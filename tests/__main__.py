@@ -5,7 +5,7 @@
 import unittest
 
 
-from tejo.simple import add_one
+from tko.simple import add_one
 
 
 class TestSimple(unittest.TestCase):

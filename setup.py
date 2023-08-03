@@ -1,7 +1,7 @@
 """A script for download and execute programming assignments.
 
 See:
-https://github.com/senapk/tejo
+https://github.com/senapk/tko
 """
 
 import pathlib
@@ -17,17 +17,17 @@ with open(here / 'requirements.txt') as fp:  # read requirements.txt
 
 
 def get_version():
-    file = here / 'src/tejo/__init__.py'
+    file = here / 'src/tko/__init__.py'
     return re.search(r'^__version__ = [\'"]([^\'"]*)[\'"]', file.read_text(), re.M).group(1)
 
 
 setup(
-    name='tejo',  # Required https://packaging.python.org/specifications/core-metadata/#name
+    name='tko',  # Required https://packaging.python.org/specifications/core-metadata/#name
     version=get_version(),  # Required https://packaging.python.org/en/latest/single_source_version.html
-    description='Tejo: Test Engine for Judge Operations',  # Optional
+    description='tko: Test Engine for Judge Operations',  # Optional
     long_description=long_description,  # Optional
     long_description_content_type='text/markdown',  # Optional
-    url='https://github.com/senapk/tejo',  # Optional, project's main homepage
+    url='https://github.com/senapk/tko',  # Optional, project's main homepage
     author='David Sena Oliveira',  # Optional, name or the name of the organization which owns the project
     author_email='sena@ufc.br',  # Optional
     classifiers=['Development Status :: 3 - Alpha',  # 3 - Alpha, 4 - Beta, 5 - Production/Stable
@@ -53,7 +53,7 @@ setup(
                     'test': ['coverage'],
                     },  # Optional
 
-    package_data={'tejo': ['package_data.dat'],
+    package_data={'tko': ['package_data.dat'],
                   },  # Optional, Data files included in your packages that need to be installed
 
     # Although 'package_data' is the preferred approach, in some case you may
@@ -70,10 +70,10 @@ setup(
     #
     # For example, the following would provide a command called `ultralytics` which
     # executes the function `main` from this package when invoked:
-    entry_points={'console_scripts': ['tejo=tejo.__main__:Main.main', ],
+    entry_points={'console_scripts': ['tko=tko.__main__:Main.main', ],
                   },  # Optional
 
-    project_urls={'Bug Reports': 'https://github.com/senapk/tejo/issues',
-                  'Source': 'https://github.com/senapk/tejo/',
+    project_urls={'Bug Reports': 'https://github.com/senapk/tko/issues',
+                  'Source': 'https://github.com/senapk/tko/',
                   },  # Optional https://packaging.python.org/specifications/core-metadata/#project-url-multiple-use
 )

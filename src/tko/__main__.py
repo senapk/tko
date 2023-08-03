@@ -60,15 +60,8 @@ class Main:
         return 0
 
     @staticmethod
-    def update(args):
-        if os.path.isfile(".info"):
-            print(".info file found, updating problem info...")
-            data = open(".info", "r").read().split("\n")[0]
-            data = data.split(" ")
-            discp = data[0]
-            label = data[1]
-            ext   = data[2]
-            Down.entry_unpack(discp, label, ext)
+    def update(_args):
+        Down.update()
 
     @staticmethod
     def main():
@@ -86,7 +79,7 @@ class Main:
         parent_manip.add_argument('--pattern', '-p', metavar="@.in @.out", type=str, default='@.in @.sol',
                                   help='pattern load/save a folder, default: "@.in @.sol"')
 
-        parser = argparse.ArgumentParser(prog='tk')
+        parser = argparse.ArgumentParser(prog='tko', description='A tool for competitive programming.')
         subparsers = parser.add_subparsers(title='subcommands', help='help for subcommand.')
 
         # list
@@ -103,7 +96,7 @@ class Main:
         parser_r = subparsers.add_parser('run', parents=[parent_basic], help='run you solver.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--vertical', '-v', action='store_true', help="use vertical mode.")
-        parser_r.add_argument('--quiet', '-q', action='store_true', help='quiet mode, dont show diffs')
+        parser_r.add_argument('--quiet', '-q', action='store_true', help='quiet mode, do not show diffs')
         parser_r.set_defaults(func=Main.run)
 
         # build

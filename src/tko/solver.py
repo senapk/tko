@@ -13,15 +13,15 @@ class Solver:
         # print("Tempdir for execution: " + self.temp_dir)
         # copia para tempdir e atualiza os paths
 
-        new_paths = []
-        for path in self.path_list:
-            if os.path.isfile(path):
-                new_paths.append(shutil.copy(path, self.temp_dir))
-            else:
-                print("File not found: " + path)
-                exit(1)
+        # new_paths = []
+        # for path in self.path_list:
+        #     if os.path.isfile(path):
+        #         new_paths.append(shutil.copy(path, self.temp_dir))
+        #     else:
+        #         print("File not found: " + path)
+        #         exit(1)
                 
-        self.path_list = new_paths
+        # self.path_list = new_paths
         
         self.error_msg: str = ""
         self.executable: str = ""

@@ -1,8 +1,10 @@
 from typing import List, Optional, Tuple
+import io
 
 from .symbol import Symbol
 from .colored import Colored, Color
 from .unit import Unit
+from .report import Report
 
 class Diff:
 

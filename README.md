@@ -1,4 +1,4 @@
-# TEJO - Test Engine for Judge Operations
+# tko - Test Engine for Judge Operations
 
 
 Configure the environment variables in the .env file

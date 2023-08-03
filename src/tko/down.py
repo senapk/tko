@@ -9,9 +9,21 @@ from .settings_parser import SettingsParser
 class Down:
 
     @staticmethod
+    def update():
+        if os.path.isfile(".info"):
+            data = open(".info", "r").read().split("\n")[0]
+            data = data.split(" ")
+            discp = data[0]
+            label = data[1]
+            ext   = data[2]
+            Down.entry_unpack(".", discp, label, ext)
+        else:
+            print("No .info file found, skipping update...")
+    
+    @staticmethod
     def entry_args(args):
-        Down.create_problem_folder(args.disc, args.index, args.extension)
-        Down.entry_unpack(args.disc, args.index, args.extension)
+        destiny = Down.create_problem_folder(args.disc, args.index, args.extension)
+        Down.entry_unpack(destiny, args.disc, args.index, args.extension)
 
     @staticmethod
     def create_file(content, path, label=""):
@@ -73,11 +85,10 @@ class Down:
         info_file = os.path.join(destiny, ".info")
         with open(info_file, "w") as f:
             f.write(disc + " " + index + " " + ext + "\n")
+        return destiny
 
     @staticmethod
-    def entry_unpack(disc, index, ext):
-        destiny = disc + "@" + index
-
+    def entry_unpack(destiny, disc, index, ext):
         discp_url = SettingsParser.get_repository(disc)
         if discp_url is None:
             print("discipline not found")

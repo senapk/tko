@@ -2,6 +2,7 @@ from .solver import Solver
 from .unit import Unit
 from .symbol import Symbol
 from .enums import ExecutionResult
+from .runner import Runner
 
 class Execution:
 

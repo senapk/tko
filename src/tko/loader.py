@@ -1,8 +1,11 @@
 from typing import List, Tuple, Optional
 import re
+import os
 from .unit import Unit
 from .enums import ExecutionResult
-  
+from .vpl_parser import VplParser
+from .pattern_loader import PatternLoader
+
 class Loader:
     regex_tio = r"^ *>>>>>>>> *(.*?)\n(.*?)^ *======== *\n(.*?)^ *<<<<<<<< *\n?"
 
@@ -46,7 +49,7 @@ class Loader:
             lines = unit.output.split('\n')
             unit.output = ""
             unit.input = ""
-            # filtrando linhas vazias e comentarios
+            # filtrando linhas vazias e comentários
             for line in lines:
                 if crude_mode:  #
                     unit.output += line + '\n'

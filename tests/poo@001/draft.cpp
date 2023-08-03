@@ -7,26 +7,15 @@ struct Calculator {
     int battery;
     float display;
 
-    Calculator(int batteryMax) { 
-        (void) batteryMax;
-    }
+    Calculator(int batteryMax) { return {}; }
 
     void chargeBattery(int value) { 
-    }
 
     bool useBattery() { 
-        return {};
-    }
 
     void sum(int a, int b) { 
-        (void) a;
-        (void) b;
-    }
 
-    void division(int num, int den) { 
-        (void) num;
-        (void) den;
-    }
+    void division(int num, int den) { return {}; }
 
     std::string str() { 
         std::stringstream ss;
@@ -40,7 +29,7 @@ std::ostream& operator<<(std::ostream& os, Calculator c) {
     return (os << c.str());
 }
 
-#include "fn.hpp"
+#include <fn.hpp>
 using namespace fn;
 
 int main() {

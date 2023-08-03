@@ -2,7 +2,10 @@ from typing import List
 from .param import Param
 from .runner import Runner
 from .wdir import Wdir
-    
+from .execution import Execution
+from .enums import DiffMode, ExecutionResult
+from .diff import Diff
+
 class Actions:
 
     def __init__(self):
