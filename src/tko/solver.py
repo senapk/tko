@@ -2,9 +2,14 @@ import tempfile
 
 import os
 from typing import List
+from shutil import which
 
 from .runner import Runner
 
+
+def check_tool(name):
+    if which(name) is None:
+        raise Runner.CompileError("fail: " + name + " executable not found")
 
 class Solver:
     def __init__(self, solver_list: List[str]):
@@ -49,20 +54,25 @@ class Solver:
             self.executable = path
 
     def __prepare_java(self):
+        check_tool("javac")
+
         solver = self.path_list[0]
         filename = os.path.basename(solver)
-        tempdir = os.path.dirname(self.path_list[0])
+        # tempdir = os.path.dirname(self.path_list[0])
         
-        cmd = ["javac"] + self.path_list + ['-d', tempdir]
+
+        cmd = ["javac"] + self.path_list + ['-d', self.temp_dir]
         return_code, stdout, stderr = Runner.subprocess_run(cmd)
         print(stdout)
         print(stderr)
         if return_code != 0:
             raise Runner.CompileError(stdout + stderr)
         # solver = solver.split(os.sep)[-1]  # getting only the filename
-        self.executable = "java -cp " + tempdir + " " + filename[:-5]  # removing the .java
+        self.executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
 
     def __prepare_js(self):
+        check_tool("node")
+
         import_str = (r'let __lines = require("fs").readFileSync(0).toString().split("\n"); let input = () => '
                       r'__lines.length === 0 ? "" : __lines.shift(); let write = (text, end="\n") => '
                       r'process.stdout.write("" + text + end);')
@@ -74,6 +84,9 @@ class Solver:
         self.executable = "node " + solver
 
     def __prepare_ts(self):
+        check_tool("esbuild")
+        check_tool("node")
+
         import_str = (r'let _cin_: string[] = require("fs").readFileSync(0).toString().split("\n"); let input = () : '
                       r'string => _cin_.length === 0 ? "" : _cin_.shift()!; let write = (text: any, '
                       r'end:string="\n")=> process.stdout.write("" + text + end);')
@@ -109,11 +122,13 @@ class Solver:
         self.executable = exec_path
 
     def __prepare_c(self):
+        check_tool("gcc")
         pre = ["gcc", "-Wall"]
         pos = ["-lm", "-lutil"]
         self.__prepare_c_cpp(pre, pos)
 
     def __prepare_cpp(self):
+        check_tool("g++")
         pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror"]
         pos = []
         self.__prepare_c_cpp(pre, pos)
