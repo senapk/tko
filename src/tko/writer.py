@@ -1,6 +1,10 @@
 from typing import List
+import os
+
 from .pattern_loader import PatternLoader
 from .unit import Unit
+from .enums import IdentifierType, Identifier
+
 
 class Writer:
 

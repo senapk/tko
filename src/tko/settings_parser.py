@@ -2,6 +2,7 @@ import os
 import configparser
 from appdirs import user_data_dir
 
+
 class SettingsParser:
     settings_file = os.path.join(user_data_dir("tkj"), "settings.cfg")
 

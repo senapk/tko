@@ -1,4 +1,6 @@
 from typing import List, Optional
+import re
+
 
 class VplParser:
     @staticmethod

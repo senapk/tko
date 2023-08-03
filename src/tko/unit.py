@@ -13,7 +13,7 @@ class Unit:
         self.output = outp  # expected output
         self.user: Optional[str] = None  # solver generated answer
         self.grade: Optional[int] = grade  # None represents proportional gr, 100 represents all
-        self.grade_reduction: int = 0 #if grade is None, this atribute should be filled with the right grade reduction
+        self.grade_reduction: int = 0 # if grade is None, this atribute should be filled with the right grade reduction
         self.index = 0
         self.repeated: Optional[int] = None
 

@@ -1,6 +1,7 @@
 from typing import Tuple
 import os
-import urllib
+import urllib.request
+import urllib.error
 import json
 
 from .settings_parser import SettingsParser
@@ -15,7 +16,7 @@ class Down:
             data = data.split(" ")
             discp = data[0]
             label = data[1]
-            ext   = data[2]
+            ext = data[2]
             Down.entry_unpack(".", discp, label, ext)
         else:
             print("No .info file found, skipping update...")
@@ -70,7 +71,7 @@ class Down:
         # downloading mapi
         mapi = os.path.join(destiny, "mapi.json")
         urllib.request.urlretrieve(cache_url + "mapi.json", mapi)
-        return (readme, mapi)
+        return readme, mapi
 
     @staticmethod
     def create_problem_folder(disc, index, ext):

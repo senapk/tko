@@ -1,10 +1,17 @@
 from typing import List
+import subprocess
+
 from .param import Param
 from .runner import Runner
 from .wdir import Wdir
 from .execution import Execution
 from .enums import DiffMode, ExecutionResult
 from .diff import Diff
+from .colored import Colored, Color
+from .report import Report
+from .symbol import Symbol
+from .writer import Writer
+
 
 class Actions:
 
@@ -24,7 +31,7 @@ class Actions:
             return        
         
         print(Report.centralize(" Exec " + wdir.solver.executable + " ", Symbol.hbar))
-        subprocess.run(wdir.solver.executable, shell = True)
+        subprocess.run(wdir.solver.executable, shell=True)
 
     @staticmethod
     def list(target_list: List[str], param: Param.Basic):
@@ -40,11 +47,11 @@ class Actions:
             print(e)
             return 0
         
-        print(wdir.resume(), end = "")
+        print(wdir.resume(), end="")
 
         if wdir.solver is None:
             print("\n" + Colored.paint("fail:", Color.RED) + " no solver found\n")
-            return
+            return 0
         
         print("[ ", end="")
         for unit in wdir.unit_list:

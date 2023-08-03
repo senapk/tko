@@ -3,6 +3,7 @@ import os
 
 from .symbol import Symbol
 
+
 class ExecutionResult(Enum):
     UNTESTED = Symbol.neutral
     SUCCESS = Symbol.success
@@ -13,9 +14,11 @@ class ExecutionResult(Enum):
     def __str__(self):
         return self.value
 
+
 class DiffMode(Enum):
     FIRST = "MODE: SHOW FIRST FAILURE ONLY"
     QUIET = "MODE: SHOW NONE FAILURES"
+
 
 class IdentifierType(Enum):
     OBI = "OBI"
@@ -23,6 +26,7 @@ class IdentifierType(Enum):
     TIO = "TIO"
     VPL = "VPL"
     SOLVER = "SOLVER"
+
 
 class Identifier:
     def __init__(self):

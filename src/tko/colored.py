@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Optional
 
+
 class Color(Enum):
     RED = 1
     GREEN = 2

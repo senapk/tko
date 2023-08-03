@@ -1,4 +1,6 @@
 from typing import List
+import re
+
 
 class FileSource:
     def __init__(self, label, input_file, output_file):
@@ -9,6 +11,7 @@ class FileSource:
     def __eq__(self, other):
         return self.label == other.label and self.input_file == other.input_file and \
                 self.output_file == other.output_file
+
 
 class PatternLoader:
     pattern: str = ""

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 import math
 import os
 
@@ -10,10 +10,11 @@ from .param import Param
 from .label_factory import LabelFactory
 from .symbol import Symbol
 from .colored import Colored, Color
-    
+
+
 class Wdir:
     def __init__(self):
-        self.solver: Solver = None
+        self.solver: Optional[Solver] = None
         self.source_list: List[str] = []
         self.pack_list: List[List[Unit]] = []
         self.unit_list: List[Unit] = []
@@ -74,7 +75,7 @@ class Wdir:
     def filter(self, param: Param.Basic):
         index = param.index
         if index is not None:
-            if 0 <= index and index < len(self.unit_list):
+            if 0 <= index < len(self.unit_list):
                 self.unit_list = [self.unit_list[index]]
             else:
                 raise ValueError("Index Number out of bounds: " + str(index))
@@ -134,7 +135,6 @@ class Wdir:
         def solvers() -> str:
             path_list = [] if self.solver is None else self.solver.path_list
             return Colored.paint("solvers:", Color.GREEN) + "[" + ", ".join([os.path.basename(path) for path in path_list]) + "]"
-
 
         folder = os.getcwd().split(os.sep)[-1]
         tests_count = Colored.paint("tests:", Color.GREEN) + str(len([x for x in self.unit_list if x.repeated is None])).zfill(2)

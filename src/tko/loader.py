@@ -2,9 +2,9 @@ from typing import List, Tuple, Optional
 import re
 import os
 from .unit import Unit
-from .enums import ExecutionResult
 from .vpl_parser import VplParser
 from .pattern_loader import PatternLoader
+
 
 class Loader:
     regex_tio = r"^ *>>>>>>>> *(.*?)\n(.*?)^ *======== *\n(.*?)^ *<<<<<<<< *\n?"
@@ -73,11 +73,11 @@ class Loader:
             if value.endswith("%"):
                 words = value.split(" ")
                 last = value.split(" ")[-1]
-                case = " ".join(words[:-1])
+                _case = " ".join(words[:-1])
                 grade_str = last[:-1]           # ultima palavra sem %
                 try:
-                    grade = int(grade_str)
-                    return case, grade
+                    _grade = int(grade_str)
+                    return _case, _grade
                 except ValueError:
                     pass
             return value, None

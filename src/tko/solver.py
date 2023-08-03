@@ -1,9 +1,10 @@
 import tempfile
-import shutil
+
 import os
 from typing import List
 
 from .runner import Runner
+
 
 class Solver:
     def __init__(self, solver_list: List[str]):
@@ -58,11 +59,13 @@ class Solver:
         print(stderr)
         if return_code != 0:
             raise Runner.CompileError(stdout + stderr)
-        solver = solver.split(os.sep)[-1]  # getting only the filename
-        self.executable =  "java -cp " + tempdir +  " "  + filename[:-5]  # removing the .java
+        # solver = solver.split(os.sep)[-1]  # getting only the filename
+        self.executable = "java -cp " + tempdir + " " + filename[:-5]  # removing the .java
 
     def __prepare_js(self):
-        import_str = r'let __lines = require("fs").readFileSync(0).toString().split("\n"); let input = () => __lines.length === 0 ? "" : __lines.shift(); let write = (text, end="\n") => process.stdout.write("" + text + end);'
+        import_str = (r'let __lines = require("fs").readFileSync(0).toString().split("\n"); let input = () => '
+                      r'__lines.length === 0 ? "" : __lines.shift(); let write = (text, end="\n") => '
+                      r'process.stdout.write("" + text + end);')
         solver = self.path_list[0]
         with open(solver, "r") as f:
             content = f.read()
@@ -71,7 +74,9 @@ class Solver:
         self.executable = "node " + solver
 
     def __prepare_ts(self):
-        import_str = r'let _cin_: string[] = require("fs").readFileSync(0).toString().split("\n"); let input = () : string => _cin_.length === 0 ? "" : _cin_.shift()!; let write = (text: any, end:string="\n")=> process.stdout.write("" + text + end);'
+        import_str = (r'let _cin_: string[] = require("fs").readFileSync(0).toString().split("\n"); let input = () : '
+                      r'string => _cin_.length === 0 ? "" : _cin_.shift()!; let write = (text: any, '
+                      r'end:string="\n")=> process.stdout.write("" + text + end);')
         solver = self.path_list[0]
         with open(solver, "r") as f:
             content = f.read()
@@ -81,7 +86,7 @@ class Solver:
         filename = os.path.basename(solver)
         source_list = self.path_list
         # print("Using the following source files: " + str([os.path.basename(x) for x in source_list]))
-        #compile the ts file
+        # compile the ts file
         cmd = ["esbuild"] + source_list + ["--outdir=" + self.temp_dir, "--format=cjs", "--log-level=error"]
         return_code, stdout, stderr = Runner.subprocess_run(cmd)
         print(stdout + stderr)
@@ -90,8 +95,8 @@ class Solver:
         jsfile = os.path.join(self.temp_dir, filename[:-3] + ".js")
         self.executable = "node " + jsfile  # renaming solver to main
     
-    def __prepare_c_cpp(self, pre_args: List[str], pos_args: list[str]) -> str:
-        solver = self.path_list[0]
+    def __prepare_c_cpp(self, pre_args: List[str], pos_args: list[str]):
+        # solver = self.path_list[0]
         tempdir = self.temp_dir
         source_list = self.path_list
         # print("Using the following source files: " + str([os.path.basename(x) for x in source_list]))
@@ -108,7 +113,7 @@ class Solver:
         pos = ["-lm", "-lutil"]
         self.__prepare_c_cpp(pre, pos)
 
-    def __prepare_cpp(self: str):
+    def __prepare_cpp(self):
         pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror"]
         pos = []
         self.__prepare_c_cpp(pre, pos)

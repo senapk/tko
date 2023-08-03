@@ -2,6 +2,7 @@ from typing import Optional
 import shutil
 from .colored import Colored
 
+
 class Report:
     __term_width: Optional[int] = None
 

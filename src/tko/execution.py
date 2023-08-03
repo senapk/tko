@@ -4,6 +4,7 @@ from .symbol import Symbol
 from .enums import ExecutionResult
 from .runner import Runner
 
+
 class Execution:
 
     def __init__(self):

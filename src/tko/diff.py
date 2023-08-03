@@ -6,6 +6,7 @@ from .colored import Colored, Color
 from .unit import Unit
 from .report import Report
 
+
 class Diff:
 
     @staticmethod
@@ -41,7 +42,10 @@ class Diff:
     # first_failure -> index of the first line unmatched 
     @staticmethod
     def first_failure_diff(a_text: str, b_text: str, first_failure) -> str:
-        get = lambda vet, i: vet[i] if i < len(vet) else ""
+        def get(vet, index):
+            if index < len(vet):
+                return vet[index]
+            return ""
 
         a_render = Diff.render_white(a_text, Color.YELLOW).splitlines()
         b_render = Diff.render_white(b_text, Color.YELLOW).splitlines()
@@ -55,13 +59,12 @@ class Diff:
             lbefore = Colored.remove_colors(get(a_render, first_failure - 1))
             greater = max(greater, Colored.len(lbefore))
         
-        postext = Report.centralize(Colored.paint(" First line mismatch showing withspaces ", Color.BOLD),  "-") + "\n";
+        postext = Report.centralize(Colored.paint(" First line mismatch showing withspaces ", Color.BOLD),  "-") + "\n"
         if first_failure > 0:
             postext += Colored.paint(Colored.ljust(lbefore, greater) + " (previous)", Color.BLUE) + "\n"
-        postext     += Colored.ljust(first_a, greater) + Colored.paint(" (expected)", Color.GREEN) + "\n"
-        postext     += Colored.ljust(first_b, greater) + Colored.paint(" (received)", Color.RED) + "\n"
+        postext += Colored.ljust(first_a, greater) + Colored.paint(" (expected)", Color.GREEN) + "\n"
+        postext += Colored.ljust(first_b, greater) + Colored.paint(" (received)", Color.RED) + "\n"
         return postext
-
 
     # return a tuple of two strings with the diff and the index of the  first mismatch line
     @staticmethod
@@ -82,11 +85,12 @@ class Diff:
             cut = (Report.get_terminal_size() // 2) - 1
 
         max_size = max(a_size, b_size)
+
         # lambda function to return element in index i or empty if out of bounds
-        def get(vet, i):
+        def get(vet, index):
             out = ""
-            if i < len(vet):
-                out = vet[i]
+            if index < len(vet):
+                out = vet[index]
             if pad is None:
                 return out
             return out[:cut].ljust(cut)
@@ -112,9 +116,6 @@ class Diff:
         string_input = unit.input
         string_expected = unit.output
         string_received = unit.user
-        expected_lines = []
-        received_lines = []
-        first_failure = -1
 
         dotted = "-"
 
@@ -153,9 +154,6 @@ class Diff:
         string_input = unit.input
         string_expected = unit.output
         string_received = unit.user
-        expected_lines = []
-        received_lines = []
-        first_failure = -1
 
         dotted = "-"
         vertical_separator = Symbol.vbar
@@ -168,7 +166,7 @@ class Diff:
         output.write(Diff.side_by_side(string_input.splitlines(), string_input.splitlines()) + "\n")
         expected_header = Colored.paint(" EXPECTED OUTPUT ", Color.GREEN)
         received_header = Colored.paint(" RECEIVED OUTPUT ", Color.RED)
-        output.write(mount_side_by_side(expected_header, received_header , dotted, vertical_separator) + "\n")
+        output.write(mount_side_by_side(expected_header, received_header, dotted, vertical_separator) + "\n")
         output.write(Diff.side_by_side(expected_lines, received_lines) + "\n")
         output.write(Diff.first_failure_diff(string_expected, string_received, first_failure))
 

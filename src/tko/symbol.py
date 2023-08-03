@@ -2,6 +2,7 @@ from .colored import Colored, Color
 
 asc2only: bool = False
 
+
 class Symbol:
     opening = "=>"
     neutral = ""
@@ -33,17 +34,17 @@ class Symbol:
         Symbol.unequal = "#" if asc2only else "≠"
         Symbol.equalbar = "|" if asc2only else "│"
 
-        
-        Symbol.opening     = Colored.paint(Symbol.opening, Color.BLUE)
-        Symbol.neutral     = Colored.paint(Symbol.neutral, Color.BLUE)
+        Symbol.opening = Colored.paint(Symbol.opening, Color.BLUE)
+        Symbol.neutral = Colored.paint(Symbol.neutral, Color.BLUE)
 
-        Symbol.success     = Colored.paint(Symbol.success, Color.GREEN)
-        Symbol.failure     = Colored.paint(Symbol.failure, Color.RED)
+        Symbol.success = Colored.paint(Symbol.success, Color.GREEN)
+        Symbol.failure = Colored.paint(Symbol.failure, Color.RED)
         
         # Symbol.wrong       = Colored.paint(Symbol.wrong,       Color.RED)
         Symbol.compilation = Colored.paint(Symbol.compilation, Color.YELLOW)
-        Symbol.execution   = Colored.paint(Symbol.execution,   Color.YELLOW)
-        Symbol.unequal     = Colored.paint(Symbol.unequal,     Color.RED)
-        Symbol.equalbar    = Colored.paint(Symbol.equalbar,    Color.GREEN)
+        Symbol.execution = Colored.paint(Symbol.execution,   Color.YELLOW)
+        Symbol.unequal = Colored.paint(Symbol.unequal,     Color.RED)
+        Symbol.equalbar = Colored.paint(Symbol.equalbar,    Color.GREEN)
+
 
 Symbol.initialize(asc2only)  # inicalizacao estatica

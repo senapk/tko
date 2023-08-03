@@ -1,7 +1,8 @@
 from typing import Optional
 
 from .enums import DiffMode
-    
+
+
 class Param:
 
     def __init__(self):

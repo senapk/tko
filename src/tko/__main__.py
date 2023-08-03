@@ -2,7 +2,6 @@
 
 import argparse
 import sys
-import os
 
 from .actions import Actions
 from .param import Param
@@ -10,7 +9,7 @@ from .pattern_loader import PatternLoader
 from .enums import DiffMode
 from .report import Report
 from .down import Down
-from .gui import gui_main
+
 
 class Main:
     @staticmethod
@@ -31,7 +30,6 @@ class Main:
             return 0
         return 1
 
-
     @staticmethod
     def list(args):
         if args.width is not None:
@@ -50,14 +48,14 @@ class Main:
         Actions.build(args.target, args.target_list, manip, args.force)
         return 0
 
-    @staticmethod
-    def rebuild(args):
-        if args.width is not None:
-            Report.set_terminal_size(args.width)
-        PatternLoader.pattern = args.pattern
-        manip = Param.Manip().set_unlabel(args.unlabel).set_to_sort(args.sort).set_to_number(args.number)
-        Actions.update(args.target_list, manip, args.cmd)
-        return 0
+    # @staticmethod
+    # def rebuild(args):
+    #     if args.width is not None:
+    #         Report.set_terminal_size(args.width)
+    #     PatternLoader.pattern = args.pattern
+    #     manip = Param.Manip().set_unlabel(args.unlabel).set_to_sort(args.sort).set_to_number(args.number)
+    #     Actions.update(args.target_list, manip, args.cmd)
+    #     return 0
 
     @staticmethod
     def update(_args):
@@ -106,11 +104,11 @@ class Main:
         parser_b.add_argument('--force', '-f', action='store_true', help='enable overwrite.')
         parser_b.set_defaults(func=Main.build)
 
-        # rebuild
-        parser_rb = subparsers.add_parser('rebuild', parents=[parent_manip], help='rebuild a test target.')
-        parser_rb.add_argument('target_list', metavar='T', type=str, nargs='+', help='input test targets.')
-        parser_rb.add_argument('--cmd', '-c', type=str, help="solver file or command to update outputs.")
-        parser_rb.set_defaults(func=Main.rebuild)
+        # # rebuild
+        # parser_rb = subparsers.add_parser('rebuild', parents=[parent_manip], help='rebuild a test target.')
+        # parser_rb.add_argument('target_list', metavar='T', type=str, nargs='+', help='input test targets.')
+        # parser_rb.add_argument('--cmd', '-c', type=str, help="solver file or command to update outputs.")
+        # parser_rb.set_defaults(func=Main.rebuild)
 
         # down
         parser_d = subparsers.add_parser('down', help='download test from remote repository.')
@@ -122,10 +120,6 @@ class Main:
         # update
         parser_u = subparsers.add_parser('update', help='update problem from repository.')
         parser_u.set_defaults(func=Main.update)
-
-        # gui
-        parser_g = subparsers.add_parser('gui', help='gui mode')
-        parser_g.set_defaults(func=gui_main)
 
         args = parser.parse_args()
         if len(sys.argv) == 1:
