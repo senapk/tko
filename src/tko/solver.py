@@ -4,12 +4,13 @@ import os
 from typing import List
 from shutil import which
 
+from .basic import CompilerError
 from .runner import Runner
 
 
 def check_tool(name):
     if which(name) is None:
-        raise Runner.CompileError("fail: " + name + " executable not found")
+        raise CompilerError("fail: " + name + " executable not found")
 
 class Solver:
     def __init__(self, solver_list: List[str]):
@@ -66,7 +67,7 @@ class Solver:
         print(stdout)
         print(stderr)
         if return_code != 0:
-            raise Runner.CompileError(stdout + stderr)
+            raise CompilerError(stdout + stderr)
         # solver = solver.split(os.sep)[-1]  # getting only the filename
         self.executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
 
@@ -104,7 +105,7 @@ class Solver:
         return_code, stdout, stderr = Runner.subprocess_run(cmd)
         print(stdout + stderr)
         if return_code != 0:
-            raise Runner.CompileError(stdout + stderr)
+            raise CompilerError(stdout + stderr)
         jsfile = os.path.join(self.temp_dir, filename[:-3] + ".js")
         self.executable = "node " + jsfile  # renaming solver to main
     
@@ -118,7 +119,7 @@ class Solver:
         cmd = pre_args + source_list + ["-o", exec_path] + pos_args
         return_code, stdout, stderr = Runner.subprocess_run(cmd)
         if return_code != 0:
-            raise Runner.CompileError(stdout + stderr)
+            raise CompilerError(stdout + stderr)
         self.executable = exec_path
 
     def __prepare_c(self):

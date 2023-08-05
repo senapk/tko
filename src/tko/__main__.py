@@ -4,12 +4,12 @@ import argparse
 import sys
 
 from .actions import Actions
-from .param import Param
-from .pattern_loader import PatternLoader
-from .enums import DiffMode
-from .report import Report
+from .basic import Param
+from .pattern import PatternLoader
+from .basic import DiffMode
+from .format import Report
 from .down import Down
-from .settings_parser import SettingsParser
+from .settings import SettingsParser
 
 
 class Main:
@@ -27,9 +27,7 @@ class Main:
             param.set_diff_mode(DiffMode.QUIET)
         if args.vertical:
             param.set_up_down(True)
-        if Actions.run(args.target_list, param):
-            return 0
-        return 1
+        Actions.run(args.target_list, param)
 
     @staticmethod
     def list(args):
@@ -38,7 +36,6 @@ class Main:
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         Actions.list(args.target_list, param)
-        return 0
 
     @staticmethod
     def build(args):
@@ -47,7 +44,6 @@ class Main:
         PatternLoader.pattern = args.pattern
         manip = Param.Manip().set_unlabel(args.unlabel).set_to_sort(args.sort).set_to_number(args.number)
         Actions.build(args.target, args.target_list, manip, args.force)
-        return 0
     
     @staticmethod
     def settings(args):
@@ -65,6 +61,11 @@ class Main:
     @staticmethod
     def update(_args):
         Down.update()
+
+    @staticmethod
+    def down(args):
+        destiny = Down.create_problem_folder(args.disc, args.index, args.extension)
+        Down.entry_unpack(destiny, args.disc, args.index, args.extension)
 
     @staticmethod
     def main():
@@ -121,7 +122,7 @@ class Main:
         parser_d.add_argument('disc', type=str, help=" [ fup | ed | poo ]")
         parser_d.add_argument('index', type=str, help="3 digits label like 021")
         parser_d.add_argument('extension', type=str, nargs = '?', default = "-", help="[ c | cpp | js | ts | py | java ]")
-        parser_d.set_defaults(func=Down.entry_args)
+        parser_d.set_defaults(func=Main.down)
 
         # update
         parser_u = subparsers.add_parser('update', help='update problem from repository.')
@@ -144,5 +145,7 @@ class Main:
 if __name__ == '__main__':
     try:
         Main.main()
+        sys.exit(0)
     except KeyboardInterrupt:
         print("\n\nKeyboard Interrupt")
+        sys.exit(1)

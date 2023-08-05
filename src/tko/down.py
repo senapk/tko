@@ -4,8 +4,7 @@ import urllib.request
 import urllib.error
 import json
 
-from .settings_parser import SettingsParser
-
+from .settings import SettingsParser
 
 class Down:
 
@@ -20,11 +19,6 @@ class Down:
             Down.entry_unpack(".", discp, label, ext)
         else:
             print("No .info file found, skipping update...")
-    
-    @staticmethod
-    def entry_args(args):
-        destiny = Down.create_problem_folder(args.disc, args.index, args.extension)
-        Down.entry_unpack(destiny, args.disc, args.index, args.extension)
 
     @staticmethod
     def create_file(content, path, label=""):

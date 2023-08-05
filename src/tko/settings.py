@@ -1,5 +1,4 @@
 import os
-import shutil
 import configparser
 from appdirs import user_data_dir
 

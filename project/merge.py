@@ -9,25 +9,18 @@ import shutil
 
 # get all files inside folder src/tko
 files = [
-"colored", 
-"symbol", 
-"enums", 
-"unit", 
-"param", 
-"solver", 
-"vpl_parser", 
-"loader",
-"wdir",
-"label_factory",
+"settings",
 "runner",
-"execution",
-"report",
+"format", 
+"basic", 
 "diff",
-"pattern_loader",
-"writer",
-"replacer",
-"actions",
 "down",
+"solver", 
+"pattern",
+"loader",
+"writer",
+"wdir",
+"actions",
 "__init__",
 "__main__",
 ]
@@ -38,7 +31,7 @@ output = []
 
 # read all files
 for file in files:
-    with open("src/tko/" + file + ".py", "r") as f:
+    with open("../src/tko/" + file + ".py", "r") as f:
         lines = f.read().split("\n")
         for line in lines:
             if line.startswith("from ."):

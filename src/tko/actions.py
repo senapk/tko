@@ -1,16 +1,33 @@
 from typing import List
 import subprocess
 
-from .param import Param
-from .runner import Runner
 from .wdir import Wdir
-from .execution import Execution
-from .enums import DiffMode, ExecutionResult
+from .basic import DiffMode, ExecutionResult, CompilerError, Param, Unit
 from .diff import Diff
-from .colored import Colored, Color
-from .report import Report
-from .symbol import Symbol
+from .format import Symbol, Colored, Color, Report
 from .writer import Writer
+from .solver import Solver
+from .runner import Runner
+
+
+
+class Execution:
+
+    def __init__(self):
+        pass
+
+    # run a unit using a solver and return if the result is correct
+    @staticmethod
+    def run_unit(solver: Solver, unit: Unit) -> ExecutionResult:
+        cmd = solver.executable.split(" ")
+        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input)
+        unit.user = stdout + stderr
+        if return_code != 0:
+            unit.user += Symbol.execution
+            return ExecutionResult.EXECUTION_ERROR
+        if unit.user == unit.output:
+            return ExecutionResult.SUCCESS
+        return ExecutionResult.WRONG_OUTPUT
 
 
 class Actions:
@@ -22,7 +39,7 @@ class Actions:
     def exec(target_list: List[str]):
         try:
             wdir = Wdir().set_target_list(target_list).build()
-        except Runner.CompileError as e:
+        except CompilerError as e:
             print(e)
             return 0
         
@@ -43,7 +60,7 @@ class Actions:
     def run(target_list: List[str], param: Param.Basic) -> int:
         try:
             wdir = Wdir().set_target_list(target_list).build().filter(param)
-        except Runner.CompileError as e:
+        except CompilerError as e:
             print(e)
             return 0
         

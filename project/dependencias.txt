@@ -1,0 +1,15 @@
+runner
+settings
+format:
+basic: format
+diff: format, basic
+down: settings_parser
+solver: runner
+pattern
+loader: basic, pattern
+writer: basic, pattern
+wdir: loader, solver, basic,  format
+actions: basic, wdir, execution,  diff, format, writer
+__init__
+__main__
+

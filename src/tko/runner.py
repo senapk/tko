@@ -8,9 +8,6 @@ class Runner:
     def __init__(self):
         pass
 
-    class CompileError(Exception):
-        pass
-
     @staticmethod
     def subprocess_run(cmd_list: List[str], input_data: str = "") -> Tuple[int, Any, Any]:
         try:
