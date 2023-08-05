@@ -1,11 +1,10 @@
 # tko - Test Engine for Judge Operations
 
-
-## Configure the environment variables in the .env file
+## Configure the environment variables for development
 
 ```bash
 python -m venv venv
-source ./venv/bin/activate (Linux, macOS) or ./venv/Scripts/activate (Win)
+source ./venv/bin/activate
 pip install -e .
 ```
 
