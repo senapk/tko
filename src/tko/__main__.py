@@ -51,7 +51,7 @@ class Main:
     
     @staticmethod
     def settings(args):
-        print(SettingsParser().get_settings_dir())
+        print("settings file at " + SettingsParser().get_settings_file())
 
     # @staticmethod
     # def rebuild(args):

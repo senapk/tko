@@ -53,8 +53,7 @@ setup(
                     'test': ['coverage'],
                     },  # Optional
 
-    package_data={'tko': ['data/settings.cfg'],
-                  },  # Optional, Data files included in your packages that need to be installed
+    #package_data={'tko': ['data/settings.cfg'], },  # Optional, Data files included in your packages that need to be installed
 
     # Although 'package_data' is the preferred approach, in some case you may
     # need to place data files outside of your packages. See:

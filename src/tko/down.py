@@ -90,7 +90,7 @@ class Down:
 
     @staticmethod
     def entry_unpack(destiny, disc, index, ext):
-        discp_url = SettingsParser.get_repository(disc)
+        discp_url = SettingsParser().get_repository(disc)
         if discp_url is None:
             print("discipline not found")
             return
