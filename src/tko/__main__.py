@@ -9,6 +9,7 @@ from .pattern_loader import PatternLoader
 from .enums import DiffMode
 from .report import Report
 from .down import Down
+from .settings_parser import SettingsParser
 
 
 class Main:
@@ -47,6 +48,10 @@ class Main:
         manip = Param.Manip().set_unlabel(args.unlabel).set_to_sort(args.sort).set_to_number(args.number)
         Actions.build(args.target, args.target_list, manip, args.force)
         return 0
+    
+    @staticmethod
+    def settings(args):
+        print(SettingsParser().get_settings_dir())
 
     # @staticmethod
     # def rebuild(args):
@@ -64,6 +69,7 @@ class Main:
     @staticmethod
     def main():
         parent_basic = argparse.ArgumentParser(add_help=False)
+        # parent_basic.add_argument('--version', '-v', action='version', help='show version.')
         parent_basic.add_argument('--width', '-w', type=int, help="term width")
         parent_basic.add_argument('--index', '-i', metavar="I", type=int, help='run a specific index.')
         parent_basic.add_argument('--pattern', '-p', metavar="P", type=str, default='@.in @.sol',
@@ -120,6 +126,10 @@ class Main:
         # update
         parser_u = subparsers.add_parser('update', help='update problem from repository.')
         parser_u.set_defaults(func=Main.update)
+
+        # settings
+        parser_s = subparsers.add_parser('settings', help='show settings.')
+        parser_s.set_defaults(func=Main.settings)
 
         args = parser.parse_args()
         if len(sys.argv) == 1:
