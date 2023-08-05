@@ -16,7 +16,7 @@ pipx install git+https://github.com/senapk/tko.git
 
 ## Requirements
 
-Python 3.8 or later with all [requirements.txt](https://github.com/ultralytics/pip/blob/master/requirements.txt)
+Python 3.8 or later with all [requirements.txt](requirements.txt)
 dependencies installed, including `build` and `twine`. To install run:
 
 ```bash
