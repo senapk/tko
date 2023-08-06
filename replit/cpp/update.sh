@@ -9,6 +9,11 @@ TARGET="${REP}/.bin/tko"
 curl  ${SOURCE} -o ${TARGET}
 chmod +x ${TARGET}
 
+SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/update.sh"
+TARGET="${REP}/.bin/update.sh"
+curl  ${SOURCE} -o ${TARGET}
+chmod +x ${TARGET}
+
 SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/cpp/replit"
 TARGET="${REP}/.replit"
 curl  ${SOURCE} -o ${TARGET}

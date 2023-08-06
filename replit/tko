@@ -1560,22 +1560,22 @@ class Main:
                                   help='pattern load/save a folder, default: "@.in @.sol"')
 
         parser = argparse.ArgumentParser(prog='tko', description='A tool for competitive programming.')
-        parser.add_argument('--version', '-v', action='store_true', help='show version.')
+        parser.add_argument('-v', '--version', action='store_true', help='show version.')
         
         subparsers = parser.add_subparsers(title='subcommands', help='help for subcommand.')
 
         # list
-        parser_l = subparsers.add_parser('list', parents=[parent_basic], help='show case packs or folders.')
+        parser_l = subparsers.add_parser('list', parents=[parent_basic], help='show test entries.')
         parser_l.add_argument('target_list', metavar='T', type=str, nargs='*', help='targets.')
         parser_l.set_defaults(func=Main.list)
 
         # exec
-        parser_e = subparsers.add_parser('exec', parents=[parent_basic], help='just run the solver without any test.')
+        parser_e = subparsers.add_parser('exec', parents=[parent_basic], help='run without test.')
         parser_e.add_argument('target_list', metavar='T', type=str, nargs='*', help='target.')
         parser_e.set_defaults(func=Main.execute)
 
         # run
-        parser_r = subparsers.add_parser('run', parents=[parent_basic], help='run you solver.')
+        parser_r = subparsers.add_parser('run', parents=[parent_basic], help='run with test cases.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--vertical', '-v', action='store_true', help="use vertical mode.")
         parser_r.add_argument('--quiet', '-q', action='store_true', help='quiet mode, do not show diffs')
@@ -1589,7 +1589,7 @@ class Main:
         parser_b.set_defaults(func=Main.build)
 
         # down
-        parser_d = subparsers.add_parser('down', help='download test from remote repository.')
+        parser_d = subparsers.add_parser('down', help='download problem from repository.')
         parser_d.add_argument('disc', type=str, help=" [ fup | ed | poo ]")
         parser_d.add_argument('index', type=str, help="3 digits label like 021")
         parser_d.add_argument('extension', type=str, nargs='?', default="-", help="[ c | cpp | js | ts | py | java ]")
@@ -1600,7 +1600,7 @@ class Main:
         parser_u.set_defaults(func=Main.update)
 
         # settings
-        parser_s = subparsers.add_parser('settings', help='show settings.')
+        parser_s = subparsers.add_parser('settings', help='settings tool.')
         parser_s.add_argument('--ascii', '-a', action='store_true', help='toggle ascii mode.')
         parser_s.set_defaults(func=Main.settings)
 
