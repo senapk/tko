@@ -1,9 +1,10 @@
 { pkgs }: {
 	deps = [
     pkgs.python38Full
-		pkgs.clang_12
-		pkgs.ccls
-		pkgs.gdb
-		pkgs.gnumake
+    pkgs.python38Packages.appdirs
+    pkgs.clang_12
+    pkgs.ccls
+    pkgs.gdb
+    pkgs.gnumake
 	];
 }
