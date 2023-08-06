@@ -34,6 +34,9 @@ class SettingsParser:
 fup = https://raw.githubusercontent.com/qxcodefup/arcade/master/base/
 ed = https://raw.githubusercontent.com/qxcodeed/arcade/master/base/
 poo = https://raw.githubusercontent.com/qxcodepoo/arcade/master/base/
+
+[VISUAL]
+ascii = False
 """
 
     def __init__(self):
@@ -55,10 +58,31 @@ poo = https://raw.githubusercontent.com/qxcodepoo/arcade/master/base/
         with open(self.settings_file, "w") as f:
             f.write(self.default_cfg_content)
 
-    def get_settings_file(self):
+    def check_settings_file(self):
         if not os.path.isfile(self.settings_file):
             self.create_default_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        if "VISUAL" not in parser or "REP" not in parser:
+            self.create_default_settings_file()
+
+    def get_settings_file(self):
+        self.check_settings_file()
         return self.settings_file
+
+    def get_ascii(self) -> bool:
+        self.check_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        return parser["VISUAL"]["ascii"] == "True"
+    
+    def toggle_ascii(self):
+        self.check_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        parser["VISUAL"]["ascii"] = str(not self.get_ascii())
+        with open(self.settings_file, "w") as f:
+            parser.write(f)
 
 
 
@@ -77,9 +101,6 @@ class Runner:
             print("\n\nCommand not found: " + " ".join(cmd_list))
             exit(1)
 
-
-
-asc2only: bool = False
 
 
 class Color(Enum):
@@ -175,6 +196,7 @@ class Symbol:
 
     @staticmethod
     def initialize(_asc2only: bool):
+        # print("Initializing symbols... in " + ("ASCII" if _asc2only else "UTF-8"))
         Symbol.neutral = "." if _asc2only else "»"  # u"\u2610"  # ☐
         Symbol.success = "S" if _asc2only else "✓"
         Symbol.failure = "X" if _asc2only else "✗"
@@ -197,7 +219,7 @@ class Symbol:
         Symbol.equalbar = Colored.paint(Symbol.equalbar,    Color.GREEN)
 
 
-Symbol.initialize(asc2only)  # inicalizacao estatica
+Symbol.initialize(SettingsParser().get_ascii())  # inicalizacao estatica
 
 
 class Report:
@@ -1456,7 +1478,7 @@ class Actions:
             return False
         return True
 
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 
 
 
@@ -1497,8 +1519,11 @@ class Main:
         Actions.build(args.target, args.target_list, manip, args.force)
     
     @staticmethod
-    def settings(_args):
+    def settings(args):
         print("settings file at " + SettingsParser().get_settings_file())
+        if (args.ascii):
+            SettingsParser().toggle_ascii()
+            print("Initializing symbols... in " + ("ASCII" if SettingsParser().get_ascii() else "UTF-8"))
 
     # @staticmethod
     # def rebuild(args):
@@ -1521,7 +1546,6 @@ class Main:
     @staticmethod
     def main():
         parent_basic = argparse.ArgumentParser(add_help=False)
-        # parent_basic.add_argument('--version', '-v', action='version', help='show version.')
         parent_basic.add_argument('--width', '-w', type=int, help="term width")
         parent_basic.add_argument('--index', '-i', metavar="I", type=int, help='run a specific index.')
         parent_basic.add_argument('--pattern', '-p', metavar="P", type=str, default='@.in @.sol',
@@ -1536,6 +1560,8 @@ class Main:
                                   help='pattern load/save a folder, default: "@.in @.sol"')
 
         parser = argparse.ArgumentParser(prog='tko', description='A tool for competitive programming.')
+        parser.add_argument('--version', '-v', action='store_true', help='show version.')
+        
         subparsers = parser.add_subparsers(title='subcommands', help='help for subcommand.')
 
         # list
@@ -1575,11 +1601,14 @@ class Main:
 
         # settings
         parser_s = subparsers.add_parser('settings', help='show settings.')
+        parser_s.add_argument('--ascii', '-a', action='store_true', help='toggle ascii mode.')
         parser_s.set_defaults(func=Main.settings)
 
         args = parser.parse_args()
         if len(sys.argv) == 1:
             print("You must call a subcommand. Use --help for more information.")
+        elif args.version:
+            print("tko version " + __version__)
         else:
             try:
                 args.func(args)

@@ -2,9 +2,7 @@ import shutil
 
 from enum import Enum
 from typing import Optional
-
-asc2only: bool = False
-
+from .settings import SettingsParser
 
 class Color(Enum):
     RED = 1
@@ -99,6 +97,7 @@ class Symbol:
 
     @staticmethod
     def initialize(_asc2only: bool):
+        # print("Initializing symbols... in " + ("ASCII" if _asc2only else "UTF-8"))
         Symbol.neutral = "." if _asc2only else "»"  # u"\u2610"  # ☐
         Symbol.success = "S" if _asc2only else "✓"
         Symbol.failure = "X" if _asc2only else "✗"
@@ -121,7 +120,7 @@ class Symbol:
         Symbol.equalbar = Colored.paint(Symbol.equalbar,    Color.GREEN)
 
 
-Symbol.initialize(asc2only)  # inicalizacao estatica
+Symbol.initialize(SettingsParser().get_ascii())  # inicalizacao estatica
 
 
 class Report:

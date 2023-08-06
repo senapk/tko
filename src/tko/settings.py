@@ -9,6 +9,9 @@ class SettingsParser:
 fup = https://raw.githubusercontent.com/qxcodefup/arcade/master/base/
 ed = https://raw.githubusercontent.com/qxcodeed/arcade/master/base/
 poo = https://raw.githubusercontent.com/qxcodepoo/arcade/master/base/
+
+[VISUAL]
+ascii = False
 """
 
     def __init__(self):
@@ -30,7 +33,28 @@ poo = https://raw.githubusercontent.com/qxcodepoo/arcade/master/base/
         with open(self.settings_file, "w") as f:
             f.write(self.default_cfg_content)
 
-    def get_settings_file(self):
+    def check_settings_file(self):
         if not os.path.isfile(self.settings_file):
             self.create_default_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        if "VISUAL" not in parser or "REP" not in parser:
+            self.create_default_settings_file()
+
+    def get_settings_file(self):
+        self.check_settings_file()
         return self.settings_file
+
+    def get_ascii(self) -> bool:
+        self.check_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        return parser["VISUAL"]["ascii"] == "True"
+    
+    def toggle_ascii(self):
+        self.check_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        parser["VISUAL"]["ascii"] = str(not self.get_ascii())
+        with open(self.settings_file, "w") as f:
+            parser.write(f)

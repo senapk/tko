@@ -11,6 +11,7 @@ from .basic import DiffMode
 from .format import Report
 from .down import Down
 from .settings import SettingsParser
+from .__init__ import __version__
 
 
 class Main:
@@ -47,8 +48,11 @@ class Main:
         Actions.build(args.target, args.target_list, manip, args.force)
     
     @staticmethod
-    def settings(_args):
+    def settings(args):
         print("settings file at " + SettingsParser().get_settings_file())
+        if (args.ascii):
+            SettingsParser().toggle_ascii()
+            print("Initializing symbols... in " + ("ASCII" if SettingsParser().get_ascii() else "UTF-8"))
 
     # @staticmethod
     # def rebuild(args):
@@ -71,7 +75,6 @@ class Main:
     @staticmethod
     def main():
         parent_basic = argparse.ArgumentParser(add_help=False)
-        # parent_basic.add_argument('--version', '-v', action='version', help='show version.')
         parent_basic.add_argument('--width', '-w', type=int, help="term width")
         parent_basic.add_argument('--index', '-i', metavar="I", type=int, help='run a specific index.')
         parent_basic.add_argument('--pattern', '-p', metavar="P", type=str, default='@.in @.sol',
@@ -86,6 +89,8 @@ class Main:
                                   help='pattern load/save a folder, default: "@.in @.sol"')
 
         parser = argparse.ArgumentParser(prog='tko', description='A tool for competitive programming.')
+        parser.add_argument('--version', '-v', action='store_true', help='show version.')
+        
         subparsers = parser.add_subparsers(title='subcommands', help='help for subcommand.')
 
         # list
@@ -125,11 +130,14 @@ class Main:
 
         # settings
         parser_s = subparsers.add_parser('settings', help='show settings.')
+        parser_s.add_argument('--ascii', '-a', action='store_true', help='toggle ascii mode.')
         parser_s.set_defaults(func=Main.settings)
 
         args = parser.parse_args()
         if len(sys.argv) == 1:
             print("You must call a subcommand. Use --help for more information.")
+        elif args.version:
+            print("tko version " + __version__)
         else:
             try:
                 args.func(args)
