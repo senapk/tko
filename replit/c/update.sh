@@ -9,20 +9,15 @@ TARGET="${REP}/.bin/tko"
 curl  ${SOURCE} -o ${TARGET}
 chmod +x ${TARGET}
 
-SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/cpp/update.sh"
+SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/c/update.sh"
 TARGET="${REP}/.bin/update.sh"
 curl  ${SOURCE} -o ${TARGET}
 chmod +x ${TARGET}
 
-SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/cpp/replit"
+SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/c/replit"
 TARGET="${REP}/.replit"
 curl  ${SOURCE} -o ${TARGET}
 
-SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/cpp/replit.nix"
+SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/c/replit.nix"
 TARGET="${REP}/replit.nix"
 curl  ${SOURCE} -o ${TARGET}
-
-SOURCE="https://raw.githubusercontent.com/senapk/cppaux/master/fn.hpp"
-TARGET="${REP}/.include/fn.hpp"
-curl ${SOURCE} -o ${TARGET}
-
