@@ -1,19 +1,31 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+from __future__ import annotations
+
 import os
 import configparser
+from appdirs import user_data_dir
 import subprocess
+from subprocess import PIPE
+from typing import List, Tuple, Any
 import shutil
+from enum import Enum
+from typing import Optional
+from typing import List, Optional, Tuple
 import io
+from typing import Tuple
 import urllib.request
 import urllib.error
 import json
 import tempfile
+from typing import List
+from shutil import which
 import re
+from typing import List, Tuple, Optional
+from typing import List, Optional
 import math
 import argparse
 import sys
-from appdirs import user_data_dir
 
 
 class SettingsParser:
@@ -48,8 +60,6 @@ poo = https://raw.githubusercontent.com/qxcodepoo/arcade/master/base/
             self.create_default_settings_file()
         return self.settings_file
 
-from subprocess import PIPE
-from typing import List, Tuple, Any
 
 
 class Runner:
@@ -68,8 +78,6 @@ class Runner:
             exit(1)
 
 
-from enum import Enum
-from typing import Optional
 
 asc2only: bool = False
 
@@ -232,8 +240,6 @@ class Report:
         filler = sep * int(tw / 2 - size / 2)
         return left_border + pad + filler + text + filler + right_border
 
-from enum import Enum
-from typing import Optional
 
 
 
@@ -354,7 +360,6 @@ class Param:
             self.to_number = value
             return self
 
-from typing import List, Optional, Tuple
 
 
 
@@ -523,7 +528,6 @@ class Diff:
 
         return output.getvalue()
 
-from typing import Tuple
 
 
 
@@ -665,8 +669,6 @@ class Down:
         #     return
 
 
-from typing import List
-from shutil import which
 
 
 
@@ -802,7 +804,6 @@ class Solver:
             solver = "." + os.sep + solver
         return solver
     
-from typing import List
 
 
 class FileSource:
@@ -867,7 +868,6 @@ class PatternLoader:
         unmatched = [file for file in filename_list if file not in matched]
         return unmatched
 
-from typing import List, Tuple, Optional
 
 
 
@@ -1095,7 +1095,6 @@ class Loader:
             raise FileNotFoundError('warning: unable to find: ' + source)
         return []
 
-from typing import List
 
 
 
@@ -1186,7 +1185,6 @@ class Writer:
         else:
             print("fail: target " + target + " do not supported for build operation\n")
 
-from typing import List, Optional
 
 
 # generate label for cases
@@ -1367,7 +1365,6 @@ class Wdir:
 
         return Symbol.opening + folder + " " + tests_count + " " + sources() + " " + solvers()
 
-from typing import List
 
 
 
@@ -1461,7 +1458,7 @@ class Actions:
 
 __version__ = "0.0.3"
 
-# Console scripts
+
 
 
 

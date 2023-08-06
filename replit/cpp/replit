@@ -1,4 +1,4 @@
-run = "start.py"
+run = "bash"
 entrypoint = "Readme.md"
 hidden = [".config", "**/*.o", "**/*.d", ".ccls-cache", "Makefile", ".*", "**/__*", "package-lock.json", "package.json", "tsconfig.json"]
 
