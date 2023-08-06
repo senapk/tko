@@ -42,7 +42,7 @@ for file in files:
             else:
                 output.append(line)
 
-with open("tko.py", "w") as f:
+with open("tko", "w") as f:
     f.write("#!/usr/bin/env python3\n")
     f.write("# -*- coding: utf-8 -*-\n")
     f.write("\n".join(imports))

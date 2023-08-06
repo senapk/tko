@@ -1,0 +1,70 @@
+run = "start.py"
+entrypoint = "Readme.md"
+hidden = [".config", "**/*.o", "**/*.d", ".ccls-cache", "Makefile", ".*", "**/__*", "package-lock.json", "package.json", "tsconfig.json"]
+
+[env]
+PATH = "/home/runner/${REPL_SLUG}/.bin"
+CPATH = "/home/runner/${REPL_SLUG}/.include"
+LD_LIBRARY_PATH = "/home/runner/${REPL_SLUG}/.include"
+CPLUS_INCLUDE_PATH = "/home/runner/${REPL_SLUG}/.include"
+
+[gitHubImport]
+requiredFiles = [".replit", "replit.nix", ".ccls-cache"]
+
+[debugger]
+support = true
+
+[debugger.compile]
+command = ["make", "main-debug"]
+noFileArgs = true
+
+[debugger.interactive]
+transport = "stdio"
+startCommand = ["dap-cpp"]
+
+[debugger.interactive.initializeMessage]
+command = "initialize"
+type = "request"
+
+[debugger.interactive.initializeMessage.arguments]
+adapterID = "cppdbg"
+clientID = "replit"
+clientName = "replit.com"
+columnsStartAt1 = true
+linesStartAt1 = true
+locale = "en-us"
+pathFormat = "path"
+supportsInvalidatedEvent = true
+supportsProgressReporting = true
+supportsRunInTerminalRequest = true
+supportsVariablePaging = true
+supportsVariableType = true
+
+[debugger.interactive.launchMessage]
+command = "launch"
+type = "request"
+
+[debugger.interactive.launchMessage.arguments]
+MIMode = "gdb"
+arg = []
+cwd = "."
+environment = []
+externalConsole = false
+logging = {}
+miDebuggerPath = "gdb"
+name = "g++ - Build and debug active file"
+program = "./main-debug"
+request = "launch"
+setupCommands = [
+	{ description = "Enable pretty-printing for gdb", ignoreFailures = true, text = "-enable-pretty-printing" }
+]
+stopAtEntry = false
+type = "cppdbg"
+
+[languages]
+
+[languages.cpp]
+pattern = "**/*.{cpp,h}"
+
+[languages.cpp.languageServer]
+start = "ccls"
