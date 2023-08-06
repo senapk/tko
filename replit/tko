@@ -51,7 +51,7 @@ poo = https://raw.githubusercontent.com/qxcodepoo/arcade/master/base/
 
     def create_default_settings_file(self):
         if not os.path.isdir(self.settings_dir):
-            os.mkdir(self.settings_dir, parents=True, exist_ok=True)
+            os.makedirs(self.settings_dir, exist_ok=True)
         with open(self.settings_file, "w") as f:
             f.write(self.default_cfg_content)
 
@@ -596,7 +596,7 @@ class Down:
         # create dir
         destiny = disc + "@" + index
         if not os.path.exists(destiny):
-            os.mkdir(destiny, parents=True, exist_ok=True)
+            os.makedirs(destiny, exist_ok=True)
         else:
             print("problem folder", destiny, "found, merging content.")
 
