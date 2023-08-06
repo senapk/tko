@@ -4,6 +4,7 @@ import io
 from .format import Symbol, Colored, Color, Report
 from .basic import Unit
 
+
 class Diff:
 
     @staticmethod

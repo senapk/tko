@@ -6,6 +6,7 @@ import json
 
 from .settings import SettingsParser
 
+
 class Down:
 
     @staticmethod
@@ -39,7 +40,6 @@ class Down:
         for entry in loaded["required"]:
             path = os.path.join(destiny, entry["name"])
             Down.compare_and_save(entry["contents"], path)
-
 
     @staticmethod
     def compare_and_save(content, path):
@@ -94,7 +94,7 @@ class Down:
         
         # downloading Readme
         try:
-            [readme_path, mapi_path] = Down.down_problem_def(destiny, cache_url)
+            [_readme_path, mapi_path] = Down.down_problem_def(destiny, cache_url)
         except urllib.error.HTTPError:
             print("Problem not found")
             return
@@ -104,11 +104,11 @@ class Down:
         os.remove(mapi_path)
         Down.unpack_json(loaded_json, destiny)
 
-        if len(loaded_json["required"]) == 1: # you already have the students file
+        if len(loaded_json["required"]) == 1:  # you already have the students file
             return
 
         # creating source file for student
-        # search if exists a draft file for the extension choosed
+        # search if exists a draft file for the extension choosen
         if ext == "-":
             return
 
@@ -116,7 +116,7 @@ class Down:
             draft_path = os.path.join(destiny, "draft." + ext)
             urllib.request.urlretrieve(cache_url + "draft." + ext, draft_path)
             print(draft_path + " (Draft) Rename before modify.")
-        except urllib.error.HTTPError: # draft not found
+        except urllib.error.HTTPError:  # draft not found
             filename = "Solver." if ext == "java" else "solver."
             draft_path = os.path.join(destiny, filename + ext)
             if not os.path.exists(draft_path):

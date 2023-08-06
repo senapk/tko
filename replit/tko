@@ -15,6 +15,7 @@ import argparse
 import sys
 from appdirs import user_data_dir
 
+
 class SettingsParser:
 
     default_cfg_content = """[REP]
@@ -66,12 +67,12 @@ class Runner:
             print("\n\nCommand not found: " + " ".join(cmd_list))
             exit(1)
 
-from typing import Optional
 
 from enum import Enum
 from typing import Optional
 
 asc2only: bool = False
+
 
 class Color(Enum):
     RED = 1
@@ -85,23 +86,25 @@ class Color(Enum):
     BOLD = 9
     ULINE = 10
 
+
 class Colored:
     __map = {
-        Color.RED     : '\u001b[31m',
-        Color.GREEN   : '\u001b[32m',
-        Color.YELLOW  : '\u001b[33m',
-        Color.BLUE    : '\u001b[34m',
-        Color.MAGENTA : '\u001b[35m',
-        Color.CYAN    : '\u001b[36m',
-        Color.WHITE   : '\u001b[37m',
-        Color.RESET   : '\u001b[0m',
-        Color.BOLD    : '\u001b[1m',
-        Color.ULINE   : '\u001b[4m'
+        Color.RED: '\u001b[31m',
+        Color.GREEN: '\u001b[32m',
+        Color.YELLOW: '\u001b[33m',
+        Color.BLUE: '\u001b[34m',
+        Color.MAGENTA: '\u001b[35m',
+        Color.CYAN: '\u001b[36m',
+        Color.WHITE: '\u001b[37m',
+        Color.RESET: '\u001b[0m',
+        Color.BOLD: '\u001b[1m',
+        Color.ULINE: '\u001b[4m'
     }
 
     @staticmethod
     def paint(text: str, color: Color, color2: Optional[Color] = None) -> str:
-        return Colored.__map[color] + ("" if color2 is None else Colored.__map[color2]) + text + Colored.__map[Color.RESET]
+        return (Colored.__map[color] + ("" if color2 is None else Colored.__map[color2])
+                + text + Colored.__map[Color.RESET])
 
     @staticmethod
     def green(text: str) -> str:
@@ -128,7 +131,7 @@ class Colored:
         return text + ' ' * (width - Colored.len(text))
 
     @staticmethod
-    def center(text: str, width: int, filler) -> str:
+    def center(text: str, width: int, filler: str) -> str:
         return filler * ((width - Colored.len(text)) // 2) + text + filler * ((width - Colored.len(text) + 1) // 2)
 
     @staticmethod
@@ -141,6 +144,7 @@ class Colored:
     def len(text):
         return len(Colored.remove_colors(text))
 
+
 class Symbol:
     opening = "=>"
     neutral = ""
@@ -150,7 +154,7 @@ class Symbol:
     compilation = ""
     execution = ""
     unequal = ""
-    equalbar= ""
+    equalbar = ""
     hbar = "─"
     vbar = "│"
     whitespace = "\u2E31"  # interpunct
@@ -162,15 +166,15 @@ class Symbol:
         pass
 
     @staticmethod
-    def initialize(asc2only: bool):
-        Symbol.neutral = "." if asc2only else "»"  # u"\u2610"  # ☐
-        Symbol.success = "S" if asc2only else "✓"
-        Symbol.failure = "X" if asc2only else "✗"
-        Symbol.wrong = "W" if asc2only else "ω"
-        Symbol.compilation = "C" if asc2only else "ϲ"
-        Symbol.execution = "E" if asc2only else "ϵ"
-        Symbol.unequal = "#" if asc2only else "≠"
-        Symbol.equalbar = "|" if asc2only else "│"
+    def initialize(_asc2only: bool):
+        Symbol.neutral = "." if _asc2only else "»"  # u"\u2610"  # ☐
+        Symbol.success = "S" if _asc2only else "✓"
+        Symbol.failure = "X" if _asc2only else "✗"
+        Symbol.wrong = "W" if _asc2only else "ω"
+        Symbol.compilation = "C" if _asc2only else "ϲ"
+        Symbol.execution = "E" if _asc2only else "ϵ"
+        Symbol.unequal = "#" if _asc2only else "≠"
+        Symbol.equalbar = "|" if _asc2only else "│"
 
         Symbol.opening = Colored.paint(Symbol.opening, Color.BLUE)
         Symbol.neutral = Colored.paint(Symbol.neutral, Color.BLUE)
@@ -234,6 +238,7 @@ from typing import Optional
 
 
 
+
 class ExecutionResult(Enum):
     UNTESTED = Symbol.neutral
     SUCCESS = Symbol.success
@@ -243,6 +248,7 @@ class ExecutionResult(Enum):
 
     def __str__(self):
         return self.value
+
 
 class CompilerError(Exception):
     pass
@@ -289,7 +295,7 @@ class Unit:
         self.output = outp  # expected output
         self.user: Optional[str] = None  # solver generated answer
         self.grade: Optional[int] = grade  # None represents proportional gr, 100 represents all
-        self.grade_reduction: int = 0 # if grade is None, this atribute should be filled with the right grade reduction
+        self.grade_reduction: int = 0  # if grade is None, this atribute should be filled with the right grade reduction
         self.index = 0
         self.repeated: Optional[int] = None
 
@@ -349,6 +355,7 @@ class Param:
             return self
 
 from typing import List, Optional, Tuple
+
 
 
 class Diff:
@@ -519,6 +526,7 @@ class Diff:
 from typing import Tuple
 
 
+
 class Down:
 
     @staticmethod
@@ -552,7 +560,6 @@ class Down:
         for entry in loaded["required"]:
             path = os.path.join(destiny, entry["name"])
             Down.compare_and_save(entry["contents"], path)
-
 
     @staticmethod
     def compare_and_save(content, path):
@@ -607,7 +614,7 @@ class Down:
         
         # downloading Readme
         try:
-            [readme_path, mapi_path] = Down.down_problem_def(destiny, cache_url)
+            [_readme_path, mapi_path] = Down.down_problem_def(destiny, cache_url)
         except urllib.error.HTTPError:
             print("Problem not found")
             return
@@ -617,11 +624,11 @@ class Down:
         os.remove(mapi_path)
         Down.unpack_json(loaded_json, destiny)
 
-        if len(loaded_json["required"]) == 1: # you already have the students file
+        if len(loaded_json["required"]) == 1:  # you already have the students file
             return
 
         # creating source file for student
-        # search if exists a draft file for the extension choosed
+        # search if exists a draft file for the extension choosen
         if ext == "-":
             return
 
@@ -629,7 +636,7 @@ class Down:
             draft_path = os.path.join(destiny, "draft." + ext)
             urllib.request.urlretrieve(cache_url + "draft." + ext, draft_path)
             print(draft_path + " (Draft) Rename before modify.")
-        except urllib.error.HTTPError: # draft not found
+        except urllib.error.HTTPError:  # draft not found
             filename = "Solver." if ext == "java" else "solver."
             draft_path = os.path.join(destiny, filename + ext)
             if not os.path.exists(draft_path):
@@ -666,6 +673,7 @@ from shutil import which
 def check_tool(name):
     if which(name) is None:
         raise CompilerError("fail: " + name + " executable not found")
+
 
 class Solver:
     def __init__(self, solver_list: List[str]):
@@ -715,7 +723,6 @@ class Solver:
         solver = self.path_list[0]
         filename = os.path.basename(solver)
         # tempdir = os.path.dirname(self.path_list[0])
-        
 
         cmd = ["javac"] + self.path_list + ['-d', self.temp_dir]
         return_code, stdout, stderr = Runner.subprocess_run(cmd)
@@ -1183,6 +1190,8 @@ from typing import List, Optional
 
 
 # generate label for cases
+
+
 class LabelFactory:
     def __init__(self):
         self._label = ""
@@ -1225,6 +1234,7 @@ class LabelFactory:
                 return " ".join(split_label[1:])
             except ValueError:
                 return label
+
 
 class Wdir:
     def __init__(self):
@@ -1348,15 +1358,16 @@ class Wdir:
 
         def solvers() -> str:
             path_list = [] if self.solver is None else self.solver.path_list
-            return Colored.paint("solvers:", Color.GREEN) + "[" + ", ".join([os.path.basename(path) for path in path_list]) + "]"
+            return (Colored.paint("solvers:", Color.GREEN) +
+                    "[" + ", ".join([os.path.basename(path) for path in path_list]) + "]")
 
         folder = os.getcwd().split(os.sep)[-1]
-        tests_count = Colored.paint("tests:", Color.GREEN) + str(len([x for x in self.unit_list if x.repeated is None])).zfill(2)
+        tests_count = (Colored.paint("tests:", Color.GREEN) +
+                       str(len([x for x in self.unit_list if x.repeated is None])).zfill(2))
 
         return Symbol.opening + folder + " " + tests_count + " " + sources() + " " + solvers()
 
 from typing import List
-
 
 
 
@@ -1448,7 +1459,7 @@ class Actions:
             return False
         return True
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 # Console scripts
 
@@ -1489,7 +1500,7 @@ class Main:
         Actions.build(args.target, args.target_list, manip, args.force)
     
     @staticmethod
-    def settings(args):
+    def settings(_args):
         print("settings file at " + SettingsParser().get_settings_file())
 
     # @staticmethod
@@ -1554,17 +1565,11 @@ class Main:
         parser_b.add_argument('--force', '-f', action='store_true', help='enable overwrite.')
         parser_b.set_defaults(func=Main.build)
 
-        # # rebuild
-        # parser_rb = subparsers.add_parser('rebuild', parents=[parent_manip], help='rebuild a test target.')
-        # parser_rb.add_argument('target_list', metavar='T', type=str, nargs='+', help='input test targets.')
-        # parser_rb.add_argument('--cmd', '-c', type=str, help="solver file or command to update outputs.")
-        # parser_rb.set_defaults(func=Main.rebuild)
-
         # down
         parser_d = subparsers.add_parser('down', help='download test from remote repository.')
         parser_d.add_argument('disc', type=str, help=" [ fup | ed | poo ]")
         parser_d.add_argument('index', type=str, help="3 digits label like 021")
-        parser_d.add_argument('extension', type=str, nargs = '?', default = "-", help="[ c | cpp | js | ts | py | java ]")
+        parser_d.add_argument('extension', type=str, nargs='?', default="-", help="[ c | cpp | js | ts | py | java ]")
         parser_d.set_defaults(func=Main.down)
 
         # update

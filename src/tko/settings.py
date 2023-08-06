@@ -2,6 +2,7 @@ import os
 import configparser
 from appdirs import user_data_dir
 
+
 class SettingsParser:
 
     default_cfg_content = """[REP]

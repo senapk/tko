@@ -1,10 +1,10 @@
-from typing import Optional
 import shutil
 
 from enum import Enum
 from typing import Optional
 
 asc2only: bool = False
+
 
 class Color(Enum):
     RED = 1
@@ -18,23 +18,25 @@ class Color(Enum):
     BOLD = 9
     ULINE = 10
 
+
 class Colored:
     __map = {
-        Color.RED     : '\u001b[31m',
-        Color.GREEN   : '\u001b[32m',
-        Color.YELLOW  : '\u001b[33m',
-        Color.BLUE    : '\u001b[34m',
-        Color.MAGENTA : '\u001b[35m',
-        Color.CYAN    : '\u001b[36m',
-        Color.WHITE   : '\u001b[37m',
-        Color.RESET   : '\u001b[0m',
-        Color.BOLD    : '\u001b[1m',
-        Color.ULINE   : '\u001b[4m'
+        Color.RED: '\u001b[31m',
+        Color.GREEN: '\u001b[32m',
+        Color.YELLOW: '\u001b[33m',
+        Color.BLUE: '\u001b[34m',
+        Color.MAGENTA: '\u001b[35m',
+        Color.CYAN: '\u001b[36m',
+        Color.WHITE: '\u001b[37m',
+        Color.RESET: '\u001b[0m',
+        Color.BOLD: '\u001b[1m',
+        Color.ULINE: '\u001b[4m'
     }
 
     @staticmethod
     def paint(text: str, color: Color, color2: Optional[Color] = None) -> str:
-        return Colored.__map[color] + ("" if color2 is None else Colored.__map[color2]) + text + Colored.__map[Color.RESET]
+        return (Colored.__map[color] + ("" if color2 is None else Colored.__map[color2])
+                + text + Colored.__map[Color.RESET])
 
     @staticmethod
     def green(text: str) -> str:
@@ -61,7 +63,7 @@ class Colored:
         return text + ' ' * (width - Colored.len(text))
 
     @staticmethod
-    def center(text: str, width: int, filler) -> str:
+    def center(text: str, width: int, filler: str) -> str:
         return filler * ((width - Colored.len(text)) // 2) + text + filler * ((width - Colored.len(text) + 1) // 2)
 
     @staticmethod
@@ -74,6 +76,7 @@ class Colored:
     def len(text):
         return len(Colored.remove_colors(text))
 
+
 class Symbol:
     opening = "=>"
     neutral = ""
@@ -83,7 +86,7 @@ class Symbol:
     compilation = ""
     execution = ""
     unequal = ""
-    equalbar= ""
+    equalbar = ""
     hbar = "─"
     vbar = "│"
     whitespace = "\u2E31"  # interpunct
@@ -95,15 +98,15 @@ class Symbol:
         pass
 
     @staticmethod
-    def initialize(asc2only: bool):
-        Symbol.neutral = "." if asc2only else "»"  # u"\u2610"  # ☐
-        Symbol.success = "S" if asc2only else "✓"
-        Symbol.failure = "X" if asc2only else "✗"
-        Symbol.wrong = "W" if asc2only else "ω"
-        Symbol.compilation = "C" if asc2only else "ϲ"
-        Symbol.execution = "E" if asc2only else "ϵ"
-        Symbol.unequal = "#" if asc2only else "≠"
-        Symbol.equalbar = "|" if asc2only else "│"
+    def initialize(_asc2only: bool):
+        Symbol.neutral = "." if _asc2only else "»"  # u"\u2610"  # ☐
+        Symbol.success = "S" if _asc2only else "✓"
+        Symbol.failure = "X" if _asc2only else "✗"
+        Symbol.wrong = "W" if _asc2only else "ω"
+        Symbol.compilation = "C" if _asc2only else "ϲ"
+        Symbol.execution = "E" if _asc2only else "ϵ"
+        Symbol.unequal = "#" if _asc2only else "≠"
+        Symbol.equalbar = "|" if _asc2only else "│"
 
         Symbol.opening = Colored.paint(Symbol.opening, Color.BLUE)
         Symbol.neutral = Colored.paint(Symbol.neutral, Color.BLUE)

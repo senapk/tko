@@ -8,6 +8,8 @@ from .solver import Solver
 from .format import Symbol, Colored, Color
 
 # generate label for cases
+
+
 class LabelFactory:
     def __init__(self):
         self._label = ""
@@ -50,6 +52,7 @@ class LabelFactory:
                 return " ".join(split_label[1:])
             except ValueError:
                 return label
+
 
 class Wdir:
     def __init__(self):
@@ -173,9 +176,11 @@ class Wdir:
 
         def solvers() -> str:
             path_list = [] if self.solver is None else self.solver.path_list
-            return Colored.paint("solvers:", Color.GREEN) + "[" + ", ".join([os.path.basename(path) for path in path_list]) + "]"
+            return (Colored.paint("solvers:", Color.GREEN) +
+                    "[" + ", ".join([os.path.basename(path) for path in path_list]) + "]")
 
         folder = os.getcwd().split(os.sep)[-1]
-        tests_count = Colored.paint("tests:", Color.GREEN) + str(len([x for x in self.unit_list if x.repeated is None])).zfill(2)
+        tests_count = (Colored.paint("tests:", Color.GREEN) +
+                       str(len([x for x in self.unit_list if x.repeated is None])).zfill(2))
 
         return Symbol.opening + folder + " " + tests_count + " " + sources() + " " + solvers()

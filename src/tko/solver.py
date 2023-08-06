@@ -12,6 +12,7 @@ def check_tool(name):
     if which(name) is None:
         raise CompilerError("fail: " + name + " executable not found")
 
+
 class Solver:
     def __init__(self, solver_list: List[str]):
         self.path_list: List[str] = [Solver.__add_dot_bar(path) for path in solver_list]
@@ -60,7 +61,6 @@ class Solver:
         solver = self.path_list[0]
         filename = os.path.basename(solver)
         # tempdir = os.path.dirname(self.path_list[0])
-        
 
         cmd = ["javac"] + self.path_list + ['-d', self.temp_dir]
         return_code, stdout, stderr = Runner.subprocess_run(cmd)

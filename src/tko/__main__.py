@@ -46,7 +46,7 @@ class Main:
         Actions.build(args.target, args.target_list, manip, args.force)
     
     @staticmethod
-    def settings(args):
+    def settings(_args):
         print("settings file at " + SettingsParser().get_settings_file())
 
     # @staticmethod
@@ -111,17 +111,11 @@ class Main:
         parser_b.add_argument('--force', '-f', action='store_true', help='enable overwrite.')
         parser_b.set_defaults(func=Main.build)
 
-        # # rebuild
-        # parser_rb = subparsers.add_parser('rebuild', parents=[parent_manip], help='rebuild a test target.')
-        # parser_rb.add_argument('target_list', metavar='T', type=str, nargs='+', help='input test targets.')
-        # parser_rb.add_argument('--cmd', '-c', type=str, help="solver file or command to update outputs.")
-        # parser_rb.set_defaults(func=Main.rebuild)
-
         # down
         parser_d = subparsers.add_parser('down', help='download test from remote repository.')
         parser_d.add_argument('disc', type=str, help=" [ fup | ed | poo ]")
         parser_d.add_argument('index', type=str, help="3 digits label like 021")
-        parser_d.add_argument('extension', type=str, nargs = '?', default = "-", help="[ c | cpp | js | ts | py | java ]")
+        parser_d.add_argument('extension', type=str, nargs='?', default="-", help="[ c | cpp | js | ts | py | java ]")
         parser_d.set_defaults(func=Main.down)
 
         # update

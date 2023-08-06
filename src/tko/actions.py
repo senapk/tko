@@ -10,7 +10,6 @@ from .solver import Solver
 from .runner import Runner
 
 
-
 class Execution:
 
     def __init__(self):
