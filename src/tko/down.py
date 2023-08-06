@@ -72,7 +72,7 @@ class Down:
         # create dir
         destiny = disc + "@" + index
         if not os.path.exists(destiny):
-            os.mkdir(destiny)
+            os.mkdir(destiny, parents=True, exist_ok=True)
         else:
             print("problem folder", destiny, "found, merging content.")
 

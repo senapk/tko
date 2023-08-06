@@ -26,7 +26,7 @@ poo = https://raw.githubusercontent.com/qxcodepoo/arcade/master/base/
 
     def create_default_settings_file(self):
         if not os.path.isdir(self.settings_dir):
-            os.mkdir(self.settings_dir)
+            os.mkdir(self.settings_dir, parents=True, exist_ok=True)
         with open(self.settings_file, "w") as f:
             f.write(self.default_cfg_content)
 
