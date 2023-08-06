@@ -9,6 +9,14 @@ TARGET="${REP}/.bin/tko"
 curl  ${SOURCE} -o ${TARGET}
 chmod +x ${TARGET}
 
+SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/cpp/replit"
+TARGET="${REP}/.replit"
+curl  ${SOURCE} -o ${TARGET}
+
+SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/cpp/replit.nix"
+TARGET="${REP}/replit.nix"
+curl  ${SOURCE} -o ${TARGET}
+
 SOURCE="https://raw.githubusercontent.com/senapk/cppaux/master/fn.hpp"
 TARGET="${REP}/.include/fn.hpp"
 curl ${SOURCE} -o ${TARGET}
