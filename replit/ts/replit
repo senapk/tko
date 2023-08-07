@@ -1,5 +1,5 @@
 run = "bash --rcfile /home/runner/${REPL_SLUG}/.bashrc"
-hidden = [".config", "package-lock.json", "tsconfig.json", ".*"]
+hidden = [".config", "package-lock.json", "tsconfig.json", ".*", "package.json"]
 
 [packager]
 language = "nodejs"
