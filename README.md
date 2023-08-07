@@ -3,7 +3,7 @@
 ## Install using pip from git
 
 ```bash
-pipx install git+https://github.com/senapk/tko.git 
+pip install git+https://github.com/senapk/tko.git 
 ```
 
 ## Install using pip
@@ -12,12 +12,174 @@ pipx install git+https://github.com/senapk/tko.git
 sudo pip install tko
 ```
 
-## Requirements
+## Install in Replit
 
-Python 3.8 or later with all [requirements.txt](requirements.txt)
-dependencies installed, including `build` and `twine`. To install run:
+[Replit tko Install](replit/Readme.md)
+
+## O que é um teste?
+
+- Um teste define qual o comportamento esperado de um programa determinístico. Para uma determinada entrada, o programa deve gerar **sempre** a mesma saída.
+- A entrada e saída e o comportamento esperado devem ser bem definidos, por exemplo:
+  - Dados dois números inteiros de entrada, um por linha, mostre o resultado da divisão. Se o resultado for inteiro, mostre o valor inteiro, se for flutuante, mostre com duas casas decimais.
+
+## Formatos de teste
+
+- Um arquivo de texto com vários testes:
+  - modelo TIO(test input output).
+  - modelo VPL que é utilizado no plugin do moodle.
+- Uma pasta com um dois arquivos para cada teste, um arquivo com a entrada e outro com a saída.
+  - modelo maratona:
+    - Arquivos .in e .out
+    - Arquivos .in e .sol
+
+---
+
+### Sintaxe TIO
+
+```txt
+>>>>>>>>
+entrada
+...
+========
+saída
+...
+<<<<<<<<
+
+>>>>>>>>
+entrada
+...
+========
+saída
+...
+<<<<<<<<
+```
+
+---
+
+### Escrevendo alguns testes
+
+Vamos escrever alguns testes para o problema proposto. Crie um arquivo chamado `testes.tio` e vamos inserir algumas entradas para o problema proposto.
+
+```txt
+>>>>>>>>
+4
+2
+========
+2
+<<<<<<<<
+
+>>>>>>>>
+3
+2
+========
+1.50
+<<<<<<<<
+
+>>>>>>>>
+5
+4
+========
+1.25
+<<<<<<<<
+
+>>>>>>>>
+1
+3
+========
+0.33
+<<<<<<<<
+```
+
+---
+
+### Listando os testes
+
+- Salve o arquivo `testes.tio`.
+- Abra o terminal na pasta onde colocou o arquivo.
+- Para simplificar, certifique-se que só existe esse arquivo na pasta.
+- O comando `tko` funciona com subcomandos.
+- O subcomando `tko list` mostra os testes.
+  - Mostrando os testes: `tko list testes.tio`
+  - Opções:
+    - `-i ou --index`: um índice específico
+
+---
+
+## Testando um código com erros
+
+- Crie algum código que tenta resolver o problema.
+
+```python
+# solver.py
+a = int(input())
+b = int(input())
+print(a/b)
+```
+
+```c
+// solver.c
+#include <stdio.h>
+int main(){
+    int a = 0, b = 0;
+    scanf("%d %d", &a, &b);
+    printf("%d\n", (a/b));
+}
+```
+
+- Rodando diretamente passando o código fonte
+  - `tko run solver.c testes.tio`: compila e testa seu código.
+  - `tko run solver.py testes.tio`: chama o interpretador e testa o código.
+  - `tko run "python2 solver.py" testes.tio`.
+- Se pode compilar manualmente e passar o executável em qualquer linguagem. Se passar o código fonte, o script vai compilar com muitos critérios restritivos para garantir que seu código esteja bem feito.
+
+## Executando
+
+- Opções extras:
+  - As mesmas do list:
+    - `-i ou --index`: roda um índice específico
+    - `-a ou --all`: mostra todos os testes que falharam e não apenas o primeiro.
+
+- Vamos consertar nosso código
+
+```c
+// solver.c
+#include <stdio.h>
+int main(){
+    int a = 0, b = 0;
+    scanf("%d %d", &a, &b);
+    if(a % b == 0)
+        printf("%d\n", (a/b));
+    else
+        printf("%.2f\n", (float)a/b);
+}
+```
+
+- Rode agora e ele deve mostrar que todos os testes foram sucesso.
+
+---
+
+## Convertendo entre formatos
+
+- Gerando um `.vpl`
+  - `tko build t.vpl testes.tio`
+
+## Exemplos rápidos
 
 ```bash
-python -m pip install -U pip
-pip install -r requirements.txt
+# mostra os testes
+tko list t.tio
+
+# roda o executável solver.c e usa o arquivo t.tio como pacote de testes
+tko run solver.c t.tio
+
+# se seus testes estiverem em arquivos com a extensão .tio ou .vpl ou .md
+# para listar basta digitar
+tko list cases.tio
+
+# roda apenas o teste número 3
+tko run solver.py t.tio -t 3
+
+# ou então rodar usando
+tko run solver.cpp "testes @.in @.sol"
+
 ```
