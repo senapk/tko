@@ -5,12 +5,12 @@ from __future__ import annotations
 import os
 import configparser
 from appdirs import user_data_dir
+from typing import Optional
 import subprocess
 from subprocess import PIPE
 from typing import List, Tuple, Any
 import shutil
 from enum import Enum
-from typing import Optional
 from typing import List, Optional, Tuple
 import io
 from typing import Tuple
@@ -39,11 +39,15 @@ poo = https://raw.githubusercontent.com/qxcodepoo/arcade/master/base/
 ascii = False
 """
 
+    __settings_file: Optional[str] = None
+
     def __init__(self):
         self.package_name = "tko"
         self.filename = "settings.cfg"
-        self.settings_dir = user_data_dir(self.package_name)
-        self.settings_file = os.path.join(self.settings_dir, self.filename)
+        if SettingsParser.__settings_file is None:
+            self.settings_file = os.path.join(user_data_dir(self.package_name), self.filename)
+        else:
+            self.settings_file = os.path.abspath(SettingsParser.__settings_file)
 
     def get_repository(self, disc):
         if not os.path.isfile(self.settings_file):
@@ -52,9 +56,12 @@ ascii = False
         parser.read(self.settings_file)
         return parser["REP"][disc]
 
+    def get_settings_dir(self):
+        return os.path.dirname(self.settings_file)
+
     def create_default_settings_file(self):
-        if not os.path.isdir(self.settings_dir):
-            os.makedirs(self.settings_dir, exist_ok=True)
+        if not os.path.isdir(self.get_settings_dir()):
+            os.makedirs(self.get_settings_dir(), exist_ok=True)
         with open(self.settings_file, "w") as f:
             f.write(self.default_cfg_content)
 
@@ -69,6 +76,11 @@ ascii = False
     def get_settings_file(self):
         self.check_settings_file()
         return self.settings_file
+    
+    def set_settings_file(self, path):
+        path = os.path.abspath(path)
+        SettingsParser.__settings_file = path
+        self.settings_file = path
 
     def get_ascii(self) -> bool:
         self.check_settings_file()
@@ -83,6 +95,7 @@ ascii = False
         parser["VISUAL"]["ascii"] = str(not self.get_ascii())
         with open(self.settings_file, "w") as f:
             parser.write(f)
+
 
 
 
@@ -555,6 +568,23 @@ class Diff:
 
 class Down:
 
+    ts_draft = (r'let __lines: string[] = require("fs").readFileSync(0).toString().split("\n");' + '\n'
+                r'let input = () : string => __lines.length === 0 ? "" : __lines.shift()!;' + '\n'
+                r'let write = (text: any, end:string="\n")=> process.stdout.write("" + text + end);') + '\n'
+    js_draft = (r'let __lines = require("fs").readFileSync(0).toString().split("\n");'  + '\n'
+                r'let input = () => __lines.length === 0 ? "" : __lines.shift();' + '\n'
+                r'let write = (text, end="\n") => process.stdout.write("" + text + end);') + '\n'
+    c_draft = '#include <stdio.h>\n\nint main() {\n    return 0;\n}\n\n'
+    cpp_draft = '#include <iostream>\n\nint main() {\n}\n\n'
+
+    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft}
+    # def __init__(self):
+    #     self.drafts = {}
+    #     self.drafts['c'] = Down.c_draft
+    #     self.drafts['cpp'] = Down.cpp_draft
+    #     self.drafts['ts'] = Down.ts_draft
+    #     self.drafts['js'] = Down.js_draft
+
     @staticmethod
     def update():
         if os.path.isfile(".info"):
@@ -667,7 +697,10 @@ class Down:
             draft_path = os.path.join(destiny, filename + ext)
             if not os.path.exists(draft_path):
                 with open(draft_path, "w") as f:
-                    f.write("")
+                    if ext in Down.drafts:
+                        f.write(Down.drafts[ext])
+                    else:
+                        f.write("")
                 print(draft_path, "(Empty)")
 
             return
@@ -704,19 +737,6 @@ class Solver:
         self.path_list: List[str] = [Solver.__add_dot_bar(path) for path in solver_list]
         
         self.temp_dir = tempfile.mkdtemp()
-        # print("Tempdir for execution: " + self.temp_dir)
-        # copia para tempdir e atualiza os paths
-
-        # new_paths = []
-        # for path in self.path_list:
-        #     if os.path.isfile(path):
-        #         new_paths.append(shutil.copy(path, self.temp_dir))
-        #     else:
-        #         print("File not found: " + path)
-        #         exit(1)
-                
-        # self.path_list = new_paths
-        
         self.error_msg: str = ""
         self.executable: str = ""
         self.prepare_exec()
@@ -754,39 +774,20 @@ class Solver:
         print(stderr)
         if return_code != 0:
             raise CompilerError(stdout + stderr)
-        # solver = solver.split(os.sep)[-1]  # getting only the filename
         self.executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
 
     def __prepare_js(self):
         check_tool("node")
-
-        import_str = (r'let __lines = require("fs").readFileSync(0).toString().split("\n"); let input = () => '
-                      r'__lines.length === 0 ? "" : __lines.shift(); let write = (text, end="\n") => '
-                      r'process.stdout.write("" + text + end);')
         solver = self.path_list[0]
-        with open(solver, "r") as f:
-            content = f.read()
-        with open(solver, "w") as f:
-            f.write(content.replace("let input,write", import_str))
         self.executable = "node " + solver
 
     def __prepare_ts(self):
         check_tool("esbuild")
         check_tool("node")
 
-        import_str = (r'let _cin_: string[] = require("fs").readFileSync(0).toString().split("\n"); let input = () : '
-                      r'string => _cin_.length === 0 ? "" : _cin_.shift()!; let write = (text: any, '
-                      r'end:string="\n")=> process.stdout.write("" + text + end);')
-        solver = self.path_list[0]
-        with open(solver, "r") as f:
-            content = f.read()
-        with open(solver, "w") as f:
-            f.write(content.replace("let input,write", import_str))
-        
+        solver = self.path_list[0]        
         filename = os.path.basename(solver)
         source_list = self.path_list
-        # print("Using the following source files: " + str([os.path.basename(x) for x in source_list]))
-        # compile the ts file
         cmd = ["esbuild"] + source_list + ["--outdir=" + self.temp_dir, "--format=cjs", "--log-level=error"]
         return_code, stdout, stderr = Runner.subprocess_run(cmd)
         print(stdout + stderr)
@@ -1561,6 +1562,7 @@ class Main:
 
         parser = argparse.ArgumentParser(prog='tko', description='A tool for competitive programming.')
         parser.add_argument('-v', '--version', action='store_true', help='show version.')
+        parser.add_argument('-c', '--config', type=str, help='config file.')
         
         subparsers = parser.add_subparsers(title='subcommands', help='help for subcommand.')
 
@@ -1605,6 +1607,10 @@ class Main:
         parser_s.set_defaults(func=Main.settings)
 
         args = parser.parse_args()
+
+        if args.config:
+            SettingsParser().set_settings_file(args.config)
+
         if len(sys.argv) == 1:
             print("You must call a subcommand. Use --help for more information.")
         elif args.version:
