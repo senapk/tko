@@ -12,16 +12,16 @@ SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/bashrc"
 TARGET="${REP}/.bashrc"
 curl  ${SOURCE} -o ${TARGET}
 
-SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/js/update.sh"
+SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/ts/update.sh"
 TARGET="${REP}/.bin/update.sh"
 curl  ${SOURCE} -o ${TARGET}
 chmod +x ${TARGET}
 
-SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/js/replit"
+SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/ts/replit"
 TARGET="${REP}/.replit"
 curl  ${SOURCE} -o ${TARGET}
 
-SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/js/replit.nix"
+SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/ts/replit.nix"
 TARGET="${REP}/replit.nix"
 curl  ${SOURCE} -o ${TARGET}
 
