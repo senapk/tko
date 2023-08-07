@@ -1,12 +1,6 @@
 run = "bash --rcfile /home/runner/${REPL_SLUG}/.bashrc"
 hidden = ["main", "main-debug", "**/*.o", "**/*.d", ".*", "Makefile"]
 
-[env]
-PATH = "/home/runner/${REPL_SLUG}/.bin"
-CPATH = "/home/runner/${REPL_SLUG}/.include"
-LD_LIBRARY_PATH = "/home/runner/${REPL_SLUG}/.include"
-CPLUS_INCLUDE_PATH = "/home/runner/${REPL_SLUG}/.include"
-
 [nix]
 channel = "stable-22_11"
 

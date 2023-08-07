@@ -51,7 +51,7 @@ if ${use_color} ; then
 		fi
 	fi
 
-	PS1='\[\033[01;32m\][\[\033[01;37m\]\w\[\033[01;32m\]]\n\$\[\033[00m\] '
+ 	PS1='\[\033[01;32m\][\[\033[01;35m\]\w\[\033[01;32m\]]\$\[\033[00m\] '
 
 	alias ls='ls --color=auto'
 	alias grep='grep --colour=auto'
@@ -82,6 +82,6 @@ shopt -s expand_aliases
 # Enable history appending instead of overwriting.  #139609
 shopt -s histappend
 
+export PATH="/home/runner/${REPL_SLUG}/.bin:${PATH}"
 
-alias tko='tko -c ${REPL_SLUG}'/.tko.cfg
-
+alias tko='tko -c /home/runner/${REPL_SLUG}/.tko.cfg'

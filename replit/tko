@@ -646,7 +646,7 @@ class Down:
     @staticmethod
     def create_problem_folder(disc, index, ext):
         # create dir
-        destiny = disc + "@" + index
+        destiny = disc + "_" + index
         if not os.path.exists(destiny):
             os.makedirs(destiny, exist_ok=True)
         else:

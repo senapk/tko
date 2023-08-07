@@ -2,6 +2,7 @@
 
 - 0.0.5
   - adding draft models to down
-  - modifying settings parser to oo model
+  - removing conversion in js and ts entry code
   - adding --config to tko
+  - changing @ for _ in downloaded problems folder name
 - 0.0.4
