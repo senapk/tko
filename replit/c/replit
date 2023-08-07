@@ -4,6 +4,11 @@ hidden = ["main", "main-debug", "**/*.o", "**/*.d", ".*", "Makefile"]
 [nix]
 channel = "stable-22_11"
 
+[env]
+CPATH = "/home/runner/${REPL_SLUG}/.include"
+LD_LIBRARY_PATH = "/home/runner/${REPL_SLUG}/.include"
+CPLUS_INCLUDE_PATH = "/home/runner/${REPL_SLUG}/.include"
+
 [gitHubImport]
 requiredFiles = [".replit", "replit.nix", ".ccls-cache"]
 

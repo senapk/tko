@@ -84,4 +84,7 @@ shopt -s histappend
 
 export PATH="/home/runner/${REPL_SLUG}/.bin:${PATH}"
 
+alias down_fn='curl https://raw.githubusercontent.com/senapk/cppaux/master/fn.hpp -o fn.hpp'
+
 alias tko='tko -c /home/runner/${REPL_SLUG}/.tko.cfg'
+

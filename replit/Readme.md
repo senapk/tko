@@ -1,23 +1,26 @@
 # Replit Install
 
-## C++
+- Crie um Replit com a linguagem desejada [c | cpp | java | node | typescript | python]:
+- Abra o console do replit e execute o comando correspondente a linguagem desejada.
+- Clique no botão `Run` para abrir o bash.
+- Execute o comando `update.sh` dentro do bash sempre que quiser ou precisar atualizar o `tko`.
 
-- Crie um replit com a linguagem C++.
-- Abra o terminal e execute o seguinte comando.
+
+## C++
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/senapk/tko/master/replit/cpp/update.sh | bash
 ```
 
-- Sempre que quiser, ou precisar atualizar seu replit com a nova versão do `tko`, basta executar o comando `update.sh` a partir do terminal.
-
 ## C
-
-- Crie um replit com a linguagem C.
-- Abra o terminal e execute o seguinte comando.
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/senapk/tko/master/replit/c/update.sh | bash
 ```
 
-- Sempre que quiser, ou precisar atualizar seu replit com a nova versão do `tko`, basta executar o comando `update.sh` a partir do terminal.
+## Java
+
+```bash
+curl -sSL https://raw.githubusercontent.com/senapk/tko/master/replit/java/update.sh | bash
+```
+
