@@ -2,7 +2,6 @@
 
 REP="${HOME}/${REPL_SLUG}"
 mkdir -p ${REP}/.bin
-mkdir -p ${REP}/.include
 
 SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/tko"
 TARGET="${REP}/.bin/tko"
@@ -26,7 +25,4 @@ SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/cpp/replit.ni
 TARGET="${REP}/replit.nix"
 curl  ${SOURCE} -o ${TARGET}
 
-SOURCE="https://raw.githubusercontent.com/senapk/cppaux/master/fn.hpp"
-TARGET="${REP}/.include/fn.hpp"
-curl ${SOURCE} -o ${TARGET}
 

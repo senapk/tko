@@ -2,7 +2,6 @@
 
 REP="${HOME}/${REPL_SLUG}"
 mkdir -p ${REP}/.bin
-mkdir -p ${REP}/.include
 
 SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/tko"
 TARGET="${REP}/.bin/tko"
