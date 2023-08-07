@@ -37,6 +37,11 @@ curl -sSL https://raw.githubusercontent.com/senapk/tko/master/replit/ts/update.s
 
 ## Python
 
+- Clique em Tools -> Packages
+  - Digite tko no campo de busca.
+  - Clique para instalar e espere terminar a operação.
+- Depois execute o comando abaixo no Shell do replit:
+
 ```bash
 curl -sSL https://raw.githubusercontent.com/senapk/tko/master/replit/py/update.sh | bash
 ```
