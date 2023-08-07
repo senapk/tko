@@ -1,7 +1,5 @@
-compile = ["make", "-s"]
-run = "./main"
-entrypoint = "main.c"
-hidden = ["main", "main-debug", "**/*.o", "**/*.d", ".ccls-cache", "Makefile"]
+run = "bash --rcfile /home/runner/${REPL_SLUG}/.bashrc"
+hidden = ["main", "main-debug", "**/*.o", "**/*.d", ".*", ".ccls-cache", "Makefile", ".bin", ".include", ".bashrc"]
 
 [env]
 PATH = "/home/runner/${REPL_SLUG}/.bin"

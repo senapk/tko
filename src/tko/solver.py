@@ -18,19 +18,6 @@ class Solver:
         self.path_list: List[str] = [Solver.__add_dot_bar(path) for path in solver_list]
         
         self.temp_dir = tempfile.mkdtemp()
-        # print("Tempdir for execution: " + self.temp_dir)
-        # copia para tempdir e atualiza os paths
-
-        # new_paths = []
-        # for path in self.path_list:
-        #     if os.path.isfile(path):
-        #         new_paths.append(shutil.copy(path, self.temp_dir))
-        #     else:
-        #         print("File not found: " + path)
-        #         exit(1)
-                
-        # self.path_list = new_paths
-        
         self.error_msg: str = ""
         self.executable: str = ""
         self.prepare_exec()
@@ -68,39 +55,20 @@ class Solver:
         print(stderr)
         if return_code != 0:
             raise CompilerError(stdout + stderr)
-        # solver = solver.split(os.sep)[-1]  # getting only the filename
         self.executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
 
     def __prepare_js(self):
         check_tool("node")
-
-        import_str = (r'let __lines = require("fs").readFileSync(0).toString().split("\n"); let input = () => '
-                      r'__lines.length === 0 ? "" : __lines.shift(); let write = (text, end="\n") => '
-                      r'process.stdout.write("" + text + end);')
         solver = self.path_list[0]
-        with open(solver, "r") as f:
-            content = f.read()
-        with open(solver, "w") as f:
-            f.write(content.replace("let input,write", import_str))
         self.executable = "node " + solver
 
     def __prepare_ts(self):
         check_tool("esbuild")
         check_tool("node")
 
-        import_str = (r'let _cin_: string[] = require("fs").readFileSync(0).toString().split("\n"); let input = () : '
-                      r'string => _cin_.length === 0 ? "" : _cin_.shift()!; let write = (text: any, '
-                      r'end:string="\n")=> process.stdout.write("" + text + end);')
-        solver = self.path_list[0]
-        with open(solver, "r") as f:
-            content = f.read()
-        with open(solver, "w") as f:
-            f.write(content.replace("let input,write", import_str))
-        
+        solver = self.path_list[0]        
         filename = os.path.basename(solver)
         source_list = self.path_list
-        # print("Using the following source files: " + str([os.path.basename(x) for x in source_list]))
-        # compile the ts file
         cmd = ["esbuild"] + source_list + ["--outdir=" + self.temp_dir, "--format=cjs", "--log-level=error"]
         return_code, stdout, stderr = Runner.subprocess_run(cmd)
         print(stdout + stderr)

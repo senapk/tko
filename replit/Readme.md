@@ -13,7 +13,7 @@ curl -sSL https://raw.githubusercontent.com/senapk/tko/master/replit/cpp/update.
 
 ## C
 
-- Crie um replit com a linguagem C++.
+- Crie um replit com a linguagem C.
 - Abra o terminal e execute o seguinte comando.
 
 ```bash

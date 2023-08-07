@@ -90,6 +90,7 @@ class Main:
 
         parser = argparse.ArgumentParser(prog='tko', description='A tool for competitive programming.')
         parser.add_argument('-v', '--version', action='store_true', help='show version.')
+        parser.add_argument('-c', '--config', type=str, help='config file.')
         
         subparsers = parser.add_subparsers(title='subcommands', help='help for subcommand.')
 
@@ -134,6 +135,10 @@ class Main:
         parser_s.set_defaults(func=Main.settings)
 
         args = parser.parse_args()
+
+        if args.config:
+            SettingsParser().set_settings_file(args.config)
+
         if len(sys.argv) == 1:
             print("You must call a subcommand. Use --help for more information.")
         elif args.version:

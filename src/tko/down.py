@@ -9,6 +9,23 @@ from .settings import SettingsParser
 
 class Down:
 
+    ts_draft = (r'let __lines: string[] = require("fs").readFileSync(0).toString().split("\n");' + '\n'
+                r'let input = () : string => __lines.length === 0 ? "" : __lines.shift()!;' + '\n'
+                r'let write = (text: any, end:string="\n")=> process.stdout.write("" + text + end);') + '\n'
+    js_draft = (r'let __lines = require("fs").readFileSync(0).toString().split("\n");'  + '\n'
+                r'let input = () => __lines.length === 0 ? "" : __lines.shift();' + '\n'
+                r'let write = (text, end="\n") => process.stdout.write("" + text + end);') + '\n'
+    c_draft = '#include <stdio.h>\n\nint main() {\n    return 0;\n}\n\n'
+    cpp_draft = '#include <iostream>\n\nint main() {\n}\n\n'
+
+    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft}
+    # def __init__(self):
+    #     self.drafts = {}
+    #     self.drafts['c'] = Down.c_draft
+    #     self.drafts['cpp'] = Down.cpp_draft
+    #     self.drafts['ts'] = Down.ts_draft
+    #     self.drafts['js'] = Down.js_draft
+
     @staticmethod
     def update():
         if os.path.isfile(".info"):
@@ -121,7 +138,10 @@ class Down:
             draft_path = os.path.join(destiny, filename + ext)
             if not os.path.exists(draft_path):
                 with open(draft_path, "w") as f:
-                    f.write("")
+                    if ext in Down.drafts:
+                        f.write(Down.drafts[ext])
+                    else:
+                        f.write("")
                 print(draft_path, "(Empty)")
 
             return

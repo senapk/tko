@@ -1,6 +1,5 @@
-run = "bash"
-entrypoint = "Readme.md"
-hidden = [".config", "**/*.o", "**/*.d", ".ccls-cache", "Makefile", ".*", "**/__*", "package-lock.json", "package.json", "tsconfig.json"]
+run = "bash --rcfile /home/runner/${REPL_SLUG}/.bashrc"
+hidden = [".config", "**/*.o", "**/*.d", ".ccls-cache", "Makefile", ".*", "**/__*", ".bin", ".include", ".bashrc"]
 
 [env]
 PATH = "/home/runner/${REPL_SLUG}/.bin"
