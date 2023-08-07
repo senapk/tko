@@ -1,5 +1,5 @@
 run = "bash --rcfile /home/runner/${REPL_SLUG}/.bashrc"
-hidden = ["main", "main-debug", "**/*.o", "**/*.d", ".*", ".ccls-cache", "Makefile", ".bin", ".include", ".bashrc"]
+hidden = ["main", "main-debug", "**/*.o", "**/*.d", ".*", "Makefile"]
 
 [env]
 PATH = "/home/runner/${REPL_SLUG}/.bin"
