@@ -1,4 +1,4 @@
-# tko - Test Engine for Judge Operations
+# tko - Test Kit Operations
 
 ## Install using pip from git
 
