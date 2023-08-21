@@ -1,20 +1,91 @@
 # tko - Test Kit Operations
 
-## Install using pip from git
+Para rodar os baixar e executar os testes diretamente do seu computador, você precisará do `python` instalado e do `tko` instalado.
+
+O python já vem instalado no linux e no mac. Para instalar no windows, baixe o instalador no site oficial: [https://www.python.org/downloads/](https://www.python.org/downloads/).
+
+Instale o `tko` utilizando o `pip`, o gerenciador de pacotes do python:
 
 ```bash
+# baixando do repositório oficial
+pip install tko
+
+# ou baixar diretamente do github
 pip install git+https://github.com/senapk/tko.git 
 ```
 
-## Install using pip
-
-```bash
-sudo pip install tko
-```
+![image](https://user-images.githubusercontent.com/4747652/262040621-1f3166b1-a6e8-47a0-b48c-f86ca45aad83.png)
 
 ## Install in Replit
 
-[Replit tko Install](replit/Readme.md)
+Se não pode instalar o compilador no seu computador, ou vai programar pelo celular, você pode utilizar o replit para rodar os testes. Para isso, siga as instruções do link: [Replit tko Install](replit/Readme.md)
+
+## Para baixar a descrição das atividades e os testes
+
+- Para baixar a atividade do carro do repositório de POO(Programação Orientada a Objetos): [@002 Carro](https://github.com/qxcodepoo/arcade/blob/master/base/002/Readme.md#carro) para `java`:
+
+```bash
+# Você informa o repositório `poo`
+# a questão `002`
+# e a linguagem `java`, `cpp`, `ts`
+# tko down _repo_ _questao_ _linguagem_
+tko down poo 002 java
+```
+
+![image](https://user-images.githubusercontent.com/4747652/262017247-3e765618-19e7-47bb-9e91-ab0b03bc2834.png)
+
+### Para rodar os testes
+
+Você precisará do compilador próprio da linguagem que for programar, instale manualmente no seu sistema. Se estiver no replit, o template da linguagem já vem com o compilador instalado.
+
+- c/c++: `gcc` ou `g++`
+- java: `javac`
+- python: `python3`
+- javascript: `node`
+- typescript: `esbuild`
+
+Ao baixar a questão, você terá os seguintes arquivos:
+
+- Readme.md: com a descrição da atividade.
+- cases.tio: com os casos de teste.
+- draft.ext: com o rascunho da solução.
+
+Renomeie o arquivo `draft.ext` para o nome apropriado e edite com a sua solução. Para rodar os testes, utilize o comando:
+
+```bash
+# tko run _arquivos_de_codigo _arquivo_de_casos_de_teste
+tko run Solver.java cases.tio
+```
+
+![image](https://user-images.githubusercontent.com/4747652/262017881-bdbdeb37-d287-46c4-92fe-d50f279477ae.png)
+
+No exemplo da imagem acima, como o código não compilou corretamente, foram apresentados os erros de compilação.
+
+### Verificando o resultado
+
+Após fazer uma parte do código, executamos os testes novamente. Agora ele compila e mostra:
+
+- Quantos testes passaram.
+- O nome e o índice dos testes que falharam.
+- O diff do primeiro teste que falhou
+  - resultado esperado (lado esquerdo), resultado obtido (lado direito).
+- O diff da primeira linha diferente renderizando os whitespaces.
+
+![image](https://user-images.githubusercontent.com/4747652/262019524-eef3035a-6132-4151-9f5f-6945294e173d.png)
+
+### Opções extras
+
+- Caso queira rodar apenas um índice de teste, utilize a opção `-i`:
+
+```bash
+tko run Solver.java cases.tio -i 1
+```
+
+- Caso queira o diff `up down` ao invés de `left right`, utilize a opção `-v`:
+
+```bash
+tko run Solver.java cases.tio -v
+```
 
 ## O que é um teste?
 
@@ -177,7 +248,7 @@ tko run solver.c t.tio
 tko list cases.tio
 
 # roda apenas o teste número 3
-tko run solver.py t.tio -t 3
+tko run solver.py t.tio -i 3
 
 # ou então rodar usando
 tko run solver.cpp "testes @.in @.sol"
