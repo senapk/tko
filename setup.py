@@ -24,7 +24,7 @@ def get_version():
 setup(
     name='tko',  # Required https://packaging.python.org/specifications/core-metadata/#name
     version=get_version(),  # Required https://packaging.python.org/en/latest/single_source_version.html
-    description='tko: Test Engine for Judge Operations',  # Optional
+    description='tko: Test Kit Operations',  # Optional
     long_description=long_description,  # Optional
     long_description_content_type='text/markdown',  # Optional
     url='https://github.com/senapk/tko',  # Optional, project's main homepage
@@ -39,7 +39,7 @@ setup(
     keywords='programming, learning',  # Optional
     package_dir={'': 'src'},  # Optional, use if source code is in a subdirectory under the project root, i.e. `src/`
     packages=find_packages(where='src'),  # Required
-    python_requires='>=3.7, <4',
+    python_requires='>=3.8, <4',
 
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
