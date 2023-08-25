@@ -77,7 +77,7 @@ class Solver:
         jsfile = os.path.join(self.temp_dir, filename[:-3] + ".js")
         self.executable = "node " + jsfile  # renaming solver to main
     
-    def __prepare_c_cpp(self, pre_args: List[str], pos_args: list[str]):
+    def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
         # solver = self.path_list[0]
         tempdir = self.temp_dir
         source_list = self.path_list
