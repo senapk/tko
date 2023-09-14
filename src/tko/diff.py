@@ -45,8 +45,8 @@ class Diff:
                 return vet[index]
             return ""
 
-        a_render = Diff.render_white(a_text, Color.YELLOW).splitlines()
-        b_render = Diff.render_white(b_text, Color.YELLOW).splitlines()
+        a_render = Diff.render_white(a_text).splitlines()
+        b_render = Diff.render_white(b_text).splitlines()
 
         first_a = get(a_render, first_failure)
         first_b = get(b_render, first_failure)
@@ -60,9 +60,32 @@ class Diff:
         postext = Report.centralize(Colored.paint(" First line mismatch showing withspaces ", Color.BOLD),  "-") + "\n"
         if first_failure > 0:
             postext += Colored.paint(Colored.ljust(lbefore, greater) + " (previous)", Color.BLUE) + "\n"
-        postext += Colored.ljust(first_a, greater) + Colored.paint(" (expected)", Color.GREEN) + "\n"
-        postext += Colored.ljust(first_b, greater) + Colored.paint(" (received)", Color.RED) + "\n"
+        
+
+
+        out_a, out_b = Diff.colorize_2_lines_diff(first_a, first_b)
+
+        postext += Colored.ljust(out_a, greater) + Colored.paint(" (expected)", Color.GREEN) + "\n"
+        postext += Colored.ljust(out_b, greater) + Colored.paint(" (received)", Color.RED) + "\n"
         return postext
+
+    @staticmethod
+    def find_first_mismatch(line_a: str, line_b: str) -> int: 
+        i = 0
+        while i < len(line_a) and i < len(line_b):
+            if line_a[i] != line_b[i]:
+                return i
+            i += 1
+        return i
+    
+    @staticmethod
+    def colorize_2_lines_diff(line_a: str, line_b: str, neutral:Color=Color.WHITE, expected:Color=Color.GREEN, received:Color=Color.RED) -> Tuple[str, str]:
+        pos = Diff.find_first_mismatch(line_a, line_b)
+        a_out = Colored.paint(line_a[0:pos], neutral) + Colored.paint(line_a[pos:], expected)
+        b_out = Colored.paint(line_b[0:pos], neutral) + Colored.paint(line_b[pos:], received)
+        return (a_out, b_out)
+    
+    
 
     # return a tuple of two strings with the diff and the index of the  first mismatch line
     @staticmethod
@@ -96,14 +119,18 @@ class Diff:
         # get = lambda vet, i: vet[i] if i < len(vet) else ""
 
         for i in range(max_size):
+            a_data = get(a_lines, i)
+            b_data = get(b_lines, i)
+            
             if i >= a_size or i >= b_size or a_lines[i] != b_lines[i]:
                 if first_failure == -1:
                     first_failure = i
-                a_output.append(Colored.paint(get(a_lines, i), Color.GREEN))
-                b_output.append(Colored.paint(get(b_lines, i), Color.RED))
+                a_out, b_out = Diff.colorize_2_lines_diff(a_data, b_data, Color.YELLOW)
+                a_output.append(a_out)
+                b_output.append(b_out)
             else:
-                a_output.append(get(a_lines, i))
-                b_output.append(get(b_lines, i))
+                a_output.append(a_data)
+                b_output.append(b_data)
 
         return a_output, b_output, first_failure
 

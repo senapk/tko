@@ -63,13 +63,17 @@ class Solver:
         self.executable = "node " + solver
 
     def __prepare_ts(self):
-        check_tool("esbuild")
+        transpiler = "esbuild"
+        if os.name == "nt":
+            transpiler += ".cmd"
+
+        check_tool(transpiler)
         check_tool("node")
 
         solver = self.path_list[0]        
         filename = os.path.basename(solver)
         source_list = self.path_list
-        cmd = ["esbuild"] + source_list + ["--outdir=" + self.temp_dir, "--format=cjs", "--log-level=error"]
+        cmd = [transpiler] + source_list + ["--outdir=" + self.temp_dir, "--format=cjs", "--log-level=error"]
         return_code, stdout, stderr = Runner.subprocess_run(cmd)
         print(stdout + stderr)
         if return_code != 0:

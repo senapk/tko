@@ -20,6 +20,16 @@ pip install git+https://github.com/senapk/tko.git
 
 Se não pode instalar o compilador no seu computador, ou vai programar pelo celular, você pode utilizar o replit para rodar os testes. Para isso, siga as instruções do link: [Replit tko Install](replit/Readme.md)
 
+## Habilitando a execução de Scripts no Windows
+
+Se você estiver no windows, você precisará habilitar a execução de scripts. Para isso, abra o powershell como administrador e digite:
+
+```powershell
+Set-ExecutionPolicy Unrestricted
+
+# Se pedir confirmação, confirme e dê enter
+```
+
 ## Para baixar a descrição das atividades e os testes
 
 - Para baixar a atividade do carro do repositório de POO(Programação Orientada a Objetos): [@002 Carro](https://github.com/qxcodepoo/arcade/blob/master/base/002/Readme.md#carro) para `java`:

@@ -5,12 +5,14 @@ class Calculator {
     display: number;
 
     constructor(batteryMax: number) {
+        this.display = 0;
     }
 
     chargeBattery(value: number) {
     }
 
     useBattery(): boolean {
+        return false;
     }
 
 
@@ -21,7 +23,7 @@ class Calculator {
     division(num: number, den: number) {
     }
     toString() {
-        return "display = " + this.display.toFixed(2) + ", battery = " + this.battery;
+        return "display = " + this.display.toFixed(2) + ", battery = 0";
     }
 }
 
