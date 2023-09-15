@@ -1,5 +1,9 @@
 # Changelog
 
+- 0.0.9
+  - removed tab from wdir.resume
+- 0.0.8
+  - add colors in diff inside the line
 - 0.0.7
   - fix esbuild incompatibility in windows
 - 0.0.6

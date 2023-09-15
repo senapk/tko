@@ -73,7 +73,7 @@ class Actions:
         for unit in wdir.unit_list:
             unit.result = Execution.run_unit(wdir.solver, unit)
             print(unit.result.value + " ", end="")
-        print("]\n")
+        print("]")
 
         if param.diff_mode != DiffMode.QUIET:        
             results = [unit.result for unit in wdir.unit_list]

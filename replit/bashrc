@@ -89,22 +89,20 @@ read -r -d '' INTRO << EOM
 │Apagar um arquivo : rm _nome_do_arquivo              │
 │Apagar uma pasta  : rm -r _nome_da_pasta             │
 ├─────────────────────────────────────────────────────┤
-│Baixar prob: tko down _curso _id _ext                │
-│   exemplo : tko down fup 012 cpp                    │
+│Atualizar o tko   : update.sh                        │
 ├─────────────────────────────────────────────────────┤
-│   Entre na pasta do problema com 'cd _nome_da_pasta'│
+│Baixar o problema : tko down _curso _id _ext         │
+│ Exemplo para fup : tko down fup 012 cpp             │
 ├─────────────────────────────────────────────────────┤
-│Update problema: tko update                          │
+│ Entre na pasta   : cd _nome_da_pasta                │
 ├─────────────────────────────────────────────────────┤
-│Executar código: tko exec _cod                       │
-│        exemplo: tko exec solver.cpp                 │
+│Executar o código : tko exec _cod                    │
+│        exemplo   : tko exec solver.ts               │
 ├─────────────────────────────────────────────────────┤
 │Rodar teste: tko run _cod [...] _testes [-v] [-i ind]│
 │    exemplo: tko run solver.cpp cases.tio            │
 │  diff vert: tko run solver.cpp cases.tio -v         │
 │ só teste 6: tko run solver.cpp cases.tio -i 6       │
-├─────────────────────────────────────────────────────┤
-│Dica: Use o tab para completar o nome dos arquivos   │
 ╰─────────────────────────────────────────────────────╯
 EOM
 

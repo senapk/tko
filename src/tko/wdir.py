@@ -162,7 +162,7 @@ class Wdir:
                 number += 1
 
     def unit_list_resume(self):
-        return "\n".join([Symbol.tab + str(unit) for unit in self.unit_list])
+        return "\n".join([str(unit) for unit in self.unit_list])
 
     def resume(self) -> str:
         def sources() -> str:
