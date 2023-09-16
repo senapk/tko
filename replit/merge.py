@@ -21,6 +21,7 @@ files = [
 "writer",
 "wdir",
 "actions",
+"guide",
 "__init__",
 "__main__",
 ]

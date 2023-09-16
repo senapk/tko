@@ -401,6 +401,22 @@ class Param:
 class Diff:
 
     @staticmethod
+    def make_line_arrow_up(a: str, b: str) -> str:
+        hdiff = ""
+        first = True
+        i = 0
+        lim = max(len(a), len(b))
+        while i < lim:
+            if i >= len(a) or i >= len(b) or a[i] != b[i]:
+                if first:
+                    first = False
+                    hdiff += "↑";
+            else:
+                hdiff += " "
+            i += 1
+        return hdiff
+
+    @staticmethod
     def render_white(text: Optional[str], color: Optional[Color] = None) -> Optional[str]:
         if text is None:
             return None
@@ -450,7 +466,7 @@ class Diff:
             lbefore = Colored.remove_colors(get(a_render, first_failure - 1))
             greater = max(greater, Colored.len(lbefore))
         
-        postext = Report.centralize(Colored.paint(" First line mismatch showing withspaces ", Color.BOLD),  "-") + "\n"
+        postext = Report.centralize(Colored.paint(" First line mismatch showing whitespaces ", Color.BOLD),  "-") + "\n"
         if first_failure > 0:
             postext += Colored.paint(Colored.ljust(lbefore, greater) + " (previous)", Color.BLUE) + "\n"
         
@@ -460,6 +476,7 @@ class Diff:
 
         postext += Colored.ljust(out_a, greater) + Colored.paint(" (expected)", Color.GREEN) + "\n"
         postext += Colored.ljust(out_b, greater) + Colored.paint(" (received)", Color.RED) + "\n"
+        postext += Colored.ljust(Diff.make_line_arrow_up(first_a, first_b), greater) + Colored.paint(" (mismatch)", Color.BLUE) + "\n"
         return postext
 
     @staticmethod
@@ -589,6 +606,7 @@ class Diff:
         output.write(Diff.first_failure_diff(string_expected, string_received, first_failure))
 
         return output.getvalue()
+
 
 
 
@@ -1510,7 +1528,32 @@ class Actions:
             return False
         return True
 
-__version__ = "0.0.8"
+simple_guide = """
+╭─────────────────────── BASH ────────────────────────╮
+│Mostrar arquivos  : ls                               │
+│Mudar de pasta    : cd _nome_da_pasta                │
+│Subir um nível    : cd ..                            │
+│Apagar um arquivo : rm _nome_do_arquivo              │
+│Apagar uma pasta  : rm -r _nome_da_pasta             │
+│Renomear          : mv _antigo_nome _novo_nome       │
+│Mover             : mv _origem _destino              │
+╰─────────────────────────────────────────────────────╯
+╭─────────────────────── TKO ─────────────────────────╮
+│Atualizar replit  : update.sh                        │
+├─────────────────────────────────────────────────────┤
+│Baixar o problema : tko down [fup|poo|ed] _id _ext   │
+│ Exemplo para poo : tko down poo 012 cpp             │
+├─────────────────────────────────────────────────────┤
+│Rodar teste: tko run _codigo[s] _testes [-v] [-i ind]│
+│    exemplo: tko run solver.cpp cases.tio            │
+│  diff vert: tko run solver.cpp cases.tio -v         │
+│ só teste 6: tko run solver.cpp cases.tio -i 6       │
+├─────────────────────────────────────────────────────┤
+│Executar sem testar: tko exec _codigo                │
+│        exemplo    : tko exec solver.ts              │
+╰─────────────────────────────────────────────────────╯
+"""
+__version__ = "0.0.9"
 
 
 
@@ -1593,6 +1636,7 @@ class Main:
 
         parser = argparse.ArgumentParser(prog='tko', description='A tool for competitive programming.')
         parser.add_argument('-v', '--version', action='store_true', help='show version.')
+        parser.add_argument('-g', '--guide', action='store_true', help='show simple guide.')
         parser.add_argument('-c', '--config', type=str, help='config file.')
         
         subparsers = parser.add_subparsers(title='subcommands', help='help for subcommand.')
@@ -1646,6 +1690,8 @@ class Main:
             print("You must call a subcommand. Use --help for more information.")
         elif args.version:
             print("tko version " + __version__)
+        elif args.guide:
+            print(simple_guide)
         else:
             try:
                 args.func(args)

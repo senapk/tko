@@ -11,6 +11,7 @@ from .basic import DiffMode
 from .format import Report
 from .down import Down
 from .settings import SettingsParser
+from .guide import simple_guide
 from .__init__ import __version__
 
 
@@ -90,6 +91,7 @@ class Main:
 
         parser = argparse.ArgumentParser(prog='tko', description='A tool for competitive programming.')
         parser.add_argument('-v', '--version', action='store_true', help='show version.')
+        parser.add_argument('-g', '--guide', action='store_true', help='show simple guide.')
         parser.add_argument('-c', '--config', type=str, help='config file.')
         
         subparsers = parser.add_subparsers(title='subcommands', help='help for subcommand.')
@@ -143,6 +145,8 @@ class Main:
             print("You must call a subcommand. Use --help for more information.")
         elif args.version:
             print("tko version " + __version__)
+        elif args.guide:
+            print(simple_guide)
         else:
             try:
                 args.func(args)

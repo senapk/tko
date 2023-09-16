@@ -8,6 +8,22 @@ from .basic import Unit
 class Diff:
 
     @staticmethod
+    def make_line_arrow_up(a: str, b: str) -> str:
+        hdiff = ""
+        first = True
+        i = 0
+        lim = max(len(a), len(b))
+        while i < lim:
+            if i >= len(a) or i >= len(b) or a[i] != b[i]:
+                if first:
+                    first = False
+                    hdiff += "↑";
+            else:
+                hdiff += " "
+            i += 1
+        return hdiff
+
+    @staticmethod
     def render_white(text: Optional[str], color: Optional[Color] = None) -> Optional[str]:
         if text is None:
             return None
@@ -57,7 +73,7 @@ class Diff:
             lbefore = Colored.remove_colors(get(a_render, first_failure - 1))
             greater = max(greater, Colored.len(lbefore))
         
-        postext = Report.centralize(Colored.paint(" First line mismatch showing withspaces ", Color.BOLD),  "-") + "\n"
+        postext = Report.centralize(Colored.paint(" First line mismatch showing whitespaces ", Color.BOLD),  "-") + "\n"
         if first_failure > 0:
             postext += Colored.paint(Colored.ljust(lbefore, greater) + " (previous)", Color.BLUE) + "\n"
         
@@ -67,6 +83,7 @@ class Diff:
 
         postext += Colored.ljust(out_a, greater) + Colored.paint(" (expected)", Color.GREEN) + "\n"
         postext += Colored.ljust(out_b, greater) + Colored.paint(" (received)", Color.RED) + "\n"
+        postext += Colored.ljust(Diff.make_line_arrow_up(first_a, first_b), greater) + Colored.paint(" (mismatch)", Color.BLUE) + "\n"
         return postext
 
     @staticmethod
@@ -196,3 +213,4 @@ class Diff:
         output.write(Diff.first_failure_diff(string_expected, string_received, first_failure))
 
         return output.getvalue()
+

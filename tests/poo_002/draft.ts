@@ -22,6 +22,7 @@ class Car{
     }
     
     toString(): string {
+        return "pass = "
     }
 };
 
