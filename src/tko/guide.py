@@ -8,6 +8,7 @@ simple_guide = """
 │Renomear ou mover : mv _antigo _novo                 │
 ├─────────────────────────────────────────────────────┤
 │Atualizar replit  : update.sh                        │
+│Mostrar esse guia : tko -g                           │
 ├─────────────────────────────────────────────────────┤
 │Baixar o problema : tko down [fup|poo|ed] _id _ext   │
 │ Exemplo para poo : tko down poo 012 cpp             │
@@ -18,6 +19,6 @@ simple_guide = """
 │ só teste 6: tko run solver.cpp cases.tio -i 6       │
 ├─────────────────────────────────────────────────────┤
 │Executar sem testar: tko exec _codigo                │
-│        exemplo    : tko exec solver.ts              │
+│           exemplo : tko exec solver.ts              │
 ╰─────────────────────────────────────────────────────╯
 """
