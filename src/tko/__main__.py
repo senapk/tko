@@ -11,7 +11,8 @@ from .basic import DiffMode
 from .format import Report
 from .down import Down
 from .settings import SettingsParser
-from .guide import simple_guide
+from .guide import tko_guide
+from .guide import bash_guide
 from .__init__ import __version__
 
 
@@ -91,7 +92,8 @@ class Main:
 
         parser = argparse.ArgumentParser(prog='tko', description='A tool for competitive programming.')
         parser.add_argument('-v', '--version', action='store_true', help='show version.')
-        parser.add_argument('-g', '--guide', action='store_true', help='show simple guide.')
+        parser.add_argument('-g', '--guide', action='store_true', help='show simple tko guide.')
+        parser.add_argument('-b', '--bash', action='store_true', help='show simple bash guide.')
         parser.add_argument('-c', '--config', type=str, help='config file.')
         
         subparsers = parser.add_subparsers(title='subcommands', help='help for subcommand.')
@@ -141,12 +143,17 @@ class Main:
         if args.config:
             SettingsParser().set_settings_file(args.config)
 
+
+
         if len(sys.argv) == 1:
             print("You must call a subcommand. Use --help for more information.")
-        elif args.version:
-            print("tko version " + __version__)
-        elif args.guide:
-            print(simple_guide)
+        elif args.version or args.guide or args.bash:
+            if args.version:
+                print("tko version " + __version__)
+            if args.bash:
+                print(bash_guide, end="")
+            if args.guide:
+                print(tko_guide, end="")
         else:
             try:
                 args.func(args)

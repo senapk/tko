@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.1.0
+  - added bash guide with -b
+  - added tko guide with -g
 - 0.0.9
   - removed tab from wdir.resume
   - fixed type in whitespace

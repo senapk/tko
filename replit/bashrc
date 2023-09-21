@@ -90,4 +90,4 @@ export PATH="/home/runner/${REPL_SLUG}/.bin:${PATH}"
 
 alias tko='tko -c /home/runner/${REPL_SLUG}/.tko.cfg'
 
-tko -g
+tko -bg
