@@ -3,6 +3,8 @@ simple_guide = """
 │Mostrar arquivos  : ls                               │
 │Mudar de pasta    : cd _nome_da_pasta                │
 │Subir um nível    : cd ..                            │
+│Criar um arquivo  : touch _nome_do_arquivo           │
+│Criar uma pasta   : mkdir _nome_da_pasta             │
 │Apagar um arquivo : rm _nome_do_arquivo              │
 │Apagar uma pasta  : rm -r _nome_da_pasta             │
 │Renomear ou mover : mv _antigo _novo                 │
