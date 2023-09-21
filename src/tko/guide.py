@@ -5,6 +5,7 @@ simple_guide = """
 │Subir um nível    : cd ..                            │
 │Criar um arquivo  : touch _nome_do_arquivo           │
 │Criar uma pasta   : mkdir _nome_da_pasta             │
+│Limpar console    : Control L                        │
 │Apagar um arquivo : rm _nome_do_arquivo              │
 │Apagar uma pasta  : rm -r _nome_da_pasta             │
 │Renomear ou mover : mv _antigo _novo                 │
