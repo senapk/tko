@@ -1,0 +1,24 @@
+usage: tko [-h] [-v] [-g] [-b] [-m] [-c CONFIG]
+           {list,exec,run,build,down,update,config} ...
+
+A tool for competitive programming.
+
+options:
+  -h, --help            show this help message and exit
+  -v, --version         show version.
+  -g, --guide           show simple tko guide.
+  -b, --bash            show simple bash guide.
+  -m, --mono            monochromatic.
+  -c CONFIG, --config CONFIG
+                        config file.
+
+subcommands:
+  {list,exec,run,build,down,update,config}
+                        help for subcommand.
+    list                show test entries.
+    exec                run without test.
+    run                 run with test cases.
+    build               build a test target.
+    down                download problem from repository.
+    update              update problem from repository.
+    config              settings tool.

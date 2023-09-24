@@ -3,16 +3,16 @@ from __future__ import annotations
 import argparse
 import sys
 
-
 from .actions import Actions
 from .basic import Param
 from .pattern import PatternLoader
 from .basic import DiffMode
-from .format import Report
+from .format import Report, Colored
 from .down import Down
 from .settings import SettingsParser
 from .guide import tko_guide
 from .guide import bash_guide
+from .format import symbols
 from .__init__ import __version__
 
 
@@ -51,10 +51,23 @@ class Main:
     
     @staticmethod
     def settings(args):
-        print("settings file at " + SettingsParser().get_settings_file())
-        if (args.ascii):
-            SettingsParser().toggle_ascii()
-            print("Initializing symbols... in " + ("ASCII" if SettingsParser().get_ascii() else "UTF-8"))
+        sp = SettingsParser()
+        print("Settings file at " + sp.get_settings_file())
+
+        if (args.color):
+            SettingsParser().toggle_color()
+        if (args.encoding):
+           SettingsParser().toggle_ascii()
+        if (args.diff):
+            SettingsParser().toggle_hdiff()
+
+        print("COLORMODE: " + ("COLORED" if sp.get_color() else "MONO"))
+        print("DIFF MODE: " + ("SIDE_BY_SIDE" if sp.get_hdiff() else "UP_DOWN"))
+        print("ENCODING : " + ("ASCII" if sp.get_ascii() else "UNICODE"))
+
+        
+
+
 
     # @staticmethod
     # def rebuild(args):
@@ -94,6 +107,7 @@ class Main:
         parser.add_argument('-v', '--version', action='store_true', help='show version.')
         parser.add_argument('-g', '--guide', action='store_true', help='show simple tko guide.')
         parser.add_argument('-b', '--bash', action='store_true', help='show simple bash guide.')
+        parser.add_argument('-m', '--mono', action='store_true', help='monochromatic.')
         parser.add_argument('-c', '--config', type=str, help='config file.')
         
         subparsers = parser.add_subparsers(title='subcommands', help='help for subcommand.')
@@ -134,8 +148,10 @@ class Main:
         parser_u.set_defaults(func=Main.update)
 
         # settings
-        parser_s = subparsers.add_parser('settings', help='settings tool.')
-        parser_s.add_argument('--ascii', '-a', action='store_true', help='toggle ascii mode.')
+        parser_s = subparsers.add_parser('config', help='settings tool.')
+        parser_s.add_argument('--encoding', '-e', action='store_true', help='toggle [ascii | unicode] mode.')
+        parser_s.add_argument('--color', '-c', action='store_true', help='toggle [colored | mono] mode.')
+        parser_s.add_argument('--diff', '-d', action='store_true', help='toggle [side_by_side | up_down] mode.')
         parser_s.set_defaults(func=Main.settings)
 
         args = parser.parse_args()
@@ -143,17 +159,27 @@ class Main:
         if args.config:
             SettingsParser().set_settings_file(args.config)
 
-
-
         if len(sys.argv) == 1:
-            print("You must call a subcommand. Use --help for more information.")
-        elif args.version or args.guide or args.bash:
+            parser.print_help()
+            return
+        
+        
+        if SettingsParser().get_ascii():
+            symbols.set_ascii()
+        else:
+            symbols.set_unicode()
+
+        if not args.mono and SettingsParser().get_color():
+            Colored.enabled = True
+            symbols.set_colors()
+
+        if args.version or args.guide or args.bash:
             if args.version:
                 print("tko version " + __version__)
             if args.bash:
-                print(bash_guide, end="")
+                print(bash_guide[1:], end="")
             if args.guide:
-                print(tko_guide, end="")
+                print(tko_guide[1:], end="")
         else:
             try:
                 args.func(args)

@@ -13,6 +13,8 @@ poo = https://raw.githubusercontent.com/qxcodepoo/arcade/master/base/
 
 [VISUAL]
 ascii = False
+color = True
+hdiff = True  
 """
 
     __settings_file: Optional[str] = None
@@ -72,3 +74,40 @@ ascii = False
         with open(self.settings_file, "w") as f:
             parser.write(f)
 
+    def get_color(self) -> bool:
+        self.check_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        if "color" not in parser["VISUAL"]:
+            parser["VISUAL"]["color"] = "True"
+            with open(self.settings_file, "w") as f:
+                parser.write(f)
+            return True
+        return parser["VISUAL"]["color"] == "True"
+    
+    def toggle_color(self):
+        self.check_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        parser["VISUAL"]["color"] = str(not self.get_color())
+        with open(self.settings_file, "w") as f:
+            parser.write(f)
+
+    def get_hdiff(self) -> bool:
+        self.check_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        if "hdiff" not in parser["VISUAL"]:
+            parser["VISUAL"]["hdiff"] = "True"
+            with open(self.settings_file, "w") as f:
+                parser.write(f)
+            return True
+        return parser["VISUAL"]["hdiff"] == "True"
+    
+    def toggle_hdiff(self):
+        self.check_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        parser["VISUAL"]["hdiff"] = str(not self.get_hdiff())
+        with open(self.settings_file, "w") as f:
+            parser.write(f)

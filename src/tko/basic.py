@@ -1,22 +1,33 @@
 from enum import Enum
 from typing import Optional
-
 import os
 
-
-from .format import Symbol
-
+from .format import symbols
 
 class ExecutionResult(Enum):
-    UNTESTED = Symbol.neutral
-    SUCCESS = Symbol.success
-    WRONG_OUTPUT = Symbol.failure
-    COMPILATION_ERROR = Symbol.compilation
-    EXECUTION_ERROR = Symbol.execution
+    UNTESTED = "neutral"
+    SUCCESS = "success"
+    WRONG_OUTPUT = "failure"
+    COMPILATION_ERROR = "compilation"
+    EXECUTION_ERROR = "execution"
+
+    @staticmethod
+    def get_symbol(result) -> str:
+        if result == ExecutionResult.UNTESTED:
+            return symbols.neutral
+        elif result == ExecutionResult.SUCCESS:
+            return symbols.success
+        elif result == ExecutionResult.WRONG_OUTPUT:
+            return symbols.wrong
+        elif result == ExecutionResult.COMPILATION_ERROR:
+            return symbols.compilation
+        elif result == ExecutionResult.EXECUTION_ERROR:
+            return symbols.execution
+        else:
+            raise ValueError("Invalid result type")
 
     def __str__(self):
         return self.value
-
 
 class CompilerError(Exception):
     pass
@@ -73,7 +84,7 @@ class Unit:
         index = str(self.index).zfill(2)
         grade = str(self.grade_reduction).zfill(3)
         rep = "" if self.repeated is None else "[" + str(self.repeated) + "]"
-        return "(%s)[%s] GR:%s %s (%s) %s" % (self.result, index, grade, self.source.ljust(self.source_pad), self.case.ljust(self.case_pad), rep)
+        return "(%s)[%s] GR:%s %s (%s) %s" % (ExecutionResult.get_symbol(self.result), index, grade, self.source.ljust(self.source_pad), self.case.ljust(self.case_pad), rep)
 
 
 class Param:

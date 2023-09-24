@@ -5,7 +5,7 @@ import os
 from .basic import IdentifierType, Identifier, Unit, Param
 from .loader import Loader
 from .solver import Solver
-from .format import Symbol, Colored, Color
+from .format import Colored, Color, symbols
 
 # generate label for cases
 
@@ -165,10 +165,11 @@ class Wdir:
         return "\n".join([str(unit) for unit in self.unit_list])
 
     def resume(self) -> str:
+
         def sources() -> str:
             out = []
             if len(self.pack_list) == 0:
-                out.append(Symbol.failure)
+                out.append(symbols.failure)
             for i in range(len(self.pack_list)):
                 nome: str = self.source_list[i].split(os.sep)[-1]
                 out.append(nome + "(" + str(len(self.pack_list[i])).zfill(2) + ")")
@@ -183,4 +184,4 @@ class Wdir:
         tests_count = (Colored.paint("tests:", Color.GREEN) +
                        str(len([x for x in self.unit_list if x.repeated is None])).zfill(2))
 
-        return Symbol.opening + folder + " " + tests_count + " " + sources() + " " + solvers()
+        return symbols.opening + folder + " " + tests_count + " " + sources() + " " + solvers()

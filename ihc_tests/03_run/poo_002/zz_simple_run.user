@@ -1,0 +1,27 @@
+
+=>poo_002 tests:10 sources:[cases.tio(10)] solvers:[draft.ts][ ω ω ω ω ω ω ω ω ω ω ]
+(ω)[00] GR:010 cases.tio (inicializar      ) 
+(ω)[01] GR:010 cases.tio (entrar           ) 
+(ω)[02] GR:010 cases.tio (limite           ) 
+(ω)[03] GR:010 cases.tio (sair             ) 
+(ω)[04] GR:010 cases.tio (limite saida     ) 
+(ω)[05] GR:010 cases.tio (abastecer        ) 
+(ω)[06] GR:010 cases.tio (dirigir vazio    ) 
+(ω)[07] GR:010 cases.tio (dirigir          ) 
+(ω)[08] GR:010 cases.tio (para longe       ) 
+(ω)[09] GR:010 cases.tio (enchendo o tanque) 
+╭──────────────────────────────────────────────────────────────────────────────
+│                (ω)[00] GR:010 cases.tio (inicializar      )                  
+├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
+│ show                                 │ show
+│ end                                  │ end
+├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
+│ $show                                │ $show                               
+≠ pass: 0, gas: 0, km: 0               ≠ pass: 0, gas: 1, km: 0              
+│ $end                                 │ $end                                
+├────────────────────────────────── MISMATCH ──────────────────────────────────
+│ pass:⸱0,⸱gas:⸱0,⸱km:⸱0↵ (expected)
+│ pass:⸱0,⸱gas:⸱1,⸱km:⸱0↵ (received)
+│               ↑         (mismatch)
+╰──────────────────────────────────────────────────────────────────────────────
+

@@ -1,0 +1,11 @@
+=>02_list tests:10 sources:[cases.tio(10)] solvers:[]
+(»)[00] GR:010 cases.tio (iniciar mostrar e recarregar) 
+(»)[01] GR:010 cases.tio (boundary                    ) 
+(»)[02] GR:010 cases.tio (reset                       ) 
+(»)[03] GR:010 cases.tio (somando                     ) 
+(»)[04] GR:010 cases.tio (gastando bateria            ) 
+(»)[05] GR:010 cases.tio (sem bateria                 ) 
+(»)[06] GR:010 cases.tio (recarregando                ) 
+(»)[07] GR:010 cases.tio (dividindo                   ) 
+(»)[08] GR:010 cases.tio (dividindo por zero          ) 
+(»)[09] GR:010 cases.tio (gastando bateria            ) 

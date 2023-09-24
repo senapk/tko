@@ -2,7 +2,6 @@ import shutil
 
 from enum import Enum
 from typing import Optional
-from .settings import SettingsParser
 
 class Color(Enum):
     RED = 1
@@ -18,6 +17,8 @@ class Color(Enum):
 
 
 class Colored:
+    enabled = False
+
     __map = {
         Color.RED: '\u001b[31m',
         Color.GREEN: '\u001b[32m',
@@ -33,6 +34,9 @@ class Colored:
 
     @staticmethod
     def paint(text: str, color: Color, color2: Optional[Color] = None) -> str:
+        if not Colored.enabled:
+            return text
+
         return (Colored.__map[color] + ("" if color2 is None else Colored.__map[color2])
                 + text + Colored.__map[Color.RESET])
 
@@ -75,52 +79,83 @@ class Colored:
         return len(Colored.remove_colors(text))
 
 
-class Symbol:
-    opening = "=>"
-    neutral = ""
-    success = ""
-    failure = ""
-    wrong = ""
-    compilation = ""
-    execution = ""
-    unequal = ""
-    equalbar = ""
-    hbar = "─"
-    vbar = "│"
-    whitespace = "\u2E31"  # interpunct
-    newline = "\u21B5"  # carriage return
-    cfill = "_"
-    tab = "    "
-
+class Symbols:
     def __init__(self):
-        pass
+        self.opening     = ""
+        self.neutral     = ""
+        self.success     = ""
+        self.failure     = ""
+        self.wrong       = ""
+        self.compilation = ""
+        self.execution   = ""
+        self.unequal     = ""
+        self.equalbar    = ""
+        self.hbar        = ""
+        self.vbar        = ""
+        self.whitespace  = ""  # interpunct
+        self.newline     = ""  # carriage return
+        self.cfill       = ""
+        self.tab         = ""
+        self.arrow_up    = ""
 
-    @staticmethod
-    def initialize(_asc2only: bool):
-        # print("Initializing symbols... in " + ("ASCII" if _asc2only else "UTF-8"))
-        Symbol.neutral = "." if _asc2only else "»"  # u"\u2610"  # ☐
-        Symbol.success = "S" if _asc2only else "✓"
-        Symbol.failure = "X" if _asc2only else "✗"
-        Symbol.wrong = "W" if _asc2only else "ω"
-        Symbol.compilation = "C" if _asc2only else "ϲ"
-        Symbol.execution = "E" if _asc2only else "ϵ"
-        Symbol.unequal = "#" if _asc2only else "≠"
-        Symbol.equalbar = "|" if _asc2only else "│"
+        self.ascii = False
+        self.set_unicode()
 
-        Symbol.opening = Colored.paint(Symbol.opening, Color.BLUE)
-        Symbol.neutral = Colored.paint(Symbol.neutral, Color.BLUE)
+    def get_mode(self) -> str:
+        return "ASCII" if self.ascii else "UTF-8"
 
-        Symbol.success = Colored.paint(Symbol.success, Color.GREEN)
-        Symbol.failure = Colored.paint(Symbol.failure, Color.RED)
-        
-        # Symbol.wrong       = Colored.paint(Symbol.wrong,       Color.RED)
-        Symbol.compilation = Colored.paint(Symbol.compilation, Color.YELLOW)
-        Symbol.execution = Colored.paint(Symbol.execution,   Color.YELLOW)
-        Symbol.unequal = Colored.paint(Symbol.unequal,     Color.RED)
-        Symbol.equalbar = Colored.paint(Symbol.equalbar,    Color.GREEN)
+    def set_ascii(self):
+        self.ascii = True
 
+        self.opening     = "=>"
+        self.neutral     = "."
+        self.success     = "S"
+        self.failure     = "X"
+        self.wrong       = "W"
+        self.compilation = "C"
+        self.execution   = "E"
+        self.unequal     = "#"
+        self.equalbar    = "|"
+        self.hbar        = "─"
+        self.vbar        = "│"
+        self.whitespace  = "\u2E31"  # interpunct
+        self.newline     = "\u21B5"  # carriage return
+        self.cfill       = "_"
+        self.tab         = "    "
+        self.arrow_up    = "A"
 
-Symbol.initialize(SettingsParser().get_ascii())  # inicalizacao estatica
+    def set_unicode(self):
+        self.ascii = False
+
+        self.opening     = "=>"
+        self.neutral     = "»"
+        self.success     = "✓"
+        self.failure     = "✗"
+        self.wrong       = "ω"
+        self.compilation = "ϲ"
+        self.execution   = "ϵ"
+        self.unequal     = "≠"
+        self.equalbar    = "│"
+        self.hbar        = "─"
+        self.vbar        = "│"
+        self.whitespace  = "\u2E31"  # interpunct
+        self.newline     = "\u21B5"  # carriage return
+        self.cfill       = "_"
+        self.tab         = "    "
+        self.arrow_up    = "↑"
+
+    def set_colors(self):
+        self.opening     = Colored.paint(self.opening,     Color.BLUE)
+        self.neutral     = Colored.paint(self.neutral,     Color.BLUE)
+        self.success     = Colored.paint(self.success,     Color.GREEN)
+        self.failure     = Colored.paint(self.failure,     Color.RED)
+        self.wrong       = Colored.paint(self.wrong,       Color.RED)
+        self.compilation = Colored.paint(self.compilation, Color.YELLOW)
+        self.execution   = Colored.paint(self.execution,   Color.YELLOW)
+        self.unequal     = Colored.paint(self.unequal,     Color.RED)
+        self.equalbar    = Colored.paint(self.equalbar,    Color.GREEN)
+
+symbols = Symbols()
 
 
 class Report:

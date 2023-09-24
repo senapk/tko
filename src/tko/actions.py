@@ -4,7 +4,7 @@ import subprocess
 from .wdir import Wdir
 from .basic import DiffMode, ExecutionResult, CompilerError, Param, Unit
 from .diff import Diff
-from .format import Symbol, Colored, Color, Report
+from .format import Symbols, Colored, Color, Report
 from .writer import Writer
 from .solver import Solver
 from .runner import Runner
@@ -22,7 +22,7 @@ class Execution:
         return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input)
         unit.user = stdout + stderr
         if return_code != 0:
-            unit.user += Symbol.execution
+            unit.user += Symbols.execution
             return ExecutionResult.EXECUTION_ERROR
         if unit.user == unit.output:
             return ExecutionResult.SUCCESS
@@ -46,7 +46,7 @@ class Actions:
             print("\n" + Colored.paint("fail:", Color.RED) + " no solver found\n")
             return        
         
-        print(Report.centralize(" Exec " + wdir.solver.executable + " ", Symbol.hbar))
+        print(Report.centralize(" Exec " + wdir.solver.executable + " ", Symbols.hbar))
         subprocess.run(wdir.solver.executable, shell=True)
 
     @staticmethod
@@ -69,17 +69,22 @@ class Actions:
             print("\n" + Colored.paint("fail:", Color.RED) + " no solver found\n")
             return 0
         
+
+        ## print top line
         print("[ ", end="")
         for unit in wdir.unit_list:
             unit.result = Execution.run_unit(wdir.solver, unit)
-            print(unit.result.value + " ", end="")
+            print(ExecutionResult.get_symbol(unit.result) + " ", end="")
         print("]")
 
         if param.diff_mode != DiffMode.QUIET:        
             results = [unit.result for unit in wdir.unit_list]
             if (ExecutionResult.EXECUTION_ERROR in results) or (ExecutionResult.WRONG_OUTPUT in results):
+                
+                # print cases lines
                 print(wdir.unit_list_resume())
 
+                # printing only the first wrong case
                 wrong = [unit for unit in wdir.unit_list if unit.result != ExecutionResult.SUCCESS][0]
                 if param.is_up_down:
                     print(Diff.mount_up_down_diff(wrong))

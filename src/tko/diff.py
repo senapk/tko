@@ -1,7 +1,7 @@
 from typing import List, Optional, Tuple
 import io
 
-from .format import Symbol, Colored, Color, Report
+from .format import Colored, Color, Report, symbols
 from .basic import Unit
 
 
@@ -17,7 +17,7 @@ class Diff:
             if i >= len(a) or i >= len(b) or a[i] != b[i]:
                 if first:
                     first = False
-                    hdiff += "↑";
+                    hdiff += symbols.arrow_up;
             else:
                 hdiff += " "
             i += 1
@@ -28,17 +28,17 @@ class Diff:
         if text is None:
             return None
         if color is None:
-            text = text.replace(' ', Symbol.whitespace)
-            text = text.replace('\n', Symbol.newline + '\n')
+            text = text.replace(' ', symbols.whitespace)
+            text = text.replace('\n', symbols.newline + '\n')
             return text
-        text = text.replace(' ', Colored.paint(Symbol.whitespace, color))
-        text = text.replace('\n', Colored.paint(Symbol.newline, color) + '\n')
+        text = text.replace(' ', Colored.paint(symbols.whitespace, color))
+        text = text.replace('\n', Colored.paint(symbols.newline, color) + '\n')
         return text
 
     # create a string with both ta and tb side by side with a vertical bar in the middle
     @staticmethod
     def side_by_side(ta: List[str], tb: List[str]):
-        cut = (Report.get_terminal_size() // 2) - 1
+        cut = (Report.get_terminal_size() - 6) // 2
         upper = max(len(ta), len(tb))
         data = []
 
@@ -47,7 +47,12 @@ class Diff:
             b = tb[i] if i < len(tb) else "###############"
             if len(a) < cut:
                 a = a.ljust(cut)
-            data.append(a + " " + Symbol.vbar + " " + b)
+            # if len(a) > cut:
+            #     a = a[:cut]
+            if i >= len(ta) or i >= len(tb) or ta[i] != tb[i]:
+                data.append(symbols.unequal + " " + a + " " + symbols.unequal + " " + b)
+            else:
+                data.append(symbols.vbar + " " + a + " " + symbols.vbar + " " + b)
 
         return "\n".join(data)
 
@@ -72,18 +77,12 @@ class Diff:
         if first_failure > 0:
             lbefore = Colored.remove_colors(get(a_render, first_failure - 1))
             greater = max(greater, Colored.len(lbefore))
-        
-        postext = Report.centralize(Colored.paint(" First line mismatch showing whitespaces ", Color.BOLD),  "-") + "\n"
-        if first_failure > 0:
-            postext += Colored.paint(Colored.ljust(lbefore, greater) + " (previous)", Color.BLUE) + "\n"
-        
-
 
         out_a, out_b = Diff.colorize_2_lines_diff(first_a, first_b)
 
-        postext += Colored.ljust(out_a, greater) + Colored.paint(" (expected)", Color.GREEN) + "\n"
-        postext += Colored.ljust(out_b, greater) + Colored.paint(" (received)", Color.RED) + "\n"
-        postext += Colored.ljust(Diff.make_line_arrow_up(first_a, first_b), greater) + Colored.paint(" (mismatch)", Color.BLUE) + "\n"
+        postext  = symbols.vbar + " " + Colored.ljust(out_a, greater) + Colored.paint(" (expected)", Color.GREEN) + "\n"
+        postext += symbols.vbar + " " + Colored.ljust(out_b, greater) + Colored.paint(" (received)", Color.RED) + "\n"
+        postext += symbols.vbar + " " + Colored.ljust(Diff.make_line_arrow_up(first_a, first_b), greater) + Colored.paint(" (mismatch)", Color.BLUE) + "\n"
         return postext
 
     @staticmethod
@@ -120,7 +119,7 @@ class Diff:
 
         cut: int = 0
         if pad is True:
-            cut = (Report.get_terminal_size() // 2) - 1
+            cut = (Report.get_terminal_size() - 6)// 2
 
         max_size = max(a_size, b_size)
 
@@ -162,33 +161,56 @@ class Diff:
         dotted = "-"
 
         expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received)
-        output.write(Report.centralize(Symbol.hbar, Symbol.hbar) + "\n")
-        output.write(Report.centralize(str(unit)) + "\n")
-        output.write(Report.centralize(Colored.paint(" PROGRAM INPUT ", Color.BLUE), dotted) + "\n")
+        string_input = "\n".join([symbols.vbar + " " + line for line in string_input.split("\n")])[0:-2]
+        expected_lines, received_lines = Diff.put_left_equal(expected_lines, received_lines)
+
+        output.write(Report.centralize("", symbols.hbar, "╭") + "\n")
+        output.write(Report.centralize(str(unit), " ", symbols.vbar) + "\n")
+        output.write(Report.centralize(Colored.paint(" INPUT ", Color.BLUE), symbols.hbar, "├") + "\n")
         output.write(string_input)
-        output.write(Report.centralize(Colored.paint(" EXPECTED OUTPUT ", Color.GREEN), dotted) + "\n")
+        output.write(Report.centralize(Colored.paint(" EXPECTED ", Color.GREEN), symbols.hbar, "├") + "\n")
         output.write("\n".join(expected_lines) + "\n")
-        output.write(Report.centralize(Colored.paint(" RECEIVED OUTPUT ", Color.RED), dotted) + "\n")
+        output.write(Report.centralize(Colored.paint(" RECEIVED ", Color.RED), symbols.hbar, "├") + "\n")
         output.write("\n".join(received_lines) + "\n")
+        output.write(Report.centralize(Colored.paint(" MISMATCH ", Color.BOLD),  symbols.hbar, "├") + "\n")
         output.write(Diff.first_failure_diff(string_expected, string_received, first_failure))
+        output.write(Report.centralize("",  symbols.hbar, "╰") + "\n")
 
         return output.getvalue()
 
     @staticmethod
+    def put_left_equal(exp_lines: str, rec_lines: str):
+
+        max_size = max(len(exp_lines), len(rec_lines))
+
+        for i in range(max_size):
+            if i >= len(exp_lines) or i >= len(rec_lines) or (exp_lines[i] != rec_lines[i]):
+                exp_lines[i] = symbols.unequal + " " + exp_lines[i]
+                rec_lines[i] = symbols.unequal + " " + rec_lines[i]
+            else:
+                exp_lines[i] = symbols.vbar + " " + exp_lines[i]
+                rec_lines[i] = symbols.vbar + " " + rec_lines[i]
+        
+        return exp_lines, rec_lines
+            
+
+    @staticmethod
     def mount_side_by_side_diff(unit: Unit) -> str:
 
-        def mount_side_by_side(left, right, filler=" ", middle=" "):
-            half = int(Report.get_terminal_size() / 2)
+        def title_side_by_side(left, right, filler=" ", middle=" ", prefix=""):
+            half = int((Report.get_terminal_size() - len(middle)) / 2)
             line = ""
-            a = " " + Colored.center(left, half - 2, filler) + " "
+            a = Colored.center(left, half, filler)
             if Colored.len(a) > half:
                 a = a[:half]
             line += a
             line += middle
-            b = " " + Colored.center(right, half - 2, filler) + " "
+            b = Colored.center(right, half, filler)
             if Colored.len(b) > half:
                 b = b[:half]
             line += b
+            if prefix != "":
+                line = prefix + line[1:]
             return line
 
         output = io.StringIO()
@@ -198,19 +220,22 @@ class Diff:
         string_received = unit.user
 
         dotted = "-"
-        vertical_separator = Symbol.vbar
+        vertical_separator = symbols.vbar
+        hbar = symbols.hbar
 
         expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received, True)
-        output.write(Report.centralize("   ", Symbol.hbar, " ", " ") + "\n")
-        output.write(Report.centralize(str(unit)) + "\n")
+        output.write(Report.centralize("", hbar, "╭") + "\n")
+        output.write(Report.centralize(str(unit), " ", "│") + "\n")
         input_header = Colored.paint(" INPUT ", Color.BLUE)
-        output.write(mount_side_by_side(input_header, input_header, dotted) + "\n")
-        output.write(Diff.side_by_side(string_input.splitlines(), string_input.splitlines()) + "\n")
-        expected_header = Colored.paint(" EXPECTED OUTPUT ", Color.GREEN)
-        received_header = Colored.paint(" RECEIVED OUTPUT ", Color.RED)
-        output.write(mount_side_by_side(expected_header, received_header, dotted, vertical_separator) + "\n")
+        output.write(title_side_by_side(input_header, input_header, hbar, "┬", "├") + "\n")
+        output.write(Diff.side_by_side(string_input.split("\n")[:-1], string_input.split("\n")[:-1]) + "\n")
+        expected_header = Colored.paint(" EXPECTED ", Color.GREEN)
+        received_header = Colored.paint(" RECEIVED ", Color.RED)
+        output.write(title_side_by_side(expected_header, received_header, hbar, "┼", "├") + "\n")
         output.write(Diff.side_by_side(expected_lines, received_lines) + "\n")
+        output.write(Report.centralize(Colored.paint(" MISMATCH ", Color.BOLD),  symbols.hbar, "├") + "\n")
         output.write(Diff.first_failure_diff(string_expected, string_received, first_failure))
+        output.write(Report.centralize("",  symbols.hbar, "╰") + "\n")
 
         return output.getvalue()
 

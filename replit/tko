@@ -37,6 +37,8 @@ poo = https://raw.githubusercontent.com/qxcodepoo/arcade/master/base/
 
 [VISUAL]
 ascii = False
+color = True
+hdiff = True  
 """
 
     __settings_file: Optional[str] = None
@@ -96,6 +98,43 @@ ascii = False
         with open(self.settings_file, "w") as f:
             parser.write(f)
 
+    def get_color(self) -> bool:
+        self.check_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        if "color" not in parser["VISUAL"]:
+            parser["VISUAL"]["color"] = "True"
+            with open(self.settings_file, "w") as f:
+                parser.write(f)
+            return True
+        return parser["VISUAL"]["color"] == "True"
+    
+    def toggle_color(self):
+        self.check_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        parser["VISUAL"]["color"] = str(not self.get_color())
+        with open(self.settings_file, "w") as f:
+            parser.write(f)
+
+    def get_hdiff(self) -> bool:
+        self.check_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        if "hdiff" not in parser["VISUAL"]:
+            parser["VISUAL"]["hdiff"] = "True"
+            with open(self.settings_file, "w") as f:
+                parser.write(f)
+            return True
+        return parser["VISUAL"]["hdiff"] == "True"
+    
+    def toggle_hdiff(self):
+        self.check_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        parser["VISUAL"]["hdiff"] = str(not self.get_hdiff())
+        with open(self.settings_file, "w") as f:
+            parser.write(f)
 
 
 
@@ -130,6 +169,8 @@ class Color(Enum):
 
 
 class Colored:
+    enabled = False
+
     __map = {
         Color.RED: '\u001b[31m',
         Color.GREEN: '\u001b[32m',
@@ -145,6 +186,9 @@ class Colored:
 
     @staticmethod
     def paint(text: str, color: Color, color2: Optional[Color] = None) -> str:
+        if not Colored.enabled:
+            return text
+
         return (Colored.__map[color] + ("" if color2 is None else Colored.__map[color2])
                 + text + Colored.__map[Color.RESET])
 
@@ -187,52 +231,83 @@ class Colored:
         return len(Colored.remove_colors(text))
 
 
-class Symbol:
-    opening = "=>"
-    neutral = ""
-    success = ""
-    failure = ""
-    wrong = ""
-    compilation = ""
-    execution = ""
-    unequal = ""
-    equalbar = ""
-    hbar = "─"
-    vbar = "│"
-    whitespace = "\u2E31"  # interpunct
-    newline = "\u21B5"  # carriage return
-    cfill = "_"
-    tab = "    "
-
+class Symbols:
     def __init__(self):
-        pass
+        self.opening     = ""
+        self.neutral     = ""
+        self.success     = ""
+        self.failure     = ""
+        self.wrong       = ""
+        self.compilation = ""
+        self.execution   = ""
+        self.unequal     = ""
+        self.equalbar    = ""
+        self.hbar        = ""
+        self.vbar        = ""
+        self.whitespace  = ""  # interpunct
+        self.newline     = ""  # carriage return
+        self.cfill       = ""
+        self.tab         = ""
+        self.arrow_up    = ""
 
-    @staticmethod
-    def initialize(_asc2only: bool):
-        # print("Initializing symbols... in " + ("ASCII" if _asc2only else "UTF-8"))
-        Symbol.neutral = "." if _asc2only else "»"  # u"\u2610"  # ☐
-        Symbol.success = "S" if _asc2only else "✓"
-        Symbol.failure = "X" if _asc2only else "✗"
-        Symbol.wrong = "W" if _asc2only else "ω"
-        Symbol.compilation = "C" if _asc2only else "ϲ"
-        Symbol.execution = "E" if _asc2only else "ϵ"
-        Symbol.unequal = "#" if _asc2only else "≠"
-        Symbol.equalbar = "|" if _asc2only else "│"
+        self.ascii = False
+        self.set_unicode()
 
-        Symbol.opening = Colored.paint(Symbol.opening, Color.BLUE)
-        Symbol.neutral = Colored.paint(Symbol.neutral, Color.BLUE)
+    def get_mode(self) -> str:
+        return "ASCII" if self.ascii else "UTF-8"
 
-        Symbol.success = Colored.paint(Symbol.success, Color.GREEN)
-        Symbol.failure = Colored.paint(Symbol.failure, Color.RED)
-        
-        # Symbol.wrong       = Colored.paint(Symbol.wrong,       Color.RED)
-        Symbol.compilation = Colored.paint(Symbol.compilation, Color.YELLOW)
-        Symbol.execution = Colored.paint(Symbol.execution,   Color.YELLOW)
-        Symbol.unequal = Colored.paint(Symbol.unequal,     Color.RED)
-        Symbol.equalbar = Colored.paint(Symbol.equalbar,    Color.GREEN)
+    def set_ascii(self):
+        self.ascii = True
 
+        self.opening     = "=>"
+        self.neutral     = "."
+        self.success     = "S"
+        self.failure     = "X"
+        self.wrong       = "W"
+        self.compilation = "C"
+        self.execution   = "E"
+        self.unequal     = "#"
+        self.equalbar    = "|"
+        self.hbar        = "─"
+        self.vbar        = "│"
+        self.whitespace  = "\u2E31"  # interpunct
+        self.newline     = "\u21B5"  # carriage return
+        self.cfill       = "_"
+        self.tab         = "    "
+        self.arrow_up    = "A"
 
-Symbol.initialize(SettingsParser().get_ascii())  # inicalizacao estatica
+    def set_unicode(self):
+        self.ascii = False
+
+        self.opening     = "=>"
+        self.neutral     = "»"
+        self.success     = "✓"
+        self.failure     = "✗"
+        self.wrong       = "ω"
+        self.compilation = "ϲ"
+        self.execution   = "ϵ"
+        self.unequal     = "≠"
+        self.equalbar    = "│"
+        self.hbar        = "─"
+        self.vbar        = "│"
+        self.whitespace  = "\u2E31"  # interpunct
+        self.newline     = "\u21B5"  # carriage return
+        self.cfill       = "_"
+        self.tab         = "    "
+        self.arrow_up    = "↑"
+
+    def set_colors(self):
+        self.opening     = Colored.paint(self.opening,     Color.BLUE)
+        self.neutral     = Colored.paint(self.neutral,     Color.BLUE)
+        self.success     = Colored.paint(self.success,     Color.GREEN)
+        self.failure     = Colored.paint(self.failure,     Color.RED)
+        self.wrong       = Colored.paint(self.wrong,       Color.RED)
+        self.compilation = Colored.paint(self.compilation, Color.YELLOW)
+        self.execution   = Colored.paint(self.execution,   Color.YELLOW)
+        self.unequal     = Colored.paint(self.unequal,     Color.RED)
+        self.equalbar    = Colored.paint(self.equalbar,    Color.GREEN)
+
+symbols = Symbols()
 
 
 class Report:
@@ -277,19 +352,30 @@ class Report:
 
 
 
-
-
-
 class ExecutionResult(Enum):
-    UNTESTED = Symbol.neutral
-    SUCCESS = Symbol.success
-    WRONG_OUTPUT = Symbol.failure
-    COMPILATION_ERROR = Symbol.compilation
-    EXECUTION_ERROR = Symbol.execution
+    UNTESTED = "neutral"
+    SUCCESS = "success"
+    WRONG_OUTPUT = "failure"
+    COMPILATION_ERROR = "compilation"
+    EXECUTION_ERROR = "execution"
+
+    @staticmethod
+    def get_symbol(result) -> str:
+        if result == ExecutionResult.UNTESTED:
+            return symbols.neutral
+        elif result == ExecutionResult.SUCCESS:
+            return symbols.success
+        elif result == ExecutionResult.WRONG_OUTPUT:
+            return symbols.wrong
+        elif result == ExecutionResult.COMPILATION_ERROR:
+            return symbols.compilation
+        elif result == ExecutionResult.EXECUTION_ERROR:
+            return symbols.execution
+        else:
+            raise ValueError("Invalid result type")
 
     def __str__(self):
         return self.value
-
 
 class CompilerError(Exception):
     pass
@@ -346,7 +432,7 @@ class Unit:
         index = str(self.index).zfill(2)
         grade = str(self.grade_reduction).zfill(3)
         rep = "" if self.repeated is None else "[" + str(self.repeated) + "]"
-        return "(%s)[%s] GR:%s %s (%s) %s" % (self.result, index, grade, self.source.ljust(self.source_pad), self.case.ljust(self.case_pad), rep)
+        return "(%s)[%s] GR:%s %s (%s) %s" % (ExecutionResult.get_symbol(self.result), index, grade, self.source.ljust(self.source_pad), self.case.ljust(self.case_pad), rep)
 
 
 class Param:
@@ -410,7 +496,7 @@ class Diff:
             if i >= len(a) or i >= len(b) or a[i] != b[i]:
                 if first:
                     first = False
-                    hdiff += "↑";
+                    hdiff += symbols.arrow_up;
             else:
                 hdiff += " "
             i += 1
@@ -421,17 +507,17 @@ class Diff:
         if text is None:
             return None
         if color is None:
-            text = text.replace(' ', Symbol.whitespace)
-            text = text.replace('\n', Symbol.newline + '\n')
+            text = text.replace(' ', symbols.whitespace)
+            text = text.replace('\n', symbols.newline + '\n')
             return text
-        text = text.replace(' ', Colored.paint(Symbol.whitespace, color))
-        text = text.replace('\n', Colored.paint(Symbol.newline, color) + '\n')
+        text = text.replace(' ', Colored.paint(symbols.whitespace, color))
+        text = text.replace('\n', Colored.paint(symbols.newline, color) + '\n')
         return text
 
     # create a string with both ta and tb side by side with a vertical bar in the middle
     @staticmethod
     def side_by_side(ta: List[str], tb: List[str]):
-        cut = (Report.get_terminal_size() // 2) - 1
+        cut = (Report.get_terminal_size() - 6) // 2
         upper = max(len(ta), len(tb))
         data = []
 
@@ -440,7 +526,12 @@ class Diff:
             b = tb[i] if i < len(tb) else "###############"
             if len(a) < cut:
                 a = a.ljust(cut)
-            data.append(a + " " + Symbol.vbar + " " + b)
+            # if len(a) > cut:
+            #     a = a[:cut]
+            if i >= len(ta) or i >= len(tb) or ta[i] != tb[i]:
+                data.append(symbols.unequal + " " + a + " " + symbols.unequal + " " + b)
+            else:
+                data.append(symbols.vbar + " " + a + " " + symbols.vbar + " " + b)
 
         return "\n".join(data)
 
@@ -465,18 +556,12 @@ class Diff:
         if first_failure > 0:
             lbefore = Colored.remove_colors(get(a_render, first_failure - 1))
             greater = max(greater, Colored.len(lbefore))
-        
-        postext = Report.centralize(Colored.paint(" First line mismatch showing whitespaces ", Color.BOLD),  "-") + "\n"
-        if first_failure > 0:
-            postext += Colored.paint(Colored.ljust(lbefore, greater) + " (previous)", Color.BLUE) + "\n"
-        
-
 
         out_a, out_b = Diff.colorize_2_lines_diff(first_a, first_b)
 
-        postext += Colored.ljust(out_a, greater) + Colored.paint(" (expected)", Color.GREEN) + "\n"
-        postext += Colored.ljust(out_b, greater) + Colored.paint(" (received)", Color.RED) + "\n"
-        postext += Colored.ljust(Diff.make_line_arrow_up(first_a, first_b), greater) + Colored.paint(" (mismatch)", Color.BLUE) + "\n"
+        postext  = symbols.vbar + " " + Colored.ljust(out_a, greater) + Colored.paint(" (expected)", Color.GREEN) + "\n"
+        postext += symbols.vbar + " " + Colored.ljust(out_b, greater) + Colored.paint(" (received)", Color.RED) + "\n"
+        postext += symbols.vbar + " " + Colored.ljust(Diff.make_line_arrow_up(first_a, first_b), greater) + Colored.paint(" (mismatch)", Color.BLUE) + "\n"
         return postext
 
     @staticmethod
@@ -513,7 +598,7 @@ class Diff:
 
         cut: int = 0
         if pad is True:
-            cut = (Report.get_terminal_size() // 2) - 1
+            cut = (Report.get_terminal_size() - 6)// 2
 
         max_size = max(a_size, b_size)
 
@@ -555,33 +640,56 @@ class Diff:
         dotted = "-"
 
         expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received)
-        output.write(Report.centralize(Symbol.hbar, Symbol.hbar) + "\n")
-        output.write(Report.centralize(str(unit)) + "\n")
-        output.write(Report.centralize(Colored.paint(" PROGRAM INPUT ", Color.BLUE), dotted) + "\n")
+        string_input = "\n".join([symbols.vbar + " " + line for line in string_input.split("\n")])[0:-2]
+        expected_lines, received_lines = Diff.put_left_equal(expected_lines, received_lines)
+
+        output.write(Report.centralize("", symbols.hbar, "╭") + "\n")
+        output.write(Report.centralize(str(unit), " ", symbols.vbar) + "\n")
+        output.write(Report.centralize(Colored.paint(" INPUT ", Color.BLUE), symbols.hbar, "├") + "\n")
         output.write(string_input)
-        output.write(Report.centralize(Colored.paint(" EXPECTED OUTPUT ", Color.GREEN), dotted) + "\n")
+        output.write(Report.centralize(Colored.paint(" EXPECTED ", Color.GREEN), symbols.hbar, "├") + "\n")
         output.write("\n".join(expected_lines) + "\n")
-        output.write(Report.centralize(Colored.paint(" RECEIVED OUTPUT ", Color.RED), dotted) + "\n")
+        output.write(Report.centralize(Colored.paint(" RECEIVED ", Color.RED), symbols.hbar, "├") + "\n")
         output.write("\n".join(received_lines) + "\n")
+        output.write(Report.centralize(Colored.paint(" MISMATCH ", Color.BOLD),  symbols.hbar, "├") + "\n")
         output.write(Diff.first_failure_diff(string_expected, string_received, first_failure))
+        output.write(Report.centralize("",  symbols.hbar, "╰") + "\n")
 
         return output.getvalue()
 
     @staticmethod
+    def put_left_equal(exp_lines: str, rec_lines: str):
+
+        max_size = max(len(exp_lines), len(rec_lines))
+
+        for i in range(max_size):
+            if i >= len(exp_lines) or i >= len(rec_lines) or (exp_lines[i] != rec_lines[i]):
+                exp_lines[i] = symbols.unequal + " " + exp_lines[i]
+                rec_lines[i] = symbols.unequal + " " + rec_lines[i]
+            else:
+                exp_lines[i] = symbols.vbar + " " + exp_lines[i]
+                rec_lines[i] = symbols.vbar + " " + rec_lines[i]
+        
+        return exp_lines, rec_lines
+            
+
+    @staticmethod
     def mount_side_by_side_diff(unit: Unit) -> str:
 
-        def mount_side_by_side(left, right, filler=" ", middle=" "):
-            half = int(Report.get_terminal_size() / 2)
+        def title_side_by_side(left, right, filler=" ", middle=" ", prefix=""):
+            half = int((Report.get_terminal_size() - len(middle)) / 2)
             line = ""
-            a = " " + Colored.center(left, half - 2, filler) + " "
+            a = Colored.center(left, half, filler)
             if Colored.len(a) > half:
                 a = a[:half]
             line += a
             line += middle
-            b = " " + Colored.center(right, half - 2, filler) + " "
+            b = Colored.center(right, half, filler)
             if Colored.len(b) > half:
                 b = b[:half]
             line += b
+            if prefix != "":
+                line = prefix + line[1:]
             return line
 
         output = io.StringIO()
@@ -591,19 +699,22 @@ class Diff:
         string_received = unit.user
 
         dotted = "-"
-        vertical_separator = Symbol.vbar
+        vertical_separator = symbols.vbar
+        hbar = symbols.hbar
 
         expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received, True)
-        output.write(Report.centralize("   ", Symbol.hbar, " ", " ") + "\n")
-        output.write(Report.centralize(str(unit)) + "\n")
+        output.write(Report.centralize("", hbar, "╭") + "\n")
+        output.write(Report.centralize(str(unit), " ", "│") + "\n")
         input_header = Colored.paint(" INPUT ", Color.BLUE)
-        output.write(mount_side_by_side(input_header, input_header, dotted) + "\n")
-        output.write(Diff.side_by_side(string_input.splitlines(), string_input.splitlines()) + "\n")
-        expected_header = Colored.paint(" EXPECTED OUTPUT ", Color.GREEN)
-        received_header = Colored.paint(" RECEIVED OUTPUT ", Color.RED)
-        output.write(mount_side_by_side(expected_header, received_header, dotted, vertical_separator) + "\n")
+        output.write(title_side_by_side(input_header, input_header, hbar, "┬", "├") + "\n")
+        output.write(Diff.side_by_side(string_input.split("\n")[:-1], string_input.split("\n")[:-1]) + "\n")
+        expected_header = Colored.paint(" EXPECTED ", Color.GREEN)
+        received_header = Colored.paint(" RECEIVED ", Color.RED)
+        output.write(title_side_by_side(expected_header, received_header, hbar, "┼", "├") + "\n")
         output.write(Diff.side_by_side(expected_lines, received_lines) + "\n")
+        output.write(Report.centralize(Colored.paint(" MISMATCH ", Color.BOLD),  symbols.hbar, "├") + "\n")
         output.write(Diff.first_failure_diff(string_expected, string_received, first_failure))
+        output.write(Report.centralize("",  symbols.hbar, "╰") + "\n")
 
         return output.getvalue()
 
@@ -1417,10 +1528,11 @@ class Wdir:
         return "\n".join([str(unit) for unit in self.unit_list])
 
     def resume(self) -> str:
+
         def sources() -> str:
             out = []
             if len(self.pack_list) == 0:
-                out.append(Symbol.failure)
+                out.append(symbols.failure)
             for i in range(len(self.pack_list)):
                 nome: str = self.source_list[i].split(os.sep)[-1]
                 out.append(nome + "(" + str(len(self.pack_list[i])).zfill(2) + ")")
@@ -1435,7 +1547,7 @@ class Wdir:
         tests_count = (Colored.paint("tests:", Color.GREEN) +
                        str(len([x for x in self.unit_list if x.repeated is None])).zfill(2))
 
-        return Symbol.opening + folder + " " + tests_count + " " + sources() + " " + solvers()
+        return symbols.opening + folder + " " + tests_count + " " + sources() + " " + solvers()
 
 
 
@@ -1452,7 +1564,7 @@ class Execution:
         return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input)
         unit.user = stdout + stderr
         if return_code != 0:
-            unit.user += Symbol.execution
+            unit.user += Symbols.execution
             return ExecutionResult.EXECUTION_ERROR
         if unit.user == unit.output:
             return ExecutionResult.SUCCESS
@@ -1476,7 +1588,7 @@ class Actions:
             print("\n" + Colored.paint("fail:", Color.RED) + " no solver found\n")
             return        
         
-        print(Report.centralize(" Exec " + wdir.solver.executable + " ", Symbol.hbar))
+        print(Report.centralize(" Exec " + wdir.solver.executable + " ", Symbols.hbar))
         subprocess.run(wdir.solver.executable, shell=True)
 
     @staticmethod
@@ -1499,17 +1611,22 @@ class Actions:
             print("\n" + Colored.paint("fail:", Color.RED) + " no solver found\n")
             return 0
         
+
+        ## print top line
         print("[ ", end="")
         for unit in wdir.unit_list:
             unit.result = Execution.run_unit(wdir.solver, unit)
-            print(unit.result.value + " ", end="")
+            print(ExecutionResult.get_symbol(unit.result) + " ", end="")
         print("]")
 
         if param.diff_mode != DiffMode.QUIET:        
             results = [unit.result for unit in wdir.unit_list]
             if (ExecutionResult.EXECUTION_ERROR in results) or (ExecutionResult.WRONG_OUTPUT in results):
+                
+                # print cases lines
                 print(wdir.unit_list_resume())
 
+                # printing only the first wrong case
                 wrong = [unit for unit in wdir.unit_list if unit.result != ExecutionResult.SUCCESS][0]
                 if param.is_up_down:
                     print(Diff.mount_up_down_diff(wrong))
@@ -1528,39 +1645,45 @@ class Actions:
             return False
         return True
 
-tko_guide = """╭─────────────────────── TKO ─────────────────────────╮
+tko_guide = """
+╭────────────────── TKO SIMPLE GUIDE ─────────────────╮
 │Mostrar esse guia : tko -g                           │
 │Atualizar scripts : update.sh                        │
-├─────────────────────────────────────────────────────┤
+├────────────────────── BAIXAR ───────────────────────┤
 │Baixar o problema : tko down [fup|poo|ed] _id _ext   │
 │ Exemplo para poo : tko down poo 012 cpp             │
-├─────────────────────────────────────────────────────┤
+├────────────────────── TESTAR ───────────────────────┤
 │Rodar teste: tko run _codigo[s] _testes [-v] [-i ind]│
 │    exemplo: tko run solver.cpp cases.tio            │
 │  diff vert: tko run solver.cpp cases.tio -v         │
 │ só teste 6: tko run solver.cpp cases.tio -i 6       │
-├─────────────────────────────────────────────────────┤
+├────────────────────── EXECUTAR ─────────────────────┤
 │Executar sem testar: tko exec _codigo                │
 │           exemplo : tko exec solver.ts              │
 ╰─────────────────────────────────────────────────────╯
 """
 
-bash_guide = """╭─────────────────────── BASH ────────────────────────╮
+bash_guide = """
+╭────────────────── BASH SIMPLE GUIDE ────────────────╮
 │Mostrar esse guia : tko -b                           │
-├─────────────────────────────────────────────────────┤
+├────────────────────── NAVEGAR ──────────────────────┤
 │Mostrar arquivos  : ls                               │
 │Mudar de pasta    : cd _nome_da_pasta                │
 │Subir um nível    : cd ..                            │
+├─────────────────────── CRIAR ───────────────────────┤
 │Criar um arquivo  : touch _nome_do_arquivo           │
 │Criar uma pasta   : mkdir _nome_da_pasta             │
-│Limpar console    : Control L                        │
+├────────────────────── REMOVER ──────────────────────┤
 │Apagar um arquivo : rm _nome_do_arquivo              │
 │Apagar uma pasta  : rm -r _nome_da_pasta             │
 │Renomear ou mover : mv _antigo _novo                 │
+├───────────────────── CONTROLAR ─────────────────────┤
+│Limpar console    : Control L                        │
+│Cancelar execução : Control C                        │
+│Finalizar entrada : Control D                        │
 ╰─────────────────────────────────────────────────────╯
 """
-__version__ = "0.1.0"
-
+__version__ = "0.1.1"
 
 
 
@@ -1601,10 +1724,23 @@ class Main:
     
     @staticmethod
     def settings(args):
-        print("settings file at " + SettingsParser().get_settings_file())
-        if (args.ascii):
-            SettingsParser().toggle_ascii()
-            print("Initializing symbols... in " + ("ASCII" if SettingsParser().get_ascii() else "UTF-8"))
+        sp = SettingsParser()
+        print("Settings file at " + sp.get_settings_file())
+
+        if (args.color):
+            SettingsParser().toggle_color()
+        if (args.encoding):
+           SettingsParser().toggle_ascii()
+        if (args.diff):
+            SettingsParser().toggle_hdiff()
+
+        print("COLORMODE: " + ("COLORED" if sp.get_color() else "MONO"))
+        print("DIFF MODE: " + ("SIDE_BY_SIDE" if sp.get_hdiff() else "UP_DOWN"))
+        print("ENCODING : " + ("ASCII" if sp.get_ascii() else "UNICODE"))
+
+        
+
+
 
     # @staticmethod
     # def rebuild(args):
@@ -1644,6 +1780,7 @@ class Main:
         parser.add_argument('-v', '--version', action='store_true', help='show version.')
         parser.add_argument('-g', '--guide', action='store_true', help='show simple tko guide.')
         parser.add_argument('-b', '--bash', action='store_true', help='show simple bash guide.')
+        parser.add_argument('-m', '--mono', action='store_true', help='monochromatic.')
         parser.add_argument('-c', '--config', type=str, help='config file.')
         
         subparsers = parser.add_subparsers(title='subcommands', help='help for subcommand.')
@@ -1684,8 +1821,10 @@ class Main:
         parser_u.set_defaults(func=Main.update)
 
         # settings
-        parser_s = subparsers.add_parser('settings', help='settings tool.')
-        parser_s.add_argument('--ascii', '-a', action='store_true', help='toggle ascii mode.')
+        parser_s = subparsers.add_parser('config', help='settings tool.')
+        parser_s.add_argument('--encoding', '-e', action='store_true', help='toggle [ascii | unicode] mode.')
+        parser_s.add_argument('--color', '-c', action='store_true', help='toggle [colored | mono] mode.')
+        parser_s.add_argument('--diff', '-d', action='store_true', help='toggle [side_by_side | up_down] mode.')
         parser_s.set_defaults(func=Main.settings)
 
         args = parser.parse_args()
@@ -1693,17 +1832,27 @@ class Main:
         if args.config:
             SettingsParser().set_settings_file(args.config)
 
-
-
         if len(sys.argv) == 1:
-            print("You must call a subcommand. Use --help for more information.")
-        elif args.version or args.guide or args.bash:
+            parser.print_help()
+            return
+        
+        
+        if SettingsParser().get_ascii():
+            symbols.set_ascii()
+        else:
+            symbols.set_unicode()
+
+        if not args.mono and SettingsParser().get_color():
+            Colored.enabled = True
+            symbols.set_colors()
+
+        if args.version or args.guide or args.bash:
             if args.version:
                 print("tko version " + __version__)
             if args.bash:
-                print(bash_guide, end="")
+                print(bash_guide[1:], end="")
             if args.guide:
-                print(tko_guide, end="")
+                print(tko_guide[1:], end="")
         else:
             try:
                 args.func(args)

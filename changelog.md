@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.1.1
+  - added -m monocolor option
+  - improved layout for both diff
 - 0.1.0
   - added bash guide with -b
   - added tko guide with -g
