@@ -36,7 +36,6 @@ class Colored:
     def paint(text: str, color: Color, color2: Optional[Color] = None) -> str:
         if not Colored.enabled:
             return text
-
         return (Colored.__map[color] + ("" if color2 is None else Colored.__map[color2])
                 + text + Colored.__map[Color.RESET])
 

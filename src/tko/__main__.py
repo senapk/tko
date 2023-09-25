@@ -24,10 +24,10 @@ class Main:
         param = Param.Basic().set_index(args.index)
         if args.quiet:
             param.set_diff_mode(DiffMode.QUIET)
-        elif args.first:
-            param.set_diff_mode(DiffMode.FIRST)
         elif args.all:
             param.set_diff_mode(DiffMode.ALL)
+        else:
+            param.set_diff_mode(DiffMode.FIRST)
 
 
         # load default diff from settings if not specified
@@ -113,7 +113,6 @@ class Main:
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         
         group_n = parser_r.add_mutually_exclusive_group()
-        group_n.add_argument('--first', '-f', action='store_true', help='(default) show only first failure.')
         group_n.add_argument('--quiet', '-q', action='store_true', help='quiet mode, do not show any failure.')
         group_n.add_argument('--all', '-a', action='store_true', help='show all failures.')
 

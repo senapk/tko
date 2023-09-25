@@ -1,0 +1,293 @@
+
+══════════════════════ Running solver against test cases ══════════════════════
+=> 06_failures tests:10 sources:[cases.tio(10)] solvers:[draft.ts][ ω ω ω ω ω ω ω ω ω ω ]
+(ω wrong_output)[00] GR:010 cases.tio (inicializar      ) 
+(ω wrong_output)[01] GR:010 cases.tio (entrar           ) 
+(ω wrong_output)[02] GR:010 cases.tio (limite           ) 
+(ω wrong_output)[03] GR:010 cases.tio (sair             ) 
+(ω wrong_output)[04] GR:010 cases.tio (limite saida     ) 
+(ω wrong_output)[05] GR:010 cases.tio (abastecer        ) 
+(ω wrong_output)[06] GR:010 cases.tio (dirigir vazio    ) 
+(ω wrong_output)[07] GR:010 cases.tio (dirigir          ) 
+(ω wrong_output)[08] GR:010 cases.tio (para longe       ) 
+(ω wrong_output)[09] GR:010 cases.tio (enchendo o tanque) 
+╭──────────────────────────────────────────────────────────────────────────────
+│          (ω wrong_output)[00] GR:010 cases.tio (inicializar      )           
+├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
+│ show                                 │ show
+│ end                                  │ end
+├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
+│ $show                                │ $show                               
+≠ pass: 0, gas: 0, km: 0               ≠ pass: 0, gas: 1, km: 0              
+│ $end                                 │ $end                                
+├────────────────────────────────── MISMATCH ──────────────────────────────────
+│ pass:⸱0,⸱gas:⸱0,⸱km:⸱0↵ (expected)
+│ pass:⸱0,⸱gas:⸱1,⸱km:⸱0↵ (received)
+│               ↑         (mismatch)
+╰──────────────────────────────────────────────────────────────────────────────
+
+╭──────────────────────────────────────────────────────────────────────────────
+│          (ω wrong_output)[01] GR:010 cases.tio (entrar           )           
+├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
+│ show                                 │ show
+│ enter                                │ enter
+│ enter                                │ enter
+│ show                                 │ show
+│ end                                  │ end
+├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
+│ $show                                │ $show                               
+≠ pass: 0, gas: 0, km: 0               ≠ pass: 0, gas: 1, km: 0              
+≠ $enter                               ≠ $end                                
+≠ $enter                               ≠                                     
+≠ $show                                ≠                                     
+≠ pass: 2, gas: 0, km: 0               ≠                                     
+≠ $end                                 ≠                                     
+├────────────────────────────────── MISMATCH ──────────────────────────────────
+│ pass:⸱0,⸱gas:⸱0,⸱km:⸱0↵ (expected)
+│ pass:⸱0,⸱gas:⸱1,⸱km:⸱0↵ (received)
+│               ↑         (mismatch)
+╰──────────────────────────────────────────────────────────────────────────────
+
+╭──────────────────────────────────────────────────────────────────────────────
+│          (ω wrong_output)[02] GR:010 cases.tio (limite           )           
+├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
+│ show                                 │ show
+│ enter                                │ enter
+│ enter                                │ enter
+│ show                                 │ show
+│ enter                                │ enter
+│ show                                 │ show
+│ end                                  │ end
+├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
+│ $show                                │ $show                               
+≠ pass: 0, gas: 0, km: 0               ≠ pass: 0, gas: 1, km: 0              
+≠ $enter                               ≠ $end                                
+≠ $enter                               ≠                                     
+≠ $show                                ≠                                     
+≠ pass: 2, gas: 0, km: 0               ≠                                     
+≠ $enter                               ≠                                     
+≠ fail: limite de pessoas atingido     ≠                                     
+≠ $show                                ≠                                     
+≠ pass: 2, gas: 0, km: 0               ≠                                     
+≠ $end                                 ≠                                     
+├────────────────────────────────── MISMATCH ──────────────────────────────────
+│ pass:⸱0,⸱gas:⸱0,⸱km:⸱0↵ (expected)
+│ pass:⸱0,⸱gas:⸱1,⸱km:⸱0↵ (received)
+│               ↑         (mismatch)
+╰──────────────────────────────────────────────────────────────────────────────
+
+╭──────────────────────────────────────────────────────────────────────────────
+│          (ω wrong_output)[03] GR:010 cases.tio (sair             )           
+├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
+│ show                                 │ show
+│ enter                                │ enter
+│ enter                                │ enter
+│ show                                 │ show
+│ enter                                │ enter
+│ show                                 │ show
+│ leave                                │ leave
+│ show                                 │ show
+│ end                                  │ end
+├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
+│ $show                                │ $show                               
+≠ pass: 0, gas: 0, km: 0               ≠ pass: 0, gas: 1, km: 0              
+≠ $enter                               ≠ $end                                
+≠ $enter                               ≠                                     
+≠ $show                                ≠                                     
+≠ pass: 2, gas: 0, km: 0               ≠                                     
+≠ $enter                               ≠                                     
+≠ fail: limite de pessoas atingido     ≠                                     
+≠ $show                                ≠                                     
+≠ pass: 2, gas: 0, km: 0               ≠                                     
+≠ $leave                               ≠                                     
+≠ $show                                ≠                                     
+≠ pass: 1, gas: 0, km: 0               ≠                                     
+≠ $end                                 ≠                                     
+├────────────────────────────────── MISMATCH ──────────────────────────────────
+│ pass:⸱0,⸱gas:⸱0,⸱km:⸱0↵ (expected)
+│ pass:⸱0,⸱gas:⸱1,⸱km:⸱0↵ (received)
+│               ↑         (mismatch)
+╰──────────────────────────────────────────────────────────────────────────────
+
+╭──────────────────────────────────────────────────────────────────────────────
+│          (ω wrong_output)[04] GR:010 cases.tio (limite saida     )           
+├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
+│ show                                 │ show
+│ enter                                │ enter
+│ enter                                │ enter
+│ show                                 │ show
+│ enter                                │ enter
+│ show                                 │ show
+│ leave                                │ leave
+│ show                                 │ show
+│ leave                                │ leave
+│ leave                                │ leave
+│ show                                 │ show
+│ end                                  │ end
+├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
+│ $show                                │ $show                               
+≠ pass: 0, gas: 0, km: 0               ≠ pass: 0, gas: 1, km: 0              
+≠ $enter                               ≠ $end                                
+≠ $enter                               ≠                                     
+≠ $show                                ≠                                     
+≠ pass: 2, gas: 0, km: 0               ≠                                     
+≠ $enter                               ≠                                     
+≠ fail: limite de pessoas atingido     ≠                                     
+≠ $show                                ≠                                     
+≠ pass: 2, gas: 0, km: 0               ≠                                     
+≠ $leave                               ≠                                     
+≠ $show                                ≠                                     
+≠ pass: 1, gas: 0, km: 0               ≠                                     
+≠ $leave                               ≠                                     
+≠ $leave                               ≠                                     
+≠ fail: nao ha ninguem no carro        ≠                                     
+≠ $show                                ≠                                     
+≠ pass: 0, gas: 0, km: 0               ≠                                     
+≠ $end                                 ≠                                     
+├────────────────────────────────── MISMATCH ──────────────────────────────────
+│ pass:⸱0,⸱gas:⸱0,⸱km:⸱0↵ (expected)
+│ pass:⸱0,⸱gas:⸱1,⸱km:⸱0↵ (received)
+│               ↑         (mismatch)
+╰──────────────────────────────────────────────────────────────────────────────
+
+╭──────────────────────────────────────────────────────────────────────────────
+│          (ω wrong_output)[05] GR:010 cases.tio (abastecer        )           
+├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
+│ fuel 60                              │ fuel 60
+│ show                                 │ show
+│ end                                  │ end
+├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
+≠ $fuel 60                             ≠ $show                               
+≠ $show                                ≠ pass: 0, gas: 1, km: 0              
+≠ pass: 0, gas: 60, km: 0              ≠ $end                                
+≠ $end                                 ≠                                     
+├────────────────────────────────── MISMATCH ──────────────────────────────────
+│ $fuel⸱60↵ (expected)
+│ $show↵    (received)
+│  ↑        (mismatch)
+╰──────────────────────────────────────────────────────────────────────────────
+
+╭──────────────────────────────────────────────────────────────────────────────
+│          (ω wrong_output)[06] GR:010 cases.tio (dirigir vazio    )           
+├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
+│ fuel 60                              │ fuel 60
+│ show                                 │ show
+│ drive 10                             │ drive 10
+│ end                                  │ end
+├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
+≠ $fuel 60                             ≠ $show                               
+≠ $show                                ≠ pass: 0, gas: 1, km: 0              
+≠ pass: 0, gas: 60, km: 0              ≠ $end                                
+≠ $drive 10                            ≠                                     
+≠ fail: nao ha ninguem no carro        ≠                                     
+≠ $end                                 ≠                                     
+├────────────────────────────────── MISMATCH ──────────────────────────────────
+│ $fuel⸱60↵ (expected)
+│ $show↵    (received)
+│  ↑        (mismatch)
+╰──────────────────────────────────────────────────────────────────────────────
+
+╭──────────────────────────────────────────────────────────────────────────────
+│          (ω wrong_output)[07] GR:010 cases.tio (dirigir          )           
+├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
+│ fuel 60                              │ fuel 60
+│ show                                 │ show
+│ drive 10                             │ drive 10
+│ enter                                │ enter
+│ drive 10                             │ drive 10
+│ show                                 │ show
+│ end                                  │ end
+├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
+≠ $fuel 60                             ≠ $show                               
+≠ $show                                ≠ pass: 0, gas: 1, km: 0              
+≠ pass: 0, gas: 60, km: 0              ≠ $end                                
+≠ $drive 10                            ≠                                     
+≠ fail: nao ha ninguem no carro        ≠                                     
+≠ $enter                               ≠                                     
+≠ $drive 10                            ≠                                     
+≠ $show                                ≠                                     
+≠ pass: 1, gas: 50, km: 10             ≠                                     
+≠ $end                                 ≠                                     
+├────────────────────────────────── MISMATCH ──────────────────────────────────
+│ $fuel⸱60↵ (expected)
+│ $show↵    (received)
+│  ↑        (mismatch)
+╰──────────────────────────────────────────────────────────────────────────────
+
+╭──────────────────────────────────────────────────────────────────────────────
+│          (ω wrong_output)[08] GR:010 cases.tio (para longe       )           
+├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
+│ fuel 60                              │ fuel 60
+│ show                                 │ show
+│ drive 10                             │ drive 10
+│ enter                                │ enter
+│ drive 10                             │ drive 10
+│ show                                 │ show
+│ drive 70                             │ drive 70
+│ drive 10                             │ drive 10
+│ show                                 │ show
+│ end                                  │ end
+├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
+≠ $fuel 60                             ≠ $show                               
+≠ $show                                ≠ pass: 0, gas: 1, km: 0              
+≠ pass: 0, gas: 60, km: 0              ≠ $end                                
+≠ $drive 10                            ≠                                     
+≠ fail: nao ha ninguem no carro        ≠                                     
+≠ $enter                               ≠                                     
+≠ $drive 10                            ≠                                     
+≠ $show                                ≠                                     
+≠ pass: 1, gas: 50, km: 10             ≠                                     
+≠ $drive 70                            ≠                                     
+≠ fail: tanque vazio apos andar 50 km  ≠                                     
+≠ $drive 10                            ≠                                     
+≠ fail: tanque vazio                   ≠                                     
+≠ $show                                ≠                                     
+≠ pass: 1, gas: 0, km: 60              ≠                                     
+≠ $end                                 ≠                                     
+├────────────────────────────────── MISMATCH ──────────────────────────────────
+│ $fuel⸱60↵ (expected)
+│ $show↵    (received)
+│  ↑        (mismatch)
+╰──────────────────────────────────────────────────────────────────────────────
+
+╭──────────────────────────────────────────────────────────────────────────────
+│          (ω wrong_output)[09] GR:010 cases.tio (enchendo o tanque)           
+├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
+│ fuel 60                              │ fuel 60
+│ show                                 │ show
+│ drive 10                             │ drive 10
+│ enter                                │ enter
+│ drive 10                             │ drive 10
+│ show                                 │ show
+│ drive 70                             │ drive 70
+│ drive 10                             │ drive 10
+│ show                                 │ show
+│ fuel 200                             │ fuel 200
+│ show                                 │ show
+│ end                                  │ end
+├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
+≠ $fuel 60                             ≠ $show                               
+≠ $show                                ≠ pass: 0, gas: 1, km: 0              
+≠ pass: 0, gas: 60, km: 0              ≠ $end                                
+≠ $drive 10                            ≠                                     
+≠ fail: nao ha ninguem no carro        ≠                                     
+≠ $enter                               ≠                                     
+≠ $drive 10                            ≠                                     
+≠ $show                                ≠                                     
+≠ pass: 1, gas: 50, km: 10             ≠                                     
+≠ $drive 70                            ≠                                     
+≠ fail: tanque vazio apos andar 50 km  ≠                                     
+≠ $drive 10                            ≠                                     
+≠ fail: tanque vazio                   ≠                                     
+≠ $show                                ≠                                     
+≠ pass: 1, gas: 0, km: 60              ≠                                     
+≠ $fuel 200                            ≠                                     
+≠ $show                                ≠                                     
+≠ pass: 1, gas: 100, km: 60            ≠                                     
+≠ $end                                 ≠                                     
+├────────────────────────────────── MISMATCH ──────────────────────────────────
+│ $fuel⸱60↵ (expected)
+│ $show↵    (received)
+│  ↑        (mismatch)
+╰──────────────────────────────────────────────────────────────────────────────
+

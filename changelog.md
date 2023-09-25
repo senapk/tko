@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.1.3
+  - 
 - 0.1.2
   - added tko config -d to change default diff mode
   - added tko run [--updown | --sideby] to select diff mode
