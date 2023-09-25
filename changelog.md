@@ -1,5 +1,12 @@
 # Changelog
 
+- 0.1.2
+  - added tko config -d to change default diff mode
+  - added tko run [--updown | --sideby] to select diff mode
+  - added more tests for run mode
+  - checking if target files exist before run
+  - integrating list, exec and run in tko
+  - disabling update subcommand
 - 0.1.1
   - added -m monocolor option
   - improved layout for both diff

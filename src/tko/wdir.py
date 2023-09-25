@@ -72,6 +72,10 @@ class Wdir:
 
     def set_target_list(self, target_list: List[str]):
         target_list = [t for t in target_list if t != ""]
+        for target in target_list:
+            if not os.path.exists(target):
+                raise FileNotFoundError(Colored.paint("fail: ", Color.RED) + target + " not found")
+
         solvers = [target for target in target_list if Identifier.get_type(target) == IdentifierType.SOLVER]
         sources = [target for target in target_list if Identifier.get_type(target) != IdentifierType.SOLVER]
         

@@ -5,11 +5,11 @@ import os
 from .format import symbols
 
 class ExecutionResult(Enum):
-    UNTESTED = "neutral"
-    SUCCESS = "success"
-    WRONG_OUTPUT = "failure"
-    COMPILATION_ERROR = "compilation"
-    EXECUTION_ERROR = "execution"
+    UNTESTED          = "__untested__"
+    SUCCESS           = "correct_case"
+    WRONG_OUTPUT      = "wrong_output"
+    COMPILATION_ERROR = "compil_error"
+    EXECUTION_ERROR   = "execut_error"
 
     @staticmethod
     def get_symbol(result) -> str:
@@ -35,6 +35,7 @@ class CompilerError(Exception):
 
 class DiffMode(Enum):
     FIRST = "MODE: SHOW FIRST FAILURE ONLY"
+    ALL = "MODE: SHOW ALL FAILURES"
     QUIET = "MODE: SHOW NONE FAILURES"
 
 
@@ -84,7 +85,7 @@ class Unit:
         index = str(self.index).zfill(2)
         grade = str(self.grade_reduction).zfill(3)
         rep = "" if self.repeated is None else "[" + str(self.repeated) + "]"
-        return "(%s)[%s] GR:%s %s (%s) %s" % (ExecutionResult.get_symbol(self.result), index, grade, self.source.ljust(self.source_pad), self.case.ljust(self.case_pad), rep)
+        return "(%s)[%s] GR:%s %s (%s) %s" % (ExecutionResult.get_symbol(self.result) + " " + self.result.value, index, grade, self.source.ljust(self.source_pad), self.case.ljust(self.case_pad), rep)
 
 
 class Param:

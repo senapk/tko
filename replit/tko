@@ -231,7 +231,7 @@ class Colored:
         return len(Colored.remove_colors(text))
 
 
-class Symbols:
+class __Symbols:
     def __init__(self):
         self.opening     = ""
         self.neutral     = ""
@@ -259,7 +259,7 @@ class Symbols:
     def set_ascii(self):
         self.ascii = True
 
-        self.opening     = "=>"
+        self.opening     = "=> "
         self.neutral     = "."
         self.success     = "S"
         self.failure     = "X"
@@ -279,7 +279,7 @@ class Symbols:
     def set_unicode(self):
         self.ascii = False
 
-        self.opening     = "=>"
+        self.opening     = "=> "
         self.neutral     = "»"
         self.success     = "✓"
         self.failure     = "✗"
@@ -307,7 +307,7 @@ class Symbols:
         self.unequal     = Colored.paint(self.unequal,     Color.RED)
         self.equalbar    = Colored.paint(self.equalbar,    Color.GREEN)
 
-symbols = Symbols()
+symbols = __Symbols()
 
 
 class Report:
@@ -353,11 +353,11 @@ class Report:
 
 
 class ExecutionResult(Enum):
-    UNTESTED = "neutral"
-    SUCCESS = "success"
-    WRONG_OUTPUT = "failure"
-    COMPILATION_ERROR = "compilation"
-    EXECUTION_ERROR = "execution"
+    UNTESTED          = "__untested__"
+    SUCCESS           = "correct_case"
+    WRONG_OUTPUT      = "wrong_output"
+    COMPILATION_ERROR = "compil_error"
+    EXECUTION_ERROR   = "execut_error"
 
     @staticmethod
     def get_symbol(result) -> str:
@@ -383,6 +383,7 @@ class CompilerError(Exception):
 
 class DiffMode(Enum):
     FIRST = "MODE: SHOW FIRST FAILURE ONLY"
+    ALL = "MODE: SHOW ALL FAILURES"
     QUIET = "MODE: SHOW NONE FAILURES"
 
 
@@ -432,7 +433,7 @@ class Unit:
         index = str(self.index).zfill(2)
         grade = str(self.grade_reduction).zfill(3)
         rep = "" if self.repeated is None else "[" + str(self.repeated) + "]"
-        return "(%s)[%s] GR:%s %s (%s) %s" % (ExecutionResult.get_symbol(self.result), index, grade, self.source.ljust(self.source_pad), self.case.ljust(self.case_pad), rep)
+        return "(%s)[%s] GR:%s %s (%s) %s" % (ExecutionResult.get_symbol(self.result) + " " + self.result.value, index, grade, self.source.ljust(self.source_pad), self.case.ljust(self.case_pad), rep)
 
 
 class Param:
@@ -707,7 +708,8 @@ class Diff:
         output.write(Report.centralize(str(unit), " ", "│") + "\n")
         input_header = Colored.paint(" INPUT ", Color.BLUE)
         output.write(title_side_by_side(input_header, input_header, hbar, "┬", "├") + "\n")
-        output.write(Diff.side_by_side(string_input.split("\n")[:-1], string_input.split("\n")[:-1]) + "\n")
+        if (string_input != ""):
+            output.write(Diff.side_by_side(string_input.split("\n")[:-1], string_input.split("\n")[:-1]) + "\n")
         expected_header = Colored.paint(" EXPECTED ", Color.GREEN)
         received_header = Colored.paint(" RECEIVED ", Color.RED)
         output.write(title_side_by_side(expected_header, received_header, hbar, "┼", "├") + "\n")
@@ -741,17 +743,17 @@ class Down:
     #     self.drafts['ts'] = Down.ts_draft
     #     self.drafts['js'] = Down.js_draft
 
-    @staticmethod
-    def update():
-        if os.path.isfile(".info"):
-            data = open(".info", "r").read().split("\n")[0]
-            data = data.split(" ")
-            discp = data[0]
-            label = data[1]
-            ext = data[2]
-            Down.entry_unpack(".", discp, label, ext)
-        else:
-            print("No .info file found, skipping update...")
+    # @staticmethod
+    # def update():
+    #     if os.path.isfile(".info"):
+    #         data = open(".info", "r").read().split("\n")[0]
+    #         data = data.split(" ")
+    #         discp = data[0]
+    #         label = data[1]
+    #         ext = data[2]
+    #         Down.entry_unpack(".", discp, label, ext)
+    #     else:
+    #         print("No .info file found, skipping update...")
 
     @staticmethod
     def create_file(content, path, label=""):
@@ -809,9 +811,9 @@ class Down:
             print("problem folder", destiny, "found, merging content.")
 
         # saving problem info on folder
-        info_file = os.path.join(destiny, ".info")
-        with open(info_file, "w") as f:
-            f.write(disc + " " + index + " " + ext + "\n")
+        # info_file = os.path.join(destiny, ".info")
+        # with open(info_file, "w") as f:
+        #     f.write(disc + " " + index + " " + ext + "\n")
         return destiny
 
     @staticmethod
@@ -1435,6 +1437,10 @@ class Wdir:
 
     def set_target_list(self, target_list: List[str]):
         target_list = [t for t in target_list if t != ""]
+        for target in target_list:
+            if not os.path.exists(target):
+                raise FileNotFoundError(Colored.paint("fail: ", Color.RED) + target + " not found")
+
         solvers = [target for target in target_list if Identifier.get_type(target) == IdentifierType.SOLVER]
         sources = [target for target in target_list if Identifier.get_type(target) != IdentifierType.SOLVER]
         
@@ -1564,7 +1570,6 @@ class Execution:
         return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input)
         unit.user = stdout + stderr
         if return_code != 0:
-            unit.user += Symbols.execution
             return ExecutionResult.EXECUTION_ERROR
         if unit.user == unit.output:
             return ExecutionResult.SUCCESS
@@ -1583,19 +1588,11 @@ class Actions:
         except CompilerError as e:
             print(e)
             return 0
-        
-        if wdir.solver is None:
-            print("\n" + Colored.paint("fail:", Color.RED) + " no solver found\n")
-            return        
-        
-        print(Report.centralize(" Exec " + wdir.solver.executable + " ", Symbols.hbar))
-        subprocess.run(wdir.solver.executable, shell=True)
 
     @staticmethod
     def list(target_list: List[str], param: Param.Basic):
         wdir = Wdir().set_target_list(target_list).build().filter(param)
-        print(wdir.resume())
-        print(wdir.unit_list_resume())
+
 
     @staticmethod
     def run(target_list: List[str], param: Param.Basic) -> int:
@@ -1604,35 +1601,63 @@ class Actions:
         except CompilerError as e:
             print(e)
             return 0
-        
-        print(wdir.resume(), end="")
+        except FileNotFoundError as e:
+            print(e)
+            return 0     
 
-        if wdir.solver is None:
-            print("\n" + Colored.paint("fail:", Color.RED) + " no solver found\n")
+        if wdir.solver is None and len(wdir.unit_list) == 0:
+            print(Colored.paint("fail: ", Color.RED) + "No solver or tests found.")
             return 0
+
+        if wdir.solver is None and len(wdir.unit_list) > 0:
+            print(wdir.resume())
+            print(Report.centralize(" No solvers found. Listing Test Cases ", "╌"))
+            print(wdir.unit_list_resume())
+            return
+
+        if wdir.solver is not None and len(wdir.unit_list) == 0:
+            print(wdir.resume())
+            print(Report.centralize(" No test cases found. Running: " + wdir.solver.executable + " ", symbols.hbar), flush=True)
+            # force print to terminal
+
+            subprocess.run(wdir.solver.executable, shell=True)
+            return
         
+        print(Report.centralize(" Running solver against test cases ", "═"))
 
         ## print top line
+        print(wdir.resume(), end="")
         print("[ ", end="")
         for unit in wdir.unit_list:
             unit.result = Execution.run_unit(wdir.solver, unit)
             print(ExecutionResult.get_symbol(unit.result) + " ", end="")
         print("]")
 
-        if param.diff_mode != DiffMode.QUIET:        
-            results = [unit.result for unit in wdir.unit_list]
-            if (ExecutionResult.EXECUTION_ERROR in results) or (ExecutionResult.WRONG_OUTPUT in results):
-                
-                # print cases lines
-                print(wdir.unit_list_resume())
+        if param.diff_mode == DiffMode.QUIET:
+            return
+        
+        results = [unit.result for unit in wdir.unit_list]
+        if (ExecutionResult.EXECUTION_ERROR in results) or (ExecutionResult.WRONG_OUTPUT in results):
+            # print cases lines
+            print(wdir.unit_list_resume())
+            
+        if param.diff_mode == DiffMode.FIRST:
+        # printing only the first wrong case
+            wrong = [unit for unit in wdir.unit_list if unit.result != ExecutionResult.SUCCESS][0]
+            if param.is_up_down:
+                print(Diff.mount_up_down_diff(wrong))
+            else:
+                print(Diff.mount_side_by_side_diff(wrong))
+            return
 
-                # printing only the first wrong case
-                wrong = [unit for unit in wdir.unit_list if unit.result != ExecutionResult.SUCCESS][0]
-                if param.is_up_down:
-                    print(Diff.mount_up_down_diff(wrong))
-                else:
-                    print(Diff.mount_side_by_side_diff(wrong))
-        return wdir.calc_grade()
+        if param.diff_mode == DiffMode.ALL:
+            for unit in wdir.unit_list:
+                if unit.result != ExecutionResult.SUCCESS:
+                    if param.is_up_down:
+                        print(Diff.mount_up_down_diff(unit))
+                    else:
+                        print(Diff.mount_side_by_side_diff(unit))
+        return
 
     @staticmethod
     def build(target_out: str, source_list: List[str], param: Param.Manip, to_force: bool) -> bool:
@@ -1646,26 +1671,26 @@ class Actions:
         return True
 
 tko_guide = """
-╭────────────────── TKO SIMPLE GUIDE ─────────────────╮
-│Mostrar esse guia : tko -g                           │
-│Atualizar scripts : update.sh                        │
-├────────────────────── BAIXAR ───────────────────────┤
-│Baixar o problema : tko down [fup|poo|ed] _id _ext   │
-│ Exemplo para poo : tko down poo 012 cpp             │
-├────────────────────── TESTAR ───────────────────────┤
-│Rodar teste: tko run _codigo[s] _testes [-v] [-i ind]│
-│    exemplo: tko run solver.cpp cases.tio            │
-│  diff vert: tko run solver.cpp cases.tio -v         │
-│ só teste 6: tko run solver.cpp cases.tio -i 6       │
-├────────────────────── EXECUTAR ─────────────────────┤
-│Executar sem testar: tko exec _codigo                │
-│           exemplo : tko exec solver.ts              │
-╰─────────────────────────────────────────────────────╯
+╔══════════════════ TKO SIMPLE GUIDE ═════════════════╗
+║Toggle diff [up_down | side-by-side] : tko config -d ║
+║Toggle color[mono    | colors]       : tko config -c ║
+╟────────────────────── BAIXAR ───────────────────────╢
+║Baixar o problema  : tko down [fup|poo|ed] _id _ext  ║
+║ Exemplo para poo  : tko down poo 012 cpp            ║
+╟────────────────────── EXECUTAR ─────────────────────╢
+║Compilar e executar: tko run _codigo[s]              ║
+║           exemplo : tko run solver.ts               ║
+║           exemplo : tko run main.cpp lib.cpp        ║
+╟────────────────────── TESTAR ───────────────────────╢
+║Compilar e testar: tko run _codigo[s] _cases [-i ind]║
+║    exemplo: tko run solver.cpp cases.tio            ║
+║ só teste 6: tko run solver.cpp cases.tio -i 6       ║
+╚═════════════════════════════════════════════════════╝
 """
 
 bash_guide = """
 ╭────────────────── BASH SIMPLE GUIDE ────────────────╮
-│Mostrar esse guia : tko -b                           │
+│Mostrar esse guia : tko -g                           │
 ├────────────────────── NAVEGAR ──────────────────────┤
 │Mostrar arquivos  : ls                               │
 │Mudar de pasta    : cd _nome_da_pasta                │
@@ -1683,41 +1708,37 @@ bash_guide = """
 │Finalizar entrada : Control D                        │
 ╰─────────────────────────────────────────────────────╯
 """
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 
 
 
 
 class Main:
-    @staticmethod
-    def execute(args):
-        Actions.exec(args.target_list)
 
     @staticmethod
     def run(args):
-        if args.width is not None:
-            Report.set_terminal_size(args.width)
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         if args.quiet:
             param.set_diff_mode(DiffMode.QUIET)
-        if args.vertical:
+        elif args.first:
+            param.set_diff_mode(DiffMode.FIRST)
+        elif args.all:
+            param.set_diff_mode(DiffMode.ALL)
+
+
+        # load default diff from settings if not specified
+        if not args.sideby and not args.updown:
+            param.set_up_down(not SettingsParser().get_hdiff())
+        elif args.sideby:
+            param.set_up_down(False)
+        elif args.updown:
             param.set_up_down(True)
         Actions.run(args.target_list, param)
 
     @staticmethod
-    def list(args):
-        if args.width is not None:
-            Report.set_terminal_size(args.width)
-        PatternLoader.pattern = args.pattern
-        param = Param.Basic().set_index(args.index)
-        Actions.list(args.target_list, param)
-
-    @staticmethod
     def build(args):
-        if args.width is not None:
-            Report.set_terminal_size(args.width)
         PatternLoader.pattern = args.pattern
         manip = Param.Manip().set_unlabel(args.unlabel).set_to_sort(args.sort).set_to_number(args.number)
         Actions.build(args.target, args.target_list, manip, args.force)
@@ -1751,9 +1772,9 @@ class Main:
     #     Actions.update(args.target_list, manip, args.cmd)
     #     return 0
 
-    @staticmethod
-    def update(_args):
-        Down.update()
+    # @staticmethod
+    # def update(_args):
+    #     Down.update()
 
     @staticmethod
     def down(args):
@@ -1763,7 +1784,6 @@ class Main:
     @staticmethod
     def main():
         parent_basic = argparse.ArgumentParser(add_help=False)
-        parent_basic.add_argument('--width', '-w', type=int, help="term width")
         parent_basic.add_argument('--index', '-i', metavar="I", type=int, help='run a specific index.')
         parent_basic.add_argument('--pattern', '-p', metavar="P", type=str, default='@.in @.sol',
                                   help='pattern load/save a folder, default: "@.in @.sol"')
@@ -1777,29 +1797,28 @@ class Main:
                                   help='pattern load/save a folder, default: "@.in @.sol"')
 
         parser = argparse.ArgumentParser(prog='tko', description='A tool for competitive programming.')
-        parser.add_argument('-v', '--version', action='store_true', help='show version.')
-        parser.add_argument('-g', '--guide', action='store_true', help='show simple tko guide.')
-        parser.add_argument('-b', '--bash', action='store_true', help='show simple bash guide.')
-        parser.add_argument('-m', '--mono', action='store_true', help='monochromatic.')
-        parser.add_argument('-c', '--config', type=str, help='config file.')
+        parser.add_argument('-c', metavar='CONFIG_FILE', type=str, help='config file.')
+        parser.add_argument('-w', metavar='WIDTH', type=int, help="terminal width.")
+        parser.add_argument('-v', action='store_true', help='show version.')
+        parser.add_argument('-g', action='store_true', help='show tko simple guide.')
+        parser.add_argument('-b', action='store_true', help='show bash simple guide.')
+        parser.add_argument('-m', action='store_true', help='monochromatic.')
         
         subparsers = parser.add_subparsers(title='subcommands', help='help for subcommand.')
-
-        # list
-        parser_l = subparsers.add_parser('list', parents=[parent_basic], help='show test entries.')
-        parser_l.add_argument('target_list', metavar='T', type=str, nargs='*', help='targets.')
-        parser_l.set_defaults(func=Main.list)
-
-        # exec
-        parser_e = subparsers.add_parser('exec', parents=[parent_basic], help='run without test.')
-        parser_e.add_argument('target_list', metavar='T', type=str, nargs='*', help='target.')
-        parser_e.set_defaults(func=Main.execute)
 
         # run
         parser_r = subparsers.add_parser('run', parents=[parent_basic], help='run with test cases.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
-        parser_r.add_argument('--vertical', '-v', action='store_true', help="use vertical mode.")
-        parser_r.add_argument('--quiet', '-q', action='store_true', help='quiet mode, do not show diffs')
+        
+        group_n = parser_r.add_mutually_exclusive_group()
+        group_n.add_argument('--first', '-f', action='store_true', help='(default) show only first failure.')
+        group_n.add_argument('--quiet', '-q', action='store_true', help='quiet mode, do not show any failure.')
+        group_n.add_argument('--all', '-a', action='store_true', help='show all failures.')
+
+        # add a exclusive group for diff mode
+        group = parser_r.add_mutually_exclusive_group()
+        group.add_argument('--updown', '-u', action='store_true', help="diff mode up-to-down.")
+        group.add_argument('--sideby', '-s', action='store_true', help="diff mode sidebyside.")
         parser_r.set_defaults(func=Main.run)
 
         # build
@@ -1811,14 +1830,10 @@ class Main:
 
         # down
         parser_d = subparsers.add_parser('down', help='download problem from repository.')
-        parser_d.add_argument('disc', type=str, help=" [ fup | ed | poo ]")
-        parser_d.add_argument('index', type=str, help="3 digits label like 021")
+        parser_d.add_argument('disc', type=str, nargs='?', help=" [ fup | ed | poo ].")
+        parser_d.add_argument('index', type=str, nargs='?', help="3 digits label like 021.")
         parser_d.add_argument('extension', type=str, nargs='?', default="-", help="[ c | cpp | js | ts | py | java ]")
         parser_d.set_defaults(func=Main.down)
-
-        # update
-        parser_u = subparsers.add_parser('update', help='update problem from repository.')
-        parser_u.set_defaults(func=Main.update)
 
         # settings
         parser_s = subparsers.add_parser('config', help='settings tool.')
@@ -1829,29 +1844,33 @@ class Main:
 
         args = parser.parse_args()
 
-        if args.config:
-            SettingsParser().set_settings_file(args.config)
-
         if len(sys.argv) == 1:
             parser.print_help()
             return
-        
+
+
+        # setting general settings options
+        if args.w is not None:
+            Report.set_terminal_size(args.width)
+
+        if args.c:
+            SettingsParser().set_settings_file(args.config)
         
         if SettingsParser().get_ascii():
             symbols.set_ascii()
         else:
             symbols.set_unicode()
 
-        if not args.mono and SettingsParser().get_color():
+        if not args.m and SettingsParser().get_color():
             Colored.enabled = True
             symbols.set_colors()
 
-        if args.version or args.guide or args.bash:
-            if args.version:
+        if args.v or args.g or args.b:
+            if args.v:
                 print("tko version " + __version__)
-            if args.bash:
+            if args.b:
                 print(bash_guide[1:], end="")
-            if args.guide:
+            if args.g:
                 print(tko_guide[1:], end="")
         else:
             try:

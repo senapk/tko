@@ -1,2 +1,2 @@
 #!/bin/bash
-tko -m list cases.tio
+tko -m run cases.tio

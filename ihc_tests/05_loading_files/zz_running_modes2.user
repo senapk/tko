@@ -1,0 +1,3 @@
+=> 05_loading_files tests:00 sources:[✗] solvers:[solver.py]
+─────────────── No test cases found. Running: python ./solver.py ──────────────
+12

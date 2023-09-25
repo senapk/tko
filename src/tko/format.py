@@ -79,7 +79,7 @@ class Colored:
         return len(Colored.remove_colors(text))
 
 
-class Symbols:
+class __Symbols:
     def __init__(self):
         self.opening     = ""
         self.neutral     = ""
@@ -107,7 +107,7 @@ class Symbols:
     def set_ascii(self):
         self.ascii = True
 
-        self.opening     = "=>"
+        self.opening     = "=> "
         self.neutral     = "."
         self.success     = "S"
         self.failure     = "X"
@@ -127,7 +127,7 @@ class Symbols:
     def set_unicode(self):
         self.ascii = False
 
-        self.opening     = "=>"
+        self.opening     = "=> "
         self.neutral     = "»"
         self.success     = "✓"
         self.failure     = "✗"
@@ -155,7 +155,7 @@ class Symbols:
         self.unequal     = Colored.paint(self.unequal,     Color.RED)
         self.equalbar    = Colored.paint(self.equalbar,    Color.GREEN)
 
-symbols = Symbols()
+symbols = __Symbols()
 
 
 class Report:

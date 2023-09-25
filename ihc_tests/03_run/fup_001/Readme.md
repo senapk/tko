@@ -1,7 +1,6 @@
-## @001 L2 - Bhaskara
+# @001 L2 - Bhaskara
 
-[](solver.c)
-![](https://raw.githubusercontent.com/qxcodefup/arcade/master/base/001/cover.jpg)
+![_](https://raw.githubusercontent.com/qxcodefup/arcade/master/base/001/cover.jpg)
 
 ## Motivação
 
@@ -11,17 +10,19 @@ Não sei se você amava ou odiava o tal do Bhaskara por inventar aquela fórmula
 
 Dados os valores de A, B e C, calcule as raízes.
 
-### Entrada:
+### Entrada
+
 - Valores de A, B e C em ponto flutuante, um por linha.
 
-### Saída:
+### Saída
+
 - Caso delta seja positivo, a saída deve ser a raiz positiva e raiz negativa, com duas casas decimais, uma raiz por linha.
 - Caso delta seja igual a zero, uma única raiz deve ser considerada, com duas casas decimais.
 - Caso delta sela negativo, a saída deve ser "nao ha raiz real"
 
 ## Exemplos
 
-```
+```txt
 >>>>>>>> duas raízes
 5.4
 25.0

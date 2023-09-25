@@ -26,17 +26,17 @@ class Down:
     #     self.drafts['ts'] = Down.ts_draft
     #     self.drafts['js'] = Down.js_draft
 
-    @staticmethod
-    def update():
-        if os.path.isfile(".info"):
-            data = open(".info", "r").read().split("\n")[0]
-            data = data.split(" ")
-            discp = data[0]
-            label = data[1]
-            ext = data[2]
-            Down.entry_unpack(".", discp, label, ext)
-        else:
-            print("No .info file found, skipping update...")
+    # @staticmethod
+    # def update():
+    #     if os.path.isfile(".info"):
+    #         data = open(".info", "r").read().split("\n")[0]
+    #         data = data.split(" ")
+    #         discp = data[0]
+    #         label = data[1]
+    #         ext = data[2]
+    #         Down.entry_unpack(".", discp, label, ext)
+    #     else:
+    #         print("No .info file found, skipping update...")
 
     @staticmethod
     def create_file(content, path, label=""):
@@ -94,9 +94,9 @@ class Down:
             print("problem folder", destiny, "found, merging content.")
 
         # saving problem info on folder
-        info_file = os.path.join(destiny, ".info")
-        with open(info_file, "w") as f:
-            f.write(disc + " " + index + " " + ext + "\n")
+        # info_file = os.path.join(destiny, ".info")
+        # with open(info_file, "w") as f:
+        #     f.write(disc + " " + index + " " + ext + "\n")
         return destiny
 
     @staticmethod

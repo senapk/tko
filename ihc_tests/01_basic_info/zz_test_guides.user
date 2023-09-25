@@ -1,5 +1,5 @@
 ╭────────────────── BASH SIMPLE GUIDE ────────────────╮
-│Mostrar esse guia : tko -b                           │
+│Mostrar esse guia : tko -g                           │
 ├────────────────────── NAVEGAR ──────────────────────┤
 │Mostrar arquivos  : ls                               │
 │Mudar de pasta    : cd _nome_da_pasta                │
@@ -16,18 +16,18 @@
 │Cancelar execução : Control C                        │
 │Finalizar entrada : Control D                        │
 ╰─────────────────────────────────────────────────────╯
-╭────────────────── TKO SIMPLE GUIDE ─────────────────╮
-│Mostrar esse guia : tko -g                           │
-│Atualizar scripts : update.sh                        │
-├────────────────────── BAIXAR ───────────────────────┤
-│Baixar o problema : tko down [fup|poo|ed] _id _ext   │
-│ Exemplo para poo : tko down poo 012 cpp             │
-├────────────────────── TESTAR ───────────────────────┤
-│Rodar teste: tko run _codigo[s] _testes [-v] [-i ind]│
-│    exemplo: tko run solver.cpp cases.tio            │
-│  diff vert: tko run solver.cpp cases.tio -v         │
-│ só teste 6: tko run solver.cpp cases.tio -i 6       │
-├────────────────────── EXECUTAR ─────────────────────┤
-│Executar sem testar: tko exec _codigo                │
-│           exemplo : tko exec solver.ts              │
-╰─────────────────────────────────────────────────────╯
+╔══════════════════ TKO SIMPLE GUIDE ═════════════════╗
+║Toggle diff [up_down | side-by-side] : tko config -d ║
+║Toggle color[mono    | colors]       : tko config -c ║
+╟────────────────────── BAIXAR ───────────────────────╢
+║Baixar o problema  : tko down [fup|poo|ed] _id _ext  ║
+║ Exemplo para poo  : tko down poo 012 cpp            ║
+╟────────────────────── EXECUTAR ─────────────────────╢
+║Compilar e executar: tko run _codigo[s]              ║
+║           exemplo : tko run solver.ts               ║
+║           exemplo : tko run main.cpp lib.cpp        ║
+╟────────────────────── TESTAR ───────────────────────╢
+║Compilar e testar: tko run _codigo[s] _cases [-i ind]║
+║    exemplo: tko run solver.cpp cases.tio            ║
+║ só teste 6: tko run solver.cpp cases.tio -i 6       ║
+╚═════════════════════════════════════════════════════╝

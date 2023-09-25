@@ -40,7 +40,9 @@ if not args.run and not args.clean:
     args.run = True
 
 root = os.getcwd()
+cut = len(root) + 1
 
+scripts = sorted(scripts)
 for script in scripts:
     dirname = os.path.dirname(script)
     filename = os.path.basename(script)
@@ -50,14 +52,13 @@ for script in scripts:
     if args.run:
         os.chdir(dirname)
         cmd = "bash " + filename + " > " + userfile
-        print("$ " + cmd)
         os.system(cmd)
         cmd = "diff " + userfile + " " + outfile
-        #print("$ " + cmd)
+        print("$ " + "diff " + userfile[cut:] + " " + outfile[cut:])
         os.system(cmd)
 
-    # if args.clean:
-    #     cmd = "rm -f " + userfile
-    #     #print("$ " + cmd)
-    #     os.system(cmd)
+    if args.clean:
+        cmd = "rm -f " + userfile
+        #print("$ " + cmd)
+        os.system(cmd)
 

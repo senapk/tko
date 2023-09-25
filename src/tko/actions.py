@@ -4,7 +4,7 @@ import subprocess
 from .wdir import Wdir
 from .basic import DiffMode, ExecutionResult, CompilerError, Param, Unit
 from .diff import Diff
-from .format import Symbols, Colored, Color, Report
+from .format import Colored, Color, Report, symbols
 from .writer import Writer
 from .solver import Solver
 from .runner import Runner
@@ -22,7 +22,6 @@ class Execution:
         return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input)
         unit.user = stdout + stderr
         if return_code != 0:
-            unit.user += Symbols.execution
             return ExecutionResult.EXECUTION_ERROR
         if unit.user == unit.output:
             return ExecutionResult.SUCCESS
@@ -41,19 +40,11 @@ class Actions:
         except CompilerError as e:
             print(e)
             return 0
-        
-        if wdir.solver is None:
-            print("\n" + Colored.paint("fail:", Color.RED) + " no solver found\n")
-            return        
-        
-        print(Report.centralize(" Exec " + wdir.solver.executable + " ", Symbols.hbar))
-        subprocess.run(wdir.solver.executable, shell=True)
 
     @staticmethod
     def list(target_list: List[str], param: Param.Basic):
         wdir = Wdir().set_target_list(target_list).build().filter(param)
-        print(wdir.resume())
-        print(wdir.unit_list_resume())
+
 
     @staticmethod
     def run(target_list: List[str], param: Param.Basic) -> int:
@@ -62,35 +53,63 @@ class Actions:
         except CompilerError as e:
             print(e)
             return 0
-        
-        print(wdir.resume(), end="")
+        except FileNotFoundError as e:
+            print(e)
+            return 0     
 
-        if wdir.solver is None:
-            print("\n" + Colored.paint("fail:", Color.RED) + " no solver found\n")
+        if wdir.solver is None and len(wdir.unit_list) == 0:
+            print(Colored.paint("fail: ", Color.RED) + "No solver or tests found.")
             return 0
+
+        if wdir.solver is None and len(wdir.unit_list) > 0:
+            print(wdir.resume())
+            print(Report.centralize(" No solvers found. Listing Test Cases ", "╌"))
+            print(wdir.unit_list_resume())
+            return
+
+        if wdir.solver is not None and len(wdir.unit_list) == 0:
+            print(wdir.resume())
+            print(Report.centralize(" No test cases found. Running: " + wdir.solver.executable + " ", symbols.hbar), flush=True)
+            # force print to terminal
+
+            subprocess.run(wdir.solver.executable, shell=True)
+            return
         
+        print(Report.centralize(" Running solver against test cases ", "═"))
 
         ## print top line
+        print(wdir.resume(), end="")
         print("[ ", end="")
         for unit in wdir.unit_list:
             unit.result = Execution.run_unit(wdir.solver, unit)
             print(ExecutionResult.get_symbol(unit.result) + " ", end="")
         print("]")
 
-        if param.diff_mode != DiffMode.QUIET:        
-            results = [unit.result for unit in wdir.unit_list]
-            if (ExecutionResult.EXECUTION_ERROR in results) or (ExecutionResult.WRONG_OUTPUT in results):
-                
-                # print cases lines
-                print(wdir.unit_list_resume())
+        if param.diff_mode == DiffMode.QUIET:
+            return
+        
+        results = [unit.result for unit in wdir.unit_list]
+        if (ExecutionResult.EXECUTION_ERROR in results) or (ExecutionResult.WRONG_OUTPUT in results):
+            # print cases lines
+            print(wdir.unit_list_resume())
+            
+        if param.diff_mode == DiffMode.FIRST:
+        # printing only the first wrong case
+            wrong = [unit for unit in wdir.unit_list if unit.result != ExecutionResult.SUCCESS][0]
+            if param.is_up_down:
+                print(Diff.mount_up_down_diff(wrong))
+            else:
+                print(Diff.mount_side_by_side_diff(wrong))
+            return
 
-                # printing only the first wrong case
-                wrong = [unit for unit in wdir.unit_list if unit.result != ExecutionResult.SUCCESS][0]
-                if param.is_up_down:
-                    print(Diff.mount_up_down_diff(wrong))
-                else:
-                    print(Diff.mount_side_by_side_diff(wrong))
-        return wdir.calc_grade()
+        if param.diff_mode == DiffMode.ALL:
+            for unit in wdir.unit_list:
+                if unit.result != ExecutionResult.SUCCESS:
+                    if param.is_up_down:
+                        print(Diff.mount_up_down_diff(unit))
+                    else:
+                        print(Diff.mount_side_by_side_diff(unit))
+        return
 
     @staticmethod
     def build(target_out: str, source_list: List[str], param: Param.Manip, to_force: bool) -> bool:

@@ -228,7 +228,8 @@ class Diff:
         output.write(Report.centralize(str(unit), " ", "│") + "\n")
         input_header = Colored.paint(" INPUT ", Color.BLUE)
         output.write(title_side_by_side(input_header, input_header, hbar, "┬", "├") + "\n")
-        output.write(Diff.side_by_side(string_input.split("\n")[:-1], string_input.split("\n")[:-1]) + "\n")
+        if (string_input != ""):
+            output.write(Diff.side_by_side(string_input.split("\n")[:-1], string_input.split("\n")[:-1]) + "\n")
         expected_header = Colored.paint(" EXPECTED ", Color.GREEN)
         received_header = Colored.paint(" RECEIVED ", Color.RED)
         output.write(title_side_by_side(expected_header, received_header, hbar, "┼", "├") + "\n")
