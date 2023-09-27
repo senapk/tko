@@ -1852,7 +1852,7 @@ class Main:
             Report.set_terminal_size(args.width)
 
         if args.c:
-            SettingsParser().set_settings_file(args.config)
+            SettingsParser().set_settings_file(args.c)
         
         if SettingsParser().get_ascii():
             symbols.set_ascii()
