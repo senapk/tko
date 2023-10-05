@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.1.4
+  - fixed acesso invalido no caso de não haver erro de execução
 - 0.1.3
   - fixed diff first failure mode
 - 0.1.2
