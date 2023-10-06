@@ -18,7 +18,7 @@ class Execution:
     # run a unit using a solver and return if the result is correct
     @staticmethod
     def run_unit(solver: Solver, unit: Unit) -> ExecutionResult:
-        cmd = solver.executable.split(" ")
+        cmd = solver.executable
         return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input)
         unit.user = stdout + stderr
         if return_code != 0:

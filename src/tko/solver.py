@@ -50,6 +50,7 @@ class Solver:
         # tempdir = os.path.dirname(self.path_list[0])
 
         cmd = ["javac"] + self.path_list + ['-d', self.temp_dir]
+        cmd = " ".join(cmd)
         return_code, stdout, stderr = Runner.subprocess_run(cmd)
         print(stdout)
         print(stderr)
@@ -74,7 +75,7 @@ class Solver:
         filename = os.path.basename(solver)
         source_list = self.path_list
         cmd = [transpiler] + source_list + ["--outdir=" + self.temp_dir, "--format=cjs", "--log-level=error"]
-        return_code, stdout, stderr = Runner.subprocess_run(cmd)
+        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
         print(stdout + stderr)
         if return_code != 0:
             raise CompilerError(stdout + stderr)
@@ -89,7 +90,7 @@ class Solver:
         
         exec_path = os.path.join(tempdir, ".a.out")
         cmd = pre_args + source_list + ["-o", exec_path] + pos_args
-        return_code, stdout, stderr = Runner.subprocess_run(cmd)
+        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
         if return_code != 0:
             raise CompilerError(stdout + stderr)
         self.executable = exec_path
