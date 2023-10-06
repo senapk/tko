@@ -9,9 +9,11 @@ from .settings import SettingsParser
 
 class Down:
 
-    ts_draft = (r'let __lines: string[] = require("fs").readFileSync(0).toString().split("\n");' + '\n'
-                r'let input = () : string => __lines.length === 0 ? "" : __lines.shift()!;' + '\n'
-                r'let write = (text: any, end:string="\n")=> process.stdout.write("" + text + end);') + '\n'
+    ts_draft = (r'let _cin_ : string[] = [];' + '\n'
+                r'try { _cin_ = require("fs").readFileSync(0).toString().split(/\r?\n/); } catch(e){}' + '\n'
+                r'let input = () : string => _cin_.length === 0 ? "" : _cin_.shift()!;' + '\n'
+                r'let write = (text: any, end:string="\n")=> process.stdout.write("" + text + end);' + '\n')
+
     js_draft = (r'let __lines = require("fs").readFileSync(0).toString().split("\n");'  + '\n'
                 r'let input = () => __lines.length === 0 ? "" : __lines.shift();' + '\n'
                 r'let write = (text, end="\n") => process.stdout.write("" + text + end);') + '\n'

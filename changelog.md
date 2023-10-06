@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.1.5
+  - fixed draft for typescript
 - 0.1.4
   - fixed acesso invalido no caso de não haver erro de execução
 - 0.1.3
