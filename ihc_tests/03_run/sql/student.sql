@@ -1,0 +1,2 @@
+SELECT  city
+FROM customers;

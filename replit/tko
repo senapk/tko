@@ -297,7 +297,7 @@ class __Symbols:
         self.wrong       = "ω"
         self.compilation = "ϲ"
         self.execution   = "ϵ"
-        self.unequal     = "≠"
+        self.unequal     = "╪"
         self.equalbar    = "│"
         self.hbar        = "─"
         self.vbar        = "│"
@@ -910,14 +910,13 @@ class Solver:
         self.temp_dir = tempfile.mkdtemp()
         self.error_msg: str = ""
         self.executable: str = ""
-        self.prepare_exec()
+        if len(self.path_list) > 0:
+            self.prepare_exec()
 
     def prepare_exec(self) -> None:
         path = self.path_list[0]
 
-        if " " in path:  # more than one parameter
-            self.executable = path
-        elif path.endswith(".py"):
+        if path.endswith(".py"):
             self.executable = "python " + path
         elif path.endswith(".js"):
             self.__prepare_js()
@@ -1462,6 +1461,15 @@ class Wdir:
         self.set_sources(sources)
         return self
 
+    def set_cmd(self, exec_cmd: Optional[str]):
+        if exec_cmd is None:
+            return self
+        if self.solver is not None:
+            print("fail: if using --cmd, don't pass source files to target")
+        self.solver = Solver([])
+        self.solver.executable = exec_cmd
+        return self
+
     def build(self):
         loading_failures = 0
         for source in self.source_list:
@@ -1560,8 +1568,12 @@ class Wdir:
 
         def solvers() -> str:
             path_list = [] if self.solver is None else self.solver.path_list
-            return (Colored.paint("solvers:", Color.GREEN) +
-                    "[" + ", ".join([os.path.basename(path) for path in path_list]) + "]")
+            out = ""
+            if self.solver is not None and len(path_list) == 0: # free_cmd
+                out = "free cmd"
+            else:
+                out = ", ".join([os.path.basename(path) for path in path_list])
+            return Colored.paint("solvers:", Color.GREEN) + "[" + out + "]"
 
         folder = os.getcwd().split(os.sep)[-1]
         tests_count = (Colored.paint("tests:", Color.GREEN) +
@@ -1595,23 +1607,23 @@ class Actions:
     def __init__(self):
         pass
 
+    # @staticmethod
+    # def exec(target_list: List[str]):
+    #     try:
+    #         wdir = Wdir().set_target_list(target_list).build()
+    #     except CompilerError as e:
+    #         print(e)
+    #         return 0
+
+    # @staticmethod
+    # def list(target_list: List[str], param: Param.Basic):
+    #     wdir = Wdir().set_target_list(target_list).build().filter(param)
+
+
     @staticmethod
-    def exec(target_list: List[str]):
+    def run(target_list: List[str], exec_cmd: Optional[str], param: Param.Basic) -> int:
         try:
-            wdir = Wdir().set_target_list(target_list).build()
-        except CompilerError as e:
-            print(e)
-            return 0
-
-    @staticmethod
-    def list(target_list: List[str], param: Param.Basic):
-        wdir = Wdir().set_target_list(target_list).build().filter(param)
-
-
-    @staticmethod
-    def run(target_list: List[str], param: Param.Basic) -> int:
-        try:
-            wdir = Wdir().set_target_list(target_list).build().filter(param)
+            wdir = Wdir().set_target_list(target_list).set_cmd(exec_cmd).build().filter(param)
         except CompilerError as e:
             print(e)
             return 0
@@ -1641,10 +1653,10 @@ class Actions:
 
         ## print top line
         print(wdir.resume(), end="")
-        print("[ ", end="")
+        print("[ ", end="", flush=True)
         for unit in wdir.unit_list:
             unit.result = Execution.run_unit(wdir.solver, unit)
-            print(ExecutionResult.get_symbol(unit.result) + " ", end="")
+            print(ExecutionResult.get_symbol(unit.result) + " ", end="", flush=True)
         print("]")
 
         if param.diff_mode == DiffMode.QUIET:
@@ -1723,7 +1735,7 @@ bash_guide = """
 │Finalizar entrada : Control D                        │
 ╰─────────────────────────────────────────────────────╯
 """
-__version__ = "0.1.5"
+__version__ = "0.1.6"
 
 
 
@@ -1750,7 +1762,7 @@ class Main:
             param.set_up_down(False)
         elif args.updown:
             param.set_up_down(True)
-        Actions.run(args.target_list, param)
+        Actions.run(args.target_list, args.cmd, param)
 
     @staticmethod
     def build(args):
@@ -1824,7 +1836,8 @@ class Main:
         # run
         parser_r = subparsers.add_parser('run', parents=[parent_basic], help='run with test cases.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
-        
+        parser_r.add_argument("--cmd", type=str, help="bash command to run code")
+
         group_n = parser_r.add_mutually_exclusive_group()
         group_n.add_argument('--quiet', '-q', action='store_true', help='quiet mode, do not show any failure.')
         group_n.add_argument('--all', '-a', action='store_true', help='show all failures.')

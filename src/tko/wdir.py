@@ -191,7 +191,7 @@ class Wdir:
         def solvers() -> str:
             path_list = [] if self.solver is None else self.solver.path_list
             out = ""
-            if len(path_list) == 0: # free_cmd
+            if self.solver is not None and len(path_list) == 0: # free_cmd
                 out = "free cmd"
             else:
                 out = ", ".join([os.path.basename(path) for path in path_list])

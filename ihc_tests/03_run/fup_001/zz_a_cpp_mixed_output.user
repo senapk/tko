@@ -11,11 +11,11 @@
 │             (ϵ execut_error)[00] GR:014 cases.tio (duas raízes)              
 ├─────────────────────────────────── INPUT ────────────────────────────────────
 ├────────────────────────────────── EXPECTED ──────────────────────────────────
-≠ 0.44
-≠ -5.07
+╪ 0.44
+╪ -5.07
 ├────────────────────────────────── RECEIVED ──────────────────────────────────
-≠ terminate called after throwing an instance of 'std::invalid_argument'
-≠   what():  Impossivel calcular
+╪ terminate called after throwing an instance of 'std::invalid_argument'
+╪   what():  Impossivel calcular
 ├────────────────────────────────── MISMATCH ──────────────────────────────────
 │ 0.44↵                                                                   (expected)
 │ terminate⸱called⸱after⸱throwing⸱an⸱instance⸱of⸱'std::invalid_argument'↵ (received)

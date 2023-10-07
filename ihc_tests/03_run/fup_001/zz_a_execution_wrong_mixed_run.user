@@ -11,17 +11,17 @@
 │             (ϵ execut_error)[00] GR:014 cases.tio (duas raízes)              
 ├─────────────────────────────────── INPUT ────────────────────────────────────
 ├────────────────────────────────── EXPECTED ──────────────────────────────────
-≠ 0.44
-≠ -5.07
-≠ 
-≠ 
-≠ 
+╪ 0.44
+╪ -5.07
+╪ 
+╪ 
+╪ 
 ├────────────────────────────────── RECEIVED ──────────────────────────────────
-≠ Traceback (most recent call last):
-≠   File "/home/lion/Dropbox/gits/tools/tko/ihc_tests/03_run/fup_001/./solver.py", line 1, in <module>
-≠     a = float(input())
-≠               ^^^^^^^
-≠ EOFError: EOF when reading a line
+╪ Traceback (most recent call last):
+╪   File "/home/lion/Dropbox/gits/tools/tko/ihc_tests/03_run/fup_001/./solver.py", line 1, in <module>
+╪     a = float(input())
+╪               ^^^^^^^
+╪ EOFError: EOF when reading a line
 ├────────────────────────────────── MISMATCH ──────────────────────────────────
 │ 0.44↵                               (expected)
 │ Traceback⸱(most⸱recent⸱call⸱last):↵ (received)

@@ -1,9 +1,10 @@
 # Changelog
 
-- 0.2.0
+- 0.1.6
   - flushing after each execution
   - support for bash commands in run
   - more test cases
+  - fixed unequal char to ╪, that looks better than ≠
 - 0.1.5
   - fixed draft for typescript
 - 0.1.4

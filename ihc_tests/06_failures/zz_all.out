@@ -18,7 +18,7 @@
 │ end                                  │ end
 ├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
 │ $show                                │ $show                               
-≠ pass: 0, gas: 0, km: 0               ≠ pass: 0, gas: 1, km: 0              
+╪ pass: 0, gas: 0, km: 0               ╪ pass: 0, gas: 1, km: 0              
 │ $end                                 │ $end                                
 ├────────────────────────────────── MISMATCH ──────────────────────────────────
 │ pass:⸱0,⸱gas:⸱0,⸱km:⸱0↵ (expected)
@@ -36,12 +36,12 @@
 │ end                                  │ end
 ├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
 │ $show                                │ $show                               
-≠ pass: 0, gas: 0, km: 0               ≠ pass: 0, gas: 1, km: 0              
-≠ $enter                               ≠ $end                                
-≠ $enter                               ≠                                     
-≠ $show                                ≠                                     
-≠ pass: 2, gas: 0, km: 0               ≠                                     
-≠ $end                                 ≠                                     
+╪ pass: 0, gas: 0, km: 0               ╪ pass: 0, gas: 1, km: 0              
+╪ $enter                               ╪ $end                                
+╪ $enter                               ╪                                     
+╪ $show                                ╪                                     
+╪ pass: 2, gas: 0, km: 0               ╪                                     
+╪ $end                                 ╪                                     
 ├────────────────────────────────── MISMATCH ──────────────────────────────────
 │ pass:⸱0,⸱gas:⸱0,⸱km:⸱0↵ (expected)
 │ pass:⸱0,⸱gas:⸱1,⸱km:⸱0↵ (received)
@@ -60,16 +60,16 @@
 │ end                                  │ end
 ├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
 │ $show                                │ $show                               
-≠ pass: 0, gas: 0, km: 0               ≠ pass: 0, gas: 1, km: 0              
-≠ $enter                               ≠ $end                                
-≠ $enter                               ≠                                     
-≠ $show                                ≠                                     
-≠ pass: 2, gas: 0, km: 0               ≠                                     
-≠ $enter                               ≠                                     
-≠ fail: limite de pessoas atingido     ≠                                     
-≠ $show                                ≠                                     
-≠ pass: 2, gas: 0, km: 0               ≠                                     
-≠ $end                                 ≠                                     
+╪ pass: 0, gas: 0, km: 0               ╪ pass: 0, gas: 1, km: 0              
+╪ $enter                               ╪ $end                                
+╪ $enter                               ╪                                     
+╪ $show                                ╪                                     
+╪ pass: 2, gas: 0, km: 0               ╪                                     
+╪ $enter                               ╪                                     
+╪ fail: limite de pessoas atingido     ╪                                     
+╪ $show                                ╪                                     
+╪ pass: 2, gas: 0, km: 0               ╪                                     
+╪ $end                                 ╪                                     
 ├────────────────────────────────── MISMATCH ──────────────────────────────────
 │ pass:⸱0,⸱gas:⸱0,⸱km:⸱0↵ (expected)
 │ pass:⸱0,⸱gas:⸱1,⸱km:⸱0↵ (received)
@@ -90,19 +90,19 @@
 │ end                                  │ end
 ├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
 │ $show                                │ $show                               
-≠ pass: 0, gas: 0, km: 0               ≠ pass: 0, gas: 1, km: 0              
-≠ $enter                               ≠ $end                                
-≠ $enter                               ≠                                     
-≠ $show                                ≠                                     
-≠ pass: 2, gas: 0, km: 0               ≠                                     
-≠ $enter                               ≠                                     
-≠ fail: limite de pessoas atingido     ≠                                     
-≠ $show                                ≠                                     
-≠ pass: 2, gas: 0, km: 0               ≠                                     
-≠ $leave                               ≠                                     
-≠ $show                                ≠                                     
-≠ pass: 1, gas: 0, km: 0               ≠                                     
-≠ $end                                 ≠                                     
+╪ pass: 0, gas: 0, km: 0               ╪ pass: 0, gas: 1, km: 0              
+╪ $enter                               ╪ $end                                
+╪ $enter                               ╪                                     
+╪ $show                                ╪                                     
+╪ pass: 2, gas: 0, km: 0               ╪                                     
+╪ $enter                               ╪                                     
+╪ fail: limite de pessoas atingido     ╪                                     
+╪ $show                                ╪                                     
+╪ pass: 2, gas: 0, km: 0               ╪                                     
+╪ $leave                               ╪                                     
+╪ $show                                ╪                                     
+╪ pass: 1, gas: 0, km: 0               ╪                                     
+╪ $end                                 ╪                                     
 ├────────────────────────────────── MISMATCH ──────────────────────────────────
 │ pass:⸱0,⸱gas:⸱0,⸱km:⸱0↵ (expected)
 │ pass:⸱0,⸱gas:⸱1,⸱km:⸱0↵ (received)
@@ -126,24 +126,24 @@
 │ end                                  │ end
 ├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
 │ $show                                │ $show                               
-≠ pass: 0, gas: 0, km: 0               ≠ pass: 0, gas: 1, km: 0              
-≠ $enter                               ≠ $end                                
-≠ $enter                               ≠                                     
-≠ $show                                ≠                                     
-≠ pass: 2, gas: 0, km: 0               ≠                                     
-≠ $enter                               ≠                                     
-≠ fail: limite de pessoas atingido     ≠                                     
-≠ $show                                ≠                                     
-≠ pass: 2, gas: 0, km: 0               ≠                                     
-≠ $leave                               ≠                                     
-≠ $show                                ≠                                     
-≠ pass: 1, gas: 0, km: 0               ≠                                     
-≠ $leave                               ≠                                     
-≠ $leave                               ≠                                     
-≠ fail: nao ha ninguem no carro        ≠                                     
-≠ $show                                ≠                                     
-≠ pass: 0, gas: 0, km: 0               ≠                                     
-≠ $end                                 ≠                                     
+╪ pass: 0, gas: 0, km: 0               ╪ pass: 0, gas: 1, km: 0              
+╪ $enter                               ╪ $end                                
+╪ $enter                               ╪                                     
+╪ $show                                ╪                                     
+╪ pass: 2, gas: 0, km: 0               ╪                                     
+╪ $enter                               ╪                                     
+╪ fail: limite de pessoas atingido     ╪                                     
+╪ $show                                ╪                                     
+╪ pass: 2, gas: 0, km: 0               ╪                                     
+╪ $leave                               ╪                                     
+╪ $show                                ╪                                     
+╪ pass: 1, gas: 0, km: 0               ╪                                     
+╪ $leave                               ╪                                     
+╪ $leave                               ╪                                     
+╪ fail: nao ha ninguem no carro        ╪                                     
+╪ $show                                ╪                                     
+╪ pass: 0, gas: 0, km: 0               ╪                                     
+╪ $end                                 ╪                                     
 ├────────────────────────────────── MISMATCH ──────────────────────────────────
 │ pass:⸱0,⸱gas:⸱0,⸱km:⸱0↵ (expected)
 │ pass:⸱0,⸱gas:⸱1,⸱km:⸱0↵ (received)
@@ -157,10 +157,10 @@
 │ show                                 │ show
 │ end                                  │ end
 ├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
-≠ $fuel 60                             ≠ $show                               
-≠ $show                                ≠ pass: 0, gas: 1, km: 0              
-≠ pass: 0, gas: 60, km: 0              ≠ $end                                
-≠ $end                                 ≠                                     
+╪ $fuel 60                             ╪ $show                               
+╪ $show                                ╪ pass: 0, gas: 1, km: 0              
+╪ pass: 0, gas: 60, km: 0              ╪ $end                                
+╪ $end                                 ╪                                     
 ├────────────────────────────────── MISMATCH ──────────────────────────────────
 │ $fuel⸱60↵ (expected)
 │ $show↵    (received)
@@ -175,12 +175,12 @@
 │ drive 10                             │ drive 10
 │ end                                  │ end
 ├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
-≠ $fuel 60                             ≠ $show                               
-≠ $show                                ≠ pass: 0, gas: 1, km: 0              
-≠ pass: 0, gas: 60, km: 0              ≠ $end                                
-≠ $drive 10                            ≠                                     
-≠ fail: nao ha ninguem no carro        ≠                                     
-≠ $end                                 ≠                                     
+╪ $fuel 60                             ╪ $show                               
+╪ $show                                ╪ pass: 0, gas: 1, km: 0              
+╪ pass: 0, gas: 60, km: 0              ╪ $end                                
+╪ $drive 10                            ╪                                     
+╪ fail: nao ha ninguem no carro        ╪                                     
+╪ $end                                 ╪                                     
 ├────────────────────────────────── MISMATCH ──────────────────────────────────
 │ $fuel⸱60↵ (expected)
 │ $show↵    (received)
@@ -198,16 +198,16 @@
 │ show                                 │ show
 │ end                                  │ end
 ├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
-≠ $fuel 60                             ≠ $show                               
-≠ $show                                ≠ pass: 0, gas: 1, km: 0              
-≠ pass: 0, gas: 60, km: 0              ≠ $end                                
-≠ $drive 10                            ≠                                     
-≠ fail: nao ha ninguem no carro        ≠                                     
-≠ $enter                               ≠                                     
-≠ $drive 10                            ≠                                     
-≠ $show                                ≠                                     
-≠ pass: 1, gas: 50, km: 10             ≠                                     
-≠ $end                                 ≠                                     
+╪ $fuel 60                             ╪ $show                               
+╪ $show                                ╪ pass: 0, gas: 1, km: 0              
+╪ pass: 0, gas: 60, km: 0              ╪ $end                                
+╪ $drive 10                            ╪                                     
+╪ fail: nao ha ninguem no carro        ╪                                     
+╪ $enter                               ╪                                     
+╪ $drive 10                            ╪                                     
+╪ $show                                ╪                                     
+╪ pass: 1, gas: 50, km: 10             ╪                                     
+╪ $end                                 ╪                                     
 ├────────────────────────────────── MISMATCH ──────────────────────────────────
 │ $fuel⸱60↵ (expected)
 │ $show↵    (received)
@@ -228,22 +228,22 @@
 │ show                                 │ show
 │ end                                  │ end
 ├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
-≠ $fuel 60                             ≠ $show                               
-≠ $show                                ≠ pass: 0, gas: 1, km: 0              
-≠ pass: 0, gas: 60, km: 0              ≠ $end                                
-≠ $drive 10                            ≠                                     
-≠ fail: nao ha ninguem no carro        ≠                                     
-≠ $enter                               ≠                                     
-≠ $drive 10                            ≠                                     
-≠ $show                                ≠                                     
-≠ pass: 1, gas: 50, km: 10             ≠                                     
-≠ $drive 70                            ≠                                     
-≠ fail: tanque vazio apos andar 50 km  ≠                                     
-≠ $drive 10                            ≠                                     
-≠ fail: tanque vazio                   ≠                                     
-≠ $show                                ≠                                     
-≠ pass: 1, gas: 0, km: 60              ≠                                     
-≠ $end                                 ≠                                     
+╪ $fuel 60                             ╪ $show                               
+╪ $show                                ╪ pass: 0, gas: 1, km: 0              
+╪ pass: 0, gas: 60, km: 0              ╪ $end                                
+╪ $drive 10                            ╪                                     
+╪ fail: nao ha ninguem no carro        ╪                                     
+╪ $enter                               ╪                                     
+╪ $drive 10                            ╪                                     
+╪ $show                                ╪                                     
+╪ pass: 1, gas: 50, km: 10             ╪                                     
+╪ $drive 70                            ╪                                     
+╪ fail: tanque vazio apos andar 50 km  ╪                                     
+╪ $drive 10                            ╪                                     
+╪ fail: tanque vazio                   ╪                                     
+╪ $show                                ╪                                     
+╪ pass: 1, gas: 0, km: 60              ╪                                     
+╪ $end                                 ╪                                     
 ├────────────────────────────────── MISMATCH ──────────────────────────────────
 │ $fuel⸱60↵ (expected)
 │ $show↵    (received)
@@ -266,25 +266,25 @@
 │ show                                 │ show
 │ end                                  │ end
 ├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
-≠ $fuel 60                             ≠ $show                               
-≠ $show                                ≠ pass: 0, gas: 1, km: 0              
-≠ pass: 0, gas: 60, km: 0              ≠ $end                                
-≠ $drive 10                            ≠                                     
-≠ fail: nao ha ninguem no carro        ≠                                     
-≠ $enter                               ≠                                     
-≠ $drive 10                            ≠                                     
-≠ $show                                ≠                                     
-≠ pass: 1, gas: 50, km: 10             ≠                                     
-≠ $drive 70                            ≠                                     
-≠ fail: tanque vazio apos andar 50 km  ≠                                     
-≠ $drive 10                            ≠                                     
-≠ fail: tanque vazio                   ≠                                     
-≠ $show                                ≠                                     
-≠ pass: 1, gas: 0, km: 60              ≠                                     
-≠ $fuel 200                            ≠                                     
-≠ $show                                ≠                                     
-≠ pass: 1, gas: 100, km: 60            ≠                                     
-≠ $end                                 ≠                                     
+╪ $fuel 60                             ╪ $show                               
+╪ $show                                ╪ pass: 0, gas: 1, km: 0              
+╪ pass: 0, gas: 60, km: 0              ╪ $end                                
+╪ $drive 10                            ╪                                     
+╪ fail: nao ha ninguem no carro        ╪                                     
+╪ $enter                               ╪                                     
+╪ $drive 10                            ╪                                     
+╪ $show                                ╪                                     
+╪ pass: 1, gas: 50, km: 10             ╪                                     
+╪ $drive 70                            ╪                                     
+╪ fail: tanque vazio apos andar 50 km  ╪                                     
+╪ $drive 10                            ╪                                     
+╪ fail: tanque vazio                   ╪                                     
+╪ $show                                ╪                                     
+╪ pass: 1, gas: 0, km: 60              ╪                                     
+╪ $fuel 200                            ╪                                     
+╪ $show                                ╪                                     
+╪ pass: 1, gas: 100, km: 60            ╪                                     
+╪ $end                                 ╪                                     
 ├────────────────────────────────── MISMATCH ──────────────────────────────────
 │ $fuel⸱60↵ (expected)
 │ $show↵    (received)
