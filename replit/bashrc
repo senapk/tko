@@ -79,8 +79,6 @@ shopt -s expand_aliases
 
 # export QT_SELECT=4
 
-
-
 echo "$INTRO"
 
 # Enable history appending instead of overwriting.  #139609
@@ -88,6 +86,6 @@ shopt -s histappend
 
 export PATH="/home/runner/${REPL_SLUG}/.bin:${PATH}"
 
-alias tko='tko -c /home/runner/${REPL_SLUG}/.tko.cfg'
-
-tko -bg
+alias tko='tko -c /home/runner/${REPL_SLUG}/.bin/tko.cfg'
+python .bin/check.py
+echo "Para ver o guia digite: tko -bg"

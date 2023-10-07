@@ -8,6 +8,10 @@ TARGET="${REP}/.bin/tko"
 curl  ${SOURCE} -o ${TARGET}
 chmod +x ${TARGET}
 
+SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/check.py"
+TARGET="${REP}/.bin/check.py"
+curl  ${SOURCE} -o ${TARGET}
+
 SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/bashrc"
 TARGET="${REP}/.bashrc"
 curl  ${SOURCE} -o ${TARGET}

@@ -18,8 +18,6 @@ tko_guide = """
 
 bash_guide = """
 ╭────────────────── BASH SIMPLE GUIDE ────────────────╮
-│Mostrar esse guia : tko -g                           │
-├────────────────────── NAVEGAR ──────────────────────┤
 │Mostrar arquivos  : ls                               │
 │Mudar de pasta    : cd _nome_da_pasta                │
 │Subir um nível    : cd ..                            │
