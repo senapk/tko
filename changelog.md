@@ -1,5 +1,9 @@
 # Changelog
 
+- 0.2.0
+  - flushing after each execution
+  - support for bash commands in run
+  - more test cases
 - 0.1.5
   - fixed draft for typescript
 - 0.1.4

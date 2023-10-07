@@ -83,6 +83,15 @@ class Wdir:
         self.set_sources(sources)
         return self
 
+    def set_cmd(self, exec_cmd: Optional[str]):
+        if exec_cmd is None:
+            return self
+        if self.solver is not None:
+            print("fail: if using --cmd, don't pass source files to target")
+        self.solver = Solver([])
+        self.solver.executable = exec_cmd
+        return self
+
     def build(self):
         loading_failures = 0
         for source in self.source_list:
@@ -181,8 +190,12 @@ class Wdir:
 
         def solvers() -> str:
             path_list = [] if self.solver is None else self.solver.path_list
-            return (Colored.paint("solvers:", Color.GREEN) +
-                    "[" + ", ".join([os.path.basename(path) for path in path_list]) + "]")
+            out = ""
+            if len(path_list) == 0: # free_cmd
+                out = "free cmd"
+            else:
+                out = ", ".join([os.path.basename(path) for path in path_list])
+            return Colored.paint("solvers:", Color.GREEN) + "[" + out + "]"
 
         folder = os.getcwd().split(os.sep)[-1]
         tests_count = (Colored.paint("tests:", Color.GREEN) +

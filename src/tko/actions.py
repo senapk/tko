@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 import subprocess
 
 from .wdir import Wdir
@@ -33,23 +33,23 @@ class Actions:
     def __init__(self):
         pass
 
+    # @staticmethod
+    # def exec(target_list: List[str]):
+    #     try:
+    #         wdir = Wdir().set_target_list(target_list).build()
+    #     except CompilerError as e:
+    #         print(e)
+    #         return 0
+
+    # @staticmethod
+    # def list(target_list: List[str], param: Param.Basic):
+    #     wdir = Wdir().set_target_list(target_list).build().filter(param)
+
+
     @staticmethod
-    def exec(target_list: List[str]):
+    def run(target_list: List[str], exec_cmd: Optional[str], param: Param.Basic) -> int:
         try:
-            wdir = Wdir().set_target_list(target_list).build()
-        except CompilerError as e:
-            print(e)
-            return 0
-
-    @staticmethod
-    def list(target_list: List[str], param: Param.Basic):
-        wdir = Wdir().set_target_list(target_list).build().filter(param)
-
-
-    @staticmethod
-    def run(target_list: List[str], param: Param.Basic) -> int:
-        try:
-            wdir = Wdir().set_target_list(target_list).build().filter(param)
+            wdir = Wdir().set_target_list(target_list).set_cmd(exec_cmd).build().filter(param)
         except CompilerError as e:
             print(e)
             return 0
@@ -79,10 +79,10 @@ class Actions:
 
         ## print top line
         print(wdir.resume(), end="")
-        print("[ ", end="")
+        print("[ ", end="", flush=True)
         for unit in wdir.unit_list:
             unit.result = Execution.run_unit(wdir.solver, unit)
-            print(ExecutionResult.get_symbol(unit.result) + " ", end="")
+            print(ExecutionResult.get_symbol(unit.result) + " ", end="", flush=True)
         print("]")
 
         if param.diff_mode == DiffMode.QUIET:

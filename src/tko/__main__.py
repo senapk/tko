@@ -37,7 +37,7 @@ class Main:
             param.set_up_down(False)
         elif args.updown:
             param.set_up_down(True)
-        Actions.run(args.target_list, param)
+        Actions.run(args.target_list, args.cmd, param)
 
     @staticmethod
     def build(args):
@@ -111,7 +111,8 @@ class Main:
         # run
         parser_r = subparsers.add_parser('run', parents=[parent_basic], help='run with test cases.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
-        
+        parser_r.add_argument("--cmd", type=str, help="bash command to run code")
+
         group_n = parser_r.add_mutually_exclusive_group()
         group_n.add_argument('--quiet', '-q', action='store_true', help='quiet mode, do not show any failure.')
         group_n.add_argument('--all', '-a', action='store_true', help='show all failures.')

@@ -20,14 +20,13 @@ class Solver:
         self.temp_dir = tempfile.mkdtemp()
         self.error_msg: str = ""
         self.executable: str = ""
-        self.prepare_exec()
+        if len(self.path_list) > 0:
+            self.prepare_exec()
 
     def prepare_exec(self) -> None:
         path = self.path_list[0]
 
-        if " " in path:  # more than one parameter
-            self.executable = path
-        elif path.endswith(".py"):
+        if path.endswith(".py"):
             self.executable = "python " + path
         elif path.endswith(".js"):
             self.__prepare_js()
