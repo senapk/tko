@@ -38,6 +38,8 @@ class Solver:
             self.__prepare_c()
         elif path.endswith(".cpp"):
             self.__prepare_cpp()
+        elif path.endswith(".sql"):
+            self.__prepare_sql()
         else:
             self.executable = path
 
@@ -61,6 +63,10 @@ class Solver:
         check_tool("node")
         solver = self.path_list[0]
         self.executable = "node " + solver
+
+    def __prepare_sql(self):
+        check_tool("sqlite3")
+        self.executable = "cat " + " ".join(self.path_list) + " | sqlite3"
 
     def __prepare_ts(self):
         transpiler = "esbuild"

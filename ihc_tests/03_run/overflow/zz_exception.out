@@ -1,0 +1,40 @@
+══════════════════════ Running solver against test cases ══════════════════════
+=> overflow tests:01 sources:[cases.tio(01)] solvers:[exception.cpp][ ϵ ]
+(ϵ execut_error)[00] GR:100 cases.tio () 
+╭──────────────────────────────────────────────────────────────────────────────
+│                  (ϵ execut_error)[00] GR:100 cases.tio ()                    
+├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
+│ 1                                    │ 1
+│ 2                                    │ 2
+│ 3                                    │ 3
+│ 4                                    │ 4
+├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
+│ 1                                    │ 1                                   
+│ 2                                    │ 2                                   
+│ 3                                    │ terminate called after throwing an i
+│ 4                                    │   what():  pane no sistema          
+│                                      │ fail: runtime exception             
+╰──────────────────────────────────────────────────────────────────────────────
+
+══════════════════════ Running solver against test cases ══════════════════════
+=> overflow tests:01 sources:[cases.tio(01)] solvers:[exception.py][ ϵ ]
+(ϵ execut_error)[00] GR:100 cases.tio () 
+╭──────────────────────────────────────────────────────────────────────────────
+│                  (ϵ execut_error)[00] GR:100 cases.tio ()                    
+├─────────────────────────────────── INPUT ────────────────────────────────────
+│ 1
+│ 2
+│ 3
+│ 4
+├────────────────────────────────── EXPECTED ──────────────────────────────────
+│ 1
+│ 2
+│ 3
+│ 4
+├────────────────────────────────── RECEIVED ──────────────────────────────────
+│   File "/home/lion/Dropbox/gits/tools/tko/ihc_tests/03_run/overflow/./exception.py", line 1
+│     except "Out"
+│     ^^^^^^
+│ SyntaxError: invalid syntax
+╰──────────────────────────────────────────────────────────────────────────────
+

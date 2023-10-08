@@ -3,6 +3,7 @@ import io
 
 from .format import Colored, Color, Report, symbols
 from .basic import Unit
+from .basic import ExecutionResult
 
 
 class Diff:
@@ -37,7 +38,7 @@ class Diff:
 
     # create a string with both ta and tb side by side with a vertical bar in the middle
     @staticmethod
-    def side_by_side(ta: List[str], tb: List[str]):
+    def side_by_side(ta: List[str], tb: List[str], unequal: str = symbols.unequal):
         cut = (Report.get_terminal_size() - 6) // 2
         upper = max(len(ta), len(tb))
         data = []
@@ -50,7 +51,7 @@ class Diff:
             # if len(a) > cut:
             #     a = a[:cut]
             if i >= len(ta) or i >= len(tb) or ta[i] != tb[i]:
-                data.append(symbols.unequal + " " + a + " " + symbols.unequal + " " + b)
+                data.append(unequal + " " + a + " " + unequal + " " + b)
             else:
                 data.append(symbols.vbar + " " + a + " " + symbols.vbar + " " + b)
 
@@ -162,7 +163,10 @@ class Diff:
 
         expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received)
         string_input = "\n".join([symbols.vbar + " " + line for line in string_input.split("\n")])[0:-2]
-        expected_lines, received_lines = Diff.put_left_equal(expected_lines, received_lines)
+        unequal = symbols.unequal
+        if unit.result == ExecutionResult.EXECUTION_ERROR:
+            unequal = symbols.vbar
+        expected_lines, received_lines = Diff.put_left_equal(expected_lines, received_lines, unequal)
 
         output.write(Report.centralize("", symbols.hbar, "╭") + "\n")
         output.write(Report.centralize(str(unit), " ", symbols.vbar) + "\n")
@@ -172,21 +176,22 @@ class Diff:
         output.write("\n".join(expected_lines) + "\n")
         output.write(Report.centralize(Colored.paint(" RECEIVED ", Color.RED), symbols.hbar, "├") + "\n")
         output.write("\n".join(received_lines) + "\n")
-        output.write(Report.centralize(Colored.paint(" MISMATCH ", Color.BOLD),  symbols.hbar, "├") + "\n")
-        output.write(Diff.first_failure_diff(string_expected, string_received, first_failure))
+        if unit.result != ExecutionResult.EXECUTION_ERROR:
+            output.write(Report.centralize(Colored.paint(" MISMATCH ", Color.BOLD),  symbols.hbar, "├") + "\n")
+            output.write(Diff.first_failure_diff(string_expected, string_received, first_failure))
         output.write(Report.centralize("",  symbols.hbar, "╰") + "\n")
 
         return output.getvalue()
 
     @staticmethod
-    def put_left_equal(exp_lines: str, rec_lines: str):
+    def put_left_equal(exp_lines: str, rec_lines: str, unequal:str=symbols.unequal):
 
         max_size = max(len(exp_lines), len(rec_lines))
 
         for i in range(max_size):
             if i >= len(exp_lines) or i >= len(rec_lines) or (exp_lines[i] != rec_lines[i]):
-                exp_lines[i] = symbols.unequal + " " + exp_lines[i]
-                rec_lines[i] = symbols.unequal + " " + rec_lines[i]
+                exp_lines[i] = unequal + " " + exp_lines[i]
+                rec_lines[i] = unequal + " " + rec_lines[i]
             else:
                 exp_lines[i] = symbols.vbar + " " + exp_lines[i]
                 rec_lines[i] = symbols.vbar + " " + rec_lines[i]
@@ -233,9 +238,13 @@ class Diff:
         expected_header = Colored.paint(" EXPECTED ", Color.GREEN)
         received_header = Colored.paint(" RECEIVED ", Color.RED)
         output.write(title_side_by_side(expected_header, received_header, hbar, "┼", "├") + "\n")
-        output.write(Diff.side_by_side(expected_lines, received_lines) + "\n")
-        output.write(Report.centralize(Colored.paint(" MISMATCH ", Color.BOLD),  symbols.hbar, "├") + "\n")
-        output.write(Diff.first_failure_diff(string_expected, string_received, first_failure))
+        unequal = symbols.unequal
+        if unit.result == ExecutionResult.EXECUTION_ERROR:
+            unequal = symbols.vbar
+        output.write(Diff.side_by_side(expected_lines, received_lines, unequal) + "\n")
+        if unit.result != ExecutionResult.EXECUTION_ERROR:
+            output.write(Report.centralize(Colored.paint(" MISMATCH ", Color.BOLD),  symbols.hbar, "├") + "\n")
+            output.write(Diff.first_failure_diff(string_expected, string_received, first_failure))
         output.write(Report.centralize("",  symbols.hbar, "╰") + "\n")
 
         return output.getvalue()

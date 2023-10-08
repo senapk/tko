@@ -1,5 +1,5 @@
-=> 02_list tests:10 sources:[cases.tio(10)] solvers:[]
 ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌ No solvers found. Listing Test Cases ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+=> 02_list tests:10 sources:[cases.tio(10)] solvers:[]
 (» __untested__)[00] GR:010 cases.tio (iniciar mostrar e recarregar) 
 (» __untested__)[01] GR:010 cases.tio (boundary                    ) 
 (» __untested__)[02] GR:010 cases.tio (reset                       ) 

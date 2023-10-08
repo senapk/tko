@@ -8,12 +8,30 @@ class Runner:
         pass
 
     @staticmethod
-    def subprocess_run(cmd: str, input_data: str="") -> Tuple[int, Any, Any]:
-        try:
-            answer = subprocess.run(cmd, shell=True, check=True, input=input_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            return 0, answer.stdout, answer.stderr
-        except subprocess.CalledProcessError as e:
-            return e.returncode, e.stdout, e.stderr
+    def subprocess_run(cmd: str, input_data: str="") -> Tuple[int, str, str]:
+        answer = subprocess.run(cmd, shell=True, input=input_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        err = ""
+        if answer.returncode != 0:
+            err = answer.stderr + Runner.decode_code(answer.returncode)
+        return answer.returncode, answer.stdout, err
+
+    @staticmethod
+    def free_run(cmd: str) -> None:
+        answer = subprocess.run(cmd, shell=True, text=True)
+        if answer.returncode != 0 and answer.returncode != 1:
+            print(Runner.decode_code(answer.returncode))
+
+
+    @staticmethod
+    def decode_code(returncode: int) -> str:
+        code = 128 - returncode
+        if code == 127:
+            return ""
+        if code == 139:
+            return "fail: segmentation fault"
+        if code == 134:
+            return "fail: runtime exception"
+        return "fail: execution error code " + str(code)
 
 # class Runner:
 

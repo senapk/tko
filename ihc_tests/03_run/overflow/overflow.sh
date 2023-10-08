@@ -1,3 +1,3 @@
 #!/bin/bash
 
-tko run Readme.md runtime.cpp
+tko -m run runtime.cpp cases.tio

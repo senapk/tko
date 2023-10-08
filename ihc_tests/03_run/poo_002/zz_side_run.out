@@ -18,7 +18,7 @@
 │ end                                  │ end
 ├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
 │ $show                                │ $show                               
-╪ pass: 0, gas: 0, km: 0               ╪ pass: 0, gas: 1, km: 0              
+├ pass: 0, gas: 0, km: 0               ├ pass: 0, gas: 1, km: 0              
 │ $end                                 │ $end                                
 ├────────────────────────────────── MISMATCH ──────────────────────────────────
 │ pass:⸱0,⸱gas:⸱0,⸱km:⸱0↵ (expected)

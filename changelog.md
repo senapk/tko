@@ -1,5 +1,12 @@
 # Changelog
 
+- 0.1.8
+  - remove ├ marks in execution errors
+- 0.1.7
+  - removed resume from free run
+  - added sqlite3 native support
+  - fixed unequal char to ├
+  - remove mismatch field in execution errors
 - 0.1.6
   - flushing after each execution
   - support for bash commands in run

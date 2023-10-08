@@ -62,17 +62,16 @@ class Actions:
             return 0
 
         if wdir.solver is None and len(wdir.unit_list) > 0:
+            print(Report.centralize(" No solvers found. Listing Test Cases ", "╌"), flush=True)
             print(wdir.resume())
-            print(Report.centralize(" No solvers found. Listing Test Cases ", "╌"))
             print(wdir.unit_list_resume())
             return
 
         if wdir.solver is not None and len(wdir.unit_list) == 0:
-            print(wdir.resume())
             print(Report.centralize(" No test cases found. Running: " + wdir.solver.executable + " ", symbols.hbar), flush=True)
             # force print to terminal
 
-            subprocess.run(wdir.solver.executable, shell=True)
+            Runner.free_run(wdir.solver.executable)
             return
         
         print(Report.centralize(" Running solver against test cases ", "═"))
@@ -93,7 +92,7 @@ class Actions:
             return
         
         print(wdir.unit_list_resume())
-            
+        
         if param.diff_mode == DiffMode.FIRST:
         # printing only the first wrong case
             wrong = [unit for unit in wdir.unit_list if unit.result != ExecutionResult.SUCCESS][0]

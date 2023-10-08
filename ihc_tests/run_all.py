@@ -51,7 +51,7 @@ for script in scripts:
 
     if args.run:
         os.chdir(dirname)
-        cmd = "bash " + filename + " > " + userfile
+        cmd = "bash " + filename + " &> " + userfile
         os.system(cmd)
         cmd = "diff " + userfile + " " + outfile
         print("$ " + "diff " + userfile[cut:] + " " + outfile[cut:])

@@ -133,7 +133,7 @@ class __Symbols:
         self.wrong       = "ω"
         self.compilation = "ϲ"
         self.execution   = "ϵ"
-        self.unequal     = "╪"
+        self.unequal     = "├"
         self.equalbar    = "│"
         self.hbar        = "─"
         self.vbar        = "│"

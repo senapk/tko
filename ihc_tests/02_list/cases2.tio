@@ -1,0 +1,73 @@
+>>>>>>>> iniciar mostrar e recarregar
+init 5
+show
+charge 3
+show
+charge 1
+show
+end
+========
+$init 5
+$show
+display = 0.00, battery = 0
+$charge 3
+$show
+display = 0.00, battery = 3
+$charge 1
+$show
+display = 0.00, battery = 4
+$end
+<<<<<<<<
+
+>>>>>>>> boundary
+init 5
+show
+charge 3
+show
+charge 1
+show
+charge 2
+show
+end
+========
+$init 5
+$show
+display = 0.00, battery = 0
+$charge 3
+$show
+display = 0.00, battery = 3
+$charge 1
+$show
+display = 0.00, battery = 4
+$charge 2
+$show
+display = 0.00, battery = 5
+$end
+<<<<<<<<
+
+
+>>>>>>>> novo teste
+init 10
+show
+charge 3
+show
+charge 1
+show
+charge 2
+show
+end
+========
+$init 10
+$show
+display = 0.00, battery = 0
+$charge 3
+$show
+display = 0.00, battery = 3
+$charge 1
+$show
+display = 0.00, battery = 4
+$charge 2
+$show
+display = 0.00, battery = 5
+$end
+<<<<<<<<
