@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.1.9
+  - change name in diff from MISMATCH to WHITESPACE
+  - fixing encoding problems in windows
 - 0.1.8
   - remove ├ marks in execution errors
 - 0.1.7

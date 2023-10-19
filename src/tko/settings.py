@@ -1,6 +1,6 @@
 import os
 import configparser
-from appdirs import user_data_dir
+import appdirs
 from typing import Optional
 
 
@@ -23,7 +23,7 @@ hdiff = True
         self.package_name = "tko"
         self.filename = "settings.cfg"
         if SettingsParser.__settings_file is None:
-            self.settings_file = os.path.join(user_data_dir(self.package_name), self.filename)
+            self.settings_file = os.path.join(appdirs.user_data_dir(self.package_name), self.filename)
         else:
             self.settings_file = os.path.abspath(SettingsParser.__settings_file)
 
@@ -36,6 +36,7 @@ hdiff = True
 
     def get_settings_dir(self):
         return os.path.dirname(self.settings_file)
+    
 
     def create_default_settings_file(self):
         if not os.path.isdir(self.get_settings_dir()):

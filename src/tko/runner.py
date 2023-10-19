@@ -1,7 +1,7 @@
 import subprocess
 from subprocess import PIPE
 from typing import List, Tuple, Any
-
+import os
 
 class Runner:
     def __init__(self):
@@ -13,6 +13,10 @@ class Runner:
         err = ""
         if answer.returncode != 0:
             err = answer.stderr + Runner.decode_code(answer.returncode)
+
+        # if running on windows
+        if os.name == "nt":
+            return answer.returncode, answer.stdout.encode("cp1252").decode("utf-8"), err
         return answer.returncode, answer.stdout, err
 
     @staticmethod

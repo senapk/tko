@@ -177,7 +177,7 @@ class Diff:
         output.write(Report.centralize(Colored.paint(" RECEIVED ", Color.RED), symbols.hbar, "├") + "\n")
         output.write("\n".join(received_lines) + "\n")
         if unit.result != ExecutionResult.EXECUTION_ERROR:
-            output.write(Report.centralize(Colored.paint(" MISMATCH ", Color.BOLD),  symbols.hbar, "├") + "\n")
+            output.write(Report.centralize(Colored.paint(" WHITESPACE ", Color.BOLD),  symbols.hbar, "├") + "\n")
             output.write(Diff.first_failure_diff(string_expected, string_received, first_failure))
         output.write(Report.centralize("",  symbols.hbar, "╰") + "\n")
 
@@ -243,7 +243,7 @@ class Diff:
             unequal = symbols.vbar
         output.write(Diff.side_by_side(expected_lines, received_lines, unequal) + "\n")
         if unit.result != ExecutionResult.EXECUTION_ERROR:
-            output.write(Report.centralize(Colored.paint(" MISMATCH ", Color.BOLD),  symbols.hbar, "├") + "\n")
+            output.write(Report.centralize(Colored.paint(" WHITESPACE ", Color.BOLD),  symbols.hbar, "├") + "\n")
             output.write(Diff.first_failure_diff(string_expected, string_received, first_failure))
         output.write(Report.centralize("",  symbols.hbar, "╰") + "\n")
 

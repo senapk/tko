@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import configparser
-from appdirs import user_data_dir
+import appdirs
 from typing import Optional
 import subprocess
 from subprocess import PIPE
@@ -47,7 +47,7 @@ hdiff = True
         self.package_name = "tko"
         self.filename = "settings.cfg"
         if SettingsParser.__settings_file is None:
-            self.settings_file = os.path.join(user_data_dir(self.package_name), self.filename)
+            self.settings_file = os.path.join(appdirs.user_data_dir(self.package_name), self.filename)
         else:
             self.settings_file = os.path.abspath(SettingsParser.__settings_file)
 
@@ -60,6 +60,7 @@ hdiff = True
 
     def get_settings_dir(self):
         return os.path.dirname(self.settings_file)
+    
 
     def create_default_settings_file(self):
         if not os.path.isdir(self.get_settings_dir()):
@@ -137,7 +138,6 @@ hdiff = True
             parser.write(f)
 
 
-
 class Runner:
     def __init__(self):
         pass
@@ -148,6 +148,10 @@ class Runner:
         err = ""
         if answer.returncode != 0:
             err = answer.stderr + Runner.decode_code(answer.returncode)
+
+        # if running on windows
+        if os.name == "nt":
+            return answer.returncode, answer.stdout.encode("cp1252").decode("utf-8"), err
         return answer.returncode, answer.stdout, err
 
     @staticmethod
@@ -685,7 +689,7 @@ class Diff:
         output.write(Report.centralize(Colored.paint(" RECEIVED ", Color.RED), symbols.hbar, "├") + "\n")
         output.write("\n".join(received_lines) + "\n")
         if unit.result != ExecutionResult.EXECUTION_ERROR:
-            output.write(Report.centralize(Colored.paint(" MISMATCH ", Color.BOLD),  symbols.hbar, "├") + "\n")
+            output.write(Report.centralize(Colored.paint(" WHITESPACE ", Color.BOLD),  symbols.hbar, "├") + "\n")
             output.write(Diff.first_failure_diff(string_expected, string_received, first_failure))
         output.write(Report.centralize("",  symbols.hbar, "╰") + "\n")
 
@@ -751,7 +755,7 @@ class Diff:
             unequal = symbols.vbar
         output.write(Diff.side_by_side(expected_lines, received_lines, unequal) + "\n")
         if unit.result != ExecutionResult.EXECUTION_ERROR:
-            output.write(Report.centralize(Colored.paint(" MISMATCH ", Color.BOLD),  symbols.hbar, "├") + "\n")
+            output.write(Report.centralize(Colored.paint(" WHITESPACE ", Color.BOLD),  symbols.hbar, "├") + "\n")
             output.write(Diff.first_failure_diff(string_expected, string_received, first_failure))
         output.write(Report.centralize("",  symbols.hbar, "╰") + "\n")
 
@@ -771,6 +775,7 @@ class Down:
     js_draft = (r'let __lines = require("fs").readFileSync(0).toString().split("\n");'  + '\n'
                 r'let input = () => __lines.length === 0 ? "" : __lines.shift();' + '\n'
                 r'let write = (text, end="\n") => process.stdout.write("" + text + end);') + '\n'
+    
     c_draft = '#include <stdio.h>\n\nint main() {\n    return 0;\n}\n\n'
     cpp_draft = '#include <iostream>\n\nint main() {\n}\n\n'
 
@@ -817,8 +822,8 @@ class Down:
     @staticmethod
     def compare_and_save(content, path):
         if not os.path.exists(path):
-            with open(path, "w") as f:
-                f.write(content)
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(content.encode("utf-8").decode("utf-8"))
             print(path + " (New)")
         else:
             if open(path).read() != content:
@@ -833,7 +838,13 @@ class Down:
         # downloading Readme
         readme = os.path.join(destiny, "Readme.md")
         [tempfile, _content] = urllib.request.urlretrieve(cache_url + "Readme.md")
-        Down.compare_and_save(open(tempfile).read(), readme)
+        content = ""
+        try:
+            content = open(tempfile, encoding="utf-8").read()
+        except:
+            content = open(tempfile).read()
+
+        Down.compare_and_save(content, readme)
         
         # downloading mapi
         mapi = os.path.join(destiny, "mapi.json")
@@ -1764,7 +1775,7 @@ bash_guide = """
 │Finalizar entrada : Control D                        │
 ╰─────────────────────────────────────────────────────╯
 """
-__version__ = "0.1.8"
+__version__ = "0.1.9"
 
 
 

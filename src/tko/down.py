@@ -17,6 +17,7 @@ class Down:
     js_draft = (r'let __lines = require("fs").readFileSync(0).toString().split("\n");'  + '\n'
                 r'let input = () => __lines.length === 0 ? "" : __lines.shift();' + '\n'
                 r'let write = (text, end="\n") => process.stdout.write("" + text + end);') + '\n'
+    
     c_draft = '#include <stdio.h>\n\nint main() {\n    return 0;\n}\n\n'
     cpp_draft = '#include <iostream>\n\nint main() {\n}\n\n'
 
@@ -63,8 +64,8 @@ class Down:
     @staticmethod
     def compare_and_save(content, path):
         if not os.path.exists(path):
-            with open(path, "w") as f:
-                f.write(content)
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(content.encode("utf-8").decode("utf-8"))
             print(path + " (New)")
         else:
             if open(path).read() != content:
@@ -79,7 +80,13 @@ class Down:
         # downloading Readme
         readme = os.path.join(destiny, "Readme.md")
         [tempfile, _content] = urllib.request.urlretrieve(cache_url + "Readme.md")
-        Down.compare_and_save(open(tempfile).read(), readme)
+        content = ""
+        try:
+            content = open(tempfile, encoding="utf-8").read()
+        except:
+            content = open(tempfile).read()
+
+        Down.compare_and_save(content, readme)
         
         # downloading mapi
         mapi = os.path.join(destiny, "mapi.json")
