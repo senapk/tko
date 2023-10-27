@@ -108,6 +108,3 @@ else
 fi
 
 
-function run()  { tko run draft.ts cases.tio ;}
-function down() {	tko down poo "$1" ts ;}
-
