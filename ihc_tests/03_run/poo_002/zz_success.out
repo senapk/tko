@@ -1,2 +1,2 @@
 ══════════════════════ Running solver against test cases ══════════════════════
-=> poo_002 tests:10 sources:[cases.tio(10)] solvers:[solver.cpp][ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ]
+=> base:[cases.tio(10)] prog:[solver.cpp] [✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓]

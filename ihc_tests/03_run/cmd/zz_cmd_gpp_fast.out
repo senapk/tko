@@ -1,2 +1,2 @@
 ══════════════════════ Running solver against test cases ══════════════════════
-=> cmd tests:02 sources:[cases.tio(03)] solvers:[free cmd][ ✓ ✓ ✓ ]
+=> base:[cases.tio(03)] prog:[free cmd] [✓ ✓ ✓]

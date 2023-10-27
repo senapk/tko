@@ -6,7 +6,6 @@ import json
 
 from .settings import SettingsParser
 
-
 class Down:
 
     ts_draft = (r'let _cin_ : string[] = [];' + '\n'

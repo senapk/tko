@@ -1,12 +1,12 @@
 ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌ No solvers found. Listing Test Cases ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
-=> 02_list tests:10 sources:[cases.tio(10)] solvers:[]
-(» __untested__)[00] GR:010 cases.tio (iniciar mostrar e recarregar) 
-(» __untested__)[01] GR:010 cases.tio (boundary                    ) 
-(» __untested__)[02] GR:010 cases.tio (reset                       ) 
-(» __untested__)[03] GR:010 cases.tio (somando                     ) 
-(» __untested__)[04] GR:010 cases.tio (gastando bateria            ) 
-(» __untested__)[05] GR:010 cases.tio (sem bateria                 ) 
-(» __untested__)[06] GR:010 cases.tio (recarregando                ) 
-(» __untested__)[07] GR:010 cases.tio (dividindo                   ) 
-(» __untested__)[08] GR:010 cases.tio (dividindo por zero          ) 
-(» __untested__)[09] GR:010 cases.tio (gastando bateria            ) 
+=> base:[cases.tio(10)] prog:[]
+(» untested_)[00] GR:010 cases.tio (iniciar mostrar e recarregar) 
+(» untested_)[01] GR:010 cases.tio (boundary                    ) 
+(» untested_)[02] GR:010 cases.tio (reset                       ) 
+(» untested_)[03] GR:010 cases.tio (somando                     ) 
+(» untested_)[04] GR:010 cases.tio (gastando bateria            ) 
+(» untested_)[05] GR:010 cases.tio (sem bateria                 ) 
+(» untested_)[06] GR:010 cases.tio (recarregando                ) 
+(» untested_)[07] GR:010 cases.tio (dividindo                   ) 
+(» untested_)[08] GR:010 cases.tio (dividindo por zero          ) 
+(» untested_)[09] GR:010 cases.tio (gastando bateria            ) 

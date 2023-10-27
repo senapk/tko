@@ -5,11 +5,11 @@ import os
 from .format import symbols
 
 class ExecutionResult(Enum):
-    UNTESTED          = "__untested__"
-    SUCCESS           = "correct_case"
-    WRONG_OUTPUT      = "wrong_output"
-    COMPILATION_ERROR = "compil_error"
-    EXECUTION_ERROR   = "execut_error"
+    UNTESTED          = "untested_"
+    SUCCESS           = "correct__"
+    WRONG_OUTPUT      = "wrong_out"
+    COMPILATION_ERROR = "compilati"
+    EXECUTION_ERROR   = "execution"
 
     @staticmethod
     def get_symbol(result) -> str:

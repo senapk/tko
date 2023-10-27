@@ -1,8 +1,8 @@
 ══════════════════════ Running solver against test cases ══════════════════════
-=> overflow tests:01 sources:[cases.tio(01)] solvers:[runtime.cpp][ ϵ ]
-(ϵ execut_error)[00] GR:100 cases.tio () 
+=> base:[cases.tio(01)] prog:[runtime.cpp] [ϵ]
+(ϵ execution)[00] GR:100 cases.tio () 
 ╭──────────────────────────────────────────────────────────────────────────────
-│                  (ϵ execut_error)[00] GR:100 cases.tio ()                    
+│                    (ϵ execution)[00] GR:100 cases.tio ()                     
 ├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
 │ 1                                    │ 1
 │ 2                                    │ 2

@@ -1,8 +1,8 @@
 ══════════════════════ Running solver against test cases ══════════════════════
-=> overflow tests:01 sources:[cases.tio(01)] solvers:[exception.cpp][ ϵ ]
-(ϵ execut_error)[00] GR:100 cases.tio () 
+=> base:[cases.tio(01)] prog:[exception.cpp] [ϵ]
+(ϵ execution)[00] GR:100 cases.tio () 
 ╭──────────────────────────────────────────────────────────────────────────────
-│                  (ϵ execut_error)[00] GR:100 cases.tio ()                    
+│                    (ϵ execution)[00] GR:100 cases.tio ()                     
 ├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
 │ 1                                    │ 1
 │ 2                                    │ 2
@@ -17,10 +17,10 @@
 ╰──────────────────────────────────────────────────────────────────────────────
 
 ══════════════════════ Running solver against test cases ══════════════════════
-=> overflow tests:01 sources:[cases.tio(01)] solvers:[exception.py][ ϵ ]
-(ϵ execut_error)[00] GR:100 cases.tio () 
+=> base:[cases.tio(01)] prog:[exception.py] [ϵ]
+(ϵ execution)[00] GR:100 cases.tio () 
 ╭──────────────────────────────────────────────────────────────────────────────
-│                  (ϵ execut_error)[00] GR:100 cases.tio ()                    
+│                    (ϵ execution)[00] GR:100 cases.tio ()                     
 ├─────────────────────────────────── INPUT ────────────────────────────────────
 │ 1
 │ 2

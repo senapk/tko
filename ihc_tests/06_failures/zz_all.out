@@ -1,18 +1,18 @@
 
 ══════════════════════ Running solver against test cases ══════════════════════
-=> 06_failures tests:10 sources:[cases.tio(10)] solvers:[draft.ts][ ω ω ω ω ω ω ω ω ω ω ]
-(ω wrong_output)[00] GR:010 cases.tio (inicializar      ) 
-(ω wrong_output)[01] GR:010 cases.tio (entrar           ) 
-(ω wrong_output)[02] GR:010 cases.tio (limite           ) 
-(ω wrong_output)[03] GR:010 cases.tio (sair             ) 
-(ω wrong_output)[04] GR:010 cases.tio (limite saida     ) 
-(ω wrong_output)[05] GR:010 cases.tio (abastecer        ) 
-(ω wrong_output)[06] GR:010 cases.tio (dirigir vazio    ) 
-(ω wrong_output)[07] GR:010 cases.tio (dirigir          ) 
-(ω wrong_output)[08] GR:010 cases.tio (para longe       ) 
-(ω wrong_output)[09] GR:010 cases.tio (enchendo o tanque) 
+=> base:[cases.tio(10)] prog:[draft.ts] [ω ω ω ω ω ω ω ω ω ω]
+(ω wrong_out)[00] GR:010 cases.tio (inicializar      ) 
+(ω wrong_out)[01] GR:010 cases.tio (entrar           ) 
+(ω wrong_out)[02] GR:010 cases.tio (limite           ) 
+(ω wrong_out)[03] GR:010 cases.tio (sair             ) 
+(ω wrong_out)[04] GR:010 cases.tio (limite saida     ) 
+(ω wrong_out)[05] GR:010 cases.tio (abastecer        ) 
+(ω wrong_out)[06] GR:010 cases.tio (dirigir vazio    ) 
+(ω wrong_out)[07] GR:010 cases.tio (dirigir          ) 
+(ω wrong_out)[08] GR:010 cases.tio (para longe       ) 
+(ω wrong_out)[09] GR:010 cases.tio (enchendo o tanque) 
 ╭──────────────────────────────────────────────────────────────────────────────
-│          (ω wrong_output)[00] GR:010 cases.tio (inicializar      )           
+│           (ω wrong_out)[00] GR:010 cases.tio (inicializar      )             
 ├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
 │ show                                 │ show
 │ end                                  │ end
@@ -27,7 +27,7 @@
 ╰──────────────────────────────────────────────────────────────────────────────
 
 ╭──────────────────────────────────────────────────────────────────────────────
-│          (ω wrong_output)[01] GR:010 cases.tio (entrar           )           
+│           (ω wrong_out)[01] GR:010 cases.tio (entrar           )             
 ├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
 │ show                                 │ show
 │ enter                                │ enter
@@ -49,7 +49,7 @@
 ╰──────────────────────────────────────────────────────────────────────────────
 
 ╭──────────────────────────────────────────────────────────────────────────────
-│          (ω wrong_output)[02] GR:010 cases.tio (limite           )           
+│           (ω wrong_out)[02] GR:010 cases.tio (limite           )             
 ├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
 │ show                                 │ show
 │ enter                                │ enter
@@ -77,7 +77,7 @@
 ╰──────────────────────────────────────────────────────────────────────────────
 
 ╭──────────────────────────────────────────────────────────────────────────────
-│          (ω wrong_output)[03] GR:010 cases.tio (sair             )           
+│           (ω wrong_out)[03] GR:010 cases.tio (sair             )             
 ├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
 │ show                                 │ show
 │ enter                                │ enter
@@ -110,7 +110,7 @@
 ╰──────────────────────────────────────────────────────────────────────────────
 
 ╭──────────────────────────────────────────────────────────────────────────────
-│          (ω wrong_output)[04] GR:010 cases.tio (limite saida     )           
+│           (ω wrong_out)[04] GR:010 cases.tio (limite saida     )             
 ├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
 │ show                                 │ show
 │ enter                                │ enter
@@ -151,7 +151,7 @@
 ╰──────────────────────────────────────────────────────────────────────────────
 
 ╭──────────────────────────────────────────────────────────────────────────────
-│          (ω wrong_output)[05] GR:010 cases.tio (abastecer        )           
+│           (ω wrong_out)[05] GR:010 cases.tio (abastecer        )             
 ├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
 │ fuel 60                              │ fuel 60
 │ show                                 │ show
@@ -168,7 +168,7 @@
 ╰──────────────────────────────────────────────────────────────────────────────
 
 ╭──────────────────────────────────────────────────────────────────────────────
-│          (ω wrong_output)[06] GR:010 cases.tio (dirigir vazio    )           
+│           (ω wrong_out)[06] GR:010 cases.tio (dirigir vazio    )             
 ├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
 │ fuel 60                              │ fuel 60
 │ show                                 │ show
@@ -188,7 +188,7 @@
 ╰──────────────────────────────────────────────────────────────────────────────
 
 ╭──────────────────────────────────────────────────────────────────────────────
-│          (ω wrong_output)[07] GR:010 cases.tio (dirigir          )           
+│           (ω wrong_out)[07] GR:010 cases.tio (dirigir          )             
 ├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
 │ fuel 60                              │ fuel 60
 │ show                                 │ show
@@ -215,7 +215,7 @@
 ╰──────────────────────────────────────────────────────────────────────────────
 
 ╭──────────────────────────────────────────────────────────────────────────────
-│          (ω wrong_output)[08] GR:010 cases.tio (para longe       )           
+│           (ω wrong_out)[08] GR:010 cases.tio (para longe       )             
 ├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
 │ fuel 60                              │ fuel 60
 │ show                                 │ show
@@ -251,7 +251,7 @@
 ╰──────────────────────────────────────────────────────────────────────────────
 
 ╭──────────────────────────────────────────────────────────────────────────────
-│          (ω wrong_output)[09] GR:010 cases.tio (enchendo o tanque)           
+│           (ω wrong_out)[09] GR:010 cases.tio (enchendo o tanque)             
 ├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
 │ fuel 60                              │ fuel 60
 │ show                                 │ show

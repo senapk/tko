@@ -32,7 +32,9 @@ class Main:
 
         # load default diff from settings if not specified
         if not args.sideby and not args.updown:
-            param.set_up_down(not SettingsParser().get_hdiff())
+            updown = not SettingsParser().get_hdiff()
+            size_too_short = Report.get_terminal_size() < 60
+            param.set_up_down(updown or size_too_short)
         elif args.sideby:
             param.set_up_down(False)
         elif args.updown:

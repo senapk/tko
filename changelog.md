@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.2.0
+  - use up_down diff auto if term size is low
 - 0.1.9
   - change name in diff from MISMATCH to WHITESPACE
   - fixing encoding problems in windows

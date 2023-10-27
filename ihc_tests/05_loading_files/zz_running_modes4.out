@@ -1,8 +1,8 @@
 ══════════════════════ Running solver against test cases ══════════════════════
-=> 05_loading_files tests:01 sources:[cases.tio(01)] solvers:[solver.py][ ω ]
-(ω wrong_output)[00] GR:100 cases.tio () 
+=> base:[cases.tio(01)] prog:[solver.py] [ω]
+(ω wrong_out)[00] GR:100 cases.tio () 
 ╭──────────────────────────────────────────────────────────────────────────────
-│                  (ω wrong_output)[00] GR:100 cases.tio ()                    
+│                    (ω wrong_out)[00] GR:100 cases.tio ()                     
 ├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
 ├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
 ├ 1                                    ├ 12                                  

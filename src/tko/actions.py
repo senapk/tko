@@ -78,10 +78,15 @@ class Actions:
 
         ## print top line
         print(wdir.resume(), end="")
-        print("[ ", end="", flush=True)
+        print(" [", end="", flush=True)
+        first = True
         for unit in wdir.unit_list:
+            if first:
+                first = False
+            else:
+                print(" ", end="", flush=True)
             unit.result = Execution.run_unit(wdir.solver, unit)
-            print(ExecutionResult.get_symbol(unit.result) + " ", end="", flush=True)
+            print(ExecutionResult.get_symbol(unit.result), end="", flush=True)
         print("]")
 
         if param.diff_mode == DiffMode.QUIET:

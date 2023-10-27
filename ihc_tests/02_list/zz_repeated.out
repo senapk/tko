@@ -1,15 +1,15 @@
 ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌ No solvers found. Listing Test Cases ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
-=> 02_list tests:11 sources:[cases.tio(10), cases2.tio(03)] solvers:[]
-(» __untested__)[00] GR:008 cases.tio  (iniciar mostrar e recarregar) 
-(» __untested__)[01] GR:008 cases.tio  (boundary                    ) 
-(» __untested__)[02] GR:008 cases.tio  (reset                       ) 
-(» __untested__)[03] GR:008 cases.tio  (somando                     ) 
-(» __untested__)[04] GR:008 cases.tio  (gastando bateria            ) 
-(» __untested__)[05] GR:008 cases.tio  (sem bateria                 ) 
-(» __untested__)[06] GR:008 cases.tio  (recarregando                ) 
-(» __untested__)[07] GR:008 cases.tio  (dividindo                   ) 
-(» __untested__)[08] GR:008 cases.tio  (dividindo por zero          ) 
-(» __untested__)[09] GR:008 cases.tio  (gastando bateria            ) 
-(» __untested__)[10] GR:008 cases2.tio (iniciar mostrar e recarregar) [0]
-(» __untested__)[11] GR:008 cases2.tio (boundary                    ) [1]
-(» __untested__)[12] GR:008 cases2.tio (novo teste                  ) 
+=> base:[cases.tio(10), cases2.tio(03)] prog:[]
+(» untested_)[00] GR:008 cases.tio  (iniciar mostrar e recarregar) 
+(» untested_)[01] GR:008 cases.tio  (boundary                    ) 
+(» untested_)[02] GR:008 cases.tio  (reset                       ) 
+(» untested_)[03] GR:008 cases.tio  (somando                     ) 
+(» untested_)[04] GR:008 cases.tio  (gastando bateria            ) 
+(» untested_)[05] GR:008 cases.tio  (sem bateria                 ) 
+(» untested_)[06] GR:008 cases.tio  (recarregando                ) 
+(» untested_)[07] GR:008 cases.tio  (dividindo                   ) 
+(» untested_)[08] GR:008 cases.tio  (dividindo por zero          ) 
+(» untested_)[09] GR:008 cases.tio  (gastando bateria            ) 
+(» untested_)[10] GR:008 cases2.tio (iniciar mostrar e recarregar) [0]
+(» untested_)[11] GR:008 cases2.tio (boundary                    ) [1]
+(» untested_)[12] GR:008 cases2.tio (novo teste                  ) 
