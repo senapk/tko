@@ -88,4 +88,16 @@ export PATH="/home/runner/${REPL_SLUG}/.bin:${PATH}"
 
 alias tko='tko -c /home/runner/${REPL_SLUG}/.bin/tko.cfg'
 python .bin/check.py
-echo "Para ver o guia digite: tko -bg"
+echo "Para ver o guia do bash digite: tko -b"
+echo "Para ver o guia do tko  digite: tko -g"
+
+#####################################################
+################    ALIAS    ########################
+#####################################################
+
+#alias run='tko run draft.ts cases.tio'
+
+#function down() {
+#	tko down poo $1 ts
+#}
+
