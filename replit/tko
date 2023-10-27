@@ -38,7 +38,8 @@ poo = https://raw.githubusercontent.com/qxcodepoo/arcade/master/base/
 [VISUAL]
 ascii = False
 color = True
-hdiff = True  
+hdiff = True
+hdiffmin = 60
 """
 
     __settings_file: Optional[str] = None
@@ -136,6 +137,18 @@ hdiff = True
         parser["VISUAL"]["hdiff"] = str(not self.get_hdiff())
         with open(self.settings_file, "w") as f:
             parser.write(f)
+
+    def get_hdiffmin(self) -> int:
+        self.check_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        if "hdiffmin" not in parser["VISUAL"]:
+            parser["VISUAL"]["hdiffmin"] = "60"
+            with open(self.settings_file, "w") as f:
+                parser.write(f)
+            return 60
+        return int(parser["VISUAL"]["hdiffmin"])
+
 
 
 class Runner:
@@ -900,7 +913,7 @@ class Down:
             urllib.request.urlretrieve(cache_url + "draft." + ext, draft_path)
             print(draft_path + " (Draft) Rename before modify.")
         except urllib.error.HTTPError:  # draft not found
-            filename = "Solver." if ext == "java" else "solver."
+            filename = "draft."
             draft_path = os.path.join(destiny, filename + ext)
             if not os.path.exists(draft_path):
                 with open(draft_path, "w") as f:
@@ -1780,7 +1793,7 @@ bash_guide = """
 │Finalizar entrada : Control D             │
 ╰──────────────────────────────────────────╯
 """
-__version__ = "0.2.0"
+__version__ = "0.1.9"
 
 
 
@@ -1803,7 +1816,7 @@ class Main:
         # load default diff from settings if not specified
         if not args.sideby and not args.updown:
             updown = not SettingsParser().get_hdiff()
-            size_too_short = Report.get_terminal_size() < 60
+            size_too_short = Report.get_terminal_size() < SettingsParser().get_hdiffmin()
             param.set_up_down(updown or size_too_short)
         elif args.sideby:
             param.set_up_down(False)

@@ -2,6 +2,8 @@
 
 - 0.2.0
   - use up_down diff auto if term size is low
+  - rename from solver. to draft.
+  - added min_term_size config
 - 0.1.9
   - change name in diff from MISMATCH to WHITESPACE
   - fixing encoding problems in windows

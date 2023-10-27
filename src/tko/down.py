@@ -142,7 +142,7 @@ class Down:
             urllib.request.urlretrieve(cache_url + "draft." + ext, draft_path)
             print(draft_path + " (Draft) Rename before modify.")
         except urllib.error.HTTPError:  # draft not found
-            filename = "Solver." if ext == "java" else "solver."
+            filename = "draft."
             draft_path = os.path.join(destiny, filename + ext)
             if not os.path.exists(draft_path):
                 with open(draft_path, "w") as f:

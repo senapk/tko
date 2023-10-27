@@ -14,7 +14,8 @@ poo = https://raw.githubusercontent.com/qxcodepoo/arcade/master/base/
 [VISUAL]
 ascii = False
 color = True
-hdiff = True  
+hdiff = True
+hdiffmin = 60
 """
 
     __settings_file: Optional[str] = None
@@ -112,3 +113,15 @@ hdiff = True
         parser["VISUAL"]["hdiff"] = str(not self.get_hdiff())
         with open(self.settings_file, "w") as f:
             parser.write(f)
+
+    def get_hdiffmin(self) -> int:
+        self.check_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        if "hdiffmin" not in parser["VISUAL"]:
+            parser["VISUAL"]["hdiffmin"] = "60"
+            with open(self.settings_file, "w") as f:
+                parser.write(f)
+            return 60
+        return int(parser["VISUAL"]["hdiffmin"])
+
