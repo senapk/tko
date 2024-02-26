@@ -82,8 +82,7 @@ class Main:
 
     @staticmethod
     def down(args):
-        destiny = Down.create_problem_folder(args.disc, args.index, args.extension)
-        Down.entry_unpack(destiny, args.disc, args.index, args.extension)
+        Down.entry_unpack(args.course, args.activity, args.language)
 
     @staticmethod
     def main():
@@ -134,9 +133,9 @@ class Main:
 
         # down
         parser_d = subparsers.add_parser('down', help='download problem from repository.')
-        parser_d.add_argument('disc', type=str, nargs='?', help=" [ fup | ed | poo ].")
-        parser_d.add_argument('index', type=str, nargs='?', help="3 digits label like 021.")
-        parser_d.add_argument('extension', type=str, nargs='?', default="-", help="[ c | cpp | js | ts | py | java ]")
+        parser_d.add_argument('course', type=str, nargs='?', help=" [ fup | ed | poo ].")
+        parser_d.add_argument('activity', type=str, nargs='?', help="activity @label.")
+        parser_d.add_argument('--language', '-l', type=str, nargs='?', help="[ c | cpp | js | ts | py | java ]")
         parser_d.set_defaults(func=Main.down)
 
         # settings

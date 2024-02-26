@@ -28,11 +28,15 @@ hdiffmin = 60
         else:
             self.settings_file = os.path.abspath(SettingsParser.__settings_file)
 
-    def get_repository(self, disc):
+    def get_repository(self, disc) -> Optional[str]:
         if not os.path.isfile(self.settings_file):
             self.create_default_settings_file()
         parser = configparser.ConfigParser()
         parser.read(self.settings_file)
+
+        if disc not in parser["REP"]:
+            return None
+
         return parser["REP"][disc]
 
     def get_settings_dir(self):

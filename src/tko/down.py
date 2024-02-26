@@ -1,8 +1,10 @@
-from typing import Tuple
+from typing import Tuple, Optional
 import os
 import urllib.request
 import urllib.error
 import json
+import tempfile
+import shutil
 
 from .settings import SettingsParser
 
@@ -93,9 +95,9 @@ class Down:
         return readme, mapi
 
     @staticmethod
-    def create_problem_folder(disc, index, ext):
+    def create_problem_folder(course, activity):
         # create dir
-        destiny = disc + "_" + index
+        destiny = course + "_" + activity
         if not os.path.exists(destiny):
             os.makedirs(destiny, exist_ok=True)
         else:
@@ -108,20 +110,22 @@ class Down:
         return destiny
 
     @staticmethod
-    def entry_unpack(destiny, disc, index, ext):
-        discp_url = SettingsParser().get_repository(disc)
-        if discp_url is None:
-            print("discipline not found")
+    def entry_unpack(course: str, activity: str, language: Optional[str]) -> None:
+        course_url = SettingsParser().get_repository(course)
+        if course_url is None:
+            print("fail: course", course, "not found")
             return
         
-        index_url = discp_url + index + "/"
+        index_url = course_url + activity + "/"
         cache_url = index_url + ".cache/"
         
+
         # downloading Readme
         try:
+            destiny = Down.create_problem_folder(course, activity)
             [_readme_path, mapi_path] = Down.down_problem_def(destiny, cache_url)
         except urllib.error.HTTPError:
-            print("Problem not found")
+            print("fail: activity not found in course")
             return
 
         with open(mapi_path) as f:
@@ -134,20 +138,21 @@ class Down:
 
         # creating source file for student
         # search if exists a draft file for the extension choosen
-        if ext == "-":
-            return
+        if language is None:
+            print("Write extension for draft file: [c, cpp, py, ts, js, java]: ", end="")
+            language = input()
 
         try:
-            draft_path = os.path.join(destiny, "draft." + ext)
-            urllib.request.urlretrieve(cache_url + "draft." + ext, draft_path)
+            draft_path = os.path.join(destiny, "draft." + language)
+            urllib.request.urlretrieve(cache_url + "draft." + language, draft_path)
             print(draft_path + " (Draft) Rename before modify.")
         except urllib.error.HTTPError:  # draft not found
             filename = "draft."
-            draft_path = os.path.join(destiny, filename + ext)
+            draft_path = os.path.join(destiny, filename + language)
             if not os.path.exists(draft_path):
                 with open(draft_path, "w") as f:
-                    if ext in Down.drafts:
-                        f.write(Down.drafts[ext])
+                    if language in Down.drafts:
+                        f.write(Down.drafts[language])
                     else:
                         f.write("")
                 print(draft_path, "(Empty)")

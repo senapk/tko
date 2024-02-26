@@ -13,7 +13,7 @@ import shutil
 from enum import Enum
 from typing import List, Optional, Tuple
 import io
-from typing import Tuple
+from typing import Tuple, Optional
 import urllib.request
 import urllib.error
 import json
@@ -52,11 +52,15 @@ hdiffmin = 60
         else:
             self.settings_file = os.path.abspath(SettingsParser.__settings_file)
 
-    def get_repository(self, disc):
+    def get_repository(self, disc) -> Optional[str]:
         if not os.path.isfile(self.settings_file):
             self.create_default_settings_file()
         parser = configparser.ConfigParser()
         parser.read(self.settings_file)
+
+        if disc not in parser["REP"]:
+            return None
+
         return parser["REP"][disc]
 
     def get_settings_dir(self):
@@ -864,9 +868,9 @@ class Down:
         return readme, mapi
 
     @staticmethod
-    def create_problem_folder(disc, index, ext):
+    def create_problem_folder(course, activity):
         # create dir
-        destiny = disc + "_" + index
+        destiny = course + "_" + activity
         if not os.path.exists(destiny):
             os.makedirs(destiny, exist_ok=True)
         else:
@@ -879,20 +883,22 @@ class Down:
         return destiny
 
     @staticmethod
-    def entry_unpack(destiny, disc, index, ext):
-        discp_url = SettingsParser().get_repository(disc)
-        if discp_url is None:
-            print("discipline not found")
+    def entry_unpack(course: str, activity: str, language: Optional[str]) -> None:
+        course_url = SettingsParser().get_repository(course)
+        if course_url is None:
+            print("fail: course", course, "not found")
             return
         
-        index_url = discp_url + index + "/"
+        index_url = course_url + activity + "/"
         cache_url = index_url + ".cache/"
         
+
         # downloading Readme
         try:
+            destiny = Down.create_problem_folder(course, activity)
             [_readme_path, mapi_path] = Down.down_problem_def(destiny, cache_url)
         except urllib.error.HTTPError:
-            print("Problem not found")
+            print("fail: activity not found in course")
             return
 
         with open(mapi_path) as f:
@@ -905,20 +911,21 @@ class Down:
 
         # creating source file for student
         # search if exists a draft file for the extension choosen
-        if ext == "-":
-            return
+        if language is None:
+            print("Write extension for draft file: [c, cpp, py, ts, js, java]: ", end="")
+            language = input()
 
         try:
-            draft_path = os.path.join(destiny, "draft." + ext)
-            urllib.request.urlretrieve(cache_url + "draft." + ext, draft_path)
+            draft_path = os.path.join(destiny, "draft." + language)
+            urllib.request.urlretrieve(cache_url + "draft." + language, draft_path)
             print(draft_path + " (Draft) Rename before modify.")
         except urllib.error.HTTPError:  # draft not found
             filename = "draft."
-            draft_path = os.path.join(destiny, filename + ext)
+            draft_path = os.path.join(destiny, filename + language)
             if not os.path.exists(draft_path):
                 with open(draft_path, "w") as f:
-                    if ext in Down.drafts:
-                        f.write(Down.drafts[ext])
+                    if language in Down.drafts:
+                        f.write(Down.drafts[language])
                     else:
                         f.write("")
                 print(draft_path, "(Empty)")
@@ -1793,7 +1800,7 @@ bash_guide = """
 │Finalizar entrada : Control D             │
 ╰──────────────────────────────────────────╯
 """
-__version__ = "0.1.9"
+__version__ = "0.2.0"
 
 
 
@@ -1865,8 +1872,7 @@ class Main:
 
     @staticmethod
     def down(args):
-        destiny = Down.create_problem_folder(args.disc, args.index, args.extension)
-        Down.entry_unpack(destiny, args.disc, args.index, args.extension)
+        Down.entry_unpack(args.course, args.activity, args.language)
 
     @staticmethod
     def main():
@@ -1917,9 +1923,9 @@ class Main:
 
         # down
         parser_d = subparsers.add_parser('down', help='download problem from repository.')
-        parser_d.add_argument('disc', type=str, nargs='?', help=" [ fup | ed | poo ].")
-        parser_d.add_argument('index', type=str, nargs='?', help="3 digits label like 021.")
-        parser_d.add_argument('extension', type=str, nargs='?', default="-", help="[ c | cpp | js | ts | py | java ]")
+        parser_d.add_argument('course', type=str, nargs='?', help=" [ fup | ed | poo ].")
+        parser_d.add_argument('activity', type=str, nargs='?', help="activity @label.")
+        parser_d.add_argument('--language', '-l', type=str, nargs='?', help="[ c | cpp | js | ts | py | java ]")
         parser_d.set_defaults(func=Main.down)
 
         # settings

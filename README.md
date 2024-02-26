@@ -38,11 +38,9 @@ Set-ExecutionPolicy Unrestricted
 # Você informa o repositório `poo`
 # a questão `002`
 # e a linguagem `java`, `cpp`, `ts`
-# tko down _repo_ _questao_ _linguagem_
-tko down poo 002 java
+# tko down _course_ _activity_ _language_
+tko down poo 002 -l java
 ```
-
-![image](https://user-images.githubusercontent.com/4747652/262017247-3e765618-19e7-47bb-9e91-ab0b03bc2834.png)
 
 ### Para rodar os testes
 
@@ -52,7 +50,7 @@ Você precisará do compilador próprio da linguagem que for programar, instale 
 - java: `javac`
 - python: `python3`
 - javascript: `node`
-- typescript: `esbuild`
+- typescript: `esbuild` e `node`
 
 Ao baixar a questão, você terá os seguintes arquivos:
 

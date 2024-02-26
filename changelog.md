@@ -4,6 +4,7 @@
   - use up_down diff auto if term size is low
   - rename from solver. to draft.
   - added min_term_size config
+  - change down to "down course activity -l language"
 - 0.1.9
   - change name in diff from MISMATCH to WHITESPACE
   - fixing encoding problems in windows
