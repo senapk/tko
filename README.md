@@ -32,14 +32,14 @@ Set-ExecutionPolicy Unrestricted
 
 ## Para baixar a descrição das atividades e os testes
 
-- Para baixar a atividade do carro do repositório de POO(Programação Orientada a Objetos): [@002 Carro](https://github.com/qxcodepoo/arcade/blob/master/base/002/Readme.md#carro) para `java`:
+- Para baixar a atividade do carro do repositório de POO(Programação Orientada a Objetos): [contrua seu primeiro @carro](https://github.com/qxcodepoo/arcade/blob/master/base/carro/Readme.md) para `java`:
 
 ```bash
 # Você informa o repositório `poo`
 # a questão `002`
 # e a linguagem `java`, `cpp`, `ts`
-# tko down _course_ _activity_ _language_
-tko down poo 002 -l java
+# tko down _course _activity -l _language
+tko down poo carro -l java
 ```
 
 ### Para rodar os testes
