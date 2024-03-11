@@ -1,9 +1,13 @@
 # Replit tko Install
 
-- Crie um Replit com a linguagem desejada `[c | cpp | java | node | typescript | python]`:
-- Abra o Shell do replit e execute o comando correspondente a linguagem desejada.
-- Clique no botão `Run` para abrir o bash.
-- Execute o comando `update.sh` dentro do bash sempre que quiser ou precisar atualizar o `tko`.
+- Instalação:
+  - Crie um Replit com a linguagem desejada `[c | cpp | java | node | typescript | python]`:
+  - Abra o Shell do replit e execute o comando correspondente a linguagem desejada.
+  - Digite enter algumas vezes para saber se setup terminou.
+  - Quando terminar, reinicie o shell apertando Control D.
+- Execução
+  - Clique no botão verde `Run` para mostrar o comando de setup.
+  - Cole e execute o comando no shell para carregar o `tko`.
 
 ## C++
 
