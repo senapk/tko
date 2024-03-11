@@ -62,10 +62,6 @@ class Main:
 
         print(str(sp))
 
-        
-
-
-
     # @staticmethod
     # def rebuild(args):
     #     if args.width is not None:

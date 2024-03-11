@@ -98,7 +98,10 @@ hdiffmin = 60
     # return the default home folder for user
     # usually the home folder ~ or $HOME
     def get_default_home(self) -> str:
-        return os.path.join(os.path.expanduser("~"), self.package_name)
+        print("Primeira execução do programa")
+        print("Definindo o diretório padrão de problemas para a pasta atual")
+        print("Caso deseje mudar, utilize o comando 'tko config --home <caminho>'\n")
+        return os.path.abspath(os.path.curdir)
 
 
     def set_home(self, path):
