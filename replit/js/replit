@@ -1,4 +1,5 @@
-run = "bash --rcfile /home/runner/${REPL_SLUG}/.bashrc"
+run = "cat /home/runner/${REPL_SLUG}/.bin/msg.txt"
+
 hidden = [".config", "package-lock.json", ".*", "package.json"]
 
 

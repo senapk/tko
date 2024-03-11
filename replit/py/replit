@@ -1,5 +1,4 @@
-# The command that runs the program. If the interpreter field is set, it will have priority and this run command will do nothing
-run = "bash --rcfile /home/runner/${REPL_SLUG}/.bashrc"
+run = "cat /home/runner/${REPL_SLUG}/.bin/msg.txt"
 
 # The primary language of the repl. There can be others, though!
 language = "python3"

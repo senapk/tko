@@ -1,0 +1,9 @@
+Para carregar o setup, siga os passos abaixo:
+
+1. Copie o comando Ctrl Shift C
+2. Abra o Shell
+3. Cole com Control Shift V
+
+bash --rcfile ~/${REPL_SLUG}/.bashrc
+
+Você pode utilizar o tko no shell para baixar, executar e testar seus códigos.

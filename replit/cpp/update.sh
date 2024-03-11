@@ -29,4 +29,6 @@ SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/cpp/replit.ni
 TARGET="${REP}/replit.nix"
 curl  ${SOURCE} -o ${TARGET}
 
-
+SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/msg.txt"
+TARGET="${REP}/.bin/msg.txt"
+curl  ${SOURCE} -o ${TARGET}
