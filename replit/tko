@@ -81,6 +81,35 @@ hdiffmin = 60
         if "VISUAL" not in parser or "REP" not in parser:
             self.create_default_settings_file()
 
+        parser.read(self.settings_file)  
+        update = False
+        if not "LOCAL" in parser or not "home" in parser["LOCAL"]:
+            # get home folder using appdirs
+            parser["LOCAL"] = {}
+            parser["LOCAL"]["home"] = self.get_default_home()
+            update = True
+
+        if "ascii" not in parser["VISUAL"]:
+            parser["VISUAL"]["ascii"] = "False"
+            update = True
+
+        if "color" not in parser["VISUAL"]:
+            parser["VISUAL"]["color"] = "True"
+            update = True
+
+        if "hdiff" not in parser["VISUAL"]:
+            parser["VISUAL"]["hdiff"] = "True"
+            update = True
+        
+        if "hdiffmin" not in parser["VISUAL"]:
+            parser["VISUAL"]["hdiffmin"] = "60"
+            update = True
+
+        if update:
+            with open(self.settings_file, "w") as f:
+                parser.write(f)
+
+
     def get_settings_file(self):
         self.check_settings_file()
         return self.settings_file
@@ -89,6 +118,29 @@ hdiffmin = 60
         path = os.path.abspath(path)
         SettingsParser.__settings_file = path
         self.settings_file = path
+
+    # return the default home folder for user
+    # usually the home folder ~ or $HOME
+    def get_default_home(self) -> str:
+        print("Primeira execução do programa")
+        print("Definindo o diretório padrão de problemas para a pasta atual")
+        print("Caso deseje mudar, utilize o comando 'tko config --home <caminho>'\n")
+        return os.path.abspath(os.path.curdir)
+
+
+    def set_home(self, path):
+        self.check_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        parser["LOCAL"]["home"] = os.path.abspath(path)
+        with open(self.settings_file, "w") as f:
+            parser.write(f)
+
+    def get_home(self) -> str:
+        self.check_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        return parser["LOCAL"]["home"]
 
     def get_ascii(self) -> bool:
         self.check_settings_file()
@@ -108,11 +160,6 @@ hdiffmin = 60
         self.check_settings_file()
         parser = configparser.ConfigParser()
         parser.read(self.settings_file)
-        if "color" not in parser["VISUAL"]:
-            parser["VISUAL"]["color"] = "True"
-            with open(self.settings_file, "w") as f:
-                parser.write(f)
-            return True
         return parser["VISUAL"]["color"] == "True"
     
     def toggle_color(self):
@@ -127,11 +174,6 @@ hdiffmin = 60
         self.check_settings_file()
         parser = configparser.ConfigParser()
         parser.read(self.settings_file)
-        if "hdiff" not in parser["VISUAL"]:
-            parser["VISUAL"]["hdiff"] = "True"
-            with open(self.settings_file, "w") as f:
-                parser.write(f)
-            return True
         return parser["VISUAL"]["hdiff"] == "True"
     
     def toggle_hdiff(self):
@@ -146,13 +188,18 @@ hdiffmin = 60
         self.check_settings_file()
         parser = configparser.ConfigParser()
         parser.read(self.settings_file)
-        if "hdiffmin" not in parser["VISUAL"]:
-            parser["VISUAL"]["hdiffmin"] = "60"
-            with open(self.settings_file, "w") as f:
-                parser.write(f)
-            return 60
         return int(parser["VISUAL"]["hdiffmin"])
+    
+    def __str__(self):
+        output = ""
 
+        output += "Settings File: " + self.get_settings_file() + "\n"
+        output += "Problems Dir : " + self.get_home() + "\n"
+        output += "Diff     Mode: " + ("SIDE_BY_SIDE" if self.get_hdiff() else "UP_DOWN") + "\n"
+        output += "Color    Mode: " + ("COLORED" if self.get_color() else "MONO") + "\n"
+        output += "Encoding Mode: " + ("ASCII" if self.get_ascii() else "UNICODE") + "\n"
+
+        return output
 
 
 class Runner:
@@ -853,7 +900,7 @@ class Down:
     def down_problem_def(destiny, cache_url) -> Tuple[str, str]:
         # downloading Readme
         readme = os.path.join(destiny, "Readme.md")
-        [tempfile, _content] = urllib.request.urlretrieve(cache_url + "Readme.md")
+        [tempfile, __content] = urllib.request.urlretrieve(cache_url + "Readme.md")
         content = ""
         try:
             content = open(tempfile, encoding="utf-8").read()
@@ -870,7 +917,8 @@ class Down:
     @staticmethod
     def create_problem_folder(course, activity):
         # create dir
-        destiny = course + "_" + activity
+        home = SettingsParser().get_home()
+        destiny = os.path.join(home, course, activity)
         if not os.path.exists(destiny):
             os.makedirs(destiny, exist_ok=True)
         else:
@@ -1800,7 +1848,7 @@ bash_guide = """
 │Finalizar entrada : Control D             │
 ╰──────────────────────────────────────────╯
 """
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 
 
@@ -1840,22 +1888,17 @@ class Main:
     @staticmethod
     def settings(args):
         sp = SettingsParser()
-        print("Settings file at " + sp.get_settings_file())
-
+        
         if (args.color):
             SettingsParser().toggle_color()
         if (args.encoding):
            SettingsParser().toggle_ascii()
         if (args.diff):
             SettingsParser().toggle_hdiff()
+        if (args.home):
+            SettingsParser().set_home(args.home)
 
-        print("COLORMODE: " + ("COLORED" if sp.get_color() else "MONO"))
-        print("DIFF MODE: " + ("SIDE_BY_SIDE" if sp.get_hdiff() else "UP_DOWN"))
-        print("ENCODING : " + ("ASCII" if sp.get_ascii() else "UNICODE"))
-
-        
-
-
+        print(str(sp))
 
     # @staticmethod
     # def rebuild(args):
@@ -1933,6 +1976,7 @@ class Main:
         parser_s.add_argument('--encoding', '-e', action='store_true', help='toggle [ascii | unicode] mode.')
         parser_s.add_argument('--color', '-c', action='store_true', help='toggle [colored | mono] mode.')
         parser_s.add_argument('--diff', '-d', action='store_true', help='toggle [side_by_side | up_down] mode.')
+        parser_s.add_argument("--home", type=str, help="set home directory.")
         parser_s.set_defaults(func=Main.settings)
 
         args = parser.parse_args()
