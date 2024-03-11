@@ -3,6 +3,7 @@
 - 0.2.1
   - improving SettingsParser
   - creating entry [LOCAL][home] in settings for problems directory
+  - adding config --home to set home directory
 - 0.2.0
   - use up_down diff auto if term size is low
   - rename from solver. to draft.

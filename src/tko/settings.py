@@ -101,6 +101,14 @@ hdiffmin = 60
         return os.path.join(os.path.expanduser("~"), self.package_name)
 
 
+    def set_home(self, path):
+        self.check_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        parser["LOCAL"]["home"] = os.path.abspath(path)
+        with open(self.settings_file, "w") as f:
+            parser.write(f)
+
     def get_home(self) -> str:
         self.check_settings_file()
         parser = configparser.ConfigParser()

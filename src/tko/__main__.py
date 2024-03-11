@@ -57,6 +57,8 @@ class Main:
            SettingsParser().toggle_ascii()
         if (args.diff):
             SettingsParser().toggle_hdiff()
+        if (args.home):
+            SettingsParser().set_home(args.home)
 
         print(str(sp))
 
@@ -140,6 +142,7 @@ class Main:
         parser_s.add_argument('--encoding', '-e', action='store_true', help='toggle [ascii | unicode] mode.')
         parser_s.add_argument('--color', '-c', action='store_true', help='toggle [colored | mono] mode.')
         parser_s.add_argument('--diff', '-d', action='store_true', help='toggle [side_by_side | up_down] mode.')
+        parser_s.add_argument("--home", type=str, help="set home directory.")
         parser_s.set_defaults(func=Main.settings)
 
         args = parser.parse_args()
