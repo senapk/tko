@@ -57,6 +57,35 @@ hdiffmin = 60
         if "VISUAL" not in parser or "REP" not in parser:
             self.create_default_settings_file()
 
+        parser.read(self.settings_file)  
+        update = False
+        if not "LOCAL" in parser or not "home" in parser["LOCAL"]:
+            # get home folder using appdirs
+            parser["LOCAL"] = {}
+            parser["LOCAL"]["home"] = self.get_default_home()
+            update = True
+
+        if "ascii" not in parser["VISUAL"]:
+            parser["VISUAL"]["ascii"] = "False"
+            update = True
+
+        if "color" not in parser["VISUAL"]:
+            parser["VISUAL"]["color"] = "True"
+            update = True
+
+        if "hdiff" not in parser["VISUAL"]:
+            parser["VISUAL"]["hdiff"] = "True"
+            update = True
+        
+        if "hdiffmin" not in parser["VISUAL"]:
+            parser["VISUAL"]["hdiffmin"] = "60"
+            update = True
+
+        if update:
+            with open(self.settings_file, "w") as f:
+                parser.write(f)
+
+
     def get_settings_file(self):
         self.check_settings_file()
         return self.settings_file
@@ -65,6 +94,18 @@ hdiffmin = 60
         path = os.path.abspath(path)
         SettingsParser.__settings_file = path
         self.settings_file = path
+
+    # return the default home folder for user
+    # usually the home folder ~ or $HOME
+    def get_default_home(self) -> str:
+        return os.path.join(os.path.expanduser("~"), self.package_name)
+
+
+    def get_home(self) -> str:
+        self.check_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        return parser["LOCAL"]["home"]
 
     def get_ascii(self) -> bool:
         self.check_settings_file()
@@ -84,11 +125,6 @@ hdiffmin = 60
         self.check_settings_file()
         parser = configparser.ConfigParser()
         parser.read(self.settings_file)
-        if "color" not in parser["VISUAL"]:
-            parser["VISUAL"]["color"] = "True"
-            with open(self.settings_file, "w") as f:
-                parser.write(f)
-            return True
         return parser["VISUAL"]["color"] == "True"
     
     def toggle_color(self):
@@ -103,11 +139,6 @@ hdiffmin = 60
         self.check_settings_file()
         parser = configparser.ConfigParser()
         parser.read(self.settings_file)
-        if "hdiff" not in parser["VISUAL"]:
-            parser["VISUAL"]["hdiff"] = "True"
-            with open(self.settings_file, "w") as f:
-                parser.write(f)
-            return True
         return parser["VISUAL"]["hdiff"] == "True"
     
     def toggle_hdiff(self):
@@ -122,10 +153,15 @@ hdiffmin = 60
         self.check_settings_file()
         parser = configparser.ConfigParser()
         parser.read(self.settings_file)
-        if "hdiffmin" not in parser["VISUAL"]:
-            parser["VISUAL"]["hdiffmin"] = "60"
-            with open(self.settings_file, "w") as f:
-                parser.write(f)
-            return 60
         return int(parser["VISUAL"]["hdiffmin"])
+    
+    def __str__(self):
+        output = ""
 
+        output += "Settings File: " + self.get_settings_file() + "\n"
+        output += "Problems Dir : " + self.get_home() + "\n"
+        output += "Diff     Mode: " + ("SIDE_BY_SIDE" if self.get_hdiff() else "UP_DOWN") + "\n"
+        output += "Color    Mode: " + ("COLORED" if self.get_color() else "MONO") + "\n"
+        output += "Encoding Mode: " + ("ASCII" if self.get_ascii() else "UNICODE") + "\n"
+
+        return output

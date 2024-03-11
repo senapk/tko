@@ -3,8 +3,6 @@ import os
 import urllib.request
 import urllib.error
 import json
-import tempfile
-import shutil
 
 from .settings import SettingsParser
 
@@ -80,7 +78,7 @@ class Down:
     def down_problem_def(destiny, cache_url) -> Tuple[str, str]:
         # downloading Readme
         readme = os.path.join(destiny, "Readme.md")
-        [tempfile, _content] = urllib.request.urlretrieve(cache_url + "Readme.md")
+        [tempfile, __content] = urllib.request.urlretrieve(cache_url + "Readme.md")
         content = ""
         try:
             content = open(tempfile, encoding="utf-8").read()
@@ -97,7 +95,8 @@ class Down:
     @staticmethod
     def create_problem_folder(course, activity):
         # create dir
-        destiny = course + "_" + activity
+        home = SettingsParser().get_home()
+        destiny = os.path.join(home, course, activity)
         if not os.path.exists(destiny):
             os.makedirs(destiny, exist_ok=True)
         else:

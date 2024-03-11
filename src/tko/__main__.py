@@ -50,8 +50,7 @@ class Main:
     @staticmethod
     def settings(args):
         sp = SettingsParser()
-        print("Settings file at " + sp.get_settings_file())
-
+        
         if (args.color):
             SettingsParser().toggle_color()
         if (args.encoding):
@@ -59,9 +58,7 @@ class Main:
         if (args.diff):
             SettingsParser().toggle_hdiff()
 
-        print("COLORMODE: " + ("COLORED" if sp.get_color() else "MONO"))
-        print("DIFF MODE: " + ("SIDE_BY_SIDE" if sp.get_hdiff() else "UP_DOWN"))
-        print("ENCODING : " + ("ASCII" if sp.get_ascii() else "UNICODE"))
+        print(str(sp))
 
         
 
