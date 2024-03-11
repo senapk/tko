@@ -51,16 +51,32 @@ class Main:
     def settings(args):
         sp = SettingsParser()
         
-        if (args.color):
-            SettingsParser().toggle_color()
-        if (args.encoding):
-           SettingsParser().toggle_ascii()
-        if (args.diff):
-            SettingsParser().toggle_hdiff()
-        if (args.lang):
-            SettingsParser().set_language(args.lang)
-
-        print(str(sp))
+        if args.ascii:
+            sp.set_ascii(True)
+            print("Encoding mode now is: ASCII")
+        if args.unicode:
+            sp.set_ascii(False)
+            print("Encoding mode now is: UNICODE")
+        if args.mono:
+            sp.set_color(False)
+            print("Color mode now is: MONOCHROMATIC")
+        if args.color:
+            sp.set_color(True)
+            print("Color mode now is: COLORED")
+        if args.side:
+            sp.set_hdiff(True)
+            print("Diff mode now is: SIDE_BY_SIDE")
+        if args.updown:
+            sp.set_hdiff(False)
+            print("Diff mode now is: UP_DOWN")
+        if args.lang:
+            sp.set_language(args.lang)
+            print("Default language extension now is:", sp.get_language())
+        if args.ask:
+            sp.set_language("ask")
+            print("Language extension will be asked always.")
+        if args.show:
+            print(str(sp))
 
     # @staticmethod
     # def rebuild(args):
@@ -135,10 +151,26 @@ class Main:
 
         # settings
         parser_s = subparsers.add_parser('config', help='settings tool.')
-        parser_s.add_argument('--encoding', '-e', action='store_true', help='toggle [ascii | unicode] mode.')
-        parser_s.add_argument('--color', '-c', action='store_true', help='toggle [colored | mono] mode.')
-        parser_s.add_argument('--diff', '-d', action='store_true', help='toggle [side_by_side | up_down] mode.')
-        parser_s.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension. Use 'ask' to ask every time.")
+        parser_s.add_argument('--show',  '-s', action='store_true', help='show current settings.')
+
+        g_encoding = parser_s.add_mutually_exclusive_group()
+        g_encoding.add_argument('--ascii', action='store_true',    help='set ascii mode.')
+        g_encoding.add_argument('--unicode', action='store_true', help='set unicode mode.')
+
+        g_color = parser_s.add_mutually_exclusive_group()
+        g_color.add_argument('--color', action='store_true', help='set colored mode.')
+        g_color.add_argument('--mono',  action='store_true', help='set mono    mode.')
+        
+
+        g_diff = parser_s.add_mutually_exclusive_group()
+        g_diff.add_argument('--side', action='store_true', help='set side_by_side diff mode.')
+        g_diff.add_argument('--updown', action='store_true', help='set up_to_down   diff mode.')
+
+
+        g_lang = parser_s.add_mutually_exclusive_group()
+        g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
+        g_lang.add_argument("--ask", action='store_true', help='ask language extension every time.')
+
         parser_s.set_defaults(func=Main.settings)
 
         args = parser.parse_args()

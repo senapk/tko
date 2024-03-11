@@ -104,11 +104,11 @@ hdiffmin = 60
         parser.read(self.settings_file)
         return parser["VISUAL"]["ascii"] == "True"
     
-    def toggle_ascii(self):
+    def set_ascii(self, value):
         self.check_settings_file()
         parser = configparser.ConfigParser()
         parser.read(self.settings_file)
-        parser["VISUAL"]["ascii"] = str(not self.get_ascii())
+        parser["VISUAL"]["ascii"] = str(value)
         with open(self.settings_file, "w") as f:
             parser.write(f)
 
@@ -118,11 +118,11 @@ hdiffmin = 60
         parser.read(self.settings_file)
         return parser["VISUAL"]["color"] == "True"
     
-    def toggle_color(self):
+    def set_color(self, value: bool):
         self.check_settings_file()
         parser = configparser.ConfigParser()
         parser.read(self.settings_file)
-        parser["VISUAL"]["color"] = str(not self.get_color())
+        parser["VISUAL"]["color"] = str(value)
         with open(self.settings_file, "w") as f:
             parser.write(f)
 
@@ -132,11 +132,11 @@ hdiffmin = 60
         parser.read(self.settings_file)
         return parser["VISUAL"]["hdiff"] == "True"
     
-    def toggle_hdiff(self):
+    def set_hdiff(self, value: bool):
         self.check_settings_file()
         parser = configparser.ConfigParser()
         parser.read(self.settings_file)
-        parser["VISUAL"]["hdiff"] = str(not self.get_hdiff())
+        parser["VISUAL"]["hdiff"] = str(value)
         with open(self.settings_file, "w") as f:
             parser.write(f)
 

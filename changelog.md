@@ -1,7 +1,11 @@
 # Changelog
 
+- 0.2.4: 11/mar/2024
+  - new improvements on guide and config
+  - fix: error in message when problem without draft was downloaded
 - 0.2.3: 11/mar/2024
-  - updating guide
+  - new improvements on guide and config
+  - updating config
 - 0.2.2
   - removing [local][home] option
   - adding [local][lang] for default extension language

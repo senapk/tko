@@ -1,9 +1,10 @@
 tko_guide = """
 ╔═════════════ TKO SIMPLE GUIDE ═══════════╗
-║Show config settings : tko config         ║
+║Show config settings : tko config --show  ║
 ║Set default language : tko config -l ext  ║
-║Toggle diff [up   | side ] : tko config -d║
-║Toggle color[mono | color] : tko config -c║
+║DiffMode: tko config [--side  | --updown ]║
+║Color   : tko config [--mono  | --color  ]║
+║Encoding: tko config [--ascii | --unicode]║
 ╟───────────────── BAIXAR ─────────────────╢
 ║Baixar config : tko down _course _problem ║
 ║ Exemplo poo  : tko down poo carro        ║

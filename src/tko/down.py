@@ -144,10 +144,6 @@ class Down:
             draft_path = os.path.join(destiny, "draft." + language)
             urllib.request.urlretrieve(cache_url + "draft." + language, draft_path)
             print(draft_path + " (Draft) Rename before modify.")
-            if ask_ext:
-                print("\nYou can choose default extension with command\n$ tko config --lang <extension>")
-
-
 
         except urllib.error.HTTPError:  # draft not found
             filename = "draft."
@@ -159,8 +155,9 @@ class Down:
                     else:
                         f.write("")
                 print(draft_path, "(Empty)")
-
-            return
+        
+        if ask_ext:
+            print("\nYou can choose default extension with command\n$ tko config --lang <extension>")
 
         # download all files in folder with the same extension or compatible
         # try:
