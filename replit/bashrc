@@ -95,16 +95,5 @@ echo "Para ver o guia do tko  digite: tko -g"
 ################    ALIAS    ########################
 #####################################################
 
-alias_file="/home/runner/${REPL_SLUG}/.alias.sh"
-if [ -f "$alias_file" ]; then
-	source "$alias_file"
-else
-	touch "$alias_file"
-	echo "#!/bin/bash" >> "$alias_file"
-	echo "" >> "$alias_file"
-	echo "function down() {	tko down poo \"\$1\" ts ;}" >> "$alias_file"
-	echo "function run()  { tko run draft.ts cases.tio ;}" >> "$alias_file"
-	echo "You can create ou personalize your own aliases in $alias_file"
-fi
 
 

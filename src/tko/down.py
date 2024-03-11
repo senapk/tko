@@ -120,6 +120,10 @@ class Down:
             [_readme_path, mapi_path] = Down.down_problem_def(destiny, cache_url)
         except urllib.error.HTTPError:
             print("fail: activity not found in course")
+            # verifi if destiny folder is empty and remove it
+            if len(os.listdir(destiny)) == 0:
+                os.rmdir(destiny)
+
             return
 
         with open(mapi_path) as f:

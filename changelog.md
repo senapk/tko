@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.2.5: 11/mar/2024
+  - remove folder if empty and no problem has been downloaded
+  - fix bashrc for replit
 - 0.2.4: 11/mar/2024
   - new improvements on guide and config
   - fix: error in message when problem without draft was downloaded
