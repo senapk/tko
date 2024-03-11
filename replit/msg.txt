@@ -1,8 +1,8 @@
-Para carregar o setup, siga os passos abaixo:
+Após instalar, para carregar o setup, siga os passos abaixo:
 
 1. Selecione o comando com o mouse.
 2. Copie utilizando Control Shift C.
-3. Abra o Shell.
+3. Abra o Shell e carregue um novo terminal com Control D.
 4. Cole com Control Shift V.
 
 bash --rcfile ~/${REPL_SLUG}/.bashrc
