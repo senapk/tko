@@ -11,6 +11,10 @@ fup = https://raw.githubusercontent.com/qxcodefup/arcade/master/base/
 ed = https://raw.githubusercontent.com/qxcodeed/arcade/master/base/
 poo = https://raw.githubusercontent.com/qxcodepoo/arcade/master/base/
 
+[LOCAL]
+; use "lang = ask" to ask for language every time
+lang = ask
+
 [VISUAL]
 ascii = False
 color = True
@@ -54,15 +58,14 @@ hdiffmin = 60
             self.create_default_settings_file()
         parser = configparser.ConfigParser()
         parser.read(self.settings_file)
-        if "VISUAL" not in parser or "REP" not in parser:
+        if "VISUAL" not in parser or "REP" not in parser or "LOCAL" not in parser:
             self.create_default_settings_file()
 
         parser.read(self.settings_file)  
         update = False
-        if not "LOCAL" in parser or not "home" in parser["LOCAL"]:
-            # get home folder using appdirs
-            parser["LOCAL"] = {}
-            parser["LOCAL"]["home"] = self.get_default_home()
+
+        if "lang" not in parser["LOCAL"]:
+            parser["LOCAL"]["lang"] = "ask"
             update = True
 
         if "ascii" not in parser["VISUAL"]:
@@ -94,29 +97,6 @@ hdiffmin = 60
         path = os.path.abspath(path)
         SettingsParser.__settings_file = path
         self.settings_file = path
-
-    # return the default home folder for user
-    # usually the home folder ~ or $HOME
-    def get_default_home(self) -> str:
-        print("Primeira execução do programa")
-        print("Definindo o diretório padrão de problemas para a pasta atual")
-        print("Caso deseje mudar, utilize o comando 'tko config --home <caminho>'\n")
-        return os.path.abspath(os.path.curdir)
-
-
-    def set_home(self, path):
-        self.check_settings_file()
-        parser = configparser.ConfigParser()
-        parser.read(self.settings_file)
-        parser["LOCAL"]["home"] = os.path.abspath(path)
-        with open(self.settings_file, "w") as f:
-            parser.write(f)
-
-    def get_home(self) -> str:
-        self.check_settings_file()
-        parser = configparser.ConfigParser()
-        parser.read(self.settings_file)
-        return parser["LOCAL"]["home"]
 
     def get_ascii(self) -> bool:
         self.check_settings_file()
@@ -166,11 +146,25 @@ hdiffmin = 60
         parser.read(self.settings_file)
         return int(parser["VISUAL"]["hdiffmin"])
     
+    def set_language(self, lang):
+        self.check_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        parser["LOCAL"]["lang"] = lang
+        with open(self.settings_file, "w") as f:
+            parser.write(f)
+    
+    def get_language(self):
+        self.check_settings_file()
+        parser = configparser.ConfigParser()
+        parser.read(self.settings_file)
+        return parser["LOCAL"]["lang"]
+    
     def __str__(self):
         output = ""
 
         output += "Settings File: " + self.get_settings_file() + "\n"
-        output += "Problems Dir : " + self.get_home() + "\n"
+        output += "Default  Lang: " + self.get_language() + "\n"
         output += "Diff     Mode: " + ("SIDE_BY_SIDE" if self.get_hdiff() else "UP_DOWN") + "\n"
         output += "Color    Mode: " + ("COLORED" if self.get_color() else "MONO") + "\n"
         output += "Encoding Mode: " + ("ASCII" if self.get_ascii() else "UNICODE") + "\n"

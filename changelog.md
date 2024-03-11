@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.2.2
+  - removing [local][home] option
+  - adding [local][lang] for default extension language
 - 0.2.1
   - improving SettingsParser
   - creating entry [LOCAL][home] in settings for problems directory

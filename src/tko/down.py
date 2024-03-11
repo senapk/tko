@@ -93,19 +93,14 @@ class Down:
         return readme, mapi
 
     @staticmethod
-    def create_problem_folder(course, activity):
+    def create_problem_folder(_course, activity):
         # create dir
-        home = SettingsParser().get_home()
-        destiny = os.path.join(home, course, activity)
+        destiny = activity
         if not os.path.exists(destiny):
             os.makedirs(destiny, exist_ok=True)
         else:
             print("problem folder", destiny, "found, merging content.")
 
-        # saving problem info on folder
-        # info_file = os.path.join(destiny, ".info")
-        # with open(info_file, "w") as f:
-        #     f.write(disc + " " + index + " " + ext + "\n")
         return destiny
 
     @staticmethod
@@ -135,16 +130,25 @@ class Down:
         if len(loaded_json["required"]) == 1:  # you already have the students file
             return
 
-        # creating source file for student
-        # search if exists a draft file for the extension choosen
+        language_def = SettingsParser().get_language()
+        ask_ext = False
         if language is None:
-            print("Write extension for draft file: [c, cpp, py, ts, js, java]: ", end="")
-            language = input()
+            if language_def != "ask":
+                language = language_def
+            else:
+                print("Choose extension for draft: [c, cpp, py, ts, js, java]: ", end="")
+                language = input()
+                ask_ext = True
 
         try:
             draft_path = os.path.join(destiny, "draft." + language)
             urllib.request.urlretrieve(cache_url + "draft." + language, draft_path)
             print(draft_path + " (Draft) Rename before modify.")
+            if ask_ext:
+                print("\nYou can choose default extension with command\n$ tko config --lang <extension>")
+
+
+
         except urllib.error.HTTPError:  # draft not found
             filename = "draft."
             draft_path = os.path.join(destiny, filename + language)

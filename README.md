@@ -35,11 +35,9 @@ Set-ExecutionPolicy Unrestricted
 - Para baixar a atividade do carro do repositório de POO(Programação Orientada a Objetos): [contrua seu primeiro @carro](https://github.com/qxcodepoo/arcade/blob/master/base/carro/Readme.md) para `java`:
 
 ```bash
-# Você informa o repositório `poo`
-# a questão `002`
-# e a linguagem `java`, `cpp`, `ts`
-# tko down _course _activity -l _language
-tko down poo carro -l java
+# Você informa o repositório `poo` o problema `carro`
+# tko down _course _activity
+tko down poo carro
 ```
 
 ### Para rodar os testes
@@ -168,19 +166,6 @@ Vamos escrever alguns testes para o problema proposto. Crie um arquivo chamado `
 0.33
 <<<<<<<<
 ```
-
----
-
-### Listando os testes
-
-- Salve o arquivo `testes.tio`.
-- Abra o terminal na pasta onde colocou o arquivo.
-- Para simplificar, certifique-se que só existe esse arquivo na pasta.
-- O comando `tko` funciona com subcomandos.
-- O subcomando `tko list` mostra os testes.
-  - Mostrando os testes: `tko list testes.tio`
-  - Opções:
-    - `-i ou --index`: um índice específico
 
 ---
 
