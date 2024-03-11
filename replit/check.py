@@ -3,10 +3,12 @@
 
 from datetime import date
 import os
+import sys
 
 today = date.today()
 
-file = ".bin/last_update.txt"
+# last_update.txt send from bashrc
+file = sys.argv[1]
 
 if not os.path.isfile(file): # create empty file if not exists
     with open(file, "w") as f:
