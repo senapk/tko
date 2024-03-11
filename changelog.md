@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.2.3: 11/mar/2024
+  - updating guide
 - 0.2.2
   - removing [local][home] option
   - adding [local][lang] for default extension language

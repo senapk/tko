@@ -1,10 +1,12 @@
 tko_guide = """
 ╔═════════════ TKO SIMPLE GUIDE ═══════════╗
+║Show config settings : tko config         ║
+║Set default language : tko config -l ext  ║
 ║Toggle diff [up   | side ] : tko config -d║
 ║Toggle color[mono | color] : tko config -c║
 ╟───────────────── BAIXAR ─────────────────╢
-║Baixar config : tko down _disc _id _ext   ║
-║ Exemplo poo  : tko down poo 012 cpp      ║
+║Baixar config : tko down _course _problem ║
+║ Exemplo poo  : tko down poo carro        ║
 ╟──────────────── EXECUTAR ────────────────╢
 ║   Executar: tko run _codigo[s]           ║
 ║   exemplo : tko run solver.ts            ║
