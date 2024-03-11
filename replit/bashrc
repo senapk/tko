@@ -84,7 +84,7 @@ shopt -s histappend
 
 export PATH="/home/runner/${REPL_SLUG}/.bin:${PATH}"
 
-alias tko='tko -c /home/runner/${REPL_SLUG}/.bin/tko.cfg'
+alias tko='tko.py -c /home/runner/${REPL_SLUG}/.bin/tko.cfg'
 python .bin/check.py
 echo "# Setup carregado corretamente"
 echo "Para ver o guia do bash digite: tko -b"

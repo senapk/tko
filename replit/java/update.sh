@@ -4,7 +4,7 @@ REP="${HOME}/${REPL_SLUG}"
 mkdir -p ${REP}/.bin
 
 SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/tko"
-TARGET="${REP}/.bin/tko"
+TARGET="${REP}/.bin/tko.py"
 curl  ${SOURCE} -o ${TARGET}
 chmod +x ${TARGET}
 
