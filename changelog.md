@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.2.6:
+  - Guides updated: tko -g and tko -b
 - 0.2.5: 11/mar/2024
   - remove folder if empty and no problem has been downloaded
   - fix bashrc for replit
