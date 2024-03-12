@@ -1812,24 +1812,34 @@ class Actions:
 
 tko_guide = """
        ╔════ TKO GUIA COMPACTO ════╗
-╔══════╩═════ MUDAR LINGUAGEM ═════╩═══════╗
-║    Comando: tko config -l <ext>          ║
-║         exemplo c : tko config -l c      ║
-║      exemplo java : tko config -l java   ║
-╟──────────── BAIXAR PROBLEMA ─────────────╢
-║      Comando : tko down <curso> <label>  ║
+╔══════╩═════ BAIXAR PROBLEMA ═════╩═══════╗
+║                                          ║
+║        tko down <curso> <label>          ║
+║                                          ║
 ║ exemplo poo  : tko down poo carro        ║
 ║ exemplo fup  : tko down fup opala        ║
 ╟─────────── EXECUTAR SEM TESTAR ──────────╢
-║   Comando  : tko run <codigo[s]>         ║
+║                                          ║
+║          tko run <cod, cod...>           ║
+║                                          ║
 ║exemplo ts  : tko run solver.ts           ║
 ║exemplo cpp : tko run main.cpp lib.cpp    ║
 ╟──────────── RODAR OS TESTES ─────────────╢
-║ Comando: tko run <tio> <cod[s]> [-i ind] ║
+║                                          ║
+║   tko run cases.tio <cod, ...> [-i ind]  ║
+║                                          ║
 ║ exemplo: tko run cases.tio main.ts       ║
-║só ind 6: tko run cases.tio main.ts -i 6  ║
+║só ind 6: tko run cases.tio main.c -i 6   ║
+╟── DEFINIR EXTENSÃO PADRÃO DOS RASCUNHOS ─╢
+║                                          ║
+║           tko config -l <ext>            ║
+║                                          ║
+║     exemplo c : tko config -l c          ║
+║  exemplo java : tko config -l java       ║
 ╟─────────── MUDAR VISUALIZAÇÃO ───────────╢
-║Mostrar configurações: tko config --show  ║
+║                                          ║
+║             tko config <--opcao>           ║
+║                                          ║
 ║DiffMode: tko config [--side  | --updown ]║
 ║Cores   : tko config [--mono  | --color  ]║
 ║Encoding: tko config [--ascii | --unicode]║
