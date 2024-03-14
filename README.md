@@ -20,6 +20,8 @@ pip install git+https://github.com/senapk/tko.git
 
 Se não pode instalar o compilador no seu computador, ou vai programar pelo celular, você pode utilizar o replit para rodar os testes. Para isso, siga as instruções do link: [Replit tko Install](replit/Readme.md)
 
+Ou veja a apresentação e o vídeo: [LINK](https://docs.google.com/presentation/d/13B2AYhyVPRGN9DVsNx8dWhA4mHDcgl8BBNDl-fYzFwg/edit?usp=sharing)
+
 ## Habilitando a execução de Scripts no Windows
 
 Se você estiver no windows, você precisará habilitar a execução de scripts. Para isso, abra o powershell como administrador e digite:
