@@ -5,6 +5,7 @@ language = "python3"
 # A list of globs that specify which files and directories should
 # be hidden in the workspace.
 hidden = ["venv", ".config", "**/__pycache__", "**/.mypy_cache", "**/*.pyc", ".*"]
+modules = ["python-3.10:v25-20230920-d4ad2e4"]
 
 # Specifies which nix channel to use when building the environment.
 [nix]

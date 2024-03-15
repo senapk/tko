@@ -28,6 +28,7 @@ hdiffmin = 60
         self.package_name = "tko"
         self.filename = "settings.cfg"
         if SettingsParser.__settings_file is None:
+            self.settings_file = "."
             self.settings_file = os.path.join(appdirs.user_data_dir(self.package_name), self.filename)
         else:
             self.settings_file = os.path.abspath(SettingsParser.__settings_file)

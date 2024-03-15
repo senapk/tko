@@ -35,7 +35,7 @@ for file in files:
     with open("../src/tko/" + file + ".py", "r") as f:
         lines = f.read().split("\n")
         for line in lines:
-            if line.startswith("from .") or line.startswith("from __future__"):
+            if line.startswith("from .") or line.startswith("from __future__") or "appdirs" in line:
                 pass
             elif line.startswith("import") or line.startswith("from "):
                 if line not in imports:
