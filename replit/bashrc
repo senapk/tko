@@ -4,7 +4,7 @@
 export PS1="\033[1;35m\w\[\033[00m\]\$ "
 
 # atualizando tko e scripts uma vez por dia
-python /home/runner/${REPL_SLUG}/.bin/check.py "/home/runner/${REPL_SLUG}/.bin/last_update.txt"
+#python /home/runner/${REPL_SLUG}/.bin/check.py "/home/runner/${REPL_SLUG}/.bin/last_update.txt"
 
 # adicionando .bin no path
 export PATH="/home/runner/${REPL_SLUG}/.bin:${PATH}"

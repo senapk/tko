@@ -2,6 +2,11 @@
 
 REP="${HOME}/${REPL_SLUG}"
 mkdir -p ${REP}/.bin
+mkdir -p ${REP}/.config
+
+SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/bashrc"
+TARGET="${REP}/.config/bashrc"
+curl  ${SOURCE} -o ${TARGET}
 
 SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/tko"
 TARGET="${REP}/.bin/tko.py"
@@ -10,10 +15,6 @@ chmod +x ${TARGET}
 
 SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/check.py"
 TARGET="${REP}/.bin/check.py"
-curl  ${SOURCE} -o ${TARGET}
-
-SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/bashrc"
-TARGET="${REP}/bashrc"
 curl  ${SOURCE} -o ${TARGET}
 
 SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/java/update.sh"

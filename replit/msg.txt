@@ -1,8 +1,2 @@
-Após instalar, para carregar o setup, siga os passos abaixo:
-
-1. Abra o Shell e o reinicie com Control D.
-2. Digite o seguinte comando.
-
-source bashrc
-
-Agora você pode utilizar o tko no shell para baixar, executar e testar seus códigos.
+Para baixar, executar e testar seu código usando as questões do repositório abra o Shell e utilize o tko.
+Digite no shell o comando update.sh sempre que quiser atualizar a versão do tko do seu repositório.
