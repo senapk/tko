@@ -22,4 +22,4 @@ alias cp="cp -i"
 alias ls="ls --color=auto"
 alias ll="ls -alh"
 
-alias tko='tko.py -c /home/runner/${REPL_SLUG}/.bin/tko.cfg'
+alias tko='tko -c /home/runner/${REPL_SLUG}/.bin/tko.cfg'

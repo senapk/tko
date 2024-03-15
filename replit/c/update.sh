@@ -9,7 +9,7 @@ TARGET="${REP}/.config/bashrc"
 curl  ${SOURCE} -o ${TARGET}
 
 SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/tko"
-TARGET="${REP}/.bin/tko.py"
+TARGET="${REP}/.bin/tko"
 curl  ${SOURCE} -o ${TARGET}
 chmod +x ${TARGET}
 
