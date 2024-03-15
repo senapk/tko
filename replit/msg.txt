@@ -1,9 +1,7 @@
 Após instalar, para carregar o setup, siga os passos abaixo:
 
-1. Selecione o comando com o mouse.
-2. Copie o comando utilizando Control Shift C C.
-3. Abra o Shell e o reinicie com Control D.
-4. Digite o seguinte comando no Shell.
+1. Abra o Shell e o reinicie com Control D.
+2. Digite o seguinte comando.
 
 source bashrc
 
