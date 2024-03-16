@@ -3,11 +3,7 @@
 - Instalação:
   - Crie um Replit com a linguagem desejada `[c | cpp | java | node | typescript | python]`:
   - Abra o Shell do replit e execute o comando correspondente a linguagem desejada.
-  - Digite enter algumas vezes para saber se setup terminou.
-  - Quando terminar, reinicie o shell apertando Control D.
-- Execução
-  - Clique no botão verde `Run` para mostrar o comando de setup.
-  - Cole e execute o comando no shell para carregar o `tko`.
+  - Dê Control D e espere a instalação terminar.
 
 ## C++
 
