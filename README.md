@@ -4,7 +4,7 @@
 
 | [Windows](install/windows.md) | [Linux](install/linux.md) | [Replit](replit/Readme.md) | [Codespace](install/codespace.md) |
 | ------- | ----- | ------ | --------- |
-| ![_](install/windows.jpg) | ![_](install/linux.jpg)       | ![_](install/replit.jpg)       | ![_](install/codespace.jpg) |
+| [![_](install/windows.jpg)](install/windows.md) | [![_](install/linux.jpg)](install/linux.md)       | [![_](install/replit.jpg)](replit/Readme.md) | [![_](install/codespace.jpg)](install/codespace.md) |
 
 ```bash
 # baixando do repositório oficial
