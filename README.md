@@ -7,11 +7,8 @@
 | [![_](install/windows.jpg)](install/windows.md) | [![_](install/linux.jpg)](install/linux.md)       | [![_](install/replit.jpg)](replit/Readme.md) | [![_](install/codespace.jpg)](install/codespace.md) |
 
 ```bash
-# baixando do repositório oficial
+# instalar utilizando o gerenciador de pacotes do python
 pip install tko
-
-# ou baixar diretamente do github
-pip install git+https://github.com/senapk/tko.git 
 ```
 
 ## Para baixar a descrição das atividades e os testes
