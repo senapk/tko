@@ -1,4 +1,6 @@
-# tko - Test Kit Operations
+# tko
+
+O TKO é um sistema de testes para programação competitiva. Ele é capaz de rodar testes em várias linguagens de programação e em vários formatos de testes.
 
 ## Instalação
 
