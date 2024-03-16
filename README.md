@@ -1,10 +1,10 @@
 # tko - Test Kit Operations
 
-Para rodar os baixar e executar os testes diretamente do seu computador, você precisará do `python` instalado e do `tko` instalado.
+## Instalação
 
-O python já vem instalado no linux e no mac. Para instalar no windows, baixe o instalador no site oficial: [https://www.python.org/downloads/](https://www.python.org/downloads/).
-
-Instale o `tko` utilizando o `pip`, o gerenciador de pacotes do python:
+| [Windows](install/windows.md) | [Linux](install/linux.md) | [Replit](replit/Readme.md) | [Codespace](install/codespace.md) |
+| ------- | ----- | ------ | --------- |
+| ![_](install/windows.jpg) | ![_](install/linux.jpg)       | ![_](install/replit.jpg)       | ![_](install/codespace.jpg) |
 
 ```bash
 # baixando do repositório oficial
@@ -12,24 +12,6 @@ pip install tko
 
 # ou baixar diretamente do github
 pip install git+https://github.com/senapk/tko.git 
-```
-
-![image](https://user-images.githubusercontent.com/4747652/262040621-1f3166b1-a6e8-47a0-b48c-f86ca45aad83.png)
-
-## Install in Replit
-
-Se não pode instalar o compilador no seu computador, ou vai programar pelo celular, você pode utilizar o replit para rodar os testes. Para isso, siga as instruções do link: [Replit tko Install](replit/Readme.md)
-
-Ou veja a apresentação e o vídeo: [LINK](https://docs.google.com/presentation/d/13B2AYhyVPRGN9DVsNx8dWhA4mHDcgl8BBNDl-fYzFwg/edit?usp=sharing)
-
-## Habilitando a execução de Scripts no Windows
-
-Se você estiver no windows, você precisará habilitar a execução de scripts. Para isso, abra o powershell como administrador e digite:
-
-```powershell
-Set-ExecutionPolicy Unrestricted
-
-# Se pedir confirmação, confirme e dê enter
 ```
 
 ## Para baixar a descrição das atividades e os testes
@@ -64,10 +46,6 @@ Renomeie o arquivo `draft.ext` para o nome apropriado e edite com a sua soluçã
 # tko run _arquivos_de_codigo _arquivo_de_casos_de_teste
 tko run Solver.java cases.tio
 ```
-
-![image](https://user-images.githubusercontent.com/4747652/262017881-bdbdeb37-d287-46c4-92fe-d50f279477ae.png)
-
-No exemplo da imagem acima, como o código não compilou corretamente, foram apresentados os erros de compilação.
 
 ### Verificando o resultado
 
