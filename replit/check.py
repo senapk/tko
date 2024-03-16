@@ -6,9 +6,9 @@ import os
 import sys
 
 today = date.today()
-
+rep_name = os.environ["REPL_SLUG"]
 # last_update.txt send from bashrc
-file = sys.argv[1]
+file = "/home/runner/" + rep_name + "/.bin/last_update.txt"
 
 if not os.path.isfile(file): # create empty file if not exists
     with open(file, "w") as f:

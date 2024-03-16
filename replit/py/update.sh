@@ -25,3 +25,7 @@ chmod +x ${TARGET}
 SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/msg.txt"
 TARGET="${REP}/.bin/msg.txt"
 curl  ${SOURCE} -o ${TARGET}
+
+SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/check.py"
+TARGET="${REP}/.bin/check.py"
+curl  ${SOURCE} -o ${TARGET}
