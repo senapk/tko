@@ -104,6 +104,20 @@ class Down:
         return destiny
 
     @staticmethod
+    def unzip_java(draft_path):
+        with open(draft_path, "r") as f:
+            content = f.read()
+        print("Do you want to extract each class to a separate file? [y/n]: ", end="")
+        if input() != "y":
+            return
+        
+        dict = {}
+        
+
+        with open(draft_path, "w") as f:
+            f.write(content)
+
+    @staticmethod
     def entry_unpack(course: str, activity: str, language: Optional[str]) -> None:
         course_url = SettingsParser().get_repository(course)
         if course_url is None:

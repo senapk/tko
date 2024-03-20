@@ -1,5 +1,6 @@
 from typing import List, Optional
-import subprocess
+import os
+import shutil
 
 from .wdir import Wdir
 from .basic import DiffMode, ExecutionResult, CompilerError, Param, Unit
@@ -8,6 +9,7 @@ from .format import Colored, Color, Report, symbols
 from .writer import Writer
 from .solver import Solver
 from .runner import Runner
+from .filter import Filter
 
 
 class Execution:
@@ -27,27 +29,69 @@ class Execution:
             return ExecutionResult.SUCCESS
         return ExecutionResult.WRONG_OUTPUT
 
-
 class Actions:
 
     def __init__(self):
         pass
 
-    # @staticmethod
-    # def exec(target_list: List[str]):
-    #     try:
-    #         wdir = Wdir().set_target_list(target_list).build()
-    #     except CompilerError as e:
-    #         print(e)
-    #         return 0
+    @staticmethod
+    def deep_filter_copy(source, destiny, deep: int):
+        if deep == 0:
+            return
+        
+        if os.path.isdir(source):
+            chain = source.split(os.sep)
+            if len(chain) > 1 and chain[-1].startswith("."):
+                return
+            if not os.path.isdir(destiny):
+                os.makedirs(destiny)
+            for file in sorted(os.listdir(source)):
+                Actions.deep_filter_copy(os.path.join(source, file), os.path.join(destiny, file), deep - 1)
+        else:
+            filename = os.path.basename(source)
+            if "solver" in filename or "Solver" in filename:
+                content = open(source, "r").read()
+                with open(destiny, "w") as f:
+                    f.write(Filter(filename).process(content))
+                    print(destiny + " --------------> filtered")
+            else:
+                print(destiny)
+                shutil.copy(source, destiny)
+                
 
-    # @staticmethod
-    # def list(target_list: List[str], param: Param.Basic):
-    #     wdir = Wdir().set_target_list(target_list).build().filter(param)
+
+
+    @staticmethod
+    def filter_mode():
+        # path to ~/.tko_filter
+        filter_path = os.path.join(os.path.expanduser("~"), ".tko_filter")
+        try:
+            if not os.path.isdir(filter_path):
+                os.makedirs(filter_path)
+            else:
+                # force remove  non empty dir
+                shutil.rmtree(filter_path)
+                os.makedirs(filter_path)
+        except FileExistsError as e:
+            print("fail: Dir " + filter_path + " could not be created.")
+            print("fail: verify your permissions, or if there is a file with the same name.")
+        
+        Actions.deep_filter_copy(".", filter_path, 3)
+
+        os.chdir(filter_path)
+
 
 
     @staticmethod
     def run(target_list: List[str], exec_cmd: Optional[str], param: Param.Basic) -> int:
+        
+        # modo de filtragem, antes de processar os dados, copiar tudo para o diretório temp fixo
+        # filtrar os solvers para então continuar com a execução
+        if param.filter:
+            Actions.filter_mode()
+            # change current directory to the filter directory
+            
+
         try:
             wdir = Wdir().set_target_list(target_list).set_cmd(exec_cmd).build().filter(param)
         except CompilerError as e:

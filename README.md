@@ -1,6 +1,10 @@
 # tko
 
-O TKO é um sistema de testes para programação competitiva. Ele é capaz de rodar testes em várias linguagens de programação e em vários formatos de testes.
+O TKO é um sistema de testes para programação competitiva. Ele é capaz de rodar testes em várias linguagens de programação e em vários formatos de testes. Ele está integrado com os repositórios de atividades das disciplinas de programação da UFC de Quixadá permitindo baixar as atividades e rodar os testes.
+
+- [Fundamentos de Programação](https://github.com/qxcodefup/arcade)
+- [Estrutura de Dados](https://github.com/qxcodeed/arcade)
+- [Programação Orientada a Objetos](https://github.com/qxcodepoo/arcade)
 
 ## Instalação
 

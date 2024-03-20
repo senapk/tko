@@ -99,6 +99,7 @@ class Param:
             self.label_pattern: Optional[str] = None
             self.is_up_down: bool = False
             self.diff_mode = DiffMode.FIRST
+            self.filter: bool = False
 
         def set_index(self, value: Optional[int]):
             self.index: Optional[int] = value
@@ -110,6 +111,10 @@ class Param:
 
         def set_up_down(self, value: bool):
             self.is_up_down = value
+            return self
+    
+        def set_filter(self, value: bool):
+            self.filter = value
             return self
 
         def set_diff_mode(self, value: DiffMode):

@@ -29,6 +29,8 @@ class Main:
         else:
             param.set_diff_mode(DiffMode.FIRST)
 
+        if args.filter:
+            param.set_filter(True)
 
         # load default diff from settings if not specified
         if not args.sideby and not args.updown:
@@ -123,6 +125,7 @@ class Main:
         # run
         parser_r = subparsers.add_parser('run', parents=[parent_basic], help='run with test cases.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
+        parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
         parser_r.add_argument("--cmd", type=str, help="bash command to run code")
 
         group_n = parser_r.add_mutually_exclusive_group()
@@ -132,7 +135,7 @@ class Main:
         # add a exclusive group for diff mode
         group = parser_r.add_mutually_exclusive_group()
         group.add_argument('--updown', '-u', action='store_true', help="diff mode up-to-down.")
-        group.add_argument('--sideby', '-s', action='store_true', help="diff mode sidebyside.")
+        group.add_argument('--sideby', '-s', action='store_true', help="diff mode side-by-side.")
         parser_r.set_defaults(func=Main.run)
 
         # build
