@@ -8,12 +8,20 @@ class Mode(enum.Enum):
 
 class Filter:
     def __init__(self, filename):
-        self.mode = Mode.DEL
+        self.mode = Mode.RAW
         self.backup_mode = Mode.RAW
         self.level = 1
         self.com = "//"
         if filename.endswith(".py"):
             self.com = "#"
+    
+    def init_raw(self):
+        self.mode = Mode.RAW
+        return self
+
+    def init_del(self):
+        self.mode = Mode.DEL
+        return self
 
     # decide se a linha deve entrar no texto
     def evaluate_insert(self, line: str):

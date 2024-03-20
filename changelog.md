@@ -2,6 +2,8 @@
 
 - 0.2.6:
   - Guides updated: tko -g and tko -b
+  - Added filter mode on run command to make it easier to create problems and drafts
+  - Creating a replit version without dependencies
 - 0.2.5: 11/mar/2024
   - remove folder if empty and no problem has been downloaded
   - fix bashrc for replit
