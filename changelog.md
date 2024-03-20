@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.2.7:
+  - Filter mode updated to only source files and all source files in folder
 - 0.2.6:
   - Guides updated: tko -g and tko -b
   - Added filter mode on run command to make it easier to create problems and drafts

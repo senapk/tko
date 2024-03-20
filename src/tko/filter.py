@@ -14,14 +14,6 @@ class Filter:
         self.com = "//"
         if filename.endswith(".py"):
             self.com = "#"
-    
-    def init_raw(self):
-        self.mode = Mode.RAW
-        return self
-
-    def init_del(self):
-        self.mode = Mode.DEL
-        return self
 
     # decide se a linha deve entrar no texto
     def evaluate_insert(self, line: str):

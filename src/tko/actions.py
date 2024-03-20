@@ -52,21 +52,17 @@ class Actions:
 
             if not any([filename.endswith(ext) for ext in text_extensions]):
                 shutil.copy(source, destiny)
-                print(destiny)
+                print("(--------): " + destiny)
                 return
-
             content = open(source, "r").read()
-            if "solver" in filename or "Solver" in filename:
-                processed = Filter(filename).init_del().process(content)
-            else:
-                processed = Filter(filename).init_raw().process(content)
+            processed = Filter(filename).process(content)
             with open(destiny, "w") as f:
-                f.write(processed)
-                print(destiny, end="")
                 if processed != content:
-                    print(" ------------------> filtered")
+                    print("(filtered): ", end="")
                 else:
-                    print("")
+                    print("(        ): ", end="")
+                f.write(processed)
+                print(destiny)
 
     @staticmethod
     def filter_mode():
