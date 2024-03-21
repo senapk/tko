@@ -48,11 +48,11 @@ class Actions:
                 Actions.deep_filter_copy(os.path.join(source, file), os.path.join(destiny, file), deep - 1)
         else:
             filename = os.path.basename(source)
-            text_extensions = [".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs"]
+            text_extensions = [".md", ".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs"]
 
             if not any([filename.endswith(ext) for ext in text_extensions]):
-                shutil.copy(source, destiny)
-                print("(--------): " + destiny)
+                # shutil.copy(source, destiny)
+                # print("(--------): " + destiny)
                 return
             content = open(source, "r").read()
             processed = Filter(filename).process(content)
@@ -102,7 +102,7 @@ class Actions:
             return 0
         except FileNotFoundError as e:
             print(e)
-            return 0     
+            return 0
 
         if wdir.solver is None and len(wdir.unit_list) == 0:
             print(Colored.paint("fail: ", Color.RED) + "No solver or tests found.")

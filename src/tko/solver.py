@@ -47,6 +47,15 @@ class Solver:
         check_tool("javac")
 
         solver = self.path_list[0]
+
+        # open all files and search for the main class
+        for file in self.path_list:
+            with open(file, "r") as f:
+                content = f.read()
+                if "public static void main" in content:
+                    solver = file
+                    break
+
         filename = os.path.basename(solver)
         # tempdir = os.path.dirname(self.path_list[0])
 

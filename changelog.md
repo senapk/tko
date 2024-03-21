@@ -1,5 +1,10 @@
 # Changelog
 
+- 0.3.0:
+  - multi-file tko download
+- 0.2.8:
+  - search for "public static void main" in multi file java solvers
+  - only filter and copy source files
 - 0.2.7:
   - Filter mode updated to only source files and all source files in folder
 - 0.2.6:

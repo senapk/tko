@@ -47,7 +47,7 @@ class Down:
         print(path, label)
 
     @staticmethod
-    def unpack_json(loaded, destiny):
+    def unpack_json(loaded, destiny, lang: str):
         # extracting all files to folder
         for entry in loaded["upload"]:
             if entry["name"] == "vpl_evaluate.cases":
@@ -59,6 +59,12 @@ class Down:
         for entry in loaded["required"]:
             path = os.path.join(destiny, entry["name"])
             Down.compare_and_save(entry["contents"], path)
+
+        if "draft" in loaded:
+            if lang in loaded["draft"]:
+                for file in loaded["draft"][lang]:
+                    path = os.path.join(destiny, file["name"])
+                    Down.create_file(file["contents"], path, "(Draft)")
 
     @staticmethod
     def compare_and_save(content, path):
@@ -130,10 +136,6 @@ class Down:
         with open(mapi_path) as f:
             loaded_json = json.load(f)
         os.remove(mapi_path)
-        Down.unpack_json(loaded_json, destiny)
-
-        if len(loaded_json["required"]) == 1:  # you already have the students file
-            return
 
         language_def = SettingsParser().get_language()
         ask_ext = False
@@ -144,22 +146,30 @@ class Down:
                 print("Choose extension for draft: [c, cpp, py, ts, js, java]: ", end="")
                 language = input()
                 ask_ext = True
+        
+        Down.unpack_json(loaded_json, destiny, language)
 
-        try:
-            draft_path = os.path.join(destiny, "draft." + language)
-            urllib.request.urlretrieve(cache_url + "draft." + language, draft_path)
-            print(draft_path + " (Draft) Rename before modify.")
+        if len(loaded_json["required"]) == 1:  # you already have the students file
+            return
 
-        except urllib.error.HTTPError:  # draft not found
-            filename = "draft."
-            draft_path = os.path.join(destiny, filename + language)
-            if not os.path.exists(draft_path):
-                with open(draft_path, "w") as f:
-                    if language in Down.drafts:
-                        f.write(Down.drafts[language])
-                    else:
-                        f.write("")
-                print(draft_path, "(Empty)")
+        if "draft" in loaded_json and language in loaded_json["draft"]:
+            pass
+        else:
+            try:
+                draft_path = os.path.join(destiny, "draft." + language)
+                urllib.request.urlretrieve(cache_url + "draft." + language, draft_path)
+                print(draft_path + " (Draft) Rename before modify.")
+
+            except urllib.error.HTTPError:  # draft not found
+                filename = "draft."
+                draft_path = os.path.join(destiny, filename + language)
+                if not os.path.exists(draft_path):
+                    with open(draft_path, "w") as f:
+                        if language in Down.drafts:
+                            f.write(Down.drafts[language])
+                        else:
+                            f.write("")
+                    print(draft_path, "(Empty)")
         
         if ask_ext:
             print("\nYou can choose default extension with command\n$ tko config -l <extension>")
