@@ -9,7 +9,7 @@ Primeiro baixe e instale o python: [https://www.python.org/downloads/](https://w
 Depois abra o terminal e execute o comando:
 
 ```bash
-pip install tko
+pip install tko --user
 ```
 
 ## Habilitando a execução de Scripts no Windows
