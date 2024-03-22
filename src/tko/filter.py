@@ -43,12 +43,12 @@ class Filter:
             if two_words and line.endswith("$$") and self.mode == Mode.ADD:
                 self.backup_mode = self.mode
                 self.mode = Mode.COM
-            elif alone and line[-3:-1] == "++":
+            elif line[-(3 + len(self.com)):-1] == self.com + "++":
                 self.mode = Mode.ADD
                 self.level = int(line[-1])
-            elif alone and line.endswith("=="):
+            elif line == self.com + "==":
                 self.mode = Mode.RAW
-            elif alone and line.endswith("--"):
+            elif line == self.com + "--":
                 self.mode = Mode.DEL
             elif self.evaluate_insert(line):
                 if self.mode == Mode.COM:

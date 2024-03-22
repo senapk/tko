@@ -1,5 +1,10 @@
 # Changelog
 
+- 0.3.2:
+  - search for "public static void main" in multi file java solvers
+  - search for file without "export" in multi file typescript solvers
+- 0.3.1:
+  - update filter class
 - 0.3.0:
   - multi-file tko download
 - 0.2.8:

@@ -456,14 +456,6 @@ class Filter:
         self.com = "//"
         if filename.endswith(".py"):
             self.com = "#"
-    
-    def init_raw(self):
-        self.mode = Mode.RAW
-        return self
-
-    def init_del(self):
-        self.mode = Mode.DEL
-        return self
 
     # decide se a linha deve entrar no texto
     def evaluate_insert(self, line: str):
@@ -493,12 +485,12 @@ class Filter:
             if two_words and line.endswith("$$") and self.mode == Mode.ADD:
                 self.backup_mode = self.mode
                 self.mode = Mode.COM
-            elif alone and line[-3:-1] == "++":
+            elif line[-(3 + len(self.com)):-1] == self.com + "++":
                 self.mode = Mode.ADD
                 self.level = int(line[-1])
-            elif alone and line.endswith("=="):
+            elif line == self.com + "==":
                 self.mode = Mode.RAW
-            elif alone and line.endswith("--"):
+            elif line == self.com + "--":
                 self.mode = Mode.DEL
             elif self.evaluate_insert(line):
                 if self.mode == Mode.COM:
@@ -933,7 +925,7 @@ class Down:
         print(path, label)
 
     @staticmethod
-    def unpack_json(loaded, destiny):
+    def unpack_json(loaded, destiny, lang: str):
         # extracting all files to folder
         for entry in loaded["upload"]:
             if entry["name"] == "vpl_evaluate.cases":
@@ -945,6 +937,12 @@ class Down:
         for entry in loaded["required"]:
             path = os.path.join(destiny, entry["name"])
             Down.compare_and_save(entry["contents"], path)
+
+        if "draft" in loaded:
+            if lang in loaded["draft"]:
+                for file in loaded["draft"][lang]:
+                    path = os.path.join(destiny, file["name"])
+                    Down.create_file(file["contents"], path, "(Draft)")
 
     @staticmethod
     def compare_and_save(content, path):
@@ -1016,10 +1014,6 @@ class Down:
         with open(mapi_path) as f:
             loaded_json = json.load(f)
         os.remove(mapi_path)
-        Down.unpack_json(loaded_json, destiny)
-
-        if len(loaded_json["required"]) == 1:  # you already have the students file
-            return
 
         language_def = SettingsParser().get_language()
         ask_ext = False
@@ -1030,22 +1024,30 @@ class Down:
                 print("Choose extension for draft: [c, cpp, py, ts, js, java]: ", end="")
                 language = input()
                 ask_ext = True
+        
+        Down.unpack_json(loaded_json, destiny, language)
 
-        try:
-            draft_path = os.path.join(destiny, "draft." + language)
-            urllib.request.urlretrieve(cache_url + "draft." + language, draft_path)
-            print(draft_path + " (Draft) Rename before modify.")
+        if len(loaded_json["required"]) == 1:  # you already have the students file
+            return
 
-        except urllib.error.HTTPError:  # draft not found
-            filename = "draft."
-            draft_path = os.path.join(destiny, filename + language)
-            if not os.path.exists(draft_path):
-                with open(draft_path, "w") as f:
-                    if language in Down.drafts:
-                        f.write(Down.drafts[language])
-                    else:
-                        f.write("")
-                print(draft_path, "(Empty)")
+        if "draft" in loaded_json and language in loaded_json["draft"]:
+            pass
+        else:
+            try:
+                draft_path = os.path.join(destiny, "draft." + language)
+                urllib.request.urlretrieve(cache_url + "draft." + language, draft_path)
+                print(draft_path + " (Draft) Rename before modify.")
+
+            except urllib.error.HTTPError:  # draft not found
+                filename = "draft."
+                draft_path = os.path.join(destiny, filename + language)
+                if not os.path.exists(draft_path):
+                    with open(draft_path, "w") as f:
+                        if language in Down.drafts:
+                            f.write(Down.drafts[language])
+                        else:
+                            f.write("")
+                    print(draft_path, "(Empty)")
         
         if ask_ext:
             print("\nYou can choose default extension with command\n$ tko config -l <extension>")
@@ -1111,6 +1113,15 @@ class Solver:
         check_tool("javac")
 
         solver = self.path_list[0]
+
+        # open all files and search for the main class
+        for file in self.path_list:
+            with open(file, "r") as f:
+                content = f.read()
+                if "public static void main" in content:
+                    solver = file
+                    break
+
         filename = os.path.basename(solver)
         # tempdir = os.path.dirname(self.path_list[0])
 
@@ -1140,7 +1151,15 @@ class Solver:
         check_tool(transpiler)
         check_tool("node")
 
-        solver = self.path_list[0]        
+        solver = self.path_list[0]
+
+        for file in self.path_list:
+            with open(file, "r") as f:
+                content = f.read()
+                if not "export" in content:
+                    solver = file
+                    break
+
         filename = os.path.basename(solver)
         source_list = self.path_list
         cmd = [transpiler] + source_list + ["--outdir=" + self.temp_dir, "--format=cjs", "--log-level=error"]
@@ -1800,25 +1819,21 @@ class Actions:
                 Actions.deep_filter_copy(os.path.join(source, file), os.path.join(destiny, file), deep - 1)
         else:
             filename = os.path.basename(source)
-            text_extensions = [".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs"]
+            text_extensions = [".md", ".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs"]
 
             if not any([filename.endswith(ext) for ext in text_extensions]):
-                shutil.copy(source, destiny)
-                print(destiny)
+                # shutil.copy(source, destiny)
+                # print("(--------): " + destiny)
                 return
-
             content = open(source, "r").read()
-            if "solver" in filename or "Solver" in filename:
-                processed = Filter(filename).init_del().process(content)
-            else:
-                processed = Filter(filename).init_raw().process(content)
+            processed = Filter(filename).process(content)
             with open(destiny, "w") as f:
-                f.write(processed)
-                print(destiny, end="")
                 if processed != content:
-                    print(" ------------------> filtered")
+                    print("(filtered): ", end="")
                 else:
-                    print("")
+                    print("(        ): ", end="")
+                f.write(processed)
+                print(destiny)
 
     @staticmethod
     def filter_mode():
@@ -1858,7 +1873,7 @@ class Actions:
             return 0
         except FileNotFoundError as e:
             print(e)
-            return 0     
+            return 0
 
         if wdir.solver is None and len(wdir.unit_list) == 0:
             print(Colored.paint("fail: ", Color.RED) + "No solver or tests found.")
@@ -1977,7 +1992,7 @@ bash_guide = """
 ║Finalizar entrada : Control D             ║
 ╚══════════════════════════════════════════╝
 """
-__version__ = "0.2.6"
+__version__ = "0.3.2"
 
 
 
