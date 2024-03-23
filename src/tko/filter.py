@@ -58,7 +58,6 @@ class Filter:
                 output.append(line)
         return "\n".join(output)
 
-
 class FilterMode:
 
     @staticmethod

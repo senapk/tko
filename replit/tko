@@ -499,69 +499,38 @@ class Filter:
 
 class FilterMode:
 
-    # @staticmethod
-    # def extract_lang_from_destiny(destiny) -> str:
-    #     parts = destiny.split(os.sep)
-    #     if len(parts) > 3 and parts[-3] == "src":
-    #         return parts[-2]
-    #     return "data"
+    @staticmethod
+    def deep_filter_copy(source, destiny):
+        if os.path.isdir(source):
+            chain = source.split(os.sep)
+            if len(chain) > 1 and chain[-1].startswith("."):
+                return
+            if not os.path.isdir(destiny):
+                os.makedirs(destiny)
+            for file in sorted(os.listdir(source)):
+                FilterMode.deep_filter_copy(os.path.join(source, file), os.path.join(destiny, file))
+        else:
+            filename = os.path.basename(source)
+            text_extensions = [".md", ".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs"]
 
-    # @staticmethod
-    # def deep_filter_copy(source, destiny, output: List[str]):
-    #     if os.path.isdir(source):
-    #         chain = source.split(os.sep)
-    #         if len(chain) > 1 and chain[-1].startswith("."):
-    #             return
-    #         if not os.path.isdir(destiny):
-    #             os.makedirs(destiny)
-    #         for file in sorted(os.listdir(source)):
-    #             FilterMode.deep_filter_copy(os.path.join(source, file), os.path.join(destiny, file), output)
-    #     else:
-    #         filename = os.path.basename(source)
-    #         text_extensions = [".md", ".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs"]
-
-    #         if not any([filename.endswith(ext) for ext in text_extensions]):
-    #             return
-    #         content = open(source, "r").read()
-    #         processed = Filter(filename).process(content)
-    #         line = "";
-    #         with open(destiny, "w") as f:
-    #             if processed != content:
-    #                 line += "(filtered): "
-    #             else:
-    #                 line += "(        ): "
-    #             f.write(processed)
-    #             line += destiny
-
-    #             lang = FilterMode.extract_lang_from_destiny(destiny)
-    #             if lang != "" and (len(output) == 0 or lang != FilterMode.extract_lang_from_destiny(output[-1])):
-    #                 output.append("    " + lang)
-
-    #             output.append(line)
-
-    # @staticmethod
-    # def deep_copy_and_change_dir():
-    #     # path to ~/.tko_filter
-    #     filter_path = os.path.join(os.path.expanduser("~"), ".tko_filter")
-    #     try:
-    #         if not os.path.isdir(filter_path):
-    #             os.makedirs(filter_path)
-    #         else:
-    #             # force remove  non empty dir
-    #             shutil.rmtree(filter_path)
-    #             os.makedirs(filter_path)
-    #     except FileExistsError as e:
-    #         print("fail: Dir " + filter_path + " could not be created.")
-    #         print("fail: verify your permissions, or if there is a file with the same name.")
-        
-    #     output = []
-    #     FilterMode.deep_filter_copy(".", filter_path, output)
-    #     print("\n".join(output))
-
-    #     os.chdir(filter_path)
+            if not any([filename.endswith(ext) for ext in text_extensions]):
+                return
+            
+            content = open(source, "r").read()
+            processed = Filter(filename).process(content)
+            with open(destiny, "w") as f:
+                f.write(processed)
+            
+            line = "";
+            if processed != content:
+                line += "(filtered): "
+            else:
+                line += "(        ): "
+            line += destiny
+            print(line)
 
     @staticmethod
-    def filter_targets_and_change_paths(targets) -> List[str]:
+    def deep_copy_and_change_dir():
         # path to ~/.tko_filter
         filter_path = os.path.join(os.path.expanduser("~"), ".tko_filter")
         try:
@@ -575,24 +544,43 @@ class FilterMode:
             print("fail: Dir " + filter_path + " could not be created.")
             print("fail: verify your permissions, or if there is a file with the same name.")
         
-        new_targets = []
+        FilterMode.deep_filter_copy(".", filter_path)
 
-        for target in targets:
-            destiny = os.path.join(filter_path, target)
-            content = open(target, "r").read()
-            processed = Filter(target).process(content)
+        os.chdir(filter_path)
 
-            if processed != content:
-                destiny_dir = os.path.dirname(destiny)
-                if not os.path.isdir(destiny_dir):
-                    os.makedirs(os.path.dirname(destiny))
-                with open(destiny, "w") as f:
-                    f.write(processed)
-                    print("filtered : " + destiny)
-                new_targets.append(destiny)
-            else:
-                new_targets.append(target)
-        return new_targets
+    # @staticmethod
+    # def filter_targets_and_change_paths(targets) -> List[str]:
+    #     # path to ~/.tko_filter
+    #     filter_path = os.path.join(os.path.expanduser("~"), ".tko_filter")
+    #     try:
+    #         if not os.path.isdir(filter_path):
+    #             os.makedirs(filter_path)
+    #         else:
+    #             # force remove  non empty dir
+    #             shutil.rmtree(filter_path)
+    #             os.makedirs(filter_path)
+    #     except FileExistsError as e:
+    #         print("fail: Dir " + filter_path + " could not be created.")
+    #         print("fail: verify your permissions, or if there is a file with the same name.")
+        
+    #     new_targets = []
+
+    #     for target in targets:
+    #         destiny = os.path.join(filter_path, target)
+    #         content = open(target, "r").read()
+    #         processed = Filter(target).process(content)
+
+    #         if processed != content:
+    #             destiny_dir = os.path.dirname(destiny)
+    #             if not os.path.isdir(destiny_dir):
+    #                 os.makedirs(os.path.dirname(destiny))
+    #             with open(destiny, "w") as f:
+    #                 f.write(processed)
+    #                 print("filtered : " + destiny)
+    #             new_targets.append(destiny)
+    #         else:
+    #             new_targets.append(target)
+    #     return new_targets
 
 
 
@@ -1612,7 +1600,7 @@ class Writer:
         text = ">>>>>>>>"
         if unit.case != '':
             text += " " + unit.case
-        elif unit.grade != 100:
+        if unit.grade is not None:
             text += " " + str(unit.grade) + "%"
         text += '\n' + unit.input
         text += "========\n"
@@ -1870,7 +1858,7 @@ class Wdir:
                 out = ", ".join([os.path.basename(path) for path in path_list])
             return Colored.paint("prog:", Color.GREEN) + "[" + out + "]"
 
-        folder = os.getcwd().split(os.sep)[-1]
+        # folder = os.getcwd().split(os.sep)[-1]
         #tests_count = (Colored.paint("tests:", Color.GREEN) +
         #               str(len([x for x in self.unit_list if x.repeated is None])).zfill(2))
 
@@ -1907,9 +1895,18 @@ class Actions:
         # modo de filtragem, antes de processar os dados, copiar tudo para o diretório temp fixo
         # filtrar os solvers para então continuar com a execução
         if param.filter:
-            # FilterMode.deep_copy_and_change_dir()
+            old_dir = os.getcwd()
+
             print(Report.centralize(" Entering in filter mode ", "═"))
-            target_list = FilterMode.filter_targets_and_change_paths(target_list)         
+            FilterMode.deep_copy_and_change_dir()  
+            # search for target outside . dir and redirect target
+            new_target_list = []
+            for target in target_list:
+                if ".." in target:
+                    new_target_list.append(os.path.normpath(os.path.join(old_dir, target)))
+                else:
+                    new_target_list.append(target)
+            target_list = new_target_list
 
         try:
             wdir = Wdir().set_target_list(target_list).set_cmd(exec_cmd).build().filter(param)
