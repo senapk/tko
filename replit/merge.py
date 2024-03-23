@@ -7,6 +7,8 @@
 import os
 import shutil
 
+print("Running merge for replit")
+
 # get all files inside folder src/tko
 files = [
 "settings",
