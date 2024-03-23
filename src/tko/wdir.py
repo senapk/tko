@@ -197,7 +197,7 @@ class Wdir:
                 out = ", ".join([os.path.basename(path) for path in path_list])
             return Colored.paint("prog:", Color.GREEN) + "[" + out + "]"
 
-        folder = os.getcwd().split(os.sep)[-1]
+        # folder = os.getcwd().split(os.sep)[-1]
         #tests_count = (Colored.paint("tests:", Color.GREEN) +
         #               str(len([x for x in self.unit_list if x.repeated is None])).zfill(2))
 

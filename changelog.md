@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.3.3:
+  - improved filter mode for fun
+  - fixed bud in grade reduction show for build a .tio file
 - 0.3.2:
   - search for "public static void main" in multi file java solvers
   - search for file without "export" in multi file typescript solvers

@@ -9,7 +9,7 @@ from .format import Colored, Color, Report, symbols
 from .writer import Writer
 from .solver import Solver
 from .runner import Runner
-from .filter import Filter
+from .filter import FilterMode
 
 
 class Execution:
@@ -35,65 +35,23 @@ class Actions:
         pass
 
     @staticmethod
-    def deep_filter_copy(source, destiny, deep: int):
-        if deep == 0:
-            return
-        if os.path.isdir(source):
-            chain = source.split(os.sep)
-            if len(chain) > 1 and chain[-1].startswith("."):
-                return
-            if not os.path.isdir(destiny):
-                os.makedirs(destiny)
-            for file in sorted(os.listdir(source)):
-                Actions.deep_filter_copy(os.path.join(source, file), os.path.join(destiny, file), deep - 1)
-        else:
-            filename = os.path.basename(source)
-            text_extensions = [".md", ".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs"]
-
-            if not any([filename.endswith(ext) for ext in text_extensions]):
-                # shutil.copy(source, destiny)
-                # print("(--------): " + destiny)
-                return
-            content = open(source, "r").read()
-            processed = Filter(filename).process(content)
-            with open(destiny, "w") as f:
-                if processed != content:
-                    print("(filtered): ", end="")
-                else:
-                    print("(        ): ", end="")
-                f.write(processed)
-                print(destiny)
-
-    @staticmethod
-    def filter_mode():
-        # path to ~/.tko_filter
-        filter_path = os.path.join(os.path.expanduser("~"), ".tko_filter")
-        try:
-            if not os.path.isdir(filter_path):
-                os.makedirs(filter_path)
-            else:
-                # force remove  non empty dir
-                shutil.rmtree(filter_path)
-                os.makedirs(filter_path)
-        except FileExistsError as e:
-            print("fail: Dir " + filter_path + " could not be created.")
-            print("fail: verify your permissions, or if there is a file with the same name.")
-        
-        Actions.deep_filter_copy(".", filter_path, 5)
-
-        os.chdir(filter_path)
-
-
-
-    @staticmethod
     def run(target_list: List[str], exec_cmd: Optional[str], param: Param.Basic) -> int:
         
         # modo de filtragem, antes de processar os dados, copiar tudo para o diretório temp fixo
         # filtrar os solvers para então continuar com a execução
         if param.filter:
-            Actions.filter_mode()
-            # change current directory to the filter directory
-            
+            old_dir = os.getcwd()
+
+            print(Report.centralize(" Entering in filter mode ", "═"))
+            FilterMode.deep_copy_and_change_dir()  
+            # search for target outside . dir and redirect target
+            new_target_list = []
+            for target in target_list:
+                if ".." in target:
+                    new_target_list.append(os.path.normpath(os.path.join(old_dir, target)))
+                else:
+                    new_target_list.append(target)
+            target_list = new_target_list
 
         try:
             wdir = Wdir().set_target_list(target_list).set_cmd(exec_cmd).build().filter(param)

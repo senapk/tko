@@ -1,4 +1,7 @@
 import enum
+import os
+from typing import List
+import shutil
 
 class Mode(enum.Enum):
     ADD = 1 # inserir cortando por degrau
@@ -35,7 +38,6 @@ class Filter:
         lines = content.split("\n")
         output = []
         for line in lines:
-            alone = len(line.split(" ")) == 1
             two_words = len(line.strip().split(" ")) == 2
             if self.mode == Mode.COM:
                 if not line.strip().startswith(self.com):
@@ -55,3 +57,88 @@ class Filter:
                     line = line.replace(self.com + " ", "", 1)
                 output.append(line)
         return "\n".join(output)
+
+class FilterMode:
+
+    @staticmethod
+    def deep_filter_copy(source, destiny):
+        if os.path.isdir(source):
+            chain = source.split(os.sep)
+            if len(chain) > 1 and chain[-1].startswith("."):
+                return
+            if not os.path.isdir(destiny):
+                os.makedirs(destiny)
+            for file in sorted(os.listdir(source)):
+                FilterMode.deep_filter_copy(os.path.join(source, file), os.path.join(destiny, file))
+        else:
+            filename = os.path.basename(source)
+            text_extensions = [".md", ".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs"]
+
+            if not any([filename.endswith(ext) for ext in text_extensions]):
+                return
+            
+            content = open(source, "r").read()
+            processed = Filter(filename).process(content)
+            with open(destiny, "w") as f:
+                f.write(processed)
+            
+            line = "";
+            if processed != content:
+                line += "(filtered): "
+            else:
+                line += "(        ): "
+            line += destiny
+            print(line)
+
+    @staticmethod
+    def deep_copy_and_change_dir():
+        # path to ~/.tko_filter
+        filter_path = os.path.join(os.path.expanduser("~"), ".tko_filter")
+        try:
+            if not os.path.isdir(filter_path):
+                os.makedirs(filter_path)
+            else:
+                # force remove  non empty dir
+                shutil.rmtree(filter_path)
+                os.makedirs(filter_path)
+        except FileExistsError as e:
+            print("fail: Dir " + filter_path + " could not be created.")
+            print("fail: verify your permissions, or if there is a file with the same name.")
+        
+        FilterMode.deep_filter_copy(".", filter_path)
+
+        os.chdir(filter_path)
+
+    # @staticmethod
+    # def filter_targets_and_change_paths(targets) -> List[str]:
+    #     # path to ~/.tko_filter
+    #     filter_path = os.path.join(os.path.expanduser("~"), ".tko_filter")
+    #     try:
+    #         if not os.path.isdir(filter_path):
+    #             os.makedirs(filter_path)
+    #         else:
+    #             # force remove  non empty dir
+    #             shutil.rmtree(filter_path)
+    #             os.makedirs(filter_path)
+    #     except FileExistsError as e:
+    #         print("fail: Dir " + filter_path + " could not be created.")
+    #         print("fail: verify your permissions, or if there is a file with the same name.")
+        
+    #     new_targets = []
+
+    #     for target in targets:
+    #         destiny = os.path.join(filter_path, target)
+    #         content = open(target, "r").read()
+    #         processed = Filter(target).process(content)
+
+    #         if processed != content:
+    #             destiny_dir = os.path.dirname(destiny)
+    #             if not os.path.isdir(destiny_dir):
+    #                 os.makedirs(os.path.dirname(destiny))
+    #             with open(destiny, "w") as f:
+    #                 f.write(processed)
+    #                 print("filtered : " + destiny)
+    #             new_targets.append(destiny)
+    #         else:
+    #             new_targets.append(target)
+    #     return new_targets

@@ -26,7 +26,7 @@ class Writer:
         text = ">>>>>>>>"
         if unit.case != '':
             text += " " + unit.case
-        elif unit.grade != 100:
+        if unit.grade is not None:
             text += " " + str(unit.grade) + "%"
         text += '\n' + unit.input
         text += "========\n"
