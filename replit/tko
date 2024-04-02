@@ -21,7 +21,7 @@ import json
 import tempfile
 from shutil import which
 import re
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 from typing import List, Optional
 import math
 import argparse
@@ -1450,54 +1450,41 @@ class Loader:
         unit_list = []
         text = "\n" + text
 
-        pattern = r'```bash\n(.*?)```'
+        pattern = r'```.*?\n(.*?)```' # get only inside code blocks
         code = re.findall(pattern, text, re.MULTILINE | re.DOTALL)
         # join all code blocks found
         text = "\n" + "\n".join(code)
 
-        for test_case in text.split("\n#__case")[1:]:
-            unit = Unit()
-            unit.source = source
-            unit.output = test_case
-            unit_list.append(unit)
+        pieces: List[Dict[str, List[str], List[str]]] = [] # header, input, output
 
-        for unit in unit_list:
-            test = unit.output
-            if "\n$end" in test:
-                test = test.split("\n$end")[0] + "\n$end"
+        open_case = False
+        for line in text.split("\n"):
+            if line.startswith("#__case") or line.startswith("#TEST_CASE"):
+                pieces.append({"header": line, "input": [], "output": []})
+                open_case = True
+            elif open_case:
+                pieces[-1]["output"].append(line)
+                if line.startswith("$end"):
+                    open_case = False
 
-            lines = test.split("\n")
-            tags = lines[0].strip().split(" ")
-            if tags[-1].endswith("%"):
-                unit.grade = int(tags[-1][0:-1])
-                del tags[-1]
-            else:
-                unit.grade = None
-            unit.case = " ".join(tags)
-            unit.output = "\n".join(lines[1:])
+        # concatenando testes contínuos e finalizando testes sem $end
+        for i in range(len(pieces)):
+            output = pieces[i]["output"]
+            if output[-1] != "$end" and i < len(pieces) - 1:
+                pieces[i + 1]["output"] = output + pieces[i + 1]["output"]
+                output.append("$end")
 
-        # concatenando testes contínuos
-        for i in range(len(unit_list)):
-            unit = unit_list[i]
-            if "\n$end" not in unit.output and (i < len(unit_list) - 1):
-                unit_list[i + 1].output = unit.output + '\n' + unit_list[i + 1].output
-                unit.output = unit.output + "\n$end\n"
+        # removendo linhas vazias e criando input das linhas com $
+        for piece in pieces:
+            piece["input"]  = [line[1:] for line in piece["output"] if line.startswith("$")]
+            piece["output"] = [line for line in piece["output"] if line != "" and not line.startswith("#")]
 
-        for unit in unit_list:
-            lines = unit.output.split('\n')
-            unit.output = ""
-            unit.input = ""
-            # filtrando linhas vazias e comentários
-            for line in lines:
-                if crude_mode:  #
-                    unit.output += line + '\n'
-                    if line == "" or line.startswith("$") or line.startswith("#"):
-                        unit.input += line + '\n'
-                else:
-                    if line != "" and not line.startswith("#"):
-                        unit.output += line + '\n'
-                        if line.startswith("$"):
-                            unit.input += line[1:] + '\n'
+        for piece in pieces:
+            case = " ".join(piece["header"].split(" ")[1:])
+            input = "\n".join(piece["input"]) + "\n"
+            output = "\n".join(piece["output"])
+            unit_list.append(Unit(case, input, output, None, source))
+
         for unit in unit_list:
             unit.fromCio = True
 
@@ -2039,7 +2026,7 @@ bash_guide = """
 ║Finalizar entrada : Control D             ║
 ╚══════════════════════════════════════════╝
 """
-__version__ = "0.3.3"
+__version__ = "0.3.4"
 
 
 

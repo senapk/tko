@@ -1,5 +1,2 @@
-./solver.cpp:1:10: fatal error: fn.hpp: No such file or directory
-    1 | #include <fn.hpp> // https://raw.githubusercontent.com/senapk/cppaux/master/fn.hpp
-      |          ^~~~~~~~
-compilation terminated.
-
+══════════════════════ Running solver against test cases ══════════════════════
+=> base:[cases.tio(10)] prog:[solver.cpp] [✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓]

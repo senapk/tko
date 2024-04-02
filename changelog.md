@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.3.4:
+  - cio mode update parser
 - 0.3.3:
   - improved filter mode for fun
   - fixed bud in grade reduction show for build a .tio file
