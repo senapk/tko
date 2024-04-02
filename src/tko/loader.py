@@ -137,7 +137,7 @@ class Loader:
         for piece in pieces:
             case = " ".join(piece["header"].split(" ")[1:])
             input = "\n".join(piece["input"]) + "\n"
-            output = "\n".join(piece["output"])
+            output = "\n".join(piece["output"]) + "\n"
             unit_list.append(Unit(case, input, output, None, source))
 
         for unit in unit_list:
