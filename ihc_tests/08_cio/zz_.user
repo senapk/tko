@@ -1,0 +1,97 @@
+]0;lion@jungle:~/Dropbox/gits/tools/tko/ihc_tests/08_cio]7;file://jungle/home/lion/Dropbox/gits/tools/tko/ihc_tests/08_cio\]0;lion@jungle:~/Dropbox/gits/tools/tko]7;file://jungle/home/lion/Dropbox/gits/tools/tko\]0;lion@jungle:~/Dropbox/gits/tools/tko]7;file://jungle/home/lion/Dropbox/gits/tools/tko\/home/lion/Dropbox/gits/tools/tko/ihc_tests/08_cio
+]0;lion@jungle:~/Dropbox/gits/tools/tko/ihc_tests/08_cio]7;file://jungle/home/lion/Dropbox/gits/tools/tko/ihc_tests/08_cio\[0m[01;32mbase_tio.sh[0m
+calc2.md
+calc.md
+_calc.tio
+calc.tio
+zz_base_tio.out
+zz_.user
+]0;lion@jungle:~/Dropbox/gits/tools/tko/ihc_tests/08_cio]7;file://jungle/home/lion/Dropbox/gits/tools/tko/ihc_tests/08_cio\On branch filter
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   ../03_run/poo_002/solver.cpp
+	modified:   ../03_run/poo_002/zz_success.user
+	modified:   ../../setup.py
+	modified:   ../../src/tko/loader.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	../03_run/poo_002/fn.hpp
+	./
+
+no changes added to commit (use "git add" and/or "git commit -a")
+]0;lion@jungle:~/Dropbox/gits/tools/tko/ihc_tests/08_cio]7;file://jungle/home/lion/Dropbox/gits/tools/tko/ihc_tests/08_cio\On branch filter
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   ../03_run/poo_002/solver.cpp
+	modified:   ../03_run/poo_002/zz_success.user
+	modified:   ../../setup.py
+	modified:   ../../src/tko/loader.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	../03_run/poo_002/fn.hpp
+	./
+
+no changes added to commit (use "git add" and/or "git commit -a")
+]0;lion@jungle:~/Dropbox/gits/tools/tko/ihc_tests/08_cio]7;file://jungle/home/lion/Dropbox/gits/tools/tko/ihc_tests/08_cio\]0;lion@jungle:~/Dropbox/gits/tools/tko/ihc_tests]7;file://jungle/home/lion/Dropbox/gits/tools/tko/ihc_tests\[0m[01;34m01_basic_info[0m
+[01;34m02_list[0m
+[01;34m03_run[0m
+[01;34m04_diff[0m
+[01;34m05_loading_files[0m
+[01;34m06_failures[0m
+[01;34m07_config[0m
+[01;34m08_cio[0m
+[01;32mrun_all.py[0m
+[01;32mupdate_all.py[0m
+]0;lion@jungle:~/Dropbox/gits/tools/tko/ihc_tests]7;file://jungle/home/lion/Dropbox/gits/tools/tko/ihc_tests\]0;lion@jungle:~/Dropbox/gits/tools/tko]7;file://jungle/home/lion/Dropbox/gits/tools/tko\On branch filter
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   ihc_tests/03_run/poo_002/solver.cpp
+	modified:   ihc_tests/03_run/poo_002/zz_success.user
+	modified:   setup.py
+	modified:   src/tko/loader.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	ihc_tests/03_run/poo_002/fn.hpp
+	ihc_tests/08_cio/
+
+no changes added to commit (use "git add" and/or "git commit -a")
+]0;lion@jungle:~/Dropbox/gits/tools/tko]7;file://jungle/home/lion/Dropbox/gits/tools/tko\[0m[01;34mdist[0m
+[01;34mihc_tests[0m
+[01;34minstall[0m
+[01;34mproject[0m
+[01;34mreplit[0m
+[01;34msrc[0m
+[01;34mtemp[0m
+[01;34mtests[0m
+[01;34mvenv[0m
+changelog.md
+LICENSE
+MANIFEST.in
+Readme.md
+[00;32mrequirements.txt[0m
+setup.cfg
+setup.py
+]0;lion@jungle:~/Dropbox/gits/tools/tko]7;file://jungle/home/lion/Dropbox/gits/tools/tko\[0m[01;34mdist[0m
+[01;34mihc_tests[0m
+[01;34minstall[0m
+[01;34mproject[0m
+[01;34mreplit[0m
+[01;34msrc[0m
+[01;34mtemp[0m
+[01;34mtests[0m
+[01;34mvenv[0m
+changelog.md
+LICENSE
+MANIFEST.in
+Readme.md
+[00;32mrequirements.txt[0m
+setup.cfg
+setup.py
+]0;lion@jungle:~/Dropbox/gits/tools/tko]7;file://jungle/home/lion/Dropbox/gits/tools/tko\/home/lion/Dropbox/gits/tools/tko
+]0;lion@jungle:~/Dropbox/gits/tools/tko]7;file://jungle/home/lion/Dropbox/gits/tools/tko\

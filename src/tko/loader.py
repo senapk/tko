@@ -105,6 +105,11 @@ class Loader:
         unit_list = []
         text = "\n" + text
 
+        pattern = r'```bash\n(.*?)```'
+        code = re.findall(pattern, text, re.MULTILINE | re.DOTALL)
+        # join all code blocks found
+        text = "\n" + "\n".join(code)
+
         for test_case in text.split("\n#__case")[1:]:
             unit = Unit()
             unit.source = source

@@ -11,7 +11,7 @@ import re
 from setuptools import setup, find_packages
 
 here = pathlib.Path(__file__).parent.resolve()  # current path
-long_description = (here / 'README.md').read_text(encoding='utf-8')  # Get the long description from the README file
+long_description = (here / 'Readme.md').read_text(encoding='utf-8')  # Get the long description from the README file
 with open(here / 'requirements.txt') as fp:  # read requirements.txt
     install_reqs = [r.rstrip() for r in fp.readlines() if not r.startswith('#')]
 
