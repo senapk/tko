@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.3.5:
+  - update filter mode
 - 0.3.4:
   - cio mode update parser
 - 0.3.3:
