@@ -694,6 +694,7 @@ class Param:
             self.is_up_down: bool = False
             self.diff_mode = DiffMode.FIRST
             self.filter: bool = False
+            self.compact: bool = False
 
         def set_index(self, value: Optional[int]):
             self.index: Optional[int] = value
@@ -701,6 +702,10 @@ class Param:
 
         def set_label_pattern(self, label_pattern: Optional[str]):
             self.label_pattern: Optional[str] = label_pattern
+            return self
+        
+        def set_compact(self, value: bool):
+            self.compact = value
             return self
 
         def set_up_down(self, value: bool):
@@ -2015,7 +2020,8 @@ class Actions:
         if not ExecutionResult.EXECUTION_ERROR in results and not ExecutionResult.WRONG_OUTPUT in results:
             return
         
-        print(wdir.unit_list_resume())
+        if not param.compact:
+            print(wdir.unit_list_resume())
         
         if param.diff_mode == DiffMode.FIRST:
         # printing only the first wrong case
@@ -2093,7 +2099,7 @@ bash_guide = """
 ║Finalizar entrada : Control D             ║
 ╚══════════════════════════════════════════╝
 """
-__version__ = "0.3.5"
+__version__ = "0.3.6"
 
 
 
@@ -2114,6 +2120,8 @@ class Main:
 
         if args.filter:
             param.set_filter(True)
+        if args.compact:
+            param.set_compact(True)
 
         # load default diff from settings if not specified
         if not args.sideby and not args.updown:
@@ -2209,6 +2217,7 @@ class Main:
         parser_r = subparsers.add_parser('run', parents=[parent_basic], help='run with test cases.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
+        parser_r.add_argument('--compact', '-c', action='store_true', help='Dont show case descriptions in failures')
         parser_r.add_argument("--cmd", type=str, help="bash command to run code")
 
         group_n = parser_r.add_mutually_exclusive_group()

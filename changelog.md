@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.3.6
+  - add compact mode to run
 - 0.3.5:
   - update filter mode
 - 0.3.4:

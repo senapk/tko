@@ -31,6 +31,8 @@ class Main:
 
         if args.filter:
             param.set_filter(True)
+        if args.compact:
+            param.set_compact(True)
 
         # load default diff from settings if not specified
         if not args.sideby and not args.updown:
@@ -126,6 +128,7 @@ class Main:
         parser_r = subparsers.add_parser('run', parents=[parent_basic], help='run with test cases.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
+        parser_r.add_argument('--compact', '-c', action='store_true', help='Dont show case descriptions in failures')
         parser_r.add_argument("--cmd", type=str, help="bash command to run code")
 
         group_n = parser_r.add_mutually_exclusive_group()

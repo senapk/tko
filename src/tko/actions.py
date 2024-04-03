@@ -154,7 +154,8 @@ class Actions:
         if not ExecutionResult.EXECUTION_ERROR in results and not ExecutionResult.WRONG_OUTPUT in results:
             return
         
-        print(wdir.unit_list_resume())
+        if not param.compact:
+            print(wdir.unit_list_resume())
         
         if param.diff_mode == DiffMode.FIRST:
         # printing only the first wrong case

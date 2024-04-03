@@ -100,6 +100,7 @@ class Param:
             self.is_up_down: bool = False
             self.diff_mode = DiffMode.FIRST
             self.filter: bool = False
+            self.compact: bool = False
 
         def set_index(self, value: Optional[int]):
             self.index: Optional[int] = value
@@ -107,6 +108,10 @@ class Param:
 
         def set_label_pattern(self, label_pattern: Optional[str]):
             self.label_pattern: Optional[str] = label_pattern
+            return self
+        
+        def set_compact(self, value: bool):
+            self.compact = value
             return self
 
         def set_up_down(self, value: bool):
