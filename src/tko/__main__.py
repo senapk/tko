@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from .actions import Actions
+from .actions import Run, Build
 from .basic import Param
 from .pattern import PatternLoader
 from .basic import DiffMode
@@ -43,13 +43,15 @@ class Main:
             param.set_up_down(False)
         elif args.updown:
             param.set_up_down(True)
-        Actions.run(args.target_list, args.cmd, param)
+        run = Run(args.target_list, args.cmd, param)
+        run.execute()
 
     @staticmethod
     def build(args):
         PatternLoader.pattern = args.pattern
         manip = Param.Manip().set_unlabel(args.unlabel).set_to_sort(args.sort).set_to_number(args.number)
-        Actions.build(args.target, args.target_list, manip, args.force)
+        build = Build(args.target, args.target_list, manip, args.force)
+        build.execute()
     
     @staticmethod
     def settings(args):

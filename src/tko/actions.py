@@ -51,12 +51,16 @@ class FilterMode:
             
             content = open(source, "r").read()
             processed = Filter(filename).process(content)
-            with open(destiny, "w") as f:
-                f.write(processed)
+            if processed != "":
+                with open(destiny, "w") as f:
+                    f.write(processed)
             
             line = "";
             if processed != content:
-                line += "(filtered): "
+                if processed == "":
+                    line += "(disabled): "
+                else:
+                    line += "(filtered): "
             else:
                 line += "(        ): "
             line += destiny
@@ -82,106 +86,142 @@ class FilterMode:
         os.chdir(filter_path)
 
 
-class Actions:
+class Run:
 
-    def __init__(self):
-        pass
+    def __init__(self, target_list: List[str], exec_cmd: Optional[str], param: Param.Basic):
+        self.target_list = target_list
+        self.exec_cmd = exec_cmd
+        self.param = param
+        self.wdir = None
 
-    @staticmethod
-    def run(target_list: List[str], exec_cmd: Optional[str], param: Param.Basic) -> int:
-        
+
+    def change_targets_to_filter_mode(self):
         # modo de filtragem, antes de processar os dados, copiar tudo para o diretório temp fixo
         # filtrar os solvers para então continuar com a execução
-        if param.filter:
+        if self.param.filter:
             old_dir = os.getcwd()
 
             print(Report.centralize(" Entering in filter mode ", "═"))
             FilterMode.deep_copy_and_change_dir()  
             # search for target outside . dir and redirect target
             new_target_list = []
-            for target in target_list:
+            for target in self.target_list:
                 if ".." in target:
                     new_target_list.append(os.path.normpath(os.path.join(old_dir, target)))
-                else:
+                elif os.path.exists(target):
                     new_target_list.append(target)
-            target_list = new_target_list
+            self.target_list = new_target_list
 
-        try:
-            wdir = Wdir().set_target_list(target_list).set_cmd(exec_cmd).build().filter(param)
-        except CompilerError as e:
-            print(e)
-            return 0
-        except FileNotFoundError as e:
-            print(e)
-            return 0
-
-        if wdir.solver is None and len(wdir.unit_list) == 0:
-            print(Colored.paint("fail: ", Color.RED) + "No solver or tests found.")
-            return 0
-
-        if wdir.solver is None and len(wdir.unit_list) > 0:
-            print(Report.centralize(" No solvers found. Listing Test Cases ", "╌"), flush=True)
-            print(wdir.resume())
-            print(wdir.unit_list_resume())
-            return
-
-        if wdir.solver is not None and len(wdir.unit_list) == 0:
-            print(Report.centralize(" No test cases found. Running: " + wdir.solver.executable + " ", symbols.hbar), flush=True)
-            # force print to terminal
-
-            Runner.free_run(wdir.solver.executable)
-            return
-        
-        print(Report.centralize(" Running solver against test cases ", "═"))
-
-        ## print top line
-        print(wdir.resume(), end="")
+    def print_top_line(self):
+        print(self.wdir.resume(), end="")
         print(" [", end="", flush=True)
         first = True
-        for unit in wdir.unit_list:
+        for unit in self.wdir.unit_list:
             if first:
                 first = False
             else:
                 print(" ", end="", flush=True)
-            unit.result = Execution.run_unit(wdir.solver, unit)
+            unit.result = Execution.run_unit(self.wdir.solver, unit)
             print(ExecutionResult.get_symbol(unit.result), end="", flush=True)
         print("]")
 
-        if param.diff_mode == DiffMode.QUIET:
+    def print_diff(self):
+        if self.param.diff_mode == DiffMode.QUIET:
             return
         
-        results = [unit.result for unit in wdir.unit_list]
+        results = [unit.result for unit in self.wdir.unit_list]
         if not ExecutionResult.EXECUTION_ERROR in results and not ExecutionResult.WRONG_OUTPUT in results:
             return
         
-        if not param.compact:
-            print(wdir.unit_list_resume())
+        if not self.param.compact:
+            print(self.wdir.unit_list_resume())
         
-        if param.diff_mode == DiffMode.FIRST:
+        if self.param.diff_mode == DiffMode.FIRST:
         # printing only the first wrong case
-            wrong = [unit for unit in wdir.unit_list if unit.result != ExecutionResult.SUCCESS][0]
-            if param.is_up_down:
+            wrong = [unit for unit in self.wdir.unit_list if unit.result != ExecutionResult.SUCCESS][0]
+            if self.param.is_up_down:
                 print(Diff.mount_up_down_diff(wrong))
             else:
                 print(Diff.mount_side_by_side_diff(wrong))
             return
 
-        if param.diff_mode == DiffMode.ALL:
-            for unit in wdir.unit_list:
+        if self.param.diff_mode == DiffMode.ALL:
+            for unit in self.wdir.unit_list:
                 if unit.result != ExecutionResult.SUCCESS:
-                    if param.is_up_down:
+                    if self.param.is_up_down:
                         print(Diff.mount_up_down_diff(unit))
                     else:
                         print(Diff.mount_side_by_side_diff(unit))
+
+    def build_wdir(self) -> bool:
+        try:
+            self.wdir = Wdir().set_target_list(self.target_list).set_cmd(self.exec_cmd).build().filter(self.param)
+        except CompilerError as e:
+            print(e)
+            return False
+        except FileNotFoundError as e:
+            print(e)
+            return False
+        return True
+
+    def missing_target(self) -> bool:
+        # no solver and no test cases
+        if self.wdir.solver is None and len(self.wdir.unit_list) == 0:
+            print(Colored.paint("fail: ", Color.RED) + "No solver or tests found.")
+            return True
+        return False
+    
+    def list_mode(self) -> bool:
+        # list mode
+        if self.wdir.solver is None and len(self.wdir.unit_list) > 0:
+            print(Report.centralize(" No solvers found. Listing Test Cases ", "╌"), flush=True)
+            print(self.wdir.resume())
+            print(self.wdir.unit_list_resume())
+            return True
+        return False
+
+    def free_run(self) -> bool:
+        # free run mode
+        if self.wdir.solver is not None and len(self.wdir.unit_list) == 0:
+            print(Report.centralize(" No test cases found. Running: " + self.wdir.solver.executable + " ", symbols.hbar), flush=True)
+            # force print to terminal
+            Runner.free_run(self.wdir.solver.executable)
+            return True
+        return False
+
+    def diff_mode(self) -> bool:
+        print(Report.centralize(" Running solver against test cases ", "═"))
+        self.print_top_line()
+        self.print_diff()
+
+    def execute(self):
+        self.change_targets_to_filter_mode()
+        if not self.build_wdir():
+            return
+        if self.missing_target():
+            return
+        if self.list_mode():
+            return
+        if self.free_run():
+            return
+        self.diff_mode()
         return
 
-    @staticmethod
-    def build(target_out: str, source_list: List[str], param: Param.Manip, to_force: bool) -> bool:
+class Build:
+
+    def __init__(self, target_out: str, source_list: List[str], param: Param.Manip, to_force: bool):
+        self.target_out = target_out
+        self.source_list = source_list
+        self.param = param
+        self.to_force = to_force
+
+    def execute(self):
         try:
-            wdir = Wdir().set_sources(source_list).build()
-            wdir.manipulate(param)
-            Writer.save_target(target_out, wdir.unit_list, to_force)
+            wdir = Wdir().set_sources(self.source_list).build()
+            wdir.manipulate(self.param)
+            Writer.save_target(self.target_out, wdir.unit_list, self.to_force)
         except FileNotFoundError as e:
             print(str(e))
             return False
         return True
+
