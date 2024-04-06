@@ -1034,17 +1034,19 @@ class Down:
             if entry["name"] == "vpl_evaluate.cases":
                 Down.compare_and_save(entry["contents"], os.path.join(destiny, "cases.tio"))
 
-        for entry in loaded["keep"]:
-            Down.compare_and_save(entry["contents"], os.path.join(destiny, entry["name"]))
+        # for entry in loaded["keep"]:
+        #    Down.compare_and_save(entry["contents"], os.path.join(destiny, entry["name"]))
 
-        for entry in loaded["required"]:
-            path = os.path.join(destiny, entry["name"])
-            Down.compare_and_save(entry["contents"], path)
+        # for entry in loaded["required"]:
+        #    path = os.path.join(destiny, entry["name"])
+        #    Down.compare_and_save(entry["contents"], path)
 
         if "draft" in loaded:
             if lang in loaded["draft"]:
                 for file in loaded["draft"][lang]:
-                    path = os.path.join(destiny, file["name"])
+                    if not os.path.isdir(os.path.join(destiny, "src")):
+                        os.makedirs(os.path.join(destiny, "src"), exist_ok=True)
+                    path = os.path.join(destiny, "src", file["name"])
                     Down.create_file(file["contents"], path, "(Draft)")
 
     @staticmethod
@@ -1217,14 +1219,6 @@ class Solver:
 
         solver = self.path_list[0]
 
-        # open all files and search for the main class
-        for file in self.path_list:
-            with open(file, "r") as f:
-                content = f.read()
-                if "public static void main" in content:
-                    solver = file
-                    break
-
         filename = os.path.basename(solver)
         # tempdir = os.path.dirname(self.path_list[0])
 
@@ -1255,13 +1249,6 @@ class Solver:
         check_tool("node")
 
         solver = self.path_list[0]
-
-        for file in self.path_list:
-            with open(file, "r") as f:
-                content = f.read()
-                if not "export" in content:
-                    solver = file
-                    break
 
         filename = os.path.basename(solver)
         source_list = self.path_list
@@ -2139,7 +2126,7 @@ bash_guide = """
 ║Finalizar entrada : Control D             ║
 ╚══════════════════════════════════════════╝
 """
-__version__ = "0.3.7"
+__version__ = "0.3.8"
 
 
 

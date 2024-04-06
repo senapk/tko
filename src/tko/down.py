@@ -53,17 +53,19 @@ class Down:
             if entry["name"] == "vpl_evaluate.cases":
                 Down.compare_and_save(entry["contents"], os.path.join(destiny, "cases.tio"))
 
-        for entry in loaded["keep"]:
-            Down.compare_and_save(entry["contents"], os.path.join(destiny, entry["name"]))
+        # for entry in loaded["keep"]:
+        #    Down.compare_and_save(entry["contents"], os.path.join(destiny, entry["name"]))
 
-        for entry in loaded["required"]:
-            path = os.path.join(destiny, entry["name"])
-            Down.compare_and_save(entry["contents"], path)
+        # for entry in loaded["required"]:
+        #    path = os.path.join(destiny, entry["name"])
+        #    Down.compare_and_save(entry["contents"], path)
 
         if "draft" in loaded:
             if lang in loaded["draft"]:
                 for file in loaded["draft"][lang]:
-                    path = os.path.join(destiny, file["name"])
+                    if not os.path.isdir(os.path.join(destiny, "src")):
+                        os.makedirs(os.path.join(destiny, "src"), exist_ok=True)
+                    path = os.path.join(destiny, "src", file["name"])
                     Down.create_file(file["contents"], path, "(Draft)")
 
     @staticmethod

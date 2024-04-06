@@ -3,6 +3,8 @@
 - 0.3.7
   - fix: filter mode with empty files
   - fix: action class to poo mode
+  - fix: remove auto select entry point for java and typescript
+  - fix: remove download keep and required from config to use drafts only
 - 0.3.6
   - add compact mode to run
 - 0.3.5:

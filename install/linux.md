@@ -45,7 +45,7 @@ sudo apt install python3
 
 ## Arch e Manjaro
 
-### Instalação básica arch
+### Instalação básica Arch
 
 No arch e manjaro, execute o comando:
 
@@ -62,7 +62,7 @@ Para atualizar, basta executar o comando:
 pipx install tko --force
 ```
 
-### Instalando os compiladores
+### Instalando os compiladores no Arch
 
 Para instalar com compiladores das linguagens que você for utilizar, execute o comando:
 
