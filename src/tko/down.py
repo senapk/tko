@@ -63,9 +63,7 @@ class Down:
         if "draft" in loaded:
             if lang in loaded["draft"]:
                 for file in loaded["draft"][lang]:
-                    if not os.path.isdir(os.path.join(destiny, "src")):
-                        os.makedirs(os.path.join(destiny, "src"), exist_ok=True)
-                    path = os.path.join(destiny, "src", file["name"])
+                    path = os.path.join(destiny, file["name"])
                     Down.create_file(file["contents"], path, "(Draft)")
 
     @staticmethod

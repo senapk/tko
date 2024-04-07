@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.3.9
+  - fix: down dont create src folder
 - 0.3.8
   - fix: filter mode calling filter command from feno package
 - 0.3.7
