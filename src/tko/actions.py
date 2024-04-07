@@ -1,6 +1,7 @@
 from typing import List, Optional
 import os
 import shutil
+import subprocess
 
 from .wdir import Wdir
 from .basic import DiffMode, ExecutionResult, CompilerError, Param, Unit
@@ -9,7 +10,6 @@ from .format import Colored, Color, Report, symbols
 from .writer import Writer
 from .solver import Solver
 from .runner import Runner
-from .filter import Filter
 
 
 class Execution:
@@ -33,55 +33,17 @@ class Execution:
 class FilterMode:
 
     @staticmethod
-    def deep_filter_copy(source, destiny):
-        if os.path.isdir(source):
-            chain = source.split(os.sep)
-            if len(chain) > 1 and chain[-1].startswith("."):
-                return
-            if not os.path.isdir(destiny):
-                os.makedirs(destiny)
-            for file in sorted(os.listdir(source)):
-                FilterMode.deep_filter_copy(os.path.join(source, file), os.path.join(destiny, file))
-        else:
-            filename = os.path.basename(source)
-            text_extensions = [".md", ".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs"]
-
-            if not any([filename.endswith(ext) for ext in text_extensions]):
-                return
-            
-            content = open(source, "r").read()
-            processed = Filter(filename).process(content)
-            if processed != "":
-                with open(destiny, "w") as f:
-                    f.write(processed)
-            
-            line = "";
-            if processed != content:
-                if processed == "":
-                    line += "(disabled): "
-                else:
-                    line += "(filtered): "
-            else:
-                line += "(        ): "
-            line += destiny
-            print(line)
-
-    @staticmethod
     def deep_copy_and_change_dir():
         # path to ~/.tko_filter
         filter_path = os.path.join(os.path.expanduser("~"), ".tko_filter")
-        try:
-            if not os.path.isdir(filter_path):
-                os.makedirs(filter_path)
-            else:
-                # force remove  non empty dir
-                shutil.rmtree(filter_path)
-                os.makedirs(filter_path)
-        except FileExistsError as e:
-            print("fail: Dir " + filter_path + " could not be created.")
-            print("fail: verify your permissions, or if there is a file with the same name.")
-        
-        FilterMode.deep_filter_copy(".", filter_path)
+
+        # verify if filter command is available
+        if shutil.which("filter") is None:
+            print("ERROR: filter command not found")
+            print("Install feno with 'pip install feno'")
+            exit(1)
+
+        subprocess.run(["filter", "-rf", ".", "-o", filter_path])
 
         os.chdir(filter_path)
 

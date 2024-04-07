@@ -14,7 +14,6 @@ files = [
 "settings",
 "runner",
 "format", 
-"filter", 
 "basic", 
 "diff",
 "down",
