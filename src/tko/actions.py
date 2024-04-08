@@ -56,6 +56,23 @@ class Run:
         self.param = param
         self.wdir = None
 
+    def execute(self):
+        self.remove_duplicates()
+        self.change_targets_to_filter_mode()
+        if not self.build_wdir():
+            return
+        if self.missing_target():
+            return
+        if self.list_mode():
+            return
+        if self.free_run():
+            return
+        self.diff_mode()
+        return
+
+    def remove_duplicates(self):
+        # remove duplicates in target list keeping the order
+        self.target_list = list(dict.fromkeys(self.target_list))
 
     def change_targets_to_filter_mode(self):
         # modo de filtragem, antes de processar os dados, copiar tudo para o diretório temp fixo
@@ -155,19 +172,6 @@ class Run:
         print(Report.centralize(" Running solver against test cases ", "═"))
         self.print_top_line()
         self.print_diff()
-
-    def execute(self):
-        self.change_targets_to_filter_mode()
-        if not self.build_wdir():
-            return
-        if self.missing_target():
-            return
-        if self.list_mode():
-            return
-        if self.free_run():
-            return
-        self.diff_mode()
-        return
 
 class Build:
 

@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.4.1
+  - fix: removing duplicated parameters in run command
+- 0.4.0
 - 0.3.9
   - fix: down dont create src folder
 - 0.3.8
