@@ -24,12 +24,13 @@ pip install tko
 - [TOC](#toc)
 - [Dependências](#dependências)
 - [Download atividades](#download-atividades)
-- [Rodando sem testar](#rodando-sem-testar)
-- [Rodando os testes](#rodando-os-testes)
-- [Rodando múltiplos arquivos](#rodando-múltiplos-arquivos)
-  - [Java](#java)
-  - [C e C++](#c-e-c)
-  - [Typescript e Javascript](#typescript-e-javascript)
+- [Rodando](#rodando)
+  - [Rodando sem testar](#rodando-sem-testar)
+  - [Rodando os testes](#rodando-os-testes)
+  - [Rodando múltiplos arquivos](#rodando-múltiplos-arquivos)
+    - [Java](#java)
+    - [C e C++](#c-e-c)
+    - [Typescript e Javascript](#typescript-e-javascript)
   - [Verificando o resultado](#verificando-o-resultado)
   - [Opções extras](#opções-extras)
 - [O que é um teste?](#o-que-é-um-teste)
@@ -76,7 +77,9 @@ Ao baixar a questão, você terá uma pasta com o nome `carro` contendo:
 
 Entre na pasta.
 
-## Rodando sem testar
+## Rodando
+
+### Rodando sem testar
 
 Você pode rodar o arquivo sem os testes digitando no terminal:
 
@@ -87,7 +90,7 @@ tko run Solver.java
 
 A ferramenta vai compilar e executar seu código, mostrando se houve algum erro.
 
-## Rodando os testes
+### Rodando os testes
 
 Renomeie o arquivo `draft.ext` para o nome apropriado e edite com a sua solução. Para rodar os testes, utilize o comando:
 
@@ -96,11 +99,11 @@ Renomeie o arquivo `draft.ext` para o nome apropriado e edite com a sua soluçã
 tko run Solver.java cases.tio
 ```
 
-## Rodando múltiplos arquivos
+### Rodando múltiplos arquivos
 
 Se você tiver mais de um arquivo de código, o comportamento depende da linguagem. 
 
-### Java
+#### Java
 
 Se estiver executando `tko` de dentro da pasta. Basta executar o arquivo que contém a `main`. No exemplo abaixo, tanto a classe `Shell` quanto a classe `Motorcycle` contém a `main`. A classe `Shell` é usada para rodar junto com o `cases.tio`, para interpretar os testes. A classe `Motorcycle` é usada para rodar sem testes.
 
@@ -117,7 +120,7 @@ Rodando a main do arquivo da motoca
 [lion@jungle java]$ 
 ```
 
-### C e C++
+#### C e C++
 
 - Você precisa passar todos os arquivo `c` ou `cpp` que deseja compilar e rodar. 
 - A ordem dos arquivos não importa, mas apenas um deles pode ter a função `main`.
@@ -131,7 +134,7 @@ cases.tio  fn.hpp  main.cpp  point.cpp  point.hpp
 => base:[cases.tio(02)] prog:[main.cpp, point.cpp] [✓ ✓]
 ```
 
-### Typescript e Javascript
+#### Typescript e Javascript
 
 - Você precisa passar todos os arquivo `ts` ou `js` que deseja compilar e rodar.
 - O primeiro arquivo passado por parâmetro é o arquivo que vai ser executado.
