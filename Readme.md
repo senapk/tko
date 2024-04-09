@@ -11,6 +11,8 @@ O TKO é um sistema de testes para programação competitiva. Ele é capaz de ro
 - [ED - Estrutura de Dados](https://github.com/qxcodeed/arcade)
 - [POO - Programação Orientada a Objetos](https://github.com/qxcodepoo/arcade)
 
+![intro](install/intro.webm)
+
 ## Instalação
 
 | [Windows](install/windows.md) | [Linux](install/linux.md) | [Replit](replit/Readme.md) | [Codespace](install/codespace.md) |
