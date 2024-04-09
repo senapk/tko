@@ -6,8 +6,23 @@ O TKO é um sistema de testes para programação competitiva. Ele é capaz de ro
 - [ED - Estrutura de Dados](https://github.com/qxcodeed/arcade)
 - [POO - Programação Orientada a Objetos](https://github.com/qxcodepoo/arcade)
 
+## Instalação
+
+| [Windows](install/windows.md) | [Linux](install/linux.md) | [Replit](replit/Readme.md) | [Codespace](install/codespace.md) |
+| ------- | ----- | ------ | --------- |
+| [![_](install/windows.jpg)](install/windows.md) | [![_](install/linux.jpg)](install/linux.md)       | [![_](install/replit.jpg)](replit/Readme.md) | [![_](install/codespace.jpg)](install/codespace.md) |
+
+```bash
+# instalar utilizando o gerenciador de pacotes do python
+pip install tko
+```
+
+## TOC
+
 <!-- toc -->
 - [Instalação](#instalação)
+- [TOC](#toc)
+- [Dependências](#dependências)
 - [Download atividades](#download-atividades)
 - [Rodando sem testar](#rodando-sem-testar)
 - [Rodando os testes](#rodando-os-testes)
@@ -27,16 +42,7 @@ O TKO é um sistema de testes para programação competitiva. Ele é capaz de ro
 - [Exemplos rápidos](#exemplos-rápidos)
 <!-- toc -->
 
-## Instalação
-
-| [Windows](install/windows.md) | [Linux](install/linux.md) | [Replit](replit/Readme.md) | [Codespace](install/codespace.md) |
-| ------- | ----- | ------ | --------- |
-| [![_](install/windows.jpg)](install/windows.md) | [![_](install/linux.jpg)](install/linux.md)       | [![_](install/replit.jpg)](replit/Readme.md) | [![_](install/codespace.jpg)](install/codespace.md) |
-
-```bash
-# instalar utilizando o gerenciador de pacotes do python
-pip install tko
-```
+## Dependências
 
 Você precisará do compilador próprio da linguagem que for programar, instale manualmente no seu sistema. Se estiver no replit, o template da linguagem já vem com o compilador instalado.
 
