@@ -1,3 +1,8 @@
+<!-- markdownlint-configure-file {
+  "MD033": false,
+  "MD041": false
+} -->
+
 # tko
 
 O TKO é um sistema de testes para programação competitiva. Ele é capaz de rodar testes em várias linguagens de programação e em vários formatos de testes. Ele está integrado com os repositórios de atividades das disciplinas de programação da UFC de Quixadá permitindo baixar as atividades e rodar os testes.
@@ -16,32 +21,6 @@ O TKO é um sistema de testes para programação competitiva. Ele é capaz de ro
 # instalar utilizando o gerenciador de pacotes do python
 pip install tko
 ```
-
-## TOC
-
-<!-- toc -->
-- [Instalação](#instalação)
-- [TOC](#toc)
-- [Dependências](#dependências)
-- [Download atividades](#download-atividades)
-- [Rodando](#rodando)
-  - [Rodando sem testar](#rodando-sem-testar)
-  - [Rodando os testes](#rodando-os-testes)
-  - [Rodando múltiplos arquivos](#rodando-múltiplos-arquivos)
-    - [Java](#java)
-    - [C e C++](#c-e-c)
-    - [Typescript e Javascript](#typescript-e-javascript)
-  - [Verificando o resultado](#verificando-o-resultado)
-  - [Opções extras](#opções-extras)
-- [O que é um teste?](#o-que-é-um-teste)
-- [Formatos de teste](#formatos-de-teste)
-  - [Sintaxe TIO](#sintaxe-tio)
-  - [Escrevendo alguns testes](#escrevendo-alguns-testes)
-- [Testando um código com erros](#testando-um-código-com-erros)
-- [Executando](#executando)
-- [Convertendo entre formatos](#convertendo-entre-formatos)
-- [Exemplos rápidos](#exemplos-rápidos)
-<!-- toc -->
 
 ## Dependências
 
@@ -75,13 +54,18 @@ Ao baixar a questão, você terá uma pasta com o nome `carro` contendo:
 - cases.tio: com os casos de teste.
 - draft.ext: com o rascunho da solução.
 
-Entre na pasta.
-
 ## Rodando
 
-### Rodando sem testar
+<details>
+<summary>Rodando sem testar</summary>
 
-Você pode rodar o arquivo sem os testes digitando no terminal:
+Após baixar, entre na pasta.
+
+Você pode aproveitar o arquivo de rascunho e renomeá-lo, ou criar seus próprios arquivos de resposta ao problema.
+
+Para executar seu arquivo sem testar, basta rodar o comando `tko run` passando o arquivo de código como parâmetro.
+
+Por exemplo, para a linguagem Java, você pode rodar o seguinte comando:
 
 ```bash
 # tko run _arquivo_de_codigo
@@ -90,20 +74,26 @@ tko run Solver.java
 
 A ferramenta vai compilar e executar seu código, mostrando se houve algum erro.
 
-### Rodando os testes
+</details>
 
-Renomeie o arquivo `draft.ext` para o nome apropriado e edite com a sua solução. Para rodar os testes, utilize o comando:
+<details>
+<summary> Rodando os testes </summary>
+
+Para rodar os testes, passe também o arquivo de testes `cases.tio` em qualquer ordem, antes ou depois do seu arquivo de código para o comando.
 
 ```bash
 # tko run _arquivos_de_codigo _arquivo_de_casos_de_teste
 tko run Solver.java cases.tio
 ```
 
+</details>
+
 ### Rodando múltiplos arquivos
 
-Se você tiver mais de um arquivo de código, o comportamento depende da linguagem. 
+Se você tiver mais de um arquivo de código, o comportamento depende da linguagem.
 
-#### Java
+<details>
+<summary> Java </summary>
 
 Se estiver executando `tko` de dentro da pasta. Basta executar o arquivo que contém a `main`. No exemplo abaixo, tanto a classe `Shell` quanto a classe `Motorcycle` contém a `main`. A classe `Shell` é usada para rodar junto com o `cases.tio`, para interpretar os testes. A classe `Motorcycle` é usada para rodar sem testes.
 
@@ -120,9 +110,11 @@ Rodando a main do arquivo da motoca
 [lion@jungle java]$ 
 ```
 
-#### C e C++
+</details>
 
-- Você precisa passar todos os arquivo `c` ou `cpp` que deseja compilar e rodar. 
+<details> <summary> C e C++ </summary>
+
+- Você precisa passar todos os arquivo `c` ou `cpp` que deseja compilar e rodar.
 - A ordem dos arquivos não importa, mas apenas um deles pode ter a função `main`.
 - No exemplo abaixo, o arquivo `main.cpp` é o arquivo que contém a `main` e o arquivo `point.cpp` contém as implementação das funções que serão usadas no arquivo `main.cpp`.
 
@@ -134,13 +126,23 @@ cases.tio  fn.hpp  main.cpp  point.cpp  point.hpp
 => base:[cases.tio(02)] prog:[main.cpp, point.cpp] [✓ ✓]
 ```
 
-#### Typescript e Javascript
+</details>
 
-- Você precisa passar todos os arquivo `ts` ou `js` que deseja compilar e rodar.
-- O primeiro arquivo passado por parâmetro é o arquivo que vai ser executado.
+<details> <summary> Typescript e Javascript </summary>
+
+- Você precisa passar todos os arquivo `ts` ou `js` que deseja compilar e rodar. Exemplo
+- O primeiro arquivo `.ts` passado por parâmetro é o arquivo que vai ser executado.
 - Opção 1: Você pode escolher o arquivo principal, antes de passar os outros arquivos.
+  - `tko run cases.tio shell.ts adapter.ts motoca.ts pessoa.ts`
 - Opção 2: Você pode passar o arquivo principal primeiro e depois utilizar o `*.ts` para os outros.
+  - `tko run cases.tio shell.ts *.ts`
 - Opção 3: Você pode renomear o arquivo principal para um nome que esteja "antes" dos outros.
+  - `mv shell.ts aashell.ts`
+  - `tko run cases.tio *.ts`
+
+</details>
+
+<details> <summary> Exemplos: Typescript e Javascript </summary>
 
 ```bash
 [lion@jungle ts]$ ls
@@ -192,6 +194,8 @@ E pode ser executado passando o arquivo diretamente:
 power:2, time:0, person:(empty)
 power:2, time:0, person:(jose:9)
 ```
+
+</details>
 
 ### Verificando o resultado
 
