@@ -6,6 +6,27 @@ O TKO é um sistema de testes para programação competitiva. Ele é capaz de ro
 - [ED - Estrutura de Dados](https://github.com/qxcodeed/arcade)
 - [POO - Programação Orientada a Objetos](https://github.com/qxcodepoo/arcade)
 
+<!-- toc -->
+- [Instalação](#instalação)
+- [Download atividades](#download-atividades)
+- [Rodando sem testar](#rodando-sem-testar)
+- [Rodando os testes](#rodando-os-testes)
+- [Rodando múltiplos arquivos](#rodando-múltiplos-arquivos)
+  - [Java](#java)
+  - [C e C++](#c-e-c)
+  - [Typescript e Javascript](#typescript-e-javascript)
+  - [Verificando o resultado](#verificando-o-resultado)
+  - [Opções extras](#opções-extras)
+- [O que é um teste?](#o-que-é-um-teste)
+- [Formatos de teste](#formatos-de-teste)
+  - [Sintaxe TIO](#sintaxe-tio)
+  - [Escrevendo alguns testes](#escrevendo-alguns-testes)
+- [Testando um código com erros](#testando-um-código-com-erros)
+- [Executando](#executando)
+- [Convertendo entre formatos](#convertendo-entre-formatos)
+- [Exemplos rápidos](#exemplos-rápidos)
+<!-- toc -->
+
 ## Instalação
 
 | [Windows](install/windows.md) | [Linux](install/linux.md) | [Replit](replit/Readme.md) | [Codespace](install/codespace.md) |
@@ -17,18 +38,6 @@ O TKO é um sistema de testes para programação competitiva. Ele é capaz de ro
 pip install tko
 ```
 
-## Para baixar a descrição das atividades e os testes
-
-- Para baixar a atividade do carro do repositório de POO(Programação Orientada a Objetos): [contrua seu primeiro @carro](https://github.com/qxcodepoo/arcade/blob/master/base/carro/Readme.md) para `java`:
-
-```bash
-# Você informa o repositório `poo` o problema `carro`
-# tko down _course _activity
-tko down poo carro
-```
-
-### Para rodar os testes
-
 Você precisará do compilador próprio da linguagem que for programar, instale manualmente no seu sistema. Se estiver no replit, o template da linguagem já vem com o compilador instalado.
 
 - c/c++: `gcc` ou `g++`
@@ -37,17 +46,142 @@ Você precisará do compilador próprio da linguagem que for programar, instale 
 - javascript: `node`
 - typescript: `esbuild` e `node`
 
-Ao baixar a questão, você terá os seguintes arquivos:
+## Download atividades
+
+- Para baixar, por exemplo, a atividade do carro do repositório de POO(Programação Orientada a Objetos): [contrua seu primeiro @carro](https://github.com/qxcodepoo/arcade/blob/master/base/carro/Readme.md) para `java`:
+
+```bash
+# Você informa o repositório `poo` o problema `carro` e vai ser perguntado a linguagem interativamente
+# tko down _course _activity
+tko down poo carro
+
+# você pode também especificar a linguagem para pular o prompt
+tko down poo carro -l java
+
+# ou pode definir a linguagem padrão de download dos rascunhos para não precisar informar toda vez
+tko config -l java
+```
+
+Ao baixar a questão, você terá uma pasta com o nome `carro` contendo:
 
 - Readme.md: com a descrição da atividade.
 - cases.tio: com os casos de teste.
 - draft.ext: com o rascunho da solução.
+
+Entre na pasta.
+
+## Rodando sem testar
+
+Você pode rodar o arquivo sem os testes digitando no terminal:
+
+```bash
+# tko run _arquivo_de_codigo
+tko run Solver.java
+```
+
+A ferramenta vai compilar e executar seu código, mostrando se houve algum erro.
+
+## Rodando os testes
 
 Renomeie o arquivo `draft.ext` para o nome apropriado e edite com a sua solução. Para rodar os testes, utilize o comando:
 
 ```bash
 # tko run _arquivos_de_codigo _arquivo_de_casos_de_teste
 tko run Solver.java cases.tio
+```
+
+## Rodando múltiplos arquivos
+
+Se você tiver mais de um arquivo de código, o comportamento depende da linguagem. 
+
+### Java
+
+Se estiver executando `tko` de dentro da pasta. Basta executar o arquivo que contém a `main`. No exemplo abaixo, tanto a classe `Shell` quanto a classe `Motorcycle` contém a `main`. A classe `Shell` é usada para rodar junto com o `cases.tio`, para interpretar os testes. A classe `Motorcycle` é usada para rodar sem testes.
+
+```bash
+[lion@jungle java]$ ls
+Adapter.java  cases.tio  Motorcycle.java  Person.java  Shell.java
+[lion@jungle java]$ tko run Shell.java cases.tio 
+═══════════════════════════ Running solver against test cases ═══════════════════════════
+=> base:[cases.tio(15)] prog:[Shell.java] [✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓]
+
+[lion@jungle java]$ tko run Motorcycle.java 
+─────────── No test cases found. Running: java -cp /tmp/tmph43lgfhb Motorcycle ──────────
+Rodando a main do arquivo da motoca
+[lion@jungle java]$ 
+```
+
+### C e C++
+
+- Você precisa passar todos os arquivo `c` ou `cpp` que deseja compilar e rodar. 
+- A ordem dos arquivos não importa, mas apenas um deles pode ter a função `main`.
+- No exemplo abaixo, o arquivo `main.cpp` é o arquivo que contém a `main` e o arquivo `point.cpp` contém as implementação das funções que serão usadas no arquivo `main.cpp`.
+
+```bash
+[lion@jungle cpp]$ ls
+cases.tio  fn.hpp  main.cpp  point.cpp  point.hpp
+[lion@jungle cpp]$ tko run *.cpp cases.tio
+═══════════════════════════ Running solver against test cases ═══════════════════════════
+=> base:[cases.tio(02)] prog:[main.cpp, point.cpp] [✓ ✓]
+```
+
+### Typescript e Javascript
+
+- Você precisa passar todos os arquivo `ts` ou `js` que deseja compilar e rodar.
+- O primeiro arquivo passado por parâmetro é o arquivo que vai ser executado.
+- Opção 1: Você pode escolher o arquivo principal, antes de passar os outros arquivos.
+- Opção 2: Você pode passar o arquivo principal primeiro e depois utilizar o `*.ts` para os outros.
+- Opção 3: Você pode renomear o arquivo principal para um nome que esteja "antes" dos outros.
+
+```bash
+[lion@jungle ts]$ ls
+adapter.ts  cases.tio  motoca.ts  pessoa.ts  shell.ts
+
+##########################################
+# PASSANDO OS ARQUIVOS SEM USAR WILDCARD *
+
+[lion@jungle ts]$ tko run cases.tio shell.ts adapter.ts motoca.ts pessoa.ts 
+═══════════════════════════ Running solver against test cases ═══════════════════════════
+=> base:[cases.tio(15)] prog:[shell.ts, adapter.ts, motoca.ts, pessoa.ts] [✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓]
+
+##########################################
+# PASSANDO O ARQUIVO PRINCIPAL PRIMEIRO E DEPOIS OS OUTROS
+
+[lion@jungle ts]$ tko run cases.tio shell.ts *.ts
+═══════════════════════════ Running solver against test cases ═══════════════════════════
+=> base:[cases.tio(15)] prog:[shell.ts, adapter.ts, motoca.ts, pessoa.ts] [✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓]
+
+##########################################
+# MUDANDO O NOME DO SHELL PARA AASHELL
+
+[lion@jungle ts]$ mv shell.ts aashell.ts
+[lion@jungle ts]$ tko run cases.tio *.ts
+═══════════════════════════ Running solver against test cases ═══════════════════════════
+=> base:[cases.tio(15)] prog:[aashell.ts, adapter.ts, motoca.ts, pessoa.ts] [✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓]
+```
+
+Se algum módulo quiser ser executado individualmente, ele pode ter o seguinte bloco de código:
+
+```ts
+export { Motoca };
+// esse if garante que o módulo só vai ser executado se for chamado diretamente
+if (module === require.main) {
+    let moto = new Motoca(2);
+    console.log(moto.toString());
+    moto.inserir(new Pessoa("jose", 9));
+    console.log(moto.toString());
+}
+
+```
+
+E pode ser executado passando o arquivo diretamente:
+
+```bash
+[lion@jungle ts]$ tko run motoca.ts pessoa.ts 
+
+────────── No test cases found. Running: node /tmp/tmp2yhb8xem/motoca.js ──────────
+power:2, time:0, person:(empty)
+power:2, time:0, person:(jose:9)
 ```
 
 ### Verificando o resultado
@@ -207,8 +341,10 @@ int main(){
 
 ## Convertendo entre formatos
 
-- Gerando um `.vpl`
+- Gerando um `t.vpl`
   - `tko build t.vpl testes.tio`
+- Gerando um `t.tio` a partir do `Readme.md`e de um `extra.tio`.
+  - `tko build t.tio Readme.md extra.tio`
 
 ## Exemplos rápidos
 
