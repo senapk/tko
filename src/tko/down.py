@@ -123,7 +123,6 @@ class Down:
         # downloading Readme
         try:
             destiny = Down.create_problem_folder(course, activity)
-            print(cache_url)
             [_readme_path, mapi_path] = Down.down_problem_def(destiny, cache_url)
         except urllib.error.HTTPError:
             print("fail: activity not found in course")

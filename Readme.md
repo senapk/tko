@@ -56,8 +56,7 @@ Ao baixar a questão, você terá uma pasta com o nome `carro` contendo:
 
 ## Rodando
 
-<details>
-<summary>Rodando sem testar</summary>
+### Rodando sem testar
 
 Após baixar, entre na pasta.
 
@@ -74,10 +73,7 @@ tko run Solver.java
 
 A ferramenta vai compilar e executar seu código, mostrando se houve algum erro.
 
-</details>
-
-<details>
-<summary> Rodando os testes </summary>
+### Rodando os testes
 
 Para rodar os testes, passe também o arquivo de testes `cases.tio` em qualquer ordem, antes ou depois do seu arquivo de código para o comando.
 
@@ -86,7 +82,6 @@ Para rodar os testes, passe também o arquivo de testes `cases.tio` em qualquer 
 tko run Solver.java cases.tio
 ```
 
-</details>
 
 ### Rodando múltiplos arquivos
 
