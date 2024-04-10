@@ -52,7 +52,7 @@ tko config -l java
 
 Ao baixar a questão, você terá uma pasta com o nome `carro` contendo:
 
-- Readme.md: com a descrição da atividade.
+- Readme.md: com a descrição da atividade em markdown.
 - cases.tio: com os casos de teste.
 - draft.ext: com o rascunho da solução.
 
@@ -83,7 +83,6 @@ Para rodar os testes, passe também o arquivo de testes `cases.tio` em qualquer 
 # tko run _arquivos_de_codigo _arquivo_de_casos_de_teste
 tko run Solver.java cases.tio
 ```
-
 
 ### Rodando múltiplos arquivos
 
@@ -214,10 +213,10 @@ Após fazer uma parte do código, executamos os testes novamente. Agora ele comp
 tko run Solver.java cases.tio -i 1
 ```
 
-- Caso queira o diff `up down` ao invés de `left right`, utilize a opção `-v`:
+- Caso queira o diff `up down` ao invés de `left right`, utilize a opção `-u`:
 
 ```bash
-tko run Solver.java cases.tio -v
+tko run Solver.java cases.tio -u
 ```
 
 ## O que é um teste?
@@ -321,7 +320,33 @@ int main(){
   - `tko run solver.c testes.tio`: compila e testa seu código.
   - `tko run solver.py testes.tio`: chama o interpretador e testa o código.
   - `tko run "python2 solver.py" testes.tio`.
-- Se pode compilar manualmente e passar o executável em qualquer linguagem. Se passar o código fonte, o script vai compilar com muitos critérios restritivos para garantir que seu código esteja bem feito.
+
+## Utilizando com outras linguagens de programação
+
+### Opção 1: chamando o interpretador da linguagem
+
+Códigos em `lua` podem ser executados por um interpretador, tal qual `python` e `javascript`.
+
+Seja o seguinte código
+
+```lua
+// teste.lua
+print("Hello World")
+```
+
+- Podemos mostrar ao `tko` qual comando executar com a flag `--cmd`:
+  - `tko run --cmd "lua teste.lua" cases.tio`
+
+![lua](install/lua.png)
+
+### Compilando antecipadamente
+
+Se sua linguagem gera código executável, tal qual `c`, `c++` ou `rust` você pode compilar e passar o executável para o `tko`. Vamos ver um exemplo em `c++`, compilado manualmente.
+
+- compilação: `g++ -std=c++20 -Wall teste.cpp -o teste.out`
+- teste: `tko run teste.out cases.tio`
+
+![alt text](install/cpp.png)
 
 ## Executando
 
