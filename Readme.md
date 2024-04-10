@@ -3,6 +3,26 @@
   "MD041": false
 } -->
 
+<!-- toc -->
+- [Instalação](#instalação)
+- [Dependências](#dependências)
+- [Download atividades](#download-atividades)
+- [Rodando](#rodando)
+  - [Rodando sem testar](#rodando-sem-testar)
+  - [Rodando os testes](#rodando-os-testes)
+  - [Rodando múltiplos arquivos](#rodando-múltiplos-arquivos)
+- [Utilizando outras linguagens de programação](#utilizando-outras-linguagens-de-programação)
+  - [Opção 1: chamando o interpretador da linguagem](#opção-1-chamando-o-interpretador-da-linguagem)
+  - [Compilando antecipadamente](#compilando-antecipadamente)
+- [Verificando o resultado](#verificando-o-resultado)
+  - [Opções extras](#opções-extras)
+- [O que é um teste?](#o-que-é-um-teste)
+  - [Formatos de teste](#formatos-de-teste)
+  - [Sintaxe TIO](#sintaxe-tio)
+  - [Escrevendo alguns testes](#escrevendo-alguns-testes)
+- [Convertendo entre formatos](#convertendo-entre-formatos)
+<!-- toc -->
+
 # tko
 
 O TKO é um sistema de testes para programação competitiva. Ele é capaz de rodar testes em várias linguagens de programação e em vários formatos de testes. Ele está integrado com os repositórios de atividades das disciplinas de programação da UFC de Quixadá permitindo baixar as atividades e rodar os testes.
@@ -193,7 +213,34 @@ power:2, time:0, person:(jose:9)
 
 </details>
 
-### Verificando o resultado
+## Utilizando outras linguagens de programação
+
+### Opção 1: chamando o interpretador da linguagem
+
+Códigos em `lua` podem ser executados por um interpretador, tal qual `python` e `javascript`.
+
+Seja o seguinte código
+
+```lua
+// teste.lua
+print("Hello World")
+```
+
+- Podemos mostrar ao `tko` qual comando executar com a flag `--cmd`:
+  - `tko run --cmd "lua teste.lua" cases.tio`
+
+![lua](install/lua.png)
+
+### Compilando antecipadamente
+
+Se sua linguagem gera código executável, tal qual `c`, `c++` ou `rust` você pode compilar e passar o executável para o `tko`. Vamos ver um exemplo em `c++`, compilado manualmente.
+
+- compilação: `g++ -std=c++20 -Wall teste.cpp -o teste.out`
+- teste: `tko run teste.out cases.tio`
+
+![alt text](install/cpp.png)
+
+## Verificando o resultado
 
 Após fazer uma parte do código, executamos os testes novamente. Agora ele compila e mostra:
 
@@ -207,16 +254,51 @@ Após fazer uma parte do código, executamos os testes novamente. Agora ele comp
 
 ### Opções extras
 
-- Caso queira rodar apenas um índice de teste, utilize a opção `-i`:
+- É muito útil na hora de debugar, isolar o teste que você está trabalhando. Caso queira rodar apenas um índice de teste, utilize a opção `-i`:
 
 ```bash
-tko run Solver.java cases.tio -i 1
+# rodando apenas o teste 5 depois de encher o código de print para debugar
+tko run Solver.java cases.tio -i 5
 ```
 
-- Caso queira o diff `up down` ao invés de `left right`, utilize a opção `-u`:
+- Você pode mudar o modo padrão de ver o `diff` no `tko run` com:
+  - Um em cima do outro (`-u` ou `--updown`)
+  - Um ao lado do outro (`-s` ou `--sideby`)
 
 ```bash
 tko run Solver.java cases.tio -u
+```
+
+- Através do `tko config`, você pode trocar configurações default para:
+  - o padrão do `diff`.
+  - esquema de cores: monocromático e colorido.
+  - tipo de caracteres: entre ascii e unicode.
+  - a linguagem padrão de download dos rascunhos.
+
+```bash
+$ tko config --help
+options:
+  -h, --help          show this help message and exit
+  --show, -s          show current settings.
+  --ascii             set ascii mode.
+  --unicode           set unicode mode.
+  --color             set colored mode.
+  --mono              set mono mode.
+  --side              set side_by_side diff mode.
+  --updown            set up_to_down diff mode.
+  --lang ext, -l ext  set default language extension.
+  --ask               ask language extension every time.
+```
+
+Vou definir a cor para monocromático, `diff updown` e a linguagem padrão para `js`.
+
+```bash
+$ tko config --mono
+Color mode now is: MONOCHROMATIC
+$ tko config --updown
+Diff mode now is: UP_DOWN
+$ tko config -l js
+Default language extension now is: js
 ```
 
 ## O que é um teste?
@@ -225,7 +307,7 @@ tko run Solver.java cases.tio -u
 - A entrada e saída e o comportamento esperado devem ser bem definidos, por exemplo:
   - Dados dois números inteiros de entrada, um por linha, mostre o resultado da divisão. Se o resultado for inteiro, mostre o valor inteiro, se for flutuante, mostre com duas casas decimais.
 
-## Formatos de teste
+### Formatos de teste
 
 - Um arquivo de texto com vários testes:
   - modelo TIO(test input output).
@@ -293,111 +375,41 @@ Vamos escrever alguns testes para o problema proposto. Crie um arquivo chamado `
 <<<<<<<<
 ```
 
----
-
-## Testando um código com erros
-
-- Crie algum código que tenta resolver o problema.
-
-```python
-# solver.py
-a = int(input())
-b = int(input())
-print(a/b)
-```
-
-```c
-// solver.c
-#include <stdio.h>
-int main(){
-    int a = 0, b = 0;
-    scanf("%d %d", &a, &b);
-    printf("%d\n", (a/b));
-}
-```
-
-- Rodando diretamente passando o código fonte
-  - `tko run solver.c testes.tio`: compila e testa seu código.
-  - `tko run solver.py testes.tio`: chama o interpretador e testa o código.
-  - `tko run "python2 solver.py" testes.tio`.
-
-## Utilizando com outras linguagens de programação
-
-### Opção 1: chamando o interpretador da linguagem
-
-Códigos em `lua` podem ser executados por um interpretador, tal qual `python` e `javascript`.
-
-Seja o seguinte código
-
-```lua
-// teste.lua
-print("Hello World")
-```
-
-- Podemos mostrar ao `tko` qual comando executar com a flag `--cmd`:
-  - `tko run --cmd "lua teste.lua" cases.tio`
-
-![lua](install/lua.png)
-
-### Compilando antecipadamente
-
-Se sua linguagem gera código executável, tal qual `c`, `c++` ou `rust` você pode compilar e passar o executável para o `tko`. Vamos ver um exemplo em `c++`, compilado manualmente.
-
-- compilação: `g++ -std=c++20 -Wall teste.cpp -o teste.out`
-- teste: `tko run teste.out cases.tio`
-
-![alt text](install/cpp.png)
-
-## Executando
-
-- Opções extras:
-  - As mesmas do list:
-    - `-i ou --index`: roda um índice específico
-    - `-a ou --all`: mostra todos os testes que falharam e não apenas o primeiro.
-
-- Vamos consertar nosso código
-
-```c
-// solver.c
-#include <stdio.h>
-int main(){
-    int a = 0, b = 0;
-    scanf("%d %d", &a, &b);
-    if(a % b == 0)
-        printf("%d\n", (a/b));
-    else
-        printf("%.2f\n", (float)a/b);
-}
-```
-
-- Rode agora e ele deve mostrar que todos os testes foram sucesso.
-
----
-
 ## Convertendo entre formatos
 
 - Gerando um `t.vpl`
   - `tko build t.vpl testes.tio`
 - Gerando um `t.tio` a partir do `Readme.md`e de um `extra.tio`.
   - `tko build t.tio Readme.md extra.tio`
-
-## Exemplos rápidos
+- Para extrair os testes para uma pasta com um arquivo para entrada e outro para saída, crie uma pasta vazia e passe para o primeiro parâmetro do `tko build`.
 
 ```bash
-# mostra os testes
-tko list t.tio
-
-# roda o executável solver.c e usa o arquivo t.tio como pacote de testes
-tko run solver.c t.tio
-
-# se seus testes estiverem em arquivos com a extensão .tio ou .vpl ou .md
-# para listar basta digitar
-tko list cases.tio
-
-# roda apenas o teste número 3
-tko run solver.py t.tio -i 3
-
-# ou então rodar usando
-tko run solver.cpp "testes @.in @.sol"
-
+$ ls
+cases.tio  draft.c  Readme.md
+$ mkdir pasta
+$ tko build pasta cases.tio 
+$ ls pasta/
+00.in   02.sol  05.in   07.sol  10.in   12.sol  15.in   17.sol  20.in   22.sol
+00.sol  03.in   05.sol  08.in   10.sol  13.in   15.sol  18.in   20.sol  23.in
+01.in   03.sol  06.in   08.sol  11.in   13.sol  16.in   18.sol  21.in   23.sol
+01.sol  04.in   06.sol  09.in   11.sol  14.in   16.sol  19.in   21.sol
+02.in   04.sol  07.in   09.sol  12.in   14.sol  17.in   19.sol  22.in
 ```
+
+- Você pode definir o padrão de nome dos arquivos gerados com `-p "@ @"`, sendo @ o wildcard que representa a numeração dos arquivo.
+  - Vamos refazer o comando acima, mas colocando "-p in.@ out.@"
+
+```bash
+$ tko build pasta/ cases.tio -p "in.@ out.@"
+$ ls pasta/
+in.00  in.05  in.10  in.15  in.20   out.01  out.06  out.11  out.16  out.21
+in.01  in.06  in.11  in.16  in.21   out.02  out.07  out.12  out.17  out.22
+in.02  in.07  in.12  in.17  in.22   out.03  out.08  out.13  out.18  out.23
+in.03  in.08  in.13  in.18  in.23   out.04  out.09  out.14  out.19
+in.04  in.09  in.14  in.19  out.00  out.05  out.10  out.15  out.20
+```
+
+- O `pattern` é útil para converter os formatos de Maratona, que vem em múltiplos arquivos para o `.tio`. Basta fazer o `match` do modelo que eles utilizarem. 
+  - `-p "@.in @.out"`
+  - `-p "in@ out@"`
+  - entre outros.
