@@ -104,6 +104,25 @@ Para rodar os testes, passe também o arquivo de testes `cases.tio` em qualquer 
 tko run Solver.java cases.tio
 ```
 
+### Descompactando os testes
+
+Se preferir trabalhar com o modelo de testes em arquivos separados, você pode descompactar o arquivo `cases.tio` para uma pasta com os arquivos de entrada e saída. Será gerado um arquivo `.in` e um `.sol` para cada teste.
+
+```bash
+$ mkdir pasta
+$ tko build pasta cases.tio
+$ ls pasta
+00.in 00.sol 01.in 01.sol 02.in 02.sol 03.in 03.sol 04.in 04.sol
+```
+
+Para rodar a partir da pasta com os testes descompactados, basta passar o nome da pasta como parâmetro.
+
+```bash
+$ tko run Solver.java pasta
+```
+
+Se quiser utilizar um nome padrão diferente para leitura ou escrita das pastas, veja a seção de [Convertendo entre formatos](#convertendo-entre-formatos).
+
 ### Rodando múltiplos arquivos
 
 Se você tiver mais de um arquivo de código, o comportamento depende da linguagem.

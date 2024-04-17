@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.4.2
+  - fix: removed debug on down
+  - add: improved description
 - 0.4.1
   - fix: removing duplicated parameters in run command
 - 0.4.0
