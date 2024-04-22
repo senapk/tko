@@ -6,7 +6,13 @@ Primeiro baixe e instale o python: [https://www.python.org/downloads/](https://w
 
 ## Instalando o TKO
 
-Depois abra o terminal e execute o comando:
+Depois abra o terminal COMO ADMIN e execute o comando:
+
+```bash
+pip install tko
+```
+
+Se não tiver poder de admin, pode tentar instalar como usuário normal:
 
 ```bash
 pip install tko --user
@@ -21,3 +27,4 @@ Set-ExecutionPolicy Unrestricted
 
 # Se pedir confirmação, confirme e dê enter
 ```
+
