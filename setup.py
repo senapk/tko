@@ -53,6 +53,11 @@ setup(
                     'test': ['coverage'],
                     },  # Optional
 
+    # tests_require=[
+    #     'pytest',
+    # ],
+    # test_suite='tests',
+
     #package_data={'tko': ['data/settings.cfg'], },  # Optional, Data files included in your packages that need to be installed
 
     # Although 'package_data' is the preferred approach, in some case you may
@@ -69,7 +74,7 @@ setup(
     #
     # For example, the following would provide a command called `ultralytics` which
     # executes the function `main` from this package when invoked:
-    entry_points={'console_scripts': ['tko=tko.__main__:Main.main', ], },
+    entry_points={'console_scripts': ['tko=tko.__main__:Main.main', 'remote=tko.remote:main'], },
 
     project_urls={'Bug Reports': 'https://github.com/senapk/tko/issues',
                   'Source': 'https://github.com/senapk/tko/',

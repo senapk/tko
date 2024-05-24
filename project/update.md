@@ -16,3 +16,10 @@ python -m venv venv
 source ./venv/bin/activate
 pip install -e .
 ```
+
+## Test
+
+```bash
+pi install -e . # se necessario
+pytest # from root repo dir
+```

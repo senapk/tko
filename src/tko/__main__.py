@@ -36,8 +36,9 @@ class Main:
 
         # load default diff from settings if not specified
         if not args.sideby and not args.updown:
-            updown = not SettingsParser().get_hdiff()
-            size_too_short = Report.get_terminal_size() < SettingsParser().get_hdiffmin()
+            local = SettingsParser().load_settings().local
+            updown = local.updown
+            size_too_short = Report.get_terminal_size() < local.sideto_min
             param.set_up_down(updown or size_too_short)
         elif args.sideby:
             param.set_up_down(False)
@@ -56,33 +57,36 @@ class Main:
     @staticmethod
     def settings(args):
         sp = SettingsParser()
+        settings = sp.load_settings()
         
         if args.ascii:
-            sp.set_ascii(True)
+            settings.local.ascii = True
             print("Encoding mode now is: ASCII")
         if args.unicode:
-            sp.set_ascii(False)
+            settings.local.ascii = False
             print("Encoding mode now is: UNICODE")
         if args.mono:
-            sp.set_color(False)
+            settings.local.color = False
             print("Color mode now is: MONOCHROMATIC")
         if args.color:
-            sp.set_color(True)
+            settings.local.color = True
             print("Color mode now is: COLORED")
         if args.side:
-            sp.set_hdiff(True)
+            settings.local.updown = False
             print("Diff mode now is: SIDE_BY_SIDE")
         if args.updown:
-            sp.set_hdiff(False)
+            settings.local.updown = True
             print("Diff mode now is: UP_DOWN")
         if args.lang:
-            sp.set_language(args.lang)
-            print("Default language extension now is:", sp.get_language())
+            settings.local.lang = args.lang
+            print("Default language extension now is:", args.lang)
         if args.ask:
-            sp.set_language("ask")
+            settings.local.lang = "ask"
             print("Language extension will be asked always.")
         if args.show:
-            print(str(sp))
+            print(SettingsParser.get_settings_file())
+            print(str(settings.local))
+        sp.save_settings()
 
     # @staticmethod
     # def rebuild(args):
@@ -117,7 +121,7 @@ class Main:
                                   help='pattern load/save a folder, default: "@.in @.sol"')
 
         parser = argparse.ArgumentParser(prog='tko', description='A tool for competitive programming.')
-        parser.add_argument('-c', metavar='CONFIG_FILE', type=str, help='config file.')
+        parser.add_argument('-c', metavar='CONFIG_FILE', type=str, help='config json file.')
         parser.add_argument('-w', metavar='WIDTH', type=int, help="terminal width.")
         parser.add_argument('-v', action='store_true', help='show version.')
         parser.add_argument('-g', action='store_true', help='show tko simple guide.')
@@ -187,20 +191,21 @@ class Main:
             parser.print_help()
             return
 
-
         # setting general settings options
         if args.w is not None:
             Report.set_terminal_size(args.width)
 
         if args.c:
-            SettingsParser().set_settings_file(args.c)
+            SettingsParser.set_settings_file(args.c)
         
-        if SettingsParser().get_ascii():
+        settings = SettingsParser().load_settings()
+
+        if settings.local.ascii:
             symbols.set_ascii()
         else:
             symbols.set_unicode()
 
-        if not args.m and SettingsParser().get_color():
+        if not args.m and settings.local.color:
             Colored.enabled = True
             symbols.set_colors()
 
