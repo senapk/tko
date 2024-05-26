@@ -5,7 +5,7 @@ from typing import Optional, List, Dict, Any
 import tempfile
 from .remote import RemoteCfg
 
-class RepSettings:
+class RepoSettings:
     def __init__(self):
         self.url: str = ""
         self.file: str = ""
@@ -114,11 +114,11 @@ class LocalSettings:
 
 class Settings:
     def __init__(self):
-        self.reps: Dict[str, RepSettings] = {}
+        self.reps: Dict[str, RepoSettings] = {}
         self.local = LocalSettings()
-        self.reps["fup"] = RepSettings().set_url("https://github.com/qxcodefup/arcade/blob/master/Readme.md")
-        self.reps["ed"] = RepSettings().set_url("https://github.com/qxcodeed/arcade/blob/master/Readme.md")
-        self.reps["poo"] = RepSettings().set_url("https://github.com/qxcodepoo/arcade/blob/master/Readme.md")
+        self.reps["fup"] = RepoSettings().set_url("https://github.com/qxcodefup/arcade/blob/master/Readme.md")
+        self.reps["ed"] = RepoSettings().set_url("https://github.com/qxcodeed/arcade/blob/master/Readme.md")
+        self.reps["poo"] = RepoSettings().set_url("https://github.com/qxcodepoo/arcade/blob/master/Readme.md")
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -127,7 +127,7 @@ class Settings:
         }
 
     def from_dict(self, data: Dict[str, Any]):
-        self.reps = {k: RepSettings().from_dict(v) for k, v in data.get("reps", {}).items()}
+        self.reps = {k: RepoSettings().from_dict(v) for k, v in data.get("reps", {}).items()}
         self.local = LocalSettings().from_dict(data.get("local", {}))
         return self
     

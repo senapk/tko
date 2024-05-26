@@ -9,11 +9,12 @@ from .pattern import PatternLoader
 from .basic import DiffMode
 from .format import Report, Colored
 from .down import Down
-from .settings import SettingsParser
+from .settings import SettingsParser, RepoSettings, Settings
 from .guide import tko_guide
 from .guide import bash_guide
 from .format import symbols
 from .__init__ import __version__
+from .game import Game, Play
 
 
 class Main:
@@ -87,6 +88,54 @@ class Main:
             print(SettingsParser.get_settings_file())
             print(str(settings.local))
         sp.save_settings()
+
+    @staticmethod
+    def repo(args):
+        sp = SettingsParser()
+        settings = sp.load_settings()
+
+        if args.add:
+            print("adding repo", args.add)
+            if args.url:
+                print("url", args.url)
+                rep = RepoSettings().set_url(args.url)
+                settings.reps[args.add] = rep
+                sp.save_settings()
+            elif args.file:
+                print("file", args.file)
+                rep = RepoSettings().set_file(args.file)
+                settings.reps[args.add] = rep
+                sp.save_settings()
+            else:
+                print("no url or file selected as source for the repository.")
+        if args.rm:
+            print("removing repo", args.rm)
+            settings.reps.pop(args.rm)
+        if args.graph:
+            print("generating graph.puml", args.graph)
+        if args.reset:
+            print("resetting all repositories to factory default.")
+            sp.settings = Settings()
+            sp.save_settings()
+
+    @staticmethod
+    def play(args):
+        if args.repo:
+            print("playing repo", args.repo)
+            sp = SettingsParser()
+            settings = sp.load_settings()
+            repo = settings.reps[args.repo]
+            game = Game()
+            print("debug 0")
+            file = repo.get_file()
+            print("debug 1")
+            game.parse_file(file)
+            print("debug 2")
+            #passsing a lambda function to the play class to save the settings
+            play = Play(game, repo, lambda: sp.save_settings())
+            play.play()
+            
+
 
     # @staticmethod
     # def rebuild(args):
@@ -182,6 +231,23 @@ class Main:
         g_lang = parser_s.add_mutually_exclusive_group()
         g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
         g_lang.add_argument("--ask", action='store_true', help='ask language extension every time.')
+
+        parser_repo = subparsers.add_parser('repo', help='manipulate repositories.')
+        repo_actions = parser_repo.add_mutually_exclusive_group()
+        repo_actions.add_argument("--add",  metavar='repo', type=str, help="alias of the repository to be added.")
+        repo_actions.add_argument("--rm", metavar='repo', type=str, help="alias of the repository to be removed.")
+        repo_actions.add_argument("--reset", action='store_true', help="reset all repositories to factory default.")
+        repo_actions.add_argument("--graph", '-g', metavar='repo', type=str, help="generate graph of the repository.")
+        
+        init_source = parser_repo.add_mutually_exclusive_group()
+        init_source.add_argument("--url", type=str, help="add a repository url to the settings file.")
+        init_source.add_argument("--file", type=str, help="add a repository file to the settings file.")
+
+        parser_repo.set_defaults(func=Main.repo)
+
+        parser_play = subparsers.add_parser('play', help='play a repository.')
+        parser_play.add_argument('repo', metavar='T', type=str, help='repository to be played.')
+        parser_play.set_defaults(func=Main.play)
 
         parser_s.set_defaults(func=Main.settings)
 
