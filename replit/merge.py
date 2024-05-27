@@ -11,6 +11,7 @@ print("Running merge for replit")
 
 # get all files inside folder src/tko
 files = [
+"remote",
 "settings",
 "runner",
 "format", 
@@ -24,6 +25,7 @@ files = [
 "wdir",
 "actions",
 "guide",
+"game",
 "__init__",
 "__main__",
 ]

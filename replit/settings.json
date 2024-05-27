@@ -1,0 +1,47 @@
+{
+    "reps": {
+        "fup": {
+            "url": "https://github.com/qxcodefup/arcade/blob/master/Readme.md",
+            "file": "",
+            "cache": "",
+            "active_quests": [],
+            "done_tasks": [],
+            "show_url": true,
+            "show_done": true,
+            "show_init": true,
+            "show_todo": true,
+            "game_mode": true
+        },
+        "ed": {
+            "url": "https://github.com/qxcodeed/arcade/blob/master/Readme.md",
+            "file": "",
+            "cache": "",
+            "active_quests": [],
+            "done_tasks": [],
+            "show_url": true,
+            "show_done": true,
+            "show_init": true,
+            "show_todo": true,
+            "game_mode": true
+        },
+        "poo": {
+            "url": "https://github.com/qxcodepoo/arcade/blob/master/Readme.md",
+            "file": "",
+            "cache": "",
+            "active_quests": [],
+            "done_tasks": [],
+            "show_url": true,
+            "show_done": true,
+            "show_init": true,
+            "show_todo": true,
+            "game_mode": true
+        }
+    },
+    "local": {
+        "lang": "ask",
+        "ascii": false,
+        "color": true,
+        "updown": true,
+        "sideto_min": 60
+    }
+}

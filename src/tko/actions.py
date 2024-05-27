@@ -6,7 +6,7 @@ import subprocess
 from .wdir import Wdir
 from .basic import DiffMode, ExecutionResult, CompilerError, Param, Unit
 from .diff import Diff
-from .format import Colored, Color, Report, symbols
+from .format import colour, Report, symbols
 from .writer import Writer
 from .solver import Solver
 from .runner import Runner
@@ -146,7 +146,7 @@ class Run:
     def missing_target(self) -> bool:
         # no solver and no test cases
         if self.wdir.solver is None and len(self.wdir.unit_list) == 0:
-            print(Colored.paint("fail: ", Color.RED) + "No solver or tests found.")
+            print(colour("red", "fail: ") + "No solver or tests found.")
             return True
         return False
     

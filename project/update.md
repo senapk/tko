@@ -20,6 +20,7 @@ pip install -e .
 ## Test
 
 ```bash
-pi install -e . # se necessario
+pip install -e . # se necessario
+pip install pytest
 pytest # from root repo dir
 ```

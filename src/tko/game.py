@@ -6,43 +6,8 @@ import re
 from typing import Optional
 import os
 import shutil
+from .format import colour
 
-
-class Color:
-  map = {
-      "red": '\u001b[31m',
-      "green": '\u001b[32m',
-      "yellow": '\u001b[33m',
-      "blue": '\u001b[34m',
-      "magenta": '\u001b[35m',
-      "cyan": '\u001b[36m',
-      "white": '\u001b[37m',
-      "reset": '\u001b[0m',
-      "bold": '\u001b[1m',
-      "uline": '\u001b[4m'
-  }
-
-  @staticmethod
-  def ljust(text: str, width: int) -> str:
-    return text + ' ' * (width - Color.len(text))
-
-  @staticmethod
-  def center(text: str, width: int, filler: str) -> str:
-    return filler * ((width - Color.len(text)) // 2) + text + filler * (
-        (width - Color.len(text) + 1) // 2)
-
-  @staticmethod
-  def remove_colors(text: str) -> str:
-    for color in Color.__map.values():
-      text = text.replace(color, '')
-    return text
-
-  @staticmethod
-  def len(text):
-    return len(Color.remove_colors(text))
-
-def colour(text: str, color: str="green", color2: Optional[str] = None) -> str:
-  return (Color.map[color] + ("" if color2 is None else Color.map[color2]) + text + Color.map["reset"])
 
 class Task:
 
@@ -116,8 +81,6 @@ class Task:
     if line == "":
       return False
     line = line.lstrip()
-    # if not line.startswith("- [ ]") and not line.startswith("- [x]"):
-    #   return False
 
     titulo, link, html = Task.parse_titulo_link_html(line)
 
@@ -155,6 +118,7 @@ class Quest:
     self.mdlink = ""
     self.tasks = []
     self.skills = []
+    self.group = ""
     self.requires = []
     self.requires_ptr = []
     self.type = "main"
@@ -203,6 +167,11 @@ class Quest:
       self.skills = [t[2:] for t in tags if t.startswith("s:")]
       self.requires = [t[2:] for t in tags if t.startswith("r:")]
       self.mdlink = "#" + get_md_link(titulo)
+      groups = [t[2:] for t in tags if t.startswith("g:")]
+      if len(groups) > 0:
+        self.group = groups[0]
+      else:
+        self.group = ""
       type = [t for t in tags if t.startswith("t:")]
       if len(type) > 0:
         self.type = type[0][2:]
@@ -232,52 +201,6 @@ def get_md_link(title: str) -> str:
     elif c.isalnum():
       out += c
   return out
-
-
-# class Rep:
-
-#   default_filename = ".game.json"
-
-#   def __init__(self):
-#     self.from_file = ""
-#     self.from_url = ""
-#     self.active_quests: List[str] = []
-#     self.done_tasks: List[str] = []
-#     self.show_url = False
-#     self.show_done = False
-
-#   # recursivamente vai retornando no caminho de diretórios procurando o arquivo .tko_game.json
-#   @staticmethod
-#   def search_for_json(folder):
-#     if os.path.exists(folder + "/" + Rep.default_filename):
-#       return folder + "/" + Rep.default_filename
-#     if folder == "/":
-#       return None
-#     return Rep.search_for_json(os.path.dirname(folder))
-
-#   def save_to_json(self, json_file):
-#     with open(json_file, "w") as f:
-#       json.dump(self, f, default=lambda o: o.__dict__, indent=4)
-
-#   def set_file(self, file):
-#     self.from_file = os.path.abspath(file)
-
-#   def get_file(self):
-#     return self.from_file
-
-#   def load_from_json(self, json_file):
-#     with open(json_file, "r") as f:
-#       data = json.load(f)
-#       self.from_file = data["from_file"]
-#       self.from_url = data["from_url"]
-#       self.active_quests = data["active_quests"]
-#       self.done_tasks = data["done_tasks"]
-#       self.show_url = data["show_url"]
-#       self.show_done = data["show_done"]
-
-#   def __str__(self):
-#     return f"from_file={self.from_file} : from_url={self.from_url} : active_quests={self.active_quests} : done_tasks={self.done_tasks}"
-
 
 class Game:
 
@@ -318,7 +241,6 @@ class Game:
   # Verifica se todas as quests tem tarefas
   def validate_requirements(self):
     #remove all quests without tasks
-    print("debug a")
     valid_quests = {}
     for k, q in self.quests.items():
       if len(q.tasks) > 0:
@@ -326,7 +248,6 @@ class Game:
 
     self.quests = valid_quests
 
-    print("debug b")
     # for q in self.quests.values():
     #   if len(q.tasks) == 0:
     #     print(f"Quest {q.key} não tem tarefas")
@@ -379,6 +300,59 @@ class Game:
     print( f"Quests de Entrada: {[q.key for q in self.quests.values() if len(q.requires) == 0]}" )
     print(f"Total de quests: {len(self.quests)}")
     print("\n".join([str(q) for q in self.quests.values()]))
+
+  def generate_graph(self, output):
+    saida = []
+    saida.append(f"@startuml {output}")
+    saida.append("digraph diag {")
+    saida.append('  node [style="rounded,filled", shape=box]')
+
+    def info(q):
+      return f"\"{q.title.strip()}:{len(q.tasks)}\""
+
+    for q in self.quests.values():
+      token = "->"
+      if len(q.requires_ptr) > 0:
+        for r in q.requires_ptr:
+          saida.append(f"  {info(r)} {token} {info(q)}")
+      else:
+        v = "  \"Início\""
+        saida.append(f"{v} {token} {info(q)}")
+
+    for q in self.quests.values():
+      if q.type == "main":
+        saida.append(f"  {info(q)} [fillcolor=lime]")
+      else:
+        saida.append(f"  {info(q)} [fillcolor=pink]")
+
+    groups = {}
+    for q in self.quests.values():
+      if q.group == "":
+        continue
+      if q.group not in groups:
+        groups[q.group] = []
+      groups[q.group].append(q)
+
+    for c in groups.values():
+      if c == "":
+        continue
+      saida.append(f"  subgraph cluster_{c[0].group} {{")
+      saida.append(f"    label=\"{c[0].group}\"")
+      saida.append(f"    style=filled")
+      saida.append(f"    color=lightyellow")
+      for q in c:
+        saida.append(f"    {info(q)}")
+
+      saida.append("  }")
+
+    saida.append("}")
+    saida.append("@enduml")
+    saida.append("")
+
+    open(output + ".puml", "w").write("\n".join(saida))
+    subprocess.run(["plantuml", output + ".puml", "-tsvg"])
+
+
 
 
 class Play:
@@ -482,18 +456,18 @@ class Play:
     text = f"[{str(done)}/{str(size)}]"
     space = " " if len(entry) == 1 else ""
     if done == size:
-      resume = colour(text, "green")
+      resume = colour("g", text)
     elif done == 0:
-      resume = colour(text, "red")
+      resume = colour("r", text)
     else:
-      resume = colour(text, "yellow")
-    entry = colour(entry, "blue") if q.type == "main" else colour(entry, "magenta")
+      resume = colour("y", text)
+    entry = colour("b", entry) if q.type == "main" else colour("m", entry)
     qlink = ""
     if self.show_url:
       if term_size > self.term_limit:
-        qlink = " " + colour(q.mdlink, "cyan")
+        qlink = " " + colour("c", q.mdlink)
       else:
-        qlink = "\n      " + colour(q.mdlink, "cyan")
+        qlink = "\n      " + colour("c", q.mdlink)
     if not self.show_done and done == size:
       return
     print(f"{opening} {entry}{space}{resume} {q.title.ljust(max_title)}")
@@ -504,9 +478,9 @@ class Play:
     vlink = ""
     if self.show_url:
       if t.key in t.title:
-        vlink = colour(t.link, "red")
+        vlink = colour("r", t.link)
       else:
-        vlink = colour(t.link, "yellow")
+        vlink = colour("y", t.link)
       if term_size > self.term_limit:
         vlink = " " + vlink
       else:
@@ -606,178 +580,43 @@ class Play:
 
   def show_help(self):
     print("Digite os números ou intervalo das tarefas para (marcar/desmarcar), exemplo:")
-    print(colour("$ ", "green") + "1 2 5-6")
+    print(colour("g", "$ ") + "1 2 5-6")
     print("Digite as letras ou intervalo das quests para (expandir/colapsar), exemplo:")
-    print(colour("$ ", "green") + "a c d-g")
+    print(colour("g", "$ ") + "a c d-g")
     print("Digite > para expandir todas as quests")
-    print(colour("$ ", "green") + ">")
+    print(colour("g", "$ ") + ">")
     print("Digite < para colapsar todas as quests")
-    print(colour("$ ", "green") + "<")
+    print(colour("g", "$ ") + "<")
     print("Digite :a ou :all para mostrar/esconder as quests completas")
-    print(colour("$ ", "green") + ":all")
+    print(colour("g", "$ ") + ":all")
     print("Digite :u ou :url para mostrar/esconder as urls")
-    print(colour("$ ", "green") + ":url")
+    print(colour("g", "$ ") + ":url")
     print("Digite :h ou :help para mostrar a ajuda")
-    print(colour("$ ", "green") + ":h")
+    print(colour("g", "$ ") + ":h")
     print("Digite :q ou :quit para sair")
-    print(colour("$ ", "green") + ":q")
+    print(colour("g", "$ ") + ":q")
     print("Digite enter para continuar")
     input()
 
   def play(self):
     while True:
       subprocess.run("clear")
-      vnum = colour("números") + "(marcar)"
-      vlet = colour("letras") + "(expandir)"
-      vfold  = colour("<") + " ou " + colour(">") + "(expandir todas)"
-      vhelp  = colour(":h", "cyan") + colour("elp")
-      vclose = colour(":q", "cyan") + colour("uit")
-      vdone  = colour(":d", "cyan") + colour("one") + ("[x]" if self.show_done else "[ ]")
-      vinit  = colour(":i", "cyan") + colour("nit") + ("[x]" if self.show_done else "[ ]")
-      vtodo  = colour(":t", "cyan") + colour("odo") + ("[x]" if self.show_done else "[ ]") 
-      vlink   = colour(":l", "cyan") + colour("ink") + ("[x]" if self.show_url else "[ ]")
+      vnum    = colour("g", "números") + "(marcar)"
+      vlet    = colour("g", "letras") + "(expandir)"
+      vfold   = colour("g", "<") + " ou " + colour("g", ">") + "(expandir todas)"
+      vhelp   = colour("c", ":h") + colour("g", "elp")
+      vclose  = colour("c", ":q") + colour("g", "uit")
+      vdone   = colour("c", ":d") + colour("g", "one") + ("[x]" if self.show_done else "[ ]")
+      vinit   = colour("c", ":i") + colour("g", "nit") + ("[x]" if self.show_done else "[ ]")
+      vtodo   = colour("c", ":t") + colour("g", "odo") + ("[x]" if self.show_done else "[ ]") 
+      vlink   = colour("c", ":l") + colour("g", "ink") + ("[x]" if self.show_url else "[ ]")
       print(f"Digite: {vnum}, {vlet}, {vfold}, {vhelp} ou {vclose}.")
       print(f"Filtro: {vdone}, {vinit}, {vtodo}, {vlink}, {vlink}")
       self.show_tasks()
-      print("\n" + colour("$") + " ", end="")
+      print("\n" + colour("g", "$") + " ", end="")
       line = input()
       if ":q" in line or ":quit" in line:
         break
       actions = self.expand_range(line)
       self.take_actions(actions)
       self.save_to_json()
-
-
-def create_diag(quests, output, colors=None):
-  saida = []
-  saida.append(f"@startuml {output}")
-  saida.append("skinparam defaultFontName Hasklig")
-  # saida.append("skinparam defaulttextalignment left")
-
-  # links  = " [[https://raw.githubusercontent.com/senapk/c_is_fun/main/graph/full_data.svg full_data]]"
-  # links += " [[https://raw.githubusercontent.com/senapk/c_is_fun/main/graph/main_only.svg main_only]]"
-  # links += " [[https://raw.githubusercontent.com/senapk/c_is_fun/main/graph/main_side.svg main_side]]"
-  # links += " [[https://raw.githubusercontent.com/senapk/c_is_fun/main/graph/main_game.svg main_game]]"
-
-  # saida.append("header")
-  # saida.append("C is Fun links: " + links)
-  # saida.append("end header")
-  #saida.append("left to right direction")
-
-  def info(q):
-    color = "lime" if q.type == "main" else "yellow"
-    return f"\"{q.title.strip()}:{len(q.tasks)}\" #{color}"
-
-  for q in quests.values():
-    token = "-->"
-    if len(q.requires_ptr) > 0:
-      for r in q.requires_ptr:
-        saida.append(f"{info(r)} {token} {info(q)}")
-    else:
-      saida.append(f"{"Início"} #cyan {token} {info(q)}")
-
-  saida.append(f"{info(list(quests.values())[-1])} --> (*)")
-
-  # skills = {}
-  # for e in entries:
-  #     for s, v in e.skills:
-  #         if s not in skills:
-  #             skills[s] = v
-  #         else:
-  #             skills[s] += v
-
-  # saida.append("legend bottom left")
-
-  # for s in skills:
-  #     name = s.rjust(7, ".")
-  #     print(name)
-  #     saida.append(f"  {name}: {skills[s]}")
-  # saida.append("end legend")
-
-  # saida.append("note top right")
-  # saida.append("    full_data: [[https://raw.githubusercontent.com/senapk/c_is_fun/main/graph/full_data.svg LINK]]")
-  # saida.append("    main_only: [[https://raw.githubusercontent.com/senapk/c_is_fun/main/graph/main_only.svg LINK]]")
-  # saida.append("    main_side: [[https://raw.githubusercontent.com/senapk/c_is_fun/main/graph/main_side.svg LINK]]")
-  # saida.append("    main_game: [[https://raw.githubusercontent.com/senapk/c_is_fun/main/graph/main_game.svg LINK]]")
-  # saida.append("end note")
-
-  saida.append("@enduml")
-  saida.append("")
-
-  open(output + ".puml", "w").write("\n".join(saida))
-  subprocess.run(["plantuml", output + ".puml", "-tsvg"])
-
-class Main:
-  @staticmethod
-  def init(args):
-    if args.url is None and args.file is None and args.rep is None:
-      print("Você precisa definir a fonte do seu jogo.")
-      exit(1)
-    if args.url:
-      rep = Rep()
-      rep.from_url = args.url
-      rep.save_to_json()
-      return
-    if args.file:
-      rep = Rep()
-      rep.set_file(args.file)
-      rep.save_to_json(Rep.default_filename)
-      return
-
-  @staticmethod
-  def play(args):
-    rep = Rep()
-    json_file = rep.search_for_json(os.getcwd())
-    if json_file is None:
-      print("Arquivo .game.json não encontrado")
-      exit(1)
-    rep.load_from_json(json_file)
-
-    game = Game()
-    game.parse_file(rep.get_file())
-
-    play = Play(game, rep, json_file)
-    play.play()
-
-  @staticmethod
-  def diag(args):
-    rep = Rep()
-    json_file = rep.search_for_json(os.getcwd())
-    if json_file is None:
-      print("Arquivo .game.json não encontrado")
-      exit(1)
-    rep.load_from_json(json_file)
-
-    game = Game()
-    game.parse_file(rep.get_file())
-    game.check_cycle()
-    create_diag(game.quests, "graph", None)
-
-    print("Diagrama gerado em graph.puml")
-
-def main():
-
-  parser = argparse.ArgumentParser()
-  # subcommand
-  subparsers = parser.add_subparsers(dest="subcommand")
-
-  parser_init = subparsers.add_parser('init')
-  parser_init.add_argument("--url", "-u", type=str, help="Inicia um jogo na pasta atual passando a url")
-  parser_init.add_argument("--file", "-f", type=str, help="Inicia um jogo na pasta atual passando a url")
-  parser_init.set_defaults(func=Main.init)
-
-  parser_play = subparsers.add_parser('play')
-  parser_play.set_defaults(func=Main.play)
-
-  parser_diag = subparsers.add_parser('diag')
-  parser_diag.set_defaults(func=Main.diag)
-
-  args = parser.parse_args()
-
-  if "func" in args:
-    args.func(args)
-  else:
-    parser.print_help()
-
-if __name__ == "__main__":
-  main()

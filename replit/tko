@@ -3,6 +3,11 @@
 from __future__ import annotations
 
 import os
+import re
+import configparser
+from typing import List, Optional
+import urllib.request
+import argparse
 import json
 from typing import Optional, List, Dict, Any
 import tempfile
@@ -15,16 +20,175 @@ from typing import Optional
 from typing import List, Optional, Tuple
 import io
 from typing import Tuple, Optional
-import urllib.request
 import urllib.error
 from typing import List
 from shutil import which
-import re
 from typing import List, Tuple, Optional, Dict
-from typing import List, Optional
 import math
-import argparse
 import sys
+
+
+
+class Title:
+    @staticmethod
+    def extract_title(readme_file):
+        title = open(readme_file).read().split("\n")[0]
+        parts = title.split(" ")
+        if parts[0].count("#") == len(parts[0]):
+            del parts[0]
+        title = " ".join(parts)
+        return title
+
+class RemoteCfg:
+    def __init__(self):
+        self.user = ""
+        self.repo = ""
+        self.branch = ""
+        self.folder = ""
+        self.file = ""
+
+    def from_url(self, url: str):
+        if url.startswith("https://raw.githubusercontent.com/"):
+            url = url.replace("https://raw.githubusercontent.com/", "")
+            parts = url.split("/")
+            self.user = parts[0]
+            self.repo = parts[1]
+            self.branch = parts[2]
+            self.folder = "/".join(parts[3:-1])
+            self.file = parts[-1]
+        elif url.startswith("https://github.com/"):
+            url = url.replace("https://github.com/", "")
+            parts = url.split("/")
+            self.user = parts[0]
+            self.repo = parts[1]
+            self.branch = parts[3]
+            self.folder = "/".join(parts[4:-1])
+            self.file = parts[-1]
+        else:
+            raise Exception("Invalid URL")
+
+    def get_raw_url(self):
+        return "https://raw.githubusercontent.com/" + self.user + "/" + self.repo + "/" + self.branch + "/" + self.folder + "/" + self.file
+
+    def download_absolute(self, filename: str):
+        try:
+            [tempfile, __content] = urllib.request.urlretrieve(self.get_raw_url(), filename)
+            content = ""
+            try:
+                content = open(tempfile, encoding="utf-8").read()
+            except:
+                content = open(tempfile).read()
+            with open(filename, "w") as f:
+                f.write(Absolute.relative_to_absolute(content, self))
+        except urllib.error.HTTPError:
+            print("Error downloading file", self.get_raw_url())
+            return
+
+    def __str__(self):
+        return f"user: ({self.user}), repo: ({self.repo}), branch: ({self.branch}), folder: ({self.folder}), file: ({self.file})"
+
+    def read(self, cfg_path: str):
+        if not os.path.isfile(cfg_path):
+            print("no remote.cfg found")
+
+        config = configparser.ConfigParser()
+        config.read(cfg_path)
+
+        self.user   = config["DEFAULT"]["user"]
+        self.repo   = config["DEFAULT"]["rep"]
+        self.branch = config["DEFAULT"]["branch"]
+        self.folder = config["DEFAULT"]["base"]
+        self.tag    = config["DEFAULT"]["tag"]
+
+    @staticmethod
+    def search_cfg_path(source_dir) -> Optional[str]:
+        # look for the remote.cfg file in the current folder
+        # if not found, look for it in the parent folder
+        # if not found, look for it in the parent's parent folder ...
+
+        path = os.path.abspath(source_dir)
+        while path != "/":
+            cfg_path = os.path.join(path, "remote.cfg")
+            if os.path.isfile(cfg_path):
+                return cfg_path
+            path = os.path.dirname(path)
+        return None
+
+class Absolute:
+
+    # processa o conteúdo trocando os links locais para links absolutos utilizando a url remota
+    @staticmethod
+    def __replace_remote(content: str, remote_raw: str, remote_view: str, remote_folder: str) -> str:
+        if content is None or content == "":
+            return ""
+        if not remote_raw.endswith("/"):
+            remote_raw += "/"
+        if not remote_view.endswith("/"):
+            remote_view += "/"
+        if not remote_folder.endswith("/"):
+            remote_folder += "/"
+
+        #trocando todas as imagens com link local
+        regex = r"!\[(.*?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
+        subst = "![\\1](" + remote_raw + "\\3)"
+        result = re.sub(regex, subst, content, 0)
+
+
+        regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?/)\)"
+        subst = "[\\1](" + remote_folder + "\\3)"
+        result = re.sub(regex, subst, result, 0)
+
+        #trocando todos os links locais cujo conteudo nao seja vazio
+        regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
+        subst = "[\\1](" + remote_view + "\\3)"
+        result = re.sub(regex, subst, result, 0)
+
+        return result
+
+    @staticmethod
+    def relative_to_absolute(content: str, cfg: RemoteCfg):
+        user_repo = os.path.join(cfg.user, cfg.repo)
+        remote_raw    = os.path.join("https://raw.githubusercontent.com", user_repo, cfg.branch , cfg.folder)
+        remote_view    = os.path.join("https://github.com/", user_repo, "blob", cfg.branch, cfg.folder)
+        remote_folder = os.path.join("https://github.com/", user_repo, "tree", cfg.branch, cfg.folder)
+        return Absolute.__replace_remote(content, remote_raw, remote_view, remote_folder)
+
+    @staticmethod
+    def from_file(source_file, output_file, cfg: RemoteCfg, hook):
+        content = open(source_file).read()
+        content = Absolute.relative_to_absolute(content, cfg, hook)
+        open(output_file, "w").write(content)
+        
+class RemoteMd:
+
+    # @staticmethod
+    # def insert_preamble(lines: List[str], online: str, tkodown: str) -> List[str]:
+
+    #     text = "\n- Veja a versão online: [aqui.](" + online + ")\n"
+    #     text += "- Para programar na sua máquina (local/virtual) use:\n"
+    #     text += "  - `" + tkodown + "`\n"
+    #     text += "- Se não tem o `tko`, instale pelo [LINK](https://github.com/senapk/tko#tko).\n\n---"
+
+    #     lines.insert(1, text)
+
+    #     return lines
+
+    # @staticmethod
+    # def insert_qxcode_preamble(cfg: RemoteCfg, content: str, hook) -> str:
+    #     base_hook = os.path.join(cfg.base, hook)
+
+    #     lines = content.split("\n")
+    #     online_readme_link = os.path.join("https://github.com", cfg.user, cfg.repo, "blob", cfg.branch, base_hook, "Readme.md")
+    #     tkodown = "tko down " + cfg.tag + " " + hook
+    #     lines = RemoteMd.insert_preamble(lines, online_readme_link, tkodown)
+    #     return "\n".join(lines)
+
+    @staticmethod
+    def run(remote_cfg: RemoteCfg, source: str, target: str, hook) -> bool:    
+        content = open(source).read()
+        content = Absolute.relative_to_absolute(content, remote_cfg, hook)
+        open(target, "w").write(content)
+
 
 class RepoSettings:
     def __init__(self):
@@ -51,7 +215,7 @@ class RepoSettings:
         return self.file
 
     def set_file(self, file: str):
-        self.file = file
+        self.file = os.path.abspath(file)
         return self
 
     def set_url(self, url: str):
@@ -167,8 +331,9 @@ class SettingsParser:
         self.package_name = "tko"
         self.filename = "settings.json"
         if SettingsParser.__settings_file is None:
+            self.filename = os.path.abspath(self.filename) # backup for replit
         else:
-            SettingsParser.__settings_file = os.path.abspath(SettingsParser.__settings_file)
+            self.filename = os.path.abspath(SettingsParser.__settings_file)
         self.settings = self.load_settings()
 
     @staticmethod
@@ -179,17 +344,16 @@ class SettingsParser:
     def get_settings_file() -> Optional[str]:
         return SettingsParser.__settings_file
 
-
     def load_settings(self) -> Settings:
         try:
-            with open(SettingsParser.__settings_file, "r") as f:
-                return Settings().from_dict(json.load(f))
+            with open(self.filename, "r") as f:
+                self.settings = Settings().from_dict(json.load(f))
+                return self.settings
         except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
             return self.create_new_settings_file()
 
     def save_settings(self):
-        self.settings.save_to_json(SettingsParser.__settings_file)
-
+        self.settings.save_to_json(self.filename)
 
     def create_new_settings_file(self) -> Settings:
         self.settings = Settings()
@@ -199,7 +363,7 @@ class SettingsParser:
         return self.settings
 
     def get_settings_dir(self) -> str:
-        return os.path.dirname(SettingsParser.__settings_file)
+        return os.path.dirname(self.filename)
     
     def get_language(self) -> str:
         return self.settings.local.lang
@@ -217,13 +381,6 @@ class SettingsParser:
                 print("debug:", url)
                 return url
 
-if __name__ == "__main__":
-    print("ping")
-    sp = SettingsParser("x.json")
-    rfup = sp.settings.reps["fup"]
-    rfup.get_file()
-    sp.save_settings()
-    print(str(sp))
 
 
 class Runner:
@@ -277,79 +434,49 @@ class Runner:
 
 
 
-class Color(Enum):
-    RED = 1
-    GREEN = 2
-    YELLOW = 3
-    BLUE = 4
-    MAGENTA = 5
-    CYAN = 6
-    WHITE = 7
-    RESET = 8
-    BOLD = 9
-    ULINE = 10
+class Color:
+  enabled = True
+  map = {
+      "red"    : '\u001b[31m',
+      "r"      : '\u001b[31m',
+      "green"  : '\u001b[32m',
+      "g"      : '\u001b[32m',
+      "yellow" : '\u001b[33m',
+      "y"      : '\u001b[33m',
+      "blue"   : '\u001b[34m',
+      "b"      : '\u001b[34m',
+      "magenta": '\u001b[35m',
+      "m"      : '\u001b[35m',
+      "cyan"   : '\u001b[36m',
+      "c"      : '\u001b[36m',
+      "white"  : '\u001b[37m',
+      "w"      : '\u001b[37m',
+      "reset"  : '\u001b[0m',
+      "bold"   : '\u001b[1m',
+      "uline"  : '\u001b[4m'
+  }
 
+  @staticmethod
+  def ljust(text: str, width: int) -> str:
+    return text + ' ' * (width - Color.len(text))
 
-class Colored:
-    enabled = False
+  @staticmethod
+  def center(text: str, width: int, filler: str) -> str:
+    return filler * ((width - Color.len(text)) // 2) + text + filler * (
+        (width - Color.len(text) + 1) // 2)
 
-    __map = {
-        Color.RED: '\u001b[31m',
-        Color.GREEN: '\u001b[32m',
-        Color.YELLOW: '\u001b[33m',
-        Color.BLUE: '\u001b[34m',
-        Color.MAGENTA: '\u001b[35m',
-        Color.CYAN: '\u001b[36m',
-        Color.WHITE: '\u001b[37m',
-        Color.RESET: '\u001b[0m',
-        Color.BOLD: '\u001b[1m',
-        Color.ULINE: '\u001b[4m'
-    }
+  @staticmethod
+  def remove_colors(text: str) -> str:
+    for color in Color.__map.values():
+      text = text.replace(color, '')
+    return text
 
-    @staticmethod
-    def paint(text: str, color: Color, color2: Optional[Color] = None) -> str:
-        if not Colored.enabled:
-            return text
-        return (Colored.__map[color] + ("" if color2 is None else Colored.__map[color2])
-                + text + Colored.__map[Color.RESET])
+  @staticmethod
+  def len(text):
+    return len(Color.remove_colors(text))
 
-    @staticmethod
-    def green(text: str) -> str:
-        return Colored.paint(text, Color.GREEN)
-    
-    @staticmethod
-    def red(text: str) -> str:
-        return Colored.paint(text, Color.RED)
-    
-    @staticmethod
-    def magenta(text: str) -> str:
-        return Colored.paint(text, Color.MAGENTA)
-
-    @staticmethod
-    def yellow(text: str) -> str:
-        return Colored.paint(text, Color.YELLOW)
-    
-    @staticmethod
-    def blue(text: str) -> str:
-        return Colored.paint(text, Color.BLUE)
-
-    @staticmethod
-    def ljust(text: str, width: int) -> str:
-        return text + ' ' * (width - Colored.len(text))
-
-    @staticmethod
-    def center(text: str, width: int, filler: str) -> str:
-        return filler * ((width - Colored.len(text)) // 2) + text + filler * ((width - Colored.len(text) + 1) // 2)
-
-    @staticmethod
-    def remove_colors(text: str) -> str:
-        for color in Colored.__map.values():
-            text = text.replace(color, '')
-        return text
-
-    @staticmethod
-    def len(text):
-        return len(Colored.remove_colors(text))
+def colour(color: str, text: str) -> str:
+  return (Color.map[color] + text + Color.map["reset"])
 
 
 class __Symbols:
@@ -418,15 +545,15 @@ class __Symbols:
         self.arrow_up    = "↑"
 
     def set_colors(self):
-        self.opening     = Colored.paint(self.opening,     Color.BLUE)
-        self.neutral     = Colored.paint(self.neutral,     Color.BLUE)
-        self.success     = Colored.paint(self.success,     Color.GREEN)
-        self.failure     = Colored.paint(self.failure,     Color.RED)
-        self.wrong       = Colored.paint(self.wrong,       Color.RED)
-        self.compilation = Colored.paint(self.compilation, Color.YELLOW)
-        self.execution   = Colored.paint(self.execution,   Color.YELLOW)
-        self.unequal     = Colored.paint(self.unequal,     Color.RED)
-        self.equalbar    = Colored.paint(self.equalbar,    Color.GREEN)
+        self.opening     = colour("b", self.opening)
+        self.neutral     = colour("b", self.neutral)
+        self.success     = colour("g", self.success)
+        self.failure     = colour("r", self.failure)
+        self.wrong       = colour("r", self.wrong)
+        self.compilation = colour("y", self.compilation)
+        self.execution   = colour("y", self.execution)
+        self.unequal     = colour("r", self.unequal)
+        self.equalbar    = colour("g", self.equalbar)
 
 symbols = __Symbols()
 
@@ -465,7 +592,7 @@ class Report:
             right_border = sep
         term_width = Report.get_terminal_size()
 
-        size = Colored.len(text)
+        size = Color.len(text)
         pad = sep if size % 2 == 0 else ""
         tw = term_width - 2
         filler = sep * int(tw / 2 - size / 2)
@@ -635,15 +762,15 @@ class Diff:
         return hdiff
 
     @staticmethod
-    def render_white(text: Optional[str], color: Optional[Color] = None) -> Optional[str]:
+    def render_white(text: Optional[str], color: Optional[str] = None) -> Optional[str]:
         if text is None:
             return None
         if color is None:
             text = text.replace(' ', symbols.whitespace)
             text = text.replace('\n', symbols.newline + '\n')
             return text
-        text = text.replace(' ', Colored.paint(symbols.whitespace, color))
-        text = text.replace('\n', Colored.paint(symbols.newline, color) + '\n')
+        text = text.replace(' ', colour(color, symbols.whitespace))
+        text = text.replace('\n', colour("r", symbols.newline) + '\n')
         return text
 
     # create a string with both ta and tb side by side with a vertical bar in the middle
@@ -682,18 +809,18 @@ class Diff:
 
         first_a = get(a_render, first_failure)
         first_b = get(b_render, first_failure)
-        greater = max(Colored.len(first_a), Colored.len(first_b))
+        greater = max(Color.len(first_a), Color.len(first_b))
         lbefore = ""
 
         if first_failure > 0:
-            lbefore = Colored.remove_colors(get(a_render, first_failure - 1))
-            greater = max(greater, Colored.len(lbefore))
+            lbefore = Color.remove_colors(get(a_render, first_failure - 1))
+            greater = max(greater, Color.len(lbefore))
 
         out_a, out_b = Diff.colorize_2_lines_diff(first_a, first_b)
 
-        postext  = symbols.vbar + " " + Colored.ljust(out_a, greater) + Colored.paint(" (expected)", Color.GREEN) + "\n"
-        postext += symbols.vbar + " " + Colored.ljust(out_b, greater) + Colored.paint(" (received)", Color.RED) + "\n"
-        postext += symbols.vbar + " " + Colored.ljust(Diff.make_line_arrow_up(first_a, first_b), greater) + Colored.paint(" (mismatch)", Color.BLUE) + "\n"
+        postext  = symbols.vbar + " " + Color.ljust(out_a, greater) + colour("g", " (expected)") + "\n"
+        postext += symbols.vbar + " " + Color.ljust(out_b, greater) + colour("r", " (received)") + "\n"
+        postext += symbols.vbar + " " + Color.ljust(Diff.make_line_arrow_up(first_a, first_b), greater) + colour("b", " (mismatch)") + "\n"
         return postext
 
     @staticmethod
@@ -706,10 +833,10 @@ class Diff:
         return i
     
     @staticmethod
-    def colorize_2_lines_diff(line_a: str, line_b: str, neutral:Color=Color.WHITE, expected:Color=Color.GREEN, received:Color=Color.RED) -> Tuple[str, str]:
+    def colorize_2_lines_diff(line_a: str, line_b: str, neutral:str="w", expected:str="g", received:str="r") -> Tuple[str, str]:
         pos = Diff.find_first_mismatch(line_a, line_b)
-        a_out = Colored.paint(line_a[0:pos], neutral) + Colored.paint(line_a[pos:], expected)
-        b_out = Colored.paint(line_b[0:pos], neutral) + Colored.paint(line_b[pos:], received)
+        a_out = colour(neutral, line_a[0:pos]) + colour(expected, line_a[pos:])
+        b_out = colour(neutral, line_b[0:pos]) + colour(received, line_b[pos:])
         return (a_out, b_out)
     
     
@@ -752,7 +879,7 @@ class Diff:
             if i >= a_size or i >= b_size or a_lines[i] != b_lines[i]:
                 if first_failure == -1:
                     first_failure = i
-                a_out, b_out = Diff.colorize_2_lines_diff(a_data, b_data, Color.YELLOW)
+                a_out, b_out = Diff.colorize_2_lines_diff(a_data, b_data, "yellow")
                 a_output.append(a_out)
                 b_output.append(b_out)
             else:
@@ -780,14 +907,14 @@ class Diff:
 
         output.write(Report.centralize("", symbols.hbar, "╭") + "\n")
         output.write(Report.centralize(str(unit), " ", symbols.vbar) + "\n")
-        output.write(Report.centralize(Colored.paint(" INPUT ", Color.BLUE), symbols.hbar, "├") + "\n")
+        output.write(Report.centralize(colour("b", " INPUT "), symbols.hbar, "├") + "\n")
         output.write(string_input)
-        output.write(Report.centralize(Colored.paint(" EXPECTED ", Color.GREEN), symbols.hbar, "├") + "\n")
+        output.write(Report.centralize(colour("g", " EXPECTED "), symbols.hbar, "├") + "\n")
         output.write("\n".join(expected_lines) + "\n")
-        output.write(Report.centralize(Colored.paint(" RECEIVED ", Color.RED), symbols.hbar, "├") + "\n")
+        output.write(Report.centralize(colour("r", " RECEIVED "), symbols.hbar, "├") + "\n")
         output.write("\n".join(received_lines) + "\n")
         if unit.result != ExecutionResult.EXECUTION_ERROR:
-            output.write(Report.centralize(Colored.paint(" WHITESPACE ", Color.BOLD),  symbols.hbar, "├") + "\n")
+            output.write(Report.centralize(colour("bold", " WHITESPACE "),  symbols.hbar, "├") + "\n")
             output.write(Diff.first_failure_diff(string_expected, string_received, first_failure))
         output.write(Report.centralize("",  symbols.hbar, "╰") + "\n")
 
@@ -815,13 +942,13 @@ class Diff:
         def title_side_by_side(left, right, filler=" ", middle=" ", prefix=""):
             half = int((Report.get_terminal_size() - len(middle)) / 2)
             line = ""
-            a = Colored.center(left, half, filler)
-            if Colored.len(a) > half:
+            a = Color.center(left, half, filler)
+            if Color.len(a) > half:
                 a = a[:half]
             line += a
             line += middle
-            b = Colored.center(right, half, filler)
-            if Colored.len(b) > half:
+            b = Color.center(right, half, filler)
+            if Color.len(b) > half:
                 b = b[:half]
             line += b
             if prefix != "":
@@ -841,19 +968,19 @@ class Diff:
         expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received, True)
         output.write(Report.centralize("", hbar, "╭") + "\n")
         output.write(Report.centralize(str(unit), " ", "│") + "\n")
-        input_header = Colored.paint(" INPUT ", Color.BLUE)
+        input_header = colour("b", " INPUT ")
         output.write(title_side_by_side(input_header, input_header, hbar, "┬", "├") + "\n")
         if (string_input != ""):
             output.write(Diff.side_by_side(string_input.split("\n")[:-1], string_input.split("\n")[:-1]) + "\n")
-        expected_header = Colored.paint(" EXPECTED ", Color.GREEN)
-        received_header = Colored.paint(" RECEIVED ", Color.RED)
+        expected_header = colour("g", " EXPECTED ")
+        received_header = colour("r", " RECEIVED ")
         output.write(title_side_by_side(expected_header, received_header, hbar, "┼", "├") + "\n")
         unequal = symbols.unequal
         if unit.result == ExecutionResult.EXECUTION_ERROR:
             unequal = symbols.vbar
         output.write(Diff.side_by_side(expected_lines, received_lines, unequal) + "\n")
         if unit.result != ExecutionResult.EXECUTION_ERROR:
-            output.write(Report.centralize(Colored.paint(" WHITESPACE ", Color.BOLD),  symbols.hbar, "├") + "\n")
+            output.write(Report.centralize(colour("bold", " WHITESPACE "),  symbols.hbar, "├") + "\n")
             output.write(Diff.first_failure_diff(string_expected, string_received, first_failure))
         output.write(Report.centralize("",  symbols.hbar, "╰") + "\n")
 
@@ -1606,7 +1733,7 @@ class Wdir:
         target_list = [t for t in target_list if t != ""]
         for target in target_list:
             if not os.path.exists(target):
-                raise FileNotFoundError(Colored.paint("fail: ", Color.RED) + target + " not found")
+                raise FileNotFoundError(colour("red", "fail: ") + target + " not found")
 
         solvers = [target for target in target_list if Identifier.get_type(target) == IdentifierType.SOLVER]
         sources = [target for target in target_list if Identifier.get_type(target) != IdentifierType.SOLVER]
@@ -1718,7 +1845,7 @@ class Wdir:
             for i in range(len(self.pack_list)):
                 nome: str = self.source_list[i].split(os.sep)[-1]
                 out.append(nome + "(" + str(len(self.pack_list[i])).zfill(2) + ")")
-            return Colored.paint("base:", Color.GREEN) + "[" + ", ".join(out) + "]"
+            return colour("green", "base:") + "[" + ", ".join(out) + "]"
 
         def solvers() -> str:
             path_list = [] if self.solver is None else self.solver.path_list
@@ -1727,10 +1854,10 @@ class Wdir:
                 out = "free cmd"
             else:
                 out = ", ".join([os.path.basename(path) for path in path_list])
-            return Colored.paint("prog:", Color.GREEN) + "[" + out + "]"
+            return colour("green", "prog:") + "[" + out + "]"
 
         # folder = os.getcwd().split(os.sep)[-1]
-        #tests_count = (Colored.paint("tests:", Color.GREEN) +
+        #tests_count = (colour("tests:", Color.GREEN) +
         #               str(len([x for x in self.unit_list if x.repeated is None])).zfill(2))
 
         return symbols.opening + sources() + " " + solvers()
@@ -1872,7 +1999,7 @@ class Run:
     def missing_target(self) -> bool:
         # no solver and no test cases
         if self.wdir.solver is None and len(self.wdir.unit_list) == 0:
-            print(Colored.paint("fail: ", Color.RED) + "No solver or tests found.")
+            print(colour("red", "fail: ") + "No solver or tests found.")
             return True
         return False
     
@@ -1965,6 +2092,622 @@ bash_guide = """
 ║Finalizar entrada : Control D             ║
 ╚══════════════════════════════════════════╝
 """
+#!/usr/bin/env python3
+
+
+
+class Task:
+
+  def __init__(self):
+    self.line_number = 0
+    self.line = ""
+    self.key = ""
+    self.coding = False
+    self.remove_tko = False
+    self.done = False
+    self.skills = []
+    self.title = ""
+    self.link = ""
+
+  def __str__(self):
+    return f"{self.line_number} : {self.key} : {self.done} : {self.title} : {self.skills} : {self.link}"
+
+  @staticmethod
+  def parse_titulo_link_html(line):
+    # Regex para extrair o título e o link
+    titulo_link_regex = r'\s*-.*\[(.*?)\](\(.+?\))'
+    titulo_link_match = re.search(titulo_link_regex, line)
+
+    # Regex para extrair as tags
+    html_regex = r'<!--\s*(.*?)\s*-->'
+    html_match = re.search(html_regex, line)
+
+    # Inicializa as variáveis de título, link e html
+    titulo = None
+    link = None
+    html = []
+
+    # Extrai título e link
+    if titulo_link_match:
+      titulo = titulo_link_match.group(1).strip()
+      link = titulo_link_match.group(2).strip('()')
+
+    # Extrai html
+    if html_match:
+      html_raw = html_match.group(1).strip()
+      html = [tag.strip() for tag in html_raw.split()]
+
+    return titulo, link, html
+
+  # coding tasks
+  def set_key_from_title(self, titulo, html):
+    title_key = titulo.split("@")[1]
+    title_key = title_key.split(" ")[0]
+    title_key = title_key.split(":")[0]
+    title_key = title_key.split("/")[0]
+    self.key = title_key
+    self.skills = html
+    self.coding = True
+
+  # non coding tasks
+  def set_key_from_html(self, titulo, html):
+    html_key = [t for t in html if t.startswith("@")][0]
+    html_key = html_key.split("@")[1]
+    self.key = html_key
+    self.coding = False
+    self.skills = [t[2:] for t in html if t.startswith("s:")]
+
+  def process_link(self, baseurl):
+    if self.link.startswith("http"):
+      return
+    if self.link.startswith("./"):
+      self.link = self.link[2:]
+    self.link = baseurl + self.link
+
+  def parse_task(self, line, line_num):
+    if line == "":
+      return False
+    line = line.lstrip()
+
+    titulo, link, html = Task.parse_titulo_link_html(line)
+
+    if titulo is None:
+      return False
+
+    self.line = line
+    self.line_number = line_num
+    self.title = titulo
+    self.link = link
+
+    self.process_link(link)
+
+    try:
+      self.set_key_from_title(titulo, html)
+      return True
+    except:
+      pass
+    try:
+      self.set_key_from_html(titulo, html)
+      return True
+    except:
+      pass
+
+    return False
+
+
+class Quest:
+
+  def __init__(self):
+    self.line_number = 0
+    self.line = ""
+    self.key = ""
+    self.title = ""
+    self.mdlink = ""
+    self.tasks = []
+    self.skills = []
+    self.group = ""
+    self.requires = []
+    self.requires_ptr = []
+    self.type = "main"
+
+  def __str__(self):
+    return f"linha={self.line_number} : {self.key} : {self.title} : {self.skills} : {self.requires} : {self.mdlink} : {[t.key for t in self.tasks]}"
+
+  def is_complete(self):
+    return all([t.done for t in self.tasks])
+
+  def is_reachable(self, cache):
+    if self.key in cache:
+      return cache[self.key]
+
+    if len(self.requires_ptr) == 0:
+      cache[self.key] = True
+      return True
+    cache[self.key] = all(
+        [r.is_complete() and r.is_reachable(cache) for r in self.requires_ptr])
+    return cache[self.key]
+
+  def parse_quest(self, line, line_num):
+    pattern = r'^#+\s*(.*?)<!--\s*(.*?)\s*-->\s*$'
+    match = re.match(pattern, line)
+    titulo = None
+    tags = []
+
+    if match:
+      titulo = match.group(1)
+      tags_raw = match.group(2).strip()
+      tags = [tag.strip() for tag in tags_raw.split()]
+    else:
+      pattern = r'^#+\s*(.*?)\s*$'
+      match = re.match(pattern, line)
+      if match:
+        titulo = match.group(1)
+        tags.append("@" + get_md_link(titulo))
+      else:
+        return False
+
+    try:
+      key = [t[1:] for t in tags if t.startswith("@")][0]
+      self.line = line
+      self.line_number = line_num
+      self.title = titulo
+      self.skills = [t[2:] for t in tags if t.startswith("s:")]
+      self.requires = [t[2:] for t in tags if t.startswith("r:")]
+      self.mdlink = "#" + get_md_link(titulo)
+      groups = [t[2:] for t in tags if t.startswith("g:")]
+      if len(groups) > 0:
+        self.group = groups[0]
+      else:
+        self.group = ""
+      type = [t for t in tags if t.startswith("t:")]
+      if len(type) > 0:
+        self.type = type[0][2:]
+      self.key = key
+      return True
+    except Exception as e:
+      print(e)
+      return False
+
+
+def rm_comments(title: str) -> str:
+  if "<!--" in title and "-->" in title:
+    title = title.split("<!--")[0] + title.split("-->")[1]
+  return title
+
+
+def get_md_link(title: str) -> str:
+  if title is None:
+    return ""
+  title = title.lower()
+  out = ''
+  for c in title:
+    if c == ' ' or c == '-':
+      out += '-'
+    elif c == '_':
+      out += '_'
+    elif c.isalnum():
+      out += c
+  return out
+
+class Game:
+
+  def __init__(self):
+    self.quests = {}
+    self.tasks = {}
+
+  def load_quest(self, line, line_num):
+    quest = Quest()
+    if not quest.parse_quest(line, line_num + 1):
+      return (False, None)
+    if quest.key in self.quests:
+      print(f"Quest {quest.key} já existe")
+      print(quest)
+      print(self.quests[quest.key])
+      exit(1)
+    self.quests[quest.key] = quest
+    return (True, quest)
+
+  def load_task(self, line, line_num, last_quest):
+    task = Task()
+    if not task.parse_task(line, line_num + 1):
+      return False
+    if last_quest is None:
+      print(f"Task {task.key} não está dentro de uma quest")
+      print(task)
+      exit(1)
+    last_quest.tasks.append(task)
+    if task.key in self.tasks:
+      print(f"Task {task.key} já existe")
+      print(task)
+      print(self.tasks[task.key])
+      exit(1)
+    self.tasks[task.key] = task
+    return True
+
+  # Verificar se todas as quests requeridas existem e adiciona o ponteiro
+  # Verifica se todas as quests tem tarefas
+  def validate_requirements(self):
+    #remove all quests without tasks
+    valid_quests = {}
+    for k, q in self.quests.items():
+      if len(q.tasks) > 0:
+        valid_quests[k] = q
+
+    self.quests = valid_quests
+
+    # for q in self.quests.values():
+    #   if len(q.tasks) == 0:
+    #     print(f"Quest {q.key} não tem tarefas")
+    #     exit(1)
+
+    for q in self.quests.values():
+      for r in q.requires:
+        if r in self.quests:
+          q.requires_ptr.append(self.quests[r])
+        else:
+          print(f"Quest\n{str(q)}\nrequer {r} que não existe")
+          exit(1)
+
+    #check if there is a cycle
+
+  def check_cycle(self):
+
+    def dfs(q, visited):
+      if len(visited) > 0:
+        if visited[0] == q.key:
+          print(f"Cycle detected: {visited}")
+          exit(1)
+      if q.key in visited:
+        return
+      visited.append(q.key)
+      for r in q.requires_ptr:
+        dfs(r, visited)
+
+    for q in self.quests.values():
+      visited = []
+      dfs(q, visited)
+
+  def parse_file(self, file):
+    lines = open(file).read().split("\n")
+    last_quest = None
+    for index, line in enumerate(lines):
+      found, quest = self.load_quest(line, index)
+      if found:
+        last_quest = quest
+      else:
+        self.load_task(line, index, last_quest)
+    self.validate_requirements()
+
+  def get_reachable_quests(self):
+    # cache needs to be reseted before each call
+    cache = {}
+    return [q for q in self.quests.values() if q.is_reachable(cache)]
+
+  def show_quests(self):
+    print( f"Quests de Entrada: {[q.key for q in self.quests.values() if len(q.requires) == 0]}" )
+    print(f"Total de quests: {len(self.quests)}")
+    print("\n".join([str(q) for q in self.quests.values()]))
+
+  def generate_graph(self, output):
+    saida = []
+    saida.append(f"@startuml {output}")
+    saida.append("digraph diag {")
+    saida.append('  node [style="rounded,filled", shape=box]')
+
+    def info(q):
+      return f"\"{q.title.strip()}:{len(q.tasks)}\""
+
+    for q in self.quests.values():
+      token = "->"
+      if len(q.requires_ptr) > 0:
+        for r in q.requires_ptr:
+          saida.append(f"  {info(r)} {token} {info(q)}")
+      else:
+        v = "  \"Início\""
+        saida.append(f"{v} {token} {info(q)}")
+
+    for q in self.quests.values():
+      if q.type == "main":
+        saida.append(f"  {info(q)} [fillcolor=lime]")
+      else:
+        saida.append(f"  {info(q)} [fillcolor=pink]")
+
+    groups = {}
+    for q in self.quests.values():
+      if q.group == "":
+        continue
+      if q.group not in groups:
+        groups[q.group] = []
+      groups[q.group].append(q)
+
+    for c in groups.values():
+      if c == "":
+        continue
+      saida.append(f"  subgraph cluster_{c[0].group} {{")
+      saida.append(f"    label=\"{c[0].group}\"")
+      saida.append(f"    style=filled")
+      saida.append(f"    color=lightyellow")
+      for q in c:
+        saida.append(f"    {info(q)}")
+
+      saida.append("  }")
+
+    saida.append("}")
+    saida.append("@enduml")
+    saida.append("")
+
+    open(output + ".puml", "w").write("\n".join(saida))
+    subprocess.run(["plantuml", output + ".puml", "-tsvg"])
+
+
+
+
+class Play:
+
+  def __init__(self, game: Game, rep, fnsave):
+    self.fnsave = fnsave
+    self.rep = rep
+    self.show_url = self.rep.show_url
+    self.show_done = self.rep.show_done
+    self.game = game
+    self.tasks = []
+    self.quests = {}  # option:quest
+    self.active = set(self.rep.active_quests)
+    self.term_limit = 130
+
+    for t in game.tasks.values():
+      if t.key in self.rep.done_tasks:
+        t.done = True
+
+  def save_to_json(self):
+    self.rep.active_quests = list(self.active)
+    self.rep.done_tasks = [t.key for t in self.game.tasks.values() if t.done]
+    self.rep.show_url = self.show_url
+    self.rep.show_done = self.show_done
+    self.fnsave()
+
+  @staticmethod
+  def calc_letter(index_letter):
+    unit = index_letter % 26
+    ten = index_letter // 26
+    if ten == 0:
+      return chr(ord("A") + unit)
+    return chr(ord("A") + ten - 1) + chr(ord("A") + unit)
+
+  @staticmethod
+  def calc_index(letter):
+    letter = letter.upper()
+    if len(letter) == 1:
+      return ord(letter) - ord("A")
+    return (ord(letter[0]) - ord("A") + 1) * 26 + (ord(letter[1]) - ord("A"))
+
+  def update_reachable(self):
+    quests = self.game.get_reachable_quests()
+    reach_keys = []
+    reach_keys = [q.key for q in quests]
+    menu_keys = [q.key for q in self.quests.values()]
+
+    for key in menu_keys:
+      if key not in reach_keys:
+        self.quests = {}
+        break
+
+    if len(self.quests) == 0:
+      index_letter = 0
+      for q in quests:
+        letter = self.calc_letter(index_letter)
+        self.quests[letter] = q
+        index_letter += 1
+    else:
+      index_letter = len(self.quests.keys())
+      for q in quests:
+        if q.key not in menu_keys:
+          letter = self.calc_letter(index_letter)
+          self.quests[letter] = q
+          index_letter += 1
+
+    self.active = set([k for k in self.active if k in reach_keys])
+
+    # if len(self.quests.values()) == 1:
+    #     for q in self.quests.values():
+    #         self.active.add(q.key)
+
+
+  def calculate_pad(self):
+    titles = []
+    keys = self.quests.keys()
+    for key in keys:
+      q = self.quests[key]
+      titles.append(q.title)
+      if q.key not in self.active:
+        continue
+      for t in q.tasks:
+        titles.append(t.title)
+    max_title = 10
+    if (len(titles) > 0):
+      max_title = max([len(t) for t in titles])
+    return max_title
+
+
+  def print_quest(self, entry, q, max_title, term_size):
+    resume = ""
+    opening = "➡️"
+    if q.key in self.active:
+      opening = "⬇️"
+    done = len([t for t in q.tasks if t.done])
+    size = len(q.tasks)
+    if done > 9:
+      done = "*"
+    if size > 9:
+      size = "*"
+    text = f"[{str(done)}/{str(size)}]"
+    space = " " if len(entry) == 1 else ""
+    if done == size:
+      resume = colour("g", text)
+    elif done == 0:
+      resume = colour("r", text)
+    else:
+      resume = colour("y", text)
+    entry = colour("b", entry) if q.type == "main" else colour("m", entry)
+    qlink = ""
+    if self.show_url:
+      if term_size > self.term_limit:
+        qlink = " " + colour("c", q.mdlink)
+      else:
+        qlink = "\n      " + colour("c", q.mdlink)
+    if not self.show_done and done == size:
+      return
+    print(f"{opening} {entry}{space}{resume} {q.title.ljust(max_title)}")
+
+  def print_task(self, t, max_title, index, term_size):
+    vindex = str(index).rjust(2, "0")
+    vdone = "x" if t.done else " "
+    vlink = ""
+    if self.show_url:
+      if t.key in t.title:
+        vlink = colour("r", t.link)
+      else:
+        vlink = colour("y", t.link)
+      if term_size > self.term_limit:
+        vlink = " " + vlink
+      else:
+        vlink = "\n      " + vlink
+    print(f"  {vindex} [{vdone}] {t.title.strip().ljust(max_title + 1)}{vlink}")
+
+  def sort_keys(self, keys):
+    single = [k for k in keys if len(k) == 1]
+    double = [k for k in keys if len(k) == 2]
+    return sorted(single) + sorted(double)
+
+  def show_tasks(self):
+    term_size = shutil.get_terminal_size().columns
+    self.tasks = []
+
+    self.update_reachable()
+    max_title = self.calculate_pad()
+    index = 0
+    for entry in self.sort_keys(self.quests.keys()):
+      q = self.quests[entry]
+      self.print_quest(entry, q, max_title, term_size)
+      if q.key not in self.active:
+        continue
+      if not self.show_done and q.is_complete():
+        continue
+      for t in q.tasks:
+        self.print_task(t, max_title, index, term_size)
+        index += 1
+        self.tasks.append(t)
+
+  @staticmethod
+  def get_num_num(s):
+    pattern = r'^(\d+)-(\d+)$'
+    match = re.match(pattern, s)
+    if match:
+      return int(match.group(1)), int(match.group(2))
+    else:
+      return (None, None)
+
+  @staticmethod
+  def get_letter_letter(s):
+    pattern =r'([a-zA-Z]+)-([a-zA-Z]+)'
+    match = re.match(pattern, s)
+    if match:
+      print(match.group(1), match.group(2))
+      return match.group(1), match.group(2)
+    return (None, None)
+
+  def expand_range(self, line):
+    line = line.replace(" - ", "-")
+    actions = line.split()
+
+    expand = []
+    for t in actions:
+      (start_number, end_number) = self.get_num_num(t)
+      (start_letter, end_letter) = self.get_letter_letter(t)
+      if start_number is not None and end_number is not None:
+        expand += list(range(start_number, end_number + 1))
+      elif start_letter is not None and end_letter is not None:
+        start_index = self.calc_index(start_letter)
+        end_index = self.calc_index(end_letter)
+        print(start_index, end_index)
+        expand += [self.calc_letter(i) for i in range(start_index, end_index + 1)]
+      else:
+        expand.append(t)
+    return expand
+
+  def take_actions(self, actions):
+    for t in actions:
+      if t == ":h" or t == ":help" or t == "?":
+        subprocess.run("clear")
+        self.show_help()
+      elif t == ":u" or t == ":url":
+        self.show_url = not self.show_url
+      elif t == ":a" or t == ":all":
+        self.show_done = not self.show_done
+      elif t == "<":
+        self.active = set()
+      elif t == ">":
+        self.update_reachable()
+        self.active = set([q.key for q in self.quests.values()])
+      else:
+        try:  # number
+          t = int(t)
+          if t >= 0 and t < len(self.tasks):
+            self.tasks[t].done = not self.tasks[t].done
+        except:  # letter
+          t = t.upper()
+          if t in self.quests:
+            key = self.quests[t].key
+            if key not in self.active:
+              self.active.add(key)
+            else:
+              self.active.remove(key)
+          else:
+            print(f"{t} não processado")
+
+  def show_help(self):
+    print("Digite os números ou intervalo das tarefas para (marcar/desmarcar), exemplo:")
+    print(colour("g", "$ ") + "1 2 5-6")
+    print("Digite as letras ou intervalo das quests para (expandir/colapsar), exemplo:")
+    print(colour("g", "$ ") + "a c d-g")
+    print("Digite > para expandir todas as quests")
+    print(colour("g", "$ ") + ">")
+    print("Digite < para colapsar todas as quests")
+    print(colour("g", "$ ") + "<")
+    print("Digite :a ou :all para mostrar/esconder as quests completas")
+    print(colour("g", "$ ") + ":all")
+    print("Digite :u ou :url para mostrar/esconder as urls")
+    print(colour("g", "$ ") + ":url")
+    print("Digite :h ou :help para mostrar a ajuda")
+    print(colour("g", "$ ") + ":h")
+    print("Digite :q ou :quit para sair")
+    print(colour("g", "$ ") + ":q")
+    print("Digite enter para continuar")
+    input()
+
+  def play(self):
+    while True:
+      subprocess.run("clear")
+      vnum    = colour("g", "números") + "(marcar)"
+      vlet    = colour("g", "letras") + "(expandir)"
+      vfold   = colour("g", "<") + " ou " + colour("g", ">") + "(expandir todas)"
+      vhelp   = colour("c", ":h") + colour("g", "elp")
+      vclose  = colour("c", ":q") + colour("g", "uit")
+      vdone   = colour("c", ":d") + colour("g", "one") + ("[x]" if self.show_done else "[ ]")
+      vinit   = colour("c", ":i") + colour("g", "nit") + ("[x]" if self.show_done else "[ ]")
+      vtodo   = colour("c", ":t") + colour("g", "odo") + ("[x]" if self.show_done else "[ ]") 
+      vlink   = colour("c", ":l") + colour("g", "ink") + ("[x]" if self.show_url else "[ ]")
+      print(f"Digite: {vnum}, {vlet}, {vfold}, {vhelp} ou {vclose}.")
+      print(f"Filtro: {vdone}, {vinit}, {vtodo}, {vlink}, {vlink}")
+      self.show_tasks()
+      print("\n" + colour("g", "$") + " ", end="")
+      line = input()
+      if ":q" in line or ":quit" in line:
+        break
+      actions = self.expand_range(line)
+      self.take_actions(actions)
+      self.save_to_json()
+
 __version__ = "0.4.3"
 
 
@@ -2048,6 +2791,15 @@ class Main:
         sp = SettingsParser()
         settings = sp.load_settings()
 
+        if args.list:
+            print("listing all repositories")
+            for rep in settings.reps:
+                value = settings.reps[rep]
+                print(f"{rep}: ", end="")
+                if value.url != "":
+                    print(f"url: {settings.reps[rep].url}")
+                else:
+                    print(f"file: {settings.reps[rep].file}")
         if args.add:
             print("adding repo", args.add)
             if args.url:
@@ -2058,6 +2810,7 @@ class Main:
             elif args.file:
                 print("file", args.file)
                 rep = RepoSettings().set_file(args.file)
+                print(str(rep))
                 settings.reps[args.add] = rep
                 sp.save_settings()
             else:
@@ -2067,6 +2820,12 @@ class Main:
             settings.reps.pop(args.rm)
         if args.graph:
             print("generating graph.puml", args.graph)
+            rep = settings.reps[args.graph]
+            file = rep.get_file()
+            game = Game()
+            game.parse_file(file)
+            game.check_cycle()
+            game.generate_graph("graph")
         if args.reset:
             print("resetting all repositories to factory default.")
             sp.settings = Settings()
@@ -2080,11 +2839,8 @@ class Main:
             settings = sp.load_settings()
             repo = settings.reps[args.repo]
             game = Game()
-            print("debug 0")
             file = repo.get_file()
-            print("debug 1")
             game.parse_file(file)
-            print("debug 2")
             #passsing a lambda function to the play class to save the settings
             play = Play(game, repo, lambda: sp.save_settings())
             play.play()
@@ -2188,6 +2944,7 @@ class Main:
 
         parser_repo = subparsers.add_parser('repo', help='manipulate repositories.')
         repo_actions = parser_repo.add_mutually_exclusive_group()
+        repo_actions.add_argument("--list", action='store_true', help="list all repositories.")
         repo_actions.add_argument("--add",  metavar='repo', type=str, help="alias of the repository to be added.")
         repo_actions.add_argument("--rm", metavar='repo', type=str, help="alias of the repository to be removed.")
         repo_actions.add_argument("--reset", action='store_true', help="reset all repositories to factory default.")
@@ -2226,7 +2983,7 @@ class Main:
             symbols.set_unicode()
 
         if not args.m and settings.local.color:
-            Colored.enabled = True
+            Color.enabled = True
             symbols.set_colors()
 
         if args.v or args.g or args.b:

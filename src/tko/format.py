@@ -3,79 +3,49 @@ import shutil
 from enum import Enum
 from typing import Optional
 
-class Color(Enum):
-    RED = 1
-    GREEN = 2
-    YELLOW = 3
-    BLUE = 4
-    MAGENTA = 5
-    CYAN = 6
-    WHITE = 7
-    RESET = 8
-    BOLD = 9
-    ULINE = 10
+class Color:
+  enabled = True
+  map = {
+      "red"    : '\u001b[31m',
+      "r"      : '\u001b[31m',
+      "green"  : '\u001b[32m',
+      "g"      : '\u001b[32m',
+      "yellow" : '\u001b[33m',
+      "y"      : '\u001b[33m',
+      "blue"   : '\u001b[34m',
+      "b"      : '\u001b[34m',
+      "magenta": '\u001b[35m',
+      "m"      : '\u001b[35m',
+      "cyan"   : '\u001b[36m',
+      "c"      : '\u001b[36m',
+      "white"  : '\u001b[37m',
+      "w"      : '\u001b[37m',
+      "reset"  : '\u001b[0m',
+      "bold"   : '\u001b[1m',
+      "uline"  : '\u001b[4m'
+  }
 
+  @staticmethod
+  def ljust(text: str, width: int) -> str:
+    return text + ' ' * (width - Color.len(text))
 
-class Colored:
-    enabled = False
+  @staticmethod
+  def center(text: str, width: int, filler: str) -> str:
+    return filler * ((width - Color.len(text)) // 2) + text + filler * (
+        (width - Color.len(text) + 1) // 2)
 
-    __map = {
-        Color.RED: '\u001b[31m',
-        Color.GREEN: '\u001b[32m',
-        Color.YELLOW: '\u001b[33m',
-        Color.BLUE: '\u001b[34m',
-        Color.MAGENTA: '\u001b[35m',
-        Color.CYAN: '\u001b[36m',
-        Color.WHITE: '\u001b[37m',
-        Color.RESET: '\u001b[0m',
-        Color.BOLD: '\u001b[1m',
-        Color.ULINE: '\u001b[4m'
-    }
+  @staticmethod
+  def remove_colors(text: str) -> str:
+    for color in Color.__map.values():
+      text = text.replace(color, '')
+    return text
 
-    @staticmethod
-    def paint(text: str, color: Color, color2: Optional[Color] = None) -> str:
-        if not Colored.enabled:
-            return text
-        return (Colored.__map[color] + ("" if color2 is None else Colored.__map[color2])
-                + text + Colored.__map[Color.RESET])
+  @staticmethod
+  def len(text):
+    return len(Color.remove_colors(text))
 
-    @staticmethod
-    def green(text: str) -> str:
-        return Colored.paint(text, Color.GREEN)
-    
-    @staticmethod
-    def red(text: str) -> str:
-        return Colored.paint(text, Color.RED)
-    
-    @staticmethod
-    def magenta(text: str) -> str:
-        return Colored.paint(text, Color.MAGENTA)
-
-    @staticmethod
-    def yellow(text: str) -> str:
-        return Colored.paint(text, Color.YELLOW)
-    
-    @staticmethod
-    def blue(text: str) -> str:
-        return Colored.paint(text, Color.BLUE)
-
-    @staticmethod
-    def ljust(text: str, width: int) -> str:
-        return text + ' ' * (width - Colored.len(text))
-
-    @staticmethod
-    def center(text: str, width: int, filler: str) -> str:
-        return filler * ((width - Colored.len(text)) // 2) + text + filler * ((width - Colored.len(text) + 1) // 2)
-
-    @staticmethod
-    def remove_colors(text: str) -> str:
-        for color in Colored.__map.values():
-            text = text.replace(color, '')
-        return text
-
-    @staticmethod
-    def len(text):
-        return len(Colored.remove_colors(text))
+def colour(color: str, text: str) -> str:
+  return (Color.map[color] + text + Color.map["reset"])
 
 
 class __Symbols:
@@ -144,15 +114,15 @@ class __Symbols:
         self.arrow_up    = "↑"
 
     def set_colors(self):
-        self.opening     = Colored.paint(self.opening,     Color.BLUE)
-        self.neutral     = Colored.paint(self.neutral,     Color.BLUE)
-        self.success     = Colored.paint(self.success,     Color.GREEN)
-        self.failure     = Colored.paint(self.failure,     Color.RED)
-        self.wrong       = Colored.paint(self.wrong,       Color.RED)
-        self.compilation = Colored.paint(self.compilation, Color.YELLOW)
-        self.execution   = Colored.paint(self.execution,   Color.YELLOW)
-        self.unequal     = Colored.paint(self.unequal,     Color.RED)
-        self.equalbar    = Colored.paint(self.equalbar,    Color.GREEN)
+        self.opening     = colour("b", self.opening)
+        self.neutral     = colour("b", self.neutral)
+        self.success     = colour("g", self.success)
+        self.failure     = colour("r", self.failure)
+        self.wrong       = colour("r", self.wrong)
+        self.compilation = colour("y", self.compilation)
+        self.execution   = colour("y", self.execution)
+        self.unequal     = colour("r", self.unequal)
+        self.equalbar    = colour("g", self.equalbar)
 
 symbols = __Symbols()
 
@@ -191,7 +161,7 @@ class Report:
             right_border = sep
         term_width = Report.get_terminal_size()
 
-        size = Colored.len(text)
+        size = Color.len(text)
         pad = sep if size % 2 == 0 else ""
         tw = term_width - 2
         filler = sep * int(tw / 2 - size / 2)

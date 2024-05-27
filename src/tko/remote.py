@@ -166,29 +166,3 @@ class RemoteMd:
         content = open(source).read()
         content = Absolute.relative_to_absolute(content, remote_cfg, hook)
         open(target, "w").write(content)
-
-class Test:
-    def fn1(self):
-        url = "https://raw.githubusercontent.com/qxcodepoo/arcade/master/Readme.md"
-        cfg = RemoteCfg()
-        cfg.from_url(url)
-        cfg.download_absolute("Readme.md")
-
-    def fn2(self):
-        url = "https://github.com/qxcodepoo/arcade/blob/master/base/carro/Readme.md"
-        cfg = RemoteCfg()
-        cfg.from_url(url)
-        cfg.download_absolute("Readme.md")
-
-def main():
-    parser = argparse.ArgumentParser(description='Download and process remote files')
-    parser.add_argument('url', type=str, help='URL to download')
-    parser.add_argument('output', type=str, help='Output file')
-    args = parser.parse_args()
-
-    cfg = RemoteCfg()
-    cfg.from_url(args.url)
-    cfg.download_absolute(args.output)
-
-if __name__ == "__main__":
-    main()

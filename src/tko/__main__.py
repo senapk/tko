@@ -7,14 +7,14 @@ from .actions import Run, Build
 from .basic import Param
 from .pattern import PatternLoader
 from .basic import DiffMode
-from .format import Report, Colored
+from .format import Report, Color
 from .down import Down
 from .settings import SettingsParser, RepoSettings, Settings
 from .guide import tko_guide
 from .guide import bash_guide
 from .format import symbols
-from .__init__ import __version__
 from .game import Game, Play
+from .__init__ import __version__
 
 
 class Main:
@@ -94,6 +94,15 @@ class Main:
         sp = SettingsParser()
         settings = sp.load_settings()
 
+        if args.list:
+            print("listing all repositories")
+            for rep in settings.reps:
+                value = settings.reps[rep]
+                print(f"{rep}: ", end="")
+                if value.url != "":
+                    print(f"url: {settings.reps[rep].url}")
+                else:
+                    print(f"file: {settings.reps[rep].file}")
         if args.add:
             print("adding repo", args.add)
             if args.url:
@@ -104,6 +113,7 @@ class Main:
             elif args.file:
                 print("file", args.file)
                 rep = RepoSettings().set_file(args.file)
+                print(str(rep))
                 settings.reps[args.add] = rep
                 sp.save_settings()
             else:
@@ -113,6 +123,12 @@ class Main:
             settings.reps.pop(args.rm)
         if args.graph:
             print("generating graph.puml", args.graph)
+            rep = settings.reps[args.graph]
+            file = rep.get_file()
+            game = Game()
+            game.parse_file(file)
+            game.check_cycle()
+            game.generate_graph("graph")
         if args.reset:
             print("resetting all repositories to factory default.")
             sp.settings = Settings()
@@ -126,11 +142,8 @@ class Main:
             settings = sp.load_settings()
             repo = settings.reps[args.repo]
             game = Game()
-            print("debug 0")
             file = repo.get_file()
-            print("debug 1")
             game.parse_file(file)
-            print("debug 2")
             #passsing a lambda function to the play class to save the settings
             play = Play(game, repo, lambda: sp.save_settings())
             play.play()
@@ -234,6 +247,7 @@ class Main:
 
         parser_repo = subparsers.add_parser('repo', help='manipulate repositories.')
         repo_actions = parser_repo.add_mutually_exclusive_group()
+        repo_actions.add_argument("--list", action='store_true', help="list all repositories.")
         repo_actions.add_argument("--add",  metavar='repo', type=str, help="alias of the repository to be added.")
         repo_actions.add_argument("--rm", metavar='repo', type=str, help="alias of the repository to be removed.")
         repo_actions.add_argument("--reset", action='store_true', help="reset all repositories to factory default.")
@@ -272,7 +286,7 @@ class Main:
             symbols.set_unicode()
 
         if not args.m and settings.local.color:
-            Colored.enabled = True
+            Color.enabled = True
             symbols.set_colors()
 
         if args.v or args.g or args.b:

@@ -30,7 +30,7 @@ class RepoSettings:
         return self.file
 
     def set_file(self, file: str):
-        self.file = file
+        self.file = os.path.abspath(file)
         return self
 
     def set_url(self, url: str):
@@ -146,9 +146,10 @@ class SettingsParser:
         self.package_name = "tko"
         self.filename = "settings.json"
         if SettingsParser.__settings_file is None:
-            SettingsParser.__settings_file = os.path.join(appdirs.user_data_dir(self.package_name), self.filename)
+            self.filename = os.path.abspath(self.filename) # backup for replit
+            self.filename = os.path.join(appdirs.user_data_dir(self.package_name), self.filename)
         else:
-            SettingsParser.__settings_file = os.path.abspath(SettingsParser.__settings_file)
+            self.filename = os.path.abspath(SettingsParser.__settings_file)
         self.settings = self.load_settings()
 
     @staticmethod
@@ -159,17 +160,16 @@ class SettingsParser:
     def get_settings_file() -> Optional[str]:
         return SettingsParser.__settings_file
 
-
     def load_settings(self) -> Settings:
         try:
-            with open(SettingsParser.__settings_file, "r") as f:
-                return Settings().from_dict(json.load(f))
+            with open(self.filename, "r") as f:
+                self.settings = Settings().from_dict(json.load(f))
+                return self.settings
         except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
             return self.create_new_settings_file()
 
     def save_settings(self):
-        self.settings.save_to_json(SettingsParser.__settings_file)
-
+        self.settings.save_to_json(self.filename)
 
     def create_new_settings_file(self) -> Settings:
         self.settings = Settings()
@@ -179,7 +179,7 @@ class SettingsParser:
         return self.settings
 
     def get_settings_dir(self) -> str:
-        return os.path.dirname(SettingsParser.__settings_file)
+        return os.path.dirname(self.filename)
     
     def get_language(self) -> str:
         return self.settings.local.lang
@@ -197,10 +197,3 @@ class SettingsParser:
                 print("debug:", url)
                 return url
 
-if __name__ == "__main__":
-    print("ping")
-    sp = SettingsParser("x.json")
-    rfup = sp.settings.reps["fup"]
-    rfup.get_file()
-    sp.save_settings()
-    print(str(sp))
