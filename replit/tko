@@ -305,6 +305,11 @@ class Settings:
         self.reps["ed"] = RepoSettings().set_url("https://github.com/qxcodeed/arcade/blob/master/Readme.md")
         self.reps["poo"] = RepoSettings().set_url("https://github.com/qxcodepoo/arcade/blob/master/Readme.md")
 
+    def get_repo(self, course: str) -> RepoSettings:
+        if course not in self.reps:
+            raise ValueError(f"Course {course} not found in settings")
+        return self.reps[course]
+    
     def to_dict(self) -> Dict[str, Any]:
         return {
             "reps": {k: v.to_dict() for k, v in self.reps.items()},
@@ -2778,8 +2783,11 @@ class MRep:
     def rm(args):
         sp = SettingsParser()
         settings = sp.load_settings()
-        settings.reps.pop(args.alias)
-        sp.save_settings()
+        if args.alias in settings.reps:
+            settings.reps.pop(args.alias)
+            sp.save_settings()
+        else:
+            print("Repository not found.")
 
     @staticmethod
     def reset(args):
@@ -2791,7 +2799,7 @@ class MRep:
     def graph(args):
         sp = SettingsParser()
         settings = sp.load_settings()
-        rep = settings.reps[args.alias]
+        rep = settings.get_repo(args.alias)
         file = rep.get_file()
         game = Game()
         game.parse_file(file)
@@ -2875,7 +2883,7 @@ class Main:
             print("playing repo", args.repo)
             sp = SettingsParser()
             settings = sp.load_settings()
-            repo = settings.reps[args.repo]
+            repo = settings.get_repo(args.repo)
             game = Game()
             file = repo.get_file()
             game.parse_file(file)
@@ -2899,6 +2907,7 @@ class Parser:
         self.add_parser_down()
         self.add_parser_config()
         self.add_parser_repo()
+        self.add_parser_play()
 
     def add_parser_args(self):
         self.parser.add_argument('-c', metavar='CONFIG_FILE', type=str, help='config json file.')
@@ -3001,6 +3010,11 @@ class Parser:
         repo_graph = subpar_repo.add_parser('graph', help='generate graph of the repository.')
         repo_graph.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be graphed.')
         repo_graph.set_defaults(func=MRep.graph)
+
+    def add_parser_play(self):
+        parser_p = self.subparsers.add_parser('play', help='play a game.')
+        parser_p.add_argument('repo', metavar='repo', type=str, help='repository to be played.')
+        parser_p.set_defaults(func=Main.play)
 
     def main(self):
         args = self.parser.parse_args()

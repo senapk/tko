@@ -120,6 +120,11 @@ class Settings:
         self.reps["ed"] = RepoSettings().set_url("https://github.com/qxcodeed/arcade/blob/master/Readme.md")
         self.reps["poo"] = RepoSettings().set_url("https://github.com/qxcodepoo/arcade/blob/master/Readme.md")
 
+    def get_repo(self, course: str) -> RepoSettings:
+        if course not in self.reps:
+            raise ValueError(f"Course {course} not found in settings")
+        return self.reps[course]
+    
     def to_dict(self) -> Dict[str, Any]:
         return {
             "reps": {k: v.to_dict() for k, v in self.reps.items()},

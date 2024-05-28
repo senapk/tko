@@ -339,7 +339,7 @@ class Game:
       saida.append(f"  subgraph cluster_{c[0].group} {{")
       saida.append(f"    label=\"{c[0].group}\"")
       saida.append(f"    style=filled")
-      saida.append(f"    color=lightyellow")
+      saida.append(f"    color=lightgray")
       for q in c:
         saida.append(f"    {info(q)}")
 

@@ -91,8 +91,11 @@ class MRep:
     def rm(args):
         sp = SettingsParser()
         settings = sp.load_settings()
-        settings.reps.pop(args.alias)
-        sp.save_settings()
+        if args.alias in settings.reps:
+            settings.reps.pop(args.alias)
+            sp.save_settings()
+        else:
+            print("Repository not found.")
 
     @staticmethod
     def reset(args):
@@ -104,7 +107,7 @@ class MRep:
     def graph(args):
         sp = SettingsParser()
         settings = sp.load_settings()
-        rep = settings.reps[args.alias]
+        rep = settings.get_repo(args.alias)
         file = rep.get_file()
         game = Game()
         game.parse_file(file)
@@ -188,7 +191,7 @@ class Main:
             print("playing repo", args.repo)
             sp = SettingsParser()
             settings = sp.load_settings()
-            repo = settings.reps[args.repo]
+            repo = settings.get_repo(args.repo)
             game = Game()
             file = repo.get_file()
             game.parse_file(file)
@@ -200,13 +203,36 @@ class Main:
     def down(args):
         Down.entry_unpack(args.course, args.activity, args.language)
 
-    @staticmethod
-    def main():
+class Parser:
+    def __init__(self):
+        self.parser = argparse.ArgumentParser(prog='tko', description='A tool for competitive programming.')        
+        self.subparsers = self.parser.add_subparsers(title='subcommands', help='help for subcommand.')
+        self.add_parser_args()
+        self.add_parent_basic()
+        self.add_parent_manip()
+        self.add_parser_run()
+        self.add_parser_build()
+        self.add_parser_down()
+        self.add_parser_config()
+        self.add_parser_repo()
+        self.add_parser_play()
+
+    def add_parser_args(self):
+        self.parser.add_argument('-c', metavar='CONFIG_FILE', type=str, help='config json file.')
+        self.parser.add_argument('-w', metavar='WIDTH', type=int, help="terminal width.")
+        self.parser.add_argument('-v', action='store_true', help='show version.')
+        self.parser.add_argument('-g', action='store_true', help='show tko simple guide.')
+        self.parser.add_argument('-b', action='store_true', help='show bash simple guide.')
+        self.parser.add_argument('-m', action='store_true', help='monochromatic.')
+
+    def add_parent_basic(self):
         parent_basic = argparse.ArgumentParser(add_help=False)
         parent_basic.add_argument('--index', '-i', metavar="I", type=int, help='run a specific index.')
         parent_basic.add_argument('--pattern', '-p', metavar="P", type=str, default='@.in @.sol',
                                   help='pattern load/save a folder, default: "@.in @.sol"')
-
+        self.parent_basic = parent_basic
+    
+    def add_parent_manip(self):
         parent_manip = argparse.ArgumentParser(add_help=False)
         parent_manip.add_argument('--width', '-w', type=int, help="term width.")
         parent_manip.add_argument('--unlabel', '-u', action='store_true', help='remove all labels.')
@@ -214,19 +240,10 @@ class Main:
         parent_manip.add_argument('--sort', '-s', action='store_true', help="sort test cases by input size.")
         parent_manip.add_argument('--pattern', '-p', metavar="@.in @.out", type=str, default='@.in @.sol',
                                   help='pattern load/save a folder, default: "@.in @.sol"')
+        self.parent_manip = parent_manip
 
-        parser = argparse.ArgumentParser(prog='tko', description='A tool for competitive programming.')
-        parser.add_argument('-c', metavar='CONFIG_FILE', type=str, help='config json file.')
-        parser.add_argument('-w', metavar='WIDTH', type=int, help="terminal width.")
-        parser.add_argument('-v', action='store_true', help='show version.')
-        parser.add_argument('-g', action='store_true', help='show tko simple guide.')
-        parser.add_argument('-b', action='store_true', help='show bash simple guide.')
-        parser.add_argument('-m', action='store_true', help='monochromatic.')
-        
-        subparsers = parser.add_subparsers(title='subcommands', help='help for subcommand.')
-
-        # run
-        parser_r = subparsers.add_parser('run', parents=[parent_basic], help='run with test cases.')
+    def add_parser_run(self):
+        parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='run with test cases.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
         parser_r.add_argument('--compact', '-c', action='store_true', help='Dont show case descriptions in failures')
@@ -242,22 +259,22 @@ class Main:
         group.add_argument('--sideby', '-s', action='store_true', help="diff mode side-by-side.")
         parser_r.set_defaults(func=Main.run)
 
-        # build
-        parser_b = subparsers.add_parser('build', parents=[parent_manip], help='build a test target.')
+    def add_parser_build(self):
+        parser_b = self.subparsers.add_parser('build', parents=[self.parent_manip], help='build a test target.')
         parser_b.add_argument('target', metavar='T_OUT', type=str, help='target to be build.')
         parser_b.add_argument('target_list', metavar='T', type=str, nargs='+', help='input test targets.')
         parser_b.add_argument('--force', '-f', action='store_true', help='enable overwrite.')
         parser_b.set_defaults(func=Main.build)
 
-        # down
-        parser_d = subparsers.add_parser('down', help='download problem from repository.')
+    def add_parser_down(self):
+        parser_d = self.subparsers.add_parser('down', help='download problem from repository.')
         parser_d.add_argument('course', type=str, nargs='?', help=" [ fup | ed | poo ].")
         parser_d.add_argument('activity', type=str, nargs='?', help="activity @label.")
         parser_d.add_argument('--language', '-l', type=str, nargs='?', help="[ c | cpp | js | ts | py | java ]")
         parser_d.set_defaults(func=Main.down)
 
-        # settings
-        parser_s = subparsers.add_parser('config', help='settings tool.')
+    def add_parser_config(self):
+        parser_s = self.subparsers.add_parser('config', help='settings tool.')
         parser_s.add_argument('--show',  '-s', action='store_true', help='show current settings.')
 
         g_encoding = parser_s.add_mutually_exclusive_group()
@@ -278,7 +295,8 @@ class Main:
         g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
         g_lang.add_argument("--ask", action='store_true', help='ask language extension every time.')
 
-        parser_repo = subparsers.add_parser('repo', help='manipulate repositories.')
+    def add_parser_repo(self):
+        parser_repo = self.subparsers.add_parser('repo', help='manipulate repositories.')
         subpar_repo = parser_repo.add_subparsers(title='subcommands', help='help for subcommand.')
 
         repo_list = subpar_repo.add_parser('list', help='list all repositories')
@@ -301,32 +319,26 @@ class Main:
         repo_graph.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be graphed.')
         repo_graph.set_defaults(func=MRep.graph)
 
-        parser_play = subparsers.add_parser('play', help='play a repository.')
-        parser_play.add_argument('repo', metavar='T', type=str, help='repository to be played.')
-        parser_play.set_defaults(func=Main.play)
+    def add_parser_play(self):
+        parser_p = self.subparsers.add_parser('play', help='play a game.')
+        parser_p.add_argument('repo', metavar='repo', type=str, help='repository to be played.')
+        parser_p.set_defaults(func=Main.play)
 
-        parser_s.set_defaults(func=Main.settings)
-
-        args = parser.parse_args()
+    def main(self):
+        args = self.parser.parse_args()
 
         if len(sys.argv) == 1:
-            parser.print_help()
+            self.parser.print_help()
             return
-
-        # setting general settings options
         if args.w is not None:
             Report.set_terminal_size(args.width)
-
         if args.c:
             SettingsParser.user_settings_file = args.c
-        
         settings = SettingsParser().load_settings()
-
         if settings.local.ascii:
             symbols.set_ascii()
         else:
             symbols.set_unicode()
-
         if not args.m and settings.local.color:
             Color.enabled = True
             symbols.set_colors()
@@ -344,11 +356,15 @@ class Main:
             except ValueError as e:
                 print(str(e))
 
-
-if __name__ == '__main__':
+def main():
     try:
-        Main.main()
+        parser = Parser()
+        parser.main()
         sys.exit(0)
     except KeyboardInterrupt:
         print("\n\nKeyboard Interrupt")
         sys.exit(1)
+
+if __name__ == '__main__':
+    main()
+
