@@ -16,9 +16,102 @@ from .format import symbols
 from .game import Game, Play
 from .__init__ import __version__
 
+class MRep:
+
+    # @staticmethod
+    # def repo(args):
+        # sp = SettingsParser()
+        # settings = sp.load_settings()
+
+        # if args.list:
+        #     print("listing all repositories")
+        #     for rep in settings.reps:
+        #         value = settings.reps[rep]
+        #         print(f"{rep}: ", end="")
+        #         if value.url != "":
+        #             print(f"url: {settings.reps[rep].url}")
+        #         else:
+        #             print(f"file: {settings.reps[rep].file}")
+        # if args.add:
+        #     print("adding repo", args.add)
+        #     if args.url:
+        #         print("url", args.url)
+        #         rep = RepoSettings().set_url(args.url)
+        #         settings.reps[args.add] = rep
+        #         sp.save_settings()
+        #     elif args.file:
+        #         print("file", args.file)
+        #         rep = RepoSettings().set_file(args.file)
+        #         print(str(rep))
+        #         settings.reps[args.add] = rep
+        #         sp.save_settings()
+        #     else:
+        #         print("no url or file selected as source for the repository.")
+        # if args.rm:
+        #     print("removing repo", args.rm)
+        #     settings.reps.pop(args.rm)
+        # if args.graph:
+        #     print("generating graph.puml", args.graph)
+        #     rep = settings.reps[args.graph]
+        #     file = rep.get_file()
+        #     game = Game()
+        #     game.parse_file(file)
+        #     game.check_cycle()
+        #     game.generate_graph("graph")
+        # if args.reset:
+        #     print("resetting all repositories to factory default.")
+        #     sp.settings = Settings()
+        #     sp.save_settings()
+
+    @staticmethod
+    def list(args):
+        sp = SettingsParser()
+        settings = sp.load_settings()
+        print("SettingsFile:", sp.settings_file)
+        print("Repositories:")
+        for key in settings.reps:
+            print(key, end="")
+            if settings.reps[key].url:
+                print(f" - {settings.reps[key].url}")
+            else:
+                print(f" - {settings.reps[key].file}")
+
+    @staticmethod
+    def add(args):
+        sp = SettingsParser()
+        settings = sp.load_settings()
+        if args.url:
+            rep = RepoSettings().set_url(args.url)
+        elif args.file:
+            rep = RepoSettings().set_file(args.file)
+        settings.reps[args.alias] = rep
+        sp.save_settings()
+    
+    @staticmethod
+    def rm(args):
+        sp = SettingsParser()
+        settings = sp.load_settings()
+        settings.reps.pop(args.alias)
+        sp.save_settings()
+
+    @staticmethod
+    def reset(args):
+        sp = SettingsParser()
+        sp.settings = Settings()
+        sp.save_settings()
+
+    @staticmethod
+    def graph(args):
+        sp = SettingsParser()
+        settings = sp.load_settings()
+        rep = settings.reps[args.alias]
+        file = rep.get_file()
+        game = Game()
+        game.parse_file(file)
+        game.check_cycle()
+        game.generate_graph("graph")
 
 class Main:
-
     @staticmethod
     def run(args):
         PatternLoader.pattern = args.pattern
@@ -85,54 +178,9 @@ class Main:
             settings.local.lang = "ask"
             print("Language extension will be asked always.")
         if args.show:
-            print(SettingsParser.get_settings_file())
+            print(sp.get_settings_file())
             print(str(settings.local))
         sp.save_settings()
-
-    @staticmethod
-    def repo(args):
-        sp = SettingsParser()
-        settings = sp.load_settings()
-
-        if args.list:
-            print("listing all repositories")
-            for rep in settings.reps:
-                value = settings.reps[rep]
-                print(f"{rep}: ", end="")
-                if value.url != "":
-                    print(f"url: {settings.reps[rep].url}")
-                else:
-                    print(f"file: {settings.reps[rep].file}")
-        if args.add:
-            print("adding repo", args.add)
-            if args.url:
-                print("url", args.url)
-                rep = RepoSettings().set_url(args.url)
-                settings.reps[args.add] = rep
-                sp.save_settings()
-            elif args.file:
-                print("file", args.file)
-                rep = RepoSettings().set_file(args.file)
-                print(str(rep))
-                settings.reps[args.add] = rep
-                sp.save_settings()
-            else:
-                print("no url or file selected as source for the repository.")
-        if args.rm:
-            print("removing repo", args.rm)
-            settings.reps.pop(args.rm)
-        if args.graph:
-            print("generating graph.puml", args.graph)
-            rep = settings.reps[args.graph]
-            file = rep.get_file()
-            game = Game()
-            game.parse_file(file)
-            game.check_cycle()
-            game.generate_graph("graph")
-        if args.reset:
-            print("resetting all repositories to factory default.")
-            sp.settings = Settings()
-            sp.save_settings()
 
     @staticmethod
     def play(args):
@@ -147,21 +195,6 @@ class Main:
             #passsing a lambda function to the play class to save the settings
             play = Play(game, repo, lambda: sp.save_settings())
             play.play()
-            
-
-
-    # @staticmethod
-    # def rebuild(args):
-    #     if args.width is not None:
-    #         Report.set_terminal_size(args.width)
-    #     PatternLoader.pattern = args.pattern
-    #     manip = Param.Manip().set_unlabel(args.unlabel).set_to_sort(args.sort).set_to_number(args.number)
-    #     Actions.update(args.target_list, manip, args.cmd)
-    #     return 0
-
-    # @staticmethod
-    # def update(_args):
-    #     Down.update()
 
     @staticmethod
     def down(args):
@@ -246,18 +279,27 @@ class Main:
         g_lang.add_argument("--ask", action='store_true', help='ask language extension every time.')
 
         parser_repo = subparsers.add_parser('repo', help='manipulate repositories.')
-        repo_actions = parser_repo.add_mutually_exclusive_group()
-        repo_actions.add_argument("--list", action='store_true', help="list all repositories.")
-        repo_actions.add_argument("--add",  metavar='repo', type=str, help="alias of the repository to be added.")
-        repo_actions.add_argument("--rm", metavar='repo', type=str, help="alias of the repository to be removed.")
-        repo_actions.add_argument("--reset", action='store_true', help="reset all repositories to factory default.")
-        repo_actions.add_argument("--graph", '-g', metavar='repo', type=str, help="generate graph of the repository.")
-        
-        init_source = parser_repo.add_mutually_exclusive_group()
-        init_source.add_argument("--url", type=str, help="add a repository url to the settings file.")
-        init_source.add_argument("--file", type=str, help="add a repository file to the settings file.")
+        subpar_repo = parser_repo.add_subparsers(title='subcommands', help='help for subcommand.')
 
-        parser_repo.set_defaults(func=Main.repo)
+        repo_list = subpar_repo.add_parser('list', help='list all repositories')
+        repo_list.set_defaults(func=MRep.list)
+
+        repo_add = subpar_repo.add_parser('add', help='add a repository.')
+        repo_add.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be added.')
+        repo_add.add_argument('--url', type=str, help='add a repository url to the settings file.')
+        repo_add.add_argument('--file', type=str, help='add a repository file to the settings file.')
+        repo_add.set_defaults(func=MRep.add)
+
+        repo_rm = subpar_repo.add_parser('rm', help='remove a repository.')
+        repo_rm.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be removed.')
+        repo_rm.set_defaults(func=MRep.rm)
+
+        repo_reset = subpar_repo.add_parser('reset', help='reset all repositories to factory default.')
+        repo_reset.set_defaults(func=MRep.reset)
+
+        repo_graph = subpar_repo.add_parser('graph', help='generate graph of the repository.')
+        repo_graph.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be graphed.')
+        repo_graph.set_defaults(func=MRep.graph)
 
         parser_play = subparsers.add_parser('play', help='play a repository.')
         parser_play.add_argument('repo', metavar='T', type=str, help='repository to be played.')
@@ -276,7 +318,7 @@ class Main:
             Report.set_terminal_size(args.width)
 
         if args.c:
-            SettingsParser.set_settings_file(args.c)
+            SettingsParser.user_settings_file = args.c
         
         settings = SettingsParser().load_settings()
 

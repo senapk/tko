@@ -323,37 +323,27 @@ class Settings:
 
 class SettingsParser:
 
-    __settings_file: Optional[str] = None
+    user_settings_file: Optional[str] = None
 
-    def __init__(self, settings_file: Optional[str] = None):
-        if settings_file is not None:
-            SettingsParser.__settings_file = settings_file
+    def __init__(self):
         self.package_name = "tko"
-        self.filename = "settings.json"
-        if SettingsParser.__settings_file is None:
-            self.filename = os.path.abspath(self.filename) # backup for replit
+        default_filename = "settings.json"
+        if SettingsParser.user_settings_file is None:
+            self.settings_file = os.path.abspath(default_filename) # backup for replit, dont remove
         else:
-            self.filename = os.path.abspath(SettingsParser.__settings_file)
+            self.settings_file = os.path.abspath(SettingsParser.user_settings_file)
         self.settings = self.load_settings()
-
-    @staticmethod
-    def set_settings_file(settings_file: str):
-        SettingsParser.__settings_file = settings_file
-
-    @staticmethod
-    def get_settings_file() -> Optional[str]:
-        return SettingsParser.__settings_file
 
     def load_settings(self) -> Settings:
         try:
-            with open(self.filename, "r") as f:
+            with open(self.settings_file, "r") as f:
                 self.settings = Settings().from_dict(json.load(f))
                 return self.settings
         except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
             return self.create_new_settings_file()
 
     def save_settings(self):
-        self.settings.save_to_json(self.filename)
+        self.settings.save_to_json(self.settings_file)
 
     def create_new_settings_file(self) -> Settings:
         self.settings = Settings()
@@ -363,7 +353,7 @@ class SettingsParser:
         return self.settings
 
     def get_settings_dir(self) -> str:
-        return os.path.dirname(self.filename)
+        return os.path.dirname(self.settings_file)
     
     def get_language(self) -> str:
         return self.settings.local.lang
@@ -2426,7 +2416,7 @@ class Game:
       saida.append(f"  subgraph cluster_{c[0].group} {{")
       saida.append(f"    label=\"{c[0].group}\"")
       saida.append(f"    style=filled")
-      saida.append(f"    color=lightyellow")
+      saida.append(f"    color=lightgray")
       for q in c:
         saida.append(f"    {info(q)}")
 
@@ -2713,9 +2703,102 @@ __version__ = "0.4.3"
 
 
 
+class MRep:
+
+    # @staticmethod
+    # def repo(args):
+        # sp = SettingsParser()
+        # settings = sp.load_settings()
+
+        # if args.list:
+        #     print("listing all repositories")
+        #     for rep in settings.reps:
+        #         value = settings.reps[rep]
+        #         print(f"{rep}: ", end="")
+        #         if value.url != "":
+        #             print(f"url: {settings.reps[rep].url}")
+        #         else:
+        #             print(f"file: {settings.reps[rep].file}")
+        # if args.add:
+        #     print("adding repo", args.add)
+        #     if args.url:
+        #         print("url", args.url)
+        #         rep = RepoSettings().set_url(args.url)
+        #         settings.reps[args.add] = rep
+        #         sp.save_settings()
+        #     elif args.file:
+        #         print("file", args.file)
+        #         rep = RepoSettings().set_file(args.file)
+        #         print(str(rep))
+        #         settings.reps[args.add] = rep
+        #         sp.save_settings()
+        #     else:
+        #         print("no url or file selected as source for the repository.")
+        # if args.rm:
+        #     print("removing repo", args.rm)
+        #     settings.reps.pop(args.rm)
+        # if args.graph:
+        #     print("generating graph.puml", args.graph)
+        #     rep = settings.reps[args.graph]
+        #     file = rep.get_file()
+        #     game = Game()
+        #     game.parse_file(file)
+        #     game.check_cycle()
+        #     game.generate_graph("graph")
+        # if args.reset:
+        #     print("resetting all repositories to factory default.")
+        #     sp.settings = Settings()
+        #     sp.save_settings()
+
+    @staticmethod
+    def list(args):
+        sp = SettingsParser()
+        settings = sp.load_settings()
+        print("SettingsFile:", sp.settings_file)
+        print("Repositories:")
+        for key in settings.reps:
+            print(key, end="")
+            if settings.reps[key].url:
+                print(f" - {settings.reps[key].url}")
+            else:
+                print(f" - {settings.reps[key].file}")
+
+    @staticmethod
+    def add(args):
+        sp = SettingsParser()
+        settings = sp.load_settings()
+        if args.url:
+            rep = RepoSettings().set_url(args.url)
+        elif args.file:
+            rep = RepoSettings().set_file(args.file)
+        settings.reps[args.alias] = rep
+        sp.save_settings()
+    
+    @staticmethod
+    def rm(args):
+        sp = SettingsParser()
+        settings = sp.load_settings()
+        settings.reps.pop(args.alias)
+        sp.save_settings()
+
+    @staticmethod
+    def reset(args):
+        sp = SettingsParser()
+        sp.settings = Settings()
+        sp.save_settings()
+
+    @staticmethod
+    def graph(args):
+        sp = SettingsParser()
+        settings = sp.load_settings()
+        rep = settings.reps[args.alias]
+        file = rep.get_file()
+        game = Game()
+        game.parse_file(file)
+        game.check_cycle()
+        game.generate_graph("graph")
 
 class Main:
-
     @staticmethod
     def run(args):
         PatternLoader.pattern = args.pattern
@@ -2782,54 +2865,9 @@ class Main:
             settings.local.lang = "ask"
             print("Language extension will be asked always.")
         if args.show:
-            print(SettingsParser.get_settings_file())
+            print(sp.get_settings_file())
             print(str(settings.local))
         sp.save_settings()
-
-    @staticmethod
-    def repo(args):
-        sp = SettingsParser()
-        settings = sp.load_settings()
-
-        if args.list:
-            print("listing all repositories")
-            for rep in settings.reps:
-                value = settings.reps[rep]
-                print(f"{rep}: ", end="")
-                if value.url != "":
-                    print(f"url: {settings.reps[rep].url}")
-                else:
-                    print(f"file: {settings.reps[rep].file}")
-        if args.add:
-            print("adding repo", args.add)
-            if args.url:
-                print("url", args.url)
-                rep = RepoSettings().set_url(args.url)
-                settings.reps[args.add] = rep
-                sp.save_settings()
-            elif args.file:
-                print("file", args.file)
-                rep = RepoSettings().set_file(args.file)
-                print(str(rep))
-                settings.reps[args.add] = rep
-                sp.save_settings()
-            else:
-                print("no url or file selected as source for the repository.")
-        if args.rm:
-            print("removing repo", args.rm)
-            settings.reps.pop(args.rm)
-        if args.graph:
-            print("generating graph.puml", args.graph)
-            rep = settings.reps[args.graph]
-            file = rep.get_file()
-            game = Game()
-            game.parse_file(file)
-            game.check_cycle()
-            game.generate_graph("graph")
-        if args.reset:
-            print("resetting all repositories to factory default.")
-            sp.settings = Settings()
-            sp.save_settings()
 
     @staticmethod
     def play(args):
@@ -2844,33 +2882,40 @@ class Main:
             #passsing a lambda function to the play class to save the settings
             play = Play(game, repo, lambda: sp.save_settings())
             play.play()
-            
-
-
-    # @staticmethod
-    # def rebuild(args):
-    #     if args.width is not None:
-    #         Report.set_terminal_size(args.width)
-    #     PatternLoader.pattern = args.pattern
-    #     manip = Param.Manip().set_unlabel(args.unlabel).set_to_sort(args.sort).set_to_number(args.number)
-    #     Actions.update(args.target_list, manip, args.cmd)
-    #     return 0
-
-    # @staticmethod
-    # def update(_args):
-    #     Down.update()
 
     @staticmethod
     def down(args):
         Down.entry_unpack(args.course, args.activity, args.language)
 
-    @staticmethod
-    def main():
+class Parser:
+    def __init__(self):
+        self.parser = argparse.ArgumentParser(prog='tko', description='A tool for competitive programming.')        
+        self.subparsers = self.parser.add_subparsers(title='subcommands', help='help for subcommand.')
+        self.add_parser_args()
+        self.add_parent_basic()
+        self.add_parent_manip()
+        self.add_parser_run()
+        self.add_parser_build()
+        self.add_parser_down()
+        self.add_parser_config()
+        self.add_parser_repo()
+
+    def add_parser_args(self):
+        self.parser.add_argument('-c', metavar='CONFIG_FILE', type=str, help='config json file.')
+        self.parser.add_argument('-w', metavar='WIDTH', type=int, help="terminal width.")
+        self.parser.add_argument('-v', action='store_true', help='show version.')
+        self.parser.add_argument('-g', action='store_true', help='show tko simple guide.')
+        self.parser.add_argument('-b', action='store_true', help='show bash simple guide.')
+        self.parser.add_argument('-m', action='store_true', help='monochromatic.')
+
+    def add_parent_basic(self):
         parent_basic = argparse.ArgumentParser(add_help=False)
         parent_basic.add_argument('--index', '-i', metavar="I", type=int, help='run a specific index.')
         parent_basic.add_argument('--pattern', '-p', metavar="P", type=str, default='@.in @.sol',
                                   help='pattern load/save a folder, default: "@.in @.sol"')
-
+        self.parent_basic = parent_basic
+    
+    def add_parent_manip(self):
         parent_manip = argparse.ArgumentParser(add_help=False)
         parent_manip.add_argument('--width', '-w', type=int, help="term width.")
         parent_manip.add_argument('--unlabel', '-u', action='store_true', help='remove all labels.')
@@ -2878,19 +2923,10 @@ class Main:
         parent_manip.add_argument('--sort', '-s', action='store_true', help="sort test cases by input size.")
         parent_manip.add_argument('--pattern', '-p', metavar="@.in @.out", type=str, default='@.in @.sol',
                                   help='pattern load/save a folder, default: "@.in @.sol"')
+        self.parent_manip = parent_manip
 
-        parser = argparse.ArgumentParser(prog='tko', description='A tool for competitive programming.')
-        parser.add_argument('-c', metavar='CONFIG_FILE', type=str, help='config json file.')
-        parser.add_argument('-w', metavar='WIDTH', type=int, help="terminal width.")
-        parser.add_argument('-v', action='store_true', help='show version.')
-        parser.add_argument('-g', action='store_true', help='show tko simple guide.')
-        parser.add_argument('-b', action='store_true', help='show bash simple guide.')
-        parser.add_argument('-m', action='store_true', help='monochromatic.')
-        
-        subparsers = parser.add_subparsers(title='subcommands', help='help for subcommand.')
-
-        # run
-        parser_r = subparsers.add_parser('run', parents=[parent_basic], help='run with test cases.')
+    def add_parser_run(self):
+        parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='run with test cases.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
         parser_r.add_argument('--compact', '-c', action='store_true', help='Dont show case descriptions in failures')
@@ -2906,22 +2942,22 @@ class Main:
         group.add_argument('--sideby', '-s', action='store_true', help="diff mode side-by-side.")
         parser_r.set_defaults(func=Main.run)
 
-        # build
-        parser_b = subparsers.add_parser('build', parents=[parent_manip], help='build a test target.')
+    def add_parser_build(self):
+        parser_b = self.subparsers.add_parser('build', parents=[self.parent_manip], help='build a test target.')
         parser_b.add_argument('target', metavar='T_OUT', type=str, help='target to be build.')
         parser_b.add_argument('target_list', metavar='T', type=str, nargs='+', help='input test targets.')
         parser_b.add_argument('--force', '-f', action='store_true', help='enable overwrite.')
         parser_b.set_defaults(func=Main.build)
 
-        # down
-        parser_d = subparsers.add_parser('down', help='download problem from repository.')
+    def add_parser_down(self):
+        parser_d = self.subparsers.add_parser('down', help='download problem from repository.')
         parser_d.add_argument('course', type=str, nargs='?', help=" [ fup | ed | poo ].")
         parser_d.add_argument('activity', type=str, nargs='?', help="activity @label.")
         parser_d.add_argument('--language', '-l', type=str, nargs='?', help="[ c | cpp | js | ts | py | java ]")
         parser_d.set_defaults(func=Main.down)
 
-        # settings
-        parser_s = subparsers.add_parser('config', help='settings tool.')
+    def add_parser_config(self):
+        parser_s = self.subparsers.add_parser('config', help='settings tool.')
         parser_s.add_argument('--show',  '-s', action='store_true', help='show current settings.')
 
         g_encoding = parser_s.add_mutually_exclusive_group()
@@ -2942,46 +2978,45 @@ class Main:
         g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
         g_lang.add_argument("--ask", action='store_true', help='ask language extension every time.')
 
-        parser_repo = subparsers.add_parser('repo', help='manipulate repositories.')
-        repo_actions = parser_repo.add_mutually_exclusive_group()
-        repo_actions.add_argument("--list", action='store_true', help="list all repositories.")
-        repo_actions.add_argument("--add",  metavar='repo', type=str, help="alias of the repository to be added.")
-        repo_actions.add_argument("--rm", metavar='repo', type=str, help="alias of the repository to be removed.")
-        repo_actions.add_argument("--reset", action='store_true', help="reset all repositories to factory default.")
-        repo_actions.add_argument("--graph", '-g', metavar='repo', type=str, help="generate graph of the repository.")
-        
-        init_source = parser_repo.add_mutually_exclusive_group()
-        init_source.add_argument("--url", type=str, help="add a repository url to the settings file.")
-        init_source.add_argument("--file", type=str, help="add a repository file to the settings file.")
+    def add_parser_repo(self):
+        parser_repo = self.subparsers.add_parser('repo', help='manipulate repositories.')
+        subpar_repo = parser_repo.add_subparsers(title='subcommands', help='help for subcommand.')
 
-        parser_repo.set_defaults(func=Main.repo)
+        repo_list = subpar_repo.add_parser('list', help='list all repositories')
+        repo_list.set_defaults(func=MRep.list)
 
-        parser_play = subparsers.add_parser('play', help='play a repository.')
-        parser_play.add_argument('repo', metavar='T', type=str, help='repository to be played.')
-        parser_play.set_defaults(func=Main.play)
+        repo_add = subpar_repo.add_parser('add', help='add a repository.')
+        repo_add.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be added.')
+        repo_add.add_argument('--url', type=str, help='add a repository url to the settings file.')
+        repo_add.add_argument('--file', type=str, help='add a repository file to the settings file.')
+        repo_add.set_defaults(func=MRep.add)
 
-        parser_s.set_defaults(func=Main.settings)
+        repo_rm = subpar_repo.add_parser('rm', help='remove a repository.')
+        repo_rm.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be removed.')
+        repo_rm.set_defaults(func=MRep.rm)
 
-        args = parser.parse_args()
+        repo_reset = subpar_repo.add_parser('reset', help='reset all repositories to factory default.')
+        repo_reset.set_defaults(func=MRep.reset)
+
+        repo_graph = subpar_repo.add_parser('graph', help='generate graph of the repository.')
+        repo_graph.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be graphed.')
+        repo_graph.set_defaults(func=MRep.graph)
+
+    def main(self):
+        args = self.parser.parse_args()
 
         if len(sys.argv) == 1:
-            parser.print_help()
+            self.parser.print_help()
             return
-
-        # setting general settings options
         if args.w is not None:
             Report.set_terminal_size(args.width)
-
         if args.c:
-            SettingsParser.set_settings_file(args.c)
-        
+            SettingsParser.user_settings_file = args.c
         settings = SettingsParser().load_settings()
-
         if settings.local.ascii:
             symbols.set_ascii()
         else:
             symbols.set_unicode()
-
         if not args.m and settings.local.color:
             Color.enabled = True
             symbols.set_colors()
@@ -2999,12 +3034,16 @@ class Main:
             except ValueError as e:
                 print(str(e))
 
-
-if __name__ == '__main__':
+def main():
     try:
-        Main.main()
+        parser = Parser()
+        parser.main()
         sys.exit(0)
     except KeyboardInterrupt:
         print("\n\nKeyboard Interrupt")
         sys.exit(1)
+
+if __name__ == '__main__':
+    main()
+
 

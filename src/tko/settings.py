@@ -138,38 +138,28 @@ class Settings:
 
 class SettingsParser:
 
-    __settings_file: Optional[str] = None
+    user_settings_file: Optional[str] = None
 
-    def __init__(self, settings_file: Optional[str] = None):
-        if settings_file is not None:
-            SettingsParser.__settings_file = settings_file
+    def __init__(self):
         self.package_name = "tko"
-        self.filename = "settings.json"
-        if SettingsParser.__settings_file is None:
-            self.filename = os.path.abspath(self.filename) # backup for replit
-            self.filename = os.path.join(appdirs.user_data_dir(self.package_name), self.filename)
+        default_filename = "settings.json"
+        if SettingsParser.user_settings_file is None:
+            self.settings_file = os.path.abspath(default_filename) # backup for replit, dont remove
+            self.settings_file = os.path.join(appdirs.user_data_dir(self.package_name), default_filename)
         else:
-            self.filename = os.path.abspath(SettingsParser.__settings_file)
+            self.settings_file = os.path.abspath(SettingsParser.user_settings_file)
         self.settings = self.load_settings()
-
-    @staticmethod
-    def set_settings_file(settings_file: str):
-        SettingsParser.__settings_file = settings_file
-
-    @staticmethod
-    def get_settings_file() -> Optional[str]:
-        return SettingsParser.__settings_file
 
     def load_settings(self) -> Settings:
         try:
-            with open(self.filename, "r") as f:
+            with open(self.settings_file, "r") as f:
                 self.settings = Settings().from_dict(json.load(f))
                 return self.settings
         except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
             return self.create_new_settings_file()
 
     def save_settings(self):
-        self.settings.save_to_json(self.filename)
+        self.settings.save_to_json(self.settings_file)
 
     def create_new_settings_file(self) -> Settings:
         self.settings = Settings()
@@ -179,7 +169,7 @@ class SettingsParser:
         return self.settings
 
     def get_settings_dir(self) -> str:
-        return os.path.dirname(self.filename)
+        return os.path.dirname(self.settings_file)
     
     def get_language(self) -> str:
         return self.settings.local.lang
