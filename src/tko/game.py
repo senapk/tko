@@ -598,22 +598,39 @@ class Play:
     print("Digite enter para continuar")
     input()
 
-  def play(self):
-    while True:
+  def show_header(self):
       subprocess.run("clear")
       vnum    = colour("g", "números") + "(marcar)"
       vlet    = colour("g", "letras") + "(expandir)"
       vfold   = colour("g", "<") + " ou " + colour("g", ">") + "(expandir todas)"
       vhelp   = colour("c", ":h") + colour("g", "elp")
       vclose  = colour("c", ":q") + colour("g", "uit")
+      print(f"Digite: {vnum}, {vlet}, {vfold}, {vhelp} ou {vclose}.")
+
       vdone   = colour("c", ":d") + colour("g", "one") + ("[x]" if self.show_done else "[ ]")
       vinit   = colour("c", ":i") + colour("g", "nit") + ("[x]" if self.show_done else "[ ]")
       vtodo   = colour("c", ":t") + colour("g", "odo") + ("[x]" if self.show_done else "[ ]") 
       vlink   = colour("c", ":l") + colour("g", "ink") + ("[x]" if self.show_url else "[ ]")
-      print(f"Digite: {vnum}, {vlet}, {vfold}, {vhelp} ou {vclose}.")
-      print(f"Filtro: {vdone}, {vinit}, {vtodo}, {vlink}, {vlink}")
+      print(f"Filtro: {vdone}, {vinit}, {vtodo}, {vlink}")
       self.show_tasks()
-      print("\n" + colour("g", "$") + " ", end="")
+      print("\n" + colour("g", "play $") + " ", end="")
+
+      # f fold     <quest>        | c colapsar
+      # a archieve <quest>        | a arquivar
+      #                           |
+      # t toggle   <task>         | m marcar
+      # g grade    <task> <value> | g graduar
+      #                           |
+      # v view     <task>         | v ver
+      # d down     <task>         | b baixar
+      #                           |
+      # q quit                    | s sair
+      # s show     <options>      | f filtrar
+
+
+  def play(self):
+    while True:
+      self.show_header()
       line = input()
       if ":q" in line or ":quit" in line:
         break

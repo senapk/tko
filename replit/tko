@@ -2680,22 +2680,39 @@ class Play:
     print("Digite enter para continuar")
     input()
 
-  def play(self):
-    while True:
+  def show_header(self):
       subprocess.run("clear")
       vnum    = colour("g", "números") + "(marcar)"
       vlet    = colour("g", "letras") + "(expandir)"
       vfold   = colour("g", "<") + " ou " + colour("g", ">") + "(expandir todas)"
       vhelp   = colour("c", ":h") + colour("g", "elp")
       vclose  = colour("c", ":q") + colour("g", "uit")
+      print(f"Digite: {vnum}, {vlet}, {vfold}, {vhelp} ou {vclose}.")
+
       vdone   = colour("c", ":d") + colour("g", "one") + ("[x]" if self.show_done else "[ ]")
       vinit   = colour("c", ":i") + colour("g", "nit") + ("[x]" if self.show_done else "[ ]")
       vtodo   = colour("c", ":t") + colour("g", "odo") + ("[x]" if self.show_done else "[ ]") 
       vlink   = colour("c", ":l") + colour("g", "ink") + ("[x]" if self.show_url else "[ ]")
-      print(f"Digite: {vnum}, {vlet}, {vfold}, {vhelp} ou {vclose}.")
-      print(f"Filtro: {vdone}, {vinit}, {vtodo}, {vlink}, {vlink}")
+      print(f"Filtro: {vdone}, {vinit}, {vtodo}, {vlink}")
       self.show_tasks()
-      print("\n" + colour("g", "$") + " ", end="")
+      print("\n" + colour("g", "play $") + " ", end="")
+
+      # f fold     <quest>        | c colapsar
+      # a archieve <quest>        | a arquivar
+      #                           |
+      # t toggle   <task>         | m marcar
+      # g grade    <task> <value> | g graduar
+      #                           |
+      # v view     <task>         | v ver
+      # d down     <task>         | b baixar
+      #                           |
+      # q quit                    | s sair
+      # s show     <options>      | f filtrar
+
+
+  def play(self):
+    while True:
+      self.show_header()
       line = input()
       if ":q" in line or ":quit" in line:
         break
@@ -2709,52 +2726,6 @@ __version__ = "0.4.3"
 
 
 class MRep:
-
-    # @staticmethod
-    # def repo(args):
-        # sp = SettingsParser()
-        # settings = sp.load_settings()
-
-        # if args.list:
-        #     print("listing all repositories")
-        #     for rep in settings.reps:
-        #         value = settings.reps[rep]
-        #         print(f"{rep}: ", end="")
-        #         if value.url != "":
-        #             print(f"url: {settings.reps[rep].url}")
-        #         else:
-        #             print(f"file: {settings.reps[rep].file}")
-        # if args.add:
-        #     print("adding repo", args.add)
-        #     if args.url:
-        #         print("url", args.url)
-        #         rep = RepoSettings().set_url(args.url)
-        #         settings.reps[args.add] = rep
-        #         sp.save_settings()
-        #     elif args.file:
-        #         print("file", args.file)
-        #         rep = RepoSettings().set_file(args.file)
-        #         print(str(rep))
-        #         settings.reps[args.add] = rep
-        #         sp.save_settings()
-        #     else:
-        #         print("no url or file selected as source for the repository.")
-        # if args.rm:
-        #     print("removing repo", args.rm)
-        #     settings.reps.pop(args.rm)
-        # if args.graph:
-        #     print("generating graph.puml", args.graph)
-        #     rep = settings.reps[args.graph]
-        #     file = rep.get_file()
-        #     game = Game()
-        #     game.parse_file(file)
-        #     game.check_cycle()
-        #     game.generate_graph("graph")
-        # if args.reset:
-        #     print("resetting all repositories to factory default.")
-        #     sp.settings = Settings()
-        #     sp.save_settings()
-
     @staticmethod
     def list(args):
         sp = SettingsParser()

@@ -17,52 +17,6 @@ from .game import Game, Play
 from .__init__ import __version__
 
 class MRep:
-
-    # @staticmethod
-    # def repo(args):
-        # sp = SettingsParser()
-        # settings = sp.load_settings()
-
-        # if args.list:
-        #     print("listing all repositories")
-        #     for rep in settings.reps:
-        #         value = settings.reps[rep]
-        #         print(f"{rep}: ", end="")
-        #         if value.url != "":
-        #             print(f"url: {settings.reps[rep].url}")
-        #         else:
-        #             print(f"file: {settings.reps[rep].file}")
-        # if args.add:
-        #     print("adding repo", args.add)
-        #     if args.url:
-        #         print("url", args.url)
-        #         rep = RepoSettings().set_url(args.url)
-        #         settings.reps[args.add] = rep
-        #         sp.save_settings()
-        #     elif args.file:
-        #         print("file", args.file)
-        #         rep = RepoSettings().set_file(args.file)
-        #         print(str(rep))
-        #         settings.reps[args.add] = rep
-        #         sp.save_settings()
-        #     else:
-        #         print("no url or file selected as source for the repository.")
-        # if args.rm:
-        #     print("removing repo", args.rm)
-        #     settings.reps.pop(args.rm)
-        # if args.graph:
-        #     print("generating graph.puml", args.graph)
-        #     rep = settings.reps[args.graph]
-        #     file = rep.get_file()
-        #     game = Game()
-        #     game.parse_file(file)
-        #     game.check_cycle()
-        #     game.generate_graph("graph")
-        # if args.reset:
-        #     print("resetting all repositories to factory default.")
-        #     sp.settings = Settings()
-        #     sp.save_settings()
-
     @staticmethod
     def list(args):
         sp = SettingsParser()
