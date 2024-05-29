@@ -10,13 +10,9 @@ class RepoSettings:
         self.url: str = ""
         self.file: str = ""
         self.cache: str = ""
-        self.active_quests: List[str] = []
-        self.done_tasks: List[str] = []
-        self.show_url: bool  = True
-        self.show_done: bool = True
-        self.show_init: bool = True
-        self.show_todo: bool = True
-        self.game_mode: bool = True
+        self.quests: Dict[str, str] = {}
+        self.tasks: Dict[str, str] = {}
+        self.view: List[str] = ["done", "init", "link", "todo"]
 
     def get_file(self) -> str:
         if self.file == "" or os.path.exists(self.file) == False:
@@ -42,40 +38,28 @@ class RepoSettings:
             "url": self.url,
             "file": self.file,
             "cache": self.cache,
-            "active_quests": self.active_quests,
-            "done_tasks": self.done_tasks,
-            "show_url": self.show_url,
-            "show_done": self.show_done,
-            "show_init": self.show_init,
-            "show_todo": self.show_todo,
-            "game_mode": self.game_mode
+            "quests": self.quests,
+            "tasks": self.tasks,
+            "view": self.view
         }
     
     def from_dict(self, data: Dict[str, Any]):
         self.url = data.get("url", "")
         self.file = data.get("file", "")
         self.cache = data.get("cache", "")
-        self.active_quests = data.get("active_quests", [])
-        self.done_tasks = data.get("done_tasks", [])
-        self.show_url = data.get("show_url", True)
-        self.show_done = data.get("show_done", True)
-        self.show_init = data.get("show_init", True)
-        self.show_todo = data.get("show_todo", True)
-        self.game_mode = data.get("game_mode", True)
+        self.quests = data.get("quests", {})
+        self.tasks = data.get("tasks", {})
+        self.view = data.get("view", [])
         return self
 
     def __str__(self) -> str:
         return (
-            f"URL: {self.url}\n"
-            f"File: {self.file}\n"
-            f"Cache: {self.cache}\n"
-            f"Active Quests: {self.active_quests}\n"
-            f"Done Tasks: {self.done_tasks}\n"
-            f"Show URL: {self.show_url}\n"
-            f"Show Done: {self.show_done}\n"
-            f"Show Init: {self.show_init}\n"
-            f"Show Todo: {self.show_todo}\n"
-            f"Game Mode: {self.game_mode}\n"
+            f"url: {self.url}\n"
+            f"file: {self.file}\n"
+            f"cache: {self.cache}\n"
+            f"Quests: {self.quests}\n"
+            f"Tasks: {self.tasks}\n"
+            f"View: {self.view}\n"
         )
 
 class LocalSettings:

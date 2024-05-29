@@ -3,11 +3,11 @@
 import argparse
 import subprocess
 import re
-from typing import Optional
+from typing import Optional, Dict, List
 import os
 import shutil
 from .format import colour
-
+from .settings import RepoSettings as RepoSettings
 
 class Task:
 
@@ -15,15 +15,23 @@ class Task:
     self.line_number = 0
     self.line = ""
     self.key = ""
-    self.coding = False
-    self.remove_tko = False
-    self.done = False
+    self.grade = ""
     self.skills = []
     self.title = ""
     self.link = ""
 
+  def is_done(self):
+    return self.grade == "x" or self.grade == "7" or self.grade == "8" or self.grade == "9"
+  
+  def set_grade(self, grade):
+    valid = ["x", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+    if grade in valid:
+      self.grade = grade
+    else:
+      print(f"Grade inválida: {grade}")
+
   def __str__(self):
-    return f"{self.line_number} : {self.key} : {self.done} : {self.title} : {self.skills} : {self.link}"
+    return f"{self.line_number} : {self.key} : {self.grade} : {self.title} : {self.skills} : {self.link}"
 
   @staticmethod
   def parse_titulo_link_html(line):
@@ -127,7 +135,7 @@ class Quest:
     return f"linha={self.line_number} : {self.key} : {self.title} : {self.skills} : {self.requires} : {self.mdlink} : {[t.key for t in self.tasks]}"
 
   def is_complete(self):
-    return all([t.done for t in self.tasks])
+    return all([t.is_done() for t in self.tasks])
 
   def is_reachable(self, cache):
     if self.key in cache:
@@ -205,8 +213,8 @@ def get_md_link(title: str) -> str:
 class Game:
 
   def __init__(self):
-    self.quests = {}
-    self.tasks = {}
+    self.quests: Dict[str, Quest] = {} # quests indexed by quest key
+    self.tasks: Dict[str, Task] = {}   # tasks  indexed by task key
 
   def load_quest(self, line, line_num):
     quest = Quest()
@@ -357,26 +365,49 @@ class Game:
 
 class Play:
 
-  def __init__(self, game: Game, rep, fnsave):
+  def __init__(self, game: Game, rep: RepoSettings, fnsave):
     self.fnsave = fnsave
     self.rep = rep
-    self.show_url = self.rep.show_url
-    self.show_done = self.rep.show_done
-    self.game = game
-    self.tasks = []
-    self.quests = {}  # option:quest
-    self.active = set(self.rep.active_quests)
+    self.show_link = "link" in self.rep.view
+    self.show_done = "done" in self.rep.view
+    self.show_init = "init" in self.rep.view
+    self.show_todo = "todo" in self.rep.view
+    self.show_cmds = "cmds" in self.rep.view
+
+    self.game: Game = game
+    self.tasks: List[Task] = []  # visible tasks  indexed by number
+    self.quests: Dict[str, Quest] = {} # visible quests indexed by letter
+    self.active: List[str] = [] # expanded quests
+
+    for k, v in self.rep.quests.items():
+      if "e" in v:
+        self.active.append(k)
+
     self.term_limit = 130
 
-    for t in game.tasks.values():
-      if t.key in self.rep.done_tasks:
-        t.done = True
+    for key, grade in rep.tasks.items():
+      if key in game.tasks:
+        game.tasks[key].set_grade(grade)
 
   def save_to_json(self):
-    self.rep.active_quests = list(self.active)
-    self.rep.done_tasks = [t.key for t in self.game.tasks.values() if t.done]
-    self.rep.show_url = self.show_url
-    self.rep.show_done = self.show_done
+    self.rep.quests = {}
+    for q in self.active:
+      self.rep.quests[q] = "e"
+    self.rep.tasks = {}
+    for t in self.game.tasks.values():
+      if t.grade != "":
+        self.rep.tasks[t.key] = t.grade
+    self.rep.view = []
+    if self.show_link:
+      self.rep.view.append("link")
+    if self.show_done:
+      self.rep.view.append("done")
+    if self.show_init:
+      self.rep.view.append("init")
+    if self.show_todo:
+      self.rep.view.append("todo")
+    if self.show_cmds:
+      self.rep.view.append("cmds")
     self.fnsave()
 
   @staticmethod
@@ -447,7 +478,7 @@ class Play:
     opening = "➡️"
     if q.key in self.active:
       opening = "⬇️"
-    done = len([t for t in q.tasks if t.done])
+    done = len([t for t in q.tasks if t.is_done()])
     size = len(q.tasks)
     if done > 9:
       done = "*"
@@ -463,7 +494,7 @@ class Play:
       resume = colour("y", text)
     entry = colour("b", entry) if q.type == "main" else colour("m", entry)
     qlink = ""
-    if self.show_url:
+    if self.show_link:
       if term_size > self.term_limit:
         qlink = " " + colour("c", q.mdlink)
       else:
@@ -474,9 +505,9 @@ class Play:
 
   def print_task(self, t, max_title, index, term_size):
     vindex = str(index).rjust(2, "0")
-    vdone = "x" if t.done else " "
+    vdone = "x" if t.is_done() else " "
     vlink = ""
-    if self.show_url:
+    if self.show_link:
       if t.key in t.title:
         vlink = colour("r", t.link)
       else:
@@ -548,77 +579,104 @@ class Play:
         expand.append(t)
     return expand
 
+  def clear(self):
+    subprocess.run("clear")
+    pass
+
   def take_actions(self, actions):
-    for t in actions:
-      if t == ":h" or t == ":help" or t == "?":
-        subprocess.run("clear")
-        self.show_help()
-      elif t == ":u" or t == ":url":
-        self.show_url = not self.show_url
-      elif t == ":a" or t == ":all":
-        self.show_done = not self.show_done
-      elif t == "<":
-        self.active = set()
-      elif t == ">":
-        self.update_reachable()
-        self.active = set([q.key for q in self.quests.values()])
-      else:
+    print(actions)
+    cmd = actions[0]
+    del actions[0]
+
+    if cmd == "<":
+      self.active = set()
+    elif cmd == ">":
+      self.update_reachable()
+      self.active = set([q.key for q in self.quests.values()])
+    elif cmd == "h" or cmd == "help":
+      self.clear()
+      self.show_help()
+    elif cmd == "c" or cmd == "cmds":
+      self.show_cmds = not self.show_cmds
+    elif cmd == "v" or cmd == "view":
+      for t in actions:
+        if t == "d" or t == "done":
+          self.show_done = not self.show_done
+        elif t == "i" or t == "init":
+          self.show_init = not self.show_init
+        elif t == "t" or t == "todo":
+          self.show_todo = not self.show_todo
+        elif t == "c" or t == "cmds":
+          self.show_cmds = not self.show_cmds
+        elif t == "l" or t == "link":
+          self.show_link = not self.show_link
+    elif cmd == "f" or cmd == "fold":
+      for t in actions:
+        t = t.upper()
+        if t in self.quests:
+          key = self.quests[t].key
+          if key not in self.active:
+            self.active.add(key)
+          else:
+            self.active.remove(key)
+        else:
+          print(f"{t} não processado")
+    elif cmd == "m" or cmd == "mark":
+      for t in actions:
         try:  # number
           t = int(t)
           if t >= 0 and t < len(self.tasks):
-            self.tasks[t].done = not self.tasks[t].done
-        except:  # letter
-          t = t.upper()
-          if t in self.quests:
-            key = self.quests[t].key
-            if key not in self.active:
-              self.active.add(key)
+            v = self.tasks[t].grade
+            if v == "x":
+              self.tasks[t].grade = ""
             else:
-              self.active.remove(key)
-          else:
-            print(f"{t} não processado")
+              self.tasks[t].grade = "x"
+        except:
+          print(f"{t} não processado")
 
   def show_help(self):
-    print("Digite os números ou intervalo das tarefas para (marcar/desmarcar), exemplo:")
-    print(colour("g", "$ ") + "1 2 5-6")
-    print("Digite as letras ou intervalo das quests para (expandir/colapsar), exemplo:")
-    print(colour("g", "$ ") + "a c d-g")
-    print("Digite > para expandir todas as quests")
-    print(colour("g", "$ ") + ">")
-    print("Digite < para colapsar todas as quests")
-    print(colour("g", "$ ") + "<")
-    print("Digite :a ou :all para mostrar/esconder as quests completas")
-    print(colour("g", "$ ") + ":all")
-    print("Digite :u ou :url para mostrar/esconder as urls")
-    print(colour("g", "$ ") + ":url")
-    print("Digite :h ou :help para mostrar a ajuda")
-    print(colour("g", "$ ") + ":h")
-    print("Digite :q ou :quit para sair")
-    print(colour("g", "$ ") + ":q")
-    print("Digite enter para continuar")
+    print("Digite " + colour("r", "t") + " os números ou intervalo das tarefas para (marcar/desmarcar), exemplo:")
+    print(colour("g", "play $ ") + "t 1 3-5")
     input()
 
   def show_header(self):
-      subprocess.run("clear")
-      vnum    = colour("g", "números") + "(marcar)"
-      vlet    = colour("g", "letras") + "(expandir)"
-      vfold   = colour("g", "<") + " ou " + colour("g", ">") + "(expandir todas)"
-      vhelp   = colour("c", ":h") + colour("g", "elp")
-      vclose  = colour("c", ":q") + colour("g", "uit")
-      print(f"Digite: {vnum}, {vlet}, {vfold}, {vhelp} ou {vclose}.")
+      self.clear()
+      if self.show_cmds:
+        print("# Digite " + colour("y", "c") + " para " + colour("y", "ocultar") + " a ajuda" + " ║       " + colour("g", "AÇÃO EXECUTADA") + "         ║      " + colour("g", "EXEMPLO DE USO"))
+      else:
+        print("# Digite " + colour("y", "c") + " para " + colour("g", "mostrar") + " a ajuda" )
+      vfilter = colour("r", "view")
+      vdone   = colour("g" if self.show_done else "y", "done")
+      vinit   = colour("g" if self.show_init else "y", "init")
+      vtodo   = colour("g" if self.show_todo else "y", "todo")
+      vlink   = colour("g" if self.show_link else "y", "link")
+      extra = ""
+      if self.show_cmds:
+        extra = "   ║ " + colour("c", "mostrar | ocultar   opções") + "   ║ " + colour("r", "v link") + " para ver os links"
+      print(f"  {vfilter} {vdone}, {vinit}, {vtodo}, {vlink}{extra}" )
+      if self.show_cmds:  
+        ccmds   = colour("r", "cmds") + "                          ║ " + colour("c", "mostrar | ocultar   comandos") + " ║ " + colour("r", "c")
+        vnum    = colour("r", "mark") + " " + colour("g", "<números>") + "                ║ " + colour("c", "marcar  | desmarcar tarefas") + "  ║ " + colour("r", "t 1 3-5")
+        vlet    = colour("r", "fold") + " " + colour("g", "<letras>")  + "                 ║ " + colour("c", "expandir| contrair  quests") + "   ║ " + colour("r", "f a b-c")
+  #      vfold   = colour("r", "<") + " ou " + colour("r", ">") + colour("y", "(expandir todas /contrair todas)")
+        print(f"  {ccmds}" ) 
+        print(f"  {vnum}")
+        print(f"  {vlet}")
 
-      vdone   = colour("c", ":d") + colour("g", "one") + ("[x]" if self.show_done else "[ ]")
-      vinit   = colour("c", ":i") + colour("g", "nit") + ("[x]" if self.show_done else "[ ]")
-      vtodo   = colour("c", ":t") + colour("g", "odo") + ("[x]" if self.show_done else "[ ]") 
-      vlink   = colour("c", ":l") + colour("g", "ink") + ("[x]" if self.show_url else "[ ]")
-      print(f"Filtro: {vdone}, {vinit}, {vtodo}, {vlink}")
+
+        vhelp   = colour("r", "help")  + "                          ║ " + colour("c", "mostrar o help") + "               ║ " + colour("r", "h")
+        vclose  = colour("r", "quit")  + "                          ║ " + colour("c", "sair") + "                         ║ " + colour("r", "q")
+        print(f"  {vhelp}" )
+        print(f"  {vclose}" )
+        print(colour("y", "  Dica: você pode digitar apenas a primeira letra do comando ao invés do comando completo."))
+
       self.show_tasks()
       print("\n" + colour("g", "play $") + " ", end="")
 
       # f fold     <quest>        | c colapsar
       # a archieve <quest>        | a arquivar
       #                           |
-      # t toggle   <task>         | m marcar
+      # m mark   <task>         | m marcar
       # g grade    <task> <value> | g graduar
       #                           |
       # v view     <task>         | v ver
@@ -626,14 +684,16 @@ class Play:
       #                           |
       # q quit                    | s sair
       # s show     <options>      | f filtrar
+      # cmds       
 
 
   def play(self):
     while True:
       self.show_header()
       line = input()
-      if ":q" in line or ":quit" in line:
+      if "quit".startswith(line):
         break
       actions = self.expand_range(line)
       self.take_actions(actions)
+
       self.save_to_json()
