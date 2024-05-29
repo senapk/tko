@@ -20,6 +20,14 @@ class Task:
     self.title = ""
     self.link = ""
 
+  def get_grade(self):
+    values = ["🯰",	"🯱",	"🯲", "🯳", "🯴", "🯵",	"🯶", "🯷", "🯸", "🯹", "🮱"]
+    if self.grade == "":
+      return "🯀"
+    if self.grade == "x":
+      return values[10]
+    return values[int(self.grade)]
+
   def is_done(self):
     return self.grade == "x" or self.grade == "7" or self.grade == "8" or self.grade == "9"
   
@@ -505,7 +513,7 @@ class Play:
 
   def print_task(self, t, max_title, index, term_size):
     vindex = str(index).rjust(2, "0")
-    vdone = "x" if t.is_done() else " "
+    vdone = t.get_grade()
     vlink = ""
     if self.show_link:
       if t.key in t.title:
@@ -516,7 +524,7 @@ class Play:
         vlink = " " + vlink
       else:
         vlink = "\n      " + vlink
-    print(f"  {vindex} [{vdone}] {t.title.strip().ljust(max_title + 1)}{vlink}")
+    print(f"  {vindex} {vdone} {t.title.strip().ljust(max_title + 1)}{vlink}")
 
   def sort_keys(self, keys):
     single = [k for k in keys if len(k) == 1]
