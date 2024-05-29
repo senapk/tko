@@ -2076,8 +2076,10 @@ bash_guide = """
 
 
 class GSym:
-  check = "🗹" #"✅" "☑" "🮱"
-  uncheck = "🗵" # "❎" "☐" "🯀"
+  check = "✓" #"✅" "☑" "🮱"
+  uncheck = "✗" # "❎" "☐" "🯀"
+  vcheck = "@" # "☑"
+  vuncheck = "#" # "☐"
   numbers = ["𝟬","𝟭","𝟮","𝟯","𝟰","𝟱","𝟲","𝟳","𝟴","𝟵"]
   
 
@@ -2183,8 +2185,6 @@ class Task:
     self.line_number = line_num
     self.title = titulo
     self.link = link
-
-    self.process_link(link)
 
     try:
       self.set_key_from_title(titulo, html)
@@ -2479,6 +2479,23 @@ class Play:
       if key in game.tasks:
         game.tasks[key].set_grade(grade)
 
+  def read_link(self, link):
+    if link.endswith(".md"):
+      if link.startswith("https"):
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+          file = f.name
+          cfg = RemoteCfg()
+          cfg.from_url(link)
+          cfg.download_absolute(file)
+          link = file
+          # verify is subprocess succeeds
+      result = subprocess.run(["glow", "-p", link])
+      if result.returncode != 0:
+        print(f"Erro ao abrir o arquivo {link}")
+        print("Verifique se o arquivo está no formato markdown")
+        input("Digite enter para continuar")
+        
+
   def save_to_json(self):
     self.rep.quests = {}
     for q in self.active:
@@ -2591,6 +2608,8 @@ class Play:
       return
     if not self.show_todo and not q.in_progress():
       return
+    if not self.show_init and q.in_progress():
+      return
     print(f"{opening} {space}{entry}{resume} {q.title.ljust(max_title)}")
 
   def print_task(self, t, max_title, letter, term_size):
@@ -2628,6 +2647,8 @@ class Play:
       if not self.show_done and q.is_complete():
         continue
       if not self.show_todo and not q.in_progress():
+        continue
+      if not self.show_init and q.in_progress():
         continue
       for t in q.tasks:
         letter = self.calc_letter(index)
@@ -2696,10 +2717,22 @@ class Play:
       self.show_help()
     elif cmd == "c" or cmd == "cmds":
       self.show_cmds = not self.show_cmds
+    elif cmd == "a" or cmd == "all":
+      self.show_done = True
+      self.show_init = True
+      self.show_todo = True
+    elif cmd == "i" or cmd == "init":
+      self.show_init = True
+      self.show_done = False
+      self.show_todo = False
     elif cmd == "d" or cmd == "done":
-      self.show_done = not self.show_done
+      self.show_done = True
+      self.show_init = False
+      self.show_todo = False
     elif cmd == "t" or cmd == "todo":
-      self.show_todo = not self.show_todo
+      self.show_todo = True
+      self.show_done = False
+      self.show_init = False
     elif cmd == "l" or cmd == "link":
       self.show_link = not self.show_link
     elif self.is_number(cmd):
@@ -2730,6 +2763,11 @@ class Play:
         else:
           print(f"{t} não processado")
           input("Digite enter para continuar")
+    elif cmd == "r" or cmd == "read":
+      if len(actions) > 1:
+        if actions[1] in self.tasks:
+          print(self.tasks[actions[1]].link)
+          self.read_link(self.tasks[actions[1]].link)
     else:
       print(f"{cmd} não processado")
       input("Digite enter para continuar")
@@ -2747,24 +2785,28 @@ class Play:
               colour("g", "Você pode digitar apenas a primeira letra do comando"))
       else:
         print("Digite " + colour("r", "c") + " para " + colour("g", "mostrar") + " a ajuda" )
-      vdone   = (colour("g", GSym.check) if self.show_done else colour("y", GSym.uncheck)) + colour("r", " done")
-      vtodo   = (colour("g", GSym.check) if self.show_todo else colour("y", GSym.uncheck)) + colour("r", " todo")
-      vlink   = (colour("g", GSym.check) if self.show_link else colour("y", GSym.uncheck)) + colour("r", " link")
+      
+      ball    = self.show_done and self.show_init and self.show_todo
+      vall    = (colour("g", GSym.vcheck) if     ball                    else colour("y", GSym.vuncheck)) + colour("r", "all")
+      vdone   = (colour("g", GSym.vcheck) if not ball and self.show_done else colour("y", GSym.vuncheck)) + colour("r", "done")
+      vinit   = (colour("g", GSym.vcheck) if not ball and self.show_init else colour("y", GSym.vuncheck)) + colour("r", "init")
+      vtodo   = (colour("g", GSym.vcheck) if not ball and self.show_todo else colour("y", GSym.vuncheck)) + colour("r", "todo")
+      vlink   = (colour("g", GSym.vcheck) if self.show_link              else colour("y", GSym.vuncheck)) + colour("r", "link")
       extra = ""
       if self.show_cmds:
         numeros = colour("r", "Números") + colour("y", " (expandir       | contrair      )")
         letras  = colour("r", "Letras Maiúsculas")  + colour("y", " (Para marcar | desmarcar tarefas)")
         extra = f"║ {numeros} ║ {letras}"
-      print(f"Filtro {vdone}, {vtodo}, {vlink} {extra}")
+      print(f" {vall} {vdone} {vinit} {vtodo} {vlink} {extra}")
       
-      extra = ""
       if self.show_cmds:  
-        extra = ("    " + colour("r", "help") + colour("y", " (Ajuda)") + ", " + 
-                colour("r", "quit") + " " + colour("y", "(Sair)") + " ║ " +
+        extra = ""
+        sair = colour("y", "Ajuda: ") + colour("r", "help") + "        " + colour("y", "Sair: ") + colour("r", "quit ")
+        extra = ("║ " +
                 colour("r", "<") + " ou " + colour("r", ">") + 
                 colour("y", "  (expandir todas | contrair todas)") +
                 " ║ " + colour("r", "LetrasValor ")  + colour("c", "{Ex: B4, AD9}") + colour("y", " (Para graduar as tarefas)"))
-      print(extra)
+        print(f"{sair}{extra}")
 
       self.show_tasks()
       print("\n" + colour("g", "play $") + " ", end="")
