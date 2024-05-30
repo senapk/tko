@@ -2081,6 +2081,18 @@ class GSym:
   vcheck = "@" # "☑"
   vuncheck = "#" # "☐"
   numbers = ["𝟬","𝟭","𝟮","𝟯","𝟰","𝟱","𝟲","𝟳","𝟴","𝟵"]
+
+def green(text):
+  return colour("g", text)
+
+def red(text):
+  return colour("r", text)
+
+def yellow(text):
+  return colour("y", text)
+
+def cyan(text):
+  return colour("c", text)
   
 
 class Task:
@@ -2096,13 +2108,20 @@ class Task:
 
   def get_grade(self):
     if self.grade == "":
-      return colour("r", GSym.uncheck)
+      return red(GSym.uncheck)
     if self.grade == "x":
-      return colour("g", GSym.check)
+      return green(GSym.check)
     number = int(self.grade)
     if number < 7:
-      return colour("r", GSym.numbers[number])
-    return colour("y", GSym.numbers[number])
+      return red(GSym.numbers[number])
+    return yellow(GSym.numbers[number])
+
+  def get_percent(self):
+    if self.grade == "":
+      return 0
+    if self.grade == "x":
+      return 100
+    return int(self.grade) * 10
 
   def is_done(self):
     return self.grade == "x" or self.grade == "7" or self.grade == "8" or self.grade == "9"
@@ -2111,10 +2130,11 @@ class Task:
     valid = ["", "x", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
     if grade in valid:
       self.grade = grade
+      return
     if grade == "10":
       self.grade = "x"
-    else:
-      print(f"Grade inválida: {grade}")
+      return
+    print(f"Grade inválida: {grade}")
 
   def __str__(self):
     return f"{self.line_number} : {self.key} : {self.grade} : {self.title} : {self.skills} : {self.link}"
@@ -2164,12 +2184,15 @@ class Task:
     self.coding = False
     self.skills = [t[2:] for t in html if t.startswith("s:")]
 
-  def process_link(self, baseurl):
+  def process_link(self, basefile):
     if self.link.startswith("http"):
       return
     if self.link.startswith("./"):
       self.link = self.link[2:]
-    self.link = baseurl + self.link
+
+    # todo trocar / por \\ se windows
+
+    self.link = basefile + self.link
 
   def parse_task(self, line, line_num):
     if line == "":
@@ -2221,11 +2244,27 @@ class Quest:
   def is_complete(self):
     return all([t.is_done() for t in self.tasks])
 
+  def get_percent(self):
+    total = len(self.tasks)
+    if total == 0:
+      return 0
+    done = sum([t.get_percent() for t in self.tasks])
+    return done // total
+
   def in_progress(self):
+    if self.is_complete():
+      return False
     for t in self.tasks:
       if t.grade != "":
         return True
     return False
+  
+  def not_started(self):
+    if self.is_complete():
+      return False
+    if self.in_progress():
+      return False
+    return True
 
   def is_reachable(self, cache):
     if self.key in cache:
@@ -2388,6 +2427,8 @@ class Game:
       else:
         self.load_task(line, index, last_quest)
     self.validate_requirements()
+    for t in self.tasks.values():
+      t.process_link(os.path.dirname(file) + "/")
 
   def get_reachable_quests(self):
     # cache needs to be reseted before each call
@@ -2463,6 +2504,7 @@ class Play:
     self.show_init = "init" in self.rep.view
     self.show_todo = "todo" in self.rep.view
     self.show_cmds = "cmds" in self.rep.view
+    self.show_perc = "perc" in self.rep.view
 
     self.game: Game = game
     self.tasks: Dict[str, Task] = {}  # visible tasks  indexed by upper letter
@@ -2507,6 +2549,8 @@ class Play:
     self.rep.view = []
     if self.show_link:
       self.rep.view.append("link")
+    if self.show_perc:
+      self.rep.view.append("perc")
     if self.show_done:
       self.rep.view.append("done")
     if self.show_init:
@@ -2577,6 +2621,15 @@ class Play:
       max_title = max([len(t) for t in titles])
     return max_title
 
+  def to_show_quest(self, quest: Quest):
+    if quest.is_complete() and not self.show_done:
+      return False
+    if quest.not_started() and not self.show_todo:
+      return False
+    if quest.in_progress() and not self.show_init:
+      return False
+    return True
+
 
   def print_quest(self, entry, q, max_title, term_size):
     resume = ""
@@ -2589,14 +2642,17 @@ class Play:
       done = "*"
     if size > 9:
       size = "*"
-    text = f"[{str(done)}/{str(size)}]"
+    if self.show_perc:
+      text = f" {str(q.get_percent()).rjust(3)}%"
+    else:
+      text = f"[{str(done)}/{str(size)}]"
     space = " " if len(entry) == 1 else ""
     if q.is_complete():
-      resume = colour("g", text)
+      resume = green(text)
     elif q.in_progress():
-      resume = colour("y", text)
+      resume = yellow(text)
     else:
-      resume = colour("r", text)
+      resume = red(text)
     entry = colour("b", entry) if q.type == "main" else colour("m", entry)
     qlink = ""
     if self.show_link:
@@ -2604,28 +2660,29 @@ class Play:
         qlink = " " + colour("c", q.mdlink)
       else:
         qlink = "\n      " + colour("c", q.mdlink)
-    if not self.show_done and q.is_complete():
+    if not self.to_show_quest(q):
       return
-    if not self.show_todo and not q.in_progress():
-      return
-    if not self.show_init and q.in_progress():
-      return
-    print(f"{opening} {space}{entry}{resume} {q.title.ljust(max_title)}")
+    title = q.title
+    if self.show_link and term_size > self.term_limit:
+      title = title.strip().ljust(max_title + 1)
+    print(f"{opening} {space}{entry}{resume} {title}")
 
   def print_task(self, t, max_title, letter, term_size):
     vindex = str(letter).rjust(2, " ")
     vdone = t.get_grade()
     vlink = ""
+    title = t.title
     if self.show_link:
       if t.key in t.title:
-        vlink = colour("r", t.link)
+        vlink = red(t.link)
       else:
-        vlink = colour("y", t.link)
+        vlink = yellow(t.link)
       if term_size > self.term_limit:
+        title = t.title.strip().ljust(max_title + 1)
         vlink = " " + vlink
       else:
         vlink = "\n      " + vlink
-    print(f"      {vindex} {vdone}  {t.title.strip().ljust(max_title + 1)}{vlink}")
+    print(f"    {vindex} {vdone}  {title}{vlink}")
 
   def sort_keys(self, keys):
     single = [k for k in keys if len(str(k)) == 1]
@@ -2644,11 +2701,7 @@ class Play:
       self.print_quest(entry, q, max_title, term_size)
       if q.key not in self.active:
         continue
-      if not self.show_done and q.is_complete():
-        continue
-      if not self.show_todo and not q.in_progress():
-        continue
-      if not self.show_init and q.in_progress():
+      if not self.to_show_quest(q):
         continue
       for t in q.tasks:
         letter = self.calc_letter(index)
@@ -2674,7 +2727,7 @@ class Play:
       return match.group(1), match.group(2)
     return (None, None)
 
-  def expand_range(self, line):
+  def expand_range(self, line) -> List[str]:
     line = line.replace(" - ", "-")
     actions = line.split()
 
@@ -2705,11 +2758,13 @@ class Play:
       return False
     
   def take_actions(self, actions):
+    if len(actions) == 0:
+      return
     cmd = actions[0]
 
-    if cmd == "<":
+    if cmd == "{":
       self.active = set()
-    elif cmd == ">":
+    elif cmd == "}":
       self.update_reachable()
       self.active = set([q.key for q in self.quests.values()])
     elif cmd == "h" or cmd == "help":
@@ -2732,9 +2787,11 @@ class Play:
     elif cmd == "t" or cmd == "todo":
       self.show_todo = True
       self.show_done = False
-      self.show_init = False
+      self.show_init = True
     elif cmd == "l" or cmd == "link":
       self.show_link = not self.show_link
+    elif cmd == "p" or cmd == "perc":
+      self.show_perc = not self.show_perc
     elif self.is_number(cmd):
       for t in actions:
         if self.is_number(t):
@@ -2773,67 +2830,57 @@ class Play:
       input("Digite enter para continuar")
 
   def show_help(self):
-    print("Digite " + colour("r", "t") + " os números ou intervalo das tarefas para (marcar/desmarcar), exemplo:")
-    print(colour("g", "play $ ") + "t 1 3-5")
+    print("Digite " + red("t") + " os números ou intervalo das tarefas para (marcar/desmarcar), exemplo:")
+    print(green("play $ ") + "t 1 3-5")
     input()
 
   def show_header(self):
       self.clear()
-      if self.show_cmds:
-        print("Digite " + colour("r", "c") + " para " + colour("y", "ocultar") + " a ajuda" + " ║ " +
-              colour("g", "Todos os nomes em vermelho são comandos") + "   ║ " +
-              colour("g", "Você pode digitar apenas a primeira letra do comando"))
-      else:
-        print("Digite " + colour("r", "c") + " para " + colour("g", "mostrar") + " a ajuda" )
-      
       ball    = self.show_done and self.show_init and self.show_todo
-      vall    = (colour("g", GSym.vcheck) if     ball                    else colour("y", GSym.vuncheck)) + colour("r", "all")
-      vdone   = (colour("g", GSym.vcheck) if not ball and self.show_done else colour("y", GSym.vuncheck)) + colour("r", "done")
-      vinit   = (colour("g", GSym.vcheck) if not ball and self.show_init else colour("y", GSym.vuncheck)) + colour("r", "init")
-      vtodo   = (colour("g", GSym.vcheck) if not ball and self.show_todo else colour("y", GSym.vuncheck)) + colour("r", "todo")
-      vlink   = (colour("g", GSym.vcheck) if self.show_link              else colour("y", GSym.vuncheck)) + colour("r", "link")
-      extra = ""
-      if self.show_cmds:
-        numeros = colour("r", "Números") + colour("y", " (expandir       | contrair      )")
-        letras  = colour("r", "Letras Maiúsculas")  + colour("y", " (Para marcar | desmarcar tarefas)")
-        extra = f"║ {numeros} ║ {letras}"
-      print(f" {vall} {vdone} {vinit} {vtodo} {vlink} {extra}")
-      
-      if self.show_cmds:  
-        extra = ""
-        sair = colour("y", "Ajuda: ") + colour("r", "help") + "        " + colour("y", "Sair: ") + colour("r", "quit ")
-        extra = ("║ " +
-                colour("r", "<") + " ou " + colour("r", ">") + 
-                colour("y", "  (expandir todas | contrair todas)") +
-                " ║ " + colour("r", "LetrasValor ")  + colour("c", "{Ex: B4, AD9}") + colour("y", " (Para graduar as tarefas)"))
-        print(f"{sair}{extra}")
+      show_ajuda = "Digite " + red("c") + " ou " + red("cmds") + " para " + yellow("ocultar") + " a ajuda "
+      hide_ajuda = "Digite " + red("c") + " ou " + red("cmds") + " para " +  green("mostrar") + " a ajuda" 
+      vall    = (green(GSym.vcheck) if     ball                    else yellow(GSym.vuncheck)) + red("all")
+      vdone   = (green(GSym.vcheck) if not ball and self.show_done else yellow(GSym.vuncheck)) + red("done")
+      vinit   = (green(GSym.vcheck) if not ball and self.show_init else yellow(GSym.vuncheck)) + red("init")
+      vtodo   = (green(GSym.vcheck) if not ball and self.show_todo else yellow(GSym.vuncheck)) + red("todo")
+      vlink   = (green(GSym.vcheck) if self.show_link              else yellow(GSym.vuncheck)) + red("link")
+      vperc   = (green(GSym.vcheck) if self.show_perc              else yellow(GSym.vuncheck)) + red("perc")
+      nomes_verm = green("Os nomes em vermelho são comandos")
+      prime_letr = green("Digite o comando ou a primeira letra")
+      numeros = red("<Número>") + cyan(" {3 5-8} ") + yellow("(expandir/contrair)")
+      sair = red("help ") + red("quit ")
+      todas = red("{") + " ou " + red("}") + yellow(" (expandir/contrair) ") + "TUDO"
+      letras  = red("<Letra>") + cyan("  {A C-E}") + yellow(" (marcar/desmarcar)")
+      graduar =  red("<Letra><Valor>")  + colour("c", " {B0 A9}") + yellow(" (dar nota)")
+      read = red("read <Letra>") + cyan(" {r B}") + yellow(" (ler)")
+      down = red("down <Letra>") + cyan(" {d B}") + yellow(" (baixar)")
+
+      indicadores = f"{vall} {vdone} {vinit} {vtodo} {vlink} {vperc}"
+
+      term_size = shutil.get_terminal_size().columns
+      limit = 75
+      token = "\n" if term_size < limit else " ║ "
+
+      if not self.show_cmds:
+        print(hide_ajuda + token + indicadores)
+      else:
+        print(show_ajuda + token + indicadores)
+        print(nomes_verm + "     " + token + prime_letr)
+        print(numeros + "  " + token + todas)
+        print(letras + "   " + token + graduar)
+        print(down + "           " + token + read + " ║ " + sair)
 
       self.show_tasks()
-      print("\n" + colour("g", "play $") + " ", end="")
-
-      # f fold     <quest>        | c colapsar
-      # a archieve <quest>        | a arquivar
-      #                           |
-      # m mark   <task>         | m marcar
-      # g grade    <task> <value> | g graduar
-      #                           |
-      # v view     <task>         | v ver
-      # d down     <task>         | b baixar
-      #                           |
-      # q quit                    | s sair
-      # s show     <options>      | f filtrar
-      # cmds       
-
+      print("\n" + green("play$") + " ", end="")
 
   def play(self):
     while True:
       self.show_header()
       line = input()
-      if "quit".startswith(line):
+      if line != "" and "quit".startswith(line):
         break
       actions = self.expand_range(line)
       self.take_actions(actions)
-
       self.save_to_json()
 
 __version__ = "0.4.3"
