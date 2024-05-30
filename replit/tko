@@ -2643,9 +2643,11 @@ class Play:
     if size > 9:
       size = "*"
     if self.show_perc:
-      text = f" {str(q.get_percent()).rjust(3)}%"
+      text = f"{str(q.get_percent()).rjust(2)}%"
+      if q.get_percent() == 100:
+        text = GSym.check * 3
     else:
-      text = f"[{str(done)}/{str(size)}]"
+      text = f"{str(done)}/{str(size)}"
     space = " " if len(entry) == 1 else ""
     if q.is_complete():
       resume = green(text)
@@ -2665,7 +2667,7 @@ class Play:
     title = q.title
     if self.show_link and term_size > self.term_limit:
       title = title.strip().ljust(max_title + 1)
-    print(f"{opening} {space}{entry}{resume} {title}")
+    print(f"{space}{entry} {opening} {resume} {title}")
 
   def print_task(self, t, max_title, letter, term_size):
     vindex = str(letter).rjust(2, " ")
@@ -2681,8 +2683,8 @@ class Play:
         title = t.title.strip().ljust(max_title + 1)
         vlink = " " + vlink
       else:
-        vlink = "\n      " + vlink
-    print(f"    {vindex} {vdone}  {title}{vlink}")
+        vlink = "\n   " + vlink
+    print(f"  {vindex}  {vdone}  {title}{vlink}")
 
   def sort_keys(self, keys):
     single = [k for k in keys if len(str(k)) == 1]
@@ -2762,9 +2764,9 @@ class Play:
       return
     cmd = actions[0]
 
-    if cmd == "{":
+    if cmd == "<":
       self.active = set()
-    elif cmd == "}":
+    elif cmd == ">":
       self.update_reachable()
       self.active = set([q.key for q in self.quests.values()])
     elif cmd == "h" or cmd == "help":
@@ -2849,7 +2851,7 @@ class Play:
       prime_letr = green("Digite o comando ou a primeira letra")
       numeros = red("<Número>") + cyan(" {3 5-8} ") + yellow("(expandir/contrair)")
       sair = red("help ") + red("quit ")
-      todas = red("{") + " ou " + red("}") + yellow(" (expandir/contrair) ") + "TUDO"
+      todas = red("<") + " ou " + red(">") + yellow(" (expandir/contrair) ") + "TUDO"
       letras  = red("<Letra>") + cyan("  {A C-E}") + yellow(" (marcar/desmarcar)")
       graduar =  red("<Letra><Valor>")  + colour("c", " {B0 A9}") + yellow(" (dar nota)")
       read = red("read <Letra>") + cyan(" {r B}") + yellow(" (ler)")
