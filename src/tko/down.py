@@ -110,11 +110,11 @@ class Down:
         return destiny
 
     @staticmethod
-    def entry_unpack(course: str, activity: str, language: Optional[str]) -> None:
+    def entry_unpack(course: str, activity: str, language: Optional[str]) -> bool:
         course_url = SettingsParser().get_repository(course)
         if course_url is None:
             print("fail: course", course, "not found")
-            return
+            return False
         
         index_url = course_url + activity + "/"
         cache_url = index_url + ".cache/"
@@ -123,15 +123,14 @@ class Down:
         # downloading Readme
         try:
             destiny = Down.create_problem_folder(course, activity)
-            print("debug", cache_url)
+            #print("debug", cache_url)
             [_readme_path, mapi_path] = Down.down_problem_def(destiny, cache_url)
         except urllib.error.HTTPError:
             print("fail: activity not found in course")
             # verifi if destiny folder is empty and remove it
             if len(os.listdir(destiny)) == 0:
                 os.rmdir(destiny)
-
-            return
+            return False
 
         with open(mapi_path) as f:
             loaded_json = json.load(f)
@@ -173,6 +172,7 @@ class Down:
         
         if ask_ext:
             print("\nYou can choose default extension with command\n$ tko config -l <extension>")
+        return True
 
         # download all files in folder with the same extension or compatible
         # try:

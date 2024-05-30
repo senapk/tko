@@ -150,7 +150,7 @@ class Main:
             file = repo.get_file()
             game.parse_file(file)
             #passsing a lambda function to the play class to save the settings
-            play = Play(game, repo, lambda: sp.save_settings())
+            play = Play(game, repo, args.repo, lambda: sp.save_settings())
             play.play()
 
     @staticmethod

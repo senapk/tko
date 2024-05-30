@@ -9,6 +9,7 @@ import shutil
 from .format import colour
 from .settings import RepoSettings as RepoSettings
 from .remote import RemoteCfg
+from .down import Down
 import tempfile
 
 class GSym:
@@ -432,8 +433,9 @@ class Game:
 
 class Play:
 
-  def __init__(self, game: Game, rep: RepoSettings, fnsave):
+  def __init__(self, game: Game, rep: RepoSettings, repo_alias: str, fnsave):
     self.fnsave = fnsave
+    self.repo_alias = repo_alias
     self.rep = rep
     self.show_link = "link" in self.rep.view
     self.show_done = "done" in self.rep.view
@@ -472,7 +474,20 @@ class Play:
         print(f"Erro ao abrir o arquivo {link}")
         print("Verifique se o arquivo está no formato markdown")
         input("Digite enter para continuar")
-        
+  
+  def down_task(self, task: Task):
+    if task.key in task.title:
+      print(f"Tarefa de código {task.key}")
+      print(f"Baixando com o comando " + red(f"tko down {self.repo_alias} {task.key}"))
+      result = Down.entry_unpack(self.repo_alias, task.key, None)
+      # result = subprocess.run(["tko", "down", self.repo_alias, task.key])
+      if result:
+        print(f"Tarefa baixada na pasta " + red(f"{os.getcwd()}/{task.key}/Readme.md"))
+    else:
+      print(f"Essa não é uma tarefa de código")
+    input("Digite enter para continuar")
+
+
 
   def save_to_json(self):
     self.rep.quests = {}
@@ -579,9 +594,11 @@ class Play:
     if size > 9:
       size = "*"
     if self.show_perc:
-      text = f" {str(q.get_percent()).rjust(3)}%"
+      text = f"{str(q.get_percent()).rjust(2)}%"
+      if q.get_percent() == 100:
+        text = GSym.check * 3
     else:
-      text = f"[{str(done)}/{str(size)}]"
+      text = f"{str(done)}/{str(size)}"
     space = " " if len(entry) == 1 else ""
     if q.is_complete():
       resume = green(text)
@@ -601,7 +618,7 @@ class Play:
     title = q.title
     if self.show_link and term_size > self.term_limit:
       title = title.strip().ljust(max_title + 1)
-    print(f"{opening} {space}{entry}{resume} {title}")
+    print(f"{space}{entry} {opening} {resume} {title}")
 
   def print_task(self, t, max_title, letter, term_size):
     vindex = str(letter).rjust(2, " ")
@@ -617,8 +634,8 @@ class Play:
         title = t.title.strip().ljust(max_title + 1)
         vlink = " " + vlink
       else:
-        vlink = "\n      " + vlink
-    print(f"    {vindex} {vdone}  {title}{vlink}")
+        vlink = "\n   " + vlink
+    print(f"  {vindex}  {vdone}  {title}{vlink}")
 
   def sort_keys(self, keys):
     single = [k for k in keys if len(str(k)) == 1]
@@ -698,9 +715,9 @@ class Play:
       return
     cmd = actions[0]
 
-    if cmd == "{":
+    if cmd == "<":
       self.active = set()
-    elif cmd == "}":
+    elif cmd == ">":
       self.update_reachable()
       self.active = set([q.key for q in self.quests.values()])
     elif cmd == "h" or cmd == "help":
@@ -728,6 +745,13 @@ class Play:
       self.show_link = not self.show_link
     elif cmd == "p" or cmd == "perc":
       self.show_perc = not self.show_perc
+    elif cmd == "d" or cmd == "down":
+      for t in actions[1:]:
+        if t in self.tasks:
+          self.down_task(self.tasks[t])
+        else:
+          print(f"Tarefa {t} não encontrada")
+          input()
     elif self.is_number(cmd):
       for t in actions:
         if self.is_number(t):
@@ -759,7 +783,7 @@ class Play:
     elif cmd == "r" or cmd == "read":
       if len(actions) > 1:
         if actions[1] in self.tasks:
-          print(self.tasks[actions[1]].link)
+          # print(self.tasks[actions[1]].link)
           self.read_link(self.tasks[actions[1]].link)
     else:
       print(f"{cmd} não processado")
@@ -785,7 +809,7 @@ class Play:
       prime_letr = green("Digite o comando ou a primeira letra")
       numeros = red("<Número>") + cyan(" {3 5-8} ") + yellow("(expandir/contrair)")
       sair = red("help ") + red("quit ")
-      todas = red("{") + " ou " + red("}") + yellow(" (expandir/contrair) ") + "TUDO"
+      todas = red("<") + " ou " + red(">") + yellow(" (expandir/contrair) ") + "TUDO"
       letras  = red("<Letra>") + cyan("  {A C-E}") + yellow(" (marcar/desmarcar)")
       graduar =  red("<Letra><Valor>")  + colour("c", " {B0 A9}") + yellow(" (dar nota)")
       read = red("read <Letra>") + cyan(" {r B}") + yellow(" (ler)")

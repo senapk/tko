@@ -173,6 +173,6 @@ class SettingsParser:
                 cfg.file = ""
                 git_raw = "https://raw.githubusercontent.com"
                 url = f"{git_raw}/{cfg.user}/{cfg.repo}/{cfg.branch}/base/"
-                print("debug:", url)
+                #print("debug:", url)
                 return url
 
