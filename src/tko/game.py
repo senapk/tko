@@ -15,8 +15,8 @@ import tempfile
 class GSym:
   check = "✓" #"✅" "☑" "🮱"
   uncheck = "✗" # "❎" "☐" "🯀"
-  vcheck = "@" # "☑"
-  vuncheck = "#" # "☐"
+  vcheck = "☑" # "@" # "☑"
+  vuncheck = "☐" # "#" # "☐"
   numbers = ["𝟬","𝟭","𝟮","𝟯","𝟰","𝟱","𝟲","𝟳","𝟴","𝟵"]
 
 def green(text):
@@ -67,6 +67,9 @@ class Task:
     valid = ["", "x", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
     if grade in valid:
       self.grade = grade
+      return
+    if grade == "0":
+      self.grade = ""
       return
     if grade == "10":
       self.grade = "x"
@@ -255,12 +258,10 @@ class Quest:
       print(e)
       return False
 
-
 def rm_comments(title: str) -> str:
   if "<!--" in title and "-->" in title:
     title = title.split("<!--")[0] + title.split("-->")[1]
   return title
-
 
 def get_md_link(title: str) -> str:
   if title is None:
@@ -429,8 +430,6 @@ class Game:
     subprocess.run(["plantuml", output + ".puml", "-tsvg"])
 
 
-
-
 class Play:
 
   def __init__(self, game: Game, rep: RepoSettings, repo_alias: str, fnsave):
@@ -486,8 +485,6 @@ class Play:
     else:
       print(f"Essa não é uma tarefa de código")
     input("Digite enter para continuar")
-
-
 
   def save_to_json(self):
     self.rep.quests = {}
@@ -556,7 +553,6 @@ class Play:
     #     for q in self.quests.values():
     #         self.active.add(q.key)
 
-
   def calculate_pad(self):
     titles = []
     keys = self.quests.keys()
@@ -581,7 +577,6 @@ class Play:
       return False
     return True
 
-
   def print_quest(self, entry, q, max_title, term_size):
     resume = ""
     opening = "➡️"
@@ -593,14 +588,16 @@ class Play:
       done = "*"
     if size > 9:
       size = "*"
-    if self.show_perc:
+    if self.show_perc: 
       text = f"{str(q.get_percent()).rjust(2)}%"
       if q.get_percent() == 100:
         text = GSym.check * 3
     else:
       text = f"{str(done)}/{str(size)}"
     space = " " if len(entry) == 1 else ""
-    if q.is_complete():
+    if q.get_percent() == 100:
+      resume = cyan(text)
+    elif q.is_complete():
       resume = green(text)
     elif q.in_progress():
       resume = yellow(text)
@@ -709,7 +706,7 @@ class Play:
       return True
     except ValueError:
       return False
-    
+  
   def take_actions(self, actions):
     if len(actions) == 0:
       return
@@ -720,20 +717,20 @@ class Play:
     elif cmd == ">":
       self.update_reachable()
       self.active = set([q.key for q in self.quests.values()])
-    elif cmd == "h" or cmd == "help":
+    elif cmd == "m" or cmd == "man":
       self.clear()
       self.show_help()
-    elif cmd == "c" or cmd == "cmds":
+    elif cmd == "h" or cmd == "help":
       self.show_cmds = not self.show_cmds
     elif cmd == "a" or cmd == "all":
       self.show_done = True
       self.show_init = True
       self.show_todo = True
-    elif cmd == "i" or cmd == "init":
+    elif cmd == "s" or cmd == "started":
       self.show_init = True
       self.show_done = False
       self.show_todo = False
-    elif cmd == "d" or cmd == "done":
+    elif cmd == "c" or cmd == "complete":
       self.show_done = True
       self.show_init = False
       self.show_todo = False
@@ -743,7 +740,7 @@ class Play:
       self.show_init = True
     elif cmd == "l" or cmd == "link":
       self.show_link = not self.show_link
-    elif cmd == "p" or cmd == "perc":
+    elif cmd == "p" or cmd == "percent":
       self.show_perc = not self.show_perc
     elif cmd == "d" or cmd == "down":
       for t in actions[1:]:
@@ -797,18 +794,18 @@ class Play:
   def show_header(self):
       self.clear()
       ball    = self.show_done and self.show_init and self.show_todo
-      show_ajuda = "Digite " + red("c") + " ou " + red("cmds") + " para " + yellow("ocultar") + " a ajuda "
-      hide_ajuda = "Digite " + red("c") + " ou " + red("cmds") + " para " +  green("mostrar") + " a ajuda" 
-      vall    = (green(GSym.vcheck) if     ball                    else yellow(GSym.vuncheck)) + red("all")
-      vdone   = (green(GSym.vcheck) if not ball and self.show_done else yellow(GSym.vuncheck)) + red("done")
-      vinit   = (green(GSym.vcheck) if not ball and self.show_init else yellow(GSym.vuncheck)) + red("init")
-      vtodo   = (green(GSym.vcheck) if not ball and self.show_todo else yellow(GSym.vuncheck)) + red("todo")
-      vlink   = (green(GSym.vcheck) if self.show_link              else yellow(GSym.vuncheck)) + red("link")
-      vperc   = (green(GSym.vcheck) if self.show_perc              else yellow(GSym.vuncheck)) + red("perc")
+      show_ajuda = "Digite " + red("h") + " ou " + red("help") + " para " + yellow("ocultar") + " a ajuda "
+      hide_ajuda = "Digite " + red("h") + " ou " + red("help") + " para " +  green("mostrar") + " a ajuda" 
+      vall    = red("all")      + (green(GSym.vcheck) if     ball                    else yellow(GSym.vuncheck))
+      vdone   = red("complete") + (green(GSym.vcheck) if not ball and self.show_done else yellow(GSym.vuncheck))
+      vinit   = red("started")  + (green(GSym.vcheck) if not ball and self.show_init else yellow(GSym.vuncheck))
+      vtodo   = red("todo")     + (green(GSym.vcheck) if not ball and self.show_todo else yellow(GSym.vuncheck))
+      vlink   = red("link")     + (green(GSym.vcheck) if self.show_link              else yellow(GSym.vuncheck))
+      vperc   = red("percent")  + (green(GSym.vcheck) if self.show_perc              else yellow(GSym.vuncheck)) 
       nomes_verm = green("Os nomes em vermelho são comandos")
-      prime_letr = green("Digite o comando ou a primeira letra")
+      prime_letr = green("Digite o comando ou só a primeira letra")
       numeros = red("<Número>") + cyan(" {3 5-8} ") + yellow("(expandir/contrair)")
-      sair = red("help ") + red("quit ")
+      sair = red("manual ") + red("quit ")
       todas = red("<") + " ou " + red(">") + yellow(" (expandir/contrair) ") + "TUDO"
       letras  = red("<Letra>") + cyan("  {A C-E}") + yellow(" (marcar/desmarcar)")
       graduar =  red("<Letra><Valor>")  + colour("c", " {B0 A9}") + yellow(" (dar nota)")
@@ -818,8 +815,8 @@ class Play:
       indicadores = f"{vall} {vdone} {vinit} {vtodo} {vlink} {vperc}"
 
       term_size = shutil.get_terminal_size().columns
-      limit = 75
-      token = "\n" if term_size < limit else " ║ "
+      minimo = 86
+      token = "\n" if term_size < minimo else " ║ "
 
       if not self.show_cmds:
         print(hide_ajuda + token + indicadores)
