@@ -5,7 +5,7 @@ import subprocess
 import re
 from typing import Optional, Dict, List
 import os
-from .format import colour
+from .format import colour, GSym, red, green, yellow
 from .settings import RepoSettings as RepoSettings
   
 
@@ -94,7 +94,7 @@ class Task:
     self.coding = True
 
   # non coding tasks
-  def set_key_from_html(self, titulo, html):
+  def set_key_from_html(self, html):
     html_key = [t for t in html if t.startswith("@")][0]
     html_key = html_key.split("@")[1]
     self.key = html_key
@@ -132,7 +132,7 @@ class Task:
     except:
       pass
     try:
-      self.set_key_from_html(titulo, html)
+      self.set_key_from_html(html)
       return True
     except:
       pass

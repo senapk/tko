@@ -378,7 +378,7 @@ class Play:
       self.clear()
       ball    = self.show_done and self.show_init and self.show_todo
       show_ajuda = "Digite " + red("h") + " ou " + red("help") + " para " + yellow("ocultar") + " a ajuda "
-      hide_ajuda = "Digite " + red("h") + " ou " + red("help") + " para " +  green("mostrar") + " a ajuda" 
+      hide_ajuda = "Digite " + red("h") + " ou " + red("help") + " para " +  green("mostrar") + " a ajuda " 
       vall    = red("all")      + (green(GSym.vcheck) if     ball                    else yellow(GSym.vuncheck))
       vdone   = red("complete") + (green(GSym.vcheck) if not ball and self.show_done else yellow(GSym.vuncheck))
       vinit   = red("started")  + (green(GSym.vcheck) if not ball and self.show_init else yellow(GSym.vuncheck))
