@@ -42,12 +42,14 @@ class Title:
         return title
 
 class RemoteCfg:
-    def __init__(self):
+    def __init__(self, url: Optional[str] = None):
         self.user = ""
         self.repo = ""
         self.branch = ""
         self.folder = ""
         self.file = ""
+        if url is not None:
+            self.from_url(url)
 
     def from_url(self, url: str):
         if url.startswith("https://raw.githubusercontent.com/"):
@@ -202,15 +204,30 @@ class RepoSettings:
         self.view: List[str] = ["done", "init", "link", "todo"]
 
     def get_file(self) -> str:
-        if self.file == "" or os.path.exists(self.file) == False:
-            if self.url != "":
-                # download file from url to tempfile
+        # arquivo existe e é local
+        if self.file != "" and os.path.exists(self.file) and self.url == "":
+            return self.file
+        
+        # arquivo não existe e é remoto
+        if self.url != "" and (self.file == "" or not os.path.exists(self.file)):
                 with tempfile.NamedTemporaryFile(delete=False) as f:
-                    self.file = f.name
-                    cfg = RemoteCfg()
-                    cfg.from_url(self.url)
-                    cfg.download_absolute(self.file)
-        return self.file
+                    filename = f.name
+                    cfg = RemoteCfg(self.url)
+                    cfg.download_absolute(filename)
+                return filename
+
+        # arquivo é local com url remota
+        if self.file != "" and os.path.exists(self.file) and self.url != "":
+            content = open(self.file).read()
+            content = Absolute.relative_to_absolute(content, RemoteCfg(self.url))
+            print(content)
+            with tempfile.NamedTemporaryFile(delete=False) as f:
+                filename = f.name
+                f.write(content.encode("utf-8"))
+            return filename
+
+        raise ValueError("fail: file not found or invalid settings to download repository file")
+        
 
     def set_file(self, file: str):
         self.file = os.path.abspath(file)
@@ -1085,23 +1102,18 @@ class Down:
     def download_problem(course: str, activity: str, language: Optional[str]) -> bool:
         sp = SettingsParser()
         settings = sp.load_settings()
-        reps = settings.reps
-        if course not in reps:
-            print("fail: course", course, "not found")
-            return False
-        if reps[course].url == "":
-            print("fail: course", course, "is not a remote course")
-            return False
-        rep = reps[course]
+        rep = settings.get_repo(course)
+        # if rep.url == "":
+        #     print("fail: course", course, "is not a remote course")
+        #     return False
         file = rep.get_file()
-        game = Game()
-        game.parse_file(file)
-        if not activity in game.tasks:
-            print("fail: activity not found in course definition")
-            return False
-    
-        item = game.tasks[activity]
-        cache_url = os.path.dirname(item.link) + "/.cache/"
+        item = Game(file).get_task(activity)
+        if not item.link.startswith("http"):
+            print("fail: link for activity is not a remote link")
+            return
+        cfg = RemoteCfg(item.link)
+        cache_url = os.path.dirname(cfg.get_raw_url()) + "/.cache/"
+        print("debug", cache_url)
     
         # rep = reps[course]
         # cfg = RemoteCfg()
@@ -1138,11 +1150,11 @@ class Down:
                 ask_ext = True
         
         Down.__unpack_json(loaded_json, destiny, language)
-        Down.__download_drafts(loaded_json, language, destiny, cache_url, ask_ext)
+        Down.__download_drafts(loaded_json, destiny, language, cache_url, ask_ext)
         return True
 
     @staticmethod
-    def __download_drafts(loaded_json, language, destiny, cache_url, ask_ext):
+    def __download_drafts(loaded_json, destiny, language, cache_url, ask_ext):
         if len(loaded_json["required"]) == 1:  # you already have the students file
             return
 
@@ -2335,9 +2347,16 @@ def get_md_link(title: str) -> str:
 
 class Game:
 
-  def __init__(self):
+  def __init__(self, file: Optional[str] = None):
     self.quests: Dict[str, Quest] = {} # quests indexed by quest key
     self.tasks: Dict[str, Task] = {}   # tasks  indexed by task key
+    if file is not None:
+      self.parse_file(file)
+
+  def get_task(self, key: str) -> Task:
+    if key in self.tasks:
+      return self.tasks[key]
+    raise Exception(f"fail: task {key} not found in course definition")
 
   def load_quest(self, line, line_num):
     quest = Quest()

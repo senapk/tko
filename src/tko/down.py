@@ -6,6 +6,7 @@ import json
 
 from .settings import SettingsParser
 from .game import Game
+from .remote import RemoteCfg
 
 class Down:
 
@@ -115,23 +116,18 @@ class Down:
     def download_problem(course: str, activity: str, language: Optional[str]) -> bool:
         sp = SettingsParser()
         settings = sp.load_settings()
-        reps = settings.reps
-        if course not in reps:
-            print("fail: course", course, "not found")
-            return False
-        if reps[course].url == "":
-            print("fail: course", course, "is not a remote course")
-            return False
-        rep = reps[course]
+        rep = settings.get_repo(course)
+        # if rep.url == "":
+        #     print("fail: course", course, "is not a remote course")
+        #     return False
         file = rep.get_file()
-        game = Game()
-        game.parse_file(file)
-        if not activity in game.tasks:
-            print("fail: activity not found in course definition")
-            return False
-    
-        item = game.tasks[activity]
-        cache_url = os.path.dirname(item.link) + "/.cache/"
+        item = Game(file).get_task(activity)
+        if not item.link.startswith("http"):
+            print("fail: link for activity is not a remote link")
+            return
+        cfg = RemoteCfg(item.link)
+        cache_url = os.path.dirname(cfg.get_raw_url()) + "/.cache/"
+        print("debug", cache_url)
     
         # rep = reps[course]
         # cfg = RemoteCfg()
@@ -168,11 +164,11 @@ class Down:
                 ask_ext = True
         
         Down.__unpack_json(loaded_json, destiny, language)
-        Down.__download_drafts(loaded_json, language, destiny, cache_url, ask_ext)
+        Down.__download_drafts(loaded_json, destiny, language, cache_url, ask_ext)
         return True
 
     @staticmethod
-    def __download_drafts(loaded_json, language, destiny, cache_url, ask_ext):
+    def __download_drafts(loaded_json, destiny, language, cache_url, ask_ext):
         if len(loaded_json["required"]) == 1:  # you already have the students file
             return
 

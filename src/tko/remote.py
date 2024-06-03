@@ -18,12 +18,14 @@ class Title:
         return title
 
 class RemoteCfg:
-    def __init__(self):
+    def __init__(self, url: Optional[str] = None):
         self.user = ""
         self.repo = ""
         self.branch = ""
         self.folder = ""
         self.file = ""
+        if url is not None:
+            self.from_url(url)
 
     def from_url(self, url: str):
         if url.startswith("https://raw.githubusercontent.com/"):

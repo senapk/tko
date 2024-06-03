@@ -3,7 +3,7 @@ import json
 import appdirs
 from typing import Optional, List, Dict, Any
 import tempfile
-from .remote import RemoteCfg
+from .remote import RemoteCfg, Absolute
 
 class RepoSettings:
     def __init__(self):
@@ -15,15 +15,30 @@ class RepoSettings:
         self.view: List[str] = ["done", "init", "link", "todo"]
 
     def get_file(self) -> str:
-        if self.file == "" or os.path.exists(self.file) == False:
-            if self.url != "":
-                # download file from url to tempfile
+        # arquivo existe e é local
+        if self.file != "" and os.path.exists(self.file) and self.url == "":
+            return self.file
+        
+        # arquivo não existe e é remoto
+        if self.url != "" and (self.file == "" or not os.path.exists(self.file)):
                 with tempfile.NamedTemporaryFile(delete=False) as f:
-                    self.file = f.name
-                    cfg = RemoteCfg()
-                    cfg.from_url(self.url)
-                    cfg.download_absolute(self.file)
-        return self.file
+                    filename = f.name
+                    cfg = RemoteCfg(self.url)
+                    cfg.download_absolute(filename)
+                return filename
+
+        # arquivo é local com url remota
+        if self.file != "" and os.path.exists(self.file) and self.url != "":
+            content = open(self.file).read()
+            content = Absolute.relative_to_absolute(content, RemoteCfg(self.url))
+            print(content)
+            with tempfile.NamedTemporaryFile(delete=False) as f:
+                filename = f.name
+                f.write(content.encode("utf-8"))
+            return filename
+
+        raise ValueError("fail: file not found or invalid settings to download repository file")
+        
 
     def set_file(self, file: str):
         self.file = os.path.abspath(file)

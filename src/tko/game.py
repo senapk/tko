@@ -256,9 +256,16 @@ def get_md_link(title: str) -> str:
 
 class Game:
 
-  def __init__(self):
+  def __init__(self, file: Optional[str] = None):
     self.quests: Dict[str, Quest] = {} # quests indexed by quest key
     self.tasks: Dict[str, Task] = {}   # tasks  indexed by task key
+    if file is not None:
+      self.parse_file(file)
+
+  def get_task(self, key: str) -> Task:
+    if key in self.tasks:
+      return self.tasks[key]
+    raise Exception(f"fail: task {key} not found in course definition")
 
   def load_quest(self, line, line_num):
     quest = Quest()
