@@ -31,7 +31,6 @@ class RepoSettings:
         if self.file != "" and os.path.exists(self.file) and self.url != "":
             content = open(self.file).read()
             content = Absolute.relative_to_absolute(content, RemoteCfg(self.url))
-            print(content)
             with tempfile.NamedTemporaryFile(delete=False) as f:
                 filename = f.name
                 f.write(content.encode("utf-8"))

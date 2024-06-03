@@ -257,6 +257,9 @@ def get_md_link(title: str) -> str:
 class Game:
 
   def __init__(self, file: Optional[str] = None):
+    self.clusters: Dict[str, List[Quest]] = {} # quests indexed by group
+    self.clusters[""] = []
+    self.cluster_order: List[str] = [""] # order of clusters
     self.quests: Dict[str, Quest] = {} # quests indexed by quest key
     self.tasks: Dict[str, Task] = {}   # tasks  indexed by task key
     if file is not None:
@@ -346,6 +349,10 @@ class Game:
       found, quest = self.load_quest(line, index)
       if found:
         last_quest = quest
+        if quest.group not in self.clusters:
+          self.clusters[quest.group] = []
+          self.cluster_order.append(quest.group)
+        self.clusters[quest.group].append(quest)
       else:
         self.load_task(line, index, last_quest)
     self.validate_requirements()
@@ -360,7 +367,9 @@ class Game:
   def show_quests(self):
     print( f"Quests de Entrada: {[q.key for q in self.quests.values() if len(q.requires) == 0]}" )
     print(f"Total de quests: {len(self.quests)}")
-    print("\n".join([str(q) for q in self.quests.values()]))
+    print(f"Total de tarefas: {len(self.tasks)}")
+    print(f"Total de clusters: {len(self.clusters)}")
+    # print("\n".join([str(q) for q in self.quests.values()]))
 
   def generate_graph(self, output):
     saida = []

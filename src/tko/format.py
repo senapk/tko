@@ -36,7 +36,7 @@ class Color:
 
   @staticmethod
   def remove_colors(text: str) -> str:
-    for color in Color.__map.values():
+    for color in Color.map.values():
       text = text.replace(color, '')
     return text
 

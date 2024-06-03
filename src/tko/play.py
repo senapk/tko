@@ -4,7 +4,7 @@ from .game import Game, Task, Quest
 from .settings import RepoSettings
 from .remote import RemoteCfg
 from .down import Down
-from .format import GSym, colour, red, green, yellow, cyan
+from .format import GSym, colour, red, green, yellow, cyan, Color
 import subprocess
 import shutil
 import tempfile
@@ -12,8 +12,8 @@ import os
 import re
 
 
-
 class Play:
+  cluster_prefix = "'"
 
   def __init__(self, game: Game, rep: RepoSettings, repo_alias: str, fnsave):
     self.fnsave = fnsave
@@ -25,8 +25,16 @@ class Play:
     self.show_todo = "todo" in self.rep.view
     self.show_cmds = "cmds" in self.rep.view
     self.show_perc = "perc" in self.rep.view
+    self.show_join = "join" in self.rep.view
+    
+    if not self.show_done and not self.show_init and not self.show_todo:
+      self.show_done = True
+      self.show_init = True
+      self.show_todo = True
 
     self.game: Game = game
+
+    self.cluster_view: Dict[str, str] = {}
     self.tasks: Dict[str, Task] = {}  # visible tasks  indexed by upper letter
     self.quests: Dict[str, Quest] = {} # visible quests indexed by number
     self.active: List[str] = [] # expanded quests
@@ -82,6 +90,8 @@ class Play:
       self.rep.view.append("link")
     if self.show_perc:
       self.rep.view.append("perc")
+    if self.show_join:
+      self.rep.view.append("join")
     if self.show_done:
       self.rep.view.append("done")
     if self.show_init:
@@ -130,7 +140,7 @@ class Play:
           self.quests[str(index)] = q
           index += 1
 
-    self.active = set([k for k in self.active if k in reach_keys])
+    #self.active = set([k for k in self.active if k in reach_keys])
 
     # if len(self.quests.values()) == 1:
     #     for q in self.quests.values():
@@ -160,7 +170,7 @@ class Play:
       return False
     return True
 
-  def print_quest(self, entry, q, max_title, term_size):
+  def str_quest(self, entry, q, max_title, term_size) -> str:
     resume = ""
     opening = "➡️"
     if q.key in self.active:
@@ -194,13 +204,13 @@ class Play:
       else:
         qlink = "\n      " + colour("c", q.mdlink)
     if not self.to_show_quest(q):
-      return
+      return ""
     title = q.title
     if self.show_link and term_size > self.term_limit:
       title = title.strip().ljust(max_title + 1)
-    print(f"{space}{entry} {opening} {resume} {title}")
+    return f"{space}{entry} {opening} {resume} {title}"
 
-  def print_task(self, t, max_title, letter, term_size):
+  def str_task(self, t, max_title, letter, term_size) -> str:
     vindex = str(letter).rjust(2, " ")
     vdone = t.get_grade()
     vlink = ""
@@ -215,32 +225,69 @@ class Play:
         vlink = " " + vlink
       else:
         vlink = "\n   " + vlink
-    print(f"  {vindex}  {vdone}  {title}{vlink}")
+    return f"  {vindex}  {vdone}  {title}{vlink}"
 
   def sort_keys(self, keys):
     single = [k for k in keys if len(str(k)) == 1]
     double = [k for k in keys if len(str(k)) == 2]
     return sorted(single) + sorted(double)
 
-  def show_tasks(self):
+  def print_cluster(self, cluster_key, cluster_name: str, lines: List[str]):
+    opening = "➡️"
+    if cluster_name in self.active:
+      opening = "⬇️"
+    intro = [Color.remove_colors(l).strip().split(" ")[0] for l in lines]
+    quests = [v for v in intro if v.isdigit()]
+    total = len(quests)
+    init = yellow(str(len([v for v in quests if self.quests[v].in_progress()])))
+    done = green(str(len([v for v in quests if self.quests[v].is_complete()])))
+    todo = red(str(len([v for v in quests if self.quests[v].not_started()])))
+    
+    if total > 0:
+      print(f"{yellow(cluster_key)} {opening} {done}/{init}/{todo} {cluster_name}")
+      if cluster_name in self.active:
+        for line in lines:
+          print("  " + line)
+    
+  def show_options(self):
     term_size = shutil.get_terminal_size().columns
     self.tasks = {}
-
     self.update_reachable()
     max_title = self.calculate_pad()
     index = 0
+
+    clusters: Dict[str, List[str]] = {}
+
     for entry in self.sort_keys(self.quests.keys()):
+      quest_output: List[str] = []
       q = self.quests[entry]
-      self.print_quest(entry, q, max_title, term_size)
-      if q.key not in self.active:
-        continue
-      if not self.to_show_quest(q):
-        continue
-      for t in q.tasks:
-        letter = self.calc_letter(index)
-        self.print_task(t, max_title, letter, term_size)
-        index += 1
-        self.tasks[letter] = t
+      quest_output.append(self.str_quest(entry, q, max_title, term_size))
+      if q.key in self.active and self.to_show_quest(q):
+        for t in q.tasks:
+          letter = self.calc_letter(index)
+          quest_output.append(self.str_task(t, max_title, letter, term_size))
+          index += 1
+          self.tasks[letter] = t
+      
+      if self.show_join:
+        if len(quest_output) > 0:
+          if q.group not in clusters:
+            clusters[q.group] = []
+          clusters[q.group] += [line for line in quest_output if line != ""]
+      else:
+        for line in quest_output:
+          if line != "":
+            print(line)
+
+    if self.show_join:
+      cluster_index = 1
+      for group in self.game.cluster_order:
+        if group in clusters.keys():
+          key = Play.cluster_prefix + str(cluster_index)
+          self.cluster_view[key] = group
+          self.print_cluster(key, group, clusters[group])
+          cluster_index += 1
+    return
 
   @staticmethod
   def get_num_num(s):
@@ -296,10 +343,28 @@ class Play:
     cmd = actions[0]
 
     if cmd == "<":
-      self.active = set()
+      all_tasks_closed = True
+      for v in self.active:
+        if v not in self.cluster_view.values():
+          all_tasks_closed = False
+          break
+      if all_tasks_closed:
+        self.active = []
+      else:
+        self.active = [q for q in self.active if q in self.cluster_view.values()]
     elif cmd == ">":
       self.update_reachable()
-      self.active = set([q.key for q in self.quests.values()])
+      # verify if all clusters are expanded
+      all_clusters_expanded = True
+      for k in self.cluster_view.values():
+        if k not in self.active:
+          all_clusters_expanded = False
+          break
+      if all_clusters_expanded:
+        self.active = [q.key for q in self.quests.values()] + [k for k in self.cluster_view.values()]
+      else:
+        self.active = self.active + [k for k in self.cluster_view.values()]
+      
     elif cmd == "m" or cmd == "man":
       self.clear()
       self.show_help()
@@ -325,6 +390,8 @@ class Play:
       self.show_link = not self.show_link
     elif cmd == "p" or cmd == "percent":
       self.show_perc = not self.show_perc
+    elif cmd == "j" or cmd == "join":
+      self.show_join = not self.show_join
     elif cmd == "d" or cmd == "down":
       for t in actions[1:]:
         if t in self.tasks:
@@ -332,13 +399,26 @@ class Play:
         else:
           print(f"Tarefa {t} não encontrada")
           input()
+    elif cmd.startswith(Play.cluster_prefix):
+      for t in actions:
+        if t in self.cluster_view:
+          key = self.cluster_view[t]
+          if key not in self.active:
+            print(f"Expandindo {key}")
+            self.active.append(key)
+          else:
+            print(f"Contraindo {key}")
+            self.active.remove(key)
+        else:
+          print(f"{t} não processado")
+          input("Digite enter para continuar")
     elif self.is_number(cmd):
       for t in actions:
         if self.is_number(t):
           if t in self.quests:
             key = self.quests[t].key
             if key not in self.active:
-              self.active.add(key)
+              self.active.append(key)
             else:
               self.active.remove(key)
           else:
@@ -385,6 +465,8 @@ class Play:
       vtodo   = red("todo")     + (green(GSym.vcheck) if not ball and self.show_todo else yellow(GSym.vuncheck))
       vlink   = red("link")     + (green(GSym.vcheck) if self.show_link              else yellow(GSym.vuncheck))
       vperc   = red("percent")  + (green(GSym.vcheck) if self.show_perc              else yellow(GSym.vuncheck)) 
+      vjoin   = red("join")  + (green(GSym.vcheck) if self.show_join              else yellow(GSym.vuncheck)) 
+
       nomes_verm = green("Os nomes em vermelho são comandos")
       prime_letr = green("Digite o comando ou só a primeira letra")
       numeros = red("<Número>") + cyan(" {3 5-8} ") + yellow("(expandir/contrair)")
@@ -395,7 +477,7 @@ class Play:
       read = red("read <Letra>") + cyan(" {r B}") + yellow(" (ler)")
       down = red("down <Letra>") + cyan(" {d B}") + yellow(" (baixar)")
 
-      indicadores = f"{vall} {vdone} {vinit} {vtodo} {vlink} {vperc}"
+      indicadores = f"{vall} {vdone} {vinit} {vtodo} {vjoin} {vlink} {vperc}"
 
       term_size = shutil.get_terminal_size().columns
       minimo = 86
@@ -410,12 +492,11 @@ class Play:
         print(letras + "   " + token + graduar)
         print(down + "           " + token + read + " ║ " + sair)
 
-      self.show_tasks()
-      print("\n" + green("play$") + " ", end="")
-
   def play(self):
     while True:
       self.show_header()
+      self.show_options()
+      print("\n" + green("play$") + " ", end="")
       line = input()
       if line != "" and "quit".startswith(line):
         break

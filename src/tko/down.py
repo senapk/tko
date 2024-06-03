@@ -127,7 +127,6 @@ class Down:
             return
         cfg = RemoteCfg(item.link)
         cache_url = os.path.dirname(cfg.get_raw_url()) + "/.cache/"
-        print("debug", cache_url)
     
         # rep = reps[course]
         # cfg = RemoteCfg()
