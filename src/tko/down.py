@@ -5,6 +5,7 @@ import urllib.error
 import json
 
 from .settings import SettingsParser
+from .game import Game
 
 class Down:
 
@@ -41,17 +42,17 @@ class Down:
     #         print("No .info file found, skipping update...")
 
     @staticmethod
-    def create_file(content, path, label=""):
+    def __create_file(content, path, label=""):
         with open(path, "w") as f:
             f.write(content)
         print(path, label)
 
     @staticmethod
-    def unpack_json(loaded, destiny, lang: str):
+    def __unpack_json(loaded, destiny, lang: str):
         # extracting all files to folder
         for entry in loaded["upload"]:
             if entry["name"] == "vpl_evaluate.cases":
-                Down.compare_and_save(entry["contents"], os.path.join(destiny, "cases.tio"))
+                Down.__compare_and_save(entry["contents"], os.path.join(destiny, "cases.tio"))
 
         # for entry in loaded["keep"]:
         #    Down.compare_and_save(entry["contents"], os.path.join(destiny, entry["name"]))
@@ -64,10 +65,10 @@ class Down:
             if lang in loaded["draft"]:
                 for file in loaded["draft"][lang]:
                     path = os.path.join(destiny, file["name"])
-                    Down.create_file(file["contents"], path, "(Draft)")
+                    Down.__create_file(file["contents"], path, "(Draft)")
 
     @staticmethod
-    def compare_and_save(content, path):
+    def __compare_and_save(content, path):
         if not os.path.exists(path):
             with open(path, "w", encoding="utf-8") as f:
                 f.write(content.encode("utf-8").decode("utf-8"))
@@ -81,7 +82,7 @@ class Down:
                 print(path + " (Unchanged)")
     
     @staticmethod
-    def down_problem_def(destiny, cache_url) -> Tuple[str, str]:
+    def __down_problem_def(destiny, cache_url) -> Tuple[str, str]:
         # downloading Readme
         readme = os.path.join(destiny, "Readme.md")
         [tempfile, __content] = urllib.request.urlretrieve(cache_url + "Readme.md")
@@ -91,7 +92,7 @@ class Down:
         except:
             content = open(tempfile).read()
 
-        Down.compare_and_save(content, readme)
+        Down.__compare_and_save(content, readme)
         
         # downloading mapi
         mapi = os.path.join(destiny, "mapi.json")
@@ -99,7 +100,7 @@ class Down:
         return readme, mapi
 
     @staticmethod
-    def create_problem_folder(_course, activity):
+    def __create_problem_folder(_course, activity):
         # create dir
         destiny = activity
         if not os.path.exists(destiny):
@@ -109,24 +110,44 @@ class Down:
 
         return destiny
 
+
     @staticmethod
-    def entry_unpack(course: str, activity: str, language: Optional[str]) -> bool:
-        course_url = SettingsParser().get_repository(course)
-        if course_url is None:
+    def download_problem(course: str, activity: str, language: Optional[str]) -> bool:
+        sp = SettingsParser()
+        settings = sp.load_settings()
+        reps = settings.reps
+        if course not in reps:
             print("fail: course", course, "not found")
             return False
-        
-        index_url = course_url + activity + "/"
-        cache_url = index_url + ".cache/"
-        
+        if reps[course].url == "":
+            print("fail: course", course, "is not a remote course")
+            return False
+        rep = reps[course]
+        file = rep.get_file()
+        game = Game()
+        game.parse_file(file)
+        if not activity in game.tasks:
+            print("fail: activity not found in course definition")
+            return False
+    
+        item = game.tasks[activity]
+        cache_url = os.path.dirname(item.link) + "/.cache/"
+    
+        # rep = reps[course]
+        # cfg = RemoteCfg()
+        # cfg.from_url(rep.url)
+        # url = cfg.get_raw_url()
+        # basedir = os.path.dirname(url) + "/base/" 
+        # index_url = basedir + activity + "/"
+        # cache_url = index_url + ".cache/"
 
         # downloading Readme
         try:
-            destiny = Down.create_problem_folder(course, activity)
+            destiny = Down.__create_problem_folder(course, activity)
             #print("debug", cache_url)
-            [_readme_path, mapi_path] = Down.down_problem_def(destiny, cache_url)
+            [_readme_path, mapi_path] = Down.__down_problem_def(destiny, cache_url)
         except urllib.error.HTTPError:
-            print("fail: activity not found in course")
+            print("fail: activity not found in course url")
             # verifi if destiny folder is empty and remove it
             if len(os.listdir(destiny)) == 0:
                 os.rmdir(destiny)
@@ -146,8 +167,12 @@ class Down:
                 language = input()
                 ask_ext = True
         
-        Down.unpack_json(loaded_json, destiny, language)
+        Down.__unpack_json(loaded_json, destiny, language)
+        Down.__download_drafts(loaded_json, language, destiny, cache_url, ask_ext)
+        return True
 
+    @staticmethod
+    def __download_drafts(loaded_json, language, destiny, cache_url, ask_ext):
         if len(loaded_json["required"]) == 1:  # you already have the students file
             return
 
@@ -172,22 +197,3 @@ class Down:
         
         if ask_ext:
             print("\nYou can choose default extension with command\n$ tko config -l <extension>")
-        return True
-
-        # download all files in folder with the same extension or compatible
-        # try:
-        #     filelist = os.path.join(index, "filelist.txt")
-        #     urllib.request.urlretrieve(cache_url + "filelist.txt", filelist)
-        #     files = open(filelist, "r").read().splitlines()
-        #     os.remove(filelist)
-
-        #     for file in files:
-        #         filename = os.path.basename(file)
-        #         fext = filename.split(".")[-1]
-        #         if fext == ext or ((fext == "h" or fext == "hpp") and ext == "cpp") or ((fext == "h" and ext == "c")):
-        #             filepath = os.path.join(index, filename)
-        #             # urllib.request.urlretrieve(index_url + file, filepath)
-        #             [tempfile, _content] = urllib.request.urlretrieve(index_url + file)
-        #             Down.compare_and_save(open(tempfile).read(), filepath)
-        # except urllib.error.HTTPError:
-        #     return

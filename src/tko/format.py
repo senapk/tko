@@ -126,6 +126,25 @@ class __Symbols:
 
 symbols = __Symbols()
 
+class GSym:
+  check = "✓" #"✅" "☑" "🮱"
+  uncheck = "✗" # "❎" "☐" "🯀"
+  vcheck = "☑" # "@" # "☑"
+  vuncheck = "☐" # "#" # "☐"
+  numbers = ["𝟬","𝟭","𝟮","𝟯","𝟰","𝟱","𝟲","𝟳","𝟴","𝟵"]
+
+def green(text):
+  return colour("g", text)
+
+def red(text):
+  return colour("r", text)
+
+def yellow(text):
+  return colour("y", text)
+
+def cyan(text):
+  return colour("c", text)
+
 
 class Report:
     __term_width: Optional[int] = None

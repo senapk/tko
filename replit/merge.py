@@ -26,6 +26,7 @@ files = [
 "actions",
 "guide",
 "game",
+"play",
 "__init__",
 "__main__",
 ]

@@ -13,7 +13,8 @@ from .settings import SettingsParser, RepoSettings, Settings
 from .guide import tko_guide
 from .guide import bash_guide
 from .format import symbols
-from .game import Game, Play
+from .game import Game
+from .play import Play
 from .__init__ import __version__
 
 class MRep:
@@ -155,7 +156,7 @@ class Main:
 
     @staticmethod
     def down(args):
-        Down.entry_unpack(args.course, args.activity, args.language)
+        Down.download_problem(args.course, args.activity, args.language)
 
 class Parser:
     def __init__(self):

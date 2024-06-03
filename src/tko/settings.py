@@ -163,16 +163,4 @@ class SettingsParser:
     def get_language(self) -> str:
         return self.settings.local.lang
 
-    def get_repository(self, course: str) -> Optional[str]:
-        rep = self.settings.reps.get(course, None)
-        if rep is not None:
-            if rep.url != "":
-                print(rep.url)
-                cfg = RemoteCfg()
-                cfg.from_url(rep.url)
-                cfg.file = ""
-                git_raw = "https://raw.githubusercontent.com"
-                url = f"{git_raw}/{cfg.user}/{cfg.repo}/{cfg.branch}/base/"
-                #print("debug:", url)
-                return url
 
