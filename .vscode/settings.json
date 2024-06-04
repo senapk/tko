@@ -20,5 +20,6 @@
         "wdir",
         "withspaces"
     ],
-    "cSpell.language": "pt-BR,en"
+    "cSpell.language": "pt-BR,en",
+    "cSpell.enabled": false
 }

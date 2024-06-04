@@ -2584,7 +2584,8 @@ class Play:
     self.show_todo = "todo" in self.rep.view
     self.show_cmds = "cmds" in self.rep.view
     self.show_perc = "perc" in self.rep.view
-    self.show_join = "join" in self.rep.view
+    self.show_fold = "fold" in self.rep.view
+    self.show_hack = "hack" in self.rep.view
     
     if not self.show_done and not self.show_init and not self.show_todo:
       self.show_done = True
@@ -2649,8 +2650,10 @@ class Play:
       self.rep.view.append("link")
     if self.show_perc:
       self.rep.view.append("perc")
-    if self.show_join:
-      self.rep.view.append("join")
+    if self.show_fold:
+      self.rep.view.append("fold")
+    if self.show_hack:
+      self.rep.view.append("hack")
     if self.show_done:
       self.rep.view.append("done")
     if self.show_init:
@@ -2810,8 +2813,6 @@ class Play:
     
   def show_options(self):
     term_size = shutil.get_terminal_size().columns
-    self.tasks = {}
-    self.update_reachable()
     max_title = self.calculate_pad()
     index = 0
 
@@ -2828,7 +2829,7 @@ class Play:
           index += 1
           self.tasks[letter] = t
       
-      if self.show_join:
+      if self.show_fold:
         if len(quest_output) > 0:
           if q.group not in clusters:
             clusters[q.group] = []
@@ -2836,9 +2837,9 @@ class Play:
       else:
         for line in quest_output:
           if line != "":
-            print(line)
+            print("  " + line)
 
-    if self.show_join:
+    if self.show_fold:
       cluster_index = 1
       for group in self.game.cluster_order:
         if group in clusters.keys():
@@ -2933,25 +2934,25 @@ class Play:
       self.show_done = True
       self.show_init = True
       self.show_todo = True
-    elif cmd == "s" or cmd == "started":
-      self.show_init = True
+    elif cmd == "i" or cmd == "init":
       self.show_done = False
+      self.show_init = True
       self.show_todo = False
-    elif cmd == "c" or cmd == "complete":
+    elif cmd == "d" or cmd == "done":
       self.show_done = True
       self.show_init = False
       self.show_todo = False
     elif cmd == "t" or cmd == "todo":
-      self.show_todo = True
-      self.show_done = False
-      self.show_init = True
+      self.show_todo = not self.show_todo
     elif cmd == "l" or cmd == "link":
       self.show_link = not self.show_link
     elif cmd == "p" or cmd == "percent":
       self.show_perc = not self.show_perc
-    elif cmd == "j" or cmd == "join":
-      self.show_join = not self.show_join
-    elif cmd == "d" or cmd == "down":
+    elif cmd == "f" or cmd == "fold":
+      self.show_fold = not self.show_fold
+    elif cmd == "h" or cmd == "hack":
+      self.show_hack = not self.show_hack
+    elif cmd == "g" or cmd == "get":
       for t in actions[1:]:
         if t in self.tasks:
           self.down_task(self.tasks[t])
@@ -3016,43 +3017,72 @@ class Play:
   def show_header(self):
       self.clear()
       ball    = self.show_done and self.show_init and self.show_todo
-      show_ajuda = "Digite " + red("h") + " ou " + red("help") + " para " + yellow("ocultar") + " a ajuda "
-      hide_ajuda = "Digite " + red("h") + " ou " + red("help") + " para " +  green("mostrar") + " a ajuda " 
-      vall    = red("all")      + (green(GSym.vcheck) if     ball                    else yellow(GSym.vuncheck))
-      vdone   = red("complete") + (green(GSym.vcheck) if not ball and self.show_done else yellow(GSym.vuncheck))
-      vinit   = red("started")  + (green(GSym.vcheck) if not ball and self.show_init else yellow(GSym.vuncheck))
-      vtodo   = red("todo")     + (green(GSym.vcheck) if not ball and self.show_todo else yellow(GSym.vuncheck))
+      show_ajuda = "Digite " + red("h") + " ou " + red("help") + " para " + yellow("ocultar") + " a ajuda"
+      hide_ajuda = "Digite " + red("h") + " ou " + red("help") + " para " +  green("mostrar") + " a ajuda" 
+
+      full_count = len([q for q in self.quests.values()])
+      done_count = len([q for q in self.quests.values() if q.is_complete()])
+      init_count = len([q for q in self.quests.values() if q.in_progress()])
+      todo_count = len([q for q in self.quests.values() if q.not_started()])
+
+      vall    = red("all")      + f"({full_count})" + (green(GSym.vcheck) if     ball                    else yellow(GSym.vuncheck))
+      vdone   = red("done") + f"({done_count})" + (green(GSym.vcheck) if not ball and self.show_done else yellow(GSym.vuncheck))
+      vinit   = red("init")  + f"({init_count})" + (green(GSym.vcheck) if not ball and self.show_init else yellow(GSym.vuncheck))
+      vtodo   = red("todo")     + f"({todo_count})" + (green(GSym.vcheck) if not ball and self.show_todo else yellow(GSym.vuncheck))
       vlink   = red("link")     + (green(GSym.vcheck) if self.show_link              else yellow(GSym.vuncheck))
       vperc   = red("percent")  + (green(GSym.vcheck) if self.show_perc              else yellow(GSym.vuncheck)) 
-      vjoin   = red("join")  + (green(GSym.vcheck) if self.show_join              else yellow(GSym.vuncheck)) 
+      vjoin   = red("fold")     + (green(GSym.vcheck) if self.show_fold              else yellow(GSym.vuncheck)) 
+      vhack   = red("hack")     + (green(GSym.vcheck) if self.show_hack              else yellow(GSym.vuncheck)) 
 
-      nomes_verm = green("Os nomes em vermelho são comandos")
-      prime_letr = green("Digite o comando ou só a primeira letra")
-      numeros = red("<Número>") + cyan(" {3 5-8} ") + yellow("(expandir/contrair)")
-      sair = red("manual ") + red("quit ")
-      todas = red("<") + " ou " + red(">") + yellow(" (expandir/contrair) ") + "TUDO"
-      letras  = red("<Letra>") + cyan("  {A C-E}") + yellow(" (marcar/desmarcar)")
-      graduar =  red("<Letra><Valor>")  + colour("c", " {B0 A9}") + yellow(" (dar nota)")
-      read = red("read <Letra>") + cyan(" {r B}") + yellow(" (ler)")
-      down = red("down <Letra>") + cyan(" {d B}") + yellow(" (baixar)")
+      nomes_verm = green("    Os nomes em vermelho são comandos")
+      prime_letr = green(" A primeira letra do cmd é suficiente")
+      numeros = red("<Número>") + cyan(" {3 5-8} ") + yellow("(Expandir/Contrair)")
+      todas = red("<") + " ou " + red(">") + yellow("       (Expandir/Contrair) ") + "TUDO"
+      letras  = red("<Letra>") + cyan("  {A C-E}") + yellow("   (Marcar/Desmarcar)")
+      graduar =  red("<Letra><Valor>")  + colour("c", " {B0 A9}") + yellow(" (Dar nota)")
+      read = red("read <Letra>") + cyan(" {r B}") + yellow("  (Ler no terminal)")
+      down = red("get <Letra>") + cyan(" {d B}") + yellow("    (Baixar tarefa)")
+      manu = red("manual") + yellow("     (Mostrar manual detalhado)")
+      sair = red("quit") + yellow("               (Sair do programa)")
+                                     
+      fold = red("fold") + yellow(" (Mostrar categorias)")
+      link = red("link") + yellow("      (Mostrar links das tarefas)")
+      hack = red("hack") + yellow(" (Desabilita o modo jogo)")
+      perc = red("percent") + yellow("        (Mostrar porcentagens)")
 
-      indicadores = f"{vall} {vdone} {vinit} {vtodo} {vjoin} {vlink} {vperc}"
+      indicadores = f"{vall} {vdone} {vinit} {vtodo}"
+      visoes = f"{vjoin} {vlink} {vperc} {vhack}"
 
-      term_size = shutil.get_terminal_size().columns
-      minimo = 86
-      token = "\n" if term_size < minimo else " ║ "
-
+      elementos = []
       if not self.show_cmds:
-        print(hide_ajuda + token + indicadores)
+        elementos = [hide_ajuda, indicadores, visoes]
       else:
-        print(show_ajuda + token + indicadores)
-        print(nomes_verm + "     " + token + prime_letr)
-        print(numeros + "  " + token + todas)
-        print(letras + "   " + token + graduar)
-        print(down + "           " + token + read + " ║ " + sair)
+        elementos = [show_ajuda, indicadores, visoes, nomes_verm, prime_letr, numeros, todas, letras, graduar,
+                     down, read, fold, perc, link, hack, manu, sair]
+      self.print_elementos(elementos)
+
+  def print_elementos(self, elementos):
+    term_size = shutil.get_terminal_size().columns
+    maxlen = max([len(Color.remove_colors(t)) for t in elementos])
+    qtd = term_size // (maxlen + 3)
+    print(f"debug {maxlen} {qtd}")
+
+    count = 0
+    for i in range(len(elementos)):  
+      print(Color.ljust(elementos[i], maxlen), end = "")
+      count += 1
+      if count >= qtd:
+        count = 0
+        print("")
+      else:
+        print(" ║ ", end="")
+    print("")
+
 
   def play(self):
     while True:
+      self.tasks = {}
+      self.update_reachable()
       self.show_header()
       self.show_options()
       print("\n" + green("play$") + " ", end="")
