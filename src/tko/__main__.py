@@ -22,14 +22,8 @@ class MRep:
     def list(args):
         sp = SettingsParser()
         settings = sp.load_settings()
-        print("SettingsFile:", sp.settings_file)
-        print("Repositories:")
-        for key in settings.reps:
-            print(key, end="")
-            if settings.reps[key].url:
-                print(f" - {settings.reps[key].url}")
-            else:
-                print(f" - {settings.reps[key].file}")
+        print(f"SettingsFile\n- {sp.settings_file}")
+        print(str(settings))
 
     @staticmethod
     def add(args):

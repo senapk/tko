@@ -138,6 +138,20 @@ class Settings:
         with open(file, "w") as f:
             json.dump(self.to_dict(), f, indent=4)
 
+    def __str__(self):
+        output = []
+        output.append("Repositories:")
+        maxlen = max([len(key) for key in self.reps])
+        for key in self.reps:
+            prefix = f"- {key.ljust(maxlen)}"
+            if self.reps[key].file and self.reps[key].url:
+                output.append(f"{prefix} : dual   : {self.reps[key].url} ; {self.reps[key].file}")
+            elif self.reps[key].url:
+                output.append(f"{prefix} : remote : {self.reps[key].url}")
+            else:
+                output.append(f"{prefix} : local  : {self.reps[key].file}")
+        return "\n".join(output)
+
 
 class SettingsParser:
 
