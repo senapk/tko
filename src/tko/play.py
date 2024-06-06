@@ -34,7 +34,7 @@ class Play:
             self.help_index = 0
 
         self.show_perc = "perc" in self.rep.view
-        self.show_fold = "fold" in self.rep.view
+        self.show_fold = not "unfold" in self.rep.view
         self.show_hack = "hack" in self.rep.view
         self.show_view = "view" in self.rep.view
 
@@ -106,8 +106,8 @@ class Play:
             self.rep.view.append("link")
         if self.show_perc:
             self.rep.view.append("perc")
-        if self.show_fold:
-            self.rep.view.append("fold")
+        if not self.show_fold:
+            self.rep.view.append("unfold")
         if self.show_hack:
             self.rep.view.append("hack")
         if self.show_view:
@@ -196,17 +196,20 @@ class Play:
             return False
         return True
 
+    def get_number(self, value):
+        if value >= 0 and value <= 20:
+            return GSym.numbers[value]
+        return "*"
+
     def str_quest(self, entry, q, max_title, term_size) -> str:
         resume = ""
-        opening = "➡️"
+        opening = GSym.right
         if q.key in self.active:
-            opening = "⬇️"
+            opening = GSym.down
         done = len([t for t in q.tasks if t.is_done()])
         size = len(q.tasks)
-        if done > 9:
-            done = "*"
-        if size > 9:
-            size = "*"
+        done = self.get_number(done)
+        size = self.get_number(size)
         if self.show_perc:
             text = f"{str(q.get_percent()).rjust(2)}%"
             if q.get_percent() == 100:
@@ -258,7 +261,7 @@ class Play:
         extra = ""
         if self.show_fold:
             extra = ""
-        title = colour("uline", title)
+#        title = colour("uline", title)
         return f"  {vindex}  {vdone}  {extra}{title}{vlink}"
 
     def sort_keys(self, keys):
@@ -268,9 +271,9 @@ class Play:
 
     def print_cluster(self, cluster_name: str, lines: List[str]):
         cluster_key = self.clusters_keys[cluster_name]
-        opening = "➡️"
+        opening = GSym.right
         if cluster_name in self.active:
-            opening = "⬇️"
+            opening = GSym.down
         intro = [Color.remove_colors(l).strip().split(" ")[0] for l in lines]
         quests = [v for v in intro if v.isdigit()]
         total = len(quests)
@@ -580,7 +583,7 @@ class Play:
         stodo = red("todo") + yellow(" (Mostrar tarefas não iniciadas)")
         fold  = red("join") + yellow(" (Juntar em categorias)")
         link  = red("link") + yellow(" (Mostrar links das tarefas)")
-        hack  = red("hack") + yellow(" (Desabilita o modo jogo)")
+        hack  = red("hack") + yellow(" (Dá acesso a todas as tarefas)")
         perc  = red("perc") + yellow(" (Mostrar porcentagens)")
 
         indicadores = f"{vall} {vdone} {vinit} {vtodo}"

@@ -3,72 +3,78 @@ import shutil
 from enum import Enum
 from typing import Optional
 
+
 class Color:
-  enabled = True
-  map = {
-      "red"    : '\u001b[31m',
-      "r"      : '\u001b[31m',
-      "green"  : '\u001b[32m',
-      "g"      : '\u001b[32m',
-      "yellow" : '\u001b[33m',
-      "y"      : '\u001b[33m',
-      "blue"   : '\u001b[34m',
-      "b"      : '\u001b[34m',
-      "magenta": '\u001b[35m',
-      "m"      : '\u001b[35m',
-      "cyan"   : '\u001b[36m',
-      "c"      : '\u001b[36m',
-      "white"  : '\u001b[37m',
-      "w"      : '\u001b[37m',
-      "reset"  : '\u001b[0m',
-      "bold"   : '\u001b[1m',
-      "uline"  : '\u001b[4m'
-  }
+    enabled = True
+    map = {
+        "red": "\u001b[31m",
+        "r": "\u001b[31m",
+        "green": "\u001b[32m",
+        "g": "\u001b[32m",
+        "yellow": "\u001b[33m",
+        "y": "\u001b[33m",
+        "blue": "\u001b[34m",
+        "b": "\u001b[34m",
+        "magenta": "\u001b[35m",
+        "m": "\u001b[35m",
+        "cyan": "\u001b[36m",
+        "c": "\u001b[36m",
+        "white": "\u001b[37m",
+        "w": "\u001b[37m",
+        "reset": "\u001b[0m",
+        "bold": "\u001b[1m",
+        "uline": "\u001b[4m",
+    }
 
-  @staticmethod
-  def ljust(text: str, width: int) -> str:
-    return text + ' ' * (width - Color.len(text))
+    @staticmethod
+    def ljust(text: str, width: int) -> str:
+        return text + " " * (width - Color.len(text))
 
-  @staticmethod
-  def center(text: str, width: int, filler: str) -> str:
-    return filler * ((width - Color.len(text)) // 2) + text + filler * (
-        (width - Color.len(text) + 1) // 2)
+    @staticmethod
+    def center(text: str, width: int, filler: str) -> str:
+        return (
+            filler * ((width - Color.len(text)) // 2)
+            + text
+            + filler * ((width - Color.len(text) + 1) // 2)
+        )
 
-  @staticmethod
-  def remove_colors(text: str) -> str:
-    for color in Color.map.values():
-      text = text.replace(color, '')
-    return text
+    @staticmethod
+    def remove_colors(text: str) -> str:
+        for color in Color.map.values():
+            text = text.replace(color, "")
+        return text
 
-  @staticmethod
-  def len(text):
-    return len(Color.remove_colors(text))
+    @staticmethod
+    def len(text):
+        return len(Color.remove_colors(text))
+
 
 def colour(color: str, text: str) -> str:
-  return (Color.map[color] + text + Color.map["reset"])
+    return Color.map[color] + text + Color.map["reset"]
+
 
 def colour_bold(color: str, text: str) -> str:
-  return (Color.map["bold"] + Color.map[color] + text + Color.map["reset"])
+    return Color.map["bold"] + Color.map[color] + text + Color.map["reset"]
 
 
 class __Symbols:
     def __init__(self):
-        self.opening     = ""
-        self.neutral     = ""
-        self.success     = ""
-        self.failure     = ""
-        self.wrong       = ""
+        self.opening = ""
+        self.neutral = ""
+        self.success = ""
+        self.failure = ""
+        self.wrong = ""
         self.compilation = ""
-        self.execution   = ""
-        self.unequal     = ""
-        self.equalbar    = ""
-        self.hbar        = ""
-        self.vbar        = ""
-        self.whitespace  = ""  # interpunct
-        self.newline     = ""  # carriage return
-        self.cfill       = ""
-        self.tab         = ""
-        self.arrow_up    = ""
+        self.execution = ""
+        self.unequal = ""
+        self.equalbar = ""
+        self.hbar = ""
+        self.vbar = ""
+        self.whitespace = ""  # interpunct
+        self.newline = ""  # carriage return
+        self.cfill = ""
+        self.tab = ""
+        self.arrow_up = ""
 
         self.ascii = False
         self.set_unicode()
@@ -79,74 +85,96 @@ class __Symbols:
     def set_ascii(self):
         self.ascii = True
 
-        self.opening     = "=> "
-        self.neutral     = "."
-        self.success     = "S"
-        self.failure     = "X"
-        self.wrong       = "W"
+        self.opening = "=> "
+        self.neutral = "."
+        self.success = "S"
+        self.failure = "X"
+        self.wrong = "W"
         self.compilation = "C"
-        self.execution   = "E"
-        self.unequal     = "#"
-        self.equalbar    = "|"
-        self.hbar        = "─"
-        self.vbar        = "│"
-        self.whitespace  = "\u2E31"  # interpunct
-        self.newline     = "\u21B5"  # carriage return
-        self.cfill       = "_"
-        self.tab         = "    "
-        self.arrow_up    = "A"
+        self.execution = "E"
+        self.unequal = "#"
+        self.equalbar = "|"
+        self.hbar = "─"
+        self.vbar = "│"
+        self.whitespace = "\u2E31"  # interpunct
+        self.newline = "\u21B5"  # carriage return
+        self.cfill = "_"
+        self.tab = "    "
+        self.arrow_up = "A"
 
     def set_unicode(self):
         self.ascii = False
 
-        self.opening     = "=> "
-        self.neutral     = "»"
-        self.success     = "✓"
-        self.failure     = "✗"
-        self.wrong       = "ω"
+        self.opening = "=> "
+        self.neutral = "»"
+        self.success = "✓"
+        self.failure = "✗"
+        self.wrong = "ω"
         self.compilation = "ϲ"
-        self.execution   = "ϵ"
-        self.unequal     = "├"
-        self.equalbar    = "│"
-        self.hbar        = "─"
-        self.vbar        = "│"
-        self.whitespace  = "\u2E31"  # interpunct
-        self.newline     = "\u21B5"  # carriage return
-        self.cfill       = "_"
-        self.tab         = "    "
-        self.arrow_up    = "↑"
+        self.execution = "ϵ"
+        self.unequal = "├"
+        self.equalbar = "│"
+        self.hbar = "─"
+        self.vbar = "│"
+        self.whitespace = "\u2E31"  # interpunct
+        self.newline = "\u21B5"  # carriage return
+        self.cfill = "_"
+        self.tab = "    "
+        self.arrow_up = "↑"
 
     def set_colors(self):
-        self.opening     = colour("b", self.opening)
-        self.neutral     = colour("b", self.neutral)
-        self.success     = colour("g", self.success)
-        self.failure     = colour("r", self.failure)
-        self.wrong       = colour("r", self.wrong)
+        self.opening = colour("b", self.opening)
+        self.neutral = colour("b", self.neutral)
+        self.success = colour("g", self.success)
+        self.failure = colour("r", self.failure)
+        self.wrong = colour("r", self.wrong)
         self.compilation = colour("y", self.compilation)
-        self.execution   = colour("y", self.execution)
-        self.unequal     = colour("r", self.unequal)
-        self.equalbar    = colour("g", self.equalbar)
+        self.execution = colour("y", self.execution)
+        self.unequal = colour("r", self.unequal)
+        self.equalbar = colour("g", self.equalbar)
+
 
 symbols = __Symbols()
 
+
 class GSym:
-  check = "✓" #"✅" "☑" "🮱"
-  uncheck = "✗" # "❎" "☐" "🯀"
-  vcheck = "☑" # "@" # "☑"
-  vuncheck = "☐" # "#" # "☐"
-  numbers = ["𝟬","𝟭","𝟮","𝟯","𝟰","𝟱","𝟲","𝟳","𝟴","𝟵"]
+    check = "✓"    # "✔"
+    uncheck = "✗"  # "✘"
+
+    opcheck = "ⴲⵔ"
+    # opcheck = "✔✘"
+    # opcheck = "✔▢"
+    # opcheck = "🞕🞖" # erro Pedro
+    # opcheck = "🟘🟗" # erro Pedro
+
+
+    # oprightdown = "→↓"
+    oprightdown = "➡️⬇️"    # azuzinho
+    # oprightdown = "🠊🠋" # erro Pedro
+    # oprightdown = "⮞⮟" # erro Pedro
+
+    vcheck = opcheck[0]
+    vuncheck = opcheck[1]
+    right = oprightdown[0]
+    down = oprightdown[1]
+
+    numbers = "0123456789***********"
+
 
 def green(text):
-  return colour("g", text)
+    return colour("g", text)
+
 
 def red(text):
-  return colour("r", text)
+    return colour("r", text)
+
 
 def yellow(text):
-  return colour("y", text)
+    return colour("y", text)
+
 
 def cyan(text):
-  return colour("c", text)
+    return colour("c", text)
 
 
 class Report:
@@ -176,7 +204,12 @@ class Report:
         Report.__term_width = value
 
     @staticmethod
-    def centralize(text, sep=' ', left_border: Optional[str] = None, right_border: Optional[str] = None) -> str:
+    def centralize(
+        text,
+        sep=" ",
+        left_border: Optional[str] = None,
+        right_border: Optional[str] = None,
+    ) -> str:
         if left_border is None:
             left_border = sep
         if right_border is None:
