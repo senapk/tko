@@ -433,72 +433,78 @@ class Runner:
 
 
 
+
 class Color:
-  enabled = True
-  map = {
-      "red"    : '\u001b[31m',
-      "r"      : '\u001b[31m',
-      "green"  : '\u001b[32m',
-      "g"      : '\u001b[32m',
-      "yellow" : '\u001b[33m',
-      "y"      : '\u001b[33m',
-      "blue"   : '\u001b[34m',
-      "b"      : '\u001b[34m',
-      "magenta": '\u001b[35m',
-      "m"      : '\u001b[35m',
-      "cyan"   : '\u001b[36m',
-      "c"      : '\u001b[36m',
-      "white"  : '\u001b[37m',
-      "w"      : '\u001b[37m',
-      "reset"  : '\u001b[0m',
-      "bold"   : '\u001b[1m',
-      "uline"  : '\u001b[4m'
-  }
+    enabled = True
+    map = {
+        "red": "\u001b[31m",
+        "r": "\u001b[31m",
+        "green": "\u001b[32m",
+        "g": "\u001b[32m",
+        "yellow": "\u001b[33m",
+        "y": "\u001b[33m",
+        "blue": "\u001b[34m",
+        "b": "\u001b[34m",
+        "magenta": "\u001b[35m",
+        "m": "\u001b[35m",
+        "cyan": "\u001b[36m",
+        "c": "\u001b[36m",
+        "white": "\u001b[37m",
+        "w": "\u001b[37m",
+        "reset": "\u001b[0m",
+        "bold": "\u001b[1m",
+        "uline": "\u001b[4m",
+    }
 
-  @staticmethod
-  def ljust(text: str, width: int) -> str:
-    return text + ' ' * (width - Color.len(text))
+    @staticmethod
+    def ljust(text: str, width: int) -> str:
+        return text + " " * (width - Color.len(text))
 
-  @staticmethod
-  def center(text: str, width: int, filler: str) -> str:
-    return filler * ((width - Color.len(text)) // 2) + text + filler * (
-        (width - Color.len(text) + 1) // 2)
+    @staticmethod
+    def center(text: str, width: int, filler: str) -> str:
+        return (
+            filler * ((width - Color.len(text)) // 2)
+            + text
+            + filler * ((width - Color.len(text) + 1) // 2)
+        )
 
-  @staticmethod
-  def remove_colors(text: str) -> str:
-    for color in Color.map.values():
-      text = text.replace(color, '')
-    return text
+    @staticmethod
+    def remove_colors(text: str) -> str:
+        for color in Color.map.values():
+            text = text.replace(color, "")
+        return text
 
-  @staticmethod
-  def len(text):
-    return len(Color.remove_colors(text))
+    @staticmethod
+    def len(text):
+        return len(Color.remove_colors(text))
+
 
 def colour(color: str, text: str) -> str:
-  return (Color.map[color] + text + Color.map["reset"])
+    return Color.map[color] + text + Color.map["reset"]
+
 
 def colour_bold(color: str, text: str) -> str:
-  return (Color.map["bold"] + Color.map[color] + text + Color.map["reset"])
+    return Color.map["bold"] + Color.map[color] + text + Color.map["reset"]
 
 
 class __Symbols:
     def __init__(self):
-        self.opening     = ""
-        self.neutral     = ""
-        self.success     = ""
-        self.failure     = ""
-        self.wrong       = ""
+        self.opening = ""
+        self.neutral = ""
+        self.success = ""
+        self.failure = ""
+        self.wrong = ""
         self.compilation = ""
-        self.execution   = ""
-        self.unequal     = ""
-        self.equalbar    = ""
-        self.hbar        = ""
-        self.vbar        = ""
-        self.whitespace  = ""  # interpunct
-        self.newline     = ""  # carriage return
-        self.cfill       = ""
-        self.tab         = ""
-        self.arrow_up    = ""
+        self.execution = ""
+        self.unequal = ""
+        self.equalbar = ""
+        self.hbar = ""
+        self.vbar = ""
+        self.whitespace = ""  # interpunct
+        self.newline = ""  # carriage return
+        self.cfill = ""
+        self.tab = ""
+        self.arrow_up = ""
 
         self.ascii = False
         self.set_unicode()
@@ -509,74 +515,96 @@ class __Symbols:
     def set_ascii(self):
         self.ascii = True
 
-        self.opening     = "=> "
-        self.neutral     = "."
-        self.success     = "S"
-        self.failure     = "X"
-        self.wrong       = "W"
+        self.opening = "=> "
+        self.neutral = "."
+        self.success = "S"
+        self.failure = "X"
+        self.wrong = "W"
         self.compilation = "C"
-        self.execution   = "E"
-        self.unequal     = "#"
-        self.equalbar    = "|"
-        self.hbar        = "─"
-        self.vbar        = "│"
-        self.whitespace  = "\u2E31"  # interpunct
-        self.newline     = "\u21B5"  # carriage return
-        self.cfill       = "_"
-        self.tab         = "    "
-        self.arrow_up    = "A"
+        self.execution = "E"
+        self.unequal = "#"
+        self.equalbar = "|"
+        self.hbar = "─"
+        self.vbar = "│"
+        self.whitespace = "\u2E31"  # interpunct
+        self.newline = "\u21B5"  # carriage return
+        self.cfill = "_"
+        self.tab = "    "
+        self.arrow_up = "A"
 
     def set_unicode(self):
         self.ascii = False
 
-        self.opening     = "=> "
-        self.neutral     = "»"
-        self.success     = "✓"
-        self.failure     = "✗"
-        self.wrong       = "ω"
+        self.opening = "=> "
+        self.neutral = "»"
+        self.success = "✓"
+        self.failure = "✗"
+        self.wrong = "ω"
         self.compilation = "ϲ"
-        self.execution   = "ϵ"
-        self.unequal     = "├"
-        self.equalbar    = "│"
-        self.hbar        = "─"
-        self.vbar        = "│"
-        self.whitespace  = "\u2E31"  # interpunct
-        self.newline     = "\u21B5"  # carriage return
-        self.cfill       = "_"
-        self.tab         = "    "
-        self.arrow_up    = "↑"
+        self.execution = "ϵ"
+        self.unequal = "├"
+        self.equalbar = "│"
+        self.hbar = "─"
+        self.vbar = "│"
+        self.whitespace = "\u2E31"  # interpunct
+        self.newline = "\u21B5"  # carriage return
+        self.cfill = "_"
+        self.tab = "    "
+        self.arrow_up = "↑"
 
     def set_colors(self):
-        self.opening     = colour("b", self.opening)
-        self.neutral     = colour("b", self.neutral)
-        self.success     = colour("g", self.success)
-        self.failure     = colour("r", self.failure)
-        self.wrong       = colour("r", self.wrong)
+        self.opening = colour("b", self.opening)
+        self.neutral = colour("b", self.neutral)
+        self.success = colour("g", self.success)
+        self.failure = colour("r", self.failure)
+        self.wrong = colour("r", self.wrong)
         self.compilation = colour("y", self.compilation)
-        self.execution   = colour("y", self.execution)
-        self.unequal     = colour("r", self.unequal)
-        self.equalbar    = colour("g", self.equalbar)
+        self.execution = colour("y", self.execution)
+        self.unequal = colour("r", self.unequal)
+        self.equalbar = colour("g", self.equalbar)
+
 
 symbols = __Symbols()
 
+
 class GSym:
-  check = "✓" #"✅" "☑" "🮱"
-  uncheck = "✗" # "❎" "☐" "🯀"
-  vcheck = "☑" # "@" # "☑"
-  vuncheck = "☐" # "#" # "☐"
-  numbers = ["𝟬","𝟭","𝟮","𝟯","𝟰","𝟱","𝟲","𝟳","𝟴","𝟵"]
+    check = "✓"    # "✔"
+    uncheck = "✗"  # "✘"
+
+    opcheck = "ⴲⵔ"
+    # opcheck = "✔✘"
+    # opcheck = "✔▢"
+    # opcheck = "🞕🞖" # erro Pedro
+    # opcheck = "🟘🟗" # erro Pedro
+
+
+    # oprightdown = "→↓"
+    oprightdown = "➡️⬇️"    # azuzinho
+    # oprightdown = "🠊🠋" # erro Pedro
+    # oprightdown = "⮞⮟" # erro Pedro
+
+    vcheck = opcheck[0]
+    vuncheck = opcheck[1]
+    right = oprightdown[0]
+    down = oprightdown[1]
+
+    numbers = "0123456789***********"
+
 
 def green(text):
-  return colour("g", text)
+    return colour("g", text)
+
 
 def red(text):
-  return colour("r", text)
+    return colour("r", text)
+
 
 def yellow(text):
-  return colour("y", text)
+    return colour("y", text)
+
 
 def cyan(text):
-  return colour("c", text)
+    return colour("c", text)
 
 
 class Report:
@@ -606,7 +634,12 @@ class Report:
         Report.__term_width = value
 
     @staticmethod
-    def centralize(text, sep=' ', left_border: Optional[str] = None, right_border: Optional[str] = None) -> str:
+    def centralize(
+        text,
+        sep=" ",
+        left_border: Optional[str] = None,
+        right_border: Optional[str] = None,
+    ) -> str:
         if left_border is None:
             left_border = sep
         if right_border is None:
@@ -2596,7 +2629,7 @@ class Play:
             self.help_index = 0
 
         self.show_perc = "perc" in self.rep.view
-        self.show_fold = "fold" in self.rep.view
+        self.show_fold = not "unfold" in self.rep.view
         self.show_hack = "hack" in self.rep.view
         self.show_view = "view" in self.rep.view
 
@@ -2607,7 +2640,10 @@ class Play:
 
         self.game: Game = game
 
-        self.clusters: Dict[str, str] = {}
+        self.clusters: Dict[str, str] = self.find_cluster_keys()
+        self.clusters_keys = {}
+        for k, v in self.clusters.items():
+            self.clusters_keys[v] = k
         self.tasks: Dict[str, Task] = {}  # visible tasks  indexed by upper letter
         self.quests: Dict[str, Quest] = {}  # visible quests indexed by number
         self.active: List[str] = []  # expanded quests
@@ -2665,8 +2701,8 @@ class Play:
             self.rep.view.append("link")
         if self.show_perc:
             self.rep.view.append("perc")
-        if self.show_fold:
-            self.rep.view.append("fold")
+        if not self.show_fold:
+            self.rep.view.append("unfold")
         if self.show_hack:
             self.rep.view.append("hack")
         if self.show_view:
@@ -2755,17 +2791,20 @@ class Play:
             return False
         return True
 
+    def get_number(self, value):
+        if value >= 0 and value <= 20:
+            return GSym.numbers[value]
+        return "*"
+
     def str_quest(self, entry, q, max_title, term_size) -> str:
         resume = ""
-        opening = "➡️"
+        opening = GSym.right
         if q.key in self.active:
-            opening = "⬇️"
+            opening = GSym.down
         done = len([t for t in q.tasks if t.is_done()])
         size = len(q.tasks)
-        if done > 9:
-            done = "*"
-        if size > 9:
-            size = "*"
+        done = self.get_number(done)
+        size = self.get_number(size)
         if self.show_perc:
             text = f"{str(q.get_percent()).rjust(2)}%"
             if q.get_percent() == 100:
@@ -2817,7 +2856,7 @@ class Play:
         extra = ""
         if self.show_fold:
             extra = ""
-        title = colour("uline", title)
+#        title = colour("uline", title)
         return f"  {vindex}  {vdone}  {extra}{title}{vlink}"
 
     def sort_keys(self, keys):
@@ -2825,22 +2864,42 @@ class Play:
         double = [k for k in keys if len(str(k)) == 2]
         return sorted(single) + sorted(double)
 
-    def print_cluster(self, cluster_key, cluster_name: str, lines: List[str]):
-        opening = "➡️"
+    def print_cluster(self, cluster_name: str, lines: List[str]):
+        cluster_key = self.clusters_keys[cluster_name]
+        opening = GSym.right
         if cluster_name in self.active:
-            opening = "⬇️"
+            opening = GSym.down
         intro = [Color.remove_colors(l).strip().split(" ")[0] for l in lines]
         quests = [v for v in intro if v.isdigit()]
         total = len(quests)
         init = yellow(str(len([v for v in quests if self.quests[v].in_progress()])))
         done = green(str(len([v for v in quests if self.quests[v].is_complete()])))
         todo = red(str(len([v for v in quests if self.quests[v].not_started()])))
-        title = colour_bold("red", cluster_name.strip()[:2]) + colour("bold", cluster_name.strip()[2:])
+        margin = len(cluster_key)
+        title = colour_bold("red", cluster_name.strip()[:margin]) + colour("bold", cluster_name.strip()[margin:])
         if total > 0:
             print(f" {opening} {done}/{init}/{todo} {title}")
             if cluster_name in self.active:
                 for line in lines:
                     print(line)
+
+    def find_cluster_keys(self) -> Dict[str, str]:
+        data = sorted(self.game.cluster_order)
+        keys = []
+        for cluster in data:
+            i = 2
+            while (True):
+                key = cluster[:i]
+                if key not in keys:
+                    keys.append(key)
+                    break
+                i += 1
+        output = {}
+        for k, v in zip(keys, data):
+            output[k] = v
+        return output
+
+
 
     def show_options(self):
         term_size = shutil.get_terminal_size().columns
@@ -2871,14 +2930,9 @@ class Play:
                         print(line)
 
         if self.show_fold:
-            cluster_index = 1
             for group in self.game.cluster_order:
                 if group in clusters.keys():
-                    # key = Play.cluster_prefix + str(cluster_index)
-                    key = group[:2]
-                    self.clusters[key] = group
-                    self.print_cluster(key, group, clusters[group])
-                    cluster_index += 1
+                    self.print_cluster(group, clusters[group])
         return
 
     @staticmethod
@@ -3102,7 +3156,7 @@ class Play:
         vtodo = "(" + str(todo_count).rjust(2, "0") + ")" + red("todo") + checkbox(not ball and self.show_todo)
         vlink = red("link") + ( checkbox(self.show_link) )
         vperc = red("perc") + ( checkbox(self.show_perc) )
-        vjoin = red("fold") + ( checkbox(self.show_fold) )
+        vjoin = red("join") + ( checkbox(self.show_fold) )
         vhack = red("hack") + ( checkbox(self.show_hack) )
 
         nomes_verm = green("Os nomes em vermelho são comandos")
@@ -3124,7 +3178,7 @@ class Play:
         stodo = red("todo") + yellow(" (Mostrar tarefas não iniciadas)")
         fold  = red("join") + yellow(" (Juntar em categorias)")
         link  = red("link") + yellow(" (Mostrar links das tarefas)")
-        hack  = red("hack") + yellow(" (Desabilita o modo jogo)")
+        hack  = red("hack") + yellow(" (Dá acesso a todas as tarefas)")
         perc  = red("perc") + yellow(" (Mostrar porcentagens)")
 
         indicadores = f"{vall} {vdone} {vinit} {vtodo}"

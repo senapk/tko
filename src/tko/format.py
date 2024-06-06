@@ -47,6 +47,9 @@ class Color:
 def colour(color: str, text: str) -> str:
   return (Color.map[color] + text + Color.map["reset"])
 
+def colour_bold(color: str, text: str) -> str:
+  return (Color.map["bold"] + Color.map[color] + text + Color.map["reset"])
+
 
 class __Symbols:
     def __init__(self):

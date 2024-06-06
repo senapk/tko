@@ -3,7 +3,7 @@ from .game import Game, Task, Quest
 from .settings import RepoSettings
 from .remote import RemoteCfg
 from .down import Down
-from .format import GSym, colour, red, green, yellow, cyan, Color
+from .format import GSym, colour, colour_bold, red, green, yellow, cyan, Color
 import subprocess
 import shutil
 import tempfile
@@ -45,7 +45,10 @@ class Play:
 
         self.game: Game = game
 
-        self.clusters: Dict[str, str] = {}
+        self.clusters: Dict[str, str] = self.find_cluster_keys()
+        self.clusters_keys = {}
+        for k, v in self.clusters.items():
+            self.clusters_keys[v] = k
         self.tasks: Dict[str, Task] = {}  # visible tasks  indexed by upper letter
         self.quests: Dict[str, Quest] = {}  # visible quests indexed by number
         self.active: List[str] = []  # expanded quests
@@ -263,7 +266,8 @@ class Play:
         double = [k for k in keys if len(str(k)) == 2]
         return sorted(single) + sorted(double)
 
-    def print_cluster(self, cluster_key, cluster_name: str, lines: List[str]):
+    def print_cluster(self, cluster_name: str, lines: List[str]):
+        cluster_key = self.clusters_keys[cluster_name]
         opening = "➡️"
         if cluster_name in self.active:
             opening = "⬇️"
@@ -273,12 +277,31 @@ class Play:
         init = yellow(str(len([v for v in quests if self.quests[v].in_progress()])))
         done = green(str(len([v for v in quests if self.quests[v].is_complete()])))
         todo = red(str(len([v for v in quests if self.quests[v].not_started()])))
-        title = colour("bold", cluster_name.strip())
+        margin = len(cluster_key)
+        title = colour_bold("red", cluster_name.strip()[:margin]) + colour("bold", cluster_name.strip()[margin:])
         if total > 0:
-            print(f"{yellow(cluster_key)} {opening} {done}/{init}/{todo} {title}")
+            print(f" {opening} {done}/{init}/{todo} {title}")
             if cluster_name in self.active:
                 for line in lines:
-                    print("  " + line)
+                    print(line)
+
+    def find_cluster_keys(self) -> Dict[str, str]:
+        data = sorted(self.game.cluster_order)
+        keys = []
+        for cluster in data:
+            i = 2
+            while (True):
+                key = cluster[:i]
+                if key not in keys:
+                    keys.append(key)
+                    break
+                i += 1
+        output = {}
+        for k, v in zip(keys, data):
+            output[k] = v
+        return output
+
+
 
     def show_options(self):
         term_size = shutil.get_terminal_size().columns
@@ -309,13 +332,9 @@ class Play:
                         print(line)
 
         if self.show_fold:
-            cluster_index = 1
             for group in self.game.cluster_order:
                 if group in clusters.keys():
-                    key = Play.cluster_prefix + str(cluster_index)
-                    self.clusters[key] = group
-                    self.print_cluster(key, group, clusters[group])
-                    cluster_index += 1
+                    self.print_cluster(group, clusters[group])
         return
 
     @staticmethod
@@ -367,36 +386,104 @@ class Play:
         except ValueError:
             return False
 
+    def process_colapse(self):
+        all_tasks_closed = True
+        for v in self.active:
+            if v not in self.clusters.values():
+                all_tasks_closed = False
+                break
+        if all_tasks_closed:
+            self.active = []
+        else:
+            self.active = [q for q in self.active if q in self.clusters.values()]
+
+    def process_expand(self):
+        self.update_reachable()
+        # verify if all clusters are expanded
+        all_clusters_expanded = True
+        for k in self.clusters.values():
+            if k not in self.active:
+                all_clusters_expanded = False
+                break
+        clusters = [k for k in self.clusters.values()]
+        if all_clusters_expanded:
+            quests = [q.key for q in self.quests.values()]
+            self.active = quests + clusters
+        else:
+            self.active = self.active + clusters
+
+    def process_down(self, actions):
+        for t in actions[1:]:
+            if t in self.tasks:
+                self.down_task(self.tasks[t])
+            else:
+                print(f"Tarefa {t} não encontrada")
+                input()
+
+    def process_clusters(self, actions):
+        for t in actions:
+            if t in self.clusters:
+                key = self.clusters[t]
+                if key not in self.active:
+                    print(f"Expandindo {key}")
+                    self.active.append(key)
+                else:
+                    print(f"Contraindo {key}")
+                    self.active.remove(key)
+            else:
+                print(f"{t} não processado")
+                input("Digite enter para continuar")
+
+    def process_quests(self, actions):
+        for t in actions:
+            if not self.is_number(t) or not t in self.quests:
+                print(f"{t} não processado")
+                input("Digite enter para continuar")
+            else:
+                key = self.quests[t].key
+                if key not in self.active:
+                    self.active.append(key)
+                    continue
+                else:
+                    self.active.remove(key)
+                    continue
+    
+    def process_tasks(self, actions):
+        for t in actions:
+            letter = "".join([c for c in t if c.isupper() and not c.isdigit()])
+            number = "".join([c for c in t if c.isdigit()])
+            if letter in self.tasks:
+                t = self.tasks[letter]
+                if len(number) > 0:
+                    t.set_grade(number)
+                else:
+                    if t.grade == "":
+                        t.set_grade("x")
+                    else:
+                        t.set_grade("")
+            else:
+                print(f"{t} não processado")
+                input("Digite enter para continuar")
+    
+    def process_see(self, actions):
+        if len(actions) > 1:
+            if actions[1] in self.tasks:
+                # print(self.tasks[actions[1]].link)
+                self.read_link(self.tasks[actions[1]].link)
+            else:
+                print(f"{actions[1]} não processado")
+                input("Digite enter para continuar")
+
     def take_actions(self, actions):
         if len(actions) == 0:
             return
         cmd = actions[0]
 
         if cmd == "<":
-            all_tasks_closed = True
-            for v in self.active:
-                if v not in self.clusters.values():
-                    all_tasks_closed = False
-                    break
-            if all_tasks_closed:
-                self.active = []
-            else:
-                self.active = [q for q in self.active if q in self.clusters.values()]
+            self.process_colapse()
 
         elif cmd == ">":
-            self.update_reachable()
-            # verify if all clusters are expanded
-            all_clusters_expanded = True
-            for k in self.clusters.values():
-                if k not in self.active:
-                    all_clusters_expanded = False
-                    break
-            clusters = [k for k in self.clusters.values()]
-            if all_clusters_expanded:
-                quests = [q.key for q in self.quests.values()]
-                self.active = quests + clusters
-            else:
-                self.active = self.active + clusters
+            self.process_expand()
 
         elif cmd == "m" or cmd == "man":
             self.clear()
@@ -430,58 +517,15 @@ class Play:
         elif cmd == "v" or cmd == "view":
             self.show_view = not self.show_view
         elif cmd == "g" or cmd == "get":
-            for t in actions[1:]:
-                if t in self.tasks:
-                    self.down_task(self.tasks[t])
-                else:
-                    print(f"Tarefa {t} não encontrada")
-                    input()
-        elif cmd.startswith(Play.cluster_prefix):
-            for t in actions:
-                if t in self.clusters:
-                    key = self.clusters[t]
-                    if key not in self.active:
-                        print(f"Expandindo {key}")
-                        self.active.append(key)
-                    else:
-                        print(f"Contraindo {key}")
-                        self.active.remove(key)
-                else:
-                    print(f"{t} não processado")
-                    input("Digite enter para continuar")
+            self.process_down(actions)
+        elif len(cmd) >= 2 and cmd[0].isupper() and cmd[1].islower():
+            self.process_clusters(actions)
         elif self.is_number(cmd):
-            for t in actions:
-                if self.is_number(t):
-                    if t in self.quests:
-                        key = self.quests[t].key
-                        if key not in self.active:
-                            self.active.append(key)
-                        else:
-                            self.active.remove(key)
-                    else:
-                        print(f"{t} não processado")
-                        input("Digite enter para continuar")
+            self.process_quests(actions)
         elif cmd[0].isupper():
-            for t in actions:
-                letter = "".join([c for c in t if c.isupper() and not c.isdigit()])
-                number = "".join([c for c in t if c.isdigit()])
-                if letter in self.tasks:
-                    t = self.tasks[letter]
-                    if len(number) > 0:
-                        t.set_grade(number)
-                    else:
-                        if t.grade == "":
-                            t.set_grade("x")
-                        else:
-                            t.set_grade("")
-                else:
-                    print(f"{t} não processado")
-                    input("Digite enter para continuar")
+            self.process_tasks(actions)
         elif cmd == "s" or cmd == "see":
-            if len(actions) > 1:
-                if actions[1] in self.tasks:
-                    # print(self.tasks[actions[1]].link)
-                    self.read_link(self.tasks[actions[1]].link)
+            self.process_see(actions)
         else:
             print(f"{cmd} não processado")
             input("Digite enter para continuar")
@@ -514,17 +558,18 @@ class Play:
         vtodo = "(" + str(todo_count).rjust(2, "0") + ")" + red("todo") + checkbox(not ball and self.show_todo)
         vlink = red("link") + ( checkbox(self.show_link) )
         vperc = red("perc") + ( checkbox(self.show_perc) )
-        vjoin = red("fold") + ( checkbox(self.show_fold) )
+        vjoin = red("join") + ( checkbox(self.show_fold) )
         vhack = red("hack") + ( checkbox(self.show_hack) )
 
         nomes_verm = green("Os nomes em vermelho são comandos")
         prime_letr = green("Basta a primeira letra do comando")
-        numeros = red("<Número>") + cyan(" {'3 5} ") + yellow("(Expandir/Contrair)")
-        todas = red("<") + " ou " + red(">") + yellow(" (Expandir/Contrair) ") + "TUDO"
-        letras = red("<Letra>") + cyan(" {A C-E}") + yellow(" (Marcar/Desmarcar)")
-        graduar = red("<Letra><Valor>") + cyan(" {A0 B5 C10}") + yellow("(Dar nota)")
-        read = red("see <Letra>") + cyan(" {s B}") + yellow(" (Ler no terminal)")
-        down = red("get <Letra>") + cyan(" {g B}") + yellow(" (Baixar tarefa)")
+        cluster = red("<LETRA><letra>") + cyan(" {Re Ve} ") + yellow("(Ver Grupo)")
+        numeros = red("<Número>") + cyan(" {3 5} ") + yellow("(Ver Quest)")
+        todas = red("<") + " ou " + red(">") + yellow(" (Ocultar/Revelar Tudo)")
+        letras = red("<LETRA>") + cyan(" {A C-E}") + yellow("(Marcar Tarefa)")
+        graduar = red("<LETRA><Valor>") + cyan(" {A0 B5} ") + yellow("(Dar nota)")
+        read = red("see <LETRA>") + cyan(" {s B}") + yellow(" (Ler no terminal)")
+        down = red("get <LETRA>") + cyan(" {g B}") + yellow(" (Baixar tarefa)")
         cmds = red("cmd") + yellow("  (Visualizar os comandos)")
         manu = red("man") + yellow("  (Mostrar manual detalhado)")
         sair = red("quit") + yellow(" (Sair do programa)")
@@ -548,7 +593,7 @@ class Play:
         elif self.help_index == 1:
             intro = show_ajuda + " (" + yellow("1") + "/2/3)" + green(" - ") + red("view") + checkbox(self.show_view)
             elementos = [ intro ] + ([ indicadores, visoes ] if self.show_view else [])
-            elementos += [ nomes_verm, prime_letr, numeros, todas, letras, graduar ]
+            elementos += [ nomes_verm, prime_letr, todas, cluster, numeros, letras, graduar ]
         elif self.help_index == 2:
             intro = show_ajuda + " (1/" + yellow("2") + "/3)" + green(" - ") + red("view") + checkbox(self.show_view)
             elementos = [ intro ] + ([ indicadores, visoes ] if self.show_view else [])
