@@ -277,9 +277,9 @@ class Play:
         intro = [Color.remove_colors(l).strip().split(" ")[0] for l in lines]
         quests = [v for v in intro if v.isdigit()]
         total = len(quests)
-        init = yellow(str(len([v for v in quests if self.quests[v].in_progress()])))
-        done = green(str(len([v for v in quests if self.quests[v].is_complete()])))
-        todo = red(str(len([v for v in quests if self.quests[v].not_started()])))
+        init = yellow(self.get_number(len([v for v in quests if self.quests[v].in_progress()])))
+        done = green(self.get_number(len([v for v in quests if self.quests[v].is_complete()])))
+        todo = red(self.get_number(len([v for v in quests if self.quests[v].not_started()])))
         margin = len(cluster_key)
         title = colour_bold("red", cluster_name.strip()[:margin]) + colour("bold", cluster_name.strip()[margin:])
         if total > 0:
@@ -379,7 +379,7 @@ class Play:
         return expand
 
     def clear(self):
-        subprocess.run("clear")
+        # subprocess.run("clear")
         pass
 
     def is_number(self, s):

@@ -61,85 +61,112 @@ class Task:
         return f"{self.line_number} : {self.key} : {self.grade} : {self.title} : {self.skills} : {self.link}"
 
     @staticmethod
-    def parse_titulo_link_html(line):
-        # Regex para extrair o título e o link
-        titulo_link_regex = r"\s*-.*\[(.*?)\](\(.+?\))"
-        titulo_link_match = re.search(titulo_link_regex, line)
+    def parse_item_with_link(line) -> Tuple[bool, str, str]:
+        pattern = r"\ *-.*\[(.*?)\]\((.+?)\)"
+        match = re.match(pattern, line)
+        if match:
+            return (True, match.group(1), match.group(2))
+        return (False, "", "")
+    
+    @staticmethod
+    def parse_task_with_link(line) -> Tuple[bool, str, str]:
+        pattern = r"\ *- \[ \].*\[(.*?)\]\((.+?)\)"
+        match = re.match(pattern, line)
+        if match:
+            return (True, match.group(1), match.group(2))
+        return (False, "", "")
+    
 
-        # Regex para extrair as tags
-        html_regex = r"<!--\s*(.*?)\s*-->"
-        html_match = re.search(html_regex, line)
+    def load_html_tags(self, line) -> Tuple[bool, List[str]]:
+        pattern = r"<!--\s*(.*?)\s*-->"
+        match = re.match(pattern, line)
+        if not match:
+            return (False, [])
+        tags_raw = match.group(1).strip()
+        tags = [tag.strip() for tag in tags_raw.split()]
+        for t in tags:
+            if t.startswith("s:"):
+                self.skills.append(t[2:])
+            elif t.startswith("@"):
+                self.key = t[1:]
 
-        # Inicializa as variáveis de título, link e html
-        titulo = None
-        link = None
-        html = []
+    @staticmethod
+    def parse_arroba_from_title_link(titulo, link) -> Tuple[bool, str]:
+        pattern = r"@(\w+)"
+        match = re.match(pattern, titulo)
+        if not match:
+            return (False, "")
+        key = match.group(1)
+        if not "key/Readme.md" in link:
+            return (False, "")
+        return (True, key)
 
-        # Extrai título e link
-        if titulo_link_match:
-            titulo = titulo_link_match.group(1).strip()
-            link = titulo_link_match.group(2).strip("()")
-
-        # Extrai html
-        if html_match:
-            html_raw = html_match.group(1).strip()
-            html = [tag.strip() for tag in html_raw.split()]
-
-        return titulo, link, html
-
-    # coding tasks
-    def set_key_from_title(self, titulo, html):
-        title_key = titulo.split("@")[1]
-        title_key = title_key.split(" ")[0]
-        title_key = title_key.split(":")[0]
-        title_key = title_key.split("/")[0]
-        self.key = title_key
-        self.skills = html
-        self.coding = True
-
-    # non coding tasks
-    def set_key_from_html(self, html):
-        html_key = [t for t in html if t.startswith("@")][0]
-        html_key = html_key.split("@")[1]
-        self.key = html_key
-        self.coding = False
-        self.skills = [t[2:] for t in html if t.startswith("s:")]
 
     def process_link(self, base_file):
         if self.link.startswith("http"):
             return
         if self.link.startswith("./"):
             self.link = self.link[2:]
-
         # todo trocar / por \\ se windows
-
         self.link = base_file + self.link
 
-    def parse_task(self, line, line_num):
+    # - [Titulo com @palavra em algum lugar](link/@palavra/Readme.md) <!-- tag1 tag2 tag3 -->
+    def parse_coding_task(self, line, line_num):
         if line == "":
             return False
         line = line.lstrip()
 
-        titulo, link, html = Task.parse_titulo_link_html(line)
+        found, titulo, link = Task.parse_task_with_link(line)
+        if not found:
+            return False
 
-        if titulo is None:
+        found, key = Task.parse_arroba_from_title_link(titulo, link)
+        if not found:
             return False
 
         self.line = line
         self.line_number = line_num
+        self.key = key
         self.title = titulo
         self.link = link
 
-        try:
-            self.set_key_from_title(titulo, html)
+        self.load_html_tags(line)
+
+        return True
+    
+
+    # se com - [ ], não precisa das tags dentro do html, o key será dado pelo título
+    # se tiver as tags dentro do html, se alguma começar com @, o key será dado por ela
+    # - [ ] [Título](link)
+    # - [ ] [Título](link) <!-- tag1 tag2 tag3 -->
+    # - [Título](link) <!-- tag1 tag2 tag3 -->
+    def parse_reading_task(self, line, line_num):
+        if line == "":
+            return False
+        line = line.lstrip()
+
+        
+        found, titulo, link = Task.parse_task_with_link(line)
+        if found:
+            self.key = titulo
+            self.title = titulo
+            self.link = link
+            self.line = line
+            self.line_number = line_num
+            self.load_html_tags(line)
             return True
-        except:
-            pass
-        try:
-            self.set_key_from_html(html)
+        
+        found, titulo, link = Task.parse_item_with_link(line)
+        self.key = ""
+        if found:
+            self.load_html_tags(line)
+            if self.key == "":
+                return False
+            self.title = titulo
+            self.link = link
+            self.line = line
+            self.line_number = line_num
             return True
-        except:
-            pass
 
         return False
 
@@ -303,13 +330,22 @@ class Game:
         return (True, quest)
 
     def load_task(self, line, line_num, last_quest) -> bool:
-        task = Task()
-        if not task.parse_task(line, line_num + 1):
+        if line == "":
             return False
+        task = Task()
+        found = False
+        if task.parse_reading_task(line, line_num + 1):
+            found = True
+        if task.parse_coding_task(line, line_num + 1):
+            found = True
+        if not found:
+            return False
+        
         if last_quest is None:
             print(f"Task {task.key} não está dentro de uma quest")
             print(task)
             exit(1)
+        task.key = last_quest.key + "-" + get_md_link(task.key)
         last_quest.tasks.append(task)
         if task.key in self.tasks:
             print(f"Task {task.key} já existe")
