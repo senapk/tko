@@ -20,28 +20,29 @@ class Play:
         self.help_options = 0
         self.help_index = 0
         self.rep = rep
-        self.show_link = "link" in self.rep.view
-        self.show_done = "done" in self.rep.view
-        self.show_init = "init" in self.rep.view
-        self.show_todo = "todo" in self.rep.view
+        self.show_vbar = "vbar" in self.rep.view
+        self.show_game = False
+        # self.show_done = "done" in self.rep.view
+        # self.show_init = "init" in self.rep.view
+        # self.show_todo = "todo" in self.rep.view
 
-        help = [v for v in self.rep.view if v.startswith("help_")]
-        if len(help) > 0:
-            self.help_index = int(help[0][5:])
-            if self.help_index >= self.help_options:
-                self.help_index = 0
-        else:
-            self.help_index = 0
+        # help = [v for v in self.rep.view if v.startswith("help_")]
+        # if len(help) > 0:
+        #     self.help_index = int(help[0][5:])
+        #     if self.help_index >= self.help_options:
+        #         self.help_index = 0
+        # else:
+        #     self.help_index = 0
 
         self.show_perc = "perc" in self.rep.view
-        self.show_fold = not "unfold" in self.rep.view
+        self.show_fold = True
         self.show_hack = "hack" in self.rep.view
-        self.show_view = "view" in self.rep.view
+        self.show_toolbar = "toolbar" in self.rep.view
 
-        if not self.show_done and not self.show_init and not self.show_todo:
-            self.show_done = True
-            self.show_init = True
-            self.show_todo = True
+        # if not self.show_done and not self.show_init and not self.show_todo:
+        #     self.show_done = True
+        #     self.show_init = True
+        #     self.show_todo = True
 
         self.game: Game = game
 
@@ -105,24 +106,24 @@ class Play:
             if t.grade != "":
                 self.rep.tasks[t.key] = t.grade
         self.rep.view = []
-        if self.show_link:
-            self.rep.view.append("link")
+        if self.show_vbar:
+            self.rep.view.append("vbar")
         if self.show_perc:
             self.rep.view.append("perc")
-        if not self.show_fold:
-            self.rep.view.append("unfold")
         if self.show_hack:
             self.rep.view.append("hack")
-        if self.show_view:
-            self.rep.view.append("view")
-        if self.show_done:
-            self.rep.view.append("done")
-        if self.show_init:
-            self.rep.view.append("init")
-        if self.show_todo:
-            self.rep.view.append("todo")
+        if self.show_game:
+            self.rep.view.append("game")
+        if self.show_toolbar:
+            self.rep.view.append("toolbar")
+        # if self.show_done:
+        #     self.rep.view.append("done")
+        # if self.show_init:
+        #     self.rep.view.append("init")
+        # if self.show_todo:
+        #     self.rep.view.append("todo")
 
-        self.rep.view.append(f"help_{self.help_index}")
+        # self.rep.view.append(f"help_{self.help_index}")
 
         self.fnsave()
 
@@ -191,12 +192,12 @@ class Play:
         return max_title
 
     def to_show_quest(self, quest: Quest):
-        if quest.is_complete() and not self.show_done:
-            return False
-        if quest.not_started() and not self.show_todo:
-            return False
-        if quest.in_progress() and not self.show_init:
-            return False
+        # if quest.is_complete() and not self.show_done:
+        #     return False
+        # if quest.not_started() and not self.show_todo:
+        #     return False
+        # if quest.in_progress() and not self.show_init:
+        #     return False
         return True
 
     def get_number(self, value):
@@ -205,44 +206,42 @@ class Play:
         return "*"
 
     def str_quest(self, entry: str, q: Quest, max_title) -> str:
-        term_size = self.get_term_size()
-        resume = ""
         opening = GSym.right
         if q.key in self.active:
             opening = GSym.down
-        done = self.get_number(len([t for t in q.tasks if t.is_complete()]))
-        init = self.get_number(len([t for t in q.tasks if t.in_progress()]))
-        todo = self.get_number(len([t for t in q.tasks if t.not_started()]))
- 
-        if self.show_perc:
-            text = f"{str(q.get_percent()).rjust(2)}%"
-            if q.get_percent() == 100:
-                text = GSym.check * 3
-            if q.get_percent() == 100:
-                resume = cyan(text)
-            elif q.is_complete():
-                resume = green(text)
-            elif q.in_progress():
-                resume = yellow(text)
-            else:
-                resume = red(text)
-        else:
-            resume = f"{green(done)}{yellow(init)}{red(todo)}"
+
         space = " " if len(entry) == 1 else ""
         entry = self.control(entry)
-        qlink = ""
-        if self.show_link:
-            if term_size > self.term_limit:
-                qlink = " " + colour("c", q.mdlink)
-            else:
-                qlink = "\n      " + colour("c", q.mdlink)
+            
         if not self.to_show_quest(q):
             return ""
         title = q.title
-        if self.show_link and term_size > self.term_limit:
-            title = title.strip().ljust(max_title + 1)
-        title = title.strip()
-        return f"{resume} {opening} {space}{entry} {title}"
+
+        resume = ""
+        if self.show_vbar:
+            done = self.get_number(len([t for t in q.tasks if t.is_complete()]))
+            init = self.get_number(len([t for t in q.tasks if t.in_progress()]))
+            todo = self.get_number(len([t for t in q.tasks if t.not_started()]))
+    
+            if self.show_perc:
+                text = f"{str(q.get_percent()).rjust(2)}%"
+                if q.get_percent() == 100:
+                    text = GSym.check * 3
+                if q.get_percent() == 100:
+                    resume = cyan(text)
+                elif q.is_complete():
+                    resume = green(text)
+                elif q.in_progress():
+                    resume = yellow(text)
+                else:
+                    resume = red(text)
+            else:
+                resume = f"{green(done)}{yellow(init)}{red(todo)}"
+            resume = resume + " "
+        else:
+            resume = ""
+
+        return f"{resume}{opening} {space}{entry} {title}"
 
     def str_task(self, t: Task, max_title: int, letter: str, lig: str) -> str:
         term_size = self.get_term_size()
@@ -250,28 +249,23 @@ class Play:
         vdone = t.get_grade()
         vlink = ""
         title = t.title
-        if self.show_link:
-            if t.key in t.title:
-                vlink = red(t.link)
-            else:
-                vlink = yellow(t.link)
-            if term_size > self.term_limit:
-                title = t.title.strip().ljust(max_title + 1)
-                vlink = " " + vlink
-            else:
-                vlink = "\n" + vlink
-#        title = colour("uline", title) 
-
+        extra = ""
+        if self.show_vbar:
+            extra = "    "
         def gen_saida():
-            return f"    {vdone}  {lig}{vindex} {title}{vlink}"
+            return f"{extra}{vdone}  {lig}{vindex} {title}{vlink}"
         
-        saida = gen_saida()
+        parts = title.split(" ")
+        parts = [("@" + yellow(p[1:]) if p.startswith("@") else p) for p in parts]
+        title = " ".join(parts)
 
+        saida = gen_saida()
         clear_total = Color.len(saida)
         dif = clear_total - term_size
         if (dif < 0):
             return saida 
         title = title[:-dif - 3] + "..."
+
 
         return gen_saida()
 
@@ -294,8 +288,11 @@ class Play:
         margin = len(cluster_key)
         title = self.control(cluster_name.strip()[:margin]) + colour("bold", cluster_name.strip()[margin:])
         opening = yellow(opening)
+        resume = ""
+        if self.show_vbar:
+            resume = f"{done}{init}{todo} "
         if total > 0:
-            print(f"{done}{init}{todo} {opening} {title}")
+            print(f"{resume}{opening} {title}")
             if cluster_name in self.active:
                 for line, t in line_types:
                     print(line)
@@ -384,7 +381,6 @@ class Play:
             elif start_letter is not None and end_letter is not None:
                 start_index = self.calc_index(start_letter)
                 end_index = self.calc_index(end_letter)
-                print(start_index, end_index)
                 limits = range(start_index, end_index + 1)
                 expand += [self.calc_letter(i) for i in limits]
             else:
@@ -452,19 +448,19 @@ class Play:
                                 self.active.remove(q.key)
             else:
                 print(f"Tópico {t} não processado")
-                input("Digite enter para continuar")
+                return False
+        return True
 
     def process_quests(self, actions):
         for t in actions:
             if not self.is_number(t):
                 print(f"Missão '{t}' não é um número")
-                input("Digite enter para continuar")
+                return False
                 return
             if not str(t) in self.quests:
                 print(self.quests.keys())
                 print(f"Missão '{t}' não existe")
-                input("Digite enter para continuar")
-                return
+                return False
             key = self.quests[str(t)].key
             if key not in self.active:
                 self.active.append(key)
@@ -472,6 +468,7 @@ class Play:
             else:
                 self.active.remove(key)
                 continue
+        return True
     
     def process_tasks(self, actions):
         for t in actions:
@@ -488,7 +485,8 @@ class Play:
                         t.set_grade("")
             else:
                 print(f"Talk {t} não processado")
-                input("Digite enter para continuar")
+                return False
+        return True
     
     def process_see(self, actions):
         if len(actions) > 1:
@@ -497,63 +495,61 @@ class Play:
                 self.read_link(self.tasks[actions[1]].link)
             else:
                 print(f"{actions[1]} não processado")
-                input("Digite enter para continuar")
+                return False
+        return True
+    
+    def process_link(self, actions):
+        if len(actions) == 1:
+            print("Após o comando passe a letra da tarefa para ver o link")
+            return False
+        for t in actions[1:]:
+            if t in self.tasks:
+                # print(self.tasks[actions[1]].link)
+                key = self.control(t)
+                link = self.tasks[t].link
+                print(f"{key} {link}")
+            else:
+                print(f"{t} não processado")
+                return False
+        return False
 
-    def take_actions(self, actions):
+    def take_actions(self, actions) -> bool:
         if len(actions) == 0:
-            return
+            return True
         cmd = actions[0]
 
         if cmd == "<":
             self.process_colapse()
-
         elif cmd == ">":
             self.process_expand()
-
         elif cmd == "m" or cmd == "man":
-            self.clear()
-            self.show_help()
+            return self.show_help()
         elif cmd == "c" or cmd == "cmd":
             self.help_index = (self.help_index + 1) % self.help_options
-        # elif cmd == "f" or cmd == "full":
-        #     self.show_done = True
-        #     self.show_init = True
-        #     self.show_todo = True
-        # elif cmd == "i" or cmd == "init":
-        #     self.show_done = False
-        #     self.show_init = True
-        #     self.show_todo = False
-        # elif cmd == "d" or cmd == "done":
-        #     self.show_done = True
-        #     self.show_init = False
-        #     self.show_todo = False
-        # elif cmd == "t" or cmd == "todo":
-        #     self.show_done = False
-        #     self.show_init = False
-        #     self.show_todo = True
-        elif cmd == "l" or cmd == "link":
-            self.show_link = not self.show_link
+        elif cmd == "v" or cmd == "vbar":
+            self.show_vbar = not self.show_vbar
         elif cmd == "p" or cmd == "perc":
             self.show_perc = not self.show_perc
-        # elif cmd == "j" or cmd == "join":
-        #     self.show_fold = not self.show_fold
         elif cmd == "h" or cmd == "hack":
             self.show_hack = not self.show_hack
         elif cmd == "t" or cmd == "toolbar":
-            self.show_view = not self.show_view
+            self.show_toolbar = not self.show_toolbar
         elif cmd == "d" or cmd == "down":
-            self.process_down(actions)
+            return self.process_down(actions)
+        elif cmd == "l" or cmd == "link":
+            return self.process_link(actions)
         elif len(str(cmd)) >= 2 and cmd[0].isupper() and cmd[1].islower():
-            self.process_clusters(actions)
+            return self.process_clusters(actions)
         elif self.is_number(cmd):
-            self.process_quests(actions)
+            return self.process_quests(actions)
         elif cmd[0].isupper():
-            self.process_tasks(actions)
-        elif cmd == "s" or cmd == "see":
-            self.process_see(actions)
+            return self.process_tasks(actions)
+        # elif cmd == "s" or cmd == "see":
+        #     return self.process_see(actions)
         else:
             print(f"{cmd} não processado")
-            input("Digite enter para continuar")
+            return False
+        return True
 
     def show_help(self):
         print(
@@ -562,11 +558,11 @@ class Play:
             + " os números ou intervalo das tarefas para (marcar/desmarcar), exemplo:"
         )
         print(green("play $ ") + "t 1 3-5")
-        input("Digite enter para continuar")
+        return False
 
     def show_header(self):
         self.clear()
-        ball = self.show_done and self.show_init and self.show_todo
+        # ball = self.show_done and self.show_init and self.show_todo
         show_ajuda = green("Digite ") + red("c") + green(" para ajuda")
 
         full_count = len([q for q in self.quests.values()])
@@ -581,7 +577,7 @@ class Play:
         # vdone = "(" + str(done_count).rjust(2, "0") + ")" + red("done") + checkbox(not ball and self.show_done)
         # vinit = "(" + str(init_count).rjust(2, "0") + ")" + red("init") + checkbox(not ball and self.show_init)
         # vtodo = "(" + str(todo_count).rjust(2, "0") + ")" + red("todo") + checkbox(not ball and self.show_todo)
-        vlink = red("link") + ( checkbox(self.show_link) )
+        vlink = red("vbar") + ( checkbox(self.show_vbar) )
         vperc = red("perc") + ( checkbox(self.show_perc) )
         # vjoin = red("join") + ( checkbox(self.show_fold) )
         vhack = red("hack") + ( checkbox(self.show_hack) )
@@ -599,22 +595,17 @@ class Play:
         
         nomes_verm = green("Os nomes em vermelho são comandos")
         prime_letr = green("Basta a primeira letra do comando")
-        read = red("see <LETRA>") + cyan(" {s B}") + yellow(" (Ler no terminal)")
+        # read = red("see <LETRA>") + cyan(" {s B}") + yellow(" (Ler no terminal)")
         down = red("down <LETRA>") + cyan(" {d B}") + yellow(" (Baixar tarefa)")
         cmds = red("cmd") + yellow("  (Visualizar os comandos)")
         manu = red("man") + yellow("  (Mostrar manual detalhado)")
         sair = red("quit") + yellow(" (Sair do programa)")
 
-        # sall  = red("full") + yellow(" (Mostrar todas as tarefas)")
-        # sdone = red("done") + yellow(" (Mostrar tarefas concluídas)")
-        # sinit = red("init") + yellow(" (Mostrar tarefas em andamento)")
-        # stodo = red("todo") + yellow(" (Mostrar tarefas não iniciadas)")
-        # fold  = red("join") + yellow(" (Juntar em categorias)")
-        link  = red("link")    + yellow(" (Mostrar links das tarefas)")
-        hack  = red("hack")    + yellow(" (Dá acesso a todas as tarefas)")
+        flag = red("toolbar") + yellow(" (Mostrar barra de flags)")
+        vbar  = red("vbar")    + yellow(" (Mostrar barra vertical)")
+        hack  = red("hack")    + yellow(" (Desabilita prá-requesitos)")
         perc  = red("perc") + yellow(" (Mostrar porcentagens)")
-        exp  =  red("xp")      + yellow(" (Mostrar experiência)")
-
+        game  =  red("game")      + yellow(" (Mostrar experiência)")
 
         #indicadores = f"{vall} {vdone} {vinit} {vtodo}"
         visoes = f"{vlink}  {vperc}  {vhack}  {vgame}"
@@ -622,23 +613,23 @@ class Play:
         div1 = "───────────────── 1 ──────────────────"
         div2 = "───────────────── 2 ──────────────────"
         elementos = []
-        vbar = red(" toolbar") + checkbox(self.show_view)
+        flagbox = red(" toolbar") + checkbox(self.show_toolbar)
         if self.help_index == 0:
-            intro = show_ajuda + " (1/2)" + vbar
-            elementos = [ intro ] + ([ div0, visoes ] if self.show_view else [])
+            intro = show_ajuda + " (1/2)" + flagbox
+            elementos = [ intro ] + ([ div0, visoes ] if self.show_toolbar else [])
         elif self.help_index == 1:
-            intro = show_ajuda + " (" + yellow("1") + "/2)" + vbar
-            elementos = [ intro ] + ([ div0, visoes ] if self.show_view else [])
+            intro = show_ajuda + " (" + yellow("1") + "/2)" + flagbox
+            elementos = [ intro ] + ([ div0, visoes ] if self.show_toolbar else [])
             elementos += [ div1, controles, feitos, todas, cluster, numeros, letras, graduar ]
-        elif self.help_index == 2:
-            intro = show_ajuda + " (1/" + yellow("2") + ")" + vbar
-            elementos = [ intro ] + ([ div0, visoes ] if self.show_view else [])
-            elementos += [ div2, nomes_verm, prime_letr, cmds, manu, down, read, perc, link, hack, sair ]
+            elementos += [ div2, nomes_verm, prime_letr, cmds, manu, down, flag, vbar, perc, game, hack, sair ]
+        # elif self.help_index == 2:
+        #     intro = show_ajuda + " (1/" + yellow("2") + ")" + flagbox
+        #     elementos = [ intro ] + ([ div0, visoes ] if self.show_toolbar else [])
         # elif self.help_index == 3:
         #     intro = show_ajuda + " (1/2/" + yellow("3") + ")" + green(" - ") + red("view") + checkbox(self.show_view)
         #     elementos = [ intro ] + ([ div0, indicadores, visoes ] if self.show_view else [])
         #     elementos += [ div3, nomes_verm, prime_letr, sall, sdone, sinit, stodo, fold,  ]
-        self.help_options = 3
+        self.help_options = 2
         self.print_elementos(elementos)
         print(div0)
 
@@ -661,15 +652,20 @@ class Play:
             print("")
 
     def play(self):
+        success = True
         while True:
-            self.tasks = {}
-            self.update_reachable()
-            self.show_header()
-            self.show_options()
+            if success:
+                self.tasks = {}
+                self.update_reachable()
+                self.show_header()
+                self.show_options()
             print("\n" + green("play$") + " ", end="")
             line = input()
-            if line != "" and "quit".startswith(line):
+            if line == "":
+                success = True
+                continue
+            if line == "q" or line == "quit":
                 break
             actions = self.expand_range(line)
-            self.take_actions(actions)
+            success = self.take_actions(actions)
             self.save_to_json()
