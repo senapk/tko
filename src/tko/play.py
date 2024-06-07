@@ -3,7 +3,7 @@ from .game import Game, Task, Quest
 from .settings import RepoSettings
 from .remote import RemoteCfg
 from .down import Down
-from .format import GSym, colour, colour_bold, red, green, yellow, cyan, Color
+from .format import GSym, colour, bold, red, green, yellow, cyan, Color
 import subprocess
 import shutil
 import tempfile
@@ -66,9 +66,9 @@ class Play:
                 game.tasks[key].set_grade(grade)
 
     def control(self, text):
-        return colour_bold("blue", text)
+        return bold("blue", text)
     def cmd(self, text):
-        return colour_bold("red", text)
+        return bold("red", text)
 
     def read_link(self, link):
         if link.endswith(".md"):
@@ -208,15 +208,15 @@ class Play:
             return GSym.numbers[value]
         return "*"
 
-    def get_percent(self, value):
+    def get_percent(self, value, color2 = None):
         text = f"{str(value).rjust(2)}%"
         if value == 100:
-            return cyan(GSym.check * 3)
+            return colour("c", GSym.check * 3, color2)
         if value >= 70:
-            return green(text)
+            return colour("g", text, color2)
         if value == 0:
-            return red(text)
-        return yellow(text)
+            return colour("r", text, color2)
+        return colour("y", text, color2)
 
     def str_quest(self, entry: str, q: Quest) -> str:
         opening = GSym.right2
@@ -285,9 +285,9 @@ class Play:
         quests = [k for k in intro if k in self.quests]
         resume = ""
         if not self.show_perc:
-            init = yellow(self.get_number(len([v for v in quests if self.quests[v].in_progress()])))
-            done = green(self.get_number(len([v for v in quests if self.quests[v].is_complete()])))
-            todo = red(self.get_number(len([v for v in quests if self.quests[v].not_started()])))
+            init = bold("y", self.get_number(len([v for v in quests if self.quests[v].in_progress()])))
+            done = bold("g", self.get_number(len([v for v in quests if self.quests[v].is_complete()])))
+            todo = bold("r", self.get_number(len([v for v in quests if self.quests[v].not_started()])))
             resume = f"{done}{init}{todo} "
         else:
             total = 0
@@ -295,7 +295,7 @@ class Play:
                 quest = self.quests[q]
                 total += quest.get_percent()
             total = total // len(quests)
-            resume = colour("bold", self.get_percent(total) + " ")
+            resume = self.get_percent(total, "bold") + " "
             
         margin = len(cluster_key)
         title = self.control(cluster_name.strip()[:margin]) + colour("bold", cluster_name.strip()[margin:])
@@ -612,7 +612,7 @@ class Play:
 
     def show_cmds(self):
         controles = green("Elementos em ") + self.control("azul") + green(" são controles")
-        feitos = colour_bold("g", "1") + colour_bold("y", "2") + colour_bold("r", "3") + green(" Feitos") + "/" + yellow("Iniciados") + "/" + red("Não Iniciados")
+        feitos = bold("g", "1") + bold("y", "2") + bold("r", "3") + green(" Feitos") + "/" + yellow("Iniciados") + "/" + red("Não Iniciados")
         cluster = GSym.right + self.control(" Gr") + green("upo. Digite ") + self.control("Gr") + green(" para ver ou ocultar")
         numeros = GSym.right2 + self.control("  3") + green(" Missão. Dig ") + self.control("3") + green(" para ver ou ocultar")
         letras = colour("g", GSym.check) + self.control("  D") + green(" Tarefa. Dig ") + self.control("D") + green(" (des)marcar")
@@ -635,7 +635,7 @@ class Play:
 
         div0 = "──────────────────────────────────────"
         div1 = "───────────── " + self.control("Controles") +  "──────────────"
-        div2 = "───────────── " + colour_bold("r", "Comandos") + " ───────────────"
+        div2 = "───────────── " + bold("r", "Comandos") + " ───────────────"
         elementos = []
         elementos += [ div1, controles, feitos, todas, cluster, numeros, letras, graduar ]
         elementos += [ div2, nomes_verm, prime_letr, down, link, vbar, perc, game, exp, manu, sair ]

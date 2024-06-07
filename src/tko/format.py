@@ -49,13 +49,8 @@ class Color:
         return len(Color.remove_colors(text))
 
 
-def colour(color: str, text: str) -> str:
-    return Color.map[color] + text + Color.map["reset"]
-
-
-def colour_bold(color: str, text: str) -> str:
-    return Color.map["bold"] + Color.map[color] + text + Color.map["reset"]
-
+def colour(color: str, text: str, color2 = None) -> str:
+    return ("" if color2 is None else Color.map[color2]) + Color.map[color] + text + Color.map["reset"]
 
 class __Symbols:
     def __init__(self):
@@ -160,6 +155,7 @@ class GSym:
     down2 = oprightdown2[1]
 
     numbers = "0123456789***********"
+#    🯰🯱🯲🯳🯴🯵🯶🯷🯸🯹
 
 
 def green(text):
@@ -177,6 +173,8 @@ def yellow(text):
 def cyan(text):
     return colour("c", text)
 
+def bold(color: str, text: str) -> str:
+    return colour(color, text, "bold")
 
 class Report:
     __term_width: Optional[int] = None
