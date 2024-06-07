@@ -2669,9 +2669,10 @@ class Play:
         # else:
         #     self.help_index = 0
 
-        self.show_perc = "perc" in self.rep.view
+        # self.show_perc = "perc" in self.rep.view
+        self.show_perc = True
         self.show_fold = True
-        self.show_hack = "hack" in self.rep.view
+        self.show_hack = not "game" in self.rep.view
         self.show_toolbar = "toolbar" in self.rep.view
 
         # if not self.show_done and not self.show_init and not self.show_todo:
@@ -2743,8 +2744,8 @@ class Play:
         self.rep.view = []
         if self.show_vbar:
             self.rep.view.append("vbar")
-        if self.show_perc:
-            self.rep.view.append("perc")
+        # if self.show_perc:
+        #     self.rep.view.append("perc")
         if self.show_hack:
             self.rep.view.append("hack")
         if self.show_game:
@@ -3106,6 +3107,7 @@ class Play:
         return True
     
     def process_tasks(self, actions):
+        mass_action = None
         for t in actions:
             letter = "".join([c for c in t if c.isupper() and not c.isdigit()])
             number = "".join([c for c in t if c.isdigit()])
@@ -3113,11 +3115,17 @@ class Play:
                 t = self.tasks[letter]
                 if len(number) > 0:
                     t.set_grade(number)
+                    continue
+                
+                if mass_action is not None:
+                    t.set_grade(mass_action)
+                    continue
+                if t.grade == "":
+                    t.set_grade("x")
+                    mass_action = "x"
                 else:
-                    if t.grade == "":
-                        t.set_grade("x")
-                    else:
-                        t.set_grade("")
+                    t.set_grade("")
+                    mass_action = ""
             else:
                 print(f"Talk {t} não processado")
                 return False
@@ -3159,13 +3167,13 @@ class Play:
             self.process_expand()
         elif cmd == "m" or cmd == "man":
             return self.show_help()
-        elif cmd == "c" or cmd == "cmd":
-            self.help_index = (self.help_index + 1) % self.help_options
+        elif cmd == "h" or cmd == "help":
+            return self.show_cmds()
         elif cmd == "v" or cmd == "vbar":
             self.show_vbar = not self.show_vbar
-        elif cmd == "p" or cmd == "perc":
-            self.show_perc = not self.show_perc
-        elif cmd == "h" or cmd == "hack":
+        # elif cmd == "p" or cmd == "perc":
+        #     self.show_perc = not self.show_perc
+        elif cmd == "g" or cmd == "game":
             self.show_hack = not self.show_hack
         elif cmd == "t" or cmd == "toolbar":
             self.show_toolbar = not self.show_toolbar
@@ -3198,26 +3206,33 @@ class Play:
     def show_header(self):
         self.clear()
         # ball = self.show_done and self.show_init and self.show_todo
-        show_ajuda = green("Digite ") + red("c") + green(" para ajuda")
-
-        full_count = len([q for q in self.quests.values()])
-        done_count = len([q for q in self.quests.values() if q.is_complete()])
-        init_count = len([q for q in self.quests.values() if q.in_progress()])
-        todo_count = len([q for q in self.quests.values() if q.not_started()])
-
         def checkbox(value):
             return green(GSym.vcheck) if value else yellow(GSym.vuncheck)
+        
 
+        # full_count = len([q for q in self.quests.values()])
+        # done_count = len([q for q in self.quests.values() if q.is_complete()])
+        # init_count = len([q for q in self.quests.values() if q.in_progress()])
+        # todo_count = len([q for q in self.quests.values() if q.not_started()])
         # vall = red("full") + (green(GSym.vcheck) if ball else yellow(GSym.vuncheck))
         # vdone = "(" + str(done_count).rjust(2, "0") + ")" + red("done") + checkbox(not ball and self.show_done)
         # vinit = "(" + str(init_count).rjust(2, "0") + ")" + red("init") + checkbox(not ball and self.show_init)
         # vtodo = "(" + str(todo_count).rjust(2, "0") + ")" + red("todo") + checkbox(not ball and self.show_todo)
-        vlink = red("vbar") + ( checkbox(self.show_vbar) )
-        vperc = red("perc") + ( checkbox(self.show_perc) )
         # vjoin = red("join") + ( checkbox(self.show_fold) )
-        vhack = red("hack") + ( checkbox(self.show_hack) )
-        vgame = red("game") + ( checkbox(False) )
+        intro = green("Digite ") + red("h") + green(" para ") + red("help") 
+        intro += green(" ou ") + red("t") + green(" para ") + red("toolbar") 
+        intro += checkbox(self.show_toolbar)
+        vlink = red("vbar") + ( checkbox(self.show_vbar) )
+        # vperc = red("perc") + ( checkbox(self.show_perc) )
+        vhack = red("game") + ( checkbox(not self.show_hack) )
+        vgame = red("exp ") + ( checkbox(False) )
 
+        visoes = f"{vlink}  {vhack}  {vgame}"
+        div0 = "──────────────────────────────────────"
+        elementos = [ intro ] + ([ div0, visoes ] if self.show_toolbar else []) + [div0]
+        self.print_elementos(elementos)
+
+    def show_cmds(self):
         controles = green("Elementos em ") + self.control("azul") + green(" são controles")
         feitos = colour_bold("g", "1") + colour_bold("y", "2") + colour_bold("r", "3") + green(" Feitos") + "/" + yellow("Iniciados") + "/" + red("Não Iniciados")
         cluster = GSym.right + self.control(" Gr") + green("upo. Digite ") + self.control("Gr") + green(" para ver ou ocultar")
@@ -3226,47 +3241,32 @@ class Play:
         graduar = colour("r", "4") + self.control("  X") + green(" Tarefa. Dig ") + self.control("X4") + green(" dar nota 4")
         todas = self.control("<") + " ou " + self.control(">") + yellow(" (Compactar ou Descompactar Tudo)")
         
-        
-        
         nomes_verm = green("Os nomes em vermelho são comandos")
         prime_letr = green("Basta a primeira letra do comando")
         # read = red("see <LETRA>") + cyan(" {s B}") + yellow(" (Ler no terminal)")
-        down = red("down <LETRA>") + cyan(" {d B}") + yellow(" (Baixar tarefa)")
-        cmds = red("cmd") + yellow("  (Visualizar os comandos)")
+        down = red("down <LETRAS>") + cyan(" {d B}") + yellow(" (Baixar tarefa)")
+        link = red("link <LETRAS>") + cyan(" {d B}") + yellow(" (Ver links)")
+
         manu = red("man") + yellow("  (Mostrar manual detalhado)")
         sair = red("quit") + yellow(" (Sair do programa)")
 
-        flag = red("toolbar") + yellow(" (Mostrar barra de flags)")
         vbar  = red("vbar")    + yellow(" (Mostrar barra vertical)")
-        hack  = red("hack")    + yellow(" (Desabilita prá-requesitos)")
-        perc  = red("perc") + yellow(" (Mostrar porcentagens)")
-        game  =  red("game")      + yellow(" (Mostrar experiência)")
+        game  = red("game")    + yellow(" (Liga e desliga o modo jogo)")
+        # perc  = red("perc") + yellow(" (Mostrar porcentagens)")
+        exp  =  red("exp")      + yellow("  (Mostrar experiência)")
 
         #indicadores = f"{vall} {vdone} {vinit} {vtodo}"
-        visoes = f"{vlink}  {vperc}  {vhack}  {vgame}"
+
         div0 = "──────────────────────────────────────"
-        div1 = "───────────────── 1 ──────────────────"
-        div2 = "───────────────── 2 ──────────────────"
+        div1 = "───────────── " + self.control("Controles") +  "──────────────"
+        div2 = "───────────── " + colour_bold("r", "Comandos") + " ───────────────"
         elementos = []
-        flagbox = red(" toolbar") + checkbox(self.show_toolbar)
-        if self.help_index == 0:
-            intro = show_ajuda + " (1/2)" + flagbox
-            elementos = [ intro ] + ([ div0, visoes ] if self.show_toolbar else [])
-        elif self.help_index == 1:
-            intro = show_ajuda + " (" + yellow("1") + "/2)" + flagbox
-            elementos = [ intro ] + ([ div0, visoes ] if self.show_toolbar else [])
-            elementos += [ div1, controles, feitos, todas, cluster, numeros, letras, graduar ]
-            elementos += [ div2, nomes_verm, prime_letr, cmds, manu, down, flag, vbar, perc, game, hack, sair ]
-        # elif self.help_index == 2:
-        #     intro = show_ajuda + " (1/" + yellow("2") + ")" + flagbox
-        #     elementos = [ intro ] + ([ div0, visoes ] if self.show_toolbar else [])
-        # elif self.help_index == 3:
-        #     intro = show_ajuda + " (1/2/" + yellow("3") + ")" + green(" - ") + red("view") + checkbox(self.show_view)
-        #     elementos = [ intro ] + ([ div0, indicadores, visoes ] if self.show_view else [])
-        #     elementos += [ div3, nomes_verm, prime_letr, sall, sdone, sinit, stodo, fold,  ]
-        self.help_options = 2
+        elementos += [ div1, controles, feitos, todas, cluster, numeros, letras, graduar ]
+        elementos += [ div2, nomes_verm, prime_letr, down, link, manu, vbar, game, exp, sair ]
+
         self.print_elementos(elementos)
         print(div0)
+        return False
 
     def print_elementos(self, elementos):
         term_size = shutil.get_terminal_size().columns
