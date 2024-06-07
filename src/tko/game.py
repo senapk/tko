@@ -25,8 +25,6 @@ class Task:
         if self.grade == "x":
             return green(GSym.check)
         number = int(self.grade)
-        if number < 7:
-            return red(GSym.numbers[number])
         return yellow(GSym.numbers[number])
 
     def get_percent(self):
@@ -43,6 +41,15 @@ class Task:
             or self.grade == "8"
             or self.grade == "9"
         )
+    
+    def is_complete(self):
+        return self.grade == "x"
+
+    def not_started(self):
+        return self.grade == ""
+    
+    def in_progress(self):
+        return self.grade != "" and self.grade != "x"
 
     def set_grade(self, grade):
         valid = ["", "x", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
@@ -92,12 +99,12 @@ class Task:
 
     @staticmethod
     def parse_arroba_from_title_link(titulo, link) -> Tuple[bool, str]:
-        pattern = r"@(\w+)"
+        pattern = r".*?@(\w*)"
         match = re.match(pattern, titulo)
         if not match:
             return (False, "")
         key = match.group(1)
-        if not "key/Readme.md" in link:
+        if not (key + "/Readme.md") in link:
             return (False, "")
         return (True, key)
 
@@ -116,10 +123,9 @@ class Task:
             return False
         line = line.lstrip()
 
-        found, titulo, link = Task.parse_task_with_link(line)
+        found, titulo, link = Task.parse_item_with_link(line)
         if not found:
             return False
-
         found, key = Task.parse_arroba_from_title_link(titulo, link)
         if not found:
             return False
@@ -148,7 +154,7 @@ class Task:
         
         found, titulo, link = Task.parse_task_with_link(line)
         if found:
-            self.key = titulo
+            self.key = link
             self.title = titulo
             self.link = link
             self.line = line
@@ -345,7 +351,6 @@ class Game:
             print(f"Task {task.key} não está dentro de uma quest")
             print(task)
             exit(1)
-        task.key = last_quest.key + "-" + get_md_link(task.key)
         last_quest.tasks.append(task)
         if task.key in self.tasks:
             print(f"Task {task.key} já existe")
