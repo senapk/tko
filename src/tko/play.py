@@ -67,6 +67,8 @@ class Play:
 
     def control(self, text):
         return colour_bold("blue", text)
+    def cmd(self, text):
+        return colour_bold("red", text)
 
     def read_link(self, link):
         if link.endswith(".md"):
@@ -177,20 +179,20 @@ class Play:
         #     for q in self.quests.values():
         #         self.active.add(q.key)
 
-    def calculate_pad(self):
-        titles = []
-        keys = self.quests.keys()
-        for key in keys:
-            q = self.quests[key]
-            titles.append(q.title)
-            if q.key not in self.active:
-                continue
-            for t in q.tasks:
-                titles.append(t.title)
-        max_title = 10
-        if len(titles) > 0:
-            max_title = max([len(t) for t in titles])
-        return max_title
+    # def calculate_pad(self):
+    #     titles = []
+    #     keys = self.quests.keys()
+    #     for key in keys:
+    #         q = self.quests[key]
+    #         titles.append(q.title)
+    #         if q.key not in self.active:
+    #             continue
+    #         for t in q.tasks:
+    #             titles.append(t.title)
+    #     max_title = 10
+    #     if len(titles) > 0:
+    #         max_title = max([len(t) for t in titles])
+    #     return max_title
 
     def to_show_quest(self, quest: Quest):
         # if quest.is_complete() and not self.show_done:
@@ -206,10 +208,10 @@ class Play:
             return GSym.numbers[value]
         return "*"
 
-    def str_quest(self, entry: str, q: Quest, max_title) -> str:
-        opening = GSym.right
+    def str_quest(self, entry: str, q: Quest) -> str:
+        opening = GSym.right2
         if q.key in self.active:
-            opening = GSym.down
+            opening = GSym.down2
 
         space = " " if len(entry) == 1 else ""
         entry = self.control(entry)
@@ -244,7 +246,7 @@ class Play:
 
         return f"{resume}{opening} {space}{entry} {title}"
 
-    def str_task(self, t: Task, max_title: int, letter: str, lig: str) -> str:
+    def str_task(self, t: Task, letter: str, lig: str) -> str:
         term_size = self.get_term_size()
         vindex = self.control(str(letter).rjust(2, " "))
         vdone = t.get_grade()
@@ -288,7 +290,7 @@ class Play:
         todo = red(self.get_number(len([v for v in quests if self.quests[v].not_started()])))
         margin = len(cluster_key)
         title = self.control(cluster_name.strip()[:margin]) + colour("bold", cluster_name.strip()[margin:])
-        opening = yellow(opening)
+        # opening = yellow(opening)
         resume = ""
         if self.show_vbar:
             resume = f"{done}{init}{todo} "
@@ -318,7 +320,7 @@ class Play:
         return shutil.get_terminal_size().columns
 
     def show_options(self):
-        max_title = self.calculate_pad()
+        # max_title = self.calculate_pad()
         index = 0
 
         clusters: Dict[str, List[Tuple[str, str]]] = {}
@@ -326,12 +328,12 @@ class Play:
         for entry in self.sort_keys(self.quests.keys()):
             quest_output: List[Tuple[str, str]] = []
             q = self.quests[entry]
-            quest_output.append((self.str_quest(entry, q, max_title), entry))
+            quest_output.append((self.str_quest(entry, q), entry))
             if q.key in self.active and self.to_show_quest(q):
                 for i, t in enumerate(q.tasks):
                     letter = self.calc_letter(index)
                     lig = "├─" if i < len(q.tasks) - 1 else "╰─"
-                    quest_output.append((self.str_task(t, max_title, letter, lig), t.key))
+                    quest_output.append((self.str_task(t, letter, lig), t.key))
                     index += 1
                     self.tasks[letter] = t
 
@@ -365,7 +367,6 @@ class Play:
         pattern = r"([a-zA-Z]+)-([a-zA-Z]+)"
         match = re.match(pattern, s)
         if match:
-            print(match.group(1), match.group(2))
             return match.group(1), match.group(2)
         return (None, None)
 
@@ -453,22 +454,28 @@ class Play:
         return True
 
     def process_quests(self, actions):
+        mass_action = None
         for t in actions:
             if not self.is_number(t):
                 print(f"Missão '{t}' não é um número")
                 return False
-                return
             if not str(t) in self.quests:
                 print(self.quests.keys())
                 print(f"Missão '{t}' não existe")
                 return False
             key = self.quests[str(t)].key
-            if key not in self.active:
-                self.active.append(key)
-                continue
+            if mass_action is not None:
+                if mass_action == "append" and key not in self.active:
+                    self.active.append(key)
+                elif key in self.active:
+                    self.active.remove(key)
             else:
-                self.active.remove(key)
-                continue
+                if key not in self.active:
+                    self.active.append(key)
+                    mass_action = "append"
+                else:
+                    self.active.remove(key)
+                    mass_action = "remove"
         return True
     
     def process_tasks(self, actions):
@@ -560,11 +567,9 @@ class Play:
         return True
 
     def show_help(self):
-        print(
-            "Digite "
-            + red("t")
-            + " os números ou intervalo das tarefas para (marcar/desmarcar), exemplo:"
-        )
+        output = "Digite " + red("t")
+        output += " os números ou intervalo das tarefas para (marcar/desmarcar), exemplo:"
+        print(output)
         print(green("play $ ") + "t 1 3-5")
         return False
 
@@ -584,13 +589,13 @@ class Play:
         # vinit = "(" + str(init_count).rjust(2, "0") + ")" + red("init") + checkbox(not ball and self.show_init)
         # vtodo = "(" + str(todo_count).rjust(2, "0") + ")" + red("todo") + checkbox(not ball and self.show_todo)
         # vjoin = red("join") + ( checkbox(self.show_fold) )
-        intro = green("Digite ") + red("h") + green(" para ") + red("help") 
-        intro += green(" ou ") + red("t") + green(" para ") + red("toolbar") 
+        intro = green("Digite ") + self.cmd("h") + green(" para ") + self.cmd("h") +red("elp") 
+        intro += green(" ou ") + self.cmd("t") + green(" para ") + self.cmd("t") + red("oolbar") 
         intro += checkbox(self.show_toolbar)
-        vlink = red("vbar") + ( checkbox(self.show_vbar) )
+        vlink = self.cmd("v") + red("bar") + ( checkbox(self.show_vbar) )
         # vperc = red("perc") + ( checkbox(self.show_perc) )
-        vhack = red("game") + ( checkbox(not self.show_hack) )
-        vgame = red("exp ") + ( checkbox(False) )
+        vhack = self.cmd("g") + red("ame") + ( checkbox(not self.show_hack) )
+        vgame = self.cmd("e") + red("xp") + ( checkbox(False) )
 
         visoes = f"{vlink}  {vhack}  {vgame}"
         div0 = "──────────────────────────────────────"
@@ -609,16 +614,14 @@ class Play:
         nomes_verm = green("Os nomes em vermelho são comandos")
         prime_letr = green("Basta a primeira letra do comando")
         # read = red("see <LETRA>") + cyan(" {s B}") + yellow(" (Ler no terminal)")
-        down = red("down <LETRAS>") + cyan(" {d B}") + yellow(" (Baixar tarefa)")
-        link = red("link <LETRAS>") + cyan(" {d B}") + yellow(" (Ver links)")
-
-        manu = red("man") + yellow("  (Mostrar manual detalhado)")
-        sair = red("quit") + yellow(" (Sair do programa)")
-
-        vbar  = red("vbar")    + yellow(" (Mostrar barra vertical)")
-        game  = red("game")    + yellow(" (Liga e desliga o modo jogo)")
+        down = self.cmd("d") + red("own <LETRAS>") + cyan(" {d B}") + yellow(" (Baixar tarefa)")
+        link = self.cmd("l") + red("ink <LETRAS>") + cyan(" {d B}") + yellow(" (Ver links)")
+        manu = self.cmd("m") + red("an") + yellow("  (Mostrar manual detalhado)")
+        sair = self.cmd("q") + red("uit") + yellow(" (Sair do programa)")
+        vbar = self.cmd("v") + red("bar")    + yellow(" (Mostrar barra vertical)")
+        game = self.cmd("g") + red("ame")    + yellow(" (Liga e desliga o modo jogo)")
+        exp  = self.cmd("e") + red("xp")      + yellow("  (Mostrar experiência)")
         # perc  = red("perc") + yellow(" (Mostrar porcentagens)")
-        exp  =  red("exp")      + yellow("  (Mostrar experiência)")
 
         #indicadores = f"{vall} {vdone} {vinit} {vtodo}"
 
@@ -627,7 +630,7 @@ class Play:
         div2 = "───────────── " + colour_bold("r", "Comandos") + " ───────────────"
         elementos = []
         elementos += [ div1, controles, feitos, todas, cluster, numeros, letras, graduar ]
-        elementos += [ div2, nomes_verm, prime_letr, down, link, manu, vbar, game, exp, sair ]
+        elementos += [ div2, nomes_verm, prime_letr, down, link, vbar, game, exp, manu, sair ]
 
         self.print_elementos(elementos)
         print(div0)

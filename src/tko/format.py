@@ -147,8 +147,8 @@ class GSym:
     # opcheck = "🟘🟗" # erro Pedro
 
 
-    # oprightdown = "→↓"
     oprightdown = "➡️⬇️"    # azuzinho
+    oprightdown2 = "→↓"
     # oprightdown = "🠊🠋" # erro Pedro
     # oprightdown = "⮞⮟" # erro Pedro
 
@@ -156,6 +156,8 @@ class GSym:
     vuncheck = opcheck[1]
     right = "➡️"
     down = "⬇️"
+    right2 = oprightdown2[0]
+    down2 = oprightdown2[1]
 
     numbers = "0123456789***********"
 
