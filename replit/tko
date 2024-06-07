@@ -2671,7 +2671,7 @@ class Play:
         # else:
         #     self.help_index = 0
 
-        # self.show_perc = "perc" in self.rep.view
+        self.show_perc = "perc" in self.rep.view
         self.show_perc = True
         self.show_fold = True
         self.show_hack = not "game" in self.rep.view
@@ -2845,6 +2845,16 @@ class Play:
             return GSym.numbers[value]
         return "*"
 
+    def get_percent(self, value):
+        text = f"{str(value).rjust(2)}%"
+        if value == 100:
+            return cyan(GSym.check * 3)
+        if value >= 70:
+            return green(text)
+        if value == 0:
+            return red(text)
+        return yellow(text)
+
     def str_quest(self, entry: str, q: Quest) -> str:
         opening = GSym.right2
         if q.key in self.active:
@@ -2859,23 +2869,12 @@ class Play:
 
         resume = ""
         if self.show_vbar:
-            done = self.get_number(len([t for t in q.tasks if t.is_complete()]))
-            init = self.get_number(len([t for t in q.tasks if t.in_progress()]))
-            todo = self.get_number(len([t for t in q.tasks if t.not_started()]))
-    
             if self.show_perc:
-                text = f"{str(q.get_percent()).rjust(2)}%"
-                if q.get_percent() == 100:
-                    text = GSym.check * 3
-                if q.get_percent() == 100:
-                    resume = cyan(text)
-                elif q.is_complete():
-                    resume = green(text)
-                elif q.in_progress():
-                    resume = yellow(text)
-                else:
-                    resume = red(text)
+                resume = self.get_percent(q.get_percent())
             else:
+                done = self.get_number(len([t for t in q.tasks if t.is_complete()]))
+                init = self.get_number(len([t for t in q.tasks if t.in_progress()]))
+                todo = self.get_number(len([t for t in q.tasks if t.not_started()]))
                 resume = f"{green(done)}{yellow(init)}{red(todo)}"
             resume = resume + " "
         else:
@@ -2921,17 +2920,26 @@ class Play:
             opening = GSym.down
         intro = [key for _, key in line_types]
         quests = [k for k in intro if k in self.quests]
-        total = len(quests)
-        init = yellow(self.get_number(len([v for v in quests if self.quests[v].in_progress()])))
-        done = green(self.get_number(len([v for v in quests if self.quests[v].is_complete()])))
-        todo = red(self.get_number(len([v for v in quests if self.quests[v].not_started()])))
+        resume = ""
+        if not self.show_perc:
+            init = yellow(self.get_number(len([v for v in quests if self.quests[v].in_progress()])))
+            done = green(self.get_number(len([v for v in quests if self.quests[v].is_complete()])))
+            todo = red(self.get_number(len([v for v in quests if self.quests[v].not_started()])))
+            resume = f"{done}{init}{todo} "
+        else:
+            total = 0
+            for q in quests:
+                quest = self.quests[q]
+                total += quest.get_percent()
+            total = total // len(quests)
+            resume = colour("bold", self.get_percent(total) + " ")
+            
         margin = len(cluster_key)
         title = self.control(cluster_name.strip()[:margin]) + colour("bold", cluster_name.strip()[margin:])
-        # opening = yellow(opening)
-        resume = ""
-        if self.show_vbar:
-            resume = f"{done}{init}{todo} "
-        if total > 0:
+        opening = yellow(opening)
+        if not self.show_vbar:
+            resume = ""
+        if len(quests) > 0:
             print(f"{resume}{opening} {title}")
             if cluster_name in self.active:
                 for line, t in line_types:
@@ -3140,15 +3148,15 @@ class Play:
                 return False
         return True
     
-    def process_see(self, actions):
-        if len(actions) > 1:
-            if actions[1] in self.tasks:
-                # print(self.tasks[actions[1]].link)
-                self.read_link(self.tasks[actions[1]].link)
-            else:
-                print(f"{actions[1]} não processado")
-                return False
-        return True
+    # def process_see(self, actions):
+    #     if len(actions) > 1:
+    #         if actions[1] in self.tasks:
+    #             # print(self.tasks[actions[1]].link)
+    #             self.read_link(self.tasks[actions[1]].link)
+    #         else:
+    #             print(f"{actions[1]} não processado")
+    #             return False
+    #     return True
     
     def process_link(self, actions):
         if len(actions) == 1:
@@ -3180,8 +3188,8 @@ class Play:
             return self.show_cmds()
         elif cmd == "v" or cmd == "vbar":
             self.show_vbar = not self.show_vbar
-        # elif cmd == "p" or cmd == "perc":
-        #     self.show_perc = not self.show_perc
+        elif cmd == "p" or cmd == "perc":
+            self.show_perc = not self.show_perc
         elif cmd == "g" or cmd == "game":
             self.show_hack = not self.show_hack
         elif cmd == "t" or cmd == "toolbar":
@@ -3230,11 +3238,11 @@ class Play:
         intro += green(" ou ") + self.cmd("t") + green(" para ") + self.cmd("t") + red("oolbar") 
         intro += checkbox(self.show_toolbar)
         vlink = self.cmd("v") + red("bar") + ( checkbox(self.show_vbar) )
-        # vperc = red("perc") + ( checkbox(self.show_perc) )
+        vperc = red("perc") + ( checkbox(self.show_perc) )
         vhack = self.cmd("g") + red("ame") + ( checkbox(not self.show_hack) )
         vgame = self.cmd("e") + red("xp") + ( checkbox(False) )
 
-        visoes = f"{vlink}  {vhack}  {vgame}"
+        visoes = f"{vlink}  {vperc}  {vhack}  {vgame}"
         div0 = "──────────────────────────────────────"
         elementos = [ intro ] + ([ div0, visoes ] if self.show_toolbar else []) + [div0]
         self.print_elementos(elementos)
@@ -3243,7 +3251,7 @@ class Play:
         controles = green("Elementos em ") + self.control("azul") + green(" são controles")
         feitos = colour_bold("g", "1") + colour_bold("y", "2") + colour_bold("r", "3") + green(" Feitos") + "/" + yellow("Iniciados") + "/" + red("Não Iniciados")
         cluster = GSym.right + self.control(" Gr") + green("upo. Digite ") + self.control("Gr") + green(" para ver ou ocultar")
-        numeros = GSym.right + self.control("  3") + green(" Missão. Dig ") + self.control("3") + green(" para ver ou ocultar")
+        numeros = GSym.right2 + self.control("  3") + green(" Missão. Dig ") + self.control("3") + green(" para ver ou ocultar")
         letras = colour("g", GSym.check) + self.control("  D") + green(" Tarefa. Dig ") + self.control("D") + green(" (des)marcar")
         graduar = colour("r", "4") + self.control("  X") + green(" Tarefa. Dig ") + self.control("X4") + green(" dar nota 4")
         todas = self.control("<") + " ou " + self.control(">") + yellow(" (Compactar ou Descompactar Tudo)")
@@ -3251,14 +3259,14 @@ class Play:
         nomes_verm = green("Os nomes em vermelho são comandos")
         prime_letr = green("Basta a primeira letra do comando")
         # read = red("see <LETRA>") + cyan(" {s B}") + yellow(" (Ler no terminal)")
-        down = self.cmd("d") + red("own <LETRAS>") + cyan(" {d B}") + yellow(" (Baixar tarefa)")
-        link = self.cmd("l") + red("ink <LETRAS>") + cyan(" {d B}") + yellow(" (Ver links)")
+        down = self.cmd("d") + red("own <Letras da Tarefas>") + yellow(" (Download)")
+        link = self.cmd("l") + red("ink <Letras da Tarefas>") + yellow(" (Ver links)")
         manu = self.cmd("m") + red("an") + yellow("  (Mostrar manual detalhado)")
         sair = self.cmd("q") + red("uit") + yellow(" (Sair do programa)")
-        vbar = self.cmd("v") + red("bar")    + yellow(" (Mostrar barra vertical)")
-        game = self.cmd("g") + red("ame")    + yellow(" (Liga e desliga o modo jogo)")
-        exp  = self.cmd("e") + red("xp")      + yellow("  (Mostrar experiência)")
-        # perc  = red("perc") + yellow(" (Mostrar porcentagens)")
+        vbar = self.cmd("v") + red("bar") + yellow(" (Alterna mostrar barra vertical)")
+        perc = self.cmd("p") + red("erc") + yellow(" (Alterna mostrar porcentagens)")
+        game = self.cmd("g") + red("ame") + yellow(" (Quebra pré requisitos de missões)")
+        exp  = self.cmd("e") + red("xp")  + yellow("  (Mostrar experiência)")
 
         #indicadores = f"{vall} {vdone} {vinit} {vtodo}"
 
@@ -3267,7 +3275,7 @@ class Play:
         div2 = "───────────── " + colour_bold("r", "Comandos") + " ───────────────"
         elementos = []
         elementos += [ div1, controles, feitos, todas, cluster, numeros, letras, graduar ]
-        elementos += [ div2, nomes_verm, prime_letr, down, link, vbar, game, exp, manu, sair ]
+        elementos += [ div2, nomes_verm, prime_letr, down, link, vbar, perc, game, exp, manu, sair ]
 
         self.print_elementos(elementos)
         print(div0)
