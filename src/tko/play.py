@@ -86,19 +86,17 @@ class Play:
                 print("Verifique se o arquivo está no formato markdown")
                 input("Digite enter para continuar")
 
-    def down_task(self, task: Task):
+    def down_task(self, rootdir, task: Task, ext: str = None):
         if task.key in task.title:
-            print(f"Tarefa de código {task.key}")
-            cmd = red(f"tko down {self.repo_alias} {task.key}")
-            print(f"Baixando com o comando {cmd}")
-            result = Down.download_problem(self.repo_alias, task.key, None)
-            # result = subprocess.run(["tko", "down", self.repo_alias, task.key])
-            if result:
-                pasta = red(f"{os.getcwd()}/{task.key}/Readme.md")
-                print(f"Tarefa baixada na pasta {pasta}")
+            
+            cmd = red(f"tko down {self.repo_alias} {task.key} -l {ext}" )
+            print(f"{cmd}")
+            result = Down.download_problem(rootdir, self.repo_alias, task.key, ext)
+            # if result:
+            #     print(yellow(f"  {os.getcwd()}/{task.key}/Readme.md"))
         else:
             print(f"Essa não é uma tarefa de código")
-        input("Digite enter para continuar")
+            
 
     def save_to_json(self):
         self.rep.quests = {}
@@ -434,10 +432,34 @@ class Play:
         else:
             self.active = self.active + clusters
 
+    def check_rootdir(self):
+        if self.rep.rootdir == "":
+            print("Diretório raiz para esse repositório ainda não foi definido")
+            print("Você deseja utilizer o diretório atual")
+            print("  " + red(os.getcwd()))
+            print("como raiz para o repositório de " + self.repo_alias + "? (s/n) ", end="")
+            answer = input()
+            if answer == "s":
+                self.rep.rootdir = os.getcwd()
+                self.fnsave()
+                print("Você pode alterar o diretório raiz navegando para o diretório desejado e executando o comando")
+                print("  " + red("tko repo init " + self.repo_alias))
+            else:
+                print("Navegue para o diretório desejado e execute o comando novamente")
+                exit(1)
+
     def process_down(self, actions):
-        for t in actions[1:]:
+        if len(actions) < 3:
+            print("Modo de usar: down <EXT> <TaskID ...>")
+            print("Exemplo: down js A C-F")
+            return False
+        self.check_rootdir()
+
+        rootdir = os.path.relpath(self.rep.rootdir)
+        for t in actions[2:]:
+            ext = actions[1]
             if t in self.tasks:
-                self.down_task(self.tasks[t])
+                self.down_task(rootdir, self.tasks[t], ext)
             else:
                 print(f"Tarefa {t} não encontrada")
                 input()
@@ -578,7 +600,7 @@ class Play:
         output = "Digite " + red("t")
         output += " os números ou intervalo das tarefas para (marcar/desmarcar), exemplo:"
         print(output)
-        print(green("play $ ") + "t 1 3-5")
+        print(green("play$ ") + "t 1 3-5")
         return False
 
     def show_header(self):
@@ -621,9 +643,8 @@ class Play:
         
         nomes_verm = green("Os nomes em vermelho são comandos")
         prime_letr = green("Basta a primeira letra do comando")
-        # read = red("see <LETRA>") + cyan(" {s B}") + yellow(" (Ler no terminal)")
-        down = self.cmd("d") + red("own <Letras da Tarefas>") + yellow(" (Download)")
-        link = self.cmd("l") + red("ink <Letras da Tarefas>") + yellow(" (Ver links)")
+        down = self.cmd("d") + red("own") + " <EXT>" + self.control(" <TaskID ...>") + yellow(" (Download)")
+        link = self.cmd("l") + red("ink") + self.control(" <TaskId ...>") + yellow(" (Ver links)")
         manu = self.cmd("m") + red("an") + yellow("  (Mostrar manual detalhado)")
         sair = self.cmd("q") + red("uit") + yellow(" (Sair do programa)")
         vbar = self.cmd("v") + red("bar") + yellow(" (Alterna mostrar barra vertical)")

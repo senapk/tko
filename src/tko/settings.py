@@ -7,6 +7,7 @@ from .remote import RemoteCfg, Absolute
 
 class RepoSettings:
     def __init__(self):
+        self.rootdir: str = ""
         self.url: str = ""
         self.file: str = ""
         self.cache: str = ""
@@ -38,6 +39,9 @@ class RepoSettings:
 
         raise ValueError("fail: file not found or invalid settings to download repository file")
         
+    def set_rootdir(self, rootdir: str):
+        self.rootdir = os.path.abspath(rootdir)
+        return self
 
     def set_file(self, file: str):
         self.file = os.path.abspath(file)
@@ -49,6 +53,7 @@ class RepoSettings:
 
     def to_dict(self):
         return {
+            "rootdir": self.rootdir,
             "url": self.url,
             "file": self.file,
             "cache": self.cache,
@@ -58,6 +63,7 @@ class RepoSettings:
         }
     
     def from_dict(self, data: Dict[str, Any]):
+        self.rootdir = data.get("rootdir", "")
         self.url = data.get("url", "")
         self.file = data.get("file", "")
         self.cache = data.get("cache", "")

@@ -47,6 +47,17 @@ class MRep:
             print("Repository not found.")
 
     @staticmethod
+    def init(args):
+        sp = SettingsParser()
+        settings = sp.load_settings()
+        if args.alias in settings.reps:
+            rep = settings.reps[args.alias]
+            rep.set_rootdir(".")
+            sp.save_settings()
+        else:
+            print("Repository not found.")
+
+    @staticmethod
     def reset(args):
         sp = SettingsParser()
         sp.settings = Settings()
@@ -150,7 +161,7 @@ class Main:
 
     @staticmethod
     def down(args):
-        Down.download_problem(args.course, args.activity, args.language)
+        Down.download_problem(".", args.course, args.activity, args.language)
 
 class Parser:
     def __init__(self):
@@ -261,8 +272,14 @@ class Parser:
         repo_rm.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be removed.')
         repo_rm.set_defaults(func=MRep.rm)
 
+        repo_setroot = subpar_repo.add_parser('init', help='Define here a root folder for repo.')
+        repo_setroot.add_argument('alias', metavar='alias', type=str, help='alias of the repository.')
+        repo_setroot.set_defaults(func=MRep.init)
+
         repo_reset = subpar_repo.add_parser('reset', help='reset all repositories to factory default.')
         repo_reset.set_defaults(func=MRep.reset)
+
+
 
         repo_graph = subpar_repo.add_parser('graph', help='generate graph of the repository.')
         repo_graph.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be graphed.')

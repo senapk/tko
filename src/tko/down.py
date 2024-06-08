@@ -46,7 +46,7 @@ class Down:
     def __create_file(content, path, label=""):
         with open(path, "w") as f:
             f.write(content)
-        print(path, label)
+        print("  " + path, label)
 
     @staticmethod
     def __unpack_json(loaded, destiny, lang: str):
@@ -73,14 +73,14 @@ class Down:
         if not os.path.exists(path):
             with open(path, "w", encoding="utf-8") as f:
                 f.write(content.encode("utf-8").decode("utf-8"))
-            print(path + " (New)")
+            print("  " + path + " (New)")
         else:
             if open(path).read() != content:
                 print(path + " (Updated)")
                 with open(path, "w") as f:
                     f.write(content)
             else:
-                print(path + " (Unchanged)")
+                print("  " + path + " (Unchanged)")
     
     @staticmethod
     def __down_problem_def(destiny, cache_url) -> Tuple[str, str]:
@@ -101,25 +101,23 @@ class Down:
         return readme, mapi
 
     @staticmethod
-    def __create_problem_folder(_course, activity):
+    def __create_problem_folder(rootdir, activity):
         # create dir
-        destiny = activity
+        destiny = os.path.join(rootdir, activity)
         if not os.path.exists(destiny):
             os.makedirs(destiny, exist_ok=True)
         else:
-            print("problem folder", destiny, "found, merging content.")
+            print("  Problem folder", destiny, "found, merging content.")
 
         return destiny
 
 
     @staticmethod
-    def download_problem(course: str, activity: str, language: Optional[str]) -> bool:
+    def download_problem(rootdir, course: str, activity: str, language: Optional[str]) -> bool:
         sp = SettingsParser()
         settings = sp.load_settings()
         rep = settings.get_repo(course)
-        # if rep.url == "":
-        #     print("fail: course", course, "is not a remote course")
-        #     return False
+
         file = rep.get_file()
         item = Game(file).get_task(activity)
         if not item.link.startswith("http"):
@@ -128,21 +126,12 @@ class Down:
         cfg = RemoteCfg(item.link)
         cache_url = os.path.dirname(cfg.get_raw_url()) + "/.cache/"
     
-        # rep = reps[course]
-        # cfg = RemoteCfg()
-        # cfg.from_url(rep.url)
-        # url = cfg.get_raw_url()
-        # basedir = os.path.dirname(url) + "/base/" 
-        # index_url = basedir + activity + "/"
-        # cache_url = index_url + ".cache/"
-
-        # downloading Readme
         try:
-            destiny = Down.__create_problem_folder(course, activity)
+            destiny = Down.__create_problem_folder(rootdir, activity)
             #print("debug", cache_url)
             [_readme_path, mapi_path] = Down.__down_problem_def(destiny, cache_url)
         except urllib.error.HTTPError:
-            print("fail: activity not found in course url")
+            print("  fail: activity not found in course url")
             # verifi if destiny folder is empty and remove it
             if len(os.listdir(destiny)) == 0:
                 os.rmdir(destiny)
@@ -158,7 +147,7 @@ class Down:
             if language_def != "ask":
                 language = language_def
             else:
-                print("Choose extension for draft: [c, cpp, py, ts, js, java]: ", end="")
+                print("  Choose extension for draft: [c, cpp, py, ts, js, java]: ", end="")
                 language = input()
                 ask_ext = True
         
@@ -177,7 +166,7 @@ class Down:
             try:
                 draft_path = os.path.join(destiny, "draft." + language)
                 urllib.request.urlretrieve(cache_url + "draft." + language, draft_path)
-                print(draft_path + " (Draft) Rename before modify.")
+                print("  " + draft_path + " (Draft) Rename before modify.")
 
             except urllib.error.HTTPError:  # draft not found
                 filename = "draft."
@@ -188,7 +177,7 @@ class Down:
                             f.write(Down.drafts[language])
                         else:
                             f.write("")
-                    print(draft_path, "(Empty)")
+                    print("  " + draft_path, "(Empty)")
         
         if ask_ext:
             print("\nYou can choose default extension with command\n$ tko config -l <extension>")
