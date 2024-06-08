@@ -1,6 +1,5 @@
 import shutil
 
-from enum import Enum
 from typing import Optional
 
 
@@ -49,8 +48,9 @@ class Color:
         return len(Color.remove_colors(text))
 
 
-def colour(color: str, text: str, color2 = None) -> str:
+def colour(color: str, text: str, color2: str = None) -> str:
     return ("" if color2 is None else Color.map[color2]) + Color.map[color] + text + Color.map["reset"]
+
 
 class __Symbols:
     def __init__(self):
@@ -141,7 +141,6 @@ class GSym:
     # opcheck = "🞕🞖" # erro Pedro
     # opcheck = "🟘🟗" # erro Pedro
 
-
     oprightdown = "➡️⬇️"    # azuzinho
     oprightdown2 = "→↓"
     # oprightdown = "🠊🠋" # erro Pedro
@@ -173,8 +172,10 @@ def yellow(text):
 def cyan(text):
     return colour("c", text)
 
+
 def bold(color: str, text: str) -> str:
     return colour(color, text, "bold")
+
 
 class Report:
     __term_width: Optional[int] = None

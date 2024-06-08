@@ -5,7 +5,7 @@ import os
 from .basic import IdentifierType, Identifier, Unit, Param
 from .loader import Loader
 from .solver import Solver
-from .format import Color, colour, symbols
+from .format import colour, symbols
 
 # generate label for cases
 
@@ -190,15 +190,15 @@ class Wdir:
 
         def solvers() -> str:
             path_list = [] if self.solver is None else self.solver.path_list
-            out = ""
-            if self.solver is not None and len(path_list) == 0: # free_cmd
+
+            if self.solver is not None and len(path_list) == 0:  # free_cmd
                 out = "free cmd"
             else:
                 out = ", ".join([os.path.basename(path) for path in path_list])
             return colour("green", "prog:") + "[" + out + "]"
 
         # folder = os.getcwd().split(os.sep)[-1]
-        #tests_count = (colour("tests:", Color.GREEN) +
+        # tests_count = (colour("tests:", Color.GREEN) +
         #               str(len([x for x in self.unit_list if x.repeated is None])).zfill(2))
 
         return symbols.opening + sources() + " " + solvers()

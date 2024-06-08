@@ -8,6 +8,7 @@ from .settings import SettingsParser
 from .game import Game
 from .remote import RemoteCfg
 
+
 class Down:
 
     ts_draft = (r'let _cin_ : string[] = [];' + '\n'
@@ -15,7 +16,7 @@ class Down:
                 r'let input = () : string => _cin_.length === 0 ? "" : _cin_.shift()!;' + '\n'
                 r'let write = (text: any, end:string="\n")=> process.stdout.write("" + text + end);' + '\n')
 
-    js_draft = (r'let __lines = require("fs").readFileSync(0).toString().split("\n");'  + '\n'
+    js_draft = (r'let __lines = require("fs").readFileSync(0).toString().split("\n");' + '\n'
                 r'let input = () => __lines.length === 0 ? "" : __lines.shift();' + '\n'
                 r'let write = (text, end="\n") => process.stdout.write("" + text + end);') + '\n'
     
@@ -87,10 +88,11 @@ class Down:
         # downloading Readme
         readme = os.path.join(destiny, "Readme.md")
         [tempfile, __content] = urllib.request.urlretrieve(cache_url + "Readme.md")
-        content = ""
+
+        # content = ""
         try:
             content = open(tempfile, encoding="utf-8").read()
-        except:
+        except FileNotFoundError:
             content = open(tempfile).read()
 
         Down.__compare_and_save(content, readme)
@@ -101,16 +103,15 @@ class Down:
         return readme, mapi
 
     @staticmethod
-    def __create_problem_folder(rootdir, activity):
+    def __create_problem_folder(rootdir: str, activity: str) -> str:
         # create dir
-        destiny = os.path.join(rootdir, activity)
+        destiny: str = os.path.join(rootdir, activity)
         if not os.path.exists(destiny):
             os.makedirs(destiny, exist_ok=True)
         else:
             print("  Problem folder", destiny, "found, merging content.")
 
         return destiny
-
 
     @staticmethod
     def download_problem(rootdir, course: str, activity: str, language: Optional[str]) -> bool:
@@ -119,16 +120,17 @@ class Down:
         rep = settings.get_repo(course)
 
         file = rep.get_file()
-        item = Game(file).get_task(activity)
+        game = Game(file)
+        item = game.get_task(activity)
         if not item.link.startswith("http"):
             print("fail: link for activity is not a remote link")
-            return
+            return False
         cfg = RemoteCfg(item.link)
         cache_url = os.path.dirname(cfg.get_raw_url()) + "/.cache/"
-    
+
+        destiny = Down.__create_problem_folder(rootdir, activity)
         try:
-            destiny = Down.__create_problem_folder(rootdir, activity)
-            #print("debug", cache_url)
+            # print("debug", cache_url)
             [_readme_path, mapi_path] = Down.__down_problem_def(destiny, cache_url)
         except urllib.error.HTTPError:
             print("  fail: activity not found in course url")
@@ -144,7 +146,7 @@ class Down:
         language_def = SettingsParser().get_language()
         ask_ext = False
         if language is None:
-            if language_def != "ask":
+            if language_def != "":
                 language = language_def
             else:
                 print("  Choose extension for draft: [c, cpp, py, ts, js, java]: ", end="")
@@ -156,7 +158,7 @@ class Down:
         return True
 
     @staticmethod
-    def __download_drafts(loaded_json, destiny, language, cache_url, ask_ext):
+    def __download_drafts(loaded_json, destiny: str, language, cache_url, ask_ext):
         if len(loaded_json["required"]) == 1:  # you already have the students file
             return
 

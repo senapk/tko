@@ -1,15 +1,16 @@
 import subprocess
-from subprocess import PIPE
-from typing import List, Tuple, Any
+from typing import Tuple
 import os
+from subprocess import PIPE
+
 
 class Runner:
     def __init__(self):
         pass
 
     @staticmethod
-    def subprocess_run(cmd: str, input_data: str="") -> Tuple[int, str, str]:
-        answer = subprocess.run(cmd, shell=True, input=input_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    def subprocess_run(cmd: str, input_data: str = "") -> Tuple[int, str, str]:
+        answer = subprocess.run(cmd, shell=True, input=input_data, stdout=PIPE, stderr=PIPE, text=True)
         err = ""
         if answer.returncode != 0:
             err = answer.stderr + Runner.decode_code(answer.returncode)
@@ -25,10 +26,9 @@ class Runner:
         if answer.returncode != 0 and answer.returncode != 1:
             print(Runner.decode_code(answer.returncode))
 
-
     @staticmethod
-    def decode_code(returncode: int) -> str:
-        code = 128 - returncode
+    def decode_code(return_code: int) -> str:
+        code = 128 - return_code
         if code == 127:
             return ""
         if code == 139:

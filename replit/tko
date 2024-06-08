@@ -12,18 +12,18 @@ import json
 from typing import Optional, List, Dict, Any
 import tempfile
 import subprocess
+from typing import Tuple
 from subprocess import PIPE
-from typing import List, Tuple, Any
 import shutil
-from enum import Enum
 from typing import Optional
+from enum import Enum
 from typing import List, Optional, Tuple
 import io
 from typing import Tuple, Optional
 import urllib.error
 from typing import List
 from shutil import which
-from typing import List, Tuple, Optional, Dict
+from typing import List, Tuple, Optional
 import math
 from typing import Optional, Dict, List, Tuple
 from typing import Dict, List, Tuple
@@ -194,9 +194,11 @@ class RemoteMd:
         open(target, "w").write(content)
 
 
+
 class RepoSettings:
     def __init__(self):
         self.rootdir: str = ""
+        self.lang: str = ""
         self.url: str = ""
         self.file: str = ""
         self.cache: str = ""
@@ -211,11 +213,11 @@ class RepoSettings:
         
         # arquivo não existe e é remoto
         if self.url != "" and (self.file == "" or not os.path.exists(self.file)):
-                with tempfile.NamedTemporaryFile(delete=False) as f:
-                    filename = f.name
-                    cfg = RemoteCfg(self.url)
-                    cfg.download_absolute(filename)
-                return filename
+            with tempfile.NamedTemporaryFile(delete=False) as f:
+                filename = f.name
+                cfg = RemoteCfg(self.url)
+                cfg.download_absolute(filename)
+            return filename
 
         # arquivo é local com url remota
         if self.file != "" and os.path.exists(self.file) and self.url != "":
@@ -235,6 +237,10 @@ class RepoSettings:
     def set_file(self, file: str):
         self.file = os.path.abspath(file)
         return self
+    
+    def set_lang(self, lang: str):
+        self.lang = lang
+        return self
 
     def set_url(self, url: str):
         self.url = url
@@ -243,6 +249,7 @@ class RepoSettings:
     def to_dict(self):
         return {
             "rootdir": self.rootdir,
+            "lang": self.lang,
             "url": self.url,
             "file": self.file,
             "cache": self.cache,
@@ -253,6 +260,7 @@ class RepoSettings:
     
     def from_dict(self, data: Dict[str, Any]):
         self.rootdir = data.get("rootdir", "")
+        self.lang = data.get("lang", "")
         self.url = data.get("url", "")
         self.file = data.get("file", "")
         self.cache = data.get("cache", "")
@@ -271,9 +279,10 @@ class RepoSettings:
             f"View: {self.view}\n"
         )
 
+
 class LocalSettings:
     def __init__(self):
-        self.lang: str = "ask"
+        self.lang: str = ""
         self.ascii: bool = False
         self.color: bool = True
         self.updown: bool = True
@@ -289,7 +298,7 @@ class LocalSettings:
         }
     
     def from_dict(self, data: Dict[str, Any]):
-        self.lang = data.get("lang", "ask")
+        self.lang = data.get("lang", "")
         self.ascii = data.get("ascii", False)
         self.color = data.get("color", True)
         self.updown = data.get("updown", True)
@@ -304,6 +313,7 @@ class LocalSettings:
             f"Diff Mode: {'SIDE_BY_SIDE' if self.updown else 'UP_DOWN'}\n"
             f"Side-to-Side Min: {self.sideto_min}\n"
         )
+
 
 class Settings:
     def __init__(self):
@@ -334,8 +344,7 @@ class Settings:
             json.dump(self.to_dict(), f, indent=4)
 
     def __str__(self):
-        output = []
-        output.append("Repositories:")
+        output = ["Repositories:"]
         maxlen = max([len(key) for key in self.reps])
         for key in self.reps:
             prefix = f"- {key.ljust(maxlen)}"
@@ -356,17 +365,20 @@ class SettingsParser:
         self.package_name = "tko"
         default_filename = "settings.json"
         if SettingsParser.user_settings_file is None:
-            self.settings_file = os.path.abspath(default_filename) # backup for replit, dont remove
+            self.settings_file = os.path.abspath(default_filename)  # backup for replit, dont remove
         else:
             self.settings_file = os.path.abspath(SettingsParser.user_settings_file)
         self.settings = self.load_settings()
+
+    def get_settings_file(self):
+        return self.settings_file
 
     def load_settings(self) -> Settings:
         try:
             with open(self.settings_file, "r") as f:
                 self.settings = Settings().from_dict(json.load(f))
                 return self.settings
-        except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
+        except (FileNotFoundError, json.decoder.JSONDecodeError) as _e:
             return self.create_new_settings_file()
 
     def save_settings(self):
@@ -387,14 +399,13 @@ class SettingsParser:
 
 
 
-
 class Runner:
     def __init__(self):
         pass
 
     @staticmethod
-    def subprocess_run(cmd: str, input_data: str="") -> Tuple[int, str, str]:
-        answer = subprocess.run(cmd, shell=True, input=input_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    def subprocess_run(cmd: str, input_data: str = "") -> Tuple[int, str, str]:
+        answer = subprocess.run(cmd, shell=True, input=input_data, stdout=PIPE, stderr=PIPE, text=True)
         err = ""
         if answer.returncode != 0:
             err = answer.stderr + Runner.decode_code(answer.returncode)
@@ -410,10 +421,9 @@ class Runner:
         if answer.returncode != 0 and answer.returncode != 1:
             print(Runner.decode_code(answer.returncode))
 
-
     @staticmethod
-    def decode_code(returncode: int) -> str:
-        code = 128 - returncode
+    def decode_code(return_code: int) -> str:
+        code = 128 - return_code
         if code == 127:
             return ""
         if code == 139:
@@ -485,8 +495,9 @@ class Color:
         return len(Color.remove_colors(text))
 
 
-def colour(color: str, text: str, color2 = None) -> str:
+def colour(color: str, text: str, color2: str = None) -> str:
     return ("" if color2 is None else Color.map[color2]) + Color.map[color] + text + Color.map["reset"]
+
 
 class __Symbols:
     def __init__(self):
@@ -577,7 +588,6 @@ class GSym:
     # opcheck = "🞕🞖" # erro Pedro
     # opcheck = "🟘🟗" # erro Pedro
 
-
     oprightdown = "➡️⬇️"    # azuzinho
     oprightdown2 = "→↓"
     # oprightdown = "🠊🠋" # erro Pedro
@@ -609,8 +619,10 @@ def yellow(text):
 def cyan(text):
     return colour("c", text)
 
+
 def bold(color: str, text: str) -> str:
     return colour(color, text, "bold")
+
 
 class Report:
     __term_width: Optional[int] = None
@@ -659,12 +671,13 @@ class Report:
 
 
 
+
 class ExecutionResult(Enum):
-    UNTESTED          = "untested_"
-    SUCCESS           = "correct__"
-    WRONG_OUTPUT      = "wrong_out"
+    UNTESTED = "untested_"
+    SUCCESS = "correct__"
+    WRONG_OUTPUT = "wrong_out"
     COMPILATION_ERROR = "compilati"
-    EXECUTION_ERROR   = "execution"
+    EXECUTION_ERROR = "execution"
 
     @staticmethod
     def get_symbol(result) -> str:
@@ -683,6 +696,7 @@ class ExecutionResult(Enum):
 
     def __str__(self):
         return self.value
+
 
 class CompilerError(Exception):
     pass
@@ -740,7 +754,9 @@ class Unit:
         index = str(self.index).zfill(2)
         grade = str(self.grade_reduction).zfill(3)
         rep = "" if self.repeated is None else "[" + str(self.repeated) + "]"
-        return "(%s)[%s] GR:%s %s (%s) %s" % (ExecutionResult.get_symbol(self.result) + " " + self.result.value, index, grade, self.source.ljust(self.source_pad), self.case.ljust(self.case_pad), rep)
+        op = ExecutionResult.get_symbol(self.result) + " " + self.result.value
+        pad = self.source.ljust(self.source_pad)
+        return f"({op})[{index}] GR:{grade} {pad} ({rep})"
 
 
 class Param:
@@ -814,7 +830,7 @@ class Diff:
             if i >= len(a) or i >= len(b) or a[i] != b[i]:
                 if first:
                     first = False
-                    hdiff += symbols.arrow_up;
+                    hdiff += symbols.arrow_up
             else:
                 hdiff += " "
             i += 1
@@ -869,7 +885,6 @@ class Diff:
         first_a = get(a_render, first_failure)
         first_b = get(b_render, first_failure)
         greater = max(Color.len(first_a), Color.len(first_b))
-        lbefore = ""
 
         if first_failure > 0:
             lbefore = Color.remove_colors(get(a_render, first_failure - 1))
@@ -877,9 +892,10 @@ class Diff:
 
         out_a, out_b = Diff.colorize_2_lines_diff(first_a, first_b)
 
-        postext  = symbols.vbar + " " + Color.ljust(out_a, greater) + colour("g", " (expected)") + "\n"
+        postext = symbols.vbar + " " + Color.ljust(out_a, greater) + colour("g", " (expected)") + "\n"
         postext += symbols.vbar + " " + Color.ljust(out_b, greater) + colour("r", " (received)") + "\n"
-        postext += symbols.vbar + " " + Color.ljust(Diff.make_line_arrow_up(first_a, first_b), greater) + colour("b", " (mismatch)") + "\n"
+        postext += (symbols.vbar + " " + Color.ljust(Diff.make_line_arrow_up(first_a, first_b), greater)
+                    + colour("b", " (mismatch)") + "\n")
         return postext
 
     @staticmethod
@@ -892,13 +908,11 @@ class Diff:
         return i
     
     @staticmethod
-    def colorize_2_lines_diff(line_a: str, line_b: str, neutral:str="w", expected:str="g", received:str="r") -> Tuple[str, str]:
-        pos = Diff.find_first_mismatch(line_a, line_b)
-        a_out = colour(neutral, line_a[0:pos]) + colour(expected, line_a[pos:])
-        b_out = colour(neutral, line_b[0:pos]) + colour(received, line_b[pos:])
-        return (a_out, b_out)
-    
-    
+    def colorize_2_lines_diff(la: str, lb: str, neut: str = "w", exp: str = "g", rec: str = "r") -> Tuple[str, str]:
+        pos = Diff.find_first_mismatch(la, lb)
+        a_out = colour(neut, la[0:pos]) + colour(exp, la[pos:])
+        b_out = colour(neut, lb[0:pos]) + colour(rec, lb[pos:])
+        return a_out, b_out
 
     # return a tuple of two strings with the diff and the index of the  first mismatch line
     @staticmethod
@@ -916,7 +930,7 @@ class Diff:
 
         cut: int = 0
         if pad is True:
-            cut = (Report.get_terminal_size() - 6)// 2
+            cut = (Report.get_terminal_size() - 6) // 2
 
         max_size = max(a_size, b_size)
 
@@ -955,7 +969,7 @@ class Diff:
         string_expected = unit.output
         string_received = unit.user
 
-        dotted = "-"
+        # dotted = "-"
 
         expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received)
         string_input = "\n".join([symbols.vbar + " " + line for line in string_input.split("\n")])[0:-2]
@@ -980,7 +994,7 @@ class Diff:
         return output.getvalue()
 
     @staticmethod
-    def put_left_equal(exp_lines: str, rec_lines: str, unequal:str=symbols.unequal):
+    def put_left_equal(exp_lines: List[str], rec_lines: List[str], unequal: str = symbols.unequal):
 
         max_size = max(len(exp_lines), len(rec_lines))
 
@@ -994,7 +1008,6 @@ class Diff:
         
         return exp_lines, rec_lines
             
-
     @staticmethod
     def mount_side_by_side_diff(unit: Unit) -> str:
 
@@ -1020,8 +1033,8 @@ class Diff:
         string_expected = unit.output
         string_received = unit.user
 
-        dotted = "-"
-        vertical_separator = symbols.vbar
+        # dotted = "-"
+        # vertical_separator = symbols.vbar
         hbar = symbols.hbar
 
         expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received, True)
@@ -1029,7 +1042,7 @@ class Diff:
         output.write(Report.centralize(str(unit), " ", "│") + "\n")
         input_header = colour("b", " INPUT ")
         output.write(title_side_by_side(input_header, input_header, hbar, "┬", "├") + "\n")
-        if (string_input != ""):
+        if string_input != "":
             output.write(Diff.side_by_side(string_input.split("\n")[:-1], string_input.split("\n")[:-1]) + "\n")
         expected_header = colour("g", " EXPECTED ")
         received_header = colour("r", " RECEIVED ")
@@ -1055,7 +1068,7 @@ class Down:
                 r'let input = () : string => _cin_.length === 0 ? "" : _cin_.shift()!;' + '\n'
                 r'let write = (text: any, end:string="\n")=> process.stdout.write("" + text + end);' + '\n')
 
-    js_draft = (r'let __lines = require("fs").readFileSync(0).toString().split("\n");'  + '\n'
+    js_draft = (r'let __lines = require("fs").readFileSync(0).toString().split("\n");' + '\n'
                 r'let input = () => __lines.length === 0 ? "" : __lines.shift();' + '\n'
                 r'let write = (text, end="\n") => process.stdout.write("" + text + end);') + '\n'
     
@@ -1127,10 +1140,11 @@ class Down:
         # downloading Readme
         readme = os.path.join(destiny, "Readme.md")
         [tempfile, __content] = urllib.request.urlretrieve(cache_url + "Readme.md")
-        content = ""
+
+        # content = ""
         try:
             content = open(tempfile, encoding="utf-8").read()
-        except:
+        except FileNotFoundError:
             content = open(tempfile).read()
 
         Down.__compare_and_save(content, readme)
@@ -1141,16 +1155,15 @@ class Down:
         return readme, mapi
 
     @staticmethod
-    def __create_problem_folder(rootdir, activity):
+    def __create_problem_folder(rootdir: str, activity: str) -> str:
         # create dir
-        destiny = os.path.join(rootdir, activity)
+        destiny: str = os.path.join(rootdir, activity)
         if not os.path.exists(destiny):
             os.makedirs(destiny, exist_ok=True)
         else:
             print("  Problem folder", destiny, "found, merging content.")
 
         return destiny
-
 
     @staticmethod
     def download_problem(rootdir, course: str, activity: str, language: Optional[str]) -> bool:
@@ -1159,16 +1172,17 @@ class Down:
         rep = settings.get_repo(course)
 
         file = rep.get_file()
-        item = Game(file).get_task(activity)
+        game = Game(file)
+        item = game.get_task(activity)
         if not item.link.startswith("http"):
             print("fail: link for activity is not a remote link")
-            return
+            return False
         cfg = RemoteCfg(item.link)
         cache_url = os.path.dirname(cfg.get_raw_url()) + "/.cache/"
-    
+
+        destiny = Down.__create_problem_folder(rootdir, activity)
         try:
-            destiny = Down.__create_problem_folder(rootdir, activity)
-            #print("debug", cache_url)
+            # print("debug", cache_url)
             [_readme_path, mapi_path] = Down.__down_problem_def(destiny, cache_url)
         except urllib.error.HTTPError:
             print("  fail: activity not found in course url")
@@ -1184,7 +1198,7 @@ class Down:
         language_def = SettingsParser().get_language()
         ask_ext = False
         if language is None:
-            if language_def != "ask":
+            if language_def != "":
                 language = language_def
             else:
                 print("  Choose extension for draft: [c, cpp, py, ts, js, java]: ", end="")
@@ -1196,7 +1210,7 @@ class Down:
         return True
 
     @staticmethod
-    def __download_drafts(loaded_json, destiny, language, cache_url, ask_ext):
+    def __download_drafts(loaded_json, destiny: str, language, cache_url, ask_ext):
         if len(loaded_json["required"]) == 1:  # you already have the students file
             return
 
@@ -1221,6 +1235,7 @@ class Down:
         
         if ask_ext:
             print("\nYou can choose default extension with command\n$ tko config -l <extension>")
+
 
 
 
@@ -1498,16 +1513,16 @@ class Loader:
         pass
 
     @staticmethod
-    def parse_cio(text, source, crude_mode=False):
+    def parse_cio(text, source):
         unit_list = []
         text = "\n" + text
 
-        pattern = r'```.*?\n(.*?)```' # get only inside code blocks
+        pattern = r'```.*?\n(.*?)```'  # get only inside code blocks
         code = re.findall(pattern, text, re.MULTILINE | re.DOTALL)
         # join all code blocks found
         text = "\n" + "\n".join(code)
 
-        pieces: List[Dict[str, List[str], List[str]]] = [] # header, input, output
+        pieces = []  # header, input, output
 
         open_case = False
         for line in text.split("\n"):
@@ -1528,14 +1543,14 @@ class Loader:
 
         # removendo linhas vazias e criando input das linhas com $
         for piece in pieces:
-            piece["input"]  = [line[1:] for line in piece["output"] if line.startswith("$")]
+            piece["input"] = [line[1:] for line in piece["output"] if line.startswith("$")]
             piece["output"] = [line for line in piece["output"] if line != "" and not line.startswith("#")]
 
         for piece in pieces:
             case = " ".join(piece["header"].split(" ")[1:])
-            input = "\n".join(piece["input"]) + "\n"
+            inp = "\n".join(piece["input"]) + "\n"
             output = "\n".join(piece["output"]) + "\n"
-            unit_list.append(Unit(case, input, output, None, source))
+            unit_list.append(Unit(case, inp, output, None, source))
 
         for unit in unit_list:
             unit.fromCio = True
@@ -1895,15 +1910,15 @@ class Wdir:
 
         def solvers() -> str:
             path_list = [] if self.solver is None else self.solver.path_list
-            out = ""
-            if self.solver is not None and len(path_list) == 0: # free_cmd
+
+            if self.solver is not None and len(path_list) == 0:  # free_cmd
                 out = "free cmd"
             else:
                 out = ", ".join([os.path.basename(path) for path in path_list])
             return colour("green", "prog:") + "[" + out + "]"
 
         # folder = os.getcwd().split(os.sep)[-1]
-        #tests_count = (colour("tests:", Color.GREEN) +
+        # tests_count = (colour("tests:", Color.GREEN) +
         #               str(len([x for x in self.unit_list if x.repeated is None])).zfill(2))
 
         return symbols.opening + sources() + " " + solvers()
@@ -1974,8 +1989,6 @@ class Run:
         self.target_list = list(dict.fromkeys(self.target_list))
 
     def change_targets_to_filter_mode(self):
-        # modo de filtragem, antes de processar os dados, copiar tudo para o diretório temp fixo
-        # filtrar os solvers para então continuar com a execução
         if self.param.filter:
             old_dir = os.getcwd()
 
@@ -2008,14 +2021,14 @@ class Run:
             return
         
         results = [unit.result for unit in self.wdir.unit_list]
-        if not ExecutionResult.EXECUTION_ERROR in results and not ExecutionResult.WRONG_OUTPUT in results:
+        if ExecutionResult.EXECUTION_ERROR not in results and ExecutionResult.WRONG_OUTPUT not in results:
             return
         
         if not self.param.compact:
             print(self.wdir.unit_list_resume())
         
         if self.param.diff_mode == DiffMode.FIRST:
-        # printing only the first wrong case
+            # printing only the first wrong case
             wrong = [unit for unit in self.wdir.unit_list if unit.result != ExecutionResult.SUCCESS][0]
             if self.param.is_up_down:
                 print(Diff.mount_up_down_diff(wrong))
@@ -2061,16 +2074,18 @@ class Run:
     def free_run(self) -> bool:
         # free run mode
         if self.wdir.solver is not None and len(self.wdir.unit_list) == 0:
-            print(Report.centralize(" No test cases found. Running: " + self.wdir.solver.executable + " ", symbols.hbar), flush=True)
+            t = Report.centralize(" No test cases found. Running: " + self.wdir.solver.executable + " ", symbols.hbar)
+            print(t, flush=True)
             # force print to terminal
             Runner.free_run(self.wdir.solver.executable)
             return True
         return False
 
-    def diff_mode(self) -> bool:
+    def diff_mode(self):
         print(Report.centralize(" Running solver against test cases ", "═"))
         self.print_top_line()
         self.print_diff()
+
 
 class Build:
 
@@ -2089,7 +2104,6 @@ class Build:
             print(str(e))
             return False
         return True
-
 
 tko_guide = """
        ╔════ TKO GUIA COMPACTO ════╗
@@ -2205,23 +2219,22 @@ class Task:
         pattern = r"\ *-.*\[(.*?)\]\((.+?)\)"
         match = re.match(pattern, line)
         if match:
-            return (True, match.group(1), match.group(2))
-        return (False, "", "")
+            return True, match.group(1), match.group(2)
+        return False, "", ""
     
     @staticmethod
     def parse_task_with_link(line) -> Tuple[bool, str, str]:
         pattern = r"\ *- \[ \].*\[(.*?)\]\((.+?)\)"
         match = re.match(pattern, line)
         if match:
-            return (True, match.group(1), match.group(2))
-        return (False, "", "")
-    
+            return True, match.group(1), match.group(2)
+        return False, "", ""
 
     def load_html_tags(self, line) -> Tuple[bool, List[str]]:
         pattern = r"<!--\s*(.*?)\s*-->"
         match = re.match(pattern, line)
         if not match:
-            return (False, [])
+            return False, []
         tags_raw = match.group(1).strip()
         tags = [tag.strip() for tag in tags_raw.split()]
         for t in tags:
@@ -2235,12 +2248,11 @@ class Task:
         pattern = r".*?@(\w*)"
         match = re.match(pattern, titulo)
         if not match:
-            return (False, "")
+            return False, ""
         key = match.group(1)
         if not (key + "/Readme.md") in link:
-            return (False, "")
-        return (True, key)
-
+            return False, ""
+        return True, key
 
     def process_link(self, base_file):
         if self.link.startswith("http"):
@@ -2272,7 +2284,6 @@ class Task:
         self.load_html_tags(line)
 
         return True
-    
 
     # se com - [ ], não precisa das tags dentro do html, o key será dado pelo título
     # se tiver as tags dentro do html, se alguma começar com @, o key será dado por ela
@@ -2284,7 +2295,6 @@ class Task:
             return False
         line = line.lstrip()
 
-        
         found, titulo, link = Task.parse_task_with_link(line)
         if found:
             self.key = link
@@ -2325,7 +2335,9 @@ class Quest:
         self.type = "main"
 
     def __str__(self):
-        return f"linha={self.line_number} : {self.key} : {self.title} : {self.skills} : {self.requires} : {self.mdlink} : {[t.key for t in self.tasks]}"
+        output = f"linha={self.line_number} : {self.key} : {self.title}"
+        output += f": {self.skills} : {self.requires} : {self.mdlink} : {[t.key for t in self.tasks]}"
+        return output
 
     def is_complete(self):
         return all([t.is_done() for t in self.tasks])
@@ -2365,9 +2377,9 @@ class Quest:
         return cache[self.key]
 
     def parse_quest(self, line, line_num):
+        
         pattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->\s*$"
         match = re.match(pattern, line)
-        titulo = None
         tags = []
 
         if match:
@@ -2396,13 +2408,13 @@ class Quest:
                 self.group = groups[0]
             else:
                 self.group = ""
-            type = [t for t in tags if t.startswith("t:")]
-            if len(type) > 0:
-                self.type = type[0][2:]
+            tx = [t for t in tags if t.startswith("t:")]
+            if len(tx) > 0:
+                self.type = tx[0][2:]
             self.key = key
             return True
         except Exception as e:
-            print(e)
+            # print(e)
             return False
 
 
@@ -2429,8 +2441,7 @@ def get_md_link(title: str) -> str:
 
 class Game:
     def __init__(self, file: Optional[str] = None):
-        self.clusters: Dict[str, List[Quest]] = {}  # quests indexed by group
-        self.clusters[""] = []
+        self.clusters: Dict[str, List[Quest]] = {"": []}  # quests indexed by group
         self.cluster_order: List[str] = [""]  # order of clusters
         self.quests: Dict[str, Quest] = {}  # quests indexed by quest key
         self.tasks: Dict[str, Task] = {}  # tasks  indexed by task key
@@ -2442,31 +2453,29 @@ class Game:
             return self.tasks[key]
         raise Exception(f"fail: task {key} not found in course definition")
 
-    def load_group(self, line, line_num) -> Tuple[bool, Optional[str]]:
+    @staticmethod
+    def load_group(line) -> Tuple[bool, Optional[str]]:
         pattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->\s*$"
         match = re.match(pattern, line)
-        titulo = None
-        tags = []
-
         if match:
             titulo = match.group(1)
             tags_raw = match.group(2).strip()
             tags = [tag.strip() for tag in tags_raw.split(" ")]
             if "group" in tags:
-                return (True, titulo)
-        return (False, None)
+                return True, titulo
+        return False, None
 
     def load_quest(self, line, line_num) -> Tuple[bool, Optional[Quest]]:
         quest = Quest()
         if not quest.parse_quest(line, line_num + 1):
-            return (False, None)
+            return False, None
         if quest.key in self.quests:
             print(f"Quest {quest.key} já existe")
             print(quest)
             print(self.quests[quest.key])
             exit(1)
         self.quests[quest.key] = quest
-        return (True, quest)
+        return True, quest
 
     def load_task(self, line, line_num, last_quest) -> bool:
         if line == "":
@@ -2533,16 +2542,16 @@ class Game:
         # check if there is a cycle
 
     def check_cycle(self):
-        def dfs(q, visited):
-            if len(visited) > 0:
-                if visited[0] == q.key:
-                    print(f"Cycle detected: {visited}")
+        def dfs(qx, visitedx):
+            if len(visitedx) > 0:
+                if visitedx[0] == qx.key:
+                    print(f"Cycle detected: {visitedx}")
                     exit(1)
-            if q.key in visited:
+            if q.key in visitedx:
                 return
-            visited.append(q.key)
+            visitedx.append(q.key)
             for r in q.requires_ptr:
-                dfs(r, visited)
+                dfs(r, visitedx)
 
         for q in self.quests.values():
             visited = []
@@ -2553,15 +2562,17 @@ class Game:
         last_quest = None
         active_group = ""
         for index, line in enumerate(lines):
-            found, group = self.load_group(line, index)
+            found, group = self.load_group(line)
             if found:
                 active_group = group
                 continue
+            
 
             found, quest = self.load_quest(line, index)
             if found:
                 last_quest = quest
                 quest.group = active_group
+
                 if quest.group not in self.clusters:
                     self.clusters[quest.group] = []
                     self.cluster_order.append(quest.group)
@@ -2589,13 +2600,10 @@ class Game:
         # print("\n".join([str(q) for q in self.quests.values()]))
 
     def generate_graph(self, output):
-        saida = []
-        saida.append(f"@startuml {output}")
-        saida.append("digraph diag {")
-        saida.append('  node [style="rounded,filled", shape=box]')
+        saida = [f"@startuml {output}", "digraph diag {", '  node [style="rounded,filled", shape=box]']
 
-        def info(q):
-            return f'"{q.title.strip()}:{len(q.tasks)}"'
+        def info(qx):
+            return f'"{qx.title.strip()}:{len(qx.tasks)}"'
 
         for q in self.quests.values():
             token = "->"
@@ -2667,7 +2675,7 @@ class Play:
         self.show_perc = "perc" in self.rep.view
         self.show_perc = True
         self.show_fold = True
-        self.show_hack = not "game" in self.rep.view
+        self.show_hack = "game" not in self.rep.view
         self.show_toolbar = "toolbar" in self.rep.view
 
         # if not self.show_done and not self.show_init and not self.show_todo:
@@ -2695,12 +2703,16 @@ class Play:
             if key in game.tasks:
                 game.tasks[key].set_grade(grade)
 
-    def control(self, text):
+    @staticmethod
+    def control(text):
         return bold("blue", text)
-    def cmd(self, text):
+
+    @staticmethod
+    def cmd(text):
         return bold("red", text)
 
-    def read_link(self, link):
+    @staticmethod
+    def read_link(link):
         if link.endswith(".md"):
             if link.startswith("https"):
                 with tempfile.NamedTemporaryFile(delete=False) as f:
@@ -2716,17 +2728,6 @@ class Play:
                 print("Verifique se o arquivo está no formato markdown")
                 input("Digite enter para continuar")
 
-    def down_task(self, rootdir, task: Task, ext: str = None):
-        if task.key in task.title:
-            
-            cmd = red(f"tko down {self.repo_alias} {task.key} -l {ext}" )
-            print(f"{cmd}")
-            result = Down.download_problem(rootdir, self.repo_alias, task.key, ext)
-            # if result:
-            #     print(yellow(f"  {os.getcwd()}/{task.key}/Readme.md"))
-        else:
-            print(f"Essa não é uma tarefa de código")
-            
 
     def save_to_json(self):
         self.rep.quests = {}
@@ -2774,13 +2775,12 @@ class Play:
         return (ord(letter[0]) - ord("A") + 1) * 26 + (ord(letter[1]) - ord("A"))
 
     def update_reachable(self):
-        quests = []
+        # quests = []
         if self.show_hack:
             quests = self.game.quests.values()
         else:
             quests = self.game.get_reachable_quests()
 
-        reach_keys = []
         reach_keys = [q.key for q in quests]
         menu_keys = [q.key for q in self.quests.values()]
 
@@ -2822,21 +2822,23 @@ class Play:
     #         max_title = max([len(t) for t in titles])
     #     return max_title
 
-    def to_show_quest(self, quest: Quest):
+    # def to_show_quest(self, quest: Quest):
         # if quest.is_complete() and not self.show_done:
         #     return False
         # if quest.not_started() and not self.show_todo:
         #     return False
         # if quest.in_progress() and not self.show_init:
         #     return False
-        return True
+    #    return True
 
-    def get_number(self, value):
-        if value >= 0 and value <= 20:
+    @staticmethod
+    def get_number(value):
+        if 0 <= value <= 20:
             return GSym.numbers[value]
         return "*"
 
-    def get_percent(self, value, color2 = None):
+    @staticmethod
+    def get_percent(value, color2=None):
         text = f"{str(value).rjust(2)}%"
         if value == 100:
             return colour("c", GSym.check * 3, color2)
@@ -2852,13 +2854,12 @@ class Play:
             opening = GSym.down2
 
         space = " " if len(entry) == 1 else ""
-        entry = self.control(entry)
+        entry = Play.control(entry)
             
-        if not self.to_show_quest(q):
-            return ""
+        # if not self.to_show_quest(q):
+        #    return ""
         title = q.title
 
-        resume = ""
         if self.show_vbar:
             if self.show_perc:
                 resume = self.get_percent(q.get_percent())
@@ -2874,32 +2875,33 @@ class Play:
         return f"{resume}{opening} {space}{entry} {title}"
 
     def str_task(self, t: Task, letter: str, lig: str) -> str:
-        term_size = self.get_term_size()
-        vindex = self.control(str(letter).rjust(2, " "))
+        term_size = Play.get_term_size()
+        vindex = Play.control(str(letter).rjust(2, " "))
         vdone = t.get_grade()
         vlink = ""
         title = t.title
         extra = ""
         if self.show_vbar:
             extra = "    "
-        def gen_saida():
-            return f"{extra}{vdone}  {lig}{vindex} {title}{vlink}"
+
+        def gen_saida(ligg: str):
+            return f"{extra}{vdone}  {ligg}{vindex} {title}{vlink}"
         
         parts = title.split(" ")
         parts = [("@" + yellow(p[1:]) if p.startswith("@") else p) for p in parts]
         title = " ".join(parts)
 
-        saida = gen_saida()
+        saida = gen_saida(lig)
         clear_total = Color.len(saida)
         dif = clear_total - term_size
-        if (dif < 0):
+        if dif < 0:
             return saida 
         title = title[:-dif - 3] + "..."
 
+        return gen_saida(lig)
 
-        return gen_saida()
-
-    def sort_keys(self, keys):
+    @staticmethod
+    def sort_keys(keys):
         single = [k for k in keys if len(str(k)) == 1]
         double = [k for k in keys if len(str(k)) == 2]
         return sorted(single) + sorted(double)
@@ -2911,7 +2913,7 @@ class Play:
             opening = GSym.down
         intro = [key for _, key in line_types]
         quests = [k for k in intro if k in self.quests]
-        resume = ""
+
         if not self.show_perc:
             init = bold("y", self.get_number(len([v for v in quests if self.quests[v].in_progress()])))
             done = bold("g", self.get_number(len([v for v in quests if self.quests[v].is_complete()])))
@@ -2926,7 +2928,7 @@ class Play:
             resume = self.get_percent(total, "bold") + " "
             
         margin = len(cluster_key)
-        title = self.control(cluster_name.strip()[:margin]) + colour("bold", cluster_name.strip()[margin:])
+        title = Play.control(cluster_name.strip()[:margin]) + colour("bold", cluster_name.strip()[margin:])
         opening = yellow(opening)
         if not self.show_vbar:
             resume = ""
@@ -2941,7 +2943,7 @@ class Play:
         keys = []
         for cluster in data:
             i = 2
-            while (True):
+            while True:
                 key = cluster[:i]
                 if key not in keys:
                     keys.append(key)
@@ -2952,7 +2954,8 @@ class Play:
             output[k] = v
         return output
 
-    def get_term_size(self):
+    @staticmethod
+    def get_term_size():
         return shutil.get_terminal_size().columns
 
     def show_options(self):
@@ -2965,7 +2968,7 @@ class Play:
             quest_output: List[Tuple[str, str]] = []
             q = self.quests[entry]
             quest_output.append((self.str_quest(entry, q), entry))
-            if q.key in self.active and self.to_show_quest(q):
+            if q.key in self.active:
                 for i, t in enumerate(q.tasks):
                     letter = self.calc_letter(index)
                     lig = "├─" if i < len(q.tasks) - 1 else "╰─"
@@ -2996,7 +2999,7 @@ class Play:
         if match:
             return int(match.group(1)), int(match.group(2))
         else:
-            return (None, None)
+            return None, None
 
     @staticmethod
     def get_letter_letter(s):
@@ -3004,7 +3007,7 @@ class Play:
         match = re.match(pattern, s)
         if match:
             return match.group(1), match.group(2)
-        return (None, None)
+        return None, None
 
     def expand_range(self, line) -> List[str]:
         line = line.replace(" - ", "-")
@@ -3025,11 +3028,13 @@ class Play:
                 expand.append(t)
         return expand
 
-    def clear(self):
+    @staticmethod
+    def clear():
         subprocess.run("clear")
         pass
 
-    def is_number(self, s):
+    @staticmethod
+    def is_number(s):
         try:
             int(s)
             return True
@@ -3062,6 +3067,17 @@ class Play:
         else:
             self.active = self.active + clusters
 
+    def down_task(self, rootdir, task: Task, ext: str = None):
+        if task.key in task.title:
+            
+            cmd = red(f"tko down {self.repo_alias} {task.key} -l {ext}")
+            print(f"{cmd}")
+            Down.download_problem(rootdir, self.repo_alias, task.key, ext)
+            # if result:
+            #     print(yellow(f"  {os.getcwd()}/{task.key}/Readme.md"))
+        else:
+            print(f"Essa não é uma tarefa de código")
+
     def check_rootdir(self):
         if self.rep.rootdir == "":
             print("Diretório raiz para esse repositório ainda não foi definido")
@@ -3077,19 +3093,30 @@ class Play:
             else:
                 print("Navegue para o diretório desejado e execute o comando novamente")
                 exit(1)
+    
+    def check_language(self):
+        if self.rep.lang == "":
+            print("Linguagem de programação default para esse repositório ainda não foi definida")
+            print("Escolha a linguagem de programação para o repositório de " + self.repo_alias)
+            print("  [c, cpp, py, ts, js, java]: ", end="")
+            lang = input()
+            self.rep.lang = lang
+            self.fnsave()
+            print("Você pode mudar a linguagem de programação executando o comando")
+            print("  " + red("ext <Extensão>"))
 
     def process_down(self, actions):
-        if len(actions) < 3:
-            print("Modo de usar: down <EXT> <TaskID ...>")
-            print("Exemplo: down js A C-F")
+        if len(actions) < 2:
+            print("Modo de usar: down <TaskID ...>")
+            print("Exemplo: down A C-F")
             return False
         self.check_rootdir()
+        self.check_language()
 
         rootdir = os.path.relpath(self.rep.rootdir)
-        for t in actions[2:]:
-            ext = actions[1]
+        for t in actions[1:]:
             if t in self.tasks:
-                self.down_task(rootdir, self.tasks[t], ext)
+                self.down_task(rootdir, self.tasks[t], self.rep.lang)
             else:
                 print(f"Tarefa {t} não encontrada")
                 input()
@@ -3180,13 +3207,27 @@ class Play:
         for t in actions[1:]:
             if t in self.tasks:
                 # print(self.tasks[actions[1]].link)
-                key = self.control(t)
+                key = Play.control(t)
                 link = self.tasks[t].link
                 print(f"{key} {link}")
             else:
                 print(f"{t} não processado")
                 return False
         return False
+    
+    def process_ext(self, actions):
+        if len(actions) == 1:
+            print("Após o comando passe a extensão desejada")
+            return False
+        ext = actions[1]
+        if ext in ["c", "cpp", "py", "ts", "js", "java"]:
+            self.rep.lang = ext
+            self.fnsave()
+            print(f"Linguagem de programação alterada para {ext}")
+            return False
+        else:
+            print(f"Extensão {ext} não processada")
+            return False
 
     def take_actions(self, actions) -> bool:
         if len(actions) == 0:
@@ -3213,6 +3254,8 @@ class Play:
             return self.process_down(actions)
         elif cmd == "l" or cmd == "link":
             return self.process_link(actions)
+        elif cmd == "e" or cmd == "ext":
+            return self.process_ext(actions)
         elif len(str(cmd)) >= 2 and cmd[0].isupper() and cmd[1].islower():
             return self.process_clusters(actions)
         elif self.is_number(cmd):
@@ -3226,20 +3269,21 @@ class Play:
             return False
         return True
 
-    def show_help(self):
+    @staticmethod
+    def show_help():
         output = "Digite " + red("t")
         output += " os números ou intervalo das tarefas para (marcar/desmarcar), exemplo:"
         print(output)
         print(green("play$ ") + "t 1 3-5")
         return False
 
+    @staticmethod
+    def checkbox(value):
+        return green(GSym.vcheck) if value else yellow(GSym.vuncheck)
+
     def show_header(self):
         self.clear()
         # ball = self.show_done and self.show_init and self.show_todo
-        def checkbox(value):
-            return green(GSym.vcheck) if value else yellow(GSym.vuncheck)
-        
-
         # full_count = len([q for q in self.quests.values()])
         # done_count = len([q for q in self.quests.values() if q.is_complete()])
         # init_count = len([q for q in self.quests.values() if q.in_progress()])
@@ -3249,54 +3293,63 @@ class Play:
         # vinit = "(" + str(init_count).rjust(2, "0") + ")" + red("init") + checkbox(not ball and self.show_init)
         # vtodo = "(" + str(todo_count).rjust(2, "0") + ")" + red("todo") + checkbox(not ball and self.show_todo)
         # vjoin = red("join") + ( checkbox(self.show_fold) )
-        intro = green("Digite ") + self.cmd("h") + green(" para ") + self.cmd("h") +red("elp") 
-        intro += green(" ou ") + self.cmd("t") + green(" para ") + self.cmd("t") + red("oolbar") 
-        intro += checkbox(self.show_toolbar)
-        vlink = self.cmd("v") + red("bar") + ( checkbox(self.show_vbar) )
-        vperc = red("perc") + ( checkbox(self.show_perc) )
-        vhack = self.cmd("g") + red("ame") + ( checkbox(not self.show_hack) )
-        vgame = self.cmd("e") + red("xp") + ( checkbox(False) )
-
-        visoes = f"{vlink}  {vperc}  {vhack}  {vgame}"
+        intro = green("Digite ") + Play.cmd("h") + green(" para ") + Play.cmd("h") + red("elp")
+        intro += green(" ou ") + Play.cmd("t") + green(" para ") + Play.cmd("t") + red("oolbar") 
+        intro += Play.checkbox(self.show_toolbar)
+        vlink = Play.cmd("v") + red("bar") + (Play.checkbox(self.show_vbar))
+        vperc = red("perc") + (Play.checkbox(self.show_perc))
+        vhack = Play.cmd("g") + red("ame") + (Play.checkbox(not self.show_hack))
+        vgame = Play.cmd("x") + red("p") + (Play.checkbox(False))
+        vext  = Play.cmd("e") + red("xt") + "(" + colour("c", self.rep.lang, "bold") + ")"
+        vrep  = colour("y", self.repo_alias + ":", "bold")
+        visoes = f"{vrep} {vext} {vlink} {vperc} {vhack} {vgame} "
         div0 = "──────────────────────────────────────"
-        elementos = [ intro ] + ([ div0, visoes ] if self.show_toolbar else []) + [div0]
+        elementos = [intro] + ([div0, visoes] if self.show_toolbar else []) + [div0]
         self.print_elementos(elementos)
 
     def show_cmds(self):
-        controles = green("Elementos em ") + self.control("azul") + green(" são controles")
-        feitos = bold("g", "1") + bold("y", "2") + bold("r", "3") + green(" Feitos") + "/" + yellow("Iniciados") + "/" + red("Não Iniciados")
-        cluster = GSym.right + self.control(" Gr") + green("upo. Digite ") + self.control("Gr") + green(" para ver ou ocultar")
-        numeros = GSym.right2 + self.control("  3") + green(" Missão. Dig ") + self.control("3") + green(" para ver ou ocultar")
-        letras = colour("g", GSym.check) + self.control("  D") + green(" Tarefa. Dig ") + self.control("D") + green(" (des)marcar")
-        graduar = colour("r", "4") + self.control("  X") + green(" Tarefa. Dig ") + self.control("X4") + green(" dar nota 4")
-        todas = self.control("<") + " ou " + self.control(">") + yellow(" (Compactar ou Descompactar Tudo)")
+        controles = green("Elementos em ") + Play.control("azul") + green(" são controles")
+        feitos = bold("g", "1") + bold("y", "2") + bold("r", "3")
+        feitos += green(" Feitos") + "/" + yellow("Iniciados") + "/" + red("Não Iniciados")
+        cluster = GSym.right + Play.control(" Gr") + green("upo. Digite ")
+        cluster += Play.control("Gr") + green(" para ver ou ocultar")
+        numeros = GSym.right2 + Play.control("  3") + green(" Missão. Dig ")
+        numeros += Play.control("3") + green(" para ver ou ocultar")
+        letras = colour("g", GSym.check) + Play.control("  D")
+        letras += green(" Tarefa. Dig ") + Play.control("D") + green(" (des)marcar")
+        graduar = colour("r", "4") + Play.control("  X") + green(" Tarefa. Dig ")
+        graduar += Play.control("X4") + green(" dar nota 4")
+        todas = Play.control("<") + " ou " + Play.control(">") + yellow(" (Compactar ou Descompactar Tudo)")
         
         nomes_verm = green("Os nomes em vermelho são comandos")
         prime_letr = green("Basta a primeira letra do comando")
-        down = self.cmd("d") + red("own") + " <EXT>" + self.control(" <TaskID ...>") + yellow(" (Download)")
-        link = self.cmd("l") + red("ink") + self.control(" <TaskId ...>") + yellow(" (Ver links)")
-        manu = self.cmd("m") + red("an") + yellow("  (Mostrar manual detalhado)")
-        sair = self.cmd("q") + red("uit") + yellow(" (Sair do programa)")
-        vbar = self.cmd("v") + red("bar") + yellow(" (Alterna mostrar barra vertical)")
-        perc = self.cmd("p") + red("erc") + yellow(" (Alterna mostrar porcentagens)")
-        game = self.cmd("g") + red("ame") + yellow(" (Quebra pré requisitos de missões)")
-        exp  = self.cmd("e") + red("xp")  + yellow("  (Mostrar experiência)")
+        down = Play.cmd("d") + red("own")  + Play.control(" <TaskID ...>") + yellow(" (Download)")
+        link = Play.cmd("l") + red("ink") + Play.control(" <TaskId ...>") + yellow(" (Ver links)")
+        manu = Play.cmd("m") + red("an") + yellow("  (Mostrar manual detalhado)")
+        ext = Play.cmd("e") + red("xt") + "  <EXT>" + yellow(" (Mudar linguagem default)")
+        sair = Play.cmd("q") + red("uit") + yellow(" (Sair do programa)")
+        vbar = Play.cmd("v") + red("bar") + yellow(" (Alterna mostrar barra vertical)")
+        perc = Play.cmd("p") + red("erc") + yellow(" (Alterna mostrar porcentagens)")
+        rep = Play.cmd("r") + red("ep") + yellow(" (Muda o repositório)")
 
-        #indicadores = f"{vall} {vdone} {vinit} {vtodo}"
+        game = Play.cmd("g") + red("ame") + yellow(" (Quebra pré requisitos de missões)")
+        xp = Play.cmd("x") + red("p") + yellow("  (Mostrar experiência)")
+
+        # indicadores = f"{vall} {vdone} {vinit} {vtodo}"
 
         div0 = "──────────────────────────────────────"
-        div1 = "───────────── " + self.control("Controles") +  "──────────────"
+        div1 = "───────────── " + Play.control("Controles") + "──────────────"
         div2 = "───────────── " + bold("r", "Comandos") + " ───────────────"
         elementos = []
-        elementos += [ div1, controles, feitos, todas, cluster, numeros, letras, graduar ]
-        elementos += [ div2, nomes_verm, prime_letr, down, link, vbar, perc, game, exp, manu, sair ]
+        elementos += [div1, controles, feitos, todas, cluster, numeros, letras, graduar]
+        elementos += [div2, nomes_verm, prime_letr, down, link, rep, ext, vbar, perc, game, xp, manu, sair]
 
         self.print_elementos(elementos)
         print(div0)
         return False
 
-    def print_elementos(self, elementos):
-        term_size = shutil.get_terminal_size().columns
+    @staticmethod
+    def print_elementos(elementos):
         maxlen = max([len(Color.remove_colors(t)) for t in elementos])
         # qtd = term_size // (maxlen + 3)
         qtd = 1
@@ -3337,9 +3390,10 @@ __version__ = "0.4.3"
 
 
 
+
 class MRep:
     @staticmethod
-    def list(args):
+    def list(_args):
         sp = SettingsParser()
         settings = sp.load_settings()
         print(f"SettingsFile\n- {sp.settings_file}")
@@ -3349,10 +3403,11 @@ class MRep:
     def add(args):
         sp = SettingsParser()
         settings = sp.load_settings()
+        rep = RepoSettings()
         if args.url:
-            rep = RepoSettings().set_url(args.url)
+            rep.set_url(args.url)
         elif args.file:
-            rep = RepoSettings().set_file(args.file)
+            rep.set_file(args.file)
         settings.reps[args.alias] = rep
         sp.save_settings()
     
@@ -3378,7 +3433,7 @@ class MRep:
             print("Repository not found.")
 
     @staticmethod
-    def reset(args):
+    def reset(_args):
         sp = SettingsParser()
         sp.settings = Settings()
         sp.save_settings()
@@ -3393,6 +3448,7 @@ class MRep:
         game.parse_file(file)
         game.check_cycle()
         game.generate_graph("graph")
+
 
 class Main:
     @staticmethod
@@ -3458,7 +3514,7 @@ class Main:
             settings.local.lang = args.lang
             print("Default language extension now is:", args.lang)
         if args.ask:
-            settings.local.lang = "ask"
+            settings.local.lang = ""
             print("Language extension will be asked always.")
         if args.show:
             print(sp.get_settings_file())
@@ -3475,7 +3531,7 @@ class Main:
             game = Game()
             file = repo.get_file()
             game.parse_file(file)
-            #passsing a lambda function to the play class to save the settings
+            # passing a lambda function to the play class to save the settings
             play = Play(game, repo, args.repo, lambda: sp.save_settings())
             play.play()
 
@@ -3483,10 +3539,15 @@ class Main:
     def down(args):
         Down.download_problem(".", args.course, args.activity, args.language)
 
+
 class Parser:
     def __init__(self):
         self.parser = argparse.ArgumentParser(prog='tko', description='A tool for competitive programming.')        
         self.subparsers = self.parser.add_subparsers(title='subcommands', help='help for subcommand.')
+
+        self.parent_manip = None
+        self.parent_basic = None
+
         self.add_parser_args()
         self.add_parent_basic()
         self.add_parent_manip()
@@ -3526,14 +3587,14 @@ class Parser:
         parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='run with test cases.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
-        parser_r.add_argument('--compact', '-c', action='store_true', help='Dont show case descriptions in failures')
+        parser_r.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures')
         parser_r.add_argument("--cmd", type=str, help="bash command to run code")
 
         group_n = parser_r.add_mutually_exclusive_group()
         group_n.add_argument('--quiet', '-q', action='store_true', help='quiet mode, do not show any failure.')
         group_n.add_argument('--all', '-a', action='store_true', help='show all failures.')
 
-        # add a exclusive group for diff mode
+        # add an exclusive group for diff mode
         group = parser_r.add_mutually_exclusive_group()
         group.add_argument('--updown', '-u', action='store_true', help="diff mode up-to-down.")
         group.add_argument('--sideby', '-s', action='store_true', help="diff mode side-by-side.")
@@ -3564,12 +3625,10 @@ class Parser:
         g_color = parser_s.add_mutually_exclusive_group()
         g_color.add_argument('--color', action='store_true', help='set colored mode.')
         g_color.add_argument('--mono',  action='store_true', help='set mono    mode.')
-        
 
         g_diff = parser_s.add_mutually_exclusive_group()
         g_diff.add_argument('--side', action='store_true', help='set side_by_side diff mode.')
         g_diff.add_argument('--updown', action='store_true', help='set up_to_down   diff mode.')
-
 
         g_lang = parser_s.add_mutually_exclusive_group()
         g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
@@ -3598,8 +3657,6 @@ class Parser:
 
         repo_reset = subpar_repo.add_parser('reset', help='reset all repositories to factory default.')
         repo_reset.set_defaults(func=MRep.reset)
-
-
 
         repo_graph = subpar_repo.add_parser('graph', help='generate graph of the repository.')
         repo_graph.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be graphed.')
@@ -3642,6 +3699,7 @@ class Parser:
             except ValueError as e:
                 print(str(e))
 
+
 def main():
     try:
         parser = Parser()
@@ -3651,7 +3709,7 @@ def main():
         print("\n\nKeyboard Interrupt")
         sys.exit(1)
 
+
 if __name__ == '__main__':
     main()
-
 

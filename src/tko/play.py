@@ -1,9 +1,9 @@
 from typing import Dict, List, Tuple
 from .game import Game, Task, Quest
-from .settings import RepoSettings
+from .settings import RepoSettings, SettingsParser
 from .remote import RemoteCfg
 from .down import Down
-from .format import GSym, colour, bold, red, green, yellow, cyan, Color
+from .format import GSym, colour, bold, red, cyan, green, yellow, Color
 import subprocess
 import shutil
 import tempfile
@@ -37,7 +37,7 @@ class Play:
         self.show_perc = "perc" in self.rep.view
         self.show_perc = True
         self.show_fold = True
-        self.show_hack = not "game" in self.rep.view
+        self.show_hack = "game" not in self.rep.view
         self.show_toolbar = "toolbar" in self.rep.view
 
         # if not self.show_done and not self.show_init and not self.show_todo:
@@ -65,12 +65,16 @@ class Play:
             if key in game.tasks:
                 game.tasks[key].set_grade(grade)
 
-    def control(self, text):
+    @staticmethod
+    def control(text):
         return bold("blue", text)
-    def cmd(self, text):
+
+    @staticmethod
+    def cmd(text):
         return bold("red", text)
 
-    def read_link(self, link):
+    @staticmethod
+    def read_link(link):
         if link.endswith(".md"):
             if link.startswith("https"):
                 with tempfile.NamedTemporaryFile(delete=False) as f:
@@ -86,17 +90,6 @@ class Play:
                 print("Verifique se o arquivo está no formato markdown")
                 input("Digite enter para continuar")
 
-    def down_task(self, rootdir, task: Task, ext: str = None):
-        if task.key in task.title:
-            
-            cmd = red(f"tko down {self.repo_alias} {task.key} -l {ext}" )
-            print(f"{cmd}")
-            result = Down.download_problem(rootdir, self.repo_alias, task.key, ext)
-            # if result:
-            #     print(yellow(f"  {os.getcwd()}/{task.key}/Readme.md"))
-        else:
-            print(f"Essa não é uma tarefa de código")
-            
 
     def save_to_json(self):
         self.rep.quests = {}
@@ -144,13 +137,12 @@ class Play:
         return (ord(letter[0]) - ord("A") + 1) * 26 + (ord(letter[1]) - ord("A"))
 
     def update_reachable(self):
-        quests = []
+        # quests = []
         if self.show_hack:
             quests = self.game.quests.values()
         else:
             quests = self.game.get_reachable_quests()
 
-        reach_keys = []
         reach_keys = [q.key for q in quests]
         menu_keys = [q.key for q in self.quests.values()]
 
@@ -192,21 +184,23 @@ class Play:
     #         max_title = max([len(t) for t in titles])
     #     return max_title
 
-    def to_show_quest(self, quest: Quest):
+    # def to_show_quest(self, quest: Quest):
         # if quest.is_complete() and not self.show_done:
         #     return False
         # if quest.not_started() and not self.show_todo:
         #     return False
         # if quest.in_progress() and not self.show_init:
         #     return False
-        return True
+    #    return True
 
-    def get_number(self, value):
-        if value >= 0 and value <= 20:
+    @staticmethod
+    def get_number(value):
+        if 0 <= value <= 20:
             return GSym.numbers[value]
         return "*"
 
-    def get_percent(self, value, color2 = None):
+    @staticmethod
+    def get_percent(value, color2=None):
         text = f"{str(value).rjust(2)}%"
         if value == 100:
             return colour("c", GSym.check * 3, color2)
@@ -222,13 +216,12 @@ class Play:
             opening = GSym.down2
 
         space = " " if len(entry) == 1 else ""
-        entry = self.control(entry)
+        entry = Play.control(entry)
             
-        if not self.to_show_quest(q):
-            return ""
+        # if not self.to_show_quest(q):
+        #    return ""
         title = q.title
 
-        resume = ""
         if self.show_vbar:
             if self.show_perc:
                 resume = self.get_percent(q.get_percent())
@@ -244,32 +237,33 @@ class Play:
         return f"{resume}{opening} {space}{entry} {title}"
 
     def str_task(self, t: Task, letter: str, lig: str) -> str:
-        term_size = self.get_term_size()
-        vindex = self.control(str(letter).rjust(2, " "))
+        term_size = Play.get_term_size()
+        vindex = Play.control(str(letter).rjust(2, " "))
         vdone = t.get_grade()
         vlink = ""
         title = t.title
         extra = ""
         if self.show_vbar:
             extra = "    "
-        def gen_saida():
-            return f"{extra}{vdone}  {lig}{vindex} {title}{vlink}"
+
+        def gen_saida(ligg: str):
+            return f"{extra}{vdone}  {ligg}{vindex} {title}{vlink}"
         
         parts = title.split(" ")
         parts = [("@" + yellow(p[1:]) if p.startswith("@") else p) for p in parts]
         title = " ".join(parts)
 
-        saida = gen_saida()
+        saida = gen_saida(lig)
         clear_total = Color.len(saida)
         dif = clear_total - term_size
-        if (dif < 0):
+        if dif < 0:
             return saida 
         title = title[:-dif - 3] + "..."
 
+        return gen_saida(lig)
 
-        return gen_saida()
-
-    def sort_keys(self, keys):
+    @staticmethod
+    def sort_keys(keys):
         single = [k for k in keys if len(str(k)) == 1]
         double = [k for k in keys if len(str(k)) == 2]
         return sorted(single) + sorted(double)
@@ -281,7 +275,7 @@ class Play:
             opening = GSym.down
         intro = [key for _, key in line_types]
         quests = [k for k in intro if k in self.quests]
-        resume = ""
+
         if not self.show_perc:
             init = bold("y", self.get_number(len([v for v in quests if self.quests[v].in_progress()])))
             done = bold("g", self.get_number(len([v for v in quests if self.quests[v].is_complete()])))
@@ -296,7 +290,7 @@ class Play:
             resume = self.get_percent(total, "bold") + " "
             
         margin = len(cluster_key)
-        title = self.control(cluster_name.strip()[:margin]) + colour("bold", cluster_name.strip()[margin:])
+        title = Play.control(cluster_name.strip()[:margin]) + colour("bold", cluster_name.strip()[margin:])
         opening = yellow(opening)
         if not self.show_vbar:
             resume = ""
@@ -311,7 +305,7 @@ class Play:
         keys = []
         for cluster in data:
             i = 2
-            while (True):
+            while True:
                 key = cluster[:i]
                 if key not in keys:
                     keys.append(key)
@@ -322,7 +316,8 @@ class Play:
             output[k] = v
         return output
 
-    def get_term_size(self):
+    @staticmethod
+    def get_term_size():
         return shutil.get_terminal_size().columns
 
     def show_options(self):
@@ -335,7 +330,7 @@ class Play:
             quest_output: List[Tuple[str, str]] = []
             q = self.quests[entry]
             quest_output.append((self.str_quest(entry, q), entry))
-            if q.key in self.active and self.to_show_quest(q):
+            if q.key in self.active:
                 for i, t in enumerate(q.tasks):
                     letter = self.calc_letter(index)
                     lig = "├─" if i < len(q.tasks) - 1 else "╰─"
@@ -366,7 +361,7 @@ class Play:
         if match:
             return int(match.group(1)), int(match.group(2))
         else:
-            return (None, None)
+            return None, None
 
     @staticmethod
     def get_letter_letter(s):
@@ -374,7 +369,7 @@ class Play:
         match = re.match(pattern, s)
         if match:
             return match.group(1), match.group(2)
-        return (None, None)
+        return None, None
 
     def expand_range(self, line) -> List[str]:
         line = line.replace(" - ", "-")
@@ -395,11 +390,13 @@ class Play:
                 expand.append(t)
         return expand
 
-    def clear(self):
+    @staticmethod
+    def clear():
         subprocess.run("clear")
         pass
 
-    def is_number(self, s):
+    @staticmethod
+    def is_number(s):
         try:
             int(s)
             return True
@@ -432,6 +429,17 @@ class Play:
         else:
             self.active = self.active + clusters
 
+    def down_task(self, rootdir, task: Task, ext: str = None):
+        if task.key in task.title:
+            
+            cmd = red(f"tko down {self.repo_alias} {task.key} -l {ext}")
+            print(f"{cmd}")
+            Down.download_problem(rootdir, self.repo_alias, task.key, ext)
+            # if result:
+            #     print(yellow(f"  {os.getcwd()}/{task.key}/Readme.md"))
+        else:
+            print(f"Essa não é uma tarefa de código")
+
     def check_rootdir(self):
         if self.rep.rootdir == "":
             print("Diretório raiz para esse repositório ainda não foi definido")
@@ -447,19 +455,30 @@ class Play:
             else:
                 print("Navegue para o diretório desejado e execute o comando novamente")
                 exit(1)
+    
+    def check_language(self):
+        if self.rep.lang == "":
+            print("Linguagem de programação default para esse repositório ainda não foi definida")
+            print("Escolha a linguagem de programação para o repositório de " + self.repo_alias)
+            print("  [c, cpp, py, ts, js, java]: ", end="")
+            lang = input()
+            self.rep.lang = lang
+            self.fnsave()
+            print("Você pode mudar a linguagem de programação executando o comando")
+            print("  " + red("ext <Extensão>"))
 
     def process_down(self, actions):
-        if len(actions) < 3:
-            print("Modo de usar: down <EXT> <TaskID ...>")
-            print("Exemplo: down js A C-F")
+        if len(actions) < 2:
+            print("Modo de usar: down <TaskID ...>")
+            print("Exemplo: down A C-F")
             return False
         self.check_rootdir()
+        self.check_language()
 
         rootdir = os.path.relpath(self.rep.rootdir)
-        for t in actions[2:]:
-            ext = actions[1]
+        for t in actions[1:]:
             if t in self.tasks:
-                self.down_task(rootdir, self.tasks[t], ext)
+                self.down_task(rootdir, self.tasks[t], self.rep.lang)
             else:
                 print(f"Tarefa {t} não encontrada")
                 input()
@@ -550,13 +569,27 @@ class Play:
         for t in actions[1:]:
             if t in self.tasks:
                 # print(self.tasks[actions[1]].link)
-                key = self.control(t)
+                key = Play.control(t)
                 link = self.tasks[t].link
                 print(f"{key} {link}")
             else:
                 print(f"{t} não processado")
                 return False
         return False
+    
+    def process_ext(self, actions):
+        if len(actions) == 1:
+            print("Após o comando passe a extensão desejada")
+            return False
+        ext = actions[1]
+        if ext in ["c", "cpp", "py", "ts", "js", "java"]:
+            self.rep.lang = ext
+            self.fnsave()
+            print(f"Linguagem de programação alterada para {ext}")
+            return False
+        else:
+            print(f"Extensão {ext} não processada")
+            return False
 
     def take_actions(self, actions) -> bool:
         if len(actions) == 0:
@@ -583,6 +616,8 @@ class Play:
             return self.process_down(actions)
         elif cmd == "l" or cmd == "link":
             return self.process_link(actions)
+        elif cmd == "e" or cmd == "ext":
+            return self.process_ext(actions)
         elif len(str(cmd)) >= 2 and cmd[0].isupper() and cmd[1].islower():
             return self.process_clusters(actions)
         elif self.is_number(cmd):
@@ -596,20 +631,21 @@ class Play:
             return False
         return True
 
-    def show_help(self):
+    @staticmethod
+    def show_help():
         output = "Digite " + red("t")
         output += " os números ou intervalo das tarefas para (marcar/desmarcar), exemplo:"
         print(output)
         print(green("play$ ") + "t 1 3-5")
         return False
 
+    @staticmethod
+    def checkbox(value):
+        return green(GSym.vcheck) if value else yellow(GSym.vuncheck)
+
     def show_header(self):
         self.clear()
         # ball = self.show_done and self.show_init and self.show_todo
-        def checkbox(value):
-            return green(GSym.vcheck) if value else yellow(GSym.vuncheck)
-        
-
         # full_count = len([q for q in self.quests.values()])
         # done_count = len([q for q in self.quests.values() if q.is_complete()])
         # init_count = len([q for q in self.quests.values() if q.in_progress()])
@@ -619,54 +655,63 @@ class Play:
         # vinit = "(" + str(init_count).rjust(2, "0") + ")" + red("init") + checkbox(not ball and self.show_init)
         # vtodo = "(" + str(todo_count).rjust(2, "0") + ")" + red("todo") + checkbox(not ball and self.show_todo)
         # vjoin = red("join") + ( checkbox(self.show_fold) )
-        intro = green("Digite ") + self.cmd("h") + green(" para ") + self.cmd("h") +red("elp") 
-        intro += green(" ou ") + self.cmd("t") + green(" para ") + self.cmd("t") + red("oolbar") 
-        intro += checkbox(self.show_toolbar)
-        vlink = self.cmd("v") + red("bar") + ( checkbox(self.show_vbar) )
-        vperc = red("perc") + ( checkbox(self.show_perc) )
-        vhack = self.cmd("g") + red("ame") + ( checkbox(not self.show_hack) )
-        vgame = self.cmd("e") + red("xp") + ( checkbox(False) )
-
-        visoes = f"{vlink}  {vperc}  {vhack}  {vgame}"
+        intro = green("Digite ") + Play.cmd("h") + green(" para ") + Play.cmd("h") + red("elp")
+        intro += green(" ou ") + Play.cmd("t") + green(" para ") + Play.cmd("t") + red("oolbar") 
+        intro += Play.checkbox(self.show_toolbar)
+        vlink = Play.cmd("v") + red("bar") + (Play.checkbox(self.show_vbar))
+        vperc = red("perc") + (Play.checkbox(self.show_perc))
+        vhack = Play.cmd("g") + red("ame") + (Play.checkbox(not self.show_hack))
+        vgame = Play.cmd("x") + red("p") + (Play.checkbox(False))
+        vext  = Play.cmd("e") + red("xt") + "(" + colour("c", self.rep.lang, "bold") + ")"
+        vrep  = colour("y", self.repo_alias + ":", "bold")
+        visoes = f"{vrep} {vext} {vlink} {vperc} {vhack} {vgame} "
         div0 = "──────────────────────────────────────"
-        elementos = [ intro ] + ([ div0, visoes ] if self.show_toolbar else []) + [div0]
+        elementos = [intro] + ([div0, visoes] if self.show_toolbar else []) + [div0]
         self.print_elementos(elementos)
 
     def show_cmds(self):
-        controles = green("Elementos em ") + self.control("azul") + green(" são controles")
-        feitos = bold("g", "1") + bold("y", "2") + bold("r", "3") + green(" Feitos") + "/" + yellow("Iniciados") + "/" + red("Não Iniciados")
-        cluster = GSym.right + self.control(" Gr") + green("upo. Digite ") + self.control("Gr") + green(" para ver ou ocultar")
-        numeros = GSym.right2 + self.control("  3") + green(" Missão. Dig ") + self.control("3") + green(" para ver ou ocultar")
-        letras = colour("g", GSym.check) + self.control("  D") + green(" Tarefa. Dig ") + self.control("D") + green(" (des)marcar")
-        graduar = colour("r", "4") + self.control("  X") + green(" Tarefa. Dig ") + self.control("X4") + green(" dar nota 4")
-        todas = self.control("<") + " ou " + self.control(">") + yellow(" (Compactar ou Descompactar Tudo)")
+        controles = green("Elementos em ") + Play.control("azul") + green(" são controles")
+        feitos = bold("g", "1") + bold("y", "2") + bold("r", "3")
+        feitos += green(" Feitos") + "/" + yellow("Iniciados") + "/" + red("Não Iniciados")
+        cluster = GSym.right + Play.control(" Gr") + green("upo. Digite ")
+        cluster += Play.control("Gr") + green(" para ver ou ocultar")
+        numeros = GSym.right2 + Play.control("  3") + green(" Missão. Dig ")
+        numeros += Play.control("3") + green(" para ver ou ocultar")
+        letras = colour("g", GSym.check) + Play.control("  D")
+        letras += green(" Tarefa. Dig ") + Play.control("D") + green(" (des)marcar")
+        graduar = colour("r", "4") + Play.control("  X") + green(" Tarefa. Dig ")
+        graduar += Play.control("X4") + green(" dar nota 4")
+        todas = Play.control("<") + " ou " + Play.control(">") + yellow(" (Compactar ou Descompactar Tudo)")
         
         nomes_verm = green("Os nomes em vermelho são comandos")
         prime_letr = green("Basta a primeira letra do comando")
-        down = self.cmd("d") + red("own") + " <EXT>" + self.control(" <TaskID ...>") + yellow(" (Download)")
-        link = self.cmd("l") + red("ink") + self.control(" <TaskId ...>") + yellow(" (Ver links)")
-        manu = self.cmd("m") + red("an") + yellow("  (Mostrar manual detalhado)")
-        sair = self.cmd("q") + red("uit") + yellow(" (Sair do programa)")
-        vbar = self.cmd("v") + red("bar") + yellow(" (Alterna mostrar barra vertical)")
-        perc = self.cmd("p") + red("erc") + yellow(" (Alterna mostrar porcentagens)")
-        game = self.cmd("g") + red("ame") + yellow(" (Quebra pré requisitos de missões)")
-        exp  = self.cmd("e") + red("xp")  + yellow("  (Mostrar experiência)")
+        down = Play.cmd("d") + red("own")  + Play.control(" <TaskID ...>") + yellow(" (Download)")
+        link = Play.cmd("l") + red("ink") + Play.control(" <TaskId ...>") + yellow(" (Ver links)")
+        manu = Play.cmd("m") + red("an") + yellow("  (Mostrar manual detalhado)")
+        ext = Play.cmd("e") + red("xt") + "  <EXT>" + yellow(" (Mudar linguagem default)")
+        sair = Play.cmd("q") + red("uit") + yellow(" (Sair do programa)")
+        vbar = Play.cmd("v") + red("bar") + yellow(" (Alterna mostrar barra vertical)")
+        perc = Play.cmd("p") + red("erc") + yellow(" (Alterna mostrar porcentagens)")
+        rep = Play.cmd("r") + red("ep") + yellow(" (Muda o repositório)")
 
-        #indicadores = f"{vall} {vdone} {vinit} {vtodo}"
+        game = Play.cmd("g") + red("ame") + yellow(" (Quebra pré requisitos de missões)")
+        xp = Play.cmd("x") + red("p") + yellow("  (Mostrar experiência)")
+
+        # indicadores = f"{vall} {vdone} {vinit} {vtodo}"
 
         div0 = "──────────────────────────────────────"
-        div1 = "───────────── " + self.control("Controles") +  "──────────────"
+        div1 = "───────────── " + Play.control("Controles") + "──────────────"
         div2 = "───────────── " + bold("r", "Comandos") + " ───────────────"
         elementos = []
-        elementos += [ div1, controles, feitos, todas, cluster, numeros, letras, graduar ]
-        elementos += [ div2, nomes_verm, prime_letr, down, link, vbar, perc, game, exp, manu, sair ]
+        elementos += [div1, controles, feitos, todas, cluster, numeros, letras, graduar]
+        elementos += [div2, nomes_verm, prime_letr, down, link, rep, ext, vbar, perc, game, xp, manu, sair]
 
         self.print_elementos(elementos)
         print(div0)
         return False
 
-    def print_elementos(self, elementos):
-        term_size = shutil.get_terminal_size().columns
+    @staticmethod
+    def print_elementos(elementos):
         maxlen = max([len(Color.remove_colors(t)) for t in elementos])
         # qtd = term_size // (maxlen + 3)
         qtd = 1

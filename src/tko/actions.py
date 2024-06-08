@@ -75,8 +75,6 @@ class Run:
         self.target_list = list(dict.fromkeys(self.target_list))
 
     def change_targets_to_filter_mode(self):
-        # modo de filtragem, antes de processar os dados, copiar tudo para o diretório temp fixo
-        # filtrar os solvers para então continuar com a execução
         if self.param.filter:
             old_dir = os.getcwd()
 
@@ -109,14 +107,14 @@ class Run:
             return
         
         results = [unit.result for unit in self.wdir.unit_list]
-        if not ExecutionResult.EXECUTION_ERROR in results and not ExecutionResult.WRONG_OUTPUT in results:
+        if ExecutionResult.EXECUTION_ERROR not in results and ExecutionResult.WRONG_OUTPUT not in results:
             return
         
         if not self.param.compact:
             print(self.wdir.unit_list_resume())
         
         if self.param.diff_mode == DiffMode.FIRST:
-        # printing only the first wrong case
+            # printing only the first wrong case
             wrong = [unit for unit in self.wdir.unit_list if unit.result != ExecutionResult.SUCCESS][0]
             if self.param.is_up_down:
                 print(Diff.mount_up_down_diff(wrong))
@@ -162,16 +160,18 @@ class Run:
     def free_run(self) -> bool:
         # free run mode
         if self.wdir.solver is not None and len(self.wdir.unit_list) == 0:
-            print(Report.centralize(" No test cases found. Running: " + self.wdir.solver.executable + " ", symbols.hbar), flush=True)
+            t = Report.centralize(" No test cases found. Running: " + self.wdir.solver.executable + " ", symbols.hbar)
+            print(t, flush=True)
             # force print to terminal
             Runner.free_run(self.wdir.solver.executable)
             return True
         return False
 
-    def diff_mode(self) -> bool:
+    def diff_mode(self):
         print(Report.centralize(" Running solver against test cases ", "═"))
         self.print_top_line()
         self.print_diff()
+
 
 class Build:
 
@@ -190,4 +190,3 @@ class Build:
             print(str(e))
             return False
         return True
-

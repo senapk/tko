@@ -38,7 +38,7 @@
         }
     },
     "local": {
-        "lang": "ask",
+        "lang": "",
         "ascii": false,
         "color": true,
         "updown": true,

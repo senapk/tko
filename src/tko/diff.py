@@ -18,7 +18,7 @@ class Diff:
             if i >= len(a) or i >= len(b) or a[i] != b[i]:
                 if first:
                     first = False
-                    hdiff += symbols.arrow_up;
+                    hdiff += symbols.arrow_up
             else:
                 hdiff += " "
             i += 1
@@ -73,7 +73,6 @@ class Diff:
         first_a = get(a_render, first_failure)
         first_b = get(b_render, first_failure)
         greater = max(Color.len(first_a), Color.len(first_b))
-        lbefore = ""
 
         if first_failure > 0:
             lbefore = Color.remove_colors(get(a_render, first_failure - 1))
@@ -81,9 +80,10 @@ class Diff:
 
         out_a, out_b = Diff.colorize_2_lines_diff(first_a, first_b)
 
-        postext  = symbols.vbar + " " + Color.ljust(out_a, greater) + colour("g", " (expected)") + "\n"
+        postext = symbols.vbar + " " + Color.ljust(out_a, greater) + colour("g", " (expected)") + "\n"
         postext += symbols.vbar + " " + Color.ljust(out_b, greater) + colour("r", " (received)") + "\n"
-        postext += symbols.vbar + " " + Color.ljust(Diff.make_line_arrow_up(first_a, first_b), greater) + colour("b", " (mismatch)") + "\n"
+        postext += (symbols.vbar + " " + Color.ljust(Diff.make_line_arrow_up(first_a, first_b), greater)
+                    + colour("b", " (mismatch)") + "\n")
         return postext
 
     @staticmethod
@@ -96,13 +96,11 @@ class Diff:
         return i
     
     @staticmethod
-    def colorize_2_lines_diff(line_a: str, line_b: str, neutral:str="w", expected:str="g", received:str="r") -> Tuple[str, str]:
-        pos = Diff.find_first_mismatch(line_a, line_b)
-        a_out = colour(neutral, line_a[0:pos]) + colour(expected, line_a[pos:])
-        b_out = colour(neutral, line_b[0:pos]) + colour(received, line_b[pos:])
-        return (a_out, b_out)
-    
-    
+    def colorize_2_lines_diff(la: str, lb: str, neut: str = "w", exp: str = "g", rec: str = "r") -> Tuple[str, str]:
+        pos = Diff.find_first_mismatch(la, lb)
+        a_out = colour(neut, la[0:pos]) + colour(exp, la[pos:])
+        b_out = colour(neut, lb[0:pos]) + colour(rec, lb[pos:])
+        return a_out, b_out
 
     # return a tuple of two strings with the diff and the index of the  first mismatch line
     @staticmethod
@@ -120,7 +118,7 @@ class Diff:
 
         cut: int = 0
         if pad is True:
-            cut = (Report.get_terminal_size() - 6)// 2
+            cut = (Report.get_terminal_size() - 6) // 2
 
         max_size = max(a_size, b_size)
 
@@ -159,7 +157,7 @@ class Diff:
         string_expected = unit.output
         string_received = unit.user
 
-        dotted = "-"
+        # dotted = "-"
 
         expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received)
         string_input = "\n".join([symbols.vbar + " " + line for line in string_input.split("\n")])[0:-2]
@@ -184,7 +182,7 @@ class Diff:
         return output.getvalue()
 
     @staticmethod
-    def put_left_equal(exp_lines: str, rec_lines: str, unequal:str=symbols.unequal):
+    def put_left_equal(exp_lines: List[str], rec_lines: List[str], unequal: str = symbols.unequal):
 
         max_size = max(len(exp_lines), len(rec_lines))
 
@@ -198,7 +196,6 @@ class Diff:
         
         return exp_lines, rec_lines
             
-
     @staticmethod
     def mount_side_by_side_diff(unit: Unit) -> str:
 
@@ -224,8 +221,8 @@ class Diff:
         string_expected = unit.output
         string_received = unit.user
 
-        dotted = "-"
-        vertical_separator = symbols.vbar
+        # dotted = "-"
+        # vertical_separator = symbols.vbar
         hbar = symbols.hbar
 
         expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received, True)
@@ -233,7 +230,7 @@ class Diff:
         output.write(Report.centralize(str(unit), " ", "│") + "\n")
         input_header = colour("b", " INPUT ")
         output.write(title_side_by_side(input_header, input_header, hbar, "┬", "├") + "\n")
-        if (string_input != ""):
+        if string_input != "":
             output.write(Diff.side_by_side(string_input.split("\n")[:-1], string_input.split("\n")[:-1]) + "\n")
         expected_header = colour("g", " EXPECTED ")
         received_header = colour("r", " RECEIVED ")
@@ -248,4 +245,3 @@ class Diff:
         output.write(Report.centralize("",  symbols.hbar, "╰") + "\n")
 
         return output.getvalue()
-

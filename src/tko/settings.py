@@ -5,9 +5,11 @@ from typing import Optional, List, Dict, Any
 import tempfile
 from .remote import RemoteCfg, Absolute
 
+
 class RepoSettings:
     def __init__(self):
         self.rootdir: str = ""
+        self.lang: str = ""
         self.url: str = ""
         self.file: str = ""
         self.cache: str = ""
@@ -22,11 +24,11 @@ class RepoSettings:
         
         # arquivo não existe e é remoto
         if self.url != "" and (self.file == "" or not os.path.exists(self.file)):
-                with tempfile.NamedTemporaryFile(delete=False) as f:
-                    filename = f.name
-                    cfg = RemoteCfg(self.url)
-                    cfg.download_absolute(filename)
-                return filename
+            with tempfile.NamedTemporaryFile(delete=False) as f:
+                filename = f.name
+                cfg = RemoteCfg(self.url)
+                cfg.download_absolute(filename)
+            return filename
 
         # arquivo é local com url remota
         if self.file != "" and os.path.exists(self.file) and self.url != "":
@@ -46,6 +48,10 @@ class RepoSettings:
     def set_file(self, file: str):
         self.file = os.path.abspath(file)
         return self
+    
+    def set_lang(self, lang: str):
+        self.lang = lang
+        return self
 
     def set_url(self, url: str):
         self.url = url
@@ -54,6 +60,7 @@ class RepoSettings:
     def to_dict(self):
         return {
             "rootdir": self.rootdir,
+            "lang": self.lang,
             "url": self.url,
             "file": self.file,
             "cache": self.cache,
@@ -64,6 +71,7 @@ class RepoSettings:
     
     def from_dict(self, data: Dict[str, Any]):
         self.rootdir = data.get("rootdir", "")
+        self.lang = data.get("lang", "")
         self.url = data.get("url", "")
         self.file = data.get("file", "")
         self.cache = data.get("cache", "")
@@ -82,9 +90,10 @@ class RepoSettings:
             f"View: {self.view}\n"
         )
 
+
 class LocalSettings:
     def __init__(self):
-        self.lang: str = "ask"
+        self.lang: str = ""
         self.ascii: bool = False
         self.color: bool = True
         self.updown: bool = True
@@ -100,7 +109,7 @@ class LocalSettings:
         }
     
     def from_dict(self, data: Dict[str, Any]):
-        self.lang = data.get("lang", "ask")
+        self.lang = data.get("lang", "")
         self.ascii = data.get("ascii", False)
         self.color = data.get("color", True)
         self.updown = data.get("updown", True)
@@ -115,6 +124,7 @@ class LocalSettings:
             f"Diff Mode: {'SIDE_BY_SIDE' if self.updown else 'UP_DOWN'}\n"
             f"Side-to-Side Min: {self.sideto_min}\n"
         )
+
 
 class Settings:
     def __init__(self):
@@ -145,8 +155,7 @@ class Settings:
             json.dump(self.to_dict(), f, indent=4)
 
     def __str__(self):
-        output = []
-        output.append("Repositories:")
+        output = ["Repositories:"]
         maxlen = max([len(key) for key in self.reps])
         for key in self.reps:
             prefix = f"- {key.ljust(maxlen)}"
@@ -167,18 +176,21 @@ class SettingsParser:
         self.package_name = "tko"
         default_filename = "settings.json"
         if SettingsParser.user_settings_file is None:
-            self.settings_file = os.path.abspath(default_filename) # backup for replit, dont remove
+            self.settings_file = os.path.abspath(default_filename)  # backup for replit, dont remove
             self.settings_file = os.path.join(appdirs.user_data_dir(self.package_name), default_filename)
         else:
             self.settings_file = os.path.abspath(SettingsParser.user_settings_file)
         self.settings = self.load_settings()
+
+    def get_settings_file(self):
+        return self.settings_file
 
     def load_settings(self) -> Settings:
         try:
             with open(self.settings_file, "r") as f:
                 self.settings = Settings().from_dict(json.load(f))
                 return self.settings
-        except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
+        except (FileNotFoundError, json.decoder.JSONDecodeError) as _e:
             return self.create_new_settings_file()
 
     def save_settings(self):
@@ -196,5 +208,3 @@ class SettingsParser:
     
     def get_language(self) -> str:
         return self.settings.local.lang
-
-

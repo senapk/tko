@@ -4,12 +4,13 @@ import os
 
 from .format import symbols
 
+
 class ExecutionResult(Enum):
-    UNTESTED          = "untested_"
-    SUCCESS           = "correct__"
-    WRONG_OUTPUT      = "wrong_out"
+    UNTESTED = "untested_"
+    SUCCESS = "correct__"
+    WRONG_OUTPUT = "wrong_out"
     COMPILATION_ERROR = "compilati"
-    EXECUTION_ERROR   = "execution"
+    EXECUTION_ERROR = "execution"
 
     @staticmethod
     def get_symbol(result) -> str:
@@ -28,6 +29,7 @@ class ExecutionResult(Enum):
 
     def __str__(self):
         return self.value
+
 
 class CompilerError(Exception):
     pass
@@ -85,7 +87,9 @@ class Unit:
         index = str(self.index).zfill(2)
         grade = str(self.grade_reduction).zfill(3)
         rep = "" if self.repeated is None else "[" + str(self.repeated) + "]"
-        return "(%s)[%s] GR:%s %s (%s) %s" % (ExecutionResult.get_symbol(self.result) + " " + self.result.value, index, grade, self.source.ljust(self.source_pad), self.case.ljust(self.case_pad), rep)
+        op = ExecutionResult.get_symbol(self.result) + " " + self.result.value
+        pad = self.source.ljust(self.source_pad)
+        return f"({op})[{index}] GR:{grade} {pad} ({rep})"
 
 
 class Param:

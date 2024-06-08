@@ -17,9 +17,10 @@ from .game import Game
 from .play import Play
 from .__init__ import __version__
 
+
 class MRep:
     @staticmethod
-    def list(args):
+    def list(_args):
         sp = SettingsParser()
         settings = sp.load_settings()
         print(f"SettingsFile\n- {sp.settings_file}")
@@ -29,10 +30,11 @@ class MRep:
     def add(args):
         sp = SettingsParser()
         settings = sp.load_settings()
+        rep = RepoSettings()
         if args.url:
-            rep = RepoSettings().set_url(args.url)
+            rep.set_url(args.url)
         elif args.file:
-            rep = RepoSettings().set_file(args.file)
+            rep.set_file(args.file)
         settings.reps[args.alias] = rep
         sp.save_settings()
     
@@ -58,7 +60,7 @@ class MRep:
             print("Repository not found.")
 
     @staticmethod
-    def reset(args):
+    def reset(_args):
         sp = SettingsParser()
         sp.settings = Settings()
         sp.save_settings()
@@ -73,6 +75,7 @@ class MRep:
         game.parse_file(file)
         game.check_cycle()
         game.generate_graph("graph")
+
 
 class Main:
     @staticmethod
@@ -138,7 +141,7 @@ class Main:
             settings.local.lang = args.lang
             print("Default language extension now is:", args.lang)
         if args.ask:
-            settings.local.lang = "ask"
+            settings.local.lang = ""
             print("Language extension will be asked always.")
         if args.show:
             print(sp.get_settings_file())
@@ -155,7 +158,7 @@ class Main:
             game = Game()
             file = repo.get_file()
             game.parse_file(file)
-            #passsing a lambda function to the play class to save the settings
+            # passing a lambda function to the play class to save the settings
             play = Play(game, repo, args.repo, lambda: sp.save_settings())
             play.play()
 
@@ -163,10 +166,15 @@ class Main:
     def down(args):
         Down.download_problem(".", args.course, args.activity, args.language)
 
+
 class Parser:
     def __init__(self):
         self.parser = argparse.ArgumentParser(prog='tko', description='A tool for competitive programming.')        
         self.subparsers = self.parser.add_subparsers(title='subcommands', help='help for subcommand.')
+
+        self.parent_manip = None
+        self.parent_basic = None
+
         self.add_parser_args()
         self.add_parent_basic()
         self.add_parent_manip()
@@ -206,14 +214,14 @@ class Parser:
         parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='run with test cases.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
-        parser_r.add_argument('--compact', '-c', action='store_true', help='Dont show case descriptions in failures')
+        parser_r.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures')
         parser_r.add_argument("--cmd", type=str, help="bash command to run code")
 
         group_n = parser_r.add_mutually_exclusive_group()
         group_n.add_argument('--quiet', '-q', action='store_true', help='quiet mode, do not show any failure.')
         group_n.add_argument('--all', '-a', action='store_true', help='show all failures.')
 
-        # add a exclusive group for diff mode
+        # add an exclusive group for diff mode
         group = parser_r.add_mutually_exclusive_group()
         group.add_argument('--updown', '-u', action='store_true', help="diff mode up-to-down.")
         group.add_argument('--sideby', '-s', action='store_true', help="diff mode side-by-side.")
@@ -244,12 +252,10 @@ class Parser:
         g_color = parser_s.add_mutually_exclusive_group()
         g_color.add_argument('--color', action='store_true', help='set colored mode.')
         g_color.add_argument('--mono',  action='store_true', help='set mono    mode.')
-        
 
         g_diff = parser_s.add_mutually_exclusive_group()
         g_diff.add_argument('--side', action='store_true', help='set side_by_side diff mode.')
         g_diff.add_argument('--updown', action='store_true', help='set up_to_down   diff mode.')
-
 
         g_lang = parser_s.add_mutually_exclusive_group()
         g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
@@ -278,8 +284,6 @@ class Parser:
 
         repo_reset = subpar_repo.add_parser('reset', help='reset all repositories to factory default.')
         repo_reset.set_defaults(func=MRep.reset)
-
-
 
         repo_graph = subpar_repo.add_parser('graph', help='generate graph of the repository.')
         repo_graph.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be graphed.')
@@ -322,6 +326,7 @@ class Parser:
             except ValueError as e:
                 print(str(e))
 
+
 def main():
     try:
         parser = Parser()
@@ -331,6 +336,6 @@ def main():
         print("\n\nKeyboard Interrupt")
         sys.exit(1)
 
+
 if __name__ == '__main__':
     main()
-

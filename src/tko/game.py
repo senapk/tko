@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 
-import argparse
 import subprocess
 import re
 from typing import Optional, Dict, List, Tuple
 import os
-from .format import colour, GSym, red, green, yellow
-from .settings import RepoSettings as RepoSettings
+from .format import GSym, red, green, yellow
 
 
 class Task:
@@ -72,23 +70,22 @@ class Task:
         pattern = r"\ *-.*\[(.*?)\]\((.+?)\)"
         match = re.match(pattern, line)
         if match:
-            return (True, match.group(1), match.group(2))
-        return (False, "", "")
+            return True, match.group(1), match.group(2)
+        return False, "", ""
     
     @staticmethod
     def parse_task_with_link(line) -> Tuple[bool, str, str]:
         pattern = r"\ *- \[ \].*\[(.*?)\]\((.+?)\)"
         match = re.match(pattern, line)
         if match:
-            return (True, match.group(1), match.group(2))
-        return (False, "", "")
-    
+            return True, match.group(1), match.group(2)
+        return False, "", ""
 
     def load_html_tags(self, line) -> Tuple[bool, List[str]]:
         pattern = r"<!--\s*(.*?)\s*-->"
         match = re.match(pattern, line)
         if not match:
-            return (False, [])
+            return False, []
         tags_raw = match.group(1).strip()
         tags = [tag.strip() for tag in tags_raw.split()]
         for t in tags:
@@ -102,12 +99,11 @@ class Task:
         pattern = r".*?@(\w*)"
         match = re.match(pattern, titulo)
         if not match:
-            return (False, "")
+            return False, ""
         key = match.group(1)
         if not (key + "/Readme.md") in link:
-            return (False, "")
-        return (True, key)
-
+            return False, ""
+        return True, key
 
     def process_link(self, base_file):
         if self.link.startswith("http"):
@@ -139,7 +135,6 @@ class Task:
         self.load_html_tags(line)
 
         return True
-    
 
     # se com - [ ], não precisa das tags dentro do html, o key será dado pelo título
     # se tiver as tags dentro do html, se alguma começar com @, o key será dado por ela
@@ -151,7 +146,6 @@ class Task:
             return False
         line = line.lstrip()
 
-        
         found, titulo, link = Task.parse_task_with_link(line)
         if found:
             self.key = link
@@ -192,7 +186,9 @@ class Quest:
         self.type = "main"
 
     def __str__(self):
-        return f"linha={self.line_number} : {self.key} : {self.title} : {self.skills} : {self.requires} : {self.mdlink} : {[t.key for t in self.tasks]}"
+        output = f"linha={self.line_number} : {self.key} : {self.title}"
+        output += f": {self.skills} : {self.requires} : {self.mdlink} : {[t.key for t in self.tasks]}"
+        return output
 
     def is_complete(self):
         return all([t.is_done() for t in self.tasks])
@@ -232,9 +228,9 @@ class Quest:
         return cache[self.key]
 
     def parse_quest(self, line, line_num):
+        
         pattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->\s*$"
         match = re.match(pattern, line)
-        titulo = None
         tags = []
 
         if match:
@@ -263,13 +259,13 @@ class Quest:
                 self.group = groups[0]
             else:
                 self.group = ""
-            type = [t for t in tags if t.startswith("t:")]
-            if len(type) > 0:
-                self.type = type[0][2:]
+            tx = [t for t in tags if t.startswith("t:")]
+            if len(tx) > 0:
+                self.type = tx[0][2:]
             self.key = key
             return True
         except Exception as e:
-            print(e)
+            # print(e)
             return False
 
 
@@ -296,8 +292,7 @@ def get_md_link(title: str) -> str:
 
 class Game:
     def __init__(self, file: Optional[str] = None):
-        self.clusters: Dict[str, List[Quest]] = {}  # quests indexed by group
-        self.clusters[""] = []
+        self.clusters: Dict[str, List[Quest]] = {"": []}  # quests indexed by group
         self.cluster_order: List[str] = [""]  # order of clusters
         self.quests: Dict[str, Quest] = {}  # quests indexed by quest key
         self.tasks: Dict[str, Task] = {}  # tasks  indexed by task key
@@ -309,31 +304,29 @@ class Game:
             return self.tasks[key]
         raise Exception(f"fail: task {key} not found in course definition")
 
-    def load_group(self, line, line_num) -> Tuple[bool, Optional[str]]:
+    @staticmethod
+    def load_group(line) -> Tuple[bool, Optional[str]]:
         pattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->\s*$"
         match = re.match(pattern, line)
-        titulo = None
-        tags = []
-
         if match:
             titulo = match.group(1)
             tags_raw = match.group(2).strip()
             tags = [tag.strip() for tag in tags_raw.split(" ")]
             if "group" in tags:
-                return (True, titulo)
-        return (False, None)
+                return True, titulo
+        return False, None
 
     def load_quest(self, line, line_num) -> Tuple[bool, Optional[Quest]]:
         quest = Quest()
         if not quest.parse_quest(line, line_num + 1):
-            return (False, None)
+            return False, None
         if quest.key in self.quests:
             print(f"Quest {quest.key} já existe")
             print(quest)
             print(self.quests[quest.key])
             exit(1)
         self.quests[quest.key] = quest
-        return (True, quest)
+        return True, quest
 
     def load_task(self, line, line_num, last_quest) -> bool:
         if line == "":
@@ -400,16 +393,16 @@ class Game:
         # check if there is a cycle
 
     def check_cycle(self):
-        def dfs(q, visited):
-            if len(visited) > 0:
-                if visited[0] == q.key:
-                    print(f"Cycle detected: {visited}")
+        def dfs(qx, visitedx):
+            if len(visitedx) > 0:
+                if visitedx[0] == qx.key:
+                    print(f"Cycle detected: {visitedx}")
                     exit(1)
-            if q.key in visited:
+            if q.key in visitedx:
                 return
-            visited.append(q.key)
+            visitedx.append(q.key)
             for r in q.requires_ptr:
-                dfs(r, visited)
+                dfs(r, visitedx)
 
         for q in self.quests.values():
             visited = []
@@ -420,15 +413,17 @@ class Game:
         last_quest = None
         active_group = ""
         for index, line in enumerate(lines):
-            found, group = self.load_group(line, index)
+            found, group = self.load_group(line)
             if found:
                 active_group = group
                 continue
+            
 
             found, quest = self.load_quest(line, index)
             if found:
                 last_quest = quest
                 quest.group = active_group
+
                 if quest.group not in self.clusters:
                     self.clusters[quest.group] = []
                     self.cluster_order.append(quest.group)
@@ -456,13 +451,10 @@ class Game:
         # print("\n".join([str(q) for q in self.quests.values()]))
 
     def generate_graph(self, output):
-        saida = []
-        saida.append(f"@startuml {output}")
-        saida.append("digraph diag {")
-        saida.append('  node [style="rounded,filled", shape=box]')
+        saida = [f"@startuml {output}", "digraph diag {", '  node [style="rounded,filled", shape=box]']
 
-        def info(q):
-            return f'"{q.title.strip()}:{len(q.tasks)}"'
+        def info(qx):
+            return f'"{qx.title.strip()}:{len(qx.tasks)}"'
 
         for q in self.quests.values():
             token = "->"

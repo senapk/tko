@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Tuple, Optional, Dict
+from typing import List, Tuple, Optional
 import re
 import os
 
@@ -101,16 +101,16 @@ class Loader:
         pass
 
     @staticmethod
-    def parse_cio(text, source, crude_mode=False):
+    def parse_cio(text, source):
         unit_list = []
         text = "\n" + text
 
-        pattern = r'```.*?\n(.*?)```' # get only inside code blocks
+        pattern = r'```.*?\n(.*?)```'  # get only inside code blocks
         code = re.findall(pattern, text, re.MULTILINE | re.DOTALL)
         # join all code blocks found
         text = "\n" + "\n".join(code)
 
-        pieces: List[Dict[str, List[str], List[str]]] = [] # header, input, output
+        pieces = []  # header, input, output
 
         open_case = False
         for line in text.split("\n"):
@@ -131,14 +131,14 @@ class Loader:
 
         # removendo linhas vazias e criando input das linhas com $
         for piece in pieces:
-            piece["input"]  = [line[1:] for line in piece["output"] if line.startswith("$")]
+            piece["input"] = [line[1:] for line in piece["output"] if line.startswith("$")]
             piece["output"] = [line for line in piece["output"] if line != "" and not line.startswith("#")]
 
         for piece in pieces:
             case = " ".join(piece["header"].split(" ")[1:])
-            input = "\n".join(piece["input"]) + "\n"
+            inp = "\n".join(piece["input"]) + "\n"
             output = "\n".join(piece["output"]) + "\n"
-            unit_list.append(Unit(case, input, output, None, source))
+            unit_list.append(Unit(case, inp, output, None, source))
 
         for unit in unit_list:
             unit.fromCio = True
