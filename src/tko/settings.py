@@ -7,14 +7,16 @@ from .remote import RemoteCfg, Absolute
 
 
 class RepoSettings:
-    def __init__(self):
+    def __init__(self, file: str = ""):
         self.rootdir: str = ""
         self.lang: str = ""
         self.url: str = ""
         self.file: str = ""
-        self.active: Dict[str, str] = {}
+        self.expanded: Dict[str, str] = {}
         self.tasks: Dict[str, str] = {}
         self.view: List[str] = []
+        if file != "":
+            self.file = os.path.abspath(file)
 
     def get_file(self) -> str:
         # arquivo existe e é local
@@ -60,9 +62,10 @@ class RepoSettings:
         return {
             "rootdir": self.rootdir,
             "lang": self.lang,
+            "expanded": self.expanded,
             "url": self.url,
             "file": self.file,
-            "quests": self.active,
+            "quests": self.expanded,
             "tasks": self.tasks,
             "view": self.view
         }
@@ -72,7 +75,7 @@ class RepoSettings:
         self.lang = data.get("lang", "")
         self.url = data.get("url", "")
         self.file = data.get("file", "")
-        self.active = data.get("active", {})
+        self.expanded = data.get("expanded", {})
         self.tasks = data.get("tasks", {})
         self.view = data.get("view", [])
         return self
@@ -81,7 +84,7 @@ class RepoSettings:
         return (
             f"url: {self.url}\n"
             f"file: {self.file}\n"
-            f"Active: {self.active}\n"
+            f"Active: {self.expanded}\n"
             f"Tasks: {self.tasks}\n"
             f"View: {self.view}\n"
         )

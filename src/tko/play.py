@@ -126,9 +126,10 @@ class Play:
         self.vfolds: Dict[str, str] = {} # visible collapsers ou expanders for clusters or quests
         self.vtasks: Dict[str, Task] = {}  # visible tasks  indexed by upper letter
         self.expanded: List[str] = []  # expanded quests or clusters
-        self.avaliable: List[Quest] = [] # avaliable quests keys
+        self.avaliable_quests: List[Quest] = [] # avaliable quests
+        self.avaliable_clusters: List[Cluster] = [] # avaliable clusters
 
-        for k, v in self.rep.active.items():
+        for k, v in self.rep.expanded.items():
             if "e" in v:
                 self.expanded.append(k)
 
@@ -138,9 +139,9 @@ class Play:
 
 
     def save_to_json(self):
-        self.rep.active = {}
+        self.rep.expanded = {}
         for q in self.expanded:
-            self.rep.active[q] = "e"
+            self.rep.expanded[q] = "e"
         self.rep.tasks = {}
         for t in self.game.tasks.values():
             if t.grade != "":
@@ -160,17 +161,22 @@ class Play:
 
     def update_reachable(self):
         if self.hack_mode:
-            self.avaliable = self.game.quests.values()
+            self.avaliable_quests = self.game.quests.values()
+            self.avaliable_clusters = self.game.clusters
         else:
-            self.avaliable = self.game.get_reachable_quests()
+            self.avaliable_quests = self.game.get_reachable_quests()
+            self.avaliable_clusters = []
+            for c in self.game.clusters:
+                if any([q in self.avaliable_quests for q in c.quests]):
+                    self.avaliable_clusters.append(c)
 
 
-    def str_quest(self, key: str, q: Quest) -> str:
-        opening = GSym.right2
-        if q.key in self.expanded:
-            opening = GSym.down2
+    def str_quest(self, key: str, q: Quest, lig: str) -> str:
+        # opening = GSym.right2
+        # if q.key in self.expanded:
+        #     opening = GSym.down2
 
-        key = Util.control(key.rjust(2))
+        key = Util.control(key.rjust(1))
 
         title = q.title
 
@@ -185,12 +191,14 @@ class Play:
             resume = resume + " "
         else:
             resume = ""
+#        con = "╮" if q.key in self.expanded else "╼"
+        con = "┬" if q.key in self.expanded else "╼"
 
-        return f"{resume}{opening} {key} {title}"
+        return f"{resume}{lig}{con}{key} {title}"
 
-    def str_task(self, key: str, t: Task, lig: str) -> str:
+    def str_task(self, key: str, t: Task, ligc: str, ligq: str) -> str:
         term_size = Util.get_term_size()
-        vindex = Util.control(str(key).rjust(2, " "))
+        vindex = Util.control(str(key).ljust(2, " "))
         vdone = t.get_grade()
         vlink = ""
         title = t.title
@@ -199,31 +207,25 @@ class Play:
             extra = "    "
 
         def gen_saida(ligg: str):
-            return f"{extra}{vdone}  {ligg}{vindex} {title}{vlink}"
+            return f"{extra}{ligc}{vdone}{ligg}{vindex} {title}{vlink}"
         
         parts = title.split(" ")
         parts = [("@" + yellow(p[1:]) if p.startswith("@") else p) for p in parts]
         title = " ".join(parts)
 
-        saida = gen_saida(lig)
+        saida = gen_saida(ligq)
         clear_total = Color.len(saida)
         dif = clear_total - term_size
         if dif < 0:
             return saida 
         title = title[:-dif - 3] + "..."
 
-        return gen_saida(lig)
-
-    @staticmethod
-    def sort_keys(keys):
-        single = [k for k in keys if len(str(k)) == 1]
-        double = [k for k in keys if len(str(k)) == 2]
-        return sorted(single) + sorted(double)
+        return gen_saida(ligq)
 
     def str_cluster(self, key: str, cluster_name: str, quests: List[Quest]) -> str:
-        opening = GSym.right
+        opening = "╼"
         if cluster_name in self.expanded:
-            opening = GSym.down
+            opening = "┬"
 
         if not self.show_perc:
             init = bold("y", Util.get_number(len([1 for q in quests if q.in_progress()])))
@@ -238,61 +240,67 @@ class Play:
             resume = Util.get_percent(total, "bold") + " "
             
         title = Util.control(key) + " " + colour("bold", cluster_name.strip())
-        opening = yellow(opening)
         if not self.show_vbar:
             resume = ""
-        return f"{resume}{opening} {title}"
+        return f"{resume}{opening}{title}"
     
-    # def find_cluster_keys(self) -> Dict[str, str]:
-    #     data = sorted(self.game.cluster_order)
-    #     keys = []
-    #     for cluster in data:
-    #         i = 2
-    #         while True:
-    #             key = cluster[:i]
-    #             if key not in keys:
-    #                 keys.append(key)
-    #                 break
-    #             i += 1
-    #     output = {}
-    #     for k, v in zip(keys, data):
-    #         output[k] = v
-    #     return output
+    def get_avaliable_quests_from_cluster(self, cluster: Cluster) -> List[Quest]:
+        return [q for q in cluster.quests if q in self.avaliable_quests]
 
     def show_options(self):
         fold_index = 0
         task_index = 0
         self.vfolds = {}
         self.vtasks = {}
-        for cluster in self.game.clusters:
-            quests = [q for q in cluster.quests if q in self.avaliable]
+        for ci, cluster in enumerate(self.avaliable_clusters):
+            quests = self.get_avaliable_quests_from_cluster(cluster)
             if len(quests) == 0: # va para proximo cluster
                 continue
-            key = str(fold_index).rjust(2)
-            print(self.str_cluster(key, cluster.title, quests))
-            self.vfolds[str(fold_index)] = cluster.key
+
+            key = str(fold_index)
+            self.vfolds[str(key)] = cluster.key
             fold_index += 1
+
+            print(self.str_cluster(key.ljust(2), cluster.title, quests))
             if not cluster.key in self.expanded: # va para proximo cluster
                 continue
 
             for q in quests:
-                key = str(fold_index).rjust(2)
-                print(self.str_quest(key, q))
+                key = str(fold_index).ljust(2)
+                lig = "├─" if q != quests[-1] else "╰─"
+                print(self.str_quest(key, q, lig))
                 self.vfolds[str(fold_index)] = q.key
                 fold_index += 1
                 if q.key in self.expanded:
                     for t in q.tasks:
                         key = Util.calc_letter(task_index)
-                        lig = "├─" if t != q.tasks[-1] else "╰─"
-                        print(self.str_task(key, t, lig))
+                        ligc = "│" if q != quests[-1] else " "
+                        ligq = "├──" if t != q.tasks[-1] else "╰──"
+                        print(self.str_task(key, t, ligc, ligq))
                         self.vtasks[key] = t
                         task_index += 1
 
-    def process_colapse(self):
-        pass
+    def process_collapse(self):
+        quest_keys = [q.key for q in self.avaliable_quests]
+        if any([q in self.expanded for q in quest_keys]):
+            self.expanded = [key for key in self.expanded if key not in quest_keys]
+        else:
+            self.expanded = []
 
     def process_expand(self):
-        pass
+        # if any cluster outside expanded
+        expand_clusters = False
+        for c in self.avaliable_clusters:
+            if c.key not in self.expanded:
+                expand_clusters = True
+        if expand_clusters:
+            for c in self.avaliable_clusters:
+                if c.key not in self.expanded:
+                    self.expanded.append(c.key)
+        else:
+            for q in self.avaliable_quests:
+                if q.key not in self.expanded:
+                    self.expanded.append(q.key)
 
     def down_task(self, rootdir, task: Task, ext: str):
         if task.key in task.title:
@@ -371,6 +379,7 @@ class Play:
                             self.expanded.remove(q.key)
                         except ValueError:
                             pass
+
             else:
                 self.expanded.append(key)
 
@@ -446,7 +455,7 @@ class Play:
         cmd = actions[0]
 
         if cmd == "<":
-            self.process_colapse()
+            self.process_collapse()
         elif cmd == ">":
             self.process_expand()
         elif cmd == "m" or cmd == "man":
