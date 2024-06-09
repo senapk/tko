@@ -1,5 +1,9 @@
 # Changelog
 
+- 0.5.0
+  - add: repo mode
+  - add: play mode
+  - add: settings update
 - 0.4.2
   - fix: removed debug on down
   - add: improved description

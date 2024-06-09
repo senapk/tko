@@ -3298,7 +3298,7 @@ class Play:
             success = self.take_actions(actions)
             self.save_to_json()
 
-__version__ = "0.4.3"
+__version__ = "0.5.0"
 
 
 
