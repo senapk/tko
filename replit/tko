@@ -2733,7 +2733,7 @@ class Util:
     def get_percent(value, color2: Optional[str]=None):
         text = f"{str(value).rjust(2)}%"
         if value == 100:
-            return colour("c", GSym.check * 3, color2)
+            return colour("c", "100", color2)
         if value >= 70:
             return colour("g", text, color2)
         if value == 0:
@@ -3155,8 +3155,8 @@ class Play:
             self.process_collapse()
         elif cmd == ">":
             self.process_expand()
-        elif cmd == "m" or cmd == "man":
-            return self.show_help()
+        # elif cmd == "m" or cmd == "man":
+        #     return self.show_help()
         elif cmd == "h" or cmd == "help":
             return self.show_cmds()
         elif cmd == "v" or cmd == "vbar":
@@ -3212,10 +3212,10 @@ class Play:
         vlink = Util.cmd("v") + red("bar") + (Play.checkbox(self.show_vbar))
         vperc = Util.cmd("p") + red("erc") + (Play.checkbox(self.show_perc))
         vhack = Util.cmd("g") + red("ame") + (Play.checkbox(not self.hack_mode))
-        vgame = Util.cmd("x") + red("p") + (Play.checkbox(False))
+        # vgame = Util.cmd("x") + red("p") + (Play.checkbox(False))
         vext = Util.cmd("e") + red("xt") + "(" + colour("c", self.rep.lang, "bold") + ")"
         vrep = colour("y", self.repo_alias + ":", "bold")
-        visoes = f"{vrep} {vext} {vlink} {vperc} {vhack} {vgame} "
+        visoes = f"{vrep} {vext} {vlink} {vperc} {vhack} "
         div0 = "──────────────────────────────────────"
         elementos = [intro] + ([div0, visoes] if self.show_toolbar else []) + [div0]
         self.print_elementos(elementos)
@@ -3238,7 +3238,7 @@ class Play:
         prime_letr = green("Basta a primeira letra do comando")
         down = Util.cmd("d") + red("own") + Util.control(" <TaskID ...>") + yellow(" (Download)")
         link = Util.cmd("l") + red("ink") + Util.control(" <TaskId ...>") + yellow(" (Ver links)")
-        manu = Util.cmd("m") + red("an") + yellow("  (Mostrar manual detalhado)")
+        # manu = Util.cmd("m") + red("an") + yellow("  (Mostrar manual detalhado)")
         ext = Util.cmd("e") + red("xt") + "  <EXT>" + yellow(" (Mudar linguagem default)")
         sair = Util.cmd("q") + red("uit") + yellow(" (Sair do programa)")
         vbar = Util.cmd("v") + red("bar") + yellow(" (Alterna mostrar barra vertical)")
@@ -3246,7 +3246,7 @@ class Play:
         rep = Util.cmd("r") + red("ep") + yellow(" (Muda o repositório)")
 
         game = Util.cmd("g") + red("ame") + yellow(" (Quebra pré requisitos de missões)")
-        xp = Util.cmd("x") + red("p") + yellow("  (Mostrar experiência)")
+        # xp = Util.cmd("x") + red("p") + yellow("  (Mostrar experiência)")
 
         # indicadores = f"{vall} {vdone} {vinit} {vtodo}"
 
@@ -3255,7 +3255,7 @@ class Play:
         div2 = "───────────── " + bold("r", "Comandos") + " ───────────────"
         elementos = []
         elementos += [div1, controles, feitos, todas, cluster, numeros, letras, graduar]
-        elementos += [div2, nomes_verm, prime_letr, down, link, rep, ext, vbar, perc, game, xp, manu, sair]
+        elementos += [div2, nomes_verm, prime_letr, down, link, rep, ext, vbar, perc, game, sair]
 
         self.print_elementos(elementos)
         print(div0)
