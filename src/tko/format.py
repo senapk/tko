@@ -48,7 +48,7 @@ class Color:
         return len(Color.remove_colors(text))
 
 
-def colour(color: str, text: str, color2: str = None) -> str:
+def colour(color: str, text: str, color2: Optional[str] = None) -> str:
     return ("" if color2 is None else Color.map[color2]) + Color.map[color] + text + Color.map["reset"]
 
 

@@ -12,10 +12,9 @@ class RepoSettings:
         self.lang: str = ""
         self.url: str = ""
         self.file: str = ""
-        self.cache: str = ""
-        self.quests: Dict[str, str] = {}
+        self.active: Dict[str, str] = {}
         self.tasks: Dict[str, str] = {}
-        self.view: List[str] = ["done", "init", "link", "todo"]
+        self.view: List[str] = []
 
     def get_file(self) -> str:
         # arquivo existe e é local
@@ -63,8 +62,7 @@ class RepoSettings:
             "lang": self.lang,
             "url": self.url,
             "file": self.file,
-            "cache": self.cache,
-            "quests": self.quests,
+            "quests": self.active,
             "tasks": self.tasks,
             "view": self.view
         }
@@ -74,8 +72,7 @@ class RepoSettings:
         self.lang = data.get("lang", "")
         self.url = data.get("url", "")
         self.file = data.get("file", "")
-        self.cache = data.get("cache", "")
-        self.quests = data.get("quests", {})
+        self.active = data.get("active", {})
         self.tasks = data.get("tasks", {})
         self.view = data.get("view", [])
         return self
@@ -84,8 +81,7 @@ class RepoSettings:
         return (
             f"url: {self.url}\n"
             f"file: {self.file}\n"
-            f"cache: {self.cache}\n"
-            f"Quests: {self.quests}\n"
+            f"Active: {self.active}\n"
             f"Tasks: {self.tasks}\n"
             f"View: {self.view}\n"
         )

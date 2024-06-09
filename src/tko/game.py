@@ -62,9 +62,6 @@ class Task:
             return
         print(f"Grade inválida: {grade}")
 
-    def __str__(self):
-        return f"{self.line_number} : {self.key} : {self.grade} : {self.title} : {self.skills} : {self.link}"
-
     @staticmethod
     def parse_item_with_link(line) -> Tuple[bool, str, str]:
         pattern = r"\ *-.*\[(.*?)\]\((.+?)\)"
@@ -81,11 +78,11 @@ class Task:
             return True, match.group(1), match.group(2)
         return False, "", ""
 
-    def load_html_tags(self, line) -> Tuple[bool, List[str]]:
+    def load_html_tags(self, line):
         pattern = r"<!--\s*(.*?)\s*-->"
         match = re.match(pattern, line)
         if not match:
-            return False, []
+            return
         tags_raw = match.group(1).strip()
         tags = [tag.strip() for tag in tags_raw.split()]
         for t in tags:
@@ -93,7 +90,7 @@ class Task:
                 self.skills.append(t[2:])
             elif t.startswith("@"):
                 self.key = t[1:]
-
+        
     @staticmethod
     def parse_arroba_from_title_link(titulo, link) -> Tuple[bool, str]:
         pattern = r".*?@(\w*)"
@@ -170,6 +167,10 @@ class Task:
 
         return False
 
+    def __str__(self):
+        line = str(self.line_number).rjust(3)
+        key = "" if self.key == self.title else self.key + " "
+        return f"{line}    {self.grade} {key}{self.title} {self.skills} {self.link}"
 
 class Quest:
     def __init__(self):
@@ -177,17 +178,18 @@ class Quest:
         self.line = ""
         self.key = ""
         self.title = ""
-        self.mdlink = ""
         self.tasks = []
         self.skills = []
-        self.group = ""
+        self.cluster = ""
         self.requires = []
         self.requires_ptr = []
         self.type = "main"
 
     def __str__(self):
-        output = f"linha={self.line_number} : {self.key} : {self.title}"
-        output += f": {self.skills} : {self.requires} : {self.mdlink} : {[t.key for t in self.tasks]}"
+        line = str(self.line_number).rjust(3)
+        tasks_size = str(len(self.tasks)).rjust(2, "0")
+        key = "" if self.key == self.title else self.key + " "
+        output = f"{line}   {tasks_size} {key}{self.title} {self.skills} {self.requires}"
         return output
 
     def is_complete(self):
@@ -256,9 +258,9 @@ class Quest:
             self.mdlink = "#" + get_md_link(titulo)
             groups = [t[2:] for t in tags if t.startswith("g:")]
             if len(groups) > 0:
-                self.group = groups[0]
+                self.cluster = groups[0]
             else:
-                self.group = ""
+                self.cluster = ""
             tx = [t for t in tags if t.startswith("t:")]
             if len(tx) > 0:
                 self.type = tx[0][2:]
@@ -268,6 +270,19 @@ class Quest:
             # print(e)
             return False
 
+
+class Cluster:
+    def __init__(self, line_number:int = 0, title: str = "", key: str = ""):
+        self.line_number = line_number
+        self.title: str = title
+        self.key: str = key
+        self.quests: list[Quest] = []
+
+    def __str__(self):
+        line = str(self.line_number).rjust(3)
+        quests_size = str(len(self.quests)).rjust(2, "0")
+        key = "" if self.key == self.title else self.key + " "
+        return f"{line} {quests_size} {key}{self.title}"
 
 def rm_comments(title: str) -> str:
     if "<!--" in title and "-->" in title:
@@ -292,10 +307,9 @@ def get_md_link(title: str) -> str:
 
 class Game:
     def __init__(self, file: Optional[str] = None):
-        self.clusters: Dict[str, List[Quest]] = {"": []}  # quests indexed by group
-        self.cluster_order: List[str] = [""]  # order of clusters
+        self.clusters: List[Cluster] = []  # clusters ordered
         self.quests: Dict[str, Quest] = {}  # quests indexed by quest key
-        self.tasks: Dict[str, Task] = {}  # tasks  indexed by task key
+        self.tasks: Dict[str, Task] = {}  # tasks indexed by task key
         if file is not None:
             self.parse_file(file)
 
@@ -304,17 +318,36 @@ class Game:
             return self.tasks[key]
         raise Exception(f"fail: task {key} not found in course definition")
 
-    @staticmethod
-    def load_group(line) -> Tuple[bool, Optional[str]]:
+    # se existir um cluster nessa linha, insere na lista de clusters e retorno o objeto cluster inserido
+    def load_cluster(self, line: str, line_num: int) -> Tuple[bool, Optional[Cluster]]:
         pattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->\s*$"
         match = re.match(pattern, line)
-        if match:
-            titulo = match.group(1)
-            tags_raw = match.group(2).strip()
-            tags = [tag.strip() for tag in tags_raw.split(" ")]
-            if "group" in tags:
-                return True, titulo
-        return False, None
+        if not match:
+            return False, None
+        titulo = match.group(1)
+        tags_raw = match.group(2).strip()
+        tags = [tag.strip() for tag in tags_raw.split(" ")]
+        if not "group" in tags:
+            return False, None
+        
+        keys = [tag[1:] for tag in tags if tag.startswith("@")]
+        key = titulo
+        if len(keys) > 0:
+            key = keys[0]
+        
+        cluster = Cluster(line_num, titulo, key)
+
+        # search for existing cluster in self.clusters
+        for c in self.clusters:
+            if c.key == key:
+                print(f"Cluster {key} já existe")
+                print(c)
+                print(cluster)
+                exit(1)
+                
+        self.clusters.append(cluster)
+        return True, cluster
+                
 
     def load_quest(self, line, line_num) -> Tuple[bool, Optional[Quest]]:
         quest = Quest()
@@ -328,9 +361,9 @@ class Game:
         self.quests[quest.key] = quest
         return True, quest
 
-    def load_task(self, line, line_num, last_quest) -> bool:
+    def load_task(self, line, line_num) -> Tuple[bool, Optional[Task]]:
         if line == "":
-            return False
+            return False, None
         task = Task()
         found = False
         if task.parse_reading_task(line, line_num + 1):
@@ -338,20 +371,15 @@ class Game:
         if task.parse_coding_task(line, line_num + 1):
             found = True
         if not found:
-            return False
+            return False, None
         
-        if last_quest is None:
-            print(f"Task {task.key} não está dentro de uma quest")
-            print(task)
-            exit(1)
-        last_quest.tasks.append(task)
         if task.key in self.tasks:
             print(f"Task {task.key} já existe")
             print(task)
             print(self.tasks[task.key])
             exit(1)
         self.tasks[task.key] = task
-        return True
+        return True, task
 
     # Verificar se todas as quests requeridas existem e adiciona o ponteiro
     # Verifica se todas as quests tem tarefas
@@ -359,7 +387,7 @@ class Game:
 
         # verify is there are keys repeated between quests, tasks and groups
 
-        keys = [k for k in self.clusters.keys()] +\
+        keys = [c.key for c in self.clusters] +\
                [k for k in self.quests.keys()] +\
                [k for k in self.tasks.keys()]
 
@@ -410,45 +438,64 @@ class Game:
 
     def parse_file(self, file):
         lines = open(file).read().split("\n")
-        last_quest = None
-        active_group = ""
-        for index, line in enumerate(lines):
-            found, group = self.load_group(line)
+        active_quest = None
+        active_cluster = None
+        for line_num, line in enumerate(lines):
+            found, cluster = self.load_cluster(line, line_num)
             if found:
-                active_group = group
+                active_cluster = cluster
                 continue
             
-
-            found, quest = self.load_quest(line, index)
+            found, quest = self.load_quest(line, line_num)
             if found:
-                last_quest = quest
-                quest.group = active_group
-
-                if quest.group not in self.clusters:
-                    self.clusters[quest.group] = []
-                    self.cluster_order.append(quest.group)
-                self.clusters[quest.group].append(quest)
+                active_quest = quest
+                if active_cluster is None:
+                    self.clusters.append(Cluster(0, "Sem grupo", "Sem grupo"))
+                    active_cluster = self.clusters[-1]
+                quest.cluster = active_cluster.key
+                active_cluster.quests.append(quest)
                 continue
 
-            self.load_task(line, index, last_quest)
+            found, task = self.load_task(line, line_num)
+            if found:
+                if active_quest is None:
+                    print(f"Task {task.key} não está dentro de uma quest")
+                    print(task)
+                    exit(1)
+                active_quest.tasks.append(task)
+
+        self.clear_empty()
 
         self.validate_requirements()
         for t in self.tasks.values():
             t.process_link(os.path.dirname(file) + "/")
+
+    def clear_empty(self):
+        for k in list(self.quests.keys()):
+            if len(self.quests[k].tasks) == 0:
+                del self.quests[k]
+        for c in self.clusters:
+            for q in c.quests:
+                if len(q.tasks) == 0:
+                    c.quests.remove(q)
+        for c in self.clusters:
+            if len(c.quests) == 0:
+                self.clusters.remove(c)
 
     def get_reachable_quests(self):
         # cache needs to be reseted before each call
         cache = {}
         return [q for q in self.quests.values() if q.is_reachable(cache)]
 
-    def show_quests(self):
-        print(
-            f"Quests de Entrada: {[q.key for q in self.quests.values() if len(q.requires) == 0]}"
-        )
-        print(f"Total de quests: {len(self.quests)}")
-        print(f"Total de tarefas: {len(self.tasks)}")
-        print(f"Total de clusters: {len(self.clusters)}")
-        # print("\n".join([str(q) for q in self.quests.values()]))
+    def __str__(self):
+        output = []
+        for c in self.clusters:
+            output.append(str(c))
+            for q in c.quests:
+                output.append(str(q))
+                for t in q.tasks:
+                    output.append(str(t))
+        return "\n".join(output)
 
     def generate_graph(self, output):
         saida = [f"@startuml {output}", "digraph diag {", '  node [style="rounded,filled", shape=box]']
@@ -473,11 +520,11 @@ class Game:
 
         groups = {}
         for q in self.quests.values():
-            if q.group == "":
+            if q.cluster == "":
                 continue
-            if q.group not in groups:
-                groups[q.group] = []
-            groups[q.group].append(q)
+            if q.cluster not in groups:
+                groups[q.cluster] = []
+            groups[q.cluster].append(q)
 
         for c in groups.values():
             if c == "":
