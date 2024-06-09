@@ -471,16 +471,20 @@ class Game:
             t.process_link(os.path.dirname(file) + "/")
 
     def clear_empty(self):
+
+        # apagando quests vazias da lista de quests
         for k in list(self.quests.keys()):
             if len(self.quests[k].tasks) == 0:
                 del self.quests[k]
+
+        # apagando quests vazias dos clusters e clusters vazios
+        clusters = []
         for c in self.clusters:
-            for q in c.quests:
-                if len(q.tasks) == 0:
-                    c.quests.remove(q)
-        for c in self.clusters:
-            if len(c.quests) == 0:
-                self.clusters.remove(c)
+            quests = [q for q in c.quests if len(q.tasks) > 0]
+            if len(quests) > 0:
+                c.quests = quests
+                clusters.append(c)
+        self.clusters = clusters
 
     def get_reachable_quests(self):
         # cache needs to be reseted before each call

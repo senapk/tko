@@ -2619,16 +2619,20 @@ class Game:
             t.process_link(os.path.dirname(file) + "/")
 
     def clear_empty(self):
+
+        # apagando quests vazias da lista de quests
         for k in list(self.quests.keys()):
             if len(self.quests[k].tasks) == 0:
                 del self.quests[k]
+
+        # apagando quests vazias dos clusters e clusters vazios
+        clusters = []
         for c in self.clusters:
-            for q in c.quests:
-                if len(q.tasks) == 0:
-                    c.quests.remove(q)
-        for c in self.clusters:
-            if len(c.quests) == 0:
-                self.clusters.remove(c)
+            quests = [q for q in c.quests if len(q.tasks) > 0]
+            if len(quests) > 0:
+                c.quests = quests
+                clusters.append(c)
+        self.clusters = clusters
 
     def get_reachable_quests(self):
         # cache needs to be reseted before each call
@@ -2857,7 +2861,7 @@ class Play:
                     self.avaliable_clusters.append(c)
 
 
-    def str_quest(self, key: str, q: Quest, lig: str) -> str:
+    def str_quest(self, key: str, q: Quest, left_lig: str, lig: str) -> str:
         # opening = GSym.right2
         # if q.key in self.expanded:
         #     opening = GSym.down2
@@ -2880,11 +2884,11 @@ class Play:
 #        con = "╮" if q.key in self.expanded else "╼"
         con = "┬" if q.key in self.expanded else "╼"
 
-        return f"{resume}{lig}{con}{key} {title}"
+        return f"{resume}{left_lig}{lig}{con}{key} {title}"
 
-    def str_task(self, key: str, t: Task, ligc: str, ligq: str) -> str:
+    def str_task(self, key: str, t: Task, ligl:str, ligc: str, ligq: str) -> str:
         term_size = Util.get_term_size()
-        vindex = Util.control(str(key).ljust(2, " "))
+        vindex = colour("y", str(key).ljust(2, " "), "bold")
         vdone = t.get_grade()
         vlink = ""
         title = t.title
@@ -2892,23 +2896,23 @@ class Play:
         if self.show_vbar:
             extra = "    "
 
-        def gen_saida(ligg: str):
-            return f"{extra}{ligc}{vdone}{ligg}{vindex} {title}{vlink}"
+        def gen_saida():
+            return f"{extra}{ligl}{ligc}{vdone}{ligq}{vindex} {title}{vlink}"
         
         parts = title.split(" ")
-        parts = [("@" + yellow(p[1:]) if p.startswith("@") else p) for p in parts]
+        parts = [("@" + colour("y", p[1:]) if p.startswith("@") else p) for p in parts]
         title = " ".join(parts)
 
-        saida = gen_saida(ligq)
+        saida = gen_saida()
         clear_total = Color.len(saida)
         dif = clear_total - term_size
         if dif < 0:
             return saida 
         title = title[:-dif - 3] + "..."
 
-        return gen_saida(ligq)
+        return gen_saida()
 
-    def str_cluster(self, key: str, cluster_name: str, quests: List[Quest]) -> str:
+    def str_cluster(self, key: str, cluster_name: str, quests: List[Quest], left_lig: str) -> str:
         opening = "╼"
         if cluster_name in self.expanded:
             opening = "┬"
@@ -2928,7 +2932,7 @@ class Play:
         title = Util.control(key) + " " + colour("bold", cluster_name.strip())
         if not self.show_vbar:
             resume = ""
-        return f"{resume}{opening}{title}"
+        return f"{resume}{left_lig}{opening}{title}"
     
     def get_avaliable_quests_from_cluster(self, cluster: Cluster) -> List[Quest]:
         return [q for q in cluster.quests if q in self.avaliable_quests]
@@ -2940,21 +2944,28 @@ class Play:
         self.vtasks = {}
         for ci, cluster in enumerate(self.avaliable_clusters):
             quests = self.get_avaliable_quests_from_cluster(cluster)
-            if len(quests) == 0: # va para proximo cluster
-                continue
 
             key = str(fold_index)
             self.vfolds[str(key)] = cluster.key
             fold_index += 1
-
-            print(self.str_cluster(key.ljust(2), cluster.title, quests))
+            left_lig = "├─"
+            if ci == 0:
+                left_lig = "╭─"
+            elif ci == len(self.avaliable_clusters) - 1:
+                left_lig = "╰─"
+            print(self.str_cluster(key.ljust(2), cluster.title, quests, left_lig))
             if not cluster.key in self.expanded: # va para proximo cluster
                 continue
 
             for q in quests:
+                
+                left_lig = "│ "
+                if ci == len(self.avaliable_clusters) - 1:
+                    left_lig = "  "
+
                 key = str(fold_index).ljust(2)
                 lig = "├─" if q != quests[-1] else "╰─"
-                print(self.str_quest(key, q, lig))
+                print(self.str_quest(key, q, left_lig, lig))
                 self.vfolds[str(fold_index)] = q.key
                 fold_index += 1
                 if q.key in self.expanded:
@@ -2962,7 +2973,7 @@ class Play:
                         key = Util.calc_letter(task_index)
                         ligc = "│" if q != quests[-1] else " "
                         ligq = "├──" if t != q.tasks[-1] else "╰──"
-                        print(self.str_task(key, t, ligc, ligq))
+                        print(self.str_task(key, t, left_lig, ligc, ligq))
                         self.vtasks[key] = t
                         task_index += 1
 
@@ -3199,7 +3210,7 @@ class Play:
         intro += green(" ou ") + Util.cmd("t") + green(" para ") + Util.cmd("t") + red("oolbar") 
         intro += Play.checkbox(self.show_toolbar)
         vlink = Util.cmd("v") + red("bar") + (Play.checkbox(self.show_vbar))
-        vperc = red("perc") + (Play.checkbox(self.show_perc))
+        vperc = Util.cmd("p") + red("erc") + (Play.checkbox(self.show_perc))
         vhack = Util.cmd("g") + red("ame") + (Play.checkbox(not self.hack_mode))
         vgame = Util.cmd("x") + red("p") + (Play.checkbox(False))
         vext = Util.cmd("e") + red("xt") + "(" + colour("c", self.rep.lang, "bold") + ")"
