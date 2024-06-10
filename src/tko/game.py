@@ -4,7 +4,7 @@ import subprocess
 import re
 from typing import Optional, Dict, List, Tuple
 import os
-from .format import GSym, red, green, yellow
+from .format import symbols, red, green, yellow
 
 
 class Task:
@@ -19,11 +19,10 @@ class Task:
 
     def get_grade(self):
         if self.grade == "":
-            return red(GSym.uncheck)
+            return red(symbols.uncheck)
         if self.grade == "x":
-            return green(GSym.check)
-        number = int(self.grade)
-        return yellow(GSym.numbers[number])
+            return green(symbols.check)
+        return yellow(self.grade)
 
     def get_percent(self):
         if self.grade == "":

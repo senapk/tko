@@ -176,7 +176,7 @@ class Parser:
         self.parent_manip = None
         self.parent_basic = None
 
-        self.add_parser_args()
+        self.add_parser_global()
         self.add_parent_basic()
         self.add_parent_manip()
         self.add_parser_run()
@@ -186,13 +186,14 @@ class Parser:
         self.add_parser_repo()
         self.add_parser_play()
 
-    def add_parser_args(self):
+    def add_parser_global(self):
         self.parser.add_argument('-c', metavar='CONFIG_FILE', type=str, help='config json file.')
         self.parser.add_argument('-w', metavar='WIDTH', type=int, help="terminal width.")
         self.parser.add_argument('-v', action='store_true', help='show version.')
         self.parser.add_argument('-g', action='store_true', help='show tko simple guide.')
         self.parser.add_argument('-b', action='store_true', help='show bash simple guide.')
         self.parser.add_argument('-m', action='store_true', help='monochromatic.')
+        self.parser.add_argument('-a', action='store_true', help='asc2 mode.')
 
     def add_parent_basic(self):
         parent_basic = argparse.ArgumentParser(add_help=False)
@@ -261,6 +262,7 @@ class Parser:
         g_lang = parser_s.add_mutually_exclusive_group()
         g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
         g_lang.add_argument("--ask", action='store_true', help='ask language extension every time.')
+        parser_s.set_defaults(func=Main.settings)
 
     def add_parser_repo(self):
         parser_repo = self.subparsers.add_parser('repo', help='manipulate repositories.')
@@ -306,13 +308,14 @@ class Parser:
         if args.c:
             SettingsParser.user_settings_file = args.c
         settings = SettingsParser().load_settings()
-        if settings.local.ascii:
+        if args.a or settings.local.ascii:
             symbols.set_ascii()
         else:
             symbols.set_unicode()
         if not args.m and settings.local.color:
             Color.enabled = True
             symbols.set_colors()
+
 
         if args.v or args.g or args.b:
             if args.v:

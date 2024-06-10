@@ -2,7 +2,7 @@ from typing import Dict, List, Tuple, Optional
 from .game import Game, Task, Quest, Cluster
 from .settings import RepoSettings
 from .down import Down
-from .format import GSym, colour, bold, red, cyan, green, yellow, Color
+from .format import symbols, colour, bold, red, cyan, green, yellow, Color
 import subprocess
 import shutil
 import os
@@ -36,7 +36,7 @@ class Util:
     @staticmethod
     def get_number(value: int):
         if 0 <= value <= 9:
-            return GSym.numbers[value]
+            return str(value)
         return "*"
 
     @staticmethod
@@ -172,9 +172,9 @@ class Play:
 
 
     def str_quest(self, key: str, q: Quest, lig: str) -> str:
-        # opening = GSym.right2
+        # opening = symbols.right2
         # if q.key in self.expanded:
-        #     opening = GSym.down2
+        #     opening = symbols.down2
 
         key = Util.control(key.rjust(1))
 
@@ -508,7 +508,7 @@ class Play:
 
     @staticmethod
     def checkbox(value):
-        return green(GSym.vcheck) if value else yellow(GSym.vuncheck)
+        return green(symbols.opcheck) if value else yellow(symbols.opuncheck)
 
     def show_header(self):
         Util.clear()
@@ -517,7 +517,7 @@ class Play:
         # done_count = len([q for q in self.quests.values() if q.is_complete()])
         # init_count = len([q for q in self.quests.values() if q.in_progress()])
         # todo_count = len([q for q in self.quests.values() if q.not_started()])
-        # vall = red("full") + (green(GSym.vcheck) if ball else yellow(GSym.vuncheck))
+        # vall = red("full") + (green(symbols.vcheck) if ball else yellow(symbols.vuncheck))
         # vdone = "(" + str(done_count).rjust(2, "0") + ")" + red("done") + checkbox(not ball and self.show_done)
         # vinit = "(" + str(init_count).rjust(2, "0") + ")" + red("init") + checkbox(not ball and self.show_init)
         # vtodo = "(" + str(todo_count).rjust(2, "0") + ")" + red("todo") + checkbox(not ball and self.show_todo)
@@ -546,7 +546,7 @@ class Play:
         numeros = "━─" + Util.control(" 3") + green(" Missão. Dig ")
         numeros += Util.control("3") + green(" para ver ou ocultar")
         
-        letras = colour("g", GSym.check) + colour("y", "  D", "bold")
+        letras = colour("g", symbols.check) + colour("y", "  D", "bold")
         letras += green(" Tarefa. Dig ") + Util.control("D") + green(" (des)marcar")
         
         graduar = colour("r", "4") + colour("y", "  X", "bold") + green(" Tarefa. Dig ")

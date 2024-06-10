@@ -4,7 +4,7 @@ from typing import Optional
 
 
 class Color:
-    enabled = True
+    enabled = False
     map = {
         "red": "\u001b[31m",
         "r": "\u001b[31m",
@@ -49,6 +49,8 @@ class Color:
 
 
 def colour(color: str, text: str, color2: Optional[str] = None) -> str:
+    if not Color.enabled:
+        return text
     return ("" if color2 is None else Color.map[color2]) + Color.map[color] + text + Color.map["reset"]
 
 
@@ -70,6 +72,10 @@ class __Symbols:
         self.cfill = ""
         self.tab = ""
         self.arrow_up = ""
+        self.check = ""  
+        self.uncheck = ""
+        self.opcheck = ""
+        self.opuncheck = ""
 
         self.ascii = False
         self.set_unicode()
@@ -97,6 +103,11 @@ class __Symbols:
         self.tab = "    "
         self.arrow_up = "A"
 
+        self.check = "x"  
+        self.uncheck = " "
+        self.opcheck = "█"# ▄ 	▅ 	▆ 	▇ 	█ 
+        self.opuncheck = "▒" # ▒
+
     def set_unicode(self):
         self.ascii = False
 
@@ -117,6 +128,12 @@ class __Symbols:
         self.tab = "    "
         self.arrow_up = "↑"
 
+        self.check = "✓"  
+        self.uncheck = "✗"
+        self.opcheck = "ⴲ"
+        self.opuncheck = "ⵔ"
+
+
     def set_colors(self):
         self.opening = colour("b", self.opening)
         self.neutral = colour("b", self.neutral)
@@ -130,32 +147,6 @@ class __Symbols:
 
 
 symbols = __Symbols()
-
-
-class GSym:
-    check = "✓"    # "✔"
-    uncheck = "✗"  # "✘"
-
-    opcheck = "ⴲⵔ"
-    # opcheck = "✔▢"
-    # opcheck = "🞕🞖" # erro Pedro
-    # opcheck = "🟘🟗" # erro Pedro
-
-    oprightdown = "➡️⬇️"    # azuzinho
-    oprightdown2 = "→↓"
-    # oprightdown = "🠊🠋" # erro Pedro
-    # oprightdown = "⮞⮟" # erro Pedro
-
-    vcheck = opcheck[0]
-    vuncheck = opcheck[1]
-    right = "➡️"
-    down = "⬇️"
-    right2 = oprightdown2[0]
-    down2 = oprightdown2[1]
-
-    numbers = "0123456789***********"
-#    🯰🯱🯲🯳🯴🯵🯶🯷🯸🯹
-
 
 def green(text):
     return colour("g", text)

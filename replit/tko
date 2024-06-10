@@ -454,7 +454,7 @@ class Runner:
 
 
 class Color:
-    enabled = True
+    enabled = False
     map = {
         "red": "\u001b[31m",
         "r": "\u001b[31m",
@@ -499,6 +499,8 @@ class Color:
 
 
 def colour(color: str, text: str, color2: Optional[str] = None) -> str:
+    if not Color.enabled:
+        return text
     return ("" if color2 is None else Color.map[color2]) + Color.map[color] + text + Color.map["reset"]
 
 
@@ -520,6 +522,10 @@ class __Symbols:
         self.cfill = ""
         self.tab = ""
         self.arrow_up = ""
+        self.check = ""  
+        self.uncheck = ""
+        self.opcheck = ""
+        self.opuncheck = ""
 
         self.ascii = False
         self.set_unicode()
@@ -547,6 +553,11 @@ class __Symbols:
         self.tab = "    "
         self.arrow_up = "A"
 
+        self.check = "x"  
+        self.uncheck = " "
+        self.opcheck = "█"# ▄ 	▅ 	▆ 	▇ 	█ 
+        self.opuncheck = "▒" # ▒
+
     def set_unicode(self):
         self.ascii = False
 
@@ -567,6 +578,12 @@ class __Symbols:
         self.tab = "    "
         self.arrow_up = "↑"
 
+        self.check = "✓"  
+        self.uncheck = "✗"
+        self.opcheck = "ⴲ"
+        self.opuncheck = "ⵔ"
+
+
     def set_colors(self):
         self.opening = colour("b", self.opening)
         self.neutral = colour("b", self.neutral)
@@ -580,32 +597,6 @@ class __Symbols:
 
 
 symbols = __Symbols()
-
-
-class GSym:
-    check = "✓"    # "✔"
-    uncheck = "✗"  # "✘"
-
-    opcheck = "ⴲⵔ"
-    # opcheck = "✔▢"
-    # opcheck = "🞕🞖" # erro Pedro
-    # opcheck = "🟘🟗" # erro Pedro
-
-    oprightdown = "➡️⬇️"    # azuzinho
-    oprightdown2 = "→↓"
-    # oprightdown = "🠊🠋" # erro Pedro
-    # oprightdown = "⮞⮟" # erro Pedro
-
-    vcheck = opcheck[0]
-    vuncheck = opcheck[1]
-    right = "➡️"
-    down = "⬇️"
-    right2 = oprightdown2[0]
-    down2 = oprightdown2[1]
-
-    numbers = "0123456789***********"
-#    🯰🯱🯲🯳🯴🯵🯶🯷🯸🯹
-
 
 def green(text):
     return colour("g", text)
@@ -2171,11 +2162,10 @@ class Task:
 
     def get_grade(self):
         if self.grade == "":
-            return red(GSym.uncheck)
+            return red(symbols.uncheck)
         if self.grade == "x":
-            return green(GSym.check)
-        number = int(self.grade)
-        return yellow(GSym.numbers[number])
+            return green(symbols.check)
+        return yellow(self.grade)
 
     def get_percent(self):
         if self.grade == "":
@@ -2730,7 +2720,7 @@ class Util:
     @staticmethod
     def get_number(value: int):
         if 0 <= value <= 9:
-            return GSym.numbers[value]
+            return str(value)
         return "*"
 
     @staticmethod
@@ -2866,9 +2856,9 @@ class Play:
 
 
     def str_quest(self, key: str, q: Quest, lig: str) -> str:
-        # opening = GSym.right2
+        # opening = symbols.right2
         # if q.key in self.expanded:
-        #     opening = GSym.down2
+        #     opening = symbols.down2
 
         key = Util.control(key.rjust(1))
 
@@ -3202,7 +3192,7 @@ class Play:
 
     @staticmethod
     def checkbox(value):
-        return green(GSym.vcheck) if value else yellow(GSym.vuncheck)
+        return green(symbols.opcheck) if value else yellow(symbols.opuncheck)
 
     def show_header(self):
         Util.clear()
@@ -3211,7 +3201,7 @@ class Play:
         # done_count = len([q for q in self.quests.values() if q.is_complete()])
         # init_count = len([q for q in self.quests.values() if q.in_progress()])
         # todo_count = len([q for q in self.quests.values() if q.not_started()])
-        # vall = red("full") + (green(GSym.vcheck) if ball else yellow(GSym.vuncheck))
+        # vall = red("full") + (green(symbols.vcheck) if ball else yellow(symbols.vuncheck))
         # vdone = "(" + str(done_count).rjust(2, "0") + ")" + red("done") + checkbox(not ball and self.show_done)
         # vinit = "(" + str(init_count).rjust(2, "0") + ")" + red("init") + checkbox(not ball and self.show_init)
         # vtodo = "(" + str(todo_count).rjust(2, "0") + ")" + red("todo") + checkbox(not ball and self.show_todo)
@@ -3240,7 +3230,7 @@ class Play:
         numeros = "━─" + Util.control(" 3") + green(" Missão. Dig ")
         numeros += Util.control("3") + green(" para ver ou ocultar")
         
-        letras = colour("g", GSym.check) + colour("y", "  D", "bold")
+        letras = colour("g", symbols.check) + colour("y", "  D", "bold")
         letras += green(" Tarefa. Dig ") + Util.control("D") + green(" (des)marcar")
         
         graduar = colour("r", "4") + colour("y", "  X", "bold") + green(" Tarefa. Dig ")
@@ -3311,7 +3301,7 @@ class Play:
             success = self.take_actions(actions)
             self.save_to_json()
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 
 
 
@@ -3475,7 +3465,7 @@ class Parser:
         self.parent_manip = None
         self.parent_basic = None
 
-        self.add_parser_args()
+        self.add_parser_global()
         self.add_parent_basic()
         self.add_parent_manip()
         self.add_parser_run()
@@ -3485,13 +3475,14 @@ class Parser:
         self.add_parser_repo()
         self.add_parser_play()
 
-    def add_parser_args(self):
+    def add_parser_global(self):
         self.parser.add_argument('-c', metavar='CONFIG_FILE', type=str, help='config json file.')
         self.parser.add_argument('-w', metavar='WIDTH', type=int, help="terminal width.")
         self.parser.add_argument('-v', action='store_true', help='show version.')
         self.parser.add_argument('-g', action='store_true', help='show tko simple guide.')
         self.parser.add_argument('-b', action='store_true', help='show bash simple guide.')
         self.parser.add_argument('-m', action='store_true', help='monochromatic.')
+        self.parser.add_argument('-a', action='store_true', help='asc2 mode.')
 
     def add_parent_basic(self):
         parent_basic = argparse.ArgumentParser(add_help=False)
@@ -3560,6 +3551,7 @@ class Parser:
         g_lang = parser_s.add_mutually_exclusive_group()
         g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
         g_lang.add_argument("--ask", action='store_true', help='ask language extension every time.')
+        parser_s.set_defaults(func=Main.settings)
 
     def add_parser_repo(self):
         parser_repo = self.subparsers.add_parser('repo', help='manipulate repositories.')
@@ -3605,13 +3597,14 @@ class Parser:
         if args.c:
             SettingsParser.user_settings_file = args.c
         settings = SettingsParser().load_settings()
-        if settings.local.ascii:
+        if args.a or settings.local.ascii:
             symbols.set_ascii()
         else:
             symbols.set_unicode()
         if not args.m and settings.local.color:
             Color.enabled = True
             symbols.set_colors()
+
 
         if args.v or args.g or args.b:
             if args.v:
