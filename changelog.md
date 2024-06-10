@@ -1,5 +1,9 @@
 # Changelog
 
+- 0.5.3
+  - fix: task cut to term size
+- 0.5.2
+  - fix ascii and color
 - 0.5.1
   - fix: windows compatibility
   - add: small improvements in visual guides

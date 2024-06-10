@@ -210,12 +210,12 @@ class Play:
             extra = "    "
 
         def gen_saida():
-            return f"{extra}{vdone}{ligc} {ligq}{vindex} {title}{vlink}"
+            parts = title.split(" ")
+            parts = [("@" + colour("y", p[1:]) if p.startswith("@") else p) for p in parts]
+            titlepainted = " ".join(parts)
+            return f"{extra}{vdone}{ligc} {ligq}{vindex} {titlepainted}{vlink}"
         
-        parts = title.split(" ")
-        parts = [("@" + colour("y", p[1:]) if p.startswith("@") else p) for p in parts]
-        title = " ".join(parts)
-
+        
         saida = gen_saida()
         clear_total = Color.len(saida)
         dif = clear_total - term_size
