@@ -171,7 +171,7 @@ class Play:
                     self.avaliable_clusters.append(c)
 
 
-    def str_quest(self, key: str, q: Quest, left_lig: str, lig: str) -> str:
+    def str_quest(self, key: str, q: Quest, lig: str) -> str:
         # opening = GSym.right2
         # if q.key in self.expanded:
         #     opening = GSym.down2
@@ -192,11 +192,14 @@ class Play:
         else:
             resume = ""
 #        con = "╮" if q.key in self.expanded else "╼"
-        con = "┬" if q.key in self.expanded else "╼"
+        #con = "┬" if q.key in self.expanded else "╼"
+        con = "━─"
+        if q.key in self.expanded:
+            con = "─┯"
 
-        return f"{resume}{left_lig}{lig}{con}{key} {title}"
+        return f"{resume} {lig}{con}{key} {title}"
 
-    def str_task(self, key: str, t: Task, ligl:str, ligc: str, ligq: str) -> str:
+    def str_task(self, key: str, t: Task, ligc: str, ligq: str) -> str:
         term_size = Util.get_term_size()
         vindex = colour("y", str(key).ljust(2, " "), "bold")
         vdone = t.get_grade()
@@ -207,7 +210,7 @@ class Play:
             extra = "    "
 
         def gen_saida():
-            return f"{extra}{ligl}{ligc}{vdone}{ligq}{vindex} {title}{vlink}"
+            return f"{extra}{vdone}{ligc} {ligq}{vindex} {title}{vlink}"
         
         parts = title.split(" ")
         parts = [("@" + colour("y", p[1:]) if p.startswith("@") else p) for p in parts]
@@ -222,10 +225,10 @@ class Play:
 
         return gen_saida()
 
-    def str_cluster(self, key: str, cluster_name: str, quests: List[Quest], left_lig: str) -> str:
-        opening = "╼"
+    def str_cluster(self, key: str, cluster_name: str, quests: List[Quest]) -> str:
+        opening = "━─"
         if cluster_name in self.expanded:
-            opening = "┬"
+            opening = "─┯"
 
         if not self.show_perc:
             init = bold("y", Util.get_number(len([1 for q in quests if q.in_progress()])))
@@ -242,7 +245,7 @@ class Play:
         title = Util.control(key) + " " + colour("bold", cluster_name.strip())
         if not self.show_vbar:
             resume = ""
-        return f"{resume}{left_lig}{opening}{title}"
+        return f"{resume}{opening}{title}"
     
     def get_avaliable_quests_from_cluster(self, cluster: Cluster) -> List[Quest]:
         return [q for q in cluster.quests if q in self.avaliable_quests]
@@ -258,24 +261,15 @@ class Play:
             key = str(fold_index)
             self.vfolds[str(key)] = cluster.key
             fold_index += 1
-            left_lig = "├─"
-            if ci == 0:
-                left_lig = "╭─"
-            elif ci == len(self.avaliable_clusters) - 1:
-                left_lig = "╰─"
-            print(self.str_cluster(key.ljust(2), cluster.title, quests, left_lig))
+            print(self.str_cluster(key.ljust(2), cluster.title, quests))
             if not cluster.key in self.expanded: # va para proximo cluster
                 continue
 
             for q in quests:
                 
-                left_lig = "│ "
-                if ci == len(self.avaliable_clusters) - 1:
-                    left_lig = "  "
-
                 key = str(fold_index).ljust(2)
-                lig = "├─" if q != quests[-1] else "╰─"
-                print(self.str_quest(key, q, left_lig, lig))
+                lig = "├" if q != quests[-1] else "╰"
+                print(self.str_quest(key, q, lig))
                 self.vfolds[str(fold_index)] = q.key
                 fold_index += 1
                 if q.key in self.expanded:
@@ -283,7 +277,7 @@ class Play:
                         key = Util.calc_letter(task_index)
                         ligc = "│" if q != quests[-1] else " "
                         ligq = "├──" if t != q.tasks[-1] else "╰──"
-                        print(self.str_task(key, t, left_lig, ligc, ligq))
+                        print(self.str_task(key, t, ligc, ligq))
                         self.vtasks[key] = t
                         task_index += 1
 
@@ -366,6 +360,16 @@ class Play:
                 return c
         return None
 
+    def collapse(self, key):
+        self.expanded.remove(key)
+        cluster = self.find_cluster(key)
+        if cluster is not None:
+            for q in cluster.quests:
+                try:
+                    self.expanded.remove(q.key)
+                except ValueError:
+                    pass
+
     def process_folds(self, actions):
         mass_action = None
         for t in actions:
@@ -377,18 +381,20 @@ class Play:
                 print(f"Entrada '{t}' não existe")
                 return False
             key = self.vfolds[str(t)]
-            if key in self.expanded:
-                self.expanded.remove(key)
-                cluster = self.find_cluster(key)
-                if cluster is not None:
-                    for q in cluster.quests:
-                        try:
-                            self.expanded.remove(q.key)
-                        except ValueError:
-                            pass
-
+            if mass_action is None:
+                if key in self.expanded:
+                    self.collapse(key)
+                    mass_action = "collapse"
+                else:
+                    self.expanded.append(key)
+                    mass_action = "expand"
             else:
-                self.expanded.append(key)
+                if mass_action == "expand":
+                    if key not in self.expanded:
+                        self.expanded.append(key)
+                else:
+                    if key in self.expanded:
+                        self.collapse(key)
 
         return True
     
