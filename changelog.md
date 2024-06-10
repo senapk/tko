@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.5.1
+  - fix: windows compatibility
+  - add: small improvements in visual guides
 - 0.5.0
   - add: repo mode
   - add: play mode

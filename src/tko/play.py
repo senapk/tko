@@ -537,31 +537,34 @@ class Play:
         self.print_elementos(elementos)
 
     def show_cmds(self):
-        controles = green("Elementos em ") + Util.control("azul") + green(" são controles")
+        controles = green("Números ") + Util.control("azul") + green(" para expandir/colapsar")
+        intervalos1 = green("Você pode digitar intervalos: ") + Util.control("1-3")
+        intervalos2 = green("Você pode digitar intervalos: ") + Util.control("B-F")
+
         feitos = bold("g", "1") + bold("y", "2") + bold("r", "3")
         feitos += green(" Feitos") + "/" + yellow("Iniciados") + "/" + red("Não Iniciados")
-        cluster = GSym.right + Util.control(" Gr") + green("upo. Digite ")
-        cluster += Util.control("Gr") + green(" para ver ou ocultar")
-        numeros = GSym.right2 + Util.control("  3") + green(" Missão. Dig ")
+        numeros = "━─" + Util.control(" 3") + green(" Missão. Dig ")
         numeros += Util.control("3") + green(" para ver ou ocultar")
-        letras = colour("g", GSym.check) + Util.control("  D")
+        
+        letras = colour("g", GSym.check) + colour("y", "  D", "bold")
         letras += green(" Tarefa. Dig ") + Util.control("D") + green(" (des)marcar")
-        graduar = colour("r", "4") + Util.control("  X") + green(" Tarefa. Dig ")
+        
+        graduar = colour("r", "4") + colour("y", "  X", "bold") + green(" Tarefa. Dig ")
         graduar += Util.control("X4") + green(" dar nota 4")
-        todas = Util.control("<") + " ou " + Util.control(">") + yellow(" (Compactar ou Descompactar Tudo)")
+        todas = Util.control("<") + " ou " + Util.control(">") + green(" (Compactar ou Descompactar Tudo)")
         
         nomes_verm = green("Os nomes em vermelho são comandos")
         prime_letr = green("Basta a primeira letra do comando")
-        down = Util.cmd("d") + red("own") + Util.control(" <TaskID ...>") + yellow(" (Download)")
-        link = Util.cmd("l") + red("ink") + Util.control(" <TaskId ...>") + yellow(" (Ver links)")
+        down = Util.cmd("d") + red("own") + colour("y", " <TaskID ...>", "bold") + green(" (Download)")
+        link = Util.cmd("l") + red("ink") + colour("y", " <TaskId ...>", "bold") + green(" (Ver links)")
         # manu = Util.cmd("m") + red("an") + yellow("  (Mostrar manual detalhado)")
-        ext = Util.cmd("e") + red("xt") + "  <EXT>" + yellow(" (Mudar linguagem default)")
-        sair = Util.cmd("q") + red("uit") + yellow(" (Sair do programa)")
-        vbar = Util.cmd("v") + red("bar") + yellow(" (Alterna mostrar barra vertical)")
-        perc = Util.cmd("p") + red("erc") + yellow(" (Alterna mostrar porcentagens)")
-        rep = Util.cmd("r") + red("ep") + yellow(" (Muda o repositório)")
+        ext = Util.cmd("e") + red("xt") + "  <EXT>" + green(" (Mudar linguagem default)")
+        sair = Util.cmd("q") + red("uit") + green(" (Sair do programa)")
+        vbar = Util.cmd("v") + red("bar") + green(" (Alterna mostrar barra vertical)")
+        perc = Util.cmd("p") + red("erc") + green(" (Alterna mostrar porcentagens)")
+        rep = Util.cmd("r") + red("ep") + green(" (Muda o repositório)")
 
-        game = Util.cmd("g") + red("ame") + yellow(" (Quebra pré requisitos de missões)")
+        game = Util.cmd("g") + red("ame") + green(" (Quebra pré requisitos de missões)")
         # xp = Util.cmd("x") + red("p") + yellow("  (Mostrar experiência)")
 
         # indicadores = f"{vall} {vdone} {vinit} {vtodo}"
@@ -570,7 +573,7 @@ class Play:
         div1 = "───────────── " + Util.control("Controles") + "──────────────"
         div2 = "───────────── " + bold("r", "Comandos") + " ───────────────"
         elementos = []
-        elementos += [div1, controles, feitos, todas, cluster, numeros, letras, graduar]
+        elementos += [div1, controles, feitos, todas, numeros, letras, graduar, intervalos1, intervalos2]
         elementos += [div2, nomes_verm, prime_letr, down, link, rep, ext, vbar, perc, game, sair]
 
         self.print_elementos(elementos)
