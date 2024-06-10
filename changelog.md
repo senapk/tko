@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.5.4
+  - add: separator in Complete|Iniciado|Pendente
 - 0.5.3
   - fix: task cut to term size
 - 0.5.2

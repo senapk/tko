@@ -41,9 +41,9 @@ class Util:
 
     @staticmethod
     def get_percent(value, color2: Optional[str]=None):
-        text = f"{str(value).rjust(2)}%"
+        text = f"{str(value).rjust(3)}%"
         if value == 100:
-            return colour("c", "100", color2)
+            return colour("c", "100%", color2)
         if value >= 70:
             return colour("g", text, color2)
         if value == 0:
@@ -170,25 +170,48 @@ class Play:
                 if any([q in self.avaliable_quests for q in c.quests]):
                     self.avaliable_clusters.append(c)
 
+    @staticmethod
+    def cut_limits(title, fn_gen):
+        term_size = Util.get_term_size()
+        clear_total = Color.len(fn_gen(title))
+        dif = clear_total - term_size
+        if dif < 0:
+            return fn_gen(title)
+        title = title[:-dif - 3] + yellow("...")
+        return fn_gen(title)
+
+    def str_task(self, key: str, t: Task, ligc: str, ligq: str) -> str:
+        vindex = colour("y", str(key).ljust(2, " "), "bold")
+        vdone = t.get_grade()
+        vlink = ""
+        title = t.title
+        extra = ""
+        if self.show_vbar:
+            extra = "     "
+            if not self.show_perc:
+                extra = " │ │ "
+
+        def gen_saida(_title):
+            parts = _title.split(" ")
+            parts = [("@" + colour("y", p[1:]) if p.startswith("@") else p) for p in parts]
+            titlepainted = " ".join(parts)
+            return f"{extra}{vdone}{ligc} {ligq}{vindex} {titlepainted}{vlink}"
+        
+        
+        return Play.cut_limits(title, gen_saida)
 
     def str_quest(self, key: str, q: Quest, lig: str) -> str:
-        # opening = symbols.right2
-        # if q.key in self.expanded:
-        #     opening = symbols.down2
-
         key = Util.control(key.rjust(1))
-
         title = q.title
-
         if self.show_vbar:
             if self.show_perc:
-                resume = Util.get_percent(q.get_percent())
+                resume = Util.get_percent(q.get_percent()) + " "
             else:
-                done = Util.get_number(len([t for t in q.tasks if t.is_complete()]))
-                init = Util.get_number(len([t for t in q.tasks if t.in_progress()]))
-                todo = Util.get_number(len([t for t in q.tasks if t.not_started()]))
-                resume = f"{green(done)}{yellow(init)}{red(todo)}"
-            resume = resume + " "
+                done = green(Util.get_number(len([t for t in q.tasks if t.is_complete()])))
+                init = yellow(Util.get_number(len([t for t in q.tasks if t.in_progress()])))
+                todo = red(Util.get_number(len([t for t in q.tasks if t.not_started()])))
+                resume = f"{done}│{init}│{todo}"
+            resume = resume
         else:
             resume = ""
 #        con = "╮" if q.key in self.expanded else "╼"
@@ -197,33 +220,10 @@ class Play:
         if q.key in self.expanded:
             con = "─┯"
 
-        return f"{resume} {lig}{con}{key} {title}"
-
-    def str_task(self, key: str, t: Task, ligc: str, ligq: str) -> str:
-        term_size = Util.get_term_size()
-        vindex = colour("y", str(key).ljust(2, " "), "bold")
-        vdone = t.get_grade()
-        vlink = ""
-        title = t.title
-        extra = ""
-        if self.show_vbar:
-            extra = "    "
-
-        def gen_saida():
-            parts = title.split(" ")
-            parts = [("@" + colour("y", p[1:]) if p.startswith("@") else p) for p in parts]
-            titlepainted = " ".join(parts)
-            return f"{extra}{vdone}{ligc} {ligq}{vindex} {titlepainted}{vlink}"
+        def gen_saida(_title):
+            return f"{resume} {lig}{con}{key} {_title}"
         
-        
-        saida = gen_saida()
-        clear_total = Color.len(saida)
-        dif = clear_total - term_size
-        if dif < 0:
-            return saida 
-        title = title[:-dif - 3] + "..."
-
-        return gen_saida()
+        return Play.cut_limits(title, gen_saida)
 
     def str_cluster(self, key: str, cluster_name: str, quests: List[Quest]) -> str:
         opening = "━─"
@@ -234,7 +234,7 @@ class Play:
             init = bold("y", Util.get_number(len([1 for q in quests if q.in_progress()])))
             done = bold("g", Util.get_number(len([1 for q in quests if q.is_complete()])))
             todo = bold("r", Util.get_number(len([1 for q in quests if q.not_started()])))
-            resume = f"{done}{init}{todo} "
+            resume = f"{done}│{init}│{todo}"
         else:
             total = 0
             for q in quests:
@@ -512,16 +512,6 @@ class Play:
 
     def show_header(self):
         Util.clear()
-        # ball = self.show_done and self.show_init and self.show_todo
-        # full_count = len([q for q in self.quests.values()])
-        # done_count = len([q for q in self.quests.values() if q.is_complete()])
-        # init_count = len([q for q in self.quests.values() if q.in_progress()])
-        # todo_count = len([q for q in self.quests.values() if q.not_started()])
-        # vall = red("full") + (green(symbols.vcheck) if ball else yellow(symbols.vuncheck))
-        # vdone = "(" + str(done_count).rjust(2, "0") + ")" + red("done") + checkbox(not ball and self.show_done)
-        # vinit = "(" + str(init_count).rjust(2, "0") + ")" + red("init") + checkbox(not ball and self.show_init)
-        # vtodo = "(" + str(todo_count).rjust(2, "0") + ")" + red("todo") + checkbox(not ball and self.show_todo)
-        # vjoin = red("join") + ( checkbox(self.show_fold) )
         intro = green("Digite ") + Util.cmd("h") + green(" para ") + Util.cmd("h") + red("elp")
         intro += green(" ou ") + Util.cmd("t") + green(" para ") + Util.cmd("t") + red("oolbar") 
         intro += Play.checkbox(self.show_toolbar)
@@ -533,7 +523,14 @@ class Play:
         vrep = colour("y", self.repo_alias + ":", "bold")
         visoes = f"{vrep} {vext} {vlink} {vperc} {vhack} "
         div0 = "──────────────────────────────────────"
-        elementos = [intro] + ([div0, visoes] if self.show_toolbar else []) + [div0]
+
+        div1 = "──────────────────────────────────────"
+        if self.show_vbar and not self.show_perc:
+        #    div1 = colour("y", "C", "bold") + "│" + colour("y", "I", "bold") + "│" + colour("r", "P", "bold") + " ────────────────────────────────"
+            div1 = "─┬─┬──────────────────────────────────"
+
+
+        elementos = [intro] + ([div0, visoes] if self.show_toolbar else []) + [div1]
         self.print_elementos(elementos)
 
     def show_cmds(self):
@@ -542,7 +539,7 @@ class Play:
         intervalos2 = green("Você pode digitar intervalos: ") + Util.control("B-F")
 
         feitos = bold("g", "1") + bold("y", "2") + bold("r", "3")
-        feitos += green(" Feitos") + "/" + yellow("Iniciados") + "/" + red("Não Iniciados")
+        feitos += green(" Completos") + "/" + yellow("Iniciados") + "/" + red("Pendentes")
         numeros = "━─" + Util.control(" 3") + green(" Missão. Dig ")
         numeros += Util.control("3") + green(" para ver ou ocultar")
         
