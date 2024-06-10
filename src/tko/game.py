@@ -500,50 +500,73 @@ class Game:
                     output.append(str(t))
         return "\n".join(output)
 
-    def generate_graph(self, output):
-        saida = [f"@startuml {output}", "digraph diag {", '  node [style="rounded,filled", shape=box]']
+    def generate_graph(self, output, reachable: Optional[List[str]] = None, counts: Optional[Dict[str, str]] = None):
+        saida = ["digraph diag {", '  node [penwidth=1, style="rounded,filled", shape=box]']
 
         def info(qx):
-            return f'"{qx.title.strip()}:{len(qx.tasks)}"'
+            text = f'{qx.title.strip()}'
+            if reachable is None:
+                return f'"{text}"'
+            return f'"{text}\\n{counts[qx.key]}"'
 
         for q in self.quests.values():
-            token = "->"
             if len(q.requires_ptr) > 0:
                 for r in q.requires_ptr:
-                    saida.append(f"  {info(r)} {token} {info(q)}")
+                    token = "->"
+                    extra = ""
+                    if reachable is not None:
+                        if q.key not in reachable:
+                            extra = "[style=dotted]"
+                    saida.append(f"  {info(r)} {token} {info(q)} {extra}")
             else:
                 v = '  "Início"'
                 saida.append(f"{v} {token} {info(q)}")
 
-        for q in self.quests.values():
-            if q.type == "main":
-                saida.append(f"  {info(q)} [fillcolor=lime]")
-            else:
-                saida.append(f"  {info(q)} [fillcolor=pink]")
+        # for q in self.quests.values():
+        #     if q.type == "main":
+        #         saida.append(f"  {info(q)} [fillcolor=lime]")
+        #     else:
+        #         saida.append(f"  {info(q)} [fillcolor=pink]")
 
-        groups = {}
-        for q in self.quests.values():
-            if q.cluster == "":
-                continue
-            if q.cluster not in groups:
-                groups[q.cluster] = []
-            groups[q.cluster].append(q)
+        colorlist = ["lightblue", "pink", "lightgreen", "cyan", "gold", "yellow", "orange", "tomato", "violet", "brown", "gray"]
+        for i, c in enumerate(self.clusters):
+            for q in c.quests:
+                if q.type == "main":
+                    shape = "ellipse"
+                else:
+                    shape = "box"
+                color = "black"
+                width = 1
+                if reachable is not None:
+                    if q.key not in reachable:
+                        color = "white"
+                    else:
+                        width = 3
+                        if q.is_complete():
+                            color = "green"
+                        elif q.in_progress():
+                            color = "yellow"
+                        elif q.not_started():
+                            color = "red"
+                saida.append(f"  {info(q)} [shape={shape}, color={color}, penwidth={width}, fillcolor={colorlist[i]}]")
 
-        for c in groups.values():
-            if c == "":
-                continue
-            saida.append(f"  subgraph cluster_{c[0].group} {{")
-            saida.append(f'    label="{c[0].group}"')
-            saida.append(f"    style=filled")
-            saida.append(f"    color=lightgray")
-            for q in c:
-                saida.append(f"    {info(q)}")
 
-            saida.append("  }")
+        # for c in self.clusters:
+        #     key = get_md_link(c.key).replace("-", "_")
+        #     saida.append(f"  subgraph cluster_{key}{{")
+        #     saida.append(f'    label="{c.title.strip()}"')
+        #     saida.append(f"    style=filled")
+        #     saida.append(f"    color=lightgray")
+        #     for q in c.quests:
+        #         saida.append(f"    {info(q)}")
+
+        #     saida.append("  }")
 
         saida.append("}")
-        saida.append("@enduml")
+        # saida.append("@enduml")
         saida.append("")
 
-        open(output + ".puml", "w").write("\n".join(saida))
-        subprocess.run(["plantuml", output + ".puml", "-tsvg"])
+        dot_file = output + ".dot"
+        out_file = output + ".svg"
+        open(dot_file, "w").write("\n".join(saida))
+        subprocess.run(["dot", "-Tsvg", dot_file, "-o", out_file])

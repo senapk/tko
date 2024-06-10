@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.5.6
+  - add: graph mode standalone and inside play
 - 0.5.4
   - add: separator in Complete|Iniciado|Pendente
 - 0.5.3

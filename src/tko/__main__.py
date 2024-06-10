@@ -161,7 +161,7 @@ class Main:
 
             # passing a lambda function to the play class to save the settings
             play = Play(game, repo, args.repo, lambda: sp.save_settings())
-            play.play()
+            play.play(args.graph)
 
     @staticmethod
     def down(args):
@@ -295,6 +295,7 @@ class Parser:
     def add_parser_play(self):
         parser_p = self.subparsers.add_parser('play', help='play a game.')
         parser_p.add_argument('repo', metavar='repo', type=str, help='repository to be played.')
+        parser_p.add_argument("--graph", "-g", action='store_true', help='generate graph of the game using graphviz.')
         parser_p.set_defaults(func=Main.play)
 
     def main(self):

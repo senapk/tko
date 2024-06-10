@@ -115,10 +115,8 @@ class Play:
         self.help_index = 0
         self.rep = rep
         self.show_vbar = "vbar" in self.rep.view
-        self.show_game = False
-
         self.show_perc = "perc" in self.rep.view
-        self.hack_mode = "game" not in self.rep.view
+        self.game_mode = "game" in self.rep.view
         self.show_toolbar = "toolbar" in self.rep.view
 
         self.game: Game = game
@@ -151,16 +149,14 @@ class Play:
             self.rep.view.append("vbar")
         if self.show_perc:
             self.rep.view.append("perc")
-        if self.hack_mode:
-            self.rep.view.append("hack")
-        if self.show_game:
+        if self.game_mode:
             self.rep.view.append("game")
         if self.show_toolbar:
             self.rep.view.append("toolbar")
         self.fnsave()
 
     def update_reachable(self):
-        if self.hack_mode:
+        if not self.game_mode:
             self.avaliable_quests = self.game.quests.values()
             self.avaliable_clusters = self.game.clusters
         else:
@@ -480,7 +476,7 @@ class Play:
         elif cmd == "p" or cmd == "perc":
             self.show_perc = not self.show_perc
         elif cmd == "g" or cmd == "game":
-            self.hack_mode = not self.hack_mode
+            self.game_mode = not self.game_mode
         elif cmd == "t" or cmd == "toolbar":
             self.show_toolbar = not self.show_toolbar
         elif cmd == "d" or cmd == "down":
@@ -517,7 +513,7 @@ class Play:
         intro += Play.checkbox(self.show_toolbar)
         vlink = Util.cmd("v") + red("bar") + (Play.checkbox(self.show_vbar))
         vperc = Util.cmd("p") + red("erc") + (Play.checkbox(self.show_perc))
-        vhack = Util.cmd("g") + red("ame") + (Play.checkbox(not self.hack_mode))
+        vhack = Util.cmd("g") + red("ame") + (Play.checkbox(self.game_mode))
         # vgame = Util.cmd("x") + red("p") + (Play.checkbox(False))
         vext = Util.cmd("e") + red("xt") + "(" + colour("c", self.rep.lang, "bold") + ")"
         vrep = colour("y", self.repo_alias + ":", "bold")
@@ -526,8 +522,8 @@ class Play:
 
         div1 = "──────────────────────────────────────"
         if self.show_vbar and not self.show_perc:
-        #    div1 = colour("y", "C", "bold") + "│" + colour("y", "I", "bold") + "│" + colour("r", "P", "bold") + " ────────────────────────────────"
-            div1 = "─┬─┬──────────────────────────────────"
+           div1 = colour("g", "C", "bold") + "│" + colour("y", "I", "bold") + "│" + colour("r", "P", "bold") + " ────────────────────────────────"
+            # div1 = "─┬─┬──────────────────────────────────"
 
 
         elementos = [intro] + ([div0, visoes] if self.show_toolbar else []) + [div1]
@@ -595,7 +591,18 @@ class Play:
         if count != 0:
             print("")
 
-    def play(self):
+    def generate_graph(self):
+
+        reachable: List[str] = [q.key for q in self.avaliable_quests]
+        counts = {}
+        for q in self.game.quests.values():
+            done = len([t for t in q.tasks if t.is_complete()])
+            init = len([t for t in q.tasks if t.in_progress()])
+            todo = len([t for t in q.tasks if t.not_started()])
+            counts[q.key] = f"{done} / {done + init + todo}"
+        self.game.generate_graph("graph", reachable, counts)
+
+    def play(self, generate_graph=False):
         success = True
         while True:
             if success:
@@ -604,6 +611,8 @@ class Play:
                 self.show_header()
                 self.show_options()
             print("\n" + green("play$") + " ", end="")
+            if generate_graph:
+                self.generate_graph()
             line = input()
             if line == "":
                 success = True
