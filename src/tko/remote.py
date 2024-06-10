@@ -96,7 +96,6 @@ class RemoteCfg:
 
 class Absolute:
 
-    # processa o conteúdo trocando os links locais para links absolutos utilizando a url remota
     @staticmethod
     def __replace_remote(content: str, remote_raw: str, remote_view: str, remote_folder: str) -> str:
         if content is None or content == "":
@@ -108,19 +107,18 @@ class Absolute:
         if not remote_folder.endswith("/"):
             remote_folder += "/"
 
-        #trocando todas as imagens com link local
+        # trocando todas as imagens com link local
         regex = r"!\[(.*?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
-        subst = "![\\1](" + remote_raw + "\\3)"
+        subst = r"![\1](" + remote_raw + r"\3)"
         result = re.sub(regex, subst, content, 0)
 
-
         regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?/)\)"
-        subst = "[\\1](" + remote_folder + "\\3)"
+        subst = r"[\1](" + remote_folder + r"\3)"
         result = re.sub(regex, subst, result, 0)
 
-        #trocando todos os links locais cujo conteudo nao seja vazio
+        # trocando todos os links locais cujo conteudo nao seja vazio
         regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
-        subst = "[\\1](" + remote_view + "\\3)"
+        subst = r"[\1](" + remote_view + r"\3)"
         result = re.sub(regex, subst, result, 0)
 
         return result
@@ -136,7 +134,7 @@ class Absolute:
     @staticmethod
     def from_file(source_file, output_file, cfg: RemoteCfg, hook):
         content = open(source_file).read()
-        content = Absolute.relative_to_absolute(content, cfg, hook)
+        content = Absolute.relative_to_absolute(content, cfg)
         open(output_file, "w").write(content)
         
 class RemoteMd:
@@ -166,5 +164,6 @@ class RemoteMd:
     @staticmethod
     def run(remote_cfg: RemoteCfg, source: str, target: str, hook) -> bool:    
         content = open(source).read()
-        content = Absolute.relative_to_absolute(content, remote_cfg, hook)
+        content = Absolute.relative_to_absolute(content, remote_cfg)
         open(target, "w").write(content)
+        return True
