@@ -437,7 +437,7 @@ class Game:
             dfs(q, visited)
 
     def parse_file(self, file):
-        lines = open(file).read().split("\n")
+        lines = open(file, encoding="utf-8").read().split("\n")
         active_quest = None
         active_cluster = None
         for line_num, line in enumerate(lines):

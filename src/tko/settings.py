@@ -33,7 +33,7 @@ class RepoSettings:
 
         # arquivo é local com url remota
         if self.file != "" and os.path.exists(self.file) and self.url != "":
-            content = open(self.file).read()
+            content = open(self.file, encoding="utf-8").read()
             content = Absolute.relative_to_absolute(content, RemoteCfg(self.url))
             with tempfile.NamedTemporaryFile(delete=False) as f:
                 filename = f.name
@@ -150,7 +150,7 @@ class Settings:
         return self
     
     def save_to_json(self, file: str):
-        with open(file, "w") as f:
+        with open(file, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, indent=4)
 
     def __str__(self):
@@ -186,7 +186,7 @@ class SettingsParser:
 
     def load_settings(self) -> Settings:
         try:
-            with open(self.settings_file, "r") as f:
+            with open(self.settings_file, "r", encoding="utf-8") as f:
                 self.settings = Settings().from_dict(json.load(f))
                 return self.settings
         except (FileNotFoundError, json.decoder.JSONDecodeError) as _e:

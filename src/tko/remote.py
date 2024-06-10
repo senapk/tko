@@ -5,7 +5,6 @@ import configparser
 
 from typing import List, Optional
 import urllib.request
-import argparse
 
 class Title:
     @staticmethod
@@ -58,8 +57,9 @@ class RemoteCfg:
                 content = open(tempfile, encoding="utf-8").read()
             except:
                 content = open(tempfile).read()
-            with open(filename, "w") as f:
-                f.write(Absolute.relative_to_absolute(content, self))
+            with open(filename, "w", encoding="utf-8") as f:
+                absolute = Absolute.relative_to_absolute(content, self)
+                f.write(absolute.encode("utf-8").decode("utf-8"))
         except urllib.error.HTTPError:
             print("Error downloading file", self.get_raw_url())
             return
@@ -96,6 +96,7 @@ class RemoteCfg:
 
 class Absolute:
 
+    # processa o conteúdo trocando os links locais para links absolutos utilizando a url remota
     @staticmethod
     def __replace_remote(content: str, remote_raw: str, remote_view: str, remote_folder: str) -> str:
         if content is None or content == "":
@@ -107,16 +108,17 @@ class Absolute:
         if not remote_folder.endswith("/"):
             remote_folder += "/"
 
-        # trocando todas as imagens com link local
+        #trocando todas as imagens com link local
         regex = r"!\[(.*?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
         subst = r"![\1](" + remote_raw + r"\3)"
         result = re.sub(regex, subst, content, 0)
+
 
         regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?/)\)"
         subst = r"[\1](" + remote_folder + r"\3)"
         result = re.sub(regex, subst, result, 0)
 
-        # trocando todos os links locais cujo conteudo nao seja vazio
+        #trocando todos os links locais cujo conteudo nao seja vazio
         regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
         subst = r"[\1](" + remote_view + r"\3)"
         result = re.sub(regex, subst, result, 0)
@@ -125,15 +127,17 @@ class Absolute:
 
     @staticmethod
     def relative_to_absolute(content: str, cfg: RemoteCfg):
-        user_repo = os.path.join(cfg.user, cfg.repo)
-        remote_raw    = os.path.join("https://raw.githubusercontent.com", user_repo, cfg.branch , cfg.folder)
-        remote_view    = os.path.join("https://github.com/", user_repo, "blob", cfg.branch, cfg.folder)
-        remote_folder = os.path.join("https://github.com/", user_repo, "tree", cfg.branch, cfg.folder)
+        user_repo = cfg.user + "/" + cfg.repo
+        raw = "https://raw.githubusercontent.com"
+        github = "https://github.com"
+        remote_raw    = f"{raw}/{user_repo}/{cfg.branch}/{cfg.folder}"
+        remote_view    = f"{github}/{user_repo}/blob/{cfg.branch}/{cfg.folder}"
+        remote_folder = f"{github}/{user_repo}/tree/{cfg.branch}/{cfg.folder}"
         return Absolute.__replace_remote(content, remote_raw, remote_view, remote_folder)
 
     @staticmethod
     def from_file(source_file, output_file, cfg: RemoteCfg, hook):
-        content = open(source_file).read()
+        content = open(source_file, encoding="utf-8").read()
         content = Absolute.relative_to_absolute(content, cfg)
         open(output_file, "w").write(content)
         

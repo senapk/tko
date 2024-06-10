@@ -7,7 +7,6 @@ import re
 import configparser
 from typing import List, Optional
 import urllib.request
-import argparse
 import json
 from typing import Optional, List, Dict, Any
 import tempfile
@@ -27,6 +26,7 @@ from typing import List, Tuple, Optional
 import math
 from typing import Optional, Dict, List, Tuple
 from typing import Dict, List, Tuple, Optional
+import argparse
 import sys
 
 
@@ -82,8 +82,9 @@ class RemoteCfg:
                 content = open(tempfile, encoding="utf-8").read()
             except:
                 content = open(tempfile).read()
-            with open(filename, "w") as f:
-                f.write(Absolute.relative_to_absolute(content, self))
+            with open(filename, "w", encoding="utf-8") as f:
+                absolute = Absolute.relative_to_absolute(content, self)
+                f.write(absolute.encode("utf-8").decode("utf-8"))
         except urllib.error.HTTPError:
             print("Error downloading file", self.get_raw_url())
             return
@@ -120,6 +121,7 @@ class RemoteCfg:
 
 class Absolute:
 
+    # processa o conteúdo trocando os links locais para links absolutos utilizando a url remota
     @staticmethod
     def __replace_remote(content: str, remote_raw: str, remote_view: str, remote_folder: str) -> str:
         if content is None or content == "":
@@ -131,16 +133,17 @@ class Absolute:
         if not remote_folder.endswith("/"):
             remote_folder += "/"
 
-        # trocando todas as imagens com link local
+        #trocando todas as imagens com link local
         regex = r"!\[(.*?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
         subst = r"![\1](" + remote_raw + r"\3)"
         result = re.sub(regex, subst, content, 0)
+
 
         regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?/)\)"
         subst = r"[\1](" + remote_folder + r"\3)"
         result = re.sub(regex, subst, result, 0)
 
-        # trocando todos os links locais cujo conteudo nao seja vazio
+        #trocando todos os links locais cujo conteudo nao seja vazio
         regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
         subst = r"[\1](" + remote_view + r"\3)"
         result = re.sub(regex, subst, result, 0)
@@ -149,15 +152,17 @@ class Absolute:
 
     @staticmethod
     def relative_to_absolute(content: str, cfg: RemoteCfg):
-        user_repo = os.path.join(cfg.user, cfg.repo)
-        remote_raw    = os.path.join("https://raw.githubusercontent.com", user_repo, cfg.branch , cfg.folder)
-        remote_view    = os.path.join("https://github.com/", user_repo, "blob", cfg.branch, cfg.folder)
-        remote_folder = os.path.join("https://github.com/", user_repo, "tree", cfg.branch, cfg.folder)
+        user_repo = cfg.user + "/" + cfg.repo
+        raw = "https://raw.githubusercontent.com"
+        github = "https://github.com"
+        remote_raw    = f"{raw}/{user_repo}/{cfg.branch}/{cfg.folder}"
+        remote_view    = f"{github}/{user_repo}/blob/{cfg.branch}/{cfg.folder}"
+        remote_folder = f"{github}/{user_repo}/tree/{cfg.branch}/{cfg.folder}"
         return Absolute.__replace_remote(content, remote_raw, remote_view, remote_folder)
 
     @staticmethod
     def from_file(source_file, output_file, cfg: RemoteCfg, hook):
-        content = open(source_file).read()
+        content = open(source_file, encoding="utf-8").read()
         content = Absolute.relative_to_absolute(content, cfg)
         open(output_file, "w").write(content)
         
@@ -221,7 +226,7 @@ class RepoSettings:
 
         # arquivo é local com url remota
         if self.file != "" and os.path.exists(self.file) and self.url != "":
-            content = open(self.file).read()
+            content = open(self.file, encoding="utf-8").read()
             content = Absolute.relative_to_absolute(content, RemoteCfg(self.url))
             with tempfile.NamedTemporaryFile(delete=False) as f:
                 filename = f.name
@@ -338,7 +343,7 @@ class Settings:
         return self
     
     def save_to_json(self, file: str):
-        with open(file, "w") as f:
+        with open(file, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, indent=4)
 
     def __str__(self):
@@ -373,7 +378,7 @@ class SettingsParser:
 
     def load_settings(self) -> Settings:
         try:
-            with open(self.settings_file, "r") as f:
+            with open(self.settings_file, "r", encoding="utf-8") as f:
                 self.settings = Settings().from_dict(json.load(f))
                 return self.settings
         except (FileNotFoundError, json.decoder.JSONDecodeError) as _e:
@@ -2584,7 +2589,7 @@ class Game:
             dfs(q, visited)
 
     def parse_file(self, file):
-        lines = open(file).read().split("\n")
+        lines = open(file, encoding="utf-8").read().split("\n")
         active_quest = None
         active_cluster = None
         for line_num, line in enumerate(lines):
