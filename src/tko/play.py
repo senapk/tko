@@ -182,9 +182,9 @@ class Play:
         title = title[:-dif - 3] + yellow("...")
         return fn_gen(title)
 
-    def str_task(self, key: str, t: Task, ligc: str, ligq: str) -> str:
+    def str_task(self, key: str, t: Task, ligc: str, ligq: str, min_value = 1) -> str:
         vindex = colour("y", str(key).ljust(2, " "), "bold")
-        vdone = t.get_grade()
+        vdone = t.get_grade_symbol(min_value)
         vlink = ""
         title = t.title
         extra = ""
@@ -197,7 +197,7 @@ class Play:
             parts = _title.split(" ")
             parts = [("@" + colour("y", p[1:]) if p.startswith("@") else p) for p in parts]
             titlepainted = " ".join(parts)
-            return f"{vdone}{ligc} {ligq}{vindex} {titlepainted}{vlink}"
+            return f" {ligc} {ligq}{vindex}{vdone} {titlepainted}{vlink}"
         
         return Play.cut_limits(title, gen_saida)
 
@@ -205,12 +205,15 @@ class Play:
         key = Util.control(key.rjust(1))
         cont = ""
         if self.show_cont:
-            done = green(Util.get_number(len([t for t in q.tasks if t.is_complete()])))
-            total = yellow(str(len(q.tasks)))
-            cont = f"({done}/{total})"
+            done = q.count_valid_tasks()
+            total = len(q.tasks)
+            color = "g" if q.is_complete_by_tasks() else "y"
+            cont = colour(color, f"({done}/{total})")
         perc = ""
         if self.show_perc:
-            perc = "(" + Util.get_percent(q.get_percent()) + ")"
+            val = f"({q.get_percent()}/{q.qmin})%"
+            color = "g" if q.is_complete_by_percent() else "y"
+            perc = colour(color, val)
         
         if not self.show_cont or not self.show_perc or self.cont_perc:
             resume = cont + perc
@@ -222,7 +225,7 @@ class Play:
             con = "─┯"
 
         def gen_saida(_title):
-            return f" {lig}{con}{key} {_title}{resume}"
+            return f" {lig}{con}{key} {_title} {resume}"
         
         return Play.cut_limits(q.title.strip(), gen_saida)
 
@@ -251,7 +254,7 @@ class Play:
 
         title = Util.control(key) + " " + colour("bold", cluster_name.strip())
 
-        return f"{opening}{title}{resume}"
+        return f"{opening}{title} {resume}"
     
     def get_avaliable_quests_from_cluster(self, cluster: Cluster) -> List[Quest]:
         return [q for q in cluster.quests if q in self.avaliable_quests]
@@ -283,7 +286,7 @@ class Play:
                         key = Util.calc_letter(task_index)
                         ligc = "│" if q != quests[-1] else " "
                         ligq = "├─" if t != q.tasks[-1] else "╰─"
-                        print(self.str_task(key, t, ligc, ligq))
+                        print(self.str_task(key, t, ligc, ligq, q.tmin))
                         self.vtasks[key] = t
                         task_index += 1
 

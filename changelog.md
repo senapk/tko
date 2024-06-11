@@ -1,5 +1,9 @@
 # Changelog
 
+- 0.5.8
+  - fix: quests parser with tags
+  - add: change in play view, tmin changes color on marks
+  - fix: graph view
 - 0.5.7
   - add: counter and perc moved to the right
 - 0.5.6

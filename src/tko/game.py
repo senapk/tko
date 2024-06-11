@@ -16,13 +16,24 @@ class Task:
         self.skills = []
         self.title = ""
         self.link = ""
+        self.opt = False
 
-    def get_grade(self):
+
+    def get_grade_symbol(self, min_value: int = 1):
         if self.grade == "":
             return red(symbols.uncheck)
         if self.grade == "x":
             return green(symbols.check)
-        return yellow(self.grade)
+        if int(self.grade) >= min_value:
+            return yellow(self.grade)
+        return red(self.grade)
+
+    def get_grade_value(self):
+        if self.grade == "":
+            return 0
+        if self.grade == "x":
+            return 10
+        return int(self.grade)
 
     def get_percent(self):
         if self.grade == "":
@@ -30,14 +41,6 @@ class Task:
         if self.grade == "x":
             return 100
         return int(self.grade) * 10
-
-    def is_done(self):
-        return (
-            self.grade == "x"
-            or self.grade == "7"
-            or self.grade == "8"
-            or self.grade == "9"
-        )
     
     def is_complete(self):
         return self.grade == "x"
@@ -89,6 +92,8 @@ class Task:
                 self.skills.append(t[2:])
             elif t.startswith("@"):
                 self.key = t[1:]
+            elif t == "opt":
+                self.opt = True
         
     @staticmethod
     def parse_arroba_from_title_link(titulo, link) -> Tuple[bool, str]:
@@ -177,12 +182,14 @@ class Quest:
         self.line = ""
         self.key = ""
         self.title = ""
-        self.tasks = []
-        self.skills = []
+        self.tasks: List[Task] = []
+        self.skills: List[str] = [] # s:skill
         self.cluster = ""
-        self.requires = []
+        self.requires = [] # r:quest_key
         self.requires_ptr = []
-        self.type = "main"
+        self.opt = False # opt
+        self.qmin = 70 # q:  minimo de 70 porcento da pontuação total para completar
+        self.tmin = 5  # t: ou ter no mínimo 5 de todas as tarefas
 
     def __str__(self):
         line = str(self.line_number).rjust(3)
@@ -191,8 +198,17 @@ class Quest:
         output = f"{line}   {tasks_size} {key}{self.title} {self.skills} {self.requires}"
         return output
 
+    def count_valid_tasks(self):
+        return len([t for t in self.tasks if t.get_grade_value() >= self.tmin])
+
     def is_complete(self):
-        return all([t.is_done() for t in self.tasks])
+        return self.is_complete_by_percent() or self.is_complete_by_tasks()
+
+    def is_complete_by_percent(self):
+        return self.get_percent() >= self.qmin
+    
+    def is_complete_by_tasks(self):
+        return self.count_valid_tasks() >= len(self.tasks)
 
     def get_percent(self):
         total = len(self.tasks)
@@ -230,45 +246,42 @@ class Quest:
 
     def parse_quest(self, line, line_num):
         
-        pattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->\s*$"
-        match = re.match(pattern, line)
+        fullpattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->\s*$"
+        match = re.match(fullpattern, line)
         tags = []
 
+        self.line = line
+        self.line_number = line_num
+        self.cluster = ""
+
         if match:
-            titulo = match.group(1)
+            self.title = match.group(1).strip()
             tags_raw = match.group(2).strip()
             tags = [tag.strip() for tag in tags_raw.split()]
-        else:
-            pattern = r"^#+\s*(.*?)\s*$"
-            match = re.match(pattern, line)
-            if match:
-                titulo = match.group(1)
-                tags.append("@" + get_md_link(titulo))
+            keys = [t[1:] for t in tags if t.startswith("@")]
+            if len(keys) > 0:
+                self.key = keys[0]
             else:
-                return False
-
-        try:
-            key = [t[1:] for t in tags if t.startswith("@")][0]
-            self.line = line
-            self.line_number = line_num
-            self.title = titulo
+                self.key = get_md_link(self.title)
             self.skills = [t[2:] for t in tags if t.startswith("s:")]
             self.requires = [t[2:] for t in tags if t.startswith("r:")]
-            self.mdlink = "#" + get_md_link(titulo)
-            groups = [t[2:] for t in tags if t.startswith("g:")]
-            if len(groups) > 0:
-                self.cluster = groups[0]
-            else:
-                self.cluster = ""
-            tx = [t for t in tags if t.startswith("t:")]
-            if len(tx) > 0:
-                self.type = tx[0][2:]
-            self.key = key
+            self.opt = "opt" in tags
+            qmin = [t[2:] for t in tags if t.startswith("q:")]
+            if len(qmin) > 0:
+                self.qmin = int(qmin[0])
+            tmin = [t[2:] for t in tags if t.startswith("t:")]
+            if len(tmin) > 0:
+                self.tmin = int(tmin[0])
             return True
-        except Exception as e:
-            # print(e)
-            return False
 
+        minipattern = r"^#+\s*(.*?)\s*$"
+        match = re.match(minipattern, line)
+        if match:
+            self.title = match.group(1)
+            self.key = get_md_link(self.title)
+            return True
+        
+        return False
 
 class Cluster:
     def __init__(self, line_number:int = 0, title: str = "", key: str = ""):
@@ -414,6 +427,7 @@ class Game:
                 if r in self.quests:
                     q.requires_ptr.append(self.quests[r])
                 else:
+                    print(f"keys: {self.quests.keys()}")
                     print(f"Quest\n{str(q)}\nrequer {r} que não existe")
                     exit(1)
 
@@ -510,9 +524,9 @@ class Game:
             return f'"{text}\\n{counts[qx.key]}"'
 
         for q in self.quests.values():
+            token = "->"
             if len(q.requires_ptr) > 0:
                 for r in q.requires_ptr:
-                    token = "->"
                     extra = ""
                     if reachable is not None:
                         if q.key not in reachable:
@@ -522,16 +536,10 @@ class Game:
                 v = '  "Início"'
                 saida.append(f"{v} {token} {info(q)}")
 
-        # for q in self.quests.values():
-        #     if q.type == "main":
-        #         saida.append(f"  {info(q)} [fillcolor=lime]")
-        #     else:
-        #         saida.append(f"  {info(q)} [fillcolor=pink]")
-
         colorlist = ["lightblue", "pink", "lightgreen", "cyan", "gold", "yellow", "orange", "tomato", "violet", "brown", "gray"]
         for i, c in enumerate(self.clusters):
             for q in c.quests:
-                if q.type == "main":
+                if q.opt:
                     shape = "ellipse"
                 else:
                     shape = "box"

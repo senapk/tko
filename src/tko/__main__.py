@@ -265,7 +265,7 @@ class Parser:
         parser_s.set_defaults(func=Main.settings)
 
     def add_parser_repo(self):
-        parser_repo = self.subparsers.add_parser('repo', help='manipulate repositories.')
+        parser_repo = self.subparsers.add_parser('rep', help='manipulate repositories.')
         subpar_repo = parser_repo.add_subparsers(title='subcommands', help='help for subcommand.')
 
         repo_list = subpar_repo.add_parser('list', help='list all repositories')
