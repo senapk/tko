@@ -627,7 +627,7 @@ class Play:
         if count != 0:
             print("")
 
-    def generate_graph(self):
+    def generate_graph(self, graph_ext):
 
         reachable: List[str] = [q.key for q in self.avaliable_quests]
         counts = {}
@@ -636,9 +636,9 @@ class Play:
             init = len([t for t in q.tasks if t.in_progress()])
             todo = len([t for t in q.tasks if t.not_started()])
             counts[q.key] = f"{done} / {done + init + todo}"
-        self.game.generate_graph("graph", reachable, counts)
+        self.game.generate_graph("graph", reachable, counts, graph_ext)
 
-    def play(self, generate_graph=False):
+    def play(self, graph_ext: str):
         success = True
         while True:
             if success:
@@ -648,8 +648,8 @@ class Play:
                 self.show_options()
 
             print("\n" + green("play$") + " ", end="")
-            if generate_graph:
-                self.generate_graph()
+            if graph_ext != "":
+                self.generate_graph(graph_ext)
             line = input()
             if line == "":
                 success = True

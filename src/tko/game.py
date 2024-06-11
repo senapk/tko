@@ -514,7 +514,7 @@ class Game:
                     output.append(str(t))
         return "\n".join(output)
 
-    def generate_graph(self, output, reachable: Optional[List[str]] = None, counts: Optional[Dict[str, str]] = None):
+    def generate_graph(self, output, reachable: Optional[List[str]] = None, counts: Optional[Dict[str, str]] = None, graph_ext=".png"):
         saida = ["digraph diag {", '  node [penwidth=1, style="rounded,filled", shape=box]']
 
         def info(qx):
@@ -575,6 +575,11 @@ class Game:
         saida.append("")
 
         dot_file = output + ".dot"
-        out_file = output + ".svg"
+        out_file = output + graph_ext
         open(dot_file, "w").write("\n".join(saida))
-        subprocess.run(["dot", "-Tsvg", dot_file, "-o", out_file])
+        if graph_ext == ".png":
+            subprocess.run(["dot", "-Tpng", dot_file, "-o", out_file])
+        elif graph_ext == ".svg":
+            subprocess.run(["dot", "-Tsvg", dot_file, "-o", out_file])
+        else:
+            print("Formato de imagem não suportado")

@@ -2657,7 +2657,7 @@ class Game:
                     output.append(str(t))
         return "\n".join(output)
 
-    def generate_graph(self, output, reachable: Optional[List[str]] = None, counts: Optional[Dict[str, str]] = None):
+    def generate_graph(self, output, reachable: Optional[List[str]] = None, counts: Optional[Dict[str, str]] = None, graph_ext=".png"):
         saida = ["digraph diag {", '  node [penwidth=1, style="rounded,filled", shape=box]']
 
         def info(qx):
@@ -2718,9 +2718,14 @@ class Game:
         saida.append("")
 
         dot_file = output + ".dot"
-        out_file = output + ".svg"
+        out_file = output + graph_ext
         open(dot_file, "w").write("\n".join(saida))
-        subprocess.run(["dot", "-Tsvg", dot_file, "-o", out_file])
+        if graph_ext == ".png":
+            subprocess.run(["dot", "-Tpng", dot_file, "-o", out_file])
+        elif graph_ext == ".svg":
+            subprocess.run(["dot", "-Tsvg", dot_file, "-o", out_file])
+        else:
+            print("Formato de imagem não suportado")
 
 
 
@@ -3342,7 +3347,7 @@ class Play:
         if count != 0:
             print("")
 
-    def generate_graph(self):
+    def generate_graph(self, graph_ext):
 
         reachable: List[str] = [q.key for q in self.avaliable_quests]
         counts = {}
@@ -3351,9 +3356,9 @@ class Play:
             init = len([t for t in q.tasks if t.in_progress()])
             todo = len([t for t in q.tasks if t.not_started()])
             counts[q.key] = f"{done} / {done + init + todo}"
-        self.game.generate_graph("graph", reachable, counts)
+        self.game.generate_graph("graph", reachable, counts, graph_ext)
 
-    def play(self, generate_graph=False):
+    def play(self, graph_ext: str):
         success = True
         while True:
             if success:
@@ -3363,8 +3368,8 @@ class Play:
                 self.show_options()
 
             print("\n" + green("play$") + " ", end="")
-            if generate_graph:
-                self.generate_graph()
+            if graph_ext != "":
+                self.generate_graph(graph_ext)
             line = input()
             if line == "":
                 success = True
@@ -3375,7 +3380,7 @@ class Play:
             success = self.take_actions(actions)
             self.save_to_json()
 
-__version__ = "0.5.8"
+__version__ = "0.5.9"
 
 
 
@@ -3523,8 +3528,11 @@ class Main:
             game.parse_file(file)
 
             # passing a lambda function to the play class to save the settings
+            ext = ""
+            if args.graph:
+                ext = ".svg" if args.svg else ".png"
             play = Play(game, repo, args.repo, lambda: sp.save_settings())
-            play.play(args.graph)
+            play.play(ext)
 
     @staticmethod
     def down(args):
@@ -3659,6 +3667,7 @@ class Parser:
         parser_p = self.subparsers.add_parser('play', help='play a game.')
         parser_p.add_argument('repo', metavar='repo', type=str, help='repository to be played.')
         parser_p.add_argument("--graph", "-g", action='store_true', help='generate graph of the game using graphviz.')
+        parser_p.add_argument("--svg", "-s", action='store_true', help='generate graph in svg instead png.')
         parser_p.set_defaults(func=Main.play)
 
     def main(self):

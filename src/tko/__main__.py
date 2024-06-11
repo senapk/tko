@@ -160,8 +160,11 @@ class Main:
             game.parse_file(file)
 
             # passing a lambda function to the play class to save the settings
+            ext = ""
+            if args.graph:
+                ext = ".svg" if args.svg else ".png"
             play = Play(game, repo, args.repo, lambda: sp.save_settings())
-            play.play(args.graph)
+            play.play(ext)
 
     @staticmethod
     def down(args):
@@ -296,6 +299,7 @@ class Parser:
         parser_p = self.subparsers.add_parser('play', help='play a game.')
         parser_p.add_argument('repo', metavar='repo', type=str, help='repository to be played.')
         parser_p.add_argument("--graph", "-g", action='store_true', help='generate graph of the game using graphviz.')
+        parser_p.add_argument("--svg", "-s", action='store_true', help='generate graph in svg instead png.')
         parser_p.set_defaults(func=Main.play)
 
     def main(self):

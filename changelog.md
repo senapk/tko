@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.5.9
+  - add: png mode in graph for default
 - 0.5.8
   - fix: quests parser with tags
   - add: change in play view, tmin changes color on marks

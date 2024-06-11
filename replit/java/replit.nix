@@ -1,5 +1,6 @@
 { pkgs }: {
     deps = [
+        pkgs.graphviz
         pkgs.python38Full
         pkgs.graalvm17-ce
         pkgs.maven

@@ -1,6 +1,7 @@
 
 { pkgs }: {
     deps = [
+        pkgs.graphviz
         pkgs.python38Full
         pkgs.yarn
         pkgs.esbuild
