@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.5.7
+  - add: counter and perc moved to the right
 - 0.5.6
   - add: graph mode standalone and inside play
 - 0.5.4
