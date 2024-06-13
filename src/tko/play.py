@@ -117,6 +117,7 @@ class Play:
         self.show_cont = "cont" in self.rep.view
         self.show_perc = "perc" in self.rep.view
         self.game_mode = "game" in self.rep.view
+        self.show_minimum = "min" in self.rep.view
         self.show_toolbar = "toolbar" in self.rep.view
         self.cont_perc = "cont_perc" in self.rep.view
         self.perc_cont = "perc_cont" in self.rep.view
@@ -166,6 +167,8 @@ class Play:
             self.rep.view.append("cont_perc")
         if self.perc_cont:
             self.rep.view.append("perc_cont")
+        if self.show_minimum:
+            self.rep.view.append("min")
         self.fnsave()
 
     def update_reachable(self):
@@ -196,7 +199,7 @@ class Play:
 
         def gen_saida(_title):
             opt = red("[opt]") if t.opt else ""
-            
+
             parts = _title.split(" ")
             parts = [("@" + bold("white", p[1:]) if p.startswith("@") else p) for p in parts]
             titlepainted = " ".join(parts)
@@ -222,12 +225,17 @@ class Play:
             resume = perc + sep + cont
 
         con = "━─"
+
+        req = ""
+        if self.show_minimum:
+            req = q.get_requirement()
+
         if q.key in self.expanded:
             con = "─┯"
 
 
         def gen_saida(_title):
-            return f" {lig}{con}{key} {_title} {resume}"
+            return f" {lig}{con}{key} {_title} {resume} {req}"
         
         return Play.cut_limits(q.title.strip(), gen_saida)
 
@@ -513,6 +521,8 @@ class Play:
             self.game_mode = not self.game_mode
         elif cmd == "t" or cmd == "toolbar":
             self.show_toolbar = not self.show_toolbar
+        elif cmd == "m" or cmd == "minimum":
+            self.show_minimum = not self.show_minimum
         elif cmd == "d" or cmd == "down":
             return self.process_down(actions)
         elif cmd == "l" or cmd == "link":

@@ -210,7 +210,14 @@ class Quest:
         ref = self.qmin if self.qmin is not None else 100
         if self.qmin is None:
             return bold("white", str(value) + "%")
-        return bold(self.get_grade_color(), str(value)) + "%" + bold("w", "/") + bold("y", str(ref) ) + "%"
+        return bold(self.get_grade_color(), str(value)) + "%"
+    
+    def get_requirement(self):
+        if self.qmin is not None:
+            return colour("y", f"[{self.qmin}%]")
+        if self.tmin is not None:
+            return colour("y", f"[t>{self.tmin - 1}]")
+        return ""
 
     def get_resume_by_tasks(self) -> str:
         tmin = self.tmin if self.tmin is not None else 7
