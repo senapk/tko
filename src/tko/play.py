@@ -192,20 +192,15 @@ class Play:
     def str_task(self, key: str, t: Task, ligc: str, ligq: str, min_value = 1) -> str:
         vindex = colour("y", str(key).ljust(2, " "), "bold")
         vdone = t.get_grade_symbol(min_value)
-        vlink = ""
         title = t.title
-        extra = ""
-        if self.show_cont:
-            extra = "     "
-            if not self.show_perc:
-                extra = "   "
 
         def gen_saida(_title):
+            opt = red("[opt]") if t.opt else ""
+            
             parts = _title.split(" ")
-            color = t.get_grade_color(min_value)
             parts = [("@" + bold("white", p[1:]) if p.startswith("@") else p) for p in parts]
             titlepainted = " ".join(parts)
-            return f" {ligc} {ligq}{vindex}{vdone} {titlepainted}{vlink}"
+            return f" {ligc} {ligq}{vindex}{vdone} {titlepainted} {opt}"
         
         return Play.cut_limits(title, gen_saida)
 
@@ -216,7 +211,7 @@ class Play:
             cont = q.get_resume_by_tasks()
         perc = ""
         if self.show_perc:
-            perc = q.get_resume_by_percent()
+            perc = q.get_resume_by_percent().rjust(4)
         sep = ""
         if self.show_cont and self.show_perc:
             sep = " "
@@ -230,35 +225,33 @@ class Play:
         if q.key in self.expanded:
             con = "─┯"
 
+
         def gen_saida(_title):
             return f" {lig}{con}{key} {_title} {resume}"
         
         return Play.cut_limits(q.title.strip(), gen_saida)
 
-    def str_cluster(self, key: str, cluster_name: str, quests: List[Quest]) -> str:
+    def str_cluster(self, key: str, cluster: Cluster, quests: List[Quest]) -> str:
         opening = "━─"
-        if cluster_name in self.expanded:
+        if cluster.key in self.expanded:
             opening = "─┯"
 
         cont = ""
         if self.show_cont:
-            done = bold("g", Util.get_number(len([1 for q in quests if q.is_complete()])))
-            total = yellow(str(len(quests)))
-            cont = f"({done}/{total})"
+            cont = cluster.get_resume_by_quests()
         perc = ""
         if self.show_perc:
-            total = 0
-            for q in quests:
-                total += q.get_percent()
-            total = total // len(quests)
-            perc = "(" + Util.get_percent(total, "bold") + ")"
+            perc = cluster.get_resume_by_percent()
         
+        sep = ""
+        if self.show_cont and self.show_perc:
+            sep = " "
         if not self.show_cont or not self.show_perc or self.cont_perc:
-            resume = cont + perc
+            resume = cont + sep + perc
         else:
-            resume = perc + cont
+            resume = perc + sep + cont
 
-        title = Util.control(key) + " " + colour("bold", cluster_name.strip())
+        title = Util.control(key) + " " + colour("bold", cluster.title.strip())
 
         return f"{opening}{title} {resume}"
     
@@ -276,7 +269,7 @@ class Play:
             key = str(fold_index)
             self.vfolds[str(key)] = cluster.key
             fold_index += 1
-            print(self.str_cluster(key.ljust(2), cluster.title, quests))
+            print(self.str_cluster(key.ljust(2), cluster, quests))
             if not cluster.key in self.expanded: # va para proximo cluster
                 continue
 

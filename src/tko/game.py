@@ -86,20 +86,21 @@ class Task:
             return True, match.group(1), match.group(2)
         return False, "", ""
 
-    def load_html_tags(self, line):
+    def load_html_tags(self):                   
         pattern = r"<!--\s*(.*?)\s*-->"
-        match = re.match(pattern, line)
+        match = re.search(pattern, self.line)
         if not match:
             return
+
         tags_raw = match.group(1).strip()
-        tags = [tag.strip() for tag in tags_raw.split()]
+        tags = [tag.strip() for tag in tags_raw.split(" ")]
+        self.opt = "opt" in tags
         for t in tags:
             if t.startswith("s:"):
                 self.skills.append(t[2:])
             elif t.startswith("@"):
                 self.key = t[1:]
-            elif t == "opt":
-                self.opt = True
+
         
     @staticmethod
     def parse_arroba_from_title_link(titulo, link) -> Tuple[bool, str]:
@@ -139,7 +140,7 @@ class Task:
         self.title = titulo
         self.link = link
 
-        self.load_html_tags(line)
+        self.load_html_tags()
 
         return True
 
@@ -160,19 +161,19 @@ class Task:
             self.link = link
             self.line = line
             self.line_number = line_num
-            self.load_html_tags(line)
+            self.load_html_tags()
             return True
         
         found, titulo, link = Task.parse_item_with_link(line)
         self.key = ""
         if found:
-            self.load_html_tags(line)
-            if self.key == "":
-                return False
-            self.title = titulo
             self.link = link
             self.line = line
             self.line_number = line_num
+            self.load_html_tags()
+            if self.key == "":
+                return False
+            self.title = titulo
             return True
 
         return False
@@ -208,17 +209,20 @@ class Quest:
         value = self.get_percent()
         ref = self.qmin if self.qmin is not None else 100
         if self.qmin is None:
-            return "(" + bold("white", str(value) + "%") + "/" + bold("white", str(ref) + "%") + ")"
-        return "(" + bold(self.get_grade_color(), str(value) + "%") + "/" + bold("y", str(ref) + "%") + ")"
+            return bold("white", str(value) + "%")
+        return bold(self.get_grade_color(), str(value)) + "%" + bold("w", "/") + bold("y", str(ref) ) + "%"
 
     def get_resume_by_tasks(self) -> str:
         tmin = self.tmin if self.tmin is not None else 7
-        total = len(self.tasks)
+        total = len([t for t in self.tasks if not t.opt])
+        plus = len([t for t in self.tasks if t.opt])
         count = len([t for t in self.tasks if t.grade >= tmin])
-        output = f"({count}/{total})"
+        output = f"{count}/{total}"
+        if plus > 0:
+            output += f"+{plus}"
         if self.tmin is None:
-            return bold("white", output)
-        return bold(self.get_grade_color(), output)
+            return "(" + bold("white", output) + ")"
+        return "(" + bold(self.get_grade_color(), output) + ")"
 
     def get_grade_color(self) -> str:
         if self.not_started():
@@ -315,6 +319,9 @@ class Quest:
             tmin = [t[2:] for t in tags if t.startswith("t:")]
             if len(tmin) > 0:
                 self.tmin = int(tmin[0])
+                if self.tmin > 10:
+                    print("fail: tmin > 10")
+                    exit(1)
             self.update_requirements()
             return True
 
@@ -342,11 +349,29 @@ class Cluster:
         return f"{line} {quests_size} {key}{self.title}"
     
     def get_grade_color(self) -> str:
-        if self.is_complete():
-            return "g"
-        if self.in_progress():
+        perc = self.get_percent()
+        if perc == 0:
+            return "m"
+        if perc < 50:
+            return "r"
+        if perc < 100:
             return "y"
-        return "r"
+        return "g"
+
+    def get_percent(self):
+        total = 0
+        for q in self.quests:
+            total += q.get_percent()
+        return total // len(self.quests)
+
+    def get_resume_by_percent(self) -> str:
+        return bold(self.get_grade_color(), f"{self.get_percent()}%")
+
+    def get_resume_by_quests(self):
+        total = len(self.quests)
+        count = len([q for q in self.quests if q.is_complete()])
+        return f"({count}/{total})"
+        
 
 def rm_comments(title: str) -> str:
     if "<!--" in title and "-->" in title:
