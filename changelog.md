@@ -1,5 +1,6 @@
 # Changelog
-
+- 0.6.1
+  - add: total xp
 - 0.6.0
   - fix: minimum requirement
   - fix: opt in tasks

@@ -40,8 +40,8 @@ class Util:
         return "*"
 
     @staticmethod
-    def get_percent(value, color2: Optional[str]=None):
-        text = f"{str(value)}%"
+    def get_percent(value, color2: Optional[str]=None, pad = 0):
+        text = f"{str(value)}%".rjust(pad)
         if value == 100:
             return colour("c", "100%", color2)
         if value >= 70:
@@ -209,7 +209,7 @@ class Play:
         return Play.cut_limits(title, gen_saida)
 
     def str_quest(self, key: str, q: Quest, lig: str) -> str:
-        key = Util.control(key.rjust(1))
+        key = bold("c", key.rjust(1))
         cont = ""
         if self.show_cont:
             cont = q.get_resume_by_tasks()
@@ -486,10 +486,14 @@ class Play:
 
         if cmd == "<":
             self.process_collapse()
+        elif cmd == "<<":
+            self.process_collapse()
+            self.process_collapse()
         elif cmd == ">":
             self.process_expand()
-        # elif cmd == "m" or cmd == "man":
-        #     return self.show_help()
+        elif cmd == ">>":
+            self.process_expand()
+            self.process_expand()
         elif cmd == "h" or cmd == "help":
             return self.show_cmds()
         elif cmd == "c" or cmd == "cont":
@@ -553,8 +557,15 @@ class Play:
 
     def show_header(self):
         Util.clear()
-        intro = green("Digite ") + Util.cmd("h") + green(" para ") + Util.cmd("h") + red("elp")
-        intro += green(" ou ") + Util.cmd("t") + green(" para ") + Util.cmd("t") + red("oolbar") 
+        total_perc = 0
+
+        for q in self.game.quests.values():
+            total_perc += q.get_percent()
+        total_perc = total_perc // len(self.game.quests)
+        vtotal = bold("g", "Total: ") + Util.get_percent(total_perc, "bold", 4)
+
+        intro = vtotal + " " + "│" + green(" Digite ") + Util.cmd("h") + red("elp")
+        intro += green(" ou ") + Util.cmd("t") + red("oolbar") 
         intro += Play.checkbox(self.show_toolbar)
         vlink = Util.cmd("c") + red("ont") + (Play.checkbox(self.show_cont))
         vperc = Util.cmd("p") + red("erc") + (Play.checkbox(self.show_perc))
@@ -563,7 +574,10 @@ class Play:
         vext = Util.cmd("e") + red("xt") + "(" + colour("c", self.rep.lang, "bold") + ")"
         vrep = colour("y", self.repo_alias + ":", "bold")
         visoes = f"{vrep} {vext} {vlink} {vperc} {vhack} "
-        div0 = "──────────────────────────────────────"
+
+
+
+        div0 = "────────────┴─────────────────────────"
 
         div1 = "──────────────────────────────────────"
         if self.show_cont and not self.show_perc:
@@ -605,7 +619,6 @@ class Play:
 
         vgame = Util.cmd("g") + red("ame") + green(" (Quebra pré requisitos de missões)")
         # xp = Util.cmd("x") + red("p") + yellow("  (Mostrar experiência)")
-
         # indicadores = f"{vall} {vdone} {vinit} {vtodo}"
 
         div0 = "──────────────────────────────────────"
