@@ -49,17 +49,6 @@ class MRep:
             print("Repository not found.")
 
     @staticmethod
-    def init(args):
-        sp = SettingsParser()
-        settings = sp.load_settings()
-        if args.alias in settings.reps:
-            rep = settings.reps[args.alias]
-            rep.set_rootdir(".")
-            sp.save_settings()
-        else:
-            print("Repository not found.")
-
-    @staticmethod
     def reset(_args):
         sp = SettingsParser()
         sp.settings = Settings()
@@ -119,33 +108,51 @@ class Main:
         sp = SettingsParser()
         settings = sp.load_settings()
         
+        action = False
+
         if args.ascii:
+            action = True
             settings.local.ascii = True
             print("Encoding mode now is: ASCII")
         if args.unicode:
+            action = True
             settings.local.ascii = False
             print("Encoding mode now is: UNICODE")
         if args.mono:
+            action = True
             settings.local.color = False
             print("Color mode now is: MONOCHROMATIC")
         if args.color:
+            action = True
             settings.local.color = True
             print("Color mode now is: COLORED")
         if args.side:
+            action = True
             settings.local.updown = False
             print("Diff mode now is: SIDE_BY_SIDE")
         if args.updown:
+            action = True
             settings.local.updown = True
             print("Diff mode now is: UP_DOWN")
         if args.lang:
+            action = True
             settings.local.lang = args.lang
             print("Default language extension now is:", args.lang)
         if args.ask:
+            action = True
             settings.local.lang = ""
             print("Language extension will be asked always.")
-        if args.show:
+            
+        if args.root:
+            action = True
+            settings.local.set_rootdir(".")
+            print("Root directory now is: current directory")
+
+        if not action:
+            action = True
             print(sp.get_settings_file())
             print(str(settings.local))
+
         sp.save_settings()
 
     @staticmethod
@@ -253,7 +260,6 @@ class Parser:
 
     def add_parser_config(self):
         parser_s = self.subparsers.add_parser('config', help='settings tool.')
-        parser_s.add_argument('--show',  '-s', action='store_true', help='show current settings.')
 
         g_encoding = parser_s.add_mutually_exclusive_group()
         g_encoding.add_argument('--ascii', action='store_true',    help='set ascii mode.')
@@ -270,6 +276,9 @@ class Parser:
         g_lang = parser_s.add_mutually_exclusive_group()
         g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
         g_lang.add_argument("--ask", action='store_true', help='ask language extension every time.')
+        
+        parser_s.add_argument("--root", action='store_true', help='set root directory to current.')
+
         parser_s.set_defaults(func=Main.settings)
 
     def add_parser_repo(self):
@@ -288,10 +297,6 @@ class Parser:
         repo_rm = subpar_repo.add_parser('rm', help='remove a repository.')
         repo_rm.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be removed.')
         repo_rm.set_defaults(func=MRep.rm)
-
-        repo_setroot = subpar_repo.add_parser('init', help='Define here a root folder for repo.')
-        repo_setroot.add_argument('alias', metavar='alias', type=str, help='alias of the repository.')
-        repo_setroot.set_defaults(func=MRep.init)
 
         repo_reset = subpar_repo.add_parser('reset', help='reset all repositories to factory default.')
         repo_reset.set_defaults(func=MRep.reset)

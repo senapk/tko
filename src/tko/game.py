@@ -233,12 +233,12 @@ class Quest:
 
     def get_grade_color(self) -> str:
         if self.not_started():
-            return "m"
+            return "magenta"
         if not self.is_complete():
-            return "r"
+            return "red"
         if self.get_percent() == 100:
-            return "g"
-        return "y"
+            return "green"
+        return "yellow"
 
     def is_complete(self):
         if self.qmin is not None:
@@ -634,12 +634,7 @@ class Game:
                         color = "white"
                     else:
                         width = 3
-                        if q.is_complete():
-                            color = "green"
-                        elif q.in_progress():
-                            color = "yellow"
-                        elif q.not_started():
-                            color = "red"
+                        color = q.get_grade_color()
                 saida.append(f"  {info(q)} [shape={shape}, color={color}, penwidth={width}, fillcolor={colorlist[i]}]")
 
 

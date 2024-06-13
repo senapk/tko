@@ -116,8 +116,10 @@ class LocalSettings:
         return self
 
     def __str__(self) -> str:
+        lang = "always ask" if self.lang == "" else self.lang
         return (
-            f"Default Language: {self.lang}\n"
+            f"Root Directory: {self.rootdir}\n"
+            f"Default Language: {lang}\n"
             f"Encoding Mode: {'ASCII' if self.ascii else 'UNICODE'}\n"
             f"Color Mode: {'COLORED' if self.color else 'MONOCHROMATIC'}\n"
             f"Diff Mode: {'SIDE_BY_SIDE' if self.updown else 'UP_DOWN'}\n"

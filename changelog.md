@@ -1,5 +1,10 @@
 # Changelog
 
+- 0.6.0
+  - fix: minimum requirement
+  - fix: opt in tasks
+  - add: global root for tko
+  - add: small improvements in interface
 - 0.5.9
   - add: png mode in graph for default
 - 0.5.8
