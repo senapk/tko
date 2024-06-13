@@ -201,7 +201,6 @@ class RemoteMd:
 
 class RepoSettings:
     def __init__(self, file: str = ""):
-        self.rootdir: str = ""
         self.lang: str = ""
         self.url: str = ""
         self.file: str = ""
@@ -235,10 +234,6 @@ class RepoSettings:
 
         raise ValueError("fail: file not found or invalid settings to download repository file")
         
-    def set_rootdir(self, rootdir: str):
-        self.rootdir = os.path.abspath(rootdir)
-        return self
-
     def set_file(self, file: str):
         self.file = os.path.abspath(file)
         return self
@@ -253,7 +248,6 @@ class RepoSettings:
 
     def to_dict(self):
         return {
-            "rootdir": self.rootdir,
             "lang": self.lang,
             "expanded": self.expanded,
             "url": self.url,
@@ -264,7 +258,6 @@ class RepoSettings:
         }
     
     def from_dict(self, data: Dict[str, Any]):
-        self.rootdir = data.get("rootdir", "")
         self.lang = data.get("lang", "")
         self.url = data.get("url", "")
         self.file = data.get("file", "")
@@ -285,14 +278,20 @@ class RepoSettings:
 
 class LocalSettings:
     def __init__(self):
+        self.rootdir: str = ""
         self.lang: str = ""
         self.ascii: bool = False
         self.color: bool = True
         self.updown: bool = True
         self.sideto_min: int = 60
 
+    def set_rootdir(self, rootdir: str):
+        self.rootdir = os.path.abspath(rootdir)
+        return self
+
     def to_dict(self) -> Dict[str, Any]:
         return {
+            "rootdir": self.rootdir,
             "lang": self.lang,
             "ascii": self.ascii,
             "color": self.color,
@@ -301,6 +300,7 @@ class LocalSettings:
         }
     
     def from_dict(self, data: Dict[str, Any]):
+        self.rootdir = data.get("rootdir", "")
         self.lang = data.get("lang", "")
         self.ascii = data.get("ascii", False)
         self.color = data.get("color", True)
@@ -2913,8 +2913,9 @@ class Util:
 class Play:
     cluster_prefix = "'"
 
-    def __init__(self, game: Game, rep: RepoSettings, repo_alias: str, fnsave):
+    def __init__(self, local: LocalSettings, game: Game, rep: RepoSettings, repo_alias: str, fnsave):
         self.fnsave = fnsave
+        self.local = local
         self.repo_alias = repo_alias
         self.help_options = 0
         self.help_index = 0
@@ -3133,17 +3134,17 @@ class Play:
             print(f"Essa não é uma tarefa de código")
 
     def check_rootdir(self):
-        if self.rep.rootdir == "":
-            print("Diretório raiz para esse repositório ainda não foi definido")
+        if self.local.rootdir == "":
+            print("Diretório raiz para o tko ainda não foi definido")
             print("Você deseja utilizer o diretório atual")
             print("  " + red(os.getcwd()))
             print("como raiz para o repositório de " + self.repo_alias + "? (s/n) ", end="")
             answer = input()
             if answer == "s":
-                self.rep.rootdir = os.getcwd()
+                self.local.rootdir = os.getcwd()
                 self.fnsave()
                 print("Você pode alterar o diretório raiz navegando para o diretório desejado e executando o comando")
-                print("  " + red("tko repo init " + self.repo_alias))
+                print("  " + red("tko config --root"))
             else:
                 print("Navegue para o diretório desejado e execute o comando novamente")
                 exit(1)
@@ -3167,7 +3168,7 @@ class Play:
         self.check_rootdir()
         self.check_language()
 
-        rootdir = os.path.relpath(self.rep.rootdir)
+        rootdir = os.path.relpath(os.path.join(self.local.rootdir, self.repo_alias))
         for t in actions[1:]:
             if t in self.vtasks:
                 self.down_task(rootdir, self.vtasks[t], self.rep.lang)
@@ -3626,6 +3627,7 @@ class Main:
                 sp = SettingsParser()
                 settings = sp.load_settings()
                 repo = settings.get_repo(args.repo)
+                local = settings.local
                 game = Game()
                 file = repo.get_file()
                 game.parse_file(file)
@@ -3634,7 +3636,7 @@ class Main:
                 ext = ""
                 if args.graph:
                     ext = ".svg" if args.svg else ".png"
-                play = Play(game, repo, args.repo, lambda: sp.save_settings())
+                play = Play(local, game, repo, args.repo, lambda: sp.save_settings())
                 reload = play.play(ext)
                 if not reload:
                     break

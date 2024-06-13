@@ -157,6 +157,7 @@ class Main:
                 sp = SettingsParser()
                 settings = sp.load_settings()
                 repo = settings.get_repo(args.repo)
+                local = settings.local
                 game = Game()
                 file = repo.get_file()
                 game.parse_file(file)
@@ -165,7 +166,7 @@ class Main:
                 ext = ""
                 if args.graph:
                     ext = ".svg" if args.svg else ".png"
-                play = Play(game, repo, args.repo, lambda: sp.save_settings())
+                play = Play(local, game, repo, args.repo, lambda: sp.save_settings())
                 reload = play.play(ext)
                 if not reload:
                     break

@@ -1,6 +1,6 @@
 from typing import Dict, List, Tuple, Optional, Union
 from .game import Game, Task, Quest, Cluster
-from .settings import RepoSettings
+from .settings import RepoSettings, LocalSettings
 from .down import Down
 from .format import symbols, colour, bold, red, cyan, green, yellow, Color
 import subprocess
@@ -108,8 +108,9 @@ class Util:
 class Play:
     cluster_prefix = "'"
 
-    def __init__(self, game: Game, rep: RepoSettings, repo_alias: str, fnsave):
+    def __init__(self, local: LocalSettings, game: Game, rep: RepoSettings, repo_alias: str, fnsave):
         self.fnsave = fnsave
+        self.local = local
         self.repo_alias = repo_alias
         self.help_options = 0
         self.help_index = 0
@@ -328,17 +329,17 @@ class Play:
             print(f"Essa não é uma tarefa de código")
 
     def check_rootdir(self):
-        if self.rep.rootdir == "":
-            print("Diretório raiz para esse repositório ainda não foi definido")
+        if self.local.rootdir == "":
+            print("Diretório raiz para o tko ainda não foi definido")
             print("Você deseja utilizer o diretório atual")
             print("  " + red(os.getcwd()))
             print("como raiz para o repositório de " + self.repo_alias + "? (s/n) ", end="")
             answer = input()
             if answer == "s":
-                self.rep.rootdir = os.getcwd()
+                self.local.rootdir = os.getcwd()
                 self.fnsave()
                 print("Você pode alterar o diretório raiz navegando para o diretório desejado e executando o comando")
-                print("  " + red("tko repo init " + self.repo_alias))
+                print("  " + red("tko config --root"))
             else:
                 print("Navegue para o diretório desejado e execute o comando novamente")
                 exit(1)
@@ -362,7 +363,7 @@ class Play:
         self.check_rootdir()
         self.check_language()
 
-        rootdir = os.path.relpath(self.rep.rootdir)
+        rootdir = os.path.relpath(os.path.join(self.local.rootdir, self.repo_alias))
         for t in actions[1:]:
             if t in self.vtasks:
                 self.down_task(rootdir, self.vtasks[t], self.rep.lang)

@@ -8,7 +8,6 @@ from .remote import RemoteCfg, Absolute
 
 class RepoSettings:
     def __init__(self, file: str = ""):
-        self.rootdir: str = ""
         self.lang: str = ""
         self.url: str = ""
         self.file: str = ""
@@ -42,10 +41,6 @@ class RepoSettings:
 
         raise ValueError("fail: file not found or invalid settings to download repository file")
         
-    def set_rootdir(self, rootdir: str):
-        self.rootdir = os.path.abspath(rootdir)
-        return self
-
     def set_file(self, file: str):
         self.file = os.path.abspath(file)
         return self
@@ -60,7 +55,6 @@ class RepoSettings:
 
     def to_dict(self):
         return {
-            "rootdir": self.rootdir,
             "lang": self.lang,
             "expanded": self.expanded,
             "url": self.url,
@@ -71,7 +65,6 @@ class RepoSettings:
         }
     
     def from_dict(self, data: Dict[str, Any]):
-        self.rootdir = data.get("rootdir", "")
         self.lang = data.get("lang", "")
         self.url = data.get("url", "")
         self.file = data.get("file", "")
@@ -92,14 +85,20 @@ class RepoSettings:
 
 class LocalSettings:
     def __init__(self):
+        self.rootdir: str = ""
         self.lang: str = ""
         self.ascii: bool = False
         self.color: bool = True
         self.updown: bool = True
         self.sideto_min: int = 60
 
+    def set_rootdir(self, rootdir: str):
+        self.rootdir = os.path.abspath(rootdir)
+        return self
+
     def to_dict(self) -> Dict[str, Any]:
         return {
+            "rootdir": self.rootdir,
             "lang": self.lang,
             "ascii": self.ascii,
             "color": self.color,
@@ -108,6 +107,7 @@ class LocalSettings:
         }
     
     def from_dict(self, data: Dict[str, Any]):
+        self.rootdir = data.get("rootdir", "")
         self.lang = data.get("lang", "")
         self.ascii = data.get("ascii", False)
         self.color = data.get("color", True)
