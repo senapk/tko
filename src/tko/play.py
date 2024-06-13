@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Union
 from .game import Game, Task, Quest, Cluster
 from .settings import RepoSettings
 from .down import Down
@@ -135,7 +135,14 @@ class Play:
 
         for key, grade in rep.tasks.items():
             if key in game.tasks:
-                game.tasks[key].set_grade(grade)
+                value = "0"
+                if grade == "x":
+                    value = "10"
+                elif grade == "":
+                    value = "0"
+                else:
+                    value = grade
+                game.tasks[key].set_grade(int(value))
 
 
     def save_to_json(self):
@@ -144,8 +151,8 @@ class Play:
             self.rep.expanded[q] = "e"
         self.rep.tasks = {}
         for t in self.game.tasks.values():
-            if t.grade != "":
-                self.rep.tasks[t.key] = t.grade
+            if t.grade != 0:
+                self.rep.tasks[t.key] = str(t.grade)
         self.rep.view = []
         if self.show_cont:
             self.rep.view.append("cont")
@@ -195,7 +202,8 @@ class Play:
 
         def gen_saida(_title):
             parts = _title.split(" ")
-            parts = [("@" + colour("y", p[1:]) if p.startswith("@") else p) for p in parts]
+            color = t.get_grade_color(min_value)
+            parts = [("@" + bold("white", p[1:]) if p.startswith("@") else p) for p in parts]
             titlepainted = " ".join(parts)
             return f" {ligc} {ligq}{vindex}{vdone} {titlepainted}{vlink}"
         
@@ -205,20 +213,18 @@ class Play:
         key = Util.control(key.rjust(1))
         cont = ""
         if self.show_cont:
-            done = q.count_valid_tasks()
-            total = len(q.tasks)
-            color = "g" if q.is_complete_by_tasks() else "y"
-            cont = colour(color, f"({done}/{total})")
+            cont = q.get_resume_by_tasks()
         perc = ""
         if self.show_perc:
-            val = f"({q.get_percent()}/{q.qmin})%"
-            color = "g" if q.is_complete_by_percent() else "y"
-            perc = colour(color, val)
-        
+            perc = q.get_resume_by_percent()
+        sep = ""
+        if self.show_cont and self.show_perc:
+            sep = " "
+
         if not self.show_cont or not self.show_perc or self.cont_perc:
-            resume = cont + perc
+            resume = cont + sep + perc
         else:
-            resume = perc + cont
+            resume = perc + sep + cont
 
         con = "━─"
         if q.key in self.expanded:
@@ -408,7 +414,7 @@ class Play:
         return True
     
     def process_tasks(self, actions):
-        mass_action = None
+        mass_action: Optional[int] = None
         for t in actions:
             letter = "".join([c for c in t if c.isupper() and not c.isdigit()])
             number = "".join([c for c in t if c.isdigit()])
@@ -421,12 +427,12 @@ class Play:
                 if mass_action is not None:
                     t.set_grade(mass_action)
                     continue
-                if t.grade == "":
-                    t.set_grade("x")
-                    mass_action = "x"
+                if t.grade == 0:
+                    t.set_grade(10)
+                    mass_action = 10
                 else:
-                    t.set_grade("")
-                    mass_action = ""
+                    t.set_grade(0)
+                    mass_action = 0
             else:
                 print(f"Talk {t} não processado")
                 return False
@@ -638,8 +644,10 @@ class Play:
             counts[q.key] = f"{done} / {done + init + todo}"
         self.game.generate_graph("graph", reachable, counts, graph_ext)
 
-    def play(self, graph_ext: str):
+    # return True if the user wants to continue playing
+    def play(self, graph_ext: str) -> bool:
         success = True
+        first_graph_msg = True 
         while True:
             if success:
                 self.vtasks = {}
@@ -647,15 +655,20 @@ class Play:
                 self.show_header()
                 self.show_options()
 
-            print("\n" + green("play$") + " ", end="")
             if graph_ext != "":
                 self.generate_graph(graph_ext)
+                if first_graph_msg:
+                    print("\nGrafo gerado em graph" + graph_ext)
+                    first_graph_msg = False
+            print("\n" + green("play$") + " ", end="")
             line = input()
             if line == "":
                 success = True
                 continue
             if line == "q" or line == "quit":
-                break
+                return False
+            if line == "r" or line == "reload":
+                return True
             actions = Util.expand_range(line)
             success = self.take_actions(actions)
             self.save_to_json()

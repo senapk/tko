@@ -23,6 +23,8 @@ class Color:
         "reset": "\u001b[0m",
         "bold": "\u001b[1m",
         "uline": "\u001b[4m",
+        "orange": "\u001b[38;5;208m",
+        "o": "\u001b[38;5;208m",
     }
 
     @staticmethod
@@ -105,8 +107,8 @@ class __Symbols:
 
         self.check = "x"  
         self.uncheck = " "
-        self.opcheck = "█"# ▄ 	▅ 	▆ 	▇ 	█ 
-        self.opuncheck = "▒" # ▒
+        self.opcheck = "█"
+        self.opuncheck = "▒"
 
     def set_unicode(self):
         self.ascii = False
@@ -148,21 +150,20 @@ class __Symbols:
 
 symbols = __Symbols()
 
-def green(text):
+def green(text: str):
     return colour("g", text)
 
-
-def red(text):
+def red(text: str):
     return colour("r", text)
 
-
-def yellow(text):
+def yellow(text: str):
     return colour("y", text)
 
+def orange(text: str):
+    return colour("o", text)
 
-def cyan(text):
+def cyan(text: str):
     return colour("c", text)
-
 
 def bold(color: str, text: str) -> str:
     return colour(color, text, "bold")

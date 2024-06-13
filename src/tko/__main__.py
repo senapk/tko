@@ -152,19 +152,23 @@ class Main:
     def play(args):
         if args.repo:
             print("playing repo", args.repo)
-            sp = SettingsParser()
-            settings = sp.load_settings()
-            repo = settings.get_repo(args.repo)
-            game = Game()
-            file = repo.get_file()
-            game.parse_file(file)
 
-            # passing a lambda function to the play class to save the settings
-            ext = ""
-            if args.graph:
-                ext = ".svg" if args.svg else ".png"
-            play = Play(game, repo, args.repo, lambda: sp.save_settings())
-            play.play(ext)
+            while True:
+                sp = SettingsParser()
+                settings = sp.load_settings()
+                repo = settings.get_repo(args.repo)
+                game = Game()
+                file = repo.get_file()
+                game.parse_file(file)
+
+                # passing a lambda function to the play class to save the settings
+                ext = ""
+                if args.graph:
+                    ext = ".svg" if args.svg else ".png"
+                play = Play(game, repo, args.repo, lambda: sp.save_settings())
+                reload = play.play(ext)
+                if not reload:
+                    break
 
     @staticmethod
     def down(args):

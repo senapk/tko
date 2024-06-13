@@ -4,7 +4,7 @@ import subprocess
 import re
 from typing import Optional, Dict, List, Tuple
 import os
-from .format import symbols, red, green, yellow
+from .format import symbols, colour, bold
 
 
 class Task:
@@ -12,57 +12,63 @@ class Task:
         self.line_number = 0
         self.line = ""
         self.key = ""
-        self.grade = ""
+        self.grade: int = 0 #valor de 0 a 10
         self.skills = []
         self.title = ""
         self.link = ""
         self.opt = False
+        self.default_min_value = 7
 
 
-    def get_grade_symbol(self, min_value: int = 1):
-        if self.grade == "":
-            return red(symbols.uncheck)
-        if self.grade == "x":
-            return green(symbols.check)
-        if int(self.grade) >= min_value:
-            return yellow(self.grade)
-        return red(self.grade)
+    def get_grade_color(self, min_value: Optional[int] = None) -> str:
+        if min_value is None:
+            min_value = self.default_min_value
+        if self.grade == 0:
+            return "m"
+        if self.grade < min_value:
+            return "r"
+        if self.grade < 10:
+            return "y"
+        if self.grade == 10:
+            return "g"
+        return "w"  
 
-    def get_grade_value(self):
-        if self.grade == "":
-            return 0
-        if self.grade == "x":
-            return 10
-        return int(self.grade)
+    def get_grade_symbol(self, min_value: Optional[int] = None) -> str:
+        if min_value is None:
+            min_value = self.default_min_value
+        color = self.get_grade_color(min_value)
+        if self.grade == 0:
+            return bold(color, symbols.uncheck)
+        if self.grade < min_value:
+            return bold(color, str(self.grade))
+        if self.grade < 10:
+            return bold(color, str(self.grade))
+        if self.grade == 10:
+            return bold(color, symbols.check)
+
 
     def get_percent(self):
-        if self.grade == "":
+        if self.grade == 0:
             return 0
-        if self.grade == "x":
+        if self.grade == 10:
             return 100
-        return int(self.grade) * 10
+        return self.grade * 10
     
     def is_complete(self):
-        return self.grade == "x"
+        return self.grade == 10
 
     def not_started(self):
-        return self.grade == ""
+        return self.grade == 0
     
     def in_progress(self):
-        return self.grade != "" and self.grade != "x"
+        return self.grade > 0 and self.grade < 10
 
-    def set_grade(self, grade):
-        valid = ["", "x", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
-        if grade in valid:
+    def set_grade(self, grade: int):
+        grade = int(grade)
+        if grade >= 0 and grade <= 10:
             self.grade = grade
-            return
-        if grade == "0":
-            self.grade = ""
-            return
-        if grade == "10":
-            self.grade = "x"
-            return
-        print(f"Grade inválida: {grade}")
+        else:
+            print(f"Grade inválida: {grade}")
 
     @staticmethod
     def parse_item_with_link(line) -> Tuple[bool, str, str]:
@@ -188,8 +194,8 @@ class Quest:
         self.requires = [] # r:quest_key
         self.requires_ptr = []
         self.opt = False # opt
-        self.qmin = 70 # q:  minimo de 70 porcento da pontuação total para completar
-        self.tmin = 5  # t: ou ter no mínimo 5 de todas as tarefas
+        self.qmin: Optional[int] = None # q:  minimo de 50 porcento da pontuação total para completar
+        self.tmin: Optional[int] = None  # t: ou ter no mínimo esse valor de todas as tarefas
 
     def __str__(self):
         line = str(self.line_number).rjust(3)
@@ -198,17 +204,50 @@ class Quest:
         output = f"{line}   {tasks_size} {key}{self.title} {self.skills} {self.requires}"
         return output
 
-    def count_valid_tasks(self):
-        return len([t for t in self.tasks if t.get_grade_value() >= self.tmin])
+    def get_resume_by_percent(self) -> str:
+        value = self.get_percent()
+        ref = self.qmin if self.qmin is not None else 100
+        if self.qmin is None:
+            return "(" + bold("white", str(value) + "%") + "/" + bold("white", str(ref) + "%") + ")"
+        return "(" + bold(self.get_grade_color(), str(value) + "%") + "/" + bold("y", str(ref) + "%") + ")"
+
+    def get_resume_by_tasks(self) -> str:
+        tmin = self.tmin if self.tmin is not None else 7
+        total = len(self.tasks)
+        count = len([t for t in self.tasks if t.grade >= tmin])
+        output = f"({count}/{total})"
+        if self.tmin is None:
+            return bold("white", output)
+        return bold(self.get_grade_color(), output)
+
+    def get_grade_color(self) -> str:
+        if self.not_started():
+            return "m"
+        if not self.is_complete():
+            return "r"
+        if self.get_percent() == 100:
+            return "g"
+        return "y"
 
     def is_complete(self):
-        return self.is_complete_by_percent() or self.is_complete_by_tasks()
+        if self.qmin is not None:
+            return self.is_complete_by_percent()
+        if self.tmin is not None:
+            return self.is_complete_by_tasks()
+        return False
 
     def is_complete_by_percent(self):
+        if self.qmin is None:
+            return False
         return self.get_percent() >= self.qmin
     
     def is_complete_by_tasks(self):
-        return self.count_valid_tasks() >= len(self.tasks)
+        if self.tmin is None:
+            return False
+        for t in self.tasks:
+            if not t.opt and t.grade < self.tmin:
+                return False
+        return True
 
     def get_percent(self):
         total = len(self.tasks)
@@ -221,7 +260,7 @@ class Quest:
         if self.is_complete():
             return False
         for t in self.tasks:
-            if t.grade != "":
+            if t.grade != 0:
                 return True
         return False
 
@@ -243,6 +282,10 @@ class Quest:
             [r.is_complete() and r.is_reachable(cache) for r in self.requires_ptr]
         )
         return cache[self.key]
+
+    def update_requirements(self):
+        if self.qmin is None and self.tmin is None:
+            self.qmin = 50
 
     def parse_quest(self, line, line_num):
         
@@ -272,6 +315,7 @@ class Quest:
             tmin = [t[2:] for t in tags if t.startswith("t:")]
             if len(tmin) > 0:
                 self.tmin = int(tmin[0])
+            self.update_requirements()
             return True
 
         minipattern = r"^#+\s*(.*?)\s*$"
@@ -279,6 +323,7 @@ class Quest:
         if match:
             self.title = match.group(1)
             self.key = get_md_link(self.title)
+            self.update_requirements()
             return True
         
         return False
@@ -295,6 +340,13 @@ class Cluster:
         quests_size = str(len(self.quests)).rjust(2, "0")
         key = "" if self.key == self.title else self.key + " "
         return f"{line} {quests_size} {key}{self.title}"
+    
+    def get_grade_color(self) -> str:
+        if self.is_complete():
+            return "g"
+        if self.in_progress():
+            return "y"
+        return "r"
 
 def rm_comments(title: str) -> str:
     if "<!--" in title and "-->" in title:
