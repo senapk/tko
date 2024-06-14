@@ -4,7 +4,7 @@ import subprocess
 import re
 from typing import Optional, Dict, List, Tuple
 import os
-from .format import symbols, colour, bold
+from .format import symbols, colour
 
 
 class Task:
@@ -38,13 +38,13 @@ class Task:
             min_value = self.default_min_value
         color = self.get_grade_color(min_value)
         if self.grade == 0:
-            return bold(color, symbols.uncheck)
+            return colour("*," + color, symbols.uncheck)
         if self.grade < min_value:
-            return bold(color, str(self.grade))
+            return colour("*," + color, str(self.grade))
         if self.grade < 10:
-            return bold(color, str(self.grade))
+            return colour("*," + color, str(self.grade))
         if self.grade == 10:
-            return bold(color, symbols.check)
+            return colour("*," + color, symbols.check)
 
 
     def get_percent(self):
@@ -209,8 +209,8 @@ class Quest:
         value = self.get_percent()
         ref = self.qmin if self.qmin is not None else 100
         if self.qmin is None:
-            return bold("white", str(value) + "%")
-        return bold(self.get_grade_color(), str(value)) + "%"
+            return colour("*", str(value) + "%")
+        return colour(self.get_grade_color() + ",*", str(value)) + "%"
     
     def get_requirement(self):
         if self.qmin is not None:
@@ -228,8 +228,8 @@ class Quest:
         if plus > 0:
             output += f"+{plus}"
         if self.tmin is None:
-            return "(" + bold("white", output) + ")"
-        return "(" + bold(self.get_grade_color(), output) + ")"
+            return "(" + colour("*", output) + ")"
+        return "(" + colour(self.get_grade_color()+",*", output) + ")"
 
     def get_grade_color(self) -> str:
         if self.not_started():
@@ -372,7 +372,7 @@ class Cluster:
         return total // len(self.quests)
 
     def get_resume_by_percent(self) -> str:
-        return bold(self.get_grade_color(), f"{self.get_percent()}%")
+        return colour(self.get_grade_color() + ",*", f"{self.get_percent()}%")
 
     def get_resume_by_quests(self):
         total = len(self.quests)

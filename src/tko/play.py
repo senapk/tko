@@ -2,7 +2,7 @@ from typing import Dict, List, Tuple, Optional, Union
 from .game import Game, Task, Quest, Cluster
 from .settings import RepoSettings, LocalSettings
 from .down import Down
-from .format import symbols, colour, bold, red, cyan, green, yellow, Color
+from .format import symbols, colour, red, cyan, green, yellow, Color
 import subprocess
 import shutil
 import os
@@ -12,11 +12,11 @@ import re
 class Util:
     @staticmethod
     def control(text: str):
-        return bold("blue", text)
+        return colour("b,*", text)
 
     @staticmethod
     def cmd(text: str):
-        return bold("red", text)
+        return colour("r,*", text)
 
     @staticmethod
     def calc_letter(index_letter: int):
@@ -43,12 +43,12 @@ class Util:
     def get_percent(value, color2: Optional[str]=None, pad = 0):
         text = f"{str(value)}%".rjust(pad)
         if value == 100:
-            return colour("c", "100%", color2)
+            return colour("c," +  color2, "100%")
         if value >= 70:
-            return colour("g", text, color2)
+            return colour("g," +  color2, text)
         if value == 0:
-            return colour("r", text, color2)
-        return colour("y", text, color2)
+            return colour("r," +  color2, text)
+        return colour("y," +  color2, text)
 
     @staticmethod
     def get_term_size():
@@ -115,13 +115,14 @@ class Play:
         self.help_options = 0
         self.help_index = 0
         self.rep = rep
-        self.show_cont = "cont" in self.rep.view
-        self.show_perc = "perc" in self.rep.view
-        self.game_mode = "game" in self.rep.view
-        self.show_minimum = "min" in self.rep.view
         self.show_toolbar = "toolbar" in self.rep.view
-        self.cont_perc = "cont_perc" in self.rep.view
-        self.perc_cont = "perc_cont" in self.rep.view
+        self.admin_mode = "admin" in self.rep.view
+        
+        order = [entry for entry in self.rep.view if entry.startswith("order:")]
+        if len(order) > 0:
+            self.order = order[0][6:].split(",")
+        else:
+            self.order = []
 
         self.game: Game = game
 
@@ -131,20 +132,7 @@ class Play:
         self.avaliable_quests: List[Quest] = [] # avaliable quests
         self.avaliable_clusters: List[Cluster] = [] # avaliable clusters
 
-        for k, v in self.rep.expanded.items():
-            if "e" in v:
-                self.expanded.append(k)
-
-        for key, grade in rep.tasks.items():
-            if key in game.tasks:
-                value = "0"
-                if grade == "x":
-                    value = "10"
-                elif grade == "":
-                    value = "0"
-                else:
-                    value = grade
-                game.tasks[key].set_grade(int(value))
+        self.load_rep()
 
 
     def save_to_json(self):
@@ -156,24 +144,34 @@ class Play:
             if t.grade != 0:
                 self.rep.tasks[t.key] = str(t.grade)
         self.rep.view = []
-        if self.show_cont:
-            self.rep.view.append("cont")
-        if self.show_perc:
-            self.rep.view.append("perc")
-        if self.game_mode:
-            self.rep.view.append("game")
+        self.rep.view.append("order:" + ",".join(self.order))
+        if self.admin_mode:
+            self.rep.view.append("admin")
         if self.show_toolbar:
             self.rep.view.append("toolbar")
-        if self.cont_perc:
-            self.rep.view.append("cont_perc")
-        if self.perc_cont:
-            self.rep.view.append("perc_cont")
-        if self.show_minimum:
-            self.rep.view.append("min")
+            
         self.fnsave()
 
+
+    def load_rep(self):
+        for k, v in self.rep.expanded.items():
+            if "e" in v:
+                self.expanded.append(k)
+
+        for key, grade in self.rep.tasks.items():
+            if key in self.game.tasks:
+                value = "0"
+                if grade == "x":
+                    value = "10"
+                elif grade == "":
+                    value = "0"
+                else:
+                    value = grade
+                self.game.tasks[key].set_grade(int(value))
+
+
     def update_reachable(self):
-        if not self.game_mode:
+        if self.admin_mode:
             self.avaliable_quests = self.game.quests.values()
             self.avaliable_clusters = self.game.clusters
         else:
@@ -194,7 +192,7 @@ class Play:
         return fn_gen(title)
 
     def str_task(self, key: str, t: Task, ligc: str, ligq: str, min_value = 1) -> str:
-        vindex = colour("y", str(key).ljust(2, " "), "bold")
+        vindex = colour("y,*", str(key).ljust(2, " "))
         vdone = t.get_grade_symbol(min_value)
         title = t.title
 
@@ -202,41 +200,30 @@ class Play:
             opt = red("[opt]") if t.opt else ""
 
             parts = _title.split(" ")
-            parts = [("@" + bold("white", p[1:]) if p.startswith("@") else p) for p in parts]
+            parts = [("@" + colour("*", p[1:]) if p.startswith("@") else p) for p in parts]
             titlepainted = " ".join(parts)
             return f" {ligc} {ligq}{vindex}{vdone} {titlepainted} {opt}"
         
         return Play.cut_limits(title, gen_saida)
 
     def str_quest(self, key: str, q: Quest, lig: str) -> str:
-        key = bold("c", key.rjust(1))
-        cont = ""
-        if self.show_cont:
-            cont = q.get_resume_by_tasks()
-        perc = ""
-        if self.show_perc:
-            perc = q.get_resume_by_percent().rjust(4)
-        sep = ""
-        if self.show_cont and self.show_perc:
-            sep = " "
+        key = colour("c,*", key.rjust(1))
 
-        if not self.show_cont or not self.show_perc or self.cont_perc:
-            resume = cont + sep + perc
-        else:
-            resume = perc + sep + cont
+        resume = ""
+        for item in self.order:
+            if item == "cont":
+                resume += " " + q.get_resume_by_tasks()
+            elif item == "perc":
+                resume += " " + q.get_resume_by_percent().rjust(4)
+            elif item == "goal":
+                resume += " " + q.get_requirement()
 
         con = "━─"
-
-        req = ""
-        if self.show_minimum:
-            req = q.get_requirement()
-
         if q.key in self.expanded:
             con = "─┯"
 
-
         def gen_saida(_title):
-            return f" {lig}{con}{key} {_title} {resume} {req}"
+            return f" {lig}{con}{key} {_title}{resume}"
         
         return Play.cut_limits(q.title.strip(), gen_saida)
 
@@ -245,24 +232,16 @@ class Play:
         if cluster.key in self.expanded:
             opening = "─┯"
 
-        cont = ""
-        if self.show_cont:
-            cont = cluster.get_resume_by_quests()
-        perc = ""
-        if self.show_perc:
-            perc = cluster.get_resume_by_percent()
-        
-        sep = ""
-        if self.show_cont and self.show_perc:
-            sep = " "
-        if not self.show_cont or not self.show_perc or self.cont_perc:
-            resume = cont + sep + perc
-        else:
-            resume = perc + sep + cont
+        resume = ""
+        for item in self.order:
+            if item == "cont":
+                resume += " " + cluster.get_resume_by_quests()
+            if item == "perc":
+                resume += " " + cluster.get_resume_by_percent()
 
-        title = Util.control(key) + " " + colour("bold", cluster.title.strip())
+        title = Util.control(key) + " " + colour("*", cluster.title.strip())
 
-        return f"{opening}{title} {resume}"
+        return f"{opening}{title}{resume}"
     
     def get_avaliable_quests_from_cluster(self, cluster: Cluster) -> List[Quest]:
         return [q for q in cluster.quests if q in self.avaliable_quests]
@@ -272,7 +251,7 @@ class Play:
         task_index = 0
         self.vfolds = {}
         self.vtasks = {}
-        for ci, cluster in enumerate(self.avaliable_clusters):
+        for cluster in self.avaliable_clusters:
             quests = self.get_avaliable_quests_from_cluster(cluster)
 
             key = str(fold_index)
@@ -283,7 +262,6 @@ class Play:
                 continue
 
             for q in quests:
-                
                 key = str(fold_index).ljust(2)
                 lig = "├" if q != quests[-1] else "╰"
                 print(self.str_quest(key, q, lig))
@@ -473,7 +451,8 @@ class Play:
         if ext in ["c", "cpp", "py", "ts", "js", "java"]:
             self.rep.lang = ext
             self.fnsave()
-            print(f"Linguagem de programação alterada para {ext}")
+            self.reset_view()
+            print(f"\nLinguagem de programação alterada para {ext}")
             return False
         else:
             print(f"Extensão {ext} não processada")
@@ -497,37 +476,24 @@ class Play:
         elif cmd == "h" or cmd == "help":
             return self.show_cmds()
         elif cmd == "c" or cmd == "cont":
-            if self.cont_perc or self.perc_cont:
-                self.show_cont = False
-                self.show_perc = True
-                self.cont_perc = False
-                self.perc_cont = False
-            elif self.show_cont and not self.show_perc:
-                self.show_cont = False
-            elif not self.show_cont and not self.show_perc:
-                self.show_cont = True
-            elif not self.show_cont and self.show_perc:
-                self.show_cont = True
-                self.perc_cont = True
+            if "cont" in self.order:
+                self.order.remove("cont")
+            else:
+                self.order.append("cont")
         elif cmd == "p" or cmd == "perc":
-            if self.cont_perc or self.perc_cont:
-                self.show_perc = False
-                self.show_cont = True
-                self.cont_perc = False
-                self.perc_cont = False
-            elif self.show_perc and not self.show_cont:
-                self.show_perc = False
-            elif not self.show_perc and not self.show_cont:
-                self.show_perc = True
-            elif not self.show_perc and self.show_cont:
-                self.show_perc = True
-                self.cont_perc = True
-        elif cmd == "g" or cmd == "game":
-            self.game_mode = not self.game_mode
+            if "perc" in self.order:
+                self.order.remove("perc")
+            else:
+                self.order.append("perc")
+        elif cmd == "g" or cmd == "goal":
+            if "goal" in self.order:
+                self.order.remove("goal")
+            else:
+                self.order.append("goal")
+        elif cmd == "a" or cmd == "admin":
+            self.admin_mode = not self.admin_mode
         elif cmd == "t" or cmd == "toolbar":
             self.show_toolbar = not self.show_toolbar
-        elif cmd == "m" or cmd == "minimum":
-            self.show_minimum = not self.show_minimum
         elif cmd == "d" or cmd == "down":
             return self.process_down(actions)
         elif cmd == "l" or cmd == "link":
@@ -562,71 +528,67 @@ class Play:
         for q in self.game.quests.values():
             total_perc += q.get_percent()
         total_perc = total_perc // len(self.game.quests)
-        vtotal = bold("g", "Total: ") + Util.get_percent(total_perc, "bold", 4)
+        vtotal = colour("*,g", "Total: ") + Util.get_percent(total_perc, "bold", 4)
 
         intro = vtotal + " " + "│" + green(" Digite ") + Util.cmd("h") + red("elp")
         intro += green(" ou ") + Util.cmd("t") + red("oolbar") 
         intro += Play.checkbox(self.show_toolbar)
-        vlink = Util.cmd("c") + red("ont") + (Play.checkbox(self.show_cont))
-        vperc = Util.cmd("p") + red("erc") + (Play.checkbox(self.show_perc))
-        vhack = Util.cmd("g") + red("ame") + (Play.checkbox(self.game_mode))
-        # vgame = Util.cmd("x") + red("p") + (Play.checkbox(False))
-        vext = Util.cmd("e") + red("xt") + "(" + colour("c", self.rep.lang, "bold") + ")"
-        vrep = colour("y", self.repo_alias + ":", "bold")
-        visoes = f"{vrep} {vext} {vlink} {vperc} {vhack} "
+        vlink = Util.cmd("c") + red("ont") + (Play.checkbox("cont" in self.order))
+        vperc = Util.cmd("p") + red("erc") + (Play.checkbox("perc" in self.order))
+        vgoal = Util.cmd("g") + red("oal") + (Play.checkbox("goal" in self.order))
 
+        vadmin = Util.cmd("a") + red("dmin") + (Play.checkbox(self.admin_mode))
+        
+        vext = Util.cmd("e") + red("xt") + "(" + colour("c,*", self.rep.lang) + ")"
+        vrep = colour("y,*", self.repo_alias + ":")
+        visoes = f"{vrep} {vext} {vlink} {vperc} {vgoal} {vadmin} "
 
 
         div0 = "────────────┴─────────────────────────"
 
         div1 = "──────────────────────────────────────"
-        if self.show_cont and not self.show_perc:
-           #div1 = colour("g", "C", "bold") + "│" + colour("y", "I", "bold") + "│" + colour("r", "P", "bold") + " ────────────────────────────────"
-           div1 = "──────────────────────────────────────"
-
-
 
         elementos = [intro] + ([div0, visoes] if self.show_toolbar else []) + [div1]
         self.print_elementos(elementos)
 
     def show_cmds(self):
         controles = green("Números ") + Util.control("azul") + green(" para expandir/colapsar")
+        letrass = green("Letras ") + colour("y,*", "amarelo") + green(" para marcar/desmarcar")
         intervalos1 = green("Você pode digitar intervalos: ") + Util.control("1-3")
         intervalos2 = green("Você pode digitar intervalos: ") + Util.control("B-F")
 
-        feitos = bold("g", "1") + bold("y", "2") + bold("r", "3")
-        feitos += green(" Completos") + "/" + yellow("Iniciados") + "/" + red("Pendentes")
-        numeros = "━─" + Util.control(" 3") + green(" Missão. Dig ")
-        numeros += Util.control("3") + green(" para ver ou ocultar")
+        numeros = "─┯" + colour("c,*", "3") + "  Digite " + colour("c,*", "3") + (" para ver ou ocultar")
         
-        letras = colour("g", symbols.check) + colour("y", "  D", "bold")
-        letras += green(" Tarefa. Dig ") + Util.control("D") + green(" (des)marcar")
+        letras = " ├─" + colour("y,*", "D ") + colour("m", symbols.uncheck)
+        letras += " Tarefa. Dig " + Util.control("D") + " (des)marcar"
         
-        graduar = colour("r", "4") + colour("y", "  X", "bold") + green(" Tarefa. Dig ")
-        graduar += Util.control("X4") + green(" dar nota 4")
+        graduar = " ╰─" + colour("y,*", "X ") + colour("r", "4")  + " Tarefa. Dig " + Util.control("X4") + " dar nota 4"
         todas = Util.control("<") + " ou " + Util.control(">") + green(" (Compactar ou Descompactar Tudo)")
         
         nomes_verm = green("Os nomes em vermelho são comandos")
         prime_letr = green("Basta a primeira letra do comando")
-        down = Util.cmd("d") + red("own") + colour("y", " <TaskID ...>", "bold") + green(" (Download)")
-        link = Util.cmd("l") + red("ink") + colour("y", " <TaskId ...>", "bold") + green(" (Ver links)")
+        down = Util.cmd("d") + red("own") + colour("y,*", " <TaskID ...>") + green(" (Download)")
+        link = Util.cmd("l") + red("ink") + colour("y,*", " <TaskID ...>") + green(" (Ver links)")
         # manu = Util.cmd("m") + red("an") + yellow("  (Mostrar manual detalhado)")
         ext = Util.cmd("e") + red("xt") + "  <EXT>" + green(" (Mudar linguagem default)")
         sair = Util.cmd("q") + red("uit") + green(" (Sair do programa)")
         vcont = Util.cmd("c") + red("ont") + green(" (Alterna contador de tarefas)")
         vperc = Util.cmd("p") + red("erc") + green(" (Alterna mostrar porcentagem)")
+        vgoal = Util.cmd("g") + red("oal") + green(" (Alterna mostrar meta mínima)")
+        vupdate = Util.cmd("u") + red("pdate") + green(" (Recarrega o arquivo do repositório)")
+
         # rep = Util.cmd("r") + red("ep") + green(" (Muda o repositório)")
 
-        vgame = Util.cmd("g") + red("ame") + green(" (Quebra pré requisitos de missões)")
+        vgame = Util.cmd("a") + red("dmin") + green(" (Modo admin para ver todas as missões)")
         # xp = Util.cmd("x") + red("p") + yellow("  (Mostrar experiência)")
         # indicadores = f"{vall} {vdone} {vinit} {vtodo}"
 
         div0 = "──────────────────────────────────────"
         div1 = "───────────── " + Util.control("Controles") + "──────────────"
-        div2 = "───────────── " + bold("r", "Comandos") + " ───────────────"
+        div2 = "───────────── " + colour("r,*", "Comandos") + " ───────────────"
         elementos = []
-        elementos += [div1, controles, feitos, todas, numeros, letras, graduar, intervalos1, intervalos2]
-        elementos += [div2, nomes_verm, prime_letr, down, link, ext, vcont, vperc, vgame, sair]
+        elementos += [div1, controles, letrass, todas, numeros, letras, graduar, intervalos1, intervalos2]
+        elementos += [div2, nomes_verm, prime_letr, down, link, ext, vcont, vperc, vgoal, vgame, sair]
 
         self.print_elementos(elementos)
         print(div0)
@@ -661,22 +623,27 @@ class Play:
             counts[q.key] = f"{done} / {done + init + todo}"
         self.game.generate_graph("graph", reachable, counts, graph_ext)
 
+
+    def reset_view(self):
+        self.vtasks = {}
+        self.update_reachable()
+        self.show_header()
+        self.show_options()
+
     # return True if the user wants to continue playing
     def play(self, graph_ext: str) -> bool:
         success = True
         first_graph_msg = True 
         while True:
             if success:
-                self.vtasks = {}
-                self.update_reachable()
-                self.show_header()
-                self.show_options()
+                self.reset_view()
 
             if graph_ext != "":
                 self.generate_graph(graph_ext)
                 if first_graph_msg:
                     print("\nGrafo gerado em graph" + graph_ext)
                     first_graph_msg = False
+
             print("\n" + green("play$") + " ", end="")
             line = input()
             if line == "":
@@ -684,7 +651,7 @@ class Play:
                 continue
             if line == "q" or line == "quit":
                 return False
-            if line == "r" or line == "reload":
+            if line == "u" or line == "update":
                 return True
             actions = Util.expand_range(line)
             success = self.take_actions(actions)

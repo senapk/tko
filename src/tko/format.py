@@ -5,27 +5,79 @@ from typing import Optional
 
 class Color:
     enabled = False
-    map = {
-        "red": "\u001b[31m",
-        "r": "\u001b[31m",
-        "green": "\u001b[32m",
-        "g": "\u001b[32m",
-        "yellow": "\u001b[33m",
-        "y": "\u001b[33m",
-        "blue": "\u001b[34m",
-        "b": "\u001b[34m",
-        "magenta": "\u001b[35m",
-        "m": "\u001b[35m",
-        "cyan": "\u001b[36m",
-        "c": "\u001b[36m",
-        "white": "\u001b[37m",
-        "w": "\u001b[37m",
-        "reset": "\u001b[0m",
-        "bold": "\u001b[1m",
-        "uline": "\u001b[4m",
-        "orange": "\u001b[38;5;208m",
-        "o": "\u001b[38;5;208m",
+    __terminal_styles = {
+        '.': '\033[0m', # Reset
+        '*': '\033[1m', # Bold
+        '/': '\033[3m', # Italic
+        '_': '\033[4m', # Underline
+        
+        'k': '\033[30m', # Black
+        'r': '\033[31m', # Red
+        'g': '\033[32m', # Green
+        'y': '\033[33m', # Yellow
+        'b': '\033[34m', # Blue
+        'm': '\033[35m', # Magenta
+        'c': '\033[36m', # Cyan
+        'w': '\033[37m', # White
+
+        'K': '\033[90m', # Bright black
+        'R': '\033[91m', # Bright red
+        'G': '\033[92m', # Bright green
+        'Y': '\033[93m', # Bright yellow
+        'B': '\033[94m', # Bright blue
+        'M': '\033[95m', # Bright magenta
+        'C': '\033[96m', # Bright cyan
+        'W': '\033[97m',
+
+        '#k': '\033[40m', # Background black
+        '#r': '\033[41m', # Background red
+        '#g': '\033[42m', # Background green
+        '#y': '\033[43m', # Background yellow
+        '#b': '\033[44m', # Background blue
+        '#m': '\033[45m', # Background magenta
+        '#c': '\033[46m', # Background cyan
+        '#w': '\033[47m', # Background white
+
+        '#K': '\033[100m', # Background bright black
+        '#R': '\033[101m', # Background bright red
+        '#G': '\033[102m', # Background bright green
+        '#Y': '\033[103m', # Background bright yellow
+        '#B': '\033[104m', # Background bright blue
+        '#M': '\033[105m', # Background bright magenta
+        '#C': '\033[106m', # Background bright cyan
+        '#W': '\033[107m'  # Background bright white
     }
+    __replacements = {
+        'black': 'k',
+        'red': 'r',
+        'green': 'g',
+        'yellow': 'y',
+        'blue': 'b',
+        'magenta': 'm',
+        'cyan': 'c',
+        'white': 'w',
+        'bright_black': 'K',
+        'bright_red': 'R',
+        'bright_green': 'G',
+        'bright_yellow': 'Y',
+        'bright_blue': 'B',
+        'bright_magenta': 'M',
+        'bright_cyan': 'C',
+        'bright_white': 'W', 
+        'reset': '.',
+        'bold': '*',
+        'italic': '/',
+        'underline': '_',
+    }
+
+    @staticmethod
+    def get_style(modifier: str):
+        if modifier in Color.__replacements:
+            modifier = Color.__replacements[modifier]
+        if modifier in Color.__terminal_styles:
+            return Color.__terminal_styles[modifier]
+        print(f'Unknown modifier: {modifier}')
+        return ''
 
     @staticmethod
     def ljust(text: str, width: int) -> str:
@@ -33,15 +85,13 @@ class Color:
 
     @staticmethod
     def center(text: str, width: int, filler: str) -> str:
-        return (
-            filler * ((width - Color.len(text)) // 2)
-            + text
-            + filler * ((width - Color.len(text) + 1) // 2)
-        )
+        before = filler * ((width - Color.len(text)) // 2)
+        after = filler * ((width - Color.len(text) + 1) // 2)
+        return before + text + after
 
     @staticmethod
     def remove_colors(text: str) -> str:
-        for color in Color.map.values():
+        for color in Color.__terminal_styles.values():
             text = text.replace(color, "")
         return text
 
@@ -50,11 +100,15 @@ class Color:
         return len(Color.remove_colors(text))
 
 
-def colour(color: str, text: str, color2: Optional[str] = None) -> str:
-    if not Color.enabled:
-        return text
-    return ("" if color2 is None else Color.map[color2]) + Color.map[color] + text + Color.map["reset"]
-
+def colour(modifiers: str, text: str) -> str:
+    mod = modifiers.split(',')
+    output = ''
+    for m in mod:
+        val = Color.get_style(m)
+        if val != '':
+            output += val
+    output += text + Color.get_style('reset')
+    return output
 
 class __Symbols:
     def __init__(self):
@@ -159,14 +213,11 @@ def red(text: str):
 def yellow(text: str):
     return colour("y", text)
 
-def orange(text: str):
-    return colour("o", text)
+def magenta(text: str):
+    return colour("m", text)
 
 def cyan(text: str):
     return colour("c", text)
-
-def bold(color: str, text: str) -> str:
-    return colour(color, text, "bold")
 
 
 class Report:
