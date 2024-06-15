@@ -290,8 +290,8 @@ class Parser:
 
         repo_add = subpar_repo.add_parser('add', help='add a repository.')
         repo_add.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be added.')
-        repo_add.add_argument('--url', type=str, help='add a repository url to the settings file.')
-        repo_add.add_argument('--file', type=str, help='add a repository file to the settings file.')
+        repo_add.add_argument('--url', '-u', type=str, help='add a repository url to the settings file.')
+        repo_add.add_argument('--file', '-f', type=str, help='add a repository file to the settings file.')
         repo_add.set_defaults(func=MRep.add)
 
         repo_rm = subpar_repo.add_parser('rm', help='remove a repository.')

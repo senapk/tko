@@ -1,19 +1,19 @@
 import os
 import json
 import appdirs
-from typing import Optional, List, Dict, Any
 import tempfile
 from .remote import RemoteCfg, Absolute
-
+from typing import Any
 
 class RepoSettings:
     def __init__(self, file: str = ""):
         self.lang: str = ""
         self.url: str = ""
         self.file: str = ""
-        self.expanded: Dict[str, str] = {}
-        self.tasks: Dict[str, str] = {}
-        self.view: List[str] = []
+        self.expanded: list[str] = []
+        self.new_items: list[str] = []
+        self.tasks: dict[str, str] = {} #notas das tarefas
+        self.view: list[str] = []  # lista de flags ligados
         if file != "":
             self.file = os.path.abspath(file)
 
@@ -57,6 +57,7 @@ class RepoSettings:
         return {
             "lang": self.lang,
             "expanded": self.expanded,
+            "new_items": self.new_items,
             "url": self.url,
             "file": self.file,
             "quests": self.expanded,
@@ -64,11 +65,17 @@ class RepoSettings:
             "view": self.view
         }
     
-    def from_dict(self, data: Dict[str, Any]):
+    def from_dict(self, data: dict[str, Any]):
         self.lang = data.get("lang", "")
         self.url = data.get("url", "")
         self.file = data.get("file", "")
-        self.expanded = data.get("expanded", {})
+        # self.expanded = data.get("expanded", [])
+        #verify if expanded is a dict, being get list of values
+        try:
+            self.expanded = list(data.get("quests", {}).values())
+        except AttributeError:
+            self.expanded = data.get("expanded", [])
+        self.new_items = data.get("new_items", [])
         self.tasks = data.get("tasks", {})
         self.view = data.get("view", [])
         return self
@@ -96,7 +103,7 @@ class LocalSettings:
         self.rootdir = os.path.abspath(rootdir)
         return self
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "rootdir": self.rootdir,
             "lang": self.lang,
@@ -106,7 +113,7 @@ class LocalSettings:
             "sideto_min": self.sideto_min
         }
     
-    def from_dict(self, data: Dict[str, Any]):
+    def from_dict(self, data: dict[str, Any]):
         self.rootdir = data.get("rootdir", "")
         self.lang = data.get("lang", "")
         self.ascii = data.get("ascii", False)
@@ -129,7 +136,7 @@ class LocalSettings:
 
 class Settings:
     def __init__(self):
-        self.reps: Dict[str, RepoSettings] = {}
+        self.reps: dict[str, RepoSettings] = {}
         self.local = LocalSettings()
         self.reps["fup"] = RepoSettings().set_url("https://github.com/qxcodefup/arcade/blob/master/Readme.md")
         self.reps["ed"] = RepoSettings().set_url("https://github.com/qxcodeed/arcade/blob/master/Readme.md")
@@ -140,13 +147,13 @@ class Settings:
             raise ValueError(f"Course {course} not found in settings")
         return self.reps[course]
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "reps": {k: v.to_dict() for k, v in self.reps.items()},
             "local": self.local.to_dict()
         }
 
-    def from_dict(self, data: Dict[str, Any]):
+    def from_dict(self, data: dict[str, Any]):
         self.reps = {k: RepoSettings().from_dict(v) for k, v in data.get("reps", {}).items()}
         self.local = LocalSettings().from_dict(data.get("local", {}))
         return self
@@ -171,7 +178,7 @@ class Settings:
 
 class SettingsParser:
 
-    user_settings_file: Optional[str] = None
+    user_settings_file: str | None = None
 
     def __init__(self):
         self.package_name = "tko"

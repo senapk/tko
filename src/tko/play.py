@@ -40,7 +40,7 @@ class Util:
         return "*"
 
     @staticmethod
-    def get_percent(value, color2: Optional[str]=None, pad = 0):
+    def get_percent(value, color2: str = "", pad = 0):
         text = f"{str(value)}%".rjust(pad)
         if value == 100:
             return colour("c," +  color2, "100%")
@@ -117,7 +117,6 @@ class Play:
         self.rep = rep
         self.show_toolbar = "toolbar" in self.rep.view
         self.admin_mode = "admin" in self.rep.view
-        
         order = [entry for entry in self.rep.view if entry.startswith("order:")]
         if len(order) > 0:
             self.order = order[0][6:].split(",")
@@ -128,17 +127,20 @@ class Play:
 
         self.vfolds: Dict[str, str] = {} # visible collapsers ou expanders for clusters or quests
         self.vtasks: Dict[str, Task] = {}  # visible tasks  indexed by upper letter
-        self.expanded: List[str] = []  # expanded quests or clusters
+        self.expanded: List[str] = [x for x in self.rep.expanded]
+        self.new_items: List[str] = [x for x in self.rep.new_items]
         self.avaliable_quests: List[Quest] = [] # avaliable quests
         self.avaliable_clusters: List[Cluster] = [] # avaliable clusters
+
+        self.first_loop = True
 
         self.load_rep()
 
 
     def save_to_json(self):
-        self.rep.expanded = {}
-        for q in self.expanded:
-            self.rep.expanded[q] = "e"
+        self.rep.expanded = [x for x in self.expanded]
+        self.rep.new_items = [x for x in self.new_items]
+
         self.rep.tasks = {}
         for t in self.game.tasks.values():
             if t.grade != 0:
@@ -154,10 +156,6 @@ class Play:
 
 
     def load_rep(self):
-        for k, v in self.rep.expanded.items():
-            if "e" in v:
-                self.expanded.append(k)
-
         for key, grade in self.rep.tasks.items():
             if key in self.game.tasks:
                 value = "0"
@@ -170,9 +168,12 @@ class Play:
                 self.game.tasks[key].set_grade(int(value))
 
 
-    def update_reachable(self):
+    # return True if change view
+    def update_avaliable_quests(self):
+        old_quests = [q for q in self.avaliable_quests]
+        old_clusters = [c for c in self.avaliable_clusters]
         if self.admin_mode:
-            self.avaliable_quests = self.game.quests.values()
+            self.avaliable_quests = list(self.game.quests.values())
             self.avaliable_clusters = self.game.clusters
         else:
             self.avaliable_quests = self.game.get_reachable_quests()
@@ -180,6 +181,28 @@ class Play:
             for c in self.game.clusters:
                 if any([q in self.avaliable_quests for q in c.quests]):
                     self.avaliable_clusters.append(c)
+
+
+        removed_clusters = [c for c in old_clusters if c not in self.avaliable_clusters]
+        for c in removed_clusters:
+            if c.key in self.expanded:
+                self.expanded.remove(c.key)
+        removed_quests = [q for q in old_quests if q not in self.avaliable_quests]
+        for q in removed_quests:
+            if q.key in self.expanded:
+                self.expanded.remove(q.key)
+        
+        if self.first_loop:
+            self.first_loop = False
+            return
+
+        added_clusters = [c for c in self.avaliable_clusters if c not in old_clusters]
+        added_quests = [q for q in self.avaliable_quests if q not in old_quests]
+        
+        for c in added_clusters:
+            self.new_items.append(c.key)
+        for q in added_quests:
+            self.new_items.append(q.key)
 
     @staticmethod
     def cut_limits(title, fn_gen):
@@ -221,9 +244,9 @@ class Play:
         con = "━─"
         if q.key in self.expanded:
             con = "─┯"
-
+        new = "" if q.key not in self.new_items else colour("g,*", " [new]")
         def gen_saida(_title):
-            return f" {lig}{con}{key} {_title}{resume}"
+            return f" {lig}{con}{key} {_title}{new}{resume}"
         
         return Play.cut_limits(q.title.strip(), gen_saida)
 
@@ -240,8 +263,8 @@ class Play:
                 resume += " " + cluster.get_resume_by_percent()
 
         title = Util.control(key) + " " + colour("*", cluster.title.strip())
-
-        return f"{opening}{title}{resume}"
+        new = "" if cluster.key not in self.new_items else colour("g,*", " [new]")
+        return f"{opening}{title}{new}{resume}"
     
     def get_avaliable_quests_from_cluster(self, cluster: Cluster) -> List[Quest]:
         return [q for q in cluster.quests if q in self.avaliable_quests]
@@ -418,15 +441,6 @@ class Play:
                 return False
         return True
     
-    # def process_see(self, actions):
-    #     if len(actions) > 1:
-    #         if actions[1] in self.tasks:
-    #             # print(self.tasks[actions[1]].link)
-    #             self.read_link(self.tasks[actions[1]].link)
-    #         else:
-    #             print(f"{actions[1]} não processado")
-    #             return False
-    #     return True
     
     def process_link(self, actions):
         if len(actions) == 1:
@@ -524,10 +538,12 @@ class Play:
     def show_header(self):
         Util.clear()
         total_perc = 0
-
+        
         for q in self.game.quests.values():
             total_perc += q.get_percent()
-        total_perc = total_perc // len(self.game.quests)
+        if self.game.quests:
+            total_perc = total_perc // len(self.game.quests)
+        
         vtotal = colour("*,g", "Total: ") + Util.get_percent(total_perc, "bold", 4)
 
         intro = vtotal + " " + "│" + green(" Digite ") + Util.cmd("h") + red("elp")
@@ -623,12 +639,16 @@ class Play:
             counts[q.key] = f"{done} / {done + init + todo}"
         self.game.generate_graph("graph", reachable, counts, graph_ext)
 
+    def update_new(self):
+        self.new_items = [item for item in self.new_items if item not in self.expanded]
+
 
     def reset_view(self):
-        self.vtasks = {}
-        self.update_reachable()
+        self.update_avaliable_quests()
+        self.update_new()
         self.show_header()
         self.show_options()
+
 
     # return True if the user wants to continue playing
     def play(self, graph_ext: str) -> bool:
