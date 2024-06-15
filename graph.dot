@@ -1,87 +1,106 @@
 digraph diag {
   node [penwidth=1, style="rounded,filled", shape=box]
-  "O que são linguagens de programação?\n3 / 4" -> "Uso do bash\n1 / 1" 
-  "Uso do bash\n1 / 1" -> "Configuração do Ambiente\n2 / 2" 
-  "O que são linguagens de programação?\n3 / 4" -> "Makefile\n0 / 4" 
-  "While\n0 / 4" -> "Macros: include, define, if, ifdef, endif\n0 / 2" [style=dotted]
-  "O que são linguagens de programação?\n3 / 4" -> "TKO - Ferramenta de Testes\n0 / 1" 
-  "Início" -> "O que são linguagens de programação?\n3 / 4"
-  "O que são linguagens de programação?\n3 / 4" -> "Primeiro código\n6 / 6" 
-  "Entrada e Saída - puts, printf, scanf\n0 / 4" -> "Strings em C: Array de `char`\n1 / 1" [style=dotted]
-  "Primeiro código\n6 / 6" -> "Clean Code - Estilo\n1 / 1" 
-  "Primeiro código\n6 / 6" -> "Clean Code - Indentação\n1 / 1" 
-  "Primeiro código\n6 / 6" -> "Manipulando tipos\n0 / 1" 
-  "Primeiro código\n6 / 6" -> "Casting e Conversão\n0 / 3" 
-  "Primeiro código\n6 / 6" -> "Operações Básicas\n0 / 3" [style=dotted]
-  "TKO - Ferramenta de Testes\n0 / 1" -> "Operações Básicas\n0 / 3" [style=dotted]
-  "Operações Básicas\n0 / 3" -> "Biblioteca matemática\n0 / 2" [style=dotted]
-  "Operações Básicas\n0 / 3" -> "Entrada e Saída - puts, printf, scanf\n0 / 4" [style=dotted]
-  "Strings I\n0 / 5" -> "Manipulando strings com `sprintf` e `sscanf`\n0 / 3" [style=dotted]
-  "While\n0 / 4" -> "Tratamento de erros de entrada fflush\n0 / 1" [style=dotted]
-  "Strings I\n0 / 5" -> "IO: argc e argv\n0 / 1" [style=dotted]
-  "Entrada e Saída - puts, printf, scanf\n0 / 4" -> "Seleção Básica\n0 / 10" [style=dotted]
-  "Clean Code - Estilo\n1 / 1" -> "Seleção Básica\n0 / 10" [style=dotted]
-  "Clean Code - Indentação\n1 / 1" -> "Seleção Básica\n0 / 10" [style=dotted]
-  "O que são linguagens de programação?\n3 / 4" -> "Debugando\n0 / 1" 
-  "Funções I\n0 / 5" -> "Técnicas de seleção I\n0 / 8" [style=dotted]
-  "Técnicas de seleção I\n0 / 8" -> "Técnicas de seleção II\n0 / 10" [style=dotted]
-  "Seleção Básica\n0 / 10" -> "Funções I\n0 / 5" [style=dotted]
-  "Funções I\n0 / 5" -> "Funções II\n0 / 4" [style=dotted]
-  "Seleção Básica\n0 / 10" -> "While\n0 / 4" [style=dotted]
-  "While\n0 / 4" -> "for\n0 / 8" [style=dotted]
-  "Seleção Básica\n0 / 10" -> "Números Aleatórios\n0 / 2" [style=dotted]
-  "for\n0 / 8" -> "Array Iniciante\n0 / 4" [style=dotted]
-  "Funções I\n0 / 5" -> "Array Iniciante\n0 / 4" [style=dotted]
-  "Array Iniciante\n0 / 4" -> "Array avançado\n0 / 4" [style=dotted]
-  "Array avançado\n0 / 4" -> "Array Expert\n0 / 6" [style=dotted]
-  "Array avançado\n0 / 4" -> "Strings I\n0 / 5" [style=dotted]
-  "Strings I\n0 / 5" -> "Strings II\n0 / 3" [style=dotted]
-  "Ponteiros\n0 / 1" -> "Strings II\n0 / 3" [style=dotted]
-  "Strings II\n0 / 3" -> "Strings Expert\n0 / 4" [style=dotted]
-  "Funções II\n0 / 4" -> "Ponteiros\n0 / 1" [style=dotted]
-  "Funções I\n0 / 5" -> "Structs\n0 / 2" [style=dotted]
-  "Array Iniciante\n0 / 4" -> "Matrizes\n0 / 2" [style=dotted]
-  "Matrizes\n0 / 2" -> "Técnicas em matrizes\n0 / 1" [style=dotted]
-  "Structs Advanced\n0 / 2" -> "Técnicas em matrizes\n0 / 1" [style=dotted]
-  "Ponteiros\n0 / 1" -> "Structs Advanced\n0 / 2" [style=dotted]
-  "Array Iniciante\n0 / 4" -> "Structs Advanced\n0 / 2" [style=dotted]
-  "Structs\n0 / 2" -> "Structs Advanced\n0 / 2" [style=dotted]
-  "Uso do bash\n1 / 1" [shape=ellipse, color=green, penwidth=3, fillcolor=lightblue]
-  "Configuração do Ambiente\n2 / 2" [shape=ellipse, color=green, penwidth=3, fillcolor=lightblue]
-  "Makefile\n0 / 4" [shape=ellipse, color=magenta, penwidth=3, fillcolor=lightblue]
-  "Macros: include, define, if, ifdef, endif\n0 / 2" [shape=ellipse, color=white, penwidth=1, fillcolor=lightblue]
-  "TKO - Ferramenta de Testes\n0 / 1" [shape=box, color=magenta, penwidth=3, fillcolor=lightblue]
-  "O que são linguagens de programação?\n3 / 4" [shape=box, color=yellow, penwidth=3, fillcolor=pink]
-  "Primeiro código\n6 / 6" [shape=box, color=green, penwidth=3, fillcolor=pink]
-  "Strings em C: Array de `char`\n1 / 1" [shape=box, color=white, penwidth=1, fillcolor=pink]
-  "Clean Code - Estilo\n1 / 1" [shape=box, color=green, penwidth=3, fillcolor=pink]
-  "Clean Code - Indentação\n1 / 1" [shape=box, color=green, penwidth=3, fillcolor=pink]
-  "Manipulando tipos\n0 / 1" [shape=ellipse, color=magenta, penwidth=3, fillcolor=pink]
-  "Casting e Conversão\n0 / 3" [shape=ellipse, color=magenta, penwidth=3, fillcolor=pink]
-  "Operações Básicas\n0 / 3" [shape=box, color=white, penwidth=1, fillcolor=pink]
-  "Biblioteca matemática\n0 / 2" [shape=ellipse, color=white, penwidth=1, fillcolor=pink]
-  "Entrada e Saída - puts, printf, scanf\n0 / 4" [shape=box, color=white, penwidth=1, fillcolor=lightgreen]
-  "Manipulando strings com `sprintf` e `sscanf`\n0 / 3" [shape=ellipse, color=white, penwidth=1, fillcolor=lightgreen]
-  "Tratamento de erros de entrada fflush\n0 / 1" [shape=ellipse, color=white, penwidth=1, fillcolor=lightgreen]
-  "IO: argc e argv\n0 / 1" [shape=ellipse, color=white, penwidth=1, fillcolor=lightgreen]
-  "Seleção Básica\n0 / 10" [shape=box, color=white, penwidth=1, fillcolor=cyan]
-  "Debugando\n0 / 1" [shape=ellipse, color=magenta, penwidth=3, fillcolor=cyan]
-  "Técnicas de seleção I\n0 / 8" [shape=ellipse, color=white, penwidth=1, fillcolor=cyan]
-  "Técnicas de seleção II\n0 / 10" [shape=ellipse, color=white, penwidth=1, fillcolor=cyan]
-  "Funções I\n0 / 5" [shape=box, color=white, penwidth=1, fillcolor=gold]
-  "Funções II\n0 / 4" [shape=box, color=white, penwidth=1, fillcolor=gold]
-  "While\n0 / 4" [shape=box, color=white, penwidth=1, fillcolor=yellow]
-  "for\n0 / 8" [shape=box, color=white, penwidth=1, fillcolor=yellow]
-  "Números Aleatórios\n0 / 2" [shape=box, color=white, penwidth=1, fillcolor=orange]
-  "Array Iniciante\n0 / 4" [shape=box, color=white, penwidth=1, fillcolor=tomato]
-  "Array avançado\n0 / 4" [shape=box, color=white, penwidth=1, fillcolor=tomato]
-  "Array Expert\n0 / 6" [shape=ellipse, color=white, penwidth=1, fillcolor=tomato]
-  "Strings I\n0 / 5" [shape=box, color=white, penwidth=1, fillcolor=tomato]
-  "Strings II\n0 / 3" [shape=ellipse, color=white, penwidth=1, fillcolor=tomato]
-  "Strings Expert\n0 / 4" [shape=ellipse, color=white, penwidth=1, fillcolor=tomato]
-  "Ponteiros\n0 / 1" [shape=box, color=white, penwidth=1, fillcolor=tomato]
-  "Structs\n0 / 2" [shape=box, color=white, penwidth=1, fillcolor=tomato]
-  "Matrizes\n0 / 2" [shape=box, color=white, penwidth=1, fillcolor=tomato]
-  "Técnicas em matrizes\n0 / 1" [shape=ellipse, color=white, penwidth=1, fillcolor=tomato]
-  "Structs Advanced\n0 / 2" [shape=box, color=white, penwidth=1, fillcolor=tomato]
+  "Início" -> "O que são linguagens de programação?\n4 / 4
+100%"
+  "O que são linguagens de programação?\n4 / 4
+100%" -> "Primeiro código\n6 / 6
+100%" 
+  "Entrada e Saída - puts, printf, scanf\n2 / 4
+50%" -> "Strings em C: Array de `char`\n0 / 1
+0%" 
+  "Primeiro código\n6 / 6
+100%" -> "Clean Code - Estilo\n1 / 1
+100%" 
+  "Primeiro código\n6 / 6
+100%" -> "Clean Code - Indentação\n1 / 1
+100%" 
+  "Primeiro código\n6 / 6
+100%" -> "Manipulando tipos\n1 / 1
+100%" 
+  "Primeiro código\n6 / 6
+100%" -> "Casting e Conversão\n0 / 3
+0%" 
+  "Primeiro código\n6 / 6
+100%" -> "Operações Básicas\n2 / 3
+66%" 
+  "TKO - Ferramenta de Testes\n1 / 1
+100%" -> "Operações Básicas\n2 / 3
+66%" 
+  "Operações Básicas\n2 / 3
+66%" -> "Biblioteca matemática\n0 / 2
+0%" 
+  "O que são linguagens de programação?\n4 / 4
+100%" -> "Uso do bash\n1 / 1
+100%" 
+  "Uso do bash\n1 / 1
+100%" -> "Configuração do Ambiente\n0 / 2
+0%" 
+  "O que são linguagens de programação?\n4 / 4
+100%" -> "Makefile\n4 / 4
+100%" 
+  "O que são linguagens de programação?\n4 / 4
+100%" -> "TKO - Ferramenta de Testes\n1 / 1
+100%" 
+  "Operações Básicas\n2 / 3
+66%" -> "Entrada e Saída - puts, printf, scanf\n2 / 4
+50%" 
+  "Entrada e Saída - puts, printf, scanf\n2 / 4
+50%" -> "Seleção Básica\n0 / 10
+0%" 
+  "Clean Code - Estilo\n1 / 1
+100%" -> "Seleção Básica\n0 / 10
+0%" 
+  "Clean Code - Indentação\n1 / 1
+100%" -> "Seleção Básica\n0 / 10
+0%" 
+  "O que são linguagens de programação?\n4 / 4
+100%" -> "Debugando\n1 / 1
+100%" 
+  "Seleção Básica\n0 / 10
+0%" -> "Funções I\n0 / 5
+0%" [style=dotted]
+  "Seleção Básica\n0 / 10
+0%" -> "While\n0 / 4
+0%" [style=dotted]
+  "Seleção Básica\n0 / 10
+0%" -> "Números Aleatórios\n0 / 2
+0%" [style=dotted]
+  "O que são linguagens de programação?\n4 / 4
+100%" [shape=ellipse, color=green, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
+  "Primeiro código\n6 / 6
+100%" [shape=ellipse, color=green, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
+  "Strings em C: Array de `char`\n0 / 1
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
+  "Clean Code - Estilo\n1 / 1
+100%" [shape=ellipse, color=green, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
+  "Clean Code - Indentação\n1 / 1
+100%" [shape=ellipse, color=green, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
+  "Manipulando tipos\n1 / 1
+100%" [shape=ellipse, color=green, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=white]
+  "Casting e Conversão\n0 / 3
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=white]
+  "Operações Básicas\n2 / 3
+66%" [shape=ellipse, color=yellow, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
+  "Biblioteca matemática\n0 / 2
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=white]
+  "Uso do bash\n1 / 1
+100%" [shape=ellipse, color=green, penwidth=3, fillcolor=bisque3, style=filled, fontcolor=white]
+  "Configuração do Ambiente\n0 / 2
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=bisque3, style=filled, fontcolor=white]
+  "Makefile\n4 / 4
+100%" [shape=ellipse, color=green, penwidth=3, fillcolor=bisque3, style=filled, fontcolor=white]
+  "TKO - Ferramenta de Testes\n1 / 1
+100%" [shape=ellipse, color=green, penwidth=3, fillcolor=bisque3, style=filled, fontcolor=black]
+  "Entrada e Saída - puts, printf, scanf\n2 / 4
+50%" [shape=ellipse, color=yellow, penwidth=3, fillcolor=brown3, style=filled, fontcolor=black]
+  "Seleção Básica\n0 / 10
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=chartreuse3, style=filled, fontcolor=black]
+  "Debugando\n1 / 1
+100%" [shape=ellipse, color=green, penwidth=3, fillcolor=chartreuse3, style=filled, fontcolor=white]
+  "Funções I\n0 / 5
+0%" [shape=ellipse, color=white, penwidth=1, fillcolor=coral3, style=filled, fontcolor=black]
+  "While\n0 / 4
+0%" [shape=ellipse, color=white, penwidth=1, fillcolor=cyan3, style=filled, fontcolor=black]
+  "Números Aleatórios\n0 / 2
+0%" [shape=ellipse, color=white, penwidth=1, fillcolor=darkgoldenrod3, style=filled, fontcolor=black]
 }

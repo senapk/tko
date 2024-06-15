@@ -1,4 +1,8 @@
 # Changelog
+
+- 0.6.2
+  - add: graph with textcolor white black for opt
+  - fix: change italic to opt
 - 0.6.1
   - add: total xp
 - 0.6.0

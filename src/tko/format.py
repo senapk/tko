@@ -103,8 +103,8 @@ class Color:
 def colour(modifiers: str, text: str) -> str:
     mod = modifiers.split(',')
     output = ''
-    for m in mod:
-        val = Color.get_style(m)
+    for m in [v for v in mod if v != '']:
+        val = Color.get_style(m.strip())
         if val != '':
             output += val
     output += text + Color.get_style('reset')

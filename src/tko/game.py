@@ -2,7 +2,6 @@
 
 import subprocess
 import re
-from typing import Optional, Dict, List, Tuple
 import os
 from .format import symbols, colour
 
@@ -20,7 +19,7 @@ class Task:
         self.default_min_value = 7
 
 
-    def get_grade_color(self, min_value: Optional[int] = None) -> str:
+    def get_grade_color(self, min_value: int | None = None) -> str:
         if min_value is None:
             min_value = self.default_min_value
         if self.grade == 0:
@@ -33,7 +32,7 @@ class Task:
             return "g"
         return "w"  
 
-    def get_grade_symbol(self, min_value: Optional[int] = None) -> str:
+    def get_grade_symbol(self, min_value: int | None = None) -> str:
         if min_value is None:
             min_value = self.default_min_value
         color = self.get_grade_color(min_value)
@@ -72,7 +71,7 @@ class Task:
             print(f"Grade inválida: {grade}")
 
     @staticmethod
-    def parse_item_with_link(line) -> Tuple[bool, str, str]:
+    def parse_item_with_link(line) -> tuple[bool, str, str]:
         pattern = r"\ *-.*\[(.*?)\]\((.+?)\)"
         match = re.match(pattern, line)
         if match:
@@ -80,7 +79,7 @@ class Task:
         return False, "", ""
     
     @staticmethod
-    def parse_task_with_link(line) -> Tuple[bool, str, str]:
+    def parse_task_with_link(line) -> tuple[bool, str, str]:
         pattern = r"\ *- \[ \].*\[(.*?)\]\((.+?)\)"
         match = re.match(pattern, line)
         if match:
@@ -104,7 +103,7 @@ class Task:
 
         
     @staticmethod
-    def parse_arroba_from_title_link(titulo, link) -> Tuple[bool, str]:
+    def parse_arroba_from_title_link(titulo, link) -> tuple[bool, str]:
         pattern = r".*?@(\w*)"
         match = re.match(pattern, titulo)
         if not match:
@@ -190,14 +189,14 @@ class Quest:
         self.line = ""
         self.key = ""
         self.title = ""
-        self.tasks: List[Task] = []
-        self.skills: List[str] = [] # s:skill
+        self.tasks: list[Task] = []
+        self.skills: list[str] = [] # s:skill
         self.cluster = ""
         self.requires = [] # r:quest_key
         self.requires_ptr = []
         self.opt = False # opt
-        self.qmin: Optional[int] = None # q:  minimo de 50 porcento da pontuação total para completar
-        self.tmin: Optional[int] = None  # t: ou ter no mínimo esse valor de todas as tarefas
+        self.qmin: int | None = None # q:  minimo de 50 porcento da pontuação total para completar
+        self.tmin: int | None = None  # t: ou ter no mínimo esse valor de todas as tarefas
 
     def __str__(self):
         line = str(self.line_number).rjust(3)
@@ -208,9 +207,9 @@ class Quest:
 
     def get_resume_by_percent(self) -> str:
         value = self.get_percent()
-        ref = self.qmin if self.qmin is not None else 100
-        if self.qmin is None:
-            return colour("*", str(value) + "%")
+        # ref = self.qmin if self.qmin is not None else 100
+        # if self.qmin is None:
+        #     return colour("*", str(value) + "%")
         return colour(self.get_grade_color() + ",*", str(value)) + "%"
     
     def get_requirement(self):
@@ -228,8 +227,8 @@ class Quest:
         output = f"{count}/{total}"
         if plus > 0:
             output += f"+{plus}"
-        if self.tmin is None:
-            return "(" + colour("*", output) + ")"
+        # if self.tmin is None:
+        #     return "(" + colour("*", output) + ")"
         return "(" + colour(self.get_grade_color()+",*", output) + ")"
 
     def get_grade_color(self) -> str:
@@ -401,10 +400,10 @@ def get_md_link(title: str) -> str:
 
 
 class Game:
-    def __init__(self, file: Optional[str] = None):
-        self.clusters: List[Cluster] = []  # clusters ordered
-        self.quests: Dict[str, Quest] = {}  # quests indexed by quest key
-        self.tasks: Dict[str, Task] = {}  # tasks indexed by task key
+    def __init__(self, file: str | None = None):
+        self.clusters: list[Cluster] = []  # clusters ordered
+        self.quests: dict[str, Quest] = {}  # quests indexed by quest key
+        self.tasks: dict[str, Task] = {}  # tasks indexed by task key
         if file is not None:
             self.parse_file(file)
 
@@ -529,7 +528,7 @@ class Game:
                 dfs(r, visitedx)
 
         for q in self.quests.values():
-            visited: List[str] = []
+            visited: list[str] = []
             dfs(q, visited)
 
     def parse_file(self, file):
@@ -598,44 +597,135 @@ class Game:
                     output.append(str(t))
         return "\n".join(output)
 
-    def generate_graph(self, output, reachable: List[str], counts: Dict[str, str], graph_ext=".png"):
+
+class Graph:
+
+    colorlist: list[tuple[str, str]] = [
+            ("aquamarine3","aquamarine4"),
+            ("bisque3","bisque4"),
+            ("brown3","brown4"),
+            ("chartreuse3","chartreuse4"),
+            ("coral3","coral4"),
+            ("cyan3","cyan4"),
+            ("darkgoldenrod3","darkgoldenrod4"),
+            ("darkolivegreen3","darkolivegreen4"),
+            ("darkorchid3","darkorchid4"),
+            ("darkseagreen3","darkseagreen4"),
+            ("darkslategray3","darkslategray4"),
+            ("deeppink3","deeppink4"),
+            ("deepskyblue3","deepskyblue4"),
+            ("dodgerblue3","dodgerblue4"),
+            ("firebrick3","firebrick4"),
+            ("gold3","gold4"),
+            ("green3","green4"),
+            ("hotpink3","hotpink4"),
+            ("indianred3","indianred4"),
+            ("khaki3","khaki4"),
+            ("lightblue3","lightblue4"),
+            ("lightcoral","lightcoral"),
+            ("lightcyan3","lightcyan4"),
+            ("lightgoldenrod3","lightgoldenrod4"),
+            ("lightgreen","lightgreen"),
+            ("lightpink3","lightpink4"),
+            ("lightsalmon3","lightsalmon4"),
+            ("lightseagreen","lightseagreen"),
+            ("lightskyblue3","lightskyblue4"),
+            ("lightsteelblue3","lightsteelblue4"),
+            ("lightyellow3","lightyellow4"),
+            ("magenta3","magenta4"),
+            ("maroon3","maroon4"),
+            ("mediumorchid3","mediumorchid4"),
+            ("mediumpurple3","mediumpurple4"),
+            ("mediumspringgreen","mediumspringgreen"),
+            ("mediumturquoise","mediumturquoise"),
+            ("mediumvioletred","mediumvioletred"),
+            ("mistyrose3","mistyrose4"),
+            ("navajowhite3","navajowhite4"),
+            ("olivedrab3","olivedrab4"),
+            ("orange3","orange4"),
+            ("orangered3","orangered4"),
+            ("orchid3","orchid4"),
+            ("palegreen3","palegreen4"),
+            ("paleturquoise3","paleturquoise4"),
+            ("palevioletred3","palevioletred4")
+            ]
+
+    def __init__(self, game: Game):
+        self.game = game
+        self.reachable: list[str] | None = None
+        self.counts: dict[str, str] | None = None
+        self.graph_ext = ".png"
+        self.output = "graph"
+
+    def set_reachable(self, reachable: list[str]):
+        self.reachable = reachable
+        return self
+
+    def set_counts(self, counts: dict[str, str]):
+        self.counts = counts
+        return self
+
+    def set_graph_ext(self, graph_ext: str):
+        self.graph_ext = graph_ext
+        return self
+    
+    def set_output(self, output: str):
+        self.output = output
+        return self
+
+    def info(self, qx: Quest):
+        text = f'{qx.title.strip()}'
+        if self.reachable is None:
+            return f'"{text}"'
+        return f'"{text}\\n{self.counts[qx.key]}"'
+
+
+    def is_reachable_or_next(self, q: Quest):
+        if self.reachable is None:
+            return True
+        if q.key in self.reachable:
+            return True
+        for r in q.requires_ptr:
+            if r.key in self.reachable:
+                return True
+        return False
+
+    def generate(self):
         saida = ["digraph diag {", '  node [penwidth=1, style="rounded,filled", shape=box]']
 
-        def info(qx):
-            text = f'{qx.title.strip()}'
-            if reachable is None:
-                return f'"{text}"'
-            return f'"{text}\\n{counts[qx.key]}"'
-
-        for q in self.quests.values():
+        targets = [q for q in self.game.quests.values() if self.is_reachable_or_next(q)]
+        for q in targets:
             token = "->"
             if len(q.requires_ptr) > 0:
                 for r in q.requires_ptr:
                     extra = ""
-                    if reachable is not None:
-                        if q.key not in reachable:
+                    if self.reachable is not None:
+                        if q.key not in self.reachable and not r.is_complete():
                             extra = "[style=dotted]"
-                    saida.append(f"  {info(r)} {token} {info(q)} {extra}")
+                    saida.append(f"  {self.info(r)} {token} {self.info(q)} {extra}")
             else:
                 v = '  "Início"'
-                saida.append(f"{v} {token} {info(q)}")
+                saida.append(f"{v} {token} {self.info(q)}")
 
-        colorlist = ["lightblue", "pink", "lightgreen", "cyan", "gold", "yellow", "orange", "tomato", "violet", "brown", "gray"]
-        for i, c in enumerate(self.clusters):
-            for q in c.quests:
+        for i, c in enumerate(self.game.clusters):
+            cluster_targets = [q for q in c.quests if self.is_reachable_or_next(q)]
+            for q in cluster_targets:
                 if q.opt:
-                    shape = "ellipse"
+                    fillcolor = self.colorlist[i][0]
+                    textcolor = "white"
                 else:
-                    shape = "box"
+                    fillcolor = self.colorlist[i][0]
+                    textcolor = "black"
+                shape = "ellipse"
                 color = "black"
                 width = 1
-                if reachable is not None:
-                    if q.key not in reachable:
+                if self.reachable is not None:
+                    if q.key not in self.reachable:
                         color = "white"
                     else:
                         width = 3
                         color = q.get_grade_color()
-                saida.append(f"  {info(q)} [shape={shape}, color={color}, penwidth={width}, fillcolor={colorlist[i]}]")
+                saida.append(f"  {self.info(q)} [shape={shape}, color={color}, penwidth={width}, fillcolor={fillcolor}, style=filled, fontcolor={textcolor}]")
 
 
         # for c in self.clusters:
@@ -653,12 +743,13 @@ class Game:
         # saida.append("@enduml")
         saida.append("")
 
-        dot_file = output + ".dot"
-        out_file = output + graph_ext
+        dot_file = self.output + ".dot"
+        out_file = self.output + self.graph_ext
         open(dot_file, "w").write("\n".join(saida))
-        if graph_ext == ".png":
+
+        if self.graph_ext == ".png":
             subprocess.run(["dot", "-Tpng", dot_file, "-o", out_file])
-        elif graph_ext == ".svg":
+        elif self.graph_ext == ".svg":
             subprocess.run(["dot", "-Tsvg", dot_file, "-o", out_file])
         else:
             print("Formato de imagem não suportado")
