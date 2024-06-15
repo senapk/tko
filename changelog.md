@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.6.3
+  - add: rotate quest text
 - 0.6.2
   - add: graph with textcolor white black for opt
   - fix: change italic to opt
