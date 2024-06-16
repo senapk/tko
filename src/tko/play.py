@@ -281,15 +281,16 @@ class Play:
 
     def str_cluster(self, key: str, cluster: Cluster, quests: list[Quest]) -> str:
         opening = "━─"
+        resume = ""
         if cluster.key in self.expanded:
             opening = "─┯"
+            resume = " " + cluster.get_resume_by_percent()
 
         # resume = ""
         # for item in self.order:
         #     if item == "cont":
         #         resume += " " + cluster.get_resume_by_quests()
             # if item == "perc":
-        resume = " " + cluster.get_resume_by_percent()
         key = colour(DD.cluster_key, key)
         title = colour(DD.cluster_title, cluster.title.strip())
         new = "" if cluster.key not in self.new_items else colour(DD.new, " [new]")
@@ -542,6 +543,8 @@ class Play:
         elif cmd == "l" or cmd == "link":
             return self.process_link(actions)
         elif cmd == "r" or cmd == "rotate":
+            if len(self.order) == 1:
+                self.order.append("cont")
             self.order = [self.order[-1]] + self.order[:-1]
         elif cmd == "e" or cmd == "ext":
             return self.process_ext(actions)
