@@ -2210,17 +2210,21 @@ bash_guide = """
 
 
 class Task:
+
     def __init__(self):
         self.line_number = 0
         self.line = ""
         self.key = ""
         self.grade: int = 0 #valor de 0 a 10
-        self.skills = []
+        
+        self.xp: int  = 0
+        self.skills: dict[str, int] = {}
+        
+        self.opt: bool = False
         self.title = ""
         self.link = ""
-        self.opt = False
-        self.default_min_value = 7
 
+        self.default_min_value = 7 # default min grade to complete task
 
     def get_grade_color(self, min_value: int | None = None) -> str:
         if min_value is None:
@@ -2249,7 +2253,6 @@ class Task:
             return colour("*," + color, symbols.check)
         return "0"
 
-
     def get_percent(self):
         if self.grade == 0:
             return 0
@@ -2273,6 +2276,40 @@ class Task:
         else:
             print(f"Grade inválida: {grade}")
 
+    def process_link(self, base_file):
+        if self.link.startswith("http"):
+            return
+        if self.link.startswith("./"):
+            self.link = self.link[2:]
+        # todo trocar / por \\ se windows
+        self.link = base_file + self.link
+
+    def __str__(self):
+        line = str(self.line_number).rjust(3)
+        key = "" if self.key == self.title else self.key + " "
+        return f"{line}    {self.grade} {key}{self.title} {self.skills} {self.link}"
+
+class TaskParser:
+
+    @staticmethod
+    def load_html_tags(task: Task):                   
+        pattern = r"<!--\s*(.*?)\s*-->"
+        match = re.search(pattern, task.line)
+        if not match:
+            return
+
+        tags_raw = match.group(1).strip()
+        tags = [tag.strip() for tag in tags_raw.split(" ")]
+        task.opt = "opt" in tags
+        for t in tags:
+            if t.startswith("+"):
+                key, value = t[1:].split(":")
+                task.skills[key] = int(value)
+            elif t.startswith("$"):
+                task.xp = int(t[1:])
+            elif t.startswith("@"):
+                task.key = t[1:]
+
     @staticmethod
     def parse_item_with_link(line) -> tuple[bool, str, str]:
         pattern = r"\ *-.*\[(.*?)\]\((.+?)\)"
@@ -2289,22 +2326,6 @@ class Task:
             return True, match.group(1), match.group(2)
         return False, "", ""
 
-    def load_html_tags(self):                   
-        pattern = r"<!--\s*(.*?)\s*-->"
-        match = re.search(pattern, self.line)
-        if not match:
-            return
-
-        tags_raw = match.group(1).strip()
-        tags = [tag.strip() for tag in tags_raw.split(" ")]
-        self.opt = "opt" in tags
-        for t in tags:
-            if t.startswith("s:"):
-                self.skills.append(t[2:])
-            elif t.startswith("@"):
-                self.key = t[1:]
-
-        
     @staticmethod
     def parse_arroba_from_title_link(titulo, link) -> tuple[bool, str]:
         pattern = r".*?@(\w*)"
@@ -2316,75 +2337,70 @@ class Task:
             return False, ""
         return True, key
 
-    def process_link(self, base_file):
-        if self.link.startswith("http"):
-            return
-        if self.link.startswith("./"):
-            self.link = self.link[2:]
-        # todo trocar / por \\ se windows
-        self.link = base_file + self.link
 
     # - [Titulo com @palavra em algum lugar](link/@palavra/Readme.md) <!-- tag1 tag2 tag3 -->
-    def parse_coding_task(self, line, line_num):
+    @staticmethod
+    def parse_coding_task(line, line_num) -> Task | None:
         if line == "":
-            return False
+            return None
         line = line.lstrip()
 
-        found, titulo, link = Task.parse_item_with_link(line)
+        found, titulo, link = TaskParser.parse_item_with_link(line)
         if not found:
-            return False
-        found, key = Task.parse_arroba_from_title_link(titulo, link)
+            return None
+        found, key = TaskParser.parse_arroba_from_title_link(titulo, link)
         if not found:
-            return False
+            return None
 
-        self.line = line
-        self.line_number = line_num
-        self.key = key
-        self.title = titulo
-        self.link = link
+        task = Task()
 
-        self.load_html_tags()
+        task.line = line
+        task.line_number = line_num
+        task.key = key
+        task.title = titulo
+        task.link = link
+        TaskParser.load_html_tags(task)
 
-        return True
+        return task
 
     # se com - [ ], não precisa das tags dentro do html, o key será dado pelo título
     # se tiver as tags dentro do html, se alguma começar com @, o key será dado por ela
     # - [ ] [Título](link)
     # - [ ] [Título](link) <!-- tag1 tag2 tag3 -->
     # - [Título](link) <!-- tag1 tag2 tag3 -->
-    def parse_reading_task(self, line, line_num):
+    @staticmethod
+    def parse_reading_task(line, line_num) -> Task | None:
         if line == "":
-            return False
+            return None
         line = line.lstrip()
 
-        found, titulo, link = Task.parse_task_with_link(line)
+        found, titulo, link = TaskParser.parse_task_with_link(line)
+
         if found:
-            self.key = link
-            self.title = titulo
-            self.link = link
-            self.line = line
-            self.line_number = line_num
-            self.load_html_tags()
-            return True
+            task = Task()
+            task.key = link
+            task.title = titulo
+            task.link = link
+            task.line = line
+            task.line_number = line_num
+            TaskParser.load_html_tags(task)
+            return task
         
-        found, titulo, link = Task.parse_item_with_link(line)
-        self.key = ""
+
+        task = Task()
+        found, titulo, link = TaskParser.parse_item_with_link(line)
+        task.key = ""
         if found:
-            self.link = link
-            self.line = line
-            self.line_number = line_num
-            self.load_html_tags()
-            if self.key == "":
-                return False
-            self.title = titulo
-            return True
+            task.link = link
+            task.line = line
+            task.line_number = line_num
+            TaskParser.load_html_tags(task)
+            if task.key == "": # item with links needs a key
+                return None
+            task.title = titulo
+            return task
 
-        return False
-
-    def __str__(self):
-        line = str(self.line_number).rjust(3)
-        key = "" if self.key == self.title else self.key + " "
-        return f"{line}    {self.grade} {key}{self.title} {self.skills} {self.link}"
+        return None
 
 class Quest:
     def __init__(self):
@@ -2393,7 +2409,8 @@ class Quest:
         self.key = ""
         self.title = ""
         self.tasks: list[Task] = []
-        self.skills: list[str] = [] # s:skill
+        self.skills: dict[str, int] = {} # s:skill
+        self.xp: int = 0
         self.cluster = ""
         self.requires = [] # r:quest_key
         self.requires_ptr = []
@@ -2495,53 +2512,88 @@ class Quest:
         cache[self.key] = all( [r.is_complete() and r.is_reachable(cache) for r in self.requires_ptr] )
         return cache[self.key]
 
-    def update_requirements(self):
-        if self.qmin is None and self.tmin is None:
-            self.qmin = 50
 
-    def parse_quest(self, line, line_num):
-        
+
+    
+
+class QuestParser:
+    quest: Quest
+
+    def __init__(self):
+        self.quest = Quest()
+        self.line = ""
+        self.line_num = 0
+
+
+    def update_requirements(self):
+        if self.quest.qmin is None and self.quest.tmin is None:
+            self.quest.qmin = 50
+
+    def match_full_pattern(self):
         fullpattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->\s*$"
-        match = re.match(fullpattern, line)
+        match = re.match(fullpattern, self.line)
         tags = []
 
-        self.line = line
-        self.line_number = line_num
-        self.cluster = ""
+        if not match:
+            return False
+        self.quest.title = match.group(1).strip()
+        tags_raw = match.group(2).strip()
+        tags = [tag.strip() for tag in tags_raw.split()]
+        keys = [t[1:] for t in tags if t.startswith("@")]
+        if len(keys) > 0:
+            self.quest.key = keys[0]
+        else:
+            self.quest.key = get_md_link(self.quest.title)
 
-        if match:
-            self.title = match.group(1).strip()
-            tags_raw = match.group(2).strip()
-            tags = [tag.strip() for tag in tags_raw.split()]
-            keys = [t[1:] for t in tags if t.startswith("@")]
-            if len(keys) > 0:
-                self.key = keys[0]
-            else:
-                self.key = get_md_link(self.title)
-            self.skills = [t[2:] for t in tags if t.startswith("s:")]
-            self.requires = [t[2:] for t in tags if t.startswith("r:")]
-            self.opt = "opt" in tags
-            qmin = [t[2:] for t in tags if t.startswith("q:")]
-            if len(qmin) > 0:
-                self.qmin = int(qmin[0])
-            tmin = [t[2:] for t in tags if t.startswith("t:")]
-            if len(tmin) > 0:
-                self.tmin = int(tmin[0])
-                if self.tmin > 10:
-                    print("fail: tmin > 10")
-                    exit(1)
-            self.update_requirements()
-            return True
+        for s in [t[1:] for t in tags if t.startswith("+")]:
+            k, v = s.split(":")
+            self.quest.skills[k] = int(v)
 
-        minipattern = r"^#+\s*(.*?)\s*$"
-        match = re.match(minipattern, line)
-        if match:
-            self.title = match.group(1)
-            self.key = get_md_link(self.title)
-            self.update_requirements()
-            return True
+        for x in [t[1:] for t in tags if t.startswith("$")]:
+            self.quest.xp = int(x)
+
+        self.quest.requires = [t[2:] for t in tags if t.startswith("r:")]
+
+        self.quest.opt = "opt" in tags
         
+        qmin = [t[2:] for t in tags if t.startswith("q:")]
+        
+        if len(qmin) > 0:
+            self.quest.qmin = int(qmin[0])
+        tmin = [t[2:] for t in tags if t.startswith("t:")]
+        if len(tmin) > 0:
+            self.quest.tmin = int(tmin[0])
+            if self.quest.tmin > 10:
+                print("fail: tmin > 10")
+                exit(1)
+        self.update_requirements()
+        return True
+
+    def __match_minimal_pattern(self):
+        minipattern = r"^#+\s*(.*?)\s*$"
+        match = re.match(minipattern, self.line)
+        if match:
+            self.quest.title = match.group(1)
+            self.quest.key = get_md_link(self.quest.title)
+            self.update_requirements()
+            return True
         return False
+
+    def parse_quest(self, line, line_num) -> Quest | None:
+        self.line = line
+        self.line_num = line_num
+
+        self.quest.line = self.line
+        self.quest.line_number = self.line_num
+        self.quest.cluster = ""
+
+        if self.match_full_pattern():
+            return self.quest
+        
+        if self.__match_minimal_pattern():
+            return self.quest
+        
+        return None
 
 class Cluster:
     def __init__(self, line_number:int = 0, title: str = "", key: str = ""):
@@ -2647,8 +2699,8 @@ class Game:
                 
 
     def load_quest(self, line, line_num) -> Quest | None:
-        quest = Quest()
-        if not quest.parse_quest(line, line_num + 1):
+        quest = QuestParser().parse_quest(line, line_num + 1)
+        if quest is None:
             return None
         if quest.key in self.quests:
             print(f"Quest {quest.key} já existe")
@@ -2661,13 +2713,10 @@ class Game:
     def load_task(self, line, line_num) -> Task | None:
         if line == "":
             return None
-        task = Task()
-        found = False
-        if task.parse_reading_task(line, line_num + 1):
-            found = True
-        if task.parse_coding_task(line, line_num + 1):
-            found = True
-        if not found:
+        task = TaskParser.parse_reading_task(line, line_num + 1)
+        if task is None:
+            task = TaskParser.parse_coding_task(line, line_num + 1)
+        if task is None:
             return None
         
         if task.key in self.tasks:
@@ -2878,7 +2927,7 @@ class Graph:
 
     def info(self, qx: Quest):
         text = f'{qx.title.strip()}'
-        if self.reachable is None:
+        if self.reachable is None or self.counts is None:
             return f'"{text}"'
         return f'"{text}\\n{self.counts[qx.key]}"'
 
