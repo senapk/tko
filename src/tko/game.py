@@ -13,9 +13,10 @@ class Task:
         self.line = ""
         self.key = ""
         self.grade: int = 0 #valor de 0 a 10
-        
-        self.xp: int  = 0
-        self.skills: dict[str, int] = {}
+
+        self.qskills: dict[str, int] = {} # default quest skills
+        self.skills: dict[str, int] = {} # local skills
+        self.xp: int = 0
         
         self.opt: bool = False
         self.title = ""
@@ -72,7 +73,7 @@ class Task:
             self.grade = grade
         else:
             print(f"Grade inválida: {grade}")
-
+    
     def process_link(self, base_file):
         if self.link.startswith("http"):
             return
@@ -102,8 +103,6 @@ class TaskParser:
             if t.startswith("+"):
                 key, value = t[1:].split(":")
                 task.skills[key] = int(value)
-            elif t.startswith("$"):
-                task.xp = int(t[1:])
             elif t.startswith("@"):
                 task.key = t[1:]
 
@@ -205,9 +204,8 @@ class Quest:
         self.line = ""
         self.key = ""
         self.title = ""
-        self.tasks: list[Task] = []
+        self.__tasks: list[Task] = []
         self.skills: dict[str, int] = {} # s:skill
-        self.xp: int = 0
         self.cluster = ""
         self.requires = [] # r:quest_key
         self.requires_ptr = []
@@ -217,16 +215,13 @@ class Quest:
 
     def __str__(self):
         line = str(self.line_number).rjust(3)
-        tasks_size = str(len(self.tasks)).rjust(2, "0")
+        tasks_size = str(len(self.__tasks)).rjust(2, "0")
         key = "" if self.key == self.title else self.key + " "
         output = f"{line}   {tasks_size} {key}{self.title} {self.skills} {self.requires}"
         return output
 
     def get_resume_by_percent(self) -> str:
         value = self.get_percent()
-        # ref = self.qmin if self.qmin is not None else 100
-        # if self.qmin is None:
-        #     return colour("*", str(value) + "%")
         return colour(self.get_grade_color() + ",*", str(value)) + "%"
     
     def get_requirement(self):
@@ -238,14 +233,12 @@ class Quest:
 
     def get_resume_by_tasks(self) -> str:
         tmin = self.tmin if self.tmin is not None else 7
-        total = len([t for t in self.tasks if not t.opt])
-        plus = len([t for t in self.tasks if t.opt])
-        count = len([t for t in self.tasks if t.grade >= tmin])
+        total = len([t for t in self.__tasks if not t.opt])
+        plus = len([t for t in self.__tasks if t.opt])
+        count = len([t for t in self.__tasks if t.grade >= tmin])
         output = f"{count}/{total}"
         if plus > 0:
             output += f"+{plus}"
-        # if self.tmin is None:
-        #     return "(" + colour("*", output) + ")"
         return "(" + colour(self.get_grade_color()+",*", output) + ")"
 
     def get_grade_color(self) -> str:
@@ -259,35 +252,54 @@ class Quest:
 
     def is_complete(self):
         if self.qmin is not None:
-            return self.is_complete_by_percent()
+            return self.get_percent() >= self.qmin
+        # task complete mode
         if self.tmin is not None:
-            return self.is_complete_by_tasks()
-        return False
-
-    def is_complete_by_percent(self):
-        if self.qmin is None:
-            return False
-        return self.get_percent() >= self.qmin
-    
-    def is_complete_by_tasks(self):
-        if self.tmin is None:
-            return False
-        for t in self.tasks:
-            if not t.opt and t.grade < self.tmin:
-                return False
+            for t in self.__tasks:
+                if not t.opt and t.grade < self.tmin:
+                    return False
         return True
 
+    def add_task(self, task: Task, filename: str):
+        if self.qmin is not None:
+            if task.opt:
+                print(f"Quests com requerimento de porcentagem não deve ter Tasks opcionais")
+                print(f"{filename}:{task.line_number} {task.key}")
+                exit(1)
+        task.qskills = self.skills
+
+        task.xp = 0
+        for s in task.skills:
+            task.xp += task.skills[s]
+
+        for s in task.qskills:
+            task.xp += task.qskills[s]
+        
+        self.__tasks.append(task)
+
+    def get_tasks(self):
+        return self.__tasks
+
+    def get_xp(self) -> tuple[int, int]:
+        total = 0
+        obtained = 0
+        for t in self.__tasks:
+            total += t.xp
+            if t.grade > 0:
+                obtained += t.xp * t.grade // 10
+
+        return obtained, total
+        
     def get_percent(self):
-        total = len(self.tasks)
+        obtained, total = self.get_xp()
         if total == 0:
             return 0
-        done = sum([t.get_percent() for t in self.tasks])
-        return done // total
+        return obtained * 100 // total
 
     def in_progress(self):
         if self.is_complete():
             return False
-        for t in self.tasks:
+        for t in self.__tasks:
             if t.grade != 0:
                 return True
         return False
@@ -308,11 +320,7 @@ class Quest:
             return True
         cache[self.key] = all( [r.is_complete() and r.is_reachable(cache) for r in self.requires_ptr] )
         return cache[self.key]
-
-
-
     
-
 class QuestParser:
     quest: Quest
 
@@ -320,11 +328,21 @@ class QuestParser:
         self.quest = Quest()
         self.line = ""
         self.line_num = 0
+        self.default_qmin_requirement = 50
+        self.default_task_xp = 10
 
+    def finish_quest(self) -> Quest:
 
-    def update_requirements(self):
+        if self.quest.key == "":
+            self.quest.key = get_md_link(self.quest.title)
+
+        if len(self.quest.skills) == 0:
+            self.quest.skills["xp"] = self.default_task_xp
+        
         if self.quest.qmin is None and self.quest.tmin is None:
-            self.quest.qmin = 50
+            self.quest.qmin = self.default_qmin_requirement
+
+        return self.quest
 
     def match_full_pattern(self):
         fullpattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->\s*$"
@@ -339,15 +357,13 @@ class QuestParser:
         keys = [t[1:] for t in tags if t.startswith("@")]
         if len(keys) > 0:
             self.quest.key = keys[0]
-        else:
-            self.quest.key = get_md_link(self.quest.title)
 
-        for s in [t[1:] for t in tags if t.startswith("+")]:
-            k, v = s.split(":")
-            self.quest.skills[k] = int(v)
-
-        for x in [t[1:] for t in tags if t.startswith("$")]:
-            self.quest.xp = int(x)
+        skills = [t[1:] for t in tags if t.startswith("+")]
+        if len(skills) > 0:
+            self.quest.skills = {}
+            for s in skills:
+                k, v = s.split(":")
+                self.quest.skills[k] = int(v)
 
         self.quest.requires = [t[2:] for t in tags if t.startswith("r:")]
 
@@ -363,32 +379,30 @@ class QuestParser:
             if self.quest.tmin > 10:
                 print("fail: tmin > 10")
                 exit(1)
-        self.update_requirements()
         return True
 
     def __match_minimal_pattern(self):
         minipattern = r"^#+\s*(.*?)\s*$"
         match = re.match(minipattern, self.line)
         if match:
-            self.quest.title = match.group(1)
-            self.quest.key = get_md_link(self.quest.title)
-            self.update_requirements()
+            self.quest.title = match.group(1).strip()
             return True
         return False
 
-    def parse_quest(self, line, line_num) -> Quest | None:
+    def parse_quest(self, filename, line, line_num) -> Quest | None:
         self.line = line
         self.line_num = line_num
+        self.filename = filename
 
         self.quest.line = self.line
         self.quest.line_number = self.line_num
         self.quest.cluster = ""
 
         if self.match_full_pattern():
-            return self.quest
+            return self.finish_quest()
         
         if self.__match_minimal_pattern():
-            return self.quest
+            return self.finish_quest()
         
         return None
 
@@ -430,10 +444,10 @@ class Cluster:
         return f"({count}/{total})"
         
 
-def rm_comments(title: str) -> str:
-    if "<!--" in title and "-->" in title:
-        title = title.split("<!--")[0] + title.split("-->")[1]
-    return title
+# def rm_comments(title: str) -> str:
+#     if "<!--" in title and "-->" in title:
+#         title = title.split("<!--")[0] + title.split("-->")[1]
+#     return title
 
 
 def get_md_link(title: str) -> str:
@@ -456,7 +470,9 @@ class Game:
         self.clusters: list[Cluster] = []  # clusters ordered
         self.quests: dict[str, Quest] = {}  # quests indexed by quest key
         self.tasks: dict[str, Task] = {}  # tasks indexed by task key
+        self.filename = None
         if file is not None:
+            self.filename = file
             self.parse_file(file)
 
     def get_task(self, key: str) -> Task:
@@ -496,7 +512,7 @@ class Game:
                 
 
     def load_quest(self, line, line_num) -> Quest | None:
-        quest = QuestParser().parse_quest(line, line_num + 1)
+        quest = QuestParser().parse_quest(self.filename, line, line_num + 1)
         if quest is None:
             return None
         if quest.key in self.quests:
@@ -543,16 +559,13 @@ class Game:
         # remove all quests without tasks
         valid_quests = {}
         for k, q in self.quests.items():
-            if len(q.tasks) > 0:
+            if len(q.get_tasks()) > 0:
                 valid_quests[k] = q
 
         self.quests = valid_quests
 
-        # for q in self.quests.values():
-        #   if len(q.tasks) == 0:
-        #     print(f"Quest {q.key} não tem tarefas")
-        #     exit(1)
-
+        
+        # verificar se todas as quests requeridas existem e adicionar o ponteiro
         for q in self.quests.values():
             for r in q.requires:
                 if r in self.quests:
@@ -561,8 +574,6 @@ class Game:
                     print(f"keys: {self.quests.keys()}")
                     print(f"Quest\n{str(q)}\nrequer {r} que não existe")
                     exit(1)
-
-        # check if there is a cycle
 
     def check_cycle(self):
         def dfs(qx, visitedx):
@@ -581,6 +592,7 @@ class Game:
             dfs(q, visited)
 
     def parse_file(self, file):
+        self.filename = file
         lines = open(file, encoding="utf-8").read().split("\n")
         active_quest = None
         active_cluster = None
@@ -603,11 +615,13 @@ class Game:
 
             task = self.load_task(line, line_num)
             if task is not None:
+                
                 if active_quest is None:
                     print(f"Task {task.key} não está dentro de uma quest")
                     print(task)
                     exit(1)
-                active_quest.tasks.append(task)
+                if self.filename is not None:
+                    active_quest.add_task(task, self.filename)
 
         self.clear_empty()
 
@@ -619,13 +633,13 @@ class Game:
 
         # apagando quests vazias da lista de quests
         for k in list(self.quests.keys()):
-            if len(self.quests[k].tasks) == 0:
+            if len(self.quests[k].get_tasks()) == 0:
                 del self.quests[k]
 
         # apagando quests vazias dos clusters e clusters vazios
         clusters = []
         for c in self.clusters:
-            quests = [q for q in c.quests if len(q.tasks) > 0]
+            quests = [q for q in c.quests if len(q.get_tasks()) > 0]
             if len(quests) > 0:
                 c.quests = quests
                 clusters.append(c)
@@ -642,7 +656,7 @@ class Game:
             output.append(str(c))
             for q in c.quests:
                 output.append(str(q))
-                for t in q.tasks:
+                for t in q.get_tasks():
                     output.append(str(t))
         return "\n".join(output)
 

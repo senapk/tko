@@ -7,6 +7,9 @@ import shutil
 import os
 import re
 
+def debug(text):
+    print(text)
+
 class DD:
     cluster_key = "blue, bold"
     cluster_title = "bold"
@@ -16,6 +19,8 @@ class DD:
     lcmd = "red, bold"
     cmd = "red"
     code_key = "bold"
+    skills = "cyan, bold"
+
 
     play = "green"
     new = "green, bold"
@@ -242,6 +247,13 @@ class Play:
 
         def gen_saida(_title):
             parts = _title.split(" ")
+        
+            xp = ""
+            if "xp" in self.order:
+                for s, v in t.skills.items():
+                    xp += f" +{s}:{v}"
+                xp = colour(DD.skills, xp)
+
             if t.opt:
                 fn = lambda x: colour(DD.opt, x)
             else:
@@ -249,8 +261,10 @@ class Play:
             parts = [("@" + colour(DD.code_key, p[1:]) if p.startswith("@") else fn(p)) for p in parts]
 
             titlepainted = " ".join(parts)
-            return f" {ligc} {ligq}{vindex}{vdone} {titlepainted}"
+            return f" {ligc} {ligq}{vindex}{vdone} {titlepainted}{xp}"
         
+        
+
         return Play.cut_limits(title, gen_saida)
 
     def str_quest(self, key: str, q: Quest, lig: str) -> str:
@@ -275,6 +289,12 @@ class Play:
                     resume += " " + q.get_requirement()
                 elif item == "title":
                     resume += " " + _title
+                elif item == "xp":
+                    xp = ""
+                    for s,v in q.skills.items():
+                        xp += f" +{s}:{v}"
+                    xp = colour(DD.skills, xp)
+                    resume += " " + xp
             return f" {lig}{con}{key}{resume}{new}"
         
         return Play.cut_limits(q.title.strip(), gen_saida)
@@ -321,10 +341,10 @@ class Play:
                 self.vfolds[str(fold_index)] = q.key
                 fold_index += 1
                 if q.key in self.expanded:
-                    for t in q.tasks:
+                    for t in q.get_tasks():
                         key = Util.calc_letter(task_index)
                         ligc = "│" if q != quests[-1] else " "
-                        ligq = "├─" if t != q.tasks[-1] else "╰─"
+                        ligq = "├─" if t != q.get_tasks()[-1] else "╰─"
                         print(self.str_task(key, t, ligc, ligq, q.tmin))
                         self.vtasks[key] = t
                         task_index += 1
@@ -502,6 +522,12 @@ class Play:
             print(f"Extensão {ext} não processada")
             return False
 
+    def order_toggle(self, token):
+        if token in self.order:
+            self.order.remove(token)
+        else:
+            self.order.append(token)
+
     def take_actions(self, actions) -> bool:
         if len(actions) == 0:
             return True
@@ -520,20 +546,13 @@ class Play:
         elif cmd == "h" or cmd == "help":
             return self.show_cmds()
         elif cmd == "c" or cmd == "cont":
-            if "cont" in self.order:
-                self.order.remove("cont")
-            else:
-                self.order.append("cont")
+            self.order_toggle("cont")
         elif cmd == "p" or cmd == "perc":
-            if "perc" in self.order:
-                self.order.remove("perc")
-            else:
-                self.order.append("perc")
+            self.order_toggle("perc")
         elif cmd == "g" or cmd == "goal":
-            if "goal" in self.order:
-                self.order.remove("goal")
-            else:
-                self.order.append("goal")
+            self.order_toggle("goal")
+        elif cmd == "x" or cmd == "xp":
+            self.order_toggle("xp")
         elif cmd == "a" or cmd == "admin":
             self.admin_mode = not self.admin_mode
         elif cmd == "t" or cmd == "toolbar":
@@ -663,9 +682,9 @@ class Play:
         reachable: list[str] = [q.key for q in self.avaliable_quests]
         counts = {}
         for q in self.game.quests.values():
-            done = len([t for t in q.tasks if t.is_complete()])
-            init = len([t for t in q.tasks if t.in_progress()])
-            todo = len([t for t in q.tasks if t.not_started()])
+            done = len([t for t in q.get_tasks() if t.is_complete()])
+            init = len([t for t in q.get_tasks() if t.in_progress()])
+            todo = len([t for t in q.get_tasks() if t.not_started()])
             counts[q.key] = f"{done} / {done + init + todo}\n{q.get_percent()}%"
 
         Graph(self.game).set_reachable(reachable).set_counts(counts).set_graph_ext(graph_ext).generate()
@@ -684,7 +703,8 @@ class Play:
     # return True if the user wants to continue playing
     def play(self, graph_ext: str) -> bool:
         success = True
-        first_graph_msg = True 
+        first_graph_msg = True
+
         while True:
             if success:
                 self.reset_view()

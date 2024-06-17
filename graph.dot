@@ -1,25 +1,16 @@
 digraph diag {
   node [penwidth=1, style="rounded,filled", shape=box]
-  "Início" -> "O que são linguagens de programação?\n4 / 4
-100%"
-  "O que são linguagens de programação?\n4 / 4
-100%" -> "Primeiro código\n6 / 6
-100%" 
-  "Entrada e Saída - puts, printf, scanf\n2 / 4
-50%" -> "Strings em C: Array de `char`\n0 / 1
-0%" 
-  "Primeiro código\n6 / 6
-100%" -> "Clean Code - Estilo\n1 / 1
+  "Início" -> "O que são linguagens de programação?\n2 / 4
+66%"
+  "O que são linguagens de programação?\n2 / 4
+66%" -> "Primeiro código\n6 / 6
 100%" 
   "Primeiro código\n6 / 6
-100%" -> "Clean Code - Indentação\n1 / 1
+100%" -> "Clean Code\n2 / 2
 100%" 
   "Primeiro código\n6 / 6
-100%" -> "Manipulando tipos\n1 / 1
-100%" 
-  "Primeiro código\n6 / 6
-100%" -> "Casting e Conversão\n0 / 3
-0%" 
+100%" -> "Casting e Conversão\n1 / 5
+20%" 
   "Primeiro código\n6 / 6
 100%" -> "Operações Básicas\n2 / 3
 66%" 
@@ -29,17 +20,17 @@ digraph diag {
   "Operações Básicas\n2 / 3
 66%" -> "Biblioteca matemática\n0 / 2
 0%" 
-  "O que são linguagens de programação?\n4 / 4
-100%" -> "Uso do bash\n1 / 1
+  "O que são linguagens de programação?\n2 / 4
+66%" -> "Uso do bash\n1 / 1
 100%" 
   "Uso do bash\n1 / 1
 100%" -> "Configuração do Ambiente\n0 / 2
 0%" 
-  "O que são linguagens de programação?\n4 / 4
-100%" -> "Makefile\n4 / 4
+  "O que são linguagens de programação?\n2 / 4
+66%" -> "Makefile\n4 / 4
 100%" 
-  "O que são linguagens de programação?\n4 / 4
-100%" -> "TKO - Ferramenta de Testes\n1 / 1
+  "O que são linguagens de programação?\n2 / 4
+66%" -> "TKO - Ferramenta de Testes\n1 / 1
 100%" 
   "Operações Básicas\n2 / 3
 66%" -> "Entrada e Saída - puts, printf, scanf\n2 / 4
@@ -47,14 +38,11 @@ digraph diag {
   "Entrada e Saída - puts, printf, scanf\n2 / 4
 50%" -> "Seleção Básica\n0 / 10
 0%" 
-  "Clean Code - Estilo\n1 / 1
+  "Clean Code\n2 / 2
 100%" -> "Seleção Básica\n0 / 10
 0%" 
-  "Clean Code - Indentação\n1 / 1
-100%" -> "Seleção Básica\n0 / 10
-0%" 
-  "O que são linguagens de programação?\n4 / 4
-100%" -> "Debugando\n1 / 1
+  "O que são linguagens de programação?\n2 / 4
+66%" -> "Debugando\n1 / 1
 100%" 
   "Seleção Básica\n0 / 10
 0%" -> "Funções I\n0 / 5
@@ -65,20 +53,14 @@ digraph diag {
   "Seleção Básica\n0 / 10
 0%" -> "Números Aleatórios\n0 / 2
 0%" [style=dotted]
-  "O que são linguagens de programação?\n4 / 4
-100%" [shape=ellipse, color=green, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
+  "O que são linguagens de programação?\n2 / 4
+66%" [shape=ellipse, color=yellow, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
   "Primeiro código\n6 / 6
 100%" [shape=ellipse, color=green, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
-  "Strings em C: Array de `char`\n0 / 1
-0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
-  "Clean Code - Estilo\n1 / 1
+  "Clean Code\n2 / 2
 100%" [shape=ellipse, color=green, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
-  "Clean Code - Indentação\n1 / 1
-100%" [shape=ellipse, color=green, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
-  "Manipulando tipos\n1 / 1
-100%" [shape=ellipse, color=green, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=white]
-  "Casting e Conversão\n0 / 3
-0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=white]
+  "Casting e Conversão\n1 / 5
+20%" [shape=ellipse, color=red, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=white]
   "Operações Básicas\n2 / 3
 66%" [shape=ellipse, color=yellow, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
   "Biblioteca matemática\n0 / 2
