@@ -591,11 +591,18 @@ class Game:
     def get_skills_resume(self) -> dict[str, int]:
         skills: dict[str, int] = {}
         for q in self.quests.values():
-            for s in q.skills:
-                if s in skills:
-                    skills[s] += q.skills[s]
-                else:
-                    skills[s] = q.skills[s]
+            for t in q.get_tasks():
+                if t.grade > 0:
+                    for s in t.skills:
+                        if s in skills:
+                            skills[s] += t.skills[s]
+                        else:
+                            skills[s] = t.skills[s]
+                    for s in t.qskills:
+                        if s in skills:
+                            skills[s] += t.qskills[s]
+                        else:
+                            skills[s] = t.qskills[s]
         return skills
 
     # Verificar se todas as quests requeridas existem e adiciona o ponteiro

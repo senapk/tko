@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.6.5
+  - fix: skills count
 - 0.6.4
   - add: basic xp features
 - 0.6.3
