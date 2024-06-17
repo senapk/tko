@@ -1,4 +1,4 @@
-from .game import Game, Task, Quest, Cluster, Graph
+from .game import Game, Task, Quest, Cluster, Graph, XP
 from .settings import RepoSettings, LocalSettings
 from .down import Down
 from .format import symbols, colour, Color
@@ -127,7 +127,6 @@ class Util:
         except ValueError:
             return False
 
-
 class Play:
     cluster_prefix = "'"
 
@@ -193,8 +192,6 @@ class Play:
                     value = grade
                 self.game.tasks[key].set_grade(int(value))
 
-
-    # return True if change view
     def update_avaliable_quests(self):
         old_quests = [q for q in self.avaliable_quests]
         old_clusters = [c for c in self.avaliable_clusters]
@@ -606,17 +603,52 @@ class Play:
         vlink = colour(DD.lcmd, "c") + colour(DD.cmd, "ont") + (Play.checkbox("cont" in self.order))
         vperc = colour(DD.lcmd, "p") + colour(DD.cmd, "erc") + (Play.checkbox("perc" in self.order))
         vgoal = colour(DD.lcmd, "g") + colour(DD.cmd, "oal") + (Play.checkbox("goal" in self.order))
+        vxp__ = colour(DD.lcmd, "x") + colour(DD.cmd, "p") + (Play.checkbox("xp" in self.order))
         vadmi = colour(DD.lcmd, "a") + colour(DD.cmd, "dmin") + (Play.checkbox(self.admin_mode))
         
         vext = colour(DD.lcmd, "e") + colour(DD.cmd, "xt") + "(" + colour(DD.param, self.rep.lang) + ")"
-        visoes = f"{vrep} {vext} {vlink} {vperc} {vgoal} {vadmi} "
+        visoes = f"{vlink} {vperc} {vgoal} {vxp__} {vadmi} "
 
+        # XP        
+        obt, total = self.game.get_xp_resume()
+        cur_level = XP().get_level(obt)
+        xp_next = XP().get_xp(cur_level + 1)
+        xp_prev = XP().get_xp(cur_level)
+        xpresume = colour(DD.skills, f"{obt}/{total}")
+        atual = obt - xp_prev
+        needed = xp_next - xp_prev
+        nbar = 35
+        nbarobt = int((atual * nbar // needed))
+        vxpall = f"{vrep} {vext} {xpresume} Level:{colour("bold, green", str(cur_level))} "
+        vxpall += colour("y", f"{str(atual).rjust(3)}/{str(needed).rjust(3)} ")
+        vxpnext = colour("y", "xp:") + "#" * nbarobt + "-" * (nbar - nbarobt)
+
+        def adding_break(base: str, added: str, lim: int):
+            last = base.split("\n")[-1]
+            if Color.len(last) + Color.len(added) > lim:
+                return base + "\n" + added
+            return base + added
+
+        skills = self.game.get_skills_resume()
+        vskills = ""
+        if skills:
+            for s, v in skills.items():
+                if s != "xp":
+                    vskills = adding_break(vskills, f"{colour(DD.skills, s)}:{v} ", nbar)
 
         div0 = "────────────┴─────────────────────────"
 
         div1 = "──────────────────────────────────────"
 
-        elementos = [intro] + ([div0, visoes] if self.show_toolbar else []) + [div1]
+        elementos = [intro]
+        if self.show_toolbar:
+            elementos += [div0, visoes, div1, vxpall, vxpnext]
+            if vskills:
+                elementos += [vskills]
+        elementos += [div1]
+
+
+        # elementos = [intro] + ([div0, visoes, div1, vxpall, vxpnext, vskills] if self.show_toolbar else []) + [div1]
         self.print_elementos(elementos)
 
     def show_cmds(self):

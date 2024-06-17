@@ -5,6 +5,14 @@ import re
 import os
 from .format import symbols, colour
 
+class RE:
+    @staticmethod
+    def load_html_tags(task: str) -> str | None:
+        pattern = r"<!--\s*(.*?)\s*-->"
+        match = re.search(pattern, task)
+        if not match:
+            return None
+        return match.group(1).strip()
 
 class Task:
 
@@ -465,6 +473,38 @@ def get_md_link(title: str) -> str:
     return out
 
 
+class XP:
+    token_level_one = "level_one"
+    token_level_mult = "level_mult"
+    level_one: int = 100
+    level_mult: float = 1.5
+    
+    @staticmethod
+    def get_level(xp: int) -> int:
+        level = 1
+        while XP.get_xp(level) <= xp:
+            level += 1
+        return level - 1
+    
+    @staticmethod
+    def get_xp(level: int) -> int:
+        total = 0
+        for i in range(level - 1):
+            total += XP.level_one * (XP.level_mult ** i)
+        return int(total)
+
+    @staticmethod
+    def parse_settings(line: str):
+        values = RE.load_html_tags(line)
+        if values is not None:
+            tags = values.split(" ")
+            for t in tags:
+                if t.startswith(XP.token_level_one):
+                    XP.level_one = int(t.split(":")[1])
+                if t.startswith(XP.token_level_mult):
+                    XP.level_mult = float(t.split(":")[1])
+
+
 class Game:
     def __init__(self, file: str | None = None):
         self.clusters: list[Cluster] = []  # clusters ordered
@@ -510,7 +550,6 @@ class Game:
         self.clusters.append(cluster)
         return cluster
                 
-
     def load_quest(self, line, line_num) -> Quest | None:
         quest = QuestParser().parse_quest(self.filename, line, line_num + 1)
         if quest is None:
@@ -540,6 +579,25 @@ class Game:
         self.tasks[task.key] = task
         return task
 
+    def get_xp_resume(self):
+        total = 0
+        obtained = 0
+        for q in self.quests.values():
+            o, t = q.get_xp()
+            total += t
+            obtained += o
+        return obtained, total
+
+    def get_skills_resume(self) -> dict[str, int]:
+        skills: dict[str, int] = {}
+        for q in self.quests.values():
+            for s in q.skills:
+                if s in skills:
+                    skills[s] += q.skills[s]
+                else:
+                    skills[s] = q.skills[s]
+        return skills
+
     # Verificar se todas as quests requeridas existem e adiciona o ponteiro
     # Verifica se todas as quests tem tarefas
     def validate_requirements(self):
@@ -564,7 +622,6 @@ class Game:
 
         self.quests = valid_quests
 
-        
         # verificar se todas as quests requeridas existem e adicionar o ponteiro
         for q in self.quests.values():
             for r in q.requires:
@@ -596,6 +653,10 @@ class Game:
         lines = open(file, encoding="utf-8").read().split("\n")
         active_quest = None
         active_cluster = None
+
+        if len(lines) > 0:
+            XP.parse_settings(lines[0])
+
 
         for line_num, line in enumerate(lines):
             cluster = self.load_cluster(line, line_num)

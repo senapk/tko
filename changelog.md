@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.6.4
+  - add: basic xp features
 - 0.6.3
   - add: rotate quest text
 - 0.6.2
