@@ -2,7 +2,6 @@ from .game import Game, Task, Quest, Cluster, Graph, XP
 from .settings import RepoSettings, LocalSettings
 from .down import Down
 from .format import symbols, colour, Color
-import plataform
 import shutil
 import os
 import re
@@ -621,7 +620,8 @@ class Play:
         needed = xp_next - xp_prev
         nbar = 35
         nbarobt = int((atual * nbar // needed))
-        vxpall = f"{vrep} {vext} {xpresume} Level:{colour("bold, green", str(cur_level))} "
+        level = colour("bold, green", str(cur_level))
+        vxpall = f"{vrep} {vext} {xpresume} Level:{level} "
         vxpall += colour("y", f"{str(atual).rjust(3)}/{str(needed).rjust(3)} ")
         vxpnext = colour("y", "xp:") + "#" * nbarobt + "-" * (nbar - nbarobt)
 

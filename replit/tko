@@ -24,7 +24,6 @@ from typing import List
 from shutil import which
 from typing import List, Tuple, Optional
 import math
-import plataform
 import argparse
 import sys
 
@@ -3704,7 +3703,8 @@ class Play:
         needed = xp_next - xp_prev
         nbar = 35
         nbarobt = int((atual * nbar // needed))
-        vxpall = f"{vrep} {vext} {xpresume} Level:{colour("bold, green", str(cur_level))} "
+        level = colour("bold, green", str(cur_level))
+        vxpall = f"{vrep} {vext} {xpresume} Level:{level} "
         vxpall += colour("y", f"{str(atual).rjust(3)}/{str(needed).rjust(3)} ")
         vxpnext = colour("y", "xp:") + "#" * nbarobt + "-" * (nbar - nbarobt)
 
@@ -3845,7 +3845,7 @@ class Play:
             success = self.take_actions(actions)
             self.save_to_json()
 
-__version__ = "0.6.5"
+__version__ = "0.6.7"
 
 
 
