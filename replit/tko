@@ -24,6 +24,7 @@ from typing import List
 from shutil import which
 from typing import List, Tuple, Optional
 import math
+import plataform
 import argparse
 import sys
 
@@ -3198,8 +3199,10 @@ class Util:
     
     @staticmethod
     def clear():
-        subprocess.run("clear")
-        pass
+        if os.name == "nt":
+            os.system("cls")
+        else:
+            os.system("clear")
 
     @staticmethod
     def is_number(s):

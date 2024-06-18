@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.6.6
+  - fix: clear for windows
 - 0.6.5
   - fix: skills count
 - 0.6.4

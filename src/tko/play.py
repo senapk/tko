@@ -2,7 +2,7 @@ from .game import Game, Task, Quest, Cluster, Graph, XP
 from .settings import RepoSettings, LocalSettings
 from .down import Down
 from .format import symbols, colour, Color
-import subprocess
+import plataform
 import shutil
 import os
 import re
@@ -116,8 +116,10 @@ class Util:
     
     @staticmethod
     def clear():
-        subprocess.run("clear")
-        pass
+        if os.name == "nt":
+            os.system("cls")
+        else:
+            os.system("clear")
 
     @staticmethod
     def is_number(s):
