@@ -4,6 +4,7 @@ import subprocess
 import re
 import os
 from .format import symbols, colour
+from typing import List, Dict, Tuple
 
 class RE:
     @staticmethod
@@ -22,8 +23,8 @@ class Task:
         self.key = ""
         self.grade: int = 0 #valor de 0 a 10
 
-        self.qskills: dict[str, int] = {} # default quest skills
-        self.skills: dict[str, int] = {} # local skills
+        self.qskills: Dict[str, int] = {} # default quest skills
+        self.skills: Dict[str, int] = {} # local skills
         self.xp: int = 0
         
         self.opt: bool = False
@@ -115,7 +116,7 @@ class TaskParser:
                 task.key = t[1:]
 
     @staticmethod
-    def parse_item_with_link(line) -> tuple[bool, str, str]:
+    def parse_item_with_link(line) -> Tuple[bool, str, str]:
         pattern = r"\ *-.*\[(.*?)\]\((.+?)\)"
         match = re.match(pattern, line)
         if match:
@@ -123,7 +124,7 @@ class TaskParser:
         return False, "", ""
     
     @staticmethod
-    def parse_task_with_link(line) -> tuple[bool, str, str]:
+    def parse_task_with_link(line) -> Tuple[bool, str, str]:
         pattern = r"\ *- \[ \].*\[(.*?)\]\((.+?)\)"
         match = re.match(pattern, line)
         if match:
@@ -131,7 +132,7 @@ class TaskParser:
         return False, "", ""
 
     @staticmethod
-    def parse_arroba_from_title_link(titulo, link) -> tuple[bool, str]:
+    def parse_arroba_from_title_link(titulo, link) -> Tuple[bool, str]:
         pattern = r".*?@(\w*)"
         match = re.match(pattern, titulo)
         if not match:
@@ -212,8 +213,8 @@ class Quest:
         self.line = ""
         self.key = ""
         self.title = ""
-        self.__tasks: list[Task] = []
-        self.skills: dict[str, int] = {} # s:skill
+        self.__tasks: List[Task] = []
+        self.skills: Dict[str, int] = {} # s:skill
         self.cluster = ""
         self.requires = [] # r:quest_key
         self.requires_ptr = []
@@ -288,7 +289,7 @@ class Quest:
     def get_tasks(self):
         return self.__tasks
 
-    def get_xp(self) -> tuple[int, int]:
+    def get_xp(self) -> Tuple[int, int]:
         total = 0
         obtained = 0
         for t in self.__tasks:
@@ -319,7 +320,7 @@ class Quest:
             return False
         return True
 
-    def is_reachable(self, cache: dict[str, bool]):
+    def is_reachable(self, cache: Dict[str, bool]):
         if self.key in cache:
             return cache[self.key]
 
@@ -419,7 +420,7 @@ class Cluster:
         self.line_number = line_number
         self.title: str = title
         self.key: str = key
-        self.quests: list[Quest] = []
+        self.quests: List[Quest] = []
 
     def __str__(self):
         line = str(self.line_number).rjust(3)
@@ -507,9 +508,9 @@ class XP:
 
 class Game:
     def __init__(self, file: str | None = None):
-        self.clusters: list[Cluster] = []  # clusters ordered
-        self.quests: dict[str, Quest] = {}  # quests indexed by quest key
-        self.tasks: dict[str, Task] = {}  # tasks indexed by task key
+        self.clusters: List[Cluster] = []  # clusters ordered
+        self.quests: Dict[str, Quest] = {}  # quests indexed by quest key
+        self.tasks: Dict[str, Task] = {}  # tasks indexed by task key
         self.filename = None
         if file is not None:
             self.filename = file
@@ -588,8 +589,8 @@ class Game:
             obtained += o
         return obtained, total
 
-    def get_skills_resume(self) -> dict[str, int]:
-        skills: dict[str, int] = {}
+    def get_skills_resume(self) -> Dict[str, int]:
+        skills: Dict[str, int] = {}
         for q in self.quests.values():
             for t in q.get_tasks():
                 if t.grade > 0:
@@ -652,7 +653,7 @@ class Game:
                 dfs(r, visitedx)
 
         for q in self.quests.values():
-            visited: list[str] = []
+            visited: List[str] = []
             dfs(q, visited)
 
     def parse_file(self, file):
@@ -715,7 +716,7 @@ class Game:
 
     def get_reachable_quests(self):
         # cache needs to be reseted before each call
-        cache: dict[str, bool] = {}
+        cache: Dict[str, bool] = {}
         return [q for q in self.quests.values() if q.is_reachable(cache)]
 
     def __str__(self):
@@ -731,7 +732,7 @@ class Game:
 
 class Graph:
 
-    colorlist: list[tuple[str, str]] = [
+    colorlist: List[Tuple[str, str]] = [
             ("aquamarine3","aquamarine4"),
             ("bisque3","bisque4"),
             ("brown3","brown4"),
@@ -783,16 +784,21 @@ class Graph:
 
     def __init__(self, game: Game):
         self.game = game
-        self.reachable: list[str] | None = None
-        self.counts: dict[str, str] | None = None
+        self.reachable: List[str] | None = None
+        self.counts: Dict[str, str] | None = None
         self.graph_ext = ".png"
         self.output = "graph"
+        self.opt = False
 
-    def set_reachable(self, reachable: list[str]):
+    def set_opt(self, opt: bool):
+        self.opt = opt
+        return self
+
+    def set_reachable(self, reachable: List[str]):
         self.reachable = reachable
         return self
 
-    def set_counts(self, counts: dict[str, str]):
+    def set_counts(self, counts: Dict[str, str]):
         self.counts = counts
         return self
 
@@ -841,12 +847,21 @@ class Graph:
         for i, c in enumerate(self.game.clusters):
             cluster_targets = [q for q in c.quests if self.is_reachable_or_next(q)]
             for q in cluster_targets:
-                if q.opt:
-                    fillcolor = self.colorlist[i][0]
-                    textcolor = "white"
+                if self.opt:
+                    if q.opt:
+                        fillcolor = "pink"
+                        textcolor = "black"
+                    else:
+                        fillcolor = "lime"
+                        textcolor = "black"
                 else:
-                    fillcolor = self.colorlist[i][0]
-                    textcolor = "black"
+                    if q.opt:
+                        fillcolor = self.colorlist[i][0]
+                        textcolor = "white"
+                    else:
+                        fillcolor = self.colorlist[i][0]
+                        textcolor = "black"
+
                 shape = "ellipse"
                 color = "black"
                 width = 1

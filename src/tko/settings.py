@@ -3,17 +3,17 @@ import json
 import appdirs
 import tempfile
 from .remote import RemoteCfg, Absolute
-from typing import Any
+from typing import Any, List, Dict, Tuple
 
 class RepoSettings:
     def __init__(self, file: str = ""):
         self.lang: str = ""
         self.url: str = ""
         self.file: str = ""
-        self.expanded: list[str] = []
-        self.new_items: list[str] = []
-        self.tasks: dict[str, str] = {} #notas das tarefas
-        self.view: list[str] = []  # lista de flags ligados
+        self.expanded: List[str] = []
+        self.new_items: List[str] = []
+        self.tasks: Dict[str, str] = {} #notas das tarefas
+        self.view: List[str] = []  # lista de flags ligados
         if file != "":
             self.file = os.path.abspath(file)
 
@@ -65,7 +65,7 @@ class RepoSettings:
             "view": self.view
         }
     
-    def from_dict(self, data: dict[str, Any]):
+    def from_dict(self, data: Dict[str, Any]):
         self.lang = data.get("lang", "")
         self.url = data.get("url", "")
         self.file = data.get("file", "")
@@ -103,7 +103,7 @@ class LocalSettings:
         self.rootdir = os.path.abspath(rootdir)
         return self
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "rootdir": self.rootdir,
             "lang": self.lang,
@@ -113,7 +113,7 @@ class LocalSettings:
             "sideto_min": self.sideto_min
         }
     
-    def from_dict(self, data: dict[str, Any]):
+    def from_dict(self, data: Dict[str, Any]):
         self.rootdir = data.get("rootdir", "")
         self.lang = data.get("lang", "")
         self.ascii = data.get("ascii", False)
@@ -136,7 +136,7 @@ class LocalSettings:
 
 class Settings:
     def __init__(self):
-        self.reps: dict[str, RepoSettings] = {}
+        self.reps: Dict[str, RepoSettings] = {}
         self.local = LocalSettings()
         self.reps["fup"] = RepoSettings().set_url("https://github.com/qxcodefup/arcade/blob/master/Readme.md")
         self.reps["ed"] = RepoSettings().set_url("https://github.com/qxcodeed/arcade/blob/master/Readme.md")
@@ -147,13 +147,13 @@ class Settings:
             raise ValueError(f"Course {course} not found in settings")
         return self.reps[course]
     
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "reps": {k: v.to_dict() for k, v in self.reps.items()},
             "local": self.local.to_dict()
         }
 
-    def from_dict(self, data: dict[str, Any]):
+    def from_dict(self, data: Dict[str, Any]):
         self.reps = {k: RepoSettings().from_dict(v) for k, v in data.get("reps", {}).items()}
         self.local = LocalSettings().from_dict(data.get("local", {}))
         return self
@@ -196,7 +196,8 @@ class SettingsParser:
     def load_settings(self) -> Settings:
         try:
             with open(self.settings_file, "r", encoding="utf-8") as f:
-                self.settings = Settings().from_dict(json.load(f))
+                data = json.load(f)
+                self.settings = Settings().from_dict(data)
                 return self.settings
         except (FileNotFoundError, json.decoder.JSONDecodeError) as _e:
             return self.create_new_settings_file()

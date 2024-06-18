@@ -1,88 +1,250 @@
 digraph diag {
   node [penwidth=1, style="rounded,filled", shape=box]
-  "Início" -> "O que são linguagens de programação?\n2 / 4
-66%"
-  "O que são linguagens de programação?\n2 / 4
-66%" -> "Primeiro código\n6 / 6
-100%" 
-  "Primeiro código\n6 / 6
-100%" -> "Clean Code\n2 / 2
-100%" 
-  "Primeiro código\n6 / 6
-100%" -> "Casting e Conversão\n1 / 5
-20%" 
-  "Primeiro código\n6 / 6
-100%" -> "Operações Básicas\n2 / 3
-66%" 
-  "TKO - Ferramenta de Testes\n1 / 1
-100%" -> "Operações Básicas\n2 / 3
-66%" 
-  "Operações Básicas\n2 / 3
-66%" -> "Biblioteca matemática\n0 / 2
-0%" 
-  "O que são linguagens de programação?\n2 / 4
-66%" -> "Uso do bash\n1 / 1
-100%" 
-  "Uso do bash\n1 / 1
-100%" -> "Configuração do Ambiente\n0 / 2
-0%" 
-  "O que são linguagens de programação?\n2 / 4
-66%" -> "Makefile\n4 / 4
-100%" 
-  "O que são linguagens de programação?\n2 / 4
-66%" -> "TKO - Ferramenta de Testes\n1 / 1
-100%" 
-  "Operações Básicas\n2 / 3
-66%" -> "Entrada e Saída - puts, printf, scanf\n2 / 4
+  "Início" -> "O que são linguagens de programação?\n0 / 4
+0%"
+  "O que são linguagens de programação?\n0 / 4
+0%" -> "Primeiro código\n3 / 6
 50%" 
-  "Entrada e Saída - puts, printf, scanf\n2 / 4
-50%" -> "Seleção Básica\n0 / 10
+  "O que são linguagens de programação?\n0 / 4
+0%" -> "Montando seu setup local\n0 / 4
 0%" 
-  "Clean Code\n2 / 2
-100%" -> "Seleção Básica\n0 / 10
+  "O que são linguagens de programação?\n0 / 4
+0%" -> "TKO - Ferramenta de Testes\n0 / 4
 0%" 
-  "O que são linguagens de programação?\n2 / 4
-66%" -> "Debugando\n1 / 1
-100%" 
+  "O que são linguagens de programação?\n0 / 4
+0%" -> "Biblioteca para desenhos\n0 / 1
+0%" 
   "Seleção Básica\n0 / 10
-0%" -> "Funções I\n0 / 5
-0%" [style=dotted]
+0%" -> "Técnicas de Debug\n0 / 3
+0%" 
+  "Primeiro código\n3 / 6
+50%" -> "Clean Code\n0 / 4
+0%" 
+  "Primeiro código\n3 / 6
+50%" -> "Tipos e casting\n0 / 5
+0%" 
+  "Primeiro código\n3 / 6
+50%" -> "Operações Básicas\n0 / 5
+0%" 
+  "TKO - Ferramenta de Testes\n0 / 4
+0%" -> "Operações Básicas\n0 / 5
+0%" 
+  "Operações Básicas\n0 / 5
+0%" -> "Entrada e Saída - puts, printf, scanf\n0 / 4
+0%" 
+  "Strings I\n0 / 5
+0%" -> "Manipulando strings com `sprintf` e `sscanf`\n0 / 3
+0%" 
+  "While\n0 / 4
+0%" -> "Tratamento de erros de entrada fflush\n0 / 1
+0%" 
+  "Strings I\n0 / 5
+0%" -> "IO: argc e argv\n0 / 1
+0%" 
+  "Entrada e Saída - puts, printf, scanf\n0 / 4
+0%" -> "Seleção Básica\n0 / 10
+0%" 
+  "Clean Code\n0 / 4
+0%" -> "Seleção Básica\n0 / 10
+0%" 
+  "Funções I\n0 / 5
+0%" -> "Técnicas de seleção I\n0 / 8
+0%" 
+  "Técnicas de seleção I\n0 / 8
+0%" -> "Técnicas de seleção II\n0 / 10
+0%" 
   "Seleção Básica\n0 / 10
 0%" -> "While\n0 / 4
-0%" [style=dotted]
+0%" 
+  "While\n0 / 4
+0%" -> "Usando o For\n0 / 8
+0%" 
+  "Usando o For\n0 / 8
+0%" -> "Array Iniciante\n0 / 4
+0%" 
+  "Funções I\n0 / 5
+0%" -> "Array Iniciante\n0 / 4
+0%" 
+  "Array Iniciante\n0 / 4
+0%" -> "Array avançado\n0 / 4
+0%" 
+  "Array avançado\n0 / 4
+0%" -> "Array Expert\n0 / 6
+0%" 
+  "Array avançado\n0 / 4
+0%" -> "Strings I\n0 / 5
+0%" 
+  "Strings I\n0 / 5
+0%" -> "Strings II\n0 / 3
+0%" 
+  "Ponteiros\n0 / 1
+0%" -> "Strings II\n0 / 3
+0%" 
+  "Strings II\n0 / 3
+0%" -> "Strings Expert\n0 / 4
+0%" 
+  "Funções I\n0 / 5
+0%" -> "Enum\n0 / 1
+0%" 
+  "Enum\n0 / 1
+0%" -> "Structs\n0 / 2
+0%" 
+  "Ponteiros\n0 / 1
+0%" -> "Structs Advanced\n0 / 2
+0%" 
+  "Array Iniciante\n0 / 4
+0%" -> "Structs Advanced\n0 / 2
+0%" 
+  "Structs\n0 / 2
+0%" -> "Structs Advanced\n0 / 2
+0%" 
+  "Array Iniciante\n0 / 4
+0%" -> "Matrizes básico\n0 / 2
+0%" 
+  "Matrizes básico\n0 / 2
+0%" -> "Técnicas em matrizes\n0 / 1
+0%" 
+  "Structs Advanced\n0 / 2
+0%" -> "Técnicas em matrizes\n0 / 1
+0%" 
+  "Seleção Básica\n0 / 10
+0%" -> "Funções I\n0 / 5
+0%" 
+  "Funções I\n0 / 5
+0%" -> "Funções II\n0 / 4
+0%" 
+  "Funções I\n0 / 5
+0%" -> "Criando um projeto modular\n0 / 1
+0%" 
+  "Criando um projeto modular\n0 / 1
+0%" -> "Makefile\n0 / 3
+0%" 
+  "Criando um projeto modular\n0 / 1
+0%" -> "Macros: Preprocessador\n0 / 3
+0%" 
+  "Funções II\n0 / 4
+0%" -> "Ponteiros\n0 / 1
+0%" 
+  "Ponteiros\n0 / 1
+0%" -> "Ponteiros ii\n0 / 1
+0%" 
+  "Ponteiros\n0 / 1
+0%" -> "Alocação Dinâmica i\n0 / 1
+0%" 
+  "Alocação Dinâmica i\n0 / 1
+0%" -> "Alocação Dinâmica ii\n0 / 1
+0%" 
   "Seleção Básica\n0 / 10
 0%" -> "Números Aleatórios\n0 / 2
-0%" [style=dotted]
-  "O que são linguagens de programação?\n2 / 4
-66%" [shape=ellipse, color=yellow, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
-  "Primeiro código\n6 / 6
-100%" [shape=ellipse, color=green, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
-  "Clean Code\n2 / 2
-100%" [shape=ellipse, color=green, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
-  "Casting e Conversão\n1 / 5
-20%" [shape=ellipse, color=red, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=white]
-  "Operações Básicas\n2 / 3
-66%" [shape=ellipse, color=yellow, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
-  "Biblioteca matemática\n0 / 2
-0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=white]
-  "Uso do bash\n1 / 1
-100%" [shape=ellipse, color=green, penwidth=3, fillcolor=bisque3, style=filled, fontcolor=white]
-  "Configuração do Ambiente\n0 / 2
-0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=bisque3, style=filled, fontcolor=white]
-  "Makefile\n4 / 4
-100%" [shape=ellipse, color=green, penwidth=3, fillcolor=bisque3, style=filled, fontcolor=white]
-  "TKO - Ferramenta de Testes\n1 / 1
-100%" [shape=ellipse, color=green, penwidth=3, fillcolor=bisque3, style=filled, fontcolor=black]
-  "Entrada e Saída - puts, printf, scanf\n2 / 4
-50%" [shape=ellipse, color=yellow, penwidth=3, fillcolor=brown3, style=filled, fontcolor=black]
-  "Seleção Básica\n0 / 10
-0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=chartreuse3, style=filled, fontcolor=black]
-  "Debugando\n1 / 1
-100%" [shape=ellipse, color=green, penwidth=3, fillcolor=chartreuse3, style=filled, fontcolor=white]
-  "Funções I\n0 / 5
-0%" [shape=ellipse, color=white, penwidth=1, fillcolor=coral3, style=filled, fontcolor=black]
-  "While\n0 / 4
-0%" [shape=ellipse, color=white, penwidth=1, fillcolor=cyan3, style=filled, fontcolor=black]
+0%" 
   "Números Aleatórios\n0 / 2
-0%" [shape=ellipse, color=white, penwidth=1, fillcolor=darkgoldenrod3, style=filled, fontcolor=black]
+0%" -> "Game Zero a Cem\n0 / 1
+0%" 
+  "Funções I\n0 / 5
+0%" -> "Game Zero a Cem\n0 / 1
+0%" 
+  "Números Aleatórios\n0 / 2
+0%" -> "Jogo da Vida\n0 / 1
+0%" 
+  "Técnicas em matrizes\n0 / 1
+0%" -> "Jogo da Vida\n0 / 1
+0%" 
+  "Números Aleatórios\n0 / 2
+0%" -> "Blackjack\n0 / 1
+0%" 
+  "Array avançado\n0 / 4
+0%" -> "Blackjack\n0 / 1
+0%" 
+  "Números Aleatórios\n0 / 2
+0%" -> "Cobrinha\n0 / 1
+0%" 
+  "Structs Advanced\n0 / 2
+0%" -> "Cobrinha\n0 / 1
+0%" 
+  "O que são linguagens de programação?\n0 / 4
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
+  "Primeiro código\n3 / 6
+50%" [shape=ellipse, color=red, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
+  "Montando seu setup local\n0 / 4
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=white]
+  "TKO - Ferramenta de Testes\n0 / 4
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
+  "Biblioteca para desenhos\n0 / 1
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=white]
+  "Técnicas de Debug\n0 / 3
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=white]
+  "Clean Code\n0 / 4
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=black]
+  "Tipos e casting\n0 / 5
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=aquamarine3, style=filled, fontcolor=white]
+  "Operações Básicas\n0 / 5
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=bisque3, style=filled, fontcolor=black]
+  "Entrada e Saída - puts, printf, scanf\n0 / 4
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=bisque3, style=filled, fontcolor=black]
+  "Manipulando strings com `sprintf` e `sscanf`\n0 / 3
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=bisque3, style=filled, fontcolor=white]
+  "Tratamento de erros de entrada fflush\n0 / 1
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=bisque3, style=filled, fontcolor=white]
+  "IO: argc e argv\n0 / 1
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=bisque3, style=filled, fontcolor=white]
+  "Seleção Básica\n0 / 10
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=brown3, style=filled, fontcolor=black]
+  "Técnicas de seleção I\n0 / 8
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=brown3, style=filled, fontcolor=white]
+  "Técnicas de seleção II\n0 / 10
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=brown3, style=filled, fontcolor=white]
+  "While\n0 / 4
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=chartreuse3, style=filled, fontcolor=black]
+  "Usando o For\n0 / 8
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=chartreuse3, style=filled, fontcolor=black]
+  "Array Iniciante\n0 / 4
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=coral3, style=filled, fontcolor=black]
+  "Array avançado\n0 / 4
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=coral3, style=filled, fontcolor=black]
+  "Array Expert\n0 / 6
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=coral3, style=filled, fontcolor=white]
+  "Strings I\n0 / 5
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=cyan3, style=filled, fontcolor=black]
+  "Strings II\n0 / 3
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=cyan3, style=filled, fontcolor=white]
+  "Strings Expert\n0 / 4
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=cyan3, style=filled, fontcolor=white]
+  "Enum\n0 / 1
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=darkgoldenrod3, style=filled, fontcolor=black]
+  "Structs\n0 / 2
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=darkgoldenrod3, style=filled, fontcolor=black]
+  "Structs Advanced\n0 / 2
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=darkgoldenrod3, style=filled, fontcolor=black]
+  "Matrizes básico\n0 / 2
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=darkgoldenrod3, style=filled, fontcolor=black]
+  "Técnicas em matrizes\n0 / 1
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=darkgoldenrod3, style=filled, fontcolor=white]
+  "Funções I\n0 / 5
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=darkolivegreen3, style=filled, fontcolor=black]
+  "Funções II\n0 / 4
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=darkolivegreen3, style=filled, fontcolor=black]
+  "Criando um projeto modular\n0 / 1
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=darkolivegreen3, style=filled, fontcolor=white]
+  "Makefile\n0 / 3
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=darkolivegreen3, style=filled, fontcolor=white]
+  "Macros: Preprocessador\n0 / 3
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=darkolivegreen3, style=filled, fontcolor=white]
+  "Ponteiros\n0 / 1
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=darkolivegreen3, style=filled, fontcolor=black]
+  "Ponteiros ii\n0 / 1
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=darkolivegreen3, style=filled, fontcolor=black]
+  "Alocação Dinâmica i\n0 / 1
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=darkolivegreen3, style=filled, fontcolor=white]
+  "Alocação Dinâmica ii\n0 / 1
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=darkolivegreen3, style=filled, fontcolor=white]
+  "Números Aleatórios\n0 / 2
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=darkorchid3, style=filled, fontcolor=black]
+  "Game Zero a Cem\n0 / 1
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=darkorchid3, style=filled, fontcolor=black]
+  "Jogo da Vida\n0 / 1
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=darkorchid3, style=filled, fontcolor=black]
+  "Blackjack\n0 / 1
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=darkorchid3, style=filled, fontcolor=black]
+  "Cobrinha\n0 / 1
+0%" [shape=ellipse, color=magenta, penwidth=3, fillcolor=darkorchid3, style=filled, fontcolor=black]
 }

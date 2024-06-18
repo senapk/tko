@@ -1,5 +1,9 @@
 # Changelog
 
+- 0.6.11
+  - add: opt mode
+- 0.6.9:
+  - fix: 3.8 compatibility
 - 0.6.7
   - fix: error imports
 - 0.6.6

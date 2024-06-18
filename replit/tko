@@ -9,7 +9,7 @@ from typing import List, Optional
 import urllib.request
 import json
 import tempfile
-from typing import Any
+from typing import Any, List, Dict, Tuple
 import subprocess
 from typing import Tuple
 from subprocess import PIPE
@@ -24,6 +24,7 @@ from typing import List
 from shutil import which
 from typing import List, Tuple, Optional
 import math
+from typing import List, Dict, Tuple
 import argparse
 import sys
 
@@ -201,10 +202,10 @@ class RepoSettings:
         self.lang: str = ""
         self.url: str = ""
         self.file: str = ""
-        self.expanded: list[str] = []
-        self.new_items: list[str] = []
-        self.tasks: dict[str, str] = {} #notas das tarefas
-        self.view: list[str] = []  # lista de flags ligados
+        self.expanded: List[str] = []
+        self.new_items: List[str] = []
+        self.tasks: Dict[str, str] = {} #notas das tarefas
+        self.view: List[str] = []  # lista de flags ligados
         if file != "":
             self.file = os.path.abspath(file)
 
@@ -256,7 +257,7 @@ class RepoSettings:
             "view": self.view
         }
     
-    def from_dict(self, data: dict[str, Any]):
+    def from_dict(self, data: Dict[str, Any]):
         self.lang = data.get("lang", "")
         self.url = data.get("url", "")
         self.file = data.get("file", "")
@@ -294,7 +295,7 @@ class LocalSettings:
         self.rootdir = os.path.abspath(rootdir)
         return self
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "rootdir": self.rootdir,
             "lang": self.lang,
@@ -304,7 +305,7 @@ class LocalSettings:
             "sideto_min": self.sideto_min
         }
     
-    def from_dict(self, data: dict[str, Any]):
+    def from_dict(self, data: Dict[str, Any]):
         self.rootdir = data.get("rootdir", "")
         self.lang = data.get("lang", "")
         self.ascii = data.get("ascii", False)
@@ -327,7 +328,7 @@ class LocalSettings:
 
 class Settings:
     def __init__(self):
-        self.reps: dict[str, RepoSettings] = {}
+        self.reps: Dict[str, RepoSettings] = {}
         self.local = LocalSettings()
         self.reps["fup"] = RepoSettings().set_url("https://github.com/qxcodefup/arcade/blob/master/Readme.md")
         self.reps["ed"] = RepoSettings().set_url("https://github.com/qxcodeed/arcade/blob/master/Readme.md")
@@ -338,13 +339,13 @@ class Settings:
             raise ValueError(f"Course {course} not found in settings")
         return self.reps[course]
     
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "reps": {k: v.to_dict() for k, v in self.reps.items()},
             "local": self.local.to_dict()
         }
 
-    def from_dict(self, data: dict[str, Any]):
+    def from_dict(self, data: Dict[str, Any]):
         self.reps = {k: RepoSettings().from_dict(v) for k, v in data.get("reps", {}).items()}
         self.local = LocalSettings().from_dict(data.get("local", {}))
         return self
@@ -386,7 +387,8 @@ class SettingsParser:
     def load_settings(self) -> Settings:
         try:
             with open(self.settings_file, "r", encoding="utf-8") as f:
-                self.settings = Settings().from_dict(json.load(f))
+                data = json.load(f)
+                self.settings = Settings().from_dict(data)
                 return self.settings
         except (FileNotFoundError, json.decoder.JSONDecodeError) as _e:
             return self.create_new_settings_file()
@@ -2225,8 +2227,8 @@ class Task:
         self.key = ""
         self.grade: int = 0 #valor de 0 a 10
 
-        self.qskills: dict[str, int] = {} # default quest skills
-        self.skills: dict[str, int] = {} # local skills
+        self.qskills: Dict[str, int] = {} # default quest skills
+        self.skills: Dict[str, int] = {} # local skills
         self.xp: int = 0
         
         self.opt: bool = False
@@ -2318,7 +2320,7 @@ class TaskParser:
                 task.key = t[1:]
 
     @staticmethod
-    def parse_item_with_link(line) -> tuple[bool, str, str]:
+    def parse_item_with_link(line) -> Tuple[bool, str, str]:
         pattern = r"\ *-.*\[(.*?)\]\((.+?)\)"
         match = re.match(pattern, line)
         if match:
@@ -2326,7 +2328,7 @@ class TaskParser:
         return False, "", ""
     
     @staticmethod
-    def parse_task_with_link(line) -> tuple[bool, str, str]:
+    def parse_task_with_link(line) -> Tuple[bool, str, str]:
         pattern = r"\ *- \[ \].*\[(.*?)\]\((.+?)\)"
         match = re.match(pattern, line)
         if match:
@@ -2334,7 +2336,7 @@ class TaskParser:
         return False, "", ""
 
     @staticmethod
-    def parse_arroba_from_title_link(titulo, link) -> tuple[bool, str]:
+    def parse_arroba_from_title_link(titulo, link) -> Tuple[bool, str]:
         pattern = r".*?@(\w*)"
         match = re.match(pattern, titulo)
         if not match:
@@ -2415,8 +2417,8 @@ class Quest:
         self.line = ""
         self.key = ""
         self.title = ""
-        self.__tasks: list[Task] = []
-        self.skills: dict[str, int] = {} # s:skill
+        self.__tasks: List[Task] = []
+        self.skills: Dict[str, int] = {} # s:skill
         self.cluster = ""
         self.requires = [] # r:quest_key
         self.requires_ptr = []
@@ -2491,7 +2493,7 @@ class Quest:
     def get_tasks(self):
         return self.__tasks
 
-    def get_xp(self) -> tuple[int, int]:
+    def get_xp(self) -> Tuple[int, int]:
         total = 0
         obtained = 0
         for t in self.__tasks:
@@ -2522,7 +2524,7 @@ class Quest:
             return False
         return True
 
-    def is_reachable(self, cache: dict[str, bool]):
+    def is_reachable(self, cache: Dict[str, bool]):
         if self.key in cache:
             return cache[self.key]
 
@@ -2622,7 +2624,7 @@ class Cluster:
         self.line_number = line_number
         self.title: str = title
         self.key: str = key
-        self.quests: list[Quest] = []
+        self.quests: List[Quest] = []
 
     def __str__(self):
         line = str(self.line_number).rjust(3)
@@ -2710,9 +2712,9 @@ class XP:
 
 class Game:
     def __init__(self, file: str | None = None):
-        self.clusters: list[Cluster] = []  # clusters ordered
-        self.quests: dict[str, Quest] = {}  # quests indexed by quest key
-        self.tasks: dict[str, Task] = {}  # tasks indexed by task key
+        self.clusters: List[Cluster] = []  # clusters ordered
+        self.quests: Dict[str, Quest] = {}  # quests indexed by quest key
+        self.tasks: Dict[str, Task] = {}  # tasks indexed by task key
         self.filename = None
         if file is not None:
             self.filename = file
@@ -2791,8 +2793,8 @@ class Game:
             obtained += o
         return obtained, total
 
-    def get_skills_resume(self) -> dict[str, int]:
-        skills: dict[str, int] = {}
+    def get_skills_resume(self) -> Dict[str, int]:
+        skills: Dict[str, int] = {}
         for q in self.quests.values():
             for t in q.get_tasks():
                 if t.grade > 0:
@@ -2855,7 +2857,7 @@ class Game:
                 dfs(r, visitedx)
 
         for q in self.quests.values():
-            visited: list[str] = []
+            visited: List[str] = []
             dfs(q, visited)
 
     def parse_file(self, file):
@@ -2918,7 +2920,7 @@ class Game:
 
     def get_reachable_quests(self):
         # cache needs to be reseted before each call
-        cache: dict[str, bool] = {}
+        cache: Dict[str, bool] = {}
         return [q for q in self.quests.values() if q.is_reachable(cache)]
 
     def __str__(self):
@@ -2934,7 +2936,7 @@ class Game:
 
 class Graph:
 
-    colorlist: list[tuple[str, str]] = [
+    colorlist: List[Tuple[str, str]] = [
             ("aquamarine3","aquamarine4"),
             ("bisque3","bisque4"),
             ("brown3","brown4"),
@@ -2986,16 +2988,21 @@ class Graph:
 
     def __init__(self, game: Game):
         self.game = game
-        self.reachable: list[str] | None = None
-        self.counts: dict[str, str] | None = None
+        self.reachable: List[str] | None = None
+        self.counts: Dict[str, str] | None = None
         self.graph_ext = ".png"
         self.output = "graph"
+        self.opt = False
 
-    def set_reachable(self, reachable: list[str]):
+    def set_opt(self, opt: bool):
+        self.opt = opt
+        return self
+
+    def set_reachable(self, reachable: List[str]):
         self.reachable = reachable
         return self
 
-    def set_counts(self, counts: dict[str, str]):
+    def set_counts(self, counts: Dict[str, str]):
         self.counts = counts
         return self
 
@@ -3044,12 +3051,21 @@ class Graph:
         for i, c in enumerate(self.game.clusters):
             cluster_targets = [q for q in c.quests if self.is_reachable_or_next(q)]
             for q in cluster_targets:
-                if q.opt:
-                    fillcolor = self.colorlist[i][0]
-                    textcolor = "white"
+                if self.opt:
+                    if q.opt:
+                        fillcolor = "pink"
+                        textcolor = "black"
+                    else:
+                        fillcolor = "lime"
+                        textcolor = "black"
                 else:
-                    fillcolor = self.colorlist[i][0]
-                    textcolor = "black"
+                    if q.opt:
+                        fillcolor = self.colorlist[i][0]
+                        textcolor = "white"
+                    else:
+                        fillcolor = self.colorlist[i][0]
+                        textcolor = "black"
+
                 shape = "ellipse"
                 color = "black"
                 width = 1
@@ -3098,6 +3114,7 @@ class DD:
     quest_key = "blue, bold, italic"
     tasks = "yellow, bold"
     opt = "magenta, italic"
+    opt_task = "cyan, italic"
     lcmd = "red, bold"
     cmd = "red"
     code_key = "bold"
@@ -3160,7 +3177,7 @@ class Util:
         return shutil.get_terminal_size().columns
     
     @staticmethod
-    def get_num_num(s: str) -> tuple[int | None, int | None]:
+    def get_num_num(s: str) -> Tuple[int | None, int | None]:
         pattern = r"^(\d+)-(\d+)$"
         match = re.match(pattern, s)
         if match:
@@ -3169,7 +3186,7 @@ class Util:
             return None, None
 
     @staticmethod
-    def get_letter_letter(s: str) -> tuple[str | None, str | None]:
+    def get_letter_letter(s: str) -> Tuple[str | None, str | None]:
         pattern = r"([a-zA-Z]+)-([a-zA-Z]+)"
         match = re.match(pattern, s)
         if match:
@@ -3177,11 +3194,11 @@ class Util:
         return None, None
     
     @staticmethod
-    def expand_range(line: str) -> list[str]:
+    def expand_range(line: str) -> List[str]:
         line = line.replace(" - ", "-")
         actions = line.split()
 
-        expand: list[str] = []
+        expand: List[str] = []
         for t in actions:
             (start_number, end_number) = Util.get_num_num(t)
             (start_letter, end_letter) = Util.get_letter_letter(t)
@@ -3223,6 +3240,7 @@ class Play:
         self.rep = rep
         self.show_toolbar = "toolbar" in self.rep.view
         self.admin_mode = "admin" in self.rep.view
+        self.mark_opt = "opt" in self.rep.view
         order = [entry for entry in self.rep.view if entry.startswith("order:")]
         if len(order) > 0:
             self.order = [v for v in order[0][6:].split(",") if v != '']
@@ -3234,12 +3252,12 @@ class Play:
 
         self.game: Game = game
 
-        self.vfolds: dict[str, str] = {} # visible collapsers ou expanders for clusters or quests
-        self.vtasks: dict[str, Task] = {}  # visible tasks  indexed by upper letter
-        self.expanded: list[str] = [x for x in self.rep.expanded]
-        self.new_items: list[str] = [x for x in self.rep.new_items]
-        self.avaliable_quests: list[Quest] = [] # avaliable quests
-        self.avaliable_clusters: list[Cluster] = [] # avaliable clusters
+        self.vfolds: Dict[str, str] = {} # visible collapsers ou expanders for clusters or quests
+        self.vtasks: Dict[str, Task] = {}  # visible tasks  indexed by upper letter
+        self.expanded: List[str] = [x for x in self.rep.expanded]
+        self.new_items: List[str] = [x for x in self.rep.new_items]
+        self.avaliable_quests: List[Quest] = [] # avaliable quests
+        self.avaliable_clusters: List[Cluster] = [] # avaliable clusters
 
         self.first_loop = True
 
@@ -3260,6 +3278,8 @@ class Play:
             self.rep.view.append("admin")
         if self.show_toolbar:
             self.rep.view.append("toolbar")
+        if self.mark_opt:
+            self.rep.view.append("opt")
             
         self.fnsave()
 
@@ -3335,8 +3355,8 @@ class Play:
                     xp += f" +{s}:{v}"
                 xp = colour(DD.skills, xp)
 
-            if t.opt:
-                fn = lambda x: colour(DD.opt, x)
+            if self.mark_opt and t.opt:
+                fn = lambda x: colour(DD.opt_task, x)
             else:
                 fn = lambda x: x
             parts = [("@" + colour(DD.code_key, p[1:]) if p.startswith("@") else fn(p)) for p in parts]
@@ -3358,7 +3378,7 @@ class Play:
         new = "" if q.key not in self.new_items else colour(DD.new, " [new]")
 
         def gen_saida(_title):
-            if q.opt:
+            if self.mark_opt and q.opt:
                 _title = colour(DD.opt, _title)
             resume = ""
             for item in self.order:
@@ -3380,7 +3400,7 @@ class Play:
         
         return Play.cut_limits(q.title.strip(), gen_saida)
 
-    def str_cluster(self, key: str, cluster: Cluster, quests: list[Quest]) -> str:
+    def str_cluster(self, key: str, cluster: Cluster, quests: List[Quest]) -> str:
         opening = "━─"
         resume = ""
         if cluster.key in self.expanded:
@@ -3397,7 +3417,7 @@ class Play:
         new = "" if cluster.key not in self.new_items else colour(DD.new, " [new]")
         return f"{opening}{key} {title}{resume}{new}"
     
-    def get_avaliable_quests_from_cluster(self, cluster: Cluster) -> list[Quest]:
+    def get_avaliable_quests_from_cluster(self, cluster: Cluster) -> List[Quest]:
         return [q for q in cluster.quests if q in self.avaliable_quests]
 
     def show_options(self):
@@ -3638,6 +3658,8 @@ class Play:
             self.admin_mode = not self.admin_mode
         elif cmd == "t" or cmd == "toolbar":
             self.show_toolbar = not self.show_toolbar
+        elif cmd == "o" or cmd == "opt":
+            self.mark_opt = not self.mark_opt
         elif cmd == "d" or cmd == "down":
             return self.process_down(actions)
         elif cmd == "l" or cmd == "link":
@@ -3688,10 +3710,12 @@ class Play:
         vperc = colour(DD.lcmd, "p") + colour(DD.cmd, "erc") + (Play.checkbox("perc" in self.order))
         vgoal = colour(DD.lcmd, "g") + colour(DD.cmd, "oal") + (Play.checkbox("goal" in self.order))
         vxp__ = colour(DD.lcmd, "x") + colour(DD.cmd, "p") + (Play.checkbox("xp" in self.order))
+        vopt_ = colour(DD.lcmd, "o") + colour(DD.cmd, "pt") + (Play.checkbox(self.mark_opt))
+
         vadmi = colour(DD.lcmd, "a") + colour(DD.cmd, "dmin") + (Play.checkbox(self.admin_mode))
         
         vext = colour(DD.lcmd, "e") + colour(DD.cmd, "xt") + "(" + colour(DD.param, self.rep.lang) + ")"
-        visoes = f"{vlink} {vperc} {vgoal} {vxp__} {vadmi} "
+        visoes = f"{vlink} {vperc} {vgoal} {vxp__} {vopt_} {vadmi} "
 
         # XP        
         obt, total = self.game.get_xp_resume()
@@ -3759,6 +3783,7 @@ class Play:
         vcont = colour(DD.lcmd, "c") + colour(DD.cmd, "ont") + colour(DD.htext, " (Alterna contador de tarefas)")
         vperc = colour(DD.lcmd, "p") + colour(DD.cmd, "erc") + colour(DD.htext, " (Alterna mostrar porcentagem)")
         vgoal = colour(DD.lcmd, "g") + colour(DD.cmd, "oal") + colour(DD.htext, " (Alterna mostrar meta mínima)")
+        vopt_ = colour(DD.lcmd, "o") + colour(DD.cmd, "pt") + colour(DD.htext, " (Alterna ressaltar opcionais)")
         vupda = colour(DD.lcmd, "u") + colour(DD.cmd, "pdate") + colour(DD.htext, " (Recarrega o repositório)")
         vrota = colour(DD.lcmd, "r") + colour(DD.cmd, "otate") + colour(DD.htext, " (Rotaciona elementos visuais)")
         vgame = colour(DD.lcmd, "a") + colour(DD.cmd, "dmin") + colour(DD.htext, " (Libera todas as missões)")
@@ -3796,7 +3821,7 @@ class Play:
 
     def generate_graph(self, graph_ext):
 
-        reachable: list[str] = [q.key for q in self.avaliable_quests]
+        reachable: List[str] = [q.key for q in self.avaliable_quests]
         counts = {}
         for q in self.game.quests.values():
             done = len([t for t in q.get_tasks() if t.is_complete()])
@@ -3804,7 +3829,7 @@ class Play:
             todo = len([t for t in q.get_tasks() if t.not_started()])
             counts[q.key] = f"{done} / {done + init + todo}\n{q.get_percent()}%"
 
-        Graph(self.game).set_reachable(reachable).set_counts(counts).set_graph_ext(graph_ext).generate()
+        Graph(self.game).set_opt(self.mark_opt).set_reachable(reachable).set_counts(counts).set_graph_ext(graph_ext).generate()
 
     def update_new(self):
         self.new_items = [item for item in self.new_items if item not in self.expanded]
@@ -3845,7 +3870,7 @@ class Play:
             success = self.take_actions(actions)
             self.save_to_json()
 
-__version__ = "0.6.7"
+__version__ = "0.6.11"
 
 
 

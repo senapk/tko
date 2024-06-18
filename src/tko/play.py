@@ -5,6 +5,7 @@ from .format import symbols, colour, Color
 import shutil
 import os
 import re
+from typing import List, Dict, Tuple
 
 def debug(text):
     print(text)
@@ -15,6 +16,7 @@ class DD:
     quest_key = "blue, bold, italic"
     tasks = "yellow, bold"
     opt = "magenta, italic"
+    opt_task = "cyan, italic"
     lcmd = "red, bold"
     cmd = "red"
     code_key = "bold"
@@ -77,7 +79,7 @@ class Util:
         return shutil.get_terminal_size().columns
     
     @staticmethod
-    def get_num_num(s: str) -> tuple[int | None, int | None]:
+    def get_num_num(s: str) -> Tuple[int | None, int | None]:
         pattern = r"^(\d+)-(\d+)$"
         match = re.match(pattern, s)
         if match:
@@ -86,7 +88,7 @@ class Util:
             return None, None
 
     @staticmethod
-    def get_letter_letter(s: str) -> tuple[str | None, str | None]:
+    def get_letter_letter(s: str) -> Tuple[str | None, str | None]:
         pattern = r"([a-zA-Z]+)-([a-zA-Z]+)"
         match = re.match(pattern, s)
         if match:
@@ -94,11 +96,11 @@ class Util:
         return None, None
     
     @staticmethod
-    def expand_range(line: str) -> list[str]:
+    def expand_range(line: str) -> List[str]:
         line = line.replace(" - ", "-")
         actions = line.split()
 
-        expand: list[str] = []
+        expand: List[str] = []
         for t in actions:
             (start_number, end_number) = Util.get_num_num(t)
             (start_letter, end_letter) = Util.get_letter_letter(t)
@@ -140,6 +142,7 @@ class Play:
         self.rep = rep
         self.show_toolbar = "toolbar" in self.rep.view
         self.admin_mode = "admin" in self.rep.view
+        self.mark_opt = "opt" in self.rep.view
         order = [entry for entry in self.rep.view if entry.startswith("order:")]
         if len(order) > 0:
             self.order = [v for v in order[0][6:].split(",") if v != '']
@@ -151,12 +154,12 @@ class Play:
 
         self.game: Game = game
 
-        self.vfolds: dict[str, str] = {} # visible collapsers ou expanders for clusters or quests
-        self.vtasks: dict[str, Task] = {}  # visible tasks  indexed by upper letter
-        self.expanded: list[str] = [x for x in self.rep.expanded]
-        self.new_items: list[str] = [x for x in self.rep.new_items]
-        self.avaliable_quests: list[Quest] = [] # avaliable quests
-        self.avaliable_clusters: list[Cluster] = [] # avaliable clusters
+        self.vfolds: Dict[str, str] = {} # visible collapsers ou expanders for clusters or quests
+        self.vtasks: Dict[str, Task] = {}  # visible tasks  indexed by upper letter
+        self.expanded: List[str] = [x for x in self.rep.expanded]
+        self.new_items: List[str] = [x for x in self.rep.new_items]
+        self.avaliable_quests: List[Quest] = [] # avaliable quests
+        self.avaliable_clusters: List[Cluster] = [] # avaliable clusters
 
         self.first_loop = True
 
@@ -177,6 +180,8 @@ class Play:
             self.rep.view.append("admin")
         if self.show_toolbar:
             self.rep.view.append("toolbar")
+        if self.mark_opt:
+            self.rep.view.append("opt")
             
         self.fnsave()
 
@@ -252,8 +257,8 @@ class Play:
                     xp += f" +{s}:{v}"
                 xp = colour(DD.skills, xp)
 
-            if t.opt:
-                fn = lambda x: colour(DD.opt, x)
+            if self.mark_opt and t.opt:
+                fn = lambda x: colour(DD.opt_task, x)
             else:
                 fn = lambda x: x
             parts = [("@" + colour(DD.code_key, p[1:]) if p.startswith("@") else fn(p)) for p in parts]
@@ -275,7 +280,7 @@ class Play:
         new = "" if q.key not in self.new_items else colour(DD.new, " [new]")
 
         def gen_saida(_title):
-            if q.opt:
+            if self.mark_opt and q.opt:
                 _title = colour(DD.opt, _title)
             resume = ""
             for item in self.order:
@@ -297,7 +302,7 @@ class Play:
         
         return Play.cut_limits(q.title.strip(), gen_saida)
 
-    def str_cluster(self, key: str, cluster: Cluster, quests: list[Quest]) -> str:
+    def str_cluster(self, key: str, cluster: Cluster, quests: List[Quest]) -> str:
         opening = "━─"
         resume = ""
         if cluster.key in self.expanded:
@@ -314,7 +319,7 @@ class Play:
         new = "" if cluster.key not in self.new_items else colour(DD.new, " [new]")
         return f"{opening}{key} {title}{resume}{new}"
     
-    def get_avaliable_quests_from_cluster(self, cluster: Cluster) -> list[Quest]:
+    def get_avaliable_quests_from_cluster(self, cluster: Cluster) -> List[Quest]:
         return [q for q in cluster.quests if q in self.avaliable_quests]
 
     def show_options(self):
@@ -555,6 +560,8 @@ class Play:
             self.admin_mode = not self.admin_mode
         elif cmd == "t" or cmd == "toolbar":
             self.show_toolbar = not self.show_toolbar
+        elif cmd == "o" or cmd == "opt":
+            self.mark_opt = not self.mark_opt
         elif cmd == "d" or cmd == "down":
             return self.process_down(actions)
         elif cmd == "l" or cmd == "link":
@@ -605,10 +612,12 @@ class Play:
         vperc = colour(DD.lcmd, "p") + colour(DD.cmd, "erc") + (Play.checkbox("perc" in self.order))
         vgoal = colour(DD.lcmd, "g") + colour(DD.cmd, "oal") + (Play.checkbox("goal" in self.order))
         vxp__ = colour(DD.lcmd, "x") + colour(DD.cmd, "p") + (Play.checkbox("xp" in self.order))
+        vopt_ = colour(DD.lcmd, "o") + colour(DD.cmd, "pt") + (Play.checkbox(self.mark_opt))
+
         vadmi = colour(DD.lcmd, "a") + colour(DD.cmd, "dmin") + (Play.checkbox(self.admin_mode))
         
         vext = colour(DD.lcmd, "e") + colour(DD.cmd, "xt") + "(" + colour(DD.param, self.rep.lang) + ")"
-        visoes = f"{vlink} {vperc} {vgoal} {vxp__} {vadmi} "
+        visoes = f"{vlink} {vperc} {vgoal} {vxp__} {vopt_} {vadmi} "
 
         # XP        
         obt, total = self.game.get_xp_resume()
@@ -676,6 +685,7 @@ class Play:
         vcont = colour(DD.lcmd, "c") + colour(DD.cmd, "ont") + colour(DD.htext, " (Alterna contador de tarefas)")
         vperc = colour(DD.lcmd, "p") + colour(DD.cmd, "erc") + colour(DD.htext, " (Alterna mostrar porcentagem)")
         vgoal = colour(DD.lcmd, "g") + colour(DD.cmd, "oal") + colour(DD.htext, " (Alterna mostrar meta mínima)")
+        vopt_ = colour(DD.lcmd, "o") + colour(DD.cmd, "pt") + colour(DD.htext, " (Alterna ressaltar opcionais)")
         vupda = colour(DD.lcmd, "u") + colour(DD.cmd, "pdate") + colour(DD.htext, " (Recarrega o repositório)")
         vrota = colour(DD.lcmd, "r") + colour(DD.cmd, "otate") + colour(DD.htext, " (Rotaciona elementos visuais)")
         vgame = colour(DD.lcmd, "a") + colour(DD.cmd, "dmin") + colour(DD.htext, " (Libera todas as missões)")
@@ -713,7 +723,7 @@ class Play:
 
     def generate_graph(self, graph_ext):
 
-        reachable: list[str] = [q.key for q in self.avaliable_quests]
+        reachable: List[str] = [q.key for q in self.avaliable_quests]
         counts = {}
         for q in self.game.quests.values():
             done = len([t for t in q.get_tasks() if t.is_complete()])
@@ -721,7 +731,7 @@ class Play:
             todo = len([t for t in q.get_tasks() if t.not_started()])
             counts[q.key] = f"{done} / {done + init + todo}\n{q.get_percent()}%"
 
-        Graph(self.game).set_reachable(reachable).set_counts(counts).set_graph_ext(graph_ext).generate()
+        Graph(self.game).set_opt(self.mark_opt).set_reachable(reachable).set_counts(counts).set_graph_ext(graph_ext).generate()
 
     def update_new(self):
         self.new_items = [item for item in self.new_items if item not in self.expanded]
