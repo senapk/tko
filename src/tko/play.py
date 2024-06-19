@@ -5,7 +5,7 @@ from .format import symbols, colour, Color
 import shutil
 import os
 import re
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 
 def debug(text):
     print(text)
@@ -79,7 +79,7 @@ class Util:
         return shutil.get_terminal_size().columns
     
     @staticmethod
-    def get_num_num(s: str) -> Tuple[int | None, int | None]:
+    def get_num_num(s: str) -> Tuple[Optional[int], Optional[int]]:
         pattern = r"^(\d+)-(\d+)$"
         match = re.match(pattern, s)
         if match:
@@ -88,7 +88,7 @@ class Util:
             return None, None
 
     @staticmethod
-    def get_letter_letter(s: str) -> Tuple[str | None, str | None]:
+    def get_letter_letter(s: str) -> Tuple[Optional[str], Optional[str]]:
         pattern = r"([a-zA-Z]+)-([a-zA-Z]+)"
         match = re.match(pattern, s)
         if match:
@@ -425,7 +425,7 @@ class Play:
                 print(f"Tarefa {t} não encontrada")
                 input()
 
-    def find_cluster(self, key) -> Cluster | None:
+    def find_cluster(self, key) -> Optional[Cluster]:
         for c in self.game.clusters:
             if c.key == key:
                 return c
@@ -441,7 +441,7 @@ class Play:
                 except ValueError:
                     pass
 
-    def process_folds(self, actions):
+    def process_folds(self, actions) -> bool:
         mass_action = None
         for t in actions:
             if not Util.is_number(t):
@@ -470,7 +470,7 @@ class Play:
         return True
     
     def process_tasks(self, actions):
-        mass_action: int | None = None
+        mass_action: Optional[int] = None
         for t in actions:
             letter = "".join([c for c in t if c.isupper() and not c.isdigit()])
             number = "".join([c for c in t if c.isdigit()])

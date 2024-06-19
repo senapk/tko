@@ -3,7 +3,7 @@ import json
 import appdirs
 import tempfile
 from .remote import RemoteCfg, Absolute
-from typing import Any, List, Dict, Tuple
+from typing import Any, List, Dict, Tuple, Optional
 
 class RepoSettings:
     def __init__(self, file: str = ""):
@@ -178,7 +178,7 @@ class Settings:
 
 class SettingsParser:
 
-    user_settings_file: str | None = None
+    user_settings_file: Optional[str] = None
 
     def __init__(self):
         self.package_name = "tko"

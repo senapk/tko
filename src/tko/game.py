@@ -4,11 +4,11 @@ import subprocess
 import re
 import os
 from .format import symbols, colour
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 
 class RE:
     @staticmethod
-    def load_html_tags(task: str) -> str | None:
+    def load_html_tags(task: str) -> Optional[str]:
         pattern = r"<!--\s*(.*?)\s*-->"
         match = re.search(pattern, task)
         if not match:
@@ -33,7 +33,7 @@ class Task:
 
         self.default_min_value = 7 # default min grade to complete task
 
-    def get_grade_color(self, min_value: int | None = None) -> str:
+    def get_grade_color(self, min_value: Optional[int] = None) -> str:
         if min_value is None:
             min_value = self.default_min_value
         if self.grade == 0:
@@ -46,7 +46,7 @@ class Task:
             return "g"
         return "w"  
 
-    def get_grade_symbol(self, min_value: int | None = None) -> str:
+    def get_grade_symbol(self, min_value: Optional[int] = None) -> str:
         if min_value is None:
             min_value = self.default_min_value
         color = self.get_grade_color(min_value)
@@ -145,7 +145,7 @@ class TaskParser:
 
     # - [Titulo com @palavra em algum lugar](link/@palavra/Readme.md) <!-- tag1 tag2 tag3 -->
     @staticmethod
-    def parse_coding_task(line, line_num) -> Task | None:
+    def parse_coding_task(line, line_num) -> Optional[Task]:
         if line == "":
             return None
         line = line.lstrip()
@@ -174,7 +174,7 @@ class TaskParser:
     # - [ ] [Título](link) <!-- tag1 tag2 tag3 -->
     # - [Título](link) <!-- tag1 tag2 tag3 -->
     @staticmethod
-    def parse_reading_task(line, line_num) -> Task | None:
+    def parse_reading_task(line, line_num) -> Optional[Task]:
         if line == "":
             return None
         line = line.lstrip()
@@ -219,8 +219,8 @@ class Quest:
         self.requires = [] # r:quest_key
         self.requires_ptr = []
         self.opt = False # opt
-        self.qmin: int | None = None # q:  minimo de 50 porcento da pontuação total para completar
-        self.tmin: int | None = None  # t: ou ter no mínimo esse valor de todas as tarefas
+        self.qmin: Optional[int] = None # q:  minimo de 50 porcento da pontuação total para completar
+        self.tmin: Optional[int] = None  # t: ou ter no mínimo esse valor de todas as tarefas
 
     def __str__(self):
         line = str(self.line_number).rjust(3)
@@ -398,7 +398,7 @@ class QuestParser:
             return True
         return False
 
-    def parse_quest(self, filename, line, line_num) -> Quest | None:
+    def parse_quest(self, filename, line, line_num) -> Optional[Quest]:
         self.line = line
         self.line_num = line_num
         self.filename = filename
@@ -507,7 +507,7 @@ class XP:
 
 
 class Game:
-    def __init__(self, file: str | None = None):
+    def __init__(self, file: Optional[str] = None):
         self.clusters: List[Cluster] = []  # clusters ordered
         self.quests: Dict[str, Quest] = {}  # quests indexed by quest key
         self.tasks: Dict[str, Task] = {}  # tasks indexed by task key
@@ -522,7 +522,7 @@ class Game:
         raise Exception(f"fail: task {key} not found in course definition")
 
     # se existir um cluster nessa linha, insere na lista de clusters e retorno o objeto cluster inserido
-    def load_cluster(self, line: str, line_num: int) -> Cluster | None:
+    def load_cluster(self, line: str, line_num: int) -> Optional[Cluster]:
         pattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->\s*$"
         match = re.match(pattern, line)
         if not match:
@@ -551,7 +551,7 @@ class Game:
         self.clusters.append(cluster)
         return cluster
                 
-    def load_quest(self, line, line_num) -> Quest | None:
+    def load_quest(self, line, line_num) -> Optional[Quest]:
         quest = QuestParser().parse_quest(self.filename, line, line_num + 1)
         if quest is None:
             return None
@@ -563,7 +563,7 @@ class Game:
         self.quests[quest.key] = quest
         return quest
 
-    def load_task(self, line, line_num) -> Task | None:
+    def load_task(self, line, line_num) -> Optional[Task]:
         if line == "":
             return None
         task = TaskParser.parse_reading_task(line, line_num + 1)
@@ -784,8 +784,8 @@ class Graph:
 
     def __init__(self, game: Game):
         self.game = game
-        self.reachable: List[str] | None = None
-        self.counts: Dict[str, str] | None = None
+        self.reachable: Optional[List[str]] = None
+        self.counts: Optional[Dict[str, str]] = None
         self.graph_ext = ".png"
         self.output = "graph"
         self.opt = False

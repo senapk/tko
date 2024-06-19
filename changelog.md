@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.6.12
+  - fix: 3.10 compatibility
 - 0.6.11
   - add: opt mode
 - 0.6.9:
