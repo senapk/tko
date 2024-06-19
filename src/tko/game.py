@@ -226,7 +226,7 @@ class Quest:
         line = str(self.line_number).rjust(3)
         tasks_size = str(len(self.__tasks)).rjust(2, "0")
         key = "" if self.key == self.title else self.key + " "
-        output = f"{line}   {tasks_size} {key}{self.title} {self.skills} {self.requires}"
+        output = f"{line} {tasks_size} {key}{self.title} {self.skills} {self.requires}"
         return output
 
     def get_resume_by_percent(self) -> str:
@@ -354,7 +354,7 @@ class QuestParser:
         return self.quest
 
     def match_full_pattern(self):
-        fullpattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->\s*$"
+        fullpattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->.*$"
         match = re.match(fullpattern, self.line)
         tags = []
 
@@ -544,8 +544,10 @@ class Game:
         for c in self.clusters:
             if c.key == key:
                 print(f"Cluster {key} já existe")
-                print(c)
-                print(cluster)
+                print(f"{self.filename}:{line_num}")
+                print(f"{self.filename}:{c.line_number}")
+                print("  " + str(c))
+                print("  " + str(cluster))
                 exit(1)
                 
         self.clusters.append(cluster)
@@ -557,8 +559,10 @@ class Game:
             return None
         if quest.key in self.quests:
             print(f"Quest {quest.key} já existe")
-            print(quest)
-            print(self.quests[quest.key])
+            print(f"{self.filename}:{quest.line_number}")
+            print(f"{self.filename}:{self.quests[quest.key].line_number}")
+            print("  " + str(quest))
+            print("  " + str(self.quests[quest.key]))
             exit(1)
         self.quests[quest.key] = quest
         return quest
@@ -574,8 +578,10 @@ class Game:
         
         if task.key in self.tasks:
             print(f"Task {task.key} já existe")
-            print(task)
-            print(self.tasks[task.key])
+            print(f"{self.filename}:{task.line_number}")
+            print(f"{self.filename}:{self.tasks[task.key].line_number}")
+            print("  " + str(task))
+            print("  " + str(self.tasks[task.key]))
             exit(1)
         self.tasks[task.key] = task
         return task
@@ -636,8 +642,8 @@ class Game:
                 if r in self.quests:
                     q.requires_ptr.append(self.quests[r])
                 else:
-                    print(f"keys: {self.quests.keys()}")
-                    print(f"Quest\n{str(q)}\nrequer {r} que não existe")
+                    # print(f"keys: {self.quests.keys()}")
+                    print(f"Quest\n{self.filename}:{q.line_number}\n{str(q)}\nrequer {r} que não existe")
                     exit(1)
 
     def check_cycle(self):
@@ -687,7 +693,8 @@ class Game:
                 
                 if active_quest is None:
                     print(f"Task {task.key} não está dentro de uma quest")
-                    print(task)
+                    print(f"{file}:{task.line_number}")
+                    print(f"  {task}")
                     exit(1)
                 if self.filename is not None:
                     active_quest.add_task(task, self.filename)

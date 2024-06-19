@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.6.13
+  - fix: better error msgs in parsing quests
+  - fix: Optional instead | None
 - 0.6.12
   - fix: 3.10 compatibility
 - 0.6.11
