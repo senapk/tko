@@ -1,1 +1,1 @@
-tko -m run cases.tio solver.py -u
+tko -m run cases.tio solver.py -d

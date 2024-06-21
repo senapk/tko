@@ -1,2 +1,2 @@
 #!/bin/bash
-tko
+tko -m

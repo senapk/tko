@@ -1,3 +1,3 @@
 #!/bin/bash
 
-tko -m run draft.ts cases.tio -u
+tko -m run draft.ts cases.tio -d

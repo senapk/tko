@@ -1,21 +1,24 @@
-usage: tko [-h] [-c CONFIG_FILE] [-w WIDTH] [-v] [-g] [-b] [-m]
-           {run,build,down,config} ...
+usage: tko [-h] [-c CONFIG_FILE] [-w WIDTH] [-v] [-g] [-b] [-m] [-a]
+           {run,build,down,config,rep,play} ...
 
 A tool for competitive programming.
 
 options:
   -h, --help            show this help message and exit
-  -c CONFIG_FILE        config file.
+  -c CONFIG_FILE        config json file.
   -w WIDTH              terminal width.
   -v                    show version.
   -g                    show tko simple guide.
   -b                    show bash simple guide.
   -m                    monochromatic.
+  -a                    asc2 mode.
 
 subcommands:
-  {run,build,down,config}
+  {run,build,down,config,rep,play}
                         help for subcommand.
     run                 run with test cases.
     build               build a test target.
     down                download problem from repository.
     config              settings tool.
+    rep                 manipulate repositories.
+    play                play a game.

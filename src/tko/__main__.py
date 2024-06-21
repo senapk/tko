@@ -84,14 +84,14 @@ class Main:
             param.set_compact(True)
 
         # load default diff from settings if not specified
-        if not args.sideby and not args.updown:
+        if not args.side and not args.down:
             local = SettingsParser().load_settings().local
             updown = local.updown
             size_too_short = Report.get_terminal_size() < local.sideto_min
             param.set_up_down(updown or size_too_short)
-        elif args.sideby:
+        elif args.side:
             param.set_up_down(False)
-        elif args.updown:
+        elif args.down:
             param.set_up_down(True)
         run = Run(args.target_list, args.cmd, param)
         run.execute()
@@ -130,7 +130,7 @@ class Main:
             action = True
             settings.local.updown = False
             print("Diff mode now is: SIDE_BY_SIDE")
-        if args.updown:
+        if args.down:
             action = True
             settings.local.updown = True
             print("Diff mode now is: UP_DOWN")
@@ -240,8 +240,8 @@ class Parser:
 
         # add an exclusive group for diff mode
         group = parser_r.add_mutually_exclusive_group()
-        group.add_argument('--updown', '-u', action='store_true', help="diff mode up-to-down.")
-        group.add_argument('--sideby', '-s', action='store_true', help="diff mode side-by-side.")
+        group.add_argument('--down', '-d', action='store_true', help="diff mode up-to-down.")
+        group.add_argument('--side', '-s', action='store_true', help="diff mode side-by-side.")
         parser_r.set_defaults(func=Main.run)
 
     def add_parser_build(self):
@@ -271,7 +271,7 @@ class Parser:
 
         g_diff = parser_s.add_mutually_exclusive_group()
         g_diff.add_argument('--side', action='store_true', help='set side_by_side diff mode.')
-        g_diff.add_argument('--updown', action='store_true', help='set up_to_down   diff mode.')
+        g_diff.add_argument('--down', action='store_true', help='set up_to_down   diff mode.')
 
         g_lang = parser_s.add_mutually_exclusive_group()
         g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
@@ -341,7 +341,10 @@ class Parser:
                 print(tko_guide[1:], end="")
         else:
             try:
-                args.func(args)
+                if "func" in args:
+                    args.func(args)
+                else:
+                    self.parser.print_help()
             except ValueError as e:
                 print(str(e))
 

@@ -101,6 +101,8 @@ class Color:
 
 
 def colour(modifiers: str, text: str) -> str:
+    if not Color.enabled:
+        return text
     mod = modifiers.split(',')
     output = ''
     for m in [v for v in mod if v != '']:

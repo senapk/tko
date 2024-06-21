@@ -2,4 +2,4 @@
 
 tko -m run exception.cpp cases.tio
 
-tko -m run -u exception.py cases.tio
+tko -m run -d exception.py cases.tio

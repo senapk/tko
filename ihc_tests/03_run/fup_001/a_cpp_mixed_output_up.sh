@@ -1,1 +1,1 @@
-tko -m run solver.cpp cases.tio -a -u
+tko -m run solver.cpp cases.tio -a -d

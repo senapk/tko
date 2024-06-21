@@ -88,8 +88,9 @@ class Unit:
         grade = str(self.grade_reduction).zfill(3)
         rep = "" if self.repeated is None else "[" + str(self.repeated) + "]"
         op = ExecutionResult.get_symbol(self.result) + " " + self.result.value
-        pad = self.source.ljust(self.source_pad)
-        return f"({op})[{index}] GR:{grade} {pad} ({rep})"
+        source = self.source.ljust(self.source_pad)
+        case = self.case.ljust(self.case_pad)
+        return f"({op})[{index}] GR:{grade} {source} ({case}) {rep}"
 
 
 class Param:

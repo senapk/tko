@@ -5,18 +5,24 @@
 import unittest
 
 
-from tko.settings import SettingsParser
+from tko.game import TaskParser, Task
 
 
 class TestSimple(unittest.TestCase):
 
-    def test_add_one(self):
-        print("ping")
-        sp = SettingsParser("x.json")
-        rfup = sp.settings.reps["fup"]
-        rfup.get_file()
-        sp.save_settings()
-        print(str(sp))
+    def test_reading_task(self):
+        task: Task = TaskParser.parse_line("- [ ] [tarefa um](wiki/tarefa.md)", 0)
+        assert task.key == "wiki/tarefa.md"
+        assert task.link == "wiki/tarefa.md"
+        assert task.grade == 0
+        assert task.title == "tarefa um"
+
+    def test_coding_local_task(self):
+        task: Task = TaskParser.parse_line("- [ ] [minha @boneca quebrou](base/boneca/Readme.md)", 0)
+        assert task.key == "boneca"
+        assert task.link == "base/boneca/Readme.md"
+        assert task.grade == 0
+        assert task.title == "minha @boneca quebrou"
 
 
 if __name__ == '__main__':

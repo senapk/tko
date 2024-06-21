@@ -18,7 +18,7 @@
 │ 
 ├────────────────────────────────── RECEIVED ──────────────────────────────────
 │ Traceback (most recent call last):
-│   File "/home/lion/Dropbox/gits/tools/tko/ihc_tests/03_run/fup_001/./solver.py", line 1, in <module>
+│   File "/home/sena/Dropbox/gits/tools/tko/ihc_tests/03_run/fup_001/./solver.py", line 1, in <module>
 │     a = float(input())
 │               ^^^^^^^
 │ EOFError: EOF when reading a line

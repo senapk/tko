@@ -4,6 +4,7 @@
 
 # Example requirements
 appdirs
+setuptools
 
 # PyPI package deployment
 build

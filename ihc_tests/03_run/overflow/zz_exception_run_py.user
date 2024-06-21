@@ -1,5 +1,5 @@
 ───────────── No test cases found. Running: python ./exception.py ─────────────
-  File "/home/lion/Dropbox/gits/tools/tko/ihc_tests/03_run/overflow/./exception.py", line 1
+  File "/home/sena/Dropbox/gits/tools/tko/ihc_tests/03_run/overflow/./exception.py", line 1
     except "Out"
     ^^^^^^
 SyntaxError: invalid syntax

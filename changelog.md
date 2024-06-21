@@ -1,5 +1,9 @@
 # Changelog
 
+- 0.7.2
+  - fix: not loading case names
+- 0.7.1
+  - fix: error loading coding tasks
 - 0.7.0
   - add: color adjustments
 - 0.6.13

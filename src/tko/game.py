@@ -96,6 +96,7 @@ class Task:
         key = "" if self.key == self.title else self.key + " "
         return f"{line}    {self.grade} {key}{self.title} {self.skills} {self.link}"
 
+
 class TaskParser:
 
     @staticmethod
@@ -133,19 +134,18 @@ class TaskParser:
 
     @staticmethod
     def parse_arroba_from_title_link(titulo, link) -> Tuple[bool, str]:
-        pattern = r".*?@(\w*)"
-        match = re.match(pattern, titulo)
+        pattern = r'@\w+'
+        match = re.search(pattern, titulo)
         if not match:
             return False, ""
-        key = match.group(1)
+        key = match.group(0)[1:]
         if not (key + "/Readme.md") in link:
             return False, ""
         return True, key
 
-
     # - [Titulo com @palavra em algum lugar](link/@palavra/Readme.md) <!-- tag1 tag2 tag3 -->
     @staticmethod
-    def parse_coding_task(line, line_num) -> Optional[Task]:
+    def __parse_coding_task(line, line_num) -> Optional[Task]:
         if line == "":
             return None
         line = line.lstrip()
@@ -174,7 +174,7 @@ class TaskParser:
     # - [ ] [Título](link) <!-- tag1 tag2 tag3 -->
     # - [Título](link) <!-- tag1 tag2 tag3 -->
     @staticmethod
-    def parse_reading_task(line, line_num) -> Optional[Task]:
+    def __parse_reading_task(line, line_num) -> Optional[Task]:
         if line == "":
             return None
         line = line.lstrip()
@@ -191,7 +191,6 @@ class TaskParser:
             TaskParser.load_html_tags(task)
             return task
         
-
         task = Task()
         found, titulo, link = TaskParser.parse_item_with_link(line)
         task.key = ""
@@ -205,6 +204,17 @@ class TaskParser:
             task.title = titulo
             return task
 
+        return None
+
+    @staticmethod
+    def parse_line(line, line_num) -> Optional[Task]:
+        task = TaskParser.__parse_coding_task(line, line_num)
+        
+        if task is not None:
+            return task
+        task = TaskParser.__parse_reading_task(line, line_num)
+        if task is not None:
+            return task
         return None
 
 class Quest:
@@ -587,9 +597,7 @@ class Game:
     def load_task(self, line, line_num) -> Optional[Task]:
         if line == "":
             return None
-        task = TaskParser.parse_reading_task(line, line_num + 1)
-        if task is None:
-            task = TaskParser.parse_coding_task(line, line_num + 1)
+        task = TaskParser.parse_line(line, line_num + 1)
         if task is None:
             return None
         

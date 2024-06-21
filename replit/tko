@@ -560,6 +560,8 @@ class Color:
 
 
 def colour(modifiers: str, text: str) -> str:
+    if not Color.enabled:
+        return text
     mod = modifiers.split(',')
     output = ''
     for m in [v for v in mod if v != '']:
@@ -810,8 +812,9 @@ class Unit:
         grade = str(self.grade_reduction).zfill(3)
         rep = "" if self.repeated is None else "[" + str(self.repeated) + "]"
         op = ExecutionResult.get_symbol(self.result) + " " + self.result.value
-        pad = self.source.ljust(self.source_pad)
-        return f"({op})[{index}] GR:{grade} {pad} ({rep})"
+        source = self.source.ljust(self.source_pad)
+        case = self.case.ljust(self.case_pad)
+        return f"({op})[{index}] GR:{grade} {source} ({case}) {rep}"
 
 
 class Param:
@@ -2300,6 +2303,7 @@ class Task:
         key = "" if self.key == self.title else self.key + " "
         return f"{line}    {self.grade} {key}{self.title} {self.skills} {self.link}"
 
+
 class TaskParser:
 
     @staticmethod
@@ -2337,19 +2341,18 @@ class TaskParser:
 
     @staticmethod
     def parse_arroba_from_title_link(titulo, link) -> Tuple[bool, str]:
-        pattern = r".*?@(\w*)"
-        match = re.match(pattern, titulo)
+        pattern = r'@\w+'
+        match = re.search(pattern, titulo)
         if not match:
             return False, ""
-        key = match.group(1)
+        key = match.group(0)[1:]
         if not (key + "/Readme.md") in link:
             return False, ""
         return True, key
 
-
     # - [Titulo com @palavra em algum lugar](link/@palavra/Readme.md) <!-- tag1 tag2 tag3 -->
     @staticmethod
-    def parse_coding_task(line, line_num) -> Optional[Task]:
+    def __parse_coding_task(line, line_num) -> Optional[Task]:
         if line == "":
             return None
         line = line.lstrip()
@@ -2378,7 +2381,7 @@ class TaskParser:
     # - [ ] [Título](link) <!-- tag1 tag2 tag3 -->
     # - [Título](link) <!-- tag1 tag2 tag3 -->
     @staticmethod
-    def parse_reading_task(line, line_num) -> Optional[Task]:
+    def __parse_reading_task(line, line_num) -> Optional[Task]:
         if line == "":
             return None
         line = line.lstrip()
@@ -2395,7 +2398,6 @@ class TaskParser:
             TaskParser.load_html_tags(task)
             return task
         
-
         task = Task()
         found, titulo, link = TaskParser.parse_item_with_link(line)
         task.key = ""
@@ -2409,6 +2411,17 @@ class TaskParser:
             task.title = titulo
             return task
 
+        return None
+
+    @staticmethod
+    def parse_line(line, line_num) -> Optional[Task]:
+        task = TaskParser.__parse_coding_task(line, line_num)
+        
+        if task is not None:
+            return task
+        task = TaskParser.__parse_reading_task(line, line_num)
+        if task is not None:
+            return task
         return None
 
 class Quest:
@@ -2791,9 +2804,7 @@ class Game:
     def load_task(self, line, line_num) -> Optional[Task]:
         if line == "":
             return None
-        task = TaskParser.parse_reading_task(line, line_num + 1)
-        if task is None:
-            task = TaskParser.parse_coding_task(line, line_num + 1)
+        task = TaskParser.parse_line(line, line_num + 1)
         if task is None:
             return None
         
@@ -3882,7 +3893,7 @@ class Play:
             success = self.take_actions(actions)
             self.save_to_json()
 
-__version__ = "0.7.0"
+__version__ = "0.7.2"
 
 
 
@@ -3954,14 +3965,14 @@ class Main:
             param.set_compact(True)
 
         # load default diff from settings if not specified
-        if not args.sideby and not args.updown:
+        if not args.side and not args.down:
             local = SettingsParser().load_settings().local
             updown = local.updown
             size_too_short = Report.get_terminal_size() < local.sideto_min
             param.set_up_down(updown or size_too_short)
-        elif args.sideby:
+        elif args.side:
             param.set_up_down(False)
-        elif args.updown:
+        elif args.down:
             param.set_up_down(True)
         run = Run(args.target_list, args.cmd, param)
         run.execute()
@@ -4000,7 +4011,7 @@ class Main:
             action = True
             settings.local.updown = False
             print("Diff mode now is: SIDE_BY_SIDE")
-        if args.updown:
+        if args.down:
             action = True
             settings.local.updown = True
             print("Diff mode now is: UP_DOWN")
@@ -4110,8 +4121,8 @@ class Parser:
 
         # add an exclusive group for diff mode
         group = parser_r.add_mutually_exclusive_group()
-        group.add_argument('--updown', '-u', action='store_true', help="diff mode up-to-down.")
-        group.add_argument('--sideby', '-s', action='store_true', help="diff mode side-by-side.")
+        group.add_argument('--down', '-d', action='store_true', help="diff mode up-to-down.")
+        group.add_argument('--side', '-s', action='store_true', help="diff mode side-by-side.")
         parser_r.set_defaults(func=Main.run)
 
     def add_parser_build(self):
@@ -4141,7 +4152,7 @@ class Parser:
 
         g_diff = parser_s.add_mutually_exclusive_group()
         g_diff.add_argument('--side', action='store_true', help='set side_by_side diff mode.')
-        g_diff.add_argument('--updown', action='store_true', help='set up_to_down   diff mode.')
+        g_diff.add_argument('--down', action='store_true', help='set up_to_down   diff mode.')
 
         g_lang = parser_s.add_mutually_exclusive_group()
         g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
@@ -4211,7 +4222,10 @@ class Parser:
                 print(tko_guide[1:], end="")
         else:
             try:
-                args.func(args)
+                if "func" in args:
+                    args.func(args)
+                else:
+                    self.parser.print_help()
             except ValueError as e:
                 print(str(e))
 

@@ -12,7 +12,7 @@
 ├─────────────── INPUT ────────────────┬──────────────── INPUT ────────────────
 ├───────────── EXPECTED ───────────────┼────────────── RECEIVED ───────────────
 │ 0.44                                 │ Traceback (most recent call last):  
-│ -5.07                                │   File "/home/lion/Dropbox/gits/tool
+│ -5.07                                │   File "/home/sena/Dropbox/gits/tool
 │                                      │     a = float(input())              
 │                                      │               ^^^^^^^               
 │                                      │ EOFError: EOF when reading a line   
