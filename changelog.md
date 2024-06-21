@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.7.0
+  - add: color adjustments
 - 0.6.13
   - fix: better error msgs in parsing quests
   - fix: Optional instead | None

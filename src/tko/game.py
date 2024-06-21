@@ -363,25 +363,36 @@ class QuestParser:
         self.quest.title = match.group(1).strip()
         tags_raw = match.group(2).strip()
         tags = [tag.strip() for tag in tags_raw.split()]
+
+        # key
         keys = [t[1:] for t in tags if t.startswith("@")]
         if len(keys) > 0:
             self.quest.key = keys[0]
 
+        # skills
         skills = [t[1:] for t in tags if t.startswith("+")]
         if len(skills) > 0:
             self.quest.skills = {}
             for s in skills:
                 k, v = s.split(":")
                 self.quest.skills[k] = int(v)
-
+        # requires
         self.quest.requires = [t[2:] for t in tags if t.startswith("r:")]
 
         self.quest.opt = "opt" in tags
+        # type
+        # try:
+        #     self.quest.type = [t[1:] for t in tags if t.startswith("#")][0]
+        # except:
+        #     self.quest.type = "main"
         
+        # quest percent
         qmin = [t[2:] for t in tags if t.startswith("q:")]
         
         if len(qmin) > 0:
             self.quest.qmin = int(qmin[0])
+
+        # task min value requirement
         tmin = [t[2:] for t in tags if t.startswith("t:")]
         if len(tmin) > 0:
             self.quest.tmin = int(tmin[0])
@@ -416,11 +427,12 @@ class QuestParser:
         return None
 
 class Cluster:
-    def __init__(self, line_number:int = 0, title: str = "", key: str = ""):
+    def __init__(self, line_number:int = 0, title: str = "", key: str = "", color: Optional[str] = None):
         self.line_number = line_number
         self.title: str = title
         self.key: str = key
         self.quests: List[Quest] = []
+        self.color: Optional[str] = color
 
     def __str__(self):
         line = str(self.line_number).rjust(3)
@@ -521,7 +533,8 @@ class Game:
             return self.tasks[key]
         raise Exception(f"fail: task {key} not found in course definition")
 
-    # se existir um cluster nessa linha, insere na lista de clusters e retorno o objeto cluster inserido
+    # se existir um cluster nessa linha, insere na lista de clusters e 
+    # retorno o objeto cluster inserido
     def load_cluster(self, line: str, line_num: int) -> Optional[Cluster]:
         pattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->\s*$"
         match = re.match(pattern, line)
@@ -535,10 +548,14 @@ class Game:
         
         keys = [tag[1:] for tag in tags if tag.startswith("@")]
         key = titulo
+        try:
+            color = [tag[2:] for tag in tags if tag.startswith("c:")][0]
+        except:
+            color = None
         if len(keys) > 0:
             key = keys[0]
         
-        cluster = Cluster(line_num, titulo, key)
+        cluster = Cluster(line_num, titulo, key, color)
 
         # search for existing cluster in self.clusters
         for c in self.clusters:
@@ -857,18 +874,18 @@ class Graph:
                 if self.opt:
                     if q.opt:
                         fillcolor = "pink"
-                        textcolor = "black"
                     else:
                         fillcolor = "lime"
-                        textcolor = "black"
                 else:
-                    if q.opt:
-                        fillcolor = self.colorlist[i][0]
-                        textcolor = "white"
+                    if c.color is not None:
+                        fillcolor = c.color
                     else:
                         fillcolor = self.colorlist[i][0]
-                        textcolor = "black"
 
+                    if q.opt:
+                        fillcolor = f'"{fillcolor};0.9:orange"'
+                    else:
+                        fillcolor = f'"{fillcolor};0.9:lime"'
                 shape = "ellipse"
                 color = "black"
                 width = 1
@@ -878,19 +895,7 @@ class Graph:
                     else:
                         width = 3
                         color = q.get_grade_color()
-                saida.append(f"  {self.info(q)} [shape={shape}, color={color}, penwidth={width}, fillcolor={fillcolor}, style=filled, fontcolor={textcolor}]")
-
-
-        # for c in self.clusters:
-        #     key = get_md_link(c.key).replace("-", "_")
-        #     saida.append(f"  subgraph cluster_{key}{{")
-        #     saida.append(f'    label="{c.title.strip()}"')
-        #     saida.append(f"    style=filled")
-        #     saida.append(f"    color=lightgray")
-        #     for q in c.quests:
-        #         saida.append(f"    {info(q)}")
-
-        #     saida.append("  }")
+                saida.append(f"  {self.info(q)} [shape={shape} color={color} penwidth={width} fillcolor={fillcolor} ]")
 
         saida.append("}")
         # saida.append("@enduml")
