@@ -42,6 +42,9 @@ O TKO é um sistema de testes para programação competitiva. Ele é capaz de ro
 ```bash
 # instalar utilizando o gerenciador de pacotes do python
 pip install tko
+
+# ou diretamente pelo github
+pip install git+https://github.com/senapk/tko.git
 ```
 
 ## Dependências
@@ -118,7 +121,7 @@ $ ls pasta
 Para rodar a partir da pasta com os testes descompactados, basta passar o nome da pasta como parâmetro.
 
 ```bash
-$ tko run Solver.java pasta
+tko run Solver.java pasta
 ```
 
 Se quiser utilizar um nome padrão diferente para leitura ou escrita das pastas, veja a seção de [Convertendo entre formatos](#convertendo-entre-formatos).
@@ -428,7 +431,7 @@ in.03  in.08  in.13  in.18  in.23   out.04  out.09  out.14  out.19
 in.04  in.09  in.14  in.19  out.00  out.05  out.10  out.15  out.20
 ```
 
-- O `pattern` é útil para converter os formatos de Maratona, que vem em múltiplos arquivos para o `.tio`. Basta fazer o `match` do modelo que eles utilizarem. 
+- O `pattern` é útil para converter os formatos de Maratona, que vem em múltiplos arquivos para o `.tio`. Basta fazer o `match` do modelo que eles utilizarem.
   - `-p "@.in @.out"`
   - `-p "in@ out@"`
   - entre outros.

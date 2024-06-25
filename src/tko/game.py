@@ -3,7 +3,7 @@
 import subprocess
 import re
 import os
-from .format import symbols, colour
+from .format import symbols
 from typing import List, Dict, Tuple, Optional
 
 class RE:
@@ -46,18 +46,18 @@ class Task:
             return "g"
         return "w"  
 
-    def get_grade_symbol(self, min_value: Optional[int] = None) -> str:
+    def get_grade_symbol(self, min_value: Optional[int] = None) -> Tuple[str, str]:
         if min_value is None:
             min_value = self.default_min_value
         color = self.get_grade_color(min_value)
         if self.grade == 0:
-            return colour("*," + color, symbols.uncheck)
+            return ("*" + color, symbols.uncheck)
         if self.grade < min_value:
-            return colour("*," + color, str(self.grade))
+            return ("*" + color, str(self.grade))
         if self.grade < 10:
-            return colour("*," + color, str(self.grade))
+            return ("*" + color, str(self.grade))
         if self.grade == 10:
-            return colour("*," + color, symbols.check)
+            return ("*" + color, symbols.check)
         return "0"
 
     def get_percent(self):
@@ -239,15 +239,15 @@ class Quest:
         output = f"{line} {tasks_size} {key}{self.title} {self.skills} {self.requires}"
         return output
 
-    def get_resume_by_percent(self) -> str:
+    def get_resume_by_percent(self) -> Tuple[str, str]:
         value = self.get_percent()
-        return colour(self.get_grade_color() + ",*", str(value)) + "%"
+        return (self.get_grade_color() + "*", (str(value) + "%").rjust(4))
     
-    def get_requirement(self):
+    def get_requirement(self) -> Tuple[str, str]:
         if self.qmin is not None:
-            return colour("y", f"[{self.qmin}%]")
+            return ("y", f"[{self.qmin}%]")
         if self.tmin is not None:
-            return colour("y", f"[t>{self.tmin - 1}]")
+            return ("y", f"[t>{self.tmin - 1}]")
         return ""
 
     def get_resume_by_tasks(self) -> str:
@@ -258,7 +258,7 @@ class Quest:
         output = f"{count}/{total}"
         if plus > 0:
             output += f"+{plus}"
-        return "(" + colour(self.get_grade_color()+",*", output) + ")"
+        return (self.get_grade_color()+"*", "(" + output + ")")
 
     def get_grade_color(self) -> str:
         if self.not_started():
@@ -466,8 +466,8 @@ class Cluster:
             total += q.get_percent()
         return total // len(self.quests)
 
-    def get_resume_by_percent(self) -> str:
-        return colour(self.get_grade_color() + ",*", f"{self.get_percent()}%")
+    def get_resume_by_percent(self) -> Tuple[str, str]:
+        return (self.get_grade_color() + "*", f"{self.get_percent()}%")
 
     def get_resume_by_quests(self):
         total = len(self.quests)

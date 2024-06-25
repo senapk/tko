@@ -1,7 +1,6 @@
 from .game import Game, Task, Quest, Cluster, Graph, XP
 from .settings import RepoSettings, LocalSettings
 from .down import Down
-from .format import symbols, colour, Color
 import shutil
 import os
 import re
@@ -10,126 +9,164 @@ from typing import List, Dict, Tuple, Optional
 def debug(text):
     print(text)
 
+import curses
+from typing import List, Tuple
+
+Text = Tuple[str, str]
+Sentence = List[Text]
+
+class Fmt:
+    # Definindo constantes para as cores
+    CM = {
+        "r": 1, # Red on White
+        "g": 2, # Green on White
+        "y": 3, # Yellow on White
+        "b": 4, # Blue on White
+        "m": 5,
+        "c": 6,
+        "w": 7,
+        "k": 8,
+    }
+
+    @staticmethod
+    def init_colors():
+        # Inicializa as cores e define os pares de cores
+        curses.start_color()
+        curses.use_default_colors()
+        curses.init_pair(Fmt.CM["r"], curses.COLOR_RED    , -1)
+        curses.init_pair(Fmt.CM["g"], curses.COLOR_GREEN  , -1)
+        curses.init_pair(Fmt.CM["y"], curses.COLOR_YELLOW , -1)
+        curses.init_pair(Fmt.CM["b"], curses.COLOR_BLUE   , -1)
+        curses.init_pair(Fmt.CM["m"], curses.COLOR_MAGENTA, -1)
+        curses.init_pair(Fmt.CM["c"], curses.COLOR_CYAN   , -1)
+        curses.init_pair(Fmt.CM["w"], curses.COLOR_WHITE  , -1)
+        curses.init_pair(Fmt.CM["k"], curses.COLOR_BLACK  , -1)
+
+    @staticmethod
+    def len(sentence: Sentence) -> int:
+        total = 0
+        for _fmt, text in sentence:
+            total += len(text)
+        return total
+
+    @staticmethod
+    def write_line(stdscr, x: int, y: int, text: str, fmt: str):
+        bold = False
+        italic = False
+        underline = False
+        if "*" in fmt:
+            bold = True
+            fmt = fmt.replace("*", "")
+        if "/" in fmt:
+            italic = True
+            fmt = fmt.replace("/", "")
+        if "_" in fmt:
+            underline = True
+            fmt = fmt.replace("_", "")
+        color = -1
+        try:
+            color = Fmt.CM[fmt]
+        except KeyError:
+            color = -1
+        if bold:
+            stdscr.attron(curses.A_BOLD)
+        if italic:
+            stdscr.attron(curses.A_ITALIC)
+        if underline:
+            stdscr.attron(curses.A_UNDERLINE)
+        if color != -1:
+            stdscr.attron(curses.color_pair(color))  # Ativa o par de cores especificado
+        stdscr.addstr(y, x, text)
+        if color != -1:
+            stdscr.attroff(curses.color_pair(color))  # Desativa o par de cores
+        if bold:
+            stdscr.attroff(curses.A_BOLD)
+        if italic:
+            stdscr.attroff(curses.A_ITALIC)
+        if underline:
+            stdscr.attroff(curses.A_UNDERLINE)
+
+    @staticmethod
+    def write(stdscr, x: int, y: int, fmt_text: Sentence):
+        # Escreve um texto na tela com cores diferentes
+        x_ini = x
+        for fmt, text in fmt_text:
+            lines = text.split("\n")
+            for i in range(len(lines)):
+                if i > 0:
+                    x = x_ini
+                    y += 1
+                Fmt.write_line(stdscr, x, y, lines[i], fmt)
+                x += len(lines[i])  # Move a posição x para a direita após o texto
+
+    @staticmethod
+    def get_user_input(stdscr, prompt: str) -> str:
+        curses.echo()  # Ativa a exibição dos caracteres digitados
+        stdscr.addstr(curses.LINES - 1, 0, prompt)
+        stdscr.refresh()
+        input_str = stdscr.getstr(curses.LINES - 1, len(prompt), 20).decode('utf-8')  # Captura o input do usuário
+        curses.noecho()  # Desativa a exibição dos caracteres digitados
+        return input_str
+
+
 class DD:
-    cluster_key = "blue, bold"
-    cluster_title = "bold"
-    quest_key = "blue, bold, italic"
-    tasks = "yellow, bold"
-    opt = "magenta, italic"
-    opt_task = "cyan, italic"
-    lcmd = "red, bold"
-    cmd = "red"
-    code_key = "bold"
-    skills = "cyan, bold"
+    cluster_key = "*b"
+    cluster_title = "*"
+    quest_key = "/*b"
+    tasks = "*y"
+    opt = "/m"
+    opt_task = "/c"
+    lcmd = "*r"
+    cmd = "r"
+    code_key = "*"
+    skills = "c*"
 
 
-    play = "green"
-    new = "green, bold"
+    play = "g"
+    new = "*g"
 
-    nothing = "magenta"
-    started = "red"
-    required = "yellow"
-    complete = "green"
+    nothing = "m"
+    started = "r"
+    required = "y"
+    complete = "g"
 
-    dots = "yellow" # ...
-    shell = "red" # extern shell cmds
+    dots = "y" # ...
+    shell = "r" # extern shell cmds
 
-    htext = "white"
+    htext = "w"
 
-    check = "green"
-    uncheck = "yellow"
+    check = "g"
+    uncheck = "y"
 
-    param = "cyan, bold"
+    param = "c"
 
 class Util:
-    @staticmethod
-    def calc_letter(index_letter: int):
-        unit = index_letter % 26
-        ten = index_letter // 26
-        if ten == 0:
-            return chr(ord("A") + unit)
-        return chr(ord("A") + ten - 1) + chr(ord("A") + unit)
-
-    @staticmethod
-    def calc_index(letter: str):
-        letter = letter.upper()
-        if len(letter) == 1:
-            return ord(letter) - ord("A")
-        return (ord(letter[0]) - ord("A") + 1) * 26 + (ord(letter[1]) - ord("A"))
-
     @staticmethod
     def get_number(value: int):
         if 0 <= value <= 9:
             return str(value)
         return "*"
-
-    @staticmethod
-    def get_percent(value, color2: str = "", pad = 0):
-        text = f"{str(value)}%".rjust(pad)
-        if value == 100:
-            return colour(DD.complete + "," +  color2, "100%")
-        if value >= 70:
-            return colour(DD.required + "," +  color2, text)
-        if value == 0:
-            return colour(DD.nothing + "," +  color2, text)
-        return colour(DD.started + "," +  color2, text)
-
+    
     @staticmethod
     def get_term_size():
-        return shutil.get_terminal_size().columns
-    
-    @staticmethod
-    def get_num_num(s: str) -> Tuple[Optional[int], Optional[int]]:
-        pattern = r"^(\d+)-(\d+)$"
-        match = re.match(pattern, s)
-        if match:
-            return int(match.group(1)), int(match.group(2))
-        else:
-            return None, None
+        return curses.COLS
 
     @staticmethod
-    def get_letter_letter(s: str) -> Tuple[Optional[str], Optional[str]]:
-        pattern = r"([a-zA-Z]+)-([a-zA-Z]+)"
-        match = re.match(pattern, s)
-        if match:
-            return match.group(1), match.group(2)
-        return None, None
-    
-    @staticmethod
-    def expand_range(line: str) -> List[str]:
-        line = line.replace(" - ", "-")
-        actions = line.split()
-
-        expand: List[str] = []
-        for t in actions:
-            (start_number, end_number) = Util.get_num_num(t)
-            (start_letter, end_letter) = Util.get_letter_letter(t)
-            if start_number is not None and end_number is not None:
-                expand += [str(v) for v in list(range(start_number, end_number + 1))]
-            elif start_letter is not None and end_letter is not None:
-                start_index = Util.calc_index(start_letter)
-                end_index = Util.calc_index(end_letter)
-                limits = range(start_index, end_index + 1)
-                expand += [Util.calc_letter(i) for i in limits]
-            else:
-                expand.append(t)
-        return expand
+    def get_percent(value, color2: str = "", pad = 0) -> Text:
+        text = f"{str(value)}%".rjust(pad)
+        if value == 100:
+            return (DD.complete +  color2, "100%")
+        if value >= 70:
+            return (DD.required +  color2, text)
+        if value == 0:
+            return (DD.nothing +  color2, text)
+        return (DD.started +  color2, text)
     
     @staticmethod
     def clear():
-        if os.name == "nt":
-            os.system("cls")
-        else:
-            os.system("clear")
-
-    @staticmethod
-    def is_number(s):
-        try:
-            int(s)
-            return True
-        except ValueError:
-            return False
-
+        os.system('cls' if os.name == 'nt' else 'clear')
+   
+    
 class Play:
     cluster_prefix = "'"
 
@@ -137,8 +174,7 @@ class Play:
         self.fnsave = fnsave
         self.local = local
         self.repo_alias = repo_alias
-        self.help_options = 0
-        self.help_index = 0
+
         self.rep = rep
         self.show_toolbar = "toolbar" in self.rep.view
         self.admin_mode = "admin" in self.rep.view
@@ -154,12 +190,13 @@ class Play:
 
         self.game: Game = game
 
-        self.vfolds: Dict[str, str] = {} # visible collapsers ou expanders for clusters or quests
-        self.vtasks: Dict[str, Task] = {}  # visible tasks  indexed by upper letter
         self.expanded: List[str] = [x for x in self.rep.expanded]
         self.new_items: List[str] = [x for x in self.rep.new_items]
         self.avaliable_quests: List[Quest] = [] # avaliable quests
         self.avaliable_clusters: List[Cluster] = [] # avaliable clusters
+
+        self.index = 0
+        self.items: List[Tuple[str, str, Sentence]] = []
 
         self.first_loop = True
 
@@ -233,150 +270,129 @@ class Play:
         for q in added_quests:
             self.new_items.append(q.key)
 
-    @staticmethod
-    def cut_limits(title, fn_gen):
-        term_size = Util.get_term_size()
-        clear_total = Color.len(fn_gen(title))
-        dif = clear_total - term_size
-        if dif < 0:
-            return fn_gen(title)
-        title = title[:-dif - 3] + colour(DD.dots, "...")
-        return fn_gen(title)
+    # @staticmethod
+    # def cut_limits(title: str, fn_gen) -> Sentence:
+    #     term_size = Util.get_term_size()
+    #     clear_total = Fmt.len(fn_gen(title))
+    #     dif = clear_total - term_size
+    #     if dif < 0:
+    #         return fn_gen(title)
+    #     title = title[:-dif - 3] + "..."
+    #     return fn_gen(title)
 
-    def str_task(self, key: str, t: Task, ligc: str, ligq: str, min_value = 1) -> str:
-        vindex = colour(DD.tasks, str(key).ljust(2, " "))
-        vdone = t.get_grade_symbol(min_value)
-        title = t.title
-
-        def gen_saida(_title):
-            parts = _title.split(" ")
+    def str_task(self, in_focus: bool, t: Task, ligc: str, ligq: str, min_value = 1) -> Sentence:
+        output: Sentence = []
+        output.append(("", " " + ligc + " " + ligq))
+        output.append(("", " "))
+        output.append(t.get_grade_symbol(min_value))
+        focus = ""
+        if in_focus:
+            focus = "_"
+        if self.mark_opt and t.opt:
+            output.append((DD.opt_task + focus, t.title))
+        else:
+            output.append(("" + focus, t.title))
         
+        if "xp" in self.order:
             xp = ""
-            if "xp" in self.order:
-                for s, v in t.skills.items():
-                    xp += f" +{s}:{v}"
-                xp = colour(DD.skills, xp)
-
-            if self.mark_opt and t.opt:
-                fn = lambda x: colour(DD.opt_task, x)
-            else:
-                fn = lambda x: x
-            parts = [("@" + colour(DD.code_key, p[1:]) if p.startswith("@") else fn(p)) for p in parts]
-
-            titlepainted = " ".join(parts)
-            return f" {ligc} {ligq}{vindex}{vdone} {titlepainted}{xp}"
-        
-        
-
-        return Play.cut_limits(title, gen_saida)
-
-    def str_quest(self, key: str, q: Quest, lig: str) -> str:
-        key = colour(DD.quest_key, key.rjust(1))
-
-
+            for s, v in t.skills.items():
+                xp += f" +{s}:{v}"
+            output.append((DD.skills, xp))
+        return output
+    
+    def str_quest(self, in_focus: bool, q: Quest, lig: str) -> Sentence:
         con = "━─"
         if q.key in self.expanded:
             con = "─┯"
-        new = "" if q.key not in self.new_items else colour(DD.new, " [new]")
 
-        def gen_saida(_title):
-            if self.mark_opt and q.opt:
-                _title = colour(DD.opt, _title)
-            resume = ""
-            for item in self.order:
-                if item == "cont":
-                    resume += " " + q.get_resume_by_tasks()
-                elif item == "perc":
-                    resume += " " + q.get_resume_by_percent().rjust(4)
-                elif item == "goal":
-                    resume += " " + q.get_requirement()
-                elif item == "title":
-                    resume += " " + _title
-                elif item == "xp":
-                    xp = ""
-                    for s,v in q.skills.items():
-                        xp += f" +{s}:{v}"
-                    xp = colour(DD.skills, xp)
-                    resume += " " + xp
-            return f" {lig}{con}{key}{resume}{new}"
+
+        output: Sentence = []
+        output.append(("", " " + lig + con))
+
+        for item in self.order:
+            if item == "cont":
+                output.append(("", " "))
+                output.append(q.get_resume_by_tasks())
+            elif item == "perc":
+                output.append(("", " "))
+                output.append(q.get_resume_by_percent())
+            elif item == "goal":
+                output.append(("", " "))
+                output.append(q.get_requirement())
+            elif item == "title":
+                opt = ""
+                if q.opt:
+                    opt = DD.opt
+                focus = ""
+                if in_focus:
+                    focus = "_"
+                output.append((opt + focus, q.title))
+            elif item == "xp":
+                xp = ""
+                for s,v in q.skills.items():
+                    xp += f" +{s}:{v}"
+                output.append((DD.skill, " " + xp))
+                
+        if q.key in self.new_items:
+            output.append((DD.new, " [new]"))
+
+        return output
         
-        return Play.cut_limits(q.title.strip(), gen_saida)
 
-    def str_cluster(self, key: str, cluster: Cluster, quests: List[Quest]) -> str:
-        opening = "━─"
-        resume = ""
+    def str_cluster(self, in_focus: bool, cluster: Cluster, quests: List[Quest]) -> Sentence:
+        output: Sentence = []
+        opening = "━─"        
         if cluster.key in self.expanded:
             opening = "─┯"
-            resume = " " + cluster.get_resume_by_percent()
+        
+        output.append(("", opening + " "))
 
-        # resume = ""
-        # for item in self.order:
-        #     if item == "cont":
-        #         resume += " " + cluster.get_resume_by_quests()
-            # if item == "perc":
-        key = colour(DD.cluster_key, key)
-        title = colour(DD.cluster_title, cluster.title.strip())
-        new = "" if cluster.key not in self.new_items else colour(DD.new, " [new]")
-        return f"{opening}{key} {title}{resume}{new}"
+        focus = ""
+        if in_focus:
+            focus = "_"
+        output.append((DD.cluster_title + focus, cluster.title.strip()))
+        
+        if cluster.key in self.expanded:
+            output.append(("", " "))
+            output.append(cluster.get_resume_by_percent())
+
+        if cluster.key in self.new_items:
+            output.append((DD.new, " [new]"))
+
+        return output
     
     def get_avaliable_quests_from_cluster(self, cluster: Cluster) -> List[Quest]:
         return [q for q in cluster.quests if q in self.avaliable_quests]
 
-    def show_options(self):
-        fold_index = 0
-        task_index = 0
-        self.vfolds = {}
-        self.vtasks = {}
+    def load_options(self):
+        index = 0
+        self.items = []
         for cluster in self.avaliable_clusters:
             quests = self.get_avaliable_quests_from_cluster(cluster)
+            sentence = self.str_cluster(self.index == index, cluster, quests)
+            self.items.append(("cluster", cluster.key, sentence))
+            index += 1
 
-            key = str(fold_index)
-            self.vfolds[str(key)] = cluster.key
-            fold_index += 1
-            print(self.str_cluster(key.ljust(2), cluster, quests))
             if not cluster.key in self.expanded: # va para proximo cluster
                 continue
 
             for q in quests:
-                key = str(fold_index).ljust(2)
                 lig = "├" if q != quests[-1] else "╰"
-                print(self.str_quest(key, q, lig))
-                self.vfolds[str(fold_index)] = q.key
-                fold_index += 1
+                sentence = self.str_quest(self.index == index, q, lig)
+                self.items.append(("quest", q.key, sentence))
+                index += 1
                 if q.key in self.expanded:
                     for t in q.get_tasks():
-                        key = Util.calc_letter(task_index)
                         ligc = "│" if q != quests[-1] else " "
                         ligq = "├─" if t != q.get_tasks()[-1] else "╰─"
-                        print(self.str_task(key, t, ligc, ligq, q.tmin))
-                        self.vtasks[key] = t
-                        task_index += 1
+                        sentence = self.str_task(self.index == index, t, ligc, ligq, q.tmin)
+                        self.items.append(("task", t.key, sentence))
+                        index += 1
 
-    def process_collapse(self):
-        quest_keys = [q.key for q in self.avaliable_quests]
-        if any([q in self.expanded for q in quest_keys]):
-            self.expanded = [key for key in self.expanded if key not in quest_keys]
-        else:
-            self.expanded = []
-
-    def process_expand(self):
-        # if any cluster outside expanded
-        expand_clusters = False
-        for c in self.avaliable_clusters:
-            if c.key not in self.expanded:
-                expand_clusters = True
-        if expand_clusters:
-            for c in self.avaliable_clusters:
-                if c.key not in self.expanded:
-                    self.expanded.append(c.key)
-        else:
-            for q in self.avaliable_quests:
-                if q.key not in self.expanded:
-                    self.expanded.append(q.key)
 
     def down_task(self, rootdir, task: Task, ext: str):
         if task.key in task.title:
-            cmd = colour(DD.shell, f"tko down {self.repo_alias} {task.key} -l {ext}")
+            cmd = (DD.shell, f"tko down {self.repo_alias} {task.key} -l {ext}")
             print(f"{cmd}")
             Down.download_problem(rootdir, self.repo_alias, task.key, ext)
         else:
@@ -386,14 +402,14 @@ class Play:
         if self.local.rootdir == "":
             print("Diretório raiz para o tko ainda não foi definido")
             print("Você deseja utilizer o diretório atual")
-            print("  " + colour(DD.shell, os.getcwd()))
+            print((DD.shell, "  " + os.getcwd()))
             print("como raiz para o repositório de " + self.repo_alias + "? (s/n) ", end="")
             answer = input()
             if answer == "s":
                 self.local.rootdir = os.getcwd()
                 self.fnsave()
                 print("Você pode alterar o diretório raiz navegando para o diretório desejado e executando o comando")
-                print("  " + colour(DD.shell, "tko config --root"))
+                print((DD.shell, "  tko config --root"))
             else:
                 print("Navegue para o diretório desejado e execute o comando novamente")
                 exit(1)
@@ -407,7 +423,7 @@ class Play:
             self.rep.lang = lang
             self.fnsave()
             print("Você pode mudar a linguagem de programação executando o comando")
-            print("  " + colour(DD.cmd, "ext <Extensão>"))
+            print((DD.cmd, "  ext <Extensão>"))
 
     def process_down(self, actions):
         if len(actions) < 2:
@@ -431,68 +447,58 @@ class Play:
                 return c
         return None
 
-    def collapse(self, key):
-        self.expanded.remove(key)
-        cluster = self.find_cluster(key)
-        if cluster is not None:
-            for q in cluster.quests:
-                try:
-                    self.expanded.remove(q.key)
-                except ValueError:
-                    pass
+    def collapse(self):
+        _type, key, _sentence = self.items[self.index]
+        if key in self.expanded:
+            self.expanded.remove(key)
+            cluster = self.find_cluster(key)
+            if cluster is not None:
+                for q in cluster.quests:
+                    try:
+                        self.expanded.remove(q.key)
+                    except ValueError:
+                        pass
+        else:
+            if _type == "task":
+                while True:
+                    _type, key, _sentence = self.items[self.index]
+                    if _type == "quest":
+                        break
+                    self.index -= 1
+            elif _type == "quest":
+                while True:
+                    _type, key, _sentence = self.items[self.index]
+                    if _type == "cluster":
+                        break
+                    self.index -= 1
 
-    def process_folds(self, actions) -> bool:
-        mass_action = None
-        for t in actions:
-            if not Util.is_number(t):
-                print(f"Missão '{t}' não é um número")
-                return False
-            if not str(t) in self.vfolds:
-                print(self.vfolds.keys())
-                print(f"Entrada '{t}' não existe")
-                return False
-            key = self.vfolds[str(t)]
-            if mass_action is None:
-                if key in self.expanded:
-                    self.collapse(key)
-                    mass_action = "collapse"
-                else:
-                    self.expanded.append(key)
-                    mass_action = "expand"
-            else:
-                if mass_action == "expand":
-                    if key not in self.expanded:
-                        self.expanded.append(key)
-                else:
-                    if key in self.expanded:
-                        self.collapse(key)
-
-        return True
+    def expand(self):
+        _type, key, _sentence = self.items[self.index]
+        if _type == "cluster" or _type == "quest":
+            if key not in self.expanded:
+                self.expanded.append(key)
     
-    def process_tasks(self, actions):
-        mass_action: Optional[int] = None
-        for t in actions:
-            letter = "".join([c for c in t if c.isupper() and not c.isdigit()])
-            number = "".join([c for c in t if c.isdigit()])
-            if letter in self.vtasks:
-                t = self.vtasks[letter]
-                if len(number) > 0:
-                    t.set_grade(number)
-                    continue
-                
-                if mass_action is not None:
-                    t.set_grade(mass_action)
-                    continue
-                if t.grade == 0:
-                    t.set_grade(10)
-                    mass_action = 10
-                else:
-                    t.set_grade(0)
-                    mass_action = 0
-            else:
-                print(f"Talk {t} não processado")
-                return False
-        return True
+    # def process_tasks(self, ):
+    #     mass_action: Optional[int] = None
+
+    #     if letter in self.vtasks:
+    #         t = self.vtasks[letter]
+    #         if len(number) > 0:
+    #             t.set_grade(number)
+    #             continue
+            
+    #         if mass_action is not None:
+    #             t.set_grade(mass_action)
+    #             continue
+    #         if t.grade == 0:
+    #             t.set_grade(10)
+    #             mass_action = 10
+    #         else:
+    #             t.set_grade(0)
+    #             mass_action = 0
+    #     else:
+    #         print(f"Talk {t} não processado")
+    #         return False
     
     
     def process_link(self, actions):
@@ -502,7 +508,7 @@ class Play:
         for t in actions[1:]:
             if t in self.vtasks:
                 # print(self.tasks[actions[1]].link)
-                key = colour(DD.tasks, t)
+                key = (DD.tasks, t)
                 link = self.vtasks[t].link
                 print(f"{key} {link}")
             else:
@@ -536,18 +542,14 @@ class Play:
             return True
         cmd = actions[0]
 
-        if cmd == "<":
-            self.process_collapse()
-        elif cmd == "<<":
-            self.process_collapse()
-            self.process_collapse()
-        elif cmd == ">":
-            self.process_expand()
-        elif cmd == ">>":
-            self.process_expand()
-            self.process_expand()
-        elif cmd == "h" or cmd == "help":
-            return self.show_cmds()
+        if cmd == "j":
+            self.index += 1
+        elif cmd == "k":
+            self.index -= 1
+        elif cmd == "h":
+            self.collapse()
+        elif cmd == "l":
+            self.expand()
         elif cmd == "c" or cmd == "cont":
             self.order_toggle("cont")
         elif cmd == "p" or cmd == "perc":
@@ -581,145 +583,145 @@ class Play:
             return False
         return True
 
-    @staticmethod
-    def show_help():
-        output = "Digite " + colour(DD.lcmd, "t")
-        output += " os números ou intervalo das tarefas para (marcar/desmarcar), exemplo:"
-        print(output)
-        print(colour(DD.play, "play$ ") + "t 1 3-5")
-        return False
+    # @staticmethod
+    # def show_help():
+    #     output = "Digite " + colour(DD.lcmd, "t")
+    #     output += " os números ou intervalo das tarefas para (marcar/desmarcar), exemplo:"
+    #     print(output)
+    #     print(colour(DD.play, "play$ ") + "t 1 3-5")
+    #     return False
 
-    @staticmethod
-    def checkbox(value):
-        return colour(DD.check, symbols.opcheck) if value else colour(DD.uncheck, symbols.opuncheck)
+    # @staticmethod
+    # def checkbox(value):
+    #     return colour(DD.check, symbols.opcheck) if value else colour(DD.uncheck, symbols.opuncheck)
 
     def show_header(self):
         Util.clear()
-        total_perc = 0
+        # total_perc = 0
         
-        for q in self.game.quests.values():
-            total_perc += q.get_percent()
-        if self.game.quests:
-            total_perc = total_perc // len(self.game.quests)
+        # for q in self.game.quests.values():
+        #     total_perc += q.get_percent()
+        # if self.game.quests:
+        #     total_perc = total_perc // len(self.game.quests)
         
-        vrep = colour(DD.htext + ",*", "[")+ colour(DD.tasks, self.repo_alias) + colour(DD.htext + ",*", "]")
-        vtotal = colour(DD.htext + ",*", "Total: ") + Util.get_percent(total_perc, "bold", 4)
+        # vrep = colour(DD.htext + ",*", "[")+ colour(DD.tasks, self.repo_alias) + colour(DD.htext + ",*", "]")
+        # vtotal = colour(DD.htext + ",*", "Total: ") #+ Util.get_percent(total_perc, "bold", 4)
 
-        intro = vtotal + " " + "│" + colour(DD.htext, " Digite ") + colour(DD.lcmd, "h") + colour(DD.cmd, "elp")
-        intro += colour(DD.htext, " ou ") + colour(DD.lcmd, "t") + colour(DD.cmd, "oolbar") 
-        intro += Play.checkbox(self.show_toolbar)
-        vlink = colour(DD.lcmd, "c") + colour(DD.cmd, "ont") + (Play.checkbox("cont" in self.order))
-        vperc = colour(DD.lcmd, "p") + colour(DD.cmd, "erc") + (Play.checkbox("perc" in self.order))
-        vgoal = colour(DD.lcmd, "g") + colour(DD.cmd, "oal") + (Play.checkbox("goal" in self.order))
-        vxp__ = colour(DD.lcmd, "x") + colour(DD.cmd, "p") + (Play.checkbox("xp" in self.order))
-        vopt_ = colour(DD.lcmd, "o") + colour(DD.cmd, "pt") + (Play.checkbox(self.mark_opt))
+        # intro = vtotal + " " + "│" + colour(DD.htext, " Digite ") + colour(DD.lcmd, "h") + colour(DD.cmd, "elp")
+        # intro += colour(DD.htext, " ou ") + colour(DD.lcmd, "t") + colour(DD.cmd, "oolbar") 
+        # intro += Play.checkbox(self.show_toolbar)
+        # vlink = colour(DD.lcmd, "c") + colour(DD.cmd, "ont") + (Play.checkbox("cont" in self.order))
+        # vperc = colour(DD.lcmd, "p") + colour(DD.cmd, "erc") + (Play.checkbox("perc" in self.order))
+        # vgoal = colour(DD.lcmd, "g") + colour(DD.cmd, "oal") + (Play.checkbox("goal" in self.order))
+        # vxp__ = colour(DD.lcmd, "x") + colour(DD.cmd, "p") + (Play.checkbox("xp" in self.order))
+        # vopt_ = colour(DD.lcmd, "o") + colour(DD.cmd, "pt") + (Play.checkbox(self.mark_opt))
 
-        vadmi = colour(DD.lcmd, "a") + colour(DD.cmd, "dmin") + (Play.checkbox(self.admin_mode))
+        # vadmi = colour(DD.lcmd, "a") + colour(DD.cmd, "dmin") + (Play.checkbox(self.admin_mode))
         
-        vext = colour(DD.lcmd, "e") + colour(DD.cmd, "xt") + "(" + colour(DD.param, self.rep.lang) + ")"
-        visoes = f"{vlink} {vperc} {vgoal} {vxp__} {vopt_} {vadmi} "
+        # vext = colour(DD.lcmd, "e") + colour(DD.cmd, "xt") + "(" + colour(DD.param, self.rep.lang) + ")"
+        # visoes = f"{vlink} {vperc} {vgoal} {vxp__} {vopt_} {vadmi} "
 
-        # XP        
-        obt, total = self.game.get_xp_resume()
-        cur_level = XP().get_level(obt)
-        xp_next = XP().get_xp(cur_level + 1)
-        xp_prev = XP().get_xp(cur_level)
-        xpresume = colour(DD.skills, f"{obt}/{total}")
-        atual = obt - xp_prev
-        needed = xp_next - xp_prev
-        nbar = 35
-        nbarobt = int((atual * nbar // needed))
-        level = colour("bold, green", str(cur_level))
-        vxpall = f"{vrep} {vext} {xpresume} Level:{level} "
-        vxpall += colour("y", f"{str(atual).rjust(3)}/{str(needed).rjust(3)} ")
-        vxpnext = colour("y", "xp:") + "#" * nbarobt + "-" * (nbar - nbarobt)
+        # # XP        
+        # obt, total = self.game.get_xp_resume()
+        # cur_level = XP().get_level(obt)
+        # xp_next = XP().get_xp(cur_level + 1)
+        # xp_prev = XP().get_xp(cur_level)
+        # xpresume = colour(DD.skills, f"{obt}/{total}")
+        # atual = obt - xp_prev
+        # needed = xp_next - xp_prev
+        # nbar = 35
+        # nbarobt = int((atual * nbar // needed))
+        # level = colour("bold, green", str(cur_level))
+        # vxpall = f"{vrep} {vext} {xpresume} Level:{level} "
+        # vxpall += colour("y", f"{str(atual).rjust(3)}/{str(needed).rjust(3)} ")
+        # vxpnext = colour("y", "xp:") + "#" * nbarobt + "-" * (nbar - nbarobt)
 
-        def adding_break(base: str, added: str, lim: int):
-            last = base.split("\n")[-1]
-            if Color.len(last) + Color.len(added) > lim:
-                return base + "\n" + added
-            return base + added
+        # def adding_break(base: str, added: str, lim: int):
+        #     last = base.split("\n")[-1]
+        #     if Color.len(last) + Color.len(added) > lim:
+        #         return base + "\n" + added
+        #     return base + added
 
-        skills = self.game.get_skills_resume()
-        vskills = ""
-        if skills:
-            for s, v in skills.items():
-                if s != "xp":
-                    vskills = adding_break(vskills, f"{colour(DD.skills, s)}:{v} ", nbar)
+        # skills = self.game.get_skills_resume()
+        # vskills = ""
+        # if skills:
+        #     for s, v in skills.items():
+        #         if s != "xp":
+        #             vskills = adding_break(vskills, f"{colour(DD.skills, s)}:{v} ", nbar)
 
-        div0 = "────────────┴─────────────────────────"
+        # div0 = "────────────┴─────────────────────────"
 
-        div1 = "──────────────────────────────────────"
+        # div1 = "──────────────────────────────────────"
 
-        elementos = [intro]
-        if self.show_toolbar:
-            elementos += [div0, visoes, div1, vxpall, vxpnext]
-            if vskills:
-                elementos += [vskills]
-        elementos += [div1]
+        # elementos = [intro]
+        # if self.show_toolbar:
+        #     elementos += [div0, visoes, div1, vxpall, vxpnext]
+        #     if vskills:
+        #         elementos += [vskills]
+        # elementos += [div1]
 
 
-        # elementos = [intro] + ([div0, visoes, div1, vxpall, vxpnext, vskills] if self.show_toolbar else []) + [div1]
-        self.print_elementos(elementos)
+        # # elementos = [intro] + ([div0, visoes, div1, vxpall, vxpnext, vskills] if self.show_toolbar else []) + [div1]
+        # self.print_elementos(elementos)
 
-    def show_cmds(self):
-        controles = colour(DD.htext, "Números ") + colour(DD.cluster_key, "azul") + colour(DD.htext, " para expandir/colapsar")
-        letrass = colour(DD.htext, "Letras ") + colour(DD.tasks, "amarelo") + colour(DD.htext, " para marcar/desmarcar")
-        intervalos1 = colour(DD.htext, "Você pode digitar intervalos: ") + colour(DD.cluster_key, "1-3")
-        intervalos2 = colour(DD.htext, "Você pode digitar intervalos: ") + colour(DD.cluster_key, "B-F")
+    # def show_cmds(self):
+        # controles = colour(DD.htext, "Números ") + colour(DD.cluster_key, "azul") + colour(DD.htext, " para expandir/colapsar")
+        # letrass = colour(DD.htext, "Letras ") + colour(DD.tasks, "amarelo") + colour(DD.htext, " para marcar/desmarcar")
+        # intervalos1 = colour(DD.htext, "Você pode digitar intervalos: ") + colour(DD.cluster_key, "1-3")
+        # intervalos2 = colour(DD.htext, "Você pode digitar intervalos: ") + colour(DD.cluster_key, "B-F")
 
-        numeros = "─┯" + colour(DD.cluster_key, "3") + "  Digite " + colour(DD.cluster_key, "3") + (" para ver ou ocultar")
+        # numeros = "─┯" + colour(DD.cluster_key, "3") + "  Digite " + colour(DD.cluster_key, "3") + (" para ver ou ocultar")
         
-        letras = " ├─" + colour(DD.tasks, "D ") + colour(DD.nothing, symbols.uncheck)
-        letras += " Tarefa. Dig " + colour(DD.cluster_key, "D") + " (des)marcar"
+        # letras = " ├─" + colour(DD.tasks, "D ") + colour(DD.nothing, symbols.uncheck)
+        # letras += " Tarefa. Dig " + colour(DD.cluster_key, "D") + " (des)marcar"
         
-        graduar = " ╰─" + colour(DD.tasks, "X ") + colour(DD.started, "4")  + " Tarefa. Dig " + colour(DD.cluster_key, "X4") + " dar nota 4"
-        todas = colour(DD.cluster_key, "<") + " ou " + colour(DD.cluster_key, ">") + colour(DD.htext, " (Compactar ou Descompactar Tudo)")
+        # graduar = " ╰─" + colour(DD.tasks, "X ") + colour(DD.started, "4")  + " Tarefa. Dig " + colour(DD.cluster_key, "X4") + " dar nota 4"
+        # todas = colour(DD.cluster_key, "<") + " ou " + colour(DD.cluster_key, ">") + colour(DD.htext, " (Compactar ou Descompactar Tudo)")
         
-        nomes_verm = colour(DD.htext, "Os nomes em vermelho são comandos")
-        prime_letr = colour(DD.htext, "Basta a primeira letra do comando")
-        vdown = colour(DD.lcmd, "d") + colour(DD.cmd, "own") + colour(DD.param, " <TaskID ...>") + colour(DD.htext, " (Download)")
-        vlink = colour(DD.lcmd, "l") + colour(DD.cmd, "ink") + colour(DD.param, " <TaskID ...>") + colour(DD.htext, " (Ver links)")
-        vexte = colour(DD.lcmd, "e") + colour(DD.cmd, "xt") + colour(DD.param, "  <EXT>") + colour(DD.htext, " (Mudar linguagem default)")
-        vsair = colour(DD.lcmd, "q") + colour(DD.cmd, "uit") + colour(DD.htext, " (Sair do programa)")
-        vcont = colour(DD.lcmd, "c") + colour(DD.cmd, "ont") + colour(DD.htext, " (Alterna contador de tarefas)")
-        vperc = colour(DD.lcmd, "p") + colour(DD.cmd, "erc") + colour(DD.htext, " (Alterna mostrar porcentagem)")
-        vgoal = colour(DD.lcmd, "g") + colour(DD.cmd, "oal") + colour(DD.htext, " (Alterna mostrar meta mínima)")
-        vopt_ = colour(DD.lcmd, "o") + colour(DD.cmd, "pt") + colour(DD.htext, " (Alterna ressaltar opcionais)")
-        vupda = colour(DD.lcmd, "u") + colour(DD.cmd, "pdate") + colour(DD.htext, " (Recarrega o repositório)")
-        vrota = colour(DD.lcmd, "r") + colour(DD.cmd, "otate") + colour(DD.htext, " (Rotaciona elementos visuais)")
-        vgame = colour(DD.lcmd, "a") + colour(DD.cmd, "dmin") + colour(DD.htext, " (Libera todas as missões)")
+        # nomes_verm = colour(DD.htext, "Os nomes em vermelho são comandos")
+        # prime_letr = colour(DD.htext, "Basta a primeira letra do comando")
+        # vdown = colour(DD.lcmd, "d") + colour(DD.cmd, "own") + colour(DD.param, " <TaskID ...>") + colour(DD.htext, " (Download)")
+        # vlink = colour(DD.lcmd, "l") + colour(DD.cmd, "ink") + colour(DD.param, " <TaskID ...>") + colour(DD.htext, " (Ver links)")
+        # vexte = colour(DD.lcmd, "e") + colour(DD.cmd, "xt") + colour(DD.param, "  <EXT>") + colour(DD.htext, " (Mudar linguagem default)")
+        # vsair = colour(DD.lcmd, "q") + colour(DD.cmd, "uit") + colour(DD.htext, " (Sair do programa)")
+        # vcont = colour(DD.lcmd, "c") + colour(DD.cmd, "ont") + colour(DD.htext, " (Alterna contador de tarefas)")
+        # vperc = colour(DD.lcmd, "p") + colour(DD.cmd, "erc") + colour(DD.htext, " (Alterna mostrar porcentagem)")
+        # vgoal = colour(DD.lcmd, "g") + colour(DD.cmd, "oal") + colour(DD.htext, " (Alterna mostrar meta mínima)")
+        # vopt_ = colour(DD.lcmd, "o") + colour(DD.cmd, "pt") + colour(DD.htext, " (Alterna ressaltar opcionais)")
+        # vupda = colour(DD.lcmd, "u") + colour(DD.cmd, "pdate") + colour(DD.htext, " (Recarrega o repositório)")
+        # vrota = colour(DD.lcmd, "r") + colour(DD.cmd, "otate") + colour(DD.htext, " (Rotaciona elementos visuais)")
+        # vgame = colour(DD.lcmd, "a") + colour(DD.cmd, "dmin") + colour(DD.htext, " (Libera todas as missões)")
 
-        div0 = "──────────────────────────────────────"
-        div1 = "───────────── " + colour(DD.cluster_key, "Controles") + "──────────────"
-        div2 = "───────────────── " + colour(DD.lcmd, "Flags") + " ──────────────"
-        div3 = "───────────── " + colour(DD.lcmd, "Comandos") + " ───────────────"
+        # div0 = "──────────────────────────────────────"
+        # div1 = "───────────── " + colour(DD.cluster_key, "Controles") + "──────────────"
+        # div2 = "───────────────── " + colour(DD.lcmd, "Flags") + " ──────────────"
+        # div3 = "───────────── " + colour(DD.lcmd, "Comandos") + " ───────────────"
 
-        elementos = []
-        elementos += [div1, controles, letrass, todas, numeros, letras, graduar, intervalos1, intervalos2]
-        elementos += [div2, nomes_verm, prime_letr, vcont, vperc, vgoal, vgame, div3, vdown, vlink, vexte, vupda, vrota, vsair]
+        # elementos = []
+        # elementos += [div1, controles, letrass, todas, numeros, letras, graduar, intervalos1, intervalos2]
+        # elementos += [div2, nomes_verm, prime_letr, vcont, vperc, vgoal, vgame, div3, vdown, vlink, vexte, vupda, vrota, vsair]
 
-        self.print_elementos(elementos)
-        print(div0)
-        return False
+        # self.print_elementos(elementos)
+        # print(div0)
+        # return False
 
-    @staticmethod
-    def print_elementos(elementos):
-        maxlen = max([len(Color.remove_colors(t)) for t in elementos])
-        # qtd = term_size // (maxlen + 3)
-        qtd = 1
+    # @staticmethod
+    # def print_elementos(elementos):
+        # maxlen = max([len(Color.remove_colors(t)) for t in elementos])
+        # # qtd = term_size // (maxlen + 3)
+        # qtd = 1
 
-        count = 0
-        for i in range(len(elementos)):
-            print(Color.ljust(elementos[i], maxlen), end="")
-            count += 1
-            if count >= qtd:
-                count = 0
-                print("")
-            elif i < len(elementos) - 1:
-                print(" ║ ", end="")
-        if count != 0:
-            print("")
+        # count = 0
+        # for i in range(len(elementos)):
+        #     print(Color.ljust(elementos[i], maxlen), end="")
+        #     count += 1
+        #     if count >= qtd:
+        #         count = 0
+        #         print("")
+        #     elif i < len(elementos) - 1:
+        #         print(" ║ ", end="")
+        # if count != 0:
+        #     print("")
 
     def generate_graph(self, graph_ext):
 
@@ -737,37 +739,80 @@ class Play:
         self.new_items = [item for item in self.new_items if item not in self.expanded]
 
 
-    def reset_view(self):
-        self.update_avaliable_quests()
-        self.update_new()
-        self.show_header()
-        self.show_options()
+    def main(self, scr):
+        curses.curs_set(0)  # Esconde o cursor
+        Fmt.init_colors()  # Inicializa as cores
 
+        # Exemplo de uso da função escrever
+        while True:
+            self.update_avaliable_quests()
+            self.update_new()
+            self.load_options()
+
+            y = 0
+            scr.clear()
+            # scr.addstr(0, 0, "Digite um texto: ")
+            for _type, _key, sentence in self.items:
+                Fmt.write(scr, 0, y, sentence)
+                y += 1
+            scr.refresh()
+            # write(scr, 0, 0, [("w", "banana")])
+
+            value = scr.getch()  # Aguarda o pressionamento de uma tecla antes de sair
+            if value == ord("q"):
+                break
+            elif value == curses.KEY_UP:
+                self.index = max(0, self.index - 1)
+            elif value == curses.KEY_DOWN:
+                self.index = min(len(self.items) - 1, self.index + 1)
+            elif value == curses.KEY_LEFT:
+                self.collapse()
+            elif value == curses.KEY_RIGHT:
+                self.expand()
+                scr.clear()
+            # value == key c
+            elif value == ord("c"):
+                self.order_toggle("cont")
+            elif value == ord("p"):
+                self.order_toggle("perc")
+            elif value == ord("g"):
+                self.order_toggle("goal")
+            elif value == ord("x"):
+                self.order_toggle("xp")
+            elif value == ord("a"):
+                self.admin_mode = not self.admin_mode
+            elif value == curses.KEY_BACKSPACE:
+                texto = Fmt.get_user_input(scr, "Digite um texto: ")
+            self.save_to_json()
+
+    
 
     # return True if the user wants to continue playing
     def play(self, graph_ext: str) -> bool:
-        success = True
-        first_graph_msg = True
+        curses.wrapper(self.main)
+        # success = True
+        # first_graph_msg = True
 
-        while True:
-            if success:
-                self.reset_view()
+        # while True:
+        #     if success:
+        #         self.reset_view()
 
-            if graph_ext != "":
-                self.generate_graph(graph_ext)
-                if first_graph_msg:
-                    print("\nGrafo gerado em graph" + graph_ext)
-                    first_graph_msg = False
+        #     if graph_ext != "":
+        #         self.generate_graph(graph_ext)
+        #         if first_graph_msg:
+        #             print("\nGrafo gerado em graph" + graph_ext)
+        #             first_graph_msg = False
 
-            print("\n" + colour(DD.play, "play$") + " ", end="")
-            line = input()
-            if line == "":
-                success = True
-                continue
-            if line == "q" or line == "quit":
-                return False
-            if line == "u" or line == "update":
-                return True
-            actions = Util.expand_range(line)
-            success = self.take_actions(actions)
-            self.save_to_json()
+        #     print("\n" + colour(DD.play, "play$") + " ", end="")
+        #     line = input()
+        #     if line == "":
+        #         success = True
+        #         continue
+        #     if line == "q" or line == "quit":
+        #         return False
+        #     if line == "u" or line == "update":
+        #         return True
+        #     # actions = Util.expand_range(line)
+        #     actions = line.split(" ")
+        #     success = self.take_actions(actions)
+        #     self.save_to_json()

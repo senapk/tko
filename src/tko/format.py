@@ -5,7 +5,7 @@ from typing import Optional
 
 class Color:
     enabled = False
-    __terminal_styles = {
+    terminal_styles = {
         '.': '\033[0m', # Reset
         '*': '\033[1m', # Bold
         '/': '\033[3m', # Italic
@@ -20,64 +20,10 @@ class Color:
         'c': '\033[36m', # Cyan
         'w': '\033[37m', # White
 
-        'K': '\033[90m', # Bright black
-        'R': '\033[91m', # Bright red
-        'G': '\033[92m', # Bright green
-        'Y': '\033[93m', # Bright yellow
-        'B': '\033[94m', # Bright blue
-        'M': '\033[95m', # Bright magenta
-        'C': '\033[96m', # Bright cyan
-        'W': '\033[97m',
 
-        '#k': '\033[40m', # Background black
-        '#r': '\033[41m', # Background red
-        '#g': '\033[42m', # Background green
-        '#y': '\033[43m', # Background yellow
-        '#b': '\033[44m', # Background blue
-        '#m': '\033[45m', # Background magenta
-        '#c': '\033[46m', # Background cyan
-        '#w': '\033[47m', # Background white
-
-        '#K': '\033[100m', # Background bright black
-        '#R': '\033[101m', # Background bright red
-        '#G': '\033[102m', # Background bright green
-        '#Y': '\033[103m', # Background bright yellow
-        '#B': '\033[104m', # Background bright blue
-        '#M': '\033[105m', # Background bright magenta
-        '#C': '\033[106m', # Background bright cyan
-        '#W': '\033[107m'  # Background bright white
+        'K': '\033[40m', # Background black
+        'W': '\033[47m', # Background white
     }
-    __replacements = {
-        'black': 'k',
-        'red': 'r',
-        'green': 'g',
-        'yellow': 'y',
-        'blue': 'b',
-        'magenta': 'm',
-        'cyan': 'c',
-        'white': 'w',
-        'bright_black': 'K',
-        'bright_red': 'R',
-        'bright_green': 'G',
-        'bright_yellow': 'Y',
-        'bright_blue': 'B',
-        'bright_magenta': 'M',
-        'bright_cyan': 'C',
-        'bright_white': 'W', 
-        'reset': '.',
-        'bold': '*',
-        'italic': '/',
-        'underline': '_',
-    }
-
-    @staticmethod
-    def get_style(modifier: str):
-        if modifier in Color.__replacements:
-            modifier = Color.__replacements[modifier]
-        if modifier in Color.__terminal_styles:
-            return Color.__terminal_styles[modifier]
-        print(f'Unknown modifier: {modifier}')
-        return ''
 
     @staticmethod
     def ljust(text: str, width: int) -> str:
@@ -91,7 +37,7 @@ class Color:
 
     @staticmethod
     def remove_colors(text: str) -> str:
-        for color in Color.__terminal_styles.values():
+        for color in Color.terminal_styles.values():
             text = text.replace(color, "")
         return text
 
@@ -103,13 +49,13 @@ class Color:
 def colour(modifiers: str, text: str) -> str:
     if not Color.enabled:
         return text
-    mod = modifiers.split(',')
+    
     output = ''
-    for m in [v for v in mod if v != '']:
-        val = Color.get_style(m.strip())
+    for m in modifiers:
+        val = Color.terminal_styles.get(m, '')
         if val != '':
             output += val
-    output += text + Color.get_style('reset')
+    output += text + Color.terminal_styles.get('.', "")
     return output
 
 class __Symbols:
