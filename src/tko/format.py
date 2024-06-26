@@ -108,7 +108,7 @@ class __Symbols:
         self.arrow_up = "A"
 
         self.check = "x"  
-        self.uncheck = " "
+        self.uncheck = "."
         self.opcheck = "█"
         self.opuncheck = "▒"
 

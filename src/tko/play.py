@@ -1,10 +1,10 @@
-from .game import Game, Task, Quest, Cluster, Graph, XP
+from .game import Game, Task, Quest, Cluster, Graph, XP, Sentence
 from .settings import RepoSettings, LocalSettings
 from .down import Down
 import shutil
 import os
 import re
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, Any
 
 def debug(text):
     print(text)
@@ -12,8 +12,7 @@ def debug(text):
 import curses
 from typing import List, Tuple
 
-Text = Tuple[str, str]
-Sentence = List[Text]
+
 
 class Fmt:
     # Definindo constantes para as cores
@@ -42,12 +41,6 @@ class Fmt:
         curses.init_pair(Fmt.CM["w"], curses.COLOR_WHITE  , -1)
         curses.init_pair(Fmt.CM["k"], curses.COLOR_BLACK  , -1)
 
-    @staticmethod
-    def len(sentence: Sentence) -> int:
-        total = 0
-        for _fmt, text in sentence:
-            total += len(text)
-        return total
 
     @staticmethod
     def write_line(stdscr, x: int, y: int, text: str, fmt: str):
@@ -87,17 +80,16 @@ class Fmt:
             stdscr.attroff(curses.A_UNDERLINE)
 
     @staticmethod
-    def write(stdscr, x: int, y: int, fmt_text: Sentence):
+    def write(stdscr, x: int, y: int, sentence: Sentence):
         # Escreve um texto na tela com cores diferentes
+        lines, cols = stdscr.getmaxyx()
         x_ini = x
-        for fmt, text in fmt_text:
-            lines = text.split("\n")
-            for i in range(len(lines)):
-                if i > 0:
-                    x = x_ini
-                    y += 1
-                Fmt.write_line(stdscr, x, y, lines[i], fmt)
-                x += len(lines[i])  # Move a posição x para a direita após o texto
+        for fmt, text in sentence.get():
+            if x < cols and y < lines:
+                if x + len(text) >= cols:
+                    text = text[:cols - x]
+                Fmt.write_line(stdscr, x, y, text, fmt)
+            x += len(text)  # Move a posição x para a direita após o texto
 
     @staticmethod
     def get_user_input(stdscr, prompt: str) -> str:
@@ -152,20 +144,27 @@ class Util:
         return curses.COLS
 
     @staticmethod
-    def get_percent(value, color2: str = "", pad = 0) -> Text:
+    def get_percent(value, color2: str = "", pad = 0) -> Sentence:
         text = f"{str(value)}%".rjust(pad)
         if value == 100:
-            return (DD.complete +  color2, "100%")
+            return Sentence().addf(DD.complete +  color2, "100%")
         if value >= 70:
-            return (DD.required +  color2, text)
+            return Sentence().addf(DD.required +  color2, text)
         if value == 0:
-            return (DD.nothing +  color2, text)
-        return (DD.started +  color2, text)
+            return Sentence().addf(DD.nothing +  color2, text)
+        return Sentence().addf(DD.started +  color2, text)
     
     @staticmethod
     def clear():
         os.system('cls' if os.name == 'nt' else 'clear')
    
+class Entry:
+    def __init__(self, obj: Any, sentence: Sentence):
+        self.obj = obj
+        self.sentence = sentence
+
+    def get(self):
+        return self.sentence
     
 class Play:
     cluster_prefix = "'"
@@ -185,18 +184,16 @@ class Play:
         else:
             self.order = []
 
-        if not "title" in self.order:
-            self.order.append("title")
-
         self.game: Game = game
-
         self.expanded: List[str] = [x for x in self.rep.expanded]
         self.new_items: List[str] = [x for x in self.rep.new_items]
         self.avaliable_quests: List[Quest] = [] # avaliable quests
         self.avaliable_clusters: List[Cluster] = [] # avaliable clusters
 
         self.index = 0
-        self.items: List[Tuple[str, str, Sentence]] = []
+        self.y_begin = 1
+        self.y_end = 1
+        self.items: List[Entry] = []
 
         self.first_loop = True
 
@@ -270,94 +267,67 @@ class Play:
         for q in added_quests:
             self.new_items.append(q.key)
 
-    # @staticmethod
-    # def cut_limits(title: str, fn_gen) -> Sentence:
-    #     term_size = Util.get_term_size()
-    #     clear_total = Fmt.len(fn_gen(title))
-    #     dif = clear_total - term_size
-    #     if dif < 0:
-    #         return fn_gen(title)
-    #     title = title[:-dif - 3] + "..."
-    #     return fn_gen(title)
-
     def str_task(self, in_focus: bool, t: Task, ligc: str, ligq: str, min_value = 1) -> Sentence:
-        output: Sentence = []
-        output.append(("", " " + ligc + " " + ligq))
-        output.append(("", " "))
-        output.append(t.get_grade_symbol(min_value))
+        output = Sentence()
+        output.addt(" " + ligc + " " + ligq)\
+              .concat(t.get_grade_symbol(min_value))\
+              .addt(" ")
+
         focus = ""
         if in_focus:
             focus = "_"
         if self.mark_opt and t.opt:
-            output.append((DD.opt_task + focus, t.title))
+            output.addf(DD.opt_task + focus, t.title)
         else:
-            output.append(("" + focus, t.title))
+            output.addf("" + focus, t.title)
         
         if "xp" in self.order:
             xp = ""
             for s, v in t.skills.items():
                 xp += f" +{s}:{v}"
-            output.append((DD.skills, xp))
+            output.addf(DD.skills, xp)
         return output
     
     def str_quest(self, in_focus: bool, q: Quest, lig: str) -> Sentence:
-        con = "━─"
-        if q.key in self.expanded:
-            con = "─┯"
+        con = "━─" if q.key not in self.expanded else "─┯"
+        output: Sentence = Sentence().addt(" " + lig + con + " ")
 
-
-        output: Sentence = []
-        output.append(("", " " + lig + con))
+        opt = "" if not q.opt else DD.opt
+        focus = "" if not in_focus else "_"
+        output.addf(opt + focus, q.title)
 
         for item in self.order:
             if item == "cont":
-                output.append(("", " "))
-                output.append(q.get_resume_by_tasks())
+                output.addt(" ").concat(q.get_resume_by_tasks())
             elif item == "perc":
-                output.append(("", " "))
-                output.append(q.get_resume_by_percent())
+                output.addt(" ").concat(q.get_resume_by_percent())
             elif item == "goal":
-                output.append(("", " "))
-                output.append(q.get_requirement())
-            elif item == "title":
-                opt = ""
-                if q.opt:
-                    opt = DD.opt
-                focus = ""
-                if in_focus:
-                    focus = "_"
-                output.append((opt + focus, q.title))
+                output.addt(" ").concat(q.get_requirement())
             elif item == "xp":
                 xp = ""
                 for s,v in q.skills.items():
                     xp += f" +{s}:{v}"
-                output.append((DD.skill, " " + xp))
+                output.addf((DD.skills, " " + xp))
                 
         if q.key in self.new_items:
-            output.append((DD.new, " [new]"))
+            output.addf(DD.new, " [new]")
 
         return output
         
 
     def str_cluster(self, in_focus: bool, cluster: Cluster, quests: List[Quest]) -> Sentence:
-        output: Sentence = []
+        output: Sentence = Sentence()
         opening = "━─"        
         if cluster.key in self.expanded:
-            opening = "─┯"
-        
-        output.append(("", opening + " "))
-
+            opening = "─┯"        
+        output.addt(opening + " ")
         focus = ""
         if in_focus:
             focus = "_"
-        output.append((DD.cluster_title + focus, cluster.title.strip()))
-        
-        if cluster.key in self.expanded:
-            output.append(("", " "))
-            output.append(cluster.get_resume_by_percent())
-
+        output.addf(DD.cluster_title + focus, cluster.title.strip())
+        output.addt(" ").concat(cluster.get_resume_by_percent())
         if cluster.key in self.new_items:
-            output.append((DD.new, " [new]"))
+            output.addf(DD.new, " [new]")
 
         return output
     
@@ -370,7 +340,7 @@ class Play:
         for cluster in self.avaliable_clusters:
             quests = self.get_avaliable_quests_from_cluster(cluster)
             sentence = self.str_cluster(self.index == index, cluster, quests)
-            self.items.append(("cluster", cluster.key, sentence))
+            self.items.append(Entry(cluster, sentence))
             index += 1
 
             if not cluster.key in self.expanded: # va para proximo cluster
@@ -379,14 +349,14 @@ class Play:
             for q in quests:
                 lig = "├" if q != quests[-1] else "╰"
                 sentence = self.str_quest(self.index == index, q, lig)
-                self.items.append(("quest", q.key, sentence))
+                self.items.append(Entry(q, sentence))
                 index += 1
                 if q.key in self.expanded:
                     for t in q.get_tasks():
                         ligc = "│" if q != quests[-1] else " "
-                        ligq = "├─" if t != q.get_tasks()[-1] else "╰─"
+                        ligq = "├ " if t != q.get_tasks()[-1] else "╰ "
                         sentence = self.str_task(self.index == index, t, ligc, ligq, q.tmin)
-                        self.items.append(("task", t.key, sentence))
+                        self.items.append(Entry(t, sentence))
                         index += 1
 
 
@@ -447,59 +417,27 @@ class Play:
                 return c
         return None
 
-    def collapse(self):
-        _type, key, _sentence = self.items[self.index]
-        if key in self.expanded:
-            self.expanded.remove(key)
-            cluster = self.find_cluster(key)
-            if cluster is not None:
-                for q in cluster.quests:
-                    try:
-                        self.expanded.remove(q.key)
-                    except ValueError:
-                        pass
+    def process_collapse(self):
+        quest_keys = [q.key for q in self.avaliable_quests]
+        if any([q in self.expanded for q in quest_keys]):
+            self.expanded = [key for key in self.expanded if key not in quest_keys]
         else:
-            if _type == "task":
-                while True:
-                    _type, key, _sentence = self.items[self.index]
-                    if _type == "quest":
-                        break
-                    self.index -= 1
-            elif _type == "quest":
-                while True:
-                    _type, key, _sentence = self.items[self.index]
-                    if _type == "cluster":
-                        break
-                    self.index -= 1
+            self.expanded = []
 
-    def expand(self):
-        _type, key, _sentence = self.items[self.index]
-        if _type == "cluster" or _type == "quest":
-            if key not in self.expanded:
-                self.expanded.append(key)
-    
-    # def process_tasks(self, ):
-    #     mass_action: Optional[int] = None
-
-    #     if letter in self.vtasks:
-    #         t = self.vtasks[letter]
-    #         if len(number) > 0:
-    #             t.set_grade(number)
-    #             continue
-            
-    #         if mass_action is not None:
-    #             t.set_grade(mass_action)
-    #             continue
-    #         if t.grade == 0:
-    #             t.set_grade(10)
-    #             mass_action = 10
-    #         else:
-    #             t.set_grade(0)
-    #             mass_action = 0
-    #     else:
-    #         print(f"Talk {t} não processado")
-    #         return False
-    
+    def process_expand(self):
+        # if any cluster outside expanded
+        expand_clusters = False
+        for c in self.avaliable_clusters:
+            if c.key not in self.expanded:
+                expand_clusters = True
+        if expand_clusters:
+            for c in self.avaliable_clusters:
+                if c.key not in self.expanded:
+                    self.expanded.append(c.key)
+        else:
+            for q in self.avaliable_quests:
+                if q.key not in self.expanded:
+                    self.expanded.append(q.key)
     
     def process_link(self, actions):
         if len(actions) == 1:
@@ -536,60 +474,6 @@ class Play:
             self.order.remove(token)
         else:
             self.order.append(token)
-
-    def take_actions(self, actions) -> bool:
-        if len(actions) == 0:
-            return True
-        cmd = actions[0]
-
-        if cmd == "j":
-            self.index += 1
-        elif cmd == "k":
-            self.index -= 1
-        elif cmd == "h":
-            self.collapse()
-        elif cmd == "l":
-            self.expand()
-        elif cmd == "c" or cmd == "cont":
-            self.order_toggle("cont")
-        elif cmd == "p" or cmd == "perc":
-            self.order_toggle("perc")
-        elif cmd == "g" or cmd == "goal":
-            self.order_toggle("goal")
-        elif cmd == "x" or cmd == "xp":
-            self.order_toggle("xp")
-        elif cmd == "a" or cmd == "admin":
-            self.admin_mode = not self.admin_mode
-        elif cmd == "t" or cmd == "toolbar":
-            self.show_toolbar = not self.show_toolbar
-        elif cmd == "o" or cmd == "opt":
-            self.mark_opt = not self.mark_opt
-        elif cmd == "d" or cmd == "down":
-            return self.process_down(actions)
-        elif cmd == "l" or cmd == "link":
-            return self.process_link(actions)
-        elif cmd == "r" or cmd == "rotate":
-            if len(self.order) == 1:
-                self.order.append("cont")
-            self.order = [self.order[-1]] + self.order[:-1]
-        elif cmd == "e" or cmd == "ext":
-            return self.process_ext(actions)
-        elif Util.is_number(cmd):
-            return self.process_folds(actions)
-        elif cmd[0].isupper():
-            return self.process_tasks(actions)
-        else:
-            print(f"{cmd} não processado")
-            return False
-        return True
-
-    # @staticmethod
-    # def show_help():
-    #     output = "Digite " + colour(DD.lcmd, "t")
-    #     output += " os números ou intervalo das tarefas para (marcar/desmarcar), exemplo:"
-    #     print(output)
-    #     print(colour(DD.play, "play$ ") + "t 1 3-5")
-    #     return False
 
     # @staticmethod
     # def checkbox(value):
@@ -705,23 +589,6 @@ class Play:
         # print(div0)
         # return False
 
-    # @staticmethod
-    # def print_elementos(elementos):
-        # maxlen = max([len(Color.remove_colors(t)) for t in elementos])
-        # # qtd = term_size // (maxlen + 3)
-        # qtd = 1
-
-        # count = 0
-        # for i in range(len(elementos)):
-        #     print(Color.ljust(elementos[i], maxlen), end="")
-        #     count += 1
-        #     if count >= qtd:
-        #         count = 0
-        #         print("")
-        #     elif i < len(elementos) - 1:
-        #         print(" ║ ", end="")
-        # if count != 0:
-        #     print("")
 
     def generate_graph(self, graph_ext):
 
@@ -738,6 +605,150 @@ class Play:
     def update_new(self):
         self.new_items = [item for item in self.new_items if item not in self.expanded]
 
+    def mass_mark(self):
+        obj = self.items[self.index].obj
+        if isinstance(obj, Cluster):
+            if obj.key not in self.expanded:
+                self.expanded.append(obj.key)
+                return
+            full_open = True
+            for q in self.get_avaliable_quests_from_cluster(obj):
+                if q.key not in self.expanded:
+                    self.expanded.append(q.key)
+                    full_open = False
+            if not full_open:
+                return
+            
+            value = None
+            for q in obj.quests:
+                for t in q.get_tasks():
+                    if value is not None:
+                        t.set_grade(value)
+                    else:
+                        value = 10 if t.grade < 10 else 0
+                        t.set_grade(value)
+        elif isinstance(obj, Quest):
+            if obj.key not in self.expanded:
+                self.expanded.append(obj.key)
+            else:
+                value = None
+                for t in obj.get_tasks():
+                    if value is not None:
+                        t.set_grade(value)
+                    else:
+                        value = 10 if t.grade < 10 else 0
+                        t.set_grade(value)
+        else:
+            obj.set_grade(10 if obj.grade < 10 else 0)
+
+    def set_grade(self, grade):
+        obj = self.items[self.index].obj
+        if isinstance(obj, Task):
+            obj.set_grade(grade - ord("0"))
+
+    def arrow_right(self):
+        obj = self.items[self.index].obj
+        if isinstance(obj, Cluster):
+            if obj.key not in self.expanded:
+                self.expanded.append(obj.key)
+            else:
+                self.index += 1
+        elif isinstance(obj, Quest):
+            if obj.key not in self.expanded:
+                self.expanded.append(obj.key)
+            else:
+                while True:
+                    self.index += 1
+                    obj = self.items[self.index].obj
+                    if isinstance(obj, Cluster) or isinstance(obj, Quest):
+                        break
+                    if self.index == len(self.items) - 1:
+                        break
+        elif isinstance(obj, Task):
+            while True:
+                obj = self.items[self.index].obj
+                if isinstance(obj, Quest) or isinstance(obj, Cluster):
+                    break
+                if self.index == len(self.items) - 1:
+                    break
+                self.index += 1
+
+    def arrow_left(self):
+        obj = self.items[self.index].obj
+        if isinstance(obj, Quest):
+            if obj.key in self.expanded:
+                self.expanded.remove(obj.key)
+            else:
+                while True:
+                    self.index -= 1
+                    obj = self.items[self.index].obj
+                    if isinstance(obj, Cluster) or isinstance(obj, Quest) and obj.key in self.expanded:
+                        break
+                    if self.index == 0:
+                        break
+        elif isinstance(obj, Cluster):
+            if obj.key in self.expanded:
+                self.expanded.remove(obj.key)
+                for q in obj.quests:
+                    try:
+                        self.expanded.remove(q.key)
+                    except ValueError:
+                        pass
+            else:
+                while True:
+                    self.index -= 1
+                    obj = self.items[self.index].obj
+                    if isinstance(obj, Cluster) or isinstance(obj, Quest):
+                        break
+                    if self.index == 0:
+                        break
+        elif isinstance(obj, Task):
+            while True:
+                obj = self.items[self.index].obj
+                if isinstance(obj, Quest):
+                    break
+                self.index -= 1
+            
+    def expand(self):
+        obj = self.items[self.index].obj
+        if isinstance(obj, Quest) or isinstance(obj, Cluster):
+            if obj.key not in self.expanded:
+                self.expanded.append(obj.key)
+
+    def show_items(self, scr):
+
+        if self.index >= len(self.items):
+            self.index = len(self.items) - 1
+            self.load_options()
+            
+        scr.clear()
+        scr.refresh()
+        lines, cols = scr.getmaxyx()
+        scr.addstr(0, 0, f"lines: {lines} cols: {cols}")
+        y = self.y_begin
+        init = 0
+        if len(self.items) > lines - self.y_end:
+            init = max(0, self.index - (lines - self.y_end) + 1)
+        for i in range(init, len(self.items)):
+            sentence = self.items[i].sentence
+            if lines - self.y_end <= y:
+                break
+            Fmt.write(scr, 0, y, sentence)
+            y += 1
+        scr.refresh()
+
+    def toggle(self):
+        obj = self.items[self.index].obj
+        if isinstance(obj, Task):
+            if obj.grade < 10:
+                obj.set_grade(10)
+            else:
+                obj.set_grade(0)
+        elif isinstance(obj, Quest) or isinstance(obj, Cluster):
+            if obj.key in self.expanded:
+                self.expanded.remove(obj.key)
+            else:
+                self.expanded.append(obj.key)
 
     def main(self, scr):
         curses.curs_set(0)  # Esconde o cursor
@@ -748,15 +759,7 @@ class Play:
             self.update_avaliable_quests()
             self.update_new()
             self.load_options()
-
-            y = 0
-            scr.clear()
-            # scr.addstr(0, 0, "Digite um texto: ")
-            for _type, _key, sentence in self.items:
-                Fmt.write(scr, 0, y, sentence)
-                y += 1
-            scr.refresh()
-            # write(scr, 0, 0, [("w", "banana")])
+            self.show_items(scr)
 
             value = scr.getch()  # Aguarda o pressionamento de uma tecla antes de sair
             if value == ord("q"):
@@ -766,11 +769,9 @@ class Play:
             elif value == curses.KEY_DOWN:
                 self.index = min(len(self.items) - 1, self.index + 1)
             elif value == curses.KEY_LEFT:
-                self.collapse()
+                self.arrow_left()
             elif value == curses.KEY_RIGHT:
-                self.expand()
-                scr.clear()
-            # value == key c
+                self.arrow_right()
             elif value == ord("c"):
                 self.order_toggle("cont")
             elif value == ord("p"):
@@ -781,7 +782,17 @@ class Play:
                 self.order_toggle("xp")
             elif value == ord("a"):
                 self.admin_mode = not self.admin_mode
-            elif value == curses.KEY_BACKSPACE:
+            elif value == ord(">"):
+                self.process_expand()
+            elif value == ord("<"):
+                self.process_collapse()
+            elif value == ord(" "):
+                self.toggle()
+            elif value == ord("\n"):
+                self.mass_mark()
+            elif value >= ord("0") and value <= ord("9"):
+                self.set_grade(value)
+            elif value == curses.KEY_CANCEL:
                 texto = Fmt.get_user_input(scr, "Digite um texto: ")
             self.save_to_json()
 

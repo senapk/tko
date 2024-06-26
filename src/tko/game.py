@@ -6,6 +6,31 @@ import os
 from .format import symbols
 from typing import List, Dict, Tuple, Optional
 
+class Sentence:
+    def __init__(self):
+        self.data: List[Tuple[str, str]] = []
+    
+    def addf(self, fmt: str, text: str):
+        self.data.append((fmt, text))
+        return self
+    
+    def addt(self, text: str):
+        self.data.append(("", text))
+        return self
+    
+    def concat(self, sentence):
+        self.data += sentence.data
+        return self
+    
+    def len(self):
+        total = 0
+        for _, text in self.data:
+            total += len(text)
+        return total
+    
+    def get(self):
+        return self.data
+
 class RE:
     @staticmethod
     def load_html_tags(task: str) -> Optional[str]:
@@ -46,19 +71,20 @@ class Task:
             return "g"
         return "w"  
 
-    def get_grade_symbol(self, min_value: Optional[int] = None) -> Tuple[str, str]:
+    def get_grade_symbol(self, min_value: Optional[int] = None) -> Sentence:
+        
         if min_value is None:
             min_value = self.default_min_value
         color = self.get_grade_color(min_value)
         if self.grade == 0:
-            return ("*" + color, symbols.uncheck)
+            return Sentence().addf("*" + color, symbols.uncheck)
         if self.grade < min_value:
-            return ("*" + color, str(self.grade))
+            return Sentence().addf("*" + color, str(self.grade))
         if self.grade < 10:
-            return ("*" + color, str(self.grade))
+            return Sentence().addf("*" + color, str(self.grade))
         if self.grade == 10:
-            return ("*" + color, symbols.check)
-        return "0"
+            return Sentence().addf("*" + color, symbols.check)
+        return Sentence().addt("0")
 
     def get_percent(self):
         if self.grade == 0:
@@ -239,18 +265,18 @@ class Quest:
         output = f"{line} {tasks_size} {key}{self.title} {self.skills} {self.requires}"
         return output
 
-    def get_resume_by_percent(self) -> Tuple[str, str]:
+    def get_resume_by_percent(self) -> Sentence:
         value = self.get_percent()
-        return (self.get_grade_color() + "*", (str(value) + "%").rjust(4))
+        return Sentence().addf(self.get_grade_color() + "*", (str(value) + "%"))
     
-    def get_requirement(self) -> Tuple[str, str]:
+    def get_requirement(self) -> Sentence:
         if self.qmin is not None:
-            return ("y", f"[{self.qmin}%]")
+            return Sentence().addf("y", f"[{self.qmin}%]")
         if self.tmin is not None:
-            return ("y", f"[t>{self.tmin - 1}]")
-        return ""
+            return Sentence().addf("y", f"[t>{self.tmin - 1}]")
+        return Sentence()
 
-    def get_resume_by_tasks(self) -> str:
+    def get_resume_by_tasks(self) -> Sentence:
         tmin = self.tmin if self.tmin is not None else 7
         total = len([t for t in self.__tasks if not t.opt])
         plus = len([t for t in self.__tasks if t.opt])
@@ -258,16 +284,16 @@ class Quest:
         output = f"{count}/{total}"
         if plus > 0:
             output += f"+{plus}"
-        return (self.get_grade_color()+"*", "(" + output + ")")
+        return Sentence().addf(self.get_grade_color() + "*", "(" + output + ")")
 
     def get_grade_color(self) -> str:
         if self.not_started():
-            return "magenta"
+            return "m"
         if not self.is_complete():
-            return "red"
+            return "r"
         if self.get_percent() == 100:
-            return "green"
-        return "yellow"
+            return "g"
+        return "y"
 
     def is_complete(self):
         if self.qmin is not None:
@@ -466,8 +492,8 @@ class Cluster:
             total += q.get_percent()
         return total // len(self.quests)
 
-    def get_resume_by_percent(self) -> Tuple[str, str]:
-        return (self.get_grade_color() + "*", f"{self.get_percent()}%")
+    def get_resume_by_percent(self) -> Sentence:
+        return Sentence().addf(self.get_grade_color() + "*", f"{self.get_percent()}%")
 
     def get_resume_by_quests(self):
         total = len(self.quests)
