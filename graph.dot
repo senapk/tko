@@ -1,0 +1,167 @@
+digraph diag {
+  node [penwidth=1, style="rounded,filled", shape=box]
+  "Início" -> "Operações: impressão formatada\n1 / 9
+11%"
+  "Operações: impressão formatada\n1 / 9
+11%" -> "Operações: Biblioteca Math\n0 / 4
+0%" 
+  "Operações: Biblioteca Math\n0 / 4
+0%" -> "Seleção: Manipulação\n0 / 9
+0%" 
+  "Operações: Biblioteca Math\n0 / 4
+0%" -> "Seleção: Biblioteca Math\n0 / 6
+0%" 
+  "Operações: Biblioteca Math\n0 / 4
+0%" -> "Seleção: Lógica\n0 / 9
+0%" 
+  "Operações: Biblioteca Math\n0 / 4
+0%" -> "Seleção: Operador de módulo\n0 / 7
+0%" 
+  "Seleção: Operador de módulo\n0 / 7
+0%" -> "Seleção: Listas circulares\n0 / 6
+0%" 
+  "Seleção: Lógica\n0 / 9
+0%" -> "Seleção: Intervalos\n0 / 3
+0%" 
+  "Seleção: Lógica\n0 / 9
+0%" -> "Seleção: Busca e Contagem\n0 / 5
+0%" 
+  "Seleção: Lógica\n0 / 9
+0%" -> "Seleção: Conversão\n0 / 3
+0%" 
+  "Seleção: Lógica\n0 / 9
+0%" -> "Repetição: Básico\n4 / 4
+100%" 
+  "Repetição: Básico\n4 / 4
+100%" -> "Repetição: Técnicas de controle\n6 / 6
+100%" 
+  "Repetição: Técnicas de controle\n6 / 6
+100%" -> "Repetição: Math\n6 / 6
+100%" 
+  "Repetição: Técnicas de controle\n6 / 6
+100%" -> "Vetores: Busca\n5 / 5
+100%" 
+  "Vetores: Busca\n5 / 5
+100%" -> "Vetores: Contagem\n5 / 5
+100%" 
+  "Vetores: Contagem\n5 / 5
+100%" -> "Vetores: Conversão\n4 / 4
+100%" 
+  "Vetores: Conversão\n4 / 4
+100%" -> "Vetores: Manipulação\n8 / 8
+100%" 
+  "Vetores: Manipulação\n8 / 8
+100%" -> "Vetores: Proximidade\n7 / 7
+100%" 
+  "Vetores: Contagem\n5 / 5
+100%" -> "Vetores: Ordenação\n5 / 5
+100%" 
+  "Vetores: Contagem\n5 / 5
+100%" -> "Vetores: Lógica\n9 / 9
+100%" 
+  "Vetores: Contagem\n5 / 5
+100%" -> "Vetores: Math\n2 / 2
+100%" 
+  "Vetores: Lógica\n9 / 9
+100%" -> "Strings I\n9 / 9
+100%" 
+  "Strings I\n9 / 9
+100%" -> "Strings II\n9 / 9
+100%" 
+  "Strings II\n9 / 9
+100%" -> "Strings III\n9 / 9
+100%" 
+  "Strings II\n9 / 9
+100%" -> "Strings IV\n9 / 9
+100%" 
+  "Strings II\n9 / 9
+100%" -> "Strings V\n6 / 6
+100%" 
+  "Strings II\n9 / 9
+100%" -> "Strings VI\n5 / 5
+100%" 
+  "Vetores: Lógica\n9 / 9
+100%" -> "Matrizes I\n7 / 7
+100%" 
+  "Matrizes I\n7 / 7
+100%" -> "Matrizes II\n8 / 8
+100%" 
+  "Vetores: Contagem\n5 / 5
+100%" -> "Ponteiros\n6 / 6
+100%" 
+  "Ponteiros\n6 / 6
+100%" -> "Recursão\n2 / 2
+100%" 
+  "Ponteiros\n6 / 6
+100%" -> "Structs\n8 / 8
+100%" 
+  "Ponteiros\n6 / 6
+100%" -> "Em construção\n2 / 2
+100%" 
+  "Operações: impressão formatada\n1 / 9
+11%" [shape=ellipse color=red penwidth=3 fillcolor="aquamarine3;0.9:lime" ]
+  "Operações: Biblioteca Math\n0 / 4
+0%" [shape=ellipse color=magenta penwidth=3 fillcolor="aquamarine3;0.9:lime" ]
+  "Seleção: Manipulação\n0 / 9
+0%" [shape=ellipse color=magenta penwidth=3 fillcolor="bisque3;0.9:lime" ]
+  "Seleção: Biblioteca Math\n0 / 6
+0%" [shape=ellipse color=magenta penwidth=3 fillcolor="bisque3;0.9:lime" ]
+  "Seleção: Lógica\n0 / 9
+0%" [shape=ellipse color=magenta penwidth=3 fillcolor="bisque3;0.9:lime" ]
+  "Seleção: Operador de módulo\n0 / 7
+0%" [shape=ellipse color=magenta penwidth=3 fillcolor="bisque3;0.9:lime" ]
+  "Seleção: Listas circulares\n0 / 6
+0%" [shape=ellipse color=magenta penwidth=3 fillcolor="bisque3;0.9:orange" ]
+  "Seleção: Intervalos\n0 / 3
+0%" [shape=ellipse color=magenta penwidth=3 fillcolor="bisque3;0.9:lime" ]
+  "Seleção: Busca e Contagem\n0 / 5
+0%" [shape=ellipse color=magenta penwidth=3 fillcolor="bisque3;0.9:lime" ]
+  "Seleção: Conversão\n0 / 3
+0%" [shape=ellipse color=magenta penwidth=3 fillcolor="bisque3;0.9:lime" ]
+  "Repetição: Básico\n4 / 4
+100%" [shape=ellipse color=green penwidth=3 fillcolor="brown3;0.9:lime" ]
+  "Repetição: Técnicas de controle\n6 / 6
+100%" [shape=ellipse color=green penwidth=3 fillcolor="brown3;0.9:lime" ]
+  "Repetição: Math\n6 / 6
+100%" [shape=ellipse color=green penwidth=3 fillcolor="brown3;0.9:orange" ]
+  "Vetores: Busca\n5 / 5
+100%" [shape=ellipse color=green penwidth=3 fillcolor="chartreuse3;0.9:lime" ]
+  "Vetores: Contagem\n5 / 5
+100%" [shape=ellipse color=green penwidth=3 fillcolor="chartreuse3;0.9:lime" ]
+  "Vetores: Conversão\n4 / 4
+100%" [shape=ellipse color=green penwidth=3 fillcolor="chartreuse3;0.9:lime" ]
+  "Vetores: Manipulação\n8 / 8
+100%" [shape=ellipse color=green penwidth=3 fillcolor="chartreuse3;0.9:lime" ]
+  "Vetores: Proximidade\n7 / 7
+100%" [shape=ellipse color=green penwidth=3 fillcolor="chartreuse3;0.9:lime" ]
+  "Vetores: Ordenação\n5 / 5
+100%" [shape=ellipse color=green penwidth=3 fillcolor="chartreuse3;0.9:lime" ]
+  "Vetores: Lógica\n9 / 9
+100%" [shape=ellipse color=green penwidth=3 fillcolor="chartreuse3;0.9:lime" ]
+  "Vetores: Math\n2 / 2
+100%" [shape=ellipse color=green penwidth=3 fillcolor="chartreuse3;0.9:orange" ]
+  "Strings I\n9 / 9
+100%" [shape=ellipse color=green penwidth=3 fillcolor="coral3;0.9:lime" ]
+  "Strings II\n9 / 9
+100%" [shape=ellipse color=green penwidth=3 fillcolor="coral3;0.9:lime" ]
+  "Strings III\n9 / 9
+100%" [shape=ellipse color=green penwidth=3 fillcolor="coral3;0.9:orange" ]
+  "Strings IV\n9 / 9
+100%" [shape=ellipse color=green penwidth=3 fillcolor="coral3;0.9:orange" ]
+  "Strings V\n6 / 6
+100%" [shape=ellipse color=green penwidth=3 fillcolor="coral3;0.9:orange" ]
+  "Strings VI\n5 / 5
+100%" [shape=ellipse color=green penwidth=3 fillcolor="coral3;0.9:orange" ]
+  "Matrizes I\n7 / 7
+100%" [shape=ellipse color=green penwidth=3 fillcolor="cyan3;0.9:lime" ]
+  "Matrizes II\n8 / 8
+100%" [shape=ellipse color=green penwidth=3 fillcolor="cyan3;0.9:orange" ]
+  "Ponteiros\n6 / 6
+100%" [shape=ellipse color=green penwidth=3 fillcolor="darkgoldenrod3;0.9:lime" ]
+  "Recursão\n2 / 2
+100%" [shape=ellipse color=green penwidth=3 fillcolor="darkgoldenrod3;0.9:lime" ]
+  "Structs\n8 / 8
+100%" [shape=ellipse color=green penwidth=3 fillcolor="darkgoldenrod3;0.9:lime" ]
+  "Em construção\n2 / 2
+100%" [shape=ellipse color=green penwidth=3 fillcolor="darkgoldenrod3;0.9:lime" ]
+}

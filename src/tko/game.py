@@ -929,6 +929,14 @@ class Graph:
                     else:
                         width = 3
                         color = q.get_grade_color()
+                        if color == "g":
+                            color = "green"
+                        elif color == "r":
+                            color = "red"
+                        elif color == "y":
+                            color = "yellow"
+                        elif color == "m":
+                            color = "magenta"
                 saida.append(f"  {self.info(q)} [shape={shape} color={color} penwidth={width} fillcolor={fillcolor} ]")
 
         saida.append("}")

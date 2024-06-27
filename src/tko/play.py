@@ -8,20 +8,20 @@ import curses
 
 
 class DD:
-    focus = "w"
+    focus = "b"
     italic = "/"
     underline = "_"
 
-    text = "w"
+    opt_quest = italic + "m"
+    opt_task = italic + "c"
+    text = ""
     cluster_key = "b"
-    cluster_title = "w"
+    cluster_title = ""
     quest_key = italic + "b"
     tasks = "y"
-    opt = italic + "m"
-    opt_task = italic + "c"
     lcmd = 'r'
-    cmd = "w"
-    code_key = "w"
+    cmd = ""
+    code_key = ""
     skills = "c"
     play = "g"
     new = "g"
@@ -32,7 +32,7 @@ class DD:
     complete = "g"
 
     shell = "r" # extern shell cmds
-    htext = "w"
+    htext = ""
     check = "g"
     uncheck = "y"
     param = "c"
@@ -46,26 +46,26 @@ class Fmt:
         "b": 4, # Blue on White
         "m": 5,
         "c": 6,
-        "w": 7,
-        "k": 8,
+        # "w": 7,
+        # "k": 8,
 
-        "rw": 9, # Red on Black
-        "gw": 10,
-        "yw": 11,
-        "bw": 12,
-        "mw": 13,
-        "cw": 14,
-        "ww": 15,
-        "kw": 16,
+        # "rw": 9, # Red on Black
+        # "gw": 10,
+        # "yw": 11,
+        # "bw": 12,
+        # "mw": 13,
+        # "cw": 14,
+        # "ww": 15,
+        # "kw": 16,
 
-        "ry": 17,
-        "gy": 18,
-        "yy": 19,
-        "by": 20,
-        "my": 21,
-        "cy": 22,
-        "wy": 23,
-        "ky": 24,
+        # "ry": 17,
+        # "gy": 18,
+        # "yy": 19,
+        # "by": 20,
+        # "my": 21,
+        # "cy": 22,
+        # "wy": 23,
+        # "ky": 24,
 
         "rb": 25,
         "gb": 26,
@@ -74,7 +74,17 @@ class Fmt:
         "mb": 29,
         "cb": 30,
         "wb": 31,
-        "kb": 32
+        "kb": 32,
+
+        # "rg": 33,
+        # "gg": 34,
+        # "yg": 35,
+        # "bg": 36,
+        # "mg": 37,
+        # "cg": 38,
+        # "wg": 39,
+        # "kg": 40,
+
     }
 
     @staticmethod
@@ -89,26 +99,26 @@ class Fmt:
         curses.init_pair(Fmt.CM["b"], curses.COLOR_BLUE   , -1)
         curses.init_pair(Fmt.CM["m"], curses.COLOR_MAGENTA, -1)
         curses.init_pair(Fmt.CM["c"], curses.COLOR_CYAN   , -1)
-        curses.init_pair(Fmt.CM["w"], curses.COLOR_WHITE  , -1)
-        curses.init_pair(Fmt.CM["k"], curses.COLOR_BLACK  , -1)
+        # curses.init_pair(Fmt.CM["w"], curses.COLOR_WHITE  , -1)
+        # curses.init_pair(Fmt.CM["k"], curses.COLOR_BLACK  , -1)
         
-        curses.init_pair(Fmt.CM["rw"], curses.COLOR_RED    , curses.COLOR_WHITE)
-        curses.init_pair(Fmt.CM["gw"], curses.COLOR_GREEN  , curses.COLOR_WHITE)
-        curses.init_pair(Fmt.CM["yw"], curses.COLOR_YELLOW , curses.COLOR_WHITE)
-        curses.init_pair(Fmt.CM["bw"], curses.COLOR_BLUE   , curses.COLOR_WHITE)
-        curses.init_pair(Fmt.CM["mw"], curses.COLOR_MAGENTA, curses.COLOR_WHITE)
-        curses.init_pair(Fmt.CM["cw"], curses.COLOR_CYAN   , curses.COLOR_WHITE)
-        curses.init_pair(Fmt.CM["ww"], curses.COLOR_WHITE  , curses.COLOR_WHITE)
-        curses.init_pair(Fmt.CM["kw"], curses.COLOR_BLACK  , curses.COLOR_WHITE)
+        # curses.init_pair(Fmt.CM["rw"], curses.COLOR_RED    , curses.COLOR_WHITE)
+        # curses.init_pair(Fmt.CM["gw"], curses.COLOR_GREEN  , curses.COLOR_WHITE)
+        # curses.init_pair(Fmt.CM["yw"], curses.COLOR_YELLOW , curses.COLOR_WHITE)
+        # curses.init_pair(Fmt.CM["bw"], curses.COLOR_BLUE   , curses.COLOR_WHITE)
+        # curses.init_pair(Fmt.CM["mw"], curses.COLOR_MAGENTA, curses.COLOR_WHITE)
+        # curses.init_pair(Fmt.CM["cw"], curses.COLOR_CYAN   , curses.COLOR_WHITE)
+        # curses.init_pair(Fmt.CM["ww"], curses.COLOR_WHITE  , curses.COLOR_WHITE)
+        # curses.init_pair(Fmt.CM["kw"], curses.COLOR_BLACK  , curses.COLOR_WHITE)
 
-        curses.init_pair(Fmt.CM["ry"], curses.COLOR_RED    , curses.COLOR_YELLOW)
-        curses.init_pair(Fmt.CM["gy"], curses.COLOR_GREEN  , curses.COLOR_YELLOW)
-        curses.init_pair(Fmt.CM["yy"], curses.COLOR_YELLOW , curses.COLOR_YELLOW)
-        curses.init_pair(Fmt.CM["by"], curses.COLOR_BLUE   , curses.COLOR_YELLOW)
-        curses.init_pair(Fmt.CM["my"], curses.COLOR_MAGENTA, curses.COLOR_YELLOW)
-        curses.init_pair(Fmt.CM["cy"], curses.COLOR_CYAN   , curses.COLOR_YELLOW)
-        curses.init_pair(Fmt.CM["wy"], curses.COLOR_WHITE  , curses.COLOR_YELLOW)
-        curses.init_pair(Fmt.CM["ky"], curses.COLOR_BLACK  , curses.COLOR_YELLOW)
+        # curses.init_pair(Fmt.CM["ry"], curses.COLOR_RED    , curses.COLOR_YELLOW)
+        # curses.init_pair(Fmt.CM["gy"], curses.COLOR_GREEN  , curses.COLOR_YELLOW)
+        # curses.init_pair(Fmt.CM["yy"], curses.COLOR_YELLOW , curses.COLOR_YELLOW)
+        # curses.init_pair(Fmt.CM["by"], curses.COLOR_BLUE   , curses.COLOR_YELLOW)
+        # curses.init_pair(Fmt.CM["my"], curses.COLOR_MAGENTA, curses.COLOR_YELLOW)
+        # curses.init_pair(Fmt.CM["cy"], curses.COLOR_CYAN   , curses.COLOR_YELLOW)
+        # curses.init_pair(Fmt.CM["wy"], curses.COLOR_WHITE  , curses.COLOR_YELLOW)
+        # curses.init_pair(Fmt.CM["ky"], curses.COLOR_BLACK  , curses.COLOR_YELLOW)
 
         curses.init_pair(Fmt.CM["rb"], curses.COLOR_RED    , curses.COLOR_BLUE)
         curses.init_pair(Fmt.CM["gb"], curses.COLOR_GREEN  , curses.COLOR_BLUE)
@@ -118,6 +128,15 @@ class Fmt:
         curses.init_pair(Fmt.CM["cb"], curses.COLOR_CYAN   , curses.COLOR_BLUE)
         curses.init_pair(Fmt.CM["wb"], curses.COLOR_WHITE  , curses.COLOR_BLUE)
         curses.init_pair(Fmt.CM["kb"], curses.COLOR_BLACK  , curses.COLOR_BLUE)
+
+        # curses.init_pair(Fmt.CM["rg"], curses.COLOR_RED    , curses.COLOR_GREEN)
+        # curses.init_pair(Fmt.CM["gg"], curses.COLOR_GREEN  , curses.COLOR_GREEN)
+        # curses.init_pair(Fmt.CM["yg"], curses.COLOR_YELLOW , curses.COLOR_GREEN)
+        # curses.init_pair(Fmt.CM["bg"], curses.COLOR_BLUE   , curses.COLOR_GREEN)
+        # curses.init_pair(Fmt.CM["mg"], curses.COLOR_MAGENTA, curses.COLOR_GREEN)
+        # curses.init_pair(Fmt.CM["cg"], curses.COLOR_CYAN   , curses.COLOR_GREEN)
+        # curses.init_pair(Fmt.CM["wg"], curses.COLOR_WHITE  , curses.COLOR_GREEN)
+        # curses.init_pair(Fmt.CM["kg"], curses.COLOR_BLACK  , curses.COLOR_GREEN)
 
 
     @staticmethod
@@ -132,16 +151,17 @@ class Fmt:
             underline = True
             fmt = fmt.replace(DD.underline, "")
 
-        
-        try:
-            if fmt == "":
-                fmt = "w"
-            color = Fmt.CM[fmt]
-        except KeyError:
-            stdscr.addstr(0, 0, f"Cor {fmt} não encontrada")
-            stdscr.refresh()
-            stdscr.getch()
-            raise Exception(f"Cor {fmt} não encontrada")
+
+        color = -1
+        if fmt != "":
+            try:
+                color = Fmt.CM[fmt]
+            except KeyError:
+                stdscr.addstr(0, 0, f"Cor {fmt} não encontrada")
+                stdscr.refresh()
+                stdscr.getch()
+                raise Exception(f"Cor {fmt} não encontrada")
+            
         if italic:
             stdscr.attron(curses.A_ITALIC)
         if underline:
@@ -170,11 +190,15 @@ class Fmt:
 
     @staticmethod
     def get_user_input(stdscr, prompt: str) -> str:
+        lines, cols = stdscr.getmaxyx()
         curses.echo()  # Ativa a exibição dos caracteres digitados
-        stdscr.addstr(curses.LINES - 1, 0, prompt)
+        curses.curs_set(1)  # Ativa o cursor
+        stdscr.addstr(0, 0, cols * " ")
+        stdscr.addstr(0, 0, prompt)
         stdscr.refresh()
-        input_str = stdscr.getstr(curses.LINES - 1, len(prompt), 20).decode('utf-8')  # Captura o input do usuário
+        input_str = stdscr.getstr(0, len(prompt), 20).decode('utf-8')  # Captura o input do usuário
         curses.noecho()  # Desativa a exibição dos caracteres digitados
+        curses.curs_set(0)
         return input_str
 
 
@@ -243,6 +267,7 @@ class Play:
         self.items: List[Entry] = []
 
         self.first_loop = True
+        self.graph_ext = ""
 
         self.load_rep()
 
@@ -303,10 +328,6 @@ class Play:
         for q in removed_quests:
             if q.key in self.expanded:
                 self.expanded.remove(q.key)
-        
-        if self.first_loop:
-            self.first_loop = False
-            return
 
         added_clusters = [c for c in self.avaliable_clusters if c not in old_clusters]
         added_quests = [q for q in self.avaliable_quests if q not in old_quests]
@@ -316,17 +337,20 @@ class Play:
         for q in added_quests:
             self.new_items.append(q.key)
 
+    def add_focus(self, color):
+        if color == "":
+            return "w" + DD.focus
+        return color + DD.focus
+
     def str_task(self, in_focus: bool, t: Task, ligc: str, ligq: str, min_value = 1) -> Sentence:
         output = Sentence()
         output.addt(" " + ligc + " " + ligq)\
               .concat(t.get_grade_symbol(min_value))\
               .addt(" ")
 
-        focus = "" if not in_focus else DD.focus
-        if self.mark_opt and t.opt:
-            output.addf(DD.opt_task + focus, t.title)
-        else:
-            output.addf(DD.text + focus, t.title)
+        value = DD.opt_task if self.mark_opt and t.opt else ""
+        value = value if not in_focus else self.add_focus(value)
+        output.addf(value, t.title)
         
         if self.xp_bar:
             xp = ""
@@ -339,9 +363,9 @@ class Play:
         con = "━─" if q.key not in self.expanded else "─┯"
         output: Sentence = Sentence().addt(" " + lig + con + " ")
 
-        opt = DD.opt if q.opt and self.mark_opt else DD.text
-        focus = "" if not in_focus else DD.focus
-        output.addf(opt + focus, q.title)
+        value = DD.opt_quest if self.mark_opt and q.opt else ""
+        value = value if not in_focus else self.add_focus(value)
+        output.addf(value, q.title)
 
         for item in self.order:
             if item == "cont":
@@ -368,8 +392,8 @@ class Play:
         if cluster.key in self.expanded:
             opening = "─┯"        
         output.addt(opening + " ")
-        focus = "" if not in_focus else DD.focus
-        output.addf(DD.cluster_title + focus, cluster.title.strip())
+        value = DD.cluster_title if not in_focus else self.add_focus(DD.cluster_title)
+        output.addf(value, cluster.title.strip())
         output.addt(" ").concat(cluster.get_resume_by_percent())
         if cluster.key in self.new_items:
             output.addf(DD.new, " [new]")
@@ -409,12 +433,13 @@ class Play:
 
 
     def down_task(self, rootdir, task: Task, ext: str):
+        output = []
         if task.key in task.title:
-            cmd = (DD.shell, f"tko down {self.repo_alias} {task.key} -l {ext}")
-            print(f"{cmd}")
-            Down.download_problem(rootdir, self.repo_alias, task.key, ext)
+            output.append(f"tko down {self.repo_alias} {task.key} -l {ext}")
+            Down.download_problem(rootdir, self.repo_alias, task.key, ext, output)
         else:
-            print(f"Essa não é uma tarefa de código")
+            output.append(f"Essa não é uma tarefa de código")
+        return output
 
     def check_rootdir(self):
         if self.local.rootdir == "":
@@ -440,30 +465,21 @@ class Play:
             lang = input()
             self.rep.lang = lang
             self.fnsave()
-            print("Você pode mudar a linguagem de programação executando o comando")
-            print((DD.cmd, "  ext <Extensão>"))
+            print("Você pode mudar a linguagem de programação apertando e")
 
-    def process_down(self, actions):
-        if len(actions) < 2:
-            print("Modo de usar: down <TaskID ...>")
-            print("Exemplo: down A C-F")
-            return False
+    def process_down(self):
         self.check_rootdir()
         self.check_language()
-
         rootdir = os.path.relpath(os.path.join(self.local.rootdir, self.repo_alias))
-        for t in actions[1:]:
-            if t in self.vtasks:
-                self.down_task(rootdir, self.vtasks[t], self.rep.lang)
-            else:
-                print(f"Tarefa {t} não encontrada")
-                input()
-
-    def find_cluster(self, key) -> Optional[Cluster]:
-        for c in self.game.clusters:
-            if c.key == key:
-                return c
-        return None
+        obj = self.items[self.index_selected].obj
+        if isinstance(obj, Task):
+            self.down_task(rootdir, obj, self.rep.lang)
+        input("Digite enter para continuar")
+    # def find_cluster(self, key) -> Optional[Cluster]:
+    #     for c in self.game.clusters:
+    #         if c.key == key:
+    #             return c
+    #     return None
 
     def process_collapse(self):
         quest_keys = [q.key for q in self.avaliable_quests]
@@ -487,35 +503,21 @@ class Play:
                 if q.key not in self.expanded:
                     self.expanded.append(q.key)
     
-    def process_link(self, actions):
-        if len(actions) == 1:
-            print("Após o comando passe a letra da tarefa para ver o link")
-            return False
-        for t in actions[1:]:
-            if t in self.vtasks:
-                # print(self.tasks[actions[1]].link)
-                key = (DD.tasks, t)
-                link = self.vtasks[t].link
-                print(f"{key} {link}")
+    def process_ext(self, scr):
+        while True:
+            opcoes = ["", "c", "cpp", "py", "ts", "js", "java"]
+            scr.erase()
+            ext = Fmt.get_user_input(scr, f"Digite a extensão: .")
+            scr.refresh()
+            if ext in opcoes:
+                self.rep.lang = ext
+                self.fnsave()
+                return
             else:
-                print(f"{t} não processado")
-                return False
-        return False
-    
-    def process_ext(self, actions):
-        if len(actions) == 1:
-            print("Após o comando passe a extensão desejada")
-            return False
-        ext = actions[1]
-        if ext in ["c", "cpp", "py", "ts", "js", "java"]:
-            self.rep.lang = ext
-            self.fnsave()
-            self.reset_view()
-            print(f"\nLinguagem de programação alterada para {ext}")
-            return False
-        else:
-            print(f"Extensão {ext} não processada")
-            return False
+                scr.addstr(1, 0, "Extensão inválida")
+                scr.addstr(2, 0, "Escolha uma das opções: " + ", ".join(opcoes))
+                scr.refresh()
+                scr.getch()
 
     def order_toggle(self, token):
         if token in self.order:
@@ -540,7 +542,10 @@ class Play:
         
         header.addf(DD.htext, "[").addf(DD.tasks, self.repo_alias).addf(DD.htext, "]")
         header.concat(Util.get_percent(total_perc, 4))
-        header.addt(" " + symbols.vbar + " ")
+        header.addt(" ").addf(DD.lcmd, "e").addf(DD.cmd, "xt").addt("(").addf(DD.param, self.rep.lang).addt(")")
+        header.addt(" ")
+        size_first = header.len()
+        header.addt(symbols.vbar + " ")
         header.addf(DD.lcmd, "x").addf(DD.cmd, "p").concat(Play.checkbox(self.xp_bar))
         header.addt(" ").addf(DD.lcmd, "f").addf(DD.cmd, "lags").concat(Play.checkbox(self.flags_bar))
         header.addt(" " + symbols.vbar + " ")
@@ -550,7 +555,7 @@ class Play:
             header.addt(" ").addf(DD.lcmd, "g").addf(DD.cmd, "oal").concat(Play.checkbox("goal" in self.order))
             header.addt(" ").addf(DD.lcmd, "o").addf(DD.cmd, "pt").concat(Play.checkbox(self.mark_opt))
             header.addt(" ").addf(DD.lcmd, "a").addf(DD.cmd, "dmin").concat(Play.checkbox(self.admin_mode))
-            header.addt(" ").addf(DD.lcmd, "e").addf(DD.cmd, "xt").addt("(").addf(DD.param, self.rep.lang).addt(")")
+            
         
         obt, total = self.game.get_xp_resume()
         cur_level = XP().get_level(obt)
@@ -563,15 +568,14 @@ class Play:
             header.addt(" xp:").addf("y", f"{str(atual)}/{str(needed)}")
             header.addt(" total:").addf("y", f"{obt}/{total}")
     
-        opening = len(self.repo_alias) + 7
         flags = 12
         bar = symbols.hbar
 
         Fmt.write(scr, 0, 0, header)
 
-        full_line = opening * bar + "┴" + flags * bar + "┴" + bar * (cols - opening - flags - 2)
+        full_line = size_first * bar + "┴" + flags * bar + "┴" + bar * (cols - size_first - flags - 2)
+        # full_line = cols * " "
         done_len = int((atual * cols // needed))
-        todo_len = cols - done_len
         splitter = Sentence().addf("g", full_line[:done_len]).addf("r", full_line[done_len:])
         Fmt.write(scr, 1, 0, splitter)
 
@@ -585,13 +589,13 @@ class Play:
             if skills:
                 for s, v in skills.items():
                     if s != "xp":
-                        skills_line.addf("w", s).addt(":").addf("c", f"{v}").addt(" ")
+                        skills_line.addf("r", s).addt(":").addf("c", f"{v}").addt(bar)
                         empty = False
-            if not empty:
+            
                 # scr.addstr(lines - 2, 0, cols * symbols.hbar)
-                Fmt.write(scr, lines - 2, 0, skills_line)
-                Fmt.write(scr, lines - 3, 0, Sentence().addt(cols * bar))
-                self.y_end = 4
+                # Fmt.write(scr, lines - 4, 0, Sentence().addt(cols * bar))
+            Fmt.write(scr, lines - 2, 0, skills_line.addt((cols - skills_line.len()) * bar))
+                # self.y_end = 4
         else:
             Fmt.write(scr, lines - 2, 0, Sentence().addt(cols * bar))
 
@@ -599,52 +603,13 @@ class Play:
         if isinstance(obj, Task):
             link = obj.link
             if link:
-                Fmt.write(scr, lines - 1, 0, Sentence().addf(DD.htext, link))
+                Fmt.write(scr, lines - 1, 0, Sentence().addt(link))
 
-    # def show_cmds(self):
-        # controles = colour(DD.htext, "Números ") + colour(DD.cluster_key, "azul") + colour(DD.htext, " para expandir/colapsar")
-        # letrass = colour(DD.htext, "Letras ") + colour(DD.tasks, "amarelo") + colour(DD.htext, " para marcar/desmarcar")
-        # intervalos1 = colour(DD.htext, "Você pode digitar intervalos: ") + colour(DD.cluster_key, "1-3")
-        # intervalos2 = colour(DD.htext, "Você pode digitar intervalos: ") + colour(DD.cluster_key, "B-F")
-
-        # numeros = "─┯" + colour(DD.cluster_key, "3") + "  Digite " + colour(DD.cluster_key, "3") + (" para ver ou ocultar")
-        
-        # letras = " ├─" + colour(DD.tasks, "D ") + colour(DD.nothing, symbols.uncheck)
-        # letras += " Tarefa. Dig " + colour(DD.cluster_key, "D") + " (des)marcar"
-        
-        # graduar = " ╰─" + colour(DD.tasks, "X ") + colour(DD.started, "4")  + " Tarefa. Dig " + colour(DD.cluster_key, "X4") + " dar nota 4"
-        # todas = colour(DD.cluster_key, "<") + " ou " + colour(DD.cluster_key, ">") + colour(DD.htext, " (Compactar ou Descompactar Tudo)")
-        
-        # nomes_verm = colour(DD.htext, "Os nomes em vermelho são comandos")
-        # prime_letr = colour(DD.htext, "Basta a primeira letra do comando")
-        # vdown = colour(DD.lcmd, "d") + colour(DD.cmd, "own") + colour(DD.param, " <TaskID ...>") + colour(DD.htext, " (Download)")
-        # vlink = colour(DD.lcmd, "l") + colour(DD.cmd, "ink") + colour(DD.param, " <TaskID ...>") + colour(DD.htext, " (Ver links)")
-        # vexte = colour(DD.lcmd, "e") + colour(DD.cmd, "xt") + colour(DD.param, "  <EXT>") + colour(DD.htext, " (Mudar linguagem default)")
-        # vsair = colour(DD.lcmd, "q") + colour(DD.cmd, "uit") + colour(DD.htext, " (Sair do programa)")
-        # vcont = colour(DD.lcmd, "c") + colour(DD.cmd, "ont") + colour(DD.htext, " (Alterna contador de tarefas)")
-        # vperc = colour(DD.lcmd, "p") + colour(DD.cmd, "erc") + colour(DD.htext, " (Alterna mostrar porcentagem)")
-        # vgoal = colour(DD.lcmd, "g") + colour(DD.cmd, "oal") + colour(DD.htext, " (Alterna mostrar meta mínima)")
-        # vopt_ = colour(DD.lcmd, "o") + colour(DD.cmd, "pt") + colour(DD.htext, " (Alterna ressaltar opcionais)")
-        # vupda = colour(DD.lcmd, "u") + colour(DD.cmd, "pdate") + colour(DD.htext, " (Recarrega o repositório)")
-        # vrota = colour(DD.lcmd, "r") + colour(DD.cmd, "otate") + colour(DD.htext, " (Rotaciona elementos visuais)")
-        # vgame = colour(DD.lcmd, "a") + colour(DD.cmd, "dmin") + colour(DD.htext, " (Libera todas as missões)")
-
-        # div0 = "──────────────────────────────────────"
-        # div1 = "───────────── " + colour(DD.cluster_key, "Controles") + "──────────────"
-        # div2 = "───────────────── " + colour(DD.lcmd, "Flags") + " ──────────────"
-        # div3 = "───────────── " + colour(DD.lcmd, "Comandos") + " ───────────────"
-
-        # elementos = []
-        # elementos += [div1, controles, letrass, todas, numeros, letras, graduar, intervalos1, intervalos2]
-        # elementos += [div2, nomes_verm, prime_letr, vcont, vperc, vgoal, vgame, div3, vdown, vlink, vexte, vupda, vrota, vsair]
-
-        # self.print_elementos(elementos)
-        # print(div0)
-        # return False
-
-
-    def generate_graph(self, graph_ext):
-
+    def generate_graph(self, scr):
+        if not self.first_loop:
+            return
+        if self.graph_ext == "":
+            return
         reachable: List[str] = [q.key for q in self.avaliable_quests]
         counts = {}
         for q in self.game.quests.values():
@@ -653,7 +618,12 @@ class Play:
             todo = len([t for t in q.get_tasks() if t.not_started()])
             counts[q.key] = f"{done} / {done + init + todo}\n{q.get_percent()}%"
 
-        Graph(self.game).set_opt(self.mark_opt).set_reachable(reachable).set_counts(counts).set_graph_ext(graph_ext).generate()
+        Graph(self.game).set_opt(self.mark_opt).set_reachable(reachable).set_counts(counts).set_graph_ext(self.graph_ext).generate()
+        lines, _cols = scr.getmaxyx()
+        if self.first_loop:
+            text = Sentence().addt(f"Grafo gerado em graph{self.graph_ext}")
+            Fmt.write(scr, lines - 1, 0, text)
+            
 
     def update_new(self):
         self.new_items = [item for item in self.new_items if item not in self.expanded]
@@ -776,8 +746,8 @@ class Play:
 
         self.reload_options()
         
-        scr.clear()
-        scr.refresh()
+        scr.erase()
+        
         lines, cols = scr.getmaxyx()
 
         self.show_header(scr)
@@ -822,7 +792,7 @@ class Play:
             self.update_avaliable_quests()
             self.update_new()
             self.show_items(scr)
-
+            self.generate_graph(scr)
             value = scr.getch()  # Aguarda o pressionamento de uma tecla antes de sair
             if value == ord("q"):
                 break
@@ -859,42 +829,27 @@ class Play:
                 self.toggle()
             elif value == ord("o"):
                 self.mark_opt = not self.mark_opt
+            elif value == ord("e"):
+                self.process_ext(scr)
+            elif value == ord("d"):
+                return self.process_down
             elif value == ord("\n"):
                 self.mass_mark()
             elif value >= ord("0") and value <= ord("9"):
                 self.set_grade(value)
-            elif value == curses.KEY_CANCEL:
-                texto = Fmt.get_user_input(scr, "Digite um texto: ")
             self.save_to_json()
+        
+            if self.first_loop:
+                self.first_loop = False
 
     
-
     # return True if the user wants to continue playing
     def play(self, graph_ext: str) -> bool:
-        curses.wrapper(self.main)
-        # success = True
-        # first_graph_msg = True
+        self.graph_ext = graph_ext
+        while True:
+            output = curses.wrapper(self.main)
+            if output is None:
+                return
+            else:
+                output()
 
-        # while True:
-        #     if success:
-        #         self.reset_view()
-
-        #     if graph_ext != "":
-        #         self.generate_graph(graph_ext)
-        #         if first_graph_msg:
-        #             print("\nGrafo gerado em graph" + graph_ext)
-        #             first_graph_msg = False
-
-        #     print("\n" + colour(DD.play, "play$") + " ", end="")
-        #     line = input()
-        #     if line == "":
-        #         success = True
-        #         continue
-        #     if line == "q" or line == "quit":
-        #         return False
-        #     if line == "u" or line == "update":
-        #         return True
-        #     # actions = Util.expand_range(line)
-        #     actions = line.split(" ")
-        #     success = self.take_actions(actions)
-        #     self.save_to_json()

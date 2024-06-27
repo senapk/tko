@@ -1,0 +1,101 @@
+{
+    "reps": {
+        "fup": {
+            "lang": "",
+            "expanded": [
+                "Opera\u00e7\u00f5es B\u00e1sicas ",
+                "op_form"
+            ],
+            "new_items": [
+                "Sele\u00e7\u00e3o ",
+                "Repeti\u00e7\u00e3o ",
+                "Vetores ",
+                "Strings ",
+                "Matrizes ",
+                "Extra ",
+                "op_math",
+                "selecao_manipulacao",
+                "selecao_math",
+                "selecao_logica",
+                "selecao_modulo",
+                "selecao_circular",
+                "selecao_intervalo",
+                "selecao_busca",
+                "selecao_conversao",
+                "laco_basico",
+                "laco_controle",
+                "laco_math",
+                "vetor_busca",
+                "vetor_contagem",
+                "vetor_conversao",
+                "vetor_manipulacao",
+                "vetor_proximidade",
+                "vetor_ordenacao",
+                "vetor_logica",
+                "vetor_math",
+                "strings_i",
+                "strings_ii",
+                "strings_iii",
+                "strings_iv",
+                "strings_v",
+                "strings_vi",
+                "matrizes_i",
+                "matrizes_ii",
+                "ponteiros",
+                "recursao",
+                "structs",
+                "em_construcao",
+                "op_math"
+            ],
+            "url": "https://github.com/qxcodefup/arcade/blob/master/Readme.md",
+            "file": "",
+            "quests": [
+                "Opera\u00e7\u00f5es B\u00e1sicas ",
+                "op_form"
+            ],
+            "tasks": {
+                "tres": "10",
+                "resto": "10",
+                "media": "10",
+                "sobrou": "10",
+                "segundos": "10",
+                "celsius": "10",
+                "quebrada": "10",
+                "operacoes": "10",
+                "data": "10"
+            },
+            "view": [
+                "order:",
+                "xp"
+            ]
+        },
+        "ed": {
+            "lang": "",
+            "expanded": [],
+            "new_items": [],
+            "url": "https://github.com/qxcodeed/arcade/blob/master/Readme.md",
+            "file": "",
+            "quests": [],
+            "tasks": {},
+            "view": []
+        },
+        "poo": {
+            "lang": "",
+            "expanded": [],
+            "new_items": [],
+            "url": "https://github.com/qxcodepoo/arcade/blob/master/Readme.md",
+            "file": "",
+            "quests": [],
+            "tasks": {},
+            "view": []
+        }
+    },
+    "local": {
+        "rootdir": "",
+        "lang": "",
+        "ascii": false,
+        "color": true,
+        "updown": true,
+        "sideto_min": 60
+    }
+}

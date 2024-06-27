@@ -114,7 +114,7 @@ class Down:
         return destiny
 
     @staticmethod
-    def download_problem(rootdir, course: str, activity: str, language: Optional[str]) -> bool:
+    def download_problem(rootdir, course: str, activity: str, language: Optional[str], output = None) -> bool:
         sp = SettingsParser()
         settings = sp.load_settings()
         rep = settings.get_repo(course)
@@ -123,8 +123,8 @@ class Down:
         game = Game(file)
         item = game.get_task(activity)
         if not item.link.startswith("http"):
-            print("fail: link for activity is not a remote link")
-            return False
+            output.append("fail: link for activity is not a remote link")
+            return output
         cfg = RemoteCfg(item.link)
         cache_url = os.path.dirname(cfg.get_raw_url()) + "/.cache/"
 
@@ -133,7 +133,7 @@ class Down:
             # print("debug", cache_url)
             [_readme_path, mapi_path] = Down.__down_problem_def(destiny, cache_url)
         except urllib.error.HTTPError:
-            print("  fail: activity not found in course url")
+            output.append("  fail: activity not found in course url")
             # verifi if destiny folder is empty and remove it
             if len(os.listdir(destiny)) == 0:
                 os.rmdir(destiny)
