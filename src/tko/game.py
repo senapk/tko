@@ -77,13 +77,13 @@ class Task:
             min_value = self.default_min_value
         color = self.get_grade_color(min_value)
         if self.grade == 0:
-            return Sentence().addf("*" + color, symbols.uncheck)
+            return Sentence().addf(color, symbols.uncheck)
         if self.grade < min_value:
-            return Sentence().addf("*" + color, str(self.grade))
+            return Sentence().addf(color, str(self.grade))
         if self.grade < 10:
-            return Sentence().addf("*" + color, str(self.grade))
+            return Sentence().addf(color, str(self.grade))
         if self.grade == 10:
-            return Sentence().addf("*" + color, symbols.check)
+            return Sentence().addf(color, symbols.check)
         return Sentence().addt("0")
 
     def get_percent(self):
@@ -267,7 +267,7 @@ class Quest:
 
     def get_resume_by_percent(self) -> Sentence:
         value = self.get_percent()
-        return Sentence().addf(self.get_grade_color() + "*", (str(value) + "%"))
+        return Sentence().addf(self.get_grade_color(), (str(value) + "%"))
     
     def get_requirement(self) -> Sentence:
         if self.qmin is not None:
@@ -284,7 +284,7 @@ class Quest:
         output = f"{count}/{total}"
         if plus > 0:
             output += f"+{plus}"
-        return Sentence().addf(self.get_grade_color() + "*", "(" + output + ")")
+        return Sentence().addf(self.get_grade_color(), "(" + output + ")")
 
     def get_grade_color(self) -> str:
         if self.not_started():
@@ -493,7 +493,7 @@ class Cluster:
         return total // len(self.quests)
 
     def get_resume_by_percent(self) -> Sentence:
-        return Sentence().addf(self.get_grade_color() + "*", f"{self.get_percent()}%")
+        return Sentence().addf(self.get_grade_color(), f"{self.get_percent()}%")
 
     def get_resume_by_quests(self):
         total = len(self.quests)
