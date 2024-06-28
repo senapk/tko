@@ -17,6 +17,11 @@ class Sentence:
     def addt(self, text: str):
         self.data.append(("", text))
         return self
+
+    def adds(self, fmt, sentence):
+        for f, t in sentence.data:
+            self.data.append((fmt, t))
+        return self
     
     def concat(self, sentence):
         self.data += sentence.data

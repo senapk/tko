@@ -2172,6 +2172,11 @@ class Sentence:
     def addt(self, text: str):
         self.data.append(("", text))
         return self
+
+    def adds(self, fmt, sentence):
+        for f, t in sentence.data:
+            self.data.append((fmt, t))
+        return self
     
     def concat(self, sentence):
         self.data += sentence.data
@@ -3517,6 +3522,8 @@ class Play:
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             self.down_task(rootdir, obj, self.rep.lang)
+        else:
+            print("Essa não é uma tarefa de código")
         input("Digite enter para continuar")
     # def find_cluster(self, key) -> Optional[Cluster]:
     #     for c in self.game.clusters:
@@ -3572,34 +3579,72 @@ class Play:
     def checkbox(value) -> Sentence:
         return Sentence().addf(DD.check, symbols.opcheck) if value else Sentence().addf(DD.uncheck, symbols.opuncheck)
 
+    def show_xp_bar(self, scr):
+        lines, cols = scr.getmaxyx()
+        skills_line = Sentence()
+        skills = self.game.get_skills_resume()
+        if skills:
+            i = 0
+            for s, v in skills.items():
+                if s != "xp":
+                    skills_line.addf("wB", f"{s}:{v}")
+                    if i < len(skills) - 1:
+                        skills_line.addf("yK", "  ")
+                        i += 1
+        
+        Fmt.write(scr, lines - 3, 0, skills_line.addf("yK", (cols - skills_line.len()) * " "))
+
+    def show_task_link(self, scr):
+        lines, cols = scr.getmaxyx()
+        obj = self.items[self.index_selected].obj
+        if isinstance(obj, Task):
+            link = obj.link
+            if link:
+                Fmt.write(scr, lines - 2, 0, Sentence().addt(link))
+
+    def show_footer(self, scr):
+        lines, cols = scr.getmaxyx()
+        footer = Sentence()
+        footer.addf(self.get_cb(self.flags_bar), f" Flags [f] ").addt(" ")
+        footer.addf(self.get_cb(self.xp_bar), f" Xp [x] ").addt(" ")
+
+        msgs = [" Quit [q] ", " Down [d] ", " Grade [0-9] ", " Expand [>] ", " Collapse [<] ", " Toggle [space] ", " Mass Toggle [Enter] "]
+
+        for x in msgs:
+            footer.addf("kW", x).addt(" ")
+        Play.trim_sentence(footer, cols - 1)
+        Fmt.write(scr, lines - 1, 0, footer)
+
+
+    def get_cb(self, value):
+        return "wG" if value else "wR"
+
+    @staticmethod
+    def trim_sentence(sentence: Sentence, limit: int):
+        for i in range(len(sentence.data) - 1, -1, -1):
+            if sentence.len() >= limit:
+                fmt, text = sentence.data[i]
+                try:
+                    sentence.data[i] = (fmt, "[" + text.split("[")[1].split("]")[0] + "]") 
+                except IndexError:
+                    pass
+
+
     def show_header(self, scr) -> Sentence:
         lines, cols = scr.getmaxyx()
         total_perc = 0
-
         header = Sentence()
-        
         for q in self.game.quests.values():
             total_perc += q.get_percent()
         if self.game.quests:
             total_perc = total_perc // len(self.game.quests)
         
-        header.addf(DD.htext, "[").addf(DD.tasks, self.repo_alias).addf(DD.htext, "]")
-        header.concat(Util.get_percent(total_perc, 4))
-        header.addt(" ").addf(DD.lcmd, "e").addf(DD.cmd, "xt").addt("(").addf(DD.param, self.rep.lang).addt(")")
-        header.addt(" ")
-        size_first = header.len()
-        header.addt(symbols.vbar + " ")
-        header.addf(DD.lcmd, "x").addf(DD.cmd, "p").concat(Play.checkbox(self.xp_bar))
-        header.addt(" ").addf(DD.lcmd, "f").addf(DD.cmd, "lags").concat(Play.checkbox(self.flags_bar))
-        header.addt(" " + symbols.vbar + " ")
-        if self.flags_bar:
-            header.addf(DD.lcmd, "c").addf(DD.cmd, "ont").concat(Play.checkbox("cont" in self.order))
-            header.addt(" ").addf(DD.lcmd, "p").addf(DD.cmd, "erc").concat(Play.checkbox("perc" in self.order))
-            header.addt(" ").addf(DD.lcmd, "g").addf(DD.cmd, "oal").concat(Play.checkbox("goal" in self.order))
-            header.addt(" ").addf(DD.lcmd, "o").addf(DD.cmd, "pt").concat(Play.checkbox(self.mark_opt))
-            header.addt(" ").addf(DD.lcmd, "a").addf(DD.cmd, "dmin").concat(Play.checkbox(self.admin_mode))
-            
-        
+        # header.addf(DD.htext, "[").addf(DD.tasks, self.repo_alias).addf(DD.htext, "]")
+        # header.concat(Util.get_percent(total_perc, 4))
+        header.addf("kY", f" {self.repo_alias} {total_perc}% ").addt("  ")
+        header.addf("kB", f" ext:({self.rep.lang}) [e] ").addt("  ")
+
+        xheader = Sentence()
         obt, total = self.game.get_xp_resume()
         cur_level = XP().get_level(obt)
         xp_next = XP().get_xp(cur_level + 1)
@@ -3607,49 +3652,30 @@ class Play:
         atual = obt - xp_prev
         needed = xp_next - xp_prev
         if self.xp_bar:
-            header.addt("Level:").addf("y", str(cur_level))
-            header.addt(" xp:").addf("y", f"{str(atual)}/{str(needed)}")
-            header.addt(" total:").addf("y", f"{obt}/{total}")
-    
-        flags = 12
+            header.addf("wC", f" Level: {cur_level} ").addt(" ")
+            header.addf("wC", f" xp:{str(atual)}/{str(needed)} ").addt(" ")
+            # header.addf("wC", f" total:{obt}/{total} ").addt(" ")
+        if self.flags_bar:
+            header.addf(self.get_cb("cont" in self.order), " cont [c] ").addt(" ")
+            header.addf(self.get_cb("perc" in self.order), " perc [p] ").addt(" ")
+            header.addf(self.get_cb("goal" in self.order), " goal [g] ").addt(" ")
+            header.addf(self.get_cb(self.mark_opt), " opt [o] ").addt(" ")
+            header.addf(self.get_cb(self.admin_mode), " admin [a] ").addt(" ")
+
+        Play.trim_sentence(header, cols - 1)
+
         bar = symbols.hbar
-
         Fmt.write(scr, 0, 0, header)
+        total = cols
+        full_line = bar * total
+        done_len = int((atual * total // needed))
+        xheader.addf("g", full_line[:done_len]).addf("r", full_line[done_len:])
+        Fmt.write(scr, 1, 0, xheader)
 
-        full_line = size_first * bar + "┴" + flags * bar + "┴" + bar * (cols - size_first - flags - 2)
-        # full_line = cols * " "
-        done_len = int((atual * cols // needed))
-        splitter = Sentence().addf("g", full_line[:done_len]).addf("r", full_line[done_len:])
-        Fmt.write(scr, 1, 0, splitter)
+        self.show_xp_bar(scr)
+        self.show_task_link(scr)
+        self.show_footer(scr)
 
-        # exp_line = Sentence().addf("g", "━" * done_len).addf("r", bar * (nbar - done_len))
-        self.y_end = 2
-
-        if self.xp_bar:
-            skills_line = Sentence()
-            skills = self.game.get_skills_resume()
-            empty = True
-            if skills:
-                i = 0
-                for s, v in skills.items():
-                    if s != "xp":
-                        skills_line.addf("wB", f"{s}:{v}")
-                        if i < len(skills) - 1:
-                            skills_line.addf("yK", "  ")
-                            i += 1
-            
-                # scr.addstr(lines - 2, 0, cols * symbols.hbar)
-                # Fmt.write(scr, lines - 4, 0, Sentence().addt(cols * bar))
-            Fmt.write(scr, lines - 2, 0, skills_line.addf("yK", (cols - skills_line.len()) * " "))
-                # self.y_end = 4
-        else:
-            Fmt.write(scr, lines - 2, 0, Sentence().addt(cols * bar))
-
-        obj = self.items[self.index_selected].obj
-        if isinstance(obj, Task):
-            link = obj.link
-            if link:
-                Fmt.write(scr, lines - 1, 0, Sentence().addt(link))
 
     def generate_graph(self, scr):
         if not self.first_loop:
@@ -3858,12 +3884,12 @@ class Play:
                 self.order_toggle("goal")
             elif value == ord("x"):
                 self.xp_bar = not self.xp_bar
-                if self.xp_bar:
-                    self.flags_bar = False
+                # if self.xp_bar:
+                #     self.flags_bar = False
             elif value == ord("f"):
                 self.flags_bar = not self.flags_bar
-                if self.flags_bar:
-                    self.xp_bar = False
+                # if self.flags_bar:
+                #     self.xp_bar = False
             elif value == ord("a"):
                 self.admin_mode = not self.admin_mode
                 self.reload_options()
