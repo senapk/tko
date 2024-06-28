@@ -3606,7 +3606,7 @@ class Play:
         lines, cols = scr.getmaxyx()
         footer = Sentence()
         footer.addf(self.get_cb(self.flags_bar), f" Flags [f] ").addt(" ")
-        footer.addf(self.get_cb(self.xp_bar), f" Xp [x] ").addt(" ")
+        footer.addf(self.get_cb(self.xp_bar), f" XP [x] ").addt(" ")
 
         msgs = [" Quit [q] ", " Down [d] ", " Grade [0-9] ", " Expand [>] ", " Collapse [<] ", " Toggle [space] ", " Mass Toggle [Enter] "]
 
@@ -3656,11 +3656,11 @@ class Play:
             header.addf("wC", f" xp:{str(atual)}/{str(needed)} ").addt(" ")
             # header.addf("wC", f" total:{obt}/{total} ").addt(" ")
         if self.flags_bar:
-            header.addf(self.get_cb("cont" in self.order), " cont [c] ").addt(" ")
-            header.addf(self.get_cb("perc" in self.order), " perc [p] ").addt(" ")
-            header.addf(self.get_cb("goal" in self.order), " goal [g] ").addt(" ")
-            header.addf(self.get_cb(self.mark_opt), " opt [o] ").addt(" ")
-            header.addf(self.get_cb(self.admin_mode), " admin [a] ").addt(" ")
+            header.addf(self.get_cb("cont" in self.order), " Count [c] ").addt(" ")
+            header.addf(self.get_cb("perc" in self.order), " Percent [p] ").addt(" ")
+            header.addf(self.get_cb("goal" in self.order), " Goals [g] ").addt(" ")
+            header.addf(self.get_cb(self.mark_opt), " Optional [o] ").addt(" ")
+            header.addf(self.get_cb(self.admin_mode), " Admin [a] ").addt(" ")
 
         Play.trim_sentence(header, cols - 1)
 
@@ -3926,7 +3926,7 @@ class Play:
                 output()
 
 
-__version__ = "0.8.0"
+__version__ = "0.8.1"
 
 
 
