@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.8.0
+  - add: curses mode on tko play
 - 0.7.2
   - fix: not loading case names
 - 0.7.1
