@@ -3112,7 +3112,7 @@ class Graph:
 
 
 class DD:
-    focus = "b"
+    focus = "B"
     italic = "/"
     underline = "_"
 
@@ -3143,138 +3143,78 @@ class DD:
 
 class Fmt:
     # Definindo constantes para as cores
-    CM = {
-        "r": 1, # Red on White
-        "g": 2, # Green on White
-        "y": 3, # Yellow on White
-        "b": 4, # Blue on White
-        "m": 5,
-        "c": 6,
-        # "w": 7,
-        # "k": 8,
+    color_pairs: Dict[str, int] = {}
 
-        # "rw": 9, # Red on Black
-        # "gw": 10,
-        # "yw": 11,
-        # "bw": 12,
-        # "mw": 13,
-        # "cw": 14,
-        # "ww": 15,
-        # "kw": 16,
-
-        # "ry": 17,
-        # "gy": 18,
-        # "yy": 19,
-        # "by": 20,
-        # "my": 21,
-        # "cy": 22,
-        # "wy": 23,
-        # "ky": 24,
-
-        "rb": 25,
-        "gb": 26,
-        "yb": 27,
-        "bb": 28,
-        "mb": 29,
-        "cb": 30,
-        "wb": 31,
-        "kb": 32,
-
-        # "rg": 33,
-        # "gg": 34,
-        # "yg": 35,
-        # "bg": 36,
-        # "mg": 37,
-        # "cg": 38,
-        # "wg": 39,
-        # "kg": 40,
-
+    COLOR_MAP = {
+        'k': curses.COLOR_BLACK,
+        'r': curses.COLOR_RED,
+        'g': curses.COLOR_GREEN,
+        'y': curses.COLOR_YELLOW,
+        'b': curses.COLOR_BLUE,
+        'm': curses.COLOR_MAGENTA,
+        'c': curses.COLOR_CYAN,
+        'w': curses.COLOR_WHITE,
     }
 
     @staticmethod
     def init_colors():
-        # Inicializa as cores e define os pares de cores
+        pair_number = 1
         curses.start_color()
         curses.use_default_colors()
-        background = curses.COLOR_WHITE
-        curses.init_pair(Fmt.CM["r"], curses.COLOR_RED    , -1)
-        curses.init_pair(Fmt.CM["g"], curses.COLOR_GREEN  , -1)
-        curses.init_pair(Fmt.CM["y"], curses.COLOR_YELLOW , -1)
-        curses.init_pair(Fmt.CM["b"], curses.COLOR_BLUE   , -1)
-        curses.init_pair(Fmt.CM["m"], curses.COLOR_MAGENTA, -1)
-        curses.init_pair(Fmt.CM["c"], curses.COLOR_CYAN   , -1)
-        # curses.init_pair(Fmt.CM["w"], curses.COLOR_WHITE  , -1)
-        # curses.init_pair(Fmt.CM["k"], curses.COLOR_BLACK  , -1)
-        
-        # curses.init_pair(Fmt.CM["rw"], curses.COLOR_RED    , curses.COLOR_WHITE)
-        # curses.init_pair(Fmt.CM["gw"], curses.COLOR_GREEN  , curses.COLOR_WHITE)
-        # curses.init_pair(Fmt.CM["yw"], curses.COLOR_YELLOW , curses.COLOR_WHITE)
-        # curses.init_pair(Fmt.CM["bw"], curses.COLOR_BLUE   , curses.COLOR_WHITE)
-        # curses.init_pair(Fmt.CM["mw"], curses.COLOR_MAGENTA, curses.COLOR_WHITE)
-        # curses.init_pair(Fmt.CM["cw"], curses.COLOR_CYAN   , curses.COLOR_WHITE)
-        # curses.init_pair(Fmt.CM["ww"], curses.COLOR_WHITE  , curses.COLOR_WHITE)
-        # curses.init_pair(Fmt.CM["kw"], curses.COLOR_BLACK  , curses.COLOR_WHITE)
+        for fk, fg in Fmt.COLOR_MAP.items():
+            curses.init_pair(pair_number, fg, -1)
+            Fmt.color_pairs[fk] = pair_number
+            pair_number += 1
 
-        # curses.init_pair(Fmt.CM["ry"], curses.COLOR_RED    , curses.COLOR_YELLOW)
-        # curses.init_pair(Fmt.CM["gy"], curses.COLOR_GREEN  , curses.COLOR_YELLOW)
-        # curses.init_pair(Fmt.CM["yy"], curses.COLOR_YELLOW , curses.COLOR_YELLOW)
-        # curses.init_pair(Fmt.CM["by"], curses.COLOR_BLUE   , curses.COLOR_YELLOW)
-        # curses.init_pair(Fmt.CM["my"], curses.COLOR_MAGENTA, curses.COLOR_YELLOW)
-        # curses.init_pair(Fmt.CM["cy"], curses.COLOR_CYAN   , curses.COLOR_YELLOW)
-        # curses.init_pair(Fmt.CM["wy"], curses.COLOR_WHITE  , curses.COLOR_YELLOW)
-        # curses.init_pair(Fmt.CM["ky"], curses.COLOR_BLACK  , curses.COLOR_YELLOW)
-
-        curses.init_pair(Fmt.CM["rb"], curses.COLOR_RED    , curses.COLOR_BLUE)
-        curses.init_pair(Fmt.CM["gb"], curses.COLOR_GREEN  , curses.COLOR_BLUE)
-        curses.init_pair(Fmt.CM["yb"], curses.COLOR_YELLOW , curses.COLOR_BLUE)
-        curses.init_pair(Fmt.CM["bb"], curses.COLOR_BLUE   , curses.COLOR_BLUE)
-        curses.init_pair(Fmt.CM["mb"], curses.COLOR_MAGENTA, curses.COLOR_BLUE)
-        curses.init_pair(Fmt.CM["cb"], curses.COLOR_CYAN   , curses.COLOR_BLUE)
-        curses.init_pair(Fmt.CM["wb"], curses.COLOR_WHITE  , curses.COLOR_BLUE)
-        curses.init_pair(Fmt.CM["kb"], curses.COLOR_BLACK  , curses.COLOR_BLUE)
-
-        # curses.init_pair(Fmt.CM["rg"], curses.COLOR_RED    , curses.COLOR_GREEN)
-        # curses.init_pair(Fmt.CM["gg"], curses.COLOR_GREEN  , curses.COLOR_GREEN)
-        # curses.init_pair(Fmt.CM["yg"], curses.COLOR_YELLOW , curses.COLOR_GREEN)
-        # curses.init_pair(Fmt.CM["bg"], curses.COLOR_BLUE   , curses.COLOR_GREEN)
-        # curses.init_pair(Fmt.CM["mg"], curses.COLOR_MAGENTA, curses.COLOR_GREEN)
-        # curses.init_pair(Fmt.CM["cg"], curses.COLOR_CYAN   , curses.COLOR_GREEN)
-        # curses.init_pair(Fmt.CM["wg"], curses.COLOR_WHITE  , curses.COLOR_GREEN)
-        # curses.init_pair(Fmt.CM["kg"], curses.COLOR_BLACK  , curses.COLOR_GREEN)
-
+        for fk, fg in Fmt.COLOR_MAP.items():
+            for bk, bg in Fmt.COLOR_MAP.items():
+                curses.init_pair(pair_number, fg, bg)
+                Fmt.color_pairs[fk + bk.upper()] = pair_number
+                pair_number += 1
 
     @staticmethod
-    def __write_line(stdscr, x: int, y: int, text: str, fmt: str):
+    def __write_line(stdscr, y: int, x: int, fmt: str, text: str):
         italic = False
         underline = False
 
-        if DD.italic in fmt:
+        if "/" in fmt:
             italic = True
-            fmt = fmt.replace(DD.italic, "")
-        if DD.underline in fmt:
+            fmt = fmt.replace("/", "")
+        if "_" in fmt:
             underline = True
-            fmt = fmt.replace(DD.underline, "")
+            fmt = fmt.replace("_", "")
 
+        fg_list = [c for c in fmt if c.islower()]
+        bg_list = [c for c in fmt if c.isupper()]
+        bg = "" if len(bg_list) == 0 else bg_list[0]
+        fg = "" if len(fg_list) == 0 else fg_list[0]
 
-        color = -1
-        if fmt != "":
+        if bg == "" and (fg == "w" or fg == "k"):
+            fg = ""
+        elif bg != "" and fg == "":
+            fg = "w"
+        if fg == "" and bg == "":
+            pair_number = -1
+        else:
             try:
-                color = Fmt.CM[fmt]
+                pair_number = Fmt.color_pairs[fg + bg]
             except KeyError:
-                stdscr.addstr(0, 0, f"Cor {fmt} não encontrada")
-                stdscr.refresh()
-                stdscr.getch()
-                raise Exception(f"Cor {fmt} não encontrada")
-            
+                print("Cor não encontrada: " + fg + bg)
+                exit(1)        
         if italic:
             stdscr.attron(curses.A_ITALIC)
         if underline:
             stdscr.attron(curses.A_UNDERLINE)
-        if color != -1:
-            stdscr.attron(curses.color_pair(color))
-        stdscr.addstr(y, x, text)
-        if color != -1:
-            stdscr.attroff(curses.color_pair(color))  # Desativa o par de cores
+        # Exibir o texto com a combinação de cores escolhida
+        if pair_number != -1:
+            stdscr.attron(curses.color_pair(pair_number))
+        try:
+            stdscr.addstr(y, x, text)
+        except curses.error as e:
+            print(str(e))
+            print(f"y:{y}, x:{x}, fmt:{fmt}, text: {text}")
+        if pair_number != -1:
+            stdscr.attroff(curses.color_pair(pair_number))
         if italic:
             stdscr.attroff(curses.A_ITALIC)
         if underline:
@@ -3284,12 +3224,11 @@ class Fmt:
     def write(stdscr, y: int, x: int, sentence: Sentence):
         # Escreve um texto na tela com cores diferentes
         lines, cols = stdscr.getmaxyx()
-        x_ini = x
         for fmt, text in sentence.get():
             if x < cols and y < lines:
                 if x + len(text) >= cols:
-                    text = text[:cols - x]
-                Fmt.__write_line(stdscr, x, y, text, fmt)
+                    text = text[:cols - x - 1]
+                Fmt.__write_line(stdscr, y, x, fmt, text)
             x += len(text)  # Move a posição x para a direita após o texto
 
     @staticmethod
@@ -3691,14 +3630,17 @@ class Play:
             skills = self.game.get_skills_resume()
             empty = True
             if skills:
+                i = 0
                 for s, v in skills.items():
                     if s != "xp":
-                        skills_line.addf("r", s).addt(":").addf("c", f"{v}").addt(bar)
-                        empty = False
+                        skills_line.addf("wB", f"{s}:{v}")
+                        if i < len(skills) - 1:
+                            skills_line.addf("yK", "  ")
+                            i += 1
             
                 # scr.addstr(lines - 2, 0, cols * symbols.hbar)
                 # Fmt.write(scr, lines - 4, 0, Sentence().addt(cols * bar))
-            Fmt.write(scr, lines - 2, 0, skills_line.addt((cols - skills_line.len()) * bar))
+            Fmt.write(scr, lines - 2, 0, skills_line.addf("yK", (cols - skills_line.len()) * " "))
                 # self.y_end = 4
         else:
             Fmt.write(scr, lines - 2, 0, Sentence().addt(cols * bar))
@@ -3852,7 +3794,7 @@ class Play:
         
         scr.erase()
         
-        lines, cols = scr.getmaxyx()
+        lines, _cols = scr.getmaxyx()
 
         self.show_header(scr)
 
