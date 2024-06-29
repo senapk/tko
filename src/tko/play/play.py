@@ -87,6 +87,19 @@ class Play:
             
         self.fnsave()
 
+    def test_color(self, scr):
+        fg = "rgbymcwk"
+        bg = " RGBYMCWK"
+        lines, cols = scr.getmaxyx()
+        scr.erase()
+        for l in range(8):
+            for c in range(9):
+                cor = fg[l] + bg[c]
+                Fmt.write(scr, 3 * l, 5 * c, Sentence().addf(cor, f" {cor} "))
+        
+        scr.refresh()
+        scr.getch()
+
 
     def load_rep(self):
         for key, grade in self.rep.tasks.items():
@@ -131,10 +144,12 @@ class Play:
         for q in added_quests:
             self.new_items.append(q.key)
 
-    def add_focus(self, color):
+    def add_focus(self, color, in_focus):
+        if not in_focus:
+            return color
         if color == "":
-            return "w" + Style.focus
-        return color + Style.focus
+            return "k" + Style.focus
+        return Style.focus + color
 
     def str_task(self, in_focus: bool, t: Task, ligc: str, ligq: str, min_value = 1) -> Sentence:
         output = Sentence()
@@ -143,8 +158,7 @@ class Play:
               .addt(" ")
 
         value = Style.opt_task if self.mark_opt and t.opt else ""
-        value = value if not in_focus else self.add_focus(value)
-        output.addf(value, t.title)
+        output.addf(self.add_focus(value, in_focus), t.title)
         
         if self.xp_bar:
             xp = ""
@@ -158,8 +172,7 @@ class Play:
         output: Sentence = Sentence().addt(" " + lig + con + " ")
 
         value = Style.opt_quest if self.mark_opt and q.opt else ""
-        value = value if not in_focus else self.add_focus(value)
-        output.addf(value, q.title)
+        output.addf(self.add_focus(value, in_focus), q.title)
 
         for item in self.order:
             if item == "cont":
@@ -186,8 +199,8 @@ class Play:
         if cluster.key in self.expanded:
             opening = "─┯"        
         output.addt(opening + " ")
-        value = Style.cluster_title if not in_focus else self.add_focus(Style.cluster_title)
-        output.addf(value, cluster.title.strip())
+        value = Style.cluster_title
+        output.addf(self.add_focus(value, in_focus), cluster.title.strip())
         output.addt(" ").concat(cluster.get_resume_by_percent())
         if cluster.key in self.new_items:
             output.addf(Style.new, " [new]")
@@ -657,6 +670,8 @@ class Play:
             #     self.mass_mark()
             elif value >= ord("0") and value <= ord("9"):
                 self.set_grade(value)
+            elif value == ord("T"):
+                self.test_color(scr)
             self.save_to_json()
         
             if self.first_loop:

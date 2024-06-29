@@ -2,13 +2,14 @@ import tempfile
 
 import os
 from typing import List
-from shutil import which
+import shutil
 
+from ..run.basic import CompilerError
 from ..util.runner import Runner
 
 
 def check_tool(name):
-    if which(name) is None:
+    if shutil.which(name) is None:
         raise CompilerError("fail: " + name + " executable not found")
 
 

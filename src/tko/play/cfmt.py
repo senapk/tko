@@ -51,9 +51,7 @@ class Fmt:
         bg = "" if len(bg_list) == 0 else bg_list[0]
         fg = "" if len(fg_list) == 0 else fg_list[0]
 
-        if bg == "" and (fg == "w" or fg == "k"):
-            fg = ""
-        elif bg != "":
+        if bg != "" and fg == "":
             fg = "k"
         if fg == "" and bg == "":
             pair_number = -1

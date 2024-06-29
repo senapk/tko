@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.8.6
+  - fix: module dependencies
 - 0.8.5
   - add: subfolders and color fix
 - 0.8.0

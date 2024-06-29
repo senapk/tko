@@ -1,7 +1,7 @@
 {
     "reps": {
         "fup": {
-            "lang": "",
+            "lang": "cpp",
             "expanded": [
                 "Opera\u00e7\u00f5es B\u00e1sicas ",
                 "op_form"
@@ -45,6 +45,7 @@
                 "recursao",
                 "structs",
                 "em_construcao",
+                "op_math",
                 "op_math"
             ],
             "url": "https://github.com/qxcodefup/arcade/blob/master/Readme.md",

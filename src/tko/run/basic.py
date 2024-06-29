@@ -1,4 +1,4 @@
-from enum import Enum
+import enum
 from typing import Optional
 import os
 
@@ -7,7 +7,7 @@ from ..util.tfmt import symbols
 class CompilerError(Exception):
     pass
 
-class ExecutionResult(Enum):
+class ExecutionResult(enum.Enum):
     UNTESTED = "untested_"
     SUCCESS = "correct__"
     WRONG_OUTPUT = "wrong_out"
@@ -33,13 +33,13 @@ class ExecutionResult(Enum):
         return self.value
 
 
-class DiffMode(Enum):
+class DiffMode(enum.Enum):
     FIRST = "MODE: SHOW FIRST FAILURE ONLY"
     ALL = "MODE: SHOW ALL FAILURES"
     QUIET = "MODE: SHOW NONE FAILURES"
 
 
-class IdentifierType(Enum):
+class IdentifierType(enum.Enum):
     OBI = "OBI"
     MD = "MD"
     TIO = "TIO"
