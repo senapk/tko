@@ -4,7 +4,7 @@ import re
 import os
 
 from .basic import Unit
-from .pattern import PatternLoader
+from ..util.pattern import PatternLoader
 
 
 class VplParser:

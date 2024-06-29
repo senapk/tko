@@ -4,17 +4,21 @@ import argparse
 import sys
 
 from .actions import Run, Build
-from .basic import Param
-from .pattern import PatternLoader
-from .basic import DiffMode
-from .format import Report, Color
+from .run.basic import Param
+from .util.pattern import PatternLoader
+from .run.basic import DiffMode
 from .down import Down
 from .settings import SettingsParser, RepoSettings, Settings
-from .guide import tko_guide
-from .guide import bash_guide
-from .format import symbols
-from .game import Game
-from .play import Play
+
+from .util.guide import tko_guide
+from .util.guide import bash_guide
+
+from .run.report import Report
+from .util.tfmt import Color, symbols
+
+from .game.game import Game
+from .play.play import Play
+
 from .__init__ import __version__
 
 

@@ -1,9 +1,10 @@
 from typing import List, Optional, Tuple
 import io
 
-from .format import Color, colour, Report, symbols
-from .basic import Unit
-from .basic import ExecutionResult
+from ..util.tfmt import colour, Color, symbols
+
+from .basic import Unit, ExecutionResult
+from .report import Report
 
 
 class Diff:

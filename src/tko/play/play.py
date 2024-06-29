@@ -1,167 +1,21 @@
-from .game import Game, Task, Quest, Cluster, Graph, XP, Sentence
-from .settings import RepoSettings, LocalSettings
-from .down import Down
-from .format import symbols
+from ..game.game import Game
+from ..game.cluster import Cluster
+from ..game.quest import Quest
+from ..game.task import Task
+from ..game.xp import XP
+from ..game.graph import Graph
+
 from typing import List, Dict, Tuple, Optional, Any
+from ..settings import RepoSettings, LocalSettings
+from ..down import Down
+from ..util.tfmt import symbols
+from ..game.sentence import Sentence
+from .style import Style
+from .cfmt import Fmt
+
 import os
 import curses
 
-
-class DD:
-    focus = "B"
-    italic = "/"
-    underline = "_"
-
-    opt_quest = italic + "m"
-    opt_task = italic + "c"
-    text = ""
-    cluster_key = "b"
-    cluster_title = ""
-    quest_key = italic + "b"
-    tasks = "y"
-    lcmd = 'r'
-    cmd = ""
-    code_key = ""
-    skills = "c"
-    play = "g"
-    new = "g"
-
-    nothing = "m"
-    started = "r"
-    required = "y"
-    complete = "g"
-
-    shell = "r" # extern shell cmds
-    htext = ""
-    check = "g"
-    uncheck = "y"
-    param = "c"
-
-class Fmt:
-    # Definindo constantes para as cores
-    color_pairs: Dict[str, int] = {}
-
-    COLOR_MAP = {
-        'k': curses.COLOR_BLACK,
-        'r': curses.COLOR_RED,
-        'g': curses.COLOR_GREEN,
-        'y': curses.COLOR_YELLOW,
-        'b': curses.COLOR_BLUE,
-        'm': curses.COLOR_MAGENTA,
-        'c': curses.COLOR_CYAN,
-        'w': curses.COLOR_WHITE,
-    }
-
-    @staticmethod
-    def init_colors():
-        pair_number = 1
-        curses.start_color()
-        curses.use_default_colors()
-        for fk, fg in Fmt.COLOR_MAP.items():
-            curses.init_pair(pair_number, fg, -1)
-            Fmt.color_pairs[fk] = pair_number
-            pair_number += 1
-
-        for fk, fg in Fmt.COLOR_MAP.items():
-            for bk, bg in Fmt.COLOR_MAP.items():
-                curses.init_pair(pair_number, fg, bg)
-                Fmt.color_pairs[fk + bk.upper()] = pair_number
-                pair_number += 1
-
-    @staticmethod
-    def __write_line(stdscr, y: int, x: int, fmt: str, text: str):
-        italic = False
-        underline = False
-
-        if "/" in fmt:
-            italic = True
-            fmt = fmt.replace("/", "")
-        if "_" in fmt:
-            underline = True
-            fmt = fmt.replace("_", "")
-
-        fg_list = [c for c in fmt if c.islower()]
-        bg_list = [c for c in fmt if c.isupper()]
-        bg = "" if len(bg_list) == 0 else bg_list[0]
-        fg = "" if len(fg_list) == 0 else fg_list[0]
-
-        if bg == "" and (fg == "w" or fg == "k"):
-            fg = ""
-        elif bg != "" and fg == "":
-            fg = "w"
-        if fg == "" and bg == "":
-            pair_number = -1
-        else:
-            try:
-                pair_number = Fmt.color_pairs[fg + bg]
-            except KeyError:
-                print("Cor não encontrada: " + fg + bg)
-                exit(1)        
-        if italic:
-            stdscr.attron(curses.A_ITALIC)
-        if underline:
-            stdscr.attron(curses.A_UNDERLINE)
-        # Exibir o texto com a combinação de cores escolhida
-        if pair_number != -1:
-            stdscr.attron(curses.color_pair(pair_number))
-        try:
-            stdscr.addstr(y, x, text)
-        except curses.error as e:
-            print(str(e))
-            print(f"y:{y}, x:{x}, fmt:{fmt}, text: {text}")
-        if pair_number != -1:
-            stdscr.attroff(curses.color_pair(pair_number))
-        if italic:
-            stdscr.attroff(curses.A_ITALIC)
-        if underline:
-            stdscr.attroff(curses.A_UNDERLINE)
-
-    @staticmethod
-    def write(stdscr, y: int, x: int, sentence: Sentence):
-        # Escreve um texto na tela com cores diferentes
-        lines, cols = stdscr.getmaxyx()
-        for fmt, text in sentence.get():
-            if x < cols and y < lines:
-                if x + len(text) >= cols:
-                    text = text[:cols - x - 1]
-                Fmt.__write_line(stdscr, y, x, fmt, text)
-            x += len(text)  # Move a posição x para a direita após o texto
-
-    @staticmethod
-    def get_user_input(stdscr, prompt: str) -> str:
-        lines, cols = stdscr.getmaxyx()
-        curses.echo()  # Ativa a exibição dos caracteres digitados
-        curses.curs_set(1)  # Ativa o cursor
-        stdscr.addstr(0, 0, cols * " ")
-        stdscr.addstr(0, 0, prompt)
-        stdscr.refresh()
-        input_str = stdscr.getstr(0, len(prompt), 20).decode('utf-8')  # Captura o input do usuário
-        curses.noecho()  # Desativa a exibição dos caracteres digitados
-        curses.curs_set(0)
-        return input_str
-
-
-class Util:
-    @staticmethod
-    def get_number(value: int):
-        if 0 <= value <= 9:
-            return str(value)
-        return "*"
-    
-    @staticmethod
-    def get_term_size():
-        return curses.COLS
-
-    @staticmethod
-    def get_percent(value, pad = 0) -> Sentence:
-        text = f"{str(value)}%".rjust(pad)
-        if value == 100:
-            return Sentence().addf(DD.complete, "100%")
-        if value >= 70:
-            return Sentence().addf(DD.required, text)
-        if value == 0:
-            return Sentence().addf(DD.nothing, text)
-        return Sentence().addf(DD.started, text)
 
 
 class Entry:
@@ -185,7 +39,8 @@ class Play:
         self.flags_bar = "toolbar" in self.rep.view
         self.xp_bar = "xp" in self.rep.view
         self.admin_mode = "admin" in self.rep.view
-        self.mark_opt = "opt" in self.rep.view
+        # self.mark_opt = "opt" in self.rep.view
+        self.mark_opt = True
         order = [entry for entry in self.rep.view if entry.startswith("order:")]
         if len(order) > 0:
             self.order = [v for v in order[0][6:].split(",") if v != '']
@@ -201,7 +56,7 @@ class Play:
         self.index_selected = 0
         self.index_begin = 0
         self.y_begin = 2
-        self.y_end = 2
+        self.y_end = 3
         
         self.items: List[Entry] = []
 
@@ -225,8 +80,8 @@ class Play:
             self.rep.view.append("admin")
         if self.flags_bar:
             self.rep.view.append("toolbar")
-        if self.mark_opt:
-            self.rep.view.append("opt")
+        # if self.mark_opt:
+        #     self.rep.view.append("opt")
         if self.xp_bar:
             self.rep.view.append("xp")
             
@@ -278,8 +133,8 @@ class Play:
 
     def add_focus(self, color):
         if color == "":
-            return "w" + DD.focus
-        return color + DD.focus
+            return "w" + Style.focus
+        return color + Style.focus
 
     def str_task(self, in_focus: bool, t: Task, ligc: str, ligq: str, min_value = 1) -> Sentence:
         output = Sentence()
@@ -287,7 +142,7 @@ class Play:
               .concat(t.get_grade_symbol(min_value))\
               .addt(" ")
 
-        value = DD.opt_task if self.mark_opt and t.opt else ""
+        value = Style.opt_task if self.mark_opt and t.opt else ""
         value = value if not in_focus else self.add_focus(value)
         output.addf(value, t.title)
         
@@ -295,14 +150,14 @@ class Play:
             xp = ""
             for s, v in t.skills.items():
                 xp += f" +{s}:{v}"
-            output.addf(DD.skills, xp)
+            output.addf(Style.skills, xp)
         return output
     
     def str_quest(self, in_focus: bool, q: Quest, lig: str) -> Sentence:
         con = "━─" if q.key not in self.expanded else "─┯"
         output: Sentence = Sentence().addt(" " + lig + con + " ")
 
-        value = DD.opt_quest if self.mark_opt and q.opt else ""
+        value = Style.opt_quest if self.mark_opt and q.opt else ""
         value = value if not in_focus else self.add_focus(value)
         output.addf(value, q.title)
 
@@ -317,10 +172,10 @@ class Play:
             xp = ""
             for s,v in q.skills.items():
                 xp += f" +{s}:{v}"
-            output.addf(DD.skills, " " + xp)
+            output.addf(Style.skills, " " + xp)
                 
         if q.key in self.new_items:
-            output.addf(DD.new, " [new]")
+            output.addf(Style.new, " [new]")
 
         return output
         
@@ -331,11 +186,11 @@ class Play:
         if cluster.key in self.expanded:
             opening = "─┯"        
         output.addt(opening + " ")
-        value = DD.cluster_title if not in_focus else self.add_focus(DD.cluster_title)
+        value = Style.cluster_title if not in_focus else self.add_focus(Style.cluster_title)
         output.addf(value, cluster.title.strip())
         output.addt(" ").concat(cluster.get_resume_by_percent())
         if cluster.key in self.new_items:
-            output.addf(DD.new, " [new]")
+            output.addf(Style.new, " [new]")
 
         return output
     
@@ -384,14 +239,14 @@ class Play:
         if self.local.rootdir == "":
             print("Diretório raiz para o tko ainda não foi definido")
             print("Você deseja utilizer o diretório atual")
-            print((DD.shell, "  " + os.getcwd()))
+            print((Style.shell, "  " + os.getcwd()))
             print("como raiz para o repositório de " + self.repo_alias + "? (s/n) ", end="")
             answer = input()
             if answer == "s":
                 self.local.rootdir = os.getcwd()
                 self.fnsave()
                 print("Você pode alterar o diretório raiz navegando para o diretório desejado e executando o comando")
-                print((DD.shell, "  tko config --root"))
+                print((Style.shell, "  tko config --root"))
             else:
                 print("Navegue para o diretório desejado e execute o comando novamente")
                 exit(1)
@@ -468,22 +323,22 @@ class Play:
 
     @staticmethod
     def checkbox(value) -> Sentence:
-        return Sentence().addf(DD.check, symbols.opcheck) if value else Sentence().addf(DD.uncheck, symbols.opuncheck)
+        return Sentence().addf(Style.check, symbols.opcheck) if value else Sentence().addf(Style.uncheck, symbols.opuncheck)
 
-    def show_xp_bar(self, scr):
+    def show_skills_bar(self, scr, size_footer):
         lines, cols = scr.getmaxyx()
         skills_line = Sentence()
         skills = self.game.get_skills_resume()
-        if skills:
+        if skills and self.xp_bar:
             i = 0
             for s, v in skills.items():
                 if s != "xp":
-                    skills_line.addf("wB", f"{s}:{v}")
+                    skills_line.addf(Style.bar_skills, f"{s}:{v}")
                     if i < len(skills) - 1:
-                        skills_line.addf("yK", "  ")
+                        skills_line.addf(Style.bar_bg, "  ")
                         i += 1
         
-        Fmt.write(scr, lines - 3, 0, skills_line.addf("yK", (cols - skills_line.len()) * " "))
+        Fmt.write(scr, lines - 3, 0, skills_line.addf(Style.bar_bg, (size_footer - 1 - skills_line.len()) * " "))
 
     def show_task_link(self, scr):
         lines, cols = scr.getmaxyx()
@@ -493,22 +348,23 @@ class Play:
             if link:
                 Fmt.write(scr, lines - 2, 0, Sentence().addt(link))
 
-    def show_footer(self, scr):
+    def show_footer(self, scr) -> int:
         lines, cols = scr.getmaxyx()
         footer = Sentence()
         footer.addf(self.get_cb(self.flags_bar), f" Flags [f] ").addt(" ")
         footer.addf(self.get_cb(self.xp_bar), f" XP [x] ").addt(" ")
 
-        msgs = [" Quit [q] ", " Down [d] ", " Grade [0-9] ", " Expand [>] ", " Collapse [<] ", " Toggle [space] ", " Mass Toggle [Enter] "]
+        msgs = [" Quit [q] ", " Down [d] ", " Grade [0-9] ", " Expand [>] ", " Collapse [<] ", " Toggle [space|enter] "]
 
         for x in msgs:
-            footer.addf("kW", x).addt(" ")
+            footer.addf(Style.bar_skills, x).addt(" ")
         Play.trim_sentence(footer, cols - 1)
         Fmt.write(scr, lines - 1, 0, footer)
+        return footer.len()
 
 
     def get_cb(self, value):
-        return "wG" if value else "wR"
+        return Style.bar_true if value else Style.bar_false
 
     @staticmethod
     def trim_sentence(sentence: Sentence, limit: int):
@@ -521,7 +377,7 @@ class Play:
                     pass
 
 
-    def show_header(self, scr) -> Sentence:
+    def show_info(self, scr) -> Sentence:
         lines, cols = scr.getmaxyx()
         total_perc = 0
         header = Sentence()
@@ -530,10 +386,6 @@ class Play:
         if self.game.quests:
             total_perc = total_perc // len(self.game.quests)
         
-        # header.addf(DD.htext, "[").addf(DD.tasks, self.repo_alias).addf(DD.htext, "]")
-        # header.concat(Util.get_percent(total_perc, 4))
-        header.addf("kY", f" {self.repo_alias} {total_perc}% ").addt("  ")
-        header.addf("kB", f" ext:({self.rep.lang}) [e] ").addt("  ")
 
         xheader = Sentence()
         obt, total = self.game.get_xp_resume()
@@ -542,31 +394,36 @@ class Play:
         xp_prev = XP().get_xp(cur_level)
         atual = obt - xp_prev
         needed = xp_next - xp_prev
+        header.addf(Style.bar_main, f" {self.repo_alias.upper()} {total_perc}% ").addt(" ")
         if self.xp_bar:
-            header.addf("wC", f" Level: {cur_level} ").addt(" ")
-            header.addf("wC", f" xp:{str(atual)}/{str(needed)} ").addt(" ")
+            header.addf(Style.bar_xp, f" Level:{cur_level} ").addt(" ")
+            header.addf(Style.bar_xp, f" XP:{str(atual)}/{str(needed)} ").addt(" ")
             # header.addf("wC", f" total:{obt}/{total} ").addt(" ")
+            header.addf(Style.bar_xp, f" Total:{obt} ").addt(" ")
+
+        header.addf(Style.bar_ext, f" Ext:{self.rep.lang} [e] ").addt(" ")
+
         if self.flags_bar:
             header.addf(self.get_cb("cont" in self.order), " Count [c] ").addt(" ")
             header.addf(self.get_cb("perc" in self.order), " Percent [p] ").addt(" ")
             header.addf(self.get_cb("goal" in self.order), " Goals [g] ").addt(" ")
-            header.addf(self.get_cb(self.mark_opt), " Optional [o] ").addt(" ")
-            header.addf(self.get_cb(self.admin_mode), " Admin [a] ").addt(" ")
+            # header.addf(self.get_cb(self.mark_opt), " Optional [o] ").addt(" ")
+            header.addf(self.get_cb(self.admin_mode), " Admin [A] ").addt(" ")
 
         Play.trim_sentence(header, cols - 1)
 
+
+        self.show_task_link(scr)
+        size_footer = self.show_footer(scr)
+        self.show_skills_bar(scr, size_footer)
+
         bar = symbols.hbar
         Fmt.write(scr, 0, 0, header)
-        total = cols
+        total = size_footer - 1
         full_line = bar * total
         done_len = int((atual * total // needed))
         xheader.addf("g", full_line[:done_len]).addf("r", full_line[done_len:])
         Fmt.write(scr, 1, 0, xheader)
-
-        self.show_xp_bar(scr)
-        self.show_task_link(scr)
-        self.show_footer(scr)
-
 
     def generate_graph(self, scr):
         if not self.first_loop:
@@ -713,7 +570,7 @@ class Play:
         
         lines, _cols = scr.getmaxyx()
 
-        self.show_header(scr)
+        self.show_info(scr)
 
         y = self.y_begin
         if len(self.items) < lines - self.y_end - self.y_begin:
@@ -781,23 +638,23 @@ class Play:
                 self.flags_bar = not self.flags_bar
                 # if self.flags_bar:
                 #     self.xp_bar = False
-            elif value == ord("a"):
+            elif value == ord("A"):
                 self.admin_mode = not self.admin_mode
                 self.reload_options()
             elif value == ord(">"):
                 self.process_expand()
             elif value == ord("<"):
                 self.process_collapse()
-            elif value == ord(" "):
+            elif value == ord(" ") or value == ord("\n"):
                 self.toggle()
-            elif value == ord("o"):
-                self.mark_opt = not self.mark_opt
+            # elif value == ord("o"):
+            #     self.mark_opt = not self.mark_opt
             elif value == ord("e"):
                 self.process_ext(scr)
             elif value == ord("d"):
                 return self.process_down
-            elif value == ord("\n"):
-                self.mass_mark()
+            # elif value == ord("\n"):
+            #     self.mass_mark()
             elif value >= ord("0") and value <= ord("9"):
                 self.set_grade(value)
             self.save_to_json()

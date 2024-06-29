@@ -2,8 +2,10 @@ from enum import Enum
 from typing import Optional
 import os
 
-from .format import symbols
+from ..util.tfmt import symbols
 
+class CompilerError(Exception):
+    pass
 
 class ExecutionResult(Enum):
     UNTESTED = "untested_"
@@ -29,10 +31,6 @@ class ExecutionResult(Enum):
 
     def __str__(self):
         return self.value
-
-
-class CompilerError(Exception):
-    pass
 
 
 class DiffMode(Enum):

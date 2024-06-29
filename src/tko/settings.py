@@ -2,8 +2,8 @@ import os
 import json
 import appdirs
 import tempfile
-from .remote import RemoteCfg, Absolute
-from typing import Any, List, Dict, Tuple, Optional
+from .util.remote import RemoteCfg, Absolute
+from typing import Any, List, Dict, Optional
 
 class RepoSettings:
     def __init__(self, file: str = ""):

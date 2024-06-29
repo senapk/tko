@@ -3,13 +3,16 @@ import os
 import shutil
 import subprocess
 
-from .wdir import Wdir
-from .basic import DiffMode, ExecutionResult, CompilerError, Param, Unit
-from .diff import Diff
-from .format import colour, Report, symbols
-from .writer import Writer
-from .solver import Solver
-from .runner import Runner
+from .run.wdir import Wdir
+from .run.basic import DiffMode, ExecutionResult, CompilerError, Param, Unit
+from .run.diff import Diff
+
+from .run.report import Report
+from .util.tfmt import colour, symbols
+
+from .run.writer import Writer
+from .run.solver import Solver
+from .util.runner import Runner
 
 
 class Execution:

@@ -5,8 +5,8 @@ import urllib.error
 import json
 
 from .settings import SettingsParser
-from .game import Game
-from .remote import RemoteCfg
+from .game.game import Game
+from .util.remote import RemoteCfg
 
 
 class Down:

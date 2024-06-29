@@ -1,7 +1,7 @@
 from typing import List
 import os
 
-from .pattern import PatternLoader
+from ..util.pattern import PatternLoader
 from .basic import IdentifierType, Identifier, Unit
 
 

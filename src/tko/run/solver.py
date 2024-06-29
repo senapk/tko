@@ -4,8 +4,7 @@ import os
 from typing import List
 from shutil import which
 
-from .basic import CompilerError
-from .runner import Runner
+from ..util.runner import Runner
 
 
 def check_tool(name):
