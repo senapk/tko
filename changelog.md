@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.8.5
+  - add: subfolders and color fix
 - 0.8.0
   - add: curses mode on tko play
 - 0.7.2
