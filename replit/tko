@@ -20,7 +20,7 @@ import io
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.8.6"
+__version__ = "0.8.7"
 
 class Style:
     focus = "Y"
@@ -52,14 +52,14 @@ class Style:
     uncheck = "y"
     param = "c"
 
-    bar_main = "kM"
-    bar_ext = "/kY"
-    bar_xp = "kC"
-    bar_true = "kY"
-    bar_false = "kR"
-    bar_skills = "kB"
-    bar_cmds = "kY"
-    bar_bg = "wM"
+    bar_main = "M"
+    bar_ext = "/Y"
+    bar_xp = "C"
+    bar_true = "G"
+    bar_false = "R"
+    bar_skills = "B"
+    bar_cmds = "Y"
+    bar_bg = "M"
 
 class Sentence:
     def __init__(self):

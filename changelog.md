@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.8.7
+  - fix: missing __init__py for run module
 - 0.8.6
   - fix: module dependencies
 - 0.8.5
