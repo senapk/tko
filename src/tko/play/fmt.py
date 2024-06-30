@@ -87,14 +87,18 @@ class Fmt:
     def write(y: int, x: int, sentence: Sentence):
         # Escreve um texto na tela com cores diferentes
         lines, cols = Fmt.scr.getmaxyx()
-        for fmt, text in sentence.get():
+        if y < 0 or y >= lines:
+            return
+        for token in sentence.get():
+            fmt = token.fmt
+            text = token.text
             if x < 0:
                 if x + len(text) >= 0:
                     text = text[-x:]
                     x = 0
-            if x < cols and x >= 0 and y < lines and y >= 0:
+            if x < cols:
                 if x + len(text) >= cols:
-                    text = text[:cols - x - 1]
+                    text = text[:cols - x]
                 Fmt.stroke(y, x, fmt, text)
             x += len(text)  # Move a posição x para a direita após o texto
 
@@ -127,7 +131,7 @@ class Fmt:
         return Fmt.scr.getch()
 
     @staticmethod
-    def clear():
+    def erase():
         Fmt.scr.erase()
 
     @staticmethod

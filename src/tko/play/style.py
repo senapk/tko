@@ -29,7 +29,7 @@ class Style:
     param = "c"
 
     bar_main = "M"
-    bar_ext = "/Y"
+    bar_ext = "Y"
     bar_xp = "C"
     bar_true = "G"
     bar_false = "R"

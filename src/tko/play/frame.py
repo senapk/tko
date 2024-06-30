@@ -11,17 +11,25 @@ class Frame:
         self._filled = False
         self._header: Sentence = Sentence()
         self._footer: Sentence = Sentence()
+        self._fill_char = " "
 
     def set_inner(self, inner_dy: int, inner_dx: int):
         self._inner_dy = inner_dy
         self._inner_dx = inner_dx
         return self
     
-    def set_end(self, x: int, y: int):
+    def get_inner(self):
+        return (self._inner_dy, self._inner_dx)
+
+    def set_end(self, y: int, x: int):
         self._inner_dx = x - self._x - 1
         self._inner_dy = y - self._y - 1
         # Fmt.write(0, 0, Sentence().addt(f"{self._inner_w}, {self._inner_h}"))
         # Fmt.getch()
+        return self
+    
+    def set_fill_char(self, char: str):
+        self._fill_char = char
         return self
     
     def get_symbol(self, value: str):
@@ -37,19 +45,19 @@ class Frame:
             return bold[value]
         return " "
         
-    def border_none(self):
+    def set_border_none(self):
         self._border = "none"
         return self
         
-    def border_bold(self):
+    def set_border_bold(self):
         self._border = "bold"
         return self
 
-    def border_rounded(self):
+    def set_border_rounded(self):
         self._border = "rounded"
         return self
 
-    def border_square(self):
+    def set_border_square(self):
         self._border = "square"
         return self
  
@@ -81,7 +89,8 @@ class Frame:
         if y_abs <= y_min or y_abs > y_max:
             return self
 
-        for fmt, text in sentence.get():
+        for token in sentence.get():
+            fmt, text = token.fmt, token.text
             if x_abs - 1 < x_min: # Se o texto começa fora do frame
                 if x_abs + len(text) > x_min: # mas ter parte dentro
                     text = text[x_min - x_abs + 1:]
@@ -114,7 +123,7 @@ class Frame:
         Fmt.write(y + height + 1, x, bottom)
         if self._filled:
             for i in range(1, height + 1):
-                Fmt.write(y + i, x, Sentence().addt(ver + width * "." + ver))
+                Fmt.write(y + i, x, Sentence().addt(ver + width * self._fill_char + ver))
         else:
             for i in range(1, height + 1):
                 Fmt.write(y + i, x, Sentence().addt(ver))

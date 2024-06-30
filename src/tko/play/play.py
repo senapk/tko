@@ -369,19 +369,20 @@ class Play:
             if link:
                 Fmt.write(lines + self.y_task_link, self.x_begin, Sentence().addt(link))
 
-    def show_bar_footer(self) -> int:
-        lines, cols = Fmt.scr.getmaxyx()
+    def show_bar_footer(self, frame: Frame) -> int:
         footer = Sentence()
-        footer.addf(self.get_cb(self.flags_bar), f" Flags [f] ").addt(" ")
-        footer.addf(self.get_cb(self.xp_bar), f" XP [x] ").addt(" ")
+        footer.addf(self.get_cb(self.flags_bar), f"Flags [f]").addt(" ")
+        footer.addf(self.get_cb(self.xp_bar), f"XP [x]").addt(" ")
 
-        msgs = [" Quit [q] ", " Down [d] ", " Grade [0-9] ", " Expand [>] ", " Collapse [<] ", " Toggle [space|enter] "]
+        msgs = ["Quit [q]", "Down [d]", "Ext [e]", "Grade [0-9]", "Expand [>]", "Collapse [<]", "Toggle [enter]"]
 
         for x in msgs:
             footer.addf(Style.bar_skills, x).addt(" ")
         full_len = footer.len()
-        Play.trim_sentence(footer, cols - 2)
-        Fmt.write(lines - 1, self.x_begin, footer, 1)
+
+        (dy, dx) = frame.get_inner()
+        Play.trim_sentence(footer, dx)
+        frame.write(dy - 1, 0, footer)
         return full_len
 
 
@@ -391,12 +392,22 @@ class Play:
     @staticmethod
     def trim_sentence(sentence: Sentence, limit: int):
         for i in range(len(sentence.data) - 1, -1, -1):
+            token = sentence.data[i]
             if sentence.len() >= limit:
-                fmt, text = sentence.data[i]
-                try:
-                    sentence.data[i] = (fmt, "[" + text.split("[")[1].split("]")[0] + "]") 
-                except IndexError:
-                    pass
+                text = token.text
+                label = None
+                if "[" in text:
+                    label, value = text.split("[")
+                    value = "[" + value
+                elif "(" in text:
+                    label, value = text.split("(")
+                    value = "(" + value
+
+                if label:
+                    if sentence.len() - len(label) < limit:
+                        token.text = token.text[:limit - (sentence.len() - len(label))] + value
+                    else:
+                        token.text = value
 
 
     def show_bar_xp(self, size_footer):
@@ -410,8 +421,8 @@ class Play:
         xheader.addf("g", full_line[:done_len]).addf("r", full_line[done_len:])
         Fmt.write(self.y_xp_bar, self.x_begin, xheader)
 
-    def show_bar_header(self) -> int:
-        lines, cols = Fmt.scr.getmaxyx()
+    def show_bar_header(self, frame: Frame) -> int:
+        
         total_perc = 0
         header = Sentence()
         for q in self.game.quests.values():
@@ -420,27 +431,26 @@ class Play:
             total_perc = total_perc // len(self.game.quests)
         
 
-        header.addf(Style.bar_main, f" {self.repo_alias.upper()} {total_perc}% ").addt(" ")
+        header.addf(Style.bar_main, f"{self.repo_alias.upper()}({total_perc}%)").addt(" ")
         if self.xp_bar:
             xp = XP(self.game)
-            header.addf(Style.bar_xp, f" Level:{xp.get_level()} ").addt(" ")
-            header.addf(Style.bar_xp, f" XP:{str(xp.get_xp_level_current())}/{str(xp.get_xp_level_needed())} ").addt(" ")
+            
+            header.addf(Style.bar_xp, f"Level({xp.get_level()})").addt(" ")
+            header.addf(Style.bar_xp, f"XP({str(xp.get_xp_level_current())}/{str(xp.get_xp_level_needed())})").addt(" ")
             # header.addf("wC", f" total:{obt}/{total} ").addt(" ")
-            header.addf(Style.bar_xp, f" Total:{xp.get_xp_total_obtained()} ").addt(" ")
-
-        header.addf(Style.bar_ext, f" Ext:{self.rep.lang} [e] ").addt(" ")
+            header.addf(Style.bar_xp, f"Total({xp.get_xp_total_obtained()})").addt(" ")
 
         if self.flags_bar:
-            header.addf(self.get_cb("cont" in self.order), " Count [c] ").addt(" ")
-            header.addf(self.get_cb("perc" in self.order), " Percent [p] ").addt(" ")
-            header.addf(self.get_cb("goal" in self.order), " Goals [g] ").addt(" ")
+            header.addf(self.get_cb("cont" in self.order), "Count [c]").addt(" ")
+            header.addf(self.get_cb("perc" in self.order), "Percent [p]").addt(" ")
+            header.addf(self.get_cb("goal" in self.order), "Goals [g]").addt(" ")
             # header.addf(self.get_cb(self.mark_opt), " Optional [o] ").addt(" ")
-            header.addf(self.get_cb(self.admin_mode), " Admin [A] ")
+            header.addf(self.get_cb(self.admin_mode), "Admin [A]")
 
         full_len = header.len()
-        Play.trim_sentence(header, cols - 2)
-        Fmt.write(self.y_header, self.x_begin, header)
-
+        dy, dx = frame.get_inner()
+        Play.trim_sentence(header, dx)
+        frame.write(0, 0, header)
         return full_len
 
     def show_tasks(self):
@@ -465,21 +475,19 @@ class Play:
 
     def show_items(self):
         lines, cols = Fmt.scr.getmaxyx()
-        frame = Frame(1, 1).set_inner(2, 3).border_square().set_fill().draw()
-        frame.write(1, 1, Sentence().addt("abcde"))
-        Fmt.refresh()
 
         # lines, cols = Fmt.scr.getmaxyx()
         self.reload_options()
-        
         Fmt.erase()
-        
-        # header_len = self.show_bar_header()
-        # # footer_len = self.show_bar_footer()
-        # # hlen = max(header_len, footer_len)
-        # # hcol = cols - 2
-        # # if hcol < hlen:
-        # #     hlen = hcol - 1 
+
+        frame = Frame(0, 0).set_end(lines - 1, cols - 1).set_border_rounded().set_fill().draw()
+
+        header_len = self.show_bar_header(frame)
+        footer_len = self.show_bar_footer(frame)
+        # hlen = max(header_len, footer_len)
+        # hcol = cols - 2
+        # if hcol < hlen:
+        #     hlen = hcol - 1 
 
         
         # # # Fmt.draw_frame(scr, self.y_begin, 0, lines - self.y_end - self.y_begin, _cols - 2)

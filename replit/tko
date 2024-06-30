@@ -53,7 +53,7 @@ class Style:
     param = "c"
 
     bar_main = "M"
-    bar_ext = "/Y"
+    bar_ext = "Y"
     bar_xp = "C"
     bar_true = "G"
     bar_false = "R"
@@ -555,21 +555,29 @@ class PatternLoader:
 
 
 
+class Token:
+    def __init__(self, fmt: str, text: str):
+        self.fmt = fmt
+        self.text = text
+    
+    def __len__(self):
+        return len(self.text)
+
 class Sentence:
     def __init__(self):
-        self.data: List[Tuple[str, str]] = []
+        self.data: List[Token] = []
     
     def addf(self, fmt: str, text: str):
-        self.data.append((fmt, text))
+        self.data.append(Token(fmt, text))
         return self
     
     def addt(self, text: str):
-        self.data.append(("", text))
+        self.data.append(Token("", text))
         return self
 
     def adds(self, fmt, sentence):
-        for f, t in sentence.data:
-            self.data.append((fmt, t))
+        for _, t in sentence.data:
+            self.data.append(Token(fmt, t))
         return self
     
     def concat(self, sentence: Sentence):
@@ -578,8 +586,8 @@ class Sentence:
     
     def len(self):
         total = 0
-        for _, text in self.data:
-            total += len(text)
+        for t in self.data:
+            total += len(t.text)
         return total
     
     def get(self):
@@ -670,14 +678,18 @@ class Fmt:
     def write(y: int, x: int, sentence: Sentence):
         # Escreve um texto na tela com cores diferentes
         lines, cols = Fmt.scr.getmaxyx()
-        for fmt, text in sentence.get():
+        if y < 0 or y >= lines:
+            return
+        for token in sentence.get():
+            fmt = token.fmt
+            text = token.text
             if x < 0:
                 if x + len(text) >= 0:
                     text = text[-x:]
                     x = 0
-            if x < cols and x >= 0 and y < lines and y >= 0:
+            if x < cols:
                 if x + len(text) >= cols:
-                    text = text[:cols - x - 1]
+                    text = text[:cols - x]
                 Fmt.stroke(y, x, fmt, text)
             x += len(text)  # Move a posição x para a direita após o texto
 
@@ -710,7 +722,7 @@ class Fmt:
         return Fmt.scr.getch()
 
     @staticmethod
-    def clear():
+    def erase():
         Fmt.scr.erase()
 
     @staticmethod
@@ -734,17 +746,25 @@ class Frame:
         self._filled = False
         self._header: Sentence = Sentence()
         self._footer: Sentence = Sentence()
+        self._fill_char = " "
 
     def set_inner(self, inner_dy: int, inner_dx: int):
         self._inner_dy = inner_dy
         self._inner_dx = inner_dx
         return self
     
-    def set_end(self, x: int, y: int):
+    def get_inner(self):
+        return (self._inner_dy, self._inner_dx)
+
+    def set_end(self, y: int, x: int):
         self._inner_dx = x - self._x - 1
         self._inner_dy = y - self._y - 1
         # Fmt.write(0, 0, Sentence().addt(f"{self._inner_w}, {self._inner_h}"))
         # Fmt.getch()
+        return self
+    
+    def set_fill_char(self, char: str):
+        self._fill_char = char
         return self
     
     def get_symbol(self, value: str):
@@ -760,19 +780,19 @@ class Frame:
             return bold[value]
         return " "
         
-    def border_none(self):
+    def set_border_none(self):
         self._border = "none"
         return self
         
-    def border_bold(self):
+    def set_border_bold(self):
         self._border = "bold"
         return self
 
-    def border_rounded(self):
+    def set_border_rounded(self):
         self._border = "rounded"
         return self
 
-    def border_square(self):
+    def set_border_square(self):
         self._border = "square"
         return self
  
@@ -804,7 +824,8 @@ class Frame:
         if y_abs <= y_min or y_abs > y_max:
             return self
 
-        for fmt, text in sentence.get():
+        for token in sentence.get():
+            fmt, text = token.fmt, token.text
             if x_abs - 1 < x_min: # Se o texto começa fora do frame
                 if x_abs + len(text) > x_min: # mas ter parte dentro
                     text = text[x_min - x_abs + 1:]
@@ -837,7 +858,7 @@ class Frame:
         Fmt.write(y + height + 1, x, bottom)
         if self._filled:
             for i in range(1, height + 1):
-                Fmt.write(y + i, x, Sentence().addt(ver + width * "." + ver))
+                Fmt.write(y + i, x, Sentence().addt(ver + width * self._fill_char + ver))
         else:
             for i in range(1, height + 1):
                 Fmt.write(y + i, x, Sentence().addt(ver))
@@ -2532,19 +2553,20 @@ class Play:
             if link:
                 Fmt.write(lines + self.y_task_link, self.x_begin, Sentence().addt(link))
 
-    def show_bar_footer(self) -> int:
-        lines, cols = Fmt.scr.getmaxyx()
+    def show_bar_footer(self, frame: Frame) -> int:
         footer = Sentence()
-        footer.addf(self.get_cb(self.flags_bar), f" Flags [f] ").addt(" ")
-        footer.addf(self.get_cb(self.xp_bar), f" XP [x] ").addt(" ")
+        footer.addf(self.get_cb(self.flags_bar), f"Flags [f]").addt(" ")
+        footer.addf(self.get_cb(self.xp_bar), f"XP [x]").addt(" ")
 
-        msgs = [" Quit [q] ", " Down [d] ", " Grade [0-9] ", " Expand [>] ", " Collapse [<] ", " Toggle [space|enter] "]
+        msgs = ["Quit [q]", "Down [d]", "Ext [e]", "Grade [0-9]", "Expand [>]", "Collapse [<]", "Toggle [enter]"]
 
         for x in msgs:
             footer.addf(Style.bar_skills, x).addt(" ")
         full_len = footer.len()
-        Play.trim_sentence(footer, cols - 2)
-        Fmt.write(lines - 1, self.x_begin, footer, 1)
+
+        (dy, dx) = frame.get_inner()
+        Play.trim_sentence(footer, dx)
+        frame.write(dy - 1, 0, footer)
         return full_len
 
 
@@ -2554,12 +2576,22 @@ class Play:
     @staticmethod
     def trim_sentence(sentence: Sentence, limit: int):
         for i in range(len(sentence.data) - 1, -1, -1):
+            token = sentence.data[i]
             if sentence.len() >= limit:
-                fmt, text = sentence.data[i]
-                try:
-                    sentence.data[i] = (fmt, "[" + text.split("[")[1].split("]")[0] + "]") 
-                except IndexError:
-                    pass
+                text = token.text
+                label = None
+                if "[" in text:
+                    label, value = text.split("[")
+                    value = "[" + value
+                elif "(" in text:
+                    label, value = text.split("(")
+                    value = "(" + value
+
+                if label:
+                    if sentence.len() - len(label) < limit:
+                        token.text = token.text[:limit - (sentence.len() - len(label))] + value
+                    else:
+                        token.text = value
 
 
     def show_bar_xp(self, size_footer):
@@ -2573,8 +2605,8 @@ class Play:
         xheader.addf("g", full_line[:done_len]).addf("r", full_line[done_len:])
         Fmt.write(self.y_xp_bar, self.x_begin, xheader)
 
-    def show_bar_header(self) -> int:
-        lines, cols = Fmt.scr.getmaxyx()
+    def show_bar_header(self, frame: Frame) -> int:
+        
         total_perc = 0
         header = Sentence()
         for q in self.game.quests.values():
@@ -2583,27 +2615,26 @@ class Play:
             total_perc = total_perc // len(self.game.quests)
         
 
-        header.addf(Style.bar_main, f" {self.repo_alias.upper()} {total_perc}% ").addt(" ")
+        header.addf(Style.bar_main, f"{self.repo_alias.upper()}({total_perc}%)").addt(" ")
         if self.xp_bar:
             xp = XP(self.game)
-            header.addf(Style.bar_xp, f" Level:{xp.get_level()} ").addt(" ")
-            header.addf(Style.bar_xp, f" XP:{str(xp.get_xp_level_current())}/{str(xp.get_xp_level_needed())} ").addt(" ")
+            
+            header.addf(Style.bar_xp, f"Level({xp.get_level()})").addt(" ")
+            header.addf(Style.bar_xp, f"XP({str(xp.get_xp_level_current())}/{str(xp.get_xp_level_needed())})").addt(" ")
             # header.addf("wC", f" total:{obt}/{total} ").addt(" ")
-            header.addf(Style.bar_xp, f" Total:{xp.get_xp_total_obtained()} ").addt(" ")
-
-        header.addf(Style.bar_ext, f" Ext:{self.rep.lang} [e] ").addt(" ")
+            header.addf(Style.bar_xp, f"Total({xp.get_xp_total_obtained()})").addt(" ")
 
         if self.flags_bar:
-            header.addf(self.get_cb("cont" in self.order), " Count [c] ").addt(" ")
-            header.addf(self.get_cb("perc" in self.order), " Percent [p] ").addt(" ")
-            header.addf(self.get_cb("goal" in self.order), " Goals [g] ").addt(" ")
+            header.addf(self.get_cb("cont" in self.order), "Count [c]").addt(" ")
+            header.addf(self.get_cb("perc" in self.order), "Percent [p]").addt(" ")
+            header.addf(self.get_cb("goal" in self.order), "Goals [g]").addt(" ")
             # header.addf(self.get_cb(self.mark_opt), " Optional [o] ").addt(" ")
-            header.addf(self.get_cb(self.admin_mode), " Admin [A] ")
+            header.addf(self.get_cb(self.admin_mode), "Admin [A]")
 
         full_len = header.len()
-        Play.trim_sentence(header, cols - 2)
-        Fmt.write(self.y_header, self.x_begin, header)
-
+        dy, dx = frame.get_inner()
+        Play.trim_sentence(header, dx)
+        frame.write(0, 0, header)
         return full_len
 
     def show_tasks(self):
@@ -2628,21 +2659,19 @@ class Play:
 
     def show_items(self):
         lines, cols = Fmt.scr.getmaxyx()
-        frame = Frame(1, 1).set_inner(2, 3).border_square().set_fill().draw()
-        frame.write(1, 1, Sentence().addt("abcde"))
-        Fmt.refresh()
 
         # lines, cols = Fmt.scr.getmaxyx()
         self.reload_options()
-        
         Fmt.erase()
-        
-        # header_len = self.show_bar_header()
-        # # footer_len = self.show_bar_footer()
-        # # hlen = max(header_len, footer_len)
-        # # hcol = cols - 2
-        # # if hcol < hlen:
-        # #     hlen = hcol - 1 
+
+        frame = Frame(0, 0).set_end(lines - 1, cols - 1).set_border_rounded().set_fill().draw()
+
+        header_len = self.show_bar_header(frame)
+        footer_len = self.show_bar_footer(frame)
+        # hlen = max(header_len, footer_len)
+        # hcol = cols - 2
+        # if hcol < hlen:
+        #     hlen = hcol - 1 
 
         
         # # # Fmt.draw_frame(scr, self.y_begin, 0, lines - self.y_end - self.y_begin, _cols - 2)
