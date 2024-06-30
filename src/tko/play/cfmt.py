@@ -4,6 +4,7 @@ from ..game.sentence import Sentence
 from .style import Style
 
 class Fmt:
+    scr = None
     # Definindo constantes para as cores
     color_pairs: Dict[str, int] = {}
 
@@ -35,10 +36,11 @@ class Fmt:
                 pair_number += 1
 
     @staticmethod
-    def __write_line(stdscr, y: int, x: int, fmt: str, text: str):
+    def __write_line(y: int, x: int, fmt: str, text: str):
+        stdscr = Fmt.scr
         italic = False
         underline = False
-
+        source_fmt = fmt
         if "/" in fmt:
             italic = True
             fmt = fmt.replace("/", "")
@@ -59,8 +61,9 @@ class Fmt:
             try:
                 pair_number = Fmt.color_pairs[fg + bg]
             except KeyError:
-                print("Cor não encontrada: " + fg + bg)
-                exit(1)        
+                # print("Cor não encontrada: " + fg + bg)
+                raise(Exception("Cor não encontrada: " + source_fmt))
+                exit(1)
         if italic:
             stdscr.attron(curses.A_ITALIC)
         if underline:
@@ -81,14 +84,14 @@ class Fmt:
             stdscr.attroff(curses.A_UNDERLINE)
 
     @staticmethod
-    def write(stdscr, y: int, x: int, sentence: Sentence):
+    def write(y: int, x: int, sentence: Sentence):
         # Escreve um texto na tela com cores diferentes
-        lines, cols = stdscr.getmaxyx()
+        lines, cols = Fmt.scr.getmaxyx()
         for fmt, text in sentence.get():
-            if x < cols and y < lines:
+            if x < cols and x >= 0 and y < lines and y >= 0:
                 if x + len(text) >= cols:
                     text = text[:cols - x - 1]
-                Fmt.__write_line(stdscr, y, x, fmt, text)
+                Fmt.__write_line(y, x, fmt, text)
             x += len(text)  # Move a posição x para a direita após o texto
 
     @staticmethod
@@ -114,3 +117,26 @@ class Fmt:
         if value == 0:
             return Sentence().addf(Style.nothing, text)
         return Sentence().addf(Style.started, text)
+    
+    @staticmethod
+    def draw_frame(y: int, x: int, height: int, width: int, fmt: str = "", fill: bool = True, header: str = "", footer: str = ""):
+        upper_left = "╭"
+        upper_right = "╮"
+        lower_left = "╰"
+        lower_right = "╯"
+        horizontal = "─"
+        vertical = "│"
+        upper = Sentence().addt(upper_left).addf(fmt, header).addt((width - len(header)) * horizontal + upper_right)
+        bottom = Sentence().addt(lower_left + (width - len(footer)) * horizontal).addf(fmt, footer).addt(lower_right)
+        
+        Fmt.write(y, x, upper)
+        Fmt.write(y + height + 1, x, bottom)
+        if fill:
+            for i in range(1, height + 1):
+                Fmt.write(y + i, x, Sentence().addt(vertical + width * " " + vertical))
+        else:
+            for i in range(1, height + 1):
+                Fmt.write(y + i, x, Sentence().addt(vertical))
+                Fmt.write(y + i, x + width + 1, Sentence().addt(vertical))
+        
+

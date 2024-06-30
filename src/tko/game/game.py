@@ -2,19 +2,42 @@ from typing import List, Dict, Optional
 from .cluster import Cluster
 from .quest import Quest, QuestParser
 from .task import Task, TaskParser
-from .xp import XP
 import re
 import os
+
+
+def load_html_tags(task: str) -> Optional[str]:
+    pattern = r"<!--\s*(.*?)\s*-->"
+    match = re.search(pattern, task)
+    if not match:
+        return None
+    return match.group(1).strip()
 
 class Game:
     def __init__(self, file: Optional[str] = None):
         self.clusters: List[Cluster] = []  # clusters ordered
         self.quests: Dict[str, Quest] = {}  # quests indexed by quest key
         self.tasks: Dict[str, Task] = {}  # tasks indexed by task key
+
+        self.token_level_one = "level_one"
+        self.token_level_mult = "level_mult"
+        self.level_one = 100
+        self.level_mult = 1.5
+
         self.filename = None
         if file is not None:
             self.filename = file
             self.parse_file(file)
+
+    def parse_xp(self, line: str):
+        values = load_html_tags(line)
+        if values is not None:
+            tags = values.split(" ")
+            for t in tags:
+                if t.startswith(self.token_level_one):
+                    self.level_one = int(t.split(":")[1])
+                if t.startswith(self.token_level_mult):
+                    self.level_mult = float(t.split(":")[1])
 
     def get_task(self, key: str) -> Task:
         if key in self.tasks:
@@ -172,8 +195,7 @@ class Game:
         active_cluster = None
 
         if len(lines) > 0:
-            XP.parse_settings(lines[0])
-
+            self.parse_xp(lines[0])
 
         for line_num, line in enumerate(lines):
             cluster = self.load_cluster(line, line_num)

@@ -55,9 +55,15 @@ class Play:
 
         self.index_selected = 0
         self.index_begin = 0
+        self.x_begin = 1
         self.y_begin = 2
         self.y_end = 3
         
+        self.y_header = 0
+        self.y_xp_bar = 1
+        self.y_skills_bar = -3
+        self.y_task_link = -2
+
         self.items: List[Entry] = []
 
         self.first_loop = True
@@ -95,7 +101,7 @@ class Play:
         for l in range(8):
             for c in range(9):
                 cor = fg[l] + bg[c]
-                Fmt.write(scr, 3 * l, 5 * c, Sentence().addf(cor, f" {cor} "))
+                Fmt.write(3 * l, 5 * c, Sentence().addf(cor, f" {cor} "))
         
         scr.refresh()
         scr.getch()
@@ -338,8 +344,8 @@ class Play:
     def checkbox(value) -> Sentence:
         return Sentence().addf(Style.check, symbols.opcheck) if value else Sentence().addf(Style.uncheck, symbols.opuncheck)
 
-    def show_skills_bar(self, scr, size_footer):
-        lines, cols = scr.getmaxyx()
+    def show_bar_skills(self, size_footer):
+        lines, cols = Fmt.scr.getmaxyx()
         skills_line = Sentence()
         skills = self.game.get_skills_resume()
         if skills and self.xp_bar:
@@ -351,18 +357,18 @@ class Play:
                         skills_line.addf(Style.bar_bg, "  ")
                         i += 1
         
-        Fmt.write(scr, lines - 3, 0, skills_line.addf(Style.bar_bg, (size_footer - 1 - skills_line.len()) * " "))
+        Fmt.write(lines + self.y_skills_bar, self.x_begin, skills_line.addf(Style.bar_bg, (size_footer - skills_line.len()) * " "))
 
-    def show_task_link(self, scr):
-        lines, cols = scr.getmaxyx()
+    def show_bar_links(self):
+        lines, cols = Fmt.scr.getmaxyx()
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             link = obj.link
             if link:
-                Fmt.write(scr, lines - 2, 0, Sentence().addt(link))
+                Fmt.write(lines + self.y_task_link, self.x_begin, Sentence().addt(link))
 
-    def show_footer(self, scr) -> int:
-        lines, cols = scr.getmaxyx()
+    def show_bar_footer(self) -> int:
+        lines, cols = Fmt.scr.getmaxyx()
         footer = Sentence()
         footer.addf(self.get_cb(self.flags_bar), f" Flags [f] ").addt(" ")
         footer.addf(self.get_cb(self.xp_bar), f" XP [x] ").addt(" ")
@@ -371,9 +377,10 @@ class Play:
 
         for x in msgs:
             footer.addf(Style.bar_skills, x).addt(" ")
-        Play.trim_sentence(footer, cols - 1)
-        Fmt.write(scr, lines - 1, 0, footer)
-        return footer.len()
+        full_len = footer.len()
+        Play.trim_sentence(footer, cols - 2)
+        Fmt.write(lines - 1, self.x_begin, footer)
+        return full_len
 
 
     def get_cb(self, value):
@@ -390,8 +397,19 @@ class Play:
                     pass
 
 
-    def show_info(self, scr) -> Sentence:
-        lines, cols = scr.getmaxyx()
+    def show_bar_xp(self, size_footer):
+        xp = XP(self.game)
+        xheader = Sentence()
+        bar = "━"
+
+        total = size_footer
+        full_line = bar * total
+        done_len = int(xp.get_xp_level_current() * total // xp.get_xp_level_needed())
+        xheader.addf("g", full_line[:done_len]).addf("r", full_line[done_len:])
+        Fmt.write(self.y_xp_bar, self.x_begin, xheader)
+
+    def show_bar_header(self) -> int:
+        lines, cols = Fmt.scr.getmaxyx()
         total_perc = 0
         header = Sentence()
         for q in self.game.quests.values():
@@ -400,19 +418,13 @@ class Play:
             total_perc = total_perc // len(self.game.quests)
         
 
-        xheader = Sentence()
-        obt, total = self.game.get_xp_resume()
-        cur_level = XP().get_level(obt)
-        xp_next = XP().get_xp(cur_level + 1)
-        xp_prev = XP().get_xp(cur_level)
-        atual = obt - xp_prev
-        needed = xp_next - xp_prev
         header.addf(Style.bar_main, f" {self.repo_alias.upper()} {total_perc}% ").addt(" ")
         if self.xp_bar:
-            header.addf(Style.bar_xp, f" Level:{cur_level} ").addt(" ")
-            header.addf(Style.bar_xp, f" XP:{str(atual)}/{str(needed)} ").addt(" ")
+            xp = XP(self.game)
+            header.addf(Style.bar_xp, f" Level:{xp.get_level()} ").addt(" ")
+            header.addf(Style.bar_xp, f" XP:{str(xp.get_xp_level_current())}/{str(xp.get_xp_level_needed())} ").addt(" ")
             # header.addf("wC", f" total:{obt}/{total} ").addt(" ")
-            header.addf(Style.bar_xp, f" Total:{obt} ").addt(" ")
+            header.addf(Style.bar_xp, f" Total:{xp.get_xp_total_obtained()} ").addt(" ")
 
         header.addf(Style.bar_ext, f" Ext:{self.rep.lang} [e] ").addt(" ")
 
@@ -421,22 +433,60 @@ class Play:
             header.addf(self.get_cb("perc" in self.order), " Percent [p] ").addt(" ")
             header.addf(self.get_cb("goal" in self.order), " Goals [g] ").addt(" ")
             # header.addf(self.get_cb(self.mark_opt), " Optional [o] ").addt(" ")
-            header.addf(self.get_cb(self.admin_mode), " Admin [A] ").addt(" ")
+            header.addf(self.get_cb(self.admin_mode), " Admin [A] ")
 
-        Play.trim_sentence(header, cols - 1)
+        full_len = header.len()
+        Play.trim_sentence(header, cols - 2)
+        Fmt.write(self.y_header, self.x_begin, header)
 
+        return full_len
 
-        self.show_task_link(scr)
-        size_footer = self.show_footer(scr)
-        self.show_skills_bar(scr, size_footer)
+    def show_tasks(self):
+        lines, cols = Fmt.scr.getmaxyx()
+        y = self.y_begin + 1
+        y_end = self.y_end + 2
+        if len(self.items) < lines - y_end - self.y_begin - 1:
+            self.index_begin = 0
+        else:
+            if self.index_selected < self.index_begin:
+                self.index_begin = self.index_selected
+            elif self.index_begin < self.index_selected - lines + y_end + self.y_begin + 2:
+                self.index_begin = self.index_selected - lines + y_end + self.y_begin + 2
+        init = self.index_begin
 
-        bar = symbols.hbar
-        Fmt.write(scr, 0, 0, header)
-        total = size_footer - 1
-        full_line = bar * total
-        done_len = int((atual * total // needed))
-        xheader.addf("g", full_line[:done_len]).addf("r", full_line[done_len:])
-        Fmt.write(scr, 1, 0, xheader)
+        for i in range(init, len(self.items)):
+            sentence = self.items[i].sentence
+            if y >= lines - y_end:
+                break
+            Fmt.write(y, self.x_begin + 1, sentence)
+            y += 1
+
+    def show_items(self):
+        lines, cols = Fmt.scr.getmaxyx()
+        self.reload_options()
+        
+        Fmt.scr.erase()
+        
+        header_len = self.show_bar_header()
+        footer_len = self.show_bar_footer()
+        hlen = max(header_len, footer_len)
+        hcol = cols - 2
+        if hcol < hlen:
+            hlen = hcol - 1
+
+        # Fmt.draw_frame(scr, self.y_begin, 0, lines - self.y_end - self.y_begin, _cols - 2)
+        delta_x = hlen
+        delta_y = lines - self.y_end - self.y_begin - 3
+        Fmt.draw_frame(-1, 0, 1, delta_x, "", False, "")
+        Fmt.draw_frame(self.y_begin, 0, delta_y, delta_x, "/", False, f"{self.repo_alias.upper()} Tarefas", f"{{{self.rep.lang}}}")
+        Fmt.draw_frame(lines - 4   , 0, 3      , delta_x, "", False)
+
+        self.show_bar_links()
+        self.show_bar_skills(hlen)
+        self.show_bar_xp(hlen)
+        self.show_tasks()
+        self.show_bar_footer()
+
 
     def generate_graph(self, scr):
         if not self.first_loop:
@@ -455,7 +505,7 @@ class Play:
         lines, _cols = scr.getmaxyx()
         if self.first_loop:
             text = Sentence().addt(f"Grafo gerado em graph{self.graph_ext}")
-            Fmt.write(scr, lines - 1, 0, text)
+            Fmt.write(lines - 1, 0, text)
             
 
     def update_new(self):
@@ -575,33 +625,26 @@ class Play:
             if obj.key not in self.expanded:
                 self.expanded.append(obj.key)
 
-    def show_items(self, scr):
 
-        self.reload_options()
         
-        scr.erase()
-        
-        lines, _cols = scr.getmaxyx()
 
-        self.show_info(scr)
+        # y = self.y_begin
+        # if len(self.items) < lines - self.y_end - self.y_begin:
+        #     self.index_begin = 0
+        # else:
+        #     if self.index_selected < self.index_begin:
+        #         self.index_begin = self.index_selected
+        #     elif self.index_selected >= self.index_begin + lines - self.y_end - self.y_begin:
+        #         self.index_begin = self.index_selected - lines + self.y_end + self.y_begin + 1
+        # init = self.index_begin
 
-        y = self.y_begin
-        if len(self.items) < lines - self.y_end - self.y_begin:
-            self.index_begin = 0
-        else:
-            if self.index_selected < self.index_begin:
-                self.index_begin = self.index_selected
-            elif self.index_selected >= self.index_begin + lines - self.y_end - self.y_begin:
-                self.index_begin = self.index_selected - lines + self.y_end + self.y_begin + 1
-        init = self.index_begin
-
-        for i in range(init, len(self.items)):
-            sentence = self.items[i].sentence
-            if y >= lines - self.y_end:
-                break
-            Fmt.write(scr, y, 0, sentence)
-            y += 1
-        scr.refresh()
+        # for i in range(init, len(self.items)):
+        #     sentence = self.items[i].sentence
+        #     if y >= lines - self.y_end:
+        #         break
+        #     Fmt.write(y, 0, sentence)
+        #     y += 1
+        Fmt.scr.refresh()
 
     def toggle(self):
         obj = self.items[self.index_selected].obj
@@ -619,12 +662,13 @@ class Play:
     def main(self, scr):
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
+        Fmt.scr = scr
 
         # Exemplo de uso da função escrever
         while True:
             self.update_avaliable_quests()
             self.update_new()
-            self.show_items(scr)
+            self.show_items()
             self.generate_graph(scr)
             value = scr.getch()  # Aguarda o pressionamento de uma tecla antes de sair
             if value == ord("q"):
