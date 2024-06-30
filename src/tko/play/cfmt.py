@@ -84,13 +84,13 @@ class Fmt:
             stdscr.attroff(curses.A_UNDERLINE)
 
     @staticmethod
-    def write(y: int, x: int, sentence: Sentence):
+    def write(y: int, x: int, sentence: Sentence, xlimit = 0):
         # Escreve um texto na tela com cores diferentes
         lines, cols = Fmt.scr.getmaxyx()
         for fmt, text in sentence.get():
             if x < cols and x >= 0 and y < lines and y >= 0:
-                if x + len(text) >= cols:
-                    text = text[:cols - x - 1]
+                if x + len(text) >= cols - xlimit:
+                    text = text[:cols -xlimit - x - 1]
                 Fmt.__write_line(y, x, fmt, text)
             x += len(text)  # Move a posição x para a direita após o texto
 

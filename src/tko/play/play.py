@@ -56,6 +56,7 @@ class Play:
         self.index_selected = 0
         self.index_begin = 0
         self.x_begin = 1
+        self.x_end = 1
         self.y_begin = 2
         self.y_end = 3
         
@@ -379,7 +380,7 @@ class Play:
             footer.addf(Style.bar_skills, x).addt(" ")
         full_len = footer.len()
         Play.trim_sentence(footer, cols - 2)
-        Fmt.write(lines - 1, self.x_begin, footer)
+        Fmt.write(lines - 1, self.x_begin, footer, 1)
         return full_len
 
 
@@ -458,7 +459,7 @@ class Play:
             sentence = self.items[i].sentence
             if y >= lines - y_end:
                 break
-            Fmt.write(y, self.x_begin + 1, sentence)
+            Fmt.write(y, self.x_begin + 1, sentence, 1)
             y += 1
 
     def show_items(self):
@@ -472,8 +473,9 @@ class Play:
         hlen = max(header_len, footer_len)
         hcol = cols - 2
         if hcol < hlen:
-            hlen = hcol - 1
+            hlen = hcol - 1 
 
+        
         # Fmt.draw_frame(scr, self.y_begin, 0, lines - self.y_end - self.y_begin, _cols - 2)
         delta_x = hlen
         delta_y = lines - self.y_end - self.y_begin - 3
@@ -485,7 +487,6 @@ class Play:
         self.show_bar_skills(hlen)
         self.show_bar_xp(hlen)
         self.show_tasks()
-        self.show_bar_footer()
 
 
     def generate_graph(self, scr):
