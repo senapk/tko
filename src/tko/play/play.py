@@ -8,10 +8,11 @@ from ..game.graph import Graph
 from typing import List, Dict, Tuple, Optional, Any
 from ..settings import RepoSettings, LocalSettings
 from ..down import Down
-from ..util.tfmt import symbols
-from ..game.sentence import Sentence
+from ..util.symbols import symbols
+from ..util.sentence import Sentence
 from .style import Style
-from .cfmt import Fmt
+from .fmt import Fmt
+from .frame import Frame
 
 import os
 import curses
@@ -464,29 +465,35 @@ class Play:
 
     def show_items(self):
         lines, cols = Fmt.scr.getmaxyx()
+        frame = Frame(1, 1).set_inner(2, 3).border_square().set_fill().draw()
+        frame.write(1, 1, Sentence().addt("abcde"))
+        Fmt.refresh()
+
+        # lines, cols = Fmt.scr.getmaxyx()
         self.reload_options()
         
-        Fmt.scr.erase()
+        Fmt.erase()
         
-        header_len = self.show_bar_header()
-        footer_len = self.show_bar_footer()
-        hlen = max(header_len, footer_len)
-        hcol = cols - 2
-        if hcol < hlen:
-            hlen = hcol - 1 
+        # header_len = self.show_bar_header()
+        # # footer_len = self.show_bar_footer()
+        # # hlen = max(header_len, footer_len)
+        # # hcol = cols - 2
+        # # if hcol < hlen:
+        # #     hlen = hcol - 1 
 
         
-        # Fmt.draw_frame(scr, self.y_begin, 0, lines - self.y_end - self.y_begin, _cols - 2)
-        delta_x = hlen
-        delta_y = lines - self.y_end - self.y_begin - 3
-        Fmt.draw_frame(-1, 0, 1, delta_x, "", False, "")
-        Fmt.draw_frame(self.y_begin, 0, delta_y, delta_x, "/", False, f"{self.repo_alias.upper()} Tarefas", f"{{{self.rep.lang}}}")
-        Fmt.draw_frame(lines - 4   , 0, 3      , delta_x, "", False)
+        # # # Fmt.draw_frame(scr, self.y_begin, 0, lines - self.y_end - self.y_begin, _cols - 2)
+        # # delta_x = hlen
+        # # delta_y = lines - self.y_end - self.y_begin - 3
+        # # Fmt.draw_frame(-1, 0, 1, delta_x, "", False, "")
 
-        self.show_bar_links()
-        self.show_bar_skills(hlen)
-        self.show_bar_xp(hlen)
-        self.show_tasks()
+        # # Fmt.draw_frame(self.y_begin, 0, delta_y, delta_x, "/", False, f"{self.repo_alias.upper()} Tarefas", f"{{{self.rep.lang}}}")
+        # # Fmt.draw_frame(lines - 4   , 0, 3      , delta_x, "", False)
+
+        # # self.show_bar_links()
+        # # self.show_bar_skills(hlen)
+        # # self.show_bar_xp(hlen)
+        # # self.show_tasks()
 
 
     def generate_graph(self, scr):
@@ -625,9 +632,6 @@ class Play:
         if isinstance(obj, Quest) or isinstance(obj, Cluster):
             if obj.key not in self.expanded:
                 self.expanded.append(obj.key)
-
-
-        
 
         # y = self.y_begin
         # if len(self.items) < lines - self.y_end - self.y_begin:

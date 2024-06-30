@@ -1,6 +1,6 @@
 import curses
-from typing import Dict, List, Tuple
-from ..game.sentence import Sentence
+from typing import Dict
+from ..util.sentence import Sentence
 from .style import Style
 
 class Fmt:
@@ -36,7 +36,7 @@ class Fmt:
                 pair_number += 1
 
     @staticmethod
-    def __write_line(y: int, x: int, fmt: str, text: str):
+    def stroke(y: int, x: int, fmt: str, text: str):
         stdscr = Fmt.scr
         italic = False
         underline = False
@@ -84,14 +84,18 @@ class Fmt:
             stdscr.attroff(curses.A_UNDERLINE)
 
     @staticmethod
-    def write(y: int, x: int, sentence: Sentence, xlimit = 0):
+    def write(y: int, x: int, sentence: Sentence):
         # Escreve um texto na tela com cores diferentes
         lines, cols = Fmt.scr.getmaxyx()
         for fmt, text in sentence.get():
+            if x < 0:
+                if x + len(text) >= 0:
+                    text = text[-x:]
+                    x = 0
             if x < cols and x >= 0 and y < lines and y >= 0:
-                if x + len(text) >= cols - xlimit:
-                    text = text[:cols -xlimit - x - 1]
-                Fmt.__write_line(y, x, fmt, text)
+                if x + len(text) >= cols:
+                    text = text[:cols - x - 1]
+                Fmt.stroke(y, x, fmt, text)
             x += len(text)  # Move a posição x para a direita após o texto
 
     @staticmethod
@@ -119,24 +123,19 @@ class Fmt:
         return Sentence().addf(Style.started, text)
     
     @staticmethod
-    def draw_frame(y: int, x: int, height: int, width: int, fmt: str = "", fill: bool = True, header: str = "", footer: str = ""):
-        upper_left = "╭"
-        upper_right = "╮"
-        lower_left = "╰"
-        lower_right = "╯"
-        horizontal = "─"
-        vertical = "│"
-        upper = Sentence().addt(upper_left).addf(fmt, header).addt((width - len(header)) * horizontal + upper_right)
-        bottom = Sentence().addt(lower_left + (width - len(footer)) * horizontal).addf(fmt, footer).addt(lower_right)
-        
-        Fmt.write(y, x, upper)
-        Fmt.write(y + height + 1, x, bottom)
-        if fill:
-            for i in range(1, height + 1):
-                Fmt.write(y + i, x, Sentence().addt(vertical + width * " " + vertical))
-        else:
-            for i in range(1, height + 1):
-                Fmt.write(y + i, x, Sentence().addt(vertical))
-                Fmt.write(y + i, x + width + 1, Sentence().addt(vertical))
+    def getch():
+        return Fmt.scr.getch()
+
+    @staticmethod
+    def clear():
+        Fmt.scr.erase()
+
+    @staticmethod
+    def refresh():
+        Fmt.scr.refresh()
+
+    @staticmethod
+    def getmaxyx():
+        return Fmt.scr.getmaxyx()
         
 

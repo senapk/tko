@@ -1,6 +1,6 @@
 from typing import List, Optional
 from .quest import Quest
-from .sentence import Sentence
+from ..util.sentence import Sentence
 
 class Cluster:
     def __init__(self, line_number:int = 0, title: str = "", key: str = "", color: Optional[str] = None):

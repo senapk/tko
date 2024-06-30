@@ -14,7 +14,8 @@ from .util.guide import tko_guide
 from .util.guide import bash_guide
 
 from .run.report import Report
-from .util.tfmt import Color, symbols
+from .util.term_color import Color
+from .util.symbols import symbols
 
 from .game.game import Game
 from .play.play import Play

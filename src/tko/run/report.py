@@ -1,6 +1,6 @@
 from typing import Optional
 import shutil
-from ..util.tfmt import Color
+from ..util.term_color import Color
 
 class Report:
     __term_width: Optional[int] = None

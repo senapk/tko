@@ -1,4 +1,6 @@
+from __future__ import annotations
 from typing import List, Tuple
+
 
 class Sentence:
     def __init__(self):
@@ -17,7 +19,7 @@ class Sentence:
             self.data.append((fmt, t))
         return self
     
-    def concat(self, sentence):
+    def concat(self, sentence: Sentence):
         self.data += sentence.data
         return self
     

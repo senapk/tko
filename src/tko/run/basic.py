@@ -2,7 +2,7 @@ import enum
 from typing import Optional
 import os
 
-from ..util.tfmt import symbols
+from ..util.symbols import symbols
 
 class CompilerError(Exception):
     pass

@@ -1,7 +1,8 @@
 from typing import List, Optional, Tuple
 import io
 
-from ..util.tfmt import colour, Color, symbols
+from ..util.term_color import colour, Color
+from ..util.symbols import symbols
 
 from .basic import Unit, ExecutionResult
 from .report import Report

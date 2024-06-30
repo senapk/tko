@@ -1,6 +1,6 @@
 from typing import Dict, Optional, Tuple
-from ..util.tfmt import symbols
-from .sentence import Sentence
+from ..util.symbols import symbols
+from ..util.sentence import Sentence
 import re
 
 class Task:

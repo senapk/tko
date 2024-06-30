@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional, Tuple
 from .task import Task
-from .sentence import Sentence
+from ..util.sentence import Sentence
 import re
 
 

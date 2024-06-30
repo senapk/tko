@@ -6,7 +6,8 @@ from .basic import IdentifierType, Identifier, Unit, Param
 from .loader import Loader
 from .solver import Solver
 
-from ..util.tfmt import colour, symbols
+from ..util.term_color import colour
+from ..util.symbols import symbols
 
 # generate label for cases
 

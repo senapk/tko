@@ -8,7 +8,8 @@ from .run.basic import DiffMode, ExecutionResult, CompilerError, Param, Unit
 from .run.diff import Diff
 
 from .run.report import Report
-from .util.tfmt import colour, symbols
+from .util.term_color import colour
+from .util.symbols import symbols
 
 from .run.writer import Writer
 from .run.solver import Solver
