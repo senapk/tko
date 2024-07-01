@@ -48,7 +48,7 @@ class Sentence:
         if total < width:
             left = (width - total) // 2
             right = width - total - left
-            self.data = [Token("", fillchar * left)] + self.data + [Token("", fillchar * right)]
+            self.data = [Token(fmt, fillchar * left)] + self.data + [Token(fmt, fillchar * right)]
         return self
     
     def len(self):

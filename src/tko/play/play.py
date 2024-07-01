@@ -63,7 +63,6 @@ class Play:
 
         self.load_rep()
 
-
     def save_to_json(self):
         self.rep.expanded = [x for x in self.expanded]
         self.rep.new_items = [x for x in self.new_items]
@@ -78,7 +77,7 @@ class Play:
         #     self.rep.view.append("toolbar")
         # if self.mark_opt:
         #     self.rep.view.append("opt")
-        if self.flags_on("xpbar"):
+        if self.flags_on("skills_bar"):
             self.rep.view.append("xp")
             
         self.fnsave()
@@ -95,7 +94,6 @@ class Play:
         
         scr.refresh()
         scr.getch()
-
 
     def load_rep(self):
         for key, grade in self.rep.tasks.items():
@@ -156,7 +154,7 @@ class Play:
         value = Style.opt_task if self.mark_opt and t.opt else ""
         output.addf(self.add_focus(value, in_focus), t.title)
         
-        if self.flags_on("xpbar"):
+        if self.flags_on("skills_bar"):
             xp = ""
             for s, v in t.skills.items():
                 xp += f" +{s}:{v}"
@@ -177,7 +175,7 @@ class Play:
                 output.addt(" ").concat(q.get_resume_by_percent())
             elif item == "goal":
                 output.addt(" ").concat(q.get_requirement())
-        if self.flags_on("xpbar"):
+        if self.flags_on("skills_bar"):
             xp = ""
             for s,v in q.skills.items():
                 xp += f" +{s}:{v}"
@@ -188,7 +186,6 @@ class Play:
 
         return output
         
-
     def str_cluster(self, in_focus: bool, cluster: Cluster, quests: List[Quest]) -> Sentence:
         output: Sentence = Sentence()
         opening = "━─"        
@@ -233,7 +230,6 @@ class Play:
 
         if self.index_selected >= len(self.items):
             self.index_selected = len(self.items) - 1
-
 
     def down_task(self, rootdir, task: Task, ext: str):
         output = []
@@ -340,7 +336,7 @@ class Play:
     def build_bar_skills(self, size_footer) -> Sentence:
         skills_line = Sentence().addt(" ")
         skills = self.game.get_skills_resume()
-        if skills and self.flags_on("xpbar"):
+        if skills and self.flags_on("skills_bar"):
             i = 0
             for s, v in skills.items():
                 if s != "xp":
@@ -359,55 +355,34 @@ class Play:
                 return Sentence().addt(" " + link)
         return Sentence()
 
-    # def build_bar_footer(self, dx: int) -> Sentence:
-
-
-    #     Play.trim_sentence(footer, dx)
-    #     return footer
-
-    def get_cb(self, value):
+    def get_toggle_bg(self, value) -> str:
         return Style.bar_true if value else Style.bar_false
 
-
-    def build_xp_bar(self, text:str, percent: float, length: int):
+    def build_xp_bar(self, text:str, percent: float, length: int) -> Sentence:
         prefix = (length - len(text)) // 2
         sufix = length - len(text) - prefix
         text = " " * prefix + text + " " * sufix
-        xp = XP(self.game)
         xp_bar = Sentence()
-        # bar = " "
-
         total = length
         full_line = text
         done_len = int(percent * total)
         xp_bar.addf("/kC", full_line[:done_len]).addf("/kR", full_line[done_len:])
         return xp_bar
 
-    def build_bar_header(self, dx:int) -> Sentence:
-        
-        total_perc = 0
+    def build_top_bar(self, dx:int) -> Sentence:
+        lines, cols = Fmt.scr.getmaxyx()
         header = Sentence().addt(" ")
-        header.addf("C", f" {self.repo_alias.upper()} ").addt(" ")
-
-        header.addf(self.get_cb(self.flags_on("xpbar")), f"XP [x]").addt(" ")
+        header.addf("C", f" {self.repo_alias.upper()}:{cols}").addt(" ")
+        header.addf(self.get_toggle_bg(self.flags_on("flags_bar")), f"Flags [f]").addt(" ")
+        header.addf(self.get_toggle_bg(self.flags_on("help")), "Help [h]").addt(" ")
+        header.addf(self.get_toggle_bg(self.flags_on("skills_bar")), f"Skill [s]").addt(" ")
 
         xp = XP(self.game)
-
-        header.addf(self.get_cb(self.flags_on("help")), "Help [h]").addt(" ")
-        header.addf(self.get_cb(self.flags_on("cont")), "Count [c]").addt(" ")
-        header.addf(self.get_cb(self.flags_on("perc")), "Percent [p]").addt(" ")
-        header.addf(self.get_cb(self.flags_on("goal")), "Goals [g]").addt(" ")
-        header.addf(self.get_cb(self.flags_on("admin")), "Admin [A]").addt(" ")
-
-        # if self.xp_bar:
         text = f"L:{xp.get_level()} XP:{str(xp.get_xp_level_current())}/{str(xp.get_xp_level_needed())}"
         percent = xp.get_xp_level_current() / xp.get_xp_level_needed()
         size = max(20 - 5, dx - header.len() - 1)
         xp_bar = self.build_xp_bar(text, percent, size)
-        # header.addf(Style.bar_xp, f"").addt(" ")
         header.concat(xp_bar).addt(" ")
-        # header.addf(Style.bar_xp, f"XP({str(xp.get_xp_level_current())}/{str(xp.get_xp_level_needed())})").addt(" ")
-
 
         header.trim_labels(dx)
         header.trim_spaces(dx)
@@ -430,7 +405,7 @@ class Play:
             frame.write(y, 0, sentence)
             y += 1
 
-    def show_skill_bar(self, xp, xp_dx, cols, deeper):
+    def show_skills_bar(self, xinit, xp, xp_dx, deeper):
             total_perc = 0
             for q in self.game.quests.values():
                 total_perc += q.get_percent()
@@ -440,7 +415,7 @@ class Play:
             text =  f" {xp.get_xp_total_obtained()}xp {total_perc}%"
         
             total_bar = self.build_xp_bar(text, total_perc / 100, xp_dx - 7)
-            frame_xp = Frame(2, cols - xp_dx).set_inner(deeper, xp_dx - 3).set_border_rounded()
+            frame_xp = Frame(2, xinit).set_inner(deeper, xp_dx - 3).set_border_rounded()
             frame_xp.set_header(Sentence().addt("{").addf("/", "Skills").addt("}"), "^")
             # frame_xp.set_footer(Sentence().addt("{").addf("/", f"Total:{xp.get_xp_total_obtained()}").addt("}"))
             frame_xp.set_footer(Sentence().addt("{").concat(total_bar).addt("}"), "^")
@@ -453,6 +428,34 @@ class Play:
                 perc = obt[skill]/value
                 skill_bar = self.build_xp_bar(text, perc, xp_dx - 5)
                 frame_xp.write(index, 1, skill_bar)
+                index += 2
+
+    def show_flags_bar(self, xinit, dx, dy):
+
+            frame = Frame(2, xinit).set_inner(dy, dx - 3).set_border_rounded()
+            frame.set_header(Sentence().addt("{").addf("/", "Flags").addt("}"), "^")
+            frame.draw()
+
+            def add_flag(_flags, _flag, _text):
+                _fmt = self.get_toggle_bg(self.flags_on(_flag))
+                _flags.append(Sentence().addf(_fmt, _text).center(dx - 5, " ", _fmt))
+
+            flags = []
+            add_flag(flags, "cont", "Count   [c]")
+            add_flag(flags, "perc", "Percent [p]")
+            add_flag(flags, "goal", "Goals   [g]")
+            add_flag(flags, "admin", "Admin   [A]")
+
+            # fmt = self.get_cb(self.flags_on("cont"))
+            # flags.append(Sentence().addf(fmt, "Count [c]").center(xp_dx - 4, " ", fmt))
+
+            # flags.append(Sentence().addf(self.get_cb(self.flags_on("perc")), "Percent [p]"))
+            # flags.append(Sentence().addf(self.get_cb(self.flags_on("goal")), "Goals [g]"))
+            # flags.append(Sentence().addf(self.get_cb(self.flags_on("admin")), "Admin [A]"))
+
+            index = 0
+            for flag in flags:
+                frame.write(index, 1, flag)
                 index += 2
 
     def build_help(self, limit: int) -> Sentence:
@@ -473,35 +476,47 @@ class Play:
     def show_items(self):
         lines, cols = Fmt.scr.getmaxyx()
 
+        if cols < 50 and self.flags_on("skills_bar") and self.flags_on("flags_bar"):
+            self.flags_toggle("skills_bar")
+        elif cols < 30 and self.flags_on("flags_bar"):
+            self.flags_toggle("flags_bar")
+        elif cols < 35 and self.flags_on("skills_bar"):
+            self.flags_toggle("skills_bar")
+
         # lines, cols = Fmt.scr.getmaxyx()
         self.reload_options()
         Fmt.erase()
         dx = cols - 3
         help = self.build_help(dx - 3)
-        frame_header = Frame(-1, 0).set_inner(1, dx).set_border_rounded().set_footer(help, "^").draw()
-        header = self.build_bar_header(dx)
-        frame_header.write(0, 0, header)
+        frame_top = Frame(-1, 0).set_inner(1, dx).set_border_rounded().set_footer(help, "^").draw()
+        header = self.build_top_bar(dx)
+        frame_top.write(0, 0, header)
 
-        frame_footer = Frame(lines - 2, 0).set_inner(3, dx).set_border_rounded()
-        frame_footer.set_header(Sentence().addt("{").addf("/", "Links").addt("}")).draw()
-        frame_footer.write(0, 0, self.build_bar_links())
+        frame_bottom = Frame(lines - 2, 0).set_inner(3, dx).set_border_rounded()
+        frame_bottom.set_header(Sentence().addt("{").addf("/", "Links").addt("}")).draw()
+        frame_bottom.write(0, 0, self.build_bar_links())
         
+        task_x_init = 0
+
         dy = lines - 6
         task_dx = dx
         xp = XP(self.game)
-        if self.flags_on("xpbar"):
+        if self.flags_on("skills_bar"):
             xp_dx = max(20, dx // 3)
             task_dx -= xp_dx - 1
-            self.show_skill_bar(xp, xp_dx, cols, dy)
+            self.show_skills_bar(cols - xp_dx, xp, xp_dx, dy)
 
-        
+        if self.flags_on("flags_bar"):
+            flags_dx = 16
+            task_dx -= flags_dx - 1
+            task_x_init = flags_dx - 1
+            self.show_flags_bar(0, flags_dx, dy)
 
-        frame_tasks = Frame(2, 0).set_inner(dy, task_dx).set_border_rounded()
-        frame_tasks.set_header(Sentence().addt("{").addf("/", f"Tarefas").addt("}"))
-        frame_tasks.set_footer(Sentence().addt("{").addf("/", f"{self.rep.lang}").addt("}"))
-        frame_tasks.draw()
-        self.show_tasks(frame_tasks)
-
+        frame_main = Frame(2, task_x_init).set_inner(dy, task_dx).set_border_rounded()
+        frame_main.set_header(Sentence().addt("{").addf("/", f"Tarefas").addt("}"))
+        frame_main.set_footer(Sentence().addt("{").addf("/", f"{self.rep.lang}").addt("}"))
+        frame_main.draw()
+        self.show_tasks(frame_main)
 
     def generate_graph(self, scr):
         if not self.first_loop:
@@ -684,10 +699,18 @@ class Play:
                 self.flags_toggle("perc")
             elif value == ord("g"):
                 self.flags_toggle("goal")
-            elif value == ord("x"):
-                self.flags_toggle("xpbar")
+            elif value == ord("s"):
+                self.flags_toggle("skills_bar")
+                lines, cols = scr.getmaxyx()
+                if cols < 50:
+                    if self.flags_on("flags_bar"):
+                        self.flags_toggle("flags_bar")
             elif value == ord("f"):
-                self.flags_toggle("fbar")
+                self.flags_toggle("flags_bar")
+                lines, cols = scr.getmaxyx()
+                if cols < 50:
+                    if self.flags_on("skills_bar"):
+                        self.flags_toggle("skills_bar")
             elif value == ord("A"):
                 self.flags_toggle("admin")
                 self.reload_options()
@@ -697,8 +720,8 @@ class Play:
                 self.process_collapse()
             elif value == ord(" ") or value == ord("\n"):
                 self.toggle()
-            # elif value == ord("o"):
-            #     self.mark_opt = not self.mark_opt
+            elif value == ord("o"):
+                self.mark_opt = not self.mark_opt
             elif value == ord("e"):
                 self.process_ext(scr)
             elif value == ord("d"):
@@ -714,8 +737,6 @@ class Play:
             if self.first_loop:
                 self.first_loop = False
 
-    
-    # return True if the user wants to continue playing
     def play(self, graph_ext: str) -> bool:
         self.graph_ext = graph_ext
         while True:
