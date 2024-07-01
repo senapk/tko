@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.9.0
+  - add: frame mode improved
 - 0.8.7
   - fix: missing __init__py for run module
 - 0.8.6

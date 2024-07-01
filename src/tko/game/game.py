@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 from .cluster import Cluster
 from .quest import Quest, QuestParser
 from .task import Task, TaskParser
@@ -121,22 +121,26 @@ class Game:
             obtained += o
         return obtained, total
 
-    def get_skills_resume(self) -> Dict[str, int]:
-        skills: Dict[str, int] = {}
+    def get_skills_resume(self) -> Tuple[Dict[str, int], Dict[str, int]]:
+        total: Dict[str, int] = {}
+        obtained: Dict[str, int] = {}
         for q in self.quests.values():
             for t in q.get_tasks():
-                if t.grade > 0:
-                    for s in t.skills:
-                        if s in skills:
-                            skills[s] += t.skills[s]
-                        else:
-                            skills[s] = t.skills[s]
-                    for s in t.qskills:
-                        if s in skills:
-                            skills[s] += t.qskills[s]
-                        else:
-                            skills[s] = t.qskills[s]
-        return skills
+                for s in t.skills:
+                    if s in total:
+                        total[s] += t.skills[s]
+                        obtained[s] += int(t.skills[s] * t.grade/10)
+                    else:
+                        total[s] = t.skills[s]
+                        obtained[s] = int(t.skills[s] * t.grade/10)
+                for s in t.qskills:
+                    if s in total:
+                        total[s] += t.qskills[s]
+                        obtained[s] += int(t.qskills[s] * t.grade/10)
+                    else:
+                        total[s] = t.qskills[s]
+                        obtained[s] = int(t.qskills[s] * t.grade/10)
+        return total, obtained
 
     # Verificar se todas as quests requeridas existem e adiciona o ponteiro
     # Verifica se todas as quests tem tarefas

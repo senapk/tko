@@ -397,7 +397,7 @@ class Play:
                         token.text = value
 
 
-    def build_bar_xp(self, text:str, percent: float, length: int):
+    def build_xp_bar(self, text:str, percent: float, length: int):
         prefix = (length - len(text)) // 2
         sufix = length - len(text) - prefix
         text = " " * prefix + text + " " * sufix
@@ -423,7 +423,7 @@ class Play:
             
             text = f"L:{xp.get_level()} XP:{str(xp.get_xp_level_current())}/{str(xp.get_xp_level_needed())}"
             percent = xp.get_xp_level_current() / xp.get_xp_level_needed()
-            xp_bar = self.build_bar_xp(text, percent, dx // 4)
+            xp_bar = self.build_xp_bar(text, percent, int(dx * 0.4))
             # header.addf(Style.bar_xp, f"").addt(" ")
             header.concat(xp_bar).addt(" ")
             # header.addf(Style.bar_xp, f"XP({str(xp.get_xp_level_current())}/{str(xp.get_xp_level_needed())})").addt(" ")
@@ -484,12 +484,9 @@ class Play:
                 total_perc = total_perc // len(self.game.quests)
             
             text =  f" {xp.get_xp_total_obtained()}xp {total_perc}%"
-            total_bar = self.build_bar_xp(text, total_perc / 100, 20)
-            
-
-            
-
             xp_dx = 30
+        
+            total_bar = self.build_xp_bar(text, total_perc / 100, xp_dx - 7)
             task_dx -= xp_dx - 1
             frame_xp = Frame(2, cols - xp_dx).set_inner(deeper, xp_dx - 3).set_border_rounded()
             frame_xp.set_header(Sentence().addt("{").addf("/", "Skills").addt("}"))
@@ -497,10 +494,14 @@ class Play:
             frame_xp.set_footer(Sentence().addt("{").concat(total_bar).addt("}"))
             frame_xp.draw()
 
+            total, obt = self.game.get_skills_resume()
             index = 0
-            for skill, value in self.game.get_skills_resume().items():
-                frame_xp.write(index, 0, Sentence().addt(f"{skill}:{value}"))
-                index += 1
+            for skill, value in total.items():
+                text = f"{skill}:{value}/{obt[skill]}"
+                perc = obt[skill]/value
+                skill_bar = self.build_xp_bar(text, perc, xp_dx - 5)
+                frame_xp.write(index, 1, skill_bar)
+                index += 2
             # frame_xp.write(0, 0, self.build_bar_xp("XP", 0.5, dx - 1))
 
         frame_tasks = Frame(2, 0).set_inner(deeper, task_dx).set_border_rounded()
