@@ -63,9 +63,11 @@ class Frame:
  
     def set_header(self, header: Sentence):
         self._header = header
+        return self
 
     def set_footer(self, footer: Sentence):
         self._footer = footer
+        return self
 
     def set_fill(self):
         self._filled = True
@@ -75,19 +77,21 @@ class Frame:
         self._filled = False
         return self
     
-    def write(self, y: int, x: int, sentence: Sentence):
+    def write(self, y: int, x: int, sentence: Sentence) -> bool:
         lines, cols = Fmt.scr.getmaxyx()
 
-        x_min = max(0, self._x)
-        y_min = max(0, self._y)
+        x_min = max(-1, self._x)
+        y_min = max(-1, self._y)
         x_max = min(cols, self._x + self._inner_dx)
         y_max = min(lines, self._y + self._inner_dy)
 
         x_abs = x + self._x + 1
         y_abs = y + self._y + 1
 
+        count = 0
+
         if y_abs <= y_min or y_abs > y_max:
-            return self
+            return 0
 
         for token in sentence.get():
             fmt, text = token.fmt, token.text
@@ -100,13 +104,15 @@ class Frame:
                 if x_abs + len(text) >= x_max:
                     text = text[:x_max - x_abs + 1]
                 Fmt.stroke(y_abs, x_abs, fmt, text)
+                count += 1
             x_abs += len(text)
+        return count
 
     def draw(self):
         x = self._x
         y = self._y
-        width = self._inner_dx
-        height = self._inner_dy
+        dx = self._inner_dx
+        dy = self._inner_dy
         up_left = self.get_symbol("lu")
         up_right = self.get_symbol("ru")
         down_left = self.get_symbol("ld")
@@ -116,16 +122,16 @@ class Frame:
         header = self._header
         footer = self._footer
 
-        upper = Sentence().addt(up_left).concat(header).addt((width - header.len()) * hor + up_right)
-        bottom = Sentence().addt(down_left + (width - footer.len()) * hor).concat(footer).addt(down_right)
+        upper = Sentence().addt(up_left + hor).concat(header).addt((dx - header.len() - 1) * hor + up_right)
+        bottom = Sentence().addt(down_left + (dx - footer.len() - 1) * hor).concat(footer).addt(hor + down_right)
         
         Fmt.write(y, x, upper)
-        Fmt.write(y + height + 1, x, bottom)
+        Fmt.write(y + dy + 1, x, bottom)
         if self._filled:
-            for i in range(1, height + 1):
-                Fmt.write(y + i, x, Sentence().addt(ver + width * self._fill_char + ver))
+            for i in range(1, dy + 1):
+                Fmt.write(y + i, x, Sentence().addt(ver + dx * self._fill_char + ver))
         else:
-            for i in range(1, height + 1):
+            for i in range(1, dy + 1):
                 Fmt.write(y + i, x, Sentence().addt(ver))
-                Fmt.write(y + i, x + width + 1, Sentence().addt(ver))
+                Fmt.write(y + i, x + dx + 1, Sentence().addt(ver))
         return self

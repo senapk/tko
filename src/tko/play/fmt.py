@@ -73,9 +73,10 @@ class Fmt:
             stdscr.attron(curses.color_pair(pair_number))
         try:
             stdscr.addstr(y, x, text)
-        except curses.error as e:
-            print(str(e))
-            print(f"y:{y}, x:{x}, fmt:{fmt}, text: {text}")
+        except curses.error as _e:
+            lines, cols = stdscr.getmaxyx()
+            stdscr.addstr(0, 0, f"y:{y}, x:{x}, fmt:{fmt}, len:{len(text)} lines:{lines}, cols:{cols}")
+            stdscr.addstr(1, 0, text)
         if pair_number != -1:
             stdscr.attroff(curses.color_pair(pair_number))
         if italic:
@@ -101,6 +102,10 @@ class Fmt:
                     text = text[:cols - x]
                 Fmt.stroke(y, x, fmt, text)
             x += len(text)  # Move a posição x para a direita após o texto
+
+    @staticmethod
+    def write_text(y: int, x: int, text: str):
+        Fmt.write(y, x, Sentence().addt(text))
 
     @staticmethod
     def get_user_input(stdscr, prompt: str) -> str:

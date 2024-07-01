@@ -56,16 +56,8 @@ class Play:
 
         self.index_selected = 0
         self.index_begin = 0
-        self.x_begin = 1
-        self.x_end = 1
-        self.y_begin = 2
-        self.y_end = 3
+  
         
-        self.y_header = 0
-        self.y_xp_bar = 1
-        self.y_skills_bar = -3
-        self.y_task_link = -2
-
         self.items: List[Entry] = []
 
         self.first_loop = True
@@ -346,9 +338,8 @@ class Play:
     def checkbox(value) -> Sentence:
         return Sentence().addf(Style.check, symbols.opcheck) if value else Sentence().addf(Style.uncheck, symbols.opuncheck)
 
-    def show_bar_skills(self, size_footer):
-        lines, cols = Fmt.scr.getmaxyx()
-        skills_line = Sentence()
+    def build_bar_skills(self, size_footer) -> Sentence:
+        skills_line = Sentence().addt(" ")
         skills = self.game.get_skills_resume()
         if skills and self.xp_bar:
             i = 0
@@ -359,18 +350,18 @@ class Play:
                         skills_line.addf(Style.bar_bg, "  ")
                         i += 1
         
-        Fmt.write(lines + self.y_skills_bar, self.x_begin, skills_line.addf(Style.bar_bg, (size_footer - skills_line.len()) * " "))
+        return skills_line.addf(Style.bar_bg, (size_footer - skills_line.len()) * " ")
 
-    def show_bar_links(self):
-        lines, cols = Fmt.scr.getmaxyx()
+    def build_bar_links(self) -> Sentence:
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             link = obj.link
             if link:
-                Fmt.write(lines + self.y_task_link, self.x_begin, Sentence().addt(link))
+                return Sentence().addt(" " + link)
+        return Sentence()
 
-    def show_bar_footer(self, frame: Frame) -> int:
-        footer = Sentence()
+    def build_bar_footer(self, dx: int) -> Sentence:
+        footer = Sentence().addt(" ")
         footer.addf(self.get_cb(self.flags_bar), f"Flags [f]").addt(" ")
         footer.addf(self.get_cb(self.xp_bar), f"XP [x]").addt(" ")
 
@@ -378,13 +369,9 @@ class Play:
 
         for x in msgs:
             footer.addf(Style.bar_skills, x).addt(" ")
-        full_len = footer.len()
 
-        (dy, dx) = frame.get_inner()
         Play.trim_sentence(footer, dx)
-        frame.write(dy - 1, 0, footer)
-        return full_len
-
+        return footer
 
     def get_cb(self, value):
         return Style.bar_true if value else Style.bar_false
@@ -410,67 +397,69 @@ class Play:
                         token.text = value
 
 
-    def show_bar_xp(self, size_footer):
+    def build_bar_xp(self, text:str, percent: float, length: int):
+        prefix = (length - len(text)) // 2
+        sufix = length - len(text) - prefix
+        text = " " * prefix + text + " " * sufix
         xp = XP(self.game)
-        xheader = Sentence()
-        bar = "━"
+        xp_bar = Sentence()
+        # bar = " "
 
-        total = size_footer
-        full_line = bar * total
-        done_len = int(xp.get_xp_level_current() * total // xp.get_xp_level_needed())
-        xheader.addf("g", full_line[:done_len]).addf("r", full_line[done_len:])
-        Fmt.write(self.y_xp_bar, self.x_begin, xheader)
+        total = length
+        full_line = text
+        done_len = int(percent * total)
+        xp_bar.addf("kC", full_line[:done_len]).addf("kY", full_line[done_len:])
+        return xp_bar
 
-    def show_bar_header(self, frame: Frame) -> int:
+    def build_bar_header(self, dx:int) -> int:
         
         total_perc = 0
-        header = Sentence()
+        header = Sentence().addt(" ")
         for q in self.game.quests.values():
             total_perc += q.get_percent()
         if self.game.quests:
             total_perc = total_perc // len(self.game.quests)
         
+        xp = XP(self.game)
 
-        header.addf(Style.bar_main, f"{self.repo_alias.upper()}({total_perc}%)").addt(" ")
+        text = f"{self.repo_alias.upper()} {total_perc}%"
         if self.xp_bar:
-            xp = XP(self.game)
+            text +=  f" XP:{xp.get_xp_total_obtained()}"
+        total_bar = self.build_bar_xp(text, total_perc / 100, dx // 4)
+        header.concat(total_bar).addt(" ")
+        if self.xp_bar:
             
-            header.addf(Style.bar_xp, f"Level({xp.get_level()})").addt(" ")
-            header.addf(Style.bar_xp, f"XP({str(xp.get_xp_level_current())}/{str(xp.get_xp_level_needed())})").addt(" ")
-            # header.addf("wC", f" total:{obt}/{total} ").addt(" ")
-            header.addf(Style.bar_xp, f"Total({xp.get_xp_total_obtained()})").addt(" ")
+            text = f"L:{xp.get_level()} XP:{str(xp.get_xp_level_current())}/{str(xp.get_xp_level_needed())}"
+            percent = xp.get_xp_level_current() / xp.get_xp_level_needed()
+            xp_bar = self.build_bar_xp(text, percent, dx // 4)
+            # header.addf(Style.bar_xp, f"").addt(" ")
+            header.concat(xp_bar).addt(" ")
+            # header.addf(Style.bar_xp, f"XP({str(xp.get_xp_level_current())}/{str(xp.get_xp_level_needed())})").addt(" ")
 
         if self.flags_bar:
             header.addf(self.get_cb("cont" in self.order), "Count [c]").addt(" ")
             header.addf(self.get_cb("perc" in self.order), "Percent [p]").addt(" ")
             header.addf(self.get_cb("goal" in self.order), "Goals [g]").addt(" ")
-            # header.addf(self.get_cb(self.mark_opt), " Optional [o] ").addt(" ")
-            header.addf(self.get_cb(self.admin_mode), "Admin [A]")
+            header.addf(self.get_cb(self.admin_mode), "Admin [A]").addt(" ")
 
-        full_len = header.len()
-        dy, dx = frame.get_inner()
         Play.trim_sentence(header, dx)
-        frame.write(0, 0, header)
-        return full_len
+        return header
 
-    def show_tasks(self):
-        lines, cols = Fmt.scr.getmaxyx()
-        y = self.y_begin + 1
-        y_end = self.y_end + 2
-        if len(self.items) < lines - y_end - self.y_begin - 1:
+    def show_tasks(self, frame: Frame):
+        dy, dx = frame.get_inner()
+        y = 0
+        if len(self.items) < dy:
             self.index_begin = 0
         else:
-            if self.index_selected < self.index_begin:
+            if self.index_selected < self.index_begin: # subiu na tela
                 self.index_begin = self.index_selected
-            elif self.index_begin < self.index_selected - lines + y_end + self.y_begin + 2:
-                self.index_begin = self.index_selected - lines + y_end + self.y_begin + 2
+            elif self.index_selected >= dy + self.index_begin: # desceu na tela
+                self.index_begin = self.index_selected - dy + 1
         init = self.index_begin
-
+    
         for i in range(init, len(self.items)):
             sentence = self.items[i].sentence
-            if y >= lines - y_end:
-                break
-            Fmt.write(y, self.x_begin + 1, sentence, 1)
+            frame.write(y, 0, sentence)
             y += 1
 
     def show_items(self):
@@ -479,29 +468,24 @@ class Play:
         # lines, cols = Fmt.scr.getmaxyx()
         self.reload_options()
         Fmt.erase()
-
-        frame = Frame(0, 0).set_end(lines - 1, cols - 1).set_border_rounded().set_fill().draw()
-
-        header_len = self.show_bar_header(frame)
-        footer_len = self.show_bar_footer(frame)
-        # hlen = max(header_len, footer_len)
-        # hcol = cols - 2
-        # if hcol < hlen:
-        #     hlen = hcol - 1 
+        dx = cols - 3
 
         
-        # # # Fmt.draw_frame(scr, self.y_begin, 0, lines - self.y_end - self.y_begin, _cols - 2)
-        # # delta_x = hlen
-        # # delta_y = lines - self.y_end - self.y_begin - 3
-        # # Fmt.draw_frame(-1, 0, 1, delta_x, "", False, "")
+        frame_header = Frame(-1, 0).set_inner(1, dx).set_border_rounded().set_fill().draw()
+        header = self.build_bar_header(dx)
+        frame_header.write(0, 0, header)
 
-        # # Fmt.draw_frame(self.y_begin, 0, delta_y, delta_x, "/", False, f"{self.repo_alias.upper()} Tarefas", f"{{{self.rep.lang}}}")
-        # # Fmt.draw_frame(lines - 4   , 0, 3      , delta_x, "", False)
+        frame_footer = Frame(lines - 4, 0).set_inner(3, dx).set_border_rounded().set_fill().draw()
+        frame_footer.write(2, 0, self.build_bar_footer(dx))
+        frame_footer.write(1, 0, self.build_bar_links())
+        frame_footer.write(0, 0, self.build_bar_skills(dx - 1))
 
-        # # self.show_bar_links()
-        # # self.show_bar_skills(hlen)
-        # # self.show_bar_xp(hlen)
-        # # self.show_tasks()
+
+        frame_tasks = Frame(2, 0).set_inner(lines - 8, dx).set_border_rounded().set_fill()
+        frame_tasks.set_header(Sentence().addt("{").addf("/", f"{self.repo_alias.upper()} Tarefas").addt("}"))
+        frame_tasks.set_footer(Sentence().addt("{").addf("/", f"{self.rep.lang}").addt("}"))
+        frame_tasks.draw()
+        self.show_tasks(frame_tasks)
 
 
     def generate_graph(self, scr):
