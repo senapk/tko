@@ -2603,25 +2603,17 @@ class Play:
         total = length
         full_line = text
         done_len = int(percent * total)
-        xp_bar.addf("kC", full_line[:done_len]).addf("kY", full_line[done_len:])
+        xp_bar.addf("/kC", full_line[:done_len]).addf("/kY", full_line[done_len:])
         return xp_bar
 
     def build_bar_header(self, dx:int) -> int:
         
         total_perc = 0
         header = Sentence().addt(" ")
-        for q in self.game.quests.values():
-            total_perc += q.get_percent()
-        if self.game.quests:
-            total_perc = total_perc // len(self.game.quests)
-        
+        header.addf("C", f" {self.repo_alias.upper()} ").addt(" ")
+
         xp = XP(self.game)
 
-        text = f"{self.repo_alias.upper()} {total_perc}%"
-        if self.xp_bar:
-            text +=  f" XP:{xp.get_xp_total_obtained()}"
-        total_bar = self.build_bar_xp(text, total_perc / 100, dx // 4)
-        header.concat(total_bar).addt(" ")
         if self.xp_bar:
             
             text = f"L:{xp.get_level()} XP:{str(xp.get_xp_level_current())}/{str(xp.get_xp_level_needed())}"
@@ -2666,18 +2658,48 @@ class Play:
         dx = cols - 3
 
         
-        frame_header = Frame(-1, 0).set_inner(1, dx).set_border_rounded().set_fill().draw()
+        frame_header = Frame(-1, 0).set_inner(1, dx).set_border_rounded().draw()
         header = self.build_bar_header(dx)
         frame_header.write(0, 0, header)
 
-        frame_footer = Frame(lines - 4, 0).set_inner(3, dx).set_border_rounded().set_fill().draw()
-        frame_footer.write(2, 0, self.build_bar_footer(dx))
-        frame_footer.write(1, 0, self.build_bar_links())
-        frame_footer.write(0, 0, self.build_bar_skills(dx - 1))
+        frame_footer = Frame(lines - 3, 0).set_inner(3, dx).set_border_rounded()
+        frame_footer.set_header(Sentence().addt("{").addf("/", "Links").addt("}")).draw()
+        frame_footer.write(0, 0, self.build_bar_links())
+        frame_footer.write(1, 0, self.build_bar_footer(dx))
+        
 
+        deeper = lines - 7
+        task_dx = dx
+        xp = XP(self.game)
+        if self.xp_bar:
+            total_perc = 0
+            for q in self.game.quests.values():
+                total_perc += q.get_percent()
+            if self.game.quests:
+                total_perc = total_perc // len(self.game.quests)
+            
+            text =  f" {xp.get_xp_total_obtained()}xp {total_perc}%"
+            total_bar = self.build_bar_xp(text, total_perc / 100, 20)
+            
 
-        frame_tasks = Frame(2, 0).set_inner(lines - 8, dx).set_border_rounded().set_fill()
-        frame_tasks.set_header(Sentence().addt("{").addf("/", f"{self.repo_alias.upper()} Tarefas").addt("}"))
+            
+
+            xp_dx = 30
+            task_dx -= xp_dx - 1
+            frame_xp = Frame(2, cols - xp_dx).set_inner(deeper, xp_dx - 3).set_border_rounded()
+            frame_xp.set_header(Sentence().addt("{").addf("/", "Skills").addt("}"))
+            # frame_xp.set_footer(Sentence().addt("{").addf("/", f"Total:{xp.get_xp_total_obtained()}").addt("}"))
+            frame_xp.set_footer(Sentence().addt("{").concat(total_bar).addt("}"))
+            frame_xp.draw()
+
+            index = 0
+            for skill, value in self.game.get_skills_resume().items():
+                frame_xp.write(index, 0, Sentence().addt(f"{skill}:{value}"))
+                index += 1
+            # frame_xp.write(0, 0, self.build_bar_xp("XP", 0.5, dx - 1))
+
+        frame_tasks = Frame(2, 0).set_inner(deeper, task_dx).set_border_rounded()
+        frame_tasks.set_header(Sentence().addt("{").addf("/", f"Tarefas").addt("}"))
         frame_tasks.set_footer(Sentence().addt("{").addf("/", f"{self.rep.lang}").addt("}"))
         frame_tasks.draw()
         self.show_tasks(frame_tasks)
