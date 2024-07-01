@@ -32,7 +32,7 @@ class Style:
     bar_ext = "Y"
     bar_xp = "C"
     bar_true = "G"
-    bar_false = "R"
+    bar_false = "Y"
     bar_skills = "B"
     bar_cmds = "Y"
     bar_bg = "M"

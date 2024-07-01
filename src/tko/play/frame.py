@@ -1,6 +1,8 @@
 from .fmt import Fmt
 from ..util.sentence import Sentence
 
+
+
 class Frame:
     def __init__(self, y: int, x: int):
         self._x = x
@@ -10,7 +12,9 @@ class Frame:
         self._border = "rounded"
         self._filled = False
         self._header: Sentence = Sentence()
+        self._header_align = ""
         self._footer: Sentence = Sentence()
+        self._footer_align = ""
         self._fill_char = " "
 
     def set_inner(self, inner_dy: int, inner_dx: int):
@@ -61,11 +65,13 @@ class Frame:
         self._border = "square"
         return self
  
-    def set_header(self, header: Sentence):
+    def set_header(self, header: Sentence, align="<"):
+        self._header_align = align
         self._header = header
         return self
 
-    def set_footer(self, footer: Sentence):
+    def set_footer(self, footer: Sentence, align=">"):
+        self._footer_align = align
         self._footer = footer
         return self
 
@@ -121,12 +127,25 @@ class Frame:
         ver = self.get_symbol("v")
         header = self._header
         footer = self._footer
-
-        upper = Sentence().addt(up_left + hor).concat(header).addt((dx - header.len() - 1) * hor + up_right)
-        bottom = Sentence().addt(down_left + (dx - footer.len() - 1) * hor).concat(footer).addt(hor + down_right)
+        if self._footer_align == "<":
+            footer.ljust(dx - 2, hor)
+        elif self._footer_align == ">":
+            footer.rjust(dx - 2, hor)
+        else:
+            footer.center(dx - 2, hor) 
         
-        Fmt.write(y, x, upper)
-        Fmt.write(y + dy + 1, x, bottom)
+        if self._header_align == "<":
+            header.ljust(dx - 2, hor)
+        elif self._header_align == ">":
+            header.rjust(dx - 2, hor)
+        else:
+            header.center(dx - 2, hor)
+
+        above = Sentence().addt(up_left + hor).concat(header).addt(hor + up_right)
+        below = Sentence().addt(down_left + hor).concat(footer).addt(hor + down_right)
+        
+        Fmt.write(y, x, above)
+        Fmt.write(y + dy + 1, x, below)
         if self._filled:
             for i in range(1, dy + 1):
                 Fmt.write(y + i, x, Sentence().addt(ver + dx * self._fill_char + ver))
