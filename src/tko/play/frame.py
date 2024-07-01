@@ -133,7 +133,7 @@ class Frame:
             footer.rjust(dx - 2, hor)
         else:
             footer.center(dx - 2, hor) 
-        
+    
         if self._header_align == "<":
             header.ljust(dx - 2, hor)
         elif self._header_align == ">":
