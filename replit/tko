@@ -992,7 +992,7 @@ class Input:
         if self.type == "answer":
             footer = Sentence().addt(" ")
             for i, option in enumerate(self.options):
-                fmt = "kG" if i == self.options_index else "kY"
+                fmt = "kG" if i == self.options_index else "kR"
                 footer.addf(fmt, option).addt(" ")
             self.frame.set_footer(footer, "^")
 
@@ -2424,7 +2424,7 @@ class Play:
         self.repo_alias = repo_alias
         self.rep = rep
 
-        self.input_layer: Optional[Input] = None
+        self.input_layer: List[Input] = []
 
         # self.mark_opt = "opt" in self.rep.view
         self.mark_opt = True
@@ -2624,9 +2624,9 @@ class Play:
         if task.key in task.title:
             output.append(f"tko down {self.repo_alias} {task.key} -l {ext}")
             output += Down.download_problem(rootdir, self.repo_alias, task.key, ext)
-            self.input_layer = Input().set_content(output).warning()
+            self.input_layer.append(Input().set_content(output).warning())
         else:
-            self.input_layer = Input().addt("Essa não é uma tarefa de código").warning()
+            self.input_layer.append(Input().addt("Essa não é uma tarefa de código").warning())
         return output
 
     def set_rootdir(self):
@@ -2634,7 +2634,7 @@ class Play:
             if value == "yes":
                 self.local.rootdir = os.getcwd()
                 self.fnsave()
-                self.input_layer = Input()\
+                self.input_layer.append(Input()\
                     .addt("Diretório raiz definido como ")\
                     .addt("  " +  self.local.rootdir)\
                     .addt("Você pode alterar o diretório raiz navegando para o")\
@@ -2642,47 +2642,51 @@ class Play:
                     .addt("  tko config --root")\
                     .addt("")\
                     .addt("Tente baixar a tarefa novamente")\
-                    .warning()
+                    .warning())
             else:
-                self.input_layer = Input()\
+                self.input_layer.append(Input()\
                     .addt("Navague para o diretório desejado e execute o comando")\
                     .addt("  tko config --root")\
-                    .addt("ou rode o tko play novamente").warning()
+                    .addt("ou rode o tko play novamente na pasta desejada").warning())
 
         
-        self.input_layer = Input().addt("Diretório raiz para o tko ainda não foi definido")\
+        self.input_layer.append(Input().addt("Diretório raiz para o tko ainda não foi definido")\
             .addt("Você deseja utilizar o diretório atual")\
             .addt(os.getcwd())\
             .addt("como raiz para o repositório de " + self.repo_alias + "?")\
             .set_options(["yes", "no"])\
-            .get_answer(chama)
+            .get_answer(chama))
     
     def set_language(self):
 
         def back(value):
             self.rep.lang = value
             self.fnsave()
-            self.input_layer = Input()\
+            self.input_layer.append(Input()\
             .addt("Linguagem alterada para " + value)\
             .addt("")\
             .addt("Você pode mudar a linguagem de programação apertando e")\
-            .warning()
+            .warning())
             
 
-        self.input_layer = Input()\
+        self.input_layer.append(Input()\
             .addt("   Escolha a extensão")\
             .addt(" default para os rascunhos") \
             .addt("")\
             .addt(" Selecione e tecle enter")\
             .set_options(["c", "cpp", "py", "ts", "js", "java", "hs"])\
-            .get_answer(back)
+            .get_answer(back))
 
     def process_down(self):
-        
+
         if self.local.rootdir == "":
             self.set_rootdir()
+            return
+
         if self.rep.lang == "":
             self.set_language()
+            return
+        
         rootdir = os.path.relpath(os.path.join(self.local.rootdir, self.repo_alias))
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
@@ -2912,8 +2916,12 @@ class Play:
         frame_main.draw()
         self.show_tasks(frame_main)
 
-        if self.input_layer and self.input_layer.enable:
-            self.input_layer.draw()
+        if len(self.input_layer) > 0:
+            if not self.input_layer[0].enable:
+                self.input_layer = self.input_layer[1:]
+
+        if len(self.input_layer) > 0 and self.input_layer[0].enable:
+            self.input_layer[0].draw()
 
     def generate_graph(self, scr):
         if not self.first_loop:
@@ -3079,8 +3087,8 @@ class Play:
             self.show_items()
             self.generate_graph(scr)
 
-            if self.input_layer and self.input_layer.enable:
-                value = self.input_layer.get_input()
+            if len(self.input_layer) > 0 and self.input_layer[0].enable:
+                value = self.input_layer[0].get_input()
             else:
                 value = scr.getch()
 
@@ -3135,7 +3143,7 @@ class Play:
                     self.set_grade(value)
                 elif value == ord("T"):
                     # self.test_color(scr)
-                    self.input_layer = Input().addt("Desabilitando flags").warning()
+                    self.input_layer.append(Input().addt("Desabilitando flags").warning())
             self.save_to_json()
         
             if self.first_loop:

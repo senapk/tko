@@ -39,7 +39,7 @@ class Input:
         if self.type == "answer":
             footer = Sentence().addt(" ")
             for i, option in enumerate(self.options):
-                fmt = "kG" if i == self.options_index else "kY"
+                fmt = "kG" if i == self.options_index else "kR"
                 footer.addf(fmt, option).addt(" ")
             self.frame.set_footer(footer, "^")
 
