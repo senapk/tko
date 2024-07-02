@@ -46,7 +46,7 @@ class XP:
     def calc_xp(self, level: int) -> int:
         total = 0
         for i in range(level - 1):
-            total += self.game.level_one * (self.game.level_mult ** i)
+            total += self.game.level_one * (int(self.game.level_mult) ** i)
         return int(total)
 
 

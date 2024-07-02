@@ -9,7 +9,7 @@ from .game.game import Game
 from .util.remote import RemoteCfg
 
 class Down:
-    fnprint = None
+    fnprint = print
 
     ts_draft = (r'let _cin_ : string[] = [];' + '\n'
                 r'try { _cin_ = require("fs").readFileSync(0).toString().split(/\r?\n/); } catch(e){}' + '\n'

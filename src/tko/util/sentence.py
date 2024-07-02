@@ -21,6 +21,13 @@ class Sentence:
     def addt(self, text: str):
         self.data.append(Token("", text))
         return self
+    
+    def __getitem__(self, index: int):
+        return self.data[index]
+    
+    def __setitem__(self, index: int, value: Token):
+        self.data[index] = value
+        return None
 
     def adds(self, fmt, sentence):
         for _, t in sentence.data:
@@ -57,6 +64,9 @@ class Sentence:
             total += len(t.text)
         return total
     
+    def __len__(self):
+        return self.len()
+    
     def get(self):
         return self.data
 
@@ -66,18 +76,21 @@ class Sentence:
             if self.len() >= limit:
                 text = token.text
                 label = None
-                if "[" in text:
-                    label, value = text.split("[")
-                    value = "[" + value
-                elif "(" in text:
-                    label, value = text.split("(")
-                    value = "(" + value
+                try:
+                    if "[" in text:
+                        label, value = text.split("[")
+                        value = "[" + value
+                    elif "(" in text:
+                        label, value = text.split("(")
+                        value = "(" + value
 
-                if label:
-                    if self.len() - len(label) < limit:
-                        token.text = token.text[:limit - (self.len() - len(label))] + value
-                    else:
-                        token.text = value
+                    if label:
+                        if self.len() - len(label) < limit:
+                            token.text = token.text[:limit - (self.len() - len(label))] + value
+                        else:
+                            token.text = value
+                except:
+                    raise Exception(f"Erro ao processar label: {text}")
 
     def trim_spaces(self, limit: int):
         for i in range(len(self.data) - 1, -1, -1):

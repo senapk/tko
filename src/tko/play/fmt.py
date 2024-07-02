@@ -4,7 +4,7 @@ from ..util.sentence import Sentence
 from .style import Style
 
 class Fmt:
-    scr = None
+    __scr = None
     # Definindo constantes para as cores
     color_pairs: Dict[str, int] = {}
 
@@ -18,6 +18,10 @@ class Fmt:
         'c': curses.COLOR_CYAN,
         'w': curses.COLOR_WHITE,
     }
+    @staticmethod
+    def set_scr(scr):
+        Fmt.__scr = scr
+        Fmt.init_colors()
 
     @staticmethod
     def init_colors():
@@ -37,7 +41,9 @@ class Fmt:
 
     @staticmethod
     def stroke(y: int, x: int, fmt: str, text: str):
-        stdscr = Fmt.scr
+        if Fmt.__scr is None:
+            raise Exception("Fmt.__scr não foi inicializado")
+        stdscr = Fmt.__scr
         italic = False
         underline = False
         source_fmt = fmt
@@ -86,8 +92,9 @@ class Fmt:
 
     @staticmethod
     def write(y: int, x: int, sentence: Sentence):
+
         # Escreve um texto na tela com cores diferentes
-        lines, cols = Fmt.scr.getmaxyx()
+        lines, cols = Fmt.get_size()
         if y < 0 or y >= lines:
             return
         for token in sentence.get():
@@ -108,17 +115,23 @@ class Fmt:
         Fmt.write(y, x, Sentence().addt(text))
 
     @staticmethod
-    def get_user_input(stdscr, prompt: str) -> str:
-        lines, cols = stdscr.getmaxyx()
-        curses.echo()  # Ativa a exibição dos caracteres digitados
-        curses.curs_set(1)  # Ativa o cursor
-        stdscr.addstr(0, 0, cols * " ")
-        stdscr.addstr(0, 0, prompt)
-        stdscr.refresh()
-        input_str = stdscr.getstr(0, len(prompt), 20).decode('utf-8')  # Captura o input do usuário
-        curses.noecho()  # Desativa a exibição dos caracteres digitados
-        curses.curs_set(0)
-        return input_str
+    def debug(text: str):
+        Fmt.write_text(0, 0, text)
+        Fmt.getch()
+
+
+    # @staticmethod
+    # def get_user_input(stdscr, prompt: str) -> str:
+    #     lines, cols = stdscr.getmaxyx()
+    #     curses.echo()  # Ativa a exibição dos caracteres digitados
+    #     curses.curs_set(1)  # Ativa o cursor
+    #     stdscr.addstr(0, 0, cols * " ")
+    #     stdscr.addstr(0, 0, prompt)
+    #     stdscr.refresh()
+    #     input_str = stdscr.getstr(0, len(prompt), 20).decode('utf-8')  # Captura o input do usuário
+    #     curses.noecho()  # Desativa a exibição dos caracteres digitados
+    #     curses.curs_set(0)
+    #     return input_str
 
     @staticmethod
     def get_percent(value, pad = 0) -> Sentence:
@@ -133,18 +146,26 @@ class Fmt:
     
     @staticmethod
     def getch():
-        return Fmt.scr.getch()
+        if Fmt.__scr is None:
+            raise Exception("Fmt.__scr não foi inicializado")
+        return Fmt.__scr.getch()
 
     @staticmethod
     def erase():
-        Fmt.scr.erase()
+        if Fmt.__scr is None:
+            raise Exception("Fmt.__scr não foi inicializado")
+        Fmt.__scr.erase()
 
     @staticmethod
     def refresh():
-        Fmt.scr.refresh()
+        if Fmt.__scr is None:
+            raise Exception("Fmt.__scr não foi inicializado")
+        Fmt.__scr.refresh()
 
     @staticmethod
     def get_size():
-        return Fmt.scr.getmaxyx()
+        if Fmt.__scr is None:
+            raise Exception("Fmt.__scr não foi inicializado")
+        return Fmt.__scr.getmaxyx()
         
 

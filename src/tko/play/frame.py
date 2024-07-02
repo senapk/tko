@@ -89,7 +89,7 @@ class Frame:
         return self
     
     def write(self, y: int, x: int, sentence: Sentence) -> bool:
-        lines, cols = Fmt.scr.getmaxyx()
+        lines, cols = Fmt.get_size()
 
         x_min = max(-1, self._x)
         y_min = max(-1, self._y)
@@ -102,7 +102,7 @@ class Frame:
         count = 0
 
         if y_abs <= y_min or y_abs > y_max:
-            return 0
+            return False
 
         for token in sentence.get():
             fmt, text = token.fmt, token.text
@@ -117,7 +117,7 @@ class Frame:
                 Fmt.stroke(y_abs, x_abs, fmt, text)
                 count += 1
             x_abs += len(text)
-        return count
+        return False if count == 0 else True
 
     def draw(self):
         x = self._x

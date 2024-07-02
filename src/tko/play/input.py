@@ -9,13 +9,14 @@ import time
 class Input:
     def __init__(self):
         self.frame = Frame(0, 0)
-        self.content: List[str] = []
+        self.content: List[Sentence] = []
         # self.ending = 0
         # self.total_time = 0
         self.type = ""
         self.options = []
         self.options_index = 0
         self.fn_answer = None
+        self.enable = True
 
     def set_header(self, text: Sentence, align: str = ''):
         self.frame.set_header(text, align)
@@ -23,7 +24,7 @@ class Input:
 
     def __setup_frame(self):
         lines, cols = Fmt.get_size()
-        max_dx = max([len(x) for x in self.content])
+        max_dx = max([x.len() for x in self.content])
         dx = max_dx + 2
         dy = len(self.content) + 2
         x = (cols - dx) // 2
@@ -39,16 +40,20 @@ class Input:
         if self.type == "answer":
             footer = Sentence().addt(" ")
             for i, option in enumerate(self.options):
-                fmt = "kG" if i == self.options_index else "kR"
+                fmt = "kG" if i == self.options_index else ""
                 footer.addf(fmt, option).addt(" ")
             self.frame.set_footer(footer, "^")
 
     def addt(self, text: str):
-        self.content.append(text)
+        self.content.append(Sentence().addt(text))
+        return self
+
+    def adds(self, sentence: Sentence):
+        self.content.append(sentence)
         return self
     
     def set_content(self, content: List[str]):
-        self.content = content
+        self.content = [Sentence().addt(x) for x in content]
         return self
 
     # def timer(self, delta: int):
@@ -63,10 +68,9 @@ class Input:
 
     def warning(self):
         self.type = "warning"
-        self.frame.set_border_bold()
+        # self.frame.set_border_bold()
         self.frame.set_header(Sentence().addf("/", " Aviso "))
         self.frame.set_footer(Sentence().addf("/", " Apente enter "))
-        self.enable = True
         return self
     
     def set_options(self, options: List[str]):
@@ -79,24 +83,21 @@ class Input:
         self.frame.set_header(Sentence().addf("/", " Pergunta "))
         # self.frame.set_footer(Sentence().addf("/", " Selecione e aperte enter "))
         self.fn_answer = fn_answer
-        self.enable = True
         return self
 
     def draw(self):
         self.__setup_frame()
         self.frame.draw()
         for i, line in enumerate(self.content):
-            self.frame.write(i + 1, 1, Sentence().addt(line))
+            self.frame.write(i + 1, 1, line)
         return self
 
     def get_input(self) -> int:
         self.draw()
         key = Fmt.getch()
         if self.type == "warning" or self.type == "answer":
-            if key == ord('\n') or self.type == "timer":
-                self.enable = False
-        if self.type == "timer":
-            if self.ending - time.time() < 0:
+            #enter ou esc
+            if key == ord('\n') or key == 27:
                 self.enable = False
         if self.type == "answer":
             if key == curses.KEY_LEFT:
@@ -105,10 +106,8 @@ class Input:
                 self.options_index = (self.options_index + 1) % len(self.options)
             elif key == ord('\n'):
                 self.enable = False
-                self.fn_answer(self.options[self.options_index])
+                if self.fn_answer is not None:
+                    self.fn_answer(self.options[self.options_index])
                 return 0            
-        return -1, ""
-            
-
-
+        return -1
         

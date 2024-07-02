@@ -21,7 +21,7 @@ import io
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.9.93"
+__version__ = "0.9.97"
 
 class Style:
     focus = "Y"
@@ -575,6 +575,13 @@ class Sentence:
     def addt(self, text: str):
         self.data.append(Token("", text))
         return self
+    
+    def __getitem__(self, index: int):
+        return self.data[index]
+    
+    def __setitem__(self, index: int, value: Token):
+        self.data[index] = value
+        return None
 
     def adds(self, fmt, sentence):
         for _, t in sentence.data:
@@ -611,6 +618,9 @@ class Sentence:
             total += len(t.text)
         return total
     
+    def __len__(self):
+        return self.len()
+    
     def get(self):
         return self.data
 
@@ -620,18 +630,21 @@ class Sentence:
             if self.len() >= limit:
                 text = token.text
                 label = None
-                if "[" in text:
-                    label, value = text.split("[")
-                    value = "[" + value
-                elif "(" in text:
-                    label, value = text.split("(")
-                    value = "(" + value
+                try:
+                    if "[" in text:
+                        label, value = text.split("[")
+                        value = "[" + value
+                    elif "(" in text:
+                        label, value = text.split("(")
+                        value = "(" + value
 
-                if label:
-                    if self.len() - len(label) < limit:
-                        token.text = token.text[:limit - (self.len() - len(label))] + value
-                    else:
-                        token.text = value
+                    if label:
+                        if self.len() - len(label) < limit:
+                            token.text = token.text[:limit - (self.len() - len(label))] + value
+                        else:
+                            token.text = value
+                except:
+                    raise Exception(f"Erro ao processar label: {text}")
 
     def trim_spaces(self, limit: int):
         for i in range(len(self.data) - 1, -1, -1):
@@ -652,7 +665,7 @@ class Sentence:
         return self
 
 class Fmt:
-    scr = None
+    __scr = None
     # Definindo constantes para as cores
     color_pairs: Dict[str, int] = {}
 
@@ -666,6 +679,10 @@ class Fmt:
         'c': curses.COLOR_CYAN,
         'w': curses.COLOR_WHITE,
     }
+    @staticmethod
+    def set_scr(scr):
+        Fmt.__scr = scr
+        Fmt.init_colors()
 
     @staticmethod
     def init_colors():
@@ -685,7 +702,9 @@ class Fmt:
 
     @staticmethod
     def stroke(y: int, x: int, fmt: str, text: str):
-        stdscr = Fmt.scr
+        if Fmt.__scr is None:
+            raise Exception("Fmt.__scr não foi inicializado")
+        stdscr = Fmt.__scr
         italic = False
         underline = False
         source_fmt = fmt
@@ -734,8 +753,9 @@ class Fmt:
 
     @staticmethod
     def write(y: int, x: int, sentence: Sentence):
+
         # Escreve um texto na tela com cores diferentes
-        lines, cols = Fmt.scr.getmaxyx()
+        lines, cols = Fmt.get_size()
         if y < 0 or y >= lines:
             return
         for token in sentence.get():
@@ -756,17 +776,23 @@ class Fmt:
         Fmt.write(y, x, Sentence().addt(text))
 
     @staticmethod
-    def get_user_input(stdscr, prompt: str) -> str:
-        lines, cols = stdscr.getmaxyx()
-        curses.echo()  # Ativa a exibição dos caracteres digitados
-        curses.curs_set(1)  # Ativa o cursor
-        stdscr.addstr(0, 0, cols * " ")
-        stdscr.addstr(0, 0, prompt)
-        stdscr.refresh()
-        input_str = stdscr.getstr(0, len(prompt), 20).decode('utf-8')  # Captura o input do usuário
-        curses.noecho()  # Desativa a exibição dos caracteres digitados
-        curses.curs_set(0)
-        return input_str
+    def debug(text: str):
+        Fmt.write_text(0, 0, text)
+        Fmt.getch()
+
+
+    # @staticmethod
+    # def get_user_input(stdscr, prompt: str) -> str:
+    #     lines, cols = stdscr.getmaxyx()
+    #     curses.echo()  # Ativa a exibição dos caracteres digitados
+    #     curses.curs_set(1)  # Ativa o cursor
+    #     stdscr.addstr(0, 0, cols * " ")
+    #     stdscr.addstr(0, 0, prompt)
+    #     stdscr.refresh()
+    #     input_str = stdscr.getstr(0, len(prompt), 20).decode('utf-8')  # Captura o input do usuário
+    #     curses.noecho()  # Desativa a exibição dos caracteres digitados
+    #     curses.curs_set(0)
+    #     return input_str
 
     @staticmethod
     def get_percent(value, pad = 0) -> Sentence:
@@ -781,19 +807,27 @@ class Fmt:
     
     @staticmethod
     def getch():
-        return Fmt.scr.getch()
+        if Fmt.__scr is None:
+            raise Exception("Fmt.__scr não foi inicializado")
+        return Fmt.__scr.getch()
 
     @staticmethod
     def erase():
-        Fmt.scr.erase()
+        if Fmt.__scr is None:
+            raise Exception("Fmt.__scr não foi inicializado")
+        Fmt.__scr.erase()
 
     @staticmethod
     def refresh():
-        Fmt.scr.refresh()
+        if Fmt.__scr is None:
+            raise Exception("Fmt.__scr não foi inicializado")
+        Fmt.__scr.refresh()
 
     @staticmethod
     def get_size():
-        return Fmt.scr.getmaxyx()
+        if Fmt.__scr is None:
+            raise Exception("Fmt.__scr não foi inicializado")
+        return Fmt.__scr.getmaxyx()
         
 
 
@@ -886,7 +920,7 @@ class Frame:
         return self
     
     def write(self, y: int, x: int, sentence: Sentence) -> bool:
-        lines, cols = Fmt.scr.getmaxyx()
+        lines, cols = Fmt.get_size()
 
         x_min = max(-1, self._x)
         y_min = max(-1, self._y)
@@ -899,7 +933,7 @@ class Frame:
         count = 0
 
         if y_abs <= y_min or y_abs > y_max:
-            return 0
+            return False
 
         for token in sentence.get():
             fmt, text = token.fmt, token.text
@@ -914,7 +948,7 @@ class Frame:
                 Fmt.stroke(y_abs, x_abs, fmt, text)
                 count += 1
             x_abs += len(text)
-        return count
+        return False if count == 0 else True
 
     def draw(self):
         x = self._x
@@ -962,13 +996,14 @@ class Frame:
 class Input:
     def __init__(self):
         self.frame = Frame(0, 0)
-        self.content: List[str] = []
+        self.content: List[Sentence] = []
         # self.ending = 0
         # self.total_time = 0
         self.type = ""
         self.options = []
         self.options_index = 0
         self.fn_answer = None
+        self.enable = True
 
     def set_header(self, text: Sentence, align: str = ''):
         self.frame.set_header(text, align)
@@ -976,7 +1011,7 @@ class Input:
 
     def __setup_frame(self):
         lines, cols = Fmt.get_size()
-        max_dx = max([len(x) for x in self.content])
+        max_dx = max([x.len() for x in self.content])
         dx = max_dx + 2
         dy = len(self.content) + 2
         x = (cols - dx) // 2
@@ -992,16 +1027,20 @@ class Input:
         if self.type == "answer":
             footer = Sentence().addt(" ")
             for i, option in enumerate(self.options):
-                fmt = "kG" if i == self.options_index else "kR"
+                fmt = "kG" if i == self.options_index else ""
                 footer.addf(fmt, option).addt(" ")
             self.frame.set_footer(footer, "^")
 
     def addt(self, text: str):
-        self.content.append(text)
+        self.content.append(Sentence().addt(text))
+        return self
+
+    def adds(self, sentence: Sentence):
+        self.content.append(sentence)
         return self
     
     def set_content(self, content: List[str]):
-        self.content = content
+        self.content = [Sentence().addt(x) for x in content]
         return self
 
     # def timer(self, delta: int):
@@ -1016,10 +1055,9 @@ class Input:
 
     def warning(self):
         self.type = "warning"
-        self.frame.set_border_bold()
+        # self.frame.set_border_bold()
         self.frame.set_header(Sentence().addf("/", " Aviso "))
         self.frame.set_footer(Sentence().addf("/", " Apente enter "))
-        self.enable = True
         return self
     
     def set_options(self, options: List[str]):
@@ -1032,24 +1070,21 @@ class Input:
         self.frame.set_header(Sentence().addf("/", " Pergunta "))
         # self.frame.set_footer(Sentence().addf("/", " Selecione e aperte enter "))
         self.fn_answer = fn_answer
-        self.enable = True
         return self
 
     def draw(self):
         self.__setup_frame()
         self.frame.draw()
         for i, line in enumerate(self.content):
-            self.frame.write(i + 1, 1, Sentence().addt(line))
+            self.frame.write(i + 1, 1, line)
         return self
 
     def get_input(self) -> int:
         self.draw()
         key = Fmt.getch()
         if self.type == "warning" or self.type == "answer":
-            if key == ord('\n') or self.type == "timer":
-                self.enable = False
-        if self.type == "timer":
-            if self.ending - time.time() < 0:
+            #enter ou esc
+            if key == ord('\n') or key == 27:
                 self.enable = False
         if self.type == "answer":
             if key == curses.KEY_LEFT:
@@ -1058,12 +1093,10 @@ class Input:
                 self.options_index = (self.options_index + 1) % len(self.options)
             elif key == ord('\n'):
                 self.enable = False
-                self.fn_answer(self.options[self.options_index])
+                if self.fn_answer is not None:
+                    self.fn_answer(self.options[self.options_index])
                 return 0            
-        return -1, ""
-            
-
-
+        return -1
         
 class Color:
     enabled = False
@@ -2007,7 +2040,7 @@ class Game:
 
 
 class Down:
-    fnprint = None
+    fnprint = print
 
     ts_draft = (r'let _cin_ : string[] = [];' + '\n'
                 r'try { _cin_ = require("fs").readFileSync(0).toString().split(/\r?\n/); } catch(e){}' + '\n'
@@ -2395,7 +2428,7 @@ class XP:
     def calc_xp(self, level: int) -> int:
         total = 0
         for i in range(level - 1):
-            total += self.game.level_one * (self.game.level_mult ** i)
+            total += self.game.level_one * (int(self.game.level_mult) ** i)
         return int(total)
 
 
@@ -2413,6 +2446,15 @@ class Entry:
     def get(self):
         return self.sentence
 
+class Flags:
+    count = "count"
+    percent = "percent"
+    goals = "goals"
+    down = "down"
+    admin = "admin"
+    flags_bar = "flags_bar"
+    skills_bar = "skills_bar"
+    help_bar = "help_bar"
 
 class Play:
     cluster_prefix = "'"
@@ -2460,12 +2502,6 @@ class Play:
                 self.rep.tasks[t.key] = str(t.grade)
         self.rep.view = []
         self.rep.view.append("order:" + ",".join(self.flags))
-        # if self.flags_bar:
-        #     self.rep.view.append("toolbar")
-        # if self.mark_opt:
-        #     self.rep.view.append("opt")
-        if self.flags_on("skills_bar"):
-            self.rep.view.append("xp")
             
         self.fnsave()
 
@@ -2497,7 +2533,7 @@ class Play:
     def update_avaliable_quests(self):
         old_quests = [q for q in self.avaliable_quests]
         old_clusters = [c for c in self.avaliable_clusters]
-        if self.flags_on("admin"):
+        if self.flags_on(Flags.admin):
             self.avaliable_quests = list(self.game.quests.values())
             self.avaliable_clusters = self.game.clusters
         else:
@@ -2540,8 +2576,13 @@ class Play:
 
         value = Style.opt_task if self.mark_opt and t.opt else ""
         output.addf(self.add_focus(value, in_focus), t.title)
-        
-        if self.flags_on("skills_bar"):
+
+        if self.flags_on(Flags.down):
+            path = os.path.join(self.local.rootdir, self.repo_alias, t.key)
+            if os.path.isdir(path):
+                output.addt(" ").addf("y", f"[{path}]")
+
+        if self.flags_on(Flags.skills_bar):
             xp = ""
             for s, v in t.skills.items():
                 xp += f" +{s}:{v}"
@@ -2556,13 +2597,13 @@ class Play:
         output.addf(self.add_focus(value, in_focus), q.title)
 
         for item in self.flags:
-            if item == "cont":
+            if item == Flags.count:
                 output.addt(" ").concat(q.get_resume_by_tasks())
-            elif item == "perc":
+            elif item == Flags.percent:
                 output.addt(" ").concat(q.get_resume_by_percent())
-            elif item == "goal":
+            elif item == Flags.goals:
                 output.addt(" ").concat(q.get_requirement())
-        if self.flags_on("skills_bar"):
+        if self.flags_on(Flags.skills_bar):
             xp = ""
             for s,v in q.skills.items():
                 xp += f" +{s}:{v}"
@@ -2627,7 +2668,7 @@ class Play:
             def fnprint(text):
                 down_frame.addt(text)
                 down_frame.draw()
-                Fmt.scr.refresh()
+                Fmt.refresh()
 
             Down.download_problem(rootdir, self.repo_alias, task.key, ext, fnprint)
         else:
@@ -2668,9 +2709,9 @@ class Play:
             self.rep.lang = value
             self.fnsave()
             self.input_layer.append(Input()\
-            .addt("Linguagem alterada para " + value)\
-            .addt("")\
-            .addt("Você pode mudar a linguagem de programação apertando e")\
+            .addt("      Linguagem alterada para " + value)\
+            .addt("Você pode mudar a linguagem de programação")\
+            .adds(Sentence().addt("            apertando ").addf("G", "e"))\
             .warning())
             
 
@@ -2698,7 +2739,7 @@ class Play:
         if isinstance(obj, Task):
             self.down_task(rootdir, obj, self.rep.lang)
         else:
-            self.input_layer = Input().addt("Essa não é uma tarefa de código").warning()
+            self.input_layer.append(Input().addt("Essa não é uma tarefa de código").warning())
 
 
     def process_collapse(self):
@@ -2736,20 +2777,6 @@ class Play:
     def checkbox(value) -> Sentence:
         return Sentence().addf(Style.check, symbols.opcheck) if value else Sentence().addf(Style.uncheck, symbols.opuncheck)
 
-    def build_bar_skills(self, size_footer) -> Sentence:
-        skills_line = Sentence().addt(" ")
-        skills = self.game.get_skills_resume()
-        if skills and self.flags_on("skills_bar"):
-            i = 0
-            for s, v in skills.items():
-                if s != "xp":
-                    skills_line.addf(Style.bar_skills, f"{s}:{v}")
-                    if i < len(skills) - 1:
-                        skills_line.addf(Style.bar_bg, "  ")
-                        i += 1
-        
-        return skills_line.addf(Style.bar_bg, (size_footer - skills_line.len()) * " ")
-
     def build_bar_links(self) -> Sentence:
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
@@ -2769,16 +2796,17 @@ class Play:
         total = length
         full_line = text
         done_len = int(percent * total)
-        xp_bar.addf("/kC", full_line[:done_len]).addf("/kR", full_line[done_len:])
+        xp_bar.addf("/kC", full_line[:done_len]).addf("/kY", full_line[done_len:])
         return xp_bar
 
     def build_top_bar(self, dx:int) -> Sentence:
-        lines, cols = Fmt.scr.getmaxyx()
+        lines, cols = Fmt.get_size()
         header = Sentence().addt(" ")
         header.addf("C", f" {self.repo_alias.upper()}:{cols}").addt(" ")
-        header.addf(self.get_toggle_bg(self.flags_on("flags_bar")), f"Flags [f]").addt(" ")
-        header.addf(self.get_toggle_bg(self.flags_on("help")), "Help [h]").addt(" ")
-        header.addf(self.get_toggle_bg(self.flags_on("skills_bar")), f"Skill [s]").addt(" ")
+        header.addf(self.get_toggle_bg(self.flags_on(Flags.flags_bar)), f"Flags[F]").addt(" ")
+        header.addf(self.get_toggle_bg(self.flags_on(Flags.help_bar)), f"Help[H]").addt(" ")
+        header.addf(self.get_toggle_bg(self.flags_on(Flags.skills_bar)), f"Skills[S]").addt(" ")
+
 
         xp = XP(self.game)
 
@@ -2786,8 +2814,8 @@ class Play:
             text = "Você atingiu o máximo de xp!"
             percent = 100
         else:
-            text = f"L:{xp.get_level()} XP:{str()}/{str(xp.get_xp_level_needed())}"
-            percent = xp.get_xp_level_current() / xp.get_xp_level_needed()
+            text = f"L:{xp.get_level()} XP:{xp.get_xp_level_current()}/{xp.get_xp_level_needed()}"
+            percent = int(float(xp.get_xp_level_current()) / float(xp.get_xp_level_needed()))
         size = max(20 - 5, dx - header.len() - 1)
         xp_bar = self.build_xp_bar(text, percent, size)
         header.concat(xp_bar).addt(" ")
@@ -2844,28 +2872,22 @@ class Play:
                 _fmt = self.get_toggle_bg(self.flags_on(_flag))
                 _flags.append(Sentence().addf(_fmt, _text).center(dx - 5, " ", _fmt))
 
-            flags = []
-            add_flag(flags, "cont", "Count   [c]")
-            add_flag(flags, "perc", "Percent [p]")
-            add_flag(flags, "goal", "Goals   [g]")
-            add_flag(flags, "admin", "Admin   [A]")
-
-            # fmt = self.get_cb(self.flags_on("cont"))
-            # flags.append(Sentence().addf(fmt, "Count [c]").center(xp_dx - 4, " ", fmt))
-
-            # flags.append(Sentence().addf(self.get_cb(self.flags_on("perc")), "Percent [p]"))
-            # flags.append(Sentence().addf(self.get_cb(self.flags_on("goal")), "Goals [g]"))
-            # flags.append(Sentence().addf(self.get_cb(self.flags_on("admin")), "Admin [A]"))
+            flags: List[Sentence]= []
+            add_flag(flags, "cont",     "Count   [C]")
+            add_flag(flags, "perc",     "Percent [P]")
+            add_flag(flags, "goal",     "Goals   [G]")
+            add_flag(flags, "folder",   "Down    [D]")
+            add_flag(flags, "admin",    "Admin   [A]")
 
             index = 0
             for flag in flags:
                 frame.write(index, 1, flag)
                 index += 2
 
-    def build_help(self, limit: int) -> Sentence:
-        msgs = ["Quit[q]", "Mark[enter]"]
-        if "help" in self.flags:
-            msgs += ["Down[d]", "Ext[e]", "Grade[0-9]", "Expand[>]", "Collapse[<]"]
+    def build_help_bar(self, limit: int) -> Sentence:
+        msgs = ["Quit[q]", "Help[h]"]
+        if self.flags_on(Flags.help_bar):
+            msgs += ["Mark[enter]", "Down[d]", "Lang[l]", "Grade[0-9]", "Expand[>]", "Collapse[<]",  "MassMark[M]"]
         help = Sentence().addt(" ")
         for x in msgs:
             help.addf("", x).addt(" ")
@@ -2877,8 +2899,38 @@ class Play:
             help.cut_end(limit)
         return help
 
+    def show_help(self):
+        help: Input = Input().warning()
+        self.input_layer.append(help)
+        help.set_header(Sentence().addt("{").addf("/", "Help").addt("}"))
+        help.addt("Barras alternáveis")
+        help.adds(Sentence().addt("  ").addf("", "F").addt(" - Mostrar ou esconder a barra de flags"))
+        help.adds(Sentence().addt("  ").addf("", "H").addt(" - Mostrar ou esconder a barra de ajuda"))
+        help.adds(Sentence().addt("  ").addf("", "S").addt(" - Mostrar ou esconder a barra de skills"))
+        help.addt("")
+        help.addt("Comandos")
+        help.addt("  q - Fechar o aplicativo")
+        help.addt("  h - Mostrar essa tela de ajuda")
+        help.addt("  l - Mudar a linguagem de download dos rascunhos")
+        help.addt("  > - Expandir tudo")
+        help.addt("  < - Contrair tudo")
+        help.addt("")
+        help.addt("Flags")
+        help.addt("  C - Contagem dos elementos finalizados")
+        help.addt("  P - Porcentagem dos elementos finalizados")
+        help.addt("  G - Mostrar as metas q[porcentagem] ou t[valor minimo]")
+        help.addt("  D - Mostrar o caminho das tarefas baixadas")
+        help.addt("  A - Modo administrador - desbloqueia todas as tarefas")
+        help.addt("")
+        help.addt("Controles")
+        help.addt("  setas - Para navegar entre os elementos")
+        help.addt("  enter - Marcar ou desmarcar")
+        help.addt("  0 a 9 - Definir a nota parcial")
+        help.addt("      d - Baixar a tarefa")
+
+
     def show_items(self):
-        lines, cols = Fmt.scr.getmaxyx()
+        lines, cols = Fmt.get_size()
 
         if cols < 50 and self.flags_on("skills_bar") and self.flags_on("flags_bar"):
             self.flags_toggle("skills_bar")
@@ -2887,14 +2939,16 @@ class Play:
         elif cols < 35 and self.flags_on("skills_bar"):
             self.flags_toggle("skills_bar")
 
-        # lines, cols = Fmt.scr.getmaxyx()
         self.reload_options()
+
+        
         Fmt.erase()
         dx = cols - 3
-        help = self.build_help(dx - 3)
+        help = self.build_help_bar(dx - 3)
         frame_top = Frame(-1, 0).set_inner(1, dx).set_border_rounded().set_footer(help, "^").draw()
         header = self.build_top_bar(dx)
         frame_top.write(0, 0, header)
+
 
         frame_bottom = Frame(lines - 2, 0).set_inner(3, dx).set_border_rounded()
         frame_bottom.set_header(Sentence().addt("{").addf("/", "Links").addt("}")).draw()
@@ -2918,7 +2972,7 @@ class Play:
 
         frame_main = Frame(2, task_x_init).set_inner(dy, task_dx).set_border_rounded()
         frame_main.set_header(Sentence().addt("{").addf("/", f"Tarefas").addt("}"))
-        frame_main.set_footer(Sentence().addt("{").addf("/", f"ext:{self.rep.lang}").addt("}"))
+        frame_main.set_footer(Sentence().addt("{").addf("/", f"lang:{self.rep.lang}").addt("}"))
         frame_main.draw()
         self.show_tasks(frame_main)
 
@@ -3065,7 +3119,7 @@ class Play:
             if obj.key not in self.expanded:
                 self.expanded.append(obj.key)
 
-        Fmt.scr.refresh()
+
 
     def toggle(self):
         obj = self.items[self.index_selected].obj
@@ -3084,7 +3138,7 @@ class Play:
         # scr.nodelay(True)
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
-        Fmt.scr = scr
+        Fmt.set_scr(scr)  # Define o scr como global
 
         # Exemplo de uso da função escrever
         while True:
@@ -3098,7 +3152,7 @@ class Play:
             else:
                 value = scr.getch()
 
-                if value == ord("q"):
+                if value == ord("q") or value == 27:
                     break
                 elif value == curses.KEY_UP:
                     self.index_selected = max(0, self.index_selected - 1)
@@ -3108,21 +3162,25 @@ class Play:
                     self.arrow_left()
                 elif value == curses.KEY_RIGHT:
                     self.arrow_right()
+                elif value == ord("H"):
+                    self.flags_toggle("help_bar")
                 elif value == ord("h"):
-                    self.flags_toggle("help")
-                elif value == ord("c"):
+                    self.show_help()
+                elif value == ord("C"):
                     self.flags_toggle("cont")
-                elif value == ord("p"):
+                elif value == ord("P"):
                     self.flags_toggle("perc")
-                elif value == ord("g"):
+                elif value == ord("G"):
                     self.flags_toggle("goal")
-                elif value == ord("s"):
+                elif value == ord("D"):
+                    self.flags_toggle("folder")
+                elif value == ord("S"):
                     self.flags_toggle("skills_bar")
                     lines, cols = scr.getmaxyx()
                     if cols < 50:
                         if self.flags_on("flags_bar"):
                             self.flags_toggle("flags_bar")
-                elif value == ord("f"):
+                elif value == ord("F"):
                     self.flags_toggle("flags_bar")
                     lines, cols = scr.getmaxyx()
                     if cols < 50:
@@ -3139,7 +3197,7 @@ class Play:
                     self.toggle()
                 elif value == ord("o"):
                     self.mark_opt = not self.mark_opt
-                elif value == ord("e"):
+                elif value == ord("l"):
                     self.set_language()
                 elif value == ord("d"):
                     self.process_down()
@@ -3155,7 +3213,7 @@ class Play:
             if self.first_loop:
                 self.first_loop = False
 
-    def play(self, graph_ext: str) -> bool:
+    def play(self, graph_ext: str):
         self.graph_ext = graph_ext
         while True:
             output = curses.wrapper(self.main)
