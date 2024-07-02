@@ -1,5 +1,10 @@
 # Changelog
 
+- 0.9.7
+  - add: curses as requirement
+  - add: Input class for errors
+- 0.9.6
+  - add: adaptative frame mode
 - 0.9.0
   - add: frame mode improved
 - 0.8.7

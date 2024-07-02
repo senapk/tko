@@ -4,7 +4,7 @@ from ..util.sentence import Sentence
 
 
 class Frame:
-    def __init__(self, y: int, x: int):
+    def __init__(self, y: int = 0, x: int = 0):
         self._x = x
         self._y = y
         self._inner_dx = 0
@@ -16,6 +16,11 @@ class Frame:
         self._footer: Sentence = Sentence()
         self._footer_align = ""
         self._fill_char = " "
+
+    def set_pos(self, y: int, x: int):
+        self._x = x
+        self._y = y
+        return self
 
     def set_inner(self, inner_dy: int, inner_dx: int):
         self._inner_dy = inner_dy

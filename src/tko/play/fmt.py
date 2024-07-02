@@ -144,7 +144,7 @@ class Fmt:
         Fmt.scr.refresh()
 
     @staticmethod
-    def getmaxyx():
+    def get_size():
         return Fmt.scr.getmaxyx()
         
 

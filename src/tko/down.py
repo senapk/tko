@@ -1,4 +1,4 @@
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 import os
 import urllib.request
 import urllib.error
@@ -10,6 +10,7 @@ from .util.remote import RemoteCfg
 
 
 class Down:
+    output: List[str] = []
 
     ts_draft = (r'let _cin_ : string[] = [];' + '\n'
                 r'try { _cin_ = require("fs").readFileSync(0).toString().split(/\r?\n/); } catch(e){}' + '\n'
@@ -47,7 +48,7 @@ class Down:
     def __create_file(content, path, label=""):
         with open(path, "w") as f:
             f.write(content)
-        print("  " + path, label)
+        Down.output.append("  " + path, label)
 
     @staticmethod
     def __unpack_json(loaded, destiny, lang: str):
@@ -74,14 +75,14 @@ class Down:
         if not os.path.exists(path):
             with open(path, "w", encoding="utf-8") as f:
                 f.write(content.encode("utf-8").decode("utf-8"))
-            print("  " + path + " (New)")
+            Down.output.append("  " + path + " (New)")
         else:
             if open(path).read() != content:
-                print(path + " (Updated)")
+                Down.output.append(path + " (Updated)")
                 with open(path, "w") as f:
                     f.write(content)
             else:
-                print("  " + path + " (Unchanged)")
+                Down.output.append("  " + path + " (Unchanged)")
     
     @staticmethod
     def __down_problem_def(destiny, cache_url) -> Tuple[str, str]:
@@ -109,12 +110,13 @@ class Down:
         if not os.path.exists(destiny):
             os.makedirs(destiny, exist_ok=True)
         else:
-            print("  Problem folder", destiny, "found, merging content.")
+            Down.output.append("  Problem folder "+ destiny + " found, merging content.")
 
         return destiny
 
     @staticmethod
-    def download_problem(rootdir, course: str, activity: str, language: Optional[str], output = None) -> bool:
+    def download_problem(rootdir, course: str, activity: str, language: Optional[str]) -> List[str]:
+        Down.output = []
         sp = SettingsParser()
         settings = sp.load_settings()
         rep = settings.get_repo(course)
@@ -123,21 +125,20 @@ class Down:
         game = Game(file)
         item = game.get_task(activity)
         if not item.link.startswith("http"):
-            output.append("fail: link for activity is not a remote link")
-            return output
+            Down.output.append("fail: link for activity is not a remote link")
+            return Down.output
         cfg = RemoteCfg(item.link)
         cache_url = os.path.dirname(cfg.get_raw_url()) + "/.cache/"
 
         destiny = Down.__create_problem_folder(rootdir, activity)
         try:
-            # print("debug", cache_url)
             [_readme_path, mapi_path] = Down.__down_problem_def(destiny, cache_url)
         except urllib.error.HTTPError:
-            output.append("  fail: activity not found in course url")
+            Down.output.append("  fail: activity not found in course url")
             # verifi if destiny folder is empty and remove it
             if len(os.listdir(destiny)) == 0:
                 os.rmdir(destiny)
-            return False
+            return Down.output
 
         with open(mapi_path) as f:
             loaded_json = json.load(f)
@@ -155,7 +156,7 @@ class Down:
         
         Down.__unpack_json(loaded_json, destiny, language)
         Down.__download_drafts(loaded_json, destiny, language, cache_url, ask_ext)
-        return True
+        return Down.output
 
     @staticmethod
     def __download_drafts(loaded_json, destiny: str, language, cache_url, ask_ext):
@@ -168,7 +169,7 @@ class Down:
             try:
                 draft_path = os.path.join(destiny, "draft." + language)
                 urllib.request.urlretrieve(cache_url + "draft." + language, draft_path)
-                print("  " + draft_path + " (Draft) Rename before modify.")
+                Down.output.append("  " + draft_path + " (Draft) Rename before modify.")
 
             except urllib.error.HTTPError:  # draft not found
                 filename = "draft."
@@ -179,7 +180,7 @@ class Down:
                             f.write(Down.drafts[language])
                         else:
                             f.write("")
-                    print("  " + draft_path, "(Empty)")
+                    Down.output.append("  " + draft_path + " (Empty)")
         
         if ask_ext:
             print("\nYou can choose default extension with command\n$ tko config -l <extension>")

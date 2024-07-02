@@ -4,8 +4,8 @@ from setuptools import setup, find_packages
 
 here = pathlib.Path(__file__).parent.resolve()  # current path
 long_description = (here / 'Readme.md').read_text(encoding='utf-8')  # Get the long description from the README file
-with open(here / 'requirements.txt') as fp:  # read requirements.txt
-    install_reqs = [r.rstrip() for r in fp.readlines() if not r.startswith('#')]
+# with open(here / 'requirements.txt') as fp:  # read requirements.txt
+#     install_reqs = [r.rstrip() for r in fp.readlines() if not r.startswith('#')]
 
 
 def get_version():
@@ -34,8 +34,11 @@ setup(
     packages=find_packages(where='src'),  # Required
     python_requires='>=3.8, <4',
 
-    install_requires=install_reqs,  # Optional, additional pip packages to be installed by this package installation
-
+    # Optional, additional pip packages to be installed by this package installation
+    install_requires=[
+        "windows-curses; platform_system=='Windows'",
+        "appdirs"
+    ],
     extras_require={
         'dev': ['check-manifest'],
         'test': ['coverage', 'pytest'],

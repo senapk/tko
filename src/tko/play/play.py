@@ -13,11 +13,11 @@ from ..util.sentence import Sentence
 from .style import Style
 from .fmt import Fmt
 from .frame import Frame
+from .input import Input
+import time
 
 import os
 import curses
-
-
 
 class Entry:
     def __init__(self, obj: Any, sentence: Sentence):
@@ -35,8 +35,9 @@ class Play:
         self.fnsave = fnsave
         self.local = local
         self.repo_alias = repo_alias
-
         self.rep = rep
+
+        self.input_layer: Optional[Input] = None
 
         # self.mark_opt = "opt" in self.rep.view
         self.mark_opt = True
@@ -235,52 +236,73 @@ class Play:
         output = []
         if task.key in task.title:
             output.append(f"tko down {self.repo_alias} {task.key} -l {ext}")
-            Down.download_problem(rootdir, self.repo_alias, task.key, ext, output)
+            output += Down.download_problem(rootdir, self.repo_alias, task.key, ext)
+            self.input_layer = Input().set_content(output).warning()
         else:
-            output.append(f"Essa não é uma tarefa de código")
+            self.input_layer = Input().addt("Essa não é uma tarefa de código").warning()
         return output
 
-    def check_rootdir(self):
-        if self.local.rootdir == "":
-            print("Diretório raiz para o tko ainda não foi definido")
-            print("Você deseja utilizer o diretório atual")
-            print((Style.shell, "  " + os.getcwd()))
-            print("como raiz para o repositório de " + self.repo_alias + "? (s/n) ", end="")
-            answer = input()
-            if answer == "s":
+    def set_rootdir(self):
+        def chama(value):
+            if value == "yes":
                 self.local.rootdir = os.getcwd()
                 self.fnsave()
-                print("Você pode alterar o diretório raiz navegando para o diretório desejado e executando o comando")
-                print((Style.shell, "  tko config --root"))
+                self.input_layer = Input()\
+                    .addt("Diretório raiz definido como ")\
+                    .addt("  " +  self.local.rootdir)\
+                    .addt("Você pode alterar o diretório raiz navegando para o")\
+                    .addt("diretório desejado e executando o comando")\
+                    .addt("  tko config --root")\
+                    .addt("")\
+                    .addt("Tente baixar a tarefa novamente")\
+                    .warning()
             else:
-                print("Navegue para o diretório desejado e execute o comando novamente")
-                exit(1)
+                self.input_layer = Input()\
+                    .addt("Navague para o diretório desejado e execute o comando")\
+                    .addt("  tko config --root")\
+                    .addt("ou rode o tko play novamente").warning()
+
+        
+        self.input_layer = Input().addt("Diretório raiz para o tko ainda não foi definido")\
+            .addt("Você deseja utilizar o diretório atual")\
+            .addt(os.getcwd())\
+            .addt("como raiz para o repositório de " + self.repo_alias + "?")\
+            .set_options(["yes", "no"])\
+            .get_answer(chama)
     
-    def check_language(self):
-        if self.rep.lang == "":
-            print("Linguagem de programação default para esse repositório ainda não foi definida")
-            print("Escolha a linguagem de programação para o repositório de " + self.repo_alias)
-            print("  [c, cpp, py, ts, js, java]: ", end="")
-            lang = input()
-            self.rep.lang = lang
+    def set_language(self):
+
+        def back(value):
+            self.rep.lang = value
             self.fnsave()
-            print("Você pode mudar a linguagem de programação apertando e")
+            self.input_layer = Input()\
+            .addt("Linguagem alterada para " + value)\
+            .addt("")\
+            .addt("Você pode mudar a linguagem de programação apertando e")\
+            .warning()
+            
+
+        self.input_layer = Input()\
+            .addt("   Escolha a extensão")\
+            .addt(" default para os rascunhos") \
+            .addt("")\
+            .addt(" Selecione e tecle enter")\
+            .set_options(["c", "cpp", "py", "ts", "js", "java", "hs"])\
+            .get_answer(back)
 
     def process_down(self):
-        self.check_rootdir()
-        self.check_language()
+        
+        if self.local.rootdir == "":
+            self.set_rootdir()
+        if self.rep.lang == "":
+            self.set_language()
         rootdir = os.path.relpath(os.path.join(self.local.rootdir, self.repo_alias))
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             self.down_task(rootdir, obj, self.rep.lang)
         else:
-            print("Essa não é uma tarefa de código")
-        input("Digite enter para continuar")
-    # def find_cluster(self, key) -> Optional[Cluster]:
-    #     for c in self.game.clusters:
-    #         if c.key == key:
-    #             return c
-    #     return None
+            self.input_layer = Input().addt("Essa não é uma tarefa de código").warning()
+
 
     def process_collapse(self):
         quest_keys = [q.key for q in self.avaliable_quests]
@@ -304,22 +326,6 @@ class Play:
                 if q.key not in self.expanded:
                     self.expanded.append(q.key)
     
-    def process_ext(self, scr):
-        while True:
-            opcoes = ["", "c", "cpp", "py", "ts", "js", "java"]
-            scr.erase()
-            ext = Fmt.get_user_input(scr, f"Digite a extensão: .")
-            scr.refresh()
-            if ext in opcoes:
-                self.rep.lang = ext
-                self.fnsave()
-                return
-            else:
-                scr.addstr(1, 0, "Extensão inválida")
-                scr.addstr(2, 0, "Escolha uma das opções: " + ", ".join(opcoes))
-                scr.refresh()
-                scr.getch()
-
     def flags_toggle(self, token):
         if token in self.flags:
             self.flags.remove(token)
@@ -378,8 +384,13 @@ class Play:
         header.addf(self.get_toggle_bg(self.flags_on("skills_bar")), f"Skill [s]").addt(" ")
 
         xp = XP(self.game)
-        text = f"L:{xp.get_level()} XP:{str(xp.get_xp_level_current())}/{str(xp.get_xp_level_needed())}"
-        percent = xp.get_xp_level_current() / xp.get_xp_level_needed()
+
+        if xp.get_xp_total_obtained() == xp.get_xp_total_available():
+            text = "Você atingiu o máximo de xp!"
+            percent = 100
+        else:
+            text = f"L:{xp.get_level()} XP:{str()}/{str(xp.get_xp_level_needed())}"
+            percent = xp.get_xp_level_current() / xp.get_xp_level_needed()
         size = max(20 - 5, dx - header.len() - 1)
         xp_bar = self.build_xp_bar(text, percent, size)
         header.concat(xp_bar).addt(" ")
@@ -405,19 +416,15 @@ class Play:
             frame.write(y, 0, sentence)
             y += 1
 
-    def show_skills_bar(self, xinit, xp, xp_dx, deeper):
-            total_perc = 0
-            for q in self.game.quests.values():
-                total_perc += q.get_percent()
-            if self.game.quests:
-                total_perc = total_perc // len(self.game.quests)
+    def show_skills_bar(self, xinit, dx, dy):
             
+            xp = XP(self.game)
+            total_perc = int(100 * (xp.get_xp_total_obtained() / xp.get_xp_total_available()))
             text =  f" {xp.get_xp_total_obtained()}xp {total_perc}%"
         
-            total_bar = self.build_xp_bar(text, total_perc / 100, xp_dx - 7)
-            frame_xp = Frame(2, xinit).set_inner(deeper, xp_dx - 3).set_border_rounded()
+            total_bar = self.build_xp_bar(text, total_perc / 100, dx - 7)
+            frame_xp = Frame(2, xinit).set_inner(dy, dx - 3).set_border_rounded()
             frame_xp.set_header(Sentence().addt("{").addf("/", "Skills").addt("}"), "^")
-            # frame_xp.set_footer(Sentence().addt("{").addf("/", f"Total:{xp.get_xp_total_obtained()}").addt("}"))
             frame_xp.set_footer(Sentence().addt("{").concat(total_bar).addt("}"), "^")
             frame_xp.draw()
 
@@ -426,7 +433,7 @@ class Play:
             for skill, value in total.items():
                 text = f"{skill}:{obt[skill]}/{value}"
                 perc = obt[skill]/value
-                skill_bar = self.build_xp_bar(text, perc, xp_dx - 5)
+                skill_bar = self.build_xp_bar(text, perc, dx - 5)
                 frame_xp.write(index, 1, skill_bar)
                 index += 2
 
@@ -459,9 +466,9 @@ class Play:
                 index += 2
 
     def build_help(self, limit: int) -> Sentence:
-        msgs = ["Quit[q]"]
+        msgs = ["Quit[q]", "Mark[enter]"]
         if "help" in self.flags:
-            msgs += ["Down[d]", "Ext[e]", f"Toggle[{symbols.newline}]", "Grade[0-9]", "Expand[>]", "Collapse[<]"]
+            msgs += ["Down[d]", "Ext[e]", "Grade[0-9]", "Expand[>]", "Collapse[<]"]
         help = Sentence().addt(" ")
         for x in msgs:
             help.addf("", x).addt(" ")
@@ -504,7 +511,7 @@ class Play:
         if self.flags_on("skills_bar"):
             xp_dx = max(20, dx // 3)
             task_dx -= xp_dx - 1
-            self.show_skills_bar(cols - xp_dx, xp, xp_dx, dy)
+            self.show_skills_bar(cols - xp_dx, xp_dx, dy)
 
         if self.flags_on("flags_bar"):
             flags_dx = 16
@@ -514,9 +521,12 @@ class Play:
 
         frame_main = Frame(2, task_x_init).set_inner(dy, task_dx).set_border_rounded()
         frame_main.set_header(Sentence().addt("{").addf("/", f"Tarefas").addt("}"))
-        frame_main.set_footer(Sentence().addt("{").addf("/", f"{self.rep.lang}").addt("}"))
+        frame_main.set_footer(Sentence().addt("{").addf("/", f"ext:{self.rep.lang}").addt("}"))
         frame_main.draw()
         self.show_tasks(frame_main)
+
+        if self.input_layer and self.input_layer.enable:
+            self.input_layer.draw()
 
     def generate_graph(self, scr):
         if not self.first_loop:
@@ -670,6 +680,7 @@ class Play:
                 self.expanded.append(obj.key)
 
     def main(self, scr):
+        # scr.nodelay(True)
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
         Fmt.scr = scr
@@ -680,58 +691,64 @@ class Play:
             self.update_new()
             self.show_items()
             self.generate_graph(scr)
-            value = scr.getch()  # Aguarda o pressionamento de uma tecla antes de sair
-            if value == ord("q"):
-                break
-            elif value == curses.KEY_UP:
-                self.index_selected = max(0, self.index_selected - 1)
-            elif value == curses.KEY_DOWN:
-                self.index_selected = min(len(self.items) - 1, self.index_selected + 1)
-            elif value == curses.KEY_LEFT:
-                self.arrow_left()
-            elif value == curses.KEY_RIGHT:
-                self.arrow_right()
-            elif value == ord("h"):
-                self.flags_toggle("help")
-            elif value == ord("c"):
-                self.flags_toggle("cont")
-            elif value == ord("p"):
-                self.flags_toggle("perc")
-            elif value == ord("g"):
-                self.flags_toggle("goal")
-            elif value == ord("s"):
-                self.flags_toggle("skills_bar")
-                lines, cols = scr.getmaxyx()
-                if cols < 50:
-                    if self.flags_on("flags_bar"):
-                        self.flags_toggle("flags_bar")
-            elif value == ord("f"):
-                self.flags_toggle("flags_bar")
-                lines, cols = scr.getmaxyx()
-                if cols < 50:
-                    if self.flags_on("skills_bar"):
-                        self.flags_toggle("skills_bar")
-            elif value == ord("A"):
-                self.flags_toggle("admin")
-                self.reload_options()
-            elif value == ord(">"):
-                self.process_expand()
-            elif value == ord("<"):
-                self.process_collapse()
-            elif value == ord(" ") or value == ord("\n"):
-                self.toggle()
-            elif value == ord("o"):
-                self.mark_opt = not self.mark_opt
-            elif value == ord("e"):
-                self.process_ext(scr)
-            elif value == ord("d"):
-                return self.process_down
-            # elif value == ord("\n"):
-            #     self.mass_mark()
-            elif value >= ord("0") and value <= ord("9"):
-                self.set_grade(value)
-            elif value == ord("T"):
-                self.test_color(scr)
+
+            if self.input_layer and self.input_layer.enable:
+                value = self.input_layer.get_input()
+            else:
+                value = scr.getch()
+
+                if value == ord("q"):
+                    break
+                elif value == curses.KEY_UP:
+                    self.index_selected = max(0, self.index_selected - 1)
+                elif value == curses.KEY_DOWN:
+                    self.index_selected = min(len(self.items) - 1, self.index_selected + 1)
+                elif value == curses.KEY_LEFT:
+                    self.arrow_left()
+                elif value == curses.KEY_RIGHT:
+                    self.arrow_right()
+                elif value == ord("h"):
+                    self.flags_toggle("help")
+                elif value == ord("c"):
+                    self.flags_toggle("cont")
+                elif value == ord("p"):
+                    self.flags_toggle("perc")
+                elif value == ord("g"):
+                    self.flags_toggle("goal")
+                elif value == ord("s"):
+                    self.flags_toggle("skills_bar")
+                    lines, cols = scr.getmaxyx()
+                    if cols < 50:
+                        if self.flags_on("flags_bar"):
+                            self.flags_toggle("flags_bar")
+                elif value == ord("f"):
+                    self.flags_toggle("flags_bar")
+                    lines, cols = scr.getmaxyx()
+                    if cols < 50:
+                        if self.flags_on("skills_bar"):
+                            self.flags_toggle("skills_bar")
+                elif value == ord("A"):
+                    self.flags_toggle("admin")
+                    self.reload_options()
+                elif value == ord(">"):
+                    self.process_expand()
+                elif value == ord("<"):
+                    self.process_collapse()
+                elif value == ord(" ") or value == ord("\n"):
+                    self.toggle()
+                elif value == ord("o"):
+                    self.mark_opt = not self.mark_opt
+                elif value == ord("e"):
+                    self.set_language()
+                elif value == ord("d"):
+                    self.process_down()
+                elif value == ord("M"):
+                    self.mass_mark()
+                elif value >= ord("0") and value <= ord("9"):
+                    self.set_grade(value)
+                elif value == ord("T"):
+                    # self.test_color(scr)
+                    self.input_layer = Input().addt("Desabilitando flags").warning()
             self.save_to_json()
         
             if self.first_loop:

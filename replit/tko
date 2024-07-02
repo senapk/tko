@@ -14,13 +14,14 @@ import sys
 import urllib.request
 import urllib.error
 import curses
+import time
 import re
 import math
 import io
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.9.6"
+__version__ = "0.9.9"
 
 class Style:
     focus = "Y"
@@ -791,7 +792,7 @@ class Fmt:
         Fmt.scr.refresh()
 
     @staticmethod
-    def getmaxyx():
+    def get_size():
         return Fmt.scr.getmaxyx()
         
 
@@ -800,7 +801,7 @@ class Fmt:
 
 
 class Frame:
-    def __init__(self, y: int, x: int):
+    def __init__(self, y: int = 0, x: int = 0):
         self._x = x
         self._y = y
         self._inner_dx = 0
@@ -812,6 +813,11 @@ class Frame:
         self._footer: Sentence = Sentence()
         self._footer_align = ""
         self._fill_char = " "
+
+    def set_pos(self, y: int, x: int):
+        self._x = x
+        self._y = y
+        return self
 
     def set_inner(self, inner_dy: int, inner_dx: int):
         self._inner_dy = inner_dy
@@ -951,6 +957,114 @@ class Frame:
                 Fmt.write(y + i, x + dx + 1, Sentence().addt(ver))
         return self
 
+
+
+class Input:
+    def __init__(self):
+        self.frame = Frame(0, 0)
+        self.content: List[str] = []
+        # self.ending = 0
+        # self.total_time = 0
+        self.type = ""
+        self.options = []
+        self.options_index = 0
+        self.fn_answer = None
+
+    def set_header(self, text: Sentence, align: str = ''):
+        self.frame.set_header(text, align)
+        return self
+
+    def __setup_frame(self):
+        lines, cols = Fmt.get_size()
+        max_dx = max([len(x) for x in self.content])
+        dx = max_dx + 2
+        dy = len(self.content) + 2
+        x = (cols - dx) // 2
+        y = (lines - dy) // 2
+        self.frame.set_pos(y, x).set_inner(dy, dx)
+        self.frame.set_fill()
+        # if self.type == "timer":
+        #     delta = dx - 4
+        #     percent = (self.ending - time.time()) / self.total_time
+        #     footer = (delta - int(delta * percent)) * "─" + int(delta * percent) * "━"
+        #     self.frame.set_footer(Sentence().addt(footer), "^")
+        
+        if self.type == "answer":
+            footer = Sentence().addt(" ")
+            for i, option in enumerate(self.options):
+                fmt = "kG" if i == self.options_index else "kY"
+                footer.addf(fmt, option).addt(" ")
+            self.frame.set_footer(footer, "^")
+
+    def addt(self, text: str):
+        self.content.append(text)
+        return self
+    
+    def set_content(self, content: List[str]):
+        self.content = content
+        return self
+
+    # def timer(self, delta: int):
+    #     self.type = "timer"
+    #     self.frame.set_border_rounded()
+    #     self.frame.set_header(Sentence().addf("/", " Aviso "))
+    #     self.enable = True
+    #     self.total_time = delta
+    #     self.ending = time.time() + delta
+
+    #     return self
+
+    def warning(self):
+        self.type = "warning"
+        self.frame.set_border_bold()
+        self.frame.set_header(Sentence().addf("/", " Aviso "))
+        self.frame.set_footer(Sentence().addf("/", " Apente enter "))
+        self.enable = True
+        return self
+    
+    def set_options(self, options: List[str]):
+        self.options = options
+        return self
+    
+    def get_answer(self, fn_answer):
+        self.type = "answer"
+        self.frame.set_border_rounded()
+        self.frame.set_header(Sentence().addf("/", " Pergunta "))
+        # self.frame.set_footer(Sentence().addf("/", " Selecione e aperte enter "))
+        self.fn_answer = fn_answer
+        self.enable = True
+        return self
+
+    def draw(self):
+        self.__setup_frame()
+        self.frame.draw()
+        for i, line in enumerate(self.content):
+            self.frame.write(i + 1, 1, Sentence().addt(line))
+        return self
+
+    def get_input(self) -> int:
+        self.draw()
+        key = Fmt.getch()
+        if self.type == "warning" or self.type == "answer":
+            if key == ord('\n') or self.type == "timer":
+                self.enable = False
+        if self.type == "timer":
+            if self.ending - time.time() < 0:
+                self.enable = False
+        if self.type == "answer":
+            if key == curses.KEY_LEFT:
+                self.options_index = (self.options_index - 1) % len(self.options)
+            elif key == curses.KEY_RIGHT:
+                self.options_index = (self.options_index + 1) % len(self.options)
+            elif key == ord('\n'):
+                self.enable = False
+                self.fn_answer(self.options[self.options_index])
+                return 0            
+        return -1, ""
+            
+
+
+        
 class Color:
     enabled = False
     terminal_styles = {
@@ -1894,6 +2008,7 @@ class Game:
 
 
 class Down:
+    output: List[str] = []
 
     ts_draft = (r'let _cin_ : string[] = [];' + '\n'
                 r'try { _cin_ = require("fs").readFileSync(0).toString().split(/\r?\n/); } catch(e){}' + '\n'
@@ -1931,7 +2046,7 @@ class Down:
     def __create_file(content, path, label=""):
         with open(path, "w") as f:
             f.write(content)
-        print("  " + path, label)
+        Down.output.append("  " + path, label)
 
     @staticmethod
     def __unpack_json(loaded, destiny, lang: str):
@@ -1958,14 +2073,14 @@ class Down:
         if not os.path.exists(path):
             with open(path, "w", encoding="utf-8") as f:
                 f.write(content.encode("utf-8").decode("utf-8"))
-            print("  " + path + " (New)")
+            Down.output.append("  " + path + " (New)")
         else:
             if open(path).read() != content:
-                print(path + " (Updated)")
+                Down.output.append(path + " (Updated)")
                 with open(path, "w") as f:
                     f.write(content)
             else:
-                print("  " + path + " (Unchanged)")
+                Down.output.append("  " + path + " (Unchanged)")
     
     @staticmethod
     def __down_problem_def(destiny, cache_url) -> Tuple[str, str]:
@@ -1993,12 +2108,13 @@ class Down:
         if not os.path.exists(destiny):
             os.makedirs(destiny, exist_ok=True)
         else:
-            print("  Problem folder", destiny, "found, merging content.")
+            Down.output.append("  Problem folder "+ destiny + " found, merging content.")
 
         return destiny
 
     @staticmethod
-    def download_problem(rootdir, course: str, activity: str, language: Optional[str], output = None) -> bool:
+    def download_problem(rootdir, course: str, activity: str, language: Optional[str]) -> List[str]:
+        Down.output = []
         sp = SettingsParser()
         settings = sp.load_settings()
         rep = settings.get_repo(course)
@@ -2007,21 +2123,20 @@ class Down:
         game = Game(file)
         item = game.get_task(activity)
         if not item.link.startswith("http"):
-            output.append("fail: link for activity is not a remote link")
-            return output
+            Down.output.append("fail: link for activity is not a remote link")
+            return Down.output
         cfg = RemoteCfg(item.link)
         cache_url = os.path.dirname(cfg.get_raw_url()) + "/.cache/"
 
         destiny = Down.__create_problem_folder(rootdir, activity)
         try:
-            # print("debug", cache_url)
             [_readme_path, mapi_path] = Down.__down_problem_def(destiny, cache_url)
         except urllib.error.HTTPError:
-            output.append("  fail: activity not found in course url")
+            Down.output.append("  fail: activity not found in course url")
             # verifi if destiny folder is empty and remove it
             if len(os.listdir(destiny)) == 0:
                 os.rmdir(destiny)
-            return False
+            return Down.output
 
         with open(mapi_path) as f:
             loaded_json = json.load(f)
@@ -2039,7 +2154,7 @@ class Down:
         
         Down.__unpack_json(loaded_json, destiny, language)
         Down.__download_drafts(loaded_json, destiny, language, cache_url, ask_ext)
-        return True
+        return Down.output
 
     @staticmethod
     def __download_drafts(loaded_json, destiny: str, language, cache_url, ask_ext):
@@ -2052,7 +2167,7 @@ class Down:
             try:
                 draft_path = os.path.join(destiny, "draft." + language)
                 urllib.request.urlretrieve(cache_url + "draft." + language, draft_path)
-                print("  " + draft_path + " (Draft) Rename before modify.")
+                Down.output.append("  " + draft_path + " (Draft) Rename before modify.")
 
             except urllib.error.HTTPError:  # draft not found
                 filename = "draft."
@@ -2063,7 +2178,7 @@ class Down:
                             f.write(Down.drafts[language])
                         else:
                             f.write("")
-                    print("  " + draft_path, "(Empty)")
+                    Down.output.append("  " + draft_path + " (Empty)")
         
         if ask_ext:
             print("\nYou can choose default extension with command\n$ tko config -l <extension>")
@@ -2291,8 +2406,6 @@ class XP:
 
 
 
-
-
 class Entry:
     def __init__(self, obj: Any, sentence: Sentence):
         self.obj = obj
@@ -2309,8 +2422,9 @@ class Play:
         self.fnsave = fnsave
         self.local = local
         self.repo_alias = repo_alias
-
         self.rep = rep
+
+        self.input_layer: Optional[Input] = None
 
         # self.mark_opt = "opt" in self.rep.view
         self.mark_opt = True
@@ -2509,52 +2623,73 @@ class Play:
         output = []
         if task.key in task.title:
             output.append(f"tko down {self.repo_alias} {task.key} -l {ext}")
-            Down.download_problem(rootdir, self.repo_alias, task.key, ext, output)
+            output += Down.download_problem(rootdir, self.repo_alias, task.key, ext)
+            self.input_layer = Input().set_content(output).warning()
         else:
-            output.append(f"Essa não é uma tarefa de código")
+            self.input_layer = Input().addt("Essa não é uma tarefa de código").warning()
         return output
 
-    def check_rootdir(self):
-        if self.local.rootdir == "":
-            print("Diretório raiz para o tko ainda não foi definido")
-            print("Você deseja utilizer o diretório atual")
-            print((Style.shell, "  " + os.getcwd()))
-            print("como raiz para o repositório de " + self.repo_alias + "? (s/n) ", end="")
-            answer = input()
-            if answer == "s":
+    def set_rootdir(self):
+        def chama(value):
+            if value == "yes":
                 self.local.rootdir = os.getcwd()
                 self.fnsave()
-                print("Você pode alterar o diretório raiz navegando para o diretório desejado e executando o comando")
-                print((Style.shell, "  tko config --root"))
+                self.input_layer = Input()\
+                    .addt("Diretório raiz definido como ")\
+                    .addt("  " +  self.local.rootdir)\
+                    .addt("Você pode alterar o diretório raiz navegando para o")\
+                    .addt("diretório desejado e executando o comando")\
+                    .addt("  tko config --root")\
+                    .addt("")\
+                    .addt("Tente baixar a tarefa novamente")\
+                    .warning()
             else:
-                print("Navegue para o diretório desejado e execute o comando novamente")
-                exit(1)
+                self.input_layer = Input()\
+                    .addt("Navague para o diretório desejado e execute o comando")\
+                    .addt("  tko config --root")\
+                    .addt("ou rode o tko play novamente").warning()
+
+        
+        self.input_layer = Input().addt("Diretório raiz para o tko ainda não foi definido")\
+            .addt("Você deseja utilizar o diretório atual")\
+            .addt(os.getcwd())\
+            .addt("como raiz para o repositório de " + self.repo_alias + "?")\
+            .set_options(["yes", "no"])\
+            .get_answer(chama)
     
-    def check_language(self):
-        if self.rep.lang == "":
-            print("Linguagem de programação default para esse repositório ainda não foi definida")
-            print("Escolha a linguagem de programação para o repositório de " + self.repo_alias)
-            print("  [c, cpp, py, ts, js, java]: ", end="")
-            lang = input()
-            self.rep.lang = lang
+    def set_language(self):
+
+        def back(value):
+            self.rep.lang = value
             self.fnsave()
-            print("Você pode mudar a linguagem de programação apertando e")
+            self.input_layer = Input()\
+            .addt("Linguagem alterada para " + value)\
+            .addt("")\
+            .addt("Você pode mudar a linguagem de programação apertando e")\
+            .warning()
+            
+
+        self.input_layer = Input()\
+            .addt("   Escolha a extensão")\
+            .addt(" default para os rascunhos") \
+            .addt("")\
+            .addt(" Selecione e tecle enter")\
+            .set_options(["c", "cpp", "py", "ts", "js", "java", "hs"])\
+            .get_answer(back)
 
     def process_down(self):
-        self.check_rootdir()
-        self.check_language()
+        
+        if self.local.rootdir == "":
+            self.set_rootdir()
+        if self.rep.lang == "":
+            self.set_language()
         rootdir = os.path.relpath(os.path.join(self.local.rootdir, self.repo_alias))
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             self.down_task(rootdir, obj, self.rep.lang)
         else:
-            print("Essa não é uma tarefa de código")
-        input("Digite enter para continuar")
-    # def find_cluster(self, key) -> Optional[Cluster]:
-    #     for c in self.game.clusters:
-    #         if c.key == key:
-    #             return c
-    #     return None
+            self.input_layer = Input().addt("Essa não é uma tarefa de código").warning()
+
 
     def process_collapse(self):
         quest_keys = [q.key for q in self.avaliable_quests]
@@ -2578,22 +2713,6 @@ class Play:
                 if q.key not in self.expanded:
                     self.expanded.append(q.key)
     
-    def process_ext(self, scr):
-        while True:
-            opcoes = ["", "c", "cpp", "py", "ts", "js", "java"]
-            scr.erase()
-            ext = Fmt.get_user_input(scr, f"Digite a extensão: .")
-            scr.refresh()
-            if ext in opcoes:
-                self.rep.lang = ext
-                self.fnsave()
-                return
-            else:
-                scr.addstr(1, 0, "Extensão inválida")
-                scr.addstr(2, 0, "Escolha uma das opções: " + ", ".join(opcoes))
-                scr.refresh()
-                scr.getch()
-
     def flags_toggle(self, token):
         if token in self.flags:
             self.flags.remove(token)
@@ -2652,8 +2771,13 @@ class Play:
         header.addf(self.get_toggle_bg(self.flags_on("skills_bar")), f"Skill [s]").addt(" ")
 
         xp = XP(self.game)
-        text = f"L:{xp.get_level()} XP:{str(xp.get_xp_level_current())}/{str(xp.get_xp_level_needed())}"
-        percent = xp.get_xp_level_current() / xp.get_xp_level_needed()
+
+        if xp.get_xp_total_obtained() == xp.get_xp_total_available():
+            text = "Você atingiu o máximo de xp!"
+            percent = 100
+        else:
+            text = f"L:{xp.get_level()} XP:{str()}/{str(xp.get_xp_level_needed())}"
+            percent = xp.get_xp_level_current() / xp.get_xp_level_needed()
         size = max(20 - 5, dx - header.len() - 1)
         xp_bar = self.build_xp_bar(text, percent, size)
         header.concat(xp_bar).addt(" ")
@@ -2679,19 +2803,15 @@ class Play:
             frame.write(y, 0, sentence)
             y += 1
 
-    def show_skills_bar(self, xinit, xp, xp_dx, deeper):
-            total_perc = 0
-            for q in self.game.quests.values():
-                total_perc += q.get_percent()
-            if self.game.quests:
-                total_perc = total_perc // len(self.game.quests)
+    def show_skills_bar(self, xinit, dx, dy):
             
+            xp = XP(self.game)
+            total_perc = int(100 * (xp.get_xp_total_obtained() / xp.get_xp_total_available()))
             text =  f" {xp.get_xp_total_obtained()}xp {total_perc}%"
         
-            total_bar = self.build_xp_bar(text, total_perc / 100, xp_dx - 7)
-            frame_xp = Frame(2, xinit).set_inner(deeper, xp_dx - 3).set_border_rounded()
+            total_bar = self.build_xp_bar(text, total_perc / 100, dx - 7)
+            frame_xp = Frame(2, xinit).set_inner(dy, dx - 3).set_border_rounded()
             frame_xp.set_header(Sentence().addt("{").addf("/", "Skills").addt("}"), "^")
-            # frame_xp.set_footer(Sentence().addt("{").addf("/", f"Total:{xp.get_xp_total_obtained()}").addt("}"))
             frame_xp.set_footer(Sentence().addt("{").concat(total_bar).addt("}"), "^")
             frame_xp.draw()
 
@@ -2700,7 +2820,7 @@ class Play:
             for skill, value in total.items():
                 text = f"{skill}:{obt[skill]}/{value}"
                 perc = obt[skill]/value
-                skill_bar = self.build_xp_bar(text, perc, xp_dx - 5)
+                skill_bar = self.build_xp_bar(text, perc, dx - 5)
                 frame_xp.write(index, 1, skill_bar)
                 index += 2
 
@@ -2733,9 +2853,9 @@ class Play:
                 index += 2
 
     def build_help(self, limit: int) -> Sentence:
-        msgs = ["Quit[q]"]
+        msgs = ["Quit[q]", "Mark[enter]"]
         if "help" in self.flags:
-            msgs += ["Down[d]", "Ext[e]", f"Toggle[{symbols.newline}]", "Grade[0-9]", "Expand[>]", "Collapse[<]"]
+            msgs += ["Down[d]", "Ext[e]", "Grade[0-9]", "Expand[>]", "Collapse[<]"]
         help = Sentence().addt(" ")
         for x in msgs:
             help.addf("", x).addt(" ")
@@ -2778,7 +2898,7 @@ class Play:
         if self.flags_on("skills_bar"):
             xp_dx = max(20, dx // 3)
             task_dx -= xp_dx - 1
-            self.show_skills_bar(cols - xp_dx, xp, xp_dx, dy)
+            self.show_skills_bar(cols - xp_dx, xp_dx, dy)
 
         if self.flags_on("flags_bar"):
             flags_dx = 16
@@ -2788,9 +2908,12 @@ class Play:
 
         frame_main = Frame(2, task_x_init).set_inner(dy, task_dx).set_border_rounded()
         frame_main.set_header(Sentence().addt("{").addf("/", f"Tarefas").addt("}"))
-        frame_main.set_footer(Sentence().addt("{").addf("/", f"{self.rep.lang}").addt("}"))
+        frame_main.set_footer(Sentence().addt("{").addf("/", f"ext:{self.rep.lang}").addt("}"))
         frame_main.draw()
         self.show_tasks(frame_main)
+
+        if self.input_layer and self.input_layer.enable:
+            self.input_layer.draw()
 
     def generate_graph(self, scr):
         if not self.first_loop:
@@ -2944,6 +3067,7 @@ class Play:
                 self.expanded.append(obj.key)
 
     def main(self, scr):
+        # scr.nodelay(True)
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
         Fmt.scr = scr
@@ -2954,58 +3078,64 @@ class Play:
             self.update_new()
             self.show_items()
             self.generate_graph(scr)
-            value = scr.getch()  # Aguarda o pressionamento de uma tecla antes de sair
-            if value == ord("q"):
-                break
-            elif value == curses.KEY_UP:
-                self.index_selected = max(0, self.index_selected - 1)
-            elif value == curses.KEY_DOWN:
-                self.index_selected = min(len(self.items) - 1, self.index_selected + 1)
-            elif value == curses.KEY_LEFT:
-                self.arrow_left()
-            elif value == curses.KEY_RIGHT:
-                self.arrow_right()
-            elif value == ord("h"):
-                self.flags_toggle("help")
-            elif value == ord("c"):
-                self.flags_toggle("cont")
-            elif value == ord("p"):
-                self.flags_toggle("perc")
-            elif value == ord("g"):
-                self.flags_toggle("goal")
-            elif value == ord("s"):
-                self.flags_toggle("skills_bar")
-                lines, cols = scr.getmaxyx()
-                if cols < 50:
-                    if self.flags_on("flags_bar"):
-                        self.flags_toggle("flags_bar")
-            elif value == ord("f"):
-                self.flags_toggle("flags_bar")
-                lines, cols = scr.getmaxyx()
-                if cols < 50:
-                    if self.flags_on("skills_bar"):
-                        self.flags_toggle("skills_bar")
-            elif value == ord("A"):
-                self.flags_toggle("admin")
-                self.reload_options()
-            elif value == ord(">"):
-                self.process_expand()
-            elif value == ord("<"):
-                self.process_collapse()
-            elif value == ord(" ") or value == ord("\n"):
-                self.toggle()
-            elif value == ord("o"):
-                self.mark_opt = not self.mark_opt
-            elif value == ord("e"):
-                self.process_ext(scr)
-            elif value == ord("d"):
-                return self.process_down
-            # elif value == ord("\n"):
-            #     self.mass_mark()
-            elif value >= ord("0") and value <= ord("9"):
-                self.set_grade(value)
-            elif value == ord("T"):
-                self.test_color(scr)
+
+            if self.input_layer and self.input_layer.enable:
+                value = self.input_layer.get_input()
+            else:
+                value = scr.getch()
+
+                if value == ord("q"):
+                    break
+                elif value == curses.KEY_UP:
+                    self.index_selected = max(0, self.index_selected - 1)
+                elif value == curses.KEY_DOWN:
+                    self.index_selected = min(len(self.items) - 1, self.index_selected + 1)
+                elif value == curses.KEY_LEFT:
+                    self.arrow_left()
+                elif value == curses.KEY_RIGHT:
+                    self.arrow_right()
+                elif value == ord("h"):
+                    self.flags_toggle("help")
+                elif value == ord("c"):
+                    self.flags_toggle("cont")
+                elif value == ord("p"):
+                    self.flags_toggle("perc")
+                elif value == ord("g"):
+                    self.flags_toggle("goal")
+                elif value == ord("s"):
+                    self.flags_toggle("skills_bar")
+                    lines, cols = scr.getmaxyx()
+                    if cols < 50:
+                        if self.flags_on("flags_bar"):
+                            self.flags_toggle("flags_bar")
+                elif value == ord("f"):
+                    self.flags_toggle("flags_bar")
+                    lines, cols = scr.getmaxyx()
+                    if cols < 50:
+                        if self.flags_on("skills_bar"):
+                            self.flags_toggle("skills_bar")
+                elif value == ord("A"):
+                    self.flags_toggle("admin")
+                    self.reload_options()
+                elif value == ord(">"):
+                    self.process_expand()
+                elif value == ord("<"):
+                    self.process_collapse()
+                elif value == ord(" ") or value == ord("\n"):
+                    self.toggle()
+                elif value == ord("o"):
+                    self.mark_opt = not self.mark_opt
+                elif value == ord("e"):
+                    self.set_language()
+                elif value == ord("d"):
+                    self.process_down()
+                elif value == ord("M"):
+                    self.mass_mark()
+                elif value >= ord("0") and value <= ord("9"):
+                    self.set_grade(value)
+                elif value == ord("T"):
+                    # self.test_color(scr)
+                    self.input_layer = Input().addt("Desabilitando flags").warning()
             self.save_to_json()
         
             if self.first_loop:
