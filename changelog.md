@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.9.93
+  - add: down working with curses and with print
 - 0.9.7
   - add: curses as requirement
   - add: Input class for errors

@@ -185,7 +185,7 @@ class Main:
 
     @staticmethod
     def down(args):
-        Down.download_problem(".", args.course, args.activity, args.language)
+        Down.download_problem(".", args.course, args.activity, args.language, print)
 
 
 class Parser:

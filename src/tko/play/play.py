@@ -233,14 +233,20 @@ class Play:
             self.index_selected = len(self.items) - 1
 
     def down_task(self, rootdir, task: Task, ext: str):
-        output = []
         if task.key in task.title:
-            output.append(f"tko down {self.repo_alias} {task.key} -l {ext}")
-            output += Down.download_problem(rootdir, self.repo_alias, task.key, ext)
-            self.input_layer.append(Input().set_content(output).warning())
+            down_frame = Input().warning()
+            down_frame.addt(f"tko down {self.repo_alias} {task.key} -l {ext}")
+            self.input_layer.append(down_frame)
+
+            def fnprint(text):
+                down_frame.addt(text)
+                down_frame.draw()
+                Fmt.scr.refresh()
+
+            Down.download_problem(rootdir, self.repo_alias, task.key, ext, fnprint)
         else:
             self.input_layer.append(Input().addt("Essa não é uma tarefa de código").warning())
-        return output
+
 
     def set_rootdir(self):
         def chama(value):
@@ -299,7 +305,8 @@ class Play:
         if self.rep.lang == "":
             self.set_language()
             return
-        
+    
+
         rootdir = os.path.relpath(os.path.join(self.local.rootdir, self.repo_alias))
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
