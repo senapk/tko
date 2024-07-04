@@ -17,9 +17,14 @@ class Input:
         self.options_index = 0
         self.fn_answer = None
         self.enable = True
+        self.extra_exit: List[int] = []
 
-    def set_header(self, text: Sentence, align: str = ''):
+    def set_header(self, text: Sentence, align: str = '<'):
         self.frame.set_header(text, align)
+        return self
+    
+    def add_extra_exit(self, key: str):
+        self.extra_exit.append(ord(key[0]))
         return self
 
     def __setup_frame(self):
@@ -68,9 +73,18 @@ class Input:
 
     def warning(self):
         self.type = "warning"
-        # self.frame.set_border_bold()
-        self.frame.set_header(Sentence().addf("/", " Aviso "))
-        self.frame.set_footer(Sentence().addf("/", " Apente enter "))
+        if self.frame.get_header().len() == 0:
+            self.frame.set_header(Sentence().addf("/", " Aviso "))
+        self.frame.set_footer(Sentence().addf("/", " Pressione enter "))
+        self.frame.set_border_color("y")
+        return self
+    
+    def error(self):
+        self.type = "warning"
+        if self.frame.get_header().len() == 0:
+            self.frame.set_header(Sentence().addf("/", " Erro "))
+        self.frame.set_footer(Sentence().addf("/", " Pressione enter "))
+        self.frame.set_border_color("r")
         return self
     
     def set_options(self, options: List[str]):
@@ -96,8 +110,7 @@ class Input:
         self.draw()
         key = Fmt.getch()
         if self.type == "warning" or self.type == "answer":
-            #enter ou esc
-            if key == ord('\n') or key == 27:
+            if key == ord('\n') or key == 27 or key in self.extra_exit:
                 self.enable = False
         if self.type == "answer":
             if key == curses.KEY_LEFT:

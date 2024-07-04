@@ -16,10 +16,39 @@ class Frame:
         self._footer: Sentence = Sentence()
         self._footer_align = ""
         self._fill_char = " "
+        self._wrap = False
+        self._border_color = ""
+        self._print_index = 0
+
+    def set_border_color(self, color: str):
+        self._border_color = color
+
+    def get_dx(self):
+        return self._inner_dx
+    
+    def get_dy(self):
+        return self._inner_dy
+    
+    def get_x(self):
+        return self._x
+
+    def get_y(self):
+        return self._y
+    
+    def get_header(self):
+        return self._header
+    
+    def get_footer(self):
+        return self._footer
 
     def set_pos(self, y: int, x: int):
         self._x = x
         self._y = y
+        return self
+
+    def set_size(self, size_y, size_x):
+        self._inner_dx = size_x - 2
+        self._inner_dy = size_y - 2
         return self
 
     def set_inner(self, inner_dy: int, inner_dx: int):
@@ -30,6 +59,9 @@ class Frame:
     def get_inner(self):
         return (self._inner_dy, self._inner_dx)
 
+    def get_size(self):
+        return self._inner_dy + 2, self._inner_dx + 2
+
     def set_end(self, y: int, x: int):
         self._inner_dx = x - self._x - 1
         self._inner_dy = y - self._y - 1
@@ -37,6 +69,9 @@ class Frame:
         # Fmt.getch()
         return self
     
+    def set_wrap(self):
+        self._wrap = True
+
     def set_fill_char(self, char: str):
         self._fill_char = char
         return self
@@ -88,6 +123,11 @@ class Frame:
         self._filled = False
         return self
     
+    def print(self, x: int, sentence: Sentence):
+        self.write(self._print_index, x, sentence)
+        self._print_index += 1
+        return self
+
     def write(self, y: int, x: int, sentence: Sentence) -> bool:
         lines, cols = Fmt.get_size()
 
@@ -112,9 +152,16 @@ class Frame:
                     x_abs = x_min + 1
 
             if x_abs <= x_max: # Se o texto começa dentro do frame
+                missing = ""
                 if x_abs + len(text) >= x_max:
-                    text = text[:x_max - x_abs + 1]
+                    cut_point = x_max - x_abs + 1
+                    missing = text[cut_point:]
+                    text = text[:cut_point]
+
                 Fmt.stroke(y_abs, x_abs, fmt, text)
+
+                if self._wrap and missing != "":
+                    Fmt.stroke(y_abs + 1, x_abs, missing)
                 count += 1
             x_abs += len(text)
         return False if count == 0 else True
@@ -124,6 +171,7 @@ class Frame:
         y = self._y
         dx = self._inner_dx
         dy = self._inner_dy
+        color = self._border_color
         up_left = self.get_symbol("lu")
         up_right = self.get_symbol("ru")
         down_left = self.get_symbol("ld")
@@ -133,29 +181,29 @@ class Frame:
         header = self._header
         footer = self._footer
         if self._footer_align == "<":
-            footer.ljust(dx - 2, hor)
+            footer.ljust(dx, hor, color)
         elif self._footer_align == ">":
-            footer.rjust(dx - 2, hor)
+            footer.rjust(dx, hor, color)
         else:
-            footer.center(dx - 2, hor) 
+            footer.center(dx, hor, color) 
     
         if self._header_align == "<":
-            header.ljust(dx - 2, hor)
+            header.ljust(dx, hor, color)
         elif self._header_align == ">":
-            header.rjust(dx - 2, hor)
+            header.rjust(dx, hor, color)
         else:
-            header.center(dx - 2, hor)
+            header.center(dx, hor, color)
 
-        above = Sentence().addt(up_left + hor).concat(header).addt(hor + up_right)
-        below = Sentence().addt(down_left + hor).concat(footer).addt(hor + down_right)
+        above = Sentence().addf(color, up_left).concat(header).addf(color, up_right)
+        below = Sentence().addf(color, down_left).concat(footer).addf(color, down_right)
         
         Fmt.write(y, x, above)
         Fmt.write(y + dy + 1, x, below)
         if self._filled:
             for i in range(1, dy + 1):
-                Fmt.write(y + i, x, Sentence().addt(ver + dx * self._fill_char + ver))
+                Fmt.write(y + i, x, Sentence().addf(color, ver).addt(dx * self._fill_char).addf(color, ver))
         else:
             for i in range(1, dy + 1):
-                Fmt.write(y + i, x, Sentence().addt(ver))
-                Fmt.write(y + i, x + dx + 1, Sentence().addt(ver))
+                Fmt.write(y + i, x, Sentence().addf(color, ver))
+                Fmt.write(y + i, x + dx + 1, Sentence().addf(color, ver))
         return self

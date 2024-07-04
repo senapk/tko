@@ -41,13 +41,13 @@ class Sentence:
     def ljust(self, width: int, fillchar: str = " ", fmt = ""):
         total = self.len()
         if total < width:
-            self.addt(fillchar * (width - total))
+            self.addf(fmt, fillchar * (width - total))
         return self
     
     def rjust(self, width: int, fillchar: str = " ", fmt = ""):
         total = self.len()
         if total < width:
-            self.data = [Token("", fillchar * (width - total))] + self.data
+            self.data = [Token(fmt, fillchar * (width - total))] + self.data
         return self
     
     def center(self, width: int, fillchar: str = " ", fmt = ""):
@@ -70,42 +70,54 @@ class Sentence:
     def get(self):
         return self.data
 
-    def trim_labels(self, limit: int):
-        for i in range(len(self.data) - 1, -1, -1):
-            token = self.data[i]
-            if self.len() >= limit:
-                text = token.text
-                label = None
-                try:
-                    if "[" in text:
-                        label, value = text.split("[")
-                        value = "[" + value
-                    elif "(" in text:
-                        label, value = text.split("(")
-                        value = "(" + value
-
-                    if label:
-                        if self.len() - len(label) < limit:
-                            token.text = token.text[:limit - (self.len() - len(label))] + value
-                        else:
-                            token.text = value
-                except:
-                    raise Exception(f"Erro ao processar label: {text}")
+    def trim_alfa(self, limit: int):
+        if limit < 0:
+            return
+        index = len(self.data) - 1
+        size = self.len()
+        while True:
+            if index < 0 or size <= limit:
+                break
+            token = self.data[index]
+            if len(token.text) == 0:
+                del self.data[index]
+                index -= 1
+            elif token.text[-1].isalpha():
+                token.text = token.text[:-1]
+                size -= 1
+            else:
+                index -= 1
 
     def trim_spaces(self, limit: int):
-        for i in range(len(self.data) - 1, -1, -1):
-            token = self.data[i]
-            if self.len() >= limit:
-                if token.text == " ":
-                    del self.data[i]
-
-    def cut_end(self, width: int):
-        total = self.len()
-        while total > width:
-            last = self.data[-1]
-            if len(last.text) == 0:
-                self.data.pop()
+        if limit < 0:
+            return
+        index = len(self.data) - 1
+        size = self.len()
+        while True:
+            if index < 0 or size <= limit:
+                break
+            token = self.data[index]
+            if len(token.text) == 0:
+                del self.data[index]
+                index -= 1
+            elif token.text[-1] == " ":
+                token.text = token.text[:-1]
+                size -= 1
             else:
-                last.text = last.text[:-1]
-                total -= 1
-        return self
+                index -= 1
+
+    def trim_end(self, width: int):
+        if width < 0:
+            return
+        size = self.len()
+        index = len(self.data) - 1
+        while True:
+            if size <= width or index < 0:
+                break
+            token = self.data[index]
+            if len(token.text) == 0:
+                del self.data[index]
+                index -= 1
+            else:
+                token.text = token.text[:-1]
+                size -= 1

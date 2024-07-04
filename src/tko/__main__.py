@@ -190,7 +190,7 @@ class Main:
 
 class Parser:
     def __init__(self):
-        self.parser = argparse.ArgumentParser(prog='tko', description='A tool for competitive programming.')        
+        self.parser = argparse.ArgumentParser(prog='tko', description=f'tko version {__version__}')        
         self.subparsers = self.parser.add_subparsers(title='subcommands', help='help for subcommand.')
 
         self.parent_manip = None

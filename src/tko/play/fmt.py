@@ -80,9 +80,14 @@ class Fmt:
         try:
             stdscr.addstr(y, x, text)
         except curses.error as _e:
-            lines, cols = stdscr.getmaxyx()
-            stdscr.addstr(0, 0, f"y:{y}, x:{x}, fmt:{fmt}, len:{len(text)} lines:{lines}, cols:{cols}")
-            stdscr.addstr(1, 0, text)
+            lines, cols = Fmt.get_size()
+            if y == lines - 1:
+                if x + len(text) <= cols:
+                    pass
+            # lines, cols = stdscr.getmaxyx()
+            # stdscr.addstr(10, 10, f"y:{y}, x:{x}, fmt:{fmt}, len:{len(text)} lines:{lines}, cols:{cols}")
+            # stdscr.addstr(1, 0, text)
+            # raise Exception(f"y:{y}, x:{x}, fmt:{fmt}, len:{len(text)} lines:{lines}, cols:{cols}\n{text}")
         if pair_number != -1:
             stdscr.attroff(curses.color_pair(pair_number))
         if italic:
