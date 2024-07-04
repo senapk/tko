@@ -38,5 +38,5 @@ class Cluster:
     def get_resume_by_quests(self):
         total = len(self.quests)
         count = len([q for q in self.quests if q.is_complete()])
-        return f"({count}/{total})"
+        return Sentence().addt(f"({count}/{total})")
         

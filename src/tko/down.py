@@ -130,6 +130,7 @@ class Down:
         cache_url = os.path.dirname(cfg.get_raw_url()) + "/.cache/"
 
         destiny = Down.__create_problem_folder(rootdir, activity)
+        destiny = os.path.abspath(destiny)
         try:
             [_readme_path, mapi_path] = Down.__down_problem_def(destiny, cache_url)
         except urllib.error.HTTPError:

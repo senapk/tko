@@ -1,9 +1,9 @@
 class Style:
-    focus = "Y"
+    focus = "B"
     italic = "/"
     underline = "_"
 
-    opt_quest = italic + "m"
+    opt_quest = italic
     opt_task = italic + "c"
     text = ""
     cluster_key = "b"

@@ -10,19 +10,30 @@ class Input:
     def __init__(self):
         self.frame = Frame(0, 0)
         self.content: List[Sentence] = []
-        # self.ending = 0
-        # self.total_time = 0
+        self.ending = None
+        self.total_time = None
         self.type = ""
         self.options = []
         self.options_index = 0
         self.fn_answer = None
         self.enable = True
         self.extra_exit: List[int] = []
+        self.exit_fn = None
+        self.exit_key = None
+        self._centralize = True
 
     def set_header(self, text: Sentence, align: str = '<'):
         self.frame.set_header(text, align)
         return self
     
+    def set_exit_key(self, key: str):
+        self.exit_key = ord(key)
+        return self
+
+    def set_exit_fn(self, fn):
+        self.exit_fn = fn
+        return self
+
     def add_extra_exit(self, key: str):
         self.extra_exit.append(ord(key[0]))
         return self
@@ -49,6 +60,9 @@ class Input:
                 footer.addf(fmt, option).addt(" ")
             self.frame.set_footer(footer, "^")
 
+    def ljust(self):
+        self._centralize = False
+
     def addt(self, text: str):
         self.content.append(Sentence().addt(text))
         return self
@@ -61,15 +75,10 @@ class Input:
         self.content = [Sentence().addt(x) for x in content]
         return self
 
-    # def timer(self, delta: int):
-    #     self.type = "timer"
-    #     self.frame.set_border_rounded()
-    #     self.frame.set_header(Sentence().addf("/", " Aviso "))
-    #     self.enable = True
-    #     self.total_time = delta
-    #     self.ending = time.time() + delta
-
-    #     return self
+    def timer(self, delta: int):
+        self.total_time = delta
+        self.ending = time.time() + delta
+        return self
 
     def warning(self):
         self.type = "warning"
@@ -103,15 +112,28 @@ class Input:
         self.__setup_frame()
         self.frame.draw()
         for i, line in enumerate(self.content):
-            self.frame.write(i + 1, 1, line)
+            if self._centralize:
+                x = (self.frame.get_dx() - line.len()) // 2
+                self.frame.write(i + 1, x, line)
+            else:
+                self.frame.write(i + 1, 1, line)
         return self
+
+    def timer_expired(self):
+        if self.ending is None:
+            return False
+        return time.time() > self.ending
 
     def get_input(self) -> int:
         self.draw()
         key = Fmt.getch()
         if self.type == "warning" or self.type == "answer":
-            if key == ord('\n') or key == 27 or key in self.extra_exit:
+            if key == ord('\n') or key == 27 or key in self.extra_exit or self.timer_expired():
                 self.enable = False
+                if self.exit_fn is not None:
+                    self.exit_fn()
+                if self.exit_key is not None:
+                    return self.exit_key
         if self.type == "answer":
             if key == curses.KEY_LEFT:
                 self.options_index = (self.options_index - 1) % len(self.options)
@@ -121,6 +143,10 @@ class Input:
                 self.enable = False
                 if self.fn_answer is not None:
                     self.fn_answer(self.options[self.options_index])
-                return 0            
+                if self.exit_fn is not None:
+                    self.exit_fn()
+                if self.exit_key is not None:
+                    return self.exit_key
+                return -1
         return -1
         
