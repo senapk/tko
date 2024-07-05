@@ -28,19 +28,53 @@ class Entry:
     def get(self):
         return self.sentence
 
-class Flags:
-    percent = "percent"
-    count = "count"
-    xp    = "xp"
-    goals = "goals"
-    down = "down"
-    admin = "admin"
-    flags_bar = "flags_bar"
-    skills_bar = "skills_bar"
-    help_bar = "help_bar"
-    top_bar = "top_bar"
-    group_bar = "group_bar"
-    quest_bar = "quest_bar"
+class Const:
+    key_left = "a"
+    key_right = "d"
+    key_down_task = "g"
+    key_help = "h"
+    key_set_lang = "l"
+    key_open_link = "o"
+    key_quit = "q"
+    key_down = "s"
+    key_up = "w"
+    key_mass_toggle = "T"
+
+    key_show_dots = "."
+    tog_show_dots = "!dots"
+    
+    key_show_count = "C"
+    tog_show_count = "count"
+    
+    key_show_down = "D"
+    tog_show_down = "down"
+    
+    key_flags_bar = "F"
+    tog_flags_bar = "flags_bar"
+    
+    key_group_prog = "G"
+    tog_group_prog = "!group_bar"
+    
+    key_help_bar = "H"
+    tog_help_bar = "help_bar"
+    
+    key_show_minimum = "M"
+    tog_show_minimum = "minimum"
+    
+    key_show_percent = "P"
+    tog_show_percent = "percent"
+    
+    key_skills_bar = "S"
+    tog_skills_bar = "skills_bar"
+    
+    key_quest_bar = "Q"
+    tog_quest_bar = "!quest_bar"
+    
+    key_show_xp = "X"
+    tog_show_xp    = "xp"
+
+    key_admin = "A"
+    tog_admin = "admin"
 
 class Play:
     cluster_prefix = "'"
@@ -50,7 +84,7 @@ class Play:
         self.local = local
         self.repo_alias = repo_alias
         self.rep = rep
-
+        self.exit = False
         self.input_layer: List[Input] = []
 
         # self.mark_opt = "opt" in self.rep.view
@@ -78,8 +112,8 @@ class Play:
 
         self.load_rep()
 
-        self.help_base = ["Quit[q]", "Help[h]", "Move[wasd]", "Mark[enter]"]
-        self.help_extra = ["OpenLink[o]", "GetTask[g]", "Grade[0-9]", "Lang[l]", "Expand[>]", "Collapse[<]",  "MassMark[M]"]
+        self.help_base = [f"Quit[{Const.key_quit}]", f"Help[{Const.key_help}]", "Move[wasd]", "Mark[enter]"]
+        self.help_extra = [f"OpenLink[{Const.key_open_link}]", f"GetTask[{Const.key_down_task}]", "Grade[0-9]", f"Lang[{Const.key_set_lang}]", "Expand[>]", "Collapse[<]",  f"MassMark[{Const.key_mass_toggle}]"]
 
     def save_to_json(self):
         self.rep.expanded = [x for x in self.expanded]
@@ -122,7 +156,7 @@ class Play:
     def update_avaliable_quests(self):
         old_quests = [q for q in self.avaliable_quests]
         old_clusters = [c for c in self.avaliable_clusters]
-        if self.flags_on(Flags.admin):
+        if self.flags_on(Const.tog_admin):
             self.avaliable_quests = list(self.game.quests.values())
             self.avaliable_clusters = self.game.clusters
         else:
@@ -153,8 +187,6 @@ class Play:
     def add_focus(self, color, in_focus):
         if not in_focus:
             return color
-        if color == "":
-            return "k" + Style.focus
         return Style.focus + color
 
     def str_task(self, in_focus: bool, t: Task, ligc: str, ligq: str, min_value = 1) -> Sentence:
@@ -166,12 +198,12 @@ class Play:
         value = Style.opt_task if self.mark_opt and t.opt else ""
         output.addf(self.add_focus(value, in_focus), t.title)
 
-        if self.flags_on(Flags.down):
+        if self.flags_on(Const.tog_show_down):
             path = os.path.join(self.local.rootdir, self.repo_alias, t.key)
             if os.path.isdir(path):
                 output.addt(" ").addf("y", f"[{path}]")
 
-        if self.flags_on(Flags.xp):
+        if self.flags_on(Const.tog_show_xp):
             xp = ""
             for s, v in t.skills.items():
                 xp += f" +{s}:{v}"
@@ -182,25 +214,26 @@ class Play:
         con = "━─" if q.key not in self.expanded else "─┯"
         output: Sentence = Sentence().addt(" " + lig + con + " ")
 
-        value = Style.opt_quest if self.mark_opt and q.opt else ""
+        color = Style.opt_quest if self.mark_opt and q.opt else ""
+        color = self.add_focus(color, in_focus)
         title = q.title
-        if in_focus:
-            output.addf(self.add_focus(value, in_focus), q.title)
+        if self.flags_on(Const.tog_show_dots):
+            max_title = max([len(c.title) for c in self.game.clusters] + [len(q.title) for q in self.game.quests.values()])
+            title = title.ljust(max_title, ".")
+        if self.flags_on(Const.tog_quest_bar):
+            output.concat(self.build_bar(title, q.get_percent() / 100, len(title), "g" + color, color))
         else:
-            if self.flags_on(Flags.quest_bar):
-                output.concat(self.build_bar(title, q.get_percent() / 100, len(title), "b" + value, "m" + value))
-            else:
-                output.addf(value, title)
+            output.addf(color, title)
 
         for item in self.flags:
-            if item == Flags.count:
-                if self.flags_on(Flags.percent):
+            if item == Const.tog_show_count:
+                if self.flags_on(Const.tog_show_percent):
                     output.addt(" ").concat(q.get_resume_by_percent())
                 else:
                     output.addt(" ").concat(q.get_resume_by_tasks())
-            elif item == Flags.goals:
+            elif item == Const.tog_show_minimum:
                 output.addt(" ").concat(q.get_requirement())
-        if self.flags_on(Flags.xp):
+        if self.flags_on(Const.tog_show_xp):
             xp = ""
             for s,v in q.skills.items():
                 xp += f" +{s}:{v}"
@@ -217,17 +250,19 @@ class Play:
         if cluster.key in self.expanded:
             opening = "─┯"        
         output.addt(opening + " ")
-        value = Style.cluster_title
+        color = self.add_focus(Style.cluster_title, in_focus)
         title = cluster.title
-        if in_focus:
-            output.addf(self.add_focus(value, in_focus), title)
+        if self.flags_on(Const.tog_show_dots):
+            max_title = max([len(c.title) for c in self.game.clusters] + [len(q.title) for q in self.game.quests.values()])
+            title = cluster.title.ljust(max_title + 2, ".")
+
+        if self.flags_on(Const.tog_group_prog):
+            output.concat(self.build_bar(title, cluster.get_percent() / 100, len(title), "g" + color, "" + color))
         else:
-            if self.flags_on(Flags.group_bar):
-                output.concat(self.build_bar(title, cluster.get_percent() / 100, len(title), "g", "y"))
-            else:
-                output.addf(value, title)
-        if self.flags_on(Flags.count):
-            if self.flags_on(Flags.percent):
+            output.addf(color, title)
+
+        if self.flags_on(Const.tog_show_count):
+            if self.flags_on(Const.tog_show_percent):
                 output.addt(" ").concat(cluster.get_resume_by_percent())
             else:
                 output.addt(" ").concat(cluster.get_resume_by_quests())
@@ -394,8 +429,10 @@ class Play:
                 return link
         return ""
 
-    def flags_on(self, value):
-        return value in self.flags
+    def flags_on(self, value: str):
+        if not value.startswith("!"):
+            return value in self.flags
+        return not value in self.flags
 
     def flags_color(self, flag: str) -> str:
         if self.flags_on(flag):
@@ -438,7 +475,7 @@ class Play:
             dy, dx = frame_xp.get_inner()
             xp = XP(self.game)
             total_perc = int(100 * (xp.get_xp_total_obtained() / xp.get_xp_total_available()))
-            if self.flags_on(Flags.percent):
+            if self.flags_on(Const.tog_show_percent):
                 text =  f" Total:{total_perc}%"
             else:
                 text =  f" Total:{xp.get_xp_total_obtained()}"
@@ -452,7 +489,7 @@ class Play:
             total, obt = self.game.get_skills_resume()
             index = 0
             for skill, value in total.items():
-                if self.flags_on(Flags.percent):
+                if self.flags_on(Const.tog_show_percent):
                     text = f"{skill}:{int(100 * obt[skill] / value)}%"
                 else:
                     text = f"{skill}:{obt[skill]}/{value}"
@@ -469,20 +506,21 @@ class Play:
         def add_flag(_flag, _text, _key):
             color = self.flags_color(_flag)
             if self.flags_on(_flag):
-                s = Sentence().addf(color, _text).addf(color, (8 - len(_text)) * " ").addf("", _key)
+                s = Sentence().addf(color  + "/", _text).addf(color, (8 - len(_text)) * " ").addf("", _key)
             else:
-                s = Sentence().addf("", _key).addf(color, (8 - len(_text)) * " ").addf(color, _text)
+                s = Sentence().addf("", _key).addf(color, (8 - len(_text)) * " ").addf(color + "/", _text)
             frame.print(1, s)
 
 
-        add_flag(Flags.count,   "Count",   "[C]")
-        add_flag(Flags.goals,   "Goals",   "[G]")
-        add_flag(Flags.down,    "Down",    "[D]")
-        add_flag(Flags.xp,    "XP",    "[X]")
-        add_flag(Flags.percent, "Percent", "[P]")
-        add_flag(Flags.admin,   "Admin",   "[A]")
-        add_flag(Flags.group_bar, "GroupBar", "[r]")
-        add_flag(Flags.quest_bar, "QuestBar", "[t]")
+        add_flag(Const.tog_show_count,   "Count",   f"[{Const.key_show_count}]")
+        add_flag(Const.tog_show_minimum,   "Minimum",   f"[{Const.key_show_minimum}]")
+        add_flag(Const.tog_show_down,    "Down",    f"[{Const.key_show_down}]")
+        add_flag(Const.tog_show_down,    "Dots",    f"[{Const.key_show_dots}]")
+        add_flag(Const.tog_show_xp,    "XP",    f"[{Const.key_show_xp}]")
+        add_flag(Const.tog_show_percent, "Percent", f"[{Const.key_show_percent}]")
+        add_flag(Const.tog_admin,   "Admin",   f"[{Const.key_admin}]")
+        add_flag(Const.tog_group_prog, "GroupBar", f"[{Const.key_group_prog}]")
+        add_flag(Const.tog_quest_bar, "QuestBar", f"[{Const.key_quest_bar}]")
 
 
 
@@ -500,33 +538,26 @@ class Play:
         return help
 
     def show_help(self):
-        help: Input = Input().add_extra_exit("h").warning()
+        help: Input = Input().add_extra_exit("h").warning().ljust()
         self.add_input(help)
         help.set_header(Sentence().addf("/", " Help "))
         help.addt("Barras alternáveis")
-        help.adds(Sentence().addt("  ").addf("", "F").addt(" - Mostrar ou esconder a barra de flags"))
-        help.adds(Sentence().addt("  ").addf("", "H").addt(" - Mostrar ou esconder a barra de ajuda"))
-        help.adds(Sentence().addt("  ").addf("", "S").addt(" - Mostrar ou esconder a barra de skills"))
-        help.addt("")
-        help.addt("Comandos")
-        help.addt("  q - Fechar o aplicativo")
-        help.addt("  h - Mostrar essa tela de ajuda")
+        help.adds(Sentence().addt("  ").addf("", f"{Const.key_flags_bar}").addt(" - Mostrar ou esconder a barra de flags"))
+        help.adds(Sentence().addt("  ").addf("", f"{Const.key_help_bar}").addt(" - Mostrar ou esconder a barra de ajuda"))
+        help.adds(Sentence().addt("  ").addf("", f"{Const.key_skills_bar}").addt(" - Mostrar ou esconder a barra de skills"))
         help.addt("")
         help.addt("Controles")
         help.addt("  setas ou wasd   - Para navegar entre os elementos")
         help.addt("  enter ou espaço - Marcar ou desmarcar, expandir ou contrair")
         help.addt("  0 a 9 - Definir a nota parcial para uma tarefa")
-        help.addt("      o - Abrir tarefa em uma aba do browser")
-        help.addt("      g - Baixar um tarefa de código para seu dispositivo")
+        help.addt(f"      {Const.key_open_link} - Abrir tarefa em uma aba do browser")
+        help.addt(f"      {Const.key_down_task} - Baixar um tarefa de código para seu dispositivo")
         help.addt("")
         help.addt("Flags")
         help.addt("  Muda a forma de exibição dos elementos")
-        help.addt("  Ligue ou desligue e veja o resultado")
         help.addt("")
         help.addt("Extra")
-        help.addt("  l - Mudar a linguagem de download dos rascunhos")
-        help.addt("  > - Expandir tudo")
-        help.addt("  < - Contrair tudo")
+        help.addt(f"  {Const.key_set_lang} - Mudar a linguagem de download dos rascunhos")
 
     def desable_on_resize(self):
         lines, cols = Fmt.get_size()
@@ -585,9 +616,9 @@ class Play:
             else:
                 content.addf(color, key).addf(color + "/", text).addt(" ")
         
-        add_flag(Flags.flags_bar, "FlagsBar", "[F]")
-        add_flag(Flags.help_bar, "HelpBar", "[H]")
-        add_flag(Flags.skills_bar, "SkillsBar", "[S]")
+        add_flag(Const.tog_flags_bar, "FlagsBar", f"[{Const.key_flags_bar}]")
+        add_flag(Const.tog_help_bar, "HelpBar", f"[{Const.key_help_bar}]")
+        add_flag(Const.tog_skills_bar, "SkillsBar", f"[{Const.key_skills_bar}]")
         
         for s in content:
             if s.text.startswith("["):
@@ -599,7 +630,7 @@ class Play:
             text = "Você atingiu o máximo de xp!"
             percent = 100.0
         else:
-            if self.flags_on(Flags.percent):
+            if self.flags_on(Const.tog_show_percent):
                 text = f"L:{xp.get_level()} XP:{int(100 * xp.get_xp_level_current() / xp.get_xp_level_needed())}%"
             else:
                 text = f"L:{xp.get_level()} XP:{xp.get_xp_level_current()}/{xp.get_xp_level_needed()}"
@@ -630,7 +661,7 @@ class Play:
         self.show_top_bar(frame_top)
         
         bottom_sy = 0
-        if self.flags_on(Flags.help_bar):
+        if self.flags_on(Const.tog_help_bar):
             bottom_sy = 1
             frame_bottom = Frame(lines - 1, 0).set_size(3, main_sx)
             self.show_bottom_bar(frame_bottom)
@@ -829,7 +860,7 @@ class Play:
     def check_disable_skills(self):
         lines, cols = Fmt.get_size()
         if cols < 50:
-            if self.flags_on(Flags.skills_bar):
+            if self.flags_on(Const.tog_skills_bar):
                 self.flags_toggle("skills_bar")
         
     def send_ligado(self, msg: str, flag: bool, key: str) -> Sentence:
@@ -840,6 +871,8 @@ class Play:
         
         self.add_input(Input().adds(opt).warning().timer(0.5).add_extra_exit(key))
 
+    def set_exit(self):
+        self.exit = True
 
     def main(self, scr):
         # scr.nodelay(True)
@@ -848,7 +881,7 @@ class Play:
         Fmt.set_scr(scr)  # Define o scr como global
 
         # Exemplo de uso da função escrever
-        while True:
+        while not self.exit:
             self.update_avaliable_quests()
             self.update_new()
             self.show_items()
@@ -860,52 +893,54 @@ class Play:
             else:
                 value = scr.getch()
 
-            if value == ord("Q"):
-                break
-            elif value == ord("q") or value == 27:
-                self.add_input(Input().addt("Saindo do aplicativo").set_exit_key("Q").add_extra_exit("q").warning())
-            elif value == curses.KEY_UP or value == ord("w"):
+            if value == ord(Const.key_quit) or value == 27:
+                self.add_input(Input().addt("Saindo do aplicativo").set_exit_fn(self.set_exit).add_extra_exit("q").warning())
+            elif value == curses.KEY_UP or value == ord(Const.key_up):
                 self.index_selected = max(0, self.index_selected - 1)
-            elif value == curses.KEY_DOWN or value == ord("s"):
+            elif value == curses.KEY_DOWN or value == ord(Const.key_down):
                 self.index_selected = min(len(self.items) - 1, self.index_selected + 1)
-            elif value == curses.KEY_LEFT or value == ord("a"):
+            elif value == curses.KEY_LEFT or value == ord(Const.key_left):
                 self.arrow_left()
-            elif value == curses.KEY_RIGHT or value == ord("d"):
+            elif value == curses.KEY_RIGHT or value == ord(Const.key_right):
                 self.arrow_right()
-            elif value == ord("H"):
-                self.flags_toggle("help_bar")
-            elif value == ord("S"):
-                self.flags_toggle(Flags.skills_bar)
+            elif value == ord(Const.key_help_bar):
+                self.flags_toggle(Const.tog_help_bar)
+            elif value == ord(Const.key_skills_bar):
+                self.flags_toggle(Const.tog_skills_bar)
                 self.check_disable_flags()
-            elif value == ord("F"):
-                self.flags_toggle(Flags.flags_bar)
+            elif value == ord(Const.key_flags_bar):
+                self.flags_toggle(Const.tog_flags_bar)
                 self.check_disable_skills()
-            elif value == ord("h"):
+            elif value == ord(Const.key_help):
                 self.show_help()
-            elif value == ord("C"):
-                self.flags_toggle(Flags.count)
-                self.send_ligado("Mostrando contagem de tarefas feitas ", Flags.count, "C")
-            elif value == ord("X"):
-                self.flags_toggle(Flags.xp)
-                self.send_ligado("Mostrando xp em missões e tarefas ", Flags.xp, "X")
-            elif value == ord("P"):
-                self.flags_toggle(Flags.percent)
-                self.send_ligado("Mostrando percentuais ", Flags.percent, "P")
-            elif value == ord("G"):
-                self.flags_toggle(Flags.goals)
-                self.send_ligado("Mostrando metas para conclusão de Missão ", Flags.goals, "G")
-            elif value == ord("D"):
-                self.flags_toggle(Flags.down)
-                self.send_ligado("Mostrando caminho das tarefas baixadas ", Flags.down, "D")
-            elif value == ord("r"):
-                self.flags_toggle(Flags.group_bar)
-                self.send_ligado("Mostrando barra de porcentagem nos Grupos ", Flags.group_bar, "r")
-            elif value == ord("t"):
-                self.flags_toggle(Flags.quest_bar)
-                self.send_ligado("Mostrando barra de porcentagem nas Missões ", Flags.quest_bar, "t")
-            elif value == ord("A"):
-                self.flags_toggle(Flags.admin)
-                self.send_ligado("Desbloqueando acesso a todas as missões ", Flags.admin, "A")
+            elif value == ord(Const.key_show_count):
+                self.flags_toggle(Const.tog_show_count)
+                self.send_ligado("Mostrando contagem de tarefas feitas ", Const.tog_show_count, Const.key_show_count)
+            elif value == ord(Const.key_show_xp):
+                self.flags_toggle(Const.tog_show_xp)
+                self.send_ligado("Mostrando xp em missões e tarefas ", Const.tog_show_xp, Const.key_show_xp)
+            elif value == ord(Const.key_show_percent):
+                self.flags_toggle(Const.tog_show_percent)
+                self.send_ligado("Mostrando percentuais ", Const.tog_show_percent, Const.key_show_percent)
+            elif value == ord(Const.key_show_minimum):
+                self.flags_toggle(Const.tog_show_minimum)
+                self.send_ligado("Mostrando mínimo valor para conclusão de Missão ", Const.tog_show_minimum, Const.key_show_minimum)
+            elif value == ord(Const.key_show_down):
+                self.flags_toggle(Const.tog_show_down)
+                self.send_ligado("Mostrando caminho das tarefas baixadas ", Const.tog_show_down, Const.key_show_down)
+            elif value == ord(Const.key_group_prog):
+                self.flags_toggle(Const.tog_group_prog)
+                self.send_ligado("Mostrando barra de porcentagem nos Grupos ", Const.tog_group_prog, Const.key_group_prog)
+            elif value == ord(Const.key_quest_bar):
+                self.flags_toggle(Const.tog_quest_bar)
+                self.send_ligado("Mostrando barra de porcentagem nas Missões ", Const.tog_quest_bar, Const.key_quest_bar)
+            elif value == ord(Const.key_show_dots):
+                self.flags_toggle(Const.tog_show_dots)
+                self.send_ligado("Fazendo o preenchimento de Missões e Grupos ", Const.tog_show_dots, Const.key_show_dots)
+
+            elif value == ord(Const.key_admin):
+                self.flags_toggle(Const.tog_admin)
+                self.send_ligado("Desbloqueando acesso a todas as missões ", Const.tog_admin, Const.key_admin)
                 self.reload_options()
             elif value == ord(">"):
                 self.process_expand()
@@ -913,13 +948,13 @@ class Play:
                 self.process_collapse()
             elif value == ord(" ") or value == ord("\n"):
                 self.toggle()
-            elif value == ord("o"):
+            elif value == ord(Const.key_open_link):
                 self.open_link()
-            elif value == ord("l"):
+            elif value == ord(Const.key_set_lang):
                 self.set_language()
-            elif value == ord("g"):
+            elif value == ord(Const.key_down_task):
                 self.process_down()
-            elif value == ord("M"):
+            elif value == ord(Const.key_mass_toggle):
                 self.mass_mark()
             elif value >= ord("0") and value <= ord("9"):
                 self.set_grade(value)

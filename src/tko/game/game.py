@@ -164,6 +164,12 @@ class Game:
             if len(q.get_tasks()) > 0:
                 valid_quests[k] = q
 
+        # trim titles
+        for q in self.quests.values():
+            q.title = q.title.strip()
+        for c in self.clusters:
+            c.title = c.title.strip()
+
         self.quests = valid_quests
 
         # verificar se todas as quests requeridas existem e adicionar o ponteiro

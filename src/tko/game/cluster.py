@@ -38,5 +38,5 @@ class Cluster:
     def get_resume_by_quests(self):
         total = len(self.quests)
         count = len([q for q in self.quests if q.is_complete()])
-        return Sentence().addt(f"({count}/{total})")
+        return Sentence().addf(self.get_grade_color(), f"({count}/{total})")
         

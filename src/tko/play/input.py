@@ -62,6 +62,7 @@ class Input:
 
     def ljust(self):
         self._centralize = False
+        return self
 
     def addt(self, text: str):
         self.content.append(Sentence().addt(text))
@@ -134,6 +135,8 @@ class Input:
                     self.exit_fn()
                 if self.exit_key is not None:
                     return self.exit_key
+                if key != ord('\n'):
+                    return key
         if self.type == "answer":
             if key == curses.KEY_LEFT:
                 self.options_index = (self.options_index - 1) % len(self.options)

@@ -1,5 +1,5 @@
 class Style:
-    focus = "B"
+    focus = "Y"
     italic = "/"
     underline = "_"
 
