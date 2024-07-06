@@ -1,7 +1,7 @@
 class Style:
-    focus = "W"
+    focus = "B"
     progress_done = "g"  # quest and cluster progress text
-    progress_todo = ""
+    progress_todo = "y"
 
     opt_quest = "/"
     opt_task =  "/c"

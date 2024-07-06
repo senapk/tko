@@ -29,7 +29,7 @@ class Quest:
 
     def get_resume_by_percent(self) -> Sentence:
         value = self.get_percent()
-        return Sentence().addf(self.get_grade_color(), (str(value) + "%"))
+        return Sentence().addf(self.get_grade_color(), (str(value) + "%").rjust(4))
     
     def get_requirement(self) -> Sentence:
         if self.qmin is not None:

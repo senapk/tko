@@ -239,10 +239,12 @@ class Play:
         items = []
         for c in self.available_clusters:
             items.append(len(c.title))
-            for q in c.quests:
-                items.append(len(q.title))
-                for t in q.get_tasks():
-                    items.append(len(t.title))
+            if c.key in self.expanded:
+                for q in c.quests:
+                    items.append(len(q.title) + 2)
+                    # if q.key in self.expanded:
+                    #     for t in q.get_tasks():
+                    #         items.append(len(t.title) + 4)
         self.max_title = max(items)
 
     def str_quest(self, in_focus: bool, q: Quest, lig: str) -> Sentence:
@@ -257,7 +259,7 @@ class Play:
 
         title = q.title
         if self.flags_on(Const.tog_show_dots):
-            title = title.ljust(self.max_title + 2, ".")
+            title = title.ljust(self.max_title - 2, ".")
         if self.flags_on(Const.tog_quest_bar):
             done = Style.progress_done + color
             todo = Style.progress_todo + color
@@ -271,6 +273,7 @@ class Play:
             else:
                 output.addt(" ").concat(q.get_resume_by_tasks())
     
+
         if self.flags_on(Const.tog_show_minimum):
             output.addt(" ").concat(q.get_requirement())
 
@@ -296,7 +299,7 @@ class Play:
             color += Style.focus + color
         title = cluster.title
         if self.flags_on(Const.tog_show_dots):
-            title = cluster.title.ljust(self.max_title + 4, ".")
+            title = cluster.title.ljust(self.max_title, ".")
 
         if self.flags_on(Const.tog_group_prog):
             done = Style.progress_done + color
@@ -393,7 +396,7 @@ class Play:
                        .addt(os.getcwd())
                        .addt("como raiz para o repositório de " + self.rep_alias + "?")
                        .set_options(["yes", "no"])
-                       .get_answer(chama))
+                       .answer(chama))
 
     def set_language(self):
 
@@ -401,7 +404,7 @@ class Play:
             self.rep.lang = value
             self.fn_save()
             self.add_input(Floating()
-                           .addt("Linguagem alterada para" + value)
+                           .addt("Linguagem alterada para " + value)
                            .addt("Você pode mudar a linguagem")
                             .addt("de programação apertando")
                            .adds(Sentence().addf("G", "l"))
@@ -413,7 +416,7 @@ class Play:
                        .addt("")
                        .addt(" Selecione e tecle enter")
                        .set_options(["c", "cpp", "py", "ts", "js", "java", "hs"])
-                       .get_answer(back))
+                       .answer(back))
 
     def process_down(self):
 
@@ -540,15 +543,15 @@ class Play:
                 s = Sentence().addf("", _key).addf(color, (8 - len(_text)) * " ").addf(color + "/", _text)
             frame.print(1, s)
 
+        add_flag(Const.tog_show_percent, "Percent", f"[{Const.key_show_percent}]")
         add_flag(Const.tog_show_count, "Count", f"[{Const.key_show_count}]")
         add_flag(Const.tog_show_minimum, "Minimum", f"[{Const.key_show_minimum}]")
+        add_flag(Const.tog_show_xp, "XP", f"[{Const.key_show_xp}]")
         add_flag(Const.tog_show_down, "Down", f"[{Const.key_show_down}]")
         add_flag(Const.tog_show_dots, "Dots", f"[{Const.key_show_dots}]")
-        add_flag(Const.tog_show_xp, "XP", f"[{Const.key_show_xp}]")
-        add_flag(Const.tog_show_percent, "Percent", f"[{Const.key_show_percent}]")
-        add_flag(Const.tog_admin, "Admin", f"[{Const.key_admin}]")
         add_flag(Const.tog_group_prog, "GroupBar", f"[{Const.key_group_prog}]")
         add_flag(Const.tog_quest_bar, "QuestBar", f"[{Const.key_quest_bar}]")
+        add_flag(Const.tog_admin, "Admin", f"[{Const.key_admin}]")
 
     def show_help(self):
         _help: Floating = Floating().warning().ljust()

@@ -38,7 +38,7 @@ class Floating:
         self._exit_fn = fn
         return self
 
-    def _set_xy(self, dx: int, dy: int):
+    def _set_xy(self, dy, dx):
         valid = "<>^v"
         for c in self._align:
             if c not in valid:
@@ -68,8 +68,8 @@ class Floating:
         max_dx = max(data)
         dx = max_dx + 2
         dy = len(self._content) + 2
-        self._set_xy(dx, dy)
         self._frame.set_inner(dy, dx)
+        self._set_xy(dy, dx)
         self._frame.set_fill()
         
         if self._type == "answer":
@@ -101,7 +101,8 @@ class Floating:
         return self
 
     def _set_default_footer(self):
-        self._frame.set_footer(Sentence().addf("/", " Pressione uma tecla "))
+        if self._frame.get_footer().len() == 0:
+            self._frame.set_footer(Sentence().addf("/", " Pressione uma tecla "))
         return self
 
     def set_default_header(self):
@@ -121,29 +122,32 @@ class Floating:
         self._frame.set_border_color("r")
         return self
     
+    def answer(self, fn_answer):
+        self._type = "answer"
+        self._frame.set_header(Sentence().addf("/", " Pergunta "))
+        self._frame.set_border_color("g")
+        self._fn_answer = fn_answer
+        return self
+
     def set_options(self, options: List[str]):
         self._options = options
         return self
     
-    def get_answer(self, fn_answer):
-        self._type = "answer"
-        self._frame.set_border_rounded()
-        self._frame.set_header(Sentence().addf("/", " Pergunta "))
-        # self.frame.set_footer(Sentence().addf("/", " Selecione e aperte enter "))
-        self._fn_answer = fn_answer
-        return self
 
     def draw(self):
-        self._set_default_footer()
-        self._set_default_footer()
         self.__setup_frame()
+        self._set_default_footer()
+        self._set_default_footer()
         self._frame.draw()
-        for i, line in enumerate(self._content):
+        y = 1
+
+        for line in self._content:
+            x = 1
             if self._centralize:
                 x = (self._frame.get_dx() - line.len()) // 2
-                self._frame.write(i + 1, x, line)
-            else:
-                self._frame.write(i + 1, 1, line)
+
+            self._frame.write(y, x, line)
+            y += 1
         return self
 
     def timer_expired(self):

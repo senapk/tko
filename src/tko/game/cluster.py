@@ -34,7 +34,7 @@ class Cluster:
         return total // len(self.quests)
 
     def get_resume_by_percent(self) -> Sentence:
-        return Sentence().addf(self.get_grade_color(), f"{self.get_percent()}%")
+        return Sentence().addf(self.get_grade_color(), f"{self.get_percent()}%".rjust(4))
 
     def get_resume_by_quests(self):
         total = len(self.quests)

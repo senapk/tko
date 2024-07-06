@@ -1,6 +1,6 @@
 from .fmt import Fmt
 from ..util.sentence import Sentence
-
+from typing import Tuple
 
 
 class Frame:
@@ -71,6 +71,7 @@ class Frame:
     
     def set_wrap(self):
         self._wrap = True
+        return self
 
     def set_fill_char(self, char: str):
         self._fill_char = char
@@ -128,6 +129,7 @@ class Frame:
         self._print_index += 1
         return self
 
+    # return y, x of the last character
     def write(self, y: int, x: int, sentence: Sentence) -> bool:
         lines, cols = Fmt.get_size()
 
@@ -139,32 +141,24 @@ class Frame:
         x_abs = x + self._x + 1
         y_abs = y + self._y + 1
 
-        count = 0
-
         if y_abs <= y_min or y_abs > y_max:
             return False
-
+        count = 0
         for token in sentence.get():
             fmt, text = token.fmt, token.text
             if x_abs - 1 < x_min: # Se o texto começa fora do frame
                 if x_abs + len(text) > x_min: # mas ter parte dentro
                     text = text[x_min - x_abs + 1:]
                     x_abs = x_min + 1
-
             if x_abs <= x_max: # Se o texto começa dentro do frame
-                missing = ""
                 if x_abs + len(text) >= x_max:
                     cut_point = x_max - x_abs + 1
-                    missing = text[cut_point:]
                     text = text[:cut_point]
 
                 Fmt.stroke(y_abs, x_abs, fmt, text)
-
-                if self._wrap and missing != "":
-                    Fmt.stroke(y_abs + 1, x_abs, missing)
                 count += 1
             x_abs += len(text)
-        return False if count == 0 else True
+        return count != 0
 
     def draw(self):
         x = self._x
