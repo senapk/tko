@@ -2,8 +2,9 @@ from typing import List, Optional
 from .quest import Quest
 from ..util.sentence import Sentence
 
+
 class Cluster:
-    def __init__(self, line_number:int = 0, title: str = "", key: str = "", color: Optional[str] = None):
+    def __init__(self, line_number: int = 0, title: str = "", key: str = "", color: Optional[str] = None):
         self.line_number = line_number
         self.title: str = title
         self.key: str = key

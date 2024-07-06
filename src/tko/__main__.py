@@ -8,7 +8,11 @@ from .run.basic import Param
 from .util.pattern import PatternLoader
 from .run.basic import DiffMode
 from .down import Down
-from .settings import SettingsParser, RepoSettings, Settings
+from .settings.settings_parser import SettingsParser
+from .settings.settings import Settings
+from .settings.rep_settings import RepSettings
+from .settings.geral_settings import GeralSettings
+
 
 from .util.guide import tko_guide
 from .util.guide import bash_guide
@@ -18,6 +22,7 @@ from .util.term_color import Color
 from .util.symbols import symbols
 
 from .game.game import Game
+from .game.graph import Graph
 from .play.play import Play
 
 from .__init__ import __version__
@@ -35,7 +40,7 @@ class MRep:
     def add(args):
         sp = SettingsParser()
         settings = sp.load_settings()
-        rep = RepoSettings()
+        rep = RepSettings()
         if args.url:
             rep.set_url(args.url)
         elif args.file:
@@ -68,7 +73,7 @@ class MRep:
         game = Game()
         game.parse_file(file)
         game.check_cycle()
-        game.generate_graph("graph")
+        Graph(game).generate()
 
 
 class Main:
@@ -90,9 +95,10 @@ class Main:
 
         # load default diff from settings if not specified
         if not args.side and not args.down:
-            local = SettingsParser().load_settings().local
-            updown = local.updown
-            size_too_short = Report.get_terminal_size() < local.sideto_min
+            geral = SettingsParser().load_settings().geral
+            updown = geral.get(geral.diffdown)
+            sidesize = geral.get(geral.sidesize)
+            size_too_short = Report.get_terminal_size() < sidesize
             param.set_up_down(updown or size_too_short)
         elif args.side:
             param.set_up_down(False)
@@ -117,46 +123,46 @@ class Main:
 
         if args.ascii:
             action = True
-            settings.local.ascii = True
+            settings.geral.set(GeralSettings.ascii, True)
             print("Encoding mode now is: ASCII")
         if args.unicode:
             action = True
-            settings.local.ascii = False
+            settings.geral.set(GeralSettings.ascii, False)
             print("Encoding mode now is: UNICODE")
         if args.mono:
             action = True
-            settings.local.color = False
+            settings.geral.set(GeralSettings.color, False)
             print("Color mode now is: MONOCHROMATIC")
         if args.color:
             action = True
-            settings.local.color = True
+            settings.geral.set(GeralSettings.color, True)
             print("Color mode now is: COLORED")
         if args.side:
             action = True
-            settings.local.updown = False
+            settings.geral.set(GeralSettings.diffdown, False)
             print("Diff mode now is: SIDE_BY_SIDE")
         if args.down:
             action = True
-            settings.local.updown = True
+            settings.geral.set(GeralSettings.diffdown, True)
             print("Diff mode now is: UP_DOWN")
         if args.lang:
             action = True
-            settings.local.lang = args.lang
+            settings.geral.set(GeralSettings.lang, args.lang)
             print("Default language extension now is:", args.lang)
         if args.ask:
             action = True
-            settings.local.lang = ""
+            settings.geral.set(GeralSettings.lang, "")
             print("Language extension will be asked always.")
             
         if args.root:
             action = True
-            settings.local.set_rootdir(".")
+            settings.geral.set_rootdir(".")
             print("Root directory now is: current directory")
 
         if not action:
             action = True
             print(sp.get_settings_file())
-            print(str(settings.local))
+            print(str(settings.geral))
 
         sp.save_settings()
 
@@ -169,7 +175,7 @@ class Main:
                 sp = SettingsParser()
                 settings = sp.load_settings()
                 repo = settings.get_repo(args.repo)
-                local = settings.local
+                local = settings.geral
                 game = Game()
                 file = repo.get_file()
                 game.parse_file(file)
@@ -328,14 +334,13 @@ class Parser:
         if args.c:
             SettingsParser.user_settings_file = args.c
         settings = SettingsParser().load_settings()
-        if args.a or settings.local.ascii:
+        if args.a or settings.geral.get(GeralSettings.ascii):
             symbols.set_ascii()
         else:
             symbols.set_unicode()
-        if not args.m and settings.local.color:
+        if not args.m and settings.geral.get(GeralSettings.color):
             Color.enabled = True
             symbols.set_colors()
-
 
         if args.v or args.g or args.b:
             if args.v:

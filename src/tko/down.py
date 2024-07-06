@@ -4,7 +4,7 @@ import urllib.request
 import urllib.error
 import json
 
-from .settings import SettingsParser
+from .settings.settings_parser import SettingsParser
 from .game.game import Game
 from .util.remote import RemoteCfg
 
@@ -19,7 +19,7 @@ class Down:
     js_draft = (r'let __lines = require("fs").readFileSync(0).toString().split("\n");' + '\n'
                 r'let input = () => __lines.length === 0 ? "" : __lines.shift();' + '\n'
                 r'let write = (text, end="\n") => process.stdout.write("" + text + end);') + '\n'
-    
+
     c_draft = '#include <stdio.h>\n\nint main() {\n    return 0;\n}\n\n'
     cpp_draft = '#include <iostream>\n\nint main() {\n}\n\n'
 
@@ -82,7 +82,7 @@ class Down:
                     f.write(content)
             else:
                 Down.fnprint("  " + path + " (Unchanged)")
-    
+
     @staticmethod
     def __down_problem_def(destiny, cache_url) -> Tuple[str, str]:
         # downloading Readme
@@ -96,7 +96,7 @@ class Down:
             content = open(tempfile).read()
 
         Down.__compare_and_save(content, readme)
-        
+
         # downloading mapi
         mapi = os.path.join(destiny, "mapi.json")
         urllib.request.urlretrieve(cache_url + "mapi.json", mapi)
@@ -153,7 +153,7 @@ class Down:
                 print("  Choose extension for draft: [c, cpp, py, ts, js, java]: ", end="")
                 language = input()
                 ask_ext = True
-        
+
         Down.__unpack_json(loaded_json, destiny, language)
         Down.__download_drafts(loaded_json, destiny, language, cache_url, ask_ext)
         return True
@@ -181,6 +181,6 @@ class Down:
                         else:
                             f.write("")
                     Down.fnprint("  " + draft_path + " (Empty)")
-        
+
         if ask_ext:
             print("\nYou can choose default extension with command\n$ tko config -l <extension>")

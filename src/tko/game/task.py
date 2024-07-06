@@ -3,6 +3,7 @@ from ..util.symbols import symbols
 from ..util.sentence import Sentence
 import re
 
+
 class Task:
 
     def __init__(self):

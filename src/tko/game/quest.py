@@ -11,13 +11,14 @@ class Quest:
         self.key = ""
         self.title = ""
         self.__tasks: List[Task] = []
-        self.skills: Dict[str, int] = {} # s:skill
+        self.skills: Dict[str, int] = {}  # s:skill
         self.cluster = ""
-        self.requires = [] # r:quest_key
+        self.requires = []  # r:quest_key
         self.requires_ptr = []
-        self.opt = False # opt
-        self.qmin: Optional[int] = None # q:  minimo de 50 porcento da pontuação total para completar
+        self.opt = False  # opt
+        self.qmin: Optional[int] = None  # q:  minimo de 50 porcento da pontuação total para completar
         self.tmin: Optional[int] = None  # t: ou ter no mínimo esse valor de todas as tarefas
+        self.filename = ""
 
     def __str__(self):
         line = str(self.line_number).rjust(3)
@@ -124,9 +125,10 @@ class Quest:
         if len(self.requires_ptr) == 0:
             cache[self.key] = True
             return True
-        cache[self.key] = all( [r.is_complete() and r.is_reachable(cache) for r in self.requires_ptr] )
+        cache[self.key] = all([r.is_complete() and r.is_reachable(cache) for r in self.requires_ptr])
         return cache[self.key]
-    
+
+
 class QuestParser:
     quest: Quest
 
@@ -136,6 +138,7 @@ class QuestParser:
         self.line_num = 0
         self.default_qmin_requirement = 50
         self.default_task_xp = 10
+        self.filename = ""
 
     @staticmethod
     def get_md_link(title: str) -> str:
@@ -168,7 +171,6 @@ class QuestParser:
     def match_full_pattern(self):
         fullpattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->.*$"
         match = re.match(fullpattern, self.line)
-        tags = []
 
         if not match:
             return False

@@ -13,6 +13,7 @@ def load_html_tags(task: str) -> Optional[str]:
         return None
     return match.group(1).strip()
 
+
 class Game:
     def __init__(self, file: Optional[str] = None):
         self.clusters: List[Cluster] = []  # clusters ordered
@@ -54,14 +55,14 @@ class Game:
         titulo = match.group(1)
         tags_raw = match.group(2).strip()
         tags = [tag.strip() for tag in tags_raw.split(" ")]
-        if not "group" in tags:
+        if "group" not in tags:
             return None
         
         keys = [tag[1:] for tag in tags if tag.startswith("@")]
         key = titulo
         try:
             color = [tag[2:] for tag in tags if tag.startswith("c:")][0]
-        except:
+        except IndexError as _e:
             color = None
         if len(keys) > 0:
             key = keys[0]
