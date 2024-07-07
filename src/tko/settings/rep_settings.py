@@ -14,7 +14,7 @@ class RepSettings:
     defaults = {
         expanded: [],
         tasks: {},
-        flags: [],
+        flags: {},
         new_items: [],
         lang: ""
     }
@@ -29,7 +29,10 @@ class RepSettings:
     def get(self, key: str) -> Any:
         if key not in self.defaults:
             raise ValueError(f"Key {key} not found in RepSettings")
-        return self.data.get(key, RepSettings.defaults[key])
+        value = self.data.get(key, RepSettings.defaults[key])
+        if type(value) != type(RepSettings.defaults[key]):
+            return RepSettings.defaults[key]
+        return value
 
     def set(self, key: str, value: Any):
         self.data[key] = value

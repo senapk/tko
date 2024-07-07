@@ -1,17 +1,15 @@
-from typing import List, Tuple
+from typing import List
 from .frame import Frame
 from ..util.sentence import Sentence
 from .fmt import Fmt
 
 import curses
-import time
+
 
 class Floating:
-    def __init__(self, _align = ""):
+    def __init__(self, _align=""):
         self._frame = Frame(0, 0)
         self._content: List[Sentence] = []
-        # self._ending = None
-        # self._total_time = None
         self._type = ""
         self._options = []
         self._options_index = 0
@@ -61,10 +59,13 @@ class Floating:
         self._frame.set_pos(y, x)
         return self
             
+    def is_enable(self):
+        return self._enable
 
     def __setup_frame(self):
-        lines, cols = Fmt.get_size()
-        data = [x.len() for x in self._content] + [self._frame.get_header().len() - 2, self._frame.get_footer().len() - 2]
+        header_len = self._frame.get_header().len() - 2
+        footer_len = self._frame.get_footer().len() - 2
+        data = [x.len() for x in self._content] + [header_len, footer_len]
         max_dx = max(data)
         dx = max_dx + 2
         dy = len(self._content) + 2
@@ -93,11 +94,6 @@ class Floating:
     
     def set_content(self, content: List[str]):
         self._content = [Sentence().addt(x) for x in content]
-        return self
-
-    def timer(self, delta: int):
-        self._total_time = delta
-        self._ending = time.time() + delta
         return self
 
     def _set_default_footer(self):
@@ -132,12 +128,11 @@ class Floating:
     def set_options(self, options: List[str]):
         self._options = options
         return self
-    
 
     def draw(self):
+        self._set_default_footer()
+        self._set_default_footer()
         self.__setup_frame()
-        self._set_default_footer()
-        self._set_default_footer()
         self._frame.draw()
         y = 1
 
@@ -149,11 +144,6 @@ class Floating:
             self._frame.write(y, x, line)
             y += 1
         return self
-
-    def timer_expired(self):
-        if self._ending is None:
-            return False
-        return time.time() > self._ending
 
     def get_input(self) -> int:
         self.draw()
