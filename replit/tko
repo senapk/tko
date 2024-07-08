@@ -21,7 +21,7 @@ import io
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.9.994"
+__version__ = "0.10.0"
 
 
 
@@ -2628,9 +2628,10 @@ class Flag:
         self._name: str = ""
         self._text: str = ""  # description
         self._char: str = ""
-        self._values: List[Any] = []
+        self._values: List[str] = ["0", "1"]
         self._index: int = 0
-        self._bar: bool = False
+        self._location: str = ""
+        self._bool = True  # many options
 
     def name(self, _name):
         self._name = _name
@@ -2644,7 +2645,7 @@ class Flag:
         self._char = _key
         return self
 
-    def values(self, _values):
+    def values(self, _values: List[str]):
         self._values = _values
         return self
 
@@ -2652,26 +2653,33 @@ class Flag:
         self._index = _index
         return self
 
-    def left_bar(self):
-        self._bar = True
+    def location(self, value: str):
+        self._location = value
         return self
 
     def toggle(self):
-        # Fmt.write_text(0, 0, str(self._values))
-        # Fmt.getch()
-        self._index = (self._index + 1) % 2 #len(self._values)
+        self._index = (self._index + 1) % len(self._values)
         return self
 
-    def is_left_bar(self) -> bool:
-        return self._bar
+    def many(self):
+        self._bool = False
+        return self
+    
+    def bool(self):
+        self._bool = True
+        return self
+    
+    def is_bool(self):
+        return self._bool
+
+    def get_location(self) -> str:
+        return self._location
 
     def get_value(self) -> Any:
-        # Fmt.write_text(0, 0, str(self._values))
-        # Fmt.getch()
         return self._values[self._index]
 
     def is_true(self) -> bool:
-        return self.get_value() == 1
+        return self.get_value() == "1"
 
     def get_name(self) -> str:
         return self._name
@@ -2686,42 +2694,56 @@ class Flag:
         return self._index
 
     def get_color(self) -> str:
-        if self.get_value() == 1:
-            return Style.flags_true
-        return Style.flags_false
+        if self.get_value() == "1":
+            return Flags.flag_on.get_value()
+        return Flags.flag_off.get_value()
 
     def get_toggle_sentence(self, pad: int = 0) -> Sentence:
+        if not self._bool:
+            name = Sentence().addf(self.get_value(), f"{self._name}".ljust(pad))
+            value = Sentence().addt(f"[{self.get_char()}]").addt(f"{self.get_value()}".rjust(2)).addt(" ").concat(name)
+            return value
+            
         char = self.get_char()
         text = self.get_name()
         color = self.get_color()
         extra = Sentence()
         if pad > 0:
-            extra.addf(color, (8 - len(text)) * " ")
-
+            extra.addf(color, (pad - len(text)) * " ")
+        visual = "━─"
         if self.is_true():
-            value = Sentence().addf(color + "/", text).concat(extra).addf("", f"[{char}]")
-        else:
-            value = Sentence().addf("", f"[{char}]").concat(extra).addf(color + "/", text)
-
+            visual = "─━"
+        value = Sentence().addt(f"[{char}]").addf(color, f"{visual} ").addf(color + "/", text).concat(extra)
         return value
     
 
 class Flags:
-    count = Flag().name("Count").char("C").values([0, 1]).text("Mostra a contagem de tarefas").left_bar()
-    down = Flag().name("Down").char("D").values([0, 1]).text("Mostra o caminho para a tarefa baixadas").left_bar()
-    minimum = Flag().name("Minimum").char("M").values([0, 1]).text("Mostra a nota mínima para a tarefa").left_bar()
-    opt = Flag().name("Opt").char("O").values([0, 1]).text("Mostra tarefas opcionais").left_bar()
-    xp = Flag().name("Xp").char("X").values([0, 1]).text("Mostra a xp obtida").left_bar()
-    percent = Flag().name("Percent").char("P").values([0, 1]).text("Mostra a porcentagem de tarefas").left_bar()
-    admin = Flag().name("Admin").char("A").values([0, 1]).text("Mostra todas as missões e grupos").left_bar()
+    count = Flag().name("Count").char("C").text("Mostra a contagem de tarefas").location("left")
+    down = Flag().name("Down").char("D").text("Mostra o caminho para a tarefa baixadas").location("left")
+    minimum = Flag().name("Minimum").char("M").text("Mostra a nota mínima para a tarefa").location("left")
+    opt = Flag().name("Opt").char("O").text("Mostra tarefas opcionais").location("left")
+    xp = Flag().name("Xp").char("X").text("Mostra a xp obtida").location("left")
+    percent = Flag().name("Percent").char("P").text("Mostra a porcentagem de tarefas").location("left")
+    admin = Flag().name("Admin").char("A").text("Mostra todas as missões e grupos").location("left")
 
-    dots = Flag().name("Dots").char(".").values([1, 0]).text("Mostra o preenchimento com pontos").left_bar()
-    group_prog = Flag().name("Group").char("G").values([1, 0]).text("Mostra a barra de progresso dos grupos").left_bar()
-    quest_prog = Flag().name("Quest").char("Q").values([1, 0]).text("Mostra a barra de progresso das missões").left_bar()
+    dots = Flag().name("Dots").char(".").values(["1", "0"]).text("Mostra o preenchimento com pontos").location("left")
+    group_prog = Flag().name("Group").char("G").values(["1", "0"]).text("Mostra a barra de progresso dos grupos").location("left")
+    quest_prog = Flag().name("Quest").char("Q").values(["1", "0"]).text("Mostra a barra de progresso das missões").location("left")
 
-    help_bar = Flag().name("HelpBar").char("H").values([1, 0]).text("Mostra a barra de ajuda")
-    skills_bar = Flag().name("SkillsBar").char("S").values([1, 0]).text("Mostra a barra de skills")
-    flags_bar = Flag().name("FlagsBar").char("F").values([1, 0]).text("Mostra a barra de flags")
+    help_bar = Flag().name("HelpBar").char("H").values(["1", "0"]).text("Mostra a barra de ajuda").location("top")
+    skills_bar = Flag().name("SkillsBar").char("S").values(["1", "0"]).text("Mostra a barra de skills").location("top")
+    flags_bar = Flag().name("FlagsBar").char("F").values(["1", "0"]).text("Mostra a barra de flags").location("top")
+
+    focus     = Flag().name("Focus").char("z").values(["R", "B", "G", "Y", "wK", "kW"]).text("Cor do item em foco").many().location("left")
+    prog_done = Flag().name("ProgDone").char("x").values(["g", "b", "c", "k", "w"]).text("Progresso Done").many().location("left")
+    prog_todo = Flag().name("ProgTodo").char("c").values(["y", "m", "r", "k", "w"]).text("Progresso Todo").many().location("left")
+    flag_on   = Flag().name("FlagTrue").char("v").values(["G", "W", "B", "C", "wK", "kW"]).text("Flag True").many().location("left")
+    flag_off  = Flag().name("FlagFalse").char("b").values(["Y", "R", "M", "wK", "kW"]).text("Flag False").many().location("left")
+    cmds      = Flag().name("Cmds").char("n").values(["B", "C", "M", "Y", "wK", "kW"]).text("CMDS").many().location("left")
+    skill_done = Flag().name("SkillDone").char("y").values(["G", "B", "C", "wK", "kW"]).text("Skill Done").many().location("left")
+    skill_todo = Flag().name("SkillTodo").char("u").values(["Y", "R", "M", "wK", "kW"]).text("Skill Todo").many().location("left")
+    main_done = Flag().name("MainDone").char("i").values(["B", "G", "C", "wK", "kW"]).text("Main Done").many().location("left")
+    main_todo = Flag().name("MainTodo").char("p").values(["M", "R", "Y", "wK", "kW"]).text("Main Todo").many().location("left")
 
 
 class FlagsMan:
@@ -2733,9 +2755,9 @@ class FlagsMan:
         for flag in Flags.__dict__.values():
             if isinstance(flag, Flag):
                 self.flags[flag.get_name()] = flag
-                if flag.is_left_bar():
+                if flag.get_location() == "left":
                     self.left.append(flag)
-                else:
+                elif flag.get_location() == "top":
                     self.top.append(flag)
 
         for key, _index in data.items():
@@ -2763,6 +2785,7 @@ class Play:
         self.new_items: List[str] = self.rep.get(RepSettings.new_items)
         self.expanded: List[str] = self.rep.get(RepSettings.expanded)
         self.flagsman = FlagsMan(self.rep.get(RepSettings.flags))
+        self.rep.lang = self.rep.get(RepSettings.lang)
 
         self.game: Game = game
 
@@ -2787,7 +2810,7 @@ class Play:
         self.help_base = [f"Quit[{self.Key.quit}]", f"Help[{self.Key.help}]", "Move[wasd]", "Mark[enter]"]
         self.help_extra = [f"OpenLink[{self.Key.open_link}]", f"GetTask[{self.Key.down_task}]", "Grade[0-9]",
                            f"Lang[{self.Key.set_lang}]", f"Expand[{self.Key.expand}]", f"Collapse[{self.Key.collapse}]",
-                           f"MassMark[{self.Key.mass_toggle}]"]
+                           f"MassMark[{self.Key.mass_toggle}]", f"ResetColors[{self.Key.reset}]"]
 
     def save_to_json(self):
         self.rep.set(RepSettings.expanded, self.expanded)
@@ -2798,6 +2821,7 @@ class Play:
                 tasks[t.key] = str(t.grade)
         self.rep.set(RepSettings.tasks, tasks)
         self.rep.set(RepSettings.flags, self.flagsman.get_data())
+        self.rep.set(RepSettings.lang, self.rep.lang)
 
         self.fn_save()
 
@@ -2843,7 +2867,7 @@ class Play:
         if Flags.opt.is_true() and t.opt:
             color = Style.opt_task + color
         if in_focus:
-            color = Style.focus + color
+            color = Flags.focus.get_value() + color
         output.addf(color, t.title)
 
         if Flags.down.is_true():
@@ -2878,14 +2902,14 @@ class Play:
         if Flags.opt.is_true() and q.opt:
             color = Style.opt_quest + color
         if in_focus:
-            color = Style.focus + color
+            color = Flags.focus.get_value() + color
 
         title = q.title
         if Flags.dots.is_true():
             title = title.ljust(self.max_title - 2, ".")
         if Flags.quest_prog.is_true():
-            done = Style.progress_done + color
-            todo = Style.progress_todo + color
+            done = color + Flags.prog_done.get_value()
+            todo = color + Flags.prog_todo.get_value()
             output.concat(Util.build_bar(title, q.get_percent() / 100, len(title), done, todo))
         else:
             output.addf(color, title)
@@ -2918,14 +2942,14 @@ class Play:
         output.addt(opening + " ")
         color = Style.cluster_title
         if in_focus:
-            color += Style.focus + color
+            color += Flags.focus.get_value() + color
         title = cluster.title
         if Flags.dots.is_true():
             title = cluster.title.ljust(self.max_title, ".")
 
         if Flags.group_prog.is_true():
-            done = Style.progress_done + color
-            todo = Style.progress_todo + color
+            done = color + Flags.prog_done.get_value()
+            todo = color + Flags.prog_todo.get_value()
             output.concat(Util.build_bar(title, cluster.get_percent() / 100, len(title), done, todo))
         else:
             output.addf(color, title)
@@ -3113,7 +3137,9 @@ class Play:
         else:
             text = f" Total:{xp.get_xp_total_obtained()}"
 
-        total_bar = Util.build_bar(text, total_perc / 100, dx - 2, "/kC", "/kM")
+        done = "/k" + Flags.main_done.get_value()
+        todo = "/k" + Flags.main_todo.get_value()
+        total_bar = Util.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Sentence().addt("{").addf("/", "Skills").addt("}"), "^")
         frame_xp.set_footer(Sentence().concat(total_bar), "^")
         frame_xp.draw()
@@ -3127,7 +3153,7 @@ class Play:
                 text = f"{skill}:{obt[skill]}/{value}"
 
             perc = obt[skill] / value
-            skill_bar = Util.build_bar(text, perc, dx - 2, "/kC", "/kR")
+            skill_bar = Util.build_bar(text, perc, dx - 2, "/k" + Flags.skill_done.get_value(), "/k" + Flags.skill_todo.get_value())
             frame_xp.write(index, 1, skill_bar)
             index += 2
 
@@ -3135,8 +3161,17 @@ class Play:
         frame.set_header(Sentence().addt("{").addf("/", "Flags").addt("}"), "^")
         frame.draw()
 
+        frame.print(0, Sentence().addt("-----VISUAL-----"))
         for flag in self.flagsman.left:
-            frame.print(1, flag.get_toggle_sentence(8))
+            if flag.is_bool():
+                frame.print(0, flag.get_toggle_sentence(7))
+
+        frame.print(0, Sentence().addt("-----CORES-----"))
+
+        for flag in self.flagsman.left:
+            if not flag.is_bool():
+                frame.print(0, flag.get_toggle_sentence())
+
 
     def show_help(self):
         _help: Floating = Floating().warning().ljust()
@@ -3179,7 +3214,7 @@ class Play:
             if s.text.startswith("["):
                 s.fmt = ""
             elif not s.text.startswith(" "):
-                s.fmt = "B"
+                s.fmt = Flags.cmds.get_value()
         dx = frame.get_dx()
         # help.trim_spaces(dx)
         _help.trim_alfa(dx)
@@ -3197,12 +3232,12 @@ class Play:
             if s.text.startswith("["):
                 s.fmt = ""
             elif not s.text.startswith(" "):
-                s.fmt = "B"
+                s.fmt = Flags.cmds.get_value()
         frame.set_footer(_help, "^")
         frame.draw()
 
         content = Sentence().addt(" ")
-        content.addf("C", f"({self.rep_alias.upper()})").addt(" ")
+        content.addf(Flags.cmds.get_value(), f"({self.rep_alias.upper()})").addt(" ")
 
         for f in self.flagsman.top:
             content.concat(f.get_toggle_sentence()).addt(" ")
@@ -3223,7 +3258,9 @@ class Play:
                 text = f"L:{xp.get_level()} XP:{xp.get_xp_level_current()}/{xp.get_xp_level_needed()}"
             percent = float(xp.get_xp_level_current()) / float(xp.get_xp_level_needed())
         size = max(15, dx - content.len() - 1)
-        xp_bar = Util.build_bar(text, percent, size).addt(" ")
+        done = "/k" + Flags.main_done.get_value()
+        todo = "/k" + Flags.main_todo.get_value()
+        xp_bar = Util.build_bar(text, percent, size, done, todo).addt(" ")
 
         limit = dx - xp_bar.len()
         content.trim_spaces(limit)
@@ -3264,7 +3301,7 @@ class Play:
 
         flags_sx = 0
         if Flags.flags_bar.is_true():
-            flags_sx = 15
+            flags_sx = 17
             frame_flags = Frame(mid_y, 0).set_size(mid_sy, flags_sx)
             self.show_flags_bar(frame_flags)
 
@@ -3466,6 +3503,7 @@ class Play:
         quit = "q"
         down = "s"
         up = "w"
+        reset = "r"
         mass_toggle = "T"
         toggle_space = " "
         toggle_enter = "\n"
@@ -3477,7 +3515,7 @@ class Play:
 
         def __call__(self):
             self.flag.toggle()
-            if self.flag.is_left_bar():
+            if self.flag.get_location() == "left" and self.flag.is_bool():
                 f = Floating("v").warning()
                 f.addt(self.flag.get_description())
                 if self.flag.is_true():
@@ -3504,11 +3542,16 @@ class Play:
         def move_down():
             self.index_selected = min(len(self.items) - 1, self.index_selected + 1)
 
+        def reset_colors():
+            for flag in self.flagsman.left:
+                if not flag.is_bool():
+                    flag.index(0)
+
         calls = {}
 
         def add_int(_key: int, fn):
             if _key in calls.keys():
-                raise ValueError("Chave duplicada")
+                raise ValueError(f"Chave duplicada {chr(_key)}")
             calls[_key] = fn
 
         def add_str(str_key: str, fn):
@@ -3539,6 +3582,7 @@ class Play:
         add_str(self.Key.set_lang, self.set_language)
         add_str(self.Key.down_task, self.process_down)
         add_str(self.Key.mass_toggle, self.mass_mark)
+        add_str(self.Key.reset, reset_colors)
 
         for value in range(10):
             add_str(str(value), self.GradeFunctor(int(value), self.set_grade))
