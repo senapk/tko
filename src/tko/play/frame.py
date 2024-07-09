@@ -175,24 +175,25 @@ class Frame:
         header = self._header
         footer = self._footer
         if self._footer_align == "<":
-            footer.ljust(dx, hor, color)
+            footer.ljust(dx, hor, color).trim_end(dx)
         elif self._footer_align == ">":
-            footer.rjust(dx, hor, color)
+            footer.rjust(dx, hor, color).trim_end(dx)
         else:
-            footer.center(dx, hor, color) 
+            footer.center(dx, hor, color).trim_end(dx)
     
         if self._header_align == "<":
-            header.ljust(dx, hor, color)
+            header.ljust(dx, hor, color).trim_end(dx)
         elif self._header_align == ">":
-            header.rjust(dx, hor, color)
+            header.rjust(dx, hor, color).trim_end(dx)
         else:
-            header.center(dx, hor, color)
+            header.center(dx, hor, color).trim_end(dx)
 
         above = Sentence().addf(color, up_left).concat(header).addf(color, up_right)
         below = Sentence().addf(color, down_left).concat(footer).addf(color, down_right)
         
         Fmt.write(y, x, above)
-        Fmt.write(y + dy + 1, x, below)
+        if dy > 0:
+            Fmt.write(y + dy + 1, x, below)
         if self._filled:
             for i in range(1, dy + 1):
                 Fmt.write(y + i, x, Sentence().addf(color, ver).addt(dx * self._fill_char).addf(color, ver))

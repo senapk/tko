@@ -72,7 +72,7 @@ class Sentence:
 
     def trim_alfa(self, limit: int):
         if limit < 0:
-            return
+            return self
         index = len(self.data) - 1
         size = self.len()
         while True:
@@ -87,10 +87,11 @@ class Sentence:
                 size -= 1
             else:
                 index -= 1
+        return self
 
     def trim_spaces(self, limit: int):
         if limit < 0:
-            return
+            return self
         index = len(self.data) - 1
         size = self.len()
         while True:
@@ -105,10 +106,12 @@ class Sentence:
                 size -= 1
             else:
                 index -= 1
+            
+        return self
 
     def trim_end(self, width: int):
         if width < 0:
-            return
+            return self
         size = self.len()
         index = len(self.data) - 1
         while True:
@@ -121,3 +124,17 @@ class Sentence:
             else:
                 token.text = token.text[:-1]
                 size -= 1
+        return self
+
+    @staticmethod
+    def build_bar(text: str, percent: float, length: int, fmt_true: str = "/kC",
+                  fmt_false: str = "/kY") -> Sentence:
+        prefix = (length - len(text)) // 2
+        suffix = length - len(text) - prefix
+        text = " " * prefix + text + " " * suffix
+        xp_bar = Sentence()
+        total = length
+        full_line = text
+        done_len = int(percent * total)
+        xp_bar.addf(fmt_true, full_line[:done_len]).addf(fmt_false, full_line[done_len:])
+        return xp_bar
