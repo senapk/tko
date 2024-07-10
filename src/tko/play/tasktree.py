@@ -38,8 +38,8 @@ class TaskTree:
         self.available_clusters: List[Cluster] = []
 
         self.items: List[Entry] = []
-        self.new_items: List[str] = []
-        self.expanded: List[str] = []
+        # self.new_items: List[str] = []
+        # self.expanded: List[str] = []
 
         self.index_selected = 0
         self.index_begin = 0

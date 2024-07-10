@@ -22,9 +22,17 @@ import webbrowser
 import os
 import curses
 
+
 class Play:
 
-    def __init__(self, local: GeralSettings, game: Game, rep: RepSettings, rep_alias: str, fn_save):
+    def __init__(
+        self,
+        local: GeralSettings,
+        game: Game,
+        rep: RepSettings,
+        rep_alias: str,
+        fn_save,
+    ):
         self.fn_save = fn_save
         self.local = local
         self.rep_alias = rep_alias
@@ -40,12 +48,22 @@ class Play:
         self.first_loop = True
         self.graph_ext = ""
 
-
-
-        self.help_base = [f"Quit[{self.Key.quit}]", f"Help[{self.Key.help}]", "Move[wasd]", "Mark[enter]"]
-        self.help_extra = [f"OpenLink[{self.Key.open_link}]", f"GetTask[{self.Key.down_task}]", "Grade[0-9]",
-            f"Lang[{self.Key.set_lang}]", f"Expand[{self.Key.expand}]", f"Collapse[{self.Key.collapse}]",
-            f"MassMark[{self.Key.mass_toggle}]", f"ResetColors[{self.Key.reset}]"]
+        self.help_base = [
+            f"Quit[{self.Key.quit}]",
+            f"Help[{self.Key.help}]",
+            "Move[wasd]",
+            "Mark[enter]",
+        ]
+        self.help_extra = [
+            f"OpenLink[{self.Key.open_link}]",
+            f"GetTask[{self.Key.down_task}]",
+            "Grade[0-9]",
+            f"Lang[{self.Key.set_lang}]",
+            f"Expand[{self.Key.expand}]",
+            f"Collapse[{self.Key.collapse}]",
+            f"MassMark[{self.Key.mass_toggle}]",
+            f"ResetColors[{self.Key.reset}]",
+        ]
 
     def save_to_json(self):
         self.tree.save_on_rep()
@@ -59,47 +77,59 @@ class Play:
             if value == "yes":
                 self.local.rootdir = os.getcwd()
                 self.fn_save()
-                self.fman.add_input(Floating()
-                            .addt("Diretório raiz definido como ")
-                            .addt("  " + self.local.rootdir)
-                            .addt("Você pode alterar o diretório raiz navegando para o")
-                            .addt("diretório desejado e executando o comando")
-                            .addt("  tko config --root")
-                            .addt("")
-                            .set_exit_fn(self.set_language)
-                            .warning())
+                self.fman.add_input(
+                    Floating()
+                    .put_text("Diretório raiz definido como ")
+                    .put_text("  " + self.local.rootdir)
+                    .put_text("Você pode alterar o diretório raiz navegando para o")
+                    .put_text("diretório desejado e executando o comando")
+                    .put_text("  tko config --root")
+                    .put_text("")
+                    .set_exit_fn(self.set_language)
+                    .warning()
+                )
             else:
-                self.fman.add_input(Floating()
-                            .addt("Navague para o diretório desejado e execute o comando")
-                            .addt("  tko config --root")
-                            .addt("ou rode o tko play novamente na pasta desejada").warning())
+                self.fman.add_input(
+                    Floating()
+                    .put_text("Navague para o diretório desejado e execute o comando")
+                    .put_text("  tko config --root")
+                    .put_text("ou rode o tko play novamente na pasta desejada")
+                    .warning()
+                )
 
-        self.fman.add_input(Floating().addt("Diretório raiz para o tko ainda não foi definido")
-                    .addt("Você deseja utilizar o diretório atual")
-                    .addt(os.getcwd())
-                    .addt("como raiz para o repositório de " + self.rep_alias + "?")
-                    .set_options(["yes", "no"])
-                    .answer(chama))
+        self.fman.add_input(
+            Floating()
+            .put_text("Diretório raiz para o tko ainda não foi definido")
+            .put_text("Você deseja utilizar o diretório atual")
+            .put_text(os.getcwd())
+            .put_text("como raiz para o repositório de " + self.rep_alias + "?")
+            .set_options(["yes", "no"])
+            .answer(chama)
+        )
 
     def set_language(self):
 
         def back(value):
             self.rep.lang = value
             self.fn_save()
-            self.fman.add_input(Floating()
-                        .addt("Linguagem alterada para " + value)
-                        .addt("Você pode mudar a linguagem")
-                        .addt("de programação apertando")
-                        .adds(Sentence().addf("G", "l"))
-                        .warning())
+            self.fman.add_input(
+                Floating()
+                .put_text("Linguagem alterada para " + value)
+                .put_text("Você pode mudar a linguagem")
+                .put_text("de programação apertando")
+                .put_sentence(Sentence().addf("G", "l"))
+                .warning()
+            )
 
-        self.fman.add_input(Floating()
-                    .addt("   Escolha a extensão")
-                    .addt(" default para os rascunhos")
-                    .addt("")
-                    .addt(" Selecione e tecle enter")
-                    .set_options(["c", "cpp", "py", "ts", "js", "java", "hs"])
-                    .answer(back))
+        self.fman.add_input(
+            Floating()
+            .put_text("   Escolha a extensão")
+            .put_text(" default para os rascunhos")
+            .put_text("")
+            .put_text(" Selecione e tecle enter")
+            .set_options(["c", "cpp", "py", "ts", "js", "java", "hs"])
+            .answer(back)
+        )
 
     def process_down(self):
         if self.local.rootdir == "":
@@ -120,13 +150,28 @@ class Play:
             task: Task = obj
             if task.link.startswith("http"):
                 webbrowser.open_new_tab(task.link)
-            self.fman.add_input(Floating().set_header(Sentence().addf("/", " Abrindo link ")).addt(task.link).warning())
+            self.fman.add_input(
+                Floating()
+                .set_header(" Abrindo link ")
+                .put_text(task.link)
+                .warning()
+            )
         elif isinstance(obj, Quest):
             self.fman.add_input(
-                Floating().addt("Essa é uma missão").addt("você só pode abrir o link").addt("de tarefas").error())
+                Floating()
+                .put_text("Essa é uma missão")
+                .put_text("você só pode abrir o link")
+                .put_text("de tarefas")
+                .error()
+            )
         else:
             self.fman.add_input(
-                Floating().addt("Esse é um grupo").addt("você só pode abrir o link").addt("de tarefas").error())
+                Floating()
+                .put_text("Esse é um grupo")
+                .put_text("você só pode abrir o link")
+                .put_text("de tarefas")
+                .error()
+            )
 
     def generate_graph(self):
         if not self.first_loop:
@@ -142,8 +187,9 @@ class Play:
             counts[q.key] = f"{done} / {done + init + todo}\n{q.get_percent()}%"
 
         mark_opt = Flags.dots.is_true()
-        Graph(self.game).set_opt(mark_opt).set_reachable(reachable).set_counts(counts).set_graph_ext(
-            self.graph_ext).generate()
+        Graph(self.game).set_opt(mark_opt).set_reachable(reachable).set_counts(
+            counts
+        ).set_graph_ext(self.graph_ext).generate()
         lines, _cols = Fmt.get_size()
         if self.first_loop:
             text = Sentence().addt(f"Grafo gerado em graph{self.graph_ext}")
@@ -152,23 +198,37 @@ class Play:
     def down_task(self, rootdir, obj: Any, ext: str):
         if isinstance(obj, Task) and obj.key in obj.title:
             task: Task = obj
-            down_frame = Floating().warning().set_header(Sentence().addt(" Baixando tarefa "))
-            down_frame.addt(f"tko down {self.rep_alias} {task.key} -l {ext}")
+            down_frame = (
+                Floating().warning().set_header(Sentence().addt(" Baixando tarefa "))
+            )
+            down_frame.put_text(f"tko down {self.rep_alias} {task.key} -l {ext}")
             self.fman.add_input(down_frame)
 
             def fnprint(text):
-                down_frame.addt(text)
+                down_frame.put_text(text)
                 down_frame.draw()
                 Fmt.refresh()
 
             Down.download_problem(rootdir, self.rep_alias, task.key, ext, fnprint)
         else:
             if isinstance(obj, Quest):
-                self.fman.add_input(Floating().addt("Essa é uma missão").addt("você só pode baixar tarefas").error())
+                self.fman.add_input(
+                    Floating()
+                    .put_text("Essa é uma missão")
+                    .put_text("você só pode baixar tarefas")
+                    .error()
+                )
             elif isinstance(obj, Cluster):
-                self.fman.add_input(Floating().addt("Esse é um grupo").addt("você só pode baixar tarefas").error())
+                self.fman.add_input(
+                    Floating()
+                    .put_text("Esse é um grupo")
+                    .put_text("você só pode baixar tarefas")
+                    .error()
+                )
             else:
-                self.fman.add_input(Floating().addt("Essa não é uma tarefa de código").error())
+                self.fman.add_input(
+                    Floating().put_text("Essa não é uma tarefa de código").error()
+                )
 
     @staticmethod
     def build_list_sentence(items: List[str]) -> Sentence:
@@ -193,8 +253,10 @@ class Play:
         return ""
 
     def show_main_bar(self, frame: Frame):
-        frame.set_header(Sentence().addt("{").addf("/", f"Tarefas lang:{self.rep.lang}").addt("}"))
-        frame.set_footer(Sentence().addt("{" + self.build_bar_links() + "}"))
+        frame.set_header(
+            Sentence().addt("{").addf("/", f"Tarefas lang:{self.rep.lang}").addt("}")
+        )
+        frame.set_footer(Sentence().addt(self.build_bar_links()), ">", "{", "}")
         frame.draw()
 
         dy, dx = frame.get_inner()
@@ -204,7 +266,9 @@ class Play:
     def show_skills_bar(self, frame_xp):
         dy, dx = frame_xp.get_inner()
         xp = XP(self.game)
-        total_perc = int(100 * (xp.get_xp_total_obtained() / xp.get_xp_total_available()))
+        total_perc = int(
+            100 * (xp.get_xp_total_obtained() / xp.get_xp_total_available())
+        )
         if Flags.percent.is_true():
             text = f" Total:{total_perc}%"
         else:
@@ -226,7 +290,13 @@ class Play:
                 text = f"{skill}:{obt[skill]}/{value}"
 
             perc = obt[skill] / value
-            skill_bar = Sentence.build_bar(text, perc, dx - 2, "/k" + Flags.skill_done.get_value(), "/k" + Flags.skill_todo.get_value())
+            skill_bar = Sentence.build_bar(
+                text,
+                perc,
+                dx - 2,
+                "/k" + Flags.skill_done.get_value(),
+                "/k" + Flags.skill_todo.get_value(),
+            )
             frame_xp.write(index, 1, skill_bar)
             index += 2
 
@@ -238,7 +308,6 @@ class Play:
             if flag.is_bool():
                 frame.print(0, flag.get_toggle_sentence(7))
 
-
     def show_color_bar(self, frame: Frame):
         frame.set_header(Sentence().addt("{").addf("/", "Cores").addt("}"), "^")
         frame.draw()
@@ -248,21 +317,25 @@ class Play:
                 frame.print(0, flag.get_toggle_sentence())
 
     def show_help(self):
-        _help: Floating = Floating().warning().ljust()
+        _help: Floating = Floating().warning().set_ljust_text()
         self.fman.add_input(_help)
         _help.set_header(Sentence().addf("/", " Help "))
-        _help.addt("Controles")
-        _help.addt("  setas ou wasd   - Para navegar entre os elementos")
-        _help.addt("  enter ou espaço - Marcar ou desmarcar, expandir ou contrair")
-        _help.addt("  0 a 9 - Definir a nota parcial para uma tarefa")
-        _help.addt(f"      {self.Key.open_link} - Abrir tarefa em uma aba do browser")
-        _help.addt(f"      {self.Key.down_task} - Baixar um tarefa de código para seu dispositivo")
-        _help.addt("")
-        _help.addt("Flags")
-        _help.addt("  Muda a forma de exibição dos elementos")
-        _help.addt("")
-        _help.addt("Extra")
-        _help.addt(f"  {self.Key.set_lang} - Mudar a linguagem de download dos rascunhos")
+        _help.put_text("Controles")
+        _help.put_text("  setas ou wasd   - Para navegar entre os elementos")
+        _help.put_text("  enter ou espaço - Marcar ou desmarcar, expandir ou contrair")
+        _help.put_text("  0 a 9 - Definir a nota parcial para uma tarefa")
+        _help.put_text(f"      {self.Key.open_link} - Abrir tarefa em uma aba do browser")
+        _help.put_text(
+            f"      {self.Key.down_task} - Baixar um tarefa de código para seu dispositivo"
+        )
+        _help.put_text("")
+        _help.put_text("Flags")
+        _help.put_text("  Muda a forma de exibição dos elementos")
+        _help.put_text("")
+        _help.put_text("Extra")
+        _help.put_text(
+            f"  {self.Key.set_lang} - Mudar a linguagem de download dos rascunhos"
+        )
 
     @staticmethod
     def disable_on_resize():
@@ -276,11 +349,6 @@ class Play:
 
     def show_bottom_bar(self, frame: Frame):
         _help = Play.build_list_sentence(self.help_extra)
-        for s in _help:
-            if s.text.startswith("["):
-                s.fmt = ""
-            elif not s.text.startswith(" "):
-                s.fmt = Flags.cmds.get_value()
         dx = frame.get_dx()
         # help.trim_spaces(dx)
         _help.trim_alfa(dx)
@@ -294,11 +362,6 @@ class Play:
         dx = frame.get_dx()
         _help.trim_alfa(dx)
         _help.trim_end(dx)
-        for s in _help:
-            if s.text.startswith("["):
-                s.fmt = ""
-            elif not s.text.startswith(" "):
-                s.fmt = Flags.cmds.get_value()
         frame.set_footer(_help, "^")
         frame.draw()
 
@@ -370,13 +433,14 @@ class Play:
             frame_flags = Frame(mid_y, 0).set_size(flags_sy + 2, flags_sx)
             self.show_flags_bar(frame_flags)
 
-            frame_colors = Frame(mid_y + flags_sy + 2, 0).set_size(mid_sy - flags_sy - 2, flags_sx)
+            frame_colors = Frame(mid_y + flags_sy + 2, 0).set_size(
+                mid_sy - flags_sy - 2, flags_sx
+            )
             self.show_color_bar(frame_colors)
 
         task_sx = main_sx - flags_sx - skills_sx
         frame_main = Frame(mid_y, flags_sx).set_size(mid_sy, task_sx)
         self.show_main_bar(frame_main)
-
 
     class Key:
         left = "a"
@@ -404,11 +468,13 @@ class Play:
             self.flag.toggle()
             if self.flag.get_location() == "left" and self.flag.is_bool():
                 f = Floating("v").warning()
-                f.addt(self.flag.get_description())
+                f.put_text("")
+                f.put_text(self.flag.get_description())
                 if self.flag.is_true():
-                    f.adds(Sentence().addf("G", "ligado"))
+                    f.put_sentence(Sentence().addf("G", "ligado"))
                 else:
-                    f.adds(Sentence().addf("R", "desligado"))
+                    f.put_sentence(Sentence().addf("R", "desligado"))
+                f.put_text("")
                 self.fman.add_input(f)
 
     class GradeFunctor:
@@ -422,7 +488,6 @@ class Play:
     def make_callback(self) -> Dict[int, Any]:
         def set_exit():
             self.exit = True
-
 
         def reset_colors():
             for flag in self.flagsman.left:
@@ -440,7 +505,12 @@ class Play:
             add_int(ord(str_key), fn)
 
         add_int(curses.KEY_RESIZE, self.disable_on_resize)
-        add_str(self.Key.quit, lambda: self.fman.add_input(Floating("v").addt("Bye Bye").set_exit_fn(set_exit).warning()))
+        add_str(
+            self.Key.quit,
+            lambda: self.fman.add_input(
+                Floating().put_text("\nBye Bye\n").set_exit_fn(set_exit).warning()
+            ),
+        )
 
         add_str(self.Key.up, self.tree.move_up)
         add_int(curses.KEY_UP, self.tree.move_up)
@@ -474,7 +544,6 @@ class Play:
 
         for flag in self.flagsman.top:
             add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
-
 
         return calls
 

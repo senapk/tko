@@ -19,13 +19,17 @@ class Floating:
         self._exit_fn = None
         self._exit_key = None
         self._centralize = True
-        self._align = _align
+        self._floating_align = _align
+
+    def set_ljust_text(self):
+        self._centralize = False
+        return self
 
     def set_align(self, _align: str):
-        self._align = _align
+        self._floating_align = _align
 
-    def set_header(self, text: Sentence, align: str = '<'):
-        self._frame.set_header(text, align)
+    def set_header(self, text: str):
+        self._frame.set_header(Sentence().addf("/", text), "")
         return self
     
     def set_exit_key(self, key: str):
@@ -38,22 +42,22 @@ class Floating:
 
     def _set_xy(self, dy, dx):
         valid = "<>^v"
-        for c in self._align:
+        for c in self._floating_align:
             if c not in valid:
                 raise ValueError("Invalid align " + c)
 
         lines, cols = Fmt.get_size()
 
         x = (cols - dx) // 2
-        if "<" in self._align:
+        if "<" in self._floating_align:
             x = 1
-        elif ">" in self._align:
+        elif ">" in self._floating_align:
             x = cols - dx - 3
 
         y = (lines - dy) // 2
-        if "^" in self._align:
+        if "^" in self._floating_align:
             y = 1
-        elif "v" in self._align:
+        elif "v" in self._floating_align:
             y = lines - dy - 3
 
         self._frame.set_pos(y, x)
@@ -63,12 +67,12 @@ class Floating:
         return self._enable
 
     def __setup_frame(self):
-        header_len = self._frame.get_header().len() - 2
-        footer_len = self._frame.get_footer().len() - 2
+        header_len = self._frame.get_header().len()
+        footer_len = self._frame.get_footer().len()
         data = [x.len() for x in self._content] + [header_len, footer_len]
         max_dx = max(data)
-        dx = max_dx + 2
-        dy = len(self._content) + 2
+        dx = max_dx
+        dy = len(self._content)
         self._frame.set_inner(dy, dx)
         self._set_xy(dy, dx)
         self._frame.set_fill()
@@ -80,15 +84,13 @@ class Floating:
                 footer.addf(fmt, option).addt(" ")
             self._frame.set_footer(footer, "^")
 
-    def ljust(self):
-        self._centralize = False
+    def put_text(self, text: str):
+        lines = text.split("\n")
+        for line in lines:
+            self._content.append(Sentence().addt(line))
         return self
 
-    def addt(self, text: str):
-        self._content.append(Sentence().addt(text))
-        return self
-
-    def adds(self, sentence: Sentence):
+    def put_sentence(self, sentence: Sentence):
         self._content.append(sentence)
         return self
     
@@ -98,15 +100,18 @@ class Floating:
 
     def _set_default_footer(self):
         if self._frame.get_footer().len() == 0:
-            self._frame.set_footer(Sentence().addf("/", " Pressione uma tecla "))
+            label = Sentence().addf("/", " Pressione uma tecla ")
+            self._frame.set_footer(label, "", "─", "─")
         return self
 
-    def set_default_header(self):
+    def _set_default_header(self):
         if self._frame.get_header().len() == 0:
             if self._type == "warning":
-                self._frame.set_header(Sentence().addf("/", " Aviso "))
+                self.set_header(" Aviso ")
             elif self._type == "error":
-                self._frame.set_header(Sentence().addf("/", " Erro "))
+                self.set_header(" Erro ")
+            elif self._type == "answer":
+                self.set_header(" Resposta ")
 
     def warning(self):
         self._type = "warning"
@@ -120,7 +125,6 @@ class Floating:
     
     def answer(self, fn_answer):
         self._type = "answer"
-        self._frame.set_header(Sentence().addf("/", " Pergunta "))
         self._frame.set_border_color("g")
         self._fn_answer = fn_answer
         return self
@@ -130,17 +134,16 @@ class Floating:
         return self
 
     def draw(self):
-        self._set_default_footer()
+        self._set_default_header()
         self._set_default_footer()
         self.__setup_frame()
         self._frame.draw()
-        y = 1
+        y = 0
 
         for line in self._content:
-            x = 1
+            x = 0
             if self._centralize:
                 x = (self._frame.get_dx() - line.len()) // 2
-
             self._frame.write(y, x, line)
             y += 1
         return self

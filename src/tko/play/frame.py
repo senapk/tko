@@ -12,9 +12,13 @@ class Frame:
         self._border = "rounded"
         self._filled = False
         self._header: Sentence = Sentence()
-        self._header_align = ""
+        self._halign = ""
+        self._hprefix = ""
+        self._hsuffix = ""
         self._footer: Sentence = Sentence()
-        self._footer_align = ""
+        self._falign = ""
+        self._fprefix = ""
+        self._fsuffix = ""
         self._fill_char = " "
         self._wrap = False
         self._border_color = ""
@@ -25,21 +29,43 @@ class Frame:
 
     def get_dx(self):
         return self._inner_dx
-    
+
     def get_dy(self):
         return self._inner_dy
-    
+
     def get_x(self):
         return self._x
 
     def get_y(self):
         return self._y
-    
+
+    def __align_header_footer(self, data, symbol, prefix, suffix):
+        dx = self._inner_dx
+        color = self._border_color
+        pad = dx - len(prefix) - len(suffix)
+        hor = self.get_symbol("h")
+        
+        data.trim_end(pad)
+        sent = Sentence().addf(color, prefix).concat(data).addf(color, suffix)
+        if symbol == "<":
+            sent.ljust(dx, hor, color)
+        elif symbol == ">":
+            sent.rjust(dx, hor, color)
+        else:
+            sent.center(dx, hor, color)
+        return sent
+
     def get_header(self):
-        return self._header
+        return Sentence().addt(self._hprefix).concat(self._header).addt(self._hsuffix)
     
     def get_footer(self):
-        return self._footer
+        return Sentence().addt(self._fprefix).concat(self._footer).addt(self._fsuffix)
+
+    def get_full_header(self):
+        return self.__align_header_footer(self._header, self._halign, self._hprefix, self._hsuffix)
+
+    def get_full_footer(self):
+        return self.__align_header_footer(self._footer, self._falign, self._fprefix, self._fsuffix)
 
     def set_pos(self, y: int, x: int):
         self._x = x
@@ -55,7 +81,7 @@ class Frame:
         self._inner_dy = inner_dy
         self._inner_dx = inner_dx
         return self
-    
+
     def get_inner(self):
         return (self._inner_dy, self._inner_dx)
 
@@ -65,10 +91,8 @@ class Frame:
     def set_end(self, y: int, x: int):
         self._inner_dx = x - self._x - 1
         self._inner_dy = y - self._y - 1
-        # Fmt.write(0, 0, Sentence().addt(f"{self._inner_w}, {self._inner_h}"))
-        # Fmt.getch()
         return self
-    
+
     def set_wrap(self):
         self._wrap = True
         return self
@@ -76,11 +100,11 @@ class Frame:
     def set_fill_char(self, char: str):
         self._fill_char = char
         return self
-    
+
     def get_symbol(self, value: str):
-        square = { "lu": "┌", "ru": "┐", "ld": "└", "rd": "┘", "h": "─", "v": "│" }
-        rounded = { "lu": "╭", "ru": "╮", "ld": "╰", "rd": "╯", "h": "─", "v": "│" }
-        bold = { "lu": "┏", "ru": "┓", "ld": "┗", "rd": "┛", "h": "━", "v": "┃" }
+        square = {"lu": "┌", "ru": "┐", "ld": "└", "rd": "┘", "h": "─", "v": "│"}
+        rounded = {"lu": "╭", "ru": "╮", "ld": "╰", "rd": "╯", "h": "─", "v": "│"}
+        bold = {"lu": "┏", "ru": "┓", "ld": "┗", "rd": "┛", "h": "━", "v": "┃"}
 
         if self._border == "square":
             return square[value]
@@ -89,11 +113,11 @@ class Frame:
         elif self._border == "bold":
             return bold[value]
         return " "
-        
+
     def set_border_none(self):
         self._border = "none"
         return self
-        
+
     def set_border_bold(self):
         self._border = "bold"
         return self
@@ -105,15 +129,19 @@ class Frame:
     def set_border_square(self):
         self._border = "square"
         return self
- 
-    def set_header(self, header: Sentence, align="<"):
-        self._header_align = align
+
+    def set_header(self, header: Sentence, align="<", prefix="", suffix=""):
+        self._halign = align
         self._header = header
+        self._hprefix = prefix
+        self._hsuffix = suffix
         return self
 
-    def set_footer(self, footer: Sentence, align=">"):
-        self._footer_align = align
+    def set_footer(self, footer: Sentence, align=">", prefix="", suffix=""):
+        self._falign = align
         self._footer = footer
+        self._fprefix = prefix
+        self._fsuffix = suffix
         return self
 
     def set_fill(self):
@@ -123,7 +151,7 @@ class Frame:
     def set_nofill(self):
         self._filled = False
         return self
-    
+
     def print(self, x: int, sentence: Sentence):
         self.write(self._print_index, x, sentence)
         self._print_index += 1
@@ -146,11 +174,11 @@ class Frame:
         count = 0
         for token in sentence.get():
             fmt, text = token.fmt, token.text
-            if x_abs - 1 < x_min: # Se o texto começa fora do frame
-                if x_abs + len(text) > x_min: # mas ter parte dentro
-                    text = text[x_min - x_abs + 1:]
+            if x_abs - 1 < x_min:  # Se o texto começa fora do frame
+                if x_abs + len(text) > x_min:  # mas ter parte dentro
+                    text = text[x_min - x_abs + 1 :]
                     x_abs = x_min + 1
-            if x_abs <= x_max: # Se o texto começa dentro do frame
+            if x_abs <= x_max:  # Se o texto começa dentro do frame
                 if x_abs + len(text) >= x_max:
                     cut_point = x_max - x_abs + 1
                     text = text[:cut_point]
@@ -172,31 +200,26 @@ class Frame:
         down_right = self.get_symbol("rd")
         hor = self.get_symbol("h")
         ver = self.get_symbol("v")
-        header = self._header
-        footer = self._footer
-        if self._footer_align == "<":
-            footer.ljust(dx, hor, color).trim_end(dx)
-        elif self._footer_align == ">":
-            footer.rjust(dx, hor, color).trim_end(dx)
-        else:
-            footer.center(dx, hor, color).trim_end(dx)
-    
-        if self._header_align == "<":
-            header.ljust(dx, hor, color).trim_end(dx)
-        elif self._header_align == ">":
-            header.rjust(dx, hor, color).trim_end(dx)
-        else:
-            header.center(dx, hor, color).trim_end(dx)
+
+        header = self.get_full_header()
+        footer = self.get_full_footer()
 
         above = Sentence().addf(color, up_left).concat(header).addf(color, up_right)
         below = Sentence().addf(color, down_left).concat(footer).addf(color, down_right)
-        
+
         Fmt.write(y, x, above)
         if dy > 0:
             Fmt.write(y + dy + 1, x, below)
         if self._filled:
             for i in range(1, dy + 1):
-                Fmt.write(y + i, x, Sentence().addf(color, ver).addt(dx * self._fill_char).addf(color, ver))
+                Fmt.write(
+                    y + i,
+                    x,
+                    Sentence()
+                    .addf(color, ver)
+                    .addt(dx * self._fill_char)
+                    .addf(color, ver),
+                )
         else:
             for i in range(1, dy + 1):
                 Fmt.write(y + i, x, Sentence().addf(color, ver))

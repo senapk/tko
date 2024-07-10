@@ -67,6 +67,8 @@ class GeralSettings:
         return str(self.data)
 
 
+
+
 class Flag:
     def __init__(self):
         self._name: str = ""
@@ -119,10 +121,10 @@ class Flag:
     def get_location(self) -> str:
         return self._location
 
-    def get_value(self) -> Any:
+    def get_value(self) -> str:
         return self._values[self._index]
 
-    def is_true(self) -> bool:
+    def is_true(self):
         return self.get_value() == "1"
 
     def get_name(self) -> str:
@@ -178,12 +180,12 @@ class Flags:
     skills_bar = Flag().name("SkillsBar").char("S").values(["1", "0"]).text("Mostra a barra de skills").location("top")
     flags_bar = Flag().name("FlagsBar").char("F").values(["1", "0"]).text("Mostra a barra de flags").location("top")
 
-    focus     = Flag().name("Focus").char("z").values(["R", "B", "G", "Y", "wK", "kW"]).text("Cor do item em foco").many().location("left")
+    focus     = Flag().name("Focus").char("z").values(["B", "R", "G", "Y", "wK", "kW"]).text("Cor do item em foco").many().location("left")
     prog_done = Flag().name("ProgDone").char("x").values(["g", "b", "c", "k", "w"]).text("Progresso Done").many().location("left")
     prog_todo = Flag().name("ProgTodo").char("c").values(["y", "m", "r", "k", "w"]).text("Progresso Todo").many().location("left")
     flag_on   = Flag().name("FlagTrue").char("v").values(["G", "W", "B", "C", "wK", "kW"]).text("Flag True").many().location("left")
     flag_off  = Flag().name("FlagFalse").char("b").values(["Y", "R", "M", "wK", "kW"]).text("Flag False").many().location("left")
-    cmds      = Flag().name("Cmds").char("n").values(["B", "C", "M", "Y", "wK", "kW"]).text("CMDS").many().location("left")
+    cmds      = Flag().name("Cmds").char("n").values(["B", "C", "M", "Y", "wK", "kW"]).text("CMDS").many()
     skill_done = Flag().name("SkillDone").char("y").values(["G", "B", "C", "wK", "kW"]).text("Skill Done").many().location("left")
     skill_todo = Flag().name("SkillTodo").char("u").values(["Y", "R", "M", "wK", "kW"]).text("Skill Todo").many().location("left")
     main_done = Flag().name("MainDone").char("i").values(["B", "G", "C", "wK", "kW"]).text("Main Done").many().location("left")
@@ -1027,9 +1029,13 @@ class Frame:
         self._border = "rounded"
         self._filled = False
         self._header: Sentence = Sentence()
-        self._header_align = ""
+        self._halign = ""
+        self._hprefix = ""
+        self._hsuffix = ""
         self._footer: Sentence = Sentence()
-        self._footer_align = ""
+        self._falign = ""
+        self._fprefix = ""
+        self._fsuffix = ""
         self._fill_char = " "
         self._wrap = False
         self._border_color = ""
@@ -1040,21 +1046,43 @@ class Frame:
 
     def get_dx(self):
         return self._inner_dx
-    
+
     def get_dy(self):
         return self._inner_dy
-    
+
     def get_x(self):
         return self._x
 
     def get_y(self):
         return self._y
-    
+
+    def __align_header_footer(self, data, symbol, prefix, suffix):
+        dx = self._inner_dx
+        color = self._border_color
+        pad = dx - len(prefix) - len(suffix)
+        hor = self.get_symbol("h")
+        
+        data.trim_end(pad)
+        sent = Sentence().addf(color, prefix).concat(data).addf(color, suffix)
+        if symbol == "<":
+            sent.ljust(dx, hor, color)
+        elif symbol == ">":
+            sent.rjust(dx, hor, color)
+        else:
+            sent.center(dx, hor, color)
+        return sent
+
     def get_header(self):
-        return self._header
+        return Sentence().addt(self._hprefix).concat(self._header).addt(self._hsuffix)
     
     def get_footer(self):
-        return self._footer
+        return Sentence().addt(self._fprefix).concat(self._footer).addt(self._fsuffix)
+
+    def get_full_header(self):
+        return self.__align_header_footer(self._header, self._halign, self._hprefix, self._hsuffix)
+
+    def get_full_footer(self):
+        return self.__align_header_footer(self._footer, self._falign, self._fprefix, self._fsuffix)
 
     def set_pos(self, y: int, x: int):
         self._x = x
@@ -1070,7 +1098,7 @@ class Frame:
         self._inner_dy = inner_dy
         self._inner_dx = inner_dx
         return self
-    
+
     def get_inner(self):
         return (self._inner_dy, self._inner_dx)
 
@@ -1080,10 +1108,8 @@ class Frame:
     def set_end(self, y: int, x: int):
         self._inner_dx = x - self._x - 1
         self._inner_dy = y - self._y - 1
-        # Fmt.write(0, 0, Sentence().addt(f"{self._inner_w}, {self._inner_h}"))
-        # Fmt.getch()
         return self
-    
+
     def set_wrap(self):
         self._wrap = True
         return self
@@ -1091,11 +1117,11 @@ class Frame:
     def set_fill_char(self, char: str):
         self._fill_char = char
         return self
-    
+
     def get_symbol(self, value: str):
-        square = { "lu": "┌", "ru": "┐", "ld": "└", "rd": "┘", "h": "─", "v": "│" }
-        rounded = { "lu": "╭", "ru": "╮", "ld": "╰", "rd": "╯", "h": "─", "v": "│" }
-        bold = { "lu": "┏", "ru": "┓", "ld": "┗", "rd": "┛", "h": "━", "v": "┃" }
+        square = {"lu": "┌", "ru": "┐", "ld": "└", "rd": "┘", "h": "─", "v": "│"}
+        rounded = {"lu": "╭", "ru": "╮", "ld": "╰", "rd": "╯", "h": "─", "v": "│"}
+        bold = {"lu": "┏", "ru": "┓", "ld": "┗", "rd": "┛", "h": "━", "v": "┃"}
 
         if self._border == "square":
             return square[value]
@@ -1104,11 +1130,11 @@ class Frame:
         elif self._border == "bold":
             return bold[value]
         return " "
-        
+
     def set_border_none(self):
         self._border = "none"
         return self
-        
+
     def set_border_bold(self):
         self._border = "bold"
         return self
@@ -1120,15 +1146,19 @@ class Frame:
     def set_border_square(self):
         self._border = "square"
         return self
- 
-    def set_header(self, header: Sentence, align="<"):
-        self._header_align = align
+
+    def set_header(self, header: Sentence, align="<", prefix="", suffix=""):
+        self._halign = align
         self._header = header
+        self._hprefix = prefix
+        self._hsuffix = suffix
         return self
 
-    def set_footer(self, footer: Sentence, align=">"):
-        self._footer_align = align
+    def set_footer(self, footer: Sentence, align=">", prefix="", suffix=""):
+        self._falign = align
         self._footer = footer
+        self._fprefix = prefix
+        self._fsuffix = suffix
         return self
 
     def set_fill(self):
@@ -1138,7 +1168,7 @@ class Frame:
     def set_nofill(self):
         self._filled = False
         return self
-    
+
     def print(self, x: int, sentence: Sentence):
         self.write(self._print_index, x, sentence)
         self._print_index += 1
@@ -1161,11 +1191,11 @@ class Frame:
         count = 0
         for token in sentence.get():
             fmt, text = token.fmt, token.text
-            if x_abs - 1 < x_min: # Se o texto começa fora do frame
-                if x_abs + len(text) > x_min: # mas ter parte dentro
-                    text = text[x_min - x_abs + 1:]
+            if x_abs - 1 < x_min:  # Se o texto começa fora do frame
+                if x_abs + len(text) > x_min:  # mas ter parte dentro
+                    text = text[x_min - x_abs + 1 :]
                     x_abs = x_min + 1
-            if x_abs <= x_max: # Se o texto começa dentro do frame
+            if x_abs <= x_max:  # Se o texto começa dentro do frame
                 if x_abs + len(text) >= x_max:
                     cut_point = x_max - x_abs + 1
                     text = text[:cut_point]
@@ -1187,31 +1217,26 @@ class Frame:
         down_right = self.get_symbol("rd")
         hor = self.get_symbol("h")
         ver = self.get_symbol("v")
-        header = self._header
-        footer = self._footer
-        if self._footer_align == "<":
-            footer.ljust(dx, hor, color).trim_end(dx)
-        elif self._footer_align == ">":
-            footer.rjust(dx, hor, color).trim_end(dx)
-        else:
-            footer.center(dx, hor, color).trim_end(dx)
-    
-        if self._header_align == "<":
-            header.ljust(dx, hor, color).trim_end(dx)
-        elif self._header_align == ">":
-            header.rjust(dx, hor, color).trim_end(dx)
-        else:
-            header.center(dx, hor, color).trim_end(dx)
+
+        header = self.get_full_header()
+        footer = self.get_full_footer()
 
         above = Sentence().addf(color, up_left).concat(header).addf(color, up_right)
         below = Sentence().addf(color, down_left).concat(footer).addf(color, down_right)
-        
+
         Fmt.write(y, x, above)
         if dy > 0:
             Fmt.write(y + dy + 1, x, below)
         if self._filled:
             for i in range(1, dy + 1):
-                Fmt.write(y + i, x, Sentence().addf(color, ver).addt(dx * self._fill_char).addf(color, ver))
+                Fmt.write(
+                    y + i,
+                    x,
+                    Sentence()
+                    .addf(color, ver)
+                    .addt(dx * self._fill_char)
+                    .addf(color, ver),
+                )
         else:
             for i in range(1, dy + 1):
                 Fmt.write(y + i, x, Sentence().addf(color, ver))
@@ -1234,13 +1259,17 @@ class Floating:
         self._exit_fn = None
         self._exit_key = None
         self._centralize = True
-        self._align = _align
+        self._floating_align = _align
+
+    def set_ljust_text(self):
+        self._centralize = False
+        return self
 
     def set_align(self, _align: str):
-        self._align = _align
+        self._floating_align = _align
 
-    def set_header(self, text: Sentence, align: str = '<'):
-        self._frame.set_header(text, align)
+    def set_header(self, text: str):
+        self._frame.set_header(Sentence().addf("/", text), "")
         return self
     
     def set_exit_key(self, key: str):
@@ -1253,22 +1282,22 @@ class Floating:
 
     def _set_xy(self, dy, dx):
         valid = "<>^v"
-        for c in self._align:
+        for c in self._floating_align:
             if c not in valid:
                 raise ValueError("Invalid align " + c)
 
         lines, cols = Fmt.get_size()
 
         x = (cols - dx) // 2
-        if "<" in self._align:
+        if "<" in self._floating_align:
             x = 1
-        elif ">" in self._align:
+        elif ">" in self._floating_align:
             x = cols - dx - 3
 
         y = (lines - dy) // 2
-        if "^" in self._align:
+        if "^" in self._floating_align:
             y = 1
-        elif "v" in self._align:
+        elif "v" in self._floating_align:
             y = lines - dy - 3
 
         self._frame.set_pos(y, x)
@@ -1278,12 +1307,12 @@ class Floating:
         return self._enable
 
     def __setup_frame(self):
-        header_len = self._frame.get_header().len() - 2
-        footer_len = self._frame.get_footer().len() - 2
+        header_len = self._frame.get_header().len()
+        footer_len = self._frame.get_footer().len()
         data = [x.len() for x in self._content] + [header_len, footer_len]
         max_dx = max(data)
-        dx = max_dx + 2
-        dy = len(self._content) + 2
+        dx = max_dx
+        dy = len(self._content)
         self._frame.set_inner(dy, dx)
         self._set_xy(dy, dx)
         self._frame.set_fill()
@@ -1295,15 +1324,13 @@ class Floating:
                 footer.addf(fmt, option).addt(" ")
             self._frame.set_footer(footer, "^")
 
-    def ljust(self):
-        self._centralize = False
+    def put_text(self, text: str):
+        lines = text.split("\n")
+        for line in lines:
+            self._content.append(Sentence().addt(line))
         return self
 
-    def addt(self, text: str):
-        self._content.append(Sentence().addt(text))
-        return self
-
-    def adds(self, sentence: Sentence):
+    def put_sentence(self, sentence: Sentence):
         self._content.append(sentence)
         return self
     
@@ -1313,15 +1340,18 @@ class Floating:
 
     def _set_default_footer(self):
         if self._frame.get_footer().len() == 0:
-            self._frame.set_footer(Sentence().addf("/", " Pressione uma tecla "))
+            label = Sentence().addf("/", " Pressione uma tecla ")
+            self._frame.set_footer(label, "", "─", "─")
         return self
 
-    def set_default_header(self):
+    def _set_default_header(self):
         if self._frame.get_header().len() == 0:
             if self._type == "warning":
-                self._frame.set_header(Sentence().addf("/", " Aviso "))
+                self.set_header(" Aviso ")
             elif self._type == "error":
-                self._frame.set_header(Sentence().addf("/", " Erro "))
+                self.set_header(" Erro ")
+            elif self._type == "answer":
+                self.set_header(" Resposta ")
 
     def warning(self):
         self._type = "warning"
@@ -1335,7 +1365,6 @@ class Floating:
     
     def answer(self, fn_answer):
         self._type = "answer"
-        self._frame.set_header(Sentence().addf("/", " Pergunta "))
         self._frame.set_border_color("g")
         self._fn_answer = fn_answer
         return self
@@ -1345,17 +1374,16 @@ class Floating:
         return self
 
     def draw(self):
-        self._set_default_footer()
+        self._set_default_header()
         self._set_default_footer()
         self.__setup_frame()
         self._frame.draw()
-        y = 1
+        y = 0
 
         for line in self._content:
-            x = 1
+            x = 0
             if self._centralize:
                 x = (self._frame.get_dx() - line.len()) // 2
-
             self._frame.write(y, x, line)
             y += 1
         return self
@@ -2498,7 +2526,7 @@ class Down:
             loaded_json = json.load(f)
         os.remove(mapi_path)
 
-        language_def = SettingsParser().get_language()
+        language_def = SettingsParser().load_settings().geral.get(GeralSettings.lang)
         ask_ext = False
         if language is None:
             if language_def != "":
@@ -2784,8 +2812,8 @@ class TaskTree:
         self.available_clusters: List[Cluster] = []
 
         self.items: List[Entry] = []
-        self.new_items: List[str] = []
-        self.expanded: List[str] = []
+        # self.new_items: List[str] = []
+        # self.expanded: List[str] = []
 
         self.index_selected = 0
         self.index_begin = 0
@@ -3165,9 +3193,17 @@ class TaskTree:
 
 
 
+
 class Play:
 
-    def __init__(self, local: GeralSettings, game: Game, rep: RepSettings, rep_alias: str, fn_save):
+    def __init__(
+        self,
+        local: GeralSettings,
+        game: Game,
+        rep: RepSettings,
+        rep_alias: str,
+        fn_save,
+    ):
         self.fn_save = fn_save
         self.local = local
         self.rep_alias = rep_alias
@@ -3183,12 +3219,22 @@ class Play:
         self.first_loop = True
         self.graph_ext = ""
 
-
-
-        self.help_base = [f"Quit[{self.Key.quit}]", f"Help[{self.Key.help}]", "Move[wasd]", "Mark[enter]"]
-        self.help_extra = [f"OpenLink[{self.Key.open_link}]", f"GetTask[{self.Key.down_task}]", "Grade[0-9]",
-            f"Lang[{self.Key.set_lang}]", f"Expand[{self.Key.expand}]", f"Collapse[{self.Key.collapse}]",
-            f"MassMark[{self.Key.mass_toggle}]", f"ResetColors[{self.Key.reset}]"]
+        self.help_base = [
+            f"Quit[{self.Key.quit}]",
+            f"Help[{self.Key.help}]",
+            "Move[wasd]",
+            "Mark[enter]",
+        ]
+        self.help_extra = [
+            f"OpenLink[{self.Key.open_link}]",
+            f"GetTask[{self.Key.down_task}]",
+            "Grade[0-9]",
+            f"Lang[{self.Key.set_lang}]",
+            f"Expand[{self.Key.expand}]",
+            f"Collapse[{self.Key.collapse}]",
+            f"MassMark[{self.Key.mass_toggle}]",
+            f"ResetColors[{self.Key.reset}]",
+        ]
 
     def save_to_json(self):
         self.tree.save_on_rep()
@@ -3202,47 +3248,59 @@ class Play:
             if value == "yes":
                 self.local.rootdir = os.getcwd()
                 self.fn_save()
-                self.fman.add_input(Floating()
-                            .addt("Diretório raiz definido como ")
-                            .addt("  " + self.local.rootdir)
-                            .addt("Você pode alterar o diretório raiz navegando para o")
-                            .addt("diretório desejado e executando o comando")
-                            .addt("  tko config --root")
-                            .addt("")
-                            .set_exit_fn(self.set_language)
-                            .warning())
+                self.fman.add_input(
+                    Floating()
+                    .put_text("Diretório raiz definido como ")
+                    .put_text("  " + self.local.rootdir)
+                    .put_text("Você pode alterar o diretório raiz navegando para o")
+                    .put_text("diretório desejado e executando o comando")
+                    .put_text("  tko config --root")
+                    .put_text("")
+                    .set_exit_fn(self.set_language)
+                    .warning()
+                )
             else:
-                self.fman.add_input(Floating()
-                            .addt("Navague para o diretório desejado e execute o comando")
-                            .addt("  tko config --root")
-                            .addt("ou rode o tko play novamente na pasta desejada").warning())
+                self.fman.add_input(
+                    Floating()
+                    .put_text("Navague para o diretório desejado e execute o comando")
+                    .put_text("  tko config --root")
+                    .put_text("ou rode o tko play novamente na pasta desejada")
+                    .warning()
+                )
 
-        self.fman.add_input(Floating().addt("Diretório raiz para o tko ainda não foi definido")
-                    .addt("Você deseja utilizar o diretório atual")
-                    .addt(os.getcwd())
-                    .addt("como raiz para o repositório de " + self.rep_alias + "?")
-                    .set_options(["yes", "no"])
-                    .answer(chama))
+        self.fman.add_input(
+            Floating()
+            .put_text("Diretório raiz para o tko ainda não foi definido")
+            .put_text("Você deseja utilizar o diretório atual")
+            .put_text(os.getcwd())
+            .put_text("como raiz para o repositório de " + self.rep_alias + "?")
+            .set_options(["yes", "no"])
+            .answer(chama)
+        )
 
     def set_language(self):
 
         def back(value):
             self.rep.lang = value
             self.fn_save()
-            self.fman.add_input(Floating()
-                        .addt("Linguagem alterada para " + value)
-                        .addt("Você pode mudar a linguagem")
-                        .addt("de programação apertando")
-                        .adds(Sentence().addf("G", "l"))
-                        .warning())
+            self.fman.add_input(
+                Floating()
+                .put_text("Linguagem alterada para " + value)
+                .put_text("Você pode mudar a linguagem")
+                .put_text("de programação apertando")
+                .put_sentence(Sentence().addf("G", "l"))
+                .warning()
+            )
 
-        self.fman.add_input(Floating()
-                    .addt("   Escolha a extensão")
-                    .addt(" default para os rascunhos")
-                    .addt("")
-                    .addt(" Selecione e tecle enter")
-                    .set_options(["c", "cpp", "py", "ts", "js", "java", "hs"])
-                    .answer(back))
+        self.fman.add_input(
+            Floating()
+            .put_text("   Escolha a extensão")
+            .put_text(" default para os rascunhos")
+            .put_text("")
+            .put_text(" Selecione e tecle enter")
+            .set_options(["c", "cpp", "py", "ts", "js", "java", "hs"])
+            .answer(back)
+        )
 
     def process_down(self):
         if self.local.rootdir == "":
@@ -3263,13 +3321,28 @@ class Play:
             task: Task = obj
             if task.link.startswith("http"):
                 webbrowser.open_new_tab(task.link)
-            self.fman.add_input(Floating().set_header(Sentence().addf("/", " Abrindo link ")).addt(task.link).warning())
+            self.fman.add_input(
+                Floating()
+                .set_header(" Abrindo link ")
+                .put_text(task.link)
+                .warning()
+            )
         elif isinstance(obj, Quest):
             self.fman.add_input(
-                Floating().addt("Essa é uma missão").addt("você só pode abrir o link").addt("de tarefas").error())
+                Floating()
+                .put_text("Essa é uma missão")
+                .put_text("você só pode abrir o link")
+                .put_text("de tarefas")
+                .error()
+            )
         else:
             self.fman.add_input(
-                Floating().addt("Esse é um grupo").addt("você só pode abrir o link").addt("de tarefas").error())
+                Floating()
+                .put_text("Esse é um grupo")
+                .put_text("você só pode abrir o link")
+                .put_text("de tarefas")
+                .error()
+            )
 
     def generate_graph(self):
         if not self.first_loop:
@@ -3285,8 +3358,9 @@ class Play:
             counts[q.key] = f"{done} / {done + init + todo}\n{q.get_percent()}%"
 
         mark_opt = Flags.dots.is_true()
-        Graph(self.game).set_opt(mark_opt).set_reachable(reachable).set_counts(counts).set_graph_ext(
-            self.graph_ext).generate()
+        Graph(self.game).set_opt(mark_opt).set_reachable(reachable).set_counts(
+            counts
+        ).set_graph_ext(self.graph_ext).generate()
         lines, _cols = Fmt.get_size()
         if self.first_loop:
             text = Sentence().addt(f"Grafo gerado em graph{self.graph_ext}")
@@ -3295,23 +3369,37 @@ class Play:
     def down_task(self, rootdir, obj: Any, ext: str):
         if isinstance(obj, Task) and obj.key in obj.title:
             task: Task = obj
-            down_frame = Floating().warning().set_header(Sentence().addt(" Baixando tarefa "))
-            down_frame.addt(f"tko down {self.rep_alias} {task.key} -l {ext}")
+            down_frame = (
+                Floating().warning().set_header(Sentence().addt(" Baixando tarefa "))
+            )
+            down_frame.put_text(f"tko down {self.rep_alias} {task.key} -l {ext}")
             self.fman.add_input(down_frame)
 
             def fnprint(text):
-                down_frame.addt(text)
+                down_frame.put_text(text)
                 down_frame.draw()
                 Fmt.refresh()
 
             Down.download_problem(rootdir, self.rep_alias, task.key, ext, fnprint)
         else:
             if isinstance(obj, Quest):
-                self.fman.add_input(Floating().addt("Essa é uma missão").addt("você só pode baixar tarefas").error())
+                self.fman.add_input(
+                    Floating()
+                    .put_text("Essa é uma missão")
+                    .put_text("você só pode baixar tarefas")
+                    .error()
+                )
             elif isinstance(obj, Cluster):
-                self.fman.add_input(Floating().addt("Esse é um grupo").addt("você só pode baixar tarefas").error())
+                self.fman.add_input(
+                    Floating()
+                    .put_text("Esse é um grupo")
+                    .put_text("você só pode baixar tarefas")
+                    .error()
+                )
             else:
-                self.fman.add_input(Floating().addt("Essa não é uma tarefa de código").error())
+                self.fman.add_input(
+                    Floating().put_text("Essa não é uma tarefa de código").error()
+                )
 
     @staticmethod
     def build_list_sentence(items: List[str]) -> Sentence:
@@ -3336,8 +3424,10 @@ class Play:
         return ""
 
     def show_main_bar(self, frame: Frame):
-        frame.set_header(Sentence().addt("{").addf("/", f"Tarefas lang:{self.rep.lang}").addt("}"))
-        frame.set_footer(Sentence().addt("{" + self.build_bar_links() + "}"))
+        frame.set_header(
+            Sentence().addt("{").addf("/", f"Tarefas lang:{self.rep.lang}").addt("}")
+        )
+        frame.set_footer(Sentence().addt(self.build_bar_links()), ">", "{", "}")
         frame.draw()
 
         dy, dx = frame.get_inner()
@@ -3347,7 +3437,9 @@ class Play:
     def show_skills_bar(self, frame_xp):
         dy, dx = frame_xp.get_inner()
         xp = XP(self.game)
-        total_perc = int(100 * (xp.get_xp_total_obtained() / xp.get_xp_total_available()))
+        total_perc = int(
+            100 * (xp.get_xp_total_obtained() / xp.get_xp_total_available())
+        )
         if Flags.percent.is_true():
             text = f" Total:{total_perc}%"
         else:
@@ -3369,7 +3461,13 @@ class Play:
                 text = f"{skill}:{obt[skill]}/{value}"
 
             perc = obt[skill] / value
-            skill_bar = Sentence.build_bar(text, perc, dx - 2, "/k" + Flags.skill_done.get_value(), "/k" + Flags.skill_todo.get_value())
+            skill_bar = Sentence.build_bar(
+                text,
+                perc,
+                dx - 2,
+                "/k" + Flags.skill_done.get_value(),
+                "/k" + Flags.skill_todo.get_value(),
+            )
             frame_xp.write(index, 1, skill_bar)
             index += 2
 
@@ -3381,7 +3479,6 @@ class Play:
             if flag.is_bool():
                 frame.print(0, flag.get_toggle_sentence(7))
 
-
     def show_color_bar(self, frame: Frame):
         frame.set_header(Sentence().addt("{").addf("/", "Cores").addt("}"), "^")
         frame.draw()
@@ -3391,21 +3488,25 @@ class Play:
                 frame.print(0, flag.get_toggle_sentence())
 
     def show_help(self):
-        _help: Floating = Floating().warning().ljust()
+        _help: Floating = Floating().warning().set_ljust_text()
         self.fman.add_input(_help)
         _help.set_header(Sentence().addf("/", " Help "))
-        _help.addt("Controles")
-        _help.addt("  setas ou wasd   - Para navegar entre os elementos")
-        _help.addt("  enter ou espaço - Marcar ou desmarcar, expandir ou contrair")
-        _help.addt("  0 a 9 - Definir a nota parcial para uma tarefa")
-        _help.addt(f"      {self.Key.open_link} - Abrir tarefa em uma aba do browser")
-        _help.addt(f"      {self.Key.down_task} - Baixar um tarefa de código para seu dispositivo")
-        _help.addt("")
-        _help.addt("Flags")
-        _help.addt("  Muda a forma de exibição dos elementos")
-        _help.addt("")
-        _help.addt("Extra")
-        _help.addt(f"  {self.Key.set_lang} - Mudar a linguagem de download dos rascunhos")
+        _help.put_text("Controles")
+        _help.put_text("  setas ou wasd   - Para navegar entre os elementos")
+        _help.put_text("  enter ou espaço - Marcar ou desmarcar, expandir ou contrair")
+        _help.put_text("  0 a 9 - Definir a nota parcial para uma tarefa")
+        _help.put_text(f"      {self.Key.open_link} - Abrir tarefa em uma aba do browser")
+        _help.put_text(
+            f"      {self.Key.down_task} - Baixar um tarefa de código para seu dispositivo"
+        )
+        _help.put_text("")
+        _help.put_text("Flags")
+        _help.put_text("  Muda a forma de exibição dos elementos")
+        _help.put_text("")
+        _help.put_text("Extra")
+        _help.put_text(
+            f"  {self.Key.set_lang} - Mudar a linguagem de download dos rascunhos"
+        )
 
     @staticmethod
     def disable_on_resize():
@@ -3419,11 +3520,6 @@ class Play:
 
     def show_bottom_bar(self, frame: Frame):
         _help = Play.build_list_sentence(self.help_extra)
-        for s in _help:
-            if s.text.startswith("["):
-                s.fmt = ""
-            elif not s.text.startswith(" "):
-                s.fmt = Flags.cmds.get_value()
         dx = frame.get_dx()
         # help.trim_spaces(dx)
         _help.trim_alfa(dx)
@@ -3437,11 +3533,6 @@ class Play:
         dx = frame.get_dx()
         _help.trim_alfa(dx)
         _help.trim_end(dx)
-        for s in _help:
-            if s.text.startswith("["):
-                s.fmt = ""
-            elif not s.text.startswith(" "):
-                s.fmt = Flags.cmds.get_value()
         frame.set_footer(_help, "^")
         frame.draw()
 
@@ -3513,13 +3604,14 @@ class Play:
             frame_flags = Frame(mid_y, 0).set_size(flags_sy + 2, flags_sx)
             self.show_flags_bar(frame_flags)
 
-            frame_colors = Frame(mid_y + flags_sy + 2, 0).set_size(mid_sy - flags_sy - 2, flags_sx)
+            frame_colors = Frame(mid_y + flags_sy + 2, 0).set_size(
+                mid_sy - flags_sy - 2, flags_sx
+            )
             self.show_color_bar(frame_colors)
 
         task_sx = main_sx - flags_sx - skills_sx
         frame_main = Frame(mid_y, flags_sx).set_size(mid_sy, task_sx)
         self.show_main_bar(frame_main)
-
 
     class Key:
         left = "a"
@@ -3547,11 +3639,13 @@ class Play:
             self.flag.toggle()
             if self.flag.get_location() == "left" and self.flag.is_bool():
                 f = Floating("v").warning()
-                f.addt(self.flag.get_description())
+                f.put_text("")
+                f.put_text(self.flag.get_description())
                 if self.flag.is_true():
-                    f.adds(Sentence().addf("G", "ligado"))
+                    f.put_sentence(Sentence().addf("G", "ligado"))
                 else:
-                    f.adds(Sentence().addf("R", "desligado"))
+                    f.put_sentence(Sentence().addf("R", "desligado"))
+                f.put_text("")
                 self.fman.add_input(f)
 
     class GradeFunctor:
@@ -3565,7 +3659,6 @@ class Play:
     def make_callback(self) -> Dict[int, Any]:
         def set_exit():
             self.exit = True
-
 
         def reset_colors():
             for flag in self.flagsman.left:
@@ -3583,7 +3676,12 @@ class Play:
             add_int(ord(str_key), fn)
 
         add_int(curses.KEY_RESIZE, self.disable_on_resize)
-        add_str(self.Key.quit, lambda: self.fman.add_input(Floating("v").addt("Bye Bye").set_exit_fn(set_exit).warning()))
+        add_str(
+            self.Key.quit,
+            lambda: self.fman.add_input(
+                Floating().put_text("\nBye Bye\n").set_exit_fn(set_exit).warning()
+            ),
+        )
 
         add_str(self.Key.up, self.tree.move_up)
         add_int(curses.KEY_UP, self.tree.move_up)
@@ -3617,7 +3715,6 @@ class Play:
 
         for flag in self.flagsman.top:
             add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
-
 
         return calls
 
@@ -4902,6 +4999,8 @@ class Build:
             print(str(e))
             return False
         return True
+
+
 
 
 

@@ -4,6 +4,7 @@ import urllib.request
 import urllib.error
 import json
 
+from .settings.geral_settings import GeralSettings
 from .settings.settings_parser import SettingsParser
 from .game.game import Game
 from .util.remote import RemoteCfg
@@ -144,7 +145,7 @@ class Down:
             loaded_json = json.load(f)
         os.remove(mapi_path)
 
-        language_def = SettingsParser().get_language()
+        language_def = SettingsParser().load_settings().geral.get(GeralSettings.lang)
         ask_ext = False
         if language is None:
             if language_def != "":

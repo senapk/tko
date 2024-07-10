@@ -53,10 +53,10 @@ class Flag:
     def get_location(self) -> str:
         return self._location
 
-    def get_value(self) -> Any:
+    def get_value(self) -> str:
         return self._values[self._index]
 
-    def is_true(self) -> bool:
+    def is_true(self):
         return self.get_value() == "1"
 
     def get_name(self) -> str:
@@ -112,12 +112,12 @@ class Flags:
     skills_bar = Flag().name("SkillsBar").char("S").values(["1", "0"]).text("Mostra a barra de skills").location("top")
     flags_bar = Flag().name("FlagsBar").char("F").values(["1", "0"]).text("Mostra a barra de flags").location("top")
 
-    focus     = Flag().name("Focus").char("z").values(["R", "B", "G", "Y", "wK", "kW"]).text("Cor do item em foco").many().location("left")
+    focus     = Flag().name("Focus").char("z").values(["B", "R", "G", "Y", "wK", "kW"]).text("Cor do item em foco").many().location("left")
     prog_done = Flag().name("ProgDone").char("x").values(["g", "b", "c", "k", "w"]).text("Progresso Done").many().location("left")
     prog_todo = Flag().name("ProgTodo").char("c").values(["y", "m", "r", "k", "w"]).text("Progresso Todo").many().location("left")
     flag_on   = Flag().name("FlagTrue").char("v").values(["G", "W", "B", "C", "wK", "kW"]).text("Flag True").many().location("left")
     flag_off  = Flag().name("FlagFalse").char("b").values(["Y", "R", "M", "wK", "kW"]).text("Flag False").many().location("left")
-    cmds      = Flag().name("Cmds").char("n").values(["B", "C", "M", "Y", "wK", "kW"]).text("CMDS").many().location("left")
+    cmds      = Flag().name("Cmds").char("n").values(["B", "C", "M", "Y", "wK", "kW"]).text("CMDS").many()
     skill_done = Flag().name("SkillDone").char("y").values(["G", "B", "C", "wK", "kW"]).text("Skill Done").many().location("left")
     skill_todo = Flag().name("SkillTodo").char("u").values(["Y", "R", "M", "wK", "kW"]).text("Skill Todo").many().location("left")
     main_done = Flag().name("MainDone").char("i").values(["B", "G", "C", "wK", "kW"]).text("Main Done").many().location("left")
