@@ -1,6 +1,6 @@
 from typing import Dict, Optional, Tuple
 from ..util.symbols import symbols
-from ..util.sentence import Sentence
+from ..util.ftext import Ftext
 import re
 
 
@@ -35,20 +35,20 @@ class Task:
             return "g"
         return "w"  
 
-    def get_grade_symbol(self, min_value: Optional[int] = None) -> Sentence:
+    def get_grade_symbol(self, min_value: Optional[int] = None) -> Ftext:
         
         if min_value is None:
             min_value = self.default_min_value
         color = self.get_grade_color(min_value)
         if self.grade == 0:
-            return Sentence().addf(color, symbols.uncheck)
+            return Ftext().addf(color, symbols.uncheck)
         if self.grade < min_value:
-            return Sentence().addf(color, str(self.grade))
+            return Ftext().addf(color, str(self.grade))
         if self.grade < 10:
-            return Sentence().addf(color, str(self.grade))
+            return Ftext().addf(color, str(self.grade))
         if self.grade == 10:
-            return Sentence().addf(color, symbols.check)
-        return Sentence().addt("0")
+            return Ftext().addf(color, symbols.check)
+        return Ftext().add("0")
 
     def get_percent(self):
         if self.grade == 0:

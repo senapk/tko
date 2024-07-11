@@ -1,6 +1,6 @@
 from typing import List
 from .frame import Frame
-from ..util.sentence import Sentence
+from ..util.ftext import Ftext
 from .fmt import Fmt
 
 import curses
@@ -9,7 +9,7 @@ import curses
 class Floating:
     def __init__(self, _align=""):
         self._frame = Frame(0, 0)
-        self._content: List[Sentence] = []
+        self._content: List[Ftext] = []
         self._type = ""
         self._options = []
         self._options_index = 0
@@ -29,7 +29,7 @@ class Floating:
         self._floating_align = _align
 
     def set_header(self, text: str):
-        self._frame.set_header(Sentence().addf("/", text), "")
+        self._frame.set_header(Ftext().addf("/", text), "")
         return self
     
     def set_exit_key(self, key: str):
@@ -78,29 +78,29 @@ class Floating:
         self._frame.set_fill()
         
         if self._type == "answer":
-            footer = Sentence().addt(" ")
+            footer = Ftext().add(" ")
             for i, option in enumerate(self._options):
                 fmt = "kG" if i == self._options_index else ""
-                footer.addf(fmt, option).addt(" ")
+                footer.addf(fmt, option).add(" ")
             self._frame.set_footer(footer, "^")
 
     def put_text(self, text: str):
         lines = text.split("\n")
         for line in lines:
-            self._content.append(Sentence().addt(line))
+            self._content.append(Ftext().add(line))
         return self
 
-    def put_sentence(self, sentence: Sentence):
+    def put_sentence(self, sentence: Ftext):
         self._content.append(sentence)
         return self
     
     def set_content(self, content: List[str]):
-        self._content = [Sentence().addt(x) for x in content]
+        self._content = [Ftext().add(x) for x in content]
         return self
 
     def _set_default_footer(self):
         if self._frame.get_footer().len() == 0:
-            label = Sentence().addf("/", " Pressione uma tecla ")
+            label = Ftext().addf("/", " Pressione uma tecla ")
             self._frame.set_footer(label, "", "─", "─")
         return self
 

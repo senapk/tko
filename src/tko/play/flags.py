@@ -1,5 +1,5 @@
 from typing import List, Dict, Any
-from tko.util.sentence import Sentence
+from tko.util.ftext import Ftext
 
 class Flag:
     def __init__(self):
@@ -76,22 +76,22 @@ class Flag:
             return Flags.flag_on.get_value()
         return Flags.flag_off.get_value()
 
-    def get_toggle_sentence(self, pad: int = 0) -> Sentence:
+    def get_toggle_sentence(self, pad: int = 0) -> Ftext:
         if not self._bool:
-            name = Sentence().addf(self.get_value(), f"{self._name}".ljust(pad))
-            value = Sentence().addt(f"[{self.get_char()}]").addt(f"{self.get_value()}".rjust(2)).addt(" ").concat(name)
+            name = Ftext().addf(self.get_value(), f"{self._name}".ljust(pad))
+            value = Ftext().add(f"[{self.get_char()}]").add(f"{self.get_value()}".rjust(2)).add(" ").add(name)
             return value
             
         char = self.get_char()
         text = self.get_name()
         color = self.get_color()
-        extra = Sentence()
+        extra = Ftext()
         if pad > 0:
             extra.addf(color, (pad - len(text)) * " ")
         visual = "━─"
         if self.is_true():
             visual = "─━"
-        value = Sentence().addt(f"[{char}]").addf(color, f"{visual} ").addf(color + "/", text).concat(extra)
+        value = Ftext().add(f"[{char}]").addf(color, f"{visual} ").addf(color + "/", text).add(extra)
         return value
     
 

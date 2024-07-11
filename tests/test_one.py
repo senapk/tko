@@ -5,7 +5,7 @@
 import unittest
 
 
-from tko.game import TaskParser, Task
+from tko.game.task import TaskParser, Task
 
 
 class TestSimple(unittest.TestCase):

@@ -6,7 +6,7 @@ from ..settings.rep_settings import RepSettings
 from .floating_manager import FloatingManager
 from .floating import Floating
 
-from ..util.sentence import Sentence
+from ..util.ftext import Ftext
 from .flags import Flags
 from ..game.game import Game
 from ..game.cluster import Cluster
@@ -18,7 +18,7 @@ from .style import Style
 import os
 
 class Entry:
-    def __init__(self, obj: Any, sentence: Sentence):
+    def __init__(self, obj: Any, sentence: Ftext):
         self.obj = obj
         self.sentence = sentence
 
@@ -113,11 +113,11 @@ class TaskTree:
                     items.append(len(q.title) + 2)
         self.max_title = max(items)
 
-    def str_task(self, in_focus: bool, t: Task, lig_cluster: str, lig_quest: str, min_value=1) -> Sentence:
-        output = Sentence()
-        output.addt(" " + lig_cluster + " " + lig_quest) \
-            .concat(t.get_grade_symbol(min_value)) \
-            .addt(" ")
+    def str_task(self, in_focus: bool, t: Task, lig_cluster: str, lig_quest: str, min_value=1) -> Ftext:
+        output = Ftext()
+        output.add(" " + lig_cluster + " " + lig_quest) \
+            .add(t.get_grade_symbol(min_value)) \
+            .add(" ")
 
         color = ""
         if Flags.opt.is_true() and t.opt:
@@ -129,7 +129,7 @@ class TaskTree:
         if Flags.down.is_true():
             path = os.path.join(self.local.rootdir, self.rep_alias, t.key)
             if os.path.isdir(path):
-                output.addt(" ").addf("y", f"[{path}]")
+                output.add(" ").addf("y", f"[{path}]")
 
         if Flags.xp.is_true():
             xp = ""
@@ -138,9 +138,9 @@ class TaskTree:
             output.addf(Style.skills, xp)
         return output
 
-    def str_quest(self, in_focus: bool, q: Quest, lig: str) -> Sentence:
+    def str_quest(self, in_focus: bool, q: Quest, lig: str) -> Ftext:
         con = "━─" if q.key not in self.expanded else "─┯"
-        output: Sentence = Sentence().addt(" " + lig + con + " ")
+        output: Ftext = Ftext().add(" " + lig + con + " ")
 
         color = ""
         if Flags.opt.is_true() and q.opt:
@@ -154,18 +154,18 @@ class TaskTree:
         if Flags.quest_prog.is_true():
             done = color + Flags.prog_done.get_value()
             todo = color + Flags.prog_todo.get_value()
-            output.concat(Sentence.build_bar(title, q.get_percent() / 100, len(title), done, todo))
+            output.add(Ftext.build_bar(title, q.get_percent() / 100, len(title), done, todo))
         else:
             output.addf(color, title)
 
         if Flags.count.is_true():
             if Flags.percent.is_true():
-                output.addt(" ").concat(q.get_resume_by_percent())
+                output.add(" ").add(q.get_resume_by_percent())
             else:
-                output.addt(" ").concat(q.get_resume_by_tasks())
+                output.add(" ").add(q.get_resume_by_tasks())
 
         if Flags.minimum.is_true():
-            output.addt(" ").concat(q.get_requirement())
+            output.add(" ").add(q.get_requirement())
 
         if Flags.xp.is_true():
             xp = ""
@@ -178,12 +178,12 @@ class TaskTree:
 
         return output
 
-    def str_cluster(self, in_focus: bool, cluster: Cluster) -> Sentence:
-        output: Sentence = Sentence()
+    def str_cluster(self, in_focus: bool, cluster: Cluster) -> Ftext:
+        output: Ftext = Ftext()
         opening = "━─"
         if cluster.key in self.expanded:
             opening = "─┯"
-        output.addt(opening + " ")
+        output.add(opening + " ")
         color = Style.cluster_title
         if in_focus:
             color += Flags.focus.get_value() + color
@@ -194,15 +194,15 @@ class TaskTree:
         if Flags.group_prog.is_true():
             done = color + Flags.prog_done.get_value()
             todo = color + Flags.prog_todo.get_value()
-            output.concat(Sentence.build_bar(title, cluster.get_percent() / 100, len(title), done, todo))
+            output.add(Ftext.build_bar(title, cluster.get_percent() / 100, len(title), done, todo))
         else:
             output.addf(color, title)
 
         if Flags.count.is_true():
             if Flags.percent.is_true():
-                output.addt(" ").concat(cluster.get_resume_by_percent())
+                output.add(" ").add(cluster.get_resume_by_percent())
             else:
-                output.addt(" ").concat(cluster.get_resume_by_quests())
+                output.add(" ").add(cluster.get_resume_by_quests())
         if cluster.key in self.new_items:
             output.addf(Style.new, " [new]")
 
@@ -401,7 +401,7 @@ class TaskTree:
             elif self.index_selected >= dy + self.index_begin:  # desceu na tela
                 self.index_begin = self.index_selected - dy + 1
 
-        sentences: List[Sentence] = []
+        sentences: List[Ftext] = []
         for i in range(self.index_begin, len(self.items)):
             sentences.append(self.items[i].sentence)
         return sentences

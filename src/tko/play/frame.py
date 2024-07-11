@@ -1,5 +1,5 @@
 from .fmt import Fmt
-from ..util.sentence import Sentence
+from ..util.ftext import Ftext
 from typing import Tuple
 
 
@@ -11,11 +11,11 @@ class Frame:
         self._inner_dy = 0
         self._border = "rounded"
         self._filled = False
-        self._header: Sentence = Sentence()
+        self._header: Ftext = Ftext()
         self._halign = ""
         self._hprefix = ""
         self._hsuffix = ""
-        self._footer: Sentence = Sentence()
+        self._footer: Ftext = Ftext()
         self._falign = ""
         self._fprefix = ""
         self._fsuffix = ""
@@ -46,7 +46,7 @@ class Frame:
         hor = self.get_symbol("h")
         
         data.trim_end(pad)
-        sent = Sentence().addf(color, prefix).concat(data).addf(color, suffix)
+        sent = Ftext().addf(color, prefix).add(data).addf(color, suffix)
         if symbol == "<":
             sent.ljust(dx, hor, color)
         elif symbol == ">":
@@ -56,10 +56,10 @@ class Frame:
         return sent
 
     def get_header(self):
-        return Sentence().addt(self._hprefix).concat(self._header).addt(self._hsuffix)
+        return Ftext().add(self._hprefix).add(self._header).add(self._hsuffix)
     
     def get_footer(self):
-        return Sentence().addt(self._fprefix).concat(self._footer).addt(self._fsuffix)
+        return Ftext().add(self._fprefix).add(self._footer).add(self._fsuffix)
 
     def get_full_header(self):
         return self.__align_header_footer(self._header, self._halign, self._hprefix, self._hsuffix)
@@ -130,14 +130,14 @@ class Frame:
         self._border = "square"
         return self
 
-    def set_header(self, header: Sentence, align="<", prefix="", suffix=""):
+    def set_header(self, header: Ftext, align="<", prefix="", suffix=""):
         self._halign = align
         self._header = header
         self._hprefix = prefix
         self._hsuffix = suffix
         return self
 
-    def set_footer(self, footer: Sentence, align=">", prefix="", suffix=""):
+    def set_footer(self, footer: Ftext, align=">", prefix="", suffix=""):
         self._falign = align
         self._footer = footer
         self._fprefix = prefix
@@ -152,13 +152,13 @@ class Frame:
         self._filled = False
         return self
 
-    def print(self, x: int, sentence: Sentence):
+    def print(self, x: int, sentence: Ftext):
         self.write(self._print_index, x, sentence)
         self._print_index += 1
         return self
 
     # return y, x of the last character
-    def write(self, y: int, x: int, sentence: Sentence) -> bool:
+    def write(self, y: int, x: int, sentence: Ftext) -> bool:
         lines, cols = Fmt.get_size()
 
         x_min = max(-1, self._x)
@@ -204,8 +204,8 @@ class Frame:
         header = self.get_full_header()
         footer = self.get_full_footer()
 
-        above = Sentence().addf(color, up_left).concat(header).addf(color, up_right)
-        below = Sentence().addf(color, down_left).concat(footer).addf(color, down_right)
+        above = Ftext().addf(color, up_left).add(header).addf(color, up_right)
+        below = Ftext().addf(color, down_left).add(footer).addf(color, down_right)
 
         Fmt.write(y, x, above)
         if dy > 0:
@@ -215,13 +215,13 @@ class Frame:
                 Fmt.write(
                     y + i,
                     x,
-                    Sentence()
+                    Ftext()
                     .addf(color, ver)
-                    .addt(dx * self._fill_char)
+                    .add(dx * self._fill_char)
                     .addf(color, ver),
                 )
         else:
             for i in range(1, dy + 1):
-                Fmt.write(y + i, x, Sentence().addf(color, ver))
-                Fmt.write(y + i, x + dx + 1, Sentence().addf(color, ver))
+                Fmt.write(y + i, x, Ftext().addf(color, ver))
+                Fmt.write(y + i, x + dx + 1, Ftext().addf(color, ver))
         return self

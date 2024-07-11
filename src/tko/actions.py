@@ -14,24 +14,9 @@ from .util.symbols import symbols
 from .run.writer import Writer
 from .run.solver import Solver
 from .util.runner import Runner
+from .cdiff import CDiff
+from .execution import Execution
 
-
-class Execution:
-
-    def __init__(self):
-        pass
-
-    # run a unit using a solver and return if the result is correct
-    @staticmethod
-    def run_unit(solver: Solver, unit: Unit) -> ExecutionResult:
-        cmd = solver.executable
-        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input)
-        unit.user = stdout + stderr
-        if return_code != 0:
-            return ExecutionResult.EXECUTION_ERROR
-        if unit.user == unit.output:
-            return ExecutionResult.SUCCESS
-        return ExecutionResult.WRONG_OUTPUT
 
 
 class FilterMode:
@@ -59,6 +44,12 @@ class Run:
         self.exec_cmd = exec_cmd
         self.param = param
         self.wdir = None
+        self.curses = False
+
+    def set_curses(self):
+        self.curses = True
+        return self
+
 
     def execute(self):
         self.remove_duplicates()
@@ -172,6 +163,10 @@ class Run:
         return False
 
     def diff_mode(self):
+        if self.curses:
+            cdiff = CDiff(self.wdir, self.param)
+            cdiff.run()
+            return
         print(Report.centralize(" Running solver against test cases ", "═"))
         self.print_top_line()
         self.print_diff()

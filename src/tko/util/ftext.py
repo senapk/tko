@@ -1,26 +1,28 @@
 from __future__ import annotations
-from typing import List, Tuple
+from typing import List,  Any, Tuple, Union
 
 
 class Token:
-    def __init__(self, fmt: str, text: str):
+    def __init__(self, fmt: str = "", text: str = ""):
         self.fmt = fmt
         self.text = text
-    
+
+    def __eq__(self, other: Token):
+        return self.text == other.text and self.fmt == other.fmt
+
     def __len__(self):
         return len(self.text)
+    
+    def __add__(self, other: Any):
+        return Ftext().add(self).add(other)
 
-class Sentence:
-    def __init__(self):
+    def __str__(self):
+        return f"({self.fmt}:{self.text})"
+
+class Ftext:
+    def __init__(self, value: Union[str, Tuple[str, str]] = ""):
         self.data: List[Token] = []
-    
-    def addf(self, fmt: str, text: str):
-        self.data.append(Token(fmt, text))
-        return self
-    
-    def addt(self, text: str):
-        self.data.append(Token("", text))
-        return self
+        self.add(value)
     
     def __getitem__(self, index: int):
         return self.data[index]
@@ -28,14 +30,43 @@ class Sentence:
     def __setitem__(self, index: int, value: Token):
         self.data[index] = value
         return None
+    
+    def __len__(self):
+        return self.len()
+    
+    def __add__(self, other: Any):
+        return Ftext().add(self).add(other)
 
-    def adds(self, fmt, sentence):
-        for _, t in sentence.data:
-            self.data.append(Token(fmt, t))
+    def __eq__(self, other: Ftext):
+        if len(self.data) != len(other.data):
+            return False
+        for i in range(len(self.data)):
+            if self.data[i] != other.data[i]:
+                return False
+        return True
+
+    def __str__(self):
+        return "".join([str(t) for t in self.data])
+
+    def add(self, value: Union[str, Token, Tuple[str, str], Ftext]):
+        if isinstance(value, str):
+            if value != "":
+                self.data.append(Token("", value))
+        elif isinstance(value, Token):
+            if value.text != "":
+                self.data.append(value)
+        elif isinstance(value, Tuple):
+            fmt, text = value
+            if text != "":
+                self.data.append(Token(fmt, text))
+        elif isinstance(value, Ftext):
+            self.data += value.data
+        else:
+            raise TypeError("unsupported type '{}'".format(type(value)))
         return self
     
-    def concat(self, sentence: Sentence):
-        self.data += sentence.data
+    def addf(self, fmt: str, text: str):
+        self.add(Token(fmt, text))
         return self
     
     def ljust(self, width: int, fillchar: str = " ", fmt = ""):
@@ -63,9 +94,6 @@ class Sentence:
         for t in self.data:
             total += len(t.text)
         return total
-    
-    def __len__(self):
-        return self.len()
     
     def get(self):
         return self.data
@@ -128,13 +156,12 @@ class Sentence:
 
     @staticmethod
     def build_bar(text: str, percent: float, length: int, fmt_true: str = "/kC",
-                  fmt_false: str = "/kY") -> Sentence:
+                  fmt_false: str = "/kY") -> Ftext:
         prefix = (length - len(text)) // 2
         suffix = length - len(text) - prefix
         text = " " * prefix + text + " " * suffix
-        xp_bar = Sentence()
         total = length
         full_line = text
         done_len = int(percent * total)
-        xp_bar.addf(fmt_true, full_line[:done_len]).addf(fmt_false, full_line[done_len:])
+        xp_bar = Ftext() + (fmt_true, full_line[:done_len]) + (fmt_false, full_line[done_len:])
         return xp_bar

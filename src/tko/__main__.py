@@ -107,6 +107,8 @@ class Main:
         elif args.down:
             param.set_up_down(True)
         run = Run(args.target_list, args.cmd, param)
+        if args.curses:
+            run.set_curses()
         run.execute()
 
     @staticmethod
@@ -245,6 +247,7 @@ class Parser:
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
         parser_r.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures')
+        parser_r.add_argument('--curses', '-C', action='store_true', help='Diff using curses mode')
         parser_r.add_argument("--cmd", type=str, help="bash command to run code")
 
         group_n = parser_r.add_mutually_exclusive_group()
