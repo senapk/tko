@@ -1,5 +1,5 @@
 from .fmt import Fmt
-from ..util.ftext import Ftext
+from ..util.ftext import FF, TK
 from typing import Tuple
 
 
@@ -11,11 +11,11 @@ class Frame:
         self._inner_dy = 0
         self._border = "rounded"
         self._filled = False
-        self._header: Ftext = Ftext()
+        self._header: FF = FF()
         self._halign = ""
         self._hprefix = ""
         self._hsuffix = ""
-        self._footer: Ftext = Ftext()
+        self._footer: FF = FF()
         self._falign = ""
         self._fprefix = ""
         self._fsuffix = ""
@@ -46,20 +46,20 @@ class Frame:
         hor = self.get_symbol("h")
         
         data.trim_end(pad)
-        sent = Ftext().addf(color, prefix).add(data).addf(color, suffix)
+        sent = FF().addf(color, prefix).add(data).addf(color, suffix)
         if symbol == "<":
-            sent.ljust(dx, hor, color)
+            sent.ljust(dx, TK(hor, color))
         elif symbol == ">":
-            sent.rjust(dx, hor, color)
+            sent.rjust(dx, TK(hor, color))
         else:
-            sent.center(dx, hor, color)
+            sent.center(dx, TK(hor, color))
         return sent
 
     def get_header(self):
-        return Ftext().add(self._hprefix).add(self._header).add(self._hsuffix)
+        return FF().add(self._hprefix).add(self._header).add(self._hsuffix)
     
     def get_footer(self):
-        return Ftext().add(self._fprefix).add(self._footer).add(self._fsuffix)
+        return FF().add(self._fprefix).add(self._footer).add(self._fsuffix)
 
     def get_full_header(self):
         return self.__align_header_footer(self._header, self._halign, self._hprefix, self._hsuffix)
@@ -130,14 +130,14 @@ class Frame:
         self._border = "square"
         return self
 
-    def set_header(self, header: Ftext, align="<", prefix="", suffix=""):
+    def set_header(self, header: FF, align="<", prefix="", suffix=""):
         self._halign = align
         self._header = header
         self._hprefix = prefix
         self._hsuffix = suffix
         return self
 
-    def set_footer(self, footer: Ftext, align=">", prefix="", suffix=""):
+    def set_footer(self, footer: FF, align=">", prefix="", suffix=""):
         self._falign = align
         self._footer = footer
         self._fprefix = prefix
@@ -152,13 +152,13 @@ class Frame:
         self._filled = False
         return self
 
-    def print(self, x: int, sentence: Ftext):
+    def print(self, x: int, sentence: FF):
         self.write(self._print_index, x, sentence)
         self._print_index += 1
         return self
 
     # return y, x of the last character
-    def write(self, y: int, x: int, sentence: Ftext) -> bool:
+    def write(self, y: int, x: int, sentence: FF) -> bool:
         lines, cols = Fmt.get_size()
 
         x_min = max(-1, self._x)
@@ -172,7 +172,7 @@ class Frame:
         if y_abs <= y_min or y_abs > y_max:
             return False
         count = 0
-        for token in sentence.get():
+        for token in sentence.get_data():
             fmt, text = token.fmt, token.text
             if x_abs - 1 < x_min:  # Se o texto começa fora do frame
                 if x_abs + len(text) > x_min:  # mas ter parte dentro
@@ -204,8 +204,8 @@ class Frame:
         header = self.get_full_header()
         footer = self.get_full_footer()
 
-        above = Ftext().addf(color, up_left).add(header).addf(color, up_right)
-        below = Ftext().addf(color, down_left).add(footer).addf(color, down_right)
+        above = FF().addf(color, up_left).add(header).addf(color, up_right)
+        below = FF().addf(color, down_left).add(footer).addf(color, down_right)
 
         Fmt.write(y, x, above)
         if dy > 0:
@@ -215,13 +215,13 @@ class Frame:
                 Fmt.write(
                     y + i,
                     x,
-                    Ftext()
+                    FF()
                     .addf(color, ver)
                     .add(dx * self._fill_char)
                     .addf(color, ver),
                 )
         else:
             for i in range(1, dy + 1):
-                Fmt.write(y + i, x, Ftext().addf(color, ver))
-                Fmt.write(y + i, x + dx + 1, Ftext().addf(color, ver))
+                Fmt.write(y + i, x, FF().addf(color, ver))
+                Fmt.write(y + i, x + dx + 1, FF().addf(color, ver))
         return self

@@ -3,6 +3,7 @@ from typing import Optional
 import os
 
 from ..util.symbols import symbols
+from ..util.ftext import TK, FF
 
 class CompilerError(Exception):
     pass
@@ -15,7 +16,7 @@ class ExecutionResult(enum.Enum):
     EXECUTION_ERROR = "execution"
 
     @staticmethod
-    def get_symbol(result) -> str:
+    def get_symbol(result) -> TK:
         if result == ExecutionResult.UNTESTED:
             return symbols.neutral
         elif result == ExecutionResult.SUCCESS:
@@ -81,14 +82,14 @@ class Unit:
 
         self.result: ExecutionResult = ExecutionResult.UNTESTED
 
-    def __str__(self):
+    def str(self) -> FF:
         index = str(self.index).zfill(2)
         grade = str(self.grade_reduction).zfill(3)
         rep = "" if self.repeated is None else "[" + str(self.repeated) + "]"
-        op = ExecutionResult.get_symbol(self.result) + " " + self.result.value
+        op = FF() + ExecutionResult.get_symbol(self.result) + " " + self.result.value
         source = self.source.ljust(self.source_pad)
         case = self.case.ljust(self.case_pad)
-        return f"({op})[{index}] GR:{grade} {source} ({case}) {rep}"
+        return FF() + "(" + op + ")" + f"[{index}] GR:{grade} {source} ({case}) {rep}"
 
 
 class Param:

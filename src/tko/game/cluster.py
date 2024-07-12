@@ -1,6 +1,6 @@
 from typing import List, Optional
 from .quest import Quest
-from ..util.ftext import Ftext
+from ..util.ftext import FF
 
 
 class Cluster:
@@ -33,11 +33,11 @@ class Cluster:
             total += q.get_percent()
         return total // len(self.quests)
 
-    def get_resume_by_percent(self) -> Ftext:
-        return Ftext().addf(self.get_grade_color(), f"{self.get_percent()}%".rjust(4))
+    def get_resume_by_percent(self) -> FF:
+        return FF().addf(self.get_grade_color(), f"{self.get_percent()}%".rjust(4))
 
     def get_resume_by_quests(self):
         total = len(self.quests)
         count = len([q for q in self.quests if q.is_complete()])
-        return Ftext().addf(self.get_grade_color(), f"({count}/{total})")
+        return FF().addf(self.get_grade_color(), f"({count}/{total})")
         

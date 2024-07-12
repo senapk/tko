@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional, Tuple
 from .task import Task
-from ..util.ftext import Ftext
+from ..util.ftext import FF
 import re
 
 
@@ -27,18 +27,18 @@ class Quest:
         output = f"{line} {tasks_size} {key}{self.title} {self.skills} {self.requires}"
         return output
 
-    def get_resume_by_percent(self) -> Ftext:
+    def get_resume_by_percent(self) -> FF:
         value = self.get_percent()
-        return Ftext().addf(self.get_grade_color(), (str(value) + "%").rjust(4))
+        return FF().addf(self.get_grade_color(), (str(value) + "%").rjust(4))
     
-    def get_requirement(self) -> Ftext:
+    def get_requirement(self) -> FF:
         if self.qmin is not None:
-            return Ftext().addf("y", f"[{self.qmin}%]")
+            return FF().addf("y", f"[{self.qmin}%]")
         if self.tmin is not None:
-            return Ftext().addf("y", f"[t>{self.tmin - 1}]")
-        return Ftext()
+            return FF().addf("y", f"[t>{self.tmin - 1}]")
+        return FF()
 
-    def get_resume_by_tasks(self) -> Ftext:
+    def get_resume_by_tasks(self) -> FF:
         tmin = self.tmin if self.tmin is not None else 7
         total = len([t for t in self.__tasks if not t.opt])
         plus = len([t for t in self.__tasks if t.opt])
@@ -46,7 +46,7 @@ class Quest:
         output = f"{count}/{total}"
         if plus > 0:
             output += f"+{plus}"
-        return Ftext().addf(self.get_grade_color(), "(" + output + ")")
+        return FF().addf(self.get_grade_color(), "(" + output + ")")
 
     def get_grade_color(self) -> str:
         if self.not_started():

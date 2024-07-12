@@ -6,7 +6,7 @@ from .basic import IdentifierType, Identifier, Unit, Param
 from .loader import Loader
 from .solver import Solver
 
-from ..util.term_color import colour
+from ..util.ftext import FF
 from ..util.symbols import symbols
 
 # generate label for cases
@@ -76,7 +76,7 @@ class Wdir:
         target_list = [t for t in target_list if t != ""]
         for target in target_list:
             if not os.path.exists(target):
-                raise FileNotFoundError(colour("red", "fail: ") + target + " not found")
+                raise FileNotFoundError(f"fail: {target} not found")
 
         solvers = [target for target in target_list if Identifier.get_type(target) == IdentifierType.SOLVER]
         sources = [target for target in target_list if Identifier.get_type(target) != IdentifierType.SOLVER]
@@ -176,31 +176,31 @@ class Wdir:
                 unit.case = LabelFactory().label(unit.case).index(number).generate()
                 number += 1
 
-    def unit_list_resume(self):
-        return "\n".join([str(unit) for unit in self.unit_list])
+    def unit_list_resume(self) -> List[FF]:
+        return [unit.str() for unit in self.unit_list]
 
-    def resume(self) -> str:
+    def resume(self) -> FF:
 
-        def sources() -> str:
+        def sources() -> FF:
             out = []
             if len(self.pack_list) == 0:
                 out.append(symbols.failure)
             for i in range(len(self.pack_list)):
                 nome: str = self.source_list[i].split(os.sep)[-1]
                 out.append(nome + "(" + str(len(self.pack_list[i])).zfill(2) + ")")
-            return colour("green", "base:") + "[" + ", ".join(out) + "]"
+            return FF().addf("g", "base:").add("[" + ", ".join(out) + "]")
 
-        def solvers() -> str:
+        def solvers() -> FF:
             path_list = [] if self.solver is None else self.solver.path_list
 
             if self.solver is not None and len(path_list) == 0:  # free_cmd
                 out = "free cmd"
             else:
                 out = ", ".join([os.path.basename(path) for path in path_list])
-            return colour("green", "prog:") + "[" + out + "]"
+            return FF().addf("g", "prog:").add("[" + out + "]")
 
         # folder = os.getcwd().split(os.sep)[-1]
         # tests_count = (colour("tests:", Color.GREEN) +
         #               str(len([x for x in self.unit_list if x.repeated is None])).zfill(2))
 
-        return symbols.opening + sources() + " " + solvers()
+        return FF().add(sources()).add(" ").add(solvers())

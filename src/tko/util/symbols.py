@@ -1,27 +1,27 @@
-from .term_color import colour
+from .ftext import TK
 
 class __Symbols:
     def __init__(self):
-        self.opening = ""
-        self.neutral = ""
-        self.success = ""
-        self.failure = ""
-        self.wrong = ""
-        self.compilation = ""
-        self.execution = ""
-        self.unequal = ""
-        self.equalbar = ""
-        self.hbar = ""
-        self.vbar = ""
-        self.whitespace = ""  # interpunct
-        self.newline = ""  # carriage return
-        self.cfill = ""
-        self.tab = ""
-        self.arrow_up = ""
-        self.check = ""  
-        self.uncheck = ""
-        self.opcheck = ""
-        self.opuncheck = ""
+        self.opening = TK()
+        self.neutral = TK()
+        self.success = TK()
+        self.failure = TK()
+        self.wrong = TK()
+        self.compilation = TK()
+        self.execution = TK()
+        self.unequal = TK()
+        self.equalbar = TK()
+        self.hbar = TK()
+        self.vbar = TK()
+        self.whitespace = TK()  # interpunct
+        self.newline = TK()  # carriage return
+        self.cfill = TK()
+        self.tab = TK()
+        self.arrow_up = TK()
+        self.check = TK()  
+        self.uncheck = TK()
+        self.opcheck = TK()
+        self.opuncheck = TK()
 
         self.ascii = False
         self.set_unicode()
@@ -32,64 +32,64 @@ class __Symbols:
     def set_ascii(self):
         self.ascii = True
 
-        self.opening = "=> "
-        self.neutral = "."
-        self.success = "S"
-        self.failure = "X"
-        self.wrong = "W"
-        self.compilation = "C"
-        self.execution = "E"
-        self.unequal = "#"
-        self.equalbar = "|"
-        self.hbar = "─"
-        self.vbar = "│"
-        self.whitespace = "\u2E31"  # interpunct
-        self.newline = "\u21B5"  # carriage return
-        self.cfill = "_"
-        self.tab = "    "
-        self.arrow_up = "A"
+        self.opening = TK("=> ")
+        self.neutral = TK(".")
+        self.success = TK("S")
+        self.failure = TK("X")
+        self.wrong = TK("W")
+        self.compilation = TK("C")
+        self.execution = TK("E")
+        self.unequal = TK("#")
+        self.equalbar = TK("|")
+        self.hbar = TK("─")
+        self.vbar = TK("│")
+        self.whitespace = TK("\u2E31")  # interpunct
+        self.newline = TK("\u21B5")  # carriage return
+        self.cfill = TK("_")
+        self.tab = TK("    ")
+        self.arrow_up = TK("A")
 
-        self.check = "x"  
-        self.uncheck = "."
-        self.opcheck = "█"
-        self.opuncheck = "▒"
+        self.check = TK("x")
+        self.uncheck = TK(".")
+        self.opcheck = TK("█")
+        self.opuncheck = TK("▒")
 
     def set_unicode(self):
         self.ascii = False
 
-        self.opening = "=> "
-        self.neutral = "»"
-        self.success = "✓"
-        self.failure = "✗"
-        self.wrong = "ω"
-        self.compilation = "ϲ"
-        self.execution = "ϵ"
-        self.unequal = "├"
-        self.equalbar = "│"
-        self.hbar = "─"
-        self.vbar = "│"
-        self.whitespace = "\u2E31"  # interpunct
-        self.newline = "\u21B5"  # carriage return
-        self.cfill = "_"
-        self.tab = "    "
-        self.arrow_up = "↑"
+        self.opening = TK("=> ")
+        self.neutral = TK("»")
+        self.success = TK("✓")
+        self.failure = TK("✗")
+        self.wrong = TK("ω")
+        self.compilation = TK("ϲ")
+        self.execution = TK("ϵ")
+        self.unequal = TK("├")
+        self.equalbar = TK("│")
+        self.hbar = TK("─")
+        self.vbar = TK("│")
+        self.whitespace = TK("\u2E31")
+        self.newline = TK("\u21B5")
+        self.cfill = TK("_")
+        self.tab = TK("    ")
+        self.arrow_up = TK("↑")
 
-        self.check = "✓"  
-        self.uncheck = "✗"
-        self.opcheck = "ⴲ"
-        self.opuncheck = "ⵔ"
+        self.check = TK("✓")
+        self.uncheck = TK("✗")
+        self.opcheck = TK("ⴲ")
+        self.opuncheck = TK("ⵔ")
 
 
     def set_colors(self):
-        self.opening = colour("b", self.opening)
-        self.neutral = colour("b", self.neutral)
-        self.success = colour("g", self.success)
-        self.failure = colour("r", self.failure)
-        self.wrong = colour("r", self.wrong)
-        self.compilation = colour("y", self.compilation)
-        self.execution = colour("y", self.execution)
-        self.unequal = colour("r", self.unequal)
-        self.equalbar = colour("g", self.equalbar)
+        self.opening.fmt = "b"
+        self.neutral.fmt = "b"
+        self.success.fmt = "g"
+        self.failure.fmt = "r"
+        self.wrong.fmt = "r"
+        self.compilation.fmt = "y"
+        self.execution.fmt = "y"
+        self.unequal.fmt = "r"
+        self.equalbar.fmt = "g"
 
 
 symbols = __Symbols()

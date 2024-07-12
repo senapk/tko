@@ -3,9 +3,8 @@ from .play.fmt import Fmt
 from .run.basic import DiffMode, ExecutionResult, CompilerError, Param, Unit
 from .execution import Execution
 from .run.diff import Diff
-from .util.ftext import Ftext
+from .util.ftext import FF
 from typing import List
-from .util.term_color import Color
 from .play.frame import Frame
 from .run.wdir import Wdir
 import os
@@ -14,7 +13,7 @@ class CDiff:
 
     def __init__(self, wdir: Wdir, param: Param.Basic):
         self.param = param
-        self.results: List[Ftext] = []
+        self.results: List[FF] = []
         self.wdir = wdir
         self.exit = False
         self.index = 0
@@ -41,12 +40,9 @@ class CDiff:
         frame = Frame(0, 0).set_size(3, cols)
 
         pwd = os.getcwd()
-        frame.set_header(Ftext().add(f" {pwd} ") , "<")
-        intro = Color.remove_colors(self.wdir.resume())
-        if intro.startswith("=>"):
-            intro = intro[2:]
-        intro += " "
-        frame.set_footer(Ftext().add(intro))
+        frame.set_header(FF().add(f" {pwd} ") , "<")
+        intro = self.wdir.resume()
+        frame.set_footer(intro)
         frame.draw()
 
         
@@ -55,24 +51,24 @@ class CDiff:
             index = len(self.results)
             unit = self.wdir.unit_list[index]
             unit.result = Execution.run_unit(self.wdir.solver, unit)
-            symbol = Color.remove_colors(ExecutionResult.get_symbol(unit.result))
+            symbol = ExecutionResult.get_symbol(unit.result)
             color = self.get_color(unit)
-            self.results.append(Ftext().addf(color, symbol))
+            self.results.append(FF().addf(color, symbol.text))
 
         x = 0
         i = 0
         for i, symbol in enumerate(self.results):
             foco = "" if i != self.index else "B"
-            label = Ftext().addf(foco + "/kW", str(i).zfill(2)).add(symbol)
+            label = FF().addf(foco + "/kW", str(i).zfill(2)).add(symbol)
             frame.write(0, x, label)
             x += 5
         
         if self.end_processing() and not self.finished:
-            self.resumes = Color.remove_colors(self.wdir.unit_list_resume()).split("\n")
+            self.resumes = self.wdir.unit_list_resume()
             self.finished = True
 
     def draw_bottom_line(self):
-        cmds = (Ftext()
+        cmds = (FF()
         .add(" ")
         .addf("/", "Move").add("[esq, dir]")
         .add(" ")
@@ -84,7 +80,8 @@ class CDiff:
 
     def draw_diff(self):
         lines, cols = Fmt.get_size()
-        frame = Frame(2, -1).set_size(lines - 4, cols + 1).set_border_none()
+        frame = Frame(3, 0).set_size(lines - 3, cols).set_border_square()
+        frame.draw()
         results = [unit.result for unit in self.wdir.unit_list]
         if ExecutionResult.EXECUTION_ERROR not in results and ExecutionResult.WRONG_OUTPUT not in results:
             return
@@ -95,12 +92,12 @@ class CDiff:
         
         unit = self.wdir.unit_list[self.index]
         if self.param.is_up_down:
-            value = Diff.mount_up_down_diff(unit)
+            lines = Diff.mount_up_down_diff(unit)
         else:
-            value = Diff.mount_side_by_side_diff(unit)
+            lines = Diff.mount_side_by_side_diff(unit)
 
-        for i, line in enumerate(value.split("\n")):
-            frame.write(i, 0, Ftext().add(Color.remove_colors(line)))
+        for i, line in enumerate(lines):
+            frame.write(i, 0, FF().add(line))
         return
 
 

@@ -355,13 +355,11 @@ class Parser:
             if args.g:
                 print(tko_guide[1:], end="")
         else:
-            try:
-                if "func" in args:
-                    args.func(args)
-                else:
-                    self.parser.print_help()
-            except ValueError as e:
-                print(str(e))
+            if "func" in args:
+                args.func(args)
+            else:
+                self.parser.print_help()
+            
 
 
 def main():

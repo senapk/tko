@@ -14,9 +14,10 @@ import urllib.error
 import json
 import curses
 import tempfile
-from tko.util.ftext import Ftext
+from tko.util.ftext import FF
 import webbrowser
 import re
+from icecream import ic
 import math
 import io
 import enum
@@ -144,22 +145,22 @@ class Flag:
             return Flags.flag_on.get_value()
         return Flags.flag_off.get_value()
 
-    def get_toggle_sentence(self, pad: int = 0) -> Ftext:
+    def get_toggle_sentence(self, pad: int = 0) -> FF:
         if not self._bool:
-            name = Ftext().addf(self.get_value(), f"{self._name}".ljust(pad))
-            value = Ftext().add(f"[{self.get_char()}]").add(f"{self.get_value()}".rjust(2)).add(" ").add(name)
+            name = FF().addf(self.get_value(), f"{self._name}".ljust(pad))
+            value = FF().add(f"[{self.get_char()}]").add(f"{self.get_value()}".rjust(2)).add(" ").add(name)
             return value
             
         char = self.get_char()
         text = self.get_name()
         color = self.get_color()
-        extra = Ftext()
+        extra = FF()
         if pad > 0:
             extra.addf(color, (pad - len(text)) * " ")
         visual = "━─"
         if self.is_true():
             visual = "─━"
-        value = Ftext().add(f"[{char}]").addf(color, f"{visual} ").addf(color + "/", text).add(extra)
+        value = FF().add(f"[{char}]").addf(color, f"{visual} ").addf(color + "/", text).add(extra)
         return value
     
 
@@ -707,902 +708,6 @@ class PatternLoader:
         unmatched = [file for file in filename_list if file not in matched]
         return unmatched
 
-class Color:
-    enabled = False
-    terminal_styles = {
-        '.': '\033[0m', # Reset
-        '*': '\033[1m', # Bold
-        '/': '\033[3m', # Italic
-        '_': '\033[4m', # Underline
-        
-        'k': '\033[30m', # Black
-        'r': '\033[31m', # Red
-        'g': '\033[32m', # Green
-        'y': '\033[33m', # Yellow
-        'b': '\033[34m', # Blue
-        'm': '\033[35m', # Magenta
-        'c': '\033[36m', # Cyan
-        'w': '\033[37m', # White
-
-
-        'K': '\033[40m', # Background black
-        'W': '\033[47m', # Background white
-    }
-
-    @staticmethod
-    def ljust(text: str, width: int) -> str:
-        return text + " " * (width - Color.len(text))
-
-    @staticmethod
-    def center(text: str, width: int, filler: str) -> str:
-        before = filler * ((width - Color.len(text)) // 2)
-        after = filler * ((width - Color.len(text) + 1) // 2)
-        return before + text + after
-
-    @staticmethod
-    def remove_colors(text: str) -> str:
-        for color in Color.terminal_styles.values():
-            text = text.replace(color, "")
-        return text
-
-    @staticmethod
-    def len(text):
-        return len(Color.remove_colors(text))
-
-
-def colour(modifiers: str, text: str) -> str:
-    if not Color.enabled:
-        return text
-    
-    output = ''
-    for m in modifiers:
-        val = Color.terminal_styles.get(m, '')
-        if val != '':
-            output += val
-    output += text + Color.terminal_styles.get('.', "")
-    return output
-
-
-
-
-class Report:
-    __term_width: Optional[int] = None
-
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def update_terminal_size():
-        term_width = shutil.get_terminal_size().columns
-        if term_width % 2 == 0:
-            term_width -= 1
-        Report.__term_width = term_width
-
-    @staticmethod
-    def get_terminal_size():
-        if Report.__term_width is None:
-            Report.update_terminal_size()
-
-        return Report.__term_width
-
-    @staticmethod
-    def set_terminal_size(value: int):
-        if value % 2 == 0:
-            value -= 1
-        Report.__term_width = value
-
-    @staticmethod
-    def centralize(
-        text,
-        sep=" ",
-        left_border: Optional[str] = None,
-        right_border: Optional[str] = None,
-    ) -> str:
-        if left_border is None:
-            left_border = sep
-        if right_border is None:
-            right_border = sep
-        term_width = Report.get_terminal_size()
-
-        size = Color.len(text)
-        pad = sep if size % 2 == 0 else ""
-        tw = term_width - 2
-        filler = sep * int(tw / 2 - size / 2)
-        return left_border + pad + filler + text + filler + right_border
-
-
-class __Symbols:
-    def __init__(self):
-        self.opening = ""
-        self.neutral = ""
-        self.success = ""
-        self.failure = ""
-        self.wrong = ""
-        self.compilation = ""
-        self.execution = ""
-        self.unequal = ""
-        self.equalbar = ""
-        self.hbar = ""
-        self.vbar = ""
-        self.whitespace = ""  # interpunct
-        self.newline = ""  # carriage return
-        self.cfill = ""
-        self.tab = ""
-        self.arrow_up = ""
-        self.check = ""  
-        self.uncheck = ""
-        self.opcheck = ""
-        self.opuncheck = ""
-
-        self.ascii = False
-        self.set_unicode()
-
-    def get_mode(self) -> str:
-        return "ASCII" if self.ascii else "UTF-8"
-
-    def set_ascii(self):
-        self.ascii = True
-
-        self.opening = "=> "
-        self.neutral = "."
-        self.success = "S"
-        self.failure = "X"
-        self.wrong = "W"
-        self.compilation = "C"
-        self.execution = "E"
-        self.unequal = "#"
-        self.equalbar = "|"
-        self.hbar = "─"
-        self.vbar = "│"
-        self.whitespace = "\u2E31"  # interpunct
-        self.newline = "\u21B5"  # carriage return
-        self.cfill = "_"
-        self.tab = "    "
-        self.arrow_up = "A"
-
-        self.check = "x"  
-        self.uncheck = "."
-        self.opcheck = "█"
-        self.opuncheck = "▒"
-
-    def set_unicode(self):
-        self.ascii = False
-
-        self.opening = "=> "
-        self.neutral = "»"
-        self.success = "✓"
-        self.failure = "✗"
-        self.wrong = "ω"
-        self.compilation = "ϲ"
-        self.execution = "ϵ"
-        self.unequal = "├"
-        self.equalbar = "│"
-        self.hbar = "─"
-        self.vbar = "│"
-        self.whitespace = "\u2E31"  # interpunct
-        self.newline = "\u21B5"  # carriage return
-        self.cfill = "_"
-        self.tab = "    "
-        self.arrow_up = "↑"
-
-        self.check = "✓"  
-        self.uncheck = "✗"
-        self.opcheck = "ⴲ"
-        self.opuncheck = "ⵔ"
-
-
-    def set_colors(self):
-        self.opening = colour("b", self.opening)
-        self.neutral = colour("b", self.neutral)
-        self.success = colour("g", self.success)
-        self.failure = colour("r", self.failure)
-        self.wrong = colour("r", self.wrong)
-        self.compilation = colour("y", self.compilation)
-        self.execution = colour("y", self.execution)
-        self.unequal = colour("r", self.unequal)
-        self.equalbar = colour("g", self.equalbar)
-
-
-symbols = __Symbols()
-
-
-
-class CompilerError(Exception):
-    pass
-
-class ExecutionResult(enum.Enum):
-    UNTESTED = "untested_"
-    SUCCESS = "correct__"
-    WRONG_OUTPUT = "wrong_out"
-    COMPILATION_ERROR = "compilati"
-    EXECUTION_ERROR = "execution"
-
-    @staticmethod
-    def get_symbol(result) -> str:
-        if result == ExecutionResult.UNTESTED:
-            return symbols.neutral
-        elif result == ExecutionResult.SUCCESS:
-            return symbols.success
-        elif result == ExecutionResult.WRONG_OUTPUT:
-            return symbols.wrong
-        elif result == ExecutionResult.COMPILATION_ERROR:
-            return symbols.compilation
-        elif result == ExecutionResult.EXECUTION_ERROR:
-            return symbols.execution
-        else:
-            raise ValueError("Invalid result type")
-
-    def __str__(self):
-        return self.value
-
-
-class DiffMode(enum.Enum):
-    FIRST = "MODE: SHOW FIRST FAILURE ONLY"
-    ALL = "MODE: SHOW ALL FAILURES"
-    QUIET = "MODE: SHOW NONE FAILURES"
-
-
-class IdentifierType(enum.Enum):
-    OBI = "OBI"
-    MD = "MD"
-    TIO = "TIO"
-    VPL = "VPL"
-    SOLVER = "SOLVER"
-
-
-class Identifier:
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def get_type(target: str) -> IdentifierType:
-        if os.path.isdir(target):
-            return IdentifierType.OBI
-        elif target.endswith(".md"):
-            return IdentifierType.MD
-        elif target.endswith(".tio"):
-            return IdentifierType.TIO
-        elif target.endswith(".vpl"):
-            return IdentifierType.VPL
-        else:
-            return IdentifierType.SOLVER
-
-
-class Unit:
-    def __init__(self, case: str = "", inp: str = "", outp: str = "", grade: Optional[int] = None, source: str = ""):
-        self.source = source  # stores the source file of the unit
-        self.source_pad = 0  # stores the pad to justify the source file
-        self.case = case  # name
-        self.case_pad = 0  # stores the pad to justify the case name
-        self.input = inp  # input
-        self.output = outp  # expected output
-        self.user: Optional[str] = None  # solver generated answer
-        self.grade: Optional[int] = grade  # None represents proportional gr, 100 represents all
-        self.grade_reduction: int = 0  # if grade is None, this atribute should be filled with the right grade reduction
-        self.index = 0
-        self.repeated: Optional[int] = None
-
-        self.result: ExecutionResult = ExecutionResult.UNTESTED
-
-    def __str__(self):
-        index = str(self.index).zfill(2)
-        grade = str(self.grade_reduction).zfill(3)
-        rep = "" if self.repeated is None else "[" + str(self.repeated) + "]"
-        op = ExecutionResult.get_symbol(self.result) + " " + self.result.value
-        source = self.source.ljust(self.source_pad)
-        case = self.case.ljust(self.case_pad)
-        return f"({op})[{index}] GR:{grade} {source} ({case}) {rep}"
-
-
-class Param:
-
-    def __init__(self):
-        pass
-
-    class Basic:
-        def __init__(self):
-            self.index: Optional[int] = None
-            self.label_pattern: Optional[str] = None
-            self.is_up_down: bool = False
-            self.diff_mode = DiffMode.FIRST
-            self.filter: bool = False
-            self.compact: bool = False
-
-        def set_index(self, value: Optional[int]):
-            self.index: Optional[int] = value
-            return self
-
-        def set_label_pattern(self, label_pattern: Optional[str]):
-            self.label_pattern: Optional[str] = label_pattern
-            return self
-        
-        def set_compact(self, value: bool):
-            self.compact = value
-            return self
-
-        def set_up_down(self, value: bool):
-            self.is_up_down = value
-            return self
-    
-        def set_filter(self, value: bool):
-            self.filter = value
-            return self
-
-        def set_diff_mode(self, value: DiffMode):
-            self.diff_mode = value
-            return self
-
-    class Manip:
-        def __init__(self):
-            self.unlabel: bool = False
-            self.to_sort: bool = False
-            self.to_number: bool = False
-        
-        def set_unlabel(self, value: bool):
-            self.unlabel = value
-            return self
-        
-        def set_to_sort(self, value: bool):
-            self.to_sort = value
-            return self
-        
-        def set_to_number(self, value: bool):
-            self.to_number = value
-            return self
-
-
-
-
-class VplParser:
-    @staticmethod
-    def finish(text):
-        return text if text.endswith("\n") else text + "\n"
-
-    @staticmethod
-    def unwrap(text):
-        while text.endswith("\n"):
-            text = text[:-1]
-        if text.startswith("\"") and text.endswith("\""):
-            text = text[1:-1]
-        return VplParser.finish(text)
-
-    @staticmethod
-    class CaseData:
-        def __init__(self, case="", inp="", outp="", grade: Optional[int] = None):
-            self.case: str = case
-            self.input: str = VplParser.finish(inp)
-            self.output: str = VplParser.unwrap(VplParser.finish(outp))
-            self.grade: Optional[int] = grade
-
-        def __str__(self):
-            return "case=" + self.case + '\n' \
-                   + "input=" + self.input \
-                   + "output=" + self.output \
-                   + "gr=" + str(self.grade)
-
-    regex_vpl_basic = r"case= *([ \S]*) *\n *input *=(.*?)^ *output *=(.*)"
-    regex_vpl_extended = r"case= *([ \S]*) *\n *input *=(.*?)^ *output *=(.*?)^ *grade *reduction *= *(\S*)% *\n?"
-
-    @staticmethod
-    def filter_quotes(x):
-        return x[1:-2] if x.startswith('"') else x
-
-    @staticmethod
-    def split_cases(text: str) -> List[str]:
-        regex = r"^ *[Cc]ase *="
-        subst = "case="
-        text = re.sub(regex, subst, text, 0, re.MULTILINE | re.DOTALL)
-        return ["case=" + t for t in text.split("case=")][1:]
-
-    @staticmethod
-    def extract_extended(text) -> Optional[CaseData]:
-        f = re.match(VplParser.regex_vpl_extended, text, re.MULTILINE | re.DOTALL)
-        if f is None:
-            return None
-        try:
-            gr = int(f.group(4))
-        except ValueError:
-            gr = None
-        return VplParser.CaseData(f.group(1), f.group(2), f.group(3), gr)
-
-    @staticmethod
-    def extract_basic(text) -> Optional[CaseData]:
-        m = re.match(VplParser.regex_vpl_basic, text, re.MULTILINE | re.DOTALL)
-        if m is None:
-            return None
-        return VplParser.CaseData(m.group(1), m.group(2), m.group(3), None)
-
-    @staticmethod
-    def parse_vpl(content: str) -> List[CaseData]:
-        text_cases = VplParser.split_cases(content)
-        seq: List[VplParser.CaseData] = []
-
-        for text in text_cases:
-            case = VplParser.extract_extended(text)
-            if case is not None:
-                seq.append(case)
-                continue
-            case = VplParser.extract_basic(text)
-            if case is not None:
-                seq.append(case)
-                continue
-            print("invalid case: " + text)
-            exit(1)
-        return seq
-
-    @staticmethod
-    def to_vpl(unit: CaseData):
-        text = "case=" + unit.case + "\n"
-        text += "input=" + unit.input
-        text += "output=\"" + unit.output + "\"\n"
-        if unit.grade is not None:
-            text += "grade reduction=" + str(unit.grade) + "%\n"
-        return text
-
-
-class Loader:
-    regex_tio = r"^ *>>>>>>>> *(.*?)\n(.*?)^ *======== *\n(.*?)^ *<<<<<<<< *\n?"
-
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def parse_cio(text, source):
-        unit_list = []
-        text = "\n" + text
-
-        pattern = r'```.*?\n(.*?)```'  # get only inside code blocks
-        code = re.findall(pattern, text, re.MULTILINE | re.DOTALL)
-        # join all code blocks found
-        text = "\n" + "\n".join(code)
-
-        pieces = []  # header, input, output
-
-        open_case = False
-        for line in text.split("\n"):
-            if line.startswith("#__case") or line.startswith("#TEST_CASE"):
-                pieces.append({"header": line, "input": [], "output": []})
-                open_case = True
-            elif open_case:
-                pieces[-1]["output"].append(line)
-                if line.startswith("$end"):
-                    open_case = False
-
-        # concatenando testes contínuos e finalizando testes sem $end
-        for i in range(len(pieces)):
-            output = pieces[i]["output"]
-            if output[-1] != "$end" and i < len(pieces) - 1:
-                pieces[i + 1]["output"] = output + pieces[i + 1]["output"]
-                output.append("$end")
-
-        # removendo linhas vazias e criando input das linhas com $
-        for piece in pieces:
-            piece["input"] = [line[1:] for line in piece["output"] if line.startswith("$")]
-            piece["output"] = [line for line in piece["output"] if line != "" and not line.startswith("#")]
-
-        for piece in pieces:
-            case = " ".join(piece["header"].split(" ")[1:])
-            inp = "\n".join(piece["input"]) + "\n"
-            output = "\n".join(piece["output"]) + "\n"
-            unit_list.append(Unit(case, inp, output, None, source))
-
-        for unit in unit_list:
-            unit.fromCio = True
-
-        return unit_list
-
-    @staticmethod
-    def parse_tio(text: str, source: str = "") -> List[Unit]:
-
-        # identifica se tem grade e retorna case name e grade
-        def parse_case_grade(value: str) -> Tuple[str, Optional[int]]:
-            if value.endswith("%"):
-                words = value.split(" ")
-                last = value.split(" ")[-1]
-                _case = " ".join(words[:-1])
-                grade_str = last[:-1]           # ultima palavra sem %
-                try:
-                    _grade = int(grade_str)
-                    return _case, _grade
-                except ValueError:
-                    pass
-            return value, None
-
-        matches = re.findall(Loader.regex_tio, text, re.MULTILINE | re.DOTALL)
-        unit_list = []
-        for m in matches:
-            case, grade = parse_case_grade(m[0])
-            unit_list.append(Unit(case, m[1], m[2], grade, source))
-        return unit_list
-
-    @staticmethod
-    def parse_vpl(text: str, source: str = "") -> List[Unit]:
-        data_list = VplParser.parse_vpl(text)
-        output: List[Unit] = []
-        for m in data_list:
-            output.append(Unit(m.case, m.input, m.output, m.grade, source))
-        return output
-
-    @staticmethod
-    def parse_dir(folder) -> List[Unit]:
-        pattern_loader = PatternLoader()
-        files = sorted(os.listdir(folder))
-        matches = pattern_loader.get_file_sources(files)
-
-        unit_list: List[Unit] = []
-        try:
-            for m in matches:
-                unit = Unit()
-                unit.source = os.path.join(folder, m.label)
-                unit.grade = 100
-                with open(os.path.join(folder, m.input_file)) as f:
-                    value = f.read()
-                    unit.input = value + ("" if value.endswith("\n") else "\n")
-                with open(os.path.join(folder, m.output_file)) as f:
-                    value = f.read()
-                    unit.output = value + ("" if value.endswith("\n") else "\n")
-                unit_list.append(unit)
-        except FileNotFoundError as e:
-            print(str(e))
-        return unit_list
-
-    @staticmethod
-    def parse_source(source: str) -> List[Unit]:
-        if os.path.isdir(source):
-            return Loader.parse_dir(source)
-        if os.path.isfile(source):
-            #  if PreScript.exists():
-            #      source = PreScript.process_source(source)
-            with open(source) as f:
-                content = f.read()
-            if source.endswith(".vpl"):
-                return Loader.parse_vpl(content, source)
-            elif source.endswith(".tio"):
-                return Loader.parse_tio(content, source)
-            elif source.endswith(".md"):
-                tests = Loader.parse_tio(content, source)
-                tests += Loader.parse_cio(content, source)
-                return tests
-            else:
-                print("warning: target format do not supported: " + source)  # make this a raise
-        else:
-            raise FileNotFoundError('warning: unable to find: ' + source)
-        return []
-
-
-
-
-class Writer:
-
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def to_vpl(unit: Unit):
-        text = "case=" + unit.case + "\n"
-        text += "input=" + unit.input
-        text += "output=\"" + unit.output + "\"\n"
-        if unit.grade is None:
-            text += "\n"
-        else:
-            text += "grade reduction=" + str(unit.grade).zfill(3) + "%\n"
-        return text
-
-    @staticmethod
-    def to_tio(unit: Unit):
-        text = ">>>>>>>>"
-        if unit.case != '':
-            text += " " + unit.case
-        if unit.grade is not None:
-            text += " " + str(unit.grade) + "%"
-        text += '\n' + unit.input
-        text += "========\n"
-        text += unit.output
-        if unit.output != '' and unit.output[-1] != '\n':
-            text += '\n'
-        text += "<<<<<<<<\n"
-        return text
-
-    @staticmethod
-    def save_dir_files(folder: str, pattern_loader: PatternLoader, label: str, unit: Unit) -> None:
-        file_source = pattern_loader.make_file_source(label)
-        with open(os.path.join(folder, file_source.input_file), "w") as f:
-            f.write(unit.input)
-        with open(os.path.join(folder, file_source.output_file), "w") as f:
-            f.write(unit.output)
-
-    @staticmethod
-    def save_target(target: str, unit_list: List[Unit], force: bool = False):
-        def ask_overwrite(file):
-            print("file " + file + " found. Overwrite? (y/n):")
-            resp = input()
-            if resp.lower() == 'y':
-                print("overwrite allowed")
-                return True
-            print("overwrite denied\n")
-            return False
-
-        def save_dir(_target: str, _unit_list):
-            folder = _target
-            pattern_loader = PatternLoader()
-            number = 0
-            for unit in _unit_list:
-                Writer.save_dir_files(folder, pattern_loader, str(number).zfill(2), unit)
-                number += 1
-
-        def save_file(_target, _unit_list):
-            if _target.endswith(".tio"):
-                _new = "\n".join([Writer.to_tio(unit) for unit in _unit_list])
-            else:
-                _new = "\n".join([Writer.to_vpl(unit) for unit in _unit_list])
-
-            file_exists = os.path.isfile(_target)
-
-            if file_exists:
-                _old = open(_target).read()
-                if _old == _new:
-                    print("no changes in test file")
-                    return
-
-            if not file_exists or (file_exists and (force or ask_overwrite(_target))):
-                with open(_target, "w") as f:
-                    f.write(_new)
-
-                    if not force:
-                        print("file " + _target + " wrote")
-
-        target_type = Identifier.get_type(target)
-        if target_type == IdentifierType.OBI:
-            save_dir(target, unit_list)
-        elif target_type == IdentifierType.TIO or target_type == IdentifierType.VPL:
-            save_file(target, unit_list)
-        else:
-            print("fail: target " + target + " do not supported for build operation\n")
-
-
-
-
-
-class Diff:
-
-    @staticmethod
-    def make_line_arrow_up(a: str, b: str) -> str:
-        hdiff = ""
-        first = True
-        i = 0
-        lim = max(len(a), len(b))
-        while i < lim:
-            if i >= len(a) or i >= len(b) or a[i] != b[i]:
-                if first:
-                    first = False
-                    hdiff += symbols.arrow_up
-            else:
-                hdiff += " "
-            i += 1
-        return hdiff
-
-    @staticmethod
-    def render_white(text: Optional[str], color: Optional[str] = None) -> Optional[str]:
-        if text is None:
-            return None
-        if color is None:
-            text = text.replace(' ', symbols.whitespace)
-            text = text.replace('\n', symbols.newline + '\n')
-            return text
-        text = text.replace(' ', colour(color, symbols.whitespace))
-        text = text.replace('\n', colour("r", symbols.newline) + '\n')
-        return text
-
-    # create a string with both ta and tb side by side with a vertical bar in the middle
-    @staticmethod
-    def side_by_side(ta: List[str], tb: List[str], unequal: str = symbols.unequal):
-        cut = (Report.get_terminal_size() - 6) // 2
-        upper = max(len(ta), len(tb))
-        data = []
-
-        for i in range(upper):
-            a = ta[i] if i < len(ta) else "###############"
-            b = tb[i] if i < len(tb) else "###############"
-            if len(a) < cut:
-                a = a.ljust(cut)
-            # if len(a) > cut:
-            #     a = a[:cut]
-            if i >= len(ta) or i >= len(tb) or ta[i] != tb[i]:
-                data.append(unequal + " " + a + " " + unequal + " " + b)
-            else:
-                data.append(symbols.vbar + " " + a + " " + symbols.vbar + " " + b)
-
-        return "\n".join(data)
-
-    # a_text -> clean full received
-    # b_text -> clean full expected
-    # first_failure -> index of the first line unmatched 
-    @staticmethod
-    def first_failure_diff(a_text: str, b_text: str, first_failure) -> str:
-        def get(vet, index):
-            if index < len(vet):
-                return vet[index]
-            return ""
-
-        a_render = Diff.render_white(a_text).splitlines()
-        b_render = Diff.render_white(b_text).splitlines()
-
-        first_a = get(a_render, first_failure)
-        first_b = get(b_render, first_failure)
-        greater = max(Color.len(first_a), Color.len(first_b))
-
-        if first_failure > 0:
-            lbefore = Color.remove_colors(get(a_render, first_failure - 1))
-            greater = max(greater, Color.len(lbefore))
-
-        out_a, out_b = Diff.colorize_2_lines_diff(first_a, first_b)
-
-        postext = symbols.vbar + " " + Color.ljust(out_a, greater) + colour("g", " (expected)") + "\n"
-        postext += symbols.vbar + " " + Color.ljust(out_b, greater) + colour("r", " (received)") + "\n"
-        postext += (symbols.vbar + " " + Color.ljust(Diff.make_line_arrow_up(first_a, first_b), greater)
-                    + colour("b", " (mismatch)") + "\n")
-        return postext
-
-    @staticmethod
-    def find_first_mismatch(line_a: str, line_b: str) -> int: 
-        i = 0
-        while i < len(line_a) and i < len(line_b):
-            if line_a[i] != line_b[i]:
-                return i
-            i += 1
-        return i
-    
-    @staticmethod
-    def colorize_2_lines_diff(la: str, lb: str, neut: str = "w", exp: str = "g", rec: str = "r") -> Tuple[str, str]:
-        pos = Diff.find_first_mismatch(la, lb)
-        a_out = colour(neut, la[0:pos]) + colour(exp, la[pos:])
-        b_out = colour(neut, lb[0:pos]) + colour(rec, lb[pos:])
-        return a_out, b_out
-
-    # return a tuple of two strings with the diff and the index of the  first mismatch line
-    @staticmethod
-    def render_diff(a_text: str, b_text: str, pad: Optional[bool] = None) -> Tuple[List[str], List[str], int]:
-        a_lines = a_text.splitlines()
-        b_lines = b_text.splitlines()
-
-        a_output = []
-        b_output = []
-
-        a_size = len(a_lines)
-        b_size = len(b_lines)
-        
-        first_failure = -1
-
-        cut: int = 0
-        if pad is True:
-            cut = (Report.get_terminal_size() - 6) // 2
-
-        max_size = max(a_size, b_size)
-
-        # lambda function to return element in index i or empty if out of bounds
-        def get(vet, index):
-            out = ""
-            if index < len(vet):
-                out = vet[index]
-            if pad is None:
-                return out
-            return out[:cut].ljust(cut)
-
-        # get = lambda vet, i: vet[i] if i < len(vet) else ""
-
-        for i in range(max_size):
-            a_data = get(a_lines, i)
-            b_data = get(b_lines, i)
-            
-            if i >= a_size or i >= b_size or a_lines[i] != b_lines[i]:
-                if first_failure == -1:
-                    first_failure = i
-                a_out, b_out = Diff.colorize_2_lines_diff(a_data, b_data, "yellow")
-                a_output.append(a_out)
-                b_output.append(b_out)
-            else:
-                a_output.append(a_data)
-                b_output.append(b_data)
-
-        return a_output, b_output, first_failure
-
-    @staticmethod
-    def mount_up_down_diff(unit: Unit) -> str:
-        output = io.StringIO()
-
-        string_input = unit.input
-        string_expected = unit.output
-        string_received = unit.user
-
-        # dotted = "-"
-
-        expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received)
-        string_input = "\n".join([symbols.vbar + " " + line for line in string_input.split("\n")])[0:-2]
-        unequal = symbols.unequal
-        if unit.result == ExecutionResult.EXECUTION_ERROR:
-            unequal = symbols.vbar
-        expected_lines, received_lines = Diff.put_left_equal(expected_lines, received_lines, unequal)
-
-        output.write(Report.centralize("", symbols.hbar, "╭") + "\n")
-        output.write(Report.centralize(str(unit), " ", symbols.vbar) + "\n")
-        output.write(Report.centralize(colour("b", " INPUT "), symbols.hbar, "├") + "\n")
-        output.write(string_input)
-        output.write(Report.centralize(colour("g", " EXPECTED "), symbols.hbar, "├") + "\n")
-        output.write("\n".join(expected_lines) + "\n")
-        output.write(Report.centralize(colour("r", " RECEIVED "), symbols.hbar, "├") + "\n")
-        output.write("\n".join(received_lines) + "\n")
-        if unit.result != ExecutionResult.EXECUTION_ERROR:
-            output.write(Report.centralize(colour("bold", " WHITESPACE "),  symbols.hbar, "├") + "\n")
-            output.write(Diff.first_failure_diff(string_expected, string_received, first_failure))
-        output.write(Report.centralize("",  symbols.hbar, "╰") + "\n")
-
-        return output.getvalue()
-
-    @staticmethod
-    def put_left_equal(exp_lines: List[str], rec_lines: List[str], unequal: str = symbols.unequal):
-
-        max_size = max(len(exp_lines), len(rec_lines))
-
-        for i in range(max_size):
-            if i >= len(exp_lines) or i >= len(rec_lines) or (exp_lines[i] != rec_lines[i]):
-                exp_lines[i] = unequal + " " + exp_lines[i]
-                rec_lines[i] = unequal + " " + rec_lines[i]
-            else:
-                exp_lines[i] = symbols.vbar + " " + exp_lines[i]
-                rec_lines[i] = symbols.vbar + " " + rec_lines[i]
-        
-        return exp_lines, rec_lines
-            
-    @staticmethod
-    def mount_side_by_side_diff(unit: Unit) -> str:
-
-        def title_side_by_side(left, right, filler=" ", middle=" ", prefix=""):
-            half = int((Report.get_terminal_size() - len(middle)) / 2)
-            line = ""
-            a = Color.center(left, half, filler)
-            if Color.len(a) > half:
-                a = a[:half]
-            line += a
-            line += middle
-            b = Color.center(right, half, filler)
-            if Color.len(b) > half:
-                b = b[:half]
-            line += b
-            if prefix != "":
-                line = prefix + line[1:]
-            return line
-
-        output = io.StringIO()
-
-        string_input = unit.input
-        string_expected = unit.output
-        string_received = unit.user
-
-        # dotted = "-"
-        # vertical_separator = symbols.vbar
-        hbar = symbols.hbar
-
-        expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received, True)
-        output.write(Report.centralize("", hbar, "╭") + "\n")
-        output.write(Report.centralize(str(unit), " ", "│") + "\n")
-        input_header = colour("b", " INPUT ")
-        output.write(title_side_by_side(input_header, input_header, hbar, "┬", "├") + "\n")
-        if string_input != "":
-            output.write(Diff.side_by_side(string_input.split("\n")[:-1], string_input.split("\n")[:-1]) + "\n")
-        expected_header = colour("g", " EXPECTED ")
-        received_header = colour("r", " RECEIVED ")
-        output.write(title_side_by_side(expected_header, received_header, hbar, "┼", "├") + "\n")
-        unequal = symbols.unequal
-        if unit.result == ExecutionResult.EXECUTION_ERROR:
-            unequal = symbols.vbar
-        output.write(Diff.side_by_side(expected_lines, received_lines, unequal) + "\n")
-        if unit.result != ExecutionResult.EXECUTION_ERROR:
-            output.write(Report.centralize(colour("bold", " WHITESPACE "),  symbols.hbar, "├") + "\n")
-            output.write(Diff.first_failure_diff(string_expected, string_received, first_failure))
-        output.write(Report.centralize("",  symbols.hbar, "╰") + "\n")
-
-        return output.getvalue()
-
 
 
 class Runner:
@@ -1655,374 +760,49 @@ class Runner:
 
 
 
-
-
-def check_tool(name):
-    if shutil.which(name) is None:
-        raise CompilerError("fail: " + name + " executable not found")
-
-
-class Solver:
-    def __init__(self, solver_list: List[str]):
-        self.path_list: List[str] = [Solver.__add_dot_bar(path) for path in solver_list]
-        
-        self.temp_dir = tempfile.mkdtemp()
-        self.error_msg: str = ""
-        self.executable: str = ""
-        if len(self.path_list) > 0:
-            self.prepare_exec()
-
-    def prepare_exec(self) -> None:
-        path = self.path_list[0]
-
-        if path.endswith(".py"):
-            self.executable = "python " + path
-        elif path.endswith(".js"):
-            self.__prepare_js()
-        elif path.endswith(".ts"):
-            self.__prepare_ts()
-        elif path.endswith(".java"):
-            self.__prepare_java()
-        elif path.endswith(".c"):
-            self.__prepare_c()
-        elif path.endswith(".cpp"):
-            self.__prepare_cpp()
-        elif path.endswith(".sql"):
-            self.__prepare_sql()
-        else:
-            self.executable = path
-
-    def __prepare_java(self):
-        check_tool("javac")
-
-        solver = self.path_list[0]
-
-        filename = os.path.basename(solver)
-        # tempdir = os.path.dirname(self.path_list[0])
-
-        cmd = ["javac"] + self.path_list + ['-d', self.temp_dir]
-        cmd = " ".join(cmd)
-        return_code, stdout, stderr = Runner.subprocess_run(cmd)
-        print(stdout)
-        print(stderr)
-        if return_code != 0:
-            raise CompilerError(stdout + stderr)
-        self.executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
-
-    def __prepare_js(self):
-        check_tool("node")
-        solver = self.path_list[0]
-        self.executable = "node " + solver
-
-    def __prepare_sql(self):
-        check_tool("sqlite3")
-        self.executable = "cat " + " ".join(self.path_list) + " | sqlite3"
-
-    def __prepare_ts(self):
-        transpiler = "esbuild"
-        if os.name == "nt":
-            transpiler += ".cmd"
-
-        check_tool(transpiler)
-        check_tool("node")
-
-        solver = self.path_list[0]
-
-        filename = os.path.basename(solver)
-        source_list = self.path_list
-        cmd = [transpiler] + source_list + ["--outdir=" + self.temp_dir, "--format=cjs", "--log-level=error"]
-        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
-        print(stdout + stderr)
-        if return_code != 0:
-            raise CompilerError(stdout + stderr)
-        jsfile = os.path.join(self.temp_dir, filename[:-3] + ".js")
-        self.executable = "node " + jsfile  # renaming solver to main
-    
-    def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
-        # solver = self.path_list[0]
-        tempdir = self.temp_dir
-        source_list = self.path_list
-        # print("Using the following source files: " + str([os.path.basename(x) for x in source_list]))
-        
-        exec_path = os.path.join(tempdir, ".a.out")
-        cmd = pre_args + source_list + ["-o", exec_path] + pos_args
-        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
-        if return_code != 0:
-            raise CompilerError(stdout + stderr)
-        self.executable = exec_path
-
-    def __prepare_c(self):
-        check_tool("gcc")
-        pre = ["gcc", "-Wall"]
-        pos = ["-lm", "-lutil"]
-        self.__prepare_c_cpp(pre, pos)
-
-    def __prepare_cpp(self):
-        check_tool("g++")
-        pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror"]
-        pos = []
-        self.__prepare_c_cpp(pre, pos)
-
-    @staticmethod
-    def __add_dot_bar(solver: str) -> str:
-        if os.sep not in solver and os.path.isfile("." + os.sep + solver):
-            solver = "." + os.sep + solver
-        return solver
-    
-
-class Execution:
-
-    def __init__(self):
-        pass
-
-    # run a unit using a solver and return if the result is correct
-    @staticmethod
-    def run_unit(solver: Solver, unit: Unit) -> ExecutionResult:
-        cmd = solver.executable
-        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input)
-        unit.user = stdout + stderr
-        if return_code != 0:
-            return ExecutionResult.EXECUTION_ERROR
-        if unit.user == unit.output:
-            return ExecutionResult.SUCCESS
-        return ExecutionResult.WRONG_OUTPUT
-
-
-
-# generate label for cases
-
-
-class LabelFactory:
-    def __init__(self):
-        self._label = ""
-        self._index = -1
-
-    def index(self, value: int):
-        try:
-            self._index = int(value)
-        except ValueError:
-            raise ValueError("Index on label must be a integer")
-        return self
-
-    def label(self, value: str):
-        self._label = value
-        return self
-
-    def generate(self):
-        label = LabelFactory.trim_spaces(self._label)
-        label = LabelFactory.remove_old_index(label)
-        if self._index != -1:
-            index = str(self._index).zfill(2)
-            if label != "":
-                return index + " " + label
-            else:
-                return index
-        return label
-
-    @staticmethod
-    def trim_spaces(text):
-        parts = text.split(" ")
-        parts = [word for word in parts if word != '']
-        return " ".join(parts)
-
-    @staticmethod
-    def remove_old_index(label):
-        split_label = label.split(" ")
-        if len(split_label) > 0:
-            try:
-                int(split_label[0])
-                return " ".join(split_label[1:])
-            except ValueError:
-                return label
-
-
-class Wdir:
-    def __init__(self):
-        self.solver: Optional[Solver] = None
-        self.source_list: List[str] = []
-        self.pack_list: List[List[Unit]] = []
-        self.unit_list: List[Unit] = []
-
-    def set_solver(self, solver_list: List[str]):
-        if len(solver_list) > 0:
-            self.solver = Solver(solver_list)
-        return self
-
-    def set_sources(self, source_list: List[str]):
-        self.source_list = source_list
-        return self
-
-    def set_target_list(self, target_list: List[str]):
-        target_list = [t for t in target_list if t != ""]
-        for target in target_list:
-            if not os.path.exists(target):
-                raise FileNotFoundError(colour("red", "fail: ") + target + " not found")
-
-        solvers = [target for target in target_list if Identifier.get_type(target) == IdentifierType.SOLVER]
-        sources = [target for target in target_list if Identifier.get_type(target) != IdentifierType.SOLVER]
-        
-        self.set_solver(solvers)
-        self.set_sources(sources)
-        return self
-
-    def set_cmd(self, exec_cmd: Optional[str]):
-        if exec_cmd is None:
-            return self
-        if self.solver is not None:
-            print("fail: if using --cmd, don't pass source files to target")
-        self.solver = Solver([])
-        self.solver.executable = exec_cmd
-        return self
-
-    def build(self):
-        loading_failures = 0
-        for source in self.source_list:
-            try:
-                self.pack_list.append(Loader.parse_source(source))
-            except FileNotFoundError as e:
-                print(str(e))
-                loading_failures += 1
-                pass
-        if loading_failures > 0 and loading_failures == len(self.source_list):
-            raise FileNotFoundError("failure: none source found")
-        self.unit_list = sum(self.pack_list, [])
-        self.__number_and_mark_duplicated()
-        self.__calculate_grade()
-        self.__pad()
-        return self
-
-    def calc_grade(self) -> int:
-        grade = 100
-        for case in self.unit_list:
-            if not case.repeated and (case.user is None or case.output != case.user):
-                grade -= case.grade_reduction
-        return max(0, grade)
-
-    # put all the labels with the same length
-    def __pad(self):
-        if len(self.unit_list) == 0:
-            return
-        max_case = max([len(x.case) for x in self.unit_list])
-        max_source = max([len(x.source) for x in self.unit_list])
-        for unit in self.unit_list:
-            unit.case_pad = max_case
-            unit.source_pad = max_source
-
-    # select a single unit to execute exclusively
-    def filter(self, param: Param.Basic):
-        index = param.index
-        if index is not None:
-            if 0 <= index < len(self.unit_list):
-                self.unit_list = [self.unit_list[index]]
-            else:
-                raise ValueError("Index Number out of bounds: " + str(index))
-        return self
-
-    # calculate the grade reduction for the cases without grade
-    # the grade is proportional to the number of unique cases
-    def __calculate_grade(self):
-        unique_count = len([x for x in self.unit_list if not x.repeated])
-        for unit in self.unit_list:
-            if unit.grade is None:
-                unit.grade_reduction = math.floor(100 / unique_count)
-            else:
-                unit.grade_reduction = unit.grade
-
-    # number the cases and mark the repeated
-    def __number_and_mark_duplicated(self):
-        new_list = []
-        index = 0
-        for unit in self.unit_list:
-            unit.index = index
-            index += 1
-            search = [x for x in new_list if x.input == unit.input]
-            if len(search) > 0:
-                unit.repeated = search[0].index
-            new_list.append(unit)
-        self.unit_list = new_list
-
-    # sort, unlabel ou rename using the param received
-    def manipulate(self, param: Param.Manip):
-        # filtering marked repeated
-        self.unit_list = [unit for unit in self.unit_list if unit.repeated is None]
-        if param.to_sort:
-            self.unit_list.sort(key=lambda v: len(v.input))
-        if param.unlabel:
-            for unit in self.unit_list:
-                unit.case = ""
-        if param.to_number:
-            number = 00
-            for unit in self.unit_list:
-                unit.case = LabelFactory().label(unit.case).index(number).generate()
-                number += 1
-
-    def unit_list_resume(self):
-        return "\n".join([str(unit) for unit in self.unit_list])
-
-    def resume(self) -> str:
-
-        def sources() -> str:
-            out = []
-            if len(self.pack_list) == 0:
-                out.append(symbols.failure)
-            for i in range(len(self.pack_list)):
-                nome: str = self.source_list[i].split(os.sep)[-1]
-                out.append(nome + "(" + str(len(self.pack_list[i])).zfill(2) + ")")
-            return colour("green", "base:") + "[" + ", ".join(out) + "]"
-
-        def solvers() -> str:
-            path_list = [] if self.solver is None else self.solver.path_list
-
-            if self.solver is not None and len(path_list) == 0:  # free_cmd
-                out = "free cmd"
-            else:
-                out = ", ".join([os.path.basename(path) for path in path_list])
-            return colour("green", "prog:") + "[" + out + "]"
-
-        # folder = os.getcwd().split(os.sep)[-1]
-        # tests_count = (colour("tests:", Color.GREEN) +
-        #               str(len([x for x in self.unit_list if x.repeated is None])).zfill(2))
-
-        return symbols.opening + sources() + " " + solvers()
-
-
-
-class Token:
-    def __init__(self, fmt: str = "", text: str = ""):
-        self.fmt = fmt
+class TK:
+    def __init__(self, text: str = "", fmt: str = "", ):
+        if not isinstance(text, str):
+            raise TypeError("text must be a string")
         self.text = text
+        self.fmt = fmt
 
-    def __eq__(self, other: Token):
+    def __eq__(self, other: TK):
         return self.text == other.text and self.fmt == other.fmt
 
     def __len__(self):
         return len(self.text)
     
     def __add__(self, other: Any):
-        return Ftext().add(self).add(other)
+        return FF().add(self).add(other)
 
     def __str__(self):
-        return f"({self.fmt}:{self.text})"
+        return f"('{self.text}', '{self.fmt}')"
 
-class Ftext:
+def TR(fmt: str, text: str) -> TK:
+    return TK(text, fmt)
+
+class FF:
     def __init__(self, value: Union[str, Tuple[str, str]] = ""):
-        self.data: List[Token] = []
+        self.data: List[TK] = []
         self.add(value)
     
-    def __getitem__(self, index: int):
-        return self.data[index]
-    
-    def __setitem__(self, index: int, value: Token):
-        self.data[index] = value
-        return None
-    
+    def setup(self, data: List[TK]):
+        self.data = data
+        return self
+
+    def __getitem__(self, index: int) -> TK:
+        if index < 0 or index >= len(self):
+            return TK()
+        return self.separate().data[index]
+
     def __len__(self):
-        return self.len()
+        return sum([len(t.text) for t in self.data])
     
     def __add__(self, other: Any):
-        return Ftext().add(self).add(other)
+        return FF().add(self).add(other)
 
-    def __eq__(self, other: Ftext):
+    def __eq__(self, other: FF):
         if len(self.data) != len(other.data):
             return False
         for i in range(len(self.data)):
@@ -2030,48 +810,94 @@ class Ftext:
                 return False
         return True
 
+
     def __str__(self):
         return "".join([str(t) for t in self.data])
+    
+    def separate(self):
+        out = FF()
+        for d in self.data:
+            for c in d.text:
+                out.add(TK(c, d.fmt))
+        return out
 
-    def add(self, value: Union[str, Token, Tuple[str, str], Ftext]):
+    def join(self):
+        if len(self.data) == 0:
+            return self
+        
+        new_data: List[TK] = [TK("", self.data[0].fmt)]
+        for d in self.data:
+            if d.fmt == new_data[-1].fmt:
+                new_data[-1].text += d.text
+            else:
+                new_data.append(TK())
+                new_data[-1].text = d.text
+                new_data[-1].fmt = d.fmt
+        self.data = new_data
+
+        return self
+
+    # search for a value inside the tokens and replace it with a new value and fmt
+    def replace(self, old: str, token: TK):
+        if len(old) != 1:
+            raise ValueError("old must be a single character")
+        value = self.separate()
+
+        for i in range(len(value.data)):
+            elem = value.data[i]
+            if elem.text == old:
+                value.data[i] = token
+        self.data = value.data
+        self.join()
+        return self
+
+    def plus(self, qtd: int) -> FF:
+        output = FF()
+        for i in range(qtd):
+            output.add(self)
+        return output
+
+    def add(self, value: Union[str, TK, Tuple[str, str], FF]):
         if isinstance(value, str):
             if value != "":
-                self.data.append(Token("", value))
-        elif isinstance(value, Token):
+                self.data.append(TK(value))
+        elif isinstance(value, TK):
             if value.text != "":
                 self.data.append(value)
         elif isinstance(value, Tuple):
-            fmt, text = value
+            text, fmt = value
             if text != "":
-                self.data.append(Token(fmt, text))
-        elif isinstance(value, Ftext):
+                self.data.append(TK(text, fmt))
+        elif isinstance(value, FF):
             self.data += value.data
         else:
             raise TypeError("unsupported type '{}'".format(type(value)))
         return self
     
-    def addf(self, fmt: str, text: str):
-        self.add(Token(fmt, text))
+    def addf(self, fmt: str, text: Any):
+        if not isinstance(text, str):
+            raise TypeError("fmt must be a string")
+        self.data.append(TK(text, fmt))
         return self
-    
-    def ljust(self, width: int, fillchar: str = " ", fmt = ""):
+
+    def ljust(self, width: int, filler: TK):
         total = self.len()
         if total < width:
-            self.addf(fmt, fillchar * (width - total))
+            self.add(TK(filler.text * (width - total), filler.fmt))
         return self
     
-    def rjust(self, width: int, fillchar: str = " ", fmt = ""):
+    def rjust(self, width: int, filler: TK):
         total = self.len()
         if total < width:
-            self.data = [Token(fmt, fillchar * (width - total))] + self.data
+            self.data = [TK(filler.text * (width - total), filler.fmt)] + self.data
         return self
     
-    def center(self, width: int, fillchar: str = " ", fmt = ""):
+    def center(self, width: int, filler: TK):
         total = self.len()
         if total < width:
             left = (width - total) // 2
             right = width - total - left
-            self.data = [Token(fmt, fillchar * left)] + self.data + [Token(fmt, fillchar * right)]
+            self.data = [TK(filler.text * left, filler.fmt)] + self.data + [TK(filler.text * right, filler.fmt)]
         return self
     
     def len(self):
@@ -2080,8 +906,14 @@ class Ftext:
             total += len(t.text)
         return total
     
-    def get(self):
+    def get_data(self):
         return self.data
+    
+    def get_text(self) -> str:
+        return "".join([t.text for t in self.data])
+
+    def get(self, index: int):
+        return self.data[index]
 
     def trim_alfa(self, limit: int):
         if limit < 0:
@@ -2141,14 +973,14 @@ class Ftext:
 
     @staticmethod
     def build_bar(text: str, percent: float, length: int, fmt_true: str = "/kC",
-                  fmt_false: str = "/kY") -> Ftext:
+                  fmt_false: str = "/kY") -> FF:
         prefix = (length - len(text)) // 2
         suffix = length - len(text) - prefix
         text = " " * prefix + text + " " * suffix
         total = length
         full_line = text
         done_len = int(percent * total)
-        xp_bar = Ftext() + (fmt_true, full_line[:done_len]) + (fmt_false, full_line[done_len:])
+        xp_bar = FF() + (full_line[:done_len], fmt_true) + (full_line[done_len:], fmt_false)
         return xp_bar
 
 class Fmt:
@@ -2244,13 +1076,13 @@ class Fmt:
             stdscr.attroff(curses.A_UNDERLINE)
 
     @staticmethod
-    def write(y: int, x: int, sentence: Ftext):
+    def write(y: int, x: int, sentence: FF):
 
         # Escreve um texto na tela com cores diferentes
         lines, cols = Fmt.get_size()
         if y < 0 or y >= lines:
             return
-        for token in sentence.get():
+        for token in sentence.get_data():
             fmt = token.fmt
             text = token.text
             if x < 0:
@@ -2265,11 +1097,11 @@ class Fmt:
 
     @staticmethod
     def write_text(y: int, x: int, text: str):
-        Fmt.write(y, x, Ftext().add(text))
+        Fmt.write(y, x, FF().add(text))
 
     @staticmethod
-    def debug(text: str):
-        Fmt.write_text(0, 0, text)
+    def debug(y, x, text: FF):
+        Fmt.write(y, x, text)
         Fmt.getch()
 
 
@@ -2287,15 +1119,15 @@ class Fmt:
     #     return input_str
 
     @staticmethod
-    def get_percent(value, pad = 0) -> Ftext:
+    def get_percent(value, pad = 0) -> FF:
         text = f"{str(value)}%".rjust(pad)
         if value == 100:
-            return Ftext().addf(Style.complete, "100%")
+            return FF().addf(Style.complete, "100%")
         if value >= 70:
-            return Ftext().addf(Style.required, text)
+            return FF().addf(Style.required, text)
         if value == 0:
-            return Ftext().addf(Style.nothing, text)
-        return Ftext().addf(Style.started, text)
+            return FF().addf(Style.nothing, text)
+        return FF().addf(Style.started, text)
     
     @staticmethod
     def getch():
@@ -2333,11 +1165,11 @@ class Frame:
         self._inner_dy = 0
         self._border = "rounded"
         self._filled = False
-        self._header: Ftext = Ftext()
+        self._header: FF = FF()
         self._halign = ""
         self._hprefix = ""
         self._hsuffix = ""
-        self._footer: Ftext = Ftext()
+        self._footer: FF = FF()
         self._falign = ""
         self._fprefix = ""
         self._fsuffix = ""
@@ -2368,20 +1200,20 @@ class Frame:
         hor = self.get_symbol("h")
         
         data.trim_end(pad)
-        sent = Ftext().addf(color, prefix).add(data).addf(color, suffix)
+        sent = FF().addf(color, prefix).add(data).addf(color, suffix)
         if symbol == "<":
-            sent.ljust(dx, hor, color)
+            sent.ljust(dx, TK(hor, color))
         elif symbol == ">":
-            sent.rjust(dx, hor, color)
+            sent.rjust(dx, TK(hor, color))
         else:
-            sent.center(dx, hor, color)
+            sent.center(dx, TK(hor, color))
         return sent
 
     def get_header(self):
-        return Ftext().add(self._hprefix).add(self._header).add(self._hsuffix)
+        return FF().add(self._hprefix).add(self._header).add(self._hsuffix)
     
     def get_footer(self):
-        return Ftext().add(self._fprefix).add(self._footer).add(self._fsuffix)
+        return FF().add(self._fprefix).add(self._footer).add(self._fsuffix)
 
     def get_full_header(self):
         return self.__align_header_footer(self._header, self._halign, self._hprefix, self._hsuffix)
@@ -2452,14 +1284,14 @@ class Frame:
         self._border = "square"
         return self
 
-    def set_header(self, header: Ftext, align="<", prefix="", suffix=""):
+    def set_header(self, header: FF, align="<", prefix="", suffix=""):
         self._halign = align
         self._header = header
         self._hprefix = prefix
         self._hsuffix = suffix
         return self
 
-    def set_footer(self, footer: Ftext, align=">", prefix="", suffix=""):
+    def set_footer(self, footer: FF, align=">", prefix="", suffix=""):
         self._falign = align
         self._footer = footer
         self._fprefix = prefix
@@ -2474,13 +1306,13 @@ class Frame:
         self._filled = False
         return self
 
-    def print(self, x: int, sentence: Ftext):
+    def print(self, x: int, sentence: FF):
         self.write(self._print_index, x, sentence)
         self._print_index += 1
         return self
 
     # return y, x of the last character
-    def write(self, y: int, x: int, sentence: Ftext) -> bool:
+    def write(self, y: int, x: int, sentence: FF) -> bool:
         lines, cols = Fmt.get_size()
 
         x_min = max(-1, self._x)
@@ -2494,7 +1326,7 @@ class Frame:
         if y_abs <= y_min or y_abs > y_max:
             return False
         count = 0
-        for token in sentence.get():
+        for token in sentence.get_data():
             fmt, text = token.fmt, token.text
             if x_abs - 1 < x_min:  # Se o texto começa fora do frame
                 if x_abs + len(text) > x_min:  # mas ter parte dentro
@@ -2526,8 +1358,8 @@ class Frame:
         header = self.get_full_header()
         footer = self.get_full_footer()
 
-        above = Ftext().addf(color, up_left).add(header).addf(color, up_right)
-        below = Ftext().addf(color, down_left).add(footer).addf(color, down_right)
+        above = FF().addf(color, up_left).add(header).addf(color, up_right)
+        below = FF().addf(color, down_left).add(footer).addf(color, down_right)
 
         Fmt.write(y, x, above)
         if dy > 0:
@@ -2537,314 +1369,16 @@ class Frame:
                 Fmt.write(
                     y + i,
                     x,
-                    Ftext()
+                    FF()
                     .addf(color, ver)
                     .add(dx * self._fill_char)
                     .addf(color, ver),
                 )
         else:
             for i in range(1, dy + 1):
-                Fmt.write(y + i, x, Ftext().addf(color, ver))
-                Fmt.write(y + i, x + dx + 1, Ftext().addf(color, ver))
+                Fmt.write(y + i, x, FF().addf(color, ver))
+                Fmt.write(y + i, x + dx + 1, FF().addf(color, ver))
         return self
-
-
-class CDiff:
-
-    def __init__(self, wdir: Wdir, param: Param.Basic):
-        self.param = param
-        self.results: List[Ftext] = []
-        self.wdir = wdir
-        self.exit = False
-        self.index = 0
-        self.finished = False
-        self.resumes: List[str] = []
-
-    def set_exit(self):
-        self.exit = True
-
-    def end_processing(self):
-        return len(self.results) == len(self.wdir.unit_list)
-
-    def get_color(self, unit: Unit):
-        if unit.result == ExecutionResult.SUCCESS:
-            return "G"
-        if unit.result == ExecutionResult.WRONG_OUTPUT:
-            return "R"
-        if unit.result == ExecutionResult.EXECUTION_ERROR:
-            return "Y"
-        return ""
-
-    def draw_top_line(self):
-        lines, cols = Fmt.get_size()
-        frame = Frame(0, 0).set_size(3, cols)
-
-        pwd = os.getcwd()
-        frame.set_header(Ftext().add(f" {pwd} ") , "<")
-        intro = Color.remove_colors(self.wdir.resume())
-        if intro.startswith("=>"):
-            intro = intro[2:]
-        intro += " "
-        frame.set_footer(Ftext().add(intro))
-        frame.draw()
-
-        
-        # construir mais uma solução
-        if len(self.results) < len(self.wdir.unit_list):
-            index = len(self.results)
-            unit = self.wdir.unit_list[index]
-            unit.result = Execution.run_unit(self.wdir.solver, unit)
-            symbol = Color.remove_colors(ExecutionResult.get_symbol(unit.result))
-            color = self.get_color(unit)
-            self.results.append(Ftext().addf(color, symbol))
-
-        x = 0
-        i = 0
-        for i, symbol in enumerate(self.results):
-            foco = "" if i != self.index else "B"
-            label = Ftext().addf(foco + "/kW", str(i).zfill(2)).add(symbol)
-            frame.write(0, x, label)
-            x += 5
-        
-        if self.end_processing() and not self.finished:
-            self.resumes = Color.remove_colors(self.wdir.unit_list_resume()).split("\n")
-            self.finished = True
-
-    def draw_bottom_line(self):
-        cmds = (Ftext()
-        .add(" ")
-        .addf("/", "Move").add("[esq, dir]")
-        .add(" ")
-        .addf("/", "Diff").add("[d]")
-        .add(" ")
-        .addf("/", "Select").add("[0-9]")
-        .add(" ")
-        )
-
-    def draw_diff(self):
-        lines, cols = Fmt.get_size()
-        frame = Frame(2, -1).set_size(lines - 4, cols + 1).set_border_none()
-        results = [unit.result for unit in self.wdir.unit_list]
-        if ExecutionResult.EXECUTION_ERROR not in results and ExecutionResult.WRONG_OUTPUT not in results:
-            return
-        # lines, cols = Fmt.get_size()
-        # frame = Frame(3, -1).set_size(lines - 3, cols)
-        # frame.set_header(Sentence().add(self.resumes[self.index]))
-        # frame.draw()
-        
-        unit = self.wdir.unit_list[self.index]
-        if self.param.is_up_down:
-            value = Diff.mount_up_down_diff(unit)
-        else:
-            value = Diff.mount_side_by_side_diff(unit)
-
-        for i, line in enumerate(value.split("\n")):
-            frame.write(i, 0, Ftext().add(Color.remove_colors(line)))
-        return
-
-
-    def main(self, scr):
-        curses.curs_set(0)  # Esconde o cursor
-        Fmt.init_colors()  # Inicializa as cores
-        Fmt.set_scr(scr)  # Define o scr como global
-        while not self.exit:
-            Fmt.erase()
-            self.draw_top_line()
-            self.draw_diff()
-            if not self.end_processing():
-                Fmt.refresh()
-            else:
-                input = Fmt.getch()
-                if input == ord('q'):
-                    self.set_exit()
-                elif input == curses.KEY_LEFT:
-                    self.index = max(0, self.index - 1)
-                elif input == curses.KEY_RIGHT:
-                    self.index = min(len(self.results) - 1, self.index + 1)
-                elif input == ord('d'):
-                    self.param.is_up_down = not self.param.is_up_down
-                elif input >= ord('0') and input <= ord('9'):
-                    if input - ord('0') < len(self.results):
-                        self.index = min(len(self.results) - 1, input - ord('0'))
-
-    def run(self):
-        curses.wrapper(self.main)
-
-
-
-
-
-
-class FilterMode:
-
-    @staticmethod
-    def deep_copy_and_change_dir():
-        # path to ~/.tko_filter
-        filter_path = os.path.join(os.path.expanduser("~"), ".tko_filter")
-
-        # verify if filter command is available
-        if shutil.which("filter") is None:
-            print("ERROR: filter command not found")
-            print("Install feno with 'pip install feno'")
-            exit(1)
-
-        subprocess.run(["filter", "-rf", ".", "-o", filter_path])
-
-        os.chdir(filter_path)
-
-
-class Run:
-
-    def __init__(self, target_list: List[str], exec_cmd: Optional[str], param: Param.Basic):
-        self.target_list = target_list
-        self.exec_cmd = exec_cmd
-        self.param = param
-        self.wdir = None
-        self.curses = False
-
-    def set_curses(self):
-        self.curses = True
-        return self
-
-
-    def execute(self):
-        self.remove_duplicates()
-        self.change_targets_to_filter_mode()
-        if not self.build_wdir():
-            return
-        if self.missing_target():
-            return
-        if self.list_mode():
-            return
-        if self.free_run():
-            return
-        self.diff_mode()
-        return
-
-    def remove_duplicates(self):
-        # remove duplicates in target list keeping the order
-        self.target_list = list(dict.fromkeys(self.target_list))
-
-    def change_targets_to_filter_mode(self):
-        if self.param.filter:
-            old_dir = os.getcwd()
-
-            print(Report.centralize(" Entering in filter mode ", "═"))
-            FilterMode.deep_copy_and_change_dir()  
-            # search for target outside . dir and redirect target
-            new_target_list = []
-            for target in self.target_list:
-                if ".." in target:
-                    new_target_list.append(os.path.normpath(os.path.join(old_dir, target)))
-                elif os.path.exists(target):
-                    new_target_list.append(target)
-            self.target_list = new_target_list
-
-    def print_top_line(self):
-        print(self.wdir.resume(), end="")
-        print(" [", end="", flush=True)
-        first = True
-        for unit in self.wdir.unit_list:
-            if first:
-                first = False
-            else:
-                print(" ", end="", flush=True)
-            unit.result = Execution.run_unit(self.wdir.solver, unit)
-            print(ExecutionResult.get_symbol(unit.result), end="", flush=True)
-        print("]")
-
-    def print_diff(self):
-        if self.param.diff_mode == DiffMode.QUIET:
-            return
-        
-        results = [unit.result for unit in self.wdir.unit_list]
-        if ExecutionResult.EXECUTION_ERROR not in results and ExecutionResult.WRONG_OUTPUT not in results:
-            return
-        
-        if not self.param.compact:
-            print(self.wdir.unit_list_resume())
-        
-        if self.param.diff_mode == DiffMode.FIRST:
-            # printing only the first wrong case
-            wrong = [unit for unit in self.wdir.unit_list if unit.result != ExecutionResult.SUCCESS][0]
-            if self.param.is_up_down:
-                print(Diff.mount_up_down_diff(wrong))
-            else:
-                print(Diff.mount_side_by_side_diff(wrong))
-            return
-
-        if self.param.diff_mode == DiffMode.ALL:
-            for unit in self.wdir.unit_list:
-                if unit.result != ExecutionResult.SUCCESS:
-                    if self.param.is_up_down:
-                        print(Diff.mount_up_down_diff(unit))
-                    else:
-                        print(Diff.mount_side_by_side_diff(unit))
-
-    def build_wdir(self) -> bool:
-        try:
-            self.wdir = Wdir().set_target_list(self.target_list).set_cmd(self.exec_cmd).build().filter(self.param)
-        except CompilerError as e:
-            print(e)
-            return False
-        except FileNotFoundError as e:
-            print(e)
-            return False
-        return True
-
-    def missing_target(self) -> bool:
-        # no solver and no test cases
-        if self.wdir.solver is None and len(self.wdir.unit_list) == 0:
-            print(colour("red", "fail: ") + "No solver or tests found.")
-            return True
-        return False
-    
-    def list_mode(self) -> bool:
-        # list mode
-        if self.wdir.solver is None and len(self.wdir.unit_list) > 0:
-            print(Report.centralize(" No solvers found. Listing Test Cases ", "╌"), flush=True)
-            print(self.wdir.resume())
-            print(self.wdir.unit_list_resume())
-            return True
-        return False
-
-    def free_run(self) -> bool:
-        # free run mode
-        if self.wdir.solver is not None and len(self.wdir.unit_list) == 0:
-            t = Report.centralize(" No test cases found. Running: " + self.wdir.solver.executable + " ", symbols.hbar)
-            print(t, flush=True)
-            # force print to terminal
-            Runner.free_run(self.wdir.solver.executable)
-            return True
-        return False
-
-    def diff_mode(self):
-        if self.curses:
-            cdiff = CDiff(self.wdir, self.param)
-            cdiff.run()
-            return
-        print(Report.centralize(" Running solver against test cases ", "═"))
-        self.print_top_line()
-        self.print_diff()
-
-
-class Build:
-
-    def __init__(self, target_out: str, source_list: List[str], param: Param.Manip, to_force: bool):
-        self.target_out = target_out
-        self.source_list = source_list
-        self.param = param
-        self.to_force = to_force
-
-    def execute(self):
-        try:
-            wdir = Wdir().set_sources(self.source_list).build()
-            wdir.manipulate(self.param)
-            Writer.save_target(self.target_out, wdir.unit_list, self.to_force)
-        except FileNotFoundError as e:
-            print(str(e))
-            return False
-        return True
 
 
 
@@ -2852,7 +1386,7 @@ class Build:
 class Floating:
     def __init__(self, _align=""):
         self._frame = Frame(0, 0)
-        self._content: List[Ftext] = []
+        self._content: List[FF] = []
         self._type = ""
         self._options = []
         self._options_index = 0
@@ -2872,7 +1406,7 @@ class Floating:
         self._floating_align = _align
 
     def set_header(self, text: str):
-        self._frame.set_header(Ftext().addf("/", text), "")
+        self._frame.set_header(FF().addf("/", text), "")
         return self
     
     def set_exit_key(self, key: str):
@@ -2921,7 +1455,7 @@ class Floating:
         self._frame.set_fill()
         
         if self._type == "answer":
-            footer = Ftext().add(" ")
+            footer = FF().add(" ")
             for i, option in enumerate(self._options):
                 fmt = "kG" if i == self._options_index else ""
                 footer.addf(fmt, option).add(" ")
@@ -2930,20 +1464,20 @@ class Floating:
     def put_text(self, text: str):
         lines = text.split("\n")
         for line in lines:
-            self._content.append(Ftext().add(line))
+            self._content.append(FF().add(line))
         return self
 
-    def put_sentence(self, sentence: Ftext):
+    def put_sentence(self, sentence: FF):
         self._content.append(sentence)
         return self
     
     def set_content(self, content: List[str]):
-        self._content = [Ftext().add(x) for x in content]
+        self._content = [FF().add(x) for x in content]
         return self
 
     def _set_default_footer(self):
         if self._frame.get_footer().len() == 0:
-            label = Ftext().addf("/", " Pressione uma tecla ")
+            label = FF().addf("/", " Pressione uma tecla ")
             self._frame.set_footer(label, "", "─", "─")
         return self
 
@@ -3042,6 +1576,101 @@ class FloatingManager:
         return self.input_layer[0].get_input()
 
 
+class __Symbols:
+    def __init__(self):
+        self.opening = TK()
+        self.neutral = TK()
+        self.success = TK()
+        self.failure = TK()
+        self.wrong = TK()
+        self.compilation = TK()
+        self.execution = TK()
+        self.unequal = TK()
+        self.equalbar = TK()
+        self.hbar = TK()
+        self.vbar = TK()
+        self.whitespace = TK()  # interpunct
+        self.newline = TK()  # carriage return
+        self.cfill = TK()
+        self.tab = TK()
+        self.arrow_up = TK()
+        self.check = TK()  
+        self.uncheck = TK()
+        self.opcheck = TK()
+        self.opuncheck = TK()
+
+        self.ascii = False
+        self.set_unicode()
+
+    def get_mode(self) -> str:
+        return "ASCII" if self.ascii else "UTF-8"
+
+    def set_ascii(self):
+        self.ascii = True
+
+        self.opening = TK("=> ")
+        self.neutral = TK(".")
+        self.success = TK("S")
+        self.failure = TK("X")
+        self.wrong = TK("W")
+        self.compilation = TK("C")
+        self.execution = TK("E")
+        self.unequal = TK("#")
+        self.equalbar = TK("|")
+        self.hbar = TK("─")
+        self.vbar = TK("│")
+        self.whitespace = TK("\u2E31")  # interpunct
+        self.newline = TK("\u21B5")  # carriage return
+        self.cfill = TK("_")
+        self.tab = TK("    ")
+        self.arrow_up = TK("A")
+
+        self.check = TK("x")
+        self.uncheck = TK(".")
+        self.opcheck = TK("█")
+        self.opuncheck = TK("▒")
+
+    def set_unicode(self):
+        self.ascii = False
+
+        self.opening = TK("=> ")
+        self.neutral = TK("»")
+        self.success = TK("✓")
+        self.failure = TK("✗")
+        self.wrong = TK("ω")
+        self.compilation = TK("ϲ")
+        self.execution = TK("ϵ")
+        self.unequal = TK("├")
+        self.equalbar = TK("│")
+        self.hbar = TK("─")
+        self.vbar = TK("│")
+        self.whitespace = TK("\u2E31")
+        self.newline = TK("\u21B5")
+        self.cfill = TK("_")
+        self.tab = TK("    ")
+        self.arrow_up = TK("↑")
+
+        self.check = TK("✓")
+        self.uncheck = TK("✗")
+        self.opcheck = TK("ⴲ")
+        self.opuncheck = TK("ⵔ")
+
+
+    def set_colors(self):
+        self.opening.fmt = "b"
+        self.neutral.fmt = "b"
+        self.success.fmt = "g"
+        self.failure.fmt = "r"
+        self.wrong.fmt = "r"
+        self.compilation.fmt = "y"
+        self.execution.fmt = "y"
+        self.unequal.fmt = "r"
+        self.equalbar.fmt = "g"
+
+
+symbols = __Symbols()
+
+
 
 class Task:
 
@@ -3074,20 +1703,20 @@ class Task:
             return "g"
         return "w"  
 
-    def get_grade_symbol(self, min_value: Optional[int] = None) -> Ftext:
+    def get_grade_symbol(self, min_value: Optional[int] = None) -> FF:
         
         if min_value is None:
             min_value = self.default_min_value
         color = self.get_grade_color(min_value)
         if self.grade == 0:
-            return Ftext().addf(color, symbols.uncheck)
+            return FF().addf(color, symbols.uncheck.text)
         if self.grade < min_value:
-            return Ftext().addf(color, str(self.grade))
+            return FF().addf(color, str(self.grade))
         if self.grade < 10:
-            return Ftext().addf(color, str(self.grade))
+            return FF().addf(color, str(self.grade))
         if self.grade == 10:
-            return Ftext().addf(color, symbols.check)
-        return Ftext().add("0")
+            return FF().addf(color, symbols.check.text)
+        return FF().add("0")
 
     def get_percent(self):
         if self.grade == 0:
@@ -3271,18 +1900,18 @@ class Quest:
         output = f"{line} {tasks_size} {key}{self.title} {self.skills} {self.requires}"
         return output
 
-    def get_resume_by_percent(self) -> Ftext:
+    def get_resume_by_percent(self) -> FF:
         value = self.get_percent()
-        return Ftext().addf(self.get_grade_color(), (str(value) + "%").rjust(4))
+        return FF().addf(self.get_grade_color(), (str(value) + "%").rjust(4))
     
-    def get_requirement(self) -> Ftext:
+    def get_requirement(self) -> FF:
         if self.qmin is not None:
-            return Ftext().addf("y", f"[{self.qmin}%]")
+            return FF().addf("y", f"[{self.qmin}%]")
         if self.tmin is not None:
-            return Ftext().addf("y", f"[t>{self.tmin - 1}]")
-        return Ftext()
+            return FF().addf("y", f"[t>{self.tmin - 1}]")
+        return FF()
 
-    def get_resume_by_tasks(self) -> Ftext:
+    def get_resume_by_tasks(self) -> FF:
         tmin = self.tmin if self.tmin is not None else 7
         total = len([t for t in self.__tasks if not t.opt])
         plus = len([t for t in self.__tasks if t.opt])
@@ -3290,7 +1919,7 @@ class Quest:
         output = f"{count}/{total}"
         if plus > 0:
             output += f"+{plus}"
-        return Ftext().addf(self.get_grade_color(), "(" + output + ")")
+        return FF().addf(self.get_grade_color(), "(" + output + ")")
 
     def get_grade_color(self) -> str:
         if self.not_started():
@@ -3516,13 +2145,13 @@ class Cluster:
             total += q.get_percent()
         return total // len(self.quests)
 
-    def get_resume_by_percent(self) -> Ftext:
-        return Ftext().addf(self.get_grade_color(), f"{self.get_percent()}%".rjust(4))
+    def get_resume_by_percent(self) -> FF:
+        return FF().addf(self.get_grade_color(), f"{self.get_percent()}%".rjust(4))
 
     def get_resume_by_quests(self):
         total = len(self.quests)
         count = len([q for q in self.quests if q.is_complete()])
-        return Ftext().addf(self.get_grade_color(), f"({count}/{total})")
+        return FF().addf(self.get_grade_color(), f"({count}/{total})")
         
 
 
@@ -4197,7 +2826,7 @@ class XP:
 
 
 class Entry:
-    def __init__(self, obj: Any, sentence: Ftext):
+    def __init__(self, obj: Any, sentence: FF):
         self.obj = obj
         self.sentence = sentence
 
@@ -4292,11 +2921,11 @@ class TaskTree:
                     items.append(len(q.title) + 2)
         self.max_title = max(items)
 
-    def str_task(self, in_focus: bool, t: Task, lig_cluster: str, lig_quest: str, min_value=1) -> Ftext:
-        output = Ftext()
-        output.add(" " + lig_cluster + " " + lig_quest) \
-            .add(t.get_grade_symbol(min_value)) \
-            .add(" ")
+    def str_task(self, in_focus: bool, t: Task, lig_cluster: str, lig_quest: str, min_value=1) -> FF:
+        output = FF()
+        output.add(" " + lig_cluster + " " + lig_quest)
+        output.add(t.get_grade_symbol(min_value))
+        output.add(" ")
 
         color = ""
         if Flags.opt.is_true() and t.opt:
@@ -4317,9 +2946,9 @@ class TaskTree:
             output.addf(Style.skills, xp)
         return output
 
-    def str_quest(self, in_focus: bool, q: Quest, lig: str) -> Ftext:
+    def str_quest(self, in_focus: bool, q: Quest, lig: str) -> FF:
         con = "━─" if q.key not in self.expanded else "─┯"
-        output: Ftext = Ftext().add(" " + lig + con + " ")
+        output: FF = FF().add(" " + lig + con + " ")
 
         color = ""
         if Flags.opt.is_true() and q.opt:
@@ -4333,7 +2962,7 @@ class TaskTree:
         if Flags.quest_prog.is_true():
             done = color + Flags.prog_done.get_value()
             todo = color + Flags.prog_todo.get_value()
-            output.add(Ftext.build_bar(title, q.get_percent() / 100, len(title), done, todo))
+            output.add(FF.build_bar(title, q.get_percent() / 100, len(title), done, todo))
         else:
             output.addf(color, title)
 
@@ -4357,8 +2986,8 @@ class TaskTree:
 
         return output
 
-    def str_cluster(self, in_focus: bool, cluster: Cluster) -> Ftext:
-        output: Ftext = Ftext()
+    def str_cluster(self, in_focus: bool, cluster: Cluster) -> FF:
+        output: FF = FF()
         opening = "━─"
         if cluster.key in self.expanded:
             opening = "─┯"
@@ -4373,7 +3002,7 @@ class TaskTree:
         if Flags.group_prog.is_true():
             done = color + Flags.prog_done.get_value()
             todo = color + Flags.prog_todo.get_value()
-            output.add(Ftext.build_bar(title, cluster.get_percent() / 100, len(title), done, todo))
+            output.add(FF.build_bar(title, cluster.get_percent() / 100, len(title), done, todo))
         else:
             output.addf(color, title)
 
@@ -4580,7 +3209,7 @@ class TaskTree:
             elif self.index_selected >= dy + self.index_begin:  # desceu na tela
                 self.index_begin = self.index_selected - dy + 1
 
-        sentences: List[Ftext] = []
+        sentences: List[FF] = []
         for i in range(self.index_begin, len(self.items)):
             sentences.append(self.items[i].sentence)
         return sentences
@@ -4631,12 +3260,11 @@ class Play:
             "Mark[enter]",
         ]
         self.help_extra = [
-            f"OpenLink[{self.Key.open_link}]",
-            f"GetTask[{self.Key.down_task}]",
+            f"Open[{self.Key.open_link}]",
+            f"Get[{self.Key.down_task}]",
             "Grade[0-9]",
             f"Lang[{self.Key.set_lang}]",
-            f"Expand[{self.Key.expand}]",
-            f"Collapse[{self.Key.collapse}]",
+            f"Fold[{self.Key.collapse}{self.Key.expand}]",
             f"MassMark[{self.Key.mass_toggle}]",
             f"ResetColors[{self.Key.reset}]",
         ]
@@ -4693,7 +3321,7 @@ class Play:
                 .put_text("Linguagem alterada para " + value)
                 .put_text("Você pode mudar a linguagem")
                 .put_text("de programação apertando")
-                .put_sentence(Ftext().addf("G", "l"))
+                .put_sentence(FF() + TR("G", "l"))
                 .warning()
             )
 
@@ -4768,14 +3396,14 @@ class Play:
         ).set_graph_ext(self.graph_ext).generate()
         lines, _cols = Fmt.get_size()
         if self.first_loop:
-            text = Ftext().add(f"Grafo gerado em graph{self.graph_ext}")
+            text = FF().add(f"Grafo gerado em graph{self.graph_ext}")
             Fmt.write(lines - 1, 0, text)
 
     def down_task(self, rootdir, obj: Any, ext: str):
         if isinstance(obj, Task) and obj.key in obj.title:
             task: Task = obj
             down_frame = (
-                Floating().warning().set_header(Ftext().add(" Baixando tarefa "))
+                Floating().warning().set_header(FF().add(" Baixando tarefa "))
             )
             down_frame.put_text(f"tko down {self.rep_alias} {task.key} -l {ext}")
             self.fman.add_input(down_frame)
@@ -4807,8 +3435,8 @@ class Play:
                 )
 
     @staticmethod
-    def build_list_sentence(items: List[str]) -> Ftext:
-        _help = Ftext()
+    def build_list_sentence(items: List[str]) -> FF:
+        _help = FF()
         try:
             for x in items:
                 label, key = x.split("[")
@@ -4830,9 +3458,9 @@ class Play:
 
     def show_main_bar(self, frame: Frame):
         frame.set_header(
-            Ftext().add("{").addf("/", f"Tarefas lang:{self.rep.lang}").add("}")
+            FF().add("{").addf("/", f"Tarefas lang:{self.rep.lang}").add("}")
         )
-        frame.set_footer(Ftext().add(self.build_bar_links()), ">", "{", "}")
+        frame.set_footer(FF().add(self.build_bar_links()), ">", "{", "}")
         frame.draw()
 
         dy, dx = frame.get_inner()
@@ -4852,9 +3480,9 @@ class Play:
 
         done = "/k" + Flags.main_done.get_value()
         todo = "/k" + Flags.main_todo.get_value()
-        total_bar = Ftext.build_bar(text, total_perc / 100, dx - 2, done, todo)
-        frame_xp.set_header(Ftext().add("{").addf("/", "Skills").add("}"), "^")
-        frame_xp.set_footer(Ftext().add(total_bar), "^")
+        total_bar = FF.build_bar(text, total_perc / 100, dx - 2, done, todo)
+        frame_xp.set_header(FF().add("{").addf("/", "Skills").add("}"), "^")
+        frame_xp.set_footer(FF().add(total_bar), "^")
         frame_xp.draw()
 
         total, obt = self.game.get_skills_resume()
@@ -4866,7 +3494,7 @@ class Play:
                 text = f"{skill}:{obt[skill]}/{value}"
 
             perc = obt[skill] / value
-            skill_bar = Ftext.build_bar(
+            skill_bar = FF.build_bar(
                 text,
                 perc,
                 dx - 2,
@@ -4877,7 +3505,7 @@ class Play:
             index += 2
 
     def show_flags_bar(self, frame: Frame):
-        frame.set_header(Ftext().add("{").addf("/", "Flags").add("}"), "^")
+        frame.set_header(FF().add("{").addf("/", "Flags").add("}"), "^")
         frame.draw()
 
         for flag in self.flagsman.left:
@@ -4885,7 +3513,7 @@ class Play:
                 frame.print(0, flag.get_toggle_sentence(7))
 
     def show_color_bar(self, frame: Frame):
-        frame.set_header(Ftext().add("{").addf("/", "Cores").add("}"), "^")
+        frame.set_header(FF().add("{").addf("/", "Cores").add("}"), "^")
         frame.draw()
 
         for flag in self.flagsman.left:
@@ -4895,7 +3523,7 @@ class Play:
     def show_help(self):
         _help: Floating = Floating().warning().set_ljust_text()
         self.fman.add_input(_help)
-        _help.set_header(Ftext().addf("/", " Help "))
+        _help.set_header(FF().addf("/", " Help "))
         _help.put_text("Controles")
         _help.put_text("  setas ou wasd   - Para navegar entre os elementos")
         _help.put_text("  enter ou espaço - Marcar ou desmarcar, expandir ou contrair")
@@ -4924,9 +3552,11 @@ class Play:
             Flags.flags_bar.toggle()
 
     def show_bottom_bar(self, frame: Frame):
-        _help = Play.build_list_sentence(self.help_extra)
+        _help = Play.build_list_sentence(self.help_base + self.help_extra)
+        for tk in _help.data:
+            if tk.text != " ":
+                tk.fmt = "B"
         dx = frame.get_dx()
-        # help.trim_spaces(dx)
         _help.trim_alfa(dx)
         _help.trim_end(dx)
         frame.set_header(_help, "^")
@@ -4934,20 +3564,20 @@ class Play:
         frame.draw()
 
     def show_top_bar(self, frame: Frame) -> None:
-        _help = Play.build_list_sentence(self.help_base)
         dx = frame.get_dx()
-        _help.trim_alfa(dx)
-        _help.trim_end(dx)
-        frame.set_footer(_help, "^")
+        # _help = Play.build_list_sentence(self.help_base)
+        # _help.trim_alfa(dx)
+        # _help.trim_end(dx)
+        # frame.set_footer(_help, "^")
         frame.draw()
 
-        content = Ftext().add(" ")
+        content = FF().add(" ")
         content.addf(Flags.cmds.get_value(), f"({self.rep_alias.upper()})").add(" ")
 
         for f in self.flagsman.top:
             content.add(f.get_toggle_sentence()).add(" ")
 
-        for s in content:
+        for s in content.get_data():
             if s.text.startswith("["):
                 s.fmt = ""
 
@@ -4965,7 +3595,7 @@ class Play:
         size = max(15, dx - content.len() - 1)
         done = "/k" + Flags.main_done.get_value()
         todo = "/k" + Flags.main_todo.get_value()
-        xp_bar = Ftext.build_bar(text, percent, size, done, todo).add(" ")
+        xp_bar = FF.build_bar(text, percent, size, done, todo).add(" ")
 
         limit = dx - xp_bar.len()
         content.trim_spaces(limit)
@@ -4973,6 +3603,7 @@ class Play:
         content.trim_end(limit)
 
         frame.write(0, 0, content.add(xp_bar))
+
 
     def show_items(self):
         Fmt.erase()
@@ -4984,6 +3615,7 @@ class Play:
         top_y = -1
         top_dy = 3
         frame_top = Frame(top_y, 0).set_size(3, main_sx)
+
         self.show_top_bar(frame_top)
 
         bottom_sy = 0
@@ -4991,6 +3623,7 @@ class Play:
             bottom_sy = 1
             frame_bottom = Frame(lines - 1, 0).set_size(3, main_sx)
             self.show_bottom_bar(frame_bottom)
+
 
         mid_y = top_y + top_dy
         mid_sy = main_sy - (top_y + top_dy + bottom_sy)
@@ -5001,6 +3634,7 @@ class Play:
             frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx)
             self.show_skills_bar(frame_skills)
 
+        
         flags_sx = 0
         if Flags.flags_bar.is_true():
             flags_sx = 17
@@ -5016,6 +3650,8 @@ class Play:
 
         task_sx = main_sx - flags_sx - skills_sx
         frame_main = Frame(mid_y, flags_sx).set_size(mid_sy, task_sx)
+
+
         self.show_main_bar(frame_main)
 
     class Key:
@@ -5047,9 +3683,9 @@ class Play:
                 f.put_text("")
                 f.put_text(self.flag.get_description())
                 if self.flag.is_true():
-                    f.put_sentence(Ftext().addf("G", "ligado"))
+                    f.put_sentence(FF().addf("G", "ligado"))
                 else:
-                    f.put_sentence(Ftext().addf("R", "desligado"))
+                    f.put_sentence(FF().addf("R", "desligado"))
                 f.put_text("")
                 self.fman.add_input(f)
 
@@ -5130,10 +3766,12 @@ class Play:
 
         while not self.exit:
             self.tree.update_available()
-            self.show_items()
             self.fman.draw_warnings()
             self.generate_graph()
             calls = self.make_callback()
+            self.show_items()
+
+
 
             if self.fman.has_floating():
                 value: int = self.fman.get_input()
@@ -5157,6 +3795,1460 @@ class Play:
                 return
         except Exception as e:
             print(e)
+
+
+
+class CompilerError(Exception):
+    pass
+
+class ExecutionResult(enum.Enum):
+    UNTESTED = "untested_"
+    SUCCESS = "correct__"
+    WRONG_OUTPUT = "wrong_out"
+    COMPILATION_ERROR = "compilati"
+    EXECUTION_ERROR = "execution"
+
+    @staticmethod
+    def get_symbol(result) -> TK:
+        if result == ExecutionResult.UNTESTED:
+            return symbols.neutral
+        elif result == ExecutionResult.SUCCESS:
+            return symbols.success
+        elif result == ExecutionResult.WRONG_OUTPUT:
+            return symbols.wrong
+        elif result == ExecutionResult.COMPILATION_ERROR:
+            return symbols.compilation
+        elif result == ExecutionResult.EXECUTION_ERROR:
+            return symbols.execution
+        else:
+            raise ValueError("Invalid result type")
+
+    def __str__(self):
+        return self.value
+
+
+class DiffMode(enum.Enum):
+    FIRST = "MODE: SHOW FIRST FAILURE ONLY"
+    ALL = "MODE: SHOW ALL FAILURES"
+    QUIET = "MODE: SHOW NONE FAILURES"
+
+
+class IdentifierType(enum.Enum):
+    OBI = "OBI"
+    MD = "MD"
+    TIO = "TIO"
+    VPL = "VPL"
+    SOLVER = "SOLVER"
+
+
+class Identifier:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def get_type(target: str) -> IdentifierType:
+        if os.path.isdir(target):
+            return IdentifierType.OBI
+        elif target.endswith(".md"):
+            return IdentifierType.MD
+        elif target.endswith(".tio"):
+            return IdentifierType.TIO
+        elif target.endswith(".vpl"):
+            return IdentifierType.VPL
+        else:
+            return IdentifierType.SOLVER
+
+
+class Unit:
+    def __init__(self, case: str = "", inp: str = "", outp: str = "", grade: Optional[int] = None, source: str = ""):
+        self.source = source  # stores the source file of the unit
+        self.source_pad = 0  # stores the pad to justify the source file
+        self.case = case  # name
+        self.case_pad = 0  # stores the pad to justify the case name
+        self.input = inp  # input
+        self.output = outp  # expected output
+        self.user: Optional[str] = None  # solver generated answer
+        self.grade: Optional[int] = grade  # None represents proportional gr, 100 represents all
+        self.grade_reduction: int = 0  # if grade is None, this atribute should be filled with the right grade reduction
+        self.index = 0
+        self.repeated: Optional[int] = None
+
+        self.result: ExecutionResult = ExecutionResult.UNTESTED
+
+    def str(self) -> FF:
+        index = str(self.index).zfill(2)
+        grade = str(self.grade_reduction).zfill(3)
+        rep = "" if self.repeated is None else "[" + str(self.repeated) + "]"
+        op = FF() + ExecutionResult.get_symbol(self.result) + " " + self.result.value
+        source = self.source.ljust(self.source_pad)
+        case = self.case.ljust(self.case_pad)
+        return FF() + "(" + op + ")" + f"[{index}] GR:{grade} {source} ({case}) {rep}"
+
+
+class Param:
+
+    def __init__(self):
+        pass
+
+    class Basic:
+        def __init__(self):
+            self.index: Optional[int] = None
+            self.label_pattern: Optional[str] = None
+            self.is_up_down: bool = False
+            self.diff_mode = DiffMode.FIRST
+            self.filter: bool = False
+            self.compact: bool = False
+
+        def set_index(self, value: Optional[int]):
+            self.index: Optional[int] = value
+            return self
+
+        def set_label_pattern(self, label_pattern: Optional[str]):
+            self.label_pattern: Optional[str] = label_pattern
+            return self
+        
+        def set_compact(self, value: bool):
+            self.compact = value
+            return self
+
+        def set_up_down(self, value: bool):
+            self.is_up_down = value
+            return self
+    
+        def set_filter(self, value: bool):
+            self.filter = value
+            return self
+
+        def set_diff_mode(self, value: DiffMode):
+            self.diff_mode = value
+            return self
+
+    class Manip:
+        def __init__(self):
+            self.unlabel: bool = False
+            self.to_sort: bool = False
+            self.to_number: bool = False
+        
+        def set_unlabel(self, value: bool):
+            self.unlabel = value
+            return self
+        
+        def set_to_sort(self, value: bool):
+            self.to_sort = value
+            return self
+        
+        def set_to_number(self, value: bool):
+            self.to_number = value
+            return self
+
+
+
+
+class VplParser:
+    @staticmethod
+    def finish(text):
+        return text if text.endswith("\n") else text + "\n"
+
+    @staticmethod
+    def unwrap(text):
+        while text.endswith("\n"):
+            text = text[:-1]
+        if text.startswith("\"") and text.endswith("\""):
+            text = text[1:-1]
+        return VplParser.finish(text)
+
+    @staticmethod
+    class CaseData:
+        def __init__(self, case="", inp="", outp="", grade: Optional[int] = None):
+            self.case: str = case
+            self.input: str = VplParser.finish(inp)
+            self.output: str = VplParser.unwrap(VplParser.finish(outp))
+            self.grade: Optional[int] = grade
+
+        def __str__(self):
+            return "case=" + self.case + '\n' \
+                   + "input=" + self.input \
+                   + "output=" + self.output \
+                   + "gr=" + str(self.grade)
+
+    regex_vpl_basic = r"case= *([ \S]*) *\n *input *=(.*?)^ *output *=(.*)"
+    regex_vpl_extended = r"case= *([ \S]*) *\n *input *=(.*?)^ *output *=(.*?)^ *grade *reduction *= *(\S*)% *\n?"
+
+    @staticmethod
+    def filter_quotes(x):
+        return x[1:-2] if x.startswith('"') else x
+
+    @staticmethod
+    def split_cases(text: str) -> List[str]:
+        regex = r"^ *[Cc]ase *="
+        subst = "case="
+        text = re.sub(regex, subst, text, 0, re.MULTILINE | re.DOTALL)
+        return ["case=" + t for t in text.split("case=")][1:]
+
+    @staticmethod
+    def extract_extended(text) -> Optional[CaseData]:
+        f = re.match(VplParser.regex_vpl_extended, text, re.MULTILINE | re.DOTALL)
+        if f is None:
+            return None
+        try:
+            gr = int(f.group(4))
+        except ValueError:
+            gr = None
+        return VplParser.CaseData(f.group(1), f.group(2), f.group(3), gr)
+
+    @staticmethod
+    def extract_basic(text) -> Optional[CaseData]:
+        m = re.match(VplParser.regex_vpl_basic, text, re.MULTILINE | re.DOTALL)
+        if m is None:
+            return None
+        return VplParser.CaseData(m.group(1), m.group(2), m.group(3), None)
+
+    @staticmethod
+    def parse_vpl(content: str) -> List[CaseData]:
+        text_cases = VplParser.split_cases(content)
+        seq: List[VplParser.CaseData] = []
+
+        for text in text_cases:
+            case = VplParser.extract_extended(text)
+            if case is not None:
+                seq.append(case)
+                continue
+            case = VplParser.extract_basic(text)
+            if case is not None:
+                seq.append(case)
+                continue
+            print("invalid case: " + text)
+            exit(1)
+        return seq
+
+    @staticmethod
+    def to_vpl(unit: CaseData):
+        text = "case=" + unit.case + "\n"
+        text += "input=" + unit.input
+        text += "output=\"" + unit.output + "\"\n"
+        if unit.grade is not None:
+            text += "grade reduction=" + str(unit.grade) + "%\n"
+        return text
+
+
+class Loader:
+    regex_tio = r"^ *>>>>>>>> *(.*?)\n(.*?)^ *======== *\n(.*?)^ *<<<<<<<< *\n?"
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def parse_cio(text, source):
+        unit_list = []
+        text = "\n" + text
+
+        pattern = r'```.*?\n(.*?)```'  # get only inside code blocks
+        code = re.findall(pattern, text, re.MULTILINE | re.DOTALL)
+        # join all code blocks found
+        text = "\n" + "\n".join(code)
+
+        pieces = []  # header, input, output
+
+        open_case = False
+        for line in text.split("\n"):
+            if line.startswith("#__case") or line.startswith("#TEST_CASE"):
+                pieces.append({"header": line, "input": [], "output": []})
+                open_case = True
+            elif open_case:
+                pieces[-1]["output"].append(line)
+                if line.startswith("$end"):
+                    open_case = False
+
+        # concatenando testes contínuos e finalizando testes sem $end
+        for i in range(len(pieces)):
+            output = pieces[i]["output"]
+            if output[-1] != "$end" and i < len(pieces) - 1:
+                pieces[i + 1]["output"] = output + pieces[i + 1]["output"]
+                output.append("$end")
+
+        # removendo linhas vazias e criando input das linhas com $
+        for piece in pieces:
+            piece["input"] = [line[1:] for line in piece["output"] if line.startswith("$")]
+            piece["output"] = [line for line in piece["output"] if line != "" and not line.startswith("#")]
+
+        for piece in pieces:
+            case = " ".join(piece["header"].split(" ")[1:])
+            inp = "\n".join(piece["input"]) + "\n"
+            output = "\n".join(piece["output"]) + "\n"
+            unit_list.append(Unit(case, inp, output, None, source))
+
+        for unit in unit_list:
+            unit.fromCio = True
+
+        return unit_list
+
+    @staticmethod
+    def parse_tio(text: str, source: str = "") -> List[Unit]:
+
+        # identifica se tem grade e retorna case name e grade
+        def parse_case_grade(value: str) -> Tuple[str, Optional[int]]:
+            if value.endswith("%"):
+                words = value.split(" ")
+                last = value.split(" ")[-1]
+                _case = " ".join(words[:-1])
+                grade_str = last[:-1]           # ultima palavra sem %
+                try:
+                    _grade = int(grade_str)
+                    return _case, _grade
+                except ValueError:
+                    pass
+            return value, None
+
+        matches = re.findall(Loader.regex_tio, text, re.MULTILINE | re.DOTALL)
+        unit_list = []
+        for m in matches:
+            case, grade = parse_case_grade(m[0])
+            unit_list.append(Unit(case, m[1], m[2], grade, source))
+        return unit_list
+
+    @staticmethod
+    def parse_vpl(text: str, source: str = "") -> List[Unit]:
+        data_list = VplParser.parse_vpl(text)
+        output: List[Unit] = []
+        for m in data_list:
+            output.append(Unit(m.case, m.input, m.output, m.grade, source))
+        return output
+
+    @staticmethod
+    def parse_dir(folder) -> List[Unit]:
+        pattern_loader = PatternLoader()
+        files = sorted(os.listdir(folder))
+        matches = pattern_loader.get_file_sources(files)
+
+        unit_list: List[Unit] = []
+        try:
+            for m in matches:
+                unit = Unit()
+                unit.source = os.path.join(folder, m.label)
+                unit.grade = 100
+                with open(os.path.join(folder, m.input_file)) as f:
+                    value = f.read()
+                    unit.input = value + ("" if value.endswith("\n") else "\n")
+                with open(os.path.join(folder, m.output_file)) as f:
+                    value = f.read()
+                    unit.output = value + ("" if value.endswith("\n") else "\n")
+                unit_list.append(unit)
+        except FileNotFoundError as e:
+            print(str(e))
+        return unit_list
+
+    @staticmethod
+    def parse_source(source: str) -> List[Unit]:
+        if os.path.isdir(source):
+            return Loader.parse_dir(source)
+        if os.path.isfile(source):
+            #  if PreScript.exists():
+            #      source = PreScript.process_source(source)
+            with open(source) as f:
+                content = f.read()
+            if source.endswith(".vpl"):
+                return Loader.parse_vpl(content, source)
+            elif source.endswith(".tio"):
+                return Loader.parse_tio(content, source)
+            elif source.endswith(".md"):
+                tests = Loader.parse_tio(content, source)
+                tests += Loader.parse_cio(content, source)
+                return tests
+            else:
+                print("warning: target format do not supported: " + source)  # make this a raise
+        else:
+            raise FileNotFoundError('warning: unable to find: ' + source)
+        return []
+
+
+
+
+
+def check_tool(name):
+    if shutil.which(name) is None:
+        raise CompilerError("fail: " + name + " executable not found")
+
+
+class Solver:
+    def __init__(self, solver_list: List[str]):
+        self.path_list: List[str] = [Solver.__add_dot_bar(path) for path in solver_list]
+        
+        self.temp_dir = tempfile.mkdtemp()
+        self.error_msg: str = ""
+        self.executable: str = ""
+        if len(self.path_list) > 0:
+            self.prepare_exec()
+
+    def prepare_exec(self) -> None:
+        path = self.path_list[0]
+
+        if path.endswith(".py"):
+            self.executable = "python " + path
+        elif path.endswith(".js"):
+            self.__prepare_js()
+        elif path.endswith(".ts"):
+            self.__prepare_ts()
+        elif path.endswith(".java"):
+            self.__prepare_java()
+        elif path.endswith(".c"):
+            self.__prepare_c()
+        elif path.endswith(".cpp"):
+            self.__prepare_cpp()
+        elif path.endswith(".sql"):
+            self.__prepare_sql()
+        else:
+            self.executable = path
+
+    def __prepare_java(self):
+        check_tool("javac")
+
+        solver = self.path_list[0]
+
+        filename = os.path.basename(solver)
+        # tempdir = os.path.dirname(self.path_list[0])
+
+        cmd = ["javac"] + self.path_list + ['-d', self.temp_dir]
+        cmd = " ".join(cmd)
+        return_code, stdout, stderr = Runner.subprocess_run(cmd)
+        print(stdout)
+        print(stderr)
+        if return_code != 0:
+            raise CompilerError(stdout + stderr)
+        self.executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
+
+    def __prepare_js(self):
+        check_tool("node")
+        solver = self.path_list[0]
+        self.executable = "node " + solver
+
+    def __prepare_sql(self):
+        check_tool("sqlite3")
+        self.executable = "cat " + " ".join(self.path_list) + " | sqlite3"
+
+    def __prepare_ts(self):
+        transpiler = "esbuild"
+        if os.name == "nt":
+            transpiler += ".cmd"
+
+        check_tool(transpiler)
+        check_tool("node")
+
+        solver = self.path_list[0]
+
+        filename = os.path.basename(solver)
+        source_list = self.path_list
+        cmd = [transpiler] + source_list + ["--outdir=" + self.temp_dir, "--format=cjs", "--log-level=error"]
+        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
+        print(stdout + stderr)
+        if return_code != 0:
+            raise CompilerError(stdout + stderr)
+        jsfile = os.path.join(self.temp_dir, filename[:-3] + ".js")
+        self.executable = "node " + jsfile  # renaming solver to main
+    
+    def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
+        # solver = self.path_list[0]
+        tempdir = self.temp_dir
+        source_list = self.path_list
+        # print("Using the following source files: " + str([os.path.basename(x) for x in source_list]))
+        
+        exec_path = os.path.join(tempdir, ".a.out")
+        cmd = pre_args + source_list + ["-o", exec_path] + pos_args
+        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
+        if return_code != 0:
+            raise CompilerError(stdout + stderr)
+        self.executable = exec_path
+
+    def __prepare_c(self):
+        check_tool("gcc")
+        pre = ["gcc", "-Wall"]
+        pos = ["-lm", "-lutil"]
+        self.__prepare_c_cpp(pre, pos)
+
+    def __prepare_cpp(self):
+        check_tool("g++")
+        pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror"]
+        pos = []
+        self.__prepare_c_cpp(pre, pos)
+
+    @staticmethod
+    def __add_dot_bar(solver: str) -> str:
+        if os.sep not in solver and os.path.isfile("." + os.sep + solver):
+            solver = "." + os.sep + solver
+        return solver
+    
+
+class Execution:
+
+    def __init__(self):
+        pass
+
+    # run a unit using a solver and return if the result is correct
+    @staticmethod
+    def run_unit(solver: Solver, unit: Unit) -> ExecutionResult:
+        cmd = solver.executable
+        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input)
+        unit.user = stdout + stderr
+        if return_code != 0:
+            return ExecutionResult.EXECUTION_ERROR
+        if unit.user == unit.output:
+            return ExecutionResult.SUCCESS
+        return ExecutionResult.WRONG_OUTPUT
+
+
+
+# generate label for cases
+
+
+class LabelFactory:
+    def __init__(self):
+        self._label = ""
+        self._index = -1
+
+    def index(self, value: int):
+        try:
+            self._index = int(value)
+        except ValueError:
+            raise ValueError("Index on label must be a integer")
+        return self
+
+    def label(self, value: str):
+        self._label = value
+        return self
+
+    def generate(self):
+        label = LabelFactory.trim_spaces(self._label)
+        label = LabelFactory.remove_old_index(label)
+        if self._index != -1:
+            index = str(self._index).zfill(2)
+            if label != "":
+                return index + " " + label
+            else:
+                return index
+        return label
+
+    @staticmethod
+    def trim_spaces(text):
+        parts = text.split(" ")
+        parts = [word for word in parts if word != '']
+        return " ".join(parts)
+
+    @staticmethod
+    def remove_old_index(label):
+        split_label = label.split(" ")
+        if len(split_label) > 0:
+            try:
+                int(split_label[0])
+                return " ".join(split_label[1:])
+            except ValueError:
+                return label
+
+
+class Wdir:
+    def __init__(self):
+        self.solver: Optional[Solver] = None
+        self.source_list: List[str] = []
+        self.pack_list: List[List[Unit]] = []
+        self.unit_list: List[Unit] = []
+
+    def set_solver(self, solver_list: List[str]):
+        if len(solver_list) > 0:
+            self.solver = Solver(solver_list)
+        return self
+
+    def set_sources(self, source_list: List[str]):
+        self.source_list = source_list
+        return self
+
+    def set_target_list(self, target_list: List[str]):
+        target_list = [t for t in target_list if t != ""]
+        for target in target_list:
+            if not os.path.exists(target):
+                raise FileNotFoundError(f"fail: {target} not found")
+
+        solvers = [target for target in target_list if Identifier.get_type(target) == IdentifierType.SOLVER]
+        sources = [target for target in target_list if Identifier.get_type(target) != IdentifierType.SOLVER]
+        
+        self.set_solver(solvers)
+        self.set_sources(sources)
+        return self
+
+    def set_cmd(self, exec_cmd: Optional[str]):
+        if exec_cmd is None:
+            return self
+        if self.solver is not None:
+            print("fail: if using --cmd, don't pass source files to target")
+        self.solver = Solver([])
+        self.solver.executable = exec_cmd
+        return self
+
+    def build(self):
+        loading_failures = 0
+        for source in self.source_list:
+            try:
+                self.pack_list.append(Loader.parse_source(source))
+            except FileNotFoundError as e:
+                print(str(e))
+                loading_failures += 1
+                pass
+        if loading_failures > 0 and loading_failures == len(self.source_list):
+            raise FileNotFoundError("failure: none source found")
+        self.unit_list = sum(self.pack_list, [])
+        self.__number_and_mark_duplicated()
+        self.__calculate_grade()
+        self.__pad()
+        return self
+
+    def calc_grade(self) -> int:
+        grade = 100
+        for case in self.unit_list:
+            if not case.repeated and (case.user is None or case.output != case.user):
+                grade -= case.grade_reduction
+        return max(0, grade)
+
+    # put all the labels with the same length
+    def __pad(self):
+        if len(self.unit_list) == 0:
+            return
+        max_case = max([len(x.case) for x in self.unit_list])
+        max_source = max([len(x.source) for x in self.unit_list])
+        for unit in self.unit_list:
+            unit.case_pad = max_case
+            unit.source_pad = max_source
+
+    # select a single unit to execute exclusively
+    def filter(self, param: Param.Basic):
+        index = param.index
+        if index is not None:
+            if 0 <= index < len(self.unit_list):
+                self.unit_list = [self.unit_list[index]]
+            else:
+                raise ValueError("Index Number out of bounds: " + str(index))
+        return self
+
+    # calculate the grade reduction for the cases without grade
+    # the grade is proportional to the number of unique cases
+    def __calculate_grade(self):
+        unique_count = len([x for x in self.unit_list if not x.repeated])
+        for unit in self.unit_list:
+            if unit.grade is None:
+                unit.grade_reduction = math.floor(100 / unique_count)
+            else:
+                unit.grade_reduction = unit.grade
+
+    # number the cases and mark the repeated
+    def __number_and_mark_duplicated(self):
+        new_list = []
+        index = 0
+        for unit in self.unit_list:
+            unit.index = index
+            index += 1
+            search = [x for x in new_list if x.input == unit.input]
+            if len(search) > 0:
+                unit.repeated = search[0].index
+            new_list.append(unit)
+        self.unit_list = new_list
+
+    # sort, unlabel ou rename using the param received
+    def manipulate(self, param: Param.Manip):
+        # filtering marked repeated
+        self.unit_list = [unit for unit in self.unit_list if unit.repeated is None]
+        if param.to_sort:
+            self.unit_list.sort(key=lambda v: len(v.input))
+        if param.unlabel:
+            for unit in self.unit_list:
+                unit.case = ""
+        if param.to_number:
+            number = 00
+            for unit in self.unit_list:
+                unit.case = LabelFactory().label(unit.case).index(number).generate()
+                number += 1
+
+    def unit_list_resume(self) -> List[FF]:
+        return [unit.str() for unit in self.unit_list]
+
+    def resume(self) -> FF:
+
+        def sources() -> FF:
+            out = []
+            if len(self.pack_list) == 0:
+                out.append(symbols.failure)
+            for i in range(len(self.pack_list)):
+                nome: str = self.source_list[i].split(os.sep)[-1]
+                out.append(nome + "(" + str(len(self.pack_list[i])).zfill(2) + ")")
+            return FF().addf("g", "base:").add("[" + ", ".join(out) + "]")
+
+        def solvers() -> FF:
+            path_list = [] if self.solver is None else self.solver.path_list
+
+            if self.solver is not None and len(path_list) == 0:  # free_cmd
+                out = "free cmd"
+            else:
+                out = ", ".join([os.path.basename(path) for path in path_list])
+            return FF().addf("g", "prog:").add("[" + out + "]")
+
+        # folder = os.getcwd().split(os.sep)[-1]
+        # tests_count = (colour("tests:", Color.GREEN) +
+        #               str(len([x for x in self.unit_list if x.repeated is None])).zfill(2))
+
+        return FF().add(sources()).add(" ").add(solvers())
+
+
+
+
+class Writer:
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def to_vpl(unit: Unit):
+        text = "case=" + unit.case + "\n"
+        text += "input=" + unit.input
+        text += "output=\"" + unit.output + "\"\n"
+        if unit.grade is None:
+            text += "\n"
+        else:
+            text += "grade reduction=" + str(unit.grade).zfill(3) + "%\n"
+        return text
+
+    @staticmethod
+    def to_tio(unit: Unit):
+        text = ">>>>>>>>"
+        if unit.case != '':
+            text += " " + unit.case
+        if unit.grade is not None:
+            text += " " + str(unit.grade) + "%"
+        text += '\n' + unit.input
+        text += "========\n"
+        text += unit.output
+        if unit.output != '' and unit.output[-1] != '\n':
+            text += '\n'
+        text += "<<<<<<<<\n"
+        return text
+
+    @staticmethod
+    def save_dir_files(folder: str, pattern_loader: PatternLoader, label: str, unit: Unit) -> None:
+        file_source = pattern_loader.make_file_source(label)
+        with open(os.path.join(folder, file_source.input_file), "w") as f:
+            f.write(unit.input)
+        with open(os.path.join(folder, file_source.output_file), "w") as f:
+            f.write(unit.output)
+
+    @staticmethod
+    def save_target(target: str, unit_list: List[Unit], force: bool = False):
+        def ask_overwrite(file):
+            print("file " + file + " found. Overwrite? (y/n):")
+            resp = input()
+            if resp.lower() == 'y':
+                print("overwrite allowed")
+                return True
+            print("overwrite denied\n")
+            return False
+
+        def save_dir(_target: str, _unit_list):
+            folder = _target
+            pattern_loader = PatternLoader()
+            number = 0
+            for unit in _unit_list:
+                Writer.save_dir_files(folder, pattern_loader, str(number).zfill(2), unit)
+                number += 1
+
+        def save_file(_target, _unit_list):
+            if _target.endswith(".tio"):
+                _new = "\n".join([Writer.to_tio(unit) for unit in _unit_list])
+            else:
+                _new = "\n".join([Writer.to_vpl(unit) for unit in _unit_list])
+
+            file_exists = os.path.isfile(_target)
+
+            if file_exists:
+                _old = open(_target).read()
+                if _old == _new:
+                    print("no changes in test file")
+                    return
+
+            if not file_exists or (file_exists and (force or ask_overwrite(_target))):
+                with open(_target, "w") as f:
+                    f.write(_new)
+
+                    if not force:
+                        print("file " + _target + " wrote")
+
+        target_type = Identifier.get_type(target)
+        if target_type == IdentifierType.OBI:
+            save_dir(target, unit_list)
+        elif target_type == IdentifierType.TIO or target_type == IdentifierType.VPL:
+            save_file(target, unit_list)
+        else:
+            print("fail: target " + target + " do not supported for build operation\n")
+
+
+class Color:
+    enabled = False
+    terminal_styles = {
+        '.': '\033[0m', # Reset
+        '*': '\033[1m', # Bold
+        '/': '\033[3m', # Italic
+        '_': '\033[4m', # Underline
+        
+        'k': '\033[30m', # Black
+        'r': '\033[31m', # Red
+        'g': '\033[32m', # Green
+        'y': '\033[33m', # Yellow
+        'b': '\033[34m', # Blue
+        'm': '\033[35m', # Magenta
+        'c': '\033[36m', # Cyan
+        'w': '\033[37m', # White
+
+
+        'K': '\033[40m', # Background black
+        'W': '\033[47m', # Background white
+    }
+
+    @staticmethod
+    def ljust(text: str, width: int) -> str:
+        return text + " " * (width - Color.len(text))
+
+    @staticmethod
+    def center(text: str, width: int, filler: str) -> str:
+        before = filler * ((width - Color.len(text)) // 2)
+        after = filler * ((width - Color.len(text) + 1) // 2)
+        return before + text + after
+
+
+    @staticmethod
+    def len(text):
+        return len(Color.remove_colors(text))
+
+
+def _colour(modifiers: str, text: str) -> str:
+    if not Color.enabled:
+        return text
+    
+    output = ''
+    for m in modifiers:
+        val = Color.terminal_styles.get(m, '')
+        if val != '':
+            output += val
+    output += text + Color.terminal_styles.get('.', "")
+    return output
+
+def term_colour(ftext: FF) -> str:
+    output = ""
+    for token in ftext.data:
+        output += _colour(token.fmt, token.text)
+    return output
+
+def term_print(ftext: Union[str, FF], **kwargs):
+    if isinstance(ftext, str):
+        print(ftext, **kwargs)
+    else:
+        print(term_colour(ftext), **kwargs)
+
+
+class Report:
+    __term_width: Optional[int] = None
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def update_terminal_size():
+        term_width = shutil.get_terminal_size().columns
+        if term_width % 2 == 0:
+            term_width -= 1
+        Report.__term_width = term_width
+
+    @staticmethod
+    def get_terminal_size():
+        if Report.__term_width is None:
+            Report.update_terminal_size()
+
+        return Report.__term_width
+
+    @staticmethod
+    def set_terminal_size(value: int):
+        if value % 2 == 0:
+            value -= 1
+        Report.__term_width = value
+
+    @staticmethod
+    def centralize(
+        ftext: Union[FF, str],
+        sep: Optional[Union[str, TK]] = TK(" "),
+        left_border: Optional[Union[str, TK]] = None,
+        right_border: Optional[Union[str, TK]] = None,
+    ) -> FF:
+        
+        if isinstance(ftext, str) or isinstance(ftext, TK):
+            ftext = FF() + ftext
+        if isinstance(sep, str):
+            sep = TK(sep)
+        if left_border is None:
+            left_border = sep
+        if right_border is None:
+            right_border = sep
+        term_width = Report.get_terminal_size()
+
+        size = len(ftext)
+        pad = sep if size % 2 == 0 else TK("")
+        tw = term_width - 2
+        filler = TK(sep.text * (int(tw / 2 - size / 2)), sep.fmt)
+        return FF() + left_border + pad + filler + ftext + filler + right_border
+
+
+
+class Diff:
+
+    @staticmethod
+    def make_line_arrow_up(a: str, b: str) -> FF:
+        hdiff = FF()
+        first = True
+        i = 0
+        lim = max(len(a), len(b))
+        while i < lim:
+            if i >= len(a) or i >= len(b) or a[i] != b[i]:
+                if first:
+                    first = False
+                    hdiff += symbols.arrow_up
+                    return hdiff
+            else:
+                hdiff += " "
+            i += 1
+        return hdiff
+
+    @staticmethod
+    def render_white(text: FF, color: str = "") -> Optional[FF]:
+        out = FF().add(text).replace(' ', TK(symbols.whitespace.text, color))
+        return out
+
+    # create a string with both ta and tb side by side with a vertical bar in the middle
+    @staticmethod
+    def side_by_side(ta: List[FF], tb: List[FF], unequal: TK = symbols.unequal) -> List[FF]:
+        cut = (Report.get_terminal_size() - 6) // 2
+        upper = max(len(ta), len(tb))
+        data: List[FF] = []
+
+        for i in range(upper):
+            a = ta[i] if i < len(ta) else "###############"
+            b = tb[i] if i < len(tb) else "###############"
+            if len(a) < cut:
+                a = a.ljust(cut, TK(" "))
+            # if len(a) > cut:
+            #     a = a[:cut]
+            if i >= len(ta) or i >= len(tb) or ta[i] != tb[i]:
+                data.append(FF() + unequal + " " + a + " " + unequal + " " + b)
+            else:
+                data.append(FF() + symbols.vbar + " " + a + " " + symbols.vbar + " " + b)
+
+        return data
+
+    # a_text -> clean full received
+    # b_text -> clean full expected
+    # first_failure -> index of the first line unmatched 
+    @staticmethod
+    def first_failure_diff(a_text: str, b_text: str, first_failure: int) -> List[FF]:
+        def get(vet, index):
+            if index < len(vet):
+                return vet[index]
+            return ""
+
+        a_render = a_text.splitlines()
+        b_render = b_text.splitlines()
+
+        first_a = get(a_render, first_failure)
+        first_b = get(b_render, first_failure)
+        greater = max(Color.len(first_a), Color.len(first_b))
+
+        if first_failure > 0:
+            lbefore = Color.remove_colors(get(a_render, first_failure - 1))
+            greater = max(greater, Color.len(lbefore))
+
+        out_a, out_b = Diff.colorize_2_lines_diff(first_a, first_b)
+
+        output: List[FF] = []
+
+        output.append(symbols.vbar + " " + out_a.ljust(greater) + ("g", " (expected)"))
+        output.append(symbols.vbar + " " + out_b.ljust(greater) + ("r", " (received)"))
+        output.append(symbols.vbar + " " + Diff.make_line_arrow_up(first_a, first_b).ljust(greater) + ("b", " (mismatch)"))
+        return output
+
+    @staticmethod
+    def find_first_mismatch(line_a: FF, line_b: FF) -> int: 
+        i = 0
+        while i < len(line_a) and i < len(line_b):
+            if line_a[i] != line_b[i]:
+                return i
+            i += 1
+        return i
+    
+    @staticmethod
+    def colorize_2_lines_diff(la: FF, lb: FF, neut: str = "", exp: str = "g", rec: str = "r") -> Tuple[FF, FF]:
+        pos = Diff.find_first_mismatch(la, lb)
+        lat = la.get_text()
+        lbt = lb.get_text()
+        a_out = FF().addf(neut, lat[0:pos]).addf(exp, lat[pos:])
+        b_out = FF().addf(neut, lbt[0:pos]).addf(rec, lbt[pos:])
+        return a_out, b_out
+
+    # return a tuple of two strings with the diff and the index of the  first mismatch line
+    @staticmethod
+    def render_diff(a_text: str, b_text: str, pad: Optional[bool] = None) -> Tuple[List[FF], List[FF], int]:
+        a_lines = a_text.splitlines()
+        b_lines = b_text.splitlines()
+
+        a_output: List[FF] = []
+        b_output: List[FF] = []
+
+        a_size = len(a_lines)
+        b_size = len(b_lines)
+        
+        first_failure = -1
+
+        cut: int = 0
+        if pad is True:
+            cut = (Report.get_terminal_size() - 6) // 2
+
+        max_size = max(a_size, b_size)
+
+        # lambda function to return element in index i or empty if out of bounds
+        def get(vet, index):
+            out = ""
+            if index < len(vet):
+                out = vet[index]
+            if pad is None:
+                return out
+            return out[:cut].ljust(cut)
+
+        # get = lambda vet, i: vet[i] if i < len(vet) else ""
+
+        for i in range(max_size):
+            a_data = FF(get(a_lines, i))
+            b_data = FF(get(b_lines, i))
+            
+            if i >= a_size or i >= b_size or a_lines[i] != b_lines[i]:
+                if first_failure == -1:
+                    first_failure = i
+                a_out, b_out = Diff.colorize_2_lines_diff(a_data, b_data, "y")
+                a_output.append(a_out)
+                b_output.append(b_out)
+            else:
+                a_output.append(a_data)
+                b_output.append(b_data)
+
+        return a_output, b_output, first_failure
+
+    @staticmethod
+    def mount_up_down_diff(unit: Unit) -> List[FF]:
+        output: List[FF] = []
+
+        string_input = unit.input
+        string_expected = unit.output
+        string_received = unit.user
+
+        # dotted = "-"
+
+        expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received)
+        string_input_list = [FF().add(symbols.vbar.text).add(" ").add(line) for line in string_input.split("\n")][:-1]
+        unequal = symbols.unequal.text
+        if unit.result == ExecutionResult.EXECUTION_ERROR:
+            unequal = symbols.vbar
+        expected_lines, received_lines = Diff.put_left_equal(expected_lines, received_lines, unequal)
+
+        output.append(Report.centralize("", symbols.hbar, "╭"))
+        output.append(Report.centralize(unit.str(), " ", symbols.vbar))
+        output.append(Report.centralize(FF().addf("b", " INPUT "), symbols.hbar, "├"))
+        for line in string_input_list:
+            output.append(line)
+        output.append(Report.centralize(FF().addf("g", " EXPECTED "), symbols.hbar, "├"))
+        for line in expected_lines:
+            output.append(line)
+        # output.append("\n".join(expected_lines))
+        output.append(Report.centralize(FF().addf("r", " RECEIVED "), symbols.hbar, "├"))
+        for line in received_lines:
+            output.append(line)
+        # output.append("\n".join(received_lines))
+        if unit.result != ExecutionResult.EXECUTION_ERROR:
+            output.append(Report.centralize(FF().add(" WHITESPACE "),  symbols.hbar, "├"))
+            for line in Diff.first_failure_diff(string_expected, string_received, first_failure):
+                output.append(line)
+        output.append(Report.centralize("",  symbols.hbar, "╰"))
+
+        return output
+
+    @staticmethod
+    def put_left_equal(exp_lines: List[FF], rec_lines: List[FF], unequal: str = symbols.unequal):
+
+        max_size = max(len(exp_lines), len(rec_lines))
+
+        for i in range(max_size):
+            if i >= len(exp_lines) or i >= len(rec_lines) or (exp_lines[i] != rec_lines[i]):
+                exp_lines[i] = FF() + unequal + " " + exp_lines[i]
+                rec_lines[i] = FF() + unequal + " " + rec_lines[i]
+            else:
+                exp_lines[i] = FF() + symbols.vbar + " " + exp_lines[i]
+                rec_lines[i] = FF() + symbols.vbar + " " + rec_lines[i]
+        
+        return exp_lines, rec_lines
+            
+    @staticmethod
+    def title_side_by_side(left: FF, right: FF, filler: TK = TK(" "), middle: TK = TK(" "), prefix: TK = TK()) -> FF:
+        half = int((Report.get_terminal_size() - len(middle)) / 2)
+        line = FF()
+        a = left
+        a = a.center(half, filler)
+        if len(a) > half:
+            a = a.trim_end(half)
+        line += a
+        line += middle
+        b = right
+        b = b.center(half, filler)
+        if len(b) > half:
+            b = b.trim_end(half)
+        line += b
+        if prefix != "":
+            line.data[0].text = line.data[0].text[1:]
+            line = FF() + prefix + line
+        return line
+
+    @staticmethod
+    def mount_side_by_side_diff(unit: Unit) -> List[FF]:
+
+        output: List[FF] = []
+
+        string_input = unit.input
+        string_expected = unit.output
+        string_received = unit.user
+
+        # dotted = "-"
+        # vertical_separator = symbols.vbar
+        hbar = symbols.hbar
+
+        expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received, True)
+        output.append(Report.centralize("", hbar, "╭"))
+        output.append(Report.centralize(unit.str(), " ", "│"))
+        input_headera = FF().addf("b", " INPUT ")
+        input_headerb = FF().addf("b", " INPUT ")
+        output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, "┬", "├"))
+        if string_input != "":
+            lines = [FF(x) for x in string_input.split("\n")[:-1]]
+            for line in Diff.side_by_side(lines, lines):
+                output.append(line)
+        expected_header = FF().addf("g", " EXPECTED ")
+        received_header = FF().addf("r", " RECEIVED ")
+        output.append(Diff.title_side_by_side(expected_header, received_header, hbar, "┼", "├"))
+        unequal = symbols.unequal
+        if unit.result == ExecutionResult.EXECUTION_ERROR:
+            unequal = symbols.vbar
+        for line in Diff.side_by_side(expected_lines, received_lines, unequal):
+            output.append(line)
+        if unit.result != ExecutionResult.EXECUTION_ERROR:
+            output.append(Report.centralize(FF() + ("bold", " WHITESPACE "),  symbols.hbar, "├"))
+            output.append(Diff.first_failure_diff(string_expected, string_received, first_failure))
+        output.append(Report.centralize("",  symbols.hbar, "╰"))
+
+        return output
+
+
+class CDiff:
+
+    def __init__(self, wdir: Wdir, param: Param.Basic):
+        self.param = param
+        self.results: List[FF] = []
+        self.wdir = wdir
+        self.exit = False
+        self.index = 0
+        self.finished = False
+        self.resumes: List[str] = []
+
+    def set_exit(self):
+        self.exit = True
+
+    def end_processing(self):
+        return len(self.results) == len(self.wdir.unit_list)
+
+    def get_color(self, unit: Unit):
+        if unit.result == ExecutionResult.SUCCESS:
+            return "G"
+        if unit.result == ExecutionResult.WRONG_OUTPUT:
+            return "R"
+        if unit.result == ExecutionResult.EXECUTION_ERROR:
+            return "Y"
+        return ""
+
+    def draw_top_line(self):
+        lines, cols = Fmt.get_size()
+        frame = Frame(0, 0).set_size(3, cols)
+
+        pwd = os.getcwd()
+        frame.set_header(FF().add(f" {pwd} ") , "<")
+        intro = self.wdir.resume()
+        frame.set_footer(intro)
+        frame.draw()
+
+        
+        # construir mais uma solução
+        if len(self.results) < len(self.wdir.unit_list):
+            index = len(self.results)
+            unit = self.wdir.unit_list[index]
+            unit.result = Execution.run_unit(self.wdir.solver, unit)
+            symbol = ExecutionResult.get_symbol(unit.result)
+            color = self.get_color(unit)
+            self.results.append(FF().addf(color, symbol.text))
+
+        x = 0
+        i = 0
+        for i, symbol in enumerate(self.results):
+            foco = "" if i != self.index else "B"
+            label = FF().addf(foco + "/kW", str(i).zfill(2)).add(symbol)
+            frame.write(0, x, label)
+            x += 5
+        
+        if self.end_processing() and not self.finished:
+            self.resumes = self.wdir.unit_list_resume()
+            self.finished = True
+
+    def draw_bottom_line(self):
+        cmds = (FF()
+        .add(" ")
+        .addf("/", "Move").add("[esq, dir]")
+        .add(" ")
+        .addf("/", "Diff").add("[d]")
+        .add(" ")
+        .addf("/", "Select").add("[0-9]")
+        .add(" ")
+        )
+
+    def draw_diff(self):
+        lines, cols = Fmt.get_size()
+        frame = Frame(3, 0).set_size(lines - 3, cols).set_border_square()
+        frame.draw()
+        results = [unit.result for unit in self.wdir.unit_list]
+        if ExecutionResult.EXECUTION_ERROR not in results and ExecutionResult.WRONG_OUTPUT not in results:
+            return
+        # lines, cols = Fmt.get_size()
+        # frame = Frame(3, -1).set_size(lines - 3, cols)
+        # frame.set_header(Sentence().add(self.resumes[self.index]))
+        # frame.draw()
+        
+        unit = self.wdir.unit_list[self.index]
+        if self.param.is_up_down:
+            lines = Diff.mount_up_down_diff(unit)
+        else:
+            lines = Diff.mount_side_by_side_diff(unit)
+
+        for i, line in enumerate(lines):
+            frame.write(i, 0, FF().add(line))
+        return
+
+
+    def main(self, scr):
+        curses.curs_set(0)  # Esconde o cursor
+        Fmt.init_colors()  # Inicializa as cores
+        Fmt.set_scr(scr)  # Define o scr como global
+        while not self.exit:
+            Fmt.erase()
+            self.draw_top_line()
+            self.draw_diff()
+            if not self.end_processing():
+                Fmt.refresh()
+            else:
+                input = Fmt.getch()
+                if input == ord('q'):
+                    self.set_exit()
+                elif input == curses.KEY_LEFT:
+                    self.index = max(0, self.index - 1)
+                elif input == curses.KEY_RIGHT:
+                    self.index = min(len(self.results) - 1, self.index + 1)
+                elif input == ord('d'):
+                    self.param.is_up_down = not self.param.is_up_down
+                elif input >= ord('0') and input <= ord('9'):
+                    if input - ord('0') < len(self.results):
+                        self.index = min(len(self.results) - 1, input - ord('0'))
+
+    def run(self):
+        curses.wrapper(self.main)
+
+
+
+
+
+
+class FilterMode:
+
+    @staticmethod
+    def deep_copy_and_change_dir():
+        # path to ~/.tko_filter
+        filter_path = os.path.join(os.path.expanduser("~"), ".tko_filter")
+
+        # verify if filter command is available
+        if shutil.which("filter") is None:
+            print("ERROR: filter command not found")
+            print("Install feno with 'pip install feno'")
+            exit(1)
+
+        subprocess.run(["filter", "-rf", ".", "-o", filter_path])
+
+        os.chdir(filter_path)
+
+
+class Run:
+
+    def __init__(self, target_list: List[str], exec_cmd: Optional[str], param: Param.Basic):
+        self.target_list = target_list
+        self.exec_cmd = exec_cmd
+        self.param = param
+        self.wdir = None
+        self.curses = False
+
+    def set_curses(self):
+        self.curses = True
+        return self
+
+
+    def execute(self):
+        self.remove_duplicates()
+        self.change_targets_to_filter_mode()
+        if not self.build_wdir():
+            return
+        if self.missing_target():
+            return
+        if self.list_mode():
+            return
+        if self.free_run():
+            return
+        self.diff_mode()
+        return
+
+    def remove_duplicates(self):
+        # remove duplicates in target list keeping the order
+        self.target_list = list(dict.fromkeys(self.target_list))
+
+    def change_targets_to_filter_mode(self):
+        if self.param.filter:
+            old_dir = os.getcwd()
+
+            term_print(Report.centralize(" Entering in filter mode ", "═"))
+            FilterMode.deep_copy_and_change_dir()  
+            # search for target outside . dir and redirect target
+            new_target_list = []
+            for target in self.target_list:
+                if ".." in target:
+                    new_target_list.append(os.path.normpath(os.path.join(old_dir, target)))
+                elif os.path.exists(target):
+                    new_target_list.append(target)
+            self.target_list = new_target_list
+
+    def print_top_line(self):
+        term_print(self.wdir.resume(), end="")
+        term_print(" [", end="")
+        first = True
+        for unit in self.wdir.unit_list:
+            if first:
+                first = False
+            else:
+                term_print(" ", end="")
+            unit.result = Execution.run_unit(self.wdir.solver, unit)
+            term_print(FF() + ExecutionResult.get_symbol(unit.result), end="")
+        term_print("]")
+
+    def print_diff(self):
+        if self.param.diff_mode == DiffMode.QUIET:
+            return
+        
+        results = [unit.result for unit in self.wdir.unit_list]
+        if ExecutionResult.EXECUTION_ERROR not in results and ExecutionResult.WRONG_OUTPUT not in results:
+            return
+        
+        if not self.param.compact:
+            for elem in self.wdir.unit_list_resume():
+                term_print(elem)
+        
+        if self.param.diff_mode == DiffMode.FIRST:
+            # printing only the first wrong case
+            wrong = [unit for unit in self.wdir.unit_list if unit.result != ExecutionResult.SUCCESS][0]
+            if self.param.is_up_down:
+                for line in Diff.mount_up_down_diff(wrong):
+                    term_print(line)
+            else:
+                for line in Diff.mount_side_by_side_diff(wrong):
+                    term_print(line)
+            return
+
+        if self.param.diff_mode == DiffMode.ALL:
+            for unit in self.wdir.unit_list:
+                if unit.result != ExecutionResult.SUCCESS:
+                    if self.param.is_up_down:
+                        for line in Diff.mount_up_down_diff(wrong):
+                            term_print(line)
+                    else:
+                        for line in Diff.mount_side_by_side_diff(wrong):
+                            term_print(line)
+
+    def build_wdir(self) -> bool:
+        try:
+            self.wdir = Wdir().set_target_list(self.target_list).set_cmd(self.exec_cmd).build().filter(self.param)
+        except CompilerError as e:
+            print(e)
+            return False
+        except FileNotFoundError as e:
+            print(e)
+            return False
+        return True
+
+    def missing_target(self) -> bool:
+        # no solver and no test cases
+        if self.wdir.solver is None and len(self.wdir.unit_list) == 0:
+            term_print(FF().addf("", "fail: ") + "No solver or tests found.")
+            return True
+        return False
+    
+    def list_mode(self) -> bool:
+        # list mode
+        if self.wdir.solver is None and len(self.wdir.unit_list) > 0:
+            term_print(Report.centralize(" No solvers found. Listing Test Cases ", TK("╌")), flush=True)
+            term_print(self.wdir.resume())
+            term_print(self.wdir.unit_list_resume())
+            return True
+        return False
+
+    def free_run(self) -> bool:
+        # free run mode
+        if self.wdir.solver is not None and len(self.wdir.unit_list) == 0:
+            t = Report.centralize(FF() + " No test cases found. Running: " + self.wdir.solver.executable + " ", symbols.hbar)
+            print(t, flush=True)
+            # force print to terminal
+            Runner.free_run(self.wdir.solver.executable)
+            return True
+        return False
+
+    def diff_mode(self):
+        if self.curses:
+            cdiff = CDiff(self.wdir, self.param)
+            cdiff.run()
+            return
+        term_print(Report.centralize(" Running solver against test cases ", "═"))
+        self.print_top_line()
+        self.print_diff()
+
+
+class Build:
+
+    def __init__(self, target_out: str, source_list: List[str], param: Param.Manip, to_force: bool):
+        self.target_out = target_out
+        self.source_list = source_list
+        self.param = param
+        self.to_force = to_force
+
+    def execute(self):
+        try:
+            wdir = Wdir().set_sources(self.source_list).build()
+            wdir.manipulate(self.param)
+            Writer.save_target(self.target_out, wdir.unit_list, self.to_force)
+        except FileNotFoundError as e:
+            print(str(e))
+            return False
+        return True
 
 
 
@@ -5494,13 +5586,11 @@ class Parser:
             if args.g:
                 print(tko_guide[1:], end="")
         else:
-            try:
-                if "func" in args:
-                    args.func(args)
-                else:
-                    self.parser.print_help()
-            except ValueError as e:
-                print(str(e))
+            if "func" in args:
+                args.func(args)
+            else:
+                self.parser.print_help()
+            
 
 
 def main():

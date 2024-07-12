@@ -9,7 +9,7 @@
             "type": "debugpy",
             "request": "launch",
             "module": "tko", 
-            "args": ["play", "f"]
+            "args": ["run", "fup/sobrou/media/draft.java fup/sobrou/media/cases.tio"]
         }
     ]
 }

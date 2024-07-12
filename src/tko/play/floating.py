@@ -1,6 +1,6 @@
 from typing import List
 from .frame import Frame
-from ..util.ftext import Ftext
+from ..util.ftext import FF
 from .fmt import Fmt
 
 import curses
@@ -9,7 +9,7 @@ import curses
 class Floating:
     def __init__(self, _align=""):
         self._frame = Frame(0, 0)
-        self._content: List[Ftext] = []
+        self._content: List[FF] = []
         self._type = ""
         self._options = []
         self._options_index = 0
@@ -29,7 +29,7 @@ class Floating:
         self._floating_align = _align
 
     def set_header(self, text: str):
-        self._frame.set_header(Ftext().addf("/", text), "")
+        self._frame.set_header(FF().addf("/", text), "")
         return self
     
     def set_exit_key(self, key: str):
@@ -78,7 +78,7 @@ class Floating:
         self._frame.set_fill()
         
         if self._type == "answer":
-            footer = Ftext().add(" ")
+            footer = FF().add(" ")
             for i, option in enumerate(self._options):
                 fmt = "kG" if i == self._options_index else ""
                 footer.addf(fmt, option).add(" ")
@@ -87,20 +87,20 @@ class Floating:
     def put_text(self, text: str):
         lines = text.split("\n")
         for line in lines:
-            self._content.append(Ftext().add(line))
+            self._content.append(FF().add(line))
         return self
 
-    def put_sentence(self, sentence: Ftext):
+    def put_sentence(self, sentence: FF):
         self._content.append(sentence)
         return self
     
     def set_content(self, content: List[str]):
-        self._content = [Ftext().add(x) for x in content]
+        self._content = [FF().add(x) for x in content]
         return self
 
     def _set_default_footer(self):
         if self._frame.get_footer().len() == 0:
-            label = Ftext().addf("/", " Pressione uma tecla ")
+            label = FF().addf("/", " Pressione uma tecla ")
             self._frame.set_footer(label, "", "─", "─")
         return self
 

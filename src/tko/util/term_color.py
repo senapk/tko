@@ -1,3 +1,6 @@
+from .ftext import FF
+from typing import Union
+
 class Color:
     enabled = False
     terminal_styles = {
@@ -30,18 +33,13 @@ class Color:
         after = filler * ((width - Color.len(text) + 1) // 2)
         return before + text + after
 
-    @staticmethod
-    def remove_colors(text: str) -> str:
-        for color in Color.terminal_styles.values():
-            text = text.replace(color, "")
-        return text
 
     @staticmethod
     def len(text):
         return len(Color.remove_colors(text))
 
 
-def colour(modifiers: str, text: str) -> str:
+def _colour(modifiers: str, text: str) -> str:
     if not Color.enabled:
         return text
     
@@ -53,4 +51,14 @@ def colour(modifiers: str, text: str) -> str:
     output += text + Color.terminal_styles.get('.', "")
     return output
 
+def term_colour(ftext: FF) -> str:
+    output = ""
+    for token in ftext.data:
+        output += _colour(token.fmt, token.text)
+    return output
 
+def term_print(ftext: Union[str, FF], **kwargs):
+    if isinstance(ftext, str):
+        print(ftext, **kwargs)
+    else:
+        print(term_colour(ftext), **kwargs)
