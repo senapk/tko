@@ -9,7 +9,9 @@ class TK:
         self.text = text
         self.fmt = fmt
 
-    def __eq__(self, other: TK):
+    def __eq__(self, other: Any):
+        if not isinstance(other, TK):
+            return False
         return self.text == other.text and self.fmt == other.fmt
 
     def __len__(self):
@@ -30,21 +32,24 @@ class FF:
         self.add(value)
     
     def setup(self, data: List[TK]):
-        self.data = data
+        self.data = []
+        for d in data:
+            for c in d.text:
+                self.data.append(TK(c, d.fmt))
         return self
 
     def __getitem__(self, index: int) -> TK:
         if index < 0 or index >= len(self):
-            return TK()
-        return self.separate().data[index]
+            raise IndexError("index out of range")
+        return self.data[index]
 
     def __len__(self):
-        return sum([len(t.text) for t in self.data])
+        return self.len()
     
     def __add__(self, other: Any):
         return FF().add(self).add(other)
 
-    def __eq__(self, other: FF):
+    def __eq__(self, other: Any):
         if len(self.data) != len(other.data):
             return False
         for i in range(len(self.data)):
@@ -54,18 +59,11 @@ class FF:
 
 
     def __str__(self):
-        return "".join([str(t) for t in self.data])
+        return f"{"".join([str(d) for d in self.resume()])}"
     
-    def separate(self):
-        out = FF()
-        for d in self.data:
-            for c in d.text:
-                out.add(TK(c, d.fmt))
-        return out
-
-    def join(self):
+    def resume(self) -> List[TK]:
         if len(self.data) == 0:
-            return self
+            return []
         
         new_data: List[TK] = [TK("", self.data[0].fmt)]
         for d in self.data:
@@ -75,22 +73,38 @@ class FF:
                 new_data.append(TK())
                 new_data[-1].text = d.text
                 new_data[-1].fmt = d.fmt
-        self.data = new_data
+        return new_data
+    
+    def resume_val_fmt(self) -> Tuple[str, str]:
+        fmt = []
+        val = []
+        for d in self.data:
+            fmt.append(" " if d.fmt == "" else d.fmt[0])
+            val.append(d.text)
+        return "".join(val), "".join(fmt)
 
-        return self
 
     # search for a value inside the tokens and replace it with a new value and fmt
     def replace(self, old: str, token: TK):
-        if len(old) != 1:
-            raise ValueError("old must be a single character")
-        value = self.separate()
+        old_list: List[str] = [c for c in old]
+        new_list = [c for c in token.text]
+        new_list.reverse()
 
-        for i in range(len(value.data)):
-            elem = value.data[i]
-            if elem.text == old:
-                value.data[i] = token
-        self.data = value.data
-        self.join()
+        index = 0
+        while index < len(self.data) - len(old_list) + 1:
+            found = True
+            for i in range(len(old_list)):
+                if self.data[index + i].text != old_list[i]:
+                    found = False
+                    break
+            if found:
+                for _ in range(len(old_list)):
+                    del self.data[index]
+                for c in new_list:
+                    self.data.insert(index, TK(c, token.fmt))
+                index += len(new_list)
+            else:
+                index += 1
         return self
 
     def plus(self, qtd: int) -> FF:
@@ -102,14 +116,12 @@ class FF:
     def add(self, value: Union[str, TK, Tuple[str, str], FF]):
         if isinstance(value, str):
             if value != "":
-                self.data.append(TK(value))
+                for c in value:
+                    self.data.append(TK(c))
         elif isinstance(value, TK):
             if value.text != "":
-                self.data.append(value)
-        elif isinstance(value, Tuple):
-            text, fmt = value
-            if text != "":
-                self.data.append(TK(text, fmt))
+                for c in value.text:
+                    self.data.append(TK(c, value.fmt))
         elif isinstance(value, FF):
             self.data += value.data
         else:
@@ -119,34 +131,41 @@ class FF:
     def addf(self, fmt: str, text: Any):
         if not isinstance(text, str):
             raise TypeError("fmt must be a string")
-        self.data.append(TK(text, fmt))
+        self.add(TK(text, fmt))
         return self
 
-    def ljust(self, width: int, filler: TK):
+    def ljust(self, width: int, filler: TK = TK(" ")):
         total = self.len()
+        char = " " if filler.text == "" else filler.text[0]
+        fmt = filler.fmt
         if total < width:
-            self.add(TK(filler.text * (width - total), filler.fmt))
+            suffix = [TK(char, fmt) for _ in range(width - total)]
+            self.data = self.data + suffix
         return self
     
-    def rjust(self, width: int, filler: TK):
+    def rjust(self, width: int, filler: TK = TK(" ")):
         total = self.len()
+        char = " " if filler.text == "" else filler.text[0]
+        fmt = filler.fmt
         if total < width:
-            self.data = [TK(filler.text * (width - total), filler.fmt)] + self.data
+            prefix = [TK(char, fmt) for _ in range(width - total)]
+            self.data = prefix + self.data
         return self
     
     def center(self, width: int, filler: TK):
         total = self.len()
+        char = " " if filler.text == "" else filler.text[0]
+        fmt = filler.fmt
         if total < width:
             left = (width - total) // 2
             right = width - total - left
-            self.data = [TK(filler.text * left, filler.fmt)] + self.data + [TK(filler.text * right, filler.fmt)]
+            prefix = [TK(char, fmt) for _ in range(left)]
+            suffix = [TK(char, fmt) for _ in range(right)]
+            self.data = prefix + self.data + suffix
         return self
     
     def len(self):
-        total = 0
-        for t in self.data:
-            total += len(t.text)
-        return total
+        return len(self.data)
     
     def get_data(self):
         return self.data
@@ -154,63 +173,15 @@ class FF:
     def get_text(self) -> str:
         return "".join([t.text for t in self.data])
 
-    def get(self, index: int):
-        return self.data[index]
-
     def trim_alfa(self, limit: int):
-        if limit < 0:
-            return self
-        index = len(self.data) - 1
-        size = self.len()
-        while True:
-            if index < 0 or size <= limit:
-                break
-            token = self.data[index]
-            if len(token.text) == 0:
-                del self.data[index]
-                index -= 1
-            elif token.text[-1].isalpha():
-                token.text = token.text[:-1]
-                size -= 1
-            else:
-                index -= 1
         return self
-
-    def trim_spaces(self, limit: int):
-        if limit < 0:
-            return self
-        index = len(self.data) - 1
-        size = self.len()
-        while True:
-            if index < 0 or size <= limit:
-                break
-            token = self.data[index]
-            if len(token.text) == 0:
-                del self.data[index]
-                index -= 1
-            elif token.text[-1] == " ":
-                token.text = token.text[:-1]
-                size -= 1
-            else:
-                index -= 1
-            
+    
+    def trim_spaces(self, limit: int):            
         return self
 
     def trim_end(self, width: int):
-        if width < 0:
-            return self
-        size = self.len()
-        index = len(self.data) - 1
-        while True:
-            if size <= width or index < 0:
-                break
-            token = self.data[index]
-            if len(token.text) == 0:
-                del self.data[index]
-                index -= 1
-            else:
-                token.text = token.text[:-1]
-                size -= 1
+        if self.len() > width:
+            self.data = self.data[:width]
         return self
 
     @staticmethod

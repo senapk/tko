@@ -41,7 +41,9 @@ class Report:
         
         if isinstance(ftext, str) or isinstance(ftext, TK):
             ftext = FF() + ftext
-        if isinstance(sep, str):
+        if sep is None:
+            sep = TK(" ")
+        elif isinstance(sep, str):
             sep = TK(sep)
         if left_border is None:
             left_border = sep

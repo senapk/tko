@@ -20,6 +20,7 @@ import re
 from icecream import ic
 import math
 import io
+from icecream import ic # type: ignore
 import enum
 import configparser
 from subprocess import PIPE
@@ -767,7 +768,9 @@ class TK:
         self.text = text
         self.fmt = fmt
 
-    def __eq__(self, other: TK):
+    def __eq__(self, other: Any):
+        if not isinstance(other, TK):
+            return False
         return self.text == other.text and self.fmt == other.fmt
 
     def __len__(self):
@@ -788,21 +791,24 @@ class FF:
         self.add(value)
     
     def setup(self, data: List[TK]):
-        self.data = data
+        self.data = []
+        for d in data:
+            for c in d.text:
+                self.data.append(TK(c, d.fmt))
         return self
 
     def __getitem__(self, index: int) -> TK:
         if index < 0 or index >= len(self):
-            return TK()
-        return self.separate().data[index]
+            raise IndexError("index out of range")
+        return self.data[index]
 
     def __len__(self):
-        return sum([len(t.text) for t in self.data])
+        return self.len()
     
     def __add__(self, other: Any):
         return FF().add(self).add(other)
 
-    def __eq__(self, other: FF):
+    def __eq__(self, other: Any):
         if len(self.data) != len(other.data):
             return False
         for i in range(len(self.data)):
@@ -812,18 +818,11 @@ class FF:
 
 
     def __str__(self):
-        return "".join([str(t) for t in self.data])
+        return f"{"".join([str(d) for d in self.resume()])}"
     
-    def separate(self):
-        out = FF()
-        for d in self.data:
-            for c in d.text:
-                out.add(TK(c, d.fmt))
-        return out
-
-    def join(self):
+    def resume(self) -> List[TK]:
         if len(self.data) == 0:
-            return self
+            return []
         
         new_data: List[TK] = [TK("", self.data[0].fmt)]
         for d in self.data:
@@ -833,22 +832,38 @@ class FF:
                 new_data.append(TK())
                 new_data[-1].text = d.text
                 new_data[-1].fmt = d.fmt
-        self.data = new_data
+        return new_data
+    
+    def resume_val_fmt(self) -> Tuple[str, str]:
+        fmt = []
+        val = []
+        for d in self.data:
+            fmt.append(" " if d.fmt == "" else d.fmt[0])
+            val.append(d.text)
+        return "".join(val), "".join(fmt)
 
-        return self
 
     # search for a value inside the tokens and replace it with a new value and fmt
     def replace(self, old: str, token: TK):
-        if len(old) != 1:
-            raise ValueError("old must be a single character")
-        value = self.separate()
+        old_list: List[str] = [c for c in old]
+        new_list = [c for c in token.text]
+        new_list.reverse()
 
-        for i in range(len(value.data)):
-            elem = value.data[i]
-            if elem.text == old:
-                value.data[i] = token
-        self.data = value.data
-        self.join()
+        index = 0
+        while index < len(self.data) - len(old_list) + 1:
+            found = True
+            for i in range(len(old_list)):
+                if self.data[index + i].text != old_list[i]:
+                    found = False
+                    break
+            if found:
+                for _ in range(len(old_list)):
+                    del self.data[index]
+                for c in new_list:
+                    self.data.insert(index, TK(c, token.fmt))
+                index += len(new_list)
+            else:
+                index += 1
         return self
 
     def plus(self, qtd: int) -> FF:
@@ -860,14 +875,12 @@ class FF:
     def add(self, value: Union[str, TK, Tuple[str, str], FF]):
         if isinstance(value, str):
             if value != "":
-                self.data.append(TK(value))
+                for c in value:
+                    self.data.append(TK(c))
         elif isinstance(value, TK):
             if value.text != "":
-                self.data.append(value)
-        elif isinstance(value, Tuple):
-            text, fmt = value
-            if text != "":
-                self.data.append(TK(text, fmt))
+                for c in value.text:
+                    self.data.append(TK(c, value.fmt))
         elif isinstance(value, FF):
             self.data += value.data
         else:
@@ -877,34 +890,41 @@ class FF:
     def addf(self, fmt: str, text: Any):
         if not isinstance(text, str):
             raise TypeError("fmt must be a string")
-        self.data.append(TK(text, fmt))
+        self.add(TK(text, fmt))
         return self
 
-    def ljust(self, width: int, filler: TK):
+    def ljust(self, width: int, filler: TK = TK(" ")):
         total = self.len()
+        char = " " if filler.text == "" else filler.text[0]
+        fmt = filler.fmt
         if total < width:
-            self.add(TK(filler.text * (width - total), filler.fmt))
+            suffix = [TK(char, fmt) for _ in range(width - total)]
+            self.data = self.data + suffix
         return self
     
-    def rjust(self, width: int, filler: TK):
+    def rjust(self, width: int, filler: TK = TK(" ")):
         total = self.len()
+        char = " " if filler.text == "" else filler.text[0]
+        fmt = filler.fmt
         if total < width:
-            self.data = [TK(filler.text * (width - total), filler.fmt)] + self.data
+            prefix = [TK(char, fmt) for _ in range(width - total)]
+            self.data = prefix + self.data
         return self
     
     def center(self, width: int, filler: TK):
         total = self.len()
+        char = " " if filler.text == "" else filler.text[0]
+        fmt = filler.fmt
         if total < width:
             left = (width - total) // 2
             right = width - total - left
-            self.data = [TK(filler.text * left, filler.fmt)] + self.data + [TK(filler.text * right, filler.fmt)]
+            prefix = [TK(char, fmt) for _ in range(left)]
+            suffix = [TK(char, fmt) for _ in range(right)]
+            self.data = prefix + self.data + suffix
         return self
     
     def len(self):
-        total = 0
-        for t in self.data:
-            total += len(t.text)
-        return total
+        return len(self.data)
     
     def get_data(self):
         return self.data
@@ -912,63 +932,15 @@ class FF:
     def get_text(self) -> str:
         return "".join([t.text for t in self.data])
 
-    def get(self, index: int):
-        return self.data[index]
-
     def trim_alfa(self, limit: int):
-        if limit < 0:
-            return self
-        index = len(self.data) - 1
-        size = self.len()
-        while True:
-            if index < 0 or size <= limit:
-                break
-            token = self.data[index]
-            if len(token.text) == 0:
-                del self.data[index]
-                index -= 1
-            elif token.text[-1].isalpha():
-                token.text = token.text[:-1]
-                size -= 1
-            else:
-                index -= 1
         return self
-
-    def trim_spaces(self, limit: int):
-        if limit < 0:
-            return self
-        index = len(self.data) - 1
-        size = self.len()
-        while True:
-            if index < 0 or size <= limit:
-                break
-            token = self.data[index]
-            if len(token.text) == 0:
-                del self.data[index]
-                index -= 1
-            elif token.text[-1] == " ":
-                token.text = token.text[:-1]
-                size -= 1
-            else:
-                index -= 1
-            
+    
+    def trim_spaces(self, limit: int):            
         return self
 
     def trim_end(self, width: int):
-        if width < 0:
-            return self
-        size = self.len()
-        index = len(self.data) - 1
-        while True:
-            if size <= width or index < 0:
-                break
-            token = self.data[index]
-            if len(token.text) == 0:
-                del self.data[index]
-                index -= 1
-            else:
-                token.text = token.text[:-1]
-                size -= 1
+        if self.len() > width:
+            self.data = self.data[:width]
         return self
 
     @staticmethod
@@ -1082,7 +1054,7 @@ class Fmt:
         lines, cols = Fmt.get_size()
         if y < 0 or y >= lines:
             return
-        for token in sentence.get_data():
+        for token in sentence.resume():
             fmt = token.fmt
             text = token.text
             if x < 0:
@@ -1326,7 +1298,7 @@ class Frame:
         if y_abs <= y_min or y_abs > y_max:
             return False
         count = 0
-        for token in sentence.get_data():
+        for token in sentence.resume():
             fmt, text = token.fmt, token.text
             if x_abs - 1 < x_min:  # Se o texto começa fora do frame
                 if x_abs + len(text) > x_min:  # mas ter parte dentro
@@ -3875,13 +3847,17 @@ class Unit:
 
         self.result: ExecutionResult = ExecutionResult.UNTESTED
 
-    def str(self) -> FF:
+    def str(self, pad: bool = True) -> FF:
         index = str(self.index).zfill(2)
         grade = str(self.grade_reduction).zfill(3)
         rep = "" if self.repeated is None else "[" + str(self.repeated) + "]"
         op = FF() + ExecutionResult.get_symbol(self.result) + " " + self.result.value
-        source = self.source.ljust(self.source_pad)
-        case = self.case.ljust(self.case_pad)
+        source = self.source
+        if pad:
+            source = self.source.ljust(self.source_pad)
+        case = self.case
+        if pad:
+            case = self.case.ljust(self.case_pad)
         return FF() + "(" + op + ")" + f"[{index}] GR:{grade} {source} ({case}) {rep}"
 
 
@@ -4605,22 +4581,6 @@ class Color:
         'W': '\033[47m', # Background white
     }
 
-    @staticmethod
-    def ljust(text: str, width: int) -> str:
-        return text + " " * (width - Color.len(text))
-
-    @staticmethod
-    def center(text: str, width: int, filler: str) -> str:
-        before = filler * ((width - Color.len(text)) // 2)
-        after = filler * ((width - Color.len(text) + 1) // 2)
-        return before + text + after
-
-
-    @staticmethod
-    def len(text):
-        return len(Color.remove_colors(text))
-
-
 def _colour(modifiers: str, text: str) -> str:
     if not Color.enabled:
         return text
@@ -4682,7 +4642,9 @@ class Report:
         
         if isinstance(ftext, str) or isinstance(ftext, TK):
             ftext = FF() + ftext
-        if isinstance(sep, str):
+        if sep is None:
+            sep = TK(" ")
+        elif isinstance(sep, str):
             sep = TK(sep)
         if left_border is None:
             left_border = sep
@@ -4719,7 +4681,8 @@ class Diff:
 
     @staticmethod
     def render_white(text: FF, color: str = "") -> Optional[FF]:
-        out = FF().add(text).replace(' ', TK(symbols.whitespace.text, color))
+        out = FF().add(text).replace(' ', TK(symbols.whitespace.text, color)).replace('\n', TK(symbols.newline.text, color))
+
         return out
 
     # create a string with both ta and tb side by side with a vertical bar in the middle
@@ -4730,8 +4693,8 @@ class Diff:
         data: List[FF] = []
 
         for i in range(upper):
-            a = ta[i] if i < len(ta) else "###############"
-            b = tb[i] if i < len(tb) else "###############"
+            a = ta[i] if i < len(ta) else FF("###############")
+            b = tb[i] if i < len(tb) else FF("###############")
             if len(a) < cut:
                 a = a.ljust(cut, TK(" "))
             # if len(a) > cut:
@@ -4750,27 +4713,28 @@ class Diff:
     def first_failure_diff(a_text: str, b_text: str, first_failure: int) -> List[FF]:
         def get(vet, index):
             if index < len(vet):
-                return vet[index]
+                return Diff.render_white(vet[index])
             return ""
 
-        a_render = a_text.splitlines()
-        b_render = b_text.splitlines()
+        a_render = a_text.splitlines(True)
+        b_render = b_text.splitlines(True)
 
         first_a = get(a_render, first_failure)
         first_b = get(b_render, first_failure)
-        greater = max(Color.len(first_a), Color.len(first_b))
+        greater = max(len(first_a), len(first_b))
 
         if first_failure > 0:
-            lbefore = Color.remove_colors(get(a_render, first_failure - 1))
-            greater = max(greater, Color.len(lbefore))
+            lbefore = get(a_render, first_failure - 1)
+            greater = max(greater, len(lbefore))
 
-        out_a, out_b = Diff.colorize_2_lines_diff(first_a, first_b)
+        out_a, out_b = Diff.colorize_2_lines_diff(FF(first_a), FF(first_b))
 
         output: List[FF] = []
 
-        output.append(symbols.vbar + " " + out_a.ljust(greater) + ("g", " (expected)"))
-        output.append(symbols.vbar + " " + out_b.ljust(greater) + ("r", " (received)"))
-        output.append(symbols.vbar + " " + Diff.make_line_arrow_up(first_a, first_b).ljust(greater) + ("b", " (mismatch)"))
+        output.append(FF().add(symbols.vbar).add(" ").add(out_a.ljust(greater)).addf("g", " (expected)"))
+        output.append(FF().add(symbols.vbar).add(" ").add(out_b.ljust(greater)).addf("r", " (received)"))
+        diff = Diff.make_line_arrow_up(first_a, first_b).ljust(greater)
+        output.append(FF().add(symbols.vbar).add(" ").add(diff).addf("b", " (mismatch)"))
         return output
 
     @staticmethod
@@ -4839,15 +4803,15 @@ class Diff:
         return a_output, b_output, first_failure
 
     @staticmethod
-    def mount_up_down_diff(unit: Unit) -> List[FF]:
+    def mount_up_down_diff(unit: Unit, curses=False) -> List[FF]:
         output: List[FF] = []
 
         string_input = unit.input
         string_expected = unit.output
         string_received = unit.user
 
-        # dotted = "-"
-
+        if string_received is None:
+            string_received = ""
         expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received)
         string_input_list = [FF().add(symbols.vbar.text).add(" ").add(line) for line in string_input.split("\n")][:-1]
         unequal = symbols.unequal.text
@@ -4855,23 +4819,24 @@ class Diff:
             unequal = symbols.vbar
         expected_lines, received_lines = Diff.put_left_equal(expected_lines, received_lines, unequal)
 
-        output.append(Report.centralize("", symbols.hbar, "╭"))
-        output.append(Report.centralize(unit.str(), " ", symbols.vbar))
-        output.append(Report.centralize(FF().addf("b", " INPUT "), symbols.hbar, "├"))
-        for line in string_input_list:
-            output.append(line)
+        if not curses:
+            output.append(Report.centralize("", symbols.hbar, "╭"))
+            output.append(Report.centralize(unit.str(), " ", symbols.vbar))
+            output.append(Report.centralize(FF().addf("b", " INPUT "), symbols.hbar, "├"))
+        else:
+            output.append(Report.centralize(FF().addf("b", " INPUT "), symbols.hbar, "╭"))
+
+        output += string_input_list
+            
         output.append(Report.centralize(FF().addf("g", " EXPECTED "), symbols.hbar, "├"))
-        for line in expected_lines:
-            output.append(line)
+        output += expected_lines
         # output.append("\n".join(expected_lines))
         output.append(Report.centralize(FF().addf("r", " RECEIVED "), symbols.hbar, "├"))
-        for line in received_lines:
-            output.append(line)
-        # output.append("\n".join(received_lines))
+        output +=  received_lines
+
         if unit.result != ExecutionResult.EXECUTION_ERROR:
-            output.append(Report.centralize(FF().add(" WHITESPACE "),  symbols.hbar, "├"))
-            for line in Diff.first_failure_diff(string_expected, string_received, first_failure):
-                output.append(line)
+            output.append(Report.centralize(FF().addf("b", " WHITESPACE "),  symbols.hbar, "├"))
+            output += Diff.first_failure_diff(string_expected, string_received, first_failure)
         output.append(Report.centralize("",  symbols.hbar, "╰"))
 
         return output
@@ -4912,39 +4877,44 @@ class Diff:
         return line
 
     @staticmethod
-    def mount_side_by_side_diff(unit: Unit) -> List[FF]:
+    def mount_side_by_side_diff(unit: Unit, curses=False) -> List[FF]:
 
         output: List[FF] = []
 
         string_input = unit.input
         string_expected = unit.output
         string_received = unit.user
-
+        if string_received is None:
+            string_received = ""
         # dotted = "-"
         # vertical_separator = symbols.vbar
         hbar = symbols.hbar
 
         expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received, True)
-        output.append(Report.centralize("", hbar, "╭"))
-        output.append(Report.centralize(unit.str(), " ", "│"))
+        if not curses:
+            output.append(Report.centralize("", hbar, "╭"))
+            output.append(Report.centralize(unit.str(), " ", "│"))
         input_headera = FF().addf("b", " INPUT ")
         input_headerb = FF().addf("b", " INPUT ")
-        output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, "┬", "├"))
+        if not curses:
+            output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, TK("┬"), TK("├")))
+        else:
+            output.append(Report.centralize(FF().addf("b", " INPUT "),  symbols.hbar, "╭"))
+            # output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, TK("┬"), TK("╭")))
+
         if string_input != "":
             lines = [FF(x) for x in string_input.split("\n")[:-1]]
-            for line in Diff.side_by_side(lines, lines):
-                output.append(line)
+            output += Diff.side_by_side(lines, lines)
         expected_header = FF().addf("g", " EXPECTED ")
         received_header = FF().addf("r", " RECEIVED ")
-        output.append(Diff.title_side_by_side(expected_header, received_header, hbar, "┼", "├"))
+        output.append(Diff.title_side_by_side(expected_header, received_header, hbar, TK("┼"), TK("├")))
         unequal = symbols.unequal
         if unit.result == ExecutionResult.EXECUTION_ERROR:
             unequal = symbols.vbar
-        for line in Diff.side_by_side(expected_lines, received_lines, unequal):
-            output.append(line)
+        output += Diff.side_by_side(expected_lines, received_lines, unequal)
         if unit.result != ExecutionResult.EXECUTION_ERROR:
-            output.append(Report.centralize(FF() + ("bold", " WHITESPACE "),  symbols.hbar, "├"))
-            output.append(Diff.first_failure_diff(string_expected, string_received, first_failure))
+            output.append(Report.centralize(FF().addf("b", " WHITESPACE "),  symbols.hbar, "├"))
+            output += Diff.first_failure_diff(string_expected, string_received, first_failure)
         output.append(Report.centralize("",  symbols.hbar, "╰"))
 
         return output
@@ -4977,16 +4947,6 @@ class CDiff:
         return ""
 
     def draw_top_line(self):
-        lines, cols = Fmt.get_size()
-        frame = Frame(0, 0).set_size(3, cols)
-
-        pwd = os.getcwd()
-        frame.set_header(FF().add(f" {pwd} ") , "<")
-        intro = self.wdir.resume()
-        frame.set_footer(intro)
-        frame.draw()
-
-        
         # construir mais uma solução
         if len(self.results) < len(self.wdir.unit_list):
             index = len(self.results)
@@ -4996,18 +4956,27 @@ class CDiff:
             color = self.get_color(unit)
             self.results.append(FF().addf(color, symbol.text))
 
+        lines, cols = Fmt.get_size()
+        frame = Frame(0, 0).set_size(3, cols)
+        pwd = os.getcwd()
+        intro = self.wdir.resume()
+        base = os.sep.join(pwd.split(os.sep)[:-1])
+        last = pwd.split(os.sep)[-1]
+        frame.set_header(FF().add(" ").add(base).add("/").addf("y", last).add("   ").add(intro).add(" ") , "<")
+        unit = self.wdir.unit_list[self.index]
+        frame.set_footer(FF().add(" ").add(unit.str(False)), "")
+        frame.draw()
+
         x = 0
         i = 0
         for i, symbol in enumerate(self.results):
             foco = "" if i != self.index else "B"
-            label = FF().addf(foco + "/kW", str(i).zfill(2)).add(symbol)
-            frame.write(0, x, label)
+            extrap = "" if not foco else ">"
+            extras = "" if not foco else "<"
+            label = FF().add(extrap).addf(foco + "/kW", str(i).zfill(2)).add(symbol).add(extras)
+            frame.write(0, x + 1 - len(extrap), label)
             x += 5
         
-        if self.end_processing() and not self.finished:
-            self.resumes = self.wdir.unit_list_resume()
-            self.finished = True
-
     def draw_bottom_line(self):
         cmds = (FF()
         .add(" ")
@@ -5018,24 +4987,21 @@ class CDiff:
         .addf("/", "Select").add("[0-9]")
         .add(" ")
         )
-
-    def draw_diff(self):
         lines, cols = Fmt.get_size()
-        frame = Frame(3, 0).set_size(lines - 3, cols).set_border_square()
-        frame.draw()
+        Fmt.write(lines - 1, 0, cmds.center(cols, TK(" ")))
+
+    def draw_diff(self, unit: Unit):
+        lines, cols = Fmt.get_size()
+        frame = Frame(2, -1).set_size(lines - 2, cols + 1).set_border_square()
+        # frame.draw()
         results = [unit.result for unit in self.wdir.unit_list]
         if ExecutionResult.EXECUTION_ERROR not in results and ExecutionResult.WRONG_OUTPUT not in results:
-            return
-        # lines, cols = Fmt.get_size()
-        # frame = Frame(3, -1).set_size(lines - 3, cols)
-        # frame.set_header(Sentence().add(self.resumes[self.index]))
-        # frame.draw()
-        
-        unit = self.wdir.unit_list[self.index]
+            return        
+        Report.set_terminal_size(cols)
         if self.param.is_up_down:
-            lines = Diff.mount_up_down_diff(unit)
+            lines = Diff.mount_up_down_diff(unit, curses=True)
         else:
-            lines = Diff.mount_side_by_side_diff(unit)
+            lines = Diff.mount_side_by_side_diff(unit, curses=True)
 
         for i, line in enumerate(lines):
             frame.write(i, 0, FF().add(line))
@@ -5049,7 +5015,9 @@ class CDiff:
         while not self.exit:
             Fmt.erase()
             self.draw_top_line()
-            self.draw_diff()
+            unit = self.wdir.unit_list[self.index]
+            self.draw_diff(unit)
+            self.draw_bottom_line()
             if not self.end_processing():
                 Fmt.refresh()
             else:

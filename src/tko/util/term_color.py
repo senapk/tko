@@ -23,22 +23,6 @@ class Color:
         'W': '\033[47m', # Background white
     }
 
-    @staticmethod
-    def ljust(text: str, width: int) -> str:
-        return text + " " * (width - Color.len(text))
-
-    @staticmethod
-    def center(text: str, width: int, filler: str) -> str:
-        before = filler * ((width - Color.len(text)) // 2)
-        after = filler * ((width - Color.len(text) + 1) // 2)
-        return before + text + after
-
-
-    @staticmethod
-    def len(text):
-        return len(Color.remove_colors(text))
-
-
 def _colour(modifiers: str, text: str) -> str:
     if not Color.enabled:
         return text

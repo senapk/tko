@@ -172,7 +172,7 @@ class Frame:
         if y_abs <= y_min or y_abs > y_max:
             return False
         count = 0
-        for token in sentence.get_data():
+        for token in sentence.resume():
             fmt, text = token.fmt, token.text
             if x_abs - 1 < x_min:  # Se o texto começa fora do frame
                 if x_abs + len(text) > x_min:  # mas ter parte dentro

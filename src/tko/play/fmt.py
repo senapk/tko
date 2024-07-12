@@ -102,7 +102,7 @@ class Fmt:
         lines, cols = Fmt.get_size()
         if y < 0 or y >= lines:
             return
-        for token in sentence.get_data():
+        for token in sentence.resume():
             fmt = token.fmt
             text = token.text
             if x < 0:

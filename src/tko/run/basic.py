@@ -82,13 +82,17 @@ class Unit:
 
         self.result: ExecutionResult = ExecutionResult.UNTESTED
 
-    def str(self) -> FF:
+    def str(self, pad: bool = True) -> FF:
         index = str(self.index).zfill(2)
         grade = str(self.grade_reduction).zfill(3)
         rep = "" if self.repeated is None else "[" + str(self.repeated) + "]"
         op = FF() + ExecutionResult.get_symbol(self.result) + " " + self.result.value
-        source = self.source.ljust(self.source_pad)
-        case = self.case.ljust(self.case_pad)
+        source = self.source
+        if pad:
+            source = self.source.ljust(self.source_pad)
+        case = self.case
+        if pad:
+            case = self.case.ljust(self.case_pad)
         return FF() + "(" + op + ")" + f"[{index}] GR:{grade} {source} ({case}) {rep}"
 
 

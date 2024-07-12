@@ -6,7 +6,7 @@ from ..util.symbols import symbols
 from ..util.ftext import FF, TK
 from .basic import Unit, ExecutionResult
 from .report import Report
-from icecream import ic
+from icecream import ic # type: ignore
 
 class Diff:
 
@@ -29,7 +29,8 @@ class Diff:
 
     @staticmethod
     def render_white(text: FF, color: str = "") -> Optional[FF]:
-        out = FF().add(text).replace(' ', TK(symbols.whitespace.text, color))
+        out = FF().add(text).replace(' ', TK(symbols.whitespace.text, color)).replace('\n', TK(symbols.newline.text, color))
+
         return out
 
     # create a string with both ta and tb side by side with a vertical bar in the middle
@@ -40,8 +41,8 @@ class Diff:
         data: List[FF] = []
 
         for i in range(upper):
-            a = ta[i] if i < len(ta) else "###############"
-            b = tb[i] if i < len(tb) else "###############"
+            a = ta[i] if i < len(ta) else FF("###############")
+            b = tb[i] if i < len(tb) else FF("###############")
             if len(a) < cut:
                 a = a.ljust(cut, TK(" "))
             # if len(a) > cut:
@@ -60,27 +61,28 @@ class Diff:
     def first_failure_diff(a_text: str, b_text: str, first_failure: int) -> List[FF]:
         def get(vet, index):
             if index < len(vet):
-                return vet[index]
+                return Diff.render_white(vet[index])
             return ""
 
-        a_render = a_text.splitlines()
-        b_render = b_text.splitlines()
+        a_render = a_text.splitlines(True)
+        b_render = b_text.splitlines(True)
 
         first_a = get(a_render, first_failure)
         first_b = get(b_render, first_failure)
-        greater = max(Color.len(first_a), Color.len(first_b))
+        greater = max(len(first_a), len(first_b))
 
         if first_failure > 0:
-            lbefore = Color.remove_colors(get(a_render, first_failure - 1))
-            greater = max(greater, Color.len(lbefore))
+            lbefore = get(a_render, first_failure - 1)
+            greater = max(greater, len(lbefore))
 
-        out_a, out_b = Diff.colorize_2_lines_diff(first_a, first_b)
+        out_a, out_b = Diff.colorize_2_lines_diff(FF(first_a), FF(first_b))
 
         output: List[FF] = []
 
-        output.append(symbols.vbar + " " + out_a.ljust(greater) + ("g", " (expected)"))
-        output.append(symbols.vbar + " " + out_b.ljust(greater) + ("r", " (received)"))
-        output.append(symbols.vbar + " " + Diff.make_line_arrow_up(first_a, first_b).ljust(greater) + ("b", " (mismatch)"))
+        output.append(FF().add(symbols.vbar).add(" ").add(out_a.ljust(greater)).addf("g", " (expected)"))
+        output.append(FF().add(symbols.vbar).add(" ").add(out_b.ljust(greater)).addf("r", " (received)"))
+        diff = Diff.make_line_arrow_up(first_a, first_b).ljust(greater)
+        output.append(FF().add(symbols.vbar).add(" ").add(diff).addf("b", " (mismatch)"))
         return output
 
     @staticmethod
@@ -149,15 +151,15 @@ class Diff:
         return a_output, b_output, first_failure
 
     @staticmethod
-    def mount_up_down_diff(unit: Unit) -> List[FF]:
+    def mount_up_down_diff(unit: Unit, curses=False) -> List[FF]:
         output: List[FF] = []
 
         string_input = unit.input
         string_expected = unit.output
         string_received = unit.user
 
-        # dotted = "-"
-
+        if string_received is None:
+            string_received = ""
         expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received)
         string_input_list = [FF().add(symbols.vbar.text).add(" ").add(line) for line in string_input.split("\n")][:-1]
         unequal = symbols.unequal.text
@@ -165,23 +167,24 @@ class Diff:
             unequal = symbols.vbar
         expected_lines, received_lines = Diff.put_left_equal(expected_lines, received_lines, unequal)
 
-        output.append(Report.centralize("", symbols.hbar, "╭"))
-        output.append(Report.centralize(unit.str(), " ", symbols.vbar))
-        output.append(Report.centralize(FF().addf("b", " INPUT "), symbols.hbar, "├"))
-        for line in string_input_list:
-            output.append(line)
+        if not curses:
+            output.append(Report.centralize("", symbols.hbar, "╭"))
+            output.append(Report.centralize(unit.str(), " ", symbols.vbar))
+            output.append(Report.centralize(FF().addf("b", " INPUT "), symbols.hbar, "├"))
+        else:
+            output.append(Report.centralize(FF().addf("b", " INPUT "), symbols.hbar, "╭"))
+
+        output += string_input_list
+            
         output.append(Report.centralize(FF().addf("g", " EXPECTED "), symbols.hbar, "├"))
-        for line in expected_lines:
-            output.append(line)
+        output += expected_lines
         # output.append("\n".join(expected_lines))
         output.append(Report.centralize(FF().addf("r", " RECEIVED "), symbols.hbar, "├"))
-        for line in received_lines:
-            output.append(line)
-        # output.append("\n".join(received_lines))
+        output +=  received_lines
+
         if unit.result != ExecutionResult.EXECUTION_ERROR:
-            output.append(Report.centralize(FF().add(" WHITESPACE "),  symbols.hbar, "├"))
-            for line in Diff.first_failure_diff(string_expected, string_received, first_failure):
-                output.append(line)
+            output.append(Report.centralize(FF().addf("b", " WHITESPACE "),  symbols.hbar, "├"))
+            output += Diff.first_failure_diff(string_expected, string_received, first_failure)
         output.append(Report.centralize("",  symbols.hbar, "╰"))
 
         return output
@@ -222,39 +225,44 @@ class Diff:
         return line
 
     @staticmethod
-    def mount_side_by_side_diff(unit: Unit) -> List[FF]:
+    def mount_side_by_side_diff(unit: Unit, curses=False) -> List[FF]:
 
         output: List[FF] = []
 
         string_input = unit.input
         string_expected = unit.output
         string_received = unit.user
-
+        if string_received is None:
+            string_received = ""
         # dotted = "-"
         # vertical_separator = symbols.vbar
         hbar = symbols.hbar
 
         expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received, True)
-        output.append(Report.centralize("", hbar, "╭"))
-        output.append(Report.centralize(unit.str(), " ", "│"))
+        if not curses:
+            output.append(Report.centralize("", hbar, "╭"))
+            output.append(Report.centralize(unit.str(), " ", "│"))
         input_headera = FF().addf("b", " INPUT ")
         input_headerb = FF().addf("b", " INPUT ")
-        output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, "┬", "├"))
+        if not curses:
+            output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, TK("┬"), TK("├")))
+        else:
+            output.append(Report.centralize(FF().addf("b", " INPUT "),  symbols.hbar, "╭"))
+            # output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, TK("┬"), TK("╭")))
+
         if string_input != "":
             lines = [FF(x) for x in string_input.split("\n")[:-1]]
-            for line in Diff.side_by_side(lines, lines):
-                output.append(line)
+            output += Diff.side_by_side(lines, lines)
         expected_header = FF().addf("g", " EXPECTED ")
         received_header = FF().addf("r", " RECEIVED ")
-        output.append(Diff.title_side_by_side(expected_header, received_header, hbar, "┼", "├"))
+        output.append(Diff.title_side_by_side(expected_header, received_header, hbar, TK("┼"), TK("├")))
         unequal = symbols.unequal
         if unit.result == ExecutionResult.EXECUTION_ERROR:
             unequal = symbols.vbar
-        for line in Diff.side_by_side(expected_lines, received_lines, unequal):
-            output.append(line)
+        output += Diff.side_by_side(expected_lines, received_lines, unequal)
         if unit.result != ExecutionResult.EXECUTION_ERROR:
-            output.append(Report.centralize(FF() + ("bold", " WHITESPACE "),  symbols.hbar, "├"))
-            output.append(Diff.first_failure_diff(string_expected, string_received, first_failure))
+            output.append(Report.centralize(FF().addf("b", " WHITESPACE "),  symbols.hbar, "├"))
+            output += Diff.first_failure_diff(string_expected, string_received, first_failure)
         output.append(Report.centralize("",  symbols.hbar, "╰"))
 
         return output
