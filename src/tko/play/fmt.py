@@ -1,5 +1,5 @@
 import curses
-from typing import Dict
+from typing import Dict, Tuple
 from ..util.ftext import FF
 from .style import Style
 
@@ -168,7 +168,7 @@ class Fmt:
         Fmt.__scr.refresh()
 
     @staticmethod
-    def get_size():
+    def get_size() -> Tuple[int, int]:
         if Fmt.__scr is None:
             raise Exception("Fmt.__scr não foi inicializado")
         return Fmt.__scr.getmaxyx()

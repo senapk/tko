@@ -80,7 +80,7 @@ class MRep:
 
 class Main:
     @staticmethod
-    def run(args):
+    def prun(args):
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         if args.quiet:
@@ -107,8 +107,20 @@ class Main:
         elif args.down:
             param.set_up_down(True)
         run = Run(args.target_list, args.cmd, param)
-        if args.curses:
-            run.set_curses()
+        run.execute()
+    
+    @staticmethod
+    def run(args):
+        PatternLoader.pattern = args.pattern
+        param = Param.Basic().set_index(args.index)
+        geral = SettingsParser().load_settings().geral
+        updown = geral.get(geral.diffdown)
+        param.set_up_down(updown)
+
+        if args.filter:
+            param.set_filter(True)
+        run = Run(args.target_list, args.cmd, param)
+        run.set_curses()
         run.execute()
 
     @staticmethod
@@ -210,6 +222,7 @@ class Parser:
         self.add_parent_basic()
         self.add_parent_manip()
         self.add_parser_run()
+        self.add_parser_prun()
         self.add_parser_build()
         self.add_parser_down()
         self.add_parser_config()
@@ -243,11 +256,17 @@ class Parser:
         self.parent_manip = parent_manip
 
     def add_parser_run(self):
-        parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='run with test cases.')
+        parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='run with test cases using curses.')
+        parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
+        parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
+        parser_r.add_argument("--cmd", type=str, help="bash command to run code")
+        parser_r.set_defaults(func=Main.run)
+
+    def add_parser_prun(self):
+        parser_r = self.subparsers.add_parser('go', parents=[self.parent_basic], help='run with test cases.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
         parser_r.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures')
-        parser_r.add_argument('--curses', '-C', action='store_true', help='Diff using curses mode')
         parser_r.add_argument("--cmd", type=str, help="bash command to run code")
 
         group_n = parser_r.add_mutually_exclusive_group()
@@ -258,7 +277,7 @@ class Parser:
         group = parser_r.add_mutually_exclusive_group()
         group.add_argument('--down', '-d', action='store_true', help="diff mode up-to-down.")
         group.add_argument('--side', '-s', action='store_true', help="diff mode side-by-side.")
-        parser_r.set_defaults(func=Main.run)
+        parser_r.set_defaults(func=Main.prun)
 
     def add_parser_build(self):
         parser_b = self.subparsers.add_parser('build', parents=[self.parent_manip], help='build a test target.')

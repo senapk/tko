@@ -179,7 +179,8 @@ class Diff:
         output.append(Report.centralize(FF().addf("g", " EXPECTED "), symbols.hbar, "├"))
         output += expected_lines
         # output.append("\n".join(expected_lines))
-        output.append(Report.centralize(FF().addf("r", " RECEIVED "), symbols.hbar, "├"))
+        rcolor = "r" if string_expected != string_received else "g"
+        output.append(Report.centralize(FF().addf(rcolor, " RECEIVED "), symbols.hbar, "├"))
         output +=  received_lines
 
         if unit.result != ExecutionResult.EXECUTION_ERROR:
@@ -254,7 +255,8 @@ class Diff:
             lines = [FF(x) for x in string_input.split("\n")[:-1]]
             output += Diff.side_by_side(lines, lines)
         expected_header = FF().addf("g", " EXPECTED ")
-        received_header = FF().addf("r", " RECEIVED ")
+        rcolor = "r" if string_expected != string_received else "g"
+        received_header = FF().addf(rcolor, " RECEIVED ")
         output.append(Diff.title_side_by_side(expected_header, received_header, hbar, TK("┼"), TK("├")))
         unequal = symbols.unequal
         if unit.result == ExecutionResult.EXECUTION_ERROR:
