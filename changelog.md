@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.10.3
+  - add: run in curses mode
 - 0.9.93
   - add: down working with curses and with print
 - 0.9.7

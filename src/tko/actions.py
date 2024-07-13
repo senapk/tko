@@ -143,6 +143,8 @@ class Run:
         return True
 
     def missing_target(self) -> bool:
+        if self.wdir is None:
+            return False
         # no solver and no test cases
         if self.wdir.solver is None and len(self.wdir.unit_list) == 0:
             term_print(FF().addf("", "fail: ") + "No solver or tests found.")
@@ -150,6 +152,9 @@ class Run:
         return False
     
     def list_mode(self) -> bool:
+        if self.wdir is None:
+            return False
+
         # list mode
         if self.wdir.solver is None and len(self.wdir.unit_list) > 0:
             term_print(Report.centralize(" No solvers found. Listing Test Cases ", TK("╌")), flush=True)
@@ -159,10 +164,12 @@ class Run:
         return False
 
     def free_run(self) -> bool:
+        if self.wdir is None:
+            return False
         # free run mode
         if self.wdir.solver is not None and len(self.wdir.unit_list) == 0:
             t = Report.centralize(FF() + " No test cases found. Running: " + self.wdir.solver.executable + " ", symbols.hbar)
-            print(t, flush=True)
+            term_print(t, flush=True)
             # force print to terminal
             Runner.free_run(self.wdir.solver.executable)
             return True
