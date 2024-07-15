@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.11.0
+  - add: tests using pytest
+  - run with curses polished
 - 0.10.3
   - add: run in curses mode
 - 0.9.93
