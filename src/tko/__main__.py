@@ -178,7 +178,11 @@ class Main:
         if not action:
             action = True
             print(sp.get_settings_file())
-            print(str(settings.geral))
+            print("Diff mode: {}".format("SIDE" if settings.geral.get(GeralSettings.diffdown) else "DOWN"))
+            print("Encoding mode: {}".format("ASCII" if settings.geral.get(GeralSettings.ascii) else "UNICODE"))
+            print("Color mode: {}".format("MONOCHROMATIC" if not settings.geral.get(GeralSettings.color) else "COLORED"))
+            value = settings.geral.get(GeralSettings.lang)
+            print("Default language extension: {}".format("Always ask" if value == "" else value))
 
         sp.save_settings()
 

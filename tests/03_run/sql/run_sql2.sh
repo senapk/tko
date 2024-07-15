@@ -1,3 +1,3 @@
 #!/bin/bash
 
-tko -m run create.sql student.sql
+tko -m go create.sql student.sql

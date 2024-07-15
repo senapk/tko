@@ -283,41 +283,27 @@ Após fazer uma parte do código, executamos os testes novamente. Agora ele comp
 tko run Solver.java cases.tio -i 5
 ```
 
-- Você pode mudar o modo padrão de ver o `diff` no `tko run` com:
-  - Um em cima do outro (`-u` ou `--updown`)
-  - Um ao lado do outro (`-s` ou `--sideby`)
-
-```bash
-tko run Solver.java cases.tio -u
-```
-
-- Através do `tko config`, você pode trocar configurações default para:
-  - o padrão do `diff`.
-  - esquema de cores: monocromático e colorido.
-  - tipo de caracteres: entre ascii e unicode.
-  - a linguagem padrão de download dos rascunhos.
-
 ```bash
 $ tko config --help
 options:
   -h, --help          show this help message and exit
-  --show, -s          show current settings.
   --ascii             set ascii mode.
   --unicode           set unicode mode.
   --color             set colored mode.
   --mono              set mono mode.
   --side              set side_by_side diff mode.
-  --updown            set up_to_down diff mode.
+  --down              set up_to_down diff mode.
   --lang ext, -l ext  set default language extension.
   --ask               ask language extension every time.
+  --root              set root path for tko down
 ```
 
-Vou definir a cor para monocromático, `diff updown` e a linguagem padrão para `js`.
+Vou definir a cor para monocromático, `diff down` e a linguagem padrão para `js`.
 
 ```bash
 $ tko config --mono
 Color mode now is: MONOCHROMATIC
-$ tko config --updown
+$ tko config --down
 Diff mode now is: UP_DOWN
 $ tko config -l js
 Default language extension now is: js

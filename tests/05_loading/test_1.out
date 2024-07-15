@@ -1,0 +1,24 @@
+fail: No solver or tests found.
+fail: cases.t not found
+fail: cases.t not found
+fail: solver.p not found
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌ No solvers found. Listing Test Cases ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+base:[cases.tio(01)] prog:[]
+(» untested_)[00] GR:100 cases.tio ()
+─────────────── No test cases found. Running: python ./solver.py ──────────────
+─────────────── No test cases found. Running: python ./solver.py ──────────────
+══════════════════════ Running solver against test cases ══════════════════════
+=> base:[cases.tio(01)] prog:[solver.py] [ω]
+(ω wrong_out)[00] GR:100 cases.tio ()
+╭──────────────────────────────────────────────────────────────────────────────
+│                    (ω wrong_out)[00] GR:100 cases.tio ()                     
+├─────────────────────────────────── INPUT ────────────────────────────────────
+├────────────────────────────────── EXPECTED ──────────────────────────────────
+├ 1
+├────────────────────────────────── RECEIVED ──────────────────────────────────
+├ 12
+├───────────────────────────────── WHITESPACE ─────────────────────────────────
+│ 1↵  (expected)
+│ 12↵ (received)
+│  ↑  (mismatch)
+╰──────────────────────────────────────────────────────────────────────────────

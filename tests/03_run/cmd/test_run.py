@@ -5,7 +5,7 @@ from tko.__main__ import exec, Parser
 
 out_1 = """
 ═══════ Running solver against test cases ═══════
-base:[cases.tio(03)] prog:[free cmd] [✓ ✓ ✓]
+=> base:[cases.tio(03)] prog:[free cmd] [✓ ✓ ✓]
 """[1:]
 
 class Test:
@@ -25,6 +25,7 @@ class Test:
         exec(parser, args)
         capture = capsys.readouterr()
         out = capture.out
+
         assert out == out_1
         self.restore()
 

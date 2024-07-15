@@ -1,1 +1,0 @@
-tko -m run cases.tio draft.ts -a
