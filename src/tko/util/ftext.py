@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import List,  Any, Tuple, Union
 
 
-class TK:
+class Token:
     def __init__(self, text: str = "", fmt: str = "", ):
         if not isinstance(text, str):
             raise TypeError("text must be a string")
@@ -10,7 +10,7 @@ class TK:
         self.fmt = fmt
 
     def __eq__(self, other: Any):
-        if not isinstance(other, TK):
+        if not isinstance(other, Token):
             return False
         return self.text == other.text and self.fmt == other.fmt
 
@@ -18,27 +18,27 @@ class TK:
         return len(self.text)
     
     def __add__(self, other: Any):
-        return FF().add(self).add(other)
+        return Sentence().add(self).add(other)
 
     def __str__(self):
         return f"('{self.text}', '{self.fmt}')"
 
-def TR(fmt: str, text: str) -> TK:
-    return TK(text, fmt)
+def TR(fmt: str, text: str) -> Token:
+    return Token(text, fmt)
 
-class FF:
+class Sentence:
     def __init__(self, value: Union[str, Tuple[str, str]] = ""):
-        self.data: List[TK] = []
+        self.data: List[Token] = []
         self.add(value)
     
-    def setup(self, data: List[TK]):
+    def setup(self, data: List[Token]):
         self.data = []
         for d in data:
             for c in d.text:
-                self.data.append(TK(c, d.fmt))
+                self.data.append(Token(c, d.fmt))
         return self
 
-    def __getitem__(self, index: int) -> TK:
+    def __getitem__(self, index: int) -> Token:
         if index < 0 or index >= len(self):
             raise IndexError("index out of range")
         return self.data[index]
@@ -47,7 +47,7 @@ class FF:
         return self.len()
     
     def __add__(self, other: Any):
-        return FF().add(self).add(other)
+        return Sentence().add(self).add(other)
 
     def __eq__(self, other: Any):
         if len(self.data) != len(other.data):
@@ -59,18 +59,18 @@ class FF:
 
 
     def __str__(self):
-        return f"{"".join([str(d) for d in self.resume()])}"
+        return "".join([str(d) for d in self.resume()])
     
-    def resume(self) -> List[TK]:
+    def resume(self) -> List[Token]:
         if len(self.data) == 0:
             return []
         
-        new_data: List[TK] = [TK("", self.data[0].fmt)]
+        new_data: List[Token] = [Token("", self.data[0].fmt)]
         for d in self.data:
             if d.fmt == new_data[-1].fmt:
                 new_data[-1].text += d.text
             else:
-                new_data.append(TK())
+                new_data.append(Token())
                 new_data[-1].text = d.text
                 new_data[-1].fmt = d.fmt
         return new_data
@@ -85,7 +85,7 @@ class FF:
 
 
     # search for a value inside the tokens and replace it with a new value and fmt
-    def replace(self, old: str, token: TK):
+    def replace(self, old: str, token: Token):
         old_list: List[str] = [c for c in old]
         new_list = [c for c in token.text]
         new_list.reverse()
@@ -101,28 +101,28 @@ class FF:
                 for _ in range(len(old_list)):
                     del self.data[index]
                 for c in new_list:
-                    self.data.insert(index, TK(c, token.fmt))
+                    self.data.insert(index, Token(c, token.fmt))
                 index += len(new_list)
             else:
                 index += 1
         return self
 
-    def plus(self, qtd: int) -> FF:
-        output = FF()
+    def plus(self, qtd: int) -> Sentence:
+        output = Sentence()
         for i in range(qtd):
             output.add(self)
         return output
 
-    def add(self, value: Union[str, TK, Tuple[str, str], FF]):
+    def add(self, value: Union[str, Token, Tuple[str, str], Sentence]):
         if isinstance(value, str):
             if value != "":
                 for c in value:
-                    self.data.append(TK(c))
-        elif isinstance(value, TK):
+                    self.data.append(Token(c))
+        elif isinstance(value, Token):
             if value.text != "":
                 for c in value.text:
-                    self.data.append(TK(c, value.fmt))
-        elif isinstance(value, FF):
+                    self.data.append(Token(c, value.fmt))
+        elif isinstance(value, Sentence):
             self.data += value.data
         else:
             raise TypeError("unsupported type '{}'".format(type(value)))
@@ -131,36 +131,36 @@ class FF:
     def addf(self, fmt: str, text: Any):
         if not isinstance(text, str):
             raise TypeError("fmt must be a string")
-        self.add(TK(text, fmt))
+        self.add(Token(text, fmt))
         return self
 
-    def ljust(self, width: int, filler: TK = TK(" ")):
+    def ljust(self, width: int, filler: Token = Token(" ")):
         total = self.len()
         char = " " if filler.text == "" else filler.text[0]
         fmt = filler.fmt
         if total < width:
-            suffix = [TK(char, fmt) for _ in range(width - total)]
+            suffix = [Token(char, fmt) for _ in range(width - total)]
             self.data = self.data + suffix
         return self
     
-    def rjust(self, width: int, filler: TK = TK(" ")):
+    def rjust(self, width: int, filler: Token = Token(" ")):
         total = self.len()
         char = " " if filler.text == "" else filler.text[0]
         fmt = filler.fmt
         if total < width:
-            prefix = [TK(char, fmt) for _ in range(width - total)]
+            prefix = [Token(char, fmt) for _ in range(width - total)]
             self.data = prefix + self.data
         return self
     
-    def center(self, width: int, filler: TK):
+    def center(self, width: int, filler: Token):
         total = self.len()
         char = " " if filler.text == "" else filler.text[0]
         fmt = filler.fmt
         if total < width:
             left = (width - total) // 2
             right = width - total - left
-            prefix = [TK(char, fmt) for _ in range(left)]
-            suffix = [TK(char, fmt) for _ in range(right)]
+            prefix = [Token(char, fmt) for _ in range(left)]
+            suffix = [Token(char, fmt) for _ in range(right)]
             self.data = prefix + self.data + suffix
         return self
     
@@ -176,7 +176,7 @@ class FF:
     def trim_alfa(self, limit: int):
         return self
     
-    def trim_spaces(self, limit: int):            
+    def trim_spaces(self, limit: int):
         return self
 
     def trim_end(self, width: int):
@@ -186,12 +186,12 @@ class FF:
 
     @staticmethod
     def build_bar(text: str, percent: float, length: int, fmt_true: str = "/kC",
-                  fmt_false: str = "/kY") -> FF:
+                  fmt_false: str = "/kY") -> Sentence:
         prefix = (length - len(text)) // 2
         suffix = length - len(text) - prefix
         text = " " * prefix + text + " " * suffix
         total = length
         full_line = text
         done_len = int(percent * total)
-        xp_bar = FF() + (full_line[:done_len], fmt_true) + (full_line[done_len:], fmt_false)
+        xp_bar = Token(full_line[:done_len], fmt_true) + Token(full_line[done_len:], fmt_false)
         return xp_bar

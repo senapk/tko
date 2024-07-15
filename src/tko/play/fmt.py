@@ -1,6 +1,6 @@
 import curses
 from typing import Dict, Tuple
-from ..util.ftext import FF
+from ..util.ftext import Sentence
 from .style import Style
 
 class Fmt:
@@ -96,7 +96,7 @@ class Fmt:
             stdscr.attroff(curses.A_UNDERLINE)
 
     @staticmethod
-    def write(y: int, x: int, sentence: FF):
+    def write(y: int, x: int, sentence: Sentence):
 
         # Escreve um texto na tela com cores diferentes
         lines, cols = Fmt.get_size()
@@ -117,10 +117,10 @@ class Fmt:
 
     @staticmethod
     def write_text(y: int, x: int, text: str):
-        Fmt.write(y, x, FF().add(text))
+        Fmt.write(y, x, Sentence().add(text))
 
     @staticmethod
-    def debug(y, x, text: FF):
+    def debug(y, x, text: Sentence):
         Fmt.write(y, x, text)
         Fmt.getch()
 
@@ -139,15 +139,15 @@ class Fmt:
     #     return input_str
 
     @staticmethod
-    def get_percent(value, pad = 0) -> FF:
+    def get_percent(value, pad = 0) -> Sentence:
         text = f"{str(value)}%".rjust(pad)
         if value == 100:
-            return FF().addf(Style.complete, "100%")
+            return Sentence().addf(Style.complete, "100%")
         if value >= 70:
-            return FF().addf(Style.required, text)
+            return Sentence().addf(Style.required, text)
         if value == 0:
-            return FF().addf(Style.nothing, text)
-        return FF().addf(Style.started, text)
+            return Sentence().addf(Style.nothing, text)
+        return Sentence().addf(Style.started, text)
     
     @staticmethod
     def getch():

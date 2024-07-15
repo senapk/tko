@@ -1,4 +1,4 @@
-from .ftext import FF
+from .ftext import Sentence
 from typing import Union
 
 class Color:
@@ -26,7 +26,6 @@ class Color:
 def _colour(modifiers: str, text: str) -> str:
     if not Color.enabled:
         return text
-    
     output = ''
     for m in modifiers:
         val = Color.terminal_styles.get(m, '')
@@ -35,13 +34,13 @@ def _colour(modifiers: str, text: str) -> str:
     output += text + Color.terminal_styles.get('.', "")
     return output
 
-def term_colour(ftext: FF) -> str:
+def term_colour(ftext: Sentence) -> str:
     output = ""
     for token in ftext.data:
         output += _colour(token.fmt, token.text)
     return output
 
-def term_print(ftext: Union[str, FF], **kwargs):
+def term_print(ftext: Union[str, Sentence], **kwargs):
     if isinstance(ftext, str):
         print(ftext, **kwargs)
     else:

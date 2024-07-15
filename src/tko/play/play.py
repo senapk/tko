@@ -8,7 +8,7 @@ from ..game.graph import Graph
 from typing import List, Any, Dict
 from ..settings.settings import RepSettings, GeralSettings
 from ..down import Down
-from ..util.ftext import FF, TK, TR
+from ..util.ftext import Sentence, Token, TR
 from .style import Style
 from .fmt import Fmt
 from .frame import Frame
@@ -116,7 +116,7 @@ class Play:
                 .put_text("Linguagem alterada para " + value)
                 .put_text("Você pode mudar a linguagem")
                 .put_text("de programação apertando")
-                .put_sentence(FF() + TR("G", "l"))
+                .put_sentence(Sentence() + TR("G", "l"))
                 .warning()
             )
 
@@ -191,14 +191,14 @@ class Play:
         ).set_graph_ext(self.graph_ext).generate()
         lines, _cols = Fmt.get_size()
         if self.first_loop:
-            text = FF().add(f"Grafo gerado em graph{self.graph_ext}")
+            text = Sentence().add(f"Grafo gerado em graph{self.graph_ext}")
             Fmt.write(lines - 1, 0, text)
 
     def down_task(self, rootdir, obj: Any, ext: str):
         if isinstance(obj, Task) and obj.key in obj.title:
             task: Task = obj
             down_frame = (
-                Floating().warning().set_header(FF().add(" Baixando tarefa "))
+                Floating().warning().set_header(Sentence().add(" Baixando tarefa "))
             )
             down_frame.put_text(f"tko down {self.rep_alias} {task.key} -l {ext}")
             self.fman.add_input(down_frame)
@@ -230,8 +230,8 @@ class Play:
                 )
 
     @staticmethod
-    def build_list_sentence(items: List[str]) -> FF:
-        _help = FF()
+    def build_list_sentence(items: List[str]) -> Sentence:
+        _help = Sentence()
         try:
             for x in items:
                 label, key = x.split("[")
@@ -253,9 +253,9 @@ class Play:
 
     def show_main_bar(self, frame: Frame):
         frame.set_header(
-            FF().add("{").addf("/", f"Tarefas lang:{self.rep.lang}").add("}")
+            Sentence().add("{").addf("/", f"Tarefas lang:{self.rep.lang}").add("}")
         )
-        frame.set_footer(FF().add(self.build_bar_links()), ">", "{", "}")
+        frame.set_footer(Sentence().add(self.build_bar_links()), ">", "{", "}")
         frame.draw()
 
         dy, dx = frame.get_inner()
@@ -275,9 +275,9 @@ class Play:
 
         done = "/k" + Flags.main_done.get_value()
         todo = "/k" + Flags.main_todo.get_value()
-        total_bar = FF.build_bar(text, total_perc / 100, dx - 2, done, todo)
-        frame_xp.set_header(FF().add("{").addf("/", "Skills").add("}"), "^")
-        frame_xp.set_footer(FF().add(total_bar), "^")
+        total_bar = Sentence.build_bar(text, total_perc / 100, dx - 2, done, todo)
+        frame_xp.set_header(Sentence().add("{").addf("/", "Skills").add("}"), "^")
+        frame_xp.set_footer(Sentence().add(total_bar), "^")
         frame_xp.draw()
 
         total, obt = self.game.get_skills_resume()
@@ -289,7 +289,7 @@ class Play:
                 text = f"{skill}:{obt[skill]}/{value}"
 
             perc = obt[skill] / value
-            skill_bar = FF.build_bar(
+            skill_bar = Sentence.build_bar(
                 text,
                 perc,
                 dx - 2,
@@ -300,7 +300,7 @@ class Play:
             index += 2
 
     def show_flags_bar(self, frame: Frame):
-        frame.set_header(FF().add("{").addf("/", "Flags").add("}"), "^")
+        frame.set_header(Sentence().add("{").addf("/", "Flags").add("}"), "^")
         frame.draw()
 
         for flag in self.flagsman.left:
@@ -308,7 +308,7 @@ class Play:
                 frame.print(0, flag.get_toggle_sentence(7))
 
     def show_color_bar(self, frame: Frame):
-        frame.set_header(FF().add("{").addf("/", "Cores").add("}"), "^")
+        frame.set_header(Sentence().add("{").addf("/", "Cores").add("}"), "^")
         frame.draw()
 
         for flag in self.flagsman.left:
@@ -318,7 +318,7 @@ class Play:
     def show_help(self):
         _help: Floating = Floating().warning().set_ljust_text()
         self.fman.add_input(_help)
-        _help.set_header(FF().addf("/", " Help "))
+        _help.set_header(Sentence().addf("/", " Help "))
         _help.put_text("Controles")
         _help.put_text("  setas ou wasd   - Para navegar entre os elementos")
         _help.put_text("  enter ou espaço - Marcar ou desmarcar, expandir ou contrair")
@@ -366,7 +366,7 @@ class Play:
         # frame.set_footer(_help, "^")
         frame.draw()
 
-        content = FF().add(" ")
+        content = Sentence().add(" ")
         content.addf(Flags.cmds.get_value(), f"({self.rep_alias.upper()})").add(" ")
 
         for f in self.flagsman.top:
@@ -390,7 +390,7 @@ class Play:
         size = max(15, dx - content.len() - 1)
         done = "/k" + Flags.main_done.get_value()
         todo = "/k" + Flags.main_todo.get_value()
-        xp_bar = FF.build_bar(text, percent, size, done, todo).add(" ")
+        xp_bar = Sentence.build_bar(text, percent, size, done, todo).add(" ")
 
         limit = dx - xp_bar.len()
         content.trim_spaces(limit)
@@ -478,9 +478,9 @@ class Play:
                 f.put_text("")
                 f.put_text(self.flag.get_description())
                 if self.flag.is_true():
-                    f.put_sentence(FF().addf("G", "ligado"))
+                    f.put_sentence(Sentence().addf("G", "ligado"))
                 else:
-                    f.put_sentence(FF().addf("R", "desligado"))
+                    f.put_sentence(Sentence().addf("R", "desligado"))
                 f.put_text("")
                 self.fman.add_input(f)
 

@@ -185,7 +185,7 @@ class Main:
     @staticmethod
     def play(args):
         if args.repo:
-            print("playing repo", args.repo)
+            print("Playing course", args.repo)
 
             while True:
                 sp = SettingsParser()
@@ -212,7 +212,7 @@ class Main:
 
 class Parser:
     def __init__(self):
-        self.parser = argparse.ArgumentParser(prog='tko', description=f'tko version {__version__}')        
+        self.parser: argparse.ArgumentParser = argparse.ArgumentParser(prog='tko', description=f'tko version {__version__}')        
         self.subparsers = self.parser.add_subparsers(title='subcommands', help='help for subcommand.')
 
         self.parent_manip = None
@@ -347,48 +347,47 @@ class Parser:
         parser_p.add_argument("--svg", "-s", action='store_true', help='generate graph in svg instead png.')
         parser_p.set_defaults(func=Main.play)
 
-    def main(self):
-        args = self.parser.parse_args()
 
-        if len(sys.argv) == 1:
-            self.parser.print_help()
-            return
-        if args.w is not None:
-            Report.set_terminal_size(args.width)
-        if args.c:
-            SettingsParser.user_settings_file = args.c
-        settings = SettingsParser().load_settings()
-        if args.a or settings.geral.get(GeralSettings.ascii):
-            symbols.set_ascii()
+def exec(parser: argparse.ArgumentParser, args):
+
+    if args.w is not None:
+        Report.set_terminal_size(args.w)
+    if args.c:
+        SettingsParser.user_settings_file = args.c
+    settings = SettingsParser().load_settings()
+    if args.a or settings.geral.get(GeralSettings.ascii):
+        symbols.set_ascii()
+    else:
+        symbols.set_unicode()
+    if not args.m and settings.geral.get(GeralSettings.color):
+        Color.enabled = True
+        symbols.set_colors()
+
+    if args.v or args.g or args.b:
+        if args.v:
+            print("tko version " + __version__)
+        if args.b:
+            print(bash_guide[1:], end="")
+        if args.g:
+            print(tko_guide[1:], end="")
+    else:
+        if "func" in args:
+            args.func(args)
         else:
-            symbols.set_unicode()
-        if not args.m and settings.geral.get(GeralSettings.color):
-            Color.enabled = True
-            symbols.set_colors()
-
-        if args.v or args.g or args.b:
-            if args.v:
-                print("tko version " + __version__)
-            if args.b:
-                print(bash_guide[1:], end="")
-            if args.g:
-                print(tko_guide[1:], end="")
-        else:
-            if "func" in args:
-                args.func(args)
-            else:
-                self.parser.print_help()
-            
-
+            parser.print_help()
 
 def main():
     try:
-        parser = Parser()
-        parser.main()
+        parser = Parser().parser
+        args = parser.parse_args()
+        exec(parser, args)
         sys.exit(0)
     except KeyboardInterrupt:
         print("\n\nKeyboard Interrupt")
         sys.exit(1)
+    # except Exception as e:
+    #     print(e)
+    #     sys.exit(1) # remove in development to show stack trace
 
 
 if __name__ == '__main__':

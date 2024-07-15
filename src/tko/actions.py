@@ -4,16 +4,15 @@ import shutil
 import subprocess
 
 from .run.wdir import Wdir
-from .run.basic import DiffMode, ExecutionResult, CompilerError, Param, Unit
+from .run.basic import DiffMode, ExecutionResult, CompilerError, Param
 from .run.diff import Diff
-from .util.ftext import FF
+from .util.ftext import Sentence, Token
 
 from .run.report import Report
 from .util.term_color import term_colour, term_print
 from .util.symbols import symbols
 
 from .run.writer import Writer
-from .run.solver import Solver
 from .util.runner import Runner
 from .cdiff import CDiff
 from .execution import Execution
@@ -41,11 +40,11 @@ class FilterMode:
 class Run:
 
     def __init__(self, target_list: List[str], exec_cmd: Optional[str], param: Param.Basic):
-        self.target_list = target_list
-        self.exec_cmd = exec_cmd
-        self.param = param
-        self.wdir = None
-        self.curses = False
+        self.target_list: List[str] = target_list
+        self.exec_cmd: Optional[str] = exec_cmd
+        self.param: Param.Basic = param
+        self.wdir: Optional[Wdir] = None
+        self.curses: bool = False
 
     def set_curses(self):
         self.curses = True
@@ -86,7 +85,10 @@ class Run:
             self.target_list = new_target_list
 
     def print_top_line(self):
-        term_print(self.wdir.resume(), end="")
+        if self.wdir is None:
+            return
+
+        term_print(symbols.opening + self.wdir.resume(), end="")
         term_print(" [", end="")
         first = True
         for unit in self.wdir.unit_list:
@@ -94,11 +96,17 @@ class Run:
                 first = False
             else:
                 term_print(" ", end="")
-            unit.result = Execution.run_unit(self.wdir.solver, unit)
-            term_print(FF() + ExecutionResult.get_symbol(unit.result), end="")
+            solver = self.wdir.solver
+            if solver is None:
+                raise ValueError("Solver empty")
+            unit.result = Execution.run_unit(solver, unit)
+            term_print(Sentence() + ExecutionResult.get_symbol(unit.result), end="")
         term_print("]")
 
     def print_diff(self):
+        if self.wdir is None:
+            return
+        
         if self.param.diff_mode == DiffMode.QUIET:
             return
         
@@ -125,10 +133,10 @@ class Run:
             for unit in self.wdir.unit_list:
                 if unit.result != ExecutionResult.SUCCESS:
                     if self.param.is_up_down:
-                        for line in Diff.mount_up_down_diff(wrong):
+                        for line in Diff.mount_up_down_diff(unit):
                             term_print(line)
                     else:
-                        for line in Diff.mount_side_by_side_diff(wrong):
+                        for line in Diff.mount_side_by_side_diff(unit):
                             term_print(line)
 
     def build_wdir(self) -> bool:
@@ -147,7 +155,7 @@ class Run:
             return False
         # no solver and no test cases
         if self.wdir.solver is None and len(self.wdir.unit_list) == 0:
-            term_print(FF().addf("", "fail: ") + "No solver or tests found.")
+            term_print(Sentence().addf("", "fail: ") + "No solver or tests found.")
             return True
         return False
     
@@ -157,9 +165,10 @@ class Run:
 
         # list mode
         if self.wdir.solver is None and len(self.wdir.unit_list) > 0:
-            term_print(Report.centralize(" No solvers found. Listing Test Cases ", TK("╌")), flush=True)
+            term_print(Report.centralize(" No solvers found. Listing Test Cases ", Token("╌")), flush=True)
             term_print(self.wdir.resume())
-            term_print(self.wdir.unit_list_resume())
+            for line in self.wdir.unit_list_resume():
+                term_print(line)
             return True
         return False
 
@@ -168,7 +177,7 @@ class Run:
             return False
         # free run mode
         if self.wdir.solver is not None and len(self.wdir.unit_list) == 0:
-            t = Report.centralize(FF() + " No test cases found. Running: " + self.wdir.solver.executable + " ", symbols.hbar)
+            t = Report.centralize(Sentence() + " No test cases found. Running: " + self.wdir.solver.executable + " ", symbols.hbar)
             term_print(t, flush=True)
             # force print to terminal
             Runner.free_run(self.wdir.solver.executable)
@@ -176,6 +185,9 @@ class Run:
         return False
 
     def diff_mode(self):
+        if self.wdir is None:
+            return
+        
         if self.curses:
             cdiff = CDiff(self.wdir, self.param)
             cdiff.run()

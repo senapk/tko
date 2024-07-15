@@ -6,7 +6,7 @@ from .basic import IdentifierType, Identifier, Unit, Param
 from .loader import Loader
 from .solver import Solver
 
-from ..util.ftext import FF
+from ..util.ftext import Sentence
 from ..util.symbols import symbols
 
 # generate label for cases
@@ -150,7 +150,7 @@ class Wdir:
 
     # number the cases and mark the repeated
     def __number_and_mark_duplicated(self):
-        new_list = []
+        new_list: List[Unit] = []
         index = 0
         for unit in self.unit_list:
             unit.index = index
@@ -176,31 +176,31 @@ class Wdir:
                 unit.case = LabelFactory().label(unit.case).index(number).generate()
                 number += 1
 
-    def unit_list_resume(self) -> List[FF]:
+    def unit_list_resume(self) -> List[Sentence]:
         return [unit.str() for unit in self.unit_list]
 
-    def resume(self) -> FF:
+    def resume(self) -> Sentence:
 
-        def sources() -> FF:
-            out = []
+        def sources() -> Sentence:
+            out: List[str] = []
             if len(self.pack_list) == 0:
-                out.append(symbols.failure)
+                out.append(symbols.failure.text)
             for i in range(len(self.pack_list)):
                 nome: str = self.source_list[i].split(os.sep)[-1]
                 out.append(nome + "(" + str(len(self.pack_list[i])).zfill(2) + ")")
-            return FF().addf("g", "base:").add("[" + ", ".join(out) + "]")
+            return Sentence().addf("g", "base:").add("[" + ", ".join(out) + "]")
 
-        def solvers() -> FF:
+        def solvers() -> Sentence:
             path_list = [] if self.solver is None else self.solver.path_list
 
             if self.solver is not None and len(path_list) == 0:  # free_cmd
                 out = "free cmd"
             else:
                 out = ", ".join([os.path.basename(path) for path in path_list])
-            return FF().addf("g", "prog:").add("[" + out + "]")
+            return Sentence().addf("g", "prog:").add("[" + out + "]")
 
         # folder = os.getcwd().split(os.sep)[-1]
         # tests_count = (colour("tests:", Color.GREEN) +
         #               str(len([x for x in self.unit_list if x.repeated is None])).zfill(2))
 
-        return FF().add(sources()).add(" ").add(solvers())
+        return Sentence().add(sources()).add(" ").add(solvers())

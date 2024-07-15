@@ -1,8 +1,7 @@
 from typing import Optional, Union
 import shutil
 from ..util.term_color import Color
-from ..util.ftext import FF, TK
-from icecream import ic
+from ..util.ftext import Sentence, Token
 
 
 class Report:
@@ -33,18 +32,18 @@ class Report:
 
     @staticmethod
     def centralize(
-        ftext: Union[FF, str],
-        sep: Optional[Union[str, TK]] = TK(" "),
-        left_border: Optional[Union[str, TK]] = None,
-        right_border: Optional[Union[str, TK]] = None,
-    ) -> FF:
+        ftext: Union[Sentence, str],
+        sep: Optional[Union[str, Token]] = Token(" "),
+        left_border: Optional[Union[str, Token]] = None,
+        right_border: Optional[Union[str, Token]] = None,
+    ) -> Sentence:
         
-        if isinstance(ftext, str) or isinstance(ftext, TK):
-            ftext = FF() + ftext
+        if isinstance(ftext, str) or isinstance(ftext, Token):
+            ftext = Sentence() + ftext
         if sep is None:
-            sep = TK(" ")
+            sep = Token(" ")
         elif isinstance(sep, str):
-            sep = TK(sep)
+            sep = Token(sep)
         if left_border is None:
             left_border = sep
         if right_border is None:
@@ -52,7 +51,7 @@ class Report:
         term_width = Report.get_terminal_size()
 
         size = len(ftext)
-        pad = sep if size % 2 == 0 else TK("")
+        pad = sep if size % 2 == 0 else Token("")
         tw = term_width - 2
-        filler = TK(sep.text * (int(tw / 2 - size / 2)), sep.fmt)
-        return FF() + left_border + pad + filler + ftext + filler + right_border
+        filler = Token(sep.text * (int(tw / 2 - size / 2)), sep.fmt)
+        return Sentence() + left_border + pad + filler + ftext + filler + right_border

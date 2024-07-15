@@ -1,27 +1,27 @@
-from .ftext import TK
+from .ftext import Token
 
 class __Symbols:
     def __init__(self):
-        self.opening = TK()
-        self.neutral = TK()
-        self.success = TK()
-        self.failure = TK()
-        self.wrong = TK()
-        self.compilation = TK()
-        self.execution = TK()
-        self.unequal = TK()
-        self.equalbar = TK()
-        self.hbar = TK()
-        self.vbar = TK()
-        self.whitespace = TK()  # interpunct
-        self.newline = TK()  # carriage return
-        self.cfill = TK()
-        self.tab = TK()
-        self.arrow_up = TK()
-        self.check = TK()  
-        self.uncheck = TK()
-        self.opcheck = TK()
-        self.opuncheck = TK()
+        self.opening = Token()
+        self.neutral = Token()
+        self.success = Token()
+        self.failure = Token()
+        self.wrong = Token()
+        self.compilation = Token()
+        self.execution = Token()
+        self.unequal = Token()
+        self.equalbar = Token()
+        self.hbar = Token()
+        self.vbar = Token()
+        self.whitespace = Token()  # interpunct
+        self.newline = Token()  # carriage return
+        self.cfill = Token()
+        self.tab = Token()
+        self.arrow_up = Token()
+        self.check = Token()  
+        self.uncheck = Token()
+        self.opcheck = Token()
+        self.opuncheck = Token()
 
         self.ascii = False
         self.set_unicode()
@@ -32,52 +32,52 @@ class __Symbols:
     def set_ascii(self):
         self.ascii = True
 
-        self.opening = TK("=> ")
-        self.neutral = TK(".")
-        self.success = TK("S")
-        self.failure = TK("X")
-        self.wrong = TK("W")
-        self.compilation = TK("C")
-        self.execution = TK("E")
-        self.unequal = TK("#")
-        self.equalbar = TK("|")
-        self.hbar = TK("─")
-        self.vbar = TK("│")
-        self.whitespace = TK("\u2E31")  # interpunct
-        self.newline = TK("\u21B5")  # carriage return
-        self.cfill = TK("_")
-        self.tab = TK("    ")
-        self.arrow_up = TK("A")
+        self.opening = Token("=> ")
+        self.neutral = Token(".")
+        self.success = Token("S")
+        self.failure = Token("X")
+        self.wrong = Token("W")
+        self.compilation = Token("C")
+        self.execution = Token("E")
+        self.unequal = Token("#")
+        self.equalbar = Token("|")
+        self.hbar = Token("─")
+        self.vbar = Token("│")
+        self.whitespace = Token("\u2E31")  # interpunct
+        self.newline = Token("\u21B5")  # carriage return
+        self.cfill = Token("_")
+        self.tab = Token("    ")
+        self.arrow_up = Token("A")
 
-        self.check = TK("x")
-        self.uncheck = TK(".")
-        self.opcheck = TK("█")
-        self.opuncheck = TK("▒")
+        self.check = Token("x")
+        self.uncheck = Token(".")
+        self.opcheck = Token("█")
+        self.opuncheck = Token("▒")
 
     def set_unicode(self):
         self.ascii = False
 
-        self.opening = TK("=> ")
-        self.neutral = TK("»")
-        self.success = TK("✓")
-        self.failure = TK("✗")
-        self.wrong = TK("ω")
-        self.compilation = TK("ϲ")
-        self.execution = TK("ϵ")
-        self.unequal = TK("├")
-        self.equalbar = TK("│")
-        self.hbar = TK("─")
-        self.vbar = TK("│")
-        self.whitespace = TK("\u2E31")
-        self.newline = TK("\u21B5")
-        self.cfill = TK("_")
-        self.tab = TK("    ")
-        self.arrow_up = TK("↑")
+        self.opening = Token("=> ")
+        self.neutral = Token("»")
+        self.success = Token("✓")
+        self.failure = Token("✗")
+        self.wrong = Token("ω")
+        self.compilation = Token("ϲ")
+        self.execution = Token("ϵ")
+        self.unequal = Token("├")
+        self.equalbar = Token("│")
+        self.hbar = Token("─")
+        self.vbar = Token("│")
+        self.whitespace = Token("\u2E31")
+        self.newline = Token("\u21B5")
+        self.cfill = Token("_")
+        self.tab = Token("    ")
+        self.arrow_up = Token("↑")
 
-        self.check = TK("✓")
-        self.uncheck = TK("✗")
-        self.opcheck = TK("ⴲ")
-        self.opuncheck = TK("ⵔ")
+        self.check = Token("✓")
+        self.uncheck = Token("✗")
+        self.opcheck = Token("ⴲ")
+        self.opuncheck = Token("ⵔ")
 
 
     def set_colors(self):

@@ -1,6 +1,5 @@
 import json
-from typing import Any, List, Dict, Optional
-from ..util.remote import RemoteCfg, Absolute
+from typing import Any, Dict
 from .rep_settings import RepSettings
 from .geral_settings import GeralSettings
 

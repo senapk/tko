@@ -3,7 +3,7 @@ from .play.fmt import Fmt
 from .run.basic import DiffMode, ExecutionResult, CompilerError, Param, Unit
 from .execution import Execution
 from .run.diff import Diff
-from .util.ftext import FF, TK
+from .util.ftext import Sentence, Token
 from typing import List
 from .play.frame import Frame
 from .run.wdir import Wdir
@@ -16,7 +16,7 @@ class CDiff:
 
     def __init__(self, wdir: Wdir, param: Param.Basic):
         self.param = param
-        self.results: List[TK] = []
+        self.results: List[Token] = []
         self.wdir = wdir
         self.exit = False
         self.index = 0
@@ -54,13 +54,13 @@ class CDiff:
 
     def sucesso(self):
         out1 = [
-            "  _____ __ __     __    ___  _____ _____  ___  ",
-            " / ___/|  |  |   /  ]  /  _]/ ___// ___/ /   \ ",
-            "(   \_ |  |  |  /  /  /  [_(   \_(   \_ |     |",
-            " \__  ||  |  | /  /  |    _]\__  |\__  ||  O  |",
-            " /  \ ||  :  |/   \_ |   [_ /  \ |/  \ ||     |",
-            " \    ||     |\     ||     |\    |\    ||     |",
-            "  \___| \__,_| \____||_____| \___| \___| \___/ ",
+            r"  _____ __ __     __    ___  _____ _____  ___  ",
+            r" / ___/|  |  |   /  ]  /  _]/ ___// ___/ /   \ ",
+            r"(   \_ |  |  |  /  /  /  [_(   \_(   \_ |     |",
+            r" \__  ||  |  | /  /  |    _]\__  |\__  ||  O  |",
+            r" /  \ ||  :  |/   \_ |   [_ /  \ |/  \ ||     |",
+            r" \    ||     |\     ||     |\    |\    ||     |",
+            r"  \___| \__,_| \____||_____| \___| \___| \___/ ",
         ]
 
         out2 = [
@@ -97,7 +97,7 @@ class CDiff:
         if cols > 91:
             out = out2
         for i, line in enumerate(out):
-            Fmt.write(i + 4, 1, FF().addf("g", line).center(cols - 2, TK(" ", " ")))
+            Fmt.write(i + 4, 1, Sentence().addf("g", line).center(cols - 2, Token(" ", " ")))
 
 
     def draw_scrollbar(self):
@@ -148,7 +148,7 @@ class CDiff:
 
         lines, cols = Fmt.get_size()
         for i in range(len(bar)):
-            Fmt.write(i + 3, cols - 1, FF().add(bar[i]))
+            Fmt.write(i + 3, cols - 1, Sentence().add(bar[i]))
 
 
     def draw_top_line(self):
@@ -156,10 +156,12 @@ class CDiff:
         if len(self.results) < len(self.wdir.unit_list):
             index = len(self.results)
             unit = self.wdir.unit_list[index]
+            if self.wdir.solver is None:
+                return
             unit.result = Execution.run_unit(self.wdir.solver, unit)
             symbol = ExecutionResult.get_symbol(unit.result)
             color = self.get_color(unit)
-            self.results.append(TK(symbol.text, color))
+            self.results.append(Token(symbol.text, color))
             if color != "G" and self.first_error == -1:
                 self.first_error = len(self.results) - 1
                 self.index = len(self.results) - 1
@@ -171,9 +173,9 @@ class CDiff:
         intro = self.wdir.resume()
         base = os.sep.join(pwd.split(os.sep)[:-1])
         last = pwd.split(os.sep)[-1]
-        frame.set_header(FF().add(" ").add(base).add("/").addf("y", last).add("   ").add(intro).add(" ") , "<")
+        frame.set_header(Sentence().add(" ").add(base).add("/").addf("y", last).add("   ").add(intro).add(" ") , "<")
         unit = self.wdir.unit_list[self.index]
-        frame.set_footer(FF().add(" ").add(unit.str(False)), "")
+        frame.set_footer(Sentence().add(" ").add(unit.str(False)), "")
         frame.draw()
 
         x = 0
@@ -182,12 +184,12 @@ class CDiff:
             foco = i == self.index
             extrap = "" if not foco else ">"
             extras = "" if not foco else "<"
-            label = FF().add(extrap).addf(symbol.fmt, str(i).zfill(2)).add(symbol).add(extras)
+            label = Sentence().add(extrap).addf(symbol.fmt, str(i).zfill(2)).add(symbol).add(extras)
             frame.write(0, x + 1 - len(extrap), label)
             x += 5
         
     def draw_bottom_line(self):
-        cmds = (FF()
+        cmds = (Sentence()
         .add(" ")
         .addf("/", "ReRun").add("[r]")
         .add(" ")
@@ -201,7 +203,7 @@ class CDiff:
         .add(" ")
         )
         lines, cols = Fmt.get_size()
-        Fmt.write(lines - 1, 0, cmds.center(cols, TK(" ", "K")))
+        Fmt.write(lines - 1, 0, cmds.center(cols, Token(" ", "K")))
 
     def has_any_error(self):
         results = [unit.result for unit in self.wdir.unit_list]
@@ -234,7 +236,7 @@ class CDiff:
         if self.init < self.length:
             line_list = line_list[self.init:]
         for i, line in enumerate(line_list):
-            frame.write(i, 0, FF().add(line))
+            frame.write(i, 0, Sentence().add(line))
         return
 
 
@@ -270,7 +272,8 @@ class CDiff:
                     self.save_settings()
                     self.init = 0
                 elif input == ord('r'):
-                    self.wdir.solver.prepare_exec()
+                    if self.wdir.solver is not None:
+                        self.wdir.solver.prepare_exec()
                     self.results = []
                     self.first_error = -1
                 elif input >= ord('0') and input <= ord('9'):

@@ -1,4 +1,8 @@
-tko_guide = """
+import unittest
+
+from tko.__main__ import exec, Parser
+
+guide = """
        ╔════ TKO GUIA COMPACTO ════╗
 ╔══════╩═════ BAIXAR PROBLEMA ═════╩═══════╗
 ║        tko down <curso> <label>          ║
@@ -24,26 +28,16 @@ tko_guide = """
 ║Cores   : tko config [--mono  | --color  ]║
 ║Encoding: tko config [--ascii | --unicode]║
 ╚══════════════════════════════════════════╝
-"""
+"""[1:]
 
-bash_guide = """
-       ╔═══ BASH  GUIA COMPACTO ════╗
-╔══════╩════ MOSTRAR E NAVEGAR ═════╩══════╗
-║Mostrar arquivos  : ls                    ║
-║Mostrar ocultos   : ls -la                ║
-║Mudar de pasta    : cd _nome_da_pasta     ║
-║Subir um nível    : cd ..                 ║
-╟─────────────── CRIAR ────────────────────╢
-║Criar um arquivo  : touch _nome_do_arquivo║
-║Criar uma pasta   : mkdir _nome_da_pasta  ║
-╟─────────────── REMOVER ──────────────────╢
-║Apagar um arquivo : rm _nome_do_arquivo   ║
-║Apagar uma pasta  : rm -r _nome_da_pasta  ║
-║Renomear ou mover : mv _antigo _novo      ║
-╟─────────────── CONTROLAR ────────────────╢
-║Últimos comandos  : SETA PRA CIMA         ║
-║Limpar console    : Control L             ║
-║Cancelar execução : Control C             ║
-║Finalizar entrada : Control D             ║
-╚══════════════════════════════════════════╝
-"""
+class Test:
+    def test_guide(self, capsys):
+        parser = Parser().parser
+        args = parser.parse_args(["-g"])
+        exec(parser, args)
+        capture = capsys.readouterr()
+        assert capture.out == guide
+
+
+if __name__ == '__main__':
+    unittest.main()

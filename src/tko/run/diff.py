@@ -3,16 +3,15 @@ import io
 
 from ..util.term_color import  Color
 from ..util.symbols import symbols
-from ..util.ftext import FF, TK
+from ..util.ftext import Sentence, Token
 from .basic import Unit, ExecutionResult
 from .report import Report
-from icecream import ic # type: ignore
 
 class Diff:
 
     @staticmethod
-    def make_line_arrow_up(a: str, b: str) -> FF:
-        hdiff = FF()
+    def make_line_arrow_up(a: str, b: str) -> Sentence:
+        hdiff = Sentence()
         first = True
         i = 0
         lim = max(len(a), len(b))
@@ -28,29 +27,29 @@ class Diff:
         return hdiff
 
     @staticmethod
-    def render_white(text: FF, color: str = "") -> Optional[FF]:
-        out = FF().add(text).replace(' ', TK(symbols.whitespace.text, color)).replace('\n', TK(symbols.newline.text, color))
+    def render_white(text: Sentence, color: str = "") -> Optional[Sentence]:
+        out = Sentence().add(text).replace(' ', Token(symbols.whitespace.text, color)).replace('\n', Token(symbols.newline.text, color))
 
         return out
 
     # create a string with both ta and tb side by side with a vertical bar in the middle
     @staticmethod
-    def side_by_side(ta: List[FF], tb: List[FF], unequal: TK = symbols.unequal) -> List[FF]:
+    def side_by_side(ta: List[Sentence], tb: List[Sentence], unequal: Token = symbols.unequal) -> List[Sentence]:
         cut = (Report.get_terminal_size() - 6) // 2
         upper = max(len(ta), len(tb))
-        data: List[FF] = []
+        data: List[Sentence] = []
 
         for i in range(upper):
-            a = ta[i] if i < len(ta) else FF("###############")
-            b = tb[i] if i < len(tb) else FF("###############")
+            a = ta[i] if i < len(ta) else Sentence("###############")
+            b = tb[i] if i < len(tb) else Sentence("###############")
             if len(a) < cut:
-                a = a.ljust(cut, TK(" "))
+                a = a.ljust(cut, Token(" "))
             # if len(a) > cut:
             #     a = a[:cut]
             if i >= len(ta) or i >= len(tb) or ta[i] != tb[i]:
-                data.append(FF() + unequal + " " + a + " " + unequal + " " + b)
+                data.append(Sentence() + unequal + " " + a + " " + unequal + " " + b)
             else:
-                data.append(FF() + symbols.vbar + " " + a + " " + symbols.vbar + " " + b)
+                data.append(Sentence() + symbols.vbar + " " + a + " " + symbols.vbar + " " + b)
 
         return data
 
@@ -58,7 +57,7 @@ class Diff:
     # b_text -> clean full expected
     # first_failure -> index of the first line unmatched 
     @staticmethod
-    def first_failure_diff(a_text: str, b_text: str, first_failure: int) -> List[FF]:
+    def first_failure_diff(a_text: str, b_text: str, first_failure: int) -> List[Sentence]:
         def get(vet, index):
             if index < len(vet):
                 return Diff.render_white(vet[index])
@@ -75,18 +74,18 @@ class Diff:
             lbefore = get(a_render, first_failure - 1)
             greater = max(greater, len(lbefore))
 
-        out_a, out_b = Diff.colorize_2_lines_diff(FF(first_a), FF(first_b))
+        out_a, out_b = Diff.colorize_2_lines_diff(Sentence(first_a), Sentence(first_b))
 
-        output: List[FF] = []
+        output: List[Sentence] = []
 
-        output.append(FF().add(symbols.vbar).add(" ").add(out_a.ljust(greater)).addf("g", " (expected)"))
-        output.append(FF().add(symbols.vbar).add(" ").add(out_b.ljust(greater)).addf("r", " (received)"))
+        output.append(Sentence().add(symbols.vbar).add(" ").add(out_a.ljust(greater)).addf("g", " (expected)"))
+        output.append(Sentence().add(symbols.vbar).add(" ").add(out_b.ljust(greater)).addf("r", " (received)"))
         diff = Diff.make_line_arrow_up(first_a, first_b).ljust(greater)
-        output.append(FF().add(symbols.vbar).add(" ").add(diff).addf("b", " (mismatch)"))
+        output.append(Sentence().add(symbols.vbar).add(" ").add(diff).addf("b", " (mismatch)"))
         return output
 
     @staticmethod
-    def find_first_mismatch(line_a: FF, line_b: FF) -> int: 
+    def find_first_mismatch(line_a: Sentence, line_b: Sentence) -> int: 
         i = 0
         while i < len(line_a) and i < len(line_b):
             if line_a[i] != line_b[i]:
@@ -95,22 +94,22 @@ class Diff:
         return i
     
     @staticmethod
-    def colorize_2_lines_diff(la: FF, lb: FF, neut: str = "", exp: str = "g", rec: str = "r") -> Tuple[FF, FF]:
+    def colorize_2_lines_diff(la: Sentence, lb: Sentence, neut: str = "", exp: str = "g", rec: str = "r") -> Tuple[Sentence, Sentence]:
         pos = Diff.find_first_mismatch(la, lb)
         lat = la.get_text()
         lbt = lb.get_text()
-        a_out = FF().addf(neut, lat[0:pos]).addf(exp, lat[pos:])
-        b_out = FF().addf(neut, lbt[0:pos]).addf(rec, lbt[pos:])
+        a_out = Sentence().addf(neut, lat[0:pos]).addf(exp, lat[pos:])
+        b_out = Sentence().addf(neut, lbt[0:pos]).addf(rec, lbt[pos:])
         return a_out, b_out
 
     # return a tuple of two strings with the diff and the index of the  first mismatch line
     @staticmethod
-    def render_diff(a_text: str, b_text: str, pad: Optional[bool] = None) -> Tuple[List[FF], List[FF], int]:
+    def render_diff(a_text: str, b_text: str, pad: Optional[bool] = None) -> Tuple[List[Sentence], List[Sentence], int]:
         a_lines = a_text.splitlines()
         b_lines = b_text.splitlines()
 
-        a_output: List[FF] = []
-        b_output: List[FF] = []
+        a_output: List[Sentence] = []
+        b_output: List[Sentence] = []
 
         a_size = len(a_lines)
         b_size = len(b_lines)
@@ -135,8 +134,8 @@ class Diff:
         # get = lambda vet, i: vet[i] if i < len(vet) else ""
 
         for i in range(max_size):
-            a_data = FF(get(a_lines, i))
-            b_data = FF(get(b_lines, i))
+            a_data = Sentence(get(a_lines, i))
+            b_data = Sentence(get(b_lines, i))
             
             if i >= a_size or i >= b_size or a_lines[i] != b_lines[i]:
                 if first_failure == -1:
@@ -151,8 +150,8 @@ class Diff:
         return a_output, b_output, first_failure
 
     @staticmethod
-    def mount_up_down_diff(unit: Unit, curses=False) -> List[FF]:
-        output: List[FF] = []
+    def mount_up_down_diff(unit: Unit, curses=False) -> List[Sentence]:
+        output: List[Sentence] = []
 
         string_input = unit.input
         string_expected = unit.output
@@ -161,7 +160,7 @@ class Diff:
         if string_received is None:
             string_received = ""
         expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received)
-        string_input_list = [FF().add(symbols.vbar.text).add(" ").add(line) for line in string_input.split("\n")][:-1]
+        string_input_list = [Sentence().add(symbols.vbar.text).add(" ").add(line) for line in string_input.split("\n")][:-1]
         unequal = symbols.unequal.text
         if unit.result == ExecutionResult.EXECUTION_ERROR:
             unequal = symbols.vbar
@@ -170,45 +169,45 @@ class Diff:
         if not curses:
             output.append(Report.centralize("", symbols.hbar, "╭"))
             output.append(Report.centralize(unit.str(), " ", symbols.vbar))
-            output.append(Report.centralize(FF().addf("b", " INPUT "), symbols.hbar, "├"))
+            output.append(Report.centralize(Sentence().addf("b", " INPUT "), symbols.hbar, "├"))
         else:
-            output.append(Report.centralize(FF().addf("b", " INPUT "), symbols.hbar, "╭"))
+            output.append(Report.centralize(Sentence().addf("b", " INPUT "), symbols.hbar, "╭"))
 
         output += string_input_list
             
-        output.append(Report.centralize(FF().addf("g", " EXPECTED "), symbols.hbar, "├"))
+        output.append(Report.centralize(Sentence().addf("g", " EXPECTED "), symbols.hbar, "├"))
         output += expected_lines
         # output.append("\n".join(expected_lines))
         rcolor = "r" if string_expected != string_received else "g"
-        output.append(Report.centralize(FF().addf(rcolor, " RECEIVED "), symbols.hbar, "├"))
+        output.append(Report.centralize(Sentence().addf(rcolor, " RECEIVED "), symbols.hbar, "├"))
         output +=  received_lines
 
         if unit.result != ExecutionResult.EXECUTION_ERROR:
-            output.append(Report.centralize(FF().addf("b", " WHITESPACE "),  symbols.hbar, "├"))
+            output.append(Report.centralize(Sentence().addf("b", " WHITESPACE "),  symbols.hbar, "├"))
             output += Diff.first_failure_diff(string_expected, string_received, first_failure)
         output.append(Report.centralize("",  symbols.hbar, "╰"))
 
         return output
 
     @staticmethod
-    def put_left_equal(exp_lines: List[FF], rec_lines: List[FF], unequal: str = symbols.unequal):
+    def put_left_equal(exp_lines: List[Sentence], rec_lines: List[Sentence], unequal: str = symbols.unequal):
 
         max_size = max(len(exp_lines), len(rec_lines))
 
         for i in range(max_size):
             if i >= len(exp_lines) or i >= len(rec_lines) or (exp_lines[i] != rec_lines[i]):
-                exp_lines[i] = FF() + unequal + " " + exp_lines[i]
-                rec_lines[i] = FF() + unequal + " " + rec_lines[i]
+                exp_lines[i] = Sentence() + unequal + " " + exp_lines[i]
+                rec_lines[i] = Sentence() + unequal + " " + rec_lines[i]
             else:
-                exp_lines[i] = FF() + symbols.vbar + " " + exp_lines[i]
-                rec_lines[i] = FF() + symbols.vbar + " " + rec_lines[i]
+                exp_lines[i] = Sentence() + symbols.vbar + " " + exp_lines[i]
+                rec_lines[i] = Sentence() + symbols.vbar + " " + rec_lines[i]
         
         return exp_lines, rec_lines
             
     @staticmethod
-    def title_side_by_side(left: FF, right: FF, filler: TK = TK(" "), middle: TK = TK(" "), prefix: TK = TK()) -> FF:
+    def title_side_by_side(left: Sentence, right: Sentence, filler: Token = Token(" "), middle: Token = Token(" "), prefix: Token = Token()) -> Sentence:
         half = int((Report.get_terminal_size() - len(middle)) / 2)
-        line = FF()
+        line = Sentence()
         a = left
         a = a.center(half, filler)
         if len(a) > half:
@@ -222,13 +221,13 @@ class Diff:
         line += b
         if prefix != "":
             line.data[0].text = line.data[0].text[1:]
-            line = FF() + prefix + line
+            line = Sentence() + prefix + line
         return line
 
     @staticmethod
-    def mount_side_by_side_diff(unit: Unit, curses=False) -> List[FF]:
+    def mount_side_by_side_diff(unit: Unit, curses=False) -> List[Sentence]:
 
-        output: List[FF] = []
+        output: List[Sentence] = []
 
         string_input = unit.input
         string_expected = unit.output
@@ -243,27 +242,27 @@ class Diff:
         if not curses:
             output.append(Report.centralize("", hbar, "╭"))
             output.append(Report.centralize(unit.str(), " ", "│"))
-        input_headera = FF().addf("b", " INPUT ")
-        input_headerb = FF().addf("b", " INPUT ")
+        input_headera = Sentence().addf("b", " INPUT ")
+        input_headerb = Sentence().addf("b", " INPUT ")
         if not curses:
-            output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, TK("┬"), TK("├")))
+            output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, Token("┬"), Token("├")))
         else:
-            output.append(Report.centralize(FF().addf("b", " INPUT "),  symbols.hbar, "╭"))
+            output.append(Report.centralize(Sentence().addf("b", " INPUT "),  symbols.hbar, "╭"))
             # output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, TK("┬"), TK("╭")))
 
         if string_input != "":
-            lines = [FF(x) for x in string_input.split("\n")[:-1]]
+            lines = [Sentence(x) for x in string_input.split("\n")[:-1]]
             output += Diff.side_by_side(lines, lines)
-        expected_header = FF().addf("g", " EXPECTED ")
+        expected_header = Sentence().addf("g", " EXPECTED ")
         rcolor = "r" if string_expected != string_received else "g"
-        received_header = FF().addf(rcolor, " RECEIVED ")
-        output.append(Diff.title_side_by_side(expected_header, received_header, hbar, TK("┼"), TK("├")))
+        received_header = Sentence().addf(rcolor, " RECEIVED ")
+        output.append(Diff.title_side_by_side(expected_header, received_header, hbar, Token("┼"), Token("├")))
         unequal = symbols.unequal
         if unit.result == ExecutionResult.EXECUTION_ERROR:
             unequal = symbols.vbar
         output += Diff.side_by_side(expected_lines, received_lines, unequal)
         if unit.result != ExecutionResult.EXECUTION_ERROR:
-            output.append(Report.centralize(FF().addf("b", " WHITESPACE "),  symbols.hbar, "├"))
+            output.append(Report.centralize(Sentence().addf("b", " WHITESPACE "),  symbols.hbar, "├"))
             output += Diff.first_failure_diff(string_expected, string_received, first_failure)
         output.append(Report.centralize("",  symbols.hbar, "╰"))
 
