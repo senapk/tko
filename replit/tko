@@ -22,7 +22,7 @@ import io
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.11.1"
+__version__ = "0.11.2"
 
 
 
