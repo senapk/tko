@@ -27,44 +27,88 @@ __version__ = "0.11.1"
 
 
 class GeralSettings:
-    rootdir = "rootdir"
-    ascii = "ascii"
-    color = "color"
-    diffdown = "diffdown"
-    sidesize = "sidesize"
-    lang = "lang"
+    __rootdir = "rootdir"
+    __is_ascii = "ascii"
+    __is_color = "color"
+    __diffdown = "diffdown"
+    __sidesize = "sidesize"
+    __langdef = "lang"
 
     defaults = {
-        rootdir: "",
-        ascii: False,
-        color: True,
-        diffdown: True,
-        sidesize: 80,
-        lang: ""
+        __rootdir: "",
+        __is_ascii: False,
+        __is_color: True,
+        __diffdown: True,
+        __sidesize: 80,
+        __langdef: ""
     }
 
     def __init__(self):
         self.data: Dict[str, Any] = {}
 
-    def set(self, key: str, value: Any):
+    def __set(self, key: str, value: Any):
         self.data[key] = value
         return self
     
-    def get(self, key: str) -> str:
+    def __get(self, key: str) -> str:
         if key not in self.defaults:
             raise ValueError(f"Key {key} not found in GeralSettings")
         return self.data.get(key, GeralSettings.defaults[key])
+        
 
     def to_dict(self) -> Dict[str, Any]:
         return self.data
         
-    
     def from_dict(self, data: Dict[str, Any]):
         self.data = data
         return self
 
     def __str__(self) -> str:
         return str(self.data)
+
+
+    def get_rootdir(self) -> str:
+        return self.__get(self.__rootdir)
+    
+    def set_rootdir(self, value: str):
+        self.__set(self.__rootdir, value)
+        return self
+    
+    def get_is_ascii(self):
+        return self.__get(self.__is_ascii)
+
+    def set_is_ascii(self, value: bool):
+        self.__set(self.__is_ascii, value)
+        return self
+    
+    def get_is_colored(self):
+        return self.__get(self.__is_color)
+    
+    def set_is_colored(self, value: bool):
+        self.__set(self.__is_color, value)
+        return self
+    
+    def get_is_diff_down(self):
+        return self.__get(self.__diffdown)
+    
+    def set_is_diff_down(self, value: bool):
+        self.__set(self.__diffdown, value)
+        return self
+    
+    def get_side_size(self):
+        return self.__get(self.__sidesize)
+    
+    def set_side_size(self, value: int):
+        self.__set(self.__sidesize, value)
+        return self
+    
+    def get_lang_def(self):
+        return self.__get(self.__langdef)
+    
+    def set_lang_def(self, value: str):
+        self.__set(self.__langdef, value)
+        return self
+    
 
 
 
@@ -164,8 +208,8 @@ class Flag:
     
 
 class Flags:
-    count = Flag().name("Count").char("C").text("Mostra a contagem de tarefas").location("left")
-    down = Flag().name("Down").char("D").text("Mostra o caminho para a tarefa baixadas").location("left")
+    count = Flag().name("Count").char("C").values(["1", "0"]).text("Mostra a contagem de tarefas").location("left")
+    down = Flag().name("Down").char("D").values(["1", "0"]).text("Mostra o caminho para a tarefa baixadas").location("left")
     minimum = Flag().name("Minimum").char("M").text("Mostra a nota mínima para a tarefa").location("left")
     opt = Flag().name("Opt").char("O").text("Mostra tarefas opcionais").location("left")
     xp = Flag().name("Xp").char("X").text("Mostra a xp obtida").location("left")
@@ -477,19 +521,49 @@ class RemoteMd:
 
 
 class RepSettings:
-    expanded = "expanded"
-    new_items = "new_items"
-    tasks = "tasks"
-    flags = "flags"
-    lang = "lang"
+    __expanded = "expanded"
+    __new_items = "new_items"
+    __tasks = "tasks"
+    __flags = "flags"
+    __lang = "lang"
 
     defaults = {
-        expanded: [],
-        tasks: {},
-        flags: {},
-        new_items: [],
-        lang: ""
+        __expanded: [],
+        __tasks: {},
+        __flags: {},
+        __new_items: [],
+        __lang: ""
     }
+
+    def get_expanded(self) -> list:
+        return self.__get(RepSettings.__expanded)
+    
+    def get_new_items(self) -> list:
+        return self.__get(RepSettings.__new_items)
+    
+    def get_tasks(self) -> Dict[str, Any]:
+        return self.__get(RepSettings.__tasks)
+    
+    def get_flags(self) -> Dict[str, Any]:
+        return self.__get(RepSettings.__flags)
+    
+    def get_lang(self) -> str:
+        return self.__get(RepSettings.__lang)
+    
+    def set_expanded(self, value: list):
+        return self.__set(RepSettings.__expanded, value)
+    
+    def set_new_items(self, value: list):
+        return self.__set(RepSettings.__new_items, value)
+    
+    def set_tasks(self, value: Dict[str, Any]):
+        return self.__set(RepSettings.__tasks, value)
+    
+    def set_flags(self, value: Dict[str, Any]):
+        return self.__set(RepSettings.__flags, value)
+    
+    def set_lang(self, value: str):
+        return self.__set(RepSettings.__lang, value)
 
     def __init__(self, file: str = ""):
         self.url: str = ""
@@ -498,7 +572,7 @@ class RepSettings:
         if file != "":
             self.file = os.path.abspath(file)
 
-    def get(self, key: str) -> Any:
+    def __get(self, key: str) -> Any:
         if key not in self.defaults:
             raise ValueError(f"Key {key} not found in RepSettings")
         value = self.data.get(key, RepSettings.defaults[key])
@@ -506,7 +580,7 @@ class RepSettings:
             return RepSettings.defaults[key]
         return value
 
-    def set(self, key: str, value: Any):
+    def __set(self, key: str, value: Any):
         self.data[key] = value
         return self
 
@@ -2532,7 +2606,7 @@ class Down:
             loaded_json = json.load(f)
         os.remove(mapi_path)
 
-        language_def = SettingsParser().load_settings().geral.get(GeralSettings.lang)
+        language_def = SettingsParser().load_settings().geral.get_lang_def()
         ask_ext = False
         if language is None:
             if language_def != "":
@@ -2832,22 +2906,22 @@ class TaskTree:
         self.reload_sentences()
 
     def load_from_rep(self):
-        self.new_items: List[str] = self.rep.get(RepSettings.new_items)
-        self.expanded: List[str] = self.rep.get(RepSettings.expanded)
+        self.new_items: List[str] = self.rep.get_new_items()
+        self.expanded: List[str] = self.rep.get_expanded()
 
-        tasks = self.rep.get(RepSettings.tasks)
+        tasks = self.rep.get_tasks()
         for key, grade in tasks.items():
             if key in self.game.tasks:
                 self.game.tasks[key].set_grade(int(grade))
 
     def save_on_rep(self):
-        self.rep.set(RepSettings.expanded, self.expanded)
-        self.rep.set(RepSettings.new_items, self.new_items)
+        self.rep.set_expanded(self.expanded)
+        self.rep.set_new_items(self.new_items)
         tasks = {}
         for t in self.game.tasks.values():
             if t.grade != 0:
                 tasks[t.key] = str(t.grade)
-        self.rep.set(RepSettings.tasks, tasks)
+        self.rep.set_tasks(tasks)
 
     def update_available(self):
         old_quests = [q for q in self.available_quests]
@@ -2907,7 +2981,7 @@ class TaskTree:
         output.addf(color, t.title)
 
         if Flags.down.is_true():
-            path = os.path.join(self.local.rootdir, self.rep_alias, t.key)
+            path = os.path.join(self.local.get_rootdir(), self.rep_alias, t.key)
             if os.path.isdir(path):
                 output.add(" ").addf("y", f"[{path}]")
 
@@ -3216,8 +3290,8 @@ class Play:
         self.rep = rep
         self.exit = False
 
-        self.flagsman = FlagsMan(self.rep.get(RepSettings.flags))
-        self.rep.lang = self.rep.get(RepSettings.lang)
+        self.lang = self.rep.get_lang()
+        self.flagsman = FlagsMan(self.rep.get_flags())
         self.game: Game = game
         self.fman = FloatingManager()
         self.tree = TaskTree(local, game, rep, rep_alias)
@@ -3243,20 +3317,19 @@ class Play:
 
     def save_to_json(self):
         self.tree.save_on_rep()
-        self.rep.set(RepSettings.flags, self.flagsman.get_data())
-        self.rep.set(RepSettings.lang, self.rep.lang)
+        self.rep.set_flags(self.flagsman.get_data())
 
         self.fn_save()
 
     def set_rootdir(self):
         def chama(value):
             if value == "yes":
-                self.local.rootdir = os.getcwd()
+                self.local.set_rootdir(os.path.abspath(os.getcwd()))
                 self.fn_save()
                 self.fman.add_input(
                     Floating()
                     .put_text("Diretório raiz definido como ")
-                    .put_text("  " + self.local.rootdir)
+                    .put_text("  " + os.getcwd())
                     .put_text("Você pode alterar o diretório raiz navegando para o")
                     .put_text("diretório desejado e executando o comando")
                     .put_text("  tko config --root")
@@ -3286,14 +3359,14 @@ class Play:
     def set_language(self):
 
         def back(value):
-            self.rep.lang = value
+            self.rep.set_lang(value)
             self.fn_save()
             self.fman.add_input(
                 Floating()
                 .put_text("Linguagem alterada para " + value)
                 .put_text("Você pode mudar a linguagem")
                 .put_text("de programação apertando")
-                .put_sentence(Sentence() + TR("G", "l"))
+                .put_sentence(Sentence().addf("G", self.Key.set_lang))
                 .warning()
             )
 
@@ -3308,17 +3381,17 @@ class Play:
         )
 
     def process_down(self):
-        if self.local.rootdir == "":
+        if self.local.get_rootdir() == "":
             self.set_rootdir()
             return
 
-        if self.rep.lang == "":
+        if self.rep.get_lang() == "":
             self.set_language()
             return
 
-        rootdir = os.path.relpath(os.path.join(self.local.rootdir, self.rep_alias))
+        rootdir = os.path.join(self.local.get_rootdir(), self.rep_alias)
         obj = self.tree.get_selected()
-        self.down_task(rootdir, obj, self.rep.lang)
+        self.down_task(rootdir, obj, self.rep.get_lang())
 
     def open_link(self):
         obj = self.tree.get_selected()
@@ -3375,7 +3448,7 @@ class Play:
         if isinstance(obj, Task) and obj.key in obj.title:
             task: Task = obj
             down_frame = (
-                Floating().warning().set_header(Sentence().add(" Baixando tarefa "))
+                Floating().warning().set_header(" Baixando tarefa ")
             )
             down_frame.put_text(f"tko down {self.rep_alias} {task.key} -l {ext}")
             self.fman.add_input(down_frame)
@@ -3430,7 +3503,7 @@ class Play:
 
     def show_main_bar(self, frame: Frame):
         frame.set_header(
-            Sentence().add("{").addf("/", f"Tarefas lang:{self.rep.lang}").add("}")
+            Sentence().add("{").addf("/", f"Tarefas lang:{self.rep.get_lang()}").add("}")
         )
         frame.set_footer(Sentence().add(self.build_bar_links()), ">", "{", "}")
         frame.draw()
@@ -3744,12 +3817,10 @@ class Play:
             calls = self.make_callback()
             self.show_items()
 
-
-
             if self.fman.has_floating():
                 value: int = self.fman.get_input()
             else:
-                value: int = scr.getch()
+                value = scr.getch()
 
             if value in calls.keys():
                 calls[value]()
@@ -4942,7 +5013,7 @@ class CDiff:
         
 
     def save_settings(self):
-        self.settings.geral.set(GeralSettings.diffdown, self.param.is_up_down)
+        self.settings.geral.set_is_diff_down(self.param.is_up_down)
         self.sp.save_settings()
 
     def set_exit(self):
@@ -5473,8 +5544,8 @@ class Main:
         # load default diff from settings if not specified
         if not args.side and not args.down:
             geral = SettingsParser().load_settings().geral
-            updown = geral.get(geral.diffdown)
-            sidesize = geral.get(geral.sidesize)
+            updown = geral.get_is_diff_down()
+            sidesize = geral.get_side_size()
             size_too_short = Report.get_terminal_size() < sidesize
             param.set_up_down(updown or size_too_short)
         elif args.side:
@@ -5489,7 +5560,7 @@ class Main:
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         geral = SettingsParser().load_settings().geral
-        updown = geral.get(geral.diffdown)
+        updown = geral.get_is_diff_down()
         param.set_up_down(updown)
 
         if args.filter:
@@ -5514,35 +5585,35 @@ class Main:
 
         if args.ascii:
             action = True
-            settings.geral.set(GeralSettings.ascii, True)
+            settings.geral.set_is_ascii(True)
             print("Encoding mode now is: ASCII")
         if args.unicode:
             action = True
-            settings.geral.set(GeralSettings.ascii, False)
+            settings.geral.set_is_ascii(False)
             print("Encoding mode now is: UNICODE")
         if args.mono:
             action = True
-            settings.geral.set(GeralSettings.color, False)
+            settings.geral.set_is_colored(False)
             print("Color mode now is: MONOCHROMATIC")
         if args.color:
             action = True
-            settings.geral.set(GeralSettings.color, True)
+            settings.geral.set_is_colored(True)
             print("Color mode now is: COLORED")
         if args.side:
             action = True
-            settings.geral.set(GeralSettings.diffdown, False)
+            settings.geral.set_is_diff_down(False)
             print("Diff mode now is: SIDE_BY_SIDE")
         if args.down:
             action = True
-            settings.geral.set(GeralSettings.diffdown, True)
+            settings.geral.set_is_diff_down(True)
             print("Diff mode now is: UP_DOWN")
         if args.lang:
             action = True
-            settings.geral.set(GeralSettings.lang, args.lang)
+            settings.geral.set_lang_def(args.lang)
             print("Default language extension now is:", args.lang)
         if args.ask:
             action = True
-            settings.geral.set(GeralSettings.lang, "")
+            settings.geral.set_lang_def("")
             print("Language extension will be asked always.")
             
         if args.root:
@@ -5553,10 +5624,10 @@ class Main:
         if not action:
             action = True
             print(sp.get_settings_file())
-            print("Diff mode: {}".format("SIDE" if settings.geral.get(GeralSettings.diffdown) else "DOWN"))
-            print("Encoding mode: {}".format("ASCII" if settings.geral.get(GeralSettings.ascii) else "UNICODE"))
-            print("Color mode: {}".format("MONOCHROMATIC" if not settings.geral.get(GeralSettings.color) else "COLORED"))
-            value = settings.geral.get(GeralSettings.lang)
+            print("Diff mode: {}".format("DOWN" if settings.geral.get_is_diff_down() else "SIDE"))
+            print("Encoding mode: {}".format("ASCII" if settings.geral.get_is_ascii() else "UNICODE"))
+            print("Color mode: {}".format("MONOCHROMATIC" if not settings.geral.get_is_colored() else "COLORED"))
+            value = settings.geral.get_lang_def()
             print("Default language extension: {}".format("Always ask" if value == "" else value))
 
         sp.save_settings()
@@ -5734,11 +5805,11 @@ def exec(parser: argparse.ArgumentParser, args):
     if args.c:
         SettingsParser.user_settings_file = args.c
     settings = SettingsParser().load_settings()
-    if args.a or settings.geral.get(GeralSettings.ascii):
+    if args.a or settings.geral.get_is_ascii():
         symbols.set_ascii()
     else:
         symbols.set_unicode()
-    if not args.m and settings.geral.get(GeralSettings.color):
+    if not args.m and settings.geral.get_is_colored():
         Color.enabled = True
         symbols.set_colors()
 
@@ -5764,9 +5835,9 @@ def main():
     except KeyboardInterrupt:
         print("\n\nKeyboard Interrupt")
         sys.exit(1)
-    except Exception as e:
-        print(e)
-        sys.exit(1) # remove in development to show stack trace
+    # except Exception as e:
+    #     print(e)
+    #     sys.exit(1) # remove in development to show stack trace
 
 
 if __name__ == '__main__':

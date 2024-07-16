@@ -5,19 +5,49 @@ from ..util.remote import RemoteCfg, Absolute
 
 
 class RepSettings:
-    expanded = "expanded"
-    new_items = "new_items"
-    tasks = "tasks"
-    flags = "flags"
-    lang = "lang"
+    __expanded = "expanded"
+    __new_items = "new_items"
+    __tasks = "tasks"
+    __flags = "flags"
+    __lang = "lang"
 
     defaults = {
-        expanded: [],
-        tasks: {},
-        flags: {},
-        new_items: [],
-        lang: ""
+        __expanded: [],
+        __tasks: {},
+        __flags: {},
+        __new_items: [],
+        __lang: ""
     }
+
+    def get_expanded(self) -> list:
+        return self.__get(RepSettings.__expanded)
+    
+    def get_new_items(self) -> list:
+        return self.__get(RepSettings.__new_items)
+    
+    def get_tasks(self) -> Dict[str, Any]:
+        return self.__get(RepSettings.__tasks)
+    
+    def get_flags(self) -> Dict[str, Any]:
+        return self.__get(RepSettings.__flags)
+    
+    def get_lang(self) -> str:
+        return self.__get(RepSettings.__lang)
+    
+    def set_expanded(self, value: list):
+        return self.__set(RepSettings.__expanded, value)
+    
+    def set_new_items(self, value: list):
+        return self.__set(RepSettings.__new_items, value)
+    
+    def set_tasks(self, value: Dict[str, Any]):
+        return self.__set(RepSettings.__tasks, value)
+    
+    def set_flags(self, value: Dict[str, Any]):
+        return self.__set(RepSettings.__flags, value)
+    
+    def set_lang(self, value: str):
+        return self.__set(RepSettings.__lang, value)
 
     def __init__(self, file: str = ""):
         self.url: str = ""
@@ -26,7 +56,7 @@ class RepSettings:
         if file != "":
             self.file = os.path.abspath(file)
 
-    def get(self, key: str) -> Any:
+    def __get(self, key: str) -> Any:
         if key not in self.defaults:
             raise ValueError(f"Key {key} not found in RepSettings")
         value = self.data.get(key, RepSettings.defaults[key])
@@ -34,7 +64,7 @@ class RepSettings:
             return RepSettings.defaults[key]
         return value
 
-    def set(self, key: str, value: Any):
+    def __set(self, key: str, value: Any):
         self.data[key] = value
         return self
 

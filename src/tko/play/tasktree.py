@@ -52,22 +52,22 @@ class TaskTree:
         self.reload_sentences()
 
     def load_from_rep(self):
-        self.new_items: List[str] = self.rep.get(RepSettings.new_items)
-        self.expanded: List[str] = self.rep.get(RepSettings.expanded)
+        self.new_items: List[str] = self.rep.get_new_items()
+        self.expanded: List[str] = self.rep.get_expanded()
 
-        tasks = self.rep.get(RepSettings.tasks)
+        tasks = self.rep.get_tasks()
         for key, grade in tasks.items():
             if key in self.game.tasks:
                 self.game.tasks[key].set_grade(int(grade))
 
     def save_on_rep(self):
-        self.rep.set(RepSettings.expanded, self.expanded)
-        self.rep.set(RepSettings.new_items, self.new_items)
+        self.rep.set_expanded(self.expanded)
+        self.rep.set_new_items(self.new_items)
         tasks = {}
         for t in self.game.tasks.values():
             if t.grade != 0:
                 tasks[t.key] = str(t.grade)
-        self.rep.set(RepSettings.tasks, tasks)
+        self.rep.set_tasks(tasks)
 
     def update_available(self):
         old_quests = [q for q in self.available_quests]
@@ -127,7 +127,7 @@ class TaskTree:
         output.addf(color, t.title)
 
         if Flags.down.is_true():
-            path = os.path.join(self.local.rootdir, self.rep_alias, t.key)
+            path = os.path.join(self.local.get_rootdir(), self.rep_alias, t.key)
             if os.path.isdir(path):
                 output.add(" ").addf("y", f"[{path}]")
 

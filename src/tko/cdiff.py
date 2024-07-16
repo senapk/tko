@@ -34,7 +34,7 @@ class CDiff:
         
 
     def save_settings(self):
-        self.settings.geral.set(GeralSettings.diffdown, self.param.is_up_down)
+        self.settings.geral.set_is_diff_down(self.param.is_up_down)
         self.sp.save_settings()
 
     def set_exit(self):

@@ -96,8 +96,8 @@ class Flag:
     
 
 class Flags:
-    count = Flag().name("Count").char("C").text("Mostra a contagem de tarefas").location("left")
-    down = Flag().name("Down").char("D").text("Mostra o caminho para a tarefa baixadas").location("left")
+    count = Flag().name("Count").char("C").values(["1", "0"]).text("Mostra a contagem de tarefas").location("left")
+    down = Flag().name("Down").char("D").values(["1", "0"]).text("Mostra o caminho para a tarefa baixadas").location("left")
     minimum = Flag().name("Minimum").char("M").text("Mostra a nota mínima para a tarefa").location("left")
     opt = Flag().name("Opt").char("O").text("Mostra tarefas opcionais").location("left")
     xp = Flag().name("Xp").char("X").text("Mostra a xp obtida").location("left")

@@ -98,8 +98,8 @@ class Main:
         # load default diff from settings if not specified
         if not args.side and not args.down:
             geral = SettingsParser().load_settings().geral
-            updown = geral.get(geral.diffdown)
-            sidesize = geral.get(geral.sidesize)
+            updown = geral.get_is_diff_down()
+            sidesize = geral.get_side_size()
             size_too_short = Report.get_terminal_size() < sidesize
             param.set_up_down(updown or size_too_short)
         elif args.side:
@@ -114,7 +114,7 @@ class Main:
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         geral = SettingsParser().load_settings().geral
-        updown = geral.get(geral.diffdown)
+        updown = geral.get_is_diff_down()
         param.set_up_down(updown)
 
         if args.filter:
@@ -139,35 +139,35 @@ class Main:
 
         if args.ascii:
             action = True
-            settings.geral.set(GeralSettings.ascii, True)
+            settings.geral.set_is_ascii(True)
             print("Encoding mode now is: ASCII")
         if args.unicode:
             action = True
-            settings.geral.set(GeralSettings.ascii, False)
+            settings.geral.set_is_ascii(False)
             print("Encoding mode now is: UNICODE")
         if args.mono:
             action = True
-            settings.geral.set(GeralSettings.color, False)
+            settings.geral.set_is_colored(False)
             print("Color mode now is: MONOCHROMATIC")
         if args.color:
             action = True
-            settings.geral.set(GeralSettings.color, True)
+            settings.geral.set_is_colored(True)
             print("Color mode now is: COLORED")
         if args.side:
             action = True
-            settings.geral.set(GeralSettings.diffdown, False)
+            settings.geral.set_is_diff_down(False)
             print("Diff mode now is: SIDE_BY_SIDE")
         if args.down:
             action = True
-            settings.geral.set(GeralSettings.diffdown, True)
+            settings.geral.set_is_diff_down(True)
             print("Diff mode now is: UP_DOWN")
         if args.lang:
             action = True
-            settings.geral.set(GeralSettings.lang, args.lang)
+            settings.geral.set_lang_def(args.lang)
             print("Default language extension now is:", args.lang)
         if args.ask:
             action = True
-            settings.geral.set(GeralSettings.lang, "")
+            settings.geral.set_lang_def("")
             print("Language extension will be asked always.")
             
         if args.root:
@@ -178,10 +178,10 @@ class Main:
         if not action:
             action = True
             print(sp.get_settings_file())
-            print("Diff mode: {}".format("SIDE" if settings.geral.get(GeralSettings.diffdown) else "DOWN"))
-            print("Encoding mode: {}".format("ASCII" if settings.geral.get(GeralSettings.ascii) else "UNICODE"))
-            print("Color mode: {}".format("MONOCHROMATIC" if not settings.geral.get(GeralSettings.color) else "COLORED"))
-            value = settings.geral.get(GeralSettings.lang)
+            print("Diff mode: {}".format("DOWN" if settings.geral.get_is_diff_down() else "SIDE"))
+            print("Encoding mode: {}".format("ASCII" if settings.geral.get_is_ascii() else "UNICODE"))
+            print("Color mode: {}".format("MONOCHROMATIC" if not settings.geral.get_is_colored() else "COLORED"))
+            value = settings.geral.get_lang_def()
             print("Default language extension: {}".format("Always ask" if value == "" else value))
 
         sp.save_settings()
@@ -359,11 +359,11 @@ def exec(parser: argparse.ArgumentParser, args):
     if args.c:
         SettingsParser.user_settings_file = args.c
     settings = SettingsParser().load_settings()
-    if args.a or settings.geral.get(GeralSettings.ascii):
+    if args.a or settings.geral.get_is_ascii():
         symbols.set_ascii()
     else:
         symbols.set_unicode()
-    if not args.m and settings.geral.get(GeralSettings.color):
+    if not args.m and settings.geral.get_is_colored():
         Color.enabled = True
         symbols.set_colors()
 
@@ -389,9 +389,9 @@ def main():
     except KeyboardInterrupt:
         print("\n\nKeyboard Interrupt")
         sys.exit(1)
-    except Exception as e:
-        print(e)
-        sys.exit(1) # remove in development to show stack trace
+    # except Exception as e:
+    #     print(e)
+    #     sys.exit(1) # remove in development to show stack trace
 
 
 if __name__ == '__main__':

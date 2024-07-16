@@ -145,7 +145,7 @@ class Down:
             loaded_json = json.load(f)
         os.remove(mapi_path)
 
-        language_def = SettingsParser().load_settings().geral.get(GeralSettings.lang)
+        language_def = SettingsParser().load_settings().geral.get_lang_def()
         ask_ext = False
         if language is None:
             if language_def != "":

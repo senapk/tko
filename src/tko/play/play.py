@@ -39,8 +39,8 @@ class Play:
         self.rep = rep
         self.exit = False
 
-        self.flagsman = FlagsMan(self.rep.get(RepSettings.flags))
-        self.rep.lang = self.rep.get(RepSettings.lang)
+        self.lang = self.rep.get_lang()
+        self.flagsman = FlagsMan(self.rep.get_flags())
         self.game: Game = game
         self.fman = FloatingManager()
         self.tree = TaskTree(local, game, rep, rep_alias)
@@ -66,20 +66,19 @@ class Play:
 
     def save_to_json(self):
         self.tree.save_on_rep()
-        self.rep.set(RepSettings.flags, self.flagsman.get_data())
-        self.rep.set(RepSettings.lang, self.rep.lang)
+        self.rep.set_flags(self.flagsman.get_data())
 
         self.fn_save()
 
     def set_rootdir(self):
         def chama(value):
             if value == "yes":
-                self.local.rootdir = os.getcwd()
+                self.local.set_rootdir(os.path.abspath(os.getcwd()))
                 self.fn_save()
                 self.fman.add_input(
                     Floating()
                     .put_text("Diretório raiz definido como ")
-                    .put_text("  " + self.local.rootdir)
+                    .put_text("  " + os.getcwd())
                     .put_text("Você pode alterar o diretório raiz navegando para o")
                     .put_text("diretório desejado e executando o comando")
                     .put_text("  tko config --root")
@@ -109,14 +108,14 @@ class Play:
     def set_language(self):
 
         def back(value):
-            self.rep.lang = value
+            self.rep.set_lang(value)
             self.fn_save()
             self.fman.add_input(
                 Floating()
                 .put_text("Linguagem alterada para " + value)
                 .put_text("Você pode mudar a linguagem")
                 .put_text("de programação apertando")
-                .put_sentence(Sentence() + TR("G", "l"))
+                .put_sentence(Sentence().addf("G", self.Key.set_lang))
                 .warning()
             )
 
@@ -131,17 +130,17 @@ class Play:
         )
 
     def process_down(self):
-        if self.local.rootdir == "":
+        if self.local.get_rootdir() == "":
             self.set_rootdir()
             return
 
-        if self.rep.lang == "":
+        if self.rep.get_lang() == "":
             self.set_language()
             return
 
-        rootdir = os.path.relpath(os.path.join(self.local.rootdir, self.rep_alias))
+        rootdir = os.path.join(self.local.get_rootdir(), self.rep_alias)
         obj = self.tree.get_selected()
-        self.down_task(rootdir, obj, self.rep.lang)
+        self.down_task(rootdir, obj, self.rep.get_lang())
 
     def open_link(self):
         obj = self.tree.get_selected()
@@ -198,7 +197,7 @@ class Play:
         if isinstance(obj, Task) and obj.key in obj.title:
             task: Task = obj
             down_frame = (
-                Floating().warning().set_header(Sentence().add(" Baixando tarefa "))
+                Floating().warning().set_header(" Baixando tarefa ")
             )
             down_frame.put_text(f"tko down {self.rep_alias} {task.key} -l {ext}")
             self.fman.add_input(down_frame)
@@ -253,7 +252,7 @@ class Play:
 
     def show_main_bar(self, frame: Frame):
         frame.set_header(
-            Sentence().add("{").addf("/", f"Tarefas lang:{self.rep.lang}").add("}")
+            Sentence().add("{").addf("/", f"Tarefas lang:{self.rep.get_lang()}").add("}")
         )
         frame.set_footer(Sentence().add(self.build_bar_links()), ">", "{", "}")
         frame.draw()
@@ -567,12 +566,10 @@ class Play:
             calls = self.make_callback()
             self.show_items()
 
-
-
             if self.fman.has_floating():
                 value: int = self.fman.get_input()
             else:
-                value: int = scr.getch()
+                value = scr.getch()
 
             if value in calls.keys():
                 calls[value]()
