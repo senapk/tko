@@ -318,7 +318,7 @@ class Play:
     def show_help(self):
         _help: Floating = Floating().warning().set_ljust_text()
         self.fman.add_input(_help)
-        _help.set_header(Sentence().addf("/", " Help "))
+        _help.set_header(" Help ")
         _help.put_text("Controles")
         _help.put_text("  setas ou wasd   - Para navegar entre os elementos")
         _help.put_text("  enter ou espaço - Marcar ou desmarcar, expandir ou contrair")
@@ -332,9 +332,10 @@ class Play:
         _help.put_text("  Muda a forma de exibição dos elementos")
         _help.put_text("")
         _help.put_text("Extra")
-        _help.put_text(
-            f"  {self.Key.set_lang} - Mudar a linguagem de download dos rascunhos"
-        )
+        _help.put_text(f"  {self.Key.set_lang} - Mudar a linguagem de download dos rascunhos" )
+        _help.put_text(f"  {self.Key.mass_toggle} - Marca ou desmarca um bloco inteiro" )
+        _help.put_text(f"  {self.Key.reset} - Reseta as cores para os valores default" )
+
 
     @staticmethod
     def disable_on_resize():
@@ -584,9 +585,7 @@ class Play:
 
     def play(self, graph_ext: str):
         self.graph_ext = graph_ext
-        try:
-            output = curses.wrapper(self.main)
-            if output is None:
-                return
-        except Exception as e:
-            print(e)
+        output = curses.wrapper(self.main)
+        if output is None:
+            return
+

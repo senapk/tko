@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.11.1
+  - fix: help in play mode bug
 - 0.11.0
   - add: tests using pytest
   - run with curses polished
