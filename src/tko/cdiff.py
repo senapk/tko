@@ -4,12 +4,13 @@ from .run.basic import ExecutionResult, Param, Unit
 from .execution import Execution
 from .run.diff import Diff
 from .util.ftext import Sentence, Token
-from typing import List
+from typing import List, Optional
 from .play.frame import Frame
+from .play.floating import Floating
+
 from .run.wdir import Wdir
 from .run.report import Report
 from .settings.settings_parser import SettingsParser
-from .settings.geral_settings import GeralSettings
 import os
 
 class CDiff:
@@ -31,7 +32,8 @@ class CDiff:
 
         self.sp = SettingsParser()
         self.settings = self.sp.load_settings()
-        
+        self.first_loop = True
+        self.warning: Optional[Floating] = None
 
     def save_settings(self):
         self.settings.geral.set_is_diff_down(self.param.is_up_down)
@@ -63,39 +65,8 @@ class CDiff:
             r"  \___| \__,_| \____||_____| \___| \___| \___/ ",
         ]
 
-#         out2 = [
-#         "░▒▓███████▓▒░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░░▒▓████████▓▒░░▒▓███████▓▒░▒▓███████▓▒░░▒▓██████▓▒░  ",
-#         "░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░     ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░",
-#         "░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░      ░▒▓█▓▒░     ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░",
-#         " ░▒▓██████▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓██████▓▒░  ░▒▓██████▓▒░░▒▓██████▓▒░░▒▓█▓▒░░▒▓█▓▒░",
-#         "       ░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░             ░▒▓█▓▒░     ░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░",
-#         "       ░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░             ░▒▓█▓▒░     ░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░",
-#         "░▒▓███████▓▒░ ░▒▓██████▓▒░ ░▒▓██████▓▒░░▒▓████████▓▒░▒▓███████▓▒░▒▓███████▓▒░ ░▒▓██████▓▒░ "]
-
-#         out3 = """
-# ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠤⢔⣶⣖⢂⢒⡐⠢⠤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-# ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠤⢊⠵⠒⣩⠟⠛⠙⠂⠀⠀⠉⠒⢤⣾⣖⠤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-# ⠀⠀⠀⠀⠀⣀⡤⠄⣀⠀⠀⠀⠀⠀⢀⠔⡡⠊⠀⠀⠀⠁⣀⣀⠀⠀⠀⠀⠀⠀⠈⠉⠻⡆⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-# ⠀⠀⠀⢠⠋⠁⠀⠀⠈⠱⡄⠀⠀⡠⠃⡜⠀⠀⠀⠀⢀⣾⠗⠋⠛⢆⠀⠀⠀⣠⣤⣤⡄⠉⢢⠀⠑⠄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-# ⠀⠀⠀⢼⠀⠀⠀⠀⠀⠀⠱⠀⢠⠃⢠⠃⠀⠀⠀⠀⢸⠋⣠⣤⡀⠘⡆⠀⢰⡿⠋⠉⠳⣄⠈⣆⠀⠐⡄⠀⠀⢀⠔⠂⠐⠲⢄⠀⠀⠀
-# ⠀⠀⠀⠈⢆⠀⠀⠀⠀⠀⢀⢃⠆⠀⠀⠁⠀⠀⢄⣀⣹⠀⣷⣼⣿⠀⢻⠀⢿⣖⣹⣷⡀⠈⡆⠈⠀⠀⢰⡀⠰⠃⠀⠀⠀⠀⠀⡇⠀⠀
-# ⠀⠀⠀⠀⠈⣆⠤⠤⠤⠤⠾⣼⡀⠀⠀⠀⠀⠀⢀⡀⠂⠙⠻⡓⠋⢀⡏⠀⠀⢿⢿⡽⠃⠀⡜⠀⠀⠀⠀⡇⡇⠀⠀⠀⠀⠀⡠⠁⠀⠀
-# ⠀⠀⢀⠔⡩⠀⠀⠀⠀⠀⠀⠀⠉⠓⢄⠀⠀⠊⠁⠙⢕⠂⠀⠘⡖⠊⠀⠀⠀⠀⠑⡤⠔⠊⡉⠐⠀⠀⢀⣰⡼⠤⠤⠤⢄⣰⠁⠀⠀⠀
-# ⠀⡰⠁⠊⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⡇⠀⠀⠀⠀⠈⣶⡤⣀⠀⠀⠀⠀⠀⠀⠀⠁⠠⣲⠖⠤⢠⠞⠉⠀⠀⠀⠀⠀⠀⠀⠁⠢⡀⠀
-# ⢰⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠉⠛⠒⢧⡀⠀⠀⠀⠀⠘⣷⣀⠉⠑⠒⠂⠒⢐⣦⠖⠋⠀⠀⠀⡗⠀⠀⢀⠀⠀⠀⠀⠀⠀⠀⠀⠐⠀
-# ⠠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢳⠀⠀⠀⠀⠀⠸⣿⣷⣦⣤⣤⣤⣾⠇⠀⠀⠀⠀⡴⠛⠉⠀⠀⠀⠀⠉⠐⠂⠀⠀⠀⠀⢠
-# ⢰⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠠⠄⣀⡀⢀⠞⢄⠀⠀⠀⠀⠀⠘⢾⣿⣻⣿⣿⡟⠀⠀⠀⠀⢸⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸
-# ⠈⢆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠓⢎⠀⠈⠢⡀⠀⠀⠀⠀⠈⠛⠿⠿⢛⠁⠀⠀⠀⠀⠈⢆⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈
-# ⠀⠈⢢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡜⠻⢤⡀⠈⠲⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠔⢻⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-# ⠀⠀⠀⠉⠢⢄⡀⠀⠀⠀⠀⢀⡠⠔⠊⠀⠀⠀⠉⠓⠦⣀⣁⠀⠀⠀⠀⠀⢀⣀⠤⠒⠊⠀⠀⠈⠢⡀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠔⠁⠀
-# ⠀⠀⠀⠀⠀⠀⠀⠉⢉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠑⠒⠤⠤⠤⠤⠒⠊⠁⠀⠀⠀""".split("\n")
-
         out = out1
-        lines, cols = Fmt.get_size()
-        # if cols > 70:
-        #     out = out3
-        # if cols > 91:
-        #     out = out2
+        _, cols = Fmt.get_size()
         for i, line in enumerate(out):
             Fmt.write(i + 4, 1, Sentence().addf("g", line).center(cols - 2, Token(" ", " ")))
 
@@ -151,7 +122,7 @@ class CDiff:
                 bar.append(vbar)
             bar.append(br)
 
-        lines, cols = Fmt.get_size()
+        _, cols = Fmt.get_size()
         for i in range(len(bar)):
             Fmt.write(i + y_init, cols - 1, Sentence().add(bar[i]))
 
@@ -172,7 +143,7 @@ class CDiff:
                 self.index = len(self.results) - 1
 
 
-        lines, cols = Fmt.get_size()
+        _, cols = Fmt.get_size()
         frame = Frame(0, 0).set_size(3, cols)
         pwd = os.getcwd()
         intro = self.wdir.resume()
@@ -205,7 +176,7 @@ class CDiff:
         .addf("/B", "DiffMode").addf("B", "[D]")
         .add(" ")
         )
-        lines, cols = Fmt.get_size()
+        _, cols = Fmt.get_size()
         Fmt.write(3, 0, cmds.center(cols, Token(" ", "K")))
 
     def has_any_error(self):
@@ -242,43 +213,85 @@ class CDiff:
             frame.write(i, 0, Sentence().add(line))
         return
 
+    def load_autoload_warning(self):
+        # if not self.wdir.autoload:
+        #     return
+        warning = Floating().set_header(" Atenção ").warning()
+        warning.put_text("Os seguintes arquivos foram carregados automaticamente")
+        solver = self.wdir.solver
+        solvers = [] if solver is None else solver.path_list
+        warning.put_text("")
+        loaded = Sentence().add("Códigos ")
+        for i, file in enumerate(solvers):
+            if i != 0:
+                loaded.add(", ")
+            loaded.addf("g", os.path.basename(file))
+        warning.put_sentence(loaded)
+        sources = self.wdir.source_list
+        loaded = Sentence().add("Testes ")
+        for i, file in enumerate(sources):
+            if i != 0:
+                loaded.add(", ")
+            loaded.addf("y", os.path.basename(file))
+
+        warning.put_sentence(loaded)
+        warning.put_text("")
+        warning.put_text("Caso queira remover algum arquivo")
+        warning.put_text("renomeie sua extensão para .txt")
+        warning.put_text("Ou execute o run manualmente passando os arquivos desejados")
+        warning.put_text("")
+        warning.put_sentence(Sentence().addf("c", "tko run <cod> <cod> cases.tio")) 
+        warning.put_text("")
+
+        self.warning = warning
 
     def main(self, scr):
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
         while not self.exit:
+            if self.first_loop:
+                self.first_loop = False
+                self.load_autoload_warning()
             Fmt.erase()
             self.draw_top_line()
             unit = self.wdir.unit_list[self.index]
             self.draw_diff(unit)
             self.draw_scrollbar()
             self.draw_guide_line()
+
+            if self.warning is not None and self.warning.is_enable():
+                self.warning.draw()
             if not self.end_processing():
                 Fmt.refresh()
+                continue
+
+            if self.warning is not None and self.warning.is_enable():
+                input = self.warning.get_input()
             else:
                 input = Fmt.getch()
-                if input == ord('q'):
-                    self.set_exit()
-                elif input == curses.KEY_LEFT or input == ord('a'):
-                    self.index = max(0, self.index - 1)
-                    self.init = 0
-                elif input == curses.KEY_RIGHT or input == ord('d'):
-                    self.index = min(len(self.results) - 1, self.index + 1)
-                    self.init = 0
-                elif input == curses.KEY_DOWN or input == ord('s'):
-                    self.init += 1
-                elif input == curses.KEY_UP or input == ord('w'):
-                    self.init = max(0, self.init - 1)
-                elif input == ord('D'):
-                    self.param.is_up_down = not self.param.is_up_down
-                    self.save_settings()
-                    self.init = 0
-                elif input == ord('r'):
-                    if self.wdir.solver is not None:
-                        self.wdir.solver.prepare_exec()
-                    self.results = []
-                    self.first_error = -1
+
+            if input == ord('q'):
+                self.set_exit()
+            elif input == curses.KEY_LEFT or input == ord('a'):
+                self.index = max(0, self.index - 1)
+                self.init = 0
+            elif input == curses.KEY_RIGHT or input == ord('d'):
+                self.index = min(len(self.results) - 1, self.index + 1)
+                self.init = 0
+            elif input == curses.KEY_DOWN or input == ord('s'):
+                self.init += 1
+            elif input == curses.KEY_UP or input == ord('w'):
+                self.init = max(0, self.init - 1)
+            elif input == ord('D'):
+                self.param.is_up_down = not self.param.is_up_down
+                self.save_settings()
+                self.init = 0
+            elif input == ord('r'):
+                if self.wdir.solver is not None:
+                    self.wdir.solver.prepare_exec()
+                self.results = []
+                self.first_error = -1
                 
 
     def run(self):

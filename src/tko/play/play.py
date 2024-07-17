@@ -8,15 +8,16 @@ from ..game.graph import Graph
 from typing import List, Any, Dict
 from ..settings.settings import RepSettings, GeralSettings
 from ..down import Down
-from ..util.ftext import Sentence, Token, TR
-from .style import Style
+from ..util.ftext import Sentence, Token,  RToken
 from .fmt import Fmt
 from .frame import Frame
 
 from .floating import Floating
 from .floating_manager import FloatingManager
 from .flags import Flag, Flags, FlagsMan
-from .tasktree import TaskTree, Entry
+from .tasktree import TaskTree
+from ..actions import Run
+from ..run.basic import Param
 
 import webbrowser
 import os
@@ -48,20 +49,20 @@ class Play:
         self.first_loop = True
         self.graph_ext = ""
 
-        self.help_base = [
-            f"Quit[{self.Key.quit}]",
-            f"Help[{self.Key.help}]",
-            "Move[wasd]",
-            "Mark[enter]",
-        ]
-        self.help_extra = [
-            f"Open[{self.Key.open_link}]",
-            f"Get[{self.Key.down_task}]",
-            "Grade[0-9]",
-            f"Lang[{self.Key.set_lang}]",
-            f"Fold[{self.Key.collapse}{self.Key.expand}]",
-            f"MassMark[{self.Key.mass_toggle}]",
-            f"ResetColors[{self.Key.reset}]",
+        self.help_base: List[Token] = [
+            RToken("B", f"Quit[{self.Key.quit}]"),
+            RToken("B", f"Help[{self.Key.help}]"),
+            RToken("B", "Move[wasd]"),
+            RToken("B", f"Fold[{self.Key.collapse}{self.Key.expand}]"),
+            RToken("Y", "Mark[enter]"),
+            RToken("Y", "Grade[0-9]"),
+            RToken("Y", f"Open[{self.Key.open_link}]"),
+            RToken("Y", f"Get[{self.Key.down_task}]"),
+            RToken("Y", f"Run[{self.Key.run_task}]"),
+            RToken("R", f"Root[{self.Key.set_root}]"),
+            RToken("R", f"Lang[{self.Key.set_lang}]"),
+            RToken("R", f"Undo[{self.Key.reset}]"),
+            RToken("R", f"Block[{self.Key.mass_toggle}]")
         ]
 
     def save_to_json(self):
@@ -78,29 +79,40 @@ class Play:
                 self.fman.add_input(
                     Floating()
                     .put_text("Diretório raiz definido como ")
+                    .put_text("")
                     .put_text("  " + os.getcwd())
-                    .put_text("Você pode alterar o diretório raiz navegando para o")
+                    .put_text("")
+                    .put_text("Você pode também pode alterar")
+                    .put_text("o diretório raiz navegando para o")
                     .put_text("diretório desejado e executando o comando")
+                    .put_text("")
                     .put_text("  tko config --root")
                     .put_text("")
-                    .set_exit_fn(self.set_language)
                     .warning()
                 )
             else:
                 self.fman.add_input(
                     Floating()
-                    .put_text("Navague para o diretório desejado e execute o comando")
+                    .put_text("Navegue para o diretório desejado e tente novamente.")
+                    .put_text("")
+                    .put_text("Você pode também pode alterar")
+                    .put_text("o diretório raiz navegando para o")
+                    .put_text("diretório desejado e executando o comando")
+                    .put_text("")
                     .put_text("  tko config --root")
-                    .put_text("ou rode o tko play novamente na pasta desejada")
+                    .put_text("")
                     .warning()
                 )
 
         self.fman.add_input(
             Floating()
-            .put_text("Diretório raiz para o tko ainda não foi definido")
-            .put_text("Você deseja utilizar o diretório atual")
+            .put_text("Você deseja utilizar o diretório")
+            .put_text("atual como diretório raiz do tko?")
+            .put_text("")
             .put_text(os.getcwd())
+            .put_text("")
             .put_text("como raiz para o repositório de " + self.rep_alias + "?")
+            .put_text("")
             .set_options(["yes", "no"])
             .answer(chama)
         )
@@ -131,11 +143,21 @@ class Play:
 
     def process_down(self):
         if self.local.get_rootdir() == "":
-            self.set_rootdir()
+            self.fman.add_input(
+                Floating().put_text("O diretório de download padrão")
+                .put_text("do tko ainda não foi definido.")
+                .put_sentence(Sentence() + "Utilize o comando " + Token(self.Key.set_root, "g"))
+                .put_text("para configurá-lo.")
+            )
             return
 
         if self.rep.get_lang() == "":
-            self.set_language()
+            self.fman.add_input(
+                Floating().put_text("A linguagem de download padrão")
+                .put_text("para os rascunhos ainda não foi definda.")
+                .put_sentence(Sentence() + "Utilize o comando " + Token(self.Key.set_lang, "g"))
+                .put_text("para configurá-la.")
+            )
             return
 
         rootdir = os.path.join(self.local.get_rootdir(), self.rep_alias)
@@ -228,14 +250,53 @@ class Play:
                     Floating().put_text("Essa não é uma tarefa de código").error()
                 )
 
+    def run_task(self):
+        rootdir = self.local.get_rootdir()
+        obj = self.tree.items[self.tree.index_selected].obj
+
+        if isinstance(obj, Quest):
+            self.fman.add_input(
+                Floating()
+                .put_text("Essa é uma missão")
+                .put_text("você só pode executar tarefas baixadas")
+                .error()
+            )
+            return
+        if isinstance(obj, Cluster):
+            self.fman.add_input(
+                Floating()
+                .put_text("Esse é um grupo")
+                .put_text("você só pode executar tarefas baixadas")
+                .error()
+            )
+            return
+
+        
+        if not obj.key in obj.title:
+            self.fman.add_input(
+                Floating().put_text("Essa não é uma tarefa de código").error()
+            )
+            return
+        path = os.path.join(rootdir, self.rep_alias, obj.key)
+        if not os.path.isdir(path):
+            self.fman.add_input(
+                Floating().put_text("Você precisa baixar a tarefa primeiro").error()
+            )
+            return
+        run = Run([path], None, Param.Basic())
+        run.set_curses()
+        return run.execute
+            
+
+
     @staticmethod
-    def build_list_sentence(items: List[str]) -> Sentence:
+    def build_list_sentence(items: List[Token]) -> Sentence:
         _help = Sentence()
         try:
             for x in items:
-                label, key = x.split("[")
+                label, key = x.text.split("[")
                 key = "[" + key
-                _help.addf("/", label).add(key).add(" ")
+                _help.addf("/" + x.fmt, label).addf(x.fmt, key).add(" ")
         except ValueError:
             raise ValueError("Desempacotando mensagens")
         _help.data.pop()
@@ -338,14 +399,15 @@ class Play:
         _help.put_text("  Muda a forma de exibição dos elementos")
         _help.put_text("")
         _help.put_text("Extra")
-        _help.put_text(f"  {self.Key.set_lang} - Mudar a linguagem de download dos rascunhos" )
-        _help.put_text(f"  {self.Key.mass_toggle} - Marca ou desmarca um bloco inteiro" )
-        _help.put_text(f"  {self.Key.reset} - Reseta as cores para os valores default" )
+        _help.put_text(f"   Root[{self.Key.set_root}] - Mudar a pasta padrão de download do tko" )
+        _help.put_text(f"   Lang[{self.Key.set_lang}] - Mudar a linguagem de download dos rascunhos" )
+        _help.put_text(f"   Undo[{self.Key.reset}] - Retorna as cores para os valores padrão" )
+        _help.put_text(f"  Block[{self.Key.mass_toggle}] - Marca ou desmarca um bloco inteiro" )
 
 
     @staticmethod
     def disable_on_resize():
-        lines, cols = Fmt.get_size()
+        _, cols = Fmt.get_size()
         if cols < 50 and Flags.skills_bar.is_true() and Flags.flags_bar.is_true():
             Flags.skills_bar.toggle()
         elif cols < 30 and Flags.skills_bar.is_true():
@@ -354,10 +416,7 @@ class Play:
             Flags.flags_bar.toggle()
 
     def show_bottom_bar(self, frame: Frame):
-        _help = Play.build_list_sentence(self.help_base + self.help_extra)
-        for tk in _help.data:
-            if tk.text != " ":
-                tk.fmt = "B"
+        _help = Play.build_list_sentence(self.help_base)
         dx = frame.get_dx()
         _help.trim_alfa(dx)
         _help.trim_end(dx)
@@ -367,10 +426,8 @@ class Play:
 
     def show_top_bar(self, frame: Frame) -> None:
         dx = frame.get_dx()
-        # _help = Play.build_list_sentence(self.help_base)
-        # _help.trim_alfa(dx)
-        # _help.trim_end(dx)
-        # frame.set_footer(_help, "^")
+        root = Sentence().addf("/", "RootDir ").addf("/", self.local.get_rootdir())
+        frame.set_footer(root, ">", "{", "}")
         frame.draw()
 
         content = Sentence().add(" ")
@@ -460,16 +517,18 @@ class Play:
         left = "a"
         right = "d"
         down_task = "g"
+        run_task = "r"
         help = "h"
         expand = ">"
         collapse = "<"
-        set_lang = "l"
+        set_root = "R"
+        set_lang = "L"
         open_link = "o"
         quit = "q"
         down = "s"
         up = "w"
-        reset = "r"
-        mass_toggle = "T"
+        reset = "U"
+        mass_toggle = "B"
         toggle_space = " "
         toggle_enter = "\n"
 
@@ -507,6 +566,7 @@ class Play:
             for flag in self.flagsman.left:
                 if not flag.is_bool():
                     flag.index(0)
+            self.fman.add_input(Floating().put_text("Cores alteradas para seus valores padrão").warning())
 
         calls = {}
 
@@ -546,7 +606,9 @@ class Play:
         add_str(self.Key.toggle_space, self.tree.toggle)
         add_str(self.Key.open_link, self.open_link)
         add_str(self.Key.set_lang, self.set_language)
+        add_str(self.Key.set_root, self.set_rootdir)
         add_str(self.Key.down_task, self.process_down)
+        add_str(self.Key.run_task, self.run_task)
         add_str(self.Key.mass_toggle, self.tree.mass_mark)
         add_str(self.Key.reset, reset_colors)
 
@@ -579,7 +641,9 @@ class Play:
                 value = scr.getch()
 
             if value in calls.keys():
-                calls[value]()
+                callback = calls[value]()
+                if callback is not None:
+                    return callback
 
             self.tree.reload_sentences()
             self.save_to_json()
@@ -589,7 +653,10 @@ class Play:
 
     def play(self, graph_ext: str):
         self.graph_ext = graph_ext
-        output = curses.wrapper(self.main)
-        if output is None:
-            return
+        while True:
+            output = curses.wrapper(self.main)
+            if output is None:
+                return
+            else:
+                output()
 

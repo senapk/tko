@@ -10,7 +10,7 @@ class Floating:
     def __init__(self, _align=""):
         self._frame = Frame(0, 0)
         self._content: List[Sentence] = []
-        self._type = ""
+        self._type = "warning"
         self._options = []
         self._options_index = 0
         self._fn_answer = None
@@ -20,6 +20,9 @@ class Floating:
         self._exit_key = None
         self._centralize = True
         self._floating_align = _align
+
+    def disable(self):
+        self._enable = False
 
     def set_ljust_text(self):
         self._centralize = False

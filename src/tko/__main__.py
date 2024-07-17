@@ -61,7 +61,7 @@ class MRep:
             print("Repository not found.")
 
     @staticmethod
-    def reset(_args):
+    def reset(_):
         sp = SettingsParser()
         sp.settings = Settings()
         sp.save_settings()

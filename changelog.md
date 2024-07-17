@@ -1,5 +1,9 @@
 # Changelog
 
+- 0.11.6
+  - add: playrun integrated
+- 0.11.5
+  - add: visual dots for incomplete path
 - 0.11.3
   - fix: default settings
 - 0.11.1

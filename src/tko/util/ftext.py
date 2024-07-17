@@ -23,7 +23,7 @@ class Token:
     def __str__(self):
         return f"('{self.text}', '{self.fmt}')"
 
-def TR(fmt: str, text: str) -> Token:
+def RToken(fmt: str, text: str) -> Token:
     return Token(text, fmt)
 
 class Sentence:

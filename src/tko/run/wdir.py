@@ -58,10 +58,16 @@ class LabelFactory:
 
 class Wdir:
     def __init__(self):
+        self.autoload = False
         self.solver: Optional[Solver] = None
         self.source_list: List[str] = []
         self.pack_list: List[List[Unit]] = []
         self.unit_list: List[Unit] = []
+        self.curses = False
+
+    def set_curses(self, value: bool):
+        self.curses = value
+        return self
 
     def set_solver(self, solver_list: List[str]):
         if len(solver_list) > 0:
@@ -72,7 +78,31 @@ class Wdir:
         self.source_list = source_list
         return self
 
+    def run_autoload(self, folder: str):
+        files = os.listdir(folder)
+        files = [os.path.join(folder, f) for f in files]
+        files = [f for f in files if os.path.isfile(f)]
+        files = [f for f in files if not (f.endswith(".txt") or f.endswith(".md"))]
+
+        sources = [target for target in files if target.endswith(".tio")]
+        solvers = [target for target in files if not target.endswith(".tio")]
+
+        if not self.curses:
+            print("Autoloading files")
+            print("solvers found: [" + ", ".join(solvers) + "]")
+            print("sources found: [" + ", ".join(sources) + "]")
+            print("To remove a file from autoloading, change extension for .txt")
+        self.set_solver(solvers)
+        self.set_sources(sources)
+        self.autoload = True
+        return self
+
     def set_target_list(self, target_list: List[str]):
+        if len(target_list) == 0:
+            target_list.append(".")
+        if len(target_list) == 1 and os.path.isdir(target_list[0]):
+            return self.run_autoload(target_list[0])
+            
         target_list = [t for t in target_list if t != ""]
         for target in target_list:
             if not os.path.exists(target):

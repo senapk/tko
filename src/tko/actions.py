@@ -9,7 +9,7 @@ from .run.diff import Diff
 from .util.ftext import Sentence, Token
 
 from .run.report import Report
-from .util.term_color import term_colour, term_print
+from .util.term_color import term_print
 from .util.symbols import symbols
 
 from .run.writer import Writer
@@ -43,33 +43,32 @@ class Run:
         self.target_list: List[str] = target_list
         self.exec_cmd: Optional[str] = exec_cmd
         self.param: Param.Basic = param
-        self.wdir: Optional[Wdir] = None
+        self.wdir: Wdir = Wdir()
         self.curses: bool = False
 
-    def set_curses(self):
-        self.curses = True
+    def set_curses(self, value:bool=True):
+        self.curses = value
         return self
 
-
     def execute(self):
-        self.remove_duplicates()
-        self.change_targets_to_filter_mode()
-        if not self.build_wdir():
+        self.__remove_duplicates()
+        self.__change_targets_to_filter_mode()
+        if not self.__build_wdir():
             return
-        if self.missing_target():
+        if self.__missing_target():
             return
-        if self.list_mode():
+        if self.__list_mode():
             return
-        if self.free_run():
+        if self.__free_run():
             return
-        self.diff_mode()
+        self.__diff_mode()
         return
 
-    def remove_duplicates(self):
+    def __remove_duplicates(self):
         # remove duplicates in target list keeping the order
         self.target_list = list(dict.fromkeys(self.target_list))
 
-    def change_targets_to_filter_mode(self):
+    def __change_targets_to_filter_mode(self):
         if self.param.filter:
             old_dir = os.getcwd()
 
@@ -84,7 +83,7 @@ class Run:
                     new_target_list.append(target)
             self.target_list = new_target_list
 
-    def print_top_line(self):
+    def __print_top_line(self):
         if self.wdir is None:
             return
 
@@ -103,7 +102,7 @@ class Run:
             term_print(Sentence() + ExecutionResult.get_symbol(unit.result), end="")
         term_print("]")
 
-    def print_diff(self):
+    def __print_diff(self):
         if self.wdir is None:
             return
         
@@ -139,9 +138,9 @@ class Run:
                         for line in Diff.mount_side_by_side_diff(unit):
                             term_print(line)
 
-    def build_wdir(self) -> bool:
+    def __build_wdir(self) -> bool:
         try:
-            self.wdir = Wdir().set_target_list(self.target_list).set_cmd(self.exec_cmd).build().filter(self.param)
+            self.wdir = Wdir().set_curses(self.curses).set_target_list(self.target_list).set_cmd(self.exec_cmd).build().filter(self.param)
         except CompilerError as e:
             print(e)
             return False
@@ -150,7 +149,7 @@ class Run:
             return False
         return True
 
-    def missing_target(self) -> bool:
+    def __missing_target(self) -> bool:
         if self.wdir is None:
             return False
         # no solver and no test cases
@@ -159,7 +158,7 @@ class Run:
             return True
         return False
     
-    def list_mode(self) -> bool:
+    def __list_mode(self) -> bool:
         if self.wdir is None:
             return False
 
@@ -172,7 +171,7 @@ class Run:
             return True
         return False
 
-    def free_run(self) -> bool:
+    def __free_run(self) -> bool:
         if self.wdir is None:
             return False
         # free run mode
@@ -184,7 +183,7 @@ class Run:
             return True
         return False
 
-    def diff_mode(self):
+    def __diff_mode(self):
         if self.wdir is None:
             return
         
@@ -193,8 +192,8 @@ class Run:
             cdiff.run()
             return
         term_print(Report.centralize(" Running solver against test cases ", "═"))
-        self.print_top_line()
-        self.print_diff()
+        self.__print_top_line()
+        self.__print_diff()
 
 
 class Build:
