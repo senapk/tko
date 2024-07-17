@@ -79,7 +79,7 @@ class Flag:
     def get_toggle_sentence(self, pad: int = 0) -> Sentence:
         if not self._bool:
             name = Sentence().addf(self.get_value(), f"{self._name}".ljust(pad))
-            value = Sentence().add(f"[{self.get_char()}]").add(f"{self.get_value()}".rjust(2)).add(" ").add(name)
+            value = Sentence().add(f"[{self.get_char()}]").add(name).add(f"{self.get_value()}".rjust(2))
             return value
             
         char = self.get_char()
@@ -102,24 +102,24 @@ class Flags:
     opt = Flag().name("Opt").char("O").text("Mostra tarefas opcionais").location("left")
     xp = Flag().name("Xp").char("X").text("Mostra a xp obtida").location("left")
     percent = Flag().name("Percent").char("P").text("Mostra a porcentagem de tarefas").location("left")
-    admin = Flag().name("Admin").char("A").text("Mostra todas as missões e grupos").location("left")
-
+    relative = Flag().name("RelPath").char("R").values(["0", "1"]).text("Mostra o path relativo para os arquivos").location("left")
     dots = Flag().name("Dots").char(".").values(["1", "0"]).text("Mostra o preenchimento com pontos").location("left")
     group_prog = Flag().name("Group").values(["1", "0"]).text("Mostra a barra de progresso dos grupos")
     quest_prog = Flag().name("Quest").values(["1", "0"]).text("Mostra a barra de progresso das missões")
+    admin = Flag().name("Admin").char("A").text("Mostra todas as missões e grupos").location("left")
 
     help_bar = Flag().name("HelpBar").char("H").values(["1", "0"]).text("Mostra a barra de ajuda").location("top")
     skills_bar = Flag().name("SkillsBar").char("S").values(["1", "0"]).text("Mostra a barra de skills").location("top")
     flags_bar = Flag().name("FlagsBar").char("F").values(["1", "0"]).text("Mostra a barra de flags").location("top")
 
-    focus     = Flag().name("Focus").char("z").values(["B", "R", "G", "Y", "wK", "kW"]).text("Cor do item em foco").many().location("left")
+    focus     = Flag().name("Selected").char("z").values(["B", "R", "G", "Y", "wK", "kW"]).text("Cor do item em foco").many().location("left")
     prog_done = Flag().name("ProgDone").char("x").values(["g", "b", "c", "k", "w"]).text("Progresso Done").many().location("left")
     prog_todo = Flag().name("ProgTodo").char("c").values(["y", "m", "r", "k", "w"]).text("Progresso Todo").many().location("left")
-    flag_on   = Flag().name("FlagTrue").char("v").values(["G", "W", "B", "C", "wK", "kW"]).text("Flag True").many().location("left")
-    flag_off  = Flag().name("FlagFalse").char("b").values(["Y", "R", "M", "wK", "kW"]).text("Flag False").many().location("left")
+    flag_on   = Flag().name("Toggle_1").char("v").values(["G", "W", "B", "C", "wK", "kW"]).text("Flag True").many().location("left")
+    flag_off  = Flag().name("Toggle_0").char("b").values(["Y", "R", "M", "wK", "kW"]).text("Flag False").many().location("left")
     cmds      = Flag().name("Cmds").char("n").values(["B", "C", "M", "Y", "wK", "kW"]).text("CMDS").many()
-    skill_done = Flag().name("SkillDone").char("y").values(["G", "B", "C", "wK", "kW"]).text("Skill Done").many().location("left")
-    skill_todo = Flag().name("SkillTodo").char("u").values(["Y", "R", "M", "wK", "kW"]).text("Skill Todo").many().location("left")
+    skill_done = Flag().name("ExpeDone").char("y").values(["G", "B", "C", "wK", "kW"]).text("Skill Done").many().location("left")
+    skill_todo = Flag().name("ExpeTodo").char("u").values(["Y", "R", "M", "wK", "kW"]).text("Skill Todo").many().location("left")
     main_done = Flag().name("MainDone").char("i").values(["B", "G", "C", "wK", "kW"]).text("Main Done").many().location("left")
     main_todo = Flag().name("MainTodo").char("p").values(["M", "R", "Y", "wK", "kW"]).text("Main Todo").many().location("left")
 

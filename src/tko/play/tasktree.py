@@ -126,16 +126,21 @@ class TaskTree:
             color = Flags.focus.get_value() + color
         output.addf(color, t.title)
 
-        if Flags.down.is_true():
-            path = os.path.join(self.local.get_rootdir(), self.rep_alias, t.key)
-            if os.path.isdir(path):
-                output.add(" ").addf("y", f"[{path}]")
-
         if Flags.xp.is_true():
             xp = ""
             for s, v in t.skills.items():
                 xp += f" +{s}:{v}"
             output.addf(Style.skills, xp)
+            
+        if Flags.down.is_true():
+            rootdir = self.local.get_rootdir()
+            if rootdir != "":
+                path = os.path.join(self.local.get_rootdir(), self.rep_alias, t.key, "Readme.md")
+                if Flags.relative.is_true():
+                    path = os.path.relpath(path)
+                if os.path.isfile(path):
+                    output.add(" ").addf("y", f"[{path}]")
+
         return output
 
     def str_quest(self, in_focus: bool, q: Quest, lig: str) -> Sentence:

@@ -251,14 +251,21 @@ class Play:
         return ""
 
     def show_main_bar(self, frame: Frame):
+        dy, dx = frame.get_inner()
         frame.set_header(
             Sentence().add("{").addf("/", f"Tarefas lang:{self.rep.get_lang()}").add("}")
         )
-        frame.set_footer(Sentence().add(self.build_bar_links()), ">", "{", "}")
+        link = Sentence().add(self.build_bar_links())
+        if link.len() > dx - 2:
+            link.trim_end(dx - 5)
+            link.addf("r", "...")
+        frame.set_footer(link, ">", "{", "}")
         frame.draw()
 
-        dy, dx = frame.get_inner()
         for y, sentence in enumerate(self.tree.get_senteces(dy)):
+            if sentence.len() > dx:
+                sentence.trim_end(dx - 3)
+                sentence.addf("r", "...")
             frame.write(y, 0, sentence)
 
     def show_skills_bar(self, frame_xp):
@@ -432,7 +439,7 @@ class Play:
         
         flags_sx = 0
         if Flags.flags_bar.is_true():
-            flags_sx = 17
+            flags_sx = 15
             flags_sy = len([1 for flag in self.flagsman.left if flag.is_bool()])
 
             frame_flags = Frame(mid_y, 0).set_size(flags_sy + 2, flags_sx)
