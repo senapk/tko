@@ -109,8 +109,8 @@ class Flags:
     admin = Flag().name("Admin").char("A").text("Mostra todas as missões e grupos").location("left")
 
     help_bar = Flag().name("HelpBar").char("H").values(["1", "0"]).text("Mostra a barra de ajuda").location("top")
-    skills_bar = Flag().name("SkillsBar").char("S").values(["1", "0"]).text("Mostra a barra de skills").location("top")
-    flags_bar = Flag().name("FlagsBar").char("F").values(["1", "0"]).text("Mostra a barra de flags").location("top")
+    skills_bar = Flag().name("SkillsBar").char("S").values(["0", "1"]).text("Mostra a barra de skills").location("top")
+    flags_bar = Flag().name("FlagsBar").char("F").values(["0", "1"]).text("Mostra a barra de flags").location("top")
 
     focus     = Flag().name("Selected").char("z").values(["B", "R", "G", "Y", "wK", "kW"]).text("Cor do item em foco").many().location("left")
     prog_done = Flag().name("ProgDone").char("x").values(["g", "b", "c", "k", "w"]).text("Progresso Done").many().location("left")

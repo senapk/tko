@@ -35,6 +35,10 @@ class Floating:
         self._frame.set_header(Sentence().addf("/", text), "")
         return self
     
+    def set_header_sentence(self, sentence: Sentence):
+        self._frame.set_header(sentence, "")
+        return self
+    
     def set_exit_key(self, key: str):
         self._exit_key = ord(key)
         return self

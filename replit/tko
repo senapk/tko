@@ -21,7 +21,7 @@ import io
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.11.6"
+__version__ = "0.11.8"
 
 
 
@@ -994,8 +994,8 @@ class Flags:
     admin = Flag().name("Admin").char("A").text("Mostra todas as missões e grupos").location("left")
 
     help_bar = Flag().name("HelpBar").char("H").values(["1", "0"]).text("Mostra a barra de ajuda").location("top")
-    skills_bar = Flag().name("SkillsBar").char("S").values(["1", "0"]).text("Mostra a barra de skills").location("top")
-    flags_bar = Flag().name("FlagsBar").char("F").values(["1", "0"]).text("Mostra a barra de flags").location("top")
+    skills_bar = Flag().name("SkillsBar").char("S").values(["0", "1"]).text("Mostra a barra de skills").location("top")
+    flags_bar = Flag().name("FlagsBar").char("F").values(["0", "1"]).text("Mostra a barra de flags").location("top")
 
     focus     = Flag().name("Selected").char("z").values(["B", "R", "G", "Y", "wK", "kW"]).text("Cor do item em foco").many().location("left")
     prog_done = Flag().name("ProgDone").char("x").values(["g", "b", "c", "k", "w"]).text("Progresso Done").many().location("left")
@@ -1462,6 +1462,10 @@ class Floating:
 
     def set_header(self, text: str):
         self._frame.set_header(Sentence().addf("/", text), "")
+        return self
+    
+    def set_header_sentence(self, sentence: Sentence):
+        self._frame.set_header(sentence, "")
         return self
     
     def set_exit_key(self, key: str):
@@ -4979,12 +4983,15 @@ class Play:
         self.fman = FloatingManager()
         self.tree = TaskTree(local, game, rep, rep_alias)
 
+        if len(self.rep.get_tasks()) == 0:
+            self.show_help()
+
         self.first_loop = True
         self.graph_ext = ""
 
         self.help_base: List[Token] = [
-            RToken("B", f"Quit[{self.Key.quit}]"),
-            RToken("B", f"Help[{self.Key.help}]"),
+            RToken("G", f"Help[{self.Key.help}]"),
+            RToken("G", f"Quit[{self.Key.quit}]"),
             RToken("B", "Move[wasd]"),
             RToken("B", f"Fold[{self.Key.collapse}{self.Key.expand}]"),
             RToken("Y", "Mark[enter]"),
@@ -5318,14 +5325,26 @@ class Play:
     def show_help(self):
         _help: Floating = Floating().warning().set_ljust_text()
         self.fman.add_input(_help)
-        _help.set_header(" Help ")
+
+        _help.set_header_sentence(Sentence().add(" ATENÇÃO: ALGUNS [ATALHOS] SÃO EM ").addf("R", "MAIÚSCULO").add(" "))
+        _help.put_text("")
+        _help.put_text("Barras Extras")
+        _help.put_text("  [H]─━ Ajuda, [S]─━ Skills, [F]─━ Flags, Atalhos em maiúsculo")
+        _help.put_text("")
         _help.put_text("Controles")
-        _help.put_text("  setas ou wasd   - Para navegar entre os elementos")
-        _help.put_text("  enter ou espaço - Marcar ou desmarcar, expandir ou contrair")
-        _help.put_text("  0 a 9 - Definir a nota parcial para uma tarefa")
-        _help.put_text(f"      {self.Key.open_link} - Abrir tarefa em uma aba do browser")
+        _help.put_text("  [setas] ou [wasd]   - Para navegar entre os elementos")
+        _help.put_text("  [enter] ou [espaço] - Marcar ou desmarcar, expandir ou contrair")
+        _help.put_text("      nas tarefas use espaço para alternar entre")
+        _help.put_sentence(Sentence() + "                    " + Token(symbols.failure.text, "r") + " - vale 0")
+        _help.put_sentence(Sentence() + "                    " + Token(symbols.success.text, "g") + " - vale 10")
+        _help.put_text("        ou [1-9] para - definir a nota parcial")
+        _help.put_text("")
+        _help.put_text(f"      [{self.Key.open_link}] - Abrir tarefa em uma aba do browser")
         _help.put_text(
-            f"      {self.Key.down_task} - Baixar um tarefa de código para seu dispositivo"
+            f"      [{self.Key.down_task}] - Baixar um tarefa de código para seu dispositivo"
+        )
+        _help.put_text(
+            f"      [{self.Key.run_task}] - Rodar um tarefa de código que você baixou"
         )
         _help.put_text("")
         _help.put_text("Flags")
@@ -5336,7 +5355,7 @@ class Play:
         _help.put_text(f"   Lang[{self.Key.set_lang}] - Mudar a linguagem de download dos rascunhos" )
         _help.put_text(f"   Undo[{self.Key.reset}] - Retorna as cores para os valores padrão" )
         _help.put_text(f"  Block[{self.Key.mass_toggle}] - Marca ou desmarca um bloco inteiro" )
-
+        _help.put_text("")
 
     @staticmethod
     def disable_on_resize():

@@ -18,6 +18,7 @@ from .flags import Flag, Flags, FlagsMan
 from .tasktree import TaskTree
 from ..actions import Run
 from ..run.basic import Param
+from ..util.symbols import symbols
 
 import webbrowser
 import os
@@ -46,12 +47,15 @@ class Play:
         self.fman = FloatingManager()
         self.tree = TaskTree(local, game, rep, rep_alias)
 
+        if len(self.rep.get_tasks()) == 0:
+            self.show_help()
+
         self.first_loop = True
         self.graph_ext = ""
 
         self.help_base: List[Token] = [
-            RToken("B", f"Quit[{self.Key.quit}]"),
-            RToken("B", f"Help[{self.Key.help}]"),
+            RToken("G", f"Help[{self.Key.help}]"),
+            RToken("G", f"Quit[{self.Key.quit}]"),
             RToken("B", "Move[wasd]"),
             RToken("B", f"Fold[{self.Key.collapse}{self.Key.expand}]"),
             RToken("Y", "Mark[enter]"),
@@ -385,14 +389,26 @@ class Play:
     def show_help(self):
         _help: Floating = Floating().warning().set_ljust_text()
         self.fman.add_input(_help)
-        _help.set_header(" Help ")
+
+        _help.set_header_sentence(Sentence().add(" ATENÇÃO: ALGUNS [ATALHOS] SÃO EM ").addf("R", "MAIÚSCULO").add(" "))
+        _help.put_text("")
+        _help.put_text("Barras Extras")
+        _help.put_text("  [H]─━ Ajuda, [S]─━ Skills, [F]─━ Flags, Atalhos em maiúsculo")
+        _help.put_text("")
         _help.put_text("Controles")
-        _help.put_text("  setas ou wasd   - Para navegar entre os elementos")
-        _help.put_text("  enter ou espaço - Marcar ou desmarcar, expandir ou contrair")
-        _help.put_text("  0 a 9 - Definir a nota parcial para uma tarefa")
-        _help.put_text(f"      {self.Key.open_link} - Abrir tarefa em uma aba do browser")
+        _help.put_text("  [setas] ou [wasd]   - Para navegar entre os elementos")
+        _help.put_text("  [enter] ou [espaço] - Marcar ou desmarcar, expandir ou contrair")
+        _help.put_text("      nas tarefas use espaço para alternar entre")
+        _help.put_sentence(Sentence() + "                    " + Token(symbols.failure.text, "r") + " - vale 0")
+        _help.put_sentence(Sentence() + "                    " + Token(symbols.success.text, "g") + " - vale 10")
+        _help.put_text("        ou [1-9] para - definir a nota parcial")
+        _help.put_text("")
+        _help.put_text(f"      [{self.Key.open_link}] - Abrir tarefa em uma aba do browser")
         _help.put_text(
-            f"      {self.Key.down_task} - Baixar um tarefa de código para seu dispositivo"
+            f"      [{self.Key.down_task}] - Baixar um tarefa de código para seu dispositivo"
+        )
+        _help.put_text(
+            f"      [{self.Key.run_task}] - Rodar um tarefa de código que você baixou"
         )
         _help.put_text("")
         _help.put_text("Flags")
@@ -403,7 +419,7 @@ class Play:
         _help.put_text(f"   Lang[{self.Key.set_lang}] - Mudar a linguagem de download dos rascunhos" )
         _help.put_text(f"   Undo[{self.Key.reset}] - Retorna as cores para os valores padrão" )
         _help.put_text(f"  Block[{self.Key.mass_toggle}] - Marca ou desmarca um bloco inteiro" )
-
+        _help.put_text("")
 
     @staticmethod
     def disable_on_resize():

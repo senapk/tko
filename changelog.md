@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.11.8
+  - add: color for help bar improved
+  - add: if rep empty, show help in start
 - 0.11.6
   - add: playrun integrated
 - 0.11.5
