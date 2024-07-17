@@ -21,7 +21,7 @@ import io
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.11.8"
+__version__ = "0.11.9"
 
 
 
@@ -5326,35 +5326,34 @@ class Play:
         _help: Floating = Floating().warning().set_ljust_text()
         self.fman.add_input(_help)
 
-        _help.set_header_sentence(Sentence().add(" ATENÇÃO: ALGUNS [ATALHOS] SÃO EM ").addf("R", "MAIÚSCULO").add(" "))
+        _help.set_header_sentence(Sentence().add(" Atenção - Existem atalhos em ")
+                                  .addf("g", "[minúsculo]").add(" e ").addf("r", "[maiúsculo]"))
         _help.put_text("")
         _help.put_text("Barras Extras")
-        _help.put_text("  [H]─━ Ajuda, [S]─━ Skills, [F]─━ Flags, Atalhos em maiúsculo")
+        _help.put_sentence(Sentence().add("  ").addf("r", "[H]").add("─━ Ajuda, ").addf("r", "[S]").add("─━ Skills, ").addf("r", "[F]").add("─━ Flags"))
         _help.put_text("")
-        _help.put_text("Controles")
-        _help.put_text("  [setas] ou [wasd]   - Para navegar entre os elementos")
-        _help.put_text("  [enter] ou [espaço] - Marcar ou desmarcar, expandir ou contrair")
-        _help.put_text("      nas tarefas use espaço para alternar entre")
-        _help.put_sentence(Sentence() + "                    " + Token(symbols.failure.text, "r") + " - vale 0")
-        _help.put_sentence(Sentence() + "                    " + Token(symbols.success.text, "g") + " - vale 10")
-        _help.put_text("        ou [1-9] para - definir a nota parcial")
+        _help.put_text("Movimentação e Empacotamento")
+        _help.put_sentence(Sentence() + "  " + RToken("g", "[setas]") + " ou " + RToken("g", "[wasd]") + "   - Para navegar entre os elementos")
+        _help.put_sentence(Sentence() + "  " + RToken("g", "[enter]") + " ou " + RToken("g", "[espaço]") + " - Expandir ou contrair")
+        _help.put_sentence(Sentence() + "    " + RToken("g", "[>]") + "   ou   " + RToken("g", "[<]") + "    - Expandir ou contrair todas")
         _help.put_text("")
-        _help.put_text(f"      [{self.Key.open_link}] - Abrir tarefa em uma aba do browser")
-        _help.put_text(
-            f"      [{self.Key.down_task}] - Baixar um tarefa de código para seu dispositivo"
-        )
-        _help.put_text(
-            f"      [{self.Key.run_task}] - Rodar um tarefa de código que você baixou"
-        )
+        _help.put_text("Tarefas")
+        _help.put_sentence(Sentence() + "  " + RToken("g", "[enter]") + " ou " + RToken("g", "[espaço]") 
+                            + " - Marcar (" + Token(symbols.success.text, "g") + "10)"
+                            + " ou Desmarcar(" + Token(symbols.failure.text, "r") + "0)")
+        _help.put_sentence(Sentence() + "          ou " + RToken("g", "[1-9]") + "    - Definir uma nota parcial")
+        _help.put_sentence(Sentence() + RToken("g", f"  [{self.Key.open_link}]") + " - Abrir tarefa em uma aba do browser")
+        _help.put_sentence(Sentence() + RToken("g", f"  [{self.Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
+        _help.put_sentence(Sentence() + RToken("g", f"  [{self.Key.run_task}]") + " - Rodar tarefa de código que você baixou")
         _help.put_text("")
         _help.put_text("Flags")
-        _help.put_text("  Muda a forma de exibição dos elementos")
+        _help.put_text("  Define quais e como os elementos serão exibidos")
         _help.put_text("")
         _help.put_text("Extra")
-        _help.put_text(f"   Root[{self.Key.set_root}] - Mudar a pasta padrão de download do tko" )
-        _help.put_text(f"   Lang[{self.Key.set_lang}] - Mudar a linguagem de download dos rascunhos" )
-        _help.put_text(f"   Undo[{self.Key.reset}] - Retorna as cores para os valores padrão" )
-        _help.put_text(f"  Block[{self.Key.mass_toggle}] - Marca ou desmarca um bloco inteiro" )
+        _help.put_sentence(Sentence() + f"   Root" + RToken("r", f"[{self.Key.set_root}]") + " - Mudar a pasta padrão de download do tko" )
+        _help.put_sentence(Sentence() + f"   Lang" + RToken("r", f"[{self.Key.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
+        _help.put_sentence(Sentence() + f"   Undo" + RToken("r", f"[{self.Key.reset}]") + " - Retorna as cores para os valores padrão" )
+        _help.put_sentence(Sentence() + f"  Block" + RToken("r", f"[{self.Key.mass_toggle}]") + " - Marca ou desmarca um bloco inteiro" )
         _help.put_text("")
 
     @staticmethod

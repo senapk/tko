@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.11.9
+  - add: help improved
 - 0.11.8
   - add: color for help bar improved
   - add: if rep empty, show help in start
