@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.11.3
+  - fix: default settings
 - 0.11.1
   - fix: help in play mode bug
 - 0.11.0

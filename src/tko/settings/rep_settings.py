@@ -98,6 +98,11 @@ class RepSettings:
     def set_url(self, url: str):
         self.url = url
         return self
+    
+    def load_defaults(self):
+        for key in RepSettings.defaults:
+            self.data[key] = RepSettings.defaults[key]
+        return self
 
     def to_dict(self):
         return {

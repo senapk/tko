@@ -1,5 +1,5 @@
 from typing import List, Dict, Any
-from tko.util.ftext import Sentence
+from ..util.ftext import Sentence
 
 class Flag:
     def __init__(self):

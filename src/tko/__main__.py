@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 import sys
-
+import os
 
 
 from .actions import Run, Build
@@ -172,8 +172,8 @@ class Main:
             
         if args.root:
             action = True
-            settings.geral.set_rootdir(".")
-            print("Root directory now is: current directory")
+            settings.geral.set_rootdir(os.path.abspath(os.getcwd()))
+            print("Root directory now is: " + os.path.abspath(os.getcwd()))
 
         if not action:
             action = True

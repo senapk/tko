@@ -7,9 +7,9 @@ class Settings:
     def __init__(self):
         self.reps: Dict[str, RepSettings] = {}
         self.geral = GeralSettings()
-        self.reps["fup"] = RepSettings().set_url("https://github.com/qxcodefup/arcade/blob/master/Readme.md")
-        self.reps["ed"] = RepSettings().set_url("https://github.com/qxcodeed/arcade/blob/master/Readme.md")
-        self.reps["poo"] = RepSettings().set_url("https://github.com/qxcodepoo/arcade/blob/master/Readme.md")
+        self.reps["fup"] = RepSettings().load_defaults().set_url("https://github.com/qxcodefup/arcade/blob/master/Readme.md")
+        self.reps["ed"] = RepSettings().load_defaults().set_url("https://github.com/qxcodeed/arcade/blob/master/Readme.md")
+        self.reps["poo"] = RepSettings().load_defaults().set_url("https://github.com/qxcodepoo/arcade/blob/master/Readme.md")
 
     def get_repo(self, course: str) -> RepSettings:
         if course not in self.reps:

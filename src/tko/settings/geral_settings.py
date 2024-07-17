@@ -20,6 +20,8 @@ class GeralSettings:
 
     def __init__(self):
         self.data: Dict[str, Any] = {}
+        for key in GeralSettings.defaults:
+            self.data[key] = GeralSettings.defaults[key]
 
     def __set(self, key: str, value: Any):
         self.data[key] = value
