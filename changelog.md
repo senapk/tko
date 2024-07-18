@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.12.0
+  - add: better warnings
 - 0.11.9
   - add: help improved
 - 0.11.8

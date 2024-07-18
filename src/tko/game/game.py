@@ -122,25 +122,39 @@ class Game:
             obtained += o
         return obtained, total
 
-    def get_skills_resume(self) -> Tuple[Dict[str, int], Dict[str, int]]:
+    def get_skills_resume(self, avaliable_quests: List[Quest]) -> Tuple[Dict[str, int], Dict[str, int]]:
         total: Dict[str, int] = {}
         obtained: Dict[str, int] = {}
+        avaliable_keys = [q.key for q in avaliable_quests]
         for q in self.quests.values():
+            reachable = q.key in avaliable_keys
             for t in q.get_tasks():
                 for s in t.skills:
                     if s in total:
                         total[s] += t.skills[s]
-                        obtained[s] += int(t.skills[s] * t.grade/10)
+                        if reachable:
+                            obtained[s] += int(t.skills[s] * t.grade/10)
+                        else:
+                            obtained[s] += 0
                     else:
                         total[s] = t.skills[s]
-                        obtained[s] = int(t.skills[s] * t.grade/10)
+                        if reachable:
+                            obtained[s] = int(t.skills[s] * t.grade/10)
+                        else:
+                            obtained[s] = 0
                 for s in t.qskills:
                     if s in total:
                         total[s] += t.qskills[s]
-                        obtained[s] += int(t.qskills[s] * t.grade/10)
+                        if reachable:
+                            obtained[s] += int(t.qskills[s] * t.grade/10)
+                        else:
+                            obtained[s] += 0
                     else:
                         total[s] = t.qskills[s]
-                        obtained[s] = int(t.qskills[s] * t.grade/10)
+                        if reachable:
+                            obtained[s] = int(t.qskills[s] * t.grade/10)
+                        else:
+                            obtained[s] = 0
         return total, obtained
 
     # Verificar se todas as quests requeridas existem e adiciona o ponteiro

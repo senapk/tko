@@ -82,6 +82,7 @@ class Play:
                 self.fn_save()
                 self.fman.add_input(
                     Floating()
+                    .put_text("")
                     .put_text("Diretório raiz definido como ")
                     .put_text("")
                     .put_text("  " + os.getcwd())
@@ -97,6 +98,7 @@ class Play:
             else:
                 self.fman.add_input(
                     Floating()
+                    .put_text("")
                     .put_text("Navegue para o diretório desejado e tente novamente.")
                     .put_text("")
                     .put_text("Você pode também pode alterar")
@@ -110,6 +112,7 @@ class Play:
 
         self.fman.add_input(
             Floating()
+            .put_text("")
             .put_text("Você deseja utilizar o diretório")
             .put_text("atual como diretório raiz do tko?")
             .put_text("")
@@ -128,19 +131,23 @@ class Play:
             self.fn_save()
             self.fman.add_input(
                 Floating()
+                .put_text("")
                 .put_text("Linguagem alterada para " + value)
+                .put_text("")
                 .put_text("Você pode mudar a linguagem")
-                .put_text("de programação apertando")
-                .put_sentence(Sentence().addf("G", self.Key.set_lang))
+                .put_sentence(Sentence().add("de programação apertando ").addf("G", self.Key.set_lang))
+                .put_text("")
                 .warning()
             )
 
         self.fman.add_input(
             Floating()
-            .put_text("   Escolha a extensão")
-            .put_text(" default para os rascunhos")
             .put_text("")
-            .put_text(" Selecione e tecle enter")
+            .put_text("Escolha a extensão")
+            .put_text("default para os rascunhos")
+            .put_text("")
+            .put_text("Selecione e tecle enter")
+            .put_text("")
             .set_options(["c", "cpp", "py", "ts", "js", "java", "hs"])
             .answer(back)
         )
@@ -148,19 +155,27 @@ class Play:
     def process_down(self):
         if self.local.get_rootdir() == "":
             self.fman.add_input(
-                Floating().put_text("O diretório de download padrão")
+                Floating()
+                .put_text("")
+                .put_text("O diretório de download padrão")
                 .put_text("do tko ainda não foi definido.")
+                .put_text("")
                 .put_sentence(Sentence() + "Utilize o comando " + Token(self.Key.set_root, "g"))
                 .put_text("para configurá-lo.")
+                .put_text("")
             )
             return
 
         if self.rep.get_lang() == "":
             self.fman.add_input(
-                Floating().put_text("A linguagem de download padrão")
+                Floating()
+                .put_text("")
+                .put_text("A linguagem de download padrão")
                 .put_text("para os rascunhos ainda não foi definda.")
+                .put_text("")
                 .put_sentence(Sentence() + "Utilize o comando " + Token(self.Key.set_lang, "g"))
                 .put_text("para configurá-la.")
+                .put_text("")
             )
             return
 
@@ -177,23 +192,23 @@ class Play:
             self.fman.add_input(
                 Floating()
                 .set_header(" Abrindo link ")
-                .put_text(task.link)
+                .put_text("\n" + task.link + "\n")
                 .warning()
             )
         elif isinstance(obj, Quest):
             self.fman.add_input(
                 Floating()
-                .put_text("Essa é uma missão")
-                .put_text("você só pode abrir o link")
-                .put_text("de tarefas")
+                .put_text("\nEssa é uma missão.")
+                .put_text("\nVocê só pode abrir o link")
+                .put_text("de tarefas.\n")
                 .error()
             )
         else:
             self.fman.add_input(
                 Floating()
-                .put_text("Esse é um grupo")
-                .put_text("você só pode abrir o link")
-                .put_text("de tarefas")
+                .put_text("\nEsse é um grupo.")
+                .put_text("\nVocê só pode abrir o link")
+                .put_text("de tarefas\n.")
                 .error()
             )
 
@@ -225,7 +240,7 @@ class Play:
             down_frame = (
                 Floating().warning().set_header(" Baixando tarefa ")
             )
-            down_frame.put_text(f"tko down {self.rep_alias} {task.key} -l {ext}")
+            down_frame.put_text(f"\ntko down {self.rep_alias} {task.key} -l {ext}\n")
             self.fman.add_input(down_frame)
 
             def fnprint(text):
@@ -238,20 +253,20 @@ class Play:
             if isinstance(obj, Quest):
                 self.fman.add_input(
                     Floating()
-                    .put_text("Essa é uma missão")
-                    .put_text("você só pode baixar tarefas")
+                    .put_text("\nEssa é uma missão.")
+                    .put_text("\nVocê só pode baixar tarefas.\n")
                     .error()
                 )
             elif isinstance(obj, Cluster):
                 self.fman.add_input(
                     Floating()
-                    .put_text("Esse é um grupo")
-                    .put_text("você só pode baixar tarefas")
+                    .put_text("\nEsse é um grupo.")
+                    .put_text("\nVocê só pode baixar tarefas.\n")
                     .error()
                 )
             else:
                 self.fman.add_input(
-                    Floating().put_text("Essa não é uma tarefa de código").error()
+                    Floating().put_text("\nEssa não é uma tarefa de código.\n").error()
                 )
 
     def run_task(self):
@@ -261,16 +276,16 @@ class Play:
         if isinstance(obj, Quest):
             self.fman.add_input(
                 Floating()
-                .put_text("Essa é uma missão")
-                .put_text("você só pode executar tarefas baixadas")
+                .put_text("\nEssa é uma missão.")
+                .put_text("\nVocê só pode executar tarefas baixadas.\n")
                 .error()
             )
             return
         if isinstance(obj, Cluster):
             self.fman.add_input(
                 Floating()
-                .put_text("Esse é um grupo")
-                .put_text("você só pode executar tarefas baixadas")
+                .put_text("\nEsse é um grupo.")
+                .put_text("\nVocê só pode executar tarefas baixadas.\n")
                 .error()
             )
             return
@@ -278,13 +293,13 @@ class Play:
         
         if not obj.key in obj.title:
             self.fman.add_input(
-                Floating().put_text("Essa não é uma tarefa de código").error()
+                Floating().put_text("\nEssa não é uma tarefa de código.\n").error()
             )
             return
         path = os.path.join(rootdir, self.rep_alias, obj.key)
         if not os.path.isdir(path):
             self.fman.add_input(
-                Floating().put_text("Você precisa baixar a tarefa primeiro").error()
+                Floating().put_text("\nVocê precisa baixar a tarefa primeiro\n").error()
             )
             return
         run = Run([path], None, Param.Basic())
@@ -344,14 +359,14 @@ class Play:
         else:
             text = f" Total:{xp.get_xp_total_obtained()}"
 
-        done = "/k" + Flags.main_done.get_value()
-        todo = "/k" + Flags.main_todo.get_value()
+        done = Flags.main_done.get_value() + "/k"  # adicionando depois para ter menor prioridade
+        todo = Flags.main_todo.get_value() + "/k"
         total_bar = Sentence.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Sentence().add("{").addf("/", "Skills").add("}"), "^")
         frame_xp.set_footer(Sentence().add(total_bar), "^")
         frame_xp.draw()
 
-        total, obt = self.game.get_skills_resume()
+        total, obt = self.game.get_skills_resume(self.tree.available_quests)
         index = 0
         for skill, value in total.items():
             if Flags.percent.is_true():
@@ -360,13 +375,9 @@ class Play:
                 text = f"{skill}:{obt[skill]}/{value}"
 
             perc = obt[skill] / value
-            skill_bar = Sentence.build_bar(
-                text,
-                perc,
-                dx - 2,
-                "/k" + Flags.skill_done.get_value(),
-                "/k" + Flags.skill_todo.get_value(),
-            )
+            done = Flags.skill_done.get_value() + "/k"  # adicionando depois para ter menor prioridade
+            todo = Flags.skill_todo.get_value() + "/k"
+            skill_bar = Sentence.build_bar(text, perc, dx - 2, done, todo)
             frame_xp.write(index, 1, skill_bar)
             index += 2
 
@@ -467,8 +478,8 @@ class Play:
                 text = f"L:{xp.get_level()} XP:{xp.get_xp_level_current()}/{xp.get_xp_level_needed()}"
             percent = float(xp.get_xp_level_current()) / float(xp.get_xp_level_needed())
         size = max(15, dx - content.len() - 1)
-        done = "/k" + Flags.main_done.get_value()
-        todo = "/k" + Flags.main_todo.get_value()
+        done = Flags.main_done.get_value() + "/k"
+        todo = Flags.main_todo.get_value() + "/k"
         xp_bar = Sentence.build_bar(text, percent, size, done, todo).add(" ")
 
         limit = dx - xp_bar.len()
@@ -581,7 +592,7 @@ class Play:
             for flag in self.flagsman.left:
                 if not flag.is_bool():
                     flag.index(0)
-            self.fman.add_input(Floating().put_text("Cores alteradas para seus valores padrão").warning())
+            self.fman.add_input(Floating().put_text("\nCores alteradas para seus valores padrão.\n").warning())
 
         calls = {}
 
