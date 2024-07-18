@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.12.1
+  - fix: down error in print
 - 0.12.0
   - add: better warnings
 - 0.11.9

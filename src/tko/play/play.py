@@ -238,7 +238,7 @@ class Play:
         if isinstance(obj, Task) and obj.key in obj.title:
             task: Task = obj
             down_frame = (
-                Floating().warning().set_header(" Baixando tarefa ")
+                Floating("").warning().set_ljust_text().set_header(" Baixando tarefa ")
             )
             down_frame.put_text(f"\ntko down {self.rep_alias} {task.key} -l {ext}\n")
             self.fman.add_input(down_frame)

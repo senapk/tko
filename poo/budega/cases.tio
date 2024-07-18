@@ -1,0 +1,323 @@
+>>>>>>>> iniciar
+init 2
+show
+end
+========
+$init 2
+$show
+Caixas: [-----, -----]
+Espera: []
+$end
+<<<<<<<<
+
+>>>>>>>> arrive
+init 2
+show
+arrive carla
+arrive maria
+arrive rubia
+show
+end
+========
+$init 2
+$show
+Caixas: [-----, -----]
+Espera: []
+$arrive carla
+$arrive maria
+$arrive rubia
+$show
+Caixas: [-----, -----]
+Espera: [carla, maria, rubia]
+$end
+<<<<<<<<
+
+>>>>>>>> call
+init 2
+show
+arrive carla
+arrive maria
+arrive rubia
+show
+call 0
+show
+end
+========
+$init 2
+$show
+Caixas: [-----, -----]
+Espera: []
+$arrive carla
+$arrive maria
+$arrive rubia
+$show
+Caixas: [-----, -----]
+Espera: [carla, maria, rubia]
+$call 0
+$show
+Caixas: [carla, -----]
+Espera: [maria, rubia]
+$end
+<<<<<<<<
+
+>>>>>>>> finish
+init 2
+show
+arrive carla
+arrive maria
+arrive rubia
+show
+call 0
+show
+finish 0
+show
+end
+========
+$init 2
+$show
+Caixas: [-----, -----]
+Espera: []
+$arrive carla
+$arrive maria
+$arrive rubia
+$show
+Caixas: [-----, -----]
+Espera: [carla, maria, rubia]
+$call 0
+$show
+Caixas: [carla, -----]
+Espera: [maria, rubia]
+$finish 0
+$show
+Caixas: [-----, -----]
+Espera: [maria, rubia]
+$end
+<<<<<<<<
+
+>>>>>>>> iniciar2
+init 3
+show
+arrive carla
+arrive maria
+show
+end
+========
+$init 3
+$show
+Caixas: [-----, -----, -----]
+Espera: []
+$arrive carla
+$arrive maria
+$show
+Caixas: [-----, -----, -----]
+Espera: [carla, maria]
+$end
+<<<<<<<<
+
+>>>>>>>> call
+init 3
+show
+arrive carla
+arrive maria
+show
+call 0
+call 0
+show
+end
+========
+$init 3
+$show
+Caixas: [-----, -----, -----]
+Espera: []
+$arrive carla
+$arrive maria
+$show
+Caixas: [-----, -----, -----]
+Espera: [carla, maria]
+$call 0
+$call 0
+fail: caixa ocupado
+$show
+Caixas: [carla, -----, -----]
+Espera: [maria]
+$end
+<<<<<<<<
+
+>>>>>>>> empty waiting
+init 3
+show
+arrive carla
+arrive maria
+show
+call 0
+call 0
+show
+call 2
+show
+end
+========
+$init 3
+$show
+Caixas: [-----, -----, -----]
+Espera: []
+$arrive carla
+$arrive maria
+$show
+Caixas: [-----, -----, -----]
+Espera: [carla, maria]
+$call 0
+$call 0
+fail: caixa ocupado
+$show
+Caixas: [carla, -----, -----]
+Espera: [maria]
+$call 2
+$show
+Caixas: [carla, -----, maria]
+Espera: []
+$end
+<<<<<<<<
+
+>>>>>>>> empty waiting
+init 3
+show
+arrive carla
+arrive maria
+show
+call 0
+call 0
+show
+call 2
+show
+call 1
+end
+========
+$init 3
+$show
+Caixas: [-----, -----, -----]
+Espera: []
+$arrive carla
+$arrive maria
+$show
+Caixas: [-----, -----, -----]
+Espera: [carla, maria]
+$call 0
+$call 0
+fail: caixa ocupado
+$show
+Caixas: [carla, -----, -----]
+Espera: [maria]
+$call 2
+$show
+Caixas: [carla, -----, maria]
+Espera: []
+$call 1
+fail: sem clientes
+$end
+<<<<<<<<
+
+>>>>>>>> finish
+init 3
+show
+arrive carla
+arrive maria
+show
+call 0
+call 0
+show
+call 2
+show
+call 1
+finish 0
+show
+finish 2
+show
+end
+========
+$init 3
+$show
+Caixas: [-----, -----, -----]
+Espera: []
+$arrive carla
+$arrive maria
+$show
+Caixas: [-----, -----, -----]
+Espera: [carla, maria]
+$call 0
+$call 0
+fail: caixa ocupado
+$show
+Caixas: [carla, -----, -----]
+Espera: [maria]
+$call 2
+$show
+Caixas: [carla, -----, maria]
+Espera: []
+$call 1
+fail: sem clientes
+$finish 0
+$show
+Caixas: [-----, -----, maria]
+Espera: []
+$finish 2
+$show
+Caixas: [-----, -----, -----]
+Espera: []
+$end
+<<<<<<<<
+
+>>>>>>>> error
+init 3
+show
+arrive carla
+arrive maria
+show
+call 0
+call 0
+show
+call 2
+show
+call 1
+finish 0
+show
+finish 2
+show
+finish 3
+finish 1
+end
+========
+$init 3
+$show
+Caixas: [-----, -----, -----]
+Espera: []
+$arrive carla
+$arrive maria
+$show
+Caixas: [-----, -----, -----]
+Espera: [carla, maria]
+$call 0
+$call 0
+fail: caixa ocupado
+$show
+Caixas: [carla, -----, -----]
+Espera: [maria]
+$call 2
+$show
+Caixas: [carla, -----, maria]
+Espera: []
+$call 1
+fail: sem clientes
+$finish 0
+$show
+Caixas: [-----, -----, maria]
+Espera: []
+$finish 2
+$show
+Caixas: [-----, -----, -----]
+Espera: []
+$finish 3
+fail: caixa inexistente
+$finish 1
+fail: caixa vazio
+$end
+<<<<<<<<

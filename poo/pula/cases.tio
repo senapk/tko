@@ -1,0 +1,264 @@
+>>>>>>>> unico
+arrive mario 5
+arrive livia 4
+arrive luana 3
+show
+end
+========
+$arrive mario 5
+$arrive livia 4
+$arrive luana 3
+$show
+[luana:3, livia:4, mario:5] => []
+$end
+<<<<<<<<
+
+>>>>>>>> entrando
+arrive mario 5
+arrive livia 4
+arrive luana 3
+show
+enter
+show
+end
+========
+$arrive mario 5
+$arrive livia 4
+$arrive luana 3
+$show
+[luana:3, livia:4, mario:5] => []
+$enter
+$show
+[luana:3, livia:4] => [mario:5]
+$end
+<<<<<<<<
+
+>>>>>>>> segunda pessoa
+arrive mario 5
+arrive livia 4
+arrive luana 3
+show
+enter
+show
+enter
+show
+end
+========
+$arrive mario 5
+$arrive livia 4
+$arrive luana 3
+$show
+[luana:3, livia:4, mario:5] => []
+$enter
+$show
+[luana:3, livia:4] => [mario:5]
+$enter
+$show
+[luana:3] => [livia:4, mario:5]
+$end
+<<<<<<<<
+
+>>>>>>>> saindo
+arrive mario 5
+arrive livia 4
+arrive luana 3
+show
+enter
+show
+enter
+show
+leave
+show
+end
+========
+$arrive mario 5
+$arrive livia 4
+$arrive luana 3
+$show
+[luana:3, livia:4, mario:5] => []
+$enter
+$show
+[luana:3, livia:4] => [mario:5]
+$enter
+$show
+[luana:3] => [livia:4, mario:5]
+$leave
+$show
+[mario:5, luana:3] => [livia:4]
+$end
+<<<<<<<<
+
+>>>>>>>> remove
+arrive mario 5
+arrive livia 4
+arrive luana 3
+show
+enter
+show
+enter
+show
+leave
+show
+remove luana
+show
+remove livia
+show
+end
+========
+$arrive mario 5
+$arrive livia 4
+$arrive luana 3
+$show
+[luana:3, livia:4, mario:5] => []
+$enter
+$show
+[luana:3, livia:4] => [mario:5]
+$enter
+$show
+[luana:3] => [livia:4, mario:5]
+$leave
+$show
+[mario:5, luana:3] => [livia:4]
+$remove luana
+$show
+[mario:5] => [livia:4]
+$remove livia
+$show
+[mario:5] => []
+$end
+<<<<<<<<
+
+>>>>>>>> 2
+show
+arrive mario 5
+show
+end
+========
+$show
+[] => []
+$arrive mario 5
+$show
+[mario:5] => []
+$end
+<<<<<<<<
+
+>>>>>>>> empty enter
+show
+arrive mario 5
+show
+enter
+show
+end
+========
+$show
+[] => []
+$arrive mario 5
+$show
+[mario:5] => []
+$enter
+$show
+[] => [mario:5]
+$end
+<<<<<<<<
+
+>>>>>>>> empty leave
+show
+arrive mario 5
+show
+enter
+show
+leave
+show
+leave
+show
+end
+========
+$show
+[] => []
+$arrive mario 5
+$show
+[mario:5] => []
+$enter
+$show
+[] => [mario:5]
+$leave
+$show
+[mario:5] => []
+$leave
+$show
+[mario:5] => []
+$end
+<<<<<<<<
+
+>>>>>>>> remove from waiting
+show
+arrive mario 5
+show
+enter
+show
+leave
+show
+leave
+show
+remove mario
+show
+end
+========
+$show
+[] => []
+$arrive mario 5
+$show
+[mario:5] => []
+$enter
+$show
+[] => [mario:5]
+$leave
+$show
+[mario:5] => []
+$leave
+$show
+[mario:5] => []
+$remove mario
+$show
+[] => []
+$end
+<<<<<<<<
+
+>>>>>>>> remove empty
+show
+arrive mario 5
+show
+enter
+show
+leave
+show
+leave
+show
+remove mario
+show
+remove rebeca
+show
+end
+========
+$show
+[] => []
+$arrive mario 5
+$show
+[mario:5] => []
+$enter
+$show
+[] => [mario:5]
+$leave
+$show
+[mario:5] => []
+$leave
+$show
+[mario:5] => []
+$remove mario
+$show
+[] => []
+$remove rebeca
+$show
+[] => []
+$end
+<<<<<<<<

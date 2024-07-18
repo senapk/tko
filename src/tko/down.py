@@ -48,7 +48,7 @@ class Down:
     def __create_file(content, path, label=""):
         with open(path, "w") as f:
             f.write(content)
-        Down.fnprint("  " + path, label)
+        Down.fnprint("  " + path + " " + label)
 
     @staticmethod
     def __unpack_json(loaded, destiny, lang: str):

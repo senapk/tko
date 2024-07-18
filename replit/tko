@@ -21,7 +21,7 @@ import io
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.12.0"
+__version__ = "0.12.1"
 
 
 
@@ -2536,7 +2536,7 @@ class Down:
     def __create_file(content, path, label=""):
         with open(path, "w") as f:
             f.write(content)
-        Down.fnprint("  " + path, label)
+        Down.fnprint("  " + path + " " + label)
 
     @staticmethod
     def __unpack_json(loaded, destiny, lang: str):
@@ -5188,7 +5188,7 @@ class Play:
         if isinstance(obj, Task) and obj.key in obj.title:
             task: Task = obj
             down_frame = (
-                Floating().warning().set_header(" Baixando tarefa ")
+                Floating("").warning().set_ljust_text().set_header(" Baixando tarefa ")
             )
             down_frame.put_text(f"\ntko down {self.rep_alias} {task.key} -l {ext}\n")
             self.fman.add_input(down_frame)
