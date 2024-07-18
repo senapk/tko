@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.12.2
+  - fix: lutil c compiler on windows
 - 0.12.1
   - fix: down error in print
 - 0.12.0

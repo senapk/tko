@@ -105,7 +105,7 @@ class Solver:
     def __prepare_c(self):
         check_tool("gcc")
         pre = ["gcc", "-Wall"]
-        pos = ["-lm", "-lutil"]
+        pos = ["-lm"]
         self.__prepare_c_cpp(pre, pos)
 
     def __prepare_cpp(self):

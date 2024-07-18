@@ -21,7 +21,7 @@ import io
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.12.1"
+__version__ = "0.12.2"
 
 
 
@@ -3770,7 +3770,7 @@ class Solver:
     def __prepare_c(self):
         check_tool("gcc")
         pre = ["gcc", "-Wall"]
-        pos = ["-lm", "-lutil"]
+        pos = ["-lm"]
         self.__prepare_c_cpp(pre, pos)
 
     def __prepare_cpp(self):
