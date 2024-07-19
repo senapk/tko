@@ -194,7 +194,10 @@ class Play:
         if isinstance(obj, Task):
             task: Task = obj
             if task.link.startswith("http"):
-                webbrowser.open_new_tab(task.link)
+                try:
+                    webbrowser.open_new_tab(task.link)
+                except Exception as _:
+                    pass
             self.fman.add_input(
                 Floating()
                 .set_header(" Abrindo link ")

@@ -217,18 +217,19 @@ class CDiff:
         if not self.wdir.autoload:
             return
         warning = Floating().set_header(" Atenção ").warning()
-        warning.put_text("Os seguintes arquivos foram carregados automaticamente")
+        warning.put_text("")
+        warning.put_sentence(Sentence().addf("r", "Todos") + " os arquivos de código da pasta foram carregados automaticamente")
         solver = self.wdir.solver
         solvers = [] if solver is None else solver.path_list
         warning.put_text("")
-        loaded = Sentence().add("Códigos ")
+        loaded = Sentence().add("Códigos: ")
         for i, file in enumerate(solvers):
             if i != 0:
                 loaded.add(", ")
             loaded.addf("g", os.path.basename(file))
         warning.put_sentence(loaded)
         sources = self.wdir.source_list
-        loaded = Sentence().add("Testes ")
+        loaded = Sentence().add("Testes: ")
         for i, file in enumerate(sources):
             if i != 0:
                 loaded.add(", ")
@@ -236,11 +237,12 @@ class CDiff:
 
         warning.put_sentence(loaded)
         warning.put_text("")
-        warning.put_text("Caso queira remover algum arquivo")
-        warning.put_text("renomeie sua extensão para .txt")
-        warning.put_text("Ou execute o run manualmente passando os arquivos desejados")
+        warning.put_text("Você também pode escolher quais arquivos deseja executar")
+        warning.put_text("chamando o comando 'tko run' com os códigos desejados")
         warning.put_text("")
-        warning.put_sentence(Sentence().addf("c", "tko run <cod> <cod> cases.tio")) 
+        warning.put_sentence(Sentence().addf("c", "tko run <arquivos> cases.tio")) 
+        warning.put_text("")
+        warning.put_sentence(Sentence().addf("r", "Exemplo: ").addf("c", "tko run main.c lib.c cases.tio")) 
         warning.put_text("")
 
         self.warning = warning
