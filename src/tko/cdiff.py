@@ -214,8 +214,8 @@ class CDiff:
         return
 
     def load_autoload_warning(self):
-        # if not self.wdir.autoload:
-        #     return
+        if not self.wdir.autoload:
+            return
         warning = Floating().set_header(" Atenção ").warning()
         warning.put_text("Os seguintes arquivos foram carregados automaticamente")
         solver = self.wdir.solver
