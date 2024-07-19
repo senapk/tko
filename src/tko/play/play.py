@@ -54,19 +54,19 @@ class Play:
         self.graph_ext = ""
 
         self.help_base: List[Token] = [
-            RToken("G", f"Help[{self.Key.help}]"),
-            RToken("G", f"Quit[{self.Key.quit}]"),
+            RToken("C", f"Help[{self.Key.help}]"),
+            RToken("C", f"Quit[{self.Key.quit}]"),
             RToken("B", "Move[wasd]"),
             RToken("B", f"Fold[{self.Key.collapse}{self.Key.expand}]"),
+            RToken("G", f"Github[{self.Key.open_link}]"),
+            RToken("G", f"Down[{self.Key.down_task}]"),
+            RToken("G", f"Run[{self.Key.run_task}]"),
             RToken("Y", "Mark[enter]"),
             RToken("Y", "Grade[0-9]"),
-            RToken("Y", f"Open[{self.Key.open_link}]"),
-            RToken("Y", f"Get[{self.Key.down_task}]"),
-            RToken("Y", f"Run[{self.Key.run_task}]"),
-            RToken("R", f"Root[{self.Key.set_root}]"),
-            RToken("R", f"Lang[{self.Key.set_lang}]"),
-            RToken("R", f"Undo[{self.Key.reset}]"),
-            RToken("R", f"Block[{self.Key.mass_toggle}]")
+            RToken("R", f"Folder[{self.Key.set_root}]"),
+            RToken("R", f"Lang[{self.Key.set_lang}]")
+            # RToken("R", f"Undo[{self.Key.reset}]"),
+            # RToken("R", f"Block[{self.Key.mass_toggle}]")
         ]
 
     def save_to_json(self):
@@ -382,12 +382,13 @@ class Play:
             index += 2
 
     def show_flags_bar(self, frame: Frame):
-        frame.set_header(Sentence().add("{").addf("/", "Flags").add("}"), "^")
+        frame.set_header(Sentence().add("{").addf("/", "View").add("}"), "^")
         frame.draw()
 
         for flag in self.flagsman.left:
             if flag.is_bool():
                 frame.print(0, flag.get_toggle_sentence(7))
+                frame.print(0, Sentence())
 
     def show_color_bar(self, frame: Frame):
         frame.set_header(Sentence().add("{").addf("/", "Cores").add("}"), "^")
@@ -399,36 +400,34 @@ class Play:
 
     def show_help(self):
         _help: Floating = Floating().warning().set_ljust_text()
+        dx = 60
         self.fman.add_input(_help)
 
         _help.set_header_sentence(Sentence().add(" Atenção - Existem atalhos em ")
                                   .addf("g", "[minúsculo]").add(" e ").addf("r", "[maiúsculo]"))
         _help.put_text("")
-        _help.put_text("Barras Extras")
-        _help.put_sentence(Sentence().add("  ").addf("r", "[H]").add("─━ Ajuda, ").addf("r", "[S]").add("─━ Skills, ").addf("r", "[F]").add("─━ Flags"))
-        _help.put_text("")
-        _help.put_text("Movimentação e Empacotamento")
+        _help.put_sentence(Sentence().add(" Barras Alternáveis:         ").addf("r", "[V]").add("View, ").addf("r", "[H]").add("Help, ").addf("r", "[S]").add("Skills"))
+        # _help.put_text("")
+        _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
         _help.put_sentence(Sentence() + "  " + RToken("g", "[setas]") + " ou " + RToken("g", "[wasd]") + "   - Para navegar entre os elementos")
         _help.put_sentence(Sentence() + "  " + RToken("g", "[enter]") + " ou " + RToken("g", "[espaço]") + " - Expandir ou contrair")
         _help.put_sentence(Sentence() + "    " + RToken("g", "[>]") + "   ou   " + RToken("g", "[<]") + "    - Expandir ou contrair todas")
-        _help.put_text("")
-        _help.put_text("Tarefas")
+        # _help.put_text("")
+        _help.put_text(" Tarefas ".center(dx, symbols.hbar.text))
         _help.put_sentence(Sentence() + "  " + RToken("g", "[enter]") + " ou " + RToken("g", "[espaço]") 
                             + " - Marcar (" + Token(symbols.success.text, "g") + "10)"
                             + " ou Desmarcar(" + Token(symbols.failure.text, "r") + "0)")
         _help.put_sentence(Sentence() + "          ou " + RToken("g", "[1-9]") + "    - Definir uma nota parcial")
-        _help.put_sentence(Sentence() + RToken("g", f"  [{self.Key.open_link}]") + " - Abrir tarefa em uma aba do browser")
-        _help.put_sentence(Sentence() + RToken("g", f"  [{self.Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
-        _help.put_sentence(Sentence() + RToken("g", f"  [{self.Key.run_task}]") + " - Rodar tarefa de código que você baixou")
-        _help.put_text("")
-        _help.put_text("Flags")
+        _help.put_sentence(Sentence() + RToken("r", f"  [{self.Key.open_link}]") + " - Github: Abrir tarefa em uma aba do browser")
+        _help.put_sentence(Sentence() + RToken("r", f"  [{self.Key.down_task}]") + " - Down: Baixar tarefa de código para seu dispositivo")
+        _help.put_sentence(Sentence() + RToken("r", f"  [{self.Key.run_task}]") + " - Run: Rodar tarefa de código que você baixou")
+        # _help.put_text("")
+        _help.put_text(" Flags ".center(dx, symbols.hbar.text))
         _help.put_text("  Define quais e como os elementos serão exibidos")
-        _help.put_text("")
-        _help.put_text("Extra")
-        _help.put_sentence(Sentence() + f"   Root" + RToken("r", f"[{self.Key.set_root}]") + " - Mudar a pasta padrão de download do tko" )
-        _help.put_sentence(Sentence() + f"   Lang" + RToken("r", f"[{self.Key.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
-        _help.put_sentence(Sentence() + f"   Undo" + RToken("r", f"[{self.Key.reset}]") + " - Retorna as cores para os valores padrão" )
-        _help.put_sentence(Sentence() + f"  Block" + RToken("r", f"[{self.Key.mass_toggle}]") + " - Marca ou desmarca um bloco inteiro" )
+        # _help.put_text("")
+        _help.put_text(" Extra ".center(dx, symbols.hbar.text))
+        _help.put_sentence(Sentence() + f"  Folder" + RToken("r", f"[{self.Key.set_root}]") + " - Mudar a pasta padrão de download do tko" )
+        _help.put_sentence(Sentence() + f"  Lang  " + RToken("r", f"[{self.Key.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
         _help.put_text("")
 
     @staticmethod
@@ -522,16 +521,16 @@ class Play:
         
         flags_sx = 0
         if Flags.flags_bar.is_true():
-            flags_sx = 15
-            flags_sy = len([1 for flag in self.flagsman.left if flag.is_bool()])
+            flags_sx = 12
+            # flags_sy = len([1 for flag in self.flagsman.left if flag.is_bool()])
 
-            frame_flags = Frame(mid_y, 0).set_size(flags_sy + 2, flags_sx)
+            frame_flags = Frame(mid_y, 0).set_size(mid_sy, flags_sx)
             self.show_flags_bar(frame_flags)
 
-            frame_colors = Frame(mid_y + flags_sy + 2, 0).set_size(
-                mid_sy - flags_sy - 2, flags_sx
-            )
-            self.show_color_bar(frame_colors)
+            # frame_colors = Frame(mid_y + flags_sy + 2, 0).set_size(
+            #     mid_sy - flags_sy - 2, flags_sx
+            # )
+            # self.show_color_bar(frame_colors)
 
         task_sx = main_sx - flags_sx - skills_sx
         frame_main = Frame(mid_y, flags_sx).set_size(mid_sy, task_sx)
@@ -542,14 +541,14 @@ class Play:
     class Key:
         left = "a"
         right = "d"
-        down_task = "g"
-        run_task = "r"
+        down_task = "D"
+        run_task = "R"
         help = "h"
         expand = ">"
         collapse = "<"
-        set_root = "R"
+        set_root = "F"
         set_lang = "L"
-        open_link = "o"
+        open_link = "G"
         quit = "q"
         down = "s"
         up = "w"

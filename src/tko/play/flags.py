@@ -54,7 +54,7 @@ class Flag:
         return self._location
 
     def get_value(self) -> str:
-        return self._values[self._index]
+        return self._values[self._index % len(self._values)]
 
     def is_true(self):
         return self.get_value() == "1"
@@ -88,40 +88,43 @@ class Flag:
         extra = Sentence()
         if pad > 0:
             extra.addf(color, (pad - len(text)) * " ")
-        visual = "━─"
-        if self.is_true():
-            visual = "─━"
-        value = Sentence().add(f"[{char}]").addf(color, f"{visual} ").addf(color + "/", text).add(extra)
+        # visual = "━─"
+        # if self.is_true():
+        #     visual = "─━"
+        # if self.is_true():
+        value = Sentence().addf(color + "/", text).add(extra).add(f"[{char}]")
+        # else:
+        #     value = Sentence().add(f"[{char}]").addf(color + "/", text).add(extra)
         return value
     
 
 class Flags:
-    count = Flag().name("Count").char("C").values(["1", "0"]).text("Mostra a contagem de tarefas").location("left")
-    down = Flag().name("Down").char("D").values(["1", "0"]).text("Mostra o caminho para a tarefa baixadas").location("left")
-    minimum = Flag().name("Minimum").char("M").text("Mostra a nota mínima para a tarefa").location("left")
-    opt = Flag().name("Opt").char("O").text("Mostra tarefas opcionais").location("left")
-    relative = Flag().name("PathRel").char("P").values(["0", "1"]).text("Mostra o path relativo para os arquivos").location("left")
-    xp = Flag().name("Exp").char("E").text("Mostra a xp obtida").location("left")
-    percent = Flag().name("Percent").char("%").text("Mostra a porcentagem de tarefas").location("left")
-    dots = Flag().name("Dots").char(".").values(["1", "0"]).text("Mostra o preenchimento com pontos").location("left")
+    count = Flag().name("Count").char("c").values(["1", "0"]).text("Mostra a contagem de tarefas").location("left")
+    down = Flag().name("Local").char("l").values(["1", "0"]).text("Mostra o local das tarefa baixadas").location("left")
+    minimum = Flag().name("Require").char("r").text("Mostra os requisitos para completar a missão").location("left")
+    opt = Flag().name("Opt").char("O").text("Mostra tarefas opcionais")
+    relative = Flag().name("PathRel").char("P").values(["0"]).text("Mostra o Path relativo para os arquivos")
+    xp = Flag().name("Exp").char("e").text("Mostra a xp obtida").location("left")
+    percent = Flag().name("Percent").char("p").text("Mostra a porcentagem de tarefas").location("left")
+    dots = Flag().name("Dots").char(".").values(["1", "0"]).text("Mostra o preenchimento com pontos")
     group_prog = Flag().name("Group").values(["1", "0"]).text("Mostra a barra de progresso dos grupos")
     quest_prog = Flag().name("Quest").values(["1", "0"]).text("Mostra a barra de progresso das missões")
     admin = Flag().name("Admin").char("A").text("Mostra todas as missões e grupos").location("left")
 
-    flags_bar = Flag().name("FlagsBar").char("F").values(["0", "1"]).text("Mostra a barra de flags").location("top")
-    help_bar = Flag().name("HelpBar").char("H").values(["1", "0"]).text("Mostra a barra de ajuda").location("top")
-    skills_bar = Flag().name("SkillsBar").char("S").values(["0", "1"]).text("Mostra a barra de skills").location("top")
+    flags_bar = Flag().name("View").char("V").values(["0", "1"]).text("Mostra a barra de flags").location("top")
+    help_bar = Flag().name("Help").char("H").values(["1", "0"]).text("Mostra a barra de ajuda").location("top")
+    skills_bar = Flag().name("Skills").char("S").values(["0", "1"]).text("Mostra a barra de skills").location("top")
 
-    focus     = Flag().name("Selected").char("z").values(["B", "R", "G", "Y", "wK", "kW"]).text("Cor do item em foco").many().location("left")
-    prog_done = Flag().name("ProgDone").char("x").values(["g", "b", "c", "k", "w"]).text("Progresso Done").many().location("left")
-    prog_todo = Flag().name("ProgTodo").char("c").values(["y", "m", "r", "k", "w"]).text("Progresso Todo").many().location("left")
-    flag_on   = Flag().name("Toggle_1").char("v").values(["G", "W", "B", "C", "wK", "kW"]).text("Flag True").many().location("left")
-    flag_off  = Flag().name("Toggle_0").char("b").values(["Y", "R", "M", "wK", "kW"]).text("Flag False").many().location("left")
-    cmds      = Flag().name("Cmds").char("n").values(["B", "C", "M", "Y", "wK", "kW"]).text("CMDS").many()
-    skill_done = Flag().name("ExpeDone").char("y").values(["G", "B", "C", "wK", "kW"]).text("Skill Done").many().location("left")
-    skill_todo = Flag().name("ExpeTodo").char("u").values(["Y", "R", "M", "wK", "kW"]).text("Skill Todo").many().location("left")
-    main_done = Flag().name("MainDone").char("i").values(["B", "G", "C", "wK", "kW"]).text("Main Done").many().location("left")
-    main_todo = Flag().name("MainTodo").char("p").values(["M", "R", "Y", "wK", "kW"]).text("Main Todo").many().location("left")
+    focus     = Flag().name("Selected").char("z").values(["B"]).text("Cor do item em foco").many()
+    prog_done = Flag().name("ProgDone").char("x").values(["g"]).text("Progresso Done").many()
+    prog_todo = Flag().name("ProgTodo").char("c").values(["y"]).text("Progresso Todo").many()
+    flag_on   = Flag().name("Toggle_1").char("v").values(["G"]).text("Flag True").many()
+    flag_off  = Flag().name("Toggle_0").char("b").values(["Y"]).text("Flag False").many()
+    cmds      = Flag().name("Cmds").char("n").values(["B"]).text("CMDS").many()
+    skill_done = Flag().name("ExpeDone").char("y").values(["G"]).text("Skill Done").many()
+    skill_todo = Flag().name("ExpeTodo").char("u").values(["R"]).text("Skill Todo").many()
+    main_done = Flag().name("MainDone").char("i").values(["B"]).text("Main Done").many()
+    main_todo = Flag().name("MainTodo").char("p").values(["M"]).text("Main Todo").many()
 
 
 class FlagsMan:
