@@ -22,8 +22,8 @@ class Test:
         exec(parser, args)
         out = capsys.readouterr().out
         out1 = open("test_1.out").read()
-        assert out == out1
         self.restore()
+        assert out == out1
 
     def test_run_mixed_down(self, capsys):
         self.load()
@@ -33,9 +33,8 @@ class Test:
         exec(parser, args)
         out = capsys.readouterr().out
         out1 = open("test_2.out").read()
-        # open("test_0.out", "w").write(out)
-        assert out == out1
         self.restore()
+        assert out == out1
 
 
     def test_run_error_1(self, capsys):
@@ -46,9 +45,8 @@ class Test:
         exec(parser, args)
         out = capsys.readouterr().out
         out1 = open("test_3.out").read()
-        # open("test_01.out", "w").write(out)
-        assert out == out1
         self.restore()
+        assert out == out1
 
     def test_run_error_2(self, capsys):
         self.load()
@@ -58,9 +56,8 @@ class Test:
         exec(parser, args)
         out = capsys.readouterr().out
         out1 = open("test_4.out").read()
-        # open("test_02.out", "w").write(out)
-        assert out == out1
         self.restore()
+        assert out == out1
 
     def test_run_error_3(self, capsys):
         self.load()
@@ -70,9 +67,9 @@ class Test:
         exec(parser, args)
         out = capsys.readouterr().out
         out1 = open("test_5.out").read()
-        # open("gen.out", "w").write(out)
-        assert out == out1
+ 
         self.restore()
+        assert out == out1
 
 if __name__ == '__main__':
     unittest.main()

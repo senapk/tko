@@ -21,7 +21,7 @@ import io
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.12.2"
+__version__ = "0.12.3"
 
 
 
@@ -3683,7 +3683,7 @@ def check_tool(name):
 
 class Solver:
     def __init__(self, solver_list: List[str]):
-        self.path_list: List[str] = [Solver.__add_dot_bar(path) for path in solver_list]
+        self.path_list: List[str] = [os.path.normpath(Solver.__add_dot_bar(path)) for path in solver_list]
         
         self.temp_dir = tempfile.mkdtemp()
         self.error_msg: str = ""
@@ -3897,6 +3897,7 @@ class Wdir:
         return self
 
     def set_target_list(self, target_list: List[str]):
+        target_list = [os.path.normpath(t) for t in target_list]
         if len(target_list) == 0:
             target_list.append(".")
         if len(target_list) == 1 and os.path.isdir(target_list[0]):

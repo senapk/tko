@@ -15,7 +15,7 @@ def check_tool(name):
 
 class Solver:
     def __init__(self, solver_list: List[str]):
-        self.path_list: List[str] = [Solver.__add_dot_bar(path) for path in solver_list]
+        self.path_list: List[str] = [os.path.normpath(Solver.__add_dot_bar(path)) for path in solver_list]
         
         self.temp_dir = tempfile.mkdtemp()
         self.error_msg: str = ""

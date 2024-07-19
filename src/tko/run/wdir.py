@@ -98,6 +98,7 @@ class Wdir:
         return self
 
     def set_target_list(self, target_list: List[str]):
+        target_list = [os.path.normpath(t) for t in target_list]
         if len(target_list) == 0:
             target_list.append(".")
         if len(target_list) == 1 and os.path.isdir(target_list[0]):
