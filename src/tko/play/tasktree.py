@@ -132,12 +132,12 @@ class TaskTree:
                 xp += f" +{s}:{v}"
             output.addf(Style.skills, xp)
             
-        if Flags.down.is_true():
+        if Flags.path.is_true():
             rootdir = self.local.get_rootdir()
             if rootdir != "":
                 path = os.path.join(self.local.get_rootdir(), self.rep_alias, t.key, "Readme.md")
-                if Flags.relative.is_true():
-                    path = os.path.relpath(path)
+                # if Flags.relative.is_true():
+                #     path = os.path.relpath(path)
                 if os.path.isfile(path):
                     output.add(" ").addf("y", f"[{path}]")
 
@@ -156,12 +156,12 @@ class TaskTree:
         title = q.title
         if Flags.dots.is_true():
             title = title.ljust(self.max_title - 2, ".")
-        if Flags.quest_prog.is_true():
-            done = color + Flags.prog_done.get_value()
-            todo = color + Flags.prog_todo.get_value()
-            output.add(Sentence.build_bar(title, q.get_percent() / 100, len(title), done, todo))
-        else:
-            output.addf(color, title)
+        # if Flags.quest_prog.is_true():
+        done = color + Flags.prog_done.get_value()
+        todo = color + Flags.prog_todo.get_value()
+        output.add(Sentence.build_bar(title, q.get_percent() / 100, len(title), done, todo))
+        # else:
+        #     output.addf(color, title)
 
         if Flags.count.is_true():
             if Flags.percent.is_true():
@@ -196,12 +196,12 @@ class TaskTree:
         if Flags.dots.is_true():
             title = cluster.title.ljust(self.max_title, ".")
 
-        if Flags.group_prog.is_true():
-            done = color + Flags.prog_done.get_value()
-            todo = color + Flags.prog_todo.get_value()
-            output.add(Sentence.build_bar(title, cluster.get_percent() / 100, len(title), done, todo))
-        else:
-            output.addf(color, title)
+        # if Flags.group_prog.is_true():
+        done = color + Flags.prog_done.get_value()
+        todo = color + Flags.prog_todo.get_value()
+        output.add(Sentence.build_bar(title, cluster.get_percent() / 100, len(title), done, todo))
+        # else:
+        #     output.addf(color, title)
 
         if Flags.count.is_true():
             if Flags.percent.is_true():

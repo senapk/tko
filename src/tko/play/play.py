@@ -54,17 +54,17 @@ class Play:
         self.graph_ext = ""
 
         self.help_base: List[Token] = [
-            RToken("C", f"Help[{self.Key.help}]"),
-            RToken("C", f"Quit[{self.Key.quit}]"),
-            RToken("B", "Move[wasd]"),
-            RToken("B", f"Fold[{self.Key.collapse}{self.Key.expand}]"),
+            RToken("C", f"Ajuda[Shift + {self.Key.ajuda}]"),
+            RToken("C", f"Sair[{self.Key.quit}]"),
+            RToken("B", "Mover[hjkl]"),
+            RToken("B", f"Empacotar[{self.Key.collapse}{self.Key.expand}]"),
             RToken("G", f"Github[{self.Key.open_link}]"),
             RToken("G", f"Down[{self.Key.down_task}]"),
-            RToken("G", f"Run[{self.Key.run_task}]"),
-            RToken("Y", "Mark[enter]"),
-            RToken("Y", "Grade[0-9]"),
-            RToken("R", f"Folder[{self.Key.set_root}]"),
-            RToken("R", f"Lang[{self.Key.set_lang}]")
+            RToken("G", f"Rodar[{self.Key.run_task}]"),
+            RToken("Y", "Marcar[enter]"),
+            RToken("Y", "Graduar[0-9]"),
+            RToken("R", f"PastaPadrão[Shift + {self.Key.set_root}]"),
+            RToken("R", f"Linguagem[Shift + {self.Key.set_lang}]")
             # RToken("R", f"Undo[{self.Key.reset}]"),
             # RToken("R", f"Block[{self.Key.mass_toggle}]")
         ]
@@ -120,6 +120,8 @@ class Play:
             .put_text("")
             .put_text("como raiz para o repositório de " + self.rep_alias + "?")
             .put_text("")
+            .put_text("Selecione e tecle enter")
+            .put_text("")
             .set_options(["yes", "no"])
             .answer(chama)
         )
@@ -135,7 +137,7 @@ class Play:
                 .put_text("Linguagem alterada para " + value)
                 .put_text("")
                 .put_text("Você pode mudar a linguagem")
-                .put_sentence(Sentence().add("de programação apertando ").addf("G", self.Key.set_lang))
+                .put_sentence(Sentence().add("de programação apertando Shift + ").addf("G", self.Key.set_lang))
                 .put_text("")
                 .warning()
             )
@@ -146,7 +148,7 @@ class Play:
             .put_text("Escolha a extensão")
             .put_text("default para os rascunhos")
             .put_text("")
-            .put_text("Selecione e tecle enter")
+            .put_text("Selecione e tecle enter.")
             .put_text("")
             .set_options(["c", "cpp", "py", "ts", "js", "java", "hs"])
             .answer(back)
@@ -154,13 +156,14 @@ class Play:
 
     def process_down(self):
         if self.local.get_rootdir() == "":
+            # self.set_rootdir()
             self.fman.add_input(
                 Floating()
                 .put_text("")
                 .put_text("O diretório de download padrão")
                 .put_text("do tko ainda não foi definido.")
                 .put_text("")
-                .put_sentence(Sentence() + "Utilize o comando " + Token(self.Key.set_root, "g"))
+                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + self.Key.set_root, "g"))
                 .put_text("para configurá-lo.")
                 .put_text("")
             )
@@ -173,7 +176,7 @@ class Play:
                 .put_text("A linguagem de download padrão")
                 .put_text("para os rascunhos ainda não foi definda.")
                 .put_text("")
-                .put_sentence(Sentence() + "Utilize o comando " + Token(self.Key.set_lang, "g"))
+                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + self.Key.set_lang, "g"))
                 .put_text("para configurá-la.")
                 .put_text("")
             )
@@ -403,10 +406,9 @@ class Play:
         dx = 60
         self.fman.add_input(_help)
 
-        _help.set_header_sentence(Sentence().add(" Atenção - Existem atalhos em ")
-                                  .addf("g", "[minúsculo]").add(" e ").addf("r", "[maiúsculo]"))
+        _help.set_header_sentence(Sentence().add(" Atenção - Alguns atalhos precisam do Shift "))
         _help.put_text("")
-        _help.put_sentence(Sentence().add(" Barras Alternáveis:         ").addf("r", "[V]").add("View, ").addf("r", "[H]").add("Help, ").addf("r", "[S]").add("Skills"))
+        _help.put_sentence(Sentence().add(" Barras Alternáveis:         ").addf("r", "[v]").add("View, ").addf("r", "[h]").add("Help, ").addf("r", "[s]").add("Skills"))
         # _help.put_text("")
         _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
         _help.put_sentence(Sentence() + "  " + RToken("g", "[setas]") + " ou " + RToken("g", "[wasd]") + "   - Para navegar entre os elementos")
@@ -539,19 +541,19 @@ class Play:
         self.show_main_bar(frame_main)
 
     class Key:
-        left = "a"
-        right = "d"
-        down_task = "D"
-        run_task = "R"
-        help = "h"
+        left = "h"
+        right = "l"
+        down = "j"
+        up = "k"
+        down_task = "d"
+        run_task = "r"
+        ajuda = "A"
         expand = ">"
         collapse = "<"
-        set_root = "F"
+        set_root = "P"
         set_lang = "L"
-        open_link = "G"
+        open_link = "g"
         quit = "q"
-        down = "s"
-        up = "w"
         reset = "U"
         mass_toggle = "B"
         toggle_space = " "
@@ -601,7 +603,8 @@ class Play:
             calls[_key] = fn
 
         def add_str(str_key: str, fn):
-            add_int(ord(str_key), fn)
+            if str_key != "":
+                add_int(ord(str_key), fn)
 
         add_int(curses.KEY_RESIZE, self.disable_on_resize)
         add_str(
@@ -623,7 +626,7 @@ class Play:
         add_str(self.Key.right, self.tree.arrow_right)
         add_int(curses.KEY_RIGHT, self.tree.arrow_right)
 
-        add_str(self.Key.help, self.show_help)
+        add_str(self.Key.ajuda, self.show_help)
         add_str(self.Key.expand, self.tree.process_expand)
         add_str(self.Key.collapse, self.tree.process_collapse)
 
@@ -640,8 +643,9 @@ class Play:
         for value in range(10):
             add_str(str(value), self.GradeFunctor(int(value), self.tree.set_grade))
 
-        for flag in self.flagsman.left:
-            add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
+        if Flags.flags_bar.is_true():
+            for flag in self.flagsman.left:
+                add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
 
         for flag in self.flagsman.top:
             add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))

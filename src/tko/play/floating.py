@@ -165,7 +165,9 @@ class Floating:
                     self._exit_fn()
                 if self._exit_key is not None:
                     return self._exit_key
-                return -1
+                if key == " " or key == "\n":
+                    return -1
+                return key
         if self._type == "answer":
             if key == curses.KEY_LEFT:
                 self._options_index = (self._options_index - 1) % len(self._options)
