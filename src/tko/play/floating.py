@@ -165,7 +165,7 @@ class Floating:
                     self._exit_fn()
                 if self._exit_key is not None:
                     return self._exit_key
-                if key == " " or key == "\n":
+                if key == ord(" ") or key == ord("\n"):
                     return -1
                 return key
         if self._type == "answer":

@@ -21,7 +21,7 @@ import io
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.12.5"
+__version__ = "0.12.7"
 
 
 
@@ -1597,7 +1597,7 @@ class Floating:
                     self._exit_fn()
                 if self._exit_key is not None:
                     return self._exit_key
-                if key == " " or key == "\n":
+                if key == ord(" ") or key == ord("\n"):
                     return -1
                 return key
         if self._type == "answer":
@@ -5005,6 +5005,8 @@ class Play:
 
         if len(self.rep.get_tasks()) == 0:
             self.show_help()
+            self.set_rootdir(True)
+            self.set_language(True)
 
         self.first_loop = True
         self.graph_ext = ""
@@ -5031,7 +5033,10 @@ class Play:
 
         self.fn_save()
 
-    def set_rootdir(self):
+    def set_rootdir(self, only_if_empty=True):
+        if only_if_empty and self.local.get_rootdir() != "":
+            return
+        
         def chama(value):
             if value == "yes":
                 self.local.set_rootdir(os.path.abspath(os.getcwd()))
@@ -5082,7 +5087,9 @@ class Play:
             .answer(chama)
         )
 
-    def set_language(self):
+    def set_language(self, only_if_empty=True):
+        if only_if_empty and self.rep.get_lang() != "":
+            return
 
         def back(value):
             self.rep.set_lang(value)
@@ -5110,7 +5117,7 @@ class Play:
             .answer(back)
         )
 
-    def process_down(self):
+    def check_root_and_lang(self):
         if self.local.get_rootdir() == "":
             # self.set_rootdir()
             self.fman.add_input(
@@ -5123,7 +5130,6 @@ class Play:
                 .put_text("para configurá-lo.")
                 .put_text("")
             )
-            return
 
         if self.rep.get_lang() == "":
             self.fman.add_input(
@@ -5138,9 +5144,6 @@ class Play:
             )
             return
 
-        rootdir = os.path.join(self.local.get_rootdir(), self.rep_alias)
-        obj = self.tree.get_selected()
-        self.down_task(rootdir, obj, self.rep.get_lang())
 
     def open_link(self):
         obj = self.tree.get_selected()
@@ -5193,13 +5196,25 @@ class Play:
             text = Sentence().add(f"Grafo gerado em graph{self.graph_ext}")
             Fmt.write(lines - 1, 0, text)
 
-    def down_task(self, rootdir, obj: Any, ext: str):
+    def down_task(self):
+        rootdir = self.local.get_rootdir()
+        if rootdir == "":
+            self.check_root_and_lang()
+            return
+        lang = self.rep.get_lang()
+        if lang == "":
+            self.check_root_and_lang()
+            return
+        
+        repdir = os.path.join(rootdir, self.rep_alias)
+
+        obj = self.tree.items[self.tree.index_selected].obj
         if isinstance(obj, Task) and obj.key in obj.title:
             task: Task = obj
             down_frame = (
                 Floating("").warning().set_ljust_text().set_header(" Baixando tarefa ")
             )
-            down_frame.put_text(f"\ntko down {self.rep_alias} {task.key} -l {ext}\n")
+            down_frame.put_text(f"\ntko down {self.rep_alias} {task.key} -l {lang}\n")
             self.fman.add_input(down_frame)
 
             def fnprint(text):
@@ -5207,7 +5222,7 @@ class Play:
                 down_frame.draw()
                 Fmt.refresh()
 
-            Down.download_problem(rootdir, self.rep_alias, task.key, ext, fnprint)
+            Down.download_problem(repdir, self.rep_alias, task.key, lang, fnprint)
         else:
             if isinstance(obj, Quest):
                 self.fman.add_input(
@@ -5362,7 +5377,7 @@ class Play:
         dx = 60
         self.fman.add_input(_help)
 
-        _help.set_header_sentence(Sentence().add(" Atenção - Alguns atalhos precisam do Shift "))
+        _help.set_header_sentence(Sentence().add(" Ajuda "))
         _help.put_text("")
         _help.put_sentence(Sentence().add(" Barras Alternáveis:         ").addf("r", "[v]").add("Visão, ").addf("r", "[a]").add("Ajuda, ").addf("r", "[s]").add("Skills"))
         # _help.put_text("")
@@ -5589,9 +5604,9 @@ class Play:
         add_str(self.Key.toggle_enter, self.tree.toggle)
         add_str(self.Key.toggle_space, self.tree.toggle)
         add_str(self.Key.open_link, self.open_link)
-        add_str(self.Key.set_lang, self.set_language)
-        add_str(self.Key.set_root, self.set_rootdir)
-        add_str(self.Key.down_task, self.process_down)
+        add_str(self.Key.set_lang, lambda: self.set_language(False))
+        add_str(self.Key.set_root, lambda: self.set_rootdir(False))
+        add_str(self.Key.down_task, self.down_task)
         add_str(self.Key.run_task, self.run_task)
         add_str(self.Key.mass_toggle, self.tree.mass_mark)
         add_str(self.Key.reset, reset_colors)
