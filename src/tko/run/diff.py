@@ -161,8 +161,8 @@ class Diff:
             string_received = ""
         expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received)
         string_input_list = [Sentence().add(symbols.vbar.text).add(" ").add(line) for line in string_input.split("\n")][:-1]
-        unequal = symbols.unequal.text
-        if unit.result == ExecutionResult.EXECUTION_ERROR:
+        unequal = symbols.unequal
+        if unit.result == ExecutionResult.EXECUTION_ERROR or unit.result == ExecutionResult.COMPILATION_ERROR:
             unequal = symbols.vbar
         expected_lines, received_lines = Diff.put_left_equal(expected_lines, received_lines, unequal)
 
@@ -182,7 +182,7 @@ class Diff:
         output.append(Report.centralize(Sentence().addf(rcolor, " RECEIVED "), symbols.hbar, "├"))
         output +=  received_lines
 
-        if unit.result != ExecutionResult.EXECUTION_ERROR:
+        if unit.result != ExecutionResult.EXECUTION_ERROR and unit.result != ExecutionResult.COMPILATION_ERROR:
             output.append(Report.centralize(Sentence().addf("b", " WHITESPACE "),  symbols.hbar, "├"))
             output += Diff.first_failure_diff(string_expected, string_received, first_failure)
         output.append(Report.centralize("",  symbols.hbar, "╰"))
@@ -190,7 +190,7 @@ class Diff:
         return output
 
     @staticmethod
-    def put_left_equal(exp_lines: List[Sentence], rec_lines: List[Sentence], unequal: str = symbols.unequal):
+    def put_left_equal(exp_lines: List[Sentence], rec_lines: List[Sentence], unequal: Token = symbols.unequal):
 
         max_size = max(len(exp_lines), len(rec_lines))
 
@@ -258,10 +258,10 @@ class Diff:
         received_header = Sentence().addf(rcolor, " RECEIVED ")
         output.append(Diff.title_side_by_side(expected_header, received_header, hbar, Token("┼"), Token("├")))
         unequal = symbols.unequal
-        if unit.result == ExecutionResult.EXECUTION_ERROR:
+        if unit.result == ExecutionResult.EXECUTION_ERROR or unit.result == ExecutionResult.COMPILATION_ERROR:
             unequal = symbols.vbar
         output += Diff.side_by_side(expected_lines, received_lines, unequal)
-        if unit.result != ExecutionResult.EXECUTION_ERROR:
+        if unit.result != ExecutionResult.EXECUTION_ERROR and unit.result != ExecutionResult.COMPILATION_ERROR:
             output.append(Report.centralize(Sentence().addf("b", " WHITESPACE "),  symbols.hbar, "├"))
             output += Diff.first_failure_diff(string_expected, string_received, first_failure)
         output.append(Report.centralize("",  symbols.hbar, "╰"))

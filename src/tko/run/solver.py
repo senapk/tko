@@ -20,6 +20,7 @@ class Solver:
         self.temp_dir = tempfile.mkdtemp()
         self.error_msg: str = ""
         self.executable: str = ""
+        self.compile_error: bool = False
         if len(self.path_list) > 0:
             self.prepare_exec()
 
@@ -52,13 +53,13 @@ class Solver:
         # tempdir = os.path.dirname(self.path_list[0])
 
         cmd = ["javac"] + self.path_list + ['-d', self.temp_dir]
-        cmd = " ".join(cmd)
-        return_code, stdout, stderr = Runner.subprocess_run(cmd)
-        print(stdout)
-        print(stderr)
+        cmdt = " ".join(cmd)
+        return_code, stdout, stderr = Runner.subprocess_run(cmdt)
         if return_code != 0:
-            raise CompilerError(stdout + stderr)
-        self.executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
+            self.error_msg = stdout + stderr
+            self.compile_error = True
+        else:
+            self.executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
 
     def __prepare_js(self):
         check_tool("node")
@@ -83,11 +84,12 @@ class Solver:
         source_list = self.path_list
         cmd = [transpiler] + source_list + ["--outdir=" + self.temp_dir, "--format=cjs", "--log-level=error"]
         return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
-        print(stdout + stderr)
         if return_code != 0:
-            raise CompilerError(stdout + stderr)
-        jsfile = os.path.join(self.temp_dir, filename[:-3] + ".js")
-        self.executable = "node " + jsfile  # renaming solver to main
+            self.error_msg = stdout + stderr
+            self.compile_error = True
+        else:
+            jsfile = os.path.join(self.temp_dir, filename[:-3] + ".js")
+            self.executable = "node " + jsfile  # renaming solver to main
     
     def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
         # solver = self.path_list[0]
@@ -99,8 +101,10 @@ class Solver:
         cmd = pre_args + source_list + ["-o", exec_path] + pos_args
         return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
         if return_code != 0:
-            raise CompilerError(stdout + stderr)
-        self.executable = exec_path
+            self.error_msg = stdout + stderr
+            self.compile_error = True
+        else:
+            self.executable = exec_path
 
     def __prepare_c(self):
         check_tool("gcc")
@@ -111,7 +115,7 @@ class Solver:
     def __prepare_cpp(self):
         check_tool("g++")
         pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror"]
-        pos = []
+        pos: List[str] = []
         self.__prepare_c_cpp(pre, pos)
 
     @staticmethod

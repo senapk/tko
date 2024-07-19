@@ -3690,6 +3690,7 @@ class Solver:
         self.temp_dir = tempfile.mkdtemp()
         self.error_msg: str = ""
         self.executable: str = ""
+        self.compile_error: bool = False
         if len(self.path_list) > 0:
             self.prepare_exec()
 
@@ -3722,13 +3723,13 @@ class Solver:
         # tempdir = os.path.dirname(self.path_list[0])
 
         cmd = ["javac"] + self.path_list + ['-d', self.temp_dir]
-        cmd = " ".join(cmd)
-        return_code, stdout, stderr = Runner.subprocess_run(cmd)
-        print(stdout)
-        print(stderr)
+        cmdt = " ".join(cmd)
+        return_code, stdout, stderr = Runner.subprocess_run(cmdt)
         if return_code != 0:
-            raise CompilerError(stdout + stderr)
-        self.executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
+            self.error_msg = stdout + stderr
+            self.compile_error = True
+        else:
+            self.executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
 
     def __prepare_js(self):
         check_tool("node")
@@ -3753,11 +3754,12 @@ class Solver:
         source_list = self.path_list
         cmd = [transpiler] + source_list + ["--outdir=" + self.temp_dir, "--format=cjs", "--log-level=error"]
         return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
-        print(stdout + stderr)
         if return_code != 0:
-            raise CompilerError(stdout + stderr)
-        jsfile = os.path.join(self.temp_dir, filename[:-3] + ".js")
-        self.executable = "node " + jsfile  # renaming solver to main
+            self.error_msg = stdout + stderr
+            self.compile_error = True
+        else:
+            jsfile = os.path.join(self.temp_dir, filename[:-3] + ".js")
+            self.executable = "node " + jsfile  # renaming solver to main
     
     def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
         # solver = self.path_list[0]
@@ -3769,8 +3771,10 @@ class Solver:
         cmd = pre_args + source_list + ["-o", exec_path] + pos_args
         return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
         if return_code != 0:
-            raise CompilerError(stdout + stderr)
-        self.executable = exec_path
+            self.error_msg = stdout + stderr
+            self.compile_error = True
+        else:
+            self.executable = exec_path
 
     def __prepare_c(self):
         check_tool("gcc")
@@ -3781,7 +3785,7 @@ class Solver:
     def __prepare_cpp(self):
         check_tool("g++")
         pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror"]
-        pos = []
+        pos: List[str] = []
         self.__prepare_c_cpp(pre, pos)
 
     @staticmethod
@@ -3799,6 +3803,9 @@ class Execution:
     # run a unit using a solver and return if the result is correct
     @staticmethod
     def run_unit(solver: Solver, unit: Unit) -> ExecutionResult:
+        if solver.compile_error:
+            unit.user = solver.error_msg
+            return ExecutionResult.COMPILATION_ERROR
         cmd = solver.executable
         return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input)
         unit.user = stdout + stderr
@@ -4382,8 +4389,8 @@ class Diff:
             string_received = ""
         expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received)
         string_input_list = [Sentence().add(symbols.vbar.text).add(" ").add(line) for line in string_input.split("\n")][:-1]
-        unequal = symbols.unequal.text
-        if unit.result == ExecutionResult.EXECUTION_ERROR:
+        unequal = symbols.unequal
+        if unit.result == ExecutionResult.EXECUTION_ERROR or unit.result == ExecutionResult.COMPILATION_ERROR:
             unequal = symbols.vbar
         expected_lines, received_lines = Diff.put_left_equal(expected_lines, received_lines, unequal)
 
@@ -4403,7 +4410,7 @@ class Diff:
         output.append(Report.centralize(Sentence().addf(rcolor, " RECEIVED "), symbols.hbar, "├"))
         output +=  received_lines
 
-        if unit.result != ExecutionResult.EXECUTION_ERROR:
+        if unit.result != ExecutionResult.EXECUTION_ERROR and unit.result != ExecutionResult.COMPILATION_ERROR:
             output.append(Report.centralize(Sentence().addf("b", " WHITESPACE "),  symbols.hbar, "├"))
             output += Diff.first_failure_diff(string_expected, string_received, first_failure)
         output.append(Report.centralize("",  symbols.hbar, "╰"))
@@ -4411,7 +4418,7 @@ class Diff:
         return output
 
     @staticmethod
-    def put_left_equal(exp_lines: List[Sentence], rec_lines: List[Sentence], unequal: str = symbols.unequal):
+    def put_left_equal(exp_lines: List[Sentence], rec_lines: List[Sentence], unequal: Token = symbols.unequal):
 
         max_size = max(len(exp_lines), len(rec_lines))
 
@@ -4479,10 +4486,10 @@ class Diff:
         received_header = Sentence().addf(rcolor, " RECEIVED ")
         output.append(Diff.title_side_by_side(expected_header, received_header, hbar, Token("┼"), Token("├")))
         unequal = symbols.unequal
-        if unit.result == ExecutionResult.EXECUTION_ERROR:
+        if unit.result == ExecutionResult.EXECUTION_ERROR or unit.result == ExecutionResult.COMPILATION_ERROR:
             unequal = symbols.vbar
         output += Diff.side_by_side(expected_lines, received_lines, unequal)
-        if unit.result != ExecutionResult.EXECUTION_ERROR:
+        if unit.result != ExecutionResult.EXECUTION_ERROR and unit.result != ExecutionResult.COMPILATION_ERROR:
             output.append(Report.centralize(Sentence().addf("b", " WHITESPACE "),  symbols.hbar, "├"))
             output += Diff.first_failure_diff(string_expected, string_received, first_failure)
         output.append(Report.centralize("",  symbols.hbar, "╰"))
@@ -4529,6 +4536,8 @@ class CDiff:
         if unit.result == ExecutionResult.WRONG_OUTPUT:
             return "R"
         if unit.result == ExecutionResult.EXECUTION_ERROR:
+            return "Y"
+        if unit.result == ExecutionResult.COMPILATION_ERROR:
             return "Y"
         return ""
 
@@ -4659,7 +4668,7 @@ class CDiff:
 
     def has_any_error(self):
         results = [unit.result for unit in self.wdir.unit_list]
-        if ExecutionResult.EXECUTION_ERROR not in results and ExecutionResult.WRONG_OUTPUT not in results:
+        if ExecutionResult.EXECUTION_ERROR not in results and ExecutionResult.WRONG_OUTPUT not in results and ExecutionResult.COMPILATION_ERROR not in results:
             return False
         return True          
 
@@ -4867,10 +4876,14 @@ class Run:
         term_print("]")
 
     def __print_diff(self):
-        if self.wdir is None:
+        if self.wdir is None or self.wdir.solver is None:
             return
         
         if self.param.diff_mode == DiffMode.QUIET:
+            return
+        
+        if self.wdir.solver.compile_error:
+            term_print(self.wdir.solver.error_msg)
             return
         
         results = [unit.result for unit in self.wdir.unit_list]
@@ -4905,12 +4918,10 @@ class Run:
     def __build_wdir(self) -> bool:
         try:
             self.wdir = Wdir().set_curses(self.curses).set_target_list(self.target_list).set_cmd(self.exec_cmd).build().filter(self.param)
-        except CompilerError as e:
-            print(e)
-            return False
         except FileNotFoundError as e:
-            print(e)
-            return False
+            if self.wdir.solver is not None:
+                self.wdir.solver.error_msg += str(e)
+                self.wdir.solver.compile_error = True
         return True
 
     def __missing_target(self) -> bool:

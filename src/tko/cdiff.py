@@ -52,6 +52,8 @@ class CDiff:
             return "R"
         if unit.result == ExecutionResult.EXECUTION_ERROR:
             return "Y"
+        if unit.result == ExecutionResult.COMPILATION_ERROR:
+            return "Y"
         return ""
 
     def sucesso(self):
@@ -181,7 +183,7 @@ class CDiff:
 
     def has_any_error(self):
         results = [unit.result for unit in self.wdir.unit_list]
-        if ExecutionResult.EXECUTION_ERROR not in results and ExecutionResult.WRONG_OUTPUT not in results:
+        if ExecutionResult.EXECUTION_ERROR not in results and ExecutionResult.WRONG_OUTPUT not in results and ExecutionResult.COMPILATION_ERROR not in results:
             return False
         return True          
 

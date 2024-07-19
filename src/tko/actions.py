@@ -103,10 +103,14 @@ class Run:
         term_print("]")
 
     def __print_diff(self):
-        if self.wdir is None:
+        if self.wdir is None or self.wdir.solver is None:
             return
         
         if self.param.diff_mode == DiffMode.QUIET:
+            return
+        
+        if self.wdir.solver.compile_error:
+            term_print(self.wdir.solver.error_msg)
             return
         
         results = [unit.result for unit in self.wdir.unit_list]
@@ -141,12 +145,10 @@ class Run:
     def __build_wdir(self) -> bool:
         try:
             self.wdir = Wdir().set_curses(self.curses).set_target_list(self.target_list).set_cmd(self.exec_cmd).build().filter(self.param)
-        except CompilerError as e:
-            print(e)
-            return False
         except FileNotFoundError as e:
-            print(e)
-            return False
+            if self.wdir.solver is not None:
+                self.wdir.solver.error_msg += str(e)
+                self.wdir.solver.compile_error = True
         return True
 
     def __missing_target(self) -> bool:
