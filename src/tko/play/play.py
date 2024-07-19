@@ -56,7 +56,7 @@ class Play:
         self.graph_ext = ""
 
         self.help_base: List[Token] = [
-            RToken("C", f"Ajuda[Shift + {self.Key.ajuda}]"),
+            RToken("C", f"Ajuda[{self.Key.ajuda}]"),
             RToken("C", f"Sair[{self.Key.quit}]"),
             # RToken("B", "Mover[hjkl]"),
             # RToken("B", f"Empacotar[{self.Key.collapse}{self.Key.expand}]"),
@@ -426,7 +426,7 @@ class Play:
 
         _help.set_header_sentence(Sentence().add(" Ajuda "))
         _help.put_text("")
-        _help.put_sentence(Sentence().add(" Barras Alternáveis:         ").addf("r", "[v]").add("Visão, ").addf("r", "[a]").add("Ajuda, ").addf("r", "[s]").add("Skills"))
+        _help.put_sentence(Sentence().add(" Barras Alternáveis:         ").addf("r", "[v]").add("Visão, ").addf("r", "[s]").add("Skills"))
         # _help.put_text("")
         _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
         _help.put_sentence(Sentence() + "  " + RToken("g", "[setas]") + " ou " + RToken("g", "[hjkl]") + "   - Para navegar entre os elementos")
@@ -565,7 +565,7 @@ class Play:
         up = "k"
         down_task = "d"
         run_task = "r"
-        ajuda = "H"
+        ajuda = "a"
         expand = ">"
         collapse = "<"
         set_root = "P"

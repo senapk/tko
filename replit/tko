@@ -21,7 +21,7 @@ import io
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.12.10"
+__version__ = "0.12.11"
 
 
 
@@ -997,7 +997,7 @@ class Flags:
     admin = Flag().name("Admin").char("A").text("Mostra todas as missões e grupos").location("left")
 
     flags_bar = Flag().name("Visão").char("v").values(["0", "1"]).text("Mostra a barra de flags").location("top")
-    help_bar = Flag().name("Ajuda").char("a").values(["1", "0"]).text("Mostra a barra de ajuda").location("top")
+    help_bar = Flag().name("Ajuda").values(["1"]).text("Mostra a barra de ajuda")
     skills_bar = Flag().name("Skills").char("s").values(["0", "1"]).text("Mostra a barra de skills").location("top")
 
     focus     = Flag().name("Selected").values(["B"]).text("Cor do item em foco").many()
@@ -4654,6 +4654,8 @@ class CDiff:
     def draw_guide_line(self):
         cmds = (Sentence()
         .add(" ")
+        .addf("/B", "Sair").addf("B","[q]")
+        .add(" ")
         .addf("/B", "ReCompile").addf("B","[r]")
         .add(" ")
         .addf("/B", "SelectCase").addf("B", "[h, l]")
@@ -5025,7 +5027,7 @@ class Play:
         self.graph_ext = ""
 
         self.help_base: List[Token] = [
-            RToken("C", f"Ajuda[Shift + {self.Key.ajuda}]"),
+            RToken("C", f"Ajuda[{self.Key.ajuda}]"),
             RToken("C", f"Sair[{self.Key.quit}]"),
             # RToken("B", "Mover[hjkl]"),
             # RToken("B", f"Empacotar[{self.Key.collapse}{self.Key.expand}]"),
@@ -5395,7 +5397,7 @@ class Play:
 
         _help.set_header_sentence(Sentence().add(" Ajuda "))
         _help.put_text("")
-        _help.put_sentence(Sentence().add(" Barras Alternáveis:         ").addf("r", "[v]").add("Visão, ").addf("r", "[a]").add("Ajuda, ").addf("r", "[s]").add("Skills"))
+        _help.put_sentence(Sentence().add(" Barras Alternáveis:         ").addf("r", "[v]").add("Visão, ").addf("r", "[s]").add("Skills"))
         # _help.put_text("")
         _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
         _help.put_sentence(Sentence() + "  " + RToken("g", "[setas]") + " ou " + RToken("g", "[hjkl]") + "   - Para navegar entre os elementos")
@@ -5534,7 +5536,7 @@ class Play:
         up = "k"
         down_task = "d"
         run_task = "r"
-        ajuda = "H"
+        ajuda = "a"
         expand = ">"
         collapse = "<"
         set_root = "P"

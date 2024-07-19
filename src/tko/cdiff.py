@@ -169,6 +169,8 @@ class CDiff:
     def draw_guide_line(self):
         cmds = (Sentence()
         .add(" ")
+        .addf("/B", "Sair").addf("B","[q]")
+        .add(" ")
         .addf("/B", "ReCompile").addf("B","[r]")
         .add(" ")
         .addf("/B", "SelectCase").addf("B", "[h, l]")
