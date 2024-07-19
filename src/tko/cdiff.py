@@ -171,11 +171,11 @@ class CDiff:
         .add(" ")
         .addf("/B", "ReCompile").addf("B","[r]")
         .add(" ")
-        .addf("/B", "SelectCase").addf("B", "[a, d]")
+        .addf("/B", "SelectCase").addf("B", "[h, l]")
         .add(" ")
-        .addf("/B", "Scroll").addf("B", "[w, s]")
+        .addf("/B", "Scroll").addf("B", "[j, k]")
         .add(" ")
-        .addf("/B", "DiffMode").addf("B", "[D]")
+        .addf("/B", "DiffMode").addf("B", "[d]")
         .add(" ")
         )
         _, cols = Fmt.get_size()
@@ -277,17 +277,17 @@ class CDiff:
 
             if input == ord('q'):
                 self.set_exit()
-            elif input == curses.KEY_LEFT or input == ord('a'):
+            elif input == curses.KEY_LEFT or input == ord('h'):
                 self.index = max(0, self.index - 1)
                 self.init = 0
-            elif input == curses.KEY_RIGHT or input == ord('d'):
+            elif input == curses.KEY_RIGHT or input == ord('l'):
                 self.index = min(len(self.results) - 1, self.index + 1)
                 self.init = 0
-            elif input == curses.KEY_DOWN or input == ord('s'):
+            elif input == curses.KEY_DOWN or input == ord('j'):
                 self.init += 1
-            elif input == curses.KEY_UP or input == ord('w'):
+            elif input == curses.KEY_UP or input == ord('k'):
                 self.init = max(0, self.init - 1)
-            elif input == ord('D'):
+            elif input == ord('d'):
                 self.param.is_up_down = not self.param.is_up_down
                 self.save_settings()
                 self.init = 0
