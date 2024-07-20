@@ -85,6 +85,9 @@ class Task:
         line = str(self.line_number).rjust(3)
         key = "" if self.key == self.title else self.key + " "
         return f"{line}    {self.grade} {key}{self.title} {self.skills} {self.link}"
+    
+    def is_downloadable(self):
+        return f"@{self.key}" in self.title
 
 
 class TaskParser:

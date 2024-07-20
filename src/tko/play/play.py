@@ -56,17 +56,20 @@ class Play:
         self.graph_ext = ""
 
         self.help_base: List[Token] = [
-            RToken("C", f"Ajuda[{self.Key.ajuda}]"),
-            RToken("C", f"Sair[{self.Key.quit}]"),
-            # RToken("B", "Mover[hjkl]"),
-            # RToken("B", f"Empacotar[{self.Key.collapse}{self.Key.expand}]"),
-            RToken("G", f"Github[{self.Key.open_link}]"),
-            RToken("G", f"Down[{self.Key.down_task}]"),
-            RToken("G", f"Rodar[{self.Key.run_task}]"),
-            RToken("Y", "Marcar[enter]"),
-            RToken("Y", "Graduar[0-9]"),
-            RToken("R", f"PastaTKO[Shift + {self.Key.set_root}]"),
-            RToken("R", f"Linguagem[Shift + {self.Key.set_lang}]")
+        ]
+
+        self.help_extra: List[Token] = [
+            RToken("G", f"Sair[{self.Key.quit}]"),
+            RToken("G", f"Ajuda[{self.Key.ajuda}]"),
+            RToken("Y", "Navegar[wasd]"),
+            RToken("Y", f"Contrair[{self.Key.collapse}{self.Key.expand}]"),
+            RToken("C", f"Github[{self.Key.open_link}]"),
+            RToken("C", f"Baixar[{self.Key.down_task}]"),
+            RToken("C", f"Executar[{self.Key.run_task}]"),
+            RToken("M", "Marcar[enter]"),
+            RToken("M", "Graduar[0-9]"),
+            # RToken("R", f"Pasta[{self.Key.set_root}]"),
+            # RToken("R", f"Linguagem[{self.Key.set_lang}]")
             # RToken("R", f"Undo[{self.Key.reset}]"),
             # RToken("R", f"Block[{self.Key.mass_toggle}]")
         ]
@@ -110,7 +113,7 @@ class Play:
                     .put_text("o diretório raiz navegando para o")
                     .put_text("diretório desejado e executando o comando")
                     .put_text("")
-                    .put_text("  tko config --root")
+                    .put_text("tko config --root")
                     .put_text("")
                     .warning()
                 )
@@ -142,9 +145,6 @@ class Play:
                 Floating()
                 .put_text("")
                 .put_text("Linguagem alterada para " + value)
-                .put_text("")
-                .put_text("Você pode mudar a linguagem")
-                .put_sentence(Sentence().add("de programação apertando Shift + ").addf("G", self.Key.set_lang))
                 .put_text("")
                 .warning()
             )
@@ -234,8 +234,8 @@ class Play:
             todo = len([t for t in q.get_tasks() if t.not_started()])
             counts[q.key] = f"{done} / {done + init + todo}\n{q.get_percent()}%"
 
-        mark_opt = Flags.dots.is_true()
-        Graph(self.game).set_opt(mark_opt).set_reachable(reachable).set_counts(
+        # mark_opt = Flags.dots.is_true()
+        Graph(self.game).set_opt(False).set_reachable(reachable).set_counts(
             counts
         ).set_graph_ext(self.graph_ext).generate()
         lines, _cols = Fmt.get_size()
@@ -376,15 +376,15 @@ class Play:
             100 * (xp.get_xp_total_obtained() / xp.get_xp_total_available())
         )
         if Flags.percent.is_true():
-            text = f" Total:{total_perc}%"
+            text = f" XPTotal:{total_perc}%"
         else:
-            text = f" Total:{xp.get_xp_total_obtained()}"
+            text = f" XPTotal:{xp.get_xp_total_obtained()}"
 
         done = Flags.main_done.get_value() + "/k"  # adicionando depois para ter menor prioridade
         todo = Flags.main_todo.get_value() + "/k"
         total_bar = Sentence.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Sentence().add("{").addf("/", "Skills").add("}"), "^")
-        frame_xp.set_footer(Sentence().add(total_bar), "^")
+        # frame_xp.set_footer(Sentence().add(total_bar), "^")
         frame_xp.draw()
 
         total, obt = self.game.get_skills_resume(self.tree.available_quests)
@@ -402,14 +402,23 @@ class Play:
             frame_xp.write(index, 1, skill_bar)
             index += 2
 
-    def show_flags_bar(self, frame: Frame):
-        frame.set_header(Sentence().add("{").addf("/", "Visão").add("}"), "^")
-        frame.draw()
+        frame_xp.write(index, 1, total_bar)
 
+    def show_flags_bar(self, frame: Frame):
+        frame.set_header(Sentence().add("{").addf("/", "Config").add("}"), "^")
+        frame.draw()
+        frame.print(0, Sentence())
+
+        pad = 11
         for flag in self.flagsman.left:
             if flag.is_bool():
-                frame.print(0, flag.get_toggle_sentence(7))
+                frame.print(0, flag.get_toggle_sentence(pad))
                 frame.print(0, Sentence())
+
+        frame.print(0, Sentence().addf("C", "Pasta Raiz [P]"))
+        frame.print(0, Sentence())        
+        frame.print(0, Sentence().addf("C", "Linguagem  [L]"))
+        frame.print(0, Sentence())
 
     def show_color_bar(self, frame: Frame):
         frame.set_header(Sentence().add("{").addf("/", "Cores").add("}"), "^")
@@ -421,15 +430,14 @@ class Play:
 
     def show_help(self):
         _help: Floating = Floating().warning().set_ljust_text()
-        dx = 60
+        dx = 80
         self.fman.add_input(_help)
 
         _help.set_header_sentence(Sentence().add(" Ajuda "))
-        _help.put_text("")
-        _help.put_sentence(Sentence().add(" Barras Alternáveis:         ").addf("r", "[v]").add("Visão, ").addf("r", "[s]").add("Skills"))
+        _help.put_sentence(Sentence().add(" Barras Alternáveis: ").add("Config").addf("r", f"[c]").add(", ").add("Técnicas").addf("r", "[t]"))
         # _help.put_text("")
         _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence() + "  " + RToken("g", "[setas]") + " ou " + RToken("g", "[hjkl]") + "   - Para navegar entre os elementos")
+        _help.put_sentence(Sentence() + "  " + RToken("g", "[setas]") + " ou " + RToken("g", "[wasd]") + "   - Para navegar entre os elementos")
         _help.put_sentence(Sentence() + "  " + RToken("g", "[enter]") + " ou " + RToken("g", "[espaço]") + " - Expandir ou contrair")
         _help.put_sentence(Sentence() + "    " + RToken("g", "[>]") + "   ou   " + RToken("g", "[<]") + "    - Expandir ou contrair todas")
         # _help.put_text("")
@@ -438,17 +446,17 @@ class Play:
                             + " - Marcar (" + Token(symbols.success.text, "g") + "10)"
                             + " ou Desmarcar(" + Token(symbols.failure.text, "r") + "0)")
         _help.put_sentence(Sentence() + "          ou " + RToken("g", "[1-9]") + "    - Definir uma nota parcial")
-        _help.put_sentence(Sentence() + RToken("r", f"  [{self.Key.open_link}]") + " - Github: Abrir tarefa em uma aba do browser")
-        _help.put_sentence(Sentence() + RToken("r", f"  [{self.Key.down_task}]") + " - Down: Baixar tarefa de código para seu dispositivo")
-        _help.put_sentence(Sentence() + RToken("r", f"  [{self.Key.run_task}]") + " - Run: Rodar tarefa de código que você baixou")
+        _help.put_sentence(Sentence() + "  Github " + RToken("r", f"[{self.Key.open_link}]") + " - Abrir tarefa em uma aba do browser")
+        _help.put_sentence(Sentence() + "  Baixar " + RToken("r", f"[{self.Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
+        _help.put_sentence(Sentence() + "Executar " + RToken("r", f"[{self.Key.run_task}]") + " - Rodar tarefa de código que você baixou")
         # _help.put_text("")
-        _help.put_text(" Visão ".center(dx, symbols.hbar.text))
-        _help.put_text("  Define quais e como os elementos serão exibidos")
-        # _help.put_text("")
-        _help.put_text(" Extra ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence() + f"      Pasta " + RToken("r", f"[{self.Key.set_root}]") + " - Mudar a pasta padrão de download do tko" )
-        _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"[{self.Key.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
-        _help.put_text("")
+        _help.put_text(" Config ".center(dx, symbols.hbar.text))
+        _help.put_sentence(Sentence() + f"      Mínimo " + RToken("r", f"[{Flags.minimum.get_char()}]") + " - Mostrar os requisitos mínimos para completar a missão")
+        _help.put_sentence(Sentence() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_char()}]") + " - Mostrar quanto de experiência cada atividade fornece")
+        _help.put_sentence(Sentence() + f"  Percentual " + RToken("r", f"[{Flags.percent.get_char()}]") + " - Mostrar os valores em percentual")
+        _help.put_sentence(Sentence() + f"  ModoAdmin " + RToken("r", f"Shift + [A]") + " - Liberar acesso a todas as missões" )
+        _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{self.Key.set_root}]") + " - Mudar a pasta padrão de download do tko" )
+        _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"Shift + [{self.Key.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
 
     @staticmethod
     def disable_on_resize():
@@ -460,30 +468,37 @@ class Play:
         elif cols < 35 and Flags.flags_bar.is_true():
             Flags.flags_bar.toggle()
 
+    def get_task_path(self) -> str:
+        obj = self.tree.get_selected()
+        if isinstance(obj, Task):
+            rootdir = self.local.get_rootdir()
+            if rootdir != "":
+                path = os.path.join(self.local.get_rootdir(), self.rep_alias, obj.key, "Readme.md")
+                if os.path.isfile(path):
+                    return path
+        return ""
+
     def show_bottom_bar(self, frame: Frame):
-        _help = Play.build_list_sentence(self.help_base)
-        dx = frame.get_dx()
-        _help.trim_alfa(dx)
-        _help.trim_end(dx)
-        frame.set_header(_help, "^")
+        content = Sentence().add("  ")
+
+        _help = Play.build_list_sentence(self.help_extra).add(" ")
+        content.add(_help)
+        content.trim_alfa(frame.get_dx())
+        frame.set_header(content, "^")
         frame.set_border_none()
         frame.draw()
-
-    def show_top_bar(self, frame: Frame) -> None:
-        dx = frame.get_dx()
-        root = Sentence().addf("/", "RootDir ").addf("/", self.local.get_rootdir())
-        frame.set_footer(root, ">", "{", "}")
         frame.draw()
 
+    def show_top_bar(self, frame: Frame) -> int:
+        dx = frame.get_dx()
         content = Sentence().add(" ")
-        content.addf(Flags.cmds.get_value(), f"({self.rep_alias.upper()})").add(" ")
-
+        content.addf("G", f"({self.rep_alias.upper()})").add(" ")
+                
+        flags = Sentence()
         for f in self.flagsman.top:
-            content.add(f.get_toggle_sentence()).add(" ")
+            flags.add(f.get_toggle_sentence()).add(" ")
+        content.add(flags)
 
-        for s in content.get_data():
-            if s.text.startswith("["):
-                s.fmt = ""
 
         xp = XP(self.game)
 
@@ -499,14 +514,25 @@ class Play:
         size = max(15, dx - content.len() - 1)
         done = Flags.main_done.get_value() + "/k"
         todo = Flags.main_todo.get_value() + "/k"
-        xp_bar = Sentence.build_bar(text, percent, size, done, todo).add(" ")
+        xp_bar = Sentence().add(Sentence.build_bar(text, percent, size, done, todo).add(" "))
 
-        limit = dx - xp_bar.len()
-        content.trim_spaces(limit)
-        content.trim_alfa(limit)
-        content.trim_end(limit)
+        # limit = dx - xp_bar.len()
+        # # content.trim_spaces(limit)
+        # # content.trim_alfa(limit)
+        # # content.trim_end(limit)
+        content.add(xp_bar)
 
-        frame.write(0, 0, content.add(xp_bar))
+        frame.write(0, 0, content)
+
+        pasta_raiz = "Não definida"
+        root = self.local.get_rootdir()
+        if root != "":
+            pasta_raiz = os.path.join(root, self.rep_alias)
+        frame.set_footer(Sentence().addf("/", "Pasta Raiz: ").addf("/", pasta_raiz), ">", "{", "}")
+
+        frame.draw()
+        return content.len()
+        # frame.write(0, 0, content)
 
 
     def show_items(self):
@@ -520,13 +546,11 @@ class Play:
         top_dy = 3
         frame_top = Frame(top_y, 0).set_size(3, main_sx)
 
-        self.show_top_bar(frame_top)
+        size_top = self.show_top_bar(frame_top)
 
-        bottom_sy = 0
-        if Flags.help_bar.is_true():
-            bottom_sy = 1
-            frame_bottom = Frame(lines - 1, 0).set_size(3, main_sx)
-            self.show_bottom_bar(frame_bottom)
+        bottom_sy = 2
+        frame_bottom = Frame(lines - 2, 0).set_size(3, size_top + 2)
+        self.show_bottom_bar(frame_bottom)
 
 
         mid_y = top_y + top_dy
@@ -541,7 +565,7 @@ class Play:
         
         flags_sx = 0
         if Flags.flags_bar.is_true():
-            flags_sx = 12
+            flags_sx = 16
             # flags_sy = len([1 for flag in self.flagsman.left if flag.is_bool()])
 
             frame_flags = Frame(mid_y, 0).set_size(mid_sy, flags_sx)
@@ -559,13 +583,13 @@ class Play:
         self.show_main_bar(frame_main)
 
     class Key:
-        left = "h"
-        right = "l"
-        down = "j"
-        up = "k"
-        down_task = "d"
-        run_task = "r"
-        ajuda = "a"
+        left = "a"
+        right = "d"
+        down = "s"
+        up = "w"
+        down_task = "b"
+        run_task = "e"
+        ajuda = "h"
         expand = ">"
         collapse = "<"
         set_root = "P"
@@ -691,6 +715,13 @@ class Play:
                 callback = calls[value]()
                 if callback is not None:
                     return callback
+            elif value != -1:
+                self.fman.add_input(Floating("v").error()
+                                    .put_text("Tecla")
+                                    .put_text(chr(value))
+                                    .put_text("não reconhecida")
+                                    .put_text("")
+                                    )
 
             self.tree.reload_sentences()
             self.save_to_json()

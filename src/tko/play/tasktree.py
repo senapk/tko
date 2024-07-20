@@ -3,17 +3,14 @@ from typing import List, Any, Dict
 from ..settings.geral_settings import GeralSettings
 from ..settings.rep_settings import RepSettings
 
-from .floating_manager import FloatingManager
-from .floating import Floating
-
-from ..util.ftext import Sentence
+from ..util.ftext import Sentence, Token
 from .flags import Flags
 from ..game.game import Game
 from ..game.cluster import Cluster
 from ..game.quest import Quest
 from ..game.task import Task
-from ..game.xp import XP
 from .style import Style
+from ..util.symbols import symbols
 
 import os
 
@@ -114,32 +111,43 @@ class TaskTree:
         self.max_title = max(items)
 
     def str_task(self, in_focus: bool, t: Task, lig_cluster: str, lig_quest: str, min_value=1) -> Sentence:
+        downloadable_in_focus = False
+        rootdir = self.local.get_rootdir()
+        down_symbol = symbols.cant_download
+        if t.is_downloadable() and rootdir != "":
+            path = os.path.join(self.local.get_rootdir(), self.rep_alias, t.key, "Readme.md")
+            if os.path.isfile(path):
+                down_symbol = symbols.downloaded
+                if in_focus:
+                    downloadable_in_focus = True
+            else:
+                down_symbol = symbols.to_download
+
         output = Sentence()
-        output.add(" " + lig_cluster + " " + lig_quest)
+        output.add(" " + lig_cluster)
+        output.add(down_symbol)
+        output.add(lig_quest)
         output.add(t.get_grade_symbol(min_value))
         output.add(" ")
 
+
         color = ""
-        if Flags.opt.is_true() and t.opt:
+        if t.opt:
             color = Style.opt_task + color
         if in_focus:
             color = Flags.focus.get_value() + color
         output.addf(color, t.title)
 
-        if Flags.xp.is_true():
+        if Flags.reward.is_true():
             xp = ""
             for s, v in t.skills.items():
                 xp += f" +{s}:{v}"
             output.addf(Style.skills, xp)
             
-        if Flags.path.is_true():
-            rootdir = self.local.get_rootdir()
-            if rootdir != "":
-                path = os.path.join(self.local.get_rootdir(), self.rep_alias, t.key, "Readme.md")
-                # if Flags.relative.is_true():
-                #     path = os.path.relpath(path)
-                if os.path.isfile(path):
-                    output.add(" ").addf("y", f"[{path}]")
+        if downloadable_in_focus:
+            output.add(" ").addf("y", f"[{path}]")
+
+        
 
         return output
 
@@ -148,14 +156,14 @@ class TaskTree:
         output: Sentence = Sentence().add(" " + lig + con + " ")
 
         color = ""
-        if Flags.opt.is_true() and q.opt:
+        if  q.opt:
             color = Style.opt_quest + color
         if in_focus:
             color = Flags.focus.get_value() + color
 
         title = q.title
-        if Flags.dots.is_true():
-            title = title.ljust(self.max_title - 2, ".")
+        # if Flags.dots.is_true():
+        title = title.ljust(self.max_title - 2, ".")
         # if Flags.quest_prog.is_true():
         done = color + Flags.prog_done.get_value()
         todo = color + Flags.prog_todo.get_value()
@@ -163,16 +171,15 @@ class TaskTree:
         # else:
         #     output.addf(color, title)
 
-        if Flags.count.is_true():
-            if Flags.percent.is_true():
-                output.add(" ").add(q.get_resume_by_percent())
-            else:
-                output.add(" ").add(q.get_resume_by_tasks())
+        if Flags.percent.is_true():
+            output.add(" ").add(q.get_resume_by_percent())
+        else:
+            output.add(" ").add(q.get_resume_by_tasks())
 
         if Flags.minimum.is_true():
             output.add(" ").add(q.get_requirement())
 
-        if Flags.xp.is_true():
+        if Flags.reward.is_true():
             xp = ""
             for s, v in q.skills.items():
                 xp += f" +{s}:{v}"
@@ -193,8 +200,8 @@ class TaskTree:
         if in_focus:
             color += Flags.focus.get_value() + color
         title = cluster.title
-        if Flags.dots.is_true():
-            title = cluster.title.ljust(self.max_title, ".")
+        # if Flags.dots.is_true():
+        title = cluster.title.ljust(self.max_title, ".")
 
         # if Flags.group_prog.is_true():
         done = color + Flags.prog_done.get_value()
@@ -203,11 +210,11 @@ class TaskTree:
         # else:
         #     output.addf(color, title)
 
-        if Flags.count.is_true():
-            if Flags.percent.is_true():
-                output.add(" ").add(cluster.get_resume_by_percent())
-            else:
-                output.add(" ").add(cluster.get_resume_by_quests())
+
+        if Flags.percent.is_true():
+            output.add(" ").add(cluster.get_resume_by_percent())
+        else:
+            output.add(" ").add(cluster.get_resume_by_quests())
         if cluster.key in self.new_items:
             output.addf(Style.new, " [new]")
 

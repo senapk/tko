@@ -174,8 +174,23 @@ class Sentence:
         return "".join([t.text for t in self.data])
 
     def trim_alfa(self, limit: int):
-        return self
-    
+        i = len(self.data) - 1
+        size = len(self.data)
+        locked = False
+        while i >= 0 and size > limit:
+            if self.data[i].text == "[":
+                locked = False
+                i -= 1
+            elif self.data[i].text == "]":
+                locked = True
+                i -= 1
+            elif not locked and self.data[i].text != " ":
+                del self.data[i]
+                size -= 1
+                i -= 1
+            else:
+                i -= 1
+
     def trim_spaces(self, limit: int):
         return self
 

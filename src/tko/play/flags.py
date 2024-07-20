@@ -88,34 +88,20 @@ class Flag:
         extra = Sentence()
         if pad > 0:
             extra.addf(color, (pad - len(text)) * " ")
-        # visual = "━─"
-        # if self.is_true():
-        #     visual = "─━"
-        # if self.is_true():
-        value = Sentence().addf(color + "/", text).add(extra).add(f"[{char}]")
-        # else:
-        #     value = Sentence().add(f"[{char}]").addf(color + "/", text).add(extra)
+        value = Sentence().addf(color + "/", text).add(extra).addf("kW", f"[{char}]")
         return value
     
 
 class Flags:
-    count = Flag().name("Count").char("c").values(["1", "0"]).text("Mostra a contagem de tarefas").location("left")
-    path = Flag().name("Local").char("p").values(["1", "0"]).text("Mostra o local das tarefa baixadas").location("left")
-    minimum = Flag().name("Minimum").char("m").text("Mostra os requisitos para completar a missão").location("left")
-    opt = Flag().name("Opt").char("O").values(["1"]).text("Mostra tarefas opcionais")
-    # relative = Flag().name("PathRel").char("P").values(["0"]).text("Mostra o Path relativo para os arquivos")
-    xp = Flag().name("Exp").char("e").text("Mostra a xp obtida").location("left")
-    percent = Flag().name("Percent").char("%").text("Mostra a porcentagem de tarefas").location("left")
-    dots = Flag().name("Dots").char(".").values(["1", "0"]).text("Mostra o preenchimento com pontos")
-    # group_prog = Flag().name("Group").values(["1", "0"]).text("Mostra a barra de progresso dos grupos")
-    # quest_prog = Flag().name("Quest").values(["1", "0"]).text("Mostra a barra de progresso das missões")
+    minimum = Flag().name("Mínimo").char("m").text("Mostra os requisitos mínimos para completar a missão").location("left")
+    reward = Flag().name("Recompensa").char("r").text("Mostra a experiência obtida na tarefa").location("left")
+    percent = Flag().name("Percentual").char("p").text("Mostra valores em porcentagem").location("left")
     admin = Flag().name("Admin").char("A").text("Mostra todas as missões e grupos").location("left")
 
-    flags_bar = Flag().name("Visão").char("v").values(["0", "1"]).text("Mostra a barra de flags").location("top")
-    help_bar = Flag().name("Ajuda").values(["1"]).text("Mostra a barra de ajuda")
-    skills_bar = Flag().name("Skills").char("s").values(["0", "1"]).text("Mostra a barra de skills").location("top")
+    flags_bar = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
+    skills_bar = Flag().name("Técnicas").char("t").values(["0", "1"]).text("Mostra a barra de skills").location("top")
 
-    focus     = Flag().name("Selected").values(["B"]).text("Cor do item em foco").many()
+    focus     = Flag().name("Selected").values(["kB"]).text("Cor do item em foco").many()
     prog_done = Flag().name("ProgDone").values(["g"]).text("Progresso Done").many()
     prog_todo = Flag().name("ProgTodo").values(["y"]).text("Progresso Todo").many()
     flag_on   = Flag().name("Toggle_1").values(["G"]).text("Flag True").many()

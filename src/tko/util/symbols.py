@@ -2,6 +2,7 @@ from .ftext import Token
 
 class __Symbols:
     def __init__(self):
+        self.downloaded = Token()
         self.opening = Token()
         self.neutral = Token()
         self.success = Token()
@@ -31,7 +32,7 @@ class __Symbols:
 
     def set_ascii(self):
         self.ascii = True
-
+        self.downloaded = Token("⇓")
         self.opening = Token("=> ")
         self.neutral = Token(".")
         self.success = Token("S")
@@ -57,6 +58,9 @@ class __Symbols:
     def set_unicode(self):
         self.ascii = False
 
+        self.downloaded = Token("▼")
+        self.to_download = Token("▽")
+        self.cant_download = Token("◉")
         self.opening = Token("=> ")
         self.neutral = Token("»")
         self.success = Token("✓")
