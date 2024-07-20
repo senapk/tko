@@ -35,3 +35,6 @@ TARGET="${REP}/.bin/msg.txt"
 curl  ${SOURCE} -o ${TARGET}
 
 
+echo ""
+echo "Digite Control + D para reiniciar o terminal"
+echo ""

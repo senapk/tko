@@ -13,10 +13,6 @@ TARGET="${REP}/.bin/tko"
 curl  ${SOURCE} -o ${TARGET}
 chmod +x ${TARGET}
 
-cd ${REP}
-./${TARGET} config --root
-./${TARGET} config --lang c
-
 SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/check.py"
 TARGET="${REP}/.bin/check.py"
 curl  ${SOURCE} -o ${TARGET}
@@ -38,3 +34,6 @@ SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/msg.txt"
 TARGET="${REP}/.bin/msg.txt"
 curl  ${SOURCE} -o ${TARGET}
 
+echo ""
+echo "Digite Control + D para reiniciar o terminal"
+echo ""
