@@ -21,7 +21,7 @@ import io
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.12.12"
+__version__ = "0.12.13"
 
 
 
@@ -4576,7 +4576,7 @@ class CDiff:
 
 
     def draw_scrollbar(self):
-        y_init = 4
+        y_init = 3
         if not self.has_any_error():
             return   
         tr = "╮"
@@ -4671,19 +4671,17 @@ class CDiff:
     def draw_guide_line(self):
         cmds = (Sentence()
         .add(" ")
-        .addf("/B", "Sair").addf("B","[q]")
+        .addf("/G", "Sair[q]")
         .add(" ")
-        .addf("/B", "ReCompile").addf("B","[r]")
+        .addf("/Y", "Executar[e]")
         .add(" ")
-        .addf("/B", "SelectCase").addf("B", "[h, l]")
+        .addf("/C", "Navegar[wasd]")
         .add(" ")
-        .addf("/B", "Scroll").addf("B", "[j, k]")
-        .add(" ")
-        .addf("/B", "DiffMode").addf("B", "[d]")
+        .addf("/M", "MudarVisão[m]")
         .add(" ")
         )
-        _, cols = Fmt.get_size()
-        Fmt.write(3, 0, cmds.center(cols, Token(" ", "K")))
+        lines, cols = Fmt.get_size()
+        Fmt.write(lines - 1, 0, cmds.center(cols, Token(" ")))
 
     def has_any_error(self):
         results = [unit.result for unit in self.wdir.unit_list]
@@ -4694,7 +4692,7 @@ class CDiff:
     def draw_diff(self, unit: Unit):
         lines, cols = Fmt.get_size()
         self.space = lines - 4
-        frame = Frame(3, -1).set_inner(self.space, cols - 1).set_border_square()
+        frame = Frame(2, -1).set_inner(self.space, cols - 1).set_border_square()
         # frame.draw()
         if not self.has_any_error():
             self.sucesso()
@@ -4781,21 +4779,21 @@ class CDiff:
 
             if input == ord('q'):
                 self.set_exit()
-            elif input == curses.KEY_LEFT or input == ord('h'):
+            elif input == curses.KEY_LEFT or input == ord('a'):
                 self.index = max(0, self.index - 1)
                 self.init = 0
-            elif input == curses.KEY_RIGHT or input == ord('l'):
+            elif input == curses.KEY_RIGHT or input == ord('d'):
                 self.index = min(len(self.results) - 1, self.index + 1)
                 self.init = 0
-            elif input == curses.KEY_DOWN or input == ord('j'):
+            elif input == curses.KEY_DOWN or input == ord('s'):
                 self.init += 1
-            elif input == curses.KEY_UP or input == ord('k'):
+            elif input == curses.KEY_UP or input == ord('w'):
                 self.init = max(0, self.init - 1)
-            elif input == ord('d'):
+            elif input == ord('m'):
                 self.param.is_up_down = not self.param.is_up_down
                 self.save_settings()
                 self.init = 0
-            elif input == ord('r'):
+            elif input == ord('e'):
                 if self.wdir.solver is not None:
                     self.wdir.solver.prepare_exec()
                 self.results = []
