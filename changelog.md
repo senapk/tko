@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.13.0
+  - add: root and lang set by default in replit
 - 0.12.16
   - fix: showing path in run based in cases.tio
 - 0.12.15

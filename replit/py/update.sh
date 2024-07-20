@@ -29,3 +29,10 @@ curl  ${SOURCE} -o ${TARGET}
 SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/check.py"
 TARGET="${REP}/.bin/check.py"
 curl  ${SOURCE} -o ${TARGET}
+
+tko=${HOME}/${REPL_SLUG}/.bin/tko 
+par="-c /home/runner/${REPL_SLUG}/.bin/tko.cfg"
+${tko} ${par} config --root
+${tko} ${par} config --lang py
+echo ""
+echo "Digite Control + D para reiniciar o shell"
