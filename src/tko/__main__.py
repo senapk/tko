@@ -189,7 +189,7 @@ class Main:
     @staticmethod
     def play(args):
         if args.repo:
-            print("Playing course", args.repo)
+            # print("Playing course", args.repo)
 
             while True:
                 sp = SettingsParser()

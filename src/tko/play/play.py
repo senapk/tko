@@ -50,8 +50,8 @@ class Play:
 
         if len(self.rep.get_tasks()) == 0:
             self.show_help()
-            self.set_rootdir(True)
-            self.set_language(True)
+            # self.set_rootdir(True)
+            # self.set_language(True)
 
         self.first_loop = True
         self.graph_ext = ""
@@ -730,8 +730,41 @@ class Play:
             if self.first_loop:
                 self.first_loop = False
 
+    def check_root_in_text_mode(self):
+        rootdir = self.local.get_rootdir()
+        if rootdir == "":
+            print("Diretório para o download das tarefas ainda não foi definido.")
+            print("")
+            print("Deseja definir o diretório atual como raiz? (s/n): ", end="")
+            while True:
+                value = input()
+                if value == "s":
+                    self.local.set_rootdir(os.path.abspath(os.getcwd()))
+                    self.fn_save()
+                    print("\nDiretório raiz definido como", os.getcwd())
+                    break
+                elif value == "n":
+                    print("Navegue até o diretório desejado e dê o play novamente.")
+                    exit(0)
+
+    def check_lang_in_text_mode(self):
+        lang = self.rep.get_lang()
+        if lang == "":
+            options = ["c", "cpp", "py", "ts", "js", "java", "hs"]
+            print("\nLinguagem padrão ainda não foi definida.\n")
+            while True:
+                print("Escolha entre as opções a seguir ", end="")
+                print("[" + ", ".join(options) + "]", ":", end=" ")
+                lang = input()
+                if lang in options:
+                    break
+            self.rep.set_lang(lang)
+
     def play(self, graph_ext: str):
         self.graph_ext = graph_ext
+        self.check_root_in_text_mode()
+        self.check_lang_in_text_mode()
+
         while True:
             output = curses.wrapper(self.main)
             if output is None:
