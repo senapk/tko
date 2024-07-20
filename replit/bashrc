@@ -24,3 +24,4 @@ alias ll="ls -alh"
 
 alias tko='tko -c /home/runner/${REPL_SLUG}/.bin/tko.cfg'
 
+tko config --root > /dev/null 2>&1

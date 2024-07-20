@@ -34,9 +34,3 @@ SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/msg.txt"
 TARGET="${REP}/.bin/msg.txt"
 curl  ${SOURCE} -o ${TARGET}
 
-tko=${HOME}/${REPL_SLUG}/.bin/tko 
-par="-c /home/runner/${REPL_SLUG}/.bin/tko.cfg"
-${tko} ${par} config --root
-${tko} ${par} config --lang java
-echo ""
-echo "Digite Control + D para reiniciar o shell"
