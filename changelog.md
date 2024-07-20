@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.12.15
+  - fix: removing .h from autoloading
 - 0.12.14
   - fix: adjustments in interface
 - 0.12.2
