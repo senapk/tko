@@ -41,7 +41,8 @@ class Play:
         self.rep = rep
         self.exit = False
 
-        self.lang = self.rep.get_lang()
+        if self.rep.get_lang() == "":
+            self.rep.set_lang(self.local.get_lang_def())
         self.flagsman = FlagsMan(self.rep.get_flags())
         self.game: Game = game
         self.fman = FloatingManager()
