@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.12.16
+  - fix: showing path in run based in cases.tio
 - 0.12.15
   - fix: removing .h from autoloading
 - 0.12.14

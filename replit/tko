@@ -4652,9 +4652,12 @@ class CDiff:
         frame = Frame(0, 0).set_size(3, cols)
         if self.wdir.solver is None:
             return
-        folder = self.wdir.solver.path_list[0]
+        folder = ""
+        if self.wdir.source_list:
+            folder = os.path.abspath(self.wdir.source_list[0])
+        else:
+            folder = os.path.abspath(self.wdir.solver.path_list[0])
         intro = self.wdir.resume()
-        base = os.sep.join(folder.split(os.sep)[:-2])
         last = folder.split(os.sep)[-2]
         frame.set_header(Sentence().add(" ").addf("c", "Atividade:").add("[").addf("m", last).add("] ").add(intro).add(" ") , "")
         unit = self.wdir.unit_list[self.index]
