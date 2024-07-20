@@ -147,11 +147,13 @@ class CDiff:
 
         _, cols = Fmt.get_size()
         frame = Frame(0, 0).set_size(3, cols)
-        pwd = os.getcwd()
+        if self.wdir.solver is None:
+            return
+        folder = self.wdir.solver.path_list[0]
         intro = self.wdir.resume()
-        base = os.sep.join(pwd.split(os.sep)[:-1])
-        last = pwd.split(os.sep)[-1]
-        frame.set_header(Sentence().add(" ").add(base).add("/").addf("y", last).add("   ").add(intro).add(" ") , "<")
+        base = os.sep.join(folder.split(os.sep)[:-2])
+        last = folder.split(os.sep)[-2]
+        frame.set_header(Sentence().add(" ").addf("c", "Atividade:").add("[").addf("m", last).add("] ").add(intro).add(" ") , "")
         unit = self.wdir.unit_list[self.index]
         frame.set_footer(Sentence().add(" ").add(unit.str(False)), "")
         frame.draw()
@@ -171,9 +173,9 @@ class CDiff:
         .add(" ")
         .addf("/G", "Sair[q]")
         .add(" ")
-        .addf("/Y", "Executar[e]")
+        .addf("/Y", "Navegar[wasd]")
         .add(" ")
-        .addf("/C", "Navegar[wasd]")
+        .addf("/C", "Executar[e]")
         .add(" ")
         .addf("/M", "MudarVisão[m]")
         .add(" ")

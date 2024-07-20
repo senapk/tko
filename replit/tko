@@ -21,7 +21,7 @@ import io
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.12.13"
+__version__ = "0.12.14"
 
 
 
@@ -4044,7 +4044,7 @@ class Wdir:
             for i in range(len(self.pack_list)):
                 nome: str = self.source_list[i].split(os.sep)[-1]
                 out.append(nome + "(" + str(len(self.pack_list[i])).zfill(2) + ")")
-            return Sentence().addf("g", "base:").add("[" + ", ".join(out) + "]")
+            return Sentence().add("Testes:").add("[").addf("y", ", ".join(out)).add("]")
 
         def solvers() -> Sentence:
             path_list = [] if self.solver is None else self.solver.path_list
@@ -4053,13 +4053,13 @@ class Wdir:
                 out = "free cmd"
             else:
                 out = ", ".join([os.path.basename(path) for path in path_list])
-            return Sentence().addf("g", "prog:").add("[" + out + "]")
+            return Sentence().add("Códigos:").add("[").addf("g", out).add("]")
 
         # folder = os.getcwd().split(os.sep)[-1]
         # tests_count = (colour("tests:", Color.GREEN) +
         #               str(len([x for x in self.unit_list if x.repeated is None])).zfill(2))
 
-        return Sentence().add(sources()).add(" ").add(solvers())
+        return Sentence().add(solvers()).add(" ").add(sources())
 
 
 
@@ -4649,11 +4649,13 @@ class CDiff:
 
         _, cols = Fmt.get_size()
         frame = Frame(0, 0).set_size(3, cols)
-        pwd = os.getcwd()
+        if self.wdir.solver is None:
+            return
+        folder = self.wdir.solver.path_list[0]
         intro = self.wdir.resume()
-        base = os.sep.join(pwd.split(os.sep)[:-1])
-        last = pwd.split(os.sep)[-1]
-        frame.set_header(Sentence().add(" ").add(base).add("/").addf("y", last).add("   ").add(intro).add(" ") , "<")
+        base = os.sep.join(folder.split(os.sep)[:-2])
+        last = folder.split(os.sep)[-2]
+        frame.set_header(Sentence().add(" ").addf("c", "Atividade:").add("[").addf("m", last).add("] ").add(intro).add(" ") , "")
         unit = self.wdir.unit_list[self.index]
         frame.set_footer(Sentence().add(" ").add(unit.str(False)), "")
         frame.draw()
@@ -4673,9 +4675,9 @@ class CDiff:
         .add(" ")
         .addf("/G", "Sair[q]")
         .add(" ")
-        .addf("/Y", "Executar[e]")
+        .addf("/Y", "Navegar[wasd]")
         .add(" ")
-        .addf("/C", "Navegar[wasd]")
+        .addf("/C", "Executar[e]")
         .add(" ")
         .addf("/M", "MudarVisão[m]")
         .add(" ")

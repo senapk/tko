@@ -219,7 +219,7 @@ class Wdir:
             for i in range(len(self.pack_list)):
                 nome: str = self.source_list[i].split(os.sep)[-1]
                 out.append(nome + "(" + str(len(self.pack_list[i])).zfill(2) + ")")
-            return Sentence().addf("g", "base:").add("[" + ", ".join(out) + "]")
+            return Sentence().add("Testes:").add("[").addf("y", ", ".join(out)).add("]")
 
         def solvers() -> Sentence:
             path_list = [] if self.solver is None else self.solver.path_list
@@ -228,10 +228,10 @@ class Wdir:
                 out = "free cmd"
             else:
                 out = ", ".join([os.path.basename(path) for path in path_list])
-            return Sentence().addf("g", "prog:").add("[" + out + "]")
+            return Sentence().add("Códigos:").add("[").addf("g", out).add("]")
 
         # folder = os.getcwd().split(os.sep)[-1]
         # tests_count = (colour("tests:", Color.GREEN) +
         #               str(len([x for x in self.unit_list if x.repeated is None])).zfill(2))
 
-        return Sentence().add(sources()).add(" ").add(solvers())
+        return Sentence().add(solvers()).add(" ").add(sources())
