@@ -25,6 +25,10 @@ alias ll="ls -alh"
 config_file="/home/runner/${REPL_SLUG}/.bin/tko.cfg"
 alias tko="tko -c ${config_file}"
 
+# verifica se o arquivo de configuração existe
+if [ ! -f ${config_file} ]; then
+    tko config > /dev/null 2>&1
+fi
 
 if grep -q '"rootdir": ""' ${config_file}; then
     tko config --root > /dev/null 2>&1
