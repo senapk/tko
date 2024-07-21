@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.13.1
+  - add: help msg improved
 - 0.13.0
   - add: root and lang set by default in replit
 - 0.12.16

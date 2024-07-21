@@ -98,8 +98,8 @@ class Flags:
     percent = Flag().name("Percentual").char("p").text("Mostra valores em porcentagem").location("left")
     admin = Flag().name("Admin").char("A").text("Mostra todas as missões e grupos").location("left")
 
-    flags_bar = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
-    skills_bar = Flag().name("Técnicas").char("t").values(["0", "1"]).text("Mostra a barra de skills").location("top")
+    config = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
+    skills = Flag().name("Técnicas").char("t").values(["0", "1"]).text("Mostra a barra de skills").location("top")
 
     focus     = Flag().name("Selected").values(["kB"]).text("Cor do item em foco").many()
     prog_done = Flag().name("ProgDone").values(["g"]).text("Progresso Done").many()

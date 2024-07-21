@@ -429,29 +429,10 @@ class Play:
             if not flag.is_bool():
                 frame.print(0, flag.get_toggle_sentence())
 
-    def show_help(self):
-        _help: Floating = Floating().warning().set_ljust_text()
+    def show_help_config(self):
+        _help: Floating = Floating().warning().set_ljust_text().set_header(" Configurações ")
         dx = 80
         self.fman.add_input(_help)
-
-        _help.set_header_sentence(Sentence().add(" Ajuda "))
-        _help.put_sentence(Sentence().add(" Barras Alternáveis: ").add("Config").addf("r", f"[c]").add(", ").add("Técnicas").addf("r", "[t]"))
-        # _help.put_text("")
-        _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence() + "  " + RToken("g", "[setas]") + " ou " + RToken("g", "[wasd]") + "   - Para navegar entre os elementos")
-        _help.put_sentence(Sentence() + "  " + RToken("g", "[enter]") + " ou " + RToken("g", "[espaço]") + " - Expandir ou contrair")
-        _help.put_sentence(Sentence() + "    " + RToken("g", "[>]") + "   ou   " + RToken("g", "[<]") + "    - Expandir ou contrair todas")
-        # _help.put_text("")
-        _help.put_text(" Tarefas ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence() + "  " + RToken("g", "[enter]") + " ou " + RToken("g", "[espaço]") 
-                            + " - Marcar (" + Token(symbols.success.text, "g") + "10)"
-                            + " ou Desmarcar(" + Token(symbols.failure.text, "r") + "0)")
-        _help.put_sentence(Sentence() + "          ou " + RToken("g", "[1-9]") + "    - Definir uma nota parcial")
-        _help.put_sentence(Sentence() + "  Github " + RToken("r", f"[{self.Key.open_link}]") + " - Abrir tarefa em uma aba do browser")
-        _help.put_sentence(Sentence() + "  Baixar " + RToken("r", f"[{self.Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
-        _help.put_sentence(Sentence() + "Executar " + RToken("r", f"[{self.Key.run_task}]") + " - Rodar tarefa de código que você baixou")
-        # _help.put_text("")
-        _help.put_text(" Config ".center(dx, symbols.hbar.text))
         _help.put_sentence(Sentence() + f"      Mínimo " + RToken("r", f"[{Flags.minimum.get_char()}]") + " - Mostrar os requisitos mínimos para completar a missão")
         _help.put_sentence(Sentence() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_char()}]") + " - Mostrar quanto de experiência cada atividade fornece")
         _help.put_sentence(Sentence() + f"  Percentual " + RToken("r", f"[{Flags.percent.get_char()}]") + " - Mostrar os valores em percentual")
@@ -459,15 +440,38 @@ class Play:
         _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{self.Key.set_root}]") + " - Mudar a pasta padrão de download do tko" )
         _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"Shift + [{self.Key.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
 
+
+    def show_help(self):
+        _help: Floating = Floating().warning().set_ljust_text()
+        dx = 80
+        self.fman.add_input(_help)
+
+        _help.set_header_sentence(Sentence().add(" Ajuda "))
+        _help.put_sentence(Sentence().add("  Barras Alternáveis  - ").add("Config").addf("r", f"[c]").add(", ").add("Técnicas").addf("r", "[t]"))
+        # _help.put_text("")
+        # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
+        _help.put_sentence(Sentence() + "  " + RToken("g", "[setas]") + " ou " + RToken("g", "[wasd]") + "   - Para navegar entre os elementos")
+        _help.put_sentence(Sentence() + "  " + RToken("g", "[enter]") + " ou " + RToken("g", "[espaço]") + " - Expandir ou contrair")
+        _help.put_sentence(Sentence() + "    " + RToken("g", "[>]") + "   ou   " + RToken("g", "[<]") + "    - Expandir ou contrair todas")
+        # _help.put_text("")
+        # _help.put_text(" Tarefas ".center(dx, symbols.hbar.text))
+        _help.put_sentence(Sentence() + "  " + RToken("g", "[enter]") + " ou " + RToken("g", "[espaço]") 
+                            + " - Marcar (" + Token(symbols.success.text, "g") + "10)"
+                            + " ou Desmarcar (" + Token(symbols.failure.text, "r") + "0)")
+        _help.put_sentence(Sentence() + "          ou " + RToken("g", "[1-9]") + "    - Definir uma nota parcial")
+        _help.put_sentence(Sentence() + "  Github " + RToken("r", f"[{self.Key.open_link}]") + " - Abrir tarefa em uma aba do browser")
+        _help.put_sentence(Sentence() + "  Baixar " + RToken("r", f"[{self.Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
+        _help.put_sentence(Sentence() + "Executar " + RToken("r", f"[{self.Key.run_task}]") + " - Rodar tarefa de código que você baixou")
+
     @staticmethod
     def disable_on_resize():
         _, cols = Fmt.get_size()
-        if cols < 50 and Flags.skills_bar.is_true() and Flags.flags_bar.is_true():
-            Flags.skills_bar.toggle()
-        elif cols < 30 and Flags.skills_bar.is_true():
-            Flags.skills_bar.toggle()
-        elif cols < 35 and Flags.flags_bar.is_true():
-            Flags.flags_bar.toggle()
+        if cols < 50 and Flags.skills.is_true() and Flags.config.is_true():
+            Flags.skills.toggle()
+        elif cols < 30 and Flags.skills.is_true():
+            Flags.skills.toggle()
+        elif cols < 35 and Flags.config.is_true():
+            Flags.config.toggle()
 
     def get_task_path(self) -> str:
         obj = self.tree.get_selected()
@@ -558,14 +562,14 @@ class Play:
         mid_sy = main_sy - (top_y + top_dy + bottom_sy)
 
         skills_sx = 0
-        if Flags.skills_bar.is_true():
+        if Flags.skills.is_true():
             skills_sx = max(20, main_sx // 4)
             frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx)
             self.show_skills_bar(frame_skills)
 
         
         flags_sx = 0
-        if Flags.flags_bar.is_true():
+        if Flags.config.is_true():
             flags_sx = 16
             # flags_sy = len([1 for flag in self.flagsman.left if flag.is_bool()])
 
@@ -628,6 +632,13 @@ class Play:
         def __call__(self):
             self.fn(self.grade)
 
+    def toggle_config(self):
+        if Flags.config.is_true():
+            Flags.config.toggle()
+        else:
+            Flags.config.toggle()
+            self.show_help_config()
+
     def make_callback(self) -> Dict[int, Any]:
         def set_exit():
             self.exit = True
@@ -686,12 +697,15 @@ class Play:
         for value in range(10):
             add_str(str(value), self.GradeFunctor(int(value), self.tree.set_grade))
 
-        if Flags.flags_bar.is_true():
+        if Flags.config.is_true():
             for flag in self.flagsman.left:
                 add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
 
-        for flag in self.flagsman.top:
-            add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
+        # for flag in self.flagsman.top:
+        #     add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
+
+        add_str(Flags.config.get_char(), self.toggle_config)
+        add_str(Flags.skills.get_char(), self.FlagFunctor(self.fman, Flags.skills))
 
         return calls
 
