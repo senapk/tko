@@ -3,26 +3,6 @@
   "MD041": false
 } -->
 
-<!-- toc -->
-- [Instalação](#instalação)
-- [Dependências](#dependências)
-- [Download atividades](#download-atividades)
-- [Rodando](#rodando)
-  - [Rodando sem testar](#rodando-sem-testar)
-  - [Rodando os testes](#rodando-os-testes)
-  - [Rodando múltiplos arquivos](#rodando-múltiplos-arquivos)
-- [Utilizando outras linguagens de programação](#utilizando-outras-linguagens-de-programação)
-  - [Opção 1: chamando o interpretador da linguagem](#opção-1-chamando-o-interpretador-da-linguagem)
-  - [Compilando antecipadamente](#compilando-antecipadamente)
-- [Verificando o resultado](#verificando-o-resultado)
-  - [Opções extras](#opções-extras)
-- [O que é um teste?](#o-que-é-um-teste)
-  - [Formatos de teste](#formatos-de-teste)
-  - [Sintaxe TIO](#sintaxe-tio)
-  - [Escrevendo alguns testes](#escrevendo-alguns-testes)
-- [Convertendo entre formatos](#convertendo-entre-formatos)
-<!-- toc -->
-
 # tko
 
 O TKO é um sistema de testes para programação competitiva. Ele é capaz de rodar testes em várias linguagens de programação e em vários formatos de testes. Ele está integrado com os repositórios de atividades das disciplinas de programação da UFC de Quixadá permitindo baixar as atividades e rodar os testes.
