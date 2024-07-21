@@ -389,9 +389,9 @@ def main():
     except KeyboardInterrupt:
         print("\n\nKeyboard Interrupt")
         sys.exit(1)
-    # except Exception as e:
-    #     print(e)
-    #     sys.exit(1) # remove in development to show stack trace
+    except Exception as e:
+        print(e)
+        sys.exit(1) # remove in development to show stack trace
 
 
 if __name__ == '__main__':
