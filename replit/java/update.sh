@@ -34,6 +34,9 @@ SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/msg.txt"
 TARGET="${REP}/.bin/msg.txt"
 curl  ${SOURCE} -o ${TARGET}
 
+TARGET="${REP}/.bin/langdef.cfg"
+echo "java" > ${TARGET}
+
 echo ""
 echo "Digite Control + D para reiniciar o terminal"
 echo ""

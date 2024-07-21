@@ -30,6 +30,9 @@ SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/check.py"
 TARGET="${REP}/.bin/check.py"
 curl  ${SOURCE} -o ${TARGET}
 
+TARGET="${REP}/.bin/langdef.cfg"
+echo "py" > ${TARGET}
+
 echo ""
 echo "Digite Control + D para reiniciar o terminal"
 echo ""

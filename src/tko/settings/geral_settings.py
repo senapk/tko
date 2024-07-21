@@ -7,7 +7,7 @@ class GeralSettings:
     __is_color = "color"
     __diffdown = "diffdown"
     __sidesize = "sidesize"
-    __langdef = "lang"
+    __langdef = "langdef"
 
     defaults = {
         __rootdir: "",
