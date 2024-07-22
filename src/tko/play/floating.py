@@ -107,7 +107,7 @@ class Floating:
 
     def _set_default_footer(self):
         if self._frame.get_footer().len() == 0:
-            label = Sentence().addf("/", " Pressione uma tecla ")
+            label = Sentence().addf("/", " Pressione espaço ")
             self._frame.set_footer(label, "", "─", "─")
         return self
 
