@@ -1,5 +1,5 @@
 from typing import Any, Dict
-
+import os
 
 class GeralSettings:
     __rootdir = "rootdir"
@@ -45,7 +45,18 @@ class GeralSettings:
 
 
     def get_rootdir(self) -> str:
-        return self.__get(self.__rootdir)
+        value = self.__get(self.__rootdir)
+        if value == "":
+            home_dir = os.path.expanduser("~")
+            def_root = os.path.join(home_dir, "qxcode")
+            if not os.path.exists(def_root):
+                os.makedirs(def_root)
+                print("Pasta padrão para download de arquivos foi definida em: " + def_root)
+                print("Você pode alterar, navegando até a a pasta desejada e executando o comando")
+                print("tko config --root")
+            self.set_rootdir(def_root)
+            return def_root
+        return value
     
     def set_rootdir(self, value: str):
         self.__set(self.__rootdir, value)

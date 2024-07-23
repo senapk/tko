@@ -172,8 +172,9 @@ class Main:
             
         if args.root:
             action = True
-            settings.geral.set_rootdir(os.path.abspath(os.getcwd()))
-            print("Root directory now is: " + os.path.abspath(os.getcwd()))
+            path = os.path.abspath(args.root)
+            settings.geral.set_rootdir(path)
+            print("Root directory now is: " + path)
 
         if not action:
             action = True
@@ -316,7 +317,7 @@ class Parser:
         g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
         g_lang.add_argument("--ask", action='store_true', help='ask language extension every time.')
         
-        parser_s.add_argument("--root", action='store_true', help='set root directory to current.')
+        parser_s.add_argument("--root", metavar="path", type=str, help='set root directory.')
 
         parser_s.set_defaults(func=Main.settings)
 

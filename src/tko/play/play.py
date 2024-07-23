@@ -69,10 +69,6 @@ class Play:
             RToken("C", f"Executar[{self.Key.run_task}]"),
             RToken("M", "Marcar[enter]"),
             RToken("M", "Graduar[0-9]"),
-            # RToken("R", f"Pasta[{self.Key.set_root}]"),
-            # RToken("R", f"Linguagem[{self.Key.set_lang}]")
-            # RToken("R", f"Undo[{self.Key.reset}]"),
-            # RToken("R", f"Block[{self.Key.mass_toggle}]")
         ]
 
     def save_to_json(self):
@@ -744,23 +740,6 @@ class Play:
             if self.first_loop:
                 self.first_loop = False
 
-    def check_root_in_text_mode(self):
-        rootdir = self.local.get_rootdir()
-        if rootdir == "":
-            print("Diretório para o download das tarefas ainda não foi definido.")
-            print("")
-            print("Deseja definir o diretório atual como raiz? (s/n): ", end="")
-            while True:
-                value = input()
-                if value == "s":
-                    self.local.set_rootdir(os.path.abspath(os.getcwd()))
-                    self.fn_save()
-                    print("\nDiretório raiz definido como", os.getcwd())
-                    break
-                elif value == "n":
-                    print("Navegue até o diretório desejado e dê o play novamente.")
-                    exit(0)
-
     def check_lang_in_text_mode(self):
         lang = self.rep.get_lang()
         if lang == "":
@@ -776,7 +755,6 @@ class Play:
 
     def play(self, graph_ext: str):
         self.graph_ext = graph_ext
-        self.check_root_in_text_mode()
         self.check_lang_in_text_mode()
 
         while True:
