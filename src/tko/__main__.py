@@ -48,7 +48,7 @@ class MRep:
             rep.set_file(args.file)
         settings.reps[args.alias] = rep
         sp.save_settings()
-    
+
     @staticmethod
     def rm(args):
         sp = SettingsParser()
@@ -98,7 +98,7 @@ class Main:
         if not args.side and not args.down:
             geral = SettingsParser().load_settings().geral
             updown = geral.get_is_diff_down()
-            sidesize = geral.get_side_size()
+            sidesize = int(geral.get_side_size())
             size_too_short = Report.get_terminal_size() < sidesize
             param.set_up_down(updown or size_too_short)
         elif args.side:
@@ -107,7 +107,7 @@ class Main:
             param.set_up_down(True)
         run = Run(args.target_list, args.cmd, param)
         run.execute()
-    
+
     @staticmethod
     def run(args):
         PatternLoader.pattern = args.pattern
@@ -128,12 +128,12 @@ class Main:
         manip = Param.Manip().set_unlabel(args.unlabel).set_to_sort(args.sort).set_to_number(args.number)
         build = Build(args.target, args.target_list, manip, args.force)
         build.execute()
-    
+
     @staticmethod
     def settings(args):
         sp = SettingsParser()
         settings = sp.load_settings()
-        
+
         action = False
 
         if args.ascii:
@@ -168,7 +168,7 @@ class Main:
             action = True
             settings.geral.set_lang_def("")
             print("Language extension will be asked always.")
-            
+
         if args.root:
             action = True
             path = os.path.abspath(args.root)
@@ -211,20 +211,20 @@ class Main:
 
     @staticmethod
     def down(args):
-        Down.download_problem(".", args.course, args.activity, args.language, print)
+        Down.download_problem(args.course, args.activity, args.language, print)
 
 
 class Parser:
     def __init__(self):
-        self.parser: argparse.ArgumentParser = argparse.ArgumentParser(prog='tko', description=f'tko version {__version__}')        
+        self.parser: argparse.ArgumentParser = argparse.ArgumentParser(prog='tko', description=f'tko version {__version__}')
         self.subparsers = self.parser.add_subparsers(title='subcommands', help='help for subcommand.')
 
-        self.parent_manip = None
-        self.parent_basic = None
+        self.parent_manip = self.create_parent_manip()
+        self.parent_basic = self.create_parent_basic()
 
         self.add_parser_global()
-        self.add_parent_basic()
-        self.add_parent_manip()
+        self.create_parent_basic()
+        self.create_parent_manip()
         self.add_parser_run()
         self.add_parser_prun()
         self.add_parser_build()
@@ -242,14 +242,14 @@ class Parser:
         self.parser.add_argument('-m', action='store_true', help='monochromatic.')
         self.parser.add_argument('-a', action='store_true', help='asc2 mode.')
 
-    def add_parent_basic(self):
+    def create_parent_basic(self):
         parent_basic = argparse.ArgumentParser(add_help=False)
         parent_basic.add_argument('--index', '-i', metavar="I", type=int, help='run a specific index.')
         parent_basic.add_argument('--pattern', '-p', metavar="P", type=str, default='@.in @.sol',
                                   help='pattern load/save a folder, default: "@.in @.sol"')
-        self.parent_basic = parent_basic
-    
-    def add_parent_manip(self):
+        return parent_basic
+
+    def create_parent_manip(self):
         parent_manip = argparse.ArgumentParser(add_help=False)
         parent_manip.add_argument('--width', '-w', type=int, help="term width.")
         parent_manip.add_argument('--unlabel', '-u', action='store_true', help='remove all labels.')
@@ -257,7 +257,7 @@ class Parser:
         parent_manip.add_argument('--sort', '-s', action='store_true', help="sort test cases by input size.")
         parent_manip.add_argument('--pattern', '-p', metavar="@.in @.out", type=str, default='@.in @.sol',
                                   help='pattern load/save a folder, default: "@.in @.sol"')
-        self.parent_manip = parent_manip
+        return parent_manip
 
     def add_parser_run(self):
         parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='run with test cases using curses.')
@@ -315,7 +315,7 @@ class Parser:
         g_lang = parser_s.add_mutually_exclusive_group()
         g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
         g_lang.add_argument("--ask", action='store_true', help='ask language extension every time.')
-        
+
         parser_s.add_argument("--root", metavar="path", type=str, help='set root directory.')
 
         parser_s.set_defaults(func=Main.settings)

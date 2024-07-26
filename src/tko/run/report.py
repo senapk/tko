@@ -11,16 +11,17 @@ class Report:
         pass
 
     @staticmethod
-    def update_terminal_size():
+    def update_terminal_size() -> int:
         term_width = shutil.get_terminal_size().columns
         if term_width % 2 == 0:
             term_width -= 1
         Report.__term_width = term_width
+        return term_width
 
     @staticmethod
     def get_terminal_size():
         if Report.__term_width is None:
-            Report.update_terminal_size()
+            return Report.update_terminal_size()
 
         return Report.__term_width
 
@@ -37,7 +38,7 @@ class Report:
         left_border: Optional[Union[str, Token]] = None,
         right_border: Optional[Union[str, Token]] = None,
     ) -> Sentence:
-        
+
         if isinstance(ftext, str) or isinstance(ftext, Token):
             ftext = Sentence() + ftext
         if sep is None:

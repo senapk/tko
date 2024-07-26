@@ -50,14 +50,9 @@ class Play:
 
         if len(self.rep.get_tasks()) == 0:
             self.show_help()
-            # self.set_rootdir(True)
-            # self.set_language(True)
 
         self.first_loop = True
         self.graph_ext = ""
-
-        self.help_base: List[Token] = [
-        ]
 
         self.help_extra: List[Token] = [
             RToken("G", f"Sair[{self.Key.quit}]"),
@@ -80,7 +75,7 @@ class Play:
     def set_rootdir(self, only_if_empty=True):
         if only_if_empty and self.local.get_rootdir() != "":
             return
-        
+
         def chama(value):
             if value == "yes":
                 self.local.set_rootdir(os.path.abspath(os.getcwd()))
@@ -249,7 +244,7 @@ class Play:
         if lang == "":
             self.check_root_and_lang()
             return
-        
+
         repdir = os.path.join(rootdir, self.rep_alias)
 
         obj = self.tree.items[self.tree.index_selected].obj
@@ -308,7 +303,7 @@ class Play:
             )
             return
 
-        
+
         if not obj.key in obj.title:
             self.fman.add_input(
                 Floating().put_text("\nEssa não é uma tarefa de código.\n").error()
@@ -323,7 +318,7 @@ class Play:
         run = Run([path], None, Param.Basic())
         run.set_curses()
         return run.execute
-            
+
 
 
     @staticmethod
@@ -413,7 +408,7 @@ class Play:
                 frame.print(0, Sentence())
 
         frame.print(0, Sentence().addf("C", "Pasta Raiz [P]"))
-        frame.print(0, Sentence())        
+        frame.print(0, Sentence())
         frame.print(0, Sentence().addf("C", "Linguagem  [L]"))
         frame.print(0, Sentence())
 
@@ -451,7 +446,7 @@ class Play:
         _help.put_sentence(Sentence() + "    " + RToken("g", "[>]") + "   ou   " + RToken("g", "[<]") + "    - Expandir ou contrair todas")
         # _help.put_text("")
         # _help.put_text(" Tarefas ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence() + "  " + RToken("g", "[enter]") + " ou " + RToken("g", "[espaço]") 
+        _help.put_sentence(Sentence() + "  " + RToken("g", "[enter]") + " ou " + RToken("g", "[espaço]")
                             + " - Marcar (" + Token(symbols.success.text, "g") + "10)"
                             + " ou Desmarcar (" + Token(symbols.failure.text, "r") + "0)")
         _help.put_sentence(Sentence() + "          ou " + RToken("g", "[1-9]") + "    - Definir uma nota parcial")
@@ -494,7 +489,7 @@ class Play:
         dx = frame.get_dx()
         content = Sentence().add(" ")
         content.addf("G", f"({self.rep_alias.upper()})").add(" ")
-                
+
         flags = Sentence()
         for f in self.flagsman.top:
             flags.add(f.get_toggle_sentence()).add(" ")
@@ -563,7 +558,7 @@ class Play:
             frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx)
             self.show_skills_bar(frame_skills)
 
-        
+
         flags_sx = 0
         if Flags.config.is_true():
             flags_sx = 16
@@ -763,4 +758,3 @@ class Play:
                 return
             else:
                 output()
-

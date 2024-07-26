@@ -115,10 +115,11 @@ class Down:
         return destiny
 
     @staticmethod
-    def download_problem(rootdir, course: str, activity: str, language: Optional[str], fnprint) -> bool:
+    def download_problem(course: str, activity: str, language: Optional[str], fnprint) -> bool:
         Down.fnprint = fnprint
         sp = SettingsParser()
         settings = sp.load_settings()
+        rootdir = os.path.join(settings.geral.get_rootdir(), course)
         rep = settings.get_repo(course)
 
         file = rep.get_file()
@@ -145,13 +146,15 @@ class Down:
             loaded_json = json.load(f)
         os.remove(mapi_path)
 
-        language_def = SettingsParser().load_settings().geral.get_lang_def()
+        language_def = rep.get_lang()
+        if language_def == "":
+            language_def = SettingsParser().load_settings().geral.get_lang_def()
         ask_ext = False
         if language is None:
             if language_def != "":
                 language = language_def
             else:
-                print("  Choose extension for draft: [c, cpp, py, ts, js, java]: ", end="")
+                print("  Escolha uma extensão para os rascunhos: [c, cpp, py, ts, js, java]: ", end="")
                 language = input()
                 ask_ext = True
 

@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.13.5
+  - add: tko down downloads to rootdir instead localdir
 - 0.13.1
   - add: help msg improved
 - 0.13.0

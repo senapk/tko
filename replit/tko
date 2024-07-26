@@ -20,7 +20,7 @@ import math
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.13.4"
+__version__ = "0.13.5"
 
 
 class GeralSettings:
@@ -48,16 +48,16 @@ class GeralSettings:
     def __set(self, key: str, value: Any):
         self.data[key] = value
         return self
-    
-    def __get(self, key: str) -> str:
+
+    def __get(self, key: str) -> Any:
         if key not in self.defaults:
             raise ValueError(f"Key {key} not found in GeralSettings")
         return self.data.get(key, GeralSettings.defaults[key])
-        
+
 
     def to_dict(self) -> Dict[str, Any]:
         return self.data
-        
+
     def from_dict(self, data: Dict[str, Any]):
         self.data = data
         return self
@@ -79,46 +79,45 @@ class GeralSettings:
             self.set_rootdir(def_root)
             return def_root
         return value
-    
+
     def set_rootdir(self, value: str):
         self.__set(self.__rootdir, value)
         return self
-    
+
     def get_is_ascii(self):
         return self.__get(self.__is_ascii)
 
     def set_is_ascii(self, value: bool):
         self.__set(self.__is_ascii, value)
         return self
-    
+
     def get_is_colored(self):
         return self.__get(self.__is_color)
-    
+
     def set_is_colored(self, value: bool):
         self.__set(self.__is_color, value)
         return self
-    
+
     def get_is_diff_down(self):
         return self.__get(self.__diffdown)
-    
+
     def set_is_diff_down(self, value: bool):
         self.__set(self.__diffdown, value)
         return self
-    
+
     def get_side_size(self):
         return self.__get(self.__sidesize)
-    
+
     def set_side_size(self, value: int):
         self.__set(self.__sidesize, value)
         return self
-    
+
     def get_lang_def(self):
         return self.__get(self.__langdef)
-    
+
     def set_lang_def(self, value: str):
         self.__set(self.__langdef, value)
         return self
-    
 
 
 
@@ -2675,10 +2674,11 @@ class Down:
         return destiny
 
     @staticmethod
-    def download_problem(rootdir, course: str, activity: str, language: Optional[str], fnprint) -> bool:
+    def download_problem(course: str, activity: str, language: Optional[str], fnprint) -> bool:
         Down.fnprint = fnprint
         sp = SettingsParser()
         settings = sp.load_settings()
+        rootdir = os.path.join(settings.geral.get_rootdir(), course)
         rep = settings.get_repo(course)
 
         file = rep.get_file()
@@ -2705,13 +2705,15 @@ class Down:
             loaded_json = json.load(f)
         os.remove(mapi_path)
 
-        language_def = SettingsParser().load_settings().geral.get_lang_def()
+        language_def = rep.get_lang()
+        if language_def == "":
+            language_def = SettingsParser().load_settings().geral.get_lang_def()
         ask_ext = False
         if language is None:
             if language_def != "":
                 language = language_def
             else:
-                print("  Choose extension for draft: [c, cpp, py, ts, js, java]: ", end="")
+                print("  Escolha uma extensão para os rascunhos: [c, cpp, py, ts, js, java]: ", end="")
                 language = input()
                 ask_ext = True
 
@@ -4236,16 +4238,17 @@ class Report:
         pass
 
     @staticmethod
-    def update_terminal_size():
+    def update_terminal_size() -> int:
         term_width = shutil.get_terminal_size().columns
         if term_width % 2 == 0:
             term_width -= 1
         Report.__term_width = term_width
+        return term_width
 
     @staticmethod
     def get_terminal_size():
         if Report.__term_width is None:
-            Report.update_terminal_size()
+            return Report.update_terminal_size()
 
         return Report.__term_width
 
@@ -4262,7 +4265,7 @@ class Report:
         left_border: Optional[Union[str, Token]] = None,
         right_border: Optional[Union[str, Token]] = None,
     ) -> Sentence:
-        
+
         if isinstance(ftext, str) or isinstance(ftext, Token):
             ftext = Sentence() + ftext
         if sep is None:
@@ -5101,14 +5104,9 @@ class Play:
 
         if len(self.rep.get_tasks()) == 0:
             self.show_help()
-            # self.set_rootdir(True)
-            # self.set_language(True)
 
         self.first_loop = True
         self.graph_ext = ""
-
-        self.help_base: List[Token] = [
-        ]
 
         self.help_extra: List[Token] = [
             RToken("G", f"Sair[{self.Key.quit}]"),
@@ -5131,7 +5129,7 @@ class Play:
     def set_rootdir(self, only_if_empty=True):
         if only_if_empty and self.local.get_rootdir() != "":
             return
-        
+
         def chama(value):
             if value == "yes":
                 self.local.set_rootdir(os.path.abspath(os.getcwd()))
@@ -5300,7 +5298,7 @@ class Play:
         if lang == "":
             self.check_root_and_lang()
             return
-        
+
         repdir = os.path.join(rootdir, self.rep_alias)
 
         obj = self.tree.items[self.tree.index_selected].obj
@@ -5359,7 +5357,7 @@ class Play:
             )
             return
 
-        
+
         if not obj.key in obj.title:
             self.fman.add_input(
                 Floating().put_text("\nEssa não é uma tarefa de código.\n").error()
@@ -5374,7 +5372,7 @@ class Play:
         run = Run([path], None, Param.Basic())
         run.set_curses()
         return run.execute
-            
+
 
 
     @staticmethod
@@ -5464,7 +5462,7 @@ class Play:
                 frame.print(0, Sentence())
 
         frame.print(0, Sentence().addf("C", "Pasta Raiz [P]"))
-        frame.print(0, Sentence())        
+        frame.print(0, Sentence())
         frame.print(0, Sentence().addf("C", "Linguagem  [L]"))
         frame.print(0, Sentence())
 
@@ -5502,7 +5500,7 @@ class Play:
         _help.put_sentence(Sentence() + "    " + RToken("g", "[>]") + "   ou   " + RToken("g", "[<]") + "    - Expandir ou contrair todas")
         # _help.put_text("")
         # _help.put_text(" Tarefas ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence() + "  " + RToken("g", "[enter]") + " ou " + RToken("g", "[espaço]") 
+        _help.put_sentence(Sentence() + "  " + RToken("g", "[enter]") + " ou " + RToken("g", "[espaço]")
                             + " - Marcar (" + Token(symbols.success.text, "g") + "10)"
                             + " ou Desmarcar (" + Token(symbols.failure.text, "r") + "0)")
         _help.put_sentence(Sentence() + "          ou " + RToken("g", "[1-9]") + "    - Definir uma nota parcial")
@@ -5545,7 +5543,7 @@ class Play:
         dx = frame.get_dx()
         content = Sentence().add(" ")
         content.addf("G", f"({self.rep_alias.upper()})").add(" ")
-                
+
         flags = Sentence()
         for f in self.flagsman.top:
             flags.add(f.get_toggle_sentence()).add(" ")
@@ -5614,7 +5612,7 @@ class Play:
             frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx)
             self.show_skills_bar(frame_skills)
 
-        
+
         flags_sx = 0
         if Flags.config.is_true():
             flags_sx = 16
@@ -5825,7 +5823,6 @@ class Play:
 
 
 
-
 class MRep:
     @staticmethod
     def list(_args):
@@ -5845,7 +5842,7 @@ class MRep:
             rep.set_file(args.file)
         settings.reps[args.alias] = rep
         sp.save_settings()
-    
+
     @staticmethod
     def rm(args):
         sp = SettingsParser()
@@ -5895,7 +5892,7 @@ class Main:
         if not args.side and not args.down:
             geral = SettingsParser().load_settings().geral
             updown = geral.get_is_diff_down()
-            sidesize = geral.get_side_size()
+            sidesize = int(geral.get_side_size())
             size_too_short = Report.get_terminal_size() < sidesize
             param.set_up_down(updown or size_too_short)
         elif args.side:
@@ -5904,7 +5901,7 @@ class Main:
             param.set_up_down(True)
         run = Run(args.target_list, args.cmd, param)
         run.execute()
-    
+
     @staticmethod
     def run(args):
         PatternLoader.pattern = args.pattern
@@ -5925,12 +5922,12 @@ class Main:
         manip = Param.Manip().set_unlabel(args.unlabel).set_to_sort(args.sort).set_to_number(args.number)
         build = Build(args.target, args.target_list, manip, args.force)
         build.execute()
-    
+
     @staticmethod
     def settings(args):
         sp = SettingsParser()
         settings = sp.load_settings()
-        
+
         action = False
 
         if args.ascii:
@@ -5965,7 +5962,7 @@ class Main:
             action = True
             settings.geral.set_lang_def("")
             print("Language extension will be asked always.")
-            
+
         if args.root:
             action = True
             path = os.path.abspath(args.root)
@@ -6008,20 +6005,20 @@ class Main:
 
     @staticmethod
     def down(args):
-        Down.download_problem(".", args.course, args.activity, args.language, print)
+        Down.download_problem(args.course, args.activity, args.language, print)
 
 
 class Parser:
     def __init__(self):
-        self.parser: argparse.ArgumentParser = argparse.ArgumentParser(prog='tko', description=f'tko version {__version__}')        
+        self.parser: argparse.ArgumentParser = argparse.ArgumentParser(prog='tko', description=f'tko version {__version__}')
         self.subparsers = self.parser.add_subparsers(title='subcommands', help='help for subcommand.')
 
-        self.parent_manip = None
-        self.parent_basic = None
+        self.parent_manip = self.create_parent_manip()
+        self.parent_basic = self.create_parent_basic()
 
         self.add_parser_global()
-        self.add_parent_basic()
-        self.add_parent_manip()
+        self.create_parent_basic()
+        self.create_parent_manip()
         self.add_parser_run()
         self.add_parser_prun()
         self.add_parser_build()
@@ -6039,14 +6036,14 @@ class Parser:
         self.parser.add_argument('-m', action='store_true', help='monochromatic.')
         self.parser.add_argument('-a', action='store_true', help='asc2 mode.')
 
-    def add_parent_basic(self):
+    def create_parent_basic(self):
         parent_basic = argparse.ArgumentParser(add_help=False)
         parent_basic.add_argument('--index', '-i', metavar="I", type=int, help='run a specific index.')
         parent_basic.add_argument('--pattern', '-p', metavar="P", type=str, default='@.in @.sol',
                                   help='pattern load/save a folder, default: "@.in @.sol"')
-        self.parent_basic = parent_basic
-    
-    def add_parent_manip(self):
+        return parent_basic
+
+    def create_parent_manip(self):
         parent_manip = argparse.ArgumentParser(add_help=False)
         parent_manip.add_argument('--width', '-w', type=int, help="term width.")
         parent_manip.add_argument('--unlabel', '-u', action='store_true', help='remove all labels.')
@@ -6054,7 +6051,7 @@ class Parser:
         parent_manip.add_argument('--sort', '-s', action='store_true', help="sort test cases by input size.")
         parent_manip.add_argument('--pattern', '-p', metavar="@.in @.out", type=str, default='@.in @.sol',
                                   help='pattern load/save a folder, default: "@.in @.sol"')
-        self.parent_manip = parent_manip
+        return parent_manip
 
     def add_parser_run(self):
         parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='run with test cases using curses.')
@@ -6112,7 +6109,7 @@ class Parser:
         g_lang = parser_s.add_mutually_exclusive_group()
         g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
         g_lang.add_argument("--ask", action='store_true', help='ask language extension every time.')
-        
+
         parser_s.add_argument("--root", metavar="path", type=str, help='set root directory.')
 
         parser_s.set_defaults(func=Main.settings)
