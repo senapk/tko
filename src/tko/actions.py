@@ -46,10 +46,15 @@ class Run:
         self.param: Param.Basic = param
         self.wdir: Wdir = Wdir()
         self.curses: bool = False
+        self.first_run = False
 
     def set_curses(self, value:bool=True):
         self.curses = value
         return self
+
+    def set_first_run(self):
+        self.first_run = True
+
 
     def execute(self):
         self.__remove_duplicates()
@@ -192,6 +197,8 @@ class Run:
         
         if self.curses:
             cdiff = CDiff(self.wdir, self.param)
+            if self.first_run:
+                cdiff.set_first_run()
             cdiff.run()
             return
         term_print(Report.centralize(" Testando o código com os casos de teste ", "═"))

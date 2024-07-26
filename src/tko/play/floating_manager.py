@@ -10,14 +10,12 @@ class FloatingManager:
         self.input_layer.append(floating)
 
     def draw_warnings(self):
-        if len(self.input_layer) > 0:
-            if not self.input_layer[0].is_enable():
-                self.input_layer = self.input_layer[1:]
-
         if len(self.input_layer) > 0 and self.input_layer[0].is_enable():
             self.input_layer[0].draw()
 
     def has_floating(self) -> bool:
+        while len(self.input_layer) > 0 and not self.input_layer[0].is_enable():
+            self.input_layer = self.input_layer[1:]
         return len(self.input_layer) > 0 and self.input_layer[0].is_enable()
 
     def get_input(self) -> int:

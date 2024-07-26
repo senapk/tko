@@ -4,6 +4,7 @@ from ..game.quest import Quest
 from ..game.task import Task
 from ..game.xp import XP
 from ..game.graph import Graph
+import random
 
 from typing import List, Any, Dict
 from ..settings.settings import RepSettings, GeralSettings
@@ -57,11 +58,11 @@ class Play:
         self.help_extra: List[Token] = [
             RToken("G", f"Sair[{self.Key.quit}]"),
             RToken("G", f"Ajuda[{self.Key.ajuda}]"),
-            RToken("Y", "Navegar[wasd]"),
-            RToken("Y", f"Contrair[{self.Key.collapse}{self.Key.expand}]"),
-            RToken("C", f"Github[{self.Key.open_link}]"),
-            RToken("C", f"Baixar[{self.Key.down_task}]"),
-            RToken("C", f"Executar[{self.Key.run_task}]"),
+            RToken("Y", f"Github[{self.Key.open_link}]"),
+            RToken("Y", f"Baixar[{self.Key.down_task}]"),
+            RToken("Y", f"Executar[{self.Key.run_task}]"),
+            RToken("C", "Navegar[wasd]"),
+            RToken("C", f"Contrair[{self.Key.collapse}{self.Key.expand}]"),
             RToken("M", "Marcar[enter]"),
             RToken("M", "Graduar[0-9]"),
         ]
@@ -317,6 +318,8 @@ class Play:
             return
         run = Run([path], None, Param.Basic())
         run.set_curses()
+        if len(self.rep.get_tasks()) == 0:
+            run.set_first_run()
         return run.execute
 
 
@@ -346,7 +349,7 @@ class Play:
     def show_main_bar(self, frame: Frame):
         dy, dx = frame.get_inner()
         frame.set_header(
-            Sentence().add("{").addf("/", f"Tarefas lang:{self.rep.get_lang()}").add("}")
+            Sentence().add("{").addf("/", f"Linguagem: {self.rep.get_lang()}").add("}")
         )
         link = Sentence().add(self.build_bar_links())
         if link.len() > dx - 2:
@@ -630,15 +633,55 @@ class Play:
             Flags.config.toggle()
             self.show_help_config()
 
+    quit_msgs = [
+        "Deus abençoe, vá em paz",
+        "Bye bye",
+        "Vou sentir saudades",
+        "Volte quando estiver mais descansado",
+        "Espero que tenha aprendido algo novo hoje",
+        "Cada pequena vitória merece ser comemorada",
+        "Obrigado pelo tempo juntos",
+        "Até a próxima",
+        "Um abraço, seja feliz", 
+        "Durma cedo, amanhã você pode continuar", 
+        "Vá, mais volte",
+        "Arri égua, já vai?", 
+        "Capando o gato tão cedo?",
+        "Vai porquê quer",
+        "Fique mais um pouquinho", 
+        "Vamos lá, pegue um café (ou chá) e volte outra hora",
+        "Foque em avançar um passo por vez",
+        "O caminho é mais importante que a chegada",
+        "Lembre de dar bons nomes para as variáveis e métodos", 
+        "Você também está programando para outros seres humanos lerem, faça algo organizado",
+        "Seja criterioso com a indentação e as regras de estilo, faça algo belo",
+        "Está precisando de mais conselhos? Vá ler a bíblia!",
+        "DRY - Don't Repeat Yourself, refatore seu código para tirar as redundâncias",
+        "São necessárias umas 1000 horas pra ser bom em algo",
+        "Só é fracasso quando você desiste, espaireça e tente de novo",
+        "Parar e descansar é importante também",
+        "Se for pra descansar, largue o celular",
+        "Traga uma garrafa de água próxima vez, facilite o acesso",
+        "Toda capacidade que não é usada, se perde, movimente-se",
+        "Te vejo depois do exercício. Malhe, corra, dance, e depois volte",
+        "Se você não se der valor, ninguém vai. Invista em você",
+        "Tem exercícios que vão ser bem complicados\ntire um tempo pra pensar longe do computador",
+        "Use as inteligências artificiais com sabedoria, tente refazer depois a tarefa sem elas",
+        "Lembre de pedir ajuda quando precisar", 
+        "Você não está sozinho, peça ajuda se preciso", 
+        "É justo que o que muito vale, muito custe", 
+        "Aprender a se divertir é parte essencial do aprendizado", 
+        "Esse miserável é um miserável",
+        "Você é importante e precioso, mesmo que seu código tenha ficado uma porcaria",
+        "Alguns tem mais dificuldades que outros, tenha paciência consigo mesmo",
+        "Se você precisa de mais tempo que seus colegas pra aprender, se dê mais tempo", 
+        "Quer um filme lindo? Assita Mary e Max, uma amizade diferente",
+        "Quer uma leitura de ficção impactante? Trilogia o problema dos três corpos", 
+    ]
+
     def make_callback(self) -> Dict[int, Any]:
         def set_exit():
             self.exit = True
-
-        def reset_colors():
-            for flag in self.flagsman.left:
-                if not flag.is_bool():
-                    flag.index(0)
-            self.fman.add_input(Floating().put_text("\nCores alteradas para seus valores padrão.\n").warning())
 
         calls = {}
 
@@ -655,7 +698,7 @@ class Play:
         add_str(
             self.Key.quit,
             lambda: self.fman.add_input(
-                Floating().put_text("\nBye Bye\n").set_exit_fn(set_exit).warning()
+                Floating().put_text("\n" + (Play.quit_msgs[random.randint(0, len(Play.quit_msgs)) - 1]) + "\n").set_exit_fn(set_exit).warning()
             ),
         )
 
@@ -682,18 +725,12 @@ class Play:
         add_str(self.Key.set_root, lambda: self.set_rootdir(False))
         add_str(self.Key.down_task, self.down_task)
         add_str(self.Key.run_task, self.run_task)
-        add_str(self.Key.mass_toggle, self.tree.mass_mark)
-        add_str(self.Key.reset, reset_colors)
 
         for value in range(10):
             add_str(str(value), self.GradeFunctor(int(value), self.tree.set_grade))
 
-        if Flags.config.is_true():
-            for flag in self.flagsman.left:
-                add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
-
-        # for flag in self.flagsman.top:
-        #     add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
+        for flag in self.flagsman.left:
+            add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
 
         add_str(Flags.config.get_char(), self.toggle_config)
         add_str(Flags.skills.get_char(), self.FlagFunctor(self.fman, Flags.skills))

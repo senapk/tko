@@ -6,9 +6,10 @@ from .run.param import Param
 from .execution import Execution
 from .run.diff import Diff
 from .util.ftext import Sentence, Token
-from typing import List, Optional
+from typing import List
 from .play.frame import Frame
 from .play.floating import Floating
+from .play.floating_manager import FloatingManager
 
 from .run.wdir import Wdir
 from .run.report import Report
@@ -35,7 +36,11 @@ class CDiff:
         self.sp = SettingsParser()
         self.settings = self.sp.load_settings()
         self.first_loop = True
-        self.warning: Optional[Floating] = None
+        self.fman = FloatingManager()
+        self.first_run = False
+
+    def set_first_run(self):
+        self.first_run = True
 
     def save_settings(self):
         self.settings.geral.set_is_diff_down(self.param.is_up_down)
@@ -205,9 +210,9 @@ class CDiff:
         .add(" ")
         .addf("/G", "Sair[q]")
         .add(" ")
-        .addf("/Y", "Navegar[wasd]")
+        .addf("/Y", "Executar[e]")
         .add(" ")
-        .addf("/C", "Executar[e]")
+        .addf("/C", "Navegar[wasd]")
         .add(" ")
         .addf("/M", "MudarVisão[m]")
         .add(" ")
@@ -252,43 +257,46 @@ class CDiff:
     def load_autoload_warning(self):
         if not self.wdir.is_autoload():
             return
-        warning = Floating().set_header(" Atenção ").warning()
+        warning = Floating().set_header(" Seja bem vindo ").warning()
         warning.put_text("")
         warning.put_sentence(Sentence().addf("r", "Todos") + " os arquivos de código da pasta foram carregados automaticamente")
-        solver = self.wdir.solver
-        solvers = [] if solver is None else solver.path_list
-        warning.put_text("")
-        loaded = Sentence().add("Códigos: ")
-        for i, file in enumerate(solvers):
-            if i != 0:
-                loaded.add(", ")
-            loaded.addf("g", os.path.basename(file))
-        warning.put_sentence(loaded)
-        sources = self.wdir.source_list
-        loaded = Sentence().add("Testes: ")
-        for i, file in enumerate(sources):
-            if i != 0:
-                loaded.add(", ")
-            loaded.addf("y", os.path.basename(file))
+        warning.put_text("Sempre verifique no topo da tela quais arquivos foram carregados.")
+        warning.put_text("Remova ou renomeie da pasta alvo os arquivo que não quer utilizar.")
+        # solver = self.wdir.solver
+        # solvers = [] if solver is None else solver.path_list
+        # warning.put_text("")
+        # loaded = Sentence().add("Códigos: ")
+        # for i, file in enumerate(solvers):
+        #     if i != 0:
+        #         loaded.add(", ")
+        #     loaded.addf("g", os.path.basename(file))
+        # warning.put_sentence(loaded)
+        # sources = self.wdir.source_list
+        # loaded = Sentence().add("Testes: ")
+        # for i, file in enumerate(sources):
+        #     if i != 0:
+        #         loaded.add(", ")
+        #     loaded.addf("y", os.path.basename(file))
 
-        warning.put_sentence(loaded)
+        # warning.put_sentence(loaded)
         warning.put_text("")
         warning.put_text("Você também pode escolher quais arquivos deseja executar")
-        warning.put_text("chamando o comando 'tko run' com os códigos desejados")
+        warning.put_text("navegando até a pasta de destino e executando")
+        warning.put_text("o comando 'tko run' com os arquivos desejados")
         warning.put_text("")
         warning.put_sentence(Sentence().addf("c", "tko run <arquivos> cases.tio")) 
         warning.put_text("")
         warning.put_sentence(Sentence().addf("r", "Exemplo: ").addf("c", "tko run main.c lib.c cases.tio")) 
         warning.put_text("")
 
-        self.warning = warning
+        self.fman.add_input(warning)
 
     def main(self, scr):
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
         while not self.exit:
-            if self.first_loop:
+            if self.first_loop and self.first_run:
                 self.first_loop = False
                 self.load_autoload_warning()
             Fmt.erase()
@@ -298,40 +306,48 @@ class CDiff:
             self.draw_scrollbar()
             self.draw_guide_line()
 
-            if self.warning is not None and self.warning.is_enable():
-                self.warning.draw()
+            if self.fman.has_floating():
+                self.fman.draw_warnings()
+
             if not self.end_processing():
                 Fmt.refresh()
                 continue
 
-            if self.warning is not None and self.warning.is_enable():
-                input = self.warning.get_input()
+            if self.fman.has_floating():
+                key = self.fman.get_input()
             else:
-                input = Fmt.getch()
+                key = Fmt.getch()
 
-            if input == ord('q'):
+            if key == ord('q'):
                 self.set_exit()
-            elif input == curses.KEY_LEFT or input == ord('a'):
+            elif key == curses.KEY_LEFT or key == ord('a'):
                 self.index = max(0, self.index - 1)
                 self.init = 0
-            elif input == curses.KEY_RIGHT or input == ord('d'):
+            elif key == curses.KEY_RIGHT or key == ord('d'):
                 self.index = min(len(self.results) - 1, self.index + 1)
                 self.init = 0
-            elif input == curses.KEY_DOWN or input == ord('s'):
+            elif key == curses.KEY_DOWN or key == ord('s'):
                 self.init += 1
-            elif input == curses.KEY_UP or input == ord('w'):
+            elif key == curses.KEY_UP or key == ord('w'):
                 self.init = max(0, self.init - 1)
-            elif input == ord('m'):
+            elif key == ord('m'):
                 self.param.is_up_down = not self.param.is_up_down
                 self.save_settings()
                 self.init = 0
-            elif input == ord('e'):
+            elif key == ord('e'):
                 if self.wdir.solver is not None:
                     if self.wdir.is_autoload():
                         self.wdir.autoload()
                     self.wdir.solver.prepare_exec()
                 self.results = []
                 self.first_error = -1
+            elif key != -1:
+                self.fman.add_input(Floating("v>").error()
+                                    .put_text("Tecla")
+                                    .put_text(chr(key))
+                                    .put_text("não reconhecida")
+                                    .put_text("")
+                                    )
                 
 
     def run(self):

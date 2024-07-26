@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.14.0
+  - add: tko fortune on play quit
+  - add: key not found in play mode
 - 0.13.5
   - add: tko down downloads to rootdir instead localdir
 - 0.13.1
