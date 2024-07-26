@@ -261,7 +261,7 @@ class Play:
                 down_frame.draw()
                 Fmt.refresh()
 
-            Down.download_problem(repdir, self.rep_alias, task.key, lang, fnprint)
+            Down.download_problem(self.rep_alias, task.key, lang, fnprint)
         else:
             if isinstance(obj, Quest):
                 self.fman.add_input(
