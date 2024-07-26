@@ -1,0 +1,13 @@
+╌╌ Nenhum arquivo de código encontrado. Listando casos de teste.╌
+Códigos:[] Testes:[_calc2.tio(11)]
+(» untested_)[00] GR:009 _calc2.tio (iniciar mostrar e recarregar       )
+(» untested_)[01] GR:009 _calc2.tio (charge                             )
+(» untested_)[02] GR:009 _calc2.tio (boundary                           )
+(» untested_)[03] GR:009 _calc2.tio (reset                              )
+(» untested_)[04] GR:009 _calc2.tio (somando                            )
+(» untested_)[05] GR:009 _calc2.tio (gastando bateria                   )
+(» untested_)[06] GR:009 _calc2.tio (sem bateria                        )
+(» untested_)[07] GR:009 _calc2.tio (recarregando                       )
+(» untested_)[08] GR:009 _calc2.tio (dividindo                          )
+(» untested_)[09] GR:009 _calc2.tio (dividindo por zero gastando bateria)
+(» untested_)[10] GR:009 _calc2.tio (gastando bateria                   )

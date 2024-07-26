@@ -2,7 +2,8 @@ from typing import List
 import os
 
 from ..util.pattern import PatternLoader
-from .basic import IdentifierType, Identifier, Unit
+from .basic import IdentifierType, Identifier
+from .unit import Unit
 
 
 class Writer:

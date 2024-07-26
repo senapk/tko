@@ -1,10 +1,9 @@
 from typing import List, Optional, Tuple
-import io
 
-from ..util.term_color import  Color
 from ..util.symbols import symbols
 from ..util.ftext import Sentence, Token
-from .basic import Unit, ExecutionResult
+from .basic import ExecutionResult
+from .unit import Unit
 from .report import Report
 
 class Diff:

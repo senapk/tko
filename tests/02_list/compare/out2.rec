@@ -1,0 +1,15 @@
+╌╌╌╌╌╌╌╌╌ Nenhum arquivo de código encontrado. Listando casos de teste.╌╌╌╌╌╌╌╌
+Códigos:[] Testes:[cases.tio(10), cases2.tio(03)]
+(. untested_)[00] GR:008 cases.tio  (iniciar mostrar e recarregar)
+(. untested_)[01] GR:008 cases.tio  (boundary                    )
+(. untested_)[02] GR:008 cases.tio  (reset                       )
+(. untested_)[03] GR:008 cases.tio  (somando                     )
+(. untested_)[04] GR:008 cases.tio  (gastando bateria            )
+(. untested_)[05] GR:008 cases.tio  (sem bateria                 )
+(. untested_)[06] GR:008 cases.tio  (recarregando                )
+(. untested_)[07] GR:008 cases.tio  (dividindo                   )
+(. untested_)[08] GR:008 cases.tio  (dividindo por zero          )
+(. untested_)[09] GR:008 cases.tio  (gastando bateria            )
+(. untested_)[10] GR:008 cases2.tio (iniciar mostrar e recarregar) [0]
+(. untested_)[11] GR:008 cases2.tio (boundary                    ) [1]
+(. untested_)[12] GR:008 cases2.tio (novo teste                  )

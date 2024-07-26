@@ -152,7 +152,7 @@ class Sentence:
             self.data = prefix + self.data
         return self
     
-    def center(self, width: int, filler: Token):
+    def center(self, width: int, filler: Token = Token(" ")):
         total = self.len()
         char = " " if filler.text == "" else filler.text[0]
         fmt = filler.fmt
@@ -190,6 +190,13 @@ class Sentence:
                 i -= 1
             else:
                 i -= 1
+
+    def cut_begin(self, qtd: int):
+        if qtd > len(self.data):
+            self.data = []
+        else:
+            self.data = self.data[qtd:]
+        return self
 
     def trim_spaces(self, limit: int):
         return self

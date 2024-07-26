@@ -2,72 +2,37 @@ from typing import List, Optional
 import math
 import os
 
-from .basic import IdentifierType, Identifier, Unit, Param
+from .basic import IdentifierType, Identifier
+from .unit import Unit
+from .param import Param
 from .loader import Loader
 from .solver import Solver
 
 from ..util.ftext import Sentence
 from ..util.symbols import symbols
-
+from .label_factory import LabelFactory
 # generate label for cases
-
-
-class LabelFactory:
-    def __init__(self):
-        self._label = ""
-        self._index = -1
-
-    def index(self, value: int):
-        try:
-            self._index = int(value)
-        except ValueError:
-            raise ValueError("Index on label must be a integer")
-        return self
-
-    def label(self, value: str):
-        self._label = value
-        return self
-
-    def generate(self):
-        label = LabelFactory.trim_spaces(self._label)
-        label = LabelFactory.remove_old_index(label)
-        if self._index != -1:
-            index = str(self._index).zfill(2)
-            if label != "":
-                return index + " " + label
-            else:
-                return index
-        return label
-
-    @staticmethod
-    def trim_spaces(text):
-        parts = text.split(" ")
-        parts = [word for word in parts if word != '']
-        return " ".join(parts)
-
-    @staticmethod
-    def remove_old_index(label):
-        split_label = label.split(" ")
-        if len(split_label) > 0:
-            try:
-                int(split_label[0])
-                return " ".join(split_label[1:])
-            except ValueError:
-                return label
-
 
 class Wdir:
     def __init__(self):
-        self.autoload = False
+        self.__autoload = False
+        self.__autoload_folder = ""
+        
         self.solver: Optional[Solver] = None
         self.source_list: List[str] = []
         self.pack_list: List[List[Unit]] = []
         self.unit_list: List[Unit] = []
-        self.curses = False
+        self.__curses = False
 
     def set_curses(self, value: bool):
-        self.curses = value
+        self.__curses = value
         return self
+    
+    def is_curses(self) -> bool:
+        return self.__curses
+
+    def is_autoload(self) -> bool:
+        return self.__autoload
 
     def set_solver(self, solver_list: List[str]):
         if len(solver_list) > 0:
@@ -78,24 +43,26 @@ class Wdir:
         self.source_list = source_list
         return self
 
-    def run_autoload(self, folder: str):
+    def autoload(self):
+        folder = self.__autoload_folder
         files = os.listdir(folder)
         files = [os.path.join(folder, f) for f in files]
         files = [f for f in files if os.path.isfile(f)]
-        avoid = [".txt", ".md", ".hpp", ".h", ".out", ".exe", ".o", ".obj", ".a", ".so", ".dll", ".png", ".jpg", ".jpg"]
+        avoid = [".txt", ".md", ".hpp", ".h", ".out", ".exe", ".o", ".obj", ".a", ".so", ".dll", ".png", ".jpg", ".jpeg"]
         files = [f for f in files if not any([f.endswith(a) for a in avoid])]
 
         sources = [target for target in files if target.endswith(".tio")]
         solvers = [target for target in files if not target.endswith(".tio")]
+        solvers = sorted(solvers)
 
-        if not self.curses:
-            print("Autoloading files")
+        if not self.__curses:
+            print("Carregando arquivos automaticamente")
             print("solvers found: [" + ", ".join(solvers) + "]")
             print("sources found: [" + ", ".join(sources) + "]")
-            print("To remove a file from autoloading, change extension for .txt")
+            print("Para remover um arquivo da lista, renomeie para sua extensão para .txt")
         self.set_solver(solvers)
         self.set_sources(sources)
-        self.autoload = True
+        self.__autoload = True
         return self
 
     def set_target_list(self, target_list: List[str]):
@@ -103,7 +70,8 @@ class Wdir:
         if len(target_list) == 0:
             target_list.append(".")
         if len(target_list) == 1 and os.path.isdir(target_list[0]):
-            return self.run_autoload(target_list[0])
+            self.__autoload_folder = target_list[0]
+            return self.autoload()
             
         target_list = [t for t in target_list if t != ""]
         for target in target_list:
@@ -211,28 +179,31 @@ class Wdir:
     def unit_list_resume(self) -> List[Sentence]:
         return [unit.str() for unit in self.unit_list]
 
+    def sources_names(self) -> List[str]:
+        out: List[str] = []
+        if len(self.pack_list) == 0:
+            out.append(symbols.failure.text)
+        for i in range(len(self.pack_list)):
+            nome: str = self.source_list[i].split(os.sep)[-1]
+            out.append(nome + "(" + str(len(self.pack_list[i])).zfill(2) + ")")
+        return out
+
+    def solvers_names(self) -> List[str]:
+        path_list = [] if self.solver is None else self.solver.path_list
+        if self.solver is not None and len(path_list) == 0:  # free_cmd
+            out = ["free cmd"]
+        else:
+            out = [os.path.basename(path) for path in path_list]
+        return out
+
     def resume(self) -> Sentence:
 
-        def sources() -> Sentence:
-            out: List[str] = []
-            if len(self.pack_list) == 0:
-                out.append(symbols.failure.text)
-            for i in range(len(self.pack_list)):
-                nome: str = self.source_list[i].split(os.sep)[-1]
-                out.append(nome + "(" + str(len(self.pack_list[i])).zfill(2) + ")")
-            return Sentence().add("Testes:").add("[").addf("y", ", ".join(out)).add("]")
+        __sources = Sentence().add("Testes:").add("[").addf("y", ", ".join(self.sources_names())).add("]")
 
-        def solvers() -> Sentence:
-            path_list = [] if self.solver is None else self.solver.path_list
-
-            if self.solver is not None and len(path_list) == 0:  # free_cmd
-                out = "free cmd"
-            else:
-                out = ", ".join([os.path.basename(path) for path in path_list])
-            return Sentence().add("Códigos:").add("[").addf("g", out).add("]")
+        __solvers = Sentence().add("Códigos:").add("[").addf("g", ", ".join(self.solvers_names())).add("]")
 
         # folder = os.getcwd().split(os.sep)[-1]
         # tests_count = (colour("tests:", Color.GREEN) +
         #               str(len([x for x in self.unit_list if x.repeated is None])).zfill(2))
 
-        return Sentence().add(solvers()).add(" ").add(sources())
+        return Sentence().add(__solvers).add(" ").add(__sources)

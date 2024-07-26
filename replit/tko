@@ -17,11 +17,10 @@ import tempfile
 import webbrowser
 import re
 import math
-import io
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.13.2"
+__version__ = "0.13.3"
 
 
 class GeralSettings:
@@ -162,6 +161,49 @@ class Style:
     bar_skills = "B"
     bar_cmds = "Y"
     bar_bg = "M"
+class LabelFactory:
+    def __init__(self):
+        self._label = ""
+        self._index = -1
+
+    def index(self, value: int):
+        try:
+            self._index = int(value)
+        except ValueError:
+            raise ValueError("Index on label must be a integer")
+        return self
+
+    def label(self, value: str):
+        self._label = value
+        return self
+
+    def generate(self):
+        label = LabelFactory.trim_spaces(self._label)
+        label = LabelFactory.remove_old_index(label)
+        if self._index != -1:
+            index = str(self._index).zfill(2)
+            if label != "":
+                return index + " " + label
+            else:
+                return index
+        return label
+
+    @staticmethod
+    def trim_spaces(text):
+        parts = text.split(" ")
+        parts = [word for word in parts if word != '']
+        return " ".join(parts)
+
+    @staticmethod
+    def remove_old_index(label):
+        split_label = label.split(" ")
+        if len(split_label) > 0:
+            try:
+                int(split_label[0])
+                return " ".join(split_label[1:])
+            except ValueError:
+                return label
+
 tko_guide = """
        ╔════ TKO GUIA COMPACTO ════╗
 ╔══════╩═════ BAIXAR PROBLEMA ═════╩═══════╗
@@ -852,7 +894,7 @@ class Sentence:
             self.data = prefix + self.data
         return self
     
-    def center(self, width: int, filler: Token):
+    def center(self, width: int, filler: Token = Token(" ")):
         total = self.len()
         char = " " if filler.text == "" else filler.text[0]
         fmt = filler.fmt
@@ -890,6 +932,13 @@ class Sentence:
                 i -= 1
             else:
                 i -= 1
+
+    def cut_begin(self, qtd: int):
+        if qtd > len(self.data):
+            self.data = []
+        else:
+            self.data = self.data[qtd:]
+        return self
 
     def trim_spaces(self, limit: int):
         return self
@@ -3396,35 +3445,6 @@ class Identifier:
             return IdentifierType.SOLVER
 
 
-class Unit:
-    def __init__(self, case: str = "", inp: str = "", outp: str = "", grade: Optional[int] = None, source: str = ""):
-        self.source = source  # stores the source file of the unit
-        self.source_pad = 0  # stores the pad to justify the source file
-        self.case = case  # name
-        self.case_pad = 0  # stores the pad to justify the case name
-        self.input = inp  # input
-        self.output = outp  # expected output
-        self.user: Optional[str] = None  # solver generated answer
-        self.grade: Optional[int] = grade  # None represents proportional gr, 100 represents all
-        self.grade_reduction: int = 0  # if grade is None, this atribute should be filled with the right grade reduction
-        self.index = 0
-        self.repeated: Optional[int] = None
-
-        self.result: ExecutionResult = ExecutionResult.UNTESTED
-
-    def str(self, pad: bool = True) -> Sentence:
-        index = str(self.index).zfill(2)
-        grade = str(self.grade_reduction).zfill(3)
-        rep = "" if self.repeated is None else " [" + str(self.repeated) + "]"
-        op = Sentence() + ExecutionResult.get_symbol(self.result) + " " + self.result.value
-        source = self.source
-        if pad:
-            source = self.source.ljust(self.source_pad)
-        case = self.case
-        if pad:
-            case = self.case.ljust(self.case_pad)
-        return Sentence() + "(" + op + ")" + f"[{index}] GR:{grade} {source} ({case}){rep}"
-
 
 class Param:
 
@@ -3441,11 +3461,11 @@ class Param:
             self.compact: bool = False
 
         def set_index(self, value: Optional[int]):
-            self.index: Optional[int] = value
+            self.index= value
             return self
 
         def set_label_pattern(self, label_pattern: Optional[str]):
-            self.label_pattern: Optional[str] = label_pattern
+            self.label_pattern = label_pattern
             return self
         
         def set_compact(self, value: bool):
@@ -3482,6 +3502,178 @@ class Param:
             self.to_number = value
             return self
 
+
+
+
+
+def check_tool(name):
+    if shutil.which(name) is None:
+        raise CompilerError("fail: " + name + " executable not found")
+
+
+class Solver:
+    def __init__(self, solver_list: List[str]):
+        self.path_list: List[str] = [os.path.normpath(Solver.__add_dot_bar(path)) for path in solver_list]
+        
+        self.temp_dir = tempfile.mkdtemp()
+        self.error_msg: str = ""
+        self.executable: str = ""
+        self.compile_error: bool = False
+        if len(self.path_list) > 0:
+            self.prepare_exec()
+
+    def prepare_exec(self) -> None:
+        path = self.path_list[0]
+
+        if path.endswith(".py"):
+            self.executable = "python " + path
+        elif path.endswith(".js"):
+            self.__prepare_js()
+        elif path.endswith(".ts"):
+            self.__prepare_ts()
+        elif path.endswith(".java"):
+            self.__prepare_java()
+        elif path.endswith(".c"):
+            self.__prepare_c()
+        elif path.endswith(".cpp"):
+            self.__prepare_cpp()
+        elif path.endswith(".sql"):
+            self.__prepare_sql()
+        else:
+            self.executable = path
+
+    def __prepare_java(self):
+        check_tool("javac")
+
+        solver = self.path_list[0]
+
+        filename = os.path.basename(solver)
+        # tempdir = os.path.dirname(self.path_list[0])
+
+        cmd = ["javac"] + self.path_list + ['-d', self.temp_dir]
+        cmdt = " ".join(cmd)
+        return_code, stdout, stderr = Runner.subprocess_run(cmdt)
+        if return_code != 0:
+            self.error_msg = stdout + stderr
+            self.compile_error = True
+        else:
+            self.executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
+
+    def __prepare_js(self):
+        check_tool("node")
+        solver = self.path_list[0]
+        self.executable = "node " + solver
+
+    def __prepare_sql(self):
+        check_tool("sqlite3")
+        self.executable = "cat " + " ".join(self.path_list) + " | sqlite3"
+
+    def __prepare_ts(self):
+        transpiler = "esbuild"
+        if os.name == "nt":
+            transpiler += ".cmd"
+
+        check_tool(transpiler)
+        check_tool("node")
+
+        solver = self.path_list[0]
+
+        filename = os.path.basename(solver)
+        source_list = self.path_list
+        cmd = [transpiler] + source_list + ["--outdir=" + self.temp_dir, "--format=cjs", "--log-level=error"]
+        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
+        if return_code != 0:
+            self.error_msg = stdout + stderr
+            self.compile_error = True
+        else:
+            jsfile = os.path.join(self.temp_dir, filename[:-3] + ".js")
+            self.executable = "node " + jsfile  # renaming solver to main
+    
+    def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
+        # solver = self.path_list[0]
+        tempdir = self.temp_dir
+        source_list = self.path_list
+        # print("Using the following source files: " + str([os.path.basename(x) for x in source_list]))
+        
+        exec_path = os.path.join(tempdir, ".a.out")
+        cmd = pre_args + source_list + ["-o", exec_path] + pos_args
+        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
+        if return_code != 0:
+            self.error_msg = stdout + stderr
+            self.compile_error = True
+        else:
+            self.executable = exec_path
+
+    def __prepare_c(self):
+        check_tool("gcc")
+        pre = ["gcc", "-Wall"]
+        pos = ["-lm"]
+        self.__prepare_c_cpp(pre, pos)
+
+    def __prepare_cpp(self):
+        check_tool("g++")
+        pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror"]
+        pos: List[str] = []
+        self.__prepare_c_cpp(pre, pos)
+
+    @staticmethod
+    def __add_dot_bar(solver: str) -> str:
+        if os.sep not in solver and os.path.isfile("." + os.sep + solver):
+            solver = "." + os.sep + solver
+        return solver
+    
+
+class Unit:
+    def __init__(self, case: str = "", inp: str = "", outp: str = "", grade: Optional[int] = None, source: str = ""):
+        self.source = source  # stores the source file of the unit
+        self.source_pad = 0  # stores the pad to justify the source file
+        self.case = case  # name
+        self.case_pad = 0  # stores the pad to justify the case name
+        self.input = inp  # input
+        self.output = outp  # expected output
+        self.user: Optional[str] = None  # solver generated answer
+        self.grade: Optional[int] = grade  # None represents proportional gr, 100 represents all
+        self.grade_reduction: int = 0  # if grade is None, this atribute should be filled with the right grade reduction
+        self.index = 0
+        self.repeated: Optional[int] = None
+
+        self.result: ExecutionResult = ExecutionResult.UNTESTED
+
+    def str(self, pad: bool = True) -> Sentence:
+        index = str(self.index).zfill(2)
+        grade = str(self.grade_reduction).zfill(3)
+        rep = "" if self.repeated is None else " [" + str(self.repeated) + "]"
+        op = Sentence() + ExecutionResult.get_symbol(self.result) + " " + self.result.value
+        source = os.path.basename(self.source)
+        if pad:
+            source = self.source.ljust(self.source_pad)
+        case = self.case
+        if pad:
+            case = self.case.ljust(self.case_pad)
+        return Sentence() + "(" + op + ")" + f"[{index}] GR:{grade} {source} ({case}){rep}"
+
+
+
+
+class Execution:
+
+    def __init__(self):
+        pass
+
+    # run a unit using a solver and return if the result is correct
+    @staticmethod
+    def run_unit(solver: Solver, unit: Unit) -> ExecutionResult:
+        if solver.compile_error:
+            unit.user = solver.error_msg
+            return ExecutionResult.COMPILATION_ERROR
+        cmd = solver.executable
+        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input)
+        unit.user = stdout + stderr
+        if return_code != 0:
+            return ExecutionResult.EXECUTION_ERROR
+        if unit.user == unit.output:
+            return ExecutionResult.SUCCESS
+        return ExecutionResult.WRONG_OUTPUT
 
 
 
@@ -3703,206 +3895,28 @@ class Loader:
 
 
 
-
-
-def check_tool(name):
-    if shutil.which(name) is None:
-        raise CompilerError("fail: " + name + " executable not found")
-
-
-class Solver:
-    def __init__(self, solver_list: List[str]):
-        self.path_list: List[str] = [os.path.normpath(Solver.__add_dot_bar(path)) for path in solver_list]
-        
-        self.temp_dir = tempfile.mkdtemp()
-        self.error_msg: str = ""
-        self.executable: str = ""
-        self.compile_error: bool = False
-        if len(self.path_list) > 0:
-            self.prepare_exec()
-
-    def prepare_exec(self) -> None:
-        path = self.path_list[0]
-
-        if path.endswith(".py"):
-            self.executable = "python " + path
-        elif path.endswith(".js"):
-            self.__prepare_js()
-        elif path.endswith(".ts"):
-            self.__prepare_ts()
-        elif path.endswith(".java"):
-            self.__prepare_java()
-        elif path.endswith(".c"):
-            self.__prepare_c()
-        elif path.endswith(".cpp"):
-            self.__prepare_cpp()
-        elif path.endswith(".sql"):
-            self.__prepare_sql()
-        else:
-            self.executable = path
-
-    def __prepare_java(self):
-        check_tool("javac")
-
-        solver = self.path_list[0]
-
-        filename = os.path.basename(solver)
-        # tempdir = os.path.dirname(self.path_list[0])
-
-        cmd = ["javac"] + self.path_list + ['-d', self.temp_dir]
-        cmdt = " ".join(cmd)
-        return_code, stdout, stderr = Runner.subprocess_run(cmdt)
-        if return_code != 0:
-            self.error_msg = stdout + stderr
-            self.compile_error = True
-        else:
-            self.executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
-
-    def __prepare_js(self):
-        check_tool("node")
-        solver = self.path_list[0]
-        self.executable = "node " + solver
-
-    def __prepare_sql(self):
-        check_tool("sqlite3")
-        self.executable = "cat " + " ".join(self.path_list) + " | sqlite3"
-
-    def __prepare_ts(self):
-        transpiler = "esbuild"
-        if os.name == "nt":
-            transpiler += ".cmd"
-
-        check_tool(transpiler)
-        check_tool("node")
-
-        solver = self.path_list[0]
-
-        filename = os.path.basename(solver)
-        source_list = self.path_list
-        cmd = [transpiler] + source_list + ["--outdir=" + self.temp_dir, "--format=cjs", "--log-level=error"]
-        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
-        if return_code != 0:
-            self.error_msg = stdout + stderr
-            self.compile_error = True
-        else:
-            jsfile = os.path.join(self.temp_dir, filename[:-3] + ".js")
-            self.executable = "node " + jsfile  # renaming solver to main
-    
-    def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
-        # solver = self.path_list[0]
-        tempdir = self.temp_dir
-        source_list = self.path_list
-        # print("Using the following source files: " + str([os.path.basename(x) for x in source_list]))
-        
-        exec_path = os.path.join(tempdir, ".a.out")
-        cmd = pre_args + source_list + ["-o", exec_path] + pos_args
-        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
-        if return_code != 0:
-            self.error_msg = stdout + stderr
-            self.compile_error = True
-        else:
-            self.executable = exec_path
-
-    def __prepare_c(self):
-        check_tool("gcc")
-        pre = ["gcc", "-Wall"]
-        pos = ["-lm"]
-        self.__prepare_c_cpp(pre, pos)
-
-    def __prepare_cpp(self):
-        check_tool("g++")
-        pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror"]
-        pos: List[str] = []
-        self.__prepare_c_cpp(pre, pos)
-
-    @staticmethod
-    def __add_dot_bar(solver: str) -> str:
-        if os.sep not in solver and os.path.isfile("." + os.sep + solver):
-            solver = "." + os.sep + solver
-        return solver
-    
-
-class Execution:
-
-    def __init__(self):
-        pass
-
-    # run a unit using a solver and return if the result is correct
-    @staticmethod
-    def run_unit(solver: Solver, unit: Unit) -> ExecutionResult:
-        if solver.compile_error:
-            unit.user = solver.error_msg
-            return ExecutionResult.COMPILATION_ERROR
-        cmd = solver.executable
-        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input)
-        unit.user = stdout + stderr
-        if return_code != 0:
-            return ExecutionResult.EXECUTION_ERROR
-        if unit.user == unit.output:
-            return ExecutionResult.SUCCESS
-        return ExecutionResult.WRONG_OUTPUT
-
-
-
 # generate label for cases
-
-
-class LabelFactory:
-    def __init__(self):
-        self._label = ""
-        self._index = -1
-
-    def index(self, value: int):
-        try:
-            self._index = int(value)
-        except ValueError:
-            raise ValueError("Index on label must be a integer")
-        return self
-
-    def label(self, value: str):
-        self._label = value
-        return self
-
-    def generate(self):
-        label = LabelFactory.trim_spaces(self._label)
-        label = LabelFactory.remove_old_index(label)
-        if self._index != -1:
-            index = str(self._index).zfill(2)
-            if label != "":
-                return index + " " + label
-            else:
-                return index
-        return label
-
-    @staticmethod
-    def trim_spaces(text):
-        parts = text.split(" ")
-        parts = [word for word in parts if word != '']
-        return " ".join(parts)
-
-    @staticmethod
-    def remove_old_index(label):
-        split_label = label.split(" ")
-        if len(split_label) > 0:
-            try:
-                int(split_label[0])
-                return " ".join(split_label[1:])
-            except ValueError:
-                return label
-
 
 class Wdir:
     def __init__(self):
-        self.autoload = False
+        self.__autoload = False
+        self.__autoload_folder = ""
+        
         self.solver: Optional[Solver] = None
         self.source_list: List[str] = []
         self.pack_list: List[List[Unit]] = []
         self.unit_list: List[Unit] = []
-        self.curses = False
+        self.__curses = False
 
     def set_curses(self, value: bool):
-        self.curses = value
+        self.__curses = value
         return self
+    
+    def is_curses(self) -> bool:
+        return self.__curses
+
+    def is_autoload(self) -> bool:
+        return self.__autoload
 
     def set_solver(self, solver_list: List[str]):
         if len(solver_list) > 0:
@@ -3913,24 +3927,26 @@ class Wdir:
         self.source_list = source_list
         return self
 
-    def run_autoload(self, folder: str):
+    def autoload(self):
+        folder = self.__autoload_folder
         files = os.listdir(folder)
         files = [os.path.join(folder, f) for f in files]
         files = [f for f in files if os.path.isfile(f)]
-        avoid = [".txt", ".md", ".hpp", ".h", ".out", ".exe", ".o", ".obj", ".a", ".so", ".dll", ".png", ".jpg", ".jpg"]
+        avoid = [".txt", ".md", ".hpp", ".h", ".out", ".exe", ".o", ".obj", ".a", ".so", ".dll", ".png", ".jpg", ".jpeg"]
         files = [f for f in files if not any([f.endswith(a) for a in avoid])]
 
         sources = [target for target in files if target.endswith(".tio")]
         solvers = [target for target in files if not target.endswith(".tio")]
+        solvers = sorted(solvers)
 
-        if not self.curses:
-            print("Autoloading files")
+        if not self.__curses:
+            print("Carregando arquivos automaticamente")
             print("solvers found: [" + ", ".join(solvers) + "]")
             print("sources found: [" + ", ".join(sources) + "]")
-            print("To remove a file from autoloading, change extension for .txt")
+            print("Para remover um arquivo da lista, renomeie para sua extensão para .txt")
         self.set_solver(solvers)
         self.set_sources(sources)
-        self.autoload = True
+        self.__autoload = True
         return self
 
     def set_target_list(self, target_list: List[str]):
@@ -3938,7 +3954,8 @@ class Wdir:
         if len(target_list) == 0:
             target_list.append(".")
         if len(target_list) == 1 and os.path.isdir(target_list[0]):
-            return self.run_autoload(target_list[0])
+            self.__autoload_folder = target_list[0]
+            return self.autoload()
             
         target_list = [t for t in target_list if t != ""]
         for target in target_list:
@@ -4046,31 +4063,34 @@ class Wdir:
     def unit_list_resume(self) -> List[Sentence]:
         return [unit.str() for unit in self.unit_list]
 
+    def sources_names(self) -> List[str]:
+        out: List[str] = []
+        if len(self.pack_list) == 0:
+            out.append(symbols.failure.text)
+        for i in range(len(self.pack_list)):
+            nome: str = self.source_list[i].split(os.sep)[-1]
+            out.append(nome + "(" + str(len(self.pack_list[i])).zfill(2) + ")")
+        return out
+
+    def solvers_names(self) -> List[str]:
+        path_list = [] if self.solver is None else self.solver.path_list
+        if self.solver is not None and len(path_list) == 0:  # free_cmd
+            out = ["free cmd"]
+        else:
+            out = [os.path.basename(path) for path in path_list]
+        return out
+
     def resume(self) -> Sentence:
 
-        def sources() -> Sentence:
-            out: List[str] = []
-            if len(self.pack_list) == 0:
-                out.append(symbols.failure.text)
-            for i in range(len(self.pack_list)):
-                nome: str = self.source_list[i].split(os.sep)[-1]
-                out.append(nome + "(" + str(len(self.pack_list[i])).zfill(2) + ")")
-            return Sentence().add("Testes:").add("[").addf("y", ", ".join(out)).add("]")
+        __sources = Sentence().add("Testes:").add("[").addf("y", ", ".join(self.sources_names())).add("]")
 
-        def solvers() -> Sentence:
-            path_list = [] if self.solver is None else self.solver.path_list
-
-            if self.solver is not None and len(path_list) == 0:  # free_cmd
-                out = "free cmd"
-            else:
-                out = ", ".join([os.path.basename(path) for path in path_list])
-            return Sentence().add("Códigos:").add("[").addf("g", out).add("]")
+        __solvers = Sentence().add("Códigos:").add("[").addf("g", ", ".join(self.solvers_names())).add("]")
 
         # folder = os.getcwd().split(os.sep)[-1]
         # tests_count = (colour("tests:", Color.GREEN) +
         #               str(len([x for x in self.unit_list if x.repeated is None])).zfill(2))
 
-        return Sentence().add(solvers()).add(" ").add(sources())
+        return Sentence().add(__solvers).add(" ").add(__sources)
 
 
 
@@ -4667,22 +4687,49 @@ class CDiff:
             folder = os.path.abspath(self.wdir.source_list[0])
         else:
             folder = os.path.abspath(self.wdir.solver.path_list[0])
-        intro = self.wdir.resume()
-        last = folder.split(os.sep)[-2]
-        frame.set_header(Sentence().add(" ").addf("c", "Atividade:").add("[").addf("m", last).add("] ").add(intro).add(" ") , "")
-        unit = self.wdir.unit_list[self.index]
-        frame.set_footer(Sentence().add(" ").add(unit.str(False)), "")
-        frame.draw()
 
-        x = 0
+        activity = Sentence().addf("C", folder.split(os.sep)[-2])
+        solvers = Sentence()
+        for i, solver in enumerate(self.wdir.solvers_names()):
+            if i != 0:
+                solvers.add(" ")
+            solvers.addf("G/", solver)
+        sources = Sentence()
+        for i, source in enumerate(self.wdir.sources_names()):
+            if i != 0:
+                sources.add(", ")
+            sources.addf("Y", source)
+
+        delta = frame.get_dx() - solvers.len()
+        left = 1
+        right = 1
+        if delta > 0:
+            delta_left = delta // 2
+            left = max(1, delta_left - activity.len())
+            delta_right = delta - delta_left
+            right = max(1, delta_right - sources.len())
+
+        header = Sentence().add(activity).add("─" * left).add(solvers).add("─" * right).add(sources)
+
+        frame.set_header(header)
+
+        unit = self.wdir.unit_list[self.index]
+        frame.write(0, 0, Sentence().add(unit.str(False)).center(frame.get_dx()))
+
+
         i = 0
+        output = Sentence()
         for i, symbol in enumerate(self.results):
             foco = i == self.index
-            extrap = "" if not foco else ">"
-            extras = "" if not foco else "<"
-            label = Sentence().add(extrap).addf(symbol.fmt, str(i).zfill(2)).add(symbol).add(extras)
-            frame.write(0, x + 1 - len(extrap), label)
-            x += 5
+            extrap = " " if not foco else ">"
+            extras = " " if not foco else "<"
+            output.add(extrap).addf(symbol.fmt, str(i).zfill(2)).add(symbol).add(extras)
+
+        if self.index * 5 > frame.get_dx():
+            output.cut_begin((self.index + 1) * 5 - frame.get_dx())
+
+        frame.set_footer(output, "")
+        frame.draw()
         
     def draw_guide_line(self):
         cmds = (Sentence()
@@ -4709,7 +4756,7 @@ class CDiff:
         lines, cols = Fmt.get_size()
         self.space = lines - 4
         frame = Frame(2, -1).set_inner(self.space, cols - 1).set_border_square()
-        # frame.draw()
+
         if not self.has_any_error():
             self.sucesso()
             return        
@@ -4734,7 +4781,7 @@ class CDiff:
         return
 
     def load_autoload_warning(self):
-        if not self.wdir.autoload:
+        if not self.wdir.is_autoload():
             return
         warning = Floating().set_header(" Atenção ").warning()
         warning.put_text("")
@@ -4811,6 +4858,8 @@ class CDiff:
                 self.init = 0
             elif input == ord('e'):
                 if self.wdir.solver is not None:
+                    if self.wdir.is_autoload():
+                        self.wdir.autoload()
                     self.wdir.solver.prepare_exec()
                 self.results = []
                 self.first_error = -1
@@ -4834,8 +4883,8 @@ class FilterMode:
 
         # verify if filter command is available
         if shutil.which("filter") is None:
-            print("ERROR: filter command not found")
-            print("Install feno with 'pip install feno'")
+            print("ERROR: comando de filtragem não encontrado")
+            print("Instale o feno com 'pip install feno'")
             exit(1)
 
         subprocess.run(["filter", "-rf", ".", "-o", filter_path])
@@ -4878,7 +4927,7 @@ class Run:
         if self.param.filter:
             old_dir = os.getcwd()
 
-            term_print(Report.centralize(" Entering in filter mode ", "═"))
+            term_print(Report.centralize(" Entrando no modo de filtragem ", "═"))
             FilterMode.deep_copy_and_change_dir()  
             # search for target outside . dir and redirect target
             new_target_list = []
@@ -4893,7 +4942,7 @@ class Run:
         if self.wdir is None:
             return
 
-        term_print(symbols.opening + self.wdir.resume(), end="")
+        term_print(Sentence().add(symbols.opening).add(self.wdir.resume()), end="")
         term_print(" [", end="")
         first = True
         for unit in self.wdir.unit_list:
@@ -4903,7 +4952,7 @@ class Run:
                 term_print(" ", end="")
             solver = self.wdir.solver
             if solver is None:
-                raise ValueError("Solver empty")
+                raise ValueError("Solver vazio")
             unit.result = Execution.run_unit(solver, unit)
             term_print(Sentence() + ExecutionResult.get_symbol(unit.result), end="")
         term_print("]")
@@ -4962,7 +5011,7 @@ class Run:
             return False
         # no solver and no test cases
         if self.wdir.solver is None and len(self.wdir.unit_list) == 0:
-            term_print(Sentence().addf("", "fail: ") + "No solver or tests found.")
+            term_print(Sentence().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
             return True
         return False
     
@@ -4972,7 +5021,7 @@ class Run:
 
         # list mode
         if self.wdir.solver is None and len(self.wdir.unit_list) > 0:
-            term_print(Report.centralize(" No solvers found. Listing Test Cases ", Token("╌")), flush=True)
+            term_print(Report.centralize(" Nenhum arquivo de código encontrado. Listando casos de teste.", Token("╌")), flush=True)
             term_print(self.wdir.resume())
             for line in self.wdir.unit_list_resume():
                 term_print(line)
@@ -4984,7 +5033,7 @@ class Run:
             return False
         # free run mode
         if self.wdir.solver is not None and len(self.wdir.unit_list) == 0:
-            t = Report.centralize(Sentence() + " No test cases found. Running: " + self.wdir.solver.executable + " ", symbols.hbar)
+            t = Report.centralize(Sentence() + " Nenhum arquivo de teste encontrado. Rodando o código " + self.wdir.solver.executable + " ", symbols.hbar)
             term_print(t, flush=True)
             # force print to terminal
             Runner.free_run(self.wdir.solver.executable)
@@ -4999,7 +5048,7 @@ class Run:
             cdiff = CDiff(self.wdir, self.param)
             cdiff.run()
             return
-        term_print(Report.centralize(" Running solver against test cases ", "═"))
+        term_print(Report.centralize(" Testando o código com os casos de teste ", "═"))
         self.__print_top_line()
         self.__print_diff()
 
@@ -6111,7 +6160,9 @@ def exec(parser: argparse.ArgumentParser, args):
         symbols.set_ascii()
     else:
         symbols.set_unicode()
-    if not args.m and settings.geral.get_is_colored():
+    if args.m:
+        Color.enabled = False
+    elif settings.geral.get_is_colored():
         Color.enabled = True
         symbols.set_colors()
 
@@ -6137,9 +6188,9 @@ def main():
     except KeyboardInterrupt:
         print("\n\nKeyboard Interrupt")
         sys.exit(1)
-    except Exception as e:
-        print(e)
-        sys.exit(1)
+    # except Exception as e:
+    #     print(e)
+    #     sys.exit(1)
 
 
 if __name__ == '__main__':

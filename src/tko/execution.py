@@ -1,4 +1,6 @@
-from .run.basic import DiffMode, ExecutionResult, CompilerError, Param, Unit
+from .run.unit import Unit
+from .run.basic import ExecutionResult
+
 from .util.runner import Runner
 from .run.solver import Solver
 

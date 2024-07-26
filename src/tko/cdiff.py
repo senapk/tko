@@ -1,6 +1,8 @@
 import curses
 from .play.fmt import Fmt
-from .run.basic import ExecutionResult, Param, Unit
+from .run.basic import ExecutionResult
+from .run.unit import Unit
+from .run.param import Param
 from .execution import Execution
 from .run.diff import Diff
 from .util.ftext import Sentence, Token
@@ -154,22 +156,49 @@ class CDiff:
             folder = os.path.abspath(self.wdir.source_list[0])
         else:
             folder = os.path.abspath(self.wdir.solver.path_list[0])
-        intro = self.wdir.resume()
-        last = folder.split(os.sep)[-2]
-        frame.set_header(Sentence().add(" ").addf("c", "Atividade:").add("[").addf("m", last).add("] ").add(intro).add(" ") , "")
-        unit = self.wdir.unit_list[self.index]
-        frame.set_footer(Sentence().add(" ").add(unit.str(False)), "")
-        frame.draw()
 
-        x = 0
+        activity = Sentence().addf("C", folder.split(os.sep)[-2])
+        solvers = Sentence()
+        for i, solver in enumerate(self.wdir.solvers_names()):
+            if i != 0:
+                solvers.add(" ")
+            solvers.addf("G/", solver)
+        sources = Sentence()
+        for i, source in enumerate(self.wdir.sources_names()):
+            if i != 0:
+                sources.add(", ")
+            sources.addf("Y", source)
+
+        delta = frame.get_dx() - solvers.len()
+        left = 1
+        right = 1
+        if delta > 0:
+            delta_left = delta // 2
+            left = max(1, delta_left - activity.len())
+            delta_right = delta - delta_left
+            right = max(1, delta_right - sources.len())
+
+        header = Sentence().add(activity).add("─" * left).add(solvers).add("─" * right).add(sources)
+
+        frame.set_header(header)
+
+        unit = self.wdir.unit_list[self.index]
+        frame.write(0, 0, Sentence().add(unit.str(False)).center(frame.get_dx()))
+
+
         i = 0
+        output = Sentence()
         for i, symbol in enumerate(self.results):
             foco = i == self.index
-            extrap = "" if not foco else ">"
-            extras = "" if not foco else "<"
-            label = Sentence().add(extrap).addf(symbol.fmt, str(i).zfill(2)).add(symbol).add(extras)
-            frame.write(0, x + 1 - len(extrap), label)
-            x += 5
+            extrap = " " if not foco else ">"
+            extras = " " if not foco else "<"
+            output.add(extrap).addf(symbol.fmt, str(i).zfill(2)).add(symbol).add(extras)
+
+        if self.index * 5 > frame.get_dx():
+            output.cut_begin((self.index + 1) * 5 - frame.get_dx())
+
+        frame.set_footer(output, "")
+        frame.draw()
         
     def draw_guide_line(self):
         cmds = (Sentence()
@@ -196,7 +225,7 @@ class CDiff:
         lines, cols = Fmt.get_size()
         self.space = lines - 4
         frame = Frame(2, -1).set_inner(self.space, cols - 1).set_border_square()
-        # frame.draw()
+
         if not self.has_any_error():
             self.sucesso()
             return        
@@ -221,7 +250,7 @@ class CDiff:
         return
 
     def load_autoload_warning(self):
-        if not self.wdir.autoload:
+        if not self.wdir.is_autoload():
             return
         warning = Floating().set_header(" Atenção ").warning()
         warning.put_text("")
@@ -298,6 +327,8 @@ class CDiff:
                 self.init = 0
             elif input == ord('e'):
                 if self.wdir.solver is not None:
+                    if self.wdir.is_autoload():
+                        self.wdir.autoload()
                     self.wdir.solver.prepare_exec()
                 self.results = []
                 self.first_error = -1

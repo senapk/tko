@@ -1,1 +1,0 @@
-──── No test cases found. Running: cat ./create.sql ./student.sql | sqlite3 ───

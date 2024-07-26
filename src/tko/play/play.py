@@ -17,7 +17,7 @@ from .floating_manager import FloatingManager
 from .flags import Flag, Flags, FlagsMan
 from .tasktree import TaskTree
 from ..actions import Run
-from ..run.basic import Param
+from ..run.param import Param
 from ..util.symbols import symbols
 
 import webbrowser

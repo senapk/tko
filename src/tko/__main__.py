@@ -6,14 +6,13 @@ import os
 
 
 from .actions import Run, Build
-from .run.basic import Param
+from .run.param import Param
 from .util.pattern import PatternLoader
 from .run.basic import DiffMode
 from .down import Down
 from .settings.settings_parser import SettingsParser
 from .settings.settings import Settings
 from .settings.rep_settings import RepSettings
-from .settings.geral_settings import GeralSettings
 
 
 from .util.guide import tko_guide
@@ -364,7 +363,9 @@ def exec(parser: argparse.ArgumentParser, args):
         symbols.set_ascii()
     else:
         symbols.set_unicode()
-    if not args.m and settings.geral.get_is_colored():
+    if args.m:
+        Color.enabled = False
+    elif settings.geral.get_is_colored():
         Color.enabled = True
         symbols.set_colors()
 
@@ -390,9 +391,9 @@ def main():
     except KeyboardInterrupt:
         print("\n\nKeyboard Interrupt")
         sys.exit(1)
-    except Exception as e:
-        print(e)
-        sys.exit(1)
+    # except Exception as e:
+    #     print(e)
+    #     sys.exit(1)
 
 
 if __name__ == '__main__':

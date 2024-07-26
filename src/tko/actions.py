@@ -4,7 +4,8 @@ import shutil
 import subprocess
 
 from .run.wdir import Wdir
-from .run.basic import DiffMode, ExecutionResult, CompilerError, Param
+from .run.basic import DiffMode, ExecutionResult
+from .run.param import Param
 from .run.diff import Diff
 from .util.ftext import Sentence, Token
 
@@ -28,8 +29,8 @@ class FilterMode:
 
         # verify if filter command is available
         if shutil.which("filter") is None:
-            print("ERROR: filter command not found")
-            print("Install feno with 'pip install feno'")
+            print("ERROR: comando de filtragem não encontrado")
+            print("Instale o feno com 'pip install feno'")
             exit(1)
 
         subprocess.run(["filter", "-rf", ".", "-o", filter_path])
@@ -72,7 +73,7 @@ class Run:
         if self.param.filter:
             old_dir = os.getcwd()
 
-            term_print(Report.centralize(" Entering in filter mode ", "═"))
+            term_print(Report.centralize(" Entrando no modo de filtragem ", "═"))
             FilterMode.deep_copy_and_change_dir()  
             # search for target outside . dir and redirect target
             new_target_list = []
@@ -87,7 +88,7 @@ class Run:
         if self.wdir is None:
             return
 
-        term_print(symbols.opening + self.wdir.resume(), end="")
+        term_print(Sentence().add(symbols.opening).add(self.wdir.resume()), end="")
         term_print(" [", end="")
         first = True
         for unit in self.wdir.unit_list:
@@ -97,7 +98,7 @@ class Run:
                 term_print(" ", end="")
             solver = self.wdir.solver
             if solver is None:
-                raise ValueError("Solver empty")
+                raise ValueError("Solver vazio")
             unit.result = Execution.run_unit(solver, unit)
             term_print(Sentence() + ExecutionResult.get_symbol(unit.result), end="")
         term_print("]")
@@ -156,7 +157,7 @@ class Run:
             return False
         # no solver and no test cases
         if self.wdir.solver is None and len(self.wdir.unit_list) == 0:
-            term_print(Sentence().addf("", "fail: ") + "No solver or tests found.")
+            term_print(Sentence().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
             return True
         return False
     
@@ -166,7 +167,7 @@ class Run:
 
         # list mode
         if self.wdir.solver is None and len(self.wdir.unit_list) > 0:
-            term_print(Report.centralize(" No solvers found. Listing Test Cases ", Token("╌")), flush=True)
+            term_print(Report.centralize(" Nenhum arquivo de código encontrado. Listando casos de teste.", Token("╌")), flush=True)
             term_print(self.wdir.resume())
             for line in self.wdir.unit_list_resume():
                 term_print(line)
@@ -178,7 +179,7 @@ class Run:
             return False
         # free run mode
         if self.wdir.solver is not None and len(self.wdir.unit_list) == 0:
-            t = Report.centralize(Sentence() + " No test cases found. Running: " + self.wdir.solver.executable + " ", symbols.hbar)
+            t = Report.centralize(Sentence() + " Nenhum arquivo de teste encontrado. Rodando o código " + self.wdir.solver.executable + " ", symbols.hbar)
             term_print(t, flush=True)
             # force print to terminal
             Runner.free_run(self.wdir.solver.executable)
@@ -193,7 +194,7 @@ class Run:
             cdiff = CDiff(self.wdir, self.param)
             cdiff.run()
             return
-        term_print(Report.centralize(" Running solver against test cases ", "═"))
+        term_print(Report.centralize(" Testando o código com os casos de teste ", "═"))
         self.__print_top_line()
         self.__print_diff()
 
