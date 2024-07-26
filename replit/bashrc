@@ -10,8 +10,8 @@ python /home/runner/${REPL_SLUG}/.bin/check.py
 export PATH="/home/runner/${REPL_SLUG}/.bin:${PATH}"
 
 echo "# Setup carregado corretamente"
-echo "Para ver o guia do bash digite: tko -b"
-echo "Para ver o guia do tko  digite: tko -g"
+echo "Para atualizar o tko digite: update.sh"
+echo "Para ver as questões digite: tko play [fup|ed|poo]"
 
 ################    ALIAS    ########################
 
