@@ -47,6 +47,9 @@ class IdentifierType(enum.Enum):
     VPL = "VPL"
     SOLVER = "SOLVER"
 
+class Success(enum.Enum):
+    RANDOM = "RANDOM"
+    FIXED = "FIXED"
 
 class Identifier:
     def __init__(self):

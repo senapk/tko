@@ -6,6 +6,7 @@ from ..game.xp import XP
 from ..game.graph import Graph
 import random
 
+from ..run.basic import Success
 from typing import List, Any, Dict
 from ..settings.settings import RepSettings, GeralSettings
 from ..down import Down
@@ -20,6 +21,7 @@ from .tasktree import TaskTree
 from ..actions import Run
 from ..run.param import Param
 from ..util.symbols import symbols
+from .quit_msgs import quit_msgs
 
 import webbrowser
 import os
@@ -317,7 +319,11 @@ class Play:
             )
             return
         run = Run([path], None, Param.Basic())
-        run.set_curses()
+        if Flags.success.is_true():
+            run.set_curses(True, Success.RANDOM)
+        else:
+            run.set_curses(True, Success.FIXED)
+
         if len(self.rep.get_tasks()) == 0:
             run.set_first_run()
         return run.execute
@@ -633,51 +639,10 @@ class Play:
             Flags.config.toggle()
             self.show_help_config()
 
-    quit_msgs = [
-        "Deus abençoe, vá em paz",
-        "Bye bye",
-        "Vou sentir saudades",
-        "Volte quando estiver mais descansado",
-        "Espero que tenha aprendido algo novo hoje",
-        "Cada pequena vitória merece ser comemorada",
-        "Obrigado pelo tempo juntos",
-        "Até a próxima",
-        "Um abraço, seja feliz", 
-        "Durma cedo, amanhã você pode continuar", 
-        "Vá, mais volte",
-        "Arri égua, já vai?", 
-        "Capando o gato tão cedo?",
-        "Vai porquê quer",
-        "Fique mais um pouquinho", 
-        "Vamos lá, pegue um café (ou chá) e volte outra hora",
-        "Foque em avançar um passo por vez",
-        "O caminho é mais importante que a chegada",
-        "Lembre de dar bons nomes para as variáveis e métodos", 
-        "Você também está programando para outros seres humanos lerem, faça algo organizado",
-        "Seja criterioso com a indentação e as regras de estilo, faça algo belo",
-        "Está precisando de mais conselhos? Vá ler a bíblia!",
-        "DRY - Don't Repeat Yourself, refatore seu código para tirar as redundâncias",
-        "São necessárias umas 1000 horas pra ser bom em algo",
-        "Só é fracasso quando você desiste, espaireça e tente de novo",
-        "Parar e descansar é importante também",
-        "Se for pra descansar, largue o celular",
-        "Traga uma garrafa de água próxima vez, facilite o acesso",
-        "Toda capacidade que não é usada, se perde, movimente-se",
-        "Te vejo depois do exercício. Malhe, corra, dance, e depois volte",
-        "Se você não se der valor, ninguém vai. Invista em você",
-        "Tem exercícios que vão ser bem complicados\ntire um tempo pra pensar longe do computador",
-        "Use as inteligências artificiais com sabedoria, tente refazer depois a tarefa sem elas",
-        "Lembre de pedir ajuda quando precisar", 
-        "Você não está sozinho, peça ajuda se preciso", 
-        "É justo que o que muito vale, muito custe", 
-        "Aprender a se divertir é parte essencial do aprendizado", 
-        "Esse miserável é um miserável",
-        "Você é importante e precioso, mesmo que seu código tenha ficado uma porcaria",
-        "Alguns tem mais dificuldades que outros, tenha paciência consigo mesmo",
-        "Se você precisa de mais tempo que seus colegas pra aprender, se dê mais tempo", 
-        "Quer um filme lindo? Assita Mary e Max, uma amizade diferente",
-        "Quer uma leitura de ficção impactante? Trilogia o problema dos três corpos", 
-    ]
+    def select_quit_msg(self):
+        if Flags.fortune.is_true():
+            return random.choice(quit_msgs)
+        return "Até a próxima!"
 
     def make_callback(self) -> Dict[int, Any]:
         def set_exit():
@@ -698,7 +663,7 @@ class Play:
         add_str(
             self.Key.quit,
             lambda: self.fman.add_input(
-                Floating().put_text("\n" + (Play.quit_msgs[random.randint(0, len(Play.quit_msgs)) - 1]) + "\n").set_exit_fn(set_exit).warning()
+                Floating().put_text("\n" + self.select_quit_msg() + "\n").set_exit_fn(set_exit).warning()
             ),
         )
 

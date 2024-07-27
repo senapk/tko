@@ -125,7 +125,7 @@ class GeralSettings:
 
 images: Dict[str, List[str]] = {}
 
-images["sucesso"] = [
+images["success"] = [
             r"  _____ __ __     __    ___  _____ _____  ___  ",
             r" / ___/|  |  |   /  ]  /  _]/ ___// ___/ /   \ ",
             r"(   \_ |  |  |  /  /  /  [_(   \_(   \_ |     |",
@@ -195,40 +195,34 @@ Não é o que sou por dentro, é o que eu faço que me define.
 
 images["vegeta"] = r"""
 O miserável é um gênio!
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠻⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢻⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡏⠻⣿⣿⣿⣿⣿⣿⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⡀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⠀⠈⢻⣿⣿⣿⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣧⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⣿⣿⣿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⡀⠀⠀⠀⠀⢸⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⢸⣿⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣧⠀⠀⠀⠀⢸⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠈⠿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⡆⢀⠀⣀⣼⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢻⡷⠘⣿⣿⣿⣿⣿⣿⡿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⢀⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⠏⢀
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢿⣿⠀⠀⠀⠀⣾⡇⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⠴⠀⠀⠀⠀⠀⠀⢀⣠⣴⣶⣶⡄⠀⡀⠈⢿⣿⢃⣴⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣇⠉⠳⣄⠀⢀⣿⡇⠀⠀⠀⣀⣤⣶⣾⠿⠋⠀⠀⠀⠀⢀⣠⣴⣿⣿⣿⣿⣿⣿⣿⣦⣸⠀⠀⠀⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠙⠿⣿⣿⣿⣿⣧⠀⠘⢷⣼⣿⣧⣤⣴⣾⣿⣿⠛⠁⠀⠀⠀⣀⣤⣾⣿⣿⣿⣿⠿⢿⠛⠛⠋⠉⠉⠁⠀⠀⢀⣿⣿⠀
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⠀⠈⠹⣿⣿⣿⣧⠀⠈⢻⣿⣿⣿⣿⡿⠋⠀⠀⠀⣀⣴⣾⣿⣿⣿⣿⠋⠉⠀⢀⡟⠀⠀⠀⠀⠀⠀⠀⢠⣿⣿⡯⠀
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⡀⠀⠛⠻⠿⠿⣷⣄⠈⠉⠉⣉⠉⠀⠀⢀⣤⣾⡿⠟⠻⠽⠿⠟⠁⠀⣀⣠⠞⠀⠀⠀⠀⠀⠀⠀⢀⡿⠋⣉⣴⡾
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣶⣶⣶⣦⣤⣽⣿⠀⡀⢿⣷⣶⣾⣿⣿⣯⣴⣶⣶⣶⣶⣬⣭⣭⣤⠤⠶⠀⠀⠀⠀⠀⠀⢀⣴⡶⠿⠛⣉⣴
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣍⡉⠉⠉⠉⢻⣷⣷⠼⠟⠛⢻⣿⣿⣿⣿⣿⣿⣿⣿⠿⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀⣰⠃⠀⢳⣴⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡄⠀⣼⣿⡟⠀⠀⠀⠀⠀⠙⠿⣿⣿⡿⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠃⠀⠀⠘⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠈⠋⣠⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡴⠃⠀⠀⠀⠀⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢀⣠⣴⠞⠁⠀⠀⠀⠀⣠⠖⠈⠁⠀⠀⠀⠀⠀⠀⢀⡴⠋⠀⠀⠀⠀⠀⠀⣿⠈⠉⠻
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⡖⠚⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⣠⡾⠋⠀⠀⠀⠀⠀⠀⠀⠀⢸⠀⠀⠀
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠛⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣤⣤⣤⡀⠀⠀⠀⠀⠀⣀⣴⣿⠟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣷⣄⠀
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠛⠉⠉⣉⡻⢛⣩⣶⣿⣿⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠁⠀⠀⣀⣤⣾⣿⣿⠏⠀⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠿⣿⣧
-⣿⣿⣿⣿⣿⣿⣿⠿⠋⣠⣴⣶⠞⣋⣭⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣄⡀⢀⣠⣴⣾⣿⣿⣿⡿⠁⢠⣾⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙
-⣿⣿⣿⣿⣿⠟⢁⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⢁⣴⣿⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⣿⣿⣿⠟⣡⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⣡⣿⣿⣿⠏⣠⣿⢿⣿⣿⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠
-⣿⣿⣧⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠁⠀⣰⣿⣿⣿⠋⣰⣿⠏⢿⣿⣿⣿⣿⣿⣷⣤⣄⣀⠤⠄⠀⠀⠀⠀⠀
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠙⠻⢿⣿⣿⣿⣿⠿⠿⠿⠿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡆⣼⣿⣿⣿⣏⣠⣿⣿⣤⣶⠟⠛⠉⠉⠉⠉⠉⠉⠀⠀⠒⠂⠀⣠⣴⣶
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⠀⠀⠀⠀⠹⣿⣿⣿⣷⣄⠀⠀⠀⠀⠀⠈⠉⠻⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣿⠟⠁
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡀⠀⠀⠀⠀⠙⣿⣿⣿⣿⣆⠀⠀⠀⠀⠀⠀⠀⢀⣹⣿⣿⣿⣿⣿⣿⣿⠟⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣾⠟⠁⠀⠀
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠈⢿⣿⣿⣿⣧⠀⠀⠀⠀⠀⢠⣾⣿⣿⣿⣿⣿⣿⣿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡠⠔⠋⠁⠀⠀⠀⠀
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⡀⠀⠀⠀⠀⠀⠈⠙⠻⠿⣿⢧⣄⣀⣀⣠⣿⣿⣿⣿⣿⣿⣿⡟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡠⠤⠖⠋⠁⡀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⢨⠊⠀⢀⢀⠀⠀⠀⠈⠺⡵⡱⠀⠀⠀⢠⠃⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡘⢰⡁⠉⠊⠙⢎⣆⠀⠀⠀⠀⢩⢀⠜⠀⠀⠀
+⠀⠀⠀⢠⠃⠀⠀⢸⢸⡀⠀⠀⠀⠀⠘⢷⡡⠀⠀⠎⠀⢰⣧⠀⠀⠈⡆⠀⠀⠀⠀⠀⠀⠀⠈⣐⢤⣀⣀⢙⠦⠀⠀⠀⠀⡇⠀⠀⠀⠀
+⠀⠀⢀⠃⠀⠀⠀⡌⢸⠃⠀⠀⠀⢀⠀⠀⠑⢧⡸⠀⢀⣿⢻⡀⠀⠀⣻⠀⠀⠀⠀⠀⣠⡴⠛⠉⠀⠀⠀⠑⢝⣦⠀⠀⠀⢰⠠⠁⠀⠀
+⠀⠀⠌⠀⠀⠀⡘⣖⣄⢃⠀⠀⠀⠈⢦⡀⠀⡜⡇⠀⣼⠃⠈⢷⣶⢿⠟⠀⠀⠀⢠⠞⠁⠀⣀⠄⠂⣶⣶⣦⠆⠋⠓⠀⢀⣀⡇⠀⠀⠀
+⠡⡀⡇⠀⢰⣧⢱⠊⠘⡈⠄⠀⠀⡀⠘⣿⢦⣡⢡⢰⡇⢀⠤⠊⡡⠃⠀⠀⢀⡴⠁⢀⠔⠊⠀⠀⢠⣿⠟⠁⠀⢀⠀⢀⠾⣤⣀⠀⠀⡠
+⡀⠱⡇⠀⡆⢃⠀⠀⠀⠃⠀⠀⠀⣧⣀⣹⡄⠙⡾⡏⠀⡌⣠⡾⠁⠀⠀⣠⠊⢠⠔⠁⠀⠀⠀⠀⣸⡏⠀⠀⠀⢨⣪⡄⢻⣥⠫⡳⢊⣴
+⠀⠀⢡⢠⠀⢸⡆⠀⣀⠀⠀⠀⠀⠈⣛⢛⣁⣀⠘⣧⣀⢱⡿⠀⠀⢀⡔⢁⢔⠕⠉⠐⣄⣠⠤⠶⠛⠁⢀⣀⠀⠀⠉⠁⠈⠷⣞⠔⡕⣿
+⢄⡀⠘⢸⠀⣘⠇⠀⠀⠀⠀⠀⠀⠀⠀⠉⠐⠤⡑⢎⡉⢨⠁⠀⣠⢏⠔⠁⠘⣤⠴⢊⣡⣤⠴⠖⠒⠻⠧⣐⠓⠀⠀⠀⠀⠈⠀⡜⠀⠇
+⠤⡈⠑⠇⠡⣻⢠⠊⠉⠉⠉⠑⠒⠤⣀⠀⠀⠀⠈⣾⣄⢘⣫⣜⠮⢿⣆⡴⢊⢥⡪⠛⠉⠀⠀⠀⠀⢀⠄⠂⠁⠀⠀⠀⠀⠀⠀⢧⡀⠈
+⠁⠈⠑⠼⣀⣁⣇⠀⣴⡉⠉⠉⠀⠒⡢⠌⣐⡂⠶⣘⢾⡾⠿⢅⠀⣠⣶⡿⠓⠁⢠⠖⣦⡄⠀⠀⠀⠊⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢎⢳
+⠀⠀⠀⠀⠉⣇⣿⢜⠙⢷⡄⠀⠀⠀⣄⣠⠼⢶⡛⣡⢴⠀⢀⠛⠱⡀⠀⠀⠀⠀⢀⠎⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⡋⠮⡈
+⠀⠀⢀⣖⠂⢽⡈⠀⠈⠑⠻⡦⠖⢋⣁⡴⠴⠊⣉⡠⢻⡖⠪⢄⡀⢈⠆⠀⠀⢠⠊⢠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠤⡵⢤⣃
+⠀⠀⠸⢠⡯⣖⢵⡀⠀⠀⣠⣤⠮⠋⠁⠀⠀⠀⠀⠀⠸⣌⢆⢱⡾⠃⢀⠠⠔⠁⣀⢸⠀⠀⠀⠀⠀⡄⠀⠀⠀⠀⠀⠀⠀⡸⠚⡸⠈⠁
+⠤⢀⣀⢇⢡⠸⡗⢔⡄⠸⠊⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⡩⠔⢉⡠⠔⠂⠉⢀⠆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⢁⠎⢀⡠⠔
+⠀⠀⠀⠘⡌⢦⡃⣎⠘⡄⠀⠀⠀⠀⠀⠀⠀⠀⠠⡟⠠⡐⣋⠤⠀⣀⠤⠐⠂⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡸⢉⠉⠁⠀⠀
+⠤⠀⠀⠀⠰⡀⠈⠻⡤⠚⢄⠀⠀⢠⠀⠀⠀⠀⠀⠀⠀⠈⠂⠒⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⠃⢸⠀⢀⠤⠊
+⣀⠀⠀⠀⠀⠘⠢⡑⢽⡬⢽⢆⠀⠈⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣤⡶⠟⣉⣉⢢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠇⠀⠈⡖⠓⠒⠂
+⠀⢈⣑⣒⡤⠄⠀⠈⠑⠥⣈⠙⠧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⣁⠔⠊⠁⠀⠀⠀⠀⠀⠀⠀⠀⡜⠀⠀⠀⣠⡻⠀⠀⠀⠇⠐⡔⣡
+⠉⠉⠁⠀⠒⠒⠒⠒⠀⠤⠤⠍⣒⡗⢄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡸⠀⠀⢠⡞⢡⠃⠀⠀⠀⢸⠀⠸⣡
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⠀⠀⠈⣶⢄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡰⠁⣠⡔⠉⠀⡎⠀⠀⠀⠀⢸⠀⠀⠃
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⠇⣀⢼⠀⠀⠀⢉⡄⠈⠐⠤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡀⠀⡜⡡⣾⠃⠀⠀⠸⠀⠀⠀⠀⠀⠀⡧⢄⡈
+⠀⠀⠀⠀⠀⠀⠀⣀⠤⠚⠉⠀⡆⠀⠀⠀⠈⡵⢄⡀⠀⠀⠙⠂⠄⣀⡀⠤⠊⠉⢀⣀⣠⡴⢿⣟⠞⠀⠀⢀⠇⠀⠀⠀⠀⠀⠀⡗⠢⢌
+⠀⠀⠀⠀⡠⠔⠉⠀⠀⢀⡠⡤⠇⠀⠀⢀⠀⠰⣣⠈⠐⠤⡀⠀⡀⠈⠙⢍⠉⣉⠤⠒⠉⣠⣟⢮⠂⡄⠀⣼⠁⠀⡆⠀⠀⠀⠀⢡⣀⠀
+⣿⡷⠖⠉⠀⠀⡠⠔⣪⣿⠟⣫⠀⠀⠀⢸⠀⠀⢩⢆⠀⠀⠈⠑⢳⠤⠄⠠⠭⠤⠐⠂⢉⣾⢮⠃⢠⠃⢰⡹⠀⢰⠀⠀⠀⠀⠀⢸⡉⣳
+⠉⠀⢀⡠⠒⠉⣠⠾⠋⢁⠔⠹⠀⠀⠀⡈⡇⠀⠀⢫⣆⠀⠀⠀⠘⣆⠀⠀⠀⠀⠀⠀⣘⢾⠃⢀⠏⣠⡳⠁⠀⣾⠀⠀⠀⠀⠀⠀⠈⠉
 """.split("\n")[1:]
+
+
 
 images["esqueleto"] = r"""
 Você venceu o desafio, mas não a guerra!
@@ -499,6 +493,223 @@ Alguém que não pode fazer sacrifícios nunca pode mudar nada.
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 """.split("\n")[1:]
+
+
+images["yoda"] = r"""
+Que a força esteja com você
+⠀⢀⣠⣄⣀⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣤⣴⣶⡾⠿⠿⠿⠿⢷⣶⣦⣤⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⢰⣿⡟⠛⠛⠛⠻⠿⠿⢿⣶⣶⣦⣤⣤⣀⣀⡀⣀⣴⣾⡿⠟⠋⠉⠀⠀⠀⠀⠀⠀⠀⠀⠉⠙⠻⢿⣷⣦⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣀⣀⣀⣀⣀⣀⡀
+⠀⠻⣿⣦⡀⠀⠉⠓⠶⢦⣄⣀⠉⠉⠛⠛⠻⠿⠟⠋⠁⠀⠀⠀⣤⡀⠀⠀⢠⠀⠀⠀⣠⠀⠀⠀⠀⠈⠙⠻⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠟⠛⠛⢻⣿
+⠀⠀⠈⠻⣿⣦⠀⠀⠀⠀⠈⠙⠻⢷⣶⣤⡀⠀⠀⠀⠀⢀⣀⡀⠀⠙⢷⡀⠸⡇⠀⣰⠇⠀⢀⣀⣀⠀⠀⠀⠀⠀⠀⣀⣠⣤⣤⣶⡶⠶⠶⠒⠂⠀⠀⣠⣾⠟
+⠀⠀⠀⠀⠈⢿⣷⡀⠀⠀⠀⠀⠀⠀⠈⢻⣿⡄⣠⣴⣿⣯⣭⣽⣷⣆⠀⠁⠀⠀⠀⠀⢠⣾⣿⣿⣿⣿⣦⡀⠀⣠⣾⠟⠋⠁⠀⠀⠀⠀⠀⠀⠀⣠⣾⡟⠁⠀
+⠀⠀⠀⠀⠀⠈⢻⣷⣄⠀⠀⠀⠀⠀⠀⠀⣿⡗⢻⣿⣧⣽⣿⣿⣿⣧⠀⠀⣀⣀⠀⢠⣿⣧⣼⣿⣿⣿⣿⠗⠰⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀⣠⣾⡿⠋⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠙⢿⣶⣄⡀⠀⠀⠀⠀⠸⠃⠈⠻⣿⣿⣿⣿⣿⡿⠃⠾⣥⡬⠗⠸⣿⣿⣿⣿⣿⡿⠛⠀⢀⡟⠀⠀⠀⠀⠀⠀⣀⣠⣾⡿⠋⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠿⣷⣶⣤⣤⣄⣰⣄⠀⠀⠉⠉⠉⠁⠀⢀⣀⣠⣄⣀⡀⠀⠉⠉⠉⠀⠀⢀⣠⣾⣥⣤⣤⣤⣶⣶⡿⠿⠛⠉⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⢻⣿⠛⢿⣷⣦⣤⣴⣶⣶⣦⣤⣤⣤⣤⣬⣥⡴⠶⠾⠿⠿⠿⠿⠛⢛⣿⣿⣿⣯⡉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣿⣧⡀⠈⠉⠀⠈⠁⣾⠛⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣴⣿⠟⠉⣹⣿⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣸⣿⣿⣦⣀⠀⠀⠀⢻⡀⠀⠀⠀⠀⠀⠀⠀⢀⣠⣤⣶⣿⠋⣿⠛⠃⠀⣈⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⡿⢿⡀⠈⢹⡿⠶⣶⣼⡇⠀⢀⣀⣀⣤⣴⣾⠟⠋⣡⣿⡟⠀⢻⣶⠶⣿⣿⠛⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣷⡈⢿⣦⣸⠇⢀⡿⠿⠿⡿⠿⠿⣿⠛⠋⠁⠀⣴⠟⣿⣧⡀⠈⢁⣰⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⢻⣦⣈⣽⣀⣾⠃⠀⢸⡇⠀⢸⡇⠀⢀⣠⡾⠋⢰⣿⣿⣿⣿⡿⠟⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠿⢿⣿⣿⡟⠛⠃⠀⠀⣾⠀⠀⢸⡇⠐⠿⠋⠀⠀⣿⢻⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⠁⢀⡴⠋⠀⣿⠀⠀⢸⠇⠀⠀⠀⠀⠀⠁⢸⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣿⡿⠟⠋⠀⠀⠀⣿⠀⠀⣸⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣁⣀⠀⠀⠀⠀⣿⡀⠀⣿⠀⠀⠀⠀⠀⠀⢀⣈⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠛⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠟⠛⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+""".split("\n")[1:]
+
+images["vader"] = r"""
+Sua falta de fé é perturbadora.
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⡀⠀⠀⠀⢀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣤⣶⣾⣿⡉⢤⣍⡓⢶⣶⣦⣤⣉⠒⠤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣿⣿⣿⣿⣿⣿⣷⡀⠙⣿⣷⣌⠻⣿⣿⣿⣶⣌⢳⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣄⠈⢿⣿⡆⠹⣿⣿⣿⣿⣷⣿⡀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣄⠹⣿⡄⢻⣿⣿⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⢠⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠿⣿⣿⣷⣽⣷⢸⣿⡿⣿⡿⠿⠿⣆⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡄⠀⠀⠀⠐⠾⢭⣭⡼⠟⠃⣤⡆⠘⢟⢺⣦⡀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⢛⣥⣶⠾⠿⠛⠳⠶⢬⡁⠀⠀⠘⣃⠤⠤⠤⢍⠻⡄⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⡿⣫⣾⡿⢋⣥⣶⣿⠿⢿⣿⣿⣿⠩⠭⢽⣷⡾⢿⣿⣦⢱⡹⡀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⡟⠈⠛⠏⠰⢿⣿⣿⣧⣤⣼⣿⣿⣿⡏⠩⠽⣿⣀⣼⣿⣿⢻⣷⢡⠀⠀⠀
+⠀⠀⠀⠀⠀⢰⣿⣿⣿⣿⣿⣿⢁⣿⣷⣦⡀⠀⠉⠙⠛⠛⠛⠋⠁⠙⢻⡆⠀⢌⣉⠉⠉⠀⠸⣿⣇⠆⠀⠀
+⠀⠀⠀⠀⢀⣾⣿⣿⣿⣿⣿⡇⢸⣿⣿⣿⣿⠷⣄⢠⣶⣾⣿⣿⣿⣿⣿⠁⠀⠀⢿⣿⣿⣿⣷⠈⣿⠸⡀⠀
+⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⣿⠀⣌⡛⠿⣿⣿⠀⠈⢧⢿⣿⡿⠟⠋⠉⣠⣤⣤⣤⣄⠙⢿⣿⠏⣰⣿⡇⢇⠀
+⠀⠀⠀⣼⣿⣿⣿⣿⣿⣿⡇⢸⣿⣿⣶⣤⣙⠣⢀⠈⠘⠏⠀⠀⢀⣴⢹⡏⢻⡏⣿⣷⣄⠉⢸⣿⣿⣷⠸⡄
+⠀⠀⣸⣿⣿⣿⣿⣿⣿⣿⠁⣾⣟⣛⠛⠛⠻⠿⠶⠬⠔⠀⣠⡶⠋⠿⠈⠷⠸⠇⠻⠏⠻⠆⣀⢿⣿⣿⡄⢇
+⠀⢰⣿⣿⣿⣿⠿⠿⠛⠋⣰⣿⣿⣿⣿⠿⠿⠿⠒⠒⠂⠀⢨⡤⢶⣶⣶⣶⣶⣶⣶⣶⣶⠆⠃⣀⣿⣿⡇⣸
+⢀⣿⣿⠿⠋⣡⣤⣶⣾⣿⣿⣿⡟⠁⠀⣠⣤⣴⣶⣶⣾⣿⣿⣷⡈⢿⣿⣿⣿⣿⠿⠛⣡⣴⣿⣿⣿⣿⠟⠁
+⣼⠋⢁⣴⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣎⠻⠟⠋⣠⣴⣿⣿⣿⣿⠿⠋⠁⠀⠀
+⢿⣷⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⣴⠀⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⣠⣾⣿⠿⠿⠟⠋⠁⠀⠀⠀⠀⠀
+⠀⠉⠛⠛⠿⠿⠿⢿⣿⣿⣿⣵⣾⣿⣧⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠉⠉⠉⠉⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+""".split("\n")[1:]
+
+images["mario"] = r"""
+Vamos lá. Nossa grande aventura começa agora!
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣠⣤⣤⣤⣄⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣴⡾⣻⣿⣿⣿⣿⣯⣍⠛⠻⢷⣦⣀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣿⠟⢁⣾⠟⠋⣁⣀⣤⡉⠻⣷⡀⠀⠙⢿⣷⣄⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⢀⡀⠀⠀⠀⠀⠀⠀⣰⣿⠏⠀⠀⢸⣿⠀⠼⢋⣉⣈⡳⢀⣿⠃⠀⠀⠀⠙⣿⣦⡀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⢰⡿⠿⣷⡀⠀⠀⠀⣼⣿⠃⠀⠀⣀⣤⡿⠟⠛⠋⠉⠉⠙⢛⣻⠶⣦⣄⡀⠀⠘⣿⣷⡀⠀⠀⠀
+⢠⣾⠟⠳⣦⣄⢸⡇⠀⠈⣷⡀⠀⣼⣿⡏⢀⣤⡾⢋⣵⠿⠻⢿⠋⠉⠉⢻⠟⠛⠻⣦⣝⠻⣷⣄⠸⣿⣿⠀⠀⠀
+⠘⣧⠀⠀⠀⠙⢿⣿⠀⠀⢸⣷⠀⣿⣿⣧⣾⣏⡴⠛⢡⠖⢛⣲⣅⠀⠀⣴⣋⡉⠳⡄⠈⠳⢬⣿⣿⣿⡿⠀⠀⠀
+⠀⠘⠷⣤⣀⣀⣀⣽⡶⠛⠛⠛⢷⣿⣿⣿⣿⣏⠀⠀⡏⢰⡿⢿⣿⠀⠀⣿⠻⣿⠀⡷⠀⣠⣾⣿⡿⠛⠷⣦⠀⠀
+⠀⠀⢀⣾⠟⠉⠙⣿⣤⣄⠀⢀⣾⠉⠀⢹⣿⣿⣷⠀⠹⡘⣷⠾⠛⠋⠉⠛⠻⢿⡴⢃⣄⣻⣿⣿⣷⠀⠀⢹⡇⠀
+⠀⠀⢸⡇⠈⠉⠛⢦⣿⡏⠀⢸⣧⠀⠈⠻⣿⡿⢣⣾⣦⣽⠃⠀⠀⠀⠀⠀⠀⠀⣷⣾⣿⡇⠉⢿⡇⠀⢀⣼⠇⠀
+⠀⠀⠘⣷⡠⣄⣀⣼⠇⠀⠀⠀⠻⣷⣤⣀⣸⡇⠀⠹⣿⣿⣦⣀⠀⠀⠀⠀⢀⣴⣿⣿⡟⠀⠀⢸⣷⣾⡿⠃⠀⠀
+⠀⠀⠀⠈⠻⢦⣍⣀⣀⣀⡄⠀⣰⣿⡿⠿⢿⣇⠀⠀⠉⠛⠻⣿⣿⡷⠾⣿⣿⡿⠉⠁⠀⠀⢀⣾⠋⠁⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠈⠉⠉⠙⠿⢿⣿⣇⠀⠀⠈⢿⣧⣄⠀⠀⠀⢹⣷⣶⣶⣾⣿⡇⠀⠀⣀⣴⡿⣧⣄⡀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢿⣷⡀⠀⠀⠙⢿⣿⣶⣤⡀⠻⢤⣀⡤⠞⢀⣴⣿⣿⠟⢷⡀⠙⠻⣦⣄⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢻⣦⠀⢠⡟⠁⠙⢻⣿⠷⠶⣶⠶⠾⠛⠙⣿⠇⠀⠀⢻⡄⠀⠀⠙⢷⡀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⣿⡀⣿⠁⣤⣤⡄⢻⡶⠶⠛⠛⠛⠛⠛⣿⢠⣾⣷⣆⢻⡀⠀⠀⠈⣷
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⢸⣿⣿⣿⡈⢿⡀⠀⠀⠀⠀⠀⡿⢸⣿⣿⣿⢸⡇⠀⠀⠀⡟
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠈⠉⠉⠉⠁⠈⠁⠀⠀⠀⠀⠈⠁⠈⠉⠉⠉⠀⠁⠀⠀⠈⠁
+""".split("\n")[1:]
+
+images["mandalorian"] = r"""
+Como deve ser
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣀⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⠴⠚⣹⠁⣶⢲⢈⠉⠓⠶⢤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠞⠉⠀⢀⣾⢻⠀⣿⡈⢸⠀⠀⠀⠀⠉⠳⢄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⠞⠀⠀⠀⠀⣈⣿⣾⣾⣿⡇⢸⠀⠀⠀⠀⠀⠀⠀⠙⢄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡴⠃⠀⢀⡀⠀⣴⣿⡏⣿⣿⣿⡇⣼⡇⠀⠀⠀⠀⠀⠀⠀⠈⠳⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⣠⡴⠶⠟⠋⠀⠀⡄⢸⡇⢸⣿⣼⣧⣿⣿⣿⣁⣿⣤⣄⣀⣀⠀⢀⠀⠀⠀⠀⠈⠙⠛⠒⠦⠄⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣦⣷⣾⡿⠿⢿⣿⣿⣿⣿⣿⣿⣽⣿⣿⣿⣿⣓⣲⠲⠦⢤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣿⣫⣭⣼⣶⣿⠿⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣟⣿⣟⢻⣶⣌⢻⣶⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣿⡿⡿⢿⠓⠒⣛⠻⣿⣟⣿⣿⣿⣿⣿⣿⡏⠙⠋⠛⠀⠀⠀⠀⠈⠉⣿⢹⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⣿⡇⢀⣀⠀⠀⣿⢀⠀⠸⣿⣿⣿⣿⣿⣿⠁⠀⠀⠀⠀⠀⣠⣴⣶⣦⣼⣿⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣿⡇⣿⣿⣿⣦⡹⣆⠀⠀⣿⣿⣿⣿⣿⣿⠀⠀⠀⣴⣿⣾⣿⣿⢿⣿⣿⣿⠛⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢘⣿⣿⣿⣿⣿⣿⡝⣧⠀⢹⣿⣿⣿⣿⣿⠀⢀⣼⣿⣿⣿⣿⣿⣿⠃⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢻⣿⢸⣿⣿⣿⣿⣿⡇⢸⣿⣿⣿⣿⡗⠈⣼⣿⢿⣿⡿⠿⢿⣯⠀⠿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣸⡇⠈⠙⢿⣷⢿⡘⣿⣿⣿⣿⠃⢠⣿⣿⡿⠉⠀⠀⠀⢻⡀⢀⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⠀⠀⠀⠈⢻⡟⣇⣇⣿⣿⣿⠀⢸⣿⡿⠁⠀⠀⠀⠀⠀⢷⣄⢻⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⡏⠀⠀⠀⠀⠀⣿⢿⣿⣿⣿⣿⠀⣾⣿⠃⠀⠀⠀⠀⠀⠀⠘⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠻⠧⣄⡀⠀⠀⠀⢸⣾⣿⣿⣿⣿⠀⣿⡟⠀⠀⠀⠀⣀⣠⣥⣶⣿⣦⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠙⠲⣦⣄⣿⣿⣿⣿⣿⣷⣿⣧⣴⣶⡾⣛⣯⣭⣷⠤⠶⠤⢬⣭⢽⣆⡀⢠⣶⣶⣶⠶⠶⢤
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⡤⣽⣿⣿⣿⣿⣿⣿⣿⣿⣿⣻⣟⢿⠏⣉⣡⣤⣶⣾⠿⣿⣿⣿⣿⠛⢸⣾⡿⠛⠛⠛⠶
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⣤⣿⣛⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣯⣿⣷⣿⣿⡿⢟⣿⡟⣰⣾⠋⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⣠⣴⡶⣫⣽⢿⣯⣽⣿⣿⣿⣿⠿⠛⠁⢈⣹⣿⣿⣿⣿⣿⣿⣿⠿⠿⠿⠿⠿⠿⣤⣴⣿⠛⢰⣿⠇⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⣰⣿⣿⣼⣟⣽⣼⣿⣿⣿⣿⣯⣷⢍⣣⣶⣿⣿⣿⣿⣿⣿⣿⠟⠁⠀⠀⠀⠀⠀⢸⣿⣿⡟⠀⣧⣿⠀⡀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⣴⣼⣿⣿⣿⣿⣿⣿⡛⠋⠛⣿⡿⢛⣿⣿⣿⣿⣿⣿⣿⡿⠟⠋⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣇⠰⣿⣿⠀⢷⢷⠀⠀⠀⠀
+⠀⠀⠀⢀⣿⡿⢿⣿⣿⡿⠋⠉⠀⢠⣴⣫⣼⣿⣿⣿⣿⣿⣿⠟⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⡆⣿⣟⢷⣞⢂⣀⠀⠀⠀
+⠀⣠⣴⡿⠉⠀⣿⣿⣿⡗⠀⣴⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡄⣿⣿⣿⣿⣿⣅⢸⣿⡳⣿⣿⣷⣤⠀⠀
+⣰⢫⡾⠁⠀⣼⣿⣿⣿⣤⣾⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡼⢸⣿⣿⣿⣿⣿⣿⣿⣿⣷⡌⠻⣝⣿⣧⡀
+⣱⣿⠁⠂⣰⣿⣿⣿⣿⣿⣿⣿⣼⣿⣿⣿⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⣡⣿⡿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣅⠈⠻⣿⣷
+⣿⠇⠀⢠⣿⣿⢿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⣱⣟⡿⣽⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⡄⠈⠿
+⣿⠀⢀⣿⣿⣿⣴⣟⡻⣮⣿⣿⣿⣿⣋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡼⣱⣿⣿⢣⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀
+⣿⠀⠘⢱⣿⠿⣿⣿⣿⣍⣻⣿⣿⣿⣿⣽⣗⡂⠤⠀⠀⠀⠀⠀⠀⢀⣤⠴⣺⣽⣾⣿⣿⠏⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+""".split("\n")[1:]
+
+
+images["minion"] = r"""
+Bananaaaa!
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠤⠤⠤⠀⣀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡠⠐⢉⠴⣚⠉⣙⠢⢄⡤⢞⡂⢀⣐⢄⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡔⡤⣞⢁⠊⢀⣀⠐⢿⡄⠰⢁⡀⠈⠺⣦⢡⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⣿⣗⣟⡸⠀⠻⡿⠃⢸⣇⢃⠿⠿⠀⠀⣽⢸⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⠈⠙⢷⣴⡀⠀⠠⣪⣾⣷⡄⡀⠠⣐⢕⠁⠀
+⠀⢰⡦⠀⠀⠀⠀⠀⠀⡇⠀⠀⠀⠀⠙⠲⡖⠓⠉⠁⠈⠉⠒⠀⠈⢸⠀⠀
+⢶⣿⣷⣤⢀⣀⡀⠀⠀⣏⡑⠢⢄⠀⠀⠀⠈⠐⠀⠐⠀⠀⠀⠀⠀⡸⡀⠀
+⠛⠛⠛⠟⠀⠤⠤⠌⢉⠀⠈⠓⢬⣿⣦⡤⣤⣤⠤⠤⣤⣤⣤⣤⣚⣔⣄⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⡇⠀⠀⡤⠂⠀⠀⢀⠤⠤⢄⡨⠔⠒⢍⠉⢁⣯⡆
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⡗⢤⡤⣬⠀⠀⠀⢇⠀⠀⠀⠁⠀⠀⡸⢰⣿⣿⡿
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢌⡿⣽⡀⠀⠀⠈⠒⢄⡀⠀⢀⠔⠁⠈⠙⡋⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⠳⢧⣠⣤⣄⣠⣀⣈⣱⡥⠤⠴⠦⠴⠃⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣿⣿⠀⣿⣿⣿⣄⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠉⠉⠀⠈⠉⠉⠉⠀⠀⠀⠀⠀⠀
+""".split("\n")[1:]
+
+images["minions2"] = r"""
+Banana banana bananáaaaaa!
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⢀⣠⣤⣄⡀⢀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⡶⠛⢉⠤⣀⠤⡠⢫⠵⠶⢩⡢⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⣀⠀⠀⠀⠀⠀⠀⢰⠋⠀⣠⢡⠋⠉⠙⣆⢂⣤⡄⠈⡇⡇⠀⠀⣀⣶⣄⢤⠀
+⢠⢇⠓⠒⣂⡤⡀⠀⡆⠀⡜⣿⣜⢄⣿⢆⠜⣤⣝⣓⣢⠜⠀⡠⢛⠧⠬⠭⠸⠇
+⠈⠒⠓⠂⠙⠓⢌⠢⢷⡫⠐⠉⠛⠴⠶⠖⠊⠀⠉⠉⠀⢸⠌⡰⠁⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠑⡀⠙⢕⢦⠀⠀⠠⣲⣒⠲⢲⠎⢻⢈⣷⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠸⡀⠀⢣⡑⡄⠀⠑⠠⠄⠘⠴⠂⣸⣹⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠃⠀⠀⢹⣼⡶⣄⠀⠀⠀⠀⡴⢿⢻⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠀⠀⠀⡝⠁⠀⠙⠒⠒⠋⠀⢸⢸⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⢄⣀⣀⡇⠀⠀⡖⢦⣴⠊⡆⢸⣸⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⠀⠉⢸⠁⠀⠸⡇⣞⣯⡷⡇⢨⢹⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⡀⠔⠃⠀⠀⠀⠑⠬⠭⠝⠀⣈⡾⡄⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⡴⢣⠑⢄⣀⣀⣀⣀⣀⠀⠤⣐⢞⣿⡡⠃⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠈⠁⠉⠉⠀⠀⠀⠀⠀⠀⠀⠈⠫⠙⠀⠀⠀⠀⠀⠀⠀⠀
+""".split("\n")[1:]
+
+images["slayer"] = r"""
+Não há atalhos, apenas trabalho duro.
+Treine duro e seja paciente. Vai valer a pena.
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⠏⠁⠈⠙⠛⢿⣿⣿⣿⣿⣿⣿⣿⡟⠀⠈⠻⣿⣿⣿⣿⣿⠟⢡⡿⢿⣿⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⠀⠀⠀⠀⢀⣎⣏⡏⣟⠛⠿⠿⡟⢁⣀⣀⣠⡼⠟⠛⠉⠀⠀⠉⠐⠋⠀⠀⠛⠋⠭⠾⢿⣿⣿⠟⣫⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣦⣶⡀⠀⠀⠀⠉⠛⣿⣿⣷⣿⣇⣠⠟⠋⠁⠀⠀⢀⡄⠀⠀⠀⠀⠀⠀⠀⣀⣠⡤⠴⠒⠋⠁⣰⡿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣷⠀⠀⡀⠀⠀⠀⠉⠉⡿⠋⠁⡠⢀⠄⡠⠔⠋⢀⣀⠔⠀⢀⡤⠚⣽⡟⠋⠀⠀⠀⢀⡜⢱⠃⠉⣩⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣦⡀⢹⠀⠀⠀⢀⡞⠁⡰⠛⣡⢃⣾⠁⠤⡾⢋⣀⡀⠠⠊⠀⢾⣏⡾⠀⢀⣠⡴⠿⠙⣿⠃⠀⠙⠛⢉⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣷⡄⠀⠀⡜⠀⠐⡅⡜⡇⢠⠃⡠⠊⠐⠝⠋⠀⠀⠀⠀⠈⠙⢁⠔⣯⡝⢁⡶⢾⣿⠇⠀⠀⠀⠐⠺⠿⢻⣿⣿⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⡀⣠⡇⠀⣠⡇⡸⠀⢣⠎⢀⣀⣤⣴⣶⠟⠛⠀⠀⠀⠀⠀⠀⣭⣷⣤⡴⠋⠀⠀⠀⠀⠀⠀⠀⠀⠙⣽⡿⢿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⣿⢿⡇⢀⡟⠃⣡⡿⠃⣰⣾⡯⠚⠉⣀⣠⣄⣤⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠀⢀⡈⠁⠀⠀⠀⣠⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣿⡇⢸⣷⠸⠁⢲⡏⢀⣾⣿⠏⣠⠞⠁⠀⢾⣿⣽⡆⡀⠀⣠⠀⠀⠀⠀⠀⠀⠀⠀⣀⡠⠄⠀⠀⠀⢀⡾⢧⣿⣿⣿⣿
+⣿⣿⣿⣿⣿⣿⣟⣳⣿⣿⣆⠀⢸⠁⠸⣿⠏⣰⣿⠀⡀⠀⠀⢁⣻⣧⣷⣿⡽⠃⠀⠀⠀⠀⠀⠀⠉⠀⠀⠀⠀⢠⣶⠯⣄⣠⡽⠿⢿⣿
+⣿⣿⣿⣿⣿⣿⣟⡁⢈⠟⣁⠀⠀⠀⠀⠋⢰⣿⡿⣧⣌⣒⣒⣿⣞⣿⣿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣸⣯⠽⠋⠁⠀⠀⠀⠀⠀
+⣿⣿⣿⠿⣿⣿⡿⠟⠁⠊⠱⣣⣶⡀⠀⠀⢘⡛⠓⠚⣛⣋⣛⣸⠭⠞⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡠⣞⡋⠁⠀⠀⠀⠀⠀⠀⠀⠀
+⣿⣿⡃⠀⠘⣿⢤⡀⠀⠀⠀⣹⣿⡟⠀⢀⡎⢱⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣉⡥⠖⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⣿⣟⢿⠀⢆⠘⢦⡈⢦⡠⡺⠋⠉⠠⢊⡝⠀⢰⣧⡈⠓⢤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣽⠶⠄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⣿⣿⣼⣷⠈⢳⣄⠙⠲⣧⠀⠀⣠⠖⠋⠙⠢⠼⠁⠙⠶⠀⠈⠉⠛⠤⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⣿⣿⣷⣍⠀⠀⠻⠷⠄⢘⣧⣞⣡⣶⣏⠉⣳⠀⣠⣤⣀⠀⢤⣠⡐⠦⣄⡀⠀⠀⠀⠀⢀⡐⠒⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⣿⣿⣿⣿⣿⣷⣶⣄⣀⣸⣿⣿⣿⣿⣿⣶⣿⣆⣻⣿⣿⣷⣶⢭⣿⣦⣶⠿⠾⣗⢒⠿⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡌⠁⠙⠂⢀⡉⣁⡠⠴⠛⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⣀⠀⠀⠈⠀⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣤⣶⠶⠖⣶⠁⠀
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣛⡦⠀⣀⣨⠟⠲⠤⠤⠬⣷⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣴⠟⢁⡀⠀⣼⠇⠀⠀
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⣶⣬⣿⣿⣡⣵⣖⣤⣀⣤⣈⣙⣶⣦⣤⣀⣀⣠⡤⠶⠟⠋⠁⠀⠀⠉⢷⠉⠀⠀⠀
+⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣒⠒⠖⠀⠀⠀⠀⠉⠀⢄⣀⣴
+""".split("\n")[1:]
+
+images["jujutsu"] = r"""
+Não sei como vou me sentir quando estiver morto, 
+mas não quero me arrepender da maneira como vivi.
+⠀⠀⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⢠⣀⡀⡏⠳⣄⠀⠀⠀⢀⡀⠀⢠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⡤⠵⠀⢀⡶⠛⠁⢢⢄⡜⠱⡾⠍⠧⠲⡇⣀⡄⠀⠀⠀⠀⠀⠀⠀⠀
+⠈⢶⣤⠛⠁⣀⡹⠉⠀⠀⠀⠀⠀⠀⠀⠀⠰⠥⣤⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠁⠀⠠⣿⢃⢀⣤⣤⡴⣰⢰⣠⢠⠀⠀⢨⣷⡆⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠝⢿⠙⢯⣟⠀⣱⡿⠌⡷⣿⣾⣿⡿⠙⢦⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⣸⠀⠼⠀⠀⠀⠃⣠⠄⠘⡟⢘⣄⠀⠈⢷⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠘⡏⠉⠀⡐⢢⠀⢀⡀⠀⢰⠖⡩⠊⠀⣠⠋⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⢈⣷⢄⡑⠚⢀⡠⠤⣒⠡⠊⢀⣠⣾⣿⣦⠀⠀⠀⠀
+⠀⠀⠀⠀⢀⣴⣿⣿⣿⣍⠫⠇⠐⠉⢒⣠⣴⣿⣿⣿⣿⣿⡆⠀⠀⠀
+⠀⠀⡤⢐⠚⣿⣿⣿⣿⣿⣶⣶⣶⣶⣾⣿⣛⠟⠛⣿⣿⣿⡇⠀⠀⠀
+⠀⢸⠐⠠⢌⣺⣿⠿⠛⠻⣿⣿⣿⣿⣿⣿⠀⠄⠀⠈⣿⣿⣷⠀⠀⠀
+⠀⠀⠣⢌⡹⠋⠁⠀⢀⣠⣿⣿⣿⣿⣿⣿⣯⣭⣀⣴⣿⣿⣿⠇⠀⠀
+⠀⠀⠀⠀⠀⢀⣠⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣍⠀⠀⠀
+⠀⠀⠀⢠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣇⠀⠀
+⠀⠀⢀⣾⣿⣿⣿⣿⣿⡿⠏⠁⠀⠈⠉⠙⢿⣿⣿⣿⣿⣿⣿⣿⣇⠀
+⠀⠀⣼⣿⣿⣿⣿⡿⠋⠁⠀⠀⠀⠀⠀⠀⠀⠙⢿⣿⣿⣿⣿⣿⣿⡆
+⠀⠘⠛⣿⡿⠛⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢿⣿⣏⠉⠉
+⢀⠤⣾⠛⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠾⣐⣚⣦⠀
+⠉⠉⠉⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+""".split("\n")[1:]
+
+
+images["gollum"] = r"""
+Meu precioso!
+⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⣴⣶⡿⠟⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⢀⣴⣾⣿⣿⣿⠋⠀⠀⠀⠀⠀⠀⠈⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⢀⣼⡿⠛⠻⣿⣿⠃⢀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠀⠀⠀⠀⠀
+⠀⠀⢠⣿⣿⠃⢰⣆⠘⢿⡦⠈⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⠀⠀⠀⠀⠀
+⠀⢠⣿⣿⣿⠀⠙⢿⡆⠈⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡀⠀
+⢀⣿⣿⣿⣿⢀⠐⢿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣷⠀
+⠈⠉⠉⠙⠛⠃⣷⣮⠃⠀⢀⣀⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⡇
+⠀⠀⠀⠀⠀⠀⠘⣿⡄⠐⠚⢆⠁⠙⢻⣶⣦⣄⡀⡀⠀⠀⠀⠀⠀⠀⠀⠘⠋⠁
+⠀⠀⢀⣶⡀⠐⣠⣿⣷⣤⡀⠐⠙⠶⠶⠿⠿⠛⠿⣿⣿⣿⣤⣴⣀⠀⠀⣴⢎⠀
+⠀⠀⠈⣿⣿⣾⣿⣿⣿⣿⣇⣠⠴⠖⠲⡂⠀⠀⠀⠹⣿⣟⡛⠹⠛⠂⠘⣡⡿⠀
+⠀⠀⠀⢻⣿⣿⣿⣿⣿⡇⢹⣧⠀⠀⠀⠱⢀⣀⡠⠲⣄⣹⣿⡏⠀⣠⣾⣿⠃⠀
+⠀⠀⠀⠸⣿⣿⣿⣿⣿⡇⠀⠁⠙⣢⣄⣀⠀⠀⠀⠀⢹⣿⣿⣫⣾⣿⡿⠃⠀⠀
+⠀⠀⠀⠀⠙⢩⢻⣿⣿⣷⡀⠀⠀⢈⡙⠛⠿⠓⠐⠉⠀⢸⣿⣿⣿⠟⠁⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠽⢀⣤⡀⠀⢠⣤⡈⠉⠁⠠⠤⠀⠀⠘⠿⠋⠁⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠿⠶⢾⣭⢤⡾⠀⠠⠒⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+""".split("\n")[1:]
 class Style:
     focus = "B"
     progress_done = "g"  # quest and cluster progress text
@@ -538,6 +749,51 @@ class Style:
     bar_skills = "B"
     bar_cmds = "Y"
     bar_bg = "M"
+quit_msgs = [
+        "Deus abençoe, vá em paz",
+        "Bye bye",
+        "Vou sentir saudades",
+        "Volte quando estiver mais descansado",
+        "Espero que tenha aprendido algo novo hoje",
+        "Cada pequena vitória merece ser comemorada",
+        "Obrigado pelo tempo juntos",
+        "Até a próxima",
+        "Um abraço, seja feliz", 
+        "Durma cedo, amanhã você pode continuar", 
+        "Vá, mais volte",
+        "Arri égua, já vai?", 
+        "Capando o gato tão cedo?",
+        "Vai porquê quer",
+        "Fique mais um pouquinho", 
+        "Vamos lá, pegue um café (ou chá) e volte outra hora",
+        "Foque em avançar um passo por vez",
+        "O caminho é mais importante que a chegada",
+        "Lembre de dar bons nomes para as variáveis e métodos", 
+        "Você também está programando para outros seres humanos lerem, faça algo organizado",
+        "Seja criterioso com a indentação e as regras de estilo, faça algo belo",
+        "Está precisando de mais conselhos? Vá ler a bíblia!",
+        "Não se repita, refatore seu código para tirar as redundâncias",
+        "São necessárias umas 1000 horas pra ser bom em algo",
+        "Só é fracasso quando você desiste, espaireça e tente de novo",
+        "Parar e descansar é importante também",
+        "Se for pra descansar, largue o celular",
+        "Traga uma garrafa de água próxima vez, facilite o acesso",
+        "Toda capacidade que não é usada, se perde, movimente-se",
+        "Te vejo depois do exercício. Malhe, corra, dance, e depois volte",
+        "Se você não se der valor, ninguém vai. Invista em você",
+        "Tem exercícios que vão ser bem complicados, tire um tempo para pensar longe do computador",
+        "Use as inteligências artificiais com sabedoria, depois tente refazer a tarefa sem elas",
+        "Lembre de pedir ajuda quando precisar", 
+        "Você não está sozinho, peça ajuda se preciso", 
+        "É justo que o que muito vale, muito custe", 
+        "Aprender a se divertir é parte essencial do aprendizado", 
+        "Esse miserável é um miserável",
+        "Você é importante e precioso, mesmo que seu código tenha ficado uma porcaria",
+        "Alguns tem mais dificuldades que outros, tenha paciência consigo mesmo",
+        "Se você precisa de mais tempo que seus colegas pra aprender, se dê mais tempo", 
+        "Quer um filme lindo? Assita Mary e Max, uma amizade diferente",
+        "Quer uma leitura de ficção impactante? Trilogia o problema dos três corpos", 
+    ]
 class LabelFactory:
     def __init__(self):
         self._label = ""
@@ -1429,11 +1685,12 @@ class Flag:
     
 
 class Flags:
-    minimum = Flag().name("Mínimo").char("m").text("Mostra os requisitos mínimos para completar a missão").location("left")
-    reward = Flag().name("Recompensa").char("r").text("Mostra a experiência obtida na tarefa").location("left")
-    percent = Flag().name("Percentual").char("p").text("Mostra valores em porcentagem").location("left")
+    minimum = Flag().name("Mínimo").char("m").values(["0", "1"]).text("Mostra os requisitos mínimos para completar a missão").location("left")
+    reward = Flag().name("Recompensa").char("r").values(["0", "1"]).text("Mostra a experiência obtida na tarefa").location("left")
+    percent = Flag().name("Percentual").char("p").values(["0", "1"]).text("Mostra valores em porcentagem").location("left")
     admin = Flag().name("Admin").char("A").text("Mostra todas as missões e grupos").location("left")
-
+    fortune = Flag().name("Conselho").char("C").values(["1", "0"]).text("Mostra mensagem aleatórias na saída").location("left")
+    success = Flag().name("Sucesso").char("S").values(["1", "0"]).text("Mostra os personagens no sucesso da execução").location("left")
     config = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
     skills = Flag().name("Técnicas").char("t").values(["0", "1"]).text("Mostra a barra de skills").location("top")
 
@@ -3804,6 +4061,9 @@ class IdentifierType(enum.Enum):
     VPL = "VPL"
     SOLVER = "SOLVER"
 
+class Success(enum.Enum):
+    RANDOM = "RANDOM"
+    FIXED = "FIXED"
 
 class Identifier:
     def __init__(self):
@@ -4927,12 +5187,13 @@ class Diff:
 
 class CDiff:
 
-    def __init__(self, wdir: Wdir, param: Param.Basic):
+    def __init__(self, wdir: Wdir, param: Param.Basic, success: Success):
         self.param = param
         self.results: List[Token] = []
         self.wdir = wdir
         self.exit = False
         self.index = 0
+        self.success = success
 
         self.init = 0   # index of first line to show
         self.length = 1  # length of diff
@@ -4973,9 +5234,12 @@ class CDiff:
         return ""
 
     def sucesso(self):
-        count = sum([ord(c) for c in self.get_folder()])
-        keys = list(images.keys())
-        out = images[keys[count % len(keys)]]
+        if self.success == Success.RANDOM:
+            count = sum([ord(c) for c in self.get_folder()])
+            keys = list(images.keys())
+            out = images[keys[count % len(keys)]]
+        else:
+            out = images["success"]
         _, cols = Fmt.get_size()
         for i, line in enumerate(out):
             Fmt.write(i + 4, 1, Sentence().addf("g", line).center(cols - 2, Token(" ", " ")))
@@ -5288,9 +5552,11 @@ class Run:
         self.wdir: Wdir = Wdir()
         self.curses: bool = False
         self.first_run = False
+        self.success = Success.RANDOM
 
-    def set_curses(self, value:bool=True):
+    def set_curses(self, value:bool=True, success: Success=Success.RANDOM):
         self.curses = value
+        self.success = success
         return self
 
     def set_first_run(self):
@@ -5437,7 +5703,7 @@ class Run:
             return
         
         if self.curses:
-            cdiff = CDiff(self.wdir, self.param)
+            cdiff = CDiff(self.wdir, self.param, self.success)
             if self.first_run:
                 cdiff.set_first_run()
             cdiff.run()
@@ -5761,7 +6027,11 @@ class Play:
             )
             return
         run = Run([path], None, Param.Basic())
-        run.set_curses()
+        if Flags.success.is_true():
+            run.set_curses(True, Success.RANDOM)
+        else:
+            run.set_curses(True, Success.FIXED)
+
         if len(self.rep.get_tasks()) == 0:
             run.set_first_run()
         return run.execute
@@ -6077,51 +6347,10 @@ class Play:
             Flags.config.toggle()
             self.show_help_config()
 
-    quit_msgs = [
-        "Deus abençoe, vá em paz",
-        "Bye bye",
-        "Vou sentir saudades",
-        "Volte quando estiver mais descansado",
-        "Espero que tenha aprendido algo novo hoje",
-        "Cada pequena vitória merece ser comemorada",
-        "Obrigado pelo tempo juntos",
-        "Até a próxima",
-        "Um abraço, seja feliz", 
-        "Durma cedo, amanhã você pode continuar", 
-        "Vá, mais volte",
-        "Arri égua, já vai?", 
-        "Capando o gato tão cedo?",
-        "Vai porquê quer",
-        "Fique mais um pouquinho", 
-        "Vamos lá, pegue um café (ou chá) e volte outra hora",
-        "Foque em avançar um passo por vez",
-        "O caminho é mais importante que a chegada",
-        "Lembre de dar bons nomes para as variáveis e métodos", 
-        "Você também está programando para outros seres humanos lerem, faça algo organizado",
-        "Seja criterioso com a indentação e as regras de estilo, faça algo belo",
-        "Está precisando de mais conselhos? Vá ler a bíblia!",
-        "DRY - Don't Repeat Yourself, refatore seu código para tirar as redundâncias",
-        "São necessárias umas 1000 horas pra ser bom em algo",
-        "Só é fracasso quando você desiste, espaireça e tente de novo",
-        "Parar e descansar é importante também",
-        "Se for pra descansar, largue o celular",
-        "Traga uma garrafa de água próxima vez, facilite o acesso",
-        "Toda capacidade que não é usada, se perde, movimente-se",
-        "Te vejo depois do exercício. Malhe, corra, dance, e depois volte",
-        "Se você não se der valor, ninguém vai. Invista em você",
-        "Tem exercícios que vão ser bem complicados\ntire um tempo pra pensar longe do computador",
-        "Use as inteligências artificiais com sabedoria, tente refazer depois a tarefa sem elas",
-        "Lembre de pedir ajuda quando precisar", 
-        "Você não está sozinho, peça ajuda se preciso", 
-        "É justo que o que muito vale, muito custe", 
-        "Aprender a se divertir é parte essencial do aprendizado", 
-        "Esse miserável é um miserável",
-        "Você é importante e precioso, mesmo que seu código tenha ficado uma porcaria",
-        "Alguns tem mais dificuldades que outros, tenha paciência consigo mesmo",
-        "Se você precisa de mais tempo que seus colegas pra aprender, se dê mais tempo", 
-        "Quer um filme lindo? Assita Mary e Max, uma amizade diferente",
-        "Quer uma leitura de ficção impactante? Trilogia o problema dos três corpos", 
-    ]
+    def select_quit_msg(self):
+        if Flags.fortune.is_true():
+            return random.choice(quit_msgs)
+        return "Até a próxima!"
 
     def make_callback(self) -> Dict[int, Any]:
         def set_exit():
@@ -6142,7 +6371,7 @@ class Play:
         add_str(
             self.Key.quit,
             lambda: self.fman.add_input(
-                Floating().put_text("\n" + (Play.quit_msgs[random.randint(0, len(Play.quit_msgs)) - 1]) + "\n").set_exit_fn(set_exit).warning()
+                Floating().put_text("\n" + self.select_quit_msg() + "\n").set_exit_fn(set_exit).warning()
             ),
         )
 

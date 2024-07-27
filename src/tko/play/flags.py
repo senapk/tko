@@ -93,11 +93,12 @@ class Flag:
     
 
 class Flags:
-    minimum = Flag().name("Mínimo").char("m").text("Mostra os requisitos mínimos para completar a missão").location("left")
-    reward = Flag().name("Recompensa").char("r").text("Mostra a experiência obtida na tarefa").location("left")
-    percent = Flag().name("Percentual").char("p").text("Mostra valores em porcentagem").location("left")
+    minimum = Flag().name("Mínimo").char("m").values(["0", "1"]).text("Mostra os requisitos mínimos para completar a missão").location("left")
+    reward = Flag().name("Recompensa").char("r").values(["0", "1"]).text("Mostra a experiência obtida na tarefa").location("left")
+    percent = Flag().name("Percentual").char("p").values(["0", "1"]).text("Mostra valores em porcentagem").location("left")
     admin = Flag().name("Admin").char("A").text("Mostra todas as missões e grupos").location("left")
-
+    fortune = Flag().name("Conselho").char("C").values(["1", "0"]).text("Mostra mensagem aleatórias na saída").location("left")
+    success = Flag().name("Sucesso").char("S").values(["1", "0"]).text("Mostra os personagens no sucesso da execução").location("left")
     config = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
     skills = Flag().name("Técnicas").char("t").values(["0", "1"]).text("Mostra a barra de skills").location("top")
 

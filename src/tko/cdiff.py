@@ -17,15 +17,17 @@ from .run.wdir import Wdir
 from .run.report import Report
 from .settings.settings_parser import SettingsParser
 import os
+from .run.basic import Success
 
 class CDiff:
 
-    def __init__(self, wdir: Wdir, param: Param.Basic):
+    def __init__(self, wdir: Wdir, param: Param.Basic, success: Success):
         self.param = param
         self.results: List[Token] = []
         self.wdir = wdir
         self.exit = False
         self.index = 0
+        self.success = success
 
         self.init = 0   # index of first line to show
         self.length = 1  # length of diff
@@ -66,9 +68,12 @@ class CDiff:
         return ""
 
     def sucesso(self):
-        count = sum([ord(c) for c in self.get_folder()])
-        keys = list(images.keys())
-        out = images[keys[count % len(keys)]]
+        if self.success == Success.RANDOM:
+            count = sum([ord(c) for c in self.get_folder()])
+            keys = list(images.keys())
+            out = images[keys[count % len(keys)]]
+        else:
+            out = images["success"]
         _, cols = Fmt.get_size()
         for i, line in enumerate(out):
             Fmt.write(i + 4, 1, Sentence().addf("g", line).center(cols - 2, Token(" ", " ")))

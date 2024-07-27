@@ -9,6 +9,7 @@ from .run.param import Param
 from .run.diff import Diff
 from .util.ftext import Sentence, Token
 
+from .run.basic import Success
 from .run.report import Report
 from .util.term_color import term_print
 from .util.symbols import symbols
@@ -47,9 +48,11 @@ class Run:
         self.wdir: Wdir = Wdir()
         self.curses: bool = False
         self.first_run = False
+        self.success = Success.RANDOM
 
-    def set_curses(self, value:bool=True):
+    def set_curses(self, value:bool=True, success: Success=Success.RANDOM):
         self.curses = value
+        self.success = success
         return self
 
     def set_first_run(self):
@@ -196,7 +199,7 @@ class Run:
             return
         
         if self.curses:
-            cdiff = CDiff(self.wdir, self.param)
+            cdiff = CDiff(self.wdir, self.param, self.success)
             if self.first_run:
                 cdiff.set_first_run()
             cdiff.run()
