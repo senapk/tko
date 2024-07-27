@@ -10,6 +10,8 @@ from typing import List
 from .play.frame import Frame
 from .play.floating import Floating
 from .play.floating_manager import FloatingManager
+from .play.images import images
+import random
 
 from .run.wdir import Wdir
 from .run.report import Report
@@ -64,21 +66,13 @@ class CDiff:
         return ""
 
     def sucesso(self):
-        out1 = [
-            r"  _____ __ __     __    ___  _____ _____  ___  ",
-            r" / ___/|  |  |   /  ]  /  _]/ ___// ___/ /   \ ",
-            r"(   \_ |  |  |  /  /  /  [_(   \_(   \_ |     |",
-            r" \__  ||  |  | /  /  |    _]\__  |\__  ||  O  |",
-            r" /  \ ||  :  |/   \_ |   [_ /  \ |/  \ ||     |",
-            r" \    ||     |\     ||     |\    |\    ||     |",
-            r"  \___| \__,_| \____||_____| \___| \___| \___/ ",
-        ]
-
-        out = out1
+        count = sum([ord(c) for c in self.get_folder()])
+        keys = list(images.keys())
+        out = images[keys[count % len(keys)]]
         _, cols = Fmt.get_size()
         for i, line in enumerate(out):
             Fmt.write(i + 4, 1, Sentence().addf("g", line).center(cols - 2, Token(" ", " ")))
-
+        
 
     def draw_scrollbar(self):
         y_init = 3
@@ -135,6 +129,12 @@ class CDiff:
         for i in range(len(bar)):
             Fmt.write(i + y_init, cols - 1, Sentence().add(bar[i]))
 
+    def get_folder(self):
+        if self.wdir.source_list:
+            folder = os.path.abspath(self.wdir.source_list[0])
+        else:
+            folder = os.path.abspath(self.wdir.solver.path_list[0])
+        return folder.split(os.sep)[-2]
 
     def draw_top_line(self):
         # construir mais uma solução
@@ -156,13 +156,8 @@ class CDiff:
         frame = Frame(0, 0).set_size(3, cols)
         if self.wdir.solver is None:
             return
-        folder = ""
-        if self.wdir.source_list:
-            folder = os.path.abspath(self.wdir.source_list[0])
-        else:
-            folder = os.path.abspath(self.wdir.solver.path_list[0])
-
-        activity = Sentence().addf("C", folder.split(os.sep)[-2])
+        folder = self.get_folder()
+        activity = Sentence().addf("C", folder)
         solvers = Sentence()
         for i, solver in enumerate(self.wdir.solvers_names()):
             if i != 0:

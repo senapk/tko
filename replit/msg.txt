@@ -1,4 +1,4 @@
-Para atualizar o tko, abra o replit e digite
+Para atualizar o tko, abra o shell e digite
 
     update.sh
 
