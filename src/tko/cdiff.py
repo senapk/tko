@@ -226,7 +226,7 @@ class CDiff:
         self.space = lines - 4
         frame = Frame(2, -1).set_inner(self.space, cols - 1).set_border_square()
 
-        if not self.has_any_error():
+        if not self.has_any_error() and self.end_processing():
             self.sucesso()
             return        
         Report.set_terminal_size(cols)
