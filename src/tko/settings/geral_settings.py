@@ -8,6 +8,7 @@ class GeralSettings:
     __diffdown = "diffdown"
     __sidesize = "sidesize"
     __langdef = "langdef"
+    __lastrep = "lastrep"
 
     defaults = {
         __rootdir: "",
@@ -15,7 +16,8 @@ class GeralSettings:
         __is_color: True,
         __diffdown: True,
         __sidesize: 80,
-        __langdef: ""
+        __langdef: "",
+        __lastrep: ""
     }
 
     def __init__(self):
@@ -32,6 +34,12 @@ class GeralSettings:
             raise ValueError(f"Key {key} not found in GeralSettings")
         return self.data.get(key, GeralSettings.defaults[key])
 
+    def get_last_rep(self) -> str:
+        return self.__get(self.__lastrep)
+    
+    def set_last_rep(self, value: str):
+        self.__set(self.__lastrep, value)
+        return self
 
     def to_dict(self) -> Dict[str, Any]:
         return self.data

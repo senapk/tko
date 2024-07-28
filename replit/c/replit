@@ -1,4 +1,4 @@
-run = "cat /home/runner/${REPL_SLUG}/.bin/msg.txt"
+run = ".bin/tko -c .bin/tko.cfg play"
 
 hidden = ["main", "main-debug", "**/*.o", "**/*.d", ".*", "Makefile"]
 

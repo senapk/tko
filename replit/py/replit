@@ -1,4 +1,4 @@
-run = "cat /home/runner/${REPL_SLUG}/.bin/msg.txt"
+run = ".bin/tko -c .bin/tko.cfg play"
 
 # The primary language of the repl. There can be others, though!
 language = "python3"

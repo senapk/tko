@@ -188,26 +188,43 @@ class Main:
 
     @staticmethod
     def play(args):
-        if args.repo:
-            # print("Playing course", args.repo)
 
-            while True:
-                sp = SettingsParser()
-                settings = sp.load_settings()
-                repo = settings.get_repo(args.repo)
-                local = settings.geral
-                game = Game()
-                file = repo.get_file()
-                game.parse_file(file)
+        sp = SettingsParser()
+        settings = sp.load_settings()
+        if args.repo == "__ask":
+            last = settings.geral.get_last_rep()
+            if last != "" and last in settings.reps:
+                args.repo = last
+            else:
+                print("Escolha um dos repositórios para abrir:")
+                for alias in settings.reps:
+                    print(f"- {alias}")
+                while True:
+                    print("Digite o nome do repositório desejado: ", end="")
+                    repo = input()
+                    if repo in settings.reps:
+                        args.repo = repo
+                        break
+                    print("Repositorio não encontrado")
+        
+        print(f"Abrindo repositório de {args.repo}")
+        settings.geral.set_last_rep(args.repo)
 
-                # passing a lambda function to the play class to save the settings
-                ext = ""
-                if args.graph:
-                    ext = ".svg" if args.svg else ".png"
-                play = Play(local, game, repo, args.repo, lambda: sp.save_settings())
-                reload = play.play(ext)
-                if not reload:
-                    break
+        while True:
+            repo = settings.get_repo(args.repo)
+            local = settings.geral
+            game = Game()
+            file = repo.get_file()
+            game.parse_file(file)
+
+            # passing a lambda function to the play class to save the settings
+            ext = ""
+            if args.graph:
+                ext = ".svg" if args.svg else ".png"
+            play = Play(local, game, repo, args.repo, lambda: sp.save_settings())
+            reload = play.play(ext)
+            if not reload:
+                break
 
     @staticmethod
     def down(args):
@@ -346,7 +363,7 @@ class Parser:
 
     def add_parser_play(self):
         parser_p = self.subparsers.add_parser('play', help='play a game.')
-        parser_p.add_argument('repo', metavar='repo', type=str, help='repository to be played.')
+        parser_p.add_argument('repo', metavar='repo', type=str, nargs="?", default="__ask", help='repository to be played.')
         parser_p.add_argument("--graph", "-g", action='store_true', help='generate graph of the game using graphviz.')
         parser_p.add_argument("--svg", "-s", action='store_true', help='generate graph in svg instead png.')
         parser_p.set_defaults(func=Main.play)
