@@ -34,5 +34,5 @@ TARGET="${REP}/.bin/langdef.cfg"
 echo "py" > ${TARGET}
 
 echo ""
-echo "Digite Control + D para reiniciar o terminal"
+echo "Você pode iniciar o play apertando o botão verde do Replit"
 echo ""
