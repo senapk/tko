@@ -38,5 +38,6 @@ TARGET="${REP}/.bin/langdef.cfg"
 echo "js" > ${TARGET}
 
 echo ""
-echo "Você pode iniciar o play apertando o botão verde do Replit"
+echo "Complete a instalação apertando Control D para reiniciar o sistema"
+echo "DEPOIS, você pode iniciar o play apertando o botão verde do Replit"
 echo ""
