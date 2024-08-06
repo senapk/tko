@@ -21,7 +21,7 @@ import math
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.14.5"
+__version__ = "0.14.6"
 
 
 class GeralSettings:
@@ -6780,9 +6780,9 @@ def main():
     except KeyboardInterrupt:
         print("\n\nKeyboard Interrupt")
         sys.exit(1)
-    # except Exception as e:
-    #     print(e)
-    #     sys.exit(1)
+    except Exception as e:
+        print(e)
+        sys.exit(1)
 
 
 if __name__ == '__main__':
