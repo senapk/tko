@@ -1,1 +1,2 @@
-─ Nenhum arquivo de teste encontrado. Rodando o código cat create.sql student.sql | sqlite3 ─
+──────────── Rodando o código cat create.sql student.sql | sqlite3 ────────────
+─────────── Se necessário, digite Control D para finalizar a entrada ──────────

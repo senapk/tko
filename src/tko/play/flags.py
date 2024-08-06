@@ -100,7 +100,7 @@ class Flags:
     fortune = Flag().name("Conselho").char("C").values(["1", "0"]).text("Mostra mensagem aleatórias na saída").location("left")
     success = Flag().name("Sucesso").char("S").values(["1", "0"]).text("Mostra os personagens no sucesso da execução").location("left")
     config = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
-    skills = Flag().name("Técnicas").char("t").values(["0", "1"]).text("Mostra a barra de skills").location("top")
+    skills = Flag().name("Inventário").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
 
     focus     = Flag().name("Selected").values(["kB"]).text("Cor do item em foco").many()
     prog_done = Flag().name("ProgDone").values(["g"]).text("Progresso Done").many()

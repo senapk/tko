@@ -2,6 +2,9 @@ import subprocess
 from typing import Tuple
 import os
 from subprocess import PIPE
+from .ftext import Sentence
+from .term_color import term_print
+from ..run.report import Report
 
 
 class Runner:
@@ -20,11 +23,27 @@ class Runner:
             return answer.returncode, answer.stdout.encode("cp1252").decode("utf-8"), err
         return answer.returncode, answer.stdout, err
 
+
     @staticmethod
-    def free_run(cmd: str) -> None:
+    def clear_screen():
+        if os.name == 'nt':
+            os.system('cls')
+        else:
+            os.system('clear')
+
+    @staticmethod
+    def free_run(cmd: str, to_clear: bool=True, wait_input:bool=True) -> None:
+        if to_clear:
+            Runner.clear_screen()
+        term_print(Report.centralize(Sentence() + " Rodando o código " + cmd + " ", "─"))
+        term_print(Report.centralize(Sentence() + " Se necessário, digite Control D para finalizar a entrada ", "─"))
+
         answer = subprocess.run(cmd, shell=True, text=True)
         if answer.returncode != 0 and answer.returncode != 1:
             print(Runner.decode_code(answer.returncode))
+        if wait_input:
+            term_print(Report.centralize(Sentence() + " Digite enter para continuar ", "─"))
+            input()
 
     @staticmethod
     def decode_code(return_code: int) -> str:

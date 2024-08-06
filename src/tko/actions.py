@@ -49,10 +49,15 @@ class Run:
         self.curses: bool = False
         self.first_run = False
         self.success = Success.RANDOM
+        self.curses_free_run = False
 
     def set_curses(self, value:bool=True, success: Success=Success.RANDOM):
         self.curses = value
         self.success = success
+        return self
+    
+    def set_free_run(self, value:bool=True):
+        self.curses_free_run = value
         return self
 
     def set_first_run(self):
@@ -185,12 +190,11 @@ class Run:
     def __free_run(self) -> bool:
         if self.wdir is None:
             return False
-        # free run mode
-        if self.wdir.solver is not None and len(self.wdir.unit_list) == 0:
-            t = Report.centralize(Sentence() + " Nenhum arquivo de teste encontrado. Rodando o código " + self.wdir.solver.executable + " ", symbols.hbar)
-            term_print(t, flush=True)
-            # force print to terminal
-            Runner.free_run(self.wdir.solver.executable)
+        if self.wdir.solver is not None and (len(self.wdir.unit_list) == 0 or self.curses_free_run):
+            if self.curses_free_run:
+                Runner.free_run(self.wdir.solver.executable)
+            else:
+                Runner.free_run(self.wdir.solver.executable, to_clear=False, wait_input=False)
             return True
         return False
 

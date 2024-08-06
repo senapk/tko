@@ -62,9 +62,10 @@ class Play:
             RToken("G", f"Ajuda[{self.Key.ajuda}]"),
             RToken("Y", f"Github[{self.Key.open_link}]"),
             RToken("Y", f"Baixar[{self.Key.down_task}]"),
-            RToken("Y", f"Executar[{self.Key.run_task}]"),
-            RToken("C", "Navegar[wasd]"),
-            RToken("C", f"Contrair[{self.Key.collapse}{self.Key.expand}]"),
+            RToken("C", f"Executar[{self.Key.run_task}]"),
+            RToken("C", f"Testar[{self.Key.test_task}]"),
+            # RToken("C", "Navegar[wasd]"),
+            # RToken("C", f"Contrair[{self.Key.collapse}{self.Key.expand}]"),
             RToken("M", "Marcar[enter]"),
             RToken("M", "Graduar[0-9]"),
         ]
@@ -285,7 +286,7 @@ class Play:
                     Floating().put_text("\nEssa não é uma tarefa de código.\n").error()
                 )
 
-    def run_task(self):
+    def test_task(self, test_mode: bool = False):
         rootdir = self.local.get_rootdir()
         obj = self.tree.items[self.tree.index_selected].obj
 
@@ -319,16 +320,18 @@ class Play:
             )
             return
         run = Run([path], None, Param.Basic())
-        if Flags.success.is_true():
-            run.set_curses(True, Success.RANDOM)
+        if test_mode:
+            if Flags.success.is_true():
+                run.set_curses(True, Success.RANDOM)
+            else:
+                run.set_curses(True, Success.FIXED)
+
+            if len(self.rep.get_tasks()) == 0:
+                run.set_first_run()
         else:
-            run.set_curses(True, Success.FIXED)
-
-        if len(self.rep.get_tasks()) == 0:
-            run.set_first_run()
+            run.set_curses(False)
+            run.set_free_run(True)
         return run.execute
-
-
 
     @staticmethod
     def build_list_sentence(items: List[Token]) -> Sentence:
@@ -461,6 +464,7 @@ class Play:
         _help.put_sentence(Sentence() + "          ou " + RToken("g", "[1-9]") + "    - Definir uma nota parcial")
         _help.put_sentence(Sentence() + "  Github " + RToken("r", f"[{self.Key.open_link}]") + " - Abrir tarefa em uma aba do browser")
         _help.put_sentence(Sentence() + "  Baixar " + RToken("r", f"[{self.Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
+        _help.put_sentence(Sentence() + "  Testar " + RToken("r", f"[{self.Key.test_task}]") + " - Testar tarefa de código que você baixou")
         _help.put_sentence(Sentence() + "Executar " + RToken("r", f"[{self.Key.run_task}]") + " - Rodar tarefa de código que você baixou")
 
     @staticmethod
@@ -594,6 +598,7 @@ class Play:
         up = "w"
         down_task = "b"
         run_task = "e"
+        test_task = "t"
         ajuda = "h"
         expand = ">"
         collapse = "<"
@@ -689,7 +694,8 @@ class Play:
         add_str(self.Key.set_lang, lambda: self.set_language(False))
         add_str(self.Key.set_root, lambda: self.set_rootdir(False))
         add_str(self.Key.down_task, self.down_task)
-        add_str(self.Key.run_task, self.run_task)
+        add_str(self.Key.run_task, lambda: self.test_task(False))
+        add_str(self.Key.test_task, lambda: self.test_task(True))
 
         for value in range(10):
             add_str(str(value), self.GradeFunctor(int(value), self.tree.set_grade))

@@ -11,6 +11,8 @@ from .play.frame import Frame
 from .play.floating import Floating
 from .play.floating_manager import FloatingManager
 from .play.images import images
+from .util.runner import Runner
+from .util.term_color import term_print
 
 from .run.wdir import Wdir
 from .run.report import Report
@@ -216,6 +218,8 @@ class CDiff:
         .add(" ")
         .addf("/Y", "Executar[e]")
         .add(" ")
+        .addf("/Y", "Testar[t]")
+        .add(" ")
         .addf("/C", "Navegar[wasd]")
         .add(" ")
         .addf("/M", "MudarVisão[m]")
@@ -326,6 +330,14 @@ class CDiff:
                     if self.wdir.is_autoload():
                         self.wdir.autoload()
                     self.wdir.solver.prepare_exec()
+                #return a lambda funcion to run the code
+                return lambda: Runner.free_run(self.wdir.solver.executable)
+
+            elif key == ord('t'):
+                if self.wdir.solver is not None:
+                    if self.wdir.is_autoload():
+                        self.wdir.autoload()
+                    self.wdir.solver.prepare_exec()
                 self.results_done = []
                 self.results_fail = []
                 self.unit_list = [unit for unit in self.wdir.unit_list]
@@ -339,4 +351,10 @@ class CDiff:
                 
 
     def run(self):
-        curses.wrapper(self.main)
+        while True:
+            fn = curses.wrapper(self.main)
+            if fn == None:
+                break
+            else:
+                fn()
+

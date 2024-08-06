@@ -1264,56 +1264,6 @@ class PatternLoader:
 
 
 
-class Runner:
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def subprocess_run(cmd: str, input_data: str = "") -> Tuple[int, str, str]:
-        answer = subprocess.run(cmd, shell=True, input=input_data, stdout=PIPE, stderr=PIPE, text=True)
-        err = ""
-        if answer.returncode != 0:
-            err = answer.stderr + Runner.decode_code(answer.returncode)
-
-        # if running on windows
-        if os.name == "nt":
-            return answer.returncode, answer.stdout.encode("cp1252").decode("utf-8"), err
-        return answer.returncode, answer.stdout, err
-
-    @staticmethod
-    def free_run(cmd: str) -> None:
-        answer = subprocess.run(cmd, shell=True, text=True)
-        if answer.returncode != 0 and answer.returncode != 1:
-            print(Runner.decode_code(answer.returncode))
-
-    @staticmethod
-    def decode_code(return_code: int) -> str:
-        code = 128 - return_code
-        if code == 127:
-            return ""
-        if code == 139:
-            return "fail: segmentation fault"
-        if code == 134:
-            return "fail: runtime exception"
-        return "fail: execution error code " + str(code)
-
-# class Runner:
-
-#     def __init__(self):
-#         pass
-
-#     @staticmethod
-#     def subprocess_run(cmd_list: List[str], input_data: str = "") -> Tuple[int, Any, Any]:
-#         try:
-#             p = subprocess.Popen(cmd_list, stdout=PIPE, stdin=PIPE, stderr=PIPE, universal_newlines=True)
-#             stdout, stderr = p.communicate(input=input_data)
-#             return p.returncode, stdout, stderr
-#         except FileNotFoundError:
-#             print("\n\nCommand not found: " + " ".join(cmd_list))
-#             exit(1)
-
-
-
 class Token:
     def __init__(self, text: str = "", fmt: str = "", ):
         if not isinstance(text, str):
@@ -1629,7 +1579,7 @@ class Flags:
     fortune = Flag().name("Conselho").char("C").values(["1", "0"]).text("Mostra mensagem aleatórias na saída").location("left")
     success = Flag().name("Sucesso").char("S").values(["1", "0"]).text("Mostra os personagens no sucesso da execução").location("left")
     config = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
-    skills = Flag().name("Técnicas").char("t").values(["0", "1"]).text("Mostra a barra de skills").location("top")
+    skills = Flag().name("Inventário").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
 
     focus     = Flag().name("Selected").values(["kB"]).text("Cor do item em foco").many()
     prog_done = Flag().name("ProgDone").values(["g"]).text("Progresso Done").many()
@@ -4078,126 +4028,6 @@ class Param:
             return self
 
 
-
-
-
-def check_tool(name):
-    if shutil.which(name) is None:
-        raise CompilerError("fail: " + name + " executable not found")
-
-
-class Solver:
-    def __init__(self, solver_list: List[str]):
-        self.path_list: List[str] = [os.path.normpath(Solver.__add_dot_bar(path)) for path in solver_list]
-        
-        self.temp_dir = tempfile.mkdtemp()
-        self.error_msg: str = ""
-        self.executable: str = ""
-        self.compile_error: bool = False
-        if len(self.path_list) > 0:
-            self.prepare_exec()
-
-    def prepare_exec(self) -> None:
-        path = self.path_list[0]
-
-        if path.endswith(".py"):
-            self.executable = "python " + path
-        elif path.endswith(".js"):
-            self.__prepare_js()
-        elif path.endswith(".ts"):
-            self.__prepare_ts()
-        elif path.endswith(".java"):
-            self.__prepare_java()
-        elif path.endswith(".c"):
-            self.__prepare_c()
-        elif path.endswith(".cpp"):
-            self.__prepare_cpp()
-        elif path.endswith(".sql"):
-            self.__prepare_sql()
-        else:
-            self.executable = path
-
-    def __prepare_java(self):
-        check_tool("javac")
-
-        solver = self.path_list[0]
-
-        filename = os.path.basename(solver)
-        # tempdir = os.path.dirname(self.path_list[0])
-
-        cmd = ["javac"] + self.path_list + ['-d', self.temp_dir]
-        cmdt = " ".join(cmd)
-        return_code, stdout, stderr = Runner.subprocess_run(cmdt)
-        if return_code != 0:
-            self.error_msg = stdout + stderr
-            self.compile_error = True
-        else:
-            self.executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
-
-    def __prepare_js(self):
-        check_tool("node")
-        solver = self.path_list[0]
-        self.executable = "node " + solver
-
-    def __prepare_sql(self):
-        check_tool("sqlite3")
-        self.executable = "cat " + " ".join(self.path_list) + " | sqlite3"
-
-    def __prepare_ts(self):
-        transpiler = "esbuild"
-        if os.name == "nt":
-            transpiler += ".cmd"
-
-        check_tool(transpiler)
-        check_tool("node")
-
-        solver = self.path_list[0]
-
-        filename = os.path.basename(solver)
-        source_list = self.path_list
-        cmd = [transpiler] + source_list + ["--outdir=" + self.temp_dir, "--format=cjs", "--log-level=error"]
-        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
-        if return_code != 0:
-            self.error_msg = stdout + stderr
-            self.compile_error = True
-        else:
-            jsfile = os.path.join(self.temp_dir, filename[:-3] + ".js")
-            self.executable = "node " + jsfile  # renaming solver to main
-    
-    def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
-        # solver = self.path_list[0]
-        tempdir = self.temp_dir
-        source_list = self.path_list
-        # print("Using the following source files: " + str([os.path.basename(x) for x in source_list]))
-        
-        exec_path = os.path.join(tempdir, ".a.out")
-        cmd = pre_args + source_list + ["-o", exec_path] + pos_args
-        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
-        if return_code != 0:
-            self.error_msg = stdout + stderr
-            self.compile_error = True
-        else:
-            self.executable = exec_path
-
-    def __prepare_c(self):
-        check_tool("gcc")
-        pre = ["gcc", "-Wall"]
-        pos = ["-lm"]
-        self.__prepare_c_cpp(pre, pos)
-
-    def __prepare_cpp(self):
-        check_tool("g++")
-        pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror"]
-        pos: List[str] = []
-        self.__prepare_c_cpp(pre, pos)
-
-    @staticmethod
-    def __add_dot_bar(solver: str) -> str:
-        if os.sep not in solver and os.path.isfile("." + os.sep + solver):
-            solver = "." + os.sep + solver
-        return solver
-    
-
 class Unit:
     def __init__(self, case: str = "", inp: str = "", outp: str = "", grade: Optional[int] = None, source: str = ""):
         self.source = source  # stores the source file of the unit
@@ -4228,27 +4058,6 @@ class Unit:
         return Sentence() + "(" + op + ")" + f"[{index}] GR:{grade} {source} ({case}){rep}"
 
 
-
-
-class Execution:
-
-    def __init__(self):
-        pass
-
-    # run a unit using a solver and return if the result is correct
-    @staticmethod
-    def run_unit(solver: Solver, unit: Unit) -> ExecutionResult:
-        if solver.compile_error:
-            unit.user = solver.error_msg
-            return ExecutionResult.COMPILATION_ERROR
-        cmd = solver.executable
-        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input)
-        unit.user = stdout + stderr
-        if return_code != 0:
-            return ExecutionResult.EXECUTION_ERROR
-        if unit.user == unit.output:
-            return ExecutionResult.SUCCESS
-        return ExecutionResult.WRONG_OUTPUT
 
 
 
@@ -4467,201 +4276,6 @@ class Loader:
         else:
             raise FileNotFoundError('warning: unable to find: ' + source)
         return []
-
-
-
-# generate label for cases
-
-class Wdir:
-    def __init__(self):
-        self.__autoload = False
-        self.__autoload_folder = ""
-        
-        self.solver: Optional[Solver] = None
-        self.source_list: List[str] = []
-        self.pack_list: List[List[Unit]] = []
-        self.unit_list: List[Unit] = []
-        self.__curses = False
-
-    def set_curses(self, value: bool):
-        self.__curses = value
-        return self
-    
-    def is_curses(self) -> bool:
-        return self.__curses
-
-    def is_autoload(self) -> bool:
-        return self.__autoload
-
-    def set_solver(self, solver_list: List[str]):
-        if len(solver_list) > 0:
-            self.solver = Solver(solver_list)
-        return self
-
-    def set_sources(self, source_list: List[str]):
-        self.source_list = source_list
-        return self
-
-    def autoload(self):
-        folder = self.__autoload_folder
-        files = os.listdir(folder)
-        files = [os.path.join(folder, f) for f in files]
-        files = [f for f in files if os.path.isfile(f)]
-        avoid = [".txt", ".md", ".hpp", ".h", ".out", ".exe", ".o", ".obj", ".a", ".so", ".dll", ".png", ".jpg", ".jpeg"]
-        files = [f for f in files if not any([f.endswith(a) for a in avoid])]
-
-        sources = [target for target in files if target.endswith(".tio")]
-        solvers = [target for target in files if not target.endswith(".tio")]
-        solvers = sorted(solvers)
-
-        if not self.__curses:
-            print("Carregando arquivos automaticamente")
-            print("solvers found: [" + ", ".join(solvers) + "]")
-            print("sources found: [" + ", ".join(sources) + "]")
-            print("Para remover um arquivo da lista, renomeie para sua extensão para .txt")
-        self.set_solver(solvers)
-        self.set_sources(sources)
-        self.__autoload = True
-        return self
-
-    def set_target_list(self, target_list: List[str]):
-        target_list = [os.path.normpath(t) for t in target_list]
-        if len(target_list) == 0:
-            target_list.append(".")
-        if len(target_list) == 1 and os.path.isdir(target_list[0]):
-            self.__autoload_folder = target_list[0]
-            return self.autoload()
-            
-        target_list = [t for t in target_list if t != ""]
-        for target in target_list:
-            if not os.path.exists(target):
-                raise FileNotFoundError(f"fail: {target} not found")
-
-        solvers = [target for target in target_list if Identifier.get_type(target) == IdentifierType.SOLVER]
-        sources = [target for target in target_list if Identifier.get_type(target) != IdentifierType.SOLVER]
-        
-        self.set_solver(solvers)
-        self.set_sources(sources)
-        return self
-
-    def set_cmd(self, exec_cmd: Optional[str]):
-        if exec_cmd is None:
-            return self
-        if self.solver is not None:
-            print("fail: if using --cmd, don't pass source files to target")
-        self.solver = Solver([])
-        self.solver.executable = exec_cmd
-        return self
-
-    def build(self):
-        loading_failures = 0
-        for source in self.source_list:
-            try:
-                self.pack_list.append(Loader.parse_source(source))
-            except FileNotFoundError as e:
-                print(str(e))
-                loading_failures += 1
-                pass
-        if loading_failures > 0 and loading_failures == len(self.source_list):
-            raise FileNotFoundError("failure: none source found")
-        self.unit_list = sum(self.pack_list, [])
-        self.__number_and_mark_duplicated()
-        self.__calculate_grade()
-        self.__pad()
-        return self
-
-    def calc_grade(self) -> int:
-        grade = 100
-        for case in self.unit_list:
-            if not case.repeated and (case.user is None or case.output != case.user):
-                grade -= case.grade_reduction
-        return max(0, grade)
-
-    # put all the labels with the same length
-    def __pad(self):
-        if len(self.unit_list) == 0:
-            return
-        max_case = max([len(x.case) for x in self.unit_list])
-        max_source = max([len(x.source) for x in self.unit_list])
-        for unit in self.unit_list:
-            unit.case_pad = max_case
-            unit.source_pad = max_source
-
-    # select a single unit to execute exclusively
-    def filter(self, param: Param.Basic):
-        index = param.index
-        if index is not None:
-            if 0 <= index < len(self.unit_list):
-                self.unit_list = [self.unit_list[index]]
-            else:
-                raise ValueError("Index Number out of bounds: " + str(index))
-        return self
-
-    # calculate the grade reduction for the cases without grade
-    # the grade is proportional to the number of unique cases
-    def __calculate_grade(self):
-        unique_count = len([x for x in self.unit_list if not x.repeated])
-        for unit in self.unit_list:
-            if unit.grade is None:
-                unit.grade_reduction = math.floor(100 / unique_count)
-            else:
-                unit.grade_reduction = unit.grade
-
-    # number the cases and mark the repeated
-    def __number_and_mark_duplicated(self):
-        new_list: List[Unit] = []
-        index = 0
-        for unit in self.unit_list:
-            unit.index = index
-            index += 1
-            search = [x for x in new_list if x.input == unit.input]
-            if len(search) > 0:
-                unit.repeated = search[0].index
-            new_list.append(unit)
-        self.unit_list = new_list
-
-    # sort, unlabel ou rename using the param received
-    def manipulate(self, param: Param.Manip):
-        # filtering marked repeated
-        self.unit_list = [unit for unit in self.unit_list if unit.repeated is None]
-        if param.to_sort:
-            self.unit_list.sort(key=lambda v: len(v.input))
-        if param.unlabel:
-            for unit in self.unit_list:
-                unit.case = ""
-        if param.to_number:
-            number = 00
-            for unit in self.unit_list:
-                unit.case = LabelFactory().label(unit.case).index(number).generate()
-                number += 1
-
-    def unit_list_resume(self) -> List[Sentence]:
-        return [unit.str() for unit in self.unit_list]
-
-    def sources_names(self) -> List[Tuple[str, int]]:
-        out: List[Tuple[str, int]] = []
-        if len(self.pack_list) == 0:
-            out.append((symbols.failure.text, 0))
-        for i in range(len(self.pack_list)):
-            nome: str = self.source_list[i].split(os.sep)[-1]
-            out.append((nome, len(self.pack_list[i])))
-        return out
-
-    def solvers_names(self) -> List[str]:
-        path_list = [] if self.solver is None else self.solver.path_list
-        if self.solver is not None and len(path_list) == 0:  # free_cmd
-            out = ["free cmd"]
-        else:
-            out = [os.path.basename(path) for path in path_list]
-        return out
-
-    def resume(self) -> Sentence:
-        sources = [f"{name}({str(count).rjust(2, "0")})" for name, count in self.sources_names()]
-        __sources = Sentence().add("Testes:").add("[").addf("y", ", ".join(sources)).add("]")
-
-        __solvers = Sentence().add("Códigos:").add("[").addf("g", ", ".join(self.solvers_names())).add("]")
-
-        return Sentence().add(__solvers).add(" ").add(__sources)
 
 
 
@@ -5118,6 +4732,408 @@ class Diff:
 
 
 
+class Runner:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def subprocess_run(cmd: str, input_data: str = "") -> Tuple[int, str, str]:
+        answer = subprocess.run(cmd, shell=True, input=input_data, stdout=PIPE, stderr=PIPE, text=True)
+        err = ""
+        if answer.returncode != 0:
+            err = answer.stderr + Runner.decode_code(answer.returncode)
+
+        # if running on windows
+        if os.name == "nt":
+            return answer.returncode, answer.stdout.encode("cp1252").decode("utf-8"), err
+        return answer.returncode, answer.stdout, err
+
+
+    @staticmethod
+    def clear_screen():
+        if os.name == 'nt':
+            os.system('cls')
+        else:
+            os.system('clear')
+
+    @staticmethod
+    def free_run(cmd: str, to_clear: bool=True, wait_input:bool=True) -> None:
+        if to_clear:
+            Runner.clear_screen()
+        term_print(Report.centralize(Sentence() + " Rodando o código " + cmd + " ", "─"))
+        term_print(Report.centralize(Sentence() + " Se necessário, digite Control D para finalizar a entrada ", "─"))
+
+        answer = subprocess.run(cmd, shell=True, text=True)
+        if answer.returncode != 0 and answer.returncode != 1:
+            print(Runner.decode_code(answer.returncode))
+        if wait_input:
+            term_print(Report.centralize(Sentence() + " Digite enter para continuar ", "─"))
+            input()
+
+    @staticmethod
+    def decode_code(return_code: int) -> str:
+        code = 128 - return_code
+        if code == 127:
+            return ""
+        if code == 139:
+            return "fail: segmentation fault"
+        if code == 134:
+            return "fail: runtime exception"
+        return "fail: execution error code " + str(code)
+
+# class Runner:
+
+#     def __init__(self):
+#         pass
+
+#     @staticmethod
+#     def subprocess_run(cmd_list: List[str], input_data: str = "") -> Tuple[int, Any, Any]:
+#         try:
+#             p = subprocess.Popen(cmd_list, stdout=PIPE, stdin=PIPE, stderr=PIPE, universal_newlines=True)
+#             stdout, stderr = p.communicate(input=input_data)
+#             return p.returncode, stdout, stderr
+#         except FileNotFoundError:
+#             print("\n\nCommand not found: " + " ".join(cmd_list))
+#             exit(1)
+
+
+
+
+
+def check_tool(name):
+    if shutil.which(name) is None:
+        raise CompilerError("fail: " + name + " executable not found")
+
+
+class Solver:
+    def __init__(self, solver_list: List[str]):
+        self.path_list: List[str] = [os.path.normpath(Solver.__add_dot_bar(path)) for path in solver_list]
+        
+        self.temp_dir = tempfile.mkdtemp()
+        self.error_msg: str = ""
+        self.executable: str = ""
+        self.compile_error: bool = False
+        if len(self.path_list) > 0:
+            self.prepare_exec()
+
+    def prepare_exec(self) -> None:
+        path = self.path_list[0]
+
+        if path.endswith(".py"):
+            self.executable = "python " + path
+        elif path.endswith(".js"):
+            self.__prepare_js()
+        elif path.endswith(".ts"):
+            self.__prepare_ts()
+        elif path.endswith(".java"):
+            self.__prepare_java()
+        elif path.endswith(".c"):
+            self.__prepare_c()
+        elif path.endswith(".cpp"):
+            self.__prepare_cpp()
+        elif path.endswith(".sql"):
+            self.__prepare_sql()
+        else:
+            self.executable = path
+
+    def __prepare_java(self):
+        check_tool("javac")
+
+        solver = self.path_list[0]
+
+        filename = os.path.basename(solver)
+        # tempdir = os.path.dirname(self.path_list[0])
+
+        cmd = ["javac"] + self.path_list + ['-d', self.temp_dir]
+        cmdt = " ".join(cmd)
+        return_code, stdout, stderr = Runner.subprocess_run(cmdt)
+        if return_code != 0:
+            self.error_msg = stdout + stderr
+            self.compile_error = True
+        else:
+            self.executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
+
+    def __prepare_js(self):
+        check_tool("node")
+        solver = self.path_list[0]
+        self.executable = "node " + solver
+
+    def __prepare_sql(self):
+        check_tool("sqlite3")
+        self.executable = "cat " + " ".join(self.path_list) + " | sqlite3"
+
+    def __prepare_ts(self):
+        transpiler = "esbuild"
+        if os.name == "nt":
+            transpiler += ".cmd"
+
+        check_tool(transpiler)
+        check_tool("node")
+
+        solver = self.path_list[0]
+
+        filename = os.path.basename(solver)
+        source_list = self.path_list
+        cmd = [transpiler] + source_list + ["--outdir=" + self.temp_dir, "--format=cjs", "--log-level=error"]
+        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
+        if return_code != 0:
+            self.error_msg = stdout + stderr
+            self.compile_error = True
+        else:
+            jsfile = os.path.join(self.temp_dir, filename[:-3] + ".js")
+            self.executable = "node " + jsfile  # renaming solver to main
+    
+    def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
+        # solver = self.path_list[0]
+        tempdir = self.temp_dir
+        source_list = self.path_list
+        # print("Using the following source files: " + str([os.path.basename(x) for x in source_list]))
+        
+        exec_path = os.path.join(tempdir, ".a.out")
+        cmd = pre_args + source_list + ["-o", exec_path] + pos_args
+        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
+        if return_code != 0:
+            self.error_msg = stdout + stderr
+            self.compile_error = True
+        else:
+            self.executable = exec_path
+
+    def __prepare_c(self):
+        check_tool("gcc")
+        pre = ["gcc", "-Wall"]
+        pos = ["-lm"]
+        self.__prepare_c_cpp(pre, pos)
+
+    def __prepare_cpp(self):
+        check_tool("g++")
+        pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror"]
+        pos: List[str] = []
+        self.__prepare_c_cpp(pre, pos)
+
+    @staticmethod
+    def __add_dot_bar(solver: str) -> str:
+        if os.sep not in solver and os.path.isfile("." + os.sep + solver):
+            solver = "." + os.sep + solver
+        return solver
+    
+
+
+class Execution:
+
+    def __init__(self):
+        pass
+
+    # run a unit using a solver and return if the result is correct
+    @staticmethod
+    def run_unit(solver: Solver, unit: Unit) -> ExecutionResult:
+        if solver.compile_error:
+            unit.user = solver.error_msg
+            return ExecutionResult.COMPILATION_ERROR
+        cmd = solver.executable
+        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input)
+        unit.user = stdout + stderr
+        if return_code != 0:
+            return ExecutionResult.EXECUTION_ERROR
+        if unit.user == unit.output:
+            return ExecutionResult.SUCCESS
+        return ExecutionResult.WRONG_OUTPUT
+
+
+# generate label for cases
+
+class Wdir:
+    def __init__(self):
+        self.__autoload = False
+        self.__autoload_folder = ""
+        
+        self.solver: Optional[Solver] = None
+        self.source_list: List[str] = []
+        self.pack_list: List[List[Unit]] = []
+        self.unit_list: List[Unit] = []
+        self.__curses = False
+
+    def set_curses(self, value: bool):
+        self.__curses = value
+        return self
+    
+    def is_curses(self) -> bool:
+        return self.__curses
+
+    def is_autoload(self) -> bool:
+        return self.__autoload
+
+    def set_solver(self, solver_list: List[str]):
+        if len(solver_list) > 0:
+            self.solver = Solver(solver_list)
+        return self
+
+    def set_sources(self, source_list: List[str]):
+        self.source_list = source_list
+        return self
+
+    def autoload(self):
+        folder = self.__autoload_folder
+        files = os.listdir(folder)
+        files = [os.path.join(folder, f) for f in files]
+        files = [f for f in files if os.path.isfile(f)]
+        avoid = [".txt", ".md", ".hpp", ".h", ".out", ".exe", ".o", ".obj", ".a", ".so", ".dll", ".png", ".jpg", ".jpeg"]
+        files = [f for f in files if not any([f.endswith(a) for a in avoid])]
+
+        sources = [target for target in files if target.endswith(".tio")]
+        solvers = [target for target in files if not target.endswith(".tio")]
+        solvers = sorted(solvers)
+
+        if not self.__curses:
+            print("Carregando arquivos automaticamente")
+            print("solvers found: [" + ", ".join(solvers) + "]")
+            print("sources found: [" + ", ".join(sources) + "]")
+            print("Para remover um arquivo da lista, renomeie para sua extensão para .txt")
+        self.set_solver(solvers)
+        self.set_sources(sources)
+        self.__autoload = True
+        return self
+
+    def set_target_list(self, target_list: List[str]):
+        target_list = [os.path.normpath(t) for t in target_list]
+        if len(target_list) == 0:
+            target_list.append(".")
+        if len(target_list) == 1 and os.path.isdir(target_list[0]):
+            self.__autoload_folder = target_list[0]
+            return self.autoload()
+            
+        target_list = [t for t in target_list if t != ""]
+        for target in target_list:
+            if not os.path.exists(target):
+                raise FileNotFoundError(f"fail: {target} not found")
+
+        solvers = [target for target in target_list if Identifier.get_type(target) == IdentifierType.SOLVER]
+        sources = [target for target in target_list if Identifier.get_type(target) != IdentifierType.SOLVER]
+        
+        self.set_solver(solvers)
+        self.set_sources(sources)
+        return self
+
+    def set_cmd(self, exec_cmd: Optional[str]):
+        if exec_cmd is None:
+            return self
+        if self.solver is not None:
+            print("fail: if using --cmd, don't pass source files to target")
+        self.solver = Solver([])
+        self.solver.executable = exec_cmd
+        return self
+
+    def build(self):
+        loading_failures = 0
+        for source in self.source_list:
+            try:
+                self.pack_list.append(Loader.parse_source(source))
+            except FileNotFoundError as e:
+                print(str(e))
+                loading_failures += 1
+                pass
+        if loading_failures > 0 and loading_failures == len(self.source_list):
+            raise FileNotFoundError("failure: none source found")
+        self.unit_list = sum(self.pack_list, [])
+        self.__number_and_mark_duplicated()
+        self.__calculate_grade()
+        self.__pad()
+        return self
+
+    def calc_grade(self) -> int:
+        grade = 100
+        for case in self.unit_list:
+            if not case.repeated and (case.user is None or case.output != case.user):
+                grade -= case.grade_reduction
+        return max(0, grade)
+
+    # put all the labels with the same length
+    def __pad(self):
+        if len(self.unit_list) == 0:
+            return
+        max_case = max([len(x.case) for x in self.unit_list])
+        max_source = max([len(x.source) for x in self.unit_list])
+        for unit in self.unit_list:
+            unit.case_pad = max_case
+            unit.source_pad = max_source
+
+    # select a single unit to execute exclusively
+    def filter(self, param: Param.Basic):
+        index = param.index
+        if index is not None:
+            if 0 <= index < len(self.unit_list):
+                self.unit_list = [self.unit_list[index]]
+            else:
+                raise ValueError("Index Number out of bounds: " + str(index))
+        return self
+
+    # calculate the grade reduction for the cases without grade
+    # the grade is proportional to the number of unique cases
+    def __calculate_grade(self):
+        unique_count = len([x for x in self.unit_list if not x.repeated])
+        for unit in self.unit_list:
+            if unit.grade is None:
+                unit.grade_reduction = math.floor(100 / unique_count)
+            else:
+                unit.grade_reduction = unit.grade
+
+    # number the cases and mark the repeated
+    def __number_and_mark_duplicated(self):
+        new_list: List[Unit] = []
+        index = 0
+        for unit in self.unit_list:
+            unit.index = index
+            index += 1
+            search = [x for x in new_list if x.input == unit.input]
+            if len(search) > 0:
+                unit.repeated = search[0].index
+            new_list.append(unit)
+        self.unit_list = new_list
+
+    # sort, unlabel ou rename using the param received
+    def manipulate(self, param: Param.Manip):
+        # filtering marked repeated
+        self.unit_list = [unit for unit in self.unit_list if unit.repeated is None]
+        if param.to_sort:
+            self.unit_list.sort(key=lambda v: len(v.input))
+        if param.unlabel:
+            for unit in self.unit_list:
+                unit.case = ""
+        if param.to_number:
+            number = 00
+            for unit in self.unit_list:
+                unit.case = LabelFactory().label(unit.case).index(number).generate()
+                number += 1
+
+    def unit_list_resume(self) -> List[Sentence]:
+        return [unit.str() for unit in self.unit_list]
+
+    def sources_names(self) -> List[Tuple[str, int]]:
+        out: List[Tuple[str, int]] = []
+        if len(self.pack_list) == 0:
+            out.append((symbols.failure.text, 0))
+        for i in range(len(self.pack_list)):
+            nome: str = self.source_list[i].split(os.sep)[-1]
+            out.append((nome, len(self.pack_list[i])))
+        return out
+
+    def solvers_names(self) -> List[str]:
+        path_list = [] if self.solver is None else self.solver.path_list
+        if self.solver is not None and len(path_list) == 0:  # free_cmd
+            out = ["free cmd"]
+        else:
+            out = [os.path.basename(path) for path in path_list]
+        return out
+
+    def resume(self) -> Sentence:
+        sources = [f"{name}({str(count).rjust(2, "0")})" for name, count in self.sources_names()]
+        __sources = Sentence().add("Testes:").add("[").addf("y", ", ".join(sources)).add("]")
+
+        __solvers = Sentence().add("Códigos:").add("[").addf("g", ", ".join(self.solvers_names())).add("]")
+
+        return Sentence().add(__solvers).add(" ").add(__sources)
+
+
+
 class CDiff:
 
     def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
@@ -5316,6 +5332,8 @@ class CDiff:
         .add(" ")
         .addf("/Y", "Executar[e]")
         .add(" ")
+        .addf("/Y", "Testar[t]")
+        .add(" ")
         .addf("/C", "Navegar[wasd]")
         .add(" ")
         .addf("/M", "MudarVisão[m]")
@@ -5426,6 +5444,14 @@ class CDiff:
                     if self.wdir.is_autoload():
                         self.wdir.autoload()
                     self.wdir.solver.prepare_exec()
+                #return a lambda funcion to run the code
+                return lambda: Runner.free_run(self.wdir.solver.executable)
+
+            elif key == ord('t'):
+                if self.wdir.solver is not None:
+                    if self.wdir.is_autoload():
+                        self.wdir.autoload()
+                    self.wdir.solver.prepare_exec()
                 self.results_done = []
                 self.results_fail = []
                 self.unit_list = [unit for unit in self.wdir.unit_list]
@@ -5439,7 +5465,13 @@ class CDiff:
                 
 
     def run(self):
-        curses.wrapper(self.main)
+        while True:
+            fn = curses.wrapper(self.main)
+            if fn == None:
+                break
+            else:
+                fn()
+
 
 
 
@@ -5475,10 +5507,15 @@ class Run:
         self.curses: bool = False
         self.first_run = False
         self.success = Success.RANDOM
+        self.curses_free_run = False
 
     def set_curses(self, value:bool=True, success: Success=Success.RANDOM):
         self.curses = value
         self.success = success
+        return self
+    
+    def set_free_run(self, value:bool=True):
+        self.curses_free_run = value
         return self
 
     def set_first_run(self):
@@ -5611,12 +5648,11 @@ class Run:
     def __free_run(self) -> bool:
         if self.wdir is None:
             return False
-        # free run mode
-        if self.wdir.solver is not None and len(self.wdir.unit_list) == 0:
-            t = Report.centralize(Sentence() + " Nenhum arquivo de teste encontrado. Rodando o código " + self.wdir.solver.executable + " ", symbols.hbar)
-            term_print(t, flush=True)
-            # force print to terminal
-            Runner.free_run(self.wdir.solver.executable)
+        if self.wdir.solver is not None and (len(self.wdir.unit_list) == 0 or self.curses_free_run):
+            if self.curses_free_run:
+                Runner.free_run(self.wdir.solver.executable)
+            else:
+                Runner.free_run(self.wdir.solver.executable, to_clear=False, wait_input=False)
             return True
         return False
 
@@ -5692,9 +5728,10 @@ class Play:
             RToken("G", f"Ajuda[{self.Key.ajuda}]"),
             RToken("Y", f"Github[{self.Key.open_link}]"),
             RToken("Y", f"Baixar[{self.Key.down_task}]"),
-            RToken("Y", f"Executar[{self.Key.run_task}]"),
-            RToken("C", "Navegar[wasd]"),
-            RToken("C", f"Contrair[{self.Key.collapse}{self.Key.expand}]"),
+            RToken("C", f"Executar[{self.Key.run_task}]"),
+            RToken("C", f"Testar[{self.Key.test_task}]"),
+            # RToken("C", "Navegar[wasd]"),
+            # RToken("C", f"Contrair[{self.Key.collapse}{self.Key.expand}]"),
             RToken("M", "Marcar[enter]"),
             RToken("M", "Graduar[0-9]"),
         ]
@@ -5915,7 +5952,7 @@ class Play:
                     Floating().put_text("\nEssa não é uma tarefa de código.\n").error()
                 )
 
-    def run_task(self):
+    def test_task(self, test_mode: bool = False):
         rootdir = self.local.get_rootdir()
         obj = self.tree.items[self.tree.index_selected].obj
 
@@ -5949,16 +5986,18 @@ class Play:
             )
             return
         run = Run([path], None, Param.Basic())
-        if Flags.success.is_true():
-            run.set_curses(True, Success.RANDOM)
+        if test_mode:
+            if Flags.success.is_true():
+                run.set_curses(True, Success.RANDOM)
+            else:
+                run.set_curses(True, Success.FIXED)
+
+            if len(self.rep.get_tasks()) == 0:
+                run.set_first_run()
         else:
-            run.set_curses(True, Success.FIXED)
-
-        if len(self.rep.get_tasks()) == 0:
-            run.set_first_run()
+            run.set_curses(False)
+            run.set_free_run(True)
         return run.execute
-
-
 
     @staticmethod
     def build_list_sentence(items: List[Token]) -> Sentence:
@@ -6091,6 +6130,7 @@ class Play:
         _help.put_sentence(Sentence() + "          ou " + RToken("g", "[1-9]") + "    - Definir uma nota parcial")
         _help.put_sentence(Sentence() + "  Github " + RToken("r", f"[{self.Key.open_link}]") + " - Abrir tarefa em uma aba do browser")
         _help.put_sentence(Sentence() + "  Baixar " + RToken("r", f"[{self.Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
+        _help.put_sentence(Sentence() + "  Testar " + RToken("r", f"[{self.Key.test_task}]") + " - Testar tarefa de código que você baixou")
         _help.put_sentence(Sentence() + "Executar " + RToken("r", f"[{self.Key.run_task}]") + " - Rodar tarefa de código que você baixou")
 
     @staticmethod
@@ -6224,6 +6264,7 @@ class Play:
         up = "w"
         down_task = "b"
         run_task = "e"
+        test_task = "t"
         ajuda = "h"
         expand = ">"
         collapse = "<"
@@ -6319,7 +6360,8 @@ class Play:
         add_str(self.Key.set_lang, lambda: self.set_language(False))
         add_str(self.Key.set_root, lambda: self.set_rootdir(False))
         add_str(self.Key.down_task, self.down_task)
-        add_str(self.Key.run_task, self.run_task)
+        add_str(self.Key.run_task, lambda: self.test_task(False))
+        add_str(self.Key.test_task, lambda: self.test_task(True))
 
         for value in range(10):
             add_str(str(value), self.GradeFunctor(int(value), self.tree.set_grade))
