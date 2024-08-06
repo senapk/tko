@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.14.7
+  - add: free run mode on play
 - 0.14.5
   - add: cdiff show first the errors, and show count while processing
 - 0.14.4

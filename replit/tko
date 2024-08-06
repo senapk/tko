@@ -21,7 +21,7 @@ import math
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.14.6"
+__version__ = "0.14.7"
 
 
 class GeralSettings:
