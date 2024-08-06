@@ -29,12 +29,12 @@ class FilterMode:
         filter_path = os.path.join(os.path.expanduser("~"), ".tko_filter")
 
         # verify if filter command is available
-        if shutil.which("filter") is None:
+        if shutil.which("filter_code") is None:
             print("ERROR: comando de filtragem não encontrado")
             print("Instale o feno com 'pip install feno'")
             exit(1)
 
-        subprocess.run(["filter", "-rf", ".", "-o", filter_path])
+        subprocess.run(["filter_code", "-rf", ".", "-o", filter_path])
 
         os.chdir(filter_path)
 

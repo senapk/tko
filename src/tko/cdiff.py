@@ -6,12 +6,11 @@ from .run.param import Param
 from .execution import Execution
 from .run.diff import Diff
 from .util.ftext import Sentence, Token
-from typing import List
+from typing import List, Tuple
 from .play.frame import Frame
 from .play.floating import Floating
 from .play.floating_manager import FloatingManager
 from .play.images import images
-import random
 
 from .run.wdir import Wdir
 from .run.report import Report
@@ -21,13 +20,15 @@ from .run.basic import Success
 
 class CDiff:
 
-    def __init__(self, wdir: Wdir, param: Param.Basic, success: Success):
+    def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
         self.param = param
-        self.results: List[Token] = []
+        self.results_done: List[Tuple[Token, int]] = []
+        self.results_fail: List[Tuple[Token, int]] = []
         self.wdir = wdir
+        self.unit_list = [unit for unit in wdir.unit_list] # unit list to be consumed
         self.exit = False
         self.index = 0
-        self.success = success
+        self.success_type = success_type
 
         self.init = 0   # index of first line to show
         self.length = 1  # length of diff
@@ -35,7 +36,6 @@ class CDiff:
 
         self.finished = False
         self.resumes: List[str] = []
-        self.first_error = -1
 
         self.sp = SettingsParser()
         self.settings = self.sp.load_settings()
@@ -54,7 +54,7 @@ class CDiff:
         self.exit = True
 
     def end_processing(self):
-        return len(self.results) == len(self.wdir.unit_list)
+        return len(self.unit_list) == 0
 
     def get_color(self, unit: Unit):
         if unit.result == ExecutionResult.SUCCESS:
@@ -67,8 +67,8 @@ class CDiff:
             return "Y"
         return ""
 
-    def sucesso(self):
-        if self.success == Success.RANDOM:
+    def show_success(self):
+        if self.success_type == Success.RANDOM:
             count = sum([ord(c) for c in self.get_folder()])
             keys = list(images.keys())
             out = images[keys[count % len(keys)]]
@@ -97,9 +97,6 @@ class CDiff:
             if self.init == self.length - self.space:
                 _end = True
 
-            # pre = int((self.init / self.length) * total)
-            # pos = int((max(0, self.length - self.init - self.space) / self.length) * total)            
-            # mid = total - pre - pos
             pre = int((self.init / self.length) * total)
             mid = int((self.space / self.length) * total)
             pos = (max(0, total - pre - mid))
@@ -143,19 +140,19 @@ class CDiff:
 
     def draw_top_line(self):
         # construir mais uma solução
-        if len(self.results) < len(self.wdir.unit_list):
-            index = len(self.results)
-            unit = self.wdir.unit_list[index]
+        if len(self.unit_list) > 0:
+            index = len(self.results_done) + len(self.results_fail)
+            unit = self.unit_list[0]
+            self.unit_list = self.unit_list[1:]
             if self.wdir.solver is None:
                 return
             unit.result = Execution.run_unit(self.wdir.solver, unit)
             symbol = ExecutionResult.get_symbol(unit.result)
             color = self.get_color(unit)
-            self.results.append(Token(symbol.text, color))
-            if color != "G" and self.first_error == -1:
-                self.first_error = len(self.results) - 1
-                self.index = len(self.results) - 1
-
+            if unit.result != ExecutionResult.SUCCESS:
+                self.results_fail.append((Token(symbol.text, color), index))
+            else:
+                self.results_done.append((Token(symbol.text, color), index))
 
         _, cols = Fmt.get_size()
         frame = Frame(0, 0).set_size(3, cols)
@@ -169,10 +166,16 @@ class CDiff:
                 solvers.add(" ")
             solvers.addf("G/", solver)
         sources = Sentence()
-        for i, source in enumerate(self.wdir.sources_names()):
+        for i, (source, _) in enumerate(self.wdir.sources_names()):
             if i != 0:
                 sources.add(", ")
             sources.addf("Y", source)
+        done = len(self.results_done) + len(self.results_fail)
+        full = len(self.wdir.unit_list)
+        if done == full:
+            sources.addf("Y", f"({full})")
+        else:
+            sources.addf("Y", f"({done}/{full})")
 
         delta = frame.get_dx() - solvers.len()
         left = 1
@@ -193,11 +196,12 @@ class CDiff:
 
         i = 0
         output = Sentence()
-        for i, symbol in enumerate(self.results):
+        for symbol, index in self.results_fail + self.results_done:
             foco = i == self.index
             extrap = " " if not foco else ">"
             extras = " " if not foco else "<"
-            output.add(extrap).addf(symbol.fmt, str(i).zfill(2)).add(symbol).add(extras)
+            output.add(extrap).addf(symbol.fmt, str(index).zfill(2)).add(symbol).add(extras)
+            i += 1
 
         if self.index * 5 > frame.get_dx():
             output.cut_begin((self.index + 1) * 5 - frame.get_dx())
@@ -232,7 +236,7 @@ class CDiff:
         frame = Frame(2, -1).set_inner(self.space, cols - 1).set_border_square()
 
         if not self.has_any_error() and self.end_processing():
-            self.sucesso()
+            self.show_success()
             return        
         Report.set_terminal_size(cols)
         if self.param.is_up_down:
@@ -262,23 +266,6 @@ class CDiff:
         warning.put_sentence(Sentence().addf("r", "Todos") + " os arquivos de código da pasta foram carregados automaticamente")
         warning.put_text("Sempre verifique no topo da tela quais arquivos foram carregados.")
         warning.put_text("Remova ou renomeie da pasta alvo os arquivo que não quer utilizar.")
-        # solver = self.wdir.solver
-        # solvers = [] if solver is None else solver.path_list
-        # warning.put_text("")
-        # loaded = Sentence().add("Códigos: ")
-        # for i, file in enumerate(solvers):
-        #     if i != 0:
-        #         loaded.add(", ")
-        #     loaded.addf("g", os.path.basename(file))
-        # warning.put_sentence(loaded)
-        # sources = self.wdir.source_list
-        # loaded = Sentence().add("Testes: ")
-        # for i, file in enumerate(sources):
-        #     if i != 0:
-        #         loaded.add(", ")
-        #     loaded.addf("y", os.path.basename(file))
-
-        # warning.put_sentence(loaded)
         warning.put_text("")
         warning.put_text("Você também pode escolher quais arquivos deseja executar")
         warning.put_text("navegando até a pasta de destino e executando")
@@ -324,7 +311,7 @@ class CDiff:
                 self.index = max(0, self.index - 1)
                 self.init = 0
             elif key == curses.KEY_RIGHT or key == ord('d'):
-                self.index = min(len(self.results) - 1, self.index + 1)
+                self.index = min(len(self.results_done) + len(self.results_fail) - 1, self.index + 1)
                 self.init = 0
             elif key == curses.KEY_DOWN or key == ord('s'):
                 self.init += 1
@@ -339,8 +326,9 @@ class CDiff:
                     if self.wdir.is_autoload():
                         self.wdir.autoload()
                     self.wdir.solver.prepare_exec()
-                self.results = []
-                self.first_error = -1
+                self.results_done = []
+                self.results_fail = []
+                self.unit_list = [unit for unit in self.wdir.unit_list]
             elif key != -1:
                 self.fman.add_input(Floating("v>").error()
                                     .put_text("Tecla")

@@ -1,5 +1,9 @@
 # Changelog
 
+- 0.14.5
+  - add: cdiff show first the errors, and show count while processing
+- 0.14.4
+  - add: changing filter name to filter_code
 - 0.14.0
   - add: tko fortune on play quit
   - add: key not found in play mode

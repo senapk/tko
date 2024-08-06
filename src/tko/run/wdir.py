@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import math
 import os
 
@@ -179,13 +179,13 @@ class Wdir:
     def unit_list_resume(self) -> List[Sentence]:
         return [unit.str() for unit in self.unit_list]
 
-    def sources_names(self) -> List[str]:
-        out: List[str] = []
+    def sources_names(self) -> List[Tuple[str, int]]:
+        out: List[Tuple[str, int]] = []
         if len(self.pack_list) == 0:
-            out.append(symbols.failure.text)
+            out.append((symbols.failure.text, 0))
         for i in range(len(self.pack_list)):
             nome: str = self.source_list[i].split(os.sep)[-1]
-            out.append(nome + "(" + str(len(self.pack_list[i])).zfill(2) + ")")
+            out.append((nome, len(self.pack_list[i])))
         return out
 
     def solvers_names(self) -> List[str]:
@@ -197,13 +197,9 @@ class Wdir:
         return out
 
     def resume(self) -> Sentence:
-
-        __sources = Sentence().add("Testes:").add("[").addf("y", ", ".join(self.sources_names())).add("]")
+        sources = [f"{name}({str(count).rjust(2, "0")})" for name, count in self.sources_names()]
+        __sources = Sentence().add("Testes:").add("[").addf("y", ", ".join(sources)).add("]")
 
         __solvers = Sentence().add("Códigos:").add("[").addf("g", ", ".join(self.solvers_names())).add("]")
-
-        # folder = os.getcwd().split(os.sep)[-1]
-        # tests_count = (colour("tests:", Color.GREEN) +
-        #               str(len([x for x in self.unit_list if x.repeated is None])).zfill(2))
 
         return Sentence().add(__solvers).add(" ").add(__sources)
