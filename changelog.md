@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.15.3
+  - fix: bug on play loading errors in wrong order
 - 0.15.2
   - add: filter solver in autoload by rep language
   - add: show downloaded in play only if selected language was found

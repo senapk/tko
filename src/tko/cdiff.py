@@ -72,7 +72,7 @@ class CDiff:
 
     def print_centered_image(self, image: str, color: str):
         _, cols = Fmt.get_size()
-        lines = image.split("\n")
+        lines = image.split("\n")[1:]
         for i, line in enumerate(lines):
             Fmt.write(i + 4, 1, Sentence().addf(color, line).center(cols - 2, Token(" ", " ")))
 
@@ -98,7 +98,7 @@ class CDiff:
 
     def draw_scrollbar(self):
         y_init = 3
-        if not self.has_any_error():
+        if len(self.results_fail) == 0:
             return   
         tr = "╮"
         br = "╯"
@@ -156,6 +156,12 @@ class CDiff:
             folder = os.path.abspath(self.wdir.get_solver().path_list[0])
         return folder.split(os.sep)[-2]
 
+    def get_focused_unit(self):
+        join_list = self.results_fail + self.results_done
+        _, index = join_list[self.index]
+        unit = self.wdir.get_unit(index)
+        return unit
+
     def draw_top_line(self):
         # construir mais uma solução
         if len(self.unit_list) > 0:
@@ -204,7 +210,7 @@ class CDiff:
 
         frame.set_header(header)
 
-        unit = self.wdir.get_unit(self.index)
+        unit = self.get_focused_unit()
         frame.write(0, 0, Sentence().add(unit.str(False)).center(frame.get_dx()))
 
 
@@ -239,21 +245,15 @@ class CDiff:
         )
         lines, cols = Fmt.get_size()
         Fmt.write(lines - 1, 0, cmds.center(cols, Token(" ")))
-
-    def has_any_error(self):
-        results = [unit.result for unit in self.wdir.get_unit_list()]
-        if ExecutionResult.EXECUTION_ERROR not in results and ExecutionResult.WRONG_OUTPUT not in results and ExecutionResult.COMPILATION_ERROR not in results:
-            return False
-        return True          
-
+ 
     def draw_diff(self, unit: Unit):
         lines, cols = Fmt.get_size()
         self.space = lines - 4
         frame = Frame(2, -1).set_inner(self.space, cols - 1).set_border_square()
 
-        if not self.has_any_error() and self.end_processing():
+        if len(self.results_fail) == 0 and self.end_processing():
             self.show_success()
-            return        
+            return
         Report.set_terminal_size(cols)
         if self.param.is_up_down:
             line_list = Diff.mount_up_down_diff(unit, curses=True)
@@ -308,7 +308,7 @@ class CDiff:
                 Fmt.refresh()
                 Fmt.erase()
             self.draw_top_line()
-            unit = self.wdir.get_unit(self.index)
+            unit = self.get_focused_unit()
             self.draw_diff(unit)
             self.draw_scrollbar()
             self.draw_guide_line()
