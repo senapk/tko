@@ -2,10 +2,10 @@ import subprocess
 from typing import Tuple
 import os
 from subprocess import PIPE
-from .ftext import Sentence
+from .ftext import Sentence, Token
 from .term_color import term_print
 from ..run.report import Report
-
+from ..play.images import compilling
 
 class Runner:
     def __init__(self):
@@ -32,9 +32,16 @@ class Runner:
             os.system('clear')
 
     @staticmethod
-    def free_run(cmd: str, to_clear: bool=True, wait_input:bool=True) -> None:
+    def free_run(compiling_fn, show_compilling:bool=True, to_clear: bool=True, wait_input:bool=True) -> None:
         if to_clear:
             Runner.clear_screen()
+        if show_compilling:
+            for line in compilling["computer"].split("\n"):
+                term_print(Report.centralize(Sentence().addf("y", line), Token(" ")))
+        cmd = compiling_fn()
+        if show_compilling:
+            Runner.clear_screen()
+        
         term_print(Report.centralize(Sentence() + " Rodando o código " + cmd + " ", "─"))
         term_print(Report.centralize(Sentence() + " Se necessário, digite Control D para finalizar a entrada ", "─"))
 

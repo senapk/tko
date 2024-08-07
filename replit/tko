@@ -13,15 +13,15 @@ import urllib.request
 import urllib.error
 import json
 import curses
-import tempfile
 import random
+import tempfile
 import webbrowser
 import re
 import math
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.14.8"
+__version__ = "0.15.0"
 
 
 class GeralSettings:
@@ -131,17 +131,96 @@ class GeralSettings:
 
 
 
-images: Dict[str, List[str]] = {}
+compilling: Dict[str, str] = {}
 
-images["success"] = [
-            r"  _____ __ __     __    ___  _____ _____  ___  ",
-            r" / ___/|  |  |   /  ]  /  _]/ ___// ___/ /   \ ",
-            r"(   \_ |  |  |  /  /  /  [_(   \_(   \_ |     |",
-            r" \__  ||  |  | /  /  |    _]\__  |\__  ||  O  |",
-            r" /  \ ||  :  |/   \_ |   [_ /  \ |/  \ ||     |",
-            r" \    ||     |\     ||     |\    |\    ||     |",
-            r"  \___| \__,_| \____||_____| \___| \___| \___/ ",
-        ]
+compilling["bloody"] = r"""
+ ▄████▄   ▒█████   ███▄ ▄███▓ ██▓███   ██▓ ██▓    ▄▄▄       ███▄    █ ▓█████▄  ▒█████  
+▒██▀ ▀█  ▒██▒  ██▒▓██▒▀█▀ ██▒▓██░  ██▒▓██▒▓██▒   ▒████▄     ██ ▀█   █ ▒██▀ ██▌▒██▒  ██▒
+▒▓█    ▄ ▒██░  ██▒▓██    ▓██░▓██░ ██▓▒▒██▒▒██░   ▒██  ▀█▄  ▓██  ▀█ ██▒░██   █▌▒██░  ██▒
+▒▓▓▄ ▄██▒▒██   ██░▒██    ▒██ ▒██▄█▓▒ ▒░██░▒██░   ░██▄▄▄▄██ ▓██▒  ▐▌██▒░▓█▄   ▌▒██   ██░
+▒ ▓███▀ ░░ ████▓▒░▒██▒   ░██▒▒██▒ ░  ░░██░░██████▒▓█   ▓██▒▒██░   ▓██░░▒████▓ ░ ████▓▒░
+░ ░▒ ▒  ░░ ▒░▒░▒░ ░ ▒░   ░  ░▒▓▒░ ░  ░░▓  ░ ▒░▓  ░▒▒   ▓▒█░░ ▒░   ▒ ▒  ▒▒▓  ▒ ░ ▒░▒░▒░ 
+  ░  ▒     ░ ▒ ▒░ ░  ░      ░░▒ ░      ▒ ░░ ░ ▒  ░ ▒   ▒▒ ░░ ░░   ░ ▒░ ░ ▒  ▒   ░ ▒ ▒░ 
+░        ░ ░ ░ ▒  ░      ░   ░░        ▒ ░  ░ ░    ░   ▒      ░   ░ ░  ░ ░  ░ ░ ░ ░ ▒  
+░ ░          ░ ░         ░             ░      ░  ░     ░  ░         ░    ░        ░ ░  
+░                                                                      ░               
+"""
+
+compilling["computer"] = r"""
+ ██████╗ ██████╗ ███╗   ███╗██████╗ ██╗██╗      █████╗ ███╗   ██╗██████╗  ██████╗ 
+██╔════╝██╔═══██╗████╗ ████║██╔══██╗██║██║     ██╔══██╗████╗  ██║██╔══██╗██╔═══██╗
+██║     ██║   ██║██╔████╔██║██████╔╝██║██║     ███████║██╔██╗ ██║██║  ██║██║   ██║
+██║     ██║   ██║██║╚██╔╝██║██╔═══╝ ██║██║     ██╔══██║██║╚██╗██║██║  ██║██║   ██║
+╚██████╗╚██████╔╝██║ ╚═╝ ██║██║     ██║███████╗██║  ██║██║ ╚████║██████╔╝╚██████╔╝
+ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═════╝  ╚═════╝ 
+"""
+
+compilling["edge]"] = r"""
+▄█▄    ████▄ █▀▄▀█ █ ▄▄  ▄█ █    ██      ▄   ██▄   ████▄
+█▀ ▀▄  █   █ █ █ █ █   █ ██ █    █ █      █  █  █  █   █
+█   ▀  █   █ █ ▄ █ █▀▀▀  ██ █    █▄▄█ ██   █ █   █ █   █
+█▄  ▄▀ ▀████ █   █ █     ▐█ ███▄ █  █ █ █  █ █  █  ▀████
+▀███▀           █   █     ▐     ▀   █ █  █ █ ███▀       
+               ▀     ▀             █  █   ██            
+                                  ▀                     
+"""
+
+success: Dict[str, str] = {}
+
+
+success["success"] = r"""
+███████╗██╗   ██╗ ██████╗███████╗███████╗███████╗ ██████╗ 
+██╔════╝██║   ██║██╔════╝██╔════╝██╔════╝██╔════╝██╔═══██╗
+███████╗██║   ██║██║     █████╗  ███████╗███████╗██║   ██║
+╚════██║██║   ██║██║     ██╔══╝  ╚════██║╚════██║██║   ██║
+███████║╚██████╔╝╚██████╗███████╗███████║███████║╚██████╔╝
+╚══════╝ ╚═════╝  ╚═════╝╚══════╝╚══════╝╚══════╝ ╚═════╝ 
+"""
+
+success["success3"] = r"""
+  ██████  █    ██  ▄████▄  ▓█████   ██████   ██████  ▒█████  
+▒██    ▒  ██  ▓██▒▒██▀ ▀█  ▓█   ▀ ▒██    ▒ ▒██    ▒ ▒██▒  ██▒
+░ ▓██▄   ▓██  ▒██░▒▓█    ▄ ▒███   ░ ▓██▄   ░ ▓██▄   ▒██░  ██▒
+  ▒   ██▒▓▓█  ░██░▒▓▓▄ ▄██▒▒▓█  ▄   ▒   ██▒  ▒   ██▒▒██   ██░
+▒██████▒▒▒▒█████▓ ▒ ▓███▀ ░░▒████▒▒██████▒▒▒██████▒▒░ ████▓▒░
+▒ ▒▓▒ ▒ ░░▒▓▒ ▒ ▒ ░ ░▒ ▒  ░░░ ▒░ ░▒ ▒▓▒ ▒ ░▒ ▒▓▒ ▒ ░░ ▒░▒░▒░ 
+░ ░▒  ░ ░░░▒░ ░ ░   ░  ▒    ░ ░  ░░ ░▒  ░ ░░ ░▒  ░ ░  ░ ▒ ▒░ 
+░  ░  ░   ░░░ ░ ░ ░           ░   ░  ░  ░  ░  ░  ░  ░ ░ ░ ▒  
+      ░     ░     ░ ░         ░  ░      ░        ░      ░ ░  
+                  ░                                          
+"""
+
+success["success4"] = r"""
+  █████████                                                       
+ ███░░░░░███                                                      
+░███    ░░░  █████ ████  ██████   ██████   █████   █████   ██████ 
+░░█████████ ░░███ ░███  ███░░███ ███░░███ ███░░   ███░░   ███░░███
+ ░░░░░░░░███ ░███ ░███ ░███ ░░░ ░███████ ░░█████ ░░█████ ░███ ░███
+ ███    ░███ ░███ ░███ ░███  ███░███░░░   ░░░░███ ░░░░███░███ ░███
+░░█████████  ░░████████░░██████ ░░██████  ██████  ██████ ░░██████ 
+ ░░░░░░░░░    ░░░░░░░░  ░░░░░░   ░░░░░░  ░░░░░░  ░░░░░░   ░░░░░░  
+"""
+
+success["success5"] = r"""
+.▄▄ · ▄• ▄▌ ▄▄· ▄▄▄ ..▄▄ · .▄▄ ·       
+▐█ ▀. █▪██▌▐█ ▌▪▀▄.▀·▐█ ▀. ▐█ ▀. ▪     
+▄▀▀▀█▄█▌▐█▌██ ▄▄▐▀▀▪▄▄▀▀▀█▄▄▀▀▀█▄ ▄█▀▄ 
+▐█▄▪▐█▐█▄█▌▐███▌▐█▄▄▌▐█▄▪▐█▐█▄▪▐█▐█▌.▐▌
+ ▀▀▀▀  ▀▀▀ ·▀▀▀  ▀▀▀  ▀▀▀▀  ▀▀▀▀  ▀█▄▀▪
+"""
+
+success["success6"] = r"""
+   ▄▄▄▄▄   ▄   ▄█▄    ▄███▄     ▄▄▄▄▄    ▄▄▄▄▄   ████▄
+  █     ▀▄  █  █▀ ▀▄  █▀   ▀   █     ▀▄ █     ▀▄ █   █
+▄  ▀▀▀▀▄ █   █ █   ▀  ██▄▄   ▄  ▀▀▀▀▄ ▄  ▀▀▀▀▄   █   █
+ ▀▄▄▄▄▀  █   █ █▄  ▄▀ █▄   ▄▀ ▀▄▄▄▄▀   ▀▄▄▄▄▀    ▀████
+         █▄ ▄█ ▀███▀  ▀███▀                           
+          ▀▀▀                                         
+"""
+
+# --------------------------------------------------------------
+
+images: Dict[str, str] = {}
 
 images["pink"] = r"""
 Programando assim, você vai dominar o mundo!
@@ -172,7 +251,7 @@ __.._,-" .-"'"")  /' ,' _          \ |  /"-.`j""``
  ;.'         /-'---"".--"'       /,_,^-._ .)      
  `:=.__.,itz `---._.;'
 
-""".split("\n")[1:]
+"""
 
 images["batman"] = r"""
 Não é o que sou por dentro, é o que eu faço que me define.
@@ -198,7 +277,7 @@ Não é o que sou por dentro, é o que eu faço que me define.
              \ \| | /   | |__      
                   / |   |____)     
                   |_/              
-""".split("\n")[1:]
+"""
 
 
 images["vegeta"] = r"""
@@ -228,7 +307,7 @@ O miserável é um gênio!
 ⠀⠀⠀⠀⡠⠔⠉⠀⠀⢀⡠⡤⠇⠀⠀⢀⠀⠰⣣⠈⠐⠤⡀⠀⡀⠈⠙⢍⠉⣉⠤⠒⠉⣠⣟⢮⠂⡄⠀⣼⠁⠀⡆⠀⠀⠀⠀⢡⣀⠀
 ⣿⡷⠖⠉⠀⠀⡠⠔⣪⣿⠟⣫⠀⠀⠀⢸⠀⠀⢩⢆⠀⠀⠈⠑⢳⠤⠄⠠⠭⠤⠐⠂⢉⣾⢮⠃⢠⠃⢰⡹⠀⢰⠀⠀⠀⠀⠀⢸⡉⣳
 ⠉⠀⢀⡠⠒⠉⣠⠾⠋⢁⠔⠹⠀⠀⠀⡈⡇⠀⠀⢫⣆⠀⠀⠀⠘⣆⠀⠀⠀⠀⠀⠀⣘⢾⠃⢀⠏⣠⡳⠁⠀⣾⠀⠀⠀⠀⠀⠀⠈⠉
-""".split("\n")[1:]
+"""
 
 
 
@@ -260,7 +339,7 @@ Espero você no próximo nível!
                        _..--' _'-' '--'.-. |                
                 __,,-'' _,,-''            \ \               
 
-""".split("\n")[1:]
+"""
 
 images["coiote"] = r"""
 Você fez essa questão muito rápido, da próxima vez
@@ -299,7 +378,7 @@ vou aumentar a dificuldade!
       _)      \_,     ; :@@@@@@@@@;                  ~~   
     _;          \\   ,' |@@@@@@@@@:                       
 
-""".split("\n")[1:]
+"""
 
 images["piupiu"] = r"""
 Eu acho que eu vi um programador!
@@ -335,7 +414,7 @@ Eu acho que eu vi um programador!
   $          $$$$$$$$         $   
    $$         $   $          $    
     $$$$$$$$$$$   $$$$$$$$$$$ ~*  
-""".split("\n")[1:]
+"""
 
 images["saitama"] = r"""
 Se garantiu
@@ -353,7 +432,7 @@ Se garantiu
 ⠀⠀⠀⢰⡯⠭⠹⡟⠿⠧⠷⣄⣀⣟⠛⣦⠔⠋⠛⠛⠋⠙⡆⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⢸⣿⠭⠉⠀⢠⣤⠀⠀⠀⠘⡷⣵⢻⠀⠀⠀⠀⣼⠀⣇⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⡇⣿⠍⠁⠀⢸⣗⠂⠀⠀⠀⣧⣿⣼⠀⠀⠀⠀⣯⠀⢸⠀⠀
-""".split("\n")[1:]
+"""
 
 images["cool"] = r"""
 Essa foi show de bola!
@@ -368,7 +447,7 @@ Essa foi show de bola!
 ⠀⠀⠘⢿⡄⠀⣠⡾⢻⣿⣄⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⢿⣴⡟⠀⢸⡏⠹⣧⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠈⠛⠀⠀⢸⣟⠀⠹⣧⠀⠀⠀⠀
-""".split("\n")[1:]
+"""
 
 images["among"] = r"""
 Sossegue, você não é um importor
@@ -391,7 +470,7 @@ Sossegue, você não é um importor
 ⠀⠀⠀⠀⠀⠀⠀⣿⣿⠀⠀⠀⠀⠀⣿⣿⡇⠀⢹⣿⡆⠀⠀⠀⣸⣿⠇⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⢿⣿⣦⣄⣀⣠⣴⣿⣿⠁⠀⠈⠻⣿⣿⣿⣿⡿⠏⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠈⠛⠻⠿⠿⠿⠿⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-""".split("\n")[1:]
+"""
 
 images["heart"] = r"""
 O código ficou lindo dessa vez!
@@ -410,7 +489,7 @@ O código ficou lindo dessa vez!
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠁⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠿⢿⣿⣿⣿⡿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 Ou será que não?
-""".split("\n")[1:]
+"""
 
 images["pikachu"] = r"""
         Picapi!          
@@ -428,7 +507,7 @@ images["pikachu"] = r"""
 ⣿⣿⣿⣿⣿⣿⣿⣿⡀⠉⠀⠀⠀⠀⠀⢄⠀⢀⠀⠀⠀⠀⠉⠉⠁⠀⠀⣿⣿⣿
 ⣿⣿⣿⣿⣿⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠈⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣿⣿
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿
-""".split("\n")[1:]
+"""
 
 images["yoda"] = r"""
 Que a força esteja com você
@@ -451,7 +530,7 @@ Que a força esteja com você
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣿⡿⠟⠋⠀⠀⠀⣿⠀⠀⣸⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣁⣀⠀⠀⠀⠀⣿⡀⠀⣿⠀⠀⠀⠀⠀⠀⢀⣈⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠛⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠟⠛⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-""".split("\n")[1:]
+"""
 
 images["vader"] = r"""
 Sua falta de fé é perturbadora.
@@ -476,7 +555,7 @@ Sua falta de fé é perturbadora.
 ⢿⣷⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⣴⠀⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⣠⣾⣿⠿⠿⠟⠋⠁⠀⠀⠀⠀⠀
 ⠀⠉⠛⠛⠿⠿⠿⢿⣿⣿⣿⣵⣾⣿⣧⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠉⠉⠉⠉⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-""".split("\n")[1:]
+"""
 
 images["mario"] = r"""
 Vamos lá. Nossa grande aventura começa agora!
@@ -498,7 +577,7 @@ Vamos lá. Nossa grande aventura começa agora!
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⣿⡀⣿⠁⣤⣤⡄⢻⡶⠶⠛⠛⠛⠛⠛⣿⢠⣾⣷⣆⢻⡀⠀⠀⠈⣷
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⢸⣿⣿⣿⡈⢿⡀⠀⠀⠀⠀⠀⡿⢸⣿⣿⣿⢸⡇⠀⠀⠀⡟
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠈⠉⠉⠉⠁⠈⠁⠀⠀⠀⠀⠈⠁⠈⠉⠉⠉⠀⠁⠀⠀⠈⠁
-""".split("\n")[1:]
+"""
 
 images["mandalorian"] = r"""
 Como deve ser
@@ -532,7 +611,7 @@ Como deve ser
 ⣿⠇⠀⢠⣿⣿⢿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⣱⣟⡿⣽⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⡄⠈⠿
 ⣿⠀⢀⣿⣿⣿⣴⣟⡻⣮⣿⣿⣿⣿⣋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡼⣱⣿⣿⢣⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀
 ⣿⠀⠘⢱⣿⠿⣿⣿⣿⣍⣻⣿⣿⣿⣿⣽⣗⡂⠤⠀⠀⠀⠀⠀⠀⢀⣤⠴⣺⣽⣾⣿⣿⠏⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-""".split("\n")[1:]
+"""
 
 
 images["minion"] = r"""
@@ -551,7 +630,7 @@ Bananaaaa!
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⠳⢧⣠⣤⣄⣠⣀⣈⣱⡥⠤⠴⠦⠴⠃⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣿⣿⠀⣿⣿⣿⣄⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠉⠉⠀⠈⠉⠉⠉⠀⠀⠀⠀⠀⠀
-""".split("\n")[1:]
+"""
 
 images["minions2"] = r"""
 Banana banana bananáaaaaa!
@@ -569,7 +648,7 @@ Banana banana bananáaaaaa!
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⡀⠔⠃⠀⠀⠀⠑⠬⠭⠝⠀⣈⡾⡄⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⡴⢣⠑⢄⣀⣀⣀⣀⣀⠀⠤⣐⢞⣿⡡⠃⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠈⠁⠉⠉⠀⠀⠀⠀⠀⠀⠀⠈⠫⠙⠀⠀⠀⠀⠀⠀⠀⠀
-""".split("\n")[1:]
+"""
 
 images["slayer"] = r"""
 Não há atalhos, apenas trabalho duro.
@@ -599,7 +678,7 @@ Treine duro e seja paciente. Vai valer a pena.
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣛⡦⠀⣀⣨⠟⠲⠤⠤⠬⣷⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣴⠟⢁⡀⠀⣼⠇⠀⠀
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⣶⣬⣿⣿⣡⣵⣖⣤⣀⣤⣈⣙⣶⣦⣤⣀⣀⣠⡤⠶⠟⠋⠁⠀⠀⠉⢷⠉⠀⠀⠀
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣒⠒⠖⠀⠀⠀⠀⠉⠀⢄⣀⣴
-""".split("\n")[1:]
+"""
 
 images["jujutsu"] = r"""
 Não sei como vou me sentir quando estiver morto, 
@@ -624,7 +703,7 @@ mas não quero me arrepender da maneira como vivi.
 ⠀⠘⠛⣿⡿⠛⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢿⣿⣏⠉⠉
 ⢀⠤⣾⠛⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠾⣐⣚⣦⠀
 ⠉⠉⠉⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-""".split("\n")[1:]
+"""
 
 
 images["gollum"] = r"""
@@ -644,7 +723,7 @@ Meu precioso!
 ⠀⠀⠀⠀⠙⢩⢻⣿⣿⣷⡀⠀⠀⢈⡙⠛⠿⠓⠐⠉⠀⢸⣿⣿⣿⠟⠁⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠽⢀⣤⡀⠀⢠⣤⡈⠉⠁⠠⠤⠀⠀⠘⠿⠋⠁⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠿⠶⢾⣭⢤⡾⠀⠠⠒⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-""".split("\n")[1:]
+"""
 
 
 class Style:
@@ -4731,7 +4810,6 @@ class Diff:
         return output
 
 
-
 class Runner:
     def __init__(self):
         pass
@@ -4757,9 +4835,16 @@ class Runner:
             os.system('clear')
 
     @staticmethod
-    def free_run(cmd: str, to_clear: bool=True, wait_input:bool=True) -> None:
+    def free_run(compiling_fn, show_compilling:bool=True, to_clear: bool=True, wait_input:bool=True) -> None:
         if to_clear:
             Runner.clear_screen()
+        if show_compilling:
+            for line in compilling["computer"].split("\n"):
+                term_print(Report.centralize(Sentence().addf("y", line), Token(" ")))
+        cmd = compiling_fn()
+        if show_compilling:
+            Runner.clear_screen()
+        
         term_print(Report.centralize(Sentence() + " Rodando o código " + cmd + " ", "─"))
         term_print(Report.centralize(Sentence() + " Se necessário, digite Control D para finalizar a entrada ", "─"))
 
@@ -4811,16 +4896,22 @@ class Solver:
         
         self.temp_dir = tempfile.mkdtemp()
         self.error_msg: str = ""
-        self.executable: str = ""
+        self.__executable: str = ""
         self.compile_error: bool = False
-        if len(self.path_list) > 0:
+
+    def set_executable(self, executable: str) -> None:
+        self.__executable = executable
+
+    def get_executable(self) -> str:
+        if len(self.path_list) > 0 and self.__executable == "":
             self.prepare_exec()
+        return self.__executable
 
     def prepare_exec(self) -> None:
         path = self.path_list[0]
 
         if path.endswith(".py"):
-            self.executable = "python " + path
+            self.__executable = "python " + path
         elif path.endswith(".js"):
             self.__prepare_js()
         elif path.endswith(".ts"):
@@ -4834,7 +4925,7 @@ class Solver:
         elif path.endswith(".sql"):
             self.__prepare_sql()
         else:
-            self.executable = path
+            self.__executable = path
 
     def __prepare_java(self):
         check_tool("javac")
@@ -4851,16 +4942,16 @@ class Solver:
             self.error_msg = stdout + stderr
             self.compile_error = True
         else:
-            self.executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
+            self.__executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
 
     def __prepare_js(self):
         check_tool("node")
         solver = self.path_list[0]
-        self.executable = "node " + solver
+        self.__executable = "node " + solver
 
     def __prepare_sql(self):
         check_tool("sqlite3")
-        self.executable = "cat " + " ".join(self.path_list) + " | sqlite3"
+        self.__executable = "cat " + " ".join(self.path_list) + " | sqlite3"
 
     def __prepare_ts(self):
         transpiler = "esbuild"
@@ -4881,7 +4972,7 @@ class Solver:
             self.compile_error = True
         else:
             jsfile = os.path.join(self.temp_dir, filename[:-3] + ".js")
-            self.executable = "node " + jsfile  # renaming solver to main
+            self.__executable = "node " + jsfile  # renaming solver to main
     
     def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
         # solver = self.path_list[0]
@@ -4896,7 +4987,7 @@ class Solver:
             self.error_msg = stdout + stderr
             self.compile_error = True
         else:
-            self.executable = exec_path
+            self.__executable = exec_path
 
     def __prepare_c(self):
         check_tool("gcc")
@@ -4929,7 +5020,7 @@ class Execution:
         if solver.compile_error:
             unit.user = solver.error_msg
             return ExecutionResult.COMPILATION_ERROR
-        cmd = solver.executable
+        cmd = solver.get_executable()
         return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input)
         unit.user = stdout + stderr
         if return_code != 0:
@@ -5019,7 +5110,7 @@ class Wdir:
         if self.solver is not None:
             print("fail: if using --cmd, don't pass source files to target")
         self.solver = Solver([])
-        self.solver.executable = exec_cmd
+        self.solver.set_executable(exec_cmd)
         return self
 
     def build(self):
@@ -5134,6 +5225,7 @@ class Wdir:
 
 
 
+
 class CDiff:
 
     def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
@@ -5183,17 +5275,31 @@ class CDiff:
             return "Y"
         return ""
 
+    def print_centered_image(self, image: str, color: str):
+        _, cols = Fmt.get_size()
+        lines = image.split("\n")
+        for i, line in enumerate(lines):
+            Fmt.write(i + 4, 1, Sentence().addf(color, line).center(cols - 2, Token(" ", " ")))
+
+    def random_get(self, dic: dict, mode:str):
+        if mode == "static":
+            count = sum([ord(c) for c in self.get_folder()])
+            keys = list(dic.keys())
+            return dic[keys[count % len(keys)]]
+        else:
+            keys = list(dic.keys())
+            return dic[random.choice(keys)]    
+
     def show_success(self):
         if self.success_type == Success.RANDOM:
-            count = sum([ord(c) for c in self.get_folder()])
-            keys = list(images.keys())
-            out = images[keys[count % len(keys)]]
+            out = self.random_get(images, "static")
         else:
-            out = images["success"]
-        _, cols = Fmt.get_size()
-        for i, line in enumerate(out):
-            Fmt.write(i + 4, 1, Sentence().addf("g", line).center(cols - 2, Token(" ", " ")))
+            out = self.random_get(success, "static")
+        self.print_centered_image(out, "g")
         
+    def show_compilling(self):
+        out = self.random_get(compilling, "random")
+        self.print_centered_image(out, "y")
 
     def draw_scrollbar(self):
         y_init = 3
@@ -5251,6 +5357,8 @@ class CDiff:
         if self.wdir.source_list:
             folder = os.path.abspath(self.wdir.source_list[0])
         else:
+            if self.wdir.solver is None:
+                raise Exception("Solver not found")
             folder = os.path.abspath(self.wdir.solver.path_list[0])
         return folder.split(os.sep)[-2]
 
@@ -5286,12 +5394,12 @@ class CDiff:
             if i != 0:
                 sources.add(", ")
             sources.addf("Y", source)
+
         done = len(self.results_done) + len(self.results_fail)
         full = len(self.wdir.unit_list)
-        if done == full:
-            sources.addf("Y", f"({full})")
-        else:
-            sources.addf("Y", f"({done}/{full})")
+        sources.addf("Y", f"({full})")
+        if done != full:
+            solvers.add(" ").addf("R", f"({done}/{full})")
 
         delta = frame.get_dx() - solvers.len()
         left = 1
@@ -5405,6 +5513,10 @@ class CDiff:
                 self.first_loop = False
                 self.load_autoload_warning()
             Fmt.erase()
+            if len(self.results_done) + len(self.results_fail) == 0:
+                self.show_compilling()
+                Fmt.refresh()
+                Fmt.erase()
             self.draw_top_line()
             unit = self.wdir.unit_list[self.index]
             self.draw_diff(unit)
@@ -5440,17 +5552,21 @@ class CDiff:
                 self.save_settings()
                 self.init = 0
             elif key == ord('e'):
+                # self.show_compilling()
+                # Fmt.refresh()
                 if self.wdir.solver is not None:
                     if self.wdir.is_autoload():
                         self.wdir.autoload()
-                    self.wdir.solver.prepare_exec()
-                #return a lambda funcion to run the code
-                return lambda: Runner.free_run(self.wdir.solver.executable)
+                        self.wdir.solver.set_executable("")
+                    return lambda: Runner.free_run(self.wdir.solver.get_executable)
 
             elif key == ord('t'):
                 if self.wdir.solver is not None:
                     if self.wdir.is_autoload():
                         self.wdir.autoload()
+                    Fmt.erase()
+                    self.show_compilling()
+                    Fmt.refresh()
                     self.wdir.solver.prepare_exec()
                 self.results_done = []
                 self.results_fail = []
@@ -5649,10 +5765,11 @@ class Run:
         if self.wdir is None:
             return False
         if self.wdir.solver is not None and (len(self.wdir.unit_list) == 0 or self.curses_free_run):
+
             if self.curses_free_run:
-                Runner.free_run(self.wdir.solver.executable)
+                Runner.free_run(self.wdir.solver.get_executable)
             else:
-                Runner.free_run(self.wdir.solver.executable, to_clear=False, wait_input=False)
+                Runner.free_run(self.wdir.solver.get_executable, show_compilling=False, to_clear=False, wait_input=False)
             return True
         return False
 

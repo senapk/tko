@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.15.0
+  - add: compilling msgs in execution and testing
 - 0.14.8
   - fix:.format fix
 - 0.14.7

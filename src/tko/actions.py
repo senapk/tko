@@ -8,6 +8,7 @@ from .run.basic import DiffMode, ExecutionResult
 from .run.param import Param
 from .run.diff import Diff
 from .util.ftext import Sentence, Token
+from .play.images import compilling
 
 from .run.basic import Success
 from .run.report import Report
@@ -191,10 +192,11 @@ class Run:
         if self.wdir is None:
             return False
         if self.wdir.solver is not None and (len(self.wdir.unit_list) == 0 or self.curses_free_run):
+
             if self.curses_free_run:
-                Runner.free_run(self.wdir.solver.executable)
+                Runner.free_run(self.wdir.solver.get_executable)
             else:
-                Runner.free_run(self.wdir.solver.executable, to_clear=False, wait_input=False)
+                Runner.free_run(self.wdir.solver.get_executable, show_compilling=False, to_clear=False, wait_input=False)
             return True
         return False
 

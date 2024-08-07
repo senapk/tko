@@ -10,9 +10,10 @@ from typing import List, Tuple
 from .play.frame import Frame
 from .play.floating import Floating
 from .play.floating_manager import FloatingManager
-from .play.images import images
+from .play.images import images, compilling, success
 from .util.runner import Runner
-from .util.term_color import term_print
+import random
+
 
 from .run.wdir import Wdir
 from .run.report import Report
@@ -69,17 +70,31 @@ class CDiff:
             return "Y"
         return ""
 
+    def print_centered_image(self, image: str, color: str):
+        _, cols = Fmt.get_size()
+        lines = image.split("\n")
+        for i, line in enumerate(lines):
+            Fmt.write(i + 4, 1, Sentence().addf(color, line).center(cols - 2, Token(" ", " ")))
+
+    def random_get(self, dic: dict, mode:str):
+        if mode == "static":
+            count = sum([ord(c) for c in self.get_folder()])
+            keys = list(dic.keys())
+            return dic[keys[count % len(keys)]]
+        else:
+            keys = list(dic.keys())
+            return dic[random.choice(keys)]    
+
     def show_success(self):
         if self.success_type == Success.RANDOM:
-            count = sum([ord(c) for c in self.get_folder()])
-            keys = list(images.keys())
-            out = images[keys[count % len(keys)]]
+            out = self.random_get(images, "static")
         else:
-            out = images["success"]
-        _, cols = Fmt.get_size()
-        for i, line in enumerate(out):
-            Fmt.write(i + 4, 1, Sentence().addf("g", line).center(cols - 2, Token(" ", " ")))
+            out = self.random_get(success, "static")
+        self.print_centered_image(out, "g")
         
+    def show_compilling(self):
+        out = self.random_get(compilling, "random")
+        self.print_centered_image(out, "y")
 
     def draw_scrollbar(self):
         y_init = 3
@@ -137,6 +152,8 @@ class CDiff:
         if self.wdir.source_list:
             folder = os.path.abspath(self.wdir.source_list[0])
         else:
+            if self.wdir.solver is None:
+                raise Exception("Solver not found")
             folder = os.path.abspath(self.wdir.solver.path_list[0])
         return folder.split(os.sep)[-2]
 
@@ -172,12 +189,12 @@ class CDiff:
             if i != 0:
                 sources.add(", ")
             sources.addf("Y", source)
+
         done = len(self.results_done) + len(self.results_fail)
         full = len(self.wdir.unit_list)
-        if done == full:
-            sources.addf("Y", f"({full})")
-        else:
-            sources.addf("Y", f"({done}/{full})")
+        sources.addf("Y", f"({full})")
+        if done != full:
+            solvers.add(" ").addf("R", f"({done}/{full})")
 
         delta = frame.get_dx() - solvers.len()
         left = 1
@@ -291,6 +308,10 @@ class CDiff:
                 self.first_loop = False
                 self.load_autoload_warning()
             Fmt.erase()
+            if len(self.results_done) + len(self.results_fail) == 0:
+                self.show_compilling()
+                Fmt.refresh()
+                Fmt.erase()
             self.draw_top_line()
             unit = self.wdir.unit_list[self.index]
             self.draw_diff(unit)
@@ -326,17 +347,21 @@ class CDiff:
                 self.save_settings()
                 self.init = 0
             elif key == ord('e'):
+                # self.show_compilling()
+                # Fmt.refresh()
                 if self.wdir.solver is not None:
                     if self.wdir.is_autoload():
                         self.wdir.autoload()
-                    self.wdir.solver.prepare_exec()
-                #return a lambda funcion to run the code
-                return lambda: Runner.free_run(self.wdir.solver.executable)
+                        self.wdir.solver.set_executable("")
+                    return lambda: Runner.free_run(self.wdir.solver.get_executable)
 
             elif key == ord('t'):
                 if self.wdir.solver is not None:
                     if self.wdir.is_autoload():
                         self.wdir.autoload()
+                    Fmt.erase()
+                    self.show_compilling()
+                    Fmt.refresh()
                     self.wdir.solver.prepare_exec()
                 self.results_done = []
                 self.results_fail = []

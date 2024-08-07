@@ -91,7 +91,7 @@ class Wdir:
         if self.solver is not None:
             print("fail: if using --cmd, don't pass source files to target")
         self.solver = Solver([])
-        self.solver.executable = exec_cmd
+        self.solver.set_executable(exec_cmd)
         return self
 
     def build(self):

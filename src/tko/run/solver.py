@@ -19,16 +19,22 @@ class Solver:
         
         self.temp_dir = tempfile.mkdtemp()
         self.error_msg: str = ""
-        self.executable: str = ""
+        self.__executable: str = ""
         self.compile_error: bool = False
-        if len(self.path_list) > 0:
+
+    def set_executable(self, executable: str) -> None:
+        self.__executable = executable
+
+    def get_executable(self) -> str:
+        if len(self.path_list) > 0 and self.__executable == "":
             self.prepare_exec()
+        return self.__executable
 
     def prepare_exec(self) -> None:
         path = self.path_list[0]
 
         if path.endswith(".py"):
-            self.executable = "python " + path
+            self.__executable = "python " + path
         elif path.endswith(".js"):
             self.__prepare_js()
         elif path.endswith(".ts"):
@@ -42,7 +48,7 @@ class Solver:
         elif path.endswith(".sql"):
             self.__prepare_sql()
         else:
-            self.executable = path
+            self.__executable = path
 
     def __prepare_java(self):
         check_tool("javac")
@@ -59,16 +65,16 @@ class Solver:
             self.error_msg = stdout + stderr
             self.compile_error = True
         else:
-            self.executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
+            self.__executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
 
     def __prepare_js(self):
         check_tool("node")
         solver = self.path_list[0]
-        self.executable = "node " + solver
+        self.__executable = "node " + solver
 
     def __prepare_sql(self):
         check_tool("sqlite3")
-        self.executable = "cat " + " ".join(self.path_list) + " | sqlite3"
+        self.__executable = "cat " + " ".join(self.path_list) + " | sqlite3"
 
     def __prepare_ts(self):
         transpiler = "esbuild"
@@ -89,7 +95,7 @@ class Solver:
             self.compile_error = True
         else:
             jsfile = os.path.join(self.temp_dir, filename[:-3] + ".js")
-            self.executable = "node " + jsfile  # renaming solver to main
+            self.__executable = "node " + jsfile  # renaming solver to main
     
     def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
         # solver = self.path_list[0]
@@ -104,7 +110,7 @@ class Solver:
             self.error_msg = stdout + stderr
             self.compile_error = True
         else:
-            self.executable = exec_path
+            self.__executable = exec_path
 
     def __prepare_c(self):
         check_tool("gcc")

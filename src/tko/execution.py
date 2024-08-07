@@ -15,7 +15,7 @@ class Execution:
         if solver.compile_error:
             unit.user = solver.error_msg
             return ExecutionResult.COMPILATION_ERROR
-        cmd = solver.executable
+        cmd = solver.get_executable()
         return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input)
         unit.user = stdout + stderr
         if return_code != 0:
