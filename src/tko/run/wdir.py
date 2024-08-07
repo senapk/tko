@@ -17,15 +17,39 @@ class Wdir:
     def __init__(self):
         self.__autoload = False
         self.__autoload_folder = ""
-        
-        self.solver: Optional[Solver] = None
-        self.source_list: List[str] = []
-        self.pack_list: List[List[Unit]] = []
-        self.unit_list: List[Unit] = []
+        self.__solver: Optional[Solver] = None
+        self.__source_list: List[str] = []
+        self.__pack_list: List[List[Unit]] = []
+        self.__unit_list: List[Unit] = []
         self.__curses = False
+        self.__lang = ""
+
+    def has_solver(self) -> bool:
+        return not self.__solver is None
+
+    def has_tests(self) -> bool:
+        return len(self.__unit_list) != 0
+
+    def get_solver(self) -> Solver:
+        if self.__solver is None:
+            raise Exception("fail: Não foi encontrado arquivo de código")
+        return self.__solver
+    
+    def get_unit_list(self) -> List[Unit]:
+        return self.__unit_list
+
+    def get_unit(self, index: int) -> Unit:
+        return self.__unit_list[index]
+    
+    def get_source_list(self) -> List[str]:
+        return self.__source_list
 
     def set_curses(self, value: bool):
         self.__curses = value
+        return self
+
+    def set_lang(self, lang: str):
+        self.__lang = lang
         return self
     
     def is_curses(self) -> bool:
@@ -34,13 +58,16 @@ class Wdir:
     def is_autoload(self) -> bool:
         return self.__autoload
 
+    def get_autoload_folder(self) -> str:
+        return self.__autoload_folder
+
     def set_solver(self, solver_list: List[str]):
         if len(solver_list) > 0:
-            self.solver = Solver(solver_list)
+            self.__solver = Solver(solver_list)
         return self
 
     def set_sources(self, source_list: List[str]):
-        self.source_list = source_list
+        self.__source_list = source_list
         return self
 
     def autoload(self):
@@ -52,7 +79,12 @@ class Wdir:
         files = [f for f in files if not any([f.endswith(a) for a in avoid])]
 
         sources = [target for target in files if target.endswith(".tio")]
-        solvers = [target for target in files if not target.endswith(".tio")]
+
+        if self.__lang != "":
+            solvers = [target for target in files if target.endswith("." + self.__lang)]
+        else:
+            solvers = [target for target in files if not target.endswith(".tio")]
+
         solvers = sorted(solvers)
 
         if not self.__curses:
@@ -88,24 +120,24 @@ class Wdir:
     def set_cmd(self, exec_cmd: Optional[str]):
         if exec_cmd is None:
             return self
-        if self.solver is not None:
+        if self.__solver is not None:
             print("fail: if using --cmd, don't pass source files to target")
-        self.solver = Solver([])
-        self.solver.set_executable(exec_cmd)
+        self.__solver = Solver([])
+        self.__solver.set_executable(exec_cmd)
         return self
 
     def build(self):
         loading_failures = 0
-        for source in self.source_list:
+        for source in self.__source_list:
             try:
-                self.pack_list.append(Loader.parse_source(source))
+                self.__pack_list.append(Loader.parse_source(source))
             except FileNotFoundError as e:
                 print(str(e))
                 loading_failures += 1
                 pass
-        if loading_failures > 0 and loading_failures == len(self.source_list):
+        if loading_failures > 0 and loading_failures == len(self.__source_list):
             raise FileNotFoundError("failure: none source found")
-        self.unit_list = sum(self.pack_list, [])
+        self.__unit_list = sum(self.__pack_list, [])
         self.__number_and_mark_duplicated()
         self.__calculate_grade()
         self.__pad()
@@ -113,18 +145,18 @@ class Wdir:
 
     def calc_grade(self) -> int:
         grade = 100
-        for case in self.unit_list:
+        for case in self.__unit_list:
             if not case.repeated and (case.user is None or case.output != case.user):
                 grade -= case.grade_reduction
         return max(0, grade)
 
     # put all the labels with the same length
     def __pad(self):
-        if len(self.unit_list) == 0:
+        if len(self.__unit_list) == 0:
             return
-        max_case = max([len(x.case) for x in self.unit_list])
-        max_source = max([len(x.source) for x in self.unit_list])
-        for unit in self.unit_list:
+        max_case = max([len(x.case) for x in self.__unit_list])
+        max_source = max([len(x.source) for x in self.__unit_list])
+        for unit in self.__unit_list:
             unit.case_pad = max_case
             unit.source_pad = max_source
 
@@ -132,8 +164,8 @@ class Wdir:
     def filter(self, param: Param.Basic):
         index = param.index
         if index is not None:
-            if 0 <= index < len(self.unit_list):
-                self.unit_list = [self.unit_list[index]]
+            if 0 <= index < len(self.__unit_list):
+                self.__unit_list = [self.__unit_list[index]]
             else:
                 raise ValueError("Index Number out of bounds: " + str(index))
         return self
@@ -141,8 +173,8 @@ class Wdir:
     # calculate the grade reduction for the cases without grade
     # the grade is proportional to the number of unique cases
     def __calculate_grade(self):
-        unique_count = len([x for x in self.unit_list if not x.repeated])
-        for unit in self.unit_list:
+        unique_count = len([x for x in self.__unit_list if not x.repeated])
+        for unit in self.__unit_list:
             if unit.grade is None:
                 unit.grade_reduction = math.floor(100 / unique_count)
             else:
@@ -152,45 +184,45 @@ class Wdir:
     def __number_and_mark_duplicated(self):
         new_list: List[Unit] = []
         index = 0
-        for unit in self.unit_list:
+        for unit in self.__unit_list:
             unit.index = index
             index += 1
             search = [x for x in new_list if x.input == unit.input]
             if len(search) > 0:
                 unit.repeated = search[0].index
             new_list.append(unit)
-        self.unit_list = new_list
+        self.__unit_list = new_list
 
     # sort, unlabel ou rename using the param received
     def manipulate(self, param: Param.Manip):
         # filtering marked repeated
-        self.unit_list = [unit for unit in self.unit_list if unit.repeated is None]
+        self.__unit_list = [unit for unit in self.__unit_list if unit.repeated is None]
         if param.to_sort:
-            self.unit_list.sort(key=lambda v: len(v.input))
+            self.__unit_list.sort(key=lambda v: len(v.input))
         if param.unlabel:
-            for unit in self.unit_list:
+            for unit in self.__unit_list:
                 unit.case = ""
         if param.to_number:
             number = 00
-            for unit in self.unit_list:
+            for unit in self.__unit_list:
                 unit.case = LabelFactory().label(unit.case).index(number).generate()
                 number += 1
 
     def unit_list_resume(self) -> List[Sentence]:
-        return [unit.str() for unit in self.unit_list]
+        return [unit.str() for unit in self.__unit_list]
 
     def sources_names(self) -> List[Tuple[str, int]]:
         out: List[Tuple[str, int]] = []
-        if len(self.pack_list) == 0:
+        if len(self.__pack_list) == 0:
             out.append((symbols.failure.text, 0))
-        for i in range(len(self.pack_list)):
-            nome: str = self.source_list[i].split(os.sep)[-1]
-            out.append((nome, len(self.pack_list[i])))
+        for i in range(len(self.__pack_list)):
+            nome: str = self.__source_list[i].split(os.sep)[-1]
+            out.append((nome, len(self.__pack_list[i])))
         return out
 
     def solvers_names(self) -> List[str]:
-        path_list = [] if self.solver is None else self.solver.path_list
-        if self.solver is not None and len(path_list) == 0:  # free_cmd
+        path_list = [] if self.__solver is None else self.__solver.path_list
+        if self.__solver is not None and len(path_list) == 0:  # free_cmd
             out = ["free cmd"]
         else:
             out = [os.path.basename(path) for path in path_list]

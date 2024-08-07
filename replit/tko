@@ -21,7 +21,7 @@ import math
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.15.1"
+__version__ = "0.15.2"
 
 
 class GeralSettings:
@@ -2397,7 +2397,6 @@ class __Symbols:
 symbols = __Symbols()
 
 
-
 class Task:
 
     def __init__(self):
@@ -2482,7 +2481,15 @@ class Task:
     
     def is_downloadable(self):
         return f"@{self.key}" in self.title
-
+    
+    def is_downloaded_for_lang(self, rep_dir: str, lang: str) -> bool:
+        folder = os.path.join(rep_dir, self.key)
+        if not os.path.isfile(os.path.join(folder, "Readme.md")):
+            return False
+        files = os.listdir(folder)
+        if not any([f.endswith("." + lang) for f in files]):
+            return False
+        return True
 
 class TaskParser:
 
@@ -3451,9 +3458,9 @@ class TaskTree:
         downloadable_in_focus = False
         rootdir = self.local.get_rootdir()
         down_symbol = symbols.cant_download
+        rep_dir = os.path.join(self.local.get_rootdir(), self.rep_alias)
         if t.is_downloadable() and rootdir != "":
-            path = os.path.join(self.local.get_rootdir(), self.rep_alias, t.key, "Readme.md")
-            if os.path.isfile(path):
+            if t.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
                 down_symbol = symbols.downloaded
                 if in_focus:
                     downloadable_in_focus = True
@@ -3482,7 +3489,8 @@ class TaskTree:
             output.addf(Style.skills, xp)
             
         if downloadable_in_focus:
-            output.add(" ").addf("y", f"[{path}]")
+            readme_path = os.path.join(rep_dir, t.key, "Readme.md")
+            output.add(" ").addf("y", f"[{readme_path}]")
 
         
 
@@ -5037,15 +5045,39 @@ class Wdir:
     def __init__(self):
         self.__autoload = False
         self.__autoload_folder = ""
-        
-        self.solver: Optional[Solver] = None
-        self.source_list: List[str] = []
-        self.pack_list: List[List[Unit]] = []
-        self.unit_list: List[Unit] = []
+        self.__solver: Optional[Solver] = None
+        self.__source_list: List[str] = []
+        self.__pack_list: List[List[Unit]] = []
+        self.__unit_list: List[Unit] = []
         self.__curses = False
+        self.__lang = ""
+
+    def has_solver(self) -> bool:
+        return not self.__solver is None
+
+    def has_tests(self) -> bool:
+        return len(self.__unit_list) != 0
+
+    def get_solver(self) -> Solver:
+        if self.__solver is None:
+            raise Exception("fail: Não foi encontrado arquivo de código")
+        return self.__solver
+    
+    def get_unit_list(self) -> List[Unit]:
+        return self.__unit_list
+
+    def get_unit(self, index: int) -> Unit:
+        return self.__unit_list[index]
+    
+    def get_source_list(self) -> List[str]:
+        return self.__source_list
 
     def set_curses(self, value: bool):
         self.__curses = value
+        return self
+
+    def set_lang(self, lang: str):
+        self.__lang = lang
         return self
     
     def is_curses(self) -> bool:
@@ -5054,13 +5086,16 @@ class Wdir:
     def is_autoload(self) -> bool:
         return self.__autoload
 
+    def get_autoload_folder(self) -> str:
+        return self.__autoload_folder
+
     def set_solver(self, solver_list: List[str]):
         if len(solver_list) > 0:
-            self.solver = Solver(solver_list)
+            self.__solver = Solver(solver_list)
         return self
 
     def set_sources(self, source_list: List[str]):
-        self.source_list = source_list
+        self.__source_list = source_list
         return self
 
     def autoload(self):
@@ -5072,7 +5107,12 @@ class Wdir:
         files = [f for f in files if not any([f.endswith(a) for a in avoid])]
 
         sources = [target for target in files if target.endswith(".tio")]
-        solvers = [target for target in files if not target.endswith(".tio")]
+
+        if self.__lang != "":
+            solvers = [target for target in files if target.endswith("." + self.__lang)]
+        else:
+            solvers = [target for target in files if not target.endswith(".tio")]
+
         solvers = sorted(solvers)
 
         if not self.__curses:
@@ -5108,24 +5148,24 @@ class Wdir:
     def set_cmd(self, exec_cmd: Optional[str]):
         if exec_cmd is None:
             return self
-        if self.solver is not None:
+        if self.__solver is not None:
             print("fail: if using --cmd, don't pass source files to target")
-        self.solver = Solver([])
-        self.solver.set_executable(exec_cmd)
+        self.__solver = Solver([])
+        self.__solver.set_executable(exec_cmd)
         return self
 
     def build(self):
         loading_failures = 0
-        for source in self.source_list:
+        for source in self.__source_list:
             try:
-                self.pack_list.append(Loader.parse_source(source))
+                self.__pack_list.append(Loader.parse_source(source))
             except FileNotFoundError as e:
                 print(str(e))
                 loading_failures += 1
                 pass
-        if loading_failures > 0 and loading_failures == len(self.source_list):
+        if loading_failures > 0 and loading_failures == len(self.__source_list):
             raise FileNotFoundError("failure: none source found")
-        self.unit_list = sum(self.pack_list, [])
+        self.__unit_list = sum(self.__pack_list, [])
         self.__number_and_mark_duplicated()
         self.__calculate_grade()
         self.__pad()
@@ -5133,18 +5173,18 @@ class Wdir:
 
     def calc_grade(self) -> int:
         grade = 100
-        for case in self.unit_list:
+        for case in self.__unit_list:
             if not case.repeated and (case.user is None or case.output != case.user):
                 grade -= case.grade_reduction
         return max(0, grade)
 
     # put all the labels with the same length
     def __pad(self):
-        if len(self.unit_list) == 0:
+        if len(self.__unit_list) == 0:
             return
-        max_case = max([len(x.case) for x in self.unit_list])
-        max_source = max([len(x.source) for x in self.unit_list])
-        for unit in self.unit_list:
+        max_case = max([len(x.case) for x in self.__unit_list])
+        max_source = max([len(x.source) for x in self.__unit_list])
+        for unit in self.__unit_list:
             unit.case_pad = max_case
             unit.source_pad = max_source
 
@@ -5152,8 +5192,8 @@ class Wdir:
     def filter(self, param: Param.Basic):
         index = param.index
         if index is not None:
-            if 0 <= index < len(self.unit_list):
-                self.unit_list = [self.unit_list[index]]
+            if 0 <= index < len(self.__unit_list):
+                self.__unit_list = [self.__unit_list[index]]
             else:
                 raise ValueError("Index Number out of bounds: " + str(index))
         return self
@@ -5161,8 +5201,8 @@ class Wdir:
     # calculate the grade reduction for the cases without grade
     # the grade is proportional to the number of unique cases
     def __calculate_grade(self):
-        unique_count = len([x for x in self.unit_list if not x.repeated])
-        for unit in self.unit_list:
+        unique_count = len([x for x in self.__unit_list if not x.repeated])
+        for unit in self.__unit_list:
             if unit.grade is None:
                 unit.grade_reduction = math.floor(100 / unique_count)
             else:
@@ -5172,45 +5212,45 @@ class Wdir:
     def __number_and_mark_duplicated(self):
         new_list: List[Unit] = []
         index = 0
-        for unit in self.unit_list:
+        for unit in self.__unit_list:
             unit.index = index
             index += 1
             search = [x for x in new_list if x.input == unit.input]
             if len(search) > 0:
                 unit.repeated = search[0].index
             new_list.append(unit)
-        self.unit_list = new_list
+        self.__unit_list = new_list
 
     # sort, unlabel ou rename using the param received
     def manipulate(self, param: Param.Manip):
         # filtering marked repeated
-        self.unit_list = [unit for unit in self.unit_list if unit.repeated is None]
+        self.__unit_list = [unit for unit in self.__unit_list if unit.repeated is None]
         if param.to_sort:
-            self.unit_list.sort(key=lambda v: len(v.input))
+            self.__unit_list.sort(key=lambda v: len(v.input))
         if param.unlabel:
-            for unit in self.unit_list:
+            for unit in self.__unit_list:
                 unit.case = ""
         if param.to_number:
             number = 00
-            for unit in self.unit_list:
+            for unit in self.__unit_list:
                 unit.case = LabelFactory().label(unit.case).index(number).generate()
                 number += 1
 
     def unit_list_resume(self) -> List[Sentence]:
-        return [unit.str() for unit in self.unit_list]
+        return [unit.str() for unit in self.__unit_list]
 
     def sources_names(self) -> List[Tuple[str, int]]:
         out: List[Tuple[str, int]] = []
-        if len(self.pack_list) == 0:
+        if len(self.__pack_list) == 0:
             out.append((symbols.failure.text, 0))
-        for i in range(len(self.pack_list)):
-            nome: str = self.source_list[i].split(os.sep)[-1]
-            out.append((nome, len(self.pack_list[i])))
+        for i in range(len(self.__pack_list)):
+            nome: str = self.__source_list[i].split(os.sep)[-1]
+            out.append((nome, len(self.__pack_list[i])))
         return out
 
     def solvers_names(self) -> List[str]:
-        path_list = [] if self.solver is None else self.solver.path_list
-        if self.solver is not None and len(path_list) == 0:  # free_cmd
+        path_list = [] if self.__solver is None else self.__solver.path_list
+        if self.__solver is not None and len(path_list) == 0:  # free_cmd
             out = ["free cmd"]
         else:
             out = [os.path.basename(path) for path in path_list]
@@ -5234,7 +5274,7 @@ class CDiff:
         self.results_done: List[Tuple[Token, int]] = []
         self.results_fail: List[Tuple[Token, int]] = []
         self.wdir = wdir
-        self.unit_list = [unit for unit in wdir.unit_list] # unit list to be consumed
+        self.unit_list = [unit for unit in wdir.get_unit_list()] # unit list to be consumed
         self.exit = False
         self.index = 0
         self.success_type = success_type
@@ -5355,12 +5395,11 @@ class CDiff:
             Fmt.write(i + y_init, cols - 1, Sentence().add(bar[i]))
 
     def get_folder(self):
-        if self.wdir.source_list:
-            folder = os.path.abspath(self.wdir.source_list[0])
+        source_list = self.wdir.get_source_list()
+        if source_list:
+            folder = os.path.abspath(source_list[0])
         else:
-            if self.wdir.solver is None:
-                raise Exception("Solver not found")
-            folder = os.path.abspath(self.wdir.solver.path_list[0])
+            folder = os.path.abspath(self.wdir.get_solver().path_list[0])
         return folder.split(os.sep)[-2]
 
     def draw_top_line(self):
@@ -5369,9 +5408,7 @@ class CDiff:
             index = len(self.results_done) + len(self.results_fail)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
-            if self.wdir.solver is None:
-                return
-            unit.result = Execution.run_unit(self.wdir.solver, unit)
+            unit.result = Execution.run_unit(self.wdir.get_solver(), unit)
             symbol = ExecutionResult.get_symbol(unit.result)
             color = self.get_color(unit)
             if unit.result != ExecutionResult.SUCCESS:
@@ -5381,8 +5418,6 @@ class CDiff:
 
         _, cols = Fmt.get_size()
         frame = Frame(0, 0).set_size(3, cols)
-        if self.wdir.solver is None:
-            return
         folder = self.get_folder()
         activity = Sentence().addf("C", folder)
         solvers = Sentence()
@@ -5397,7 +5432,7 @@ class CDiff:
             sources.addf("Y", source)
 
         done = len(self.results_done) + len(self.results_fail)
-        full = len(self.wdir.unit_list)
+        full = len(self.wdir.get_unit_list())
         sources.addf("Y", f"({full})")
         if done != full:
             solvers.add(" ").addf("R", f"({done}/{full})")
@@ -5415,7 +5450,7 @@ class CDiff:
 
         frame.set_header(header)
 
-        unit = self.wdir.unit_list[self.index]
+        unit = self.wdir.get_unit(self.index)
         frame.write(0, 0, Sentence().add(unit.str(False)).center(frame.get_dx()))
 
 
@@ -5452,7 +5487,7 @@ class CDiff:
         Fmt.write(lines - 1, 0, cmds.center(cols, Token(" ")))
 
     def has_any_error(self):
-        results = [unit.result for unit in self.wdir.unit_list]
+        results = [unit.result for unit in self.wdir.get_unit_list()]
         if ExecutionResult.EXECUTION_ERROR not in results and ExecutionResult.WRONG_OUTPUT not in results and ExecutionResult.COMPILATION_ERROR not in results:
             return False
         return True          
@@ -5519,7 +5554,7 @@ class CDiff:
                 Fmt.refresh()
                 Fmt.erase()
             self.draw_top_line()
-            unit = self.wdir.unit_list[self.index]
+            unit = self.wdir.get_unit(self.index)
             self.draw_diff(unit)
             self.draw_scrollbar()
             self.draw_guide_line()
@@ -5553,25 +5588,22 @@ class CDiff:
                 self.save_settings()
                 self.init = 0
             elif key == ord('e'):
-                # self.show_compilling()
-                # Fmt.refresh()
-                if self.wdir.solver is not None:
-                    if self.wdir.is_autoload():
-                        self.wdir.autoload()
-                        self.wdir.solver.set_executable("")
-                    return lambda: Runner.free_run(self.wdir.solver.get_executable)
+                if self.wdir.is_autoload():
+                    self.wdir.autoload()
+                    self.wdir.get_solver().set_executable("")
+                return lambda: Runner.free_run(self.wdir.get_solver().get_executable)
 
             elif key == ord('t'):
-                if self.wdir.solver is not None:
-                    if self.wdir.is_autoload():
-                        self.wdir.autoload()
-                    Fmt.erase()
-                    self.show_compilling()
-                    Fmt.refresh()
-                    self.wdir.solver.prepare_exec()
+
+                if self.wdir.is_autoload():
+                    self.wdir.autoload()
+                Fmt.erase()
+                self.show_compilling()
+                Fmt.refresh()
+                self.wdir.get_solver().prepare_exec()
                 self.results_done = []
                 self.results_fail = []
-                self.unit_list = [unit for unit in self.wdir.unit_list]
+                self.unit_list = [unit for unit in self.wdir.get_unit_list()]
             elif key != -1:
                 self.fman.add_input(Floating("v>").error()
                                     .put_text("Tecla")
@@ -5621,16 +5653,22 @@ class Run:
         self.exec_cmd: Optional[str] = exec_cmd
         self.param: Param.Basic = param
         self.wdir: Wdir = Wdir()
+        self.wdir_builded = False
         self.curses: bool = False
         self.first_run = False
         self.success = Success.RANDOM
         self.curses_free_run = False
+        self.__lang = ""
 
     def set_curses(self, value:bool=True, success: Success=Success.RANDOM):
         self.curses = value
         self.success = success
         return self
-    
+   
+    def set_lang(self, lang:str):
+        self.__lang = lang
+        return self
+
     def set_free_run(self, value:bool=True):
         self.curses_free_run = value
         return self
@@ -5638,12 +5676,10 @@ class Run:
     def set_first_run(self):
         self.first_run = True
 
-
     def execute(self):
-        self.__remove_duplicates()
-        self.__change_targets_to_filter_mode()
-        if not self.__build_wdir():
-            return
+        if not self.wdir_builded:
+            self.build_wdir()
+
         if self.__missing_target():
             return
         if self.__list_mode():
@@ -5679,12 +5715,12 @@ class Run:
         term_print(Sentence().add(symbols.opening).add(self.wdir.resume()), end="")
         term_print(" [", end="")
         first = True
-        for unit in self.wdir.unit_list:
+        for unit in self.wdir.get_unit_list():
             if first:
                 first = False
             else:
                 term_print(" ", end="")
-            solver = self.wdir.solver
+            solver = self.wdir.get_solver()
             if solver is None:
                 raise ValueError("Solver vazio")
             unit.result = Execution.run_unit(solver, unit)
@@ -5692,17 +5728,17 @@ class Run:
         term_print("]")
 
     def __print_diff(self):
-        if self.wdir is None or self.wdir.solver is None:
+        if self.wdir is None or not self.wdir.has_solver():
             return
         
         if self.param.diff_mode == DiffMode.QUIET:
             return
         
-        if self.wdir.solver.compile_error:
-            term_print(self.wdir.solver.error_msg)
+        if self.wdir.get_solver().compile_error:
+            term_print(self.wdir.get_solver().error_msg)
             return
         
-        results = [unit.result for unit in self.wdir.unit_list]
+        results = [unit.result for unit in self.wdir.get_unit_list()]
         if ExecutionResult.EXECUTION_ERROR not in results and ExecutionResult.WRONG_OUTPUT not in results:
             return
         
@@ -5712,7 +5748,7 @@ class Run:
         
         if self.param.diff_mode == DiffMode.FIRST:
             # printing only the first wrong case
-            wrong = [unit for unit in self.wdir.unit_list if unit.result != ExecutionResult.SUCCESS][0]
+            wrong = [unit for unit in self.wdir.get_unit_list() if unit.result != ExecutionResult.SUCCESS][0]
             if self.param.is_up_down:
                 for line in Diff.mount_up_down_diff(wrong):
                     term_print(line)
@@ -5722,7 +5758,7 @@ class Run:
             return
 
         if self.param.diff_mode == DiffMode.ALL:
-            for unit in self.wdir.unit_list:
+            for unit in self.wdir.get_unit_list():
                 if unit.result != ExecutionResult.SUCCESS:
                     if self.param.is_up_down:
                         for line in Diff.mount_up_down_diff(unit):
@@ -5731,20 +5767,22 @@ class Run:
                         for line in Diff.mount_side_by_side_diff(unit):
                             term_print(line)
 
-    def __build_wdir(self) -> bool:
+    def build_wdir(self):
+        self.wdir_builded = True
+        self.__remove_duplicates()
+        self.__change_targets_to_filter_mode()
         try:
-            self.wdir = Wdir().set_curses(self.curses).set_target_list(self.target_list).set_cmd(self.exec_cmd).build().filter(self.param)
+            self.wdir = Wdir().set_curses(self.curses).set_lang(self.__lang).set_target_list(self.target_list).set_cmd(self.exec_cmd).build().filter(self.param)
         except FileNotFoundError as e:
-            if self.wdir.solver is not None:
-                self.wdir.solver.error_msg += str(e)
-                self.wdir.solver.compile_error = True
-        return True
+            if self.wdir.has_solver():
+                self.wdir.get_solver().error_msg += str(e)
+                self.wdir.get_solver().compile_error = True
+        return self.wdir
 
     def __missing_target(self) -> bool:
         if self.wdir is None:
             return False
-        # no solver and no test cases
-        if self.wdir.solver is None and len(self.wdir.unit_list) == 0:
+        if not self.wdir.has_solver() and not self.wdir.has_tests():
             term_print(Sentence().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
             return True
         return False
@@ -5754,7 +5792,7 @@ class Run:
             return False
 
         # list mode
-        if self.wdir.solver is None and len(self.wdir.unit_list) > 0:
+        if not self.wdir.has_solver() and self.wdir.has_tests():
             term_print(Report.centralize(" Nenhum arquivo de código encontrado. Listando casos de teste.", Token("╌")), flush=True)
             term_print(self.wdir.resume())
             for line in self.wdir.unit_list_resume():
@@ -5765,12 +5803,12 @@ class Run:
     def __free_run(self) -> bool:
         if self.wdir is None:
             return False
-        if self.wdir.solver is not None and (len(self.wdir.unit_list) == 0 or self.curses_free_run):
-
+        if self.wdir.has_solver() and (not self.wdir.has_tests() or self.curses_free_run):
+            fn_build = self.wdir.get_solver().get_executable
             if self.curses_free_run:
-                Runner.free_run(self.wdir.solver.get_executable)
+                Runner.free_run(fn_build)
             else:
-                Runner.free_run(self.wdir.solver.get_executable, show_compilling=False, to_clear=False, wait_input=False)
+                Runner.free_run(fn_build, show_compilling=False, to_clear=False, wait_input=False)
             return True
         return False
 
@@ -5783,10 +5821,10 @@ class Run:
             if self.first_run:
                 cdiff.set_first_run()
             cdiff.run()
-            return
-        term_print(Report.centralize(" Testando o código com os casos de teste ", "═"))
-        self.__print_top_line()
-        self.__print_diff()
+        else:
+            term_print(Report.centralize(" Testando o código com os casos de teste ", "═"))
+            self.__print_top_line()
+            self.__print_diff()
 
 
 class Build:
@@ -5801,7 +5839,7 @@ class Build:
         try:
             wdir = Wdir().set_sources(self.source_list).build()
             wdir.manipulate(self.param)
-            Writer.save_target(self.target_out, wdir.unit_list, self.to_force)
+            Writer.save_target(self.target_out, wdir.get_unit_list(), self.to_force)
         except FileNotFoundError as e:
             print(str(e))
             return False
@@ -6018,7 +6056,7 @@ class Play:
         Graph(self.game).set_opt(False).set_reachable(reachable).set_counts(
             counts
         ).set_graph_ext(self.graph_ext).generate()
-        lines, _cols = Fmt.get_size()
+        lines, _ = Fmt.get_size()
         if self.first_loop:
             text = Sentence().add(f"Grafo gerado em graph{self.graph_ext}")
             Fmt.write(lines - 1, 0, text)
@@ -6032,8 +6070,6 @@ class Play:
         if lang == "":
             self.check_root_and_lang()
             return
-
-        repdir = os.path.join(rootdir, self.rep_alias)
 
         obj = self.tree.items[self.tree.index_selected].obj
         if isinstance(obj, Task) and obj.key in obj.title:
@@ -6069,9 +6105,10 @@ class Play:
                 self.fman.add_input(
                     Floating().put_text("\nEssa não é uma tarefa de código.\n").error()
                 )
-
+    
     def test_task(self, test_mode: bool = False):
         rootdir = self.local.get_rootdir()
+        
         obj = self.tree.items[self.tree.index_selected].obj
 
         if isinstance(obj, Quest):
@@ -6091,19 +6128,22 @@ class Play:
             )
             return
 
-
-        if not obj.key in obj.title:
-            self.fman.add_input(
-                Floating().put_text("\nEssa não é uma tarefa de código.\n").error()
-            )
+        rep_dir = os.path.join(rootdir, self.rep_alias)
+        task: Task = obj
+        if not task.is_downloadable():
+            self.fman.add_input( Floating().put_text("\nEssa não é uma tarefa de código.\n").error() )
             return
-        path = os.path.join(rootdir, self.rep_alias, obj.key)
-        if not os.path.isdir(path):
+        if not task.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
             self.fman.add_input(
                 Floating().put_text("\nVocê precisa baixar a tarefa primeiro\n").error()
             )
             return
+        return self.run_selected_task(task, rep_dir, test_mode)
+        
+    def run_selected_task(self, task: Task, rep_dir: str, test_mode: bool):
+        path = os.path.join(rep_dir, task.key)
         run = Run([path], None, Param.Basic())
+        run.set_lang(self.rep.get_lang())
         if test_mode:
             if Flags.success.is_true():
                 run.set_curses(True, Success.RANDOM)
@@ -6113,8 +6153,20 @@ class Play:
             if len(self.rep.get_tasks()) == 0:
                 run.set_first_run()
         else:
-            run.set_curses(False)
+            run.set_curses(True)
             run.set_free_run(True)
+        run.build_wdir()
+        if not run.wdir.has_solver():
+            msg = Floating().error()
+            msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.rep.get_lang()))
+            msg.put_text("Arquivos encontrados na pasta:\n")
+            folder = run.wdir.get_autoload_folder()
+            file_list = [file for file in os.listdir(folder) if os.path.isfile(os.path.join(folder, file))]
+            for file in file_list:
+                msg.put_text(file)
+            msg.put_text("")
+            self.fman.add_input(msg)
+            return
         return run.execute
 
     @staticmethod

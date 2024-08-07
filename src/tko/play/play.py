@@ -234,7 +234,7 @@ class Play:
         Graph(self.game).set_opt(False).set_reachable(reachable).set_counts(
             counts
         ).set_graph_ext(self.graph_ext).generate()
-        lines, _cols = Fmt.get_size()
+        lines, _ = Fmt.get_size()
         if self.first_loop:
             text = Sentence().add(f"Grafo gerado em graph{self.graph_ext}")
             Fmt.write(lines - 1, 0, text)
@@ -248,8 +248,6 @@ class Play:
         if lang == "":
             self.check_root_and_lang()
             return
-
-        repdir = os.path.join(rootdir, self.rep_alias)
 
         obj = self.tree.items[self.tree.index_selected].obj
         if isinstance(obj, Task) and obj.key in obj.title:
@@ -285,9 +283,10 @@ class Play:
                 self.fman.add_input(
                     Floating().put_text("\nEssa não é uma tarefa de código.\n").error()
                 )
-
+    
     def test_task(self, test_mode: bool = False):
         rootdir = self.local.get_rootdir()
+        
         obj = self.tree.items[self.tree.index_selected].obj
 
         if isinstance(obj, Quest):
@@ -307,19 +306,22 @@ class Play:
             )
             return
 
-
-        if not obj.key in obj.title:
-            self.fman.add_input(
-                Floating().put_text("\nEssa não é uma tarefa de código.\n").error()
-            )
+        rep_dir = os.path.join(rootdir, self.rep_alias)
+        task: Task = obj
+        if not task.is_downloadable():
+            self.fman.add_input( Floating().put_text("\nEssa não é uma tarefa de código.\n").error() )
             return
-        path = os.path.join(rootdir, self.rep_alias, obj.key)
-        if not os.path.isdir(path):
+        if not task.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
             self.fman.add_input(
                 Floating().put_text("\nVocê precisa baixar a tarefa primeiro\n").error()
             )
             return
+        return self.run_selected_task(task, rep_dir, test_mode)
+        
+    def run_selected_task(self, task: Task, rep_dir: str, test_mode: bool):
+        path = os.path.join(rep_dir, task.key)
         run = Run([path], None, Param.Basic())
+        run.set_lang(self.rep.get_lang())
         if test_mode:
             if Flags.success.is_true():
                 run.set_curses(True, Success.RANDOM)
@@ -329,8 +331,20 @@ class Play:
             if len(self.rep.get_tasks()) == 0:
                 run.set_first_run()
         else:
-            run.set_curses(False)
+            run.set_curses(True)
             run.set_free_run(True)
+        run.build_wdir()
+        if not run.wdir.has_solver():
+            msg = Floating().error()
+            msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.rep.get_lang()))
+            msg.put_text("Arquivos encontrados na pasta:\n")
+            folder = run.wdir.get_autoload_folder()
+            file_list = [file for file in os.listdir(folder) if os.path.isfile(os.path.join(folder, file))]
+            for file in file_list:
+                msg.put_text(file)
+            msg.put_text("")
+            self.fman.add_input(msg)
+            return
         return run.execute
 
     @staticmethod

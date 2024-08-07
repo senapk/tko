@@ -114,9 +114,9 @@ class TaskTree:
         downloadable_in_focus = False
         rootdir = self.local.get_rootdir()
         down_symbol = symbols.cant_download
+        rep_dir = os.path.join(self.local.get_rootdir(), self.rep_alias)
         if t.is_downloadable() and rootdir != "":
-            path = os.path.join(self.local.get_rootdir(), self.rep_alias, t.key, "Readme.md")
-            if os.path.isfile(path):
+            if t.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
                 down_symbol = symbols.downloaded
                 if in_focus:
                     downloadable_in_focus = True
@@ -145,7 +145,8 @@ class TaskTree:
             output.addf(Style.skills, xp)
             
         if downloadable_in_focus:
-            output.add(" ").addf("y", f"[{path}]")
+            readme_path = os.path.join(rep_dir, t.key, "Readme.md")
+            output.add(" ").addf("y", f"[{readme_path}]")
 
         
 

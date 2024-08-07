@@ -1,5 +1,9 @@
 # Changelog
 
+- 0.15.2
+  - add: filter solver in autoload by rep language
+  - add: show downloaded in play only if selected language was found
+  - add: rebuild wdir for better error dealing
 - 0.15.0
   - add: compilling msgs in execution and testing
 - 0.14.8

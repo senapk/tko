@@ -28,7 +28,7 @@ class CDiff:
         self.results_done: List[Tuple[Token, int]] = []
         self.results_fail: List[Tuple[Token, int]] = []
         self.wdir = wdir
-        self.unit_list = [unit for unit in wdir.unit_list] # unit list to be consumed
+        self.unit_list = [unit for unit in wdir.get_unit_list()] # unit list to be consumed
         self.exit = False
         self.index = 0
         self.success_type = success_type
@@ -149,12 +149,11 @@ class CDiff:
             Fmt.write(i + y_init, cols - 1, Sentence().add(bar[i]))
 
     def get_folder(self):
-        if self.wdir.source_list:
-            folder = os.path.abspath(self.wdir.source_list[0])
+        source_list = self.wdir.get_source_list()
+        if source_list:
+            folder = os.path.abspath(source_list[0])
         else:
-            if self.wdir.solver is None:
-                raise Exception("Solver not found")
-            folder = os.path.abspath(self.wdir.solver.path_list[0])
+            folder = os.path.abspath(self.wdir.get_solver().path_list[0])
         return folder.split(os.sep)[-2]
 
     def draw_top_line(self):
@@ -163,9 +162,7 @@ class CDiff:
             index = len(self.results_done) + len(self.results_fail)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
-            if self.wdir.solver is None:
-                return
-            unit.result = Execution.run_unit(self.wdir.solver, unit)
+            unit.result = Execution.run_unit(self.wdir.get_solver(), unit)
             symbol = ExecutionResult.get_symbol(unit.result)
             color = self.get_color(unit)
             if unit.result != ExecutionResult.SUCCESS:
@@ -175,8 +172,6 @@ class CDiff:
 
         _, cols = Fmt.get_size()
         frame = Frame(0, 0).set_size(3, cols)
-        if self.wdir.solver is None:
-            return
         folder = self.get_folder()
         activity = Sentence().addf("C", folder)
         solvers = Sentence()
@@ -191,7 +186,7 @@ class CDiff:
             sources.addf("Y", source)
 
         done = len(self.results_done) + len(self.results_fail)
-        full = len(self.wdir.unit_list)
+        full = len(self.wdir.get_unit_list())
         sources.addf("Y", f"({full})")
         if done != full:
             solvers.add(" ").addf("R", f"({done}/{full})")
@@ -209,7 +204,7 @@ class CDiff:
 
         frame.set_header(header)
 
-        unit = self.wdir.unit_list[self.index]
+        unit = self.wdir.get_unit(self.index)
         frame.write(0, 0, Sentence().add(unit.str(False)).center(frame.get_dx()))
 
 
@@ -246,7 +241,7 @@ class CDiff:
         Fmt.write(lines - 1, 0, cmds.center(cols, Token(" ")))
 
     def has_any_error(self):
-        results = [unit.result for unit in self.wdir.unit_list]
+        results = [unit.result for unit in self.wdir.get_unit_list()]
         if ExecutionResult.EXECUTION_ERROR not in results and ExecutionResult.WRONG_OUTPUT not in results and ExecutionResult.COMPILATION_ERROR not in results:
             return False
         return True          
@@ -313,7 +308,7 @@ class CDiff:
                 Fmt.refresh()
                 Fmt.erase()
             self.draw_top_line()
-            unit = self.wdir.unit_list[self.index]
+            unit = self.wdir.get_unit(self.index)
             self.draw_diff(unit)
             self.draw_scrollbar()
             self.draw_guide_line()
@@ -347,25 +342,22 @@ class CDiff:
                 self.save_settings()
                 self.init = 0
             elif key == ord('e'):
-                # self.show_compilling()
-                # Fmt.refresh()
-                if self.wdir.solver is not None:
-                    if self.wdir.is_autoload():
-                        self.wdir.autoload()
-                        self.wdir.solver.set_executable("")
-                    return lambda: Runner.free_run(self.wdir.solver.get_executable)
+                if self.wdir.is_autoload():
+                    self.wdir.autoload()
+                    self.wdir.get_solver().set_executable("")
+                return lambda: Runner.free_run(self.wdir.get_solver().get_executable)
 
             elif key == ord('t'):
-                if self.wdir.solver is not None:
-                    if self.wdir.is_autoload():
-                        self.wdir.autoload()
-                    Fmt.erase()
-                    self.show_compilling()
-                    Fmt.refresh()
-                    self.wdir.solver.prepare_exec()
+
+                if self.wdir.is_autoload():
+                    self.wdir.autoload()
+                Fmt.erase()
+                self.show_compilling()
+                Fmt.refresh()
+                self.wdir.get_solver().prepare_exec()
                 self.results_done = []
                 self.results_fail = []
-                self.unit_list = [unit for unit in self.wdir.unit_list]
+                self.unit_list = [unit for unit in self.wdir.get_unit_list()]
             elif key != -1:
                 self.fman.add_input(Floating("v>").error()
                                     .put_text("Tecla")

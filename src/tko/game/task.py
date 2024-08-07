@@ -2,7 +2,7 @@ from typing import Dict, Optional, Tuple
 from ..util.symbols import symbols
 from ..util.ftext import Sentence
 import re
-
+import os
 
 class Task:
 
@@ -88,7 +88,15 @@ class Task:
     
     def is_downloadable(self):
         return f"@{self.key}" in self.title
-
+    
+    def is_downloaded_for_lang(self, rep_dir: str, lang: str) -> bool:
+        folder = os.path.join(rep_dir, self.key)
+        if not os.path.isfile(os.path.join(folder, "Readme.md")):
+            return False
+        files = os.listdir(folder)
+        if not any([f.endswith("." + lang) for f in files]):
+            return False
+        return True
 
 class TaskParser:
 

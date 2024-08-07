@@ -8,7 +8,6 @@ from .run.basic import DiffMode, ExecutionResult
 from .run.param import Param
 from .run.diff import Diff
 from .util.ftext import Sentence, Token
-from .play.images import compilling
 
 from .run.basic import Success
 from .run.report import Report
@@ -47,16 +46,22 @@ class Run:
         self.exec_cmd: Optional[str] = exec_cmd
         self.param: Param.Basic = param
         self.wdir: Wdir = Wdir()
+        self.wdir_builded = False
         self.curses: bool = False
         self.first_run = False
         self.success = Success.RANDOM
         self.curses_free_run = False
+        self.__lang = ""
 
     def set_curses(self, value:bool=True, success: Success=Success.RANDOM):
         self.curses = value
         self.success = success
         return self
-    
+   
+    def set_lang(self, lang:str):
+        self.__lang = lang
+        return self
+
     def set_free_run(self, value:bool=True):
         self.curses_free_run = value
         return self
@@ -64,12 +69,10 @@ class Run:
     def set_first_run(self):
         self.first_run = True
 
-
     def execute(self):
-        self.__remove_duplicates()
-        self.__change_targets_to_filter_mode()
-        if not self.__build_wdir():
-            return
+        if not self.wdir_builded:
+            self.build_wdir()
+
         if self.__missing_target():
             return
         if self.__list_mode():
@@ -105,12 +108,12 @@ class Run:
         term_print(Sentence().add(symbols.opening).add(self.wdir.resume()), end="")
         term_print(" [", end="")
         first = True
-        for unit in self.wdir.unit_list:
+        for unit in self.wdir.get_unit_list():
             if first:
                 first = False
             else:
                 term_print(" ", end="")
-            solver = self.wdir.solver
+            solver = self.wdir.get_solver()
             if solver is None:
                 raise ValueError("Solver vazio")
             unit.result = Execution.run_unit(solver, unit)
@@ -118,17 +121,17 @@ class Run:
         term_print("]")
 
     def __print_diff(self):
-        if self.wdir is None or self.wdir.solver is None:
+        if self.wdir is None or not self.wdir.has_solver():
             return
         
         if self.param.diff_mode == DiffMode.QUIET:
             return
         
-        if self.wdir.solver.compile_error:
-            term_print(self.wdir.solver.error_msg)
+        if self.wdir.get_solver().compile_error:
+            term_print(self.wdir.get_solver().error_msg)
             return
         
-        results = [unit.result for unit in self.wdir.unit_list]
+        results = [unit.result for unit in self.wdir.get_unit_list()]
         if ExecutionResult.EXECUTION_ERROR not in results and ExecutionResult.WRONG_OUTPUT not in results:
             return
         
@@ -138,7 +141,7 @@ class Run:
         
         if self.param.diff_mode == DiffMode.FIRST:
             # printing only the first wrong case
-            wrong = [unit for unit in self.wdir.unit_list if unit.result != ExecutionResult.SUCCESS][0]
+            wrong = [unit for unit in self.wdir.get_unit_list() if unit.result != ExecutionResult.SUCCESS][0]
             if self.param.is_up_down:
                 for line in Diff.mount_up_down_diff(wrong):
                     term_print(line)
@@ -148,7 +151,7 @@ class Run:
             return
 
         if self.param.diff_mode == DiffMode.ALL:
-            for unit in self.wdir.unit_list:
+            for unit in self.wdir.get_unit_list():
                 if unit.result != ExecutionResult.SUCCESS:
                     if self.param.is_up_down:
                         for line in Diff.mount_up_down_diff(unit):
@@ -157,20 +160,22 @@ class Run:
                         for line in Diff.mount_side_by_side_diff(unit):
                             term_print(line)
 
-    def __build_wdir(self) -> bool:
+    def build_wdir(self):
+        self.wdir_builded = True
+        self.__remove_duplicates()
+        self.__change_targets_to_filter_mode()
         try:
-            self.wdir = Wdir().set_curses(self.curses).set_target_list(self.target_list).set_cmd(self.exec_cmd).build().filter(self.param)
+            self.wdir = Wdir().set_curses(self.curses).set_lang(self.__lang).set_target_list(self.target_list).set_cmd(self.exec_cmd).build().filter(self.param)
         except FileNotFoundError as e:
-            if self.wdir.solver is not None:
-                self.wdir.solver.error_msg += str(e)
-                self.wdir.solver.compile_error = True
-        return True
+            if self.wdir.has_solver():
+                self.wdir.get_solver().error_msg += str(e)
+                self.wdir.get_solver().compile_error = True
+        return self.wdir
 
     def __missing_target(self) -> bool:
         if self.wdir is None:
             return False
-        # no solver and no test cases
-        if self.wdir.solver is None and len(self.wdir.unit_list) == 0:
+        if not self.wdir.has_solver() and not self.wdir.has_tests():
             term_print(Sentence().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
             return True
         return False
@@ -180,7 +185,7 @@ class Run:
             return False
 
         # list mode
-        if self.wdir.solver is None and len(self.wdir.unit_list) > 0:
+        if not self.wdir.has_solver() and self.wdir.has_tests():
             term_print(Report.centralize(" Nenhum arquivo de código encontrado. Listando casos de teste.", Token("╌")), flush=True)
             term_print(self.wdir.resume())
             for line in self.wdir.unit_list_resume():
@@ -191,12 +196,12 @@ class Run:
     def __free_run(self) -> bool:
         if self.wdir is None:
             return False
-        if self.wdir.solver is not None and (len(self.wdir.unit_list) == 0 or self.curses_free_run):
-
+        if self.wdir.has_solver() and (not self.wdir.has_tests() or self.curses_free_run):
+            fn_build = self.wdir.get_solver().get_executable
             if self.curses_free_run:
-                Runner.free_run(self.wdir.solver.get_executable)
+                Runner.free_run(fn_build)
             else:
-                Runner.free_run(self.wdir.solver.get_executable, show_compilling=False, to_clear=False, wait_input=False)
+                Runner.free_run(fn_build, show_compilling=False, to_clear=False, wait_input=False)
             return True
         return False
 
@@ -209,10 +214,10 @@ class Run:
             if self.first_run:
                 cdiff.set_first_run()
             cdiff.run()
-            return
-        term_print(Report.centralize(" Testando o código com os casos de teste ", "═"))
-        self.__print_top_line()
-        self.__print_diff()
+        else:
+            term_print(Report.centralize(" Testando o código com os casos de teste ", "═"))
+            self.__print_top_line()
+            self.__print_diff()
 
 
 class Build:
@@ -227,7 +232,7 @@ class Build:
         try:
             wdir = Wdir().set_sources(self.source_list).build()
             wdir.manipulate(self.param)
-            Writer.save_target(self.target_out, wdir.unit_list, self.to_force)
+            Writer.save_target(self.target_out, wdir.get_unit_list(), self.to_force)
         except FileNotFoundError as e:
             print(str(e))
             return False
