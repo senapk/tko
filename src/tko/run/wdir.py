@@ -197,7 +197,7 @@ class Wdir:
         return out
 
     def resume(self) -> Sentence:
-        sources = [f"{name}({str(count).rjust(2, "0")})" for name, count in self.sources_names()]
+        sources = ["{}({})".format(name, str(count).rjust(2, "0")) for name, count in self.sources_names()]
         __sources = Sentence().add("Testes:").add("[").addf("y", ", ".join(sources)).add("]")
 
         __solvers = Sentence().add("Códigos:").add("[").addf("g", ", ".join(self.solvers_names())).add("]")

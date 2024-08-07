@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.14.8
+  - fix:.format fix
 - 0.14.7
   - add: free run mode on play
 - 0.14.5
