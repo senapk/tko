@@ -21,7 +21,7 @@ import math
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.15.0"
+__version__ = "0.15.1"
 
 
 class GeralSettings:
@@ -4839,7 +4839,8 @@ class Runner:
         if to_clear:
             Runner.clear_screen()
         if show_compilling:
-            for line in compilling["computer"].split("\n"):
+            image = random.choice(list(compilling.keys()))
+            for line in compilling[image].split("\n"):
                 term_print(Report.centralize(Sentence().addf("y", line), Token(" ")))
         cmd = compiling_fn()
         if show_compilling:

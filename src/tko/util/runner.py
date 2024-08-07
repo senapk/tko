@@ -6,6 +6,7 @@ from .ftext import Sentence, Token
 from .term_color import term_print
 from ..run.report import Report
 from ..play.images import compilling
+import random
 
 class Runner:
     def __init__(self):
@@ -36,7 +37,8 @@ class Runner:
         if to_clear:
             Runner.clear_screen()
         if show_compilling:
-            for line in compilling["computer"].split("\n"):
+            image = random.choice(list(compilling.keys()))
+            for line in compilling[image].split("\n"):
                 term_print(Report.centralize(Sentence().addf("y", line), Token(" ")))
         cmd = compiling_fn()
         if show_compilling:
