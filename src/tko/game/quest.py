@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional, Tuple
 from .task import Task
-from ..util.ftext import Sentence
+from ..util.sentence import Sentence
 from ..util.remote import get_md_link
 import re
 

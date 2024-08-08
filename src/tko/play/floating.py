@@ -1,6 +1,6 @@
 from typing import List
 from .frame import Frame
-from ..util.ftext import Sentence
+from ..util.sentence import Sentence
 from .fmt import Fmt
 
 import curses
@@ -65,7 +65,7 @@ class Floating:
         if "^" in self._floating_align:
             y = 1
         elif "v" in self._floating_align:
-            y = lines - dy - 3
+            y = lines - dy - 5
 
         self._frame.set_pos(y, x)
         return self

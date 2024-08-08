@@ -2,7 +2,7 @@ import subprocess
 from typing import Tuple
 import os
 from subprocess import PIPE
-from .ftext import Sentence, Token
+from .sentence import Sentence, Token
 from .term_color import term_print
 from ..run.report import Report
 from ..play.images import compilling

@@ -1,6 +1,6 @@
 from typing import Dict, Optional, Tuple
 from ..util.symbols import symbols
-from ..util.ftext import Sentence
+from ..util.sentence import Sentence
 import re
 import os
 

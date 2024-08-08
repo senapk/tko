@@ -7,12 +7,13 @@ from ..game.graph import Graph
 import random
 
 from ..run.basic import Success
-from typing import List, Any, Dict
+from typing import List, Any, Dict, Callable, Tuple
 from ..settings.settings import RepData, GeralSettings
 from ..down import Down
-from ..util.ftext import Sentence, Token,  RToken
+from ..util.sentence import Sentence, Token,  RToken
 from .fmt import Fmt
 from .frame import Frame
+from .style import Style
 
 from .floating import Floating
 from .floating_manager import FloatingManager
@@ -57,16 +58,21 @@ class Play:
         self.first_loop = True
         self.graph_ext = ""
 
+        self.wrap_size = 80
+
+        self.help_basic: List[Token] = [
+            RToken("C", f"Sair[{self.Key.quit}]"),
+            RToken("C", f"Ajuda[{self.Key.ajuda}]"),
+            RToken("C", "Navegar[wasd]"),
+        ]
+
         self.help_extra: List[Token] = [
-            RToken("G", f"Sair[{self.Key.quit}]"),
-            RToken("G", f"Ajuda[{self.Key.ajuda}]"),
-            RToken("Y", f"Github[{self.Key.open_link}]"),
-            RToken("Y", f"Baixar[{self.Key.down_task}]"),
+            RToken("C", f"Baixar[{self.Key.down_task}]"),
             RToken("C", f"Executar[{self.Key.run_task}]"),
             RToken("C", f"Testar[{self.Key.test_task}]"),
-            # RToken("C", "Navegar[wasd]"),
-            # RToken("C", f"Contrair[{self.Key.collapse}{self.Key.expand}]"),
+            RToken("M", f"Github[{self.Key.open_link}]"),
             RToken("M", "Marcar[enter]"),
+            # RToken("C", f"Contrair[{self.Key.collapse}{self.Key.expand}]"),
             RToken("M", "Graduar[0-9]"),
         ]
 
@@ -349,18 +355,27 @@ class Play:
         return run.execute
 
     @staticmethod
-    def build_list_sentence(items: List[Token]) -> Sentence:
-        _help = Sentence()
+    def build_list_sentence(items: List[Token], fill=True) -> List[Sentence]:
+        out: List[Sentence] = []
         try:
             for x in items:
-                label, key = x.text.split("[")
-                key = "[" + key
-                _help.addf("/" + x.fmt, label).addf(x.fmt, key).add(" ")
+                help = Sentence()
+                if Flags.mono.is_true():
+                    color = "W"
+                else:
+                    color = x.fmt
+                if fill:
+                    left = Style.roundL()
+                    right = Style.roundR()
+                else:
+                    left = " "
+                    right = " "
+                help.addf(color.lower(), left).addf(color, x.text).addf(color.lower(), right)
+                out.append(help)
         except ValueError:
             raise ValueError("Desempacotando mensagens")
-        _help.data.pop()
 
-        return _help
+        return out
 
     def build_bar_links(self) -> str:
         obj = self.tree.items[self.tree.index_selected].obj
@@ -372,13 +387,16 @@ class Play:
 
     def show_main_bar(self, frame: Frame):
         dy, dx = frame.get_inner()
-        frame.set_header(
-            Sentence().add("{").addf("/", f"Linguagem: {self.rep.get_lang()}").add("}")
-        )
+        
+        alias = Sentence().addf("r", Style.sharpL()).addf("R", self.rep_alias.upper()).addf("r", Style.sharpR())
+        y = frame.get_y()
+        # Fmt.write(y + 1, dx // 2, alias)
         link = Sentence().add(self.build_bar_links())
         if link.len() > dx - 2:
             link.trim_end(dx - 5)
             link.addf("r", "...")
+
+        frame.set_header(alias, "^")
         frame.set_footer(link, ">", "{", "}")
         frame.draw()
 
@@ -388,8 +406,8 @@ class Play:
                 sentence.addf("r", "...")
             frame.write(y, 0, sentence)
 
-    def show_skills_bar(self, frame_xp):
-        dy, dx = frame_xp.get_inner()
+    def show_inventary_bar(self, frame_xp):
+        _, dx = frame_xp.get_inner()
         xp = XP(self.game)
         total_perc = int(
             100 * (xp.get_xp_total_obtained() / xp.get_xp_total_available())
@@ -399,11 +417,11 @@ class Play:
         else:
             text = f" XPTotal:{xp.get_xp_total_obtained()}"
 
-        done = Flags.main_done.get_value() + "/k"  # adicionando depois para ter menor prioridade
-        todo = Flags.main_todo.get_value() + "/k"
-        total_bar = Sentence.build_bar(text, total_perc / 100, dx - 2, done, todo)
+        done = Style.main_done() + "/"
+        todo = Style.main_todo() + "/"
+        total_bar = Style.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Sentence().add("{").addf("/", "Skills").add("}"), "^")
-        # frame_xp.set_footer(Sentence().add(total_bar), "^")
+        frame_xp.set_footer(Sentence().add(" ").add(self.local.get_rootdir()).add(" "), "^")
         frame_xp.draw()
 
         total, obt = self.game.get_skills_resume(self.tree.available_quests)
@@ -415,41 +433,87 @@ class Play:
                 text = f"{skill}:{obt[skill]}/{value}"
 
             perc = obt[skill] / value
-            done = Flags.skill_done.get_value() + "/k"  # adicionando depois para ter menor prioridade
-            todo = Flags.skill_todo.get_value() + "/k"
-            skill_bar = Sentence.build_bar(text, perc, dx - 2, done, todo)
+            done = Style.skill_done() + "/"
+            todo = Style.skill_todo() + "/"
+
+            skill_bar = Style.build_bar(text, perc, dx - 2, done, todo)
             frame_xp.write(index, 1, skill_bar)
             index += 2
 
         frame_xp.write(index, 1, total_bar)
 
-    def show_flags_bar(self, frame: Frame):
+    def show_config_bar(self, frame: Frame):
         frame.set_header(Sentence().add("{").addf("/", "Config").add("}"), "^")
+        frame.set_footer(Sentence().add(" ").add(self.rep.get_lang().upper()).add(" "), "^")
         frame.draw()
-        frame.print(0, Sentence())
 
         pad = 11
         for flag in self.flagsman.left:
             if flag.is_bool():
-                frame.print(0, flag.get_toggle_sentence(pad))
+                frame.print(0, Style.get_flag_sentence(flag, pad))
                 frame.print(0, Sentence())
 
-        frame.print(0, Sentence().addf("C", "Pasta Raiz [P]"))
+        color = "W" if Flags.mono.is_true() else "C"
+        frame.print(0, Sentence().addf(color.lower(), Style.roundL()).addf(color, "Pasta Raiz [P]").addf(color.lower(), Style.roundR()))
         frame.print(0, Sentence())
-        frame.print(0, Sentence().addf("C", "Linguagem  [L]"))
+        frame.print(0, Sentence().addf(color.lower(), Style.roundL()).addf(color, "Linguagem  [L]").addf(color.lower(), Style.roundR()))
         frame.print(0, Sentence())
 
-    def show_color_bar(self, frame: Frame):
-        frame.set_header(Sentence().add("{").addf("/", "Cores").add("}"), "^")
+    def show_bottom_bar(self, frame: Frame):
+        text, percent = self.build_xp_bar()
+        init = Sentence().addf("w", Style.roundL()).addf("W", text).addf("w", Style.roundR())
+        if Flags.xpbar.is_true():
+            text = text.center(28)
+            done = Style.main_done()
+            todo = Style.main_todo()
+            init = Style.build_bar(text, percent, len(text), done, todo)
+            
+
+        elemsfill = [init] + Play.build_list_sentence(self.help_extra, fill=True)
+        wrap = Fmt.get_size()[1] < self.wrap_size
+        half = len(elemsfill) // 2
+  
+        _, percent = self.build_xp_bar()
+        if not wrap:
+            line_0 = Sentence().add(" ")
+            for s in elemsfill:
+                line_0.add(s).add(" ")
+            frame.write(0, 0, line_0.center(frame.get_dx()))
+        else:
+            line_0 = Sentence().add(" ")
+            for s in elemsfill[0 : half]:
+                line_0.add(s).add(" ")
+            frame.write(0, 0, line_0.center(frame.get_dx()))
+            line_1 = Sentence().add(" ")
+            for s in elemsfill[half:]:
+                line_1.add(s).add(" ")
+            frame.write(1, 0, line_1.center(frame.get_dx()))
+        
+
+        frame.set_border_none()
         frame.draw()
 
-        for flag in self.flagsman.left:
-            if not flag.is_bool():
-                frame.print(0, flag.get_toggle_sentence())
+    def show_top_bar(self, frame: Frame):
+        help = Sentence().add(" ")
+        for s in Play.build_list_sentence(self.help_basic):
+            help.add(s).add(" ")
+
+        flags = Sentence().add(" ")
+        for f in self.flagsman.top:
+            flags.add(Style.get_flag_sentence(f)).add(" ")
+
+        lines, cols = Fmt.get_size()
+        if cols > self.wrap_size:
+            frame.write(0, 0, help.add(flags).center(frame.get_dx()))
+        else:
+            frame.write(0, 0, help.center(frame.get_dx()))
+            frame.write(1, 0, flags.center(frame.get_dx()))
+
+        frame.set_border_none()
+        frame.draw()
 
     def show_help_config(self):
         _help: Floating = Floating().warning().set_ljust_text().set_header(" Configurações ")
-        dx = 80
         self.fman.add_input(_help)
         _help.put_sentence(Sentence() + f"      Mínimo " + RToken("r", f"[{Flags.minimum.get_char()}]") + " - Mostrar os requisitos mínimos para completar a missão")
         _help.put_sentence(Sentence() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_char()}]") + " - Mostrar quanto de experiência cada atividade fornece")
@@ -461,7 +525,6 @@ class Play:
 
     def show_help(self):
         _help: Floating = Floating().warning().set_ljust_text()
-        dx = 80
         self.fman.add_input(_help)
 
         _help.set_header_sentence(Sentence().add(" Ajuda "))
@@ -502,62 +565,29 @@ class Play:
                     return path
         return ""
 
-    def show_bottom_bar(self, frame: Frame):
-        content = Sentence().add("  ")
 
-        _help = Play.build_list_sentence(self.help_extra).add(" ")
-        content.add(_help)
-        content.trim_alfa(frame.get_dx())
-        frame.set_header(content, "^")
-        frame.set_border_none()
-        frame.draw()
-        frame.draw()
-
-    def show_top_bar(self, frame: Frame) -> int:
-        dx = frame.get_dx()
-        content = Sentence().add(" ")
-        content.addf("G", f"({self.rep_alias.upper()})").add(" ")
-
-        flags = Sentence()
-        for f in self.flagsman.top:
-            flags.add(f.get_toggle_sentence()).add(" ")
-        content.add(flags)
-
-
+    def build_xp_bar(self) -> Tuple[str, float]:
         xp = XP(self.game)
-
         if xp.get_xp_total_obtained() == xp.get_xp_total_available():
             text = "Você atingiu o máximo de xp!"
             percent = 100.0
         else:
-            if Flags.percent.is_true():
-                text = f"L:{xp.get_level()} XP:{int(100 * xp.get_xp_level_current() / xp.get_xp_level_needed())}%"
-            else:
-                text = f"L:{xp.get_level()} XP:{xp.get_xp_level_current()}/{xp.get_xp_level_needed()}"
+            lang = self.rep.get_lang().upper()
+            level = xp.get_level()
             percent = float(xp.get_xp_level_current()) / float(xp.get_xp_level_needed())
-        size = max(15, dx - content.len() - 1)
-        done = Flags.main_done.get_value() + "/k"
-        todo = Flags.main_todo.get_value() + "/k"
-        xp_bar = Sentence().add(Sentence.build_bar(text, percent, size, done, todo).add(" "))
+            if Flags.percent.is_true():
+                xpobt = int(100 * xp.get_xp_level_current() / xp.get_xp_level_needed())
+                text = "L:{} XP:{}%".format(level, xpobt)
+            else:
+                xpobt1 = xp.get_xp_level_current()
+                xpobt2 = xp.get_xp_level_needed()
+                text = "Level:{} XP:{}/{}".format(level, xpobt1, xpobt2)
 
-        # limit = dx - xp_bar.len()
-        # # content.trim_spaces(limit)
-        # # content.trim_alfa(limit)
-        # # content.trim_end(limit)
-        content.add(xp_bar)
-
-        frame.write(0, 0, content)
-
-        pasta_raiz = "Não definida"
-        root = self.local.get_rootdir()
-        if root != "":
-            pasta_raiz = os.path.join(root, self.rep_alias)
-        frame.set_footer(Sentence().addf("/", "Pasta Raiz: ").addf("/", pasta_raiz), ">", "{", "}")
-
-        frame.draw()
-        return content.len()
-        # frame.write(0, 0, content)
-
+        # size = max(15, dx)
+        # done = "" if Flags.mono.is_true() else "g"
+        # todo = "" if Flags.mono.is_true() else "r"
+        # xp_bar = Sentence().add(Style.build_bar(text, percent, size, done, todo, fill_mode=False, round=False).add(" "))
+        return text, percent
 
     def show_items(self):
         Fmt.erase()
@@ -567,43 +597,37 @@ class Play:
         main_sy = lines  # size em y avaliable
 
         top_y = -1
-        top_dy = 3
-        frame_top = Frame(top_y, 0).set_size(3, main_sx)
+        top_dy = 1  #quantas linhas o topo usa
+        if cols <= self.wrap_size:
+            top_dy += 1
+        bottom_dy = 1 # quantas linhas o fundo usa
+        if cols <= self.wrap_size:
+            bottom_dy += 1
 
-        size_top = self.show_top_bar(frame_top)
-
-        bottom_sy = 2
-        frame_bottom = Frame(lines - 2, 0).set_size(3, size_top + 2)
-        self.show_bottom_bar(frame_bottom)
-
-
-        mid_y = top_y + top_dy
-        mid_sy = main_sy - (top_y + top_dy + bottom_sy)
+        mid_y = top_dy # onde o meio começa
+        mid_sy = main_sy - top_dy - bottom_dy # tamanho do meio
 
         skills_sx = 0
         if Flags.inventory.is_true():
             skills_sx = max(20, main_sx // 4)
-            frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx)
-            self.show_skills_bar(frame_skills)
-
+            frame_skills = Frame(0, cols - skills_sx).set_size(main_sy, skills_sx)
+            self.show_inventary_bar(frame_skills)
 
         flags_sx = 0
         if Flags.config.is_true():
-            flags_sx = 16
-            # flags_sy = len([1 for flag in self.flagsman.left if flag.is_bool()])
-
-            frame_flags = Frame(mid_y, 0).set_size(mid_sy, flags_sx)
-            self.show_flags_bar(frame_flags)
-
-            # frame_colors = Frame(mid_y + flags_sy + 2, 0).set_size(
-            #     mid_sy - flags_sy - 2, flags_sx
-            # )
-            # self.show_color_bar(frame_colors)
+            flags_sx = 18
+            frame_flags = Frame(0, 0).set_size(main_sy, flags_sx)
+            self.show_config_bar(frame_flags)
 
         task_sx = main_sx - flags_sx - skills_sx
+
+        frame_top = Frame(top_y, flags_sx).set_size(top_dy + 2, task_sx)
+        self.show_top_bar(frame_top)
+
+        frame_bottom = Frame(lines - bottom_dy - 1, flags_sx).set_size(bottom_dy + 2, task_sx)
+        self.show_bottom_bar(frame_bottom)
+
         frame_main = Frame(mid_y, flags_sx).set_size(mid_sy, task_sx)
-
-
         self.show_main_bar(frame_main)
 
     class Key:
@@ -638,9 +662,9 @@ class Play:
                 f.put_text("")
                 f.put_text(self.flag.get_description())
                 if self.flag.is_true():
-                    f.put_sentence(Sentence().addf("G", "ligado"))
+                    f.put_sentence(Sentence().addf("g", "ligado"))
                 else:
-                    f.put_sentence(Sentence().addf("R", "desligado"))
+                    f.put_sentence(Sentence().addf("r", "desligado"))
                 f.put_text("")
                 self.fman.add_input(f)
 
@@ -668,7 +692,7 @@ class Play:
         def set_exit():
             self.exit = True
 
-        calls = {}
+        calls: Dict[int, Callable[[None],None]] = {}
 
         def add_int(_key: int, fn):
             if _key in calls.keys():
@@ -720,6 +744,7 @@ class Play:
 
         add_str(Flags.config.get_char(), self.toggle_config)
         add_str(Flags.inventory.get_char(), self.FlagFunctor(self.fman, Flags.inventory))
+        add_str(Flags.xpbar.get_char(), self.FlagFunctor(self.fman, Flags.xpbar))
 
         return calls
 

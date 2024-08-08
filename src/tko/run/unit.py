@@ -1,6 +1,6 @@
 from typing import Optional
 from .basic import ExecutionResult
-from ..util.ftext import Sentence
+from ..util.sentence import Sentence
 import os
 
 class Unit:
@@ -31,4 +31,3 @@ class Unit:
         if pad:
             case = self.case.ljust(self.case_pad)
         return Sentence() + "(" + op + ")" + f"[{index}] GR:{grade} {source} ({case}){rep}"
-

@@ -3,7 +3,7 @@ from typing import List, Any, Dict
 from ..settings.geral_settings import GeralSettings
 from ..settings.rep_settings import RepData
 
-from ..util.ftext import Sentence, Token
+from ..util.sentence import Sentence, Token
 from .flags import Flags
 from ..game.game import Game
 from ..game.cluster import Cluster
@@ -131,49 +131,62 @@ class TaskTree:
         output.add(down_symbol)
         output.add(lig_quest)
         output.add(t.get_grade_symbol(min_value))
-        output.add(" ")
 
+        focus_color = Style.focus()
+
+        if in_focus:
+            output.addf(focus_color.lower(), "")
+        else:
+            output.add(" ")
 
         color = ""
-        if t.opt:
-            color = Style.opt_task + color
         if in_focus:
-            color = Flags.focus.get_value() + color
+            color = "k" + focus_color
         output.addf(color, t.title)
+
+        if in_focus:
+            output.addf(focus_color.lower(), "")
+        else:
+            output.add(" ")
+
 
         if Flags.reward.is_true():
             xp = ""
             for s, v in t.skills.items():
                 xp += f" +{s}:{v}"
-            output.addf(Style.skills, xp)
+            output.addf(Style.skills(), xp)
             
         if downloadable_in_focus:
             readme_path = os.path.join(rep_dir, t.key, "Readme.md")
             output.add(" ").addf("y", f"[{readme_path}]")
 
-        
-
         return output
 
     def str_quest(self, in_focus: bool, q: Quest, lig: str) -> Sentence:
         con = "━─" if q.key not in self.expanded else "─┯"
-        output: Sentence = Sentence().add(" " + lig + con + " ")
+        output: Sentence = Sentence().add(" " + lig + con)
+
+        focus_color = Style.focus()
+        if in_focus:
+            output.addf(focus_color.lower(), "")
+        else:
+            output.add(" ")
 
         color = ""
-        if  q.opt:
-            color = Style.opt_quest + color
         if in_focus:
-            color = Flags.focus.get_value() + color
+            color = "k" + focus_color
 
         title = q.title
-        # if Flags.dots.is_true():
         title = title.ljust(self.max_title - 2, ".")
-        # if Flags.quest_prog.is_true():
-        done = color + Flags.prog_done.get_value()
-        todo = color + Flags.prog_todo.get_value()
-        output.add(Sentence.build_bar(title, q.get_percent() / 100, len(title), done, todo))
-        # else:
-        #     output.addf(color, title)
+
+        done = color + Style.prog_done()
+        todo = color + Style.prog_todo()
+        output.add(Style.build_bar(title, q.get_percent() / 100, len(title), done, todo, round=False))
+
+        if in_focus:
+            output.addf(focus_color.lower(), "")
+        else:
+            output.add(" ")
 
         if Flags.percent.is_true():
             output.add(" ").add(q.get_resume_by_percent())
@@ -187,10 +200,10 @@ class TaskTree:
             xp = ""
             for s, v in q.skills.items():
                 xp += f" +{s}:{v}"
-            output.addf(Style.skills, " " + xp)
+            output.addf(Style.skills(), " " + xp)
 
         if q.key in self.new_items:
-            output.addf(Style.new, " [new]")
+            output.addf(Style.new(), " [new]")
 
         return output
 
@@ -199,20 +212,30 @@ class TaskTree:
         opening = "━─"
         if cluster.key in self.expanded:
             opening = "─┯"
-        output.add(opening + " ")
-        color = Style.cluster_title
+        output.add(opening)
+
+        focus_color = Style.focus()
+        color = ""
         if in_focus:
-            color += Flags.focus.get_value() + color
+            color = "k" + focus_color
         title = cluster.title
         # if Flags.dots.is_true():
         title = cluster.title.ljust(self.max_title, ".")
 
-        # if Flags.group_prog.is_true():
-        done = color + Flags.prog_done.get_value()
-        todo = color + Flags.prog_todo.get_value()
-        output.add(Sentence.build_bar(title, cluster.get_percent() / 100, len(title), done, todo))
-        # else:
-        #     output.addf(color, title)
+        if in_focus:
+            output.addf(focus_color.lower(), "")
+        else:
+            output.add(" ")
+
+        done = color + Style.prog_done()
+        todo = color + Style.prog_todo()
+
+        output.add(Style.build_bar(title, cluster.get_percent() / 100, len(title), done, todo, round=False))
+
+        if in_focus:
+            output.addf(focus_color.lower(), "")
+        else:
+            output.add(" ")
 
 
         if Flags.percent.is_true():
@@ -220,7 +243,7 @@ class TaskTree:
         else:
             output.add(" ").add(cluster.get_resume_by_quests())
         if cluster.key in self.new_items:
-            output.addf(Style.new, " [new]")
+            output.addf(Style.new(), " [new]")
 
         return output
 

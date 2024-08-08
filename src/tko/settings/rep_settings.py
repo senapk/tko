@@ -128,6 +128,8 @@ class RepData:
 
 
     def save_data_to_json(self):
+        if not os.path.exists(os.path.dirname(self.json_file)):
+            os.makedirs(os.path.dirname(self.json_file))
         with open(self.json_file, "w", encoding="utf-8") as f:
             f.write(json.dumps(self.data, indent=4))
         return self

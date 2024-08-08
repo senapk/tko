@@ -1,5 +1,5 @@
 from .fmt import Fmt
-from ..util.ftext import Sentence, Token
+from ..util.sentence import Sentence, Token
 from typing import Tuple
 
 

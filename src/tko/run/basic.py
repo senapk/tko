@@ -3,7 +3,7 @@ from typing import Optional
 import os
 
 from ..util.symbols import symbols
-from ..util.ftext import Token, Sentence
+from ..util.sentence import Token, Sentence
 
 class CompilerError(Exception):
     pass
@@ -67,4 +67,3 @@ class Identifier:
             return IdentifierType.VPL
         else:
             return IdentifierType.SOLVER
-

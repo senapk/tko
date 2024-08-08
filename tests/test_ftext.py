@@ -5,7 +5,7 @@
 import unittest
 
 
-from tko.util.ftext import Sentence, Token
+from tko.util.sentence import Sentence, Token
 
 class TestSimple(unittest.TestCase):
     def test_token_creation(self):
@@ -72,12 +72,6 @@ class TestSimple(unittest.TestCase):
         trimmed_sentence = sentence.trim_end(7)
         assert trimmed_sentence.len() == 7
         assert trimmed_sentence.resume_val_fmt() == ("text1te", "rrrrrgg")
-
-    def test_build_bar(self):
-        bar = Sentence.build_bar("loading", 0.5, 20, fmt_true="C", fmt_false="Y")
-        assert bar.len() == 20
-        assert str(bar) == str(Token("      load", 'C') + Token('ing       ', 'Y'))
-        assert bar.resume_val_fmt() == ("      loading       ", "CCCCCCCCCCYYYYYYYYYY")
 
     def test_text_replace(self):
         bar = Sentence() + Token("text1foo", "g") + Token("text2", "b")

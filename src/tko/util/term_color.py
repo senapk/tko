@@ -1,4 +1,4 @@
-from .ftext import Sentence
+from .sentence import Sentence
 from typing import Union
 
 class Color:

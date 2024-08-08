@@ -8,7 +8,7 @@ from .param import Param
 from .loader import Loader
 from .solver import Solver
 
-from ..util.ftext import Sentence
+from ..util.sentence import Sentence
 from ..util.symbols import symbols
 from .label_factory import LabelFactory
 # generate label for cases

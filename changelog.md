@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.15.5
+  - add: adding rounded corners using nerdfonts and mono color
 - 0.15.4
   - add: each rep has his own json file inside rep folder
 - 0.15.3

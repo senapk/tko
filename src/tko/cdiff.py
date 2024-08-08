@@ -5,13 +5,15 @@ from .run.unit import Unit
 from .run.param import Param
 from .execution import Execution
 from .run.diff import Diff
-from .util.ftext import Sentence, Token
+from .util.sentence import Sentence, Token, RToken
 from typing import List, Tuple
 from .play.frame import Frame
 from .play.floating import Floating
 from .play.floating_manager import FloatingManager
 from .play.images import images, compilling, success
 from .util.runner import Runner
+from .play.style import Style
+from .play.flags import Flags
 import random
 
 
@@ -90,11 +92,11 @@ class CDiff:
             out = self.random_get(images, "static")
         else:
             out = self.random_get(success, "static")
-        self.print_centered_image(out, "g")
+        self.print_centered_image(out, "" if Flags.mono.is_true() else "g")
         
     def show_compilling(self):
         out = self.random_get(compilling, "random")
-        self.print_centered_image(out, "y")
+        self.print_centered_image(out, "" if Flags.mono.is_true() else "y")
 
     def draw_scrollbar(self):
         y_init = 3
@@ -176,26 +178,36 @@ class CDiff:
             else:
                 self.results_done.append((Token(symbol.text, color), index))
 
+        activity_color = "W" if Flags.mono.is_true() else "C"
+        solver_color = "W" if Flags.mono.is_true() else "G"
+        sources_color = "W" if Flags.mono.is_true() else "Y"
+        running_color = "W" if Flags.mono.is_true() else "R"
+
         _, cols = Fmt.get_size()
         frame = Frame(0, 0).set_size(3, cols)
         folder = self.get_folder()
-        activity = Sentence().addf("C", folder)
+        activity = Sentence().addf(activity_color, folder)
         solvers = Sentence()
         for i, solver in enumerate(self.wdir.solvers_names()):
             if i != 0:
                 solvers.add(" ")
-            solvers.addf("G/", solver)
+            solvers.addf(solver_color, solver)
+        
         sources = Sentence()
         for i, (source, _) in enumerate(self.wdir.sources_names()):
             if i != 0:
                 sources.add(", ")
-            sources.addf("Y", source)
+            sources.addf(sources_color, source)
 
         done = len(self.results_done) + len(self.results_fail)
         full = len(self.wdir.get_unit_list())
-        sources.addf("Y", f"({full})")
+        sources.addf(sources_color, f"({full})")
         if done != full:
-            solvers.add(" ").addf("R", f"({done}/{full})")
+            solvers.add(" ").addf(running_color, f"({done}/{full})")
+
+        solvers = Sentence().addf(solver_color.lower(), Style.roundL()).add(solvers).addf(solver_color.lower(), Style.roundR())
+        activity = Sentence().addf(activity_color.lower(), Style.roundL()).add(activity).addf(activity_color.lower(), Style.roundR())
+        sources = Sentence().addf(sources_color.lower(), Style.roundL()).add(sources).addf(sources_color.lower(), Style.roundR())
 
         delta = frame.get_dx() - solvers.len()
         left = 1
@@ -218,31 +230,43 @@ class CDiff:
         output = Sentence()
         for symbol, index in self.results_fail + self.results_done:
             foco = i == self.index
-            extrap = " " if not foco else ">"
-            extras = " " if not foco else "<"
-            output.add(extrap).addf(symbol.fmt, str(index).zfill(2)).add(symbol).add(extras)
+            extrap = Token(Style.roundL(), symbol.fmt.lower()) if not foco else Token(Style.roundL(), "")
+            extras = Token(Style.roundR(), symbol.fmt.lower()) if not foco else Token(Style.roundR(), "")
+            output.add(extrap).addf(symbol.fmt, str(index).zfill(2)).add(symbol).add(extras).add(" ")
             i += 1
 
-        if self.index * 5 > frame.get_dx():
-            output.cut_begin((self.index + 1) * 5 - frame.get_dx())
+        size = 8
+        if self.index * 8 > frame.get_dx():
+            output.cut_begin((self.index + 1) * 8 - frame.get_dx())
 
         frame.set_footer(output, "")
         frame.draw()
         
     def draw_guide_line(self):
-        cmds = (Sentence()
-        .add(" ")
-        .addf("/G", "Sair[q]")
-        .add(" ")
-        .addf("/Y", "Executar[e]")
-        .add(" ")
-        .addf("/Y", "Testar[t]")
-        .add(" ")
-        .addf("/C", "Navegar[wasd]")
-        .add(" ")
-        .addf("/M", "MudarVisão[m]")
-        .add(" ")
-        )
+        tokens = [
+            RToken("G", "Sair[q]"),
+            RToken("Y", "Executar[e]"),
+            RToken("Y", "Testar[t]"),
+            RToken("C", "Navegar[wasd]"),
+            RToken("M", "MudarVisão[m]")
+        ]
+        cmds = Sentence()
+        for t in tokens:
+            color = "W" if Flags.mono.is_true() else t.fmt
+            cmds.addf(color.lower(), Style.roundL()).addf(color, t.text).addf(color.lower(), Style.roundR()).add(" ")
+        # cmds = (Sentence()
+        # .add(" ")
+        # .addf("g", "").addf("G", "Sair[q]").addf("g", "")
+        # .add(" ")
+        # .addf("y", "").addf("Y", "Executar[e]").addf("y", "")
+        # .add(" ")
+        # .addf("y", "").addf("Y", "Testar[t]").addf("y", "")
+        # .add(" ")
+        # .addf("c", "").addf("C", "Navegar[wasd]").addf("c", "")
+        # .add(" ")
+        # .addf("m", "").addf("M", "MudarVisão[m]").addf("m", "")
+        # .add(" ")
+        # )
         lines, cols = Fmt.get_size()
         Fmt.write(lines - 1, 0, cmds.center(cols, Token(" ")))
  
@@ -374,4 +398,3 @@ class CDiff:
                 break
             else:
                 fn()
-

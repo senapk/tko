@@ -1,7 +1,7 @@
 from typing import Optional, Union
 import shutil
 from ..util.term_color import Color
-from ..util.ftext import Sentence, Token
+from ..util.sentence import Sentence, Token
 
 
 class Report:
@@ -54,4 +54,3 @@ class Report:
         tw = term_width - 2
         filler = Token(sep.text * (int(tw / 2 - size / 2)), sep.fmt)
         return Sentence() + left_border + pad + filler + ftext + filler + right_border
-

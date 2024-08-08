@@ -1,6 +1,6 @@
 from typing import List, Optional
 from .quest import Quest
-from ..util.ftext import Sentence
+from ..util.sentence import Sentence
 
 
 class Cluster:

@@ -1,5 +1,6 @@
 from typing import List, Dict, Any
-from ..util.ftext import Sentence
+from ..util.sentence import Sentence
+
 
 class Flag:
     def __init__(self):
@@ -73,26 +74,6 @@ class Flag:
 
     def get_index(self) -> int:
         return self._index
-
-    def get_color(self) -> str:
-        if self.get_value() == "1":
-            return Flags.flag_on.get_value()
-        return Flags.flag_off.get_value()
-
-    def get_toggle_sentence(self, pad: int = 0) -> Sentence:
-        if not self._bool:
-            name = Sentence().addf(self.get_value(), f"{self._name}".ljust(pad))
-            value = Sentence().add(f"[{self.get_char()}]").add(name).add(f"{self.get_value()}".rjust(2))
-            return value
-            
-        char = self.get_char()
-        text = self.get_name()
-        color = self.get_color()
-        extra = Sentence()
-        if pad > 0:
-            extra.addf(color, (pad - len(text)) * " ")
-        value = Sentence().addf(color + "/", text).add(extra).addf("kW", f"[{char}]")
-        return value
     
 
 class Flags:
@@ -102,20 +83,11 @@ class Flags:
     admin = Flag().name("Admin").char("A").values(["0", "1"]).text("Mostra todas as missões e grupos").location("left")
     fortune = Flag().name("Conselho").char("C").values(["0", "1"]).text("Mostra mensagem aleatórias na saída").location("left")
     random = Flag().name("Sucesso").char("S").values(["1", "0"]).text("Mostra os personagens no sucesso da execução").location("left")
-    config = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
+    config = Flag().name("Conf").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
+    xpbar = Flag().name("XpBar").char("x").values(["0", "1"]).text("Mostra a barra de experiência").location("top")
     inventory = Flag().name("Inventário").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
-
-    focus     = Flag().name("Selected").values(["kB"]).text("Cor do item em foco").many()
-    prog_done = Flag().name("ProgDone").values(["g"]).text("Progresso Done").many()
-    prog_todo = Flag().name("ProgTodo").values(["y"]).text("Progresso Todo").many()
-    flag_on   = Flag().name("Toggle_1").values(["G"]).text("Flag True").many()
-    flag_off  = Flag().name("Toggle_0").values(["Y"]).text("Flag False").many()
-    cmds      = Flag().name("Cmds").values(["B"]).text("CMDS").many()
-    skill_done = Flag().name("ExpeDone").values(["G"]).text("Skill Done").many()
-    skill_todo = Flag().name("ExpeTodo").values(["R"]).text("Skill Todo").many()
-    main_done = Flag().name("MainDone").values(["B"]).text("Main Done").many()
-    main_todo = Flag().name("MainTodo").values(["M"]).text("Main Todo").many()
-
+    mono = Flag().name("Mono").char("M").values(["0", "1"]).text("Usa tema monocromatico").location("left")
+    nerd = Flag().name("Nerd").char("n").values(["0", "1"]).text("Usa nerd fonts para habilitar bordas").location("left")
 
 class FlagsMan:
     def __init__(self, data: Dict[str, int]):
@@ -141,4 +113,3 @@ class FlagsMan:
             if len(flag.get_values()) > 1:
                 data[name] = flag.get_index()
         return data
-

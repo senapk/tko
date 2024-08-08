@@ -1,4 +1,4 @@
-from .ftext import Token
+from .sentence import Token
 
 class __Symbols:
     def __init__(self):

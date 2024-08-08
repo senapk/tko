@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import List,  Any, Tuple, Union
 
 
+
 class Token:
     def __init__(self, text: str = "", fmt: str = "", ):
         if not isinstance(text, str):
@@ -206,14 +207,3 @@ class Sentence:
             self.data = self.data[:width]
         return self
 
-    @staticmethod
-    def build_bar(text: str, percent: float, length: int, fmt_true: str = "/kC",
-                  fmt_false: str = "/kY") -> Sentence:
-        prefix = (length - len(text)) // 2
-        suffix = length - len(text) - prefix
-        text = " " * prefix + text + " " * suffix
-        total = length
-        full_line = text
-        done_len = int(percent * total)
-        xp_bar = Token(full_line[:done_len], fmt_true) + Token(full_line[done_len:], fmt_false)
-        return xp_bar

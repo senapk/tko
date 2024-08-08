@@ -7,7 +7,7 @@ from .run.wdir import Wdir
 from .run.basic import DiffMode, ExecutionResult
 from .run.param import Param
 from .run.diff import Diff
-from .util.ftext import Sentence, Token
+from .util.sentence import Sentence, Token
 
 from .run.basic import Success
 from .run.report import Report

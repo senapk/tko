@@ -1,6 +1,6 @@
 import curses
 from typing import Dict, Tuple
-from ..util.ftext import Sentence
+from ..util.sentence import Sentence
 from .style import Style
 
 class Fmt:
@@ -173,4 +173,3 @@ class Fmt:
             raise Exception("Fmt.__scr não foi inicializado")
         return Fmt.__scr.getmaxyx()
         
-
