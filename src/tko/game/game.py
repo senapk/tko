@@ -2,9 +2,15 @@ from typing import List, Dict, Optional, Tuple
 from .cluster import Cluster
 from .quest import Quest, QuestParser
 from .task import Task, TaskParser
+from ..util.remote import get_md_link
+import unicodedata
+
 import re
 import os
 
+def remove_accents(input_str):
+    nfkd_form = unicodedata.normalize('NFKD', input_str)
+    return u"".join([c for c in nfkd_form if not unicodedata.combining(c)])
 
 def load_html_tags(task: str) -> Optional[str]:
     pattern = r"<!--\s*(.*?)\s*-->"
@@ -59,7 +65,7 @@ class Game:
             return None
         
         keys = [tag[1:] for tag in tags if tag.startswith("@")]
-        key = titulo
+        key = remove_accents(get_md_link(titulo))
         try:
             color = [tag[2:] for tag in tags if tag.startswith("c:")][0]
         except IndexError as _e:

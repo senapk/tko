@@ -4,6 +4,7 @@
 
 # Example requirements
 appdirs
+types-appdirs
 
 # PyPI package deployment
 build

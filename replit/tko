@@ -17,11 +17,12 @@ import random
 import tempfile
 import webbrowser
 import re
+import unicodedata
 import math
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.15.3"
+__version__ = "0.15.4"
 
 
 class GeralSettings:
@@ -903,6 +904,20 @@ bash_guide = """
 
 
 
+def get_md_link(title: str) -> str:
+    if title is None:
+        return ""
+    title = title.lower()
+    out = ""
+    for c in title:
+        if c == " " or c == "-":
+            out += "-"
+        elif c == "_":
+            out += "_"
+        elif c.isalnum():
+            out += c
+    return out
+
 class Title:
     @staticmethod
     def extract_title(readme_file):
@@ -1071,68 +1086,19 @@ class RemoteMd:
 
 
 
-class RepSettings:
-    __expanded = "expanded"
-    __new_items = "new_items"
-    __tasks = "tasks"
-    __flags = "flags"
-    __lang = "lang"
-
-    defaults = {
-        __expanded: [],
-        __tasks: {},
-        __flags: {},
-        __new_items: [],
-        __lang: ""
-    }
-
-    def get_expanded(self) -> list:
-        return self.__get(RepSettings.__expanded)
-    
-    def get_new_items(self) -> list:
-        return self.__get(RepSettings.__new_items)
-    
-    def get_tasks(self) -> Dict[str, Any]:
-        return self.__get(RepSettings.__tasks)
-    
-    def get_flags(self) -> Dict[str, Any]:
-        return self.__get(RepSettings.__flags)
-    
-    def get_lang(self) -> str:
-        return self.__get(RepSettings.__lang)
-    
-    def set_expanded(self, value: list):
-        return self.__set(RepSettings.__expanded, value)
-    
-    def set_new_items(self, value: list):
-        return self.__set(RepSettings.__new_items, value)
-    
-    def set_tasks(self, value: Dict[str, Any]):
-        return self.__set(RepSettings.__tasks, value)
-    
-    def set_flags(self, value: Dict[str, Any]):
-        return self.__set(RepSettings.__flags, value)
-    
-    def set_lang(self, value: str):
-        return self.__set(RepSettings.__lang, value)
-
-    def __init__(self, file: str = ""):
-        self.url: str = ""
+class RepSource:
+    def __init__(self, file: str = "", url: str = ""):
         self.file: str = ""
-        self.data: Dict[str, Any] = {}
         if file != "":
-            self.file = os.path.abspath(file)
+            self.file = os.path.abspath(file)        
+        self.url: str = url
 
-    def __get(self, key: str) -> Any:
-        if key not in self.defaults:
-            raise ValueError(f"Key {key} not found in RepSettings")
-        value = self.data.get(key, RepSettings.defaults[key])
-        if type(value) != type(RepSettings.defaults[key]):
-            return RepSettings.defaults[key]
-        return value
+    def set_file(self, file: str):
+        self.file = os.path.abspath(file)
+        return self
 
-    def __set(self, key: str, value: Any):
-        self.data[key] = value
+    def set_url(self, url: str):
+        self.url = url
         return self
 
     def get_file(self) -> str:
@@ -1158,67 +1124,147 @@ class RepSettings:
 
         raise ValueError("fail: file not found or invalid settings to download repository file")
 
-    def set_file(self, file: str):
-        self.file = os.path.abspath(file)
-        return self
-
-    def set_url(self, url: str):
-        self.url = url
-        return self
-    
-    def load_defaults(self):
-        for key in RepSettings.defaults:
-            self.data[key] = RepSettings.defaults[key]
-        return self
-
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         return {
-            "url": self.url,
             "file": self.file,
-            "data": self.data
+            "url": self.url
         }
 
     def from_dict(self, data: Dict[str, Any]):
-        self.url = data.get("url", "")
         self.file = data.get("file", "")
-        self.data = data.get("data", {})
+        self.url = data.get("url", "")
+        return self    
+
+class RepData:
+
+    def __init__(self, json_file: str = ""):
+        self.json_file: str = json_file
+        self.data: Dict[str, Any] = {}
+
+    __expanded = "expanded"
+    __new_items = "new_items"
+    __tasks = "tasks"
+    __flags = "flags"
+    __lang = "lang"
+
+    defaults = {
+        __expanded: [],
+        __tasks: {},
+        __flags: {},
+        __new_items: [],
+        __lang: ""
+    }
+
+    def get_expanded(self) -> list:
+        return self.__get(RepData.__expanded)
+    
+    def get_new_items(self) -> list:
+        return self.__get(RepData.__new_items)
+    
+    def get_tasks(self) -> Dict[str, Any]:
+        return self.__get(RepData.__tasks)
+    
+    def get_flags(self) -> Dict[str, Any]:
+        return self.__get(RepData.__flags)
+    
+    def get_lang(self) -> str:
+        return self.__get(RepData.__lang)
+    
+    def set_expanded(self, value: list):
+        return self.__set(RepData.__expanded, value)
+    
+    def set_new_items(self, value: list):
+        return self.__set(RepData.__new_items, value)
+    
+    def set_tasks(self, value: Dict[str, Any]):
+        return self.__set(RepData.__tasks, value)
+    
+    def set_flags(self, value: Dict[str, Any]):
+        return self.__set(RepData.__flags, value)
+    
+    def set_lang(self, value: str):
+        return self.__set(RepData.__lang, value)
+
+    def __get(self, key: str) -> Any:
+        if key not in self.defaults:
+            raise ValueError(f"Key {key} not found in RepSettings")
+        value = self.data.get(key, RepData.defaults[key])
+        if type(value) != type(RepData.defaults[key]):
+            return RepData.defaults[key]
+        return value
+
+    def __set(self, key: str, value: Any):
+        self.data[key] = value
+        return self
+
+    def load_defaults(self):
+        for key in RepData.defaults:
+            self.data[key] = RepData.defaults[key]
+        return self
+
+    def load_data_from_json(self):
+        with open(self.json_file, encoding="utf-8") as f:
+            self.data = json.load(f)
+        return self
+
+
+    def save_data_to_json(self):
+        with open(self.json_file, "w", encoding="utf-8") as f:
+            f.write(json.dumps(self.data, indent=4))
         return self
 
     def __str__(self) -> str:
         return (
-            f"url: {self.url}\n"
-            f"file: {self.file}\n"
             f"data: {self.data}\n"
         )
 
 
 class Settings:
     def __init__(self):
-        self.reps: Dict[str, RepSettings] = {}
+        self.reps: Dict[str, RepSource] = {}
         self.geral = GeralSettings()
-        self.reps["fup"] = RepSettings().load_defaults().set_url("https://github.com/qxcodefup/arcade/blob/master/Readme.md")
-        self.reps["ed"] = RepSettings().load_defaults().set_url("https://github.com/qxcodeed/arcade/blob/master/Readme.md")
-        self.reps["poo"] = RepSettings().load_defaults().set_url("https://github.com/qxcodepoo/arcade/blob/master/Readme.md")
 
-    def get_repo(self, course: str) -> RepSettings:
-        if course not in self.reps:
-            raise ValueError(f"Course {course} not found in settings")
-        return self.reps[course]
-    
+    def init_default_reps(self):
+        self.reps["fup"] = RepSource(url = "https://github.com/qxcodefup/arcade/blob/master/Readme.md")
+        self.reps["ed"] = RepSource(url = "https://github.com/qxcodeed/arcade/blob/master/Readme.md")
+        self.reps["poo"] = RepSource(url = "https://github.com/qxcodepoo/arcade/blob/master/Readme.md")
+
+        for key in self.reps:
+            repdata = self.get_rep_data(key)
+            repdata.save_data_to_json()
+        return self
+
+    def __get_rep_file_path(self, course: str) -> str:
+        return os.path.join(self.geral.get_rootdir(), course, ".rep.json")   
+
+    def get_rep_source(self, course: str) -> RepSource:
+        if course in self.reps:
+            return self.reps[course]
+        raise Warning(f"Curso {course} não encontrado")
+
+    def get_rep_data(self, course: str) -> RepData:
+        cfg_file = self.__get_rep_file_path(course)
+        rep_data = RepData(cfg_file)
+        if os.path.exists(cfg_file):
+            return rep_data.load_data_from_json()
+        return rep_data.load_defaults()
+  
     def to_dict(self) -> Dict[str, Any]:
         return {
             "reps": {k: v.to_dict() for k, v in self.reps.items()},
             "geral": self.geral.to_dict()
         }
+        return self
 
     def from_dict(self, data: Dict[str, Any]):
-        self.reps = {k: RepSettings().from_dict(v) for k, v in data.get("reps", {}).items()}
+        self.reps = {k: RepSource().from_dict(v) for k, v in data.get("reps", {}).items()}
         self.geral = GeralSettings().from_dict(data.get("geral", {}))
         return self
     
     def save_to_json(self, file: str):
         with open(file, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, indent=4)
+        return self
 
     def __str__(self):
         output = ["Repositories:"]
@@ -1232,7 +1278,6 @@ class Settings:
             else:
                 output.append(f"{prefix} : local  : {self.reps[key].file}")
         return "\n".join(output)
-
 
 
 
@@ -1265,7 +1310,7 @@ class SettingsParser:
         self.settings.save_to_json(self.settings_file)
 
     def create_new_settings_file(self) -> Settings:
-        self.settings = Settings()
+        self.settings = Settings().init_default_reps()
         if not os.path.isdir(self.get_settings_dir()):
             os.makedirs(self.get_settings_dir(), exist_ok=True)
         self.save_settings()
@@ -1273,7 +1318,6 @@ class SettingsParser:
 
     def get_settings_dir(self) -> str:
         return os.path.dirname(self.settings_file)
-
 
 
 
@@ -1591,6 +1635,9 @@ class Flag:
         self._location = value
         return self
 
+    def get_values(self):
+        return self._values
+
     def toggle(self):
         self._index = (self._index + 1) % len(self._values)
         return self
@@ -1652,11 +1699,11 @@ class Flags:
     minimum = Flag().name("Mínimo").char("m").values(["0", "1"]).text("Mostra os requisitos mínimos para completar a missão").location("left")
     reward = Flag().name("Recompensa").char("r").values(["0", "1"]).text("Mostra a experiência obtida na tarefa").location("left")
     percent = Flag().name("Percentual").char("p").values(["0", "1"]).text("Mostra valores em porcentagem").location("left")
-    admin = Flag().name("Admin").char("A").text("Mostra todas as missões e grupos").location("left")
-    fortune = Flag().name("Conselho").char("C").values(["1", "0"]).text("Mostra mensagem aleatórias na saída").location("left")
-    success = Flag().name("Sucesso").char("S").values(["1", "0"]).text("Mostra os personagens no sucesso da execução").location("left")
+    admin = Flag().name("Admin").char("A").values(["0", "1"]).text("Mostra todas as missões e grupos").location("left")
+    fortune = Flag().name("Conselho").char("C").values(["0", "1"]).text("Mostra mensagem aleatórias na saída").location("left")
+    random = Flag().name("Sucesso").char("S").values(["1", "0"]).text("Mostra os personagens no sucesso da execução").location("left")
     config = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
-    skills = Flag().name("Inventário").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
+    inventory = Flag().name("Inventário").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
 
     focus     = Flag().name("Selected").values(["kB"]).text("Cor do item em foco").many()
     prog_done = Flag().name("ProgDone").values(["g"]).text("Progresso Done").many()
@@ -1676,9 +1723,9 @@ class FlagsMan:
         self.left: List[Flag] = []
         self.top: List[Flag] = []
 
-        for flag in Flags.__dict__.values():
+        for varname, flag in Flags.__dict__.items():
             if isinstance(flag, Flag):
-                self.flags[flag.get_name()] = flag
+                self.flags[varname] = flag
                 if flag.get_location() == "left":
                     self.left.append(flag)
                 elif flag.get_location() == "top":
@@ -1691,7 +1738,8 @@ class FlagsMan:
     def get_data(self) -> Dict[str, int]:
         data = {}
         for name, flag in self.flags.items():
-            data[name] = flag.get_index()
+            if len(flag.get_values()) > 1:
+                data[name] = flag.get_index()
         return data
 
 
@@ -2747,25 +2795,10 @@ class QuestParser:
         self.default_task_xp = 10
         self.filename = ""
 
-    @staticmethod
-    def get_md_link(title: str) -> str:
-        if title is None:
-            return ""
-        title = title.lower()
-        out = ""
-        for c in title:
-            if c == " " or c == "-":
-                out += "-"
-            elif c == "_":
-                out += "_"
-            elif c.isalnum():
-                out += c
-        return out
-
     def finish_quest(self) -> Quest:
 
         if self.quest.key == "":
-            self.quest.key = QuestParser.get_md_link(self.quest.title)
+            self.quest.key = get_md_link(self.quest.title)
 
         if len(self.quest.skills) == 0:
             self.quest.skills["xp"] = self.default_task_xp
@@ -2890,6 +2923,10 @@ class Cluster:
 
 
 
+def remove_accents(input_str):
+    nfkd_form = unicodedata.normalize('NFKD', input_str)
+    return u"".join([c for c in nfkd_form if not unicodedata.combining(c)])
+
 def load_html_tags(task: str) -> Optional[str]:
     pattern = r"<!--\s*(.*?)\s*-->"
     match = re.search(pattern, task)
@@ -2943,7 +2980,7 @@ class Game:
             return None
         
         keys = [tag[1:] for tag in tags if tag.startswith("@")]
-        key = titulo
+        key = remove_accents(get_md_link(titulo))
         try:
             color = [tag[2:] for tag in tags if tag.startswith("c:")][0]
         except IndexError as _e:
@@ -3238,14 +3275,14 @@ class Down:
         if not os.path.exists(path):
             with open(path, "w", encoding="utf-8") as f:
                 f.write(content.encode("utf-8").decode("utf-8"))
-            Down.fnprint("  " + path + " (New)")
+            Down.fnprint("  " + path + " (Novo)")
         else:
             if open(path).read() != content:
-                Down.fnprint(path + " (Updated)")
+                Down.fnprint(path + " (Atualizado)")
                 with open(path, "w") as f:
                     f.write(content)
             else:
-                Down.fnprint("  " + path + " (Unchanged)")
+                Down.fnprint("  " + path + " (Inalterado)")
 
     @staticmethod
     def __down_problem_def(destiny, cache_url) -> Tuple[str, str]:
@@ -3273,7 +3310,7 @@ class Down:
         if not os.path.exists(destiny):
             os.makedirs(destiny, exist_ok=True)
         else:
-            Down.fnprint("  Problem folder "+ destiny + " found, merging content.")
+            Down.fnprint("  Pasta do problema "+ destiny + " encontrada, juntando conteúdo.")
 
         return destiny
 
@@ -3283,13 +3320,14 @@ class Down:
         sp = SettingsParser()
         settings = sp.load_settings()
         rootdir = os.path.join(settings.geral.get_rootdir(), course)
-        rep = settings.get_repo(course)
+        rep_source = settings.get_rep_source(course)
+        rep_data = settings.get_rep_data(course)
 
-        file = rep.get_file()
+        file = rep_source.get_file()
         game = Game(file)
         item = game.get_task(activity)
         if not item.link.startswith("http"):
-            Down.fnprint("fail: link for activity is not a remote link")
+            Down.fnprint("falha: link para atividade não é um link remoto")
             return False
         cfg = RemoteCfg(item.link)
         cache_url = os.path.dirname(cfg.get_raw_url()) + "/.cache/"
@@ -3299,7 +3337,7 @@ class Down:
         try:
             [_readme_path, mapi_path] = Down.__down_problem_def(destiny, cache_url)
         except urllib.error.HTTPError:
-            Down.fnprint("  fail: activity not found in course url")
+            Down.fnprint("  falha: atividade não encontrada no curso")
             # verifi if destiny folder is empty and remove it
             if len(os.listdir(destiny)) == 0:
                 os.rmdir(destiny)
@@ -3309,7 +3347,7 @@ class Down:
             loaded_json = json.load(f)
         os.remove(mapi_path)
 
-        language_def = rep.get_lang()
+        language_def = rep_data.get_lang()
         if language_def == "":
             language_def = SettingsParser().load_settings().geral.get_lang_def()
         ask_ext = False
@@ -3336,7 +3374,7 @@ class Down:
             try:
                 draft_path = os.path.join(destiny, "draft." + language)
                 urllib.request.urlretrieve(cache_url + "draft." + language, draft_path)
-                Down.fnprint("  " + draft_path + " (Draft) Rename before modify.")
+                Down.fnprint("  " + draft_path + " (Rascunho) Renomeie antes de modificar")
 
             except urllib.error.HTTPError:  # draft not found
                 filename = "draft."
@@ -3347,10 +3385,10 @@ class Down:
                             f.write(Down.drafts[language])
                         else:
                             f.write("")
-                    Down.fnprint("  " + draft_path + " (Empty)")
+                    Down.fnprint("  " + draft_path + " (Vazio)")
 
         if ask_ext:
-            print("\nYou can choose default extension with command\n$ tko config -l <extension>")
+            print("\nVocê pode escolher a extensão padrão com o comando\n$ tko config -l <extension>")
 
 
 
@@ -3367,7 +3405,7 @@ class Entry:
 
 class TaskTree:
 
-    def __init__(self, local: GeralSettings, game: Game, rep: RepSettings, rep_alias: str):
+    def __init__(self, local: GeralSettings, game: Game, rep: RepData, rep_alias: str):
         self.local = local
         self.game = game
         self.rep = rep
@@ -3400,7 +3438,10 @@ class TaskTree:
                 self.game.tasks[key].set_grade(int(grade))
 
     def save_on_rep(self):
-        self.rep.set_expanded(self.expanded)
+        keys = [c.key for c in self.game.clusters]
+        keys.extend([key for key in self.game.quests.keys()])
+        expanded = [item for item in self.expanded if item in keys]
+        self.rep.set_expanded(expanded)
         self.rep.set_new_items(self.new_items)
         tasks = {}
         for t in self.game.tasks.values():
@@ -4506,18 +4547,16 @@ class Report:
         pass
 
     @staticmethod
-    def update_terminal_size() -> int:
+    def __get_terminal_size() -> int:
         term_width = shutil.get_terminal_size().columns
         if term_width % 2 == 0:
             term_width -= 1
-        Report.__term_width = term_width
         return term_width
 
     @staticmethod
     def get_terminal_size():
         if Report.__term_width is None:
-            return Report.update_terminal_size()
-
+            return Report.__get_terminal_size()
         return Report.__term_width
 
     @staticmethod
@@ -4551,6 +4590,7 @@ class Report:
         tw = term_width - 2
         filler = Token(sep.text * (int(tw / 2 - size / 2)), sep.fmt)
         return Sentence() + left_border + pad + filler + ftext + filler + right_border
+
 
 
 
@@ -4852,8 +4892,9 @@ class Runner:
         if show_compilling:
             Runner.clear_screen()
         
-        term_print(Report.centralize(Sentence() + " Rodando o código " + cmd + " ", "─"))
-        term_print(Report.centralize(Sentence() + " Se necessário, digite Control D para finalizar a entrada ", "─"))
+        term_print(Report.centralize(Sentence() + " " + cmd + " ", "─"))
+        if cmd.startswith("node"):
+            term_print(Report.centralize(Sentence() + " Use Control-D caso precise finalizar a entrada ", "─"))
 
         answer = subprocess.run(cmd, shell=True, text=True)
         if answer.returncode != 0 and answer.returncode != 1:
@@ -5852,16 +5893,16 @@ class Play:
 
     def __init__(
         self,
-        local: GeralSettings,
+        geral: GeralSettings,
         game: Game,
-        rep: RepSettings,
-        rep_alias: str,
-        fn_save,
+        rep_data: RepData,
+        rep_alias: str, 
+        fn_save
     ):
-        self.fn_save = fn_save
-        self.local = local
+        self.geral_save = fn_save
+        self.local = geral
         self.rep_alias = rep_alias
-        self.rep = rep
+        self.rep = rep_data
         self.exit = False
 
         if self.rep.get_lang() == "":
@@ -5869,7 +5910,7 @@ class Play:
         self.flagsman = FlagsMan(self.rep.get_flags())
         self.game: Game = game
         self.fman = FloatingManager()
-        self.tree = TaskTree(local, game, rep, rep_alias)
+        self.tree = TaskTree(geral, game, rep_data, rep_alias)
 
         if len(self.rep.get_tasks()) == 0:
             self.show_help()
@@ -5894,7 +5935,8 @@ class Play:
         self.tree.save_on_rep()
         self.rep.set_flags(self.flagsman.get_data())
 
-        self.fn_save()
+        self.geral_save()
+        self.rep.save_data_to_json()
 
     def set_rootdir(self, only_if_empty=True):
         if only_if_empty and self.local.get_rootdir() != "":
@@ -5903,7 +5945,7 @@ class Play:
         def chama(value):
             if value == "yes":
                 self.local.set_rootdir(os.path.abspath(os.getcwd()))
-                self.fn_save()
+                self.save_to_json()
                 self.fman.add_input(
                     Floating()
                     .put_text("")
@@ -5956,7 +5998,7 @@ class Play:
 
         def back(value):
             self.rep.set_lang(value)
-            self.fn_save()
+            self.save_to_json()
             self.fman.add_input(
                 Floating()
                 .put_text("")
@@ -6143,7 +6185,7 @@ class Play:
         run = Run([path], None, Param.Basic())
         run.set_lang(self.rep.get_lang())
         if test_mode:
-            if Flags.success.is_true():
+            if Flags.random.is_true():
                 run.set_curses(True, Success.RANDOM)
             else:
                 run.set_curses(True, Success.FIXED)
@@ -6304,10 +6346,10 @@ class Play:
     @staticmethod
     def disable_on_resize():
         _, cols = Fmt.get_size()
-        if cols < 50 and Flags.skills.is_true() and Flags.config.is_true():
-            Flags.skills.toggle()
-        elif cols < 30 and Flags.skills.is_true():
-            Flags.skills.toggle()
+        if cols < 50 and Flags.inventory.is_true() and Flags.config.is_true():
+            Flags.inventory.toggle()
+        elif cols < 30 and Flags.inventory.is_true():
+            Flags.inventory.toggle()
         elif cols < 35 and Flags.config.is_true():
             Flags.config.toggle()
 
@@ -6400,7 +6442,7 @@ class Play:
         mid_sy = main_sy - (top_y + top_dy + bottom_sy)
 
         skills_sx = 0
-        if Flags.skills.is_true():
+        if Flags.inventory.is_true():
             skills_sx = max(20, main_sx // 4)
             frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx)
             self.show_skills_bar(frame_skills)
@@ -6538,7 +6580,7 @@ class Play:
             add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
 
         add_str(Flags.config.get_char(), self.toggle_config)
-        add_str(Flags.skills.get_char(), self.FlagFunctor(self.fman, Flags.skills))
+        add_str(Flags.inventory.get_char(), self.FlagFunctor(self.fman, Flags.inventory))
 
         return calls
 
@@ -6623,7 +6665,7 @@ class MRep:
     def add(args):
         sp = SettingsParser()
         settings = sp.load_settings()
-        rep = RepSettings()
+        rep = RepData()
         if args.url:
             rep.set_url(args.url)
         elif args.file:
@@ -6644,14 +6686,14 @@ class MRep:
     @staticmethod
     def reset(_):
         sp = SettingsParser()
-        sp.settings = Settings()
+        sp.settings = Settings().init_default_reps()
         sp.save_settings()
 
     @staticmethod
     def graph(args):
         sp = SettingsParser()
         settings = sp.load_settings()
-        rep = settings.get_repo(args.alias)
+        rep = settings.get_rep_data(args.alias)
         file = rep.get_file()
         game = Game()
         game.parse_file(file)
@@ -6783,9 +6825,9 @@ class Main:
                     print(f"- {alias}")
                 while True:
                     print("Digite o nome do repositório desejado: ", end="")
-                    repo = input()
-                    if repo in settings.reps:
-                        args.repo = repo
+                    rep_source = input()
+                    if rep_source in settings.reps:
+                        args.repo = rep_source
                         break
                     print("Repositorio não encontrado")
         
@@ -6793,17 +6835,19 @@ class Main:
         settings.geral.set_last_rep(args.repo)
 
         while True:
-            repo = settings.get_repo(args.repo)
+            rep_source = settings.get_rep_source(args.repo)
+            rep_data = settings.get_rep_data(args.repo)
+
             local = settings.geral
             game = Game()
-            file = repo.get_file()
+            file = rep_source.get_file()
             game.parse_file(file)
 
             # passing a lambda function to the play class to save the settings
             ext = ""
             if args.graph:
                 ext = ".svg" if args.svg else ".png"
-            play = Play(local, game, repo, args.repo, lambda: sp.save_settings())
+            play = Play(geral=local, game=game, rep_data=rep_data, rep_alias=args.repo, fn_save=sp.save_settings)
             reload = play.play(ext)
             if not reload:
                 break
@@ -6990,9 +7034,12 @@ def main():
     except KeyboardInterrupt:
         print("\n\nKeyboard Interrupt")
         sys.exit(1)
-    except Exception as e:
-        print(e)
+    except Warning as w:
+        print(w)
         sys.exit(1)
+    # except Exception as e:
+    #     print(e)
+    #     sys.exit(1)
 
 
 if __name__ == '__main__':

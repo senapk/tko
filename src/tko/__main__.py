@@ -12,7 +12,7 @@ from .run.basic import DiffMode
 from .down import Down
 from .settings.settings_parser import SettingsParser
 from .settings.settings import Settings
-from .settings.rep_settings import RepSettings
+from .settings.rep_settings import RepData
 
 
 from .util.guide import tko_guide
@@ -41,7 +41,7 @@ class MRep:
     def add(args):
         sp = SettingsParser()
         settings = sp.load_settings()
-        rep = RepSettings()
+        rep = RepData()
         if args.url:
             rep.set_url(args.url)
         elif args.file:
@@ -62,14 +62,14 @@ class MRep:
     @staticmethod
     def reset(_):
         sp = SettingsParser()
-        sp.settings = Settings()
+        sp.settings = Settings().init_default_reps()
         sp.save_settings()
 
     @staticmethod
     def graph(args):
         sp = SettingsParser()
         settings = sp.load_settings()
-        rep = settings.get_repo(args.alias)
+        rep = settings.get_rep_data(args.alias)
         file = rep.get_file()
         game = Game()
         game.parse_file(file)
@@ -201,9 +201,9 @@ class Main:
                     print(f"- {alias}")
                 while True:
                     print("Digite o nome do repositório desejado: ", end="")
-                    repo = input()
-                    if repo in settings.reps:
-                        args.repo = repo
+                    rep_source = input()
+                    if rep_source in settings.reps:
+                        args.repo = rep_source
                         break
                     print("Repositorio não encontrado")
         
@@ -211,17 +211,19 @@ class Main:
         settings.geral.set_last_rep(args.repo)
 
         while True:
-            repo = settings.get_repo(args.repo)
+            rep_source = settings.get_rep_source(args.repo)
+            rep_data = settings.get_rep_data(args.repo)
+
             local = settings.geral
             game = Game()
-            file = repo.get_file()
+            file = rep_source.get_file()
             game.parse_file(file)
 
             # passing a lambda function to the play class to save the settings
             ext = ""
             if args.graph:
                 ext = ".svg" if args.svg else ".png"
-            play = Play(local, game, repo, args.repo, lambda: sp.save_settings())
+            play = Play(geral=local, game=game, rep_data=rep_data, rep_alias=args.repo, fn_save=sp.save_settings)
             reload = play.play(ext)
             if not reload:
                 break
@@ -408,9 +410,12 @@ def main():
     except KeyboardInterrupt:
         print("\n\nKeyboard Interrupt")
         sys.exit(1)
-    except Exception as e:
-        print(e)
+    except Warning as w:
+        print(w)
         sys.exit(1)
+    # except Exception as e:
+    #     print(e)
+    #     sys.exit(1)
 
 
 if __name__ == '__main__':

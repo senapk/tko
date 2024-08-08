@@ -11,18 +11,16 @@ class Report:
         pass
 
     @staticmethod
-    def update_terminal_size() -> int:
+    def __get_terminal_size() -> int:
         term_width = shutil.get_terminal_size().columns
         if term_width % 2 == 0:
             term_width -= 1
-        Report.__term_width = term_width
         return term_width
 
     @staticmethod
     def get_terminal_size():
         if Report.__term_width is None:
-            return Report.update_terminal_size()
-
+            return Report.__get_terminal_size()
         return Report.__term_width
 
     @staticmethod
@@ -56,3 +54,4 @@ class Report:
         tw = term_width - 2
         filler = Token(sep.text * (int(tw / 2 - size / 2)), sep.fmt)
         return Sentence() + left_border + pad + filler + ftext + filler + right_border
+

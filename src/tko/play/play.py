@@ -8,7 +8,7 @@ import random
 
 from ..run.basic import Success
 from typing import List, Any, Dict
-from ..settings.settings import RepSettings, GeralSettings
+from ..settings.settings import RepData, GeralSettings
 from ..down import Down
 from ..util.ftext import Sentence, Token,  RToken
 from .fmt import Fmt
@@ -32,16 +32,16 @@ class Play:
 
     def __init__(
         self,
-        local: GeralSettings,
+        geral: GeralSettings,
         game: Game,
-        rep: RepSettings,
-        rep_alias: str,
-        fn_save,
+        rep_data: RepData,
+        rep_alias: str, 
+        fn_save
     ):
-        self.fn_save = fn_save
-        self.local = local
+        self.geral_save = fn_save
+        self.local = geral
         self.rep_alias = rep_alias
-        self.rep = rep
+        self.rep = rep_data
         self.exit = False
 
         if self.rep.get_lang() == "":
@@ -49,7 +49,7 @@ class Play:
         self.flagsman = FlagsMan(self.rep.get_flags())
         self.game: Game = game
         self.fman = FloatingManager()
-        self.tree = TaskTree(local, game, rep, rep_alias)
+        self.tree = TaskTree(geral, game, rep_data, rep_alias)
 
         if len(self.rep.get_tasks()) == 0:
             self.show_help()
@@ -74,7 +74,8 @@ class Play:
         self.tree.save_on_rep()
         self.rep.set_flags(self.flagsman.get_data())
 
-        self.fn_save()
+        self.geral_save()
+        self.rep.save_data_to_json()
 
     def set_rootdir(self, only_if_empty=True):
         if only_if_empty and self.local.get_rootdir() != "":
@@ -83,7 +84,7 @@ class Play:
         def chama(value):
             if value == "yes":
                 self.local.set_rootdir(os.path.abspath(os.getcwd()))
-                self.fn_save()
+                self.save_to_json()
                 self.fman.add_input(
                     Floating()
                     .put_text("")
@@ -136,7 +137,7 @@ class Play:
 
         def back(value):
             self.rep.set_lang(value)
-            self.fn_save()
+            self.save_to_json()
             self.fman.add_input(
                 Floating()
                 .put_text("")
@@ -323,7 +324,7 @@ class Play:
         run = Run([path], None, Param.Basic())
         run.set_lang(self.rep.get_lang())
         if test_mode:
-            if Flags.success.is_true():
+            if Flags.random.is_true():
                 run.set_curses(True, Success.RANDOM)
             else:
                 run.set_curses(True, Success.FIXED)
@@ -484,10 +485,10 @@ class Play:
     @staticmethod
     def disable_on_resize():
         _, cols = Fmt.get_size()
-        if cols < 50 and Flags.skills.is_true() and Flags.config.is_true():
-            Flags.skills.toggle()
-        elif cols < 30 and Flags.skills.is_true():
-            Flags.skills.toggle()
+        if cols < 50 and Flags.inventory.is_true() and Flags.config.is_true():
+            Flags.inventory.toggle()
+        elif cols < 30 and Flags.inventory.is_true():
+            Flags.inventory.toggle()
         elif cols < 35 and Flags.config.is_true():
             Flags.config.toggle()
 
@@ -580,7 +581,7 @@ class Play:
         mid_sy = main_sy - (top_y + top_dy + bottom_sy)
 
         skills_sx = 0
-        if Flags.skills.is_true():
+        if Flags.inventory.is_true():
             skills_sx = max(20, main_sx // 4)
             frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx)
             self.show_skills_bar(frame_skills)
@@ -718,7 +719,7 @@ class Play:
             add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
 
         add_str(Flags.config.get_char(), self.toggle_config)
-        add_str(Flags.skills.get_char(), self.FlagFunctor(self.fman, Flags.skills))
+        add_str(Flags.inventory.get_char(), self.FlagFunctor(self.fman, Flags.inventory))
 
         return calls
 

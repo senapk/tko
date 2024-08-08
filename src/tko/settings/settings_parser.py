@@ -36,7 +36,7 @@ class SettingsParser:
         self.settings.save_to_json(self.settings_file)
 
     def create_new_settings_file(self) -> Settings:
-        self.settings = Settings()
+        self.settings = Settings().init_default_reps()
         if not os.path.isdir(self.get_settings_dir()):
             os.makedirs(self.get_settings_dir(), exist_ok=True)
         self.save_settings()
@@ -44,4 +44,3 @@ class SettingsParser:
 
     def get_settings_dir(self) -> str:
         return os.path.dirname(self.settings_file)
-

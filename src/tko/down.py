@@ -75,14 +75,14 @@ class Down:
         if not os.path.exists(path):
             with open(path, "w", encoding="utf-8") as f:
                 f.write(content.encode("utf-8").decode("utf-8"))
-            Down.fnprint("  " + path + " (New)")
+            Down.fnprint("  " + path + " (Novo)")
         else:
             if open(path).read() != content:
-                Down.fnprint(path + " (Updated)")
+                Down.fnprint(path + " (Atualizado)")
                 with open(path, "w") as f:
                     f.write(content)
             else:
-                Down.fnprint("  " + path + " (Unchanged)")
+                Down.fnprint("  " + path + " (Inalterado)")
 
     @staticmethod
     def __down_problem_def(destiny, cache_url) -> Tuple[str, str]:
@@ -110,7 +110,7 @@ class Down:
         if not os.path.exists(destiny):
             os.makedirs(destiny, exist_ok=True)
         else:
-            Down.fnprint("  Problem folder "+ destiny + " found, merging content.")
+            Down.fnprint("  Pasta do problema "+ destiny + " encontrada, juntando conteúdo.")
 
         return destiny
 
@@ -120,13 +120,14 @@ class Down:
         sp = SettingsParser()
         settings = sp.load_settings()
         rootdir = os.path.join(settings.geral.get_rootdir(), course)
-        rep = settings.get_repo(course)
+        rep_source = settings.get_rep_source(course)
+        rep_data = settings.get_rep_data(course)
 
-        file = rep.get_file()
+        file = rep_source.get_file()
         game = Game(file)
         item = game.get_task(activity)
         if not item.link.startswith("http"):
-            Down.fnprint("fail: link for activity is not a remote link")
+            Down.fnprint("falha: link para atividade não é um link remoto")
             return False
         cfg = RemoteCfg(item.link)
         cache_url = os.path.dirname(cfg.get_raw_url()) + "/.cache/"
@@ -136,7 +137,7 @@ class Down:
         try:
             [_readme_path, mapi_path] = Down.__down_problem_def(destiny, cache_url)
         except urllib.error.HTTPError:
-            Down.fnprint("  fail: activity not found in course url")
+            Down.fnprint("  falha: atividade não encontrada no curso")
             # verifi if destiny folder is empty and remove it
             if len(os.listdir(destiny)) == 0:
                 os.rmdir(destiny)
@@ -146,7 +147,7 @@ class Down:
             loaded_json = json.load(f)
         os.remove(mapi_path)
 
-        language_def = rep.get_lang()
+        language_def = rep_data.get_lang()
         if language_def == "":
             language_def = SettingsParser().load_settings().geral.get_lang_def()
         ask_ext = False
@@ -173,7 +174,7 @@ class Down:
             try:
                 draft_path = os.path.join(destiny, "draft." + language)
                 urllib.request.urlretrieve(cache_url + "draft." + language, draft_path)
-                Down.fnprint("  " + draft_path + " (Draft) Rename before modify.")
+                Down.fnprint("  " + draft_path + " (Rascunho) Renomeie antes de modificar")
 
             except urllib.error.HTTPError:  # draft not found
                 filename = "draft."
@@ -184,7 +185,7 @@ class Down:
                             f.write(Down.drafts[language])
                         else:
                             f.write("")
-                    Down.fnprint("  " + draft_path + " (Empty)")
+                    Down.fnprint("  " + draft_path + " (Vazio)")
 
         if ask_ext:
-            print("\nYou can choose default extension with command\n$ tko config -l <extension>")
+            print("\nVocê pode escolher a extensão padrão com o comando\n$ tko config -l <extension>")

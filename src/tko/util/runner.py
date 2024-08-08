@@ -44,8 +44,9 @@ class Runner:
         if show_compilling:
             Runner.clear_screen()
         
-        term_print(Report.centralize(Sentence() + " Rodando o código " + cmd + " ", "─"))
-        term_print(Report.centralize(Sentence() + " Se necessário, digite Control D para finalizar a entrada ", "─"))
+        term_print(Report.centralize(Sentence() + " " + cmd + " ", "─"))
+        if cmd.startswith("node"):
+            term_print(Report.centralize(Sentence() + " Use Control-D caso precise finalizar a entrada ", "─"))
 
         answer = subprocess.run(cmd, shell=True, text=True)
         if answer.returncode != 0 and answer.returncode != 1:

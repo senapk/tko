@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional, Tuple
 from .task import Task
 from ..util.ftext import Sentence
+from ..util.remote import get_md_link
 import re
 
 
@@ -140,25 +141,10 @@ class QuestParser:
         self.default_task_xp = 10
         self.filename = ""
 
-    @staticmethod
-    def get_md_link(title: str) -> str:
-        if title is None:
-            return ""
-        title = title.lower()
-        out = ""
-        for c in title:
-            if c == " " or c == "-":
-                out += "-"
-            elif c == "_":
-                out += "_"
-            elif c.isalnum():
-                out += c
-        return out
-
     def finish_quest(self) -> Quest:
 
         if self.quest.key == "":
-            self.quest.key = QuestParser.get_md_link(self.quest.title)
+            self.quest.key = get_md_link(self.quest.title)
 
         if len(self.quest.skills) == 0:
             self.quest.skills["xp"] = self.default_task_xp

@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.15.4
+  - add: each rep has his own json file inside rep folder
 - 0.15.3
   - fix: bug on play loading errors in wrong order
 - 0.15.2

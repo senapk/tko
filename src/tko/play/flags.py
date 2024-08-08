@@ -35,6 +35,9 @@ class Flag:
         self._location = value
         return self
 
+    def get_values(self):
+        return self._values
+
     def toggle(self):
         self._index = (self._index + 1) % len(self._values)
         return self
@@ -96,11 +99,11 @@ class Flags:
     minimum = Flag().name("Mínimo").char("m").values(["0", "1"]).text("Mostra os requisitos mínimos para completar a missão").location("left")
     reward = Flag().name("Recompensa").char("r").values(["0", "1"]).text("Mostra a experiência obtida na tarefa").location("left")
     percent = Flag().name("Percentual").char("p").values(["0", "1"]).text("Mostra valores em porcentagem").location("left")
-    admin = Flag().name("Admin").char("A").text("Mostra todas as missões e grupos").location("left")
-    fortune = Flag().name("Conselho").char("C").values(["1", "0"]).text("Mostra mensagem aleatórias na saída").location("left")
-    success = Flag().name("Sucesso").char("S").values(["1", "0"]).text("Mostra os personagens no sucesso da execução").location("left")
+    admin = Flag().name("Admin").char("A").values(["0", "1"]).text("Mostra todas as missões e grupos").location("left")
+    fortune = Flag().name("Conselho").char("C").values(["0", "1"]).text("Mostra mensagem aleatórias na saída").location("left")
+    random = Flag().name("Sucesso").char("S").values(["1", "0"]).text("Mostra os personagens no sucesso da execução").location("left")
     config = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
-    skills = Flag().name("Inventário").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
+    inventory = Flag().name("Inventário").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
 
     focus     = Flag().name("Selected").values(["kB"]).text("Cor do item em foco").many()
     prog_done = Flag().name("ProgDone").values(["g"]).text("Progresso Done").many()
@@ -120,9 +123,9 @@ class FlagsMan:
         self.left: List[Flag] = []
         self.top: List[Flag] = []
 
-        for flag in Flags.__dict__.values():
+        for varname, flag in Flags.__dict__.items():
             if isinstance(flag, Flag):
-                self.flags[flag.get_name()] = flag
+                self.flags[varname] = flag
                 if flag.get_location() == "left":
                     self.left.append(flag)
                 elif flag.get_location() == "top":
@@ -135,6 +138,7 @@ class FlagsMan:
     def get_data(self) -> Dict[str, int]:
         data = {}
         for name, flag in self.flags.items():
-            data[name] = flag.get_index()
+            if len(flag.get_values()) > 1:
+                data[name] = flag.get_index()
         return data
 

@@ -1,7 +1,7 @@
 from typing import List, Any, Dict
 
 from ..settings.geral_settings import GeralSettings
-from ..settings.rep_settings import RepSettings
+from ..settings.rep_settings import RepData
 
 from ..util.ftext import Sentence, Token
 from .flags import Flags
@@ -25,7 +25,7 @@ class Entry:
 
 class TaskTree:
 
-    def __init__(self, local: GeralSettings, game: Game, rep: RepSettings, rep_alias: str):
+    def __init__(self, local: GeralSettings, game: Game, rep: RepData, rep_alias: str):
         self.local = local
         self.game = game
         self.rep = rep
@@ -58,7 +58,10 @@ class TaskTree:
                 self.game.tasks[key].set_grade(int(grade))
 
     def save_on_rep(self):
-        self.rep.set_expanded(self.expanded)
+        keys = [c.key for c in self.game.clusters]
+        keys.extend([key for key in self.game.quests.keys()])
+        expanded = [item for item in self.expanded if item in keys]
+        self.rep.set_expanded(expanded)
         self.rep.set_new_items(self.new_items)
         tasks = {}
         for t in self.game.tasks.values():
