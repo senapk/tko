@@ -51,6 +51,7 @@ class TaskTree:
     def load_from_rep(self):
         self.new_items: List[str] = self.rep.get_new_items()
         self.expanded: List[str] = self.rep.get_expanded()
+        self.index_selected = self.rep.get_index()
 
         tasks = self.rep.get_tasks()
         for key, grade in tasks.items():
@@ -63,6 +64,7 @@ class TaskTree:
         expanded = [item for item in self.expanded if item in keys]
         self.rep.set_expanded(expanded)
         self.rep.set_new_items(self.new_items)
+        self.rep.set_index(self.index_selected)
         tasks = {}
         for t in self.game.tasks.values():
             if t.grade != 0:

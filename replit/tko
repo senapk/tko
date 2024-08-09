@@ -22,7 +22,7 @@ import math
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.15.5"
+__version__ = "0.15.6"
 
 
 class GeralSettings:
@@ -1107,14 +1107,19 @@ class RepData:
     __tasks = "tasks"
     __flags = "flags"
     __lang = "lang"
+    __index = "index"
 
     defaults = {
         __expanded: [],
         __tasks: {},
         __flags: {},
         __new_items: [],
-        __lang: ""
+        __lang: "",
+        __index: 0
     }
+
+    def get_index(self) -> int:
+        return self.__get(RepData.__index)
 
     def get_expanded(self) -> list:
         return self.__get(RepData.__expanded)
@@ -1145,6 +1150,9 @@ class RepData:
     
     def set_lang(self, value: str):
         return self.__set(RepData.__lang, value)
+    
+    def set_index(self, value: int):
+        return self.__set(RepData.__index, value)
 
     def __get(self, key: str) -> Any:
         if key not in self.defaults:
@@ -3477,6 +3485,7 @@ class TaskTree:
     def load_from_rep(self):
         self.new_items: List[str] = self.rep.get_new_items()
         self.expanded: List[str] = self.rep.get_expanded()
+        self.index_selected = self.rep.get_index()
 
         tasks = self.rep.get_tasks()
         for key, grade in tasks.items():
@@ -3489,6 +3498,7 @@ class TaskTree:
         expanded = [item for item in self.expanded if item in keys]
         self.rep.set_expanded(expanded)
         self.rep.set_new_items(self.new_items)
+        self.rep.set_index(self.index_selected)
         tasks = {}
         for t in self.game.tasks.values():
             if t.grade != 0:
@@ -4960,8 +4970,11 @@ class Runner:
         
         term_print(Report.centralize(Sentence() + " " + cmd + " ", "─"))
         if cmd.startswith("node"):
-            term_print(Report.centralize(Sentence() + " Use Control-D caso precise finalizar a entrada ", "─"))
-
+            if os.name == "nt":
+                term_print(Report.centralize(Sentence() + " Use Control-Z Enter caso precise finalizar a entrada ", "─"))
+            else:
+                term_print(Report.centralize(Sentence() + " Use Control-D caso precise finalizar a entrada ", "─"))
+            
         answer = subprocess.run(cmd, shell=True, text=True)
         if answer.returncode != 0 and answer.returncode != 1:
             print(Runner.decode_code(answer.returncode))
@@ -5714,6 +5727,10 @@ class CDiff:
                 self.param.is_up_down = not self.param.is_up_down
                 self.save_settings()
                 self.init = 0
+            elif key == ord("M"):
+                Flags.mono.toggle()
+            elif key == ord("n"):
+                Flags.nerd.toggle()
             elif key == ord('e'):
                 if self.wdir.is_autoload():
                     self.wdir.autoload()

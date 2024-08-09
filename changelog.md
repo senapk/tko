@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.15.6
+  - add: saving index on rep
+  - add: change message for control D in Windows
 - 0.15.5
   - add: adding rounded corners using nerdfonts and mono color
 - 0.15.4

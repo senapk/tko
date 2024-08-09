@@ -365,6 +365,10 @@ class CDiff:
                 self.param.is_up_down = not self.param.is_up_down
                 self.save_settings()
                 self.init = 0
+            elif key == ord("M"):
+                Flags.mono.toggle()
+            elif key == ord("n"):
+                Flags.nerd.toggle()
             elif key == ord('e'):
                 if self.wdir.is_autoload():
                     self.wdir.autoload()
