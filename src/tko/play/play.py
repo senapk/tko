@@ -688,6 +688,20 @@ class Play:
             return random.choice(quit_msgs)
         return "Até a próxima!"
 
+    def open_code(self):
+        obj = self.tree.get_selected()
+        if isinstance(obj, Task):
+            path = self.get_task_path()
+            cmd = "code"
+            if path and os.system(cmd + " --version") == 0:
+                os.system(f"{cmd} {path}")
+                folder = os.path.dirname(path)
+                files = os.listdir(folder)
+                files = [os.path.join(folder, f) for f in files if os.path.isfile(os.path.join(folder, f)) and f.startswith("draft")]
+                for f in files:
+                    os.system(f"{cmd} {f}")
+
+
     def make_callback(self) -> Dict[int, Any]:
         def set_exit():
             self.exit = True
@@ -735,6 +749,7 @@ class Play:
         add_str(self.Key.down_task, self.down_task)
         add_str(self.Key.run_task, lambda: self.test_task(False))
         add_str(self.Key.test_task, lambda: self.test_task(True))
+        add_str("o", self.open_code)
 
         for value in range(10):
             add_str(str(value), self.GradeFunctor(int(value), self.tree.set_grade))
