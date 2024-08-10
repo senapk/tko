@@ -3,7 +3,6 @@
 
 from datetime import date
 import os
-import sys
 
 today = date.today()
 rep_name = os.environ["REPL_SLUG"]
@@ -21,4 +20,4 @@ if last_update != today.strftime("%Y-%m-%d"):
     with open(file, "w") as f:
         f.write(today.strftime("%Y-%m-%d"))
     print("Checking for updates")
-    os.system("bash update.sh > /dev/null 2>&1")
+    os.system("update.sh")

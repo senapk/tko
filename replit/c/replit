@@ -1,4 +1,4 @@
-run = ".bin/tko -c .bin/tko.cfg play"
+run = "cat .bin/msg.txt"
 
 hidden = ["main", "main-debug", "**/*.o", "**/*.d", ".*", "Makefile"]
 

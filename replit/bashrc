@@ -9,9 +9,18 @@ python /home/runner/${REPL_SLUG}/.bin/check.py
 # adicionando .bin no path
 export PATH="/home/runner/${REPL_SLUG}/.bin:${PATH}"
 
-echo "# Setup carregado corretamente"
-echo "Para atualizar o tko digite: update.sh"
-echo "Para ver as questões digite: tko play [fup|ed|poo]"
+# verifica se o tko está instalado
+
+if ! command -v tko &> /dev/null
+then
+    echo "TKO ainda não terminou a configuração"
+    echo "Digite Control D para reiniciar o shell"
+else
+    echo "# Setup carregado corretamente"
+    echo "Para atualizar o tko digite: update.sh"
+    echo "Para ver as questões digite: tko play [fup|ed|poo]"
+fi
+
 
 ################    ALIAS    ########################
 
