@@ -35,5 +35,5 @@ echo "py" > ${TARGET}
 
 echo ""
 echo "Complete a instalação apertando Control D para reiniciar o sistema"
-echo "DEPOIS, você pode iniciar o play apertando o botão verde do Replit"
+
 echo ""

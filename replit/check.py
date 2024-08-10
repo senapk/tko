@@ -20,4 +20,4 @@ if last_update != today.strftime("%Y-%m-%d"):
     with open(file, "w") as f:
         f.write(today.strftime("%Y-%m-%d"))
     print("Checking for updates")
-    os.system("update.sh")
+    os.system(f"/home/runner/{rep_name}/.bin/update.sh")

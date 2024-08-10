@@ -58,7 +58,7 @@ class Play:
         self.first_loop = True
         self.graph_ext = ""
 
-        self.wrap_size = 80
+        self.wrap_size = 100
 
         self.help_basic: List[Token] = [
             RToken("C", f"Sair[{self.Key.quit}]"),
@@ -387,8 +387,9 @@ class Play:
 
     def show_main_bar(self, frame: Frame):
         dy, dx = frame.get_inner()
-        
-        alias = Sentence().addf("r", Style.sharpL()).addf("R", self.rep_alias.upper()).addf("r", Style.sharpR())
+        alias_color = "R"
+        alias = Sentence().addf(alias_color.lower(), Style.sharpL()).addf(alias_color, self.rep_alias.upper()).addf(alias_color.lower(), Style.sharpR())
+        alias.add(" ").addf("g", Style.sharpL()).addf("G", self.rep.get_lang().upper()).addf("g", Style.sharpR())
         y = frame.get_y()
         # Fmt.write(y + 1, dx // 2, alias)
         link = Sentence().add(self.build_bar_links())
@@ -444,7 +445,7 @@ class Play:
 
     def show_config_bar(self, frame: Frame):
         frame.set_header(Sentence().add("{").addf("/", "Config").add("}"), "^")
-        frame.set_footer(Sentence().add(" ").add(self.rep.get_lang().upper()).add(" "), "^")
+        # frame.set_footer(Sentence().add(" ").add(self.rep.get_lang().upper()).add(" "), "^")
         frame.draw()
 
         pad = 11
@@ -460,20 +461,13 @@ class Play:
         frame.print(0, Sentence())
 
     def show_bottom_bar(self, frame: Frame):
-        text, percent = self.build_xp_bar()
-        init = Sentence().addf("w", Style.roundL()).addf("W", text).addf("w", Style.roundR())
-        if Flags.xpbar.is_true():
-            text = text.center(28)
-            done = Style.main_done()
-            todo = Style.main_todo()
-            init = Style.build_bar(text, percent, len(text), done, todo)
-            
 
-        elemsfill = [init] + Play.build_list_sentence(self.help_extra, fill=True)
+        # init = Sentence().addf("w", Style.roundL()).addf("W", text).addf("w", Style.roundR())
+        
+        elemsfill = Play.build_list_sentence(self.help_extra, fill=True)
         wrap = Fmt.get_size()[1] < self.wrap_size
         half = len(elemsfill) // 2
   
-        _, percent = self.build_xp_bar()
         if not wrap:
             line_0 = Sentence().add(" ")
             for s in elemsfill:
@@ -494,20 +488,32 @@ class Play:
         frame.draw()
 
     def show_top_bar(self, frame: Frame):
-        help = Sentence().add(" ")
+        help = Sentence()
         for s in Play.build_list_sentence(self.help_basic):
             help.add(s).add(" ")
 
-        flags = Sentence().add(" ")
+        flags = Sentence()
         for f in self.flagsman.top:
             flags.add(Style.get_flag_sentence(f)).add(" ")
+        xpbar = Sentence("")
+        if Flags.xpbar.is_true():
+            text, percent = self.build_xp_bar()
+            text = text.center(36)
+            done = Style.main_done()
+            todo = Style.main_todo()
+            xpbar = Style.build_bar(text, percent, len(text), done, todo).add(" ")
 
-        lines, cols = Fmt.get_size()
+        _, cols = Fmt.get_size()
         if cols > self.wrap_size:
-            frame.write(0, 0, help.add(flags).center(frame.get_dx()))
+            frame.write(0, 0, help.add(xpbar).add(flags).center(frame.get_dx()))
         else:
-            frame.write(0, 0, help.center(frame.get_dx()))
-            frame.write(1, 0, flags.center(frame.get_dx()))
+            y = 0
+            if Flags.xpbar.is_true():
+                frame.write(y, 0, xpbar.add("  ").center(frame.get_dx()))
+                y += 1
+            frame.write(y, 0, help.add("  ").center(frame.get_dx()))
+            y += 1
+            frame.write(y, 0, flags.add("  ").center(frame.get_dx()))
 
         frame.set_border_none()
         frame.draw()
@@ -577,7 +583,7 @@ class Play:
             percent = float(xp.get_xp_level_current()) / float(xp.get_xp_level_needed())
             if Flags.percent.is_true():
                 xpobt = int(100 * xp.get_xp_level_current() / xp.get_xp_level_needed())
-                text = "L:{} XP:{}%".format(level, xpobt)
+                text = "Level:{} XP:{}%".format(level, xpobt)
             else:
                 xpobt1 = xp.get_xp_level_current()
                 xpobt2 = xp.get_xp_level_needed()
@@ -600,6 +606,8 @@ class Play:
         top_dy = 1  #quantas linhas o topo usa
         if cols <= self.wrap_size:
             top_dy += 1
+            if Flags.xpbar.is_true():
+                top_dy += 1
         bottom_dy = 1 # quantas linhas o fundo usa
         if cols <= self.wrap_size:
             bottom_dy += 1

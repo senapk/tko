@@ -111,14 +111,16 @@ class Style:
         char = flag.get_char()
         text = flag.get_name()
         color = "G" if flag.is_true() else "Y"
+        textc = ""
         extra = Sentence()
         if Flags.mono.is_true():
-            color = "W"
+            color = "W" if flag.is_true() else "K"
+            textc = "k" if flag.is_true() else "w"
         if pad > 0:
             extra.addf(color, (pad - len(text)) * " ")
-        mid = Sentence().addf(color, text).add(extra).addf(color, f"[{char}]")
-        if flag.is_true():
-            middle = Sentence().addf(color.lower(), Style.roundL()).add(mid).addf(color.lower(), Style.roundR())
-        else:
-            middle = Sentence().addf(color.lower(), Style.sharpL()).add(mid).addf(color.lower(), Style.sharpR())
+        mid = Sentence().addf(color + textc, text).add(extra).addf(color, f"[{char}]")
+        # if flag.is_true():
+        #     middle = Sentence().addf(color.lower(), Style.roundL()).add(mid).addf(color.lower(), Style.roundR())
+        # else:
+        middle = Sentence().addf(color.lower(), Style.sharpL()).add(mid).addf(color.lower(), Style.sharpR())
         return middle
