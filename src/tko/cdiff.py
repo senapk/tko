@@ -402,8 +402,9 @@ class CDiff:
 
     def run(self):
         while True:
-            fn = curses.wrapper(self.main)
-            if fn == None:
+            free_run_fn = curses.wrapper(self.main)
+            if free_run_fn == None:
                 break
             else:
-                fn()
+                while(free_run_fn()):
+                    pass

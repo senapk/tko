@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.16.0
+  - add: select main file in play
+  - add: loop in exec mode
 - 0.15.7
   - add: auto update on replit
   - add: xpbar moved to top

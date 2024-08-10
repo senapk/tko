@@ -22,7 +22,7 @@ import math
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.15.7"
+__version__ = "0.16.0"
 
 
 class GeralSettings:
@@ -5016,7 +5016,7 @@ class Runner:
             os.system('clear')
 
     @staticmethod
-    def free_run(compiling_fn, show_compilling:bool=True, to_clear: bool=True, wait_input:bool=True) -> None:
+    def free_run(compiling_fn, show_compilling:bool=True, to_clear: bool=True, wait_input:bool=True) -> bool:
         if to_clear:
             Runner.clear_screen()
         if show_compilling:
@@ -5038,8 +5038,12 @@ class Runner:
         if answer.returncode != 0 and answer.returncode != 1:
             print(Runner.decode_code(answer.returncode))
         if wait_input:
-            term_print(Report.centralize(Sentence() + " Digite enter para continuar ", "─"))
-            input()
+            term_print(Report.centralize("", "─"))
+            term_print(Sentence().addf("y", "Pressione (Enter) para executar novamente ou (s Enter) para sair: "), end="")
+            valor = input()
+            if valor != "s":
+                return True
+        return False
 
     @staticmethod
     def decode_code(return_code: int) -> str:
@@ -5836,11 +5840,12 @@ class CDiff:
 
     def run(self):
         while True:
-            fn = curses.wrapper(self.main)
-            if fn == None:
+            free_run_fn = curses.wrapper(self.main)
+            if free_run_fn == None:
                 break
             else:
-                fn()
+                while(free_run_fn()):
+                    pass
 
 
 

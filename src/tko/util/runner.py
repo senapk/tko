@@ -33,7 +33,7 @@ class Runner:
             os.system('clear')
 
     @staticmethod
-    def free_run(compiling_fn, show_compilling:bool=True, to_clear: bool=True, wait_input:bool=True) -> None:
+    def free_run(compiling_fn, show_compilling:bool=True, to_clear: bool=True, wait_input:bool=True) -> bool:
         if to_clear:
             Runner.clear_screen()
         if show_compilling:
@@ -55,8 +55,12 @@ class Runner:
         if answer.returncode != 0 and answer.returncode != 1:
             print(Runner.decode_code(answer.returncode))
         if wait_input:
-            term_print(Report.centralize(Sentence() + " Digite enter para continuar ", "─"))
-            input()
+            term_print(Report.centralize("", "─"))
+            term_print(Sentence().addf("y", "Pressione (Enter) para executar novamente ou (s Enter) para sair: "), end="")
+            valor = input()
+            if valor != "s":
+                return True
+        return False
 
     @staticmethod
     def decode_code(return_code: int) -> str:
