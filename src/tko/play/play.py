@@ -15,6 +15,7 @@ from .fmt import Fmt
 from .frame import Frame
 from .style import Style
 
+from ..util.runner import Runner
 from .floating import Floating
 from .floating_manager import FloatingManager
 from .flags import Flag, Flags, FlagsMan
@@ -31,6 +32,30 @@ import curses
 
 class Play:
 
+    class Key:
+        left = "a"
+        right = "d"
+        down = "s"
+        up = "w"
+        down_task = "b"
+        run_task = "e"
+        test_task = "t"
+        ajuda = "h"
+        expand = ">"
+        collapse = "<"
+        set_root = "D"
+        set_lang = "L"
+        open_link = "g"
+        quit = "q"
+        reset = "U"
+        mass_toggle = "B"
+        toggle_space = " "
+        toggle_enter = "\n"
+        open_draft = "r"
+        open_readme = "l"
+        cores = "C"
+        bordas = "B"
+
     def __init__(
         self,
         geral: GeralSettings,
@@ -40,14 +65,15 @@ class Play:
         fn_save
     ):
         self.geral_save = fn_save
-        self.local = geral
+        self.geral = geral
         self.rep_alias = rep_alias
         self.rep = rep_data
         self.exit = False
 
         if self.rep.get_lang() == "":
-            self.rep.set_lang(self.local.get_lang_def())
+            self.rep.set_lang(self.geral.get_lang_def())
         self.flagsman = FlagsMan(self.rep.get_flags())
+        
         self.game: Game = game
         self.fman = FloatingManager()
         self.tree = TaskTree(geral, game, rep_data, rep_alias)
@@ -67,29 +93,29 @@ class Play:
         ]
 
         self.help_extra: List[Token] = [
+            RToken("C", f"Github[{self.Key.open_link}]"),
             RToken("C", f"Baixar[{self.Key.down_task}]"),
-            RToken("C", f"Executar[{self.Key.run_task}]"),
-            RToken("C", f"Testar[{self.Key.test_task}]"),
-            RToken("M", f"Github[{self.Key.open_link}]"),
+            RToken("Y", f"Executar[{self.Key.run_task}]"),
+            RToken("Y", f"Testar[{self.Key.test_task}]"),
+            RToken("G", f"Rascunho[{self.Key.open_draft}]"),
+            RToken("G", f"Leitura [{self.Key.open_readme}]"),
             RToken("M", "Marcar[enter]"),
-            # RToken("C", f"Contrair[{self.Key.collapse}{self.Key.expand}]"),
             RToken("M", "Graduar[0-9]"),
         ]
 
     def save_to_json(self):
         self.tree.save_on_rep()
         self.rep.set_flags(self.flagsman.get_data())
-
         self.geral_save()
         self.rep.save_data_to_json()
 
     def set_rootdir(self, only_if_empty=True):
-        if only_if_empty and self.local.get_rootdir() != "":
+        if only_if_empty and self.geral.get_rootdir() != "":
             return
 
         def chama(value):
             if value == "yes":
-                self.local.set_rootdir(os.path.abspath(os.getcwd()))
+                self.geral.set_rootdir(os.path.abspath(os.getcwd()))
                 self.save_to_json()
                 self.fman.add_input(
                     Floating()
@@ -102,7 +128,7 @@ class Play:
                     .put_text("o diretório raiz navegando para o")
                     .put_text("diretório desejado e executando o comando")
                     .put_text("")
-                    .put_text("  tko config --root")
+                    .put_text("  tko config --root .")
                     .put_text("")
                     .warning()
                 )
@@ -116,7 +142,7 @@ class Play:
                     .put_text("o diretório raiz navegando para o")
                     .put_text("diretório desejado e executando o comando")
                     .put_text("")
-                    .put_text("tko config --root")
+                    .put_text("tko config --root .")
                     .put_text("")
                     .warning()
                 )
@@ -165,7 +191,7 @@ class Play:
         )
 
     def check_root_and_lang(self):
-        if self.local.get_rootdir() == "":
+        if self.geral.get_rootdir() == "":
             # self.set_rootdir()
             self.fman.add_input(
                 Floating()
@@ -247,7 +273,7 @@ class Play:
             Fmt.write(lines - 1, 0, text)
 
     def down_task(self):
-        rootdir = self.local.get_rootdir()
+        rootdir = self.geral.get_rootdir()
         if rootdir == "":
             self.check_root_and_lang()
             return
@@ -292,7 +318,7 @@ class Play:
                 )
     
     def test_task(self, test_mode: bool = False):
-        rootdir = self.local.get_rootdir()
+        rootdir = self.geral.get_rootdir()
         
         obj = self.tree.items[self.tree.index_selected].obj
 
@@ -354,13 +380,12 @@ class Play:
             return
         return run.execute
 
-    @staticmethod
-    def build_list_sentence(items: List[Token], fill=True) -> List[Sentence]:
+    def build_list_sentence(self, items: List[Token], fill=True) -> List[Sentence]:
         out: List[Sentence] = []
         try:
             for x in items:
                 help = Sentence()
-                if Flags.mono.is_true():
+                if not self.geral.is_colored():
                     color = "W"
                 else:
                     color = x.fmt
@@ -422,7 +447,7 @@ class Play:
         todo = Style.main_todo() + "/"
         total_bar = Style.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Sentence().add("{").addf("/", "Skills").add("}"), "^")
-        frame_xp.set_footer(Sentence().add(" ").add(self.local.get_rootdir()).add(" "), "^")
+        frame_xp.set_footer(Sentence().add(" ").add(self.geral.get_rootdir()).add(" "), "^")
         frame_xp.draw()
 
         total, obt = self.game.get_skills_resume(self.tree.available_quests)
@@ -449,13 +474,22 @@ class Play:
         frame.draw()
 
         pad = 11
-        for flag in self.flagsman.left:
+        for flag in self.flagsman.others:
             if flag.is_bool():
                 frame.print(0, Style.get_flag_sentence(flag, pad))
                 frame.print(0, Sentence())
 
-        color = "W" if Flags.mono.is_true() else "C"
-        frame.print(0, Sentence().addf(color.lower(), Style.roundL()).addf(color, "Pasta Raiz [P]").addf(color.lower(), Style.roundR()))
+        color = "W" if not self.geral.is_colored() else "C"
+
+        colored = Flag().name("Colorido").char("C").values(["1" if self.geral.is_colored() else "0"]).text("Ativa ou desativa as cores").bool()
+        frame.print(0, Style.get_flag_sentence(colored, pad))
+        frame.print(0, Sentence())
+
+        bordas = Flag().name("Bordas").char("B").values(["1" if self.geral.is_nerdfonts() else "0"]).text("Ativa ou desativa as bordas").bool()
+        frame.print(0, Style.get_flag_sentence(bordas, pad))
+        frame.print(0, Sentence())
+        
+        frame.print(0, Sentence().addf(color.lower(), Style.roundL()).addf(color, "DirDestino [D]").addf(color.lower(), Style.roundR()))
         frame.print(0, Sentence())
         frame.print(0, Sentence().addf(color.lower(), Style.roundL()).addf(color, "Linguagem  [L]").addf(color.lower(), Style.roundR()))
         frame.print(0, Sentence())
@@ -464,7 +498,7 @@ class Play:
 
         # init = Sentence().addf("w", Style.roundL()).addf("W", text).addf("w", Style.roundR())
         
-        elemsfill = Play.build_list_sentence(self.help_extra, fill=True)
+        elemsfill = self.build_list_sentence(self.help_extra, fill=True)
         wrap = Fmt.get_size()[1] < self.wrap_size
         half = len(elemsfill) // 2
   
@@ -489,7 +523,7 @@ class Play:
 
     def show_top_bar(self, frame: Frame):
         help = Sentence()
-        for s in Play.build_list_sentence(self.help_basic):
+        for s in self.build_list_sentence(self.help_basic):
             help.add(s).add(" ")
 
         flags = Sentence()
@@ -564,9 +598,9 @@ class Play:
     def get_task_path(self) -> str:
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
-            rootdir = self.local.get_rootdir()
+            rootdir = self.geral.get_rootdir()
             if rootdir != "":
-                path = os.path.join(self.local.get_rootdir(), self.rep_alias, obj.key, "Readme.md")
+                path = os.path.join(self.geral.get_rootdir(), self.rep_alias, obj.key, "Readme.md")
                 if os.path.isfile(path):
                     return path
         return ""
@@ -638,26 +672,6 @@ class Play:
         frame_main = Frame(mid_y, flags_sx).set_size(mid_sy, task_sx)
         self.show_main_bar(frame_main)
 
-    class Key:
-        left = "a"
-        right = "d"
-        down = "s"
-        up = "w"
-        down_task = "b"
-        run_task = "e"
-        test_task = "t"
-        ajuda = "h"
-        expand = ">"
-        collapse = "<"
-        set_root = "P"
-        set_lang = "L"
-        open_link = "g"
-        quit = "q"
-        reset = "U"
-        mass_toggle = "B"
-        toggle_space = " "
-        toggle_enter = "\n"
-
     class FlagFunctor:
         def __init__(self, fman: FloatingManager, flag: Flag):
             self.fman = fman
@@ -665,7 +679,7 @@ class Play:
 
         def __call__(self):
             self.flag.toggle()
-            if self.flag.get_location() == "left" and self.flag.is_bool():
+            if (self.flag.get_location() == "left" or self.flag.get_location() == "geral") and self.flag.is_bool():
                 f = Floating("v").warning()
                 f.put_text("")
                 f.put_text(self.flag.get_description())
@@ -689,26 +703,47 @@ class Play:
             Flags.config.toggle()
         else:
             Flags.config.toggle()
-            self.show_help_config()
+            # self.show_help_config()
 
     def select_quit_msg(self):
         if Flags.fortune.is_true():
             return random.choice(quit_msgs)
         return "Até a próxima!"
 
-    def open_code(self):
+    def open_code(self, draft: bool, readme: bool):
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
             path = self.get_task_path()
             cmd = "code"
-            if path and os.system(cmd + " --version") == 0:
-                os.system(f"{cmd} {path}")
+            code, _, _ = Runner().subprocess_run("whereis {}".format(cmd))
+            if code != 0:
+                self.fman.add_input(
+                    Floating().error().put_text("Comando {} não encontrado.".format(code))
+                )
+                return
+            if code == 0:
+                if readme:
+                    if not os.path.isfile(path):
+                        self.fman.add_input(
+                            Floating().error().put_text("Não achei nada baixado para você ler.")
+                        )
+                        return
+                    os.system(f"{cmd} {path}")
                 folder = os.path.dirname(path)
                 files = os.listdir(folder)
-                files = [os.path.join(folder, f) for f in files if os.path.isfile(os.path.join(folder, f)) and f.startswith("draft")]
-                for f in files:
-                    os.system(f"{cmd} {f}")
-
+                if draft:
+                    drafts = []
+                    for f in files:
+                        if not f.endswith(self.rep.get_lang()):
+                            continue
+                        drafts.append(os.path.join(folder, f))
+                    if len(drafts) == 0:
+                        self.fman.add_input(
+                            Floating().error().put_text("Não achei nenhum arquivo de rascunho.")
+                        )
+                        return
+                    for f in drafts:
+                        Runner.subprocess_run(f"{cmd} {f}")
 
     def make_callback(self) -> Dict[int, Any]:
         def set_exit():
@@ -757,12 +792,15 @@ class Play:
         add_str(self.Key.down_task, self.down_task)
         add_str(self.Key.run_task, lambda: self.test_task(False))
         add_str(self.Key.test_task, lambda: self.test_task(True))
-        add_str("o", self.open_code)
+        add_str(self.Key.open_draft, lambda: self.open_code(draft = True, readme = False))
+        add_str(self.Key.open_readme, lambda: self.open_code(draft = False, readme = True))
+        add_str(self.Key.cores, self.geral.toggle_color)
+        add_str(self.Key.bordas, self.geral.toggle_nerdfonts)
 
         for value in range(10):
             add_str(str(value), self.GradeFunctor(int(value), self.tree.set_grade))
 
-        for flag in self.flagsman.left:
+        for flag in self.flagsman.others:
             add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
 
         add_str(Flags.config.get_char(), self.toggle_config)

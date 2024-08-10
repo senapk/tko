@@ -42,8 +42,10 @@ class CDiff:
         self.finished = False
         self.resumes: List[str] = []
 
+
         self.sp = SettingsParser()
         self.settings = self.sp.load_settings()
+        self.colors = self.settings.geral.is_colored()
         self.first_loop = True
         self.fman = FloatingManager()
         self.first_run = False
@@ -54,6 +56,7 @@ class CDiff:
     def save_settings(self):
         self.settings.geral.set_is_diff_down(self.param.is_up_down)
         self.sp.save_settings()
+        
 
     def set_exit(self):
         self.exit = True
@@ -92,11 +95,11 @@ class CDiff:
             out = self.random_get(images, "static")
         else:
             out = self.random_get(success, "static")
-        self.print_centered_image(out, "" if Flags.mono.is_true() else "g")
+        self.print_centered_image(out, "" if not self.colors else "g")
         
     def show_compilling(self):
         out = self.random_get(compilling, "random")
-        self.print_centered_image(out, "" if Flags.mono.is_true() else "y")
+        self.print_centered_image(out, "" if not self.colors else "y")
 
     def draw_scrollbar(self):
         y_init = 3
@@ -178,10 +181,10 @@ class CDiff:
             else:
                 self.results_done.append((Token(symbol.text, color), index))
 
-        activity_color = "W" if Flags.mono.is_true() else "C"
-        solver_color = "W" if Flags.mono.is_true() else "G"
-        sources_color = "W" if Flags.mono.is_true() else "Y"
-        running_color = "W" if Flags.mono.is_true() else "R"
+        activity_color = "W" if not self.colors else "C"
+        solver_color = "W" if not self.colors else "G"
+        sources_color = "W" if not self.colors else "Y"
+        running_color = "W" if not self.colors else "R"
 
         _, cols = Fmt.get_size()
         frame = Frame(0, 0).set_size(3, cols)
@@ -252,7 +255,7 @@ class CDiff:
         ]
         cmds = Sentence()
         for t in tokens:
-            color = "W" if Flags.mono.is_true() else t.fmt
+            color = "W" if not self.colors else t.fmt
             cmds.addf(color.lower(), Style.roundL()).addf(color, t.text).addf(color.lower(), Style.roundR()).add(" ")
         # cmds = (Sentence()
         # .add(" ")
@@ -327,10 +330,11 @@ class CDiff:
                 self.first_loop = False
                 self.load_autoload_warning()
             Fmt.erase()
-            if len(self.results_done) + len(self.results_fail) == 0:
+            if self.wdir.get_solver().get_executable() == "":
                 self.show_compilling()
                 Fmt.refresh()
                 Fmt.erase()
+                self.wdir.get_solver().prepare_exec()
             self.draw_top_line()
             unit = self.get_focused_unit()
             self.draw_diff(unit)
@@ -365,10 +369,6 @@ class CDiff:
                 self.param.is_up_down = not self.param.is_up_down
                 self.save_settings()
                 self.init = 0
-            elif key == ord("M"):
-                Flags.mono.toggle()
-            elif key == ord("n"):
-                Flags.nerd.toggle()
             elif key == ord('e'):
                 if self.wdir.is_autoload():
                     self.wdir.autoload()

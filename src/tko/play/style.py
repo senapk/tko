@@ -1,61 +1,71 @@
-from .flags import Flags, Flag
+from .flags import Flag
 from ..util.sentence import Sentence, Token
-
+from ..settings.settings_parser import SettingsParser
+from ..settings.geral_settings import GeralSettings
 class Style:
+    # geral: GeralSettings = SettingsParser().load_settings().geral
+    @staticmethod
+    def has_borders():
+        return SettingsParser().load_settings().geral.is_nerdfonts()
+    
+    @staticmethod
+    def has_colors():
+        return SettingsParser().load_settings().geral.is_colored()
+
     @staticmethod
     def roundL():
-        return "" if Flags.nerd.is_true() else "█"
+        return "" if Style.has_borders() else "█"
 
     @staticmethod
     def roundR():
-        return "" if Flags.nerd.is_true() else "█"
+        return "" if Style.has_borders() else "█"
 
     @staticmethod
     def sharpL():
-        return "" if Flags.nerd.is_true() else "▒"
+        return "" if Style.has_borders() else "▒"
 
     @staticmethod
     def sharpR():
-        return "" if Flags.nerd.is_true() else "▒"
+        return "" if Style.has_borders() else "▒"
     
     @staticmethod
     def midL():
-        return "" if Flags.nerd.is_true() else "█"
+        return "" if Style.has_borders() else "█"
     
     @staticmethod
     def midR():
-        return "" if Flags.nerd.is_true() else "█"
+        return "" if Style.has_borders() else "█"
  
     @staticmethod
     def focus():
-        return "W" if Flags.mono.is_true() else "B"
+        return "W" if not Style.has_colors() else "B"
     @staticmethod
     def prog_done():
-        return "g" if Flags.mono.is_true() else "g"
+        return "g" if not Style.has_colors() else "g"
     @staticmethod
     def prog_todo():
-        return "" if Flags.mono.is_true() else "y"
+        return "" if not Style.has_colors() else "y"
     @staticmethod
     def flag_on():
-        return "W" if Flags.mono.is_true() else "G"
+        return "W" if not Style.has_colors() else "G"
     @staticmethod
     def flag_off():
-        return "W" if Flags.mono.is_true() else "Y"
+        return "W" if not Style.has_colors() else "Y"
     # @staticmethod
     # def cmds():
     #     return "W" if Flags.mono.is_true() else "B"
     @staticmethod
     def skill_done():
-        return "kW" if Flags.mono.is_true() else "C"
+        return "kW" if not Style.has_colors() else "C"
     @staticmethod
     def skill_todo():
-        return "wK" if Flags.mono.is_true() else "M"
+        return "wK" if not Style.has_colors() else "M"
     @staticmethod
     def main_done():
-        return "kW" if Flags.mono.is_true() else "G"
+        return "kW" if not Style.has_colors() else "G"
     @staticmethod
     def main_todo():
-        return "wK" if Flags.mono.is_true() else "R"
+        return "wK" if not Style.has_colors() else "R"
     
     @staticmethod
     def skills():
@@ -113,7 +123,7 @@ class Style:
         color = "G" if flag.is_true() else "Y"
         textc = ""
         extra = Sentence()
-        if Flags.mono.is_true():
+        if not Style.has_colors():
             color = "W" if flag.is_true() else "K"
             textc = "k" if flag.is_true() else "w"
         if pad > 0:

@@ -45,7 +45,7 @@ class __Symbols:
         self.hbar = Token("─")
         self.vbar = Token("│")
         self.whitespace = Token("\u2E31")  # interpunct
-        self.newline = Token("\u21B5")  # carriage return
+        self.newline = Token("▒")#Token("\u21B5")  # carriage return
         self.cfill = Token("_")
         self.tab = Token("    ")
         self.arrow_up = Token("A")
@@ -72,8 +72,14 @@ class __Symbols:
         self.equalbar = Token("│")
         self.hbar = Token("─")
         self.vbar = Token("│")
-        self.whitespace = Token("\u2E31")
-        self.newline = Token("\u21B5")
+
+        self.whitespace = Token("·")
+        # self.whitespace = Token("␣")
+        
+        # self.newline = Token("¶")
+        self.newline = Token("↲")
+        # self.newline = Token("⏎")
+
         self.cfill = Token("_")
         self.tab = Token("    ")
         self.arrow_up = Token("↑")

@@ -33,6 +33,7 @@ class GeralSettings:
     __sidesize = "sidesize"
     __langdef = "langdef"
     __lastrep = "lastrep"
+    __nerdfonts = "nerdfonts"
 
     defaults = {
         __rootdir: "",
@@ -41,7 +42,8 @@ class GeralSettings:
         __diffdown: True,
         __sidesize: 80,
         __langdef: "",
-        __lastrep: ""
+        __lastrep: "", 
+        __nerdfonts: "0",
     }
 
     def __init__(self):
@@ -89,26 +91,41 @@ class GeralSettings:
             self.set_rootdir(def_root)
             return def_root
         return value
+    
+    def is_nerdfonts(self) -> bool:
+        return self.__get(self.__nerdfonts)
+    
+    def set_nerdfonts(self, value: bool):
+        self.__set(self.__nerdfonts, value)
+        return self
 
     def set_rootdir(self, value: str):
         self.__set(self.__rootdir, value)
         return self
 
-    def get_is_ascii(self):
+    def is_ascii(self):
         return self.__get(self.__is_ascii)
 
     def set_is_ascii(self, value: bool):
         self.__set(self.__is_ascii, value)
         return self
 
-    def get_is_colored(self):
+    def is_colored(self):
         return self.__get(self.__is_color)
 
     def set_is_colored(self, value: bool):
         self.__set(self.__is_color, value)
         return self
+    
+    def toggle_color(self):
+        self.set_is_colored(not self.is_colored())
+        return
+    
+    def toggle_nerdfonts(self):
+        self.set_nerdfonts(not self.is_nerdfonts())
+        return
 
-    def get_is_diff_down(self):
+    def is_diff_down(self):
         return self.__get(self.__diffdown)
 
     def set_is_diff_down(self, value: bool):
@@ -741,7 +758,7 @@ quit_msgs = [
         "Vá, mais volte",
         "Arri égua, já vai?", 
         "Capando o gato tão cedo?",
-        "Vai porquê quer",
+        "Vai porque quer",
         "Fique mais um pouquinho", 
         "Vamos lá, pegue um café (ou chá) e volte outra hora",
         "Foque em avançar um passo por vez",
@@ -1621,6 +1638,12 @@ class Flag:
 
     def get_value(self) -> str:
         return self._values[self._index % len(self._values)]
+    
+    def set_value(self, value: Any):
+        for i, v in enumerate(self._values):
+            if v == value:
+                self._index = i
+                break
 
     def is_true(self):
         return self.get_value() == "1"
@@ -1639,31 +1662,29 @@ class Flag:
     
 
 class Flags:
-    minimum = Flag().name("Mínimo").char("m").values(["0", "1"]).text("Mostra os requisitos mínimos para completar a missão").location("left")
-    reward = Flag().name("Recompensa").char("r").values(["0", "1"]).text("Mostra a experiência obtida na tarefa").location("left")
-    percent = Flag().name("Percentual").char("p").values(["0", "1"]).text("Mostra valores em porcentagem").location("left")
+    minimum = Flag().name("Mínimo").char("M").values(["0", "1"]).text("Mostra os requisitos mínimos para completar a missão").location("left")
+    reward = Flag().name("Recompensa").char("R").values(["0", "1"]).text("Mostra a experiência obtida na tarefa").location("left")
+    percent = Flag().name("Percentual").char("P").values(["0", "1"]).text("Mostra valores em porcentagem").location("left")
     admin = Flag().name("Admin").char("A").values(["0", "1"]).text("Mostra todas as missões e grupos").location("left")
-    fortune = Flag().name("Conselho").char("C").values(["0", "1"]).text("Mostra mensagem aleatórias na saída").location("left")
+    fortune = Flag().name("Fortuna").char("F").values(["0", "1"]).text("Mostra mensagem aleatórias na saída").location("left")
     random = Flag().name("Sucesso").char("S").values(["1", "0"]).text("Mostra os personagens no sucesso da execução").location("left")
     config = Flag().name("Conf").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
     xpbar = Flag().name("XpBar").char("x").values(["1", "0"]).text("Mostra a barra de experiência").location("top")
     inventory = Flag().name("Inventário").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
-    mono = Flag().name("Mono").char("M").values(["0", "1"]).text("Usa tema monocromatico").location("left")
-    nerd = Flag().name("Nerd").char("n").values(["0", "1"]).text("Usa nerd fonts para habilitar bordas").location("left")
 
 class FlagsMan:
     def __init__(self, data: Dict[str, int]):
         self.flags: Dict[str, Flag] = {}
-        self.left: List[Flag] = []
         self.top: List[Flag] = []
+        self.others: List[Flag] = []
 
         for varname, flag in Flags.__dict__.items():
             if isinstance(flag, Flag):
                 self.flags[varname] = flag
-                if flag.get_location() == "left":
-                    self.left.append(flag)
-                elif flag.get_location() == "top":
+                if flag.get_location() == "top":
                     self.top.append(flag)
+                else:
+                    self.others.append(flag)
 
         for key, _index in data.items():
             if key in self.flags:
@@ -1672,66 +1693,76 @@ class FlagsMan:
     def get_data(self) -> Dict[str, int]:
         data = {}
         for name, flag in self.flags.items():
+            if flag.get_location() == "geral":
+                continue
             if len(flag.get_values()) > 1:
                 data[name] = flag.get_index()
         return data
 
-
 class Style:
+    # geral: GeralSettings = SettingsParser().load_settings().geral
+    @staticmethod
+    def has_borders():
+        return SettingsParser().load_settings().geral.is_nerdfonts()
+    
+    @staticmethod
+    def has_colors():
+        return SettingsParser().load_settings().geral.is_colored()
+
     @staticmethod
     def roundL():
-        return "" if Flags.nerd.is_true() else "█"
+        return "" if Style.has_borders() else "█"
 
     @staticmethod
     def roundR():
-        return "" if Flags.nerd.is_true() else "█"
+        return "" if Style.has_borders() else "█"
 
     @staticmethod
     def sharpL():
-        return "" if Flags.nerd.is_true() else "▒"
+        return "" if Style.has_borders() else "▒"
 
     @staticmethod
     def sharpR():
-        return "" if Flags.nerd.is_true() else "▒"
+        return "" if Style.has_borders() else "▒"
     
     @staticmethod
     def midL():
-        return "" if Flags.nerd.is_true() else "█"
+        return "" if Style.has_borders() else "█"
     
     @staticmethod
     def midR():
-        return "" if Flags.nerd.is_true() else "█"
+        return "" if Style.has_borders() else "█"
  
     @staticmethod
     def focus():
-        return "W" if Flags.mono.is_true() else "B"
+        return "W" if not Style.has_colors() else "B"
     @staticmethod
     def prog_done():
-        return "g" if Flags.mono.is_true() else "g"
+        return "g" if not Style.has_colors() else "g"
     @staticmethod
     def prog_todo():
-        return "" if Flags.mono.is_true() else "y"
+        return "" if not Style.has_colors() else "y"
     @staticmethod
     def flag_on():
-        return "W" if Flags.mono.is_true() else "G"
+        return "W" if not Style.has_colors() else "G"
     @staticmethod
     def flag_off():
-        return "W" if Flags.mono.is_true() else "Y"
+        return "W" if not Style.has_colors() else "Y"
     # @staticmethod
     # def cmds():
     #     return "W" if Flags.mono.is_true() else "B"
     @staticmethod
     def skill_done():
-        return "kW" if Flags.mono.is_true() else "C"
+        return "kW" if not Style.has_colors() else "C"
     @staticmethod
     def skill_todo():
-        return "wK" if Flags.mono.is_true() else "M"
+        return "wK" if not Style.has_colors() else "M"
     @staticmethod
     def main_done():
-        return "kW" if Flags.mono.is_true() else "G"
+        return "kW" if not Style.has_colors() else "G"
     @staticmethod
     def main_todo():
-        return "wK" if Flags.mono.is_true() else "R"
+        return "wK" if not Style.has_colors() else "R"
     
     @staticmethod
     def skills():
@@ -1789,7 +1820,7 @@ class Style:
         color = "G" if flag.is_true() else "Y"
         textc = ""
         extra = Sentence()
-        if Flags.mono.is_true():
+        if not Style.has_colors():
             color = "W" if flag.is_true() else "K"
             textc = "k" if flag.is_true() else "w"
         if pad > 0:
@@ -2445,7 +2476,7 @@ class __Symbols:
         self.hbar = Token("─")
         self.vbar = Token("│")
         self.whitespace = Token("\u2E31")  # interpunct
-        self.newline = Token("\u21B5")  # carriage return
+        self.newline = Token("▒")#Token("\u21B5")  # carriage return
         self.cfill = Token("_")
         self.tab = Token("    ")
         self.arrow_up = Token("A")
@@ -2472,8 +2503,14 @@ class __Symbols:
         self.equalbar = Token("│")
         self.hbar = Token("─")
         self.vbar = Token("│")
-        self.whitespace = Token("\u2E31")
-        self.newline = Token("\u21B5")
+
+        self.whitespace = Token("·")
+        # self.whitespace = Token("␣")
+        
+        # self.newline = Token("¶")
+        self.newline = Token("↲")
+        # self.newline = Token("⏎")
+
         self.cfill = Token("_")
         self.tab = Token("    ")
         self.arrow_up = Token("↑")
@@ -3574,7 +3611,7 @@ class TaskTree:
         focus_color = Style.focus()
 
         if in_focus:
-            output.addf(focus_color.lower(), "")
+            output.addf(focus_color.lower(), Style.roundL())
         else:
             output.add(" ")
 
@@ -3584,7 +3621,7 @@ class TaskTree:
         output.addf(color, t.title)
 
         if in_focus:
-            output.addf(focus_color.lower(), "")
+            output.addf(focus_color.lower(), Style.roundR())
         else:
             output.add(" ")
 
@@ -4675,6 +4712,11 @@ class Report:
 
 class Diff:
 
+    vinput    = " INSERIDO "
+    vexpected = " ESPERADO "
+    vreceived = " RECEBIDO "
+    vunequal  = " DESIGUAL "
+
     @staticmethod
     def make_line_arrow_up(a: str, b: str) -> Sentence:
         hdiff = Sentence()
@@ -4690,6 +4732,8 @@ class Diff:
             else:
                 hdiff += " "
             i += 1
+        while len(hdiff) < lim:
+            hdiff += " "
         return hdiff
 
     @staticmethod
@@ -4734,20 +4778,20 @@ class Diff:
 
         first_a = get(a_render, first_failure)
         first_b = get(b_render, first_failure)
-        greater = max(len(first_a), len(first_b))
+        # greater = max(len(first_a), len(first_b))
 
-        if first_failure > 0:
-            lbefore = get(a_render, first_failure - 1)
-            greater = max(greater, len(lbefore))
+        # if first_failure > 0:
+        #     lbefore = get(a_render, first_failure - 1)
+        #     greater = max(greater, len(lbefore))
 
         out_a, out_b = Diff.colorize_2_lines_diff(Sentence(first_a), Sentence(first_b))
-
+        greater = max(len(out_a), len(out_b))
         output: List[Sentence] = []
 
-        output.append(Sentence().add(symbols.vbar).add(" ").add(out_a.ljust(greater)).addf("g", " (expected)"))
-        output.append(Sentence().add(symbols.vbar).add(" ").add(out_b.ljust(greater)).addf("r", " (received)"))
-        diff = Diff.make_line_arrow_up(first_a, first_b).ljust(greater)
-        output.append(Sentence().add(symbols.vbar).add(" ").add(diff).addf("b", " (mismatch)"))
+        output.append(Sentence().add(symbols.vbar).add(" ").add(out_a.ljust(greater)).addf("g", " (esperado)"))
+        output.append(Sentence().add(symbols.vbar).add(" ").add(out_b.ljust(greater)).addf("r", " (recebido)"))
+        diff = Diff.make_line_arrow_up(first_a, first_b)
+        output.append(Sentence().add(symbols.vbar).add(" ").add(diff.ljust(greater)).addf("b", " (primeiro)"))
         return output
 
     @staticmethod
@@ -4835,21 +4879,21 @@ class Diff:
         if not curses:
             output.append(Report.centralize("", symbols.hbar, "╭"))
             output.append(Report.centralize(unit.str(), " ", symbols.vbar))
-            output.append(Report.centralize(Sentence().addf("b", " INPUT "), symbols.hbar, "├"))
+            output.append(Report.centralize(Sentence().addf("b", Diff.vinput), symbols.hbar, "├"))
         else:
-            output.append(Report.centralize(Sentence().addf("b", " INPUT "), symbols.hbar, "╭"))
+            output.append(Report.centralize(Sentence().addf("b", Diff.vinput), symbols.hbar, "╭"))
 
         output += string_input_list
             
-        output.append(Report.centralize(Sentence().addf("g", " EXPECTED "), symbols.hbar, "├"))
+        output.append(Report.centralize(Sentence().addf("g", Diff.vexpected), symbols.hbar, "├"))
         output += expected_lines
         # output.append("\n".join(expected_lines))
         rcolor = "r" if string_expected != string_received else "g"
-        output.append(Report.centralize(Sentence().addf(rcolor, " RECEIVED "), symbols.hbar, "├"))
+        output.append(Report.centralize(Sentence().addf(rcolor, Diff.vreceived), symbols.hbar, "├"))
         output +=  received_lines
 
         if unit.result != ExecutionResult.EXECUTION_ERROR and unit.result != ExecutionResult.COMPILATION_ERROR:
-            output.append(Report.centralize(Sentence().addf("b", " WHITESPACE "),  symbols.hbar, "├"))
+            output.append(Report.centralize(Sentence().addf("b", Diff.vunequal),  symbols.hbar, "├"))
             output += Diff.first_failure_diff(string_expected, string_received, first_failure)
         output.append(Report.centralize("",  symbols.hbar, "╰"))
 
@@ -4908,27 +4952,27 @@ class Diff:
         if not curses:
             output.append(Report.centralize("", hbar, "╭"))
             output.append(Report.centralize(unit.str(), " ", "│"))
-        input_headera = Sentence().addf("b", " INPUT ")
-        input_headerb = Sentence().addf("b", " INPUT ")
+        input_headera = Sentence().addf("b", Diff.vinput)
+        input_headerb = Sentence().addf("b", Diff.vinput)
         if not curses:
             output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, Token("┬"), Token("├")))
         else:
-            output.append(Report.centralize(Sentence().addf("b", " INPUT "),  symbols.hbar, "╭"))
+            output.append(Report.centralize(Sentence().addf("b", Diff.vinput),  symbols.hbar, "╭"))
             # output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, TK("┬"), TK("╭")))
 
         if string_input != "":
             lines = [Sentence(x) for x in string_input.split("\n")[:-1]]
             output += Diff.side_by_side(lines, lines)
-        expected_header = Sentence().addf("g", " EXPECTED ")
+        expected_header = Sentence().addf("g", Diff.vexpected)
         rcolor = "r" if string_expected != string_received else "g"
-        received_header = Sentence().addf(rcolor, " RECEIVED ")
+        received_header = Sentence().addf(rcolor, Diff.vreceived)
         output.append(Diff.title_side_by_side(expected_header, received_header, hbar, Token("┼"), Token("├")))
         unequal = symbols.unequal
         if unit.result == ExecutionResult.EXECUTION_ERROR or unit.result == ExecutionResult.COMPILATION_ERROR:
             unequal = symbols.vbar
         output += Diff.side_by_side(expected_lines, received_lines, unequal)
         if unit.result != ExecutionResult.EXECUTION_ERROR and unit.result != ExecutionResult.COMPILATION_ERROR:
-            output.append(Report.centralize(Sentence().addf("b", " WHITESPACE "),  symbols.hbar, "├"))
+            output.append(Report.centralize(Sentence().addf("b", Diff.vunequal),  symbols.hbar, "├"))
             output += Diff.first_failure_diff(string_expected, string_received, first_failure)
         output.append(Report.centralize("",  symbols.hbar, "╰"))
 
@@ -5407,8 +5451,10 @@ class CDiff:
         self.finished = False
         self.resumes: List[str] = []
 
+
         self.sp = SettingsParser()
         self.settings = self.sp.load_settings()
+        self.colors = self.settings.geral.is_colored()
         self.first_loop = True
         self.fman = FloatingManager()
         self.first_run = False
@@ -5419,6 +5465,7 @@ class CDiff:
     def save_settings(self):
         self.settings.geral.set_is_diff_down(self.param.is_up_down)
         self.sp.save_settings()
+        
 
     def set_exit(self):
         self.exit = True
@@ -5457,11 +5504,11 @@ class CDiff:
             out = self.random_get(images, "static")
         else:
             out = self.random_get(success, "static")
-        self.print_centered_image(out, "" if Flags.mono.is_true() else "g")
+        self.print_centered_image(out, "" if not self.colors else "g")
         
     def show_compilling(self):
         out = self.random_get(compilling, "random")
-        self.print_centered_image(out, "" if Flags.mono.is_true() else "y")
+        self.print_centered_image(out, "" if not self.colors else "y")
 
     def draw_scrollbar(self):
         y_init = 3
@@ -5543,10 +5590,10 @@ class CDiff:
             else:
                 self.results_done.append((Token(symbol.text, color), index))
 
-        activity_color = "W" if Flags.mono.is_true() else "C"
-        solver_color = "W" if Flags.mono.is_true() else "G"
-        sources_color = "W" if Flags.mono.is_true() else "Y"
-        running_color = "W" if Flags.mono.is_true() else "R"
+        activity_color = "W" if not self.colors else "C"
+        solver_color = "W" if not self.colors else "G"
+        sources_color = "W" if not self.colors else "Y"
+        running_color = "W" if not self.colors else "R"
 
         _, cols = Fmt.get_size()
         frame = Frame(0, 0).set_size(3, cols)
@@ -5617,7 +5664,7 @@ class CDiff:
         ]
         cmds = Sentence()
         for t in tokens:
-            color = "W" if Flags.mono.is_true() else t.fmt
+            color = "W" if not self.colors else t.fmt
             cmds.addf(color.lower(), Style.roundL()).addf(color, t.text).addf(color.lower(), Style.roundR()).add(" ")
         # cmds = (Sentence()
         # .add(" ")
@@ -5692,10 +5739,11 @@ class CDiff:
                 self.first_loop = False
                 self.load_autoload_warning()
             Fmt.erase()
-            if len(self.results_done) + len(self.results_fail) == 0:
+            if self.wdir.get_solver().get_executable() == "":
                 self.show_compilling()
                 Fmt.refresh()
                 Fmt.erase()
+                self.wdir.get_solver().prepare_exec()
             self.draw_top_line()
             unit = self.get_focused_unit()
             self.draw_diff(unit)
@@ -5730,10 +5778,6 @@ class CDiff:
                 self.param.is_up_down = not self.param.is_up_down
                 self.save_settings()
                 self.init = 0
-            elif key == ord("M"):
-                Flags.mono.toggle()
-            elif key == ord("n"):
-                Flags.nerd.toggle()
             elif key == ord('e'):
                 if self.wdir.is_autoload():
                     self.wdir.autoload()
@@ -5998,6 +6042,30 @@ class Build:
 
 class Play:
 
+    class Key:
+        left = "a"
+        right = "d"
+        down = "s"
+        up = "w"
+        down_task = "b"
+        run_task = "e"
+        test_task = "t"
+        ajuda = "h"
+        expand = ">"
+        collapse = "<"
+        set_root = "D"
+        set_lang = "L"
+        open_link = "g"
+        quit = "q"
+        reset = "U"
+        mass_toggle = "B"
+        toggle_space = " "
+        toggle_enter = "\n"
+        open_draft = "r"
+        open_readme = "l"
+        cores = "C"
+        bordas = "B"
+
     def __init__(
         self,
         geral: GeralSettings,
@@ -6007,14 +6075,15 @@ class Play:
         fn_save
     ):
         self.geral_save = fn_save
-        self.local = geral
+        self.geral = geral
         self.rep_alias = rep_alias
         self.rep = rep_data
         self.exit = False
 
         if self.rep.get_lang() == "":
-            self.rep.set_lang(self.local.get_lang_def())
+            self.rep.set_lang(self.geral.get_lang_def())
         self.flagsman = FlagsMan(self.rep.get_flags())
+        
         self.game: Game = game
         self.fman = FloatingManager()
         self.tree = TaskTree(geral, game, rep_data, rep_alias)
@@ -6034,29 +6103,29 @@ class Play:
         ]
 
         self.help_extra: List[Token] = [
+            RToken("C", f"Github[{self.Key.open_link}]"),
             RToken("C", f"Baixar[{self.Key.down_task}]"),
-            RToken("C", f"Executar[{self.Key.run_task}]"),
-            RToken("C", f"Testar[{self.Key.test_task}]"),
-            RToken("M", f"Github[{self.Key.open_link}]"),
+            RToken("Y", f"Executar[{self.Key.run_task}]"),
+            RToken("Y", f"Testar[{self.Key.test_task}]"),
+            RToken("G", f"Rascunho[{self.Key.open_draft}]"),
+            RToken("G", f"Leitura [{self.Key.open_readme}]"),
             RToken("M", "Marcar[enter]"),
-            # RToken("C", f"Contrair[{self.Key.collapse}{self.Key.expand}]"),
             RToken("M", "Graduar[0-9]"),
         ]
 
     def save_to_json(self):
         self.tree.save_on_rep()
         self.rep.set_flags(self.flagsman.get_data())
-
         self.geral_save()
         self.rep.save_data_to_json()
 
     def set_rootdir(self, only_if_empty=True):
-        if only_if_empty and self.local.get_rootdir() != "":
+        if only_if_empty and self.geral.get_rootdir() != "":
             return
 
         def chama(value):
             if value == "yes":
-                self.local.set_rootdir(os.path.abspath(os.getcwd()))
+                self.geral.set_rootdir(os.path.abspath(os.getcwd()))
                 self.save_to_json()
                 self.fman.add_input(
                     Floating()
@@ -6069,7 +6138,7 @@ class Play:
                     .put_text("o diretório raiz navegando para o")
                     .put_text("diretório desejado e executando o comando")
                     .put_text("")
-                    .put_text("  tko config --root")
+                    .put_text("  tko config --root .")
                     .put_text("")
                     .warning()
                 )
@@ -6083,7 +6152,7 @@ class Play:
                     .put_text("o diretório raiz navegando para o")
                     .put_text("diretório desejado e executando o comando")
                     .put_text("")
-                    .put_text("tko config --root")
+                    .put_text("tko config --root .")
                     .put_text("")
                     .warning()
                 )
@@ -6132,7 +6201,7 @@ class Play:
         )
 
     def check_root_and_lang(self):
-        if self.local.get_rootdir() == "":
+        if self.geral.get_rootdir() == "":
             # self.set_rootdir()
             self.fman.add_input(
                 Floating()
@@ -6214,7 +6283,7 @@ class Play:
             Fmt.write(lines - 1, 0, text)
 
     def down_task(self):
-        rootdir = self.local.get_rootdir()
+        rootdir = self.geral.get_rootdir()
         if rootdir == "":
             self.check_root_and_lang()
             return
@@ -6259,7 +6328,7 @@ class Play:
                 )
     
     def test_task(self, test_mode: bool = False):
-        rootdir = self.local.get_rootdir()
+        rootdir = self.geral.get_rootdir()
         
         obj = self.tree.items[self.tree.index_selected].obj
 
@@ -6321,13 +6390,12 @@ class Play:
             return
         return run.execute
 
-    @staticmethod
-    def build_list_sentence(items: List[Token], fill=True) -> List[Sentence]:
+    def build_list_sentence(self, items: List[Token], fill=True) -> List[Sentence]:
         out: List[Sentence] = []
         try:
             for x in items:
                 help = Sentence()
-                if Flags.mono.is_true():
+                if not self.geral.is_colored():
                     color = "W"
                 else:
                     color = x.fmt
@@ -6389,7 +6457,7 @@ class Play:
         todo = Style.main_todo() + "/"
         total_bar = Style.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Sentence().add("{").addf("/", "Skills").add("}"), "^")
-        frame_xp.set_footer(Sentence().add(" ").add(self.local.get_rootdir()).add(" "), "^")
+        frame_xp.set_footer(Sentence().add(" ").add(self.geral.get_rootdir()).add(" "), "^")
         frame_xp.draw()
 
         total, obt = self.game.get_skills_resume(self.tree.available_quests)
@@ -6416,13 +6484,22 @@ class Play:
         frame.draw()
 
         pad = 11
-        for flag in self.flagsman.left:
+        for flag in self.flagsman.others:
             if flag.is_bool():
                 frame.print(0, Style.get_flag_sentence(flag, pad))
                 frame.print(0, Sentence())
 
-        color = "W" if Flags.mono.is_true() else "C"
-        frame.print(0, Sentence().addf(color.lower(), Style.roundL()).addf(color, "Pasta Raiz [P]").addf(color.lower(), Style.roundR()))
+        color = "W" if not self.geral.is_colored() else "C"
+
+        colored = Flag().name("Colorido").char("C").values(["1" if self.geral.is_colored() else "0"]).text("Ativa ou desativa as cores").bool()
+        frame.print(0, Style.get_flag_sentence(colored, pad))
+        frame.print(0, Sentence())
+
+        bordas = Flag().name("Bordas").char("B").values(["1" if self.geral.is_nerdfonts() else "0"]).text("Ativa ou desativa as bordas").bool()
+        frame.print(0, Style.get_flag_sentence(bordas, pad))
+        frame.print(0, Sentence())
+        
+        frame.print(0, Sentence().addf(color.lower(), Style.roundL()).addf(color, "DirDestino [D]").addf(color.lower(), Style.roundR()))
         frame.print(0, Sentence())
         frame.print(0, Sentence().addf(color.lower(), Style.roundL()).addf(color, "Linguagem  [L]").addf(color.lower(), Style.roundR()))
         frame.print(0, Sentence())
@@ -6431,7 +6508,7 @@ class Play:
 
         # init = Sentence().addf("w", Style.roundL()).addf("W", text).addf("w", Style.roundR())
         
-        elemsfill = Play.build_list_sentence(self.help_extra, fill=True)
+        elemsfill = self.build_list_sentence(self.help_extra, fill=True)
         wrap = Fmt.get_size()[1] < self.wrap_size
         half = len(elemsfill) // 2
   
@@ -6456,7 +6533,7 @@ class Play:
 
     def show_top_bar(self, frame: Frame):
         help = Sentence()
-        for s in Play.build_list_sentence(self.help_basic):
+        for s in self.build_list_sentence(self.help_basic):
             help.add(s).add(" ")
 
         flags = Sentence()
@@ -6531,9 +6608,9 @@ class Play:
     def get_task_path(self) -> str:
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
-            rootdir = self.local.get_rootdir()
+            rootdir = self.geral.get_rootdir()
             if rootdir != "":
-                path = os.path.join(self.local.get_rootdir(), self.rep_alias, obj.key, "Readme.md")
+                path = os.path.join(self.geral.get_rootdir(), self.rep_alias, obj.key, "Readme.md")
                 if os.path.isfile(path):
                     return path
         return ""
@@ -6605,26 +6682,6 @@ class Play:
         frame_main = Frame(mid_y, flags_sx).set_size(mid_sy, task_sx)
         self.show_main_bar(frame_main)
 
-    class Key:
-        left = "a"
-        right = "d"
-        down = "s"
-        up = "w"
-        down_task = "b"
-        run_task = "e"
-        test_task = "t"
-        ajuda = "h"
-        expand = ">"
-        collapse = "<"
-        set_root = "P"
-        set_lang = "L"
-        open_link = "g"
-        quit = "q"
-        reset = "U"
-        mass_toggle = "B"
-        toggle_space = " "
-        toggle_enter = "\n"
-
     class FlagFunctor:
         def __init__(self, fman: FloatingManager, flag: Flag):
             self.fman = fman
@@ -6632,7 +6689,7 @@ class Play:
 
         def __call__(self):
             self.flag.toggle()
-            if self.flag.get_location() == "left" and self.flag.is_bool():
+            if (self.flag.get_location() == "left" or self.flag.get_location() == "geral") and self.flag.is_bool():
                 f = Floating("v").warning()
                 f.put_text("")
                 f.put_text(self.flag.get_description())
@@ -6656,26 +6713,47 @@ class Play:
             Flags.config.toggle()
         else:
             Flags.config.toggle()
-            self.show_help_config()
+            # self.show_help_config()
 
     def select_quit_msg(self):
         if Flags.fortune.is_true():
             return random.choice(quit_msgs)
         return "Até a próxima!"
 
-    def open_code(self):
+    def open_code(self, draft: bool, readme: bool):
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
             path = self.get_task_path()
             cmd = "code"
-            if path and os.system(cmd + " --version") == 0:
-                os.system(f"{cmd} {path}")
+            code, _, _ = Runner().subprocess_run("whereis {}".format(cmd))
+            if code != 0:
+                self.fman.add_input(
+                    Floating().error().put_text("Comando {} não encontrado.".format(code))
+                )
+                return
+            if code == 0:
+                if readme:
+                    if not os.path.isfile(path):
+                        self.fman.add_input(
+                            Floating().error().put_text("Não achei nada baixado para você ler.")
+                        )
+                        return
+                    os.system(f"{cmd} {path}")
                 folder = os.path.dirname(path)
                 files = os.listdir(folder)
-                files = [os.path.join(folder, f) for f in files if os.path.isfile(os.path.join(folder, f)) and f.startswith("draft")]
-                for f in files:
-                    os.system(f"{cmd} {f}")
-
+                if draft:
+                    drafts = []
+                    for f in files:
+                        if not f.endswith(self.rep.get_lang()):
+                            continue
+                        drafts.append(os.path.join(folder, f))
+                    if len(drafts) == 0:
+                        self.fman.add_input(
+                            Floating().error().put_text("Não achei nenhum arquivo de rascunho.")
+                        )
+                        return
+                    for f in drafts:
+                        Runner.subprocess_run(f"{cmd} {f}")
 
     def make_callback(self) -> Dict[int, Any]:
         def set_exit():
@@ -6724,12 +6802,15 @@ class Play:
         add_str(self.Key.down_task, self.down_task)
         add_str(self.Key.run_task, lambda: self.test_task(False))
         add_str(self.Key.test_task, lambda: self.test_task(True))
-        add_str("o", self.open_code)
+        add_str(self.Key.open_draft, lambda: self.open_code(draft = True, readme = False))
+        add_str(self.Key.open_readme, lambda: self.open_code(draft = False, readme = True))
+        add_str(self.Key.cores, self.geral.toggle_color)
+        add_str(self.Key.bordas, self.geral.toggle_nerdfonts)
 
         for value in range(10):
             add_str(str(value), self.GradeFunctor(int(value), self.tree.set_grade))
 
-        for flag in self.flagsman.left:
+        for flag in self.flagsman.others:
             add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
 
         add_str(Flags.config.get_char(), self.toggle_config)
@@ -6875,7 +6956,7 @@ class Main:
         # load default diff from settings if not specified
         if not args.side and not args.down:
             geral = SettingsParser().load_settings().geral
-            updown = geral.get_is_diff_down()
+            updown = geral.is_diff_down()
             sidesize = int(geral.get_side_size())
             size_too_short = Report.get_terminal_size() < sidesize
             param.set_up_down(updown or size_too_short)
@@ -6891,7 +6972,7 @@ class Main:
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         geral = SettingsParser().load_settings().geral
-        updown = geral.get_is_diff_down()
+        updown = geral.is_diff_down()
         param.set_up_down(updown)
 
         if args.filter:
@@ -6956,9 +7037,9 @@ class Main:
         if not action:
             action = True
             print(sp.get_settings_file())
-            print("Diff mode: {}".format("DOWN" if settings.geral.get_is_diff_down() else "SIDE"))
-            print("Encoding mode: {}".format("ASCII" if settings.geral.get_is_ascii() else "UNICODE"))
-            print("Color mode: {}".format("MONOCHROMATIC" if not settings.geral.get_is_colored() else "COLORED"))
+            print("Diff mode: {}".format("DOWN" if settings.geral.is_diff_down() else "SIDE"))
+            print("Encoding mode: {}".format("ASCII" if settings.geral.is_ascii() else "UNICODE"))
+            print("Color mode: {}".format("MONOCHROMATIC" if not settings.geral.is_colored() else "COLORED"))
             value = settings.geral.get_lang_def()
             print("Default language extension: {}".format("Always ask" if value == "" else value))
 
@@ -7156,13 +7237,13 @@ def exec(parser: argparse.ArgumentParser, args):
     if args.c:
         SettingsParser.user_settings_file = args.c
     settings = SettingsParser().load_settings()
-    if args.a or settings.geral.get_is_ascii():
+    if args.a or settings.geral.is_ascii():
         symbols.set_ascii()
     else:
         symbols.set_unicode()
     if args.m:
         Color.enabled = False
-    elif settings.geral.get_is_colored():
+    elif settings.geral.is_colored():
         Color.enabled = True
         symbols.set_colors()
 

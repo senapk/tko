@@ -11,6 +11,7 @@ from ..game.quest import Quest
 from ..game.task import Task
 from .style import Style
 from ..util.symbols import symbols
+from .style import Style
 
 import os
 
@@ -137,7 +138,7 @@ class TaskTree:
         focus_color = Style.focus()
 
         if in_focus:
-            output.addf(focus_color.lower(), "")
+            output.addf(focus_color.lower(), Style.roundL())
         else:
             output.add(" ")
 
@@ -147,7 +148,7 @@ class TaskTree:
         output.addf(color, t.title)
 
         if in_focus:
-            output.addf(focus_color.lower(), "")
+            output.addf(focus_color.lower(), Style.roundR())
         else:
             output.add(" ")
 

@@ -12,7 +12,7 @@ quit_msgs = [
         "Vá, mais volte",
         "Arri égua, já vai?", 
         "Capando o gato tão cedo?",
-        "Vai porquê quer",
+        "Vai porque quer",
         "Fique mais um pouquinho", 
         "Vamos lá, pegue um café (ou chá) e volte outra hora",
         "Foque em avançar um passo por vez",

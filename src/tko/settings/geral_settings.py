@@ -9,6 +9,7 @@ class GeralSettings:
     __sidesize = "sidesize"
     __langdef = "langdef"
     __lastrep = "lastrep"
+    __nerdfonts = "nerdfonts"
 
     defaults = {
         __rootdir: "",
@@ -17,7 +18,8 @@ class GeralSettings:
         __diffdown: True,
         __sidesize: 80,
         __langdef: "",
-        __lastrep: ""
+        __lastrep: "", 
+        __nerdfonts: "0",
     }
 
     def __init__(self):
@@ -65,26 +67,41 @@ class GeralSettings:
             self.set_rootdir(def_root)
             return def_root
         return value
+    
+    def is_nerdfonts(self) -> bool:
+        return self.__get(self.__nerdfonts)
+    
+    def set_nerdfonts(self, value: bool):
+        self.__set(self.__nerdfonts, value)
+        return self
 
     def set_rootdir(self, value: str):
         self.__set(self.__rootdir, value)
         return self
 
-    def get_is_ascii(self):
+    def is_ascii(self):
         return self.__get(self.__is_ascii)
 
     def set_is_ascii(self, value: bool):
         self.__set(self.__is_ascii, value)
         return self
 
-    def get_is_colored(self):
+    def is_colored(self):
         return self.__get(self.__is_color)
 
     def set_is_colored(self, value: bool):
         self.__set(self.__is_color, value)
         return self
+    
+    def toggle_color(self):
+        self.set_is_colored(not self.is_colored())
+        return
+    
+    def toggle_nerdfonts(self):
+        self.set_nerdfonts(not self.is_nerdfonts())
+        return
 
-    def get_is_diff_down(self):
+    def is_diff_down(self):
         return self.__get(self.__diffdown)
 
     def set_is_diff_down(self, value: bool):

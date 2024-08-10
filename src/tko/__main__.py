@@ -97,7 +97,7 @@ class Main:
         # load default diff from settings if not specified
         if not args.side and not args.down:
             geral = SettingsParser().load_settings().geral
-            updown = geral.get_is_diff_down()
+            updown = geral.is_diff_down()
             sidesize = int(geral.get_side_size())
             size_too_short = Report.get_terminal_size() < sidesize
             param.set_up_down(updown or size_too_short)
@@ -113,7 +113,7 @@ class Main:
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         geral = SettingsParser().load_settings().geral
-        updown = geral.get_is_diff_down()
+        updown = geral.is_diff_down()
         param.set_up_down(updown)
 
         if args.filter:
@@ -178,9 +178,9 @@ class Main:
         if not action:
             action = True
             print(sp.get_settings_file())
-            print("Diff mode: {}".format("DOWN" if settings.geral.get_is_diff_down() else "SIDE"))
-            print("Encoding mode: {}".format("ASCII" if settings.geral.get_is_ascii() else "UNICODE"))
-            print("Color mode: {}".format("MONOCHROMATIC" if not settings.geral.get_is_colored() else "COLORED"))
+            print("Diff mode: {}".format("DOWN" if settings.geral.is_diff_down() else "SIDE"))
+            print("Encoding mode: {}".format("ASCII" if settings.geral.is_ascii() else "UNICODE"))
+            print("Color mode: {}".format("MONOCHROMATIC" if not settings.geral.is_colored() else "COLORED"))
             value = settings.geral.get_lang_def()
             print("Default language extension: {}".format("Always ask" if value == "" else value))
 
@@ -378,13 +378,13 @@ def exec(parser: argparse.ArgumentParser, args):
     if args.c:
         SettingsParser.user_settings_file = args.c
     settings = SettingsParser().load_settings()
-    if args.a or settings.geral.get_is_ascii():
+    if args.a or settings.geral.is_ascii():
         symbols.set_ascii()
     else:
         symbols.set_unicode()
     if args.m:
         Color.enabled = False
-    elif settings.geral.get_is_colored():
+    elif settings.geral.is_colored():
         Color.enabled = True
         symbols.set_colors()
 

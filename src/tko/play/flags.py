@@ -59,6 +59,12 @@ class Flag:
 
     def get_value(self) -> str:
         return self._values[self._index % len(self._values)]
+    
+    def set_value(self, value: Any):
+        for i, v in enumerate(self._values):
+            if v == value:
+                self._index = i
+                break
 
     def is_true(self):
         return self.get_value() == "1"
@@ -77,31 +83,29 @@ class Flag:
     
 
 class Flags:
-    minimum = Flag().name("Mínimo").char("m").values(["0", "1"]).text("Mostra os requisitos mínimos para completar a missão").location("left")
-    reward = Flag().name("Recompensa").char("r").values(["0", "1"]).text("Mostra a experiência obtida na tarefa").location("left")
-    percent = Flag().name("Percentual").char("p").values(["0", "1"]).text("Mostra valores em porcentagem").location("left")
+    minimum = Flag().name("Mínimo").char("M").values(["0", "1"]).text("Mostra os requisitos mínimos para completar a missão").location("left")
+    reward = Flag().name("Recompensa").char("R").values(["0", "1"]).text("Mostra a experiência obtida na tarefa").location("left")
+    percent = Flag().name("Percentual").char("P").values(["0", "1"]).text("Mostra valores em porcentagem").location("left")
     admin = Flag().name("Admin").char("A").values(["0", "1"]).text("Mostra todas as missões e grupos").location("left")
-    fortune = Flag().name("Conselho").char("C").values(["0", "1"]).text("Mostra mensagem aleatórias na saída").location("left")
+    fortune = Flag().name("Fortuna").char("F").values(["0", "1"]).text("Mostra mensagem aleatórias na saída").location("left")
     random = Flag().name("Sucesso").char("S").values(["1", "0"]).text("Mostra os personagens no sucesso da execução").location("left")
     config = Flag().name("Conf").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
     xpbar = Flag().name("XpBar").char("x").values(["1", "0"]).text("Mostra a barra de experiência").location("top")
     inventory = Flag().name("Inventário").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
-    mono = Flag().name("Mono").char("M").values(["0", "1"]).text("Usa tema monocromatico").location("left")
-    nerd = Flag().name("Nerd").char("n").values(["0", "1"]).text("Usa nerd fonts para habilitar bordas").location("left")
 
 class FlagsMan:
     def __init__(self, data: Dict[str, int]):
         self.flags: Dict[str, Flag] = {}
-        self.left: List[Flag] = []
         self.top: List[Flag] = []
+        self.others: List[Flag] = []
 
         for varname, flag in Flags.__dict__.items():
             if isinstance(flag, Flag):
                 self.flags[varname] = flag
-                if flag.get_location() == "left":
-                    self.left.append(flag)
-                elif flag.get_location() == "top":
+                if flag.get_location() == "top":
                     self.top.append(flag)
+                else:
+                    self.others.append(flag)
 
         for key, _index in data.items():
             if key in self.flags:
@@ -110,6 +114,8 @@ class FlagsMan:
     def get_data(self) -> Dict[str, int]:
         data = {}
         for name, flag in self.flags.items():
+            if flag.get_location() == "geral":
+                continue
             if len(flag.get_values()) > 1:
                 data[name] = flag.get_index()
         return data
