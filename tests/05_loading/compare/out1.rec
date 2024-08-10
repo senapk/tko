@@ -13,7 +13,7 @@ Para remover um arquivo da lista, renomeie para sua extensão para .txt
 ├────────────────────────────────── RECEBIDO ──────────────────────────────────
 ├ 12
 ├────────────────────────────────── DESIGUAL ──────────────────────────────────
-│ 1⏎  (esperado)
-│ 12⏎ (recebido)
-│  ↑  (desigual)
+│ 1↲  (esperado)
+│ 12↲ (recebido)
+│  ↑  (primeiro)
 ╰──────────────────────────────────────────────────────────────────────────────

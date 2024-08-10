@@ -22,6 +22,19 @@ class Solver:
         self.__executable: str = ""
         self.compile_error: bool = False
 
+    def set_main(self, main: str):
+        list_main: List[str] = []
+        list_other: List[str] = []
+
+        for path in self.path_list:
+            if os.path.basename(path) == main:
+                list_main.append(path)
+            else:
+                list_other.append(path)
+        
+        self.path_list = list_main + list_other
+        return self
+
     def set_executable(self, executable: str) -> None:
         self.__executable = executable
 

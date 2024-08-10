@@ -365,7 +365,7 @@ class Play:
                 run.set_first_run()
         else:
             run.set_curses(True)
-            run.set_free_run(True)
+            run.set_curses_select_mode(True)
         run.build_wdir()
         if not run.wdir.has_solver():
             msg = Floating().error()
@@ -583,7 +583,7 @@ class Play:
         _help.put_sentence(Sentence() + "  Github " + RToken("r", f"[{self.Key.open_link}]") + " - Abrir tarefa em uma aba do browser")
         _help.put_sentence(Sentence() + "  Baixar " + RToken("r", f"[{self.Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
         _help.put_sentence(Sentence() + "  Testar " + RToken("r", f"[{self.Key.test_task}]") + " - Testar tarefa de código que você baixou")
-        _help.put_sentence(Sentence() + "Executar " + RToken("r", f"[{self.Key.run_task}]") + " - Rodar tarefa de código que você baixou")
+        _help.put_sentence(Sentence() + "Escolher " + RToken("r", f"[{self.Key.run_task}]") + " - Escolher a tarefa de código que você baixou")
 
     @staticmethod
     def disable_on_resize():

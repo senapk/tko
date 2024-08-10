@@ -6,11 +6,11 @@ from .run.param import Param
 from .execution import Execution
 from .run.diff import Diff
 from .util.sentence import Sentence, Token, RToken
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from .play.frame import Frame
 from .play.floating import Floating
 from .play.floating_manager import FloatingManager
-from .play.images import images, compilling, success
+from .play.images import images, compilling, success, select
 from .util.runner import Runner
 from .play.style import Style
 from .play.flags import Flags
@@ -25,7 +25,7 @@ from .run.basic import Success
 
 class CDiff:
 
-    def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
+    def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success, select_mode: bool = False):
         self.param = param
         self.results_done: List[Tuple[Token, int]] = []
         self.results_fail: List[Tuple[Token, int]] = []
@@ -38,10 +38,12 @@ class CDiff:
         self.init = 0   # index of first line to show
         self.length = 1  # length of diff
         self.space = 0  # dy space for draw
+        self.select_mode = select_mode
 
         self.finished = False
         self.resumes: List[str] = []
 
+        self.main_file = 0
 
         self.sp = SettingsParser()
         self.settings = self.sp.load_settings()
@@ -161,7 +163,9 @@ class CDiff:
             folder = os.path.abspath(self.wdir.get_solver().path_list[0])
         return folder.split(os.sep)[-2]
 
-    def get_focused_unit(self):
+    def get_focused_unit(self) -> Optional[Unit]:
+        if len(self.results_fail + self.results_done) == 0:
+            return None
         join_list = self.results_fail + self.results_done
         _, index = join_list[self.index]
         unit = self.wdir.get_unit(index)
@@ -169,7 +173,7 @@ class CDiff:
 
     def draw_top_line(self):
         # construir mais uma solução
-        if len(self.unit_list) > 0:
+        if len(self.unit_list) > 0 and not self.select_mode:
             index = len(self.results_done) + len(self.results_fail)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
@@ -182,7 +186,7 @@ class CDiff:
                 self.results_done.append((Token(symbol.text, color), index))
 
         activity_color = "W" if not self.colors else "C"
-        solver_color = "W" if not self.colors else "G"
+        solver_color = "M" if not self.colors else "M"
         sources_color = "W" if not self.colors else "Y"
         running_color = "W" if not self.colors else "R"
 
@@ -191,11 +195,14 @@ class CDiff:
         folder = self.get_folder()
         activity = Sentence().addf(activity_color, folder)
         solvers = Sentence()
-        for i, solver in enumerate(self.wdir.solvers_names()):
-            if i != 0:
-                solvers.add(" ")
-            solvers.addf(solver_color, solver)
-        
+        for i, solver in enumerate(self.get_solver_names()):
+            # if i != 0:
+            #     solvers.addf(solver_color, ", ")
+            color = solver_color
+            if i == self.main_file:
+                color = "G"
+            solvers.addf(color.lower(), Style.roundL()).addf(color, solver).addf(color.lower(), Style.roundR())
+
         sources = Sentence()
         for i, (source, _) in enumerate(self.wdir.sources_names()):
             if i != 0:
@@ -205,11 +212,10 @@ class CDiff:
         done = len(self.results_done) + len(self.results_fail)
         full = len(self.wdir.get_unit_list())
         sources.addf(sources_color, f"({full})")
-        if done != full:
-            solvers.add(" ").addf(running_color, f"({done}/{full})")
-
-        solvers = Sentence().addf(solver_color.lower(), Style.roundL()).add(solvers).addf(solver_color.lower(), Style.roundR())
+        # solvers = Sentence().addf(solver_color.lower(), Style.roundL()).add(solvers).addf(solver_color.lower(), Style.roundR())
         activity = Sentence().addf(activity_color.lower(), Style.roundL()).add(activity).addf(activity_color.lower(), Style.roundR())
+        if done != full:
+            activity.addf(running_color.lower(), Style.roundL()).addf(running_color, f"({done}/{full})").addf(running_color.lower(), Style.roundR())
         sources = Sentence().addf(sources_color.lower(), Style.roundL()).add(sources).addf(sources_color.lower(), Style.roundR())
 
         delta = frame.get_dx() - solvers.len()
@@ -225,8 +231,10 @@ class CDiff:
 
         frame.set_header(header)
 
-        unit = self.get_focused_unit()
-        frame.write(0, 0, Sentence().add(unit.str(False)).center(frame.get_dx()))
+
+        value = self.get_focused_unit()
+        if value is not None:
+            frame.write(0, 0, Sentence().add(value.str(False)).center(frame.get_dx()))
 
 
         i = 0
@@ -250,6 +258,7 @@ class CDiff:
             RToken("G", "Sair[q]"),
             RToken("Y", "Executar[e]"),
             RToken("Y", "Testar[t]"),
+            RToken("Y", "Printipal[p]"),
             RToken("C", "Navegar[wasd]"),
             RToken("M", "MudarVisão[m]")
         ]
@@ -257,19 +266,6 @@ class CDiff:
         for t in tokens:
             color = "W" if not self.colors else t.fmt
             cmds.addf(color.lower(), Style.roundL()).addf(color, t.text).addf(color.lower(), Style.roundR()).add(" ")
-        # cmds = (Sentence()
-        # .add(" ")
-        # .addf("g", "").addf("G", "Sair[q]").addf("g", "")
-        # .add(" ")
-        # .addf("y", "").addf("Y", "Executar[e]").addf("y", "")
-        # .add(" ")
-        # .addf("y", "").addf("Y", "Testar[t]").addf("y", "")
-        # .add(" ")
-        # .addf("c", "").addf("C", "Navegar[wasd]").addf("c", "")
-        # .add(" ")
-        # .addf("m", "").addf("M", "MudarVisão[m]").addf("m", "")
-        # .add(" ")
-        # )
         lines, cols = Fmt.get_size()
         Fmt.write(lines - 1, 0, cmds.center(cols, Token(" ")))
  
@@ -321,6 +317,9 @@ class CDiff:
 
         self.fman.add_input(warning)
 
+    def get_solver_names(self):
+        return sorted(self.wdir.solvers_names())
+
     def main(self, scr):
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
@@ -337,14 +336,18 @@ class CDiff:
                 self.wdir.get_solver().prepare_exec()
             self.draw_top_line()
             unit = self.get_focused_unit()
-            self.draw_diff(unit)
-            self.draw_scrollbar()
+            if unit is not None:
+                self.draw_diff(unit)
+                self.draw_scrollbar()
+            else:
+                self.print_centered_image(select, "y")
+            
             self.draw_guide_line()
 
             if self.fman.has_floating():
                 self.fman.draw_warnings()
 
-            if not self.end_processing():
+            if not self.select_mode and not self.end_processing():
                 Fmt.refresh()
                 continue
 
@@ -372,17 +375,19 @@ class CDiff:
             elif key == ord('e'):
                 if self.wdir.is_autoload():
                     self.wdir.autoload()
+                    self.wdir.get_solver().set_main(self.get_solver_names()[self.main_file])
                     self.wdir.get_solver().set_executable("")
                 return lambda: Runner.free_run(self.wdir.get_solver().get_executable)
-
+            elif key == ord('p'):
+                self.main_file = (self.main_file + 1) % len(self.get_solver_names())
             elif key == ord('t'):
-
+                self.select_mode = False
                 if self.wdir.is_autoload():
                     self.wdir.autoload()
                 Fmt.erase()
                 self.show_compilling()
                 Fmt.refresh()
-                self.wdir.get_solver().prepare_exec()
+                self.wdir.get_solver().set_main(self.get_solver_names()[self.main_file]).prepare_exec()
                 self.results_done = []
                 self.results_fail = []
                 self.unit_list = [unit for unit in self.wdir.get_unit_list()]

@@ -13,22 +13,22 @@
 (ω wrong_out)[10] GR:009 _calc2.tio (gastando bateria                   )
 ╭────────────────────────────────────────────────
 │(ω wrong_out)[00] GR:009 _calc2.tio (iniciar mostrar e recarregar       ) 
-├──────────────────── INPUT ─────────────────────
+├─────────────────── INSERIDO ───────────────────
 │ init 5
 │ show
 │ end
-├─────────────────── EXPECTED ───────────────────
+├─────────────────── ESPERADO ───────────────────
 ├ $init 5
 ├ $show
 ├ display = 0.00, battery = 0
 ├ $end
-├─────────────────── RECEIVED ───────────────────
+├─────────────────── RECEBIDO ───────────────────
 ├ 
 ├ 
 ├ 
 ├ 
-├────────────────── WHITESPACE ──────────────────
-│ $init⸱5↵ (expected)
-│ ↵        (received)
-│ ↑        (mismatch)
+├─────────────────── DESIGUAL ───────────────────
+│ $init·5↲ (esperado)
+│ ↲        (recebido)
+│ ↑        (primeiro)
 ╰────────────────────────────────────────────────

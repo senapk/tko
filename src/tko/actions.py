@@ -50,7 +50,7 @@ class Run:
         self.curses: bool = False
         self.first_run = False
         self.success = Success.RANDOM
-        self.curses_free_run = False
+        self.curses_select_mode = False
         self.__lang = ""
 
     def set_curses(self, value:bool=True, success: Success=Success.RANDOM):
@@ -62,8 +62,8 @@ class Run:
         self.__lang = lang
         return self
 
-    def set_free_run(self, value:bool=True):
-        self.curses_free_run = value
+    def set_curses_select_mode(self, value:bool=True):
+        self.curses_select_mode = value
         return self
 
     def set_first_run(self):
@@ -196,12 +196,9 @@ class Run:
     def __free_run(self) -> bool:
         if self.wdir is None:
             return False
-        if self.wdir.has_solver() and (not self.wdir.has_tests() or self.curses_free_run):
+        if self.wdir.has_solver() and (not self.wdir.has_tests()):
             fn_build = self.wdir.get_solver().get_executable
-            if self.curses_free_run:
-                Runner.free_run(fn_build)
-            else:
-                Runner.free_run(fn_build, show_compilling=False, to_clear=False, wait_input=False)
+            Runner.free_run(fn_build, show_compilling=False, to_clear=False, wait_input=False)
             return True
         return False
 
@@ -210,7 +207,7 @@ class Run:
             return
         
         if self.curses:
-            cdiff = CDiff(self.wdir, self.param, self.success)
+            cdiff = CDiff(self.wdir, self.param, self.success, select_mode=self.curses_select_mode)
             if self.first_run:
                 cdiff.set_first_run()
             cdiff.run()
