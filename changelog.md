@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.15.7
+  - add: auto update on replit
+  - add: xpbar moved to top
 - 0.15.6
   - add: saving index on rep
   - add: change message for control D in Windows
