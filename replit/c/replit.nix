@@ -1,6 +1,6 @@
 { pkgs }: {
 	deps = [
-    pkgs.python38Full
+    pkgs.python310Full
     pkgs.graphviz
     pkgs.clang_12
     pkgs.ccls

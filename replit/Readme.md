@@ -40,3 +40,30 @@ curl -sSL https://raw.githubusercontent.com/senapk/tko/master/replit/ts/update.s
 ```bash
 curl -sSL https://raw.githubusercontent.com/senapk/tko/master/replit/py/update.sh | bash
 ```
+
+## Configuração genérica para qualquer linguagem
+
+- Crie um replit da linguagem desejada
+- Abra o arquivo `replit.nix`, se não existir, crie:
+
+```bash
+code replit.nix
+```
+
+Se não existir, coloque esse conteúdo no arquivo. Se já existir, adicione os pacotes abaixo.
+
+```bash
+### 
+{pkgs}: {
+  deps = [
+    pkgs.graphviz
+    pkgs.python310Full
+  ];
+}
+```
+
+Após isso, salve o arquivo, e execute a seguinte linha no terminal.
+
+```bash
+curl -sSL https://raw.githubusercontent.com/senapk/tko/master/replit/py/update.sh | bash
+```
