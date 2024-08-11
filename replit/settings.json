@@ -1,0 +1,27 @@
+{
+    "reps": {
+        "fup": {
+            "file": "",
+            "url": "https://github.com/qxcodefup/arcade/blob/master/Readme.md"
+        },
+        "ed": {
+            "file": "",
+            "url": "https://github.com/qxcodeed/arcade/blob/master/Readme.md"
+        },
+        "poo": {
+            "file": "",
+            "url": "https://github.com/qxcodepoo/arcade/blob/master/Readme.md"
+        }
+    },
+    "geral": {
+        "rootdir": "/home/lion/qxcode",
+        "ascii": false,
+        "color": true,
+        "diffdown": true,
+        "sidesize": 80,
+        "langdef": "",
+        "lastrep": "",
+        "nerdfonts": "0",
+        "editor": "code"
+    }
+}
