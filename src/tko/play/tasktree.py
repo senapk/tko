@@ -171,7 +171,7 @@ class TaskTree:
 
         focus_color = Style.focus()
         if in_focus:
-            output.addf(focus_color.lower(), Style.roundR())
+            output.addf(focus_color.lower(), Style.roundL())
         else:
             output.add(" ")
 
