@@ -12,27 +12,63 @@ from .util.remote import RemoteCfg
 class Down:
     fnprint = print
 
-    ts_draft = (r'let _cin_ : string[] = [];' + '\n'
-                r'try { _cin_ = require("fs").readFileSync(0).toString().split(/\r?\n/); } catch(e){}' + '\n'
-                r'let input = () : string => _cin_.length === 0 ? "" : _cin_.shift()!;' + '\n'
-                r'let write = (text: any, end:string="\n")=> process.stdout.write("" + text + end);' + '\n'
-                r'export {};' + '\n')
+    ts_draft = r"""
+let _cin_ : string[] = [];
+try { _cin_ = require("fs").readFileSync(0).toString().split(/\r?\n/); } catch(e){}
+let input = () : string => _cin_.length === 0 ? "" : _cin_.shift()!;
+let write = (text: any, end:string="\n")=> process.stdout.write("" + text + end);
+export {};
 
-    js_draft = (r'let __lines = require("fs").readFileSync(0).toString().split("\n");' + '\n'
-                r'let input = () => __lines.length === 0 ? "" : __lines.shift();' + '\n'
-                r'let write = (text, end="\n") => process.stdout.write("" + text + end);') + '\n'
+write("qxcode");
+"""[1:]
 
-    c_draft = '#include <stdio.h>\n\nint main() {\n    return 0;\n}\n\n'
-    cpp_draft = '#include <iostream>\n\nint main() {\n}\n\n'
+    js_draft = r"""
+let __lines = require("fs").readFileSync(0).toString().split("\n");
+let input = () => __lines.length === 0 ? "" : __lines.shift();
+let write = (text, end="\n") => process.stdout.write("" + text + end);
 
-    java_draft = r"""public class Draft {
+write("qxcode");
+"""[1:]
+
+    c_draft = r"""
+#include <stdio.h>
+
+int main() {
+    puts("qxcode");
+    return 0;
+}
+
+"""[1:]
+    
+    cpp_draft = r"""
+#include <iostream>
+
+int main() {
+    std::cout << "qxcode\n";
+}
+
+"""[1:]
+    
+    java_draft = r"""
+public class draft {
     public static void main(String args[]) {
         System.out.println("qxcode");
     }
 }
-"""
 
-    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft, 'java': java_draft}
+"""[1:]
+
+    go_draft = r"""
+package main
+import "fmt"
+
+func main() {
+    fmt.Println("qxcode")
+}
+
+"""[1:]
+
+    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft, 'java': java_draft, 'go': go_draft}
     # def __init__(self):
     #     self.drafts = {}
     #     self.drafts['c'] = Down.c_draft

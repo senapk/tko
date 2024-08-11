@@ -12,6 +12,7 @@ import sys
 import urllib.request
 import urllib.error
 import json
+import "fmt"
 import curses
 import random
 import tempfile
@@ -22,7 +23,7 @@ import math
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.17.0"
+__version__ = "0.17.1"
 
 
 class GeralSettings:
@@ -162,33 +163,34 @@ class GeralSettings:
 
 
 
-select = r"""
-  _________         .    .  e -> Executa sem testar          
+select = r"""               e -> Executa sem testar          
+  _________         .    .                                   
  (..       \_    ,  |\  /|  t -> Roda os casos de teste      
-  \       O  \  /|  \ \/ /  p -> Muda o arquivo principal    
-   \______    \/ |   \  /        para problemas de múltiplos 
-      vvvv\    \ |   /  |        arquivos de código fonte    
-      \^^^^  ==   \_/   |   m -> muda o modo diff de vertical
-       `\_   ===    \.  |        para modo diff horizontal   
-       / /\_   \ /      |                                    
-       |/   \_  \|      /        Esquerda e Direita          
-              \________/           muda o caso de teste      
+  \       O  \  /|  \ \/ /                                   
+   \______    \/ |   \  /   p -> Muda o arquivo principal    
+      vvvv\    \ |   /  |        para problemas de múltiplos 
+      \^^^^  ==   \_/   |        arquivos de código fonte    
+       `\_   ===    \.  |                                    
+       / /\_   \ /      |   m -> muda o modo diff de vertical
+       |/   \_  \|      /        para modo diff horizontal   
+              \________/                                     
+           Esquerda e Direita -> muda o caso de teste        
 """
 
 compilling: Dict[str, str] = {}
 
-compilling["bloody"] = r"""
- ▄████▄   ▒█████   ███▄ ▄███▓ ██▓███   ██▓ ██▓    ▄▄▄       ███▄    █ ▓█████▄  ▒█████  
-▒██▀ ▀█  ▒██▒  ██▒▓██▒▀█▀ ██▒▓██░  ██▒▓██▒▓██▒   ▒████▄     ██ ▀█   █ ▒██▀ ██▌▒██▒  ██▒
-▒▓█    ▄ ▒██░  ██▒▓██    ▓██░▓██░ ██▓▒▒██▒▒██░   ▒██  ▀█▄  ▓██  ▀█ ██▒░██   █▌▒██░  ██▒
-▒▓▓▄ ▄██▒▒██   ██░▒██    ▒██ ▒██▄█▓▒ ▒░██░▒██░   ░██▄▄▄▄██ ▓██▒  ▐▌██▒░▓█▄   ▌▒██   ██░
-▒ ▓███▀ ░░ ████▓▒░▒██▒   ░██▒▒██▒ ░  ░░██░░██████▒▓█   ▓██▒▒██░   ▓██░░▒████▓ ░ ████▓▒░
-░ ░▒ ▒  ░░ ▒░▒░▒░ ░ ▒░   ░  ░▒▓▒░ ░  ░░▓  ░ ▒░▓  ░▒▒   ▓▒█░░ ▒░   ▒ ▒  ▒▒▓  ▒ ░ ▒░▒░▒░ 
-  ░  ▒     ░ ▒ ▒░ ░  ░      ░░▒ ░      ▒ ░░ ░ ▒  ░ ▒   ▒▒ ░░ ░░   ░ ▒░ ░ ▒  ▒   ░ ▒ ▒░ 
-░        ░ ░ ░ ▒  ░      ░   ░░        ▒ ░  ░ ░    ░   ▒      ░   ░ ░  ░ ░  ░ ░ ░ ░ ▒  
-░ ░          ░ ░         ░             ░      ░  ░     ░  ░         ░    ░        ░ ░  
-░                                                                      ░               
-"""
+# compilling["bloody"] = r"""
+#  ▄████▄   ▒█████   ███▄ ▄███▓ ██▓███   ██▓ ██▓    ▄▄▄       ███▄    █ ▓█████▄  ▒█████  
+# ▒██▀ ▀█  ▒██▒  ██▒▓██▒▀█▀ ██▒▓██░  ██▒▓██▒▓██▒   ▒████▄     ██ ▀█   █ ▒██▀ ██▌▒██▒  ██▒
+# ▒▓█    ▄ ▒██░  ██▒▓██    ▓██░▓██░ ██▓▒▒██▒▒██░   ▒██  ▀█▄  ▓██  ▀█ ██▒░██   █▌▒██░  ██▒
+# ▒▓▓▄ ▄██▒▒██   ██░▒██    ▒██ ▒██▄█▓▒ ▒░██░▒██░   ░██▄▄▄▄██ ▓██▒  ▐▌██▒░▓█▄   ▌▒██   ██░
+# ▒ ▓███▀ ░░ ████▓▒░▒██▒   ░██▒▒██▒ ░  ░░██░░██████▒▓█   ▓██▒▒██░   ▓██░░▒████▓ ░ ████▓▒░
+# ░ ░▒ ▒  ░░ ▒░▒░▒░ ░ ▒░   ░  ░▒▓▒░ ░  ░░▓  ░ ▒░▓  ░▒▒   ▓▒█░░ ▒░   ▒ ▒  ▒▒▓  ▒ ░ ▒░▒░▒░ 
+#   ░  ▒     ░ ▒ ▒░ ░  ░      ░░▒ ░      ▒ ░░ ░ ▒  ░ ▒   ▒▒ ░░ ░░   ░ ▒░ ░ ▒  ▒   ░ ▒ ▒░ 
+# ░        ░ ░ ░ ▒  ░      ░   ░░        ▒ ░  ░ ░    ░   ▒      ░   ░ ░  ░ ░  ░ ░ ░ ░ ▒  
+# ░ ░          ░ ░         ░             ░      ░  ░     ░  ░         ░    ░        ░ ░  
+# ░                                                                      ░               
+# """
 
 compilling["computer"] = r"""
  ██████╗ ██████╗ ███╗   ███╗██████╗ ██╗██╗      █████╗ ███╗   ██╗██████╗  ██████╗ 
@@ -199,15 +201,15 @@ compilling["computer"] = r"""
  ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═════╝  ╚═════╝ 
 """
 
-compilling["edge]"] = r"""
-▄█▄    ████▄ █▀▄▀█ █ ▄▄  ▄█ █    ██      ▄   ██▄   ████▄
-█▀ ▀▄  █   █ █ █ █ █   █ ██ █    █ █      █  █  █  █   █
-█   ▀  █   █ █ ▄ █ █▀▀▀  ██ █    █▄▄█ ██   █ █   █ █   █
-█▄  ▄▀ ▀████ █   █ █     ▐█ ███▄ █  █ █ █  █ █  █  ▀████
-▀███▀           █   █     ▐     ▀   █ █  █ █ ███▀       
-               ▀     ▀             █  █   ██            
-                                  ▀                     
-"""
+# compilling["edge]"] = r"""
+# ▄█▄    ████▄ █▀▄▀█ █ ▄▄  ▄█ █    ██      ▄   ██▄   ████▄
+# █▀ ▀▄  █   █ █ █ █ █   █ ██ █    █ █      █  █  █  █   █
+# █   ▀  █   █ █ ▄ █ █▀▀▀  ██ █    █▄▄█ ██   █ █   █ █   █
+# █▄  ▄▀ ▀████ █   █ █     ▐█ ███▄ █  █ █ █  █ █  █  ▀████
+# ▀███▀           █   █     ▐     ▀   █ █  █ █ ███▀       
+#                ▀     ▀             █  █   ██            
+#                                   ▀                     
+# """
 
 success: Dict[str, str] = {}
 
@@ -221,46 +223,46 @@ success["success"] = r"""
 ╚══════╝ ╚═════╝  ╚═════╝╚══════╝╚══════╝╚══════╝ ╚═════╝ 
 """
 
-success["success3"] = r"""
-  ██████  █    ██  ▄████▄  ▓█████   ██████   ██████  ▒█████  
-▒██    ▒  ██  ▓██▒▒██▀ ▀█  ▓█   ▀ ▒██    ▒ ▒██    ▒ ▒██▒  ██▒
-░ ▓██▄   ▓██  ▒██░▒▓█    ▄ ▒███   ░ ▓██▄   ░ ▓██▄   ▒██░  ██▒
-  ▒   ██▒▓▓█  ░██░▒▓▓▄ ▄██▒▒▓█  ▄   ▒   ██▒  ▒   ██▒▒██   ██░
-▒██████▒▒▒▒█████▓ ▒ ▓███▀ ░░▒████▒▒██████▒▒▒██████▒▒░ ████▓▒░
-▒ ▒▓▒ ▒ ░░▒▓▒ ▒ ▒ ░ ░▒ ▒  ░░░ ▒░ ░▒ ▒▓▒ ▒ ░▒ ▒▓▒ ▒ ░░ ▒░▒░▒░ 
-░ ░▒  ░ ░░░▒░ ░ ░   ░  ▒    ░ ░  ░░ ░▒  ░ ░░ ░▒  ░ ░  ░ ▒ ▒░ 
-░  ░  ░   ░░░ ░ ░ ░           ░   ░  ░  ░  ░  ░  ░  ░ ░ ░ ▒  
-      ░     ░     ░ ░         ░  ░      ░        ░      ░ ░  
-                  ░                                          
-"""
+# success["success3"] = r"""
+#   ██████  █    ██  ▄████▄  ▓█████   ██████   ██████  ▒█████  
+# ▒██    ▒  ██  ▓██▒▒██▀ ▀█  ▓█   ▀ ▒██    ▒ ▒██    ▒ ▒██▒  ██▒
+# ░ ▓██▄   ▓██  ▒██░▒▓█    ▄ ▒███   ░ ▓██▄   ░ ▓██▄   ▒██░  ██▒
+#   ▒   ██▒▓▓█  ░██░▒▓▓▄ ▄██▒▒▓█  ▄   ▒   ██▒  ▒   ██▒▒██   ██░
+# ▒██████▒▒▒▒█████▓ ▒ ▓███▀ ░░▒████▒▒██████▒▒▒██████▒▒░ ████▓▒░
+# ▒ ▒▓▒ ▒ ░░▒▓▒ ▒ ▒ ░ ░▒ ▒  ░░░ ▒░ ░▒ ▒▓▒ ▒ ░▒ ▒▓▒ ▒ ░░ ▒░▒░▒░ 
+# ░ ░▒  ░ ░░░▒░ ░ ░   ░  ▒    ░ ░  ░░ ░▒  ░ ░░ ░▒  ░ ░  ░ ▒ ▒░ 
+# ░  ░  ░   ░░░ ░ ░ ░           ░   ░  ░  ░  ░  ░  ░  ░ ░ ░ ▒  
+#       ░     ░     ░ ░         ░  ░      ░        ░      ░ ░  
+#                   ░                                          
+# """
 
-success["success4"] = r"""
-  █████████                                                       
- ███░░░░░███                                                      
-░███    ░░░  █████ ████  ██████   ██████   █████   █████   ██████ 
-░░█████████ ░░███ ░███  ███░░███ ███░░███ ███░░   ███░░   ███░░███
- ░░░░░░░░███ ░███ ░███ ░███ ░░░ ░███████ ░░█████ ░░█████ ░███ ░███
- ███    ░███ ░███ ░███ ░███  ███░███░░░   ░░░░███ ░░░░███░███ ░███
-░░█████████  ░░████████░░██████ ░░██████  ██████  ██████ ░░██████ 
- ░░░░░░░░░    ░░░░░░░░  ░░░░░░   ░░░░░░  ░░░░░░  ░░░░░░   ░░░░░░  
-"""
+# success["success4"] = r"""
+#   █████████                                                       
+#  ███░░░░░███                                                      
+# ░███    ░░░  █████ ████  ██████   ██████   █████   █████   ██████ 
+# ░░█████████ ░░███ ░███  ███░░███ ███░░███ ███░░   ███░░   ███░░███
+#  ░░░░░░░░███ ░███ ░███ ░███ ░░░ ░███████ ░░█████ ░░█████ ░███ ░███
+#  ███    ░███ ░███ ░███ ░███  ███░███░░░   ░░░░███ ░░░░███░███ ░███
+# ░░█████████  ░░████████░░██████ ░░██████  ██████  ██████ ░░██████ 
+#  ░░░░░░░░░    ░░░░░░░░  ░░░░░░   ░░░░░░  ░░░░░░  ░░░░░░   ░░░░░░  
+# """
 
-success["success5"] = r"""
-.▄▄ · ▄• ▄▌ ▄▄· ▄▄▄ ..▄▄ · .▄▄ ·       
-▐█ ▀. █▪██▌▐█ ▌▪▀▄.▀·▐█ ▀. ▐█ ▀. ▪     
-▄▀▀▀█▄█▌▐█▌██ ▄▄▐▀▀▪▄▄▀▀▀█▄▄▀▀▀█▄ ▄█▀▄ 
-▐█▄▪▐█▐█▄█▌▐███▌▐█▄▄▌▐█▄▪▐█▐█▄▪▐█▐█▌.▐▌
- ▀▀▀▀  ▀▀▀ ·▀▀▀  ▀▀▀  ▀▀▀▀  ▀▀▀▀  ▀█▄▀▪
-"""
+# success["success5"] = r"""
+# .▄▄ · ▄• ▄▌ ▄▄· ▄▄▄ ..▄▄ · .▄▄ ·       
+# ▐█ ▀. █▪██▌▐█ ▌▪▀▄.▀·▐█ ▀. ▐█ ▀. ▪     
+# ▄▀▀▀█▄█▌▐█▌██ ▄▄▐▀▀▪▄▄▀▀▀█▄▄▀▀▀█▄ ▄█▀▄ 
+# ▐█▄▪▐█▐█▄█▌▐███▌▐█▄▄▌▐█▄▪▐█▐█▄▪▐█▐█▌.▐▌
+#  ▀▀▀▀  ▀▀▀ ·▀▀▀  ▀▀▀  ▀▀▀▀  ▀▀▀▀  ▀█▄▀▪
+# """
 
-success["success6"] = r"""
-   ▄▄▄▄▄   ▄   ▄█▄    ▄███▄     ▄▄▄▄▄    ▄▄▄▄▄   ████▄
-  █     ▀▄  █  █▀ ▀▄  █▀   ▀   █     ▀▄ █     ▀▄ █   █
-▄  ▀▀▀▀▄ █   █ █   ▀  ██▄▄   ▄  ▀▀▀▀▄ ▄  ▀▀▀▀▄   █   █
- ▀▄▄▄▄▀  █   █ █▄  ▄▀ █▄   ▄▀ ▀▄▄▄▄▀   ▀▄▄▄▄▀    ▀████
-         █▄ ▄█ ▀███▀  ▀███▀                           
-          ▀▀▀                                         
-"""
+# success["success6"] = r"""
+#    ▄▄▄▄▄   ▄   ▄█▄    ▄███▄     ▄▄▄▄▄    ▄▄▄▄▄   ████▄
+#   █     ▀▄  █  █▀ ▀▄  █▀   ▀   █     ▀▄ █     ▀▄ █   █
+# ▄  ▀▀▀▀▄ █   █ █   ▀  ██▄▄   ▄  ▀▀▀▀▄ ▄  ▀▀▀▀▄   █   █
+#  ▀▄▄▄▄▀  █   █ █▄  ▄▀ █▄   ▄▀ ▀▄▄▄▄▀   ▀▄▄▄▄▀    ▀████
+#          █▄ ▄█ ▀███▀  ▀███▀                           
+#           ▀▀▀                                         
+# """
 
 # --------------------------------------------------------------
 
@@ -294,7 +296,6 @@ __.._,-" .-"'"")  /' ,' _          \ |  /"-.`j""``
   .'_.-'"     / .("-'-"":\        ._)|_(__. "'    
  ;.'         /-'---"".--"'       /,_,^-._ .)      
  `:=.__.,itz `---._.;'
-
 """
 
 images["batman"] = r"""
@@ -647,14 +648,6 @@ Como deve ser
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⣤⣿⣛⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣯⣿⣷⣿⣿⡿⢟⣿⡟⣰⣾⠋⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⣠⣴⡶⣫⣽⢿⣯⣽⣿⣿⣿⣿⠿⠛⠁⢈⣹⣿⣿⣿⣿⣿⣿⣿⠿⠿⠿⠿⠿⠿⣤⣴⣿⠛⢰⣿⠇⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⣰⣿⣿⣼⣟⣽⣼⣿⣿⣿⣿⣯⣷⢍⣣⣶⣿⣿⣿⣿⣿⣿⣿⠟⠁⠀⠀⠀⠀⠀⢸⣿⣿⡟⠀⣧⣿⠀⡀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⣴⣼⣿⣿⣿⣿⣿⣿⡛⠋⠛⣿⡿⢛⣿⣿⣿⣿⣿⣿⣿⡿⠟⠋⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣇⠰⣿⣿⠀⢷⢷⠀⠀⠀⠀
-⠀⠀⠀⢀⣿⡿⢿⣿⣿⡿⠋⠉⠀⢠⣴⣫⣼⣿⣿⣿⣿⣿⣿⠟⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⡆⣿⣟⢷⣞⢂⣀⠀⠀⠀
-⠀⣠⣴⡿⠉⠀⣿⣿⣿⡗⠀⣴⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡄⣿⣿⣿⣿⣿⣅⢸⣿⡳⣿⣿⣷⣤⠀⠀
-⣰⢫⡾⠁⠀⣼⣿⣿⣿⣤⣾⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡼⢸⣿⣿⣿⣿⣿⣿⣿⣿⣷⡌⠻⣝⣿⣧⡀
-⣱⣿⠁⠂⣰⣿⣿⣿⣿⣿⣿⣿⣼⣿⣿⣿⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⣡⣿⡿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣅⠈⠻⣿⣷
-⣿⠇⠀⢠⣿⣿⢿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⣱⣟⡿⣽⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⡄⠈⠿
-⣿⠀⢀⣿⣿⣿⣴⣟⡻⣮⣿⣿⣿⣿⣋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡼⣱⣿⣿⢣⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀
-⣿⠀⠘⢱⣿⠿⣿⣿⣿⣍⣻⣿⣿⣿⣿⣽⣗⡂⠤⠀⠀⠀⠀⠀⠀⢀⣤⠴⣺⣽⣾⣿⣿⠏⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 """
 
 
@@ -697,9 +690,6 @@ Banana banana bananáaaaaa!
 images["slayer"] = r"""
 Não há atalhos, apenas trabalho duro.
 Treine duro e seja paciente. Vai valer a pena.
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ⠏⠁⠈⠙⠛⢿⣿⣿⣿⣿⣿⣿⣿⡟⠀⠈⠻⣿⣿⣿⣿⣿⠟⢡⡿⢿⣿⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ⠀⠀⠀⠀⢀⣎⣏⡏⣟⠛⠿⠿⡟⢁⣀⣀⣠⡼⠟⠛⠉⠀⠀⠉⠐⠋⠀⠀⠛⠋⠭⠾⢿⣿⣿⠟⣫⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ⣦⣶⡀⠀⠀⠀⠉⠛⣿⣿⣷⣿⣇⣠⠟⠋⠁⠀⠀⢀⡄⠀⠀⠀⠀⠀⠀⠀⣀⣠⡤⠴⠒⠋⠁⣰⡿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
@@ -721,7 +711,6 @@ Treine duro e seja paciente. Vai valer a pena.
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⣀⠀⠀⠈⠀⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣤⣶⠶⠖⣶⠁⠀
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣛⡦⠀⣀⣨⠟⠲⠤⠤⠬⣷⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣴⠟⢁⡀⠀⣼⠇⠀⠀
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⣶⣬⣿⣿⣡⣵⣖⣤⣀⣤⣈⣙⣶⣦⣤⣀⣀⣠⡤⠶⠟⠋⠁⠀⠀⠉⢷⠉⠀⠀⠀
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣒⠒⠖⠀⠀⠀⠀⠉⠀⢄⣀⣴
 """
 
 images["jujutsu"] = r"""
@@ -1692,8 +1681,8 @@ class Flags:
     percent = Flag().name("Percentual").char("P").values(["0", "1"]).text("Mostra valores em porcentagem").location("left")
     admin = Flag().name("Admin").char("A").values(["0", "1"]).text("Mostra todas as missões e grupos").location("left")
     fortune = Flag().name("Fortuna").char("F").values(["0", "1"]).text("Mostra mensagem aleatórias na saída").location("left")
-    random = Flag().name("Sucesso").char("S").values(["1", "0"]).text("Mostra os personagens no sucesso da execução").location("left")
-    config = Flag().name("Conf").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
+    random = Flag().name("Imagens").char("I").values(["1", "0"]).text("Mostra os imagens no sucesso da execução").location("left")
+    config = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
     # xpbar = Flag().name("XpBar").char("x").values(["1", "0"]).text("Mostra a barra de experiência").location("top")
     inventory = Flag().name("Inventário").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
 
@@ -3330,27 +3319,62 @@ class Game:
 class Down:
     fnprint = print
 
-    ts_draft = (r'let _cin_ : string[] = [];' + '\n'
-                r'try { _cin_ = require("fs").readFileSync(0).toString().split(/\r?\n/); } catch(e){}' + '\n'
-                r'let input = () : string => _cin_.length === 0 ? "" : _cin_.shift()!;' + '\n'
-                r'let write = (text: any, end:string="\n")=> process.stdout.write("" + text + end);' + '\n'
-                r'export {};' + '\n')
+    ts_draft = r"""
+let _cin_ : string[] = [];
+try { _cin_ = require("fs").readFileSync(0).toString().split(/\r?\n/); } catch(e){}
+let input = () : string => _cin_.length === 0 ? "" : _cin_.shift()!;
+let write = (text: any, end:string="\n")=> process.stdout.write("" + text + end);
+export {};
 
-    js_draft = (r'let __lines = require("fs").readFileSync(0).toString().split("\n");' + '\n'
-                r'let input = () => __lines.length === 0 ? "" : __lines.shift();' + '\n'
-                r'let write = (text, end="\n") => process.stdout.write("" + text + end);') + '\n'
+write("qxcode");
+"""[1:]
 
-    c_draft = '#include <stdio.h>\n\nint main() {\n    return 0;\n}\n\n'
-    cpp_draft = '#include <iostream>\n\nint main() {\n}\n\n'
+    js_draft = r"""
+let __lines = require("fs").readFileSync(0).toString().split("\n");
+let input = () => __lines.length === 0 ? "" : __lines.shift();
+let write = (text, end="\n") => process.stdout.write("" + text + end);
 
-    java_draft = r"""public class Draft {
+write("qxcode");
+"""[1:]
+
+    c_draft = r"""
+#include <stdio.h>
+
+int main() {
+    puts("qxcode");
+    return 0;
+}
+
+"""[1:]
+    
+    cpp_draft = r"""
+#include <iostream>
+
+int main() {
+    std::cout << "qxcode\n";
+}
+
+"""[1:]
+    
+    java_draft = r"""
+public class draft {
     public static void main(String args[]) {
         System.out.println("qxcode");
     }
 }
-"""
 
-    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft, 'java': java_draft}
+"""[1:]
+
+    go_draft = r"""
+package main
+
+func main() {
+    fmt.Println("qxcode")
+}
+
+"""[1:]
+
+    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft, 'java': java_draft, 'go': go_draft}
     # def __init__(self):
     #     self.drafts = {}
     #     self.drafts['c'] = Down.c_draft
@@ -5125,6 +5149,8 @@ class Solver:
             self.__prepare_c()
         elif path.endswith(".cpp"):
             self.__prepare_cpp()
+        elif path.endswith(".go"):
+            self.__prepare_go()
         elif path.endswith(".sql"):
             self.__prepare_sql()
         else:
@@ -5151,6 +5177,11 @@ class Solver:
         check_tool("node")
         solver = self.path_list[0]
         self.__executable = "node " + solver
+
+    def __prepare_go(self):
+        check_tool("go")
+        solver = self.path_list[0]
+        self.__executable = "go run " + solver
 
     def __prepare_sql(self):
         check_tool("sqlite3")
@@ -5492,7 +5523,11 @@ class Free:
             term_print(Sentence().addf("y", "Pressione (Enter) para executar novamente ou (q Enter) para sair: "), end="")
             valor = input()
             if valor != "q":
+                if to_clear:
+                    Runner.clear_screen()
                 return True
+        if to_clear:
+            Runner.clear_screen()
         return False
 
 
@@ -6136,21 +6171,16 @@ class Play:
         up = "w"
         down_task = "b"
         select_task = "e"
-        # test_task = "t"
         ajuda = "h"
         expand = ">"
         collapse = "<"
-        set_root = "D"
+        set_root_dir = "D"
         set_lang = "L"
-        open_link = "g"
+        github_open = "g"
         quit = "q"
-        reset = "U"
-        mass_toggle = "B"
         toggle_space = " "
         toggle_enter = "\n"
-        # open_draft = "r"
-        # open_readme = "l"
-        open_dir= "p"
+        project_open= "p"
         cores = "C"
         bordas = "B"
 
@@ -6190,14 +6220,14 @@ class Play:
         ]
 
         self.help_extra: List[Token] = [
-            RToken("C", f"Github[{self.Key.open_link}]"),
+            RToken("C", f"Github[{self.Key.github_open}]"),
             RToken("C", f"Baixar[{self.Key.down_task}]"),
             RToken("G", f"Escolher[{self.Key.select_task}]"),
-            # RToken("Y", f"Testar[{self.Key.test_task}]"),
             RToken("M", "Manipular[wasd]"),
+            RToken("M", f"Pasta[{self.Key.project_open}]"),
+            # RToken("Y", f"Testar[{self.Key.test_task}]"),
             # RToken("M", f"Rascunho[{self.Key.open_draft}]"),
             # RToken("M", f"Leitura[{self.Key.open_readme}]"),
-            RToken("M", f"Pasta[{self.Key.open_dir}]"),
             # RToken("M", "Marcar[enter]"),
             # RToken("M", "Graduar[0-9]"),
         ]
@@ -6280,12 +6310,11 @@ class Play:
         self.fman.add_input(
             Floating()
             .put_text("")
-            .put_text("Escolha a extensão")
-            .put_text("default para os rascunhos")
+            .put_text("Escolha a extensão default para os rascunhos")
             .put_text("")
             .put_text("Selecione e tecle enter.")
             .put_text("")
-            .set_options(["c", "cpp", "py", "ts", "js", "java", "hs"])
+            .set_options(["c", "cpp", "py", "ts", "js", "java", "go"])
             .answer(back)
         )
 
@@ -6298,7 +6327,7 @@ class Play:
                 .put_text("O diretório de download padrão")
                 .put_text("do tko ainda não foi definido.")
                 .put_text("")
-                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + self.Key.set_root, "g"))
+                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + self.Key.set_root_dir, "g"))
                 .put_text("para configurá-lo.")
                 .put_text("")
             )
@@ -6454,17 +6483,11 @@ class Play:
         path = os.path.join(rep_dir, task.key)
         run = Run([path], None, Param.Basic())
         run.set_lang(self.rep.get_lang())
-        if test_mode:
-            if Flags.random.is_true():
-                run.set_curses(True, Success.RANDOM)
-            else:
-                run.set_curses(True, Success.FIXED)
-
-            if len(self.rep.get_tasks()) == 0:
-                run.set_first_run()
+        if Flags.random.is_true():
+            run.set_curses(True, Success.RANDOM)
         else:
-            run.set_curses(True)
-            run.set_curses_select_mode(True)
+            run.set_curses(True, Success.FIXED)
+        run.set_curses_select_mode(True)
         run.build_wdir()
         if not run.wdir.has_solver():
             msg = Floating().error()
@@ -6630,25 +6653,25 @@ class Play:
 
     def show_top_bar(self, frame: Frame):
         help = Sentence()
-        for s in self.build_list_sentence(self.help_basic):
-            help.add(s).add(" ")
-
-        flags = Sentence()
-        for f in self.flagsman.top:
-            flags.add(Style.get_flag_sentence(f)).add(" ")
-        xpbar = Sentence("")
-        # if Flags.xpbar.is_true():
+        for i, s in enumerate(self.build_list_sentence(self.help_basic)):
+            if i > 0:
+                help.add(" ")
+            help.add(s)
         
+        flags = Sentence()
+        for i, f in enumerate(self.flagsman.top):
+            if i > 0:
+                flags.add(" ")
+            flags.add(Style.get_flag_sentence(f))
 
         _, cols = Fmt.get_size()
         if cols > self.wrap_size:
-            frame.write(0, 0, help.add(self.make_xp_button(32)).add(flags).center(frame.get_dx()))
+            align = (flags.len() - help.len()) * " "
+            frame.write(0, 0, Sentence(align).add(help).add(" ").add(self.make_xp_button(32)).add(flags).center(frame.get_dx()))
         else:
-            y = 0
-            # if Flags.xpbar.is_true():
-            frame.write(y, 0, self.make_xp_button(46).center(frame.get_dx()))
-            y += 1
-            frame.write(y, 0, help.add(flags).center(frame.get_dx()))
+            line_2 = help.add(" ").add(flags)
+            frame.write(0, 0, self.make_xp_button(line_2.len()).center(frame.get_dx()))
+            frame.write(1, 0, line_2.center(frame.get_dx()))
             # y += 1
             # frame.write(y, 0, .center(frame.get_dx()))
 
@@ -6662,7 +6685,7 @@ class Play:
         _help.put_sentence(Sentence() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_char()}]") + " - Mostrar quanto de experiência cada atividade fornece")
         _help.put_sentence(Sentence() + f"  Percentual " + RToken("r", f"[{Flags.percent.get_char()}]") + " - Mostrar os valores em percentual")
         _help.put_sentence(Sentence() + f"  ModoAdmin " + RToken("r", f"Shift + [A]") + " - Liberar acesso a todas as missões" )
-        _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{self.Key.set_root}]") + " - Mudar a pasta padrão de download do tko" )
+        _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{self.Key.set_root_dir}]") + " - Mudar a pasta padrão de download do tko" )
         _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"Shift + [{self.Key.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
 
 
@@ -6682,7 +6705,7 @@ class Play:
                             + " - Marcar (" + Token(symbols.success.text, "g") + "10)"
                             + " ou Desmarcar (" + Token(symbols.failure.text, "r") + "0)")
         _help.put_sentence(Sentence() + "          ou " + RToken("g", "[1-9]") + "    - Definir uma nota parcial")
-        _help.put_sentence(Sentence() + "  Github " + RToken("r", f"[{self.Key.open_link}]") + " - Abrir tarefa em uma aba do browser")
+        _help.put_sentence(Sentence() + "  Github " + RToken("r", f"[{self.Key.github_open}]") + " - Abrir tarefa em uma aba do browser")
         _help.put_sentence(Sentence() + "  Baixar " + RToken("r", f"[{self.Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
         # _help.put_sentence(Sentence() + "  Testar " + RToken("r", f"[{self.Key.test_task}]") + " - Testar tarefa de código que você baixou")
         _help.put_sentence(Sentence() + "Escolher " + RToken("r", f"[{self.Key.select_task}]") + " - Escolher a tarefa de código que você baixou")
@@ -6910,15 +6933,15 @@ class Play:
 
         # add_str(self.Key.toggle_enter, self.tree.toggle)
         # add_str(self.Key.toggle_space, self.tree.toggle)
-        add_str(self.Key.open_link, self.open_link)
+        add_str(self.Key.github_open, self.open_link)
         add_str(self.Key.set_lang, lambda: self.set_language(False))
-        add_str(self.Key.set_root, lambda: self.set_rootdir(False))
+        add_str(self.Key.set_root_dir, lambda: self.set_rootdir(False))
         add_str(self.Key.down_task, self.down_task)
         add_str(self.Key.select_task, lambda: self.test_task(False))
         # add_str(self.Key.test_task, lambda: self.test_task(True))
         # add_str(self.Key.open_draft, lambda: self.open_code(open_drafts = True, open_readme = False))
         # add_str(self.Key.open_readme, lambda: self.open_code(open_drafts = False, open_readme = True))
-        add_str(self.Key.open_dir, lambda: self.open_code(open_drafts = False, open_readme = False, open_dir=True))
+        add_str(self.Key.project_open, lambda: self.open_code(open_drafts = False, open_readme = False, open_dir=True))
         add_str(self.Key.cores, self.geral.toggle_color)
         add_str(self.Key.bordas, self.geral.toggle_nerdfonts)
 

@@ -39,21 +39,16 @@ class Play:
         up = "w"
         down_task = "b"
         select_task = "e"
-        # test_task = "t"
         ajuda = "h"
         expand = ">"
         collapse = "<"
-        set_root = "D"
+        set_root_dir = "D"
         set_lang = "L"
-        open_link = "g"
+        github_open = "g"
         quit = "q"
-        reset = "U"
-        mass_toggle = "B"
         toggle_space = " "
         toggle_enter = "\n"
-        # open_draft = "r"
-        # open_readme = "l"
-        open_dir= "p"
+        project_open= "p"
         cores = "C"
         bordas = "B"
 
@@ -93,14 +88,14 @@ class Play:
         ]
 
         self.help_extra: List[Token] = [
-            RToken("C", f"Github[{self.Key.open_link}]"),
+            RToken("C", f"Github[{self.Key.github_open}]"),
             RToken("C", f"Baixar[{self.Key.down_task}]"),
             RToken("G", f"Escolher[{self.Key.select_task}]"),
-            # RToken("Y", f"Testar[{self.Key.test_task}]"),
             RToken("M", "Manipular[wasd]"),
+            RToken("M", f"Pasta[{self.Key.project_open}]"),
+            # RToken("Y", f"Testar[{self.Key.test_task}]"),
             # RToken("M", f"Rascunho[{self.Key.open_draft}]"),
             # RToken("M", f"Leitura[{self.Key.open_readme}]"),
-            RToken("M", f"Pasta[{self.Key.open_dir}]"),
             # RToken("M", "Marcar[enter]"),
             # RToken("M", "Graduar[0-9]"),
         ]
@@ -183,12 +178,11 @@ class Play:
         self.fman.add_input(
             Floating()
             .put_text("")
-            .put_text("Escolha a extensão")
-            .put_text("default para os rascunhos")
+            .put_text("Escolha a extensão default para os rascunhos")
             .put_text("")
             .put_text("Selecione e tecle enter.")
             .put_text("")
-            .set_options(["c", "cpp", "py", "ts", "js", "java", "hs"])
+            .set_options(["c", "cpp", "py", "ts", "js", "java", "go"])
             .answer(back)
         )
 
@@ -201,7 +195,7 @@ class Play:
                 .put_text("O diretório de download padrão")
                 .put_text("do tko ainda não foi definido.")
                 .put_text("")
-                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + self.Key.set_root, "g"))
+                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + self.Key.set_root_dir, "g"))
                 .put_text("para configurá-lo.")
                 .put_text("")
             )
@@ -357,17 +351,11 @@ class Play:
         path = os.path.join(rep_dir, task.key)
         run = Run([path], None, Param.Basic())
         run.set_lang(self.rep.get_lang())
-        if test_mode:
-            if Flags.random.is_true():
-                run.set_curses(True, Success.RANDOM)
-            else:
-                run.set_curses(True, Success.FIXED)
-
-            if len(self.rep.get_tasks()) == 0:
-                run.set_first_run()
+        if Flags.random.is_true():
+            run.set_curses(True, Success.RANDOM)
         else:
-            run.set_curses(True)
-            run.set_curses_select_mode(True)
+            run.set_curses(True, Success.FIXED)
+        run.set_curses_select_mode(True)
         run.build_wdir()
         if not run.wdir.has_solver():
             msg = Floating().error()
@@ -533,25 +521,25 @@ class Play:
 
     def show_top_bar(self, frame: Frame):
         help = Sentence()
-        for s in self.build_list_sentence(self.help_basic):
-            help.add(s).add(" ")
-
-        flags = Sentence()
-        for f in self.flagsman.top:
-            flags.add(Style.get_flag_sentence(f)).add(" ")
-        xpbar = Sentence("")
-        # if Flags.xpbar.is_true():
+        for i, s in enumerate(self.build_list_sentence(self.help_basic)):
+            if i > 0:
+                help.add(" ")
+            help.add(s)
         
+        flags = Sentence()
+        for i, f in enumerate(self.flagsman.top):
+            if i > 0:
+                flags.add(" ")
+            flags.add(Style.get_flag_sentence(f))
 
         _, cols = Fmt.get_size()
         if cols > self.wrap_size:
-            frame.write(0, 0, help.add(self.make_xp_button(32)).add(flags).center(frame.get_dx()))
+            align = (flags.len() - help.len()) * " "
+            frame.write(0, 0, Sentence(align).add(help).add(" ").add(self.make_xp_button(32)).add(flags).center(frame.get_dx()))
         else:
-            y = 0
-            # if Flags.xpbar.is_true():
-            frame.write(y, 0, self.make_xp_button(46).center(frame.get_dx()))
-            y += 1
-            frame.write(y, 0, help.add(flags).center(frame.get_dx()))
+            line_2 = help.add(" ").add(flags)
+            frame.write(0, 0, self.make_xp_button(line_2.len()).center(frame.get_dx()))
+            frame.write(1, 0, line_2.center(frame.get_dx()))
             # y += 1
             # frame.write(y, 0, .center(frame.get_dx()))
 
@@ -565,7 +553,7 @@ class Play:
         _help.put_sentence(Sentence() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_char()}]") + " - Mostrar quanto de experiência cada atividade fornece")
         _help.put_sentence(Sentence() + f"  Percentual " + RToken("r", f"[{Flags.percent.get_char()}]") + " - Mostrar os valores em percentual")
         _help.put_sentence(Sentence() + f"  ModoAdmin " + RToken("r", f"Shift + [A]") + " - Liberar acesso a todas as missões" )
-        _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{self.Key.set_root}]") + " - Mudar a pasta padrão de download do tko" )
+        _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{self.Key.set_root_dir}]") + " - Mudar a pasta padrão de download do tko" )
         _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"Shift + [{self.Key.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
 
 
@@ -585,7 +573,7 @@ class Play:
                             + " - Marcar (" + Token(symbols.success.text, "g") + "10)"
                             + " ou Desmarcar (" + Token(symbols.failure.text, "r") + "0)")
         _help.put_sentence(Sentence() + "          ou " + RToken("g", "[1-9]") + "    - Definir uma nota parcial")
-        _help.put_sentence(Sentence() + "  Github " + RToken("r", f"[{self.Key.open_link}]") + " - Abrir tarefa em uma aba do browser")
+        _help.put_sentence(Sentence() + "  Github " + RToken("r", f"[{self.Key.github_open}]") + " - Abrir tarefa em uma aba do browser")
         _help.put_sentence(Sentence() + "  Baixar " + RToken("r", f"[{self.Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
         # _help.put_sentence(Sentence() + "  Testar " + RToken("r", f"[{self.Key.test_task}]") + " - Testar tarefa de código que você baixou")
         _help.put_sentence(Sentence() + "Escolher " + RToken("r", f"[{self.Key.select_task}]") + " - Escolher a tarefa de código que você baixou")
@@ -813,15 +801,15 @@ class Play:
 
         # add_str(self.Key.toggle_enter, self.tree.toggle)
         # add_str(self.Key.toggle_space, self.tree.toggle)
-        add_str(self.Key.open_link, self.open_link)
+        add_str(self.Key.github_open, self.open_link)
         add_str(self.Key.set_lang, lambda: self.set_language(False))
-        add_str(self.Key.set_root, lambda: self.set_rootdir(False))
+        add_str(self.Key.set_root_dir, lambda: self.set_rootdir(False))
         add_str(self.Key.down_task, self.down_task)
         add_str(self.Key.select_task, lambda: self.test_task(False))
         # add_str(self.Key.test_task, lambda: self.test_task(True))
         # add_str(self.Key.open_draft, lambda: self.open_code(open_drafts = True, open_readme = False))
         # add_str(self.Key.open_readme, lambda: self.open_code(open_drafts = False, open_readme = True))
-        add_str(self.Key.open_dir, lambda: self.open_code(open_drafts = False, open_readme = False, open_dir=True))
+        add_str(self.Key.project_open, lambda: self.open_code(open_drafts = False, open_readme = False, open_dir=True))
         add_str(self.Key.cores, self.geral.toggle_color)
         add_str(self.Key.bordas, self.geral.toggle_nerdfonts)
 

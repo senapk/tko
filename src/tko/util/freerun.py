@@ -43,5 +43,9 @@ class Free:
             term_print(Sentence().addf("y", "Pressione (Enter) para executar novamente ou (q Enter) para sair: "), end="")
             valor = input()
             if valor != "q":
+                if to_clear:
+                    Runner.clear_screen()
                 return True
+        if to_clear:
+            Runner.clear_screen()
         return False

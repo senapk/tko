@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.17.2
+  - add: added golang support
+  - add: improved drafts for all languages
 - 0.17.0
   - fix: compilling error on play
   - fix: missing entries on keys

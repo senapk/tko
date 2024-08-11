@@ -63,6 +63,8 @@ class Solver:
             self.__prepare_c()
         elif path.endswith(".cpp"):
             self.__prepare_cpp()
+        elif path.endswith(".go"):
+            self.__prepare_go()
         elif path.endswith(".sql"):
             self.__prepare_sql()
         else:
@@ -89,6 +91,11 @@ class Solver:
         check_tool("node")
         solver = self.path_list[0]
         self.__executable = "node " + solver
+
+    def __prepare_go(self):
+        check_tool("go")
+        solver = self.path_list[0]
+        self.__executable = "go run " + solver
 
     def __prepare_sql(self):
         check_tool("sqlite3")
