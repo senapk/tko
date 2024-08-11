@@ -1,3 +1,4 @@
+
 # Instalação no Codespace
 
 ## Criando um Codespace
@@ -13,7 +14,12 @@
 Depois de criar o codespace, abra o terminal e execute o comando:
 
 ```bash
+
 pip install tko
+
+#depois de instalado, defina a pasta atual como padrão para download
+
+tko config --root .
 ```
 
 ## Salvando os dados no repositório
