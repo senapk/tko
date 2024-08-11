@@ -865,7 +865,7 @@ class Play:
     def check_lang_in_text_mode(self):
         lang = self.rep.get_lang()
         if lang == "":
-            options = ["c", "cpp", "py", "ts", "js", "java", "hs"]
+            options = ["c", "cpp", "py", "ts", "js", "java", "go"]
             print("\nLinguagem padrão ainda não foi definida.\n")
             while True:
                 print("Escolha entre as opções a seguir ", end="")
