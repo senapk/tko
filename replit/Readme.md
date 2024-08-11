@@ -65,5 +65,5 @@ Se não existir, coloque esse conteúdo no arquivo. Se já existir, adicione os 
 Após isso, salve o arquivo, e execute a seguinte linha no terminal.
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/senapk/tko/master/replit/py/update.sh | bash
+curl -sSL https://raw.githubusercontent.com/senapk/tko/master/replit/any/update.sh | bash
 ```
