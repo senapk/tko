@@ -67,3 +67,6 @@ Após isso, salve o arquivo, e execute a seguinte linha no terminal.
 ```bash
 curl -sSL https://raw.githubusercontent.com/senapk/tko/master/replit/any/update.sh | bash
 ```
+
+Execute o comando:
+

@@ -32,8 +32,3 @@ if [ ! -f ${config_file} ]; then
 fi
 
 tko config --root . > /dev/null 2>&1
-
-langdef=$(cat /home/runner/${REPL_SLUG}/.bin/langdef.cfg)
-if grep -q '"langdef": ""' ${config_file}; then
-    tko config --lang ${langdef} > /dev/null 2>&1
-fi
