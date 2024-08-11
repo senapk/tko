@@ -1,5 +1,10 @@
 # Changelog
 
+- 0.17.0
+  - fix: compilling error on play
+  - fix: missing entries on keys
+  - add: open folder on replit and pc using code
+  - add: geral settings with editor option
 - 0.16.0
   - add: select main file in play
   - add: loop in exec mode

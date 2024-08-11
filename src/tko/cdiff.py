@@ -12,6 +12,7 @@ from .play.floating import Floating
 from .play.floating_manager import FloatingManager
 from .play.images import images, compilling, success, select
 from .util.runner import Runner
+from .util.freerun import Free
 from .play.style import Style
 from .play.flags import Flags
 import random
@@ -64,7 +65,7 @@ class CDiff:
         self.exit = True
 
     def end_processing(self):
-        return len(self.unit_list) == 0
+        return (len(self.unit_list) == 0) or self.wdir.get_solver().compile_error
 
     def get_color(self, unit: Unit):
         if unit.result == ExecutionResult.SUCCESS:
@@ -171,13 +172,15 @@ class CDiff:
         unit = self.wdir.get_unit(index)
         return unit
 
-    def draw_top_line(self):
-        # construir mais uma solução
+    def process_one(self):
+        solver = self.wdir.get_solver()
+        if len(self.results_fail) != 0 and solver.compile_error:
+            return
         if len(self.unit_list) > 0 and not self.select_mode:
             index = len(self.results_done) + len(self.results_fail)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
-            unit.result = Execution.run_unit(self.wdir.get_solver(), unit)
+            unit.result = Execution.run_unit(solver, unit)
             symbol = ExecutionResult.get_symbol(unit.result)
             color = self.get_color(unit)
             if unit.result != ExecutionResult.SUCCESS:
@@ -185,6 +188,8 @@ class CDiff:
             else:
                 self.results_done.append((Token(symbol.text, color), index))
 
+    def draw_top_line(self):
+        # construir mais uma solução
         activity_color = "W" if not self.colors else "C"
         solver_color = "M" if not self.colors else "M"
         sources_color = "W" if not self.colors else "Y"
@@ -258,10 +263,14 @@ class CDiff:
             RToken("G", "Sair[q]"),
             RToken("Y", "Executar[e]"),
             RToken("Y", "Testar[t]"),
-            RToken("Y", "Printipal[p]"),
+            RToken("C", "Principal[p]"),
             RToken("C", "Navegar[wasd]"),
-            RToken("M", "MudarVisão[m]")
         ]
+        if self.settings.geral.is_diff_down():
+            tokens.append(RToken("G", "cima╾lado[m]")) 
+        else:
+            tokens.append(RToken("G", "cima╼lado[m]"))
+
         cmds = Sentence()
         for t in tokens:
             color = "W" if not self.colors else t.fmt
@@ -269,7 +278,7 @@ class CDiff:
         lines, cols = Fmt.get_size()
         Fmt.write(lines - 1, 0, cmds.center(cols, Token(" ")))
  
-    def draw_diff(self, unit: Unit):
+    def draw_main(self, unit: Unit):
         lines, cols = Fmt.get_size()
         self.space = lines - 4
         frame = Frame(2, -1).set_inner(self.space, cols - 1).set_border_square()
@@ -278,7 +287,11 @@ class CDiff:
             self.show_success()
             return
         Report.set_terminal_size(cols)
-        if self.param.is_up_down:
+        
+        if self.wdir.get_solver().compile_error:
+            received = self.wdir.get_solver().error_msg
+            line_list = [Sentence().add(line) for line in received.split("\n")]
+        elif self.param.is_up_down:
             line_list = Diff.mount_up_down_diff(unit, curses=True)
         else:
             line_list = Diff.mount_side_by_side_diff(unit, curses=True)
@@ -319,8 +332,9 @@ class CDiff:
 
     def get_solver_names(self):
         return sorted(self.wdir.solvers_names())
-
+    
     def main(self, scr):
+        self.select_mode = True
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
@@ -329,16 +343,19 @@ class CDiff:
                 self.first_loop = False
                 self.load_autoload_warning()
             Fmt.erase()
-            if self.wdir.get_solver().get_executable() == "":
+            if not self.select_mode and self.wdir.get_solver().not_compiled():
                 self.show_compilling()
                 Fmt.refresh()
                 Fmt.erase()
                 self.wdir.get_solver().prepare_exec()
+            if not self.select_mode:
+                self.process_one()
             self.draw_top_line()
             unit = self.get_focused_unit()
             if unit is not None:
-                self.draw_diff(unit)
-                self.draw_scrollbar()
+                self.draw_main(unit)
+                if not self.wdir.get_solver().compile_error:
+                    self.draw_scrollbar()
             else:
                 self.print_centered_image(select, "y")
             
@@ -373,15 +390,18 @@ class CDiff:
                 self.save_settings()
                 self.init = 0
             elif key == ord('e'):
+                self.select_mode = False
                 if self.wdir.is_autoload():
                     self.wdir.autoload()
                     self.wdir.get_solver().set_main(self.get_solver_names()[self.main_file])
-                    self.wdir.get_solver().set_executable("")
-                return lambda: Runner.free_run(self.wdir.get_solver().get_executable)
+
+                return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True)
+
             elif key == ord('p'):
                 self.main_file = (self.main_file + 1) % len(self.get_solver_names())
             elif key == ord('t'):
                 self.select_mode = False
+                self.index = 0
                 if self.wdir.is_autoload():
                     self.wdir.autoload()
                 Fmt.erase()

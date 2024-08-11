@@ -10,6 +10,7 @@ class GeralSettings:
     __langdef = "langdef"
     __lastrep = "lastrep"
     __nerdfonts = "nerdfonts"
+    __editor = "editor"
 
     defaults = {
         __rootdir: "",
@@ -20,6 +21,7 @@ class GeralSettings:
         __langdef: "",
         __lastrep: "", 
         __nerdfonts: "0",
+        __editor: "code"
     }
 
     def __init__(self):
@@ -34,7 +36,17 @@ class GeralSettings:
     def __get(self, key: str) -> Any:
         if key not in self.defaults:
             raise ValueError(f"Key {key} not found in GeralSettings")
-        return self.data.get(key, GeralSettings.defaults[key])
+        if key not in self.data:
+            self.data[key] = GeralSettings.defaults[key]
+        return self.data[key]
+
+
+    def get_editor(self) -> str:
+        return self.__get(self.__editor)
+    
+    def set_editor(self, value: str):
+        self.__set(self.__editor, value)
+        return self
 
     def get_last_rep(self) -> str:
         return self.__get(self.__lastrep)

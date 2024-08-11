@@ -22,7 +22,7 @@ import math
 import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.16.0"
+__version__ = "0.17.0"
 
 
 class GeralSettings:
@@ -34,6 +34,7 @@ class GeralSettings:
     __langdef = "langdef"
     __lastrep = "lastrep"
     __nerdfonts = "nerdfonts"
+    __editor = "editor"
 
     defaults = {
         __rootdir: "",
@@ -44,6 +45,7 @@ class GeralSettings:
         __langdef: "",
         __lastrep: "", 
         __nerdfonts: "0",
+        __editor: "code"
     }
 
     def __init__(self):
@@ -58,7 +60,17 @@ class GeralSettings:
     def __get(self, key: str) -> Any:
         if key not in self.defaults:
             raise ValueError(f"Key {key} not found in GeralSettings")
-        return self.data.get(key, GeralSettings.defaults[key])
+        if key not in self.data:
+            self.data[key] = GeralSettings.defaults[key]
+        return self.data[key]
+
+
+    def get_editor(self) -> str:
+        return self.__get(self.__editor)
+    
+    def set_editor(self, value: str):
+        self.__set(self.__editor, value)
+        return self
 
     def get_last_rep(self) -> str:
         return self.__get(self.__lastrep)
@@ -150,16 +162,17 @@ class GeralSettings:
 
 
 
-select = """
-╔═╗       ╔═╗─┐ ┬┌─┐┌─┐┬ ┬┌┬┐┌─┐┬─┐
-║╣   ───  ║╣ ┌┴┬┘├┤ │  │ │ │ ├─┤├┬┘
-╚═╝       ╚═╝┴ └─└─┘└─┘└─┘ ┴ ┴ ┴┴└─
-╔╦╗       ╔╦╗┌─┐┌─┐┌┬┐┌─┐┬─┐       
- ║   ───   ║ ├┤ └─┐ │ ├─┤├┬┘       
- ╩         ╩ └─┘└─┘ ┴ ┴ ┴┴└─       
-╔═╗       ╔═╗┬─┐┬┌┐┌┌─┐┬┌─┐┌─┐┬    
-╠═╝  ───  ╠═╝├┬┘│││││  │├─┘├─┤│    
-╩         ╩  ┴└─┴┘└┘└─┘┴┴  ┴ ┴┴─┘  
+select = r"""
+  _________         .    .  e -> Executa sem testar          
+ (..       \_    ,  |\  /|  t -> Roda os casos de teste      
+  \       O  \  /|  \ \/ /  p -> Muda o arquivo principal    
+   \______    \/ |   \  /        para problemas de múltiplos 
+      vvvv\    \ |   /  |        arquivos de código fonte    
+      \^^^^  ==   \_/   |   m -> muda o modo diff de vertical
+       `\_   ===    \.  |        para modo diff horizontal   
+       / /\_   \ /      |                                    
+       |/   \_  \|      /        Esquerda e Direita          
+              \________/           muda o caso de teste      
 """
 
 compilling: Dict[str, str] = {}
@@ -1681,7 +1694,7 @@ class Flags:
     fortune = Flag().name("Fortuna").char("F").values(["0", "1"]).text("Mostra mensagem aleatórias na saída").location("left")
     random = Flag().name("Sucesso").char("S").values(["1", "0"]).text("Mostra os personagens no sucesso da execução").location("left")
     config = Flag().name("Conf").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
-    xpbar = Flag().name("XpBar").char("x").values(["1", "0"]).text("Mostra a barra de experiência").location("top")
+    # xpbar = Flag().name("XpBar").char("x").values(["1", "0"]).text("Mostra a barra de experiência").location("top")
     inventory = Flag().name("Inventário").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
 
 class FlagsMan:
@@ -1731,11 +1744,11 @@ class Style:
 
     @staticmethod
     def sharpL():
-        return "" if Style.has_borders() else "▒"
+        return "" if Style.has_borders() else "█"
 
     @staticmethod
     def sharpR():
-        return "" if Style.has_borders() else "▒"
+        return "" if Style.has_borders() else "█"
     
     @staticmethod
     def midL():
@@ -3330,7 +3343,14 @@ class Down:
     c_draft = '#include <stdio.h>\n\nint main() {\n    return 0;\n}\n\n'
     cpp_draft = '#include <iostream>\n\nint main() {\n}\n\n'
 
-    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft}
+    java_draft = r"""public class Draft {
+    public static void main(String args[]) {
+        System.out.println("qxcode");
+    }
+}
+"""
+
+    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft, 'java': java_draft}
     # def __init__(self):
     #     self.drafts = {}
     #     self.drafts['c'] = Down.c_draft
@@ -3656,7 +3676,7 @@ class TaskTree:
 
         focus_color = Style.focus()
         if in_focus:
-            output.addf(focus_color.lower(), "")
+            output.addf(focus_color.lower(), Style.roundR())
         else:
             output.add(" ")
 
@@ -3672,7 +3692,7 @@ class TaskTree:
         output.add(Style.build_bar(title, q.get_percent() / 100, len(title), done, todo, round=False))
 
         if in_focus:
-            output.addf(focus_color.lower(), "")
+            output.addf(focus_color.lower(), Style.roundR())
         else:
             output.add(" ")
 
@@ -3711,7 +3731,7 @@ class TaskTree:
         title = cluster.title.ljust(self.max_title, ".")
 
         if in_focus:
-            output.addf(focus_color.lower(), "")
+            output.addf(focus_color.lower(), Style.roundL())
         else:
             output.add(" ")
 
@@ -3721,7 +3741,7 @@ class TaskTree:
         output.add(Style.build_bar(title, cluster.get_percent() / 100, len(title), done, todo, round=False))
 
         if in_focus:
-            output.addf(focus_color.lower(), "")
+            output.addf(focus_color.lower(), Style.roundR())
         else:
             output.add(" ")
 
@@ -3852,13 +3872,15 @@ class TaskTree:
                     if self.index_selected == len(self.items) - 1:
                         break
         elif isinstance(obj, Task):
-            while True:
-                obj = self.items[self.index_selected].obj
-                if isinstance(obj, Quest) or isinstance(obj, Cluster):
-                    break
-                if self.index_selected == len(self.items) - 1:
-                    break
-                self.index_selected += 1
+            task: Task = obj
+            task.set_grade(min(10, task.grade + 1))
+            # while True:
+            #     obj = self.items[self.index_selected].obj
+            #     if isinstance(obj, Quest) or isinstance(obj, Cluster):
+            #         break
+            #     if self.index_selected == len(self.items) - 1:
+            #         break
+            #     self.index_selected += 1
 
     def arrow_left(self):
         obj = self.items[self.index_selected].obj
@@ -3894,11 +3916,13 @@ class TaskTree:
                     if self.index_selected == 0:
                         break
         elif isinstance(obj, Task):
-            while True:
-                obj = self.items[self.index_selected].obj
-                if isinstance(obj, Quest):
-                    break
-                self.index_selected -= 1
+            task: Task = obj
+            task.set_grade(max(0, task.grade - 1))
+            # while True:
+            #     obj = self.items[self.index_selected].obj
+            #     if isinstance(obj, Quest):
+            #         break
+            #     self.index_selected -= 1
 
     def expand(self):
         obj = self.items[self.index_selected].obj
@@ -4991,6 +5015,7 @@ class Diff:
         return output
 
 
+
 class Runner:
     def __init__(self):
         pass
@@ -5014,36 +5039,6 @@ class Runner:
             os.system('cls')
         else:
             os.system('clear')
-
-    @staticmethod
-    def free_run(compiling_fn, show_compilling:bool=True, to_clear: bool=True, wait_input:bool=True) -> bool:
-        if to_clear:
-            Runner.clear_screen()
-        if show_compilling:
-            image = random.choice(list(compilling.keys()))
-            for line in compilling[image].split("\n"):
-                term_print(Report.centralize(Sentence().addf("y", line), Token(" ")))
-        cmd = compiling_fn()
-        if show_compilling:
-            Runner.clear_screen()
-        
-        term_print(Report.centralize(Sentence() + " " + cmd + " ", "─"))
-        if cmd.startswith("node"):
-            if os.name == "nt":
-                term_print(Report.centralize(Sentence() + " Use Control-Z Enter caso precise finalizar a entrada ", "─"))
-            else:
-                term_print(Report.centralize(Sentence() + " Use Control-D caso precise finalizar a entrada ", "─"))
-            
-        answer = subprocess.run(cmd, shell=True, text=True)
-        if answer.returncode != 0 and answer.returncode != 1:
-            print(Runner.decode_code(answer.returncode))
-        if wait_input:
-            term_print(Report.centralize("", "─"))
-            term_print(Sentence().addf("y", "Pressione (Enter) para executar novamente ou (s Enter) para sair: "), end="")
-            valor = input()
-            if valor != "s":
-                return True
-        return False
 
     @staticmethod
     def decode_code(return_code: int) -> str:
@@ -5105,13 +5100,18 @@ class Solver:
     def set_executable(self, executable: str) -> None:
         self.__executable = executable
 
-    def get_executable(self) -> str:
-        if len(self.path_list) > 0 and self.__executable == "":
+    def not_compiled(self):
+        return self.__executable == "" and not self.compile_error
+
+    def get_executable(self, force_rebuild=False) -> str:
+        if (len(self.path_list) > 0 and self.not_compiled()) or force_rebuild:
             self.prepare_exec()
         return self.__executable
 
     def prepare_exec(self) -> None:
+        self.__executable = ""
         path = self.path_list[0]
+        self.compile_error = False
 
         if path.endswith(".py"):
             self.__executable = "python " + path
@@ -5459,6 +5459,42 @@ class Wdir:
         return Sentence().add(__solvers).add(" ").add(__sources)
 
 
+class Free:
+    @staticmethod
+    def free_run(solver: Solver, show_compilling:bool=True, to_clear: bool=True, wait_input:bool=True) -> bool:
+        if to_clear:
+            Runner.clear_screen()
+        if show_compilling:
+            image = random.choice(list(compilling.keys()))
+            for line in compilling[image].split("\n"):
+                term_print(Report.centralize(Sentence().addf("y", line), Token(" ")))
+
+        if show_compilling:
+            Runner.clear_screen()
+        solver.prepare_exec()
+        if solver.compile_error:
+            print(solver.error_msg)
+        else:
+            cmd = solver.get_executable()
+            term_print(Report.centralize(Sentence() + " " + cmd + " ", "─"))
+            if cmd.startswith("node"):
+                if os.name == "nt":
+                    term_print(Report.centralize(Sentence() + " Use Control-Z Enter caso precise finalizar a entrada ", "─"))
+                else:
+                    term_print(Report.centralize(Sentence() + " Use Control-D caso precise finalizar a entrada ", "─"))
+                
+            answer = subprocess.run(cmd, shell=True, text=True)
+            if answer.returncode != 0 and answer.returncode != 1:
+                print(Runner.decode_code(answer.returncode))
+            
+        if wait_input:
+            term_print(Report.centralize("", "─"))
+            term_print(Sentence().addf("y", "Pressione (Enter) para executar novamente ou (q Enter) para sair: "), end="")
+            valor = input()
+            if valor != "q":
+                return True
+        return False
+
 
 
 class CDiff:
@@ -5502,7 +5538,7 @@ class CDiff:
         self.exit = True
 
     def end_processing(self):
-        return len(self.unit_list) == 0
+        return (len(self.unit_list) == 0) or self.wdir.get_solver().compile_error
 
     def get_color(self, unit: Unit):
         if unit.result == ExecutionResult.SUCCESS:
@@ -5609,13 +5645,15 @@ class CDiff:
         unit = self.wdir.get_unit(index)
         return unit
 
-    def draw_top_line(self):
-        # construir mais uma solução
+    def process_one(self):
+        solver = self.wdir.get_solver()
+        if len(self.results_fail) != 0 and solver.compile_error:
+            return
         if len(self.unit_list) > 0 and not self.select_mode:
             index = len(self.results_done) + len(self.results_fail)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
-            unit.result = Execution.run_unit(self.wdir.get_solver(), unit)
+            unit.result = Execution.run_unit(solver, unit)
             symbol = ExecutionResult.get_symbol(unit.result)
             color = self.get_color(unit)
             if unit.result != ExecutionResult.SUCCESS:
@@ -5623,6 +5661,8 @@ class CDiff:
             else:
                 self.results_done.append((Token(symbol.text, color), index))
 
+    def draw_top_line(self):
+        # construir mais uma solução
         activity_color = "W" if not self.colors else "C"
         solver_color = "M" if not self.colors else "M"
         sources_color = "W" if not self.colors else "Y"
@@ -5696,10 +5736,14 @@ class CDiff:
             RToken("G", "Sair[q]"),
             RToken("Y", "Executar[e]"),
             RToken("Y", "Testar[t]"),
-            RToken("Y", "Printipal[p]"),
+            RToken("C", "Principal[p]"),
             RToken("C", "Navegar[wasd]"),
-            RToken("M", "MudarVisão[m]")
         ]
+        if self.settings.geral.is_diff_down():
+            tokens.append(RToken("G", "cima╾lado[m]")) 
+        else:
+            tokens.append(RToken("G", "cima╼lado[m]"))
+
         cmds = Sentence()
         for t in tokens:
             color = "W" if not self.colors else t.fmt
@@ -5707,7 +5751,7 @@ class CDiff:
         lines, cols = Fmt.get_size()
         Fmt.write(lines - 1, 0, cmds.center(cols, Token(" ")))
  
-    def draw_diff(self, unit: Unit):
+    def draw_main(self, unit: Unit):
         lines, cols = Fmt.get_size()
         self.space = lines - 4
         frame = Frame(2, -1).set_inner(self.space, cols - 1).set_border_square()
@@ -5716,7 +5760,11 @@ class CDiff:
             self.show_success()
             return
         Report.set_terminal_size(cols)
-        if self.param.is_up_down:
+        
+        if self.wdir.get_solver().compile_error:
+            received = self.wdir.get_solver().error_msg
+            line_list = [Sentence().add(line) for line in received.split("\n")]
+        elif self.param.is_up_down:
             line_list = Diff.mount_up_down_diff(unit, curses=True)
         else:
             line_list = Diff.mount_side_by_side_diff(unit, curses=True)
@@ -5757,8 +5805,9 @@ class CDiff:
 
     def get_solver_names(self):
         return sorted(self.wdir.solvers_names())
-
+    
     def main(self, scr):
+        self.select_mode = True
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
@@ -5767,16 +5816,19 @@ class CDiff:
                 self.first_loop = False
                 self.load_autoload_warning()
             Fmt.erase()
-            if self.wdir.get_solver().get_executable() == "":
+            if not self.select_mode and self.wdir.get_solver().not_compiled():
                 self.show_compilling()
                 Fmt.refresh()
                 Fmt.erase()
                 self.wdir.get_solver().prepare_exec()
+            if not self.select_mode:
+                self.process_one()
             self.draw_top_line()
             unit = self.get_focused_unit()
             if unit is not None:
-                self.draw_diff(unit)
-                self.draw_scrollbar()
+                self.draw_main(unit)
+                if not self.wdir.get_solver().compile_error:
+                    self.draw_scrollbar()
             else:
                 self.print_centered_image(select, "y")
             
@@ -5811,15 +5863,18 @@ class CDiff:
                 self.save_settings()
                 self.init = 0
             elif key == ord('e'):
+                self.select_mode = False
                 if self.wdir.is_autoload():
                     self.wdir.autoload()
                     self.wdir.get_solver().set_main(self.get_solver_names()[self.main_file])
-                    self.wdir.get_solver().set_executable("")
-                return lambda: Runner.free_run(self.wdir.get_solver().get_executable)
+
+                return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True)
+
             elif key == ord('p'):
                 self.main_file = (self.main_file + 1) % len(self.get_solver_names())
             elif key == ord('t'):
                 self.select_mode = False
+                self.index = 0
                 if self.wdir.is_autoload():
                     self.wdir.autoload()
                 Fmt.erase()
@@ -6080,8 +6135,8 @@ class Play:
         down = "s"
         up = "w"
         down_task = "b"
-        run_task = "e"
-        test_task = "t"
+        select_task = "e"
+        # test_task = "t"
         ajuda = "h"
         expand = ">"
         collapse = "<"
@@ -6093,8 +6148,9 @@ class Play:
         mass_toggle = "B"
         toggle_space = " "
         toggle_enter = "\n"
-        open_draft = "r"
-        open_readme = "l"
+        # open_draft = "r"
+        # open_readme = "l"
+        open_dir= "p"
         cores = "C"
         bordas = "B"
 
@@ -6131,18 +6187,19 @@ class Play:
         self.help_basic: List[Token] = [
             RToken("C", f"Sair[{self.Key.quit}]"),
             RToken("C", f"Ajuda[{self.Key.ajuda}]"),
-            RToken("C", "Navegar[wasd]"),
         ]
 
         self.help_extra: List[Token] = [
             RToken("C", f"Github[{self.Key.open_link}]"),
             RToken("C", f"Baixar[{self.Key.down_task}]"),
-            RToken("Y", f"Executar[{self.Key.run_task}]"),
-            RToken("Y", f"Testar[{self.Key.test_task}]"),
-            RToken("G", f"Rascunho[{self.Key.open_draft}]"),
-            RToken("G", f"Leitura [{self.Key.open_readme}]"),
-            RToken("M", "Marcar[enter]"),
-            RToken("M", "Graduar[0-9]"),
+            RToken("G", f"Escolher[{self.Key.select_task}]"),
+            # RToken("Y", f"Testar[{self.Key.test_task}]"),
+            RToken("M", "Manipular[wasd]"),
+            # RToken("M", f"Rascunho[{self.Key.open_draft}]"),
+            # RToken("M", f"Leitura[{self.Key.open_readme}]"),
+            RToken("M", f"Pasta[{self.Key.open_dir}]"),
+            # RToken("M", "Marcar[enter]"),
+            # RToken("M", "Graduar[0-9]"),
         ]
 
     def save_to_json(self):
@@ -6563,6 +6620,14 @@ class Play:
         frame.set_border_none()
         frame.draw()
 
+    def make_xp_button(self, size):
+        text, percent = self.build_xp_bar()
+        text = text.center(size)
+        done = Style.main_done()
+        todo = Style.main_todo()
+        xpbar = Style.build_bar(text, percent, len(text), done, todo).add(" ")
+        return xpbar
+
     def show_top_bar(self, frame: Frame):
         help = Sentence()
         for s in self.build_list_sentence(self.help_basic):
@@ -6572,24 +6637,20 @@ class Play:
         for f in self.flagsman.top:
             flags.add(Style.get_flag_sentence(f)).add(" ")
         xpbar = Sentence("")
-        if Flags.xpbar.is_true():
-            text, percent = self.build_xp_bar()
-            text = text.center(36)
-            done = Style.main_done()
-            todo = Style.main_todo()
-            xpbar = Style.build_bar(text, percent, len(text), done, todo).add(" ")
+        # if Flags.xpbar.is_true():
+        
 
         _, cols = Fmt.get_size()
         if cols > self.wrap_size:
-            frame.write(0, 0, help.add(xpbar).add(flags).center(frame.get_dx()))
+            frame.write(0, 0, help.add(self.make_xp_button(32)).add(flags).center(frame.get_dx()))
         else:
             y = 0
-            if Flags.xpbar.is_true():
-                frame.write(y, 0, xpbar.add("  ").center(frame.get_dx()))
-                y += 1
-            frame.write(y, 0, help.add("  ").center(frame.get_dx()))
+            # if Flags.xpbar.is_true():
+            frame.write(y, 0, self.make_xp_button(46).center(frame.get_dx()))
             y += 1
-            frame.write(y, 0, flags.add("  ").center(frame.get_dx()))
+            frame.write(y, 0, help.add(flags).center(frame.get_dx()))
+            # y += 1
+            # frame.write(y, 0, .center(frame.get_dx()))
 
         frame.set_border_none()
         frame.draw()
@@ -6610,7 +6671,6 @@ class Play:
         self.fman.add_input(_help)
 
         _help.set_header_sentence(Sentence().add(" Ajuda "))
-        _help.put_sentence(Sentence().add("  Barras Alternáveis  - ").add("Config").addf("r", f"[c]").add(", ").add("Técnicas").addf("r", "[t]"))
         # _help.put_text("")
         # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
         _help.put_sentence(Sentence() + "  " + RToken("g", "[setas]") + " ou " + RToken("g", "[wasd]") + "   - Para navegar entre os elementos")
@@ -6624,8 +6684,8 @@ class Play:
         _help.put_sentence(Sentence() + "          ou " + RToken("g", "[1-9]") + "    - Definir uma nota parcial")
         _help.put_sentence(Sentence() + "  Github " + RToken("r", f"[{self.Key.open_link}]") + " - Abrir tarefa em uma aba do browser")
         _help.put_sentence(Sentence() + "  Baixar " + RToken("r", f"[{self.Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
-        _help.put_sentence(Sentence() + "  Testar " + RToken("r", f"[{self.Key.test_task}]") + " - Testar tarefa de código que você baixou")
-        _help.put_sentence(Sentence() + "Escolher " + RToken("r", f"[{self.Key.run_task}]") + " - Escolher a tarefa de código que você baixou")
+        # _help.put_sentence(Sentence() + "  Testar " + RToken("r", f"[{self.Key.test_task}]") + " - Testar tarefa de código que você baixou")
+        _help.put_sentence(Sentence() + "Escolher " + RToken("r", f"[{self.Key.select_task}]") + " - Escolher a tarefa de código que você baixou")
 
     @staticmethod
     def disable_on_resize():
@@ -6637,7 +6697,7 @@ class Play:
         elif cols < 35 and Flags.config.is_true():
             Flags.config.toggle()
 
-    def get_task_path(self) -> str:
+    def get_task_readme_path(self) -> str:
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
             rootdir = self.geral.get_rootdir()
@@ -6682,8 +6742,8 @@ class Play:
         top_dy = 1  #quantas linhas o topo usa
         if cols <= self.wrap_size:
             top_dy += 1
-            if Flags.xpbar.is_true():
-                top_dy += 1
+            # if Flags.xpbar.is_true():
+            #     top_dy += 1
         bottom_dy = 1 # quantas linhas o fundo usa
         if cols <= self.wrap_size:
             bottom_dy += 1
@@ -6752,40 +6812,62 @@ class Play:
             return random.choice(quit_msgs)
         return "Até a próxima!"
 
-    def open_code(self, draft: bool, readme: bool):
+    def open_code(self, open_drafts: bool, open_readme: bool, open_dir: bool = False, open_cases: bool = False):
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
-            path = self.get_task_path()
-            cmd = "code"
-            code, _, _ = Runner().subprocess_run("whereis {}".format(cmd))
-            if code != 0:
-                self.fman.add_input(
-                    Floating().error().put_text("Comando {} não encontrado.".format(code))
-                )
+            path = self.get_task_readme_path()
+            cmd = self.geral.get_editor()
+            # code, _, _ = Runner().subprocess_run("whereis {}".format(cmd))
+            if not os.path.isfile(path):
+                if open_readme:
+                    self.fman.add_input(
+                        Floating().error().put_text("Não achei nada baixado para você ler.")
+                    )
+                if open_drafts:
+                    self.fman.add_input(
+                        Floating().error().put_text("Não achei nada baixado para você editar.")
+                    )
+                if open_dir:
+                    self.fman.add_input(
+                        Floating().error().put_text("Não achei nada baixado para você abrir.")
+                    )
                 return
-            if code == 0:
-                if readme:
-                    if not os.path.isfile(path):
-                        self.fman.add_input(
-                            Floating().error().put_text("Não achei nada baixado para você ler.")
-                        )
-                        return
-                    os.system(f"{cmd} {path}")
-                folder = os.path.dirname(path)
-                files = os.listdir(folder)
-                if draft:
-                    drafts = []
-                    for f in files:
-                        if not f.endswith(self.rep.get_lang()):
-                            continue
-                        drafts.append(os.path.join(folder, f))
-                    if len(drafts) == 0:
-                        self.fman.add_input(
-                            Floating().error().put_text("Não achei nenhum arquivo de rascunho.")
-                        )
-                        return
-                    for f in drafts:
-                        Runner.subprocess_run(f"{cmd} {f}")
+            if open_dir:
+                code, out, err = Runner.subprocess_run(f"{cmd} -h")
+                if ("Replit" in out) or ("replit" in err):
+                    open_cases = True
+                    open_readme = True
+                    open_drafts = True
+                else:
+                    code, out, err = Runner.subprocess_run(f"{cmd} {os.path.dirname(path)}")
+                
+            files_to_open: List[str] = []
+            if open_readme:
+                files_to_open.append(path)
+                # Runner.subprocess_run(f"{cmd} {path}")
+            if open_cases:
+                cases = os.path.join(os.path.dirname(path), "cases.tio")
+                if os.path.isfile(cases):
+                    files_to_open.append(cases)
+                    # Runner.subprocess_run(f"{cmd} {cases}")
+            folder = os.path.dirname(path)
+            files = os.listdir(folder)
+            if open_drafts:
+                drafts = []
+                for f in files:
+                    if not f.endswith(self.rep.get_lang()):
+                        continue
+                    drafts.append(os.path.join(folder, f))
+                if len(drafts) == 0:
+                    self.fman.add_input(
+                        Floating().error().put_text("Não achei nenhum arquivo de rascunho.")
+                    )
+                    return
+                for f in drafts:
+                    files_to_open.append(f)
+            if len(files_to_open) != 0:
+                print(" ".join(files_to_open))
+                Runner.subprocess_run("{} {}".format(cmd, " ".join(files_to_open)))
 
     def make_callback(self) -> Dict[int, Any]:
         def set_exit():
@@ -6826,16 +6908,17 @@ class Play:
         add_str(self.Key.expand, self.tree.process_expand)
         add_str(self.Key.collapse, self.tree.process_collapse)
 
-        add_str(self.Key.toggle_enter, self.tree.toggle)
-        add_str(self.Key.toggle_space, self.tree.toggle)
+        # add_str(self.Key.toggle_enter, self.tree.toggle)
+        # add_str(self.Key.toggle_space, self.tree.toggle)
         add_str(self.Key.open_link, self.open_link)
         add_str(self.Key.set_lang, lambda: self.set_language(False))
         add_str(self.Key.set_root, lambda: self.set_rootdir(False))
         add_str(self.Key.down_task, self.down_task)
-        add_str(self.Key.run_task, lambda: self.test_task(False))
-        add_str(self.Key.test_task, lambda: self.test_task(True))
-        add_str(self.Key.open_draft, lambda: self.open_code(draft = True, readme = False))
-        add_str(self.Key.open_readme, lambda: self.open_code(draft = False, readme = True))
+        add_str(self.Key.select_task, lambda: self.test_task(False))
+        # add_str(self.Key.test_task, lambda: self.test_task(True))
+        # add_str(self.Key.open_draft, lambda: self.open_code(open_drafts = True, open_readme = False))
+        # add_str(self.Key.open_readme, lambda: self.open_code(open_drafts = False, open_readme = True))
+        add_str(self.Key.open_dir, lambda: self.open_code(open_drafts = False, open_readme = False, open_dir=True))
         add_str(self.Key.cores, self.geral.toggle_color)
         add_str(self.Key.bordas, self.geral.toggle_nerdfonts)
 
@@ -6847,7 +6930,7 @@ class Play:
 
         add_str(Flags.config.get_char(), self.toggle_config)
         add_str(Flags.inventory.get_char(), self.FlagFunctor(self.fman, Flags.inventory))
-        add_str(Flags.xpbar.get_char(), self.FlagFunctor(self.fman, Flags.xpbar))
+        # add_str(Flags.xpbar.get_char(), self.FlagFunctor(self.fman, Flags.xpbar))
 
         return calls
 
@@ -6872,6 +6955,8 @@ class Play:
                 callback = calls[value]()
                 if callback is not None:
                     return callback
+            elif value == ord("\n") or value == ord(" "):
+                self.fman.add_input(Floating("v").put_text("\n Utilize esquerda e direita\npara marcar as questões \n").put_text(""))
             elif value != -1:
                 self.fman.add_input(Floating("v").error()
                                     .put_text("Tecla")

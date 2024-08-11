@@ -25,7 +25,14 @@ class Down:
     c_draft = '#include <stdio.h>\n\nint main() {\n    return 0;\n}\n\n'
     cpp_draft = '#include <iostream>\n\nint main() {\n}\n\n'
 
-    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft}
+    java_draft = r"""public class Draft {
+    public static void main(String args[]) {
+        System.out.println("qxcode");
+    }
+}
+"""
+
+    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft, 'java': java_draft}
     # def __init__(self):
     #     self.drafts = {}
     #     self.drafts['c'] = Down.c_draft

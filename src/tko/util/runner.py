@@ -1,12 +1,12 @@
 import subprocess
-from typing import Tuple
+from typing import Tuple, Callable
 import os
 from subprocess import PIPE
 from .sentence import Sentence, Token
 from .term_color import term_print
 from ..run.report import Report
 from ..play.images import compilling
-import random
+
 
 class Runner:
     def __init__(self):
@@ -31,36 +31,6 @@ class Runner:
             os.system('cls')
         else:
             os.system('clear')
-
-    @staticmethod
-    def free_run(compiling_fn, show_compilling:bool=True, to_clear: bool=True, wait_input:bool=True) -> bool:
-        if to_clear:
-            Runner.clear_screen()
-        if show_compilling:
-            image = random.choice(list(compilling.keys()))
-            for line in compilling[image].split("\n"):
-                term_print(Report.centralize(Sentence().addf("y", line), Token(" ")))
-        cmd = compiling_fn()
-        if show_compilling:
-            Runner.clear_screen()
-        
-        term_print(Report.centralize(Sentence() + " " + cmd + " ", "─"))
-        if cmd.startswith("node"):
-            if os.name == "nt":
-                term_print(Report.centralize(Sentence() + " Use Control-Z Enter caso precise finalizar a entrada ", "─"))
-            else:
-                term_print(Report.centralize(Sentence() + " Use Control-D caso precise finalizar a entrada ", "─"))
-            
-        answer = subprocess.run(cmd, shell=True, text=True)
-        if answer.returncode != 0 and answer.returncode != 1:
-            print(Runner.decode_code(answer.returncode))
-        if wait_input:
-            term_print(Report.centralize("", "─"))
-            term_print(Sentence().addf("y", "Pressione (Enter) para executar novamente ou (s Enter) para sair: "), end="")
-            valor = input()
-            if valor != "s":
-                return True
-        return False
 
     @staticmethod
     def decode_code(return_code: int) -> str:

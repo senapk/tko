@@ -22,11 +22,11 @@ class Style:
 
     @staticmethod
     def sharpL():
-        return "" if Style.has_borders() else "▒"
+        return "" if Style.has_borders() else "█"
 
     @staticmethod
     def sharpR():
-        return "" if Style.has_borders() else "▒"
+        return "" if Style.has_borders() else "█"
     
     @staticmethod
     def midL():

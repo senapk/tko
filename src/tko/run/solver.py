@@ -1,7 +1,7 @@
 import tempfile
 
 import os
-from typing import List
+from typing import List, Tuple
 import shutil
 
 from ..run.basic import CompilerError
@@ -38,13 +38,18 @@ class Solver:
     def set_executable(self, executable: str) -> None:
         self.__executable = executable
 
-    def get_executable(self) -> str:
-        if len(self.path_list) > 0 and self.__executable == "":
+    def not_compiled(self):
+        return self.__executable == "" and not self.compile_error
+
+    def get_executable(self, force_rebuild=False) -> str:
+        if (len(self.path_list) > 0 and self.not_compiled()) or force_rebuild:
             self.prepare_exec()
         return self.__executable
 
     def prepare_exec(self) -> None:
+        self.__executable = ""
         path = self.path_list[0]
+        self.compile_error = False
 
         if path.endswith(".py"):
             self.__executable = "python " + path

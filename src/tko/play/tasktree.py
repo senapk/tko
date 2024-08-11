@@ -171,7 +171,7 @@ class TaskTree:
 
         focus_color = Style.focus()
         if in_focus:
-            output.addf(focus_color.lower(), "")
+            output.addf(focus_color.lower(), Style.roundR())
         else:
             output.add(" ")
 
@@ -187,7 +187,7 @@ class TaskTree:
         output.add(Style.build_bar(title, q.get_percent() / 100, len(title), done, todo, round=False))
 
         if in_focus:
-            output.addf(focus_color.lower(), "")
+            output.addf(focus_color.lower(), Style.roundR())
         else:
             output.add(" ")
 
@@ -226,7 +226,7 @@ class TaskTree:
         title = cluster.title.ljust(self.max_title, ".")
 
         if in_focus:
-            output.addf(focus_color.lower(), "")
+            output.addf(focus_color.lower(), Style.roundL())
         else:
             output.add(" ")
 
@@ -236,7 +236,7 @@ class TaskTree:
         output.add(Style.build_bar(title, cluster.get_percent() / 100, len(title), done, todo, round=False))
 
         if in_focus:
-            output.addf(focus_color.lower(), "")
+            output.addf(focus_color.lower(), Style.roundR())
         else:
             output.add(" ")
 
@@ -367,13 +367,15 @@ class TaskTree:
                     if self.index_selected == len(self.items) - 1:
                         break
         elif isinstance(obj, Task):
-            while True:
-                obj = self.items[self.index_selected].obj
-                if isinstance(obj, Quest) or isinstance(obj, Cluster):
-                    break
-                if self.index_selected == len(self.items) - 1:
-                    break
-                self.index_selected += 1
+            task: Task = obj
+            task.set_grade(min(10, task.grade + 1))
+            # while True:
+            #     obj = self.items[self.index_selected].obj
+            #     if isinstance(obj, Quest) or isinstance(obj, Cluster):
+            #         break
+            #     if self.index_selected == len(self.items) - 1:
+            #         break
+            #     self.index_selected += 1
 
     def arrow_left(self):
         obj = self.items[self.index_selected].obj
@@ -409,11 +411,13 @@ class TaskTree:
                     if self.index_selected == 0:
                         break
         elif isinstance(obj, Task):
-            while True:
-                obj = self.items[self.index_selected].obj
-                if isinstance(obj, Quest):
-                    break
-                self.index_selected -= 1
+            task: Task = obj
+            task.set_grade(max(0, task.grade - 1))
+            # while True:
+            #     obj = self.items[self.index_selected].obj
+            #     if isinstance(obj, Quest):
+            #         break
+            #     self.index_selected -= 1
 
     def expand(self):
         obj = self.items[self.index_selected].obj

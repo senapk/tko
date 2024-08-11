@@ -1,16 +1,17 @@
 from typing import Dict
 
 
-select = """
-╔═╗       ╔═╗─┐ ┬┌─┐┌─┐┬ ┬┌┬┐┌─┐┬─┐
-║╣   ───  ║╣ ┌┴┬┘├┤ │  │ │ │ ├─┤├┬┘
-╚═╝       ╚═╝┴ └─└─┘└─┘└─┘ ┴ ┴ ┴┴└─
-╔╦╗       ╔╦╗┌─┐┌─┐┌┬┐┌─┐┬─┐       
- ║   ───   ║ ├┤ └─┐ │ ├─┤├┬┘       
- ╩         ╩ └─┘└─┘ ┴ ┴ ┴┴└─       
-╔═╗       ╔═╗┬─┐┬┌┐┌┌─┐┬┌─┐┌─┐┬    
-╠═╝  ───  ╠═╝├┬┘│││││  │├─┘├─┤│    
-╩         ╩  ┴└─┴┘└┘└─┘┴┴  ┴ ┴┴─┘  
+select = r"""
+  _________         .    .  e -> Executa sem testar          
+ (..       \_    ,  |\  /|  t -> Roda os casos de teste      
+  \       O  \  /|  \ \/ /  p -> Muda o arquivo principal    
+   \______    \/ |   \  /        para problemas de múltiplos 
+      vvvv\    \ |   /  |        arquivos de código fonte    
+      \^^^^  ==   \_/   |   m -> muda o modo diff de vertical
+       `\_   ===    \.  |        para modo diff horizontal   
+       / /\_   \ /      |                                    
+       |/   \_  \|      /        Esquerda e Direita          
+              \________/           muda o caso de teste      
 """
 
 compilling: Dict[str, str] = {}

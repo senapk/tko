@@ -38,8 +38,8 @@ class Play:
         down = "s"
         up = "w"
         down_task = "b"
-        run_task = "e"
-        test_task = "t"
+        select_task = "e"
+        # test_task = "t"
         ajuda = "h"
         expand = ">"
         collapse = "<"
@@ -51,8 +51,9 @@ class Play:
         mass_toggle = "B"
         toggle_space = " "
         toggle_enter = "\n"
-        open_draft = "r"
-        open_readme = "l"
+        # open_draft = "r"
+        # open_readme = "l"
+        open_dir= "p"
         cores = "C"
         bordas = "B"
 
@@ -89,18 +90,19 @@ class Play:
         self.help_basic: List[Token] = [
             RToken("C", f"Sair[{self.Key.quit}]"),
             RToken("C", f"Ajuda[{self.Key.ajuda}]"),
-            RToken("C", "Navegar[wasd]"),
         ]
 
         self.help_extra: List[Token] = [
             RToken("C", f"Github[{self.Key.open_link}]"),
             RToken("C", f"Baixar[{self.Key.down_task}]"),
-            RToken("Y", f"Executar[{self.Key.run_task}]"),
-            RToken("Y", f"Testar[{self.Key.test_task}]"),
-            RToken("G", f"Rascunho[{self.Key.open_draft}]"),
-            RToken("G", f"Leitura [{self.Key.open_readme}]"),
-            RToken("M", "Marcar[enter]"),
-            RToken("M", "Graduar[0-9]"),
+            RToken("G", f"Escolher[{self.Key.select_task}]"),
+            # RToken("Y", f"Testar[{self.Key.test_task}]"),
+            RToken("M", "Manipular[wasd]"),
+            # RToken("M", f"Rascunho[{self.Key.open_draft}]"),
+            # RToken("M", f"Leitura[{self.Key.open_readme}]"),
+            RToken("M", f"Pasta[{self.Key.open_dir}]"),
+            # RToken("M", "Marcar[enter]"),
+            # RToken("M", "Graduar[0-9]"),
         ]
 
     def save_to_json(self):
@@ -521,6 +523,14 @@ class Play:
         frame.set_border_none()
         frame.draw()
 
+    def make_xp_button(self, size):
+        text, percent = self.build_xp_bar()
+        text = text.center(size)
+        done = Style.main_done()
+        todo = Style.main_todo()
+        xpbar = Style.build_bar(text, percent, len(text), done, todo).add(" ")
+        return xpbar
+
     def show_top_bar(self, frame: Frame):
         help = Sentence()
         for s in self.build_list_sentence(self.help_basic):
@@ -530,24 +540,20 @@ class Play:
         for f in self.flagsman.top:
             flags.add(Style.get_flag_sentence(f)).add(" ")
         xpbar = Sentence("")
-        if Flags.xpbar.is_true():
-            text, percent = self.build_xp_bar()
-            text = text.center(36)
-            done = Style.main_done()
-            todo = Style.main_todo()
-            xpbar = Style.build_bar(text, percent, len(text), done, todo).add(" ")
+        # if Flags.xpbar.is_true():
+        
 
         _, cols = Fmt.get_size()
         if cols > self.wrap_size:
-            frame.write(0, 0, help.add(xpbar).add(flags).center(frame.get_dx()))
+            frame.write(0, 0, help.add(self.make_xp_button(32)).add(flags).center(frame.get_dx()))
         else:
             y = 0
-            if Flags.xpbar.is_true():
-                frame.write(y, 0, xpbar.add("  ").center(frame.get_dx()))
-                y += 1
-            frame.write(y, 0, help.add("  ").center(frame.get_dx()))
+            # if Flags.xpbar.is_true():
+            frame.write(y, 0, self.make_xp_button(46).center(frame.get_dx()))
             y += 1
-            frame.write(y, 0, flags.add("  ").center(frame.get_dx()))
+            frame.write(y, 0, help.add(flags).center(frame.get_dx()))
+            # y += 1
+            # frame.write(y, 0, .center(frame.get_dx()))
 
         frame.set_border_none()
         frame.draw()
@@ -568,7 +574,6 @@ class Play:
         self.fman.add_input(_help)
 
         _help.set_header_sentence(Sentence().add(" Ajuda "))
-        _help.put_sentence(Sentence().add("  Barras Alternáveis  - ").add("Config").addf("r", f"[c]").add(", ").add("Técnicas").addf("r", "[t]"))
         # _help.put_text("")
         # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
         _help.put_sentence(Sentence() + "  " + RToken("g", "[setas]") + " ou " + RToken("g", "[wasd]") + "   - Para navegar entre os elementos")
@@ -582,8 +587,8 @@ class Play:
         _help.put_sentence(Sentence() + "          ou " + RToken("g", "[1-9]") + "    - Definir uma nota parcial")
         _help.put_sentence(Sentence() + "  Github " + RToken("r", f"[{self.Key.open_link}]") + " - Abrir tarefa em uma aba do browser")
         _help.put_sentence(Sentence() + "  Baixar " + RToken("r", f"[{self.Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
-        _help.put_sentence(Sentence() + "  Testar " + RToken("r", f"[{self.Key.test_task}]") + " - Testar tarefa de código que você baixou")
-        _help.put_sentence(Sentence() + "Escolher " + RToken("r", f"[{self.Key.run_task}]") + " - Escolher a tarefa de código que você baixou")
+        # _help.put_sentence(Sentence() + "  Testar " + RToken("r", f"[{self.Key.test_task}]") + " - Testar tarefa de código que você baixou")
+        _help.put_sentence(Sentence() + "Escolher " + RToken("r", f"[{self.Key.select_task}]") + " - Escolher a tarefa de código que você baixou")
 
     @staticmethod
     def disable_on_resize():
@@ -595,7 +600,7 @@ class Play:
         elif cols < 35 and Flags.config.is_true():
             Flags.config.toggle()
 
-    def get_task_path(self) -> str:
+    def get_task_readme_path(self) -> str:
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
             rootdir = self.geral.get_rootdir()
@@ -640,8 +645,8 @@ class Play:
         top_dy = 1  #quantas linhas o topo usa
         if cols <= self.wrap_size:
             top_dy += 1
-            if Flags.xpbar.is_true():
-                top_dy += 1
+            # if Flags.xpbar.is_true():
+            #     top_dy += 1
         bottom_dy = 1 # quantas linhas o fundo usa
         if cols <= self.wrap_size:
             bottom_dy += 1
@@ -710,40 +715,62 @@ class Play:
             return random.choice(quit_msgs)
         return "Até a próxima!"
 
-    def open_code(self, draft: bool, readme: bool):
+    def open_code(self, open_drafts: bool, open_readme: bool, open_dir: bool = False, open_cases: bool = False):
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
-            path = self.get_task_path()
-            cmd = "code"
-            code, _, _ = Runner().subprocess_run("whereis {}".format(cmd))
-            if code != 0:
-                self.fman.add_input(
-                    Floating().error().put_text("Comando {} não encontrado.".format(code))
-                )
+            path = self.get_task_readme_path()
+            cmd = self.geral.get_editor()
+            # code, _, _ = Runner().subprocess_run("whereis {}".format(cmd))
+            if not os.path.isfile(path):
+                if open_readme:
+                    self.fman.add_input(
+                        Floating().error().put_text("Não achei nada baixado para você ler.")
+                    )
+                if open_drafts:
+                    self.fman.add_input(
+                        Floating().error().put_text("Não achei nada baixado para você editar.")
+                    )
+                if open_dir:
+                    self.fman.add_input(
+                        Floating().error().put_text("Não achei nada baixado para você abrir.")
+                    )
                 return
-            if code == 0:
-                if readme:
-                    if not os.path.isfile(path):
-                        self.fman.add_input(
-                            Floating().error().put_text("Não achei nada baixado para você ler.")
-                        )
-                        return
-                    os.system(f"{cmd} {path}")
-                folder = os.path.dirname(path)
-                files = os.listdir(folder)
-                if draft:
-                    drafts = []
-                    for f in files:
-                        if not f.endswith(self.rep.get_lang()):
-                            continue
-                        drafts.append(os.path.join(folder, f))
-                    if len(drafts) == 0:
-                        self.fman.add_input(
-                            Floating().error().put_text("Não achei nenhum arquivo de rascunho.")
-                        )
-                        return
-                    for f in drafts:
-                        Runner.subprocess_run(f"{cmd} {f}")
+            if open_dir:
+                code, out, err = Runner.subprocess_run(f"{cmd} -h")
+                if ("Replit" in out) or ("replit" in err):
+                    open_cases = True
+                    open_readme = True
+                    open_drafts = True
+                else:
+                    code, out, err = Runner.subprocess_run(f"{cmd} {os.path.dirname(path)}")
+                
+            files_to_open: List[str] = []
+            if open_readme:
+                files_to_open.append(path)
+                # Runner.subprocess_run(f"{cmd} {path}")
+            if open_cases:
+                cases = os.path.join(os.path.dirname(path), "cases.tio")
+                if os.path.isfile(cases):
+                    files_to_open.append(cases)
+                    # Runner.subprocess_run(f"{cmd} {cases}")
+            folder = os.path.dirname(path)
+            files = os.listdir(folder)
+            if open_drafts:
+                drafts = []
+                for f in files:
+                    if not f.endswith(self.rep.get_lang()):
+                        continue
+                    drafts.append(os.path.join(folder, f))
+                if len(drafts) == 0:
+                    self.fman.add_input(
+                        Floating().error().put_text("Não achei nenhum arquivo de rascunho.")
+                    )
+                    return
+                for f in drafts:
+                    files_to_open.append(f)
+            if len(files_to_open) != 0:
+                print(" ".join(files_to_open))
+                Runner.subprocess_run("{} {}".format(cmd, " ".join(files_to_open)))
 
     def make_callback(self) -> Dict[int, Any]:
         def set_exit():
@@ -784,16 +811,17 @@ class Play:
         add_str(self.Key.expand, self.tree.process_expand)
         add_str(self.Key.collapse, self.tree.process_collapse)
 
-        add_str(self.Key.toggle_enter, self.tree.toggle)
-        add_str(self.Key.toggle_space, self.tree.toggle)
+        # add_str(self.Key.toggle_enter, self.tree.toggle)
+        # add_str(self.Key.toggle_space, self.tree.toggle)
         add_str(self.Key.open_link, self.open_link)
         add_str(self.Key.set_lang, lambda: self.set_language(False))
         add_str(self.Key.set_root, lambda: self.set_rootdir(False))
         add_str(self.Key.down_task, self.down_task)
-        add_str(self.Key.run_task, lambda: self.test_task(False))
-        add_str(self.Key.test_task, lambda: self.test_task(True))
-        add_str(self.Key.open_draft, lambda: self.open_code(draft = True, readme = False))
-        add_str(self.Key.open_readme, lambda: self.open_code(draft = False, readme = True))
+        add_str(self.Key.select_task, lambda: self.test_task(False))
+        # add_str(self.Key.test_task, lambda: self.test_task(True))
+        # add_str(self.Key.open_draft, lambda: self.open_code(open_drafts = True, open_readme = False))
+        # add_str(self.Key.open_readme, lambda: self.open_code(open_drafts = False, open_readme = True))
+        add_str(self.Key.open_dir, lambda: self.open_code(open_drafts = False, open_readme = False, open_dir=True))
         add_str(self.Key.cores, self.geral.toggle_color)
         add_str(self.Key.bordas, self.geral.toggle_nerdfonts)
 
@@ -805,7 +833,7 @@ class Play:
 
         add_str(Flags.config.get_char(), self.toggle_config)
         add_str(Flags.inventory.get_char(), self.FlagFunctor(self.fman, Flags.inventory))
-        add_str(Flags.xpbar.get_char(), self.FlagFunctor(self.fman, Flags.xpbar))
+        # add_str(Flags.xpbar.get_char(), self.FlagFunctor(self.fman, Flags.xpbar))
 
         return calls
 
@@ -830,6 +858,8 @@ class Play:
                 callback = calls[value]()
                 if callback is not None:
                     return callback
+            elif value == ord("\n") or value == ord(" "):
+                self.fman.add_input(Floating("v").put_text("\n Utilize esquerda e direita\npara marcar as questões \n").put_text(""))
             elif value != -1:
                 self.fman.add_input(Floating("v").error()
                                     .put_text("Tecla")
