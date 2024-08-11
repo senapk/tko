@@ -58,15 +58,14 @@ public class draft {
 
 """[1:]
 
-    go_draft = r"""
-package main
-import "fmt"
+    go_draft = (
+        r"package main""\n"
+        r'import "fmt"'"\n"
+        r"func main() {""\n"
+        r'    fmt.Println("qxcode")''\n'
+        r"}""\n"
+    )
 
-func main() {
-    fmt.Println("qxcode")
-}
-
-"""[1:]
 
     drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft, 'java': java_draft, 'go': go_draft}
     # def __init__(self):
