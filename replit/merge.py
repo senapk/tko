@@ -91,6 +91,8 @@ class Merge:
                 aux = entry
                 del tree[key]
                 return aux
+        print("ERROR: no free entry")
+        exit(1)
 
 
     def merge(self):
@@ -98,7 +100,7 @@ class Merge:
         content.append("#!/usr/bin/env python3")
         content.append("# -*- coding: utf-8 -*-")
         content.append("from __future__ import annotations\n\n")
-        content.append("from typing import List, Dict, Tuple, Optional, Any")
+        content.append("from typing import List, Dict, Tuple, Optional, Any, Callable")
         content.append("\n".join(self.imports))
         init = self.parse_entry(f"{self.root}/__init__.py")
         content.append(init.content)

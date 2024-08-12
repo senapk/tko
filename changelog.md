@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.17.4
+  - fix: free run mode missing
 - 0.17.2
   - add: added golang support
   - add: improved drafts for all languages

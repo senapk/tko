@@ -224,14 +224,14 @@ class Play:
                 except Exception as _:
                     pass
             self.fman.add_input(
-                Floating()
+                Floating("v>")
                 .set_header(" Abrindo link ")
                 .put_text("\n" + task.link + "\n")
                 .warning()
             )
         elif isinstance(obj, Quest):
             self.fman.add_input(
-                Floating()
+                Floating("v>")
                 .put_text("\nEssa é uma missão.")
                 .put_text("\nVocê só pode abrir o link")
                 .put_text("de tarefas.\n")
@@ -239,7 +239,7 @@ class Play:
             )
         else:
             self.fman.add_input(
-                Floating()
+                Floating("v>")
                 .put_text("\nEsse é um grupo.")
                 .put_text("\nVocê só pode abrir o link")
                 .put_text("de tarefas\n.")
@@ -282,7 +282,7 @@ class Play:
         if isinstance(obj, Task) and obj.key in obj.title:
             task: Task = obj
             down_frame = (
-                Floating("").warning().set_ljust_text().set_header(" Baixando tarefa ")
+                Floating("v>").warning().set_ljust_text().set_header(" Baixando tarefa ")
             )
             down_frame.put_text(f"\ntko down {self.rep_alias} {task.key} -l {lang}\n")
             self.fman.add_input(down_frame)
@@ -296,21 +296,21 @@ class Play:
         else:
             if isinstance(obj, Quest):
                 self.fman.add_input(
-                    Floating()
+                    Floating("v>")
                     .put_text("\nEssa é uma missão.")
                     .put_text("\nVocê só pode baixar tarefas.\n")
                     .error()
                 )
             elif isinstance(obj, Cluster):
                 self.fman.add_input(
-                    Floating()
+                    Floating("v>")
                     .put_text("\nEsse é um grupo.")
                     .put_text("\nVocê só pode baixar tarefas.\n")
                     .error()
                 )
             else:
                 self.fman.add_input(
-                    Floating().put_text("\nEssa não é uma tarefa de código.\n").error()
+                    Floating("v>").put_text("\nEssa não é uma tarefa de código.\n").error()
                 )
     
     def test_task(self, test_mode: bool = False):
@@ -320,7 +320,7 @@ class Play:
 
         if isinstance(obj, Quest):
             self.fman.add_input(
-                Floating()
+                Floating("v>")
                 .put_text("\nEssa é uma missão.")
                 .put_text("\nVocê só pode executar tarefas baixadas.\n")
                 .error()
@@ -328,7 +328,7 @@ class Play:
             return
         if isinstance(obj, Cluster):
             self.fman.add_input(
-                Floating()
+                Floating("v>")
                 .put_text("\nEsse é um grupo.")
                 .put_text("\nVocê só pode executar tarefas baixadas.\n")
                 .error()
@@ -358,7 +358,7 @@ class Play:
         run.set_curses_select_mode(True)
         run.build_wdir()
         if not run.wdir.has_solver():
-            msg = Floating().error()
+            msg = Floating("v>").error()
             msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.rep.get_lang()))
             msg.put_text("Arquivos encontrados na pasta:\n")
             folder = run.wdir.get_autoload_folder()
@@ -547,7 +547,7 @@ class Play:
         frame.draw()
 
     def show_help_config(self):
-        _help: Floating = Floating().warning().set_ljust_text().set_header(" Configurações ")
+        _help: Floating = Floating("v>").warning().set_ljust_text().set_header(" Configurações ")
         self.fman.add_input(_help)
         _help.put_sentence(Sentence() + f"      Mínimo " + RToken("r", f"[{Flags.minimum.get_char()}]") + " - Mostrar os requisitos mínimos para completar a missão")
         _help.put_sentence(Sentence() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_char()}]") + " - Mostrar quanto de experiência cada atividade fornece")
@@ -558,7 +558,7 @@ class Play:
 
 
     def show_help(self):
-        _help: Floating = Floating().warning().set_ljust_text()
+        _help: Floating = Floating("v>").warning().set_ljust_text()
         self.fman.add_input(_help)
 
         _help.set_header_sentence(Sentence().add(" Ajuda "))
@@ -673,7 +673,7 @@ class Play:
         def __call__(self):
             self.flag.toggle()
             if (self.flag.get_location() == "left" or self.flag.get_location() == "geral") and self.flag.is_bool():
-                f = Floating("v").warning()
+                f = Floating("v>").warning()
                 f.put_text("")
                 f.put_text(self.flag.get_description())
                 if self.flag.is_true():
@@ -712,15 +712,15 @@ class Play:
             if not os.path.isfile(path):
                 if open_readme:
                     self.fman.add_input(
-                        Floating().error().put_text("Não achei nada baixado para você ler.")
+                        Floating("v>").error().put_text("Não achei nada baixado para você ler.")
                     )
                 if open_drafts:
                     self.fman.add_input(
-                        Floating().error().put_text("Não achei nada baixado para você editar.")
+                        Floating("v>").error().put_text("Não achei nada baixado para você editar.")
                     )
                 if open_dir:
                     self.fman.add_input(
-                        Floating().error().put_text("Não achei nada baixado para você abrir.")
+                        Floating("v>").error().put_text("Não achei nada baixado para você abrir.")
                     )
                 return
             if open_dir:
@@ -751,7 +751,7 @@ class Play:
                     drafts.append(os.path.join(folder, f))
                 if len(drafts) == 0:
                     self.fman.add_input(
-                        Floating().error().put_text("Não achei nenhum arquivo de rascunho.")
+                        Floating("v>").error().put_text("Não achei nenhum arquivo de rascunho.")
                     )
                     return
                 for f in drafts:
@@ -847,9 +847,9 @@ class Play:
                 if callback is not None:
                     return callback
             elif value == ord("\n") or value == ord(" "):
-                self.fman.add_input(Floating("v").put_text("\n Utilize esquerda e direita\npara marcar as questões \n").put_text(""))
+                self.fman.add_input(Floating("v>").put_text("\n Utilize esquerda e direita\npara marcar as questões \n").put_text(""))
             elif value != -1:
-                self.fman.add_input(Floating("v").error()
+                self.fman.add_input(Floating("v>").error()
                                     .put_text("Tecla")
                                     .put_text(chr(value))
                                     .put_text("não reconhecida")

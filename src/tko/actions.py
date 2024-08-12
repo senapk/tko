@@ -16,6 +16,7 @@ from .util.symbols import symbols
 
 from .run.writer import Writer
 from .util.runner import Runner
+from .util.freerun import Free
 from .cdiff import CDiff
 from .execution import Execution
 
@@ -197,8 +198,7 @@ class Run:
         if self.wdir is None:
             return False
         if self.wdir.has_solver() and (not self.wdir.has_tests()):
-            fn_build = self.wdir.get_solver().get_executable
-            Runner.free_run(fn_build, show_compilling=False, to_clear=False, wait_input=False)
+            Free.free_run(self.wdir.get_solver(), show_compilling=False, to_clear=False, wait_input=False)
             return True
         return False
 
