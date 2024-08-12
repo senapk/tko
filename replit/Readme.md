@@ -1,10 +1,18 @@
 # Replit tko Install
 
-- Instalação:
-  - Crie um Replit com a linguagem desejada `[c | cpp | java | node | typescript | python]`:
-  - Abra o Shell do replit e execute o comando correspondente a linguagem desejada.
-  - Dê Control D e espere a instalação terminar.
+- Crie um Replit com a linguagem desejada.
+- Copie o comando de instalação abaixo:
 
+```bash
+curl -sSL https://raw.githubusercontent.com/senapk/tko/master/replit/update.sh | bash
+```
+
+- Abra o Shell do replit, cole o comando com `Control Shift V` e dê enter.
+- Dê Control D e espere a instalação terminar.
+- Inicie o aplicativo digitando `tko play [fup | ed | poo]`
+- Por exemplo, se sua disciplina é fup, digite `tko play fup`.
+
+<!--
 ## C++
 
 ```bash
@@ -65,8 +73,8 @@ Se não existir, coloque esse conteúdo no arquivo. Se já existir, adicione os 
 Após isso, salve o arquivo, e execute a seguinte linha no terminal.
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/senapk/tko/master/replit/any/update.sh | bash
+curl -sSL https://raw.githubusercontent.com/senapk/tko/master/replit/update.sh | bash
 ```
 
 Execute o comando:
-
+-->

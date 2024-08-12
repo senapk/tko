@@ -6888,7 +6888,7 @@ class Play:
                 for f in drafts:
                     files_to_open.append(f)
             if len(files_to_open) != 0:
-                print(" ".join(files_to_open))
+                # print(" ".join(files_to_open))
                 Runner.subprocess_run("{} {}".format(cmd, " ".join(files_to_open)))
 
     def make_callback(self) -> Dict[int, Any]:

@@ -1,7 +1,7 @@
 { pkgs }: {
     deps = [
         pkgs.graphviz
-        pkgs.python310Full
+        pkgs.python3
         pkgs.graalvm17-ce
         pkgs.maven
         pkgs.replitPackages.jdt-language-server

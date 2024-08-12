@@ -1,34 +1,24 @@
 ################    BASIC    ########################
-
 # atualizando tko e scripts uma vez por dia
 export PS1="\033[1;35m\w\[\033[00m\]\$ "
 
 # atualizando tko e scripts uma vez por dia
-python /home/runner/${REPL_SLUG}/.bin/check.py
+/home/runner/${REPL_SLUG}/.bin/update.sh --check
 
 # adicionando .bin no path
 export PATH="/home/runner/${REPL_SLUG}/.bin:${PATH}"
+################    ALIAS    ########################
+config_file="/home/runner/${REPL_SLUG}/.bin/tko.cfg"
+alias tko="tko -c ${config_file}"
+tko config --root . > /dev/null 2>&1
+################    MENSAGEM    ########################
 
-echo "# Setup carregado corretamente"
 echo "Para atualizar o tko digite: update.sh"
 echo "Para ver as questões digite: tko play [fup|ed|poo]"
 
+#######    Carregando configurações do usuário    ######
+user_bashrc="/home/runner/${REPL_SLUG}/.bashrc"
 
-################    ALIAS    ########################
-
-alias rm="rm -i"
-alias mv="mv -i"
-alias cp="cp -i"
-
-alias ls="ls --color=auto"
-alias ll="ls -alh"
-
-config_file="/home/runner/${REPL_SLUG}/.bin/tko.cfg"
-alias tko="tko -c ${config_file}"
-
-# verifica se o arquivo de configuração existe
-if [ ! -f ${config_file} ]; then
-    tko config > /dev/null 2>&1
+if [ -f "${user_bashrc}" ]; then
+    source ${user_bashrc}
 fi
-
-tko config --root . > /dev/null 2>&1

@@ -1,8 +1,7 @@
-
 { pkgs }: {
     deps = [
         pkgs.graphviz
-        pkgs.python310Full
+        pkgs.python3
         pkgs.yarn
         pkgs.esbuild
         pkgs.nodejs-18_x

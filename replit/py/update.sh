@@ -17,7 +17,7 @@ SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/py/replit"
 TARGET="${REP}/.replit"
 curl  ${SOURCE} -o ${TARGET}
 
-SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/py/update.sh"
+SOURCE="https://raw.githubusercontent.com/senapk/tko/master/replit/update.sh"
 TARGET="${REP}/.bin/update.sh"
 curl  ${SOURCE} -o ${TARGET}
 chmod +x ${TARGET}
