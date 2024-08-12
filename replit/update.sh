@@ -44,7 +44,7 @@ SOURCE="${GITHUB}/bashrc"
 TARGET="${REP}/.config/bashrc"
 curl -sS ${SOURCE} -o ${TARGET}
 
-SOURCE="${GITHUB}/check.py"
+SOURCE="${GITHUB}/tko"
 TARGET="${REP}/.bin/tko"
 curl -sS ${SOURCE} -o ${TARGET}
 chmod +x ${TARGET}
