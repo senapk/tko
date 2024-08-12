@@ -63,6 +63,7 @@ class RepData:
     __expanded = "expanded"
     __new_items = "new_items"
     __tasks = "tasks"
+    __progress = "progress"
     __flags = "flags"
     __lang = "lang"
     __index = "index"
@@ -70,6 +71,7 @@ class RepData:
     defaults = {
         __expanded: [],
         __tasks: {},
+        __progress: {},
         __flags: {},
         __new_items: [],
         __lang: "",
@@ -82,6 +84,9 @@ class RepData:
     def get_expanded(self) -> list:
         return self.__get(RepData.__expanded)
     
+    def get_progress(self) -> Dict[str, str]:
+        return self.__get(RepData.__progress)
+
     def get_new_items(self) -> list:
         return self.__get(RepData.__new_items)
     
@@ -94,6 +99,9 @@ class RepData:
     def get_lang(self) -> str:
         return self.__get(RepData.__lang)
     
+    def set_progress(self, value: Dict[str, Any]):
+        return self.__set(RepData.__progress, value)
+
     def set_expanded(self, value: list):
         return self.__set(RepData.__expanded, value)
     

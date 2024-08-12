@@ -174,6 +174,11 @@ class Main:
             path = os.path.abspath(args.root)
             settings.geral.set_rootdir(path)
             print("Root directory now is: " + path)
+        
+        if args.editor:
+            action = True
+            settings.geral.set_editor(args.editor)
+            print(f"Novo comando para abrir arquivos de código {args.editor}")
 
         if not action:
             action = True
@@ -336,6 +341,7 @@ class Parser:
         g_lang.add_argument("--ask", action='store_true', help='ask language extension every time.')
 
         parser_s.add_argument("--root", metavar="path", type=str, help='set root directory.')
+        parser_s.add_argument("--editor", metavar="cmd", type=str, help='set editor command.')
 
         parser_s.set_defaults(func=Main.settings)
 

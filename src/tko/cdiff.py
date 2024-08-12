@@ -15,6 +15,7 @@ from .util.runner import Runner
 from .util.freerun import Free
 from .play.style import Style
 from .play.flags import Flags
+from .play.tasktree import TaskProgress, TaskTree
 import random
 
 
@@ -23,28 +24,31 @@ from .run.report import Report
 from .settings.settings_parser import SettingsParser
 import os
 from .run.basic import Success
+import enum
+
+class Mode(enum.Enum):
+    select = 0
+    running = 1
+    finished = 2
 
 class CDiff:
-
-    def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success, select_mode: bool = False):
+    def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
         self.param = param
         self.results_done: List[Tuple[Token, int]] = []
         self.results_fail: List[Tuple[Token, int]] = []
         self.wdir = wdir
         self.unit_list = [unit for unit in wdir.get_unit_list()] # unit list to be consumed
         self.exit = False
-        self.index = 0
         self.success_type = success_type
-
+        self.task_prog = TaskProgress()
         self.init = 0   # index of first line to show
         self.length = 1  # length of diff
         self.space = 0  # dy space for draw
-        self.select_mode = select_mode
+        self.mode: Mode = Mode.select
 
+        self.index = 0
         self.finished = False
         self.resumes: List[str] = []
-
-        self.main_file = 0
 
         self.sp = SettingsParser()
         self.settings = self.sp.load_settings()
@@ -55,14 +59,20 @@ class CDiff:
 
     def set_first_run(self):
         self.first_run = True
+        return self
 
     def save_settings(self):
         self.settings.geral.set_is_diff_down(self.param.is_up_down)
         self.sp.save_settings()
-        
+        return self
+    
+    def set_task_progress(self, task_prog: TaskProgress):
+        self.task_prog = task_prog
+        return self
 
     def set_exit(self):
         self.exit = True
+        return self
 
     def end_processing(self):
         return (len(self.unit_list) == 0) or self.wdir.get_solver().compile_error
@@ -175,8 +185,11 @@ class CDiff:
     def process_one(self):
         solver = self.wdir.get_solver()
         if len(self.results_fail) != 0 and solver.compile_error:
+            self.mode = Mode.running
             return
-        if len(self.unit_list) > 0 and not self.select_mode:
+        if self.mode != Mode.running:
+            return
+        if len(self.unit_list) > 0:
             index = len(self.results_done) + len(self.results_fail)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
@@ -187,6 +200,9 @@ class CDiff:
                 self.results_fail.append((Token(symbol.text, color), index))
             else:
                 self.results_done.append((Token(symbol.text, color), index))
+            self.task_prog.progress = (len(self.results_done) * 100) // len(self.wdir.get_unit_list())
+        else:
+            self.mode = Mode.finished
 
     def draw_top_line(self):
         # construir mais uma solução
@@ -204,7 +220,7 @@ class CDiff:
             # if i != 0:
             #     solvers.addf(solver_color, ", ")
             color = solver_color
-            if i == self.main_file:
+            if i == self.task_prog.index:
                 color = "G"
             solvers.addf(color.lower(), Style.roundL()).addf(color, solver).addf(color.lower(), Style.roundR())
 
@@ -258,7 +274,7 @@ class CDiff:
         frame.set_footer(output, "")
         frame.draw()
         
-    def draw_guide_line(self):
+    def draw_bottom_line(self):
         tokens = [
             RToken("G", "Sair[q]"),
             RToken("Y", "Executar[e]"),
@@ -334,7 +350,7 @@ class CDiff:
         return sorted(self.wdir.solvers_names())
     
     def main(self, scr):
-        self.select_mode = True
+        self.mode = Mode.select
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
@@ -343,12 +359,12 @@ class CDiff:
                 self.first_loop = False
                 self.load_autoload_warning()
             Fmt.erase()
-            if not self.select_mode and self.wdir.get_solver().not_compiled():
-                self.show_compilling()
-                Fmt.refresh()
-                Fmt.erase()
-                self.wdir.get_solver().prepare_exec()
-            if not self.select_mode:
+            if self.mode == Mode.running:
+                if self.wdir.get_solver().not_compiled():
+                    self.show_compilling()
+                    Fmt.refresh()
+                    Fmt.erase()
+                    self.wdir.get_solver().prepare_exec()
                 self.process_one()
             self.draw_top_line()
             unit = self.get_focused_unit()
@@ -359,12 +375,12 @@ class CDiff:
             else:
                 self.print_centered_image(select, "y")
             
-            self.draw_guide_line()
+            self.draw_bottom_line()
 
             if self.fman.has_floating():
                 self.fman.draw_warnings()
 
-            if not self.select_mode and not self.end_processing():
+            if self.mode == Mode.running and not self.end_processing():
                 Fmt.refresh()
                 continue
 
@@ -390,24 +406,24 @@ class CDiff:
                 self.save_settings()
                 self.init = 0
             elif key == ord('e'):
-                self.select_mode = False
+                self.mode = Mode.running
                 if self.wdir.is_autoload():
                     self.wdir.autoload()
-                    self.wdir.get_solver().set_main(self.get_solver_names()[self.main_file])
+                    self.wdir.get_solver().set_main(self.get_solver_names()[self.task_prog.index])
 
                 return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True)
 
             elif key == ord('p'):
-                self.main_file = (self.main_file + 1) % len(self.get_solver_names())
+                self.task_prog.index = (self.task_prog.index + 1) % len(self.get_solver_names())
             elif key == ord('t'):
-                self.select_mode = False
+                self.mode = Mode.running
                 self.index = 0
                 if self.wdir.is_autoload():
                     self.wdir.autoload()
                 Fmt.erase()
                 self.show_compilling()
                 Fmt.refresh()
-                self.wdir.get_solver().set_main(self.get_solver_names()[self.main_file]).prepare_exec()
+                self.wdir.get_solver().set_main(self.get_solver_names()[self.task_prog.index]).prepare_exec()
                 self.results_done = []
                 self.results_fail = []
                 self.unit_list = [unit for unit in self.wdir.get_unit_list()]

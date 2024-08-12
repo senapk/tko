@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.17.5
+  - add: tasks show progress
+  - add: [] used to increase and decrease grade
 - 0.17.4
   - fix: free run mode missing
 - 0.17.2

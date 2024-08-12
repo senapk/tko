@@ -14,15 +14,15 @@ import urllib.error
 import json
 import curses
 import random
+import enum
 import tempfile
 import webbrowser
 import re
 import unicodedata
 import math
-import enum
 import configparser
 from subprocess import PIPE
-__version__ = "0.17.4"
+__version__ = "0.17.5"
 
 
 class GeralSettings:
@@ -1135,6 +1135,7 @@ class RepData:
     __expanded = "expanded"
     __new_items = "new_items"
     __tasks = "tasks"
+    __progress = "progress"
     __flags = "flags"
     __lang = "lang"
     __index = "index"
@@ -1142,6 +1143,7 @@ class RepData:
     defaults = {
         __expanded: [],
         __tasks: {},
+        __progress: {},
         __flags: {},
         __new_items: [],
         __lang: "",
@@ -1154,6 +1156,9 @@ class RepData:
     def get_expanded(self) -> list:
         return self.__get(RepData.__expanded)
     
+    def get_progress(self) -> Dict[str, str]:
+        return self.__get(RepData.__progress)
+
     def get_new_items(self) -> list:
         return self.__get(RepData.__new_items)
     
@@ -1166,6 +1171,9 @@ class RepData:
     def get_lang(self) -> str:
         return self.__get(RepData.__lang)
     
+    def set_progress(self, value: Dict[str, Any]):
+        return self.__set(RepData.__progress, value)
+
     def set_expanded(self, value: list):
         return self.__set(RepData.__expanded, value)
     
@@ -3551,6 +3559,18 @@ class Entry:
     def get(self):
         return self.sentence
 
+class TaskProgress:
+    def __init__(self):
+        self.index = 0
+        self.progress = 0
+
+    def from_str(self, value: str):
+        v = value.split(":")
+        self.index = int(v[0])
+        self.progress = int(v[1])
+    
+    def to_str(self):
+        return f"{self.index}:{self.progress}"
 
 class TaskTree:
 
@@ -3580,6 +3600,12 @@ class TaskTree:
     def load_from_rep(self):
         self.new_items: List[str] = self.rep.get_new_items()
         self.expanded: List[str] = self.rep.get_expanded()
+        self.progress: Dict[str, TaskProgress] = {}
+        for key, val in self.rep.get_progress().items():
+            tp = TaskProgress()
+            tp.from_str(val)
+            self.progress[key] = tp
+
         self.index_selected = self.rep.get_index()
 
         tasks = self.rep.get_tasks()
@@ -3599,6 +3625,12 @@ class TaskTree:
             if t.grade != 0:
                 tasks[t.key] = str(t.grade)
         self.rep.set_tasks(tasks)
+
+        progress = {}
+        for key, tp in self.progress.items():
+            progress[key] = tp.to_str()
+
+        self.rep.set_progress(progress)
 
     def update_available(self):
         old_quests = [q for q in self.available_quests]
@@ -3673,7 +3705,12 @@ class TaskTree:
         color = ""
         if in_focus:
             color = "k" + focus_color
-        output.addf(color, t.title)
+
+        done = color + "c"
+        todo = color
+        perc = self.progress.get(t.key, TaskProgress()).progress
+        output.add(Style.build_bar(t.title, perc / 100, len(t.title), done, todo, round=False))
+        # output.addf(color, t.title)
 
         if in_focus:
             output.addf(focus_color.lower(), Style.roundR())
@@ -3876,6 +3913,16 @@ class TaskTree:
         if isinstance(obj, Task):
             obj.set_grade(grade)
 
+    def inc_grade(self):
+        obj = self.items[self.index_selected].obj
+        if isinstance(obj, Task):
+            obj.set_grade(min(10, obj.grade + 1))
+    
+    def dec_grade(self):
+        obj = self.items[self.index_selected].obj
+        if isinstance(obj, Task):
+            obj.set_grade(max(0, obj.grade - 1))
+
     def arrow_right(self):
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Cluster):
@@ -3895,15 +3942,15 @@ class TaskTree:
                     if self.index_selected == len(self.items) - 1:
                         break
         elif isinstance(obj, Task):
-            task: Task = obj
-            task.set_grade(min(10, task.grade + 1))
-            # while True:
-            #     obj = self.items[self.index_selected].obj
-            #     if isinstance(obj, Quest) or isinstance(obj, Cluster):
-            #         break
-            #     if self.index_selected == len(self.items) - 1:
-            #         break
-            #     self.index_selected += 1
+            # task: Task = obj
+            # task.set_grade(min(10, task.grade + 1))
+            while True:
+                obj = self.items[self.index_selected].obj
+                if isinstance(obj, Quest) or isinstance(obj, Cluster):
+                    break
+                if self.index_selected == len(self.items) - 1:
+                    break
+                self.index_selected += 1
 
     def arrow_left(self):
         obj = self.items[self.index_selected].obj
@@ -3939,13 +3986,13 @@ class TaskTree:
                     if self.index_selected == 0:
                         break
         elif isinstance(obj, Task):
-            task: Task = obj
-            task.set_grade(max(0, task.grade - 1))
-            # while True:
-            #     obj = self.items[self.index_selected].obj
-            #     if isinstance(obj, Quest):
-            #         break
-            #     self.index_selected -= 1
+            # task: Task = obj
+            # task.set_grade(max(0, task.grade - 1))
+            while True:
+                obj = self.items[self.index_selected].obj
+                if isinstance(obj, Quest):
+                    break
+                self.index_selected -= 1
 
     def expand(self):
         obj = self.items[self.index_selected].obj
@@ -5531,27 +5578,29 @@ class Free:
 
 
 
-class CDiff:
+class Mode(enum.Enum):
+    select = 0
+    running = 1
+    finished = 2
 
-    def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success, select_mode: bool = False):
+class CDiff:
+    def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
         self.param = param
         self.results_done: List[Tuple[Token, int]] = []
         self.results_fail: List[Tuple[Token, int]] = []
         self.wdir = wdir
         self.unit_list = [unit for unit in wdir.get_unit_list()] # unit list to be consumed
         self.exit = False
-        self.index = 0
         self.success_type = success_type
-
+        self.task_prog = TaskProgress()
         self.init = 0   # index of first line to show
         self.length = 1  # length of diff
         self.space = 0  # dy space for draw
-        self.select_mode = select_mode
+        self.mode: Mode = Mode.select
 
+        self.index = 0
         self.finished = False
         self.resumes: List[str] = []
-
-        self.main_file = 0
 
         self.sp = SettingsParser()
         self.settings = self.sp.load_settings()
@@ -5562,14 +5611,20 @@ class CDiff:
 
     def set_first_run(self):
         self.first_run = True
+        return self
 
     def save_settings(self):
         self.settings.geral.set_is_diff_down(self.param.is_up_down)
         self.sp.save_settings()
-        
+        return self
+    
+    def set_task_progress(self, task_prog: TaskProgress):
+        self.task_prog = task_prog
+        return self
 
     def set_exit(self):
         self.exit = True
+        return self
 
     def end_processing(self):
         return (len(self.unit_list) == 0) or self.wdir.get_solver().compile_error
@@ -5682,8 +5737,11 @@ class CDiff:
     def process_one(self):
         solver = self.wdir.get_solver()
         if len(self.results_fail) != 0 and solver.compile_error:
+            self.mode = Mode.running
             return
-        if len(self.unit_list) > 0 and not self.select_mode:
+        if self.mode != Mode.running:
+            return
+        if len(self.unit_list) > 0:
             index = len(self.results_done) + len(self.results_fail)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
@@ -5694,6 +5752,9 @@ class CDiff:
                 self.results_fail.append((Token(symbol.text, color), index))
             else:
                 self.results_done.append((Token(symbol.text, color), index))
+            self.task_prog.progress = (len(self.results_done) * 100) // len(self.wdir.get_unit_list())
+        else:
+            self.mode = Mode.finished
 
     def draw_top_line(self):
         # construir mais uma solução
@@ -5711,7 +5772,7 @@ class CDiff:
             # if i != 0:
             #     solvers.addf(solver_color, ", ")
             color = solver_color
-            if i == self.main_file:
+            if i == self.task_prog.index:
                 color = "G"
             solvers.addf(color.lower(), Style.roundL()).addf(color, solver).addf(color.lower(), Style.roundR())
 
@@ -5765,7 +5826,7 @@ class CDiff:
         frame.set_footer(output, "")
         frame.draw()
         
-    def draw_guide_line(self):
+    def draw_bottom_line(self):
         tokens = [
             RToken("G", "Sair[q]"),
             RToken("Y", "Executar[e]"),
@@ -5841,7 +5902,7 @@ class CDiff:
         return sorted(self.wdir.solvers_names())
     
     def main(self, scr):
-        self.select_mode = True
+        self.mode = Mode.select
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
@@ -5850,12 +5911,12 @@ class CDiff:
                 self.first_loop = False
                 self.load_autoload_warning()
             Fmt.erase()
-            if not self.select_mode and self.wdir.get_solver().not_compiled():
-                self.show_compilling()
-                Fmt.refresh()
-                Fmt.erase()
-                self.wdir.get_solver().prepare_exec()
-            if not self.select_mode:
+            if self.mode == Mode.running:
+                if self.wdir.get_solver().not_compiled():
+                    self.show_compilling()
+                    Fmt.refresh()
+                    Fmt.erase()
+                    self.wdir.get_solver().prepare_exec()
                 self.process_one()
             self.draw_top_line()
             unit = self.get_focused_unit()
@@ -5866,12 +5927,12 @@ class CDiff:
             else:
                 self.print_centered_image(select, "y")
             
-            self.draw_guide_line()
+            self.draw_bottom_line()
 
             if self.fman.has_floating():
                 self.fman.draw_warnings()
 
-            if not self.select_mode and not self.end_processing():
+            if self.mode == Mode.running and not self.end_processing():
                 Fmt.refresh()
                 continue
 
@@ -5897,24 +5958,24 @@ class CDiff:
                 self.save_settings()
                 self.init = 0
             elif key == ord('e'):
-                self.select_mode = False
+                self.mode = Mode.running
                 if self.wdir.is_autoload():
                     self.wdir.autoload()
-                    self.wdir.get_solver().set_main(self.get_solver_names()[self.main_file])
+                    self.wdir.get_solver().set_main(self.get_solver_names()[self.task_prog.index])
 
                 return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True)
 
             elif key == ord('p'):
-                self.main_file = (self.main_file + 1) % len(self.get_solver_names())
+                self.task_prog.index = (self.task_prog.index + 1) % len(self.get_solver_names())
             elif key == ord('t'):
-                self.select_mode = False
+                self.mode = Mode.running
                 self.index = 0
                 if self.wdir.is_autoload():
                     self.wdir.autoload()
                 Fmt.erase()
                 self.show_compilling()
                 Fmt.refresh()
-                self.wdir.get_solver().set_main(self.get_solver_names()[self.main_file]).prepare_exec()
+                self.wdir.get_solver().set_main(self.get_solver_names()[self.task_prog.index]).prepare_exec()
                 self.results_done = []
                 self.results_fail = []
                 self.unit_list = [unit for unit in self.wdir.get_unit_list()]
@@ -5935,7 +5996,6 @@ class CDiff:
             else:
                 while(free_run_fn()):
                     pass
-
 
 
 
@@ -5968,28 +6028,34 @@ class Run:
         self.param: Param.Basic = param
         self.wdir: Wdir = Wdir()
         self.wdir_builded = False
-        self.curses: bool = False
-        self.first_run = False
-        self.success = Success.RANDOM
-        self.curses_select_mode = False
+        self.__curses_mode: bool = False
+        self.__first_run = False
+        self.__success_mode = Success.RANDOM
+        # self.__curses_select_mode = False
         self.__lang = ""
+        self.__task_progress: Optional[TaskProgress] = None
 
     def set_curses(self, value:bool=True, success: Success=Success.RANDOM):
-        self.curses = value
-        self.success = success
+        self.__curses_mode = value
+        self.__success_mode = success
         return self
    
     def set_lang(self, lang:str):
         self.__lang = lang
         return self
 
-    def set_curses_select_mode(self, value:bool=True):
-        self.curses_select_mode = value
+    # def set_curses_select_mode(self, value:bool=True):
+    #     self.__curses_select_mode = value
+    #     return self
+    
+    def set_task_progress(self, task_progress: TaskProgress):
+        self.__task_progress = task_progress
         return self
 
     def set_first_run(self):
-        self.first_run = True
-
+        self.__first_run = True
+        return self
+    
     def execute(self):
         if not self.wdir_builded:
             self.build_wdir()
@@ -6086,7 +6152,7 @@ class Run:
         self.__remove_duplicates()
         self.__change_targets_to_filter_mode()
         try:
-            self.wdir = Wdir().set_curses(self.curses).set_lang(self.__lang).set_target_list(self.target_list).set_cmd(self.exec_cmd).build().filter(self.param)
+            self.wdir = Wdir().set_curses(self.__curses_mode).set_lang(self.__lang).set_target_list(self.target_list).set_cmd(self.exec_cmd).build().filter(self.param)
         except FileNotFoundError as e:
             if self.wdir.has_solver():
                 self.wdir.get_solver().error_msg += str(e)
@@ -6126,10 +6192,12 @@ class Run:
         if self.wdir is None:
             return
         
-        if self.curses:
-            cdiff = CDiff(self.wdir, self.param, self.success, select_mode=self.curses_select_mode)
-            if self.first_run:
+        if self.__curses_mode:
+            cdiff = CDiff(self.wdir, self.param, self.__success_mode)
+            if self.__first_run:
                 cdiff.set_first_run()
+            if self.__task_progress is not None:
+                cdiff.set_task_progress(self.__task_progress)
             cdiff.run()
         else:
             term_print(Report.centralize(" Testando o código com os casos de teste ", "═"))
@@ -6159,28 +6227,43 @@ class Build:
 
 
 
+class Actions:
+    github = "Github"
+    sair = "Sair"
+    ajuda = "Ajuda"
+    baixar = "Baixar"
+    escolher = "Escolher"
+    navegar = "Navegar"
+    abrir_pasta = "VerArquivos"
+    graduar = "Graduar"
+
+class Key:
+    left = "a"
+    right = "d"
+    down = "s"
+    up = "w"
+
+    down_task = "b"
+    select_task = "e"
+    ajuda = "h"
+    expand = "}"
+    collapse = "{"
+    inc_grade = ">"
+    dec_grade = "<"
+    set_root_dir = "D"
+    set_lang = "L"
+    github_open = "g"
+    quit = "q"
+    toggle_space = " "
+    toggle_enter = "\n"
+    project_open= "v"
+    cores = "C"
+    bordas = "B"
 
 class Play:
 
-    class Key:
-        left = "a"
-        right = "d"
-        down = "s"
-        up = "w"
-        down_task = "b"
-        select_task = "e"
-        ajuda = "h"
-        expand = ">"
-        collapse = "<"
-        set_root_dir = "D"
-        set_lang = "L"
-        github_open = "g"
-        quit = "q"
-        toggle_space = " "
-        toggle_enter = "\n"
-        project_open= "p"
-        cores = "C"
-        bordas = "B"
+
+
 
     def __init__(
         self,
@@ -6213,19 +6296,20 @@ class Play:
         self.wrap_size = 100
 
         self.help_basic: List[Token] = [
-            RToken("C", f"Sair[{self.Key.quit}]"),
-            RToken("C", f"Ajuda[{self.Key.ajuda}]"),
+            RToken("C", f"{Actions.sair}[{Key.quit}]"),
+            RToken("C", f"{Actions.ajuda}[{Key.ajuda}]"),
         ]
 
         self.help_extra: List[Token] = [
-            RToken("C", f"Github[{self.Key.github_open}]"),
-            RToken("C", f"Baixar[{self.Key.down_task}]"),
-            RToken("G", f"Escolher[{self.Key.select_task}]"),
-            RToken("M", "Manipular[wasd]"),
-            RToken("M", f"Pasta[{self.Key.project_open}]"),
-            # RToken("Y", f"Testar[{self.Key.test_task}]"),
-            # RToken("M", f"Rascunho[{self.Key.open_draft}]"),
-            # RToken("M", f"Leitura[{self.Key.open_readme}]"),
+            RToken("C", f"{Actions.github}[{Key.github_open}]"),
+            RToken("C", f"{Actions.baixar}[{Key.down_task}]"),
+            RToken("G", f"{Actions.escolher}[{Key.select_task}]"),
+            RToken("M", f"{Actions.navegar}[wasd]"),
+            RToken("M", f"{Actions.graduar}[<>]"),
+            RToken("M", f"{Actions.abrir_pasta}[{Key.project_open}]"),
+            # RToken("Y", f"Testar[{Key.test_task}]"),
+            # RToken("M", f"Rascunho[{Key.open_draft}]"),
+            # RToken("M", f"Leitura[{Key.open_readme}]"),
             # RToken("M", "Marcar[enter]"),
             # RToken("M", "Graduar[0-9]"),
         ]
@@ -6325,7 +6409,7 @@ class Play:
                 .put_text("O diretório de download padrão")
                 .put_text("do tko ainda não foi definido.")
                 .put_text("")
-                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + self.Key.set_root_dir, "g"))
+                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + Key.set_root_dir, "g"))
                 .put_text("para configurá-lo.")
                 .put_text("")
             )
@@ -6337,7 +6421,7 @@ class Play:
                 .put_text("A linguagem de download padrão")
                 .put_text("para os rascunhos ainda não foi definda.")
                 .put_text("")
-                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + self.Key.set_lang, "g"))
+                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + Key.set_lang, "g"))
                 .put_text("para configurá-la.")
                 .put_text("")
             )
@@ -6485,7 +6569,12 @@ class Play:
             run.set_curses(True, Success.RANDOM)
         else:
             run.set_curses(True, Success.FIXED)
-        run.set_curses_select_mode(True)
+        # run.set_curses_select_mode(True)
+
+        if not task.key in self.tree.progress:
+            self.tree.progress[task.key] = TaskProgress()
+        run.set_task_progress(self.tree.progress[task.key])
+
         run.build_wdir()
         if not run.wdir.has_solver():
             msg = Floating("v>").error()
@@ -6683,8 +6772,8 @@ class Play:
         _help.put_sentence(Sentence() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_char()}]") + " - Mostrar quanto de experiência cada atividade fornece")
         _help.put_sentence(Sentence() + f"  Percentual " + RToken("r", f"[{Flags.percent.get_char()}]") + " - Mostrar os valores em percentual")
         _help.put_sentence(Sentence() + f"  ModoAdmin " + RToken("r", f"Shift + [A]") + " - Liberar acesso a todas as missões" )
-        _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{self.Key.set_root_dir}]") + " - Mudar a pasta padrão de download do tko" )
-        _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"Shift + [{self.Key.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
+        _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{Key.set_root_dir}]") + " - Mudar a pasta padrão de download do tko" )
+        _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"Shift + [{Key.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
 
 
     def show_help(self):
@@ -6694,19 +6783,20 @@ class Play:
         _help.set_header_sentence(Sentence().add(" Ajuda "))
         # _help.put_text("")
         # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence() + "  " + RToken("g", "[setas]") + " ou " + RToken("g", "[wasd]") + "   - Para navegar entre os elementos")
-        _help.put_sentence(Sentence() + "  " + RToken("g", "[enter]") + " ou " + RToken("g", "[espaço]") + " - Expandir ou contrair")
-        _help.put_sentence(Sentence() + "    " + RToken("g", "[>]") + "   ou   " + RToken("g", "[<]") + "    - Expandir ou contrair todas")
-        # _help.put_text("")
-        # _help.put_text(" Tarefas ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence() + "  " + RToken("g", "[enter]") + " ou " + RToken("g", "[espaço]")
-                            + " - Marcar (" + Token(symbols.success.text, "g") + "10)"
-                            + " ou Desmarcar (" + Token(symbols.failure.text, "r") + "0)")
-        _help.put_sentence(Sentence() + "          ou " + RToken("g", "[1-9]") + "    - Definir uma nota parcial")
-        _help.put_sentence(Sentence() + "  Github " + RToken("r", f"[{self.Key.github_open}]") + " - Abrir tarefa em uma aba do browser")
-        _help.put_sentence(Sentence() + "  Baixar " + RToken("r", f"[{self.Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
-        # _help.put_sentence(Sentence() + "  Testar " + RToken("r", f"[{self.Key.test_task}]") + " - Testar tarefa de código que você baixou")
-        _help.put_sentence(Sentence() + "Escolher " + RToken("r", f"[{self.Key.select_task}]") + " - Escolher a tarefa de código que você baixou")
+        _help.put_sentence(Sentence() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + " - Para navegar entre os elementos")
+        _help.put_sentence(Sentence() + "            - Expandir ou contrair")
+        _help.put_sentence(Sentence() + "            - Saltar entre as sessões")
+        _help.put_sentence(Sentence() + "     " + RToken("g", "{") + " ou " + RToken("g", "}") + " - Expandir ou contrair todas as sessões")
+        _help.put_sentence(Sentence() + "" + RToken("g", "'1234567890") + " - Definir uma nota")
+        _help.put_sentence(Sentence() + "     " + RToken("g", "<") + " ou " + RToken("g", ">") + " - Aumentar ou diminuir nota")
+        _help.put_sentence(Sentence() + f"     {Actions.github} " + RToken("r", f"[{Key.github_open}]") + " - Abrir tarefa em uma aba do browser")
+        _help.put_sentence(Sentence() + f"     {Actions.baixar} " + RToken("r", f"[{Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
+        # _help.put_sentence(Sentence() + "  Testar " + RToken("r", f"[{Key.test_task}]") + " - Testar tarefa de código que você baixou")
+        _help.put_sentence(Sentence() + f"   {Actions.escolher} " + RToken("r", f"[{Key.select_task}]") + " - Escolher a tarefa de código que você baixou")
+        _help.put_sentence(Sentence() + f"{Actions.abrir_pasta} " + RToken("r", f"[{Key.project_open}]") + " - Abrir os arquivos no editor de código")
+        _help.put_sentence(Sentence())
+        _help.put_sentence(Sentence() + "Você pode editar o editor padrão com o comando")
+        _help.put_sentence(Sentence() + RToken("g", "             tko config --editor comando"))
 
     @staticmethod
     def disable_on_resize():
@@ -6860,7 +6950,9 @@ class Play:
                     open_readme = True
                     open_drafts = True
                 else:
-                    code, out, err = Runner.subprocess_run(f"{cmd} {os.path.dirname(path)}")
+                    outfile = tempfile.NamedTemporaryFile(delete=False)
+                    subprocess.Popen(f"{cmd} {os.path.dirname(path)}", stdout=outfile, shell=True)
+                    #code, out, err = Runner.subprocess_run(f"{cmd} {os.path.dirname(path)}")
                 
             files_to_open: List[str] = []
             if open_readme:
@@ -6907,44 +6999,50 @@ class Play:
 
         add_int(curses.KEY_RESIZE, self.disable_on_resize)
         add_str(
-            self.Key.quit,
+            Key.quit,
             lambda: self.fman.add_input(
                 Floating().put_text("\n" + self.select_quit_msg() + "\n").set_exit_fn(set_exit).warning()
             ),
         )
 
-        add_str(self.Key.up, self.tree.move_up)
+        add_str(Key.up, self.tree.move_up)
         add_int(curses.KEY_UP, self.tree.move_up)
 
-        add_str(self.Key.down, self.tree.move_down)
+        add_str(Key.down, self.tree.move_down)
         add_int(curses.KEY_DOWN, self.tree.move_down)
 
-        add_str(self.Key.left, self.tree.arrow_left)
+        add_str(Key.left, self.tree.arrow_left)
         add_int(curses.KEY_LEFT, self.tree.arrow_left)
 
-        add_str(self.Key.right, self.tree.arrow_right)
+        add_str(Key.right, self.tree.arrow_right)
         add_int(curses.KEY_RIGHT, self.tree.arrow_right)
 
-        add_str(self.Key.ajuda, self.show_help)
-        add_str(self.Key.expand, self.tree.process_expand)
-        add_str(self.Key.collapse, self.tree.process_collapse)
+        add_str(Key.ajuda, self.show_help)
+        add_str(Key.expand, self.tree.process_expand)
+        add_str(Key.collapse, self.tree.process_collapse)
 
-        # add_str(self.Key.toggle_enter, self.tree.toggle)
-        # add_str(self.Key.toggle_space, self.tree.toggle)
-        add_str(self.Key.github_open, self.open_link)
-        add_str(self.Key.set_lang, lambda: self.set_language(False))
-        add_str(self.Key.set_root_dir, lambda: self.set_rootdir(False))
-        add_str(self.Key.down_task, self.down_task)
-        add_str(self.Key.select_task, lambda: self.test_task(False))
-        # add_str(self.Key.test_task, lambda: self.test_task(True))
-        # add_str(self.Key.open_draft, lambda: self.open_code(open_drafts = True, open_readme = False))
-        # add_str(self.Key.open_readme, lambda: self.open_code(open_drafts = False, open_readme = True))
-        add_str(self.Key.project_open, lambda: self.open_code(open_drafts = False, open_readme = False, open_dir=True))
-        add_str(self.Key.cores, self.geral.toggle_color)
-        add_str(self.Key.bordas, self.geral.toggle_nerdfonts)
+        # add_str(Key.toggle_enter, self.tree.toggle)
+        # add_str(Key.toggle_space, self.tree.toggle)
+        add_str(Key.github_open, self.open_link)
+        add_str(Key.set_lang, lambda: self.set_language(False))
+        add_str(Key.set_root_dir, lambda: self.set_rootdir(False))
+        add_str(Key.down_task, self.down_task)
+        add_str(Key.select_task, lambda: self.test_task(False))
+        add_str(Key.inc_grade, self.tree.inc_grade)
+        add_str(Key.dec_grade, self.tree.dec_grade)
+        # add_str(Key.inc_grade2, self.tree.inc_grade)
+        # add_str(Key.dec_grade2, self.tree.dec_grade)
+        # add_str(Key.test_task, lambda: self.test_task(True))
+        # add_str(Key.open_draft, lambda: self.open_code(open_drafts = True, open_readme = False))
+        # add_str(Key.open_readme, lambda: self.open_code(open_drafts = False, open_readme = True))
+        add_str(Key.project_open, lambda: self.open_code(open_drafts = False, open_readme = False, open_dir=True))
+        add_str(Key.cores, self.geral.toggle_color)
+        add_str(Key.bordas, self.geral.toggle_nerdfonts)
 
-        for value in range(10):
+        for value in range(1, 10):
             add_str(str(value), self.GradeFunctor(int(value), self.tree.set_grade))
+        add_str("'", self.GradeFunctor(0, self.tree.set_grade))
+        add_str("0", self.GradeFunctor(10, self.tree.set_grade))
 
         for flag in self.flagsman.others:
             add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
@@ -6977,7 +7075,7 @@ class Play:
                 if callback is not None:
                     return callback
             elif value == ord("\n") or value == ord(" "):
-                self.fman.add_input(Floating("v>").put_text("\n Utilize esquerda e direita\npara marcar as questões \n").put_text(""))
+                self.fman.add_input(Floating("v>").put_text("\n Utilize esquerda e direita\npara marcar as questões\n e compactar e expandir tópicos \n").put_text(""))
             elif value != -1:
                 self.fman.add_input(Floating("v>").error()
                                     .put_text("Tecla")
@@ -7171,6 +7269,11 @@ class Main:
             path = os.path.abspath(args.root)
             settings.geral.set_rootdir(path)
             print("Root directory now is: " + path)
+        
+        if args.editor:
+            action = True
+            settings.geral.set_editor(args.editor)
+            print(f"Novo comando para abrir arquivos de código {args.editor}")
 
         if not action:
             action = True
@@ -7333,6 +7436,7 @@ class Parser:
         g_lang.add_argument("--ask", action='store_true', help='ask language extension every time.')
 
         parser_s.add_argument("--root", metavar="path", type=str, help='set root directory.')
+        parser_s.add_argument("--editor", metavar="cmd", type=str, help='set editor command.')
 
         parser_s.set_defaults(func=Main.settings)
 

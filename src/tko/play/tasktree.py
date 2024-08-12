@@ -1,4 +1,4 @@
-from typing import List, Any, Dict
+from typing import List, Any, Dict, Tuple
 
 from ..settings.geral_settings import GeralSettings
 from ..settings.rep_settings import RepData
@@ -23,6 +23,18 @@ class Entry:
     def get(self):
         return self.sentence
 
+class TaskProgress:
+    def __init__(self):
+        self.index = 0
+        self.progress = 0
+
+    def from_str(self, value: str):
+        v = value.split(":")
+        self.index = int(v[0])
+        self.progress = int(v[1])
+    
+    def to_str(self):
+        return f"{self.index}:{self.progress}"
 
 class TaskTree:
 
@@ -52,6 +64,12 @@ class TaskTree:
     def load_from_rep(self):
         self.new_items: List[str] = self.rep.get_new_items()
         self.expanded: List[str] = self.rep.get_expanded()
+        self.progress: Dict[str, TaskProgress] = {}
+        for key, val in self.rep.get_progress().items():
+            tp = TaskProgress()
+            tp.from_str(val)
+            self.progress[key] = tp
+
         self.index_selected = self.rep.get_index()
 
         tasks = self.rep.get_tasks()
@@ -71,6 +89,12 @@ class TaskTree:
             if t.grade != 0:
                 tasks[t.key] = str(t.grade)
         self.rep.set_tasks(tasks)
+
+        progress = {}
+        for key, tp in self.progress.items():
+            progress[key] = tp.to_str()
+
+        self.rep.set_progress(progress)
 
     def update_available(self):
         old_quests = [q for q in self.available_quests]
@@ -145,7 +169,12 @@ class TaskTree:
         color = ""
         if in_focus:
             color = "k" + focus_color
-        output.addf(color, t.title)
+
+        done = color + "c"
+        todo = color
+        perc = self.progress.get(t.key, TaskProgress()).progress
+        output.add(Style.build_bar(t.title, perc / 100, len(t.title), done, todo, round=False))
+        # output.addf(color, t.title)
 
         if in_focus:
             output.addf(focus_color.lower(), Style.roundR())
@@ -348,6 +377,16 @@ class TaskTree:
         if isinstance(obj, Task):
             obj.set_grade(grade)
 
+    def inc_grade(self):
+        obj = self.items[self.index_selected].obj
+        if isinstance(obj, Task):
+            obj.set_grade(min(10, obj.grade + 1))
+    
+    def dec_grade(self):
+        obj = self.items[self.index_selected].obj
+        if isinstance(obj, Task):
+            obj.set_grade(max(0, obj.grade - 1))
+
     def arrow_right(self):
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Cluster):
@@ -367,15 +406,15 @@ class TaskTree:
                     if self.index_selected == len(self.items) - 1:
                         break
         elif isinstance(obj, Task):
-            task: Task = obj
-            task.set_grade(min(10, task.grade + 1))
-            # while True:
-            #     obj = self.items[self.index_selected].obj
-            #     if isinstance(obj, Quest) or isinstance(obj, Cluster):
-            #         break
-            #     if self.index_selected == len(self.items) - 1:
-            #         break
-            #     self.index_selected += 1
+            # task: Task = obj
+            # task.set_grade(min(10, task.grade + 1))
+            while True:
+                obj = self.items[self.index_selected].obj
+                if isinstance(obj, Quest) or isinstance(obj, Cluster):
+                    break
+                if self.index_selected == len(self.items) - 1:
+                    break
+                self.index_selected += 1
 
     def arrow_left(self):
         obj = self.items[self.index_selected].obj
@@ -411,13 +450,13 @@ class TaskTree:
                     if self.index_selected == 0:
                         break
         elif isinstance(obj, Task):
-            task: Task = obj
-            task.set_grade(max(0, task.grade - 1))
-            # while True:
-            #     obj = self.items[self.index_selected].obj
-            #     if isinstance(obj, Quest):
-            #         break
-            #     self.index_selected -= 1
+            # task: Task = obj
+            # task.set_grade(max(0, task.grade - 1))
+            while True:
+                obj = self.items[self.index_selected].obj
+                if isinstance(obj, Quest):
+                    break
+                self.index_selected -= 1
 
     def expand(self):
         obj = self.items[self.index_selected].obj

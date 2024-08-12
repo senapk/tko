@@ -5,6 +5,7 @@ from ..game.task import Task
 from ..game.xp import XP
 from ..game.graph import Graph
 import random
+import tempfile
 
 from ..run.basic import Success
 from typing import List, Any, Dict, Callable, Tuple
@@ -19,7 +20,7 @@ from ..util.runner import Runner
 from .floating import Floating
 from .floating_manager import FloatingManager
 from .flags import Flag, Flags, FlagsMan
-from .tasktree import TaskTree
+from .tasktree import TaskTree, TaskProgress
 from ..actions import Run
 from ..run.param import Param
 from ..util.symbols import symbols
@@ -28,29 +29,45 @@ from .quit_msgs import quit_msgs
 import webbrowser
 import os
 import curses
+import subprocess
 
+class Actions:
+    github = "Github"
+    sair = "Sair"
+    ajuda = "Ajuda"
+    baixar = "Baixar"
+    escolher = "Escolher"
+    navegar = "Navegar"
+    abrir_pasta = "VerArquivos"
+    graduar = "Graduar"
+
+class Key:
+    left = "a"
+    right = "d"
+    down = "s"
+    up = "w"
+
+    down_task = "b"
+    select_task = "e"
+    ajuda = "h"
+    expand = "}"
+    collapse = "{"
+    inc_grade = ">"
+    dec_grade = "<"
+    set_root_dir = "D"
+    set_lang = "L"
+    github_open = "g"
+    quit = "q"
+    toggle_space = " "
+    toggle_enter = "\n"
+    project_open= "v"
+    cores = "C"
+    bordas = "B"
 
 class Play:
 
-    class Key:
-        left = "a"
-        right = "d"
-        down = "s"
-        up = "w"
-        down_task = "b"
-        select_task = "e"
-        ajuda = "h"
-        expand = ">"
-        collapse = "<"
-        set_root_dir = "D"
-        set_lang = "L"
-        github_open = "g"
-        quit = "q"
-        toggle_space = " "
-        toggle_enter = "\n"
-        project_open= "p"
-        cores = "C"
-        bordas = "B"
+
+
 
     def __init__(
         self,
@@ -83,19 +100,20 @@ class Play:
         self.wrap_size = 100
 
         self.help_basic: List[Token] = [
-            RToken("C", f"Sair[{self.Key.quit}]"),
-            RToken("C", f"Ajuda[{self.Key.ajuda}]"),
+            RToken("C", f"{Actions.sair}[{Key.quit}]"),
+            RToken("C", f"{Actions.ajuda}[{Key.ajuda}]"),
         ]
 
         self.help_extra: List[Token] = [
-            RToken("C", f"Github[{self.Key.github_open}]"),
-            RToken("C", f"Baixar[{self.Key.down_task}]"),
-            RToken("G", f"Escolher[{self.Key.select_task}]"),
-            RToken("M", "Manipular[wasd]"),
-            RToken("M", f"Pasta[{self.Key.project_open}]"),
-            # RToken("Y", f"Testar[{self.Key.test_task}]"),
-            # RToken("M", f"Rascunho[{self.Key.open_draft}]"),
-            # RToken("M", f"Leitura[{self.Key.open_readme}]"),
+            RToken("C", f"{Actions.github}[{Key.github_open}]"),
+            RToken("C", f"{Actions.baixar}[{Key.down_task}]"),
+            RToken("G", f"{Actions.escolher}[{Key.select_task}]"),
+            RToken("M", f"{Actions.navegar}[wasd]"),
+            RToken("M", f"{Actions.graduar}[<>]"),
+            RToken("M", f"{Actions.abrir_pasta}[{Key.project_open}]"),
+            # RToken("Y", f"Testar[{Key.test_task}]"),
+            # RToken("M", f"Rascunho[{Key.open_draft}]"),
+            # RToken("M", f"Leitura[{Key.open_readme}]"),
             # RToken("M", "Marcar[enter]"),
             # RToken("M", "Graduar[0-9]"),
         ]
@@ -195,7 +213,7 @@ class Play:
                 .put_text("O diretório de download padrão")
                 .put_text("do tko ainda não foi definido.")
                 .put_text("")
-                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + self.Key.set_root_dir, "g"))
+                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + Key.set_root_dir, "g"))
                 .put_text("para configurá-lo.")
                 .put_text("")
             )
@@ -207,7 +225,7 @@ class Play:
                 .put_text("A linguagem de download padrão")
                 .put_text("para os rascunhos ainda não foi definda.")
                 .put_text("")
-                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + self.Key.set_lang, "g"))
+                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + Key.set_lang, "g"))
                 .put_text("para configurá-la.")
                 .put_text("")
             )
@@ -355,7 +373,12 @@ class Play:
             run.set_curses(True, Success.RANDOM)
         else:
             run.set_curses(True, Success.FIXED)
-        run.set_curses_select_mode(True)
+        # run.set_curses_select_mode(True)
+
+        if not task.key in self.tree.progress:
+            self.tree.progress[task.key] = TaskProgress()
+        run.set_task_progress(self.tree.progress[task.key])
+
         run.build_wdir()
         if not run.wdir.has_solver():
             msg = Floating("v>").error()
@@ -553,8 +576,8 @@ class Play:
         _help.put_sentence(Sentence() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_char()}]") + " - Mostrar quanto de experiência cada atividade fornece")
         _help.put_sentence(Sentence() + f"  Percentual " + RToken("r", f"[{Flags.percent.get_char()}]") + " - Mostrar os valores em percentual")
         _help.put_sentence(Sentence() + f"  ModoAdmin " + RToken("r", f"Shift + [A]") + " - Liberar acesso a todas as missões" )
-        _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{self.Key.set_root_dir}]") + " - Mudar a pasta padrão de download do tko" )
-        _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"Shift + [{self.Key.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
+        _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{Key.set_root_dir}]") + " - Mudar a pasta padrão de download do tko" )
+        _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"Shift + [{Key.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
 
 
     def show_help(self):
@@ -564,19 +587,20 @@ class Play:
         _help.set_header_sentence(Sentence().add(" Ajuda "))
         # _help.put_text("")
         # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence() + "  " + RToken("g", "[setas]") + " ou " + RToken("g", "[wasd]") + "   - Para navegar entre os elementos")
-        _help.put_sentence(Sentence() + "  " + RToken("g", "[enter]") + " ou " + RToken("g", "[espaço]") + " - Expandir ou contrair")
-        _help.put_sentence(Sentence() + "    " + RToken("g", "[>]") + "   ou   " + RToken("g", "[<]") + "    - Expandir ou contrair todas")
-        # _help.put_text("")
-        # _help.put_text(" Tarefas ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence() + "  " + RToken("g", "[enter]") + " ou " + RToken("g", "[espaço]")
-                            + " - Marcar (" + Token(symbols.success.text, "g") + "10)"
-                            + " ou Desmarcar (" + Token(symbols.failure.text, "r") + "0)")
-        _help.put_sentence(Sentence() + "          ou " + RToken("g", "[1-9]") + "    - Definir uma nota parcial")
-        _help.put_sentence(Sentence() + "  Github " + RToken("r", f"[{self.Key.github_open}]") + " - Abrir tarefa em uma aba do browser")
-        _help.put_sentence(Sentence() + "  Baixar " + RToken("r", f"[{self.Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
-        # _help.put_sentence(Sentence() + "  Testar " + RToken("r", f"[{self.Key.test_task}]") + " - Testar tarefa de código que você baixou")
-        _help.put_sentence(Sentence() + "Escolher " + RToken("r", f"[{self.Key.select_task}]") + " - Escolher a tarefa de código que você baixou")
+        _help.put_sentence(Sentence() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + " - Para navegar entre os elementos")
+        _help.put_sentence(Sentence() + "            - Expandir ou contrair")
+        _help.put_sentence(Sentence() + "            - Saltar entre as sessões")
+        _help.put_sentence(Sentence() + "     " + RToken("g", "{") + " ou " + RToken("g", "}") + " - Expandir ou contrair todas as sessões")
+        _help.put_sentence(Sentence() + "" + RToken("g", "'1234567890") + " - Definir uma nota")
+        _help.put_sentence(Sentence() + "     " + RToken("g", "<") + " ou " + RToken("g", ">") + " - Aumentar ou diminuir nota")
+        _help.put_sentence(Sentence() + f"     {Actions.github} " + RToken("r", f"[{Key.github_open}]") + " - Abrir tarefa em uma aba do browser")
+        _help.put_sentence(Sentence() + f"     {Actions.baixar} " + RToken("r", f"[{Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
+        # _help.put_sentence(Sentence() + "  Testar " + RToken("r", f"[{Key.test_task}]") + " - Testar tarefa de código que você baixou")
+        _help.put_sentence(Sentence() + f"   {Actions.escolher} " + RToken("r", f"[{Key.select_task}]") + " - Escolher a tarefa de código que você baixou")
+        _help.put_sentence(Sentence() + f"{Actions.abrir_pasta} " + RToken("r", f"[{Key.project_open}]") + " - Abrir os arquivos no editor de código")
+        _help.put_sentence(Sentence())
+        _help.put_sentence(Sentence() + "Você pode editar o editor padrão com o comando")
+        _help.put_sentence(Sentence() + RToken("g", "             tko config --editor comando"))
 
     @staticmethod
     def disable_on_resize():
@@ -730,7 +754,9 @@ class Play:
                     open_readme = True
                     open_drafts = True
                 else:
-                    code, out, err = Runner.subprocess_run(f"{cmd} {os.path.dirname(path)}")
+                    outfile = tempfile.NamedTemporaryFile(delete=False)
+                    subprocess.Popen(f"{cmd} {os.path.dirname(path)}", stdout=outfile, shell=True)
+                    #code, out, err = Runner.subprocess_run(f"{cmd} {os.path.dirname(path)}")
                 
             files_to_open: List[str] = []
             if open_readme:
@@ -777,44 +803,50 @@ class Play:
 
         add_int(curses.KEY_RESIZE, self.disable_on_resize)
         add_str(
-            self.Key.quit,
+            Key.quit,
             lambda: self.fman.add_input(
                 Floating().put_text("\n" + self.select_quit_msg() + "\n").set_exit_fn(set_exit).warning()
             ),
         )
 
-        add_str(self.Key.up, self.tree.move_up)
+        add_str(Key.up, self.tree.move_up)
         add_int(curses.KEY_UP, self.tree.move_up)
 
-        add_str(self.Key.down, self.tree.move_down)
+        add_str(Key.down, self.tree.move_down)
         add_int(curses.KEY_DOWN, self.tree.move_down)
 
-        add_str(self.Key.left, self.tree.arrow_left)
+        add_str(Key.left, self.tree.arrow_left)
         add_int(curses.KEY_LEFT, self.tree.arrow_left)
 
-        add_str(self.Key.right, self.tree.arrow_right)
+        add_str(Key.right, self.tree.arrow_right)
         add_int(curses.KEY_RIGHT, self.tree.arrow_right)
 
-        add_str(self.Key.ajuda, self.show_help)
-        add_str(self.Key.expand, self.tree.process_expand)
-        add_str(self.Key.collapse, self.tree.process_collapse)
+        add_str(Key.ajuda, self.show_help)
+        add_str(Key.expand, self.tree.process_expand)
+        add_str(Key.collapse, self.tree.process_collapse)
 
-        # add_str(self.Key.toggle_enter, self.tree.toggle)
-        # add_str(self.Key.toggle_space, self.tree.toggle)
-        add_str(self.Key.github_open, self.open_link)
-        add_str(self.Key.set_lang, lambda: self.set_language(False))
-        add_str(self.Key.set_root_dir, lambda: self.set_rootdir(False))
-        add_str(self.Key.down_task, self.down_task)
-        add_str(self.Key.select_task, lambda: self.test_task(False))
-        # add_str(self.Key.test_task, lambda: self.test_task(True))
-        # add_str(self.Key.open_draft, lambda: self.open_code(open_drafts = True, open_readme = False))
-        # add_str(self.Key.open_readme, lambda: self.open_code(open_drafts = False, open_readme = True))
-        add_str(self.Key.project_open, lambda: self.open_code(open_drafts = False, open_readme = False, open_dir=True))
-        add_str(self.Key.cores, self.geral.toggle_color)
-        add_str(self.Key.bordas, self.geral.toggle_nerdfonts)
+        # add_str(Key.toggle_enter, self.tree.toggle)
+        # add_str(Key.toggle_space, self.tree.toggle)
+        add_str(Key.github_open, self.open_link)
+        add_str(Key.set_lang, lambda: self.set_language(False))
+        add_str(Key.set_root_dir, lambda: self.set_rootdir(False))
+        add_str(Key.down_task, self.down_task)
+        add_str(Key.select_task, lambda: self.test_task(False))
+        add_str(Key.inc_grade, self.tree.inc_grade)
+        add_str(Key.dec_grade, self.tree.dec_grade)
+        # add_str(Key.inc_grade2, self.tree.inc_grade)
+        # add_str(Key.dec_grade2, self.tree.dec_grade)
+        # add_str(Key.test_task, lambda: self.test_task(True))
+        # add_str(Key.open_draft, lambda: self.open_code(open_drafts = True, open_readme = False))
+        # add_str(Key.open_readme, lambda: self.open_code(open_drafts = False, open_readme = True))
+        add_str(Key.project_open, lambda: self.open_code(open_drafts = False, open_readme = False, open_dir=True))
+        add_str(Key.cores, self.geral.toggle_color)
+        add_str(Key.bordas, self.geral.toggle_nerdfonts)
 
-        for value in range(10):
+        for value in range(1, 10):
             add_str(str(value), self.GradeFunctor(int(value), self.tree.set_grade))
+        add_str("'", self.GradeFunctor(0, self.tree.set_grade))
+        add_str("0", self.GradeFunctor(10, self.tree.set_grade))
 
         for flag in self.flagsman.others:
             add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
@@ -847,7 +879,7 @@ class Play:
                 if callback is not None:
                     return callback
             elif value == ord("\n") or value == ord(" "):
-                self.fman.add_input(Floating("v>").put_text("\n Utilize esquerda e direita\npara marcar as questões \n").put_text(""))
+                self.fman.add_input(Floating("v>").put_text("\n Utilize esquerda e direita\npara marcar as questões\n e compactar e expandir tópicos \n").put_text(""))
             elif value != -1:
                 self.fman.add_input(Floating("v>").error()
                                     .put_text("Tecla")

@@ -19,7 +19,7 @@ from .util.runner import Runner
 from .util.freerun import Free
 from .cdiff import CDiff
 from .execution import Execution
-
+from .play.tasktree import TaskProgress
 
 
 class FilterMode:
@@ -48,28 +48,34 @@ class Run:
         self.param: Param.Basic = param
         self.wdir: Wdir = Wdir()
         self.wdir_builded = False
-        self.curses: bool = False
-        self.first_run = False
-        self.success = Success.RANDOM
-        self.curses_select_mode = False
+        self.__curses_mode: bool = False
+        self.__first_run = False
+        self.__success_mode = Success.RANDOM
+        # self.__curses_select_mode = False
         self.__lang = ""
+        self.__task_progress: Optional[TaskProgress] = None
 
     def set_curses(self, value:bool=True, success: Success=Success.RANDOM):
-        self.curses = value
-        self.success = success
+        self.__curses_mode = value
+        self.__success_mode = success
         return self
    
     def set_lang(self, lang:str):
         self.__lang = lang
         return self
 
-    def set_curses_select_mode(self, value:bool=True):
-        self.curses_select_mode = value
+    # def set_curses_select_mode(self, value:bool=True):
+    #     self.__curses_select_mode = value
+    #     return self
+    
+    def set_task_progress(self, task_progress: TaskProgress):
+        self.__task_progress = task_progress
         return self
 
     def set_first_run(self):
-        self.first_run = True
-
+        self.__first_run = True
+        return self
+    
     def execute(self):
         if not self.wdir_builded:
             self.build_wdir()
@@ -166,7 +172,7 @@ class Run:
         self.__remove_duplicates()
         self.__change_targets_to_filter_mode()
         try:
-            self.wdir = Wdir().set_curses(self.curses).set_lang(self.__lang).set_target_list(self.target_list).set_cmd(self.exec_cmd).build().filter(self.param)
+            self.wdir = Wdir().set_curses(self.__curses_mode).set_lang(self.__lang).set_target_list(self.target_list).set_cmd(self.exec_cmd).build().filter(self.param)
         except FileNotFoundError as e:
             if self.wdir.has_solver():
                 self.wdir.get_solver().error_msg += str(e)
@@ -206,10 +212,12 @@ class Run:
         if self.wdir is None:
             return
         
-        if self.curses:
-            cdiff = CDiff(self.wdir, self.param, self.success, select_mode=self.curses_select_mode)
-            if self.first_run:
+        if self.__curses_mode:
+            cdiff = CDiff(self.wdir, self.param, self.__success_mode)
+            if self.__first_run:
                 cdiff.set_first_run()
+            if self.__task_progress is not None:
+                cdiff.set_task_progress(self.__task_progress)
             cdiff.run()
         else:
             term_print(Report.centralize(" Testando o código com os casos de teste ", "═"))
