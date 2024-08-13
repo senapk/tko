@@ -6362,7 +6362,7 @@ class Play:
             RToken("Y", f"{Actions.github}[{Key.github_open}]"),
             RToken("Y", f"{Actions.baixar}[{Key.down_task}]"),
             RToken("C", f"{Actions.editar}[{Key.edit}]"),
-            RToken("C", f"{Actions.escolher}[{"↲"}]"),
+            RToken("C", f"{Actions.escolher}[↲]"),
             RToken("C", f"{Actions.graduar}[<>]"),
             # RToken("Y", f"Testar[{Key.test_task}]"),
             # RToken("M", f"Rascunho[{Key.open_draft}]"),
