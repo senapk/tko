@@ -4,6 +4,7 @@ import json
 import tempfile
 from ..util.remote import RemoteCfg, Absolute
 
+languages_avaliable = ["c", "cpp", "py", "ts", "js", "java", "go"]
 
 class RepSource:
     def __init__(self, file: str = "", url: str = ""):
@@ -63,7 +64,6 @@ class RepData:
     __expanded = "expanded"
     __new_items = "new_items"
     __tasks = "tasks"
-    __progress = "progress"
     __flags = "flags"
     __lang = "lang"
     __index = "index"
@@ -71,7 +71,6 @@ class RepData:
     defaults = {
         __expanded: [],
         __tasks: {},
-        __progress: {},
         __flags: {},
         __new_items: [],
         __lang: "",
@@ -83,9 +82,6 @@ class RepData:
 
     def get_expanded(self) -> list:
         return self.__get(RepData.__expanded)
-    
-    def get_progress(self) -> Dict[str, str]:
-        return self.__get(RepData.__progress)
 
     def get_new_items(self) -> list:
         return self.__get(RepData.__new_items)
@@ -98,9 +94,6 @@ class RepData:
     
     def get_lang(self) -> str:
         return self.__get(RepData.__lang)
-    
-    def set_progress(self, value: Dict[str, Any]):
-        return self.__set(RepData.__progress, value)
 
     def set_expanded(self, value: list):
         return self.__set(RepData.__expanded, value)
@@ -146,6 +139,11 @@ class RepData:
     def save_data_to_json(self):
         if not os.path.exists(os.path.dirname(self.json_file)):
             os.makedirs(os.path.dirname(self.json_file))
+        # filter keys that are not in defaults
+        for key in list(self.data.keys()):
+            if key not in RepData.defaults:
+                del self.data[key]
+
         with open(self.json_file, "w", encoding="utf-8") as f:
             f.write(json.dumps(self.data, indent=4))
         return self

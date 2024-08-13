@@ -14,8 +14,7 @@ from .play.images import images, compilling, success, select
 from .util.runner import Runner
 from .util.freerun import Free
 from .play.style import Style
-from .play.flags import Flags
-from .play.tasktree import TaskProgress, TaskTree
+from .game.task import Task
 import random
 
 
@@ -31,6 +30,21 @@ class Mode(enum.Enum):
     running = 1
     finished = 2
 
+class Keys:
+    left = "a"
+    left2 = "h"
+    up = "w"
+    up2 = "k"
+    right = "d"
+    right2 = "l"
+    down = "s"
+    down2 = "k"
+    principal = "p"
+    diff = "m"
+    executar = "e"
+    testar = "t"
+    sair = "q"
+
 class CDiff:
     def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
         self.param = param
@@ -40,7 +54,7 @@ class CDiff:
         self.unit_list = [unit for unit in wdir.get_unit_list()] # unit list to be consumed
         self.exit = False
         self.success_type = success_type
-        self.task_prog = TaskProgress()
+        self.task = Task()
         self.init = 0   # index of first line to show
         self.length = 1  # length of diff
         self.space = 0  # dy space for draw
@@ -66,8 +80,8 @@ class CDiff:
         self.sp.save_settings()
         return self
     
-    def set_task_progress(self, task_prog: TaskProgress):
-        self.task_prog = task_prog
+    def set_task(self, task: Task):
+        self.task = task
         return self
 
     def set_exit(self):
@@ -200,7 +214,7 @@ class CDiff:
                 self.results_fail.append((Token(symbol.text, color), index))
             else:
                 self.results_done.append((Token(symbol.text, color), index))
-            self.task_prog.progress = (len(self.results_done) * 100) // len(self.wdir.get_unit_list())
+            self.task.test_progress = (len(self.results_done) * 100) // len(self.wdir.get_unit_list())
         else:
             self.mode = Mode.finished
 
@@ -220,7 +234,7 @@ class CDiff:
             # if i != 0:
             #     solvers.addf(solver_color, ", ")
             color = solver_color
-            if i == self.task_prog.index:
+            if i == self.task.main_index:
                 color = "G"
             solvers.addf(color.lower(), Style.roundL()).addf(color, solver).addf(color.lower(), Style.roundR())
 
@@ -389,52 +403,76 @@ class CDiff:
             else:
                 key = Fmt.getch()
 
-            if key == ord('q'):
-                self.set_exit()
-            elif key == curses.KEY_LEFT or key == ord('a'):
-                self.index = max(0, self.index - 1)
-                self.init = 0
-            elif key == curses.KEY_RIGHT or key == ord('d'):
-                self.index = min(len(self.results_done) + len(self.results_fail) - 1, self.index + 1)
-                self.init = 0
-            elif key == curses.KEY_DOWN or key == ord('s'):
-                self.init += 1
-            elif key == curses.KEY_UP or key == ord('w'):
-                self.init = max(0, self.init - 1)
-            elif key == ord('m'):
-                self.param.is_up_down = not self.param.is_up_down
-                self.save_settings()
-                self.init = 0
-            elif key == ord('e'):
-                self.mode = Mode.running
-                if self.wdir.is_autoload():
-                    self.wdir.autoload()
-                    self.wdir.get_solver().set_main(self.get_solver_names()[self.task_prog.index])
+            fn_exec = self.process_key(key)
+            if fn_exec is not None:
+                return fn_exec
 
-                return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True)
+    def run_exec_mode(self):
+        self.mode = Mode.running
+        if self.wdir.is_autoload():
+            self.wdir.autoload()
+            self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index])
+        return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True)
 
-            elif key == ord('p'):
-                self.task_prog.index = (self.task_prog.index + 1) % len(self.get_solver_names())
-            elif key == ord('t'):
-                self.mode = Mode.running
-                self.index = 0
-                if self.wdir.is_autoload():
-                    self.wdir.autoload()
-                Fmt.erase()
-                self.show_compilling()
-                Fmt.refresh()
-                self.wdir.get_solver().set_main(self.get_solver_names()[self.task_prog.index]).prepare_exec()
-                self.results_done = []
-                self.results_fail = []
-                self.unit_list = [unit for unit in self.wdir.get_unit_list()]
-            elif key != -1:
-                self.fman.add_input(Floating("v>").error()
-                                    .put_text("Tecla")
-                                    .put_text(chr(key))
-                                    .put_text("não reconhecida")
-                                    .put_text("")
-                                    )
-                
+    def run_test_mode(self):
+        self.mode = Mode.running
+        self.index = 0
+        if self.wdir.is_autoload():
+            self.wdir.autoload()
+        Fmt.erase()
+        self.show_compilling()
+        Fmt.refresh()
+        self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index]).prepare_exec()
+        self.results_done = []
+        self.results_fail = []
+        self.unit_list = [unit for unit in self.wdir.get_unit_list()]
+
+    def send_char_not_found(self, key):
+        self.fman.add_input(Floating("v>").error()
+                    .put_text("Tecla")
+                    .put_text(f"char {chr(key)}")
+                    .put_text(f"code {key}")
+                    .put_text("não reconhecida")
+                    .put_text("")
+                    )
+
+    def go_left(self):
+        self.index = max(0, self.index - 1)
+        self.init = 0
+
+    def go_right(self):
+        self.index = min(len(self.results_done) + len(self.results_fail) - 1, self.index + 1)
+        self.init = 0
+
+    def go_down(self):
+        self.init += 1
+
+    def go_up(self):
+        self.init = max(0, self.init - 1)
+
+    def process_key(self, key):
+        if key == ord('q'):
+            self.set_exit()
+        elif key == curses.KEY_LEFT or key == ord(Keys.left) or key == ord(Keys.left2):
+            self.go_left()
+        elif key == curses.KEY_RIGHT or key == ord(Keys.right) or key == ord(Keys.right2):
+            self.go_right()
+        elif key == curses.KEY_DOWN or key == ord(Keys.down) or key == ord(Keys.down2):
+            self.go_down()
+        elif key == curses.KEY_UP or key == ord(Keys.up) or key == ord(Keys.up2):
+            self.go_up()
+        elif key == ord(Keys.diff):
+            self.param.is_up_down = not self.param.is_up_down
+            self.save_settings()
+            self.init = 0
+        elif key == ord(Keys.principal):
+            self.task.main_index = (self.task.main_index + 1) % len(self.get_solver_names())
+        elif key == ord(Keys.executar):
+            return self.run_exec_mode()
+        elif key == ord(Keys.testar):
+            self.run_test_mode()
+        elif key != -1:
+            self.send_char_not_found(key)
 
     def run(self):
         while True:

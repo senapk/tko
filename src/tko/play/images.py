@@ -1,7 +1,8 @@
 from typing import Dict
 
 
-select = r"""               e -> Executa sem testar          
+select = r"""
+                            e -> Executa sem testar          
   _________         .    .                                   
  (..       \_    ,  |\  /|  t -> Roda os casos de teste      
   \       O  \  /|  \ \/ /                                   

@@ -19,7 +19,7 @@ from .util.runner import Runner
 from .util.freerun import Free
 from .cdiff import CDiff
 from .execution import Execution
-from .play.tasktree import TaskProgress
+from .game.task import Task
 
 
 class FilterMode:
@@ -53,7 +53,7 @@ class Run:
         self.__success_mode = Success.RANDOM
         # self.__curses_select_mode = False
         self.__lang = ""
-        self.__task_progress: Optional[TaskProgress] = None
+        self.__task: Optional[Task] = None
 
     def set_curses(self, value:bool=True, success: Success=Success.RANDOM):
         self.__curses_mode = value
@@ -68,8 +68,8 @@ class Run:
     #     self.__curses_select_mode = value
     #     return self
     
-    def set_task_progress(self, task_progress: TaskProgress):
-        self.__task_progress = task_progress
+    def set_task(self, task: Task):
+        self.__task = task
         return self
 
     def set_first_run(self):
@@ -216,8 +216,8 @@ class Run:
             cdiff = CDiff(self.wdir, self.param, self.__success_mode)
             if self.__first_run:
                 cdiff.set_first_run()
-            if self.__task_progress is not None:
-                cdiff.set_task_progress(self.__task_progress)
+            if self.__task is not None:
+                cdiff.set_task(self.__task)
             cdiff.run()
         else:
             term_print(Report.centralize(" Testando o código com os casos de teste ", "═"))

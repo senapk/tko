@@ -39,7 +39,6 @@ class Settings:
             "reps": {k: v.to_dict() for k, v in self.reps.items()},
             "geral": self.geral.to_dict()
         }
-        return self
 
     def from_dict(self, data: Dict[str, Any]):
         self.reps = {k: RepSource().from_dict(v) for k, v in data.get("reps", {}).items()}

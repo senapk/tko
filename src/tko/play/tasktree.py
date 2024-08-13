@@ -23,18 +23,24 @@ class Entry:
     def get(self):
         return self.sentence
 
-class TaskProgress:
-    def __init__(self):
-        self.index = 0
-        self.progress = 0
+# class TaskProgress:
+#     def __init__(self):
+#         self.grade = 0
+#         self.index = 0
+#         self.progress = 0
 
-    def from_str(self, value: str):
-        v = value.split(":")
-        self.index = int(v[0])
-        self.progress = int(v[1])
+#     def from_str(self, value: str):
+#         if ":" not in value:
+#             self.grade = int(value)
+#         else:
+#             v = value.split(":")
+#             if len(v) == 3:
+#                 self.grade = int(v[0])
+#                 self.index = int(v[1])
+#                 self.progress = int(v[2])
     
-    def to_str(self):
-        return f"{self.index}:{self.progress}"
+#     def to_str(self):
+#         return f"{self.grade}:{self.index}:{self.progress}"
 
 class TaskTree:
 
@@ -64,18 +70,12 @@ class TaskTree:
     def load_from_rep(self):
         self.new_items: List[str] = self.rep.get_new_items()
         self.expanded: List[str] = self.rep.get_expanded()
-        self.progress: Dict[str, TaskProgress] = {}
-        for key, val in self.rep.get_progress().items():
-            tp = TaskProgress()
-            tp.from_str(val)
-            self.progress[key] = tp
-
         self.index_selected = self.rep.get_index()
 
         tasks = self.rep.get_tasks()
-        for key, grade in tasks.items():
+        for key, serial in tasks.items():
             if key in self.game.tasks:
-                self.game.tasks[key].set_grade(int(grade))
+                self.game.tasks[key].load_from_db(serial)
 
     def save_on_rep(self):
         keys = [c.key for c in self.game.clusters]
@@ -86,15 +86,10 @@ class TaskTree:
         self.rep.set_index(self.index_selected)
         tasks = {}
         for t in self.game.tasks.values():
-            if t.grade != 0:
-                tasks[t.key] = str(t.grade)
+            if not t.is_db_empty():
+                tasks[t.key] = t.save_to_db()
         self.rep.set_tasks(tasks)
 
-        progress = {}
-        for key, tp in self.progress.items():
-            progress[key] = tp.to_str()
-
-        self.rep.set_progress(progress)
 
     def update_available(self):
         old_quests = [q for q in self.available_quests]
@@ -172,7 +167,7 @@ class TaskTree:
 
         done = color + "c"
         todo = color
-        perc = self.progress.get(t.key, TaskProgress()).progress
+        perc = t.test_progress
         output.add(Style.build_bar(t.title, perc / 100, len(t.title), done, todo, round=False))
         # output.addf(color, t.title)
 

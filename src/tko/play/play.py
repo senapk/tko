@@ -10,6 +10,7 @@ import tempfile
 from ..run.basic import Success
 from typing import List, Any, Dict, Callable, Tuple
 from ..settings.settings import RepData, GeralSettings
+from ..settings.rep_settings import languages_avaliable
 from ..down import Down
 from ..util.sentence import Sentence, Token,  RToken
 from .fmt import Fmt
@@ -20,7 +21,7 @@ from ..util.runner import Runner
 from .floating import Floating
 from .floating_manager import FloatingManager
 from .flags import Flag, Flags, FlagsMan
-from .tasktree import TaskTree, TaskProgress
+from .tasktree import TaskTree
 from ..actions import Run
 from ..run.param import Param
 from ..util.symbols import symbols
@@ -38,29 +39,35 @@ class Actions:
     baixar = "Baixar"
     escolher = "Escolher"
     navegar = "Navegar"
-    abrir_pasta = "VerArquivos"
+    editar = "Editar"
     graduar = "Graduar"
 
 class Key:
     left = "a"
+    # left2 = "h"
     right = "d"
+    # right2 = "l"
     down = "s"
+    # down2 = "j"
     up = "w"
+    # up2 = "k"
 
     down_task = "b"
-    select_task = "e"
-    ajuda = "h"
+    select_task = "\n"
+    ajuda = "?"
     expand = "}"
     collapse = "{"
     inc_grade = ">"
+    inc_grade2 = "."
     dec_grade = "<"
+    dec_grade2 = ","
     set_root_dir = "D"
     set_lang = "L"
     github_open = "g"
     quit = "q"
-    toggle_space = " "
-    toggle_enter = "\n"
-    project_open= "v"
+    # toggle_space = " "
+    # toggle_enter = "\n"
+    edit= "e"
     cores = "C"
     bordas = "B"
 
@@ -105,12 +112,12 @@ class Play:
         ]
 
         self.help_extra: List[Token] = [
-            RToken("C", f"{Actions.github}[{Key.github_open}]"),
-            RToken("C", f"{Actions.baixar}[{Key.down_task}]"),
-            RToken("G", f"{Actions.escolher}[{Key.select_task}]"),
-            RToken("M", f"{Actions.navegar}[wasd]"),
-            RToken("M", f"{Actions.graduar}[<>]"),
-            RToken("M", f"{Actions.abrir_pasta}[{Key.project_open}]"),
+            RToken("Y", f"{Actions.navegar}[wasd]"),
+            RToken("Y", f"{Actions.github}[{Key.github_open}]"),
+            RToken("Y", f"{Actions.baixar}[{Key.down_task}]"),
+            RToken("C", f"{Actions.editar}[{Key.edit}]"),
+            RToken("C", f"{Actions.escolher}[{"↲"}]"),
+            RToken("C", f"{Actions.graduar}[<>]"),
             # RToken("Y", f"Testar[{Key.test_task}]"),
             # RToken("M", f"Rascunho[{Key.open_draft}]"),
             # RToken("M", f"Leitura[{Key.open_readme}]"),
@@ -200,7 +207,7 @@ class Play:
             .put_text("")
             .put_text("Selecione e tecle enter.")
             .put_text("")
-            .set_options(["c", "cpp", "py", "ts", "js", "java", "go"])
+            .set_options(languages_avaliable)
             .answer(back)
         )
 
@@ -331,7 +338,7 @@ class Play:
                     Floating("v>").put_text("\nEssa não é uma tarefa de código.\n").error()
                 )
     
-    def test_task(self, test_mode: bool = False):
+    def select_task(self):
         rootdir = self.geral.get_rootdir()
         
         obj = self.tree.items[self.tree.index_selected].obj
@@ -363,9 +370,9 @@ class Play:
                 Floating().put_text("\nVocê precisa baixar a tarefa primeiro\n").error()
             )
             return
-        return self.run_selected_task(task, rep_dir, test_mode)
+        return self.run_selected_task(task, rep_dir)
         
-    def run_selected_task(self, task: Task, rep_dir: str, test_mode: bool):
+    def run_selected_task(self, task: Task, rep_dir: str):
         path = os.path.join(rep_dir, task.key)
         run = Run([path], None, Param.Basic())
         run.set_lang(self.rep.get_lang())
@@ -375,9 +382,7 @@ class Play:
             run.set_curses(True, Success.FIXED)
         # run.set_curses_select_mode(True)
 
-        if not task.key in self.tree.progress:
-            self.tree.progress[task.key] = TaskProgress()
-        run.set_task_progress(self.tree.progress[task.key])
+        run.set_task(task)
 
         run.build_wdir()
         if not run.wdir.has_solver():
@@ -539,7 +544,7 @@ class Play:
         text = text.center(size)
         done = Style.main_done()
         todo = Style.main_todo()
-        xpbar = Style.build_bar(text, percent, len(text), done, todo).add(" ")
+        xpbar = Style.build_bar(text, percent, len(text), done, todo)
         return xpbar
 
     def show_top_bar(self, frame: Frame):
@@ -558,11 +563,14 @@ class Play:
         _, cols = Fmt.get_size()
         if cols > self.wrap_size:
             align = (flags.len() - help.len()) * " "
-            frame.write(0, 0, Sentence(align).add(help).add(" ").add(self.make_xp_button(32)).add(flags).center(frame.get_dx()))
+            frame.write(0, 0, Sentence(align).add(help).add(" ").add(self.make_xp_button(32)).add(" ").add(flags).center(frame.get_dx()))
         else:
             line_2 = help.add(" ").add(flags)
-            frame.write(0, 0, self.make_xp_button(line_2.len()).center(frame.get_dx()))
+            xp_button = self.make_xp_button(line_2.len())
+            frame.write(0, 0, xp_button.center(frame.get_dx()))
             frame.write(1, 0, line_2.center(frame.get_dx()))
+            # frame.write(0, 0, line_2.add(str(line_2.len())))
+            # frame.write(1, 0, xp_button.add(str(xp_button.len())))
             # y += 1
             # frame.write(y, 0, .center(frame.get_dx()))
 
@@ -587,17 +595,15 @@ class Play:
         _help.set_header_sentence(Sentence().add(" Ajuda "))
         # _help.put_text("")
         # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + " - Para navegar entre os elementos")
-        _help.put_sentence(Sentence() + "            - Expandir ou contrair")
-        _help.put_sentence(Sentence() + "            - Saltar entre as sessões")
-        _help.put_sentence(Sentence() + "     " + RToken("g", "{") + " ou " + RToken("g", "}") + " - Expandir ou contrair todas as sessões")
-        _help.put_sentence(Sentence() + "" + RToken("g", "'1234567890") + " - Definir uma nota")
-        _help.put_sentence(Sentence() + "     " + RToken("g", "<") + " ou " + RToken("g", ">") + " - Aumentar ou diminuir nota")
-        _help.put_sentence(Sentence() + f"     {Actions.github} " + RToken("r", f"[{Key.github_open}]") + " - Abrir tarefa em uma aba do browser")
-        _help.put_sentence(Sentence() + f"     {Actions.baixar} " + RToken("r", f"[{Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
-        # _help.put_sentence(Sentence() + "  Testar " + RToken("r", f"[{Key.test_task}]") + " - Testar tarefa de código que você baixou")
-        _help.put_sentence(Sentence() + f"   {Actions.escolher} " + RToken("r", f"[{Key.select_task}]") + " - Escolher a tarefa de código que você baixou")
-        _help.put_sentence(Sentence() + f"{Actions.abrir_pasta} " + RToken("r", f"[{Key.project_open}]") + " - Abrir os arquivos no editor de código")
+        _help.put_sentence(Sentence() + " " + RToken("g", "setas") + ", " + RToken("g", "wasd")  + " - Para navegar entre os elementos")
+        _help.put_sentence(Sentence() + "             - Expandir ou contrair")
+        _help.put_sentence(Sentence() + "             - Saltar entre as sessões")
+        _help.put_sentence(Sentence() + "    " + RToken("g", "{ ") + " ou " + RToken("g", " }") + " - Expandir ou contrair todas as sessões")
+        _help.put_sentence(Sentence() + "    " + RToken("g", "<,") + " ou " + RToken("g", ".>") + " - Aumentar ou diminuir nota")
+        _help.put_sentence(Sentence() + f"  {Actions.github} " + RToken("r", f"[{Key.github_open}]") + " - Abrir tarefa em uma aba do browser")
+        _help.put_sentence(Sentence() + f"  {Actions.baixar} " + RToken("r", f"[{Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
+        _help.put_sentence(Sentence() + f"{Actions.escolher} " + RToken("r", f"[↲]") + " - Escolher a tarefa de código que você baixou")
+        _help.put_sentence(Sentence() + f"  {Actions.editar} " + RToken("r", f"[{Key.edit}]") + " - Abrir os arquivos no editor de código")
         _help.put_sentence(Sentence())
         _help.put_sentence(Sentence() + "Você pode editar o editor padrão com o comando")
         _help.put_sentence(Sentence() + RToken("g", "             tko config --editor comando"))
@@ -755,6 +761,12 @@ class Play:
                     open_drafts = True
                 else:
                     outfile = tempfile.NamedTemporaryFile(delete=False)
+                    self.fman.add_input(
+                        Floating("v>")
+                            .warning()
+                            .put_text("Abrindo arquivos do problema com o comando")
+                            .put_sentence(Sentence().addf("g", f"  {cmd}"))
+                    )
                     subprocess.Popen(f"{cmd} {os.path.dirname(path)}", stdout=outfile, shell=True)
                     #code, out, err = Runner.subprocess_run(f"{cmd} {os.path.dirname(path)}")
                 
@@ -810,15 +822,19 @@ class Play:
         )
 
         add_str(Key.up, self.tree.move_up)
+        # add_str(Key.up2, self.tree.move_up)
         add_int(curses.KEY_UP, self.tree.move_up)
 
         add_str(Key.down, self.tree.move_down)
+        # add_str(Key.down2, self.tree.move_down)
         add_int(curses.KEY_DOWN, self.tree.move_down)
 
         add_str(Key.left, self.tree.arrow_left)
+        # add_str(Key.left2, self.tree.arrow_left)
         add_int(curses.KEY_LEFT, self.tree.arrow_left)
 
         add_str(Key.right, self.tree.arrow_right)
+        # add_str(Key.right2, self.tree.arrow_right)
         add_int(curses.KEY_RIGHT, self.tree.arrow_right)
 
         add_str(Key.ajuda, self.show_help)
@@ -831,15 +847,17 @@ class Play:
         add_str(Key.set_lang, lambda: self.set_language(False))
         add_str(Key.set_root_dir, lambda: self.set_rootdir(False))
         add_str(Key.down_task, self.down_task)
-        add_str(Key.select_task, lambda: self.test_task(False))
+        add_str(Key.select_task, self.select_task)
         add_str(Key.inc_grade, self.tree.inc_grade)
+        add_str(Key.inc_grade2, self.tree.inc_grade)
         add_str(Key.dec_grade, self.tree.dec_grade)
+        add_str(Key.dec_grade2, self.tree.dec_grade)
         # add_str(Key.inc_grade2, self.tree.inc_grade)
         # add_str(Key.dec_grade2, self.tree.dec_grade)
         # add_str(Key.test_task, lambda: self.test_task(True))
         # add_str(Key.open_draft, lambda: self.open_code(open_drafts = True, open_readme = False))
         # add_str(Key.open_readme, lambda: self.open_code(open_drafts = False, open_readme = True))
-        add_str(Key.project_open, lambda: self.open_code(open_drafts = False, open_readme = False, open_dir=True))
+        add_str(Key.edit, lambda: self.open_code(open_drafts = False, open_readme = False, open_dir=True))
         add_str(Key.cores, self.geral.toggle_color)
         add_str(Key.bordas, self.geral.toggle_nerdfonts)
 
@@ -856,6 +874,26 @@ class Play:
         # add_str(Flags.xpbar.get_char(), self.FlagFunctor(self.fman, Flags.xpbar))
 
         return calls
+
+    def send_char_not_found(self, key):
+        self.fman.add_input(
+            Floating("v>")
+                .error()
+                .put_text("Tecla")
+                .put_text(f"char {chr(key)}")
+                .put_text(f"code {key}")
+                .put_text("não reconhecida")
+                .put_text("")
+        )
+
+    def send_dont_use_enter(self):
+        self.fman.add_input(
+            Floating("v>")
+                .put_text("\n")
+                .put_text("Utilize esquerda e direita\npara marcar as questões")
+                .put_text("e compactar e expandir tópicos \n")
+                .put_text("")
+        )
 
     def main(self, scr):
         curses.curs_set(0)  # Esconde o cursor
@@ -881,23 +919,17 @@ class Play:
             elif value == ord("\n") or value == ord(" "):
                 self.fman.add_input(Floating("v>").put_text("\n Utilize esquerda e direita\npara marcar as questões\n e compactar e expandir tópicos \n").put_text(""))
             elif value != -1:
-                self.fman.add_input(Floating("v>").error()
-                                    .put_text("Tecla")
-                                    .put_text(chr(value))
-                                    .put_text("não reconhecida")
-                                    .put_text("")
-                                    )
+                self.send_char_not_found(value)
 
             self.tree.reload_sentences()
             self.save_to_json()
-
             if self.first_loop:
                 self.first_loop = False
 
     def check_lang_in_text_mode(self):
         lang = self.rep.get_lang()
         if lang == "":
-            options = ["c", "cpp", "py", "ts", "js", "java", "go"]
+            options = languages_avaliable
             print("\nLinguagem padrão ainda não foi definida.\n")
             while True:
                 print("Escolha entre as opções a seguir ", end="")

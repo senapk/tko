@@ -1,1 +1,1 @@
-except "Out"
+raise Exception("Out")

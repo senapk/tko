@@ -12,7 +12,7 @@ from .run.basic import DiffMode
 from .down import Down
 from .settings.settings_parser import SettingsParser
 from .settings.settings import Settings
-from .settings.rep_settings import RepData
+from .settings.rep_settings import RepSource
 
 
 from .util.guide import tko_guide
@@ -41,7 +41,7 @@ class MRep:
     def add(args):
         sp = SettingsParser()
         settings = sp.load_settings()
-        rep = RepData()
+        rep = RepSource()
         if args.url:
             rep.set_url(args.url)
         elif args.file:

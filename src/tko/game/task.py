@@ -10,7 +10,10 @@ class Task:
         self.line_number = 0
         self.line = ""
         self.key = ""
+
         self.grade: int = 0 #valor de 0 a 10
+        self.test_progress: int = 0 #valor de 0 a 100
+        self.main_index: int = 0
 
         self.qskills: Dict[str, int] = {} # default quest skills
         self.skills: Dict[str, int] = {} # local skills
@@ -21,6 +24,22 @@ class Task:
         self.link = ""
 
         self.default_min_value = 7 # default min grade to complete task
+
+    def load_from_db(self, value: str):
+        if ":" not in value:
+            self.grade = int(value)
+        else:
+            v = value.split(":")
+            if len(v) == 3:
+                self.grade = int(v[0])
+                self.main_index = int(v[1])
+                self.test_progress = int(v[2])
+
+    def save_to_db(self) -> str:
+        return f"{self.grade}:{self.main_index}:{self.test_progress}"
+    
+    def is_db_empty(self) -> bool:
+        return self.grade == 0 and self.main_index == 0 and self.test_progress == 0
 
     def get_grade_color(self, min_value: Optional[int] = None) -> str:
         if min_value is None:

@@ -22,7 +22,7 @@ import unicodedata
 import math
 import configparser
 from subprocess import PIPE
-__version__ = "0.17.5"
+__version__ = "0.17.6"
 
 
 class GeralSettings:
@@ -162,7 +162,8 @@ class GeralSettings:
 
 
 
-select = r"""               e -> Executa sem testar          
+select = r"""
+                            e -> Executa sem testar          
   _________         .    .                                   
  (..       \_    ,  |\  /|  t -> Roda os casos de teste      
   \       O  \  /|  \ \/ /                                   
@@ -1076,6 +1077,7 @@ class RemoteMd:
         return True
 
 
+languages_avaliable = ["c", "cpp", "py", "ts", "js", "java", "go"]
 
 class RepSource:
     def __init__(self, file: str = "", url: str = ""):
@@ -1135,7 +1137,6 @@ class RepData:
     __expanded = "expanded"
     __new_items = "new_items"
     __tasks = "tasks"
-    __progress = "progress"
     __flags = "flags"
     __lang = "lang"
     __index = "index"
@@ -1143,7 +1144,6 @@ class RepData:
     defaults = {
         __expanded: [],
         __tasks: {},
-        __progress: {},
         __flags: {},
         __new_items: [],
         __lang: "",
@@ -1155,9 +1155,6 @@ class RepData:
 
     def get_expanded(self) -> list:
         return self.__get(RepData.__expanded)
-    
-    def get_progress(self) -> Dict[str, str]:
-        return self.__get(RepData.__progress)
 
     def get_new_items(self) -> list:
         return self.__get(RepData.__new_items)
@@ -1170,9 +1167,6 @@ class RepData:
     
     def get_lang(self) -> str:
         return self.__get(RepData.__lang)
-    
-    def set_progress(self, value: Dict[str, Any]):
-        return self.__set(RepData.__progress, value)
 
     def set_expanded(self, value: list):
         return self.__set(RepData.__expanded, value)
@@ -1218,6 +1212,11 @@ class RepData:
     def save_data_to_json(self):
         if not os.path.exists(os.path.dirname(self.json_file)):
             os.makedirs(os.path.dirname(self.json_file))
+        # filter keys that are not in defaults
+        for key in list(self.data.keys()):
+            if key not in RepData.defaults:
+                del self.data[key]
+
         with open(self.json_file, "w", encoding="utf-8") as f:
             f.write(json.dumps(self.data, indent=4))
         return self
@@ -1263,7 +1262,6 @@ class Settings:
             "reps": {k: v.to_dict() for k, v in self.reps.items()},
             "geral": self.geral.to_dict()
         }
-        return self
 
     def from_dict(self, data: Dict[str, Any]):
         self.reps = {k: RepSource().from_dict(v) for k, v in data.get("reps", {}).items()}
@@ -2563,7 +2561,10 @@ class Task:
         self.line_number = 0
         self.line = ""
         self.key = ""
+
         self.grade: int = 0 #valor de 0 a 10
+        self.test_progress: int = 0 #valor de 0 a 100
+        self.main_index: int = 0
 
         self.qskills: Dict[str, int] = {} # default quest skills
         self.skills: Dict[str, int] = {} # local skills
@@ -2574,6 +2575,22 @@ class Task:
         self.link = ""
 
         self.default_min_value = 7 # default min grade to complete task
+
+    def load_from_db(self, value: str):
+        if ":" not in value:
+            self.grade = int(value)
+        else:
+            v = value.split(":")
+            if len(v) == 3:
+                self.grade = int(v[0])
+                self.main_index = int(v[1])
+                self.test_progress = int(v[2])
+
+    def save_to_db(self) -> str:
+        return f"{self.grade}:{self.main_index}:{self.test_progress}"
+    
+    def is_db_empty(self) -> bool:
+        return self.grade == 0 and self.main_index == 0 and self.test_progress == 0
 
     def get_grade_color(self, min_value: Optional[int] = None) -> str:
         if min_value is None:
@@ -3559,18 +3576,24 @@ class Entry:
     def get(self):
         return self.sentence
 
-class TaskProgress:
-    def __init__(self):
-        self.index = 0
-        self.progress = 0
+# class TaskProgress:
+#     def __init__(self):
+#         self.grade = 0
+#         self.index = 0
+#         self.progress = 0
 
-    def from_str(self, value: str):
-        v = value.split(":")
-        self.index = int(v[0])
-        self.progress = int(v[1])
+#     def from_str(self, value: str):
+#         if ":" not in value:
+#             self.grade = int(value)
+#         else:
+#             v = value.split(":")
+#             if len(v) == 3:
+#                 self.grade = int(v[0])
+#                 self.index = int(v[1])
+#                 self.progress = int(v[2])
     
-    def to_str(self):
-        return f"{self.index}:{self.progress}"
+#     def to_str(self):
+#         return f"{self.grade}:{self.index}:{self.progress}"
 
 class TaskTree:
 
@@ -3600,18 +3623,12 @@ class TaskTree:
     def load_from_rep(self):
         self.new_items: List[str] = self.rep.get_new_items()
         self.expanded: List[str] = self.rep.get_expanded()
-        self.progress: Dict[str, TaskProgress] = {}
-        for key, val in self.rep.get_progress().items():
-            tp = TaskProgress()
-            tp.from_str(val)
-            self.progress[key] = tp
-
         self.index_selected = self.rep.get_index()
 
         tasks = self.rep.get_tasks()
-        for key, grade in tasks.items():
+        for key, serial in tasks.items():
             if key in self.game.tasks:
-                self.game.tasks[key].set_grade(int(grade))
+                self.game.tasks[key].load_from_db(serial)
 
     def save_on_rep(self):
         keys = [c.key for c in self.game.clusters]
@@ -3622,15 +3639,10 @@ class TaskTree:
         self.rep.set_index(self.index_selected)
         tasks = {}
         for t in self.game.tasks.values():
-            if t.grade != 0:
-                tasks[t.key] = str(t.grade)
+            if not t.is_db_empty():
+                tasks[t.key] = t.save_to_db()
         self.rep.set_tasks(tasks)
 
-        progress = {}
-        for key, tp in self.progress.items():
-            progress[key] = tp.to_str()
-
-        self.rep.set_progress(progress)
 
     def update_available(self):
         old_quests = [q for q in self.available_quests]
@@ -3708,7 +3720,7 @@ class TaskTree:
 
         done = color + "c"
         todo = color
-        perc = self.progress.get(t.key, TaskProgress()).progress
+        perc = t.test_progress
         output.add(Style.build_bar(t.title, perc / 100, len(t.title), done, todo, round=False))
         # output.addf(color, t.title)
 
@@ -5583,6 +5595,21 @@ class Mode(enum.Enum):
     running = 1
     finished = 2
 
+class Keys:
+    left = "a"
+    left2 = "h"
+    up = "w"
+    up2 = "k"
+    right = "d"
+    right2 = "l"
+    down = "s"
+    down2 = "k"
+    principal = "p"
+    diff = "m"
+    executar = "e"
+    testar = "t"
+    sair = "q"
+
 class CDiff:
     def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
         self.param = param
@@ -5592,7 +5619,7 @@ class CDiff:
         self.unit_list = [unit for unit in wdir.get_unit_list()] # unit list to be consumed
         self.exit = False
         self.success_type = success_type
-        self.task_prog = TaskProgress()
+        self.task = Task()
         self.init = 0   # index of first line to show
         self.length = 1  # length of diff
         self.space = 0  # dy space for draw
@@ -5618,8 +5645,8 @@ class CDiff:
         self.sp.save_settings()
         return self
     
-    def set_task_progress(self, task_prog: TaskProgress):
-        self.task_prog = task_prog
+    def set_task(self, task: Task):
+        self.task = task
         return self
 
     def set_exit(self):
@@ -5752,7 +5779,7 @@ class CDiff:
                 self.results_fail.append((Token(symbol.text, color), index))
             else:
                 self.results_done.append((Token(symbol.text, color), index))
-            self.task_prog.progress = (len(self.results_done) * 100) // len(self.wdir.get_unit_list())
+            self.task.test_progress = (len(self.results_done) * 100) // len(self.wdir.get_unit_list())
         else:
             self.mode = Mode.finished
 
@@ -5772,7 +5799,7 @@ class CDiff:
             # if i != 0:
             #     solvers.addf(solver_color, ", ")
             color = solver_color
-            if i == self.task_prog.index:
+            if i == self.task.main_index:
                 color = "G"
             solvers.addf(color.lower(), Style.roundL()).addf(color, solver).addf(color.lower(), Style.roundR())
 
@@ -5941,52 +5968,76 @@ class CDiff:
             else:
                 key = Fmt.getch()
 
-            if key == ord('q'):
-                self.set_exit()
-            elif key == curses.KEY_LEFT or key == ord('a'):
-                self.index = max(0, self.index - 1)
-                self.init = 0
-            elif key == curses.KEY_RIGHT or key == ord('d'):
-                self.index = min(len(self.results_done) + len(self.results_fail) - 1, self.index + 1)
-                self.init = 0
-            elif key == curses.KEY_DOWN or key == ord('s'):
-                self.init += 1
-            elif key == curses.KEY_UP or key == ord('w'):
-                self.init = max(0, self.init - 1)
-            elif key == ord('m'):
-                self.param.is_up_down = not self.param.is_up_down
-                self.save_settings()
-                self.init = 0
-            elif key == ord('e'):
-                self.mode = Mode.running
-                if self.wdir.is_autoload():
-                    self.wdir.autoload()
-                    self.wdir.get_solver().set_main(self.get_solver_names()[self.task_prog.index])
+            fn_exec = self.process_key(key)
+            if fn_exec is not None:
+                return fn_exec
 
-                return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True)
+    def run_exec_mode(self):
+        self.mode = Mode.running
+        if self.wdir.is_autoload():
+            self.wdir.autoload()
+            self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index])
+        return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True)
 
-            elif key == ord('p'):
-                self.task_prog.index = (self.task_prog.index + 1) % len(self.get_solver_names())
-            elif key == ord('t'):
-                self.mode = Mode.running
-                self.index = 0
-                if self.wdir.is_autoload():
-                    self.wdir.autoload()
-                Fmt.erase()
-                self.show_compilling()
-                Fmt.refresh()
-                self.wdir.get_solver().set_main(self.get_solver_names()[self.task_prog.index]).prepare_exec()
-                self.results_done = []
-                self.results_fail = []
-                self.unit_list = [unit for unit in self.wdir.get_unit_list()]
-            elif key != -1:
-                self.fman.add_input(Floating("v>").error()
-                                    .put_text("Tecla")
-                                    .put_text(chr(key))
-                                    .put_text("não reconhecida")
-                                    .put_text("")
-                                    )
-                
+    def run_test_mode(self):
+        self.mode = Mode.running
+        self.index = 0
+        if self.wdir.is_autoload():
+            self.wdir.autoload()
+        Fmt.erase()
+        self.show_compilling()
+        Fmt.refresh()
+        self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index]).prepare_exec()
+        self.results_done = []
+        self.results_fail = []
+        self.unit_list = [unit for unit in self.wdir.get_unit_list()]
+
+    def send_char_not_found(self, key):
+        self.fman.add_input(Floating("v>").error()
+                    .put_text("Tecla")
+                    .put_text(f"char {chr(key)}")
+                    .put_text(f"code {key}")
+                    .put_text("não reconhecida")
+                    .put_text("")
+                    )
+
+    def go_left(self):
+        self.index = max(0, self.index - 1)
+        self.init = 0
+
+    def go_right(self):
+        self.index = min(len(self.results_done) + len(self.results_fail) - 1, self.index + 1)
+        self.init = 0
+
+    def go_down(self):
+        self.init += 1
+
+    def go_up(self):
+        self.init = max(0, self.init - 1)
+
+    def process_key(self, key):
+        if key == ord('q'):
+            self.set_exit()
+        elif key == curses.KEY_LEFT or key == ord(Keys.left) or key == ord(Keys.left2):
+            self.go_left()
+        elif key == curses.KEY_RIGHT or key == ord(Keys.right) or key == ord(Keys.right2):
+            self.go_right()
+        elif key == curses.KEY_DOWN or key == ord(Keys.down) or key == ord(Keys.down2):
+            self.go_down()
+        elif key == curses.KEY_UP or key == ord(Keys.up) or key == ord(Keys.up2):
+            self.go_up()
+        elif key == ord(Keys.diff):
+            self.param.is_up_down = not self.param.is_up_down
+            self.save_settings()
+            self.init = 0
+        elif key == ord(Keys.principal):
+            self.task.main_index = (self.task.main_index + 1) % len(self.get_solver_names())
+        elif key == ord(Keys.executar):
+            return self.run_exec_mode()
+        elif key == ord(Keys.testar):
+            self.run_test_mode()
+        elif key != -1:
+            self.send_char_not_found(key)
 
     def run(self):
         while True:
@@ -6033,7 +6084,7 @@ class Run:
         self.__success_mode = Success.RANDOM
         # self.__curses_select_mode = False
         self.__lang = ""
-        self.__task_progress: Optional[TaskProgress] = None
+        self.__task: Optional[Task] = None
 
     def set_curses(self, value:bool=True, success: Success=Success.RANDOM):
         self.__curses_mode = value
@@ -6048,8 +6099,8 @@ class Run:
     #     self.__curses_select_mode = value
     #     return self
     
-    def set_task_progress(self, task_progress: TaskProgress):
-        self.__task_progress = task_progress
+    def set_task(self, task: Task):
+        self.__task = task
         return self
 
     def set_first_run(self):
@@ -6196,8 +6247,8 @@ class Run:
             cdiff = CDiff(self.wdir, self.param, self.__success_mode)
             if self.__first_run:
                 cdiff.set_first_run()
-            if self.__task_progress is not None:
-                cdiff.set_task_progress(self.__task_progress)
+            if self.__task is not None:
+                cdiff.set_task(self.__task)
             cdiff.run()
         else:
             term_print(Report.centralize(" Testando o código com os casos de teste ", "═"))
@@ -6234,29 +6285,35 @@ class Actions:
     baixar = "Baixar"
     escolher = "Escolher"
     navegar = "Navegar"
-    abrir_pasta = "VerArquivos"
+    editar = "Editar"
     graduar = "Graduar"
 
 class Key:
     left = "a"
+    # left2 = "h"
     right = "d"
+    # right2 = "l"
     down = "s"
+    # down2 = "j"
     up = "w"
+    # up2 = "k"
 
     down_task = "b"
-    select_task = "e"
-    ajuda = "h"
+    select_task = "\n"
+    ajuda = "?"
     expand = "}"
     collapse = "{"
     inc_grade = ">"
+    inc_grade2 = "."
     dec_grade = "<"
+    dec_grade2 = ","
     set_root_dir = "D"
     set_lang = "L"
     github_open = "g"
     quit = "q"
-    toggle_space = " "
-    toggle_enter = "\n"
-    project_open= "v"
+    # toggle_space = " "
+    # toggle_enter = "\n"
+    edit= "e"
     cores = "C"
     bordas = "B"
 
@@ -6301,12 +6358,12 @@ class Play:
         ]
 
         self.help_extra: List[Token] = [
-            RToken("C", f"{Actions.github}[{Key.github_open}]"),
-            RToken("C", f"{Actions.baixar}[{Key.down_task}]"),
-            RToken("G", f"{Actions.escolher}[{Key.select_task}]"),
-            RToken("M", f"{Actions.navegar}[wasd]"),
-            RToken("M", f"{Actions.graduar}[<>]"),
-            RToken("M", f"{Actions.abrir_pasta}[{Key.project_open}]"),
+            RToken("Y", f"{Actions.navegar}[wasd]"),
+            RToken("Y", f"{Actions.github}[{Key.github_open}]"),
+            RToken("Y", f"{Actions.baixar}[{Key.down_task}]"),
+            RToken("C", f"{Actions.editar}[{Key.edit}]"),
+            RToken("C", f"{Actions.escolher}[{"↲"}]"),
+            RToken("C", f"{Actions.graduar}[<>]"),
             # RToken("Y", f"Testar[{Key.test_task}]"),
             # RToken("M", f"Rascunho[{Key.open_draft}]"),
             # RToken("M", f"Leitura[{Key.open_readme}]"),
@@ -6396,7 +6453,7 @@ class Play:
             .put_text("")
             .put_text("Selecione e tecle enter.")
             .put_text("")
-            .set_options(["c", "cpp", "py", "ts", "js", "java", "go"])
+            .set_options(languages_avaliable)
             .answer(back)
         )
 
@@ -6527,7 +6584,7 @@ class Play:
                     Floating("v>").put_text("\nEssa não é uma tarefa de código.\n").error()
                 )
     
-    def test_task(self, test_mode: bool = False):
+    def select_task(self):
         rootdir = self.geral.get_rootdir()
         
         obj = self.tree.items[self.tree.index_selected].obj
@@ -6559,9 +6616,9 @@ class Play:
                 Floating().put_text("\nVocê precisa baixar a tarefa primeiro\n").error()
             )
             return
-        return self.run_selected_task(task, rep_dir, test_mode)
+        return self.run_selected_task(task, rep_dir)
         
-    def run_selected_task(self, task: Task, rep_dir: str, test_mode: bool):
+    def run_selected_task(self, task: Task, rep_dir: str):
         path = os.path.join(rep_dir, task.key)
         run = Run([path], None, Param.Basic())
         run.set_lang(self.rep.get_lang())
@@ -6571,9 +6628,7 @@ class Play:
             run.set_curses(True, Success.FIXED)
         # run.set_curses_select_mode(True)
 
-        if not task.key in self.tree.progress:
-            self.tree.progress[task.key] = TaskProgress()
-        run.set_task_progress(self.tree.progress[task.key])
+        run.set_task(task)
 
         run.build_wdir()
         if not run.wdir.has_solver():
@@ -6735,7 +6790,7 @@ class Play:
         text = text.center(size)
         done = Style.main_done()
         todo = Style.main_todo()
-        xpbar = Style.build_bar(text, percent, len(text), done, todo).add(" ")
+        xpbar = Style.build_bar(text, percent, len(text), done, todo)
         return xpbar
 
     def show_top_bar(self, frame: Frame):
@@ -6754,11 +6809,14 @@ class Play:
         _, cols = Fmt.get_size()
         if cols > self.wrap_size:
             align = (flags.len() - help.len()) * " "
-            frame.write(0, 0, Sentence(align).add(help).add(" ").add(self.make_xp_button(32)).add(flags).center(frame.get_dx()))
+            frame.write(0, 0, Sentence(align).add(help).add(" ").add(self.make_xp_button(32)).add(" ").add(flags).center(frame.get_dx()))
         else:
             line_2 = help.add(" ").add(flags)
-            frame.write(0, 0, self.make_xp_button(line_2.len()).center(frame.get_dx()))
+            xp_button = self.make_xp_button(line_2.len())
+            frame.write(0, 0, xp_button.center(frame.get_dx()))
             frame.write(1, 0, line_2.center(frame.get_dx()))
+            # frame.write(0, 0, line_2.add(str(line_2.len())))
+            # frame.write(1, 0, xp_button.add(str(xp_button.len())))
             # y += 1
             # frame.write(y, 0, .center(frame.get_dx()))
 
@@ -6783,17 +6841,15 @@ class Play:
         _help.set_header_sentence(Sentence().add(" Ajuda "))
         # _help.put_text("")
         # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + " - Para navegar entre os elementos")
-        _help.put_sentence(Sentence() + "            - Expandir ou contrair")
-        _help.put_sentence(Sentence() + "            - Saltar entre as sessões")
-        _help.put_sentence(Sentence() + "     " + RToken("g", "{") + " ou " + RToken("g", "}") + " - Expandir ou contrair todas as sessões")
-        _help.put_sentence(Sentence() + "" + RToken("g", "'1234567890") + " - Definir uma nota")
-        _help.put_sentence(Sentence() + "     " + RToken("g", "<") + " ou " + RToken("g", ">") + " - Aumentar ou diminuir nota")
-        _help.put_sentence(Sentence() + f"     {Actions.github} " + RToken("r", f"[{Key.github_open}]") + " - Abrir tarefa em uma aba do browser")
-        _help.put_sentence(Sentence() + f"     {Actions.baixar} " + RToken("r", f"[{Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
-        # _help.put_sentence(Sentence() + "  Testar " + RToken("r", f"[{Key.test_task}]") + " - Testar tarefa de código que você baixou")
-        _help.put_sentence(Sentence() + f"   {Actions.escolher} " + RToken("r", f"[{Key.select_task}]") + " - Escolher a tarefa de código que você baixou")
-        _help.put_sentence(Sentence() + f"{Actions.abrir_pasta} " + RToken("r", f"[{Key.project_open}]") + " - Abrir os arquivos no editor de código")
+        _help.put_sentence(Sentence() + " " + RToken("g", "setas") + ", " + RToken("g", "wasd")  + " - Para navegar entre os elementos")
+        _help.put_sentence(Sentence() + "             - Expandir ou contrair")
+        _help.put_sentence(Sentence() + "             - Saltar entre as sessões")
+        _help.put_sentence(Sentence() + "    " + RToken("g", "{ ") + " ou " + RToken("g", " }") + " - Expandir ou contrair todas as sessões")
+        _help.put_sentence(Sentence() + "    " + RToken("g", "<,") + " ou " + RToken("g", ".>") + " - Aumentar ou diminuir nota")
+        _help.put_sentence(Sentence() + f"  {Actions.github} " + RToken("r", f"[{Key.github_open}]") + " - Abrir tarefa em uma aba do browser")
+        _help.put_sentence(Sentence() + f"  {Actions.baixar} " + RToken("r", f"[{Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
+        _help.put_sentence(Sentence() + f"{Actions.escolher} " + RToken("r", f"[↲]") + " - Escolher a tarefa de código que você baixou")
+        _help.put_sentence(Sentence() + f"  {Actions.editar} " + RToken("r", f"[{Key.edit}]") + " - Abrir os arquivos no editor de código")
         _help.put_sentence(Sentence())
         _help.put_sentence(Sentence() + "Você pode editar o editor padrão com o comando")
         _help.put_sentence(Sentence() + RToken("g", "             tko config --editor comando"))
@@ -6951,6 +7007,12 @@ class Play:
                     open_drafts = True
                 else:
                     outfile = tempfile.NamedTemporaryFile(delete=False)
+                    self.fman.add_input(
+                        Floating("v>")
+                            .warning()
+                            .put_text("Abrindo arquivos do problema com o comando")
+                            .put_sentence(Sentence().addf("g", f"  {cmd}"))
+                    )
                     subprocess.Popen(f"{cmd} {os.path.dirname(path)}", stdout=outfile, shell=True)
                     #code, out, err = Runner.subprocess_run(f"{cmd} {os.path.dirname(path)}")
                 
@@ -7006,15 +7068,19 @@ class Play:
         )
 
         add_str(Key.up, self.tree.move_up)
+        # add_str(Key.up2, self.tree.move_up)
         add_int(curses.KEY_UP, self.tree.move_up)
 
         add_str(Key.down, self.tree.move_down)
+        # add_str(Key.down2, self.tree.move_down)
         add_int(curses.KEY_DOWN, self.tree.move_down)
 
         add_str(Key.left, self.tree.arrow_left)
+        # add_str(Key.left2, self.tree.arrow_left)
         add_int(curses.KEY_LEFT, self.tree.arrow_left)
 
         add_str(Key.right, self.tree.arrow_right)
+        # add_str(Key.right2, self.tree.arrow_right)
         add_int(curses.KEY_RIGHT, self.tree.arrow_right)
 
         add_str(Key.ajuda, self.show_help)
@@ -7027,15 +7093,17 @@ class Play:
         add_str(Key.set_lang, lambda: self.set_language(False))
         add_str(Key.set_root_dir, lambda: self.set_rootdir(False))
         add_str(Key.down_task, self.down_task)
-        add_str(Key.select_task, lambda: self.test_task(False))
+        add_str(Key.select_task, self.select_task)
         add_str(Key.inc_grade, self.tree.inc_grade)
+        add_str(Key.inc_grade2, self.tree.inc_grade)
         add_str(Key.dec_grade, self.tree.dec_grade)
+        add_str(Key.dec_grade2, self.tree.dec_grade)
         # add_str(Key.inc_grade2, self.tree.inc_grade)
         # add_str(Key.dec_grade2, self.tree.dec_grade)
         # add_str(Key.test_task, lambda: self.test_task(True))
         # add_str(Key.open_draft, lambda: self.open_code(open_drafts = True, open_readme = False))
         # add_str(Key.open_readme, lambda: self.open_code(open_drafts = False, open_readme = True))
-        add_str(Key.project_open, lambda: self.open_code(open_drafts = False, open_readme = False, open_dir=True))
+        add_str(Key.edit, lambda: self.open_code(open_drafts = False, open_readme = False, open_dir=True))
         add_str(Key.cores, self.geral.toggle_color)
         add_str(Key.bordas, self.geral.toggle_nerdfonts)
 
@@ -7052,6 +7120,26 @@ class Play:
         # add_str(Flags.xpbar.get_char(), self.FlagFunctor(self.fman, Flags.xpbar))
 
         return calls
+
+    def send_char_not_found(self, key):
+        self.fman.add_input(
+            Floating("v>")
+                .error()
+                .put_text("Tecla")
+                .put_text(f"char {chr(key)}")
+                .put_text(f"code {key}")
+                .put_text("não reconhecida")
+                .put_text("")
+        )
+
+    def send_dont_use_enter(self):
+        self.fman.add_input(
+            Floating("v>")
+                .put_text("\n")
+                .put_text("Utilize esquerda e direita\npara marcar as questões")
+                .put_text("e compactar e expandir tópicos \n")
+                .put_text("")
+        )
 
     def main(self, scr):
         curses.curs_set(0)  # Esconde o cursor
@@ -7077,23 +7165,17 @@ class Play:
             elif value == ord("\n") or value == ord(" "):
                 self.fman.add_input(Floating("v>").put_text("\n Utilize esquerda e direita\npara marcar as questões\n e compactar e expandir tópicos \n").put_text(""))
             elif value != -1:
-                self.fman.add_input(Floating("v>").error()
-                                    .put_text("Tecla")
-                                    .put_text(chr(value))
-                                    .put_text("não reconhecida")
-                                    .put_text("")
-                                    )
+                self.send_char_not_found(value)
 
             self.tree.reload_sentences()
             self.save_to_json()
-
             if self.first_loop:
                 self.first_loop = False
 
     def check_lang_in_text_mode(self):
         lang = self.rep.get_lang()
         if lang == "":
-            options = ["c", "cpp", "py", "ts", "js", "java", "go"]
+            options = languages_avaliable
             print("\nLinguagem padrão ainda não foi definida.\n")
             while True:
                 print("Escolha entre as opções a seguir ", end="")
@@ -7136,7 +7218,7 @@ class MRep:
     def add(args):
         sp = SettingsParser()
         settings = sp.load_settings()
-        rep = RepData()
+        rep = RepSource()
         if args.url:
             rep.set_url(args.url)
         elif args.file:

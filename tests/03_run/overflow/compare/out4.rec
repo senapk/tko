@@ -14,8 +14,8 @@
 │ 3
 │ 4
 ├────────────────────────────────── RECEBIDO ──────────────────────────────────
-│   File "/home/lion/Dropbox/gits/tools/tko/tests/03_run/overflow/exception.py", line 1
-│     except "Out"
-│     ^^^^^^
-│ SyntaxError: invalid syntax
+│ Traceback (most recent call last):
+│   File "/home/lion/Dropbox/gits/tools/tko/tests/03_run/overflow/exception.py", line 1, in <module>
+│     raise Exception("Out")
+│ Exception: Out
 ╰──────────────────────────────────────────────────────────────────────────────
