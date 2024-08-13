@@ -375,12 +375,19 @@ class TaskTree:
     def inc_grade(self):
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
-            obj.set_grade(min(10, obj.grade + 1))
+            grade = obj.grade + 1
+            if grade == 11:
+                grade = 10
+            obj.set_grade(grade)
+
     
     def dec_grade(self):
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
-            obj.set_grade(max(0, obj.grade - 1))
+            grade = obj.grade - 1
+            if grade == -1:
+                grade = 0
+            obj.set_grade(grade)
 
     def arrow_right(self):
         obj = self.items[self.index_selected].obj

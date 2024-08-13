@@ -37,10 +37,11 @@ class Actions:
     sair = "Sair"
     ajuda = "Ajuda"
     baixar = "Baixar"
-    escolher = "Escolher"
+    testar = "Testar"
     navegar = "Navegar"
     editar = "Editar"
-    graduar = "Graduar"
+    marcar = "Marcar"
+    desmarcar = "Desmarcar"
 
 class Key:
     left = "a"
@@ -53,14 +54,14 @@ class Key:
     # up2 = "k"
 
     down_task = "b"
-    select_task = "\n"
-    ajuda = "?"
+    select_task = "t"
+    ajuda = "h"
     expand = "}"
     collapse = "{"
-    inc_grade = ">"
-    inc_grade2 = "."
-    dec_grade = "<"
-    dec_grade2 = ","
+    inc_grade = "."
+    # inc_grade2 = "\n"
+    dec_grade = ","
+    # dec_grade2 = "<"
     set_root_dir = "D"
     set_lang = "L"
     github_open = "g"
@@ -116,8 +117,9 @@ class Play:
             RToken("Y", f"{Actions.github}[{Key.github_open}]"),
             RToken("Y", f"{Actions.baixar}[{Key.down_task}]"),
             RToken("C", f"{Actions.editar}[{Key.edit}]"),
-            RToken("C", f"{Actions.escolher}[↲]"),
-            RToken("C", f"{Actions.graduar}[<>]"),
+            RToken("C", f"{Actions.testar}[{Key.select_task}]"),
+            RToken("C", f"{Actions.marcar}[{Key.inc_grade}]"),
+            RToken("C", f"{Actions.desmarcar}[{Key.dec_grade}]"),
             # RToken("Y", f"Testar[{Key.test_task}]"),
             # RToken("M", f"Rascunho[{Key.open_draft}]"),
             # RToken("M", f"Leitura[{Key.open_readme}]"),
@@ -595,15 +597,16 @@ class Play:
         _help.set_header_sentence(Sentence().add(" Ajuda "))
         # _help.put_text("")
         # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence() + " " + RToken("g", "setas") + ", " + RToken("g", "wasd")  + " - Para navegar entre os elementos")
-        _help.put_sentence(Sentence() + "             - Expandir ou contrair")
-        _help.put_sentence(Sentence() + "             - Saltar entre as sessões")
-        _help.put_sentence(Sentence() + "    " + RToken("g", "{ ") + " ou " + RToken("g", " }") + " - Expandir ou contrair todas as sessões")
-        _help.put_sentence(Sentence() + "    " + RToken("g", "<,") + " ou " + RToken("g", ".>") + " - Aumentar ou diminuir nota")
-        _help.put_sentence(Sentence() + f"  {Actions.github} " + RToken("r", f"[{Key.github_open}]") + " - Abrir tarefa em uma aba do browser")
-        _help.put_sentence(Sentence() + f"  {Actions.baixar} " + RToken("r", f"[{Key.down_task}]") + " - Baixar tarefa de código para seu dispositivo")
-        _help.put_sentence(Sentence() + f"{Actions.escolher} " + RToken("r", f"[↲]") + " - Escolher a tarefa de código que você baixou")
-        _help.put_sentence(Sentence() + f"  {Actions.editar} " + RToken("r", f"[{Key.edit}]") + " - Abrir os arquivos no editor de código")
+        _help.put_sentence(Sentence() + "  " + RToken("g", "setas") + ", " + RToken("g", "wasd")  + " - Para navegar entre os elementos")
+        # _help.put_sentence(Sentence() + "              - Expandir ou contrair")
+        # _help.put_sentence(Sentence() + "              - Saltar entre as sessões")
+        _help.put_sentence(Sentence() + "     " + RToken("g", "{ ") + " ou " + RToken("g", " }") + " - Expande ou contrai todas as sessões")
+        _help.put_sentence(Sentence() + f"   {Actions.github} " + RToken("r", f"{Key.github_open}") + " - Abre tarefa em uma aba do browser")
+        _help.put_sentence(Sentence() + f"   {Actions.baixar} " + RToken("r", f"{Key.down_task}") + " - Baixa tarefa de código para seu dispositivo")
+        _help.put_sentence(Sentence() + f"   {Actions.editar} " + RToken("r", f"{Key.edit}") + " - Abre os arquivos no editor de código")
+        _help.put_sentence(Sentence() + f"   {Actions.testar} " + RToken("r", f"{Key.select_task}") + " - Escolhe a tarefa de código que você baixou")
+        _help.put_sentence(Sentence() + f"   {Actions.marcar} " + RToken("r", f"{Key.inc_grade}") + " - Aumenta a pontuação da tarefa")
+        _help.put_sentence(Sentence() + f"{Actions.desmarcar} " + RToken("r", f"{Key.dec_grade}") + " - Diminui a pontuação da tarefa")
         _help.put_sentence(Sentence())
         _help.put_sentence(Sentence() + "Você pode editar o editor padrão com o comando")
         _help.put_sentence(Sentence() + RToken("g", "             tko config --editor comando"))
@@ -849,9 +852,9 @@ class Play:
         add_str(Key.down_task, self.down_task)
         add_str(Key.select_task, self.select_task)
         add_str(Key.inc_grade, self.tree.inc_grade)
-        add_str(Key.inc_grade2, self.tree.inc_grade)
+        # add_str(Key.inc_grade2, self.tree.inc_grade)
         add_str(Key.dec_grade, self.tree.dec_grade)
-        add_str(Key.dec_grade2, self.tree.dec_grade)
+        # add_str(Key.dec_grade2, self.tree.dec_grade)
         # add_str(Key.inc_grade2, self.tree.inc_grade)
         # add_str(Key.dec_grade2, self.tree.dec_grade)
         # add_str(Key.test_task, lambda: self.test_task(True))
