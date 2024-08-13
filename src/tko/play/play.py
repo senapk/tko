@@ -59,9 +59,9 @@ class Key:
     expand = "}"
     collapse = "{"
     inc_grade = "."
-    # inc_grade2 = "\n"
+    inc_grade2 = "\n"
     dec_grade = ","
-    # dec_grade2 = "<"
+    dec_grade2 = 263 #backspace
     set_root_dir = "D"
     set_lang = "L"
     github_open = "g"
@@ -852,9 +852,9 @@ class Play:
         add_str(Key.down_task, self.down_task)
         add_str(Key.select_task, self.select_task)
         add_str(Key.inc_grade, self.tree.inc_grade)
-        # add_str(Key.inc_grade2, self.tree.inc_grade)
+        add_str(Key.inc_grade2, self.tree.inc_grade)
         add_str(Key.dec_grade, self.tree.dec_grade)
-        # add_str(Key.dec_grade2, self.tree.dec_grade)
+        add_int(Key.dec_grade2, self.tree.dec_grade)
         # add_str(Key.inc_grade2, self.tree.inc_grade)
         # add_str(Key.dec_grade2, self.tree.dec_grade)
         # add_str(Key.test_task, lambda: self.test_task(True))
