@@ -2,9 +2,9 @@ from typing import Dict
 
 
 select = r"""
-                            e -> Executa sem testar          
+                            r -> Roda sem testar             
   _________         .    .                                   
- (..       \_    ,  |\  /|  t -> Roda os casos de teste      
+ (..       \_    ,  |\  /|  t -> Testa usando casos de teste 
   \       O  \  /|  \ \/ /                                   
    \______    \/ |   \  /   p -> Muda o arquivo principal    
       vvvv\    \ |   /  |        para problemas de múltiplos 

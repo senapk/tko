@@ -20,6 +20,7 @@ from .util.freerun import Free
 from .cdiff import CDiff
 from .execution import Execution
 from .game.task import Task
+from .play.opener import Opener
 
 
 class FilterMode:
@@ -54,6 +55,7 @@ class Run:
         # self.__curses_select_mode = False
         self.__lang = ""
         self.__task: Optional[Task] = None
+        self.__opener: Optional[Opener] = None
 
     def set_curses(self, value:bool=True, success: Success=Success.RANDOM):
         self.__curses_mode = value
@@ -62,6 +64,10 @@ class Run:
    
     def set_lang(self, lang:str):
         self.__lang = lang
+        return self
+    
+    def set_opener(self, opener: Opener):
+        self.__opener = opener
         return self
 
     # def set_curses_select_mode(self, value:bool=True):
@@ -218,6 +224,8 @@ class Run:
                 cdiff.set_first_run()
             if self.__task is not None:
                 cdiff.set_task(self.__task)
+            if self.__opener is not None:
+                cdiff.set_opener(self.__opener)
             cdiff.run()
         else:
             term_print(Report.centralize(" Testando o código com os casos de teste ", "═"))

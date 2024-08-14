@@ -165,7 +165,7 @@ class TaskTree:
         if in_focus:
             color = "k" + focus_color
 
-        done = color + "c"
+        done = color + "g"
         todo = color
         perc = t.test_progress
         output.add(Style.build_bar(t.title, perc / 100, len(t.title), done, todo, round=False))
@@ -379,6 +379,9 @@ class TaskTree:
             if grade == 11:
                 grade = 10
             obj.set_grade(grade)
+        elif isinstance(obj, Quest) or isinstance(obj, Cluster):
+            if obj.key not in self.expanded:
+                self.expanded.append(obj.key)
 
     
     def dec_grade(self):
@@ -388,6 +391,9 @@ class TaskTree:
             if grade == -1:
                 grade = 0
             obj.set_grade(grade)
+        elif isinstance(obj, Quest) or isinstance(obj, Cluster):
+            if obj.key in self.expanded:
+                self.expanded.remove(obj.key)
 
     def arrow_right(self):
         obj = self.items[self.index_selected].obj

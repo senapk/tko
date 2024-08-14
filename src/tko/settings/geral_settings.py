@@ -20,7 +20,7 @@ class GeralSettings:
         __sidesize: 80,
         __langdef: "",
         __lastrep: "", 
-        __nerdfonts: "0",
+        __nerdfonts: False,
         __editor: "code"
     }
 

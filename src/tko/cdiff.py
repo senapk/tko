@@ -16,7 +16,7 @@ from .util.freerun import Free
 from .play.style import Style
 from .game.task import Task
 import random
-
+from .play.opener import Opener
 
 from .run.wdir import Wdir
 from .run.report import Report
@@ -41,9 +41,10 @@ class Keys:
     down2 = "k"
     principal = "p"
     diff = "m"
-    executar = "e"
+    rodar = "r"
     testar = "t"
     sair = "q"
+    editar = "e"
 
 class CDiff:
     def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
@@ -71,8 +72,15 @@ class CDiff:
         self.fman = FloatingManager()
         self.first_run = False
 
+        self.opener: Optional[Opener] = None
+
     def set_first_run(self):
         self.first_run = True
+        return self
+
+    def set_opener(self, opener: Opener):
+        self.opener = opener
+        self.opener.set_fman(self.fman)
         return self
 
     def save_settings(self):
@@ -215,6 +223,11 @@ class CDiff:
             else:
                 self.results_done.append((Token(symbol.text, color), index))
             self.task.test_progress = (len(self.results_done) * 100) // len(self.wdir.get_unit_list())
+            old_grade = self.task.grade
+            new_grade = self.task.test_progress // 10
+            if new_grade > old_grade:
+                self.task.grade = new_grade
+                self.fman.add_input(Floating("v>").put_text(f"Melhorou!"))
         else:
             self.mode = Mode.finished
 
@@ -290,16 +303,18 @@ class CDiff:
         
     def draw_bottom_line(self):
         tokens = [
-            RToken("G", "Sair[q]"),
-            RToken("Y", "Executar[e]"),
-            RToken("Y", "Testar[t]"),
-            RToken("C", "Principal[p]"),
+            RToken("C", "Sair[q]"),
             RToken("C", "Navegar[wasd]"),
         ]
+        if self.opener is not None:
+            tokens.append(RToken("C", "Editar[e]"))
+        tokens.append(RToken("G", "Testar[t]"))
+        tokens.append(RToken("M", "Rodar[r]"))
         if self.settings.geral.is_diff_down():
-            tokens.append(RToken("G", "cima╾lado[m]")) 
+            tokens.append(RToken("M", "Modo[m]V╾H")) 
         else:
-            tokens.append(RToken("G", "cima╼lado[m]"))
+            tokens.append(RToken("M", "Modo[m]V╼H"))
+        tokens.append(RToken("M", "Main[p]"))
 
         cmds = Sentence()
         for t in tokens:
@@ -450,6 +465,17 @@ class CDiff:
     def go_up(self):
         self.init = max(0, self.init - 1)
 
+    def change_main(self):
+        if len(self.get_solver_names()) == 1:
+            self.fman.add_input(
+                Floating("v>").warning()
+                .put_text("Seu projeto só tem um arquivo de solução")
+                .put_text("Essa funcionalidade troca qual dos arquivos")
+                .put_text("de solução será o principal.")
+            )
+            return
+        self.task.main_index = (self.task.main_index + 1) % len(self.get_solver_names())
+
     def process_key(self, key):
         if key == ord('q'):
             self.set_exit()
@@ -466,11 +492,14 @@ class CDiff:
             self.save_settings()
             self.init = 0
         elif key == ord(Keys.principal):
-            self.task.main_index = (self.task.main_index + 1) % len(self.get_solver_names())
-        elif key == ord(Keys.executar):
+            self.change_main()
+        elif key == ord(Keys.rodar):
             return self.run_exec_mode()
         elif key == ord(Keys.testar):
             self.run_test_mode()
+        elif key == ord(Keys.editar):
+            if self.opener is not None:
+                self.opener.open_code(open_dir=True)
         elif key != -1:
             self.send_char_not_found(key)
 

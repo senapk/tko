@@ -5,8 +5,7 @@ from ..game.task import Task
 from ..game.xp import XP
 from ..game.graph import Graph
 import random
-import tempfile
-
+from .opener import Opener
 from ..run.basic import Success
 from typing import List, Any, Dict, Callable, Tuple
 from ..settings.settings import RepData, GeralSettings
@@ -61,6 +60,7 @@ class Key:
     inc_grade = "."
     inc_grade2 = "\n"
     dec_grade = ","
+    dec_grade2 = [127, 263]
     set_root_dir = "D"
     set_lang = "L"
     github_open = "g"
@@ -107,24 +107,26 @@ class Play:
         self.wrap_size = 100
 
         self.help_basic: List[Token] = [
-            RToken("C", f"{Actions.sair}[{Key.quit}]"),
-            RToken("C", f"{Actions.ajuda}[{Key.ajuda}]"),
+            RToken("Y", f"{Actions.marcar}[{Key.inc_grade}]"),
+            RToken("Y", f"{Actions.desmarcar}[{Key.dec_grade}]"),
         ]
 
         self.help_extra: List[Token] = [
-            RToken("Y", f"{Actions.navegar}[wasd]"),
+            RToken("C", f"{Actions.sair}[{Key.quit}]"),
+            RToken("C", f"{Actions.navegar}[wasd]"),
+            RToken("C", f"{Actions.editar}[{Key.edit}]"),
+            RToken("G", f"{Actions.testar}[{Key.select_task}]"),
+            RToken("Y", f"{Actions.ajuda}[{Key.ajuda}]"),
             RToken("Y", f"{Actions.github}[{Key.github_open}]"),
             RToken("Y", f"{Actions.baixar}[{Key.down_task}]"),
-            RToken("C", f"{Actions.editar}[{Key.edit}]"),
-            RToken("C", f"{Actions.testar}[{Key.select_task}]"),
-            RToken("C", f"{Actions.marcar}[{Key.inc_grade}]"),
-            RToken("C", f"{Actions.desmarcar}[{Key.dec_grade}]"),
             # RToken("Y", f"Testar[{Key.test_task}]"),
             # RToken("M", f"Rascunho[{Key.open_draft}]"),
             # RToken("M", f"Leitura[{Key.open_readme}]"),
             # RToken("M", "Marcar[enter]"),
             # RToken("M", "Graduar[0-9]"),
         ]
+
+        self.opener = Opener(tree=self.tree, fman=self.fman, geral=geral, rep_data=rep_data, rep_alias=rep_alias)
 
     def save_to_json(self):
         self.tree.save_on_rep()
@@ -367,9 +369,10 @@ class Play:
             self.fman.add_input( Floating().put_text("\nEssa não é uma tarefa de código.\n").error() )
             return
         if not task.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
-            self.fman.add_input(
-                Floating().put_text("\nVocê precisa baixar a tarefa primeiro\n").error()
-            )
+            self.down_task()
+            # self.fman.add_input(
+            #     Floating().put_text("\nVocê precisa baixar a tarefa primeiro\n").error()
+            # )
             return
         return self.run_selected_task(task, rep_dir)
         
@@ -377,6 +380,7 @@ class Play:
         path = os.path.join(rep_dir, task.key)
         run = Run([path], None, Param.Basic())
         run.set_lang(self.rep.get_lang())
+        run.set_opener(self.opener)
         if Flags.random.is_true():
             run.set_curses(True, Success.RANDOM)
         else:
@@ -620,16 +624,6 @@ class Play:
         elif cols < 35 and Flags.config.is_true():
             Flags.config.toggle()
 
-    def get_task_readme_path(self) -> str:
-        obj = self.tree.get_selected()
-        if isinstance(obj, Task):
-            rootdir = self.geral.get_rootdir()
-            if rootdir != "":
-                path = os.path.join(self.geral.get_rootdir(), self.rep_alias, obj.key, "Readme.md")
-                if os.path.isfile(path):
-                    return path
-        return ""
-
 
     def build_xp_bar(self) -> Tuple[str, float]:
         xp = XP(self.game)
@@ -735,71 +729,6 @@ class Play:
             return random.choice(quit_msgs)
         return "Até a próxima!"
 
-    def open_code(self, open_drafts: bool, open_readme: bool, open_dir: bool = False, open_cases: bool = False):
-        obj = self.tree.get_selected()
-        if isinstance(obj, Task):
-            path = self.get_task_readme_path()
-            cmd = self.geral.get_editor()
-            # code, _, _ = Runner().subprocess_run("whereis {}".format(cmd))
-            if not os.path.isfile(path):
-                if open_readme:
-                    self.fman.add_input(
-                        Floating("v>").error().put_text("Não achei nada baixado para você ler.")
-                    )
-                if open_drafts:
-                    self.fman.add_input(
-                        Floating("v>").error().put_text("Não achei nada baixado para você editar.")
-                    )
-                if open_dir:
-                    self.fman.add_input(
-                        Floating("v>").error().put_text("Não achei nada baixado para você abrir.")
-                    )
-                return
-            if open_dir:
-                code, out, err = Runner.subprocess_run(f"{cmd} -h")
-                if ("Replit" in out) or ("replit" in err):
-                    open_cases = True
-                    open_readme = True
-                    open_drafts = True
-                else:
-                    outfile = tempfile.NamedTemporaryFile(delete=False)
-                    self.fman.add_input(
-                        Floating("v>")
-                            .warning()
-                            .put_text("Abrindo arquivos do problema com o comando")
-                            .put_sentence(Sentence().addf("g", f"  {cmd}"))
-                    )
-                    subprocess.Popen(f"{cmd} {os.path.dirname(path)}", stdout=outfile, shell=True)
-                    #code, out, err = Runner.subprocess_run(f"{cmd} {os.path.dirname(path)}")
-                
-            files_to_open: List[str] = []
-            if open_readme:
-                files_to_open.append(path)
-                # Runner.subprocess_run(f"{cmd} {path}")
-            if open_cases:
-                cases = os.path.join(os.path.dirname(path), "cases.tio")
-                if os.path.isfile(cases):
-                    files_to_open.append(cases)
-                    # Runner.subprocess_run(f"{cmd} {cases}")
-            folder = os.path.dirname(path)
-            files = os.listdir(folder)
-            if open_drafts:
-                drafts = []
-                for f in files:
-                    if not f.endswith(self.rep.get_lang()):
-                        continue
-                    drafts.append(os.path.join(folder, f))
-                if len(drafts) == 0:
-                    self.fman.add_input(
-                        Floating("v>").error().put_text("Não achei nenhum arquivo de rascunho.")
-                    )
-                    return
-                for f in drafts:
-                    files_to_open.append(f)
-            if len(files_to_open) != 0:
-                # print(" ".join(files_to_open))
-                Runner.subprocess_run("{} {}".format(cmd, " ".join(files_to_open)))
-
     def make_callback(self) -> Dict[int, Any]:
         def set_exit():
             self.exit = True
@@ -853,12 +782,14 @@ class Play:
         add_str(Key.inc_grade, self.tree.inc_grade)
         add_str(Key.inc_grade2, self.tree.inc_grade)
         add_str(Key.dec_grade, self.tree.dec_grade)
+        for value in Key.dec_grade2:
+            add_int(value, self.tree.dec_grade)
         # add_str(Key.inc_grade2, self.tree.inc_grade)
         # add_str(Key.dec_grade2, self.tree.dec_grade)
         # add_str(Key.test_task, lambda: self.test_task(True))
         # add_str(Key.open_draft, lambda: self.open_code(open_drafts = True, open_readme = False))
         # add_str(Key.open_readme, lambda: self.open_code(open_drafts = False, open_readme = True))
-        add_str(Key.edit, lambda: self.open_code(open_drafts = False, open_readme = False, open_dir=True))
+        add_str(Key.edit, lambda: self.opener.open_code(open_dir=True))
         add_str(Key.cores, self.geral.toggle_color)
         add_str(Key.bordas, self.geral.toggle_nerdfonts)
 
