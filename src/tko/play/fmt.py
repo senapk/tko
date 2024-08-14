@@ -156,7 +156,7 @@ class Fmt:
         return Fmt.__scr.getch()
 
     @staticmethod
-    def erase():
+    def clear():
         if Fmt.__scr is None:
             raise Exception("Fmt.__scr não foi inicializado")
         Fmt.__scr.erase()

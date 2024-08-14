@@ -1,7 +1,8 @@
 from typing import Dict
 
 
-select = r"""
+select: Dict[str, str] = {}
+select["shark"] = r"""
                             r -> Roda sem testar             
   _________         .    .                                   
  (..       \_    ,  |\  /|  t -> Testa usando casos de teste 
@@ -14,6 +15,36 @@ select = r"""
        |/   \_  \|      /        para modo diff horizontal   
               \________/                                     
            Esquerda e Direita -> muda o caso de teste        
+"""
+
+select["cat"] = r"""
+ ,_     _          r -> Roda sem testar             
+ |\\_,-~/                                           
+ / _  _ |    ,--.  t -> Testa usando casos de teste 
+(  @  @ )   / ,-'                                   
+ \  _T_/-._( (     p -> Muda o arquivo principal    
+ /         `. \         para problemas de múltiplos 
+|         _  \ |        arquivos de código fonte    
+ \ \ ,  /      |                                    
+  || |-_\__   /    m -> muda o modo diff de vertical
+ ((_/`(____,-'          para modo diff horizontal   
+                                                    
+                   direcionais -> muda o teste      
+"""
+
+select["elephant"] = r"""
+⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀r -> Roda sem testar             
+⠀⠀⠀⠀⠀⠀⣰⣿⣿⣿⣿⣦⣀⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀                                 
+⠀⠀⠀⠀⠀⠀⢿⣿⠟⠋⠉⠀⠀⠀⠀⠉⠑⠢⣄⡀⠀⠀⠀⠀⠀t -> Testa usando casos de teste 
+⠀⠀⠀⠀⠀⢠⠞⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢿⣿⣿⣦⡀                                 
+⠀⣀⠀⠀⢀⡏⠀⢀⣴⣶⣶⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⢻⣿⣿⠇p -> Muda o arquivo principal    
+⣾⣿⣿⣦⣼⡀⠀⢺⣿⣿⡿⠃⠀⠀⠀⠀⣠⣤⣄⠀⠀⠈⡿⠋⠀     para problemas de múltiplos 
+⢿⣿⣿⣿⣿⣇⠀⠤⠌⠁⠀⡀⢲⡶⠄⢸⣏⣿⣿⠀⠀⠀⡇⠀⠀     arquivos de código fonte    
+⠈⢿⣿⣿⣿⣿⣷⣄⡀⠀⠀⠈⠉⠓⠂⠀⠙⠛⠛⠠⠀⡸⠁⠀⠀                                 
+⠀⠀⠻⣿⣿⣿⣿⣿⣿⣷⣦⣄⣀⠀⠀⠀⠀⠑⠀⣠⠞⠁⠀⠀⠀m -> muda o modo diff de vertical
+⠀⠀⠀⢸⡏⠉⠛⠛⠛⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⡄⠀⠀⠀⠀⠀     para modo diff horizontal   
+⠀⠀⠀⠸⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠛⢿⣿⣿⣿⣿⡄⠀⠀⠀⠀                                 
+⠀⠀⠀⢷⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢻⣿⣿⣿⣿⡀⠀⠀⠀direcionais -> muda o teste      
 """
 
 compilling: Dict[str, str] = {}
@@ -30,6 +61,24 @@ compilling: Dict[str, str] = {}
 # ░ ░          ░ ░         ░             ░      ░  ░     ░  ░         ░    ░        ░ ░  
 # ░                                                                      ░               
 # """
+
+
+numbers = r"""
+  __    __     _   ____  ____   ___   ___   ___  ____  ____  ___  
+ /  \  /  \   / ) (___ \( __ \ / _ \ / __) / __)(__  )/ _  \/ _ \ 
+(  0 )(_/ /  / /   / __/ (__ ((__  ((___ \(  _ \  / / ) _  (\__  )
+ \__/  (__) (_/   (____)(____/  (__/(____/ \___/ (_/  \____/(___/ 
+"""
+
+
+executing: str = r"""
+███████╗██╗  ██╗███████╗ ██████╗██╗   ██╗████████╗ █████╗ ███╗   ██╗██████╗  ██████╗ 
+██╔════╝╚██╗██╔╝██╔════╝██╔════╝██║   ██║╚══██╔══╝██╔══██╗████╗  ██║██╔══██╗██╔═══██╗
+█████╗   ╚███╔╝ █████╗  ██║     ██║   ██║   ██║   ███████║██╔██╗ ██║██║  ██║██║   ██║
+██╔══╝   ██╔██╗ ██╔══╝  ██║     ██║   ██║   ██║   ██╔══██║██║╚██╗██║██║  ██║██║   ██║
+███████╗██╔╝ ██╗███████╗╚██████╗╚██████╔╝   ██║   ██║  ██║██║ ╚████║██████╔╝╚██████╔╝
+╚══════╝╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═════╝    ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝╚═════╝  ╚═════╝ 
+"""
 
 compilling["computer"] = r"""
  ██████╗ ██████╗ ███╗   ███╗██████╗ ██╗██╗      █████╗ ███╗   ██╗██████╗  ██████╗ 

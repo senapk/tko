@@ -608,8 +608,8 @@ class Play:
         _help.put_sentence(Sentence() + f"   {Actions.baixar} " + RToken("r", f"{Key.down_task}") + " - Baixa tarefa de código para seu dispositivo")
         _help.put_sentence(Sentence() + f"   {Actions.editar} " + RToken("r", f"{Key.edit}") + " - Abre os arquivos no editor de código")
         _help.put_sentence(Sentence() + f"   {Actions.testar} " + RToken("r", f"{Key.select_task}") + " - Escolhe a tarefa de código que você baixou")
-        _help.put_sentence(Sentence() + f"   {Actions.marcar} " + RToken("r", f"{Key.inc_grade}") + " - Aumenta a pontuação da tarefa")
-        _help.put_sentence(Sentence() + f"{Actions.desmarcar} " + RToken("r", f"{Key.dec_grade}") + " - Diminui a pontuação da tarefa")
+        _help.put_sentence(Sentence() + f"   {Actions.marcar} " + RToken("r", f"{Key.inc_grade}") + RToken("g", " ou ") + RToken("r", "enter    ") + " - Aumenta a pontuação da tarefa")
+        _help.put_sentence(Sentence() + f"{Actions.desmarcar} " + RToken("r", f"{Key.dec_grade}") + RToken("g", " ou ") + RToken("r", "backspace") + " - Diminui a pontuação da tarefa")
         _help.put_sentence(Sentence())
         _help.put_sentence(Sentence() + "Você pode editar o editor padrão com o comando")
         _help.put_sentence(Sentence() + RToken("g", "             tko config --editor comando"))
@@ -649,7 +649,7 @@ class Play:
         return text, percent
 
     def show_items(self):
-        Fmt.erase()
+        Fmt.clear()
         self.tree.reload_sentences()
         lines, cols = Fmt.get_size()
         main_sx = cols  # tamanho em x livre

@@ -10,7 +10,7 @@ from typing import List, Tuple, Optional
 from .play.frame import Frame
 from .play.floating import Floating
 from .play.floating_manager import FloatingManager
-from .play.images import images, compilling, success, select
+from .play.images import images, compilling, success, select, executing
 from .util.runner import Runner
 from .util.freerun import Free
 from .play.style import Style
@@ -61,7 +61,7 @@ class CDiff:
         self.space = 0  # dy space for draw
         self.mode: Mode = Mode.select
 
-        self.index = 0
+        self.focused_index = 0
         self.finished = False
         self.resumes: List[str] = []
 
@@ -110,20 +110,28 @@ class CDiff:
             return "Y"
         return ""
 
-    def print_centered_image(self, image: str, color: str):
-        _, cols = Fmt.get_size()
+    def print_centered_image(self, image: str, color: str, clear=False, align: str = "."):
+        dy, dx = Fmt.get_size()
         lines = image.split("\n")[1:]
+        init_y = 4
+        if align == "v":
+            init_y = dy - len(lines) - 1
         for i, line in enumerate(lines):
-            Fmt.write(i + 4, 1, Sentence().addf(color, line).center(cols - 2, Token(" ", " ")))
+            info = Sentence().addf(color, line).center(dx - 2, Token(" ", " "))
+            if clear:
+                Fmt.write(i + init_y, 1, Sentence(" " * info.len()))
+            else:
+                Fmt.write(i + init_y, 1, Sentence().addf(color, line).center(dx - 2, Token(" ", " ")))
 
-    def random_get(self, dic: dict, mode:str):
+
+    def random_get(self, dic: dict, mode:str = "static"):
         if mode == "static":
             count = sum([ord(c) for c in self.get_folder()])
             keys = list(dic.keys())
             return dic[keys[count % len(keys)]]
         else:
             keys = list(dic.keys())
-            return dic[random.choice(keys)]    
+            return dic[random.choice(keys)]
 
     def show_success(self):
         if self.success_type == Success.RANDOM:
@@ -132,14 +140,18 @@ class CDiff:
             out = self.random_get(success, "static")
         self.print_centered_image(out, "" if not self.colors else "g")
         
-    def show_compilling(self):
+    def show_compilling(self, clear=False):
         out = self.random_get(compilling, "random")
-        self.print_centered_image(out, "" if not self.colors else "y")
+        self.print_centered_image(out, "" if not self.colors else "y", clear)
+
+    def show_executing(self, clear=False):
+        out = executing
+        self.print_centered_image(out, "" if not self.colors else "y", clear, "v")
 
     def draw_scrollbar(self):
         y_init = 3
-        if len(self.results_fail) == 0:
-            return   
+        # if len(self.results_fail) == 0:
+        #     return
         tr = "╮"
         br = "╯"
         vbar = "│"
@@ -200,7 +212,7 @@ class CDiff:
         if len(self.results_fail + self.results_done) == 0:
             return None
         join_list = self.results_fail + self.results_done
-        _, index = join_list[self.index]
+        _, index = join_list[self.focused_index]
         unit = self.wdir.get_unit(index)
         return unit
 
@@ -212,24 +224,40 @@ class CDiff:
         if self.mode != Mode.running:
             return
         if len(self.unit_list) > 0:
+            # self.show_executing()
+            # Fmt.refresh()
             index = len(self.results_done) + len(self.results_fail)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
             unit.result = Execution.run_unit(solver, unit)
+            # self.show_executing(clear=True)
+            # Fmt.refresh()
             symbol = ExecutionResult.get_symbol(unit.result)
             color = self.get_color(unit)
-            if unit.result != ExecutionResult.SUCCESS:
-                self.results_fail.append((Token(symbol.text, color), index))
-            else:
-                self.results_done.append((Token(symbol.text, color), index))
+            # if unit.result != ExecutionResult.SUCCESS:
+            #     self.results_fail.append((Token(symbol.text, color), index))
+            # else:
+            self.results_done.append((Token(symbol.text, color), index))
             self.task.test_progress = (len(self.results_done) * 100) // len(self.wdir.get_unit_list())
-            old_grade = self.task.grade
-            new_grade = self.task.test_progress // 10
-            if new_grade > old_grade:
-                self.task.grade = new_grade
-                self.fman.add_input(Floating("v>").put_text(f"Melhorou!"))
-        else:
+            self.focused_index = index
+            # old_grade = self.task.grade
+            # new_grade = self.task.test_progress // 10
+            # if new_grade > old_grade:
+            #     self.task.grade = new_grade
+            #     self.fman.add_input(Floating("v>").put_text(f"Melhorou!"))
+        if len(self.unit_list) == 0:
             self.mode = Mode.finished
+            self.focused_index = 0
+
+            done_list = self.results_done
+            self.results_done = []
+            for data in done_list:
+                token, _ = data
+                if token.fmt != "G":
+                    self.results_fail.append(data)
+                else:
+                    self.results_done.append(data)
+
 
     def draw_top_line(self):
         # construir mais uma solução
@@ -279,24 +307,29 @@ class CDiff:
 
         frame.set_header(header)
 
-
         value = self.get_focused_unit()
         if value is not None:
             frame.write(0, 0, Sentence().add(value.str(False)).center(frame.get_dx()))
 
+        output = Sentence()
+        done_list = self.results_fail + self.results_done
+        todo_list: List[Tuple[Token, int]] = []
+        i = len(done_list)
+        for _ in self.unit_list:
+            todo_list.append((RToken("W", "-"), i))
+            i += 1
 
         i = 0
-        output = Sentence()
-        for symbol, index in self.results_fail + self.results_done:
-            foco = i == self.index
+        for symbol, index in done_list + todo_list:
+            foco = i == self.focused_index
             extrap = Token(Style.roundL(), symbol.fmt.lower()) if not foco else Token(Style.roundL(), "")
             extras = Token(Style.roundR(), symbol.fmt.lower()) if not foco else Token(Style.roundR(), "")
             output.add(extrap).addf(symbol.fmt, str(index).zfill(2)).add(symbol).add(extras).add(" ")
             i += 1
 
-        size = 8
-        if self.index * 8 > frame.get_dx():
-            output.cut_begin((self.index + 1) * 8 - frame.get_dx())
+        size = 6
+        if self.focused_index * size > frame.get_dx():
+            output.cut_begin((self.focused_index + 1) * size - frame.get_dx())
 
         frame.set_footer(output, "")
         frame.draw()
@@ -353,6 +386,8 @@ class CDiff:
             line_list = line_list[self.init:]
         for i, line in enumerate(line_list):
             frame.write(i, 0, Sentence().add(line))
+
+        self.draw_scrollbar()
         return
 
     def load_autoload_warning(self):
@@ -387,22 +422,27 @@ class CDiff:
             if self.first_loop and self.first_run:
                 self.first_loop = False
                 self.load_autoload_warning()
-            Fmt.erase()
+            Fmt.clear()
             if self.mode == Mode.running:
                 if self.wdir.get_solver().not_compiled():
+                    self.draw_top_line()
+                    self.draw_bottom_line()
                     self.show_compilling()
                     Fmt.refresh()
-                    Fmt.erase()
                     self.wdir.get_solver().prepare_exec()
+                    Fmt.clear()
+                    self.draw_top_line()
+                    self.draw_bottom_line()
+                    Fmt.refresh()
                 self.process_one()
             self.draw_top_line()
             unit = self.get_focused_unit()
             if unit is not None:
                 self.draw_main(unit)
-                if not self.wdir.get_solver().compile_error:
-                    self.draw_scrollbar()
+                # if not self.wdir.get_solver().compile_error:
+                    
             else:
-                self.print_centered_image(select, "y")
+                self.print_centered_image(self.random_get(select), "y")
             
             self.draw_bottom_line()
 
@@ -431,13 +471,14 @@ class CDiff:
 
     def run_test_mode(self):
         self.mode = Mode.running
-        self.index = 0
+        self.focused_index = 0
         if self.wdir.is_autoload():
             self.wdir.autoload()
-        Fmt.erase()
-        self.show_compilling()
-        Fmt.refresh()
-        self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index]).prepare_exec()
+        Fmt.clear()
+        # self.show_compilling()
+        # Fmt.refresh()
+        # change main and force to recompile
+        self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index]).set_executable("")
         self.results_done = []
         self.results_fail = []
         self.unit_list = [unit for unit in self.wdir.get_unit_list()]
@@ -452,11 +493,11 @@ class CDiff:
                     )
 
     def go_left(self):
-        self.index = max(0, self.index - 1)
+        self.focused_index = max(0, self.focused_index - 1)
         self.init = 0
 
     def go_right(self):
-        self.index = min(len(self.results_done) + len(self.results_fail) - 1, self.index + 1)
+        self.focused_index = min(len(self.results_done) + len(self.results_fail) - 1, self.focused_index + 1)
         self.init = 0
 
     def go_down(self):
