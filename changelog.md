@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.18.9
+  - add: changind default editor to open files instead folder
 - 0.18.8
   - fix: improved help message on opening
 - 0.18.7

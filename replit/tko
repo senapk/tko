@@ -23,7 +23,7 @@ import unicodedata
 import math
 import configparser
 from subprocess import PIPE
-__version__ = "0.18.8"
+__version__ = "0.18.9"
 
 
 class GeralSettings:
@@ -5254,21 +5254,21 @@ class Opener:
                     )
                 return
             if open_dir:
-                code, out, err = Runner.subprocess_run(f"{cmd} -h")
-                if ("Replit" in out) or ("replit" in err):
-                    open_cases = True
-                    open_readme = True
-                    open_drafts = True
-                else:
-                    outfile = tempfile.NamedTemporaryFile(delete=False)
-                    self.fman.add_input(
-                        Floating("v>")
-                            .warning()
-                            .put_text("Abrindo arquivos do problema com o comando")
-                            .put_sentence(Sentence().addf("g", f"  {cmd}"))
-                    )
-                    subprocess.Popen(f"{cmd} {os.path.dirname(path)}", stdout=outfile, shell=True)
-                    #code, out, err = Runner.subprocess_run(f"{cmd} {os.path.dirname(path)}")
+                # code, out, err = Runner.subprocess_run(f"{cmd} -h")
+                # if ("Replit" in out) or ("replit" in err):
+                open_cases = True
+                open_readme = True
+                open_drafts = True
+                # else:
+                #     outfile = tempfile.NamedTemporaryFile(delete=False)
+                #     self.fman.add_input(
+                #         Floating("v>")
+                #             .warning()
+                #             .put_text("Abrindo arquivos do problema com o comando")
+                #             .put_sentence(Sentence().addf("g", f"  {cmd}"))
+                #     )
+                #     subprocess.Popen(f"{cmd} {os.path.dirname(path)}", stdout=outfile, shell=True)
+                #     #code, out, err = Runner.subprocess_run(f"{cmd} {os.path.dirname(path)}")
                 
             files_to_open: List[str] = []
             if open_readme:
