@@ -207,3 +207,11 @@ class Sentence:
             self.data = self.data[:width]
         return self
 
+    def join(self, array: List[Sentence]):
+        out = Sentence()
+        for i, a in enumerate(array):
+            if i != 0:
+                out.add(self)
+            out.add(a)
+        return out
+            

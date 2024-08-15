@@ -1,7 +1,7 @@
 from typing import Any, Dict
 import os
 import json
-import tempfile
+import urllib
 from ..util.remote import RemoteCfg, Absolute
 
 languages_avaliable = ["c", "cpp", "py", "ts", "js", "java", "go"]
@@ -21,26 +21,24 @@ class RepSource:
         self.url = url
         return self
 
-    def get_file(self) -> str:
+    def get_file(self, rep_dir: str) -> str:
         # arquivo existe e é local
         if self.file != "" and os.path.exists(self.file) and self.url == "":
             return self.file
 
         # arquivo não existe e é remoto
         if self.url != "" and (self.file == "" or not os.path.exists(self.file)):
-            with tempfile.NamedTemporaryFile(delete=False) as f:
-                filename = f.name
-                cfg = RemoteCfg(self.url)
-                cfg.download_absolute(filename)
-            return filename
-
-        if self.file != "" and os.path.exists(self.file) and self.url != "":
-            content = open(self.file, encoding="utf-8").read()
-            content = Absolute.relative_to_absolute(content, RemoteCfg(self.url))
-            with tempfile.NamedTemporaryFile(delete=False) as f:
-                filename = f.name
-                f.write(content.encode("utf-8"))
-            return filename
+            cache_file = os.path.join(rep_dir, ".cache.md")
+            cfg = RemoteCfg(self.url)
+            try:
+                cfg.download_absolute(cache_file)
+            except urllib.error.URLError:
+                print("fail: Não foi possível baixar o arquivo do repositório")
+                if os.path.exists(cache_file):
+                    print("Usando arquivo do cache")
+                else:
+                    raise Warning("fail: Arquivo do cache não encontrado")
+            return cache_file
 
         raise ValueError("fail: file not found or invalid settings to download repository file")
 

@@ -221,7 +221,7 @@ class Main:
 
             local = settings.geral
             game = Game()
-            file = rep_source.get_file()
+            file = rep_source.get_file(os.path.join(local.get_rootdir(), args.repo))
             game.parse_file(file)
 
             # passing a lambda function to the play class to save the settings

@@ -64,19 +64,16 @@ class RemoteCfg:
         return "https://raw.githubusercontent.com/" + self.user + "/" + self.repo + "/" + self.branch + "/" + self.folder + "/" + self.file
 
     def download_absolute(self, filename: str):
+        [tempfile, __content] = urllib.request.urlretrieve(self.get_raw_url(), filename)
+        content = ""
         try:
-            [tempfile, __content] = urllib.request.urlretrieve(self.get_raw_url(), filename)
-            content = ""
-            try:
-                content = open(tempfile, encoding="utf-8").read()
-            except:
-                content = open(tempfile).read()
-            with open(filename, "w", encoding="utf-8") as f:
-                absolute = Absolute.relative_to_absolute(content, self)
-                f.write(absolute.encode("utf-8").decode("utf-8"))
-        except urllib.error.HTTPError:
-            print("Error downloading file", self.get_raw_url())
-            return
+            content = open(tempfile, encoding="utf-8").read()
+        except:
+            content = open(tempfile).read()
+        with open(filename, "w", encoding="utf-8") as f:
+            absolute = Absolute.relative_to_absolute(content, self)
+            f.write(absolute.encode("utf-8").decode("utf-8"))
+        return
 
     def __str__(self):
         return f"user: ({self.user}), repo: ({self.repo}), branch: ({self.branch}), folder: ({self.folder}), file: ({self.file})"

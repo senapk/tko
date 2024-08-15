@@ -104,8 +104,6 @@ class Play:
         self.first_loop = True
         self.graph_ext = ""
 
-        self.wrap_size = 100
-
         self.help_basic: List[Token] = [
             RToken("Y", f"{Actions.marcar}[{Key.inc_grade}]"),
             RToken("Y", f"{Actions.desmarcar}[{Key.dec_grade}]"),
@@ -119,12 +117,9 @@ class Play:
             RToken("Y", f"{Actions.ajuda}[{Key.ajuda}]"),
             RToken("Y", f"{Actions.github}[{Key.github_open}]"),
             RToken("Y", f"{Actions.baixar}[{Key.down_task}]"),
-            # RToken("Y", f"Testar[{Key.test_task}]"),
-            # RToken("M", f"Rascunho[{Key.open_draft}]"),
-            # RToken("M", f"Leitura[{Key.open_readme}]"),
-            # RToken("M", "Marcar[enter]"),
-            # RToken("M", "Graduar[0-9]"),
         ]
+
+        self.wrap_size = Sentence(" ").join(self.build_list_sentence(self.help_extra)).len()
 
         self.opener = Opener(tree=self.tree, fman=self.fman, geral=geral, rep_data=rep_data, rep_alias=rep_alias)
 
@@ -385,8 +380,6 @@ class Play:
             run.set_curses(True, Success.RANDOM)
         else:
             run.set_curses(True, Success.FIXED)
-        # run.set_curses_select_mode(True)
-
         run.set_task(task)
 
         run.build_wdir()
@@ -403,26 +396,13 @@ class Play:
             return
         return run.execute
 
-    def build_list_sentence(self, items: List[Token], fill=True) -> List[Sentence]:
+    def build_list_sentence(self, items: List[Token]) -> List[Sentence]:
         out: List[Sentence] = []
-        try:
-            for x in items:
-                help = Sentence()
-                if not self.geral.is_colored():
-                    color = "W"
-                else:
-                    color = x.fmt
-                if fill:
-                    left = Style.roundL()
-                    right = Style.roundR()
-                else:
-                    left = " "
-                    right = " "
-                help.addf(color.lower(), left).addf(color, x.text).addf(color.lower(), right)
-                out.append(help)
-        except ValueError:
-            raise ValueError("Desempacotando mensagens")
-
+        for x in items:
+            color = x.fmt if self.geral.is_colored() else "W"
+            left = Style.roundL()
+            right = Style.roundR()
+            out.append(Sentence().addf(color.lower(), left).addf(color, x.text).addf(color.lower(), right))
         return out
 
     def build_bar_links(self) -> str:
@@ -517,30 +497,24 @@ class Play:
         frame.print(0, Sentence().addf(color.lower(), Style.roundL()).addf(color, "Linguagem  [L]").addf(color.lower(), Style.roundR()))
         frame.print(0, Sentence())
 
-    def show_bottom_bar(self, frame: Frame):
+    def two_column_mode(self):
+        _, cols = Fmt.get_size()
+        return cols < self.wrap_size + 2
 
-        # init = Sentence().addf("w", Style.roundL()).addf("W", text).addf("w", Style.roundR())
-        
-        elemsfill = self.build_list_sentence(self.help_extra, fill=True)
-        wrap = Fmt.get_size()[1] < self.wrap_size
+    def show_bottom_bar(self, frame: Frame):
+        elemsfill = self.build_list_sentence(self.help_extra)
+
         half = len(elemsfill) // 2
   
-        if not wrap:
-            line_0 = Sentence().add(" ")
-            for s in elemsfill:
-                line_0.add(s).add(" ")
+        if self.two_column_mode():
+            line_0 = Sentence(" ").join(elemsfill[0 : half])
             frame.write(0, 0, line_0.center(frame.get_dx()))
-        else:
-            line_0 = Sentence().add(" ")
-            for s in elemsfill[0 : half]:
-                line_0.add(s).add(" ")
-            frame.write(0, 0, line_0.center(frame.get_dx()))
-            line_1 = Sentence().add(" ")
-            for s in elemsfill[half:]:
-                line_1.add(s).add(" ")
+            line_1 = Sentence(" ").join(elemsfill[half:])
             frame.write(1, 0, line_1.center(frame.get_dx()))
+        else:
+            line_0 = Sentence(" ").join(elemsfill)
+            frame.write(0, 0, line_0.center(frame.get_dx()))
         
-
         frame.set_border_none()
         frame.draw()
 
@@ -553,31 +527,18 @@ class Play:
         return xpbar
 
     def show_top_bar(self, frame: Frame):
-        help = Sentence()
-        for i, s in enumerate(self.build_list_sentence(self.help_basic)):
-            if i > 0:
-                help.add(" ")
-            help.add(s)
+        help = Sentence(" ").join(self.build_list_sentence(self.help_basic))
         
-        flags = Sentence()
-        for i, f in enumerate(self.flagsman.top):
-            if i > 0:
-                flags.add(" ")
-            flags.add(Style.get_flag_sentence(f))
+        flags = Sentence(" ").join([Style.get_flag_sentence(f) for f in self.flagsman.top])
 
-        _, cols = Fmt.get_size()
-        if cols > self.wrap_size:
-            align = (flags.len() - help.len()) * " "
-            frame.write(0, 0, Sentence(align).add(help).add(" ").add(self.make_xp_button(32)).add(" ").add(flags).center(frame.get_dx()))
-        else:
+        if self.two_column_mode():
             line_2 = help.add(" ").add(flags)
             xp_button = self.make_xp_button(line_2.len())
             frame.write(0, 0, xp_button.center(frame.get_dx()))
             frame.write(1, 0, line_2.center(frame.get_dx()))
-            # frame.write(0, 0, line_2.add(str(line_2.len())))
-            # frame.write(1, 0, xp_button.add(str(xp_button.len())))
-            # y += 1
-            # frame.write(y, 0, .center(frame.get_dx()))
+        else:
+            size = self.wrap_size - help.len() - flags.len() - 2
+            frame.write(0, 0, Sentence().add(help).add(" ").add(self.make_xp_button(size)).add(" ").add(flags).center(frame.get_dx()))
 
         frame.set_border_none()
         frame.draw()
@@ -657,12 +618,9 @@ class Play:
 
         top_y = -1
         top_dy = 1  #quantas linhas o topo usa
-        if cols <= self.wrap_size:
-            top_dy += 1
-            # if Flags.xpbar.is_true():
-            #     top_dy += 1
         bottom_dy = 1 # quantas linhas o fundo usa
-        if cols <= self.wrap_size:
+        if self.two_column_mode():
+            top_dy += 1
             bottom_dy += 1
 
         mid_y = top_dy # onde o meio começa

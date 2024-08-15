@@ -162,11 +162,11 @@ public class draft {
         Down.fnprint = fnprint
         sp = SettingsParser()
         settings = sp.load_settings()
-        rootdir = os.path.join(settings.geral.get_rootdir(), course)
+        rep_dir = os.path.join(settings.geral.get_rootdir(), course)
         rep_source = settings.get_rep_source(course)
         rep_data = settings.get_rep_data(course)
 
-        file = rep_source.get_file()
+        file = rep_source.get_file(rep_dir)
         game = Game(file)
         item = game.get_task(activity)
         if not item.link.startswith("http"):
@@ -175,7 +175,7 @@ public class draft {
         cfg = RemoteCfg(item.link)
         cache_url = os.path.dirname(cfg.get_raw_url()) + "/.cache/"
 
-        destiny = Down.__create_problem_folder(rootdir, activity)
+        destiny = Down.__create_problem_folder(rep_dir, activity)
         destiny = os.path.abspath(destiny)
         try:
             [_readme_path, mapi_path] = Down.__down_problem_def(destiny, cache_url)

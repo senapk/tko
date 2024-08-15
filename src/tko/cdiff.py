@@ -344,17 +344,17 @@ class CDiff:
         tokens.append(RToken("G", "Testar[t]"))
         tokens.append(RToken("M", "Rodar[r]"))
         if self.settings.geral.is_diff_down():
-            tokens.append(RToken("M", "Modo[m]V╾H")) 
+            tokens.append(RToken("M", "Modo[m] V╾H")) 
         else:
-            tokens.append(RToken("M", "Modo[m]V╼H"))
+            tokens.append(RToken("M", "Modo[m] V╼H"))
         tokens.append(RToken("M", "Main[p]"))
 
-        cmds = Sentence()
+        cmds = []
         for t in tokens:
             color = "W" if not self.colors else t.fmt
-            cmds.addf(color.lower(), Style.roundL()).addf(color, t.text).addf(color.lower(), Style.roundR()).add(" ")
+            cmds.append(Sentence().addf(color.lower(), Style.roundL()).addf(color, t.text).addf(color.lower(), Style.roundR()))
         lines, cols = Fmt.get_size()
-        Fmt.write(lines - 1, 0, cmds.center(cols, Token(" ")))
+        Fmt.write(lines - 1, 0, Sentence(" ").join(cmds).center(cols, Token(" ")))
  
     def draw_main(self, unit: Unit):
         lines, cols = Fmt.get_size()
