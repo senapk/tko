@@ -83,7 +83,11 @@ class Opener:
             if open_drafts:
                 drafts = []
                 for f in files:
-                    if not f.endswith(self.rep.get_lang()):
+                    allowed = [self.rep.get_lang()]
+                    if self.rep.get_lang() == "c" or self.rep.get_lang() == "cpp":
+                        allowed.append("h")
+                        allowed.append("hpp")
+                    if not f.endswith(tuple(allowed)):
                         continue
                     drafts.append(os.path.join(folder, f))
                 if len(drafts) == 0:
