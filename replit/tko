@@ -5903,11 +5903,12 @@ class CDiff:
             if _end:
                 bar.append(br)
 
-        elif self.length < self.space:
+        else:
             bar.append(tr)
             for i in range(self.length - 2):
                 bar.append(vbar)
             bar.append(br)
+
 
         _, cols = Fmt.get_size()
         for i in range(len(bar)):
@@ -6047,7 +6048,11 @@ class CDiff:
         frame.set_footer(output, "")
         frame.draw()
         
-    def draw_bottom_line(self):
+    def two_column_mode(self):
+        _, cols = Fmt.get_size()
+        return cols < Sentence(" ").join(self.make_bottom_line()).len() + 2
+
+    def make_bottom_line(self) -> List[Sentence]:
         tokens = [
             RToken("C", "Sair[q]"),
             RToken("C", "Navegar[wasd]"),
@@ -6066,12 +6071,24 @@ class CDiff:
         for t in tokens:
             color = "W" if not self.colors else t.fmt
             cmds.append(Sentence().addf(color.lower(), Style.roundL()).addf(color, t.text).addf(color.lower(), Style.roundR()))
+        return cmds
+
+    def draw_bottom_line(self):
         lines, cols = Fmt.get_size()
-        Fmt.write(lines - 1, 0, Sentence(" ").join(cmds).center(cols, Token(" ")))
+        if self.two_column_mode():
+            line = self.make_bottom_line()
+            one = line[:len(line) // 2]
+            two = line[len(line) // 2:]
+            Fmt.write(lines - 2, 0, Sentence(" ").join(one).center(cols, Token(" ")))
+            Fmt.write(lines - 1, 0, Sentence(" ").join(two).center(cols, Token(" ")))
+        else:
+            Fmt.write(lines - 1, 0, Sentence(" ").join(self.make_bottom_line()).center(cols, Token(" ")))
  
     def draw_main(self, unit: Unit):
         lines, cols = Fmt.get_size()
         self.space = lines - 4
+        if self.two_column_mode():
+            self.space = lines - 5
         frame = Frame(2, -1).set_inner(self.space, cols - 1).set_border_square()
 
         if len(self.results_fail) == 0 and self.end_processing():
@@ -6254,7 +6271,7 @@ class CDiff:
         elif key == ord(Keys.editar):
             if self.opener is not None:
                 self.opener.open_code(open_dir=True)
-        elif key != -1:
+        elif key != -1 and key != curses.KEY_RESIZE:
             self.send_char_not_found(key)
 
     def run(self):
