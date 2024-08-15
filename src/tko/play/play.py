@@ -15,21 +15,19 @@ from ..util.sentence import Sentence, Token,  RToken
 from .fmt import Fmt
 from .frame import Frame
 from .style import Style
+import urllib
 
-from ..util.runner import Runner
 from .floating import Floating
 from .floating_manager import FloatingManager
 from .flags import Flag, Flags, FlagsMan
 from .tasktree import TaskTree
 from ..actions import Run
 from ..run.param import Param
-from ..util.symbols import symbols
 from .quit_msgs import quit_msgs
 
 import webbrowser
 import os
 import curses
-import subprocess
 
 class Actions:
     github = "LerOnline"
@@ -314,8 +312,15 @@ class Play:
                 down_frame.put_text(text)
                 down_frame.draw()
                 Fmt.refresh()
-
-            Down.download_problem(self.rep_alias, task.key, lang, fnprint)
+            try:
+                Down.download_problem(self.rep_alias, task.key, lang, fnprint)
+            except urllib.error.URLError as e:
+                self.fman.add_input(
+                    Floating("v")
+                    .put_text("\nNão consegui baixar sua tarefa.")
+                    .put_text("\nVerifique a internet.\n")
+                    .error()
+                )
         else:
             if isinstance(obj, Quest):
                 self.fman.add_input(

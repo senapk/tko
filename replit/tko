@@ -23,7 +23,7 @@ import unicodedata
 import math
 import configparser
 from subprocess import PIPE
-__version__ = "0.19.5"
+__version__ = "0.19.6"
 
 
 class GeralSettings:
@@ -5991,6 +5991,7 @@ class CDiff:
 
         _, cols = Fmt.get_size()
         frame = Frame(0, 0).set_size(3, cols)
+
         folder = self.get_folder()
         activity = Sentence().addf(activity_color, folder)
         solvers = Sentence()
@@ -6031,7 +6032,7 @@ class CDiff:
         frame.set_header(header)
 
         value = self.get_focused_unit()
-        if value is not None and not self.wdir.get_solver().compile_error:
+        if value is not None and not self.wdir.get_solver().compile_error and not self.is_all_right():
             frame.write(0, 0, Sentence().add(value.str(False)).center(frame.get_dx()))
 
         output = Sentence()
@@ -6048,7 +6049,7 @@ class CDiff:
             token = self.get_token(unit_result)
             extrap = Token(Style.roundL(), token.fmt.lower())# if not foco else Token(Style.roundL(), "")
             extras = Token(Style.roundR(), token.fmt.lower())# if not foco else Token(Style.roundR(), "")
-            if foco and not self.wdir.get_solver().compile_error and not self.mode == Mode.select:
+            if foco and not self.wdir.get_solver().compile_error and not self.mode == Mode.select and not self.is_all_right():
                 token.fmt = ""
             output.add(extrap).addf(token.fmt, str(index).zfill(2)).add(token).add(extras).add(" ")
             i += 1
@@ -6833,8 +6834,15 @@ class Play:
                 down_frame.put_text(text)
                 down_frame.draw()
                 Fmt.refresh()
-
-            Down.download_problem(self.rep_alias, task.key, lang, fnprint)
+            try:
+                Down.download_problem(self.rep_alias, task.key, lang, fnprint)
+            except urllib.error.URLError as e:
+                self.fman.add_input(
+                    Floating("v")
+                    .put_text("\nNão consegui baixar sua tarefa.")
+                    .put_text("\nVerifique a internet.\n")
+                    .error()
+                )
         else:
             if isinstance(obj, Quest):
                 self.fman.add_input(

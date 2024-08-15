@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.19.6
+  - add: floating if trying download without internet
+  - add: after success, dont focus unit
 - 0.19.5
   - add: command not found open as a floating
 - 0.19.4

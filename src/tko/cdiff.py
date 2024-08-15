@@ -264,6 +264,7 @@ class CDiff:
 
         _, cols = Fmt.get_size()
         frame = Frame(0, 0).set_size(3, cols)
+
         folder = self.get_folder()
         activity = Sentence().addf(activity_color, folder)
         solvers = Sentence()
@@ -304,7 +305,7 @@ class CDiff:
         frame.set_header(header)
 
         value = self.get_focused_unit()
-        if value is not None and not self.wdir.get_solver().compile_error:
+        if value is not None and not self.wdir.get_solver().compile_error and not self.is_all_right():
             frame.write(0, 0, Sentence().add(value.str(False)).center(frame.get_dx()))
 
         output = Sentence()
@@ -321,7 +322,7 @@ class CDiff:
             token = self.get_token(unit_result)
             extrap = Token(Style.roundL(), token.fmt.lower())# if not foco else Token(Style.roundL(), "")
             extras = Token(Style.roundR(), token.fmt.lower())# if not foco else Token(Style.roundR(), "")
-            if foco and not self.wdir.get_solver().compile_error and not self.mode == Mode.select:
+            if foco and not self.wdir.get_solver().compile_error and not self.mode == Mode.select and not self.is_all_right():
                 token.fmt = ""
             output.add(extrap).addf(token.fmt, str(index).zfill(2)).add(token).add(extras).add(" ")
             i += 1
