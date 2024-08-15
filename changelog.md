@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.19.1
+  - fix: error in compile mode
 - 0.18.9
   - add: changind default editor to open files instead folder
 - 0.18.8

@@ -374,6 +374,9 @@ class CDiff:
         else:
             Fmt.write(lines - 1, 0, Sentence(" ").join(self.make_bottom_line()).center(cols, Token(" ")))
  
+    def is_all_right(self):
+        return len(self.results_fail) == 0 and self.end_processing() and not self.wdir.get_solver().compile_error
+
     def draw_main(self, unit: Unit):
         lines, cols = Fmt.get_size()
         self.space = lines - 4
@@ -381,7 +384,7 @@ class CDiff:
             self.space = lines - 5
         frame = Frame(2, -1).set_inner(self.space, cols - 1).set_border_square()
 
-        if len(self.results_fail) == 0 and self.end_processing():
+        if self.is_all_right():
             self.show_success()
             return
         Report.set_terminal_size(cols)
