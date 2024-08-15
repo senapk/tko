@@ -4,13 +4,12 @@ import os
 from typing import List, Tuple
 import shutil
 
-from ..run.basic import CompilerError
 from ..util.runner import Runner
 
 
 def check_tool(name):
     if shutil.which(name) is None:
-        raise CompilerError("fail: " + name + " executable not found")
+        raise Warning("fail: comando '" + name + "' não foi encontrado")
 
 
 class Solver:

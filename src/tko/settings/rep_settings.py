@@ -41,7 +41,7 @@ class RepSource:
                     raise Warning("fail: Arquivo do cache não encontrado")
             return cache_file
 
-        raise ValueError("fail: file not found or invalid settings to download repository file")
+        raise ValueError("fail: arquivo não encontrado ou configurações inválidas para o repositório")
 
     def to_dict(self) -> Dict[str, Any]:
         return {

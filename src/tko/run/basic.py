@@ -5,9 +5,6 @@ import os
 from ..util.symbols import symbols
 from ..util.sentence import Token, Sentence
 
-class CompilerError(Exception):
-    pass
-
 class ExecutionResult(enum.Enum):
     UNTESTED = "untested_"
     SUCCESS = "correct__"

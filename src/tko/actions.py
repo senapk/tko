@@ -128,7 +128,7 @@ class Run:
                 term_print(" ", end="")
             solver = self.wdir.get_solver()
             if solver is None:
-                raise ValueError("Solver vazio")
+                raise Warning("Solver vazio")
             unit.result = Execution.run_unit(solver, unit)
             term_print(Sentence() + ExecutionResult.get_symbol(unit.result), end="")
         term_print("]")

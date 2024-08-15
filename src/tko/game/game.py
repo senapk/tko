@@ -49,7 +49,7 @@ class Game:
     def get_task(self, key: str) -> Task:
         if key in self.tasks:
             return self.tasks[key]
-        raise Exception(f"fail: task {key} not found in course definition")
+        raise Warning(f"fail: tarefa '{key}' não encontrada no curso")
 
     # se existir um cluster nessa linha, insere na lista de clusters e 
     # retorno o objeto cluster inserido

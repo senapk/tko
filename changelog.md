@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.19.3
+  - add: better error dealing when compiler not found
 - 0.19.2
   - fix: enconding for windows downloading
 - 0.19.1

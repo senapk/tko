@@ -31,7 +31,7 @@ class Wdir:
 
     def get_solver(self) -> Solver:
         if self.__solver is None:
-            raise Exception("fail: Não foi encontrado arquivo de código")
+            raise Warning("fail: Não foi encontrado arquivo de código")
         return self.__solver
     
     def get_unit_list(self) -> List[Unit]:
@@ -104,7 +104,7 @@ class Wdir:
         target_list = [t for t in target_list if t != ""]
         for target in target_list:
             if not os.path.exists(target):
-                raise FileNotFoundError(f"fail: {target} not found")
+                raise FileNotFoundError(f"fail: {target} não encontrado")
 
         solvers = [target for target in target_list if Identifier.get_type(target) == IdentifierType.SOLVER]
         sources = [target for target in target_list if Identifier.get_type(target) != IdentifierType.SOLVER]
@@ -132,7 +132,7 @@ class Wdir:
                 loading_failures += 1
                 pass
         if loading_failures > 0 and loading_failures == len(self.__source_list):
-            raise FileNotFoundError("failure: none source found")
+            raise FileNotFoundError("failure: nenhum arquivo de teste encontrado")
         self.__unit_list = sum(self.__pack_list, [])
         self.__number_and_mark_duplicated()
         self.__calculate_grade()
@@ -163,7 +163,7 @@ class Wdir:
             if 0 <= index < len(self.__unit_list):
                 self.__unit_list = [self.__unit_list[index]]
             else:
-                raise ValueError("Index Number out of bounds: " + str(index))
+                raise ValueError("Índice fora dos limites: " + str(index))
         return self
 
     # calculate the grade reduction for the cases without grade
