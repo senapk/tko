@@ -348,11 +348,11 @@ class CDiff:
             tokens.append(RToken("C", "Editar[e]"))
         tokens.append(RToken("G", "Testar[t]"))
         tokens.append(RToken("M", "Rodar[r]"))
+        tokens.append(RToken("M", "Principal[p]"))
         if self.settings.geral.is_diff_down():
-            tokens.append(RToken("M", "Modo[m] V╾H")) 
+            tokens.append(RToken("M", "[m] Ver╾H")) 
         else:
-            tokens.append(RToken("M", "Modo[m] V╼H"))
-        tokens.append(RToken("M", "Main[p]"))
+            tokens.append(RToken("M", "[m] V╼Hor"))
 
         cmds = []
         for t in tokens:

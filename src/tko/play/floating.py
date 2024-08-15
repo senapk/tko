@@ -2,7 +2,6 @@ from typing import List
 from .frame import Frame
 from ..util.sentence import Sentence
 from .fmt import Fmt
-
 import curses
 
 

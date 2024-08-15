@@ -10,7 +10,7 @@ class RepSource:
     def __init__(self, file: str = "", url: str = ""):
         self.file: str = ""
         if file != "":
-            self.file = os.path.abspath(file)        
+            self.file = os.path.abspath(file)
         self.url: str = url
 
     def set_file(self, file: str):

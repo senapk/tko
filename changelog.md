@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.18.8
+  - fix: improved help message on opening
 - 0.18.7
   - fix: tko run loading wrong files
 - 0.18.6
