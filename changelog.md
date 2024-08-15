@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.18.7
+  - fix: tko run loading wrong files
 - 0.18.6
   - fix: error opening new rep
 - 0.18.4

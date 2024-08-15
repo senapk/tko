@@ -11,8 +11,7 @@ from .solver import Solver
 from ..util.sentence import Sentence
 from ..util.symbols import symbols
 from .label_factory import LabelFactory
-# generate label for cases
-
+from ..settings.rep_settings import languages_avaliable
 class Wdir:
     def __init__(self):
         self.__autoload = False
@@ -75,15 +74,12 @@ class Wdir:
         files = os.listdir(folder)
         files = [os.path.join(folder, f) for f in files]
         files = [f for f in files if os.path.isfile(f)]
-        avoid = [".txt", ".md", ".hpp", ".h", ".out", ".exe", ".o", ".obj", ".a", ".so", ".dll", ".png", ".jpg", ".jpeg"]
-        files = [f for f in files if not any([f.endswith(a) for a in avoid])]
 
         sources = [target for target in files if target.endswith(".tio")]
-
         if self.__lang != "":
             solvers = [target for target in files if target.endswith("." + self.__lang)]
         else:
-            solvers = [target for target in files if not target.endswith(".tio")]
+            solvers = [target for target in files if any([target.endswith("." + lang) for lang in languages_avaliable])]
 
         solvers = sorted(solvers)
 
