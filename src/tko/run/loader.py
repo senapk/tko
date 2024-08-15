@@ -140,9 +140,6 @@ class Loader:
             output = "\n".join(piece["output"]) + "\n"
             unit_list.append(Unit(case, inp, output, None, source))
 
-        for unit in unit_list:
-            unit.fromCio = True
-
         return unit_list
 
     @staticmethod

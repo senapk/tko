@@ -69,8 +69,8 @@ class MRep:
     def graph(args):
         sp = SettingsParser()
         settings = sp.load_settings()
-        rep = settings.get_rep_data(args.alias)
-        file = rep.get_file()
+        rep_source:RepSource = settings.get_rep_source(args.alias)
+        file = rep_source.get_file(os.path.join(settings.geral.get_rootdir(), args.alias))
         game = Game()
         game.parse_file(file)
         game.check_cycle()
@@ -206,9 +206,9 @@ class Main:
                     print(f"- {alias}")
                 while True:
                     print("Digite o nome do repositório desejado: ", end="")
-                    rep_source = input()
-                    if rep_source in settings.reps:
-                        args.repo = rep_source
+                    _rep_source = input()
+                    if _rep_source in settings.reps:
+                        args.repo = _rep_source
                         break
                     print("Repositorio não encontrado")
         
@@ -216,7 +216,7 @@ class Main:
         settings.geral.set_last_rep(args.repo)
 
         while True:
-            rep_source = settings.get_rep_source(args.repo)
+            rep_source: RepSource = settings.get_rep_source(args.repo)
             rep_data = settings.get_rep_data(args.repo)
 
             local = settings.geral
