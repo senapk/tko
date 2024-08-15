@@ -95,4 +95,13 @@ class Opener:
                     files_to_open.append(f)
             if len(files_to_open) != 0:
                 # print(" ".join(files_to_open))
-                Runner.subprocess_run("{} {}".format(cmd, " ".join(files_to_open)))
+                # Runner.subprocess_run("{} {}".format(cmd, " ".join(files_to_open)))
+                cmd = "{} {}".format(cmd, " ".join(files_to_open))
+                self.fman.add_input(
+                    Floating("v>")
+                        .warning()
+                        .put_text("Abrindo arquivos do problema com o comando")
+                        .put_sentence(Sentence().addf("g", f"  {cmd}"))
+                )
+                outfile = tempfile.NamedTemporaryFile(delete=False)
+                subprocess.Popen(cmd, stdout=outfile, stderr=outfile, shell=True)
