@@ -1,15 +1,18 @@
 import tempfile
 
 import os
-from typing import List, Tuple
+from typing import List
 import shutil
 
 from ..util.runner import Runner
 
+class CompileError(Exception):
+    def __init__(self, message):
+        self.message = message
 
-def check_tool(name):
-    if shutil.which(name) is None:
-        raise Warning("fail: comando '" + name + "' não foi encontrado")
+    def __str__(self):
+        return self.message
+
 
 
 class Solver:
@@ -20,6 +23,11 @@ class Solver:
         self.error_msg: str = ""
         self.__executable: str = ""
         self.compile_error: bool = False
+
+    def check_tool(self, name):
+        if shutil.which(name) is None:
+            self.compile_error = True
+            raise CompileError("fail: comando '" + name + "' não foi encontrado")
 
     def set_main(self, main: str):
         list_main: List[str] = []
@@ -70,7 +78,7 @@ class Solver:
             self.__executable = path
 
     def __prepare_java(self):
-        check_tool("javac")
+        self.check_tool("javac")
 
         solver = self.path_list[0]
 
@@ -87,17 +95,17 @@ class Solver:
             self.__executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
 
     def __prepare_js(self):
-        check_tool("node")
+        self.check_tool("node")
         solver = self.path_list[0]
         self.__executable = "node " + solver
 
     def __prepare_go(self):
-        check_tool("go")
+        self.check_tool("go")
         solver = self.path_list[0]
         self.__executable = "go run " + solver
 
     def __prepare_sql(self):
-        check_tool("sqlite3")
+        self.check_tool("sqlite3")
         self.__executable = "cat " + " ".join(self.path_list) + " | sqlite3"
 
     def __prepare_ts(self):
@@ -105,8 +113,8 @@ class Solver:
         if os.name == "nt":
             transpiler += ".cmd"
 
-        check_tool(transpiler)
-        check_tool("node")
+        self.check_tool(transpiler)
+        self.check_tool("node")
 
         solver = self.path_list[0]
 
@@ -137,13 +145,13 @@ class Solver:
             self.__executable = exec_path
 
     def __prepare_c(self):
-        check_tool("gcc")
+        self.check_tool("gcc")
         pre = ["gcc", "-Wall"]
         pos = ["-lm"]
         self.__prepare_c_cpp(pre, pos)
 
     def __prepare_cpp(self):
-        check_tool("g++")
+        self.check_tool("g++")
         pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror"]
         pos: List[str] = []
         self.__prepare_c_cpp(pre, pos)

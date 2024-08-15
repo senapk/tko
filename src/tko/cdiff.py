@@ -17,6 +17,7 @@ from .play.style import Style
 from .game.task import Task
 import random
 from .play.opener import Opener
+from .run.solver import CompileError
 
 from .run.wdir import Wdir
 from .run.report import Report
@@ -454,7 +455,12 @@ class CDiff:
                     self.draw_bottom_line()
                     self.show_compilling()
                     Fmt.refresh()
-                    self.wdir.get_solver().prepare_exec()
+                    try:
+                        self.wdir.get_solver().prepare_exec()
+                    except CompileError as e:
+                        self.fman.add_input(Floating("v>").error().put_text(e.message))
+                        self.mode = Mode.finished
+
                     Fmt.clear()
                     self.draw_top_line()
                     self.draw_bottom_line()
