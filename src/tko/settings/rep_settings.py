@@ -29,6 +29,7 @@ class RepSource:
         # arquivo não existe e é remoto
         if self.url != "" and (self.file == "" or not os.path.exists(self.file)):
             cache_file = os.path.join(rep_dir, ".cache.md")
+            os.makedirs(rep_dir, exist_ok=True)
             cfg = RemoteCfg(self.url)
             try:
                 cfg.download_absolute(cache_file)
