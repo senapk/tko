@@ -204,7 +204,7 @@ class Loader:
         if os.path.isfile(source):
             #  if PreScript.exists():
             #      source = PreScript.process_source(source)
-            with open(source) as f:
+            with open(source, encoding="utf-8") as f:
                 content = f.read()
             if source.endswith(".vpl"):
                 return Loader.parse_vpl(content, source)

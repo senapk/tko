@@ -120,9 +120,9 @@ public class draft {
                 f.write(content.encode("utf-8").decode("utf-8"))
             Down.fnprint("  " + path + " (Novo)")
         else:
-            if open(path).read() != content:
+            if open(path, encoding="utf-8").read() != content:
                 Down.fnprint(path + " (Atualizado)")
-                with open(path, "w") as f:
+                with open(path, "w", encoding="utf-8") as f:
                     f.write(content)
             else:
                 Down.fnprint("  " + path + " (Inalterado)")

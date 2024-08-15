@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.19.2
+  - fix: enconding for windows downloading
 - 0.19.1
   - fix: error in compile mode
 - 0.18.9

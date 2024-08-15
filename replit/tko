@@ -23,7 +23,7 @@ import unicodedata
 import math
 import configparser
 from subprocess import PIPE
-__version__ = "0.19.1"
+__version__ = "0.19.2"
 
 
 class GeralSettings:
@@ -3503,9 +3503,9 @@ public class draft {
                 f.write(content.encode("utf-8").decode("utf-8"))
             Down.fnprint("  " + path + " (Novo)")
         else:
-            if open(path).read() != content:
+            if open(path, encoding="utf-8").read() != content:
                 Down.fnprint(path + " (Atualizado)")
-                with open(path, "w") as f:
+                with open(path, "w", encoding="utf-8") as f:
                     f.write(content)
             else:
                 Down.fnprint("  " + path + " (Inalterado)")
@@ -4684,7 +4684,7 @@ class Loader:
         if os.path.isfile(source):
             #  if PreScript.exists():
             #      source = PreScript.process_source(source)
-            with open(source) as f:
+            with open(source, encoding="utf-8") as f:
                 content = f.read()
             if source.endswith(".vpl"):
                 return Loader.parse_vpl(content, source)
