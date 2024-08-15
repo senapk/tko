@@ -49,8 +49,7 @@ class Keys:
 class CDiff:
     def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
         self.param = param
-        self.results_done: List[Tuple[Token, int]] = []
-        self.results_fail: List[Tuple[Token, int]] = []
+        self.results: List[Tuple[ExecutionResult, int]] = []
         self.wdir = wdir
         self.unit_list = [unit for unit in wdir.get_unit_list()] # unit list to be consumed
         self.exit = False
@@ -95,20 +94,6 @@ class CDiff:
     def set_exit(self):
         self.exit = True
         return self
-
-    def end_processing(self):
-        return (len(self.unit_list) == 0) or self.wdir.get_solver().compile_error
-
-    def get_color(self, unit: Unit):
-        if unit.result == ExecutionResult.SUCCESS:
-            return "G"
-        if unit.result == ExecutionResult.WRONG_OUTPUT:
-            return "R"
-        if unit.result == ExecutionResult.EXECUTION_ERROR:
-            return "Y"
-        if unit.result == ExecutionResult.COMPILATION_ERROR:
-            return "Y"
-        return ""
 
     def print_centered_image(self, image: str, color: str, clear=False, align: str = "."):
         dy, dx = Fmt.get_size()
@@ -210,54 +195,63 @@ class CDiff:
         return folder.split(os.sep)[-2]
 
     def get_focused_unit(self) -> Optional[Unit]:
-        if len(self.results_fail + self.results_done) == 0:
+        if len(self.results) == 0:
             return None
-        join_list = self.results_fail + self.results_done
-        _, index = join_list[self.focused_index]
+        _, index = self.results[self.focused_index]
         unit = self.wdir.get_unit(index)
         return unit
 
+    def get_token(self, result: ExecutionResult) -> Token:
+        if result == ExecutionResult.SUCCESS:
+            return Token(ExecutionResult.get_symbol(ExecutionResult.SUCCESS).text, "G")
+        elif result == ExecutionResult.WRONG_OUTPUT:
+            return Token(ExecutionResult.get_symbol(ExecutionResult.WRONG_OUTPUT).text, "R")
+        elif result == ExecutionResult.COMPILATION_ERROR:
+            return Token(ExecutionResult.get_symbol(ExecutionResult.COMPILATION_ERROR).text, "Y")
+        elif result == ExecutionResult.EXECUTION_ERROR:
+            return Token(ExecutionResult.get_symbol(ExecutionResult.EXECUTION_ERROR).text, "M")
+        else:
+            return Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "W")
+
     def process_one(self):
-        solver = self.wdir.get_solver()
-        if len(self.results_fail) != 0 and solver.compile_error:
-            self.mode = Mode.running
-            return
+
         if self.mode != Mode.running:
             return
+
+        solver = self.wdir.get_solver()
+
+        if solver.compile_error:
+            self.mode = Mode.finished
+            while len(self.unit_list) > 0:
+                index = len(self.results)
+                self.unit_list = self.unit_list[1:]
+                self.results.append((ExecutionResult.COMPILATION_ERROR, index))
+            return
+        
+        
         if len(self.unit_list) > 0:
-            # self.show_executing()
-            # Fmt.refresh()
-            index = len(self.results_done) + len(self.results_fail)
+            index = len(self.results)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
             unit.result = Execution.run_unit(solver, unit)
-            # self.show_executing(clear=True)
-            # Fmt.refresh()
-            symbol = ExecutionResult.get_symbol(unit.result)
-            color = self.get_color(unit)
-            # if unit.result != ExecutionResult.SUCCESS:
-            #     self.results_fail.append((Token(symbol.text, color), index))
-            # else:
-            self.results_done.append((Token(symbol.text, color), index))
-            self.task.test_progress = (len(self.results_done) * 100) // len(self.wdir.get_unit_list())
+            self.results.append((unit.result, index))
+            self.task.test_progress = (len(self.results) * 100) // len(self.wdir.get_unit_list())
             self.focused_index = index
-            # old_grade = self.task.grade
-            # new_grade = self.task.test_progress // 10
-            # if new_grade > old_grade:
-            #     self.task.grade = new_grade
-            #     self.fman.add_input(Floating("v>").put_text(f"Melhorou!"))
+
         if len(self.unit_list) == 0:
             self.mode = Mode.finished
             self.focused_index = 0
 
-            done_list = self.results_done
-            self.results_done = []
-            for data in done_list:
-                token, _ = data
-                if token.fmt != "G":
-                    self.results_fail.append(data)
+
+            done_list: List[Tuple[ExecutionResult, int]] = []
+            fail_list: List[Tuple[ExecutionResult, int]] = []
+            for data in self.results:
+                unit_result, _ = data
+                if unit_result != ExecutionResult.SUCCESS:
+                    fail_list.append(data)
                 else:
-                    self.results_done.append(data)
+                    done_list.append(data)
+            self.results = fail_list + done_list
 
 
     def draw_top_line(self):
@@ -286,7 +280,7 @@ class CDiff:
                 sources.add(", ")
             sources.addf(sources_color, source)
 
-        done = len(self.results_done) + len(self.results_fail)
+        done = len(self.results)
         full = len(self.wdir.get_unit_list())
         sources.addf(sources_color, f"({full})")
         # solvers = Sentence().addf(solver_color.lower(), Style.roundL()).add(solvers).addf(solver_color.lower(), Style.roundR())
@@ -309,23 +303,26 @@ class CDiff:
         frame.set_header(header)
 
         value = self.get_focused_unit()
-        if value is not None:
+        if value is not None and not self.wdir.get_solver().compile_error:
             frame.write(0, 0, Sentence().add(value.str(False)).center(frame.get_dx()))
 
         output = Sentence()
-        done_list = self.results_fail + self.results_done
-        todo_list: List[Tuple[Token, int]] = []
+        done_list = self.results
+        todo_list: List[Tuple[ExecutionResult, int]] = []
         i = len(done_list)
         for _ in self.unit_list:
-            todo_list.append((RToken("W", "-"), i))
+            todo_list.append((ExecutionResult.UNTESTED, i))
             i += 1
 
         i = 0
-        for symbol, index in done_list + todo_list:
+        for unit_result, index in done_list + todo_list:
             foco = i == self.focused_index
-            extrap = Token(Style.roundL(), symbol.fmt.lower()) if not foco else Token(Style.roundL(), "")
-            extras = Token(Style.roundR(), symbol.fmt.lower()) if not foco else Token(Style.roundR(), "")
-            output.add(extrap).addf(symbol.fmt, str(index).zfill(2)).add(symbol).add(extras).add(" ")
+            token = self.get_token(unit_result)
+            extrap = Token(Style.roundL(), token.fmt.lower())# if not foco else Token(Style.roundL(), "")
+            extras = Token(Style.roundR(), token.fmt.lower())# if not foco else Token(Style.roundR(), "")
+            if foco and not self.wdir.get_solver().compile_error and not self.mode == Mode.select:
+                token.fmt = ""
+            output.add(extrap).addf(token.fmt, str(index).zfill(2)).add(token).add(extras).add(" ")
             i += 1
 
         size = 6
@@ -375,7 +372,12 @@ class CDiff:
             Fmt.write(lines - 1, 0, Sentence(" ").join(self.make_bottom_line()).center(cols, Token(" ")))
  
     def is_all_right(self):
-        return len(self.results_fail) == 0 and self.end_processing() and not self.wdir.get_solver().compile_error
+        if not self.mode == Mode.finished:
+            return False
+        for result, _ in self.results:
+            if result != ExecutionResult.SUCCESS:
+                return False
+        return True
 
     def draw_main(self, unit: Unit):
         lines, cols = Fmt.get_size()
@@ -472,7 +474,7 @@ class CDiff:
             if self.fman.has_floating():
                 self.fman.draw_warnings()
 
-            if self.mode == Mode.running and not self.end_processing():
+            if self.mode == Mode.running:
                 Fmt.refresh()
                 continue
 
@@ -502,8 +504,7 @@ class CDiff:
         # Fmt.refresh()
         # change main and force to recompile
         self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index]).set_executable("")
-        self.results_done = []
-        self.results_fail = []
+        self.results = []
         self.unit_list = [unit for unit in self.wdir.get_unit_list()]
 
     def send_char_not_found(self, key):
@@ -516,11 +517,15 @@ class CDiff:
                     )
 
     def go_left(self):
+        if len(self.results) == 0:
+            return
         self.focused_index = max(0, self.focused_index - 1)
         self.init = 0
 
     def go_right(self):
-        self.focused_index = min(len(self.results_done) + len(self.results_fail) - 1, self.focused_index + 1)
+        if len(self.results) == 0:
+            return
+        self.focused_index = min(len(self.results) - 1, self.focused_index + 1)
         self.init = 0
 
     def go_down(self):

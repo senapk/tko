@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.19.4
+  - add: better msg after open code command
+  - fix: cdiff showing focused unit only in wrong output
 - 0.19.3
   - add: better error dealing when compiler not found
 - 0.19.2
