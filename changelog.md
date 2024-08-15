@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.18.4
+  - add: fix align bottom bar
+  - add: fix scrollbar
 - 0.18.3
   - add: changing increase and decrease to + e -
 - 0.18.1

@@ -23,7 +23,7 @@ import unicodedata
 import math
 import configparser
 from subprocess import PIPE
-__version__ = "0.18.3"
+__version__ = "0.18.4"
 
 
 class GeralSettings:
@@ -6076,11 +6076,14 @@ class CDiff:
     def draw_bottom_line(self):
         lines, cols = Fmt.get_size()
         if self.two_column_mode():
+            half = len(self.make_bottom_line()) // 2
+            if len(self.make_bottom_line()) % 2 == 1:
+                half += 1
             line = self.make_bottom_line()
-            one = line[:len(line) // 2]
-            two = line[len(line) // 2:]
-            Fmt.write(lines - 2, 0, Sentence(" ").join(one).center(cols, Token(" ")))
-            Fmt.write(lines - 1, 0, Sentence(" ").join(two).center(cols, Token(" ")))
+            one = line[:half]
+            two = line[half:]
+            Fmt.write(lines - 1, 0, Sentence(" ").join(one).center(cols, Token(" ")))
+            Fmt.write(lines - 2, 0, Sentence(" ").join(two).center(cols, Token(" ")))
         else:
             Fmt.write(lines - 1, 0, Sentence(" ").join(self.make_bottom_line()).center(cols, Token(" ")))
  
@@ -6993,12 +6996,14 @@ class Play:
         elemsfill = self.build_list_sentence(self.help_extra)
 
         half = len(elemsfill) // 2
-  
+        if len(elemsfill) % 2 == 1:
+            half += 1
+            
         if self.two_column_mode():
             line_0 = Sentence(" ").join(elemsfill[0 : half])
-            frame.write(0, 0, line_0.center(frame.get_dx()))
             line_1 = Sentence(" ").join(elemsfill[half:])
-            frame.write(1, 0, line_1.center(frame.get_dx()))
+            frame.write(0, 0, line_1.center(frame.get_dx()))
+            frame.write(1, 0, line_0.center(frame.get_dx()))
         else:
             line_0 = Sentence(" ").join(elemsfill)
             frame.write(0, 0, line_0.center(frame.get_dx()))

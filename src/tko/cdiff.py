@@ -363,11 +363,14 @@ class CDiff:
     def draw_bottom_line(self):
         lines, cols = Fmt.get_size()
         if self.two_column_mode():
+            half = len(self.make_bottom_line()) // 2
+            if len(self.make_bottom_line()) % 2 == 1:
+                half += 1
             line = self.make_bottom_line()
-            one = line[:len(line) // 2]
-            two = line[len(line) // 2:]
-            Fmt.write(lines - 2, 0, Sentence(" ").join(one).center(cols, Token(" ")))
-            Fmt.write(lines - 1, 0, Sentence(" ").join(two).center(cols, Token(" ")))
+            one = line[:half]
+            two = line[half:]
+            Fmt.write(lines - 1, 0, Sentence(" ").join(one).center(cols, Token(" ")))
+            Fmt.write(lines - 2, 0, Sentence(" ").join(two).center(cols, Token(" ")))
         else:
             Fmt.write(lines - 1, 0, Sentence(" ").join(self.make_bottom_line()).center(cols, Token(" ")))
  

@@ -505,12 +505,14 @@ class Play:
         elemsfill = self.build_list_sentence(self.help_extra)
 
         half = len(elemsfill) // 2
-  
+        if len(elemsfill) % 2 == 1:
+            half += 1
+            
         if self.two_column_mode():
             line_0 = Sentence(" ").join(elemsfill[0 : half])
-            frame.write(0, 0, line_0.center(frame.get_dx()))
             line_1 = Sentence(" ").join(elemsfill[half:])
-            frame.write(1, 0, line_1.center(frame.get_dx()))
+            frame.write(0, 0, line_1.center(frame.get_dx()))
+            frame.write(1, 0, line_0.center(frame.get_dx()))
         else:
             line_0 = Sentence(" ").join(elemsfill)
             frame.write(0, 0, line_0.center(frame.get_dx()))
