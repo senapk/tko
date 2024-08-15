@@ -1,5 +1,9 @@
 # Changelog
 
+- 0.18.3
+  - add: changing increase and decrease to + e -
+- 0.18.1
+  - add: cache mode
 - 0.17.5
   - add: tasks show progress
   - add: [] used to increase and decrease grade

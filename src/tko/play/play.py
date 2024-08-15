@@ -57,9 +57,9 @@ class Key:
     ajuda = "h"
     expand = "}"
     collapse = "{"
-    inc_grade = "."
+    inc_grade = "+"
     inc_grade2 = "\n"
-    dec_grade = ","
+    dec_grade = "-"
     dec_grade2 = [127, 263]
     set_root_dir = "D"
     set_lang = "L"
@@ -738,8 +738,11 @@ class Play:
         add_str(Key.down_task, self.down_task)
         add_str(Key.select_task, self.select_task)
         add_str(Key.inc_grade, self.tree.inc_grade)
+        add_str("=", self.tree.inc_grade)
+        # add_str(".", self.tree.inc_grade)
         add_str(Key.inc_grade2, self.tree.inc_grade)
         add_str(Key.dec_grade, self.tree.dec_grade)
+        # add_str(",", self.tree.dec_grade)
         for value in Key.dec_grade2:
             add_int(value, self.tree.dec_grade)
         # add_str(Key.inc_grade2, self.tree.inc_grade)
