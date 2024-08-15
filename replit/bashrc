@@ -11,10 +11,12 @@ export PATH="/home/runner/${REPL_SLUG}/.bin:${PATH}"
 config_file="/home/runner/${REPL_SLUG}/.bin/tko.cfg"
 alias tko="tko -c ${config_file}"
 tko config --root . > /dev/null 2>&1
+alias play="tko play"
+alias run="tko run"
 ################    MENSAGEM    ########################
 
-echo "Para atualizar o tko digite: update.sh"
-echo "Para ver as questões digite: tko play [fup|ed|poo]"
+echo "Para atualizar manualmente o tko, digite: update.sh"
+echo "Para interagir com os repositórios user : tko play [fup|ed|poo]"
 
 #######    Carregando configurações do usuário    ######
 user_bashrc="/home/runner/${REPL_SLUG}/.bashrc"
