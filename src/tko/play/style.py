@@ -13,6 +13,14 @@ class Style:
         return SettingsParser().load_settings().geral.is_colored()
 
     @staticmethod
+    def border_round(color: str, data: str):
+        return Sentence().addf(color.lower(), Style.roundL()).addf(color, data).addf(color.lower(), Style.roundR())
+
+    @staticmethod
+    def border_sharp(color: str, data: str):
+        return Sentence().addf(color.lower(), Style.sharpL()).addf(color, data).addf(color.lower(), Style.sharpR())
+
+    @staticmethod
     def roundL():
         return "" if Style.has_borders() else "█"
 

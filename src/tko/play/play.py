@@ -35,7 +35,7 @@ class Actions:
     ajuda = "Ajuda"
     baixar = "Baixar"
     testar = "Testar"
-    navegar = "Setas"
+    navegar = "↑←↓→"
     editar = "Editar"
     marcar = "Marcar"
     desmarcar = "Desmarcar"
@@ -62,6 +62,7 @@ class Key:
     inc_grade = "+"
     inc_grade2 = "="
     dec_grade = "-"
+    dec_grade2 = "_"
     set_root_dir = "D"
     set_lang = "L"
     github_open = "l"
@@ -179,7 +180,7 @@ class Play:
             .put_text("")
             .put_text("como raiz para o repositório de " + self.rep_alias + "?")
             .put_text("")
-            .put_text("Selecione e tecle enter")
+            .put_text("Selecione e tecle Enter")
             .put_text("")
             .set_options(["yes", "no"])
             .answer(chama)
@@ -205,7 +206,7 @@ class Play:
             .put_text("")
             .put_text("Escolha a extensão default para os rascunhos")
             .put_text("")
-            .put_text("Selecione e tecle enter.")
+            .put_text("Selecione e tecle Enter.")
             .put_text("")
             .set_options(languages_avaliable)
             .answer(back)
@@ -757,11 +758,12 @@ class Play:
         add_str(Key.set_root_dir, lambda: self.set_rootdir(False))
         add_str(Key.down_task, self.down_task)
         add_str(Key.select_task, self.select_task)
-        add_str("t", lambda: self.fman.add_input(Floating().put_text("\n Use o enter para testar uma questão\n").warning()))
+        add_str("t", lambda: self.fman.add_input(Floating().put_text("\n Use o Enter para testar uma questão\n").warning()))
         # add_str(Key.select_task2, self.select_task)
         add_str(Key.inc_grade, self.tree.inc_grade)
         add_str(Key.inc_grade2, self.tree.inc_grade)
         add_str(Key.dec_grade, self.tree.dec_grade)
+        add_str(Key.dec_grade2, self.tree.dec_grade)
         # add_str(",", self.tree.dec_grade)
         # for value in Key.dec_grade2:
         #     add_int(value, self.tree.dec_grade)

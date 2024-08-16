@@ -23,7 +23,7 @@ import unicodedata
 import math
 import configparser
 from subprocess import PIPE
-__version__ = "0.20.2"
+__version__ = "0.20.3"
 
 
 class GeralSettings:
@@ -1791,6 +1791,14 @@ class Style:
     @staticmethod
     def has_colors():
         return SettingsParser().load_settings().geral.is_colored()
+
+    @staticmethod
+    def border_round(color: str, data: str):
+        return Sentence().addf(color.lower(), Style.roundL()).addf(color, data).addf(color.lower(), Style.roundR())
+
+    @staticmethod
+    def border_sharp(color: str, data: str):
+        return Sentence().addf(color.lower(), Style.sharpL()).addf(color, data).addf(color.lower(), Style.sharpR())
 
     @staticmethod
     def roundL():
@@ -5856,7 +5864,7 @@ class CDiff:
     def print_centered_image(self, image: str, color: str, clear=False, align: str = "."):
         dy, dx = Fmt.get_size()
         lines = image.split("\n")[1:]
-        init_y = 4
+        init_y = 3
         if align == "v":
             init_y = dy - len(lines) - 1
         for i, line in enumerate(lines):
@@ -6017,42 +6025,38 @@ class CDiff:
             self.results = fail_list + done_list
 
 
-    def draw_top_line(self):
-        # construir mais uma solução
+    def build_top_line_header(self, frame):
         activity_color = "W" if not self.colors else "C"
         solver_color = "M" if not self.colors else "M"
         sources_color = "W" if not self.colors else "Y"
         running_color = "W" if not self.colors else "R"
 
-        _, cols = Fmt.get_size()
-        frame = Frame(0, 0).set_size(3, cols)
+        # building activity
+        activity = Sentence().add(Style.border_round(activity_color, self.get_folder()))
 
-        folder = self.get_folder()
-        activity = Sentence().addf(activity_color, folder)
+        # building solvers
         solvers = Sentence()
         for i, solver in enumerate(self.get_solver_names()):
-            # if i != 0:
-            #     solvers.addf(solver_color, ", ")
             color = solver_color
             if i == self.task.main_index:
                 color = "G"
-            solvers.addf(color.lower(), Style.roundL()).addf(color, solver).addf(color.lower(), Style.roundR())
-
-        sources = Sentence()
-        for i, (source, _) in enumerate(self.wdir.sources_names()):
-            if i != 0:
-                sources.add(", ")
-            sources.addf(sources_color, source)
-
+            solvers.add(Style.border_round(color, solver))
+        
+        # replacing with count if running
         done = len(self.results)
         full = len(self.wdir.get_unit_list())
-        sources.addf(sources_color, f"({full})")
-        # solvers = Sentence().addf(solver_color.lower(), Style.roundL()).add(solvers).addf(solver_color.lower(), Style.roundR())
-        activity = Sentence().addf(activity_color.lower(), Style.roundL()).add(activity).addf(activity_color.lower(), Style.roundR())
-        if done != full:
-            activity.addf(running_color.lower(), Style.roundL()).addf(running_color, f"({done}/{full})").addf(running_color.lower(), Style.roundR())
-        sources = Sentence().addf(sources_color.lower(), Style.roundL()).add(sources).addf(sources_color.lower(), Style.roundR())
+        count_missing = Sentence().add(Style.border_round(running_color, f"({done}/{full})"))
+        if self.mode == Mode.running:
+            if  self.locked_index:
+                solvers = Sentence().add(Style.border_round("R", "Executando atividade travada"))
+            else:
+                solvers = count_missing
 
+        # building sources
+        source_names = Sentence(", ").join([Sentence().addf(sources_color, f"{name[0]}({name[1]})") for name in self.wdir.sources_names()])
+        sources = Sentence().addf(sources_color.lower(), Style.roundL()).add(source_names).addf(sources_color.lower(), Style.roundR())
+
+        # merging activity, solvers and sources in header
         delta = frame.get_dx() - solvers.len()
         left = 1
         right = 1
@@ -6062,14 +6066,9 @@ class CDiff:
             delta_right = delta - delta_left
             right = max(1, delta_right - sources.len())
 
-        header = Sentence().add(activity).add("─" * left).add(solvers).add("─" * right).add(sources)
+        return Sentence().add(activity).add("─" * left).add(solvers).add("─" * right).add(sources)
 
-        frame.set_header(header)
-
-        value = self.get_focused_unit()
-        if value is not None and not self.wdir.get_solver().compile_error and not self.is_all_right():
-            frame.write(0, 0, Sentence().add(value.str(False)).center(frame.get_dx()))
-
+    def build_top_bar_footer(self, frame):
         output = Sentence()
         done_list = self.results
         if len(done_list) > 0 and self.locked_index:
@@ -6101,8 +6100,19 @@ class CDiff:
         size = 6
         if self.focused_index * size > frame.get_dx():
             output.cut_begin((self.focused_index + 1) * size - frame.get_dx())
+        return output
 
-        frame.set_footer(output, "")
+    def draw_top_bar(self):
+        # construir mais uma solução
+        _, cols = Fmt.get_size()
+        frame = Frame(0, 0).set_size(3, cols)
+        frame.set_header(self.build_top_line_header(frame))
+
+        value = self.get_focused_unit()
+        if value is not None and not self.wdir.get_solver().compile_error and not self.is_all_right() and not self.mode == Mode.intro:
+            frame.write(0, 0, Sentence().add(value.str(False)).center(frame.get_dx()))
+
+        frame.set_footer(self.build_top_bar_footer(frame), "")
         frame.draw()
         
     def two_column_mode(self):
@@ -6110,30 +6120,25 @@ class CDiff:
         return cols < Sentence(" ").join(self.make_bottom_line()).len() + 2
 
     def make_bottom_line(self) -> List[Sentence]:
-        tokens = [
-            RToken("C", f"{DActions.sair}[{DKeys.sair}]"),
-            # RToken("C", "Navegar[wasd]"),
-        ]
+        tokens = [ RToken("C", f"{DActions.sair}[{DKeys.sair}]") ]
         if self.opener is not None:
             tokens.append(RToken("C", f"{DActions.editar}[{DKeys.editar}]"))
         tokens.append(RToken("G", f"{DActions.testar}[↲]"))
         tokens.append(RToken("M", f"{DActions.rodar}[{DKeys.rodar}]"))
         tokens.append(RToken("M", f"{DActions.principal}[{DKeys.principal}]"))
         if self.settings.geral.is_diff_down():
-            tokens.append(RToken("M", f"VER╾hor [{DKeys.diff}]")) 
+            tokens.append(RToken("M", f"VER╾hor[{DKeys.diff}]")) 
         else:
-            tokens.append(RToken("M", f"ver╼HOR [{DKeys.diff}]"))
+            tokens.append(RToken("M", f"ver╼HOR[{DKeys.diff}]"))
 
         cmds = []
         for t in tokens:
             color = "W" if not self.colors else t.fmt
-            cmds.append(Sentence().addf(color.lower(), Style.roundL()).addf(color, t.text).addf(color.lower(), Style.roundR()))
+            cmds.append(Style.border_round(color, t.text))
 
         fixar = f"{DActions.fixar}[{DKeys.travar}]"
-        if self.locked_index:
-            cmds.append(Sentence().addf("g", Style.sharpL()).add(RToken("G", fixar)).addf("g", Style.sharpR()))
-        else:
-            cmds.append(Sentence().addf("m", Style.sharpL()).add(RToken("M", fixar)).addf("m", Style.sharpR()))
+        color = "G" if self.locked_index else "M"
+        cmds.append(Style.border_sharp(color, fixar))
         
         value = str(self.settings.geral.get_timeout())
         if value == "0":
@@ -6172,7 +6177,8 @@ class CDiff:
                 return False
         return True
 
-    def draw_main(self, unit: Unit):
+    def draw_main(self):
+        unit = self.get_focused_unit()
         lines, cols = Fmt.get_size()
         self.space = lines - 4
         if self.two_column_mode():
@@ -6243,7 +6249,7 @@ class CDiff:
             Fmt.clear()
             if self.mode == Mode.running:
                 if self.wdir.get_solver().not_compiled():
-                    self.draw_top_line()
+                    self.draw_top_bar()
                     self.draw_bottom_line()
                     self.show_compilling()
                     Fmt.refresh()
@@ -6252,20 +6258,17 @@ class CDiff:
                     except CompileError as e:
                         self.fman.add_input(Floating("v>").error().put_text(e.message))
                         self.mode = Mode.finished
-
                     Fmt.clear()
-                    self.draw_top_line()
+                    self.draw_top_bar()
                     self.draw_bottom_line()
                     Fmt.refresh()
                 self.process_one()
-            self.draw_top_line()
+            self.draw_top_bar()
 
-            unit = self.get_focused_unit()
-            if unit is not None and self.mode != Mode.intro:
-                self.draw_main(unit)
-                # if not self.wdir.get_solver().compile_error:
-            elif self.mode == Mode.intro:
+            if self.mode == Mode.intro:
                 self.print_centered_image(self.random_get(intro), "y")
+            else:
+                self.draw_main()
             
             self.draw_bottom_line()
 
@@ -6322,6 +6325,7 @@ class CDiff:
         if self.mode == Mode.intro:
             self.mode = Mode.select
         if self.locked_index:
+            self.fman.add_input(Floating("v>").warning().put_text("Atividade travada\nAperte {} para destravar".format(DKeys.travar)))
             return
         self.focused_index = max(0, self.focused_index - 1)
         self.init = 0
@@ -6332,6 +6336,7 @@ class CDiff:
             self.focused_index = 0
             return
         if self.locked_index:
+            self.fman.add_input(Floating("v>").warning().put_text("Atividade travada,\naperte {} para destravar".format(DKeys.travar)))
             return
         self.focused_index = min(len(self.wdir.get_unit_list()) - 1, self.focused_index + 1)
         self.init = 0
@@ -6364,9 +6369,9 @@ class CDiff:
         if self.locked_index:
             self.fman.add_input(
                 Floating("v>").warning()
-                .put_text("Agora você está travado esse caso de teste")
-                .put_text("Aperte {} novamente para destravar".format(DKeys.travar))
-                .put_text("Use Enter para rodar o teste")
+                .put_text("Atividade travada")
+                .put_sentence(Sentence("Aperte ").addf("g", DKeys.travar).add(" para destravar"))
+                .put_sentence(Sentence("Use ").addf("g", "Enter").add(" para rodar os testes"))
             )
 
     def change_limit(self):
@@ -6663,7 +6668,7 @@ class Actions:
     ajuda = "Ajuda"
     baixar = "Baixar"
     testar = "Testar"
-    navegar = "Setas"
+    navegar = "↑←↓→"
     editar = "Editar"
     marcar = "Marcar"
     desmarcar = "Desmarcar"
@@ -6690,6 +6695,7 @@ class Key:
     inc_grade = "+"
     inc_grade2 = "="
     dec_grade = "-"
+    dec_grade2 = "_"
     set_root_dir = "D"
     set_lang = "L"
     github_open = "l"
@@ -6807,7 +6813,7 @@ class Play:
             .put_text("")
             .put_text("como raiz para o repositório de " + self.rep_alias + "?")
             .put_text("")
-            .put_text("Selecione e tecle enter")
+            .put_text("Selecione e tecle Enter")
             .put_text("")
             .set_options(["yes", "no"])
             .answer(chama)
@@ -6833,7 +6839,7 @@ class Play:
             .put_text("")
             .put_text("Escolha a extensão default para os rascunhos")
             .put_text("")
-            .put_text("Selecione e tecle enter.")
+            .put_text("Selecione e tecle Enter.")
             .put_text("")
             .set_options(languages_avaliable)
             .answer(back)
@@ -7385,11 +7391,12 @@ class Play:
         add_str(Key.set_root_dir, lambda: self.set_rootdir(False))
         add_str(Key.down_task, self.down_task)
         add_str(Key.select_task, self.select_task)
-        add_str("t", lambda: self.fman.add_input(Floating().put_text("\n Use o enter para testar uma questão\n").warning()))
+        add_str("t", lambda: self.fman.add_input(Floating().put_text("\n Use o Enter para testar uma questão\n").warning()))
         # add_str(Key.select_task2, self.select_task)
         add_str(Key.inc_grade, self.tree.inc_grade)
         add_str(Key.inc_grade2, self.tree.inc_grade)
         add_str(Key.dec_grade, self.tree.dec_grade)
+        add_str(Key.dec_grade2, self.tree.dec_grade)
         # add_str(",", self.tree.dec_grade)
         # for value in Key.dec_grade2:
         #     add_int(value, self.tree.dec_grade)
