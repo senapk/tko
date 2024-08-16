@@ -1,50 +1,45 @@
 from typing import Dict
 
 
-select: Dict[str, str] = {}
-select["shark"] = r"""
- r -> Roda sem testar                                        
-                                    _________         .    . 
- t -> Testa usando casos de teste  (..       \_    ,  |\  /| 
-                                    \       O  \  /|  \ \/ / 
- p -> Muda o arquivo principal       \______    \/ |   \  /  
-      para problemas de múltiplos       vvvv\    \ |   /  |  
-      arquivos de código fonte          \^^^^  ==   \_/   |  
-                                         `\_   ===    \.  |  
- m -> muda o modo diff de vertical       / /\_   \ /      |  
-      para modo diff horizontal          |/   \_  \|      /  
-                                                \________/   
- direcionais -> muda o teste                                 
+intro: Dict[str, str] = {}
+intro["shark"] = r"""
+  _________         .    . r -> Roda sem testar             
+ (..       \_    ,  |\  /| t -> Testa usando casos de teste 
+  \       O  \  /|  \ \/ / b -> Bloqueia a execução num para
+   \______    \/ |   \  /       um único caso de teste      
+      vvvv\    \ |   /  |  p -> Muda o arquivo principal    
+      \^^^^  ==   \_/   |       para problemas de múltiplos 
+       `\_   ===    \.  |       arquivos de código fonte    
+       / /\_   \ /      |  m -> muda o modo diff de vertical
+       |/   \_  \|      /       para modo diff horizontal   
+              \________/   setas -> muda o teste            
 """
 
-select["cat"] = r"""
+intro["cat"] = r"""
  ,_     _          r -> Roda sem testar             
- |\\_,-~/                                           
- / _  _ |    ,--.  t -> Testa usando casos de teste 
-(  @  @ )   / ,-'                                   
+ |\\_,-~/          t -> Testa usando casos de teste 
+ / _  _ |    ,--.  b -> Bloqueia a execução num para
+(  @  @ )   / ,-'       um único caso de teste      
  \  _T_/-._( (     p -> Muda o arquivo principal    
  /         `. \         para problemas de múltiplos 
 |         _  \ |        arquivos de código fonte    
- \ \ ,  /      |                                    
-  || |-_\__   /    m -> muda o modo diff de vertical
- ((_/`(____,-'          para modo diff horizontal   
-                                                    
-                   direcionais -> muda o teste      
+ \ \ ,  /      |   m -> muda o modo diff de vertical
+  || |-_\__   /         para modo diff horizontal   
+ ((_/`(____,-'     setas -> muda o teste            
 """
 
-select["elephant"] = r"""
-        ⣀⣀               r -> Roda sem testar             
-      ⣰⣿⣿⣿⣿⣦⣀⣀⣀                                           
+intro["elephant"] = r"""
+        ⣀⣀                                                
+      ⣰⣿⣿⣿⣿⣦⣀⣀⣀          r -> Roda sem testar             
       ⢿⣿⠟⠋⠉    ⠉⠑⠢⣄⡀     t -> Testa usando casos de teste 
-     ⢠⠞⠁           ⠙⢿⣿⣿⣦⡀                                 
- ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇p -> Muda o arquivo principal    
-⣾⣿⣿⣦⣼⡀ ⢺⣿⣿⡿⠃    ⣠⣤⣄  ⠈⡿⠋      para problemas de múltiplos 
-⢿⣿⣿⣿⣿⣇ ⠤⠌⠁ ⡀⢲⡶⠄⢸⣏⣿⣿   ⡇       arquivos de código fonte    
-⠈⢿⣿⣿⣿⣿⣷⣄⡀  ⠈⠉⠓⠂ ⠙⠛⠛⠠ ⡸⠁                                   
+     ⢠⠞⠁           ⠙⢿⣿⣿⣦⡀b -> Bloqueia a execução num para
+ ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇     um único caso de teste      
+⣾⣿⣿⣦⣼⡀ ⢺⣿⣿⡿⠃    ⣠⣤⣄  ⠈⡿⠋ p -> Muda o arquivo principal    
+⢿⣿⣿⣿⣿⣇ ⠤⠌⠁ ⡀⢲⡶⠄⢸⣏⣿⣿   ⡇       para problemas de múltiplos 
+⠈⢿⣿⣿⣿⣿⣷⣄⡀  ⠈⠉⠓⠂ ⠙⠛⠛⠠ ⡸⠁       arquivos de código fonte    
   ⠻⣿⣿⣿⣿⣿⣿⣷⣦⣄⣀    ⠑ ⣠⠞⠁   m -> muda o modo diff de vertical
    ⢸⡏⠉⠛⠛⠛⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⡄          para modo diff horizontal   
-   ⠸        ⠈⠉⠛⢿⣿⣿⣿⣿⡄                                     
-   ⢷           ⠈⢻⣿⣿⣿⣿⡀   direcionais -> muda o teste      
+   ⠸        ⠈⠉⠛⢿⣿⣿⣿⣿⡄    setas -> muda o teste            
 """
 
 compilling: Dict[str, str] = {}

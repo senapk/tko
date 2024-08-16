@@ -10,7 +10,7 @@ from typing import List, Tuple, Optional
 from .play.frame import Frame
 from .play.floating import Floating
 from .play.floating_manager import FloatingManager
-from .play.images import images, compilling, success, select, executing
+from .play.images import images, compilling, success, intro, executing
 from .util.runner import Runner
 from .util.freerun import Free
 from .play.style import Style
@@ -27,25 +27,24 @@ from .run.basic import Success
 import enum
 
 class Mode(enum.Enum):
-    select = 0
-    running = 1
-    finished = 2
+    intro = 0
+    select = 1
+    running = 2
+    finished = 3
 
 class Keys:
     left = "a"
-    left2 = "h"
     up = "w"
-    up2 = "k"
     right = "d"
-    right2 = "l"
     down = "s"
-    down2 = "k"
     principal = "p"
     diff = "m"
     rodar = "r"
     testar = "t"
+    testar2 = "\n"
     sair = "q"
     editar = "e"
+    bloquear = "b"
 
 class CDiff:
     def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
@@ -59,7 +58,9 @@ class CDiff:
         self.init = 0   # index of first line to show
         self.length = 1  # length of diff
         self.space = 0  # dy space for draw
-        self.mode: Mode = Mode.select
+        self.mode: Mode = Mode.intro
+
+        self.locked_index: bool = False
 
         self.focused_index = 0
         self.finished = False
@@ -195,12 +196,12 @@ class CDiff:
             folder = os.path.abspath(self.wdir.get_solver().path_list[0])
         return folder.split(os.sep)[-2]
 
-    def get_focused_unit(self) -> Optional[Unit]:
-        if len(self.results) == 0:
-            return None
-        _, index = self.results[self.focused_index]
-        unit = self.wdir.get_unit(index)
-        return unit
+    def get_focused_unit(self) -> Unit:
+        if len(self.results) != 0:
+            _, index = self.results[self.focused_index]
+            unit = self.wdir.get_unit(index)
+            return unit
+        return self.wdir.get_unit(self.focused_index)
 
     def get_token(self, result: ExecutionResult) -> Token:
         if result == ExecutionResult.SUCCESS:
@@ -229,7 +230,12 @@ class CDiff:
                 self.results.append((ExecutionResult.COMPILATION_ERROR, index))
             return
         
-        
+        if self.locked_index:
+            self.mode = Mode.finished
+            unit = self.get_focused_unit()
+            unit.result = Execution.run_unit(solver, unit)
+            return
+
         if len(self.unit_list) > 0:
             index = len(self.results)
             unit = self.unit_list[0]
@@ -310,10 +316,16 @@ class CDiff:
 
         output = Sentence()
         done_list = self.results
+        if len(done_list) > 0 and self.locked_index:
+            _, index = done_list[self.focused_index]
+            done_list[self.focused_index] = (self.get_focused_unit().result, index)
         todo_list: List[Tuple[ExecutionResult, int]] = []
         i = len(done_list)
         for _ in self.unit_list:
-            todo_list.append((ExecutionResult.UNTESTED, i))
+            if self.locked_index and i == self.focused_index:
+                todo_list.append((self.wdir.get_unit(self.focused_index).result, i))
+            else:
+                todo_list.append((ExecutionResult.UNTESTED, i))
             i += 1
 
         i = 0
@@ -322,8 +334,11 @@ class CDiff:
             token = self.get_token(unit_result)
             extrap = Token(Style.roundL(), token.fmt.lower())# if not foco else Token(Style.roundL(), "")
             extras = Token(Style.roundR(), token.fmt.lower())# if not foco else Token(Style.roundR(), "")
-            if foco and not self.wdir.get_solver().compile_error and not self.mode == Mode.select and not self.is_all_right():
-                token.fmt = ""
+            if foco and not self.wdir.get_solver().compile_error and not self.mode == Mode.intro and not self.is_all_right():
+                if self.locked_index:
+                    token.fmt = "r"
+                else:
+                    token.fmt = ""
             output.add(extrap).addf(token.fmt, str(index).zfill(2)).add(token).add(extras).add(" ")
             i += 1
 
@@ -341,22 +356,29 @@ class CDiff:
     def make_bottom_line(self) -> List[Sentence]:
         tokens = [
             RToken("C", "Sair[q]"),
-            RToken("C", "Navegar[wasd]"),
+            # RToken("C", "Navegar[wasd]"),
         ]
         if self.opener is not None:
             tokens.append(RToken("C", "Editar[e]"))
-        tokens.append(RToken("G", "Testar[t]"))
+        tokens.append(RToken("G", "Testar[↲]"))
         tokens.append(RToken("M", "Rodar[r]"))
         tokens.append(RToken("M", "Principal[p]"))
         if self.settings.geral.is_diff_down():
-            tokens.append(RToken("M", "[m] Ver╾H")) 
+            tokens.append(RToken("M", "[m] Ver╾Hor")) 
         else:
-            tokens.append(RToken("M", "[m] V╼Hor"))
+            tokens.append(RToken("M", "[m] Ver╼Hor"))
 
         cmds = []
         for t in tokens:
             color = "W" if not self.colors else t.fmt
             cmds.append(Sentence().addf(color.lower(), Style.roundL()).addf(color, t.text).addf(color.lower(), Style.roundR()))
+
+        if self.locked_index:
+            cmds.append(Sentence().addf("g", Style.sharpL()).add(RToken("G", "Bloquear[b]")).addf("g", Style.sharpR()))
+        else:
+            cmds.append(Sentence().addf("m", Style.sharpL()).add(RToken("M", "Bloquear[b]")).addf("m", Style.sharpR()))
+        
+
         return cmds
 
     def draw_bottom_line(self):
@@ -374,6 +396,8 @@ class CDiff:
             Fmt.write(lines - 1, 0, Sentence(" ").join(self.make_bottom_line()).center(cols, Token(" ")))
  
     def is_all_right(self):
+        if self.locked_index or len(self.results) == 0:
+            return False
         if not self.mode == Mode.finished:
             return False
         for result, _ in self.results:
@@ -441,7 +465,7 @@ class CDiff:
         return sorted(self.wdir.solvers_names())
     
     def main(self, scr):
-        self.mode = Mode.select
+        self.mode = Mode.intro
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
@@ -468,13 +492,13 @@ class CDiff:
                     Fmt.refresh()
                 self.process_one()
             self.draw_top_line()
+
             unit = self.get_focused_unit()
-            if unit is not None:
+            if unit is not None and self.mode != Mode.intro:
                 self.draw_main(unit)
                 # if not self.wdir.get_solver().compile_error:
-                    
-            else:
-                self.print_centered_image(self.random_get(select), "y")
+            elif self.mode == Mode.intro:
+                self.print_centered_image(self.random_get(intro), "y")
             
             self.draw_bottom_line()
 
@@ -503,16 +527,20 @@ class CDiff:
 
     def run_test_mode(self):
         self.mode = Mode.running
-        self.focused_index = 0
         if self.wdir.is_autoload():
             self.wdir.autoload()
         Fmt.clear()
-        # self.show_compilling()
-        # Fmt.refresh()
-        # change main and force to recompile
         self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index]).set_executable("")
-        self.results = []
-        self.unit_list = [unit for unit in self.wdir.get_unit_list()]
+        
+        if self.locked_index:
+            for i in range(len(self.results)):
+                _, index = self.results[i]
+                self.results[i] = (ExecutionResult.UNTESTED, index)
+                
+        else:
+            self.focused_index = 0
+            self.results = []
+            self.unit_list = [unit for unit in self.wdir.get_unit_list()]
 
     def send_char_not_found(self, key):
         self.fman.add_input(Floating("v>").error()
@@ -524,21 +552,31 @@ class CDiff:
                     )
 
     def go_left(self):
-        if len(self.results) == 0:
+        if self.mode == Mode.intro:
+            self.mode = Mode.select
+        if self.locked_index:
             return
         self.focused_index = max(0, self.focused_index - 1)
         self.init = 0
 
     def go_right(self):
-        if len(self.results) == 0:
+        if self.mode == Mode.intro:
+            self.mode = Mode.select
+            self.focused_index = 0
             return
-        self.focused_index = min(len(self.results) - 1, self.focused_index + 1)
+        if self.locked_index:
+            return
+        self.focused_index = min(len(self.wdir.get_unit_list()) - 1, self.focused_index + 1)
         self.init = 0
 
     def go_down(self):
+        if self.mode == Mode.intro:
+            self.mode = Mode.select
         self.init += 1
 
     def go_up(self):
+        if self.mode == Mode.intro:
+            self.mode = Mode.select
         self.init = max(0, self.init - 1)
 
     def change_main(self):
@@ -555,13 +593,13 @@ class CDiff:
     def process_key(self, key):
         if key == ord('q'):
             self.set_exit()
-        elif key == curses.KEY_LEFT or key == ord(Keys.left) or key == ord(Keys.left2):
+        elif key == curses.KEY_LEFT or key == ord(Keys.left):
             self.go_left()
-        elif key == curses.KEY_RIGHT or key == ord(Keys.right) or key == ord(Keys.right2):
+        elif key == curses.KEY_RIGHT or key == ord(Keys.right):
             self.go_right()
-        elif key == curses.KEY_DOWN or key == ord(Keys.down) or key == ord(Keys.down2):
+        elif key == curses.KEY_DOWN or key == ord(Keys.down):
             self.go_down()
-        elif key == curses.KEY_UP or key == ord(Keys.up) or key == ord(Keys.up2):
+        elif key == curses.KEY_UP or key == ord(Keys.up):
             self.go_up()
         elif key == ord(Keys.diff):
             self.param.is_up_down = not self.param.is_up_down
@@ -571,8 +609,12 @@ class CDiff:
             self.change_main()
         elif key == ord(Keys.rodar):
             return self.run_exec_mode()
-        elif key == ord(Keys.testar):
+        elif key == ord(Keys.testar) or key == ord(Keys.testar2):
             self.run_test_mode()
+        elif key == ord(Keys.bloquear):
+            self.locked_index = not self.locked_index
+            if self.mode == Mode.intro:
+                self.mode = Mode.select
         elif key == ord(Keys.editar):
             if self.opener is not None:
                 self.opener.open_code(open_dir=True)

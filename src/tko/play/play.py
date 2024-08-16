@@ -52,13 +52,13 @@ class Key:
 
     down_task = "b"
     select_task = "t"
+    select_task2 = "\n"
     ajuda = "h"
     expand = "}"
     collapse = "{"
     inc_grade = "+"
-    inc_grade2 = "\n"
+    inc_grade2 = "="
     dec_grade = "-"
-    dec_grade2 = [127, 263]
     set_root_dir = "D"
     set_lang = "L"
     github_open = "l"
@@ -109,11 +109,11 @@ class Play:
 
         self.help_extra: List[Token] = [
             RToken("C", f"{Actions.sair}[{Key.quit}]"),
-            RToken("C", f"{Actions.navegar}[wasd]"),
             RToken("C", f"{Actions.editar}[{Key.edit}]"),
-            RToken("G", f"{Actions.testar}[{Key.select_task}]"),
+            RToken("G", f"{Actions.testar}[↲]"),
             RToken("Y", f"{Actions.ajuda}[{Key.ajuda}]"),
             RToken("Y", f"{Actions.github}[{Key.github_open}]"),
+            RToken("Y", f"{Actions.navegar}[wasd]"),
             RToken("Y", f"{Actions.baixar}[{Key.down_task}]"),
         ]
 
@@ -751,14 +751,13 @@ class Play:
         add_str(Key.set_root_dir, lambda: self.set_rootdir(False))
         add_str(Key.down_task, self.down_task)
         add_str(Key.select_task, self.select_task)
+        add_str(Key.select_task2, self.select_task)
         add_str(Key.inc_grade, self.tree.inc_grade)
-        add_str("=", self.tree.inc_grade)
-        # add_str(".", self.tree.inc_grade)
         add_str(Key.inc_grade2, self.tree.inc_grade)
         add_str(Key.dec_grade, self.tree.dec_grade)
         # add_str(",", self.tree.dec_grade)
-        for value in Key.dec_grade2:
-            add_int(value, self.tree.dec_grade)
+        # for value in Key.dec_grade2:
+        #     add_int(value, self.tree.dec_grade)
         # add_str(Key.inc_grade2, self.tree.inc_grade)
         # add_str(Key.dec_grade2, self.tree.dec_grade)
         # add_str(Key.test_task, lambda: self.test_task(True))
@@ -793,14 +792,14 @@ class Play:
                 .put_text("")
         )
 
-    def send_dont_use_enter(self):
-        self.fman.add_input(
-            Floating("v>")
-                .put_text("\n")
-                .put_text("Utilize esquerda e direita\npara marcar as questões")
-                .put_text("e compactar e expandir tópicos \n")
-                .put_text("")
-        )
+    # def send_dont_use_enter(self):
+    #     self.fman.add_input(
+    #         Floating("v>")
+    #             .put_text("\n")
+    #             .put_text("Utilize esquerda e direita\npara marcar as questões")
+    #             .put_text("e compactar e expandir tópicos \n")
+    #             .put_text("")
+    #     )
 
     def main(self, scr):
         curses.curs_set(0)  # Esconde o cursor

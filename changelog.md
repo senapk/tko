@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.20.0
+  - add: lock unit to test
 - 0.19.6
   - add: floating if trying download without internet
   - add: after success, dont focus unit
