@@ -32,7 +32,17 @@ class Mode(enum.Enum):
     running = 2
     finished = 3
 
-class Keys:
+
+class DActions:
+    sair = "Sair"
+    editar = "Editar"
+    testar = "Testar"
+    rodar = "Rodar"
+    principal = "Principal"
+    fixar = "Travar"
+    limite = "Limite"
+
+class DKeys:
     left = "a"
     up = "w"
     right = "d"
@@ -40,11 +50,12 @@ class Keys:
     principal = "p"
     diff = "m"
     rodar = "r"
-    testar = "t"
-    testar2 = "\n"
+    testar = "\n"
+    # testar2 = "\n"
     sair = "q"
     editar = "e"
-    bloquear = "b"
+    travar = "t"
+    limite = "l"
 
 class CDiff:
     def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
@@ -233,14 +244,14 @@ class CDiff:
         if self.locked_index:
             self.mode = Mode.finished
             unit = self.get_focused_unit()
-            unit.result = Execution.run_unit(solver, unit)
+            unit.result = Execution.run_unit(solver, unit, self.settings.geral.get_timeout())
             return
 
         if len(self.unit_list) > 0:
             index = len(self.results)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
-            unit.result = Execution.run_unit(solver, unit)
+            unit.result = Execution.run_unit(solver, unit, self.settings.geral.get_timeout())
             self.results.append((unit.result, index))
             self.task.test_progress = (len(self.results) * 100) // len(self.wdir.get_unit_list())
             self.focused_index = index
@@ -355,29 +366,40 @@ class CDiff:
 
     def make_bottom_line(self) -> List[Sentence]:
         tokens = [
-            RToken("C", "Sair[q]"),
+            RToken("C", f"{DActions.sair}[{DKeys.sair}]"),
             # RToken("C", "Navegar[wasd]"),
         ]
         if self.opener is not None:
-            tokens.append(RToken("C", "Editar[e]"))
-        tokens.append(RToken("G", "Testar[↲]"))
-        tokens.append(RToken("M", "Rodar[r]"))
-        tokens.append(RToken("M", "Principal[p]"))
+            tokens.append(RToken("C", f"{DActions.editar}[{DKeys.editar}]"))
+        tokens.append(RToken("G", f"{DActions.testar}[↲]"))
+        tokens.append(RToken("M", f"{DActions.rodar}[{DKeys.rodar}]"))
+        tokens.append(RToken("M", f"{DActions.principal}[{DKeys.principal}]"))
         if self.settings.geral.is_diff_down():
-            tokens.append(RToken("M", "[m] Ver╾Hor")) 
+            tokens.append(RToken("M", f"VER╾hor [{DKeys.diff}]")) 
         else:
-            tokens.append(RToken("M", "[m] Ver╼Hor"))
+            tokens.append(RToken("M", f"ver╼HOR [{DKeys.diff}]"))
 
         cmds = []
         for t in tokens:
             color = "W" if not self.colors else t.fmt
             cmds.append(Sentence().addf(color.lower(), Style.roundL()).addf(color, t.text).addf(color.lower(), Style.roundR()))
 
+        fixar = f"{DActions.fixar}[{DKeys.travar}]"
         if self.locked_index:
-            cmds.append(Sentence().addf("g", Style.sharpL()).add(RToken("G", "Bloquear[b]")).addf("g", Style.sharpR()))
+            cmds.append(Sentence().addf("g", Style.sharpL()).add(RToken("G", fixar)).addf("g", Style.sharpR()))
         else:
-            cmds.append(Sentence().addf("m", Style.sharpL()).add(RToken("M", "Bloquear[b]")).addf("m", Style.sharpR()))
+            cmds.append(Sentence().addf("m", Style.sharpL()).add(RToken("M", fixar)).addf("m", Style.sharpR()))
         
+        value = str(self.settings.geral.get_timeout())
+        if value == "0":
+            value = "∞"
+        cmds.append(
+            Sentence()
+                .addf("m", Style.roundL())
+                .add(RToken("M", f"{DActions.limite}[{DKeys.limite}]"))
+                .add(RToken("C", " {} ".format(value)))
+                .addf("c", Style.roundR())
+        )
 
         return cmds
 
@@ -390,8 +412,8 @@ class CDiff:
             line = self.make_bottom_line()
             one = line[:half]
             two = line[half:]
-            Fmt.write(lines - 1, 0, Sentence(" ").join(one).center(cols, Token(" ")))
-            Fmt.write(lines - 2, 0, Sentence(" ").join(two).center(cols, Token(" ")))
+            Fmt.write(lines - 2, 0, Sentence(" ").join(one).center(cols, Token(" ")))
+            Fmt.write(lines - 1, 0, Sentence(" ").join(two).center(cols, Token(" ")))
         else:
             Fmt.write(lines - 1, 0, Sentence(" ").join(self.make_bottom_line()).center(cols, Token(" ")))
  
@@ -593,31 +615,36 @@ class CDiff:
     def process_key(self, key):
         if key == ord('q'):
             self.set_exit()
-        elif key == curses.KEY_LEFT or key == ord(Keys.left):
+        elif key == curses.KEY_LEFT or key == ord(DKeys.left):
             self.go_left()
-        elif key == curses.KEY_RIGHT or key == ord(Keys.right):
+        elif key == curses.KEY_RIGHT or key == ord(DKeys.right):
             self.go_right()
-        elif key == curses.KEY_DOWN or key == ord(Keys.down):
+        elif key == curses.KEY_DOWN or key == ord(DKeys.down):
             self.go_down()
-        elif key == curses.KEY_UP or key == ord(Keys.up):
+        elif key == curses.KEY_UP or key == ord(DKeys.up):
             self.go_up()
-        elif key == ord(Keys.diff):
+        elif key == ord(DKeys.diff):
             self.param.is_up_down = not self.param.is_up_down
             self.save_settings()
             self.init = 0
-        elif key == ord(Keys.principal):
+        elif key == ord(DKeys.principal):
             self.change_main()
-        elif key == ord(Keys.rodar):
+        elif key == ord(DKeys.rodar):
             return self.run_exec_mode()
-        elif key == ord(Keys.testar) or key == ord(Keys.testar2):
+        elif key == ord(DKeys.testar):
             self.run_test_mode()
-        elif key == ord(Keys.bloquear):
+        elif key == ord(DKeys.travar):
             self.locked_index = not self.locked_index
             if self.mode == Mode.intro:
                 self.mode = Mode.select
-        elif key == ord(Keys.editar):
+        elif key == ord(DKeys.editar):
             if self.opener is not None:
                 self.opener.open_code(open_dir=True)
+        elif key == ord(DKeys.limite):
+            valor = self.settings.geral.get_timeout()
+            valor = (valor + 1) % 10
+            self.settings.geral.set_timeout(valor)
+            self.save_settings()
         elif key != -1 and key != curses.KEY_RESIZE:
             self.send_char_not_found(key)
 

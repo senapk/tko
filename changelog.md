@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.20.1
+  - add: timeout to execution
 - 0.20.0
   - add: lock unit to test
 - 0.19.6

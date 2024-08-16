@@ -23,7 +23,7 @@ import unicodedata
 import math
 import configparser
 from subprocess import PIPE
-__version__ = "0.20.0"
+__version__ = "0.20.1"
 
 
 class GeralSettings:
@@ -36,6 +36,7 @@ class GeralSettings:
     __lastrep = "lastrep"
     __nerdfonts = "nerdfonts"
     __editor = "editor"
+    __timeout = "timeout"
 
     defaults = {
         __rootdir: "",
@@ -46,7 +47,8 @@ class GeralSettings:
         __langdef: "",
         __lastrep: "", 
         __nerdfonts: False,
-        __editor: "code"
+        __editor: "code",
+        __timeout: 2
     }
 
     def __init__(self):
@@ -65,6 +67,13 @@ class GeralSettings:
             self.data[key] = GeralSettings.defaults[key]
         return self.data[key]
 
+
+    def get_timeout(self) -> int:
+        return self.__get(self.__timeout)
+    
+    def set_timeout(self, value: int):
+        self.__set(self.__timeout, value)
+        return self
 
     def get_editor(self) -> str:
         return self.__get(self.__editor)
@@ -166,42 +175,44 @@ class GeralSettings:
 intro: Dict[str, str] = {}
 intro["shark"] = r"""
   _________         .    . r -> Roda sem testar             
- (..       \_    ,  |\  /| t -> Testa usando casos de teste 
-  \       O  \  /|  \ \/ / b -> Bloqueia a execução num para
+ (..       \_    ,  |\  /| ↲ -> Testa usando casos de teste 
+  \       O  \  /|  \ \/ / t -> Trava a execução num para   
    \______    \/ |   \  /       um único caso de teste      
       vvvv\    \ |   /  |  p -> Muda o arquivo principal    
       \^^^^  ==   \_/   |       para problemas de múltiplos 
        `\_   ===    \.  |       arquivos de código fonte    
        / /\_   \ /      |  m -> muda o modo diff de vertical
        |/   \_  \|      /       para modo diff horizontal   
-              \________/   setas -> muda o teste            
+              \________/   l -> define o limite de tempo    
+                           setas -> muda o teste            
 """
 
 intro["cat"] = r"""
  ,_     _          r -> Roda sem testar             
- |\\_,-~/          t -> Testa usando casos de teste 
- / _  _ |    ,--.  b -> Bloqueia a execução num para
+ |\\_,-~/          ↲ -> Testa usando casos de teste 
+ / _  _ |    ,--.  t -> Trava a execução num para   
 (  @  @ )   / ,-'       um único caso de teste      
  \  _T_/-._( (     p -> Muda o arquivo principal    
  /         `. \         para problemas de múltiplos 
 |         _  \ |        arquivos de código fonte    
  \ \ ,  /      |   m -> muda o modo diff de vertical
   || |-_\__   /         para modo diff horizontal   
- ((_/`(____,-'     setas -> muda o teste            
+ ((_/`(____,-'     l -> define o limite de tempo    
+                   setas -> muda o teste            
 """
 
 intro["elephant"] = r"""
-        ⣀⣀                                                
-      ⣰⣿⣿⣿⣿⣦⣀⣀⣀          r -> Roda sem testar             
-      ⢿⣿⠟⠋⠉    ⠉⠑⠢⣄⡀     t -> Testa usando casos de teste 
-     ⢠⠞⠁           ⠙⢿⣿⣿⣦⡀b -> Bloqueia a execução num para
- ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇     um único caso de teste      
-⣾⣿⣿⣦⣼⡀ ⢺⣿⣿⡿⠃    ⣠⣤⣄  ⠈⡿⠋ p -> Muda o arquivo principal    
-⢿⣿⣿⣿⣿⣇ ⠤⠌⠁ ⡀⢲⡶⠄⢸⣏⣿⣿   ⡇       para problemas de múltiplos 
-⠈⢿⣿⣿⣿⣿⣷⣄⡀  ⠈⠉⠓⠂ ⠙⠛⠛⠠ ⡸⠁       arquivos de código fonte    
-  ⠻⣿⣿⣿⣿⣿⣿⣷⣦⣄⣀    ⠑ ⣠⠞⠁   m -> muda o modo diff de vertical
-   ⢸⡏⠉⠛⠛⠛⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⡄          para modo diff horizontal   
-   ⠸        ⠈⠉⠛⢿⣿⣿⣿⣿⡄    setas -> muda o teste            
+        ⣀⣀                r -> Roda sem testar             
+      ⣰⣿⣿⣿⣿⣦⣀⣀⣀           ↲ -> Testa usando casos de teste 
+      ⢿⣿⠟⠋⠉    ⠉⠑⠢⣄⡀      t -> Trava a execução num para   
+     ⢠⠞⠁           ⠙⢿⣿⣿⣦⡀      um único caso de teste      
+ ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇ p -> Muda o arquivo principal    
+⣾⣿⣿⣦⣼⡀ ⢺⣿⣿⡿⠃    ⣠⣤⣄  ⠈⡿⠋       para problemas de múltiplos 
+⢿⣿⣿⣿⣿⣇ ⠤⠌⠁ ⡀⢲⡶⠄⢸⣏⣿⣿   ⡇        arquivos de código fonte    
+⠈⢿⣿⣿⣿⣿⣷⣄⡀  ⠈⠉⠓⠂ ⠙⠛⠛⠠ ⡸⠁   m -> muda o modo diff de vertical
+  ⠻⣿⣿⣿⣿⣿⣿⣷⣦⣄⣀    ⠑ ⣠⠞⠁         para modo diff horizontal   
+   ⢸⡏⠉⠛⠛⠛⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⡄      l -> define o limite de tempo    
+   ⠸        ⠈⠉⠛⢿⣿⣿⣿⣿⡄     setas -> muda o teste            
 """
 
 compilling: Dict[str, str] = {}
@@ -1332,6 +1343,7 @@ class Settings:
 class SettingsParser:
 
     user_settings_file: Optional[str] = None
+    settings: Optional[Settings] = None
 
     def __init__(self):
         self.package_name = "tko"
@@ -1340,29 +1352,33 @@ class SettingsParser:
             self.settings_file = os.path.abspath(default_filename)  # backup for replit, dont remove
         else:
             self.settings_file = os.path.abspath(SettingsParser.user_settings_file)
-        self.settings = self.load_settings()
+        SettingsParser.settings = self.load_settings()
 
     def get_settings_file(self):
         return self.settings_file
 
     def load_settings(self) -> Settings:
         try:
+            if SettingsParser.settings is not None:
+                return SettingsParser.settings
             with open(self.settings_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                self.settings = Settings().from_dict(data)
-                return self.settings
+                SettingsParser.settings = Settings().from_dict(data)
+                return SettingsParser.settings
         except (FileNotFoundError, json.decoder.JSONDecodeError) as _e:
             return self.create_new_settings_file()
 
     def save_settings(self):
-        self.settings.save_to_json(self.settings_file)
+        self.load_settings().save_to_json(self.settings_file)
 
     def create_new_settings_file(self) -> Settings:
-        self.settings = Settings().init_default_reps()
+        SettingsParser.settings = Settings().init_default_reps()
         if not os.path.isdir(self.get_settings_dir()):
             os.makedirs(self.get_settings_dir(), exist_ok=True)
         self.save_settings()
-        return self.settings
+        if SettingsParser.settings is None:
+            raise ValueError("Settings not loaded")
+        return SettingsParser.settings
 
     def get_settings_dir(self) -> str:
         return os.path.dirname(self.settings_file)
@@ -5155,22 +5171,25 @@ class Diff:
         return output
 
 
-
 class Runner:
     def __init__(self):
         pass
 
     @staticmethod
-    def subprocess_run(cmd: str, input_data: str = "") -> Tuple[int, str, str]:
-        answer = subprocess.run(cmd, shell=True, input=input_data, stdout=PIPE, stderr=PIPE, text=True)
-        err = ""
-        if answer.returncode != 0:
-            err = answer.stderr + Runner.decode_code(answer.returncode)
+    def subprocess_run(cmd: str, input_data: str = "", timeout:Optional[float] = None) -> Tuple[int, str, str]:
+        try:
+            answer = subprocess.run(cmd, shell=True, input=input_data, stdout=PIPE, stderr=PIPE, text=True, timeout=timeout)
+            err = ""
+            if answer.returncode != 0:
+                err = answer.stderr + Runner.decode_code(answer.returncode)
+            # if running on windows
+            if os.name == "nt":
+                return answer.returncode, answer.stdout.encode("cp1252").decode("utf-8"), err
+            return answer.returncode, answer.stdout, err
+        except subprocess.TimeoutExpired:
+            err = "fail: processo abortado depois de {} segundos".format(timeout)
+            return 1, "", err
 
-        # if running on windows
-        if os.name == "nt":
-            return answer.returncode, answer.stdout.encode("cp1252").decode("utf-8"), err
-        return answer.returncode, answer.stdout, err
 
 
     @staticmethod
@@ -5476,12 +5495,12 @@ class Execution:
 
     # run a unit using a solver and return if the result is correct
     @staticmethod
-    def run_unit(solver: Solver, unit: Unit) -> ExecutionResult:
+    def run_unit(solver: Solver, unit: Unit, timeout: Optional[float]=None) -> ExecutionResult:
         if solver.compile_error:
             unit.user = solver.error_msg
             return ExecutionResult.COMPILATION_ERROR
         cmd = solver.get_executable()
-        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input)
+        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input, timeout)
         unit.user = stdout + stderr
         if return_code != 0:
             return ExecutionResult.EXECUTION_ERROR
@@ -5758,7 +5777,17 @@ class Mode(enum.Enum):
     running = 2
     finished = 3
 
-class Keys:
+
+class DActions:
+    sair = "Sair"
+    editar = "Editar"
+    testar = "Testar"
+    rodar = "Rodar"
+    principal = "Principal"
+    fixar = "Travar"
+    limite = "Limite"
+
+class DKeys:
     left = "a"
     up = "w"
     right = "d"
@@ -5766,11 +5795,12 @@ class Keys:
     principal = "p"
     diff = "m"
     rodar = "r"
-    testar = "t"
-    testar2 = "\n"
+    testar = "\n"
+    # testar2 = "\n"
     sair = "q"
     editar = "e"
-    bloquear = "b"
+    travar = "t"
+    limite = "l"
 
 class CDiff:
     def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
@@ -5959,14 +5989,14 @@ class CDiff:
         if self.locked_index:
             self.mode = Mode.finished
             unit = self.get_focused_unit()
-            unit.result = Execution.run_unit(solver, unit)
+            unit.result = Execution.run_unit(solver, unit, self.settings.geral.get_timeout())
             return
 
         if len(self.unit_list) > 0:
             index = len(self.results)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
-            unit.result = Execution.run_unit(solver, unit)
+            unit.result = Execution.run_unit(solver, unit, self.settings.geral.get_timeout())
             self.results.append((unit.result, index))
             self.task.test_progress = (len(self.results) * 100) // len(self.wdir.get_unit_list())
             self.focused_index = index
@@ -6081,29 +6111,40 @@ class CDiff:
 
     def make_bottom_line(self) -> List[Sentence]:
         tokens = [
-            RToken("C", "Sair[q]"),
+            RToken("C", f"{DActions.sair}[{DKeys.sair}]"),
             # RToken("C", "Navegar[wasd]"),
         ]
         if self.opener is not None:
-            tokens.append(RToken("C", "Editar[e]"))
-        tokens.append(RToken("G", "Testar[↲]"))
-        tokens.append(RToken("M", "Rodar[r]"))
-        tokens.append(RToken("M", "Principal[p]"))
+            tokens.append(RToken("C", f"{DActions.editar}[{DKeys.editar}]"))
+        tokens.append(RToken("G", f"{DActions.testar}[↲]"))
+        tokens.append(RToken("M", f"{DActions.rodar}[{DKeys.rodar}]"))
+        tokens.append(RToken("M", f"{DActions.principal}[{DKeys.principal}]"))
         if self.settings.geral.is_diff_down():
-            tokens.append(RToken("M", "[m] Ver╾Hor")) 
+            tokens.append(RToken("M", f"VER╾hor [{DKeys.diff}]")) 
         else:
-            tokens.append(RToken("M", "[m] Ver╼Hor"))
+            tokens.append(RToken("M", f"ver╼HOR [{DKeys.diff}]"))
 
         cmds = []
         for t in tokens:
             color = "W" if not self.colors else t.fmt
             cmds.append(Sentence().addf(color.lower(), Style.roundL()).addf(color, t.text).addf(color.lower(), Style.roundR()))
 
+        fixar = f"{DActions.fixar}[{DKeys.travar}]"
         if self.locked_index:
-            cmds.append(Sentence().addf("g", Style.sharpL()).add(RToken("G", "Bloquear[b]")).addf("g", Style.sharpR()))
+            cmds.append(Sentence().addf("g", Style.sharpL()).add(RToken("G", fixar)).addf("g", Style.sharpR()))
         else:
-            cmds.append(Sentence().addf("m", Style.sharpL()).add(RToken("M", "Bloquear[b]")).addf("m", Style.sharpR()))
+            cmds.append(Sentence().addf("m", Style.sharpL()).add(RToken("M", fixar)).addf("m", Style.sharpR()))
         
+        value = str(self.settings.geral.get_timeout())
+        if value == "0":
+            value = "∞"
+        cmds.append(
+            Sentence()
+                .addf("m", Style.roundL())
+                .add(RToken("M", f"{DActions.limite}[{DKeys.limite}]"))
+                .add(RToken("C", " {} ".format(value)))
+                .addf("c", Style.roundR())
+        )
 
         return cmds
 
@@ -6116,8 +6157,8 @@ class CDiff:
             line = self.make_bottom_line()
             one = line[:half]
             two = line[half:]
-            Fmt.write(lines - 1, 0, Sentence(" ").join(one).center(cols, Token(" ")))
-            Fmt.write(lines - 2, 0, Sentence(" ").join(two).center(cols, Token(" ")))
+            Fmt.write(lines - 2, 0, Sentence(" ").join(one).center(cols, Token(" ")))
+            Fmt.write(lines - 1, 0, Sentence(" ").join(two).center(cols, Token(" ")))
         else:
             Fmt.write(lines - 1, 0, Sentence(" ").join(self.make_bottom_line()).center(cols, Token(" ")))
  
@@ -6319,31 +6360,36 @@ class CDiff:
     def process_key(self, key):
         if key == ord('q'):
             self.set_exit()
-        elif key == curses.KEY_LEFT or key == ord(Keys.left):
+        elif key == curses.KEY_LEFT or key == ord(DKeys.left):
             self.go_left()
-        elif key == curses.KEY_RIGHT or key == ord(Keys.right):
+        elif key == curses.KEY_RIGHT or key == ord(DKeys.right):
             self.go_right()
-        elif key == curses.KEY_DOWN or key == ord(Keys.down):
+        elif key == curses.KEY_DOWN or key == ord(DKeys.down):
             self.go_down()
-        elif key == curses.KEY_UP or key == ord(Keys.up):
+        elif key == curses.KEY_UP or key == ord(DKeys.up):
             self.go_up()
-        elif key == ord(Keys.diff):
+        elif key == ord(DKeys.diff):
             self.param.is_up_down = not self.param.is_up_down
             self.save_settings()
             self.init = 0
-        elif key == ord(Keys.principal):
+        elif key == ord(DKeys.principal):
             self.change_main()
-        elif key == ord(Keys.rodar):
+        elif key == ord(DKeys.rodar):
             return self.run_exec_mode()
-        elif key == ord(Keys.testar) or key == ord(Keys.testar2):
+        elif key == ord(DKeys.testar):
             self.run_test_mode()
-        elif key == ord(Keys.bloquear):
+        elif key == ord(DKeys.travar):
             self.locked_index = not self.locked_index
             if self.mode == Mode.intro:
                 self.mode = Mode.select
-        elif key == ord(Keys.editar):
+        elif key == ord(DKeys.editar):
             if self.opener is not None:
                 self.opener.open_code(open_dir=True)
+        elif key == ord(DKeys.limite):
+            valor = self.settings.geral.get_timeout()
+            valor = (valor + 1) % 10
+            self.settings.geral.set_timeout(valor)
+            self.save_settings()
         elif key != -1 and key != curses.KEY_RESIZE:
             self.send_char_not_found(key)
 
@@ -6598,10 +6644,11 @@ class Actions:
     ajuda = "Ajuda"
     baixar = "Baixar"
     testar = "Testar"
-    navegar = "Navegar"
+    navegar = "Setas"
     editar = "Editar"
     marcar = "Marcar"
     desmarcar = "Desmarcar"
+    colapsar = "Colapsar"
 
 class Key:
     left = "a"
@@ -6614,11 +6661,13 @@ class Key:
     # up2 = "k"
 
     down_task = "b"
-    select_task = "t"
-    select_task2 = "\n"
+    # select_task = "t"
+    select_task = "\n"
     ajuda = "h"
-    expand = "}"
-    collapse = "{"
+    expand = ">"
+    expand2 = "."
+    collapse = "<"
+    collapse2 = ","
     inc_grade = "+"
     inc_grade2 = "="
     dec_grade = "-"
@@ -6678,6 +6727,7 @@ class Play:
             RToken("Y", f"{Actions.github}[{Key.github_open}]"),
             RToken("Y", f"{Actions.navegar}[wasd]"),
             RToken("Y", f"{Actions.baixar}[{Key.down_task}]"),
+            RToken("Y", f"{Actions.colapsar}[{Key.collapse}{Key.expand}]"),
         ]
 
         self.wrap_size = Sentence(" ").join(self.build_list_sentence(self.help_extra)).len()
@@ -7079,8 +7129,8 @@ class Play:
         if self.two_column_mode():
             line_0 = Sentence(" ").join(elemsfill[0 : half])
             line_1 = Sentence(" ").join(elemsfill[half:])
-            frame.write(0, 0, line_1.center(frame.get_dx()))
-            frame.write(1, 0, line_0.center(frame.get_dx()))
+            frame.write(1, 0, line_1.center(frame.get_dx()))
+            frame.write(0, 0, line_0.center(frame.get_dx()))
         else:
             line_0 = Sentence(" ").join(elemsfill)
             frame.write(0, 0, line_0.center(frame.get_dx()))
@@ -7145,7 +7195,7 @@ class Play:
         _help.put_sentence(Sentence() + f"{Actions.github} " + RToken("r", f"{Key.github_open}") + "  Abre tarefa em uma aba do browser")
         _help.put_sentence(Sentence() + f"   {Actions.baixar} " + RToken("r", f"{Key.down_task}") + "  Baixa tarefa de código para seu dispositivo")
         _help.put_sentence(Sentence() + f"   {Actions.editar} " + RToken("r", f"{Key.edit}") + "  Abre os arquivos no editor de código")
-        _help.put_sentence(Sentence() + f"   {Actions.testar} " + RToken("r", f"{Key.select_task}") + "  Escolhe a tarefa de código que você baixou")
+        _help.put_sentence(Sentence() + f"   {Actions.testar} " + RToken("r", "↲") + "  Escolhe a tarefa de código que você baixou")
         _help.put_sentence(Sentence() + f"   {Actions.marcar} " + RToken("r", f"{Key.inc_grade}") + RToken("r", f"{Key.dec_grade}") + " Muda a pontuação da tarefa")
         # _help.put_sentence(Sentence() + f"{Actions.desmarcar} " + RToken("r", f"{Key.dec_grade}") + RToken("g", " ou ") + RToken("r", "backspace") + " - Diminui a pontuação da tarefa")
         _help.put_sentence(Sentence())
@@ -7305,7 +7355,9 @@ class Play:
 
         add_str(Key.ajuda, self.show_help)
         add_str(Key.expand, self.tree.process_expand)
+        add_str(Key.expand2, self.tree.process_expand)
         add_str(Key.collapse, self.tree.process_collapse)
+        add_str(Key.collapse2, self.tree.process_collapse)
 
         # add_str(Key.toggle_enter, self.tree.toggle)
         # add_str(Key.toggle_space, self.tree.toggle)
@@ -7314,7 +7366,8 @@ class Play:
         add_str(Key.set_root_dir, lambda: self.set_rootdir(False))
         add_str(Key.down_task, self.down_task)
         add_str(Key.select_task, self.select_task)
-        add_str(Key.select_task2, self.select_task)
+        add_str("t", lambda: self.fman.add_input(Floating().put_text("\n Use o enter para testar uma questão\n").warning()))
+        # add_str(Key.select_task2, self.select_task)
         add_str(Key.inc_grade, self.tree.inc_grade)
         add_str(Key.inc_grade2, self.tree.inc_grade)
         add_str(Key.dec_grade, self.tree.dec_grade)
@@ -7386,7 +7439,7 @@ class Play:
                 if callback is not None:
                     return callback
             elif value == ord("\n") or value == ord(" "):
-                self.fman.add_input(Floating("v>").put_text("\n Utilize esquerda e direita\npara marcar as questões\n e compactar e expandir tópicos \n").put_text(""))
+                self.fman.add_input(Floating("v>").warning().put_text("\n Utilize esquerda e direita\npara navegar,\n compactar e expandir tópicos \n").put_text(""))
             elif value != -1:
                 self.send_char_not_found(value)
 

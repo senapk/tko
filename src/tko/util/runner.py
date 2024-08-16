@@ -1,28 +1,29 @@
 import subprocess
-from typing import Tuple, Callable
+from typing import Tuple, Optional
 import os
 from subprocess import PIPE
-from .sentence import Sentence, Token
 from .term_color import term_print
 from ..run.report import Report
-from ..play.images import compilling
-
 
 class Runner:
     def __init__(self):
         pass
 
     @staticmethod
-    def subprocess_run(cmd: str, input_data: str = "") -> Tuple[int, str, str]:
-        answer = subprocess.run(cmd, shell=True, input=input_data, stdout=PIPE, stderr=PIPE, text=True)
-        err = ""
-        if answer.returncode != 0:
-            err = answer.stderr + Runner.decode_code(answer.returncode)
+    def subprocess_run(cmd: str, input_data: str = "", timeout:Optional[float] = None) -> Tuple[int, str, str]:
+        try:
+            answer = subprocess.run(cmd, shell=True, input=input_data, stdout=PIPE, stderr=PIPE, text=True, timeout=timeout)
+            err = ""
+            if answer.returncode != 0:
+                err = answer.stderr + Runner.decode_code(answer.returncode)
+            # if running on windows
+            if os.name == "nt":
+                return answer.returncode, answer.stdout.encode("cp1252").decode("utf-8"), err
+            return answer.returncode, answer.stdout, err
+        except subprocess.TimeoutExpired:
+            err = "fail: processo abortado depois de {} segundos".format(timeout)
+            return 1, "", err
 
-        # if running on windows
-        if os.name == "nt":
-            return answer.returncode, answer.stdout.encode("cp1252").decode("utf-8"), err
-        return answer.returncode, answer.stdout, err
 
 
     @staticmethod

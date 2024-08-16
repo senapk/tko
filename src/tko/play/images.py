@@ -4,42 +4,44 @@ from typing import Dict
 intro: Dict[str, str] = {}
 intro["shark"] = r"""
   _________         .    . r -> Roda sem testar             
- (..       \_    ,  |\  /| t -> Testa usando casos de teste 
-  \       O  \  /|  \ \/ / b -> Bloqueia a execução num para
+ (..       \_    ,  |\  /| ↲ -> Testa usando casos de teste 
+  \       O  \  /|  \ \/ / t -> Trava a execução num para   
    \______    \/ |   \  /       um único caso de teste      
       vvvv\    \ |   /  |  p -> Muda o arquivo principal    
       \^^^^  ==   \_/   |       para problemas de múltiplos 
        `\_   ===    \.  |       arquivos de código fonte    
        / /\_   \ /      |  m -> muda o modo diff de vertical
        |/   \_  \|      /       para modo diff horizontal   
-              \________/   setas -> muda o teste            
+              \________/   l -> define o limite de tempo    
+                           setas -> muda o teste            
 """
 
 intro["cat"] = r"""
  ,_     _          r -> Roda sem testar             
- |\\_,-~/          t -> Testa usando casos de teste 
- / _  _ |    ,--.  b -> Bloqueia a execução num para
+ |\\_,-~/          ↲ -> Testa usando casos de teste 
+ / _  _ |    ,--.  t -> Trava a execução num para   
 (  @  @ )   / ,-'       um único caso de teste      
  \  _T_/-._( (     p -> Muda o arquivo principal    
  /         `. \         para problemas de múltiplos 
 |         _  \ |        arquivos de código fonte    
  \ \ ,  /      |   m -> muda o modo diff de vertical
   || |-_\__   /         para modo diff horizontal   
- ((_/`(____,-'     setas -> muda o teste            
+ ((_/`(____,-'     l -> define o limite de tempo    
+                   setas -> muda o teste            
 """
 
 intro["elephant"] = r"""
-        ⣀⣀                                                
-      ⣰⣿⣿⣿⣿⣦⣀⣀⣀          r -> Roda sem testar             
-      ⢿⣿⠟⠋⠉    ⠉⠑⠢⣄⡀     t -> Testa usando casos de teste 
-     ⢠⠞⠁           ⠙⢿⣿⣿⣦⡀b -> Bloqueia a execução num para
- ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇     um único caso de teste      
-⣾⣿⣿⣦⣼⡀ ⢺⣿⣿⡿⠃    ⣠⣤⣄  ⠈⡿⠋ p -> Muda o arquivo principal    
-⢿⣿⣿⣿⣿⣇ ⠤⠌⠁ ⡀⢲⡶⠄⢸⣏⣿⣿   ⡇       para problemas de múltiplos 
-⠈⢿⣿⣿⣿⣿⣷⣄⡀  ⠈⠉⠓⠂ ⠙⠛⠛⠠ ⡸⠁       arquivos de código fonte    
-  ⠻⣿⣿⣿⣿⣿⣿⣷⣦⣄⣀    ⠑ ⣠⠞⠁   m -> muda o modo diff de vertical
-   ⢸⡏⠉⠛⠛⠛⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⡄          para modo diff horizontal   
-   ⠸        ⠈⠉⠛⢿⣿⣿⣿⣿⡄    setas -> muda o teste            
+        ⣀⣀                r -> Roda sem testar             
+      ⣰⣿⣿⣿⣿⣦⣀⣀⣀           ↲ -> Testa usando casos de teste 
+      ⢿⣿⠟⠋⠉    ⠉⠑⠢⣄⡀      t -> Trava a execução num para   
+     ⢠⠞⠁           ⠙⢿⣿⣿⣦⡀      um único caso de teste      
+ ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇ p -> Muda o arquivo principal    
+⣾⣿⣿⣦⣼⡀ ⢺⣿⣿⡿⠃    ⣠⣤⣄  ⠈⡿⠋       para problemas de múltiplos 
+⢿⣿⣿⣿⣿⣇ ⠤⠌⠁ ⡀⢲⡶⠄⢸⣏⣿⣿   ⡇        arquivos de código fonte    
+⠈⢿⣿⣿⣿⣿⣷⣄⡀  ⠈⠉⠓⠂ ⠙⠛⠛⠠ ⡸⠁   m -> muda o modo diff de vertical
+  ⠻⣿⣿⣿⣿⣿⣿⣷⣦⣄⣀    ⠑ ⣠⠞⠁         para modo diff horizontal   
+   ⢸⡏⠉⠛⠛⠛⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⡄      l -> define o limite de tempo    
+   ⠸        ⠈⠉⠛⢿⣿⣿⣿⣿⡄     setas -> muda o teste            
 """
 
 compilling: Dict[str, str] = {}

@@ -11,6 +11,7 @@ class GeralSettings:
     __lastrep = "lastrep"
     __nerdfonts = "nerdfonts"
     __editor = "editor"
+    __timeout = "timeout"
 
     defaults = {
         __rootdir: "",
@@ -21,7 +22,8 @@ class GeralSettings:
         __langdef: "",
         __lastrep: "", 
         __nerdfonts: False,
-        __editor: "code"
+        __editor: "code",
+        __timeout: 2
     }
 
     def __init__(self):
@@ -40,6 +42,13 @@ class GeralSettings:
             self.data[key] = GeralSettings.defaults[key]
         return self.data[key]
 
+
+    def get_timeout(self) -> int:
+        return self.__get(self.__timeout)
+    
+    def set_timeout(self, value: int):
+        self.__set(self.__timeout, value)
+        return self
 
     def get_editor(self) -> str:
         return self.__get(self.__editor)

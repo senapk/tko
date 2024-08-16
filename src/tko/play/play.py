@@ -35,10 +35,11 @@ class Actions:
     ajuda = "Ajuda"
     baixar = "Baixar"
     testar = "Testar"
-    navegar = "Navegar"
+    navegar = "Setas"
     editar = "Editar"
     marcar = "Marcar"
     desmarcar = "Desmarcar"
+    colapsar = "Colapsar"
 
 class Key:
     left = "a"
@@ -51,11 +52,13 @@ class Key:
     # up2 = "k"
 
     down_task = "b"
-    select_task = "t"
-    select_task2 = "\n"
+    # select_task = "t"
+    select_task = "\n"
     ajuda = "h"
-    expand = "}"
-    collapse = "{"
+    expand = ">"
+    expand2 = "."
+    collapse = "<"
+    collapse2 = ","
     inc_grade = "+"
     inc_grade2 = "="
     dec_grade = "-"
@@ -115,6 +118,7 @@ class Play:
             RToken("Y", f"{Actions.github}[{Key.github_open}]"),
             RToken("Y", f"{Actions.navegar}[wasd]"),
             RToken("Y", f"{Actions.baixar}[{Key.down_task}]"),
+            RToken("Y", f"{Actions.colapsar}[{Key.collapse}{Key.expand}]"),
         ]
 
         self.wrap_size = Sentence(" ").join(self.build_list_sentence(self.help_extra)).len()
@@ -516,8 +520,8 @@ class Play:
         if self.two_column_mode():
             line_0 = Sentence(" ").join(elemsfill[0 : half])
             line_1 = Sentence(" ").join(elemsfill[half:])
-            frame.write(0, 0, line_1.center(frame.get_dx()))
-            frame.write(1, 0, line_0.center(frame.get_dx()))
+            frame.write(1, 0, line_1.center(frame.get_dx()))
+            frame.write(0, 0, line_0.center(frame.get_dx()))
         else:
             line_0 = Sentence(" ").join(elemsfill)
             frame.write(0, 0, line_0.center(frame.get_dx()))
@@ -582,7 +586,7 @@ class Play:
         _help.put_sentence(Sentence() + f"{Actions.github} " + RToken("r", f"{Key.github_open}") + "  Abre tarefa em uma aba do browser")
         _help.put_sentence(Sentence() + f"   {Actions.baixar} " + RToken("r", f"{Key.down_task}") + "  Baixa tarefa de código para seu dispositivo")
         _help.put_sentence(Sentence() + f"   {Actions.editar} " + RToken("r", f"{Key.edit}") + "  Abre os arquivos no editor de código")
-        _help.put_sentence(Sentence() + f"   {Actions.testar} " + RToken("r", f"{Key.select_task}") + "  Escolhe a tarefa de código que você baixou")
+        _help.put_sentence(Sentence() + f"   {Actions.testar} " + RToken("r", "↲") + "  Escolhe a tarefa de código que você baixou")
         _help.put_sentence(Sentence() + f"   {Actions.marcar} " + RToken("r", f"{Key.inc_grade}") + RToken("r", f"{Key.dec_grade}") + " Muda a pontuação da tarefa")
         # _help.put_sentence(Sentence() + f"{Actions.desmarcar} " + RToken("r", f"{Key.dec_grade}") + RToken("g", " ou ") + RToken("r", "backspace") + " - Diminui a pontuação da tarefa")
         _help.put_sentence(Sentence())
@@ -742,7 +746,9 @@ class Play:
 
         add_str(Key.ajuda, self.show_help)
         add_str(Key.expand, self.tree.process_expand)
+        add_str(Key.expand2, self.tree.process_expand)
         add_str(Key.collapse, self.tree.process_collapse)
+        add_str(Key.collapse2, self.tree.process_collapse)
 
         # add_str(Key.toggle_enter, self.tree.toggle)
         # add_str(Key.toggle_space, self.tree.toggle)
@@ -751,7 +757,8 @@ class Play:
         add_str(Key.set_root_dir, lambda: self.set_rootdir(False))
         add_str(Key.down_task, self.down_task)
         add_str(Key.select_task, self.select_task)
-        add_str(Key.select_task2, self.select_task)
+        add_str("t", lambda: self.fman.add_input(Floating().put_text("\n Use o enter para testar uma questão\n").warning()))
+        # add_str(Key.select_task2, self.select_task)
         add_str(Key.inc_grade, self.tree.inc_grade)
         add_str(Key.inc_grade2, self.tree.inc_grade)
         add_str(Key.dec_grade, self.tree.dec_grade)
@@ -823,7 +830,7 @@ class Play:
                 if callback is not None:
                     return callback
             elif value == ord("\n") or value == ord(" "):
-                self.fman.add_input(Floating("v>").put_text("\n Utilize esquerda e direita\npara marcar as questões\n e compactar e expandir tópicos \n").put_text(""))
+                self.fman.add_input(Floating("v>").warning().put_text("\n Utilize esquerda e direita\npara navegar,\n compactar e expandir tópicos \n").put_text(""))
             elif value != -1:
                 self.send_char_not_found(value)
 
