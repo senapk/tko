@@ -361,8 +361,11 @@ class CDiff:
         frame.set_header(self.build_top_line_header(frame))
 
         value = self.get_focused_unit()
+        info = value.str(pad = False)
+        if self.locked_index:
+            info = Style.border_round("Y", info.get_text())
         if value is not None and not self.wdir.get_solver().compile_error and not self.is_all_right() and not self.mode == Mode.intro:
-            frame.write(0, 0, Sentence().add(value.str(False)).center(frame.get_dx()))
+            frame.write(0, 0, Sentence().add(info).center(frame.get_dx()))
 
         frame.set_footer(self.build_top_bar_footer(frame), "")
         frame.draw()
@@ -403,18 +406,14 @@ class CDiff:
             text = f"VER╾hor[{DKeys.diff}]" if self.settings.geral.is_diff_down() else f"ver╼HOR[{DKeys.diff}]"
             cmds.append(Style.border_round("M", text))
 
-
         return cmds
 
     def draw_bottom_line(self):
         lines, cols = Fmt.get_size()
         if self.two_column_mode():
-            half = len(self.make_bottom_line()) // 2
-            if len(self.make_bottom_line()) % 2 == 1:
-                half += 1
             line = self.make_bottom_line()
-            one = line[:half]
-            two = line[half:]
+            one = line[0:2] + line[-2:]
+            two = line[2:-2]
             Fmt.write(lines - 2, 0, Sentence(" ").join(one).center(cols, Token(" ")))
             Fmt.write(lines - 1, 0, Sentence(" ").join(two).center(cols, Token(" ")))
         else:

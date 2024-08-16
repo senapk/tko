@@ -34,7 +34,7 @@ class Actions:
     sair = "Sair"
     ajuda = "Ajuda"
     baixar = "Baixar"
-    testar = "Ativar"
+    ativar = "Ativar"
     navegar = "↑←↓→"
     editar = "Editar"
     marcar = "Marcar"
@@ -74,10 +74,6 @@ class Key:
     bordas = "B"
 
 class Play:
-
-
-
-
     def __init__(
         self,
         geral: GeralSettings,
@@ -107,17 +103,17 @@ class Play:
         self.graph_ext = ""
 
         self.help_basic: List[Token] = [
-            RToken("Y", f"{Actions.marcar}[{Key.inc_grade}{Key.dec_grade}]"),
+            RToken("Y", f"{Actions.colapsar}[{Key.collapse} {Key.expand}]"),
+            RToken("Y", f"{Actions.marcar}[{Key.inc_grade} {Key.dec_grade}]"),
             # RToken("Y", f"{Actions.desmarcar}[{Key.dec_grade}]"),
-            RToken("Y", f"{Actions.colapsar}[{Key.collapse}{Key.expand}]")
         ]
 
-        self.help_extra: List[Token] = [
+        self.help_fixed: List[Token] = [
             RToken("C", f"{Actions.sair}[{Key.quit}]"),
             RToken("C", f"{Actions.editar}[{Key.edit}]"),
-            RToken("G", f"{Actions.testar}[↲]"),
+            RToken("G", f"{Actions.ativar}[↲]"),
         ]
-        self.help_others: List[Token] = [
+        self.help_others_before: List[Token] = [
             RToken("Y", f"{Actions.ajuda}[{Key.ajuda}]"),
             RToken("Y", f"{Actions.ler_online}[{Key.github_open}]"),
         ]
@@ -126,7 +122,7 @@ class Play:
             RToken("Y", f"{Actions.navegar}[wasd]")
         ]
 
-        self.wrap_size = Sentence(" ").join(self.build_list_sentence(self.help_extra + self.help_others + self.help_others_after)).len()
+        self.wrap_size = Sentence(" ").join(self.build_bottom_array()).len()
 
         self.opener = Opener(tree=self.tree, fman=self.fman, geral=geral, rep_data=rep_data, rep_alias=rep_alias)
 
@@ -506,33 +502,38 @@ class Play:
 
     def two_column_mode(self):
         _, cols = Fmt.get_size()
-        return cols < self.wrap_size + 2
+        return cols < self.wrap_size + 2 and Flags.others.is_true()
 
-    def show_bottom_bar(self, frame: Frame):
-        array = []
-        if Flags.others.is_true():
-            array += self.help_others
-        array += self.help_extra
+    def build_bottom_array(self):
+        array: List[Token] = []
+        # if Flags.others.is_true():
+        array += self.help_others_before
+        array += self.help_fixed
         color = "G" if Flags.others.is_true() else "Y"
         array.append(RToken(color, "!Outros[o]"))
 
-        if Flags.others.is_true():
-            array += self.help_others_after
+        # if Flags.others.is_true():
+        array += self.help_others_after
 
-        elemsfill = self.build_list_sentence(array)
+        return self.build_list_sentence(array)
 
-        half = len(elemsfill) // 2
-        if len(elemsfill) % 2 == 1:
-            half += 1
-            
+    def show_bottom_bar(self, frame: Frame):
+        elems = self.build_bottom_array()
         if self.two_column_mode():
-            line_0 = Sentence(" ").join(elemsfill[0 : half])
-            line_1 = Sentence(" ").join(elemsfill[half:])
-            frame.write(1, 0, line_1.center(frame.get_dx()))
-            frame.write(0, 0, line_0.center(frame.get_dx()))
+            line_up = Sentence(" ").join(elems[0 : 2] + elems[-2:])
+            line_down = Sentence(" ").join(elems[2:-2])
+            if Flags.others.is_true():
+                frame.write(1, 0, line_down.center(frame.get_dx()))
+                frame.write(0, 0, line_up.center(frame.get_dx()))
+            else:
+                frame.write(0, 0, line_down.center(frame.get_dx()))
         else:
-            line_0 = Sentence(" ").join(elemsfill)
-            frame.write(0, 0, line_0.center(frame.get_dx()))
+            if Flags.others.is_true():
+                line_all = Sentence(" ").join(elems)
+                frame.write(0, 0, line_all.center(frame.get_dx()))
+            else:
+                line_main = Sentence(" ").join(elems[2: -2])
+                frame.write(0, 0, line_main.center(frame.get_dx()))
         
         frame.set_border_none()
         frame.draw()
@@ -547,7 +548,6 @@ class Play:
 
     def show_top_bar(self, frame: Frame):
         help = Sentence(" ").join(self.build_list_sentence(self.help_basic))
-        
         flags = Sentence(" ").join([Style.get_flag_sentence(f) for f in self.flagsman.top])
 
         if self.two_column_mode():
@@ -557,7 +557,13 @@ class Play:
             frame.write(1, 0, line_2.center(frame.get_dx()))
         else:
             size = self.wrap_size - help.len() - flags.len() - 2
+            if not Flags.others.is_true():
+                help = Sentence(" ").join(self.build_list_sentence(self.help_basic[1:]))
+                flags = Sentence(" ").join([Style.get_flag_sentence(f) for f in self.flagsman.top[:1]])
+                if len(help) + size + len(flags) + 2 > Fmt.get_size()[1]:
+                    size = Fmt.get_size()[1] - len(help) - len(flags) - 4
             frame.write(0, 0, Sentence().add(help).add(" ").add(self.make_xp_button(size)).add(" ").add(flags).center(frame.get_dx()))
+
 
         frame.set_border_none()
         frame.draw()
@@ -574,8 +580,8 @@ class Play:
 
 
     def show_help(self):
-        def empty(value):
-            pass
+        # def empty(value):
+        #     pass
         _help: Floating = Floating("v>").set_ljust_text()
         self.fman.add_input(_help)
 
@@ -594,7 +600,7 @@ class Play:
         _help.put_sentence(Sentence() + f"{Actions.ler_online} " + RToken("r", f"{Key.github_open}") + "  Abre tarefa em uma aba do browser")
         _help.put_sentence(Sentence() + f"   {Actions.baixar} " + RToken("r", f"{Key.down_task}") + "  Baixa tarefa de código para seu dispositivo")
         _help.put_sentence(Sentence() + f"   {Actions.editar} " + RToken("r", f"{Key.edit}") + "  Abre os arquivos no editor de código")
-        _help.put_sentence(Sentence() + f"   {Actions.testar} " + RToken("r", "↲") + "  Escolhe a tarefa de código que você baixou")
+        _help.put_sentence(Sentence() + f"   {Actions.ativar} " + RToken("r", "↲") + "  Escolhe a tarefa de código que você baixou")
         _help.put_sentence(Sentence() + f"   {Actions.marcar} " + RToken("r", f"{Key.inc_grade}") + RToken("r", f"{Key.dec_grade}") + " Muda a pontuação da tarefa")
         # _help.put_sentence(Sentence() + f"{Actions.desmarcar} " + RToken("r", f"{Key.dec_grade}") + RToken("g", " ou ") + RToken("r", "backspace") + " - Diminui a pontuação da tarefa")
         _help.put_sentence(Sentence())
@@ -618,7 +624,7 @@ class Play:
             text = "Você atingiu o máximo de xp!"
             percent = 100.0
         else:
-            lang = self.rep.get_lang().upper()
+            # lang = self.rep.get_lang().upper()
             level = xp.get_level()
             percent = float(xp.get_xp_level_current()) / float(xp.get_xp_level_needed())
             if Flags.percent.is_true():
