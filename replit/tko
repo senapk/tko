@@ -23,7 +23,7 @@ import unicodedata
 import math
 import configparser
 from subprocess import PIPE
-__version__ = "0.20.3"
+__version__ = "0.20.4"
 
 
 class GeralSettings:
