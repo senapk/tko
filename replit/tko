@@ -23,7 +23,7 @@ import unicodedata
 import math
 import configparser
 from subprocess import PIPE
-__version__ = "0.20.1"
+__version__ = "0.20.2"
 
 
 class GeralSettings:
@@ -6357,6 +6357,30 @@ class CDiff:
             return
         self.task.main_index = (self.task.main_index + 1) % len(self.get_solver_names())
 
+    def lock_unit(self):
+        self.locked_index = not self.locked_index
+        if self.mode == Mode.intro:
+            self.mode = Mode.select
+        if self.locked_index:
+            self.fman.add_input(
+                Floating("v>").warning()
+                .put_text("Agora você está travado esse caso de teste")
+                .put_text("Aperte {} novamente para destravar".format(DKeys.travar))
+                .put_text("Use Enter para rodar o teste")
+            )
+
+    def change_limit(self):
+            valor = self.settings.geral.get_timeout()
+            valor = (valor + 1) % 10
+            self.settings.geral.set_timeout(valor)
+            self.save_settings()
+            nome = "∞" if valor == 0 else str(valor)
+            self.fman.add_input(
+                Floating("v>").warning()
+                .put_text("Limite de tempo de execução alterado para")
+                .put_text(f"{nome} segundos")
+            )
+
     def process_key(self, key):
         if key == ord('q'):
             self.set_exit()
@@ -6379,17 +6403,12 @@ class CDiff:
         elif key == ord(DKeys.testar):
             self.run_test_mode()
         elif key == ord(DKeys.travar):
-            self.locked_index = not self.locked_index
-            if self.mode == Mode.intro:
-                self.mode = Mode.select
+            self.lock_unit()
         elif key == ord(DKeys.editar):
             if self.opener is not None:
                 self.opener.open_code(open_dir=True)
         elif key == ord(DKeys.limite):
-            valor = self.settings.geral.get_timeout()
-            valor = (valor + 1) % 10
-            self.settings.geral.set_timeout(valor)
-            self.save_settings()
+            self.change_limit()
         elif key != -1 and key != curses.KEY_RESIZE:
             self.send_char_not_found(key)
 
