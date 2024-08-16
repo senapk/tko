@@ -89,7 +89,7 @@ public class draft {
 
     @staticmethod
     def __create_file(content, path, label=""):
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             f.write(content)
         Down.fnprint("  " + path + " " + label)
 
@@ -137,7 +137,7 @@ public class draft {
         try:
             content = open(tempfile, encoding="utf-8").read()
         except FileNotFoundError:
-            content = open(tempfile).read()
+            content = open(tempfile, encoding="utf-8").read()
 
         Down.__compare_and_save(content, readme)
 
@@ -186,7 +186,7 @@ public class draft {
                 os.rmdir(destiny)
             return False
 
-        with open(mapi_path) as f:
+        with open(mapi_path, encoding="utf-8") as f:
             loaded_json = json.load(f)
         os.remove(mapi_path)
 
@@ -223,7 +223,7 @@ public class draft {
                 filename = "draft."
                 draft_path = os.path.join(destiny, filename + language)
                 if not os.path.exists(draft_path):
-                    with open(draft_path, "w") as f:
+                    with open(draft_path, "w", encoding="utf-8") as f:
                         if language in Down.drafts:
                             f.write(Down.drafts[language])
                         else:

@@ -18,6 +18,7 @@ from .game.task import Task
 import random
 from .play.opener import Opener
 from .run.solver import CompileError
+from .play.flags import Flags
 
 from .run.wdir import Wdir
 from .run.report import Report
@@ -36,11 +37,12 @@ class Mode(enum.Enum):
 class DActions:
     sair = "Sair"
     editar = "Editar"
-    testar = "Testar"
+    testar = "Ativar"
     rodar = "Rodar"
     principal = "Principal"
     fixar = "Travar"
     limite = "Limite"
+    outros = "Outros"
 
 class DKeys:
     left = "a"
@@ -56,6 +58,7 @@ class DKeys:
     editar = "e"
     travar = "t"
     limite = "l"
+    outros = "o"
 
 class CDiff:
     def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
@@ -283,6 +286,8 @@ class CDiff:
 
         # building solvers
         solvers = Sentence()
+        if len(self.get_solver_names()) > 1:
+            solvers.add(Style.border_sharp("W", "[p]"))
         for i, solver in enumerate(self.get_solver_names()):
             color = solver_color
             if i == self.task.main_index:
@@ -367,36 +372,37 @@ class CDiff:
         return cols < Sentence(" ").join(self.make_bottom_line()).len() + 2
 
     def make_bottom_line(self) -> List[Sentence]:
-        tokens = [ RToken("C", f"{DActions.sair}[{DKeys.sair}]") ]
-        if self.opener is not None:
-            tokens.append(RToken("C", f"{DActions.editar}[{DKeys.editar}]"))
-        tokens.append(RToken("G", f"{DActions.testar}[↲]"))
-        tokens.append(RToken("M", f"{DActions.rodar}[{DKeys.rodar}]"))
-        tokens.append(RToken("M", f"{DActions.principal}[{DKeys.principal}]"))
-        if self.settings.geral.is_diff_down():
-            tokens.append(RToken("M", f"VER╾hor[{DKeys.diff}]")) 
-        else:
-            tokens.append(RToken("M", f"ver╼HOR[{DKeys.diff}]"))
-
-        cmds = []
-        for t in tokens:
-            color = "W" if not self.colors else t.fmt
-            cmds.append(Style.border_round(color, t.text))
-
-        fixar = f"{DActions.fixar}[{DKeys.travar}]"
-        color = "G" if self.locked_index else "M"
-        cmds.append(Style.border_sharp(color, fixar))
+        cmds: List[Sentence] = []
+        if Flags.others.is_true():
+            cmds.append(Style.border_round("M", f"{DActions.rodar}[{DKeys.rodar}]"))
+            value = str(self.settings.geral.get_timeout())
+            if value == "0":
+                value = "∞"
+            cmds.append(
+                Sentence()
+                    .addf("m", Style.roundL())
+                    .add(RToken("M", f"{DActions.limite}[{DKeys.limite}]"))
+                    .add(RToken("C", " {} ".format(value)))
+                    .addf("c", Style.roundR())
+            )
         
-        value = str(self.settings.geral.get_timeout())
-        if value == "0":
-            value = "∞"
-        cmds.append(
-            Sentence()
-                .addf("m", Style.roundL())
-                .add(RToken("M", f"{DActions.limite}[{DKeys.limite}]"))
-                .add(RToken("C", " {} ".format(value)))
-                .addf("c", Style.roundR())
-        )
+        cmds.append(Style.border_round("C", f"{DActions.sair}[{DKeys.sair}]"))
+        if self.opener is not None:
+            cmds.append(Style.border_round("C", f"{DActions.editar}[{DKeys.editar}]"))
+        cmds.append(Style.border_round("G", f"{DActions.testar}[↲]"))
+        
+        color = "G" if Flags.others.is_true() else "Y"
+        cmds.append(Style.border_sharp(color, f"{DActions.outros}[{DKeys.outros}]"))
+        if Flags.others.is_true():
+            # travar
+            travar = f"{DActions.fixar}[{DKeys.travar}]"
+            color = "G" if self.locked_index else "M"
+            cmds.append(Style.border_sharp(color, travar))
+
+            # diff
+            text = f"VER╾hor[{DKeys.diff}]" if self.settings.geral.is_diff_down() else f"ver╼HOR[{DKeys.diff}]"
+            cmds.append(Style.border_round("M", text))
+
 
         return cmds
 
@@ -661,6 +667,8 @@ class CDiff:
                 self.opener.open_code(open_dir=True)
         elif key == ord(DKeys.limite):
             self.change_limit()
+        elif key == ord('o'):
+            Flags.others.toggle()
         elif key != -1 and key != curses.KEY_RESIZE:
             self.send_char_not_found(key)
 

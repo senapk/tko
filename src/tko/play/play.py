@@ -30,11 +30,11 @@ import os
 import curses
 
 class Actions:
-    github = "LerOnline"
+    ler_online = "LerOnline"
     sair = "Sair"
     ajuda = "Ajuda"
     baixar = "Baixar"
-    testar = "Testar"
+    testar = "Ativar"
     navegar = "↑←↓→"
     editar = "Editar"
     marcar = "Marcar"
@@ -107,22 +107,26 @@ class Play:
         self.graph_ext = ""
 
         self.help_basic: List[Token] = [
-            RToken("Y", f"{Actions.marcar}[{Key.inc_grade}]"),
-            RToken("Y", f"{Actions.desmarcar}[{Key.dec_grade}]"),
+            RToken("Y", f"{Actions.marcar}[{Key.inc_grade}{Key.dec_grade}]"),
+            # RToken("Y", f"{Actions.desmarcar}[{Key.dec_grade}]"),
+            RToken("Y", f"{Actions.colapsar}[{Key.collapse}{Key.expand}]")
         ]
 
         self.help_extra: List[Token] = [
             RToken("C", f"{Actions.sair}[{Key.quit}]"),
             RToken("C", f"{Actions.editar}[{Key.edit}]"),
             RToken("G", f"{Actions.testar}[↲]"),
+        ]
+        self.help_others: List[Token] = [
             RToken("Y", f"{Actions.ajuda}[{Key.ajuda}]"),
-            RToken("Y", f"{Actions.github}[{Key.github_open}]"),
-            RToken("Y", f"{Actions.navegar}[wasd]"),
+            RToken("Y", f"{Actions.ler_online}[{Key.github_open}]"),
+        ]
+        self.help_others_after: List[Token] = [
             RToken("Y", f"{Actions.baixar}[{Key.down_task}]"),
-            RToken("Y", f"{Actions.colapsar}[{Key.collapse}{Key.expand}]"),
+            RToken("Y", f"{Actions.navegar}[wasd]")
         ]
 
-        self.wrap_size = Sentence(" ").join(self.build_list_sentence(self.help_extra)).len()
+        self.wrap_size = Sentence(" ").join(self.build_list_sentence(self.help_extra + self.help_others + self.help_others_after)).len()
 
         self.opener = Opener(tree=self.tree, fman=self.fman, geral=geral, rep_data=rep_data, rep_alias=rep_alias)
 
@@ -351,27 +355,15 @@ class Play:
         
         obj = self.tree.items[self.tree.index_selected].obj
 
-        if isinstance(obj, Quest):
-            self.fman.add_input(
-                Floating("v>")
-                .put_text("\nEssa é uma missão.")
-                .put_text("\nVocê só pode executar tarefas baixadas.\n")
-                .error()
-            )
-            return
-        if isinstance(obj, Cluster):
-            self.fman.add_input(
-                Floating("v>")
-                .put_text("\nEsse é um grupo.")
-                .put_text("\nVocê só pode executar tarefas baixadas.\n")
-                .error()
-            )
+        if isinstance(obj, Quest) or isinstance(obj, Cluster):
+            self.tree.toggle()
             return
 
         rep_dir = os.path.join(rootdir, self.rep_alias)
         task: Task = obj
         if not task.is_downloadable():
-            self.fman.add_input( Floating().put_text("\nEssa não é uma tarefa de código.\n").error() )
+            # self.fman.add_input( Floating().put_text("\nEssa não é uma tarefa de código.\n").error() )
+            self.open_link()
             return
         if not task.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
             self.down_task()
@@ -412,7 +404,12 @@ class Play:
             color = x.fmt if self.geral.is_colored() else "W"
             left = Style.roundL()
             right = Style.roundR()
-            out.append(Sentence().addf(color.lower(), left).addf(color, x.text).addf(color.lower(), right))
+            text = x.text
+            if x.text[0] == "!":
+                left = Style.sharpL()
+                right = Style.sharpR()
+                text = x.text[1:]
+            out.append(Sentence().addf(color.lower(), left).addf(color, text).addf(color.lower(), right))
         return out
 
     def build_bar_links(self) -> str:
@@ -512,7 +509,17 @@ class Play:
         return cols < self.wrap_size + 2
 
     def show_bottom_bar(self, frame: Frame):
-        elemsfill = self.build_list_sentence(self.help_extra)
+        array = []
+        if Flags.others.is_true():
+            array += self.help_others
+        array += self.help_extra
+        color = "G" if Flags.others.is_true() else "Y"
+        array.append(RToken(color, "!Outros[o]"))
+
+        if Flags.others.is_true():
+            array += self.help_others_after
+
+        elemsfill = self.build_list_sentence(array)
 
         half = len(elemsfill) // 2
         if len(elemsfill) % 2 == 1:
@@ -584,7 +591,7 @@ class Play:
         # _help.put_sentence(Sentence() + "              - Expandir ou contrair")
         # _help.put_sentence(Sentence() + "              - Saltar entre as sessões")
         # _help.put_sentence(Sentence() + "     " + RToken("g", "{ ") + " ou " + RToken("g", " }") + " - Expande ou contrai todas as sessões")
-        _help.put_sentence(Sentence() + f"{Actions.github} " + RToken("r", f"{Key.github_open}") + "  Abre tarefa em uma aba do browser")
+        _help.put_sentence(Sentence() + f"{Actions.ler_online} " + RToken("r", f"{Key.github_open}") + "  Abre tarefa em uma aba do browser")
         _help.put_sentence(Sentence() + f"   {Actions.baixar} " + RToken("r", f"{Key.down_task}") + "  Baixa tarefa de código para seu dispositivo")
         _help.put_sentence(Sentence() + f"   {Actions.editar} " + RToken("r", f"{Key.edit}") + "  Abre os arquivos no editor de código")
         _help.put_sentence(Sentence() + f"   {Actions.testar} " + RToken("r", "↲") + "  Escolhe a tarefa de código que você baixou")

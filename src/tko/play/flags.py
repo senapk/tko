@@ -92,6 +92,7 @@ class Flags:
     config = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
     # xpbar = Flag().name("XpBar").char("x").values(["1", "0"]).text("Mostra a barra de experiência").location("top")
     inventory = Flag().name("Inventário").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
+    others = Flag().name("Outros").char("o").values(["1", "0"]).text("Mostra opções extras").location("bottom")
 
 class FlagsMan:
     def __init__(self, data: Dict[str, int]):

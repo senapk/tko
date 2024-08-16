@@ -1754,6 +1754,7 @@ class Flags:
     config = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
     # xpbar = Flag().name("XpBar").char("x").values(["1", "0"]).text("Mostra a barra de experiência").location("top")
     inventory = Flag().name("Inventário").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
+    others = Flag().name("Outros").char("o").values(["1", "0"]).text("Mostra opções extras").location("bottom")
 
 class FlagsMan:
     def __init__(self, data: Dict[str, int]):
@@ -3491,7 +3492,7 @@ public class draft {
 
     @staticmethod
     def __create_file(content, path, label=""):
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             f.write(content)
         Down.fnprint("  " + path + " " + label)
 
@@ -3539,7 +3540,7 @@ public class draft {
         try:
             content = open(tempfile, encoding="utf-8").read()
         except FileNotFoundError:
-            content = open(tempfile).read()
+            content = open(tempfile, encoding="utf-8").read()
 
         Down.__compare_and_save(content, readme)
 
@@ -3588,7 +3589,7 @@ public class draft {
                 os.rmdir(destiny)
             return False
 
-        with open(mapi_path) as f:
+        with open(mapi_path, encoding="utf-8") as f:
             loaded_json = json.load(f)
         os.remove(mapi_path)
 
@@ -3625,7 +3626,7 @@ public class draft {
                 filename = "draft."
                 draft_path = os.path.join(destiny, filename + language)
                 if not os.path.exists(draft_path):
-                    with open(draft_path, "w") as f:
+                    with open(draft_path, "w", encoding="utf-8") as f:
                         if language in Down.drafts:
                             f.write(Down.drafts[language])
                         else:
@@ -5789,11 +5790,12 @@ class Mode(enum.Enum):
 class DActions:
     sair = "Sair"
     editar = "Editar"
-    testar = "Testar"
+    testar = "Ativar"
     rodar = "Rodar"
     principal = "Principal"
     fixar = "Travar"
     limite = "Limite"
+    outros = "Outros"
 
 class DKeys:
     left = "a"
@@ -5809,6 +5811,7 @@ class DKeys:
     editar = "e"
     travar = "t"
     limite = "l"
+    outros = "o"
 
 class CDiff:
     def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
@@ -6036,6 +6039,8 @@ class CDiff:
 
         # building solvers
         solvers = Sentence()
+        if len(self.get_solver_names()) > 1:
+            solvers.add(Style.border_sharp("W", "[p]"))
         for i, solver in enumerate(self.get_solver_names()):
             color = solver_color
             if i == self.task.main_index:
@@ -6120,36 +6125,37 @@ class CDiff:
         return cols < Sentence(" ").join(self.make_bottom_line()).len() + 2
 
     def make_bottom_line(self) -> List[Sentence]:
-        tokens = [ RToken("C", f"{DActions.sair}[{DKeys.sair}]") ]
-        if self.opener is not None:
-            tokens.append(RToken("C", f"{DActions.editar}[{DKeys.editar}]"))
-        tokens.append(RToken("G", f"{DActions.testar}[↲]"))
-        tokens.append(RToken("M", f"{DActions.rodar}[{DKeys.rodar}]"))
-        tokens.append(RToken("M", f"{DActions.principal}[{DKeys.principal}]"))
-        if self.settings.geral.is_diff_down():
-            tokens.append(RToken("M", f"VER╾hor[{DKeys.diff}]")) 
-        else:
-            tokens.append(RToken("M", f"ver╼HOR[{DKeys.diff}]"))
-
-        cmds = []
-        for t in tokens:
-            color = "W" if not self.colors else t.fmt
-            cmds.append(Style.border_round(color, t.text))
-
-        fixar = f"{DActions.fixar}[{DKeys.travar}]"
-        color = "G" if self.locked_index else "M"
-        cmds.append(Style.border_sharp(color, fixar))
+        cmds: List[Sentence] = []
+        if Flags.others.is_true():
+            cmds.append(Style.border_round("M", f"{DActions.rodar}[{DKeys.rodar}]"))
+            value = str(self.settings.geral.get_timeout())
+            if value == "0":
+                value = "∞"
+            cmds.append(
+                Sentence()
+                    .addf("m", Style.roundL())
+                    .add(RToken("M", f"{DActions.limite}[{DKeys.limite}]"))
+                    .add(RToken("C", " {} ".format(value)))
+                    .addf("c", Style.roundR())
+            )
         
-        value = str(self.settings.geral.get_timeout())
-        if value == "0":
-            value = "∞"
-        cmds.append(
-            Sentence()
-                .addf("m", Style.roundL())
-                .add(RToken("M", f"{DActions.limite}[{DKeys.limite}]"))
-                .add(RToken("C", " {} ".format(value)))
-                .addf("c", Style.roundR())
-        )
+        cmds.append(Style.border_round("C", f"{DActions.sair}[{DKeys.sair}]"))
+        if self.opener is not None:
+            cmds.append(Style.border_round("C", f"{DActions.editar}[{DKeys.editar}]"))
+        cmds.append(Style.border_round("G", f"{DActions.testar}[↲]"))
+        
+        color = "G" if Flags.others.is_true() else "Y"
+        cmds.append(Style.border_sharp(color, f"{DActions.outros}[{DKeys.outros}]"))
+        if Flags.others.is_true():
+            # travar
+            travar = f"{DActions.fixar}[{DKeys.travar}]"
+            color = "G" if self.locked_index else "M"
+            cmds.append(Style.border_sharp(color, travar))
+
+            # diff
+            text = f"VER╾hor[{DKeys.diff}]" if self.settings.geral.is_diff_down() else f"ver╼HOR[{DKeys.diff}]"
+            cmds.append(Style.border_round("M", text))
+
 
         return cmds
 
@@ -6414,6 +6420,8 @@ class CDiff:
                 self.opener.open_code(open_dir=True)
         elif key == ord(DKeys.limite):
             self.change_limit()
+        elif key == ord('o'):
+            Flags.others.toggle()
         elif key != -1 and key != curses.KEY_RESIZE:
             self.send_char_not_found(key)
 
@@ -6663,11 +6671,11 @@ class Build:
 
 
 class Actions:
-    github = "LerOnline"
+    ler_online = "LerOnline"
     sair = "Sair"
     ajuda = "Ajuda"
     baixar = "Baixar"
-    testar = "Testar"
+    testar = "Ativar"
     navegar = "↑←↓→"
     editar = "Editar"
     marcar = "Marcar"
@@ -6740,22 +6748,26 @@ class Play:
         self.graph_ext = ""
 
         self.help_basic: List[Token] = [
-            RToken("Y", f"{Actions.marcar}[{Key.inc_grade}]"),
-            RToken("Y", f"{Actions.desmarcar}[{Key.dec_grade}]"),
+            RToken("Y", f"{Actions.marcar}[{Key.inc_grade}{Key.dec_grade}]"),
+            # RToken("Y", f"{Actions.desmarcar}[{Key.dec_grade}]"),
+            RToken("Y", f"{Actions.colapsar}[{Key.collapse}{Key.expand}]")
         ]
 
         self.help_extra: List[Token] = [
             RToken("C", f"{Actions.sair}[{Key.quit}]"),
             RToken("C", f"{Actions.editar}[{Key.edit}]"),
             RToken("G", f"{Actions.testar}[↲]"),
+        ]
+        self.help_others: List[Token] = [
             RToken("Y", f"{Actions.ajuda}[{Key.ajuda}]"),
-            RToken("Y", f"{Actions.github}[{Key.github_open}]"),
-            RToken("Y", f"{Actions.navegar}[wasd]"),
+            RToken("Y", f"{Actions.ler_online}[{Key.github_open}]"),
+        ]
+        self.help_others_after: List[Token] = [
             RToken("Y", f"{Actions.baixar}[{Key.down_task}]"),
-            RToken("Y", f"{Actions.colapsar}[{Key.collapse}{Key.expand}]"),
+            RToken("Y", f"{Actions.navegar}[wasd]")
         ]
 
-        self.wrap_size = Sentence(" ").join(self.build_list_sentence(self.help_extra)).len()
+        self.wrap_size = Sentence(" ").join(self.build_list_sentence(self.help_extra + self.help_others + self.help_others_after)).len()
 
         self.opener = Opener(tree=self.tree, fman=self.fman, geral=geral, rep_data=rep_data, rep_alias=rep_alias)
 
@@ -6984,27 +6996,15 @@ class Play:
         
         obj = self.tree.items[self.tree.index_selected].obj
 
-        if isinstance(obj, Quest):
-            self.fman.add_input(
-                Floating("v>")
-                .put_text("\nEssa é uma missão.")
-                .put_text("\nVocê só pode executar tarefas baixadas.\n")
-                .error()
-            )
-            return
-        if isinstance(obj, Cluster):
-            self.fman.add_input(
-                Floating("v>")
-                .put_text("\nEsse é um grupo.")
-                .put_text("\nVocê só pode executar tarefas baixadas.\n")
-                .error()
-            )
+        if isinstance(obj, Quest) or isinstance(obj, Cluster):
+            self.tree.toggle()
             return
 
         rep_dir = os.path.join(rootdir, self.rep_alias)
         task: Task = obj
         if not task.is_downloadable():
-            self.fman.add_input( Floating().put_text("\nEssa não é uma tarefa de código.\n").error() )
+            # self.fman.add_input( Floating().put_text("\nEssa não é uma tarefa de código.\n").error() )
+            self.open_link()
             return
         if not task.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
             self.down_task()
@@ -7045,7 +7045,12 @@ class Play:
             color = x.fmt if self.geral.is_colored() else "W"
             left = Style.roundL()
             right = Style.roundR()
-            out.append(Sentence().addf(color.lower(), left).addf(color, x.text).addf(color.lower(), right))
+            text = x.text
+            if x.text[0] == "!":
+                left = Style.sharpL()
+                right = Style.sharpR()
+                text = x.text[1:]
+            out.append(Sentence().addf(color.lower(), left).addf(color, text).addf(color.lower(), right))
         return out
 
     def build_bar_links(self) -> str:
@@ -7145,7 +7150,17 @@ class Play:
         return cols < self.wrap_size + 2
 
     def show_bottom_bar(self, frame: Frame):
-        elemsfill = self.build_list_sentence(self.help_extra)
+        array = []
+        if Flags.others.is_true():
+            array += self.help_others
+        array += self.help_extra
+        color = "G" if Flags.others.is_true() else "Y"
+        array.append(RToken(color, "!Outros[o]"))
+
+        if Flags.others.is_true():
+            array += self.help_others_after
+
+        elemsfill = self.build_list_sentence(array)
 
         half = len(elemsfill) // 2
         if len(elemsfill) % 2 == 1:
@@ -7217,7 +7232,7 @@ class Play:
         # _help.put_sentence(Sentence() + "              - Expandir ou contrair")
         # _help.put_sentence(Sentence() + "              - Saltar entre as sessões")
         # _help.put_sentence(Sentence() + "     " + RToken("g", "{ ") + " ou " + RToken("g", " }") + " - Expande ou contrai todas as sessões")
-        _help.put_sentence(Sentence() + f"{Actions.github} " + RToken("r", f"{Key.github_open}") + "  Abre tarefa em uma aba do browser")
+        _help.put_sentence(Sentence() + f"{Actions.ler_online} " + RToken("r", f"{Key.github_open}") + "  Abre tarefa em uma aba do browser")
         _help.put_sentence(Sentence() + f"   {Actions.baixar} " + RToken("r", f"{Key.down_task}") + "  Baixa tarefa de código para seu dispositivo")
         _help.put_sentence(Sentence() + f"   {Actions.editar} " + RToken("r", f"{Key.edit}") + "  Abre os arquivos no editor de código")
         _help.put_sentence(Sentence() + f"   {Actions.testar} " + RToken("r", "↲") + "  Escolhe a tarefa de código que você baixou")
