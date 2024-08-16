@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.20.6
+  - border default for linux
+  - align of buttons in other mode
 - 0.20.1
   - add: timeout to execution
 - 0.20.0

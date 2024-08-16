@@ -1,6 +1,11 @@
 from typing import Any, Dict
 import os
 
+def get_default_settings_for_borders() -> bool:
+    if os.name == "nt":
+        return False
+    return True
+
 class GeralSettings:
     __rootdir = "rootdir"
     __is_ascii = "ascii"
@@ -21,7 +26,7 @@ class GeralSettings:
         __sidesize: 80,
         __langdef: "",
         __lastrep: "", 
-        __nerdfonts: False,
+        __nerdfonts: get_default_settings_for_borders(),
         __editor: "code",
         __timeout: 2
     }
