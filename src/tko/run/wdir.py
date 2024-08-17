@@ -124,6 +124,7 @@ class Wdir:
 
     def build(self):
         loading_failures = 0
+        self.__pack_list = []
         for source in self.__source_list:
             try:
                 self.__pack_list.append(Loader.parse_source(source))

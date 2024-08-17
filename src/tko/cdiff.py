@@ -223,9 +223,9 @@ class CDiff:
         elif result == ExecutionResult.WRONG_OUTPUT:
             return Token(ExecutionResult.get_symbol(ExecutionResult.WRONG_OUTPUT).text, "R")
         elif result == ExecutionResult.COMPILATION_ERROR:
-            return Token(ExecutionResult.get_symbol(ExecutionResult.COMPILATION_ERROR).text, "Y")
+            return Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "W")
         elif result == ExecutionResult.EXECUTION_ERROR:
-            return Token(ExecutionResult.get_symbol(ExecutionResult.EXECUTION_ERROR).text, "M")
+            return Token(ExecutionResult.get_symbol(ExecutionResult.EXECUTION_ERROR).text, "Y")
         else:
             return Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "W")
 
@@ -336,16 +336,14 @@ class CDiff:
             i += 1
 
         i = 0
+        show_focused_index = not self.wdir.get_solver().compile_error and not self.mode == Mode.intro and not self.is_all_right()
         for unit_result, index in done_list + todo_list:
             foco = i == self.focused_index
             token = self.get_token(unit_result)
             extrap = Token(Style.roundL(), token.fmt.lower())# if not foco else Token(Style.roundL(), "")
             extras = Token(Style.roundR(), token.fmt.lower())# if not foco else Token(Style.roundR(), "")
-            if foco and not self.wdir.get_solver().compile_error and not self.mode == Mode.intro and not self.is_all_right():
-                if self.locked_index:
-                    token.fmt = "r"
-                else:
-                    token.fmt = ""
+            if foco and show_focused_index:
+                token.fmt = ""
             output.add(extrap).addf(token.fmt, str(index).zfill(2)).add(token).add(extras).add(" ")
             i += 1
 
@@ -354,19 +352,26 @@ class CDiff:
             output.cut_begin((self.focused_index + 1) * size - frame.get_dx())
         return output
 
+    def draw_top_bar_content(self, frame):
+        focused_unit_color = "B"
+        value = self.get_focused_unit()
+        info = Sentence()
+        if self.wdir.get_solver().compile_error:
+            info = Style.border_round("R", "Erro de compilação")
+        elif value is not None and not self.is_all_right() and not self.mode == Mode.intro:
+            info = value.str(pad = False)
+            if self.locked_index:
+                info = Style.border_round(focused_unit_color, info.get_text())
+        frame.write(0, 0, Sentence().add(info).center(frame.get_dx()))
+
     def draw_top_bar(self):
         # construir mais uma solução
         _, cols = Fmt.get_size()
         frame = Frame(0, 0).set_size(3, cols)
         frame.set_header(self.build_top_line_header(frame))
 
-        value = self.get_focused_unit()
-        info = value.str(pad = False)
-        if self.locked_index:
-            info = Style.border_round("Y", info.get_text())
-        if value is not None and not self.wdir.get_solver().compile_error and not self.is_all_right() and not self.mode == Mode.intro:
-            frame.write(0, 0, Sentence().add(info).center(frame.get_dx()))
-
+        self.draw_top_bar_content(frame)
+    
         frame.set_footer(self.build_top_bar_footer(frame), "")
         frame.draw()
         
@@ -550,7 +555,7 @@ class CDiff:
     def run_test_mode(self):
         self.mode = Mode.running
         if self.wdir.is_autoload():
-            self.wdir.autoload()
+            self.wdir.autoload().build()
         Fmt.clear()
         self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index]).set_executable("")
         
@@ -577,10 +582,11 @@ class CDiff:
         if self.mode == Mode.intro:
             self.mode = Mode.select
         if self.locked_index:
-            self.fman.add_input(Floating("v>").warning().put_text("Atividade travada\nAperte {} para destravar".format(DKeys.travar)))
+            self.fman.add_input(Floating("v>").warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(DKeys.travar)))
             return
-        self.focused_index = max(0, self.focused_index - 1)
-        self.init = 0
+        if not self.wdir.get_solver().compile_error:
+            self.focused_index = max(0, self.focused_index - 1)
+            self.init = 0
 
     def go_right(self):
         if self.mode == Mode.intro:
@@ -588,10 +594,11 @@ class CDiff:
             self.focused_index = 0
             return
         if self.locked_index:
-            self.fman.add_input(Floating("v>").warning().put_text("Atividade travada,\naperte {} para destravar".format(DKeys.travar)))
+            self.fman.add_input(Floating("v>").warning().put_text("→\nAtividade travada\nAperte {} para destravar".format(DKeys.travar)))
             return
-        self.focused_index = min(len(self.wdir.get_unit_list()) - 1, self.focused_index + 1)
-        self.init = 0
+        if not self.wdir.get_solver().compile_error:
+            self.focused_index = min(len(self.wdir.get_unit_list()) - 1, self.focused_index + 1)
+            self.init = 0
 
     def go_down(self):
         if self.mode == Mode.intro:
@@ -619,6 +626,9 @@ class CDiff:
         if self.mode == Mode.intro:
             self.mode = Mode.select
         if self.locked_index:
+            for i in range(len(self.results)):
+                _, index = self.results[i]
+                self.results[i] = (ExecutionResult.UNTESTED, index)
             self.fman.add_input(
                 Floating("v>").warning()
                 .put_text("Atividade travada")

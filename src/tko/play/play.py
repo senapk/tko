@@ -16,6 +16,7 @@ from .fmt import Fmt
 from .frame import Frame
 from .style import Style
 import urllib
+from .images import opening
 
 from .floating import Floating
 from .floating_manager import FloatingManager
@@ -480,7 +481,7 @@ class Play:
         frame.draw()
 
         pad = 11
-        for flag in self.flagsman.others:
+        for flag in self.flagsman.left:
             if flag.is_bool():
                 frame.print(0, Style.get_flag_sentence(flag, pad))
                 frame.print(0, Sentence())
@@ -641,6 +642,16 @@ class Play:
         # xp_bar = Sentence().add(Style.build_bar(text, percent, size, done, todo, fill_mode=False, round=False).add(" "))
         return text, percent
 
+    def show_parrot(self):
+        if Fmt.get_size()[1] < 100:
+            return
+        lines, cols = Fmt.get_size()
+        parrot = opening["parrot"]
+        parrot_lines = parrot.split("\n")
+        yinit = 2
+        for y, line in enumerate(parrot_lines):
+            Fmt.write(yinit + y, cols - len(line) - 1, Sentence().addf("y", line))
+
     def show_items(self):
         Fmt.clear()
         self.tree.reload_sentences()
@@ -663,6 +674,8 @@ class Play:
             skills_sx = max(20, main_sx // 4)
             frame_skills = Frame(0, cols - skills_sx).set_size(main_sy, skills_sx)
             self.show_inventary_bar(frame_skills)
+        else:
+            self.show_parrot()
 
         flags_sx = 0
         if Flags.config.is_true():
@@ -794,6 +807,8 @@ class Play:
         add_str("'", self.GradeFunctor(0, self.tree.set_grade))
         add_str("0", self.GradeFunctor(10, self.tree.set_grade))
 
+        for flag in self.flagsman.left:
+            add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
         for flag in self.flagsman.others:
             add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
 

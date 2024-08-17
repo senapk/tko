@@ -97,6 +97,7 @@ class FlagsMan:
     def __init__(self, data: Dict[str, int]):
         self.flags: Dict[str, Flag] = {}
         self.top: List[Flag] = []
+        self.left: List[Flag] = []
         self.others: List[Flag] = []
 
         for varname, flag in Flags.__dict__.items():
@@ -104,6 +105,8 @@ class FlagsMan:
                 self.flags[varname] = flag
                 if flag.get_location() == "top":
                     self.top.append(flag)
+                elif flag.get_location() == "left":
+                    self.left.append(flag)
                 else:
                     self.others.append(flag)
 
