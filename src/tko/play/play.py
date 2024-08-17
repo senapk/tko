@@ -375,7 +375,7 @@ class Play:
         run = Run([path], None, Param.Basic())
         run.set_lang(self.rep.get_lang())
         run.set_opener(self.opener)
-        if Flags.random.is_true():
+        if Flags.images.is_true():
             run.set_curses(True, Success.RANDOM)
         else:
             run.set_curses(True, Success.FIXED)
@@ -645,12 +645,14 @@ class Play:
     def show_parrot(self):
         if Fmt.get_size()[1] < 100:
             return
-        lines, cols = Fmt.get_size()
+        if not Flags.images.is_true():
+            return
+        _, cols = Fmt.get_size()
         parrot = opening["parrot"]
         parrot_lines = parrot.split("\n")
-        yinit = 2
+        yinit = 1
         for y, line in enumerate(parrot_lines):
-            Fmt.write(yinit + y, cols - len(line) - 1, Sentence().addf("y", line))
+            Fmt.write(yinit + y, cols - len(line) - 1, Sentence().addf("g", line))
 
     def show_items(self):
         Fmt.clear()
