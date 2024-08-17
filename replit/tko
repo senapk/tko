@@ -212,6 +212,46 @@ opening["estuda"] = r"""
            (______(((_(((______(@)
 """
 
+opening["wood"] = r"""
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛⬛⬛⬛⬛⬛⬛⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛⬛🟥🟥🟥🟥🟥🟥🟥⬛⬛⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥⬛⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥⬛⬜⬜⬜⬜⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥⬛⬜⬜⬜⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥⬛⬜⬜⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥⬛⬜⬜⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥⬛⬜⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥⬛⬜⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥⬛⬛⬛🟥🟥⬛⬜⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥⬛⬜⬜⬜⬛🟥⬛⬜⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥⬛⬜⬜⬜⬜⬛⬜⬜⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥⬛⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛🟥🟥🟥🟥🟥🟥🟥🟥🟥⬛⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛⬛⬛⬛⬜⬜⬜⬜⬜⬜⬜⬜⬛🟥🟥🟥🟥🟥🟥⬛⬛🟥⬛⬛⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛⬜⬜⬜⬜⬛⬜⬜⬜⬜⬜⬜⬜⬜⬛🟥🟥🟥🟥⬛⬜⬜⬛⬜⬜⬛⬜⬜⬜⬜⬛⬛⬛⬛⬛⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛⬜⬛⬛⬜⬜⬜⬛⬛⬜⬜⬜⬜⬜⬜⬜⬛🟥🟥🟥⬛⬜⬜⬛⬜⬜⬛⬜⬜⬜⬛⬜⬜⬛⬜⬜⬛
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛⬜⬜⬛⬜⬛⬜⬜⬛⬜⬜⬜⬜⬜⬜⬛🟥🟥⬛⬜⬜⬜⬜⬛⬜⬜⬛⬜⬛⬜⬜⬛⬜⬛⬛⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛⬜⬛⬛⬜⬜⬛⬜⬜⬛⬜⬜⬜⬜⬜⬛🟥🟥🟥⬛⬜⬜⬜⬛⬛⬜⬛⬛⬛⬛⬜⬛⬜⬜⬜⬜⬛
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛⬛⬜⬜⬛⬜⬜⬛⬜⬛⬜⬜⬜⬜⬜⬛🟥🟥🟥⬛⬜⬜⬛⬛⬛⬛⬛⬛🟦⬜⬜⬜⬜⬛⬛⬛⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛🟦🟦⬛⬛⬜⬜⬜⬜⬜⬛⬛⬜⬜⬜⬜⬛🟥🟥🟥⬛⬜⬜⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛🟧⬛⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬛⬛⬛⬛⬛🟦⬛⬛⬜⬛⬛🟦🟦⬛⬜⬜⬜⬛🟥⬛⬛⬛⬛⬜⬛⬛🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧⬛⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬛🟦🟦🟦🟦🟦⬛🟦🟦⬛🟦🟦🟦🟦🟦⬛⬜⬜⬜⬛🟧🟧🟧🟧⬛⬛🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧⬛⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬛⬛⬛⬛🟦🟦⬛🟦⬛⬛🟦🟦🟦🟦🟦⬛⬜⬛🟧🟧⬛🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧🟧⬛⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛🟦⬛⬛⬛⬜⬛🟦🟦🟦🟦🟦⬛⬛🟧🟧🟧⬛⬛🟧🟧🟧🟧🟧🟧🟧🟧🟧⬛⬛⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛🟦🟦🟦⬛⬛🟦🟦🟦🟦🟦🟦🟦⬛⬛🟧🟧🟧⬛⬛⬛🟧🟧🟧🟧⬛⬛⬜⬜⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬛⬛⬜⬜⬜⬛🟦🟦🟦🟦🟦🟦⬛🟦🟦🟦🟦🟦⬛⬜⬜⬛⬛⬛🟧🟧🟧⬛⬛⬛⬛⬜⬜⬜⬜⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬛🟧🟧⬛⬜⬛🟦🟦🟦🟦🟦🟦🟦🟦⬛🟦🟦🟦🟦⬛⬜⬜⬛🟥⬛⬛⬛⬛⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬛🟧🟧🟧⬛⬛🟦🟦🟦🟦🟦🟦🟦🟦🟦⬛🟦🟦🟦🟦⬛⬜⬜⬜⬛⬜⬛⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
+⬜⬜⬛⬛⬛🟧🟧🟧⬛🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦⬛⬜⬜⬜⬜⬛⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
+⬜⬛🟧🟧🟧🟧🟧🟧⬛🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦⬛⬛⬛⬜⬜⬜⬛⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
+⬛🟧🟧🟧🟧🟧🟧🟧⬛🟦🟦🟦🟦🟦⬛⬛🟦🟦🟦🟦🟦🟦⬛⬛⬜⬜⬜⬛⬛⬛⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
+⬛🟧🟧🟧🟧🟧🟧🟧🟧⬛⬛⬛⬛⬛🟦🟦⬛⬛🟦🟦⬛⬛⬜⬜⬜⬜⬜⬛⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
+⬛🟧🟧🟧⬛🟧🟧⬛⬛🟧🟧🟧🟧🟧⬛⬛⬜⬜⬛⬛⬜⬜⬜⬜⬛⬛⬛⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
+⬜⬛⬛⬛🟧🟧⬛⬛🟧🟧🟧⬛🟧🟧⬛⬜⬜⬜⬜⬜⬛⬛⬛⬛⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬛⬛⬜⬜⬛⬛⬛🟧🟧⬛⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
+⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬛⬛⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜
+"""
+
 intro: Dict[str, str] = {}
 intro["shark"] = r"""
   _________         .    . r -> Roda sem testar             
@@ -1790,7 +1830,7 @@ class Flags:
     percent = Flag().name("Percentual").char("P").values(["1", "0"]).text("Mostra valores em porcentagem").location("left")
     admin = Flag().name("Admin").char("A").values(["0", "1"]).text("Mostra todas as missões e grupos").location("left")
     fortune = Flag().name("Fortuna").char("F").values(["0", "1"]).text("Mostra mensagem aleatórias na saída").location("left")
-    images = Flag().name("Imagens").char("I").values(["1", "0"]).text("Mostra os imagens aleatórias").location("left")
+    images = Flag().name("Imagens").char("I").values(["1", "0"]).text("Mostra imagens aleatórias").location("left")
     config = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
     inventory = Flag().name("Inventário").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
     others = Flag().name("Outros").char("o").values(["0", "1"]).text("Mostra opções extras").location("bottom")
@@ -6052,7 +6092,8 @@ class CDiff:
             self.unit_list = self.unit_list[1:]
             unit.result = Execution.run_unit(solver, unit, self.settings.geral.get_timeout())
             self.results.append((unit.result, index))
-            self.task.test_progress = (len(self.results) * 100) // len(self.wdir.get_unit_list())
+            success = [result for result, _ in self.results if result == ExecutionResult.SUCCESS]
+            self.task.test_progress = (len(success) * 100) // len(self.wdir.get_unit_list())
             self.focused_index = index
 
         if len(self.unit_list) == 0:
@@ -6434,7 +6475,12 @@ class CDiff:
 
     def change_limit(self):
             valor = self.settings.geral.get_timeout()
-            valor = (valor + 1) % 10
+            if valor == 0:
+                valor = 1
+            else:
+                valor *= 2
+            if valor >= 5:
+                valor = 0
             self.settings.geral.set_timeout(valor)
             self.save_settings()
             nome = "∞" if valor == 0 else str(valor)
@@ -7287,15 +7333,11 @@ class Play:
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
         # _help.put_text("")
         _help.put_sentence(Sentence() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
-        # _help.put_sentence(Sentence() + "              - Expandir ou contrair")
-        # _help.put_sentence(Sentence() + "              - Saltar entre as sessões")
-        # _help.put_sentence(Sentence() + "     " + RToken("g", "{ ") + " ou " + RToken("g", " }") + " - Expande ou contrai todas as sessões")
         _help.put_sentence(Sentence() + f"{Actions.ler_online} " + RToken("r", f"{Key.github_open}") + "  Abre tarefa em uma aba do browser")
         _help.put_sentence(Sentence() + f"   {Actions.baixar} " + RToken("r", f"{Key.down_task}") + "  Baixa tarefa de código para seu dispositivo")
         _help.put_sentence(Sentence() + f"   {Actions.editar} " + RToken("r", f"{Key.edit}") + "  Abre os arquivos no editor de código")
-        _help.put_sentence(Sentence() + f"   {Actions.ativar} " + RToken("r", "↲") + "  Escolhe a tarefa de código que você baixou")
+        _help.put_sentence(Sentence() + f"   {Actions.ativar} " + RToken("r", "↲") + "  Interage com o elemento q")
         _help.put_sentence(Sentence() + f"   {Actions.marcar} " + RToken("r", f"{Key.inc_grade}") + RToken("r", f"{Key.dec_grade}") + " Muda a pontuação da tarefa")
-        # _help.put_sentence(Sentence() + f"{Actions.desmarcar} " + RToken("r", f"{Key.dec_grade}") + RToken("g", " ou ") + RToken("r", "backspace") + " - Diminui a pontuação da tarefa")
         _help.put_sentence(Sentence())
         _help.put_sentence(Sentence() + "Você pode mudar o editor padrão com o comando")
         _help.put_sentence(Sentence() + RToken("g", "             tko config --editor <comando>"))
@@ -7328,10 +7370,6 @@ class Play:
                 xpobt2 = xp.get_xp_level_needed()
                 text = "Level:{} XP:{}/{}".format(level, xpobt1, xpobt2)
 
-        # size = max(15, dx)
-        # done = "" if Flags.mono.is_true() else "g"
-        # todo = "" if Flags.mono.is_true() else "r"
-        # xp_bar = Sentence().add(Style.build_bar(text, percent, size, done, todo, fill_mode=False, round=False).add(" "))
         return text, percent
 
     def show_parrot(self):

@@ -595,15 +595,11 @@ class Play:
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
         # _help.put_text("")
         _help.put_sentence(Sentence() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
-        # _help.put_sentence(Sentence() + "              - Expandir ou contrair")
-        # _help.put_sentence(Sentence() + "              - Saltar entre as sessões")
-        # _help.put_sentence(Sentence() + "     " + RToken("g", "{ ") + " ou " + RToken("g", " }") + " - Expande ou contrai todas as sessões")
         _help.put_sentence(Sentence() + f"{Actions.ler_online} " + RToken("r", f"{Key.github_open}") + "  Abre tarefa em uma aba do browser")
         _help.put_sentence(Sentence() + f"   {Actions.baixar} " + RToken("r", f"{Key.down_task}") + "  Baixa tarefa de código para seu dispositivo")
         _help.put_sentence(Sentence() + f"   {Actions.editar} " + RToken("r", f"{Key.edit}") + "  Abre os arquivos no editor de código")
-        _help.put_sentence(Sentence() + f"   {Actions.ativar} " + RToken("r", "↲") + "  Escolhe a tarefa de código que você baixou")
+        _help.put_sentence(Sentence() + f"   {Actions.ativar} " + RToken("r", "↲") + "  Interage com o elemento q")
         _help.put_sentence(Sentence() + f"   {Actions.marcar} " + RToken("r", f"{Key.inc_grade}") + RToken("r", f"{Key.dec_grade}") + " Muda a pontuação da tarefa")
-        # _help.put_sentence(Sentence() + f"{Actions.desmarcar} " + RToken("r", f"{Key.dec_grade}") + RToken("g", " ou ") + RToken("r", "backspace") + " - Diminui a pontuação da tarefa")
         _help.put_sentence(Sentence())
         _help.put_sentence(Sentence() + "Você pode mudar o editor padrão com o comando")
         _help.put_sentence(Sentence() + RToken("g", "             tko config --editor <comando>"))
@@ -636,10 +632,6 @@ class Play:
                 xpobt2 = xp.get_xp_level_needed()
                 text = "Level:{} XP:{}/{}".format(level, xpobt1, xpobt2)
 
-        # size = max(15, dx)
-        # done = "" if Flags.mono.is_true() else "g"
-        # todo = "" if Flags.mono.is_true() else "r"
-        # xp_bar = Sentence().add(Style.build_bar(text, percent, size, done, todo, fill_mode=False, round=False).add(" "))
         return text, percent
 
     def show_parrot(self):

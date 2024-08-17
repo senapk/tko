@@ -256,7 +256,8 @@ class CDiff:
             self.unit_list = self.unit_list[1:]
             unit.result = Execution.run_unit(solver, unit, self.settings.geral.get_timeout())
             self.results.append((unit.result, index))
-            self.task.test_progress = (len(self.results) * 100) // len(self.wdir.get_unit_list())
+            success = [result for result, _ in self.results if result == ExecutionResult.SUCCESS]
+            self.task.test_progress = (len(success) * 100) // len(self.wdir.get_unit_list())
             self.focused_index = index
 
         if len(self.unit_list) == 0:
@@ -638,7 +639,12 @@ class CDiff:
 
     def change_limit(self):
             valor = self.settings.geral.get_timeout()
-            valor = (valor + 1) % 10
+            if valor == 0:
+                valor = 1
+            else:
+                valor *= 2
+            if valor >= 5:
+                valor = 0
             self.settings.geral.set_timeout(valor)
             self.save_settings()
             nome = "∞" if valor == 0 else str(valor)
