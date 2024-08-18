@@ -19,11 +19,11 @@ import urllib
 import tempfile
 import webbrowser
 import re
-import unicodedata
 import math
 import configparser
+import unicodedata
 from subprocess import PIPE
-__version__ = "0.20.7"
+__version__ = "0.20.8"
 
 
 def get_default_settings_for_borders() -> bool:
@@ -210,6 +210,104 @@ opening["estuda"] = r"""
                   \______/\\\\    
             _______ ||_||_______  
            (______(((_(((______(@)
+"""
+
+opening["alien"] = r"""
+       __.,,------.._
+      ,'"   _      _   "`.
+     /.__, ._  -=- _"`    Y
+    (.____.-.`      ""`   j
+     VvvvvvV`.Y,.    _.,-'       ,     ,     ,
+        Y    ||,   '"\         ,/    ,/    ./
+        |   ,'  ,     `-..,'_,'/___,'/   ,'/   ,
+   ..  ,;,,',-'"\,'  ,  .     '     ' ""' '--,/    .. ..
+ ,'. `.`---'     `, /  , Y -=-    ,'   ,   ,. .`-..||_|| ..
+ff\\`. `._        /f ,'j j , ,' ,   , f ,  \=\ Y   || ||`||_..
+l` \` `.`."`-..,-' j  /./ /, , / , / /l \   \=\l   || `' || ||...
+ `  `   `-._ `-.,-/ ,' /`"/-/-/-/-"'''"`.`.  `'.\--`'--..`'_`' || ,
+            "`-_,',  ,'  f    ,   /      `._    ``._     ,  `-.`'//         ,
+          ,-"'' _.,-'    l_,-'_,,'          "`-._ . "`. /|     `.'\ ,       |
+        ,',.,-'"          \=) ,`-.         ,    `-'._`.V |       \ // .. . /j
+        |f\\               `._ )-."`.     /|         `.| |        `.`-||-\\/
+        l` \`                 "`._   "`--' j          j' j          `-`---'
+         `  `                     "`,-  ,'/       ,-'"  /
+                                 ,'",__,-'       /,, ,-'
+                                 Vvv'            VVv'
+"""
+
+opening["alien2"] = r"""
+                                         (  )  () @@  )  (( (
+                                     (      (  )( @@  (  )) ) (
+                                   (    (  ( ()( /---\   (()( (
+     _______                            )  ) )(@ !O O! )@@  ( ) ) )
+    <   ____)                      ) (  ( )( ()@ \ o / (@@@@@ ( ()( )
+ /--|  |(  o|                     (  )  ) ((@@(@@ !o! @@@@(@@@@@)() (
+|   >   \___|                      ) ( @)@@)@ /---\-/---\ )@@@@@()( )
+|  /---------+                    (@@@@)@@@( // /-----\ \\ @@@)@@@@@(  .
+| |    \ =========______/|@@@@@@@@@@@@@(@@@ // @ /---\ @ \\ @(@@@(@@@ .  .
+|  \   \\=========------\|@@@@@@@@@@@@@@@@@ O @@@ /-\ @@@ O @@(@@)@@ @   .
+|   \   \----+--\-)))           @@@@@@@@@@ !! @@@@ % @@@@ !! @@)@@@ .. .
+|   |\______|_)))/             .    @@@@@@ !! @@ /---\ @@ !! @@(@@@ @ . .
+ \__==========           *        .    @@ /MM  /\O   O/\  MM\ @@@@@@@. .
+    |   |-\   \          (       .      @ !!!  !! \-/ !!  !!! @@@@@ .
+    |   |  \   \          )            .  @@@@ !!     !!  .(. @.  .. .
+    |   |   \   \        (    /   .(  . \)). ( |O  )( O! @@@@ . )      .
+    |   |   /   /         ) (      )).  ((  .) !! ((( !! @@ (. ((. .   .
+    |   |  /   /   ()  ))   ))   .( ( ( ) ). ( !!  )( !! ) ((   ))  ..
+    |   |_<   /   ( ) ( (  ) )   (( )  )).) ((/ |  (  | \(  )) ((. ).
+____<_____\\__\__(___)_))_((_(____))__(_(___.oooO_____Oooo.(_(_)_)((_
+"""
+
+opening["alien3"] = r"""
+           \.   \.      __,-"-.__      ./   ./
+       \.   \`.  \`.-'"" _,="=._ ""`-.'/  .'/   ./
+        \`.  \_`-''      _,="=._      ``-'_/  .'/
+         \ `-',-._   _.  _,="=._  ,_   _.-,`-' /
+      \. /`,-',-._ ""  \ _,="=._ /   ""_.-,`-,'\ ./
+       \`-'  /    `-._  "       "  _.-'    \  `-'/
+       /)   (         \    ,-.    /         )   (\
+    ,-'"     `-.       \  /   \  /       .-'     "`-,
+  ,'_._         `-.____/ /  _  \ \____.-'         _._`,
+ /,'   `.                \_/ \_/                .'   `,\
+/'       )                  _                  (       `\
+        /   _,-'"`-.  ,++|T|||T|++.  .-'"`-,_   \
+       / ,-'        \/|`|`|`|'|'|'|\/        `-, \
+      /,'             | | | | | | |             `,\
+     /'               ` | | | | | '               `\
+"""
+
+opening["alien4"] = r"""
+            ______              ______
+           /___   \___\ || /___/   ___\
+          //\]/\ ___  \\||//  ___ /\[/\\
+          \\/[\//  _)   \/   (_  \\/]\//
+           \___/ _/   o    o   \_ \___/
+               _/                \_
+              //'VvvvvvvvvvvvvvvV'\\
+             ( \.'^^^^^^^^^^^^^^'./ )
+              \____   . .. .   ____/
+   ________        \ . .''. . /        ________
+  /______  \________)________(________/ _______\
+ /|       \ \  Estuda seu miserável  / /       |\
+(\|____   / /                        \ \   ____|/)
+"""
+
+opening["alien5"] = r"""
+                   ⢀⡀⠤⠤⠤⠄ ⠒⠢⣄    
+                ⡠⠐⢈⠄        ⢸⠓⠄  
+              ⠐⠈⠠⠊         ⡠⠊ ⠈⢂ 
+            ⢀⠊ ⡐⠁        ⢠⢊⠔⠈   ⠆
+           ⣠⡃ ⢰    ⢀⡠⠄⠐⠒ ⢸⢜⠄     
+          ⡐⣁⡑ ⠘  ⢀⠔⢁⣀⣤⣤⣤⣒⣤ ⠈    ⡄
+          ⢫⣿⢧ ⢸  ⣡⣶⣯⠭⢄⣀⣼⡏⠁⢀⡤   ⢐⠁
+          ⢠⢿⣾⣧⠈ ⢠⣿⣿⣗⢢⣤⣿⡿⢋ ⡏    ⡌ 
+   Gosto  ⠘⠳⠙⠻  ⠰⠿⠟⠛⠻⢍⠫⠒⠁⡰   ⢀⠜  
+    de    ⠘⢄          ⢀⠠⢊ ⡇⢠⠒⠁   
+   comer    ⠈⢦⠂    ⢠⠊⠁ ⢀⠄ ⡇⢸     
+ cérebros    ⠘⢄⡄⢤⢄ ⠘⡄  ⡀⠄⢊⡅⡆⢆    
+    de         ⢊   ⠈⢁⠴⠅⣀⣀⠘⢣⠠⠈⠢⢀  
+  alunos       ⠈⠢⢄⣀⡠⠊  ⠈⢣ ⠈⠃⠡  ⠉⠐
+preguiçosos             ⠰⠇  ⠐⡑⠤⢀ 
 """
 
 intro: Dict[str, str] = {}
@@ -1488,7 +1586,9 @@ class PatternLoader:
         return unmatched
 
 
-
+def remove_accents(input_str: str):
+    nfkd_form = unicodedata.normalize('NFKD', input_str)
+    return u"".join([c for c in nfkd_form if not unicodedata.combining(c)])
 
 class Token:
     def __init__(self, text: str = "", fmt: str = "", ):
@@ -1791,6 +1891,7 @@ class Flags:
     admin = Flag().name("Admin").char("A").values(["0", "1"]).text("Mostra todas as missões e grupos").location("left")
     fortune = Flag().name("Fortuna").char("F").values(["0", "1"]).text("Mostra mensagem aleatórias na saída").location("left")
     images = Flag().name("Imagens").char("I").values(["1", "0"]).text("Mostra imagens aleatórias").location("left")
+    juntas = Flag().name("Juntas").char("J").values(["1", "0"]).text("Mostra conecções entre os elementos").location("left")
     config = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
     inventory = Flag().name("Inventário").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
     others = Flag().name("Outros").char("o").values(["0", "1"]).text("Mostra opções extras").location("bottom")
@@ -2476,7 +2577,7 @@ class Floating:
             elif self._type == "error":
                 self.set_header(" Erro ")
             elif self._type == "answer":
-                self.set_header(" Resposta ")
+                self.set_header(" Pergunta ")
 
     def warning(self):
         self._type = "warning"
@@ -2523,7 +2624,7 @@ class Floating:
                     self._exit_fn()
                 if self._exit_key is not None:
                     return self._exit_key
-                if key == ord(" ") or key == ord("\n"):
+                if key == ord(" ") or key == 27:
                     return -1
                 return key
         if self._type == "answer":
@@ -2531,6 +2632,8 @@ class Floating:
                 self._options_index = (self._options_index - 1) % len(self._options)
             elif key == curses.KEY_RIGHT:
                 self._options_index = (self._options_index + 1) % len(self._options)
+            elif key == 27:
+                self._enable = False
             elif key == ord('\n'):
                 self._enable = False
                 if self._fn_answer is not None:
@@ -3168,10 +3271,6 @@ class Cluster:
 
 
 
-def remove_accents(input_str):
-    nfkd_form = unicodedata.normalize('NFKD', input_str)
-    return u"".join([c for c in nfkd_form if not unicodedata.combining(c)])
-
 def load_html_tags(task: str) -> Optional[str]:
     pattern = r"<!--\s*(.*?)\s*-->"
     match = re.search(pattern, task)
@@ -3728,6 +3827,7 @@ class TaskTree:
         self.index_begin = 0
 
         self.max_title = 0
+        self.search_text = ""
 
         self.load_from_rep()
 
@@ -3805,6 +3905,8 @@ class TaskTree:
     def str_task(self, in_focus: bool, t: Task, lig_cluster: str, lig_quest: str, min_value=1) -> Sentence:
         downloadable_in_focus = False
         rootdir = self.local.get_rootdir()
+        down_symbol = Token(" ")
+
         down_symbol = symbols.cant_download
         rep_dir = os.path.join(self.local.get_rootdir(), self.rep_alias)
         if t.is_downloadable() and rootdir != "":
@@ -3817,10 +3919,11 @@ class TaskTree:
 
         output = Sentence()
         output.add(" " + lig_cluster)
-        output.add(down_symbol)
+        output.add(" ")
         output.add(lig_quest)
+        output.add(down_symbol)
+        output.add(" ")
         output.add(t.get_grade_symbol(min_value))
-
         focus_color = Style.focus()
 
         if in_focus:
@@ -3858,6 +3961,8 @@ class TaskTree:
 
     def str_quest(self, in_focus: bool, q: Quest, lig: str) -> Sentence:
         con = "━─" if q.key not in self.expanded else "─┯"
+        if self.clean_visual():
+            con = " │"
         output: Sentence = Sentence().add(" " + lig + con)
 
         focus_color = Style.focus()
@@ -3901,11 +4006,18 @@ class TaskTree:
 
         return output
 
+    def clean_visual(self):
+        if not Flags.juntas.is_true():
+            return True
+        return self.search_text != ""
+
     def str_cluster(self, in_focus: bool, cluster: Cluster) -> Sentence:
         output: Sentence = Sentence()
         opening = "━─"
         if cluster.key in self.expanded:
             opening = "─┯"
+        if self.clean_visual():
+            opening = "  "
         output.add(opening)
 
         focus_color = Style.focus()
@@ -3913,9 +4025,8 @@ class TaskTree:
         if in_focus:
             color = "k" + focus_color
         title = cluster.title
-        # if Flags.dots.is_true():
-        title = cluster.title.ljust(self.max_title, ".")
 
+        title = cluster.title.ljust(self.max_title, ".")
         if in_focus:
             output.addf(focus_color.lower(), Style.roundL())
         else:
@@ -3944,32 +4055,78 @@ class TaskTree:
     def get_available_quests_from_cluster(self, cluster: Cluster) -> List[Quest]:
         return [q for q in cluster.quests if q in self.available_quests]
 
+    def add_in_search(self, item: Any, sentence: Sentence) -> bool:
+        search_value = remove_accents(self.search_text)
+        if search_value == "":
+            self.items.append(Entry(item, sentence))
+            return True
+        text = remove_accents(sentence.get_text().lower())
+        pos = text.find(search_value)
+        if pos != -1:
+            for i in range(pos, pos + len(search_value)):
+                sentence.data[i].fmt = "R"
+        if isinstance(item, Task):
+            if search_value in remove_accents(item.title.lower()):
+                self.items.append(Entry(item, sentence))
+                return True
+        elif isinstance(item, Quest):
+            if search_value in remove_accents(item.title.lower()):
+                self.items.append(Entry(item, sentence))
+                return True
+            for t in item.get_tasks():
+                if search_value in remove_accents(t.title.lower()):
+                    self.items.append(Entry(item, sentence))
+                    return True
+        elif isinstance(item, Cluster):
+            if search_value in remove_accents(item.title.lower()):
+                self.items.append(Entry(item, sentence))
+                return True
+            for q in self.get_available_quests_from_cluster(item):
+                if search_value in remove_accents(q.title.lower()):
+                    self.items.append(Entry(item, sentence))
+                    return True
+                for t in q.get_tasks():
+                    if search_value in remove_accents(t.title.lower()):
+                        self.items.append(Entry(item, sentence))
+                        return True
+        return False
+
     def reload_sentences(self):
+        searching: bool = self.clean_visual()
+        # searching = True
         self.update_max_title()
         index = 0
         self.items = []
         for cluster in self.available_clusters:
             quests = self.get_available_quests_from_cluster(cluster)
             sentence = self.str_cluster(self.index_selected == index, cluster)
-            self.items.append(Entry(cluster, sentence))
-            index += 1
+            # self.items.append(Entry(cluster, sentence))
+            if self.add_in_search(cluster, sentence):
+                index += 1
 
             if cluster.key not in self.expanded:  # va para proximo cluster
                 continue
 
             for q in quests:
-                lig = "├" if q != quests[-1] else "╰"
+                lig = " "
+                if not searching:
+                    lig = "├" if q != quests[-1] else "╰"
                 sentence = self.str_quest(self.index_selected == index, q, lig)
-                self.items.append(Entry(q, sentence))
-                index += 1
+
+                # self.items.append(Entry(q, sentence))
+                if self.add_in_search(q, sentence):
+                    index += 1
                 if q.key in self.expanded:
                     for t in q.get_tasks():
-                        ligc = "│" if q != quests[-1] else " "
-                        ligq = "├ " if t != q.get_tasks()[-1] else "╰ "
+                        ligc = " "
+                        ligq = "│ "
+                        if not searching: #├
+                            ligc = "│" if q != quests[-1] else " "
+                            ligq = "├ " if t != q.get_tasks()[-1] else "╰ "
                         min_value = 7 if q.tmin is None else q.tmin
                         sentence = self.str_task(self.index_selected == index, t, ligc, ligq, min_value)
-                        self.items.append(Entry(t, sentence))
-                        index += 1
+                        if self.add_in_search(t, sentence):
+                            index += 1
 
         if self.index_selected >= len(self.items):
             self.index_selected = len(self.items) - 1
@@ -6451,7 +6608,7 @@ class CDiff:
             )
 
     def process_key(self, key):
-        if key == ord('q'):
+        if key == ord('q') or key == 27:
             self.set_exit()
         elif key == curses.KEY_LEFT or key == ord(DKeys.left):
             self.go_left()
@@ -6739,6 +6896,7 @@ class Actions:
     marcar = "Marcar"
     desmarcar = "Desmarcar"
     colapsar = "Colapsar"
+    pesquisar = "Pesquisar"
 
 class Key:
     left = "a"
@@ -6771,6 +6929,7 @@ class Key:
     edit= "e"
     cores = "C"
     bordas = "B"
+    pesquisar = "/"
 
 class Play:
     def __init__(
@@ -6802,7 +6961,8 @@ class Play:
         self.graph_ext = ""
 
         self.help_basic: List[Token] = [
-            RToken("Y", f"{Actions.colapsar}[{Key.collapse} {Key.expand}]"),
+            RToken("Y", f"{Actions.pesquisar}[{Key.pesquisar}]"),
+            #RToken("Y", f"{Actions.colapsar}[{Key.collapse} {Key.expand}]"),
             RToken("Y", f"{Actions.marcar}[{Key.inc_grade} {Key.dec_grade}]"),
             # RToken("Y", f"{Actions.desmarcar}[{Key.dec_grade}]"),
         ]
@@ -6824,6 +6984,8 @@ class Play:
         self.wrap_size = Sentence(" ").join(self.build_bottom_array()).len()
 
         self.opener = Opener(tree=self.tree, fman=self.fman, geral=geral, rep_data=rep_data, rep_alias=rep_alias)
+
+        self.search_mode: bool = False
 
     def save_to_json(self):
         self.tree.save_on_rep()
@@ -7108,6 +7270,8 @@ class Play:
         return out
 
     def build_bar_links(self) -> str:
+        if not self.tree.items:
+            return ""
         obj = self.tree.items[self.tree.index_selected].obj
         if isinstance(obj, Task):
             link = obj.link
@@ -7175,7 +7339,6 @@ class Play:
 
     def show_config_bar(self, frame: Frame):
         frame.set_header(Sentence().add("{").addf("/", "Config").add("}"), "^")
-        # frame.set_footer(Sentence().add(" ").add(self.rep.get_lang().upper()).add(" "), "^")
         frame.draw()
 
         pad = 11
@@ -7238,10 +7401,17 @@ class Play:
         frame.draw()
 
     def make_xp_button(self, size):
-        text, percent = self.build_xp_bar()
-        text = text.center(size)
-        done = Style.main_done()
-        todo = Style.main_todo()
+        if self.search_mode:
+            text = " Pesquisando: " + self.tree.search_text + "┊"
+            percent = 0.0
+            done = "W"
+            todo = "W"
+            text = text.ljust(size)
+        else:
+            text, percent = self.build_xp_bar()
+            done = Style.main_done()
+            todo = Style.main_todo()
+            text = text.center(size)
         xpbar = Style.build_bar(text, percent, len(text), done, todo)
         return xpbar
 
@@ -7291,7 +7461,6 @@ class Play:
 
         _help.put_sentence(Sentence("  ").addf("r", "Shift + B")
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
-        # _help.put_text("")
         _help.put_sentence(Sentence() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
         _help.put_sentence(Sentence() + f"{Actions.ler_online} " + RToken("r", f"{Key.github_open}") + "  Abre tarefa em uma aba do browser")
         _help.put_sentence(Sentence() + f"   {Actions.baixar} " + RToken("r", f"{Key.down_task}") + "  Baixa tarefa de código para seu dispositivo")
@@ -7338,11 +7507,12 @@ class Play:
         if not Flags.images.is_true():
             return
         _, cols = Fmt.get_size()
-        parrot = opening["parrot"]
+        parrot = opening["alien5"]
         parrot_lines = parrot.split("\n")
+        max_len = max([len(line) for line in parrot_lines])
         yinit = 1
         for y, line in enumerate(parrot_lines):
-            Fmt.write(yinit + y, cols - len(line) - 1, Sentence().addf("g", line))
+            Fmt.write(yinit + y, cols - max_len - 2, Sentence().addf("g", line))
 
     def show_items(self):
         Fmt.clear()
@@ -7424,11 +7594,16 @@ class Play:
             return random.choice(quit_msgs)
         return "Até a próxima!"
 
-    def make_callback(self) -> Dict[int, Any]:
+    def send_quit_msg(self):
         def set_exit():
             self.exit = True
 
-        calls: Dict[int, Callable[[None],None]] = {}
+        self.fman.add_input(
+            Floating().put_text("\n" + self.select_quit_msg() + "\n").set_exit_fn(set_exit).warning()
+        ),
+
+    def make_callback(self) -> Dict[int, Any]:
+        calls: Dict[int, Callable[[],None]] = {}
 
         def add_int(_key: int, fn):
             if _key in calls.keys():
@@ -7440,27 +7615,19 @@ class Play:
                 add_int(ord(str_key), fn)
 
         add_int(curses.KEY_RESIZE, self.disable_on_resize)
-        add_str(
-            Key.quit,
-            lambda: self.fman.add_input(
-                Floating().put_text("\n" + self.select_quit_msg() + "\n").set_exit_fn(set_exit).warning()
-            ),
-        )
+        add_str(Key.quit, self.send_quit_msg)
+        add_int(27, self.send_quit_msg)            
 
         add_str(Key.up, self.tree.move_up)
-        # add_str(Key.up2, self.tree.move_up)
         add_int(curses.KEY_UP, self.tree.move_up)
 
         add_str(Key.down, self.tree.move_down)
-        # add_str(Key.down2, self.tree.move_down)
         add_int(curses.KEY_DOWN, self.tree.move_down)
 
         add_str(Key.left, self.tree.arrow_left)
-        # add_str(Key.left2, self.tree.arrow_left)
         add_int(curses.KEY_LEFT, self.tree.arrow_left)
 
         add_str(Key.right, self.tree.arrow_right)
-        # add_str(Key.right2, self.tree.arrow_right)
         add_int(curses.KEY_RIGHT, self.tree.arrow_right)
 
         add_str(Key.ajuda, self.show_help)
@@ -7468,28 +7635,16 @@ class Play:
         add_str(Key.expand2, self.tree.process_expand)
         add_str(Key.collapse, self.tree.process_collapse)
         add_str(Key.collapse2, self.tree.process_collapse)
-
-        # add_str(Key.toggle_enter, self.tree.toggle)
-        # add_str(Key.toggle_space, self.tree.toggle)
         add_str(Key.github_open, self.open_link)
         add_str(Key.set_lang, lambda: self.set_language(False))
         add_str(Key.set_root_dir, lambda: self.set_rootdir(False))
         add_str(Key.down_task, self.down_task)
         add_str(Key.select_task, self.select_task)
         add_str("t", lambda: self.fman.add_input(Floating().put_text("\n Use o Enter para testar uma questão\n").warning()))
-        # add_str(Key.select_task2, self.select_task)
         add_str(Key.inc_grade, self.tree.inc_grade)
         add_str(Key.inc_grade2, self.tree.inc_grade)
         add_str(Key.dec_grade, self.tree.dec_grade)
         add_str(Key.dec_grade2, self.tree.dec_grade)
-        # add_str(",", self.tree.dec_grade)
-        # for value in Key.dec_grade2:
-        #     add_int(value, self.tree.dec_grade)
-        # add_str(Key.inc_grade2, self.tree.inc_grade)
-        # add_str(Key.dec_grade2, self.tree.dec_grade)
-        # add_str(Key.test_task, lambda: self.test_task(True))
-        # add_str(Key.open_draft, lambda: self.open_code(open_drafts = True, open_readme = False))
-        # add_str(Key.open_readme, lambda: self.open_code(open_drafts = False, open_readme = True))
         add_str(Key.edit, lambda: self.opener.open_code(open_dir=True))
         add_str(Key.cores, self.geral.toggle_color)
         add_str(Key.bordas, self.geral.toggle_nerdfonts)
@@ -7506,9 +7661,67 @@ class Play:
 
         add_str(Flags.config.get_char(), self.toggle_config)
         add_str(Flags.inventory.get_char(), self.FlagFunctor(self.fman, Flags.inventory))
-        # add_str(Flags.xpbar.get_char(), self.FlagFunctor(self.fman, Flags.xpbar))
+        add_str("/", self.toogle_search)
 
         return calls
+
+    def toogle_search(self):
+        self.search_mode = not self.search_mode
+        if self.search_mode:
+            self.expanded_backup = [v for v in self.tree.expanded]
+            self.tree.process_expand()
+            self.tree.process_expand()
+    
+    def finish_search(self):
+        self.search_mode = False
+        unit = self.tree.get_selected()
+        self.tree.index_selected = 0
+        self.tree.search_text = ""
+        self.tree.reload_sentences()
+    
+        for i, item in enumerate(self.tree.items):
+            if item.obj == unit:
+                self.tree.index_selected = i
+                break
+
+        self.tree.process_collapse()
+        self.tree.process_collapse()
+
+        if isinstance(unit, Task):
+            for cluster in self.tree.available_clusters:
+                for quest in cluster.quests:
+                    for task in quest.get_tasks():
+                        if task == unit:
+                            self.tree.expanded = [cluster.key, quest.key]
+        elif isinstance(unit, Quest):
+            for cluster in self.tree.available_clusters:
+                for quest in cluster.quests:
+                    if quest == unit:
+                        self.tree.expanded = [cluster.key]
+        self.tree.reload_sentences()
+        for i, item in enumerate(self.tree.items):
+            if item.obj == unit:
+                self.tree.index_selected = i
+                break
+
+
+    def process_search(self, key):
+        if key == 27:
+            self.search_mode = False
+            self.tree.search_text = ""
+            self.tree.expanded = [v for v in self.expanded_backup]
+        elif key == ord("\n"):
+            self.finish_search()
+    
+        elif key == curses.KEY_UP:
+            self.tree.move_up()
+        elif key == curses.KEY_DOWN:
+            self.tree.move_down()
+        elif key == 127 or key == 263 or key == 330:
+            self.tree.search_text = self.tree.search_text[:-1]
+        elif key >= 32 and key < 127:
+            self.tree.search_text += chr(key).lower()
+        
 
     def send_char_not_found(self, key):
         self.fman.add_input(
@@ -7531,6 +7744,7 @@ class Play:
     #     )
 
     def main(self, scr):
+        curses.set_escdelay(25)
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
@@ -7546,14 +7760,18 @@ class Play:
                 value: int = self.fman.get_input()
             else:
                 value = scr.getch()
+                if value == 195:
+                    value = scr.getch()
+                    if value == 167: #ç
+                        value = ord("c")
 
-            if value in calls.keys():
+            if self.search_mode:
+                self.process_search(value)
+            elif value in calls.keys():
                 callback = calls[value]()
                 if callback is not None:
                     return callback
-            elif value == ord("\n") or value == ord(" "):
-                self.fman.add_input(Floating("v>").warning().put_text("\n Utilize esquerda e direita\npara navegar,\n compactar e expandir tópicos \n").put_text(""))
-            elif value != -1:
+            elif value != -1 and value != 27:
                 self.send_char_not_found(value)
 
             self.tree.reload_sentences()

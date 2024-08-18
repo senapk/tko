@@ -655,7 +655,7 @@ class CDiff:
             )
 
     def process_key(self, key):
-        if key == ord('q'):
+        if key == ord('q') or key == 27:
             self.set_exit()
         elif key == curses.KEY_LEFT or key == ord(DKeys.left):
             self.go_left()

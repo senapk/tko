@@ -117,7 +117,7 @@ class Floating:
             elif self._type == "error":
                 self.set_header(" Erro ")
             elif self._type == "answer":
-                self.set_header(" Resposta ")
+                self.set_header(" Pergunta ")
 
     def warning(self):
         self._type = "warning"
@@ -164,7 +164,7 @@ class Floating:
                     self._exit_fn()
                 if self._exit_key is not None:
                     return self._exit_key
-                if key == ord(" ") or key == ord("\n"):
+                if key == ord(" ") or key == 27:
                     return -1
                 return key
         if self._type == "answer":
@@ -172,6 +172,8 @@ class Floating:
                 self._options_index = (self._options_index - 1) % len(self._options)
             elif key == curses.KEY_RIGHT:
                 self._options_index = (self._options_index + 1) % len(self._options)
+            elif key == 27:
+                self._enable = False
             elif key == ord('\n'):
                 self._enable = False
                 if self._fn_answer is not None:

@@ -3,7 +3,7 @@ from typing import List, Any, Dict, Tuple
 from ..settings.geral_settings import GeralSettings
 from ..settings.rep_settings import RepData
 
-from ..util.sentence import Sentence, Token
+from ..util.sentence import Sentence, Token, remove_accents
 from .flags import Flags
 from ..game.game import Game
 from ..game.cluster import Cluster
@@ -61,6 +61,7 @@ class TaskTree:
         self.index_begin = 0
 
         self.max_title = 0
+        self.search_text = ""
 
         self.load_from_rep()
 
@@ -138,6 +139,8 @@ class TaskTree:
     def str_task(self, in_focus: bool, t: Task, lig_cluster: str, lig_quest: str, min_value=1) -> Sentence:
         downloadable_in_focus = False
         rootdir = self.local.get_rootdir()
+        down_symbol = Token(" ")
+
         down_symbol = symbols.cant_download
         rep_dir = os.path.join(self.local.get_rootdir(), self.rep_alias)
         if t.is_downloadable() and rootdir != "":
@@ -150,10 +153,11 @@ class TaskTree:
 
         output = Sentence()
         output.add(" " + lig_cluster)
-        output.add(down_symbol)
+        output.add(" ")
         output.add(lig_quest)
+        output.add(down_symbol)
+        output.add(" ")
         output.add(t.get_grade_symbol(min_value))
-
         focus_color = Style.focus()
 
         if in_focus:
@@ -191,6 +195,8 @@ class TaskTree:
 
     def str_quest(self, in_focus: bool, q: Quest, lig: str) -> Sentence:
         con = "━─" if q.key not in self.expanded else "─┯"
+        if self.clean_visual():
+            con = " │"
         output: Sentence = Sentence().add(" " + lig + con)
 
         focus_color = Style.focus()
@@ -234,11 +240,18 @@ class TaskTree:
 
         return output
 
+    def clean_visual(self):
+        if not Flags.juntas.is_true():
+            return True
+        return self.search_text != ""
+
     def str_cluster(self, in_focus: bool, cluster: Cluster) -> Sentence:
         output: Sentence = Sentence()
         opening = "━─"
         if cluster.key in self.expanded:
             opening = "─┯"
+        if self.clean_visual():
+            opening = "  "
         output.add(opening)
 
         focus_color = Style.focus()
@@ -246,9 +259,8 @@ class TaskTree:
         if in_focus:
             color = "k" + focus_color
         title = cluster.title
-        # if Flags.dots.is_true():
-        title = cluster.title.ljust(self.max_title, ".")
 
+        title = cluster.title.ljust(self.max_title, ".")
         if in_focus:
             output.addf(focus_color.lower(), Style.roundL())
         else:
@@ -277,32 +289,78 @@ class TaskTree:
     def get_available_quests_from_cluster(self, cluster: Cluster) -> List[Quest]:
         return [q for q in cluster.quests if q in self.available_quests]
 
+    def add_in_search(self, item: Any, sentence: Sentence) -> bool:
+        search_value = remove_accents(self.search_text)
+        if search_value == "":
+            self.items.append(Entry(item, sentence))
+            return True
+        text = remove_accents(sentence.get_text().lower())
+        pos = text.find(search_value)
+        if pos != -1:
+            for i in range(pos, pos + len(search_value)):
+                sentence.data[i].fmt = "R"
+        if isinstance(item, Task):
+            if search_value in remove_accents(item.title.lower()):
+                self.items.append(Entry(item, sentence))
+                return True
+        elif isinstance(item, Quest):
+            if search_value in remove_accents(item.title.lower()):
+                self.items.append(Entry(item, sentence))
+                return True
+            for t in item.get_tasks():
+                if search_value in remove_accents(t.title.lower()):
+                    self.items.append(Entry(item, sentence))
+                    return True
+        elif isinstance(item, Cluster):
+            if search_value in remove_accents(item.title.lower()):
+                self.items.append(Entry(item, sentence))
+                return True
+            for q in self.get_available_quests_from_cluster(item):
+                if search_value in remove_accents(q.title.lower()):
+                    self.items.append(Entry(item, sentence))
+                    return True
+                for t in q.get_tasks():
+                    if search_value in remove_accents(t.title.lower()):
+                        self.items.append(Entry(item, sentence))
+                        return True
+        return False
+
     def reload_sentences(self):
+        searching: bool = self.clean_visual()
+        # searching = True
         self.update_max_title()
         index = 0
         self.items = []
         for cluster in self.available_clusters:
             quests = self.get_available_quests_from_cluster(cluster)
             sentence = self.str_cluster(self.index_selected == index, cluster)
-            self.items.append(Entry(cluster, sentence))
-            index += 1
+            # self.items.append(Entry(cluster, sentence))
+            if self.add_in_search(cluster, sentence):
+                index += 1
 
             if cluster.key not in self.expanded:  # va para proximo cluster
                 continue
 
             for q in quests:
-                lig = "├" if q != quests[-1] else "╰"
+                lig = " "
+                if not searching:
+                    lig = "├" if q != quests[-1] else "╰"
                 sentence = self.str_quest(self.index_selected == index, q, lig)
-                self.items.append(Entry(q, sentence))
-                index += 1
+
+                # self.items.append(Entry(q, sentence))
+                if self.add_in_search(q, sentence):
+                    index += 1
                 if q.key in self.expanded:
                     for t in q.get_tasks():
-                        ligc = "│" if q != quests[-1] else " "
-                        ligq = "├ " if t != q.get_tasks()[-1] else "╰ "
+                        ligc = " "
+                        ligq = "│ "
+                        if not searching: #├
+                            ligc = "│" if q != quests[-1] else " "
+                            ligq = "├ " if t != q.get_tasks()[-1] else "╰ "
                         min_value = 7 if q.tmin is None else q.tmin
                         sentence = self.str_task(self.index_selected == index, t, ligc, ligq, min_value)
-                        self.items.append(Entry(t, sentence))
-                        index += 1
+                        if self.add_in_search(t, sentence):
+                            index += 1
 
         if self.index_selected >= len(self.items):
             self.index_selected = len(self.items) - 1

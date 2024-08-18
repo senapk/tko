@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.20.8
+  - search finished
 - 0.20.6
   - border default for linux
   - align of buttons in other mode
