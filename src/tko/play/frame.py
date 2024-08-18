@@ -26,6 +26,7 @@ class Frame:
 
     def set_border_color(self, color: str):
         self._border_color = color
+        return self
 
     def get_dx(self):
         return self._inner_dx

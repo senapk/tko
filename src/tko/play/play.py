@@ -16,7 +16,8 @@ from .fmt import Fmt
 from .frame import Frame
 from .style import Style
 import urllib
-from .images import opening
+from .images import opening, random_get
+import datetime
 
 from .floating import Floating
 from .floating_manager import FloatingManager
@@ -131,6 +132,9 @@ class Play:
         self.opener = Opener(tree=self.tree, fman=self.fman, geral=geral, rep_data=rep_data, rep_alias=rep_alias)
 
         self.search_mode: bool = False
+        self.backup_expanded: List[str] = []
+        self.backup_index_selected = 0
+        self.backup_admin_mode = False
 
     def save_to_json(self):
         self.tree.save_on_rep()
@@ -283,7 +287,7 @@ class Play:
             return
         if self.graph_ext == "":
             return
-        reachable: List[str] = [q.key for q in self.tree.available_quests]
+        reachable: List[str] = self.game.available_quests
         counts = {}
         for q in self.game.quests.values():
             done = len([t for t in q.get_tasks() if t.is_complete()])
@@ -460,11 +464,13 @@ class Play:
         done = Style.main_done() + "/"
         todo = Style.main_todo() + "/"
         total_bar = Style.build_bar(text, total_perc / 100, dx - 2, done, todo)
-        frame_xp.set_header(Sentence().add("{").addf("/", "Skills").add("}"), "^")
+        frame_xp.set_header(Sentence().addf("/", "Skills"), "^", "{", "}")
         frame_xp.set_footer(Sentence().add(" ").add(self.geral.get_rootdir()).add(" "), "^")
         frame_xp.draw()
 
-        total, obt = self.game.get_skills_resume(self.tree.available_quests)
+
+
+        total, obt = self.game.get_skills_resume([self.game.quests[key] for key in self.game.available_quests])
         elements: List[Sentence] = []
         for skill, value in total.items():
             if Flags.percent.is_true():
@@ -487,7 +493,7 @@ class Play:
                 frame_xp.print(1, Sentence())
 
     def show_config_bar(self, frame: Frame):
-        frame.set_header(Sentence().add("{").addf("/", "Config").add("}"), "^")
+        frame.set_header(Sentence().addf("/", "Config"), "^", "{", "}")
         frame.draw()
 
         elements: List[Sentence] = []
@@ -556,7 +562,7 @@ class Play:
                 frame.write(0, 0, line_main.center(frame.get_dx()))
         
         frame.set_border_none()
-        frame.draw()
+        # frame.draw()
 
     def make_xp_button(self, size):
         if self.search_mode:
@@ -592,8 +598,9 @@ class Play:
             frame.write(0, 0, Sentence().add(help).add(" ").add(self.make_xp_button(size)).add(" ").add(flags).center(frame.get_dx()))
 
 
-        frame.set_border_none()
-        frame.draw()
+        # frame.set_border_none()
+        # frame.set_border_rounded()
+        # frame.draw()
 
     def show_help_config(self):
         _help: Floating = Floating("v>").warning().set_ljust_text().set_header(" Configurações ")
@@ -659,13 +666,15 @@ class Play:
 
         return text, percent
 
-    def show_parrot(self):
+    def show_opening(self):
         if Fmt.get_size()[1] < 100:
             return
         if not Flags.images.is_true():
             return
         _, cols = Fmt.get_size()
-        parrot = opening["alien5"]
+        
+        now = datetime.datetime.now()
+        parrot = random_get(opening, str(now.hour))
         parrot_lines = parrot.split("\n")
         max_len = max([len(line) for line in parrot_lines])
         yinit = 1
@@ -673,6 +682,7 @@ class Play:
             Fmt.write(yinit + y, cols - max_len - 2, Sentence().addf("g", line))
 
     def show_items(self):
+        border_color = "r" if Flags.admin.is_true() else ""
         Fmt.clear()
         self.tree.reload_sentences()
         lines, cols = Fmt.get_size()
@@ -692,26 +702,26 @@ class Play:
         skills_sx = 0
         if Flags.inventory.is_true():
             skills_sx = max(20, main_sx // 4)
-            frame_skills = Frame(0, cols - skills_sx).set_size(main_sy, skills_sx)
+            frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)
             self.show_inventary_bar(frame_skills)
         else:
-            self.show_parrot()
+            self.show_opening()
 
         flags_sx = 0
         if Flags.config.is_true():
             flags_sx = 18
-            frame_flags = Frame(0, 0).set_size(main_sy, flags_sx)
+            frame_flags = Frame(mid_y, 0).set_size(mid_sy, flags_sx).set_border_color(border_color)
             self.show_config_bar(frame_flags)
 
         task_sx = main_sx - flags_sx - skills_sx
 
-        frame_top = Frame(top_y, flags_sx).set_size(top_dy + 2, task_sx)
+        frame_top = Frame(top_y, 0).set_size(top_dy + 2, cols)
         self.show_top_bar(frame_top)
 
-        frame_bottom = Frame(lines - bottom_dy - 1, flags_sx).set_size(bottom_dy + 2, task_sx)
+        frame_bottom = Frame(lines - bottom_dy - 1, 0).set_size(bottom_dy + 2, cols)
         self.show_bottom_bar(frame_bottom)
 
-        frame_main = Frame(mid_y, flags_sx).set_size(mid_sy, task_sx)
+        frame_main = Frame(mid_y, flags_sx).set_size(mid_sy, task_sx).set_border_color(border_color)
         self.show_main_bar(frame_main)
 
     class FlagFunctor:
@@ -774,7 +784,9 @@ class Play:
 
         add_int(curses.KEY_RESIZE, self.disable_on_resize)
         add_str(Key.quit, self.send_quit_msg)
-        add_int(27, self.send_quit_msg)            
+        add_int(27, self.send_quit_msg)
+        add_int(curses.KEY_BACKSPACE, self.send_quit_msg)
+
 
         add_str(Key.up, self.tree.move_up)
         add_int(curses.KEY_UP, self.tree.move_up)
@@ -819,14 +831,17 @@ class Play:
 
         add_str(Flags.config.get_char(), self.toggle_config)
         add_str(Flags.inventory.get_char(), self.FlagFunctor(self.fman, Flags.inventory))
-        add_str("/", self.toogle_search)
+        add_str("/", self.toggle_search)
 
         return calls
 
-    def toogle_search(self):
+    def toggle_search(self):
         self.search_mode = not self.search_mode
         if self.search_mode:
-            self.expanded_backup = [v for v in self.tree.expanded]
+            self.backup_expanded = [v for v in self.tree.expanded]
+            self.backup_index_selected = self.tree.index_selected
+            self.backup_admin_mode = Flags.admin.is_true()
+            self.tree.update_tree(admin_mode=True)
             self.tree.process_expand()
             self.tree.process_expand()
     
@@ -835,24 +850,34 @@ class Play:
         unit = self.tree.get_selected()
         self.tree.index_selected = 0
         self.tree.search_text = ""
+        if self.backup_admin_mode == False:
+            self.tree.update_tree(admin_mode=False)
         self.tree.reload_sentences()
     
+        found = False
         for i, item in enumerate(self.tree.items):
             if item.obj == unit:
                 self.tree.index_selected = i
+                found = True
                 break
 
         self.tree.process_collapse()
         self.tree.process_collapse()
 
+        if not found:
+            self.fman.add_input(Floating().error().put_text("Elemento nao acessível no modo normal.\nEntre no modo Admin(SHIFT A)\nantes da busca\npara habilitar acesso"))
+            return
+
         if isinstance(unit, Task):
-            for cluster in self.tree.available_clusters:
+            for cluster_key in self.game.available_clusters:
+                cluster = self.game.clusters[cluster_key]
                 for quest in cluster.quests:
                     for task in quest.get_tasks():
                         if task == unit:
                             self.tree.expanded = [cluster.key, quest.key]
         elif isinstance(unit, Quest):
-            for cluster in self.tree.available_clusters:
+            for cluster_key in self.game.available_clusters:
+                cluster = self.game.clusters[cluster_key]
                 for quest in cluster.quests:
                     if quest == unit:
                         self.tree.expanded = [cluster.key]
@@ -867,7 +892,8 @@ class Play:
         if key == 27:
             self.search_mode = False
             self.tree.search_text = ""
-            self.tree.expanded = [v for v in self.expanded_backup]
+            self.tree.expanded = [v for v in self.backup_expanded]
+            self.tree.index_selected = self.backup_index_selected
         elif key == ord("\n"):
             self.finish_search()
     
@@ -875,7 +901,7 @@ class Play:
             self.tree.move_up()
         elif key == curses.KEY_DOWN:
             self.tree.move_down()
-        elif key == 127 or key == 263 or key == 330:
+        elif key == curses.KEY_BACKSPACE or key == 263 or key == 330:
             self.tree.search_text = self.tree.search_text[:-1]
         elif key >= 32 and key < 127:
             self.tree.search_text += chr(key).lower()
@@ -908,7 +934,7 @@ class Play:
         Fmt.set_scr(scr)  # Define o scr como global
 
         while not self.exit:
-            self.tree.update_available()
+            self.tree.update_tree(admin_mode=Flags.admin.is_true() or self.search_mode)
             self.fman.draw_warnings()
             self.generate_graph()
             calls = self.make_callback()

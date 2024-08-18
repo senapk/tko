@@ -20,6 +20,13 @@ class Quest:
         self.qmin: Optional[int] = None  # q:  minimo de 50 porcento da pontuação total para completar
         self.tmin: Optional[int] = None  # t: ou ter no mínimo esse valor de todas as tarefas
         self.filename = ""
+        self.__is_reachable: bool = False
+        
+    def is_reachable(self)-> bool:
+        return self.__is_reachable
+
+    def set_reachable(self, value: bool):
+        self.__is_reachable = value
 
     def __str__(self):
         line = str(self.line_number).rjust(3)
@@ -119,15 +126,7 @@ class Quest:
             return False
         return True
 
-    def is_reachable(self, cache: Dict[str, bool]):
-        if self.key in cache:
-            return cache[self.key]
 
-        if len(self.requires_ptr) == 0:
-            cache[self.key] = True
-            return True
-        cache[self.key] = all([r.is_complete() and r.is_reachable(cache) for r in self.requires_ptr])
-        return cache[self.key]
 
 
 class QuestParser:

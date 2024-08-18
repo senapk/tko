@@ -1,10 +1,5 @@
 from __future__ import annotations
 from typing import List,  Any, Tuple, Union
-import unicodedata
-
-def remove_accents(input_str: str):
-    nfkd_form = unicodedata.normalize('NFKD', input_str)
-    return u"".join([c for c in nfkd_form if not unicodedata.combining(c)])
 
 class Token:
     def __init__(self, text: str = "", fmt: str = "", ):
