@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.21.1
+  - add: random images on opening
 - 0.21.0
   - add: auto ajustment in config and inventary bar
 - 0.20.8

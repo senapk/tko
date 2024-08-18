@@ -10,7 +10,7 @@ from typing import List, Tuple, Optional
 from .play.frame import Frame
 from .play.floating import Floating
 from .play.floating_manager import FloatingManager
-from .play.images import images, compilling, success, intro, executing
+from .play.images import images, compilling, success, intro, executing, random_get
 from .util.runner import Runner
 from .util.freerun import Free
 from .play.style import Style
@@ -124,25 +124,15 @@ class CDiff:
             else:
                 Fmt.write(i + init_y, 1, Sentence().addf(color, line).center(dx - 2, Token(" ", " ")))
 
-
-    def random_get(self, dic: dict, mode:str = "static"):
-        if mode == "static":
-            count = sum([ord(c) for c in self.get_folder()])
-            keys = list(dic.keys())
-            return dic[keys[count % len(keys)]]
-        else:
-            keys = list(dic.keys())
-            return dic[random.choice(keys)]
-
     def show_success(self):
         if self.success_type == Success.RANDOM:
-            out = self.random_get(images, "static")
+            out = random_get(images, self.get_folder(), "static")
         else:
-            out = self.random_get(success, "static")
+            out = random_get(success, self.get_folder(), "static")
         self.print_centered_image(out, "" if not self.colors else "g")
         
     def show_compilling(self, clear=False):
-        out = self.random_get(compilling, "random")
+        out = random_get(compilling, self.get_folder(), "random")
         self.print_centered_image(out, "" if not self.colors else "y", clear)
 
     def show_executing(self, clear=False):
@@ -524,7 +514,7 @@ class CDiff:
             self.draw_top_bar()
 
             if self.mode == Mode.intro:
-                self.print_centered_image(self.random_get(intro), "y")
+                self.print_centered_image(random_get(intro, self.get_folder()), "y")
             else:
                 self.draw_main()
             

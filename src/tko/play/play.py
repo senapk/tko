@@ -16,7 +16,8 @@ from .fmt import Fmt
 from .frame import Frame
 from .style import Style
 import urllib
-from .images import opening
+from .images import opening, random_get
+import datetime
 
 from .floating import Floating
 from .floating_manager import FloatingManager
@@ -665,7 +666,9 @@ class Play:
         if not Flags.images.is_true():
             return
         _, cols = Fmt.get_size()
-        parrot = opening["alien5"]
+        
+        now = datetime.datetime.now()
+        parrot = random_get(opening, str(now.hour))
         parrot_lines = parrot.split("\n")
         max_len = max([len(line) for line in parrot_lines])
         yinit = 1
