@@ -23,7 +23,7 @@ import math
 import configparser
 import unicodedata
 from subprocess import PIPE
-__version__ = "0.20.8"
+__version__ = "0.21.0"
 
 
 def get_default_settings_for_borders() -> bool:
@@ -7302,7 +7302,7 @@ class Play:
             frame.write(y, 0, sentence)
 
     def show_inventary_bar(self, frame_xp):
-        _, dx = frame_xp.get_inner()
+        dy, dx = frame_xp.get_inner()
         xp = XP(self.game)
         total_perc = int(
             100 * (xp.get_xp_total_obtained() / xp.get_xp_total_available())
@@ -7320,47 +7320,60 @@ class Play:
         frame_xp.draw()
 
         total, obt = self.game.get_skills_resume(self.tree.available_quests)
-        index = 0
+        elements: List[Sentence] = []
         for skill, value in total.items():
             if Flags.percent.is_true():
                 text = f"{skill}:{int(100 * obt[skill] / value)}%"
             else:
                 text = f"{skill}:{obt[skill]}/{value}"
-
             perc = obt[skill] / value
             done = Style.skill_done() + "/"
             todo = Style.skill_todo() + "/"
-
             skill_bar = Style.build_bar(text, perc, dx - 2, done, todo)
-            frame_xp.write(index, 1, skill_bar)
-            index += 2
+            elements.append(skill_bar)
+            
+        elements.append(total_bar)
 
-        frame_xp.write(index, 1, total_bar)
+        line_breaks = dy - len(elements)
+        for skill_bar in elements:
+            frame_xp.print(1, skill_bar)
+            if line_breaks > 0:
+                line_breaks -= 1
+                frame_xp.print(1, Sentence())
 
     def show_config_bar(self, frame: Frame):
         frame.set_header(Sentence().add("{").addf("/", "Config").add("}"), "^")
         frame.draw()
 
+        elements: List[Sentence] = []
         pad = 11
         for flag in self.flagsman.left:
-            if flag.is_bool():
-                frame.print(0, Style.get_flag_sentence(flag, pad))
-                frame.print(0, Sentence())
+            elements.append(Style.get_flag_sentence(flag, pad))
 
-        color = "W" if not self.geral.is_colored() else "C"
 
         colored = Flag().name("Colorido").char("C").values(["1" if self.geral.is_colored() else "0"]).text("Ativa ou desativa as cores").bool()
-        frame.print(0, Style.get_flag_sentence(colored, pad))
-        frame.print(0, Sentence())
-
+        elements.append(Style.get_flag_sentence(colored, pad))
         bordas = Flag().name("Bordas").char("B").values(["1" if self.geral.is_nerdfonts() else "0"]).text("Ativa ou desativa as bordas").bool()
-        frame.print(0, Style.get_flag_sentence(bordas, pad))
-        frame.print(0, Sentence())
+        elements.append(Style.get_flag_sentence(bordas, pad))
         
-        frame.print(0, Sentence().addf(color.lower(), Style.roundL()).addf(color, "DirDestino [D]").addf(color.lower(), Style.roundR()))
-        frame.print(0, Sentence())
-        frame.print(0, Sentence().addf(color.lower(), Style.roundL()).addf(color, "Linguagem  [L]").addf(color.lower(), Style.roundR()))
-        frame.print(0, Sentence())
+        color = "W" if not self.geral.is_colored() else "C"
+        elements.append(Sentence().addf(color.lower(), Style.roundL()).addf(color, "DirDestino [D]").addf(color.lower(), Style.roundR()))
+        elements.append(Sentence().addf(color.lower(), Style.roundL()).addf(color, "Linguagem  [L]").addf(color.lower(), Style.roundR()))
+
+        # dy, dx = frame.get_inner()
+        # line_breaks = dy - len(elements) + 1
+        # for i, elem in enumerate(elements):
+        #     frame.print(0, elem)
+        #     if line_breaks > len(elements) - i - 1:
+        #         # line_breaks -= 1
+        #         frame.print(0, Sentence())
+        dy, dx = frame.get_inner()
+        line_breaks = dy - len(elements)
+        for i, elem in enumerate(elements):
+            frame.print(0, elem)
+            if line_breaks > 0:
+                line_breaks -= 1
+                frame.print(0, Sentence())
 
     def two_column_mode(self):
         _, cols = Fmt.get_size()

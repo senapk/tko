@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.21.0
+  - add: auto ajustment in config and inventary bar
 - 0.20.8
   - search finished
 - 0.20.6
