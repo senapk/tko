@@ -10,6 +10,14 @@ class Cluster:
         self.key: str = key
         self.quests: List[Quest] = []
         self.color: Optional[str] = color
+        self.__is_reachable = False
+
+    def is_reachable(self):
+        return self.__is_reachable
+    
+    def set_reachable(self, value: bool):
+        self.__is_reachable = value
+        return self
 
     def __str__(self):
         line = str(self.line_number).rjust(3)

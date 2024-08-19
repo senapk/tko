@@ -645,7 +645,8 @@ class CDiff:
             )
 
     def process_key(self, key):
-        if key == ord('q') or key == 27:
+        key_esc = 27
+        if key == ord('q') or key == key_esc or key == curses.KEY_BACKSPACE:
             self.set_exit()
         elif key == curses.KEY_LEFT or key == ord(DKeys.left):
             self.go_left()
@@ -672,7 +673,7 @@ class CDiff:
                 self.opener.open_code(open_dir=True)
         elif key == ord(DKeys.limite):
             self.change_limit()
-        elif key == ord('o'):
+        elif key == ord(DKeys.outros):
             Flags.others.toggle()
         elif key != -1 and key != curses.KEY_RESIZE:
             self.send_char_not_found(key)

@@ -1,9 +1,10 @@
-from typing import List, Any, Dict, Tuple
+from typing import List, Any, Dict, Tuple, Union
 
 from ..settings.geral_settings import GeralSettings
 from ..settings.rep_settings import RepData
 
-from ..util.sentence import Sentence, Token, remove_accents
+from ..util.sentence import Sentence, Token
+from ..util.to_asc import SearchAsc, uni_to_asc
 from .flags import Flags
 from ..game.game import Game
 from ..game.cluster import Cluster
@@ -16,31 +17,12 @@ from .style import Style
 import os
 
 class Entry:
-    def __init__(self, obj: Any, sentence: Sentence):
+    def __init__(self, obj: Union[Task, Quest, Cluster], sentence: Sentence):
         self.obj = obj
         self.sentence = sentence
 
     def get(self):
         return self.sentence
-
-# class TaskProgress:
-#     def __init__(self):
-#         self.grade = 0
-#         self.index = 0
-#         self.progress = 0
-
-#     def from_str(self, value: str):
-#         if ":" not in value:
-#             self.grade = int(value)
-#         else:
-#             v = value.split(":")
-#             if len(v) == 3:
-#                 self.grade = int(v[0])
-#                 self.index = int(v[1])
-#                 self.progress = int(v[2])
-    
-#     def to_str(self):
-#         return f"{self.grade}:{self.index}:{self.progress}"
 
 class TaskTree:
 
@@ -50,22 +32,13 @@ class TaskTree:
         self.rep = rep
         self.rep_alias = rep_alias
 
-        self.available_quests: List[Quest] = []
-        self.available_clusters: List[Cluster] = []
-
         self.items: List[Entry] = []
-        # self.new_items: List[str] = []
-        # self.expanded: List[str] = []
-
         self.index_selected = 0
         self.index_begin = 0
-
         self.max_title = 0
         self.search_text = ""
-
         self.load_from_rep()
-
-        self.update_available()
+        self.update_tree(admin_mode=Flags.admin.is_true())
         self.reload_sentences()
 
     def load_from_rep(self):
@@ -79,8 +52,7 @@ class TaskTree:
                 self.game.tasks[key].load_from_db(serial)
 
     def save_on_rep(self):
-        keys = [c.key for c in self.game.clusters]
-        keys.extend([key for key in self.game.quests.keys()])
+        keys = self.game.available_clusters + self.game.available_quests
         expanded = [item for item in self.expanded if item in keys]
         self.rep.set_expanded(expanded)
         self.rep.set_new_items(self.new_items)
@@ -92,55 +64,38 @@ class TaskTree:
         self.rep.set_tasks(tasks)
 
 
-    def update_available(self):
-        old_quests = [q for q in self.available_quests]
-        old_clusters = [c for c in self.available_clusters]
-        if Flags.admin.is_true():
-            self.available_quests = list(self.game.quests.values())
-            self.available_clusters = [c for c in self.game.clusters]
-        else:
-            self.available_quests = self.game.get_reachable_quests()
-            self.available_clusters = []
-            for c in self.game.clusters:
-                if any([q in self.available_quests for q in c.quests]):
-                    self.available_clusters.append(c)
+    def update_tree(self, admin_mode):
+        if not admin_mode:
+            old_reachable = self.game.available_clusters + self.game.available_quests
 
-        removed_clusters = [c for c in old_clusters if c not in self.available_clusters]
-        for c in removed_clusters:
-            if c.key in self.expanded:
-                self.expanded.remove(c.key)
-        removed_quests = [q for q in old_quests if q not in self.available_quests]
-        for q in removed_quests:
-            if q.key in self.expanded:
-                self.expanded.remove(q.key)
+        self.game.update_reachable_and_available(admin_mode)
+            
+        if not admin_mode:
+            available_keys = self.game.available_quests + self.game.available_clusters
+            for key in self.expanded:
+                if key not in available_keys:
+                    self.expanded.remove(key)
+                if key not in old_reachable:
+                    self.new_items.append(key)
 
-        added_clusters = [c for c in self.available_clusters if c not in old_clusters]
-        added_quests = [q for q in self.available_quests if q not in old_quests]
-
-        for c in added_clusters:
-            if c.key not in self.new_items:
-                self.new_items.append(c.key)
-        for q in added_quests:
-            if q.key not in self.new_items:
-                self.new_items.append(q.key)
-
+        # remove expanded items
         self.new_items = [item for item in self.new_items if item not in self.expanded]
-
 
     def update_max_title(self):
         items = []
-        for c in self.available_clusters:
-            items.append(len(c.title))
-            if c.key in self.expanded:
-                for q in c.quests:
-                    items.append(len(q.title) + 2)
+        for c in self.game.clusters.values():
+            if c.key in self.game.available_clusters:
+                items.append(len(c.title))
+                if c.key in self.expanded:
+                    for q in c.quests:
+                        items.append(len(q.title) + 2)
         self.max_title = max(items)
 
-    def str_task(self, in_focus: bool, t: Task, lig_cluster: str, lig_quest: str, min_value=1) -> Sentence:
+    def str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool, min_value=1) -> Sentence:
         downloadable_in_focus = False
         rootdir = self.local.get_rootdir()
         down_symbol = Token(" ")
-
+        in_focus = focus_color != ""
         down_symbol = symbols.cant_download
         rep_dir = os.path.join(self.local.get_rootdir(), self.rep_alias)
         if t.is_downloadable() and rootdir != "":
@@ -151,14 +106,15 @@ class TaskTree:
             else:
                 down_symbol = symbols.to_download
 
+        color_aval = "" if quest_reachable else "r"
+
         output = Sentence()
-        output.add(" " + lig_cluster)
+        output.add(" ").addf(color_aval, lig_cluster)
         output.add(" ")
-        output.add(lig_quest)
+        output.addf(color_aval, lig_quest)
         output.add(down_symbol)
         output.add(" ")
         output.add(t.get_grade_symbol(min_value))
-        focus_color = Style.focus()
 
         if in_focus:
             output.addf(focus_color.lower(), Style.roundL())
@@ -193,13 +149,14 @@ class TaskTree:
 
         return output
 
-    def str_quest(self, in_focus: bool, q: Quest, lig: str) -> Sentence:
+    def str_quest(self, focus_color: str, q: Quest, lig: str) -> Sentence:
         con = "━─" if q.key not in self.expanded else "─┯"
         if self.clean_visual():
             con = " │"
-        output: Sentence = Sentence().add(" " + lig + con)
+        color_reachable = "" if q.is_reachable() else "r"
+        output: Sentence = Sentence().addf(color_reachable, " " + lig + con)
 
-        focus_color = Style.focus()
+        in_focus = focus_color != ""
         if in_focus:
             output.addf(focus_color.lower(), Style.roundL())
         else:
@@ -245,23 +202,23 @@ class TaskTree:
             return True
         return self.search_text != ""
 
-    def str_cluster(self, in_focus: bool, cluster: Cluster) -> Sentence:
+    def str_cluster(self, focus_color: str, cluster: Cluster) -> Sentence:
         output: Sentence = Sentence()
         opening = "━─"
         if cluster.key in self.expanded:
             opening = "─┯"
         if self.clean_visual():
             opening = "  "
-        output.add(opening)
+        color_reachable = "" if cluster.is_reachable() else "r"
+        output.addf(color_reachable, opening)
 
-        focus_color = Style.focus()
         color = ""
-        if in_focus:
+        if focus_color != "":
             color = "k" + focus_color
         title = cluster.title
 
         title = cluster.title.ljust(self.max_title, ".")
-        if in_focus:
+        if focus_color != "":
             output.addf(focus_color.lower(), Style.roundL())
         else:
             output.add(" ")
@@ -271,7 +228,7 @@ class TaskTree:
 
         output.add(Style.build_bar(title, cluster.get_percent() / 100, len(title), done, todo, round=False))
 
-        if in_focus:
+        if focus_color != "":
             output.addf(focus_color.lower(), Style.roundR())
         else:
             output.add(" ")
@@ -286,66 +243,77 @@ class TaskTree:
 
         return output
 
-    def get_available_quests_from_cluster(self, cluster: Cluster) -> List[Quest]:
-        return [q for q in cluster.quests if q in self.available_quests]
 
     def add_in_search(self, item: Any, sentence: Sentence) -> bool:
-        search_value = remove_accents(self.search_text)
-        if search_value == "":
+        if self.search_text == "":
             self.items.append(Entry(item, sentence))
             return True
-        text = remove_accents(sentence.get_text().lower())
-        pos = text.find(search_value)
-        if pos != -1:
-            for i in range(pos, pos + len(search_value)):
-                sentence.data[i].fmt = "R"
+        
+        matcher = SearchAsc(self.search_text)
+        pos = matcher.find(sentence.get_text())
+        found = pos != -1
+        if found:
+            for i in range(pos, pos + len(self.search_text)):
+                sentence.data[i].fmt = "Y"
+
         if isinstance(item, Task):
-            if search_value in remove_accents(item.title.lower()):
+            if found:
                 self.items.append(Entry(item, sentence))
                 return True
         elif isinstance(item, Quest):
-            if search_value in remove_accents(item.title.lower()):
+            if found:
                 self.items.append(Entry(item, sentence))
                 return True
             for t in item.get_tasks():
-                if search_value in remove_accents(t.title.lower()):
+                if matcher.inside(t.title):
                     self.items.append(Entry(item, sentence))
                     return True
         elif isinstance(item, Cluster):
-            if search_value in remove_accents(item.title.lower()):
-                self.items.append(Entry(item, sentence))
+            cluster: Cluster = item
+            if matcher.inside(cluster.title):
+                self.items.append(Entry(cluster, sentence))
                 return True
-            for q in self.get_available_quests_from_cluster(item):
-                if search_value in remove_accents(q.title.lower()):
+            for q in cluster.quests:
+                if matcher.inside(q.title):
                     self.items.append(Entry(item, sentence))
                     return True
                 for t in q.get_tasks():
-                    if search_value in remove_accents(t.title.lower()):
+                    if matcher.inside(t.title):
                         self.items.append(Entry(item, sentence))
                         return True
         return False
 
+    def get_focus_color(self, item: Union[Quest, Cluster], index: int) -> str:
+        if index != self.index_selected:
+            return ""
+        if not item.is_reachable() and not Flags.admin.is_true():
+            return "R"
+        return Style.focus()
+
     def reload_sentences(self):
-        searching: bool = self.clean_visual()
-        # searching = True
+        clean_visual: bool = self.clean_visual()
         self.update_max_title()
         index = 0
         self.items = []
-        for cluster in self.available_clusters:
-            quests = self.get_available_quests_from_cluster(cluster)
-            sentence = self.str_cluster(self.index_selected == index, cluster)
-            # self.items.append(Entry(cluster, sentence))
+        available_quests = self.game.available_quests
+        available_clusters = self.game.available_clusters
+        clusters = [self.game.clusters[key] for key in available_clusters]
+        for cluster in clusters:
+            focus_color = self.get_focus_color(cluster, index)
+            sentence = self.str_cluster(focus_color, cluster)
+
             if self.add_in_search(cluster, sentence):
                 index += 1
 
-            if cluster.key not in self.expanded:  # va para proximo cluster
+            if cluster.key not in self.expanded:  # adicionou o cluster, mas não adicione as quests
                 continue
-
+            quests = [q for q in cluster.quests if q.key in available_quests]
             for q in quests:
                 lig = " "
-                if not searching:
+                if not clean_visual:
                     lig = "├" if q != quests[-1] else "╰"
-                sentence = self.str_quest(self.index_selected == index, q, lig)
+                focus_color = self.get_focus_color(q, index)
+                sentence = self.str_quest(focus_color, q, lig)
 
                 # self.items.append(Entry(q, sentence))
                 if self.add_in_search(q, sentence):
@@ -354,11 +322,12 @@ class TaskTree:
                     for t in q.get_tasks():
                         ligc = " "
                         ligq = "│ "
-                        if not searching: #├
+                        if not clean_visual: #├
                             ligc = "│" if q != quests[-1] else " "
                             ligq = "├ " if t != q.get_tasks()[-1] else "╰ "
                         min_value = 7 if q.tmin is None else q.tmin
-                        sentence = self.str_task(self.index_selected == index, t, ligc, ligq, min_value)
+                        focus_color = self.get_focus_color(q, index)
+                        sentence = self.str_task(focus_color, t, ligc, ligq, q.is_reachable(), min_value)
                         if self.add_in_search(t, sentence):
                             index += 1
 
@@ -367,37 +336,37 @@ class TaskTree:
 
 
     def process_collapse(self):
-        quest_keys = [q.key for q in self.available_quests]
-        if any([q in self.expanded for q in quest_keys]):
-            self.expanded = [key for key in self.expanded if key not in quest_keys]
+        if any([q in self.expanded for q in self.game.available_quests]):
+            self.expanded = [key for key in self.expanded if key not in self.game.available_quests]
         else:
             self.expanded = []
 
     def process_expand(self):
         # if any cluster outside expanded
         expand_clusters = False
-        for c in self.available_clusters:
-            if c.key not in self.expanded:
+        for ckey in self.game.available_clusters:
+            if ckey not in self.expanded:
                 expand_clusters = True
         if expand_clusters:
-            for c in self.available_clusters:
-                if c.key not in self.expanded:
-                    self.expanded.append(c.key)
+            for ckey in self.game.available_clusters:
+                if ckey not in self.expanded:
+                    self.expanded.append(ckey)
         else:
-            for q in self.available_quests:
-                if q.key not in self.expanded:
-                    self.expanded.append(q.key)
+            for qkey in self.game.available_quests:
+                if qkey not in self.expanded:
+                    self.expanded.append(qkey)
 
 
     def mass_mark(self):
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Cluster):
-            if obj.key not in self.expanded:
-                self.expanded.append(obj.key)
+            cluster: Cluster = obj
+            if cluster.key not in self.expanded:
+                self.expanded.append(cluster.key)
                 return
             full_open = True
-            for q in self.get_available_quests_from_cluster(obj):
-                if q.key not in self.expanded:
+            for q in cluster.quests:
+                if q.key in self.game.available_quests and q.key not in self.expanded:
                     self.expanded.append(q.key)
                     full_open = False
             if not full_open:

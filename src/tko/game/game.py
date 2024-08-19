@@ -3,7 +3,7 @@ from .cluster import Cluster
 from .quest import Quest, QuestParser
 from .task import Task, TaskParser
 from ..util.remote import get_md_link
-from ..util.sentence import remove_accents
+from ..util.to_asc import uni_to_asc
 
 import re
 import os
@@ -18,9 +18,13 @@ def load_html_tags(task: str) -> Optional[str]:
 
 class Game:
     def __init__(self, file: Optional[str] = None):
-        self.clusters: List[Cluster] = []  # clusters ordered
+        self.ordered_clusters: List[str] = [] # ordered clusters
+        self.clusters: Dict[str, Cluster] = {} 
         self.quests: Dict[str, Quest] = {}  # quests indexed by quest key
         self.tasks: Dict[str, Task] = {}  # tasks indexed by task key
+
+        self.available_quests: List[str] = []
+        self.available_clusters: List[str] = []
 
         self.token_level_one = "level_one"
         self.token_level_mult = "level_mult"
@@ -61,7 +65,7 @@ class Game:
             return None
         
         keys = [tag[1:] for tag in tags if tag.startswith("@")]
-        key = remove_accents(get_md_link(titulo))
+        key = uni_to_asc(get_md_link(titulo))
         try:
             color = [tag[2:] for tag in tags if tag.startswith("c:")][0]
         except IndexError as _e:
@@ -71,17 +75,17 @@ class Game:
         
         cluster = Cluster(line_num, titulo, key, color)
 
-        # search for existing cluster in self.clusters
-        for c in self.clusters:
-            if c.key == key:
-                print(f"Cluster {key} já existe")
-                print(f"{self.filename}:{line_num}")
-                print(f"{self.filename}:{c.line_number}")
-                print("  " + str(c))
-                print("  " + str(cluster))
-                exit(1)
+        if key in self.clusters.keys():
+            c = self.clusters[key]
+            print(f"Cluster {key} já existe")
+            print(f"{self.filename}:{line_num}")
+            print(f"{self.filename}:{c.line_number}")
+            print("  " + str(c))
+            print("  " + str(cluster))
+            exit(1)
                 
-        self.clusters.append(cluster)
+        self.clusters[key] = cluster
+        self.ordered_clusters.append(key)
         return cluster
                 
     def load_quest(self, line, line_num) -> Optional[Quest]:
@@ -165,7 +169,7 @@ class Game:
 
         # verify is there are keys repeated between quests, tasks and groups
 
-        keys = [c.key for c in self.clusters] +\
+        keys = [c.key for c in self.clusters.values()] +\
                [k for k in self.quests.keys()] +\
                [k for k in self.tasks.keys()]
 
@@ -184,7 +188,7 @@ class Game:
         # trim titles
         for q in self.quests.values():
             q.title = q.title.strip()
-        for c in self.clusters:
+        for c in self.clusters.values():
             c.title = c.title.strip()
 
         self.quests = valid_quests
@@ -234,8 +238,11 @@ class Game:
             if quest is not None:
                 active_quest = quest
                 if active_cluster is None:
-                    self.clusters.append(Cluster(0, "Sem grupo", "Sem grupo"))
-                    active_cluster = self.clusters[-1]
+                    key = "Sem Grupo"
+                    cluster = Cluster(0, key, key)
+                    self.clusters[key] = cluster
+                    self.ordered_clusters.append(key)
+                    active_cluster = cluster
                 quest.cluster = active_cluster.key
                 active_cluster.quests.append(quest)
                 continue
@@ -265,22 +272,61 @@ class Game:
                 del self.quests[k]
 
         # apagando quests vazias dos clusters e clusters vazios
-        clusters = []
-        for c in self.clusters:
-            quests = [q for q in c.quests if len(q.get_tasks()) > 0]
+        ordered_clusters: List[str] = []
+        clusters: Dict[str, Cluster] = {}
+        for key in self.ordered_clusters:
+            cluster = self.clusters[key]
+            quests = [q for q in cluster.quests if len(q.get_tasks()) > 0]
             if len(quests) > 0:
-                c.quests = quests
-                clusters.append(c)
+                cluster.quests = quests
+                clusters[cluster.key] = cluster
+                ordered_clusters.append(cluster.key)
+
+        self.ordered_clusters = ordered_clusters
         self.clusters = clusters
 
-    def get_reachable_quests(self):
-        # cache needs to be reseted before each call
+    @staticmethod
+    def __is_reachable_quest(q: Quest, cache: Dict[str, bool]):
+        if q.key in cache:
+            return cache[q.key]
+
+        if len(q.requires_ptr) == 0:
+            cache[q.key] = True
+            return True
+        cache[q.key] = all([r.is_complete() and Game.__is_reachable_quest(r, cache) for r in q.requires_ptr])
+        return cache[q.key]
+
+    # def __get_reachable_quests(self):
+    #     # cache needs to be reseted before each call
+    #     cache: Dict[str, bool] = {}
+    #     return [q for q in self.quests.values() if Game.__is_reachable_quest(q, cache)]
+
+    def update_reachable_and_available(self, admin_mode: bool):
+        for q in self.quests.values():
+            q.set_reachable(False)
+        for c in self.clusters.values():
+            c.set_reachable(False)
+
         cache: Dict[str, bool] = {}
-        return [q for q in self.quests.values() if q.is_reachable(cache)]
+        for c in self.clusters.values():
+            for q in c.quests:
+                if Game.__is_reachable_quest(q, cache):
+                    q.set_reachable(True)
+                    c.set_reachable(True)
+
+        self.available_quests = []
+        self.available_clusters = []
+        if admin_mode:
+            self.available_quests = [key for key in self.quests.keys()]
+            self.available_clusters = [key for key in self.clusters.keys()]
+        else:
+            self.available_quests = [q.key for q in self.quests.values() if q.is_reachable()]
+            self.available_clusters = [c.key for c in self.clusters.values() if c.is_reachable()]
+
 
     def __str__(self):
         output = []
-        for c in self.clusters:
+        for c in self.clusters.values():
             output.append(str(c))
             for q in c.quests:
                 output.append(str(q))
