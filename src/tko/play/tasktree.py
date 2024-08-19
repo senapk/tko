@@ -14,8 +14,6 @@ from .style import Style
 from ..util.symbols import symbols
 from .style import Style
 
-from icecream import ic
-
 import os
 
 class Entry:
