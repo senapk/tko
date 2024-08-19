@@ -5254,11 +5254,11 @@ class TaskTree:
                         items.append(len(q.title) + 2)
         self.max_title = max(items)
 
-    def str_task(self, in_focus: bool, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool, min_value=1) -> Sentence:
+    def str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool, min_value=1) -> Sentence:
         downloadable_in_focus = False
         rootdir = self.local.get_rootdir()
         down_symbol = Token(" ")
-
+        in_focus = focus_color != ""
         down_symbol = symbols.cant_download
         rep_dir = os.path.join(self.local.get_rootdir(), self.rep_alias)
         if t.is_downloadable() and rootdir != "":
@@ -5278,7 +5278,6 @@ class TaskTree:
         output.add(down_symbol)
         output.add(" ")
         output.add(t.get_grade_symbol(min_value))
-        focus_color = Style.focus()
 
         if in_focus:
             output.addf(focus_color.lower(), Style.roundL())
@@ -5313,14 +5312,14 @@ class TaskTree:
 
         return output
 
-    def str_quest(self, in_focus: bool, q: Quest, lig: str) -> Sentence:
+    def str_quest(self, focus_color: str, q: Quest, lig: str) -> Sentence:
         con = "━─" if q.key not in self.expanded else "─┯"
         if self.clean_visual():
             con = " │"
         color_reachable = "" if q.is_reachable() else "r"
         output: Sentence = Sentence().addf(color_reachable, " " + lig + con)
 
-        focus_color = Style.focus()
+        in_focus = focus_color != ""
         if in_focus:
             output.addf(focus_color.lower(), Style.roundL())
         else:
@@ -5366,7 +5365,7 @@ class TaskTree:
             return True
         return self.search_text != ""
 
-    def str_cluster(self, in_focus: bool, cluster: Cluster) -> Sentence:
+    def str_cluster(self, focus_color: str, cluster: Cluster) -> Sentence:
         output: Sentence = Sentence()
         opening = "━─"
         if cluster.key in self.expanded:
@@ -5376,14 +5375,13 @@ class TaskTree:
         color_reachable = "" if cluster.is_reachable() else "r"
         output.addf(color_reachable, opening)
 
-        focus_color = Style.focus()
         color = ""
-        if in_focus:
+        if focus_color != "":
             color = "k" + focus_color
         title = cluster.title
 
         title = cluster.title.ljust(self.max_title, ".")
-        if in_focus:
+        if focus_color != "":
             output.addf(focus_color.lower(), Style.roundL())
         else:
             output.add(" ")
@@ -5393,7 +5391,7 @@ class TaskTree:
 
         output.add(Style.build_bar(title, cluster.get_percent() / 100, len(title), done, todo, round=False))
 
-        if in_focus:
+        if focus_color != "":
             output.addf(focus_color.lower(), Style.roundR())
         else:
             output.add(" ")
@@ -5448,6 +5446,13 @@ class TaskTree:
                         return True
         return False
 
+    def get_focus_color(self, item: Union[Quest, Cluster], index: int) -> str:
+        if index != self.index_selected:
+            return ""
+        if not item.is_reachable() and not Flags.admin.is_true():
+            return "R"
+        return Style.focus()
+
     def reload_sentences(self):
         clean_visual: bool = self.clean_visual()
         self.update_max_title()
@@ -5455,11 +5460,11 @@ class TaskTree:
         self.items = []
         available_quests = self.game.available_quests
         available_clusters = self.game.available_clusters
-
         clusters = [self.game.clusters[key] for key in available_clusters]
         for cluster in clusters:
-            sentence = self.str_cluster(self.index_selected == index, cluster)
-            # self.items.append(Entry(cluster, sentence))
+            focus_color = self.get_focus_color(cluster, index)
+            sentence = self.str_cluster(focus_color, cluster)
+
             if self.add_in_search(cluster, sentence):
                 index += 1
 
@@ -5470,7 +5475,8 @@ class TaskTree:
                 lig = " "
                 if not clean_visual:
                     lig = "├" if q != quests[-1] else "╰"
-                sentence = self.str_quest(self.index_selected == index, q, lig)
+                focus_color = self.get_focus_color(q, index)
+                sentence = self.str_quest(focus_color, q, lig)
 
                 # self.items.append(Entry(q, sentence))
                 if self.add_in_search(q, sentence):
@@ -5483,7 +5489,8 @@ class TaskTree:
                             ligc = "│" if q != quests[-1] else " "
                             ligq = "├ " if t != q.get_tasks()[-1] else "╰ "
                         min_value = 7 if q.tmin is None else q.tmin
-                        sentence = self.str_task(self.index_selected == index, t, ligc, ligq, q.is_reachable(), min_value)
+                        focus_color = self.get_focus_color(q, index)
+                        sentence = self.str_task(focus_color, t, ligc, ligq, q.is_reachable(), min_value)
                         if self.add_in_search(t, sentence):
                             index += 1
 
