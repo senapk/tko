@@ -105,8 +105,8 @@ class Opener:
                         .put_text("Abrindo arquivos do problema com o comando")
                         .put_sentence(Sentence().addf("g", f"{cmd}"))
                         )
-                for file in files_to_open:
-                    aviso.put_sentence(Sentence().addf("g", file))
+                files = [os.path.basename(path) for path in files_to_open]
+                aviso.put_sentence(Sentence().addf("g", " ".join(files)))
                 self.fman.add_input(aviso)
                 fullcmd = "{} {}".format(cmd, " ".join(files_to_open))
                 outfile = tempfile.NamedTemporaryFile(delete=False)
