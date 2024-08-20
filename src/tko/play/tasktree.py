@@ -149,10 +149,11 @@ class TaskTree:
 
         return output
 
-    def str_quest(self, focus_color: str, q: Quest, lig: str) -> Sentence:
-        con = "━─" if q.key not in self.expanded else "─┯"
-        if self.clean_visual():
-            con = " │"
+    def str_quest(self, has_kids: bool, focus_color: str, q: Quest, lig: str) -> Sentence:
+        con = "━─"
+        if q.key in self.expanded and has_kids:
+            con = "─┯"
+
         color_reachable = "" if q.is_reachable() else "r"
         output: Sentence = Sentence().addf(color_reachable, " " + lig + con)
 
@@ -197,18 +198,12 @@ class TaskTree:
 
         return output
 
-    def clean_visual(self):
-        if not Flags.juntas.is_true():
-            return True
-        return self.search_text != ""
 
-    def str_cluster(self, focus_color: str, cluster: Cluster) -> Sentence:
+    def str_cluster(self, has_kids: bool, focus_color: str, cluster: Cluster) -> Sentence:
         output: Sentence = Sentence()
         opening = "━─"
-        if cluster.key in self.expanded:
+        if cluster.key in self.expanded and has_kids:
             opening = "─┯"
-        if self.clean_visual():
-            opening = "  "
         color_reachable = "" if cluster.is_reachable() else "r"
         output.addf(color_reachable, opening)
 
@@ -307,56 +302,59 @@ class TaskTree:
                         matches.add(task.key)
         return matches
 
+    def try_add(self, filtered, matcher, item, sentence):
+        if self.search_text == "":
+            self.items.append(Entry(item, sentence))
+            return True
+        if item.key in filtered:
+            pos = matcher.find(sentence.get_text())
+            found = pos != -1
+            if found:
+                for i in range(pos, pos + len(self.search_text)):
+                    sentence.data[i].fmt = "Y"
+            self.items.append(Entry(item, sentence))
+            return True
+        return False
+
     def reload_sentences(self):
-        clean_visual: bool = self.clean_visual()
         self.update_max_title()
         index = 0
         self.items = []
         available_quests = self.game.available_quests
         available_clusters = self.game.available_clusters
+
         filtered = self.filter_by_search()
+        matcher = SearchAsc(self.search_text)
 
-        def try_add(item, sentence):
-            if self.search_text == "":
-                self.items.append(Entry(item, sentence))
-                return True
-            if item.key in filtered:
-                self.items.append(Entry(item, sentence))
-                return True
-            return False
-
-        clusters = [self.game.clusters[key] for key in available_clusters]
+        clusters = [self.game.clusters[key] for key in available_clusters if key in filtered]
         for cluster in clusters:
+            quests = [q for q in cluster.quests if q.key in available_quests if q.key in filtered]
             focus_color = self.get_focus_color(cluster, index)
-            sentence = self.str_cluster(focus_color, cluster)
+            sentence = self.str_cluster(len(quests) > 0, focus_color, cluster)
 
-            if try_add(cluster, sentence):
+            if self.try_add(filtered, matcher, cluster, sentence):
                 index += 1
 
             if cluster.key not in self.expanded:  # adicionou o cluster, mas não adicione as quests
                 continue
-            quests = [q for q in cluster.quests if q.key in available_quests]
+
             for q in quests:
-                lig = " "
-                if not clean_visual:
-                    lig = "├" if q != quests[-1] else "╰"
+                tasks =[t for t in q.get_tasks() if t.key in filtered]
+                lig = "├" if q != quests[-1] else "╰"
                 focus_color = self.get_focus_color(q, index)
-                sentence = self.str_quest(focus_color, q, lig)
+                sentence = self.str_quest(len(tasks) > 0, focus_color, q, lig)
 
                 # self.items.append(Entry(q, sentence))
-                if try_add(q, sentence):
+                if self.try_add(filtered, matcher, q, sentence):
                     index += 1
                 if q.key in self.expanded:
-                    for t in q.get_tasks():
-                        ligc = " "
-                        ligq = "│ "
-                        if not clean_visual: #├
-                            ligc = "│" if q != quests[-1] else " "
-                            ligq = "├ " if t != q.get_tasks()[-1] else "╰ "
+                    for t in tasks:
+                        ligc = "│" if q != quests[-1] else " "
+                        ligq = "├ " if t != tasks[-1] else "╰ "
                         min_value = 7 if q.tmin is None else q.tmin
                         focus_color = self.get_focus_color(q, index)
                         sentence = self.str_task(focus_color, t, ligc, ligq, q.is_reachable(), min_value)
-                        if try_add(t, sentence):
+                        if self.try_add(filtered, matcher, t, sentence):
                             index += 1
 
         if self.index_selected >= len(self.items):
