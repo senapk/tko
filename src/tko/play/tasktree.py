@@ -1,4 +1,4 @@
-from typing import List, Any, Dict, Tuple, Union
+from typing import List, Any, Dict, Tuple, Union, Set
 
 from ..settings.geral_settings import GeralSettings
 from ..settings.rep_settings import RepData
@@ -244,44 +244,44 @@ class TaskTree:
         return output
 
 
-    def add_in_search(self, item: Any, sentence: Sentence) -> bool:
-        if self.search_text == "":
-            self.items.append(Entry(item, sentence))
-            return True
+    # def add_in_search(self, item: Any, sentence: Sentence) -> bool:
+    #     if self.search_text == "":
+    #         self.items.append(Entry(item, sentence))
+    #         return True
         
-        matcher = SearchAsc(self.search_text)
-        pos = matcher.find(sentence.get_text())
-        found = pos != -1
-        if found:
-            for i in range(pos, pos + len(self.search_text)):
-                sentence.data[i].fmt = "Y"
+    #     matcher = SearchAsc(self.search_text)
+    #     pos = matcher.find(sentence.get_text())
+    #     found = pos != -1
+    #     if found:
+    #         for i in range(pos, pos + len(self.search_text)):
+    #             sentence.data[i].fmt = "Y"
 
-        if isinstance(item, Task):
-            if found:
-                self.items.append(Entry(item, sentence))
-                return True
-        elif isinstance(item, Quest):
-            if found:
-                self.items.append(Entry(item, sentence))
-                return True
-            for t in item.get_tasks():
-                if matcher.inside(t.title):
-                    self.items.append(Entry(item, sentence))
-                    return True
-        elif isinstance(item, Cluster):
-            cluster: Cluster = item
-            if matcher.inside(cluster.title):
-                self.items.append(Entry(cluster, sentence))
-                return True
-            for q in cluster.quests:
-                if matcher.inside(q.title):
-                    self.items.append(Entry(item, sentence))
-                    return True
-                for t in q.get_tasks():
-                    if matcher.inside(t.title):
-                        self.items.append(Entry(item, sentence))
-                        return True
-        return False
+    #     if isinstance(item, Task):
+    #         if found:
+    #             self.items.append(Entry(item, sentence))
+    #             return True
+    #     elif isinstance(item, Quest):
+    #         if found:
+    #             self.items.append(Entry(item, sentence))
+    #             return True
+    #         for t in item.get_tasks():
+    #             if matcher.inside(t.title):
+    #                 self.items.append(Entry(item, sentence))
+    #                 return True
+    #     elif isinstance(item, Cluster):
+    #         cluster: Cluster = item
+    #         if matcher.inside(cluster.title):
+    #             self.items.append(Entry(cluster, sentence))
+    #             return True
+    #         for q in cluster.quests:
+    #             if matcher.inside(q.title):
+    #                 self.items.append(Entry(item, sentence))
+    #                 return True
+    #             for t in q.get_tasks():
+    #                 if matcher.inside(t.title):
+    #                     self.items.append(Entry(item, sentence))
+    #                     return True
+    #     return False
 
     def get_focus_color(self, item: Union[Quest, Cluster], index: int) -> str:
         if index != self.index_selected:
@@ -290,6 +290,23 @@ class TaskTree:
             return "R"
         return Style.focus()
 
+    def filter_by_search(self) -> Set[str]:
+        matches: Set[str] = set()
+        search = SearchAsc(self.search_text)
+        for cluster in self.game.clusters.values():
+            if search.inside(cluster.title):
+                matches.add(cluster.key)
+            for quest in cluster.quests:
+                if search.inside(quest.title):
+                    matches.add(cluster.key)
+                    matches.add(quest.key)
+                for task in quest.get_tasks():
+                    if search.inside(task.title):
+                        matches.add(cluster.key)
+                        matches.add(quest.key)
+                        matches.add(task.key)
+        return matches
+
     def reload_sentences(self):
         clean_visual: bool = self.clean_visual()
         self.update_max_title()
@@ -297,12 +314,23 @@ class TaskTree:
         self.items = []
         available_quests = self.game.available_quests
         available_clusters = self.game.available_clusters
+        filtered = self.filter_by_search()
+
+        def try_add(item, sentence):
+            if self.search_text == "":
+                self.items.append(Entry(item, sentence))
+                return True
+            if item.key in filtered:
+                self.items.append(Entry(item, sentence))
+                return True
+            return False
+
         clusters = [self.game.clusters[key] for key in available_clusters]
         for cluster in clusters:
             focus_color = self.get_focus_color(cluster, index)
             sentence = self.str_cluster(focus_color, cluster)
 
-            if self.add_in_search(cluster, sentence):
+            if try_add(cluster, sentence):
                 index += 1
 
             if cluster.key not in self.expanded:  # adicionou o cluster, mas não adicione as quests
@@ -316,7 +344,7 @@ class TaskTree:
                 sentence = self.str_quest(focus_color, q, lig)
 
                 # self.items.append(Entry(q, sentence))
-                if self.add_in_search(q, sentence):
+                if try_add(q, sentence):
                     index += 1
                 if q.key in self.expanded:
                     for t in q.get_tasks():
@@ -328,7 +356,7 @@ class TaskTree:
                         min_value = 7 if q.tmin is None else q.tmin
                         focus_color = self.get_focus_color(q, index)
                         sentence = self.str_task(focus_color, t, ligc, ligq, q.is_reachable(), min_value)
-                        if self.add_in_search(t, sentence):
+                        if try_add(t, sentence):
                             index += 1
 
         if self.index_selected >= len(self.items):
