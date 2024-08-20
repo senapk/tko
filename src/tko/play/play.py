@@ -327,15 +327,7 @@ class Play:
                 down_frame.put_text(text)
                 down_frame.draw()
                 Fmt.refresh()
-            try:
-                Down.download_problem(self.rep_alias, task.key, lang, fnprint)
-            except urllib.error.URLError as e:
-                self.fman.add_input(
-                    Floating("v")
-                    .put_text("\nNão consegui baixar sua tarefa.")
-                    .put_text("\nVerifique a internet.\n")
-                    .error()
-                )
+            Down.download_problem(self.rep_alias, task.key, lang, fnprint, self.game)
         else:
             if isinstance(obj, Quest):
                 self.fman.add_input(
@@ -865,7 +857,7 @@ class Play:
         self.tree.process_collapse()
 
         if not found:
-            self.fman.add_input(Floating().error().put_text("Elemento nao acessível no modo normal.\nEntre no modo Admin(SHIFT A)\nantes da busca\npara habilitar acesso"))
+            self.fman.add_input(Floating().error().put_text("Elemento não acessível no modo normal.\nEntre no modo Admin(SHIFT A)\nantes da busca\npara habilitar acesso"))
             return
 
         if isinstance(unit, Task):

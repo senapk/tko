@@ -87,8 +87,11 @@ class TaskTree:
             if c.key in self.game.available_clusters:
                 items.append(len(c.title))
                 if c.key in self.expanded:
-                    for q in c.quests:
+                    for q in [q for q in c.quests if q.key in self.game.available_quests]:
                         items.append(len(q.title) + 2)
+                        if q.key in self.expanded:
+                            for t in q.get_tasks():
+                                items.append(len(t.title) + 6)
         self.max_title = max(items)
 
     def str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool, min_value=1) -> Sentence:
@@ -145,7 +148,8 @@ class TaskTree:
             
         if downloadable_in_focus:
             readme_path = os.path.join(rep_dir, t.key, "Readme.md")
-            output.add(" ").addf("y", f"[{readme_path}]")
+            output.ljust(self.max_title + 4, Token(" "))
+            output.addf("y", f"[{readme_path}]")
 
         return output
 

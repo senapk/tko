@@ -1,4 +1,4 @@
-from typing import Tuple, Optional, List
+from typing import Tuple, Optional, List, Callable
 import os
 import urllib.request
 import urllib.error
@@ -10,7 +10,7 @@ from .game.game import Game
 from .util.remote import RemoteCfg
 
 class Down:
-    fnprint = print
+    fnprint: Callable[[str], None] = print
 
     ts_draft = r"""
 let _cin_ : string[] = [];
@@ -158,16 +158,19 @@ public class draft {
         return destiny
 
     @staticmethod
-    def download_problem(course: str, activity: str, language: Optional[str], fnprint) -> bool:
+    def download_problem(course: str, activity: str, language: Optional[str], fnprint: Callable[[str], None], game: Optional[Game] = None) -> bool:
         Down.fnprint = fnprint
         sp = SettingsParser()
         settings = sp.load_settings()
         rep_dir = os.path.join(settings.geral.get_rootdir(), course)
         rep_source = settings.get_rep_source(course)
         rep_data = settings.get_rep_data(course)
-
-        file = rep_source.get_file(rep_dir)
-        game = Game(file)
+        if game is None:
+            try:
+                file = rep_source.get_file(rep_dir)
+            except urllib.error.HTTPError:
+                Down.fnprint("falha: Verifique sua internet")
+            game = Game(file)
         item = game.get_task(activity)
         if not item.link.startswith("http"):
             Down.fnprint("falha: link para atividade não é um link remoto")
@@ -185,6 +188,10 @@ public class draft {
             if len(os.listdir(destiny)) == 0:
                 os.rmdir(destiny)
             return False
+        except urllib.error.URLError:
+            Down.fnprint("  falha: não consegui baixar a atividade, verifique sua internet")
+            return False
+
 
         with open(mapi_path, encoding="utf-8") as f:
             loaded_json = json.load(f)

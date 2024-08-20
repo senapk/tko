@@ -24,7 +24,7 @@ import math
 import configparser
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.21.1"
+__version__ = "0.21.3"
 
 
 def get_default_settings_for_borders() -> bool:
@@ -4952,7 +4952,7 @@ class Game:
 
 
 class Down:
-    fnprint = print
+    fnprint: Callable[[str], None] = print
 
     ts_draft = r"""
 let _cin_ : string[] = [];
@@ -5100,16 +5100,19 @@ public class draft {
         return destiny
 
     @staticmethod
-    def download_problem(course: str, activity: str, language: Optional[str], fnprint) -> bool:
+    def download_problem(course: str, activity: str, language: Optional[str], fnprint: Callable[[str], None], game: Optional[Game] = None) -> bool:
         Down.fnprint = fnprint
         sp = SettingsParser()
         settings = sp.load_settings()
         rep_dir = os.path.join(settings.geral.get_rootdir(), course)
         rep_source = settings.get_rep_source(course)
         rep_data = settings.get_rep_data(course)
-
-        file = rep_source.get_file(rep_dir)
-        game = Game(file)
+        if game is None:
+            try:
+                file = rep_source.get_file(rep_dir)
+            except urllib.error.HTTPError:
+                Down.fnprint("falha: Verifique sua internet")
+            game = Game(file)
         item = game.get_task(activity)
         if not item.link.startswith("http"):
             Down.fnprint("falha: link para atividade não é um link remoto")
@@ -5127,6 +5130,10 @@ public class draft {
             if len(os.listdir(destiny)) == 0:
                 os.rmdir(destiny)
             return False
+        except urllib.error.URLError:
+            Down.fnprint("  falha: não consegui baixar a atividade, verifique sua internet")
+            return False
+
 
         with open(mapi_path, encoding="utf-8") as f:
             loaded_json = json.load(f)
@@ -5250,8 +5257,11 @@ class TaskTree:
             if c.key in self.game.available_clusters:
                 items.append(len(c.title))
                 if c.key in self.expanded:
-                    for q in c.quests:
+                    for q in [q for q in c.quests if q.key in self.game.available_quests]:
                         items.append(len(q.title) + 2)
+                        if q.key in self.expanded:
+                            for t in q.get_tasks():
+                                items.append(len(t.title) + 6)
         self.max_title = max(items)
 
     def str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool, min_value=1) -> Sentence:
@@ -5308,7 +5318,8 @@ class TaskTree:
             
         if downloadable_in_focus:
             readme_path = os.path.join(rep_dir, t.key, "Readme.md")
-            output.add(" ").addf("y", f"[{readme_path}]")
+            output.ljust(self.max_title + 4, Token(" "))
+            output.addf("y", f"[{readme_path}]")
 
         return output
 
@@ -7226,15 +7237,7 @@ class Play:
                 down_frame.put_text(text)
                 down_frame.draw()
                 Fmt.refresh()
-            try:
-                Down.download_problem(self.rep_alias, task.key, lang, fnprint)
-            except urllib.error.URLError as e:
-                self.fman.add_input(
-                    Floating("v")
-                    .put_text("\nNão consegui baixar sua tarefa.")
-                    .put_text("\nVerifique a internet.\n")
-                    .error()
-                )
+            Down.download_problem(self.rep_alias, task.key, lang, fnprint, self.game)
         else:
             if isinstance(obj, Quest):
                 self.fman.add_input(
@@ -7764,7 +7767,7 @@ class Play:
         self.tree.process_collapse()
 
         if not found:
-            self.fman.add_input(Floating().error().put_text("Elemento nao acessível no modo normal.\nEntre no modo Admin(SHIFT A)\nantes da busca\npara habilitar acesso"))
+            self.fman.add_input(Floating().error().put_text("Elemento não acessível no modo normal.\nEntre no modo Admin(SHIFT A)\nantes da busca\npara habilitar acesso"))
             return
 
         if isinstance(unit, Task):

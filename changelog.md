@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.22.2
+  - add: search mode with tree joins
 - 0.21.1
   - add: random images on opening
 - 0.21.0
