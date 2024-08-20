@@ -406,9 +406,8 @@ class TaskTree:
             if grade == 11:
                 grade = 10
             obj.set_grade(grade)
-        elif isinstance(obj, Quest) or isinstance(obj, Cluster):
-            if obj.key not in self.expanded:
-                self.expanded.append(obj.key)
+        else:
+            self.unfold(obj)
 
     
     def dec_grade(self):
@@ -418,21 +417,16 @@ class TaskTree:
             if grade == -1:
                 grade = 0
             obj.set_grade(grade)
-        elif isinstance(obj, Quest) or isinstance(obj, Cluster):
-            if obj.key in self.expanded:
-                self.expanded.remove(obj.key)
+        else:
+            self.fold(obj)
 
     def arrow_right(self):
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Cluster):
-            if obj.key not in self.expanded:
-                self.expanded.append(obj.key)
-            else:
+            if not self.unfold(obj):
                 self.index_selected += 1
         elif isinstance(obj, Quest):
-            if obj.key not in self.expanded:
-                self.expanded.append(obj.key)
-            else:
+            if not self.unfold(obj):
                 while True:
                     self.index_selected += 1
                     obj = self.items[self.index_selected].obj
@@ -441,8 +435,6 @@ class TaskTree:
                     if self.index_selected == len(self.items) - 1:
                         break
         elif isinstance(obj, Task):
-            # task: Task = obj
-            # task.set_grade(min(10, task.grade + 1))
             while True:
                 obj = self.items[self.index_selected].obj
                 if isinstance(obj, Quest) or isinstance(obj, Cluster):
@@ -454,9 +446,7 @@ class TaskTree:
     def arrow_left(self):
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Quest):
-            if obj.key in self.expanded:
-                self.expanded.remove(obj.key)
-            else:
+            if not self.fold(obj):
                 while True:
                     if self.index_selected == 0:
                         break
@@ -485,32 +475,29 @@ class TaskTree:
                     if self.index_selected == 0:
                         break
         elif isinstance(obj, Task):
-            # task: Task = obj
-            # task.set_grade(max(0, task.grade - 1))
             while True:
                 obj = self.items[self.index_selected].obj
                 if isinstance(obj, Quest):
                     break
                 self.index_selected -= 1
 
-    def expand(self):
-        obj = self.items[self.index_selected].obj
+    def unfold(self, obj: Union[Task, Quest, Cluster]) -> bool:
         if isinstance(obj, Quest) or isinstance(obj, Cluster):
             if obj.key not in self.expanded:
                 self.expanded.append(obj.key)
+                return True
+        return False
 
-    def toggle(self):
-        obj = self.items[self.index_selected].obj
-        if isinstance(obj, Task):
-            if obj.grade < 10:
-                obj.set_grade(10)
-            else:
-                obj.set_grade(0)
-        elif isinstance(obj, Quest) or isinstance(obj, Cluster):
+    def fold(self, obj: Union[Task, Quest, Cluster]) -> bool:
+        if isinstance(obj, Quest) or isinstance(obj, Cluster):
             if obj.key in self.expanded:
                 self.expanded.remove(obj.key)
-            else:
-                self.expanded.append(obj.key)
+                return True
+        return False
+
+    def toggle(self, obj: Union[Quest, Cluster]):
+            if not self.fold(obj):
+                self.unfold(obj)
 
     def get_senteces(self, dy):
         if len(self.items) < dy:

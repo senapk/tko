@@ -362,7 +362,7 @@ class Play:
         obj = self.tree.items[self.tree.index_selected].obj
 
         if isinstance(obj, Quest) or isinstance(obj, Cluster):
-            self.tree.toggle()
+            self.tree.toggle(obj)
             return
 
         rep_dir = os.path.join(rootdir, self.rep_alias)
