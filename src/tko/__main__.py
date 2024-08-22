@@ -178,7 +178,7 @@ class Main:
         if args.editor:
             action = True
             settings.geral.set_editor(args.editor)
-            print(f"Novo comando para abrir arquivos de código {args.editor}")
+            print(f"Novo comando para abrir arquivos de código: {args.editor}")
 
         if not action:
             action = True

@@ -1,6 +1,8 @@
 # Changelog
 
-- 0.22.2
+- 0.21.4
+  - add: small fixed when no internet
+- 0.21.3
   - add: search mode with tree joins
 - 0.21.1
   - add: random images on opening

@@ -24,7 +24,7 @@ import math
 import configparser
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.21.3"
+__version__ = "0.21.4"
 
 
 def get_default_settings_for_borders() -> bool:
@@ -1897,8 +1897,8 @@ class Flags:
     fortune = Flag().name("Fortuna").char("F").values(["0", "1"]).text("Mostra mensagem aleatórias na saída").location("left")
     images = Flag().name("Imagens").char("I").values(["1", "0"]).text("Mostra imagens aleatórias").location("left")
     # juntas = Flag().name("Juntas").char("J").values(["1", "0"]).text("Mostra conecções entre os elementos").location("left")
-    config = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
-    inventory = Flag().name("Inventário").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
+    config    = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
+    skills = Flag().name("Skills").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
     others = Flag().name("Outros").char("o").values(["0", "1"]).text("Mostra opções extras").location("bottom")
 
 class FlagsMan:
@@ -7188,7 +7188,7 @@ class Play:
                 Floating("v>")
                 .put_text("\nEsse é um grupo.")
                 .put_text("\nVocê só pode abrir o link")
-                .put_text("de tarefas\n.")
+                .put_text("de tarefas.\n")
                 .error()
             )
 
@@ -7482,22 +7482,38 @@ class Play:
         return xpbar
 
     def show_top_bar(self, frame: Frame):
-        help = Sentence(" ").join(self.build_list_sentence(self.help_basic))
-        flags = Sentence(" ").join([Style.get_flag_sentence(f) for f in self.flagsman.top])
+        help = self.build_list_sentence(self.help_basic)
+        pesquisar = help[0]
+        marcar = help[1]
+        flags = [Style.get_flag_sentence(f) for f in self.flagsman.top]
+        config = Style.get_flag_sentence(Flags.config)
+        skills = Style.get_flag_sentence(Flags.skills)
+
 
         if self.two_column_mode():
-            line_2 = help.add(" ").add(flags)
+            line_2 = (Sentence()
+                .add(config).add(" ")
+                .add(marcar).add(" ")
+                .add(pesquisar).add(" ")
+                .add(skills)
+            )
             xp_button = self.make_xp_button(line_2.len())
             frame.write(0, 0, xp_button.center(frame.get_dx()))
             frame.write(1, 0, line_2.center(frame.get_dx()))
         else:
-            size = self.wrap_size - help.len() - flags.len() - 2
-            if not Flags.others.is_true():
-                help = Sentence(" ").join(self.build_list_sentence(self.help_basic[1:]))
-                flags = Sentence(" ").join([Style.get_flag_sentence(f) for f in self.flagsman.top[:1]])
-                if len(help) + size + len(flags) + 2 > Fmt.get_size()[1]:
-                    size = Fmt.get_size()[1] - len(help) - len(flags) - 4
-            frame.write(0, 0, Sentence().add(help).add(" ").add(self.make_xp_button(size)).add(" ").add(flags).center(frame.get_dx()))
+            size = self.wrap_size - Sentence(" ").join(help + flags).len() - 1
+            main_label = self.make_xp_button(size)
+            info = Sentence()
+            if Flags.others.is_true():
+                info.add(config).add(" ")
+            # else:
+            #     info.add(" " * config.len()).add(" ")
+            info.add(marcar).add(" ").add(main_label).add(" ").add(pesquisar)
+            if Flags.others.is_true():
+                info.add(" ").add(skills)
+            # else:
+            #     info.add(" ").add(" " * inventary.len())
+            frame.write(0, 0, info.center(frame.get_dx()))
 
 
         # frame.set_border_none()
@@ -7541,10 +7557,10 @@ class Play:
     @staticmethod
     def disable_on_resize():
         _, cols = Fmt.get_size()
-        if cols < 50 and Flags.inventory.is_true() and Flags.config.is_true():
-            Flags.inventory.toggle()
-        elif cols < 30 and Flags.inventory.is_true():
-            Flags.inventory.toggle()
+        if cols < 50 and Flags.skills.is_true() and Flags.config.is_true():
+            Flags.skills.toggle()
+        elif cols < 30 and Flags.skills.is_true():
+            Flags.skills.toggle()
         elif cols < 35 and Flags.config.is_true():
             Flags.config.toggle()
 
@@ -7602,18 +7618,14 @@ class Play:
         mid_sy = main_sy - top_dy - bottom_dy # tamanho do meio
 
         skills_sx = 0
-        if Flags.inventory.is_true():
+        if Flags.skills.is_true():
             skills_sx = max(20, main_sx // 4)
-            frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)
-            self.show_inventary_bar(frame_skills)
         else:
             self.show_opening()
 
         flags_sx = 0
         if Flags.config.is_true():
-            flags_sx = 18
-            frame_flags = Frame(mid_y, 0).set_size(mid_sy, flags_sx).set_border_color(border_color)
-            self.show_config_bar(frame_flags)
+            flags_sx = 18            
 
         task_sx = main_sx - flags_sx - skills_sx
 
@@ -7622,9 +7634,18 @@ class Play:
 
         frame_bottom = Frame(lines - bottom_dy - 1, 0).set_size(bottom_dy + 2, cols)
         self.show_bottom_bar(frame_bottom)
+        if task_sx > 5: 
+            frame_main = Frame(mid_y, flags_sx).set_size(mid_sy, task_sx).set_border_color(border_color)
+            self.show_main_bar(frame_main)
 
-        frame_main = Frame(mid_y, flags_sx).set_size(mid_sy, task_sx).set_border_color(border_color)
-        self.show_main_bar(frame_main)
+        if Flags.config.is_true():
+            frame_flags = Frame(mid_y, 0).set_size(mid_sy, flags_sx).set_border_color(border_color)
+            self.show_config_bar(frame_flags)
+
+        if Flags.skills.is_true():
+            frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)
+            self.show_inventary_bar(frame_skills)
+
 
     class FlagFunctor:
         def __init__(self, fman: FloatingManager, flag: Flag):
@@ -7732,7 +7753,7 @@ class Play:
             add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
 
         add_str(Flags.config.get_char(), self.toggle_config)
-        add_str(Flags.inventory.get_char(), self.FlagFunctor(self.fman, Flags.inventory))
+        add_str(Flags.skills.get_char(), self.FlagFunctor(self.fman, Flags.skills))
         add_str("/", self.toggle_search)
 
         return calls
@@ -8048,7 +8069,7 @@ class Main:
         if args.editor:
             action = True
             settings.geral.set_editor(args.editor)
-            print(f"Novo comando para abrir arquivos de código {args.editor}")
+            print(f"Novo comando para abrir arquivos de código: {args.editor}")
 
         if not action:
             action = True
