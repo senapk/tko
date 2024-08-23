@@ -420,11 +420,25 @@ class Play:
                 return link
         return ""
 
+    def get_task_path(self) -> str:
+        obj = self.tree.get_selected()
+        if not isinstance(obj, Task):
+            return ""
+        
+        path = os.path.join(self.geral.get_rootdir(), self.rep_alias, obj.key, "Readme.md")
+        if os.path.isfile(path):
+            return path
+        return ""
+    
     def show_main_bar(self, frame: Frame):
         dy, dx = frame.get_inner()
         alias_color = "R"
         alias = Sentence().addf(alias_color.lower(), Style.sharpL()).addf(alias_color, self.rep_alias.upper()).addf(alias_color.lower(), Style.sharpR())
-        alias.add(" ").addf("g", Style.sharpL()).addf("G", self.rep.get_lang().upper()).addf("g", Style.sharpR())
+        if Flags.links.is_true():
+            path = self.get_task_path()
+            if path != "":
+                alias.add(path)
+        alias.addf("g", Style.sharpL()).addf("G", self.rep.get_lang().upper()).addf("g", Style.sharpR())
         y = frame.get_y()
         # Fmt.write(y + 1, dx // 2, alias)
         link = Sentence().add(self.build_bar_links())
@@ -433,7 +447,8 @@ class Play:
             link.addf("r", "...")
 
         frame.set_header(alias, "^")
-        frame.set_footer(link, ">", "{", "}")
+        if Flags.links.is_true():
+            frame.set_footer(link, "", "{", "}")
         frame.draw()
 
         for y, sentence in enumerate(self.tree.get_senteces(dy)):

@@ -146,11 +146,6 @@ class TaskTree:
                 xp += f" +{s}:{v}"
             output.addf(Style.skills(), xp)
             
-        if downloadable_in_focus:
-            readme_path = os.path.join(rep_dir, t.key, "Readme.md")
-            output.ljust(self.max_title + 4, Token(" "))
-            output.addf("y", f"[{readme_path}]")
-
         return output
 
     def str_quest(self, has_kids: bool, focus_color: str, q: Quest, lig: str) -> Sentence:

@@ -1,7 +1,7 @@
 from .flags import Flag
 from ..util.sentence import Sentence, Token
 from ..settings.settings_parser import SettingsParser
-from ..settings.geral_settings import GeralSettings
+
 class Style:
     # geral: GeralSettings = SettingsParser().load_settings().geral
     @staticmethod
@@ -97,12 +97,18 @@ class Style:
     @staticmethod
     def build_bar(text: str, percent: float, length: int, fmt_true: str = "/kC",
                   fmt_false: str = "/kY", round=True) -> Sentence:
-        prefix = (length - len(text)) // 2 + 1
-        suffix = length - len(text) - prefix - 1
-        text = " " * prefix + text + " " * suffix
-        total = length
+        if round and (len(text) >= length - 2):
+            text = " " + text
+
+        if length > len(text):
+            prefix = (length - len(text)) // 2
+            suffix = length - len(text) - prefix
+            text = " " * prefix + text + " " * suffix
+        elif length < len(text):
+            text = text[:length]
+        
         full_line = text
-        done_len = int(percent * total)
+        done_len = int(percent * length)
         xp_bar = Token(full_line[:done_len], fmt_true) + Token(full_line[done_len:], fmt_false)
             
         if round:

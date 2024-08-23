@@ -1896,7 +1896,8 @@ class Flags:
     admin = Flag().name("Admin").char("A").values(["0", "1"]).text("Mostra todas as missões e grupos").location("left")
     fortune = Flag().name("Fortuna").char("F").values(["0", "1"]).text("Mostra mensagem aleatórias na saída").location("left")
     images = Flag().name("Imagens").char("I").values(["1", "0"]).text("Mostra imagens aleatórias").location("left")
-    # juntas = Flag().name("Juntas").char("J").values(["1", "0"]).text("Mostra conecções entre os elementos").location("left")
+    links = Flag().name("Links").char("Y").values(["0", "1"]).text("Mostra links remotos e locais das tarefas").location("left")
+
     config    = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
     skills = Flag().name("Skills").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
     others = Flag().name("Outros").char("o").values(["0", "1"]).text("Mostra opções extras").location("bottom")
@@ -1930,6 +1931,7 @@ class FlagsMan:
             if len(flag.get_values()) > 1:
                 data[name] = flag.get_index()
         return data
+
 
 class Style:
     # geral: GeralSettings = SettingsParser().load_settings().geral
@@ -2026,12 +2028,18 @@ class Style:
     @staticmethod
     def build_bar(text: str, percent: float, length: int, fmt_true: str = "/kC",
                   fmt_false: str = "/kY", round=True) -> Sentence:
-        prefix = (length - len(text)) // 2 + 1
-        suffix = length - len(text) - prefix - 1
-        text = " " * prefix + text + " " * suffix
-        total = length
+        if round and (len(text) >= length - 2):
+            text = " " + text
+
+        if length > len(text):
+            prefix = (length - len(text)) // 2
+            suffix = length - len(text) - prefix
+            text = " " * prefix + text + " " * suffix
+        elif length < len(text):
+            text = text[:length]
+        
         full_line = text
-        done_len = int(percent * total)
+        done_len = int(percent * length)
         xp_bar = Token(full_line[:done_len], fmt_true) + Token(full_line[done_len:], fmt_false)
             
         if round:
@@ -5316,11 +5324,6 @@ class TaskTree:
                 xp += f" +{s}:{v}"
             output.addf(Style.skills(), xp)
             
-        if downloadable_in_focus:
-            readme_path = os.path.join(rep_dir, t.key, "Readme.md")
-            output.ljust(self.max_title + 4, Token(" "))
-            output.addf("y", f"[{readme_path}]")
-
         return output
 
     def str_quest(self, has_kids: bool, focus_color: str, q: Quest, lig: str) -> Sentence:
@@ -7330,11 +7333,25 @@ class Play:
                 return link
         return ""
 
+    def get_task_path(self) -> str:
+        obj = self.tree.get_selected()
+        if not isinstance(obj, Task):
+            return ""
+        
+        path = os.path.join(self.geral.get_rootdir(), self.rep_alias, obj.key, "Readme.md")
+        if os.path.isfile(path):
+            return path
+        return ""
+    
     def show_main_bar(self, frame: Frame):
         dy, dx = frame.get_inner()
         alias_color = "R"
         alias = Sentence().addf(alias_color.lower(), Style.sharpL()).addf(alias_color, self.rep_alias.upper()).addf(alias_color.lower(), Style.sharpR())
-        alias.add(" ").addf("g", Style.sharpL()).addf("G", self.rep.get_lang().upper()).addf("g", Style.sharpR())
+        if Flags.links.is_true():
+            path = self.get_task_path()
+            if path != "":
+                alias.add(path)
+        alias.addf("g", Style.sharpL()).addf("G", self.rep.get_lang().upper()).addf("g", Style.sharpR())
         y = frame.get_y()
         # Fmt.write(y + 1, dx // 2, alias)
         link = Sentence().add(self.build_bar_links())
@@ -7343,7 +7360,8 @@ class Play:
             link.addf("r", "...")
 
         frame.set_header(alias, "^")
-        frame.set_footer(link, ">", "{", "}")
+        if Flags.links.is_true():
+            frame.set_footer(link, "", "{", "}")
         frame.draw()
 
         for y, sentence in enumerate(self.tree.get_senteces(dy)):
