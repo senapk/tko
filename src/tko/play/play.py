@@ -864,6 +864,7 @@ class Play:
             self.tree.update_tree(admin_mode=True)
             self.tree.process_expand()
             self.tree.process_expand()
+            self.fman.add_input(Floating(">v").warning().put_text("Digite o texto\nVavegue até o elemnto desejado\ne aperte Enter"))
     
     def finish_search(self):
         self.search_mode = False
@@ -881,12 +882,14 @@ class Play:
                 found = True
                 break
 
-        self.tree.process_collapse()
-        self.tree.process_collapse()
-
         if not found:
-            self.fman.add_input(Floating().error().put_text("Elemento não acessível no modo normal.\nEntre no modo Admin(SHIFT A)\nantes da busca\npara habilitar acesso"))
-            return
+            self.fman.add_input(Floating(">v").warning().put_text("Elemento não acessível no modo normal.\nEntrando no modo Admin\npara habilitar acesso"))
+            Flags.admin.toggle()
+            self.tree.update_tree(True)
+            self.tree.reload_sentences()
+        
+        self.tree.process_collapse()
+        self.tree.process_collapse()
 
         if isinstance(unit, Task):
             for cluster_key in self.game.available_clusters:
