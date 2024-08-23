@@ -921,7 +921,7 @@ class Play:
             self.tree.move_up()
         elif key == curses.KEY_DOWN:
             self.tree.move_down()
-        elif key == curses.KEY_BACKSPACE or key == 263 or key == 330:
+        elif key == 127 or key == 263 or key == 330:
             self.tree.search_text = self.tree.search_text[:-1]
         elif key >= 32 and key < 127:
             self.tree.search_text += chr(key).lower()
