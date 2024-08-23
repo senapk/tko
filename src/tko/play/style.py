@@ -97,8 +97,8 @@ class Style:
     @staticmethod
     def build_bar(text: str, percent: float, length: int, fmt_true: str = "/kC",
                   fmt_false: str = "/kY", round=True) -> Sentence:
-        prefix = (length - len(text)) // 2
-        suffix = length - len(text) - prefix
+        prefix = (length - len(text)) // 2 + 1
+        suffix = length - len(text) - prefix - 1
         text = " " * prefix + text + " " * suffix
         total = length
         full_line = text

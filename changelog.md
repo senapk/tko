@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.22.0
+  - add: small align fixes
 - 0.21.4
   - add: small fixed when no internet
 - 0.21.3

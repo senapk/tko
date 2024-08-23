@@ -548,6 +548,8 @@ class Play:
         else:
             if Flags.others.is_true():
                 line_all = Sentence(" ").join(elems)
+                if frame.get_dx() % 2 == 0:
+                    line_all.add(" ")
                 frame.write(0, 0, line_all.center(frame.get_dx()))
             else:
                 line_main = Sentence(" ").join(elems[2: -2])
@@ -558,7 +560,7 @@ class Play:
 
     def make_xp_button(self, size):
         if self.search_mode:
-            text = " Pesquisando: " + self.tree.search_text + "┊"
+            text = " Busca: " + self.tree.search_text + "┊"
             percent = 0.0
             done = "W"
             todo = "W"
@@ -578,7 +580,7 @@ class Play:
         flags = [Style.get_flag_sentence(f) for f in self.flagsman.top]
         config = Style.get_flag_sentence(Flags.config)
         skills = Style.get_flag_sentence(Flags.skills)
-
+        others = Flags.others.is_true()
 
         if self.two_column_mode():
             line_2 = (Sentence()
@@ -591,18 +593,23 @@ class Play:
             frame.write(0, 0, xp_button.center(frame.get_dx()))
             frame.write(1, 0, line_2.center(frame.get_dx()))
         else:
-            size = self.wrap_size - Sentence(" ").join(help + flags).len() - 1
+
+            pre: List[Sentence] = []
+            pre.append(marcar)
+            if others:
+                pre.append(config)
+
+            pos: List[Sentence] = []
+            if others:
+                pos.append(skills)
+            pos.append(pesquisar)
+
+            limit = self.wrap_size
+            if not others and frame.get_dx() < self.wrap_size:
+                limit = frame.get_dx()
+            size = limit - Sentence(" ").join(pre + pos).len() - 2
             main_label = self.make_xp_button(size)
-            info = Sentence()
-            if Flags.others.is_true():
-                info.add(config).add(" ")
-            # else:
-            #     info.add(" " * config.len()).add(" ")
-            info.add(marcar).add(" ").add(main_label).add(" ").add(pesquisar)
-            if Flags.others.is_true():
-                info.add(" ").add(skills)
-            # else:
-            #     info.add(" ").add(" " * inventary.len())
+            info = Sentence(" ").join(pre + [main_label] + pos)
             frame.write(0, 0, info.center(frame.get_dx()))
 
 
