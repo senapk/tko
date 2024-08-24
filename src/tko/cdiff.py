@@ -35,16 +35,17 @@ class Mode(enum.Enum):
 
 
 class DActions:
-    sair = "Sair"
+    sair   = "  Sair"
     editar = "Editar"
     testar = "Ativar"
-    rodar = "Rodar"
+    rodar  = " Rodar"
     principal = "Principal"
-    fixar = "Travar"
-    limite = "Limite"
+    fixar  = " Fixar"
+    tempo = "Tempo"
     outros = "Outros"
 
 class DKeys:
+    backspace1 = 127
     left = "a"
     up = "w"
     right = "d"
@@ -54,10 +55,10 @@ class DKeys:
     rodar = "r"
     testar = "\n"
     # testar2 = "\n"
-    sair = "q"
+    sair   = "q"
     editar = "e"
-    travar = "t"
-    limite = "l"
+    travar = "f"
+    tempo  = "t"
     outros = "o"
 
 class CDiff:
@@ -374,16 +375,9 @@ class CDiff:
         cmds: List[Sentence] = []
         if Flags.others.is_true():
             cmds.append(Style.border_round("M", f"{DActions.rodar}[{DKeys.rodar}]"))
-            value = str(self.settings.geral.get_timeout())
-            if value == "0":
-                value = "∞"
-            cmds.append(
-                Sentence()
-                    .addf("m", Style.roundL())
-                    .add(RToken("M", f"{DActions.limite}[{DKeys.limite}]"))
-                    .add(RToken("C", " {} ".format(value)))
-                    .addf("c", Style.roundR())
-            )
+            # diff
+            text = f"VER━╾h[{DKeys.diff}]" if self.settings.geral.is_diff_down() else f"v╼━HOR[{DKeys.diff}]"
+            cmds.append(Style.border_round("M", text))
         
         cmds.append(Style.border_round("C", f"{DActions.sair}[{DKeys.sair}]"))
         if self.opener is not None:
@@ -394,17 +388,25 @@ class CDiff:
         cmds.append(Style.border_sharp(color, f"{DActions.outros}[{DKeys.outros}]"))
         if Flags.others.is_true():
             # travar
+
+            value = str(self.settings.geral.get_timeout())
+            if value == "0":
+                value = "∞"
+            cmds.append(
+                Sentence()
+                    .addf("m", Style.roundL())
+                    .add(RToken("M", f"{DActions.tempo}"))
+                    .add(RToken("M", "{}".format(value)))
+                    .add(RToken("M", f"[{DKeys.tempo}]"))
+                    .addf("m", Style.roundR())
+            )
             travar = f"{DActions.fixar}[{DKeys.travar}]"
             color = "G" if self.locked_index else "M"
             cmds.append(Style.border_sharp(color, travar))
 
-            # diff
-            text = f"VER╾hor[{DKeys.diff}]" if self.settings.geral.is_diff_down() else f"ver╼HOR[{DKeys.diff}]"
-            cmds.append(Style.border_round("M", text))
-
         return cmds
 
-    def draw_bottom_line(self):
+    def show_bottom_line(self):
         lines, cols = Fmt.get_size()
         if self.two_column_mode():
             line = self.make_bottom_line()
@@ -413,7 +415,10 @@ class CDiff:
             Fmt.write(lines - 2, 0, Sentence(" ").join(one).center(cols, Token(" ")))
             Fmt.write(lines - 1, 0, Sentence(" ").join(two).center(cols, Token(" ")))
         else:
-            Fmt.write(lines - 1, 0, Sentence(" ").join(self.make_bottom_line()).center(cols, Token(" ")))
+            out = Sentence(" ").join(self.make_bottom_line())
+            # if Fmt.get_size()[1] % 2 == 0:
+            #     out.add("-")
+            Fmt.write(lines - 1, 0, out.center(cols, Token(" ")))
  
     def is_all_right(self):
         if self.locked_index or len(self.results) == 0:
@@ -498,7 +503,7 @@ class CDiff:
             if self.mode == Mode.running:
                 if self.wdir.get_solver().not_compiled():
                     self.draw_top_bar()
-                    self.draw_bottom_line()
+                    self.show_bottom_line()
                     self.show_compilling()
                     Fmt.refresh()
                     try:
@@ -508,7 +513,7 @@ class CDiff:
                         self.mode = Mode.finished
                     Fmt.clear()
                     self.draw_top_bar()
-                    self.draw_bottom_line()
+                    self.show_bottom_line()
                     Fmt.refresh()
                 self.process_one()
             self.draw_top_bar()
@@ -518,7 +523,7 @@ class CDiff:
             else:
                 self.draw_main()
             
-            self.draw_bottom_line()
+            self.show_bottom_line()
 
             if self.fman.has_floating():
                 self.fman.draw_warnings()
@@ -646,7 +651,7 @@ class CDiff:
 
     def process_key(self, key):
         key_esc = 27
-        if key == ord('q') or key == key_esc or key == curses.KEY_BACKSPACE:
+        if key == ord('q') or key == key_esc or key == DKeys.backspace1:
             self.set_exit()
         elif key == curses.KEY_LEFT or key == ord(DKeys.left):
             self.go_left()
@@ -671,7 +676,7 @@ class CDiff:
         elif key == ord(DKeys.editar):
             if self.opener is not None:
                 self.opener.open_code(open_dir=True)
-        elif key == ord(DKeys.limite):
+        elif key == ord(DKeys.tempo):
             self.change_limit()
         elif key == ord(DKeys.outros):
             Flags.others.toggle()

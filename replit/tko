@@ -1624,6 +1624,11 @@ class Sentence:
         self.data: List[Token] = []
         self.add(value)
     
+    def clone(self):
+        other = Sentence()
+        other.data = [v for v in self.data]
+        return other
+
     def setup(self, data: List[Token]):
         self.data = []
         for d in data:
@@ -1896,7 +1901,7 @@ class Flags:
     admin = Flag().name("Admin").char("A").values(["0", "1"]).text("Mostra todas as missões e grupos").location("left")
     fortune = Flag().name("Fortuna").char("F").values(["0", "1"]).text("Mostra mensagem aleatórias na saída").location("left")
     images = Flag().name("Imagens").char("I").values(["1", "0"]).text("Mostra imagens aleatórias").location("left")
-    links = Flag().name("Links").char("Y").values(["0", "1"]).text("Mostra links remotos e locais das tarefas").location("left")
+    # links = Flag().name("Links").char("Y").values(["0", "1"]).text("Mostra links remotos e locais das tarefas").location("left")
 
     config    = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
     skills = Flag().name("Skills").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
@@ -5837,16 +5842,17 @@ class Mode(enum.Enum):
 
 
 class DActions:
-    sair = "Sair"
+    sair   = "  Sair"
     editar = "Editar"
     testar = "Ativar"
-    rodar = "Rodar"
+    rodar  = " Rodar"
     principal = "Principal"
-    fixar = "Travar"
-    limite = "Limite"
+    fixar  = " Fixar"
+    tempo = "Tempo"
     outros = "Outros"
 
 class DKeys:
+    backspace1 = 127
     left = "a"
     up = "w"
     right = "d"
@@ -5856,10 +5862,10 @@ class DKeys:
     rodar = "r"
     testar = "\n"
     # testar2 = "\n"
-    sair = "q"
+    sair   = "q"
     editar = "e"
-    travar = "t"
-    limite = "l"
+    travar = "f"
+    tempo  = "t"
     outros = "o"
 
 class CDiff:
@@ -6176,16 +6182,9 @@ class CDiff:
         cmds: List[Sentence] = []
         if Flags.others.is_true():
             cmds.append(Style.border_round("M", f"{DActions.rodar}[{DKeys.rodar}]"))
-            value = str(self.settings.geral.get_timeout())
-            if value == "0":
-                value = "∞"
-            cmds.append(
-                Sentence()
-                    .addf("m", Style.roundL())
-                    .add(RToken("M", f"{DActions.limite}[{DKeys.limite}]"))
-                    .add(RToken("C", " {} ".format(value)))
-                    .addf("c", Style.roundR())
-            )
+            # diff
+            text = f"VER━╾h[{DKeys.diff}]" if self.settings.geral.is_diff_down() else f"v╼━HOR[{DKeys.diff}]"
+            cmds.append(Style.border_round("M", text))
         
         cmds.append(Style.border_round("C", f"{DActions.sair}[{DKeys.sair}]"))
         if self.opener is not None:
@@ -6196,17 +6195,25 @@ class CDiff:
         cmds.append(Style.border_sharp(color, f"{DActions.outros}[{DKeys.outros}]"))
         if Flags.others.is_true():
             # travar
+
+            value = str(self.settings.geral.get_timeout())
+            if value == "0":
+                value = "∞"
+            cmds.append(
+                Sentence()
+                    .addf("m", Style.roundL())
+                    .add(RToken("M", f"{DActions.tempo}"))
+                    .add(RToken("M", "{}".format(value)))
+                    .add(RToken("M", f"[{DKeys.tempo}]"))
+                    .addf("m", Style.roundR())
+            )
             travar = f"{DActions.fixar}[{DKeys.travar}]"
             color = "G" if self.locked_index else "M"
             cmds.append(Style.border_sharp(color, travar))
 
-            # diff
-            text = f"VER╾hor[{DKeys.diff}]" if self.settings.geral.is_diff_down() else f"ver╼HOR[{DKeys.diff}]"
-            cmds.append(Style.border_round("M", text))
-
         return cmds
 
-    def draw_bottom_line(self):
+    def show_bottom_line(self):
         lines, cols = Fmt.get_size()
         if self.two_column_mode():
             line = self.make_bottom_line()
@@ -6215,7 +6222,10 @@ class CDiff:
             Fmt.write(lines - 2, 0, Sentence(" ").join(one).center(cols, Token(" ")))
             Fmt.write(lines - 1, 0, Sentence(" ").join(two).center(cols, Token(" ")))
         else:
-            Fmt.write(lines - 1, 0, Sentence(" ").join(self.make_bottom_line()).center(cols, Token(" ")))
+            out = Sentence(" ").join(self.make_bottom_line())
+            # if Fmt.get_size()[1] % 2 == 0:
+            #     out.add("-")
+            Fmt.write(lines - 1, 0, out.center(cols, Token(" ")))
  
     def is_all_right(self):
         if self.locked_index or len(self.results) == 0:
@@ -6300,7 +6310,7 @@ class CDiff:
             if self.mode == Mode.running:
                 if self.wdir.get_solver().not_compiled():
                     self.draw_top_bar()
-                    self.draw_bottom_line()
+                    self.show_bottom_line()
                     self.show_compilling()
                     Fmt.refresh()
                     try:
@@ -6310,7 +6320,7 @@ class CDiff:
                         self.mode = Mode.finished
                     Fmt.clear()
                     self.draw_top_bar()
-                    self.draw_bottom_line()
+                    self.show_bottom_line()
                     Fmt.refresh()
                 self.process_one()
             self.draw_top_bar()
@@ -6320,7 +6330,7 @@ class CDiff:
             else:
                 self.draw_main()
             
-            self.draw_bottom_line()
+            self.show_bottom_line()
 
             if self.fman.has_floating():
                 self.fman.draw_warnings()
@@ -6448,7 +6458,7 @@ class CDiff:
 
     def process_key(self, key):
         key_esc = 27
-        if key == ord('q') or key == key_esc or key == curses.KEY_BACKSPACE:
+        if key == ord('q') or key == key_esc or key == DKeys.backspace1:
             self.set_exit()
         elif key == curses.KEY_LEFT or key == ord(DKeys.left):
             self.go_left()
@@ -6473,7 +6483,7 @@ class CDiff:
         elif key == ord(DKeys.editar):
             if self.opener is not None:
                 self.opener.open_code(open_dir=True)
-        elif key == ord(DKeys.limite):
+        elif key == ord(DKeys.tempo):
             self.change_limit()
         elif key == ord(DKeys.outros):
             Flags.others.toggle()
@@ -6945,17 +6955,17 @@ class XP:
 
 
 class Actions:
-    ler_online = "LerOnline"
+    ler_online = "Github"
     sair = "Sair"
     ajuda = "Ajuda"
     baixar = "Baixar"
     ativar = "Ativar"
-    navegar = "↑←↓→"
+    navegar = "←↓→"
     editar = "Editar"
     marcar = "Marcar"
     desmarcar = "Desmarcar"
     colapsar = "Colapsar"
-    pesquisar = "Pesquisar"
+    pesquisar = "Buscar"
 
 class Key:
     left = "a"
@@ -6981,7 +6991,7 @@ class Key:
     dec_grade2 = "_"
     set_root_dir = "D"
     set_lang = "L"
-    github_open = "l"
+    github_open = "g"
     quit = "q"
     # toggle_space = " "
     # toggle_enter = "\n"
@@ -7019,25 +7029,23 @@ class Play:
         self.first_loop = True
         self.graph_ext = ""
 
-        self.help_basic: List[Token] = [
-            RToken("Y", f"{Actions.pesquisar}[{Key.pesquisar}]"),
-            #RToken("Y", f"{Actions.colapsar}[{Key.collapse} {Key.expand}]"),
-            RToken("Y", f"{Actions.marcar}[{Key.inc_grade} {Key.dec_grade}]"),
-            # RToken("Y", f"{Actions.desmarcar}[{Key.dec_grade}]"),
+        self.help_basic: List[Sentence] = [
+            Sentence() + RToken("Y", f"{Actions.pesquisar}[{Key.pesquisar}]"),
+            Sentence() + RToken("Y", f"{Actions.marcar} {Key.inc_grade}{Key.dec_grade}"),
         ]
 
-        self.help_fixed: List[Token] = [
-            RToken("C", f"{Actions.sair}[{Key.quit}]"),
-            RToken("C", f"{Actions.editar}[{Key.edit}]"),
-            RToken("G", f"{Actions.ativar}[↲]"),
+        self.help_fixed: List[Sentence] = [
+            Sentence() + RToken("C", f"  {Actions.sair}[{Key.quit}]"),
+            Sentence() + RToken("C", f"{Actions.editar}[{Key.edit}]"),
+            Sentence() + RToken("C", f"{Actions.ativar}[↲]"),
         ]
-        self.help_others_before: List[Token] = [
-            RToken("Y", f"{Actions.ajuda}[{Key.ajuda}]"),
-            RToken("Y", f"{Actions.ler_online}[{Key.github_open}]"),
+        self.help_others_before: List[Sentence] = [
+            Sentence() + RToken("Y", f" {Actions.ajuda}[{Key.ajuda}]"),
+            Sentence() + RToken("Y", f"{Actions.ler_online}[{Key.github_open}]"),
         ]
-        self.help_others_after: List[Token] = [
-            RToken("Y", f"{Actions.baixar}[{Key.down_task}]"),
-            RToken("Y", f"{Actions.navegar}[wasd]")
+        self.help_others_after: List[Sentence] = [
+            Sentence() + RToken("Y", f"{Actions.baixar}[{Key.down_task}]"),
+            Sentence() + RToken("Y", f"{Actions.navegar}[wasd]")
         ]
 
         self.wrap_size = Sentence(" ").join(self.build_bottom_array()).len()
@@ -7309,18 +7317,19 @@ class Play:
             return
         return run.execute
 
-    def build_list_sentence(self, items: List[Token]) -> List[Sentence]:
+    def build_list_sentence(self, items: List[Sentence]) -> List[Sentence]:
         out: List[Sentence] = []
         for x in items:
-            color = x.fmt if self.geral.is_colored() else "W"
+            color_ini = x.data[0].fmt if self.geral.is_colored() else "W"
+            color_end = x.data[-1].fmt if self.geral.is_colored() else "W"
             left = Style.roundL()
             right = Style.roundR()
-            text = x.text
-            if x.text[0] == "!":
+            middle = x.clone()
+            if x.data[0].text == "!":
                 left = Style.sharpL()
                 right = Style.sharpR()
-                text = x.text[1:]
-            out.append(Sentence().addf(color.lower(), left).addf(color, text).addf(color.lower(), right))
+                middle.data = x.data[1:]
+            out.append(Sentence().addf(color_ini.lower(), left).add(middle).addf(color_end.lower(), right))
         return out
 
     def build_bar_links(self) -> str:
@@ -7345,23 +7354,26 @@ class Play:
     
     def show_main_bar(self, frame: Frame):
         dy, dx = frame.get_inner()
-        alias_color = "R"
-        alias = Sentence().addf(alias_color.lower(), Style.sharpL()).addf(alias_color, self.rep_alias.upper()).addf(alias_color.lower(), Style.sharpR())
-        if Flags.links.is_true():
-            path = self.get_task_path()
-            if path != "":
-                alias.add(path)
-        alias.addf("g", Style.sharpL()).addf("G", self.rep.get_lang().upper()).addf("g", Style.sharpR())
-        y = frame.get_y()
-        # Fmt.write(y + 1, dx // 2, alias)
-        link = Sentence().add(self.build_bar_links())
-        if link.len() > dx - 2:
-            link.trim_end(dx - 5)
-            link.addf("r", "...")
+        top = Sentence()
+        if self.two_column_mode() and Flags.others.is_true(): 
+            top.add(Style.get_flag_sentence(Flags.config)).add(" ")
 
-        frame.set_header(alias, "^")
-        if Flags.links.is_true():
-            frame.set_footer(link, "", "{", "}")
+        alias_color = "R"
+        top.addf(alias_color.lower(), Style.sharpL()).addf(alias_color, self.rep_alias.upper()).addf(alias_color.lower(), Style.sharpR())
+        if Flags.others.is_true():
+            color = "W" if Flags.admin.is_true() else "K"
+            top.add(Style.border_sharp(color, "ADMIN"))
+        top.addf("g", Style.sharpL()).addf("G", self.rep.get_lang().upper()).addf("g", Style.sharpR())
+
+        if self.two_column_mode() and Flags.others.is_true(): 
+            top.add(" ").add(Style.get_flag_sentence(Flags.skills))
+
+        frame.set_header(top, "^")
+        
+        if self.two_column_mode():
+            elems = self.build_bottom_array()
+            line_up = Sentence(" ").join(elems[0 : 2] + elems[-2:])
+            frame.set_footer(line_up, "")
         frame.draw()
 
         for y, sentence in enumerate(self.tree.get_senteces(dy)):
@@ -7451,40 +7463,28 @@ class Play:
         return cols < self.wrap_size + 2 and Flags.others.is_true()
 
     def build_bottom_array(self):
-        array: List[Token] = []
-        # if Flags.others.is_true():
+        array: List[Sentence] = []
         array += self.help_others_before
         array += self.help_fixed
         color = "G" if Flags.others.is_true() else "Y"
-        array.append(RToken(color, "!Outros[o]"))
-
-        # if Flags.others.is_true():
+        array.append(Sentence() + RToken(color, "!Outros[o]"))
         array += self.help_others_after
 
         return self.build_list_sentence(array)
 
-    def show_bottom_bar(self, frame: Frame):
+    def show_bottom_bar(self):
+        lines, cols = Fmt.get_size()
         elems = self.build_bottom_array()
         if self.two_column_mode():
-            line_up = Sentence(" ").join(elems[0 : 2] + elems[-2:])
             line_down = Sentence(" ").join(elems[2:-2])
-            if Flags.others.is_true():
-                frame.write(1, 0, line_down.center(frame.get_dx()))
-                frame.write(0, 0, line_up.center(frame.get_dx()))
-            else:
-                frame.write(0, 0, line_down.center(frame.get_dx()))
+            Fmt.write(lines - 1, 0, line_down.center(cols))
         else:
             if Flags.others.is_true():
                 line_all = Sentence(" ").join(elems)
-                if frame.get_dx() % 2 == 0:
-                    line_all.add(" ")
-                frame.write(0, 0, line_all.center(frame.get_dx()))
+                Fmt.write(lines - 1, 0, line_all.center(cols))
             else:
-                line_main = Sentence(" ").join(elems[2: -2])
-                frame.write(0, 0, line_main.center(frame.get_dx()))
-        
-        frame.set_border_none()
-        # frame.draw()
+                line_main = Sentence(" ").join(elems[2: -2]) # alignment adjust
+                Fmt.write(lines - 1, 0, line_main.center(cols))   
 
     def make_xp_button(self, size):
         if self.search_mode:
@@ -7505,40 +7505,27 @@ class Play:
         help = self.build_list_sentence(self.help_basic)
         pesquisar = help[0]
         marcar = help[1]
-        flags = [Style.get_flag_sentence(f) for f in self.flagsman.top]
         config = Style.get_flag_sentence(Flags.config)
         skills = Style.get_flag_sentence(Flags.skills)
         others = Flags.others.is_true()
 
-        if self.two_column_mode():
-            line_2 = (Sentence()
-                .add(config).add(" ")
-                .add(marcar).add(" ")
-                .add(pesquisar).add(" ")
-                .add(skills)
-            )
-            xp_button = self.make_xp_button(line_2.len())
-            frame.write(0, 0, xp_button.center(frame.get_dx()))
-            frame.write(1, 0, line_2.center(frame.get_dx()))
-        else:
+        pre: List[Sentence] = []
+        pre.append(marcar)
+        if others and not self.two_column_mode():
+            pre.append(config)
 
-            pre: List[Sentence] = []
-            pre.append(marcar)
-            if others:
-                pre.append(config)
+        pos: List[Sentence] = []
+        if others and not self.two_column_mode():
+            pos.append(skills)
+        pos.append(pesquisar)
 
-            pos: List[Sentence] = []
-            if others:
-                pos.append(skills)
-            pos.append(pesquisar)
-
-            limit = self.wrap_size
-            if not others and frame.get_dx() < self.wrap_size:
-                limit = frame.get_dx()
-            size = limit - Sentence(" ").join(pre + pos).len() - 2
-            main_label = self.make_xp_button(size)
-            info = Sentence(" ").join(pre + [main_label] + pos)
-            frame.write(0, 0, info.center(frame.get_dx()))
+        limit = self.wrap_size
+        if frame.get_dx() < self.wrap_size:
+            limit = frame.get_dx()
+        size = limit - Sentence(" ").join(pre + pos).len() - 2
+        main_label = self.make_xp_button(size)
+        info = Sentence(" ").join(pre + [main_label] + pos)
+        frame.write(0, 0, info.center(frame.get_dx()))
 
 
         # frame.set_border_none()
@@ -7573,7 +7560,7 @@ class Play:
         _help.put_sentence(Sentence() + f"{Actions.ler_online} " + RToken("r", f"{Key.github_open}") + "  Abre tarefa em uma aba do browser")
         _help.put_sentence(Sentence() + f"   {Actions.baixar} " + RToken("r", f"{Key.down_task}") + "  Baixa tarefa de código para seu dispositivo")
         _help.put_sentence(Sentence() + f"   {Actions.editar} " + RToken("r", f"{Key.edit}") + "  Abre os arquivos no editor de código")
-        _help.put_sentence(Sentence() + f"   {Actions.ativar} " + RToken("r", "↲") + "  Interage com o elemento q")
+        _help.put_sentence(Sentence() + f"   {Actions.ativar} " + RToken("r", "↲") + "  Interage com o elemento")
         _help.put_sentence(Sentence() + f"   {Actions.marcar} " + RToken("r", f"{Key.inc_grade}") + RToken("r", f"{Key.dec_grade}") + " Muda a pontuação da tarefa")
         _help.put_sentence(Sentence())
         _help.put_sentence(Sentence() + "Você pode mudar o editor padrão com o comando")
@@ -7635,10 +7622,6 @@ class Play:
         top_y = -1
         top_dy = 1  #quantas linhas o topo usa
         bottom_dy = 1 # quantas linhas o fundo usa
-        if self.two_column_mode():
-            top_dy += 1
-            bottom_dy += 1
-
         mid_y = top_dy # onde o meio começa
         mid_sy = main_sy - top_dy - bottom_dy # tamanho do meio
 
@@ -7657,8 +7640,8 @@ class Play:
         frame_top = Frame(top_y, 0).set_size(top_dy + 2, cols)
         self.show_top_bar(frame_top)
 
-        frame_bottom = Frame(lines - bottom_dy - 1, 0).set_size(bottom_dy + 2, cols)
-        self.show_bottom_bar(frame_bottom)
+        # frame_bottom = Frame(lines - bottom_dy - 1, -1).set_size(bottom_dy + 2, cols + 2)
+        self.show_bottom_bar()
         if task_sx > 5: 
             frame_main = Frame(mid_y, flags_sx).set_size(mid_sy, task_sx).set_border_color(border_color)
             self.show_main_bar(frame_main)

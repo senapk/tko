@@ -30,6 +30,11 @@ class Sentence:
         self.data: List[Token] = []
         self.add(value)
     
+    def clone(self):
+        other = Sentence()
+        other.data = [v for v in self.data]
+        return other
+
     def setup(self, data: List[Token]):
         self.data = []
         for d in data:
