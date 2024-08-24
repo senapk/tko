@@ -98,7 +98,7 @@ opening["alien3"] = r"""
          \ `-',-._   _.  _,="=._  ,_   _.-,`-' /
       \. /`,-',-._ ""  \ _,="=._ /   ""_.-,`-,'\ ./
        \`-'  /    `-._  "       "  _.-'    \  `-'/
-       /)   (         \    ,-.    /         )   (\
+       /)   (   BOM   \    ,-.    / ESTUDO  )   (\
     ,-'"     `-.       \  /   \  /       .-'     "`-,
   ,'_._         `-.____/ /  _  \ \____.-'         _._`,
  /,'   `.                \_/ \_/                .'   `,\
@@ -147,42 +147,42 @@ intro: Dict[str, str] = {}
 intro["shark"] = r"""
   _________         .    . r -> Roda sem testar             
  (..       \_    ,  |\  /| ↲ -> Testa usando casos de teste 
-  \       O  \  /|  \ \/ / t -> Trava a execução num para   
+  \       O  \  /|  \ \/ / f -> FIXA a execução para        
    \______    \/ |   \  /       um único caso de teste      
-      vvvv\    \ |   /  |  p -> Muda o arquivo principal    
+      vvvv\    \ |   /  |  p -> Muda o arquivo PRINCIPAL    
       \^^^^  ==   \_/   |       para problemas de múltiplos 
        `\_   ===    \.  |       arquivos de código fonte    
-       / /\_   \ /      |  m -> muda o modo diff de vertical
+       / /\_   \ /      |  m -> muda o MODO diff de vertical
        |/   \_  \|      /       para modo diff horizontal   
-              \________/   l -> define o limite de tempo    
+              \________/   t -> define o limite de TEMPO    
                            setas -> muda o teste            
 """
 
 intro["cat"] = r"""
  ,_     _          r -> Roda sem testar             
  |\\_,-~/          ↲ -> Testa usando casos de teste 
- / _  _ |    ,--.  t -> Trava a execução num para   
+ / _  _ |    ,--.  f -> FIXA a execução para        
 (  @  @ )   / ,-'       um único caso de teste      
- \  _T_/-._( (     p -> Muda o arquivo principal    
+ \  _T_/-._( (     p -> Muda o arquivo PRINCIPAL    
  /         `. \         para problemas de múltiplos 
 |         _  \ |        arquivos de código fonte    
- \ \ ,  /      |   m -> muda o modo diff de vertical
+ \ \ ,  /      |   m -> muda o MODO diff de vertical
   || |-_\__   /         para modo diff horizontal   
- ((_/`(____,-'     l -> define o limite de tempo    
+ ((_/`(____,-'     t -> define o limite de TEMPO    
                    setas -> muda o teste            
 """
 
 intro["elephant"] = r"""
         ⣀⣀                r -> Roda sem testar             
       ⣰⣿⣿⣿⣿⣦⣀⣀⣀           ↲ -> Testa usando casos de teste 
-      ⢿⣿⠟⠋⠉    ⠉⠑⠢⣄⡀      t -> Trava a execução num para   
+      ⢿⣿⠟⠋⠉    ⠉⠑⠢⣄⡀      f -> FIXA a execução para        
      ⢠⠞⠁           ⠙⢿⣿⣿⣦⡀      um único caso de teste      
- ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇ p -> Muda o arquivo principal    
+ ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇ p -> Muda o arquivo PRINCIPAL    
 ⣾⣿⣿⣦⣼⡀ ⢺⣿⣿⡿⠃    ⣠⣤⣄  ⠈⡿⠋       para problemas de múltiplos 
 ⢿⣿⣿⣿⣿⣇ ⠤⠌⠁ ⡀⢲⡶⠄⢸⣏⣿⣿   ⡇        arquivos de código fonte    
-⠈⢿⣿⣿⣿⣿⣷⣄⡀  ⠈⠉⠓⠂ ⠙⠛⠛⠠ ⡸⠁   m -> muda o modo diff de vertical
+⠈⢿⣿⣿⣿⣿⣷⣄⡀  ⠈⠉⠓⠂ ⠙⠛⠛⠠ ⡸⠁   m -> muda o MODO diff de vertical
   ⠻⣿⣿⣿⣿⣿⣿⣷⣦⣄⣀    ⠑ ⣠⠞⠁         para modo diff horizontal   
-   ⢸⡏⠉⠛⠛⠛⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⡄      l -> define o limite de tempo    
+   ⢸⡏⠉⠛⠛⠛⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⡄      t -> define o limite de TEMPO    
    ⠸        ⠈⠉⠛⢿⣿⣿⣿⣿⡄     setas -> muda o teste            
 """
 

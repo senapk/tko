@@ -17,6 +17,8 @@ class Execution:
             unit.user = solver.error_msg
             return ExecutionResult.COMPILATION_ERROR
         cmd = solver.get_executable()
+        if timeout == 0:
+            timeout = None
         return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input, timeout)
         unit.user = stdout + stderr
         if return_code != 0:

@@ -1,5 +1,11 @@
 # Changelog
 
+- 0.22.3
+  - fix: fix in cdiff help
+- 0.22.2
+  - add: go to end of the diff auto
+  - fix: timeout 0
+  - add: button align
 - 0.22.0
   - add: small align fixes
 - 0.21.4

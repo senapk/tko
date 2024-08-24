@@ -24,7 +24,7 @@ import math
 import configparser
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.22.1"
+__version__ = "0.22.2"
 
 
 def get_default_settings_for_borders() -> bool:
@@ -274,7 +274,7 @@ opening["alien3"] = r"""
          \ `-',-._   _.  _,="=._  ,_   _.-,`-' /
       \. /`,-',-._ ""  \ _,="=._ /   ""_.-,`-,'\ ./
        \`-'  /    `-._  "       "  _.-'    \  `-'/
-       /)   (         \    ,-.    /         )   (\
+       /)   (   BOM   \    ,-.    / ESTUDO  )   (\
     ,-'"     `-.       \  /   \  /       .-'     "`-,
   ,'_._         `-.____/ /  _  \ \____.-'         _._`,
  /,'   `.                \_/ \_/                .'   `,\
@@ -323,42 +323,42 @@ intro: Dict[str, str] = {}
 intro["shark"] = r"""
   _________         .    . r -> Roda sem testar             
  (..       \_    ,  |\  /| ↲ -> Testa usando casos de teste 
-  \       O  \  /|  \ \/ / t -> Trava a execução num para   
+  \       O  \  /|  \ \/ / f -> FIXA a execução para        
    \______    \/ |   \  /       um único caso de teste      
-      vvvv\    \ |   /  |  p -> Muda o arquivo principal    
+      vvvv\    \ |   /  |  p -> Muda o arquivo PRINCIPAL    
       \^^^^  ==   \_/   |       para problemas de múltiplos 
        `\_   ===    \.  |       arquivos de código fonte    
-       / /\_   \ /      |  m -> muda o modo diff de vertical
+       / /\_   \ /      |  m -> muda o MODO diff de vertical
        |/   \_  \|      /       para modo diff horizontal   
-              \________/   l -> define o limite de tempo    
+              \________/   t -> define o limite de TEMPO    
                            setas -> muda o teste            
 """
 
 intro["cat"] = r"""
  ,_     _          r -> Roda sem testar             
  |\\_,-~/          ↲ -> Testa usando casos de teste 
- / _  _ |    ,--.  t -> Trava a execução num para   
+ / _  _ |    ,--.  f -> FIXA a execução para        
 (  @  @ )   / ,-'       um único caso de teste      
- \  _T_/-._( (     p -> Muda o arquivo principal    
+ \  _T_/-._( (     p -> Muda o arquivo PRINCIPAL    
  /         `. \         para problemas de múltiplos 
 |         _  \ |        arquivos de código fonte    
- \ \ ,  /      |   m -> muda o modo diff de vertical
+ \ \ ,  /      |   m -> muda o MODO diff de vertical
   || |-_\__   /         para modo diff horizontal   
- ((_/`(____,-'     l -> define o limite de tempo    
+ ((_/`(____,-'     t -> define o limite de TEMPO    
                    setas -> muda o teste            
 """
 
 intro["elephant"] = r"""
         ⣀⣀                r -> Roda sem testar             
       ⣰⣿⣿⣿⣿⣦⣀⣀⣀           ↲ -> Testa usando casos de teste 
-      ⢿⣿⠟⠋⠉    ⠉⠑⠢⣄⡀      t -> Trava a execução num para   
+      ⢿⣿⠟⠋⠉    ⠉⠑⠢⣄⡀      f -> FIXA a execução para        
      ⢠⠞⠁           ⠙⢿⣿⣿⣦⡀      um único caso de teste      
- ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇ p -> Muda o arquivo principal    
+ ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇ p -> Muda o arquivo PRINCIPAL    
 ⣾⣿⣿⣦⣼⡀ ⢺⣿⣿⡿⠃    ⣠⣤⣄  ⠈⡿⠋       para problemas de múltiplos 
 ⢿⣿⣿⣿⣿⣇ ⠤⠌⠁ ⡀⢲⡶⠄⢸⣏⣿⣿   ⡇        arquivos de código fonte    
-⠈⢿⣿⣿⣿⣿⣷⣄⡀  ⠈⠉⠓⠂ ⠙⠛⠛⠠ ⡸⠁   m -> muda o modo diff de vertical
+⠈⢿⣿⣿⣿⣿⣷⣄⡀  ⠈⠉⠓⠂ ⠙⠛⠛⠠ ⡸⠁   m -> muda o MODO diff de vertical
   ⠻⣿⣿⣿⣿⣿⣿⣷⣦⣄⣀    ⠑ ⣠⠞⠁         para modo diff horizontal   
-   ⢸⡏⠉⠛⠛⠛⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⡄      l -> define o limite de tempo    
+   ⢸⡏⠉⠛⠛⠛⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⡄      t -> define o limite de TEMPO    
    ⠸        ⠈⠉⠛⢿⣿⣿⣿⣿⡄     setas -> muda o teste            
 """
 
@@ -4350,6 +4350,8 @@ class Execution:
             unit.user = solver.error_msg
             return ExecutionResult.COMPILATION_ERROR
         cmd = solver.get_executable()
+        if timeout == 0:
+            timeout = None
         return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input, timeout)
         unit.user = stdout + stderr
         if return_code != 0:
@@ -5877,7 +5879,7 @@ class CDiff:
         self.exit = False
         self.success_type = success_type
         self.task = Task()
-        self.init = 0   # index of first line to show
+        self.init = 1000   # index of first line to show
         self.length = 1  # length of diff
         self.space = 0  # dy space for draw
         self.mode: Mode = Mode.intro
@@ -6211,6 +6213,7 @@ class CDiff:
             color = "G" if self.locked_index else "M"
             cmds.append(Style.border_sharp(color, travar))
 
+
         return cmds
 
     def show_bottom_line(self):
@@ -6389,7 +6392,7 @@ class CDiff:
             return
         if not self.wdir.get_solver().compile_error:
             self.focused_index = max(0, self.focused_index - 1)
-            self.init = 0
+            self.init = 1000
 
     def go_right(self):
         if self.mode == Mode.intro:
@@ -6401,7 +6404,7 @@ class CDiff:
             return
         if not self.wdir.get_solver().compile_error:
             self.focused_index = min(len(self.wdir.get_unit_list()) - 1, self.focused_index + 1)
-            self.init = 0
+            self.init = 1000
 
     def go_down(self):
         if self.mode == Mode.intro:
@@ -6471,7 +6474,7 @@ class CDiff:
         elif key == ord(DKeys.diff):
             self.param.is_up_down = not self.param.is_up_down
             self.save_settings()
-            self.init = 0
+            # self.init = 0
         elif key == ord(DKeys.principal):
             self.change_main()
         elif key == ord(DKeys.rodar):

@@ -70,7 +70,7 @@ class CDiff:
         self.exit = False
         self.success_type = success_type
         self.task = Task()
-        self.init = 0   # index of first line to show
+        self.init = 1000   # index of first line to show
         self.length = 1  # length of diff
         self.space = 0  # dy space for draw
         self.mode: Mode = Mode.intro
@@ -404,6 +404,7 @@ class CDiff:
             color = "G" if self.locked_index else "M"
             cmds.append(Style.border_sharp(color, travar))
 
+
         return cmds
 
     def show_bottom_line(self):
@@ -582,7 +583,7 @@ class CDiff:
             return
         if not self.wdir.get_solver().compile_error:
             self.focused_index = max(0, self.focused_index - 1)
-            self.init = 0
+            self.init = 1000
 
     def go_right(self):
         if self.mode == Mode.intro:
@@ -594,7 +595,7 @@ class CDiff:
             return
         if not self.wdir.get_solver().compile_error:
             self.focused_index = min(len(self.wdir.get_unit_list()) - 1, self.focused_index + 1)
-            self.init = 0
+            self.init = 1000
 
     def go_down(self):
         if self.mode == Mode.intro:
@@ -664,7 +665,7 @@ class CDiff:
         elif key == ord(DKeys.diff):
             self.param.is_up_down = not self.param.is_up_down
             self.save_settings()
-            self.init = 0
+            # self.init = 0
         elif key == ord(DKeys.principal):
             self.change_main()
         elif key == ord(DKeys.rodar):
