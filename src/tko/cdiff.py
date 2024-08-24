@@ -99,6 +99,11 @@ class CDiff:
         self.opener.set_fman(self.fman)
         return self
 
+    def set_autorun(self, value:bool):
+        if value:
+            self.mode = Mode.running
+        return self
+
     def save_settings(self):
         self.settings.geral.set_is_diff_down(self.param.is_up_down)
         self.sp.save_settings()
@@ -492,7 +497,6 @@ class CDiff:
         return sorted(self.wdir.solvers_names())
     
     def main(self, scr):
-        self.mode = Mode.intro
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global

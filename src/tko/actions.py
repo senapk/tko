@@ -56,6 +56,7 @@ class Run:
         self.__lang = ""
         self.__task: Optional[Task] = None
         self.__opener: Optional[Opener] = None
+        self.__autorun: bool = False
 
     def set_curses(self, value:bool=True, success: Success=Success.RANDOM):
         self.__curses_mode = value
@@ -69,6 +70,9 @@ class Run:
     def set_opener(self, opener: Opener):
         self.__opener = opener
         return self
+
+    def set_autorun(self, value:bool):
+        self.__autorun = value
 
     # def set_curses_select_mode(self, value:bool=True):
     #     self.__curses_select_mode = value
@@ -226,6 +230,7 @@ class Run:
                 cdiff.set_task(self.__task)
             if self.__opener is not None:
                 cdiff.set_opener(self.__opener)
+            cdiff.set_autorun(self.__autorun)
             cdiff.run()
         else:
             term_print(Report.centralize(" Testando o código com os casos de teste ", "═"))

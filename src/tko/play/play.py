@@ -374,6 +374,7 @@ class Play:
         run = Run([path], None, Param.Basic())
         run.set_lang(self.rep.get_lang())
         run.set_opener(self.opener)
+        run.set_autorun(False)
         if Flags.images.is_true():
             run.set_curses(True, Success.RANDOM)
         else:

@@ -119,6 +119,8 @@ class Main:
         if args.filter:
             param.set_filter(True)
         run = Run(args.target_list, args.cmd, param)
+        if args.now:
+            run.set_autorun(True)
         run.set_curses()
         run.execute()
 
@@ -288,6 +290,7 @@ class Parser:
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
         parser_r.add_argument("--cmd", type=str, help="bash command to run code")
+        parser_r.add_argument("--now", "-n", action='store_true', help="autorun skipping intro screen")
         parser_r.set_defaults(func=Main.run)
 
     def add_parser_prun(self):

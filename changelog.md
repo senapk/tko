@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.22.4
+  - add: tko run skip intro
 - 0.22.3
   - fix: fix in cdiff help
 - 0.22.2

@@ -24,7 +24,7 @@ import math
 import configparser
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.22.3"
+__version__ = "0.22.4"
 
 
 def get_default_settings_for_borders() -> bool:
@@ -5908,6 +5908,11 @@ class CDiff:
         self.opener.set_fman(self.fman)
         return self
 
+    def set_autorun(self, value:bool):
+        if value:
+            self.mode = Mode.running
+        return self
+
     def save_settings(self):
         self.settings.geral.set_is_diff_down(self.param.is_up_down)
         self.sp.save_settings()
@@ -6301,7 +6306,6 @@ class CDiff:
         return sorted(self.wdir.solvers_names())
     
     def main(self, scr):
-        self.mode = Mode.intro
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
@@ -6540,6 +6544,7 @@ class Run:
         self.__lang = ""
         self.__task: Optional[Task] = None
         self.__opener: Optional[Opener] = None
+        self.__autorun: bool = False
 
     def set_curses(self, value:bool=True, success: Success=Success.RANDOM):
         self.__curses_mode = value
@@ -6553,6 +6558,9 @@ class Run:
     def set_opener(self, opener: Opener):
         self.__opener = opener
         return self
+
+    def set_autorun(self, value:bool):
+        self.__autorun = value
 
     # def set_curses_select_mode(self, value:bool=True):
     #     self.__curses_select_mode = value
@@ -6710,6 +6718,7 @@ class Run:
                 cdiff.set_task(self.__task)
             if self.__opener is not None:
                 cdiff.set_opener(self.__opener)
+            cdiff.set_autorun(self.__autorun)
             cdiff.run()
         else:
             term_print(Report.centralize(" Testando o código com os casos de teste ", "═"))
@@ -7300,6 +7309,7 @@ class Play:
         run = Run([path], None, Param.Basic())
         run.set_lang(self.rep.get_lang())
         run.set_opener(self.opener)
+        run.set_autorun(False)
         if Flags.images.is_true():
             run.set_curses(True, Success.RANDOM)
         else:
@@ -8024,6 +8034,8 @@ class Main:
         if args.filter:
             param.set_filter(True)
         run = Run(args.target_list, args.cmd, param)
+        if args.now:
+            run.set_autorun(True)
         run.set_curses()
         run.execute()
 
@@ -8193,6 +8205,7 @@ class Parser:
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
         parser_r.add_argument("--cmd", type=str, help="bash command to run code")
+        parser_r.add_argument("--now", "-n", action='store_true', help="autorun skipping intro screen")
         parser_r.set_defaults(func=Main.run)
 
     def add_parser_prun(self):
