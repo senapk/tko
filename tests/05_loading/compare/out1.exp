@@ -1,7 +1,3 @@
-Carregando arquivos automaticamente
-solvers found: [./solver.py]
-sources found: [./cases_empty.tio, ./cases.tio]
-Para remover um arquivo da lista, renomeie para sua extensão para .txt
 ═══════════════════ Testando o código com os casos de teste ═══════════════════
 => Códigos:[solver.py] Testes:[cases_empty.tio(00), cases.tio(01)] [ω]
 (ω wrong_out)[00] GR:100 ./cases.tio ()
