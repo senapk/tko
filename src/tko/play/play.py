@@ -940,7 +940,11 @@ class Play:
     #     )
 
     def main(self, scr):
-        curses.set_escdelay(25)
+        if hasattr(curses, "set_escdelay"):
+            curses.set_escdelay(25)
+        else:
+            os.environ.setdefault('ESCDELAY', '25')
+        # verify if curses has method set_escdelay
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global

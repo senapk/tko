@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.22.5
+  - fix: esc_delay for windows
 - 0.22.4
   - add: tko run skip intro
 - 0.22.3

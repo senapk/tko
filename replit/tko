@@ -24,7 +24,7 @@ import math
 import configparser
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.22.4"
+__version__ = "0.22.5"
 
 
 def get_default_settings_for_borders() -> bool:
@@ -4432,11 +4432,10 @@ class Wdir:
 
         solvers = sorted(solvers)
 
-        if not self.__curses:
-            print("Carregando arquivos automaticamente")
-            print("solvers found: [" + ", ".join(solvers) + "]")
-            print("sources found: [" + ", ".join(sources) + "]")
-            print("Para remover um arquivo da lista, renomeie para sua extensão para .txt")
+        # if not self.__curses:
+        #     print("códigos encontrados: [" + ", ".join(solvers) + "]")
+        #     print("testes  encontrados: [" + ", ".join(sources) + "]")
+            # print("Para remover um arquivo da lista, renomeie para sua extensão para .txt")
         self.set_solver(solvers)
         self.set_sources(sources)
         self.__autoload = True
@@ -7875,7 +7874,11 @@ class Play:
     #     )
 
     def main(self, scr):
-        curses.set_escdelay(25)
+        if hasattr(curses, "set_escdelay"):
+            curses.set_escdelay(25)
+        else:
+            os.environ.setdefault('ESCDELAY', '25')
+        # verify if curses has method set_escdelay
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global

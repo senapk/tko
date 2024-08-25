@@ -83,11 +83,10 @@ class Wdir:
 
         solvers = sorted(solvers)
 
-        if not self.__curses:
-            print("Carregando arquivos automaticamente")
-            print("solvers found: [" + ", ".join(solvers) + "]")
-            print("sources found: [" + ", ".join(sources) + "]")
-            print("Para remover um arquivo da lista, renomeie para sua extensão para .txt")
+        # if not self.__curses:
+        #     print("códigos encontrados: [" + ", ".join(solvers) + "]")
+        #     print("testes  encontrados: [" + ", ".join(sources) + "]")
+            # print("Para remover um arquivo da lista, renomeie para sua extensão para .txt")
         self.set_solver(solvers)
         self.set_sources(sources)
         self.__autoload = True
