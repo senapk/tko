@@ -1,16 +1,16 @@
 from .flags import Flag
 from ..util.sentence import Sentence, Token
-from ..settings.settings_parser import SettingsParser
+from ..settings.settings import Settings
 
 class Style:
-    # geral: GeralSettings = SettingsParser().load_settings().geral
+
     @staticmethod
     def has_borders():
-        return SettingsParser().load_settings().geral.is_nerdfonts()
+        return Settings().app.is_nerdfonts()
     
     @staticmethod
     def has_colors():
-        return SettingsParser().load_settings().geral.is_colored()
+        return Settings().app.is_colored()
 
     @staticmethod
     def border_round(color: str, data: str):

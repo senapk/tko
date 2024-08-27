@@ -8,8 +8,9 @@ import random
 from .opener import Opener
 from ..run.basic import Success
 from typing import List, Any, Dict, Callable, Tuple
-from ..settings.settings import RepData, GeralSettings
-from ..settings.rep_settings import languages_avaliable
+from ..settings.settings import Settings
+from ..settings.app_settings import AppSettings
+from ..settings.rep_settings import languages_avaliable, RepData
 from ..down import Down
 from ..util.sentence import Sentence, Token,  RToken
 from .fmt import Fmt
@@ -80,25 +81,24 @@ class Key:
 class Play:
     def __init__(
         self,
-        geral: GeralSettings,
+        app: AppSettings,
         game: Game,
         rep_data: RepData,
-        rep_alias: str, 
-        fn_save
+        rep_alias: str
     ):
-        self.geral_save = fn_save
-        self.geral = geral
+        self.app = app
         self.rep_alias = rep_alias
         self.rep = rep_data
+        self.settings = Settings()
         self.exit = False
 
         if self.rep.get_lang() == "":
-            self.rep.set_lang(self.geral.get_lang_def())
+            self.rep.set_lang(self.app.get_lang_def())
         self.flagsman = FlagsMan(self.rep.get_flags())
         
         self.game: Game = game
         self.fman = FloatingManager()
-        self.tree = TaskTree(geral, game, rep_data, rep_alias)
+        self.tree = TaskTree(app, game, rep_data, rep_alias)
 
         if len(self.rep.get_tasks()) == 0:
             self.show_help()
@@ -127,7 +127,7 @@ class Play:
 
         self.wrap_size = Sentence(" ").join(self.build_bottom_array()).len()
 
-        self.opener = Opener(tree=self.tree, fman=self.fman, geral=geral, rep_data=rep_data, rep_alias=rep_alias)
+        self.opener = Opener(tree=self.tree, fman=self.fman, geral=app, rep_data=rep_data, rep_alias=rep_alias)
 
         self.search_mode: bool = False
         self.backup_expanded: List[str] = []
@@ -137,16 +137,16 @@ class Play:
     def save_to_json(self):
         self.tree.save_on_rep()
         self.rep.set_flags(self.flagsman.get_data())
-        self.geral_save()
+        self.settings.save_settings()
         self.rep.save_data_to_json()
 
     def set_rootdir(self, only_if_empty=True):
-        if only_if_empty and self.geral.get_rootdir() != "":
+        if only_if_empty and self.app.get_rootdir() != "":
             return
 
         def chama(value):
             if value == "yes":
-                self.geral.set_rootdir(os.path.abspath(os.getcwd()))
+                self.app.set_rootdir(os.path.abspath(os.getcwd()))
                 self.save_to_json()
                 self.fman.add_input(
                     Floating()
@@ -221,7 +221,7 @@ class Play:
         )
 
     def check_root_and_lang(self):
-        if self.geral.get_rootdir() == "":
+        if self.app.get_rootdir() == "":
             # self.set_rootdir()
             self.fman.add_input(
                 Floating()
@@ -303,7 +303,7 @@ class Play:
             Fmt.write(lines - 1, 0, text)
 
     def down_task(self):
-        rootdir = self.geral.get_rootdir()
+        rootdir = self.app.get_rootdir()
         if rootdir == "":
             self.check_root_and_lang()
             return
@@ -347,7 +347,7 @@ class Play:
                 )
     
     def select_task(self):
-        rootdir = self.geral.get_rootdir()
+        rootdir = self.app.get_rootdir()
         
         obj = self.tree.items[self.tree.index_selected].obj
 
@@ -398,8 +398,8 @@ class Play:
     def build_list_sentence(self, items: List[Sentence]) -> List[Sentence]:
         out: List[Sentence] = []
         for x in items:
-            color_ini = x.data[0].fmt if self.geral.is_colored() else "W"
-            color_end = x.data[-1].fmt if self.geral.is_colored() else "W"
+            color_ini = x.data[0].fmt if self.app.is_colored() else "W"
+            color_end = x.data[-1].fmt if self.app.is_colored() else "W"
             left = Style.roundL()
             right = Style.roundR()
             middle = x.clone()
@@ -425,7 +425,7 @@ class Play:
         if not isinstance(obj, Task):
             return ""
         
-        path = os.path.join(self.geral.get_rootdir(), self.rep_alias, obj.key, "Readme.md")
+        path = os.path.join(self.app.get_rootdir(), self.rep_alias, obj.key, "Readme.md")
         if os.path.isfile(path):
             return path
         return ""
@@ -475,7 +475,7 @@ class Play:
         todo = Style.main_todo() + "/"
         total_bar = Style.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Sentence().addf("/", "Skills"), "^", "{", "}")
-        frame_xp.set_footer(Sentence().add(" ").add(self.geral.get_rootdir()).add(" "), "^")
+        frame_xp.set_footer(Sentence().add(" ").add(self.app.get_rootdir()).add(" "), "^")
         frame_xp.draw()
 
 
@@ -512,12 +512,12 @@ class Play:
             elements.append(Style.get_flag_sentence(flag, pad))
 
 
-        colored = Flag().name("Colorido").char("C").values(["1" if self.geral.is_colored() else "0"]).text("Ativa ou desativa as cores").bool()
+        colored = Flag().name("Colorido").char("C").values(["1" if self.app.is_colored() else "0"]).text("Ativa ou desativa as cores").bool()
         elements.append(Style.get_flag_sentence(colored, pad))
-        bordas = Flag().name("Bordas").char("B").values(["1" if self.geral.is_nerdfonts() else "0"]).text("Ativa ou desativa as bordas").bool()
+        bordas = Flag().name("Bordas").char("B").values(["1" if self.app.is_nerdfonts() else "0"]).text("Ativa ou desativa as bordas").bool()
         elements.append(Style.get_flag_sentence(bordas, pad))
         
-        color = "W" if not self.geral.is_colored() else "C"
+        color = "W" if not self.app.is_colored() else "C"
         elements.append(Sentence().addf(color.lower(), Style.roundL()).addf(color, "DirDestino [D]").addf(color.lower(), Style.roundR()))
         elements.append(Sentence().addf(color.lower(), Style.roundL()).addf(color, "Linguagem  [L]").addf(color.lower(), Style.roundR()))
 
@@ -825,8 +825,8 @@ class Play:
         add_str(Key.dec_grade, self.tree.dec_grade)
         add_str(Key.dec_grade2, self.tree.dec_grade)
         add_str(Key.edit, lambda: self.opener.open_code(open_dir=True))
-        add_str(Key.cores, self.geral.toggle_color)
-        add_str(Key.bordas, self.geral.toggle_nerdfonts)
+        add_str(Key.cores, self.app.toggle_color)
+        add_str(Key.bordas, self.app.toggle_nerdfonts)
 
         for value in range(1, 10):
             add_str(str(value), self.GradeFunctor(int(value), self.tree.set_grade))

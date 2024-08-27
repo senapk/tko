@@ -1,26 +1,57 @@
 import json
 from typing import Any, Dict
 from .rep_settings import RepData, RepSource
-from .geral_settings import GeralSettings
+from .app_settings import AppSettings
 import os
+import appdirs
+from ..util.term_color import term_print
+from ..util.sentence import Sentence
 
+def singleton(class_):
+    instances = {}
+    def getinstance(*args, **kwargs):
+        if class_ not in instances:
+            instances[class_] = class_(*args, **kwargs)
+        return instances[class_]
+    return getinstance
+
+@singleton
 class Settings:
     def __init__(self):
         self.reps: Dict[str, RepSource] = {}
-        self.geral = GeralSettings()
+        self.app = AppSettings()
+        self.settings_file = ""
 
-    def init_default_reps(self):
+    def set_settings_file(self, path: str):
+        self.settings_file = path
+        return self
+
+    def get_settings_file(self) -> str:
+        if self.settings_file is None or self.settings_file == "":
+            self.package_name = "tko"
+            default_filename = "settings.json"
+            self.settings_file = os.path.abspath(default_filename)  # backup for replit, dont remove
+            self.settings_file = os.path.join(appdirs.user_data_dir(self.package_name), default_filename)
+        
+        if not os.path.exists(self.settings_file):
+            os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
+        return self.settings_file
+
+    def reset(self):
+        self.reps = {}
         self.reps["fup"] = RepSource(url = "https://github.com/qxcodefup/arcade/blob/master/Readme.md")
         self.reps["ed"] = RepSource(url = "https://github.com/qxcodeed/arcade/blob/master/Readme.md")
         self.reps["poo"] = RepSource(url = "https://github.com/qxcodepoo/arcade/blob/master/Readme.md")
 
-        for key in self.reps:
-            repdata = self.get_rep_data(key)
-            repdata.save_data_to_json()
+        # for key in self.reps:
+        #     repdata = self.get_rep_data(key)
+        #     repdata.save_data_to_json()
+
+        self.app = AppSettings()
         return self
 
     def __get_rep_file_path(self, course: str) -> str:
-        return os.path.join(self.geral.get_rootdir(), course, ".rep.json")   
+        return os.path.join(self.app.get_rootdir(), course, ".rep.json")   
 
     def get_rep_source(self, course: str) -> RepSource:
         if course in self.reps:
@@ -34,20 +65,71 @@ class Settings:
             return rep_data.load_data_from_json()
         return rep_data.load_defaults()
   
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "reps": {k: v.to_dict() for k, v in self.reps.items()},
-            "geral": self.geral.to_dict()
-        }
-
-    def from_dict(self, data: Dict[str, Any]):
-        self.reps = {k: RepSource().from_dict(v) for k, v in data.get("reps", {}).items()}
-        self.geral = GeralSettings().from_dict(data.get("geral", {}))
-        return self
+    # def to_dict(self) -> Dict[str, Any]:
+    #     return {
+    #         "reps": {k: v.to_dict() for k, v in self.reps.items()},
+    #         "geral": self.app.to_dict()
+    #     }
     
-    def save_to_json(self, file: str):
+    def load_settings(self):
+        try:
+            settings_file = self.get_settings_file() # assure right loading if value == ""
+            with open(settings_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                self.reps = {k: RepSource().from_dict(v) for k, v in data.get("reps", {}).items()}
+                self.app = AppSettings().from_dict(data.get("geral", {}))
+        except (FileNotFoundError, json.decoder.JSONDecodeError) as _e:
+            self.reset()
+            self.save_settings()
+        return self
+
+    # def from_dict(self, data: Dict[str, Any]):
+    #     self.reps = {k: RepSource().from_dict(v) for k, v in data.get("reps", {}).items()}
+    #     self.app = AppSettings().from_dict(data.get("geral", {}))
+    #     return self
+
+    def check_rootdir(self) -> None:
+        if self.app.get_rootdir() != "":
+            return
+        term_print(Sentence().add("Pasta padrão para download de arquivos ").addf("r", "precisa").add(" ser definida."))
+        term_print(Sentence().add("Escolha ").addf("r", "uma").add(" para continuar:"))
+        here_cwd = os.getcwd()
+        qxcode = os.path.join(os.path.expanduser("~"), "qxcode")
+
+        while True:
+            term_print(Sentence().addf("r", "1 - ").add(here_cwd))
+            term_print(Sentence().addf("r", "2 - ").add(qxcode))
+            term_print(Sentence().addf("r", "3 - ").add("Outra pasta"))
+            term_print(Sentence().add("Default ").addf("r", "1").add(": "), end="")
+            op = input()
+            if op == "":
+                op = "1"
+            if op == "1":
+                home_qxcode = here_cwd
+                break
+            if op == "2":
+                home_qxcode = qxcode
+                break
+            if op == "3":
+                term_print(Sentence().addf("y", "Navegue até o diretório desejado e execute o tko novamente."))
+                exit(1)
+
+        if not os.path.exists(home_qxcode):
+            os.makedirs(home_qxcode)
+        print("Pasta padrão para download de arquivos foi definida em: " + home_qxcode)
+        print("Você pode alterar, navegando até a a pasta desejada e executando o comando")
+        print("tko config --root .")
+        self.app.set_rootdir(home_qxcode)
+        self.save_settings();
+    
+    def save_settings(self):
+        file = self.get_settings_file()
+        value = {
+            "reps": {k: v.to_dict() for k, v in self.reps.items()},
+            "geral": self.app.to_dict()
+        }
         with open(file, "w", encoding="utf-8") as f:
-            json.dump(self.to_dict(), f, indent=4)
+            json.dump(value, f, indent=4)
         return self
 
     def __str__(self):

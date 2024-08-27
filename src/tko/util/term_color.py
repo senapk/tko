@@ -2,7 +2,7 @@ from .sentence import Sentence
 from typing import Union
 
 class Color:
-    enabled = False
+    enabled = True
     terminal_styles = {
         '.': '\033[0m', # Reset
         '*': '\033[1m', # Bold

@@ -1,6 +1,6 @@
 from typing import List, Any, Dict, Tuple, Union, Set
 
-from ..settings.geral_settings import GeralSettings
+from ..settings.app_settings import AppSettings
 from ..settings.rep_settings import RepData
 
 from ..util.sentence import Sentence, Token
@@ -26,7 +26,7 @@ class Entry:
 
 class TaskTree:
 
-    def __init__(self, local: GeralSettings, game: Game, rep: RepData, rep_alias: str):
+    def __init__(self, local: AppSettings, game: Game, rep: RepData, rep_alias: str):
         self.local = local
         self.game = game
         self.rep = rep

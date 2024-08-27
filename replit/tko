@@ -24,7 +24,7 @@ import math
 import configparser
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.22.5"
+__version__ = "0.22.6"
 
 
 def get_default_settings_for_borders() -> bool:
@@ -32,11 +32,11 @@ def get_default_settings_for_borders() -> bool:
         return False
     return True
 
-class GeralSettings:
+class AppSettings:
     __rootdir = "rootdir"
     __is_ascii = "ascii"
     __is_color = "color"
-    __diffdown = "diffdown"
+    __diffmode = "diffmode"
     __sidesize = "sidesize"
     __langdef = "langdef"
     __lastrep = "lastrep"
@@ -48,19 +48,19 @@ class GeralSettings:
         __rootdir: "",
         __is_ascii: False,
         __is_color: True,
-        __diffdown: True,
+        __diffmode: "side",
         __sidesize: 80,
         __langdef: "",
         __lastrep: "", 
         __nerdfonts: get_default_settings_for_borders(),
         __editor: "code",
-        __timeout: 2
+        __timeout: 1
     }
 
     def __init__(self):
         self.data: Dict[str, Any] = {}
-        for key in GeralSettings.defaults:
-            self.data[key] = GeralSettings.defaults[key]
+        for key in AppSettings.defaults:
+            self.data[key] = AppSettings.defaults[key]
 
     def __set(self, key: str, value: Any):
         self.data[key] = value
@@ -68,9 +68,9 @@ class GeralSettings:
 
     def __get(self, key: str) -> Any:
         if key not in self.defaults:
-            raise ValueError(f"Key {key} not found in GeralSettings")
+            raise ValueError(f"Key {key} not found in AppSettings")
         if key not in self.data:
-            self.data[key] = GeralSettings.defaults[key]
+            self.data[key] = AppSettings.defaults[key]
         return self.data[key]
 
 
@@ -108,16 +108,6 @@ class GeralSettings:
 
     def get_rootdir(self) -> str:
         value = self.__get(self.__rootdir)
-        if value == "":
-            home_dir = os.path.expanduser("~")
-            def_root = os.path.join(home_dir, "qxcode")
-            if not os.path.exists(def_root):
-                os.makedirs(def_root)
-                print("Pasta padrão para download de arquivos foi definida em: " + def_root)
-                print("Você pode alterar, navegando até a a pasta desejada e executando o comando")
-                print("tko config --root")
-            self.set_rootdir(def_root)
-            return def_root
         return value
     
     def is_nerdfonts(self) -> bool:
@@ -153,11 +143,11 @@ class GeralSettings:
         self.set_nerdfonts(not self.is_nerdfonts())
         return
 
-    def is_diff_down(self):
-        return self.__get(self.__diffdown)
+    def get_diff_mode(self) -> str:
+        return self.__get(self.__diffmode)
 
-    def set_is_diff_down(self, value: bool):
-        self.__set(self.__diffdown, value)
+    def set_diff_mode(self, value: str):
+        self.__set(self.__diffmode, value)
         return self
 
     def get_side_size(self):
@@ -1426,111 +1416,6 @@ class RepData:
         )
 
 
-class Settings:
-    def __init__(self):
-        self.reps: Dict[str, RepSource] = {}
-        self.geral = GeralSettings()
-
-    def init_default_reps(self):
-        self.reps["fup"] = RepSource(url = "https://github.com/qxcodefup/arcade/blob/master/Readme.md")
-        self.reps["ed"] = RepSource(url = "https://github.com/qxcodeed/arcade/blob/master/Readme.md")
-        self.reps["poo"] = RepSource(url = "https://github.com/qxcodepoo/arcade/blob/master/Readme.md")
-
-        for key in self.reps:
-            repdata = self.get_rep_data(key)
-            repdata.save_data_to_json()
-        return self
-
-    def __get_rep_file_path(self, course: str) -> str:
-        return os.path.join(self.geral.get_rootdir(), course, ".rep.json")   
-
-    def get_rep_source(self, course: str) -> RepSource:
-        if course in self.reps:
-            return self.reps[course]
-        raise Warning(f"Curso {course} não encontrado")
-
-    def get_rep_data(self, course: str) -> RepData:
-        cfg_file = self.__get_rep_file_path(course)
-        rep_data = RepData(cfg_file)
-        if os.path.exists(cfg_file):
-            return rep_data.load_data_from_json()
-        return rep_data.load_defaults()
-  
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "reps": {k: v.to_dict() for k, v in self.reps.items()},
-            "geral": self.geral.to_dict()
-        }
-
-    def from_dict(self, data: Dict[str, Any]):
-        self.reps = {k: RepSource().from_dict(v) for k, v in data.get("reps", {}).items()}
-        self.geral = GeralSettings().from_dict(data.get("geral", {}))
-        return self
-    
-    def save_to_json(self, file: str):
-        with open(file, "w", encoding="utf-8") as f:
-            json.dump(self.to_dict(), f, indent=4)
-        return self
-
-    def __str__(self):
-        output = ["Repositories:"]
-        maxlen = max([len(key) for key in self.reps])
-        for key in self.reps:
-            prefix = f"- {key.ljust(maxlen)}"
-            if self.reps[key].file and self.reps[key].url:
-                output.append(f"{prefix} : dual   : {self.reps[key].url} ; {self.reps[key].file}")
-            elif self.reps[key].url:
-                output.append(f"{prefix} : remote : {self.reps[key].url}")
-            else:
-                output.append(f"{prefix} : local  : {self.reps[key].file}")
-        return "\n".join(output)
-
-
-
-class SettingsParser:
-
-    user_settings_file: Optional[str] = None
-    settings: Optional[Settings] = None
-
-    def __init__(self):
-        self.package_name = "tko"
-        default_filename = "settings.json"
-        if SettingsParser.user_settings_file is None:
-            self.settings_file = os.path.abspath(default_filename)  # backup for replit, dont remove
-        else:
-            self.settings_file = os.path.abspath(SettingsParser.user_settings_file)
-        SettingsParser.settings = self.load_settings()
-
-    def get_settings_file(self):
-        return self.settings_file
-
-    def load_settings(self) -> Settings:
-        try:
-            if SettingsParser.settings is not None:
-                return SettingsParser.settings
-            with open(self.settings_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                SettingsParser.settings = Settings().from_dict(data)
-                return SettingsParser.settings
-        except (FileNotFoundError, json.decoder.JSONDecodeError) as _e:
-            return self.create_new_settings_file()
-
-    def save_settings(self):
-        self.load_settings().save_to_json(self.settings_file)
-
-    def create_new_settings_file(self) -> Settings:
-        SettingsParser.settings = Settings().init_default_reps()
-        if not os.path.isdir(self.get_settings_dir()):
-            os.makedirs(self.get_settings_dir(), exist_ok=True)
-        self.save_settings()
-        if SettingsParser.settings is None:
-            raise ValueError("Settings not loaded")
-        return SettingsParser.settings
-
-    def get_settings_dir(self) -> str:
-        return os.path.dirname(self.settings_file)
-
-
 
 class FileSource:
     def __init__(self, label, input_file, output_file):
@@ -1936,754 +1821,6 @@ class FlagsMan:
             if len(flag.get_values()) > 1:
                 data[name] = flag.get_index()
         return data
-
-
-class Style:
-    # geral: GeralSettings = SettingsParser().load_settings().geral
-    @staticmethod
-    def has_borders():
-        return SettingsParser().load_settings().geral.is_nerdfonts()
-    
-    @staticmethod
-    def has_colors():
-        return SettingsParser().load_settings().geral.is_colored()
-
-    @staticmethod
-    def border_round(color: str, data: str):
-        return Sentence().addf(color.lower(), Style.roundL()).addf(color, data).addf(color.lower(), Style.roundR())
-
-    @staticmethod
-    def border_sharp(color: str, data: str):
-        return Sentence().addf(color.lower(), Style.sharpL()).addf(color, data).addf(color.lower(), Style.sharpR())
-
-    @staticmethod
-    def roundL():
-        return "" if Style.has_borders() else "█"
-
-    @staticmethod
-    def roundR():
-        return "" if Style.has_borders() else "█"
-
-    @staticmethod
-    def sharpL():
-        return "" if Style.has_borders() else "█"
-
-    @staticmethod
-    def sharpR():
-        return "" if Style.has_borders() else "█"
-    
-    @staticmethod
-    def midL():
-        return "" if Style.has_borders() else "█"
-    
-    @staticmethod
-    def midR():
-        return "" if Style.has_borders() else "█"
- 
-    @staticmethod
-    def focus():
-        return "W" if not Style.has_colors() else "B"
-    @staticmethod
-    def prog_done():
-        return "g" if not Style.has_colors() else "g"
-    @staticmethod
-    def prog_todo():
-        return "" if not Style.has_colors() else "y"
-    @staticmethod
-    def flag_on():
-        return "W" if not Style.has_colors() else "G"
-    @staticmethod
-    def flag_off():
-        return "W" if not Style.has_colors() else "Y"
-    # @staticmethod
-    # def cmds():
-    #     return "W" if Flags.mono.is_true() else "B"
-    @staticmethod
-    def skill_done():
-        return "kW" if not Style.has_colors() else "C"
-    @staticmethod
-    def skill_todo():
-        return "wK" if not Style.has_colors() else "M"
-    @staticmethod
-    def main_done():
-        return "kW" if not Style.has_colors() else "G"
-    @staticmethod
-    def main_todo():
-        return "wK" if not Style.has_colors() else "R"
-    
-    @staticmethod
-    def skills():
-        return "c"
-
-    @staticmethod
-    def new():
-        return "g"
-
-    nothing = "m"
-    started = "r"
-    required = "y"
-    complete = "g"
-
-    shell = "r" # extern shell cmds
-    htext = ""
-    check = "g"
-    uncheck = "y"
-    param = "c"
-
-    @staticmethod
-    def build_bar(text: str, percent: float, length: int, fmt_true: str = "/kC",
-                  fmt_false: str = "/kY", round=True) -> Sentence:
-        if round and (len(text) >= length - 2):
-            text = " " + text
-
-        if length > len(text):
-            prefix = (length - len(text)) // 2
-            suffix = length - len(text) - prefix
-            text = " " * prefix + text + " " * suffix
-        elif length < len(text):
-            text = text[:length]
-        
-        full_line = text
-        done_len = int(percent * length)
-        xp_bar = Token(full_line[:done_len], fmt_true) + Token(full_line[done_len:], fmt_false)
-            
-        if round:
-            xp_bar.data[0].text = Style.roundL()
-            fmt = xp_bar.data[0].fmt
-            fmt = [c for c in fmt if c.isupper()]
-            fmt = "" if len(fmt) == 0 else fmt[0]
-            xp_bar.data[0].fmt = fmt.lower()
-
-            xp_bar.data[-1].text = Style.roundR()
-            fmt = xp_bar.data[-1].fmt
-            fmt = [c for c in fmt if c.isupper()]
-            fmt = "" if len(fmt) == 0 else fmt[0]
-            xp_bar.data[-1].fmt = fmt.lower()
-        return xp_bar
-
-    @staticmethod
-    def get_flag_sentence(flag: Flag, pad: int = 0) -> Sentence:
-        if not flag.is_bool():
-            name = Sentence().addf(flag.get_value(), f"{flag._name}".ljust(pad))
-            value = Sentence().add(f"[{flag.get_char()}]").add(name).add(f"{flag.get_value()}".rjust(2))
-            return value
-            
-        char = flag.get_char()
-        text = flag.get_name()
-        color = "G" if flag.is_true() else "Y"
-        textc = ""
-        extra = Sentence()
-        if not Style.has_colors():
-            color = "W" if flag.is_true() else "K"
-            textc = "k" if flag.is_true() else "w"
-        if pad > 0:
-            extra.addf(color, (pad - len(text)) * " ")
-        mid = Sentence().addf(color + textc, text).add(extra).addf(color, f"[{char}]")
-        # if flag.is_true():
-        #     middle = Sentence().addf(color.lower(), Style.roundL()).add(mid).addf(color.lower(), Style.roundR())
-        # else:
-        middle = Sentence().addf(color.lower(), Style.sharpL()).add(mid).addf(color.lower(), Style.sharpR())
-        return middle
-
-class Fmt:
-    __scr = None
-    # Definindo constantes para as cores
-    color_pairs: Dict[str, int] = {}
-
-    COLOR_MAP = {
-        'k': curses.COLOR_BLACK,
-        'r': curses.COLOR_RED,
-        'g': curses.COLOR_GREEN,
-        'y': curses.COLOR_YELLOW,
-        'b': curses.COLOR_BLUE,
-        'm': curses.COLOR_MAGENTA,
-        'c': curses.COLOR_CYAN,
-        'w': curses.COLOR_WHITE,
-    }
-    @staticmethod
-    def set_scr(scr):
-        Fmt.__scr = scr
-        Fmt.init_colors()
-
-    @staticmethod
-    def init_colors():
-        pair_number = 1
-        curses.start_color()
-        curses.use_default_colors()
-        for fk, fg in Fmt.COLOR_MAP.items():
-            curses.init_pair(pair_number, fg, -1)
-            Fmt.color_pairs[fk] = pair_number
-            pair_number += 1
-
-        for fk, fg in Fmt.COLOR_MAP.items():
-            for bk, bg in Fmt.COLOR_MAP.items():
-                curses.init_pair(pair_number, fg, bg)
-                Fmt.color_pairs[fk + bk.upper()] = pair_number
-                pair_number += 1
-
-    @staticmethod
-    def stroke(y: int, x: int, fmt: str, text: str):
-        if Fmt.__scr is None:
-            raise Exception("Fmt.__scr não foi inicializado")
-        stdscr = Fmt.__scr
-        italic = False
-        underline = False
-        source_fmt = fmt
-        if "/" in fmt:
-            italic = True
-            fmt = fmt.replace("/", "")
-        if "_" in fmt:
-            underline = True
-            fmt = fmt.replace("_", "")
-
-        fg_list = [c for c in fmt if c.islower()]
-        bg_list = [c for c in fmt if c.isupper()]
-        bg = "" if len(bg_list) == 0 else bg_list[0]
-        fg = "" if len(fg_list) == 0 else fg_list[0]
-
-        if bg != "" and fg == "":
-            fg = "k"
-        if fg == "" and bg == "":
-            pair_number = -1
-        else:
-            try:
-                pair_number = Fmt.color_pairs[fg + bg]
-            except KeyError:
-                # print("Cor não encontrada: " + fg + bg)
-                raise(Exception("Cor não encontrada: " + source_fmt))
-                exit(1)
-        if italic:
-            stdscr.attron(curses.A_ITALIC)
-        if underline:
-            stdscr.attron(curses.A_UNDERLINE)
-        # Exibir o texto com a combinação de cores escolhida
-        if pair_number != -1:
-            stdscr.attron(curses.color_pair(pair_number))
-        try:
-            stdscr.addstr(y, x, text)
-        except curses.error as _e:
-            lines, cols = Fmt.get_size()
-            if y == lines - 1:
-                if x + len(text) <= cols:
-                    pass
-            # lines, cols = stdscr.getmaxyx()
-            # stdscr.addstr(10, 10, f"y:{y}, x:{x}, fmt:{fmt}, len:{len(text)} lines:{lines}, cols:{cols}")
-            # stdscr.addstr(1, 0, text)
-            # raise Exception(f"y:{y}, x:{x}, fmt:{fmt}, len:{len(text)} lines:{lines}, cols:{cols}\n{text}")
-        if pair_number != -1:
-            stdscr.attroff(curses.color_pair(pair_number))
-        if italic:
-            stdscr.attroff(curses.A_ITALIC)
-        if underline:
-            stdscr.attroff(curses.A_UNDERLINE)
-
-    @staticmethod
-    def write(y: int, x: int, sentence: Sentence):
-
-        # Escreve um texto na tela com cores diferentes
-        lines, cols = Fmt.get_size()
-        if y < 0 or y >= lines:
-            return
-        for token in sentence.resume():
-            fmt = token.fmt
-            text = token.text
-            if x < 0:
-                if x + len(text) >= 0:
-                    text = text[-x:]
-                    x = 0
-            if x < cols:
-                if x + len(text) >= cols:
-                    text = text[:cols - x]
-                Fmt.stroke(y, x, fmt, text)
-            x += len(text)  # Move a posição x para a direita após o texto
-
-    @staticmethod
-    def write_text(y: int, x: int, text: str):
-        Fmt.write(y, x, Sentence().add(text))
-
-    @staticmethod
-    def debug(y, x, text: Sentence):
-        Fmt.write(y, x, text)
-        Fmt.getch()
-
-
-    # @staticmethod
-    # def get_user_input(stdscr, prompt: str) -> str:
-    #     lines, cols = stdscr.getmaxyx()
-    #     curses.echo()  # Ativa a exibição dos caracteres digitados
-    #     curses.curs_set(1)  # Ativa o cursor
-    #     stdscr.addstr(0, 0, cols * " ")
-    #     stdscr.addstr(0, 0, prompt)
-    #     stdscr.refresh()
-    #     input_str = stdscr.getstr(0, len(prompt), 20).decode('utf-8')  # Captura o input do usuário
-    #     curses.noecho()  # Desativa a exibição dos caracteres digitados
-    #     curses.curs_set(0)
-    #     return input_str
-
-    @staticmethod
-    def get_percent(value, pad = 0) -> Sentence:
-        text = f"{str(value)}%".rjust(pad)
-        if value == 100:
-            return Sentence().addf(Style.complete, "100%")
-        if value >= 70:
-            return Sentence().addf(Style.required, text)
-        if value == 0:
-            return Sentence().addf(Style.nothing, text)
-        return Sentence().addf(Style.started, text)
-    
-    @staticmethod
-    def getch():
-        if Fmt.__scr is None:
-            raise Exception("Fmt.__scr não foi inicializado")
-        return Fmt.__scr.getch()
-
-    @staticmethod
-    def clear():
-        if Fmt.__scr is None:
-            raise Exception("Fmt.__scr não foi inicializado")
-        Fmt.__scr.erase()
-
-    @staticmethod
-    def refresh():
-        if Fmt.__scr is None:
-            raise Exception("Fmt.__scr não foi inicializado")
-        Fmt.__scr.refresh()
-
-    @staticmethod
-    def get_size() -> Tuple[int, int]:
-        if Fmt.__scr is None:
-            raise Exception("Fmt.__scr não foi inicializado")
-        return Fmt.__scr.getmaxyx()
-        
-
-
-
-class Frame:
-    def __init__(self, y: int = 0, x: int = 0):
-        self._x = x
-        self._y = y
-        self._inner_dx = 0
-        self._inner_dy = 0
-        self._border = "rounded"
-        self._filled = False
-        self._header: Sentence = Sentence()
-        self._halign = ""
-        self._hprefix = ""
-        self._hsuffix = ""
-        self._footer: Sentence = Sentence()
-        self._falign = ""
-        self._fprefix = ""
-        self._fsuffix = ""
-        self._fill_char = " "
-        self._wrap = False
-        self._border_color = ""
-        self._print_index = 0
-
-    def set_border_color(self, color: str):
-        self._border_color = color
-        return self
-
-    def get_dx(self):
-        return self._inner_dx
-
-    def get_dy(self):
-        return self._inner_dy
-
-    def get_x(self):
-        return self._x
-
-    def get_y(self):
-        return self._y
-
-    def __align_header_footer(self, data, symbol, prefix, suffix):
-        dx = self._inner_dx
-        color = self._border_color
-        pad = dx - len(prefix) - len(suffix)
-        hor = self.get_symbol("h")
-        
-        data.trim_end(pad)
-        sent = Sentence().addf(color, prefix).add(data).addf(color, suffix)
-        if symbol == "<":
-            sent.ljust(dx, Token(hor, color))
-        elif symbol == ">":
-            sent.rjust(dx, Token(hor, color))
-        else:
-            sent.center(dx, Token(hor, color))
-        return sent
-
-    def get_header(self):
-        return Sentence().add(self._hprefix).add(self._header).add(self._hsuffix)
-    
-    def get_footer(self):
-        return Sentence().add(self._fprefix).add(self._footer).add(self._fsuffix)
-
-    def get_full_header(self):
-        return self.__align_header_footer(self._header, self._halign, self._hprefix, self._hsuffix)
-
-    def get_full_footer(self):
-        return self.__align_header_footer(self._footer, self._falign, self._fprefix, self._fsuffix)
-
-    def set_pos(self, y: int, x: int):
-        self._x = x
-        self._y = y
-        return self
-
-    def set_size(self, size_y, size_x):
-        self._inner_dx = size_x - 2
-        self._inner_dy = size_y - 2
-        return self
-
-    def set_inner(self, inner_dy: int, inner_dx: int):
-        self._inner_dy = inner_dy
-        self._inner_dx = inner_dx
-        return self
-
-    def get_inner(self):
-        return (self._inner_dy, self._inner_dx)
-
-    def get_size(self):
-        return self._inner_dy + 2, self._inner_dx + 2
-
-    def set_end(self, y: int, x: int):
-        self._inner_dx = x - self._x - 1
-        self._inner_dy = y - self._y - 1
-        return self
-
-    def set_wrap(self):
-        self._wrap = True
-        return self
-
-    def set_fill_char(self, char: str):
-        self._fill_char = char
-        return self
-
-    def get_symbol(self, value: str):
-        square = {"lu": "┌", "ru": "┐", "ld": "└", "rd": "┘", "h": "─", "v": "│"}
-        rounded = {"lu": "╭", "ru": "╮", "ld": "╰", "rd": "╯", "h": "─", "v": "│"}
-        bold = {"lu": "┏", "ru": "┓", "ld": "┗", "rd": "┛", "h": "━", "v": "┃"}
-
-        if self._border == "square":
-            return square[value]
-        elif self._border == "rounded":
-            return rounded[value]
-        elif self._border == "bold":
-            return bold[value]
-        return " "
-
-    def set_border_none(self):
-        self._border = "none"
-        return self
-
-    def set_border_bold(self):
-        self._border = "bold"
-        return self
-
-    def set_border_rounded(self):
-        self._border = "rounded"
-        return self
-
-    def set_border_square(self):
-        self._border = "square"
-        return self
-
-    def set_header(self, header: Sentence, align="<", prefix="", suffix=""):
-        self._halign = align
-        self._header = header
-        self._hprefix = prefix
-        self._hsuffix = suffix
-        return self
-
-    def set_footer(self, footer: Sentence, align=">", prefix="", suffix=""):
-        self._falign = align
-        self._footer = footer
-        self._fprefix = prefix
-        self._fsuffix = suffix
-        return self
-
-    def set_fill(self):
-        self._filled = True
-        return self
-
-    def set_nofill(self):
-        self._filled = False
-        return self
-
-    def print(self, x: int, sentence: Sentence):
-        self.write(self._print_index, x, sentence)
-        self._print_index += 1
-        return self
-
-    # return y, x of the last character
-    def write(self, y: int, x: int, sentence: Sentence) -> bool:
-        lines, cols = Fmt.get_size()
-
-        x_min = max(-1, self._x)
-        y_min = max(-1, self._y)
-        x_max = min(cols, self._x + self._inner_dx)
-        y_max = min(lines, self._y + self._inner_dy)
-
-        x_abs = x + self._x + 1
-        y_abs = y + self._y + 1
-
-        if y_abs <= y_min or y_abs > y_max:
-            return False
-        count = 0
-        for token in sentence.resume():
-            fmt, text = token.fmt, token.text
-            if x_abs - 1 < x_min:  # Se o texto começa fora do frame
-                if x_abs + len(text) > x_min:  # mas ter parte dentro
-                    text = text[x_min - x_abs + 1 :]
-                    x_abs = x_min + 1
-            if x_abs <= x_max:  # Se o texto começa dentro do frame
-                if x_abs + len(text) >= x_max:
-                    cut_point = x_max - x_abs + 1
-                    text = text[:cut_point]
-
-                Fmt.stroke(y_abs, x_abs, fmt, text)
-                count += 1
-            x_abs += len(text)
-        return count != 0
-
-    def draw(self):
-        x = self._x
-        y = self._y
-        dx = self._inner_dx
-        dy = self._inner_dy
-        color = self._border_color
-        up_left = self.get_symbol("lu")
-        up_right = self.get_symbol("ru")
-        down_left = self.get_symbol("ld")
-        down_right = self.get_symbol("rd")
-        hor = self.get_symbol("h")
-        ver = self.get_symbol("v")
-
-        header = self.get_full_header()
-        footer = self.get_full_footer()
-
-        above = Sentence().addf(color, up_left).add(header).addf(color, up_right)
-        below = Sentence().addf(color, down_left).add(footer).addf(color, down_right)
-
-        Fmt.write(y, x, above)
-        if dy > 0:
-            Fmt.write(y + dy + 1, x, below)
-        if self._filled:
-            for i in range(1, dy + 1):
-                Fmt.write(
-                    y + i,
-                    x,
-                    Sentence()
-                    .addf(color, ver)
-                    .add(dx * self._fill_char)
-                    .addf(color, ver),
-                )
-        else:
-            for i in range(1, dy + 1):
-                Fmt.write(y + i, x, Sentence().addf(color, ver))
-                Fmt.write(y + i, x + dx + 1, Sentence().addf(color, ver))
-        return self
-
-
-
-class Floating:
-    def __init__(self, _align=""):
-        self._frame = Frame(0, 0)
-        self._content: List[Sentence] = []
-        self._type = "warning"
-        self._options = []
-        self._options_index = 0
-        self._fn_answer = None
-        self._enable = True
-        self._extra_exit: List[int] = []
-        self._exit_fn = None
-        self._exit_key = None
-        self._centralize = True
-        self._floating_align = _align
-
-    def disable(self):
-        self._enable = False
-
-    def set_ljust_text(self):
-        self._centralize = False
-        return self
-
-    def set_align(self, _align: str):
-        self._floating_align = _align
-
-    def set_header(self, text: str):
-        self._frame.set_header(Sentence().addf("/", text), "")
-        return self
-    
-    def set_header_sentence(self, sentence: Sentence):
-        self._frame.set_header(sentence, "")
-        return self
-    
-    def set_exit_key(self, key: str):
-        self._exit_key = ord(key)
-        return self
-
-    def set_exit_fn(self, fn):
-        self._exit_fn = fn
-        return self
-
-    def _set_xy(self, dy, dx):
-        valid = "<>^v"
-        for c in self._floating_align:
-            if c not in valid:
-                raise ValueError("Invalid align " + c)
-
-        lines, cols = Fmt.get_size()
-
-        x = (cols - dx) // 2
-        if "<" in self._floating_align:
-            x = 1
-        elif ">" in self._floating_align:
-            x = cols - dx - 3
-
-        y = (lines - dy) // 2
-        if "^" in self._floating_align:
-            y = 1
-        elif "v" in self._floating_align:
-            y = lines - dy - 5
-
-        self._frame.set_pos(y, x)
-        return self
-            
-    def is_enable(self):
-        return self._enable
-
-    def __setup_frame(self):
-        header_len = self._frame.get_header().len()
-        footer_len = self._frame.get_footer().len()
-        data = [x.len() for x in self._content] + [header_len, footer_len]
-        max_dx = max(data)
-        dx = max_dx
-        dy = len(self._content)
-        self._frame.set_inner(dy, dx)
-        self._set_xy(dy, dx)
-        self._frame.set_fill()
-        
-        if self._type == "answer":
-            footer = Sentence().add(" ")
-            for i, option in enumerate(self._options):
-                fmt = "kG" if i == self._options_index else ""
-                footer.addf(fmt, option).add(" ")
-            self._frame.set_footer(footer, "^")
-
-    def put_text(self, text: str):
-        lines = text.split("\n")
-        for line in lines:
-            self._content.append(Sentence().add(line))
-        return self
-
-    def put_sentence(self, sentence: Sentence):
-        self._content.append(sentence)
-        return self
-    
-    def set_content(self, content: List[str]):
-        self._content = [Sentence().add(x) for x in content]
-        return self
-
-    def _set_default_footer(self):
-        if self._frame.get_footer().len() == 0:
-            label = Sentence().addf("/", " Pressione espaço ")
-            self._frame.set_footer(label, "", "─", "─")
-        return self
-
-    def _set_default_header(self):
-        if self._frame.get_header().len() == 0:
-            if self._type == "warning":
-                self.set_header(" Aviso ")
-            elif self._type == "error":
-                self.set_header(" Erro ")
-            elif self._type == "answer":
-                self.set_header(" Pergunta ")
-
-    def warning(self):
-        self._type = "warning"
-        self._frame.set_border_color("y")
-        return self
-    
-    def error(self):
-        self._type = "warning"
-        self._frame.set_border_color("r")
-        return self
-    
-    def answer(self, fn_answer):
-        self._type = "answer"
-        self._frame.set_border_color("g")
-        self._fn_answer = fn_answer
-        return self
-
-    def set_options(self, options: List[str]):
-        self._options = options
-        return self
-
-    def draw(self):
-        self._set_default_header()
-        self._set_default_footer()
-        self.__setup_frame()
-        self._frame.draw()
-        y = 0
-
-        for line in self._content:
-            x = 0
-            if self._centralize:
-                x = (self._frame.get_dx() - line.len()) // 2
-            self._frame.write(y, x, line)
-            y += 1
-        return self
-
-    def get_input(self) -> int:
-        self.draw()
-        key: int = Fmt.getch()
-        if self._type == "warning" or self._type == "error":
-            if key < 300:
-                self._enable = False
-                if self._exit_fn is not None:
-                    self._exit_fn()
-                if self._exit_key is not None:
-                    return self._exit_key
-                if key == ord(" ") or key == 27:
-                    return -1
-                return key
-        if self._type == "answer":
-            if key == curses.KEY_LEFT:
-                self._options_index = (self._options_index - 1) % len(self._options)
-            elif key == curses.KEY_RIGHT:
-                self._options_index = (self._options_index + 1) % len(self._options)
-            elif key == 27:
-                self._enable = False
-            elif key == ord('\n'):
-                self._enable = False
-                if self._fn_answer is not None:
-                    self._fn_answer(self._options[self._options_index])
-                if self._exit_fn is not None:
-                    self._exit_fn()
-                if self._exit_key is not None:
-                    return self._exit_key
-                return -1
-        return -1
-        
-
-
-class FloatingManager:
-    def __init__(self):
-        self.input_layer: List[Floating] = []
-
-    def add_input(self, floating: Floating):
-        self.input_layer.append(floating)
-
-    def draw_warnings(self):
-        if len(self.input_layer) > 0 and self.input_layer[0].is_enable():
-            self.input_layer[0].draw()
-
-    def has_floating(self) -> bool:
-        while len(self.input_layer) > 0 and not self.input_layer[0].is_enable():
-            self.input_layer = self.input_layer[1:]
-        return len(self.input_layer) > 0 and self.input_layer[0].is_enable()
-
-    def get_input(self) -> int:
-        return self.input_layer[0].get_input()
 
 
 class __Symbols:
@@ -3752,7 +2889,7 @@ class Writer:
 
 
 class Color:
-    enabled = False
+    enabled = True
     terminal_styles = {
         '.': '\033[0m', # Reset
         '*': '\033[1m', # Bold
@@ -3795,6 +2932,892 @@ def term_print(ftext: Union[str, Sentence], **kwargs):
         print(ftext, **kwargs)
     else:
         print(term_colour(ftext), **kwargs)
+
+def singleton(class_):
+    instances = {}
+    def getinstance(*args, **kwargs):
+        if class_ not in instances:
+            instances[class_] = class_(*args, **kwargs)
+        return instances[class_]
+    return getinstance
+
+@singleton
+class Settings:
+    def __init__(self):
+        self.reps: Dict[str, RepSource] = {}
+        self.app = AppSettings()
+        self.settings_file = ""
+
+    def set_settings_file(self, path: str):
+        self.settings_file = path
+        return self
+
+    def get_settings_file(self) -> str:
+        if self.settings_file is None or self.settings_file == "":
+            self.package_name = "tko"
+            default_filename = "settings.json"
+            self.settings_file = os.path.abspath(default_filename)  # backup for replit, dont remove
+        
+        if not os.path.exists(self.settings_file):
+            os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
+        return self.settings_file
+
+    def reset(self):
+        self.reps = {}
+        self.reps["fup"] = RepSource(url = "https://github.com/qxcodefup/arcade/blob/master/Readme.md")
+        self.reps["ed"] = RepSource(url = "https://github.com/qxcodeed/arcade/blob/master/Readme.md")
+        self.reps["poo"] = RepSource(url = "https://github.com/qxcodepoo/arcade/blob/master/Readme.md")
+
+        # for key in self.reps:
+        #     repdata = self.get_rep_data(key)
+        #     repdata.save_data_to_json()
+
+        self.app = AppSettings()
+        return self
+
+    def __get_rep_file_path(self, course: str) -> str:
+        return os.path.join(self.app.get_rootdir(), course, ".rep.json")   
+
+    def get_rep_source(self, course: str) -> RepSource:
+        if course in self.reps:
+            return self.reps[course]
+        raise Warning(f"Curso {course} não encontrado")
+
+    def get_rep_data(self, course: str) -> RepData:
+        cfg_file = self.__get_rep_file_path(course)
+        rep_data = RepData(cfg_file)
+        if os.path.exists(cfg_file):
+            return rep_data.load_data_from_json()
+        return rep_data.load_defaults()
+  
+    # def to_dict(self) -> Dict[str, Any]:
+    #     return {
+    #         "reps": {k: v.to_dict() for k, v in self.reps.items()},
+    #         "geral": self.app.to_dict()
+    #     }
+    
+    def load_settings(self):
+        try:
+            settings_file = self.get_settings_file() # assure right loading if value == ""
+            with open(settings_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                self.reps = {k: RepSource().from_dict(v) for k, v in data.get("reps", {}).items()}
+                self.app = AppSettings().from_dict(data.get("geral", {}))
+        except (FileNotFoundError, json.decoder.JSONDecodeError) as _e:
+            self.reset()
+            self.save_settings()
+        return self
+
+    # def from_dict(self, data: Dict[str, Any]):
+    #     self.reps = {k: RepSource().from_dict(v) for k, v in data.get("reps", {}).items()}
+    #     self.app = AppSettings().from_dict(data.get("geral", {}))
+    #     return self
+
+    def check_rootdir(self) -> None:
+        if self.app.get_rootdir() != "":
+            return
+        term_print(Sentence().add("Pasta padrão para download de arquivos ").addf("r", "precisa").add(" ser definida."))
+        term_print(Sentence().add("Escolha ").addf("r", "uma").add(" para continuar:"))
+        here_cwd = os.getcwd()
+        qxcode = os.path.join(os.path.expanduser("~"), "qxcode")
+
+        while True:
+            term_print(Sentence().addf("r", "1 - ").add(here_cwd))
+            term_print(Sentence().addf("r", "2 - ").add(qxcode))
+            term_print(Sentence().addf("r", "3 - ").add("Outra pasta"))
+            term_print(Sentence().add("Default ").addf("r", "1").add(": "), end="")
+            op = input()
+            if op == "":
+                op = "1"
+            if op == "1":
+                home_qxcode = here_cwd
+                break
+            if op == "2":
+                home_qxcode = qxcode
+                break
+            if op == "3":
+                term_print(Sentence().addf("y", "Navegue até o diretório desejado e execute o tko novamente."))
+                exit(1)
+
+        if not os.path.exists(home_qxcode):
+            os.makedirs(home_qxcode)
+        print("Pasta padrão para download de arquivos foi definida em: " + home_qxcode)
+        print("Você pode alterar, navegando até a a pasta desejada e executando o comando")
+        print("tko config --root .")
+        self.app.set_rootdir(home_qxcode)
+        self.save_settings();
+    
+    def save_settings(self):
+        file = self.get_settings_file()
+        value = {
+            "reps": {k: v.to_dict() for k, v in self.reps.items()},
+            "geral": self.app.to_dict()
+        }
+        with open(file, "w", encoding="utf-8") as f:
+            json.dump(value, f, indent=4)
+        return self
+
+    def __str__(self):
+        output = ["Repositories:"]
+        maxlen = max([len(key) for key in self.reps])
+        for key in self.reps:
+            prefix = f"- {key.ljust(maxlen)}"
+            if self.reps[key].file and self.reps[key].url:
+                output.append(f"{prefix} : dual   : {self.reps[key].url} ; {self.reps[key].file}")
+            elif self.reps[key].url:
+                output.append(f"{prefix} : remote : {self.reps[key].url}")
+            else:
+                output.append(f"{prefix} : local  : {self.reps[key].file}")
+        return "\n".join(output)
+
+
+class Style:
+
+    @staticmethod
+    def has_borders():
+        return Settings().app.is_nerdfonts()
+    
+    @staticmethod
+    def has_colors():
+        return Settings().app.is_colored()
+
+    @staticmethod
+    def border_round(color: str, data: str):
+        return Sentence().addf(color.lower(), Style.roundL()).addf(color, data).addf(color.lower(), Style.roundR())
+
+    @staticmethod
+    def border_sharp(color: str, data: str):
+        return Sentence().addf(color.lower(), Style.sharpL()).addf(color, data).addf(color.lower(), Style.sharpR())
+
+    @staticmethod
+    def roundL():
+        return "" if Style.has_borders() else "█"
+
+    @staticmethod
+    def roundR():
+        return "" if Style.has_borders() else "█"
+
+    @staticmethod
+    def sharpL():
+        return "" if Style.has_borders() else "█"
+
+    @staticmethod
+    def sharpR():
+        return "" if Style.has_borders() else "█"
+    
+    @staticmethod
+    def midL():
+        return "" if Style.has_borders() else "█"
+    
+    @staticmethod
+    def midR():
+        return "" if Style.has_borders() else "█"
+ 
+    @staticmethod
+    def focus():
+        return "W" if not Style.has_colors() else "B"
+    @staticmethod
+    def prog_done():
+        return "g" if not Style.has_colors() else "g"
+    @staticmethod
+    def prog_todo():
+        return "" if not Style.has_colors() else "y"
+    @staticmethod
+    def flag_on():
+        return "W" if not Style.has_colors() else "G"
+    @staticmethod
+    def flag_off():
+        return "W" if not Style.has_colors() else "Y"
+    # @staticmethod
+    # def cmds():
+    #     return "W" if Flags.mono.is_true() else "B"
+    @staticmethod
+    def skill_done():
+        return "kW" if not Style.has_colors() else "C"
+    @staticmethod
+    def skill_todo():
+        return "wK" if not Style.has_colors() else "M"
+    @staticmethod
+    def main_done():
+        return "kW" if not Style.has_colors() else "G"
+    @staticmethod
+    def main_todo():
+        return "wK" if not Style.has_colors() else "R"
+    
+    @staticmethod
+    def skills():
+        return "c"
+
+    @staticmethod
+    def new():
+        return "g"
+
+    nothing = "m"
+    started = "r"
+    required = "y"
+    complete = "g"
+
+    shell = "r" # extern shell cmds
+    htext = ""
+    check = "g"
+    uncheck = "y"
+    param = "c"
+
+    @staticmethod
+    def build_bar(text: str, percent: float, length: int, fmt_true: str = "/kC",
+                  fmt_false: str = "/kY", round=True) -> Sentence:
+        if round and (len(text) >= length - 2):
+            text = " " + text
+
+        if length > len(text):
+            prefix = (length - len(text)) // 2
+            suffix = length - len(text) - prefix
+            text = " " * prefix + text + " " * suffix
+        elif length < len(text):
+            text = text[:length]
+        
+        full_line = text
+        done_len = int(percent * length)
+        xp_bar = Token(full_line[:done_len], fmt_true) + Token(full_line[done_len:], fmt_false)
+            
+        if round:
+            xp_bar.data[0].text = Style.roundL()
+            fmt = xp_bar.data[0].fmt
+            fmt = [c for c in fmt if c.isupper()]
+            fmt = "" if len(fmt) == 0 else fmt[0]
+            xp_bar.data[0].fmt = fmt.lower()
+
+            xp_bar.data[-1].text = Style.roundR()
+            fmt = xp_bar.data[-1].fmt
+            fmt = [c for c in fmt if c.isupper()]
+            fmt = "" if len(fmt) == 0 else fmt[0]
+            xp_bar.data[-1].fmt = fmt.lower()
+        return xp_bar
+
+    @staticmethod
+    def get_flag_sentence(flag: Flag, pad: int = 0) -> Sentence:
+        if not flag.is_bool():
+            name = Sentence().addf(flag.get_value(), f"{flag._name}".ljust(pad))
+            value = Sentence().add(f"[{flag.get_char()}]").add(name).add(f"{flag.get_value()}".rjust(2))
+            return value
+            
+        char = flag.get_char()
+        text = flag.get_name()
+        color = "G" if flag.is_true() else "Y"
+        textc = ""
+        extra = Sentence()
+        if not Style.has_colors():
+            color = "W" if flag.is_true() else "K"
+            textc = "k" if flag.is_true() else "w"
+        if pad > 0:
+            extra.addf(color, (pad - len(text)) * " ")
+        mid = Sentence().addf(color + textc, text).add(extra).addf(color, f"[{char}]")
+        # if flag.is_true():
+        #     middle = Sentence().addf(color.lower(), Style.roundL()).add(mid).addf(color.lower(), Style.roundR())
+        # else:
+        middle = Sentence().addf(color.lower(), Style.sharpL()).add(mid).addf(color.lower(), Style.sharpR())
+        return middle
+
+class Fmt:
+    __scr = None
+    # Definindo constantes para as cores
+    color_pairs: Dict[str, int] = {}
+
+    COLOR_MAP = {
+        'k': curses.COLOR_BLACK,
+        'r': curses.COLOR_RED,
+        'g': curses.COLOR_GREEN,
+        'y': curses.COLOR_YELLOW,
+        'b': curses.COLOR_BLUE,
+        'm': curses.COLOR_MAGENTA,
+        'c': curses.COLOR_CYAN,
+        'w': curses.COLOR_WHITE,
+    }
+    @staticmethod
+    def set_scr(scr):
+        Fmt.__scr = scr
+        Fmt.init_colors()
+
+    @staticmethod
+    def init_colors():
+        pair_number = 1
+        curses.start_color()
+        curses.use_default_colors()
+        for fk, fg in Fmt.COLOR_MAP.items():
+            curses.init_pair(pair_number, fg, -1)
+            Fmt.color_pairs[fk] = pair_number
+            pair_number += 1
+
+        for fk, fg in Fmt.COLOR_MAP.items():
+            for bk, bg in Fmt.COLOR_MAP.items():
+                curses.init_pair(pair_number, fg, bg)
+                Fmt.color_pairs[fk + bk.upper()] = pair_number
+                pair_number += 1
+
+    @staticmethod
+    def stroke(y: int, x: int, fmt: str, text: str):
+        if Fmt.__scr is None:
+            raise Exception("Fmt.__scr não foi inicializado")
+        stdscr = Fmt.__scr
+        italic = False
+        underline = False
+        source_fmt = fmt
+        if "/" in fmt:
+            italic = True
+            fmt = fmt.replace("/", "")
+        if "_" in fmt:
+            underline = True
+            fmt = fmt.replace("_", "")
+
+        fg_list = [c for c in fmt if c.islower()]
+        bg_list = [c for c in fmt if c.isupper()]
+        bg = "" if len(bg_list) == 0 else bg_list[0]
+        fg = "" if len(fg_list) == 0 else fg_list[0]
+
+        if bg != "" and fg == "":
+            fg = "k"
+        if fg == "" and bg == "":
+            pair_number = -1
+        else:
+            try:
+                pair_number = Fmt.color_pairs[fg + bg]
+            except KeyError:
+                # print("Cor não encontrada: " + fg + bg)
+                raise(Exception("Cor não encontrada: " + source_fmt))
+                exit(1)
+        if italic:
+            stdscr.attron(curses.A_ITALIC)
+        if underline:
+            stdscr.attron(curses.A_UNDERLINE)
+        # Exibir o texto com a combinação de cores escolhida
+        if pair_number != -1:
+            stdscr.attron(curses.color_pair(pair_number))
+        try:
+            stdscr.addstr(y, x, text)
+        except curses.error as _e:
+            lines, cols = Fmt.get_size()
+            if y == lines - 1:
+                if x + len(text) <= cols:
+                    pass
+            # lines, cols = stdscr.getmaxyx()
+            # stdscr.addstr(10, 10, f"y:{y}, x:{x}, fmt:{fmt}, len:{len(text)} lines:{lines}, cols:{cols}")
+            # stdscr.addstr(1, 0, text)
+            # raise Exception(f"y:{y}, x:{x}, fmt:{fmt}, len:{len(text)} lines:{lines}, cols:{cols}\n{text}")
+        if pair_number != -1:
+            stdscr.attroff(curses.color_pair(pair_number))
+        if italic:
+            stdscr.attroff(curses.A_ITALIC)
+        if underline:
+            stdscr.attroff(curses.A_UNDERLINE)
+
+    @staticmethod
+    def write(y: int, x: int, sentence: Sentence):
+
+        # Escreve um texto na tela com cores diferentes
+        lines, cols = Fmt.get_size()
+        if y < 0 or y >= lines:
+            return
+        for token in sentence.resume():
+            fmt = token.fmt
+            text = token.text
+            if x < 0:
+                if x + len(text) >= 0:
+                    text = text[-x:]
+                    x = 0
+            if x < cols:
+                if x + len(text) >= cols:
+                    text = text[:cols - x]
+                Fmt.stroke(y, x, fmt, text)
+            x += len(text)  # Move a posição x para a direita após o texto
+
+    @staticmethod
+    def write_text(y: int, x: int, text: str):
+        Fmt.write(y, x, Sentence().add(text))
+
+    @staticmethod
+    def debug(y, x, text: Sentence):
+        Fmt.write(y, x, text)
+        Fmt.getch()
+
+
+    # @staticmethod
+    # def get_user_input(stdscr, prompt: str) -> str:
+    #     lines, cols = stdscr.getmaxyx()
+    #     curses.echo()  # Ativa a exibição dos caracteres digitados
+    #     curses.curs_set(1)  # Ativa o cursor
+    #     stdscr.addstr(0, 0, cols * " ")
+    #     stdscr.addstr(0, 0, prompt)
+    #     stdscr.refresh()
+    #     input_str = stdscr.getstr(0, len(prompt), 20).decode('utf-8')  # Captura o input do usuário
+    #     curses.noecho()  # Desativa a exibição dos caracteres digitados
+    #     curses.curs_set(0)
+    #     return input_str
+
+    @staticmethod
+    def get_percent(value, pad = 0) -> Sentence:
+        text = f"{str(value)}%".rjust(pad)
+        if value == 100:
+            return Sentence().addf(Style.complete, "100%")
+        if value >= 70:
+            return Sentence().addf(Style.required, text)
+        if value == 0:
+            return Sentence().addf(Style.nothing, text)
+        return Sentence().addf(Style.started, text)
+    
+    @staticmethod
+    def getch():
+        if Fmt.__scr is None:
+            raise Exception("Fmt.__scr não foi inicializado")
+        return Fmt.__scr.getch()
+
+    @staticmethod
+    def clear():
+        if Fmt.__scr is None:
+            raise Exception("Fmt.__scr não foi inicializado")
+        Fmt.__scr.erase()
+
+    @staticmethod
+    def refresh():
+        if Fmt.__scr is None:
+            raise Exception("Fmt.__scr não foi inicializado")
+        Fmt.__scr.refresh()
+
+    @staticmethod
+    def get_size() -> Tuple[int, int]:
+        if Fmt.__scr is None:
+            raise Exception("Fmt.__scr não foi inicializado")
+        return Fmt.__scr.getmaxyx()
+        
+
+
+
+class Frame:
+    def __init__(self, y: int = 0, x: int = 0):
+        self._x = x
+        self._y = y
+        self._inner_dx = 0
+        self._inner_dy = 0
+        self._border = "rounded"
+        self._filled = False
+        self._header: Sentence = Sentence()
+        self._halign = ""
+        self._hprefix = ""
+        self._hsuffix = ""
+        self._footer: Sentence = Sentence()
+        self._falign = ""
+        self._fprefix = ""
+        self._fsuffix = ""
+        self._fill_char = " "
+        self._wrap = False
+        self._border_color = ""
+        self._print_index = 0
+
+    def set_border_color(self, color: str):
+        self._border_color = color
+        return self
+
+    def get_dx(self):
+        return self._inner_dx
+
+    def get_dy(self):
+        return self._inner_dy
+
+    def get_x(self):
+        return self._x
+
+    def get_y(self):
+        return self._y
+
+    def __align_header_footer(self, data, symbol, prefix, suffix):
+        dx = self._inner_dx
+        color = self._border_color
+        pad = dx - len(prefix) - len(suffix)
+        hor = self.get_symbol("h")
+        
+        data.trim_end(pad)
+        sent = Sentence().addf(color, prefix).add(data).addf(color, suffix)
+        if symbol == "<":
+            sent.ljust(dx, Token(hor, color))
+        elif symbol == ">":
+            sent.rjust(dx, Token(hor, color))
+        else:
+            sent.center(dx, Token(hor, color))
+        return sent
+
+    def get_header(self):
+        return Sentence().add(self._hprefix).add(self._header).add(self._hsuffix)
+    
+    def get_footer(self):
+        return Sentence().add(self._fprefix).add(self._footer).add(self._fsuffix)
+
+    def get_full_header(self):
+        return self.__align_header_footer(self._header, self._halign, self._hprefix, self._hsuffix)
+
+    def get_full_footer(self):
+        return self.__align_header_footer(self._footer, self._falign, self._fprefix, self._fsuffix)
+
+    def set_pos(self, y: int, x: int):
+        self._x = x
+        self._y = y
+        return self
+
+    def set_size(self, size_y, size_x):
+        self._inner_dx = size_x - 2
+        self._inner_dy = size_y - 2
+        return self
+
+    def set_inner(self, inner_dy: int, inner_dx: int):
+        self._inner_dy = inner_dy
+        self._inner_dx = inner_dx
+        return self
+
+    def get_inner(self):
+        return (self._inner_dy, self._inner_dx)
+
+    def get_size(self):
+        return self._inner_dy + 2, self._inner_dx + 2
+
+    def set_end(self, y: int, x: int):
+        self._inner_dx = x - self._x - 1
+        self._inner_dy = y - self._y - 1
+        return self
+
+    def set_wrap(self):
+        self._wrap = True
+        return self
+
+    def set_fill_char(self, char: str):
+        self._fill_char = char
+        return self
+
+    def get_symbol(self, value: str):
+        square = {"lu": "┌", "ru": "┐", "ld": "└", "rd": "┘", "h": "─", "v": "│"}
+        rounded = {"lu": "╭", "ru": "╮", "ld": "╰", "rd": "╯", "h": "─", "v": "│"}
+        bold = {"lu": "┏", "ru": "┓", "ld": "┗", "rd": "┛", "h": "━", "v": "┃"}
+
+        if self._border == "square":
+            return square[value]
+        elif self._border == "rounded":
+            return rounded[value]
+        elif self._border == "bold":
+            return bold[value]
+        return " "
+
+    def set_border_none(self):
+        self._border = "none"
+        return self
+
+    def set_border_bold(self):
+        self._border = "bold"
+        return self
+
+    def set_border_rounded(self):
+        self._border = "rounded"
+        return self
+
+    def set_border_square(self):
+        self._border = "square"
+        return self
+
+    def set_header(self, header: Sentence, align="<", prefix="", suffix=""):
+        self._halign = align
+        self._header = header
+        self._hprefix = prefix
+        self._hsuffix = suffix
+        return self
+
+    def set_footer(self, footer: Sentence, align=">", prefix="", suffix=""):
+        self._falign = align
+        self._footer = footer
+        self._fprefix = prefix
+        self._fsuffix = suffix
+        return self
+
+    def set_fill(self):
+        self._filled = True
+        return self
+
+    def set_nofill(self):
+        self._filled = False
+        return self
+
+    def print(self, x: int, sentence: Sentence):
+        self.write(self._print_index, x, sentence)
+        self._print_index += 1
+        return self
+
+    # return y, x of the last character
+    def write(self, y: int, x: int, sentence: Sentence) -> bool:
+        lines, cols = Fmt.get_size()
+
+        x_min = max(-1, self._x)
+        y_min = max(-1, self._y)
+        x_max = min(cols, self._x + self._inner_dx)
+        y_max = min(lines, self._y + self._inner_dy)
+
+        x_abs = x + self._x + 1
+        y_abs = y + self._y + 1
+
+        if y_abs <= y_min or y_abs > y_max:
+            return False
+        count = 0
+        for token in sentence.resume():
+            fmt, text = token.fmt, token.text
+            if x_abs - 1 < x_min:  # Se o texto começa fora do frame
+                if x_abs + len(text) > x_min:  # mas ter parte dentro
+                    text = text[x_min - x_abs + 1 :]
+                    x_abs = x_min + 1
+            if x_abs <= x_max:  # Se o texto começa dentro do frame
+                if x_abs + len(text) >= x_max:
+                    cut_point = x_max - x_abs + 1
+                    text = text[:cut_point]
+
+                Fmt.stroke(y_abs, x_abs, fmt, text)
+                count += 1
+            x_abs += len(text)
+        return count != 0
+
+    def draw(self):
+        x = self._x
+        y = self._y
+        dx = self._inner_dx
+        dy = self._inner_dy
+        color = self._border_color
+        up_left = self.get_symbol("lu")
+        up_right = self.get_symbol("ru")
+        down_left = self.get_symbol("ld")
+        down_right = self.get_symbol("rd")
+        hor = self.get_symbol("h")
+        ver = self.get_symbol("v")
+
+        header = self.get_full_header()
+        footer = self.get_full_footer()
+
+        above = Sentence().addf(color, up_left).add(header).addf(color, up_right)
+        below = Sentence().addf(color, down_left).add(footer).addf(color, down_right)
+
+        Fmt.write(y, x, above)
+        if dy > 0:
+            Fmt.write(y + dy + 1, x, below)
+        if self._filled:
+            for i in range(1, dy + 1):
+                Fmt.write(
+                    y + i,
+                    x,
+                    Sentence()
+                    .addf(color, ver)
+                    .add(dx * self._fill_char)
+                    .addf(color, ver),
+                )
+        else:
+            for i in range(1, dy + 1):
+                Fmt.write(y + i, x, Sentence().addf(color, ver))
+                Fmt.write(y + i, x + dx + 1, Sentence().addf(color, ver))
+        return self
+
+
+
+class Floating:
+    def __init__(self, _align=""):
+        self._frame = Frame(0, 0)
+        self._content: List[Sentence] = []
+        self._type = "warning"
+        self._options = []
+        self._options_index = 0
+        self._fn_answer = None
+        self._enable = True
+        self._extra_exit: List[int] = []
+        self._exit_fn = None
+        self._exit_key = None
+        self._centralize = True
+        self._floating_align = _align
+
+    def disable(self):
+        self._enable = False
+
+    def set_ljust_text(self):
+        self._centralize = False
+        return self
+
+    def set_align(self, _align: str):
+        self._floating_align = _align
+
+    def set_header(self, text: str):
+        self._frame.set_header(Sentence().addf("/", text), "")
+        return self
+    
+    def set_header_sentence(self, sentence: Sentence):
+        self._frame.set_header(sentence, "")
+        return self
+    
+    def set_exit_key(self, key: str):
+        self._exit_key = ord(key)
+        return self
+
+    def set_exit_fn(self, fn):
+        self._exit_fn = fn
+        return self
+
+    def _set_xy(self, dy, dx):
+        valid = "<>^v"
+        for c in self._floating_align:
+            if c not in valid:
+                raise ValueError("Invalid align " + c)
+
+        lines, cols = Fmt.get_size()
+
+        x = (cols - dx) // 2
+        if "<" in self._floating_align:
+            x = 1
+        elif ">" in self._floating_align:
+            x = cols - dx - 3
+
+        y = (lines - dy) // 2
+        if "^" in self._floating_align:
+            y = 1
+        elif "v" in self._floating_align:
+            y = lines - dy - 5
+
+        self._frame.set_pos(y, x)
+        return self
+            
+    def is_enable(self):
+        return self._enable
+
+    def __setup_frame(self):
+        header_len = self._frame.get_header().len()
+        footer_len = self._frame.get_footer().len()
+        data = [x.len() for x in self._content] + [header_len, footer_len]
+        max_dx = max(data)
+        dx = max_dx
+        dy = len(self._content)
+        self._frame.set_inner(dy, dx)
+        self._set_xy(dy, dx)
+        self._frame.set_fill()
+        
+        if self._type == "answer":
+            footer = Sentence().add(" ")
+            for i, option in enumerate(self._options):
+                fmt = "kG" if i == self._options_index else ""
+                footer.addf(fmt, option).add(" ")
+            self._frame.set_footer(footer, "^")
+
+    def put_text(self, text: str):
+        lines = text.split("\n")
+        for line in lines:
+            self._content.append(Sentence().add(line))
+        return self
+
+    def put_sentence(self, sentence: Sentence):
+        self._content.append(sentence)
+        return self
+    
+    def set_content(self, content: List[str]):
+        self._content = [Sentence().add(x) for x in content]
+        return self
+
+    def _set_default_footer(self):
+        if self._frame.get_footer().len() == 0:
+            label = Sentence().addf("/", " Pressione espaço ")
+            self._frame.set_footer(label, "", "─", "─")
+        return self
+
+    def _set_default_header(self):
+        if self._frame.get_header().len() == 0:
+            if self._type == "warning":
+                self.set_header(" Aviso ")
+            elif self._type == "error":
+                self.set_header(" Erro ")
+            elif self._type == "answer":
+                self.set_header(" Pergunta ")
+
+    def warning(self):
+        self._type = "warning"
+        self._frame.set_border_color("y")
+        return self
+    
+    def error(self):
+        self._type = "warning"
+        self._frame.set_border_color("r")
+        return self
+    
+    def answer(self, fn_answer):
+        self._type = "answer"
+        self._frame.set_border_color("g")
+        self._fn_answer = fn_answer
+        return self
+
+    def set_options(self, options: List[str]):
+        self._options = options
+        return self
+
+    def draw(self):
+        self._set_default_header()
+        self._set_default_footer()
+        self.__setup_frame()
+        self._frame.draw()
+        y = 0
+
+        for line in self._content:
+            x = 0
+            if self._centralize:
+                x = (self._frame.get_dx() - line.len()) // 2
+            self._frame.write(y, x, line)
+            y += 1
+        return self
+
+    def get_input(self) -> int:
+        self.draw()
+        key: int = Fmt.getch()
+        if self._type == "warning" or self._type == "error":
+            if key < 300:
+                self._enable = False
+                if self._exit_fn is not None:
+                    self._exit_fn()
+                if self._exit_key is not None:
+                    return self._exit_key
+                if key == ord(" ") or key == 27:
+                    return -1
+                return key
+        if self._type == "answer":
+            if key == curses.KEY_LEFT:
+                self._options_index = (self._options_index - 1) % len(self._options)
+            elif key == curses.KEY_RIGHT:
+                self._options_index = (self._options_index + 1) % len(self._options)
+            elif key == 27:
+                self._enable = False
+            elif key == ord('\n'):
+                self._enable = False
+                if self._fn_answer is not None:
+                    self._fn_answer(self._options[self._options_index])
+                if self._exit_fn is not None:
+                    self._exit_fn()
+                if self._exit_key is not None:
+                    return self._exit_key
+                return -1
+        return -1
+        
+
+
+class FloatingManager:
+    def __init__(self):
+        self.input_layer: List[Floating] = []
+
+    def add_input(self, floating: Floating):
+        self.input_layer.append(floating)
+
+    def draw_warnings(self):
+        if len(self.input_layer) > 0 and self.input_layer[0].is_enable():
+            self.input_layer[0].draw()
+
+    def has_floating(self) -> bool:
+        while len(self.input_layer) > 0 and not self.input_layer[0].is_enable():
+            self.input_layer = self.input_layer[1:]
+        return len(self.input_layer) > 0 and self.input_layer[0].is_enable()
+
+    def get_input(self) -> int:
+        return self.input_layer[0].get_input()
+
 
 
 class Report:
@@ -5116,9 +5139,9 @@ public class draft {
     @staticmethod
     def download_problem(course: str, activity: str, language: Optional[str], fnprint: Callable[[str], None], game: Optional[Game] = None) -> bool:
         Down.fnprint = fnprint
-        sp = SettingsParser()
-        settings = sp.load_settings()
-        rep_dir = os.path.join(settings.geral.get_rootdir(), course)
+        
+        settings = Settings()
+        rep_dir = os.path.join(settings.app.get_rootdir(), course)
         rep_source = settings.get_rep_source(course)
         rep_data = settings.get_rep_data(course)
         if game is None:
@@ -5155,7 +5178,7 @@ public class draft {
 
         language_def = rep_data.get_lang()
         if language_def == "":
-            language_def = SettingsParser().load_settings().geral.get_lang_def()
+            language_def = Settings().app.get_lang_def()
         ask_ext = False
         if language is None:
             if language_def != "":
@@ -5210,7 +5233,7 @@ class Entry:
 
 class TaskTree:
 
-    def __init__(self, local: GeralSettings, game: Game, rep: RepData, rep_alias: str):
+    def __init__(self, local: AppSettings, game: Game, rep: RepData, rep_alias: str):
         self.local = local
         self.game = game
         self.rep = rep
@@ -5733,7 +5756,7 @@ class TaskTree:
 
 
 class Opener:
-    def __init__(self, tree: TaskTree, fman: FloatingManager, geral: GeralSettings, rep_data: RepData, rep_alias: str):
+    def __init__(self, tree: TaskTree, fman: FloatingManager, geral: AppSettings, rep_data: RepData, rep_alias: str):
         self.tree = tree
         self.fman = fman
         self.geral = geral
@@ -5889,9 +5912,8 @@ class CDiff:
         self.finished = False
         self.resumes: List[str] = []
 
-        self.sp = SettingsParser()
-        self.settings = self.sp.load_settings()
-        self.colors = self.settings.geral.is_colored()
+        self.settings = Settings()
+        self.colors = self.settings.app.is_colored()
         self.first_loop = True
         self.fman = FloatingManager()
         self.first_run = False
@@ -5913,8 +5935,8 @@ class CDiff:
         return self
 
     def save_settings(self):
-        self.settings.geral.set_is_diff_down(self.param.is_up_down)
-        self.sp.save_settings()
+        self.settings.app.set_diff_mode("down" if self.param.is_up_down else "side")
+        self.settings.save_settings()
         return self
     
     def set_task(self, task: Task):
@@ -6051,14 +6073,14 @@ class CDiff:
         if self.locked_index:
             self.mode = Mode.finished
             unit = self.get_focused_unit()
-            unit.result = Execution.run_unit(solver, unit, self.settings.geral.get_timeout())
+            unit.result = Execution.run_unit(solver, unit, self.settings.app.get_timeout())
             return
 
         if len(self.unit_list) > 0:
             index = len(self.results)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
-            unit.result = Execution.run_unit(solver, unit, self.settings.geral.get_timeout())
+            unit.result = Execution.run_unit(solver, unit, self.settings.app.get_timeout())
             self.results.append((unit.result, index))
             success = [result for result, _ in self.results if result == ExecutionResult.SUCCESS]
             self.task.test_progress = (len(success) * 100) // len(self.wdir.get_unit_list())
@@ -6189,7 +6211,7 @@ class CDiff:
         if Flags.others.is_true():
             cmds.append(Style.border_round("M", f"{DActions.rodar}[{DKeys.rodar}]"))
             # diff
-            text = f"VER━╾h[{DKeys.diff}]" if self.settings.geral.is_diff_down() else f"v╼━HOR[{DKeys.diff}]"
+            text = f"VER━╾h[{DKeys.diff}]" if self.settings.app.get_diff_mode() == "side" else f"v╼━HOR[{DKeys.diff}]"
             cmds.append(Style.border_round("M", text))
         
         cmds.append(Style.border_round("C", f"{DActions.sair}[{DKeys.sair}]"))
@@ -6202,7 +6224,7 @@ class CDiff:
         if Flags.others.is_true():
             # travar
 
-            value = str(self.settings.geral.get_timeout())
+            value = str(self.settings.app.get_timeout())
             if value == "0":
                 value = "∞"
             cmds.append(
@@ -6446,14 +6468,14 @@ class CDiff:
             )
 
     def change_limit(self):
-            valor = self.settings.geral.get_timeout()
+            valor = self.settings.app.get_timeout()
             if valor == 0:
                 valor = 1
             else:
                 valor *= 2
             if valor >= 5:
                 valor = 0
-            self.settings.geral.set_timeout(valor)
+            self.settings.app.set_timeout(valor)
             self.save_settings()
             nome = "∞" if valor == 0 else str(valor)
             self.fman.add_input(
@@ -7014,25 +7036,24 @@ class Key:
 class Play:
     def __init__(
         self,
-        geral: GeralSettings,
+        app: AppSettings,
         game: Game,
         rep_data: RepData,
-        rep_alias: str, 
-        fn_save
+        rep_alias: str
     ):
-        self.geral_save = fn_save
-        self.geral = geral
+        self.app = app
         self.rep_alias = rep_alias
         self.rep = rep_data
+        self.settings = Settings()
         self.exit = False
 
         if self.rep.get_lang() == "":
-            self.rep.set_lang(self.geral.get_lang_def())
+            self.rep.set_lang(self.app.get_lang_def())
         self.flagsman = FlagsMan(self.rep.get_flags())
         
         self.game: Game = game
         self.fman = FloatingManager()
-        self.tree = TaskTree(geral, game, rep_data, rep_alias)
+        self.tree = TaskTree(app, game, rep_data, rep_alias)
 
         if len(self.rep.get_tasks()) == 0:
             self.show_help()
@@ -7061,7 +7082,7 @@ class Play:
 
         self.wrap_size = Sentence(" ").join(self.build_bottom_array()).len()
 
-        self.opener = Opener(tree=self.tree, fman=self.fman, geral=geral, rep_data=rep_data, rep_alias=rep_alias)
+        self.opener = Opener(tree=self.tree, fman=self.fman, geral=app, rep_data=rep_data, rep_alias=rep_alias)
 
         self.search_mode: bool = False
         self.backup_expanded: List[str] = []
@@ -7071,16 +7092,16 @@ class Play:
     def save_to_json(self):
         self.tree.save_on_rep()
         self.rep.set_flags(self.flagsman.get_data())
-        self.geral_save()
+        self.settings.save_settings()
         self.rep.save_data_to_json()
 
     def set_rootdir(self, only_if_empty=True):
-        if only_if_empty and self.geral.get_rootdir() != "":
+        if only_if_empty and self.app.get_rootdir() != "":
             return
 
         def chama(value):
             if value == "yes":
-                self.geral.set_rootdir(os.path.abspath(os.getcwd()))
+                self.app.set_rootdir(os.path.abspath(os.getcwd()))
                 self.save_to_json()
                 self.fman.add_input(
                     Floating()
@@ -7155,7 +7176,7 @@ class Play:
         )
 
     def check_root_and_lang(self):
-        if self.geral.get_rootdir() == "":
+        if self.app.get_rootdir() == "":
             # self.set_rootdir()
             self.fman.add_input(
                 Floating()
@@ -7237,7 +7258,7 @@ class Play:
             Fmt.write(lines - 1, 0, text)
 
     def down_task(self):
-        rootdir = self.geral.get_rootdir()
+        rootdir = self.app.get_rootdir()
         if rootdir == "":
             self.check_root_and_lang()
             return
@@ -7281,7 +7302,7 @@ class Play:
                 )
     
     def select_task(self):
-        rootdir = self.geral.get_rootdir()
+        rootdir = self.app.get_rootdir()
         
         obj = self.tree.items[self.tree.index_selected].obj
 
@@ -7332,8 +7353,8 @@ class Play:
     def build_list_sentence(self, items: List[Sentence]) -> List[Sentence]:
         out: List[Sentence] = []
         for x in items:
-            color_ini = x.data[0].fmt if self.geral.is_colored() else "W"
-            color_end = x.data[-1].fmt if self.geral.is_colored() else "W"
+            color_ini = x.data[0].fmt if self.app.is_colored() else "W"
+            color_end = x.data[-1].fmt if self.app.is_colored() else "W"
             left = Style.roundL()
             right = Style.roundR()
             middle = x.clone()
@@ -7359,7 +7380,7 @@ class Play:
         if not isinstance(obj, Task):
             return ""
         
-        path = os.path.join(self.geral.get_rootdir(), self.rep_alias, obj.key, "Readme.md")
+        path = os.path.join(self.app.get_rootdir(), self.rep_alias, obj.key, "Readme.md")
         if os.path.isfile(path):
             return path
         return ""
@@ -7409,7 +7430,7 @@ class Play:
         todo = Style.main_todo() + "/"
         total_bar = Style.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Sentence().addf("/", "Skills"), "^", "{", "}")
-        frame_xp.set_footer(Sentence().add(" ").add(self.geral.get_rootdir()).add(" "), "^")
+        frame_xp.set_footer(Sentence().add(" ").add(self.app.get_rootdir()).add(" "), "^")
         frame_xp.draw()
 
 
@@ -7446,12 +7467,12 @@ class Play:
             elements.append(Style.get_flag_sentence(flag, pad))
 
 
-        colored = Flag().name("Colorido").char("C").values(["1" if self.geral.is_colored() else "0"]).text("Ativa ou desativa as cores").bool()
+        colored = Flag().name("Colorido").char("C").values(["1" if self.app.is_colored() else "0"]).text("Ativa ou desativa as cores").bool()
         elements.append(Style.get_flag_sentence(colored, pad))
-        bordas = Flag().name("Bordas").char("B").values(["1" if self.geral.is_nerdfonts() else "0"]).text("Ativa ou desativa as bordas").bool()
+        bordas = Flag().name("Bordas").char("B").values(["1" if self.app.is_nerdfonts() else "0"]).text("Ativa ou desativa as bordas").bool()
         elements.append(Style.get_flag_sentence(bordas, pad))
         
-        color = "W" if not self.geral.is_colored() else "C"
+        color = "W" if not self.app.is_colored() else "C"
         elements.append(Sentence().addf(color.lower(), Style.roundL()).addf(color, "DirDestino [D]").addf(color.lower(), Style.roundR()))
         elements.append(Sentence().addf(color.lower(), Style.roundL()).addf(color, "Linguagem  [L]").addf(color.lower(), Style.roundR()))
 
@@ -7759,8 +7780,8 @@ class Play:
         add_str(Key.dec_grade, self.tree.dec_grade)
         add_str(Key.dec_grade2, self.tree.dec_grade)
         add_str(Key.edit, lambda: self.opener.open_code(open_dir=True))
-        add_str(Key.cores, self.geral.toggle_color)
-        add_str(Key.bordas, self.geral.toggle_nerdfonts)
+        add_str(Key.cores, self.app.toggle_color)
+        add_str(Key.bordas, self.app.toggle_nerdfonts)
 
         for value in range(1, 10):
             add_str(str(value), self.GradeFunctor(int(value), self.tree.set_grade))
@@ -7950,45 +7971,42 @@ class Play:
 class MRep:
     @staticmethod
     def list(_args):
-        sp = SettingsParser()
-        settings = sp.load_settings()
-        print(f"SettingsFile\n- {sp.settings_file}")
+        settings = Settings()
+        print(f"SettingsFile\n- {settings.settings_file}")
         print(str(settings))
 
     @staticmethod
     def add(args):
-        sp = SettingsParser()
-        settings = sp.load_settings()
+        settings = Settings()
         rep = RepSource()
         if args.url:
             rep.set_url(args.url)
         elif args.file:
             rep.set_file(args.file)
         settings.reps[args.alias] = rep
-        sp.save_settings()
+        settings.save_settings()
 
     @staticmethod
     def rm(args):
-        sp = SettingsParser()
-        settings = sp.load_settings()
-        if args.alias in settings.reps:
-            settings.reps.pop(args.alias)
+        sp = Settings()
+        if args.alias in sp.reps:
+            sp.reps.pop(args.alias)
             sp.save_settings()
         else:
             print("Repository not found.")
 
     @staticmethod
     def reset(_):
-        sp = SettingsParser()
-        sp.settings = Settings().init_default_reps()
+        sp = Settings().reset()
+        print(sp.settings_file)
+        print(sp.app.get_rootdir())
         sp.save_settings()
 
     @staticmethod
     def graph(args):
-        sp = SettingsParser()
-        settings = sp.load_settings()
+        settings = Settings()
         rep_source:RepSource = settings.get_rep_source(args.alias)
-        file = rep_source.get_file(os.path.join(settings.geral.get_rootdir(), args.alias))
+        file = rep_source.get_file(os.path.join(settings.app.get_rootdir(), args.alias))
         game = Game()
         game.parse_file(file)
         game.check_cycle()
@@ -8014,11 +8032,11 @@ class Main:
 
         # load default diff from settings if not specified
         if not args.side and not args.down:
-            geral = SettingsParser().load_settings().geral
-            updown = geral.is_diff_down()
+            geral = Settings().app
+            diff_mode = geral.get_diff_mode()
             sidesize = int(geral.get_side_size())
             size_too_short = Report.get_terminal_size() < sidesize
-            param.set_up_down(updown or size_too_short)
+            param.set_up_down(diff_mode == "down" or size_too_short)
         elif args.side:
             param.set_up_down(False)
         elif args.down:
@@ -8030,9 +8048,7 @@ class Main:
     def run(args):
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
-        geral = SettingsParser().load_settings().geral
-        updown = geral.is_diff_down()
-        param.set_up_down(updown)
+        param.set_up_down(Settings().app.get_diff_mode() == "down")
 
         if args.filter:
             param.set_filter(True)
@@ -8051,76 +8067,74 @@ class Main:
 
     @staticmethod
     def settings(args):
-        sp = SettingsParser()
-        settings = sp.load_settings()
+        settings = Settings()
 
         action = False
 
         if args.ascii:
             action = True
-            settings.geral.set_is_ascii(True)
+            settings.app.set_is_ascii(True)
             print("Encoding mode now is: ASCII")
         if args.unicode:
             action = True
-            settings.geral.set_is_ascii(False)
+            settings.app.set_is_ascii(False)
             print("Encoding mode now is: UNICODE")
         if args.mono:
             action = True
-            settings.geral.set_is_colored(False)
+            settings.app.set_is_colored(False)
             print("Color mode now is: MONOCHROMATIC")
         if args.color:
             action = True
-            settings.geral.set_is_colored(True)
+            settings.app.set_is_colored(True)
             print("Color mode now is: COLORED")
         if args.side:
             action = True
-            settings.geral.set_is_diff_down(False)
+            settings.app.set_diff_mode("side")
             print("Diff mode now is: SIDE_BY_SIDE")
         if args.down:
             action = True
-            settings.geral.set_is_diff_down(True)
+            settings.app.set_diff_mode("down")
             print("Diff mode now is: UP_DOWN")
         if args.lang:
             action = True
-            settings.geral.set_lang_def(args.lang)
+            settings.app.set_lang_def(args.lang)
             print("Default language extension now is:", args.lang)
         if args.ask:
             action = True
-            settings.geral.set_lang_def("")
+            settings.app.set_lang_def("")
             print("Language extension will be asked always.")
 
         if args.root:
             action = True
             path = os.path.abspath(args.root)
-            settings.geral.set_rootdir(path)
+            settings.app.set_rootdir(path)
             print("Root directory now is: " + path)
         
         if args.editor:
             action = True
-            settings.geral.set_editor(args.editor)
+            settings.app.set_editor(args.editor)
             print(f"Novo comando para abrir arquivos de código: {args.editor}")
 
         if not action:
             action = True
-            print(sp.get_settings_file())
-            print("Diff mode: {}".format("DOWN" if settings.geral.is_diff_down() else "SIDE"))
-            print("Encoding mode: {}".format("ASCII" if settings.geral.is_ascii() else "UNICODE"))
-            print("Color mode: {}".format("MONOCHROMATIC" if not settings.geral.is_colored() else "COLORED"))
-            value = settings.geral.get_lang_def()
+            print(settings.get_settings_file())
+            print("Diff mode: {}".format("DOWN" if settings.app.get_diff_mode() else "SIDE"))
+            print("Encoding mode: {}".format("ASCII" if settings.app.is_ascii() else "UNICODE"))
+            print("Color mode: {}".format("MONOCHROMATIC" if not settings.app.is_colored() else "COLORED"))
+            value = settings.app.get_lang_def()
             print("Default language extension: {}".format("Always ask" if value == "" else value))
 
-        sp.save_settings()
+        settings.save_settings()
 
     @staticmethod
     def play(args):
-
-        sp = SettingsParser()
-        settings = sp.load_settings()
+        settings = Settings()
         if args.repo == "__ask":
-            last = settings.geral.get_last_rep()
+            last = settings.app.get_last_rep()
             if last != "" and last in settings.reps:
                 args.repo = last
             else:
+                print("---------------------------------------")
                 print("Escolha um dos repositórios para abrir:")
                 for alias in settings.reps:
                     print(f"- {alias}")
@@ -8133,13 +8147,13 @@ class Main:
                     print("Repositorio não encontrado")
         
         print(f"Abrindo repositório de {args.repo}")
-        settings.geral.set_last_rep(args.repo)
+        settings.app.set_last_rep(args.repo)
 
         while True:
             rep_source: RepSource = settings.get_rep_source(args.repo)
             rep_data = settings.get_rep_data(args.repo)
 
-            local = settings.geral
+            local = settings.app
             game = Game()
             file = rep_source.get_file(os.path.join(local.get_rootdir(), args.repo))
             game.parse_file(file)
@@ -8148,7 +8162,7 @@ class Main:
             ext = ""
             if args.graph:
                 ext = ".svg" if args.svg else ".png"
-            play = Play(geral=local, game=game, rep_data=rep_data, rep_alias=args.repo, fn_save=sp.save_settings)
+            play = Play(app=local, game=game, rep_data=rep_data, rep_alias=args.repo)
             reload = play.play(ext)
             if not reload:
                 break
@@ -8299,19 +8313,20 @@ class Parser:
 
 
 def exec(parser: argparse.ArgumentParser, args):
-
+    settings = Settings()
     if args.w is not None:
         Report.set_terminal_size(args.w)
     if args.c:
-        SettingsParser.user_settings_file = args.c
-    settings = SettingsParser().load_settings()
-    if args.a or settings.geral.is_ascii():
+        settings.set_settings_file(args.c)
+    settings.load_settings()
+    settings.check_rootdir()
+    if args.a or settings.app.is_ascii():
         symbols.set_ascii()
     else:
         symbols.set_unicode()
     if args.m:
         Color.enabled = False
-    elif settings.geral.is_colored():
+    elif settings.app.is_colored():
         Color.enabled = True
         symbols.set_colors()
 

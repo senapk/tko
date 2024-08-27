@@ -6,11 +6,11 @@ def get_default_settings_for_borders() -> bool:
         return False
     return True
 
-class GeralSettings:
+class AppSettings:
     __rootdir = "rootdir"
     __is_ascii = "ascii"
     __is_color = "color"
-    __diffdown = "diffdown"
+    __diffmode = "diffmode"
     __sidesize = "sidesize"
     __langdef = "langdef"
     __lastrep = "lastrep"
@@ -22,19 +22,19 @@ class GeralSettings:
         __rootdir: "",
         __is_ascii: False,
         __is_color: True,
-        __diffdown: True,
+        __diffmode: "side",
         __sidesize: 80,
         __langdef: "",
         __lastrep: "", 
         __nerdfonts: get_default_settings_for_borders(),
         __editor: "code",
-        __timeout: 2
+        __timeout: 1
     }
 
     def __init__(self):
         self.data: Dict[str, Any] = {}
-        for key in GeralSettings.defaults:
-            self.data[key] = GeralSettings.defaults[key]
+        for key in AppSettings.defaults:
+            self.data[key] = AppSettings.defaults[key]
 
     def __set(self, key: str, value: Any):
         self.data[key] = value
@@ -42,9 +42,9 @@ class GeralSettings:
 
     def __get(self, key: str) -> Any:
         if key not in self.defaults:
-            raise ValueError(f"Key {key} not found in GeralSettings")
+            raise ValueError(f"Key {key} not found in AppSettings")
         if key not in self.data:
-            self.data[key] = GeralSettings.defaults[key]
+            self.data[key] = AppSettings.defaults[key]
         return self.data[key]
 
 
@@ -82,16 +82,6 @@ class GeralSettings:
 
     def get_rootdir(self) -> str:
         value = self.__get(self.__rootdir)
-        if value == "":
-            home_dir = os.path.expanduser("~")
-            def_root = os.path.join(home_dir, "qxcode")
-            if not os.path.exists(def_root):
-                os.makedirs(def_root)
-                print("Pasta padrão para download de arquivos foi definida em: " + def_root)
-                print("Você pode alterar, navegando até a a pasta desejada e executando o comando")
-                print("tko config --root")
-            self.set_rootdir(def_root)
-            return def_root
         return value
     
     def is_nerdfonts(self) -> bool:
@@ -127,11 +117,11 @@ class GeralSettings:
         self.set_nerdfonts(not self.is_nerdfonts())
         return
 
-    def is_diff_down(self):
-        return self.__get(self.__diffdown)
+    def get_diff_mode(self) -> str:
+        return self.__get(self.__diffmode)
 
-    def set_is_diff_down(self, value: bool):
-        self.__set(self.__diffdown, value)
+    def set_diff_mode(self, value: str):
+        self.__set(self.__diffmode, value)
         return self
 
     def get_side_size(self):

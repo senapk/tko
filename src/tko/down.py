@@ -4,8 +4,8 @@ import urllib.request
 import urllib.error
 import json
 
-from .settings.geral_settings import GeralSettings
-from .settings.settings_parser import SettingsParser
+from .settings.app_settings import AppSettings
+from .settings.settings import Settings
 from .game.game import Game
 from .util.remote import RemoteCfg
 
@@ -160,9 +160,9 @@ public class draft {
     @staticmethod
     def download_problem(course: str, activity: str, language: Optional[str], fnprint: Callable[[str], None], game: Optional[Game] = None) -> bool:
         Down.fnprint = fnprint
-        sp = SettingsParser()
-        settings = sp.load_settings()
-        rep_dir = os.path.join(settings.geral.get_rootdir(), course)
+        
+        settings = Settings()
+        rep_dir = os.path.join(settings.app.get_rootdir(), course)
         rep_source = settings.get_rep_source(course)
         rep_data = settings.get_rep_data(course)
         if game is None:
@@ -199,7 +199,7 @@ public class draft {
 
         language_def = rep_data.get_lang()
         if language_def == "":
-            language_def = SettingsParser().load_settings().geral.get_lang_def()
+            language_def = Settings().app.get_lang_def()
         ask_ext = False
         if language is None:
             if language_def != "":

@@ -1,7 +1,7 @@
 from .tasktree import TaskTree, Task
 from .floating import Floating
 from .floating_manager import FloatingManager
-from ..settings.geral_settings import GeralSettings
+from ..settings.app_settings import AppSettings
 from ..settings.rep_settings import RepData
 from ..util.runner import Runner
 from ..util.sentence import Sentence
@@ -11,7 +11,7 @@ import subprocess
 from typing import List
 
 class Opener:
-    def __init__(self, tree: TaskTree, fman: FloatingManager, geral: GeralSettings, rep_data: RepData, rep_alias: str):
+    def __init__(self, tree: TaskTree, fman: FloatingManager, geral: AppSettings, rep_data: RepData, rep_alias: str):
         self.tree = tree
         self.fman = fman
         self.geral = geral
