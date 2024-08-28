@@ -17,9 +17,20 @@ Depois de criar o codespace, abra o terminal e execute o comando:
 
 pip install tko
 
-#depois de instalado, defina a pasta atual como padrão para download
+# depois de instalado, defina a pasta atual 
+# como padrão para download
 
 tko config --root .
+```
+
+## Instalando ferramentas para linguagens de programação
+
+Python, c, c++, javascript, java e go não precisam de nenhum software adicional.
+
+Para typescript, você precisa instalar o `esbuild`.
+
+```bash
+npm install -g esbuild
 ```
 
 ## Salvando os dados no repositório
