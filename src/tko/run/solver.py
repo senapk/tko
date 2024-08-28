@@ -42,8 +42,14 @@ class Solver:
         self.path_list = list_main + list_other
         return self
 
-    def set_executable(self, executable: str) -> None:
+    def set_executable(self, executable: str):
         self.__executable = executable
+        return self
+
+    def reset(self):
+        self.__executable = ""
+        self.compile_error = False
+        self.error_msg = ""
 
     def not_compiled(self):
         return self.__executable == "" and not self.compile_error

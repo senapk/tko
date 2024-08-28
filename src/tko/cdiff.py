@@ -555,15 +555,17 @@ class CDiff:
     def run_test_mode(self):
         self.mode = Mode.running
         if self.wdir.is_autoload():
-            self.wdir.autoload().build()
+            self.wdir.autoload() # reload sources and solvers
+        
+        self.wdir.build() # reload cases
+
         Fmt.clear()
-        self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index]).set_executable("")
+        self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index]).reset() # clear old compilation
         
         if self.locked_index:
             for i in range(len(self.results)):
                 _, index = self.results[i]
                 self.results[i] = (ExecutionResult.UNTESTED, index)
-                
         else:
             self.focused_index = 0
             self.results = []

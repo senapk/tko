@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.22.7
+  - fix: reset solver in run
 - 0.22.6
   - refactor: settings files
 - 0.22.5

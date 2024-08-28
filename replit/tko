@@ -24,7 +24,7 @@ import math
 import configparser
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.22.6"
+__version__ = "0.22.7"
 
 
 def get_default_settings_for_borders() -> bool:
@@ -4239,8 +4239,14 @@ class Solver:
         self.path_list = list_main + list_other
         return self
 
-    def set_executable(self, executable: str) -> None:
+    def set_executable(self, executable: str):
         self.__executable = executable
+        return self
+
+    def reset(self):
+        self.__executable = ""
+        self.compile_error = False
+        self.error_msg = ""
 
     def not_compiled(self):
         return self.__executable == "" and not self.compile_error
@@ -6386,15 +6392,17 @@ class CDiff:
     def run_test_mode(self):
         self.mode = Mode.running
         if self.wdir.is_autoload():
-            self.wdir.autoload().build()
+            self.wdir.autoload() # reload sources and solvers
+        
+        self.wdir.build() # reload cases
+
         Fmt.clear()
-        self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index]).set_executable("")
+        self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index]).reset() # clear old compilation
         
         if self.locked_index:
             for i in range(len(self.results)):
                 _, index = self.results[i]
                 self.results[i] = (ExecutionResult.UNTESTED, index)
-                
         else:
             self.focused_index = 0
             self.results = []
@@ -6565,7 +6573,7 @@ class Run:
         self.__lang = ""
         self.__task: Optional[Task] = None
         self.__opener: Optional[Opener] = None
-        self.__autorun: bool = False
+        self.__autorun: bool = True
 
     def set_curses(self, value:bool=True, success: Success=Success.RANDOM):
         self.__curses_mode = value
