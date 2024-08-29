@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.22.8
+  - fix: new items bug
 - 0.22.7
   - fix: reset solver in run
 - 0.22.6

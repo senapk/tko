@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 import os
 import json
 import urllib
@@ -79,10 +79,10 @@ class RepData:
     def get_index(self) -> int:
         return self.__get(RepData.__index)
 
-    def get_expanded(self) -> list:
+    def get_expanded(self) -> List[str]:
         return self.__get(RepData.__expanded)
 
-    def get_new_items(self) -> list:
+    def get_new_items(self) -> List[str]:
         return self.__get(RepData.__new_items)
     
     def get_tasks(self) -> Dict[str, Any]:
@@ -94,13 +94,13 @@ class RepData:
     def get_lang(self) -> str:
         return self.__get(RepData.__lang)
 
-    def set_expanded(self, value: list):
+    def set_expanded(self, value: List[str]):
         return self.__set(RepData.__expanded, value)
     
-    def set_new_items(self, value: list):
+    def set_new_items(self, value: List[str]):
         return self.__set(RepData.__new_items, value)
     
-    def set_tasks(self, value: Dict[str, Any]):
+    def set_tasks(self, value: Dict[str, str]):
         return self.__set(RepData.__tasks, value)
     
     def set_flags(self, value: Dict[str, Any]):

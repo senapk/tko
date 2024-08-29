@@ -38,12 +38,12 @@ class TaskTree:
         self.max_title = 0
         self.search_text = ""
         self.load_from_rep()
-        self.update_tree(admin_mode=Flags.admin.is_true())
+        self.update_tree(admin_mode=Flags.admin.is_true(), first_loop=True)
         self.reload_sentences()
 
     def load_from_rep(self):
-        self.new_items: List[str] = self.rep.get_new_items()
-        self.expanded: List[str] = self.rep.get_expanded()
+        self.new_items: List[str] = [v for v in self.rep.get_new_items()]
+        self.expanded: List[str] = [v for v in self.rep.get_expanded()]
         self.index_selected = self.rep.get_index()
 
         tasks = self.rep.get_tasks()
@@ -52,10 +52,8 @@ class TaskTree:
                 self.game.tasks[key].load_from_db(serial)
 
     def save_on_rep(self):
-        keys = self.game.available_clusters + self.game.available_quests
-        expanded = [item for item in self.expanded if item in keys]
-        self.rep.set_expanded(expanded)
-        self.rep.set_new_items(self.new_items)
+        self.rep.set_expanded(self.expanded)
+        self.rep.set_new_items([x for x in set(self.new_items)])
         self.rep.set_index(self.index_selected)
         tasks = {}
         for t in self.game.tasks.values():
@@ -64,7 +62,7 @@ class TaskTree:
         self.rep.set_tasks(tasks)
 
 
-    def update_tree(self, admin_mode):
+    def update_tree(self, admin_mode: bool, first_loop: bool = False):
         if not admin_mode:
             old_reachable = self.game.available_clusters + self.game.available_quests
 
@@ -75,10 +73,12 @@ class TaskTree:
             for key in self.expanded:
                 if key not in available_keys:
                     self.expanded.remove(key)
-                if key not in old_reachable:
-                    self.new_items.append(key)
+            if not first_loop:
+                for key in available_keys:
+                    if key not in old_reachable and key not in self.new_items:
+                        self.new_items.append(key)
 
-        # remove expanded items
+        # remove expanded items from new
         self.new_items = [item for item in self.new_items if item not in self.expanded]
 
     def update_max_title(self):

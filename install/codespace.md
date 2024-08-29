@@ -31,6 +31,7 @@ Para typescript, você precisa instalar o `esbuild`.
 
 ```bash
 npm install -g esbuild
+npm i --save-dev @types/node
 ```
 
 ## Salvando os dados no repositório
