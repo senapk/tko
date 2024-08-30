@@ -283,7 +283,7 @@ class CDiff:
         # building solvers
         solvers = Sentence()
         if len(self.get_solver_names()) > 1:
-            solvers.add(Style.border_round("R", "Principal[p]"))
+            solvers.add(Sentence().addf("R", "[p]").addf("r", Style.sharpR()))
         for i, solver in enumerate(self.get_solver_names()):
             color = solver_color
             if i == self.task.main_index:
