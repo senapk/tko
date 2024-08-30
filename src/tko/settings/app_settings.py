@@ -1,10 +1,4 @@
 from typing import Any, Dict
-import os
-
-def get_default_settings_for_borders() -> bool:
-    if os.name == "nt":
-        return False
-    return True
 
 class AppSettings:
     __rootdir = "rootdir"
@@ -26,7 +20,7 @@ class AppSettings:
         __sidesize: 80,
         __langdef: "",
         __lastrep: "", 
-        __nerdfonts: get_default_settings_for_borders(),
+        __nerdfonts: False,
         __editor: "code",
         __timeout: 1
     }

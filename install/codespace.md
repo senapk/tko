@@ -34,6 +34,24 @@ npm install -g esbuild
 npm i --save-dev @types/node
 ```
 
+## Adicionando alguns atalhos no bash
+
+Abra o arquivo de configurações do bash
+
+```bash
+code ~/.bashrc
+```
+
+Vá até o final do arquivo e cole as seguintes linhas
+
+```bash
+alias update='pip install tko --upgrade'
+alias play='tko play'
+alias run='tko run'
+```
+
+Reinicie o terminal com Control D para reiniciar o bash
+
 ## Salvando os dados no repositório
 
 - Vá no botão de controle de versão.

@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.23.1
+  - fix: remove default borders for linux
 - 0.23.0
   - change Principal apperence in cdiff
 - 0.22.9
