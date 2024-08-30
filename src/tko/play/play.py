@@ -399,14 +399,14 @@ class Play:
         for x in items:
             color_ini = x.data[0].fmt if self.app.is_colored() else "W"
             color_end = x.data[-1].fmt if self.app.is_colored() else "W"
-            left = Style.roundL()
-            right = Style.roundR()
+            left = Style.roundL(color_ini)
+            right = Style.roundR(color_end)
             middle = x.clone()
             if x.data[0].text == "!":
-                left = Style.sharpL()
-                right = Style.sharpR()
+                left = Style.sharpL(color_ini)
+                right = Style.sharpR(color_end)
                 middle.data = x.data[1:]
-            out.append(Sentence().addf(color_ini.lower(), left).add(middle).addf(color_end.lower(), right))
+            out.append(Sentence().add(left).add(middle).add(right))
         return out
 
     def build_bar_links(self) -> str:
@@ -436,11 +436,11 @@ class Play:
             top.add(Style.get_flag_sentence(Flags.config)).add(" ")
 
         alias_color = "R"
-        top.addf(alias_color.lower(), Style.sharpL()).addf(alias_color, self.rep_alias.upper()).addf(alias_color.lower(), Style.sharpR())
+        top.add(Style.border_sharp(alias_color, self.rep_alias.upper()))
         if Flags.others.is_true():
             color = "W" if Flags.admin.is_true() else "K"
             top.add(Style.border_sharp(color, "ADMIN"))
-        top.addf("g", Style.sharpL()).addf("G", self.rep.get_lang().upper()).addf("g", Style.sharpR())
+        top.add(Style.border_sharp("G", self.rep.get_lang().upper()))
 
         if self.two_column_mode() and Flags.others.is_true(): 
             top.add(" ").add(Style.get_flag_sentence(Flags.skills))
@@ -517,8 +517,8 @@ class Play:
         elements.append(Style.get_flag_sentence(bordas, pad))
         
         color = "W" if not self.app.is_colored() else "C"
-        elements.append(Sentence().addf(color.lower(), Style.roundL()).addf(color, "DirDestino [D]").addf(color.lower(), Style.roundR()))
-        elements.append(Sentence().addf(color.lower(), Style.roundL()).addf(color, "Linguagem  [L]").addf(color.lower(), Style.roundR()))
+        elements.append(Style.border_round(color, "DirDestino [D]"))
+        elements.append(Style.border_round(color, "Linguagem  [L]"))
 
         # dy, dx = frame.get_inner()
         # line_breaks = dy - len(elements) + 1
@@ -947,7 +947,7 @@ class Play:
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
 
-        while not self.exit:
+        while True:
             self.tree.update_tree(admin_mode=Flags.admin.is_true() or self.search_mode)
             self.fman.draw_warnings()
             self.generate_graph()
@@ -963,13 +963,16 @@ class Play:
                     if value == 167: #ç
                         value = ord("c")
 
+            if self.exit:
+                break
+
             if self.search_mode:
                 self.process_search(value)
             elif value in calls.keys():
                 callback = calls[value]()
                 if callback is not None:
                     return callback
-            elif value != -1 and value != 27:
+            elif value != -1 and value != 27 and value != 32:
                 self.send_char_not_found(value)
 
             self.tree.reload_sentences()

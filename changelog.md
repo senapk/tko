@@ -1,5 +1,9 @@
 # Changelog
 
+- 0.23.2
+  - add: update border symbol for non nerdfonts
+  - fix: entering cdiff after quit
+  - add: min value for max_title
 - 0.23.1
   - fix: remove default borders for linux
 - 0.23.0

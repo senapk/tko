@@ -3035,35 +3035,36 @@ class Style:
 
     @staticmethod
     def border_round(color: str, data: str):
-        return Sentence().addf(color.lower(), Style.roundL()).addf(color, data).addf(color.lower(), Style.roundR())
+        return Sentence().add(Style.roundL(color)).addf(color, data).add(Style.roundR(color))
 
     @staticmethod
     def border_sharp(color: str, data: str):
-        return Sentence().addf(color.lower(), Style.sharpL()).addf(color, data).addf(color.lower(), Style.sharpR())
+        return Sentence().add(Style.sharpL(color)).addf(color, data).add(Style.sharpR(color))
 
     @staticmethod
-    def roundL():
-        return "" if Style.has_borders() else "█"
+    def roundL(color: str) -> Token:
+        return Token("", color.lower()) if Style.has_borders() else Token(" ", color)
 
     @staticmethod
-    def roundR():
-        return "" if Style.has_borders() else "█"
+    def roundR(color: str) -> Token:
+        return Token("", color.lower()) if Style.has_borders() else Token(" ", color)
 
     @staticmethod
-    def sharpL():
-        return "" if Style.has_borders() else "█"
+    def sharpL(color: str) -> Token:
+        return Token("", color.lower()) if Style.has_borders() else Token(" ", color)
+
 
     @staticmethod
-    def sharpR():
-        return "" if Style.has_borders() else "█"
-    
+    def sharpR(color: str):
+        return Token("", color.lower()) if Style.has_borders() else Token(" ", color)
+
     @staticmethod
     def midL():
-        return "" if Style.has_borders() else "█"
+        return "" if Style.has_borders() else " "
     
     @staticmethod
     def midR():
-        return "" if Style.has_borders() else "█"
+        return "" if Style.has_borders() else " "
  
     @staticmethod
     def focus():
@@ -3133,17 +3134,8 @@ class Style:
         xp_bar = Token(full_line[:done_len], fmt_true) + Token(full_line[done_len:], fmt_false)
             
         if round:
-            xp_bar.data[0].text = Style.roundL()
-            fmt = xp_bar.data[0].fmt
-            fmt = [c for c in fmt if c.isupper()]
-            fmt = "" if len(fmt) == 0 else fmt[0]
-            xp_bar.data[0].fmt = fmt.lower()
-
-            xp_bar.data[-1].text = Style.roundR()
-            fmt = xp_bar.data[-1].fmt
-            fmt = [c for c in fmt if c.isupper()]
-            fmt = "" if len(fmt) == 0 else fmt[0]
-            xp_bar.data[-1].fmt = fmt.lower()
+            xp_bar.data[0] = Style.roundL(xp_bar.data[0].fmt)
+            xp_bar.data[-1] = Style.roundR(xp_bar.data[-1].fmt)
         return xp_bar
 
     @staticmethod
@@ -3167,7 +3159,7 @@ class Style:
         # if flag.is_true():
         #     middle = Sentence().addf(color.lower(), Style.roundL()).add(mid).addf(color.lower(), Style.roundR())
         # else:
-        middle = Sentence().addf(color.lower(), Style.sharpL()).add(mid).addf(color.lower(), Style.sharpR())
+        middle = Sentence().add(Style.sharpL(color)).add(mid).add(Style.sharpR(color))
         return middle
 
 class Fmt:
@@ -5247,6 +5239,7 @@ class TaskTree:
         self.new_items = [item for item in self.new_items if item not in self.expanded]
 
     def update_max_title(self):
+        min_value = 20
         items = []
         for c in self.game.clusters.values():
             if c.key in self.game.available_clusters:
@@ -5258,9 +5251,11 @@ class TaskTree:
                             for t in q.get_tasks():
                                 items.append(len(t.title) + 6)
         self.max_title = max(items)
+        if self.max_title < min_value:
+            self.max_title = min_value
 
     def str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool, min_value=1) -> Sentence:
-        downloadable_in_focus = False
+        # downloadable_in_focus = False
         rootdir = self.local.get_rootdir()
         down_symbol = Token(" ")
         in_focus = focus_color != ""
@@ -5269,8 +5264,8 @@ class TaskTree:
         if t.is_downloadable() and rootdir != "":
             if t.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
                 down_symbol = symbols.downloaded
-                if in_focus:
-                    downloadable_in_focus = True
+                # if in_focus:
+                #     downloadable_in_focus = True
             else:
                 down_symbol = symbols.to_download
 
@@ -5285,7 +5280,7 @@ class TaskTree:
         output.add(t.get_grade_symbol(min_value))
 
         if in_focus:
-            output.addf(focus_color.lower(), Style.roundL())
+            output.add(Style.roundL(focus_color))
         else:
             output.add(" ")
 
@@ -5300,7 +5295,7 @@ class TaskTree:
         # output.addf(color, t.title)
 
         if in_focus:
-            output.addf(focus_color.lower(), Style.roundR())
+            output.add(Style.roundR(focus_color))
         else:
             output.add(" ")
 
@@ -5323,7 +5318,7 @@ class TaskTree:
 
         in_focus = focus_color != ""
         if in_focus:
-            output.addf(focus_color.lower(), Style.roundL())
+            output.add(Style.roundL(focus_color))
         else:
             output.add(" ")
 
@@ -5339,7 +5334,7 @@ class TaskTree:
         output.add(Style.build_bar(title, q.get_percent() / 100, len(title), done, todo, round=False))
 
         if in_focus:
-            output.addf(focus_color.lower(), Style.roundR())
+            output.add(Style.roundR(focus_color))
         else:
             output.add(" ")
 
@@ -5378,7 +5373,7 @@ class TaskTree:
 
         title = cluster.title.ljust(self.max_title, ".")
         if focus_color != "":
-            output.addf(focus_color.lower(), Style.roundL())
+            output.add(Style.roundL(focus_color))
         else:
             output.add(" ")
 
@@ -5388,7 +5383,7 @@ class TaskTree:
         output.add(Style.build_bar(title, cluster.get_percent() / 100, len(title), done, todo, round=False))
 
         if focus_color != "":
-            output.addf(focus_color.lower(), Style.roundR())
+            output.add(Style.roundR(focus_color))
         else:
             output.add(" ")
 
@@ -5849,6 +5844,7 @@ class DKeys:
     travar = "f"
     tempo  = "t"
     outros = "o"
+    border = "B"
 
 class CDiff:
     def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
@@ -6072,7 +6068,7 @@ class CDiff:
         # building solvers
         solvers = Sentence()
         if len(self.get_solver_names()) > 1:
-            solvers.add(Sentence().addf("R", "[p]").addf("r", Style.sharpR()))
+            solvers.add(Sentence().addf("R", "[p]").add(Style.sharpR("R")))
         for i, solver in enumerate(self.get_solver_names()):
             color = solver_color
             if i == self.task.main_index:
@@ -6091,7 +6087,7 @@ class CDiff:
 
         # building sources
         source_names = Sentence(", ").join([Sentence().addf(sources_color, f"{name[0]}({name[1]})") for name in self.wdir.sources_names()])
-        sources = Sentence().addf(sources_color.lower(), Style.roundL()).add(source_names).addf(sources_color.lower(), Style.roundR())
+        sources = Sentence().add(Style.roundL(sources_color)).add(source_names).add(Style.roundR(sources_color))
 
         # merging activity, solvers and sources in header
         delta = frame.get_dx() - solvers.len()
@@ -6125,8 +6121,8 @@ class CDiff:
         for unit_result, index in done_list + todo_list:
             foco = i == self.focused_index
             token = self.get_token(unit_result)
-            extrap = Token(Style.roundL(), token.fmt.lower())# if not foco else Token(Style.roundL(), "")
-            extras = Token(Style.roundR(), token.fmt.lower())# if not foco else Token(Style.roundR(), "")
+            extrap = Style.roundL(token.fmt) # if not foco else Token(Style.roundL(), "")
+            extras = Style.roundR(token.fmt) # if not foco else Token(Style.roundR(), "")
             if foco and show_focused_index:
                 token.fmt = ""
             output.add(extrap).addf(token.fmt, str(index).zfill(2)).add(token).add(extras).add(" ")
@@ -6187,11 +6183,11 @@ class CDiff:
                 value = "∞"
             cmds.append(
                 Sentence()
-                    .addf("m", Style.roundL())
+                    .add(Style.roundL("M"))
                     .add(RToken("M", f"{DActions.tempo}"))
                     .add(RToken("M", "{}".format(value)))
                     .add(RToken("M", f"[{DKeys.tempo}]"))
-                    .addf("m", Style.roundR())
+                    .add(Style.roundR("M"))
             )
             travar = f"{DActions.fixar}[{DKeys.travar}]"
             color = "G" if self.locked_index else "M"
@@ -6475,6 +6471,8 @@ class CDiff:
             self.change_limit()
         elif key == ord(DKeys.outros):
             Flags.others.toggle()
+        elif key == ord(DKeys.border):
+            self.settings.app.toggle_nerdfonts()
         elif key != -1 and key != curses.KEY_RESIZE:
             self.send_char_not_found(key)
 
@@ -7315,14 +7313,14 @@ class Play:
         for x in items:
             color_ini = x.data[0].fmt if self.app.is_colored() else "W"
             color_end = x.data[-1].fmt if self.app.is_colored() else "W"
-            left = Style.roundL()
-            right = Style.roundR()
+            left = Style.roundL(color_ini)
+            right = Style.roundR(color_end)
             middle = x.clone()
             if x.data[0].text == "!":
-                left = Style.sharpL()
-                right = Style.sharpR()
+                left = Style.sharpL(color_ini)
+                right = Style.sharpR(color_end)
                 middle.data = x.data[1:]
-            out.append(Sentence().addf(color_ini.lower(), left).add(middle).addf(color_end.lower(), right))
+            out.append(Sentence().add(left).add(middle).add(right))
         return out
 
     def build_bar_links(self) -> str:
@@ -7352,11 +7350,11 @@ class Play:
             top.add(Style.get_flag_sentence(Flags.config)).add(" ")
 
         alias_color = "R"
-        top.addf(alias_color.lower(), Style.sharpL()).addf(alias_color, self.rep_alias.upper()).addf(alias_color.lower(), Style.sharpR())
+        top.add(Style.border_sharp(alias_color, self.rep_alias.upper()))
         if Flags.others.is_true():
             color = "W" if Flags.admin.is_true() else "K"
             top.add(Style.border_sharp(color, "ADMIN"))
-        top.addf("g", Style.sharpL()).addf("G", self.rep.get_lang().upper()).addf("g", Style.sharpR())
+        top.add(Style.border_sharp("G", self.rep.get_lang().upper()))
 
         if self.two_column_mode() and Flags.others.is_true(): 
             top.add(" ").add(Style.get_flag_sentence(Flags.skills))
@@ -7433,8 +7431,8 @@ class Play:
         elements.append(Style.get_flag_sentence(bordas, pad))
         
         color = "W" if not self.app.is_colored() else "C"
-        elements.append(Sentence().addf(color.lower(), Style.roundL()).addf(color, "DirDestino [D]").addf(color.lower(), Style.roundR()))
-        elements.append(Sentence().addf(color.lower(), Style.roundL()).addf(color, "Linguagem  [L]").addf(color.lower(), Style.roundR()))
+        elements.append(Style.border_round(color, "DirDestino [D]"))
+        elements.append(Style.border_round(color, "Linguagem  [L]"))
 
         # dy, dx = frame.get_inner()
         # line_breaks = dy - len(elements) + 1
@@ -7863,7 +7861,7 @@ class Play:
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
 
-        while not self.exit:
+        while True:
             self.tree.update_tree(admin_mode=Flags.admin.is_true() or self.search_mode)
             self.fman.draw_warnings()
             self.generate_graph()
@@ -7879,13 +7877,16 @@ class Play:
                     if value == 167: #ç
                         value = ord("c")
 
+            if self.exit:
+                break
+
             if self.search_mode:
                 self.process_search(value)
             elif value in calls.keys():
                 callback = calls[value]()
                 if callback is not None:
                     return callback
-            elif value != -1 and value != 27:
+            elif value != -1 and value != 27 and value != 32:
                 self.send_char_not_found(value)
 
             self.tree.reload_sentences()
@@ -7974,7 +7975,7 @@ class MRep:
 
 class Main:
     @staticmethod
-    def prun(args):
+    def go(args):
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         if args.quiet:
@@ -8088,6 +8089,7 @@ class Main:
     @staticmethod
     def play(args):
         settings = Settings()
+        settings.check_rootdir()
         if args.repo == "__ask":
             last = settings.app.get_last_rep()
             if last != "" and last in settings.reps:
@@ -8128,6 +8130,7 @@ class Main:
 
     @staticmethod
     def down(args):
+        Settings().check_rootdir()
         Down.download_problem(args.course, args.activity, args.language, print)
 
 
@@ -8199,7 +8202,7 @@ class Parser:
         group = parser_r.add_mutually_exclusive_group()
         group.add_argument('--down', '-d', action='store_true', help="diff mode up-to-down.")
         group.add_argument('--side', '-s', action='store_true', help="diff mode side-by-side.")
-        parser_r.set_defaults(func=Main.prun)
+        parser_r.set_defaults(func=Main.go)
 
     def add_parser_build(self):
         parser_b = self.subparsers.add_parser('build', parents=[self.parent_manip], help='build a test target.')
@@ -8278,7 +8281,6 @@ def exec(parser: argparse.ArgumentParser, args):
     if args.c:
         settings.set_settings_file(args.c)
     settings.load_settings()
-    settings.check_rootdir()
     if args.a or settings.app.is_ascii():
         symbols.set_ascii()
     else:

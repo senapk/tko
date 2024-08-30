@@ -14,35 +14,36 @@ class Style:
 
     @staticmethod
     def border_round(color: str, data: str):
-        return Sentence().addf(color.lower(), Style.roundL()).addf(color, data).addf(color.lower(), Style.roundR())
+        return Sentence().add(Style.roundL(color)).addf(color, data).add(Style.roundR(color))
 
     @staticmethod
     def border_sharp(color: str, data: str):
-        return Sentence().addf(color.lower(), Style.sharpL()).addf(color, data).addf(color.lower(), Style.sharpR())
+        return Sentence().add(Style.sharpL(color)).addf(color, data).add(Style.sharpR(color))
 
     @staticmethod
-    def roundL():
-        return "" if Style.has_borders() else "█"
+    def roundL(color: str) -> Token:
+        return Token("", color.lower()) if Style.has_borders() else Token(" ", color)
 
     @staticmethod
-    def roundR():
-        return "" if Style.has_borders() else "█"
+    def roundR(color: str) -> Token:
+        return Token("", color.lower()) if Style.has_borders() else Token(" ", color)
 
     @staticmethod
-    def sharpL():
-        return "" if Style.has_borders() else "█"
+    def sharpL(color: str) -> Token:
+        return Token("", color.lower()) if Style.has_borders() else Token(" ", color)
+
 
     @staticmethod
-    def sharpR():
-        return "" if Style.has_borders() else "█"
-    
+    def sharpR(color: str):
+        return Token("", color.lower()) if Style.has_borders() else Token(" ", color)
+
     @staticmethod
     def midL():
-        return "" if Style.has_borders() else "█"
+        return "" if Style.has_borders() else " "
     
     @staticmethod
     def midR():
-        return "" if Style.has_borders() else "█"
+        return "" if Style.has_borders() else " "
  
     @staticmethod
     def focus():
@@ -112,17 +113,8 @@ class Style:
         xp_bar = Token(full_line[:done_len], fmt_true) + Token(full_line[done_len:], fmt_false)
             
         if round:
-            xp_bar.data[0].text = Style.roundL()
-            fmt = xp_bar.data[0].fmt
-            fmt = [c for c in fmt if c.isupper()]
-            fmt = "" if len(fmt) == 0 else fmt[0]
-            xp_bar.data[0].fmt = fmt.lower()
-
-            xp_bar.data[-1].text = Style.roundR()
-            fmt = xp_bar.data[-1].fmt
-            fmt = [c for c in fmt if c.isupper()]
-            fmt = "" if len(fmt) == 0 else fmt[0]
-            xp_bar.data[-1].fmt = fmt.lower()
+            xp_bar.data[0] = Style.roundL(xp_bar.data[0].fmt)
+            xp_bar.data[-1] = Style.roundR(xp_bar.data[-1].fmt)
         return xp_bar
 
     @staticmethod
@@ -146,5 +138,5 @@ class Style:
         # if flag.is_true():
         #     middle = Sentence().addf(color.lower(), Style.roundL()).add(mid).addf(color.lower(), Style.roundR())
         # else:
-        middle = Sentence().addf(color.lower(), Style.sharpL()).add(mid).addf(color.lower(), Style.sharpR())
+        middle = Sentence().add(Style.sharpL(color)).add(mid).add(Style.sharpR(color))
         return middle

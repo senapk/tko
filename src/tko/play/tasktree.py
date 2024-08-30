@@ -82,6 +82,7 @@ class TaskTree:
         self.new_items = [item for item in self.new_items if item not in self.expanded]
 
     def update_max_title(self):
+        min_value = 20
         items = []
         for c in self.game.clusters.values():
             if c.key in self.game.available_clusters:
@@ -93,9 +94,11 @@ class TaskTree:
                             for t in q.get_tasks():
                                 items.append(len(t.title) + 6)
         self.max_title = max(items)
+        if self.max_title < min_value:
+            self.max_title = min_value
 
     def str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool, min_value=1) -> Sentence:
-        downloadable_in_focus = False
+        # downloadable_in_focus = False
         rootdir = self.local.get_rootdir()
         down_symbol = Token(" ")
         in_focus = focus_color != ""
@@ -104,8 +107,8 @@ class TaskTree:
         if t.is_downloadable() and rootdir != "":
             if t.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
                 down_symbol = symbols.downloaded
-                if in_focus:
-                    downloadable_in_focus = True
+                # if in_focus:
+                #     downloadable_in_focus = True
             else:
                 down_symbol = symbols.to_download
 
@@ -120,7 +123,7 @@ class TaskTree:
         output.add(t.get_grade_symbol(min_value))
 
         if in_focus:
-            output.addf(focus_color.lower(), Style.roundL())
+            output.add(Style.roundL(focus_color))
         else:
             output.add(" ")
 
@@ -135,7 +138,7 @@ class TaskTree:
         # output.addf(color, t.title)
 
         if in_focus:
-            output.addf(focus_color.lower(), Style.roundR())
+            output.add(Style.roundR(focus_color))
         else:
             output.add(" ")
 
@@ -158,7 +161,7 @@ class TaskTree:
 
         in_focus = focus_color != ""
         if in_focus:
-            output.addf(focus_color.lower(), Style.roundL())
+            output.add(Style.roundL(focus_color))
         else:
             output.add(" ")
 
@@ -174,7 +177,7 @@ class TaskTree:
         output.add(Style.build_bar(title, q.get_percent() / 100, len(title), done, todo, round=False))
 
         if in_focus:
-            output.addf(focus_color.lower(), Style.roundR())
+            output.add(Style.roundR(focus_color))
         else:
             output.add(" ")
 
@@ -213,7 +216,7 @@ class TaskTree:
 
         title = cluster.title.ljust(self.max_title, ".")
         if focus_color != "":
-            output.addf(focus_color.lower(), Style.roundL())
+            output.add(Style.roundL(focus_color))
         else:
             output.add(" ")
 
@@ -223,7 +226,7 @@ class TaskTree:
         output.add(Style.build_bar(title, cluster.get_percent() / 100, len(title), done, todo, round=False))
 
         if focus_color != "":
-            output.addf(focus_color.lower(), Style.roundR())
+            output.add(Style.roundR(focus_color))
         else:
             output.add(" ")
 

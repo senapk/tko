@@ -75,7 +75,7 @@ class MRep:
 
 class Main:
     @staticmethod
-    def prun(args):
+    def go(args):
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         if args.quiet:
@@ -189,6 +189,7 @@ class Main:
     @staticmethod
     def play(args):
         settings = Settings()
+        settings.check_rootdir()
         if args.repo == "__ask":
             last = settings.app.get_last_rep()
             if last != "" and last in settings.reps:
@@ -229,6 +230,7 @@ class Main:
 
     @staticmethod
     def down(args):
+        Settings().check_rootdir()
         Down.download_problem(args.course, args.activity, args.language, print)
 
 
@@ -300,7 +302,7 @@ class Parser:
         group = parser_r.add_mutually_exclusive_group()
         group.add_argument('--down', '-d', action='store_true', help="diff mode up-to-down.")
         group.add_argument('--side', '-s', action='store_true', help="diff mode side-by-side.")
-        parser_r.set_defaults(func=Main.prun)
+        parser_r.set_defaults(func=Main.go)
 
     def add_parser_build(self):
         parser_b = self.subparsers.add_parser('build', parents=[self.parent_manip], help='build a test target.')
@@ -379,7 +381,6 @@ def exec(parser: argparse.ArgumentParser, args):
     if args.c:
         settings.set_settings_file(args.c)
     settings.load_settings()
-    settings.check_rootdir()
     if args.a or settings.app.is_ascii():
         symbols.set_ascii()
     else:

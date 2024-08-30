@@ -60,6 +60,7 @@ class DKeys:
     travar = "f"
     tempo  = "t"
     outros = "o"
+    border = "B"
 
 class CDiff:
     def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
@@ -283,7 +284,7 @@ class CDiff:
         # building solvers
         solvers = Sentence()
         if len(self.get_solver_names()) > 1:
-            solvers.add(Sentence().addf("R", "[p]").addf("r", Style.sharpR()))
+            solvers.add(Sentence().addf("R", "[p]").add(Style.sharpR("R")))
         for i, solver in enumerate(self.get_solver_names()):
             color = solver_color
             if i == self.task.main_index:
@@ -302,7 +303,7 @@ class CDiff:
 
         # building sources
         source_names = Sentence(", ").join([Sentence().addf(sources_color, f"{name[0]}({name[1]})") for name in self.wdir.sources_names()])
-        sources = Sentence().addf(sources_color.lower(), Style.roundL()).add(source_names).addf(sources_color.lower(), Style.roundR())
+        sources = Sentence().add(Style.roundL(sources_color)).add(source_names).add(Style.roundR(sources_color))
 
         # merging activity, solvers and sources in header
         delta = frame.get_dx() - solvers.len()
@@ -336,8 +337,8 @@ class CDiff:
         for unit_result, index in done_list + todo_list:
             foco = i == self.focused_index
             token = self.get_token(unit_result)
-            extrap = Token(Style.roundL(), token.fmt.lower())# if not foco else Token(Style.roundL(), "")
-            extras = Token(Style.roundR(), token.fmt.lower())# if not foco else Token(Style.roundR(), "")
+            extrap = Style.roundL(token.fmt) # if not foco else Token(Style.roundL(), "")
+            extras = Style.roundR(token.fmt) # if not foco else Token(Style.roundR(), "")
             if foco and show_focused_index:
                 token.fmt = ""
             output.add(extrap).addf(token.fmt, str(index).zfill(2)).add(token).add(extras).add(" ")
@@ -398,11 +399,11 @@ class CDiff:
                 value = "∞"
             cmds.append(
                 Sentence()
-                    .addf("m", Style.roundL())
+                    .add(Style.roundL("M"))
                     .add(RToken("M", f"{DActions.tempo}"))
                     .add(RToken("M", "{}".format(value)))
                     .add(RToken("M", f"[{DKeys.tempo}]"))
-                    .addf("m", Style.roundR())
+                    .add(Style.roundR("M"))
             )
             travar = f"{DActions.fixar}[{DKeys.travar}]"
             color = "G" if self.locked_index else "M"
@@ -686,6 +687,8 @@ class CDiff:
             self.change_limit()
         elif key == ord(DKeys.outros):
             Flags.others.toggle()
+        elif key == ord(DKeys.border):
+            self.settings.app.toggle_nerdfonts()
         elif key != -1 and key != curses.KEY_RESIZE:
             self.send_char_not_found(key)
 
