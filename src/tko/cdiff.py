@@ -273,7 +273,7 @@ class CDiff:
 
     def build_top_line_header(self, frame):
         activity_color = "W" if not self.colors else "C"
-        solver_color = "M" if not self.colors else "M"
+        solver_color = "W" if not self.colors else "W"
         sources_color = "W" if not self.colors else "Y"
         running_color = "W" if not self.colors else "R"
 
@@ -283,7 +283,7 @@ class CDiff:
         # building solvers
         solvers = Sentence()
         if len(self.get_solver_names()) > 1:
-            solvers.add(Style.border_sharp("W", "[p]"))
+            solvers.add(Style.border_round("R", "Principal[p]"))
         for i, solver in enumerate(self.get_solver_names()):
             color = solver_color
             if i == self.task.main_index:

@@ -1,5 +1,9 @@
 # Changelog
 
+- 0.23.0
+  - change Principal apperence in cdiff
+- 0.22.9
+  - add: disable fortune messages
 - 0.22.8
   - fix: new items bug
 - 0.22.7

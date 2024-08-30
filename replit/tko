@@ -24,7 +24,7 @@ import math
 import configparser
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.22.8"
+__version__ = "0.23.0"
 
 
 def get_default_settings_for_borders() -> bool:
@@ -951,49 +951,6 @@ Meu precioso!
          ⠉⠛⠿⠶⢾⣭⢤⡾ ⠠⠒          
 """
 
-quit_msgs = [
-        "Deus abençoe, vá em paz",
-        "Bye bye",
-        "Vou sentir saudades",
-        "Volte quando estiver mais descansado",
-        "Espero que tenha aprendido algo novo hoje",
-        "Cada pequena vitória merece ser comemorada",
-        "Obrigado pelo tempo juntos",
-        "Até a próxima",
-        "Um abraço, seja feliz", 
-        "Durma cedo, amanhã você pode continuar", 
-        "Vá, mais volte",
-        "Arri égua, já vai?", 
-        "Capando o gato tão cedo?",
-        "Vai porque quer",
-        "Fique mais um pouquinho", 
-        "Vamos lá, pegue um café (ou chá) e volte outra hora",
-        "Foque em avançar um passo por vez",
-        "O caminho é mais importante que a chegada",
-        "Lembre de dar bons nomes para as variáveis e métodos", 
-        "Você também está programando para outros seres humanos lerem, faça algo organizado",
-        "Seja criterioso com a indentação e as regras de estilo, faça algo belo",
-        "Está precisando de mais conselhos? Experimente rezar",
-        "Não se repita, refatore seu código para tirar as redundâncias",
-        "São necessárias umas 1000 horas pra ser bom em algo",
-        "Só é fracasso quando você desiste, espaireça e tente de novo",
-        "Parar e descansar é importante também",
-        "Se for pra descansar, largue o celular",
-        "Traga uma garrafa de água próxima vez, facilite o acesso",
-        "Toda capacidade que não é usada, se perde, movimente-se",
-        "Te vejo depois do exercício. Malhe, corra, dance, e depois volte",
-        "Se você não se der valor, ninguém vai. Invista em você",
-        "Tem exercícios que vão ser bem complicados, tire um tempo para pensar longe do computador",
-        "Use as inteligências artificiais com sabedoria, depois, tente refazer a tarefa sem elas",
-        "Lembre de pedir ajuda quando precisar", 
-        "Você não está sozinho, peça ajuda se preciso", 
-        "É justo que o que muito vale, muito custe", 
-        "Aprender a se divertir é parte essencial do aprendizado", 
-        "Esse miserável é um miserável",
-        "Você é importante e precioso, mesmo que seu código tenha ficado uma porcaria",
-        "Alguns tem mais dificuldades que outros, tenha paciência consigo mesmo",
-        "Se você precisa de mais tempo que seus colegas pra aprender, se dê mais tempo", 
-    ]
 class LabelFactory:
     def __init__(self):
         self._label = ""
@@ -1784,7 +1741,7 @@ class Flags:
     reward = Flag().name("Recompensa").char("R").values(["0", "1"]).text("Mostra a experiência obtida na tarefa").location("left")
     percent = Flag().name("Percentual").char("P").values(["1", "0"]).text("Mostra valores em porcentagem").location("left")
     admin = Flag().name("Admin").char("A").values(["0", "1"]).text("Mostra todas as missões e grupos").location("left")
-    fortune = Flag().name("Fortuna").char("F").values(["0", "1"]).text("Mostra mensagem aleatórias na saída").location("left")
+    # fortune = Flag().name("Fortuna").char("F").values(["0", "1"]).text("Mostra mensagem aleatórias na saída").location("left")
     images = Flag().name("Imagens").char("I").values(["1", "0"]).text("Mostra imagens aleatórias").location("left")
     # links = Flag().name("Links").char("Y").values(["0", "1"]).text("Mostra links remotos e locais das tarefas").location("left")
 
@@ -6110,7 +6067,7 @@ class CDiff:
 
     def build_top_line_header(self, frame):
         activity_color = "W" if not self.colors else "C"
-        solver_color = "M" if not self.colors else "M"
+        solver_color = "W" if not self.colors else "W"
         sources_color = "W" if not self.colors else "Y"
         running_color = "W" if not self.colors else "R"
 
@@ -6120,7 +6077,7 @@ class CDiff:
         # building solvers
         solvers = Sentence()
         if len(self.get_solver_names()) > 1:
-            solvers.add(Style.border_sharp("W", "[p]"))
+            solvers.add(Style.border_round("R", "Principal[p]"))
         for i, solver in enumerate(self.get_solver_names()):
             color = solver_color
             if i == self.task.main_index:
@@ -6995,6 +6952,7 @@ class XP:
 
 
 
+
 class Actions:
     ler_online = "Github"
     sair = "Sair"
@@ -7077,7 +7035,7 @@ class Play:
         self.help_fixed: List[Sentence] = [
             Sentence() + RToken("C", f"  {Actions.sair}[{Key.quit}]"),
             Sentence() + RToken("C", f"{Actions.editar}[{Key.edit}]"),
-            Sentence() + RToken("C", f"{Actions.ativar}[↲]"),
+            Sentence() + RToken("G", f"{Actions.ativar}[↲]"),
         ]
         self.help_others_before: List[Sentence] = [
             Sentence() + RToken("Y", f" {Actions.ajuda}[{Key.ajuda}]"),
@@ -7089,7 +7047,6 @@ class Play:
         ]
 
         self.wrap_size = Sentence(" ").join(self.build_bottom_array()).len()
-
         self.opener = Opener(tree=self.tree, fman=self.fman, geral=app, rep_data=rep_data, rep_alias=rep_alias)
 
         self.search_mode: bool = False
@@ -7507,7 +7464,11 @@ class Play:
         array: List[Sentence] = []
         array += self.help_others_before
         array += self.help_fixed
-        color = "G" if Flags.others.is_true() else "Y"
+        if self.app.is_colored():
+            color = "G" if Flags.others.is_true() else "Y"
+        else:
+            color = "W" if Flags.others.is_true() else "K"
+
         array.append(Sentence() + RToken(color, "!Outros[o]"))
         array += self.help_others_after
 
@@ -7729,17 +7690,12 @@ class Play:
             Flags.config.toggle()
             # self.show_help_config()
 
-    def select_quit_msg(self):
-        if Flags.fortune.is_true():
-            return random.choice(quit_msgs)
-        return "Até a próxima!"
-
     def send_quit_msg(self):
         def set_exit():
             self.exit = True
 
         self.fman.add_input(
-            Floating().put_text("\n" + self.select_quit_msg() + "\n").set_exit_fn(set_exit).warning()
+            Floating().put_text("\nAté a próxima\n").set_exit_fn(set_exit).warning()
         ),
 
     def make_callback(self) -> Dict[int, Any]:

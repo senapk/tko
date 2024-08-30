@@ -26,7 +26,7 @@ from .flags import Flag, Flags, FlagsMan
 from .tasktree import TaskTree
 from ..actions import Run
 from ..run.param import Param
-from .quit_msgs import quit_msgs
+
 
 import webbrowser
 import os
@@ -114,7 +114,7 @@ class Play:
         self.help_fixed: List[Sentence] = [
             Sentence() + RToken("C", f"  {Actions.sair}[{Key.quit}]"),
             Sentence() + RToken("C", f"{Actions.editar}[{Key.edit}]"),
-            Sentence() + RToken("C", f"{Actions.ativar}[↲]"),
+            Sentence() + RToken("G", f"{Actions.ativar}[↲]"),
         ]
         self.help_others_before: List[Sentence] = [
             Sentence() + RToken("Y", f" {Actions.ajuda}[{Key.ajuda}]"),
@@ -126,7 +126,6 @@ class Play:
         ]
 
         self.wrap_size = Sentence(" ").join(self.build_bottom_array()).len()
-
         self.opener = Opener(tree=self.tree, fman=self.fman, geral=app, rep_data=rep_data, rep_alias=rep_alias)
 
         self.search_mode: bool = False
@@ -544,7 +543,11 @@ class Play:
         array: List[Sentence] = []
         array += self.help_others_before
         array += self.help_fixed
-        color = "G" if Flags.others.is_true() else "Y"
+        if self.app.is_colored():
+            color = "G" if Flags.others.is_true() else "Y"
+        else:
+            color = "W" if Flags.others.is_true() else "K"
+
         array.append(Sentence() + RToken(color, "!Outros[o]"))
         array += self.help_others_after
 
@@ -766,17 +769,12 @@ class Play:
             Flags.config.toggle()
             # self.show_help_config()
 
-    def select_quit_msg(self):
-        if Flags.fortune.is_true():
-            return random.choice(quit_msgs)
-        return "Até a próxima!"
-
     def send_quit_msg(self):
         def set_exit():
             self.exit = True
 
         self.fman.add_input(
-            Floating().put_text("\n" + self.select_quit_msg() + "\n").set_exit_fn(set_exit).warning()
+            Floating().put_text("\nAté a próxima\n").set_exit_fn(set_exit).warning()
         ),
 
     def make_callback(self) -> Dict[int, Any]:
