@@ -20,14 +20,14 @@ from .flags import Flag, Flags, FlagsMan
 from .tasktree import TaskTree
 from ..actions import Run
 from ..run.param import Param
-from .gui import Key
+from .gui import Key, Gui
 
 import webbrowser
 import os
 
 class PlayActions:
 
-    def __init__(self, fman: FloatingManager, rep: RepData, rep_alias:str, tree: TaskTree, game: Game, opener: Opener):
+    def __init__(self, fman: FloatingManager, rep: RepData, rep_alias:str, tree: TaskTree, game: Game, opener: Opener, gui: Gui):
         self.app = Settings().app
         self.settings = Settings()
         self.fman = fman
@@ -36,18 +36,15 @@ class PlayActions:
         self.tree = tree
         self.game = game
         self.opener = opener
-        self.gen_graph: bool = False
+        self.graph_opened: bool = False
+        self.gui = gui
 
     def gen_graph_path(self) -> str:
         return os.path.join(self.app.get_rootdir(), self.rep_alias, "graph.png")
 
 
     def graph_toggle(self):
-        self.gen_graph = not self.gen_graph
-        if self.gen_graph:
-            path = self.gen_graph_path()
-            # self.fman.add_input(Floating().put_text(f"\nGrafo gerado em\n {path} \n"))
-            self.opener.open_files([path])
+        self.gui.gen_graph = not self.gui.gen_graph
         
     def set_rootdir(self, only_if_empty=True):
         if only_if_empty and self.app.get_rootdir() != "":
@@ -190,7 +187,20 @@ class PlayActions:
             )
 
     def generate_graph(self):
-        Graph(self.game).set_path(self.gen_graph_path()).set_opt(False).generate()
+        try:
+            Graph(self.game).set_path(self.gen_graph_path()).set_opt(False).generate()
+            path = self.gen_graph_path()
+            # self.fman.add_input(Floating().put_text(f"\nGrafo gerado em\n {path} \n"))
+            if not self.graph_opened:
+                self.opener.open_files([path])
+                self.graph_opened = True
+        except FileNotFoundError as _:
+            self.gui.gen_graph = False
+            self.fman.add_input(Floating().error()
+                                .put_text("")
+                                .put_sentence(Sentence().add("Instale o ").addf("r", "graphviz").add(" para poder gerar os grafos"))
+                                .put_text("")
+                                )
 
     def down_task(self):
         rootdir = self.app.get_rootdir()

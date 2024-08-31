@@ -65,7 +65,7 @@ class Key:
     cores = "C"
     bordas = "B"
     pesquisar = "/"
-    graph = "k"
+    graph = "G"
 
 
 class Gui:
@@ -78,6 +78,7 @@ class Gui:
         self.flagsman = flagsman
         self.fman = fman
         self.search = search
+        self.gen_graph: bool = False
 
         self.app = Settings().app
 
@@ -198,8 +199,12 @@ class Gui:
         elements.append(Style.get_flag_sentence(colored, pad))
         bordas = Flag().name("Bordas").char("B").values(["1" if self.app.is_nerdfonts() else "0"]).text("Ativa ou desativa as bordas").bool()
         elements.append(Style.get_flag_sentence(bordas, pad))
-        
+        grafo = Flag().name("Grafo").char("G").values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
+        elements.append(Style.get_flag_sentence(grafo, pad))
+
+
         color = "W" if not self.app.is_colored() else "C"
+
         elements.append(Style.border_round(color, "DirDestino [D]"))
         elements.append(Style.border_round(color, "Linguagem  [L]"))
 

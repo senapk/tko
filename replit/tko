@@ -3759,6 +3759,34 @@ class FloatingManager:
         return self.input_layer[0].get_input()
 
 
+class FlagFunctor:
+    def __init__(self, fman: FloatingManager, flag: Flag):
+        self.fman = fman
+        self.flag = flag
+
+    def __call__(self):
+        self.flag.toggle()
+        if (self.flag.get_location() == "left" or self.flag.get_location() == "geral") and self.flag.is_bool():
+            f = Floating("v>").warning()
+            f.put_text("")
+            f.put_text(self.flag.get_description())
+            if self.flag.is_true():
+                f.put_sentence(Sentence().addf("g", "ligado"))
+            else:
+                f.put_sentence(Sentence().addf("r", "desligado"))
+            f.put_text("")
+            self.fman.add_input(f)
+
+class GradeFunctor:
+    def __init__(self, grade: int, fn):
+        self.grade = grade
+        self.fn = fn
+
+    def __call__(self):
+        self.fn(self.grade)
+
+
+
 
 class Report:
     __term_width: Optional[int] = None
@@ -7056,7 +7084,7 @@ class Key:
     cores = "C"
     bordas = "B"
     pesquisar = "/"
-    graph = "k"
+    graph = "G"
 
 
 class Gui:
@@ -7069,6 +7097,7 @@ class Gui:
         self.flagsman = flagsman
         self.fman = fman
         self.search = search
+        self.gen_graph: bool = False
 
         self.app = Settings().app
 
@@ -7189,8 +7218,12 @@ class Gui:
         elements.append(Style.get_flag_sentence(colored, pad))
         bordas = Flag().name("Bordas").char("B").values(["1" if self.app.is_nerdfonts() else "0"]).text("Ativa ou desativa as bordas").bool()
         elements.append(Style.get_flag_sentence(bordas, pad))
-        
+        grafo = Flag().name("Grafo").char("G").values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
+        elements.append(Style.get_flag_sentence(grafo, pad))
+
+
         color = "W" if not self.app.is_colored() else "C"
+
         elements.append(Style.border_round(color, "DirDestino [D]"))
         elements.append(Style.border_round(color, "Linguagem  [L]"))
 
@@ -7414,7 +7447,7 @@ class Gui:
 
 class PlayActions:
 
-    def __init__(self, fman: FloatingManager, rep: RepData, rep_alias:str, tree: TaskTree, game: Game, opener: Opener):
+    def __init__(self, fman: FloatingManager, rep: RepData, rep_alias:str, tree: TaskTree, game: Game, opener: Opener, gui: Gui):
         self.app = Settings().app
         self.settings = Settings()
         self.fman = fman
@@ -7423,18 +7456,15 @@ class PlayActions:
         self.tree = tree
         self.game = game
         self.opener = opener
-        self.gen_graph: bool = False
+        self.graph_opened: bool = False
+        self.gui = gui
 
     def gen_graph_path(self) -> str:
         return os.path.join(self.app.get_rootdir(), self.rep_alias, "graph.png")
 
 
     def graph_toggle(self):
-        self.gen_graph = not self.gen_graph
-        if self.gen_graph:
-            path = self.gen_graph_path()
-            # self.fman.add_input(Floating().put_text(f"\nGrafo gerado em\n {path} \n"))
-            self.opener.open_files([path])
+        self.gui.gen_graph = not self.gui.gen_graph
         
     def set_rootdir(self, only_if_empty=True):
         if only_if_empty and self.app.get_rootdir() != "":
@@ -7577,7 +7607,20 @@ class PlayActions:
             )
 
     def generate_graph(self):
-        Graph(self.game).set_path(self.gen_graph_path()).set_opt(False).generate()
+        try:
+            Graph(self.game).set_path(self.gen_graph_path()).set_opt(False).generate()
+            path = self.gen_graph_path()
+            # self.fman.add_input(Floating().put_text(f"\nGrafo gerado em\n {path} \n"))
+            if not self.graph_opened:
+                self.opener.open_files([path])
+                self.graph_opened = True
+        except FileNotFoundError as _:
+            self.gui.gen_graph = False
+            self.fman.add_input(Floating().error()
+                                .put_text("")
+                                .put_sentence(Sentence().add("Instale o ").addf("r", "graphviz").add(" para poder gerar os grafos"))
+                                .put_text("")
+                                )
 
     def down_task(self):
         rootdir = self.app.get_rootdir()
@@ -7671,7 +7714,6 @@ class PlayActions:
 
 
 
-
 class Play:
     def __init__(
         self,
@@ -7704,46 +7746,13 @@ class Play:
         self.graph_ext = ""
 
         self.opener = Opener(tree=self.tree, fman=self.fman, geral=app, rep_data=rep_data, rep_alias=rep_alias)
-        self.actions = PlayActions(fman=self.fman, rep=self.rep, rep_alias=self.rep_alias, tree=self.tree, game=self.game, opener=self.opener)
+        self.actions = PlayActions(fman=self.fman, rep=self.rep, rep_alias=self.rep_alias, tree=self.tree, game=self.game, opener=self.opener, gui=self.gui)
 
     def save_to_json(self):
         self.tree.save_on_rep()
         self.rep.set_flags(self.flagsman.get_data())
         self.settings.save_settings()
         self.rep.save_data_to_json()
-
-    class FlagFunctor:
-        def __init__(self, fman: FloatingManager, flag: Flag):
-            self.fman = fman
-            self.flag = flag
-
-        def __call__(self):
-            self.flag.toggle()
-            if (self.flag.get_location() == "left" or self.flag.get_location() == "geral") and self.flag.is_bool():
-                f = Floating("v>").warning()
-                f.put_text("")
-                f.put_text(self.flag.get_description())
-                if self.flag.is_true():
-                    f.put_sentence(Sentence().addf("g", "ligado"))
-                else:
-                    f.put_sentence(Sentence().addf("r", "desligado"))
-                f.put_text("")
-                self.fman.add_input(f)
-
-    class GradeFunctor:
-        def __init__(self, grade: int, fn):
-            self.grade = grade
-            self.fn = fn
-
-        def __call__(self):
-            self.fn(self.grade)
-
-    def toggle_config(self):
-        if Flags.config.is_true():
-            Flags.config.toggle()
-        else:
-            Flags.config.toggle()
-            # self.show_help_config()
 
     def send_quit_msg(self):
         def set_exit():
@@ -7752,6 +7761,12 @@ class Play:
         self.fman.add_input(
             Floating().put_text("\nAté a próxima\n").set_exit_fn(set_exit).warning()
         ),
+
+    def toggle_config(self):
+        if Flags.config.is_true():
+            Flags.config.toggle()
+        else:
+            Flags.config.toggle()
 
     def make_callback(self) -> Dict[int, Any]:
         calls: Dict[int, Callable[[],None]] = {}
@@ -7804,17 +7819,17 @@ class Play:
         add_str(Key.graph, self.actions.graph_toggle)
 
         for value in range(1, 10):
-            add_str(str(value), self.GradeFunctor(int(value), self.tree.set_grade))
-        add_str("'", self.GradeFunctor(0, self.tree.set_grade))
-        add_str("0", self.GradeFunctor(10, self.tree.set_grade))
+            add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
+        add_str("'", GradeFunctor(0, self.tree.set_grade))
+        add_str("0", GradeFunctor(10, self.tree.set_grade))
 
         for flag in self.flagsman.left:
-            add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
+            add_str(flag.get_char(), FlagFunctor(self.fman, flag))
         for flag in self.flagsman.others:
-            add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
+            add_str(flag.get_char(), FlagFunctor(self.fman, flag))
 
         add_str(Flags.config.get_char(), self.toggle_config)
-        add_str(Flags.skills.get_char(), self.FlagFunctor(self.fman, Flags.skills))
+        add_str(Flags.skills.get_char(), FlagFunctor(self.fman, Flags.skills))
         add_str("/", self.search.toggle_search)
 
         return calls
@@ -7843,7 +7858,7 @@ class Play:
         while True:
             self.tree.update_tree(admin_mode=Flags.admin.is_true() or self.search.search_mode)
             self.fman.draw_warnings()
-            if self.actions.gen_graph:
+            if self.gui.gen_graph:
                 self.actions.generate_graph()
             calls = self.make_callback()
             self.gui.show_items()

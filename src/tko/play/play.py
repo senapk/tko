@@ -15,7 +15,7 @@ from .flags import Flag, Flags, FlagsMan
 from .tasktree import TaskTree
 from .gui import Gui, Key
 from .play_actions import PlayActions
-
+from .functors import FlagFunctor, GradeFunctor
 
 import os
 import curses
@@ -52,46 +52,13 @@ class Play:
         self.graph_ext = ""
 
         self.opener = Opener(tree=self.tree, fman=self.fman, geral=app, rep_data=rep_data, rep_alias=rep_alias)
-        self.actions = PlayActions(fman=self.fman, rep=self.rep, rep_alias=self.rep_alias, tree=self.tree, game=self.game, opener=self.opener)
+        self.actions = PlayActions(fman=self.fman, rep=self.rep, rep_alias=self.rep_alias, tree=self.tree, game=self.game, opener=self.opener, gui=self.gui)
 
     def save_to_json(self):
         self.tree.save_on_rep()
         self.rep.set_flags(self.flagsman.get_data())
         self.settings.save_settings()
         self.rep.save_data_to_json()
-
-    class FlagFunctor:
-        def __init__(self, fman: FloatingManager, flag: Flag):
-            self.fman = fman
-            self.flag = flag
-
-        def __call__(self):
-            self.flag.toggle()
-            if (self.flag.get_location() == "left" or self.flag.get_location() == "geral") and self.flag.is_bool():
-                f = Floating("v>").warning()
-                f.put_text("")
-                f.put_text(self.flag.get_description())
-                if self.flag.is_true():
-                    f.put_sentence(Sentence().addf("g", "ligado"))
-                else:
-                    f.put_sentence(Sentence().addf("r", "desligado"))
-                f.put_text("")
-                self.fman.add_input(f)
-
-    class GradeFunctor:
-        def __init__(self, grade: int, fn):
-            self.grade = grade
-            self.fn = fn
-
-        def __call__(self):
-            self.fn(self.grade)
-
-    def toggle_config(self):
-        if Flags.config.is_true():
-            Flags.config.toggle()
-        else:
-            Flags.config.toggle()
-            # self.show_help_config()
 
     def send_quit_msg(self):
         def set_exit():
@@ -100,6 +67,12 @@ class Play:
         self.fman.add_input(
             Floating().put_text("\nAté a próxima\n").set_exit_fn(set_exit).warning()
         ),
+
+    def toggle_config(self):
+        if Flags.config.is_true():
+            Flags.config.toggle()
+        else:
+            Flags.config.toggle()
 
     def make_callback(self) -> Dict[int, Any]:
         calls: Dict[int, Callable[[],None]] = {}
@@ -152,17 +125,17 @@ class Play:
         add_str(Key.graph, self.actions.graph_toggle)
 
         for value in range(1, 10):
-            add_str(str(value), self.GradeFunctor(int(value), self.tree.set_grade))
-        add_str("'", self.GradeFunctor(0, self.tree.set_grade))
-        add_str("0", self.GradeFunctor(10, self.tree.set_grade))
+            add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
+        add_str("'", GradeFunctor(0, self.tree.set_grade))
+        add_str("0", GradeFunctor(10, self.tree.set_grade))
 
         for flag in self.flagsman.left:
-            add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
+            add_str(flag.get_char(), FlagFunctor(self.fman, flag))
         for flag in self.flagsman.others:
-            add_str(flag.get_char(), self.FlagFunctor(self.fman, flag))
+            add_str(flag.get_char(), FlagFunctor(self.fman, flag))
 
         add_str(Flags.config.get_char(), self.toggle_config)
-        add_str(Flags.skills.get_char(), self.FlagFunctor(self.fman, Flags.skills))
+        add_str(Flags.skills.get_char(), FlagFunctor(self.fman, Flags.skills))
         add_str("/", self.search.toggle_search)
 
         return calls
@@ -191,7 +164,7 @@ class Play:
         while True:
             self.tree.update_tree(admin_mode=Flags.admin.is_true() or self.search.search_mode)
             self.fman.draw_warnings()
-            if self.actions.gen_graph:
+            if self.gui.gen_graph:
                 self.actions.generate_graph()
             calls = self.make_callback()
             self.gui.show_items()
