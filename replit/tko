@@ -3057,14 +3057,6 @@ class Style:
         return Token("", color.lower()) if Style.has_borders() else Token(" ", color)
 
     @staticmethod
-    def midL():
-        return "" if Style.has_borders() else " "
-    
-    @staticmethod
-    def midR():
-        return "" if Style.has_borders() else " "
- 
-    @staticmethod
     def focus():
         return "W" if not Style.has_colors() else "B"
     @staticmethod
