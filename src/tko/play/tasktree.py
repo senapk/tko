@@ -27,8 +27,8 @@ class Entry:
 
 class TaskTree:
 
-    def __init__(self, local: AppSettings, game: Game, rep: RepData, rep_alias: str):
-        self.local = local
+    def __init__(self, app: AppSettings, game: Game, rep: RepData, rep_alias: str):
+        self.app = app
         self.game = game
         self.rep = rep
         self.rep_alias = rep_alias
@@ -101,11 +101,11 @@ class TaskTree:
 
     def str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool, min_value=1) -> Sentence:
         # downloadable_in_focus = False
-        rootdir = self.local.get_rootdir()
+        rootdir = self.app.rootdir
         down_symbol = Token(" ")
         in_focus = focus_color != ""
         down_symbol = symbols.cant_download
-        rep_dir = os.path.join(self.local.get_rootdir(), self.rep_alias)
+        rep_dir = os.path.join(self.app.rootdir, self.rep_alias)
         if t.is_downloadable() and rootdir != "":
             if t.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
                 down_symbol = symbols.downloaded
@@ -174,8 +174,8 @@ class TaskTree:
         title = q.title
         title = title.ljust(self.max_title - 2, ".")
 
-        done = color + self.colors.prog_done
-        todo = color + self.colors.prog_todo
+        done = color + self.colors.task_text_done
+        todo = color + self.colors.task_text_todo
         output.add(self.style.build_bar(title, q.get_percent() / 100, len(title), done, todo, round=False))
 
         if in_focus:
@@ -222,8 +222,8 @@ class TaskTree:
         else:
             output.add(" ")
 
-        done = color + self.colors.prog_done
-        todo = color + self.colors.prog_todo
+        done = color + self.colors.task_text_done
+        todo = color + self.colors.task_text_todo
 
         output.add(self.style.build_bar(title, cluster.get_percent() / 100, len(title), done, todo, round=False))
 

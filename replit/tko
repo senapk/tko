@@ -28,142 +28,38 @@ __version__ = "0.23.4"
 
 
 class AppSettings:
-    __rootdir = "rootdir"
-    __is_ascii = "ascii"
-    __is_color = "color"
-    __diffmode = "diffmode"
-    __sidesize = "sidesize"
-    __langdef = "langdef"
-    __lastrep = "lastrep"
-    __nerdfonts = "nerdfonts"
-    __editor = "editor"
-    __timeout = "timeout"
-
-    defaults = {
-        __rootdir: "",
-        __is_ascii: False,
-        __is_color: True,
-        __diffmode: "side",
-        __sidesize: 80,
-        __langdef: "",
-        __lastrep: "", 
-        __nerdfonts: False,
-        __editor: "code",
-        __timeout: 1
-    }
-
     def __init__(self):
-        self.data: Dict[str, Any] = {}
-        for key in AppSettings.defaults:
-            self.data[key] = AppSettings.defaults[key]
+        self.rootdir = ""
+        self.is_ascii = False
+        self.is_colored = True
+        self.diff_mode = "side"
+        self.side_size_min = 80
+        self.lang_default = ""
+        self.last_rep = ""
+        self.borders = False
+        self.editor = "code"
+        self.timeout = 1
 
-    def __set(self, key: str, value: Any):
-        self.data[key] = value
-        return self
-
-    def __get(self, key: str) -> Any:
-        if key not in self.defaults:
-            raise ValueError(f"Key {key} not found in AppSettings")
-        if key not in self.data:
-            self.data[key] = AppSettings.defaults[key]
-        return self.data[key]
-
-
-    def get_timeout(self) -> int:
-        return self.__get(self.__timeout)
+    def to_dict(self):
+        return self.__dict__
     
-    def set_timeout(self, value: int):
-        self.__set(self.__timeout, value)
+    def from_dict(self, attr_dict):
+        for key, value in attr_dict.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
         return self
 
-    def get_editor(self) -> str:
-        return self.__get(self.__editor)
-    
-    def set_editor(self, value: str):
-        self.__set(self.__editor, value)
-        return self
-
-    def get_last_rep(self) -> str:
-        return self.__get(self.__lastrep)
-    
-    def set_last_rep(self, value: str):
-        self.__set(self.__lastrep, value)
-        return self
-
-    def to_dict(self) -> Dict[str, Any]:
-        return self.data
-
-    def from_dict(self, data: Dict[str, Any]):
-        self.data = data
-        return self
-
-    def __str__(self) -> str:
-        return str(self.data)
-
-
-    def get_rootdir(self) -> str:
-        value = self.__get(self.__rootdir)
-        return value
-    
-    def has_borders(self) -> bool:
-        return self.__get(self.__nerdfonts)
-    
-    def set_borders(self, value: bool):
-        self.__set(self.__nerdfonts, value)
-        return self
-
-    def set_rootdir(self, value: str):
-        self.__set(self.__rootdir, value)
-        return self
-
-    def is_ascii(self):
-        return self.__get(self.__is_ascii)
-
-    def set_is_ascii(self, value: bool):
-        self.__set(self.__is_ascii, value)
-        return self
-
-    def is_colored(self):
-        return self.__get(self.__is_color)
-
-    def set_is_colored(self, value: bool):
-        self.__set(self.__is_color, value)
-        return self
-    
     def toggle_color(self):
-        self.set_is_colored(not self.is_colored())
-        return
+        self.is_colored = not self.is_colored
     
     def toggle_borders(self):
-        self.set_borders(not self.has_borders())
-        return
-
-    def get_diff_mode(self) -> str:
-        return self.__get(self.__diffmode)
-
-    def set_diff_mode(self, value: str):
-        self.__set(self.__diffmode, value)
-        return self
-
-    def get_side_size(self):
-        return self.__get(self.__sidesize)
-
-    def set_side_size(self, value: int):
-        self.__set(self.__sidesize, value)
-        return self
-
-    def get_lang_def(self):
-        return self.__get(self.__langdef)
-
-    def set_lang_def(self, value: str):
-        self.__set(self.__langdef, value)
-        return self
+        self.borders = not self.borders
 
 class Colors:
     def __init__(self):
         self.focused_item = "B"
-        self.prog_done = "g"
-        self.prog_todo = "y"
+        self.task_text_done = "g"
+        self.task_text_todo = "y"
         self.button_flag_on = "G"
         self.button_flag_off = "Y"
         self.progress_skill_done = "C"
@@ -2434,7 +2330,7 @@ class Border:
         self.app = app
 
     def has_borders(self):
-        return self.app.has_borders()
+        return self.app.borders
 
     def border_round(self, color: str, data: str):
         return Sentence().add(self.roundL(color)).addf(color, data).add(self.roundR(color))
@@ -3649,7 +3545,7 @@ class Settings:
         return self
 
     def __get_rep_file_path(self, course: str) -> str:
-        return os.path.join(self.app.get_rootdir(), course, ".rep.json")   
+        return os.path.join(self.app.rootdir, course, ".rep.json")   
 
     def get_rep_source(self, course: str) -> RepSource:
         if course in self.reps:
@@ -3688,7 +3584,7 @@ class Settings:
     #     return self
 
     def check_rootdir(self) -> None:
-        if self.app.get_rootdir() != "":
+        if self.app.rootdir != "":
             return
         term_print(Sentence().add("Pasta padrão para download de arquivos ").addf("r", "precisa").add(" ser definida."))
         term_print(Sentence().add("Escolha ").addf("r", "uma").add(" para continuar:"))
@@ -3718,7 +3614,7 @@ class Settings:
         print("Pasta padrão para download de arquivos foi definida em: " + home_qxcode)
         print("Você pode alterar, navegando até a a pasta desejada e executando o comando")
         print("tko config --root .")
-        self.app.set_rootdir(home_qxcode)
+        self.app.rootdir = home_qxcode
         self.save_settings();
     
     def save_settings(self):
@@ -5074,7 +4970,7 @@ public class draft {
         Down.fnprint = fnprint
         
         settings = Settings()
-        rep_dir = os.path.join(settings.app.get_rootdir(), course)
+        rep_dir = os.path.join(settings.app.rootdir, course)
         rep_source = settings.get_rep_source(course)
         rep_data = settings.get_rep_data(course)
         if game is None:
@@ -5111,7 +5007,7 @@ public class draft {
 
         language_def = rep_data.get_lang()
         if language_def == "":
-            language_def = Settings().app.get_lang_def()
+            language_def = Settings().app.lang_default
         ask_ext = False
         if language is None:
             if language_def != "":
@@ -5166,8 +5062,8 @@ class Entry:
 
 class TaskTree:
 
-    def __init__(self, local: AppSettings, game: Game, rep: RepData, rep_alias: str):
-        self.local = local
+    def __init__(self, app: AppSettings, game: Game, rep: RepData, rep_alias: str):
+        self.app = app
         self.game = game
         self.rep = rep
         self.rep_alias = rep_alias
@@ -5240,11 +5136,11 @@ class TaskTree:
 
     def str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool, min_value=1) -> Sentence:
         # downloadable_in_focus = False
-        rootdir = self.local.get_rootdir()
+        rootdir = self.app.rootdir
         down_symbol = Token(" ")
         in_focus = focus_color != ""
         down_symbol = symbols.cant_download
-        rep_dir = os.path.join(self.local.get_rootdir(), self.rep_alias)
+        rep_dir = os.path.join(self.app.rootdir, self.rep_alias)
         if t.is_downloadable() and rootdir != "":
             if t.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
                 down_symbol = symbols.downloaded
@@ -5313,8 +5209,8 @@ class TaskTree:
         title = q.title
         title = title.ljust(self.max_title - 2, ".")
 
-        done = color + self.colors.prog_done
-        todo = color + self.colors.prog_todo
+        done = color + self.colors.task_text_done
+        todo = color + self.colors.task_text_todo
         output.add(self.style.build_bar(title, q.get_percent() / 100, len(title), done, todo, round=False))
 
         if in_focus:
@@ -5361,8 +5257,8 @@ class TaskTree:
         else:
             output.add(" ")
 
-        done = color + self.colors.prog_done
-        todo = color + self.colors.prog_todo
+        done = color + self.colors.task_text_done
+        todo = color + self.colors.task_text_todo
 
         output.add(self.style.build_bar(title, cluster.get_percent() / 100, len(title), done, todo, round=False))
 
@@ -5781,7 +5677,7 @@ class Opener:
     def __init__(self, tree: TaskTree, fman: FloatingManager, geral: AppSettings, rep_data: RepData, rep_alias: str):
         self.tree = tree
         self.fman = fman
-        self.geral = geral
+        self.app = geral
         self.rep = rep_data
         self.rep_alias = rep_alias
 
@@ -5792,15 +5688,15 @@ class Opener:
     def get_task_readme_path(self) -> str:
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
-            rootdir = self.geral.get_rootdir()
+            rootdir = self.app.rootdir
             if rootdir != "":
-                path = os.path.join(self.geral.get_rootdir(), self.rep_alias, obj.key, "Readme.md")
+                path = os.path.join(self.app.rootdir, self.rep_alias, obj.key, "Readme.md")
                 if os.path.isfile(path):
                     return path
         return ""
 
     def open_files(self, files_to_open: List[str]):
-        cmd = self.geral.get_editor()
+        cmd = self.app.editor
         folder = os.path.dirname(os.path.abspath(files_to_open[0]));
         aviso = (Floating("v>")
                 .warning()
@@ -5927,7 +5823,7 @@ class CDiff:
         self.resumes: List[str] = []
 
         self.settings = Settings()
-        self.colors = self.settings.app.is_colored()
+        self.colors = self.settings.app.is_colored
         self.first_loop = True
         self.fman = FloatingManager()
         self.first_run = False
@@ -5949,7 +5845,7 @@ class CDiff:
         return self
 
     def save_settings(self):
-        self.settings.app.set_diff_mode("down" if self.param.is_up_down else "side")
+        self.settings.app.diff_mode = "down" if self.param.is_up_down else "side"
         self.settings.save_settings()
         return self
     
@@ -6087,14 +5983,14 @@ class CDiff:
         if self.locked_index:
             self.mode = Mode.finished
             unit = self.get_focused_unit()
-            unit.result = Execution.run_unit(solver, unit, self.settings.app.get_timeout())
+            unit.result = Execution.run_unit(solver, unit, self.settings.app.timeout)
             return
 
         if len(self.unit_list) > 0:
             index = len(self.results)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
-            unit.result = Execution.run_unit(solver, unit, self.settings.app.get_timeout())
+            unit.result = Execution.run_unit(solver, unit, self.settings.app.timeout)
             self.results.append((unit.result, index))
             success = [result for result, _ in self.results if result == ExecutionResult.SUCCESS]
             self.task.test_progress = (len(success) * 100) // len(self.wdir.get_unit_list())
@@ -6225,7 +6121,7 @@ class CDiff:
         if Flags.others.is_true():
             cmds.append(self.style.border_round("M", f"{DActions.rodar}[{DKeys.rodar}]"))
             # diff
-            text = f"VER━╾h[{DKeys.diff}]" if self.settings.app.get_diff_mode() == "side" else f"v╼━HOR[{DKeys.diff}]"
+            text = f"VER━╾h[{DKeys.diff}]" if self.settings.app.diff_mode == "side" else f"v╼━HOR[{DKeys.diff}]"
             cmds.append(self.style.border_round("M", text))
         
         cmds.append(self.style.border_round("C", f"{DActions.sair}[{DKeys.sair}]"))
@@ -6238,7 +6134,7 @@ class CDiff:
         if Flags.others.is_true():
             # travar
 
-            value = str(self.settings.app.get_timeout())
+            value = str(self.settings.app.timeout)
             if value == "0":
                 value = "∞"
             cmds.append(
@@ -6484,14 +6380,14 @@ class CDiff:
             )
 
     def change_limit(self):
-            valor = self.settings.app.get_timeout()
+            valor = self.settings.app.timeout
             if valor == 0:
                 valor = 1
             else:
                 valor *= 2
             if valor >= 5:
                 valor = 0
-            self.settings.app.set_timeout(valor)
+            self.settings.app.timeout = valor
             self.save_settings()
             nome = "∞" if valor == 0 else str(valor)
             self.fman.add_input(
@@ -7142,7 +7038,7 @@ class Gui:
         todo = self.pcolor.main_bar_todo + "/"
         total_bar = self.style.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Sentence().addf("/", "Skills"), "^", "{", "}")
-        frame_xp.set_footer(Sentence().add(" ").add(self.app.get_rootdir()).add(" "), "^")
+        frame_xp.set_footer(Sentence().add(" ").add(self.app.rootdir).add(" "), "^")
         frame_xp.draw()
 
         total, obt = self.game.get_skills_resume([self.game.quests[key] for key in self.game.available_quests])
@@ -7177,15 +7073,15 @@ class Gui:
             elements.append(self.style.get_flag_sentence(flag, pad))
 
 
-        colored = Flag().name("Colorido").char("C").values(["1" if self.app.is_colored() else "0"]).text("Ativa ou desativa as cores").bool()
+        colored = Flag().name("Colorido").char("C").values(["1" if self.app.is_colored else "0"]).text("Ativa ou desativa as cores").bool()
         elements.append(self.style.get_flag_sentence(colored, pad))
-        bordas = Flag().name("Bordas").char("B").values(["1" if self.app.has_borders() else "0"]).text("Ativa ou desativa as bordas").bool()
+        bordas = Flag().name("Bordas").char("B").values(["1" if self.app.borders else "0"]).text("Ativa ou desativa as bordas").bool()
         elements.append(self.style.get_flag_sentence(bordas, pad))
         grafo = Flag().name("Grafo").char("G").values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
         elements.append(self.style.get_flag_sentence(grafo, pad))
 
 
-        color = "W" if not self.app.is_colored() else "C"
+        color = "W" if not self.app.is_colored else "C"
 
         elements.append(self.style.border_round(color, "DirDestino [D]"))
         elements.append(self.style.border_round(color, "Linguagem  [L]"))
@@ -7205,8 +7101,8 @@ class Gui:
     def build_list_sentence(self, items: List[Sentence]) -> List[Sentence]:
         out: List[Sentence] = []
         for x in items:
-            color_ini = x.data[0].fmt if self.app.is_colored() else "W"
-            color_end = x.data[-1].fmt if self.app.is_colored() else "W"
+            color_ini = x.data[0].fmt if self.app.is_colored else "W"
+            color_end = x.data[-1].fmt if self.app.is_colored else "W"
             left = self.style.roundL(color_ini)
             right = self.style.roundR(color_end)
             middle = x.clone()
@@ -7221,7 +7117,7 @@ class Gui:
         array: List[Sentence] = []
         array += self.help_others_before
         array += self.help_fixed
-        if self.app.is_colored():
+        if self.app.is_colored:
             color = "G" if Flags.others.is_true() else "Y"
         else:
             color = "W" if Flags.others.is_true() else "K"
@@ -7423,19 +7319,19 @@ class PlayActions:
         self.gui = gui
 
     def gen_graph_path(self) -> str:
-        return os.path.join(self.app.get_rootdir(), self.rep_alias, "graph.png")
+        return os.path.join(self.app.rootdir, self.rep_alias, "graph.png")
 
 
     def graph_toggle(self):
         self.gui.gen_graph = not self.gui.gen_graph
         
     def set_rootdir(self, only_if_empty=True):
-        if only_if_empty and self.app.get_rootdir() != "":
+        if only_if_empty and self.app.rootdir != "":
             return
 
         def chama(value):
             if value == "yes":
-                self.app.set_rootdir(os.path.abspath(os.getcwd()))
+                self.app.rootdir = os.path.abspath(os.getcwd())
                 self.settings.save_settings()
                 self.fman.add_input(
                     Floating()
@@ -7510,8 +7406,7 @@ class PlayActions:
         )
 
     def check_root_and_lang(self):
-        if self.app.get_rootdir() == "":
-            # self.set_rootdir()
+        if self.app.rootdir == "":
             self.fman.add_input(
                 Floating()
                 .put_text("")
@@ -7586,7 +7481,7 @@ class PlayActions:
                                 )
 
     def down_task(self):
-        rootdir = self.app.get_rootdir()
+        rootdir = self.app.rootdir
         if rootdir == "":
             self.check_root_and_lang()
             return
@@ -7630,7 +7525,7 @@ class PlayActions:
                 )
     
     def select_task(self):
-        rootdir = self.app.get_rootdir()
+        rootdir = self.app.rootdir
         
         obj = self.tree.items[self.tree.index_selected].obj
 
@@ -7692,7 +7587,7 @@ class Play:
         self.exit = False
 
         if self.rep.get_lang() == "":
-            self.rep.set_lang(self.app.get_lang_def())
+            self.rep.set_lang(self.app.lang_default)
         self.flagsman = FlagsMan(self.rep.get_flags())
         
         self.game: Game = game
@@ -7917,14 +7812,14 @@ class MRep:
     def reset(_):
         sp = Settings().reset()
         print(sp.settings_file)
-        print(sp.app.get_rootdir())
+        print(sp.app.rootdir)
         sp.save_settings()
 
     @staticmethod
     def graph(args):
         settings = Settings()
         rep_source:RepSource = settings.get_rep_source(args.alias)
-        file = rep_source.get_file(os.path.join(settings.app.get_rootdir(), args.alias))
+        file = rep_source.get_file(os.path.join(settings.app.rootdir, args.alias))
         game = Game()
         game.parse_file(file)
         game.check_cycle()
@@ -7950,9 +7845,9 @@ class Main:
 
         # load default diff from settings if not specified
         if not args.side and not args.down:
-            geral = Settings().app
-            diff_mode = geral.get_diff_mode()
-            sidesize = int(geral.get_side_size())
+            app = Settings().app
+            diff_mode = app.diff_mode
+            sidesize = int(app.side_size_min)
             size_too_short = Report.get_terminal_size() < sidesize
             param.set_up_down(diff_mode == "down" or size_too_short)
         elif args.side:
@@ -7966,7 +7861,7 @@ class Main:
     def run(args):
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
-        param.set_up_down(Settings().app.get_diff_mode() == "down")
+        param.set_up_down(Settings().app.diff_mode == "down")
 
         if args.filter:
             param.set_filter(True)
@@ -7991,55 +7886,55 @@ class Main:
 
         if args.ascii:
             action = True
-            settings.app.set_is_ascii(True)
+            settings.app.is_ascii = True
             print("Encoding mode now is: ASCII")
         if args.unicode:
             action = True
-            settings.app.set_is_ascii(False)
+            settings.app.is_ascii = False
             print("Encoding mode now is: UNICODE")
         if args.mono:
             action = True
-            settings.app.set_is_colored(False)
+            settings.app.is_colored = False
             print("Color mode now is: MONOCHROMATIC")
         if args.color:
             action = True
-            settings.app.set_is_colored(True)
+            settings.app.is_colored = True
             print("Color mode now is: COLORED")
         if args.side:
             action = True
-            settings.app.set_diff_mode("side")
+            settings.app.diff_mode = "side"
             print("Diff mode now is: SIDE_BY_SIDE")
         if args.down:
             action = True
-            settings.app.set_diff_mode("down")
+            settings.app.diff_mode = "down"
             print("Diff mode now is: UP_DOWN")
         if args.lang:
             action = True
-            settings.app.set_lang_def(args.lang)
+            settings.app.lang_default = args.lang
             print("Default language extension now is:", args.lang)
         if args.ask:
             action = True
-            settings.app.set_lang_def("")
+            settings.app.lang_default = ""
             print("Language extension will be asked always.")
 
         if args.root:
             action = True
             path = os.path.abspath(args.root)
-            settings.app.set_rootdir(path)
+            settings.app.rootdir = path
             print("Root directory now is: " + path)
         
         if args.editor:
             action = True
-            settings.app.set_editor(args.editor)
+            settings.app.editor = args.editor
             print(f"Novo comando para abrir arquivos de código: {args.editor}")
 
         if not action:
             action = True
             print(settings.get_settings_file())
-            print("Diff mode: {}".format("DOWN" if settings.app.get_diff_mode() else "SIDE"))
-            print("Encoding mode: {}".format("ASCII" if settings.app.is_ascii() else "UNICODE"))
-            print("Color mode: {}".format("MONOCHROMATIC" if not settings.app.is_colored() else "COLORED"))
-            value = settings.app.get_lang_def()
+            print("Diff mode: {}".format("DOWN" if settings.app.diff_mode else "SIDE"))
+            print("Encoding mode: {}".format("ASCII" if settings.app.is_ascii else "UNICODE"))
+            print("Color mode: {}".format("MONOCHROMATIC" if not settings.app.is_colored else "COLORED"))
+            value = settings.app.lang_default
             print("Default language extension: {}".format("Always ask" if value == "" else value))
 
         settings.save_settings()
@@ -8049,7 +7944,7 @@ class Main:
         settings = Settings()
         settings.check_rootdir()
         if args.repo == "__ask":
-            last = settings.app.get_last_rep()
+            last = settings.app.last_rep
             if last != "" and last in settings.reps:
                 args.repo = last
             else:
@@ -8066,7 +7961,7 @@ class Main:
                     print("Repositorio não encontrado")
         
         print(f"Abrindo repositório de {args.repo}")
-        settings.app.set_last_rep(args.repo)
+        settings.app.last_rep = args.repo
 
         while True:
             rep_source: RepSource = settings.get_rep_source(args.repo)
@@ -8074,7 +7969,7 @@ class Main:
 
             local = settings.app
             game = Game()
-            file = rep_source.get_file(os.path.join(local.get_rootdir(), args.repo))
+            file = rep_source.get_file(os.path.join(local.rootdir, args.repo))
             game.parse_file(file)
 
             # passing a lambda function to the play class to save the settings
@@ -8239,13 +8134,13 @@ def exec(parser: argparse.ArgumentParser, args):
     if args.c:
         settings.set_settings_file(args.c)
     settings.load_settings()
-    if args.a or settings.app.is_ascii():
+    if args.a or settings.app.is_ascii:
         symbols.set_ascii()
     else:
         symbols.set_unicode()
     if args.m:
         TermColor.enabled = False
-    elif settings.app.is_colored():
+    elif settings.app.is_colored:
         TermColor.enabled = True
         symbols.set_colors()
 

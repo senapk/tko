@@ -35,7 +35,7 @@ class Play:
         self.exit = False
 
         if self.rep.get_lang() == "":
-            self.rep.set_lang(self.app.get_lang_def())
+            self.rep.set_lang(self.app.lang_default)
         self.flagsman = FlagsMan(self.rep.get_flags())
         
         self.game: Game = game

@@ -162,7 +162,7 @@ public class draft {
         Down.fnprint = fnprint
         
         settings = Settings()
-        rep_dir = os.path.join(settings.app.get_rootdir(), course)
+        rep_dir = os.path.join(settings.app.rootdir, course)
         rep_source = settings.get_rep_source(course)
         rep_data = settings.get_rep_data(course)
         if game is None:
@@ -199,7 +199,7 @@ public class draft {
 
         language_def = rep_data.get_lang()
         if language_def == "":
-            language_def = Settings().app.get_lang_def()
+            language_def = Settings().app.lang_default
         ask_ext = False
         if language is None:
             if language_def != "":

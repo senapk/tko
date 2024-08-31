@@ -84,7 +84,7 @@ class CDiff:
         self.resumes: List[str] = []
 
         self.settings = Settings()
-        self.colors = self.settings.app.is_colored()
+        self.colors = self.settings.app.is_colored
         self.first_loop = True
         self.fman = FloatingManager()
         self.first_run = False
@@ -106,7 +106,7 @@ class CDiff:
         return self
 
     def save_settings(self):
-        self.settings.app.set_diff_mode("down" if self.param.is_up_down else "side")
+        self.settings.app.diff_mode = "down" if self.param.is_up_down else "side"
         self.settings.save_settings()
         return self
     
@@ -244,14 +244,14 @@ class CDiff:
         if self.locked_index:
             self.mode = Mode.finished
             unit = self.get_focused_unit()
-            unit.result = Execution.run_unit(solver, unit, self.settings.app.get_timeout())
+            unit.result = Execution.run_unit(solver, unit, self.settings.app.timeout)
             return
 
         if len(self.unit_list) > 0:
             index = len(self.results)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
-            unit.result = Execution.run_unit(solver, unit, self.settings.app.get_timeout())
+            unit.result = Execution.run_unit(solver, unit, self.settings.app.timeout)
             self.results.append((unit.result, index))
             success = [result for result, _ in self.results if result == ExecutionResult.SUCCESS]
             self.task.test_progress = (len(success) * 100) // len(self.wdir.get_unit_list())
@@ -382,7 +382,7 @@ class CDiff:
         if Flags.others.is_true():
             cmds.append(self.style.border_round("M", f"{DActions.rodar}[{DKeys.rodar}]"))
             # diff
-            text = f"VER━╾h[{DKeys.diff}]" if self.settings.app.get_diff_mode() == "side" else f"v╼━HOR[{DKeys.diff}]"
+            text = f"VER━╾h[{DKeys.diff}]" if self.settings.app.diff_mode == "side" else f"v╼━HOR[{DKeys.diff}]"
             cmds.append(self.style.border_round("M", text))
         
         cmds.append(self.style.border_round("C", f"{DActions.sair}[{DKeys.sair}]"))
@@ -395,7 +395,7 @@ class CDiff:
         if Flags.others.is_true():
             # travar
 
-            value = str(self.settings.app.get_timeout())
+            value = str(self.settings.app.timeout)
             if value == "0":
                 value = "∞"
             cmds.append(
@@ -641,14 +641,14 @@ class CDiff:
             )
 
     def change_limit(self):
-            valor = self.settings.app.get_timeout()
+            valor = self.settings.app.timeout
             if valor == 0:
                 valor = 1
             else:
                 valor *= 2
             if valor >= 5:
                 valor = 0
-            self.settings.app.set_timeout(valor)
+            self.settings.app.timeout = valor
             self.save_settings()
             nome = "∞" if valor == 0 else str(valor)
             self.fman.add_input(

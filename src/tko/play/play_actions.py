@@ -40,19 +40,19 @@ class PlayActions:
         self.gui = gui
 
     def gen_graph_path(self) -> str:
-        return os.path.join(self.app.get_rootdir(), self.rep_alias, "graph.png")
+        return os.path.join(self.app.rootdir, self.rep_alias, "graph.png")
 
 
     def graph_toggle(self):
         self.gui.gen_graph = not self.gui.gen_graph
         
     def set_rootdir(self, only_if_empty=True):
-        if only_if_empty and self.app.get_rootdir() != "":
+        if only_if_empty and self.app.rootdir != "":
             return
 
         def chama(value):
             if value == "yes":
-                self.app.set_rootdir(os.path.abspath(os.getcwd()))
+                self.app.rootdir = os.path.abspath(os.getcwd())
                 self.settings.save_settings()
                 self.fman.add_input(
                     Floating()
@@ -127,8 +127,7 @@ class PlayActions:
         )
 
     def check_root_and_lang(self):
-        if self.app.get_rootdir() == "":
-            # self.set_rootdir()
+        if self.app.rootdir == "":
             self.fman.add_input(
                 Floating()
                 .put_text("")
@@ -203,7 +202,7 @@ class PlayActions:
                                 )
 
     def down_task(self):
-        rootdir = self.app.get_rootdir()
+        rootdir = self.app.rootdir
         if rootdir == "":
             self.check_root_and_lang()
             return
@@ -247,7 +246,7 @@ class PlayActions:
                 )
     
     def select_task(self):
-        rootdir = self.app.get_rootdir()
+        rootdir = self.app.rootdir
         
         obj = self.tree.items[self.tree.index_selected].obj
 

@@ -55,7 +55,7 @@ class Settings:
         return self
 
     def __get_rep_file_path(self, course: str) -> str:
-        return os.path.join(self.app.get_rootdir(), course, ".rep.json")   
+        return os.path.join(self.app.rootdir, course, ".rep.json")   
 
     def get_rep_source(self, course: str) -> RepSource:
         if course in self.reps:
@@ -94,7 +94,7 @@ class Settings:
     #     return self
 
     def check_rootdir(self) -> None:
-        if self.app.get_rootdir() != "":
+        if self.app.rootdir != "":
             return
         term_print(Sentence().add("Pasta padrão para download de arquivos ").addf("r", "precisa").add(" ser definida."))
         term_print(Sentence().add("Escolha ").addf("r", "uma").add(" para continuar:"))
@@ -124,7 +124,7 @@ class Settings:
         print("Pasta padrão para download de arquivos foi definida em: " + home_qxcode)
         print("Você pode alterar, navegando até a a pasta desejada e executando o comando")
         print("tko config --root .")
-        self.app.set_rootdir(home_qxcode)
+        self.app.rootdir = home_qxcode
         self.save_settings();
     
     def save_settings(self):

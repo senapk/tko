@@ -163,7 +163,7 @@ class Gui:
         todo = self.pcolor.main_bar_todo + "/"
         total_bar = self.style.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Sentence().addf("/", "Skills"), "^", "{", "}")
-        frame_xp.set_footer(Sentence().add(" ").add(self.app.get_rootdir()).add(" "), "^")
+        frame_xp.set_footer(Sentence().add(" ").add(self.app.rootdir).add(" "), "^")
         frame_xp.draw()
 
         total, obt = self.game.get_skills_resume([self.game.quests[key] for key in self.game.available_quests])
@@ -198,15 +198,15 @@ class Gui:
             elements.append(self.style.get_flag_sentence(flag, pad))
 
 
-        colored = Flag().name("Colorido").char("C").values(["1" if self.app.is_colored() else "0"]).text("Ativa ou desativa as cores").bool()
+        colored = Flag().name("Colorido").char("C").values(["1" if self.app.is_colored else "0"]).text("Ativa ou desativa as cores").bool()
         elements.append(self.style.get_flag_sentence(colored, pad))
-        bordas = Flag().name("Bordas").char("B").values(["1" if self.app.has_borders() else "0"]).text("Ativa ou desativa as bordas").bool()
+        bordas = Flag().name("Bordas").char("B").values(["1" if self.app.borders else "0"]).text("Ativa ou desativa as bordas").bool()
         elements.append(self.style.get_flag_sentence(bordas, pad))
         grafo = Flag().name("Grafo").char("G").values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
         elements.append(self.style.get_flag_sentence(grafo, pad))
 
 
-        color = "W" if not self.app.is_colored() else "C"
+        color = "W" if not self.app.is_colored else "C"
 
         elements.append(self.style.border_round(color, "DirDestino [D]"))
         elements.append(self.style.border_round(color, "Linguagem  [L]"))
@@ -226,8 +226,8 @@ class Gui:
     def build_list_sentence(self, items: List[Sentence]) -> List[Sentence]:
         out: List[Sentence] = []
         for x in items:
-            color_ini = x.data[0].fmt if self.app.is_colored() else "W"
-            color_end = x.data[-1].fmt if self.app.is_colored() else "W"
+            color_ini = x.data[0].fmt if self.app.is_colored else "W"
+            color_end = x.data[-1].fmt if self.app.is_colored else "W"
             left = self.style.roundL(color_ini)
             right = self.style.roundR(color_end)
             middle = x.clone()
@@ -242,7 +242,7 @@ class Gui:
         array: List[Sentence] = []
         array += self.help_others_before
         array += self.help_fixed
-        if self.app.is_colored():
+        if self.app.is_colored:
             color = "G" if Flags.others.is_true() else "Y"
         else:
             color = "W" if Flags.others.is_true() else "K"

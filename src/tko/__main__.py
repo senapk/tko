@@ -59,14 +59,14 @@ class MRep:
     def reset(_):
         sp = Settings().reset()
         print(sp.settings_file)
-        print(sp.app.get_rootdir())
+        print(sp.app.rootdir)
         sp.save_settings()
 
     @staticmethod
     def graph(args):
         settings = Settings()
         rep_source:RepSource = settings.get_rep_source(args.alias)
-        file = rep_source.get_file(os.path.join(settings.app.get_rootdir(), args.alias))
+        file = rep_source.get_file(os.path.join(settings.app.rootdir, args.alias))
         game = Game()
         game.parse_file(file)
         game.check_cycle()
@@ -92,9 +92,9 @@ class Main:
 
         # load default diff from settings if not specified
         if not args.side and not args.down:
-            geral = Settings().app
-            diff_mode = geral.get_diff_mode()
-            sidesize = int(geral.get_side_size())
+            app = Settings().app
+            diff_mode = app.diff_mode
+            sidesize = int(app.side_size_min)
             size_too_short = Report.get_terminal_size() < sidesize
             param.set_up_down(diff_mode == "down" or size_too_short)
         elif args.side:
@@ -108,7 +108,7 @@ class Main:
     def run(args):
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
-        param.set_up_down(Settings().app.get_diff_mode() == "down")
+        param.set_up_down(Settings().app.diff_mode == "down")
 
         if args.filter:
             param.set_filter(True)
@@ -133,55 +133,55 @@ class Main:
 
         if args.ascii:
             action = True
-            settings.app.set_is_ascii(True)
+            settings.app.is_ascii = True
             print("Encoding mode now is: ASCII")
         if args.unicode:
             action = True
-            settings.app.set_is_ascii(False)
+            settings.app.is_ascii = False
             print("Encoding mode now is: UNICODE")
         if args.mono:
             action = True
-            settings.app.set_is_colored(False)
+            settings.app.is_colored = False
             print("Color mode now is: MONOCHROMATIC")
         if args.color:
             action = True
-            settings.app.set_is_colored(True)
+            settings.app.is_colored = True
             print("Color mode now is: COLORED")
         if args.side:
             action = True
-            settings.app.set_diff_mode("side")
+            settings.app.diff_mode = "side"
             print("Diff mode now is: SIDE_BY_SIDE")
         if args.down:
             action = True
-            settings.app.set_diff_mode("down")
+            settings.app.diff_mode = "down"
             print("Diff mode now is: UP_DOWN")
         if args.lang:
             action = True
-            settings.app.set_lang_def(args.lang)
+            settings.app.lang_default = args.lang
             print("Default language extension now is:", args.lang)
         if args.ask:
             action = True
-            settings.app.set_lang_def("")
+            settings.app.lang_default = ""
             print("Language extension will be asked always.")
 
         if args.root:
             action = True
             path = os.path.abspath(args.root)
-            settings.app.set_rootdir(path)
+            settings.app.rootdir = path
             print("Root directory now is: " + path)
         
         if args.editor:
             action = True
-            settings.app.set_editor(args.editor)
+            settings.app.editor = args.editor
             print(f"Novo comando para abrir arquivos de código: {args.editor}")
 
         if not action:
             action = True
             print(settings.get_settings_file())
-            print("Diff mode: {}".format("DOWN" if settings.app.get_diff_mode() else "SIDE"))
-            print("Encoding mode: {}".format("ASCII" if settings.app.is_ascii() else "UNICODE"))
-            print("Color mode: {}".format("MONOCHROMATIC" if not settings.app.is_colored() else "COLORED"))
-            value = settings.app.get_lang_def()
+            print("Diff mode: {}".format("DOWN" if settings.app.diff_mode else "SIDE"))
+            print("Encoding mode: {}".format("ASCII" if settings.app.is_ascii else "UNICODE"))
+            print("Color mode: {}".format("MONOCHROMATIC" if not settings.app.is_colored else "COLORED"))
+            value = settings.app.lang_default
             print("Default language extension: {}".format("Always ask" if value == "" else value))
 
         settings.save_settings()
@@ -191,7 +191,7 @@ class Main:
         settings = Settings()
         settings.check_rootdir()
         if args.repo == "__ask":
-            last = settings.app.get_last_rep()
+            last = settings.app.last_rep
             if last != "" and last in settings.reps:
                 args.repo = last
             else:
@@ -208,7 +208,7 @@ class Main:
                     print("Repositorio não encontrado")
         
         print(f"Abrindo repositório de {args.repo}")
-        settings.app.set_last_rep(args.repo)
+        settings.app.last_rep = args.repo
 
         while True:
             rep_source: RepSource = settings.get_rep_source(args.repo)
@@ -216,7 +216,7 @@ class Main:
 
             local = settings.app
             game = Game()
-            file = rep_source.get_file(os.path.join(local.get_rootdir(), args.repo))
+            file = rep_source.get_file(os.path.join(local.rootdir, args.repo))
             game.parse_file(file)
 
             # passing a lambda function to the play class to save the settings
@@ -381,13 +381,13 @@ def exec(parser: argparse.ArgumentParser, args):
     if args.c:
         settings.set_settings_file(args.c)
     settings.load_settings()
-    if args.a or settings.app.is_ascii():
+    if args.a or settings.app.is_ascii:
         symbols.set_ascii()
     else:
         symbols.set_unicode()
     if args.m:
         TermColor.enabled = False
-    elif settings.app.is_colored():
+    elif settings.app.is_colored:
         TermColor.enabled = True
         symbols.set_colors()
 

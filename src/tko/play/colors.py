@@ -1,8 +1,8 @@
 class Colors:
     def __init__(self):
         self.focused_item = "B"
-        self.prog_done = "g"
-        self.prog_todo = "y"
+        self.task_text_done = "g"
+        self.task_text_todo = "y"
         self.button_flag_on = "G"
         self.button_flag_off = "Y"
         self.progress_skill_done = "C"
