@@ -5,7 +5,7 @@ from ..game.task import Task
 from ..game.graph import Graph
 from .opener import Opener
 from ..run.basic import Success
-from typing import List, Any, Dict, Callable, Tuple
+from typing import List
 from ..settings.settings import Settings
 
 from ..settings.rep_settings import languages_avaliable, RepData
@@ -36,6 +36,18 @@ class PlayActions:
         self.tree = tree
         self.game = game
         self.opener = opener
+        self.gen_graph: bool = False
+
+    def gen_graph_path(self) -> str:
+        return os.path.join(self.app.get_rootdir(), self.rep_alias, "graph.png")
+
+
+    def graph_toggle(self):
+        self.gen_graph = not self.gen_graph
+        if self.gen_graph:
+            path = self.gen_graph_path()
+            # self.fman.add_input(Floating().put_text(f"\nGrafo gerado em\n {path} \n"))
+            self.opener.open_files([path])
         
     def set_rootdir(self, only_if_empty=True):
         if only_if_empty and self.app.get_rootdir() != "":
@@ -177,27 +189,8 @@ class PlayActions:
                 .error()
             )
 
-    def generate_graph(self, first_loop: bool, graph_ext: str):
-        if not first_loop:
-            return
-        if graph_ext == "":
-            return
-        reachable: List[str] = self.game.available_quests
-        counts = {}
-        for q in self.game.quests.values():
-            done = len([t for t in q.get_tasks() if t.is_complete()])
-            init = len([t for t in q.get_tasks() if t.in_progress()])
-            todo = len([t for t in q.get_tasks() if t.not_started()])
-            counts[q.key] = f"{done} / {done + init + todo}\n{q.get_percent()}%"
-
-        # mark_opt = Flags.dots.is_true()
-        Graph(self.game).set_opt(False).set_reachable(reachable).set_counts(
-            counts
-        ).set_graph_ext(graph_ext).generate()
-        lines, _ = Fmt.get_size()
-        if first_loop:
-            text = Sentence().add(f"Grafo gerado em graph{graph_ext}")
-            Fmt.write(lines - 1, 0, text)
+    def generate_graph(self):
+        Graph(self.game).set_path(self.gen_graph_path()).set_opt(False).generate()
 
     def down_task(self):
         rootdir = self.app.get_rootdir()

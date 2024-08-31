@@ -65,6 +65,7 @@ class Key:
     cores = "C"
     bordas = "B"
     pesquisar = "/"
+    graph = "k"
 
 
 class Gui:

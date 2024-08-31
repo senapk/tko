@@ -3,6 +3,7 @@
 - 0.23.3
   - refactor: play_actions
   - refactor: search
+  - add: graph
 - 0.23.2
   - add: update border symbol for non nerdfonts
   - fix: entering cdiff after quit

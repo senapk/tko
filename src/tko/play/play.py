@@ -149,6 +149,7 @@ class Play:
         add_str(Key.edit, lambda: self.opener.open_code(open_dir=True))
         add_str(Key.cores, self.app.toggle_color)
         add_str(Key.bordas, self.app.toggle_nerdfonts)
+        add_str(Key.graph, self.actions.graph_toggle)
 
         for value in range(1, 10):
             add_str(str(value), self.GradeFunctor(int(value), self.tree.set_grade))
@@ -190,7 +191,8 @@ class Play:
         while True:
             self.tree.update_tree(admin_mode=Flags.admin.is_true() or self.search.search_mode)
             self.fman.draw_warnings()
-            self.actions.generate_graph(self.first_loop, self.graph_ext)
+            if self.actions.gen_graph:
+                self.actions.generate_graph()
             calls = self.make_callback()
             self.gui.show_items()
 

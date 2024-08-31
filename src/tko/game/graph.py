@@ -2,6 +2,7 @@ from typing import List, Dict, Tuple, Optional
 from .quest import Quest
 from .game import Game
 import subprocess
+import os
 
 
 class Graph:
@@ -58,26 +59,28 @@ class Graph:
 
     def __init__(self, game: Game):
         self.game = game
-        self.reachable: Optional[List[str]] = None
-        self.counts: Optional[Dict[str, str]] = None
-        self.graph_ext = ".png"
-        self.output = "graph"
+        self.path = "graph.png"
         self.opt = False
+        self.reachable = [q.key for q in self.game.quests.values() if q.is_reachable()]
+        # self.reachable = [key for key in self.game.quests.keys()]
+
+        self.counts: Dict[str, str] = {}
+        for q in self.game.quests.values():
+            done = len([t for t in q.get_tasks() if t.is_complete()])
+            init = len([t for t in q.get_tasks() if t.in_progress()])
+            todo = len([t for t in q.get_tasks() if t.not_started()])
+            self.counts[q.key] = f"{done} / {done + init + todo}"
+
+    def set_path(self, path: str):
+        self.path = path
+        return self
 
     def set_opt(self, opt: bool):
         self.opt = opt
         return self
 
-    def set_reachable(self, reachable: List[str]):
-        self.reachable = reachable
-        return self
-
     def set_counts(self, counts: Dict[str, str]):
         self.counts = counts
-        return self
-
-    def set_graph_ext(self, graph_ext: str):
-        self.graph_ext = graph_ext
         return self
     
     def set_output(self, output: str):
@@ -103,7 +106,7 @@ class Graph:
     def generate(self):
         saida = ["digraph diag {", '  node [penwidth=1, style="rounded,filled", shape=box]']
 
-        targets = [q for q in self.game.quests.values() if self.is_reachable_or_next(q)]
+        targets = [q for q in self.game.quests.values()]
         for q in targets:
             token = "->"
             if len(q.requires_ptr) > 0:
@@ -118,7 +121,8 @@ class Graph:
                 saida.append(f"{v} {token} {self.info(q)}")
 
         for i, c in enumerate(self.game.clusters.values()):
-            cluster_targets = [q for q in c.quests if self.is_reachable_or_next(q)]
+            # cluster_targets = [q for q in c.quests if self.is_reachable_or_next(q)]
+            cluster_targets = [q for q in c.quests]
             for q in cluster_targets:
                 if self.opt:
                     if q.opt:
@@ -158,13 +162,13 @@ class Graph:
         # saida.append("@enduml")
         saida.append("")
 
-        dot_file = self.output + ".dot"
-        out_file = self.output + self.graph_ext
+        dot_file = os.path.join(os.path.dirname(self.path) + "graph.dot")
+        out_file = self.path
         open(dot_file, "w").write("\n".join(saida))
 
-        if self.graph_ext == ".png":
-            subprocess.run(["dot", "-Tpng", dot_file, "-o", out_file])
-        elif self.graph_ext == ".svg":
-            subprocess.run(["dot", "-Tsvg", dot_file, "-o", out_file])
-        else:
-            print("Formato de imagem não suportado")
+        # if self.graph_ext == ".png":
+        subprocess.run(["dot", "-Tpng", dot_file, "-o", out_file])
+        # elif self.graph_ext == ".svg":
+        #     subprocess.run(["dot", "-Tsvg", dot_file, "-o", out_file])
+        # else:
+        #     print("Formato de imagem não suportado")

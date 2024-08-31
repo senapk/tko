@@ -32,11 +32,25 @@ class Opener:
                     return path
         return ""
 
+    def open_files(self, files_to_open: List[str]):
+        cmd = self.geral.get_editor()
+        folder = os.path.dirname(os.path.abspath(files_to_open[0]));
+        aviso = (Floating("v>")
+                .warning()
+                .put_sentence(Sentence().add("Pasta: ").addf("g", folder).add(" "))
+                .put_text("Abrindo arquivos com o comando")
+                )
+        files = [os.path.basename(path) for path in files_to_open]
+        aviso.put_sentence(Sentence().addf("g", f"{cmd}").add(" ").addf("g", " ".join(files)).add(" "))
+        self.fman.add_input(aviso)
+        fullcmd = "{} {}".format(cmd, " ".join(files_to_open))
+        outfile = tempfile.NamedTemporaryFile(delete=False)
+        subprocess.Popen(fullcmd, stdout=outfile, stderr=outfile, shell=True)
+
     def open_code(self, open_drafts: bool=False, open_readme: bool=False, open_dir: bool = False, open_cases: bool = False):
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
             path = self.get_task_readme_path()
-            cmd = self.geral.get_editor()
             # code, _, _ = Runner().subprocess_run("whereis {}".format(cmd))
             if not os.path.isfile(path):
                 if open_readme:
@@ -53,21 +67,9 @@ class Opener:
                     )
                 return
             if open_dir:
-                # code, out, err = Runner.subprocess_run(f"{cmd} -h")
-                # if ("Replit" in out) or ("replit" in err):
                 open_cases = True
                 open_readme = True
                 open_drafts = True
-                # else:
-                #     outfile = tempfile.NamedTemporaryFile(delete=False)
-                #     self.fman.add_input(
-                #         Floating("v>")
-                #             .warning()
-                #             .put_text("Abrindo arquivos do problema com o comando")
-                #             .put_sentence(Sentence().addf("g", f"  {cmd}"))
-                #     )
-                #     subprocess.Popen(f"{cmd} {os.path.dirname(path)}", stdout=outfile, shell=True)
-                #     #code, out, err = Runner.subprocess_run(f"{cmd} {os.path.dirname(path)}")
                 
             files_to_open: List[str] = []
             if open_readme:
@@ -98,16 +100,4 @@ class Opener:
                 for f in drafts:
                     files_to_open.append(f)
             if len(files_to_open) != 0:
-                # print(" ".join(files_to_open))
-                # Runner.subprocess_run("{} {}".format(cmd, " ".join(files_to_open)))
-                aviso = (Floating("v>")
-                        .warning()
-                        .put_text("Abrindo arquivos do problema com o comando")
-                        .put_sentence(Sentence().addf("g", f"{cmd}"))
-                        )
-                files = [os.path.basename(path) for path in files_to_open]
-                aviso.put_sentence(Sentence().addf("g", " ".join(files)))
-                self.fman.add_input(aviso)
-                fullcmd = "{} {}".format(cmd, " ".join(files_to_open))
-                outfile = tempfile.NamedTemporaryFile(delete=False)
-                subprocess.Popen(fullcmd, stdout=outfile, stderr=outfile, shell=True)
+                self.open_files(files_to_open)

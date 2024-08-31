@@ -1,5 +1,6 @@
 import unittest
 from tko.play.style import Style
+from tko.settings.settings import Settings
 
 class Test:    
     def test_convert(self):
@@ -33,18 +34,21 @@ class Test:
         assert fmt == "ttttffff"
 
     def test_convert6(self):
+        Settings().app.set_nerdfonts(True)
         res = Style.build_bar("abcdefghij", 0.5, 10, "G", "R", round=True)
         val, fmt = res.resume_val_fmt()
         assert val == "abcdefgh"
         assert fmt == "gGGGGRRRRr"
 
     def test_convert7(self):
+        Settings().app.set_nerdfonts(True)
         res = Style.build_bar("abcdefghij", 0.5, 11, "G", "R", round=True)
         val, fmt = res.resume_val_fmt()
         assert val == "abcdefghi"
         assert fmt == "gGGGGRRRRRr"
 
     def test_convert8(self):
+        Settings().app.set_nerdfonts(True)
         res = Style.build_bar("abcdefghij", 0, 11, "G", "R", round=True)
         val, fmt = res.resume_val_fmt()
         assert val == "abcdefghi"

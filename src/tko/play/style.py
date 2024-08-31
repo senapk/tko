@@ -60,9 +60,7 @@ class Style:
     @staticmethod
     def flag_off():
         return "W" if not Style.has_colors() else "Y"
-    # @staticmethod
-    # def cmds():
-    #     return "W" if Flags.mono.is_true() else "B"
+
     @staticmethod
     def skill_done():
         return "kW" if not Style.has_colors() else "C"

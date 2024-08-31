@@ -24,7 +24,7 @@ import math
 import configparser
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.23.2"
+__version__ = "0.23.3"
 
 
 class AppSettings:
@@ -3079,9 +3079,7 @@ class Style:
     @staticmethod
     def flag_off():
         return "W" if not Style.has_colors() else "Y"
-    # @staticmethod
-    # def cmds():
-    #     return "W" if Flags.mono.is_true() else "B"
+
     @staticmethod
     def skill_done():
         return "kW" if not Style.has_colors() else "C"
@@ -5813,11 +5811,25 @@ class Opener:
                     return path
         return ""
 
+    def open_files(self, files_to_open: List[str]):
+        cmd = self.geral.get_editor()
+        folder = os.path.dirname(os.path.abspath(files_to_open[0]));
+        aviso = (Floating("v>")
+                .warning()
+                .put_sentence(Sentence().add("Pasta: ").addf("g", folder).add(" "))
+                .put_text("Abrindo arquivos com o comando")
+                )
+        files = [os.path.basename(path) for path in files_to_open]
+        aviso.put_sentence(Sentence().addf("g", f"{cmd}").add(" ").addf("g", " ".join(files)).add(" "))
+        self.fman.add_input(aviso)
+        fullcmd = "{} {}".format(cmd, " ".join(files_to_open))
+        outfile = tempfile.NamedTemporaryFile(delete=False)
+        subprocess.Popen(fullcmd, stdout=outfile, stderr=outfile, shell=True)
+
     def open_code(self, open_drafts: bool=False, open_readme: bool=False, open_dir: bool = False, open_cases: bool = False):
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
             path = self.get_task_readme_path()
-            cmd = self.geral.get_editor()
             # code, _, _ = Runner().subprocess_run("whereis {}".format(cmd))
             if not os.path.isfile(path):
                 if open_readme:
@@ -5834,21 +5846,9 @@ class Opener:
                     )
                 return
             if open_dir:
-                # code, out, err = Runner.subprocess_run(f"{cmd} -h")
-                # if ("Replit" in out) or ("replit" in err):
                 open_cases = True
                 open_readme = True
                 open_drafts = True
-                # else:
-                #     outfile = tempfile.NamedTemporaryFile(delete=False)
-                #     self.fman.add_input(
-                #         Floating("v>")
-                #             .warning()
-                #             .put_text("Abrindo arquivos do problema com o comando")
-                #             .put_sentence(Sentence().addf("g", f"  {cmd}"))
-                #     )
-                #     subprocess.Popen(f"{cmd} {os.path.dirname(path)}", stdout=outfile, shell=True)
-                #     #code, out, err = Runner.subprocess_run(f"{cmd} {os.path.dirname(path)}")
                 
             files_to_open: List[str] = []
             if open_readme:
@@ -5879,19 +5879,7 @@ class Opener:
                 for f in drafts:
                     files_to_open.append(f)
             if len(files_to_open) != 0:
-                # print(" ".join(files_to_open))
-                # Runner.subprocess_run("{} {}".format(cmd, " ".join(files_to_open)))
-                aviso = (Floating("v>")
-                        .warning()
-                        .put_text("Abrindo arquivos do problema com o comando")
-                        .put_sentence(Sentence().addf("g", f"{cmd}"))
-                        )
-                files = [os.path.basename(path) for path in files_to_open]
-                aviso.put_sentence(Sentence().addf("g", " ".join(files)))
-                self.fman.add_input(aviso)
-                fullcmd = "{} {}".format(cmd, " ".join(files_to_open))
-                outfile = tempfile.NamedTemporaryFile(delete=False)
-                subprocess.Popen(fullcmd, stdout=outfile, stderr=outfile, shell=True)
+                self.open_files(files_to_open)
 
 
 class Mode(enum.Enum):
@@ -6862,26 +6850,28 @@ class Graph:
 
     def __init__(self, game: Game):
         self.game = game
-        self.reachable: Optional[List[str]] = None
-        self.counts: Optional[Dict[str, str]] = None
-        self.graph_ext = ".png"
-        self.output = "graph"
+        self.path = "graph.png"
         self.opt = False
+        self.reachable = [q.key for q in self.game.quests.values() if q.is_reachable()]
+        # self.reachable = [key for key in self.game.quests.keys()]
+
+        self.counts: Dict[str, str] = {}
+        for q in self.game.quests.values():
+            done = len([t for t in q.get_tasks() if t.is_complete()])
+            init = len([t for t in q.get_tasks() if t.in_progress()])
+            todo = len([t for t in q.get_tasks() if t.not_started()])
+            self.counts[q.key] = f"{done} / {done + init + todo}"
+
+    def set_path(self, path: str):
+        self.path = path
+        return self
 
     def set_opt(self, opt: bool):
         self.opt = opt
         return self
 
-    def set_reachable(self, reachable: List[str]):
-        self.reachable = reachable
-        return self
-
     def set_counts(self, counts: Dict[str, str]):
         self.counts = counts
-        return self
-
-    def set_graph_ext(self, graph_ext: str):
-        self.graph_ext = graph_ext
         return self
     
     def set_output(self, output: str):
@@ -6907,7 +6897,7 @@ class Graph:
     def generate(self):
         saida = ["digraph diag {", '  node [penwidth=1, style="rounded,filled", shape=box]']
 
-        targets = [q for q in self.game.quests.values() if self.is_reachable_or_next(q)]
+        targets = [q for q in self.game.quests.values()]
         for q in targets:
             token = "->"
             if len(q.requires_ptr) > 0:
@@ -6922,7 +6912,8 @@ class Graph:
                 saida.append(f"{v} {token} {self.info(q)}")
 
         for i, c in enumerate(self.game.clusters.values()):
-            cluster_targets = [q for q in c.quests if self.is_reachable_or_next(q)]
+            # cluster_targets = [q for q in c.quests if self.is_reachable_or_next(q)]
+            cluster_targets = [q for q in c.quests]
             for q in cluster_targets:
                 if self.opt:
                     if q.opt:
@@ -6962,16 +6953,16 @@ class Graph:
         # saida.append("@enduml")
         saida.append("")
 
-        dot_file = self.output + ".dot"
-        out_file = self.output + self.graph_ext
+        dot_file = os.path.join(os.path.dirname(self.path) + "graph.dot")
+        out_file = self.path
         open(dot_file, "w").write("\n".join(saida))
 
-        if self.graph_ext == ".png":
-            subprocess.run(["dot", "-Tpng", dot_file, "-o", out_file])
-        elif self.graph_ext == ".svg":
-            subprocess.run(["dot", "-Tsvg", dot_file, "-o", out_file])
-        else:
-            print("Formato de imagem não suportado")
+        # if self.graph_ext == ".png":
+        subprocess.run(["dot", "-Tpng", dot_file, "-o", out_file])
+        # elif self.graph_ext == ".svg":
+        #     subprocess.run(["dot", "-Tsvg", dot_file, "-o", out_file])
+        # else:
+        #     print("Formato de imagem não suportado")
 
 
 class XP:
@@ -7065,6 +7056,7 @@ class Key:
     cores = "C"
     bordas = "B"
     pesquisar = "/"
+    graph = "k"
 
 
 class Gui:
@@ -7431,6 +7423,18 @@ class PlayActions:
         self.tree = tree
         self.game = game
         self.opener = opener
+        self.gen_graph: bool = False
+
+    def gen_graph_path(self) -> str:
+        return os.path.join(self.app.get_rootdir(), self.rep_alias, "graph.png")
+
+
+    def graph_toggle(self):
+        self.gen_graph = not self.gen_graph
+        if self.gen_graph:
+            path = self.gen_graph_path()
+            # self.fman.add_input(Floating().put_text(f"\nGrafo gerado em\n {path} \n"))
+            self.opener.open_files([path])
         
     def set_rootdir(self, only_if_empty=True):
         if only_if_empty and self.app.get_rootdir() != "":
@@ -7572,27 +7576,8 @@ class PlayActions:
                 .error()
             )
 
-    def generate_graph(self, first_loop: bool, graph_ext: str):
-        if not first_loop:
-            return
-        if graph_ext == "":
-            return
-        reachable: List[str] = self.game.available_quests
-        counts = {}
-        for q in self.game.quests.values():
-            done = len([t for t in q.get_tasks() if t.is_complete()])
-            init = len([t for t in q.get_tasks() if t.in_progress()])
-            todo = len([t for t in q.get_tasks() if t.not_started()])
-            counts[q.key] = f"{done} / {done + init + todo}\n{q.get_percent()}%"
-
-        # mark_opt = Flags.dots.is_true()
-        Graph(self.game).set_opt(False).set_reachable(reachable).set_counts(
-            counts
-        ).set_graph_ext(graph_ext).generate()
-        lines, _ = Fmt.get_size()
-        if first_loop:
-            text = Sentence().add(f"Grafo gerado em graph{graph_ext}")
-            Fmt.write(lines - 1, 0, text)
+    def generate_graph(self):
+        Graph(self.game).set_path(self.gen_graph_path()).set_opt(False).generate()
 
     def down_task(self):
         rootdir = self.app.get_rootdir()
@@ -7816,6 +7801,7 @@ class Play:
         add_str(Key.edit, lambda: self.opener.open_code(open_dir=True))
         add_str(Key.cores, self.app.toggle_color)
         add_str(Key.bordas, self.app.toggle_nerdfonts)
+        add_str(Key.graph, self.actions.graph_toggle)
 
         for value in range(1, 10):
             add_str(str(value), self.GradeFunctor(int(value), self.tree.set_grade))
@@ -7857,7 +7843,8 @@ class Play:
         while True:
             self.tree.update_tree(admin_mode=Flags.admin.is_true() or self.search.search_mode)
             self.fman.draw_warnings()
-            self.actions.generate_graph(self.first_loop, self.graph_ext)
+            if self.actions.gen_graph:
+                self.actions.generate_graph()
             calls = self.make_callback()
             self.gui.show_items()
 
