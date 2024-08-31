@@ -78,10 +78,10 @@ class AppSettings:
         value = self.__get(self.__rootdir)
         return value
     
-    def is_nerdfonts(self) -> bool:
+    def has_borders(self) -> bool:
         return self.__get(self.__nerdfonts)
     
-    def set_nerdfonts(self, value: bool):
+    def set_borders(self, value: bool):
         self.__set(self.__nerdfonts, value)
         return self
 
@@ -107,8 +107,8 @@ class AppSettings:
         self.set_is_colored(not self.is_colored())
         return
     
-    def toggle_nerdfonts(self):
-        self.set_nerdfonts(not self.is_nerdfonts())
+    def toggle_borders(self):
+        self.set_borders(not self.has_borders())
         return
 
     def get_diff_mode(self) -> str:

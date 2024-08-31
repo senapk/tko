@@ -1,6 +1,6 @@
 from typing import Optional, Union
 import shutil
-from ..util.term_color import Color
+from ..util.term_color import TermColor
 from ..util.sentence import Sentence, Token
 
 

@@ -105,10 +105,10 @@ class AppSettings:
         value = self.__get(self.__rootdir)
         return value
     
-    def is_nerdfonts(self) -> bool:
+    def has_borders(self) -> bool:
         return self.__get(self.__nerdfonts)
     
-    def set_nerdfonts(self, value: bool):
+    def set_borders(self, value: bool):
         self.__set(self.__nerdfonts, value)
         return self
 
@@ -134,8 +134,8 @@ class AppSettings:
         self.set_is_colored(not self.is_colored())
         return
     
-    def toggle_nerdfonts(self):
-        self.set_nerdfonts(not self.is_nerdfonts())
+    def toggle_borders(self):
+        self.set_borders(not self.has_borders())
         return
 
     def get_diff_mode(self) -> str:
@@ -159,54 +159,32 @@ class AppSettings:
         self.__set(self.__langdef, value)
         return self
 
-class PColor:
-    @staticmethod
-    def focus():
-        return "B"
+class Colors:
+    def __init__(self):
+        self.focused_item = "B"
+        self.prog_done = "g"
+        self.prog_todo = "y"
+        self.button_flag_on = "G"
+        self.button_flag_off = "Y"
+        self.progress_skill_done = "C"
+        self.progress_skill_todo = "M"
+        self.main_bar_done = "G"
+        self.main_bar_todo = "R"
+        self.task_skills = "c"
+        self.task_new = "g"
+        self.mark_nothing = "m"
+        self.mark_started = "r"
+        self.mark_required = "y"
+        self.mark_complete = "g"
     
-    @staticmethod
-    def prog_done():
-        return "g"
-    @staticmethod
-    def prog_todo():
-        return "y"
-    @staticmethod
-    def flag_on():
-        return "G"
-    @staticmethod
-    def flag_off():
-        return "Y"
-
-    @staticmethod
-    def skill_done():
-        return "C"
-    @staticmethod
-    def skill_todo():
-        return "M"
-    @staticmethod
-    def main_done():
-        return "G"
-    @staticmethod
-    def main_todo():
-        return "R"    
-    @staticmethod
-    def skills():
-        return "c"
-
-    @staticmethod
-    def new():
-        return "g"
-
-    nothing = "m"
-    started = "r"
-    required = "y"
-    complete = "g"
-
-    shell = "r"
-    htext = ""
-    check = "g"
-    uncheck = "y"
-    param = "c"
+    def to_dict(self):
+        return self.__dict__
+    
+    def from_dict(self, attr_dict):
+        for key, value in attr_dict.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+        return self
 
 
 def random_get(dic: dict, str_key: str, mode:str = "static"):
@@ -1961,12 +1939,12 @@ class Fmt:
     def get_percent(value, pad = 0) -> Sentence:
         text = f"{str(value)}%".rjust(pad)
         if value == 100:
-            return Sentence().addf(PColor.complete, "100%")
+            return Sentence().addf(Colors.mark_complete, "100%")
         if value >= 70:
-            return Sentence().addf(PColor.required, text)
+            return Sentence().addf(Colors.mark_required, text)
         if value == 0:
-            return Sentence().addf(PColor.nothing, text)
-        return Sentence().addf(PColor.started, text)
+            return Sentence().addf(Colors.mark_nothing, text)
+        return Sentence().addf(Colors.mark_started, text)
     
     @staticmethod
     def getch():
@@ -2452,11 +2430,11 @@ class GradeFunctor:
 
 
 class Border:
-    def __init__(self, borders: bool):
-        self.borders = borders
+    def __init__(self, app: AppSettings):
+        self.app = app
 
     def has_borders(self):
-        return self.borders
+        return self.app.has_borders()
 
     def border_round(self, color: str, data: str):
         return Sentence().add(self.roundL(color)).addf(color, data).add(self.roundR(color))
@@ -3580,7 +3558,7 @@ class Writer:
             print("fail: target " + target + " do not supported for build operation\n")
 
 
-class Color:
+class TermColor:
     enabled = True
     terminal_styles = {
         '.': '\033[0m', # Reset
@@ -3603,14 +3581,14 @@ class Color:
     }
 
 def _colour(modifiers: str, text: str) -> str:
-    if not Color.enabled:
+    if not TermColor.enabled:
         return text
     output = ''
     for m in modifiers:
-        val = Color.terminal_styles.get(m, '')
+        val = TermColor.terminal_styles.get(m, '')
         if val != '':
             output += val
-    output += text + Color.terminal_styles.get('.', "")
+    output += text + TermColor.terminal_styles.get('.', "")
     return output
 
 def term_colour(ftext: Sentence) -> str:
@@ -3638,6 +3616,8 @@ class Settings:
     def __init__(self):
         self.reps: Dict[str, RepSource] = {}
         self.app = AppSettings()
+        self.colors = Colors()
+
         self.settings_file = ""
 
     def set_settings_file(self, path: str):
@@ -3665,6 +3645,7 @@ class Settings:
         #     repdata.save_data_to_json()
 
         self.app = AppSettings()
+        self.colors = Colors()
         return self
 
     def __get_rep_file_path(self, course: str) -> str:
@@ -3695,6 +3676,7 @@ class Settings:
                 data = json.load(f)
                 self.reps = {k: RepSource().from_dict(v) for k, v in data.get("reps", {}).items()}
                 self.app = AppSettings().from_dict(data.get("geral", {}))
+                self.colors = Colors().from_dict(data.get("colors", {}))
         except (FileNotFoundError, json.decoder.JSONDecodeError) as _e:
             self.reset()
             self.save_settings()
@@ -3743,7 +3725,8 @@ class Settings:
         file = self.get_settings_file()
         value = {
             "reps": {k: v.to_dict() for k, v in self.reps.items()},
-            "geral": self.app.to_dict()
+            "geral": self.app.to_dict(),
+            "colors": self.colors.to_dict()
         }
         with open(file, "w", encoding="utf-8") as f:
             json.dump(value, f, indent=4)
@@ -5188,8 +5171,8 @@ class TaskTree:
         self.game = game
         self.rep = rep
         self.rep_alias = rep_alias
-        self.style = Border(Settings().app.is_nerdfonts())
-        self.pcolor = PColor()
+        self.style = Border(Settings().app)
+        self.colors = Settings().colors
         self.items: List[Entry] = []
         self.index_selected = 0
         self.index_begin = 0
@@ -5305,7 +5288,7 @@ class TaskTree:
             xp = ""
             for s, v in t.skills.items():
                 xp += f" +{s}:{v}"
-            output.addf(self.pcolor.skills(), xp)
+            output.addf(self.colors.task_skills, xp)
             
         return output
 
@@ -5330,8 +5313,8 @@ class TaskTree:
         title = q.title
         title = title.ljust(self.max_title - 2, ".")
 
-        done = color + self.pcolor.prog_done()
-        todo = color + self.pcolor.prog_todo()
+        done = color + self.colors.prog_done
+        todo = color + self.colors.prog_todo
         output.add(self.style.build_bar(title, q.get_percent() / 100, len(title), done, todo, round=False))
 
         if in_focus:
@@ -5351,10 +5334,10 @@ class TaskTree:
             xp = ""
             for s, v in q.skills.items():
                 xp += f" +{s}:{v}"
-            output.addf(self.pcolor.skills(), " " + xp)
+            output.addf(self.colors.task_skills, " " + xp)
 
         if q.key in self.new_items:
-            output.addf(self.pcolor.new(), " [new]")
+            output.addf(self.colors.task_new, " [new]")
 
         return output
 
@@ -5378,8 +5361,8 @@ class TaskTree:
         else:
             output.add(" ")
 
-        done = color + self.pcolor.prog_done()
-        todo = color + self.pcolor.prog_todo()
+        done = color + self.colors.prog_done
+        todo = color + self.colors.prog_todo
 
         output.add(self.style.build_bar(title, cluster.get_percent() / 100, len(title), done, todo, round=False))
 
@@ -5394,7 +5377,7 @@ class TaskTree:
         else:
             output.add(" ").add(cluster.get_resume_by_quests())
         if cluster.key in self.new_items:
-            output.addf(self.pcolor.new(), " [new]")
+            output.addf(self.colors.task_new, " [new]")
 
         return output
 
@@ -5443,7 +5426,7 @@ class TaskTree:
             return ""
         if not item.is_reachable() and not Flags.admin.is_true():
             return "R"
-        return self.pcolor.focus()
+        return self.colors.focused_item
 
     def filter_by_search(self) -> Set[str]:
         matches: Set[str] = set()
@@ -5935,7 +5918,7 @@ class CDiff:
         self.length = 1  # length of diff
         self.space = 0  # dy space for draw
         self.mode: Mode = Mode.intro
-        self.style = Border(Settings().app.is_nerdfonts())
+        self.style = Border(Settings().app)
 
         self.locked_index: bool = False
 
@@ -6549,7 +6532,7 @@ class CDiff:
         elif key == ord(DKeys.outros):
             Flags.others.toggle()
         elif key == ord(DKeys.border):
-            self.settings.app.toggle_nerdfonts()
+            self.settings.app.toggle_borders()
         elif key != -1 and key != curses.KEY_RESIZE:
             self.send_char_not_found(key)
 
@@ -7059,8 +7042,8 @@ class Key:
     github_open = "g"
     quit = "q"
     edit= "e"
-    cores = "C"
-    bordas = "B"
+    colors = "C"
+    borders = "B"
     pesquisar = "/"
     graph = "G"
 
@@ -7076,8 +7059,8 @@ class Gui:
         self.fman = fman
         self.search = search
         self.gen_graph: bool = False
-        self.style = Border(Settings().app.is_nerdfonts())
-        self.pcolor = PColor()
+        self.style = Border(Settings().app)
+        self.pcolor = Colors()
 
         self.app = Settings().app
 
@@ -7155,8 +7138,8 @@ class Gui:
         else:
             text = f" XPTotal:{xp.get_xp_total_obtained()}"
 
-        done = self.pcolor.main_done() + "/"
-        todo = self.pcolor.main_todo() + "/"
+        done = self.pcolor.main_bar_done + "/"
+        todo = self.pcolor.main_bar_todo + "/"
         total_bar = self.style.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Sentence().addf("/", "Skills"), "^", "{", "}")
         frame_xp.set_footer(Sentence().add(" ").add(self.app.get_rootdir()).add(" "), "^")
@@ -7170,8 +7153,8 @@ class Gui:
             else:
                 text = f"{skill}:{obt[skill]}/{value}"
             perc = obt[skill] / value
-            done = self.pcolor.skill_done() + "/"
-            todo = self.pcolor.skill_todo() + "/"
+            done = self.pcolor.progress_skill_done + "/"
+            todo = self.pcolor.progress_skill_todo + "/"
             skill_bar = self.style.build_bar(text, perc, dx - 2, done, todo)
             elements.append(skill_bar)
             
@@ -7196,7 +7179,7 @@ class Gui:
 
         colored = Flag().name("Colorido").char("C").values(["1" if self.app.is_colored() else "0"]).text("Ativa ou desativa as cores").bool()
         elements.append(self.style.get_flag_sentence(colored, pad))
-        bordas = Flag().name("Bordas").char("B").values(["1" if self.app.is_nerdfonts() else "0"]).text("Ativa ou desativa as bordas").bool()
+        bordas = Flag().name("Bordas").char("B").values(["1" if self.app.has_borders() else "0"]).text("Ativa ou desativa as bordas").bool()
         elements.append(self.style.get_flag_sentence(bordas, pad))
         grafo = Flag().name("Grafo").char("G").values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
         elements.append(self.style.get_flag_sentence(grafo, pad))
@@ -7271,8 +7254,8 @@ class Gui:
             text = text.ljust(size)
         else:
             text, percent = self.build_xp_bar()
-            done = PColor.main_done()
-            todo = PColor.main_todo()
+            done = self.pcolor.main_bar_done
+            todo = self.pcolor.main_bar_todo
             text = text.center(size)
         xpbar = self.style.build_bar(text, percent, len(text), done, todo)
         return xpbar
@@ -7794,8 +7777,8 @@ class Play:
         add_str(Key.dec_grade, self.tree.dec_grade)
         add_str(Key.dec_grade2, self.tree.dec_grade)
         add_str(Key.edit, lambda: self.opener.open_code(open_dir=True))
-        add_str(Key.cores, self.app.toggle_color)
-        add_str(Key.bordas, self.app.toggle_nerdfonts)
+        add_str(Key.colors, self.app.toggle_color)
+        add_str(Key.borders, self.app.toggle_borders)
         add_str(Key.graph, self.actions.graph_toggle)
 
         for value in range(1, 10):
@@ -8261,9 +8244,9 @@ def exec(parser: argparse.ArgumentParser, args):
     else:
         symbols.set_unicode()
     if args.m:
-        Color.enabled = False
+        TermColor.enabled = False
     elif settings.app.is_colored():
-        Color.enabled = True
+        TermColor.enabled = True
         symbols.set_colors()
 
     if args.v or args.g or args.b:

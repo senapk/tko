@@ -75,7 +75,7 @@ class CDiff:
         self.length = 1  # length of diff
         self.space = 0  # dy space for draw
         self.mode: Mode = Mode.intro
-        self.style = Border(Settings().app.is_nerdfonts())
+        self.style = Border(Settings().app)
 
         self.locked_index: bool = False
 
@@ -689,7 +689,7 @@ class CDiff:
         elif key == ord(DKeys.outros):
             Flags.others.toggle()
         elif key == ord(DKeys.border):
-            self.settings.app.toggle_nerdfonts()
+            self.settings.app.toggle_borders()
         elif key != -1 and key != curses.KEY_RESIZE:
             self.send_char_not_found(key)
 

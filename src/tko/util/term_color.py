@@ -1,7 +1,7 @@
 from .sentence import Sentence
 from typing import Union
 
-class Color:
+class TermColor:
     enabled = True
     terminal_styles = {
         '.': '\033[0m', # Reset
@@ -24,14 +24,14 @@ class Color:
     }
 
 def _colour(modifiers: str, text: str) -> str:
-    if not Color.enabled:
+    if not TermColor.enabled:
         return text
     output = ''
     for m in modifiers:
-        val = Color.terminal_styles.get(m, '')
+        val = TermColor.terminal_styles.get(m, '')
         if val != '':
             output += val
-    output += text + Color.terminal_styles.get('.', "")
+    output += text + TermColor.terminal_styles.get('.', "")
     return output
 
 def term_colour(ftext: Sentence) -> str:

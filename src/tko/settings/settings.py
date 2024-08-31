@@ -6,6 +6,7 @@ import os
 import appdirs
 from ..util.term_color import term_print
 from ..util.sentence import Sentence
+from ..play.colors import Colors
 
 def singleton(class_):
     instances = {}
@@ -20,6 +21,8 @@ class Settings:
     def __init__(self):
         self.reps: Dict[str, RepSource] = {}
         self.app = AppSettings()
+        self.colors = Colors()
+
         self.settings_file = ""
 
     def set_settings_file(self, path: str):
@@ -48,6 +51,7 @@ class Settings:
         #     repdata.save_data_to_json()
 
         self.app = AppSettings()
+        self.colors = Colors()
         return self
 
     def __get_rep_file_path(self, course: str) -> str:
@@ -78,6 +82,7 @@ class Settings:
                 data = json.load(f)
                 self.reps = {k: RepSource().from_dict(v) for k, v in data.get("reps", {}).items()}
                 self.app = AppSettings().from_dict(data.get("geral", {}))
+                self.colors = Colors().from_dict(data.get("colors", {}))
         except (FileNotFoundError, json.decoder.JSONDecodeError) as _e:
             self.reset()
             self.save_settings()
@@ -126,7 +131,8 @@ class Settings:
         file = self.get_settings_file()
         value = {
             "reps": {k: v.to_dict() for k, v in self.reps.items()},
-            "geral": self.app.to_dict()
+            "geral": self.app.to_dict(),
+            "colors": self.colors.to_dict()
         }
         with open(file, "w", encoding="utf-8") as f:
             json.dump(value, f, indent=4)

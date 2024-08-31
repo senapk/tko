@@ -34,25 +34,28 @@ class Test:
         assert fmt == "ttttffff"
 
     def test_convert6(self):
-        Settings().app.set_nerdfonts(True)
-        res = Border(False).build_bar("abcdefghij", 0.5, 10, "G", "R", round=True)
+        res = Border(True).build_bar("abcdefghij", 0.5, 10, "G", "R", round=True)
         val, fmt = res.resume_val_fmt()
         assert val == "abcdefgh"
         assert fmt == "gGGGGRRRRr"
 
     def test_convert7(self):
-        Settings().app.set_nerdfonts(True)
-        res = Border(False).build_bar("abcdefghij", 0.5, 11, "G", "R", round=True)
+        res = Border(True).build_bar("abcdefghij", 0.5, 11, "G", "R", round=True)
         val, fmt = res.resume_val_fmt()
         assert val == "abcdefghi"
         assert fmt == "gGGGGRRRRRr"
 
     def test_convert8(self):
-        Settings().app.set_nerdfonts(True)
-        res = Border(False).build_bar("abcdefghij", 0, 11, "G", "R", round=True)
+        res = Border(True).build_bar("abcdefghij", 0, 11, "G", "R", round=True)
         val, fmt = res.resume_val_fmt()
         assert val == "abcdefghi"
         assert fmt == "rRRRRRRRRRr"
+    
+    def test_convert9(self):
+        res = Border(False).build_bar("abcdefghij", 0, 11, "G", "R", round=True)
+        val, fmt = res.resume_val_fmt()
+        assert val == " abcdefghi "
+        assert fmt == "RRRRRRRRRRR"
 
 if __name__ == '__main__':
     unittest.main()

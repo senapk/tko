@@ -1,12 +1,13 @@
 from .flags import Flag
 from ..util.sentence import Sentence, Token
+from ..settings.app_settings import AppSettings
 
 class Border:
-    def __init__(self, borders: bool):
-        self.borders = borders
+    def __init__(self, app: AppSettings):
+        self.app = app
 
     def has_borders(self):
-        return self.borders
+        return self.app.has_borders()
 
     def border_round(self, color: str, data: str):
         return Sentence().add(self.roundL(color)).addf(color, data).add(self.roundR(color))

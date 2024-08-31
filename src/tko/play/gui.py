@@ -16,7 +16,7 @@ from ..util.sentence import Sentence, Token,  RToken
 from .fmt import Fmt
 from .frame import Frame
 from .border import Border
-from .pcolor import PColor
+from .colors import Colors
 from .search import Search
 from .images import opening, random_get
 import datetime
@@ -63,8 +63,8 @@ class Key:
     github_open = "g"
     quit = "q"
     edit= "e"
-    cores = "C"
-    bordas = "B"
+    colors = "C"
+    borders = "B"
     pesquisar = "/"
     graph = "G"
 
@@ -80,8 +80,8 @@ class Gui:
         self.fman = fman
         self.search = search
         self.gen_graph: bool = False
-        self.style = Border(Settings().app.is_nerdfonts())
-        self.pcolor = PColor()
+        self.style = Border(Settings().app)
+        self.pcolor = Colors()
 
         self.app = Settings().app
 
@@ -159,8 +159,8 @@ class Gui:
         else:
             text = f" XPTotal:{xp.get_xp_total_obtained()}"
 
-        done = self.pcolor.main_done() + "/"
-        todo = self.pcolor.main_todo() + "/"
+        done = self.pcolor.main_bar_done + "/"
+        todo = self.pcolor.main_bar_todo + "/"
         total_bar = self.style.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Sentence().addf("/", "Skills"), "^", "{", "}")
         frame_xp.set_footer(Sentence().add(" ").add(self.app.get_rootdir()).add(" "), "^")
@@ -174,8 +174,8 @@ class Gui:
             else:
                 text = f"{skill}:{obt[skill]}/{value}"
             perc = obt[skill] / value
-            done = self.pcolor.skill_done() + "/"
-            todo = self.pcolor.skill_todo() + "/"
+            done = self.pcolor.progress_skill_done + "/"
+            todo = self.pcolor.progress_skill_todo + "/"
             skill_bar = self.style.build_bar(text, perc, dx - 2, done, todo)
             elements.append(skill_bar)
             
@@ -200,7 +200,7 @@ class Gui:
 
         colored = Flag().name("Colorido").char("C").values(["1" if self.app.is_colored() else "0"]).text("Ativa ou desativa as cores").bool()
         elements.append(self.style.get_flag_sentence(colored, pad))
-        bordas = Flag().name("Bordas").char("B").values(["1" if self.app.is_nerdfonts() else "0"]).text("Ativa ou desativa as bordas").bool()
+        bordas = Flag().name("Bordas").char("B").values(["1" if self.app.has_borders() else "0"]).text("Ativa ou desativa as bordas").bool()
         elements.append(self.style.get_flag_sentence(bordas, pad))
         grafo = Flag().name("Grafo").char("G").values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
         elements.append(self.style.get_flag_sentence(grafo, pad))
@@ -275,8 +275,8 @@ class Gui:
             text = text.ljust(size)
         else:
             text, percent = self.build_xp_bar()
-            done = PColor.main_done()
-            todo = PColor.main_todo()
+            done = self.pcolor.main_bar_done
+            todo = self.pcolor.main_bar_todo
             text = text.center(size)
         xpbar = self.style.build_bar(text, percent, len(text), done, todo)
         return xpbar

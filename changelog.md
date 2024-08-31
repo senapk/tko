@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.23.5
+  - refactor: style using self, pcolor class created
 - 0.23.3
   - refactor: play_actions
   - refactor: search

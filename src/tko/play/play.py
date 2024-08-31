@@ -120,8 +120,8 @@ class Play:
         add_str(Key.dec_grade, self.tree.dec_grade)
         add_str(Key.dec_grade2, self.tree.dec_grade)
         add_str(Key.edit, lambda: self.opener.open_code(open_dir=True))
-        add_str(Key.cores, self.app.toggle_color)
-        add_str(Key.bordas, self.app.toggle_nerdfonts)
+        add_str(Key.colors, self.app.toggle_color)
+        add_str(Key.borders, self.app.toggle_borders)
         add_str(Key.graph, self.actions.graph_toggle)
 
         for value in range(1, 10):

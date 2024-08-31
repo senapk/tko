@@ -18,7 +18,7 @@ from .util.guide import tko_guide
 from .util.guide import bash_guide
 
 from .run.report import Report
-from .util.term_color import Color
+from .util.term_color import TermColor
 from .util.symbols import symbols
 
 from .game.game import Game
@@ -386,9 +386,9 @@ def exec(parser: argparse.ArgumentParser, args):
     else:
         symbols.set_unicode()
     if args.m:
-        Color.enabled = False
+        TermColor.enabled = False
     elif settings.app.is_colored():
-        Color.enabled = True
+        TermColor.enabled = True
         symbols.set_colors()
 
     if args.v or args.g or args.b:
