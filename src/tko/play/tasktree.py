@@ -10,9 +10,10 @@ from ..game.game import Game
 from ..game.cluster import Cluster
 from ..game.quest import Quest
 from ..game.task import Task
-from .style import Style
+from .border import Border
+from .pcolor import PColor
 from ..util.symbols import symbols
-from .style import Style
+from ..settings.settings import Settings
 
 import os
 
@@ -31,7 +32,8 @@ class TaskTree:
         self.game = game
         self.rep = rep
         self.rep_alias = rep_alias
-
+        self.style = Border(Settings().app.is_nerdfonts())
+        self.pcolor = PColor()
         self.items: List[Entry] = []
         self.index_selected = 0
         self.index_begin = 0
@@ -123,7 +125,7 @@ class TaskTree:
         output.add(t.get_grade_symbol(min_value))
 
         if in_focus:
-            output.add(Style.roundL(focus_color))
+            output.add(self.style.roundL(focus_color))
         else:
             output.add(" ")
 
@@ -134,11 +136,11 @@ class TaskTree:
         done = color + "g"
         todo = color
         perc = t.test_progress
-        output.add(Style.build_bar(t.title, perc / 100, len(t.title), done, todo, round=False))
+        output.add(self.style.build_bar(t.title, perc / 100, len(t.title), done, todo, round=False))
         # output.addf(color, t.title)
 
         if in_focus:
-            output.add(Style.roundR(focus_color))
+            output.add(self.style.roundR(focus_color))
         else:
             output.add(" ")
 
@@ -147,7 +149,7 @@ class TaskTree:
             xp = ""
             for s, v in t.skills.items():
                 xp += f" +{s}:{v}"
-            output.addf(Style.skills(), xp)
+            output.addf(self.pcolor.skills(), xp)
             
         return output
 
@@ -161,7 +163,7 @@ class TaskTree:
 
         in_focus = focus_color != ""
         if in_focus:
-            output.add(Style.roundL(focus_color))
+            output.add(self.style.roundL(focus_color))
         else:
             output.add(" ")
 
@@ -172,12 +174,12 @@ class TaskTree:
         title = q.title
         title = title.ljust(self.max_title - 2, ".")
 
-        done = color + Style.prog_done()
-        todo = color + Style.prog_todo()
-        output.add(Style.build_bar(title, q.get_percent() / 100, len(title), done, todo, round=False))
+        done = color + self.pcolor.prog_done()
+        todo = color + self.pcolor.prog_todo()
+        output.add(self.style.build_bar(title, q.get_percent() / 100, len(title), done, todo, round=False))
 
         if in_focus:
-            output.add(Style.roundR(focus_color))
+            output.add(self.style.roundR(focus_color))
         else:
             output.add(" ")
 
@@ -193,10 +195,10 @@ class TaskTree:
             xp = ""
             for s, v in q.skills.items():
                 xp += f" +{s}:{v}"
-            output.addf(Style.skills(), " " + xp)
+            output.addf(self.pcolor.skills(), " " + xp)
 
         if q.key in self.new_items:
-            output.addf(Style.new(), " [new]")
+            output.addf(self.pcolor.new(), " [new]")
 
         return output
 
@@ -216,17 +218,17 @@ class TaskTree:
 
         title = cluster.title.ljust(self.max_title, ".")
         if focus_color != "":
-            output.add(Style.roundL(focus_color))
+            output.add(self.style.roundL(focus_color))
         else:
             output.add(" ")
 
-        done = color + Style.prog_done()
-        todo = color + Style.prog_todo()
+        done = color + self.pcolor.prog_done()
+        todo = color + self.pcolor.prog_todo()
 
-        output.add(Style.build_bar(title, cluster.get_percent() / 100, len(title), done, todo, round=False))
+        output.add(self.style.build_bar(title, cluster.get_percent() / 100, len(title), done, todo, round=False))
 
         if focus_color != "":
-            output.add(Style.roundR(focus_color))
+            output.add(self.style.roundR(focus_color))
         else:
             output.add(" ")
 
@@ -236,7 +238,7 @@ class TaskTree:
         else:
             output.add(" ").add(cluster.get_resume_by_quests())
         if cluster.key in self.new_items:
-            output.addf(Style.new(), " [new]")
+            output.addf(self.pcolor.new(), " [new]")
 
         return output
 
@@ -285,7 +287,7 @@ class TaskTree:
             return ""
         if not item.is_reachable() and not Flags.admin.is_true():
             return "R"
-        return Style.focus()
+        return self.pcolor.focus()
 
     def filter_by_search(self) -> Set[str]:
         matches: Set[str] = set()

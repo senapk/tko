@@ -15,7 +15,8 @@ from ..down import Down
 from ..util.sentence import Sentence, Token,  RToken
 from .fmt import Fmt
 from .frame import Frame
-from .style import Style
+from .border import Border
+from .pcolor import PColor
 from .search import Search
 from .images import opening, random_get
 import datetime
@@ -79,6 +80,8 @@ class Gui:
         self.fman = fman
         self.search = search
         self.gen_graph: bool = False
+        self.style = Border(Settings().app.is_nerdfonts())
+        self.pcolor = PColor()
 
         self.app = Settings().app
 
@@ -119,17 +122,17 @@ class Gui:
         dy, dx = frame.get_inner()
         top = Sentence()
         if self.two_column_mode() and Flags.others.is_true(): 
-            top.add(Style.get_flag_sentence(Flags.config)).add(" ")
+            top.add(self.style.get_flag_sentence(Flags.config)).add(" ")
 
         alias_color = "R"
-        top.add(Style.border_sharp(alias_color, self.rep_alias.upper()))
+        top.add(self.style.border_sharp(alias_color, self.rep_alias.upper()))
         if Flags.others.is_true():
             color = "W" if Flags.admin.is_true() else "K"
-            top.add(Style.border_sharp(color, "ADMIN"))
-        top.add(Style.border_sharp("G", self.rep.get_lang().upper()))
+            top.add(self.style.border_sharp(color, "ADMIN"))
+        top.add(self.style.border_sharp("G", self.rep.get_lang().upper()))
 
         if self.two_column_mode() and Flags.others.is_true(): 
-            top.add(" ").add(Style.get_flag_sentence(Flags.skills))
+            top.add(" ").add(self.style.get_flag_sentence(Flags.skills))
 
         frame.set_header(top, "^")
         
@@ -156,9 +159,9 @@ class Gui:
         else:
             text = f" XPTotal:{xp.get_xp_total_obtained()}"
 
-        done = Style.main_done() + "/"
-        todo = Style.main_todo() + "/"
-        total_bar = Style.build_bar(text, total_perc / 100, dx - 2, done, todo)
+        done = self.pcolor.main_done() + "/"
+        todo = self.pcolor.main_todo() + "/"
+        total_bar = self.style.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Sentence().addf("/", "Skills"), "^", "{", "}")
         frame_xp.set_footer(Sentence().add(" ").add(self.app.get_rootdir()).add(" "), "^")
         frame_xp.draw()
@@ -171,9 +174,9 @@ class Gui:
             else:
                 text = f"{skill}:{obt[skill]}/{value}"
             perc = obt[skill] / value
-            done = Style.skill_done() + "/"
-            todo = Style.skill_todo() + "/"
-            skill_bar = Style.build_bar(text, perc, dx - 2, done, todo)
+            done = self.pcolor.skill_done() + "/"
+            todo = self.pcolor.skill_todo() + "/"
+            skill_bar = self.style.build_bar(text, perc, dx - 2, done, todo)
             elements.append(skill_bar)
             
         elements.append(total_bar)
@@ -192,21 +195,21 @@ class Gui:
         elements: List[Sentence] = []
         pad = 11
         for flag in self.flagsman.left:
-            elements.append(Style.get_flag_sentence(flag, pad))
+            elements.append(self.style.get_flag_sentence(flag, pad))
 
 
         colored = Flag().name("Colorido").char("C").values(["1" if self.app.is_colored() else "0"]).text("Ativa ou desativa as cores").bool()
-        elements.append(Style.get_flag_sentence(colored, pad))
+        elements.append(self.style.get_flag_sentence(colored, pad))
         bordas = Flag().name("Bordas").char("B").values(["1" if self.app.is_nerdfonts() else "0"]).text("Ativa ou desativa as bordas").bool()
-        elements.append(Style.get_flag_sentence(bordas, pad))
+        elements.append(self.style.get_flag_sentence(bordas, pad))
         grafo = Flag().name("Grafo").char("G").values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
-        elements.append(Style.get_flag_sentence(grafo, pad))
+        elements.append(self.style.get_flag_sentence(grafo, pad))
 
 
         color = "W" if not self.app.is_colored() else "C"
 
-        elements.append(Style.border_round(color, "DirDestino [D]"))
-        elements.append(Style.border_round(color, "Linguagem  [L]"))
+        elements.append(self.style.border_round(color, "DirDestino [D]"))
+        elements.append(self.style.border_round(color, "Linguagem  [L]"))
 
         dy, dx = frame.get_inner()
         line_breaks = dy - len(elements)
@@ -225,12 +228,12 @@ class Gui:
         for x in items:
             color_ini = x.data[0].fmt if self.app.is_colored() else "W"
             color_end = x.data[-1].fmt if self.app.is_colored() else "W"
-            left = Style.roundL(color_ini)
-            right = Style.roundR(color_end)
+            left = self.style.roundL(color_ini)
+            right = self.style.roundR(color_end)
             middle = x.clone()
             if x.data[0].text == "!":
-                left = Style.sharpL(color_ini)
-                right = Style.sharpR(color_end)
+                left = self.style.sharpL(color_ini)
+                right = self.style.sharpR(color_end)
                 middle.data = x.data[1:]
             out.append(Sentence().add(left).add(middle).add(right))
         return out
@@ -272,18 +275,18 @@ class Gui:
             text = text.ljust(size)
         else:
             text, percent = self.build_xp_bar()
-            done = Style.main_done()
-            todo = Style.main_todo()
+            done = PColor.main_done()
+            todo = PColor.main_todo()
             text = text.center(size)
-        xpbar = Style.build_bar(text, percent, len(text), done, todo)
+        xpbar = self.style.build_bar(text, percent, len(text), done, todo)
         return xpbar
 
     def show_top_bar(self, frame: Frame):
         help = self.build_list_sentence(self.help_basic)
         pesquisar = help[0]
         marcar = help[1]
-        config = Style.get_flag_sentence(Flags.config)
-        skills = Style.get_flag_sentence(Flags.skills)
+        config = self.style.get_flag_sentence(Flags.config)
+        skills = self.style.get_flag_sentence(Flags.skills)
         others = Flags.others.is_true()
 
         pre: List[Sentence] = []

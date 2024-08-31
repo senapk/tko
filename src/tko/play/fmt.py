@@ -1,7 +1,7 @@
 import curses
 from typing import Dict, Tuple
 from ..util.sentence import Sentence
-from .style import Style
+from .pcolor import PColor
 
 class Fmt:
     __scr = None
@@ -142,12 +142,12 @@ class Fmt:
     def get_percent(value, pad = 0) -> Sentence:
         text = f"{str(value)}%".rjust(pad)
         if value == 100:
-            return Sentence().addf(Style.complete, "100%")
+            return Sentence().addf(PColor.complete, "100%")
         if value >= 70:
-            return Sentence().addf(Style.required, text)
+            return Sentence().addf(PColor.required, text)
         if value == 0:
-            return Sentence().addf(Style.nothing, text)
-        return Sentence().addf(Style.started, text)
+            return Sentence().addf(PColor.nothing, text)
+        return Sentence().addf(PColor.started, text)
     
     @staticmethod
     def getch():

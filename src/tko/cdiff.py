@@ -13,7 +13,7 @@ from .play.floating_manager import FloatingManager
 from .play.images import images, compilling, success, intro, executing, random_get
 from .util.runner import Runner
 from .util.freerun import Free
-from .play.style import Style
+from .play.border import Border
 from .game.task import Task
 import random
 from .play.opener import Opener
@@ -75,6 +75,7 @@ class CDiff:
         self.length = 1  # length of diff
         self.space = 0  # dy space for draw
         self.mode: Mode = Mode.intro
+        self.style = Border(Settings().app.is_nerdfonts())
 
         self.locked_index: bool = False
 
@@ -279,31 +280,31 @@ class CDiff:
         running_color = "W" if not self.colors else "R"
 
         # building activity
-        activity = Sentence().add(Style.border_round(activity_color, self.get_folder()))
+        activity = Sentence().add(self.style.border_round(activity_color, self.get_folder()))
 
         # building solvers
         solvers = Sentence()
         if len(self.get_solver_names()) > 1:
-            solvers.add(Sentence().addf("R", "[p]").add(Style.sharpR("R")))
+            solvers.add(Sentence().addf("R", "[p]").add(self.style.sharpR("R")))
         for i, solver in enumerate(self.get_solver_names()):
             color = solver_color
             if i == self.task.main_index:
                 color = "G"
-            solvers.add(Style.border_round(color, solver))
+            solvers.add(self.style.border_round(color, solver))
         
         # replacing with count if running
         done = len(self.results)
         full = len(self.wdir.get_unit_list())
-        count_missing = Sentence().add(Style.border_round(running_color, f"({done}/{full})"))
+        count_missing = Sentence().add(self.style.border_round(running_color, f"({done}/{full})"))
         if self.mode == Mode.running:
             if  self.locked_index:
-                solvers = Sentence().add(Style.border_round("R", "Executando atividade travada"))
+                solvers = Sentence().add(self.style.border_round("R", "Executando atividade travada"))
             else:
                 solvers = count_missing
 
         # building sources
         source_names = Sentence(", ").join([Sentence().addf(sources_color, f"{name[0]}({name[1]})") for name in self.wdir.sources_names()])
-        sources = Sentence().add(Style.roundL(sources_color)).add(source_names).add(Style.roundR(sources_color))
+        sources = Sentence().add(self.style.roundL(sources_color)).add(source_names).add(self.style.roundR(sources_color))
 
         # merging activity, solvers and sources in header
         delta = frame.get_dx() - solvers.len()
@@ -337,8 +338,8 @@ class CDiff:
         for unit_result, index in done_list + todo_list:
             foco = i == self.focused_index
             token = self.get_token(unit_result)
-            extrap = Style.roundL(token.fmt) # if not foco else Token(Style.roundL(), "")
-            extras = Style.roundR(token.fmt) # if not foco else Token(Style.roundR(), "")
+            extrap = self.style.roundL(token.fmt) # if not foco else Token(self.style.roundL(), "")
+            extras = self.style.roundR(token.fmt) # if not foco else Token(self.style.roundR(), "")
             if foco and show_focused_index:
                 token.fmt = ""
             output.add(extrap).addf(token.fmt, str(index).zfill(2)).add(token).add(extras).add(" ")
@@ -354,11 +355,11 @@ class CDiff:
         value = self.get_focused_unit()
         info = Sentence()
         if self.wdir.get_solver().compile_error:
-            info = Style.border_round("R", "Erro de compilação")
+            info = self.style.border_round("R", "Erro de compilação")
         elif value is not None and not self.is_all_right() and not self.mode == Mode.intro:
             info = value.str(pad = False)
             if self.locked_index:
-                info = Style.border_round(focused_unit_color, info.get_text())
+                info = self.style.border_round(focused_unit_color, info.get_text())
         frame.write(0, 0, Sentence().add(info).center(frame.get_dx()))
 
     def draw_top_bar(self):
@@ -379,18 +380,18 @@ class CDiff:
     def make_bottom_line(self) -> List[Sentence]:
         cmds: List[Sentence] = []
         if Flags.others.is_true():
-            cmds.append(Style.border_round("M", f"{DActions.rodar}[{DKeys.rodar}]"))
+            cmds.append(self.style.border_round("M", f"{DActions.rodar}[{DKeys.rodar}]"))
             # diff
             text = f"VER━╾h[{DKeys.diff}]" if self.settings.app.get_diff_mode() == "side" else f"v╼━HOR[{DKeys.diff}]"
-            cmds.append(Style.border_round("M", text))
+            cmds.append(self.style.border_round("M", text))
         
-        cmds.append(Style.border_round("C", f"{DActions.sair}[{DKeys.sair}]"))
+        cmds.append(self.style.border_round("C", f"{DActions.sair}[{DKeys.sair}]"))
         if self.opener is not None:
-            cmds.append(Style.border_round("C", f"{DActions.editar}[{DKeys.editar}]"))
-        cmds.append(Style.border_round("G", f"{DActions.testar}[↲]"))
+            cmds.append(self.style.border_round("C", f"{DActions.editar}[{DKeys.editar}]"))
+        cmds.append(self.style.border_round("G", f"{DActions.testar}[↲]"))
         
         color = "G" if Flags.others.is_true() else "Y"
-        cmds.append(Style.border_sharp(color, f"{DActions.outros}[{DKeys.outros}]"))
+        cmds.append(self.style.border_sharp(color, f"{DActions.outros}[{DKeys.outros}]"))
         if Flags.others.is_true():
             # travar
 
@@ -399,15 +400,15 @@ class CDiff:
                 value = "∞"
             cmds.append(
                 Sentence()
-                    .add(Style.roundL("M"))
+                    .add(self.style.roundL("M"))
                     .add(RToken("M", f"{DActions.tempo}"))
                     .add(RToken("M", "{}".format(value)))
                     .add(RToken("M", f"[{DKeys.tempo}]"))
-                    .add(Style.roundR("M"))
+                    .add(self.style.roundR("M"))
             )
             travar = f"{DActions.fixar}[{DKeys.travar}]"
             color = "G" if self.locked_index else "M"
-            cmds.append(Style.border_sharp(color, travar))
+            cmds.append(self.style.border_sharp(color, travar))
 
 
         return cmds
