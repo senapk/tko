@@ -6,7 +6,7 @@ from .basic import IdentifierType, Identifier
 from .unit import Unit
 from .param import Param
 from .loader import Loader
-from .solver import Solver
+from .solver_builder import SolverBuilder
 
 from ..util.sentence import Sentence
 from ..util.symbols import symbols
@@ -16,7 +16,7 @@ class Wdir:
     def __init__(self):
         self.__autoload = False
         self.__autoload_folder = ""
-        self.__solver: Optional[Solver] = None
+        self.__solver: Optional[SolverBuilder] = None
         self.__source_list: List[str] = []
         self.__pack_list: List[List[Unit]] = []
         self.__unit_list: List[Unit] = []
@@ -29,7 +29,7 @@ class Wdir:
     def has_tests(self) -> bool:
         return len(self.__unit_list) != 0
 
-    def get_solver(self) -> Solver:
+    def get_solver(self) -> SolverBuilder:
         if self.__solver is None:
             raise Warning("fail: Não foi encontrado arquivo de código")
         return self.__solver
@@ -62,7 +62,7 @@ class Wdir:
 
     def set_solver(self, solver_list: List[str]):
         if len(solver_list) > 0:
-            self.__solver = Solver(solver_list)
+            self.__solver = SolverBuilder(solver_list)
         return self
 
     def set_sources(self, source_list: List[str]):
@@ -117,7 +117,7 @@ class Wdir:
             return self
         if self.__solver is not None:
             print("fail: if using --cmd, don't pass source files to target")
-        self.__solver = Solver([])
+        self.__solver = SolverBuilder([])
         self.__solver.set_executable(exec_cmd)
         return self
 

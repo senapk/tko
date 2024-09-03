@@ -23,24 +23,25 @@ import curses
 class Play:
     def __init__(
         self,
-        app: AppSettings,
+        settings: Settings,
         game: Game,
         rep_data: RepData,
         rep_alias: str
     ):
-        self.app = app
+        self.settings = settings
+        self.app = settings.app
         self.rep_alias = rep_alias
         self.rep = rep_data
         self.settings = Settings()
         self.exit = False
 
         if self.rep.get_lang() == "":
-            self.rep.set_lang(self.app.lang_default)
+            self.rep.set_lang(self.app._lang_default)
         self.flagsman = FlagsMan(self.rep.get_flags())
         
         self.game: Game = game
         self.fman = FloatingManager()
-        self.tree = TaskTree(app, game, rep_data, rep_alias)
+        self.tree = TaskTree(self.app, game, rep_data, rep_alias)
         self.search = Search(tree=self.tree, fman=self.fman, game=self.game)
         self.gui = Gui(rep=self.rep, rep_alias=self.rep_alias, game=self.game, tree=self.tree, 
                        flagsman=self.flagsman, search=self.search, fman=self.fman)
@@ -51,7 +52,7 @@ class Play:
         self.first_loop = True
         self.graph_ext = ""
 
-        self.opener = Opener(tree=self.tree, fman=self.fman, geral=app, rep_data=rep_data, rep_alias=rep_alias)
+        self.opener = Opener(tree=self.tree, fman=self.fman, app=self.app, rep_data=rep_data, rep_alias=rep_alias)
         self.actions = PlayActions(fman=self.fman, rep=self.rep, rep_alias=self.rep_alias, tree=self.tree, game=self.game, opener=self.opener, gui=self.gui)
 
     def save_to_json(self):

@@ -1,18 +1,18 @@
-from .run.unit import Unit
-from .run.basic import ExecutionResult
+from .unit import Unit
+from .basic import ExecutionResult
 
-from .util.runner import Runner
-from .run.solver import Solver
+from ..util.runner import Runner
+from .solver_builder import SolverBuilder
 from typing import Optional
 
-class Execution:
+class UnitRunner:
 
     def __init__(self):
         pass
 
     # run a unit using a solver and return if the result is correct
     @staticmethod
-    def run_unit(solver: Solver, unit: Unit, timeout: Optional[float]=None) -> ExecutionResult:
+    def run_unit(solver: SolverBuilder, unit: Unit, timeout: Optional[float]=None) -> ExecutionResult:
         if solver.compile_error:
             unit.user = solver.error_msg
             return ExecutionResult.COMPILATION_ERROR

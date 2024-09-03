@@ -19,7 +19,6 @@ pip install tko
 
 # depois de instalado, defina a pasta atual 
 # como padrão para download
-
 tko config --root .
 ```
 
@@ -34,27 +33,21 @@ npm install -g esbuild
 npm i --save-dev @types/node
 ```
 
+## Adicionando alguns atalhos úteis no bash
+
+```bash
+echo "" >> ~/.bashrc
+echo "alias update='pip install tko --upgrade'" >> ~/.bashrc
+echo "alias play='tko play'" >> ~/.bashrc
+echo "alias run='tko run'" >> ~/.bashrc
+echo "" >> ~/.bashrc
+```
+
+Reinicie o terminal com Control D para reiniciar o bash
+
 ## Salvando os dados no repositório
 
 - Vá no botão de controle de versão.
 - Clique em "Stage All Changes".
 - Digite uma mensagem no campo de mensagem.
 - Clique em "Commit && Push".
-
-## Adicionando alguns atalhos no bash
-
-Agora abra o arquivo de configuração do bash
-
-```bash
-code ~/.bashrc
-```
-
-Vá até o final do arquivo e cole as seguintes linhas
-
-```bash
-alias update='pip install tko --upgrade'
-alias play='tko play'
-alias run='tko run'
-```
-
-Reinicie o terminal com Control D para reiniciar o bash

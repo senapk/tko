@@ -1,38 +1,38 @@
 import curses
-from .play.fmt import Fmt
-from .run.basic import ExecutionResult
-from .run.unit import Unit
-from .run.param import Param
-from .execution import Execution
-from .run.diff import Diff
-from .util.sentence import Sentence, Token, RToken
 from typing import List, Tuple, Optional
-from .play.frame import Frame
-from .play.floating import Floating
-from .play.floating_manager import FloatingManager
-from .play.images import images, compilling, success, intro, executing, random_get
-from .util.runner import Runner
-from .util.freerun import Free
-from .play.border import Border
-from .game.task import Task
-import random
-from .play.opener import Opener
-from .run.solver import CompileError
-from .play.flags import Flags
-
-from .run.wdir import Wdir
-from .run.report import Report
-from .settings.settings import Settings
 import os
-from .run.basic import Success
 import enum
 
-class Mode(enum.Enum):
+from ..run.basic import ExecutionResult
+from ..run.unit import Unit
+from ..run.param import Param
+from ..run.unit_runner import UnitRunner
+from ..run.diff import Diff
+from ..util.sentence import Sentence, Token, RToken
+
+from .frame import Frame
+from .floating import Floating
+from .floating_manager import FloatingManager
+from .images import images, compilling, success, intro, executing, random_get
+from .fmt import Fmt
+from .border import Border
+from .opener import Opener
+from .flags import Flags
+
+from ..util.freerun import Free
+from ..game.task import Task
+
+from ..run.solver_builder import CompileError
+from ..run.wdir import Wdir
+from ..run.report import Report
+from ..settings.settings import Settings
+from ..run.basic import Success
+
+class CDiffMode(enum.Enum):
     intro = 0
     select = 1
     running = 2
     finished = 3
-
 
 class DActions:
     sair   = "  Sair"
@@ -74,7 +74,7 @@ class CDiff:
         self.init = 1000   # index of first line to show
         self.length = 1  # length of diff
         self.space = 0  # dy space for draw
-        self.mode: Mode = Mode.intro
+        self.mode: CDiffMode = CDiffMode.intro
         self.style = Border(Settings().app)
 
         self.locked_index: bool = False
@@ -84,7 +84,7 @@ class CDiff:
         self.resumes: List[str] = []
 
         self.settings = Settings()
-        self.colors = self.settings.app.is_colored
+        self.colors = self.settings.app.is_colored()
         self.first_loop = True
         self.fman = FloatingManager()
         self.first_run = False
@@ -102,11 +102,11 @@ class CDiff:
 
     def set_autorun(self, value:bool):
         if value:
-            self.mode = Mode.running
+            self.mode = CDiffMode.running
         return self
 
     def save_settings(self):
-        self.settings.app.diff_mode = "down" if self.param.is_up_down else "side"
+        self.settings.app._diff_mode = "down" if self.param.is_up_down else "side"
         self.settings.save_settings()
         return self
     
@@ -228,13 +228,13 @@ class CDiff:
 
     def process_one(self):
 
-        if self.mode != Mode.running:
+        if self.mode != CDiffMode.running:
             return
 
         solver = self.wdir.get_solver()
 
         if solver.compile_error:
-            self.mode = Mode.finished
+            self.mode = CDiffMode.finished
             while len(self.unit_list) > 0:
                 index = len(self.results)
                 self.unit_list = self.unit_list[1:]
@@ -242,23 +242,23 @@ class CDiff:
             return
         
         if self.locked_index:
-            self.mode = Mode.finished
+            self.mode = CDiffMode.finished
             unit = self.get_focused_unit()
-            unit.result = Execution.run_unit(solver, unit, self.settings.app.timeout)
+            unit.result = UnitRunner.run_unit(solver, unit, self.settings.app._timeout)
             return
 
         if len(self.unit_list) > 0:
             index = len(self.results)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
-            unit.result = Execution.run_unit(solver, unit, self.settings.app.timeout)
+            unit.result = UnitRunner.run_unit(solver, unit, self.settings.app._timeout)
             self.results.append((unit.result, index))
             success = [result for result, _ in self.results if result == ExecutionResult.SUCCESS]
             self.task.test_progress = (len(success) * 100) // len(self.wdir.get_unit_list())
             self.focused_index = index
 
         if len(self.unit_list) == 0:
-            self.mode = Mode.finished
+            self.mode = CDiffMode.finished
             self.focused_index = 0
 
 
@@ -296,7 +296,7 @@ class CDiff:
         done = len(self.results)
         full = len(self.wdir.get_unit_list())
         count_missing = Sentence().add(self.style.border_round(running_color, f"({done}/{full})"))
-        if self.mode == Mode.running:
+        if self.mode == CDiffMode.running:
             if  self.locked_index:
                 solvers = Sentence().add(self.style.border_round("R", "Executando atividade travada"))
             else:
@@ -334,7 +334,7 @@ class CDiff:
             i += 1
 
         i = 0
-        show_focused_index = not self.wdir.get_solver().compile_error and not self.mode == Mode.intro and not self.is_all_right()
+        show_focused_index = not self.wdir.get_solver().compile_error and not self.mode == CDiffMode.intro and not self.is_all_right()
         for unit_result, index in done_list + todo_list:
             foco = i == self.focused_index
             token = self.get_token(unit_result)
@@ -356,7 +356,7 @@ class CDiff:
         info = Sentence()
         if self.wdir.get_solver().compile_error:
             info = self.style.border_round("R", "Erro de compilação")
-        elif value is not None and not self.is_all_right() and not self.mode == Mode.intro:
+        elif value is not None and not self.is_all_right() and not self.mode == CDiffMode.intro:
             info = value.str(pad = False)
             if self.locked_index:
                 info = self.style.border_round(focused_unit_color, info.get_text())
@@ -382,7 +382,7 @@ class CDiff:
         if Flags.others.is_true():
             cmds.append(self.style.border_round("M", f"{DActions.rodar}[{DKeys.rodar}]"))
             # diff
-            text = f"VER━╾h[{DKeys.diff}]" if self.settings.app.diff_mode == "side" else f"v╼━HOR[{DKeys.diff}]"
+            text = f"VER━╾h[{DKeys.diff}]" if self.settings.app._diff_mode == "side" else f"v╼━HOR[{DKeys.diff}]"
             cmds.append(self.style.border_round("M", text))
         
         cmds.append(self.style.border_round("C", f"{DActions.sair}[{DKeys.sair}]"))
@@ -395,7 +395,7 @@ class CDiff:
         if Flags.others.is_true():
             # travar
 
-            value = str(self.settings.app.timeout)
+            value = str(self.settings.app._timeout)
             if value == "0":
                 value = "∞"
             cmds.append(
@@ -430,7 +430,7 @@ class CDiff:
     def is_all_right(self):
         if self.locked_index or len(self.results) == 0:
             return False
-        if not self.mode == Mode.finished:
+        if not self.mode == CDiffMode.finished:
             return False
         for result, _ in self.results:
             if result != ExecutionResult.SUCCESS:
@@ -506,7 +506,7 @@ class CDiff:
                 self.first_loop = False
                 self.load_autoload_warning()
             Fmt.clear()
-            if self.mode == Mode.running:
+            if self.mode == CDiffMode.running:
                 if self.wdir.get_solver().not_compiled():
                     self.draw_top_bar()
                     self.show_bottom_line()
@@ -516,7 +516,7 @@ class CDiff:
                         self.wdir.get_solver().prepare_exec()
                     except CompileError as e:
                         self.fman.add_input(Floating("v>").error().put_text(e.message))
-                        self.mode = Mode.finished
+                        self.mode = CDiffMode.finished
                     Fmt.clear()
                     self.draw_top_bar()
                     self.show_bottom_line()
@@ -524,7 +524,7 @@ class CDiff:
                 self.process_one()
             self.draw_top_bar()
 
-            if self.mode == Mode.intro:
+            if self.mode == CDiffMode.intro:
                 self.print_centered_image(random_get(intro, self.get_folder()), "y")
             else:
                 self.draw_main()
@@ -534,7 +534,7 @@ class CDiff:
             if self.fman.has_floating():
                 self.fman.draw_warnings()
 
-            if self.mode == Mode.running:
+            if self.mode == CDiffMode.running:
                 Fmt.refresh()
                 continue
 
@@ -548,14 +548,14 @@ class CDiff:
                 return fn_exec
 
     def run_exec_mode(self):
-        self.mode = Mode.running
+        self.mode = CDiffMode.running
         if self.wdir.is_autoload():
             self.wdir.autoload()
             self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index])
         return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True)
 
     def run_test_mode(self):
-        self.mode = Mode.running
+        self.mode = CDiffMode.running
         if self.wdir.is_autoload():
             self.wdir.autoload() # reload sources and solvers
         
@@ -583,8 +583,8 @@ class CDiff:
                     )
 
     def go_left(self):
-        if self.mode == Mode.intro:
-            self.mode = Mode.select
+        if self.mode == CDiffMode.intro:
+            self.mode = CDiffMode.select
         if self.locked_index:
             self.fman.add_input(Floating("v>").warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(DKeys.travar)))
             return
@@ -593,8 +593,8 @@ class CDiff:
             self.init = 1000
 
     def go_right(self):
-        if self.mode == Mode.intro:
-            self.mode = Mode.select
+        if self.mode == CDiffMode.intro:
+            self.mode = CDiffMode.select
             self.focused_index = 0
             return
         if self.locked_index:
@@ -605,13 +605,13 @@ class CDiff:
             self.init = 1000
 
     def go_down(self):
-        if self.mode == Mode.intro:
-            self.mode = Mode.select
+        if self.mode == CDiffMode.intro:
+            self.mode = CDiffMode.select
         self.init += 1
 
     def go_up(self):
-        if self.mode == Mode.intro:
-            self.mode = Mode.select
+        if self.mode == CDiffMode.intro:
+            self.mode = CDiffMode.select
         self.init = max(0, self.init - 1)
 
     def change_main(self):
@@ -627,8 +627,8 @@ class CDiff:
 
     def lock_unit(self):
         self.locked_index = not self.locked_index
-        if self.mode == Mode.intro:
-            self.mode = Mode.select
+        if self.mode == CDiffMode.intro:
+            self.mode = CDiffMode.select
         if self.locked_index:
             for i in range(len(self.results)):
                 _, index = self.results[i]
@@ -641,14 +641,14 @@ class CDiff:
             )
 
     def change_limit(self):
-            valor = self.settings.app.timeout
+            valor = self.settings.app._timeout
             if valor == 0:
                 valor = 1
             else:
                 valor *= 2
             if valor >= 5:
                 valor = 0
-            self.settings.app.timeout = valor
+            self.settings.app._timeout = valor
             self.save_settings()
             nome = "∞" if valor == 0 else str(valor)
             self.fman.add_input(

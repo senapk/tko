@@ -11,7 +11,7 @@ from typing import List, Any, Dict, Callable, Tuple
 from ..settings.settings import Settings
 from ..settings.app_settings import AppSettings
 from ..settings.rep_settings import languages_avaliable, RepData
-from ..down import Down
+from ..down.down import DownProblem
 from ..util.sentence import Sentence, Token,  RToken
 from .fmt import Fmt
 from .frame import Frame
@@ -25,7 +25,7 @@ from .floating import Floating
 from .floating_manager import FloatingManager
 from .flags import Flag, Flags, FlagsMan
 from .tasktree import TaskTree
-from ..actions import Run
+from ..cmds.cmd_run import Run
 from ..run.param import Param
 
 class Actions:
@@ -163,7 +163,7 @@ class Gui:
         todo = self.pcolor.main_bar_todo + "/"
         total_bar = self.style.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Sentence().addf("/", "Skills"), "^", "{", "}")
-        frame_xp.set_footer(Sentence().add(" ").add(self.app.rootdir).add(" "), "^")
+        frame_xp.set_footer(Sentence().add(" ").add(self.app._rootdir).add(" "), "^")
         frame_xp.draw()
 
         total, obt = self.game.get_skills_resume([self.game.quests[key] for key in self.game.available_quests])
@@ -197,16 +197,13 @@ class Gui:
         for flag in self.flagsman.left:
             elements.append(self.style.get_flag_sentence(flag, pad))
 
-
-        colored = Flag().name("Colorido").char("C").values(["1" if self.app.is_colored else "0"]).text("Ativa ou desativa as cores").bool()
-        elements.append(self.style.get_flag_sentence(colored, pad))
-        bordas = Flag().name("Bordas").char("B").values(["1" if self.app.borders else "0"]).text("Ativa ou desativa as bordas").bool()
+        bordas = Flag().name("Bordas").char("B").values(["1" if self.app._borders else "0"]).text("Ativa ou desativa as bordas").bool()
         elements.append(self.style.get_flag_sentence(bordas, pad))
         grafo = Flag().name("Grafo").char("G").values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
         elements.append(self.style.get_flag_sentence(grafo, pad))
 
 
-        color = "W" if not self.app.is_colored else "C"
+        color = "C"
 
         elements.append(self.style.border_round(color, "DirDestino [D]"))
         elements.append(self.style.border_round(color, "Linguagem  [L]"))
@@ -226,8 +223,8 @@ class Gui:
     def build_list_sentence(self, items: List[Sentence]) -> List[Sentence]:
         out: List[Sentence] = []
         for x in items:
-            color_ini = x.data[0].fmt if self.app.is_colored else "W"
-            color_end = x.data[-1].fmt if self.app.is_colored else "W"
+            color_ini = x.data[0].fmt
+            color_end = x.data[-1].fmt
             left = self.style.roundL(color_ini)
             right = self.style.roundR(color_end)
             middle = x.clone()
@@ -242,10 +239,8 @@ class Gui:
         array: List[Sentence] = []
         array += self.help_others_before
         array += self.help_fixed
-        if self.app.is_colored:
-            color = "G" if Flags.others.is_true() else "Y"
-        else:
-            color = "W" if Flags.others.is_true() else "K"
+        color = "G" if Flags.others.is_true() else "Y"
+
 
         array.append(Sentence() + RToken(color, "!Outros[o]"))
         array += self.help_others_after

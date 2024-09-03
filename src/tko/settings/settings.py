@@ -7,6 +7,8 @@ import appdirs
 from ..util.term_color import term_print
 from ..util.sentence import Sentence
 from ..play.colors import Colors
+from ..util.term_color import term_print
+from tko.run.report import Report
 
 def singleton(class_):
     instances = {}
@@ -55,7 +57,7 @@ class Settings:
         return self
 
     def __get_rep_file_path(self, course: str) -> str:
-        return os.path.join(self.app.rootdir, course, ".rep.json")   
+        return os.path.join(self.app._rootdir, course, ".rep.json")   
 
     def get_rep_source(self, course: str) -> RepSource:
         if course in self.reps:
@@ -93,18 +95,17 @@ class Settings:
     #     self.app = AppSettings().from_dict(data.get("geral", {}))
     #     return self
 
-    def check_rootdir(self) -> None:
-        if self.app.rootdir != "":
+    def check_rootdir(self):
+        if self.app._rootdir != "":
             return
         term_print(Sentence().add("Pasta padrão para download de arquivos ").addf("r", "precisa").add(" ser definida."))
-        term_print(Sentence().add("Escolha ").addf("r", "uma").add(" para continuar:"))
         here_cwd = os.getcwd()
         qxcode = os.path.join(os.path.expanduser("~"), "qxcode")
 
         while True:
-            term_print(Sentence().addf("r", "1 - ").add(here_cwd))
-            term_print(Sentence().addf("r", "2 - ").add(qxcode))
-            term_print(Sentence().addf("r", "3 - ").add("Outra pasta"))
+            term_print(Sentence().addf("r", "1").add(" - ").add(here_cwd))
+            term_print(Sentence().addf("r", "2").add(" - ").add(qxcode))
+            term_print(Sentence().addf("r", "3").add(" - ").add("Outra pasta"))
             term_print(Sentence().add("Default ").addf("r", "1").add(": "), end="")
             op = input()
             if op == "":
@@ -121,11 +122,36 @@ class Settings:
 
         if not os.path.exists(home_qxcode):
             os.makedirs(home_qxcode)
-        print("Pasta padrão para download de arquivos foi definida em: " + home_qxcode)
-        print("Você pode alterar, navegando até a a pasta desejada e executando o comando")
-        print("tko config --root .")
-        self.app.rootdir = home_qxcode
+        term_print("Pasta padrão para download de arquivos foi definida em: " + home_qxcode)
+        term_print(Report.centralize("", "-"))
+        self.app._rootdir = home_qxcode
         self.save_settings();
+        return self
+    
+    def check_rep_alias(self, rep_alias: str):
+        if rep_alias == "__ask":
+            last = self.app.get_last_rep()
+            if last != "" and last in self.reps:
+                rep_alias = last
+            else:
+                print("Escolha um dos repositórios para abrir:")
+                options: Dict[int, str] = {}
+                for i, alias in enumerate(self.reps, start=1):
+                    term_print(Sentence().addf("r", str(i)).add(f" - {alias}"))
+                    options[i] = alias
+                while True:
+                    try:
+                        print("Digite o número do repositório desejado: ", end="")
+                        index = int(input())
+                        if index in options:
+                            rep_alias = options[index]
+                            self.app.set_last_rep(rep_alias)
+                            self.save_settings()
+                            break
+                    except ValueError:
+                        pass
+                    print("Digite um número válido")
+        return rep_alias
     
     def save_settings(self):
         file = self.get_settings_file()

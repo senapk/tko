@@ -54,7 +54,7 @@ class Merge:
             for line in lines:
                 if  line.startswith("from __future__") or ("appdirs" in line) or line.startswith("from typing"):
                     pass
-                elif line.startswith("from ."):
+                elif line.startswith("from .") or line.startswith("from tko."):
                     line = line.replace("..", ".")
                     dependence_key = line.split(".")[-1].split(" ")[0]
                     if dependence_key not in entry.dependencies:

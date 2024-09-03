@@ -7,12 +7,12 @@ from .term_color import term_print
 from ..run.report import Report
 from ..play.images import compilling
 from .runner import Runner
-from ..run.solver import Solver
+from ..run.solver_builder import SolverBuilder
 import random
 
 class Free:
     @staticmethod
-    def free_run(solver: Solver, show_compilling:bool=True, to_clear: bool=True, wait_input:bool=True) -> bool:
+    def free_run(solver: SolverBuilder, show_compilling:bool=True, to_clear: bool=True, wait_input:bool=True) -> bool:
         if to_clear:
             Runner.clear_screen()
         if show_compilling:

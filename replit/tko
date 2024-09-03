@@ -4,57 +4,124 @@ from __future__ import annotations
 
 
 from typing import List, Dict, Tuple, Optional, Any, Callable, Union, Set
-import os
-import shutil
-import subprocess
 import argparse
 import sys
-import urllib.request
-import urllib.error
+import os
 import json
+import urllib
 import curses
 import random
-import enum
-import urllib
 import datetime
-import webbrowser
 import tempfile
+import subprocess
+import enum
+import urllib.request
+import urllib.error
+import shutil
 import re
 import math
 import configparser
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.23.4"
-
+__version__ = "0.23.7"
 
 class AppSettings:
     def __init__(self):
-        self.rootdir = ""
-        self.is_ascii = False
-        self.is_colored = True
-        self.diff_mode = "side"
-        self.side_size_min = 80
-        self.lang_default = ""
-        self.last_rep = ""
-        self.borders = False
-        self.editor = "code"
-        self.timeout = 1
+        self._rootdir = ""
+        self._is_ascii = False
+        self._is_colored = True
+        self._diff_mode = "side"
+        self._side_size_min = 80
+        self._lang_default = ""
+        self._last_rep = ""
+        self._borders = False
+        self._editor = "code"
+        self._timeout = 1
 
     def to_dict(self):
         return self.__dict__
     
     def from_dict(self, attr_dict):
         for key, value in attr_dict.items():
-            if hasattr(self, key):
+            if hasattr(self, key) and type(getattr(self, key)) == type(value):
                 setattr(self, key, value)
         return self
 
     def toggle_color(self):
-        self.is_colored = not self.is_colored
+        self._is_colored = not self._is_colored
     
     def toggle_borders(self):
-        self.borders = not self.borders
+        self._borders = not self._borders
 
+    def set_rootdir(self, rootdir: str):
+        self._rootdir = rootdir
+        return self
+
+    def set_ascii(self, is_ascii: bool):
+        self._is_ascii = is_ascii
+        return self
+
+    def set_colored(self, is_colored: bool):
+        self._is_colored = is_colored
+        return self
+
+    def set_diff_mode(self, diff_mode: str):
+        self._diff_mode = diff_mode
+        return self
+
+    def set_side_size_min(self, side_size_min: int):
+        self._side_size_min = side_size_min
+        return self
+
+    def set_lang_default(self, lang_default: str):
+        self._lang_default = lang_default
+        return self
+
+    def set_last_rep(self, last_rep: str):
+        self._last_rep = last_rep
+        return self
+
+    def set_borders(self, borders: bool):
+        self._borders = borders
+        return self
+
+    def set_editor(self, editor: str):
+        self._editor = editor
+        return self
+
+    def set_timeout(self, timeout: int):
+        self._timeout = timeout
+        return self
+
+    def get_rootdir(self) -> str:
+        return self._rootdir
+
+    def is_ascii(self) -> bool:
+        return self._is_ascii
+
+    def is_colored(self) -> bool:
+        return self._is_colored
+
+    def get_diff_mode(self) -> str:
+        return self._diff_mode
+
+    def get_side_size_min(self) -> int:
+        return self._side_size_min
+
+    def get_lang_default(self) -> str:
+        return self._lang_default
+
+    def get_last_rep(self) -> str:
+        return self._last_rep
+
+    def has_borders(self) -> bool:
+        return self._borders
+
+    def get_editor(self) -> str:
+        return self._editor
+
+    def get_timeout(self) -> int:
+        return self._timeout
 class Colors:
     def __init__(self):
         self.focused_item = "B"
@@ -2330,7 +2397,7 @@ class Border:
         self.app = app
 
     def has_borders(self):
-        return self.app.borders
+        return self.app._borders
 
     def border_round(self, color: str, data: str):
         return Sentence().add(self.roundL(color)).addf(color, data).add(self.roundR(color))
@@ -3499,149 +3566,6 @@ def term_print(ftext: Union[str, Sentence], **kwargs):
     else:
         print(term_colour(ftext), **kwargs)
 
-def singleton(class_):
-    instances = {}
-    def getinstance(*args, **kwargs):
-        if class_ not in instances:
-            instances[class_] = class_(*args, **kwargs)
-        return instances[class_]
-    return getinstance
-
-@singleton
-class Settings:
-    def __init__(self):
-        self.reps: Dict[str, RepSource] = {}
-        self.app = AppSettings()
-        self.colors = Colors()
-
-        self.settings_file = ""
-
-    def set_settings_file(self, path: str):
-        self.settings_file = path
-        return self
-
-    def get_settings_file(self) -> str:
-        if self.settings_file is None or self.settings_file == "":
-            self.package_name = "tko"
-            default_filename = "settings.json"
-            self.settings_file = os.path.abspath(default_filename)  # backup for replit, dont remove
-        
-        if not os.path.exists(self.settings_file):
-            os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
-        return self.settings_file
-
-    def reset(self):
-        self.reps = {}
-        self.reps["fup"] = RepSource(url = "https://github.com/qxcodefup/arcade/blob/master/Readme.md")
-        self.reps["ed"] = RepSource(url = "https://github.com/qxcodeed/arcade/blob/master/Readme.md")
-        self.reps["poo"] = RepSource(url = "https://github.com/qxcodepoo/arcade/blob/master/Readme.md")
-
-        # for key in self.reps:
-        #     repdata = self.get_rep_data(key)
-        #     repdata.save_data_to_json()
-
-        self.app = AppSettings()
-        self.colors = Colors()
-        return self
-
-    def __get_rep_file_path(self, course: str) -> str:
-        return os.path.join(self.app.rootdir, course, ".rep.json")   
-
-    def get_rep_source(self, course: str) -> RepSource:
-        if course in self.reps:
-            return self.reps[course]
-        raise Warning(f"Curso {course} não encontrado")
-
-    def get_rep_data(self, course: str) -> RepData:
-        cfg_file = self.__get_rep_file_path(course)
-        rep_data = RepData(cfg_file)
-        if os.path.exists(cfg_file):
-            return rep_data.load_data_from_json()
-        return rep_data.load_defaults()
-  
-    # def to_dict(self) -> Dict[str, Any]:
-    #     return {
-    #         "reps": {k: v.to_dict() for k, v in self.reps.items()},
-    #         "geral": self.app.to_dict()
-    #     }
-    
-    def load_settings(self):
-        try:
-            settings_file = self.get_settings_file() # assure right loading if value == ""
-            with open(settings_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                self.reps = {k: RepSource().from_dict(v) for k, v in data.get("reps", {}).items()}
-                self.app = AppSettings().from_dict(data.get("geral", {}))
-                self.colors = Colors().from_dict(data.get("colors", {}))
-        except (FileNotFoundError, json.decoder.JSONDecodeError) as _e:
-            self.reset()
-            self.save_settings()
-        return self
-
-    # def from_dict(self, data: Dict[str, Any]):
-    #     self.reps = {k: RepSource().from_dict(v) for k, v in data.get("reps", {}).items()}
-    #     self.app = AppSettings().from_dict(data.get("geral", {}))
-    #     return self
-
-    def check_rootdir(self) -> None:
-        if self.app.rootdir != "":
-            return
-        term_print(Sentence().add("Pasta padrão para download de arquivos ").addf("r", "precisa").add(" ser definida."))
-        term_print(Sentence().add("Escolha ").addf("r", "uma").add(" para continuar:"))
-        here_cwd = os.getcwd()
-        qxcode = os.path.join(os.path.expanduser("~"), "qxcode")
-
-        while True:
-            term_print(Sentence().addf("r", "1 - ").add(here_cwd))
-            term_print(Sentence().addf("r", "2 - ").add(qxcode))
-            term_print(Sentence().addf("r", "3 - ").add("Outra pasta"))
-            term_print(Sentence().add("Default ").addf("r", "1").add(": "), end="")
-            op = input()
-            if op == "":
-                op = "1"
-            if op == "1":
-                home_qxcode = here_cwd
-                break
-            if op == "2":
-                home_qxcode = qxcode
-                break
-            if op == "3":
-                term_print(Sentence().addf("y", "Navegue até o diretório desejado e execute o tko novamente."))
-                exit(1)
-
-        if not os.path.exists(home_qxcode):
-            os.makedirs(home_qxcode)
-        print("Pasta padrão para download de arquivos foi definida em: " + home_qxcode)
-        print("Você pode alterar, navegando até a a pasta desejada e executando o comando")
-        print("tko config --root .")
-        self.app.rootdir = home_qxcode
-        self.save_settings();
-    
-    def save_settings(self):
-        file = self.get_settings_file()
-        value = {
-            "reps": {k: v.to_dict() for k, v in self.reps.items()},
-            "geral": self.app.to_dict(),
-            "colors": self.colors.to_dict()
-        }
-        with open(file, "w", encoding="utf-8") as f:
-            json.dump(value, f, indent=4)
-        return self
-
-    def __str__(self):
-        output = ["Repositories:"]
-        maxlen = max([len(key) for key in self.reps])
-        for key in self.reps:
-            prefix = f"- {key.ljust(maxlen)}"
-            if self.reps[key].file and self.reps[key].url:
-                output.append(f"{prefix} : dual   : {self.reps[key].url} ; {self.reps[key].file}")
-            elif self.reps[key].url:
-                output.append(f"{prefix} : remote : {self.reps[key].url}")
-            else:
-                output.append(f"{prefix} : local  : {self.reps[key].file}")
-        return "\n".join(output)
-
-
 
 class Report:
     __term_width: Optional[int] = None
@@ -3694,6 +3618,251 @@ class Report:
         filler = Token(sep.text * (int(tw / 2 - size / 2)), sep.fmt)
         return Sentence() + left_border + pad + filler + ftext + filler + right_border
 
+
+def singleton(class_):
+    instances = {}
+    def getinstance(*args, **kwargs):
+        if class_ not in instances:
+            instances[class_] = class_(*args, **kwargs)
+        return instances[class_]
+    return getinstance
+
+@singleton
+class Settings:
+    def __init__(self):
+        self.reps: Dict[str, RepSource] = {}
+        self.app = AppSettings()
+        self.colors = Colors()
+
+        self.settings_file = ""
+
+    def set_settings_file(self, path: str):
+        self.settings_file = path
+        return self
+
+    def get_settings_file(self) -> str:
+        if self.settings_file is None or self.settings_file == "":
+            self.package_name = "tko"
+            default_filename = "settings.json"
+            self.settings_file = os.path.abspath(default_filename)  # backup for replit, dont remove
+        
+        if not os.path.exists(self.settings_file):
+            os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
+        return self.settings_file
+
+    def reset(self):
+        self.reps = {}
+        self.reps["fup"] = RepSource(url = "https://github.com/qxcodefup/arcade/blob/master/Readme.md")
+        self.reps["ed"] = RepSource(url = "https://github.com/qxcodeed/arcade/blob/master/Readme.md")
+        self.reps["poo"] = RepSource(url = "https://github.com/qxcodepoo/arcade/blob/master/Readme.md")
+
+        # for key in self.reps:
+        #     repdata = self.get_rep_data(key)
+        #     repdata.save_data_to_json()
+
+        self.app = AppSettings()
+        self.colors = Colors()
+        return self
+
+    def __get_rep_file_path(self, course: str) -> str:
+        return os.path.join(self.app._rootdir, course, ".rep.json")   
+
+    def get_rep_source(self, course: str) -> RepSource:
+        if course in self.reps:
+            return self.reps[course]
+        raise Warning(f"Curso {course} não encontrado")
+
+    def get_rep_data(self, course: str) -> RepData:
+        cfg_file = self.__get_rep_file_path(course)
+        rep_data = RepData(cfg_file)
+        if os.path.exists(cfg_file):
+            return rep_data.load_data_from_json()
+        return rep_data.load_defaults()
+  
+    # def to_dict(self) -> Dict[str, Any]:
+    #     return {
+    #         "reps": {k: v.to_dict() for k, v in self.reps.items()},
+    #         "geral": self.app.to_dict()
+    #     }
+    
+    def load_settings(self):
+        try:
+            settings_file = self.get_settings_file() # assure right loading if value == ""
+            with open(settings_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                self.reps = {k: RepSource().from_dict(v) for k, v in data.get("reps", {}).items()}
+                self.app = AppSettings().from_dict(data.get("geral", {}))
+                self.colors = Colors().from_dict(data.get("colors", {}))
+        except (FileNotFoundError, json.decoder.JSONDecodeError) as _e:
+            self.reset()
+            self.save_settings()
+        return self
+
+    # def from_dict(self, data: Dict[str, Any]):
+    #     self.reps = {k: RepSource().from_dict(v) for k, v in data.get("reps", {}).items()}
+    #     self.app = AppSettings().from_dict(data.get("geral", {}))
+    #     return self
+
+    def check_rootdir(self):
+        if self.app._rootdir != "":
+            return
+        term_print(Sentence().add("Pasta padrão para download de arquivos ").addf("r", "precisa").add(" ser definida."))
+        here_cwd = os.getcwd()
+        qxcode = os.path.join(os.path.expanduser("~"), "qxcode")
+
+        while True:
+            term_print(Sentence().addf("r", "1").add(" - ").add(here_cwd))
+            term_print(Sentence().addf("r", "2").add(" - ").add(qxcode))
+            term_print(Sentence().addf("r", "3").add(" - ").add("Outra pasta"))
+            term_print(Sentence().add("Default ").addf("r", "1").add(": "), end="")
+            op = input()
+            if op == "":
+                op = "1"
+            if op == "1":
+                home_qxcode = here_cwd
+                break
+            if op == "2":
+                home_qxcode = qxcode
+                break
+            if op == "3":
+                term_print(Sentence().addf("y", "Navegue até o diretório desejado e execute o tko novamente."))
+                exit(1)
+
+        if not os.path.exists(home_qxcode):
+            os.makedirs(home_qxcode)
+        term_print("Pasta padrão para download de arquivos foi definida em: " + home_qxcode)
+        term_print(Report.centralize("", "-"))
+        self.app._rootdir = home_qxcode
+        self.save_settings();
+        return self
+    
+    def check_rep_alias(self, rep_alias: str):
+        if rep_alias == "__ask":
+            last = self.app.get_last_rep()
+            if last != "" and last in self.reps:
+                rep_alias = last
+            else:
+                print("Escolha um dos repositórios para abrir:")
+                options: Dict[int, str] = {}
+                for i, alias in enumerate(self.reps, start=1):
+                    term_print(Sentence().addf("r", str(i)).add(f" - {alias}"))
+                    options[i] = alias
+                while True:
+                    try:
+                        print("Digite o número do repositório desejado: ", end="")
+                        index = int(input())
+                        if index in options:
+                            rep_alias = options[index]
+                            self.app.set_last_rep(rep_alias)
+                            self.save_settings()
+                            break
+                    except ValueError:
+                        pass
+                    print("Digite um número válido")
+        return rep_alias
+    
+    def save_settings(self):
+        file = self.get_settings_file()
+        value = {
+            "reps": {k: v.to_dict() for k, v in self.reps.items()},
+            "geral": self.app.to_dict(),
+            "colors": self.colors.to_dict()
+        }
+        with open(file, "w", encoding="utf-8") as f:
+            json.dump(value, f, indent=4)
+        return self
+
+    def __str__(self):
+        output = ["Repositories:"]
+        maxlen = max([len(key) for key in self.reps])
+        for key in self.reps:
+            prefix = f"- {key.ljust(maxlen)}"
+            if self.reps[key].file and self.reps[key].url:
+                output.append(f"{prefix} : dual   : {self.reps[key].url} ; {self.reps[key].file}")
+            elif self.reps[key].url:
+                output.append(f"{prefix} : remote : {self.reps[key].url}")
+            else:
+                output.append(f"{prefix} : local  : {self.reps[key].file}")
+        return "\n".join(output)
+
+
+
+class ConfigParams:
+    def __init__(self):
+        self.ascii = False
+        self.unicode = False
+        self.mono = False
+        self.color = False
+        self.side = False
+        self.down = False
+        self.lang = None
+        self.ask = False
+        self.root = None
+        self.editor = None
+
+    def __str__(self):
+        return f"ascii: {self.ascii}, unicode: {self.unicode}, mono: {self.mono}, color: {self.color}, side: {self.side}, down: {self.down}, lang: {self.lang}, ask: {self.ask}, root: {self.root}, editor: {self.editor}"
+
+class CmdConfig:
+        
+    @staticmethod
+    def execute(settings: Settings, param: ConfigParams):
+        action = False
+
+        if param.ascii:
+            action = True
+            settings.app.set_ascii(True)
+            print("Encoding mode now is: ASCII")
+        if param.unicode:
+            action = True
+            settings.app.set_ascii(False)
+            print("Encoding mode now is: UNICODE")
+        if param.mono:
+            action = True
+            settings.app.set_colored(False)
+            print("Color mode now is: MONOCHROMATIC")
+        if param.color:
+            action = True
+            settings.app.set_colored(True)
+            print("Color mode now is: COLORED")
+        if param.side:
+            action = True
+            settings.app._diff_mode = "side"
+            print("Diff mode now is: SIDE_BY_SIDE")
+        if param.down:
+            action = True
+            settings.app._diff_mode = "down"
+            print("Diff mode now is: UP_DOWN")
+        if param.lang:
+            action = True
+            settings.app._lang_default = param.lang
+            print("Default language extension now is:", param.lang)
+        if param.ask:
+            action = True
+            settings.app._lang_default = ""
+            print("Language extension will be asked always.")
+
+        if param.root:
+            action = True
+            path = os.path.abspath(param.root)
+            settings.app._rootdir = path
+            print("Root directory now is: " + path)
+        
+        if param.editor:
+            action = True
+            settings.app._editor = param.editor
+            print(f"Novo comando para abrir arquivos de código: {param.editor}")
+
+        if not action:
+            action = True
+            print(settings.get_settings_file())
+            print("Diff mode: {}".format("DOWN" if settings.app.get_diff_mode() else "SIDE"))
+            print("Encoding mode: {}".format("ASCII" if settings.app.is_ascii() else "UNICODE"))
+            print("Color mode: {}".format("MONOCHROMATIC" if not settings.app.is_colored() else "COLORED"))
+            value = settings.app._lang_default
+            print("Default language extension: {}".format("Always ask" if value == "" else value))
+
+        settings.save_settings()
 
 
 class Diff:
@@ -4033,11 +4202,9 @@ class CompileError(Exception):
     def __str__(self):
         return self.message
 
-
-
-class Solver:
+class SolverBuilder:
     def __init__(self, solver_list: List[str]):
-        self.path_list: List[str] = [os.path.normpath(Solver.__add_dot_bar(path)) for path in solver_list]
+        self.path_list: List[str] = [os.path.normpath(SolverBuilder.__add_dot_bar(path)) for path in solver_list]
         
         self.temp_dir = tempfile.mkdtemp()
         self.error_msg: str = ""
@@ -4190,14 +4357,14 @@ class Solver:
     
 
 
-class Execution:
+class UnitRunner:
 
     def __init__(self):
         pass
 
     # run a unit using a solver and return if the result is correct
     @staticmethod
-    def run_unit(solver: Solver, unit: Unit, timeout: Optional[float]=None) -> ExecutionResult:
+    def run_unit(solver: SolverBuilder, unit: Unit, timeout: Optional[float]=None) -> ExecutionResult:
         if solver.compile_error:
             unit.user = solver.error_msg
             return ExecutionResult.COMPILATION_ERROR
@@ -4217,7 +4384,7 @@ class Wdir:
     def __init__(self):
         self.__autoload = False
         self.__autoload_folder = ""
-        self.__solver: Optional[Solver] = None
+        self.__solver: Optional[SolverBuilder] = None
         self.__source_list: List[str] = []
         self.__pack_list: List[List[Unit]] = []
         self.__unit_list: List[Unit] = []
@@ -4230,7 +4397,7 @@ class Wdir:
     def has_tests(self) -> bool:
         return len(self.__unit_list) != 0
 
-    def get_solver(self) -> Solver:
+    def get_solver(self) -> SolverBuilder:
         if self.__solver is None:
             raise Warning("fail: Não foi encontrado arquivo de código")
         return self.__solver
@@ -4263,7 +4430,7 @@ class Wdir:
 
     def set_solver(self, solver_list: List[str]):
         if len(solver_list) > 0:
-            self.__solver = Solver(solver_list)
+            self.__solver = SolverBuilder(solver_list)
         return self
 
     def set_sources(self, source_list: List[str]):
@@ -4318,7 +4485,7 @@ class Wdir:
             return self
         if self.__solver is not None:
             print("fail: if using --cmd, don't pass source files to target")
-        self.__solver = Solver([])
+        self.__solver = SolverBuilder([])
         self.__solver.set_executable(exec_cmd)
         return self
 
@@ -4434,9 +4601,29 @@ class Wdir:
         return Sentence().add(__solvers).add(" ").add(__sources)
 
 
+
+class CmdBuild:
+
+    def __init__(self, target_out: str, source_list: List[str], param: Param.Manip, to_force: bool):
+        self.target_out = target_out
+        self.source_list = source_list
+        self.param = param
+        self.to_force = to_force
+
+    def execute(self):
+        try:
+            wdir = Wdir().set_sources(self.source_list).build()
+            wdir.manipulate(self.param)
+            Writer.save_target(self.target_out, wdir.get_unit_list(), self.to_force)
+        except FileNotFoundError as e:
+            print(str(e))
+            return False
+        return True
+
+
 class Free:
     @staticmethod
-    def free_run(solver: Solver, show_compilling:bool=True, to_clear: bool=True, wait_input:bool=True) -> bool:
+    def free_run(solver: SolverBuilder, show_compilling:bool=True, to_clear: bool=True, wait_input:bool=True) -> bool:
         if to_clear:
             Runner.clear_screen()
         if show_compilling:
@@ -4817,239 +5004,6 @@ class Game:
 
 
 
-class Down:
-    fnprint: Callable[[str], None] = print
-
-    ts_draft = r"""
-let _cin_ : string[] = [];
-try { _cin_ = require("fs").readFileSync(0).toString().split(/\r?\n/); } catch(e){}
-let input = () : string => _cin_.length === 0 ? "" : _cin_.shift()!;
-let write = (text: any, end:string="\n")=> process.stdout.write("" + text + end);
-export {};
-
-write("qxcode");
-"""[1:]
-
-    js_draft = r"""
-let __lines = require("fs").readFileSync(0).toString().split("\n");
-let input = () => __lines.length === 0 ? "" : __lines.shift();
-let write = (text, end="\n") => process.stdout.write("" + text + end);
-
-write("qxcode");
-"""[1:]
-
-    c_draft = r"""
-#include <stdio.h>
-
-int main() {
-    puts("qxcode");
-    return 0;
-}
-
-"""[1:]
-    
-    cpp_draft = r"""
-#include <iostream>
-
-int main() {
-    std::cout << "qxcode\n";
-}
-
-"""[1:]
-    
-    java_draft = r"""
-public class draft {
-    public static void main(String args[]) {
-        System.out.println("qxcode");
-    }
-}
-
-"""[1:]
-
-    go_draft = (
-        r"package main""\n"
-        r'import "fmt"'"\n"
-        r"func main() {""\n"
-        r'    fmt.Println("qxcode")''\n'
-        r"}""\n"
-    )
-
-
-    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft, 'java': java_draft, 'go': go_draft}
-    # def __init__(self):
-    #     self.drafts = {}
-    #     self.drafts['c'] = Down.c_draft
-    #     self.drafts['cpp'] = Down.cpp_draft
-    #     self.drafts['ts'] = Down.ts_draft
-    #     self.drafts['js'] = Down.js_draft
-
-    # @staticmethod
-    # def update():
-    #     if os.path.isfile(".info"):
-    #         data = open(".info", "r").read().split("\n")[0]
-    #         data = data.split(" ")
-    #         discp = data[0]
-    #         label = data[1]
-    #         ext = data[2]
-    #         Down.entry_unpack(".", discp, label, ext)
-    #     else:
-    #         print("No .info file found, skipping update...")
-
-    @staticmethod
-    def __create_file(content, path, label=""):
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(content)
-        Down.fnprint("  " + path + " " + label)
-
-    @staticmethod
-    def __unpack_json(loaded, destiny, lang: str):
-        # extracting all files to folder
-        for entry in loaded["upload"]:
-            if entry["name"] == "vpl_evaluate.cases":
-                Down.__compare_and_save(entry["contents"], os.path.join(destiny, "cases.tio"))
-
-        # for entry in loaded["keep"]:
-        #    Down.compare_and_save(entry["contents"], os.path.join(destiny, entry["name"]))
-
-        # for entry in loaded["required"]:
-        #    path = os.path.join(destiny, entry["name"])
-        #    Down.compare_and_save(entry["contents"], path)
-
-        if "draft" in loaded:
-            if lang in loaded["draft"]:
-                for file in loaded["draft"][lang]:
-                    path = os.path.join(destiny, file["name"])
-                    Down.__create_file(file["contents"], path, "(Draft)")
-
-    @staticmethod
-    def __compare_and_save(content, path):
-        if not os.path.exists(path):
-            with open(path, "w", encoding="utf-8") as f:
-                f.write(content.encode("utf-8").decode("utf-8"))
-            Down.fnprint("  " + path + " (Novo)")
-        else:
-            if open(path, encoding="utf-8").read() != content:
-                Down.fnprint(path + " (Atualizado)")
-                with open(path, "w", encoding="utf-8") as f:
-                    f.write(content)
-            else:
-                Down.fnprint("  " + path + " (Inalterado)")
-
-    @staticmethod
-    def __down_problem_def(destiny, cache_url) -> Tuple[str, str]:
-        # downloading Readme
-        readme = os.path.join(destiny, "Readme.md")
-        [tempfile, __content] = urllib.request.urlretrieve(cache_url + "Readme.md")
-
-        # content = ""
-        try:
-            content = open(tempfile, encoding="utf-8").read()
-        except FileNotFoundError:
-            content = open(tempfile, encoding="utf-8").read()
-
-        Down.__compare_and_save(content, readme)
-
-        # downloading mapi
-        mapi = os.path.join(destiny, "mapi.json")
-        urllib.request.urlretrieve(cache_url + "mapi.json", mapi)
-        return readme, mapi
-
-    @staticmethod
-    def __create_problem_folder(rootdir: str, activity: str) -> str:
-        # create dir
-        destiny: str = os.path.join(rootdir, activity)
-        if not os.path.exists(destiny):
-            os.makedirs(destiny, exist_ok=True)
-        else:
-            Down.fnprint("  Pasta do problema "+ destiny + " encontrada, juntando conteúdo.")
-
-        return destiny
-
-    @staticmethod
-    def download_problem(course: str, activity: str, language: Optional[str], fnprint: Callable[[str], None], game: Optional[Game] = None) -> bool:
-        Down.fnprint = fnprint
-        
-        settings = Settings()
-        rep_dir = os.path.join(settings.app.rootdir, course)
-        rep_source = settings.get_rep_source(course)
-        rep_data = settings.get_rep_data(course)
-        if game is None:
-            try:
-                file = rep_source.get_file(rep_dir)
-            except urllib.error.HTTPError:
-                Down.fnprint("falha: Verifique sua internet")
-            game = Game(file)
-        item = game.get_task(activity)
-        if not item.link.startswith("http"):
-            Down.fnprint("falha: link para atividade não é um link remoto")
-            return False
-        cfg = RemoteCfg(item.link)
-        cache_url = os.path.dirname(cfg.get_raw_url()) + "/.cache/"
-
-        destiny = Down.__create_problem_folder(rep_dir, activity)
-        destiny = os.path.abspath(destiny)
-        try:
-            [_readme_path, mapi_path] = Down.__down_problem_def(destiny, cache_url)
-        except urllib.error.HTTPError:
-            Down.fnprint("  falha: atividade não encontrada no curso")
-            # verifi if destiny folder is empty and remove it
-            if len(os.listdir(destiny)) == 0:
-                os.rmdir(destiny)
-            return False
-        except urllib.error.URLError:
-            Down.fnprint("  falha: não consegui baixar a atividade, verifique sua internet")
-            return False
-
-
-        with open(mapi_path, encoding="utf-8") as f:
-            loaded_json = json.load(f)
-        os.remove(mapi_path)
-
-        language_def = rep_data.get_lang()
-        if language_def == "":
-            language_def = Settings().app.lang_default
-        ask_ext = False
-        if language is None:
-            if language_def != "":
-                language = language_def
-            else:
-                print("  Escolha uma extensão para os rascunhos: [c, cpp, py, ts, js, java]: ", end="")
-                language = input()
-                ask_ext = True
-
-        Down.__unpack_json(loaded_json, destiny, language)
-        Down.__download_drafts(loaded_json, destiny, language, cache_url, ask_ext)
-        return True
-
-    @staticmethod
-    def __download_drafts(loaded_json, destiny: str, language, cache_url, ask_ext):
-        if len(loaded_json["required"]) == 1:  # you already have the students file
-            return
-
-        if "draft" in loaded_json and language in loaded_json["draft"]:
-            pass
-        else:
-            try:
-                draft_path = os.path.join(destiny, "draft." + language)
-                urllib.request.urlretrieve(cache_url + "draft." + language, draft_path)
-                Down.fnprint("  " + draft_path + " (Rascunho) Renomeie antes de modificar")
-
-            except urllib.error.HTTPError:  # draft not found
-                filename = "draft."
-                draft_path = os.path.join(destiny, filename + language)
-                if not os.path.exists(draft_path):
-                    with open(draft_path, "w", encoding="utf-8") as f:
-                        if language in Down.drafts:
-                            f.write(Down.drafts[language])
-                        else:
-                            f.write("")
-                    Down.fnprint("  " + draft_path + " (Vazio)")
-
-        if ask_ext:
-            print("\nVocê pode escolher a extensão padrão com o comando\n$ tko config -l <extension>")
-
-
-
 
 
 class Entry:
@@ -5136,11 +5090,11 @@ class TaskTree:
 
     def str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool, min_value=1) -> Sentence:
         # downloadable_in_focus = False
-        rootdir = self.app.rootdir
+        rootdir = self.app._rootdir
         down_symbol = Token(" ")
         in_focus = focus_color != ""
         down_symbol = symbols.cant_download
-        rep_dir = os.path.join(self.app.rootdir, self.rep_alias)
+        rep_dir = os.path.join(self.app._rootdir, self.rep_alias)
         if t.is_downloadable() and rootdir != "":
             if t.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
                 down_symbol = symbols.downloaded
@@ -5674,10 +5628,10 @@ class Search:
 
 
 class Opener:
-    def __init__(self, tree: TaskTree, fman: FloatingManager, geral: AppSettings, rep_data: RepData, rep_alias: str):
+    def __init__(self, tree: TaskTree, fman: FloatingManager, app: AppSettings, rep_data: RepData, rep_alias: str):
         self.tree = tree
         self.fman = fman
-        self.app = geral
+        self.app = app
         self.rep = rep_data
         self.rep_alias = rep_alias
 
@@ -5688,15 +5642,15 @@ class Opener:
     def get_task_readme_path(self) -> str:
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
-            rootdir = self.app.rootdir
+            rootdir = self.app._rootdir
             if rootdir != "":
-                path = os.path.join(self.app.rootdir, self.rep_alias, obj.key, "Readme.md")
+                path = os.path.join(self.app._rootdir, self.rep_alias, obj.key, "Readme.md")
                 if os.path.isfile(path):
                     return path
         return ""
 
     def open_files(self, files_to_open: List[str]):
-        cmd = self.app.editor
+        cmd = self.app._editor
         folder = os.path.dirname(os.path.abspath(files_to_open[0]));
         aviso = (Floating("v>")
                 .warning()
@@ -5766,12 +5720,14 @@ class Opener:
                 self.open_files(files_to_open)
 
 
-class Mode(enum.Enum):
+
+
+
+class CDiffMode(enum.Enum):
     intro = 0
     select = 1
     running = 2
     finished = 3
-
 
 class DActions:
     sair   = "  Sair"
@@ -5813,7 +5769,7 @@ class CDiff:
         self.init = 1000   # index of first line to show
         self.length = 1  # length of diff
         self.space = 0  # dy space for draw
-        self.mode: Mode = Mode.intro
+        self.mode: CDiffMode = CDiffMode.intro
         self.style = Border(Settings().app)
 
         self.locked_index: bool = False
@@ -5823,7 +5779,7 @@ class CDiff:
         self.resumes: List[str] = []
 
         self.settings = Settings()
-        self.colors = self.settings.app.is_colored
+        self.colors = self.settings.app.is_colored()
         self.first_loop = True
         self.fman = FloatingManager()
         self.first_run = False
@@ -5841,11 +5797,11 @@ class CDiff:
 
     def set_autorun(self, value:bool):
         if value:
-            self.mode = Mode.running
+            self.mode = CDiffMode.running
         return self
 
     def save_settings(self):
-        self.settings.app.diff_mode = "down" if self.param.is_up_down else "side"
+        self.settings.app._diff_mode = "down" if self.param.is_up_down else "side"
         self.settings.save_settings()
         return self
     
@@ -5967,13 +5923,13 @@ class CDiff:
 
     def process_one(self):
 
-        if self.mode != Mode.running:
+        if self.mode != CDiffMode.running:
             return
 
         solver = self.wdir.get_solver()
 
         if solver.compile_error:
-            self.mode = Mode.finished
+            self.mode = CDiffMode.finished
             while len(self.unit_list) > 0:
                 index = len(self.results)
                 self.unit_list = self.unit_list[1:]
@@ -5981,23 +5937,23 @@ class CDiff:
             return
         
         if self.locked_index:
-            self.mode = Mode.finished
+            self.mode = CDiffMode.finished
             unit = self.get_focused_unit()
-            unit.result = Execution.run_unit(solver, unit, self.settings.app.timeout)
+            unit.result = UnitRunner.run_unit(solver, unit, self.settings.app._timeout)
             return
 
         if len(self.unit_list) > 0:
             index = len(self.results)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
-            unit.result = Execution.run_unit(solver, unit, self.settings.app.timeout)
+            unit.result = UnitRunner.run_unit(solver, unit, self.settings.app._timeout)
             self.results.append((unit.result, index))
             success = [result for result, _ in self.results if result == ExecutionResult.SUCCESS]
             self.task.test_progress = (len(success) * 100) // len(self.wdir.get_unit_list())
             self.focused_index = index
 
         if len(self.unit_list) == 0:
-            self.mode = Mode.finished
+            self.mode = CDiffMode.finished
             self.focused_index = 0
 
 
@@ -6035,7 +5991,7 @@ class CDiff:
         done = len(self.results)
         full = len(self.wdir.get_unit_list())
         count_missing = Sentence().add(self.style.border_round(running_color, f"({done}/{full})"))
-        if self.mode == Mode.running:
+        if self.mode == CDiffMode.running:
             if  self.locked_index:
                 solvers = Sentence().add(self.style.border_round("R", "Executando atividade travada"))
             else:
@@ -6073,7 +6029,7 @@ class CDiff:
             i += 1
 
         i = 0
-        show_focused_index = not self.wdir.get_solver().compile_error and not self.mode == Mode.intro and not self.is_all_right()
+        show_focused_index = not self.wdir.get_solver().compile_error and not self.mode == CDiffMode.intro and not self.is_all_right()
         for unit_result, index in done_list + todo_list:
             foco = i == self.focused_index
             token = self.get_token(unit_result)
@@ -6095,7 +6051,7 @@ class CDiff:
         info = Sentence()
         if self.wdir.get_solver().compile_error:
             info = self.style.border_round("R", "Erro de compilação")
-        elif value is not None and not self.is_all_right() and not self.mode == Mode.intro:
+        elif value is not None and not self.is_all_right() and not self.mode == CDiffMode.intro:
             info = value.str(pad = False)
             if self.locked_index:
                 info = self.style.border_round(focused_unit_color, info.get_text())
@@ -6121,7 +6077,7 @@ class CDiff:
         if Flags.others.is_true():
             cmds.append(self.style.border_round("M", f"{DActions.rodar}[{DKeys.rodar}]"))
             # diff
-            text = f"VER━╾h[{DKeys.diff}]" if self.settings.app.diff_mode == "side" else f"v╼━HOR[{DKeys.diff}]"
+            text = f"VER━╾h[{DKeys.diff}]" if self.settings.app._diff_mode == "side" else f"v╼━HOR[{DKeys.diff}]"
             cmds.append(self.style.border_round("M", text))
         
         cmds.append(self.style.border_round("C", f"{DActions.sair}[{DKeys.sair}]"))
@@ -6134,7 +6090,7 @@ class CDiff:
         if Flags.others.is_true():
             # travar
 
-            value = str(self.settings.app.timeout)
+            value = str(self.settings.app._timeout)
             if value == "0":
                 value = "∞"
             cmds.append(
@@ -6169,7 +6125,7 @@ class CDiff:
     def is_all_right(self):
         if self.locked_index or len(self.results) == 0:
             return False
-        if not self.mode == Mode.finished:
+        if not self.mode == CDiffMode.finished:
             return False
         for result, _ in self.results:
             if result != ExecutionResult.SUCCESS:
@@ -6245,7 +6201,7 @@ class CDiff:
                 self.first_loop = False
                 self.load_autoload_warning()
             Fmt.clear()
-            if self.mode == Mode.running:
+            if self.mode == CDiffMode.running:
                 if self.wdir.get_solver().not_compiled():
                     self.draw_top_bar()
                     self.show_bottom_line()
@@ -6255,7 +6211,7 @@ class CDiff:
                         self.wdir.get_solver().prepare_exec()
                     except CompileError as e:
                         self.fman.add_input(Floating("v>").error().put_text(e.message))
-                        self.mode = Mode.finished
+                        self.mode = CDiffMode.finished
                     Fmt.clear()
                     self.draw_top_bar()
                     self.show_bottom_line()
@@ -6263,7 +6219,7 @@ class CDiff:
                 self.process_one()
             self.draw_top_bar()
 
-            if self.mode == Mode.intro:
+            if self.mode == CDiffMode.intro:
                 self.print_centered_image(random_get(intro, self.get_folder()), "y")
             else:
                 self.draw_main()
@@ -6273,7 +6229,7 @@ class CDiff:
             if self.fman.has_floating():
                 self.fman.draw_warnings()
 
-            if self.mode == Mode.running:
+            if self.mode == CDiffMode.running:
                 Fmt.refresh()
                 continue
 
@@ -6287,14 +6243,14 @@ class CDiff:
                 return fn_exec
 
     def run_exec_mode(self):
-        self.mode = Mode.running
+        self.mode = CDiffMode.running
         if self.wdir.is_autoload():
             self.wdir.autoload()
             self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index])
         return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True)
 
     def run_test_mode(self):
-        self.mode = Mode.running
+        self.mode = CDiffMode.running
         if self.wdir.is_autoload():
             self.wdir.autoload() # reload sources and solvers
         
@@ -6322,8 +6278,8 @@ class CDiff:
                     )
 
     def go_left(self):
-        if self.mode == Mode.intro:
-            self.mode = Mode.select
+        if self.mode == CDiffMode.intro:
+            self.mode = CDiffMode.select
         if self.locked_index:
             self.fman.add_input(Floating("v>").warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(DKeys.travar)))
             return
@@ -6332,8 +6288,8 @@ class CDiff:
             self.init = 1000
 
     def go_right(self):
-        if self.mode == Mode.intro:
-            self.mode = Mode.select
+        if self.mode == CDiffMode.intro:
+            self.mode = CDiffMode.select
             self.focused_index = 0
             return
         if self.locked_index:
@@ -6344,13 +6300,13 @@ class CDiff:
             self.init = 1000
 
     def go_down(self):
-        if self.mode == Mode.intro:
-            self.mode = Mode.select
+        if self.mode == CDiffMode.intro:
+            self.mode = CDiffMode.select
         self.init += 1
 
     def go_up(self):
-        if self.mode == Mode.intro:
-            self.mode = Mode.select
+        if self.mode == CDiffMode.intro:
+            self.mode = CDiffMode.select
         self.init = max(0, self.init - 1)
 
     def change_main(self):
@@ -6366,8 +6322,8 @@ class CDiff:
 
     def lock_unit(self):
         self.locked_index = not self.locked_index
-        if self.mode == Mode.intro:
-            self.mode = Mode.select
+        if self.mode == CDiffMode.intro:
+            self.mode = CDiffMode.select
         if self.locked_index:
             for i in range(len(self.results)):
                 _, index = self.results[i]
@@ -6380,14 +6336,14 @@ class CDiff:
             )
 
     def change_limit(self):
-            valor = self.settings.app.timeout
+            valor = self.settings.app._timeout
             if valor == 0:
                 valor = 1
             else:
                 valor *= 2
             if valor >= 5:
                 valor = 0
-            self.settings.app.timeout = valor
+            self.settings.app._timeout = valor
             self.save_settings()
             nome = "∞" if valor == 0 else str(valor)
             self.fman.add_input(
@@ -6445,9 +6401,7 @@ class CDiff:
 
 
 
-
 class FilterMode:
-
     @staticmethod
     def deep_copy_and_change_dir():
         # path to ~/.tko_filter
@@ -6462,7 +6416,6 @@ class FilterMode:
         subprocess.run(["filter_code", "-rf", ".", "-o", filter_path])
 
         os.chdir(filter_path)
-
 
 class Run:
 
@@ -6556,7 +6509,7 @@ class Run:
             solver = self.wdir.get_solver()
             if solver is None:
                 raise Warning("Solver vazio")
-            unit.result = Execution.run_unit(solver, unit)
+            unit.result = UnitRunner.run_unit(solver, unit)
             term_print(Sentence() + ExecutionResult.get_symbol(unit.result), end="")
         term_print("]")
 
@@ -6659,25 +6612,6 @@ class Run:
             term_print(Report.centralize(" Testando o código com os casos de teste ", "═"))
             self.__print_top_line()
             self.__print_diff()
-
-
-class Build:
-
-    def __init__(self, target_out: str, source_list: List[str], param: Param.Manip, to_force: bool):
-        self.target_out = target_out
-        self.source_list = source_list
-        self.param = param
-        self.to_force = to_force
-
-    def execute(self):
-        try:
-            wdir = Wdir().set_sources(self.source_list).build()
-            wdir.manipulate(self.param)
-            Writer.save_target(self.target_out, wdir.get_unit_list(), self.to_force)
-        except FileNotFoundError as e:
-            print(str(e))
-            return False
-        return True
 
 
 
@@ -6850,6 +6784,51 @@ class Graph:
         #     print("Formato de imagem não suportado")
 
 
+
+class CmdRep:
+    @staticmethod
+    def list(_args):
+        settings = Settings()
+        print(f"SettingsFile\n- {settings.settings_file}")
+        print(str(settings))
+
+    @staticmethod
+    def add(args):
+        settings = Settings()
+        rep = RepSource()
+        if args.url:
+            rep.set_url(args.url)
+        elif args.file:
+            rep.set_file(args.file)
+        settings.reps[args.alias] = rep
+        settings.save_settings()
+
+    @staticmethod
+    def rm(args):
+        sp = Settings()
+        if args.alias in sp.reps:
+            sp.reps.pop(args.alias)
+            sp.save_settings()
+        else:
+            print("Repository not found.")
+
+    @staticmethod
+    def reset(_):
+        sp = Settings().reset()
+        print(sp.settings_file)
+        print(sp.app._rootdir)
+        sp.save_settings()
+
+    @staticmethod
+    def graph(args):
+        settings = Settings()
+        rep_source:RepSource = settings.get_rep_source(args.alias)
+        file = rep_source.get_file(os.path.join(settings.app._rootdir, args.alias))
+        game = Game()
+        game.parse_file(file)
+        game.check_cycle()
+        Graph(game).generate()
+
 class XP:
     token_level_one = "level_one"
     token_level_mult = "level_mult"
@@ -6901,6 +6880,159 @@ class XP:
 
 
 
+class Drafts:
+    ts_draft = r"""
+let _cin_ : string[] = [];
+try { _cin_ = require("fs").readFileSync(0).toString().split(/\r?\n/); } catch(e){}
+let input = () : string => _cin_.length === 0 ? "" : _cin_.shift()!;
+let write = (text: any, end:string="\n")=> process.stdout.write("" + text + end);
+export {};
+
+write("qxcode");
+"""[1:]
+
+    js_draft = r"""
+let __lines = require("fs").readFileSync(0).toString().split("\n");
+let input = () => __lines.length === 0 ? "" : __lines.shift();
+let write = (text, end="\n") => process.stdout.write("" + text + end);
+
+write("qxcode");
+"""[1:]
+
+    c_draft = r"""
+#include <stdio.h>
+
+int main() {
+    puts("qxcode");
+    return 0;
+}
+
+"""[1:]
+
+    cpp_draft = r"""
+#include <iostream>
+
+int main() {
+    std::cout << "qxcode\n";
+}
+
+"""[1:]
+
+    java_draft = r"""
+public class draft {
+    public static void main(String args[]) {
+        System.out.println("qxcode");
+    }
+}
+
+"""[1:]
+
+    go_draft = (
+        r"package main""\n"
+        r'import "fmt"'"\n"
+        r"func main() {""\n"
+        r'    fmt.Println("qxcode")''\n'
+        r"}""\n"
+    )
+
+
+    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft, 'java': java_draft, 'go': go_draft}
+
+
+
+
+class DownProblem:
+    fnprint: Callable[[str], None] = print
+
+    @staticmethod
+    def __create_file(content, path, label=""):
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content)
+        DownProblem.fnprint("  " + path + " " + label)
+
+    @staticmethod
+    def unpack_json(loaded, destiny, lang: str):
+        # extracting all files to folder
+        for entry in loaded["upload"]:
+            if entry["name"] == "vpl_evaluate.cases":
+                DownProblem.__compare_and_save(entry["contents"], os.path.join(destiny, "cases.tio"))
+
+        if "draft" in loaded:
+            if lang in loaded["draft"]:
+                for file in loaded["draft"][lang]:
+                    path = os.path.join(destiny, file["name"])
+                    DownProblem.__create_file(file["contents"], path, "(Draft)")
+
+    @staticmethod
+    def __compare_and_save(content, path):
+        if not os.path.exists(path):
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(content.encode("utf-8").decode("utf-8"))
+            DownProblem.fnprint("  " + path + " (Novo)")
+        else:
+            if open(path, encoding="utf-8").read() != content:
+                DownProblem.fnprint(path + " (Atualizado)")
+                with open(path, "w", encoding="utf-8") as f:
+                    f.write(content)
+            else:
+                DownProblem.fnprint("  " + path + " (Inalterado)")
+
+    @staticmethod
+    def down_problem_def(destiny, cache_url) -> Tuple[str, str]:
+        # downloading Readme
+        readme = os.path.join(destiny, "Readme.md")
+        [tempfile, __content] = urllib.request.urlretrieve(cache_url + "Readme.md")
+
+        # content = ""
+        try:
+            content = open(tempfile, encoding="utf-8").read()
+        except FileNotFoundError:
+            content = open(tempfile, encoding="utf-8").read()
+
+        DownProblem.__compare_and_save(content, readme)
+
+        # downloading mapi
+        mapi = os.path.join(destiny, "mapi.json")
+        urllib.request.urlretrieve(cache_url + "mapi.json", mapi)
+        return readme, mapi
+
+    @staticmethod
+    def create_problem_folder(rootdir: str, activity: str) -> str:
+        # create dir
+        destiny: str = os.path.join(rootdir, activity)
+        if not os.path.exists(destiny):
+            os.makedirs(destiny, exist_ok=True)
+        else:
+            DownProblem.fnprint("  Pasta do problema "+ destiny + " encontrada, juntando conteúdo.")
+
+        return destiny
+
+    @staticmethod
+    def download_drafts(loaded_json, destiny: str, language, cache_url, ask_ext):
+        if len(loaded_json["required"]) == 1:  # you already have the students file
+            return
+
+        if "draft" in loaded_json and language in loaded_json["draft"]:
+            pass
+        else:
+            try:
+                draft_path = os.path.join(destiny, "draft." + language)
+                urllib.request.urlretrieve(cache_url + "draft." + language, draft_path)
+                DownProblem.fnprint("  " + draft_path + " (Rascunho) Renomeie antes de modificar")
+
+            except urllib.error.HTTPError:  # draft not found
+                filename = "draft."
+                draft_path = os.path.join(destiny, filename + language)
+                if not os.path.exists(draft_path):
+                    with open(draft_path, "w", encoding="utf-8") as f:
+                        if language in Drafts.drafts:
+                            f.write(Drafts.drafts[language])
+                        else:
+                            f.write("")
+                    DownProblem.fnprint("  " + draft_path + " (Vazio)")
+
+        if ask_ext:
+            print("\nVocê pode escolher a extensão padrão com o comando\n$ tko config -l <extension>")
 
 
 class Actions:
@@ -7038,7 +7170,7 @@ class Gui:
         todo = self.pcolor.main_bar_todo + "/"
         total_bar = self.style.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Sentence().addf("/", "Skills"), "^", "{", "}")
-        frame_xp.set_footer(Sentence().add(" ").add(self.app.rootdir).add(" "), "^")
+        frame_xp.set_footer(Sentence().add(" ").add(self.app._rootdir).add(" "), "^")
         frame_xp.draw()
 
         total, obt = self.game.get_skills_resume([self.game.quests[key] for key in self.game.available_quests])
@@ -7072,16 +7204,13 @@ class Gui:
         for flag in self.flagsman.left:
             elements.append(self.style.get_flag_sentence(flag, pad))
 
-
-        colored = Flag().name("Colorido").char("C").values(["1" if self.app.is_colored else "0"]).text("Ativa ou desativa as cores").bool()
-        elements.append(self.style.get_flag_sentence(colored, pad))
-        bordas = Flag().name("Bordas").char("B").values(["1" if self.app.borders else "0"]).text("Ativa ou desativa as bordas").bool()
+        bordas = Flag().name("Bordas").char("B").values(["1" if self.app._borders else "0"]).text("Ativa ou desativa as bordas").bool()
         elements.append(self.style.get_flag_sentence(bordas, pad))
         grafo = Flag().name("Grafo").char("G").values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
         elements.append(self.style.get_flag_sentence(grafo, pad))
 
 
-        color = "W" if not self.app.is_colored else "C"
+        color = "C"
 
         elements.append(self.style.border_round(color, "DirDestino [D]"))
         elements.append(self.style.border_round(color, "Linguagem  [L]"))
@@ -7101,8 +7230,8 @@ class Gui:
     def build_list_sentence(self, items: List[Sentence]) -> List[Sentence]:
         out: List[Sentence] = []
         for x in items:
-            color_ini = x.data[0].fmt if self.app.is_colored else "W"
-            color_end = x.data[-1].fmt if self.app.is_colored else "W"
+            color_ini = x.data[0].fmt
+            color_end = x.data[-1].fmt
             left = self.style.roundL(color_ini)
             right = self.style.roundR(color_end)
             middle = x.clone()
@@ -7117,10 +7246,8 @@ class Gui:
         array: List[Sentence] = []
         array += self.help_others_before
         array += self.help_fixed
-        if self.app.is_colored:
-            color = "G" if Flags.others.is_true() else "Y"
-        else:
-            color = "W" if Flags.others.is_true() else "K"
+        color = "G" if Flags.others.is_true() else "Y"
+
 
         array.append(Sentence() + RToken(color, "!Outros[o]"))
         array += self.help_others_after
@@ -7303,6 +7430,65 @@ class Gui:
 
 
 
+class CmdDown:
+    @staticmethod
+    def execute(rep_alias: str, task_key: str, language: Optional[str], settings: Settings, fnprint: Callable[[str], None], game: Optional[Game] = None) -> bool:
+        DownProblem.fnprint = fnprint
+        rep_dir = os.path.join(settings.app.get_rootdir(), rep_alias)
+        rep_source = settings.get_rep_source(rep_alias)
+        rep_data = settings.get_rep_data(rep_alias)
+        if game is None:
+            try:
+                file = rep_source.get_file(rep_dir)
+            except urllib.error.HTTPError:
+                DownProblem.fnprint("falha: Verifique sua internet")
+            game = Game(file)
+        item = game.get_task(task_key)
+        if not item.link.startswith("http"):
+            DownProblem.fnprint("falha: link para atividade não é um link remoto")
+            return False
+        cfg = RemoteCfg(item.link)
+        cache_url = os.path.dirname(cfg.get_raw_url()) + "/.cache/"
+
+        destiny = DownProblem.create_problem_folder(rep_dir, task_key)
+        destiny = os.path.abspath(destiny)
+        try:
+            [_readme_path, mapi_path] = DownProblem.down_problem_def(destiny, cache_url)
+        except urllib.error.HTTPError:
+            DownProblem.fnprint("  falha: atividade não encontrada no curso")
+            # verifi if destiny folder is empty and remove it
+            if len(os.listdir(destiny)) == 0:
+                os.rmdir(destiny)
+            return False
+        except urllib.error.URLError:
+            DownProblem.fnprint("  falha: não consegui baixar a atividade, verifique sua internet")
+            return False
+
+
+        with open(mapi_path, encoding="utf-8") as f:
+            loaded_json = json.load(f)
+        os.remove(mapi_path)
+
+        language_def = rep_data.get_lang()
+        if language_def == "":
+            language_def = Settings().app.get_lang_default()
+        ask_ext = False
+        if language is None:
+            if language_def != "":
+                language = language_def
+            else:
+                print("  Escolha uma extensão para os rascunhos: [c, cpp, py, ts, js, java]: ", end="")
+                language = input()
+                ask_ext = True
+
+        DownProblem.unpack_json(loaded_json, destiny, language)
+        DownProblem.download_drafts(loaded_json, destiny, language, cache_url, ask_ext)
+        return True
+
+
+
+
+
 
 class PlayActions:
 
@@ -7319,19 +7505,19 @@ class PlayActions:
         self.gui = gui
 
     def gen_graph_path(self) -> str:
-        return os.path.join(self.app.rootdir, self.rep_alias, "graph.png")
+        return os.path.join(self.app._rootdir, self.rep_alias, "graph.png")
 
 
     def graph_toggle(self):
         self.gui.gen_graph = not self.gui.gen_graph
         
     def set_rootdir(self, only_if_empty=True):
-        if only_if_empty and self.app.rootdir != "":
+        if only_if_empty and self.app._rootdir != "":
             return
 
         def chama(value):
             if value == "yes":
-                self.app.rootdir = os.path.abspath(os.getcwd())
+                self.app._rootdir = os.path.abspath(os.getcwd())
                 self.settings.save_settings()
                 self.fman.add_input(
                     Floating()
@@ -7406,7 +7592,7 @@ class PlayActions:
         )
 
     def check_root_and_lang(self):
-        if self.app.rootdir == "":
+        if self.app._rootdir == "":
             self.fman.add_input(
                 Floating()
                 .put_text("")
@@ -7431,6 +7617,9 @@ class PlayActions:
             )
             return
 
+    def open_link_without_stdout_stderr(self, link: str):
+        outfile = tempfile.NamedTemporaryFile(delete=False)
+        subprocess.Popen("python3 -m webbrowser -t {}".format(link), stdout=outfile, stderr=outfile, shell=True)
 
     def open_link(self):
         obj = self.tree.get_selected()
@@ -7438,13 +7627,13 @@ class PlayActions:
             task: Task = obj
             if task.link.startswith("http"):
                 try:
-                    webbrowser.open_new_tab(task.link)
+                    self.open_link_without_stdout_stderr(task.link)
                 except Exception as _:
                     pass
             self.fman.add_input(
                 Floating("v>")
                 .set_header(" Abrindo link ")
-                .put_text("\n" + task.link + "\n")
+                .put_text("\n " + task.link + " \n")
                 .warning()
             )
         elif isinstance(obj, Quest):
@@ -7481,7 +7670,7 @@ class PlayActions:
                                 )
 
     def down_task(self):
-        rootdir = self.app.rootdir
+        rootdir = self.app._rootdir
         if rootdir == "":
             self.check_root_and_lang()
             return
@@ -7503,7 +7692,7 @@ class PlayActions:
                 down_frame.put_text(text)
                 down_frame.draw()
                 Fmt.refresh()
-            Down.download_problem(self.rep_alias, task.key, lang, fnprint, self.game)
+            CmdDown.execute(self.rep_alias, task.key, lang, self.settings, fnprint, self.game)
         else:
             if isinstance(obj, Quest):
                 self.fman.add_input(
@@ -7525,7 +7714,7 @@ class PlayActions:
                 )
     
     def select_task(self):
-        rootdir = self.app.rootdir
+        rootdir = self.app._rootdir
         
         obj = self.tree.items[self.tree.index_selected].obj
 
@@ -7575,24 +7764,25 @@ class PlayActions:
 class Play:
     def __init__(
         self,
-        app: AppSettings,
+        settings: Settings,
         game: Game,
         rep_data: RepData,
         rep_alias: str
     ):
-        self.app = app
+        self.settings = settings
+        self.app = settings.app
         self.rep_alias = rep_alias
         self.rep = rep_data
         self.settings = Settings()
         self.exit = False
 
         if self.rep.get_lang() == "":
-            self.rep.set_lang(self.app.lang_default)
+            self.rep.set_lang(self.app._lang_default)
         self.flagsman = FlagsMan(self.rep.get_flags())
         
         self.game: Game = game
         self.fman = FloatingManager()
-        self.tree = TaskTree(app, game, rep_data, rep_alias)
+        self.tree = TaskTree(self.app, game, rep_data, rep_alias)
         self.search = Search(tree=self.tree, fman=self.fman, game=self.game)
         self.gui = Gui(rep=self.rep, rep_alias=self.rep_alias, game=self.game, tree=self.tree, 
                        flagsman=self.flagsman, search=self.search, fman=self.fman)
@@ -7603,7 +7793,7 @@ class Play:
         self.first_loop = True
         self.graph_ext = ""
 
-        self.opener = Opener(tree=self.tree, fman=self.fman, geral=app, rep_data=rep_data, rep_alias=rep_alias)
+        self.opener = Opener(tree=self.tree, fman=self.fman, app=self.app, rep_data=rep_data, rep_alias=rep_alias)
         self.actions = PlayActions(fman=self.fman, rep=self.rep, rep_alias=self.rep_alias, tree=self.tree, game=self.game, opener=self.opener, gui=self.gui)
 
     def save_to_json(self):
@@ -7772,58 +7962,35 @@ class Play:
                 output()
 
 
-
-
-
-
-
-
-
-
-
-class MRep:
+class CmdPlay:
     @staticmethod
-    def list(_args):
-        settings = Settings()
-        print(f"SettingsFile\n- {settings.settings_file}")
-        print(str(settings))
+    def execute(rep_alias: str, settings: Settings, graph: bool, svg: bool):
+        while True:
+            rep_alias = settings.check_rep_alias(rep_alias)
+            rep_source: RepSource = settings.get_rep_source(rep_alias)
+            rep_data = settings.get_rep_data(rep_alias)
 
-    @staticmethod
-    def add(args):
-        settings = Settings()
-        rep = RepSource()
-        if args.url:
-            rep.set_url(args.url)
-        elif args.file:
-            rep.set_file(args.file)
-        settings.reps[args.alias] = rep
-        settings.save_settings()
+            game = Game()
+            file = rep_source.get_file(os.path.join(settings.app._rootdir, rep_alias))
+            game.parse_file(file)
 
-    @staticmethod
-    def rm(args):
-        sp = Settings()
-        if args.alias in sp.reps:
-            sp.reps.pop(args.alias)
-            sp.save_settings()
-        else:
-            print("Repository not found.")
+            # passing a lambda function to the play class to save the settings
+            ext = ""
+            if graph:
+                ext = ".svg" if svg else ".png"
+            play = Play(settings=settings, game=game, rep_data=rep_data, rep_alias=rep_alias)
+            print(f"Abrindo repositório de {rep_alias}")
+            reload = play.play(ext)
+            if not reload:
+                break
 
-    @staticmethod
-    def reset(_):
-        sp = Settings().reset()
-        print(sp.settings_file)
-        print(sp.app.rootdir)
-        sp.save_settings()
 
-    @staticmethod
-    def graph(args):
-        settings = Settings()
-        rep_source:RepSource = settings.get_rep_source(args.alias)
-        file = rep_source.get_file(os.path.join(settings.app.rootdir, args.alias))
-        game = Game()
-        game.parse_file(file)
-        game.check_cycle()
-        Graph(game).generate()
+
+
+
+
+
+
 
 
 class Main:
@@ -7846,145 +8013,65 @@ class Main:
         # load default diff from settings if not specified
         if not args.side and not args.down:
             app = Settings().app
-            diff_mode = app.diff_mode
-            sidesize = int(app.side_size_min)
+            diff_mode = app._diff_mode
+            sidesize = int(app._side_size_min)
             size_too_short = Report.get_terminal_size() < sidesize
             param.set_up_down(diff_mode == "down" or size_too_short)
         elif args.side:
             param.set_up_down(False)
         elif args.down:
             param.set_up_down(True)
-        run = Run(args.target_list, args.cmd, param)
-        run.execute()
+        cmd_run = Run(args.target_list, args.cmd, param)
+        cmd_run.execute()
 
     @staticmethod
     def run(args):
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
-        param.set_up_down(Settings().app.diff_mode == "down")
+        param.set_up_down(Settings().app._diff_mode == "down")
 
         if args.filter:
             param.set_filter(True)
-        run = Run(args.target_list, args.cmd, param)
+        cmd_run = Run(args.target_list, args.cmd, param)
         if args.now:
-            run.set_autorun(True)
-        run.set_curses()
-        run.execute()
+            cmd_run.set_autorun(True)
+        cmd_run.set_curses()
+        cmd_run.execute()
 
     @staticmethod
     def build(args):
         PatternLoader.pattern = args.pattern
         manip = Param.Manip().set_unlabel(args.unlabel).set_to_sort(args.sort).set_to_number(args.number)
-        build = Build(args.target, args.target_list, manip, args.force)
+        build = CmdBuild(args.target, args.target_list, manip, args.force)
         build.execute()
-
-    @staticmethod
-    def settings(args):
-        settings = Settings()
-
-        action = False
-
-        if args.ascii:
-            action = True
-            settings.app.is_ascii = True
-            print("Encoding mode now is: ASCII")
-        if args.unicode:
-            action = True
-            settings.app.is_ascii = False
-            print("Encoding mode now is: UNICODE")
-        if args.mono:
-            action = True
-            settings.app.is_colored = False
-            print("Color mode now is: MONOCHROMATIC")
-        if args.color:
-            action = True
-            settings.app.is_colored = True
-            print("Color mode now is: COLORED")
-        if args.side:
-            action = True
-            settings.app.diff_mode = "side"
-            print("Diff mode now is: SIDE_BY_SIDE")
-        if args.down:
-            action = True
-            settings.app.diff_mode = "down"
-            print("Diff mode now is: UP_DOWN")
-        if args.lang:
-            action = True
-            settings.app.lang_default = args.lang
-            print("Default language extension now is:", args.lang)
-        if args.ask:
-            action = True
-            settings.app.lang_default = ""
-            print("Language extension will be asked always.")
-
-        if args.root:
-            action = True
-            path = os.path.abspath(args.root)
-            settings.app.rootdir = path
-            print("Root directory now is: " + path)
-        
-        if args.editor:
-            action = True
-            settings.app.editor = args.editor
-            print(f"Novo comando para abrir arquivos de código: {args.editor}")
-
-        if not action:
-            action = True
-            print(settings.get_settings_file())
-            print("Diff mode: {}".format("DOWN" if settings.app.diff_mode else "SIDE"))
-            print("Encoding mode: {}".format("ASCII" if settings.app.is_ascii else "UNICODE"))
-            print("Color mode: {}".format("MONOCHROMATIC" if not settings.app.is_colored else "COLORED"))
-            value = settings.app.lang_default
-            print("Default language extension: {}".format("Always ask" if value == "" else value))
-
-        settings.save_settings()
 
     @staticmethod
     def play(args):
         settings = Settings()
         settings.check_rootdir()
-        if args.repo == "__ask":
-            last = settings.app.last_rep
-            if last != "" and last in settings.reps:
-                args.repo = last
-            else:
-                print("---------------------------------------")
-                print("Escolha um dos repositórios para abrir:")
-                for alias in settings.reps:
-                    print(f"- {alias}")
-                while True:
-                    print("Digite o nome do repositório desejado: ", end="")
-                    _rep_source = input()
-                    if _rep_source in settings.reps:
-                        args.repo = _rep_source
-                        break
-                    print("Repositorio não encontrado")
-        
-        print(f"Abrindo repositório de {args.repo}")
-        settings.app.last_rep = args.repo
-
-        while True:
-            rep_source: RepSource = settings.get_rep_source(args.repo)
-            rep_data = settings.get_rep_data(args.repo)
-
-            local = settings.app
-            game = Game()
-            file = rep_source.get_file(os.path.join(local.rootdir, args.repo))
-            game.parse_file(file)
-
-            # passing a lambda function to the play class to save the settings
-            ext = ""
-            if args.graph:
-                ext = ".svg" if args.svg else ".png"
-            play = Play(app=local, game=game, rep_data=rep_data, rep_alias=args.repo)
-            reload = play.play(ext)
-            if not reload:
-                break
+        CmdPlay.execute(args.repo, settings, args.graph, args.svg)
 
     @staticmethod
     def down(args):
-        Settings().check_rootdir()
-        Down.download_problem(args.course, args.activity, args.language, print)
+        settings = Settings().check_rootdir()
+        CmdDown.execute(args.course, args.activity, args.language, settings, print)
+
+    @staticmethod
+    def config(args):
+        settings = Settings()
+        param = ConfigParams()
+        param.ascii = args.ascii
+        param.unicode = args.unicode
+        param.mono = args.mono
+        param.color = args.color
+        param.side = args.side
+        param.down = args.down
+        param.lang = args.lang
+        param.ask = args.ask
+        param.root = args.root
+        param.editor = args.editor
+
+        CmdConfig.execute(settings, param)
 
 
 class Parser:
@@ -8093,31 +8180,31 @@ class Parser:
         parser_s.add_argument("--root", metavar="path", type=str, help='set root directory.')
         parser_s.add_argument("--editor", metavar="cmd", type=str, help='set editor command.')
 
-        parser_s.set_defaults(func=Main.settings)
+        parser_s.set_defaults(func=Main.config)
 
     def add_parser_repo(self):
         parser_repo = self.subparsers.add_parser('rep', help='manipulate repositories.')
         subpar_repo = parser_repo.add_subparsers(title='subcommands', help='help for subcommand.')
 
         repo_list = subpar_repo.add_parser('list', help='list all repositories')
-        repo_list.set_defaults(func=MRep.list)
+        repo_list.set_defaults(func=CmdRep.list)
 
         repo_add = subpar_repo.add_parser('add', help='add a repository.')
         repo_add.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be added.')
         repo_add.add_argument('--url', '-u', type=str, help='add a repository url to the settings file.')
         repo_add.add_argument('--file', '-f', type=str, help='add a repository file to the settings file.')
-        repo_add.set_defaults(func=MRep.add)
+        repo_add.set_defaults(func=CmdRep.add)
 
         repo_rm = subpar_repo.add_parser('rm', help='remove a repository.')
         repo_rm.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be removed.')
-        repo_rm.set_defaults(func=MRep.rm)
+        repo_rm.set_defaults(func=CmdRep.rm)
 
         repo_reset = subpar_repo.add_parser('reset', help='reset all repositories to factory default.')
-        repo_reset.set_defaults(func=MRep.reset)
+        repo_reset.set_defaults(func=CmdRep.reset)
 
         repo_graph = subpar_repo.add_parser('graph', help='generate graph of the repository.')
         repo_graph.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be graphed.')
-        repo_graph.set_defaults(func=MRep.graph)
+        repo_graph.set_defaults(func=CmdRep.graph)
 
     def add_parser_play(self):
         parser_p = self.subparsers.add_parser('play', help='play a game.')
@@ -8134,13 +8221,13 @@ def exec(parser: argparse.ArgumentParser, args):
     if args.c:
         settings.set_settings_file(args.c)
     settings.load_settings()
-    if args.a or settings.app.is_ascii:
+    if args.a or settings.app.is_ascii():
         symbols.set_ascii()
     else:
         symbols.set_unicode()
     if args.m:
         TermColor.enabled = False
-    elif settings.app.is_colored:
+    elif settings.app.is_colored():
         TermColor.enabled = True
         symbols.set_colors()
 

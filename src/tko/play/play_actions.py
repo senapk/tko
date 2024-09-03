@@ -7,9 +7,10 @@ from .opener import Opener
 from ..run.basic import Success
 from typing import List
 from ..settings.settings import Settings
+from tko.cmds.cmd_down import CmdDown
 
 from ..settings.rep_settings import languages_avaliable, RepData
-from ..down import Down
+from ..down.down import DownProblem
 from ..util.sentence import Sentence, Token
 from .fmt import Fmt
 
@@ -18,12 +19,13 @@ from .floating import Floating
 from .floating_manager import FloatingManager
 from .flags import Flag, Flags, FlagsMan
 from .tasktree import TaskTree
-from ..actions import Run
+from ..cmds.cmd_run import Run
 from ..run.param import Param
 from .gui import Key, Gui
 
-import webbrowser
 import os
+import tempfile
+import subprocess
 
 class PlayActions:
 
@@ -40,19 +42,19 @@ class PlayActions:
         self.gui = gui
 
     def gen_graph_path(self) -> str:
-        return os.path.join(self.app.rootdir, self.rep_alias, "graph.png")
+        return os.path.join(self.app._rootdir, self.rep_alias, "graph.png")
 
 
     def graph_toggle(self):
         self.gui.gen_graph = not self.gui.gen_graph
         
     def set_rootdir(self, only_if_empty=True):
-        if only_if_empty and self.app.rootdir != "":
+        if only_if_empty and self.app._rootdir != "":
             return
 
         def chama(value):
             if value == "yes":
-                self.app.rootdir = os.path.abspath(os.getcwd())
+                self.app._rootdir = os.path.abspath(os.getcwd())
                 self.settings.save_settings()
                 self.fman.add_input(
                     Floating()
@@ -127,7 +129,7 @@ class PlayActions:
         )
 
     def check_root_and_lang(self):
-        if self.app.rootdir == "":
+        if self.app._rootdir == "":
             self.fman.add_input(
                 Floating()
                 .put_text("")
@@ -152,6 +154,9 @@ class PlayActions:
             )
             return
 
+    def open_link_without_stdout_stderr(self, link: str):
+        outfile = tempfile.NamedTemporaryFile(delete=False)
+        subprocess.Popen("python3 -m webbrowser -t {}".format(link), stdout=outfile, stderr=outfile, shell=True)
 
     def open_link(self):
         obj = self.tree.get_selected()
@@ -159,13 +164,13 @@ class PlayActions:
             task: Task = obj
             if task.link.startswith("http"):
                 try:
-                    webbrowser.open_new_tab(task.link)
+                    self.open_link_without_stdout_stderr(task.link)
                 except Exception as _:
                     pass
             self.fman.add_input(
                 Floating("v>")
                 .set_header(" Abrindo link ")
-                .put_text("\n" + task.link + "\n")
+                .put_text("\n " + task.link + " \n")
                 .warning()
             )
         elif isinstance(obj, Quest):
@@ -202,7 +207,7 @@ class PlayActions:
                                 )
 
     def down_task(self):
-        rootdir = self.app.rootdir
+        rootdir = self.app._rootdir
         if rootdir == "":
             self.check_root_and_lang()
             return
@@ -224,7 +229,7 @@ class PlayActions:
                 down_frame.put_text(text)
                 down_frame.draw()
                 Fmt.refresh()
-            Down.download_problem(self.rep_alias, task.key, lang, fnprint, self.game)
+            CmdDown.execute(self.rep_alias, task.key, lang, self.settings, fnprint, self.game)
         else:
             if isinstance(obj, Quest):
                 self.fman.add_input(
@@ -246,7 +251,7 @@ class PlayActions:
                 )
     
     def select_task(self):
-        rootdir = self.app.rootdir
+        rootdir = self.app._rootdir
         
         obj = self.tree.items[self.tree.index_selected].obj
 

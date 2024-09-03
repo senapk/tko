@@ -101,11 +101,11 @@ class TaskTree:
 
     def str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool, min_value=1) -> Sentence:
         # downloadable_in_focus = False
-        rootdir = self.app.rootdir
+        rootdir = self.app._rootdir
         down_symbol = Token(" ")
         in_focus = focus_color != ""
         down_symbol = symbols.cant_download
-        rep_dir = os.path.join(self.app.rootdir, self.rep_alias)
+        rep_dir = os.path.join(self.app._rootdir, self.rep_alias)
         if t.is_downloadable() and rootdir != "":
             if t.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
                 down_symbol = symbols.downloaded

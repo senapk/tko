@@ -14,14 +14,32 @@
         }
     },
     "geral": {
-        "rootdir": "/home/lion/qxcode",
-        "ascii": false,
-        "color": true,
-        "diffdown": true,
-        "sidesize": 80,
-        "langdef": "",
-        "lastrep": "",
-        "nerdfonts": "0",
-        "editor": "code"
+        "_rootdir": "/home/lion/qxcode",
+        "_is_ascii": false,
+        "_is_colored": true,
+        "_diff_mode": "side",
+        "_side_size_min": 80,
+        "_lang_default": "",
+        "_last_rep": "fup",
+        "_borders": true,
+        "_editor": "code",
+        "_timeout": 0
+    },
+    "colors": {
+        "focused_item": "B",
+        "task_text_done": "g",
+        "task_text_todo": "y",
+        "button_flag_on": "G",
+        "button_flag_off": "Y",
+        "progress_skill_done": "C",
+        "progress_skill_todo": "M",
+        "main_bar_done": "G",
+        "main_bar_todo": "R",
+        "task_skills": "c",
+        "task_new": "g",
+        "mark_nothing": "m",
+        "mark_started": "r",
+        "mark_required": "y",
+        "mark_complete": "g"
     }
 }

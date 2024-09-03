@@ -4,15 +4,18 @@ import argparse
 import sys
 import os
 
+from tko.cmds.cmd_rep import CmdRep
+from tko.cmds.cmd_play import CmdPlay
+from tko.cmds.cmd_down import CmdDown
+from tko.cmds.cmd_run import Run
+from tko.cmds.cmd_build import CmdBuild
+from tko.cmds.cmd_config import CmdConfig, ConfigParams
 
-from .actions import Run, Build
+
 from .run.param import Param
 from .util.pattern import PatternLoader
 from .run.basic import DiffMode
-from .down import Down
 from .settings.settings import Settings
-from .settings.rep_settings import RepSource
-
 
 from .util.guide import tko_guide
 from .util.guide import bash_guide
@@ -21,56 +24,7 @@ from .run.report import Report
 from .util.term_color import TermColor
 from .util.symbols import symbols
 
-from .game.game import Game
-from .game.graph import Graph
-from .play.play import Play
-
 from .__init__ import __version__
-
-
-class MRep:
-    @staticmethod
-    def list(_args):
-        settings = Settings()
-        print(f"SettingsFile\n- {settings.settings_file}")
-        print(str(settings))
-
-    @staticmethod
-    def add(args):
-        settings = Settings()
-        rep = RepSource()
-        if args.url:
-            rep.set_url(args.url)
-        elif args.file:
-            rep.set_file(args.file)
-        settings.reps[args.alias] = rep
-        settings.save_settings()
-
-    @staticmethod
-    def rm(args):
-        sp = Settings()
-        if args.alias in sp.reps:
-            sp.reps.pop(args.alias)
-            sp.save_settings()
-        else:
-            print("Repository not found.")
-
-    @staticmethod
-    def reset(_):
-        sp = Settings().reset()
-        print(sp.settings_file)
-        print(sp.app.rootdir)
-        sp.save_settings()
-
-    @staticmethod
-    def graph(args):
-        settings = Settings()
-        rep_source:RepSource = settings.get_rep_source(args.alias)
-        file = rep_source.get_file(os.path.join(settings.app.rootdir, args.alias))
-        game = Game()
-        game.parse_file(file)
-        game.check_cycle()
-        Graph(game).generate()
 
 
 class Main:
@@ -93,145 +47,65 @@ class Main:
         # load default diff from settings if not specified
         if not args.side and not args.down:
             app = Settings().app
-            diff_mode = app.diff_mode
-            sidesize = int(app.side_size_min)
+            diff_mode = app._diff_mode
+            sidesize = int(app._side_size_min)
             size_too_short = Report.get_terminal_size() < sidesize
             param.set_up_down(diff_mode == "down" or size_too_short)
         elif args.side:
             param.set_up_down(False)
         elif args.down:
             param.set_up_down(True)
-        run = Run(args.target_list, args.cmd, param)
-        run.execute()
+        cmd_run = Run(args.target_list, args.cmd, param)
+        cmd_run.execute()
 
     @staticmethod
     def run(args):
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
-        param.set_up_down(Settings().app.diff_mode == "down")
+        param.set_up_down(Settings().app._diff_mode == "down")
 
         if args.filter:
             param.set_filter(True)
-        run = Run(args.target_list, args.cmd, param)
+        cmd_run = Run(args.target_list, args.cmd, param)
         if args.now:
-            run.set_autorun(True)
-        run.set_curses()
-        run.execute()
+            cmd_run.set_autorun(True)
+        cmd_run.set_curses()
+        cmd_run.execute()
 
     @staticmethod
     def build(args):
         PatternLoader.pattern = args.pattern
         manip = Param.Manip().set_unlabel(args.unlabel).set_to_sort(args.sort).set_to_number(args.number)
-        build = Build(args.target, args.target_list, manip, args.force)
+        build = CmdBuild(args.target, args.target_list, manip, args.force)
         build.execute()
-
-    @staticmethod
-    def settings(args):
-        settings = Settings()
-
-        action = False
-
-        if args.ascii:
-            action = True
-            settings.app.is_ascii = True
-            print("Encoding mode now is: ASCII")
-        if args.unicode:
-            action = True
-            settings.app.is_ascii = False
-            print("Encoding mode now is: UNICODE")
-        if args.mono:
-            action = True
-            settings.app.is_colored = False
-            print("Color mode now is: MONOCHROMATIC")
-        if args.color:
-            action = True
-            settings.app.is_colored = True
-            print("Color mode now is: COLORED")
-        if args.side:
-            action = True
-            settings.app.diff_mode = "side"
-            print("Diff mode now is: SIDE_BY_SIDE")
-        if args.down:
-            action = True
-            settings.app.diff_mode = "down"
-            print("Diff mode now is: UP_DOWN")
-        if args.lang:
-            action = True
-            settings.app.lang_default = args.lang
-            print("Default language extension now is:", args.lang)
-        if args.ask:
-            action = True
-            settings.app.lang_default = ""
-            print("Language extension will be asked always.")
-
-        if args.root:
-            action = True
-            path = os.path.abspath(args.root)
-            settings.app.rootdir = path
-            print("Root directory now is: " + path)
-        
-        if args.editor:
-            action = True
-            settings.app.editor = args.editor
-            print(f"Novo comando para abrir arquivos de código: {args.editor}")
-
-        if not action:
-            action = True
-            print(settings.get_settings_file())
-            print("Diff mode: {}".format("DOWN" if settings.app.diff_mode else "SIDE"))
-            print("Encoding mode: {}".format("ASCII" if settings.app.is_ascii else "UNICODE"))
-            print("Color mode: {}".format("MONOCHROMATIC" if not settings.app.is_colored else "COLORED"))
-            value = settings.app.lang_default
-            print("Default language extension: {}".format("Always ask" if value == "" else value))
-
-        settings.save_settings()
 
     @staticmethod
     def play(args):
         settings = Settings()
         settings.check_rootdir()
-        if args.repo == "__ask":
-            last = settings.app.last_rep
-            if last != "" and last in settings.reps:
-                args.repo = last
-            else:
-                print("---------------------------------------")
-                print("Escolha um dos repositórios para abrir:")
-                for alias in settings.reps:
-                    print(f"- {alias}")
-                while True:
-                    print("Digite o nome do repositório desejado: ", end="")
-                    _rep_source = input()
-                    if _rep_source in settings.reps:
-                        args.repo = _rep_source
-                        break
-                    print("Repositorio não encontrado")
-        
-        print(f"Abrindo repositório de {args.repo}")
-        settings.app.last_rep = args.repo
-
-        while True:
-            rep_source: RepSource = settings.get_rep_source(args.repo)
-            rep_data = settings.get_rep_data(args.repo)
-
-            local = settings.app
-            game = Game()
-            file = rep_source.get_file(os.path.join(local.rootdir, args.repo))
-            game.parse_file(file)
-
-            # passing a lambda function to the play class to save the settings
-            ext = ""
-            if args.graph:
-                ext = ".svg" if args.svg else ".png"
-            play = Play(app=local, game=game, rep_data=rep_data, rep_alias=args.repo)
-            reload = play.play(ext)
-            if not reload:
-                break
+        CmdPlay.execute(args.repo, settings, args.graph, args.svg)
 
     @staticmethod
     def down(args):
-        Settings().check_rootdir()
-        Down.download_problem(args.course, args.activity, args.language, print)
+        settings = Settings().check_rootdir()
+        CmdDown.execute(args.course, args.activity, args.language, settings, print)
+
+    @staticmethod
+    def config(args):
+        settings = Settings()
+        param = ConfigParams()
+        param.ascii = args.ascii
+        param.unicode = args.unicode
+        param.mono = args.mono
+        param.color = args.color
+        param.side = args.side
+        param.down = args.down
+        param.lang = args.lang
+        param.ask = args.ask
+        param.root = args.root
+        param.editor = args.editor
+
+        CmdConfig.execute(settings, param)
 
 
 class Parser:
@@ -340,31 +214,31 @@ class Parser:
         parser_s.add_argument("--root", metavar="path", type=str, help='set root directory.')
         parser_s.add_argument("--editor", metavar="cmd", type=str, help='set editor command.')
 
-        parser_s.set_defaults(func=Main.settings)
+        parser_s.set_defaults(func=Main.config)
 
     def add_parser_repo(self):
         parser_repo = self.subparsers.add_parser('rep', help='manipulate repositories.')
         subpar_repo = parser_repo.add_subparsers(title='subcommands', help='help for subcommand.')
 
         repo_list = subpar_repo.add_parser('list', help='list all repositories')
-        repo_list.set_defaults(func=MRep.list)
+        repo_list.set_defaults(func=CmdRep.list)
 
         repo_add = subpar_repo.add_parser('add', help='add a repository.')
         repo_add.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be added.')
         repo_add.add_argument('--url', '-u', type=str, help='add a repository url to the settings file.')
         repo_add.add_argument('--file', '-f', type=str, help='add a repository file to the settings file.')
-        repo_add.set_defaults(func=MRep.add)
+        repo_add.set_defaults(func=CmdRep.add)
 
         repo_rm = subpar_repo.add_parser('rm', help='remove a repository.')
         repo_rm.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be removed.')
-        repo_rm.set_defaults(func=MRep.rm)
+        repo_rm.set_defaults(func=CmdRep.rm)
 
         repo_reset = subpar_repo.add_parser('reset', help='reset all repositories to factory default.')
-        repo_reset.set_defaults(func=MRep.reset)
+        repo_reset.set_defaults(func=CmdRep.reset)
 
         repo_graph = subpar_repo.add_parser('graph', help='generate graph of the repository.')
         repo_graph.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be graphed.')
-        repo_graph.set_defaults(func=MRep.graph)
+        repo_graph.set_defaults(func=CmdRep.graph)
 
     def add_parser_play(self):
         parser_p = self.subparsers.add_parser('play', help='play a game.')
@@ -381,13 +255,13 @@ def exec(parser: argparse.ArgumentParser, args):
     if args.c:
         settings.set_settings_file(args.c)
     settings.load_settings()
-    if args.a or settings.app.is_ascii:
+    if args.a or settings.app.is_ascii():
         symbols.set_ascii()
     else:
         symbols.set_unicode()
     if args.m:
         TermColor.enabled = False
-    elif settings.app.is_colored:
+    elif settings.app.is_colored():
         TermColor.enabled = True
         symbols.set_colors()
 

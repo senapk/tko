@@ -1,5 +1,9 @@
 # Changelog
 
+- 0.23.7
+  - fix: message to choose rep
+- 0.23.6
+  - fix: webbroser msgs on screen
 - 0.23.5
   - refactor: style using self, pcolor class created
 - 0.23.3

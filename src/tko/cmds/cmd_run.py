@@ -3,28 +3,26 @@ import os
 import shutil
 import subprocess
 
-from .run.wdir import Wdir
-from .run.basic import DiffMode, ExecutionResult
-from .run.param import Param
-from .run.diff import Diff
-from .util.sentence import Sentence, Token
+from ..run.wdir import Wdir
+from ..run.basic import DiffMode, ExecutionResult
+from ..run.param import Param
+from ..run.diff import Diff
+from ..util.sentence import Sentence, Token
 
-from .run.basic import Success
-from .run.report import Report
-from .util.term_color import term_print
-from .util.symbols import symbols
+from ..run.basic import Success
+from ..run.report import Report
+from ..util.term_color import term_print
+from ..util.symbols import symbols
 
-from .run.writer import Writer
-from .util.runner import Runner
-from .util.freerun import Free
-from .cdiff import CDiff
-from .execution import Execution
-from .game.task import Task
-from .play.opener import Opener
-
+from ..run.writer import Writer
+from ..util.runner import Runner
+from ..util.freerun import Free
+from ..play.cdiff import CDiff
+from ..run.unit_runner import UnitRunner
+from ..game.task import Task
+from ..play.opener import Opener
 
 class FilterMode:
-
     @staticmethod
     def deep_copy_and_change_dir():
         # path to ~/.tko_filter
@@ -39,7 +37,6 @@ class FilterMode:
         subprocess.run(["filter_code", "-rf", ".", "-o", filter_path])
 
         os.chdir(filter_path)
-
 
 class Run:
 
@@ -133,7 +130,7 @@ class Run:
             solver = self.wdir.get_solver()
             if solver is None:
                 raise Warning("Solver vazio")
-            unit.result = Execution.run_unit(solver, unit)
+            unit.result = UnitRunner.run_unit(solver, unit)
             term_print(Sentence() + ExecutionResult.get_symbol(unit.result), end="")
         term_print("]")
 
@@ -236,22 +233,3 @@ class Run:
             term_print(Report.centralize(" Testando o código com os casos de teste ", "═"))
             self.__print_top_line()
             self.__print_diff()
-
-
-class Build:
-
-    def __init__(self, target_out: str, source_list: List[str], param: Param.Manip, to_force: bool):
-        self.target_out = target_out
-        self.source_list = source_list
-        self.param = param
-        self.to_force = to_force
-
-    def execute(self):
-        try:
-            wdir = Wdir().set_sources(self.source_list).build()
-            wdir.manipulate(self.param)
-            Writer.save_target(self.target_out, wdir.get_unit_list(), self.to_force)
-        except FileNotFoundError as e:
-            print(str(e))
-            return False
-        return True

@@ -11,10 +11,10 @@ import subprocess
 from typing import List
 
 class Opener:
-    def __init__(self, tree: TaskTree, fman: FloatingManager, geral: AppSettings, rep_data: RepData, rep_alias: str):
+    def __init__(self, tree: TaskTree, fman: FloatingManager, app: AppSettings, rep_data: RepData, rep_alias: str):
         self.tree = tree
         self.fman = fman
-        self.app = geral
+        self.app = app
         self.rep = rep_data
         self.rep_alias = rep_alias
 
@@ -25,15 +25,15 @@ class Opener:
     def get_task_readme_path(self) -> str:
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
-            rootdir = self.app.rootdir
+            rootdir = self.app._rootdir
             if rootdir != "":
-                path = os.path.join(self.app.rootdir, self.rep_alias, obj.key, "Readme.md")
+                path = os.path.join(self.app._rootdir, self.rep_alias, obj.key, "Readme.md")
                 if os.path.isfile(path):
                     return path
         return ""
 
     def open_files(self, files_to_open: List[str]):
-        cmd = self.app.editor
+        cmd = self.app._editor
         folder = os.path.dirname(os.path.abspath(files_to_open[0]));
         aviso = (Floating("v>")
                 .warning()
