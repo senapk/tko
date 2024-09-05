@@ -7126,7 +7126,6 @@ class Gui:
 
 
     def show_main_bar(self, frame: Frame):
-        dy, dx = frame.get_inner()
         top = Sentence()
         if self.two_column_mode() and Flags.others.is_true(): 
             top.add(self.style.get_flag_sentence(Flags.config)).add(" ")
@@ -7140,15 +7139,25 @@ class Gui:
 
         if self.two_column_mode() and Flags.others.is_true(): 
             top.add(" ").add(self.style.get_flag_sentence(Flags.skills))
-
-        frame.set_header(top, "^")
+        half = top.len() // 2
+        x = frame.get_x()
+        dy, dx = Fmt.get_size()
+        full = Sentence().add("─" * ((dx//2) - x - 2 - half)).add(top)
+        frame.set_header(full, "<")
         
         if self.two_column_mode():
             elems = self.build_bottom_array()
             line_up = Sentence(" ").join(elems[0 : 2] + elems[-2:])
-            frame.set_footer(line_up, "")
+            half = line_up.len() // 2
+            _, adx = Fmt.get_size()
+            if adx % 2 == 1:
+                adx += 1 
+            x = frame.get_x()
+            full = Sentence().add("─" * ((adx//2) - x - 2 - half)).add(line_up)
+            frame.set_footer(full, "<")
         frame.draw()
 
+        dy, dx = frame.get_inner()
         for y, sentence in enumerate(self.tree.get_senteces(dy)):
             if sentence.len() > dx:
                 sentence.trim_end(dx - 3)
@@ -7210,12 +7219,12 @@ class Gui:
         elements.append(self.style.get_flag_sentence(grafo, pad))
 
 
-        color = "C"
+        color = "M"
 
         elements.append(self.style.border_round(color, "DirDestino [D]"))
         elements.append(self.style.border_round(color, "Linguagem  [L]"))
 
-        dy, dx = frame.get_inner()
+        dy, _ = frame.get_inner()
         line_breaks = dy - len(elements)
         for i, elem in enumerate(elements):
             frame.print(0, elem)
