@@ -44,9 +44,8 @@ class PlayActions:
     def gen_graph_path(self) -> str:
         return os.path.join(self.app._rootdir, self.rep_alias, "graph.png")
 
-
     def graph_toggle(self):
-        self.gui.gen_graph = not self.gui.gen_graph
+        self.gui.config.gen_graph = not self.gui.config.gen_graph
         
     def set_rootdir(self, only_if_empty=True):
         if only_if_empty and self.app._rootdir != "":
@@ -199,7 +198,7 @@ class PlayActions:
                 self.opener.open_files([path])
                 self.graph_opened = True
         except FileNotFoundError as _:
-            self.gui.gen_graph = False
+            self.gui.config.gen_graph = False
             self.fman.add_input(Floating().error()
                                 .put_text("")
                                 .put_sentence(Sentence().add("Instale o ").addf("r", "graphviz").add(" para poder gerar os grafos"))

@@ -18,6 +18,7 @@ from .frame import Frame
 from .border import Border
 from .colors import Colors
 from .search import Search
+from .config import Config
 from .images import opening, random_get
 import datetime
 
@@ -79,8 +80,9 @@ class Gui:
         self.flagsman = flagsman
         self.fman = fman
         self.search = search
-        self.gen_graph: bool = False
-        self.style = Border(Settings().app)
+        settings = Settings()
+        self.style: Border = Border(settings.app)
+        self.config = Config(self.flagsman, self.fman, self.style, settings)
         self.pcolor = Colors()
 
         self.app = Settings().app
@@ -200,23 +202,7 @@ class Gui:
     def show_config_bar(self, frame: Frame):
         frame.set_header(Sentence().addf("/", "Config"), "^", "{", "}")
         frame.draw()
-
-        elements: List[Sentence] = []
-        pad = 11
-        for flag in self.flagsman.left:
-            elements.append(self.style.get_flag_sentence(flag, pad))
-
-        bordas = Flag().name("Bordas").char("B").values(["1" if self.app._borders else "0"]).text("Ativa ou desativa as bordas").bool()
-        elements.append(self.style.get_flag_sentence(bordas, pad))
-        grafo = Flag().name("Grafo").char("G").values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
-        elements.append(self.style.get_flag_sentence(grafo, pad))
-
-
-        color = "M"
-
-        elements.append(self.style.border_round(color, "DirDestino [D]"))
-        elements.append(self.style.border_round(color, "Linguagem  [L]"))
-
+        elements = self.config.get_elements()
         dy, _ = frame.get_inner()
         line_breaks = dy - len(elements)
         for i, elem in enumerate(elements):
@@ -312,10 +298,6 @@ class Gui:
         frame.write(0, 0, info.center(frame.get_dx()))
 
 
-        # frame.set_border_none()
-        # frame.set_border_rounded()
-        # frame.draw()
-
     def show_help_config(self):
         _help: Floating = Floating("v>").warning().set_ljust_text().set_header(" Configurações ")
         self.fman.add_input(_help)
@@ -407,7 +389,7 @@ class Gui:
 
         flags_sx = 0
         if Flags.config.is_true():
-            flags_sx = 18            
+            flags_sx = 18 
 
         task_sx = main_sx - flags_sx - skills_sx
 

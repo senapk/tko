@@ -87,10 +87,7 @@ class Flags:
     reward = Flag().name("Recompensa").char("R").values(["0", "1"]).text("Mostra a experiência obtida na tarefa").location("left")
     percent = Flag().name("Percentual").char("P").values(["1", "0"]).text("Mostra valores em porcentagem").location("left")
     admin = Flag().name("Admin").char("A").values(["0", "1"]).text("Mostra todas as missões e grupos").location("left")
-    # fortune = Flag().name("Fortuna").char("F").values(["0", "1"]).text("Mostra mensagem aleatórias na saída").location("left")
     images = Flag().name("Imagens").char("I").values(["1", "0"]).text("Mostra imagens aleatórias").location("left")
-    # links = Flag().name("Links").char("Y").values(["0", "1"]).text("Mostra links remotos e locais das tarefas").location("left")
-
     config    = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
     skills = Flag().name("Skills").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
     others = Flag().name("Outros").char("o").values(["0", "1"]).text("Mostra opções extras").location("bottom")

@@ -283,7 +283,7 @@ class TaskTree:
     #     return False
 
     def get_focus_color(self, item: Union[Quest, Cluster], index: int) -> str:
-        if index != self.index_selected:
+        if index != self.index_selected or Flags.config.is_true():
             return ""
         if not item.is_reachable() and not Flags.admin.is_true():
             return "R"
