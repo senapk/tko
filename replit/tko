@@ -5816,7 +5816,7 @@ class CDiff:
     def print_centered_image(self, image: str, color: str, clear=False, align: str = "."):
         dy, dx = Fmt.get_size()
         lines = image.split("\n")[1:]
-        init_y = 3
+        init_y = 4
         if align == "v":
             init_y = dy - len(lines) - 1
         for i, line in enumerate(lines):
