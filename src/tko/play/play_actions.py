@@ -1,3 +1,4 @@
+from .keys import GuiKeys
 from ..game.game import Game
 from ..game.cluster import Cluster
 from ..game.quest import Quest
@@ -21,7 +22,7 @@ from .flags import Flag, Flags, FlagsMan
 from .tasktree import TaskTree
 from ..cmds.cmd_run import Run
 from ..run.param import Param
-from .gui import Key, Gui
+from .gui import Gui
 
 import os
 import tempfile
@@ -135,7 +136,7 @@ class PlayActions:
                 .put_text("O diretório de download padrão")
                 .put_text("do tko ainda não foi definido.")
                 .put_text("")
-                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + Key.set_root_dir, "g"))
+                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + GuiKeys.set_root_dir, "g"))
                 .put_text("para configurá-lo.")
                 .put_text("")
             )
@@ -147,7 +148,7 @@ class PlayActions:
                 .put_text("A linguagem de download padrão")
                 .put_text("para os rascunhos ainda não foi definda.")
                 .put_text("")
-                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + Key.set_lang, "g"))
+                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + GuiKeys.set_lang, "g"))
                 .put_text("para configurá-la.")
                 .put_text("")
             )

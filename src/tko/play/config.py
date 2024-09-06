@@ -35,34 +35,27 @@ class Config:
         if self.index == -1:
             self.index = self.size - 1
 
-    def mark_focused(self, index, elem: Union[Flag, Tuple[str, str]]) -> Sentence:
+    def mark_focused(self, index, elem: Flag) -> Sentence:
         pad = 14 if index == self.index else 14
-        if isinstance(elem, Flag):
-            sentence = self.style.get_flag_sentence(elem, pad)
-        else:
-            sentence = self.style.border_round("M", elem[0].ljust(pad) + elem[1])
+        sentence = self.style.get_flag_sentence(elem, pad)
 
         if index == self.index:
             focus = self.colors.focused_item
-            return Sentence("") + self.style.border_round(focus, sentence.get_text()[1:-1])
+            return Sentence("") + self.style.border(focus, sentence.get_text()[1:-1])
         return Sentence("    ").add(sentence)
 
     def get_elements(self):
-        elements: List[Union[Flag, Tuple[str, str]]] = []
+        elements: List[Flag] = []
         for flag in self.flagsman.left:            
             elements.append(flag)
-
         bordas = Flag().set_name("Bordas").set_char("B").set_values(["1" if self.app.has_borders() else "0"]).text("Ativa ou desativa as bordas").bool()
         elements.append(bordas)
-
         grafo = Flag().set_name("Grafo").set_char("G").set_values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
         elements.append(grafo)
         destiny = Flag().set_name("DirDestino").set_values([]).set_char("D").text("Muda o diretório root de download")
         elements.append(destiny)
         language = Flag().set_name("Linguagem").set_values([]).set_char("L").text("Muda a linguagem de download dos rascunhos")
         elements.append(language)
-        # elements.append(("DirDestino", "[D]"))
-        # elements.append(("Linguagem", "[L]"))
         output: List[Sentence] = []
         if Flags.config.is_true():
             for i in range(len(elements)):

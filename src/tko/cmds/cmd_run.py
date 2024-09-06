@@ -6,7 +6,7 @@ import subprocess
 from ..run.wdir import Wdir
 from ..run.basic import DiffMode, ExecutionResult
 from ..run.param import Param
-from ..run.diff import Diff
+from ..run.diff_builder import DiffBuilder
 from ..util.sentence import Sentence, Token
 
 from ..run.basic import Success
@@ -17,7 +17,7 @@ from ..util.symbols import symbols
 from ..run.writer import Writer
 from ..util.runner import Runner
 from ..util.freerun import Free
-from ..play.cdiff import CDiff
+from ..play.diff import Diff
 from ..run.unit_runner import UnitRunner
 from ..game.task import Task
 from ..play.opener import Opener
@@ -157,10 +157,10 @@ class Run:
             # printing only the first wrong case
             wrong = [unit for unit in self.wdir.get_unit_list() if unit.result != ExecutionResult.SUCCESS][0]
             if self.param.is_up_down:
-                for line in Diff.mount_up_down_diff(wrong):
+                for line in DiffBuilder.mount_up_down_diff(wrong):
                     term_print(line)
             else:
-                for line in Diff.mount_side_by_side_diff(wrong):
+                for line in DiffBuilder.mount_side_by_side_diff(wrong):
                     term_print(line)
             return
 
@@ -168,10 +168,10 @@ class Run:
             for unit in self.wdir.get_unit_list():
                 if unit.result != ExecutionResult.SUCCESS:
                     if self.param.is_up_down:
-                        for line in Diff.mount_up_down_diff(unit):
+                        for line in DiffBuilder.mount_up_down_diff(unit):
                             term_print(line)
                     else:
-                        for line in Diff.mount_side_by_side_diff(unit):
+                        for line in DiffBuilder.mount_side_by_side_diff(unit):
                             term_print(line)
 
     def build_wdir(self):
@@ -220,7 +220,7 @@ class Run:
             return
         
         if self.__curses_mode:
-            cdiff = CDiff(self.wdir, self.param, self.__success_mode)
+            cdiff = Diff(self.wdir, self.param, self.__success_mode)
             if self.__first_run:
                 cdiff.set_first_run()
             if self.__task is not None:

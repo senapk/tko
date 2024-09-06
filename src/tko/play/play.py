@@ -1,3 +1,4 @@
+from .keys import GuiKeys
 from ..game.game import Game
 from .opener import Opener
 from typing import Any, Dict, Callable, Tuple
@@ -14,7 +15,7 @@ from .floating import Floating
 from .floating_manager import FloatingManager
 from .flags import Flag, Flags, FlagsMan
 from .tasktree import TaskTree
-from .gui import Gui, Key
+from .gui import Gui
 from .play_actions import PlayActions
 from .functors import FlagFunctor, GradeFunctor
 
@@ -93,44 +94,44 @@ class Play:
         cman = InputManager()
 
         cman.add_int(curses.KEY_RESIZE, self.gui.disable_on_resize)
-        cman.add_str(Key.key_quit, self.send_quit_msg)
+        cman.add_str(GuiKeys.key_quit, self.send_quit_msg)
         cman.add_int(InputManager.esc, self.send_quit_msg)
         cman.add_int(curses.KEY_BACKSPACE, self.send_quit_msg)
 
         if Flags.config.is_true():
-            cman.add_str(Key.up, self.gui.config.move_up)
+            cman.add_str(GuiKeys.up, self.gui.config.move_up)
             cman.add_int(curses.KEY_UP, self.gui.config.move_up)
-            cman.add_str(Key.down, self.gui.config.move_down)
+            cman.add_str(GuiKeys.down, self.gui.config.move_down)
             cman.add_int(curses.KEY_DOWN, self.gui.config.move_down)
         else:
-            cman.add_str(Key.up, self.tree.move_up)
+            cman.add_str(GuiKeys.up, self.tree.move_up)
             cman.add_int(curses.KEY_UP, self.tree.move_up)
-            cman.add_str(Key.down, self.tree.move_down)
+            cman.add_str(GuiKeys.down, self.tree.move_down)
             cman.add_int(curses.KEY_DOWN, self.tree.move_down)
-            cman.add_str(Key.left, self.tree.arrow_left)
+            cman.add_str(GuiKeys.left, self.tree.arrow_left)
             cman.add_int(curses.KEY_LEFT, self.tree.arrow_left)
-            cman.add_str(Key.right, self.tree.arrow_right)
+            cman.add_str(GuiKeys.right, self.tree.arrow_right)
             cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
         
-        cman.add_str(Key.key_help, self.gui.show_help)
-        cman.add_str(Key.expand, self.tree.process_expand)
-        cman.add_str(Key.expand2, self.tree.process_expand)
-        cman.add_str(Key.collapse, self.tree.process_collapse)
-        cman.add_str(Key.collapse2, self.tree.process_collapse)
-        cman.add_str(Key.github_open, self.actions.open_link)
-        cman.add_str(Key.set_lang, lambda: self.actions.set_language(False))
-        cman.add_str(Key.set_root_dir, lambda: self.actions.set_rootdir(False))
-        cman.add_str(Key.down_task, self.actions.down_task)
-        cman.add_str(Key.select_task, self.actions.select_task)
+        cman.add_str(GuiKeys.key_help, self.gui.show_help)
+        cman.add_str(GuiKeys.expand, self.tree.process_expand)
+        cman.add_str(GuiKeys.expand2, self.tree.process_expand)
+        cman.add_str(GuiKeys.collapse, self.tree.process_collapse)
+        cman.add_str(GuiKeys.collapse2, self.tree.process_collapse)
+        cman.add_str(GuiKeys.github_open, self.actions.open_link)
+        cman.add_str(GuiKeys.set_lang, lambda: self.actions.set_language(False))
+        cman.add_str(GuiKeys.set_root_dir, lambda: self.actions.set_rootdir(False))
+        cman.add_str(GuiKeys.down_task, self.actions.down_task)
+        cman.add_str(GuiKeys.select_task, self.actions.select_task)
         cman.add_str("t", lambda: self.fman.add_input(Floating().put_text("\n Use o Enter para testar uma questão\n").warning()))
-        cman.add_str(Key.inc_grade, self.tree.inc_grade)
-        cman.add_str(Key.inc_grade2, self.tree.inc_grade)
-        cman.add_str(Key.dec_grade, self.tree.dec_grade)
-        cman.add_str(Key.dec_grade2, self.tree.dec_grade)
-        cman.add_str(Key.edit, lambda: self.opener.open_code(open_dir=True))
-        cman.add_str(Key.colors, self.app.toggle_color)
-        cman.add_str(Key.borders, self.app.toggle_borders)
-        cman.add_str(Key.graph, self.actions.graph_toggle)
+        cman.add_str(GuiKeys.inc_grade, self.tree.inc_grade)
+        cman.add_str(GuiKeys.inc_grade2, self.tree.inc_grade)
+        cman.add_str(GuiKeys.dec_grade, self.tree.dec_grade)
+        cman.add_str(GuiKeys.dec_grade2, self.tree.dec_grade)
+        cman.add_str(GuiKeys.edit, lambda: self.opener.open_code(open_dir=True))
+        cman.add_str(GuiKeys.colors, self.app.toggle_color)
+        cman.add_str(GuiKeys.borders, self.app.toggle_borders)
+        cman.add_str(GuiKeys.graph, self.actions.graph_toggle)
 
         for value in range(1, 10):
             cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))

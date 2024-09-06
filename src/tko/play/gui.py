@@ -1,3 +1,4 @@
+from tko.play.keys import GuiActions, GuiKeys
 from ..game.game import Game
 from ..game.cluster import Cluster
 from ..game.quest import Quest
@@ -30,49 +31,6 @@ from .tasktree import TaskTree
 from ..cmds.cmd_run import Run
 from ..run.param import Param
 
-class Actions:
-    ler_online = "Github"
-    sair = "Sair"
-    ajuda = "Ajuda"
-    baixar = "Baixar"
-    ativar = "Ativar"
-    navegar = "←↓→"
-    editar = "Editar"
-    marcar = "Marcar"
-    desmarcar = "Desmarcar"
-    colapsar = "Colapsar"
-    pesquisar = "Buscar"
-    hud = "HUD"
-
-class Key:
-    left = "a"
-    right = "d"
-    down = "s"
-    up = "w"
-
-    down_task = "b"
-    select_task = "\n"
-    key_help = "?"
-    expand = ">"
-    expand2 = "."
-    collapse = "<"
-    collapse2 = ","
-    inc_grade = "+"
-    inc_grade2 = "="
-    dec_grade = "-"
-    dec_grade2 = "_"
-    set_root_dir = "D"
-    set_lang = "L"
-    github_open = "g"
-    key_quit = "q"
-    edit= "e"
-    colors = "C"
-    borders = "B"
-    pesquisar = "/"
-    graph = "G"
-    hud = "h"
-
-
 class Gui:
 
     def __init__(self, rep: RepData, rep_alias: str, game: Game, tree: TaskTree, flagsman: FlagsMan, search: Search, fman: FloatingManager):
@@ -91,22 +49,22 @@ class Gui:
         self.app = Settings().app
 
         self.help_basic: List[Sentence] = [
-            Sentence() + RToken("Y", f"{Actions.pesquisar}[{Key.pesquisar}]"),
-            Sentence() + RToken("Y", f"{Actions.marcar} {Key.inc_grade}{Key.dec_grade}"),
+            Sentence() + RToken("Y", f"{GuiActions.pesquisar}[{GuiKeys.pesquisar}]"),
+            Sentence() + RToken("Y", f"{GuiActions.marcar} {GuiKeys.inc_grade}{GuiKeys.dec_grade}"),
         ]
 
         self.help_fixed: List[Sentence] = [
-            Sentence() + RToken("C", f" {Actions.sair} [{Key.key_quit}]"),
-            Sentence() + RToken("C", f"{Actions.editar}[{Key.edit}]"),
-            Sentence() + RToken("G", f"{Actions.ativar}[↲]"),
+            Sentence() + RToken("C", f" {GuiActions.sair}  [{GuiKeys.key_quit}]"),
+            Sentence() + RToken("C", f"{GuiActions.editar} [{GuiKeys.edit}]"),
+            Sentence() + RToken("G", f"{GuiActions.ativar} [↲]"),
         ]
         self.help_others_before: List[Sentence] = [
-            Sentence() + RToken("Y", f" {Actions.ajuda}[{Key.key_help}]"),
-            Sentence() + RToken("Y", f"{Actions.ler_online}[{Key.github_open}]"),
+            Sentence() + RToken("Y", f" {GuiActions.ajuda} [{GuiKeys.key_help}]"),
+            Sentence() + RToken("Y", f"{GuiActions.github} [{GuiKeys.github_open}]"),
         ]
         self.help_others_after: List[Sentence] = [
-            Sentence() + RToken("Y", f"{Actions.baixar}[{Key.down_task}]"),
-            Sentence() + RToken("Y", f"{Actions.navegar}[wasd]")
+            Sentence() + RToken("Y", f"{GuiActions.baixar} [{GuiKeys.down_task}]"),
+            Sentence() + RToken("Y", f"{GuiActions.navegar} [wasd]")
         ]
 
         self.wrap_size = Sentence(" ").join(self.build_bottom_array()).len()
@@ -129,11 +87,11 @@ class Gui:
             top.add(self.style.get_flag_sentence(Flags.config)).add(" ")
 
         alias_color = "R"
-        top.add(self.style.border_sharp(alias_color, self.rep_alias.upper()))
+        top.add(self.style.border(alias_color, self.rep_alias.upper()))
         if Flags.hud.is_true():
             color = "W" if Flags.admin.is_true() else "K"
-            top.add(self.style.border_sharp(color, "ADMIN"))
-        top.add(self.style.border_sharp("G", self.rep.get_lang().upper()))
+            top.add(self.style.border(color, "ADMIN"))
+        top.add(self.style.border("G", self.rep.get_lang().upper()))
 
         if self.two_column_mode() and Flags.hud.is_true(): 
             top.add(" ").add(self.style.get_flag_sentence(Flags.skills))
@@ -239,7 +197,7 @@ class Gui:
         array += self.help_fixed
         color = "G" if Flags.hud.is_true() else "Y"
         symbol = symbols.success if Flags.hud.is_true() else symbols.failure
-        array.append(Sentence() + RToken(color, f"{Actions.hud} {symbol.text} [{Key.hud}]"))
+        array.append(Sentence() + RToken(color, f" {symbol.text} {GuiActions.hud} [{GuiKeys.hud}]"))
         array += self.help_others_after
 
         return self.build_list_sentence(array)
@@ -307,8 +265,8 @@ class Gui:
         _help.put_sentence(Sentence() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_char()}]") + " - Mostrar quanto de experiência cada atividade fornece")
         _help.put_sentence(Sentence() + f"  Percentual " + RToken("r", f"[{Flags.percent.get_char()}]") + " - Mostrar os valores em percentual")
         _help.put_sentence(Sentence() + f"  ModoAdmin " + RToken("r", f"Shift + [A]") + " - Liberar acesso a todas as missões" )
-        _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{Key.set_root_dir}]") + " - Mudar a pasta padrão de download do tko" )
-        _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"Shift + [{Key.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
+        _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{GuiKeys.set_root_dir}]") + " - Mudar a pasta padrão de download do tko" )
+        _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"Shift + [{GuiKeys.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
 
 
     def show_help(self):
@@ -319,17 +277,17 @@ class Gui:
 
         _help.set_header_sentence(Sentence().add(" Ajuda "))
         # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence("    Ajuda ").addf("r", Key.key_help).add("  Abre essa tela de ajuda")
+        _help.put_sentence(Sentence("    Ajuda ").addf("r", GuiKeys.key_help).add("  Abre essa tela de ajuda")
         )
 
         _help.put_sentence(Sentence("  ").addf("r", "Shift + B")
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
         _help.put_sentence(Sentence() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
-        _help.put_sentence(Sentence() + f"{Actions.ler_online} " + RToken("r", f"{Key.github_open}") + "  Abre tarefa em uma aba do browser")
-        _help.put_sentence(Sentence() + f"   {Actions.baixar} " + RToken("r", f"{Key.down_task}") + "  Baixa tarefa de código para seu dispositivo")
-        _help.put_sentence(Sentence() + f"   {Actions.editar} " + RToken("r", f"{Key.edit}") + "  Abre os arquivos no editor de código")
-        _help.put_sentence(Sentence() + f"   {Actions.ativar} " + RToken("r", "↲") + "  Interage com o elemento")
-        _help.put_sentence(Sentence() + f"   {Actions.marcar} " + RToken("r", f"{Key.inc_grade}") + RToken("r", f"{Key.dec_grade}") + " Muda a pontuação da tarefa")
+        _help.put_sentence(Sentence() + f"{GuiActions.github} " + RToken("r", f"{GuiKeys.github_open}") + "  Abre tarefa em uma aba do browser")
+        _help.put_sentence(Sentence() + f"   {GuiActions.baixar} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
+        _help.put_sentence(Sentence() + f"   {GuiActions.editar} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
+        _help.put_sentence(Sentence() + f"   {GuiActions.ativar} " + RToken("r", "↲") + "  Interage com o elemento")
+        _help.put_sentence(Sentence() + f"   {GuiActions.marcar} " + RToken("r", f"{GuiKeys.inc_grade}") + RToken("r", f"{GuiKeys.dec_grade}") + " Muda a pontuação da tarefa")
         _help.put_sentence(Sentence())
         _help.put_sentence(Sentence() + "Você pode mudar o editor padrão com o comando")
         _help.put_sentence(Sentence() + RToken("g", "             tko config --editor <comando>"))

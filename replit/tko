@@ -934,6 +934,78 @@ Meu precioso!
          ⠉⠛⠿⠶⢾⣭⢤⡾ ⠠⠒          
 """
 
+class DiffKeys:
+    backspace1 = 127
+    left = "a"
+    up = "w"
+    right = "d"
+    down = "s"
+    principal = "p"
+    diff = "m"
+    rodar = "r"
+    testar = "\n"
+    # testar2 = "\n"
+    sair   = "q"
+    editar = "e"
+    travar = "f"
+    tempo  = "t"
+    hud = "h"
+    border = "B"
+
+
+class DiffActions:
+    sair   = "Sair"
+    editar = "Editar"
+    ativar = "Ativar"
+    rodar  = " Rodar"
+    principal = "Principal"
+    fixar  = "Fixar"
+    tempo = "Tempo"
+    hud = "HUD"
+
+
+class GuiActions:
+    github = "Github"
+    sair = "Sair"
+    ajuda = "Ajuda"
+    baixar = "Baixar"
+    ativar = "Ativar"
+    navegar = "←↓→"
+    editar = "Editar"
+    marcar = "Marcar"
+    desmarcar = "Desmarcar"
+    colapsar = "Colapsar"
+    pesquisar = "Buscar"
+    hud = "HUD"
+
+
+class GuiKeys:
+    left = "a"
+    right = "d"
+    down = "s"
+    up = "w"
+
+    down_task = "b"
+    select_task = "\n"
+    key_help = "?"
+    expand = ">"
+    expand2 = "."
+    collapse = "<"
+    collapse2 = ","
+    inc_grade = "+"
+    inc_grade2 = "="
+    dec_grade = "-"
+    dec_grade2 = "_"
+    set_root_dir = "D"
+    set_lang = "L"
+    github_open = "g"
+    key_quit = "q"
+    edit= "e"
+    colors = "C"
+    borders = "B"
+    pesquisar = "/"
+    graph = "G"
+    hud = "h"
 
 class InputManager:
     special_double_key = 195
@@ -2542,7 +2614,7 @@ class Border:
     def has_borders(self):
         return self.app._borders
 
-    def border_round(self, color: str, data: str):
+    def border(self, color: str, data: str):
         return Sentence().add(self.roundL(color)).addf(color, data).add(self.roundR(color))
 
     def border_sharp(self, color: str, data: str):
@@ -3908,7 +3980,7 @@ class CmdConfig:
         settings.save_settings()
 
 
-class Diff:
+class DiffBuilder:
 
     vinput    = " INSERIDO "
     vexpected = " ESPERADO "
@@ -3968,7 +4040,7 @@ class Diff:
     def first_failure_diff(a_text: str, b_text: str, first_failure: int) -> List[Sentence]:
         def get(vet, index):
             if index < len(vet):
-                return Diff.render_white(vet[index])
+                return DiffBuilder.render_white(vet[index])
             return ""
 
         a_render = a_text.splitlines(True)
@@ -3982,13 +4054,13 @@ class Diff:
         #     lbefore = get(a_render, first_failure - 1)
         #     greater = max(greater, len(lbefore))
 
-        out_a, out_b = Diff.colorize_2_lines_diff(Sentence(first_a), Sentence(first_b))
+        out_a, out_b = DiffBuilder.colorize_2_lines_diff(Sentence(first_a), Sentence(first_b))
         greater = max(len(out_a), len(out_b))
         output: List[Sentence] = []
 
         output.append(Sentence().add(symbols.vbar).add(" ").add(out_a.ljust(greater)).addf("g", " (esperado)"))
         output.append(Sentence().add(symbols.vbar).add(" ").add(out_b.ljust(greater)).addf("r", " (recebido)"))
-        diff = Diff.make_line_arrow_up(first_a, first_b)
+        diff = DiffBuilder.make_line_arrow_up(first_a, first_b)
         output.append(Sentence().add(symbols.vbar).add(" ").add(diff.ljust(greater)).addf("b", " (primeiro)"))
         return output
 
@@ -4003,7 +4075,7 @@ class Diff:
     
     @staticmethod
     def colorize_2_lines_diff(la: Sentence, lb: Sentence, neut: str = "", exp: str = "g", rec: str = "r") -> Tuple[Sentence, Sentence]:
-        pos = Diff.find_first_mismatch(la, lb)
+        pos = DiffBuilder.find_first_mismatch(la, lb)
         lat = la.get_text()
         lbt = lb.get_text()
         a_out = Sentence().addf(neut, lat[0:pos]).addf(exp, lat[pos:])
@@ -4048,7 +4120,7 @@ class Diff:
             if i >= a_size or i >= b_size or a_lines[i] != b_lines[i]:
                 if first_failure == -1:
                     first_failure = i
-                a_out, b_out = Diff.colorize_2_lines_diff(a_data, b_data, "y")
+                a_out, b_out = DiffBuilder.colorize_2_lines_diff(a_data, b_data, "y")
                 a_output.append(a_out)
                 b_output.append(b_out)
             else:
@@ -4067,33 +4139,33 @@ class Diff:
 
         if string_received is None:
             string_received = ""
-        expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received)
+        expected_lines, received_lines, first_failure = DiffBuilder.render_diff(string_expected, string_received)
         string_input_list = [Sentence().add(symbols.vbar.text).add(" ").add(line) for line in string_input.split("\n")][:-1]
         unequal = symbols.unequal
         if unit.result == ExecutionResult.EXECUTION_ERROR or unit.result == ExecutionResult.COMPILATION_ERROR:
             unequal = symbols.vbar
-        expected_lines, received_lines = Diff.put_left_equal(expected_lines, received_lines, unequal)
+        expected_lines, received_lines = DiffBuilder.put_left_equal(expected_lines, received_lines, unequal)
 
         color = "b" if string_expected != string_received else "g"
         if not curses:
             output.append(Report.centralize("", symbols.hbar, "╭"))
             output.append(Report.centralize(unit.str(), " ", symbols.vbar))
-            output.append(Report.centralize(Sentence().addf(color, Diff.vinput), symbols.hbar, "├"))
+            output.append(Report.centralize(Sentence().addf(color, DiffBuilder.vinput), symbols.hbar, "├"))
         else:
-            output.append(Report.centralize(Sentence().addf(color, Diff.vinput), symbols.hbar, "╭"))
+            output.append(Report.centralize(Sentence().addf(color, DiffBuilder.vinput), symbols.hbar, "╭"))
 
         output += string_input_list
             
-        output.append(Report.centralize(Sentence().addf("g", Diff.vexpected), symbols.hbar, "├"))
+        output.append(Report.centralize(Sentence().addf("g", DiffBuilder.vexpected), symbols.hbar, "├"))
         output += expected_lines
         # output.append("\n".join(expected_lines))
         rcolor = "r" if string_expected != string_received else "g"
-        output.append(Report.centralize(Sentence().addf(rcolor, Diff.vreceived), symbols.hbar, "├"))
+        output.append(Report.centralize(Sentence().addf(rcolor, DiffBuilder.vreceived), symbols.hbar, "├"))
         output +=  received_lines
 
         if unit.result != ExecutionResult.EXECUTION_ERROR and unit.result != ExecutionResult.COMPILATION_ERROR and string_expected != string_received:
-            output.append(Report.centralize(Sentence().addf("b", Diff.vunequal),  symbols.hbar, "├"))
-            output += Diff.first_failure_diff(string_expected, string_received, first_failure)
+            output.append(Report.centralize(Sentence().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├"))
+            output += DiffBuilder.first_failure_diff(string_expected, string_received, first_failure)
         output.append(Report.centralize("",  symbols.hbar, "╰"))
 
         return output
@@ -4147,33 +4219,33 @@ class Diff:
         # vertical_separator = symbols.vbar
         hbar = symbols.hbar
 
-        expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received, True)
+        expected_lines, received_lines, first_failure = DiffBuilder.render_diff(string_expected, string_received, True)
         if not curses:
             output.append(Report.centralize("", hbar, "╭"))
             output.append(Report.centralize(unit.str(), " ", "│"))
         input_color = "b" if string_expected != string_received else "g"
-        input_headera = Sentence().addf(input_color, Diff.vinput)
-        input_headerb = Sentence().addf(input_color, Diff.vinput)
+        input_headera = Sentence().addf(input_color, DiffBuilder.vinput)
+        input_headerb = Sentence().addf(input_color, DiffBuilder.vinput)
         if not curses:
-            output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, Token("┬"), Token("├")))
+            output.append(DiffBuilder.title_side_by_side(input_headera, input_headerb, hbar, Token("┬"), Token("├")))
         else:
-            output.append(Report.centralize(Sentence().addf(input_color, Diff.vinput),  symbols.hbar, "╭"))
+            output.append(Report.centralize(Sentence().addf(input_color, DiffBuilder.vinput),  symbols.hbar, "╭"))
             # output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, TK("┬"), TK("╭")))
 
         if string_input != "":
             lines = [Sentence(x) for x in string_input.split("\n")[:-1]]
-            output += Diff.side_by_side(lines, lines)
-        expected_header = Sentence().addf("g", Diff.vexpected)
+            output += DiffBuilder.side_by_side(lines, lines)
+        expected_header = Sentence().addf("g", DiffBuilder.vexpected)
         rcolor = "r" if string_expected != string_received else "g"
-        received_header = Sentence().addf(rcolor, Diff.vreceived)
-        output.append(Diff.title_side_by_side(expected_header, received_header, hbar, Token("┼"), Token("├")))
+        received_header = Sentence().addf(rcolor, DiffBuilder.vreceived)
+        output.append(DiffBuilder.title_side_by_side(expected_header, received_header, hbar, Token("┼"), Token("├")))
         unequal = symbols.unequal
         if unit.result == ExecutionResult.EXECUTION_ERROR or unit.result == ExecutionResult.COMPILATION_ERROR:
             unequal = symbols.vbar
-        output += Diff.side_by_side(expected_lines, received_lines, unequal)
+        output += DiffBuilder.side_by_side(expected_lines, received_lines, unequal)
         if unit.result != ExecutionResult.EXECUTION_ERROR and unit.result != ExecutionResult.COMPILATION_ERROR and string_expected != string_received:
-            output.append(Report.centralize(Sentence().addf("b", Diff.vunequal),  symbols.hbar, "├"))
-            output += Diff.first_failure_diff(string_expected, string_received, first_failure)
+            output.append(Report.centralize(Sentence().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├"))
+            output += DiffBuilder.first_failure_diff(string_expected, string_received, first_failure)
             output.append(Report.centralize("",  symbols.hbar, "╰"))
         else:
             output.append(Report.centralize("┴",  symbols.hbar, "╰"))
@@ -5784,34 +5856,27 @@ class Config:
         if self.index == -1:
             self.index = self.size - 1
 
-    def mark_focused(self, index, elem: Union[Flag, Tuple[str, str]]) -> Sentence:
+    def mark_focused(self, index, elem: Flag) -> Sentence:
         pad = 14 if index == self.index else 14
-        if isinstance(elem, Flag):
-            sentence = self.style.get_flag_sentence(elem, pad)
-        else:
-            sentence = self.style.border_round("M", elem[0].ljust(pad) + elem[1])
+        sentence = self.style.get_flag_sentence(elem, pad)
 
         if index == self.index:
             focus = self.colors.focused_item
-            return Sentence("") + self.style.border_round(focus, sentence.get_text()[1:-1])
+            return Sentence("") + self.style.border(focus, sentence.get_text()[1:-1])
         return Sentence("    ").add(sentence)
 
     def get_elements(self):
-        elements: List[Union[Flag, Tuple[str, str]]] = []
+        elements: List[Flag] = []
         for flag in self.flagsman.left:            
             elements.append(flag)
-
         bordas = Flag().set_name("Bordas").set_char("B").set_values(["1" if self.app.has_borders() else "0"]).text("Ativa ou desativa as bordas").bool()
         elements.append(bordas)
-
         grafo = Flag().set_name("Grafo").set_char("G").set_values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
         elements.append(grafo)
         destiny = Flag().set_name("DirDestino").set_values([]).set_char("D").text("Muda o diretório root de download")
         elements.append(destiny)
         language = Flag().set_name("Linguagem").set_values([]).set_char("L").text("Muda a linguagem de download dos rascunhos")
         elements.append(language)
-        # elements.append(("DirDestino", "[D]"))
-        # elements.append(("Linguagem", "[L]"))
         output: List[Sentence] = []
         if Flags.config.is_true():
             for i in range(len(elements)):
@@ -5832,35 +5897,7 @@ class CDiffMode(enum.Enum):
     running = 2
     finished = 3
 
-class DActions:
-    sair   = "  Sair"
-    editar = "Editar"
-    testar = "Ativar"
-    rodar  = " Rodar"
-    principal = "Principal"
-    fixar  = " Fixar"
-    tempo = "Tempo"
-    outros = "Outros"
-
-class DKeys:
-    backspace1 = 127
-    left = "a"
-    up = "w"
-    right = "d"
-    down = "s"
-    principal = "p"
-    diff = "m"
-    rodar = "r"
-    testar = "\n"
-    # testar2 = "\n"
-    sair   = "q"
-    editar = "e"
-    travar = "f"
-    tempo  = "t"
-    outros = "o"
-    border = "B"
-
-class CDiff:
+class Diff:
     def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
         self.param = param
         self.results: List[Tuple[ExecutionResult, int]] = []
@@ -6078,7 +6115,7 @@ class CDiff:
         running_color = "W" if not self.colors else "R"
 
         # building activity
-        activity = Sentence().add(self.style.border_round(activity_color, self.get_folder()))
+        activity = Sentence().add(self.style.border(activity_color, self.get_folder()))
 
         # building solvers
         solvers = Sentence()
@@ -6088,15 +6125,15 @@ class CDiff:
             color = solver_color
             if i == self.task.main_index:
                 color = "G"
-            solvers.add(self.style.border_round(color, solver))
+            solvers.add(self.style.border(color, solver))
         
         # replacing with count if running
         done = len(self.results)
         full = len(self.wdir.get_unit_list())
-        count_missing = Sentence().add(self.style.border_round(running_color, f"({done}/{full})"))
+        count_missing = Sentence().add(self.style.border(running_color, f"({done}/{full})"))
         if self.mode == CDiffMode.running:
             if  self.locked_index:
-                solvers = Sentence().add(self.style.border_round("R", "Executando atividade travada"))
+                solvers = Sentence().add(self.style.border("R", "Executando atividade travada"))
             else:
                 solvers = count_missing
 
@@ -6153,11 +6190,11 @@ class CDiff:
         value = self.get_focused_unit()
         info = Sentence()
         if self.wdir.get_solver().compile_error:
-            info = self.style.border_round("R", "Erro de compilação")
+            info = self.style.border("R", "Erro de compilação")
         elif value is not None and not self.is_all_right() and not self.mode == CDiffMode.intro:
             info = value.str(pad = False)
             if self.locked_index:
-                info = self.style.border_round(focused_unit_color, info.get_text())
+                info = self.style.border(focused_unit_color, info.get_text())
         frame.write(0, 0, Sentence().add(info).center(frame.get_dx()))
 
     def draw_top_bar(self):
@@ -6178,35 +6215,33 @@ class CDiff:
     def make_bottom_line(self) -> List[Sentence]:
         cmds: List[Sentence] = []
         if Flags.hud.is_true():
-            cmds.append(self.style.border_round("M", f"{DActions.rodar}[{DKeys.rodar}]"))
+            cmds.append(self.style.border("M", f"{DiffActions.rodar} [{DiffKeys.rodar}]"))
             # diff
-            text = f"VER━╾h[{DKeys.diff}]" if self.settings.app._diff_mode == "side" else f"v╼━HOR[{DKeys.diff}]"
-            cmds.append(self.style.border_round("M", text))
+            text = f"VER╾hor[{DiffKeys.diff}]" if self.settings.app._diff_mode == "side" else f"ver╼HOR[{DiffKeys.diff}]"
+            cmds.append(self.style.border("M", text))
         
-        cmds.append(self.style.border_round("C", f"{DActions.sair}[{DKeys.sair}]"))
+        cmds.append(self.style.border("C", f" {DiffActions.sair}  [{DiffKeys.sair}]"))
         if self.opener is not None:
-            cmds.append(self.style.border_round("C", f"{DActions.editar}[{DKeys.editar}]"))
-        cmds.append(self.style.border_round("G", f"{DActions.testar}[↲]"))
+            cmds.append(self.style.border("C", f"{DiffActions.editar} [{DiffKeys.editar}]"))
+        cmds.append(self.style.border("G", f"{DiffActions.ativar} [↲]"))
         
         color = "G" if Flags.hud.is_true() else "Y"
-        cmds.append(self.style.border_sharp(color, f"{DActions.outros}[{DKeys.outros}]"))
+        symbol = symbols.success if Flags.hud.is_true() else symbols.failure
+        cmds.append(self.style.border(color, f" {symbol.text} {DiffActions.hud} [{DiffKeys.hud}]"))
         if Flags.hud.is_true():
-            # travar
-
             value = str(self.settings.app._timeout)
             if value == "0":
                 value = "∞"
             cmds.append(
                 Sentence()
                     .add(self.style.roundL("M"))
-                    .add(RToken("M", f"{DActions.tempo}"))
-                    .add(RToken("M", "{}".format(value)))
-                    .add(RToken("M", f"[{DKeys.tempo}]"))
+                    .add(RToken("M", "{} {}[{}]".format(DiffActions.tempo, value, DiffKeys.tempo)))
                     .add(self.style.roundR("M"))
             )
-            travar = f"{DActions.fixar}[{DKeys.travar}]"
             color = "G" if self.locked_index else "M"
-            cmds.append(self.style.border_sharp(color, travar))
+            symbol = symbols.success if self.locked_index else symbols.failure
+            travar = f"{symbol.text} {DiffActions.fixar}[{DiffKeys.travar}]"
+            cmds.append(self.style.border(color, travar))
 
 
         return cmds
@@ -6252,9 +6287,9 @@ class CDiff:
             received = self.wdir.get_solver().error_msg
             line_list = [Sentence().add(line) for line in received.split("\n")]
         elif self.param.is_up_down:
-            line_list = Diff.mount_up_down_diff(unit, curses=True)
+            line_list = DiffBuilder.mount_up_down_diff(unit, curses=True)
         else:
-            line_list = Diff.mount_side_by_side_diff(unit, curses=True)
+            line_list = DiffBuilder.mount_side_by_side_diff(unit, curses=True)
 
         self.length = max(1, len(line_list))
 
@@ -6384,7 +6419,7 @@ class CDiff:
         if self.mode == CDiffMode.intro:
             self.mode = CDiffMode.select
         if self.locked_index:
-            self.fman.add_input(Floating("v>").warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(DKeys.travar)))
+            self.fman.add_input(Floating("v>").warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(DiffKeys.travar)))
             return
         if not self.wdir.get_solver().compile_error:
             self.focused_index = max(0, self.focused_index - 1)
@@ -6396,7 +6431,7 @@ class CDiff:
             self.focused_index = 0
             return
         if self.locked_index:
-            self.fman.add_input(Floating("v>").warning().put_text("→\nAtividade travada\nAperte {} para destravar".format(DKeys.travar)))
+            self.fman.add_input(Floating("v>").warning().put_text("→\nAtividade travada\nAperte {} para destravar".format(DiffKeys.travar)))
             return
         if not self.wdir.get_solver().compile_error:
             self.focused_index = min(len(self.wdir.get_unit_list()) - 1, self.focused_index + 1)
@@ -6434,7 +6469,7 @@ class CDiff:
             self.fman.add_input(
                 Floating("v>").warning()
                 .put_text("Atividade travada")
-                .put_sentence(Sentence("Aperte ").addf("g", DKeys.travar).add(" para destravar"))
+                .put_sentence(Sentence("Aperte ").addf("g", DiffKeys.travar).add(" para destravar"))
                 .put_sentence(Sentence("Use ").addf("g", "Enter").add(" para rodar os testes"))
             )
 
@@ -6457,36 +6492,36 @@ class CDiff:
 
     def process_key(self, key):
         key_esc = 27
-        if key == ord('q') or key == key_esc or key == DKeys.backspace1:
+        if key == ord('q') or key == key_esc or key == DiffKeys.backspace1:
             self.set_exit()
-        elif key == curses.KEY_LEFT or key == ord(DKeys.left):
+        elif key == curses.KEY_LEFT or key == ord(DiffKeys.left):
             self.go_left()
-        elif key == curses.KEY_RIGHT or key == ord(DKeys.right):
+        elif key == curses.KEY_RIGHT or key == ord(DiffKeys.right):
             self.go_right()
-        elif key == curses.KEY_DOWN or key == ord(DKeys.down):
+        elif key == curses.KEY_DOWN or key == ord(DiffKeys.down):
             self.go_down()
-        elif key == curses.KEY_UP or key == ord(DKeys.up):
+        elif key == curses.KEY_UP or key == ord(DiffKeys.up):
             self.go_up()
-        elif key == ord(DKeys.diff):
+        elif key == ord(DiffKeys.diff):
             self.param.is_up_down = not self.param.is_up_down
             self.save_settings()
             # self.init = 0
-        elif key == ord(DKeys.principal):
+        elif key == ord(DiffKeys.principal):
             self.change_main()
-        elif key == ord(DKeys.rodar):
+        elif key == ord(DiffKeys.rodar):
             return self.run_exec_mode()
-        elif key == ord(DKeys.testar):
+        elif key == ord(DiffKeys.testar):
             self.run_test_mode()
-        elif key == ord(DKeys.travar):
+        elif key == ord(DiffKeys.travar):
             self.lock_unit()
-        elif key == ord(DKeys.editar):
+        elif key == ord(DiffKeys.editar):
             if self.opener is not None:
                 self.opener.open_code(open_dir=True)
-        elif key == ord(DKeys.tempo):
+        elif key == ord(DiffKeys.tempo):
             self.change_limit()
-        elif key == ord(DKeys.outros):
+        elif key == ord(DiffKeys.hud):
             Flags.hud.toggle()
-        elif key == ord(DKeys.border):
+        elif key == ord(DiffKeys.border):
             self.settings.app.toggle_borders()
         elif key != -1 and key != curses.KEY_RESIZE:
             self.send_char_not_found(key)
@@ -6639,10 +6674,10 @@ class Run:
             # printing only the first wrong case
             wrong = [unit for unit in self.wdir.get_unit_list() if unit.result != ExecutionResult.SUCCESS][0]
             if self.param.is_up_down:
-                for line in Diff.mount_up_down_diff(wrong):
+                for line in DiffBuilder.mount_up_down_diff(wrong):
                     term_print(line)
             else:
-                for line in Diff.mount_side_by_side_diff(wrong):
+                for line in DiffBuilder.mount_side_by_side_diff(wrong):
                     term_print(line)
             return
 
@@ -6650,10 +6685,10 @@ class Run:
             for unit in self.wdir.get_unit_list():
                 if unit.result != ExecutionResult.SUCCESS:
                     if self.param.is_up_down:
-                        for line in Diff.mount_up_down_diff(unit):
+                        for line in DiffBuilder.mount_up_down_diff(unit):
                             term_print(line)
                     else:
-                        for line in Diff.mount_side_by_side_diff(unit):
+                        for line in DiffBuilder.mount_side_by_side_diff(unit):
                             term_print(line)
 
     def build_wdir(self):
@@ -6702,7 +6737,7 @@ class Run:
             return
         
         if self.__curses_mode:
-            cdiff = CDiff(self.wdir, self.param, self.__success_mode)
+            cdiff = Diff(self.wdir, self.param, self.__success_mode)
             if self.__first_run:
                 cdiff.set_first_run()
             if self.__task is not None:
@@ -7138,49 +7173,6 @@ class DownProblem:
             print("\nVocê pode escolher a extensão padrão com o comando\n$ tko config -l <extension>")
 
 
-class Actions:
-    ler_online = "Github"
-    sair = "Sair"
-    ajuda = "Ajuda"
-    baixar = "Baixar"
-    ativar = "Ativar"
-    navegar = "←↓→"
-    editar = "Editar"
-    marcar = "Marcar"
-    desmarcar = "Desmarcar"
-    colapsar = "Colapsar"
-    pesquisar = "Buscar"
-    hud = "HUD"
-
-class Key:
-    left = "a"
-    right = "d"
-    down = "s"
-    up = "w"
-
-    down_task = "b"
-    select_task = "\n"
-    key_help = "?"
-    expand = ">"
-    expand2 = "."
-    collapse = "<"
-    collapse2 = ","
-    inc_grade = "+"
-    inc_grade2 = "="
-    dec_grade = "-"
-    dec_grade2 = "_"
-    set_root_dir = "D"
-    set_lang = "L"
-    github_open = "g"
-    key_quit = "q"
-    edit= "e"
-    colors = "C"
-    borders = "B"
-    pesquisar = "/"
-    graph = "G"
-    hud = "h"
-
-
 class Gui:
 
     def __init__(self, rep: RepData, rep_alias: str, game: Game, tree: TaskTree, flagsman: FlagsMan, search: Search, fman: FloatingManager):
@@ -7199,22 +7191,22 @@ class Gui:
         self.app = Settings().app
 
         self.help_basic: List[Sentence] = [
-            Sentence() + RToken("Y", f"{Actions.pesquisar}[{Key.pesquisar}]"),
-            Sentence() + RToken("Y", f"{Actions.marcar} {Key.inc_grade}{Key.dec_grade}"),
+            Sentence() + RToken("Y", f"{GuiActions.pesquisar}[{GuiKeys.pesquisar}]"),
+            Sentence() + RToken("Y", f"{GuiActions.marcar} {GuiKeys.inc_grade}{GuiKeys.dec_grade}"),
         ]
 
         self.help_fixed: List[Sentence] = [
-            Sentence() + RToken("C", f" {Actions.sair} [{Key.key_quit}]"),
-            Sentence() + RToken("C", f"{Actions.editar}[{Key.edit}]"),
-            Sentence() + RToken("G", f"{Actions.ativar}[↲]"),
+            Sentence() + RToken("C", f" {GuiActions.sair}  [{GuiKeys.key_quit}]"),
+            Sentence() + RToken("C", f"{GuiActions.editar} [{GuiKeys.edit}]"),
+            Sentence() + RToken("G", f"{GuiActions.ativar} [↲]"),
         ]
         self.help_others_before: List[Sentence] = [
-            Sentence() + RToken("Y", f" {Actions.ajuda}[{Key.key_help}]"),
-            Sentence() + RToken("Y", f"{Actions.ler_online}[{Key.github_open}]"),
+            Sentence() + RToken("Y", f" {GuiActions.ajuda} [{GuiKeys.key_help}]"),
+            Sentence() + RToken("Y", f"{GuiActions.github} [{GuiKeys.github_open}]"),
         ]
         self.help_others_after: List[Sentence] = [
-            Sentence() + RToken("Y", f"{Actions.baixar}[{Key.down_task}]"),
-            Sentence() + RToken("Y", f"{Actions.navegar}[wasd]")
+            Sentence() + RToken("Y", f"{GuiActions.baixar} [{GuiKeys.down_task}]"),
+            Sentence() + RToken("Y", f"{GuiActions.navegar} [wasd]")
         ]
 
         self.wrap_size = Sentence(" ").join(self.build_bottom_array()).len()
@@ -7237,11 +7229,11 @@ class Gui:
             top.add(self.style.get_flag_sentence(Flags.config)).add(" ")
 
         alias_color = "R"
-        top.add(self.style.border_sharp(alias_color, self.rep_alias.upper()))
+        top.add(self.style.border(alias_color, self.rep_alias.upper()))
         if Flags.hud.is_true():
             color = "W" if Flags.admin.is_true() else "K"
-            top.add(self.style.border_sharp(color, "ADMIN"))
-        top.add(self.style.border_sharp("G", self.rep.get_lang().upper()))
+            top.add(self.style.border(color, "ADMIN"))
+        top.add(self.style.border("G", self.rep.get_lang().upper()))
 
         if self.two_column_mode() and Flags.hud.is_true(): 
             top.add(" ").add(self.style.get_flag_sentence(Flags.skills))
@@ -7347,7 +7339,7 @@ class Gui:
         array += self.help_fixed
         color = "G" if Flags.hud.is_true() else "Y"
         symbol = symbols.success if Flags.hud.is_true() else symbols.failure
-        array.append(Sentence() + RToken(color, f"{Actions.hud} {symbol.text} [{Key.hud}]"))
+        array.append(Sentence() + RToken(color, f" {symbol.text} {GuiActions.hud} [{GuiKeys.hud}]"))
         array += self.help_others_after
 
         return self.build_list_sentence(array)
@@ -7415,8 +7407,8 @@ class Gui:
         _help.put_sentence(Sentence() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_char()}]") + " - Mostrar quanto de experiência cada atividade fornece")
         _help.put_sentence(Sentence() + f"  Percentual " + RToken("r", f"[{Flags.percent.get_char()}]") + " - Mostrar os valores em percentual")
         _help.put_sentence(Sentence() + f"  ModoAdmin " + RToken("r", f"Shift + [A]") + " - Liberar acesso a todas as missões" )
-        _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{Key.set_root_dir}]") + " - Mudar a pasta padrão de download do tko" )
-        _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"Shift + [{Key.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
+        _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{GuiKeys.set_root_dir}]") + " - Mudar a pasta padrão de download do tko" )
+        _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"Shift + [{GuiKeys.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
 
 
     def show_help(self):
@@ -7427,17 +7419,17 @@ class Gui:
 
         _help.set_header_sentence(Sentence().add(" Ajuda "))
         # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence("    Ajuda ").addf("r", Key.key_help).add("  Abre essa tela de ajuda")
+        _help.put_sentence(Sentence("    Ajuda ").addf("r", GuiKeys.key_help).add("  Abre essa tela de ajuda")
         )
 
         _help.put_sentence(Sentence("  ").addf("r", "Shift + B")
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
         _help.put_sentence(Sentence() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
-        _help.put_sentence(Sentence() + f"{Actions.ler_online} " + RToken("r", f"{Key.github_open}") + "  Abre tarefa em uma aba do browser")
-        _help.put_sentence(Sentence() + f"   {Actions.baixar} " + RToken("r", f"{Key.down_task}") + "  Baixa tarefa de código para seu dispositivo")
-        _help.put_sentence(Sentence() + f"   {Actions.editar} " + RToken("r", f"{Key.edit}") + "  Abre os arquivos no editor de código")
-        _help.put_sentence(Sentence() + f"   {Actions.ativar} " + RToken("r", "↲") + "  Interage com o elemento")
-        _help.put_sentence(Sentence() + f"   {Actions.marcar} " + RToken("r", f"{Key.inc_grade}") + RToken("r", f"{Key.dec_grade}") + " Muda a pontuação da tarefa")
+        _help.put_sentence(Sentence() + f"{GuiActions.github} " + RToken("r", f"{GuiKeys.github_open}") + "  Abre tarefa em uma aba do browser")
+        _help.put_sentence(Sentence() + f"   {GuiActions.baixar} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
+        _help.put_sentence(Sentence() + f"   {GuiActions.editar} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
+        _help.put_sentence(Sentence() + f"   {GuiActions.ativar} " + RToken("r", "↲") + "  Interage com o elemento")
+        _help.put_sentence(Sentence() + f"   {GuiActions.marcar} " + RToken("r", f"{GuiKeys.inc_grade}") + RToken("r", f"{GuiKeys.dec_grade}") + " Muda a pontuação da tarefa")
         _help.put_sentence(Sentence())
         _help.put_sentence(Sentence() + "Você pode mudar o editor padrão com o comando")
         _help.put_sentence(Sentence() + RToken("g", "             tko config --editor <comando>"))
@@ -7692,7 +7684,7 @@ class PlayActions:
                 .put_text("O diretório de download padrão")
                 .put_text("do tko ainda não foi definido.")
                 .put_text("")
-                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + Key.set_root_dir, "g"))
+                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + GuiKeys.set_root_dir, "g"))
                 .put_text("para configurá-lo.")
                 .put_text("")
             )
@@ -7704,7 +7696,7 @@ class PlayActions:
                 .put_text("A linguagem de download padrão")
                 .put_text("para os rascunhos ainda não foi definda.")
                 .put_text("")
-                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + Key.set_lang, "g"))
+                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + GuiKeys.set_lang, "g"))
                 .put_text("para configurá-la.")
                 .put_text("")
             )
@@ -7926,44 +7918,44 @@ class Play:
         cman = InputManager()
 
         cman.add_int(curses.KEY_RESIZE, self.gui.disable_on_resize)
-        cman.add_str(Key.key_quit, self.send_quit_msg)
+        cman.add_str(GuiKeys.key_quit, self.send_quit_msg)
         cman.add_int(InputManager.esc, self.send_quit_msg)
         cman.add_int(curses.KEY_BACKSPACE, self.send_quit_msg)
 
         if Flags.config.is_true():
-            cman.add_str(Key.up, self.gui.config.move_up)
+            cman.add_str(GuiKeys.up, self.gui.config.move_up)
             cman.add_int(curses.KEY_UP, self.gui.config.move_up)
-            cman.add_str(Key.down, self.gui.config.move_down)
+            cman.add_str(GuiKeys.down, self.gui.config.move_down)
             cman.add_int(curses.KEY_DOWN, self.gui.config.move_down)
         else:
-            cman.add_str(Key.up, self.tree.move_up)
+            cman.add_str(GuiKeys.up, self.tree.move_up)
             cman.add_int(curses.KEY_UP, self.tree.move_up)
-            cman.add_str(Key.down, self.tree.move_down)
+            cman.add_str(GuiKeys.down, self.tree.move_down)
             cman.add_int(curses.KEY_DOWN, self.tree.move_down)
-            cman.add_str(Key.left, self.tree.arrow_left)
+            cman.add_str(GuiKeys.left, self.tree.arrow_left)
             cman.add_int(curses.KEY_LEFT, self.tree.arrow_left)
-            cman.add_str(Key.right, self.tree.arrow_right)
+            cman.add_str(GuiKeys.right, self.tree.arrow_right)
             cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
         
-        cman.add_str(Key.key_help, self.gui.show_help)
-        cman.add_str(Key.expand, self.tree.process_expand)
-        cman.add_str(Key.expand2, self.tree.process_expand)
-        cman.add_str(Key.collapse, self.tree.process_collapse)
-        cman.add_str(Key.collapse2, self.tree.process_collapse)
-        cman.add_str(Key.github_open, self.actions.open_link)
-        cman.add_str(Key.set_lang, lambda: self.actions.set_language(False))
-        cman.add_str(Key.set_root_dir, lambda: self.actions.set_rootdir(False))
-        cman.add_str(Key.down_task, self.actions.down_task)
-        cman.add_str(Key.select_task, self.actions.select_task)
+        cman.add_str(GuiKeys.key_help, self.gui.show_help)
+        cman.add_str(GuiKeys.expand, self.tree.process_expand)
+        cman.add_str(GuiKeys.expand2, self.tree.process_expand)
+        cman.add_str(GuiKeys.collapse, self.tree.process_collapse)
+        cman.add_str(GuiKeys.collapse2, self.tree.process_collapse)
+        cman.add_str(GuiKeys.github_open, self.actions.open_link)
+        cman.add_str(GuiKeys.set_lang, lambda: self.actions.set_language(False))
+        cman.add_str(GuiKeys.set_root_dir, lambda: self.actions.set_rootdir(False))
+        cman.add_str(GuiKeys.down_task, self.actions.down_task)
+        cman.add_str(GuiKeys.select_task, self.actions.select_task)
         cman.add_str("t", lambda: self.fman.add_input(Floating().put_text("\n Use o Enter para testar uma questão\n").warning()))
-        cman.add_str(Key.inc_grade, self.tree.inc_grade)
-        cman.add_str(Key.inc_grade2, self.tree.inc_grade)
-        cman.add_str(Key.dec_grade, self.tree.dec_grade)
-        cman.add_str(Key.dec_grade2, self.tree.dec_grade)
-        cman.add_str(Key.edit, lambda: self.opener.open_code(open_dir=True))
-        cman.add_str(Key.colors, self.app.toggle_color)
-        cman.add_str(Key.borders, self.app.toggle_borders)
-        cman.add_str(Key.graph, self.actions.graph_toggle)
+        cman.add_str(GuiKeys.inc_grade, self.tree.inc_grade)
+        cman.add_str(GuiKeys.inc_grade2, self.tree.inc_grade)
+        cman.add_str(GuiKeys.dec_grade, self.tree.dec_grade)
+        cman.add_str(GuiKeys.dec_grade2, self.tree.dec_grade)
+        cman.add_str(GuiKeys.edit, lambda: self.opener.open_code(open_dir=True))
+        cman.add_str(GuiKeys.colors, self.app.toggle_color)
+        cman.add_str(GuiKeys.borders, self.app.toggle_borders)
+        cman.add_str(GuiKeys.graph, self.actions.graph_toggle)
 
         for value in range(1, 10):
             cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
