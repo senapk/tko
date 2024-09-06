@@ -1,6 +1,7 @@
 from .flags import Flag
 from ..util.sentence import Sentence, Token
 from ..settings.app_settings import AppSettings
+from tko.util.symbols import symbols
 
 class Border:
     def __init__(self, app: AppSettings):
@@ -51,22 +52,21 @@ class Border:
     def get_flag_sentence(self, flag: Flag, pad: int = 0, button_mode: bool = True) -> Sentence:
         char = flag.get_char()
         text = flag.get_name()
-        # if flag.is_true():
-        #     text = text.upper()
-        # else:
-        #     text = text.lower()
-
-        color = "G" if flag.is_true() else "Y"
+        color = "M" 
+        symbol = symbols.neutral
+        if len(flag.get_values()) > 0:
+            color = "G" if flag.is_true() else "Y"
+            symbol = symbols.success if flag.is_true() else symbols.failure
         if not button_mode:
             color = color.lower()
         extra = Sentence()
-        filler = "+" if flag.is_true() else "-"
-        if pad > 0:
-            extra.addf(color, (pad - len(text)) * filler)
+        filler = " "
+        if pad > 2:
+            extra.addf(color, (pad - 2 - len(text)) * filler)
 
-        mid = Sentence().addf(color, text).add(extra).addf(color, f"[{char}]")
+        mid = Sentence().addf(color, symbol.text).addf(color, " ").addf(color, text).add(extra).addf(color, f"[{char}]")
         if button_mode:
-            middle = Sentence().add(self.sharpL(color)).add(mid).add(self.sharpR(color))
+            middle = Sentence().add(self.roundL(color)).add(mid).add(self.roundR(color))
         else:
             middle = Sentence().add(" ").add(mid).add(" ")
         return middle

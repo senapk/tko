@@ -52,13 +52,17 @@ class Config:
         for flag in self.flagsman.left:            
             elements.append(flag)
 
-        bordas = Flag().name("Bordas").char("B").values(["1" if self.app.has_borders() else "0"]).text("Ativa ou desativa as bordas").bool()
+        bordas = Flag().set_name("Bordas").set_char("B").set_values(["1" if self.app.has_borders() else "0"]).text("Ativa ou desativa as bordas").bool()
         elements.append(bordas)
 
-        grafo = Flag().name("Grafo").char("G").values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
+        grafo = Flag().set_name("Grafo").set_char("G").set_values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
         elements.append(grafo)
-        elements.append(("DirDestino", "[D]"))
-        elements.append(("Linguagem", "[L]"))
+        destiny = Flag().set_name("DirDestino").set_values([]).set_char("D").text("Muda o diretório root de download")
+        elements.append(destiny)
+        language = Flag().set_name("Linguagem").set_values([]).set_char("L").text("Muda a linguagem de download dos rascunhos")
+        elements.append(language)
+        # elements.append(("DirDestino", "[D]"))
+        # elements.append(("Linguagem", "[L]"))
         output: List[Sentence] = []
         if Flags.config.is_true():
             for i in range(len(elements)):

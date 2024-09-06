@@ -93,7 +93,7 @@ class Play:
         cman = InputManager()
 
         cman.add_int(curses.KEY_RESIZE, self.gui.disable_on_resize)
-        cman.add_str(Key.quit, self.send_quit_msg)
+        cman.add_str(Key.key_quit, self.send_quit_msg)
         cman.add_int(InputManager.esc, self.send_quit_msg)
         cman.add_int(curses.KEY_BACKSPACE, self.send_quit_msg)
 
@@ -112,7 +112,7 @@ class Play:
             cman.add_str(Key.right, self.tree.arrow_right)
             cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
         
-        cman.add_str(Key.ajuda, self.gui.show_help)
+        cman.add_str(Key.key_help, self.gui.show_help)
         cman.add_str(Key.expand, self.tree.process_expand)
         cman.add_str(Key.expand2, self.tree.process_expand)
         cman.add_str(Key.collapse, self.tree.process_collapse)

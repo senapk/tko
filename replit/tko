@@ -1691,7 +1691,7 @@ class Flag:
         self._location: str = ""
         self._bool = True  # many options
 
-    def name(self, _name):
+    def set_name(self, _name):
         self._name = _name
         return self
 
@@ -1699,11 +1699,11 @@ class Flag:
         self._text = _text
         return self
 
-    def char(self, _key):
+    def set_char(self, _key):
         self._char = _key
         return self
 
-    def values(self, _values: List[str]):
+    def set_values(self, _values: List[str]):
         self._values = _values
         return self
 
@@ -1762,14 +1762,14 @@ class Flag:
     
 
 class Flags:
-    minimum = Flag().name("Mínimo").char("M").values(["0", "1"]).text("Mostra os requisitos mínimos para completar a missão").location("left")
-    reward = Flag().name("Recompensa").char("R").values(["0", "1"]).text("Mostra a experiência obtida na tarefa").location("left")
-    percent = Flag().name("Percentual").char("P").values(["1", "0"]).text("Mostra valores em porcentagem").location("left")
-    admin = Flag().name("Admin").char("A").values(["0", "1"]).text("Mostra todas as missões e grupos").location("left")
-    images = Flag().name("Imagens").char("I").values(["1", "0"]).text("Mostra imagens aleatórias").location("left")
-    config    = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
-    skills = Flag().name("Skills").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
-    others = Flag().name("Outros").char("o").values(["0", "1"]).text("Mostra opções extras").location("bottom")
+    minimum = Flag().set_name("Mínimo").set_char("M").set_values(["0", "1"]).text("Mostra os requisitos mínimos para completar a missão").location("left")
+    reward = Flag().set_name("Recompensa").set_char("R").set_values(["0", "1"]).text("Mostra a experiência obtida na tarefa").location("left")
+    percent = Flag().set_name("Percentual").set_char("P").set_values(["1", "0"]).text("Mostra valores em porcentagem").location("left")
+    admin = Flag().set_name("Admin").set_char("A").set_values(["0", "1"]).text("Mostra todas as missões e grupos").location("left")
+    images = Flag().set_name("Imagens").set_char("I").set_values(["1", "0"]).text("Mostra imagens aleatórias").location("left")
+    config    = Flag().set_name("Config").set_char("c").set_values(["0", "1"]).text("Mostra a barra de flags").location("top")
+    skills = Flag().set_name("Skills").set_char("i").set_values(["0", "1"]).text("Mostra a barra de skills").location("top")
+    hud = Flag().set_name("HUD").set_char("h").set_values(["0", "1"]).text("Mostra opções extras").location("bottom")
 
 class FlagsMan:
     def __init__(self, data: Dict[str, int]):
@@ -2430,76 +2430,6 @@ class GradeFunctor:
         self.fn(self.grade)
 
 
-class Border:
-    def __init__(self, app: AppSettings):
-        self.app = app
-
-    def has_borders(self):
-        return self.app._borders
-
-    def border_round(self, color: str, data: str):
-        return Sentence().add(self.roundL(color)).addf(color, data).add(self.roundR(color))
-
-    def border_sharp(self, color: str, data: str):
-        return Sentence().add(self.sharpL(color)).addf(color, data).add(self.sharpR(color))
-
-    def roundL(self, color: str) -> Token:
-        return Token("", color.lower()) if self.has_borders() else Token(" ", color)
-
-    def roundR(self, color: str) -> Token:
-        return Token("", color.lower()) if self.has_borders() else Token(" ", color)
-
-    def sharpL(self, color: str) -> Token:
-        return Token("", color.lower()) if self.has_borders() else Token(" ", color)
-
-    def sharpR(self, color: str):
-        return Token("", color.lower()) if self.has_borders() else Token(" ", color)
-
-    def build_bar(self, text: str, percent: float, length: int, fmt_true: str = "/kC",
-                  fmt_false: str = "/kY", round=True) -> Sentence:
-        if round and (len(text) >= length - 2):
-            text = " " + text
-
-        if length > len(text):
-            prefix = (length - len(text)) // 2
-            suffix = length - len(text) - prefix
-            text = " " * prefix + text + " " * suffix
-        elif length < len(text):
-            text = text[:length]
-        
-        full_line = text
-        done_len = int(percent * length)
-        xp_bar = Token(full_line[:done_len], fmt_true) + Token(full_line[done_len:], fmt_false)
-            
-        if round:
-            xp_bar.data[0] = self.roundL(xp_bar.data[0].fmt)
-            xp_bar.data[-1] = self.roundR(xp_bar.data[-1].fmt)
-        return xp_bar
-
-    def get_flag_sentence(self, flag: Flag, pad: int = 0, button_mode: bool = True) -> Sentence:
-        char = flag.get_char()
-        text = flag.get_name()
-        # if flag.is_true():
-        #     text = text.upper()
-        # else:
-        #     text = text.lower()
-
-        color = "G" if flag.is_true() else "Y"
-        if not button_mode:
-            color = color.lower()
-        extra = Sentence()
-        filler = "+" if flag.is_true() else "-"
-        if pad > 0:
-            extra.addf(color, (pad - len(text)) * filler)
-
-        mid = Sentence().addf(color, text).add(extra).addf(color, f"[{char}]")
-        if button_mode:
-            middle = Sentence().add(self.sharpL(color)).add(mid).add(self.sharpR(color))
-        else:
-            middle = Sentence().add(" ").add(mid).add(" ")
-        return middle
-
-
 class __Symbols:
     def __init__(self):
         self.downloaded = Token()
@@ -2603,6 +2533,75 @@ class __Symbols:
 
 
 symbols = __Symbols()
+
+
+class Border:
+    def __init__(self, app: AppSettings):
+        self.app = app
+
+    def has_borders(self):
+        return self.app._borders
+
+    def border_round(self, color: str, data: str):
+        return Sentence().add(self.roundL(color)).addf(color, data).add(self.roundR(color))
+
+    def border_sharp(self, color: str, data: str):
+        return Sentence().add(self.sharpL(color)).addf(color, data).add(self.sharpR(color))
+
+    def roundL(self, color: str) -> Token:
+        return Token("", color.lower()) if self.has_borders() else Token(" ", color)
+
+    def roundR(self, color: str) -> Token:
+        return Token("", color.lower()) if self.has_borders() else Token(" ", color)
+
+    def sharpL(self, color: str) -> Token:
+        return Token("", color.lower()) if self.has_borders() else Token(" ", color)
+
+    def sharpR(self, color: str):
+        return Token("", color.lower()) if self.has_borders() else Token(" ", color)
+
+    def build_bar(self, text: str, percent: float, length: int, fmt_true: str = "/kC",
+                  fmt_false: str = "/kY", round=True) -> Sentence:
+        if round and (len(text) >= length - 2):
+            text = " " + text
+
+        if length > len(text):
+            prefix = (length - len(text)) // 2
+            suffix = length - len(text) - prefix
+            text = " " * prefix + text + " " * suffix
+        elif length < len(text):
+            text = text[:length]
+        
+        full_line = text
+        done_len = int(percent * length)
+        xp_bar = Token(full_line[:done_len], fmt_true) + Token(full_line[done_len:], fmt_false)
+            
+        if round:
+            xp_bar.data[0] = self.roundL(xp_bar.data[0].fmt)
+            xp_bar.data[-1] = self.roundR(xp_bar.data[-1].fmt)
+        return xp_bar
+
+    def get_flag_sentence(self, flag: Flag, pad: int = 0, button_mode: bool = True) -> Sentence:
+        char = flag.get_char()
+        text = flag.get_name()
+        color = "M" 
+        symbol = symbols.neutral
+        if len(flag.get_values()) > 0:
+            color = "G" if flag.is_true() else "Y"
+            symbol = symbols.success if flag.is_true() else symbols.failure
+        if not button_mode:
+            color = color.lower()
+        extra = Sentence()
+        filler = " "
+        if pad > 2:
+            extra.addf(color, (pad - 2 - len(text)) * filler)
+
+        mid = Sentence().addf(color, symbol.text).addf(color, " ").addf(color, text).add(extra).addf(color, f"[{char}]")
+        if button_mode:
+            middle = Sentence().add(self.roundL(color)).add(mid).add(self.roundR(color))
+        else:
+            middle = Sentence().add(" ").add(mid).add(" ")
+        return middle
 
 
 class Task:
@@ -5802,13 +5801,17 @@ class Config:
         for flag in self.flagsman.left:            
             elements.append(flag)
 
-        bordas = Flag().name("Bordas").char("B").values(["1" if self.app.has_borders() else "0"]).text("Ativa ou desativa as bordas").bool()
+        bordas = Flag().set_name("Bordas").set_char("B").set_values(["1" if self.app.has_borders() else "0"]).text("Ativa ou desativa as bordas").bool()
         elements.append(bordas)
 
-        grafo = Flag().name("Grafo").char("G").values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
+        grafo = Flag().set_name("Grafo").set_char("G").set_values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
         elements.append(grafo)
-        elements.append(("DirDestino", "[D]"))
-        elements.append(("Linguagem", "[L]"))
+        destiny = Flag().set_name("DirDestino").set_values([]).set_char("D").text("Muda o diretório root de download")
+        elements.append(destiny)
+        language = Flag().set_name("Linguagem").set_values([]).set_char("L").text("Muda a linguagem de download dos rascunhos")
+        elements.append(language)
+        # elements.append(("DirDestino", "[D]"))
+        # elements.append(("Linguagem", "[L]"))
         output: List[Sentence] = []
         if Flags.config.is_true():
             for i in range(len(elements)):
@@ -6174,7 +6177,7 @@ class CDiff:
 
     def make_bottom_line(self) -> List[Sentence]:
         cmds: List[Sentence] = []
-        if Flags.others.is_true():
+        if Flags.hud.is_true():
             cmds.append(self.style.border_round("M", f"{DActions.rodar}[{DKeys.rodar}]"))
             # diff
             text = f"VER━╾h[{DKeys.diff}]" if self.settings.app._diff_mode == "side" else f"v╼━HOR[{DKeys.diff}]"
@@ -6185,9 +6188,9 @@ class CDiff:
             cmds.append(self.style.border_round("C", f"{DActions.editar}[{DKeys.editar}]"))
         cmds.append(self.style.border_round("G", f"{DActions.testar}[↲]"))
         
-        color = "G" if Flags.others.is_true() else "Y"
+        color = "G" if Flags.hud.is_true() else "Y"
         cmds.append(self.style.border_sharp(color, f"{DActions.outros}[{DKeys.outros}]"))
-        if Flags.others.is_true():
+        if Flags.hud.is_true():
             # travar
 
             value = str(self.settings.app._timeout)
@@ -6482,7 +6485,7 @@ class CDiff:
         elif key == ord(DKeys.tempo):
             self.change_limit()
         elif key == ord(DKeys.outros):
-            Flags.others.toggle()
+            Flags.hud.toggle()
         elif key == ord(DKeys.border):
             self.settings.app.toggle_borders()
         elif key != -1 and key != curses.KEY_RESIZE:
@@ -7147,6 +7150,7 @@ class Actions:
     desmarcar = "Desmarcar"
     colapsar = "Colapsar"
     pesquisar = "Buscar"
+    hud = "HUD"
 
 class Key:
     left = "a"
@@ -7156,7 +7160,7 @@ class Key:
 
     down_task = "b"
     select_task = "\n"
-    ajuda = "h"
+    key_help = "?"
     expand = ">"
     expand2 = "."
     collapse = "<"
@@ -7168,12 +7172,13 @@ class Key:
     set_root_dir = "D"
     set_lang = "L"
     github_open = "g"
-    quit = "q"
+    key_quit = "q"
     edit= "e"
     colors = "C"
     borders = "B"
     pesquisar = "/"
     graph = "G"
+    hud = "h"
 
 
 class Gui:
@@ -7199,12 +7204,12 @@ class Gui:
         ]
 
         self.help_fixed: List[Sentence] = [
-            Sentence() + RToken("C", f"  {Actions.sair}[{Key.quit}]"),
+            Sentence() + RToken("C", f" {Actions.sair} [{Key.key_quit}]"),
             Sentence() + RToken("C", f"{Actions.editar}[{Key.edit}]"),
             Sentence() + RToken("G", f"{Actions.ativar}[↲]"),
         ]
         self.help_others_before: List[Sentence] = [
-            Sentence() + RToken("Y", f" {Actions.ajuda}[{Key.ajuda}]"),
+            Sentence() + RToken("Y", f" {Actions.ajuda}[{Key.key_help}]"),
             Sentence() + RToken("Y", f"{Actions.ler_online}[{Key.github_open}]"),
         ]
         self.help_others_after: List[Sentence] = [
@@ -7228,17 +7233,17 @@ class Gui:
 
     def show_main_bar(self, frame: Frame):
         top = Sentence()
-        if self.two_column_mode() and Flags.others.is_true(): 
+        if self.two_column_mode() and Flags.hud.is_true(): 
             top.add(self.style.get_flag_sentence(Flags.config)).add(" ")
 
         alias_color = "R"
         top.add(self.style.border_sharp(alias_color, self.rep_alias.upper()))
-        if Flags.others.is_true():
+        if Flags.hud.is_true():
             color = "W" if Flags.admin.is_true() else "K"
             top.add(self.style.border_sharp(color, "ADMIN"))
         top.add(self.style.border_sharp("G", self.rep.get_lang().upper()))
 
-        if self.two_column_mode() and Flags.others.is_true(): 
+        if self.two_column_mode() and Flags.hud.is_true(): 
             top.add(" ").add(self.style.get_flag_sentence(Flags.skills))
         half = top.len() // 2
         x = frame.get_x()
@@ -7319,7 +7324,7 @@ class Gui:
 
     def two_column_mode(self):
         _, cols = Fmt.get_size()
-        return cols < self.wrap_size + 2 and Flags.others.is_true()
+        return cols < self.wrap_size + 2 and Flags.hud.is_true()
 
     def build_list_sentence(self, items: List[Sentence]) -> List[Sentence]:
         out: List[Sentence] = []
@@ -7340,10 +7345,9 @@ class Gui:
         array: List[Sentence] = []
         array += self.help_others_before
         array += self.help_fixed
-        color = "G" if Flags.others.is_true() else "Y"
-
-
-        array.append(Sentence() + RToken(color, "!Outros[o]"))
+        color = "G" if Flags.hud.is_true() else "Y"
+        symbol = symbols.success if Flags.hud.is_true() else symbols.failure
+        array.append(Sentence() + RToken(color, f"{Actions.hud} {symbol.text} [{Key.hud}]"))
         array += self.help_others_after
 
         return self.build_list_sentence(array)
@@ -7355,7 +7359,7 @@ class Gui:
             line_down = Sentence(" ").join(elems[2:-2])
             Fmt.write(lines - 1, 0, line_down.center(cols))
         else:
-            if Flags.others.is_true():
+            if Flags.hud.is_true():
                 line_all = Sentence(" ").join(elems)
                 Fmt.write(lines - 1, 0, line_all.center(cols))
             else:
@@ -7383,7 +7387,7 @@ class Gui:
         marcar = help[1]
         config = self.style.get_flag_sentence(Flags.config)
         skills = self.style.get_flag_sentence(Flags.skills)
-        others = Flags.others.is_true()
+        others = Flags.hud.is_true()
 
         pre: List[Sentence] = []
         pre.append(marcar)
@@ -7423,7 +7427,7 @@ class Gui:
 
         _help.set_header_sentence(Sentence().add(" Ajuda "))
         # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence("    Ajuda ").addf("r", Key.ajuda).add("  Abre essa tela de ajuda")
+        _help.put_sentence(Sentence("    Ajuda ").addf("r", Key.key_help).add("  Abre essa tela de ajuda")
         )
 
         _help.put_sentence(Sentence("  ").addf("r", "Shift + B")
@@ -7922,7 +7926,7 @@ class Play:
         cman = InputManager()
 
         cman.add_int(curses.KEY_RESIZE, self.gui.disable_on_resize)
-        cman.add_str(Key.quit, self.send_quit_msg)
+        cman.add_str(Key.key_quit, self.send_quit_msg)
         cman.add_int(InputManager.esc, self.send_quit_msg)
         cman.add_int(curses.KEY_BACKSPACE, self.send_quit_msg)
 
@@ -7941,7 +7945,7 @@ class Play:
             cman.add_str(Key.right, self.tree.arrow_right)
             cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
         
-        cman.add_str(Key.ajuda, self.gui.show_help)
+        cman.add_str(Key.key_help, self.gui.show_help)
         cman.add_str(Key.expand, self.tree.process_expand)
         cman.add_str(Key.expand2, self.tree.process_expand)
         cman.add_str(Key.collapse, self.tree.process_collapse)

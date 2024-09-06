@@ -13,6 +13,7 @@ from ..settings.app_settings import AppSettings
 from ..settings.rep_settings import languages_avaliable, RepData
 from ..down.down import DownProblem
 from ..util.sentence import Sentence, Token,  RToken
+from tko.util.symbols import symbols
 from .fmt import Fmt
 from .frame import Frame
 from .border import Border
@@ -41,6 +42,7 @@ class Actions:
     desmarcar = "Desmarcar"
     colapsar = "Colapsar"
     pesquisar = "Buscar"
+    hud = "HUD"
 
 class Key:
     left = "a"
@@ -50,7 +52,7 @@ class Key:
 
     down_task = "b"
     select_task = "\n"
-    ajuda = "h"
+    key_help = "?"
     expand = ">"
     expand2 = "."
     collapse = "<"
@@ -62,12 +64,13 @@ class Key:
     set_root_dir = "D"
     set_lang = "L"
     github_open = "g"
-    quit = "q"
+    key_quit = "q"
     edit= "e"
     colors = "C"
     borders = "B"
     pesquisar = "/"
     graph = "G"
+    hud = "h"
 
 
 class Gui:
@@ -93,12 +96,12 @@ class Gui:
         ]
 
         self.help_fixed: List[Sentence] = [
-            Sentence() + RToken("C", f"  {Actions.sair}[{Key.quit}]"),
+            Sentence() + RToken("C", f" {Actions.sair} [{Key.key_quit}]"),
             Sentence() + RToken("C", f"{Actions.editar}[{Key.edit}]"),
             Sentence() + RToken("G", f"{Actions.ativar}[↲]"),
         ]
         self.help_others_before: List[Sentence] = [
-            Sentence() + RToken("Y", f" {Actions.ajuda}[{Key.ajuda}]"),
+            Sentence() + RToken("Y", f" {Actions.ajuda}[{Key.key_help}]"),
             Sentence() + RToken("Y", f"{Actions.ler_online}[{Key.github_open}]"),
         ]
         self.help_others_after: List[Sentence] = [
@@ -122,17 +125,17 @@ class Gui:
 
     def show_main_bar(self, frame: Frame):
         top = Sentence()
-        if self.two_column_mode() and Flags.others.is_true(): 
+        if self.two_column_mode() and Flags.hud.is_true(): 
             top.add(self.style.get_flag_sentence(Flags.config)).add(" ")
 
         alias_color = "R"
         top.add(self.style.border_sharp(alias_color, self.rep_alias.upper()))
-        if Flags.others.is_true():
+        if Flags.hud.is_true():
             color = "W" if Flags.admin.is_true() else "K"
             top.add(self.style.border_sharp(color, "ADMIN"))
         top.add(self.style.border_sharp("G", self.rep.get_lang().upper()))
 
-        if self.two_column_mode() and Flags.others.is_true(): 
+        if self.two_column_mode() and Flags.hud.is_true(): 
             top.add(" ").add(self.style.get_flag_sentence(Flags.skills))
         half = top.len() // 2
         x = frame.get_x()
@@ -213,7 +216,7 @@ class Gui:
 
     def two_column_mode(self):
         _, cols = Fmt.get_size()
-        return cols < self.wrap_size + 2 and Flags.others.is_true()
+        return cols < self.wrap_size + 2 and Flags.hud.is_true()
 
     def build_list_sentence(self, items: List[Sentence]) -> List[Sentence]:
         out: List[Sentence] = []
@@ -234,10 +237,9 @@ class Gui:
         array: List[Sentence] = []
         array += self.help_others_before
         array += self.help_fixed
-        color = "G" if Flags.others.is_true() else "Y"
-
-
-        array.append(Sentence() + RToken(color, "!Outros[o]"))
+        color = "G" if Flags.hud.is_true() else "Y"
+        symbol = symbols.success if Flags.hud.is_true() else symbols.failure
+        array.append(Sentence() + RToken(color, f"{Actions.hud} {symbol.text} [{Key.hud}]"))
         array += self.help_others_after
 
         return self.build_list_sentence(array)
@@ -249,7 +251,7 @@ class Gui:
             line_down = Sentence(" ").join(elems[2:-2])
             Fmt.write(lines - 1, 0, line_down.center(cols))
         else:
-            if Flags.others.is_true():
+            if Flags.hud.is_true():
                 line_all = Sentence(" ").join(elems)
                 Fmt.write(lines - 1, 0, line_all.center(cols))
             else:
@@ -277,7 +279,7 @@ class Gui:
         marcar = help[1]
         config = self.style.get_flag_sentence(Flags.config)
         skills = self.style.get_flag_sentence(Flags.skills)
-        others = Flags.others.is_true()
+        others = Flags.hud.is_true()
 
         pre: List[Sentence] = []
         pre.append(marcar)
@@ -317,7 +319,7 @@ class Gui:
 
         _help.set_header_sentence(Sentence().add(" Ajuda "))
         # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence("    Ajuda ").addf("r", Key.ajuda).add("  Abre essa tela de ajuda")
+        _help.put_sentence(Sentence("    Ajuda ").addf("r", Key.key_help).add("  Abre essa tela de ajuda")
         )
 
         _help.put_sentence(Sentence("  ").addf("r", "Shift + B")

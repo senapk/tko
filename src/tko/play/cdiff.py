@@ -379,7 +379,7 @@ class CDiff:
 
     def make_bottom_line(self) -> List[Sentence]:
         cmds: List[Sentence] = []
-        if Flags.others.is_true():
+        if Flags.hud.is_true():
             cmds.append(self.style.border_round("M", f"{DActions.rodar}[{DKeys.rodar}]"))
             # diff
             text = f"VER━╾h[{DKeys.diff}]" if self.settings.app._diff_mode == "side" else f"v╼━HOR[{DKeys.diff}]"
@@ -390,9 +390,9 @@ class CDiff:
             cmds.append(self.style.border_round("C", f"{DActions.editar}[{DKeys.editar}]"))
         cmds.append(self.style.border_round("G", f"{DActions.testar}[↲]"))
         
-        color = "G" if Flags.others.is_true() else "Y"
+        color = "G" if Flags.hud.is_true() else "Y"
         cmds.append(self.style.border_sharp(color, f"{DActions.outros}[{DKeys.outros}]"))
-        if Flags.others.is_true():
+        if Flags.hud.is_true():
             # travar
 
             value = str(self.settings.app._timeout)
@@ -687,7 +687,7 @@ class CDiff:
         elif key == ord(DKeys.tempo):
             self.change_limit()
         elif key == ord(DKeys.outros):
-            Flags.others.toggle()
+            Flags.hud.toggle()
         elif key == ord(DKeys.border):
             self.settings.app.toggle_borders()
         elif key != -1 and key != curses.KEY_RESIZE:
