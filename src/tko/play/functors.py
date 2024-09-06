@@ -11,7 +11,7 @@ class FlagFunctor:
     def __call__(self):
         self.flag.toggle()
         if (self.flag.get_location() == "left" or self.flag.get_location() == "geral") and self.flag.is_bool():
-            f = Floating("v>").warning()
+            f = Floating("v").warning()
             f.put_text("")
             f.put_text(self.flag.get_description())
             if self.flag.is_true():
@@ -28,4 +28,3 @@ class GradeFunctor:
 
     def __call__(self):
         self.fn(self.grade)
-

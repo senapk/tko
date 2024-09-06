@@ -382,14 +382,14 @@ class Gui:
         mid_sy = main_sy - top_dy - bottom_dy # tamanho do meio
 
         skills_sx = 0
+        flags_sx = 0
         if Flags.skills.is_true():
-            skills_sx = max(20, main_sx // 4)
+            skills_sx = 25 #max(20, main_sx // 4)
+        elif Flags.config.is_true():
+            flags_sx = 25
         else:
             self.show_opening()
-
-        flags_sx = 0
-        if Flags.config.is_true():
-            flags_sx = 18 
+        
 
         task_sx = main_sx - flags_sx - skills_sx
 
@@ -399,11 +399,11 @@ class Gui:
         # frame_bottom = Frame(lines - bottom_dy - 1, -1).set_size(bottom_dy + 2, cols + 2)
         self.show_bottom_bar()
         if task_sx > 5: 
-            frame_main = Frame(mid_y, flags_sx).set_size(mid_sy, task_sx).set_border_color(border_color)
+            frame_main = Frame(mid_y, 0).set_size(mid_sy, task_sx).set_border_color(border_color)
             self.show_main_bar(frame_main)
 
         if Flags.config.is_true():
-            frame_flags = Frame(mid_y, 0).set_size(mid_sy, flags_sx).set_border_color(border_color)
+            frame_flags = Frame(mid_y, cols - flags_sx).set_size(mid_sy, flags_sx).set_border_color(border_color)
             self.show_config_bar(frame_flags)
 
         if Flags.skills.is_true():

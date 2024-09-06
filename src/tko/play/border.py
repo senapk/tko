@@ -48,20 +48,25 @@ class Border:
             xp_bar.data[-1] = self.roundR(xp_bar.data[-1].fmt)
         return xp_bar
 
-    def get_flag_sentence(self, flag: Flag, pad: int = 0) -> Sentence:
-        if not flag.is_bool():
-            name = Sentence().addf(flag.get_value(), f"{flag._name}".ljust(pad))
-            value = Sentence().add(f"[{flag.get_char()}]").add(name).add(f"{flag.get_value()}".rjust(2))
-            return value
-            
+    def get_flag_sentence(self, flag: Flag, pad: int = 0, button_mode: bool = True) -> Sentence:
         char = flag.get_char()
         text = flag.get_name()
+        # if flag.is_true():
+        #     text = text.upper()
+        # else:
+        #     text = text.lower()
+
         color = "G" if flag.is_true() else "Y"
-        textc = ""
+        if not button_mode:
+            color = color.lower()
         extra = Sentence()
+        filler = "+" if flag.is_true() else "-"
         if pad > 0:
-            extra.addf(color, (pad - len(text)) * " ")
-        mid = Sentence().addf(color + textc, text).add(extra).addf(color, f"[{char}]")
-        middle = Sentence().add(self.sharpL(color)).add(mid).add(self.sharpR(color))
+            extra.addf(color, (pad - len(text)) * filler)
+
+        mid = Sentence().addf(color, text).add(extra).addf(color, f"[{char}]")
+        if button_mode:
+            middle = Sentence().add(self.sharpL(color)).add(mid).add(self.sharpR(color))
+        else:
+            middle = Sentence().add(" ").add(mid).add(" ")
         return middle
-    

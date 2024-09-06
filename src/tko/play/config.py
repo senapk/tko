@@ -9,9 +9,10 @@ import curses
 from tko.settings.settings import Settings
 from tko.util.sentence import Sentence
 from .border import Border
-from typing import List
+from typing import List, Tuple, Union
 from .functors import FlagFunctor
 from .input_manager import InputManager
+
 
 class Config:
     def __init__(self, flagsman: FlagsMan, fman: FloatingManager, style: Border, settings: Settings):
@@ -34,34 +35,36 @@ class Config:
         if self.index == -1:
             self.index = self.size - 1
 
-    def mark_focused_sentence(self, sentence: Sentence):
-        focus = self.colors.focused_item
-        for i in range(1, len(sentence.data) - 1):
-            if sentence.data[i].text == " ":
-                break
-            sentence.data[i].fmt = focus
+    def mark_focused(self, index, elem: Union[Flag, Tuple[str, str]]) -> Sentence:
+        pad = 14 if index == self.index else 14
+        if isinstance(elem, Flag):
+            sentence = self.style.get_flag_sentence(elem, pad)
+        else:
+            sentence = self.style.border_round("M", elem[0].ljust(pad) + elem[1])
+
+        if index == self.index:
+            focus = self.colors.focused_item
+            return Sentence("") + self.style.border_round(focus, sentence.get_text()[1:-1])
+        return Sentence("    ").add(sentence)
 
     def get_elements(self):
-        elements: List[Sentence] = []
-        pad = 11
+        elements: List[Union[Flag, Tuple[str, str]]] = []
         for flag in self.flagsman.left:            
-            elements.append(self.style.get_flag_sentence(flag, pad))
+            elements.append(flag)
 
         bordas = Flag().name("Bordas").char("B").values(["1" if self.app.has_borders() else "0"]).text("Ativa ou desativa as bordas").bool()
-        elements.append(self.style.get_flag_sentence(bordas, pad))
+        elements.append(bordas)
 
         grafo = Flag().name("Grafo").char("G").values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
-        elements.append(self.style.get_flag_sentence(grafo, pad))
-
-        color = "M"
-        elements.append(self.style.border_round(color, "DirDestino [D]"))
-        elements.append(self.style.border_round(color, "Linguagem  [L]"))
-
+        elements.append(grafo)
+        elements.append(("DirDestino", "[D]"))
+        elements.append(("Linguagem", "[L]"))
+        output: List[Sentence] = []
         if Flags.config.is_true():
-            for i, value in enumerate(elements):
-                if i == self.index:
-                    self.mark_focused_sentence(value)
+            for i in range(len(elements)):
+                sentence = self.mark_focused(i, elements[i])
+                output.append(sentence)
 
-        return elements
+        return output
 
     

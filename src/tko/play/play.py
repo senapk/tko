@@ -77,6 +77,17 @@ class Play:
             Flags.config.toggle()
         else:
             Flags.config.toggle()
+            if Flags.skills.is_true():
+                Flags.skills.toggle()
+
+    def toggle_skills(self):
+        if Flags.skills.is_true():
+            Flags.skills.toggle()
+        else:
+            Flags.skills.toggle()
+            if Flags.config.is_true():
+                Flags.config.toggle()
+            
 
     def make_callback(self) -> InputManager:
         cman = InputManager()
@@ -132,7 +143,7 @@ class Play:
             cman.add_str(flag.get_char(), FlagFunctor(self.fman, flag))
 
         cman.add_str(Flags.config.get_char(), self.toggle_config)
-        cman.add_str(Flags.skills.get_char(), FlagFunctor(self.fman, Flags.skills))
+        cman.add_str(Flags.skills.get_char(), self.toggle_skills)
         cman.add_str("/", self.search.toggle_search)
 
         return cman
