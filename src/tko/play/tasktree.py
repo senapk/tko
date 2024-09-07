@@ -27,13 +27,13 @@ class Entry:
 
 class TaskTree:
 
-    def __init__(self, app: AppSettings, game: Game, rep: RepData, rep_alias: str):
-        self.app = app
+    def __init__(self, settings: Settings, game: Game, rep: RepData):
+        self.settings = settings
+        self.app = settings.app
         self.game = game
         self.rep = rep
-        self.rep_alias = rep_alias
-        self.style = Border(Settings().app)
-        self.colors = Settings().colors
+        self.style = Border(settings.app)
+        self.colors = settings.colors
         self.items: List[Entry] = []
         self.index_selected = 0
         self.index_begin = 0
@@ -109,7 +109,7 @@ class TaskTree:
         down_symbol = Token(" ")
         in_focus = focus_color != ""
         down_symbol = symbols.cant_download
-        rep_dir = os.path.join(self.app._rootdir, self.rep_alias)
+        rep_dir = os.path.join(self.app.get_rootdir(), self.rep.alias)
         if t.is_downloadable() and rootdir != "":
             if t.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
                 down_symbol = symbols.downloaded

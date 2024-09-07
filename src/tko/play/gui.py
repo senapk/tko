@@ -1,48 +1,37 @@
 from tko.play.keys import GuiActions, GuiKeys
-from ..game.game import Game
-from ..game.cluster import Cluster
-from ..game.quest import Quest
-from ..game.task import Task
-from ..game.xp import XP
-from ..game.graph import Graph
-import random
-from .opener import Opener
-from ..run.basic import Success
-from typing import List, Any, Dict, Callable, Tuple
-from ..settings.settings import Settings
-from ..settings.app_settings import AppSettings
-from ..settings.rep_settings import languages_avaliable, RepData
-from ..down.down import DownProblem
-from ..util.sentence import Sentence, Token,  RToken
+from tko.game.xp import XP
+from tko.play.opener import Opener
+from tko.settings.settings import Settings
+from tko.util.sentence import Sentence, Token,  RToken
 from tko.util.symbols import symbols
-from .fmt import Fmt
-from .frame import Frame
-from .border import Border
-from .colors import Colors
-from .search import Search
-from .config import Config
-from .images import opening, random_get
+
+from tko.play.fmt import Fmt
+from tko.play.frame import Frame
+from tko.play.border import Border
+from tko.play.search import Search
+from tko.play.config import Config
+from tko.play.images import opening, random_get
+from tko.play.floating import Floating
+from tko.play.floating_manager import FloatingManager
+from tko.play.flags import Flag, Flags, FlagsMan
+from tko.play.tasktree import TaskTree
+
+from typing import List, Any, Dict, Callable, Tuple
 import datetime
-
-from .floating import Floating
-from .floating_manager import FloatingManager
-from .flags import Flag, Flags, FlagsMan
-from .tasktree import TaskTree
-
 
 class Gui:
 
-    def __init__(self, rep: RepData, rep_alias: str, game: Game, tree: TaskTree, flagsman: FlagsMan, search: Search, fman: FloatingManager):
-        self.rep = rep
-        self.rep_alias = rep_alias
-        self.game = game
+    def __init__(self, tree: TaskTree, flagsman: FlagsMan, fman: FloatingManager):
+        self.rep = tree.rep
+        self.game = tree.game
         self.tree = tree
         self.flagsman = flagsman
         self.fman = fman
-        self.search = search
-        self.settings = Settings()
+        self.settings = tree.settings
+        self.search = Search(tree=self.tree, fman=self.fman)
+        self.opener = Opener(tree=self.tree, fman=self.fman)
         self.style: Border = Border(self.settings.app)
-        self.config = Config(self.rep, self.flagsman, self.fman, self.settings)
+        self.config = Config(self.settings, self.rep, self.flagsman, self.fman)
         self.colors = self.settings.colors
 
         self.app = Settings().app
@@ -98,7 +87,7 @@ class Gui:
             top.add(self.style.get_flag_sentence(Flags.config)).add(" ")
 
         alias_color = "R"
-        top.add(self.style.border(alias_color, self.rep_alias.upper()))
+        top.add(self.style.border(alias_color, self.rep.alias.upper()))
         if Flags.hud.is_true():
             color = "W" if Flags.admin.is_true() else "K"
             top.add(self.style.border(color, "ADMIN"))
@@ -392,7 +381,7 @@ class Gui:
         if Flags.config.is_true():
             frame_flags = Frame(mid_y, cols - flags_sx).set_size(mid_sy, flags_sx).set_border_color(border_color)
             self.show_config_bar(frame_flags)
-            Fmt.write(1, cols - left_size - 3, Sentence().addf("r", " ↔TAB "))
+            Fmt.write(1, cols - left_size - 3, Sentence().addf("r", f" {GuiActions.tab} "))
 
         if Flags.skills.is_true():
             frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)

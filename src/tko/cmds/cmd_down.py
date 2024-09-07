@@ -20,7 +20,7 @@ class CmdDown:
         rep_data = settings.get_rep_data(rep_alias)
         if game is None:
             try:
-                file = rep_source.get_file(rep_dir)
+                file = rep_source.get_file_or_cache(rep_dir)
             except urllib.error.HTTPError:
                 DownProblem.fnprint("falha: Verifique sua internet")
             game = Game(file)

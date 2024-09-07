@@ -1,22 +1,19 @@
-from .tasktree import TaskTree, Task
-from .floating import Floating
-from .floating_manager import FloatingManager
-from ..settings.app_settings import AppSettings
-from ..settings.rep_settings import RepData
-from ..util.runner import Runner
-from ..util.sentence import Sentence
+from tko.play.tasktree import TaskTree, Task
+from tko.play.floating import Floating
+from tko.play.floating_manager import FloatingManager
+from tko.util.sentence import Sentence
+
 import tempfile
 import os
 import subprocess
 from typing import List
 
 class Opener:
-    def __init__(self, tree: TaskTree, fman: FloatingManager, app: AppSettings, rep_data: RepData, rep_alias: str):
+    def __init__(self, tree: TaskTree, fman: FloatingManager):
         self.tree = tree
         self.fman = fman
-        self.app = app
-        self.rep = rep_data
-        self.rep_alias = rep_alias
+        self.app = tree.settings.app
+        self.rep = tree.rep
 
     def set_fman(self, fman: FloatingManager):
         self.fman = fman
@@ -27,7 +24,7 @@ class Opener:
         if isinstance(obj, Task):
             rootdir = self.app._rootdir
             if rootdir != "":
-                path = os.path.join(self.app._rootdir, self.rep_alias, obj.key, "Readme.md")
+                path = os.path.join(self.app._rootdir, self.rep.alias, obj.key, "Readme.md")
                 if os.path.isfile(path):
                     return path
         return ""

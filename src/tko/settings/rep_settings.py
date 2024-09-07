@@ -21,7 +21,7 @@ class RepSource:
         self.url = url
         return self
 
-    def get_file(self, rep_dir: str) -> str:
+    def get_file_or_cache(self, rep_dir: str) -> str:
         # arquivo existe e é local
         if self.file != "" and os.path.exists(self.file) and self.url == "":
             return self.file
@@ -56,9 +56,17 @@ class RepSource:
 
 class RepData:
 
-    def __init__(self, json_file: str = ""):
+    def __init__(self, rootdir: str, alias: str, json_file: str = ""):
         self.json_file: str = json_file
         self.data: Dict[str, Any] = {}
+        self.rootdir = rootdir
+        self.alias = alias
+
+    def get_rootdir(self) -> str:
+        return self.rootdir
+
+    def get_rep_dir(self) -> str:
+        return os.path.join(self.rootdir, self.alias)
 
     __expanded = "expanded"
     __new_items = "new_items"

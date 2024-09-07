@@ -43,7 +43,7 @@ class CmdRep:
     def graph(args):
         settings = Settings()
         rep_source:RepSource = settings.get_rep_source(args.alias)
-        file = rep_source.get_file(os.path.join(settings.app._rootdir, args.alias))
+        file = rep_source.get_file_or_cache(os.path.join(settings.app._rootdir, args.alias))
         game = Game()
         game.parse_file(file)
         game.check_cycle()

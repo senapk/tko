@@ -5,30 +5,32 @@ import enum
 
 from tko.play.keys import DiffActions, DiffKeys
 
-from ..run.basic import ExecutionResult
-from ..run.unit import Unit
-from ..run.param import Param
-from ..run.unit_runner import UnitRunner
-from ..run.diff_builder import DiffBuilder
-from ..util.sentence import Sentence, Token, RToken
+from tko.run.basic import ExecutionResult
+from tko.run.unit import Unit
+from tko.run.param import Param
+from tko.run.unit_runner import UnitRunner
+from tko.run.diff_builder import DiffBuilder
+from tko.run.solver_builder import CompileError
+from tko.run.wdir import Wdir
+from tko.run.report import Report
+from tko.run.basic import Success
+
+from tko.play.frame import Frame
+from tko.play.floating import Floating
+from tko.play.floating_manager import FloatingManager
+from tko.play.images import images, compilling, success, intro, executing, random_get
+from tko.play.fmt import Fmt
+from tko.play.border import Border
+from tko.play.opener import Opener
+from tko.play.flags import Flags
+
+from tko.util.sentence import Sentence, Token, RToken
 from tko.util.symbols import symbols
-from .frame import Frame
-from .floating import Floating
-from .floating_manager import FloatingManager
-from .images import images, compilling, success, intro, executing, random_get
-from .fmt import Fmt
-from .border import Border
-from .opener import Opener
-from .flags import Flags
+from tko.util.freerun import Free
 
-from ..util.freerun import Free
-from ..game.task import Task
+from tko.game.task import Task
 
-from ..run.solver_builder import CompileError
-from ..run.wdir import Wdir
-from ..run.report import Report
-from ..settings.settings import Settings
-from ..run.basic import Success
+from tko.settings.settings import Settings
 
 class CDiffMode(enum.Enum):
     intro = 0
@@ -259,7 +261,7 @@ class Diff:
         # building solvers
         solvers = Sentence()
         if len(self.get_solver_names()) > 1:
-            solvers.add(Sentence().addf("R", "[p]").add(self.style.sharpR("R")))
+            solvers.add(Sentence().addf("R", f" {DiffActions.tab}").add(self.style.sharpR("R")))
         for i, solver in enumerate(self.get_solver_names()):
             color = solver_color
             if i == self.task.main_index:
@@ -293,7 +295,6 @@ class Diff:
         return Sentence().add(activity).add("─" * left).add(solvers).add("─" * right).add(sources)
 
     def build_top_bar_footer(self, frame):
-        output = Sentence()
         done_list = self.results
         if len(done_list) > 0 and self.locked_index:
             _, index = done_list[self.focused_index]
@@ -309,6 +310,8 @@ class Diff:
 
         i = 0
         show_focused_index = not self.wdir.get_solver().compile_error and not self.mode == CDiffMode.intro and not self.is_all_right()
+        
+        output = Sentence().add(6 * "─")
         for unit_result, index in done_list + todo_list:
             foco = i == self.focused_index
             token = self.get_token(unit_result)
@@ -320,12 +323,12 @@ class Diff:
             i += 1
 
         size = 6
-        if self.focused_index * size > frame.get_dx():
-            output.cut_begin((self.focused_index + 1) * size - frame.get_dx())
+        if self.focused_index * (size + 1) > frame.get_dx():
+            output.cut_begin((self.focused_index + 2) * size - frame.get_dx())
         return output
 
     def draw_top_bar_content(self, frame):
-        focused_unit_color = "B"
+        focused_unit_color = "Y"
         value = self.get_focused_unit()
         info = Sentence()
         if self.wdir.get_solver().compile_error:
@@ -346,6 +349,13 @@ class Diff:
     
         frame.set_footer(self.build_top_bar_footer(frame), "")
         frame.draw()
+
+        free = "⇛"
+        locked = "⇟"
+        symbol = locked if self.locked_index else free
+        color = "R" if self.locked_index else "G"
+        arrow = Sentence().addf(color, f" {symbol}[{DiffKeys.travar}]").add(self.style.sharpR(color))
+        Fmt.write(2, 1, arrow)
         
     def two_column_mode(self):
         _, cols = Fmt.get_size()

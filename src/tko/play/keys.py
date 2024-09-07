@@ -4,11 +4,10 @@ class DiffKeys:
     up = "w"
     right = "d"
     down = "s"
-    principal = "p"
     diff = "m"
     rodar = "r"
     testar = "\n"
-    # testar2 = "\n"
+    principal = "\t"
     sair   = "q"
     editar = "e"
     travar = "f"
@@ -18,6 +17,7 @@ class DiffKeys:
 
 
 class DiffActions:
+    tab = "↔TAB"
     sair   = "Sair"
     editar = "Editar"
     ativar = "Ativar"
@@ -29,6 +29,7 @@ class DiffActions:
 
 
 class GuiActions:
+    tab = "↔TAB"
     github = "Github"
     sair = "Sair"
     ajuda = "Ajuda"

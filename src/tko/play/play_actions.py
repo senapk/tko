@@ -1,28 +1,22 @@
-from .keys import GuiKeys
-from ..game.game import Game
-from ..game.cluster import Cluster
-from ..game.quest import Quest
-from ..game.task import Task
-from ..game.graph import Graph
-from .opener import Opener
-from ..run.basic import Success
-from typing import List
-from ..settings.settings import Settings
+from tko.game.cluster import Cluster
+from tko.game.quest import Quest
+from tko.game.task import Task
+from tko.game.graph import Graph
+
+from tko.settings.settings import Settings
+
 from tko.cmds.cmd_down import CmdDown
+from tko.cmds.cmd_run import Run
 
-from ..settings.rep_settings import languages_avaliable, RepData
-from ..down.down import DownProblem
-from ..util.sentence import Sentence, Token
-from .fmt import Fmt
+from tko.run.basic import Success
+from tko.run.param import Param
 
+from tko.util.sentence import Sentence
 
-from .floating import Floating
-from .floating_manager import FloatingManager
-from .flags import Flag, Flags, FlagsMan
-from .tasktree import TaskTree
-from ..cmds.cmd_run import Run
-from ..run.param import Param
-from .gui import Gui
+from tko.play.fmt import Fmt
+from tko.play.floating import Floating
+from tko.play.flags import Flags
+from tko.play.gui import Gui
 
 import os
 import tempfile
@@ -30,20 +24,19 @@ import subprocess
 
 class PlayActions:
 
-    def __init__(self, fman: FloatingManager, rep: RepData, rep_alias:str, tree: TaskTree, game: Game, opener: Opener, gui: Gui):
+    def __init__(self, gui: Gui):
         self.app = Settings().app
         self.settings = Settings()
-        self.fman = fman
-        self.rep = rep
-        self.rep_alias = rep_alias
-        self.tree = tree
-        self.game = game
-        self.opener = opener
+        self.fman = gui.fman
+        self.rep = gui.rep
+        self.tree = gui.tree
+        self.game = gui.game
+        self.opener = gui.opener
         self.graph_opened: bool = False
         self.gui = gui
 
     def gen_graph_path(self) -> str:
-        return os.path.join(self.app._rootdir, self.rep_alias, "graph.png")
+        return os.path.join(self.app._rootdir, self.rep.alias, "graph.png")
         
 
     def open_link_without_stdout_stderr(self, link: str):
@@ -107,14 +100,14 @@ class PlayActions:
             down_frame = (
                 Floating("v>").warning().set_ljust_text().set_header(" Baixando tarefa ")
             )
-            down_frame.put_text(f"\ntko down {self.rep_alias} {task.key} -l {lang}\n")
+            down_frame.put_text(f"\ntko down {self.rep.alias} {task.key} -l {lang}\n")
             self.fman.add_input(down_frame)
 
             def fnprint(text):
                 down_frame.put_text(text)
                 down_frame.draw()
                 Fmt.refresh()
-            CmdDown.execute(self.rep_alias, task.key, lang, self.settings, fnprint, self.game)
+            CmdDown.execute(self.rep.alias, task.key, lang, self.settings, fnprint, self.game)
         else:
             if isinstance(obj, Quest):
                 self.fman.add_input(
@@ -144,7 +137,7 @@ class PlayActions:
             self.tree.toggle(obj)
             return
 
-        rep_dir = os.path.join(rootdir, self.rep_alias)
+        rep_dir = os.path.join(rootdir, self.rep.alias)
         task: Task = obj
         if not task.is_downloadable():
             self.open_link()

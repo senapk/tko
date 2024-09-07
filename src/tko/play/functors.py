@@ -1,7 +1,4 @@
-from .floating_manager import FloatingManager
-from .flags import Flag, Flags
-from .floating import Floating
-from ..util.sentence import Sentence
+from .flags import Flag
 
 class FlagFunctor:
     def __init__(self, flag: Flag):

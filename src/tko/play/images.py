@@ -149,7 +149,7 @@ intro["shark"] = r"""
  (..       \_    ,  |\  /| ↲ -> Testa usando casos de teste 
   \       O  \  /|  \ \/ / f -> FIXA a execução para        
    \______    \/ |   \  /       um único caso de teste      
-      vvvv\    \ |   /  |  p -> Muda o arquivo PRINCIPAL    
+      vvvv\    \ |   /  |  TAB  Muda o arquivo PRINCIPAL    
       \^^^^  ==   \_/   |       para problemas de múltiplos 
        `\_   ===    \.  |       arquivos de código fonte    
        / /\_   \ /      |  m -> muda o MODO diff de vertical
@@ -163,7 +163,7 @@ intro["cat"] = r"""
  |\\_,-~/          ↲ -> Testa usando casos de teste 
  / _  _ |    ,--.  f -> FIXA a execução para        
 (  @  @ )   / ,-'       um único caso de teste      
- \  _T_/-._( (     p -> Muda o arquivo PRINCIPAL    
+ \  _T_/-._( (     TAB  Muda o arquivo PRINCIPAL    
  /         `. \         para problemas de múltiplos 
 |         _  \ |        arquivos de código fonte    
  \ \ ,  /      |   m -> muda o MODO diff de vertical
@@ -177,7 +177,7 @@ intro["elephant"] = r"""
       ⣰⣿⣿⣿⣿⣦⣀⣀⣀           ↲ -> Testa usando casos de teste 
       ⢿⣿⠟⠋⠉    ⠉⠑⠢⣄⡀      f -> FIXA a execução para        
      ⢠⠞⠁           ⠙⢿⣿⣿⣦⡀      um único caso de teste      
- ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇ p -> Muda o arquivo PRINCIPAL    
+ ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇ TAB  Muda o arquivo PRINCIPAL    
 ⣾⣿⣿⣦⣼⡀ ⢺⣿⣿⡿⠃    ⣠⣤⣄  ⠈⡿⠋       para problemas de múltiplos 
 ⢿⣿⣿⣿⣿⣇ ⠤⠌⠁ ⡀⢲⡶⠄⢸⣏⣿⣿   ⡇        arquivos de código fonte    
 ⠈⢿⣿⣿⣿⣿⣷⣄⡀  ⠈⠉⠓⠂ ⠙⠛⠛⠠ ⡸⠁   m -> muda o MODO diff de vertical

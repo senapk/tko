@@ -23,30 +23,20 @@ import os
 import curses
 
 class Play:
-    def __init__(
-        self,
-        settings: Settings,
-        game: Game,
-        rep_data: RepData,
-        rep_alias: str
-    ):
+    def __init__(self, settings: Settings, game: Game, rep: RepData):
         self.settings = settings
         self.app = settings.app
-        self.rep_alias = rep_alias
-        self.rep = rep_data
-        self.settings = Settings()
+        self.rep = rep
+        self.game: Game = game
+
         self.exit = False
 
         if self.rep.get_lang() == "":
             self.rep.set_lang(self.app._lang_default)
         self.flagsman = FlagsMan(self.rep.get_flags())
-        
-        self.game: Game = game
         self.fman = FloatingManager()
-        self.tree = TaskTree(self.app, game, rep_data, rep_alias)
-        self.search = Search(tree=self.tree, fman=self.fman, game=self.game)
-        self.gui = Gui(rep=self.rep, rep_alias=self.rep_alias, game=self.game, tree=self.tree, 
-                       flagsman=self.flagsman, search=self.search, fman=self.fman)
+        self.tree = TaskTree(self.settings, game, rep)
+        self.gui = Gui(tree=self.tree, flagsman=self.flagsman, fman=self.fman)
 
         if len(self.rep.get_tasks()) == 0:
             self.gui.show_help()
@@ -54,8 +44,7 @@ class Play:
         self.first_loop = True
         self.graph_ext = ""
 
-        self.opener = Opener(tree=self.tree, fman=self.fman, app=self.app, rep_data=rep_data, rep_alias=rep_alias)
-        self.actions = PlayActions(fman=self.fman, rep=self.rep, rep_alias=self.rep_alias, tree=self.tree, game=self.game, opener=self.opener, gui=self.gui)
+        self.actions = PlayActions(self.gui)
 
 
 
@@ -132,7 +121,7 @@ class Play:
             cman.add_str(GuiKeys.inc_grade2, self.tree.inc_grade)
             cman.add_str(GuiKeys.dec_grade, self.tree.dec_grade)
             cman.add_str(GuiKeys.dec_grade2, self.tree.dec_grade)
-            cman.add_str(GuiKeys.edit, lambda: self.opener.open_code(open_dir=True))
+            cman.add_str(GuiKeys.edit, lambda: self.gui.opener.open_code(open_dir=True))
             for value in range(1, 10):
                 cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
             cman.add_str("'", GradeFunctor(0, self.tree.set_grade))
@@ -151,11 +140,15 @@ class Play:
 
         cman.add_str(Flags.config.get_keycode(), self.toggle_config)
         cman.add_str(Flags.skills.get_keycode(), self.toggle_skills)
-        cman.add_str("/", self.search.toggle_search)
+        cman.add_str("/", self.gui.search.toggle_search)
 
         return cman
         
     def send_char_not_found(self, key):
+        exclude_str = [ord(v) for v in [" ", "a", "d", "\n"]]
+        exclude_int = [ -1, InputManager.esc, InputManager.left, InputManager.right ]
+        if key in exclude_int + exclude_str:
+            return
         self.fman.add_input(
             Floating("v")
                 .error()
@@ -169,7 +162,7 @@ class Play:
         Fmt.set_scr(scr)  # Define o scr como global
 
         while True:
-            self.tree.update_tree(admin_mode=Flags.admin.is_true() or self.search.search_mode)
+            self.tree.update_tree(admin_mode=Flags.admin.is_true() or self.gui.search.search_mode)
             self.fman.draw_warnings()
             if self.gui.config.gen_graph:
                 self.actions.generate_graph()
@@ -185,13 +178,13 @@ class Play:
             if self.exit:
                 break
 
-            if self.search.search_mode:
-                self.search.process_search(value)
+            if self.gui.search.search_mode:
+                self.gui.search.process_search(value)
             elif cman.has_int_key(value):
                 callback = cman.exec_call(value)
                 if callback is not None:
                     return callback
-            elif value != -1 and value != InputManager.esc and value != 32:
+            else:
                 self.send_char_not_found(value)
 
             self.tree.reload_sentences()

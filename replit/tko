@@ -10,8 +10,8 @@ import json
 import os
 import urllib
 import curses
-import random
 import datetime
+import random
 import tempfile
 import subprocess
 import enum
@@ -23,7 +23,7 @@ import math
 import configparser
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.24.1"
+__version__ = "0.24.2"
 
 class AppSettings:
     def __init__(self):
@@ -298,7 +298,7 @@ intro["shark"] = r"""
  (..       \_    ,  |\  /| ↲ -> Testa usando casos de teste 
   \       O  \  /|  \ \/ / f -> FIXA a execução para        
    \______    \/ |   \  /       um único caso de teste      
-      vvvv\    \ |   /  |  p -> Muda o arquivo PRINCIPAL    
+      vvvv\    \ |   /  |  TAB  Muda o arquivo PRINCIPAL    
       \^^^^  ==   \_/   |       para problemas de múltiplos 
        `\_   ===    \.  |       arquivos de código fonte    
        / /\_   \ /      |  m -> muda o MODO diff de vertical
@@ -312,7 +312,7 @@ intro["cat"] = r"""
  |\\_,-~/          ↲ -> Testa usando casos de teste 
  / _  _ |    ,--.  f -> FIXA a execução para        
 (  @  @ )   / ,-'       um único caso de teste      
- \  _T_/-._( (     p -> Muda o arquivo PRINCIPAL    
+ \  _T_/-._( (     TAB  Muda o arquivo PRINCIPAL    
  /         `. \         para problemas de múltiplos 
 |         _  \ |        arquivos de código fonte    
  \ \ ,  /      |   m -> muda o MODO diff de vertical
@@ -326,7 +326,7 @@ intro["elephant"] = r"""
       ⣰⣿⣿⣿⣿⣦⣀⣀⣀           ↲ -> Testa usando casos de teste 
       ⢿⣿⠟⠋⠉    ⠉⠑⠢⣄⡀      f -> FIXA a execução para        
      ⢠⠞⠁           ⠙⢿⣿⣿⣦⡀      um único caso de teste      
- ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇ p -> Muda o arquivo PRINCIPAL    
+ ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇ TAB  Muda o arquivo PRINCIPAL    
 ⣾⣿⣿⣦⣼⡀ ⢺⣿⣿⡿⠃    ⣠⣤⣄  ⠈⡿⠋       para problemas de múltiplos 
 ⢿⣿⣿⣿⣿⣇ ⠤⠌⠁ ⡀⢲⡶⠄⢸⣏⣿⣿   ⡇        arquivos de código fonte    
 ⠈⢿⣿⣿⣿⣿⣷⣄⡀  ⠈⠉⠓⠂ ⠙⠛⠛⠠ ⡸⠁   m -> muda o MODO diff de vertical
@@ -940,11 +940,10 @@ class DiffKeys:
     up = "w"
     right = "d"
     down = "s"
-    principal = "p"
     diff = "m"
     rodar = "r"
     testar = "\n"
-    # testar2 = "\n"
+    principal = "\t"
     sair   = "q"
     editar = "e"
     travar = "f"
@@ -954,6 +953,7 @@ class DiffKeys:
 
 
 class DiffActions:
+    tab = "↔TAB"
     sair   = "Sair"
     editar = "Editar"
     ativar = "Ativar"
@@ -965,6 +965,7 @@ class DiffActions:
 
 
 class GuiActions:
+    tab = "↔TAB"
     github = "Github"
     sair = "Sair"
     ajuda = "Ajuda"
@@ -1343,7 +1344,7 @@ class RepSource:
         self.url = url
         return self
 
-    def get_file(self, rep_dir: str) -> str:
+    def get_file_or_cache(self, rep_dir: str) -> str:
         # arquivo existe e é local
         if self.file != "" and os.path.exists(self.file) and self.url == "":
             return self.file
@@ -1378,9 +1379,17 @@ class RepSource:
 
 class RepData:
 
-    def __init__(self, json_file: str = ""):
+    def __init__(self, rootdir: str, alias: str, json_file: str = ""):
         self.json_file: str = json_file
         self.data: Dict[str, Any] = {}
+        self.rootdir = rootdir
+        self.alias = alias
+
+    def get_rootdir(self) -> str:
+        return self.rootdir
+
+    def get_rep_dir(self) -> str:
+        return os.path.join(self.rootdir, self.alias)
 
     __expanded = "expanded"
     __new_items = "new_items"
@@ -1873,6 +1882,22 @@ class FlagsMan:
             if len(flag.get_values()) > 1:
                 data[name] = flag.get_index()
         return data
+
+
+class FlagFunctor:
+    def __init__(self, flag: Flag):
+        self.flag = flag
+
+    def __call__(self):
+        self.flag.toggle()
+
+class GradeFunctor:
+    def __init__(self, grade: int, fn):
+        self.grade = grade
+        self.fn = fn
+
+    def __call__(self):
+        self.fn(self.grade)
 
 
 class Fmt:
@@ -2474,22 +2499,6 @@ class FloatingManager:
 
     def get_input(self) -> int:
         return self.input_layer[0].get_input()
-
-
-class FlagFunctor:
-    def __init__(self, flag: Flag):
-        self.flag = flag
-
-    def __call__(self):
-        self.flag.toggle()
-
-class GradeFunctor:
-    def __init__(self, grade: int, fn):
-        self.grade = grade
-        self.fn = fn
-
-    def __call__(self):
-        self.fn(self.grade)
 
 
 class __Symbols:
@@ -3779,7 +3788,7 @@ class Settings:
 
     def get_rep_data(self, course: str) -> RepData:
         cfg_file = self.__get_rep_file_path(course)
-        rep_data = RepData(cfg_file)
+        rep_data = RepData(self.app.get_rootdir(), course, cfg_file)
         if os.path.exists(cfg_file):
             return rep_data.load_data_from_json()
         return rep_data.load_defaults()
@@ -3890,6 +3899,107 @@ class Settings:
                 output.append(f"{prefix} : local  : {self.reps[key].file}")
         return "\n".join(output)
 
+
+def empty_fn():
+    pass
+
+class ConfigItem:
+    def __init__(self, flag: Flag, fn: Callable[[], None], sentence: Sentence = Sentence() ):
+        self.flag = flag
+        self.fn: Callable[[], None] = fn
+        self.sentence = sentence
+
+
+class Config:
+    def __init__(self, settings: Settings, rep: RepData, flagsman: FlagsMan, fman: FloatingManager):
+        self.index: int = 0
+        self.flagsman = flagsman
+        self.border = Border(settings.app)
+        self.gen_graph: bool = False
+        self.app = settings.app
+        self.colors = settings.colors
+        self.fman = fman
+        self.rep = rep
+        self.enabled = False
+        self.size = len(self.get_elements())
+
+    def enable(self):
+        self.enabled = True
+    
+    def disable(self):
+        self.enabled = False
+
+    def activate_selected(self):
+        elements = self.get_elements()
+        chosen = elements[self.index]
+        chosen.fn()
+
+    def move_down(self):
+        self.index += 1
+        if self.index == self.size:
+            self.index = 0
+
+    def move_up(self):
+        self.index -= 1
+        if self.index == -1:
+            self.index = self.size - 1
+
+    def mark_focused(self, index, elem: Flag) -> Sentence:
+        pad = 14 if index == self.index else 14
+        sentence = self.border.get_flag_sentence(elem, pad)
+
+        if index == self.index and self.enabled:
+            focus = self.colors.focused_item
+            return sentence
+        return Sentence("    ").add(sentence)
+
+    def graph_toggle(self):
+        self.gen_graph = not self.gen_graph
+
+    def get_elements(self) -> List[ConfigItem]:
+        elements: List[ConfigItem] = []
+        for flag in self.flagsman.left:
+            item = ConfigItem(flag, FlagFunctor(flag))
+            elements.append(item)
+        border_values = ["1" if self.app.has_borders() else "0"]
+        graph_values = ["1" if self.gen_graph else "0"]
+        bordas = Flag().set_name("Bordas").set_keycode("B").set_values(border_values).set_description("Ativa as bordas se a fonte tiver suporte    ").set_bool()
+        elements.append(ConfigItem(bordas, self.app.toggle_borders))
+        grafo = Flag().set_name("Grafo").set_keycode("G").set_values(graph_values)   .set_description("Ativa a geração do grafo do repositório     ").set_bool()
+        elements.append(ConfigItem(grafo, self.graph_toggle))
+        language = Flag().set_name("Linguagem").set_values([]).set_keycode("L")      .set_description("Muda a linguagem de download dos rascunhos  ")
+        elements.append(ConfigItem(language, lambda: self.set_language(False)))
+
+        if Flags.config.is_true():
+            for i in range(len(elements)):
+                elements[i].sentence = self.mark_focused(i, elements[i].flag)
+        return elements
+
+    def set_language(self, only_if_empty=True):
+        if only_if_empty and self.rep.get_lang() != "":
+            return
+
+        def back(value):
+            self.rep.set_lang(value)
+            self.rep.save_data_to_json()
+            self.fman.add_input(
+                Floating()
+                .put_text("")
+                .put_text("Linguagem alterada para " + value)
+                .put_text("")
+                .warning()
+            )
+
+        self.fman.add_input(
+            Floating()
+            .put_text("")
+            .put_text("Escolha a extensão default para os rascunhos")
+            .put_text("")
+            .put_text("Selecione e tecle Enter.")
+            .put_text("")
+            .set_options(languages_avaliable)
+            .answer(back)
+        )
 
 
 class ConfigParams:
@@ -5121,13 +5231,13 @@ class Entry:
 
 class TaskTree:
 
-    def __init__(self, app: AppSettings, game: Game, rep: RepData, rep_alias: str):
-        self.app = app
+    def __init__(self, settings: Settings, game: Game, rep: RepData):
+        self.settings = settings
+        self.app = settings.app
         self.game = game
         self.rep = rep
-        self.rep_alias = rep_alias
-        self.style = Border(Settings().app)
-        self.colors = Settings().colors
+        self.style = Border(settings.app)
+        self.colors = settings.colors
         self.items: List[Entry] = []
         self.index_selected = 0
         self.index_begin = 0
@@ -5203,7 +5313,7 @@ class TaskTree:
         down_symbol = Token(" ")
         in_focus = focus_color != ""
         down_symbol = symbols.cant_download
-        rep_dir = os.path.join(self.app._rootdir, self.rep_alias)
+        rep_dir = os.path.join(self.app.get_rootdir(), self.rep.alias)
         if t.is_downloadable() and rootdir != "":
             if t.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
                 down_symbol = symbols.downloaded
@@ -5651,10 +5761,11 @@ class TaskTree:
         self.index_selected = min(len(self.items) - 1, self.index_selected + 1)
 
 
+
 class Search:
-    def __init__(self, tree: TaskTree, fman: FloatingManager, game: Game):
-        self.game = game
+    def __init__(self, tree: TaskTree, fman: FloatingManager):
         self.tree = tree
+        self.game = tree.game
         self.fman = fman
         self.search_mode: bool = False
         self.backup_expanded: List[str] = []
@@ -5736,13 +5847,13 @@ class Search:
             self.tree.search_text += chr(key).lower()
 
 
+
 class Opener:
-    def __init__(self, tree: TaskTree, fman: FloatingManager, app: AppSettings, rep_data: RepData, rep_alias: str):
+    def __init__(self, tree: TaskTree, fman: FloatingManager):
         self.tree = tree
         self.fman = fman
-        self.app = app
-        self.rep = rep_data
-        self.rep_alias = rep_alias
+        self.app = tree.settings.app
+        self.rep = tree.rep
 
     def set_fman(self, fman: FloatingManager):
         self.fman = fman
@@ -5753,7 +5864,7 @@ class Opener:
         if isinstance(obj, Task):
             rootdir = self.app._rootdir
             if rootdir != "":
-                path = os.path.join(self.app._rootdir, self.rep_alias, obj.key, "Readme.md")
+                path = os.path.join(self.app._rootdir, self.rep.alias, obj.key, "Readme.md")
                 if os.path.isfile(path):
                     return path
         return ""
@@ -5828,161 +5939,7 @@ class Opener:
             if len(files_to_open) != 0:
                 self.open_files(files_to_open)
 
-def empty_fn():
-    pass
 
-class ConfigItem:
-    def __init__(self, flag: Flag, fn: Callable[[], None], sentence: Sentence = Sentence() ):
-        self.flag = flag
-        self.fn: Callable[[], None] = fn
-        self.sentence = sentence
-
-
-class Config:
-    def __init__(self, rep: RepData, flagsman: FlagsMan, fman: FloatingManager, settings: Settings):
-        self.index: int = 0
-        self.flagsman = flagsman
-        self.style = Border(settings.app)
-        self.gen_graph: bool = False
-        self.app = settings.app
-        self.colors = settings.colors
-        self.fman = fman
-        self.rep = rep
-        self.enabled = False
-        self.size = len(self.get_elements())
-
-    def enable(self):
-        self.enabled = True
-    
-    def disable(self):
-        self.enabled = False
-
-    def activate_selected(self):
-        elements = self.get_elements()
-        chosen = elements[self.index]
-        chosen.fn()
-
-    def move_down(self):
-        self.index += 1
-        if self.index == self.size:
-            self.index = 0
-
-    def move_up(self):
-        self.index -= 1
-        if self.index == -1:
-            self.index = self.size - 1
-
-    def mark_focused(self, index, elem: Flag) -> Sentence:
-        pad = 14 if index == self.index else 14
-        sentence = self.style.get_flag_sentence(elem, pad)
-
-        if index == self.index and self.enabled:
-            focus = self.colors.focused_item
-            return sentence
-        return Sentence("    ").add(sentence)
-
-    def graph_toggle(self):
-        self.gen_graph = not self.gen_graph
-
-    def get_elements(self) -> List[ConfigItem]:
-        elements: List[ConfigItem] = []
-        for flag in self.flagsman.left:
-            item = ConfigItem(flag, FlagFunctor(flag))
-            elements.append(item)
-        border_values = ["1" if self.app.has_borders() else "0"]
-        graph_values = ["1" if self.gen_graph else "0"]
-        bordas = Flag().set_name("Bordas").set_keycode("B").set_values(border_values).set_description("Ativa as bordas se a fonte tiver suporte    ").set_bool()
-        elements.append(ConfigItem(bordas, self.app.toggle_borders))
-        grafo = Flag().set_name("Grafo").set_keycode("G").set_values(graph_values)   .set_description("Ativa a geração do grafo do repositório     ").set_bool()
-        elements.append(ConfigItem(grafo, self.graph_toggle))
-        language = Flag().set_name("Linguagem").set_values([]).set_keycode("L")      .set_description("Muda a linguagem de download dos rascunhos  ")
-        elements.append(ConfigItem(language, lambda: self.set_language(False)))
-
-        if Flags.config.is_true():
-            for i in range(len(elements)):
-                elements[i].sentence = self.mark_focused(i, elements[i].flag)
-        return elements
-
-
-    # def set_rootdir(self, only_if_empty=True):
-    #     if only_if_empty and self.app._rootdir != "":
-    #         return
-
-    #     def chama(value):
-    #         if value == "yes":
-    #             self.app._rootdir = os.path.abspath(os.getcwd())
-    #             self.settings.save_settings()
-    #             self.fman.add_input(
-    #                 Floating()
-    #                 .put_text("")
-    #                 .put_text("Diretório raiz definido como ")
-    #                 .put_text("")
-    #                 .put_text("  " + os.getcwd())
-    #                 .put_text("")
-    #                 .put_text("Você pode também pode alterar")
-    #                 .put_text("o diretório raiz navegando para o")
-    #                 .put_text("diretório desejado e executando o comando")
-    #                 .put_text("")
-    #                 .put_text("  tko config --root .")
-    #                 .put_text("")
-    #                 .warning()
-    #             )
-    #         else:
-    #             self.fman.add_input(
-    #                 Floating()
-    #                 .put_text("")
-    #                 .put_text("Navegue para o diretório desejado e tente novamente.")
-    #                 .put_text("")
-    #                 .put_text("Você pode também pode alterar")
-    #                 .put_text("o diretório raiz navegando para o")
-    #                 .put_text("diretório desejado e executando o comando")
-    #                 .put_text("")
-    #                 .put_text("tko config --root .")
-    #                 .put_text("")
-    #                 .warning()
-    #             )
-
-    #     self.fman.add_input(
-    #         Floating()
-    #         .put_text("")
-    #         .put_text("Você deseja utilizar o diretório")
-    #         .put_text("atual como diretório raiz do tko?")
-    #         .put_text("")
-    #         .put_text(os.getcwd())
-    #         .put_text("")
-    #         .put_text("como raiz para o repositório de " + self.rep_alias + "?")
-    #         .put_text("")
-    #         .put_text("Selecione e tecle Enter")
-    #         .put_text("")
-    #         .set_options(["yes", "no"])
-    #         .answer(chama)
-    #     )
-
-    def set_language(self, only_if_empty=True):
-        if only_if_empty and self.rep.get_lang() != "":
-            return
-
-        def back(value):
-            self.rep.set_lang(value)
-            self.rep.save_data_to_json()
-            self.fman.add_input(
-                Floating()
-                .put_text("")
-                .put_text("Linguagem alterada para " + value)
-                .put_text("")
-                .warning()
-            )
-
-        self.fman.add_input(
-            Floating()
-            .put_text("")
-            .put_text("Escolha a extensão default para os rascunhos")
-            .put_text("")
-            .put_text("Selecione e tecle Enter.")
-            .put_text("")
-            .set_options(languages_avaliable)
-            .answer(back)
-        )
 
 
 
@@ -6217,7 +6174,7 @@ class Diff:
         # building solvers
         solvers = Sentence()
         if len(self.get_solver_names()) > 1:
-            solvers.add(Sentence().addf("R", "[p]").add(self.style.sharpR("R")))
+            solvers.add(Sentence().addf("R", f" {DiffActions.tab}").add(self.style.sharpR("R")))
         for i, solver in enumerate(self.get_solver_names()):
             color = solver_color
             if i == self.task.main_index:
@@ -6251,7 +6208,6 @@ class Diff:
         return Sentence().add(activity).add("─" * left).add(solvers).add("─" * right).add(sources)
 
     def build_top_bar_footer(self, frame):
-        output = Sentence()
         done_list = self.results
         if len(done_list) > 0 and self.locked_index:
             _, index = done_list[self.focused_index]
@@ -6267,6 +6223,8 @@ class Diff:
 
         i = 0
         show_focused_index = not self.wdir.get_solver().compile_error and not self.mode == CDiffMode.intro and not self.is_all_right()
+        
+        output = Sentence().add(6 * "─")
         for unit_result, index in done_list + todo_list:
             foco = i == self.focused_index
             token = self.get_token(unit_result)
@@ -6278,12 +6236,12 @@ class Diff:
             i += 1
 
         size = 6
-        if self.focused_index * size > frame.get_dx():
-            output.cut_begin((self.focused_index + 1) * size - frame.get_dx())
+        if self.focused_index * (size + 1) > frame.get_dx():
+            output.cut_begin((self.focused_index + 2) * size - frame.get_dx())
         return output
 
     def draw_top_bar_content(self, frame):
-        focused_unit_color = "B"
+        focused_unit_color = "Y"
         value = self.get_focused_unit()
         info = Sentence()
         if self.wdir.get_solver().compile_error:
@@ -6304,6 +6262,13 @@ class Diff:
     
         frame.set_footer(self.build_top_bar_footer(frame), "")
         frame.draw()
+
+        free = "⇛"
+        locked = "⇟"
+        symbol = locked if self.locked_index else free
+        color = "R" if self.locked_index else "G"
+        arrow = Sentence().addf(color, f" {symbol}[{DiffKeys.travar}]").add(self.style.sharpR(color))
+        Fmt.write(2, 1, arrow)
         
     def two_column_mode(self):
         _, cols = Fmt.get_size()
@@ -7058,7 +7023,7 @@ class CmdRep:
     def graph(args):
         settings = Settings()
         rep_source:RepSource = settings.get_rep_source(args.alias)
-        file = rep_source.get_file(os.path.join(settings.app._rootdir, args.alias))
+        file = rep_source.get_file_or_cache(os.path.join(settings.app._rootdir, args.alias))
         game = Game()
         game.parse_file(file)
         game.check_cycle()
@@ -7115,175 +7080,22 @@ class XP:
 
 
 
-class Drafts:
-    ts_draft = r"""
-let _cin_ : string[] = [];
-try { _cin_ = require("fs").readFileSync(0).toString().split(/\r?\n/); } catch(e){}
-let input = () : string => _cin_.length === 0 ? "" : _cin_.shift()!;
-let write = (text: any, end:string="\n")=> process.stdout.write("" + text + end);
-export {};
-
-write("qxcode");
-"""[1:]
-
-    js_draft = r"""
-let __lines = require("fs").readFileSync(0).toString().split("\n");
-let input = () => __lines.length === 0 ? "" : __lines.shift();
-let write = (text, end="\n") => process.stdout.write("" + text + end);
-
-write("qxcode");
-"""[1:]
-
-    c_draft = r"""
-#include <stdio.h>
-
-int main() {
-    puts("qxcode");
-    return 0;
-}
-
-"""[1:]
-
-    cpp_draft = r"""
-#include <iostream>
-
-int main() {
-    std::cout << "qxcode\n";
-}
-
-"""[1:]
-
-    java_draft = r"""
-public class draft {
-    public static void main(String args[]) {
-        System.out.println("qxcode");
-    }
-}
-
-"""[1:]
-
-    go_draft = (
-        r"package main""\n"
-        r'import "fmt"'"\n"
-        r"func main() {""\n"
-        r'    fmt.Println("qxcode")''\n'
-        r"}""\n"
-    )
-
-
-    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft, 'java': java_draft, 'go': go_draft}
-
-
-
-
-class DownProblem:
-    fnprint: Callable[[str], None] = print
-
-    @staticmethod
-    def __create_file(content, path, label=""):
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(content)
-        DownProblem.fnprint("  " + path + " " + label)
-
-    @staticmethod
-    def unpack_json(loaded, destiny, lang: str):
-        # extracting all files to folder
-        for entry in loaded["upload"]:
-            if entry["name"] == "vpl_evaluate.cases":
-                DownProblem.__compare_and_save(entry["contents"], os.path.join(destiny, "cases.tio"))
-
-        if "draft" in loaded:
-            if lang in loaded["draft"]:
-                for file in loaded["draft"][lang]:
-                    path = os.path.join(destiny, file["name"])
-                    DownProblem.__create_file(file["contents"], path, "(Draft)")
-
-    @staticmethod
-    def __compare_and_save(content, path):
-        if not os.path.exists(path):
-            with open(path, "w", encoding="utf-8") as f:
-                f.write(content.encode("utf-8").decode("utf-8"))
-            DownProblem.fnprint("  " + path + " (Novo)")
-        else:
-            if open(path, encoding="utf-8").read() != content:
-                DownProblem.fnprint(path + " (Atualizado)")
-                with open(path, "w", encoding="utf-8") as f:
-                    f.write(content)
-            else:
-                DownProblem.fnprint("  " + path + " (Inalterado)")
-
-    @staticmethod
-    def down_problem_def(destiny, cache_url) -> Tuple[str, str]:
-        # downloading Readme
-        readme = os.path.join(destiny, "Readme.md")
-        [tempfile, __content] = urllib.request.urlretrieve(cache_url + "Readme.md")
-
-        # content = ""
-        try:
-            content = open(tempfile, encoding="utf-8").read()
-        except FileNotFoundError:
-            content = open(tempfile, encoding="utf-8").read()
-
-        DownProblem.__compare_and_save(content, readme)
-
-        # downloading mapi
-        mapi = os.path.join(destiny, "mapi.json")
-        urllib.request.urlretrieve(cache_url + "mapi.json", mapi)
-        return readme, mapi
-
-    @staticmethod
-    def create_problem_folder(rootdir: str, activity: str) -> str:
-        # create dir
-        destiny: str = os.path.join(rootdir, activity)
-        if not os.path.exists(destiny):
-            os.makedirs(destiny, exist_ok=True)
-        else:
-            DownProblem.fnprint("  Pasta do problema "+ destiny + " encontrada, juntando conteúdo.")
-
-        return destiny
-
-    @staticmethod
-    def download_drafts(loaded_json, destiny: str, language, cache_url, ask_ext):
-        if len(loaded_json["required"]) == 1:  # you already have the students file
-            return
-
-        if "draft" in loaded_json and language in loaded_json["draft"]:
-            pass
-        else:
-            try:
-                draft_path = os.path.join(destiny, "draft." + language)
-                urllib.request.urlretrieve(cache_url + "draft." + language, draft_path)
-                DownProblem.fnprint("  " + draft_path + " (Rascunho) Renomeie antes de modificar")
-
-            except urllib.error.HTTPError:  # draft not found
-                filename = "draft."
-                draft_path = os.path.join(destiny, filename + language)
-                if not os.path.exists(draft_path):
-                    with open(draft_path, "w", encoding="utf-8") as f:
-                        if language in Drafts.drafts:
-                            f.write(Drafts.drafts[language])
-                        else:
-                            f.write("")
-                    DownProblem.fnprint("  " + draft_path + " (Vazio)")
-
-        if ask_ext:
-            print("\nVocê pode escolher a extensão padrão com o comando\n$ tko config -l <extension>")
 
 
 
 class Gui:
 
-    def __init__(self, rep: RepData, rep_alias: str, game: Game, tree: TaskTree, flagsman: FlagsMan, search: Search, fman: FloatingManager):
-        self.rep = rep
-        self.rep_alias = rep_alias
-        self.game = game
+    def __init__(self, tree: TaskTree, flagsman: FlagsMan, fman: FloatingManager):
+        self.rep = tree.rep
+        self.game = tree.game
         self.tree = tree
         self.flagsman = flagsman
         self.fman = fman
-        self.search = search
-        self.settings = Settings()
+        self.settings = tree.settings
+        self.search = Search(tree=self.tree, fman=self.fman)
+        self.opener = Opener(tree=self.tree, fman=self.fman)
         self.style: Border = Border(self.settings.app)
-        self.config = Config(self.rep, self.flagsman, self.fman, self.settings)
+        self.config = Config(self.settings, self.rep, self.flagsman, self.fman)
         self.colors = self.settings.colors
 
         self.app = Settings().app
@@ -7339,7 +7151,7 @@ class Gui:
             top.add(self.style.get_flag_sentence(Flags.config)).add(" ")
 
         alias_color = "R"
-        top.add(self.style.border(alias_color, self.rep_alias.upper()))
+        top.add(self.style.border(alias_color, self.rep.alias.upper()))
         if Flags.hud.is_true():
             color = "W" if Flags.admin.is_true() else "K"
             top.add(self.style.border(color, "ADMIN"))
@@ -7633,12 +7445,165 @@ class Gui:
         if Flags.config.is_true():
             frame_flags = Frame(mid_y, cols - flags_sx).set_size(mid_sy, flags_sx).set_border_color(border_color)
             self.show_config_bar(frame_flags)
-            Fmt.write(1, cols - left_size - 3, Sentence().addf("r", " ↔TAB "))
+            Fmt.write(1, cols - left_size - 3, Sentence().addf("r", f" {GuiActions.tab} "))
 
         if Flags.skills.is_true():
             frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)
             self.show_skills_bar(frame_skills)
 
+class Drafts:
+    ts_draft = r"""
+let _cin_ : string[] = [];
+try { _cin_ = require("fs").readFileSync(0).toString().split(/\r?\n/); } catch(e){}
+let input = () : string => _cin_.length === 0 ? "" : _cin_.shift()!;
+let write = (text: any, end:string="\n")=> process.stdout.write("" + text + end);
+export {};
+
+write("qxcode");
+"""[1:]
+
+    js_draft = r"""
+let __lines = require("fs").readFileSync(0).toString().split("\n");
+let input = () => __lines.length === 0 ? "" : __lines.shift();
+let write = (text, end="\n") => process.stdout.write("" + text + end);
+
+write("qxcode");
+"""[1:]
+
+    c_draft = r"""
+#include <stdio.h>
+
+int main() {
+    puts("qxcode");
+    return 0;
+}
+
+"""[1:]
+
+    cpp_draft = r"""
+#include <iostream>
+
+int main() {
+    std::cout << "qxcode\n";
+}
+
+"""[1:]
+
+    java_draft = r"""
+public class draft {
+    public static void main(String args[]) {
+        System.out.println("qxcode");
+    }
+}
+
+"""[1:]
+
+    go_draft = (
+        r"package main""\n"
+        r'import "fmt"'"\n"
+        r"func main() {""\n"
+        r'    fmt.Println("qxcode")''\n'
+        r"}""\n"
+    )
+
+
+    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft, 'java': java_draft, 'go': go_draft}
+
+
+
+
+class DownProblem:
+    fnprint: Callable[[str], None] = print
+
+    @staticmethod
+    def __create_file(content, path, label=""):
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content)
+        DownProblem.fnprint("  " + path + " " + label)
+
+    @staticmethod
+    def unpack_json(loaded, destiny, lang: str):
+        # extracting all files to folder
+        for entry in loaded["upload"]:
+            if entry["name"] == "vpl_evaluate.cases":
+                DownProblem.__compare_and_save(entry["contents"], os.path.join(destiny, "cases.tio"))
+
+        if "draft" in loaded:
+            if lang in loaded["draft"]:
+                for file in loaded["draft"][lang]:
+                    path = os.path.join(destiny, file["name"])
+                    DownProblem.__create_file(file["contents"], path, "(Draft)")
+
+    @staticmethod
+    def __compare_and_save(content, path):
+        if not os.path.exists(path):
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(content.encode("utf-8").decode("utf-8"))
+            DownProblem.fnprint("  " + path + " (Novo)")
+        else:
+            if open(path, encoding="utf-8").read() != content:
+                DownProblem.fnprint(path + " (Atualizado)")
+                with open(path, "w", encoding="utf-8") as f:
+                    f.write(content)
+            else:
+                DownProblem.fnprint("  " + path + " (Inalterado)")
+
+    @staticmethod
+    def down_problem_def(destiny, cache_url) -> Tuple[str, str]:
+        # downloading Readme
+        readme = os.path.join(destiny, "Readme.md")
+        [tempfile, __content] = urllib.request.urlretrieve(cache_url + "Readme.md")
+
+        # content = ""
+        try:
+            content = open(tempfile, encoding="utf-8").read()
+        except FileNotFoundError:
+            content = open(tempfile, encoding="utf-8").read()
+
+        DownProblem.__compare_and_save(content, readme)
+
+        # downloading mapi
+        mapi = os.path.join(destiny, "mapi.json")
+        urllib.request.urlretrieve(cache_url + "mapi.json", mapi)
+        return readme, mapi
+
+    @staticmethod
+    def create_problem_folder(rootdir: str, activity: str) -> str:
+        # create dir
+        destiny: str = os.path.join(rootdir, activity)
+        if not os.path.exists(destiny):
+            os.makedirs(destiny, exist_ok=True)
+        else:
+            DownProblem.fnprint("  Pasta do problema "+ destiny + " encontrada, juntando conteúdo.")
+
+        return destiny
+
+    @staticmethod
+    def download_drafts(loaded_json, destiny: str, language, cache_url, ask_ext):
+        if len(loaded_json["required"]) == 1:  # you already have the students file
+            return
+
+        if "draft" in loaded_json and language in loaded_json["draft"]:
+            pass
+        else:
+            try:
+                draft_path = os.path.join(destiny, "draft." + language)
+                urllib.request.urlretrieve(cache_url + "draft." + language, draft_path)
+                DownProblem.fnprint("  " + draft_path + " (Rascunho) Renomeie antes de modificar")
+
+            except urllib.error.HTTPError:  # draft not found
+                filename = "draft."
+                draft_path = os.path.join(destiny, filename + language)
+                if not os.path.exists(draft_path):
+                    with open(draft_path, "w", encoding="utf-8") as f:
+                        if language in Drafts.drafts:
+                            f.write(Drafts.drafts[language])
+                        else:
+                            f.write("")
+                    DownProblem.fnprint("  " + draft_path + " (Vazio)")
+
+        if ask_ext:
+            print("\nVocê pode escolher a extensão padrão com o comando\n$ tko config -l <extension>")
 
 
 
@@ -7652,7 +7617,7 @@ class CmdDown:
         rep_data = settings.get_rep_data(rep_alias)
         if game is None:
             try:
-                file = rep_source.get_file(rep_dir)
+                file = rep_source.get_file_or_cache(rep_dir)
             except urllib.error.HTTPError:
                 DownProblem.fnprint("falha: Verifique sua internet")
             game = Game(file)
@@ -7703,22 +7668,23 @@ class CmdDown:
 
 
 
+
+
 class PlayActions:
 
-    def __init__(self, fman: FloatingManager, rep: RepData, rep_alias:str, tree: TaskTree, game: Game, opener: Opener, gui: Gui):
+    def __init__(self, gui: Gui):
         self.app = Settings().app
         self.settings = Settings()
-        self.fman = fman
-        self.rep = rep
-        self.rep_alias = rep_alias
-        self.tree = tree
-        self.game = game
-        self.opener = opener
+        self.fman = gui.fman
+        self.rep = gui.rep
+        self.tree = gui.tree
+        self.game = gui.game
+        self.opener = gui.opener
         self.graph_opened: bool = False
         self.gui = gui
 
     def gen_graph_path(self) -> str:
-        return os.path.join(self.app._rootdir, self.rep_alias, "graph.png")
+        return os.path.join(self.app._rootdir, self.rep.alias, "graph.png")
         
 
     def open_link_without_stdout_stderr(self, link: str):
@@ -7782,14 +7748,14 @@ class PlayActions:
             down_frame = (
                 Floating("v>").warning().set_ljust_text().set_header(" Baixando tarefa ")
             )
-            down_frame.put_text(f"\ntko down {self.rep_alias} {task.key} -l {lang}\n")
+            down_frame.put_text(f"\ntko down {self.rep.alias} {task.key} -l {lang}\n")
             self.fman.add_input(down_frame)
 
             def fnprint(text):
                 down_frame.put_text(text)
                 down_frame.draw()
                 Fmt.refresh()
-            CmdDown.execute(self.rep_alias, task.key, lang, self.settings, fnprint, self.game)
+            CmdDown.execute(self.rep.alias, task.key, lang, self.settings, fnprint, self.game)
         else:
             if isinstance(obj, Quest):
                 self.fman.add_input(
@@ -7819,7 +7785,7 @@ class PlayActions:
             self.tree.toggle(obj)
             return
 
-        rep_dir = os.path.join(rootdir, self.rep_alias)
+        rep_dir = os.path.join(rootdir, self.rep.alias)
         task: Task = obj
         if not task.is_downloadable():
             self.open_link()
@@ -7859,30 +7825,20 @@ class PlayActions:
 
 
 class Play:
-    def __init__(
-        self,
-        settings: Settings,
-        game: Game,
-        rep_data: RepData,
-        rep_alias: str
-    ):
+    def __init__(self, settings: Settings, game: Game, rep: RepData):
         self.settings = settings
         self.app = settings.app
-        self.rep_alias = rep_alias
-        self.rep = rep_data
-        self.settings = Settings()
+        self.rep = rep
+        self.game: Game = game
+
         self.exit = False
 
         if self.rep.get_lang() == "":
             self.rep.set_lang(self.app._lang_default)
         self.flagsman = FlagsMan(self.rep.get_flags())
-        
-        self.game: Game = game
         self.fman = FloatingManager()
-        self.tree = TaskTree(self.app, game, rep_data, rep_alias)
-        self.search = Search(tree=self.tree, fman=self.fman, game=self.game)
-        self.gui = Gui(rep=self.rep, rep_alias=self.rep_alias, game=self.game, tree=self.tree, 
-                       flagsman=self.flagsman, search=self.search, fman=self.fman)
+        self.tree = TaskTree(self.settings, game, rep)
+        self.gui = Gui(tree=self.tree, flagsman=self.flagsman, fman=self.fman)
 
         if len(self.rep.get_tasks()) == 0:
             self.gui.show_help()
@@ -7890,8 +7846,7 @@ class Play:
         self.first_loop = True
         self.graph_ext = ""
 
-        self.opener = Opener(tree=self.tree, fman=self.fman, app=self.app, rep_data=rep_data, rep_alias=rep_alias)
-        self.actions = PlayActions(fman=self.fman, rep=self.rep, rep_alias=self.rep_alias, tree=self.tree, game=self.game, opener=self.opener, gui=self.gui)
+        self.actions = PlayActions(self.gui)
 
 
 
@@ -7968,7 +7923,7 @@ class Play:
             cman.add_str(GuiKeys.inc_grade2, self.tree.inc_grade)
             cman.add_str(GuiKeys.dec_grade, self.tree.dec_grade)
             cman.add_str(GuiKeys.dec_grade2, self.tree.dec_grade)
-            cman.add_str(GuiKeys.edit, lambda: self.opener.open_code(open_dir=True))
+            cman.add_str(GuiKeys.edit, lambda: self.gui.opener.open_code(open_dir=True))
             for value in range(1, 10):
                 cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
             cman.add_str("'", GradeFunctor(0, self.tree.set_grade))
@@ -7987,11 +7942,15 @@ class Play:
 
         cman.add_str(Flags.config.get_keycode(), self.toggle_config)
         cman.add_str(Flags.skills.get_keycode(), self.toggle_skills)
-        cman.add_str("/", self.search.toggle_search)
+        cman.add_str("/", self.gui.search.toggle_search)
 
         return cman
         
     def send_char_not_found(self, key):
+        exclude_str = [ord(v) for v in [" ", "a", "d", "\n"]]
+        exclude_int = [ -1, InputManager.esc, InputManager.left, InputManager.right ]
+        if key in exclude_int + exclude_str:
+            return
         self.fman.add_input(
             Floating("v")
                 .error()
@@ -8005,7 +7964,7 @@ class Play:
         Fmt.set_scr(scr)  # Define o scr como global
 
         while True:
-            self.tree.update_tree(admin_mode=Flags.admin.is_true() or self.search.search_mode)
+            self.tree.update_tree(admin_mode=Flags.admin.is_true() or self.gui.search.search_mode)
             self.fman.draw_warnings()
             if self.gui.config.gen_graph:
                 self.actions.generate_graph()
@@ -8021,13 +7980,13 @@ class Play:
             if self.exit:
                 break
 
-            if self.search.search_mode:
-                self.search.process_search(value)
+            if self.gui.search.search_mode:
+                self.gui.search.process_search(value)
             elif cman.has_int_key(value):
                 callback = cman.exec_call(value)
                 if callback is not None:
                     return callback
-            elif value != -1 and value != InputManager.esc and value != 32:
+            else:
                 self.send_char_not_found(value)
 
             self.tree.reload_sentences()
@@ -8066,17 +8025,17 @@ class CmdPlay:
         while True:
             rep_alias = settings.check_rep_alias(rep_alias)
             rep_source: RepSource = settings.get_rep_source(rep_alias)
-            rep_data = settings.get_rep_data(rep_alias)
-
+            rep = settings.get_rep_data(rep_alias)
+            rep_dir = rep.get_rep_dir()
+            file = rep_source.get_file_or_cache(rep_dir)
             game = Game()
-            file = rep_source.get_file(os.path.join(settings.app._rootdir, rep_alias))
             game.parse_file(file)
 
             # passing a lambda function to the play class to save the settings
             ext = ""
             if graph:
                 ext = ".svg" if svg else ".png"
-            play = Play(settings=settings, game=game, rep_data=rep_data, rep_alias=rep_alias)
+            play = Play(settings=settings, game=game, rep=rep)
             print(f"Abrindo repositório de {rep_alias}")
             reload = play.play(ext)
             if not reload:

@@ -1,17 +1,17 @@
-from .tasktree import TaskTree
-from ..game.task import Task
-from ..game.quest import Quest
-from ..game.game import Game
-from .flags import Flags
-from .floating import Floating
-from .floating_manager import FloatingManager
+from tko.game.task import Task
+from tko.game.quest import Quest
+from tko.play.tasktree import TaskTree
+from tko.play.flags import Flags
+from tko.play.floating import Floating
+from tko.play.floating_manager import FloatingManager
+
 import curses
 from typing import List
 
 class Search:
-    def __init__(self, tree: TaskTree, fman: FloatingManager, game: Game):
-        self.game = game
+    def __init__(self, tree: TaskTree, fman: FloatingManager):
         self.tree = tree
+        self.game = tree.game
         self.fman = fman
         self.search_mode: bool = False
         self.backup_expanded: List[str] = []

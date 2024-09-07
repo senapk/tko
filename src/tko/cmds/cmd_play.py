@@ -11,17 +11,17 @@ class CmdPlay:
         while True:
             rep_alias = settings.check_rep_alias(rep_alias)
             rep_source: RepSource = settings.get_rep_source(rep_alias)
-            rep_data = settings.get_rep_data(rep_alias)
-
+            rep = settings.get_rep_data(rep_alias)
+            rep_dir = rep.get_rep_dir()
+            file = rep_source.get_file_or_cache(rep_dir)
             game = Game()
-            file = rep_source.get_file(os.path.join(settings.app._rootdir, rep_alias))
             game.parse_file(file)
 
             # passing a lambda function to the play class to save the settings
             ext = ""
             if graph:
                 ext = ".svg" if svg else ".png"
-            play = Play(settings=settings, game=game, rep_data=rep_data, rep_alias=rep_alias)
+            play = Play(settings=settings, game=game, rep=rep)
             print(f"Abrindo repositório de {rep_alias}")
             reload = play.play(ext)
             if not reload:

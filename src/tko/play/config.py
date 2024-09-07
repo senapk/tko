@@ -1,16 +1,12 @@
-from .tasktree import TaskTree
-from ..game.task import Task
-from ..game.quest import Quest
-from ..game.game import Game
-from .flags import Flag, Flags, FlagsMan
-from .floating import Floating
-from .floating_manager import FloatingManager
+from tko.play.flags import Flag, Flags, FlagsMan
+from tko.play.floating import Floating
+from tko.play.floating_manager import FloatingManager
 from tko.play.border import Border
 from tko.settings.settings import Settings
 from tko.util.sentence import Sentence
-from .border import Border
+from tko.play.border import Border
 from typing import List, Tuple, Union, Callable
-from .functors import FlagFunctor
+from tko.play.functors import FlagFunctor
 from tko.settings.rep_settings import RepData, languages_avaliable
 
 def empty_fn():
@@ -24,10 +20,10 @@ class ConfigItem:
 
 
 class Config:
-    def __init__(self, rep: RepData, flagsman: FlagsMan, fman: FloatingManager, settings: Settings):
+    def __init__(self, settings: Settings, rep: RepData, flagsman: FlagsMan, fman: FloatingManager):
         self.index: int = 0
         self.flagsman = flagsman
-        self.style = Border(settings.app)
+        self.border = Border(settings.app)
         self.gen_graph: bool = False
         self.app = settings.app
         self.colors = settings.colors
@@ -59,7 +55,7 @@ class Config:
 
     def mark_focused(self, index, elem: Flag) -> Sentence:
         pad = 14 if index == self.index else 14
-        sentence = self.style.get_flag_sentence(elem, pad)
+        sentence = self.border.get_flag_sentence(elem, pad)
 
         if index == self.index and self.enabled:
             focus = self.colors.focused_item
@@ -87,61 +83,6 @@ class Config:
             for i in range(len(elements)):
                 elements[i].sentence = self.mark_focused(i, elements[i].flag)
         return elements
-
-
-    # def set_rootdir(self, only_if_empty=True):
-    #     if only_if_empty and self.app._rootdir != "":
-    #         return
-
-    #     def chama(value):
-    #         if value == "yes":
-    #             self.app._rootdir = os.path.abspath(os.getcwd())
-    #             self.settings.save_settings()
-    #             self.fman.add_input(
-    #                 Floating()
-    #                 .put_text("")
-    #                 .put_text("Diretório raiz definido como ")
-    #                 .put_text("")
-    #                 .put_text("  " + os.getcwd())
-    #                 .put_text("")
-    #                 .put_text("Você pode também pode alterar")
-    #                 .put_text("o diretório raiz navegando para o")
-    #                 .put_text("diretório desejado e executando o comando")
-    #                 .put_text("")
-    #                 .put_text("  tko config --root .")
-    #                 .put_text("")
-    #                 .warning()
-    #             )
-    #         else:
-    #             self.fman.add_input(
-    #                 Floating()
-    #                 .put_text("")
-    #                 .put_text("Navegue para o diretório desejado e tente novamente.")
-    #                 .put_text("")
-    #                 .put_text("Você pode também pode alterar")
-    #                 .put_text("o diretório raiz navegando para o")
-    #                 .put_text("diretório desejado e executando o comando")
-    #                 .put_text("")
-    #                 .put_text("tko config --root .")
-    #                 .put_text("")
-    #                 .warning()
-    #             )
-
-    #     self.fman.add_input(
-    #         Floating()
-    #         .put_text("")
-    #         .put_text("Você deseja utilizar o diretório")
-    #         .put_text("atual como diretório raiz do tko?")
-    #         .put_text("")
-    #         .put_text(os.getcwd())
-    #         .put_text("")
-    #         .put_text("como raiz para o repositório de " + self.rep_alias + "?")
-    #         .put_text("")
-    #         .put_text("Selecione e tecle Enter")
-    #         .put_text("")
-    #         .set_options(["yes", "no"])
-    #         .answer(chama)
-    #     )
 
     def set_language(self, only_if_empty=True):
         if only_if_empty and self.rep.get_lang() != "":
