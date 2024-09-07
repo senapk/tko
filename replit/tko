@@ -23,7 +23,7 @@ import math
 import configparser
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.23.7"
+__version__ = "0.24.0"
 
 class AppSettings:
     def __init__(self):

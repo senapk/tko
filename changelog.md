@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.24.0
+  - add: new config mode
 - 0.23.7
   - fix: message to choose rep
 - 0.23.6
