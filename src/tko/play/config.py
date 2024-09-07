@@ -72,7 +72,7 @@ class Config:
     def get_elements(self) -> List[ConfigItem]:
         elements: List[ConfigItem] = []
         for flag in self.flagsman.left:
-            item = ConfigItem(flag, flag.toggle)
+            item = ConfigItem(flag, FlagFunctor(flag))
             elements.append(item)
         border_values = ["1" if self.app.has_borders() else "0"]
         graph_values = ["1" if self.gen_graph else "0"]

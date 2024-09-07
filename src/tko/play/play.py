@@ -141,7 +141,7 @@ class Play:
         cman.add_str(GuiKeys.key_help, self.gui.show_help)
         
         for flag in self.flagsman.others:
-            cman.add_str(flag.get_keycode(), FlagFunctor(self.fman, flag))
+            cman.add_str(flag.get_keycode(), FlagFunctor(flag))
 
         config_elements = self.gui.config.get_elements()
         for element in config_elements:

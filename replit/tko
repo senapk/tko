@@ -23,7 +23,7 @@ import math
 import configparser
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.24.0"
+__version__ = "0.24.1"
 
 class AppSettings:
     def __init__(self):
@@ -1008,6 +1008,10 @@ class GuiKeys:
     hud = "h"
 
 class InputManager:
+    left = 260
+    right = 261
+    a = 97
+    d = 100
     tab = 9
     special_double_key = 195
     cedilha = 167
@@ -2473,22 +2477,11 @@ class FloatingManager:
 
 
 class FlagFunctor:
-    def __init__(self, fman: FloatingManager, flag: Flag):
-        self.fman = fman
+    def __init__(self, flag: Flag):
         self.flag = flag
 
     def __call__(self):
         self.flag.toggle()
-        # if (self.flag.get_location() == "left" or self.flag.get_location() == "geral") and self.flag.is_bool():
-        #     f = Floating("v").warning()
-        #     f.put_text("")
-        #     f.put_text(self.flag.get_description())
-        #     if self.flag.is_true():
-        #         f.put_sentence(Sentence().addf("g", "ligado"))
-        #     else:
-        #         f.put_sentence(Sentence().addf("r", "desligado"))
-        #     f.put_text("")
-        #     self.fman.add_input(f)
 
 class GradeFunctor:
     def __init__(self, grade: int, fn):
@@ -5894,7 +5887,7 @@ class Config:
     def get_elements(self) -> List[ConfigItem]:
         elements: List[ConfigItem] = []
         for flag in self.flagsman.left:
-            item = ConfigItem(flag, flag.toggle)
+            item = ConfigItem(flag, FlagFunctor(flag))
             elements.append(item)
         border_values = ["1" if self.app.has_borders() else "0"]
         graph_values = ["1" if self.gen_graph else "0"]
@@ -7984,7 +7977,7 @@ class Play:
         cman.add_str(GuiKeys.key_help, self.gui.show_help)
         
         for flag in self.flagsman.others:
-            cman.add_str(flag.get_keycode(), FlagFunctor(self.fman, flag))
+            cman.add_str(flag.get_keycode(), FlagFunctor(flag))
 
         config_elements = self.gui.config.get_elements()
         for element in config_elements:

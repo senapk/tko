@@ -3,6 +3,10 @@ import curses
 import os
 
 class InputManager:
+    left = 260
+    right = 261
+    a = 97
+    d = 100
     tab = 9
     special_double_key = 195
     cedilha = 167
