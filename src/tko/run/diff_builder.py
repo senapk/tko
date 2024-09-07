@@ -6,7 +6,7 @@ from .basic import ExecutionResult
 from .unit import Unit
 from .report import Report
 
-class Diff:
+class DiffBuilder:
 
     vinput    = " INSERIDO "
     vexpected = " ESPERADO "
@@ -66,7 +66,7 @@ class Diff:
     def first_failure_diff(a_text: str, b_text: str, first_failure: int) -> List[Sentence]:
         def get(vet, index):
             if index < len(vet):
-                return Diff.render_white(vet[index])
+                return DiffBuilder.render_white(vet[index])
             return ""
 
         a_render = a_text.splitlines(True)
@@ -80,13 +80,13 @@ class Diff:
         #     lbefore = get(a_render, first_failure - 1)
         #     greater = max(greater, len(lbefore))
 
-        out_a, out_b = Diff.colorize_2_lines_diff(Sentence(first_a), Sentence(first_b))
+        out_a, out_b = DiffBuilder.colorize_2_lines_diff(Sentence(first_a), Sentence(first_b))
         greater = max(len(out_a), len(out_b))
         output: List[Sentence] = []
 
         output.append(Sentence().add(symbols.vbar).add(" ").add(out_a.ljust(greater)).addf("g", " (esperado)"))
         output.append(Sentence().add(symbols.vbar).add(" ").add(out_b.ljust(greater)).addf("r", " (recebido)"))
-        diff = Diff.make_line_arrow_up(first_a, first_b)
+        diff = DiffBuilder.make_line_arrow_up(first_a, first_b)
         output.append(Sentence().add(symbols.vbar).add(" ").add(diff.ljust(greater)).addf("b", " (primeiro)"))
         return output
 
@@ -101,7 +101,7 @@ class Diff:
     
     @staticmethod
     def colorize_2_lines_diff(la: Sentence, lb: Sentence, neut: str = "", exp: str = "g", rec: str = "r") -> Tuple[Sentence, Sentence]:
-        pos = Diff.find_first_mismatch(la, lb)
+        pos = DiffBuilder.find_first_mismatch(la, lb)
         lat = la.get_text()
         lbt = lb.get_text()
         a_out = Sentence().addf(neut, lat[0:pos]).addf(exp, lat[pos:])
@@ -146,7 +146,7 @@ class Diff:
             if i >= a_size or i >= b_size or a_lines[i] != b_lines[i]:
                 if first_failure == -1:
                     first_failure = i
-                a_out, b_out = Diff.colorize_2_lines_diff(a_data, b_data, "y")
+                a_out, b_out = DiffBuilder.colorize_2_lines_diff(a_data, b_data, "y")
                 a_output.append(a_out)
                 b_output.append(b_out)
             else:
@@ -165,33 +165,33 @@ class Diff:
 
         if string_received is None:
             string_received = ""
-        expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received)
+        expected_lines, received_lines, first_failure = DiffBuilder.render_diff(string_expected, string_received)
         string_input_list = [Sentence().add(symbols.vbar.text).add(" ").add(line) for line in string_input.split("\n")][:-1]
         unequal = symbols.unequal
         if unit.result == ExecutionResult.EXECUTION_ERROR or unit.result == ExecutionResult.COMPILATION_ERROR:
             unequal = symbols.vbar
-        expected_lines, received_lines = Diff.put_left_equal(expected_lines, received_lines, unequal)
+        expected_lines, received_lines = DiffBuilder.put_left_equal(expected_lines, received_lines, unequal)
 
         color = "b" if string_expected != string_received else "g"
         if not curses:
             output.append(Report.centralize("", symbols.hbar, "╭"))
             output.append(Report.centralize(unit.str(), " ", symbols.vbar))
-            output.append(Report.centralize(Sentence().addf(color, Diff.vinput), symbols.hbar, "├"))
+            output.append(Report.centralize(Sentence().addf(color, DiffBuilder.vinput), symbols.hbar, "├"))
         else:
-            output.append(Report.centralize(Sentence().addf(color, Diff.vinput), symbols.hbar, "╭"))
+            output.append(Report.centralize(Sentence().addf(color, DiffBuilder.vinput), symbols.hbar, "╭"))
 
         output += string_input_list
             
-        output.append(Report.centralize(Sentence().addf("g", Diff.vexpected), symbols.hbar, "├"))
+        output.append(Report.centralize(Sentence().addf("g", DiffBuilder.vexpected), symbols.hbar, "├"))
         output += expected_lines
         # output.append("\n".join(expected_lines))
         rcolor = "r" if string_expected != string_received else "g"
-        output.append(Report.centralize(Sentence().addf(rcolor, Diff.vreceived), symbols.hbar, "├"))
+        output.append(Report.centralize(Sentence().addf(rcolor, DiffBuilder.vreceived), symbols.hbar, "├"))
         output +=  received_lines
 
         if unit.result != ExecutionResult.EXECUTION_ERROR and unit.result != ExecutionResult.COMPILATION_ERROR and string_expected != string_received:
-            output.append(Report.centralize(Sentence().addf("b", Diff.vunequal),  symbols.hbar, "├"))
-            output += Diff.first_failure_diff(string_expected, string_received, first_failure)
+            output.append(Report.centralize(Sentence().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├"))
+            output += DiffBuilder.first_failure_diff(string_expected, string_received, first_failure)
         output.append(Report.centralize("",  symbols.hbar, "╰"))
 
         return output
@@ -245,33 +245,33 @@ class Diff:
         # vertical_separator = symbols.vbar
         hbar = symbols.hbar
 
-        expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received, True)
+        expected_lines, received_lines, first_failure = DiffBuilder.render_diff(string_expected, string_received, True)
         if not curses:
             output.append(Report.centralize("", hbar, "╭"))
             output.append(Report.centralize(unit.str(), " ", "│"))
         input_color = "b" if string_expected != string_received else "g"
-        input_headera = Sentence().addf(input_color, Diff.vinput)
-        input_headerb = Sentence().addf(input_color, Diff.vinput)
+        input_headera = Sentence().addf(input_color, DiffBuilder.vinput)
+        input_headerb = Sentence().addf(input_color, DiffBuilder.vinput)
         if not curses:
-            output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, Token("┬"), Token("├")))
+            output.append(DiffBuilder.title_side_by_side(input_headera, input_headerb, hbar, Token("┬"), Token("├")))
         else:
-            output.append(Report.centralize(Sentence().addf(input_color, Diff.vinput),  symbols.hbar, "╭"))
+            output.append(Report.centralize(Sentence().addf(input_color, DiffBuilder.vinput),  symbols.hbar, "╭"))
             # output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, TK("┬"), TK("╭")))
 
         if string_input != "":
             lines = [Sentence(x) for x in string_input.split("\n")[:-1]]
-            output += Diff.side_by_side(lines, lines)
-        expected_header = Sentence().addf("g", Diff.vexpected)
+            output += DiffBuilder.side_by_side(lines, lines)
+        expected_header = Sentence().addf("g", DiffBuilder.vexpected)
         rcolor = "r" if string_expected != string_received else "g"
-        received_header = Sentence().addf(rcolor, Diff.vreceived)
-        output.append(Diff.title_side_by_side(expected_header, received_header, hbar, Token("┼"), Token("├")))
+        received_header = Sentence().addf(rcolor, DiffBuilder.vreceived)
+        output.append(DiffBuilder.title_side_by_side(expected_header, received_header, hbar, Token("┼"), Token("├")))
         unequal = symbols.unequal
         if unit.result == ExecutionResult.EXECUTION_ERROR or unit.result == ExecutionResult.COMPILATION_ERROR:
             unequal = symbols.vbar
-        output += Diff.side_by_side(expected_lines, received_lines, unequal)
+        output += DiffBuilder.side_by_side(expected_lines, received_lines, unequal)
         if unit.result != ExecutionResult.EXECUTION_ERROR and unit.result != ExecutionResult.COMPILATION_ERROR and string_expected != string_received:
-            output.append(Report.centralize(Sentence().addf("b", Diff.vunequal),  symbols.hbar, "├"))
-            output += Diff.first_failure_diff(string_expected, string_received, first_failure)
+            output.append(Report.centralize(Sentence().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├"))
+            output += DiffBuilder.first_failure_diff(string_expected, string_received, first_failure)
             output.append(Report.centralize("",  symbols.hbar, "╰"))
         else:
             output.append(Report.centralize("┴",  symbols.hbar, "╰"))

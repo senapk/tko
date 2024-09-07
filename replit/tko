@@ -6,8 +6,8 @@ from __future__ import annotations
 from typing import List, Dict, Tuple, Optional, Any, Callable, Union, Set
 import argparse
 import sys
-import os
 import json
+import os
 import urllib
 import curses
 import random
@@ -934,6 +934,121 @@ Meu precioso!
          ⠉⠛⠿⠶⢾⣭⢤⡾ ⠠⠒          
 """
 
+class DiffKeys:
+    backspace1 = 127
+    left = "a"
+    up = "w"
+    right = "d"
+    down = "s"
+    principal = "p"
+    diff = "m"
+    rodar = "r"
+    testar = "\n"
+    # testar2 = "\n"
+    sair   = "q"
+    editar = "e"
+    travar = "f"
+    tempo  = "t"
+    hud = "h"
+    border = "B"
+
+
+class DiffActions:
+    sair   = "Sair"
+    editar = "Editar"
+    ativar = "Ativar"
+    rodar  = " Rodar"
+    principal = "Principal"
+    fixar  = "Fixar"
+    tempo = "Tempo"
+    hud = "HUD"
+
+
+class GuiActions:
+    github = "Github"
+    sair = "Sair"
+    ajuda = "Ajuda"
+    baixar = "Baixar"
+    ativar = "Ativar"
+    navegar = "←↓→"
+    editar = "Editar"
+    marcar = "Marcar"
+    desmarcar = "Desmarcar"
+    colapsar = "Colapsar"
+    pesquisar = "Buscar"
+    hud = "HUD"
+
+
+class GuiKeys:
+    left = "a"
+    right = "d"
+    down = "s"
+    up = "w"
+
+    down_task = "b"
+    activate = "\n"
+    key_help = "?"
+    expand = ">"
+    expand2 = "."
+    collapse = "<"
+    collapse2 = ","
+    inc_grade = "+"
+    inc_grade2 = "="
+    dec_grade = "-"
+    dec_grade2 = "_"
+    set_root_dir = "D"
+    set_lang = "L"
+    github_open = "g"
+    key_quit = "q"
+    edit= "e"
+    colors = "C"
+    borders = "B"
+    pesquisar = "/"
+    graph = "G"
+    hud = "h"
+
+class InputManager:
+    tab = 9
+    special_double_key = 195
+    cedilha = 167
+    esc = 27
+
+    def __init__(self):
+        # stores a function than can return another function
+        self.calls: Dict[int, Callable[[], Optional[Callable[[], None]]]] = {}
+
+    def add_int(self, _key: int, fn: Callable[[], None]):
+        if _key in self.calls.keys():
+            raise ValueError(f"Chave duplicada {chr(_key)}")
+        self.calls[_key] = fn
+
+    def add_str(self, str_key: str, fn: Callable[[], None]):
+        if str_key != "":
+            self.add_int(ord(str_key), fn)
+
+    def has_str_key(self, key: str) -> bool:
+        return ord(key) in self.calls
+    
+    def has_int_key(self, key: int) -> bool:
+        return key in self.calls
+    
+    def exec_call(self, key: int):
+        return self.calls[key]()
+
+    @staticmethod
+    def fix_esc_delay():
+        if hasattr(curses, "set_escdelay"):
+            curses.set_escdelay(25)
+        else:
+            os.environ.setdefault('ESCDELAY', '25')
+
+    @staticmethod
+    def fix_cedilha(scr, value: int) -> int:
+        if value == InputManager.special_double_key:
+            value = scr.getch()
+            if value == InputManager.cedilha: #ç
+                value = ord("c")
+        return value
 class LabelFactory:
     def __init__(self):
         self._label = ""
@@ -1649,19 +1764,19 @@ class Flag:
         self._location: str = ""
         self._bool = True  # many options
 
-    def name(self, _name):
+    def set_name(self, _name):
         self._name = _name
         return self
 
-    def text(self, _text):
+    def set_description(self, _text):
         self._text = _text
         return self
 
-    def char(self, _key):
+    def set_keycode(self, _key):
         self._char = _key
         return self
 
-    def values(self, _values: List[str]):
+    def set_values(self, _values: List[str]):
         self._values = _values
         return self
 
@@ -1679,12 +1794,8 @@ class Flag:
     def toggle(self):
         self._index = (self._index + 1) % len(self._values)
         return self
-
-    def many(self):
-        self._bool = False
-        return self
     
-    def bool(self):
+    def set_bool(self):
         self._bool = True
         return self
     
@@ -1712,7 +1823,7 @@ class Flag:
     def get_description(self) -> str:
         return self._text
 
-    def get_char(self) -> str:
+    def get_keycode(self) -> str:
         return self._char
 
     def get_index(self) -> int:
@@ -1720,17 +1831,14 @@ class Flag:
     
 
 class Flags:
-    minimum = Flag().name("Mínimo").char("M").values(["0", "1"]).text("Mostra os requisitos mínimos para completar a missão").location("left")
-    reward = Flag().name("Recompensa").char("R").values(["0", "1"]).text("Mostra a experiência obtida na tarefa").location("left")
-    percent = Flag().name("Percentual").char("P").values(["1", "0"]).text("Mostra valores em porcentagem").location("left")
-    admin = Flag().name("Admin").char("A").values(["0", "1"]).text("Mostra todas as missões e grupos").location("left")
-    # fortune = Flag().name("Fortuna").char("F").values(["0", "1"]).text("Mostra mensagem aleatórias na saída").location("left")
-    images = Flag().name("Imagens").char("I").values(["1", "0"]).text("Mostra imagens aleatórias").location("left")
-    # links = Flag().name("Links").char("Y").values(["0", "1"]).text("Mostra links remotos e locais das tarefas").location("left")
-
-    config    = Flag().name("Config").char("c").values(["0", "1"]).text("Mostra a barra de flags").location("top")
-    skills = Flag().name("Skills").char("i").values(["0", "1"]).text("Mostra a barra de skills").location("top")
-    others = Flag().name("Outros").char("o").values(["0", "1"]).text("Mostra opções extras").location("bottom")
+    minimum = Flag().set_name("Mínimo").set_keycode("M").set_values(["0", "1"])    .set_description("Mostra os requisitos para completar a missão").location("left")
+    reward = Flag().set_name("Recompensa").set_keycode("R").set_values(["0", "1"]) .set_description("Mostra a experiência obtida nas tarefas     ").location("left")
+    percent = Flag().set_name("Percentual").set_keycode("P").set_values(["1", "0"]).set_description("Mostra todos os valores em porcentagem      ").location("left")
+    admin = Flag().set_name("Admin").set_keycode("A").set_values(["0", "1"])       .set_description("Habilitas todas as missões e tarefas        ").location("left")
+    images = Flag().set_name("Imagens").set_keycode("I").set_values(["1", "0"])    .set_description("Mostra imagens de abertura e sucesso        ").location("left")
+    config    = Flag().set_name("Config").set_keycode("c").set_values(["0", "1"]).set_description("Mostra a barra de flags").location("top")
+    skills = Flag().set_name("Skills").set_keycode("i").set_values(["0", "1"]).set_description("Mostra a barra de skills").location("top")
+    hud = Flag().set_name("HUD").set_keycode("h").set_values(["0", "1"]).set_description("Mostra opções extras").location("bottom")
 
 class FlagsMan:
     def __init__(self, data: Dict[str, int]):
@@ -2371,16 +2479,16 @@ class FlagFunctor:
 
     def __call__(self):
         self.flag.toggle()
-        if (self.flag.get_location() == "left" or self.flag.get_location() == "geral") and self.flag.is_bool():
-            f = Floating("v>").warning()
-            f.put_text("")
-            f.put_text(self.flag.get_description())
-            if self.flag.is_true():
-                f.put_sentence(Sentence().addf("g", "ligado"))
-            else:
-                f.put_sentence(Sentence().addf("r", "desligado"))
-            f.put_text("")
-            self.fman.add_input(f)
+        # if (self.flag.get_location() == "left" or self.flag.get_location() == "geral") and self.flag.is_bool():
+        #     f = Floating("v").warning()
+        #     f.put_text("")
+        #     f.put_text(self.flag.get_description())
+        #     if self.flag.is_true():
+        #         f.put_sentence(Sentence().addf("g", "ligado"))
+        #     else:
+        #         f.put_sentence(Sentence().addf("r", "desligado"))
+        #     f.put_text("")
+        #     self.fman.add_input(f)
 
 class GradeFunctor:
     def __init__(self, grade: int, fn):
@@ -2390,71 +2498,6 @@ class GradeFunctor:
     def __call__(self):
         self.fn(self.grade)
 
-
-
-class Border:
-    def __init__(self, app: AppSettings):
-        self.app = app
-
-    def has_borders(self):
-        return self.app._borders
-
-    def border_round(self, color: str, data: str):
-        return Sentence().add(self.roundL(color)).addf(color, data).add(self.roundR(color))
-
-    def border_sharp(self, color: str, data: str):
-        return Sentence().add(self.sharpL(color)).addf(color, data).add(self.sharpR(color))
-
-    def roundL(self, color: str) -> Token:
-        return Token("", color.lower()) if self.has_borders() else Token(" ", color)
-
-    def roundR(self, color: str) -> Token:
-        return Token("", color.lower()) if self.has_borders() else Token(" ", color)
-
-    def sharpL(self, color: str) -> Token:
-        return Token("", color.lower()) if self.has_borders() else Token(" ", color)
-
-    def sharpR(self, color: str):
-        return Token("", color.lower()) if self.has_borders() else Token(" ", color)
-
-    def build_bar(self, text: str, percent: float, length: int, fmt_true: str = "/kC",
-                  fmt_false: str = "/kY", round=True) -> Sentence:
-        if round and (len(text) >= length - 2):
-            text = " " + text
-
-        if length > len(text):
-            prefix = (length - len(text)) // 2
-            suffix = length - len(text) - prefix
-            text = " " * prefix + text + " " * suffix
-        elif length < len(text):
-            text = text[:length]
-        
-        full_line = text
-        done_len = int(percent * length)
-        xp_bar = Token(full_line[:done_len], fmt_true) + Token(full_line[done_len:], fmt_false)
-            
-        if round:
-            xp_bar.data[0] = self.roundL(xp_bar.data[0].fmt)
-            xp_bar.data[-1] = self.roundR(xp_bar.data[-1].fmt)
-        return xp_bar
-
-    def get_flag_sentence(self, flag: Flag, pad: int = 0) -> Sentence:
-        if not flag.is_bool():
-            name = Sentence().addf(flag.get_value(), f"{flag._name}".ljust(pad))
-            value = Sentence().add(f"[{flag.get_char()}]").add(name).add(f"{flag.get_value()}".rjust(2))
-            return value
-            
-        char = flag.get_char()
-        text = flag.get_name()
-        color = "G" if flag.is_true() else "Y"
-        textc = ""
-        extra = Sentence()
-        if pad > 0:
-            extra.addf(color, (pad - len(text)) * " ")
-        mid = Sentence().addf(color + textc, text).add(extra).addf(color, f"[{char}]")
-        middle = Sentence().add(self.sharpL(color)).add(mid).add(self.sharpR(color))
-        return middle
-    
 
 class __Symbols:
     def __init__(self):
@@ -2559,6 +2602,75 @@ class __Symbols:
 
 
 symbols = __Symbols()
+
+
+class Border:
+    def __init__(self, app: AppSettings):
+        self.app = app
+
+    def has_borders(self):
+        return self.app._borders
+
+    def border(self, color: str, data: str):
+        return Sentence().add(self.roundL(color)).addf(color, data).add(self.roundR(color))
+
+    def border_sharp(self, color: str, data: str):
+        return Sentence().add(self.sharpL(color)).addf(color, data).add(self.sharpR(color))
+
+    def roundL(self, color: str) -> Token:
+        return Token("", color.lower()) if self.has_borders() else Token(" ", color)
+
+    def roundR(self, color: str) -> Token:
+        return Token("", color.lower()) if self.has_borders() else Token(" ", color)
+
+    def sharpL(self, color: str) -> Token:
+        return Token("", color.lower()) if self.has_borders() else Token(" ", color)
+
+    def sharpR(self, color: str):
+        return Token("", color.lower()) if self.has_borders() else Token(" ", color)
+
+    def build_bar(self, text: str, percent: float, length: int, fmt_true: str = "/kC",
+                  fmt_false: str = "/kY", round=True) -> Sentence:
+        if round and (len(text) >= length - 2):
+            text = " " + text
+
+        if length > len(text):
+            prefix = (length - len(text)) // 2
+            suffix = length - len(text) - prefix
+            text = " " * prefix + text + " " * suffix
+        elif length < len(text):
+            text = text[:length]
+        
+        full_line = text
+        done_len = int(percent * length)
+        xp_bar = Token(full_line[:done_len], fmt_true) + Token(full_line[done_len:], fmt_false)
+            
+        if round:
+            xp_bar.data[0] = self.roundL(xp_bar.data[0].fmt)
+            xp_bar.data[-1] = self.roundR(xp_bar.data[-1].fmt)
+        return xp_bar
+
+    def get_flag_sentence(self, flag: Flag, pad: int = 0, button_mode: bool = True) -> Sentence:
+        char = flag.get_keycode()
+        text = flag.get_name()
+        color = "M" 
+        symbol = symbols.neutral
+        if len(flag.get_values()) > 0:
+            color = "G" if flag.is_true() else "Y"
+            symbol = symbols.success if flag.is_true() else symbols.failure
+        if not button_mode:
+            color = color.lower()
+        extra = Sentence()
+        filler = " "
+        if pad > 2:
+            extra.addf(color, (pad - 2 - len(text)) * filler)
+
+        mid = Sentence().addf(color, symbol.text).addf(color, " ").addf(color, text).add(extra).addf(color, f"[{char}]")
+        if button_mode:
+            middle = Sentence().add(self.roundL(color)).add(mid).add(self.roundR(color))
+        else:
+            middle = Sentence().add(" ").add(mid).add(" ")
+        return middle
 
 
 class Task:
@@ -3865,7 +3977,7 @@ class CmdConfig:
         settings.save_settings()
 
 
-class Diff:
+class DiffBuilder:
 
     vinput    = " INSERIDO "
     vexpected = " ESPERADO "
@@ -3925,7 +4037,7 @@ class Diff:
     def first_failure_diff(a_text: str, b_text: str, first_failure: int) -> List[Sentence]:
         def get(vet, index):
             if index < len(vet):
-                return Diff.render_white(vet[index])
+                return DiffBuilder.render_white(vet[index])
             return ""
 
         a_render = a_text.splitlines(True)
@@ -3939,13 +4051,13 @@ class Diff:
         #     lbefore = get(a_render, first_failure - 1)
         #     greater = max(greater, len(lbefore))
 
-        out_a, out_b = Diff.colorize_2_lines_diff(Sentence(first_a), Sentence(first_b))
+        out_a, out_b = DiffBuilder.colorize_2_lines_diff(Sentence(first_a), Sentence(first_b))
         greater = max(len(out_a), len(out_b))
         output: List[Sentence] = []
 
         output.append(Sentence().add(symbols.vbar).add(" ").add(out_a.ljust(greater)).addf("g", " (esperado)"))
         output.append(Sentence().add(symbols.vbar).add(" ").add(out_b.ljust(greater)).addf("r", " (recebido)"))
-        diff = Diff.make_line_arrow_up(first_a, first_b)
+        diff = DiffBuilder.make_line_arrow_up(first_a, first_b)
         output.append(Sentence().add(symbols.vbar).add(" ").add(diff.ljust(greater)).addf("b", " (primeiro)"))
         return output
 
@@ -3960,7 +4072,7 @@ class Diff:
     
     @staticmethod
     def colorize_2_lines_diff(la: Sentence, lb: Sentence, neut: str = "", exp: str = "g", rec: str = "r") -> Tuple[Sentence, Sentence]:
-        pos = Diff.find_first_mismatch(la, lb)
+        pos = DiffBuilder.find_first_mismatch(la, lb)
         lat = la.get_text()
         lbt = lb.get_text()
         a_out = Sentence().addf(neut, lat[0:pos]).addf(exp, lat[pos:])
@@ -4005,7 +4117,7 @@ class Diff:
             if i >= a_size or i >= b_size or a_lines[i] != b_lines[i]:
                 if first_failure == -1:
                     first_failure = i
-                a_out, b_out = Diff.colorize_2_lines_diff(a_data, b_data, "y")
+                a_out, b_out = DiffBuilder.colorize_2_lines_diff(a_data, b_data, "y")
                 a_output.append(a_out)
                 b_output.append(b_out)
             else:
@@ -4024,33 +4136,33 @@ class Diff:
 
         if string_received is None:
             string_received = ""
-        expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received)
+        expected_lines, received_lines, first_failure = DiffBuilder.render_diff(string_expected, string_received)
         string_input_list = [Sentence().add(symbols.vbar.text).add(" ").add(line) for line in string_input.split("\n")][:-1]
         unequal = symbols.unequal
         if unit.result == ExecutionResult.EXECUTION_ERROR or unit.result == ExecutionResult.COMPILATION_ERROR:
             unequal = symbols.vbar
-        expected_lines, received_lines = Diff.put_left_equal(expected_lines, received_lines, unequal)
+        expected_lines, received_lines = DiffBuilder.put_left_equal(expected_lines, received_lines, unequal)
 
         color = "b" if string_expected != string_received else "g"
         if not curses:
             output.append(Report.centralize("", symbols.hbar, "╭"))
             output.append(Report.centralize(unit.str(), " ", symbols.vbar))
-            output.append(Report.centralize(Sentence().addf(color, Diff.vinput), symbols.hbar, "├"))
+            output.append(Report.centralize(Sentence().addf(color, DiffBuilder.vinput), symbols.hbar, "├"))
         else:
-            output.append(Report.centralize(Sentence().addf(color, Diff.vinput), symbols.hbar, "╭"))
+            output.append(Report.centralize(Sentence().addf(color, DiffBuilder.vinput), symbols.hbar, "╭"))
 
         output += string_input_list
             
-        output.append(Report.centralize(Sentence().addf("g", Diff.vexpected), symbols.hbar, "├"))
+        output.append(Report.centralize(Sentence().addf("g", DiffBuilder.vexpected), symbols.hbar, "├"))
         output += expected_lines
         # output.append("\n".join(expected_lines))
         rcolor = "r" if string_expected != string_received else "g"
-        output.append(Report.centralize(Sentence().addf(rcolor, Diff.vreceived), symbols.hbar, "├"))
+        output.append(Report.centralize(Sentence().addf(rcolor, DiffBuilder.vreceived), symbols.hbar, "├"))
         output +=  received_lines
 
         if unit.result != ExecutionResult.EXECUTION_ERROR and unit.result != ExecutionResult.COMPILATION_ERROR and string_expected != string_received:
-            output.append(Report.centralize(Sentence().addf("b", Diff.vunequal),  symbols.hbar, "├"))
-            output += Diff.first_failure_diff(string_expected, string_received, first_failure)
+            output.append(Report.centralize(Sentence().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├"))
+            output += DiffBuilder.first_failure_diff(string_expected, string_received, first_failure)
         output.append(Report.centralize("",  symbols.hbar, "╰"))
 
         return output
@@ -4104,33 +4216,33 @@ class Diff:
         # vertical_separator = symbols.vbar
         hbar = symbols.hbar
 
-        expected_lines, received_lines, first_failure = Diff.render_diff(string_expected, string_received, True)
+        expected_lines, received_lines, first_failure = DiffBuilder.render_diff(string_expected, string_received, True)
         if not curses:
             output.append(Report.centralize("", hbar, "╭"))
             output.append(Report.centralize(unit.str(), " ", "│"))
         input_color = "b" if string_expected != string_received else "g"
-        input_headera = Sentence().addf(input_color, Diff.vinput)
-        input_headerb = Sentence().addf(input_color, Diff.vinput)
+        input_headera = Sentence().addf(input_color, DiffBuilder.vinput)
+        input_headerb = Sentence().addf(input_color, DiffBuilder.vinput)
         if not curses:
-            output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, Token("┬"), Token("├")))
+            output.append(DiffBuilder.title_side_by_side(input_headera, input_headerb, hbar, Token("┬"), Token("├")))
         else:
-            output.append(Report.centralize(Sentence().addf(input_color, Diff.vinput),  symbols.hbar, "╭"))
+            output.append(Report.centralize(Sentence().addf(input_color, DiffBuilder.vinput),  symbols.hbar, "╭"))
             # output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, TK("┬"), TK("╭")))
 
         if string_input != "":
             lines = [Sentence(x) for x in string_input.split("\n")[:-1]]
-            output += Diff.side_by_side(lines, lines)
-        expected_header = Sentence().addf("g", Diff.vexpected)
+            output += DiffBuilder.side_by_side(lines, lines)
+        expected_header = Sentence().addf("g", DiffBuilder.vexpected)
         rcolor = "r" if string_expected != string_received else "g"
-        received_header = Sentence().addf(rcolor, Diff.vreceived)
-        output.append(Diff.title_side_by_side(expected_header, received_header, hbar, Token("┼"), Token("├")))
+        received_header = Sentence().addf(rcolor, DiffBuilder.vreceived)
+        output.append(DiffBuilder.title_side_by_side(expected_header, received_header, hbar, Token("┼"), Token("├")))
         unequal = symbols.unequal
         if unit.result == ExecutionResult.EXECUTION_ERROR or unit.result == ExecutionResult.COMPILATION_ERROR:
             unequal = symbols.vbar
-        output += Diff.side_by_side(expected_lines, received_lines, unequal)
+        output += DiffBuilder.side_by_side(expected_lines, received_lines, unequal)
         if unit.result != ExecutionResult.EXECUTION_ERROR and unit.result != ExecutionResult.COMPILATION_ERROR and string_expected != string_received:
-            output.append(Report.centralize(Sentence().addf("b", Diff.vunequal),  symbols.hbar, "├"))
-            output += Diff.first_failure_diff(string_expected, string_received, first_failure)
+            output.append(Report.centralize(Sentence().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├"))
+            output += DiffBuilder.first_failure_diff(string_expected, string_received, first_failure)
             output.append(Report.centralize("",  symbols.hbar, "╰"))
         else:
             output.append(Report.centralize("┴",  symbols.hbar, "╰"))
@@ -5028,9 +5140,13 @@ class TaskTree:
         self.index_begin = 0
         self.max_title = 0
         self.search_text = ""
+        self.in_focus = True
         self.load_from_rep()
         self.update_tree(admin_mode=Flags.admin.is_true(), first_loop=True)
         self.reload_sentences()
+
+    def set_focus(self, focus: bool):
+        self.in_focus = focus
 
     def load_from_rep(self):
         self.new_items: List[str] = [v for v in self.rep.get_new_items()]
@@ -5272,7 +5388,7 @@ class TaskTree:
     #     return False
 
     def get_focus_color(self, item: Union[Quest, Cluster], index: int) -> str:
-        if index != self.index_selected:
+        if index != self.index_selected or not self.in_focus:
             return ""
         if not item.is_reachable() and not Flags.admin.is_true():
             return "R"
@@ -5719,6 +5835,162 @@ class Opener:
             if len(files_to_open) != 0:
                 self.open_files(files_to_open)
 
+def empty_fn():
+    pass
+
+class ConfigItem:
+    def __init__(self, flag: Flag, fn: Callable[[], None], sentence: Sentence = Sentence() ):
+        self.flag = flag
+        self.fn: Callable[[], None] = fn
+        self.sentence = sentence
+
+
+class Config:
+    def __init__(self, rep: RepData, flagsman: FlagsMan, fman: FloatingManager, settings: Settings):
+        self.index: int = 0
+        self.flagsman = flagsman
+        self.style = Border(settings.app)
+        self.gen_graph: bool = False
+        self.app = settings.app
+        self.colors = settings.colors
+        self.fman = fman
+        self.rep = rep
+        self.enabled = False
+        self.size = len(self.get_elements())
+
+    def enable(self):
+        self.enabled = True
+    
+    def disable(self):
+        self.enabled = False
+
+    def activate_selected(self):
+        elements = self.get_elements()
+        chosen = elements[self.index]
+        chosen.fn()
+
+    def move_down(self):
+        self.index += 1
+        if self.index == self.size:
+            self.index = 0
+
+    def move_up(self):
+        self.index -= 1
+        if self.index == -1:
+            self.index = self.size - 1
+
+    def mark_focused(self, index, elem: Flag) -> Sentence:
+        pad = 14 if index == self.index else 14
+        sentence = self.style.get_flag_sentence(elem, pad)
+
+        if index == self.index and self.enabled:
+            focus = self.colors.focused_item
+            return sentence
+        return Sentence("    ").add(sentence)
+
+    def graph_toggle(self):
+        self.gen_graph = not self.gen_graph
+
+    def get_elements(self) -> List[ConfigItem]:
+        elements: List[ConfigItem] = []
+        for flag in self.flagsman.left:
+            item = ConfigItem(flag, flag.toggle)
+            elements.append(item)
+        border_values = ["1" if self.app.has_borders() else "0"]
+        graph_values = ["1" if self.gen_graph else "0"]
+        bordas = Flag().set_name("Bordas").set_keycode("B").set_values(border_values).set_description("Ativa as bordas se a fonte tiver suporte    ").set_bool()
+        elements.append(ConfigItem(bordas, self.app.toggle_borders))
+        grafo = Flag().set_name("Grafo").set_keycode("G").set_values(graph_values)   .set_description("Ativa a geração do grafo do repositório     ").set_bool()
+        elements.append(ConfigItem(grafo, self.graph_toggle))
+        language = Flag().set_name("Linguagem").set_values([]).set_keycode("L")      .set_description("Muda a linguagem de download dos rascunhos  ")
+        elements.append(ConfigItem(language, lambda: self.set_language(False)))
+
+        if Flags.config.is_true():
+            for i in range(len(elements)):
+                elements[i].sentence = self.mark_focused(i, elements[i].flag)
+        return elements
+
+
+    # def set_rootdir(self, only_if_empty=True):
+    #     if only_if_empty and self.app._rootdir != "":
+    #         return
+
+    #     def chama(value):
+    #         if value == "yes":
+    #             self.app._rootdir = os.path.abspath(os.getcwd())
+    #             self.settings.save_settings()
+    #             self.fman.add_input(
+    #                 Floating()
+    #                 .put_text("")
+    #                 .put_text("Diretório raiz definido como ")
+    #                 .put_text("")
+    #                 .put_text("  " + os.getcwd())
+    #                 .put_text("")
+    #                 .put_text("Você pode também pode alterar")
+    #                 .put_text("o diretório raiz navegando para o")
+    #                 .put_text("diretório desejado e executando o comando")
+    #                 .put_text("")
+    #                 .put_text("  tko config --root .")
+    #                 .put_text("")
+    #                 .warning()
+    #             )
+    #         else:
+    #             self.fman.add_input(
+    #                 Floating()
+    #                 .put_text("")
+    #                 .put_text("Navegue para o diretório desejado e tente novamente.")
+    #                 .put_text("")
+    #                 .put_text("Você pode também pode alterar")
+    #                 .put_text("o diretório raiz navegando para o")
+    #                 .put_text("diretório desejado e executando o comando")
+    #                 .put_text("")
+    #                 .put_text("tko config --root .")
+    #                 .put_text("")
+    #                 .warning()
+    #             )
+
+    #     self.fman.add_input(
+    #         Floating()
+    #         .put_text("")
+    #         .put_text("Você deseja utilizar o diretório")
+    #         .put_text("atual como diretório raiz do tko?")
+    #         .put_text("")
+    #         .put_text(os.getcwd())
+    #         .put_text("")
+    #         .put_text("como raiz para o repositório de " + self.rep_alias + "?")
+    #         .put_text("")
+    #         .put_text("Selecione e tecle Enter")
+    #         .put_text("")
+    #         .set_options(["yes", "no"])
+    #         .answer(chama)
+    #     )
+
+    def set_language(self, only_if_empty=True):
+        if only_if_empty and self.rep.get_lang() != "":
+            return
+
+        def back(value):
+            self.rep.set_lang(value)
+            self.rep.save_data_to_json()
+            self.fman.add_input(
+                Floating()
+                .put_text("")
+                .put_text("Linguagem alterada para " + value)
+                .put_text("")
+                .warning()
+            )
+
+        self.fman.add_input(
+            Floating()
+            .put_text("")
+            .put_text("Escolha a extensão default para os rascunhos")
+            .put_text("")
+            .put_text("Selecione e tecle Enter.")
+            .put_text("")
+            .set_options(languages_avaliable)
+            .answer(back)
+        )
+
 
 
 
@@ -5729,35 +6001,7 @@ class CDiffMode(enum.Enum):
     running = 2
     finished = 3
 
-class DActions:
-    sair   = "  Sair"
-    editar = "Editar"
-    testar = "Ativar"
-    rodar  = " Rodar"
-    principal = "Principal"
-    fixar  = " Fixar"
-    tempo = "Tempo"
-    outros = "Outros"
-
-class DKeys:
-    backspace1 = 127
-    left = "a"
-    up = "w"
-    right = "d"
-    down = "s"
-    principal = "p"
-    diff = "m"
-    rodar = "r"
-    testar = "\n"
-    # testar2 = "\n"
-    sair   = "q"
-    editar = "e"
-    travar = "f"
-    tempo  = "t"
-    outros = "o"
-    border = "B"
-
-class CDiff:
+class Diff:
     def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
         self.param = param
         self.results: List[Tuple[ExecutionResult, int]] = []
@@ -5975,7 +6219,7 @@ class CDiff:
         running_color = "W" if not self.colors else "R"
 
         # building activity
-        activity = Sentence().add(self.style.border_round(activity_color, self.get_folder()))
+        activity = Sentence().add(self.style.border(activity_color, self.get_folder()))
 
         # building solvers
         solvers = Sentence()
@@ -5985,15 +6229,15 @@ class CDiff:
             color = solver_color
             if i == self.task.main_index:
                 color = "G"
-            solvers.add(self.style.border_round(color, solver))
+            solvers.add(self.style.border(color, solver))
         
         # replacing with count if running
         done = len(self.results)
         full = len(self.wdir.get_unit_list())
-        count_missing = Sentence().add(self.style.border_round(running_color, f"({done}/{full})"))
+        count_missing = Sentence().add(self.style.border(running_color, f"({done}/{full})"))
         if self.mode == CDiffMode.running:
             if  self.locked_index:
-                solvers = Sentence().add(self.style.border_round("R", "Executando atividade travada"))
+                solvers = Sentence().add(self.style.border("R", "Executando atividade travada"))
             else:
                 solvers = count_missing
 
@@ -6050,11 +6294,11 @@ class CDiff:
         value = self.get_focused_unit()
         info = Sentence()
         if self.wdir.get_solver().compile_error:
-            info = self.style.border_round("R", "Erro de compilação")
+            info = self.style.border("R", "Erro de compilação")
         elif value is not None and not self.is_all_right() and not self.mode == CDiffMode.intro:
             info = value.str(pad = False)
             if self.locked_index:
-                info = self.style.border_round(focused_unit_color, info.get_text())
+                info = self.style.border(focused_unit_color, info.get_text())
         frame.write(0, 0, Sentence().add(info).center(frame.get_dx()))
 
     def draw_top_bar(self):
@@ -6074,36 +6318,34 @@ class CDiff:
 
     def make_bottom_line(self) -> List[Sentence]:
         cmds: List[Sentence] = []
-        if Flags.others.is_true():
-            cmds.append(self.style.border_round("M", f"{DActions.rodar}[{DKeys.rodar}]"))
+        if Flags.hud.is_true():
+            cmds.append(self.style.border("M", f"{DiffActions.rodar} [{DiffKeys.rodar}]"))
             # diff
-            text = f"VER━╾h[{DKeys.diff}]" if self.settings.app._diff_mode == "side" else f"v╼━HOR[{DKeys.diff}]"
-            cmds.append(self.style.border_round("M", text))
+            text = f"VER╾hor[{DiffKeys.diff}]" if self.settings.app._diff_mode == "side" else f"ver╼HOR[{DiffKeys.diff}]"
+            cmds.append(self.style.border("M", text))
         
-        cmds.append(self.style.border_round("C", f"{DActions.sair}[{DKeys.sair}]"))
+        cmds.append(self.style.border("C", f" {DiffActions.sair}  [{DiffKeys.sair}]"))
         if self.opener is not None:
-            cmds.append(self.style.border_round("C", f"{DActions.editar}[{DKeys.editar}]"))
-        cmds.append(self.style.border_round("G", f"{DActions.testar}[↲]"))
+            cmds.append(self.style.border("C", f"{DiffActions.editar} [{DiffKeys.editar}]"))
+        cmds.append(self.style.border("G", f"{DiffActions.ativar} [↲]"))
         
-        color = "G" if Flags.others.is_true() else "Y"
-        cmds.append(self.style.border_sharp(color, f"{DActions.outros}[{DKeys.outros}]"))
-        if Flags.others.is_true():
-            # travar
-
+        color = "G" if Flags.hud.is_true() else "Y"
+        symbol = symbols.success if Flags.hud.is_true() else symbols.failure
+        cmds.append(self.style.border(color, f" {symbol.text} {DiffActions.hud} [{DiffKeys.hud}]"))
+        if Flags.hud.is_true():
             value = str(self.settings.app._timeout)
             if value == "0":
                 value = "∞"
             cmds.append(
                 Sentence()
                     .add(self.style.roundL("M"))
-                    .add(RToken("M", f"{DActions.tempo}"))
-                    .add(RToken("M", "{}".format(value)))
-                    .add(RToken("M", f"[{DKeys.tempo}]"))
+                    .add(RToken("M", "{} {}[{}]".format(DiffActions.tempo, value, DiffKeys.tempo)))
                     .add(self.style.roundR("M"))
             )
-            travar = f"{DActions.fixar}[{DKeys.travar}]"
             color = "G" if self.locked_index else "M"
-            cmds.append(self.style.border_sharp(color, travar))
+            symbol = symbols.success if self.locked_index else symbols.failure
+            travar = f"{symbol.text} {DiffActions.fixar}[{DiffKeys.travar}]"
+            cmds.append(self.style.border(color, travar))
 
 
         return cmds
@@ -6149,9 +6391,9 @@ class CDiff:
             received = self.wdir.get_solver().error_msg
             line_list = [Sentence().add(line) for line in received.split("\n")]
         elif self.param.is_up_down:
-            line_list = Diff.mount_up_down_diff(unit, curses=True)
+            line_list = DiffBuilder.mount_up_down_diff(unit, curses=True)
         else:
-            line_list = Diff.mount_side_by_side_diff(unit, curses=True)
+            line_list = DiffBuilder.mount_side_by_side_diff(unit, curses=True)
 
         self.length = max(1, len(line_list))
 
@@ -6281,7 +6523,7 @@ class CDiff:
         if self.mode == CDiffMode.intro:
             self.mode = CDiffMode.select
         if self.locked_index:
-            self.fman.add_input(Floating("v>").warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(DKeys.travar)))
+            self.fman.add_input(Floating("v>").warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(DiffKeys.travar)))
             return
         if not self.wdir.get_solver().compile_error:
             self.focused_index = max(0, self.focused_index - 1)
@@ -6293,7 +6535,7 @@ class CDiff:
             self.focused_index = 0
             return
         if self.locked_index:
-            self.fman.add_input(Floating("v>").warning().put_text("→\nAtividade travada\nAperte {} para destravar".format(DKeys.travar)))
+            self.fman.add_input(Floating("v>").warning().put_text("→\nAtividade travada\nAperte {} para destravar".format(DiffKeys.travar)))
             return
         if not self.wdir.get_solver().compile_error:
             self.focused_index = min(len(self.wdir.get_unit_list()) - 1, self.focused_index + 1)
@@ -6331,7 +6573,7 @@ class CDiff:
             self.fman.add_input(
                 Floating("v>").warning()
                 .put_text("Atividade travada")
-                .put_sentence(Sentence("Aperte ").addf("g", DKeys.travar).add(" para destravar"))
+                .put_sentence(Sentence("Aperte ").addf("g", DiffKeys.travar).add(" para destravar"))
                 .put_sentence(Sentence("Use ").addf("g", "Enter").add(" para rodar os testes"))
             )
 
@@ -6354,36 +6596,36 @@ class CDiff:
 
     def process_key(self, key):
         key_esc = 27
-        if key == ord('q') or key == key_esc or key == DKeys.backspace1:
+        if key == ord('q') or key == key_esc or key == DiffKeys.backspace1:
             self.set_exit()
-        elif key == curses.KEY_LEFT or key == ord(DKeys.left):
+        elif key == curses.KEY_LEFT or key == ord(DiffKeys.left):
             self.go_left()
-        elif key == curses.KEY_RIGHT or key == ord(DKeys.right):
+        elif key == curses.KEY_RIGHT or key == ord(DiffKeys.right):
             self.go_right()
-        elif key == curses.KEY_DOWN or key == ord(DKeys.down):
+        elif key == curses.KEY_DOWN or key == ord(DiffKeys.down):
             self.go_down()
-        elif key == curses.KEY_UP or key == ord(DKeys.up):
+        elif key == curses.KEY_UP or key == ord(DiffKeys.up):
             self.go_up()
-        elif key == ord(DKeys.diff):
+        elif key == ord(DiffKeys.diff):
             self.param.is_up_down = not self.param.is_up_down
             self.save_settings()
             # self.init = 0
-        elif key == ord(DKeys.principal):
+        elif key == ord(DiffKeys.principal):
             self.change_main()
-        elif key == ord(DKeys.rodar):
+        elif key == ord(DiffKeys.rodar):
             return self.run_exec_mode()
-        elif key == ord(DKeys.testar):
+        elif key == ord(DiffKeys.testar):
             self.run_test_mode()
-        elif key == ord(DKeys.travar):
+        elif key == ord(DiffKeys.travar):
             self.lock_unit()
-        elif key == ord(DKeys.editar):
+        elif key == ord(DiffKeys.editar):
             if self.opener is not None:
                 self.opener.open_code(open_dir=True)
-        elif key == ord(DKeys.tempo):
+        elif key == ord(DiffKeys.tempo):
             self.change_limit()
-        elif key == ord(DKeys.outros):
-            Flags.others.toggle()
-        elif key == ord(DKeys.border):
+        elif key == ord(DiffKeys.hud):
+            Flags.hud.toggle()
+        elif key == ord(DiffKeys.border):
             self.settings.app.toggle_borders()
         elif key != -1 and key != curses.KEY_RESIZE:
             self.send_char_not_found(key)
@@ -6536,10 +6778,10 @@ class Run:
             # printing only the first wrong case
             wrong = [unit for unit in self.wdir.get_unit_list() if unit.result != ExecutionResult.SUCCESS][0]
             if self.param.is_up_down:
-                for line in Diff.mount_up_down_diff(wrong):
+                for line in DiffBuilder.mount_up_down_diff(wrong):
                     term_print(line)
             else:
-                for line in Diff.mount_side_by_side_diff(wrong):
+                for line in DiffBuilder.mount_side_by_side_diff(wrong):
                     term_print(line)
             return
 
@@ -6547,10 +6789,10 @@ class Run:
             for unit in self.wdir.get_unit_list():
                 if unit.result != ExecutionResult.SUCCESS:
                     if self.param.is_up_down:
-                        for line in Diff.mount_up_down_diff(unit):
+                        for line in DiffBuilder.mount_up_down_diff(unit):
                             term_print(line)
                     else:
-                        for line in Diff.mount_side_by_side_diff(unit):
+                        for line in DiffBuilder.mount_side_by_side_diff(unit):
                             term_print(line)
 
     def build_wdir(self):
@@ -6599,7 +6841,7 @@ class Run:
             return
         
         if self.__curses_mode:
-            cdiff = CDiff(self.wdir, self.param, self.__success_mode)
+            cdiff = Diff(self.wdir, self.param, self.__success_mode)
             if self.__first_run:
                 cdiff.set_first_run()
             if self.__task is not None:
@@ -7035,46 +7277,6 @@ class DownProblem:
             print("\nVocê pode escolher a extensão padrão com o comando\n$ tko config -l <extension>")
 
 
-class Actions:
-    ler_online = "Github"
-    sair = "Sair"
-    ajuda = "Ajuda"
-    baixar = "Baixar"
-    ativar = "Ativar"
-    navegar = "←↓→"
-    editar = "Editar"
-    marcar = "Marcar"
-    desmarcar = "Desmarcar"
-    colapsar = "Colapsar"
-    pesquisar = "Buscar"
-
-class Key:
-    left = "a"
-    right = "d"
-    down = "s"
-    up = "w"
-
-    down_task = "b"
-    select_task = "\n"
-    ajuda = "h"
-    expand = ">"
-    expand2 = "."
-    collapse = "<"
-    collapse2 = ","
-    inc_grade = "+"
-    inc_grade2 = "="
-    dec_grade = "-"
-    dec_grade2 = "_"
-    set_root_dir = "D"
-    set_lang = "L"
-    github_open = "g"
-    quit = "q"
-    edit= "e"
-    colors = "C"
-    borders = "B"
-    pesquisar = "/"
-    graph = "G"
-
 
 class Gui:
 
@@ -7086,33 +7288,46 @@ class Gui:
         self.flagsman = flagsman
         self.fman = fman
         self.search = search
-        self.gen_graph: bool = False
-        self.style = Border(Settings().app)
-        self.pcolor = Colors()
+        self.settings = Settings()
+        self.style: Border = Border(self.settings.app)
+        self.config = Config(self.rep, self.flagsman, self.fman, self.settings)
+        self.colors = self.settings.colors
 
         self.app = Settings().app
-
-        self.help_basic: List[Sentence] = [
-            Sentence() + RToken("Y", f"{Actions.pesquisar}[{Key.pesquisar}]"),
-            Sentence() + RToken("Y", f"{Actions.marcar} {Key.inc_grade}{Key.dec_grade}"),
-        ]
-
-        self.help_fixed: List[Sentence] = [
-            Sentence() + RToken("C", f"  {Actions.sair}[{Key.quit}]"),
-            Sentence() + RToken("C", f"{Actions.editar}[{Key.edit}]"),
-            Sentence() + RToken("G", f"{Actions.ativar}[↲]"),
-        ]
-        self.help_others_before: List[Sentence] = [
-            Sentence() + RToken("Y", f" {Actions.ajuda}[{Key.ajuda}]"),
-            Sentence() + RToken("Y", f"{Actions.ler_online}[{Key.github_open}]"),
-        ]
-        self.help_others_after: List[Sentence] = [
-            Sentence() + RToken("Y", f"{Actions.baixar}[{Key.down_task}]"),
-            Sentence() + RToken("Y", f"{Actions.navegar}[wasd]")
-        ]
-
         self.wrap_size = Sentence(" ").join(self.build_bottom_array()).len()
 
+    def get_help_others_after(self):
+        color = "Y" if self.tree.in_focus else "W"
+        help_others_after: List[Sentence] = [
+            Sentence() + RToken(color, f"{GuiActions.baixar} [{GuiKeys.down_task}]"),
+            Sentence() + RToken("Y", f"{GuiActions.navegar} [wasd]")
+        ]
+        return help_others_after
+
+    def get_help_basic(self):
+        color = "Y" if self.tree.in_focus else "W"
+        help_basic: List[Sentence] = [
+            Sentence() + RToken(color, f"{GuiActions.pesquisar}[{GuiKeys.pesquisar}]"),
+            Sentence() + RToken(color, f"{GuiActions.marcar} {GuiKeys.inc_grade}{GuiKeys.dec_grade}"),
+        ]
+        return help_basic
+
+    def get_help_fixed(self):
+        color = "C" if self.tree.in_focus else "W"
+        help_fixed: List[Sentence] = [
+            Sentence() + RToken("C", f" {GuiActions.sair}  [{GuiKeys.key_quit}]"),
+            Sentence() + RToken(color, f"{GuiActions.editar} [{GuiKeys.edit}]"),
+            Sentence() + RToken("G", f"{GuiActions.ativar} [↲]"),
+        ]
+        return help_fixed
+
+    def get_help_others_before(self):
+        color = "Y" if self.tree.in_focus else "W"
+        help_others_before: List[Sentence] = [
+            Sentence() + RToken("Y", f" {GuiActions.ajuda} [{GuiKeys.key_help}]"),
+            Sentence() + RToken(color, f"{GuiActions.github} [{GuiKeys.github_open}]"),
+        ]
+        return help_others_before
 
     @staticmethod
     def disable_on_resize():
@@ -7126,36 +7341,45 @@ class Gui:
 
 
     def show_main_bar(self, frame: Frame):
-        dy, dx = frame.get_inner()
         top = Sentence()
-        if self.two_column_mode() and Flags.others.is_true(): 
+        if self.two_column_mode() and Flags.hud.is_true() and not Flags.config.is_true():
             top.add(self.style.get_flag_sentence(Flags.config)).add(" ")
 
         alias_color = "R"
-        top.add(self.style.border_sharp(alias_color, self.rep_alias.upper()))
-        if Flags.others.is_true():
+        top.add(self.style.border(alias_color, self.rep_alias.upper()))
+        if Flags.hud.is_true():
             color = "W" if Flags.admin.is_true() else "K"
-            top.add(self.style.border_sharp(color, "ADMIN"))
-        top.add(self.style.border_sharp("G", self.rep.get_lang().upper()))
+            top.add(self.style.border(color, "ADMIN"))
+        top.add(self.style.border("G", self.rep.get_lang().upper()))
 
-        if self.two_column_mode() and Flags.others.is_true(): 
+        if self.two_column_mode() and Flags.hud.is_true() and not Flags.config.is_true():
             top.add(" ").add(self.style.get_flag_sentence(Flags.skills))
-
-        frame.set_header(top, "^")
+        half = top.len() // 2
+        x = frame.get_x()
+        dy, dx = Fmt.get_size()
+        full = Sentence().add("─" * ((dx//2) - x - 2 - half)).add(top)
+        frame.set_header(full, "<")
         
-        if self.two_column_mode():
+        if self.two_column_mode() and not Flags.config.is_true():
             elems = self.build_bottom_array()
             line_up = Sentence(" ").join(elems[0 : 2] + elems[-2:])
-            frame.set_footer(line_up, "")
+            half = line_up.len() // 2
+            _, adx = Fmt.get_size()
+            if adx % 2 == 1:
+                adx += 1 
+            x = frame.get_x()
+            full = Sentence().add("─" * ((adx//2) - x - 2 - half)).add(line_up)
+            frame.set_footer(full, "<")
         frame.draw()
 
+        dy, dx = frame.get_inner()
         for y, sentence in enumerate(self.tree.get_senteces(dy)):
             if sentence.len() > dx:
                 sentence.trim_end(dx - 3)
                 sentence.addf("r", "...")
             frame.write(y, 0, sentence)
 
-    def show_inventary_bar(self, frame_xp):
+    def show_skills_bar(self, frame_xp):
         dy, dx = frame_xp.get_inner()
         xp = XP(self.game)
         total_perc = int(
@@ -7166,8 +7390,8 @@ class Gui:
         else:
             text = f" XPTotal:{xp.get_xp_total_obtained()}"
 
-        done = self.pcolor.main_bar_done + "/"
-        todo = self.pcolor.main_bar_todo + "/"
+        done = self.colors.main_bar_done + "/"
+        todo = self.colors.main_bar_todo + "/"
         total_bar = self.style.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Sentence().addf("/", "Skills"), "^", "{", "}")
         frame_xp.set_footer(Sentence().add(" ").add(self.app._rootdir).add(" "), "^")
@@ -7181,8 +7405,8 @@ class Gui:
             else:
                 text = f"{skill}:{obt[skill]}/{value}"
             perc = obt[skill] / value
-            done = self.pcolor.progress_skill_done + "/"
-            todo = self.pcolor.progress_skill_todo + "/"
+            done = self.colors.progress_skill_done + "/"
+            todo = self.colors.progress_skill_todo + "/"
             skill_bar = self.style.build_bar(text, perc, dx - 2, done, todo)
             elements.append(skill_bar)
             
@@ -7198,34 +7422,34 @@ class Gui:
     def show_config_bar(self, frame: Frame):
         frame.set_header(Sentence().addf("/", "Config"), "^", "{", "}")
         frame.draw()
-
-        elements: List[Sentence] = []
-        pad = 11
-        for flag in self.flagsman.left:
-            elements.append(self.style.get_flag_sentence(flag, pad))
-
-        bordas = Flag().name("Bordas").char("B").values(["1" if self.app._borders else "0"]).text("Ativa ou desativa as bordas").bool()
-        elements.append(self.style.get_flag_sentence(bordas, pad))
-        grafo = Flag().name("Grafo").char("G").values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
-        elements.append(self.style.get_flag_sentence(grafo, pad))
-
-
-        color = "C"
-
-        elements.append(self.style.border_round(color, "DirDestino [D]"))
-        elements.append(self.style.border_round(color, "Linguagem  [L]"))
-
+        elements = self.config.get_elements()
         dy, dx = frame.get_inner()
-        line_breaks = dy - len(elements)
-        for i, elem in enumerate(elements):
-            frame.print(0, elem)
-            if line_breaks > 0:
-                line_breaks -= 1
-                frame.print(0, Sentence())
+        y = frame.get_y()
+        lines, cols = Fmt.get_size()
+        
+        index = 0
+        delta = 0
+        if len(elements) > dy and self.config.index > dy - 2:
+            delta = self.config.index - dy + 2
+        elements = elements[delta:]
+        target = self.config.index - delta
+
+        while index < len(elements):
+            item = elements[index]
+            frame.print(0, item.sentence)
+            if index == target and self.config.enabled:
+                text = item.flag.get_description()
+                focus = self.colors.focused_item
+                Fmt.write(y + index + 1, cols - dx - len(text) - 4, Sentence().addf(focus, f" {text} ").add(self.style.sharpR(focus)))
+            index += 1
+            # if line_breaks > 0:
+            #     line_breaks -= 1
+            #     frame.print(0, Sentence())
+            #     delta += 1
 
     def two_column_mode(self):
         _, cols = Fmt.get_size()
-        return cols < self.wrap_size + 2 and Flags.others.is_true()
+        return cols < self.wrap_size + 2 and Flags.hud.is_true()
 
     def build_list_sentence(self, items: List[Sentence]) -> List[Sentence]:
         out: List[Sentence] = []
@@ -7244,13 +7468,12 @@ class Gui:
 
     def build_bottom_array(self):
         array: List[Sentence] = []
-        array += self.help_others_before
-        array += self.help_fixed
-        color = "G" if Flags.others.is_true() else "Y"
-
-
-        array.append(Sentence() + RToken(color, "!Outros[o]"))
-        array += self.help_others_after
+        array += self.get_help_others_before()
+        array += self.get_help_fixed()
+        color = "G" if Flags.hud.is_true() else "Y"
+        symbol = symbols.success if Flags.hud.is_true() else symbols.failure
+        array.append(Sentence() + RToken(color, f" {symbol.text} {GuiActions.hud} [{GuiKeys.hud}]"))
+        array += self.get_help_others_after()
 
         return self.build_list_sentence(array)
 
@@ -7261,7 +7484,7 @@ class Gui:
             line_down = Sentence(" ").join(elems[2:-2])
             Fmt.write(lines - 1, 0, line_down.center(cols))
         else:
-            if Flags.others.is_true():
+            if Flags.hud.is_true():
                 line_all = Sentence(" ").join(elems)
                 Fmt.write(lines - 1, 0, line_all.center(cols))
             else:
@@ -7277,19 +7500,19 @@ class Gui:
             text = text.ljust(size)
         else:
             text, percent = self.build_xp_bar()
-            done = self.pcolor.main_bar_done
-            todo = self.pcolor.main_bar_todo
+            done = self.colors.main_bar_done
+            todo = self.colors.main_bar_todo
             text = text.center(size)
         xpbar = self.style.build_bar(text, percent, len(text), done, todo)
         return xpbar
 
     def show_top_bar(self, frame: Frame):
-        help = self.build_list_sentence(self.help_basic)
+        help = self.build_list_sentence(self.get_help_basic())
         pesquisar = help[0]
         marcar = help[1]
         config = self.style.get_flag_sentence(Flags.config)
         skills = self.style.get_flag_sentence(Flags.skills)
-        others = Flags.others.is_true()
+        others = Flags.hud.is_true()
 
         pre: List[Sentence] = []
         pre.append(marcar)
@@ -7310,19 +7533,15 @@ class Gui:
         frame.write(0, 0, info.center(frame.get_dx()))
 
 
-        # frame.set_border_none()
-        # frame.set_border_rounded()
-        # frame.draw()
-
     def show_help_config(self):
         _help: Floating = Floating("v>").warning().set_ljust_text().set_header(" Configurações ")
         self.fman.add_input(_help)
-        _help.put_sentence(Sentence() + f"      Mínimo " + RToken("r", f"[{Flags.minimum.get_char()}]") + " - Mostrar os requisitos mínimos para completar a missão")
-        _help.put_sentence(Sentence() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_char()}]") + " - Mostrar quanto de experiência cada atividade fornece")
-        _help.put_sentence(Sentence() + f"  Percentual " + RToken("r", f"[{Flags.percent.get_char()}]") + " - Mostrar os valores em percentual")
+        _help.put_sentence(Sentence() + f"      Mínimo " + RToken("r", f"[{Flags.minimum.get_keycode()}]") + " - Mostrar os requisitos mínimos para completar a missão")
+        _help.put_sentence(Sentence() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_keycode()}]") + " - Mostrar quanto de experiência cada atividade fornece")
+        _help.put_sentence(Sentence() + f"  Percentual " + RToken("r", f"[{Flags.percent.get_keycode()}]") + " - Mostrar os valores em percentual")
         _help.put_sentence(Sentence() + f"  ModoAdmin " + RToken("r", f"Shift + [A]") + " - Liberar acesso a todas as missões" )
-        _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{Key.set_root_dir}]") + " - Mudar a pasta padrão de download do tko" )
-        _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"Shift + [{Key.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
+        _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{GuiKeys.set_root_dir}]") + " - Mudar a pasta padrão de download do tko" )
+        _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"Shift + [{GuiKeys.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
 
 
     def show_help(self):
@@ -7333,17 +7552,17 @@ class Gui:
 
         _help.set_header_sentence(Sentence().add(" Ajuda "))
         # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence("    Ajuda ").addf("r", Key.ajuda).add("  Abre essa tela de ajuda")
+        _help.put_sentence(Sentence("    Ajuda ").addf("r", GuiKeys.key_help).add("  Abre essa tela de ajuda")
         )
 
         _help.put_sentence(Sentence("  ").addf("r", "Shift + B")
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
         _help.put_sentence(Sentence() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
-        _help.put_sentence(Sentence() + f"{Actions.ler_online} " + RToken("r", f"{Key.github_open}") + "  Abre tarefa em uma aba do browser")
-        _help.put_sentence(Sentence() + f"   {Actions.baixar} " + RToken("r", f"{Key.down_task}") + "  Baixa tarefa de código para seu dispositivo")
-        _help.put_sentence(Sentence() + f"   {Actions.editar} " + RToken("r", f"{Key.edit}") + "  Abre os arquivos no editor de código")
-        _help.put_sentence(Sentence() + f"   {Actions.ativar} " + RToken("r", "↲") + "  Interage com o elemento")
-        _help.put_sentence(Sentence() + f"   {Actions.marcar} " + RToken("r", f"{Key.inc_grade}") + RToken("r", f"{Key.dec_grade}") + " Muda a pontuação da tarefa")
+        _help.put_sentence(Sentence() + f"{GuiActions.github} " + RToken("r", f"{GuiKeys.github_open}") + "  Abre tarefa em uma aba do browser")
+        _help.put_sentence(Sentence() + f"   {GuiActions.baixar} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
+        _help.put_sentence(Sentence() + f"   {GuiActions.editar} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
+        _help.put_sentence(Sentence() + f"   {GuiActions.ativar} " + RToken("r", "↲") + "  Interage com o elemento")
+        _help.put_sentence(Sentence() + f"   {GuiActions.marcar} " + RToken("r", f"{GuiKeys.inc_grade}") + RToken("r", f"{GuiKeys.dec_grade}") + " Muda a pontuação da tarefa")
         _help.put_sentence(Sentence())
         _help.put_sentence(Sentence() + "Você pode mudar o editor padrão com o comando")
         _help.put_sentence(Sentence() + RToken("g", "             tko config --editor <comando>"))
@@ -7386,6 +7605,7 @@ class Gui:
     def show_items(self):
         border_color = "r" if Flags.admin.is_true() else ""
         Fmt.clear()
+        self.tree.set_focus(not self.config.enabled)
         self.tree.reload_sentences()
         lines, cols = Fmt.get_size()
         main_sx = cols  # tamanho em x livre
@@ -7396,17 +7616,16 @@ class Gui:
         bottom_dy = 1 # quantas linhas o fundo usa
         mid_y = top_dy # onde o meio começa
         mid_sy = main_sy - top_dy - bottom_dy # tamanho do meio
-
+        left_size = 25
         skills_sx = 0
+        flags_sx = 0
         if Flags.skills.is_true():
-            skills_sx = max(20, main_sx // 4)
+            skills_sx = left_size #max(20, main_sx // 4)
+        elif Flags.config.is_true():
+            flags_sx = left_size
         else:
             self.show_opening()
-
-        flags_sx = 0
-        if Flags.config.is_true():
-            flags_sx = 18            
-
+        
         task_sx = main_sx - flags_sx - skills_sx
 
         frame_top = Frame(top_y, 0).set_size(top_dy + 2, cols)
@@ -7415,16 +7634,17 @@ class Gui:
         # frame_bottom = Frame(lines - bottom_dy - 1, -1).set_size(bottom_dy + 2, cols + 2)
         self.show_bottom_bar()
         if task_sx > 5: 
-            frame_main = Frame(mid_y, flags_sx).set_size(mid_sy, task_sx).set_border_color(border_color)
+            frame_main = Frame(mid_y, 0).set_size(mid_sy, task_sx).set_border_color(border_color)
             self.show_main_bar(frame_main)
 
         if Flags.config.is_true():
-            frame_flags = Frame(mid_y, 0).set_size(mid_sy, flags_sx).set_border_color(border_color)
+            frame_flags = Frame(mid_y, cols - flags_sx).set_size(mid_sy, flags_sx).set_border_color(border_color)
             self.show_config_bar(frame_flags)
+            Fmt.write(1, cols - left_size - 3, Sentence().addf("r", " ↔TAB "))
 
         if Flags.skills.is_true():
             frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)
-            self.show_inventary_bar(frame_skills)
+            self.show_skills_bar(frame_skills)
 
 
 
@@ -7506,116 +7726,7 @@ class PlayActions:
 
     def gen_graph_path(self) -> str:
         return os.path.join(self.app._rootdir, self.rep_alias, "graph.png")
-
-
-    def graph_toggle(self):
-        self.gui.gen_graph = not self.gui.gen_graph
         
-    def set_rootdir(self, only_if_empty=True):
-        if only_if_empty and self.app._rootdir != "":
-            return
-
-        def chama(value):
-            if value == "yes":
-                self.app._rootdir = os.path.abspath(os.getcwd())
-                self.settings.save_settings()
-                self.fman.add_input(
-                    Floating()
-                    .put_text("")
-                    .put_text("Diretório raiz definido como ")
-                    .put_text("")
-                    .put_text("  " + os.getcwd())
-                    .put_text("")
-                    .put_text("Você pode também pode alterar")
-                    .put_text("o diretório raiz navegando para o")
-                    .put_text("diretório desejado e executando o comando")
-                    .put_text("")
-                    .put_text("  tko config --root .")
-                    .put_text("")
-                    .warning()
-                )
-            else:
-                self.fman.add_input(
-                    Floating()
-                    .put_text("")
-                    .put_text("Navegue para o diretório desejado e tente novamente.")
-                    .put_text("")
-                    .put_text("Você pode também pode alterar")
-                    .put_text("o diretório raiz navegando para o")
-                    .put_text("diretório desejado e executando o comando")
-                    .put_text("")
-                    .put_text("tko config --root .")
-                    .put_text("")
-                    .warning()
-                )
-
-        self.fman.add_input(
-            Floating()
-            .put_text("")
-            .put_text("Você deseja utilizar o diretório")
-            .put_text("atual como diretório raiz do tko?")
-            .put_text("")
-            .put_text(os.getcwd())
-            .put_text("")
-            .put_text("como raiz para o repositório de " + self.rep_alias + "?")
-            .put_text("")
-            .put_text("Selecione e tecle Enter")
-            .put_text("")
-            .set_options(["yes", "no"])
-            .answer(chama)
-        )
-
-    def set_language(self, only_if_empty=True):
-        if only_if_empty and self.rep.get_lang() != "":
-            return
-
-        def back(value):
-            self.rep.set_lang(value)
-            self.rep.save_data_to_json()
-            self.fman.add_input(
-                Floating()
-                .put_text("")
-                .put_text("Linguagem alterada para " + value)
-                .put_text("")
-                .warning()
-            )
-
-        self.fman.add_input(
-            Floating()
-            .put_text("")
-            .put_text("Escolha a extensão default para os rascunhos")
-            .put_text("")
-            .put_text("Selecione e tecle Enter.")
-            .put_text("")
-            .set_options(languages_avaliable)
-            .answer(back)
-        )
-
-    def check_root_and_lang(self):
-        if self.app._rootdir == "":
-            self.fman.add_input(
-                Floating()
-                .put_text("")
-                .put_text("O diretório de download padrão")
-                .put_text("do tko ainda não foi definido.")
-                .put_text("")
-                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + Key.set_root_dir, "g"))
-                .put_text("para configurá-lo.")
-                .put_text("")
-            )
-
-        if self.rep.get_lang() == "":
-            self.fman.add_input(
-                Floating()
-                .put_text("")
-                .put_text("A linguagem de download padrão")
-                .put_text("para os rascunhos ainda não foi definda.")
-                .put_text("")
-                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + Key.set_lang, "g"))
-                .put_text("para configurá-la.")
-                .put_text("")
-            )
-            return
 
     def open_link_without_stdout_stderr(self, link: str):
         outfile = tempfile.NamedTemporaryFile(delete=False)
@@ -7662,7 +7773,7 @@ class PlayActions:
                 self.opener.open_files([path])
                 self.graph_opened = True
         except FileNotFoundError as _:
-            self.gui.gen_graph = False
+            self.gui.config.gen_graph = False
             self.fman.add_input(Floating().error()
                                 .put_text("")
                                 .put_sentence(Sentence().add("Instale o ").addf("r", "graphviz").add(" para poder gerar os grafos"))
@@ -7670,15 +7781,8 @@ class PlayActions:
                                 )
 
     def down_task(self):
-        rootdir = self.app._rootdir
-        if rootdir == "":
-            self.check_root_and_lang()
-            return
-        lang = self.rep.get_lang()
-        if lang == "":
-            self.check_root_and_lang()
-            return
 
+        lang = self.rep.get_lang() 
         obj = self.tree.items[self.tree.index_selected].obj
         if isinstance(obj, Task) and obj.key in obj.title:
             task: Task = obj
@@ -7796,6 +7900,8 @@ class Play:
         self.opener = Opener(tree=self.tree, fman=self.fman, app=self.app, rep_data=rep_data, rep_alias=rep_alias)
         self.actions = PlayActions(fman=self.fman, rep=self.rep, rep_alias=self.rep_alias, tree=self.tree, game=self.game, opener=self.opener, gui=self.gui)
 
+
+
     def save_to_json(self):
         self.tree.save_on_rep()
         self.rep.set_flags(self.flagsman.get_data())
@@ -7813,92 +7919,94 @@ class Play:
     def toggle_config(self):
         if Flags.config.is_true():
             Flags.config.toggle()
+            self.gui.config.disable()
         else:
             Flags.config.toggle()
+            self.gui.config.enable()
+            if Flags.skills.is_true():
+                Flags.skills.toggle()
 
-    def make_callback(self) -> Dict[int, Any]:
-        calls: Dict[int, Callable[[],None]] = {}
+    def toggle_skills(self):
+        if Flags.skills.is_true():
+            Flags.skills.toggle()
+        else:
+            Flags.skills.toggle()
+            if Flags.config.is_true():
+                Flags.config.toggle()
+            
+    def process_tab(self):
+        if Flags.config.is_true():
+            self.gui.config.enable()
 
-        def add_int(_key: int, fn):
-            if _key in calls.keys():
-                raise ValueError(f"Chave duplicada {chr(_key)}")
-            calls[_key] = fn
+    def make_callback(self) -> InputManager:
+        cman = InputManager()
 
-        def add_str(str_key: str, fn):
-            if str_key != "":
-                add_int(ord(str_key), fn)
+        cman.add_int(curses.KEY_RESIZE, self.gui.disable_on_resize)
+        cman.add_str(GuiKeys.key_quit, self.send_quit_msg)
+        cman.add_int(InputManager.esc, self.send_quit_msg)
+        cman.add_int(curses.KEY_BACKSPACE, self.send_quit_msg)
 
-        add_int(curses.KEY_RESIZE, self.gui.disable_on_resize)
-        add_str(Key.quit, self.send_quit_msg)
-        add_int(27, self.send_quit_msg)
-        add_int(curses.KEY_BACKSPACE, self.send_quit_msg)
-
-
-        add_str(Key.up, self.tree.move_up)
-        add_int(curses.KEY_UP, self.tree.move_up)
-
-        add_str(Key.down, self.tree.move_down)
-        add_int(curses.KEY_DOWN, self.tree.move_down)
-
-        add_str(Key.left, self.tree.arrow_left)
-        add_int(curses.KEY_LEFT, self.tree.arrow_left)
-
-        add_str(Key.right, self.tree.arrow_right)
-        add_int(curses.KEY_RIGHT, self.tree.arrow_right)
-
-        add_str(Key.ajuda, self.gui.show_help)
-        add_str(Key.expand, self.tree.process_expand)
-        add_str(Key.expand2, self.tree.process_expand)
-        add_str(Key.collapse, self.tree.process_collapse)
-        add_str(Key.collapse2, self.tree.process_collapse)
-        add_str(Key.github_open, self.actions.open_link)
-        add_str(Key.set_lang, lambda: self.actions.set_language(False))
-        add_str(Key.set_root_dir, lambda: self.actions.set_rootdir(False))
-        add_str(Key.down_task, self.actions.down_task)
-        add_str(Key.select_task, self.actions.select_task)
-        add_str("t", lambda: self.fman.add_input(Floating().put_text("\n Use o Enter para testar uma questão\n").warning()))
-        add_str(Key.inc_grade, self.tree.inc_grade)
-        add_str(Key.inc_grade2, self.tree.inc_grade)
-        add_str(Key.dec_grade, self.tree.dec_grade)
-        add_str(Key.dec_grade2, self.tree.dec_grade)
-        add_str(Key.edit, lambda: self.opener.open_code(open_dir=True))
-        add_str(Key.colors, self.app.toggle_color)
-        add_str(Key.borders, self.app.toggle_borders)
-        add_str(Key.graph, self.actions.graph_toggle)
-
-        for value in range(1, 10):
-            add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
-        add_str("'", GradeFunctor(0, self.tree.set_grade))
-        add_str("0", GradeFunctor(10, self.tree.set_grade))
-
-        for flag in self.flagsman.left:
-            add_str(flag.get_char(), FlagFunctor(self.fman, flag))
+        if Flags.config.is_true() and self.gui.config.enabled:
+            cman.add_str(GuiKeys.up, self.gui.config.move_up)
+            cman.add_int(curses.KEY_UP, self.gui.config.move_up)
+            cman.add_str(GuiKeys.down, self.gui.config.move_down)
+            cman.add_int(curses.KEY_DOWN, self.gui.config.move_down)
+            cman.add_str(GuiKeys.activate, self.gui.config.activate_selected)
+            cman.add_int(InputManager.tab, self.gui.config.disable)
+    
+        else:
+            cman.add_str(GuiKeys.up, self.tree.move_up)
+            cman.add_int(curses.KEY_UP, self.tree.move_up)
+            cman.add_str(GuiKeys.down, self.tree.move_down)
+            cman.add_int(curses.KEY_DOWN, self.tree.move_down)
+            cman.add_str(GuiKeys.left, self.tree.arrow_left)
+            cman.add_int(curses.KEY_LEFT, self.tree.arrow_left)
+            cman.add_str(GuiKeys.right, self.tree.arrow_right)
+            cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
+            cman.add_str(GuiKeys.activate, self.actions.select_task)
+            cman.add_int(InputManager.tab, self.process_tab)
+            cman.add_str(GuiKeys.expand, self.tree.process_expand)
+            cman.add_str(GuiKeys.expand2, self.tree.process_expand)
+            cman.add_str(GuiKeys.collapse, self.tree.process_collapse)
+            cman.add_str(GuiKeys.collapse2, self.tree.process_collapse)
+            cman.add_str(GuiKeys.github_open, self.actions.open_link)
+            cman.add_str(GuiKeys.down_task, self.actions.down_task)
+            cman.add_str(GuiKeys.inc_grade, self.tree.inc_grade)
+            cman.add_str(GuiKeys.inc_grade2, self.tree.inc_grade)
+            cman.add_str(GuiKeys.dec_grade, self.tree.dec_grade)
+            cman.add_str(GuiKeys.dec_grade2, self.tree.dec_grade)
+            cman.add_str(GuiKeys.edit, lambda: self.opener.open_code(open_dir=True))
+            for value in range(1, 10):
+                cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
+            cman.add_str("'", GradeFunctor(0, self.tree.set_grade))
+            cman.add_str("0", GradeFunctor(10, self.tree.set_grade))
+        
+        cman.add_str(GuiKeys.key_help, self.gui.show_help)
+        
         for flag in self.flagsman.others:
-            add_str(flag.get_char(), FlagFunctor(self.fman, flag))
+            cman.add_str(flag.get_keycode(), FlagFunctor(self.fman, flag))
 
-        add_str(Flags.config.get_char(), self.toggle_config)
-        add_str(Flags.skills.get_char(), FlagFunctor(self.fman, Flags.skills))
-        add_str("/", self.search.toggle_search)
+        config_elements = self.gui.config.get_elements()
+        for element in config_elements:
+            key = element.flag.get_keycode()
+            fn = element.fn
+            cman.add_str(key, fn)
 
-        return calls
+        cman.add_str(Flags.config.get_keycode(), self.toggle_config)
+        cman.add_str(Flags.skills.get_keycode(), self.toggle_skills)
+        cman.add_str("/", self.search.toggle_search)
+
+        return cman
         
     def send_char_not_found(self, key):
         self.fman.add_input(
-            Floating("v>")
+            Floating("v")
                 .error()
-                .put_text("Tecla")
-                .put_text(f"char {chr(key)}")
-                .put_text(f"code {key}")
-                .put_text("não reconhecida")
-                .put_text("")
+                .put_text(f"Tecla char {chr(key)} code {key} não reconhecida")
         )
 
     def main(self, scr):
-        if hasattr(curses, "set_escdelay"):
-            curses.set_escdelay(25)
-        else:
-            os.environ.setdefault('ESCDELAY', '25')
-        # verify if curses has method set_escdelay
+        InputManager.fix_esc_delay()
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
@@ -7906,30 +8014,27 @@ class Play:
         while True:
             self.tree.update_tree(admin_mode=Flags.admin.is_true() or self.search.search_mode)
             self.fman.draw_warnings()
-            if self.gui.gen_graph:
+            if self.gui.config.gen_graph:
                 self.actions.generate_graph()
-            calls = self.make_callback()
+            cman = self.make_callback()
             self.gui.show_items()
 
             if self.fman.has_floating():
                 value: int = self.fman.get_input()
             else:
                 value = scr.getch()
-                if value == 195:
-                    value = scr.getch()
-                    if value == 167: #ç
-                        value = ord("c")
+                value = InputManager.fix_cedilha(scr, value)
 
             if self.exit:
                 break
 
             if self.search.search_mode:
                 self.search.process_search(value)
-            elif value in calls.keys():
-                callback = calls[value]()
+            elif cman.has_int_key(value):
+                callback = cman.exec_call(value)
                 if callback is not None:
                     return callback
-            elif value != -1 and value != 27 and value != 32:
+            elif value != -1 and value != InputManager.esc and value != 32:
                 self.send_char_not_found(value)
 
             self.tree.reload_sentences()
@@ -7937,22 +8042,22 @@ class Play:
             if self.first_loop:
                 self.first_loop = False
 
-    def check_lang_in_text_mode(self):
-        lang = self.rep.get_lang()
-        if lang == "":
-            options = languages_avaliable
-            print("\nLinguagem padrão ainda não foi definida.\n")
-            while True:
-                print("Escolha entre as opções a seguir ", end="")
-                print("[" + ", ".join(options) + "]", ":", end=" ")
-                lang = input()
-                if lang in options:
-                    break
-            self.rep.set_lang(lang)
+    # def check_lang_in_text_mode(self):
+    #     lang = self.rep.get_lang()
+    #     if lang == "":
+    #         options = languages_avaliable
+    #         print("\nLinguagem padrão ainda não foi definida.\n")
+    #         while True:
+    #             print("Escolha entre as opções a seguir ", end="")
+    #             print("[" + ", ".join(options) + "]", ":", end=" ")
+    #             lang = input()
+    #             if lang in options:
+    #                 break
+    #         self.rep.set_lang(lang)
 
     def play(self, graph_ext: str):
         self.graph_ext = graph_ext
-        self.check_lang_in_text_mode()
+        # self.check_lang_in_text_mode()
 
         while True:
             output = curses.wrapper(self.main)

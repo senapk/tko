@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-import os
 
 from tko.cmds.cmd_rep import CmdRep
 from tko.cmds.cmd_play import CmdPlay

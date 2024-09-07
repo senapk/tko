@@ -3,13 +3,15 @@ from typing import List, Tuple, Optional
 import os
 import enum
 
+from tko.play.keys import DiffActions, DiffKeys
+
 from ..run.basic import ExecutionResult
 from ..run.unit import Unit
 from ..run.param import Param
 from ..run.unit_runner import UnitRunner
-from ..run.diff import Diff
+from ..run.diff_builder import DiffBuilder
 from ..util.sentence import Sentence, Token, RToken
-
+from tko.util.symbols import symbols
 from .frame import Frame
 from .floating import Floating
 from .floating_manager import FloatingManager
@@ -34,35 +36,7 @@ class CDiffMode(enum.Enum):
     running = 2
     finished = 3
 
-class DActions:
-    sair   = "  Sair"
-    editar = "Editar"
-    testar = "Ativar"
-    rodar  = " Rodar"
-    principal = "Principal"
-    fixar  = " Fixar"
-    tempo = "Tempo"
-    outros = "Outros"
-
-class DKeys:
-    backspace1 = 127
-    left = "a"
-    up = "w"
-    right = "d"
-    down = "s"
-    principal = "p"
-    diff = "m"
-    rodar = "r"
-    testar = "\n"
-    # testar2 = "\n"
-    sair   = "q"
-    editar = "e"
-    travar = "f"
-    tempo  = "t"
-    outros = "o"
-    border = "B"
-
-class CDiff:
+class Diff:
     def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
         self.param = param
         self.results: List[Tuple[ExecutionResult, int]] = []
@@ -280,7 +254,7 @@ class CDiff:
         running_color = "W" if not self.colors else "R"
 
         # building activity
-        activity = Sentence().add(self.style.border_round(activity_color, self.get_folder()))
+        activity = Sentence().add(self.style.border(activity_color, self.get_folder()))
 
         # building solvers
         solvers = Sentence()
@@ -290,15 +264,15 @@ class CDiff:
             color = solver_color
             if i == self.task.main_index:
                 color = "G"
-            solvers.add(self.style.border_round(color, solver))
+            solvers.add(self.style.border(color, solver))
         
         # replacing with count if running
         done = len(self.results)
         full = len(self.wdir.get_unit_list())
-        count_missing = Sentence().add(self.style.border_round(running_color, f"({done}/{full})"))
+        count_missing = Sentence().add(self.style.border(running_color, f"({done}/{full})"))
         if self.mode == CDiffMode.running:
             if  self.locked_index:
-                solvers = Sentence().add(self.style.border_round("R", "Executando atividade travada"))
+                solvers = Sentence().add(self.style.border("R", "Executando atividade travada"))
             else:
                 solvers = count_missing
 
@@ -355,11 +329,11 @@ class CDiff:
         value = self.get_focused_unit()
         info = Sentence()
         if self.wdir.get_solver().compile_error:
-            info = self.style.border_round("R", "Erro de compilação")
+            info = self.style.border("R", "Erro de compilação")
         elif value is not None and not self.is_all_right() and not self.mode == CDiffMode.intro:
             info = value.str(pad = False)
             if self.locked_index:
-                info = self.style.border_round(focused_unit_color, info.get_text())
+                info = self.style.border(focused_unit_color, info.get_text())
         frame.write(0, 0, Sentence().add(info).center(frame.get_dx()))
 
     def draw_top_bar(self):
@@ -379,36 +353,34 @@ class CDiff:
 
     def make_bottom_line(self) -> List[Sentence]:
         cmds: List[Sentence] = []
-        if Flags.others.is_true():
-            cmds.append(self.style.border_round("M", f"{DActions.rodar}[{DKeys.rodar}]"))
+        if Flags.hud.is_true():
+            cmds.append(self.style.border("M", f"{DiffActions.rodar} [{DiffKeys.rodar}]"))
             # diff
-            text = f"VER━╾h[{DKeys.diff}]" if self.settings.app._diff_mode == "side" else f"v╼━HOR[{DKeys.diff}]"
-            cmds.append(self.style.border_round("M", text))
+            text = f"VER╾hor[{DiffKeys.diff}]" if self.settings.app._diff_mode == "side" else f"ver╼HOR[{DiffKeys.diff}]"
+            cmds.append(self.style.border("M", text))
         
-        cmds.append(self.style.border_round("C", f"{DActions.sair}[{DKeys.sair}]"))
+        cmds.append(self.style.border("C", f" {DiffActions.sair}  [{DiffKeys.sair}]"))
         if self.opener is not None:
-            cmds.append(self.style.border_round("C", f"{DActions.editar}[{DKeys.editar}]"))
-        cmds.append(self.style.border_round("G", f"{DActions.testar}[↲]"))
+            cmds.append(self.style.border("C", f"{DiffActions.editar} [{DiffKeys.editar}]"))
+        cmds.append(self.style.border("G", f"{DiffActions.ativar} [↲]"))
         
-        color = "G" if Flags.others.is_true() else "Y"
-        cmds.append(self.style.border_sharp(color, f"{DActions.outros}[{DKeys.outros}]"))
-        if Flags.others.is_true():
-            # travar
-
+        color = "G" if Flags.hud.is_true() else "Y"
+        symbol = symbols.success if Flags.hud.is_true() else symbols.failure
+        cmds.append(self.style.border(color, f" {symbol.text} {DiffActions.hud} [{DiffKeys.hud}]"))
+        if Flags.hud.is_true():
             value = str(self.settings.app._timeout)
             if value == "0":
                 value = "∞"
             cmds.append(
                 Sentence()
                     .add(self.style.roundL("M"))
-                    .add(RToken("M", f"{DActions.tempo}"))
-                    .add(RToken("M", "{}".format(value)))
-                    .add(RToken("M", f"[{DKeys.tempo}]"))
+                    .add(RToken("M", "{} {}[{}]".format(DiffActions.tempo, value, DiffKeys.tempo)))
                     .add(self.style.roundR("M"))
             )
-            travar = f"{DActions.fixar}[{DKeys.travar}]"
             color = "G" if self.locked_index else "M"
-            cmds.append(self.style.border_sharp(color, travar))
+            symbol = symbols.success if self.locked_index else symbols.failure
+            travar = f"{symbol.text} {DiffActions.fixar}[{DiffKeys.travar}]"
+            cmds.append(self.style.border(color, travar))
 
 
         return cmds
@@ -454,9 +426,9 @@ class CDiff:
             received = self.wdir.get_solver().error_msg
             line_list = [Sentence().add(line) for line in received.split("\n")]
         elif self.param.is_up_down:
-            line_list = Diff.mount_up_down_diff(unit, curses=True)
+            line_list = DiffBuilder.mount_up_down_diff(unit, curses=True)
         else:
-            line_list = Diff.mount_side_by_side_diff(unit, curses=True)
+            line_list = DiffBuilder.mount_side_by_side_diff(unit, curses=True)
 
         self.length = max(1, len(line_list))
 
@@ -586,7 +558,7 @@ class CDiff:
         if self.mode == CDiffMode.intro:
             self.mode = CDiffMode.select
         if self.locked_index:
-            self.fman.add_input(Floating("v>").warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(DKeys.travar)))
+            self.fman.add_input(Floating("v>").warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(DiffKeys.travar)))
             return
         if not self.wdir.get_solver().compile_error:
             self.focused_index = max(0, self.focused_index - 1)
@@ -598,7 +570,7 @@ class CDiff:
             self.focused_index = 0
             return
         if self.locked_index:
-            self.fman.add_input(Floating("v>").warning().put_text("→\nAtividade travada\nAperte {} para destravar".format(DKeys.travar)))
+            self.fman.add_input(Floating("v>").warning().put_text("→\nAtividade travada\nAperte {} para destravar".format(DiffKeys.travar)))
             return
         if not self.wdir.get_solver().compile_error:
             self.focused_index = min(len(self.wdir.get_unit_list()) - 1, self.focused_index + 1)
@@ -636,7 +608,7 @@ class CDiff:
             self.fman.add_input(
                 Floating("v>").warning()
                 .put_text("Atividade travada")
-                .put_sentence(Sentence("Aperte ").addf("g", DKeys.travar).add(" para destravar"))
+                .put_sentence(Sentence("Aperte ").addf("g", DiffKeys.travar).add(" para destravar"))
                 .put_sentence(Sentence("Use ").addf("g", "Enter").add(" para rodar os testes"))
             )
 
@@ -659,36 +631,36 @@ class CDiff:
 
     def process_key(self, key):
         key_esc = 27
-        if key == ord('q') or key == key_esc or key == DKeys.backspace1:
+        if key == ord('q') or key == key_esc or key == DiffKeys.backspace1:
             self.set_exit()
-        elif key == curses.KEY_LEFT or key == ord(DKeys.left):
+        elif key == curses.KEY_LEFT or key == ord(DiffKeys.left):
             self.go_left()
-        elif key == curses.KEY_RIGHT or key == ord(DKeys.right):
+        elif key == curses.KEY_RIGHT or key == ord(DiffKeys.right):
             self.go_right()
-        elif key == curses.KEY_DOWN or key == ord(DKeys.down):
+        elif key == curses.KEY_DOWN or key == ord(DiffKeys.down):
             self.go_down()
-        elif key == curses.KEY_UP or key == ord(DKeys.up):
+        elif key == curses.KEY_UP or key == ord(DiffKeys.up):
             self.go_up()
-        elif key == ord(DKeys.diff):
+        elif key == ord(DiffKeys.diff):
             self.param.is_up_down = not self.param.is_up_down
             self.save_settings()
             # self.init = 0
-        elif key == ord(DKeys.principal):
+        elif key == ord(DiffKeys.principal):
             self.change_main()
-        elif key == ord(DKeys.rodar):
+        elif key == ord(DiffKeys.rodar):
             return self.run_exec_mode()
-        elif key == ord(DKeys.testar):
+        elif key == ord(DiffKeys.testar):
             self.run_test_mode()
-        elif key == ord(DKeys.travar):
+        elif key == ord(DiffKeys.travar):
             self.lock_unit()
-        elif key == ord(DKeys.editar):
+        elif key == ord(DiffKeys.editar):
             if self.opener is not None:
                 self.opener.open_code(open_dir=True)
-        elif key == ord(DKeys.tempo):
+        elif key == ord(DiffKeys.tempo):
             self.change_limit()
-        elif key == ord(DKeys.outros):
-            Flags.others.toggle()
-        elif key == ord(DKeys.border):
+        elif key == ord(DiffKeys.hud):
+            Flags.hud.toggle()
+        elif key == ord(DiffKeys.border):
             self.settings.app.toggle_borders()
         elif key != -1 and key != curses.KEY_RESIZE:
             self.send_char_not_found(key)

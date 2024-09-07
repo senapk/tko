@@ -1,19 +1,21 @@
+from .keys import GuiKeys
 from ..game.game import Game
 from .opener import Opener
-from typing import List, Any, Dict, Callable, Tuple
+from typing import Any, Dict, Callable, Tuple
 from ..settings.settings import Settings
 from ..settings.app_settings import AppSettings
 from ..settings.rep_settings import languages_avaliable, RepData
 from ..util.sentence import Sentence
 from .fmt import Fmt
 from .search import Search
+from .input_manager import InputManager
 
 
 from .floating import Floating
 from .floating_manager import FloatingManager
 from .flags import Flag, Flags, FlagsMan
 from .tasktree import TaskTree
-from .gui import Gui, Key
+from .gui import Gui
 from .play_actions import PlayActions
 from .functors import FlagFunctor, GradeFunctor
 
@@ -55,6 +57,8 @@ class Play:
         self.opener = Opener(tree=self.tree, fman=self.fman, app=self.app, rep_data=rep_data, rep_alias=rep_alias)
         self.actions = PlayActions(fman=self.fman, rep=self.rep, rep_alias=self.rep_alias, tree=self.tree, game=self.game, opener=self.opener, gui=self.gui)
 
+
+
     def save_to_json(self):
         self.tree.save_on_rep()
         self.rep.set_flags(self.flagsman.get_data())
@@ -72,92 +76,94 @@ class Play:
     def toggle_config(self):
         if Flags.config.is_true():
             Flags.config.toggle()
+            self.gui.config.disable()
         else:
             Flags.config.toggle()
+            self.gui.config.enable()
+            if Flags.skills.is_true():
+                Flags.skills.toggle()
 
-    def make_callback(self) -> Dict[int, Any]:
-        calls: Dict[int, Callable[[],None]] = {}
+    def toggle_skills(self):
+        if Flags.skills.is_true():
+            Flags.skills.toggle()
+        else:
+            Flags.skills.toggle()
+            if Flags.config.is_true():
+                Flags.config.toggle()
+            
+    def process_tab(self):
+        if Flags.config.is_true():
+            self.gui.config.enable()
 
-        def add_int(_key: int, fn):
-            if _key in calls.keys():
-                raise ValueError(f"Chave duplicada {chr(_key)}")
-            calls[_key] = fn
+    def make_callback(self) -> InputManager:
+        cman = InputManager()
 
-        def add_str(str_key: str, fn):
-            if str_key != "":
-                add_int(ord(str_key), fn)
+        cman.add_int(curses.KEY_RESIZE, self.gui.disable_on_resize)
+        cman.add_str(GuiKeys.key_quit, self.send_quit_msg)
+        cman.add_int(InputManager.esc, self.send_quit_msg)
+        cman.add_int(curses.KEY_BACKSPACE, self.send_quit_msg)
 
-        add_int(curses.KEY_RESIZE, self.gui.disable_on_resize)
-        add_str(Key.quit, self.send_quit_msg)
-        add_int(27, self.send_quit_msg)
-        add_int(curses.KEY_BACKSPACE, self.send_quit_msg)
-
-
-        add_str(Key.up, self.tree.move_up)
-        add_int(curses.KEY_UP, self.tree.move_up)
-
-        add_str(Key.down, self.tree.move_down)
-        add_int(curses.KEY_DOWN, self.tree.move_down)
-
-        add_str(Key.left, self.tree.arrow_left)
-        add_int(curses.KEY_LEFT, self.tree.arrow_left)
-
-        add_str(Key.right, self.tree.arrow_right)
-        add_int(curses.KEY_RIGHT, self.tree.arrow_right)
-
-        add_str(Key.ajuda, self.gui.show_help)
-        add_str(Key.expand, self.tree.process_expand)
-        add_str(Key.expand2, self.tree.process_expand)
-        add_str(Key.collapse, self.tree.process_collapse)
-        add_str(Key.collapse2, self.tree.process_collapse)
-        add_str(Key.github_open, self.actions.open_link)
-        add_str(Key.set_lang, lambda: self.actions.set_language(False))
-        add_str(Key.set_root_dir, lambda: self.actions.set_rootdir(False))
-        add_str(Key.down_task, self.actions.down_task)
-        add_str(Key.select_task, self.actions.select_task)
-        add_str("t", lambda: self.fman.add_input(Floating().put_text("\n Use o Enter para testar uma questão\n").warning()))
-        add_str(Key.inc_grade, self.tree.inc_grade)
-        add_str(Key.inc_grade2, self.tree.inc_grade)
-        add_str(Key.dec_grade, self.tree.dec_grade)
-        add_str(Key.dec_grade2, self.tree.dec_grade)
-        add_str(Key.edit, lambda: self.opener.open_code(open_dir=True))
-        add_str(Key.colors, self.app.toggle_color)
-        add_str(Key.borders, self.app.toggle_borders)
-        add_str(Key.graph, self.actions.graph_toggle)
-
-        for value in range(1, 10):
-            add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
-        add_str("'", GradeFunctor(0, self.tree.set_grade))
-        add_str("0", GradeFunctor(10, self.tree.set_grade))
-
-        for flag in self.flagsman.left:
-            add_str(flag.get_char(), FlagFunctor(self.fman, flag))
+        if Flags.config.is_true() and self.gui.config.enabled:
+            cman.add_str(GuiKeys.up, self.gui.config.move_up)
+            cman.add_int(curses.KEY_UP, self.gui.config.move_up)
+            cman.add_str(GuiKeys.down, self.gui.config.move_down)
+            cman.add_int(curses.KEY_DOWN, self.gui.config.move_down)
+            cman.add_str(GuiKeys.activate, self.gui.config.activate_selected)
+            cman.add_int(InputManager.tab, self.gui.config.disable)
+    
+        else:
+            cman.add_str(GuiKeys.up, self.tree.move_up)
+            cman.add_int(curses.KEY_UP, self.tree.move_up)
+            cman.add_str(GuiKeys.down, self.tree.move_down)
+            cman.add_int(curses.KEY_DOWN, self.tree.move_down)
+            cman.add_str(GuiKeys.left, self.tree.arrow_left)
+            cman.add_int(curses.KEY_LEFT, self.tree.arrow_left)
+            cman.add_str(GuiKeys.right, self.tree.arrow_right)
+            cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
+            cman.add_str(GuiKeys.activate, self.actions.select_task)
+            cman.add_int(InputManager.tab, self.process_tab)
+            cman.add_str(GuiKeys.expand, self.tree.process_expand)
+            cman.add_str(GuiKeys.expand2, self.tree.process_expand)
+            cman.add_str(GuiKeys.collapse, self.tree.process_collapse)
+            cman.add_str(GuiKeys.collapse2, self.tree.process_collapse)
+            cman.add_str(GuiKeys.github_open, self.actions.open_link)
+            cman.add_str(GuiKeys.down_task, self.actions.down_task)
+            cman.add_str(GuiKeys.inc_grade, self.tree.inc_grade)
+            cman.add_str(GuiKeys.inc_grade2, self.tree.inc_grade)
+            cman.add_str(GuiKeys.dec_grade, self.tree.dec_grade)
+            cman.add_str(GuiKeys.dec_grade2, self.tree.dec_grade)
+            cman.add_str(GuiKeys.edit, lambda: self.opener.open_code(open_dir=True))
+            for value in range(1, 10):
+                cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
+            cman.add_str("'", GradeFunctor(0, self.tree.set_grade))
+            cman.add_str("0", GradeFunctor(10, self.tree.set_grade))
+        
+        cman.add_str(GuiKeys.key_help, self.gui.show_help)
+        
         for flag in self.flagsman.others:
-            add_str(flag.get_char(), FlagFunctor(self.fman, flag))
+            cman.add_str(flag.get_keycode(), FlagFunctor(self.fman, flag))
 
-        add_str(Flags.config.get_char(), self.toggle_config)
-        add_str(Flags.skills.get_char(), FlagFunctor(self.fman, Flags.skills))
-        add_str("/", self.search.toggle_search)
+        config_elements = self.gui.config.get_elements()
+        for element in config_elements:
+            key = element.flag.get_keycode()
+            fn = element.fn
+            cman.add_str(key, fn)
 
-        return calls
+        cman.add_str(Flags.config.get_keycode(), self.toggle_config)
+        cman.add_str(Flags.skills.get_keycode(), self.toggle_skills)
+        cman.add_str("/", self.search.toggle_search)
+
+        return cman
         
     def send_char_not_found(self, key):
         self.fman.add_input(
-            Floating("v>")
+            Floating("v")
                 .error()
-                .put_text("Tecla")
-                .put_text(f"char {chr(key)}")
-                .put_text(f"code {key}")
-                .put_text("não reconhecida")
-                .put_text("")
+                .put_text(f"Tecla char {chr(key)} code {key} não reconhecida")
         )
 
     def main(self, scr):
-        if hasattr(curses, "set_escdelay"):
-            curses.set_escdelay(25)
-        else:
-            os.environ.setdefault('ESCDELAY', '25')
-        # verify if curses has method set_escdelay
+        InputManager.fix_esc_delay()
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
@@ -165,30 +171,27 @@ class Play:
         while True:
             self.tree.update_tree(admin_mode=Flags.admin.is_true() or self.search.search_mode)
             self.fman.draw_warnings()
-            if self.gui.gen_graph:
+            if self.gui.config.gen_graph:
                 self.actions.generate_graph()
-            calls = self.make_callback()
+            cman = self.make_callback()
             self.gui.show_items()
 
             if self.fman.has_floating():
                 value: int = self.fman.get_input()
             else:
                 value = scr.getch()
-                if value == 195:
-                    value = scr.getch()
-                    if value == 167: #ç
-                        value = ord("c")
+                value = InputManager.fix_cedilha(scr, value)
 
             if self.exit:
                 break
 
             if self.search.search_mode:
                 self.search.process_search(value)
-            elif value in calls.keys():
-                callback = calls[value]()
+            elif cman.has_int_key(value):
+                callback = cman.exec_call(value)
                 if callback is not None:
                     return callback
-            elif value != -1 and value != 27 and value != 32:
+            elif value != -1 and value != InputManager.esc and value != 32:
                 self.send_char_not_found(value)
 
             self.tree.reload_sentences()
@@ -196,22 +199,22 @@ class Play:
             if self.first_loop:
                 self.first_loop = False
 
-    def check_lang_in_text_mode(self):
-        lang = self.rep.get_lang()
-        if lang == "":
-            options = languages_avaliable
-            print("\nLinguagem padrão ainda não foi definida.\n")
-            while True:
-                print("Escolha entre as opções a seguir ", end="")
-                print("[" + ", ".join(options) + "]", ":", end=" ")
-                lang = input()
-                if lang in options:
-                    break
-            self.rep.set_lang(lang)
+    # def check_lang_in_text_mode(self):
+    #     lang = self.rep.get_lang()
+    #     if lang == "":
+    #         options = languages_avaliable
+    #         print("\nLinguagem padrão ainda não foi definida.\n")
+    #         while True:
+    #             print("Escolha entre as opções a seguir ", end="")
+    #             print("[" + ", ".join(options) + "]", ":", end=" ")
+    #             lang = input()
+    #             if lang in options:
+    #                 break
+    #         self.rep.set_lang(lang)
 
     def play(self, graph_ext: str):
         self.graph_ext = graph_ext
-        self.check_lang_in_text_mode()
+        # self.check_lang_in_text_mode()
 
         while True:
             output = curses.wrapper(self.main)

@@ -1,3 +1,4 @@
+from .keys import GuiKeys
 from ..game.game import Game
 from ..game.cluster import Cluster
 from ..game.quest import Quest
@@ -21,7 +22,7 @@ from .flags import Flag, Flags, FlagsMan
 from .tasktree import TaskTree
 from ..cmds.cmd_run import Run
 from ..run.param import Param
-from .gui import Key, Gui
+from .gui import Gui
 
 import os
 import tempfile
@@ -43,116 +44,7 @@ class PlayActions:
 
     def gen_graph_path(self) -> str:
         return os.path.join(self.app._rootdir, self.rep_alias, "graph.png")
-
-
-    def graph_toggle(self):
-        self.gui.gen_graph = not self.gui.gen_graph
         
-    def set_rootdir(self, only_if_empty=True):
-        if only_if_empty and self.app._rootdir != "":
-            return
-
-        def chama(value):
-            if value == "yes":
-                self.app._rootdir = os.path.abspath(os.getcwd())
-                self.settings.save_settings()
-                self.fman.add_input(
-                    Floating()
-                    .put_text("")
-                    .put_text("Diretório raiz definido como ")
-                    .put_text("")
-                    .put_text("  " + os.getcwd())
-                    .put_text("")
-                    .put_text("Você pode também pode alterar")
-                    .put_text("o diretório raiz navegando para o")
-                    .put_text("diretório desejado e executando o comando")
-                    .put_text("")
-                    .put_text("  tko config --root .")
-                    .put_text("")
-                    .warning()
-                )
-            else:
-                self.fman.add_input(
-                    Floating()
-                    .put_text("")
-                    .put_text("Navegue para o diretório desejado e tente novamente.")
-                    .put_text("")
-                    .put_text("Você pode também pode alterar")
-                    .put_text("o diretório raiz navegando para o")
-                    .put_text("diretório desejado e executando o comando")
-                    .put_text("")
-                    .put_text("tko config --root .")
-                    .put_text("")
-                    .warning()
-                )
-
-        self.fman.add_input(
-            Floating()
-            .put_text("")
-            .put_text("Você deseja utilizar o diretório")
-            .put_text("atual como diretório raiz do tko?")
-            .put_text("")
-            .put_text(os.getcwd())
-            .put_text("")
-            .put_text("como raiz para o repositório de " + self.rep_alias + "?")
-            .put_text("")
-            .put_text("Selecione e tecle Enter")
-            .put_text("")
-            .set_options(["yes", "no"])
-            .answer(chama)
-        )
-
-    def set_language(self, only_if_empty=True):
-        if only_if_empty and self.rep.get_lang() != "":
-            return
-
-        def back(value):
-            self.rep.set_lang(value)
-            self.rep.save_data_to_json()
-            self.fman.add_input(
-                Floating()
-                .put_text("")
-                .put_text("Linguagem alterada para " + value)
-                .put_text("")
-                .warning()
-            )
-
-        self.fman.add_input(
-            Floating()
-            .put_text("")
-            .put_text("Escolha a extensão default para os rascunhos")
-            .put_text("")
-            .put_text("Selecione e tecle Enter.")
-            .put_text("")
-            .set_options(languages_avaliable)
-            .answer(back)
-        )
-
-    def check_root_and_lang(self):
-        if self.app._rootdir == "":
-            self.fman.add_input(
-                Floating()
-                .put_text("")
-                .put_text("O diretório de download padrão")
-                .put_text("do tko ainda não foi definido.")
-                .put_text("")
-                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + Key.set_root_dir, "g"))
-                .put_text("para configurá-lo.")
-                .put_text("")
-            )
-
-        if self.rep.get_lang() == "":
-            self.fman.add_input(
-                Floating()
-                .put_text("")
-                .put_text("A linguagem de download padrão")
-                .put_text("para os rascunhos ainda não foi definda.")
-                .put_text("")
-                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + Key.set_lang, "g"))
-                .put_text("para configurá-la.")
-                .put_text("")
-            )
-            return
 
     def open_link_without_stdout_stderr(self, link: str):
         outfile = tempfile.NamedTemporaryFile(delete=False)
@@ -199,7 +91,7 @@ class PlayActions:
                 self.opener.open_files([path])
                 self.graph_opened = True
         except FileNotFoundError as _:
-            self.gui.gen_graph = False
+            self.gui.config.gen_graph = False
             self.fman.add_input(Floating().error()
                                 .put_text("")
                                 .put_sentence(Sentence().add("Instale o ").addf("r", "graphviz").add(" para poder gerar os grafos"))
@@ -207,15 +99,8 @@ class PlayActions:
                                 )
 
     def down_task(self):
-        rootdir = self.app._rootdir
-        if rootdir == "":
-            self.check_root_and_lang()
-            return
-        lang = self.rep.get_lang()
-        if lang == "":
-            self.check_root_and_lang()
-            return
 
+        lang = self.rep.get_lang() 
         obj = self.tree.items[self.tree.index_selected].obj
         if isinstance(obj, Task) and obj.key in obj.title:
             task: Task = obj

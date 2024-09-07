@@ -1,3 +1,4 @@
+from tko.play.keys import GuiActions, GuiKeys
 from ..game.game import Game
 from ..game.cluster import Cluster
 from ..game.quest import Quest
@@ -13,11 +14,13 @@ from ..settings.app_settings import AppSettings
 from ..settings.rep_settings import languages_avaliable, RepData
 from ..down.down import DownProblem
 from ..util.sentence import Sentence, Token,  RToken
+from tko.util.symbols import symbols
 from .fmt import Fmt
 from .frame import Frame
 from .border import Border
 from .colors import Colors
 from .search import Search
+from .config import Config
 from .images import opening, random_get
 import datetime
 
@@ -25,48 +28,6 @@ from .floating import Floating
 from .floating_manager import FloatingManager
 from .flags import Flag, Flags, FlagsMan
 from .tasktree import TaskTree
-from ..cmds.cmd_run import Run
-from ..run.param import Param
-
-class Actions:
-    ler_online = "Github"
-    sair = "Sair"
-    ajuda = "Ajuda"
-    baixar = "Baixar"
-    ativar = "Ativar"
-    navegar = "←↓→"
-    editar = "Editar"
-    marcar = "Marcar"
-    desmarcar = "Desmarcar"
-    colapsar = "Colapsar"
-    pesquisar = "Buscar"
-
-class Key:
-    left = "a"
-    right = "d"
-    down = "s"
-    up = "w"
-
-    down_task = "b"
-    select_task = "\n"
-    ajuda = "h"
-    expand = ">"
-    expand2 = "."
-    collapse = "<"
-    collapse2 = ","
-    inc_grade = "+"
-    inc_grade2 = "="
-    dec_grade = "-"
-    dec_grade2 = "_"
-    set_root_dir = "D"
-    set_lang = "L"
-    github_open = "g"
-    quit = "q"
-    edit= "e"
-    colors = "C"
-    borders = "B"
-    pesquisar = "/"
-    graph = "G"
 
 
 class Gui:
@@ -79,33 +40,46 @@ class Gui:
         self.flagsman = flagsman
         self.fman = fman
         self.search = search
-        self.gen_graph: bool = False
-        self.style = Border(Settings().app)
-        self.pcolor = Colors()
+        self.settings = Settings()
+        self.style: Border = Border(self.settings.app)
+        self.config = Config(self.rep, self.flagsman, self.fman, self.settings)
+        self.colors = self.settings.colors
 
         self.app = Settings().app
-
-        self.help_basic: List[Sentence] = [
-            Sentence() + RToken("Y", f"{Actions.pesquisar}[{Key.pesquisar}]"),
-            Sentence() + RToken("Y", f"{Actions.marcar} {Key.inc_grade}{Key.dec_grade}"),
-        ]
-
-        self.help_fixed: List[Sentence] = [
-            Sentence() + RToken("C", f"  {Actions.sair}[{Key.quit}]"),
-            Sentence() + RToken("C", f"{Actions.editar}[{Key.edit}]"),
-            Sentence() + RToken("G", f"{Actions.ativar}[↲]"),
-        ]
-        self.help_others_before: List[Sentence] = [
-            Sentence() + RToken("Y", f" {Actions.ajuda}[{Key.ajuda}]"),
-            Sentence() + RToken("Y", f"{Actions.ler_online}[{Key.github_open}]"),
-        ]
-        self.help_others_after: List[Sentence] = [
-            Sentence() + RToken("Y", f"{Actions.baixar}[{Key.down_task}]"),
-            Sentence() + RToken("Y", f"{Actions.navegar}[wasd]")
-        ]
-
         self.wrap_size = Sentence(" ").join(self.build_bottom_array()).len()
 
+    def get_help_others_after(self):
+        color = "Y" if self.tree.in_focus else "W"
+        help_others_after: List[Sentence] = [
+            Sentence() + RToken(color, f"{GuiActions.baixar} [{GuiKeys.down_task}]"),
+            Sentence() + RToken("Y", f"{GuiActions.navegar} [wasd]")
+        ]
+        return help_others_after
+
+    def get_help_basic(self):
+        color = "Y" if self.tree.in_focus else "W"
+        help_basic: List[Sentence] = [
+            Sentence() + RToken(color, f"{GuiActions.pesquisar}[{GuiKeys.pesquisar}]"),
+            Sentence() + RToken(color, f"{GuiActions.marcar} {GuiKeys.inc_grade}{GuiKeys.dec_grade}"),
+        ]
+        return help_basic
+
+    def get_help_fixed(self):
+        color = "C" if self.tree.in_focus else "W"
+        help_fixed: List[Sentence] = [
+            Sentence() + RToken("C", f" {GuiActions.sair}  [{GuiKeys.key_quit}]"),
+            Sentence() + RToken(color, f"{GuiActions.editar} [{GuiKeys.edit}]"),
+            Sentence() + RToken("G", f"{GuiActions.ativar} [↲]"),
+        ]
+        return help_fixed
+
+    def get_help_others_before(self):
+        color = "Y" if self.tree.in_focus else "W"
+        help_others_before: List[Sentence] = [
+            Sentence() + RToken("Y", f" {GuiActions.ajuda} [{GuiKeys.key_help}]"),
+            Sentence() + RToken(color, f"{GuiActions.github} [{GuiKeys.github_open}]"),
+        ]
+        return help_others_before
 
     @staticmethod
     def disable_on_resize():
@@ -119,36 +93,45 @@ class Gui:
 
 
     def show_main_bar(self, frame: Frame):
-        dy, dx = frame.get_inner()
         top = Sentence()
-        if self.two_column_mode() and Flags.others.is_true(): 
+        if self.two_column_mode() and Flags.hud.is_true() and not Flags.config.is_true():
             top.add(self.style.get_flag_sentence(Flags.config)).add(" ")
 
         alias_color = "R"
-        top.add(self.style.border_sharp(alias_color, self.rep_alias.upper()))
-        if Flags.others.is_true():
+        top.add(self.style.border(alias_color, self.rep_alias.upper()))
+        if Flags.hud.is_true():
             color = "W" if Flags.admin.is_true() else "K"
-            top.add(self.style.border_sharp(color, "ADMIN"))
-        top.add(self.style.border_sharp("G", self.rep.get_lang().upper()))
+            top.add(self.style.border(color, "ADMIN"))
+        top.add(self.style.border("G", self.rep.get_lang().upper()))
 
-        if self.two_column_mode() and Flags.others.is_true(): 
+        if self.two_column_mode() and Flags.hud.is_true() and not Flags.config.is_true():
             top.add(" ").add(self.style.get_flag_sentence(Flags.skills))
-
-        frame.set_header(top, "^")
+        half = top.len() // 2
+        x = frame.get_x()
+        dy, dx = Fmt.get_size()
+        full = Sentence().add("─" * ((dx//2) - x - 2 - half)).add(top)
+        frame.set_header(full, "<")
         
-        if self.two_column_mode():
+        if self.two_column_mode() and not Flags.config.is_true():
             elems = self.build_bottom_array()
             line_up = Sentence(" ").join(elems[0 : 2] + elems[-2:])
-            frame.set_footer(line_up, "")
+            half = line_up.len() // 2
+            _, adx = Fmt.get_size()
+            if adx % 2 == 1:
+                adx += 1 
+            x = frame.get_x()
+            full = Sentence().add("─" * ((adx//2) - x - 2 - half)).add(line_up)
+            frame.set_footer(full, "<")
         frame.draw()
 
+        dy, dx = frame.get_inner()
         for y, sentence in enumerate(self.tree.get_senteces(dy)):
             if sentence.len() > dx:
                 sentence.trim_end(dx - 3)
                 sentence.addf("r", "...")
             frame.write(y, 0, sentence)
 
-    def show_inventary_bar(self, frame_xp):
+    def show_skills_bar(self, frame_xp):
         dy, dx = frame_xp.get_inner()
         xp = XP(self.game)
         total_perc = int(
@@ -159,8 +142,8 @@ class Gui:
         else:
             text = f" XPTotal:{xp.get_xp_total_obtained()}"
 
-        done = self.pcolor.main_bar_done + "/"
-        todo = self.pcolor.main_bar_todo + "/"
+        done = self.colors.main_bar_done + "/"
+        todo = self.colors.main_bar_todo + "/"
         total_bar = self.style.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Sentence().addf("/", "Skills"), "^", "{", "}")
         frame_xp.set_footer(Sentence().add(" ").add(self.app._rootdir).add(" "), "^")
@@ -174,8 +157,8 @@ class Gui:
             else:
                 text = f"{skill}:{obt[skill]}/{value}"
             perc = obt[skill] / value
-            done = self.pcolor.progress_skill_done + "/"
-            todo = self.pcolor.progress_skill_todo + "/"
+            done = self.colors.progress_skill_done + "/"
+            todo = self.colors.progress_skill_todo + "/"
             skill_bar = self.style.build_bar(text, perc, dx - 2, done, todo)
             elements.append(skill_bar)
             
@@ -191,34 +174,34 @@ class Gui:
     def show_config_bar(self, frame: Frame):
         frame.set_header(Sentence().addf("/", "Config"), "^", "{", "}")
         frame.draw()
-
-        elements: List[Sentence] = []
-        pad = 11
-        for flag in self.flagsman.left:
-            elements.append(self.style.get_flag_sentence(flag, pad))
-
-        bordas = Flag().name("Bordas").char("B").values(["1" if self.app._borders else "0"]).text("Ativa ou desativa as bordas").bool()
-        elements.append(self.style.get_flag_sentence(bordas, pad))
-        grafo = Flag().name("Grafo").char("G").values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
-        elements.append(self.style.get_flag_sentence(grafo, pad))
-
-
-        color = "C"
-
-        elements.append(self.style.border_round(color, "DirDestino [D]"))
-        elements.append(self.style.border_round(color, "Linguagem  [L]"))
-
+        elements = self.config.get_elements()
         dy, dx = frame.get_inner()
-        line_breaks = dy - len(elements)
-        for i, elem in enumerate(elements):
-            frame.print(0, elem)
-            if line_breaks > 0:
-                line_breaks -= 1
-                frame.print(0, Sentence())
+        y = frame.get_y()
+        lines, cols = Fmt.get_size()
+        
+        index = 0
+        delta = 0
+        if len(elements) > dy and self.config.index > dy - 2:
+            delta = self.config.index - dy + 2
+        elements = elements[delta:]
+        target = self.config.index - delta
+
+        while index < len(elements):
+            item = elements[index]
+            frame.print(0, item.sentence)
+            if index == target and self.config.enabled:
+                text = item.flag.get_description()
+                focus = self.colors.focused_item
+                Fmt.write(y + index + 1, cols - dx - len(text) - 4, Sentence().addf(focus, f" {text} ").add(self.style.sharpR(focus)))
+            index += 1
+            # if line_breaks > 0:
+            #     line_breaks -= 1
+            #     frame.print(0, Sentence())
+            #     delta += 1
 
     def two_column_mode(self):
         _, cols = Fmt.get_size()
-        return cols < self.wrap_size + 2 and Flags.others.is_true()
+        return cols < self.wrap_size + 2 and Flags.hud.is_true()
 
     def build_list_sentence(self, items: List[Sentence]) -> List[Sentence]:
         out: List[Sentence] = []
@@ -237,13 +220,12 @@ class Gui:
 
     def build_bottom_array(self):
         array: List[Sentence] = []
-        array += self.help_others_before
-        array += self.help_fixed
-        color = "G" if Flags.others.is_true() else "Y"
-
-
-        array.append(Sentence() + RToken(color, "!Outros[o]"))
-        array += self.help_others_after
+        array += self.get_help_others_before()
+        array += self.get_help_fixed()
+        color = "G" if Flags.hud.is_true() else "Y"
+        symbol = symbols.success if Flags.hud.is_true() else symbols.failure
+        array.append(Sentence() + RToken(color, f" {symbol.text} {GuiActions.hud} [{GuiKeys.hud}]"))
+        array += self.get_help_others_after()
 
         return self.build_list_sentence(array)
 
@@ -254,7 +236,7 @@ class Gui:
             line_down = Sentence(" ").join(elems[2:-2])
             Fmt.write(lines - 1, 0, line_down.center(cols))
         else:
-            if Flags.others.is_true():
+            if Flags.hud.is_true():
                 line_all = Sentence(" ").join(elems)
                 Fmt.write(lines - 1, 0, line_all.center(cols))
             else:
@@ -270,19 +252,19 @@ class Gui:
             text = text.ljust(size)
         else:
             text, percent = self.build_xp_bar()
-            done = self.pcolor.main_bar_done
-            todo = self.pcolor.main_bar_todo
+            done = self.colors.main_bar_done
+            todo = self.colors.main_bar_todo
             text = text.center(size)
         xpbar = self.style.build_bar(text, percent, len(text), done, todo)
         return xpbar
 
     def show_top_bar(self, frame: Frame):
-        help = self.build_list_sentence(self.help_basic)
+        help = self.build_list_sentence(self.get_help_basic())
         pesquisar = help[0]
         marcar = help[1]
         config = self.style.get_flag_sentence(Flags.config)
         skills = self.style.get_flag_sentence(Flags.skills)
-        others = Flags.others.is_true()
+        others = Flags.hud.is_true()
 
         pre: List[Sentence] = []
         pre.append(marcar)
@@ -303,19 +285,15 @@ class Gui:
         frame.write(0, 0, info.center(frame.get_dx()))
 
 
-        # frame.set_border_none()
-        # frame.set_border_rounded()
-        # frame.draw()
-
     def show_help_config(self):
         _help: Floating = Floating("v>").warning().set_ljust_text().set_header(" Configurações ")
         self.fman.add_input(_help)
-        _help.put_sentence(Sentence() + f"      Mínimo " + RToken("r", f"[{Flags.minimum.get_char()}]") + " - Mostrar os requisitos mínimos para completar a missão")
-        _help.put_sentence(Sentence() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_char()}]") + " - Mostrar quanto de experiência cada atividade fornece")
-        _help.put_sentence(Sentence() + f"  Percentual " + RToken("r", f"[{Flags.percent.get_char()}]") + " - Mostrar os valores em percentual")
+        _help.put_sentence(Sentence() + f"      Mínimo " + RToken("r", f"[{Flags.minimum.get_keycode()}]") + " - Mostrar os requisitos mínimos para completar a missão")
+        _help.put_sentence(Sentence() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_keycode()}]") + " - Mostrar quanto de experiência cada atividade fornece")
+        _help.put_sentence(Sentence() + f"  Percentual " + RToken("r", f"[{Flags.percent.get_keycode()}]") + " - Mostrar os valores em percentual")
         _help.put_sentence(Sentence() + f"  ModoAdmin " + RToken("r", f"Shift + [A]") + " - Liberar acesso a todas as missões" )
-        _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{Key.set_root_dir}]") + " - Mudar a pasta padrão de download do tko" )
-        _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"Shift + [{Key.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
+        _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{GuiKeys.set_root_dir}]") + " - Mudar a pasta padrão de download do tko" )
+        _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"Shift + [{GuiKeys.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
 
 
     def show_help(self):
@@ -326,17 +304,17 @@ class Gui:
 
         _help.set_header_sentence(Sentence().add(" Ajuda "))
         # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence("    Ajuda ").addf("r", Key.ajuda).add("  Abre essa tela de ajuda")
+        _help.put_sentence(Sentence("    Ajuda ").addf("r", GuiKeys.key_help).add("  Abre essa tela de ajuda")
         )
 
         _help.put_sentence(Sentence("  ").addf("r", "Shift + B")
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
         _help.put_sentence(Sentence() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
-        _help.put_sentence(Sentence() + f"{Actions.ler_online} " + RToken("r", f"{Key.github_open}") + "  Abre tarefa em uma aba do browser")
-        _help.put_sentence(Sentence() + f"   {Actions.baixar} " + RToken("r", f"{Key.down_task}") + "  Baixa tarefa de código para seu dispositivo")
-        _help.put_sentence(Sentence() + f"   {Actions.editar} " + RToken("r", f"{Key.edit}") + "  Abre os arquivos no editor de código")
-        _help.put_sentence(Sentence() + f"   {Actions.ativar} " + RToken("r", "↲") + "  Interage com o elemento")
-        _help.put_sentence(Sentence() + f"   {Actions.marcar} " + RToken("r", f"{Key.inc_grade}") + RToken("r", f"{Key.dec_grade}") + " Muda a pontuação da tarefa")
+        _help.put_sentence(Sentence() + f"{GuiActions.github} " + RToken("r", f"{GuiKeys.github_open}") + "  Abre tarefa em uma aba do browser")
+        _help.put_sentence(Sentence() + f"   {GuiActions.baixar} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
+        _help.put_sentence(Sentence() + f"   {GuiActions.editar} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
+        _help.put_sentence(Sentence() + f"   {GuiActions.ativar} " + RToken("r", "↲") + "  Interage com o elemento")
+        _help.put_sentence(Sentence() + f"   {GuiActions.marcar} " + RToken("r", f"{GuiKeys.inc_grade}") + RToken("r", f"{GuiKeys.dec_grade}") + " Muda a pontuação da tarefa")
         _help.put_sentence(Sentence())
         _help.put_sentence(Sentence() + "Você pode mudar o editor padrão com o comando")
         _help.put_sentence(Sentence() + RToken("g", "             tko config --editor <comando>"))
@@ -379,6 +357,7 @@ class Gui:
     def show_items(self):
         border_color = "r" if Flags.admin.is_true() else ""
         Fmt.clear()
+        self.tree.set_focus(not self.config.enabled)
         self.tree.reload_sentences()
         lines, cols = Fmt.get_size()
         main_sx = cols  # tamanho em x livre
@@ -389,17 +368,16 @@ class Gui:
         bottom_dy = 1 # quantas linhas o fundo usa
         mid_y = top_dy # onde o meio começa
         mid_sy = main_sy - top_dy - bottom_dy # tamanho do meio
-
+        left_size = 25
         skills_sx = 0
+        flags_sx = 0
         if Flags.skills.is_true():
-            skills_sx = max(20, main_sx // 4)
+            skills_sx = left_size #max(20, main_sx // 4)
+        elif Flags.config.is_true():
+            flags_sx = left_size
         else:
             self.show_opening()
-
-        flags_sx = 0
-        if Flags.config.is_true():
-            flags_sx = 18            
-
+        
         task_sx = main_sx - flags_sx - skills_sx
 
         frame_top = Frame(top_y, 0).set_size(top_dy + 2, cols)
@@ -408,13 +386,14 @@ class Gui:
         # frame_bottom = Frame(lines - bottom_dy - 1, -1).set_size(bottom_dy + 2, cols + 2)
         self.show_bottom_bar()
         if task_sx > 5: 
-            frame_main = Frame(mid_y, flags_sx).set_size(mid_sy, task_sx).set_border_color(border_color)
+            frame_main = Frame(mid_y, 0).set_size(mid_sy, task_sx).set_border_color(border_color)
             self.show_main_bar(frame_main)
 
         if Flags.config.is_true():
-            frame_flags = Frame(mid_y, 0).set_size(mid_sy, flags_sx).set_border_color(border_color)
+            frame_flags = Frame(mid_y, cols - flags_sx).set_size(mid_sy, flags_sx).set_border_color(border_color)
             self.show_config_bar(frame_flags)
+            Fmt.write(1, cols - left_size - 3, Sentence().addf("r", " ↔TAB "))
 
         if Flags.skills.is_true():
             frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)
-            self.show_inventary_bar(frame_skills)
+            self.show_skills_bar(frame_skills)
