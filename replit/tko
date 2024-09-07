@@ -986,7 +986,7 @@ class GuiKeys:
     up = "w"
 
     down_task = "b"
-    select_task = "\n"
+    activate = "\n"
     key_help = "?"
     expand = ">"
     expand2 = "."
@@ -1008,6 +1008,7 @@ class GuiKeys:
     hud = "h"
 
 class InputManager:
+    tab = 9
     special_double_key = 195
     cedilha = 167
     esc = 27
@@ -1767,11 +1768,11 @@ class Flag:
         self._name = _name
         return self
 
-    def text(self, _text):
+    def set_description(self, _text):
         self._text = _text
         return self
 
-    def set_char(self, _key):
+    def set_keycode(self, _key):
         self._char = _key
         return self
 
@@ -1793,12 +1794,8 @@ class Flag:
     def toggle(self):
         self._index = (self._index + 1) % len(self._values)
         return self
-
-    def many(self):
-        self._bool = False
-        return self
     
-    def bool(self):
+    def set_bool(self):
         self._bool = True
         return self
     
@@ -1826,7 +1823,7 @@ class Flag:
     def get_description(self) -> str:
         return self._text
 
-    def get_char(self) -> str:
+    def get_keycode(self) -> str:
         return self._char
 
     def get_index(self) -> int:
@@ -1834,14 +1831,14 @@ class Flag:
     
 
 class Flags:
-    minimum = Flag().set_name("Mínimo").set_char("M").set_values(["0", "1"]).text("Mostra os requisitos mínimos para completar a missão").location("left")
-    reward = Flag().set_name("Recompensa").set_char("R").set_values(["0", "1"]).text("Mostra a experiência obtida na tarefa").location("left")
-    percent = Flag().set_name("Percentual").set_char("P").set_values(["1", "0"]).text("Mostra valores em porcentagem").location("left")
-    admin = Flag().set_name("Admin").set_char("A").set_values(["0", "1"]).text("Mostra todas as missões e grupos").location("left")
-    images = Flag().set_name("Imagens").set_char("I").set_values(["1", "0"]).text("Mostra imagens aleatórias").location("left")
-    config    = Flag().set_name("Config").set_char("c").set_values(["0", "1"]).text("Mostra a barra de flags").location("top")
-    skills = Flag().set_name("Skills").set_char("i").set_values(["0", "1"]).text("Mostra a barra de skills").location("top")
-    hud = Flag().set_name("HUD").set_char("h").set_values(["0", "1"]).text("Mostra opções extras").location("bottom")
+    minimum = Flag().set_name("Mínimo").set_keycode("M").set_values(["0", "1"])    .set_description("Mostra os requisitos para completar a missão").location("left")
+    reward = Flag().set_name("Recompensa").set_keycode("R").set_values(["0", "1"]) .set_description("Mostra a experiência obtida nas tarefas     ").location("left")
+    percent = Flag().set_name("Percentual").set_keycode("P").set_values(["1", "0"]).set_description("Mostra todos os valores em porcentagem      ").location("left")
+    admin = Flag().set_name("Admin").set_keycode("A").set_values(["0", "1"])       .set_description("Habilitas todas as missões e tarefas        ").location("left")
+    images = Flag().set_name("Imagens").set_keycode("I").set_values(["1", "0"])    .set_description("Mostra imagens de abertura e sucesso        ").location("left")
+    config    = Flag().set_name("Config").set_keycode("c").set_values(["0", "1"]).set_description("Mostra a barra de flags").location("top")
+    skills = Flag().set_name("Skills").set_keycode("i").set_values(["0", "1"]).set_description("Mostra a barra de skills").location("top")
+    hud = Flag().set_name("HUD").set_keycode("h").set_values(["0", "1"]).set_description("Mostra opções extras").location("bottom")
 
 class FlagsMan:
     def __init__(self, data: Dict[str, int]):
@@ -2482,16 +2479,16 @@ class FlagFunctor:
 
     def __call__(self):
         self.flag.toggle()
-        if (self.flag.get_location() == "left" or self.flag.get_location() == "geral") and self.flag.is_bool():
-            f = Floating("v").warning()
-            f.put_text("")
-            f.put_text(self.flag.get_description())
-            if self.flag.is_true():
-                f.put_sentence(Sentence().addf("g", "ligado"))
-            else:
-                f.put_sentence(Sentence().addf("r", "desligado"))
-            f.put_text("")
-            self.fman.add_input(f)
+        # if (self.flag.get_location() == "left" or self.flag.get_location() == "geral") and self.flag.is_bool():
+        #     f = Floating("v").warning()
+        #     f.put_text("")
+        #     f.put_text(self.flag.get_description())
+        #     if self.flag.is_true():
+        #         f.put_sentence(Sentence().addf("g", "ligado"))
+        #     else:
+        #         f.put_sentence(Sentence().addf("r", "desligado"))
+        #     f.put_text("")
+        #     self.fman.add_input(f)
 
 class GradeFunctor:
     def __init__(self, grade: int, fn):
@@ -2654,7 +2651,7 @@ class Border:
         return xp_bar
 
     def get_flag_sentence(self, flag: Flag, pad: int = 0, button_mode: bool = True) -> Sentence:
-        char = flag.get_char()
+        char = flag.get_keycode()
         text = flag.get_name()
         color = "M" 
         symbol = symbols.neutral
@@ -5143,9 +5140,13 @@ class TaskTree:
         self.index_begin = 0
         self.max_title = 0
         self.search_text = ""
+        self.in_focus = True
         self.load_from_rep()
         self.update_tree(admin_mode=Flags.admin.is_true(), first_loop=True)
         self.reload_sentences()
+
+    def set_focus(self, focus: bool):
+        self.in_focus = focus
 
     def load_from_rep(self):
         self.new_items: List[str] = [v for v in self.rep.get_new_items()]
@@ -5387,7 +5388,7 @@ class TaskTree:
     #     return False
 
     def get_focus_color(self, item: Union[Quest, Cluster], index: int) -> str:
-        if index != self.index_selected or Flags.config.is_true():
+        if index != self.index_selected or not self.in_focus:
             return ""
         if not item.is_reachable() and not Flags.admin.is_true():
             return "R"
@@ -5834,17 +5835,39 @@ class Opener:
             if len(files_to_open) != 0:
                 self.open_files(files_to_open)
 
+def empty_fn():
+    pass
+
+class ConfigItem:
+    def __init__(self, flag: Flag, fn: Callable[[], None], sentence: Sentence = Sentence() ):
+        self.flag = flag
+        self.fn: Callable[[], None] = fn
+        self.sentence = sentence
+
 
 class Config:
-    def __init__(self, flagsman: FlagsMan, fman: FloatingManager, style: Border, settings: Settings):
+    def __init__(self, rep: RepData, flagsman: FlagsMan, fman: FloatingManager, settings: Settings):
         self.index: int = 0
         self.flagsman = flagsman
-        self.style = style
+        self.style = Border(settings.app)
         self.gen_graph: bool = False
         self.app = settings.app
         self.colors = settings.colors
         self.fman = fman
+        self.rep = rep
+        self.enabled = False
         self.size = len(self.get_elements())
+
+    def enable(self):
+        self.enabled = True
+    
+    def disable(self):
+        self.enabled = False
+
+    def activate_selected(self):
+        elements = self.get_elements()
+        chosen = elements[self.index]
+        chosen.fn()
 
     def move_down(self):
         self.index += 1
@@ -5860,32 +5883,113 @@ class Config:
         pad = 14 if index == self.index else 14
         sentence = self.style.get_flag_sentence(elem, pad)
 
-        if index == self.index:
+        if index == self.index and self.enabled:
             focus = self.colors.focused_item
-            return Sentence("") + self.style.border(focus, sentence.get_text()[1:-1])
+            return sentence
         return Sentence("    ").add(sentence)
 
-    def get_elements(self):
-        elements: List[Flag] = []
-        for flag in self.flagsman.left:            
-            elements.append(flag)
-        bordas = Flag().set_name("Bordas").set_char("B").set_values(["1" if self.app.has_borders() else "0"]).text("Ativa ou desativa as bordas").bool()
-        elements.append(bordas)
-        grafo = Flag().set_name("Grafo").set_char("G").set_values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
-        elements.append(grafo)
-        destiny = Flag().set_name("DirDestino").set_values([]).set_char("D").text("Muda o diretório root de download")
-        elements.append(destiny)
-        language = Flag().set_name("Linguagem").set_values([]).set_char("L").text("Muda a linguagem de download dos rascunhos")
-        elements.append(language)
-        output: List[Sentence] = []
+    def graph_toggle(self):
+        self.gen_graph = not self.gen_graph
+
+    def get_elements(self) -> List[ConfigItem]:
+        elements: List[ConfigItem] = []
+        for flag in self.flagsman.left:
+            item = ConfigItem(flag, flag.toggle)
+            elements.append(item)
+        border_values = ["1" if self.app.has_borders() else "0"]
+        graph_values = ["1" if self.gen_graph else "0"]
+        bordas = Flag().set_name("Bordas").set_keycode("B").set_values(border_values).set_description("Ativa as bordas se a fonte tiver suporte    ").set_bool()
+        elements.append(ConfigItem(bordas, self.app.toggle_borders))
+        grafo = Flag().set_name("Grafo").set_keycode("G").set_values(graph_values)   .set_description("Ativa a geração do grafo do repositório     ").set_bool()
+        elements.append(ConfigItem(grafo, self.graph_toggle))
+        language = Flag().set_name("Linguagem").set_values([]).set_keycode("L")      .set_description("Muda a linguagem de download dos rascunhos  ")
+        elements.append(ConfigItem(language, lambda: self.set_language(False)))
+
         if Flags.config.is_true():
             for i in range(len(elements)):
-                sentence = self.mark_focused(i, elements[i])
-                output.append(sentence)
+                elements[i].sentence = self.mark_focused(i, elements[i].flag)
+        return elements
 
-        return output
 
-    
+    # def set_rootdir(self, only_if_empty=True):
+    #     if only_if_empty and self.app._rootdir != "":
+    #         return
+
+    #     def chama(value):
+    #         if value == "yes":
+    #             self.app._rootdir = os.path.abspath(os.getcwd())
+    #             self.settings.save_settings()
+    #             self.fman.add_input(
+    #                 Floating()
+    #                 .put_text("")
+    #                 .put_text("Diretório raiz definido como ")
+    #                 .put_text("")
+    #                 .put_text("  " + os.getcwd())
+    #                 .put_text("")
+    #                 .put_text("Você pode também pode alterar")
+    #                 .put_text("o diretório raiz navegando para o")
+    #                 .put_text("diretório desejado e executando o comando")
+    #                 .put_text("")
+    #                 .put_text("  tko config --root .")
+    #                 .put_text("")
+    #                 .warning()
+    #             )
+    #         else:
+    #             self.fman.add_input(
+    #                 Floating()
+    #                 .put_text("")
+    #                 .put_text("Navegue para o diretório desejado e tente novamente.")
+    #                 .put_text("")
+    #                 .put_text("Você pode também pode alterar")
+    #                 .put_text("o diretório raiz navegando para o")
+    #                 .put_text("diretório desejado e executando o comando")
+    #                 .put_text("")
+    #                 .put_text("tko config --root .")
+    #                 .put_text("")
+    #                 .warning()
+    #             )
+
+    #     self.fman.add_input(
+    #         Floating()
+    #         .put_text("")
+    #         .put_text("Você deseja utilizar o diretório")
+    #         .put_text("atual como diretório raiz do tko?")
+    #         .put_text("")
+    #         .put_text(os.getcwd())
+    #         .put_text("")
+    #         .put_text("como raiz para o repositório de " + self.rep_alias + "?")
+    #         .put_text("")
+    #         .put_text("Selecione e tecle Enter")
+    #         .put_text("")
+    #         .set_options(["yes", "no"])
+    #         .answer(chama)
+    #     )
+
+    def set_language(self, only_if_empty=True):
+        if only_if_empty and self.rep.get_lang() != "":
+            return
+
+        def back(value):
+            self.rep.set_lang(value)
+            self.rep.save_data_to_json()
+            self.fman.add_input(
+                Floating()
+                .put_text("")
+                .put_text("Linguagem alterada para " + value)
+                .put_text("")
+                .warning()
+            )
+
+        self.fman.add_input(
+            Floating()
+            .put_text("")
+            .put_text("Escolha a extensão default para os rascunhos")
+            .put_text("")
+            .put_text("Selecione e tecle Enter.")
+            .put_text("")
+            .set_options(languages_avaliable)
+            .answer(back)
+        )
 
 
 
@@ -7173,6 +7277,7 @@ class DownProblem:
             print("\nVocê pode escolher a extensão padrão com o comando\n$ tko config -l <extension>")
 
 
+
 class Gui:
 
     def __init__(self, rep: RepData, rep_alias: str, game: Game, tree: TaskTree, flagsman: FlagsMan, search: Search, fman: FloatingManager):
@@ -7183,34 +7288,46 @@ class Gui:
         self.flagsman = flagsman
         self.fman = fman
         self.search = search
-        settings = Settings()
-        self.style: Border = Border(settings.app)
-        self.config = Config(self.flagsman, self.fman, self.style, settings)
-        self.pcolor = Colors()
+        self.settings = Settings()
+        self.style: Border = Border(self.settings.app)
+        self.config = Config(self.rep, self.flagsman, self.fman, self.settings)
+        self.colors = self.settings.colors
 
         self.app = Settings().app
-
-        self.help_basic: List[Sentence] = [
-            Sentence() + RToken("Y", f"{GuiActions.pesquisar}[{GuiKeys.pesquisar}]"),
-            Sentence() + RToken("Y", f"{GuiActions.marcar} {GuiKeys.inc_grade}{GuiKeys.dec_grade}"),
-        ]
-
-        self.help_fixed: List[Sentence] = [
-            Sentence() + RToken("C", f" {GuiActions.sair}  [{GuiKeys.key_quit}]"),
-            Sentence() + RToken("C", f"{GuiActions.editar} [{GuiKeys.edit}]"),
-            Sentence() + RToken("G", f"{GuiActions.ativar} [↲]"),
-        ]
-        self.help_others_before: List[Sentence] = [
-            Sentence() + RToken("Y", f" {GuiActions.ajuda} [{GuiKeys.key_help}]"),
-            Sentence() + RToken("Y", f"{GuiActions.github} [{GuiKeys.github_open}]"),
-        ]
-        self.help_others_after: List[Sentence] = [
-            Sentence() + RToken("Y", f"{GuiActions.baixar} [{GuiKeys.down_task}]"),
-            Sentence() + RToken("Y", f"{GuiActions.navegar} [wasd]")
-        ]
-
         self.wrap_size = Sentence(" ").join(self.build_bottom_array()).len()
 
+    def get_help_others_after(self):
+        color = "Y" if self.tree.in_focus else "W"
+        help_others_after: List[Sentence] = [
+            Sentence() + RToken(color, f"{GuiActions.baixar} [{GuiKeys.down_task}]"),
+            Sentence() + RToken("Y", f"{GuiActions.navegar} [wasd]")
+        ]
+        return help_others_after
+
+    def get_help_basic(self):
+        color = "Y" if self.tree.in_focus else "W"
+        help_basic: List[Sentence] = [
+            Sentence() + RToken(color, f"{GuiActions.pesquisar}[{GuiKeys.pesquisar}]"),
+            Sentence() + RToken(color, f"{GuiActions.marcar} {GuiKeys.inc_grade}{GuiKeys.dec_grade}"),
+        ]
+        return help_basic
+
+    def get_help_fixed(self):
+        color = "C" if self.tree.in_focus else "W"
+        help_fixed: List[Sentence] = [
+            Sentence() + RToken("C", f" {GuiActions.sair}  [{GuiKeys.key_quit}]"),
+            Sentence() + RToken(color, f"{GuiActions.editar} [{GuiKeys.edit}]"),
+            Sentence() + RToken("G", f"{GuiActions.ativar} [↲]"),
+        ]
+        return help_fixed
+
+    def get_help_others_before(self):
+        color = "Y" if self.tree.in_focus else "W"
+        help_others_before: List[Sentence] = [
+            Sentence() + RToken("Y", f" {GuiActions.ajuda} [{GuiKeys.key_help}]"),
+            Sentence() + RToken(color, f"{GuiActions.github} [{GuiKeys.github_open}]"),
+        ]
+        return help_others_before
 
     @staticmethod
     def disable_on_resize():
@@ -7225,7 +7342,7 @@ class Gui:
 
     def show_main_bar(self, frame: Frame):
         top = Sentence()
-        if self.two_column_mode() and Flags.hud.is_true(): 
+        if self.two_column_mode() and Flags.hud.is_true() and not Flags.config.is_true():
             top.add(self.style.get_flag_sentence(Flags.config)).add(" ")
 
         alias_color = "R"
@@ -7235,7 +7352,7 @@ class Gui:
             top.add(self.style.border(color, "ADMIN"))
         top.add(self.style.border("G", self.rep.get_lang().upper()))
 
-        if self.two_column_mode() and Flags.hud.is_true(): 
+        if self.two_column_mode() and Flags.hud.is_true() and not Flags.config.is_true():
             top.add(" ").add(self.style.get_flag_sentence(Flags.skills))
         half = top.len() // 2
         x = frame.get_x()
@@ -7243,7 +7360,7 @@ class Gui:
         full = Sentence().add("─" * ((dx//2) - x - 2 - half)).add(top)
         frame.set_header(full, "<")
         
-        if self.two_column_mode():
+        if self.two_column_mode() and not Flags.config.is_true():
             elems = self.build_bottom_array()
             line_up = Sentence(" ").join(elems[0 : 2] + elems[-2:])
             half = line_up.len() // 2
@@ -7262,7 +7379,7 @@ class Gui:
                 sentence.addf("r", "...")
             frame.write(y, 0, sentence)
 
-    def show_inventary_bar(self, frame_xp):
+    def show_skills_bar(self, frame_xp):
         dy, dx = frame_xp.get_inner()
         xp = XP(self.game)
         total_perc = int(
@@ -7273,8 +7390,8 @@ class Gui:
         else:
             text = f" XPTotal:{xp.get_xp_total_obtained()}"
 
-        done = self.pcolor.main_bar_done + "/"
-        todo = self.pcolor.main_bar_todo + "/"
+        done = self.colors.main_bar_done + "/"
+        todo = self.colors.main_bar_todo + "/"
         total_bar = self.style.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Sentence().addf("/", "Skills"), "^", "{", "}")
         frame_xp.set_footer(Sentence().add(" ").add(self.app._rootdir).add(" "), "^")
@@ -7288,8 +7405,8 @@ class Gui:
             else:
                 text = f"{skill}:{obt[skill]}/{value}"
             perc = obt[skill] / value
-            done = self.pcolor.progress_skill_done + "/"
-            todo = self.pcolor.progress_skill_todo + "/"
+            done = self.colors.progress_skill_done + "/"
+            todo = self.colors.progress_skill_todo + "/"
             skill_bar = self.style.build_bar(text, perc, dx - 2, done, todo)
             elements.append(skill_bar)
             
@@ -7306,13 +7423,29 @@ class Gui:
         frame.set_header(Sentence().addf("/", "Config"), "^", "{", "}")
         frame.draw()
         elements = self.config.get_elements()
-        dy, _ = frame.get_inner()
-        line_breaks = dy - len(elements)
-        for i, elem in enumerate(elements):
-            frame.print(0, elem)
-            if line_breaks > 0:
-                line_breaks -= 1
-                frame.print(0, Sentence())
+        dy, dx = frame.get_inner()
+        y = frame.get_y()
+        lines, cols = Fmt.get_size()
+        
+        index = 0
+        delta = 0
+        if len(elements) > dy and self.config.index > dy - 2:
+            delta = self.config.index - dy + 2
+        elements = elements[delta:]
+        target = self.config.index - delta
+
+        while index < len(elements):
+            item = elements[index]
+            frame.print(0, item.sentence)
+            if index == target and self.config.enabled:
+                text = item.flag.get_description()
+                focus = self.colors.focused_item
+                Fmt.write(y + index + 1, cols - dx - len(text) - 4, Sentence().addf(focus, f" {text} ").add(self.style.sharpR(focus)))
+            index += 1
+            # if line_breaks > 0:
+            #     line_breaks -= 1
+            #     frame.print(0, Sentence())
+            #     delta += 1
 
     def two_column_mode(self):
         _, cols = Fmt.get_size()
@@ -7335,12 +7468,12 @@ class Gui:
 
     def build_bottom_array(self):
         array: List[Sentence] = []
-        array += self.help_others_before
-        array += self.help_fixed
+        array += self.get_help_others_before()
+        array += self.get_help_fixed()
         color = "G" if Flags.hud.is_true() else "Y"
         symbol = symbols.success if Flags.hud.is_true() else symbols.failure
         array.append(Sentence() + RToken(color, f" {symbol.text} {GuiActions.hud} [{GuiKeys.hud}]"))
-        array += self.help_others_after
+        array += self.get_help_others_after()
 
         return self.build_list_sentence(array)
 
@@ -7367,14 +7500,14 @@ class Gui:
             text = text.ljust(size)
         else:
             text, percent = self.build_xp_bar()
-            done = self.pcolor.main_bar_done
-            todo = self.pcolor.main_bar_todo
+            done = self.colors.main_bar_done
+            todo = self.colors.main_bar_todo
             text = text.center(size)
         xpbar = self.style.build_bar(text, percent, len(text), done, todo)
         return xpbar
 
     def show_top_bar(self, frame: Frame):
-        help = self.build_list_sentence(self.help_basic)
+        help = self.build_list_sentence(self.get_help_basic())
         pesquisar = help[0]
         marcar = help[1]
         config = self.style.get_flag_sentence(Flags.config)
@@ -7403,9 +7536,9 @@ class Gui:
     def show_help_config(self):
         _help: Floating = Floating("v>").warning().set_ljust_text().set_header(" Configurações ")
         self.fman.add_input(_help)
-        _help.put_sentence(Sentence() + f"      Mínimo " + RToken("r", f"[{Flags.minimum.get_char()}]") + " - Mostrar os requisitos mínimos para completar a missão")
-        _help.put_sentence(Sentence() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_char()}]") + " - Mostrar quanto de experiência cada atividade fornece")
-        _help.put_sentence(Sentence() + f"  Percentual " + RToken("r", f"[{Flags.percent.get_char()}]") + " - Mostrar os valores em percentual")
+        _help.put_sentence(Sentence() + f"      Mínimo " + RToken("r", f"[{Flags.minimum.get_keycode()}]") + " - Mostrar os requisitos mínimos para completar a missão")
+        _help.put_sentence(Sentence() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_keycode()}]") + " - Mostrar quanto de experiência cada atividade fornece")
+        _help.put_sentence(Sentence() + f"  Percentual " + RToken("r", f"[{Flags.percent.get_keycode()}]") + " - Mostrar os valores em percentual")
         _help.put_sentence(Sentence() + f"  ModoAdmin " + RToken("r", f"Shift + [A]") + " - Liberar acesso a todas as missões" )
         _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{GuiKeys.set_root_dir}]") + " - Mudar a pasta padrão de download do tko" )
         _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"Shift + [{GuiKeys.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
@@ -7472,6 +7605,7 @@ class Gui:
     def show_items(self):
         border_color = "r" if Flags.admin.is_true() else ""
         Fmt.clear()
+        self.tree.set_focus(not self.config.enabled)
         self.tree.reload_sentences()
         lines, cols = Fmt.get_size()
         main_sx = cols  # tamanho em x livre
@@ -7482,17 +7616,16 @@ class Gui:
         bottom_dy = 1 # quantas linhas o fundo usa
         mid_y = top_dy # onde o meio começa
         mid_sy = main_sy - top_dy - bottom_dy # tamanho do meio
-
+        left_size = 25
         skills_sx = 0
         flags_sx = 0
         if Flags.skills.is_true():
-            skills_sx = 25 #max(20, main_sx // 4)
+            skills_sx = left_size #max(20, main_sx // 4)
         elif Flags.config.is_true():
-            flags_sx = 25
+            flags_sx = left_size
         else:
             self.show_opening()
         
-
         task_sx = main_sx - flags_sx - skills_sx
 
         frame_top = Frame(top_y, 0).set_size(top_dy + 2, cols)
@@ -7507,10 +7640,11 @@ class Gui:
         if Flags.config.is_true():
             frame_flags = Frame(mid_y, cols - flags_sx).set_size(mid_sy, flags_sx).set_border_color(border_color)
             self.show_config_bar(frame_flags)
+            Fmt.write(1, cols - left_size - 3, Sentence().addf("r", " ↔TAB "))
 
         if Flags.skills.is_true():
             frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)
-            self.show_inventary_bar(frame_skills)
+            self.show_skills_bar(frame_skills)
 
 
 
@@ -7592,115 +7726,7 @@ class PlayActions:
 
     def gen_graph_path(self) -> str:
         return os.path.join(self.app._rootdir, self.rep_alias, "graph.png")
-
-    def graph_toggle(self):
-        self.gui.config.gen_graph = not self.gui.config.gen_graph
         
-    def set_rootdir(self, only_if_empty=True):
-        if only_if_empty and self.app._rootdir != "":
-            return
-
-        def chama(value):
-            if value == "yes":
-                self.app._rootdir = os.path.abspath(os.getcwd())
-                self.settings.save_settings()
-                self.fman.add_input(
-                    Floating()
-                    .put_text("")
-                    .put_text("Diretório raiz definido como ")
-                    .put_text("")
-                    .put_text("  " + os.getcwd())
-                    .put_text("")
-                    .put_text("Você pode também pode alterar")
-                    .put_text("o diretório raiz navegando para o")
-                    .put_text("diretório desejado e executando o comando")
-                    .put_text("")
-                    .put_text("  tko config --root .")
-                    .put_text("")
-                    .warning()
-                )
-            else:
-                self.fman.add_input(
-                    Floating()
-                    .put_text("")
-                    .put_text("Navegue para o diretório desejado e tente novamente.")
-                    .put_text("")
-                    .put_text("Você pode também pode alterar")
-                    .put_text("o diretório raiz navegando para o")
-                    .put_text("diretório desejado e executando o comando")
-                    .put_text("")
-                    .put_text("tko config --root .")
-                    .put_text("")
-                    .warning()
-                )
-
-        self.fman.add_input(
-            Floating()
-            .put_text("")
-            .put_text("Você deseja utilizar o diretório")
-            .put_text("atual como diretório raiz do tko?")
-            .put_text("")
-            .put_text(os.getcwd())
-            .put_text("")
-            .put_text("como raiz para o repositório de " + self.rep_alias + "?")
-            .put_text("")
-            .put_text("Selecione e tecle Enter")
-            .put_text("")
-            .set_options(["yes", "no"])
-            .answer(chama)
-        )
-
-    def set_language(self, only_if_empty=True):
-        if only_if_empty and self.rep.get_lang() != "":
-            return
-
-        def back(value):
-            self.rep.set_lang(value)
-            self.rep.save_data_to_json()
-            self.fman.add_input(
-                Floating()
-                .put_text("")
-                .put_text("Linguagem alterada para " + value)
-                .put_text("")
-                .warning()
-            )
-
-        self.fman.add_input(
-            Floating()
-            .put_text("")
-            .put_text("Escolha a extensão default para os rascunhos")
-            .put_text("")
-            .put_text("Selecione e tecle Enter.")
-            .put_text("")
-            .set_options(languages_avaliable)
-            .answer(back)
-        )
-
-    def check_root_and_lang(self):
-        if self.app._rootdir == "":
-            self.fman.add_input(
-                Floating()
-                .put_text("")
-                .put_text("O diretório de download padrão")
-                .put_text("do tko ainda não foi definido.")
-                .put_text("")
-                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + GuiKeys.set_root_dir, "g"))
-                .put_text("para configurá-lo.")
-                .put_text("")
-            )
-
-        if self.rep.get_lang() == "":
-            self.fman.add_input(
-                Floating()
-                .put_text("")
-                .put_text("A linguagem de download padrão")
-                .put_text("para os rascunhos ainda não foi definda.")
-                .put_text("")
-                .put_sentence(Sentence() + "Utilize o comando " + Token("Shift + " + GuiKeys.set_lang, "g"))
-                .put_text("para configurá-la.")
-                .put_text("")
-            )
-            return
 
     def open_link_without_stdout_stderr(self, link: str):
         outfile = tempfile.NamedTemporaryFile(delete=False)
@@ -7755,15 +7781,8 @@ class PlayActions:
                                 )
 
     def down_task(self):
-        rootdir = self.app._rootdir
-        if rootdir == "":
-            self.check_root_and_lang()
-            return
-        lang = self.rep.get_lang()
-        if lang == "":
-            self.check_root_and_lang()
-            return
 
+        lang = self.rep.get_lang() 
         obj = self.tree.items[self.tree.index_selected].obj
         if isinstance(obj, Task) and obj.key in obj.title:
             task: Task = obj
@@ -7900,8 +7919,10 @@ class Play:
     def toggle_config(self):
         if Flags.config.is_true():
             Flags.config.toggle()
+            self.gui.config.disable()
         else:
             Flags.config.toggle()
+            self.gui.config.enable()
             if Flags.skills.is_true():
                 Flags.skills.toggle()
 
@@ -7913,6 +7934,9 @@ class Play:
             if Flags.config.is_true():
                 Flags.config.toggle()
             
+    def process_tab(self):
+        if Flags.config.is_true():
+            self.gui.config.enable()
 
     def make_callback(self) -> InputManager:
         cman = InputManager()
@@ -7922,11 +7946,14 @@ class Play:
         cman.add_int(InputManager.esc, self.send_quit_msg)
         cman.add_int(curses.KEY_BACKSPACE, self.send_quit_msg)
 
-        if Flags.config.is_true():
+        if Flags.config.is_true() and self.gui.config.enabled:
             cman.add_str(GuiKeys.up, self.gui.config.move_up)
             cman.add_int(curses.KEY_UP, self.gui.config.move_up)
             cman.add_str(GuiKeys.down, self.gui.config.move_down)
             cman.add_int(curses.KEY_DOWN, self.gui.config.move_down)
+            cman.add_str(GuiKeys.activate, self.gui.config.activate_selected)
+            cman.add_int(InputManager.tab, self.gui.config.disable)
+    
         else:
             cman.add_str(GuiKeys.up, self.tree.move_up)
             cman.add_int(curses.KEY_UP, self.tree.move_up)
@@ -7936,52 +7963,46 @@ class Play:
             cman.add_int(curses.KEY_LEFT, self.tree.arrow_left)
             cman.add_str(GuiKeys.right, self.tree.arrow_right)
             cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
+            cman.add_str(GuiKeys.activate, self.actions.select_task)
+            cman.add_int(InputManager.tab, self.process_tab)
+            cman.add_str(GuiKeys.expand, self.tree.process_expand)
+            cman.add_str(GuiKeys.expand2, self.tree.process_expand)
+            cman.add_str(GuiKeys.collapse, self.tree.process_collapse)
+            cman.add_str(GuiKeys.collapse2, self.tree.process_collapse)
+            cman.add_str(GuiKeys.github_open, self.actions.open_link)
+            cman.add_str(GuiKeys.down_task, self.actions.down_task)
+            cman.add_str(GuiKeys.inc_grade, self.tree.inc_grade)
+            cman.add_str(GuiKeys.inc_grade2, self.tree.inc_grade)
+            cman.add_str(GuiKeys.dec_grade, self.tree.dec_grade)
+            cman.add_str(GuiKeys.dec_grade2, self.tree.dec_grade)
+            cman.add_str(GuiKeys.edit, lambda: self.opener.open_code(open_dir=True))
+            for value in range(1, 10):
+                cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
+            cman.add_str("'", GradeFunctor(0, self.tree.set_grade))
+            cman.add_str("0", GradeFunctor(10, self.tree.set_grade))
         
         cman.add_str(GuiKeys.key_help, self.gui.show_help)
-        cman.add_str(GuiKeys.expand, self.tree.process_expand)
-        cman.add_str(GuiKeys.expand2, self.tree.process_expand)
-        cman.add_str(GuiKeys.collapse, self.tree.process_collapse)
-        cman.add_str(GuiKeys.collapse2, self.tree.process_collapse)
-        cman.add_str(GuiKeys.github_open, self.actions.open_link)
-        cman.add_str(GuiKeys.set_lang, lambda: self.actions.set_language(False))
-        cman.add_str(GuiKeys.set_root_dir, lambda: self.actions.set_rootdir(False))
-        cman.add_str(GuiKeys.down_task, self.actions.down_task)
-        cman.add_str(GuiKeys.select_task, self.actions.select_task)
-        cman.add_str("t", lambda: self.fman.add_input(Floating().put_text("\n Use o Enter para testar uma questão\n").warning()))
-        cman.add_str(GuiKeys.inc_grade, self.tree.inc_grade)
-        cman.add_str(GuiKeys.inc_grade2, self.tree.inc_grade)
-        cman.add_str(GuiKeys.dec_grade, self.tree.dec_grade)
-        cman.add_str(GuiKeys.dec_grade2, self.tree.dec_grade)
-        cman.add_str(GuiKeys.edit, lambda: self.opener.open_code(open_dir=True))
-        cman.add_str(GuiKeys.colors, self.app.toggle_color)
-        cman.add_str(GuiKeys.borders, self.app.toggle_borders)
-        cman.add_str(GuiKeys.graph, self.actions.graph_toggle)
-
-        for value in range(1, 10):
-            cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
-        cman.add_str("'", GradeFunctor(0, self.tree.set_grade))
-        cman.add_str("0", GradeFunctor(10, self.tree.set_grade))
-
-        for flag in self.flagsman.left:
-            cman.add_str(flag.get_char(), FlagFunctor(self.fman, flag))
+        
         for flag in self.flagsman.others:
-            cman.add_str(flag.get_char(), FlagFunctor(self.fman, flag))
+            cman.add_str(flag.get_keycode(), FlagFunctor(self.fman, flag))
 
-        cman.add_str(Flags.config.get_char(), self.toggle_config)
-        cman.add_str(Flags.skills.get_char(), self.toggle_skills)
+        config_elements = self.gui.config.get_elements()
+        for element in config_elements:
+            key = element.flag.get_keycode()
+            fn = element.fn
+            cman.add_str(key, fn)
+
+        cman.add_str(Flags.config.get_keycode(), self.toggle_config)
+        cman.add_str(Flags.skills.get_keycode(), self.toggle_skills)
         cman.add_str("/", self.search.toggle_search)
 
         return cman
         
     def send_char_not_found(self, key):
         self.fman.add_input(
-            Floating("v>")
+            Floating("v")
                 .error()
-                .put_text("Tecla")
-                .put_text(f"char {chr(key)}")
-                .put_text(f"code {key}")
-                .put_text("não reconhecida")
-                .put_text("")
+                .put_text(f"Tecla char {chr(key)} code {key} não reconhecida")
         )
 
     def main(self, scr):

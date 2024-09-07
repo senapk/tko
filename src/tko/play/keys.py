@@ -50,7 +50,7 @@ class GuiKeys:
     up = "w"
 
     down_task = "b"
-    select_task = "\n"
+    activate = "\n"
     key_help = "?"
     expand = ">"
     expand2 = "."

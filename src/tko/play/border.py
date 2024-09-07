@@ -50,7 +50,7 @@ class Border:
         return xp_bar
 
     def get_flag_sentence(self, flag: Flag, pad: int = 0, button_mode: bool = True) -> Sentence:
-        char = flag.get_char()
+        char = flag.get_keycode()
         text = flag.get_name()
         color = "M" 
         symbol = symbols.neutral

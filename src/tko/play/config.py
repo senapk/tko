@@ -5,25 +5,47 @@ from ..game.game import Game
 from .flags import Flag, Flags, FlagsMan
 from .floating import Floating
 from .floating_manager import FloatingManager
-import curses
+from tko.play.border import Border
 from tko.settings.settings import Settings
 from tko.util.sentence import Sentence
 from .border import Border
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Callable
 from .functors import FlagFunctor
-from .input_manager import InputManager
+from tko.settings.rep_settings import RepData, languages_avaliable
+
+def empty_fn():
+    pass
+
+class ConfigItem:
+    def __init__(self, flag: Flag, fn: Callable[[], None], sentence: Sentence = Sentence() ):
+        self.flag = flag
+        self.fn: Callable[[], None] = fn
+        self.sentence = sentence
 
 
 class Config:
-    def __init__(self, flagsman: FlagsMan, fman: FloatingManager, style: Border, settings: Settings):
+    def __init__(self, rep: RepData, flagsman: FlagsMan, fman: FloatingManager, settings: Settings):
         self.index: int = 0
         self.flagsman = flagsman
-        self.style = style
+        self.style = Border(settings.app)
         self.gen_graph: bool = False
         self.app = settings.app
         self.colors = settings.colors
         self.fman = fman
+        self.rep = rep
+        self.enabled = False
         self.size = len(self.get_elements())
+
+    def enable(self):
+        self.enabled = True
+    
+    def disable(self):
+        self.enabled = False
+
+    def activate_selected(self):
+        elements = self.get_elements()
+        chosen = elements[self.index]
+        chosen.fn()
 
     def move_down(self):
         self.index += 1
@@ -39,29 +61,110 @@ class Config:
         pad = 14 if index == self.index else 14
         sentence = self.style.get_flag_sentence(elem, pad)
 
-        if index == self.index:
+        if index == self.index and self.enabled:
             focus = self.colors.focused_item
-            return Sentence("") + self.style.border(focus, sentence.get_text()[1:-1])
+            return sentence
         return Sentence("    ").add(sentence)
 
-    def get_elements(self):
-        elements: List[Flag] = []
-        for flag in self.flagsman.left:            
-            elements.append(flag)
-        bordas = Flag().set_name("Bordas").set_char("B").set_values(["1" if self.app.has_borders() else "0"]).text("Ativa ou desativa as bordas").bool()
-        elements.append(bordas)
-        grafo = Flag().set_name("Grafo").set_char("G").set_values(["1" if self.gen_graph else "0"]).text("Ativa a geração do grafo").bool()
-        elements.append(grafo)
-        destiny = Flag().set_name("DirDestino").set_values([]).set_char("D").text("Muda o diretório root de download")
-        elements.append(destiny)
-        language = Flag().set_name("Linguagem").set_values([]).set_char("L").text("Muda a linguagem de download dos rascunhos")
-        elements.append(language)
-        output: List[Sentence] = []
+    def graph_toggle(self):
+        self.gen_graph = not self.gen_graph
+
+    def get_elements(self) -> List[ConfigItem]:
+        elements: List[ConfigItem] = []
+        for flag in self.flagsman.left:
+            item = ConfigItem(flag, flag.toggle)
+            elements.append(item)
+        border_values = ["1" if self.app.has_borders() else "0"]
+        graph_values = ["1" if self.gen_graph else "0"]
+        bordas = Flag().set_name("Bordas").set_keycode("B").set_values(border_values).set_description("Ativa as bordas se a fonte tiver suporte    ").set_bool()
+        elements.append(ConfigItem(bordas, self.app.toggle_borders))
+        grafo = Flag().set_name("Grafo").set_keycode("G").set_values(graph_values)   .set_description("Ativa a geração do grafo do repositório     ").set_bool()
+        elements.append(ConfigItem(grafo, self.graph_toggle))
+        language = Flag().set_name("Linguagem").set_values([]).set_keycode("L")      .set_description("Muda a linguagem de download dos rascunhos  ")
+        elements.append(ConfigItem(language, lambda: self.set_language(False)))
+
         if Flags.config.is_true():
             for i in range(len(elements)):
-                sentence = self.mark_focused(i, elements[i])
-                output.append(sentence)
+                elements[i].sentence = self.mark_focused(i, elements[i].flag)
+        return elements
 
-        return output
 
-    
+    # def set_rootdir(self, only_if_empty=True):
+    #     if only_if_empty and self.app._rootdir != "":
+    #         return
+
+    #     def chama(value):
+    #         if value == "yes":
+    #             self.app._rootdir = os.path.abspath(os.getcwd())
+    #             self.settings.save_settings()
+    #             self.fman.add_input(
+    #                 Floating()
+    #                 .put_text("")
+    #                 .put_text("Diretório raiz definido como ")
+    #                 .put_text("")
+    #                 .put_text("  " + os.getcwd())
+    #                 .put_text("")
+    #                 .put_text("Você pode também pode alterar")
+    #                 .put_text("o diretório raiz navegando para o")
+    #                 .put_text("diretório desejado e executando o comando")
+    #                 .put_text("")
+    #                 .put_text("  tko config --root .")
+    #                 .put_text("")
+    #                 .warning()
+    #             )
+    #         else:
+    #             self.fman.add_input(
+    #                 Floating()
+    #                 .put_text("")
+    #                 .put_text("Navegue para o diretório desejado e tente novamente.")
+    #                 .put_text("")
+    #                 .put_text("Você pode também pode alterar")
+    #                 .put_text("o diretório raiz navegando para o")
+    #                 .put_text("diretório desejado e executando o comando")
+    #                 .put_text("")
+    #                 .put_text("tko config --root .")
+    #                 .put_text("")
+    #                 .warning()
+    #             )
+
+    #     self.fman.add_input(
+    #         Floating()
+    #         .put_text("")
+    #         .put_text("Você deseja utilizar o diretório")
+    #         .put_text("atual como diretório raiz do tko?")
+    #         .put_text("")
+    #         .put_text(os.getcwd())
+    #         .put_text("")
+    #         .put_text("como raiz para o repositório de " + self.rep_alias + "?")
+    #         .put_text("")
+    #         .put_text("Selecione e tecle Enter")
+    #         .put_text("")
+    #         .set_options(["yes", "no"])
+    #         .answer(chama)
+    #     )
+
+    def set_language(self, only_if_empty=True):
+        if only_if_empty and self.rep.get_lang() != "":
+            return
+
+        def back(value):
+            self.rep.set_lang(value)
+            self.rep.save_data_to_json()
+            self.fman.add_input(
+                Floating()
+                .put_text("")
+                .put_text("Linguagem alterada para " + value)
+                .put_text("")
+                .warning()
+            )
+
+        self.fman.add_input(
+            Floating()
+            .put_text("")
+            .put_text("Escolha a extensão default para os rascunhos")
+            .put_text("")
+            .put_text("Selecione e tecle Enter.")
+            .put_text("")
+            .set_options(languages_avaliable)
+            .answer(back)
+        )

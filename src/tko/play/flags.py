@@ -16,11 +16,11 @@ class Flag:
         self._name = _name
         return self
 
-    def text(self, _text):
+    def set_description(self, _text):
         self._text = _text
         return self
 
-    def set_char(self, _key):
+    def set_keycode(self, _key):
         self._char = _key
         return self
 
@@ -42,12 +42,8 @@ class Flag:
     def toggle(self):
         self._index = (self._index + 1) % len(self._values)
         return self
-
-    def many(self):
-        self._bool = False
-        return self
     
-    def bool(self):
+    def set_bool(self):
         self._bool = True
         return self
     
@@ -75,7 +71,7 @@ class Flag:
     def get_description(self) -> str:
         return self._text
 
-    def get_char(self) -> str:
+    def get_keycode(self) -> str:
         return self._char
 
     def get_index(self) -> int:
@@ -83,14 +79,14 @@ class Flag:
     
 
 class Flags:
-    minimum = Flag().set_name("Mínimo").set_char("M").set_values(["0", "1"]).text("Mostra os requisitos mínimos para completar a missão").location("left")
-    reward = Flag().set_name("Recompensa").set_char("R").set_values(["0", "1"]).text("Mostra a experiência obtida na tarefa").location("left")
-    percent = Flag().set_name("Percentual").set_char("P").set_values(["1", "0"]).text("Mostra valores em porcentagem").location("left")
-    admin = Flag().set_name("Admin").set_char("A").set_values(["0", "1"]).text("Mostra todas as missões e grupos").location("left")
-    images = Flag().set_name("Imagens").set_char("I").set_values(["1", "0"]).text("Mostra imagens aleatórias").location("left")
-    config    = Flag().set_name("Config").set_char("c").set_values(["0", "1"]).text("Mostra a barra de flags").location("top")
-    skills = Flag().set_name("Skills").set_char("i").set_values(["0", "1"]).text("Mostra a barra de skills").location("top")
-    hud = Flag().set_name("HUD").set_char("h").set_values(["0", "1"]).text("Mostra opções extras").location("bottom")
+    minimum = Flag().set_name("Mínimo").set_keycode("M").set_values(["0", "1"])    .set_description("Mostra os requisitos para completar a missão").location("left")
+    reward = Flag().set_name("Recompensa").set_keycode("R").set_values(["0", "1"]) .set_description("Mostra a experiência obtida nas tarefas     ").location("left")
+    percent = Flag().set_name("Percentual").set_keycode("P").set_values(["1", "0"]).set_description("Mostra todos os valores em porcentagem      ").location("left")
+    admin = Flag().set_name("Admin").set_keycode("A").set_values(["0", "1"])       .set_description("Habilitas todas as missões e tarefas        ").location("left")
+    images = Flag().set_name("Imagens").set_keycode("I").set_values(["1", "0"])    .set_description("Mostra imagens de abertura e sucesso        ").location("left")
+    config    = Flag().set_name("Config").set_keycode("c").set_values(["0", "1"]).set_description("Mostra a barra de flags").location("top")
+    skills = Flag().set_name("Skills").set_keycode("i").set_values(["0", "1"]).set_description("Mostra a barra de skills").location("top")
+    hud = Flag().set_name("HUD").set_keycode("h").set_values(["0", "1"]).set_description("Mostra opções extras").location("bottom")
 
 class FlagsMan:
     def __init__(self, data: Dict[str, int]):

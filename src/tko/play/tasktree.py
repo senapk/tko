@@ -39,9 +39,13 @@ class TaskTree:
         self.index_begin = 0
         self.max_title = 0
         self.search_text = ""
+        self.in_focus = True
         self.load_from_rep()
         self.update_tree(admin_mode=Flags.admin.is_true(), first_loop=True)
         self.reload_sentences()
+
+    def set_focus(self, focus: bool):
+        self.in_focus = focus
 
     def load_from_rep(self):
         self.new_items: List[str] = [v for v in self.rep.get_new_items()]
@@ -283,7 +287,7 @@ class TaskTree:
     #     return False
 
     def get_focus_color(self, item: Union[Quest, Cluster], index: int) -> str:
-        if index != self.index_selected or Flags.config.is_true():
+        if index != self.index_selected or not self.in_focus:
             return ""
         if not item.is_reachable() and not Flags.admin.is_true():
             return "R"

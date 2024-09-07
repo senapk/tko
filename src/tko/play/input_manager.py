@@ -3,6 +3,7 @@ import curses
 import os
 
 class InputManager:
+    tab = 9
     special_double_key = 195
     cedilha = 167
     esc = 27
