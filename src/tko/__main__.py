@@ -11,15 +11,15 @@ from tko.cmds.cmd_build import CmdBuild
 from tko.cmds.cmd_config import CmdConfig, ConfigParams
 
 
-from .run.param import Param
+from .util.param import Param
 from .util.pattern import PatternLoader
-from .run.basic import DiffMode
+from .util.consts import DiffCount, DiffMode
 from .settings.settings import Settings
 
 from .util.guide import tko_guide
 from .util.guide import bash_guide
 
-from .run.report import Report
+from .util.report import Report
 from .util.term_color import TermColor
 from .util.symbols import symbols
 
@@ -32,42 +32,37 @@ class Main:
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         if args.quiet:
-            param.set_diff_mode(DiffMode.QUIET)
+            param.set_diff_count(DiffCount.QUIET)
         elif args.all:
-            param.set_diff_mode(DiffMode.ALL)
+            param.set_diff_count(DiffCount.ALL)
         else:
-            param.set_diff_mode(DiffMode.FIRST)
+            param.set_diff_count(DiffCount.FIRST)
 
         if args.filter:
             param.set_filter(True)
         if args.compact:
             param.set_compact(True)
 
+        settings = Settings()
         # load default diff from settings if not specified
         if not args.side and not args.down:
-            app = Settings().app
-            diff_mode = app._diff_mode
-            sidesize = int(app._side_size_min)
-            size_too_short = Report.get_terminal_size() < sidesize
-            param.set_up_down(diff_mode == "down" or size_too_short)
+            param.set_diff_mode(settings.app.get_diff_mode())
         elif args.side:
-            param.set_up_down(False)
+            param.set_diff_mode(DiffMode.SIDE)
         elif args.down:
-            param.set_up_down(True)
-        cmd_run = Run(args.target_list, args.cmd, param)
+            param.set_diff_mode(DiffMode.DOWN)
+        cmd_run = Run(settings, args.target_list, args.cmd, param)
         cmd_run.execute()
 
     @staticmethod
     def run(args):
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
-        param.set_up_down(Settings().app._diff_mode == "down")
-
+        settings = Settings()
+        param.set_diff_mode(settings.app.get_diff_mode())
         if args.filter:
             param.set_filter(True)
-        cmd_run = Run(args.target_list, args.cmd, param)
-        if args.now:
-            cmd_run.set_autorun(True)
+        cmd_run = Run(settings, args.target_list, args.cmd, param)
         cmd_run.set_curses()
         cmd_run.execute()
 
@@ -82,7 +77,7 @@ class Main:
     def play(args):
         settings = Settings()
         settings.check_rootdir()
-        CmdPlay.execute(args.repo, settings, args.graph, args.svg)
+        CmdPlay.execute(args.repo, settings)
 
     @staticmethod
     def down(args):
@@ -93,10 +88,6 @@ class Main:
     def config(args):
         settings = Settings()
         param = ConfigParams()
-        param.ascii = args.ascii
-        param.unicode = args.unicode
-        param.mono = args.mono
-        param.color = args.color
         param.side = args.side
         param.down = args.down
         param.lang = args.lang
@@ -119,7 +110,7 @@ class Parser:
         self.create_parent_basic()
         self.create_parent_manip()
         self.add_parser_run()
-        self.add_parser_prun()
+        self.add_parser_go()
         self.add_parser_build()
         self.add_parser_down()
         self.add_parser_config()
@@ -130,10 +121,7 @@ class Parser:
         self.parser.add_argument('-c', metavar='CONFIG_FILE', type=str, help='config json file.')
         self.parser.add_argument('-w', metavar='WIDTH', type=int, help="terminal width.")
         self.parser.add_argument('-v', action='store_true', help='show version.')
-        self.parser.add_argument('-g', action='store_true', help='show tko simple guide.')
-        self.parser.add_argument('-b', action='store_true', help='show bash simple guide.')
-        self.parser.add_argument('-m', action='store_true', help='monochromatic.')
-        self.parser.add_argument('-a', action='store_true', help='asc2 mode.')
+        self.parser.add_argument('-m', action='store_true', help='monochromatic debug.')
 
     def create_parent_basic(self):
         parent_basic = argparse.ArgumentParser(add_help=False)
@@ -157,10 +145,9 @@ class Parser:
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
         parser_r.add_argument("--cmd", type=str, help="bash command to run code")
-        parser_r.add_argument("--now", "-n", action='store_true', help="autorun skipping intro screen")
         parser_r.set_defaults(func=Main.run)
 
-    def add_parser_prun(self):
+    def add_parser_go(self):
         parser_r = self.subparsers.add_parser('go', parents=[self.parent_basic], help='run with test cases.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
@@ -193,14 +180,6 @@ class Parser:
 
     def add_parser_config(self):
         parser_s = self.subparsers.add_parser('config', help='settings tool.')
-
-        g_encoding = parser_s.add_mutually_exclusive_group()
-        g_encoding.add_argument('--ascii', action='store_true',    help='set ascii mode.')
-        g_encoding.add_argument('--unicode', action='store_true', help='set unicode mode.')
-
-        g_color = parser_s.add_mutually_exclusive_group()
-        g_color.add_argument('--color', action='store_true', help='set colored mode.')
-        g_color.add_argument('--mono',  action='store_true', help='set mono    mode.')
 
         g_diff = parser_s.add_mutually_exclusive_group()
         g_diff.add_argument('--side', action='store_true', help='set side_by_side diff mode.')
@@ -242,8 +221,8 @@ class Parser:
     def add_parser_play(self):
         parser_p = self.subparsers.add_parser('play', help='play a game.')
         parser_p.add_argument('repo', metavar='repo', type=str, nargs="?", default="__ask", help='repository to be played.')
-        parser_p.add_argument("--graph", "-g", action='store_true', help='generate graph of the game using graphviz.')
-        parser_p.add_argument("--svg", "-s", action='store_true', help='generate graph in svg instead png.')
+        # parser_p.add_argument("--graph", "-g", action='store_true', help='generate graph of the game using graphviz.')
+        # parser_p.add_argument("--svg", "-s", action='store_true', help='generate graph in svg instead png.')
         parser_p.set_defaults(func=Main.play)
 
 
@@ -254,23 +233,16 @@ def exec(parser: argparse.ArgumentParser, args):
     if args.c:
         settings.set_settings_file(args.c)
     settings.load_settings()
-    if args.a or settings.app.is_ascii():
-        symbols.set_ascii()
-    else:
-        symbols.set_unicode()
+
     if args.m:
         TermColor.enabled = False
-    elif settings.app.is_colored():
+    else:
         TermColor.enabled = True
         symbols.set_colors()
 
-    if args.v or args.g or args.b:
+    if args.v:
         if args.v:
             print("tko version " + __version__)
-        if args.b:
-            print(bash_guide[1:], end="")
-        if args.g:
-            print(tko_guide[1:], end="")
     else:
         if "func" in args:
             args.func(args)

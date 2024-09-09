@@ -4,13 +4,13 @@ import shutil
 import subprocess
 
 from ..run.wdir import Wdir
-from ..run.basic import DiffMode, ExecutionResult
-from ..run.param import Param
+from ..util.consts import DiffCount, ExecutionResult
+from ..util.param import Param
 from ..run.diff_builder import DiffBuilder
 from ..util.sentence import Sentence, Token
 
-from ..run.basic import Success
-from ..run.report import Report
+from ..util.consts import Success
+from ..util.report import Report
 from ..util.term_color import term_print
 from ..util.symbols import symbols
 
@@ -21,6 +21,7 @@ from ..play.diff import Diff
 from ..run.unit_runner import UnitRunner
 from ..game.task import Task
 from ..play.opener import Opener
+from tko.settings.settings import Settings
 
 class FilterMode:
     @staticmethod
@@ -40,10 +41,14 @@ class FilterMode:
 
 class Run:
 
-    def __init__(self, target_list: List[str], exec_cmd: Optional[str], param: Param.Basic):
+    def __init__(self, settings: Settings, target_list: List[str], exec_cmd: Optional[str], param: Optional[Param.Basic]):
+        self.settings = settings
         self.target_list: List[str] = target_list
         self.exec_cmd: Optional[str] = exec_cmd
-        self.param: Param.Basic = param
+        if param is None:
+            self.param = Param.Basic()
+        else:
+            self.param = param
         self.wdir: Wdir = Wdir()
         self.wdir_builded = False
         self.__curses_mode: bool = False
@@ -138,7 +143,7 @@ class Run:
         if self.wdir is None or not self.wdir.has_solver():
             return
         
-        if self.param.diff_mode == DiffMode.QUIET:
+        if self.param.diff_count == DiffCount.QUIET:
             return
         
         if self.wdir.get_solver().compile_error:
@@ -153,10 +158,10 @@ class Run:
             for elem in self.wdir.unit_list_resume():
                 term_print(elem)
         
-        if self.param.diff_mode == DiffMode.FIRST:
+        if self.param.diff_count == DiffCount.FIRST:
             # printing only the first wrong case
             wrong = [unit for unit in self.wdir.get_unit_list() if unit.result != ExecutionResult.SUCCESS][0]
-            if self.param.is_up_down:
+            if self.param.diff_mode:
                 for line in DiffBuilder.mount_up_down_diff(wrong):
                     term_print(line)
             else:
@@ -164,10 +169,10 @@ class Run:
                     term_print(line)
             return
 
-        if self.param.diff_mode == DiffMode.ALL:
+        if self.param.diff_count == DiffCount.ALL:
             for unit in self.wdir.get_unit_list():
                 if unit.result != ExecutionResult.SUCCESS:
-                    if self.param.is_up_down:
+                    if self.param.diff_mode:
                         for line in DiffBuilder.mount_up_down_diff(unit):
                             term_print(line)
                     else:
@@ -220,7 +225,7 @@ class Run:
             return
         
         if self.__curses_mode:
-            cdiff = Diff(self.wdir, self.param, self.__success_mode)
+            cdiff = Diff(self.settings, self.wdir)
             if self.__first_run:
                 cdiff.set_first_run()
             if self.__task is not None:

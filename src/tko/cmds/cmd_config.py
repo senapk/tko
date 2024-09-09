@@ -1,13 +1,10 @@
 import os
 
 from tko.settings.settings import Settings
+from tko.util.consts import DiffMode
 
 class ConfigParams:
     def __init__(self):
-        self.ascii = False
-        self.unicode = False
-        self.mono = False
-        self.color = False
         self.side = False
         self.down = False
         self.lang = None
@@ -16,7 +13,7 @@ class ConfigParams:
         self.editor = None
 
     def __str__(self):
-        return f"ascii: {self.ascii}, unicode: {self.unicode}, mono: {self.mono}, color: {self.color}, side: {self.side}, down: {self.down}, lang: {self.lang}, ask: {self.ask}, root: {self.root}, editor: {self.editor}"
+        return f"side: {self.side}, down: {self.down}, lang: {self.lang}, ask: {self.ask}, root: {self.root}, editor: {self.editor}"
 
 class CmdConfig:
         
@@ -24,29 +21,13 @@ class CmdConfig:
     def execute(settings: Settings, param: ConfigParams):
         action = False
 
-        if param.ascii:
-            action = True
-            settings.app.set_ascii(True)
-            print("Encoding mode now is: ASCII")
-        if param.unicode:
-            action = True
-            settings.app.set_ascii(False)
-            print("Encoding mode now is: UNICODE")
-        if param.mono:
-            action = True
-            settings.app.set_colored(False)
-            print("Color mode now is: MONOCHROMATIC")
-        if param.color:
-            action = True
-            settings.app.set_colored(True)
-            print("Color mode now is: COLORED")
         if param.side:
             action = True
-            settings.app._diff_mode = "side"
+            settings.app.set_diff_mode(DiffMode.SIDE)
             print("Diff mode now is: SIDE_BY_SIDE")
         if param.down:
             action = True
-            settings.app._diff_mode = "down"
+            settings.app.set_diff_mode(DiffMode.DOWN)
             print("Diff mode now is: UP_DOWN")
         if param.lang:
             action = True
@@ -71,10 +52,12 @@ class CmdConfig:
         if not action:
             action = True
             print(settings.get_settings_file())
-            print("Diff mode: {}".format("DOWN" if settings.app.get_diff_mode() else "SIDE"))
-            print("Encoding mode: {}".format("ASCII" if settings.app.is_ascii() else "UNICODE"))
-            print("Color mode: {}".format("MONOCHROMATIC" if not settings.app.is_colored() else "COLORED"))
-            value = settings.app._lang_default
-            print("Default language extension: {}".format("Always ask" if value == "" else value))
+            print("Rootdir: {}".format(settings.app.get_rootdir()))
+            print("Diff   : {}".format(str(settings.app.get_diff_mode())))
+            print("Editor : {}".format(settings.app.get_editor()))
+            print("Bordas : {}".format(settings.app.has_borders()))
+            print("Images : {}".format(settings.app.has_images()))
+            value = settings.app.get_lang_default()
+            print("Linguagem default: {}".format("Não definido" if value == "" else value))
 
         settings.save_settings()

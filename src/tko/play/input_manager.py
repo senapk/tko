@@ -3,6 +3,8 @@ import curses
 import os
 
 class InputManager:
+    backspace1 = 127
+    backspace2 = 263
     left = 260
     right = 261
     a = 97

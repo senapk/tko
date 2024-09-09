@@ -83,17 +83,17 @@ class Gui:
 
     def show_main_bar(self, frame: Frame):
         top = Sentence()
-        if self.two_column_mode() and Flags.hud.is_true() and not Flags.config.is_true():
+        if self.two_column_mode() and self.app.has_full_hud() and not Flags.config.is_true():
             top.add(self.style.get_flag_sentence(Flags.config)).add(" ")
 
         alias_color = "R"
         top.add(self.style.border(alias_color, self.rep.alias.upper()))
-        if Flags.hud.is_true():
+        if self.app.has_full_hud():
             color = "W" if Flags.admin.is_true() else "K"
             top.add(self.style.border(color, "ADMIN"))
         top.add(self.style.border("G", self.rep.get_lang().upper()))
 
-        if self.two_column_mode() and Flags.hud.is_true() and not Flags.config.is_true():
+        if self.two_column_mode() and self.app.has_full_hud() and not Flags.config.is_true():
             top.add(" ").add(self.style.get_flag_sentence(Flags.skills))
         half = top.len() // 2
         x = frame.get_x()
@@ -190,7 +190,7 @@ class Gui:
 
     def two_column_mode(self):
         _, cols = Fmt.get_size()
-        return cols < self.wrap_size + 2 and Flags.hud.is_true()
+        return cols < self.wrap_size + 2 and self.app.has_full_hud()
 
     def build_list_sentence(self, items: List[Sentence]) -> List[Sentence]:
         out: List[Sentence] = []
@@ -211,8 +211,8 @@ class Gui:
         array: List[Sentence] = []
         array += self.get_help_others_before()
         array += self.get_help_fixed()
-        color = "G" if Flags.hud.is_true() else "Y"
-        symbol = symbols.success if Flags.hud.is_true() else symbols.failure
+        color = "G" if self.app.has_full_hud() else "Y"
+        symbol = symbols.success if self.app.has_full_hud() else symbols.failure
         array.append(Sentence() + RToken(color, f" {symbol.text} {GuiActions.hud} [{GuiKeys.hud}]"))
         array += self.get_help_others_after()
 
@@ -225,7 +225,7 @@ class Gui:
             line_down = Sentence(" ").join(elems[2:-2])
             Fmt.write(lines - 1, 0, line_down.center(cols))
         else:
-            if Flags.hud.is_true():
+            if self.app.has_full_hud():
                 line_all = Sentence(" ").join(elems)
                 Fmt.write(lines - 1, 0, line_all.center(cols))
             else:
@@ -253,7 +253,7 @@ class Gui:
         marcar = help[1]
         config = self.style.get_flag_sentence(Flags.config)
         skills = self.style.get_flag_sentence(Flags.skills)
-        others = Flags.hud.is_true()
+        others = self.app.has_full_hud()
 
         pre: List[Sentence] = []
         pre.append(marcar)
@@ -331,7 +331,7 @@ class Gui:
     def show_opening(self):
         if Fmt.get_size()[1] < 100:
             return
-        if not Flags.images.is_true():
+        if not self.app.has_images():
             return
         _, cols = Fmt.get_size()
         

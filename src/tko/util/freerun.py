@@ -4,7 +4,7 @@ import os
 from subprocess import PIPE
 from .sentence import Sentence, Token
 from .term_color import term_print
-from ..run.report import Report
+from .report import Report
 from ..play.images import compilling
 from .runner import Runner
 from ..run.solver_builder import SolverBuilder

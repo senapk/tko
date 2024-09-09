@@ -8,7 +8,7 @@ from ..util.term_color import term_print
 from ..util.sentence import Sentence
 from ..play.colors import Colors
 from ..util.term_color import term_print
-from tko.run.report import Report
+from tko.util.report import Report
 
 def singleton(class_):
     instances = {}

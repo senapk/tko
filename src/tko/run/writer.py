@@ -1,8 +1,10 @@
 from typing import List
 import os
 
+from ..util.identifier import Identifier
+
 from ..util.pattern import PatternLoader
-from .basic import IdentifierType, Identifier
+from ..util.consts import IdentifierType
 from .unit import Unit
 
 

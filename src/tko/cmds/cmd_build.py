@@ -1,5 +1,5 @@
 from typing import List
-from ..run.param import Param
+from ..util.param import Param
 from ..run.wdir import Wdir
 from ..run.writer import Writer
 

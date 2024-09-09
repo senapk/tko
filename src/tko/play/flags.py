@@ -83,10 +83,8 @@ class Flags:
     reward = Flag().set_name("Recompensa").set_keycode("R").set_values(["0", "1"]) .set_description("Mostra a experiência obtida nas tarefas     ").location("left")
     percent = Flag().set_name("Percentual").set_keycode("P").set_values(["1", "0"]).set_description("Mostra todos os valores em porcentagem      ").location("left")
     admin = Flag().set_name("Admin").set_keycode("A").set_values(["0", "1"])       .set_description("Habilitas todas as missões e tarefas        ").location("left")
-    images = Flag().set_name("Imagens").set_keycode("I").set_values(["1", "0"])    .set_description("Mostra imagens de abertura e sucesso        ").location("left")
     config    = Flag().set_name("Config").set_keycode("c").set_values(["0", "1"]).set_description("Mostra a barra de flags").location("top")
     skills = Flag().set_name("Skills").set_keycode("i").set_values(["0", "1"]).set_description("Mostra a barra de skills").location("top")
-    hud = Flag().set_name("HUD").set_keycode("h").set_values(["0", "1"]).set_description("Mostra opções extras").location("bottom")
 
 class FlagsMan:
     def __init__(self, data: Dict[str, int]):

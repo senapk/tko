@@ -8,8 +8,8 @@ from tko.settings.settings import Settings
 from tko.cmds.cmd_down import CmdDown
 from tko.cmds.cmd_run import Run
 
-from tko.run.basic import Success
-from tko.run.param import Param
+from tko.util.consts import Success
+from tko.util.param import Param
 
 from tko.util.sentence import Sentence
 
@@ -149,11 +149,11 @@ class PlayActions:
         
     def run_selected_task(self, task: Task, rep_dir: str):
         path = os.path.join(rep_dir, task.key)
-        run = Run([path], None, Param.Basic())
+        run = Run(self.settings, [path], None, Param.Basic())
         run.set_lang(self.rep.get_lang())
         run.set_opener(self.opener)
         run.set_autorun(False)
-        if Flags.images.is_true():
+        if self.app.has_images():
             run.set_curses(True, Success.RANDOM)
         else:
             run.set_curses(True, Success.FIXED)

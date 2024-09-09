@@ -1,70 +1,62 @@
 import curses
-from typing import List, Tuple, Optional
-import os
 import enum
-
-from tko.play.keys import DiffActions, DiffKeys
-
-from tko.run.basic import ExecutionResult
-from tko.run.unit import Unit
-from tko.run.param import Param
-from tko.run.unit_runner import UnitRunner
-from tko.run.diff_builder import DiffBuilder
-from tko.run.solver_builder import CompileError
-from tko.run.wdir import Wdir
-from tko.run.report import Report
-from tko.run.basic import Success
-
-from tko.play.frame import Frame
-from tko.play.floating import Floating
-from tko.play.floating_manager import FloatingManager
-from tko.play.images import images, compilling, success, intro, executing, random_get
-from tko.play.fmt import Fmt
-from tko.play.border import Border
-from tko.play.opener import Opener
-from tko.play.flags import Flags
-
-from tko.util.sentence import Sentence, Token, RToken
-from tko.util.symbols import symbols
-from tko.util.freerun import Free
+import os
+from typing import List, Optional, Tuple
 
 from tko.game.task import Task
-
+from tko.play.border import Border
+from tko.play.flags import Flags
+from tko.play.floating import Floating
+from tko.play.floating_manager import FloatingManager
+from tko.play.fmt import Fmt
+from tko.play.frame import Frame
+from tko.play.images import compilling, executing, images, intro, random_get, success
+from tko.play.keys import GuiActions, GuiKeys, GuiKeys
+from tko.play.opener import Opener
+from tko.run.diff_builder import DiffBuilder
+from tko.util.report import Report
+from tko.run.solver_builder import CompileError
+from tko.run.unit import Unit
+from tko.run.unit_runner import UnitRunner
+from tko.run.wdir import Wdir
 from tko.settings.settings import Settings
+from tko.util.consts import ExecutionResult, Success
+from tko.util.freerun import Free
+from tko.util.sentence import RToken, Sentence, Token
+from tko.util.symbols import symbols
+from tko.util.consts import DiffMode
+from tko.play.input_manager import InputManager
 
-class CDiffMode(enum.Enum):
+
+class SeqMode(enum.Enum):
     intro = 0
     select = 1
     running = 2
     finished = 3
 
 class Diff:
-    def __init__(self, wdir: Wdir, param: Param.Basic, success_type: Success):
-        self.param = param
+    def __init__(self, settings: Settings, wdir: Wdir):
         self.results: List[Tuple[ExecutionResult, int]] = []
         self.wdir = wdir
         self.unit_list = [unit for unit in wdir.get_unit_list()] # unit list to be consumed
         self.exit = False
-        self.success_type = success_type
+
         self.task = Task()
         self.init = 1000   # index of first line to show
         self.length = 1  # length of diff
         self.space = 0  # dy space for draw
-        self.mode: CDiffMode = CDiffMode.intro
-        self.style = Border(Settings().app)
+        self.mode: SeqMode = SeqMode.intro
+
+        self.settings = settings
+        self.app = settings.app
+        self.borders = Border(settings.app)
 
         self.locked_index: bool = False
-
         self.focused_index = 0
-        self.finished = False
         self.resumes: List[str] = []
-
-        self.settings = Settings()
-        self.colors = self.settings.app.is_colored()
         self.first_loop = True
-        self.fman = FloatingManager()
-        self.first_run = False
 
+        self.fman = FloatingManager()
         self.opener: Optional[Opener] = None
 
     def set_first_run(self):
@@ -78,12 +70,7 @@ class Diff:
 
     def set_autorun(self, value:bool):
         if value:
-            self.mode = CDiffMode.running
-        return self
-
-    def save_settings(self):
-        self.settings.app._diff_mode = "down" if self.param.is_up_down else "side"
-        self.settings.save_settings()
+            self.mode = SeqMode.running
         return self
     
     def set_task(self, task: Task):
@@ -108,19 +95,19 @@ class Diff:
                 Fmt.write(i + init_y, 1, Sentence().addf(color, line).center(dx - 2, Token(" ", " ")))
 
     def show_success(self):
-        if self.success_type == Success.RANDOM:
+        if self.settings.app.has_images():
             out = random_get(images, self.get_folder(), "static")
         else:
             out = random_get(success, self.get_folder(), "static")
-        self.print_centered_image(out, "" if not self.colors else "g")
+        self.print_centered_image(out, "g")
         
     def show_compilling(self, clear=False):
         out = random_get(compilling, self.get_folder(), "random")
-        self.print_centered_image(out, "" if not self.colors else "y", clear)
+        self.print_centered_image(out, "y", clear)
 
     def show_executing(self, clear=False):
         out = executing
-        self.print_centered_image(out, "" if not self.colors else "y", clear, "v")
+        self.print_centered_image(out, "y", clear, "v")
 
     def draw_scrollbar(self):
         y_init = 3
@@ -204,13 +191,13 @@ class Diff:
 
     def process_one(self):
 
-        if self.mode != CDiffMode.running:
+        if self.mode != SeqMode.running:
             return
 
         solver = self.wdir.get_solver()
 
         if solver.compile_error:
-            self.mode = CDiffMode.finished
+            self.mode = SeqMode.finished
             while len(self.unit_list) > 0:
                 index = len(self.results)
                 self.unit_list = self.unit_list[1:]
@@ -218,7 +205,7 @@ class Diff:
             return
         
         if self.locked_index:
-            self.mode = CDiffMode.finished
+            self.mode = SeqMode.finished
             unit = self.get_focused_unit()
             unit.result = UnitRunner.run_unit(solver, unit, self.settings.app._timeout)
             return
@@ -234,7 +221,7 @@ class Diff:
             self.focused_index = index
 
         if len(self.unit_list) == 0:
-            self.mode = CDiffMode.finished
+            self.mode = SeqMode.finished
             self.focused_index = 0
 
 
@@ -250,37 +237,39 @@ class Diff:
 
 
     def build_top_line_header(self, frame):
-        activity_color = "W" if not self.colors else "C"
-        solver_color = "W" if not self.colors else "W"
-        sources_color = "W" if not self.colors else "Y"
-        running_color = "W" if not self.colors else "R"
+        activity_color = "C"
+        solver_color = "W"
+        sources_color = "Y"
+        running_color = "R"
 
         # building activity
-        activity = Sentence().add(self.style.border(activity_color, self.get_folder()))
+        activity = Sentence().add(self.borders.border(activity_color, self.get_folder()))
 
         # building solvers
         solvers = Sentence()
         if len(self.get_solver_names()) > 1:
-            solvers.add(Sentence().addf("R", f" {DiffActions.tab}").add(self.style.sharpR("R")))
+            solvers.add(Sentence().add(self.borders.roundL("R")).addf("R", f"{GuiActions.tab}").add(self.borders.sharpR("R")))
         for i, solver in enumerate(self.get_solver_names()):
+            if len(self.get_solver_names()) > 1:
+                solvers.add(" ")
             color = solver_color
             if i == self.task.main_index:
                 color = "G"
-            solvers.add(self.style.border(color, solver))
+            solvers.add(self.borders.border(color, solver))
         
         # replacing with count if running
         done = len(self.results)
         full = len(self.wdir.get_unit_list())
-        count_missing = Sentence().add(self.style.border(running_color, f"({done}/{full})"))
-        if self.mode == CDiffMode.running:
+        count_missing = Sentence().add(self.borders.border(running_color, f"({done}/{full})"))
+        if self.mode == SeqMode.running:
             if  self.locked_index:
-                solvers = Sentence().add(self.style.border("R", "Executando atividade travada"))
+                solvers = Sentence().add(self.borders.border("R", "Executando atividade travada"))
             else:
                 solvers = count_missing
 
         # building sources
         source_names = Sentence(", ").join([Sentence().addf(sources_color, f"{name[0]}({name[1]})") for name in self.wdir.sources_names()])
-        sources = Sentence().add(self.style.roundL(sources_color)).add(source_names).add(self.style.roundR(sources_color))
+        sources = Sentence().add(self.borders.roundL(sources_color)).add(source_names).add(self.borders.roundR(sources_color))
 
         # merging activity, solvers and sources in header
         delta = frame.get_dx() - solvers.len()
@@ -294,7 +283,7 @@ class Diff:
 
         return Sentence().add(activity).add("─" * left).add(solvers).add("─" * right).add(sources)
 
-    def build_top_bar_footer(self, frame):
+    def build_unit_list(self, frame: Frame) -> Sentence:
         done_list = self.results
         if len(done_list) > 0 and self.locked_index:
             _, index = done_list[self.focused_index]
@@ -309,34 +298,48 @@ class Diff:
             i += 1
 
         i = 0
-        show_focused_index = not self.wdir.get_solver().compile_error and not self.mode == CDiffMode.intro and not self.is_all_right()
+        show_focused_index = not self.wdir.get_solver().compile_error and not self.mode == SeqMode.intro and not self.is_all_right()
         
-        output = Sentence().add(6 * "─")
+        output = Sentence().add(self.get_fixed_arrow())
         for unit_result, index in done_list + todo_list:
             foco = i == self.focused_index
             token = self.get_token(unit_result)
-            extrap = self.style.roundL(token.fmt) # if not foco else Token(self.style.roundL(), "")
-            extras = self.style.roundR(token.fmt) # if not foco else Token(self.style.roundR(), "")
+            extrap = self.borders.roundL(token.fmt)
+            extras = self.borders.roundR(token.fmt)
             if foco and show_focused_index:
-                token.fmt = ""
-            output.add(extrap).addf(token.fmt, str(index).zfill(2)).add(token).add(extras).add(" ")
+                token.fmt = token.fmt.lower() + "C"
+                extrap = self.borders.roundL("C")
+                extras = self.borders.roundR("C")
+
+            output.add(" ").add(extrap).addf(token.fmt, str(index).zfill(2)).add(token).add(extras)
             i += 1
 
         size = 6
-        if self.focused_index * (size + 1) > frame.get_dx():
-            output.cut_begin((self.focused_index + 2) * size - frame.get_dx())
+        to_remove = 0
+        index = self.focused_index
+        dx = frame.get_dx()
+        while (index + 2) * size - to_remove >= dx:
+            to_remove += size
+        output.data = output.data[:6] + output.data[6 + to_remove:]
         return output
+
+    def get_fixed_arrow(self) -> Sentence:
+        free = "⇛"
+        locked = "⇟"
+        symbol = locked if self.locked_index else free
+        color = "R" if self.locked_index else "G"
+        return Sentence().add(self.borders.roundL(color)).addf(color, f"{GuiKeys.travar} {symbol}").add(self.borders.sharpR(color))
 
     def draw_top_bar_content(self, frame):
         focused_unit_color = "Y"
         value = self.get_focused_unit()
         info = Sentence()
         if self.wdir.get_solver().compile_error:
-            info = self.style.border("R", "Erro de compilação")
-        elif value is not None and not self.is_all_right() and not self.mode == CDiffMode.intro:
+            info = self.borders.border("R", "Erro de compilação")
+        elif value is not None and not self.is_all_right() and not self.mode == SeqMode.intro:
             info = value.str(pad = False)
             if self.locked_index:
-                info = self.style.border(focused_unit_color, info.get_text())
+                info = self.borders.border(focused_unit_color, info.get_text())
         frame.write(0, 0, Sentence().add(info).center(frame.get_dx()))
 
     def draw_top_bar(self):
@@ -344,18 +347,9 @@ class Diff:
         _, cols = Fmt.get_size()
         frame = Frame(0, 0).set_size(3, cols)
         frame.set_header(self.build_top_line_header(frame))
-
         self.draw_top_bar_content(frame)
-    
-        frame.set_footer(self.build_top_bar_footer(frame), "")
+        frame.set_footer(self.build_unit_list(frame), "")
         frame.draw()
-
-        free = "⇛"
-        locked = "⇟"
-        symbol = locked if self.locked_index else free
-        color = "R" if self.locked_index else "G"
-        arrow = Sentence().addf(color, f" {symbol}[{DiffKeys.travar}]").add(self.style.sharpR(color))
-        Fmt.write(2, 1, arrow)
         
     def two_column_mode(self):
         _, cols = Fmt.get_size()
@@ -363,36 +357,42 @@ class Diff:
 
     def make_bottom_line(self) -> List[Sentence]:
         cmds: List[Sentence] = []
-        if Flags.hud.is_true():
-            cmds.append(self.style.border("M", f"{DiffActions.rodar} [{DiffKeys.rodar}]"))
-            # diff
-            text = f"VER╾hor[{DiffKeys.diff}]" if self.settings.app._diff_mode == "side" else f"ver╼HOR[{DiffKeys.diff}]"
-            cmds.append(self.style.border("M", text))
-        
-        cmds.append(self.style.border("C", f" {DiffActions.sair}  [{DiffKeys.sair}]"))
+        if self.app.has_full_hud():
+            # rodar
+            cmds.append(self.borders.border("M", f"{GuiActions.rodar} [{GuiKeys.rodar}]"))
+            # fixar
+            color = "G" if self.locked_index else "M"
+            symbol = symbols.success if self.locked_index else symbols.failure
+            travar = f"{symbol.text} {GuiActions.fixar}[{GuiKeys.travar}]"
+            cmds.append(self.borders.border(color, travar))
+        # sair
+        cmds.append(self.borders.border("C", f" {GuiActions.sair}  [{GuiKeys.sair}]"))
+        # editar
         if self.opener is not None:
-            cmds.append(self.style.border("C", f"{DiffActions.editar} [{DiffKeys.editar}]"))
-        cmds.append(self.style.border("G", f"{DiffActions.ativar} [↲]"))
+            cmds.append(self.borders.border("C", f"{GuiActions.editar} [{GuiKeys.editar}]"))
+        # ativar
+        cmds.append(self.borders.border("G", f"{GuiActions.ativar} [↲]"))
         
-        color = "G" if Flags.hud.is_true() else "Y"
-        symbol = symbols.success if Flags.hud.is_true() else symbols.failure
-        cmds.append(self.style.border(color, f" {symbol.text} {DiffActions.hud} [{DiffKeys.hud}]"))
-        if Flags.hud.is_true():
-            value = str(self.settings.app._timeout)
+        # hud
+        color = "G" if self.app.has_full_hud() else "Y"
+        symbol = symbols.success if self.app.has_full_hud() else symbols.failure
+        cmds.append(self.borders.border(color, f" {symbol.text} {GuiActions.hud} [{GuiKeys.hud}]"))
+
+        if self.app.has_full_hud():
+            # tempo
+            value = str(self.settings.app.get_timeout())
             if value == "0":
                 value = "∞"
             cmds.append(
                 Sentence()
-                    .add(self.style.roundL("M"))
-                    .add(RToken("M", "{} {}[{}]".format(DiffActions.tempo, value, DiffKeys.tempo)))
-                    .add(self.style.roundR("M"))
+                    .add(self.borders.roundL("M"))
+                    .add(RToken("M", "{} {}[{}]".format(GuiActions.tempo, value, GuiKeys.tempo)))
+                    .add(self.borders.roundR("M"))
             )
-            color = "G" if self.locked_index else "M"
-            symbol = symbols.success if self.locked_index else symbols.failure
-            travar = f"{symbol.text} {DiffActions.fixar}[{DiffKeys.travar}]"
-            cmds.append(self.style.border(color, travar))
-
-
+            # diff mode
+            text = f"VER╾hor[{GuiKeys.diff}]" if self.settings.app.get_diff_mode() == DiffMode.DOWN else f"ver╼HOR[{GuiKeys.diff}]"
+            cmds.append(self.borders.border("M", text))
+            
         return cmds
 
     def show_bottom_line(self):
@@ -412,7 +412,7 @@ class Diff:
     def is_all_right(self):
         if self.locked_index or len(self.results) == 0:
             return False
-        if not self.mode == CDiffMode.finished:
+        if not self.mode == SeqMode.finished:
             return False
         for result, _ in self.results:
             if result != ExecutionResult.SUCCESS:
@@ -435,7 +435,7 @@ class Diff:
         if self.wdir.get_solver().compile_error:
             received = self.wdir.get_solver().error_msg
             line_list = [Sentence().add(line) for line in received.split("\n")]
-        elif self.param.is_up_down:
+        elif self.settings.app.get_diff_mode() == DiffMode.DOWN:
             line_list = DiffBuilder.mount_up_down_diff(unit, curses=True)
         else:
             line_list = DiffBuilder.mount_side_by_side_diff(unit, curses=True)
@@ -480,15 +480,16 @@ class Diff:
         return sorted(self.wdir.solvers_names())
     
     def main(self, scr):
+        InputManager.fix_esc_delay()
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
         while not self.exit:
-            if self.first_loop and self.first_run:
-                self.first_loop = False
-                self.load_autoload_warning()
+            # if self.first_loop:
+            #     self.first_loop = False
+            #     self.load_autoload_warning()
             Fmt.clear()
-            if self.mode == CDiffMode.running:
+            if self.mode == SeqMode.running:
                 if self.wdir.get_solver().not_compiled():
                     self.draw_top_bar()
                     self.show_bottom_line()
@@ -498,7 +499,7 @@ class Diff:
                         self.wdir.get_solver().prepare_exec()
                     except CompileError as e:
                         self.fman.add_input(Floating("v>").error().put_text(e.message))
-                        self.mode = CDiffMode.finished
+                        self.mode = SeqMode.finished
                     Fmt.clear()
                     self.draw_top_bar()
                     self.show_bottom_line()
@@ -506,7 +507,7 @@ class Diff:
                 self.process_one()
             self.draw_top_bar()
 
-            if self.mode == CDiffMode.intro:
+            if self.mode == SeqMode.intro:
                 self.print_centered_image(random_get(intro, self.get_folder()), "y")
             else:
                 self.draw_main()
@@ -516,7 +517,7 @@ class Diff:
             if self.fman.has_floating():
                 self.fman.draw_warnings()
 
-            if self.mode == CDiffMode.running:
+            if self.mode == SeqMode.running:
                 Fmt.refresh()
                 continue
 
@@ -530,14 +531,14 @@ class Diff:
                 return fn_exec
 
     def run_exec_mode(self):
-        self.mode = CDiffMode.running
+        self.mode = SeqMode.running
         if self.wdir.is_autoload():
             self.wdir.autoload()
             self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index])
         return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True)
 
     def run_test_mode(self):
-        self.mode = CDiffMode.running
+        self.mode = SeqMode.running
         if self.wdir.is_autoload():
             self.wdir.autoload() # reload sources and solvers
         
@@ -565,35 +566,41 @@ class Diff:
                     )
 
     def go_left(self):
-        if self.mode == CDiffMode.intro:
-            self.mode = CDiffMode.select
+        if self.mode == SeqMode.intro:
+            self.mode = SeqMode.select
+        if self.mode == SeqMode.finished:
+            self.mode = SeqMode.select
+            return
         if self.locked_index:
-            self.fman.add_input(Floating("v>").warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(DiffKeys.travar)))
+            self.fman.add_input(Floating("v>").warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(GuiKeys.travar)))
             return
         if not self.wdir.get_solver().compile_error:
             self.focused_index = max(0, self.focused_index - 1)
             self.init = 1000
 
     def go_right(self):
-        if self.mode == CDiffMode.intro:
-            self.mode = CDiffMode.select
+        if self.mode == SeqMode.intro:
+            self.mode = SeqMode.select
             self.focused_index = 0
             return
+        if self.mode == SeqMode.finished:
+            self.mode = SeqMode.select
+            return
         if self.locked_index:
-            self.fman.add_input(Floating("v>").warning().put_text("→\nAtividade travada\nAperte {} para destravar".format(DiffKeys.travar)))
+            self.fman.add_input(Floating("v>").warning().put_text("→\nAtividade travada\nAperte {} para destravar".format(GuiKeys.travar)))
             return
         if not self.wdir.get_solver().compile_error:
             self.focused_index = min(len(self.wdir.get_unit_list()) - 1, self.focused_index + 1)
             self.init = 1000
 
     def go_down(self):
-        if self.mode == CDiffMode.intro:
-            self.mode = CDiffMode.select
+        if self.mode == SeqMode.intro:
+            self.mode = SeqMode.select
         self.init += 1
 
     def go_up(self):
-        if self.mode == CDiffMode.intro:
-            self.mode = CDiffMode.select
+        if self.mode == SeqMode.intro:
+            self.mode = SeqMode.select
         self.init = max(0, self.init - 1)
 
     def change_main(self):
@@ -609,8 +616,8 @@ class Diff:
 
     def lock_unit(self):
         self.locked_index = not self.locked_index
-        if self.mode == CDiffMode.intro:
-            self.mode = CDiffMode.select
+        if self.mode == SeqMode.intro:
+            self.mode = SeqMode.select
         if self.locked_index:
             for i in range(len(self.results)):
                 _, index = self.results[i]
@@ -618,7 +625,7 @@ class Diff:
             self.fman.add_input(
                 Floating("v>").warning()
                 .put_text("Atividade travada")
-                .put_sentence(Sentence("Aperte ").addf("g", DiffKeys.travar).add(" para destravar"))
+                .put_sentence(Sentence("Aperte ").addf("g", GuiKeys.travar).add(" para destravar"))
                 .put_sentence(Sentence("Use ").addf("g", "Enter").add(" para rodar os testes"))
             )
 
@@ -630,8 +637,8 @@ class Diff:
                 valor *= 2
             if valor >= 5:
                 valor = 0
-            self.settings.app._timeout = valor
-            self.save_settings()
+            self.settings.app.set_timeout(valor)
+            self.settings.save_settings()
             nome = "∞" if valor == 0 else str(valor)
             self.fman.add_input(
                 Floating("v>").warning()
@@ -640,38 +647,46 @@ class Diff:
             )
 
     def process_key(self, key):
-        key_esc = 27
-        if key == ord('q') or key == key_esc or key == DiffKeys.backspace1:
+        if key == ord('q') or key == InputManager.backspace1 or key == InputManager.backspace2:
             self.set_exit()
-        elif key == curses.KEY_LEFT or key == ord(DiffKeys.left):
+        elif key == InputManager.esc:
+            if self.locked_index:
+                self.locked_index = False
+            else:
+                self.set_exit()
+        elif key == curses.KEY_LEFT or key == ord(GuiKeys.left):
             self.go_left()
-        elif key == curses.KEY_RIGHT or key == ord(DiffKeys.right):
+        elif key == curses.KEY_RIGHT or key == ord(GuiKeys.right):
             self.go_right()
-        elif key == curses.KEY_DOWN or key == ord(DiffKeys.down):
+        elif key == curses.KEY_DOWN or key == ord(GuiKeys.down):
             self.go_down()
-        elif key == curses.KEY_UP or key == ord(DiffKeys.up):
+        elif key == curses.KEY_UP or key == ord(GuiKeys.up):
             self.go_up()
-        elif key == ord(DiffKeys.diff):
-            self.param.is_up_down = not self.param.is_up_down
-            self.save_settings()
-            # self.init = 0
-        elif key == ord(DiffKeys.principal):
+        elif key == ord(GuiKeys.principal):
             self.change_main()
-        elif key == ord(DiffKeys.rodar):
+        elif key == ord(GuiKeys.rodar):
             return self.run_exec_mode()
-        elif key == ord(DiffKeys.testar):
+        elif key == ord(GuiKeys.testar):
             self.run_test_mode()
-        elif key == ord(DiffKeys.travar):
+        elif key == ord(GuiKeys.travar):
             self.lock_unit()
-        elif key == ord(DiffKeys.editar):
+        elif key == ord(GuiKeys.editar):
             if self.opener is not None:
                 self.opener.open_code(open_dir=True)
-        elif key == ord(DiffKeys.tempo):
+        elif key == ord(GuiKeys.tempo):
             self.change_limit()
-        elif key == ord(DiffKeys.hud):
-            Flags.hud.toggle()
-        elif key == ord(DiffKeys.border):
+        elif key == ord(GuiKeys.hud):
+            self.settings.app.toggle_hud()
+            self.settings.save_settings()
+        elif key == ord(GuiKeys.diff):
+            self.settings.app.toggle_diff()
+            self.settings.save_settings()
+        elif key == ord(GuiKeys.border):
             self.settings.app.toggle_borders()
+            self.settings.save_settings()
+        elif key == ord(GuiKeys.images):
+            self.settings.app.toggle_images()
+            self.settings.save_settings()
         elif key != -1 and key != curses.KEY_RESIZE:
             self.send_char_not_found(key)
 

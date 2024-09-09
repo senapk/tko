@@ -40,7 +40,7 @@ class Test:
 
     def test_convert6(self):
         app = AppSettings()
-        app._borders = True
+        app._use_borders = True
         res = Border(app).build_bar("abcdefghij", 0.5, 10, "G", "R", round=True)
         val, fmt = res.resume_val_fmt()
         assert val == "abcdefgh"
@@ -48,7 +48,7 @@ class Test:
 
     def test_convert7(self):
         app = AppSettings()
-        app._borders = True
+        app._use_borders = True
         res = Border(app).build_bar("abcdefghij", 0.5, 11, "G", "R", round=True)
         val, fmt = res.resume_val_fmt()
         assert val == "abcdefghi"
@@ -56,7 +56,7 @@ class Test:
 
     def test_convert8(self):
         app = AppSettings()
-        app._borders = True
+        app._use_borders = True
         res = Border(app).build_bar("abcdefghij", 0, 11, "G", "R", round=True)
         val, fmt = res.resume_val_fmt()
         assert val == "abcdefghi"
@@ -64,7 +64,7 @@ class Test:
     
     def test_convert9(self):
         app = AppSettings()
-        app._borders = False
+        app._use_borders = False
         res = Border(app).build_bar("abcdefghij", 0, 11, "G", "R", round=True)
         val, fmt = res.resume_val_fmt()
         assert val == " abcdefghi "

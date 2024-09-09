@@ -1,47 +1,21 @@
-class DiffKeys:
-    backspace1 = 127
-    left = "a"
-    up = "w"
-    right = "d"
-    down = "s"
-    diff = "m"
-    rodar = "r"
-    testar = "\n"
-    principal = "\t"
-    sair   = "q"
-    editar = "e"
-    travar = "f"
-    tempo  = "t"
-    hud = "h"
-    border = "B"
-
-
-class DiffActions:
+class GuiActions:
     tab = "↔TAB"
     sair   = "Sair"
     editar = "Editar"
-    ativar = "Ativar"
     rodar  = " Rodar"
     principal = "Principal"
     fixar  = "Fixar"
     tempo = "Tempo"
     hud = "HUD"
-
-
-class GuiActions:
-    tab = "↔TAB"
     github = "Github"
-    sair = "Sair"
     ajuda = "Ajuda"
     baixar = "Baixar"
     ativar = "Ativar"
     navegar = "←↓→"
-    editar = "Editar"
     marcar = "Marcar"
     desmarcar = "Desmarcar"
     colapsar = "Colapsar"
     pesquisar = "Buscar"
-    hud = "HUD"
 
 
 class GuiKeys:
@@ -50,6 +24,8 @@ class GuiKeys:
     down = "s"
     up = "w"
 
+    hud = "h"
+    images = "I"
     down_task = "b"
     activate = "\n"
     key_help = "?"
@@ -70,4 +46,12 @@ class GuiKeys:
     borders = "B"
     pesquisar = "/"
     graph = "G"
-    hud = "h"
+    diff = "m"
+    rodar = "r"
+    testar = "\n"
+    principal = "\t"
+    sair   = "q"
+    editar = "e"
+    travar = "f"
+    tempo  = "t"
+    border = "B"

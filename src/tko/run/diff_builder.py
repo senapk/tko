@@ -2,9 +2,9 @@ from typing import List, Optional, Tuple
 
 from ..util.symbols import symbols
 from ..util.sentence import Sentence, Token
-from .basic import ExecutionResult
+from ..util.consts import ExecutionResult
 from .unit import Unit
-from .report import Report
+from ..util.report import Report
 
 class DiffBuilder:
 

@@ -1,5 +1,5 @@
 from typing import Optional
-from .basic import ExecutionResult
+from ..util.consts import ExecutionResult
 from ..util.sentence import Sentence
 import os
 

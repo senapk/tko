@@ -3,7 +3,7 @@ from typing import Tuple, Optional
 import os
 from subprocess import PIPE
 from .term_color import term_print
-from ..run.report import Report
+from .report import Report
 
 class Runner:
     def __init__(self):

@@ -2,15 +2,17 @@ from typing import List, Optional, Tuple
 import math
 import os
 
-from .basic import IdentifierType, Identifier
+from ..util.identifier import Identifier
+
+from ..util.consts import IdentifierType
 from .unit import Unit
-from .param import Param
+from ..util.param import Param
 from .loader import Loader
 from .solver_builder import SolverBuilder
 
 from ..util.sentence import Sentence
 from ..util.symbols import symbols
-from .label_factory import LabelFactory
+from ..util.label_factory import LabelFactory
 from ..settings.rep_settings import languages_avaliable
 class Wdir:
     def __init__(self):

@@ -72,10 +72,14 @@ class Config:
             elements.append(item)
         border_values = ["1" if self.app.has_borders() else "0"]
         graph_values = ["1" if self.gen_graph else "0"]
+        images_values = ["1" if self.app.has_images() else "0"]
         bordas = Flag().set_name("Bordas").set_keycode("B").set_values(border_values).set_description("Ativa as bordas se a fonte tiver suporte    ").set_bool()
         elements.append(ConfigItem(bordas, self.app.toggle_borders))
         grafo = Flag().set_name("Grafo").set_keycode("G").set_values(graph_values)   .set_description("Ativa a geração do grafo do repositório     ").set_bool()
         elements.append(ConfigItem(grafo, self.graph_toggle))
+        images = Flag().set_name("Imagens").set_keycode("I").set_values(images_values)    .set_description("Mostra imagens de abertura e sucesso        ").location("left")
+        elements.append(ConfigItem(images, self.app.toggle_images))
+       
         language = Flag().set_name("Linguagem").set_values([]).set_keycode("L")      .set_description("Muda a linguagem de download dos rascunhos  ")
         elements.append(ConfigItem(language, lambda: self.set_language(False)))
 

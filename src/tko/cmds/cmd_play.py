@@ -7,7 +7,7 @@ import os
 
 class CmdPlay:
     @staticmethod
-    def execute(rep_alias: str, settings: Settings, graph: bool, svg: bool):
+    def execute(rep_alias: str, settings: Settings):
         while True:
             rep_alias = settings.check_rep_alias(rep_alias)
             rep_source: RepSource = settings.get_rep_source(rep_alias)
@@ -18,11 +18,8 @@ class CmdPlay:
             game.parse_file(file)
 
             # passing a lambda function to the play class to save the settings
-            ext = ""
-            if graph:
-                ext = ".svg" if svg else ".png"
             play = Play(settings=settings, game=game, rep=rep)
             print(f"Abrindo repositório de {rep_alias}")
-            reload = play.play(ext)
+            reload = play.play()
             if not reload:
                 break

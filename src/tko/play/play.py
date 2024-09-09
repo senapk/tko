@@ -140,6 +140,7 @@ class Play:
 
         cman.add_str(Flags.config.get_keycode(), self.toggle_config)
         cman.add_str(Flags.skills.get_keycode(), self.toggle_skills)
+        cman.add_str(GuiKeys.hud, self.app.toggle_hud)
         cman.add_str("/", self.gui.search.toggle_search)
 
         return cman
@@ -192,22 +193,22 @@ class Play:
             if self.first_loop:
                 self.first_loop = False
 
-    # def check_lang_in_text_mode(self):
-    #     lang = self.rep.get_lang()
-    #     if lang == "":
-    #         options = languages_avaliable
-    #         print("\nLinguagem padrão ainda não foi definida.\n")
-    #         while True:
-    #             print("Escolha entre as opções a seguir ", end="")
-    #             print("[" + ", ".join(options) + "]", ":", end=" ")
-    #             lang = input()
-    #             if lang in options:
-    #                 break
-    #         self.rep.set_lang(lang)
+    def check_lang_in_text_mode(self):
+        lang = self.rep.get_lang()
+        if lang == "":
+            options = languages_avaliable
+            print("\nLinguagem padrão ainda não foi definida.\n")
+            while True:
+                print("Escolha entre as opções a seguir ", end="")
+                print("[" + ", ".join(options) + "]", ":", end=" ")
+                lang = input()
+                if lang in options:
+                    break
+            self.rep.set_lang(lang)
 
-    def play(self, graph_ext: str):
-        self.graph_ext = graph_ext
-        # self.check_lang_in_text_mode()
+    def play(self):
+
+        self.check_lang_in_text_mode()
 
         while True:
             output = curses.wrapper(self.main)

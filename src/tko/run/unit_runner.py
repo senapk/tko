@@ -1,5 +1,5 @@
 from .unit import Unit
-from .basic import ExecutionResult
+from ..util.consts import ExecutionResult
 
 from ..util.runner import Runner
 from .solver_builder import SolverBuilder

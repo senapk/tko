@@ -1,5 +1,5 @@
 from typing import Optional
-from .basic import DiffMode
+from .consts import DiffCount, DiffMode
 
 class Param:
 
@@ -10,8 +10,8 @@ class Param:
         def __init__(self):
             self.index: Optional[int] = None
             self.label_pattern: Optional[str] = None
-            self.is_up_down: bool = False
-            self.diff_mode = DiffMode.FIRST
+            self.diff_mode = DiffMode.SIDE
+            self.diff_count = DiffCount.FIRST
             self.filter: bool = False
             self.compact: bool = False
 
@@ -27,16 +27,16 @@ class Param:
             self.compact = value
             return self
 
-        def set_up_down(self, value: bool):
-            self.is_up_down = value
+        def set_diff_mode(self, value: DiffMode):
+            self.diff_mode = value
             return self
     
         def set_filter(self, value: bool):
             self.filter = value
             return self
 
-        def set_diff_mode(self, value: DiffMode):
-            self.diff_mode = value
+        def set_diff_count(self, value: DiffCount):
+            self.diff_count = value
             return self
 
     class Manip:

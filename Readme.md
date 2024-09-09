@@ -267,10 +267,6 @@ tko run Solver.java cases.tio -i 5
 $ tko config --help
 options:
   -h, --help          show this help message and exit
-  --ascii             set ascii mode.
-  --unicode           set unicode mode.
-  --color             set colored mode.
-  --mono              set mono mode.
   --side              set side_by_side diff mode.
   --down              set up_to_down diff mode.
   --lang ext, -l ext  set default language extension.

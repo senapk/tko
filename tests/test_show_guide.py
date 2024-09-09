@@ -25,8 +25,6 @@ guide = """
 ╟─────────── MUDAR VISUALIZAÇÃO ───────────╢
 ║             tko config <--opcao>         ║
 ║DiffMode: tko config [--side  | --down ]  ║
-║Cores   : tko config [--mono  | --color  ]║
-║Encoding: tko config [--ascii | --unicode]║
 ╚══════════════════════════════════════════╝
 """[1:]
 
