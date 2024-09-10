@@ -17,6 +17,7 @@ from tko.play.fmt import Fmt
 from tko.play.floating import Floating
 from tko.play.flags import Flags
 from tko.play.gui import Gui
+from tko.play.opener import Opener
 
 import os
 import tempfile
@@ -31,7 +32,6 @@ class PlayActions:
         self.rep = gui.rep
         self.tree = gui.tree
         self.game = gui.game
-        self.opener = gui.opener
         self.graph_opened: bool = False
         self.gui = gui
 
@@ -42,6 +42,29 @@ class PlayActions:
     def open_link_without_stdout_stderr(self, link: str):
         outfile = tempfile.NamedTemporaryFile(delete=False)
         subprocess.Popen("python3 -m webbrowser -t {}".format(link), stdout=outfile, stderr=outfile, shell=True)
+
+    def open_code(self):
+        obj = self.tree.get_selected()
+        if isinstance(obj, Task):
+            task: Task = obj
+            folder = os.path.join(self.app._rootdir, self.rep.alias, task.key)
+            if os.path.exists(folder):
+                opener = Opener(self.settings).set_fman(self.fman)
+                opener.set_target([folder]).set_language(self.rep.get_lang())
+                opener.load_folders_and_open()
+            else:
+                self.fman.add_input(
+                    Floating("v>")
+                    .put_text("\nO arquivo de código não foi encontrado.\n")
+                    .error()
+                )
+        else:
+            self.fman.add_input(
+                Floating("v>")
+                .put_text("\nVocê só pode abrir o código")
+                .put_text("de tarefas baixadas.\n")
+                .error()
+            )
 
     def open_link(self):
         obj = self.tree.get_selected()
@@ -81,7 +104,8 @@ class PlayActions:
             path = self.gen_graph_path()
             # self.fman.add_input(Floating().put_text(f"\nGrafo gerado em\n {path} \n"))
             if not self.graph_opened:
-                self.opener.open_files([path])
+                opener = Opener(self.settings)
+                opener.open_files([path])
                 self.graph_opened = True
         except FileNotFoundError as _:
             self.gui.config.gen_graph = False
@@ -148,10 +172,11 @@ class PlayActions:
         return self.run_selected_task(task, rep_dir)
         
     def run_selected_task(self, task: Task, rep_dir: str):
-        path = os.path.join(rep_dir, task.key)
-        run = Run(self.settings, [path], None, Param.Basic())
+        folder = os.path.join(rep_dir, task.key)
+        run = Run(self.settings, [folder], None, Param.Basic())
         run.set_lang(self.rep.get_lang())
-        run.set_opener(self.opener)
+        opener = Opener(self.settings).set_language(self.rep.get_lang()).set_target([folder])
+        run.set_opener(opener)
         run.set_autorun(False)
         if self.app.has_images():
             run.set_curses(True, Success.RANDOM)

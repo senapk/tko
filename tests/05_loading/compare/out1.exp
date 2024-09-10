@@ -1,8 +1,8 @@
 ═══════════════════ Testando o código com os casos de teste ═══════════════════
 => Códigos:[solver.py] Testes:[cases_empty.tio(00), cases.tio(01)] [ω]
-(ω wrong_out)[00] GR:100 ./cases.tio ()
+(ω saída_incorreta)[00] GR:100 ./cases.tio ()
 ╭──────────────────────────────────────────────────────────────────────────────
-│                   (ω wrong_out)[00] GR:100 ./cases.tio ()                    
+│                (ω saída_incorreta)[00] GR:100 ./cases.tio ()                 
 ├────────────────────────────────── INSERIDO ──────────────────────────────────
 ├────────────────────────────────── ESPERADO ──────────────────────────────────
 ├ 1

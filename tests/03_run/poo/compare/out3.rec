@@ -1,17 +1,17 @@
 ═══════════════════ Testando o código com os casos de teste ═══════════════════
 => Códigos:[draft.ts] Testes:[cases.tio(10)] [ω ω ω ω ω ω ω ω ω ω]
-(ω wrong_out)[00] GR:010 cases.tio (inicializar      )
-(ω wrong_out)[01] GR:010 cases.tio (entrar           )
-(ω wrong_out)[02] GR:010 cases.tio (limite           )
-(ω wrong_out)[03] GR:010 cases.tio (sair             )
-(ω wrong_out)[04] GR:010 cases.tio (limite saida     )
-(ω wrong_out)[05] GR:010 cases.tio (abastecer        )
-(ω wrong_out)[06] GR:010 cases.tio (dirigir vazio    )
-(ω wrong_out)[07] GR:010 cases.tio (dirigir          )
-(ω wrong_out)[08] GR:010 cases.tio (para longe       )
-(ω wrong_out)[09] GR:010 cases.tio (enchendo o tanque)
+(ω saída_incorreta)[00] GR:010 cases.tio (inicializar      )
+(ω saída_incorreta)[01] GR:010 cases.tio (entrar           )
+(ω saída_incorreta)[02] GR:010 cases.tio (limite           )
+(ω saída_incorreta)[03] GR:010 cases.tio (sair             )
+(ω saída_incorreta)[04] GR:010 cases.tio (limite saida     )
+(ω saída_incorreta)[05] GR:010 cases.tio (abastecer        )
+(ω saída_incorreta)[06] GR:010 cases.tio (dirigir vazio    )
+(ω saída_incorreta)[07] GR:010 cases.tio (dirigir          )
+(ω saída_incorreta)[08] GR:010 cases.tio (para longe       )
+(ω saída_incorreta)[09] GR:010 cases.tio (enchendo o tanque)
 ╭──────────────────────────────────────────────────────────────────────────────
-│            (ω wrong_out)[00] GR:010 cases.tio (inicializar      )            
+│         (ω saída_incorreta)[00] GR:010 cases.tio (inicializar      )         
 ├────────────────────────────────── INSERIDO ──────────────────────────────────
 │ show
 │ end

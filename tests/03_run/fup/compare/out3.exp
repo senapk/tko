@@ -1,14 +1,14 @@
 ═══════════════════ Testando o código com os casos de teste ═══════════════════
 => Códigos:[solver.py] Testes:[cases.tio(07)] [ϵ ω ω ✓ ω ω ✓]
-(ϵ execution)[00] GR:014 cases.tio (duas raízes)
-(ω wrong_out)[01] GR:014 cases.tio (duas raízes)
-(ω wrong_out)[02] GR:014 cases.tio (uma raiz   )
-(✓ correct__)[03] GR:014 cases.tio (sem raízes )
-(ω wrong_out)[04] GR:014 cases.tio (05         )
-(ω wrong_out)[05] GR:014 cases.tio (06         )
-(✓ correct__)[06] GR:014 cases.tio (07         )
+(ϵ erro_execução__)[00] GR:014 cases.tio (duas raízes)
+(ω saída_incorreta)[01] GR:014 cases.tio (duas raízes)
+(ω saída_incorreta)[02] GR:014 cases.tio (uma raiz   )
+(✓ saída_correta__)[03] GR:014 cases.tio (sem raízes )
+(ω saída_incorreta)[04] GR:014 cases.tio (05         )
+(ω saída_incorreta)[05] GR:014 cases.tio (06         )
+(✓ saída_correta__)[06] GR:014 cases.tio (07         )
 ╭──────────────────────────────────────────────────────────────────────────────
-│               (ϵ execution)[00] GR:014 cases.tio (duas raízes)               
+│            (ϵ erro_execução__)[00] GR:014 cases.tio (duas raízes)            
 ├────────────────────────────────── INSERIDO ──────────────────────────────────
 ├────────────────────────────────── ESPERADO ──────────────────────────────────
 │ 0.44

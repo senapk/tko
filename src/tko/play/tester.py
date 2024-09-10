@@ -34,7 +34,7 @@ class SeqMode(enum.Enum):
     running = 2
     finished = 3
 
-class Diff:
+class Tester:
     def __init__(self, settings: Settings, wdir: Wdir):
         self.results: List[Tuple[ExecutionResult, int]] = []
         self.wdir = wdir
@@ -570,7 +570,6 @@ class Diff:
             self.mode = SeqMode.select
         if self.mode == SeqMode.finished:
             self.mode = SeqMode.select
-            return
         if self.locked_index:
             self.fman.add_input(Floating("v>").warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(GuiKeys.travar)))
             return
@@ -585,7 +584,6 @@ class Diff:
             return
         if self.mode == SeqMode.finished:
             self.mode = SeqMode.select
-            return
         if self.locked_index:
             self.fman.add_input(Floating("v>").warning().put_text("→\nAtividade travada\nAperte {} para destravar".format(GuiKeys.travar)))
             return
@@ -672,7 +670,7 @@ class Diff:
             self.lock_unit()
         elif key == ord(GuiKeys.editar):
             if self.opener is not None:
-                self.opener.open_code(open_dir=True)
+                self.opener.load_folders_and_open()
         elif key == ord(GuiKeys.tempo):
             self.change_limit()
         elif key == ord(GuiKeys.hud):

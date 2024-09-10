@@ -17,7 +17,7 @@ from ..util.symbols import symbols
 from ..run.writer import Writer
 from ..util.runner import Runner
 from ..util.freerun import Free
-from ..play.diff import Diff
+from ..play.tester import Tester
 from ..run.unit_runner import UnitRunner
 from ..game.task import Task
 from ..play.opener import Opener
@@ -220,18 +220,39 @@ class Run:
             return True
         return False
 
+    def __create_opener_for_wdir(self) -> Opener:
+        opener = Opener(self.settings)
+        folders = []
+        targets = ["."]
+        if self.target_list:
+            targets = self.target_list
+        for f in targets:
+            if os.path.isdir(f) and f not in folders:
+                folders.append(f)
+            else:
+                folder = os.path.dirname(os.path.abspath(f))
+                if folder not in folders:
+                    folders.append(folder)
+        opener.set_target(folders)
+        solver_zero = self.wdir.get_solver().path_list[0]
+        lang = solver_zero.split(".")[-1]
+        opener.set_language(lang)
+        return opener
+
     def __diff_mode(self):
         if self.wdir is None:
             return
         
         if self.__curses_mode:
-            cdiff = Diff(self.settings, self.wdir)
+            cdiff = Tester(self.settings, self.wdir)
             if self.__first_run:
                 cdiff.set_first_run()
             if self.__task is not None:
                 cdiff.set_task(self.__task)
             if self.__opener is not None:
                 cdiff.set_opener(self.__opener)
+            else:
+                cdiff.set_opener(self.__create_opener_for_wdir())
             cdiff.set_autorun(self.__autorun)
             cdiff.run()
         else:

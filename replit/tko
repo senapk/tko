@@ -23,7 +23,7 @@ import math
 import configparser
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.24.2"
+__version__ = "0.24.3"
 
 class Colors:
     def __init__(self):
@@ -3864,11 +3864,11 @@ class XP:
 
 
 class ExecutionResult(enum.Enum):
-    UNTESTED          = "não  testado   "
-    SUCCESS           = "saída correta  "
-    WRONG_OUTPUT      = "saída errada   "
-    COMPILATION_ERROR = "erro compilação"
-    EXECUTION_ERROR   = "erro execução  "
+    UNTESTED          = "não_verificado_"
+    SUCCESS           = "saída_correta__"
+    WRONG_OUTPUT      = "saída_incorreta"
+    COMPILATION_ERROR = "erro_compilação"
+    EXECUTION_ERROR   = "erro_execução__"
 
     @staticmethod
     def get_symbol(result) -> Token:
@@ -4879,28 +4879,28 @@ class Search:
 
 
 class Opener:
-    def __init__(self, tree: TaskTree, fman: FloatingManager):
-        self.tree = tree
-        self.fman = fman
-        self.app = tree.settings.app
-        self.rep = tree.rep
+    def __init__(self, settings: Settings):
+        self.settings = settings
+        self.fman: Optional[FloatingManager] = None
+        self.folders: List[str] = []
+        self.language: str = ""
 
     def set_fman(self, fman: FloatingManager):
         self.fman = fman
         return self
+    
+    def set_target(self, folders: List[str]):
+        self.folders = folders
+        return self
 
-    def get_task_readme_path(self) -> str:
-        obj = self.tree.get_selected()
-        if isinstance(obj, Task):
-            rootdir = self.app._rootdir
-            if rootdir != "":
-                path = os.path.join(self.app._rootdir, self.rep.alias, obj.key, "Readme.md")
-                if os.path.isfile(path):
-                    return path
-        return ""
+    def set_language(self, language: str):
+        self.language = language
+        return self
 
     def open_files(self, files_to_open: List[str]):
-        cmd = self.app._editor
+        files_to_open = list(set(files_to_open))
+
+        cmd = self.settings.app.get_editor()
         folder = os.path.dirname(os.path.abspath(files_to_open[0]));
         aviso = (Floating("v>")
                 .warning()
@@ -4909,65 +4909,50 @@ class Opener:
                 )
         files = [os.path.basename(path) for path in files_to_open]
         aviso.put_sentence(Sentence().addf("g", f"{cmd}").add(" ").addf("g", " ".join(files)).add(" "))
-        self.fman.add_input(aviso)
+        self.send_floating(aviso)
         fullcmd = "{} {}".format(cmd, " ".join(files_to_open))
         outfile = tempfile.NamedTemporaryFile(delete=False)
         subprocess.Popen(fullcmd, stdout=outfile, stderr=outfile, shell=True)
 
-    def open_code(self, open_drafts: bool=False, open_readme: bool=False, open_dir: bool = False, open_cases: bool = False):
-        obj = self.tree.get_selected()
-        if isinstance(obj, Task):
-            path = self.get_task_readme_path()
-            # code, _, _ = Runner().subprocess_run("whereis {}".format(cmd))
-            if not os.path.isfile(path):
-                if open_readme:
-                    self.fman.add_input(
-                        Floating("v>").error().put_text("Não achei nada baixado para você ler.")
-                    )
-                if open_drafts:
-                    self.fman.add_input(
-                        Floating("v>").error().put_text("Não achei nada baixado para você editar.")
-                    )
-                if open_dir:
-                    self.fman.add_input(
-                        Floating("v>").error().put_text("Não achei nada baixado para você abrir.")
-                    )
-                return
-            if open_dir:
-                open_cases = True
-                open_readme = True
-                open_drafts = True
-                
-            files_to_open: List[str] = []
-            if open_readme:
-                files_to_open.append(path)
-                # Runner.subprocess_run(f"{cmd} {path}")
-            if open_cases:
-                cases = os.path.join(os.path.dirname(path), "cases.tio")
-                if os.path.isfile(cases):
-                    files_to_open.append(cases)
-                    # Runner.subprocess_run(f"{cmd} {cases}")
-            folder = os.path.dirname(path)
-            files = os.listdir(folder)
-            if open_drafts:
-                drafts = []
-                for f in files:
-                    allowed = [self.rep.get_lang()]
-                    if self.rep.get_lang() == "c" or self.rep.get_lang() == "cpp":
-                        allowed.append("h")
-                        allowed.append("hpp")
-                    if not f.endswith(tuple(allowed)):
-                        continue
-                    drafts.append(os.path.join(folder, f))
-                if len(drafts) == 0:
-                    self.fman.add_input(
-                        Floating("v>").error().put_text("Não achei nenhum arquivo de rascunho.")
-                    )
-                    return
-                for f in drafts:
-                    files_to_open.append(f)
-            if len(files_to_open) != 0:
-                self.open_files(files_to_open)
+    def send_floating(self, Floating: Floating):
+        if self.fman is not None:
+            self.fman.add_input(Floating)
+
+    def load_drafs(self, folder: str) -> List[str]:
+        files = os.listdir(folder)
+        files_to_open = []
+        for f in files:
+            allowed = [self.language]
+            if self.language == "c" or self.language== "cpp":
+                allowed.append("h")
+                allowed.append("hpp")
+            if not f.endswith(tuple(allowed)):
+                continue
+            files_to_open.append(os.path.join(folder, f))
+        return files_to_open
+
+    @staticmethod
+    def try_add(files_to_open: List[str], folder: str, file: str):
+        path = os.path.join(folder, file)
+        if os.path.isfile(path):
+            files_to_open.append(path)
+
+    def load_folder(self, folder: str):
+        files_to_open: List[str] = []
+        Opener.try_add(files_to_open, folder, "Readme.md")
+        Opener.try_add(files_to_open, folder, "cases.tio")
+        files_to_open += self.load_drafs(folder)
+        return files_to_open
+
+    def load_folders_and_open(self):
+        files_to_open: List[str] = []
+        for folder in self.folders:
+            files_to_open += self.load_folder(folder)
+        if len(files_to_open) != 0:
+            self.open_files(files_to_open)
+
+    def __call__(self):
+        self.load_folders_and_open()
 
 def empty_fn():
     pass
@@ -5086,7 +5071,6 @@ class Gui:
         self.fman = fman
         self.settings = tree.settings
         self.search = Search(tree=self.tree, fman=self.fman)
-        self.opener = Opener(tree=self.tree, fman=self.fman)
         self.style: Border = Border(self.settings.app)
         self.config = Config(self.settings, self.rep, self.flagsman, self.fman)
         self.colors = self.settings.colors
@@ -5145,7 +5129,7 @@ class Gui:
 
         alias_color = "R"
         top.add(self.style.border(alias_color, self.rep.alias.upper()))
-        if self.app.has_full_hud():
+        if Flags.admin.is_true():
             color = "W" if Flags.admin.is_true() else "K"
             top.add(self.style.border(color, "ADMIN"))
         top.add(self.style.border("G", self.rep.get_lang().upper()))
@@ -6399,7 +6383,7 @@ class SeqMode(enum.Enum):
     running = 2
     finished = 3
 
-class Diff:
+class Tester:
     def __init__(self, settings: Settings, wdir: Wdir):
         self.results: List[Tuple[ExecutionResult, int]] = []
         self.wdir = wdir
@@ -6935,7 +6919,6 @@ class Diff:
             self.mode = SeqMode.select
         if self.mode == SeqMode.finished:
             self.mode = SeqMode.select
-            return
         if self.locked_index:
             self.fman.add_input(Floating("v>").warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(GuiKeys.travar)))
             return
@@ -6950,7 +6933,6 @@ class Diff:
             return
         if self.mode == SeqMode.finished:
             self.mode = SeqMode.select
-            return
         if self.locked_index:
             self.fman.add_input(Floating("v>").warning().put_text("→\nAtividade travada\nAperte {} para destravar".format(GuiKeys.travar)))
             return
@@ -7037,7 +7019,7 @@ class Diff:
             self.lock_unit()
         elif key == ord(GuiKeys.editar):
             if self.opener is not None:
-                self.opener.open_code(open_dir=True)
+                self.opener.load_folders_and_open()
         elif key == ord(GuiKeys.tempo):
             self.change_limit()
         elif key == ord(GuiKeys.hud):
@@ -7356,18 +7338,39 @@ class Run:
             return True
         return False
 
+    def __create_opener_for_wdir(self) -> Opener:
+        opener = Opener(self.settings)
+        folders = []
+        targets = ["."]
+        if self.target_list:
+            targets = self.target_list
+        for f in targets:
+            if os.path.isdir(f) and f not in folders:
+                folders.append(f)
+            else:
+                folder = os.path.dirname(os.path.abspath(f))
+                if folder not in folders:
+                    folders.append(folder)
+        opener.set_target(folders)
+        solver_zero = self.wdir.get_solver().path_list[0]
+        lang = solver_zero.split(".")[-1]
+        opener.set_language(lang)
+        return opener
+
     def __diff_mode(self):
         if self.wdir is None:
             return
         
         if self.__curses_mode:
-            cdiff = Diff(self.settings, self.wdir)
+            cdiff = Tester(self.settings, self.wdir)
             if self.__first_run:
                 cdiff.set_first_run()
             if self.__task is not None:
                 cdiff.set_task(self.__task)
             if self.__opener is not None:
                 cdiff.set_opener(self.__opener)
+            else:
+                cdiff.set_opener(self.__create_opener_for_wdir())
             cdiff.set_autorun(self.__autorun)
             cdiff.run()
         else:
@@ -7623,7 +7626,6 @@ class PlayActions:
         self.rep = gui.rep
         self.tree = gui.tree
         self.game = gui.game
-        self.opener = gui.opener
         self.graph_opened: bool = False
         self.gui = gui
 
@@ -7634,6 +7636,29 @@ class PlayActions:
     def open_link_without_stdout_stderr(self, link: str):
         outfile = tempfile.NamedTemporaryFile(delete=False)
         subprocess.Popen("python3 -m webbrowser -t {}".format(link), stdout=outfile, stderr=outfile, shell=True)
+
+    def open_code(self):
+        obj = self.tree.get_selected()
+        if isinstance(obj, Task):
+            task: Task = obj
+            folder = os.path.join(self.app._rootdir, self.rep.alias, task.key)
+            if os.path.exists(folder):
+                opener = Opener(self.settings).set_fman(self.fman)
+                opener.set_target([folder]).set_language(self.rep.get_lang())
+                opener.load_folders_and_open()
+            else:
+                self.fman.add_input(
+                    Floating("v>")
+                    .put_text("\nO arquivo de código não foi encontrado.\n")
+                    .error()
+                )
+        else:
+            self.fman.add_input(
+                Floating("v>")
+                .put_text("\nVocê só pode abrir o código")
+                .put_text("de tarefas baixadas.\n")
+                .error()
+            )
 
     def open_link(self):
         obj = self.tree.get_selected()
@@ -7673,7 +7698,8 @@ class PlayActions:
             path = self.gen_graph_path()
             # self.fman.add_input(Floating().put_text(f"\nGrafo gerado em\n {path} \n"))
             if not self.graph_opened:
-                self.opener.open_files([path])
+                opener = Opener(self.settings)
+                opener.open_files([path])
                 self.graph_opened = True
         except FileNotFoundError as _:
             self.gui.config.gen_graph = False
@@ -7740,10 +7766,11 @@ class PlayActions:
         return self.run_selected_task(task, rep_dir)
         
     def run_selected_task(self, task: Task, rep_dir: str):
-        path = os.path.join(rep_dir, task.key)
-        run = Run(self.settings, [path], None, Param.Basic())
+        folder = os.path.join(rep_dir, task.key)
+        run = Run(self.settings, [folder], None, Param.Basic())
         run.set_lang(self.rep.get_lang())
-        run.set_opener(self.opener)
+        opener = Opener(self.settings).set_language(self.rep.get_lang()).set_target([folder])
+        run.set_opener(opener)
         run.set_autorun(False)
         if self.app.has_images():
             run.set_curses(True, Success.RANDOM)
@@ -7867,7 +7894,7 @@ class Play:
             cman.add_str(GuiKeys.inc_grade2, self.tree.inc_grade)
             cman.add_str(GuiKeys.dec_grade, self.tree.dec_grade)
             cman.add_str(GuiKeys.dec_grade2, self.tree.dec_grade)
-            cman.add_str(GuiKeys.edit, lambda: self.gui.opener.open_code(open_dir=True))
+            cman.add_str(GuiKeys.edit, lambda: self.actions.open_code())
             for value in range(1, 10):
                 cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
             cman.add_str("'", GradeFunctor(0, self.tree.set_grade))

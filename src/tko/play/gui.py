@@ -29,7 +29,6 @@ class Gui:
         self.fman = fman
         self.settings = tree.settings
         self.search = Search(tree=self.tree, fman=self.fman)
-        self.opener = Opener(tree=self.tree, fman=self.fman)
         self.style: Border = Border(self.settings.app)
         self.config = Config(self.settings, self.rep, self.flagsman, self.fman)
         self.colors = self.settings.colors
@@ -88,7 +87,7 @@ class Gui:
 
         alias_color = "R"
         top.add(self.style.border(alias_color, self.rep.alias.upper()))
-        if self.app.has_full_hud():
+        if Flags.admin.is_true():
             color = "W" if Flags.admin.is_true() else "K"
             top.add(self.style.border(color, "ADMIN"))
         top.add(self.style.border("G", self.rep.get_lang().upper()))

@@ -1,8 +1,8 @@
 ═══════════════════ Testando o código com os casos de teste ═══════════════════
 => Códigos:[exception.cpp] Testes:[cases.tio(01)] [ϵ]
-(ϵ execution)[00] GR:100 cases.tio ()
+(ϵ erro_execução__)[00] GR:100 cases.tio ()
 ╭──────────────────────────────────────────────────────────────────────────────
-│                    (ϵ execution)[00] GR:100 cases.tio ()                     
+│                 (ϵ erro_execução__)[00] GR:100 cases.tio ()                  
 ├────────────────────────────────── INSERIDO ──────────────────────────────────
 │ 1
 │ 2

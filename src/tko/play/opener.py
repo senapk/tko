@@ -2,6 +2,8 @@ from tko.play.tasktree import TaskTree, Task
 from tko.play.floating import Floating
 from tko.play.floating_manager import FloatingManager
 from tko.util.sentence import Sentence
+from tko.settings.settings import Settings
+from typing import Optional, List
 
 import tempfile
 import os
@@ -9,28 +11,28 @@ import subprocess
 from typing import List
 
 class Opener:
-    def __init__(self, tree: TaskTree, fman: FloatingManager):
-        self.tree = tree
-        self.fman = fman
-        self.app = tree.settings.app
-        self.rep = tree.rep
+    def __init__(self, settings: Settings):
+        self.settings = settings
+        self.fman: Optional[FloatingManager] = None
+        self.folders: List[str] = []
+        self.language: str = ""
 
     def set_fman(self, fman: FloatingManager):
         self.fman = fman
         return self
+    
+    def set_target(self, folders: List[str]):
+        self.folders = folders
+        return self
 
-    def get_task_readme_path(self) -> str:
-        obj = self.tree.get_selected()
-        if isinstance(obj, Task):
-            rootdir = self.app._rootdir
-            if rootdir != "":
-                path = os.path.join(self.app._rootdir, self.rep.alias, obj.key, "Readme.md")
-                if os.path.isfile(path):
-                    return path
-        return ""
+    def set_language(self, language: str):
+        self.language = language
+        return self
 
     def open_files(self, files_to_open: List[str]):
-        cmd = self.app._editor
+        files_to_open = list(set(files_to_open))
+
+        cmd = self.settings.app.get_editor()
         folder = os.path.dirname(os.path.abspath(files_to_open[0]));
         aviso = (Floating("v>")
                 .warning()
@@ -39,62 +41,47 @@ class Opener:
                 )
         files = [os.path.basename(path) for path in files_to_open]
         aviso.put_sentence(Sentence().addf("g", f"{cmd}").add(" ").addf("g", " ".join(files)).add(" "))
-        self.fman.add_input(aviso)
+        self.send_floating(aviso)
         fullcmd = "{} {}".format(cmd, " ".join(files_to_open))
         outfile = tempfile.NamedTemporaryFile(delete=False)
         subprocess.Popen(fullcmd, stdout=outfile, stderr=outfile, shell=True)
 
-    def open_code(self, open_drafts: bool=False, open_readme: bool=False, open_dir: bool = False, open_cases: bool = False):
-        obj = self.tree.get_selected()
-        if isinstance(obj, Task):
-            path = self.get_task_readme_path()
-            # code, _, _ = Runner().subprocess_run("whereis {}".format(cmd))
-            if not os.path.isfile(path):
-                if open_readme:
-                    self.fman.add_input(
-                        Floating("v>").error().put_text("Não achei nada baixado para você ler.")
-                    )
-                if open_drafts:
-                    self.fman.add_input(
-                        Floating("v>").error().put_text("Não achei nada baixado para você editar.")
-                    )
-                if open_dir:
-                    self.fman.add_input(
-                        Floating("v>").error().put_text("Não achei nada baixado para você abrir.")
-                    )
-                return
-            if open_dir:
-                open_cases = True
-                open_readme = True
-                open_drafts = True
-                
-            files_to_open: List[str] = []
-            if open_readme:
-                files_to_open.append(path)
-                # Runner.subprocess_run(f"{cmd} {path}")
-            if open_cases:
-                cases = os.path.join(os.path.dirname(path), "cases.tio")
-                if os.path.isfile(cases):
-                    files_to_open.append(cases)
-                    # Runner.subprocess_run(f"{cmd} {cases}")
-            folder = os.path.dirname(path)
-            files = os.listdir(folder)
-            if open_drafts:
-                drafts = []
-                for f in files:
-                    allowed = [self.rep.get_lang()]
-                    if self.rep.get_lang() == "c" or self.rep.get_lang() == "cpp":
-                        allowed.append("h")
-                        allowed.append("hpp")
-                    if not f.endswith(tuple(allowed)):
-                        continue
-                    drafts.append(os.path.join(folder, f))
-                if len(drafts) == 0:
-                    self.fman.add_input(
-                        Floating("v>").error().put_text("Não achei nenhum arquivo de rascunho.")
-                    )
-                    return
-                for f in drafts:
-                    files_to_open.append(f)
-            if len(files_to_open) != 0:
-                self.open_files(files_to_open)
+    def send_floating(self, Floating: Floating):
+        if self.fman is not None:
+            self.fman.add_input(Floating)
+
+    def load_drafs(self, folder: str) -> List[str]:
+        files = os.listdir(folder)
+        files_to_open = []
+        for f in files:
+            allowed = [self.language]
+            if self.language == "c" or self.language== "cpp":
+                allowed.append("h")
+                allowed.append("hpp")
+            if not f.endswith(tuple(allowed)):
+                continue
+            files_to_open.append(os.path.join(folder, f))
+        return files_to_open
+
+    @staticmethod
+    def try_add(files_to_open: List[str], folder: str, file: str):
+        path = os.path.join(folder, file)
+        if os.path.isfile(path):
+            files_to_open.append(path)
+
+    def load_folder(self, folder: str):
+        files_to_open: List[str] = []
+        Opener.try_add(files_to_open, folder, "Readme.md")
+        Opener.try_add(files_to_open, folder, "cases.tio")
+        files_to_open += self.load_drafs(folder)
+        return files_to_open
+
+    def load_folders_and_open(self):
+        files_to_open: List[str] = []
+        for folder in self.folders:
+            files_to_open += self.load_folder(folder)
+        if len(files_to_open) != 0:
+            self.open_files(files_to_open)
+
+    def __call__(self):
+        self.load_folders_and_open()

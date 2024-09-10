@@ -1,5 +1,9 @@
 # Changelog
 
+- 0.24.3
+  - fix: many small desing features
+  - add: editor command working in run
+  - refactor: editor command
 - 0.24.0
   - add: new config mode
 - 0.23.7

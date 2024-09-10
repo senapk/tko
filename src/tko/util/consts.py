@@ -4,11 +4,11 @@ from .symbols import symbols
 from .sentence import Token
 
 class ExecutionResult(enum.Enum):
-    UNTESTED          = "não  testado   "
-    SUCCESS           = "saída correta  "
-    WRONG_OUTPUT      = "saída errada   "
-    COMPILATION_ERROR = "erro compilação"
-    EXECUTION_ERROR   = "erro execução  "
+    UNTESTED          = "não_verificado_"
+    SUCCESS           = "saída_correta__"
+    WRONG_OUTPUT      = "saída_incorreta"
+    COMPILATION_ERROR = "erro_compilação"
+    EXECUTION_ERROR   = "erro_execução__"
 
     @staticmethod
     def get_symbol(result) -> Token:

@@ -1,18 +1,18 @@
 ════ Testando o código com os casos de teste ════
 => Códigos:[empty.py] Testes:[_calc.tio(11)] [ω ω ω ω ω ω ω ω ω ω ω]
-(ω wrong_out)[00] GR:009 _calc.tio (iniciar mostrar e recarregar       )
-(ω wrong_out)[01] GR:009 _calc.tio (charge                             )
-(ω wrong_out)[02] GR:009 _calc.tio (boundary                           )
-(ω wrong_out)[03] GR:009 _calc.tio (reset                              )
-(ω wrong_out)[04] GR:009 _calc.tio (somando                            )
-(ω wrong_out)[05] GR:009 _calc.tio (gastando bateria                   )
-(ω wrong_out)[06] GR:009 _calc.tio (sem bateria                        )
-(ω wrong_out)[07] GR:009 _calc.tio (recarregando                       )
-(ω wrong_out)[08] GR:009 _calc.tio (dividindo                          )
-(ω wrong_out)[09] GR:009 _calc.tio (dividindo por zero gastando bateria)
-(ω wrong_out)[10] GR:009 _calc.tio (gastando bateria                   )
+(ω saída_incorreta)[00] GR:009 _calc.tio (iniciar mostrar e recarregar       )
+(ω saída_incorreta)[01] GR:009 _calc.tio (charge                             )
+(ω saída_incorreta)[02] GR:009 _calc.tio (boundary                           )
+(ω saída_incorreta)[03] GR:009 _calc.tio (reset                              )
+(ω saída_incorreta)[04] GR:009 _calc.tio (somando                            )
+(ω saída_incorreta)[05] GR:009 _calc.tio (gastando bateria                   )
+(ω saída_incorreta)[06] GR:009 _calc.tio (sem bateria                        )
+(ω saída_incorreta)[07] GR:009 _calc.tio (recarregando                       )
+(ω saída_incorreta)[08] GR:009 _calc.tio (dividindo                          )
+(ω saída_incorreta)[09] GR:009 _calc.tio (dividindo por zero gastando bateria)
+(ω saída_incorreta)[10] GR:009 _calc.tio (gastando bateria                   )
 ╭────────────────────────────────────────────────
-│ (ω wrong_out)[00] GR:009 _calc.tio (iniciar mostrar e recarregar       ) 
+│ (ω saída_incorreta)[00] GR:009 _calc.tio (iniciar mostrar e recarregar       ) 
 ├─────────────────── INSERIDO ───────────────────
 │ init 5
 │ show

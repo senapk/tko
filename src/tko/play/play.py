@@ -121,7 +121,7 @@ class Play:
             cman.add_str(GuiKeys.inc_grade2, self.tree.inc_grade)
             cman.add_str(GuiKeys.dec_grade, self.tree.dec_grade)
             cman.add_str(GuiKeys.dec_grade2, self.tree.dec_grade)
-            cman.add_str(GuiKeys.edit, lambda: self.gui.opener.open_code(open_dir=True))
+            cman.add_str(GuiKeys.edit, lambda: self.actions.open_code())
             for value in range(1, 10):
                 cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
             cman.add_str("'", GradeFunctor(0, self.tree.set_grade))
