@@ -45,51 +45,6 @@ opening["estuda"] = r"""
            (______(((_(((______(@)
 """
 
-# opening["alien"] = r"""
-#        __.,,------.._
-#       ,'"   _      _   "`.
-#      /.__, ._  -=- _"`    Y
-#     (.____.-.`      ""`   j
-#      VvvvvvV`.Y,.    _.,-'       ,     ,     ,
-#         Y    ||,   '"\         ,/    ,/    ./
-#         |   ,'  ,     `-..,'_,'/___,'/   ,'/   ,
-#    ..  ,;,,',-'"\,'  ,  .     '     ' ""' '--,/    .. ..
-#  ,'. `.`---'     `, /  , Y -=-    ,'   ,   ,. .`-..||_|| ..
-# ff\\`. `._        /f ,'j j , ,' ,   , f ,  \=\ Y   || ||`||_..
-# l` \` `.`."`-..,-' j  /./ /, , / , / /l \   \=\l   || `' || ||...
-#  `  `   `-._ `-.,-/ ,' /`"/-/-/-/-"'''"`.`.  `'.\--`'--..`'_`' || ,
-#             "`-_,',  ,'  f    ,   /      `._    ``._     ,  `-.`'//         ,
-#           ,-"'' _.,-'    l_,-'_,,'          "`-._ . "`. /|     `.'\ ,       |
-#         ,',.,-'"          \=) ,`-.         ,    `-'._`.V |       \ // .. . /j
-#         |f\\               `._ )-."`.     /|         `.| |        `.`-||-\\/
-#         l` \`                 "`._   "`--' j          j' j          `-`---'
-#          `  `                     "`,-  ,'/       ,-'"  /
-#                                  ,'",__,-'       /,, ,-'
-#                                  Vvv'            VVv'
-# """
-
-# opening["alien2"] = r"""
-#                                          (  )  () @@  )  (( (
-#                                      (      (  )( @@  (  )) ) (
-#                                    (    (  ( ()( /---\   (()( (
-#      _______                            )  ) )(@ !O O! )@@  ( ) ) )
-#     <   ____)                      ) (  ( )( ()@ \ o / (@@@@@ ( ()( )
-#  /--|  |(  o|                     (  )  ) ((@@(@@ !o! @@@@(@@@@@)() (
-# |   >   \___|                      ) ( @)@@)@ /---\-/---\ )@@@@@()( )
-# |  /---------+                    (@@@@)@@@( // /-----\ \\ @@@)@@@@@(  .
-# | |    \ =========______/|@@@@@@@@@@@@@(@@@ // @ /---\ @ \\ @(@@@(@@@ .  .
-# |  \   \\=========------\|@@@@@@@@@@@@@@@@@ O @@@ /-\ @@@ O @@(@@)@@ @   .
-# |   \   \----+--\-)))           @@@@@@@@@@ !! @@@@ % @@@@ !! @@)@@@ .. .
-# |   |\______|_)))/             .    @@@@@@ !! @@ /---\ @@ !! @@(@@@ @ . .
-#  \__==========           *        .    @@ /MM  /\O   O/\  MM\ @@@@@@@. .
-#     |   |-\   \          (       .      @ !!!  !! \-/ !!  !!! @@@@@ .
-#     |   |  \   \          )            .  @@@@ !!     !!  .(. @.  .. .
-#     |   |   \   \        (    /   .(  . \)). ( |O  )( O! @@@@ . )      .
-#     |   |   /   /         ) (      )).  ((  .) !! ((( !! @@ (. ((. .   .
-#     |   |  /   /   ()  ))   ))   .( ( ( ) ). ( !!  )( !! ) ((   ))  ..
-#     |   |_<   /   ( ) ( (  ) )   (( )  )).) ((/ |  (  | \(  )) ((. ).
-# ____<_____\\__\__(___)_))_((_(____))__(_(___.oooO_____Oooo.(_(_)_)((_
-# """
 
 opening["alien3"] = r"""
            \.   \.      __,-"-.__      ./   ./
@@ -144,33 +99,33 @@ preguiçosos             ⠰⠇  ⠐⡑⠤⢀
 """
 
 intro: Dict[str, str] = {}
-intro["shark"] = r"""
-  _________         .    . r -> Roda sem testar             
- (..       \_    ,  |\  /| ↲ -> Testa usando casos de teste 
-  \       O  \  /|  \ \/ / f -> FIXA a execução para        
-   \______    \/ |   \  /       um único caso de teste      
-      vvvv\    \ |   /  |  TAB  Muda o arquivo PRINCIPAL    
-      \^^^^  ==   \_/   |       para problemas de múltiplos 
-       `\_   ===    \.  |       arquivos de código fonte    
-       / /\_   \ /      |  m -> muda o MODO diff de vertical
-       |/   \_  \|      /       para modo diff horizontal   
-              \________/   t -> define o limite de TEMPO    
-                           setas -> muda o teste            
-"""
+# intro["shark"] = r"""
+#   _________         .    . r -> Roda sem testar             
+#  (..       \_    ,  |\  /| ↲ -> Testa usando casos de teste 
+#   \       O  \  /|  \ \/ / f -> FIXA a execução para        
+#    \______    \/ |   \  /       um único caso de teste      
+#       vvvv\    \ |   /  |  TAB  Muda o arquivo PRINCIPAL    
+#       \^^^^  ==   \_/   |       para problemas de múltiplos 
+#        `\_   ===    \.  |       arquivos de código fonte    
+#        / /\_   \ /      |  m -> muda o MODO diff de vertical
+#        |/   \_  \|      /       para modo diff horizontal   
+#               \________/   t -> define o limite de TEMPO    
+#                            setas -> muda o teste            
+# """
 
-intro["cat"] = r"""
- ,_     _          r -> Roda sem testar             
- |\\_,-~/          ↲ -> Testa usando casos de teste 
- / _  _ |    ,--.  f -> FIXA a execução para        
-(  @  @ )   / ,-'       um único caso de teste      
- \  _T_/-._( (     TAB  Muda o arquivo PRINCIPAL    
- /         `. \         para problemas de múltiplos 
-|         _  \ |        arquivos de código fonte    
- \ \ ,  /      |   m -> muda o MODO diff de vertical
-  || |-_\__   /         para modo diff horizontal   
- ((_/`(____,-'     t -> define o limite de TEMPO    
-                   setas -> muda o teste            
-"""
+# intro["cat"] = r"""
+#  ,_     _          r -> Roda sem testar             
+#  |\\_,-~/          ↲ -> Testa usando casos de teste 
+#  / _  _ |    ,--.  f -> FIXA a execução para        
+# (  @  @ )   / ,-'       um único caso de teste      
+#  \  _T_/-._( (     TAB  Muda o arquivo PRINCIPAL    
+#  /         `. \         para problemas de múltiplos 
+# |         _  \ |        arquivos de código fonte    
+#  \ \ ,  /      |   m -> muda o MODO diff de vertical
+#   || |-_\__   /         para modo diff horizontal   
+#  ((_/`(____,-'     t -> define o limite de TEMPO    
+#                    setas -> muda o teste            
+# """
 
 intro["elephant"] = r"""
         ⣀⣀                r -> Roda sem testar             
@@ -314,15 +269,6 @@ Programando assim, você vai dominar o mundo!
            `.,'   |; \          \`\_,/-'  \'      
             .'    l \ `.        /"\ _ \`  j       
             f      : `-'        `._;."/`-'        
-            |      `.               ,7  \         
-            l       j             .'/ - \`.       
-           .j.  .   <            (.'    .\ \f`. |\
-          ,' `.  \ / \           `|      \,'||-:j 
-        .'  .'\   Y.  \___......__\ ._   /`.||    
-__.._,-" .-"'"")  /' ,' _          \ |  /"-.`j""``
-  .'_.-'"     / .("-'-"":\        ._)|_(__. "'    
- ;.'         /-'---"".--"'       /,_,^-._ .)      
- `:=.__.,itz `---._.;'
 """
 
 images["batman"] = r"""
@@ -444,12 +390,6 @@ vou aumentar a dificuldade!
   `HH `.      ,'   /     |@@@@@ @@@@.  `.           / /(~)
    HH   \_   ,'  _/`.    |@@@@@ @@@@@;  `.          ; (~~)
    ~~`.   \_,'  /   ;   .@@@@@ @@@@@@;\_  \___      ; H~\)
-       \_     _/    `.  |@@@@@@ @@@@@;  \     `----'_HH[~)
-         \___/       `. :@@@@@ @@@@@@'   \__,------' HH ~ 
-        ______        ; |@@@@@@ @@@'                 HH   
-      _)      \_,     ; :@@@@@@@@@;                  ~~   
-    _;          \\   ,' |@@@@@@@@@:                       
-
 """
 
 images["piupiu"] = r"""
@@ -560,7 +500,6 @@ O código ficou lindo dessa vez!
         ⠻⢿⣟⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠏       
           ⠘⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠁        
              ⠙⠿⢿⣿⣿⣿⡿⠋          
-Ou será que não?
 """
 
 images["pikachu"] = r"""

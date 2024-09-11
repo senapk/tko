@@ -57,7 +57,7 @@ class Settings:
         return self
 
     def __get_rep_file_path(self, course: str) -> str:
-        return os.path.join(self.app._rootdir, course, ".rep.json")   
+        return os.path.join(self.app._rootdir, course, ".rep.json")
 
     def get_rep_source(self, course: str) -> RepSource:
         if course in self.reps:

@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.24.4
+  - add: check update function
 - 0.24.3
   - fix: many small desing features
   - add: editor command working in run

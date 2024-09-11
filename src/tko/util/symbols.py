@@ -33,6 +33,11 @@ class __Symbols:
         self.uncheck = Token("✗")
         self.opcheck = Token("ⴲ")
         self.opuncheck = Token("ⵔ")
+        self.infinity = Token("∞")
+        self.locked_free = Token("⇉")
+        self.locked_locked = Token("⇟")
+        self.left_toggle = Token("━─")
+        self.right_toggle = Token("─━")
 
 
     def set_colors(self):

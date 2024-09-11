@@ -324,8 +324,8 @@ class Tester:
         return output
 
     def get_fixed_arrow(self) -> Sentence:
-        free = "⇛"
-        locked = "⇟"
+        free = symbols.locked_free.text
+        locked = symbols.locked_locked.text
         symbol = locked if self.locked_index else free
         color = "R" if self.locked_index else "G"
         return Sentence().add(self.borders.roundL(color)).addf(color, f"{GuiKeys.travar} {symbol}").add(self.borders.sharpR(color))
@@ -382,7 +382,7 @@ class Tester:
             # tempo
             value = str(self.settings.app.get_timeout())
             if value == "0":
-                value = "∞"
+                value = symbols.infinity.text
             cmds.append(
                 Sentence()
                     .add(self.borders.roundL("M"))
@@ -390,7 +390,11 @@ class Tester:
                     .add(self.borders.roundR("M"))
             )
             # diff mode
-            text = f"VER╾hor[{GuiKeys.diff}]" if self.settings.app.get_diff_mode() == DiffMode.DOWN else f"ver╼HOR[{GuiKeys.diff}]"
+            if self.settings.app.get_diff_mode() == DiffMode.DOWN:
+                text = f"Ver{symbols.left_toggle.text}Hor[{GuiKeys.diff}]"
+            else:
+                text = f"Ver{symbols.right_toggle.text}Hor[{GuiKeys.diff}]"
+
             cmds.append(self.borders.border("M", text))
             
         return cmds

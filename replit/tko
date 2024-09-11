@@ -8,6 +8,7 @@ import argparse
 import sys
 import json
 import os
+from urllib.request import urlopen
 import urllib
 import curses
 import datetime
@@ -23,8 +24,32 @@ import math
 import configparser
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.24.3"
+__version__ = "0.24.4"
 
+
+class CheckVersion:
+
+    link = "https://raw.githubusercontent.com/senapk/tko/master/src/tko/__init__.py"
+
+    def __init__(self):
+        self.version: str = __version__
+        self.latest_version: Optional[str] = self.get_latest_version()
+
+    def version_check(self):
+        if self.latest_version is None:
+            return
+        if self.version != self.latest_version:
+            print(f"Sua versão do  TKO ({self.version}) está desatualizada.")
+            print(f"A última versão é a {self.latest_version}.")
+
+    def get_latest_version(self):
+        try:
+            with urlopen(self.link) as f:
+                for line in f:
+                    if b"__version__" in line:
+                        return line.decode().split('"')[1]
+        except:
+            return None
 class Colors:
     def __init__(self):
         self.focused_item = "B"
@@ -97,51 +122,6 @@ opening["estuda"] = r"""
            (______(((_(((______(@)
 """
 
-# opening["alien"] = r"""
-#        __.,,------.._
-#       ,'"   _      _   "`.
-#      /.__, ._  -=- _"`    Y
-#     (.____.-.`      ""`   j
-#      VvvvvvV`.Y,.    _.,-'       ,     ,     ,
-#         Y    ||,   '"\         ,/    ,/    ./
-#         |   ,'  ,     `-..,'_,'/___,'/   ,'/   ,
-#    ..  ,;,,',-'"\,'  ,  .     '     ' ""' '--,/    .. ..
-#  ,'. `.`---'     `, /  , Y -=-    ,'   ,   ,. .`-..||_|| ..
-# ff\\`. `._        /f ,'j j , ,' ,   , f ,  \=\ Y   || ||`||_..
-# l` \` `.`."`-..,-' j  /./ /, , / , / /l \   \=\l   || `' || ||...
-#  `  `   `-._ `-.,-/ ,' /`"/-/-/-/-"'''"`.`.  `'.\--`'--..`'_`' || ,
-#             "`-_,',  ,'  f    ,   /      `._    ``._     ,  `-.`'//         ,
-#           ,-"'' _.,-'    l_,-'_,,'          "`-._ . "`. /|     `.'\ ,       |
-#         ,',.,-'"          \=) ,`-.         ,    `-'._`.V |       \ // .. . /j
-#         |f\\               `._ )-."`.     /|         `.| |        `.`-||-\\/
-#         l` \`                 "`._   "`--' j          j' j          `-`---'
-#          `  `                     "`,-  ,'/       ,-'"  /
-#                                  ,'",__,-'       /,, ,-'
-#                                  Vvv'            VVv'
-# """
-
-# opening["alien2"] = r"""
-#                                          (  )  () @@  )  (( (
-#                                      (      (  )( @@  (  )) ) (
-#                                    (    (  ( ()( /---\   (()( (
-#      _______                            )  ) )(@ !O O! )@@  ( ) ) )
-#     <   ____)                      ) (  ( )( ()@ \ o / (@@@@@ ( ()( )
-#  /--|  |(  o|                     (  )  ) ((@@(@@ !o! @@@@(@@@@@)() (
-# |   >   \___|                      ) ( @)@@)@ /---\-/---\ )@@@@@()( )
-# |  /---------+                    (@@@@)@@@( // /-----\ \\ @@@)@@@@@(  .
-# | |    \ =========______/|@@@@@@@@@@@@@(@@@ // @ /---\ @ \\ @(@@@(@@@ .  .
-# |  \   \\=========------\|@@@@@@@@@@@@@@@@@ O @@@ /-\ @@@ O @@(@@)@@ @   .
-# |   \   \----+--\-)))           @@@@@@@@@@ !! @@@@ % @@@@ !! @@)@@@ .. .
-# |   |\______|_)))/             .    @@@@@@ !! @@ /---\ @@ !! @@(@@@ @ . .
-#  \__==========           *        .    @@ /MM  /\O   O/\  MM\ @@@@@@@. .
-#     |   |-\   \          (       .      @ !!!  !! \-/ !!  !!! @@@@@ .
-#     |   |  \   \          )            .  @@@@ !!     !!  .(. @.  .. .
-#     |   |   \   \        (    /   .(  . \)). ( |O  )( O! @@@@ . )      .
-#     |   |   /   /         ) (      )).  ((  .) !! ((( !! @@ (. ((. .   .
-#     |   |  /   /   ()  ))   ))   .( ( ( ) ). ( !!  )( !! ) ((   ))  ..
-#     |   |_<   /   ( ) ( (  ) )   (( )  )).) ((/ |  (  | \(  )) ((. ).
-# ____<_____\\__\__(___)_))_((_(____))__(_(___.oooO_____Oooo.(_(_)_)((_
-# """
 
 opening["alien3"] = r"""
            \.   \.      __,-"-.__      ./   ./
@@ -196,33 +176,33 @@ preguiçosos             ⠰⠇  ⠐⡑⠤⢀
 """
 
 intro: Dict[str, str] = {}
-intro["shark"] = r"""
-  _________         .    . r -> Roda sem testar             
- (..       \_    ,  |\  /| ↲ -> Testa usando casos de teste 
-  \       O  \  /|  \ \/ / f -> FIXA a execução para        
-   \______    \/ |   \  /       um único caso de teste      
-      vvvv\    \ |   /  |  TAB  Muda o arquivo PRINCIPAL    
-      \^^^^  ==   \_/   |       para problemas de múltiplos 
-       `\_   ===    \.  |       arquivos de código fonte    
-       / /\_   \ /      |  m -> muda o MODO diff de vertical
-       |/   \_  \|      /       para modo diff horizontal   
-              \________/   t -> define o limite de TEMPO    
-                           setas -> muda o teste            
-"""
+# intro["shark"] = r"""
+#   _________         .    . r -> Roda sem testar             
+#  (..       \_    ,  |\  /| ↲ -> Testa usando casos de teste 
+#   \       O  \  /|  \ \/ / f -> FIXA a execução para        
+#    \______    \/ |   \  /       um único caso de teste      
+#       vvvv\    \ |   /  |  TAB  Muda o arquivo PRINCIPAL    
+#       \^^^^  ==   \_/   |       para problemas de múltiplos 
+#        `\_   ===    \.  |       arquivos de código fonte    
+#        / /\_   \ /      |  m -> muda o MODO diff de vertical
+#        |/   \_  \|      /       para modo diff horizontal   
+#               \________/   t -> define o limite de TEMPO    
+#                            setas -> muda o teste            
+# """
 
-intro["cat"] = r"""
- ,_     _          r -> Roda sem testar             
- |\\_,-~/          ↲ -> Testa usando casos de teste 
- / _  _ |    ,--.  f -> FIXA a execução para        
-(  @  @ )   / ,-'       um único caso de teste      
- \  _T_/-._( (     TAB  Muda o arquivo PRINCIPAL    
- /         `. \         para problemas de múltiplos 
-|         _  \ |        arquivos de código fonte    
- \ \ ,  /      |   m -> muda o MODO diff de vertical
-  || |-_\__   /         para modo diff horizontal   
- ((_/`(____,-'     t -> define o limite de TEMPO    
-                   setas -> muda o teste            
-"""
+# intro["cat"] = r"""
+#  ,_     _          r -> Roda sem testar             
+#  |\\_,-~/          ↲ -> Testa usando casos de teste 
+#  / _  _ |    ,--.  f -> FIXA a execução para        
+# (  @  @ )   / ,-'       um único caso de teste      
+#  \  _T_/-._( (     TAB  Muda o arquivo PRINCIPAL    
+#  /         `. \         para problemas de múltiplos 
+# |         _  \ |        arquivos de código fonte    
+#  \ \ ,  /      |   m -> muda o MODO diff de vertical
+#   || |-_\__   /         para modo diff horizontal   
+#  ((_/`(____,-'     t -> define o limite de TEMPO    
+#                    setas -> muda o teste            
+# """
 
 intro["elephant"] = r"""
         ⣀⣀                r -> Roda sem testar             
@@ -366,15 +346,6 @@ Programando assim, você vai dominar o mundo!
            `.,'   |; \          \`\_,/-'  \'      
             .'    l \ `.        /"\ _ \`  j       
             f      : `-'        `._;."/`-'        
-            |      `.               ,7  \         
-            l       j             .'/ - \`.       
-           .j.  .   <            (.'    .\ \f`. |\
-          ,' `.  \ / \           `|      \,'||-:j 
-        .'  .'\   Y.  \___......__\ ._   /`.||    
-__.._,-" .-"'"")  /' ,' _          \ |  /"-.`j""``
-  .'_.-'"     / .("-'-"":\        ._)|_(__. "'    
- ;.'         /-'---"".--"'       /,_,^-._ .)      
- `:=.__.,itz `---._.;'
 """
 
 images["batman"] = r"""
@@ -496,12 +467,6 @@ vou aumentar a dificuldade!
   `HH `.      ,'   /     |@@@@@ @@@@.  `.           / /(~)
    HH   \_   ,'  _/`.    |@@@@@ @@@@@;  `.          ; (~~)
    ~~`.   \_,'  /   ;   .@@@@@ @@@@@@;\_  \___      ; H~\)
-       \_     _/    `.  |@@@@@@ @@@@@;  \     `----'_HH[~)
-         \___/       `. :@@@@@ @@@@@@'   \__,------' HH ~ 
-        ______        ; |@@@@@@ @@@'                 HH   
-      _)      \_,     ; :@@@@@@@@@;                  ~~   
-    _;          \\   ,' |@@@@@@@@@:                       
-
 """
 
 images["piupiu"] = r"""
@@ -612,7 +577,6 @@ O código ficou lindo dessa vez!
         ⠻⢿⣟⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠏       
           ⠘⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠁        
              ⠙⠿⢿⣿⣿⣿⡿⠋          
-Ou será que não?
 """
 
 images["pikachu"] = r"""
@@ -2378,6 +2342,11 @@ class __Symbols:
         self.uncheck = Token("✗")
         self.opcheck = Token("ⴲ")
         self.opuncheck = Token("ⵔ")
+        self.infinity = Token("∞")
+        self.locked_free = Token("⇉")
+        self.locked_locked = Token("⇟")
+        self.left_toggle = Token("━─")
+        self.right_toggle = Token("─━")
 
 
     def set_colors(self):
@@ -4058,7 +4027,7 @@ class Settings:
         return self
 
     def __get_rep_file_path(self, course: str) -> str:
-        return os.path.join(self.app._rootdir, course, ".rep.json")   
+        return os.path.join(self.app._rootdir, course, ".rep.json")
 
     def get_rep_source(self, course: str) -> RepSource:
         if course in self.reps:
@@ -6673,8 +6642,8 @@ class Tester:
         return output
 
     def get_fixed_arrow(self) -> Sentence:
-        free = "⇛"
-        locked = "⇟"
+        free = symbols.locked_free.text
+        locked = symbols.locked_locked.text
         symbol = locked if self.locked_index else free
         color = "R" if self.locked_index else "G"
         return Sentence().add(self.borders.roundL(color)).addf(color, f"{GuiKeys.travar} {symbol}").add(self.borders.sharpR(color))
@@ -6731,7 +6700,7 @@ class Tester:
             # tempo
             value = str(self.settings.app.get_timeout())
             if value == "0":
-                value = "∞"
+                value = symbols.infinity.text
             cmds.append(
                 Sentence()
                     .add(self.borders.roundL("M"))
@@ -6739,7 +6708,11 @@ class Tester:
                     .add(self.borders.roundR("M"))
             )
             # diff mode
-            text = f"VER╾hor[{GuiKeys.diff}]" if self.settings.app.get_diff_mode() == DiffMode.DOWN else f"ver╼HOR[{GuiKeys.diff}]"
+            if self.settings.app.get_diff_mode() == DiffMode.DOWN:
+                text = f"Ver{symbols.left_toggle.text}Hor[{GuiKeys.diff}]"
+            else:
+                text = f"Ver{symbols.right_toggle.text}Hor[{GuiKeys.diff}]"
+
             cmds.append(self.borders.border("M", text))
             
         return cmds
@@ -8071,6 +8044,7 @@ class Main:
         settings = Settings()
         settings.check_rootdir()
         CmdPlay.execute(args.repo, settings)
+        CheckVersion().version_check()
 
     @staticmethod
     def down(args):

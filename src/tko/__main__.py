@@ -22,6 +22,7 @@ from .util.guide import bash_guide
 from .util.report import Report
 from .util.term_color import TermColor
 from .util.symbols import symbols
+from tko.settings.check_version import CheckVersion
 
 from .__init__ import __version__
 
@@ -78,6 +79,7 @@ class Main:
         settings = Settings()
         settings.check_rootdir()
         CmdPlay.execute(args.repo, settings)
+        CheckVersion().version_check()
 
     @staticmethod
     def down(args):
