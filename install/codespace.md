@@ -29,7 +29,7 @@ Python, c, c++, javascript, java e go não precisam de nenhum software adicional
 Para typescript, você precisa instalar o `esbuild`.
 
 ```bash
-npm install -g esbuild
+npm install -g esbuild ts-node readline-sync
 npm i --save-dev @types/node
 ```
 

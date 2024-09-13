@@ -57,7 +57,7 @@ class SolverBuilder:
             self.prepare_exec()
         return self.__executable
 
-    def prepare_exec(self) -> None:
+    def prepare_exec(self, free_run_mode: bool = False) -> None:
         self.__executable = ""
         path = self.path_list[0]
         self.compile_error = False
@@ -67,7 +67,7 @@ class SolverBuilder:
         elif path.endswith(".js"):
             self.__prepare_js()
         elif path.endswith(".ts"):
-            self.__prepare_ts()
+            self.__prepare_ts(free_run_mode)
         elif path.endswith(".java"):
             self.__prepare_java()
         elif path.endswith(".c"):
@@ -112,7 +112,12 @@ class SolverBuilder:
         self.check_tool("sqlite3")
         self.__executable = "cat " + " ".join(self.path_list) + " | sqlite3"
 
-    def __prepare_ts(self):
+    def __prepare_ts(self, free_run_mode: bool):
+        if free_run_mode:
+            self.check_tool("ts-node")
+            self.__executable = "ts-node -O '{\"module\": \"commonjs\"}' " + " ".join(self.path_list)
+            return
+        
         transpiler = "esbuild"
         if os.name == "nt":
             transpiler += ".cmd"

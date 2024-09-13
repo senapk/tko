@@ -57,6 +57,8 @@ class Tester:
 
         self.fman = FloatingManager()
         self.opener: Optional[Opener] = None
+        self.dummy_unit = Unit()
+
 
     def set_opener(self, opener: Opener):
         self.opener = opener
@@ -166,6 +168,8 @@ class Tester:
         return folder.split(os.sep)[-2]
 
     def get_focused_unit(self) -> Unit:
+        if not self.wdir.has_tests():
+            return self.dummy_unit
         if len(self.results) != 0:
             _, index = self.results[self.focused_index]
             unit = self.wdir.get_unit(index)
@@ -199,13 +203,13 @@ class Tester:
                 self.results.append((ExecutionResult.COMPILATION_ERROR, index))
             return
         
-        if self.locked_index:
+        if self.locked_index or not self.wdir.has_tests():
             self.mode = SeqMode.finished
             unit = self.get_focused_unit()
             unit.result = UnitRunner.run_unit(solver, unit, self.settings.app._timeout)
             return
 
-        if len(self.unit_list) > 0:
+        if self.wdir.has_tests():
             index = len(self.results)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
@@ -295,7 +299,14 @@ class Tester:
         i = 0
         show_focused_index = not self.wdir.get_solver().compile_error and not self.mode == SeqMode.intro and not self.is_all_right()
         
-        output = Sentence().add(self.get_fixed_arrow())
+        output = Sentence()
+        if self.wdir.has_tests():
+            output.add(self.get_fixed_arrow())
+        else:
+            output.add(self.borders.border("R", "Nenhum teste encontrado"))
+
+            
+
         for unit_result, index in done_list + todo_list:
             foco = i == self.focused_index
             token = self.get_token(unit_result)
@@ -328,7 +339,8 @@ class Tester:
         return Sentence().add(self.borders.roundL(color)).addf(color, f"{GuiKeys.travar} {symbol}").add(self.borders.sharpR(color))
 
     def draw_top_bar_content(self, frame):
-        focused_unit_color = "Y"
+        if not self.wdir.has_tests():
+            return
         value = self.get_focused_unit()
         info = Sentence()
         if self.wdir.get_solver().compile_error:
@@ -436,7 +448,7 @@ class Tester:
         if self.wdir.get_solver().compile_error:
             received = self.wdir.get_solver().error_msg
             line_list = [Sentence().add(line) for line in received.split("\n")]
-        elif self.settings.app.get_diff_mode() == DiffMode.DOWN:
+        elif self.settings.app.get_diff_mode() == DiffMode.DOWN or not self.wdir.has_tests():
             line_list = DiffBuilder.mount_up_down_diff(unit, curses=True)
         else:
             line_list = DiffBuilder.mount_side_by_side_diff(unit, curses=True)
@@ -514,6 +526,7 @@ class Tester:
         if self.wdir.is_autoload():
             self.wdir.autoload()
             self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index])
+        self.mode = SeqMode.finished
         return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True)
 
     def run_test_mode(self):
@@ -673,5 +686,13 @@ class Tester:
             if free_run_fn == None:
                 break
             else:
-                while(free_run_fn()):
-                    pass
+                while(True):
+                    try:
+                        repeat = free_run_fn()
+                        if repeat == False:
+                            break
+                    except CompileError as e:
+                        self.mode = SeqMode.finished
+                        print(e)
+                        input("Pressione enter para continuar")
+                        break

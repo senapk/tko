@@ -24,7 +24,7 @@ import math
 import configparser
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.24.5"
+__version__ = "0.25.0"
 
 
 class CheckVersion:
@@ -3120,7 +3120,7 @@ class SolverBuilder:
             self.prepare_exec()
         return self.__executable
 
-    def prepare_exec(self) -> None:
+    def prepare_exec(self, free_run_mode: bool = False) -> None:
         self.__executable = ""
         path = self.path_list[0]
         self.compile_error = False
@@ -3130,7 +3130,7 @@ class SolverBuilder:
         elif path.endswith(".js"):
             self.__prepare_js()
         elif path.endswith(".ts"):
-            self.__prepare_ts()
+            self.__prepare_ts(free_run_mode)
         elif path.endswith(".java"):
             self.__prepare_java()
         elif path.endswith(".c"):
@@ -3175,7 +3175,12 @@ class SolverBuilder:
         self.check_tool("sqlite3")
         self.__executable = "cat " + " ".join(self.path_list) + " | sqlite3"
 
-    def __prepare_ts(self):
+    def __prepare_ts(self, free_run_mode: bool):
+        if free_run_mode:
+            self.check_tool("ts-node")
+            self.__executable = "ts-node -O '{\"module\": \"commonjs\"}' " + " ".join(self.path_list)
+            return
+        
         transpiler = "esbuild"
         if os.name == "nt":
             transpiler += ".cmd"
@@ -3233,6 +3238,7 @@ class SolverBuilder:
 class Free:
     @staticmethod
     def free_run(solver: SolverBuilder, show_compilling:bool=True, to_clear: bool=True, wait_input:bool=True) -> bool:
+
         if to_clear:
             Runner.clear_screen()
         if show_compilling:
@@ -3242,7 +3248,7 @@ class Free:
 
         if show_compilling:
             Runner.clear_screen()
-        solver.prepare_exec()
+        solver.prepare_exec(free_run_mode=True)
         if solver.compile_error:
             print(solver.error_msg)
         else:
@@ -3257,18 +3263,19 @@ class Free:
             answer = subprocess.run(cmd, shell=True, text=True)
             if answer.returncode != 0 and answer.returncode != 1:
                 print(Runner.decode_code(answer.returncode))
-            
+        to_run_again = False
         if wait_input:
             term_print(Report.centralize("", "─"))
-            term_print(Sentence().addf("y", "Pressione (Enter) para executar novamente ou (q Enter) para sair: "), end="")
+            term_print(Sentence().addf("y", "Deseja compilar e executar novamente? (").addf("c", "s").addf("y", "/n): "), end="")
             valor = input()
-            if valor != "q":
+            if valor != "n" and valor != "q":
                 if to_clear:
                     Runner.clear_screen()
-                return True
+                to_run_again = True
         if to_clear:
             Runner.clear_screen()
-        return False
+
+        return to_run_again
 
 def uni_to_asc(input_str: str):
     nfkd_form = unicodedata.normalize('NFKD', input_str)
@@ -6400,6 +6407,8 @@ class Tester:
 
         self.fman = FloatingManager()
         self.opener: Optional[Opener] = None
+        self.dummy_unit = Unit()
+
 
     def set_opener(self, opener: Opener):
         self.opener = opener
@@ -6509,6 +6518,8 @@ class Tester:
         return folder.split(os.sep)[-2]
 
     def get_focused_unit(self) -> Unit:
+        if not self.wdir.has_tests():
+            return self.dummy_unit
         if len(self.results) != 0:
             _, index = self.results[self.focused_index]
             unit = self.wdir.get_unit(index)
@@ -6542,13 +6553,13 @@ class Tester:
                 self.results.append((ExecutionResult.COMPILATION_ERROR, index))
             return
         
-        if self.locked_index:
+        if self.locked_index or not self.wdir.has_tests():
             self.mode = SeqMode.finished
             unit = self.get_focused_unit()
             unit.result = UnitRunner.run_unit(solver, unit, self.settings.app._timeout)
             return
 
-        if len(self.unit_list) > 0:
+        if self.wdir.has_tests():
             index = len(self.results)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
@@ -6638,7 +6649,14 @@ class Tester:
         i = 0
         show_focused_index = not self.wdir.get_solver().compile_error and not self.mode == SeqMode.intro and not self.is_all_right()
         
-        output = Sentence().add(self.get_fixed_arrow())
+        output = Sentence()
+        if self.wdir.has_tests():
+            output.add(self.get_fixed_arrow())
+        else:
+            output.add(self.borders.border("R", "Nenhum teste encontrado"))
+
+            
+
         for unit_result, index in done_list + todo_list:
             foco = i == self.focused_index
             token = self.get_token(unit_result)
@@ -6671,7 +6689,8 @@ class Tester:
         return Sentence().add(self.borders.roundL(color)).addf(color, f"{GuiKeys.travar} {symbol}").add(self.borders.sharpR(color))
 
     def draw_top_bar_content(self, frame):
-        focused_unit_color = "Y"
+        if not self.wdir.has_tests():
+            return
         value = self.get_focused_unit()
         info = Sentence()
         if self.wdir.get_solver().compile_error:
@@ -6779,7 +6798,7 @@ class Tester:
         if self.wdir.get_solver().compile_error:
             received = self.wdir.get_solver().error_msg
             line_list = [Sentence().add(line) for line in received.split("\n")]
-        elif self.settings.app.get_diff_mode() == DiffMode.DOWN:
+        elif self.settings.app.get_diff_mode() == DiffMode.DOWN or not self.wdir.has_tests():
             line_list = DiffBuilder.mount_up_down_diff(unit, curses=True)
         else:
             line_list = DiffBuilder.mount_side_by_side_diff(unit, curses=True)
@@ -6857,6 +6876,7 @@ class Tester:
         if self.wdir.is_autoload():
             self.wdir.autoload()
             self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index])
+        self.mode = SeqMode.finished
         return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True)
 
     def run_test_mode(self):
@@ -7016,8 +7036,16 @@ class Tester:
             if free_run_fn == None:
                 break
             else:
-                while(free_run_fn()):
-                    pass
+                while(True):
+                    try:
+                        repeat = free_run_fn()
+                        if repeat == False:
+                            break
+                    except CompileError as e:
+                        self.mode = SeqMode.finished
+                        print(e)
+                        input("Pressione enter para continuar")
+                        break
 
 
 
@@ -7294,7 +7322,7 @@ class Run:
     def __free_run(self) -> bool:
         if self.wdir is None:
             return False
-        if self.wdir.has_solver() and (not self.wdir.has_tests()):
+        if self.wdir.has_solver() and (not self.wdir.has_tests()) and not self.__curses_mode:
             Free.free_run(self.wdir.get_solver(), show_compilling=False, to_clear=False, wait_input=False)
             return True
         return False

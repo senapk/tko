@@ -31,7 +31,7 @@ Para instalar com compiladores das linguagens que você for utilizar, execute o 
 sudo apt install nodejs
 
 ## se for utilizar typescript
-npm install -g esbuild
+npm install -g esbuild ts-node
 
 ## se for utilizar java
 sudo apt install openjdk-11-jdk
@@ -71,7 +71,7 @@ Para instalar com compiladores das linguagens que você for utilizar, execute o 
 sudo pacman -S nodejs
 
 ## typescript
-npm install -g esbuild
+npm install -g esbuild ts-node
 
 ## java
 sudo pacman -S jdk-openjdk

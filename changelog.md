@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.25.0
+  - add: ts-node and readline-sync support for typescript
 - 0.24.4
   - add: check update function
 - 0.24.3

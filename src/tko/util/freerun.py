@@ -13,6 +13,7 @@ import random
 class Free:
     @staticmethod
     def free_run(solver: SolverBuilder, show_compilling:bool=True, to_clear: bool=True, wait_input:bool=True) -> bool:
+
         if to_clear:
             Runner.clear_screen()
         if show_compilling:
@@ -22,7 +23,7 @@ class Free:
 
         if show_compilling:
             Runner.clear_screen()
-        solver.prepare_exec()
+        solver.prepare_exec(free_run_mode=True)
         if solver.compile_error:
             print(solver.error_msg)
         else:
@@ -37,15 +38,16 @@ class Free:
             answer = subprocess.run(cmd, shell=True, text=True)
             if answer.returncode != 0 and answer.returncode != 1:
                 print(Runner.decode_code(answer.returncode))
-            
+        to_run_again = False
         if wait_input:
             term_print(Report.centralize("", "─"))
-            term_print(Sentence().addf("y", "Pressione (Enter) para executar novamente ou (q Enter) para sair: "), end="")
+            term_print(Sentence().addf("y", "Deseja compilar e executar novamente? (").addf("c", "s").addf("y", "/n): "), end="")
             valor = input()
-            if valor != "q":
+            if valor != "n" and valor != "q":
                 if to_clear:
                     Runner.clear_screen()
-                return True
+                to_run_again = True
         if to_clear:
             Runner.clear_screen()
-        return False
+
+        return to_run_again

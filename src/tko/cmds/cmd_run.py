@@ -203,7 +203,7 @@ class Run:
     def __free_run(self) -> bool:
         if self.wdir is None:
             return False
-        if self.wdir.has_solver() and (not self.wdir.has_tests()):
+        if self.wdir.has_solver() and (not self.wdir.has_tests()) and not self.__curses_mode:
             Free.free_run(self.wdir.get_solver(), show_compilling=False, to_clear=False, wait_input=False)
             return True
         return False
