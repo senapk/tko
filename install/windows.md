@@ -6,25 +6,8 @@ Primeiro baixe e instale o python: [https://www.python.org/downloads/](https://w
 
 ## Instalando o TKO
 
-Depois abra o terminal COMO ADMIN e execute o comando:
+Depois abra o power shell **COMO ADMINISTRADOR** e execute o comando:
 
 ```bash
 pip install tko
 ```
-
-Se não tiver poder de admin, pode tentar instalar como usuário normal:
-
-```bash
-pip install tko --user
-```
-
-## Habilitando a execução de Scripts no Windows
-
-Você precisará habilitar a execução de scripts. Para isso, abra o powershell como administrador e digite:
-
-```powershell
-Set-ExecutionPolicy Unrestricted
-
-# Se pedir confirmação, confirme e dê enter
-```
-

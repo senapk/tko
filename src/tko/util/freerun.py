@@ -27,7 +27,7 @@ class Free:
             print(solver.error_msg)
         else:
             cmd = solver.get_executable()
-            term_print(Report.centralize(Sentence() + " " + cmd + " ", "─"))
+            # term_print(Report.centralize(Sentence() + " " + cmd + " ", "─"))
             if cmd.startswith("node"):
                 if os.name == "nt":
                     term_print(Report.centralize(Sentence() + " Use Control-Z Enter caso precise finalizar a entrada ", "─"))

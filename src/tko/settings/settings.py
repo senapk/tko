@@ -56,8 +56,11 @@ class Settings:
         self.colors = Colors()
         return self
 
-    def __get_rep_file_path(self, course: str) -> str:
-        return os.path.join(self.app._rootdir, course, ".rep.json")
+    def __get_old_rep_file_path(self, course: str) -> str:
+        return os.path.join(self.app.get_rootdir(), course, ".rep.json")
+
+    def __get_new_rep_file_path(self, course: str) -> str:
+        return os.path.join(self.app.get_rootdir(), course, "rep.json")
 
     def get_rep_source(self, course: str) -> RepSource:
         if course in self.reps:
@@ -65,9 +68,15 @@ class Settings:
         raise Warning(f"Curso {course} não encontrado")
 
     def get_rep_data(self, course: str) -> RepData:
-        cfg_file = self.__get_rep_file_path(course)
-        rep_data = RepData(self.app.get_rootdir(), course, cfg_file)
-        if os.path.exists(cfg_file):
+        old_cfg_file = self.__get_old_rep_file_path(course)
+        new_cfg_file = self.__get_new_rep_file_path(course)
+        print("debug entrando")
+        if os.path.exists(old_cfg_file):
+            os.rename(old_cfg_file, new_cfg_file)
+            print("debug renomeando")
+        
+        rep_data = RepData(self.app.get_rootdir(), course, new_cfg_file)
+        if os.path.exists(new_cfg_file):
             return rep_data.load_data_from_json()
         return rep_data.load_defaults()
   

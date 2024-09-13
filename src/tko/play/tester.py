@@ -310,8 +310,10 @@ class Tester:
                 token.fmt = token.fmt.lower() + "C"
                 extrap = self.borders.roundL("C")
                 extras = self.borders.roundR("C")
-
-            output.add(" ").add(extrap).addf(token.fmt, str(index).zfill(2)).add(token).add(extras)
+            if self.locked_index and not foco:
+                output.add("  ").addf(token.fmt.lower(), str(index).zfill(2)).addf(token.fmt.lower(), token.text).add(" ")
+            else:
+                output.add(" ").add(extrap).addf(token.fmt, str(index).zfill(2)).add(token).add(extras)
             i += 1
 
         size = 6
@@ -338,8 +340,8 @@ class Tester:
             info = self.borders.border("R", "Erro de compilação")
         elif value is not None and not self.is_all_right() and not self.mode == SeqMode.intro:
             info = value.str(pad = False)
-            if self.locked_index:
-                info = self.borders.border(focused_unit_color, info.get_text())
+            # if self.locked_index:
+            #     info = self.borders.border(focused_unit_color, info.get_text())
         frame.write(0, 0, Sentence().add(info).center(frame.get_dx()))
 
     def draw_top_bar(self):
@@ -391,9 +393,9 @@ class Tester:
             )
             # diff mode
             if self.settings.app.get_diff_mode() == DiffMode.DOWN:
-                text = f"Ver{symbols.left_toggle.text}Hor[{GuiKeys.diff}]"
+                text = f"Diff ⇕ [{GuiKeys.diff}]"
             else:
-                text = f"Ver{symbols.right_toggle.text}Hor[{GuiKeys.diff}]"
+                text = f"Diff ⇔ [{GuiKeys.diff}]"
 
             cmds.append(self.borders.border("M", text))
             

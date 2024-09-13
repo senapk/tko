@@ -2343,8 +2343,8 @@ class __Symbols:
 
         self.check = Token("✓")
         self.uncheck = Token("✗")
-        self.opcheck = Token("ⴲ")
-        self.opuncheck = Token("ⵔ")
+        # self.opcheck = Token("ⴲ")
+        # self.opuncheck = Token("ⵔ")
         self.infinity = Token("∞")
         self.locked_free = Token("⇉")
         self.locked_locked = Token("⇟")
@@ -3247,7 +3247,7 @@ class Free:
             print(solver.error_msg)
         else:
             cmd = solver.get_executable()
-            term_print(Report.centralize(Sentence() + " " + cmd + " ", "─"))
+            # term_print(Report.centralize(Sentence() + " " + cmd + " ", "─"))
             if cmd.startswith("node"):
                 if os.name == "nt":
                     term_print(Report.centralize(Sentence() + " Use Control-Z Enter caso precise finalizar a entrada ", "─"))
@@ -4029,8 +4029,11 @@ class Settings:
         self.colors = Colors()
         return self
 
-    def __get_rep_file_path(self, course: str) -> str:
-        return os.path.join(self.app._rootdir, course, ".rep.json")
+    def __get_old_rep_file_path(self, course: str) -> str:
+        return os.path.join(self.app.get_rootdir(), course, ".rep.json")
+
+    def __get_new_rep_file_path(self, course: str) -> str:
+        return os.path.join(self.app.get_rootdir(), course, "rep.json")
 
     def get_rep_source(self, course: str) -> RepSource:
         if course in self.reps:
@@ -4038,9 +4041,15 @@ class Settings:
         raise Warning(f"Curso {course} não encontrado")
 
     def get_rep_data(self, course: str) -> RepData:
-        cfg_file = self.__get_rep_file_path(course)
-        rep_data = RepData(self.app.get_rootdir(), course, cfg_file)
-        if os.path.exists(cfg_file):
+        old_cfg_file = self.__get_old_rep_file_path(course)
+        new_cfg_file = self.__get_new_rep_file_path(course)
+        print("debug entrando")
+        if os.path.exists(old_cfg_file):
+            os.rename(old_cfg_file, new_cfg_file)
+            print("debug renomeando")
+        
+        rep_data = RepData(self.app.get_rootdir(), course, new_cfg_file)
+        if os.path.exists(new_cfg_file):
             return rep_data.load_data_from_json()
         return rep_data.load_defaults()
   
@@ -4912,7 +4921,7 @@ class Opener:
     def load_folder(self, folder: str):
         files_to_open: List[str] = []
         Opener.try_add(files_to_open, folder, "Readme.md")
-        Opener.try_add(files_to_open, folder, "cases.tio")
+        # Opener.try_add(files_to_open, folder, "cases.tio")
         files_to_open += self.load_drafs(folder)
         return files_to_open
 
@@ -6631,8 +6640,10 @@ class Tester:
                 token.fmt = token.fmt.lower() + "C"
                 extrap = self.borders.roundL("C")
                 extras = self.borders.roundR("C")
-
-            output.add(" ").add(extrap).addf(token.fmt, str(index).zfill(2)).add(token).add(extras)
+            if self.locked_index and not foco:
+                output.add("  ").addf(token.fmt.lower(), str(index).zfill(2)).addf(token.fmt.lower(), token.text).add(" ")
+            else:
+                output.add(" ").add(extrap).addf(token.fmt, str(index).zfill(2)).add(token).add(extras)
             i += 1
 
         size = 6
@@ -6659,8 +6670,8 @@ class Tester:
             info = self.borders.border("R", "Erro de compilação")
         elif value is not None and not self.is_all_right() and not self.mode == SeqMode.intro:
             info = value.str(pad = False)
-            if self.locked_index:
-                info = self.borders.border(focused_unit_color, info.get_text())
+            # if self.locked_index:
+            #     info = self.borders.border(focused_unit_color, info.get_text())
         frame.write(0, 0, Sentence().add(info).center(frame.get_dx()))
 
     def draw_top_bar(self):
@@ -6712,9 +6723,9 @@ class Tester:
             )
             # diff mode
             if self.settings.app.get_diff_mode() == DiffMode.DOWN:
-                text = f"Ver{symbols.left_toggle.text}Hor[{GuiKeys.diff}]"
+                text = f"Diff ⇕ [{GuiKeys.diff}]"
             else:
-                text = f"Ver{symbols.right_toggle.text}Hor[{GuiKeys.diff}]"
+                text = f"Diff ⇔ [{GuiKeys.diff}]"
 
             cmds.append(self.borders.border("M", text))
             

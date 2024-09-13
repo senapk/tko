@@ -21,6 +21,8 @@ O TKO é um sistema de testes para programação competitiva. Ele é capaz de ro
 
 ```bash
 # instalar utilizando o gerenciador de pacotes do python
+# se estiver no windows, abra o terminal do powershell como admin
+# se estiver no linux, use sudo
 pip install tko
 
 # ou diretamente pelo github
@@ -35,7 +37,14 @@ Você precisará do compilador próprio da linguagem que for programar, instale 
 - java: `javac`
 - python: `python3`
 - javascript: `node`
-- typescript: `esbuild` e `node`
+- typescript: `esbuild`
+
+```bash
+# para instalar o esbuild, use o npm
+# se estiver no windows, abra o terminal do powershell como admin
+npm install -g esbuild
+
+```
 
 ## Download atividades
 
