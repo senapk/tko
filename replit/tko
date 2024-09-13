@@ -4043,10 +4043,8 @@ class Settings:
     def get_rep_data(self, course: str) -> RepData:
         old_cfg_file = self.__get_old_rep_file_path(course)
         new_cfg_file = self.__get_new_rep_file_path(course)
-        print("debug entrando")
         if os.path.exists(old_cfg_file):
             os.rename(old_cfg_file, new_cfg_file)
-            print("debug renomeando")
         
         rep_data = RepData(self.app.get_rootdir(), course, new_cfg_file)
         if os.path.exists(new_cfg_file):
@@ -5678,7 +5676,8 @@ class DiffBuilder:
             return out[:cut].ljust(cut)
 
         # get = lambda vet, i: vet[i] if i < len(vet) else ""
-
+        expected_color = "g"
+        received_color = "r" if a_text != "" else ""
         for i in range(max_size):
             a_data = Sentence(get(a_lines, i))
             b_data = Sentence(get(b_lines, i))
@@ -5686,7 +5685,7 @@ class DiffBuilder:
             if i >= a_size or i >= b_size or a_lines[i] != b_lines[i]:
                 if first_failure == -1:
                     first_failure = i
-                a_out, b_out = DiffBuilder.colorize_2_lines_diff(a_data, b_data, "y")
+                a_out, b_out = DiffBuilder.colorize_2_lines_diff(a_data, b_data, "y", expected_color, received_color)
                 a_output.append(a_out)
                 b_output.append(b_out)
             else:
@@ -5703,12 +5702,14 @@ class DiffBuilder:
         string_expected = unit.output
         string_received = unit.user
 
+        no_diff_mode = string_input == "" and string_expected == ""
+
         if string_received is None:
             string_received = ""
         expected_lines, received_lines, first_failure = DiffBuilder.render_diff(string_expected, string_received)
         string_input_list = [Sentence().add(symbols.vbar.text).add(" ").add(line) for line in string_input.split("\n")][:-1]
         unequal = symbols.unequal
-        if unit.result == ExecutionResult.EXECUTION_ERROR or unit.result == ExecutionResult.COMPILATION_ERROR:
+        if unit.result == ExecutionResult.EXECUTION_ERROR or unit.result == ExecutionResult.COMPILATION_ERROR or string_expected == "":
             unequal = symbols.vbar
         expected_lines, received_lines = DiffBuilder.put_left_equal(expected_lines, received_lines, unequal)
 
@@ -5718,18 +5719,30 @@ class DiffBuilder:
             output.append(Report.centralize(unit.str(), " ", symbols.vbar))
             output.append(Report.centralize(Sentence().addf(color, DiffBuilder.vinput), symbols.hbar, "├"))
         else:
-            output.append(Report.centralize(Sentence().addf(color, DiffBuilder.vinput), symbols.hbar, "╭"))
+            if no_diff_mode:
+                output.append(Report.centralize(Sentence().addf(color, DiffBuilder.vreceived), symbols.hbar, "╭"))
+            else:
+                output.append(Report.centralize(Sentence().addf(color, DiffBuilder.vinput), symbols.hbar, "╭"))
+
 
         output += string_input_list
             
-        output.append(Report.centralize(Sentence().addf("g", DiffBuilder.vexpected), symbols.hbar, "├"))
-        output += expected_lines
+        if string_expected != "":
+            output.append(Report.centralize(Sentence().addf("g", DiffBuilder.vexpected), symbols.hbar, "├"))
+            output += expected_lines
         # output.append("\n".join(expected_lines))
-        rcolor = "r" if string_expected != string_received else "g"
-        output.append(Report.centralize(Sentence().addf(rcolor, DiffBuilder.vreceived), symbols.hbar, "├"))
+        rcolor = "r" if (string_expected != "" and string_expected != string_received) else "g"
+        if no_diff_mode == False:
+            output.append(Report.centralize(Sentence().addf(rcolor, DiffBuilder.vreceived), symbols.hbar, "├"))
         output +=  received_lines
 
-        if unit.result != ExecutionResult.EXECUTION_ERROR and unit.result != ExecutionResult.COMPILATION_ERROR and string_expected != string_received:
+        include_rendering = False
+        if string_expected != string_received and string_expected != "":
+            include_rendering = True
+        if unit.result == ExecutionResult.EXECUTION_ERROR or unit.result == ExecutionResult.COMPILATION_ERROR:
+            include_rendering = False
+
+        if include_rendering:
             output.append(Report.centralize(Sentence().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├"))
             output += DiffBuilder.first_failure_diff(string_expected, string_received, first_failure)
         output.append(Report.centralize("",  symbols.hbar, "╰"))
@@ -6384,14 +6397,9 @@ class Tester:
         self.locked_index: bool = False
         self.focused_index = 0
         self.resumes: List[str] = []
-        self.first_loop = True
 
         self.fman = FloatingManager()
         self.opener: Optional[Opener] = None
-
-    def set_first_run(self):
-        self.first_run = True
-        return self
 
     def set_opener(self, opener: Opener):
         self.opener = opener
@@ -6792,26 +6800,6 @@ class Tester:
         self.draw_scrollbar()
         return
 
-    def load_autoload_warning(self):
-        if not self.wdir.is_autoload():
-            return
-        warning = Floating().set_header(" Seja bem vindo ").warning()
-        warning.put_text("")
-        warning.put_sentence(Sentence().addf("r", "Todos") + " os arquivos de código da pasta foram carregados automaticamente")
-        warning.put_text("Sempre verifique no topo da tela quais arquivos foram carregados.")
-        warning.put_text("Remova ou renomeie da pasta alvo os arquivo que não quer utilizar.")
-        warning.put_text("")
-        warning.put_text("Você também pode escolher quais arquivos deseja executar")
-        warning.put_text("navegando até a pasta de destino e executando")
-        warning.put_text("o comando 'tko run' com os arquivos desejados")
-        warning.put_text("")
-        warning.put_sentence(Sentence().addf("c", "tko run <arquivos> cases.tio")) 
-        warning.put_text("")
-        warning.put_sentence(Sentence().addf("r", "Exemplo: ").addf("c", "tko run main.c lib.c cases.tio")) 
-        warning.put_text("")
-
-        self.fman.add_input(warning)
-
     def get_solver_names(self):
         return sorted(self.wdir.solvers_names())
     
@@ -6821,9 +6809,7 @@ class Tester:
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
         while not self.exit:
-            # if self.first_loop:
-            #     self.first_loop = False
-            #     self.load_autoload_warning()
+
             Fmt.clear()
             if self.mode == SeqMode.running:
                 if self.wdir.get_solver().not_compiled():
@@ -7157,9 +7143,6 @@ class Run:
         self.wdir: Wdir = Wdir()
         self.wdir_builded = False
         self.__curses_mode: bool = False
-        self.__first_run = False
-        self.__success_mode = Success.RANDOM
-        # self.__curses_select_mode = False
         self.__lang = ""
         self.__task: Optional[Task] = None
         self.__opener: Optional[Opener] = None
@@ -7167,7 +7150,6 @@ class Run:
 
     def set_curses(self, value:bool=True, success: Success=Success.RANDOM):
         self.__curses_mode = value
-        self.__success_mode = success
         return self
    
     def set_lang(self, lang:str):
@@ -7181,18 +7163,10 @@ class Run:
     def set_autorun(self, value:bool):
         self.__autorun = value
 
-    # def set_curses_select_mode(self, value:bool=True):
-    #     self.__curses_select_mode = value
-    #     return self
-    
     def set_task(self, task: Task):
         self.__task = task
         return self
 
-    def set_first_run(self):
-        self.__first_run = True
-        return self
-    
     def execute(self):
         if not self.wdir_builded:
             self.build_wdir()
@@ -7350,8 +7324,6 @@ class Run:
         
         if self.__curses_mode:
             cdiff = Tester(self.settings, self.wdir)
-            if self.__first_run:
-                cdiff.set_first_run()
             if self.__task is not None:
                 cdiff.set_task(self.__task)
             if self.__opener is not None:

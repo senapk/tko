@@ -52,9 +52,6 @@ class Run:
         self.wdir: Wdir = Wdir()
         self.wdir_builded = False
         self.__curses_mode: bool = False
-        self.__first_run = False
-        self.__success_mode = Success.RANDOM
-        # self.__curses_select_mode = False
         self.__lang = ""
         self.__task: Optional[Task] = None
         self.__opener: Optional[Opener] = None
@@ -62,7 +59,6 @@ class Run:
 
     def set_curses(self, value:bool=True, success: Success=Success.RANDOM):
         self.__curses_mode = value
-        self.__success_mode = success
         return self
    
     def set_lang(self, lang:str):
@@ -76,18 +72,10 @@ class Run:
     def set_autorun(self, value:bool):
         self.__autorun = value
 
-    # def set_curses_select_mode(self, value:bool=True):
-    #     self.__curses_select_mode = value
-    #     return self
-    
     def set_task(self, task: Task):
         self.__task = task
         return self
 
-    def set_first_run(self):
-        self.__first_run = True
-        return self
-    
     def execute(self):
         if not self.wdir_builded:
             self.build_wdir()
@@ -245,8 +233,6 @@ class Run:
         
         if self.__curses_mode:
             cdiff = Tester(self.settings, self.wdir)
-            if self.__first_run:
-                cdiff.set_first_run()
             if self.__task is not None:
                 cdiff.set_task(self.__task)
             if self.__opener is not None:

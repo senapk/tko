@@ -70,10 +70,8 @@ class Settings:
     def get_rep_data(self, course: str) -> RepData:
         old_cfg_file = self.__get_old_rep_file_path(course)
         new_cfg_file = self.__get_new_rep_file_path(course)
-        print("debug entrando")
         if os.path.exists(old_cfg_file):
             os.rename(old_cfg_file, new_cfg_file)
-            print("debug renomeando")
         
         rep_data = RepData(self.app.get_rootdir(), course, new_cfg_file)
         if os.path.exists(new_cfg_file):

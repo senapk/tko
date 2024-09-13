@@ -54,14 +54,9 @@ class Tester:
         self.locked_index: bool = False
         self.focused_index = 0
         self.resumes: List[str] = []
-        self.first_loop = True
 
         self.fman = FloatingManager()
         self.opener: Optional[Opener] = None
-
-    def set_first_run(self):
-        self.first_run = True
-        return self
 
     def set_opener(self, opener: Opener):
         self.opener = opener
@@ -462,26 +457,6 @@ class Tester:
         self.draw_scrollbar()
         return
 
-    def load_autoload_warning(self):
-        if not self.wdir.is_autoload():
-            return
-        warning = Floating().set_header(" Seja bem vindo ").warning()
-        warning.put_text("")
-        warning.put_sentence(Sentence().addf("r", "Todos") + " os arquivos de código da pasta foram carregados automaticamente")
-        warning.put_text("Sempre verifique no topo da tela quais arquivos foram carregados.")
-        warning.put_text("Remova ou renomeie da pasta alvo os arquivo que não quer utilizar.")
-        warning.put_text("")
-        warning.put_text("Você também pode escolher quais arquivos deseja executar")
-        warning.put_text("navegando até a pasta de destino e executando")
-        warning.put_text("o comando 'tko run' com os arquivos desejados")
-        warning.put_text("")
-        warning.put_sentence(Sentence().addf("c", "tko run <arquivos> cases.tio")) 
-        warning.put_text("")
-        warning.put_sentence(Sentence().addf("r", "Exemplo: ").addf("c", "tko run main.c lib.c cases.tio")) 
-        warning.put_text("")
-
-        self.fman.add_input(warning)
-
     def get_solver_names(self):
         return sorted(self.wdir.solvers_names())
     
@@ -491,9 +466,7 @@ class Tester:
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
         while not self.exit:
-            # if self.first_loop:
-            #     self.first_loop = False
-            #     self.load_autoload_warning()
+
             Fmt.clear()
             if self.mode == SeqMode.running:
                 if self.wdir.get_solver().not_compiled():
