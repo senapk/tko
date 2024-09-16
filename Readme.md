@@ -37,12 +37,12 @@ Você precisará do compilador próprio da linguagem que for programar, instale 
 - java: `javac`
 - python: `python3`
 - javascript: `node`
-- typescript: `esbuild`
+- typescript: `esbuild ts-node`
 
 ```bash
 # para instalar o esbuild, use o npm
 # se estiver no windows, abra o terminal do powershell como admin
-npm install -g esbuild
+npm install -g esbuild ts-node
 
 ```
 

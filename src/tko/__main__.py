@@ -123,7 +123,7 @@ class Parser:
         self.parser.add_argument('-c', metavar='CONFIG_FILE', type=str, help='config json file.')
         self.parser.add_argument('-w', metavar='WIDTH', type=int, help="terminal width.")
         self.parser.add_argument('-v', action='store_true', help='show version.')
-        self.parser.add_argument('-m', action='store_true', help='monochromatic debug.')
+        self.parser.add_argument('-m', action='store_true', help='monochromatic.')
 
     def create_parent_basic(self):
         parent_basic = argparse.ArgumentParser(add_help=False)

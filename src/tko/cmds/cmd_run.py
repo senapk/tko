@@ -14,8 +14,6 @@ from ..util.report import Report
 from ..util.term_color import term_print
 from ..util.symbols import symbols
 
-from ..run.writer import Writer
-from ..util.runner import Runner
 from ..util.freerun import Free
 from ..play.tester import Tester
 from ..run.unit_runner import UnitRunner

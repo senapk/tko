@@ -105,8 +105,7 @@ class SolverBuilder:
 
     def __prepare_go(self):
         self.check_tool("go")
-        solver = self.path_list[0]
-        self.__executable = "go run " + solver
+        self.__executable = "go run " + " ".join(self.path_list)
 
     def __prepare_sql(self):
         self.check_tool("sqlite3")

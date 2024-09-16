@@ -101,15 +101,16 @@ class Wdir:
         if len(target_list) == 1 and os.path.isdir(target_list[0]):
             self.__autoload_folder = target_list[0]
             return self.autoload()
-            
+                    
         target_list = [t for t in target_list if t != ""]
         for target in target_list:
             if not os.path.exists(target):
-                raise FileNotFoundError(f"fail: {target} não encontrado")
+                raise Warning(f"fail: {target} não encontrado")
 
         solvers = [target for target in target_list if Identifier.get_type(target) == IdentifierType.SOLVER]
         sources = [target for target in target_list if Identifier.get_type(target) != IdentifierType.SOLVER]
         
+
         self.set_solver(solvers)
         self.set_sources(sources)
         return self

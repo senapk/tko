@@ -119,11 +119,6 @@ class Fmt:
     def write_text(y: int, x: int, text: str):
         Fmt.write(y, x, Sentence().add(text))
 
-    @staticmethod
-    def debug(y, x, text: Sentence):
-        Fmt.write(y, x, text)
-        Fmt.getch()
-
 
     # @staticmethod
     # def get_user_input(stdscr, prompt: str) -> str:
