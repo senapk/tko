@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.25.1
+  - fix: golang support multifiles
 - 0.25.0
   - add: ts-node and readline-sync support for typescript
 - 0.24.4
