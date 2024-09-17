@@ -24,7 +24,7 @@ import math
 import configparser
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.25.1"
+__version__ = "0.26.0"
 
 
 class CheckVersion:
@@ -3123,7 +3123,7 @@ class SolverBuilder:
         if path.endswith(".py"):
             self.__executable = "python " + path
         elif path.endswith(".js"):
-            self.__prepare_js()
+            self.__prepare_js(free_run_mode)
         elif path.endswith(".ts"):
             self.__prepare_ts(free_run_mode)
         elif path.endswith(".java"):
@@ -3156,9 +3156,36 @@ class SolverBuilder:
         else:
             self.__executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
 
-    def __prepare_js(self):
+    def comment_and_uncomment_node_input(self, free_run_mode: bool):
+        for i in range(len(self.path_list)):
+            path = self.path_list[i]
+            with open(path, "r") as f:
+                lines = f.readlines()
+            with open(path, "w") as f:
+                for line in lines:
+                    if free_run_mode:
+                        if 'require("fs")' in line and not line.startswith("//"):
+                            f.write("// " + line)
+                        elif 'require("readline-sync")' in line and line.startswith("//"):
+                            f.write(line[2:].lstrip())
+                        elif 'TKO_TEST_ONLY' in line and not line.startswith("//"):
+                            f.write("//" + line)
+                        else:
+                            f.write(line)
+                    else:
+                        if 'require("fs")' in line and line.startswith("//"):
+                            f.write(line[2:].lstrip())
+                        elif 'require("readline-sync")' in line and not line.startswith("//"):
+                            f.write("// " + line);
+                        elif 'TKO_TEST_ONLY' in line and line.startswith("//"):
+                            f.write(line[2:])
+                        else:
+                            f.write(line)
+
+    def __prepare_js(self, free_run_mode: bool):
         self.check_tool("node")
         solver = self.path_list[0]
+        self.comment_and_uncomment_node_input(free_run_mode)
         self.__executable = "node " + solver
 
     def __prepare_go(self):
@@ -3170,6 +3197,7 @@ class SolverBuilder:
         self.__executable = "cat " + " ".join(self.path_list) + " | sqlite3"
 
     def __prepare_ts(self, free_run_mode: bool):
+        self.comment_and_uncomment_node_input(free_run_mode)
         if free_run_mode:
             self.check_tool("ts-node")
             self.__executable = "ts-node -O '{\"module\": \"commonjs\"}' " + " ".join(self.path_list)
@@ -3247,13 +3275,7 @@ class Free:
             print(solver.error_msg)
         else:
             cmd = solver.get_executable()
-            # term_print(Report.centralize(Sentence() + " " + cmd + " ", "─"))
-            if cmd.startswith("node"):
-                if os.name == "nt":
-                    term_print(Report.centralize(Sentence() + " Use Control-Z Enter caso precise finalizar a entrada ", "─"))
-                else:
-                    term_print(Report.centralize(Sentence() + " Use Control-D caso precise finalizar a entrada ", "─"))
-                
+            term_print(Report.centralize(Sentence(), "─"))
             answer = subprocess.run(cmd, shell=True, text=True)
             if answer.returncode != 0 and answer.returncode != 1:
                 print(Runner.decode_code(answer.returncode))
@@ -7382,19 +7404,18 @@ class CmdBuild:
 
 class Drafts:
     ts_draft = r"""
-let _cin_ : string[] = [];
-try { _cin_ = require("fs").readFileSync(0).toString().split(/\r?\n/); } catch(e){}
-let input = () : string => _cin_.length === 0 ? "" : _cin_.shift()!;
-let write = (text: any, end:string="\n")=> process.stdout.write("" + text + end);
+function input(): string { let X: any = input; X.L = X.L || require("fs").readFileSync(0).toString().split(/\r?\n/); return X.L.shift(); }
+// function input(): string { let X: any = input; X.P = X.P || require("readline-sync"); return X.P.question() }
+function write(text: any, endl="\n") { process.stdout.write("" + text + endl); }
 export {};
 
 write("qxcode");
 """[1:]
 
     js_draft = r"""
-let __lines = require("fs").readFileSync(0).toString().split("\n");
-let input = () => __lines.length === 0 ? "" : __lines.shift();
-let write = (text, end="\n") => process.stdout.write("" + text + end);
+function input() { let X = input; X.L = X.L || require("fs").readFileSync(0).toString().split(/\r?\n/); return X.L.shift(); }
+// function input() { let X = input; X.P = X.P || require("readline-sync"); return X.P.question() }
+function write(text, endl="\n") { process.stdout.write("" + text + endl); }
 
 write("qxcode");
 """[1:]

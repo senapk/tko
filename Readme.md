@@ -39,10 +39,18 @@ Você precisará do compilador próprio da linguagem que for programar, instale 
 - javascript: `node`
 - typescript: `esbuild ts-node`
 
+### typescript
+
 ```bash
 # para instalar o esbuild, use o npm
 # se estiver no windows, abra o terminal do powershell como admin
-npm install -g esbuild ts-node
+# no linux use sudo
+npm install -g esbuild ts-node typescript
+
+# inicie o tko com tko play e ele vai perguntar a pasta de instalação padrão
+# após definir, navegue até a pasta e rode os comandos
+npm i --save-dev @types/node
+npm install readline-sync
 
 ```
 

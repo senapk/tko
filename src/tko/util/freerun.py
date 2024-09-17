@@ -1,7 +1,4 @@
 import subprocess
-from typing import Tuple, Callable
-import os
-from subprocess import PIPE
 from .sentence import Sentence, Token
 from .term_color import term_print
 from .report import Report
@@ -28,13 +25,7 @@ class Free:
             print(solver.error_msg)
         else:
             cmd = solver.get_executable()
-            # term_print(Report.centralize(Sentence() + " " + cmd + " ", "─"))
-            if cmd.startswith("node"):
-                if os.name == "nt":
-                    term_print(Report.centralize(Sentence() + " Use Control-Z Enter caso precise finalizar a entrada ", "─"))
-                else:
-                    term_print(Report.centralize(Sentence() + " Use Control-D caso precise finalizar a entrada ", "─"))
-                
+            term_print(Report.centralize(Sentence(), "─"))
             answer = subprocess.run(cmd, shell=True, text=True)
             if answer.returncode != 0 and answer.returncode != 1:
                 print(Runner.decode_code(answer.returncode))

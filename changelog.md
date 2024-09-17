@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.26.0
+  - add: auto change mode in diff or free for typescript and javascript
 - 0.25.1
   - fix: golang support multifiles
 - 0.25.0

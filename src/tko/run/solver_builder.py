@@ -65,7 +65,7 @@ class SolverBuilder:
         if path.endswith(".py"):
             self.__executable = "python " + path
         elif path.endswith(".js"):
-            self.__prepare_js()
+            self.__prepare_js(free_run_mode)
         elif path.endswith(".ts"):
             self.__prepare_ts(free_run_mode)
         elif path.endswith(".java"):
@@ -98,9 +98,36 @@ class SolverBuilder:
         else:
             self.__executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
 
-    def __prepare_js(self):
+    def comment_and_uncomment_node_input(self, free_run_mode: bool):
+        for i in range(len(self.path_list)):
+            path = self.path_list[i]
+            with open(path, "r") as f:
+                lines = f.readlines()
+            with open(path, "w") as f:
+                for line in lines:
+                    if free_run_mode:
+                        if 'require("fs")' in line and not line.startswith("//"):
+                            f.write("// " + line)
+                        elif 'require("readline-sync")' in line and line.startswith("//"):
+                            f.write(line[2:].lstrip())
+                        elif 'TKO_TEST_ONLY' in line and not line.startswith("//"):
+                            f.write("//" + line)
+                        else:
+                            f.write(line)
+                    else:
+                        if 'require("fs")' in line and line.startswith("//"):
+                            f.write(line[2:].lstrip())
+                        elif 'require("readline-sync")' in line and not line.startswith("//"):
+                            f.write("// " + line);
+                        elif 'TKO_TEST_ONLY' in line and line.startswith("//"):
+                            f.write(line[2:])
+                        else:
+                            f.write(line)
+
+    def __prepare_js(self, free_run_mode: bool):
         self.check_tool("node")
         solver = self.path_list[0]
+        self.comment_and_uncomment_node_input(free_run_mode)
         self.__executable = "node " + solver
 
     def __prepare_go(self):
@@ -112,6 +139,7 @@ class SolverBuilder:
         self.__executable = "cat " + " ".join(self.path_list) + " | sqlite3"
 
     def __prepare_ts(self, free_run_mode: bool):
+        self.comment_and_uncomment_node_input(free_run_mode)
         if free_run_mode:
             self.check_tool("ts-node")
             self.__executable = "ts-node -O '{\"module\": \"commonjs\"}' " + " ".join(self.path_list)

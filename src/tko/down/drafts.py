@@ -1,18 +1,17 @@
 class Drafts:
     ts_draft = r"""
-let _cin_ : string[] = [];
-try { _cin_ = require("fs").readFileSync(0).toString().split(/\r?\n/); } catch(e){}
-let input = () : string => _cin_.length === 0 ? "" : _cin_.shift()!;
-let write = (text: any, end:string="\n")=> process.stdout.write("" + text + end);
+function input(): string { let X: any = input; X.L = X.L || require("fs").readFileSync(0).toString().split(/\r?\n/); return X.L.shift(); }
+// function input(): string { let X: any = input; X.P = X.P || require("readline-sync"); return X.P.question() }
+function write(text: any, endl="\n") { process.stdout.write("" + text + endl); }
 export {};
 
 write("qxcode");
 """[1:]
 
     js_draft = r"""
-let __lines = require("fs").readFileSync(0).toString().split("\n");
-let input = () => __lines.length === 0 ? "" : __lines.shift();
-let write = (text, end="\n") => process.stdout.write("" + text + end);
+function input() { let X = input; X.L = X.L || require("fs").readFileSync(0).toString().split(/\r?\n/); return X.L.shift(); }
+// function input() { let X = input; X.P = X.P || require("readline-sync"); return X.P.question() }
+function write(text, endl="\n") { process.stdout.write("" + text + endl); }
 
 write("qxcode");
 """[1:]
