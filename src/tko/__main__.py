@@ -29,7 +29,7 @@ from .__init__ import __version__
 
 class Main:
     @staticmethod
-    def go(args):
+    def exec(args):
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         if args.quiet:
@@ -45,7 +45,6 @@ class Main:
             param.set_compact(True)
 
         settings = Settings()
-        # load default diff from settings if not specified
         if not args.side and not args.down:
             param.set_diff_mode(settings.app.get_diff_mode())
         elif args.side:
@@ -112,7 +111,7 @@ class Parser:
         self.create_parent_basic()
         self.create_parent_manip()
         self.add_parser_run()
-        self.add_parser_go()
+        self.add_parser_exec()
         self.add_parser_build()
         self.add_parser_down()
         self.add_parser_config()
@@ -149,8 +148,8 @@ class Parser:
         parser_r.add_argument("--cmd", type=str, help="bash command to run code")
         parser_r.set_defaults(func=Main.run)
 
-    def add_parser_go(self):
-        parser_r = self.subparsers.add_parser('go', parents=[self.parent_basic], help='run with test cases.')
+    def add_parser_exec(self):
+        parser_r = self.subparsers.add_parser('test', parents=[self.parent_basic], help='run with test cases.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
         parser_r.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures')
@@ -164,7 +163,7 @@ class Parser:
         group = parser_r.add_mutually_exclusive_group()
         group.add_argument('--down', '-d', action='store_true', help="diff mode up-to-down.")
         group.add_argument('--side', '-s', action='store_true', help="diff mode side-by-side.")
-        parser_r.set_defaults(func=Main.go)
+        parser_r.set_defaults(func=Main.exec)
 
     def add_parser_build(self):
         parser_b = self.subparsers.add_parser('build', parents=[self.parent_manip], help='build a test target.')

@@ -212,7 +212,7 @@ class Gui:
         array += self.get_help_fixed()
         color = "G" if self.app.has_full_hud() else "Y"
         symbol = symbols.success if self.app.has_full_hud() else symbols.failure
-        array.append(Sentence() + RToken(color, f" {symbol.text} {GuiActions.hud} [{GuiKeys.hud}]"))
+        array.append(Sentence() + RToken(color, f"{symbol.text} {GuiActions.hud}  [{GuiKeys.hud}]"))
         array += self.get_help_others_after()
 
         return self.build_list_sentence(array)

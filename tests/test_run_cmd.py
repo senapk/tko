@@ -8,13 +8,13 @@ class Test:
 
     def test_run_cmd(self, capsys):
         cmd = "g++ solver.cpp -o solver.out && ./solver.out"
-        cmd2 = ["-w", "50", "-m", "go", "--cmd", cmd, "cases.tio"]
+        cmd2 = ["-w", "50", "-m", "test", "--cmd", cmd, "cases.tio"]
         compare_list(capsys, Test.folder, "out1", cmd2)
 
 
     def test_run_makefile(self, capsys):
         cmd = "make -s solver.out && ./solver.out"
-        cmd2 = ["-w", "50", "-m", "go", "--cmd", cmd, "cases.tio"]
+        cmd2 = ["-w", "50", "-m", "test", "--cmd", cmd, "cases.tio"]
         compare_list(capsys, Test.folder, "out2", cmd2)
 
 

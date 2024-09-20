@@ -385,7 +385,7 @@ class Tester:
         # hud
         color = "G" if self.app.has_full_hud() else "Y"
         symbol = symbols.success if self.app.has_full_hud() else symbols.failure
-        cmds.append(self.borders.border(color, f" {symbol.text} {GuiActions.hud} [{GuiKeys.hud}]"))
+        cmds.append(self.borders.border(color, f"{symbol.text} {GuiActions.hud}  [{GuiKeys.hud}]"))
 
         if self.app.has_full_hud():
             # tempo
@@ -400,9 +400,9 @@ class Tester:
             )
             # diff mode
             if self.settings.app.get_diff_mode() == DiffMode.DOWN:
-                text = f"Diff ⇕ [{GuiKeys.diff}]"
+                text = f"⇕ Diff [{GuiKeys.diff}]"
             else:
-                text = f"Diff ⇔ [{GuiKeys.diff}]"
+                text = f"⇔ Diff [{GuiKeys.diff}]"
 
             cmds.append(self.borders.border("M", text))
             

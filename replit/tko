@@ -24,7 +24,7 @@ import math
 import configparser
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.26.0"
+__version__ = "0.27.0"
 
 
 class CheckVersion:
@@ -3075,7 +3075,11 @@ class SolverBuilder:
     def __init__(self, solver_list: List[str]):
         self.path_list: List[str] = [os.path.normpath(SolverBuilder.__add_dot_bar(path)) for path in solver_list]
         
-        self.temp_dir = tempfile.mkdtemp()
+        if len(self.path_list) > 0:
+            self.cache_dir = os.path.join(os.path.dirname(self.path_list[0]), ".cache")
+        else:
+            self.cache_dir = tempfile.mkdtemp()
+        self.clear_cache()
         self.error_msg: str = ""
         self.__executable: str = ""
         self.compile_error: bool = False
@@ -3102,10 +3106,16 @@ class SolverBuilder:
         self.__executable = executable
         return self
 
+    def clear_cache(self):
+        if os.path.exists(self.cache_dir):
+            shutil.rmtree(self.cache_dir)
+        os.makedirs(self.cache_dir, exist_ok=True)
+
     def reset(self):
         self.__executable = ""
         self.compile_error = False
         self.error_msg = ""
+        self.clear_cache()
 
     def not_compiled(self):
         return self.__executable == "" and not self.compile_error
@@ -3147,14 +3157,14 @@ class SolverBuilder:
         filename = os.path.basename(solver)
         # tempdir = os.path.dirname(self.path_list[0])
 
-        cmd = ["javac"] + self.path_list + ['-d', self.temp_dir]
+        cmd = ["javac"] + self.path_list + ['-d', self.cache_dir]
         cmdt = " ".join(cmd)
         return_code, stdout, stderr = Runner.subprocess_run(cmdt)
         if return_code != 0:
             self.error_msg = stdout + stderr
             self.compile_error = True
         else:
-            self.__executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
+            self.__executable = "java -cp " + self.cache_dir + " " + filename[:-5]  # removing the .java
 
     def comment_and_uncomment_node_input(self, free_run_mode: bool):
         for i in range(len(self.path_list)):
@@ -3164,20 +3174,20 @@ class SolverBuilder:
             with open(path, "w") as f:
                 for line in lines:
                     if free_run_mode:
-                        if 'require("fs")' in line and not line.startswith("//"):
-                            f.write("// " + line)
-                        elif 'require("readline-sync")' in line and line.startswith("//"):
-                            f.write(line[2:].lstrip())
-                        elif 'TKO_TEST_ONLY' in line and not line.startswith("//"):
+                        if '_TEST_ONLY_' in line and not line.startswith("//"):
                             f.write("//" + line)
+                        elif '_FREE_ONLY' in line and line.startswith("// function"):
+                            f.write(line[3:])
+                        elif '_FREE_ONLY' in line and line.startswith("//"):
+                            f.write(line[2:])
                         else:
                             f.write(line)
                     else:
-                        if 'require("fs")' in line and line.startswith("//"):
-                            f.write(line[2:].lstrip())
-                        elif 'require("readline-sync")' in line and not line.startswith("//"):
-                            f.write("// " + line);
-                        elif 'TKO_TEST_ONLY' in line and line.startswith("//"):
+                        if '_FREE_ONLY_' in line and not line.startswith("//"):
+                            f.write("//" + line)
+                        elif '_TEST_ONLY' in line and line.startswith("// function"):
+                            f.write(line[3:])
+                        elif '_TEST_ONLY' in line and line.startswith("//"):
                             f.write(line[2:])
                         else:
                             f.write(line)
@@ -3198,10 +3208,6 @@ class SolverBuilder:
 
     def __prepare_ts(self, free_run_mode: bool):
         self.comment_and_uncomment_node_input(free_run_mode)
-        if free_run_mode:
-            self.check_tool("ts-node")
-            self.__executable = "ts-node -O '{\"module\": \"commonjs\"}' " + " ".join(self.path_list)
-            return
         
         transpiler = "esbuild"
         if os.name == "nt":
@@ -3209,23 +3215,21 @@ class SolverBuilder:
 
         self.check_tool(transpiler)
         self.check_tool("node")
-
-        solver = self.path_list[0]
-
-        filename = os.path.basename(solver)
         source_list = self.path_list
-        cmd = [transpiler] + source_list + ["--outdir=" + self.temp_dir, "--format=cjs", "--log-level=error"]
+        cmd = [transpiler] + source_list + ["--outdir=" + self.cache_dir, "--format=cjs", "--log-level=error"]
         return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
         if return_code != 0:
             self.error_msg = stdout + stderr
             self.compile_error = True
         else:
-            jsfile = os.path.join(self.temp_dir, filename[:-3] + ".js")
-            self.__executable = "node " + jsfile  # renaming solver to main
+            new_source_list = []
+            for source in source_list:
+                new_source_list.append(os.path.join(self.cache_dir, os.path.basename(source)[:-2] + "js"))
+            self.__executable = "node " + " ".join(new_source_list)  # renaming solver to main
     
     def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
         # solver = self.path_list[0]
-        tempdir = self.temp_dir
+        tempdir = self.cache_dir
         source_list = self.path_list
         # print("Using the following source files: " + str([os.path.basename(x) for x in source_list]))
         
@@ -3279,10 +3283,11 @@ class Free:
             answer = subprocess.run(cmd, shell=True, text=True)
             if answer.returncode != 0 and answer.returncode != 1:
                 print(Runner.decode_code(answer.returncode))
+        solver.reset()
         to_run_again = False
         if wait_input:
             term_print(Report.centralize("", "─"))
-            term_print(Sentence().addf("y", "Deseja compilar e executar novamente? (").addf("c", "s").addf("y", "/n): "), end="")
+            term_print(Sentence().addf("y", "Deseja compilar e executar novamente? [").addf("c", "S").addf("y", "/n]: "), end="")
             valor = input()
             if valor != "n" and valor != "q":
                 if to_clear:
@@ -5256,7 +5261,7 @@ class Gui:
         array += self.get_help_fixed()
         color = "G" if self.app.has_full_hud() else "Y"
         symbol = symbols.success if self.app.has_full_hud() else symbols.failure
-        array.append(Sentence() + RToken(color, f" {symbol.text} {GuiActions.hud} [{GuiKeys.hud}]"))
+        array.append(Sentence() + RToken(color, f"{symbol.text} {GuiActions.hud}  [{GuiKeys.hud}]"))
         array += self.get_help_others_after()
 
         return self.build_list_sentence(array)
@@ -6752,7 +6757,7 @@ class Tester:
         # hud
         color = "G" if self.app.has_full_hud() else "Y"
         symbol = symbols.success if self.app.has_full_hud() else symbols.failure
-        cmds.append(self.borders.border(color, f" {symbol.text} {GuiActions.hud} [{GuiKeys.hud}]"))
+        cmds.append(self.borders.border(color, f"{symbol.text} {GuiActions.hud}  [{GuiKeys.hud}]"))
 
         if self.app.has_full_hud():
             # tempo
@@ -6767,9 +6772,9 @@ class Tester:
             )
             # diff mode
             if self.settings.app.get_diff_mode() == DiffMode.DOWN:
-                text = f"Diff ⇕ [{GuiKeys.diff}]"
+                text = f"⇕ Diff [{GuiKeys.diff}]"
             else:
-                text = f"Diff ⇔ [{GuiKeys.diff}]"
+                text = f"⇔ Diff [{GuiKeys.diff}]"
 
             cmds.append(self.borders.border("M", text))
             
@@ -7194,7 +7199,7 @@ class Run:
         if self.param.diff_count == DiffCount.FIRST:
             # printing only the first wrong case
             wrong = [unit for unit in self.wdir.get_unit_list() if unit.result != ExecutionResult.SUCCESS][0]
-            if self.param.diff_mode:
+            if self.param.diff_mode == DiffMode.DOWN:
                 for line in DiffBuilder.mount_up_down_diff(wrong):
                     term_print(line)
             else:
@@ -7409,7 +7414,10 @@ function input(): string { let X: any = input; X.L = X.L || require("fs").readFi
 function write(text: any, endl="\n") { process.stdout.write("" + text + endl); }
 export {};
 
-write("qxcode");
+function main() {
+    write("qxcode");
+}
+main();
 """[1:]
 
     js_draft = r"""
@@ -7417,7 +7425,10 @@ function input() { let X = input; X.L = X.L || require("fs").readFileSync(0).toS
 // function input() { let X = input; X.P = X.P || require("readline-sync"); return X.P.question() }
 function write(text, endl="\n") { process.stdout.write("" + text + endl); }
 
-write("qxcode");
+function main() {
+    write("qxcode");
+}
+main();
 """[1:]
 
     c_draft = r"""
@@ -8024,7 +8035,7 @@ class CmdPlay:
 
 class Main:
     @staticmethod
-    def go(args):
+    def exec(args):
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         if args.quiet:
@@ -8040,7 +8051,6 @@ class Main:
             param.set_compact(True)
 
         settings = Settings()
-        # load default diff from settings if not specified
         if not args.side and not args.down:
             param.set_diff_mode(settings.app.get_diff_mode())
         elif args.side:
@@ -8107,7 +8117,7 @@ class Parser:
         self.create_parent_basic()
         self.create_parent_manip()
         self.add_parser_run()
-        self.add_parser_go()
+        self.add_parser_exec()
         self.add_parser_build()
         self.add_parser_down()
         self.add_parser_config()
@@ -8144,8 +8154,8 @@ class Parser:
         parser_r.add_argument("--cmd", type=str, help="bash command to run code")
         parser_r.set_defaults(func=Main.run)
 
-    def add_parser_go(self):
-        parser_r = self.subparsers.add_parser('go', parents=[self.parent_basic], help='run with test cases.')
+    def add_parser_exec(self):
+        parser_r = self.subparsers.add_parser('test', parents=[self.parent_basic], help='run with test cases.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
         parser_r.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures')
@@ -8159,7 +8169,7 @@ class Parser:
         group = parser_r.add_mutually_exclusive_group()
         group.add_argument('--down', '-d', action='store_true', help="diff mode up-to-down.")
         group.add_argument('--side', '-s', action='store_true', help="diff mode side-by-side.")
-        parser_r.set_defaults(func=Main.go)
+        parser_r.set_defaults(func=Main.exec)
 
     def add_parser_build(self):
         parser_b = self.subparsers.add_parser('build', parents=[self.parent_manip], help='build a test target.')

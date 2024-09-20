@@ -5,7 +5,10 @@ function input(): string { let X: any = input; X.L = X.L || require("fs").readFi
 function write(text: any, endl="\n") { process.stdout.write("" + text + endl); }
 export {};
 
-write("qxcode");
+function main() {
+    write("qxcode");
+}
+main();
 """[1:]
 
     js_draft = r"""
@@ -13,7 +16,10 @@ function input() { let X = input; X.L = X.L || require("fs").readFileSync(0).toS
 // function input() { let X = input; X.P = X.P || require("readline-sync"); return X.P.question() }
 function write(text, endl="\n") { process.stdout.write("" + text + endl); }
 
-write("qxcode");
+function main() {
+    write("qxcode");
+}
+main();
 """[1:]
 
     c_draft = r"""

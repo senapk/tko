@@ -29,10 +29,11 @@ class Free:
             answer = subprocess.run(cmd, shell=True, text=True)
             if answer.returncode != 0 and answer.returncode != 1:
                 print(Runner.decode_code(answer.returncode))
+        solver.reset()
         to_run_again = False
         if wait_input:
             term_print(Report.centralize("", "─"))
-            term_print(Sentence().addf("y", "Deseja compilar e executar novamente? (").addf("c", "s").addf("y", "/n): "), end="")
+            term_print(Sentence().addf("y", "Deseja compilar e executar novamente? [").addf("c", "S").addf("y", "/n]: "), end="")
             valor = input()
             if valor != "n" and valor != "q":
                 if to_clear:

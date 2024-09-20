@@ -17,7 +17,11 @@ class SolverBuilder:
     def __init__(self, solver_list: List[str]):
         self.path_list: List[str] = [os.path.normpath(SolverBuilder.__add_dot_bar(path)) for path in solver_list]
         
-        self.temp_dir = tempfile.mkdtemp()
+        if len(self.path_list) > 0:
+            self.cache_dir = os.path.join(os.path.dirname(self.path_list[0]), ".cache")
+        else:
+            self.cache_dir = tempfile.mkdtemp()
+        self.clear_cache()
         self.error_msg: str = ""
         self.__executable: str = ""
         self.compile_error: bool = False
@@ -44,10 +48,16 @@ class SolverBuilder:
         self.__executable = executable
         return self
 
+    def clear_cache(self):
+        if os.path.exists(self.cache_dir):
+            shutil.rmtree(self.cache_dir)
+        os.makedirs(self.cache_dir, exist_ok=True)
+
     def reset(self):
         self.__executable = ""
         self.compile_error = False
         self.error_msg = ""
+        self.clear_cache()
 
     def not_compiled(self):
         return self.__executable == "" and not self.compile_error
@@ -89,14 +99,14 @@ class SolverBuilder:
         filename = os.path.basename(solver)
         # tempdir = os.path.dirname(self.path_list[0])
 
-        cmd = ["javac"] + self.path_list + ['-d', self.temp_dir]
+        cmd = ["javac"] + self.path_list + ['-d', self.cache_dir]
         cmdt = " ".join(cmd)
         return_code, stdout, stderr = Runner.subprocess_run(cmdt)
         if return_code != 0:
             self.error_msg = stdout + stderr
             self.compile_error = True
         else:
-            self.__executable = "java -cp " + self.temp_dir + " " + filename[:-5]  # removing the .java
+            self.__executable = "java -cp " + self.cache_dir + " " + filename[:-5]  # removing the .java
 
     def comment_and_uncomment_node_input(self, free_run_mode: bool):
         for i in range(len(self.path_list)):
@@ -106,20 +116,20 @@ class SolverBuilder:
             with open(path, "w") as f:
                 for line in lines:
                     if free_run_mode:
-                        if 'require("fs")' in line and not line.startswith("//"):
-                            f.write("// " + line)
-                        elif 'require("readline-sync")' in line and line.startswith("//"):
-                            f.write(line[2:].lstrip())
-                        elif 'TKO_TEST_ONLY' in line and not line.startswith("//"):
+                        if '_TEST_ONLY_' in line and not line.startswith("//"):
                             f.write("//" + line)
+                        elif '_FREE_ONLY' in line and line.startswith("// function"):
+                            f.write(line[3:])
+                        elif '_FREE_ONLY' in line and line.startswith("//"):
+                            f.write(line[2:])
                         else:
                             f.write(line)
                     else:
-                        if 'require("fs")' in line and line.startswith("//"):
-                            f.write(line[2:].lstrip())
-                        elif 'require("readline-sync")' in line and not line.startswith("//"):
-                            f.write("// " + line);
-                        elif 'TKO_TEST_ONLY' in line and line.startswith("//"):
+                        if '_FREE_ONLY_' in line and not line.startswith("//"):
+                            f.write("//" + line)
+                        elif '_TEST_ONLY' in line and line.startswith("// function"):
+                            f.write(line[3:])
+                        elif '_TEST_ONLY' in line and line.startswith("//"):
                             f.write(line[2:])
                         else:
                             f.write(line)
@@ -140,10 +150,6 @@ class SolverBuilder:
 
     def __prepare_ts(self, free_run_mode: bool):
         self.comment_and_uncomment_node_input(free_run_mode)
-        if free_run_mode:
-            self.check_tool("ts-node")
-            self.__executable = "ts-node -O '{\"module\": \"commonjs\"}' " + " ".join(self.path_list)
-            return
         
         transpiler = "esbuild"
         if os.name == "nt":
@@ -151,23 +157,21 @@ class SolverBuilder:
 
         self.check_tool(transpiler)
         self.check_tool("node")
-
-        solver = self.path_list[0]
-
-        filename = os.path.basename(solver)
         source_list = self.path_list
-        cmd = [transpiler] + source_list + ["--outdir=" + self.temp_dir, "--format=cjs", "--log-level=error"]
+        cmd = [transpiler] + source_list + ["--outdir=" + self.cache_dir, "--format=cjs", "--log-level=error"]
         return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
         if return_code != 0:
             self.error_msg = stdout + stderr
             self.compile_error = True
         else:
-            jsfile = os.path.join(self.temp_dir, filename[:-3] + ".js")
-            self.__executable = "node " + jsfile  # renaming solver to main
+            new_source_list = []
+            for source in source_list:
+                new_source_list.append(os.path.join(self.cache_dir, os.path.basename(source)[:-2] + "js"))
+            self.__executable = "node " + " ".join(new_source_list)  # renaming solver to main
     
     def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
         # solver = self.path_list[0]
-        tempdir = self.temp_dir
+        tempdir = self.cache_dir
         source_list = self.path_list
         # print("Using the following source files: " + str([os.path.basename(x) for x in source_list]))
         

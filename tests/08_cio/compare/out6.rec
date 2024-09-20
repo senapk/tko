@@ -13,20 +13,15 @@
 (ω saída_incorreta)[10] GR:009 _calc2.tio (gastando bateria                   )
 ╭────────────────────────────────────────────────
 │(ω saída_incorreta)[00] GR:009 _calc2.tio (iniciar mostrar e recarregar       ) 
-├─────────────────── INSERIDO ───────────────────
-│ init 5
-│ show
-│ end
-├─────────────────── ESPERADO ───────────────────
-├ $init 5
-├ $show
-├ display = 0.00, battery = 0
-├ $end
-├─────────────────── RECEBIDO ───────────────────
-├ 
-├ 
-├ 
-├ 
+├────── INSERIDO ───────┬─────── INSERIDO ───────
+│ init 5                │ init 5               
+│ show                  │ show                 
+│ end                   │ end                  
+├────── ESPERADO ───────┼─────── RECEBIDO ───────
+├ $init 5               ├                      
+├ $show                 ├                      
+├ display = 0.00, batte ├                      
+├ $end                  ├                      
 ├─────────────────── DESIGUAL ───────────────────
 │ $init·5↲ (esperado)
 │ ↲        (recebido)

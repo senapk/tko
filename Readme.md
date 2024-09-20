@@ -37,7 +37,7 @@ Você precisará do compilador próprio da linguagem que for programar, instale 
 - java: `javac`
 - python: `python3`
 - javascript: `node`
-- typescript: `esbuild ts-node`
+- typescript: `esbuild`
 
 ### typescript
 
@@ -45,7 +45,10 @@ Você precisará do compilador próprio da linguagem que for programar, instale 
 # para instalar o esbuild, use o npm
 # se estiver no windows, abra o terminal do powershell como admin
 # no linux use sudo
-npm install -g esbuild ts-node typescript
+npm install -g esbuild typescript
+npm i --save-dev @types/node
+npm install readline-sync
+
 
 # inicie o tko com tko play e ele vai perguntar a pasta de instalação padrão
 # após definir, navegue até a pasta e rode os comandos

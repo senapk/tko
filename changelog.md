@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.27.0
+  - fix: removed ts-node dependence
+  - add: change go command to test command
 - 0.26.0
   - add: auto change mode in diff or free for typescript and javascript
 - 0.25.1

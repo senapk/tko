@@ -20,6 +20,7 @@ from ..run.unit_runner import UnitRunner
 from ..game.task import Task
 from ..play.opener import Opener
 from tko.settings.settings import Settings
+from tko.util.consts import DiffMode
 
 class FilterMode:
     @staticmethod
@@ -147,7 +148,7 @@ class Run:
         if self.param.diff_count == DiffCount.FIRST:
             # printing only the first wrong case
             wrong = [unit for unit in self.wdir.get_unit_list() if unit.result != ExecutionResult.SUCCESS][0]
-            if self.param.diff_mode:
+            if self.param.diff_mode == DiffMode.DOWN:
                 for line in DiffBuilder.mount_up_down_diff(wrong):
                     term_print(line)
             else:
