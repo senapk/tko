@@ -46,15 +46,20 @@ Você precisará do compilador próprio da linguagem que for programar, instale 
 # se estiver no windows, abra o terminal do powershell como admin
 # no linux use sudo
 npm install -g esbuild typescript
-npm i --save-dev @types/node
-npm install readline-sync
-
 
 # inicie o tko com tko play e ele vai perguntar a pasta de instalação padrão
 # após definir, navegue até a pasta e rode os comandos
 npm i --save-dev @types/node
 npm install readline-sync
+```
 
+## Para interagir com os repositórios, navegar, baixar, testar
+
+```bash
+tko play [ poo | fup | ed ]
+
+# exemplo
+tko play fup
 ```
 
 ## Download atividades
