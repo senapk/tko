@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.29.0
+  - add: improved drafts for ts and js
 - 0.28.0
   - add: config options to borders and hud
 - 0.27.0
