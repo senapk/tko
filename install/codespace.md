@@ -29,10 +29,18 @@ Python, c, c++, javascript, java e go não precisam de nenhum software adicional
 Para typescript, você precisa instalar o `esbuild`.
 
 ```bash
-npm install -g esbuild
+npm install -g esbuild typescript
 npm i --save-dev @types/node
 npm install readline-sync
 ```
+
+Se precisar refazer a instalação dos módulos por algum motivo, execute:
+
+```bash
+rm -rf node_modules package-lock.json package.json
+```
+
+E refaça os comandos da instalação.
 
 ## Adicionando alguns atalhos úteis no bash
 
