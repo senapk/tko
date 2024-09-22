@@ -5,12 +5,14 @@ from tko.util.consts import DiffMode
 
 class ConfigParams:
     def __init__(self):
-        self.side = False
-        self.down = False
-        self.lang = None
-        self.ask = False
-        self.root = None
-        self.editor = None
+        self.side: bool = False
+        self.down: bool = False
+        self.lang: str | None = None
+        self.ask: bool = False
+        self.root: str | None = None
+        self.editor: str | None = None
+        self.hud: str | None = None
+        self.borders: str | None = None
 
     def __str__(self):
         return f"side: {self.side}, down: {self.down}, lang: {self.lang}, ask: {self.ask}, root: {self.root}, editor: {self.editor}"
@@ -20,6 +22,15 @@ class CmdConfig:
     @staticmethod
     def execute(settings: Settings, param: ConfigParams):
         action = False
+
+        if param.borders is not None:
+            action = True
+            settings.app.set_borders(param.borders == "1")
+            print("Borders now is: " + str("True" if param.borders == "1" else "False"))
+        if param.hud is not None:
+            action = True
+            settings.app.set_full_hud(param.hud == "1")
+            print("HUD now is: " + str("True" if param.hud == "1" else "False"))
 
         if param.side:
             action = True

@@ -95,6 +95,8 @@ class Main:
         param.ask = args.ask
         param.root = args.root
         param.editor = args.editor
+        param.borders = args.borders
+        param.hud = args.hud
 
         CmdConfig.execute(settings, param)
 
@@ -192,6 +194,8 @@ class Parser:
 
         parser_s.add_argument("--root", metavar="path", type=str, help='set root directory.')
         parser_s.add_argument("--editor", metavar="cmd", type=str, help='set editor command.')
+        parser_s.add_argument("--borders", metavar="0or1", type=str, help='enable borders.')
+        parser_s.add_argument("--hud", metavar="0or1", type=str, help='enable hud.')
 
         parser_s.set_defaults(func=Main.config)
 

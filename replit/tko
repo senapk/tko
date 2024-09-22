@@ -24,7 +24,7 @@ import math
 import configparser
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.27.0"
+__version__ = "0.28.0"
 
 
 class CheckVersion:
@@ -5439,12 +5439,14 @@ class Gui:
 
 class ConfigParams:
     def __init__(self):
-        self.side = False
-        self.down = False
-        self.lang = None
-        self.ask = False
-        self.root = None
-        self.editor = None
+        self.side: bool = False
+        self.down: bool = False
+        self.lang: str | None = None
+        self.ask: bool = False
+        self.root: str | None = None
+        self.editor: str | None = None
+        self.hud: str | None = None
+        self.borders: str | None = None
 
     def __str__(self):
         return f"side: {self.side}, down: {self.down}, lang: {self.lang}, ask: {self.ask}, root: {self.root}, editor: {self.editor}"
@@ -5454,6 +5456,15 @@ class CmdConfig:
     @staticmethod
     def execute(settings: Settings, param: ConfigParams):
         action = False
+
+        if param.borders is not None:
+            action = True
+            settings.app.set_borders(param.borders == "1")
+            print("Borders now is: " + str("True" if param.borders == "1" else "False"))
+        if param.hud is not None:
+            action = True
+            settings.app.set_full_hud(param.hud == "1")
+            print("HUD now is: " + str("True" if param.hud == "1" else "False"))
 
         if param.side:
             action = True
@@ -8101,6 +8112,8 @@ class Main:
         param.ask = args.ask
         param.root = args.root
         param.editor = args.editor
+        param.borders = args.borders
+        param.hud = args.hud
 
         CmdConfig.execute(settings, param)
 
@@ -8198,6 +8211,8 @@ class Parser:
 
         parser_s.add_argument("--root", metavar="path", type=str, help='set root directory.')
         parser_s.add_argument("--editor", metavar="cmd", type=str, help='set editor command.')
+        parser_s.add_argument("--borders", metavar="0or1", type=str, help='enable borders.')
+        parser_s.add_argument("--hud", metavar="0or1", type=str, help='enable hud.')
 
         parser_s.set_defaults(func=Main.config)
 

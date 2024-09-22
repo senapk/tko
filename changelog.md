@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.28.0
+  - add: config options to borders and hud
 - 0.27.0
   - fix: removed ts-node dependence
   - add: change go command to test command
