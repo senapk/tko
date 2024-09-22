@@ -3,7 +3,7 @@ build/
 dist/
 *.egg-info/
 *.egg
-*.py[cod]
+*.py
 __pycache__/
 *.so
 *~
@@ -18,3 +18,5 @@ temp
 .venv*
 venv*/
 ENV*/
+todo.md
+
