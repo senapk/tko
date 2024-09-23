@@ -24,7 +24,7 @@ import math
 import configparser
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.29.0"
+__version__ = "0.30.0"
 
 
 class CheckVersion:
@@ -2345,6 +2345,11 @@ class __Symbols:
         self.locked_locked = Token("⇟")
         self.left_toggle = Token("━─")
         self.right_toggle = Token("─━")
+        self.timer = Token("⏰") # ⌛⏰
+        self.diff_down = Token("⇕")
+        self.diff_left = Token("⇔")
+        self.sharpR = Token("")
+        self.sharpL = Token("")
 
 
     def set_colors(self):
@@ -6709,17 +6714,45 @@ class Tester:
         to_remove = 0
         index = self.focused_index
         dx = frame.get_dx()
-        while (index + 2) * size - to_remove >= dx:
+        while (index + 4) * size - to_remove >= dx:
             to_remove += size
-        output.data = output.data[:6] + output.data[6 + to_remove:]
+        output.data = output.data[:3 * 6] + output.data[3 * 6 + to_remove:]
         return output
 
     def get_fixed_arrow(self) -> Sentence:
+        
+        output = Sentence()
+        # diff
+        diff = self.settings.app.get_diff_mode()
+        if diff == DiffMode.DOWN:
+            diff_text = symbols.diff_down.text
+        else:
+            diff_text = symbols.diff_left.text
+        output.addf("B", f" {GuiKeys.diff} {diff_text} ")
+        if self.settings.app.has_borders():
+            output.addf("Mb", symbols.sharpR.text)
+        else:
+            output.addf("B", " ")
+
+        # timer
+        timer = symbols.timer.text
+        value = str(self.settings.app.get_timeout())
+        if value == "0":
+            value = symbols.infinity.text
+        output.addf("M", f"{timer} {value}  ")
+        color = "R" if self.locked_index else "G"
+        if self.settings.app.has_borders():
+            output.addf(color + "m", symbols.sharpR.text)
+        else:
+            output.addf("M", " ")
+
+        # travar
         free = symbols.locked_free.text
         locked = symbols.locked_locked.text
         symbol = locked if self.locked_index else free
-        color = "R" if self.locked_index else "G"
-        return Sentence().add(self.borders.roundL(color)).addf(color, f"{GuiKeys.travar} {symbol}").add(self.borders.sharpR(color))
+        output.addf(color, f" {GuiKeys.travar} {symbol} ").add(self.borders.sharpR(color))
+
+        return output
 
     def draw_top_bar_content(self, frame):
         if not self.wdir.has_tests():
@@ -6763,7 +6796,7 @@ class Tester:
         if self.opener is not None:
             cmds.append(self.borders.border("C", f"{GuiActions.editar} [{GuiKeys.editar}]"))
         # ativar
-        cmds.append(self.borders.border("G", f"{GuiActions.ativar} [↲]"))
+        cmds.append(self.borders.border("G", f"{GuiActions.ativar} [{symbols.newline.text}]"))
         
         # hud
         color = "G" if self.app.has_full_hud() else "Y"
@@ -6783,9 +6816,9 @@ class Tester:
             )
             # diff mode
             if self.settings.app.get_diff_mode() == DiffMode.DOWN:
-                text = f"⇕ Diff [{GuiKeys.diff}]"
+                text = f"{symbols.diff_down.text} Diff [{GuiKeys.diff}]"
             else:
-                text = f"⇔ Diff [{GuiKeys.diff}]"
+                text = f"{symbols.diff_left.text} Diff [{GuiKeys.diff}]"
 
             cmds.append(self.borders.border("M", text))
             
