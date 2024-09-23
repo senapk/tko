@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.30.0
+  - add: time and diff view in tester arrow
 - 0.29.0
   - add: improved drafts for ts and js
 - 0.28.0
