@@ -9,7 +9,7 @@ from tko.cmds.cmd_down import CmdDown
 from tko.cmds.cmd_run import Run
 from tko.cmds.cmd_build import CmdBuild
 from tko.cmds.cmd_config import CmdConfig, ConfigParams
-
+from tko.util.logger import LogAction, Logger
 
 from .util.param import Param
 from .util.pattern import PatternLoader
@@ -223,6 +223,10 @@ class Parser:
         repo_graph.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be graphed.')
         repo_graph.set_defaults(func=CmdRep.graph)
 
+        repo_log = subpar_repo.add_parser("log", help="validates log of the repository.")
+        repo_log.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be log.')
+        repo_log.set_defaults(func=CmdRep.log)
+
     def add_parser_play(self):
         parser_p = self.subparsers.add_parser('play', help='play a game.')
         parser_p.add_argument('repo', metavar='repo', type=str, nargs="?", default="__ask", help='repository to be played.')
@@ -238,6 +242,8 @@ def exec(parser: argparse.ArgumentParser, args):
     if args.c:
         settings.set_settings_file(args.c)
     settings.load_settings()
+    logger = Logger.get_instance()
+    logger.set_settings(settings)
 
     if args.m:
         TermColor.enabled = False

@@ -2,6 +2,7 @@ from tko.settings.settings import Settings
 from tko.game.game import Game
 from tko.settings.rep_settings import RepSource
 from tko.play.play import Play
+from tko.util.logger import Logger, LogAction
 from typing import Dict
 import os
 
@@ -19,7 +20,10 @@ class CmdPlay:
 
             # passing a lambda function to the play class to save the settings
             play = Play(settings=settings, game=game, rep=rep)
+            logger = Logger.get_instance().set_rep(rep_alias)
+            logger.record_event(LogAction.OPEN)
             print(f"Abrindo repositório de {rep_alias}")
             reload = play.play()
             if not reload:
                 break
+        logger.record_event(LogAction.QUIT)

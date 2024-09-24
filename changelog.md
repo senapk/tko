@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.31.0
+  - add: log mode enabled
 - 0.30.0
   - add: time and diff view in tester arrow
 - 0.29.0

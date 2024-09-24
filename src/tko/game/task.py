@@ -1,6 +1,7 @@
 from typing import Dict, Optional, Tuple
 from ..util.symbols import symbols
 from ..util.sentence import Sentence
+from tko.util.logger import Logger, LogAction
 import re
 import os
 
@@ -88,7 +89,9 @@ class Task:
     def set_grade(self, grade: int):
         grade = int(grade)
         if grade >= 0 and grade <= 10:
-            self.grade = grade
+            if grade != self.grade:
+                Logger.get_instance().record_event(LogAction.SELF, self.key, str(grade))
+                self.grade = grade
         else:
             print(f"Grade inválida: {grade}")
     

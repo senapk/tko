@@ -26,6 +26,7 @@ from tko.util.sentence import RToken, Sentence, Token
 from tko.util.symbols import symbols
 from tko.util.consts import DiffMode
 from tko.play.input_manager import InputManager
+from tko.util.logger import LogAction, Logger
 
 
 class SeqMode(enum.Enum):
@@ -196,6 +197,7 @@ class Tester:
         solver = self.wdir.get_solver()
 
         if solver.compile_error:
+            Logger.get_instance().record_event(LogAction.TEST, self.task.key, Logger.COMP_ERROR)
             self.mode = SeqMode.finished
             while len(self.unit_list) > 0:
                 index = len(self.results)
@@ -223,7 +225,6 @@ class Tester:
             self.mode = SeqMode.finished
             self.focused_index = 0
 
-
             done_list: List[Tuple[ExecutionResult, int]] = []
             fail_list: List[Tuple[ExecutionResult, int]] = []
             for data in self.results:
@@ -233,6 +234,8 @@ class Tester:
                 else:
                     done_list.append(data)
             self.results = fail_list + done_list
+            percent = (100 * len(done_list)) // len(self.results)
+            Logger.get_instance().record_event(LogAction.TEST, self.task.key, str(percent) + "%")
 
 
     def build_top_line_header(self, frame):
@@ -555,6 +558,7 @@ class Tester:
             self.wdir.autoload()
             self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index])
         self.mode = SeqMode.finished
+        Logger.get_instance().record_event(LogAction.FREE, self.task.key)
         return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True)
 
     def run_test_mode(self):
@@ -721,6 +725,7 @@ class Tester:
                             break
                     except CompileError as e:
                         self.mode = SeqMode.finished
+                        Logger.get_instance().record_event(LogAction.TEST, self.task.key, Logger.COMP_ERROR)
                         print(e)
                         input("Pressione enter para continuar")
                         break

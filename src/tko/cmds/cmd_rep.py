@@ -2,10 +2,18 @@ from tko.game.game import Game
 from tko.game.graph import Graph
 from tko.settings.rep_settings import RepSource
 from tko.settings.settings import Settings
+from tko.util.logger import Logger
 
 import os
 
 class CmdRep:
+    @staticmethod
+    def log(args):
+        rep = args.alias
+        logger = Logger.get_instance()
+        logger.set_rep(rep)
+        logger.check_log_file_integrity()
+
     @staticmethod
     def list(_args):
         settings = Settings()

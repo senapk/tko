@@ -3,6 +3,7 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.game.graph import Graph
 
+from tko.util.logger import Logger, LogAction
 from tko.settings.settings import Settings
 
 from tko.cmds.cmd_down import CmdDown
@@ -131,7 +132,10 @@ class PlayActions:
                 down_frame.put_text(text)
                 down_frame.draw()
                 Fmt.refresh()
-            CmdDown.execute(self.rep.alias, task.key, lang, self.settings, fnprint, self.game)
+            result = CmdDown.execute(self.rep.alias, task.key, lang, self.settings, fnprint, self.game)
+            if result:
+                Logger.get_instance().record_event(LogAction.DOWN, task.key)
+
         else:
             if isinstance(obj, Quest):
                 self.fman.add_input(

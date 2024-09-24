@@ -22,9 +22,11 @@ import shutil
 import re
 import math
 import configparser
+import csv
+import hashlib
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.30.0"
+__version__ = "0.31.0"
 
 
 class CheckVersion:
@@ -2365,511 +2367,6 @@ class __Symbols:
 
 symbols = __Symbols()
 
-
-class Task:
-
-    def __init__(self):
-        self.line_number = 0
-        self.line = ""
-        self.key = ""
-
-        self.grade: int = 0 #valor de 0 a 10
-        self.test_progress: int = 0 #valor de 0 a 100
-        self.main_index: int = 0
-
-        self.qskills: Dict[str, int] = {} # default quest skills
-        self.skills: Dict[str, int] = {} # local skills
-        self.xp: int = 0
-        
-        self.opt: bool = False
-        self.title = ""
-        self.link = ""
-
-        self.default_min_value = 7 # default min grade to complete task
-
-    def load_from_db(self, value: str):
-        if ":" not in value:
-            self.grade = int(value)
-        else:
-            v = value.split(":")
-            if len(v) == 3:
-                self.grade = int(v[0])
-                self.main_index = int(v[1])
-                self.test_progress = int(v[2])
-
-    def save_to_db(self) -> str:
-        return f"{self.grade}:{self.main_index}:{self.test_progress}"
-    
-    def is_db_empty(self) -> bool:
-        return self.grade == 0 and self.main_index == 0 and self.test_progress == 0
-
-    def get_grade_color(self, min_value: Optional[int] = None) -> str:
-        if min_value is None:
-            min_value = self.default_min_value
-        if self.grade == 0:
-            return "m"
-        if self.grade < min_value:
-            return "r"
-        if self.grade < 10:
-            return "y"
-        if self.grade == 10:
-            return "g"
-        return "w"  
-
-    def get_grade_symbol(self, min_value: Optional[int] = None) -> Sentence:
-        
-        if min_value is None:
-            min_value = self.default_min_value
-        color = self.get_grade_color(min_value)
-        if self.grade == 0:
-            return Sentence().addf(color, symbols.uncheck.text)
-        if self.grade < min_value:
-            return Sentence().addf(color, str(self.grade))
-        if self.grade < 10:
-            return Sentence().addf(color, str(self.grade))
-        if self.grade == 10:
-            return Sentence().addf(color, symbols.check.text)
-        return Sentence().add("0")
-
-    def get_percent(self):
-        if self.grade == 0:
-            return 0
-        if self.grade == 10:
-            return 100
-        return self.grade * 10
-    
-    def is_complete(self):
-        return self.grade == 10
-
-    def not_started(self):
-        return self.grade == 0
-    
-    def in_progress(self):
-        return self.grade > 0 and self.grade < 10
-
-    def set_grade(self, grade: int):
-        grade = int(grade)
-        if grade >= 0 and grade <= 10:
-            self.grade = grade
-        else:
-            print(f"Grade inválida: {grade}")
-    
-    def process_link(self, base_file):
-        if self.link.startswith("http"):
-            return
-        if self.link.startswith("./"):
-            self.link = self.link[2:]
-        # todo trocar / por \\ se windows
-        self.link = base_file + self.link
-
-    def __str__(self):
-        line = str(self.line_number).rjust(3)
-        key = "" if self.key == self.title else self.key + " "
-        return f"{line}    {self.grade} {key}{self.title} {self.skills} {self.link}"
-    
-    def is_downloadable(self):
-        return f"@{self.key}" in self.title
-    
-    def is_downloaded_for_lang(self, rep_dir: str, lang: str) -> bool:
-        folder = os.path.join(rep_dir, self.key)
-        if not os.path.isfile(os.path.join(folder, "Readme.md")):
-            return False
-        files = os.listdir(folder)
-        if not any([f.endswith("." + lang) for f in files]):
-            return False
-        return True
-
-class TaskParser:
-
-    @staticmethod
-    def load_html_tags(task: Task):                   
-        pattern = r"<!--\s*(.*?)\s*-->"
-        match = re.search(pattern, task.line)
-        if not match:
-            return
-
-        tags_raw = match.group(1).strip()
-        tags = [tag.strip() for tag in tags_raw.split(" ")]
-        task.opt = "opt" in tags
-        for t in tags:
-            if t.startswith("+"):
-                key, value = t[1:].split(":")
-                task.skills[key] = int(value)
-            elif t.startswith("@"):
-                task.key = t[1:]
-
-    @staticmethod
-    def parse_item_with_link(line) -> Tuple[bool, str, str]:
-        pattern = r"\ *-.*\[(.*?)\]\((.+?)\)"
-        match = re.match(pattern, line)
-        if match:
-            return True, match.group(1), match.group(2)
-        return False, "", ""
-    
-    @staticmethod
-    def parse_task_with_link(line) -> Tuple[bool, str, str]:
-        pattern = r"\ *- \[ \].*\[(.*?)\]\((.+?)\)"
-        match = re.match(pattern, line)
-        if match:
-            return True, match.group(1), match.group(2)
-        return False, "", ""
-
-    @staticmethod
-    def parse_arroba_from_title_link(titulo, link) -> Tuple[bool, str]:
-        pattern = r'@\w+'
-        match = re.search(pattern, titulo)
-        if not match:
-            return False, ""
-        key = match.group(0)[1:]
-        if not (key + "/Readme.md") in link:
-            return False, ""
-        return True, key
-
-    # - [Titulo com @palavra em algum lugar](link/@palavra/Readme.md) <!-- tag1 tag2 tag3 -->
-    @staticmethod
-    def __parse_coding_task(line, line_num) -> Optional[Task]:
-        if line == "":
-            return None
-        line = line.lstrip()
-
-        found, titulo, link = TaskParser.parse_item_with_link(line)
-        if not found:
-            return None
-        found, key = TaskParser.parse_arroba_from_title_link(titulo, link)
-        if not found:
-            return None
-
-        task = Task()
-
-        task.line = line
-        task.line_number = line_num
-        task.key = key
-        task.title = titulo
-        task.link = link
-        TaskParser.load_html_tags(task)
-
-        return task
-
-    # se com - [ ], não precisa das tags dentro do html, o key será dado pelo título
-    # se tiver as tags dentro do html, se alguma começar com @, o key será dado por ela
-    # - [ ] [Título](link)
-    # - [ ] [Título](link) <!-- tag1 tag2 tag3 -->
-    # - [Título](link) <!-- tag1 tag2 tag3 -->
-    @staticmethod
-    def __parse_reading_task(line, line_num) -> Optional[Task]:
-        if line == "":
-            return None
-        line = line.lstrip()
-
-        found, titulo, link = TaskParser.parse_task_with_link(line)
-
-        if found:
-            task = Task()
-            task.key = link
-            task.title = titulo
-            task.link = link
-            task.line = line
-            task.line_number = line_num
-            TaskParser.load_html_tags(task)
-            return task
-        
-        task = Task()
-        found, titulo, link = TaskParser.parse_item_with_link(line)
-        task.key = ""
-        if found:
-            task.link = link
-            task.line = line
-            task.line_number = line_num
-            TaskParser.load_html_tags(task)
-            if task.key == "": # item with links needs a key
-                return None
-            task.title = titulo
-            return task
-
-        return None
-
-    @staticmethod
-    def parse_line(line, line_num) -> Optional[Task]:
-        task = TaskParser.__parse_coding_task(line, line_num)
-        
-        if task is not None:
-            return task
-        task = TaskParser.__parse_reading_task(line, line_num)
-        if task is not None:
-            return task
-        return None
-
-
-
-class Quest:
-    def __init__(self):
-        self.line_number = 0
-        self.line = ""
-        self.key = ""
-        self.title = ""
-        self.__tasks: List[Task] = []
-        self.skills: Dict[str, int] = {}  # s:skill
-        self.cluster = ""
-        self.requires = []  # r:quest_key
-        self.requires_ptr = []
-        self.opt = False  # opt
-        self.qmin: Optional[int] = None  # q:  minimo de 50 porcento da pontuação total para completar
-        self.tmin: Optional[int] = None  # t: ou ter no mínimo esse valor de todas as tarefas
-        self.filename = ""
-        self.__is_reachable: bool = False
-        
-    def is_reachable(self)-> bool:
-        return self.__is_reachable
-
-    def set_reachable(self, value: bool):
-        self.__is_reachable = value
-
-    def __str__(self):
-        line = str(self.line_number).rjust(3)
-        tasks_size = str(len(self.__tasks)).rjust(2, "0")
-        key = "" if self.key == self.title else self.key + " "
-        output = f"{line} {tasks_size} {key}{self.title} {self.skills} {self.requires}"
-        return output
-
-    def get_resume_by_percent(self) -> Sentence:
-        value = self.get_percent()
-        return Sentence().addf(self.get_grade_color(), (str(value) + "%").rjust(4))
-    
-    def get_requirement(self) -> Sentence:
-        if self.qmin is not None:
-            return Sentence().addf("y", f"[{self.qmin}%]")
-        if self.tmin is not None:
-            return Sentence().addf("y", f"[t>{self.tmin - 1}]")
-        return Sentence()
-
-    def get_resume_by_tasks(self) -> Sentence:
-        tmin = self.tmin if self.tmin is not None else 7
-        total = len([t for t in self.__tasks if not t.opt])
-        plus = len([t for t in self.__tasks if t.opt])
-        count = len([t for t in self.__tasks if t.grade >= tmin])
-        output = f"{count}/{total}"
-        if plus > 0:
-            output += f"+{plus}"
-        return Sentence().addf(self.get_grade_color(), "(" + output + ")")
-
-    def get_grade_color(self) -> str:
-        if self.not_started():
-            return "m"
-        if not self.is_complete():
-            return "r"
-        if self.get_percent() == 100:
-            return "g"
-        return "y"
-
-    def is_complete(self):
-        if self.qmin is not None:
-            return self.get_percent() >= self.qmin
-        # task complete mode
-        if self.tmin is not None:
-            for t in self.__tasks:
-                if not t.opt and t.grade < self.tmin:
-                    return False
-        return True
-
-    def add_task(self, task: Task, filename: str):
-        if self.qmin is not None:
-            if task.opt:
-                print(f"Quests com requerimento de porcentagem não deve ter Tasks opcionais")
-                print(f"{filename}:{task.line_number} {task.key}")
-                exit(1)
-        task.qskills = self.skills
-
-        task.xp = 0
-        for s in task.skills:
-            task.xp += task.skills[s]
-
-        for s in task.qskills:
-            task.xp += task.qskills[s]
-        
-        self.__tasks.append(task)
-
-    def get_tasks(self):
-        return self.__tasks
-
-    def get_xp(self) -> Tuple[int, int]:
-        total = 0
-        obtained = 0
-        for t in self.__tasks:
-            total += t.xp
-            if t.grade > 0:
-                obtained += t.xp * t.grade // 10
-
-        return obtained, total
-        
-    def get_percent(self):
-        obtained, total = self.get_xp()
-        if total == 0:
-            return 0
-        return obtained * 100 // total
-
-    def in_progress(self):
-        if self.is_complete():
-            return False
-        for t in self.__tasks:
-            if t.grade != 0:
-                return True
-        return False
-
-    def not_started(self):
-        if self.is_complete():
-            return False
-        if self.in_progress():
-            return False
-        return True
-
-
-
-
-class QuestParser:
-    quest: Quest
-
-    def __init__(self):
-        self.quest = Quest()
-        self.line = ""
-        self.line_num = 0
-        self.default_qmin_requirement = 50
-        self.default_task_xp = 10
-        self.filename = ""
-
-    def finish_quest(self) -> Quest:
-
-        if self.quest.key == "":
-            self.quest.key = get_md_link(self.quest.title)
-
-        if len(self.quest.skills) == 0:
-            self.quest.skills["xp"] = self.default_task_xp
-        
-        if self.quest.qmin is None and self.quest.tmin is None:
-            self.quest.qmin = self.default_qmin_requirement
-
-        return self.quest
-
-    def match_full_pattern(self):
-        fullpattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->.*$"
-        match = re.match(fullpattern, self.line)
-
-        if not match:
-            return False
-        self.quest.title = match.group(1).strip()
-        tags_raw = match.group(2).strip()
-        tags = [tag.strip() for tag in tags_raw.split()]
-
-        # key
-        keys = [t[1:] for t in tags if t.startswith("@")]
-        if len(keys) > 0:
-            self.quest.key = keys[0]
-
-        # skills
-        skills = [t[1:] for t in tags if t.startswith("+")]
-        if len(skills) > 0:
-            self.quest.skills = {}
-            for s in skills:
-                k, v = s.split(":")
-                self.quest.skills[k] = int(v)
-        # requires
-        self.quest.requires = [t[2:] for t in tags if t.startswith("r:")]
-
-        self.quest.opt = "opt" in tags
-        # type
-        # try:
-        #     self.quest.type = [t[1:] for t in tags if t.startswith("#")][0]
-        # except:
-        #     self.quest.type = "main"
-        
-        # quest percent
-        qmin = [t[2:] for t in tags if t.startswith("q:")]
-        
-        if len(qmin) > 0:
-            self.quest.qmin = int(qmin[0])
-
-        # task min value requirement
-        tmin = [t[2:] for t in tags if t.startswith("t:")]
-        if len(tmin) > 0:
-            self.quest.tmin = int(tmin[0])
-            if self.quest.tmin > 10:
-                print("fail: tmin > 10")
-                exit(1)
-        return True
-
-    def __match_minimal_pattern(self):
-        minipattern = r"^#+\s*(.*?)\s*$"
-        match = re.match(minipattern, self.line)
-        if match:
-            self.quest.title = match.group(1).strip()
-            return True
-        return False
-
-    def parse_quest(self, filename, line, line_num) -> Optional[Quest]:
-        self.line = line
-        self.line_num = line_num
-        self.filename = filename
-
-        self.quest.line = self.line
-        self.quest.line_number = self.line_num
-        self.quest.cluster = ""
-
-        if self.match_full_pattern():
-            return self.finish_quest()
-        
-        if self.__match_minimal_pattern():
-            return self.finish_quest()
-        
-        return None
-
-
-
-class Cluster:
-    def __init__(self, line_number: int = 0, title: str = "", key: str = "", color: Optional[str] = None):
-        self.line_number = line_number
-        self.title: str = title
-        self.key: str = key
-        self.quests: List[Quest] = []
-        self.color: Optional[str] = color
-        self.__is_reachable = False
-
-    def is_reachable(self):
-        return self.__is_reachable
-    
-    def set_reachable(self, value: bool):
-        self.__is_reachable = value
-        return self
-
-    def __str__(self):
-        line = str(self.line_number).rjust(3)
-        quests_size = str(len(self.quests)).rjust(2, "0")
-        key = "" if self.key == self.title else self.key + " "
-        return f"{line} {quests_size} {key}{self.title}"
-    
-    def get_grade_color(self) -> str:
-        perc = self.get_percent()
-        if perc == 0:
-            return "m"
-        if perc < 50:
-            return "r"
-        if perc < 100:
-            return "y"
-        return "g"
-
-    def get_percent(self):
-        total = 0
-        for q in self.quests:
-            total += q.get_percent()
-        return total // len(self.quests)
-
-    def get_resume_by_percent(self) -> Sentence:
-        return Sentence().addf(self.get_grade_color(), f"{self.get_percent()}%".rjust(4))
-
-    def get_resume_by_quests(self):
-        total = len(self.quests)
-        count = len([q for q in self.quests if q.is_complete()])
-        return Sentence().addf(self.get_grade_color(), f"({count}/{total})")
-        
-
 class LabelFactory:
     def __init__(self):
         self._label = ""
@@ -3318,556 +2815,6 @@ class SearchAsc:
         return self.find(title) != -1
 
 
-def load_html_tags(task: str) -> Optional[str]:
-    pattern = r"<!--\s*(.*?)\s*-->"
-    match = re.search(pattern, task)
-    if not match:
-        return None
-    return match.group(1).strip()
-
-
-class Game:
-    def __init__(self, file: Optional[str] = None):
-        self.ordered_clusters: List[str] = [] # ordered clusters
-        self.clusters: Dict[str, Cluster] = {} 
-        self.quests: Dict[str, Quest] = {}  # quests indexed by quest key
-        self.tasks: Dict[str, Task] = {}  # tasks indexed by task key
-
-        self.available_quests: List[str] = []
-        self.available_clusters: List[str] = []
-
-        self.token_level_one = "level_one"
-        self.token_level_mult = "level_mult"
-        self.level_one = 100
-        self.level_mult = 1.5
-
-        self.filename = None
-        if file is not None:
-            self.filename = file
-            self.parse_file(file)
-
-    def parse_xp(self, line: str):
-        values = load_html_tags(line)
-        if values is not None:
-            tags = values.split(" ")
-            for t in tags:
-                if t.startswith(self.token_level_one):
-                    self.level_one = int(t.split(":")[1])
-                if t.startswith(self.token_level_mult):
-                    self.level_mult = float(t.split(":")[1])
-
-    def get_task(self, key: str) -> Task:
-        if key in self.tasks:
-            return self.tasks[key]
-        raise Warning(f"fail: tarefa '{key}' não encontrada no curso")
-
-    # se existir um cluster nessa linha, insere na lista de clusters e 
-    # retorno o objeto cluster inserido
-    def load_cluster(self, line: str, line_num: int) -> Optional[Cluster]:
-        pattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->\s*$"
-        match = re.match(pattern, line)
-        if not match:
-            return None
-        titulo = match.group(1)
-        tags_raw = match.group(2).strip()
-        tags = [tag.strip() for tag in tags_raw.split(" ")]
-        if "group" not in tags:
-            return None
-        
-        keys = [tag[1:] for tag in tags if tag.startswith("@")]
-        key = uni_to_asc(get_md_link(titulo))
-        try:
-            color = [tag[2:] for tag in tags if tag.startswith("c:")][0]
-        except IndexError as _e:
-            color = None
-        if len(keys) > 0:
-            key = keys[0]
-        
-        cluster = Cluster(line_num, titulo, key, color)
-
-        if key in self.clusters.keys():
-            c = self.clusters[key]
-            print(f"Cluster {key} já existe")
-            print(f"{self.filename}:{line_num}")
-            print(f"{self.filename}:{c.line_number}")
-            print("  " + str(c))
-            print("  " + str(cluster))
-            exit(1)
-                
-        self.clusters[key] = cluster
-        self.ordered_clusters.append(key)
-        return cluster
-                
-    def load_quest(self, line, line_num) -> Optional[Quest]:
-        quest = QuestParser().parse_quest(self.filename, line, line_num + 1)
-        if quest is None:
-            return None
-        if quest.key in self.quests:
-            print(f"Quest {quest.key} já existe")
-            print(f"{self.filename}:{quest.line_number}")
-            print(f"{self.filename}:{self.quests[quest.key].line_number}")
-            print("  " + str(quest))
-            print("  " + str(self.quests[quest.key]))
-            exit(1)
-        self.quests[quest.key] = quest
-        return quest
-
-    def load_task(self, line, line_num) -> Optional[Task]:
-        if line == "":
-            return None
-        task = TaskParser.parse_line(line, line_num + 1)
-        if task is None:
-            return None
-        
-        if task.key in self.tasks:
-            print(f"Task {task.key} já existe")
-            print(f"{self.filename}:{task.line_number}")
-            print(f"{self.filename}:{self.tasks[task.key].line_number}")
-            print("  " + str(task))
-            print("  " + str(self.tasks[task.key]))
-            exit(1)
-        self.tasks[task.key] = task
-        return task
-
-    def get_xp_resume(self):
-        total = 0
-        obtained = 0
-        for q in self.quests.values():
-            o, t = q.get_xp()
-            total += t
-            obtained += o
-        return obtained, total
-
-    def get_skills_resume(self, avaliable_quests: List[Quest]) -> Tuple[Dict[str, int], Dict[str, int]]:
-        total: Dict[str, int] = {}
-        obtained: Dict[str, int] = {}
-        avaliable_keys = [q.key for q in avaliable_quests]
-        for q in self.quests.values():
-            reachable = q.key in avaliable_keys
-            for t in q.get_tasks():
-                for s in t.skills:
-                    if s in total:
-                        total[s] += t.skills[s]
-                        if reachable:
-                            obtained[s] += int(t.skills[s] * t.grade/10)
-                        else:
-                            obtained[s] += 0
-                    else:
-                        total[s] = t.skills[s]
-                        if reachable:
-                            obtained[s] = int(t.skills[s] * t.grade/10)
-                        else:
-                            obtained[s] = 0
-                for s in t.qskills:
-                    if s in total:
-                        total[s] += t.qskills[s]
-                        if reachable:
-                            obtained[s] += int(t.qskills[s] * t.grade/10)
-                        else:
-                            obtained[s] += 0
-                    else:
-                        total[s] = t.qskills[s]
-                        if reachable:
-                            obtained[s] = int(t.qskills[s] * t.grade/10)
-                        else:
-                            obtained[s] = 0
-        return total, obtained
-
-    # Verificar se todas as quests requeridas existem e adiciona o ponteiro
-    # Verifica se todas as quests tem tarefas
-    def validate_requirements(self):
-
-        # verify is there are keys repeated between quests, tasks and groups
-
-        keys = [c.key for c in self.clusters.values()] +\
-               [k for k in self.quests.keys()] +\
-               [k for k in self.tasks.keys()]
-
-        # print chaves repetidas
-        for k in keys:
-            if keys.count(k) > 1:
-                print(f"Chave repetida: {k}")
-                exit(1)
-
-        # remove all quests without tasks
-        valid_quests = {}
-        for k, q in self.quests.items():
-            if len(q.get_tasks()) > 0:
-                valid_quests[k] = q
-
-        # trim titles
-        for q in self.quests.values():
-            q.title = q.title.strip()
-        for c in self.clusters.values():
-            c.title = c.title.strip()
-
-        self.quests = valid_quests
-
-        # verificar se todas as quests requeridas existem e adicionar o ponteiro
-        for q in self.quests.values():
-            for r in q.requires:
-                if r in self.quests:
-                    q.requires_ptr.append(self.quests[r])
-                else:
-                    # print(f"keys: {self.quests.keys()}")
-                    print(f"Quest\n{self.filename}:{q.line_number}\n{str(q)}\nrequer {r} que não existe")
-                    exit(1)
-
-    def check_cycle(self):
-        def dfs(qx, visitedx):
-            if len(visitedx) > 0:
-                if visitedx[0] == qx.key:
-                    print(f"Cycle detected: {visitedx}")
-                    exit(1)
-            if q.key in visitedx:
-                return
-            visitedx.append(q.key)
-            for r in q.requires_ptr:
-                dfs(r, visitedx)
-
-        for q in self.quests.values():
-            visited: List[str] = []
-            dfs(q, visited)
-
-    def parse_file(self, file):
-        self.filename = file
-        lines = open(file, encoding="utf-8").read().split("\n")
-        active_quest = None
-        active_cluster = None
-
-        if len(lines) > 0:
-            self.parse_xp(lines[0])
-
-        for line_num, line in enumerate(lines):
-            cluster = self.load_cluster(line, line_num)
-            if cluster is not None:
-                active_cluster = cluster
-                continue
-            
-            quest = self.load_quest(line, line_num)
-            if quest is not None:
-                active_quest = quest
-                if active_cluster is None:
-                    key = "Sem Grupo"
-                    cluster = Cluster(0, key, key)
-                    self.clusters[key] = cluster
-                    self.ordered_clusters.append(key)
-                    active_cluster = cluster
-                quest.cluster = active_cluster.key
-                active_cluster.quests.append(quest)
-                continue
-
-            task = self.load_task(line, line_num)
-            if task is not None:
-                
-                if active_quest is None:
-                    print(f"Task {task.key} não está dentro de uma quest")
-                    print(f"{file}:{task.line_number}")
-                    print(f"  {task}")
-                    exit(1)
-                if self.filename is not None:
-                    active_quest.add_task(task, self.filename)
-
-        self.clear_empty()
-
-        self.validate_requirements()
-        for t in self.tasks.values():
-            t.process_link(os.path.dirname(file) + "/")
-
-    def clear_empty(self):
-
-        # apagando quests vazias da lista de quests
-        for k in list(self.quests.keys()):
-            if len(self.quests[k].get_tasks()) == 0:
-                del self.quests[k]
-
-        # apagando quests vazias dos clusters e clusters vazios
-        ordered_clusters: List[str] = []
-        clusters: Dict[str, Cluster] = {}
-        for key in self.ordered_clusters:
-            cluster = self.clusters[key]
-            quests = [q for q in cluster.quests if len(q.get_tasks()) > 0]
-            if len(quests) > 0:
-                cluster.quests = quests
-                clusters[cluster.key] = cluster
-                ordered_clusters.append(cluster.key)
-
-        self.ordered_clusters = ordered_clusters
-        self.clusters = clusters
-
-    @staticmethod
-    def __is_reachable_quest(q: Quest, cache: Dict[str, bool]):
-        if q.key in cache:
-            return cache[q.key]
-
-        if len(q.requires_ptr) == 0:
-            cache[q.key] = True
-            return True
-        cache[q.key] = all([r.is_complete() and Game.__is_reachable_quest(r, cache) for r in q.requires_ptr])
-        return cache[q.key]
-
-    # def __get_reachable_quests(self):
-    #     # cache needs to be reseted before each call
-    #     cache: Dict[str, bool] = {}
-    #     return [q for q in self.quests.values() if Game.__is_reachable_quest(q, cache)]
-
-    def update_reachable_and_available(self, admin_mode: bool):
-        for q in self.quests.values():
-            q.set_reachable(False)
-        for c in self.clusters.values():
-            c.set_reachable(False)
-
-        cache: Dict[str, bool] = {}
-        for c in self.clusters.values():
-            for q in c.quests:
-                if Game.__is_reachable_quest(q, cache):
-                    q.set_reachable(True)
-                    c.set_reachable(True)
-
-        self.available_quests = []
-        self.available_clusters = []
-        if admin_mode:
-            self.available_quests = [key for key in self.quests.keys()]
-            self.available_clusters = [key for key in self.clusters.keys()]
-        else:
-            self.available_quests = [q.key for q in self.quests.values() if q.is_reachable()]
-            self.available_clusters = [c.key for c in self.clusters.values() if c.is_reachable()]
-
-
-    def __str__(self):
-        output = []
-        for c in self.clusters.values():
-            output.append(str(c))
-            for q in c.quests:
-                output.append(str(q))
-                for t in q.get_tasks():
-                    output.append(str(t))
-        return "\n".join(output)
-
-
-
-class Graph:
-
-    colorlist: List[Tuple[str, str]] = [
-            ("aquamarine3", "aquamarine4"),
-            ("bisque3", "bisque4"),
-            ("brown3", "brown4"),
-            ("chartreuse3", "chartreuse4"),
-            ("coral3", "coral4"),
-            ("cyan3", "cyan4"),
-            ("darkgoldenrod3", "darkgoldenrod4"),
-            ("darkolivegreen3", "darkolivegreen4"),
-            ("darkorchid3", "darkorchid4"),
-            ("darkseagreen3", "darkseagreen4"),
-            ("darkslategray3", "darkslategray4"),
-            ("deeppink3", "deeppink4"),
-            ("deepskyblue3", "deepskyblue4"),
-            ("dodgerblue3", "dodgerblue4"),
-            ("firebrick3", "firebrick4"),
-            ("gold3", "gold4"),
-            ("green3", "green4"),
-            ("hotpink3", "hotpink4"),
-            ("indianred3", "indianred4"),
-            ("khaki3", "khaki4"),
-            ("lightblue3", "lightblue4"),
-            ("lightcoral", "lightcoral"),
-            ("lightcyan3", "lightcyan4"),
-            ("lightgoldenrod3", "lightgoldenrod4"),
-            ("lightgreen", "lightgreen"),
-            ("lightpink3", "lightpink4"),
-            ("lightsalmon3", "lightsalmon4"),
-            ("lightseagreen", "lightseagreen"),
-            ("lightskyblue3", "lightskyblue4"),
-            ("lightsteelblue3", "lightsteelblue4"),
-            ("lightyellow3", "lightyellow4"),
-            ("magenta3", "magenta4"),
-            ("maroon3", "maroon4"),
-            ("mediumorchid3", "mediumorchid4"),
-            ("mediumpurple3", "mediumpurple4"),
-            ("mediumspringgreen", "mediumspringgreen"),
-            ("mediumturquoise", "mediumturquoise"),
-            ("mediumvioletred", "mediumvioletred"),
-            ("mistyrose3", "mistyrose4"),
-            ("navajowhite3", "navajowhite4"),
-            ("olivedrab3", "olivedrab4"),
-            ("orange3", "orange4"),
-            ("orangered3", "orangered4"),
-            ("orchid3", "orchid4"),
-            ("palegreen3", "palegreen4"),
-            ("paleturquoise3", "paleturquoise4"),
-            ("palevioletred3", "palevioletred4")
-            ]
-
-    def __init__(self, game: Game):
-        self.game = game
-        self.path = "graph.png"
-        self.opt = False
-        self.reachable = [q.key for q in self.game.quests.values() if q.is_reachable()]
-        # self.reachable = [key for key in self.game.quests.keys()]
-
-        self.counts: Dict[str, str] = {}
-        for q in self.game.quests.values():
-            done = len([t for t in q.get_tasks() if t.is_complete()])
-            init = len([t for t in q.get_tasks() if t.in_progress()])
-            todo = len([t for t in q.get_tasks() if t.not_started()])
-            self.counts[q.key] = f"{done} / {done + init + todo}"
-
-    def set_path(self, path: str):
-        self.path = path
-        return self
-
-    def set_opt(self, opt: bool):
-        self.opt = opt
-        return self
-
-    def set_counts(self, counts: Dict[str, str]):
-        self.counts = counts
-        return self
-    
-    def set_output(self, output: str):
-        self.output = output
-        return self
-
-    def info(self, qx: Quest):
-        text = f'{qx.title.strip()}'
-        if self.reachable is None or self.counts is None:
-            return f'"{text}"'
-        return f'"{text}\\n{self.counts[qx.key]}"'
-
-    def is_reachable_or_next(self, q: Quest):
-        if self.reachable is None:
-            return True
-        if q.key in self.reachable:
-            return True
-        for r in q.requires_ptr:
-            if r.key in self.reachable:
-                return True
-        return False
-
-    def generate(self):
-        saida = ["digraph diag {", '  node [penwidth=1, style="rounded,filled", shape=box]']
-
-        targets = [q for q in self.game.quests.values()]
-        for q in targets:
-            token = "->"
-            if len(q.requires_ptr) > 0:
-                for r in q.requires_ptr:
-                    extra = ""
-                    if self.reachable is not None:
-                        if q.key not in self.reachable and not r.is_complete():
-                            extra = "[style=dotted]"
-                    saida.append(f"  {self.info(r)} {token} {self.info(q)} {extra}")
-            else:
-                v = '  "Início"'
-                saida.append(f"{v} {token} {self.info(q)}")
-
-        for i, c in enumerate(self.game.clusters.values()):
-            # cluster_targets = [q for q in c.quests if self.is_reachable_or_next(q)]
-            cluster_targets = [q for q in c.quests]
-            for q in cluster_targets:
-                if self.opt:
-                    if q.opt:
-                        fillcolor = "pink"
-                    else:
-                        fillcolor = "lime"
-                else:
-                    if c.color is not None:
-                        fillcolor = c.color
-                    else:
-                        fillcolor = self.colorlist[i][0]
-
-                    if q.opt:
-                        fillcolor = f'"{fillcolor};0.9:orange"'
-                    else:
-                        fillcolor = f'"{fillcolor};0.9:lime"'
-                shape = "ellipse"
-                color = "black"
-                width = 1
-                if self.reachable is not None:
-                    if q.key not in self.reachable:
-                        color = "white"
-                    else:
-                        width = 3
-                        color = q.get_grade_color()
-                        if color == "g":
-                            color = "green"
-                        elif color == "r":
-                            color = "red"
-                        elif color == "y":
-                            color = "yellow"
-                        elif color == "m":
-                            color = "magenta"
-                saida.append(f"  {self.info(q)} [shape={shape} color={color} penwidth={width} fillcolor={fillcolor} ]")
-
-        saida.append("}")
-        # saida.append("@enduml")
-        saida.append("")
-
-        dot_file = os.path.join(os.path.dirname(self.path) + "graph.dot")
-        out_file = self.path
-        open(dot_file, "w").write("\n".join(saida))
-
-        # if self.graph_ext == ".png":
-        subprocess.run(["dot", "-Tpng", dot_file, "-o", out_file])
-        # elif self.graph_ext == ".svg":
-        #     subprocess.run(["dot", "-Tsvg", dot_file, "-o", out_file])
-        # else:
-        #     print("Formato de imagem não suportado")
-
-
-class XP:
-    token_level_one = "level_one"
-    token_level_mult = "level_mult"
-    level_one: int = 100
-    level_mult: float = 1.5
-    
-    def __init__(self, game: Game):
-        self.game = game
-        self.obtained = 0
-        self.avaliable = 0
-        self.update()
-        self.level = self.get_level()
-    
-    def update(self):
-        self.obtained, self.avaliable = self.game.get_xp_resume()
-
-    def get_level(self) -> int:
-        return self.calc_level(self.obtained)
-
-    def get_xp_level_current(self) -> int:
-        xp_prev = self.calc_xp(self.level)
-        atual = self.obtained - xp_prev
-        return atual
-
-    def get_xp_level_needed(self) -> int:
-        xp_next = self.calc_xp(self.level + 1)
-        xp_prev = self.calc_xp(self.level)
-        return xp_next - xp_prev
-
-    def get_xp_total_obtained(self) -> int:
-        return self.obtained
-
-    def get_xp_total_available(self) -> int:
-        return self.avaliable
-
-    def calc_level(self, xp) -> int:
-        level = 1
-        while self.calc_xp(level) <= xp:
-            level += 1
-        return level - 1
-    
-    def calc_xp(self, level: int) -> int:
-        total = 0
-        for i in range(level - 1):
-            total += self.game.level_one * (int(self.game.level_mult) ** i)
-        return int(total)
-
-
-
-
-
-
-
 class ExecutionResult(enum.Enum):
     UNTESTED          = "não_verificado_"
     SUCCESS           = "saída_correta__"
@@ -4260,712 +3207,6 @@ class Border:
         return middle
 
 
-
-
-
-class Entry:
-    def __init__(self, obj: Union[Task, Quest, Cluster], sentence: Sentence):
-        self.obj = obj
-        self.sentence = sentence
-
-    def get(self):
-        return self.sentence
-
-class TaskTree:
-
-    def __init__(self, settings: Settings, game: Game, rep: RepData):
-        self.settings = settings
-        self.app = settings.app
-        self.game = game
-        self.rep = rep
-        self.style = Border(settings.app)
-        self.colors = settings.colors
-        self.items: List[Entry] = []
-        self.index_selected = 0
-        self.index_begin = 0
-        self.max_title = 0
-        self.search_text = ""
-        self.in_focus = True
-        self.load_from_rep()
-        self.update_tree(admin_mode=Flags.admin.is_true(), first_loop=True)
-        self.reload_sentences()
-
-    def set_focus(self, focus: bool):
-        self.in_focus = focus
-
-    def load_from_rep(self):
-        self.new_items: List[str] = [v for v in self.rep.get_new_items()]
-        self.expanded: List[str] = [v for v in self.rep.get_expanded()]
-        self.index_selected = self.rep.get_index()
-
-        tasks = self.rep.get_tasks()
-        for key, serial in tasks.items():
-            if key in self.game.tasks:
-                self.game.tasks[key].load_from_db(serial)
-
-    def save_on_rep(self):
-        self.rep.set_expanded(self.expanded)
-        self.rep.set_new_items([x for x in set(self.new_items)])
-        self.rep.set_index(self.index_selected)
-        tasks = {}
-        for t in self.game.tasks.values():
-            if not t.is_db_empty():
-                tasks[t.key] = t.save_to_db()
-        self.rep.set_tasks(tasks)
-
-
-    def update_tree(self, admin_mode: bool, first_loop: bool = False):
-        if not admin_mode:
-            old_reachable = self.game.available_clusters + self.game.available_quests
-
-        self.game.update_reachable_and_available(admin_mode)
-            
-        if not admin_mode:
-            available_keys = self.game.available_quests + self.game.available_clusters
-            for key in self.expanded:
-                if key not in available_keys:
-                    self.expanded.remove(key)
-            if not first_loop:
-                for key in available_keys:
-                    if key not in old_reachable and key not in self.new_items:
-                        self.new_items.append(key)
-
-        # remove expanded items from new
-        self.new_items = [item for item in self.new_items if item not in self.expanded]
-
-    def update_max_title(self):
-        min_value = 20
-        items = []
-        for c in self.game.clusters.values():
-            if c.key in self.game.available_clusters:
-                items.append(len(c.title))
-                if c.key in self.expanded:
-                    for q in [q for q in c.quests if q.key in self.game.available_quests]:
-                        items.append(len(q.title) + 2)
-                        if q.key in self.expanded:
-                            for t in q.get_tasks():
-                                items.append(len(t.title) + 6)
-        self.max_title = max(items)
-        if self.max_title < min_value:
-            self.max_title = min_value
-
-    def str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool, min_value=1) -> Sentence:
-        # downloadable_in_focus = False
-        rootdir = self.app._rootdir
-        down_symbol = Token(" ")
-        in_focus = focus_color != ""
-        down_symbol = symbols.cant_download
-        rep_dir = os.path.join(self.app.get_rootdir(), self.rep.alias)
-        if t.is_downloadable() and rootdir != "":
-            if t.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
-                down_symbol = symbols.downloaded
-                # if in_focus:
-                #     downloadable_in_focus = True
-            else:
-                down_symbol = symbols.to_download
-
-        color_aval = "" if quest_reachable else "r"
-
-        output = Sentence()
-        output.add(" ").addf(color_aval, lig_cluster)
-        output.add(" ")
-        output.addf(color_aval, lig_quest)
-        output.add(down_symbol)
-        output.add(" ")
-        output.add(t.get_grade_symbol(min_value))
-
-        if in_focus:
-            output.add(self.style.roundL(focus_color))
-        else:
-            output.add(" ")
-
-        color = ""
-        if in_focus:
-            color = "k" + focus_color
-
-        done = color + "g"
-        todo = color
-        perc = t.test_progress
-        output.add(self.style.build_bar(t.title, perc / 100, len(t.title), done, todo, round=False))
-        # output.addf(color, t.title)
-
-        if in_focus:
-            output.add(self.style.roundR(focus_color))
-        else:
-            output.add(" ")
-
-
-        if Flags.reward.is_true():
-            xp = ""
-            for s, v in t.skills.items():
-                xp += f" +{s}:{v}"
-            output.addf(self.colors.task_skills, xp)
-            
-        return output
-
-    def str_quest(self, has_kids: bool, focus_color: str, q: Quest, lig: str) -> Sentence:
-        con = "━─"
-        if q.key in self.expanded and has_kids:
-            con = "─┯"
-
-        color_reachable = "" if q.is_reachable() else "r"
-        output: Sentence = Sentence().addf(color_reachable, " " + lig + con)
-
-        in_focus = focus_color != ""
-        if in_focus:
-            output.add(self.style.roundL(focus_color))
-        else:
-            output.add(" ")
-
-        color = ""
-        if in_focus:
-            color = "k" + focus_color
-
-        title = q.title
-        title = title.ljust(self.max_title - 2, ".")
-
-        done = color + self.colors.task_text_done
-        todo = color + self.colors.task_text_todo
-        output.add(self.style.build_bar(title, q.get_percent() / 100, len(title), done, todo, round=False))
-
-        if in_focus:
-            output.add(self.style.roundR(focus_color))
-        else:
-            output.add(" ")
-
-        if Flags.percent.is_true():
-            output.add(" ").add(q.get_resume_by_percent())
-        else:
-            output.add(" ").add(q.get_resume_by_tasks())
-
-        if Flags.minimum.is_true():
-            output.add(" ").add(q.get_requirement())
-
-        if Flags.reward.is_true():
-            xp = ""
-            for s, v in q.skills.items():
-                xp += f" +{s}:{v}"
-            output.addf(self.colors.task_skills, " " + xp)
-
-        if q.key in self.new_items:
-            output.addf(self.colors.task_new, " [new]")
-
-        return output
-
-
-    def str_cluster(self, has_kids: bool, focus_color: str, cluster: Cluster) -> Sentence:
-        output: Sentence = Sentence()
-        opening = "━─"
-        if cluster.key in self.expanded and has_kids:
-            opening = "─┯"
-        color_reachable = "" if cluster.is_reachable() else "r"
-        output.addf(color_reachable, opening)
-
-        color = ""
-        if focus_color != "":
-            color = "k" + focus_color
-        title = cluster.title
-
-        title = cluster.title.ljust(self.max_title, ".")
-        if focus_color != "":
-            output.add(self.style.roundL(focus_color))
-        else:
-            output.add(" ")
-
-        done = color + self.colors.task_text_done
-        todo = color + self.colors.task_text_todo
-
-        output.add(self.style.build_bar(title, cluster.get_percent() / 100, len(title), done, todo, round=False))
-
-        if focus_color != "":
-            output.add(self.style.roundR(focus_color))
-        else:
-            output.add(" ")
-
-
-        if Flags.percent.is_true():
-            output.add(" ").add(cluster.get_resume_by_percent())
-        else:
-            output.add(" ").add(cluster.get_resume_by_quests())
-        if cluster.key in self.new_items:
-            output.addf(self.colors.task_new, " [new]")
-
-        return output
-
-
-    # def add_in_search(self, item: Any, sentence: Sentence) -> bool:
-    #     if self.search_text == "":
-    #         self.items.append(Entry(item, sentence))
-    #         return True
-        
-    #     matcher = SearchAsc(self.search_text)
-    #     pos = matcher.find(sentence.get_text())
-    #     found = pos != -1
-    #     if found:
-    #         for i in range(pos, pos + len(self.search_text)):
-    #             sentence.data[i].fmt = "Y"
-
-    #     if isinstance(item, Task):
-    #         if found:
-    #             self.items.append(Entry(item, sentence))
-    #             return True
-    #     elif isinstance(item, Quest):
-    #         if found:
-    #             self.items.append(Entry(item, sentence))
-    #             return True
-    #         for t in item.get_tasks():
-    #             if matcher.inside(t.title):
-    #                 self.items.append(Entry(item, sentence))
-    #                 return True
-    #     elif isinstance(item, Cluster):
-    #         cluster: Cluster = item
-    #         if matcher.inside(cluster.title):
-    #             self.items.append(Entry(cluster, sentence))
-    #             return True
-    #         for q in cluster.quests:
-    #             if matcher.inside(q.title):
-    #                 self.items.append(Entry(item, sentence))
-    #                 return True
-    #             for t in q.get_tasks():
-    #                 if matcher.inside(t.title):
-    #                     self.items.append(Entry(item, sentence))
-    #                     return True
-    #     return False
-
-    def get_focus_color(self, item: Union[Quest, Cluster], index: int) -> str:
-        if index != self.index_selected or not self.in_focus:
-            return ""
-        if not item.is_reachable() and not Flags.admin.is_true():
-            return "R"
-        return self.colors.focused_item
-
-    def filter_by_search(self) -> Set[str]:
-        matches: Set[str] = set()
-        search = SearchAsc(self.search_text)
-        for cluster in self.game.clusters.values():
-            if search.inside(cluster.title):
-                matches.add(cluster.key)
-            for quest in cluster.quests:
-                if search.inside(quest.title):
-                    matches.add(cluster.key)
-                    matches.add(quest.key)
-                for task in quest.get_tasks():
-                    if search.inside(task.title):
-                        matches.add(cluster.key)
-                        matches.add(quest.key)
-                        matches.add(task.key)
-        return matches
-
-    def try_add(self, filtered, matcher, item, sentence):
-        if self.search_text == "":
-            self.items.append(Entry(item, sentence))
-            return True
-        if item.key in filtered:
-            pos = matcher.find(sentence.get_text())
-            found = pos != -1
-            if found:
-                for i in range(pos, pos + len(self.search_text)):
-                    sentence.data[i].fmt = "Y"
-            self.items.append(Entry(item, sentence))
-            return True
-        return False
-
-    def reload_sentences(self):
-        self.update_max_title()
-        index = 0
-        self.items = []
-        available_quests = self.game.available_quests
-        available_clusters = self.game.available_clusters
-
-        filtered = self.filter_by_search()
-        matcher = SearchAsc(self.search_text)
-
-        clusters = [self.game.clusters[key] for key in available_clusters if key in filtered]
-        for cluster in clusters:
-            quests = [q for q in cluster.quests if q.key in available_quests if q.key in filtered]
-            focus_color = self.get_focus_color(cluster, index)
-            sentence = self.str_cluster(len(quests) > 0, focus_color, cluster)
-
-            if self.try_add(filtered, matcher, cluster, sentence):
-                index += 1
-
-            if cluster.key not in self.expanded:  # adicionou o cluster, mas não adicione as quests
-                continue
-
-            for q in quests:
-                tasks =[t for t in q.get_tasks() if t.key in filtered]
-                lig = "├" if q != quests[-1] else "╰"
-                focus_color = self.get_focus_color(q, index)
-                sentence = self.str_quest(len(tasks) > 0, focus_color, q, lig)
-
-                # self.items.append(Entry(q, sentence))
-                if self.try_add(filtered, matcher, q, sentence):
-                    index += 1
-                if q.key in self.expanded:
-                    for t in tasks:
-                        ligc = "│" if q != quests[-1] else " "
-                        ligq = "├ " if t != tasks[-1] else "╰ "
-                        min_value = 7 if q.tmin is None else q.tmin
-                        focus_color = self.get_focus_color(q, index)
-                        sentence = self.str_task(focus_color, t, ligc, ligq, q.is_reachable(), min_value)
-                        if self.try_add(filtered, matcher, t, sentence):
-                            index += 1
-
-        if self.index_selected >= len(self.items):
-            self.index_selected = len(self.items) - 1
-
-
-    def process_collapse(self):
-        if any([q in self.expanded for q in self.game.available_quests]):
-            self.expanded = [key for key in self.expanded if key not in self.game.available_quests]
-        else:
-            self.expanded = []
-
-    def process_expand(self):
-        # if any cluster outside expanded
-        expand_clusters = False
-        for ckey in self.game.available_clusters:
-            if ckey not in self.expanded:
-                expand_clusters = True
-        if expand_clusters:
-            for ckey in self.game.available_clusters:
-                if ckey not in self.expanded:
-                    self.expanded.append(ckey)
-        else:
-            for qkey in self.game.available_quests:
-                if qkey not in self.expanded:
-                    self.expanded.append(qkey)
-
-
-    def mass_mark(self):
-        obj = self.items[self.index_selected].obj
-        if isinstance(obj, Cluster):
-            cluster: Cluster = obj
-            if cluster.key not in self.expanded:
-                self.expanded.append(cluster.key)
-                return
-            full_open = True
-            for q in cluster.quests:
-                if q.key in self.game.available_quests and q.key not in self.expanded:
-                    self.expanded.append(q.key)
-                    full_open = False
-            if not full_open:
-                return
-
-            value = None
-            for q in obj.quests:
-                for t in q.get_tasks():
-                    if value is not None:
-                        t.set_grade(value)
-                    else:
-                        value = 10 if t.grade < 10 else 0
-                        t.set_grade(value)
-        elif isinstance(obj, Quest):
-            if obj.key not in self.expanded:
-                self.expanded.append(obj.key)
-            else:
-                value = None
-                for t in obj.get_tasks():
-                    if value is not None:
-                        t.set_grade(value)
-                    else:
-                        value = 10 if t.grade < 10 else 0
-                        t.set_grade(value)
-        else:
-            obj.set_grade(10 if obj.grade < 10 else 0)
-
-    def set_grade(self, grade: int):
-        obj = self.items[self.index_selected].obj
-        if isinstance(obj, Task):
-            obj.set_grade(grade)
-
-    def inc_grade(self):
-        obj = self.items[self.index_selected].obj
-        if isinstance(obj, Task):
-            grade = obj.grade + 1
-            if grade == 11:
-                grade = 10
-            obj.set_grade(grade)
-        else:
-            self.unfold(obj)
-
-    
-    def dec_grade(self):
-        obj = self.items[self.index_selected].obj
-        if isinstance(obj, Task):
-            grade = obj.grade - 1
-            if grade == -1:
-                grade = 0
-            obj.set_grade(grade)
-        else:
-            self.fold(obj)
-
-    def arrow_right(self):
-        obj = self.items[self.index_selected].obj
-        if isinstance(obj, Cluster):
-            if not self.unfold(obj):
-                self.index_selected += 1
-        elif isinstance(obj, Quest):
-            if not self.unfold(obj):
-                while True:
-                    self.index_selected += 1
-                    obj = self.items[self.index_selected].obj
-                    if isinstance(obj, Cluster) or isinstance(obj, Quest):
-                        break
-                    if self.index_selected == len(self.items) - 1:
-                        break
-        elif isinstance(obj, Task):
-            while True:
-                obj = self.items[self.index_selected].obj
-                if isinstance(obj, Quest) or isinstance(obj, Cluster):
-                    break
-                if self.index_selected == len(self.items) - 1:
-                    break
-                self.index_selected += 1
-
-    def arrow_left(self):
-        obj = self.items[self.index_selected].obj
-        if isinstance(obj, Quest):
-            if not self.fold(obj):
-                while True:
-                    if self.index_selected == 0:
-                        break
-                    self.index_selected -= 1
-                    obj = self.items[self.index_selected].obj
-                    if isinstance(obj, Cluster) or isinstance(obj, Quest) and obj.key in self.expanded:
-                        break
-                    if self.index_selected == 0:
-                        break
-        elif isinstance(obj, Cluster):
-            if obj.key in self.expanded:
-                self.expanded.remove(obj.key)
-                for q in obj.quests:
-                    try:
-                        self.expanded.remove(q.key)
-                    except ValueError:
-                        pass
-            else:
-                while True:
-                    if self.index_selected == 0:
-                        break
-                    self.index_selected -= 1
-                    obj = self.items[self.index_selected].obj
-                    if isinstance(obj, Cluster) or isinstance(obj, Quest):
-                        break
-                    if self.index_selected == 0:
-                        break
-        elif isinstance(obj, Task):
-            while True:
-                obj = self.items[self.index_selected].obj
-                if isinstance(obj, Quest):
-                    break
-                self.index_selected -= 1
-
-    def unfold(self, obj: Union[Task, Quest, Cluster]) -> bool:
-        if isinstance(obj, Quest) or isinstance(obj, Cluster):
-            if obj.key not in self.expanded:
-                self.expanded.append(obj.key)
-                return True
-        return False
-
-    def fold(self, obj: Union[Task, Quest, Cluster]) -> bool:
-        if isinstance(obj, Quest) or isinstance(obj, Cluster):
-            if obj.key in self.expanded:
-                self.expanded.remove(obj.key)
-                return True
-        return False
-
-    def toggle(self, obj: Union[Quest, Cluster]):
-            if not self.fold(obj):
-                self.unfold(obj)
-
-    def get_senteces(self, dy):
-        if len(self.items) < dy:
-            self.index_begin = 0
-        else:
-            if self.index_selected < self.index_begin:  # subiu na tela
-                self.index_begin = self.index_selected
-            elif self.index_selected >= dy + self.index_begin:  # desceu na tela
-                self.index_begin = self.index_selected - dy + 1
-
-        sentences: List[Sentence] = []
-        for i in range(self.index_begin, len(self.items)):
-            sentences.append(self.items[i].sentence)
-        return sentences
-
-    def get_selected(self):
-        return self.items[self.index_selected].obj
-
-    def move_up(self):
-        self.index_selected = max(0, self.index_selected - 1)
-
-    def move_down(self):
-        self.index_selected = min(len(self.items) - 1, self.index_selected + 1)
-
-
-
-class Search:
-    def __init__(self, tree: TaskTree, fman: FloatingManager):
-        self.tree = tree
-        self.game = tree.game
-        self.fman = fman
-        self.search_mode: bool = False
-        self.backup_expanded: List[str] = []
-        self.backup_index_selected = 0
-        self.backup_admin_mode = False
-
-    def toggle_search(self):
-        self.search_mode = not self.search_mode
-        if self.search_mode:
-            self.backup_expanded = [v for v in self.tree.expanded]
-            self.backup_index_selected = self.tree.index_selected
-            self.backup_admin_mode = Flags.admin.is_true()
-            self.tree.update_tree(admin_mode=True)
-            self.tree.process_expand()
-            self.tree.process_expand()
-            self.fman.add_input(Floating(">v").warning().put_text("Digite o texto\nVavegue até o elemnto desejado\ne aperte Enter"))
-    
-    def finish_search(self):
-        self.search_mode = False
-        unit = self.tree.get_selected()
-        self.tree.index_selected = 0
-        self.tree.search_text = ""
-        if self.backup_admin_mode == False:
-            self.tree.update_tree(admin_mode=False)
-        self.tree.reload_sentences()
-    
-        found = False
-        for i, item in enumerate(self.tree.items):
-            if item.obj == unit:
-                self.tree.index_selected = i
-                found = True
-                break
-
-        if not found:
-            self.fman.add_input(Floating(">v").warning().put_text("Elemento não acessível no modo normal.\nEntrando no modo Admin\npara habilitar acesso"))
-            Flags.admin.toggle()
-            self.tree.update_tree(True)
-            self.tree.reload_sentences()
-        
-        self.tree.process_collapse()
-        self.tree.process_collapse()
-
-        if isinstance(unit, Task):
-            for cluster_key in self.game.available_clusters:
-                cluster = self.game.clusters[cluster_key]
-                for quest in cluster.quests:
-                    for task in quest.get_tasks():
-                        if task == unit:
-                            self.tree.expanded = [cluster.key, quest.key]
-        elif isinstance(unit, Quest):
-            for cluster_key in self.game.available_clusters:
-                cluster = self.game.clusters[cluster_key]
-                for quest in cluster.quests:
-                    if quest == unit:
-                        self.tree.expanded = [cluster.key]
-        self.tree.reload_sentences()
-        for i, item in enumerate(self.tree.items):
-            if item.obj == unit:
-                self.tree.index_selected = i
-                break
-
-
-    def process_search(self, key):
-        if key == 27:
-            self.search_mode = False
-            self.tree.search_text = ""
-            self.tree.expanded = [v for v in self.backup_expanded]
-            self.tree.index_selected = self.backup_index_selected
-        elif key == ord("\n"):
-            self.finish_search()
-    
-        elif key == curses.KEY_UP:
-            self.tree.move_up()
-        elif key == curses.KEY_DOWN:
-            self.tree.move_down()
-        elif key == 127 or key == 263 or key == 330:
-            self.tree.search_text = self.tree.search_text[:-1]
-        elif key >= 32 and key < 127:
-            self.tree.search_text += chr(key).lower()
-
-
-
-class Opener:
-    def __init__(self, settings: Settings):
-        self.settings = settings
-        self.fman: Optional[FloatingManager] = None
-        self.folders: List[str] = []
-        self.language: str = ""
-
-    def set_fman(self, fman: FloatingManager):
-        self.fman = fman
-        return self
-    
-    def set_target(self, folders: List[str]):
-        self.folders = folders
-        return self
-
-    def set_language(self, language: str):
-        self.language = language
-        return self
-
-    def open_files(self, files_to_open: List[str]):
-        files_to_open = list(set(files_to_open))
-
-        cmd = self.settings.app.get_editor()
-        folder = os.path.dirname(os.path.abspath(files_to_open[0]));
-        aviso = (Floating("v>")
-                .warning()
-                .put_sentence(Sentence().add("Pasta: ").addf("g", folder).add(" "))
-                .put_text("Abrindo arquivos com o comando")
-                )
-        files = [os.path.basename(path) for path in files_to_open]
-        aviso.put_sentence(Sentence().addf("g", f"{cmd}").add(" ").addf("g", " ".join(files)).add(" "))
-        self.send_floating(aviso)
-        fullcmd = "{} {}".format(cmd, " ".join(files_to_open))
-        outfile = tempfile.NamedTemporaryFile(delete=False)
-        subprocess.Popen(fullcmd, stdout=outfile, stderr=outfile, shell=True)
-
-    def send_floating(self, Floating: Floating):
-        if self.fman is not None:
-            self.fman.add_input(Floating)
-
-    def load_drafs(self, folder: str) -> List[str]:
-        files = os.listdir(folder)
-        files_to_open = []
-        for f in files:
-            allowed = [self.language]
-            if self.language == "c" or self.language== "cpp":
-                allowed.append("h")
-                allowed.append("hpp")
-            if not f.endswith(tuple(allowed)):
-                continue
-            files_to_open.append(os.path.join(folder, f))
-        return files_to_open
-
-    @staticmethod
-    def try_add(files_to_open: List[str], folder: str, file: str):
-        path = os.path.join(folder, file)
-        if os.path.isfile(path):
-            files_to_open.append(path)
-
-    def load_folder(self, folder: str):
-        files_to_open: List[str] = []
-        Opener.try_add(files_to_open, folder, "Readme.md")
-        # Opener.try_add(files_to_open, folder, "cases.tio")
-        files_to_open += self.load_drafs(folder)
-        return files_to_open
-
-    def load_folders_and_open(self):
-        files_to_open: List[str] = []
-        for folder in self.folders:
-            files_to_open += self.load_folder(folder)
-        if len(files_to_open) != 0:
-            self.open_files(files_to_open)
-
-    def __call__(self):
-        self.load_folders_and_open()
-
 def empty_fn():
     pass
 
@@ -5072,376 +3313,6 @@ class Config:
         )
 
 
-
-class Gui:
-
-    def __init__(self, tree: TaskTree, flagsman: FlagsMan, fman: FloatingManager):
-        self.rep = tree.rep
-        self.game = tree.game
-        self.tree = tree
-        self.flagsman = flagsman
-        self.fman = fman
-        self.settings = tree.settings
-        self.search = Search(tree=self.tree, fman=self.fman)
-        self.style: Border = Border(self.settings.app)
-        self.config = Config(self.settings, self.rep, self.flagsman, self.fman)
-        self.colors = self.settings.colors
-
-        self.app = Settings().app
-        self.wrap_size = Sentence(" ").join(self.build_bottom_array()).len()
-
-    def get_help_others_after(self):
-        color = "Y" if self.tree.in_focus else "W"
-        help_others_after: List[Sentence] = [
-            Sentence() + RToken(color, f"{GuiActions.baixar} [{GuiKeys.down_task}]"),
-            Sentence() + RToken("Y", f"{GuiActions.navegar} [wasd]")
-        ]
-        return help_others_after
-
-    def get_help_basic(self):
-        color = "Y" if self.tree.in_focus else "W"
-        help_basic: List[Sentence] = [
-            Sentence() + RToken(color, f"{GuiActions.pesquisar}[{GuiKeys.pesquisar}]"),
-            Sentence() + RToken(color, f"{GuiActions.marcar} {GuiKeys.inc_grade}{GuiKeys.dec_grade}"),
-        ]
-        return help_basic
-
-    def get_help_fixed(self):
-        color = "C" if self.tree.in_focus else "W"
-        help_fixed: List[Sentence] = [
-            Sentence() + RToken("C", f" {GuiActions.sair}  [{GuiKeys.key_quit}]"),
-            Sentence() + RToken(color, f"{GuiActions.editar} [{GuiKeys.edit}]"),
-            Sentence() + RToken("G", f"{GuiActions.ativar} [↲]"),
-        ]
-        return help_fixed
-
-    def get_help_others_before(self):
-        color = "Y" if self.tree.in_focus else "W"
-        help_others_before: List[Sentence] = [
-            Sentence() + RToken("Y", f" {GuiActions.ajuda} [{GuiKeys.key_help}]"),
-            Sentence() + RToken(color, f"{GuiActions.github} [{GuiKeys.github_open}]"),
-        ]
-        return help_others_before
-
-    @staticmethod
-    def disable_on_resize():
-        _, cols = Fmt.get_size()
-        if cols < 50 and Flags.skills.is_true() and Flags.config.is_true():
-            Flags.skills.toggle()
-        elif cols < 30 and Flags.skills.is_true():
-            Flags.skills.toggle()
-        elif cols < 35 and Flags.config.is_true():
-            Flags.config.toggle()
-
-
-    def show_main_bar(self, frame: Frame):
-        top = Sentence()
-        if self.two_column_mode() and self.app.has_full_hud() and not Flags.config.is_true():
-            top.add(self.style.get_flag_sentence(Flags.config)).add(" ")
-
-        alias_color = "R"
-        top.add(self.style.border(alias_color, self.rep.alias.upper()))
-        if Flags.admin.is_true():
-            color = "W" if Flags.admin.is_true() else "K"
-            top.add(self.style.border(color, "ADMIN"))
-        top.add(self.style.border("G", self.rep.get_lang().upper()))
-
-        if self.two_column_mode() and self.app.has_full_hud() and not Flags.config.is_true():
-            top.add(" ").add(self.style.get_flag_sentence(Flags.skills))
-        half = top.len() // 2
-        x = frame.get_x()
-        dy, dx = Fmt.get_size()
-        full = Sentence().add("─" * ((dx//2) - x - 2 - half)).add(top)
-        frame.set_header(full, "<")
-        
-        if self.two_column_mode() and not Flags.config.is_true():
-            elems = self.build_bottom_array()
-            line_up = Sentence(" ").join(elems[0 : 2] + elems[-2:])
-            half = line_up.len() // 2
-            _, adx = Fmt.get_size()
-            if adx % 2 == 1:
-                adx += 1 
-            x = frame.get_x()
-            full = Sentence().add("─" * ((adx//2) - x - 2 - half)).add(line_up)
-            frame.set_footer(full, "<")
-        frame.draw()
-
-        dy, dx = frame.get_inner()
-        for y, sentence in enumerate(self.tree.get_senteces(dy)):
-            if sentence.len() > dx:
-                sentence.trim_end(dx - 3)
-                sentence.addf("r", "...")
-            frame.write(y, 0, sentence)
-
-    def show_skills_bar(self, frame_xp):
-        dy, dx = frame_xp.get_inner()
-        xp = XP(self.game)
-        total_perc = int(
-            100 * (xp.get_xp_total_obtained() / xp.get_xp_total_available())
-        )
-        if Flags.percent.is_true():
-            text = f" XPTotal:{total_perc}%"
-        else:
-            text = f" XPTotal:{xp.get_xp_total_obtained()}"
-
-        done = self.colors.main_bar_done + "/"
-        todo = self.colors.main_bar_todo + "/"
-        total_bar = self.style.build_bar(text, total_perc / 100, dx - 2, done, todo)
-        frame_xp.set_header(Sentence().addf("/", "Skills"), "^", "{", "}")
-        frame_xp.set_footer(Sentence().add(" ").add(self.app._rootdir).add(" "), "^")
-        frame_xp.draw()
-
-        total, obt = self.game.get_skills_resume([self.game.quests[key] for key in self.game.available_quests])
-        elements: List[Sentence] = []
-        for skill, value in total.items():
-            if Flags.percent.is_true():
-                text = f"{skill}:{int(100 * obt[skill] / value)}%"
-            else:
-                text = f"{skill}:{obt[skill]}/{value}"
-            perc = obt[skill] / value
-            done = self.colors.progress_skill_done + "/"
-            todo = self.colors.progress_skill_todo + "/"
-            skill_bar = self.style.build_bar(text, perc, dx - 2, done, todo)
-            elements.append(skill_bar)
-            
-        elements.append(total_bar)
-
-        line_breaks = dy - len(elements)
-        for skill_bar in elements:
-            frame_xp.print(1, skill_bar)
-            if line_breaks > 0:
-                line_breaks -= 1
-                frame_xp.print(1, Sentence())
-
-    def show_config_bar(self, frame: Frame):
-        frame.set_header(Sentence().addf("/", "Config"), "^", "{", "}")
-        frame.draw()
-        elements = self.config.get_elements()
-        dy, dx = frame.get_inner()
-        y = frame.get_y()
-        lines, cols = Fmt.get_size()
-        
-        index = 0
-        delta = 0
-        if len(elements) > dy and self.config.index > dy - 2:
-            delta = self.config.index - dy + 2
-        elements = elements[delta:]
-        target = self.config.index - delta
-
-        while index < len(elements):
-            item = elements[index]
-            frame.print(0, item.sentence)
-            if index == target and self.config.enabled:
-                text = item.flag.get_description()
-                focus = self.colors.focused_item
-                Fmt.write(y + index + 1, cols - dx - len(text) - 4, Sentence().addf(focus, f" {text} ").add(self.style.sharpR(focus)))
-            index += 1
-            # if line_breaks > 0:
-            #     line_breaks -= 1
-            #     frame.print(0, Sentence())
-            #     delta += 1
-
-    def two_column_mode(self):
-        _, cols = Fmt.get_size()
-        return cols < self.wrap_size + 2 and self.app.has_full_hud()
-
-    def build_list_sentence(self, items: List[Sentence]) -> List[Sentence]:
-        out: List[Sentence] = []
-        for x in items:
-            color_ini = x.data[0].fmt
-            color_end = x.data[-1].fmt
-            left = self.style.roundL(color_ini)
-            right = self.style.roundR(color_end)
-            middle = x.clone()
-            if x.data[0].text == "!":
-                left = self.style.sharpL(color_ini)
-                right = self.style.sharpR(color_end)
-                middle.data = x.data[1:]
-            out.append(Sentence().add(left).add(middle).add(right))
-        return out
-
-    def build_bottom_array(self):
-        array: List[Sentence] = []
-        array += self.get_help_others_before()
-        array += self.get_help_fixed()
-        color = "G" if self.app.has_full_hud() else "Y"
-        symbol = symbols.success if self.app.has_full_hud() else symbols.failure
-        array.append(Sentence() + RToken(color, f"{symbol.text} {GuiActions.hud}  [{GuiKeys.hud}]"))
-        array += self.get_help_others_after()
-
-        return self.build_list_sentence(array)
-
-    def show_bottom_bar(self):
-        lines, cols = Fmt.get_size()
-        elems = self.build_bottom_array()
-        if self.two_column_mode():
-            line_down = Sentence(" ").join(elems[2:-2])
-            Fmt.write(lines - 1, 0, line_down.center(cols))
-        else:
-            if self.app.has_full_hud():
-                line_all = Sentence(" ").join(elems)
-                Fmt.write(lines - 1, 0, line_all.center(cols))
-            else:
-                line_main = Sentence(" ").join(elems[2: -2]) # alignment adjust
-                Fmt.write(lines - 1, 0, line_main.center(cols))   
-
-    def make_xp_button(self, size):
-        if self.search.search_mode:
-            text = " Busca: " + self.tree.search_text + "┊"
-            percent = 0.0
-            done = "W"
-            todo = "W"
-            text = text.ljust(size)
-        else:
-            text, percent = self.build_xp_bar()
-            done = self.colors.main_bar_done
-            todo = self.colors.main_bar_todo
-            text = text.center(size)
-        xpbar = self.style.build_bar(text, percent, len(text), done, todo)
-        return xpbar
-
-    def show_top_bar(self, frame: Frame):
-        help = self.build_list_sentence(self.get_help_basic())
-        pesquisar = help[0]
-        marcar = help[1]
-        config = self.style.get_flag_sentence(Flags.config)
-        skills = self.style.get_flag_sentence(Flags.skills)
-        others = self.app.has_full_hud()
-
-        pre: List[Sentence] = []
-        pre.append(marcar)
-        if others and not self.two_column_mode():
-            pre.append(config)
-
-        pos: List[Sentence] = []
-        if others and not self.two_column_mode():
-            pos.append(skills)
-        pos.append(pesquisar)
-
-        limit = self.wrap_size
-        if frame.get_dx() < self.wrap_size:
-            limit = frame.get_dx()
-        size = limit - Sentence(" ").join(pre + pos).len() - 2
-        main_label = self.make_xp_button(size)
-        info = Sentence(" ").join(pre + [main_label] + pos)
-        frame.write(0, 0, info.center(frame.get_dx()))
-
-
-    def show_help_config(self):
-        _help: Floating = Floating("v>").warning().set_ljust_text().set_header(" Configurações ")
-        self.fman.add_input(_help)
-        _help.put_sentence(Sentence() + f"      Mínimo " + RToken("r", f"[{Flags.minimum.get_keycode()}]") + " - Mostrar os requisitos mínimos para completar a missão")
-        _help.put_sentence(Sentence() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_keycode()}]") + " - Mostrar quanto de experiência cada atividade fornece")
-        _help.put_sentence(Sentence() + f"  Percentual " + RToken("r", f"[{Flags.percent.get_keycode()}]") + " - Mostrar os valores em percentual")
-        _help.put_sentence(Sentence() + f"  ModoAdmin " + RToken("r", f"Shift + [A]") + " - Liberar acesso a todas as missões" )
-        _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{GuiKeys.set_root_dir}]") + " - Mudar a pasta padrão de download do tko" )
-        _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"Shift + [{GuiKeys.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
-
-
-    def show_help(self):
-        # def empty(value):
-        #     pass
-        _help: Floating = Floating("v>").set_ljust_text()
-        self.fman.add_input(_help)
-
-        _help.set_header_sentence(Sentence().add(" Ajuda "))
-        # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence("    Ajuda ").addf("r", GuiKeys.key_help).add("  Abre essa tela de ajuda")
-        )
-
-        _help.put_sentence(Sentence("  ").addf("r", "Shift + B")
-                           .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
-        _help.put_sentence(Sentence() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
-        _help.put_sentence(Sentence() + f"{GuiActions.github} " + RToken("r", f"{GuiKeys.github_open}") + "  Abre tarefa em uma aba do browser")
-        _help.put_sentence(Sentence() + f"   {GuiActions.baixar} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
-        _help.put_sentence(Sentence() + f"   {GuiActions.editar} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
-        _help.put_sentence(Sentence() + f"   {GuiActions.ativar} " + RToken("r", "↲") + "  Interage com o elemento")
-        _help.put_sentence(Sentence() + f"   {GuiActions.marcar} " + RToken("r", f"{GuiKeys.inc_grade}") + RToken("r", f"{GuiKeys.dec_grade}") + " Muda a pontuação da tarefa")
-        _help.put_sentence(Sentence())
-        _help.put_sentence(Sentence() + "Você pode mudar o editor padrão com o comando")
-        _help.put_sentence(Sentence() + RToken("g", "             tko config --editor <comando>"))
-
-
-    def build_xp_bar(self) -> Tuple[str, float]:
-        xp = XP(self.game)
-        if xp.get_xp_total_obtained() == xp.get_xp_total_available():
-            text = "Você atingiu o máximo de xp!"
-            percent = 100.0
-        else:
-            # lang = self.rep.get_lang().upper()
-            level = xp.get_level()
-            percent = float(xp.get_xp_level_current()) / float(xp.get_xp_level_needed())
-            if Flags.percent.is_true():
-                xpobt = int(100 * xp.get_xp_level_current() / xp.get_xp_level_needed())
-                text = "Level:{} XP:{}%".format(level, xpobt)
-            else:
-                xpobt1 = xp.get_xp_level_current()
-                xpobt2 = xp.get_xp_level_needed()
-                text = "Level:{} XP:{}/{}".format(level, xpobt1, xpobt2)
-
-        return text, percent
-
-    def show_opening(self):
-        if Fmt.get_size()[1] < 100:
-            return
-        if not self.app.has_images():
-            return
-        _, cols = Fmt.get_size()
-        
-        now = datetime.datetime.now()
-        parrot = random_get(opening, str(now.hour))
-        parrot_lines = parrot.split("\n")
-        max_len = max([len(line) for line in parrot_lines])
-        yinit = 1
-        for y, line in enumerate(parrot_lines):
-            Fmt.write(yinit + y, cols - max_len - 2, Sentence().addf("g", line))
-
-    def show_items(self):
-        border_color = "r" if Flags.admin.is_true() else ""
-        Fmt.clear()
-        self.tree.set_focus(not self.config.enabled)
-        self.tree.reload_sentences()
-        lines, cols = Fmt.get_size()
-        main_sx = cols  # tamanho em x livre
-        main_sy = lines  # size em y avaliable
-
-        top_y = -1
-        top_dy = 1  #quantas linhas o topo usa
-        bottom_dy = 1 # quantas linhas o fundo usa
-        mid_y = top_dy # onde o meio começa
-        mid_sy = main_sy - top_dy - bottom_dy # tamanho do meio
-        left_size = 25
-        skills_sx = 0
-        flags_sx = 0
-        if Flags.skills.is_true():
-            skills_sx = left_size #max(20, main_sx // 4)
-        elif Flags.config.is_true():
-            flags_sx = left_size
-        else:
-            self.show_opening()
-        
-        task_sx = main_sx - flags_sx - skills_sx
-
-        frame_top = Frame(top_y, 0).set_size(top_dy + 2, cols)
-        self.show_top_bar(frame_top)
-
-        # frame_bottom = Frame(lines - bottom_dy - 1, -1).set_size(bottom_dy + 2, cols + 2)
-        self.show_bottom_bar()
-        if task_sx > 5: 
-            frame_main = Frame(mid_y, 0).set_size(mid_sy, task_sx).set_border_color(border_color)
-            self.show_main_bar(frame_main)
-
-        if Flags.config.is_true():
-            frame_flags = Frame(mid_y, cols - flags_sx).set_size(mid_sy, flags_sx).set_border_color(border_color)
-            self.show_config_bar(frame_flags)
-            Fmt.write(1, cols - left_size - 3, Sentence().addf("r", f" {GuiActions.tab} "))
-
-        if Flags.skills.is_true():
-            frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)
-            self.show_skills_bar(frame_skills)
-
-
-
 class ConfigParams:
     def __init__(self):
         self.side: bool = False
@@ -5511,51 +3382,6 @@ class CmdConfig:
             print("Linguagem default: {}".format("Não definido" if value == "" else value))
 
         settings.save_settings()
-
-
-class CmdRep:
-    @staticmethod
-    def list(_args):
-        settings = Settings()
-        print(f"SettingsFile\n- {settings.settings_file}")
-        print(str(settings))
-
-    @staticmethod
-    def add(args):
-        settings = Settings()
-        rep = RepSource()
-        if args.url:
-            rep.set_url(args.url)
-        elif args.file:
-            rep.set_file(args.file)
-        settings.reps[args.alias] = rep
-        settings.save_settings()
-
-    @staticmethod
-    def rm(args):
-        sp = Settings()
-        if args.alias in sp.reps:
-            sp.reps.pop(args.alias)
-            sp.save_settings()
-        else:
-            print("Repository not found.")
-
-    @staticmethod
-    def reset(_):
-        sp = Settings().reset()
-        print(sp.settings_file)
-        print(sp.app._rootdir)
-        sp.save_settings()
-
-    @staticmethod
-    def graph(args):
-        settings = Settings()
-        rep_source:RepSource = settings.get_rep_source(args.alias)
-        file = rep_source.get_file_or_cache(os.path.join(settings.app._rootdir, args.alias))
-        game = Game()
-        game.parse_file(file)
-        game.check_cycle()
-        Graph(game).generate()
 
 class Unit:
     def __init__(self, case: str = "", inp: str = "", outp: str = "", grade: Optional[int] = None, source: str = ""):
@@ -6416,6 +4242,1796 @@ class Wdir:
 
 
 
+
+class Writer:
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def to_vpl(unit: Unit):
+        text = "case=" + unit.case + "\n"
+        text += "input=" + unit.input
+        text += "output=\"" + unit.output + "\"\n"
+        if unit.grade is None:
+            text += "\n"
+        else:
+            text += "grade reduction=" + str(unit.grade).zfill(3) + "%\n"
+        return text
+
+    @staticmethod
+    def to_tio(unit: Unit):
+        text = ">>>>>>>>"
+        if unit.case != '':
+            text += " " + unit.case
+        if unit.grade is not None:
+            text += " " + str(unit.grade) + "%"
+        text += '\n' + unit.input
+        text += "========\n"
+        text += unit.output
+        if unit.output != '' and unit.output[-1] != '\n':
+            text += '\n'
+        text += "<<<<<<<<\n"
+        return text
+
+    @staticmethod
+    def save_dir_files(folder: str, pattern_loader: PatternLoader, label: str, unit: Unit) -> None:
+        file_source = pattern_loader.make_file_source(label)
+        with open(os.path.join(folder, file_source.input_file), "w") as f:
+            f.write(unit.input)
+        with open(os.path.join(folder, file_source.output_file), "w") as f:
+            f.write(unit.output)
+
+    @staticmethod
+    def save_target(target: str, unit_list: List[Unit], force: bool = False):
+        def ask_overwrite(file):
+            print("file " + file + " found. Overwrite? (y/n):")
+            resp = input()
+            if resp.lower() == 'y':
+                print("overwrite allowed")
+                return True
+            print("overwrite denied\n")
+            return False
+
+        def save_dir(_target: str, _unit_list):
+            folder = _target
+            pattern_loader = PatternLoader()
+            number = 0
+            for unit in _unit_list:
+                Writer.save_dir_files(folder, pattern_loader, str(number).zfill(2), unit)
+                number += 1
+
+        def save_file(_target, _unit_list):
+            if _target.endswith(".tio"):
+                _new = "\n".join([Writer.to_tio(unit) for unit in _unit_list])
+            else:
+                _new = "\n".join([Writer.to_vpl(unit) for unit in _unit_list])
+
+            file_exists = os.path.isfile(_target)
+
+            if file_exists:
+                _old = open(_target).read()
+                if _old == _new:
+                    print("no changes in test file")
+                    return
+
+            if not file_exists or (file_exists and (force or ask_overwrite(_target))):
+                with open(_target, "w") as f:
+                    f.write(_new)
+
+                    if not force:
+                        print("file " + _target + " wrote")
+
+        target_type = Identifier.get_type(target)
+        if target_type == IdentifierType.OBI:
+            save_dir(target, unit_list)
+        elif target_type == IdentifierType.TIO or target_type == IdentifierType.VPL:
+            save_file(target, unit_list)
+        else:
+            print("fail: target " + target + " do not supported for build operation\n")
+
+
+
+class CmdBuild:
+
+    def __init__(self, target_out: str, source_list: List[str], param: Param.Manip, to_force: bool):
+        self.target_out = target_out
+        self.source_list = source_list
+        self.param = param
+        self.to_force = to_force
+
+    def execute(self):
+        try:
+            wdir = Wdir().set_sources(self.source_list).build()
+            wdir.manipulate(self.param)
+            Writer.save_target(self.target_out, wdir.get_unit_list(), self.to_force)
+        except FileNotFoundError as e:
+            print(str(e))
+            return False
+        return True
+
+
+class LogAction(enum.Enum):
+    NONE = 'NONE'
+    OPEN = 'OPEN'
+    DOWN = 'DOWN'
+    FREE = 'FREE' 
+    TEST = 'TEST' # CORRECT|WRONG|COMPILE|RUNTIME
+    SELF = 'SELF' # int
+    QUIT = 'QUIT'
+
+
+class ActionData:
+    def __init__(self, timestamp: str, action_id: str, rep: str = "", task: str = "", payload: str = ""):
+        self.timestamp = timestamp
+        self.action: str = action_id
+        self.rep = rep
+        self.task = task
+        self.payload = payload
+        self.hash = ""
+
+    def action_self_same_task(self, other):
+        return self.action == LogAction.SELF and other.action == LogAction.SELF and self.rep == other.rep and self.task == other.task
+
+    def __str__(self):
+        return f'{self.timestamp}, {self.action}, {self.rep}, {self.task}, {self.payload}'
+
+class Logger:
+    instance = None
+    COMP_ERROR = "COMPILATION_ERROR"
+    grade_action_cache: str | None = None
+
+    @staticmethod
+    def get_instance():
+        if Logger.instance is None:
+            Logger.instance = Logger()
+        return Logger.instance
+
+    def __init__(self):
+        self.settings: Settings | None = None
+        self.last_hash: str = ""
+        self.rep_alias: str = ""
+        self.cached_action: ActionData | None = None
+
+    def get_settings(self) -> Settings:
+        if self.settings is None:
+            raise Exception("Settings not set")
+        return self.settings
+
+    def set_settings(self, settings: Settings):
+        self.settings = settings
+        return self
+
+    def set_rep(self, rep_alias: str):
+        self.rep_alias = rep_alias
+        self.last_hash = self.get_last_hash()
+        return self
+
+    def get_last_hash(self) -> str:
+        # open csv file and get last hash
+        log_file = self.get_log_file()
+        if not os.path.exists(log_file):
+            return ""
+        with open(log_file, 'r') as file:
+            reader = csv.reader(file)
+            rows = list(reader)
+            if len(rows) == 0:
+                return ""
+            return rows[-1][0]
+
+    def check_log_file_integrity(self):
+        log_file = self.get_log_file()
+        if not os.path.exists(log_file):
+            return False
+        with open(log_file, 'r') as file:
+            reader = csv.reader(file)
+            rows = list(reader)
+            for i in range(1, len(rows)):
+                hash_anterior = rows[i-1][0]
+
+                hash = rows[i][0]
+                timestamp = rows[i][1]
+                action = rows[i][2]
+                rep = rows[i][3]
+                task = rows[i][4]
+                payload = rows[i][5]
+
+                action_data = ActionData(timestamp, action, rep, task, payload)
+                calc_hash = self.generate_hash(action_data, hash_anterior)
+                if calc_hash != hash:
+                    print('Erro de continuidade na linha {}: {}'.format(str(i + 1).rjust(4), rows[i]))
+        return True
+
+
+    def get_log_file(self):
+        rootdir = self.get_settings().app.get_rootdir()
+        log_file = "rep_log.csv"
+        return os.path.join(rootdir, self.rep_alias, log_file)
+
+    @staticmethod
+    def generate_hash(action_data: ActionData, last_hash: str):
+        comprimento = 6
+        input_str = str(action_data) + last_hash
+        hash_completo = hashlib.sha256(input_str.encode()).hexdigest()
+        return hash_completo[:comprimento]  # Retorna os primeiros 'comprimento' caracteres do hash
+
+    def push_to_file(self, action_data: ActionData):
+        action_data.hash = self.generate_hash(action_data, self.last_hash)
+        
+        with open(self.get_log_file(), 'a', newline='') as file:
+            writer = csv.writer(file)
+            ad = action_data
+            writer.writerow([ad.hash, ad.timestamp, ad.action, ad.rep, ad.task, ad.payload])
+            self.last_hash = ad.hash
+
+    def store_in_cached(self, action_data: ActionData) -> bool:
+        if self.cached_action is None and action_data.action == LogAction.SELF:
+            return True
+        if self.cached_action is not None and self.cached_action.action_self_same_task(action_data):
+            return True
+        return False
+
+    def record_event(self, action: LogAction, task: str = "", payload: str = ""):
+        if self.rep_alias == "":
+            return
+        action_data = ActionData(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), action.value, self.rep_alias, task, payload)
+        
+        if self.store_in_cached(action_data):
+            self.cached_action = action_data
+            return
+        
+        if self.cached_action is not None:
+            self.push_to_file(self.cached_action)
+            self.cached_action = None
+        
+        if self.store_in_cached(action_data):
+            self.cached_action = action_data
+        else:
+            self.push_to_file(action_data)
+
+class Task:
+
+    def __init__(self):
+        self.line_number = 0
+        self.line = ""
+        self.key = ""
+
+        self.grade: int = 0 #valor de 0 a 10
+        self.test_progress: int = 0 #valor de 0 a 100
+        self.main_index: int = 0
+
+        self.qskills: Dict[str, int] = {} # default quest skills
+        self.skills: Dict[str, int] = {} # local skills
+        self.xp: int = 0
+        
+        self.opt: bool = False
+        self.title = ""
+        self.link = ""
+
+        self.default_min_value = 7 # default min grade to complete task
+
+    def load_from_db(self, value: str):
+        if ":" not in value:
+            self.grade = int(value)
+        else:
+            v = value.split(":")
+            if len(v) == 3:
+                self.grade = int(v[0])
+                self.main_index = int(v[1])
+                self.test_progress = int(v[2])
+
+    def save_to_db(self) -> str:
+        return f"{self.grade}:{self.main_index}:{self.test_progress}"
+    
+    def is_db_empty(self) -> bool:
+        return self.grade == 0 and self.main_index == 0 and self.test_progress == 0
+
+    def get_grade_color(self, min_value: Optional[int] = None) -> str:
+        if min_value is None:
+            min_value = self.default_min_value
+        if self.grade == 0:
+            return "m"
+        if self.grade < min_value:
+            return "r"
+        if self.grade < 10:
+            return "y"
+        if self.grade == 10:
+            return "g"
+        return "w"  
+
+    def get_grade_symbol(self, min_value: Optional[int] = None) -> Sentence:
+        
+        if min_value is None:
+            min_value = self.default_min_value
+        color = self.get_grade_color(min_value)
+        if self.grade == 0:
+            return Sentence().addf(color, symbols.uncheck.text)
+        if self.grade < min_value:
+            return Sentence().addf(color, str(self.grade))
+        if self.grade < 10:
+            return Sentence().addf(color, str(self.grade))
+        if self.grade == 10:
+            return Sentence().addf(color, symbols.check.text)
+        return Sentence().add("0")
+
+    def get_percent(self):
+        if self.grade == 0:
+            return 0
+        if self.grade == 10:
+            return 100
+        return self.grade * 10
+    
+    def is_complete(self):
+        return self.grade == 10
+
+    def not_started(self):
+        return self.grade == 0
+    
+    def in_progress(self):
+        return self.grade > 0 and self.grade < 10
+
+    def set_grade(self, grade: int):
+        grade = int(grade)
+        if grade >= 0 and grade <= 10:
+            if grade != self.grade:
+                Logger.get_instance().record_event(LogAction.SELF, self.key, str(grade))
+                self.grade = grade
+        else:
+            print(f"Grade inválida: {grade}")
+    
+    def process_link(self, base_file):
+        if self.link.startswith("http"):
+            return
+        if self.link.startswith("./"):
+            self.link = self.link[2:]
+        # todo trocar / por \\ se windows
+        self.link = base_file + self.link
+
+    def __str__(self):
+        line = str(self.line_number).rjust(3)
+        key = "" if self.key == self.title else self.key + " "
+        return f"{line}    {self.grade} {key}{self.title} {self.skills} {self.link}"
+    
+    def is_downloadable(self):
+        return f"@{self.key}" in self.title
+    
+    def is_downloaded_for_lang(self, rep_dir: str, lang: str) -> bool:
+        folder = os.path.join(rep_dir, self.key)
+        if not os.path.isfile(os.path.join(folder, "Readme.md")):
+            return False
+        files = os.listdir(folder)
+        if not any([f.endswith("." + lang) for f in files]):
+            return False
+        return True
+
+class TaskParser:
+
+    @staticmethod
+    def load_html_tags(task: Task):                   
+        pattern = r"<!--\s*(.*?)\s*-->"
+        match = re.search(pattern, task.line)
+        if not match:
+            return
+
+        tags_raw = match.group(1).strip()
+        tags = [tag.strip() for tag in tags_raw.split(" ")]
+        task.opt = "opt" in tags
+        for t in tags:
+            if t.startswith("+"):
+                key, value = t[1:].split(":")
+                task.skills[key] = int(value)
+            elif t.startswith("@"):
+                task.key = t[1:]
+
+    @staticmethod
+    def parse_item_with_link(line) -> Tuple[bool, str, str]:
+        pattern = r"\ *-.*\[(.*?)\]\((.+?)\)"
+        match = re.match(pattern, line)
+        if match:
+            return True, match.group(1), match.group(2)
+        return False, "", ""
+    
+    @staticmethod
+    def parse_task_with_link(line) -> Tuple[bool, str, str]:
+        pattern = r"\ *- \[ \].*\[(.*?)\]\((.+?)\)"
+        match = re.match(pattern, line)
+        if match:
+            return True, match.group(1), match.group(2)
+        return False, "", ""
+
+    @staticmethod
+    def parse_arroba_from_title_link(titulo, link) -> Tuple[bool, str]:
+        pattern = r'@\w+'
+        match = re.search(pattern, titulo)
+        if not match:
+            return False, ""
+        key = match.group(0)[1:]
+        if not (key + "/Readme.md") in link:
+            return False, ""
+        return True, key
+
+    # - [Titulo com @palavra em algum lugar](link/@palavra/Readme.md) <!-- tag1 tag2 tag3 -->
+    @staticmethod
+    def __parse_coding_task(line, line_num) -> Optional[Task]:
+        if line == "":
+            return None
+        line = line.lstrip()
+
+        found, titulo, link = TaskParser.parse_item_with_link(line)
+        if not found:
+            return None
+        found, key = TaskParser.parse_arroba_from_title_link(titulo, link)
+        if not found:
+            return None
+
+        task = Task()
+
+        task.line = line
+        task.line_number = line_num
+        task.key = key
+        task.title = titulo
+        task.link = link
+        TaskParser.load_html_tags(task)
+
+        return task
+
+    # se com - [ ], não precisa das tags dentro do html, o key será dado pelo título
+    # se tiver as tags dentro do html, se alguma começar com @, o key será dado por ela
+    # - [ ] [Título](link)
+    # - [ ] [Título](link) <!-- tag1 tag2 tag3 -->
+    # - [Título](link) <!-- tag1 tag2 tag3 -->
+    @staticmethod
+    def __parse_reading_task(line, line_num) -> Optional[Task]:
+        if line == "":
+            return None
+        line = line.lstrip()
+
+        found, titulo, link = TaskParser.parse_task_with_link(line)
+
+        if found:
+            task = Task()
+            task.key = link
+            task.title = titulo
+            task.link = link
+            task.line = line
+            task.line_number = line_num
+            TaskParser.load_html_tags(task)
+            return task
+        
+        task = Task()
+        found, titulo, link = TaskParser.parse_item_with_link(line)
+        task.key = ""
+        if found:
+            task.link = link
+            task.line = line
+            task.line_number = line_num
+            TaskParser.load_html_tags(task)
+            if task.key == "": # item with links needs a key
+                return None
+            task.title = titulo
+            return task
+
+        return None
+
+    @staticmethod
+    def parse_line(line, line_num) -> Optional[Task]:
+        task = TaskParser.__parse_coding_task(line, line_num)
+        
+        if task is not None:
+            return task
+        task = TaskParser.__parse_reading_task(line, line_num)
+        if task is not None:
+            return task
+        return None
+
+
+
+class Quest:
+    def __init__(self):
+        self.line_number = 0
+        self.line = ""
+        self.key = ""
+        self.title = ""
+        self.__tasks: List[Task] = []
+        self.skills: Dict[str, int] = {}  # s:skill
+        self.cluster = ""
+        self.requires = []  # r:quest_key
+        self.requires_ptr = []
+        self.opt = False  # opt
+        self.qmin: Optional[int] = None  # q:  minimo de 50 porcento da pontuação total para completar
+        self.tmin: Optional[int] = None  # t: ou ter no mínimo esse valor de todas as tarefas
+        self.filename = ""
+        self.__is_reachable: bool = False
+        
+    def is_reachable(self)-> bool:
+        return self.__is_reachable
+
+    def set_reachable(self, value: bool):
+        self.__is_reachable = value
+
+    def __str__(self):
+        line = str(self.line_number).rjust(3)
+        tasks_size = str(len(self.__tasks)).rjust(2, "0")
+        key = "" if self.key == self.title else self.key + " "
+        output = f"{line} {tasks_size} {key}{self.title} {self.skills} {self.requires}"
+        return output
+
+    def get_resume_by_percent(self) -> Sentence:
+        value = self.get_percent()
+        return Sentence().addf(self.get_grade_color(), (str(value) + "%").rjust(4))
+    
+    def get_requirement(self) -> Sentence:
+        if self.qmin is not None:
+            return Sentence().addf("y", f"[{self.qmin}%]")
+        if self.tmin is not None:
+            return Sentence().addf("y", f"[t>{self.tmin - 1}]")
+        return Sentence()
+
+    def get_resume_by_tasks(self) -> Sentence:
+        tmin = self.tmin if self.tmin is not None else 7
+        total = len([t for t in self.__tasks if not t.opt])
+        plus = len([t for t in self.__tasks if t.opt])
+        count = len([t for t in self.__tasks if t.grade >= tmin])
+        output = f"{count}/{total}"
+        if plus > 0:
+            output += f"+{plus}"
+        return Sentence().addf(self.get_grade_color(), "(" + output + ")")
+
+    def get_grade_color(self) -> str:
+        if self.not_started():
+            return "m"
+        if not self.is_complete():
+            return "r"
+        if self.get_percent() == 100:
+            return "g"
+        return "y"
+
+    def is_complete(self):
+        if self.qmin is not None:
+            return self.get_percent() >= self.qmin
+        # task complete mode
+        if self.tmin is not None:
+            for t in self.__tasks:
+                if not t.opt and t.grade < self.tmin:
+                    return False
+        return True
+
+    def add_task(self, task: Task, filename: str):
+        if self.qmin is not None:
+            if task.opt:
+                print(f"Quests com requerimento de porcentagem não deve ter Tasks opcionais")
+                print(f"{filename}:{task.line_number} {task.key}")
+                exit(1)
+        task.qskills = self.skills
+
+        task.xp = 0
+        for s in task.skills:
+            task.xp += task.skills[s]
+
+        for s in task.qskills:
+            task.xp += task.qskills[s]
+        
+        self.__tasks.append(task)
+
+    def get_tasks(self):
+        return self.__tasks
+
+    def get_xp(self) -> Tuple[int, int]:
+        total = 0
+        obtained = 0
+        for t in self.__tasks:
+            total += t.xp
+            if t.grade > 0:
+                obtained += t.xp * t.grade // 10
+
+        return obtained, total
+        
+    def get_percent(self):
+        obtained, total = self.get_xp()
+        if total == 0:
+            return 0
+        return obtained * 100 // total
+
+    def in_progress(self):
+        if self.is_complete():
+            return False
+        for t in self.__tasks:
+            if t.grade != 0:
+                return True
+        return False
+
+    def not_started(self):
+        if self.is_complete():
+            return False
+        if self.in_progress():
+            return False
+        return True
+
+
+
+
+class QuestParser:
+    quest: Quest
+
+    def __init__(self):
+        self.quest = Quest()
+        self.line = ""
+        self.line_num = 0
+        self.default_qmin_requirement = 50
+        self.default_task_xp = 10
+        self.filename = ""
+
+    def finish_quest(self) -> Quest:
+
+        if self.quest.key == "":
+            self.quest.key = get_md_link(self.quest.title)
+
+        if len(self.quest.skills) == 0:
+            self.quest.skills["xp"] = self.default_task_xp
+        
+        if self.quest.qmin is None and self.quest.tmin is None:
+            self.quest.qmin = self.default_qmin_requirement
+
+        return self.quest
+
+    def match_full_pattern(self):
+        fullpattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->.*$"
+        match = re.match(fullpattern, self.line)
+
+        if not match:
+            return False
+        self.quest.title = match.group(1).strip()
+        tags_raw = match.group(2).strip()
+        tags = [tag.strip() for tag in tags_raw.split()]
+
+        # key
+        keys = [t[1:] for t in tags if t.startswith("@")]
+        if len(keys) > 0:
+            self.quest.key = keys[0]
+
+        # skills
+        skills = [t[1:] for t in tags if t.startswith("+")]
+        if len(skills) > 0:
+            self.quest.skills = {}
+            for s in skills:
+                k, v = s.split(":")
+                self.quest.skills[k] = int(v)
+        # requires
+        self.quest.requires = [t[2:] for t in tags if t.startswith("r:")]
+
+        self.quest.opt = "opt" in tags
+        # type
+        # try:
+        #     self.quest.type = [t[1:] for t in tags if t.startswith("#")][0]
+        # except:
+        #     self.quest.type = "main"
+        
+        # quest percent
+        qmin = [t[2:] for t in tags if t.startswith("q:")]
+        
+        if len(qmin) > 0:
+            self.quest.qmin = int(qmin[0])
+
+        # task min value requirement
+        tmin = [t[2:] for t in tags if t.startswith("t:")]
+        if len(tmin) > 0:
+            self.quest.tmin = int(tmin[0])
+            if self.quest.tmin > 10:
+                print("fail: tmin > 10")
+                exit(1)
+        return True
+
+    def __match_minimal_pattern(self):
+        minipattern = r"^#+\s*(.*?)\s*$"
+        match = re.match(minipattern, self.line)
+        if match:
+            self.quest.title = match.group(1).strip()
+            return True
+        return False
+
+    def parse_quest(self, filename, line, line_num) -> Optional[Quest]:
+        self.line = line
+        self.line_num = line_num
+        self.filename = filename
+
+        self.quest.line = self.line
+        self.quest.line_number = self.line_num
+        self.quest.cluster = ""
+
+        if self.match_full_pattern():
+            return self.finish_quest()
+        
+        if self.__match_minimal_pattern():
+            return self.finish_quest()
+        
+        return None
+
+
+
+class Cluster:
+    def __init__(self, line_number: int = 0, title: str = "", key: str = "", color: Optional[str] = None):
+        self.line_number = line_number
+        self.title: str = title
+        self.key: str = key
+        self.quests: List[Quest] = []
+        self.color: Optional[str] = color
+        self.__is_reachable = False
+
+    def is_reachable(self):
+        return self.__is_reachable
+    
+    def set_reachable(self, value: bool):
+        self.__is_reachable = value
+        return self
+
+    def __str__(self):
+        line = str(self.line_number).rjust(3)
+        quests_size = str(len(self.quests)).rjust(2, "0")
+        key = "" if self.key == self.title else self.key + " "
+        return f"{line} {quests_size} {key}{self.title}"
+    
+    def get_grade_color(self) -> str:
+        perc = self.get_percent()
+        if perc == 0:
+            return "m"
+        if perc < 50:
+            return "r"
+        if perc < 100:
+            return "y"
+        return "g"
+
+    def get_percent(self):
+        total = 0
+        for q in self.quests:
+            total += q.get_percent()
+        return total // len(self.quests)
+
+    def get_resume_by_percent(self) -> Sentence:
+        return Sentence().addf(self.get_grade_color(), f"{self.get_percent()}%".rjust(4))
+
+    def get_resume_by_quests(self):
+        total = len(self.quests)
+        count = len([q for q in self.quests if q.is_complete()])
+        return Sentence().addf(self.get_grade_color(), f"({count}/{total})")
+        
+
+
+
+def load_html_tags(task: str) -> Optional[str]:
+    pattern = r"<!--\s*(.*?)\s*-->"
+    match = re.search(pattern, task)
+    if not match:
+        return None
+    return match.group(1).strip()
+
+
+class Game:
+    def __init__(self, file: Optional[str] = None):
+        self.ordered_clusters: List[str] = [] # ordered clusters
+        self.clusters: Dict[str, Cluster] = {} 
+        self.quests: Dict[str, Quest] = {}  # quests indexed by quest key
+        self.tasks: Dict[str, Task] = {}  # tasks indexed by task key
+
+        self.available_quests: List[str] = []
+        self.available_clusters: List[str] = []
+
+        self.token_level_one = "level_one"
+        self.token_level_mult = "level_mult"
+        self.level_one = 100
+        self.level_mult = 1.5
+
+        self.filename = None
+        if file is not None:
+            self.filename = file
+            self.parse_file(file)
+
+    def parse_xp(self, line: str):
+        values = load_html_tags(line)
+        if values is not None:
+            tags = values.split(" ")
+            for t in tags:
+                if t.startswith(self.token_level_one):
+                    self.level_one = int(t.split(":")[1])
+                if t.startswith(self.token_level_mult):
+                    self.level_mult = float(t.split(":")[1])
+
+    def get_task(self, key: str) -> Task:
+        if key in self.tasks:
+            return self.tasks[key]
+        raise Warning(f"fail: tarefa '{key}' não encontrada no curso")
+
+    # se existir um cluster nessa linha, insere na lista de clusters e 
+    # retorno o objeto cluster inserido
+    def load_cluster(self, line: str, line_num: int) -> Optional[Cluster]:
+        pattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->\s*$"
+        match = re.match(pattern, line)
+        if not match:
+            return None
+        titulo = match.group(1)
+        tags_raw = match.group(2).strip()
+        tags = [tag.strip() for tag in tags_raw.split(" ")]
+        if "group" not in tags:
+            return None
+        
+        keys = [tag[1:] for tag in tags if tag.startswith("@")]
+        key = uni_to_asc(get_md_link(titulo))
+        try:
+            color = [tag[2:] for tag in tags if tag.startswith("c:")][0]
+        except IndexError as _e:
+            color = None
+        if len(keys) > 0:
+            key = keys[0]
+        
+        cluster = Cluster(line_num, titulo, key, color)
+
+        if key in self.clusters.keys():
+            c = self.clusters[key]
+            print(f"Cluster {key} já existe")
+            print(f"{self.filename}:{line_num}")
+            print(f"{self.filename}:{c.line_number}")
+            print("  " + str(c))
+            print("  " + str(cluster))
+            exit(1)
+                
+        self.clusters[key] = cluster
+        self.ordered_clusters.append(key)
+        return cluster
+                
+    def load_quest(self, line, line_num) -> Optional[Quest]:
+        quest = QuestParser().parse_quest(self.filename, line, line_num + 1)
+        if quest is None:
+            return None
+        if quest.key in self.quests:
+            print(f"Quest {quest.key} já existe")
+            print(f"{self.filename}:{quest.line_number}")
+            print(f"{self.filename}:{self.quests[quest.key].line_number}")
+            print("  " + str(quest))
+            print("  " + str(self.quests[quest.key]))
+            exit(1)
+        self.quests[quest.key] = quest
+        return quest
+
+    def load_task(self, line, line_num) -> Optional[Task]:
+        if line == "":
+            return None
+        task = TaskParser.parse_line(line, line_num + 1)
+        if task is None:
+            return None
+        
+        if task.key in self.tasks:
+            print(f"Task {task.key} já existe")
+            print(f"{self.filename}:{task.line_number}")
+            print(f"{self.filename}:{self.tasks[task.key].line_number}")
+            print("  " + str(task))
+            print("  " + str(self.tasks[task.key]))
+            exit(1)
+        self.tasks[task.key] = task
+        return task
+
+    def get_xp_resume(self):
+        total = 0
+        obtained = 0
+        for q in self.quests.values():
+            o, t = q.get_xp()
+            total += t
+            obtained += o
+        return obtained, total
+
+    def get_skills_resume(self, avaliable_quests: List[Quest]) -> Tuple[Dict[str, int], Dict[str, int]]:
+        total: Dict[str, int] = {}
+        obtained: Dict[str, int] = {}
+        avaliable_keys = [q.key for q in avaliable_quests]
+        for q in self.quests.values():
+            reachable = q.key in avaliable_keys
+            for t in q.get_tasks():
+                for s in t.skills:
+                    if s in total:
+                        total[s] += t.skills[s]
+                        if reachable:
+                            obtained[s] += int(t.skills[s] * t.grade/10)
+                        else:
+                            obtained[s] += 0
+                    else:
+                        total[s] = t.skills[s]
+                        if reachable:
+                            obtained[s] = int(t.skills[s] * t.grade/10)
+                        else:
+                            obtained[s] = 0
+                for s in t.qskills:
+                    if s in total:
+                        total[s] += t.qskills[s]
+                        if reachable:
+                            obtained[s] += int(t.qskills[s] * t.grade/10)
+                        else:
+                            obtained[s] += 0
+                    else:
+                        total[s] = t.qskills[s]
+                        if reachable:
+                            obtained[s] = int(t.qskills[s] * t.grade/10)
+                        else:
+                            obtained[s] = 0
+        return total, obtained
+
+    # Verificar se todas as quests requeridas existem e adiciona o ponteiro
+    # Verifica se todas as quests tem tarefas
+    def validate_requirements(self):
+
+        # verify is there are keys repeated between quests, tasks and groups
+
+        keys = [c.key for c in self.clusters.values()] +\
+               [k for k in self.quests.keys()] +\
+               [k for k in self.tasks.keys()]
+
+        # print chaves repetidas
+        for k in keys:
+            if keys.count(k) > 1:
+                print(f"Chave repetida: {k}")
+                exit(1)
+
+        # remove all quests without tasks
+        valid_quests = {}
+        for k, q in self.quests.items():
+            if len(q.get_tasks()) > 0:
+                valid_quests[k] = q
+
+        # trim titles
+        for q in self.quests.values():
+            q.title = q.title.strip()
+        for c in self.clusters.values():
+            c.title = c.title.strip()
+
+        self.quests = valid_quests
+
+        # verificar se todas as quests requeridas existem e adicionar o ponteiro
+        for q in self.quests.values():
+            for r in q.requires:
+                if r in self.quests:
+                    q.requires_ptr.append(self.quests[r])
+                else:
+                    # print(f"keys: {self.quests.keys()}")
+                    print(f"Quest\n{self.filename}:{q.line_number}\n{str(q)}\nrequer {r} que não existe")
+                    exit(1)
+
+    def check_cycle(self):
+        def dfs(qx, visitedx):
+            if len(visitedx) > 0:
+                if visitedx[0] == qx.key:
+                    print(f"Cycle detected: {visitedx}")
+                    exit(1)
+            if q.key in visitedx:
+                return
+            visitedx.append(q.key)
+            for r in q.requires_ptr:
+                dfs(r, visitedx)
+
+        for q in self.quests.values():
+            visited: List[str] = []
+            dfs(q, visited)
+
+    def parse_file(self, file):
+        self.filename = file
+        lines = open(file, encoding="utf-8").read().split("\n")
+        active_quest = None
+        active_cluster = None
+
+        if len(lines) > 0:
+            self.parse_xp(lines[0])
+
+        for line_num, line in enumerate(lines):
+            cluster = self.load_cluster(line, line_num)
+            if cluster is not None:
+                active_cluster = cluster
+                continue
+            
+            quest = self.load_quest(line, line_num)
+            if quest is not None:
+                active_quest = quest
+                if active_cluster is None:
+                    key = "Sem Grupo"
+                    cluster = Cluster(0, key, key)
+                    self.clusters[key] = cluster
+                    self.ordered_clusters.append(key)
+                    active_cluster = cluster
+                quest.cluster = active_cluster.key
+                active_cluster.quests.append(quest)
+                continue
+
+            task = self.load_task(line, line_num)
+            if task is not None:
+                
+                if active_quest is None:
+                    print(f"Task {task.key} não está dentro de uma quest")
+                    print(f"{file}:{task.line_number}")
+                    print(f"  {task}")
+                    exit(1)
+                if self.filename is not None:
+                    active_quest.add_task(task, self.filename)
+
+        self.clear_empty()
+
+        self.validate_requirements()
+        for t in self.tasks.values():
+            t.process_link(os.path.dirname(file) + "/")
+
+    def clear_empty(self):
+
+        # apagando quests vazias da lista de quests
+        for k in list(self.quests.keys()):
+            if len(self.quests[k].get_tasks()) == 0:
+                del self.quests[k]
+
+        # apagando quests vazias dos clusters e clusters vazios
+        ordered_clusters: List[str] = []
+        clusters: Dict[str, Cluster] = {}
+        for key in self.ordered_clusters:
+            cluster = self.clusters[key]
+            quests = [q for q in cluster.quests if len(q.get_tasks()) > 0]
+            if len(quests) > 0:
+                cluster.quests = quests
+                clusters[cluster.key] = cluster
+                ordered_clusters.append(cluster.key)
+
+        self.ordered_clusters = ordered_clusters
+        self.clusters = clusters
+
+    @staticmethod
+    def __is_reachable_quest(q: Quest, cache: Dict[str, bool]):
+        if q.key in cache:
+            return cache[q.key]
+
+        if len(q.requires_ptr) == 0:
+            cache[q.key] = True
+            return True
+        cache[q.key] = all([r.is_complete() and Game.__is_reachable_quest(r, cache) for r in q.requires_ptr])
+        return cache[q.key]
+
+    # def __get_reachable_quests(self):
+    #     # cache needs to be reseted before each call
+    #     cache: Dict[str, bool] = {}
+    #     return [q for q in self.quests.values() if Game.__is_reachable_quest(q, cache)]
+
+    def update_reachable_and_available(self, admin_mode: bool):
+        for q in self.quests.values():
+            q.set_reachable(False)
+        for c in self.clusters.values():
+            c.set_reachable(False)
+
+        cache: Dict[str, bool] = {}
+        for c in self.clusters.values():
+            for q in c.quests:
+                if Game.__is_reachable_quest(q, cache):
+                    q.set_reachable(True)
+                    c.set_reachable(True)
+
+        self.available_quests = []
+        self.available_clusters = []
+        if admin_mode:
+            self.available_quests = [key for key in self.quests.keys()]
+            self.available_clusters = [key for key in self.clusters.keys()]
+        else:
+            self.available_quests = [q.key for q in self.quests.values() if q.is_reachable()]
+            self.available_clusters = [c.key for c in self.clusters.values() if c.is_reachable()]
+
+
+    def __str__(self):
+        output = []
+        for c in self.clusters.values():
+            output.append(str(c))
+            for q in c.quests:
+                output.append(str(q))
+                for t in q.get_tasks():
+                    output.append(str(t))
+        return "\n".join(output)
+
+
+
+
+
+class Entry:
+    def __init__(self, obj: Union[Task, Quest, Cluster], sentence: Sentence):
+        self.obj = obj
+        self.sentence = sentence
+
+    def get(self):
+        return self.sentence
+
+class TaskTree:
+
+    def __init__(self, settings: Settings, game: Game, rep: RepData):
+        self.settings = settings
+        self.app = settings.app
+        self.game = game
+        self.rep = rep
+        self.style = Border(settings.app)
+        self.colors = settings.colors
+        self.items: List[Entry] = []
+        self.index_selected = 0
+        self.index_begin = 0
+        self.max_title = 0
+        self.search_text = ""
+        self.in_focus = True
+        self.load_from_rep()
+        self.update_tree(admin_mode=Flags.admin.is_true(), first_loop=True)
+        self.reload_sentences()
+
+    def set_focus(self, focus: bool):
+        self.in_focus = focus
+
+    def load_from_rep(self):
+        self.new_items: List[str] = [v for v in self.rep.get_new_items()]
+        self.expanded: List[str] = [v for v in self.rep.get_expanded()]
+        self.index_selected = self.rep.get_index()
+
+        tasks = self.rep.get_tasks()
+        for key, serial in tasks.items():
+            if key in self.game.tasks:
+                self.game.tasks[key].load_from_db(serial)
+
+    def save_on_rep(self):
+        self.rep.set_expanded(self.expanded)
+        self.rep.set_new_items([x for x in set(self.new_items)])
+        self.rep.set_index(self.index_selected)
+        tasks = {}
+        for t in self.game.tasks.values():
+            if not t.is_db_empty():
+                tasks[t.key] = t.save_to_db()
+        self.rep.set_tasks(tasks)
+
+
+    def update_tree(self, admin_mode: bool, first_loop: bool = False):
+        if not admin_mode:
+            old_reachable = self.game.available_clusters + self.game.available_quests
+
+        self.game.update_reachable_and_available(admin_mode)
+            
+        if not admin_mode:
+            available_keys = self.game.available_quests + self.game.available_clusters
+            for key in self.expanded:
+                if key not in available_keys:
+                    self.expanded.remove(key)
+            if not first_loop:
+                for key in available_keys:
+                    if key not in old_reachable and key not in self.new_items:
+                        self.new_items.append(key)
+
+        # remove expanded items from new
+        self.new_items = [item for item in self.new_items if item not in self.expanded]
+
+    def update_max_title(self):
+        min_value = 20
+        items = []
+        for c in self.game.clusters.values():
+            if c.key in self.game.available_clusters:
+                items.append(len(c.title))
+                if c.key in self.expanded:
+                    for q in [q for q in c.quests if q.key in self.game.available_quests]:
+                        items.append(len(q.title) + 2)
+                        if q.key in self.expanded:
+                            for t in q.get_tasks():
+                                items.append(len(t.title) + 6)
+        self.max_title = max(items)
+        if self.max_title < min_value:
+            self.max_title = min_value
+
+    def str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool, min_value=1) -> Sentence:
+        # downloadable_in_focus = False
+        rootdir = self.app._rootdir
+        down_symbol = Token(" ")
+        in_focus = focus_color != ""
+        down_symbol = symbols.cant_download
+        rep_dir = os.path.join(self.app.get_rootdir(), self.rep.alias)
+        if t.is_downloadable() and rootdir != "":
+            if t.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
+                down_symbol = symbols.downloaded
+                # if in_focus:
+                #     downloadable_in_focus = True
+            else:
+                down_symbol = symbols.to_download
+
+        color_aval = "" if quest_reachable else "r"
+
+        output = Sentence()
+        output.add(" ").addf(color_aval, lig_cluster)
+        output.add(" ")
+        output.addf(color_aval, lig_quest)
+        output.add(down_symbol)
+        output.add(" ")
+        output.add(t.get_grade_symbol(min_value))
+
+        if in_focus:
+            output.add(self.style.roundL(focus_color))
+        else:
+            output.add(" ")
+
+        color = ""
+        if in_focus:
+            color = "k" + focus_color
+
+        done = color + "g"
+        todo = color
+        perc = t.test_progress
+        output.add(self.style.build_bar(t.title, perc / 100, len(t.title), done, todo, round=False))
+        # output.addf(color, t.title)
+
+        if in_focus:
+            output.add(self.style.roundR(focus_color))
+        else:
+            output.add(" ")
+
+
+        if Flags.reward.is_true():
+            xp = ""
+            for s, v in t.skills.items():
+                xp += f" +{s}:{v}"
+            output.addf(self.colors.task_skills, xp)
+            
+        return output
+
+    def str_quest(self, has_kids: bool, focus_color: str, q: Quest, lig: str) -> Sentence:
+        con = "━─"
+        if q.key in self.expanded and has_kids:
+            con = "─┯"
+
+        color_reachable = "" if q.is_reachable() else "r"
+        output: Sentence = Sentence().addf(color_reachable, " " + lig + con)
+
+        in_focus = focus_color != ""
+        if in_focus:
+            output.add(self.style.roundL(focus_color))
+        else:
+            output.add(" ")
+
+        color = ""
+        if in_focus:
+            color = "k" + focus_color
+
+        title = q.title
+        title = title.ljust(self.max_title - 2, ".")
+
+        done = color + self.colors.task_text_done
+        todo = color + self.colors.task_text_todo
+        output.add(self.style.build_bar(title, q.get_percent() / 100, len(title), done, todo, round=False))
+
+        if in_focus:
+            output.add(self.style.roundR(focus_color))
+        else:
+            output.add(" ")
+
+        if Flags.percent.is_true():
+            output.add(" ").add(q.get_resume_by_percent())
+        else:
+            output.add(" ").add(q.get_resume_by_tasks())
+
+        if Flags.minimum.is_true():
+            output.add(" ").add(q.get_requirement())
+
+        if Flags.reward.is_true():
+            xp = ""
+            for s, v in q.skills.items():
+                xp += f" +{s}:{v}"
+            output.addf(self.colors.task_skills, " " + xp)
+
+        if q.key in self.new_items:
+            output.addf(self.colors.task_new, " [new]")
+
+        return output
+
+
+    def str_cluster(self, has_kids: bool, focus_color: str, cluster: Cluster) -> Sentence:
+        output: Sentence = Sentence()
+        opening = "━─"
+        if cluster.key in self.expanded and has_kids:
+            opening = "─┯"
+        color_reachable = "" if cluster.is_reachable() else "r"
+        output.addf(color_reachable, opening)
+
+        color = ""
+        if focus_color != "":
+            color = "k" + focus_color
+        title = cluster.title
+
+        title = cluster.title.ljust(self.max_title, ".")
+        if focus_color != "":
+            output.add(self.style.roundL(focus_color))
+        else:
+            output.add(" ")
+
+        done = color + self.colors.task_text_done
+        todo = color + self.colors.task_text_todo
+
+        output.add(self.style.build_bar(title, cluster.get_percent() / 100, len(title), done, todo, round=False))
+
+        if focus_color != "":
+            output.add(self.style.roundR(focus_color))
+        else:
+            output.add(" ")
+
+
+        if Flags.percent.is_true():
+            output.add(" ").add(cluster.get_resume_by_percent())
+        else:
+            output.add(" ").add(cluster.get_resume_by_quests())
+        if cluster.key in self.new_items:
+            output.addf(self.colors.task_new, " [new]")
+
+        return output
+
+
+    # def add_in_search(self, item: Any, sentence: Sentence) -> bool:
+    #     if self.search_text == "":
+    #         self.items.append(Entry(item, sentence))
+    #         return True
+        
+    #     matcher = SearchAsc(self.search_text)
+    #     pos = matcher.find(sentence.get_text())
+    #     found = pos != -1
+    #     if found:
+    #         for i in range(pos, pos + len(self.search_text)):
+    #             sentence.data[i].fmt = "Y"
+
+    #     if isinstance(item, Task):
+    #         if found:
+    #             self.items.append(Entry(item, sentence))
+    #             return True
+    #     elif isinstance(item, Quest):
+    #         if found:
+    #             self.items.append(Entry(item, sentence))
+    #             return True
+    #         for t in item.get_tasks():
+    #             if matcher.inside(t.title):
+    #                 self.items.append(Entry(item, sentence))
+    #                 return True
+    #     elif isinstance(item, Cluster):
+    #         cluster: Cluster = item
+    #         if matcher.inside(cluster.title):
+    #             self.items.append(Entry(cluster, sentence))
+    #             return True
+    #         for q in cluster.quests:
+    #             if matcher.inside(q.title):
+    #                 self.items.append(Entry(item, sentence))
+    #                 return True
+    #             for t in q.get_tasks():
+    #                 if matcher.inside(t.title):
+    #                     self.items.append(Entry(item, sentence))
+    #                     return True
+    #     return False
+
+    def get_focus_color(self, item: Union[Quest, Cluster], index: int) -> str:
+        if index != self.index_selected or not self.in_focus:
+            return ""
+        if not item.is_reachable() and not Flags.admin.is_true():
+            return "R"
+        return self.colors.focused_item
+
+    def filter_by_search(self) -> Set[str]:
+        matches: Set[str] = set()
+        search = SearchAsc(self.search_text)
+        for cluster in self.game.clusters.values():
+            if search.inside(cluster.title):
+                matches.add(cluster.key)
+            for quest in cluster.quests:
+                if search.inside(quest.title):
+                    matches.add(cluster.key)
+                    matches.add(quest.key)
+                for task in quest.get_tasks():
+                    if search.inside(task.title):
+                        matches.add(cluster.key)
+                        matches.add(quest.key)
+                        matches.add(task.key)
+        return matches
+
+    def try_add(self, filtered, matcher, item, sentence):
+        if self.search_text == "":
+            self.items.append(Entry(item, sentence))
+            return True
+        if item.key in filtered:
+            pos = matcher.find(sentence.get_text())
+            found = pos != -1
+            if found:
+                for i in range(pos, pos + len(self.search_text)):
+                    sentence.data[i].fmt = "Y"
+            self.items.append(Entry(item, sentence))
+            return True
+        return False
+
+    def reload_sentences(self):
+        self.update_max_title()
+        index = 0
+        self.items = []
+        available_quests = self.game.available_quests
+        available_clusters = self.game.available_clusters
+
+        filtered = self.filter_by_search()
+        matcher = SearchAsc(self.search_text)
+
+        clusters = [self.game.clusters[key] for key in available_clusters if key in filtered]
+        for cluster in clusters:
+            quests = [q for q in cluster.quests if q.key in available_quests if q.key in filtered]
+            focus_color = self.get_focus_color(cluster, index)
+            sentence = self.str_cluster(len(quests) > 0, focus_color, cluster)
+
+            if self.try_add(filtered, matcher, cluster, sentence):
+                index += 1
+
+            if cluster.key not in self.expanded:  # adicionou o cluster, mas não adicione as quests
+                continue
+
+            for q in quests:
+                tasks =[t for t in q.get_tasks() if t.key in filtered]
+                lig = "├" if q != quests[-1] else "╰"
+                focus_color = self.get_focus_color(q, index)
+                sentence = self.str_quest(len(tasks) > 0, focus_color, q, lig)
+
+                # self.items.append(Entry(q, sentence))
+                if self.try_add(filtered, matcher, q, sentence):
+                    index += 1
+                if q.key in self.expanded:
+                    for t in tasks:
+                        ligc = "│" if q != quests[-1] else " "
+                        ligq = "├ " if t != tasks[-1] else "╰ "
+                        min_value = 7 if q.tmin is None else q.tmin
+                        focus_color = self.get_focus_color(q, index)
+                        sentence = self.str_task(focus_color, t, ligc, ligq, q.is_reachable(), min_value)
+                        if self.try_add(filtered, matcher, t, sentence):
+                            index += 1
+
+        if self.index_selected >= len(self.items):
+            self.index_selected = len(self.items) - 1
+
+
+    def process_collapse(self):
+        if any([q in self.expanded for q in self.game.available_quests]):
+            self.expanded = [key for key in self.expanded if key not in self.game.available_quests]
+        else:
+            self.expanded = []
+
+    def process_expand(self):
+        # if any cluster outside expanded
+        expand_clusters = False
+        for ckey in self.game.available_clusters:
+            if ckey not in self.expanded:
+                expand_clusters = True
+        if expand_clusters:
+            for ckey in self.game.available_clusters:
+                if ckey not in self.expanded:
+                    self.expanded.append(ckey)
+        else:
+            for qkey in self.game.available_quests:
+                if qkey not in self.expanded:
+                    self.expanded.append(qkey)
+
+
+    def mass_mark(self):
+        obj = self.items[self.index_selected].obj
+        if isinstance(obj, Cluster):
+            cluster: Cluster = obj
+            if cluster.key not in self.expanded:
+                self.expanded.append(cluster.key)
+                return
+            full_open = True
+            for q in cluster.quests:
+                if q.key in self.game.available_quests and q.key not in self.expanded:
+                    self.expanded.append(q.key)
+                    full_open = False
+            if not full_open:
+                return
+
+            value = None
+            for q in obj.quests:
+                for t in q.get_tasks():
+                    if value is not None:
+                        t.set_grade(value)
+                    else:
+                        value = 10 if t.grade < 10 else 0
+                        t.set_grade(value)
+        elif isinstance(obj, Quest):
+            if obj.key not in self.expanded:
+                self.expanded.append(obj.key)
+            else:
+                value = None
+                for t in obj.get_tasks():
+                    if value is not None:
+                        t.set_grade(value)
+                    else:
+                        value = 10 if t.grade < 10 else 0
+                        t.set_grade(value)
+        else:
+            obj.set_grade(10 if obj.grade < 10 else 0)
+
+    def set_grade(self, grade: int):
+        obj = self.items[self.index_selected].obj
+        if isinstance(obj, Task):
+            obj.set_grade(grade)
+
+    def inc_grade(self):
+        obj = self.items[self.index_selected].obj
+        if isinstance(obj, Task):
+            grade = obj.grade + 1
+            if grade == 11:
+                grade = 10
+            obj.set_grade(grade)
+        else:
+            self.unfold(obj)
+
+    
+    def dec_grade(self):
+        obj = self.items[self.index_selected].obj
+        if isinstance(obj, Task):
+            grade = obj.grade - 1
+            if grade == -1:
+                grade = 0
+            obj.set_grade(grade)
+        else:
+            self.fold(obj)
+
+    def arrow_right(self):
+        obj = self.items[self.index_selected].obj
+        if isinstance(obj, Cluster):
+            if not self.unfold(obj):
+                self.index_selected += 1
+        elif isinstance(obj, Quest):
+            if not self.unfold(obj):
+                while True:
+                    self.index_selected += 1
+                    obj = self.items[self.index_selected].obj
+                    if isinstance(obj, Cluster) or isinstance(obj, Quest):
+                        break
+                    if self.index_selected == len(self.items) - 1:
+                        break
+        elif isinstance(obj, Task):
+            while True:
+                obj = self.items[self.index_selected].obj
+                if isinstance(obj, Quest) or isinstance(obj, Cluster):
+                    break
+                if self.index_selected == len(self.items) - 1:
+                    break
+                self.index_selected += 1
+
+    def arrow_left(self):
+        obj = self.items[self.index_selected].obj
+        if isinstance(obj, Quest):
+            if not self.fold(obj):
+                while True:
+                    if self.index_selected == 0:
+                        break
+                    self.index_selected -= 1
+                    obj = self.items[self.index_selected].obj
+                    if isinstance(obj, Cluster) or isinstance(obj, Quest) and obj.key in self.expanded:
+                        break
+                    if self.index_selected == 0:
+                        break
+        elif isinstance(obj, Cluster):
+            if obj.key in self.expanded:
+                self.expanded.remove(obj.key)
+                for q in obj.quests:
+                    try:
+                        self.expanded.remove(q.key)
+                    except ValueError:
+                        pass
+            else:
+                while True:
+                    if self.index_selected == 0:
+                        break
+                    self.index_selected -= 1
+                    obj = self.items[self.index_selected].obj
+                    if isinstance(obj, Cluster) or isinstance(obj, Quest):
+                        break
+                    if self.index_selected == 0:
+                        break
+        elif isinstance(obj, Task):
+            while True:
+                obj = self.items[self.index_selected].obj
+                if isinstance(obj, Quest):
+                    break
+                self.index_selected -= 1
+
+    def unfold(self, obj: Union[Task, Quest, Cluster]) -> bool:
+        if isinstance(obj, Quest) or isinstance(obj, Cluster):
+            if obj.key not in self.expanded:
+                self.expanded.append(obj.key)
+                return True
+        return False
+
+    def fold(self, obj: Union[Task, Quest, Cluster]) -> bool:
+        if isinstance(obj, Quest) or isinstance(obj, Cluster):
+            if obj.key in self.expanded:
+                self.expanded.remove(obj.key)
+                return True
+        return False
+
+    def toggle(self, obj: Union[Quest, Cluster]):
+            if not self.fold(obj):
+                self.unfold(obj)
+
+    def get_senteces(self, dy):
+        if len(self.items) < dy:
+            self.index_begin = 0
+        else:
+            if self.index_selected < self.index_begin:  # subiu na tela
+                self.index_begin = self.index_selected
+            elif self.index_selected >= dy + self.index_begin:  # desceu na tela
+                self.index_begin = self.index_selected - dy + 1
+
+        sentences: List[Sentence] = []
+        for i in range(self.index_begin, len(self.items)):
+            sentences.append(self.items[i].sentence)
+        return sentences
+
+    def get_selected(self):
+        return self.items[self.index_selected].obj
+
+    def move_up(self):
+        self.index_selected = max(0, self.index_selected - 1)
+
+    def move_down(self):
+        self.index_selected = min(len(self.items) - 1, self.index_selected + 1)
+
+
+
+class Search:
+    def __init__(self, tree: TaskTree, fman: FloatingManager):
+        self.tree = tree
+        self.game = tree.game
+        self.fman = fman
+        self.search_mode: bool = False
+        self.backup_expanded: List[str] = []
+        self.backup_index_selected = 0
+        self.backup_admin_mode = False
+
+    def toggle_search(self):
+        self.search_mode = not self.search_mode
+        if self.search_mode:
+            self.backup_expanded = [v for v in self.tree.expanded]
+            self.backup_index_selected = self.tree.index_selected
+            self.backup_admin_mode = Flags.admin.is_true()
+            self.tree.update_tree(admin_mode=True)
+            self.tree.process_expand()
+            self.tree.process_expand()
+            self.fman.add_input(Floating(">v").warning().put_text("Digite o texto\nVavegue até o elemnto desejado\ne aperte Enter"))
+    
+    def finish_search(self):
+        self.search_mode = False
+        unit = self.tree.get_selected()
+        self.tree.index_selected = 0
+        self.tree.search_text = ""
+        if self.backup_admin_mode == False:
+            self.tree.update_tree(admin_mode=False)
+        self.tree.reload_sentences()
+    
+        found = False
+        for i, item in enumerate(self.tree.items):
+            if item.obj == unit:
+                self.tree.index_selected = i
+                found = True
+                break
+
+        if not found:
+            self.fman.add_input(Floating(">v").warning().put_text("Elemento não acessível no modo normal.\nEntrando no modo Admin\npara habilitar acesso"))
+            Flags.admin.toggle()
+            self.tree.update_tree(True)
+            self.tree.reload_sentences()
+        
+        self.tree.process_collapse()
+        self.tree.process_collapse()
+
+        if isinstance(unit, Task):
+            for cluster_key in self.game.available_clusters:
+                cluster = self.game.clusters[cluster_key]
+                for quest in cluster.quests:
+                    for task in quest.get_tasks():
+                        if task == unit:
+                            self.tree.expanded = [cluster.key, quest.key]
+        elif isinstance(unit, Quest):
+            for cluster_key in self.game.available_clusters:
+                cluster = self.game.clusters[cluster_key]
+                for quest in cluster.quests:
+                    if quest == unit:
+                        self.tree.expanded = [cluster.key]
+        self.tree.reload_sentences()
+        for i, item in enumerate(self.tree.items):
+            if item.obj == unit:
+                self.tree.index_selected = i
+                break
+
+
+    def process_search(self, key):
+        if key == 27:
+            self.search_mode = False
+            self.tree.search_text = ""
+            self.tree.expanded = [v for v in self.backup_expanded]
+            self.tree.index_selected = self.backup_index_selected
+        elif key == ord("\n"):
+            self.finish_search()
+    
+        elif key == curses.KEY_UP:
+            self.tree.move_up()
+        elif key == curses.KEY_DOWN:
+            self.tree.move_down()
+        elif key == 127 or key == 263 or key == 330:
+            self.tree.search_text = self.tree.search_text[:-1]
+        elif key >= 32 and key < 127:
+            self.tree.search_text += chr(key).lower()
+
+
+
+class Opener:
+    def __init__(self, settings: Settings):
+        self.settings = settings
+        self.fman: Optional[FloatingManager] = None
+        self.folders: List[str] = []
+        self.language: str = ""
+
+    def set_fman(self, fman: FloatingManager):
+        self.fman = fman
+        return self
+    
+    def set_target(self, folders: List[str]):
+        self.folders = folders
+        return self
+
+    def set_language(self, language: str):
+        self.language = language
+        return self
+
+    def open_files(self, files_to_open: List[str]):
+        files_to_open = list(set(files_to_open))
+
+        cmd = self.settings.app.get_editor()
+        folder = os.path.dirname(os.path.abspath(files_to_open[0]));
+        aviso = (Floating("v>")
+                .warning()
+                .put_sentence(Sentence().add("Pasta: ").addf("g", folder).add(" "))
+                .put_text("Abrindo arquivos com o comando")
+                )
+        files = [os.path.basename(path) for path in files_to_open]
+        aviso.put_sentence(Sentence().addf("g", f"{cmd}").add(" ").addf("g", " ".join(files)).add(" "))
+        self.send_floating(aviso)
+        fullcmd = "{} {}".format(cmd, " ".join(files_to_open))
+        outfile = tempfile.NamedTemporaryFile(delete=False)
+        subprocess.Popen(fullcmd, stdout=outfile, stderr=outfile, shell=True)
+
+    def send_floating(self, Floating: Floating):
+        if self.fman is not None:
+            self.fman.add_input(Floating)
+
+    def load_drafs(self, folder: str) -> List[str]:
+        files = os.listdir(folder)
+        files_to_open = []
+        for f in files:
+            allowed = [self.language]
+            if self.language == "c" or self.language== "cpp":
+                allowed.append("h")
+                allowed.append("hpp")
+            if not f.endswith(tuple(allowed)):
+                continue
+            files_to_open.append(os.path.join(folder, f))
+        return files_to_open
+
+    @staticmethod
+    def try_add(files_to_open: List[str], folder: str, file: str):
+        path = os.path.join(folder, file)
+        if os.path.isfile(path):
+            files_to_open.append(path)
+
+    def load_folder(self, folder: str):
+        files_to_open: List[str] = []
+        Opener.try_add(files_to_open, folder, "Readme.md")
+        # Opener.try_add(files_to_open, folder, "cases.tio")
+        files_to_open += self.load_drafs(folder)
+        return files_to_open
+
+    def load_folders_and_open(self):
+        files_to_open: List[str] = []
+        for folder in self.folders:
+            files_to_open += self.load_folder(folder)
+        if len(files_to_open) != 0:
+            self.open_files(files_to_open)
+
+    def __call__(self):
+        self.load_folders_and_open()
+
+
+
 class SeqMode(enum.Enum):
     intro = 0
     select = 1
@@ -6584,6 +6200,7 @@ class Tester:
         solver = self.wdir.get_solver()
 
         if solver.compile_error:
+            Logger.get_instance().record_event(LogAction.TEST, self.task.key, Logger.COMP_ERROR)
             self.mode = SeqMode.finished
             while len(self.unit_list) > 0:
                 index = len(self.results)
@@ -6611,7 +6228,6 @@ class Tester:
             self.mode = SeqMode.finished
             self.focused_index = 0
 
-
             done_list: List[Tuple[ExecutionResult, int]] = []
             fail_list: List[Tuple[ExecutionResult, int]] = []
             for data in self.results:
@@ -6621,6 +6237,8 @@ class Tester:
                 else:
                     done_list.append(data)
             self.results = fail_list + done_list
+            percent = (100 * len(done_list)) // len(self.results)
+            Logger.get_instance().record_event(LogAction.TEST, self.task.key, str(percent) + "%")
 
 
     def build_top_line_header(self, frame):
@@ -6943,6 +6561,7 @@ class Tester:
             self.wdir.autoload()
             self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index])
         self.mode = SeqMode.finished
+        Logger.get_instance().record_event(LogAction.FREE, self.task.key)
         return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True)
 
     def run_test_mode(self):
@@ -7109,6 +6728,7 @@ class Tester:
                             break
                     except CompileError as e:
                         self.mode = SeqMode.finished
+                        Logger.get_instance().record_event(LogAction.TEST, self.task.key, Logger.COMP_ERROR)
                         print(e)
                         input("Pressione enter para continuar")
                         break
@@ -7342,114 +6962,647 @@ class Run:
 
 
 
+class Graph:
 
+    colorlist: List[Tuple[str, str]] = [
+            ("aquamarine3", "aquamarine4"),
+            ("bisque3", "bisque4"),
+            ("brown3", "brown4"),
+            ("chartreuse3", "chartreuse4"),
+            ("coral3", "coral4"),
+            ("cyan3", "cyan4"),
+            ("darkgoldenrod3", "darkgoldenrod4"),
+            ("darkolivegreen3", "darkolivegreen4"),
+            ("darkorchid3", "darkorchid4"),
+            ("darkseagreen3", "darkseagreen4"),
+            ("darkslategray3", "darkslategray4"),
+            ("deeppink3", "deeppink4"),
+            ("deepskyblue3", "deepskyblue4"),
+            ("dodgerblue3", "dodgerblue4"),
+            ("firebrick3", "firebrick4"),
+            ("gold3", "gold4"),
+            ("green3", "green4"),
+            ("hotpink3", "hotpink4"),
+            ("indianred3", "indianred4"),
+            ("khaki3", "khaki4"),
+            ("lightblue3", "lightblue4"),
+            ("lightcoral", "lightcoral"),
+            ("lightcyan3", "lightcyan4"),
+            ("lightgoldenrod3", "lightgoldenrod4"),
+            ("lightgreen", "lightgreen"),
+            ("lightpink3", "lightpink4"),
+            ("lightsalmon3", "lightsalmon4"),
+            ("lightseagreen", "lightseagreen"),
+            ("lightskyblue3", "lightskyblue4"),
+            ("lightsteelblue3", "lightsteelblue4"),
+            ("lightyellow3", "lightyellow4"),
+            ("magenta3", "magenta4"),
+            ("maroon3", "maroon4"),
+            ("mediumorchid3", "mediumorchid4"),
+            ("mediumpurple3", "mediumpurple4"),
+            ("mediumspringgreen", "mediumspringgreen"),
+            ("mediumturquoise", "mediumturquoise"),
+            ("mediumvioletred", "mediumvioletred"),
+            ("mistyrose3", "mistyrose4"),
+            ("navajowhite3", "navajowhite4"),
+            ("olivedrab3", "olivedrab4"),
+            ("orange3", "orange4"),
+            ("orangered3", "orangered4"),
+            ("orchid3", "orchid4"),
+            ("palegreen3", "palegreen4"),
+            ("paleturquoise3", "paleturquoise4"),
+            ("palevioletred3", "palevioletred4")
+            ]
 
-class Writer:
+    def __init__(self, game: Game):
+        self.game = game
+        self.path = "graph.png"
+        self.opt = False
+        self.reachable = [q.key for q in self.game.quests.values() if q.is_reachable()]
+        # self.reachable = [key for key in self.game.quests.keys()]
 
-    def __init__(self):
-        pass
+        self.counts: Dict[str, str] = {}
+        for q in self.game.quests.values():
+            done = len([t for t in q.get_tasks() if t.is_complete()])
+            init = len([t for t in q.get_tasks() if t.in_progress()])
+            todo = len([t for t in q.get_tasks() if t.not_started()])
+            self.counts[q.key] = f"{done} / {done + init + todo}"
 
-    @staticmethod
-    def to_vpl(unit: Unit):
-        text = "case=" + unit.case + "\n"
-        text += "input=" + unit.input
-        text += "output=\"" + unit.output + "\"\n"
-        if unit.grade is None:
-            text += "\n"
-        else:
-            text += "grade reduction=" + str(unit.grade).zfill(3) + "%\n"
-        return text
+    def set_path(self, path: str):
+        self.path = path
+        return self
 
-    @staticmethod
-    def to_tio(unit: Unit):
-        text = ">>>>>>>>"
-        if unit.case != '':
-            text += " " + unit.case
-        if unit.grade is not None:
-            text += " " + str(unit.grade) + "%"
-        text += '\n' + unit.input
-        text += "========\n"
-        text += unit.output
-        if unit.output != '' and unit.output[-1] != '\n':
-            text += '\n'
-        text += "<<<<<<<<\n"
-        return text
+    def set_opt(self, opt: bool):
+        self.opt = opt
+        return self
 
-    @staticmethod
-    def save_dir_files(folder: str, pattern_loader: PatternLoader, label: str, unit: Unit) -> None:
-        file_source = pattern_loader.make_file_source(label)
-        with open(os.path.join(folder, file_source.input_file), "w") as f:
-            f.write(unit.input)
-        with open(os.path.join(folder, file_source.output_file), "w") as f:
-            f.write(unit.output)
+    def set_counts(self, counts: Dict[str, str]):
+        self.counts = counts
+        return self
+    
+    def set_output(self, output: str):
+        self.output = output
+        return self
 
-    @staticmethod
-    def save_target(target: str, unit_list: List[Unit], force: bool = False):
-        def ask_overwrite(file):
-            print("file " + file + " found. Overwrite? (y/n):")
-            resp = input()
-            if resp.lower() == 'y':
-                print("overwrite allowed")
+    def info(self, qx: Quest):
+        text = f'{qx.title.strip()}'
+        if self.reachable is None or self.counts is None:
+            return f'"{text}"'
+        return f'"{text}\\n{self.counts[qx.key]}"'
+
+    def is_reachable_or_next(self, q: Quest):
+        if self.reachable is None:
+            return True
+        if q.key in self.reachable:
+            return True
+        for r in q.requires_ptr:
+            if r.key in self.reachable:
                 return True
-            print("overwrite denied\n")
-            return False
+        return False
 
-        def save_dir(_target: str, _unit_list):
-            folder = _target
-            pattern_loader = PatternLoader()
-            number = 0
-            for unit in _unit_list:
-                Writer.save_dir_files(folder, pattern_loader, str(number).zfill(2), unit)
-                number += 1
+    def generate(self):
+        saida = ["digraph diag {", '  node [penwidth=1, style="rounded,filled", shape=box]']
 
-        def save_file(_target, _unit_list):
-            if _target.endswith(".tio"):
-                _new = "\n".join([Writer.to_tio(unit) for unit in _unit_list])
+        targets = [q for q in self.game.quests.values()]
+        for q in targets:
+            token = "->"
+            if len(q.requires_ptr) > 0:
+                for r in q.requires_ptr:
+                    extra = ""
+                    if self.reachable is not None:
+                        if q.key not in self.reachable and not r.is_complete():
+                            extra = "[style=dotted]"
+                    saida.append(f"  {self.info(r)} {token} {self.info(q)} {extra}")
             else:
-                _new = "\n".join([Writer.to_vpl(unit) for unit in _unit_list])
+                v = '  "Início"'
+                saida.append(f"{v} {token} {self.info(q)}")
 
-            file_exists = os.path.isfile(_target)
+        for i, c in enumerate(self.game.clusters.values()):
+            # cluster_targets = [q for q in c.quests if self.is_reachable_or_next(q)]
+            cluster_targets = [q for q in c.quests]
+            for q in cluster_targets:
+                if self.opt:
+                    if q.opt:
+                        fillcolor = "pink"
+                    else:
+                        fillcolor = "lime"
+                else:
+                    if c.color is not None:
+                        fillcolor = c.color
+                    else:
+                        fillcolor = self.colorlist[i][0]
 
-            if file_exists:
-                _old = open(_target).read()
-                if _old == _new:
-                    print("no changes in test file")
-                    return
+                    if q.opt:
+                        fillcolor = f'"{fillcolor};0.9:orange"'
+                    else:
+                        fillcolor = f'"{fillcolor};0.9:lime"'
+                shape = "ellipse"
+                color = "black"
+                width = 1
+                if self.reachable is not None:
+                    if q.key not in self.reachable:
+                        color = "white"
+                    else:
+                        width = 3
+                        color = q.get_grade_color()
+                        if color == "g":
+                            color = "green"
+                        elif color == "r":
+                            color = "red"
+                        elif color == "y":
+                            color = "yellow"
+                        elif color == "m":
+                            color = "magenta"
+                saida.append(f"  {self.info(q)} [shape={shape} color={color} penwidth={width} fillcolor={fillcolor} ]")
 
-            if not file_exists or (file_exists and (force or ask_overwrite(_target))):
-                with open(_target, "w") as f:
-                    f.write(_new)
+        saida.append("}")
+        # saida.append("@enduml")
+        saida.append("")
 
-                    if not force:
-                        print("file " + _target + " wrote")
+        dot_file = os.path.join(os.path.dirname(self.path) + "graph.dot")
+        out_file = self.path
+        open(dot_file, "w").write("\n".join(saida))
 
-        target_type = Identifier.get_type(target)
-        if target_type == IdentifierType.OBI:
-            save_dir(target, unit_list)
-        elif target_type == IdentifierType.TIO or target_type == IdentifierType.VPL:
-            save_file(target, unit_list)
+        # if self.graph_ext == ".png":
+        subprocess.run(["dot", "-Tpng", dot_file, "-o", out_file])
+        # elif self.graph_ext == ".svg":
+        #     subprocess.run(["dot", "-Tsvg", dot_file, "-o", out_file])
+        # else:
+        #     print("Formato de imagem não suportado")
+
+
+
+class CmdRep:
+    @staticmethod
+    def log(args):
+        rep = args.alias
+        logger = Logger.get_instance()
+        logger.set_rep(rep)
+        logger.check_log_file_integrity()
+
+    @staticmethod
+    def list(_args):
+        settings = Settings()
+        print(f"SettingsFile\n- {settings.settings_file}")
+        print(str(settings))
+
+    @staticmethod
+    def add(args):
+        settings = Settings()
+        rep = RepSource()
+        if args.url:
+            rep.set_url(args.url)
+        elif args.file:
+            rep.set_file(args.file)
+        settings.reps[args.alias] = rep
+        settings.save_settings()
+
+    @staticmethod
+    def rm(args):
+        sp = Settings()
+        if args.alias in sp.reps:
+            sp.reps.pop(args.alias)
+            sp.save_settings()
         else:
-            print("fail: target " + target + " do not supported for build operation\n")
+            print("Repository not found.")
+
+    @staticmethod
+    def reset(_):
+        sp = Settings().reset()
+        print(sp.settings_file)
+        print(sp.app._rootdir)
+        sp.save_settings()
+
+    @staticmethod
+    def graph(args):
+        settings = Settings()
+        rep_source:RepSource = settings.get_rep_source(args.alias)
+        file = rep_source.get_file_or_cache(os.path.join(settings.app._rootdir, args.alias))
+        game = Game()
+        game.parse_file(file)
+        game.check_cycle()
+        Graph(game).generate()
+
+class XP:
+    token_level_one = "level_one"
+    token_level_mult = "level_mult"
+    level_one: int = 100
+    level_mult: float = 1.5
+    
+    def __init__(self, game: Game):
+        self.game = game
+        self.obtained = 0
+        self.avaliable = 0
+        self.update()
+        self.level = self.get_level()
+    
+    def update(self):
+        self.obtained, self.avaliable = self.game.get_xp_resume()
+
+    def get_level(self) -> int:
+        return self.calc_level(self.obtained)
+
+    def get_xp_level_current(self) -> int:
+        xp_prev = self.calc_xp(self.level)
+        atual = self.obtained - xp_prev
+        return atual
+
+    def get_xp_level_needed(self) -> int:
+        xp_next = self.calc_xp(self.level + 1)
+        xp_prev = self.calc_xp(self.level)
+        return xp_next - xp_prev
+
+    def get_xp_total_obtained(self) -> int:
+        return self.obtained
+
+    def get_xp_total_available(self) -> int:
+        return self.avaliable
+
+    def calc_level(self, xp) -> int:
+        level = 1
+        while self.calc_xp(level) <= xp:
+            level += 1
+        return level - 1
+    
+    def calc_xp(self, level: int) -> int:
+        total = 0
+        for i in range(level - 1):
+            total += self.game.level_one * (int(self.game.level_mult) ** i)
+        return int(total)
 
 
 
-class CmdBuild:
 
-    def __init__(self, target_out: str, source_list: List[str], param: Param.Manip, to_force: bool):
-        self.target_out = target_out
-        self.source_list = source_list
-        self.param = param
-        self.to_force = to_force
 
-    def execute(self):
-        try:
-            wdir = Wdir().set_sources(self.source_list).build()
-            wdir.manipulate(self.param)
-            Writer.save_target(self.target_out, wdir.get_unit_list(), self.to_force)
-        except FileNotFoundError as e:
-            print(str(e))
-            return False
-        return True
+
+
+
+class Gui:
+
+    def __init__(self, tree: TaskTree, flagsman: FlagsMan, fman: FloatingManager):
+        self.rep = tree.rep
+        self.game = tree.game
+        self.tree = tree
+        self.flagsman = flagsman
+        self.fman = fman
+        self.settings = tree.settings
+        self.search = Search(tree=self.tree, fman=self.fman)
+        self.style: Border = Border(self.settings.app)
+        self.config = Config(self.settings, self.rep, self.flagsman, self.fman)
+        self.colors = self.settings.colors
+
+        self.app = Settings().app
+        self.wrap_size = Sentence(" ").join(self.build_bottom_array()).len()
+
+    def get_help_others_after(self):
+        color = "Y" if self.tree.in_focus else "W"
+        help_others_after: List[Sentence] = [
+            Sentence() + RToken(color, f"{GuiActions.baixar} [{GuiKeys.down_task}]"),
+            Sentence() + RToken("Y", f"{GuiActions.navegar} [wasd]")
+        ]
+        return help_others_after
+
+    def get_help_basic(self):
+        color = "Y" if self.tree.in_focus else "W"
+        help_basic: List[Sentence] = [
+            Sentence() + RToken(color, f"{GuiActions.pesquisar}[{GuiKeys.pesquisar}]"),
+            Sentence() + RToken(color, f"{GuiActions.marcar} {GuiKeys.inc_grade}{GuiKeys.dec_grade}"),
+        ]
+        return help_basic
+
+    def get_help_fixed(self):
+        color = "C" if self.tree.in_focus else "W"
+        help_fixed: List[Sentence] = [
+            Sentence() + RToken("C", f" {GuiActions.sair}  [{GuiKeys.key_quit}]"),
+            Sentence() + RToken(color, f"{GuiActions.editar} [{GuiKeys.edit}]"),
+            Sentence() + RToken("G", f"{GuiActions.ativar} [↲]"),
+        ]
+        return help_fixed
+
+    def get_help_others_before(self):
+        color = "Y" if self.tree.in_focus else "W"
+        help_others_before: List[Sentence] = [
+            Sentence() + RToken("Y", f" {GuiActions.ajuda} [{GuiKeys.key_help}]"),
+            Sentence() + RToken(color, f"{GuiActions.github} [{GuiKeys.github_open}]"),
+        ]
+        return help_others_before
+
+    @staticmethod
+    def disable_on_resize():
+        _, cols = Fmt.get_size()
+        if cols < 50 and Flags.skills.is_true() and Flags.config.is_true():
+            Flags.skills.toggle()
+        elif cols < 30 and Flags.skills.is_true():
+            Flags.skills.toggle()
+        elif cols < 35 and Flags.config.is_true():
+            Flags.config.toggle()
+
+
+    def show_main_bar(self, frame: Frame):
+        top = Sentence()
+        if self.two_column_mode() and self.app.has_full_hud() and not Flags.config.is_true():
+            top.add(self.style.get_flag_sentence(Flags.config)).add(" ")
+
+        alias_color = "R"
+        top.add(self.style.border(alias_color, self.rep.alias.upper()))
+        if Flags.admin.is_true():
+            color = "W" if Flags.admin.is_true() else "K"
+            top.add(self.style.border(color, "ADMIN"))
+        top.add(self.style.border("G", self.rep.get_lang().upper()))
+
+        if self.two_column_mode() and self.app.has_full_hud() and not Flags.config.is_true():
+            top.add(" ").add(self.style.get_flag_sentence(Flags.skills))
+        half = top.len() // 2
+        x = frame.get_x()
+        dy, dx = Fmt.get_size()
+        full = Sentence().add("─" * ((dx//2) - x - 2 - half)).add(top)
+        frame.set_header(full, "<")
+        
+        if self.two_column_mode() and not Flags.config.is_true():
+            elems = self.build_bottom_array()
+            line_up = Sentence(" ").join(elems[0 : 2] + elems[-2:])
+            half = line_up.len() // 2
+            _, adx = Fmt.get_size()
+            if adx % 2 == 1:
+                adx += 1 
+            x = frame.get_x()
+            full = Sentence().add("─" * ((adx//2) - x - 2 - half)).add(line_up)
+            frame.set_footer(full, "<")
+        frame.draw()
+
+        dy, dx = frame.get_inner()
+        for y, sentence in enumerate(self.tree.get_senteces(dy)):
+            if sentence.len() > dx:
+                sentence.trim_end(dx - 3)
+                sentence.addf("r", "...")
+            frame.write(y, 0, sentence)
+
+    def show_skills_bar(self, frame_xp):
+        dy, dx = frame_xp.get_inner()
+        xp = XP(self.game)
+        total_perc = int(
+            100 * (xp.get_xp_total_obtained() / xp.get_xp_total_available())
+        )
+        if Flags.percent.is_true():
+            text = f" XPTotal:{total_perc}%"
+        else:
+            text = f" XPTotal:{xp.get_xp_total_obtained()}"
+
+        done = self.colors.main_bar_done + "/"
+        todo = self.colors.main_bar_todo + "/"
+        total_bar = self.style.build_bar(text, total_perc / 100, dx - 2, done, todo)
+        frame_xp.set_header(Sentence().addf("/", "Skills"), "^", "{", "}")
+        frame_xp.set_footer(Sentence().add(" ").add(self.app._rootdir).add(" "), "^")
+        frame_xp.draw()
+
+        total, obt = self.game.get_skills_resume([self.game.quests[key] for key in self.game.available_quests])
+        elements: List[Sentence] = []
+        for skill, value in total.items():
+            if Flags.percent.is_true():
+                text = f"{skill}:{int(100 * obt[skill] / value)}%"
+            else:
+                text = f"{skill}:{obt[skill]}/{value}"
+            perc = obt[skill] / value
+            done = self.colors.progress_skill_done + "/"
+            todo = self.colors.progress_skill_todo + "/"
+            skill_bar = self.style.build_bar(text, perc, dx - 2, done, todo)
+            elements.append(skill_bar)
+            
+        elements.append(total_bar)
+
+        line_breaks = dy - len(elements)
+        for skill_bar in elements:
+            frame_xp.print(1, skill_bar)
+            if line_breaks > 0:
+                line_breaks -= 1
+                frame_xp.print(1, Sentence())
+
+    def show_config_bar(self, frame: Frame):
+        frame.set_header(Sentence().addf("/", "Config"), "^", "{", "}")
+        frame.draw()
+        elements = self.config.get_elements()
+        dy, dx = frame.get_inner()
+        y = frame.get_y()
+        lines, cols = Fmt.get_size()
+        
+        index = 0
+        delta = 0
+        if len(elements) > dy and self.config.index > dy - 2:
+            delta = self.config.index - dy + 2
+        elements = elements[delta:]
+        target = self.config.index - delta
+
+        while index < len(elements):
+            item = elements[index]
+            frame.print(0, item.sentence)
+            if index == target and self.config.enabled:
+                text = item.flag.get_description()
+                focus = self.colors.focused_item
+                Fmt.write(y + index + 1, cols - dx - len(text) - 4, Sentence().addf(focus, f" {text} ").add(self.style.sharpR(focus)))
+            index += 1
+            # if line_breaks > 0:
+            #     line_breaks -= 1
+            #     frame.print(0, Sentence())
+            #     delta += 1
+
+    def two_column_mode(self):
+        _, cols = Fmt.get_size()
+        return cols < self.wrap_size + 2 and self.app.has_full_hud()
+
+    def build_list_sentence(self, items: List[Sentence]) -> List[Sentence]:
+        out: List[Sentence] = []
+        for x in items:
+            color_ini = x.data[0].fmt
+            color_end = x.data[-1].fmt
+            left = self.style.roundL(color_ini)
+            right = self.style.roundR(color_end)
+            middle = x.clone()
+            if x.data[0].text == "!":
+                left = self.style.sharpL(color_ini)
+                right = self.style.sharpR(color_end)
+                middle.data = x.data[1:]
+            out.append(Sentence().add(left).add(middle).add(right))
+        return out
+
+    def build_bottom_array(self):
+        array: List[Sentence] = []
+        array += self.get_help_others_before()
+        array += self.get_help_fixed()
+        color = "G" if self.app.has_full_hud() else "Y"
+        symbol = symbols.success if self.app.has_full_hud() else symbols.failure
+        array.append(Sentence() + RToken(color, f"{symbol.text} {GuiActions.hud}  [{GuiKeys.hud}]"))
+        array += self.get_help_others_after()
+
+        return self.build_list_sentence(array)
+
+    def show_bottom_bar(self):
+        lines, cols = Fmt.get_size()
+        elems = self.build_bottom_array()
+        if self.two_column_mode():
+            line_down = Sentence(" ").join(elems[2:-2])
+            Fmt.write(lines - 1, 0, line_down.center(cols))
+        else:
+            if self.app.has_full_hud():
+                line_all = Sentence(" ").join(elems)
+                Fmt.write(lines - 1, 0, line_all.center(cols))
+            else:
+                line_main = Sentence(" ").join(elems[2: -2]) # alignment adjust
+                Fmt.write(lines - 1, 0, line_main.center(cols))   
+
+    def make_xp_button(self, size):
+        if self.search.search_mode:
+            text = " Busca: " + self.tree.search_text + "┊"
+            percent = 0.0
+            done = "W"
+            todo = "W"
+            text = text.ljust(size)
+        else:
+            text, percent = self.build_xp_bar()
+            done = self.colors.main_bar_done
+            todo = self.colors.main_bar_todo
+            text = text.center(size)
+        xpbar = self.style.build_bar(text, percent, len(text), done, todo)
+        return xpbar
+
+    def show_top_bar(self, frame: Frame):
+        help = self.build_list_sentence(self.get_help_basic())
+        pesquisar = help[0]
+        marcar = help[1]
+        config = self.style.get_flag_sentence(Flags.config)
+        skills = self.style.get_flag_sentence(Flags.skills)
+        others = self.app.has_full_hud()
+
+        pre: List[Sentence] = []
+        pre.append(marcar)
+        if others and not self.two_column_mode():
+            pre.append(config)
+
+        pos: List[Sentence] = []
+        if others and not self.two_column_mode():
+            pos.append(skills)
+        pos.append(pesquisar)
+
+        limit = self.wrap_size
+        if frame.get_dx() < self.wrap_size:
+            limit = frame.get_dx()
+        size = limit - Sentence(" ").join(pre + pos).len() - 2
+        main_label = self.make_xp_button(size)
+        info = Sentence(" ").join(pre + [main_label] + pos)
+        frame.write(0, 0, info.center(frame.get_dx()))
+
+
+    def show_help_config(self):
+        _help: Floating = Floating("v>").warning().set_ljust_text().set_header(" Configurações ")
+        self.fman.add_input(_help)
+        _help.put_sentence(Sentence() + f"      Mínimo " + RToken("r", f"[{Flags.minimum.get_keycode()}]") + " - Mostrar os requisitos mínimos para completar a missão")
+        _help.put_sentence(Sentence() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_keycode()}]") + " - Mostrar quanto de experiência cada atividade fornece")
+        _help.put_sentence(Sentence() + f"  Percentual " + RToken("r", f"[{Flags.percent.get_keycode()}]") + " - Mostrar os valores em percentual")
+        _help.put_sentence(Sentence() + f"  ModoAdmin " + RToken("r", f"Shift + [A]") + " - Liberar acesso a todas as missões" )
+        _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{GuiKeys.set_root_dir}]") + " - Mudar a pasta padrão de download do tko" )
+        _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"Shift + [{GuiKeys.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
+
+
+    def show_help(self):
+        # def empty(value):
+        #     pass
+        _help: Floating = Floating("v>").set_ljust_text()
+        self.fman.add_input(_help)
+
+        _help.set_header_sentence(Sentence().add(" Ajuda "))
+        # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
+        _help.put_sentence(Sentence("    Ajuda ").addf("r", GuiKeys.key_help).add("  Abre essa tela de ajuda")
+        )
+
+        _help.put_sentence(Sentence("  ").addf("r", "Shift + B")
+                           .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
+        _help.put_sentence(Sentence() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
+        _help.put_sentence(Sentence() + f"{GuiActions.github} " + RToken("r", f"{GuiKeys.github_open}") + "  Abre tarefa em uma aba do browser")
+        _help.put_sentence(Sentence() + f"   {GuiActions.baixar} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
+        _help.put_sentence(Sentence() + f"   {GuiActions.editar} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
+        _help.put_sentence(Sentence() + f"   {GuiActions.ativar} " + RToken("r", "↲") + "  Interage com o elemento")
+        _help.put_sentence(Sentence() + f"   {GuiActions.marcar} " + RToken("r", f"{GuiKeys.inc_grade}") + RToken("r", f"{GuiKeys.dec_grade}") + " Muda a pontuação da tarefa")
+        _help.put_sentence(Sentence())
+        _help.put_sentence(Sentence() + "Você pode mudar o editor padrão com o comando")
+        _help.put_sentence(Sentence() + RToken("g", "             tko config --editor <comando>"))
+
+
+    def build_xp_bar(self) -> Tuple[str, float]:
+        xp = XP(self.game)
+        if xp.get_xp_total_obtained() == xp.get_xp_total_available():
+            text = "Você atingiu o máximo de xp!"
+            percent = 100.0
+        else:
+            # lang = self.rep.get_lang().upper()
+            level = xp.get_level()
+            percent = float(xp.get_xp_level_current()) / float(xp.get_xp_level_needed())
+            if Flags.percent.is_true():
+                xpobt = int(100 * xp.get_xp_level_current() / xp.get_xp_level_needed())
+                text = "Level:{} XP:{}%".format(level, xpobt)
+            else:
+                xpobt1 = xp.get_xp_level_current()
+                xpobt2 = xp.get_xp_level_needed()
+                text = "Level:{} XP:{}/{}".format(level, xpobt1, xpobt2)
+
+        return text, percent
+
+    def show_opening(self):
+        if Fmt.get_size()[1] < 100:
+            return
+        if not self.app.has_images():
+            return
+        _, cols = Fmt.get_size()
+        
+        now = datetime.datetime.now()
+        parrot = random_get(opening, str(now.hour))
+        parrot_lines = parrot.split("\n")
+        max_len = max([len(line) for line in parrot_lines])
+        yinit = 1
+        for y, line in enumerate(parrot_lines):
+            Fmt.write(yinit + y, cols - max_len - 2, Sentence().addf("g", line))
+
+    def show_items(self):
+        border_color = "r" if Flags.admin.is_true() else ""
+        Fmt.clear()
+        self.tree.set_focus(not self.config.enabled)
+        self.tree.reload_sentences()
+        lines, cols = Fmt.get_size()
+        main_sx = cols  # tamanho em x livre
+        main_sy = lines  # size em y avaliable
+
+        top_y = -1
+        top_dy = 1  #quantas linhas o topo usa
+        bottom_dy = 1 # quantas linhas o fundo usa
+        mid_y = top_dy # onde o meio começa
+        mid_sy = main_sy - top_dy - bottom_dy # tamanho do meio
+        left_size = 25
+        skills_sx = 0
+        flags_sx = 0
+        if Flags.skills.is_true():
+            skills_sx = left_size #max(20, main_sx // 4)
+        elif Flags.config.is_true():
+            flags_sx = left_size
+        else:
+            self.show_opening()
+        
+        task_sx = main_sx - flags_sx - skills_sx
+
+        frame_top = Frame(top_y, 0).set_size(top_dy + 2, cols)
+        self.show_top_bar(frame_top)
+
+        # frame_bottom = Frame(lines - bottom_dy - 1, -1).set_size(bottom_dy + 2, cols + 2)
+        self.show_bottom_bar()
+        if task_sx > 5: 
+            frame_main = Frame(mid_y, 0).set_size(mid_sy, task_sx).set_border_color(border_color)
+            self.show_main_bar(frame_main)
+
+        if Flags.config.is_true():
+            frame_flags = Frame(mid_y, cols - flags_sx).set_size(mid_sy, flags_sx).set_border_color(border_color)
+            self.show_config_bar(frame_flags)
+            Fmt.write(1, cols - left_size - 3, Sentence().addf("r", f" {GuiActions.tab} "))
+
+        if Flags.skills.is_true():
+            frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)
+            self.show_skills_bar(frame_skills)
 
 class Drafts:
     ts_draft = r"""
@@ -7783,7 +7936,10 @@ class PlayActions:
                 down_frame.put_text(text)
                 down_frame.draw()
                 Fmt.refresh()
-            CmdDown.execute(self.rep.alias, task.key, lang, self.settings, fnprint, self.game)
+            result = CmdDown.execute(self.rep.alias, task.key, lang, self.settings, fnprint, self.game)
+            if result:
+                Logger.get_instance().record_event(LogAction.DOWN, task.key)
+
         else:
             if isinstance(obj, Quest):
                 self.fman.add_input(
@@ -8063,11 +8219,13 @@ class CmdPlay:
 
             # passing a lambda function to the play class to save the settings
             play = Play(settings=settings, game=game, rep=rep)
+            logger = Logger.get_instance().set_rep(rep_alias)
+            logger.record_event(LogAction.OPEN)
             print(f"Abrindo repositório de {rep_alias}")
             reload = play.play()
             if not reload:
                 break
-
+        logger.record_event(LogAction.QUIT)
 
 
 
@@ -8273,6 +8431,10 @@ class Parser:
         repo_graph.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be graphed.')
         repo_graph.set_defaults(func=CmdRep.graph)
 
+        repo_log = subpar_repo.add_parser("log", help="validates log of the repository.")
+        repo_log.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be log.')
+        repo_log.set_defaults(func=CmdRep.log)
+
     def add_parser_play(self):
         parser_p = self.subparsers.add_parser('play', help='play a game.')
         parser_p.add_argument('repo', metavar='repo', type=str, nargs="?", default="__ask", help='repository to be played.')
@@ -8288,6 +8450,8 @@ def exec(parser: argparse.ArgumentParser, args):
     if args.c:
         settings.set_settings_file(args.c)
     settings.load_settings()
+    logger = Logger.get_instance()
+    logger.set_settings(settings)
 
     if args.m:
         TermColor.enabled = False
