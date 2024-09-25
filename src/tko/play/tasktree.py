@@ -14,6 +14,8 @@ from .border import Border
 from .colors import Colors
 from ..util.symbols import symbols
 from ..settings.settings import Settings
+from tko.play.floating_manager import FloatingManager
+from tko.play.floating import Floating
 
 import os
 
@@ -27,11 +29,12 @@ class Entry:
 
 class TaskTree:
 
-    def __init__(self, settings: Settings, game: Game, rep: RepData):
+    def __init__(self, settings: Settings, game: Game, rep: RepData, fman: FloatingManager):
         self.settings = settings
         self.app = settings.app
         self.game = game
         self.rep = rep
+        self.fman = fman
         self.style = Border(settings.app)
         self.colors = settings.colors
         self.items: List[Entry] = []
@@ -429,9 +432,29 @@ class TaskTree:
             obj.set_grade(10 if obj.grade < 10 else 0)
 
     def set_grade(self, grade: int):
+        level: Dict[int, Token] = {}
+        level[0] = Token("Nenhuma", "r")
+        level[1] = Token("Muito Baixa", "r")
+        level[2] = Token("Baixa", "r")
+        level[3] = Token("Parcial e com lacunas", "r")
+        level[4] = Token("Superficial", "y")
+        level[5] = Token("Razoável", "y")
+        level[6] = Token("Com lacunas", "y")
+        level[7] = Token("Média", "g")
+        level[8] = Token("Aceitável", "g")
+        level[9] = Token("Adequada", 'g')
+        level[10] = Token("Confiante", "g")
+        text =  "Na minha última resolução desta questão, minha ca-\n"
+        text += "pacidade de compreensão das técnicas e conceitos, \n"
+        text += "sem utilizar de ajuda externa (monitoria, IA, prof)"
+
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             obj.set_grade(grade)
+            self.fman.add_input(
+                Floating("v").warning()
+                    .put_text(text)
+                    .put_sentence(Sentence("pode ser definida como ").add(level[grade])))
 
     def inc_grade(self):
         obj = self.items[self.index_selected].obj
@@ -439,7 +462,7 @@ class TaskTree:
             grade = obj.grade + 1
             if grade == 11:
                 grade = 10
-            obj.set_grade(grade)
+            self.set_grade(grade)
         else:
             self.unfold(obj)
 
@@ -450,7 +473,7 @@ class TaskTree:
             grade = obj.grade - 1
             if grade == -1:
                 grade = 0
-            obj.set_grade(grade)
+            self.set_grade(grade)
         else:
             self.fold(obj)
 

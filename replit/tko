@@ -26,7 +26,7 @@ import csv
 import hashlib
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.31.0"
+__version__ = "0.32.0"
 
 
 class CheckVersion:
@@ -5337,11 +5337,12 @@ class Entry:
 
 class TaskTree:
 
-    def __init__(self, settings: Settings, game: Game, rep: RepData):
+    def __init__(self, settings: Settings, game: Game, rep: RepData, fman: FloatingManager):
         self.settings = settings
         self.app = settings.app
         self.game = game
         self.rep = rep
+        self.fman = fman
         self.style = Border(settings.app)
         self.colors = settings.colors
         self.items: List[Entry] = []
@@ -5739,9 +5740,29 @@ class TaskTree:
             obj.set_grade(10 if obj.grade < 10 else 0)
 
     def set_grade(self, grade: int):
+        level: Dict[int, Token] = {}
+        level[0] = Token("Nenhuma", "r")
+        level[1] = Token("Muito Baixa", "r")
+        level[2] = Token("Baixa", "r")
+        level[3] = Token("Parcial e com lacunas", "r")
+        level[4] = Token("Superficial", "y")
+        level[5] = Token("Razoável", "y")
+        level[6] = Token("Com lacunas", "y")
+        level[7] = Token("Média", "g")
+        level[8] = Token("Aceitável", "g")
+        level[9] = Token("Adequada", 'g')
+        level[10] = Token("Confiante", "g")
+        text =  "Na minha última resolução desta questão, minha ca-\n"
+        text += "pacidade de compreensão das técnicas e conceitos, \n"
+        text += "sem utilizar de ajuda externa (monitoria, IA, prof)"
+
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             obj.set_grade(grade)
+            self.fman.add_input(
+                Floating("v").warning()
+                    .put_text(text)
+                    .put_sentence(Sentence("pode ser definida como ").add(level[grade])))
 
     def inc_grade(self):
         obj = self.items[self.index_selected].obj
@@ -5749,7 +5770,7 @@ class TaskTree:
             grade = obj.grade + 1
             if grade == 11:
                 grade = 10
-            obj.set_grade(grade)
+            self.set_grade(grade)
         else:
             self.unfold(obj)
 
@@ -5760,7 +5781,7 @@ class TaskTree:
             grade = obj.grade - 1
             if grade == -1:
                 grade = 0
-            obj.set_grade(grade)
+            self.set_grade(grade)
         else:
             self.fold(obj)
 
@@ -8022,7 +8043,7 @@ class Play:
             self.rep.set_lang(self.app._lang_default)
         self.flagsman = FlagsMan(self.rep.get_flags())
         self.fman = FloatingManager()
-        self.tree = TaskTree(self.settings, game, rep)
+        self.tree = TaskTree(self.settings, game, rep, self.fman)
         self.gui = Gui(tree=self.tree, flagsman=self.flagsman, fman=self.fman)
 
         if len(self.rep.get_tasks()) == 0:

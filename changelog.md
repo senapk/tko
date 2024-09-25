@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.32.0
+  - add: message with self grade meaning
 - 0.31.0
   - add: log mode enabled
 - 0.30.0

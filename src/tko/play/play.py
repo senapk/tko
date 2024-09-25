@@ -35,7 +35,7 @@ class Play:
             self.rep.set_lang(self.app._lang_default)
         self.flagsman = FlagsMan(self.rep.get_flags())
         self.fman = FloatingManager()
-        self.tree = TaskTree(self.settings, game, rep)
+        self.tree = TaskTree(self.settings, game, rep, self.fman)
         self.gui = Gui(tree=self.tree, flagsman=self.flagsman, fman=self.fman)
 
         if len(self.rep.get_tasks()) == 0:
