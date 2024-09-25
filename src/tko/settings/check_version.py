@@ -16,7 +16,7 @@ class CheckVersion:
         if self.version != self.latest_version:
             major, minor, patch = [int(x) for x in self.version.split(".")]
             latest_major, latest_minor, latest_patch = [int(x) for x in self.latest_version.split(".")]
-            if major < latest_major or (major == latest_major and minor < latest_minor):
+            if major < latest_major or (major == latest_major and minor < latest_minor) or (major == latest_major and minor == latest_minor and patch < latest_patch):
                 print(f"Sua versão do  TKO ({self.version}) está desatualizada.")
                 print(f"A última versão é a {self.latest_version}.")
 

@@ -26,7 +26,7 @@ import csv
 import hashlib
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.32.0"
+__version__ = "0.32.1"
 
 
 class CheckVersion:
@@ -43,7 +43,7 @@ class CheckVersion:
         if self.version != self.latest_version:
             major, minor, patch = [int(x) for x in self.version.split(".")]
             latest_major, latest_minor, latest_patch = [int(x) for x in self.latest_version.split(".")]
-            if major < latest_major or (major == latest_major and minor < latest_minor):
+            if major < latest_major or (major == latest_major and minor < latest_minor) or (major == latest_major and minor == latest_minor and patch < latest_patch):
                 print(f"Sua versão do  TKO ({self.version}) está desatualizada.")
                 print(f"A última versão é a {self.latest_version}.")
 
@@ -5744,25 +5744,25 @@ class TaskTree:
         level[0] = Token("Nenhuma", "r")
         level[1] = Token("Muito Baixa", "r")
         level[2] = Token("Baixa", "r")
-        level[3] = Token("Parcial e com lacunas", "r")
+        level[3] = Token("Parcial e Com Lacunas", "r")
         level[4] = Token("Superficial", "y")
         level[5] = Token("Razoável", "y")
-        level[6] = Token("Com lacunas", "y")
+        level[6] = Token("Com Lacunas", "y")
         level[7] = Token("Média", "g")
         level[8] = Token("Aceitável", "g")
         level[9] = Token("Adequada", 'g')
         level[10] = Token("Confiante", "g")
-        text =  "Na minha última resolução desta questão, minha ca-\n"
-        text += "pacidade de compreensão das técnicas e conceitos, \n"
-        text += "sem utilizar de ajuda externa (monitoria, IA, prof)"
 
+        msg1 = Sentence("Na minha ").addf("b", "última").add(" resolução desta questão, minha ").addf("y", "capacidade ")
+        msg2 = Sentence("de ").addf("y", "resolver").add(" o exercício e ").addf("y", "compreender").add(" técnicas e conceitos,")
+        msg3 = Sentence().addf("b", "sem utilizar").add(" de ajuda externa (monitoria, IA, professor)  ")
+        msg4 = Sentence("pode ser definida como ").add(level[grade])
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             obj.set_grade(grade)
             self.fman.add_input(
-                Floating("v").warning()
-                    .put_text(text)
-                    .put_sentence(Sentence("pode ser definida como ").add(level[grade])))
+                Floating("v").warning().put_sentence(msg1).put_sentence(msg2).put_sentence(msg3).put_sentence(msg4)
+            )
 
     def inc_grade(self):
         obj = self.items[self.index_selected].obj
