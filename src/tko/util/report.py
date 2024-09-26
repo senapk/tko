@@ -1,7 +1,7 @@
 from typing import Optional, Union
 import shutil
 from .term_color import TermColor
-from .sentence import Sentence, Token
+from .text import Text, Token
 
 
 class Report:
@@ -31,14 +31,14 @@ class Report:
 
     @staticmethod
     def centralize(
-        ftext: Union[Sentence, str],
+        ftext: Union[Text, str],
         sep: Optional[Union[str, Token]] = Token(" "),
         left_border: Optional[Union[str, Token]] = None,
         right_border: Optional[Union[str, Token]] = None,
-    ) -> Sentence:
+    ) -> Text:
 
         if isinstance(ftext, str) or isinstance(ftext, Token):
-            ftext = Sentence() + ftext
+            ftext = Text() + ftext
         if sep is None:
             sep = Token(" ")
         elif isinstance(sep, str):
@@ -53,4 +53,4 @@ class Report:
         pad = sep if size % 2 == 0 else Token("")
         tw = term_width - 2
         filler = Token(sep.text * (int(tw / 2 - size / 2)), sep.fmt)
-        return Sentence() + left_border + pad + filler + ftext + filler + right_border
+        return Text() + left_border + pad + filler + ftext + filler + right_border

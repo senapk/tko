@@ -1,4 +1,4 @@
-from .sentence import Sentence
+from .text import Text
 from typing import Union
 
 class TermColor:
@@ -31,17 +31,19 @@ def _colour(modifiers: str, text: str) -> str:
         val = TermColor.terminal_styles.get(m, '')
         if val != '':
             output += val
-    output += text + TermColor.terminal_styles.get('.', "")
+    output += text
+    if len(modifiers) > 0:
+        output += TermColor.terminal_styles.get('.', "")
     return output
 
-def term_colour(ftext: Sentence) -> str:
+def term_colour(ftext: Text) -> str:
     output = ""
-    for token in ftext.data:
-        output += _colour(token.fmt, token.text)
+    for elem in ftext.resume():
+        output += _colour(elem.fmt, elem.text)
     return output
 
-def term_print(ftext: Union[str, Sentence], **kwargs):
+def term_print(ftext: Union[str, Text], **kwargs):
     if isinstance(ftext, str):
         print(ftext, **kwargs)
     else:
-        print(term_colour(ftext), **kwargs)
+        print(ftext, **kwargs)

@@ -7,7 +7,7 @@ from ..run.wdir import Wdir
 from ..util.consts import DiffCount, ExecutionResult
 from ..util.param import Param
 from ..run.diff_builder import DiffBuilder
-from ..util.sentence import Sentence, Token
+from ..util.text import Text, Token
 
 from ..util.consts import Success
 from ..util.report import Report
@@ -111,7 +111,7 @@ class Run:
         if self.wdir is None:
             return
 
-        term_print(Sentence().add(symbols.opening).add(self.wdir.resume()), end="")
+        term_print(Text().add(symbols.opening).add(self.wdir.resume()), end="")
         term_print(" [", end="")
         first = True
         for unit in self.wdir.get_unit_list():
@@ -123,7 +123,7 @@ class Run:
             if solver is None:
                 raise Warning("Solver vazio")
             unit.result = UnitRunner.run_unit(solver, unit)
-            term_print(Sentence() + ExecutionResult.get_symbol(unit.result), end="")
+            term_print(Text() + ExecutionResult.get_symbol(unit.result), end="")
         term_print("]")
 
     def __print_diff(self):
@@ -182,7 +182,7 @@ class Run:
         if self.wdir is None:
             return False
         if not self.wdir.has_solver() and not self.wdir.has_tests():
-            term_print(Sentence().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
+            term_print(Text().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
             return True
         return False
     

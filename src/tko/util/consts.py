@@ -1,7 +1,7 @@
 import enum
 
 from .symbols import symbols
-from .sentence import Token
+from .text import Token
 
 class ExecutionResult(enum.Enum):
     UNTESTED          = "não_verificado_"

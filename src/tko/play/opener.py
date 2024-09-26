@@ -1,7 +1,7 @@
 from tko.play.tasktree import TaskTree, Task
 from tko.play.floating import Floating
 from tko.play.floating_manager import FloatingManager
-from tko.util.sentence import Sentence
+from tko.util.text import Text
 from tko.settings.settings import Settings
 from typing import Optional, List
 
@@ -36,11 +36,11 @@ class Opener:
         folder = os.path.dirname(os.path.abspath(files_to_open[0]));
         aviso = (Floating("v>")
                 .warning()
-                .put_sentence(Sentence().add("Pasta: ").addf("g", folder).add(" "))
+                .put_sentence(Text().add("Pasta: ").addf("g", folder).add(" "))
                 .put_text("Abrindo arquivos com o comando")
                 )
         files = [os.path.basename(path) for path in files_to_open]
-        aviso.put_sentence(Sentence().addf("g", f"{cmd}").add(" ").addf("g", " ".join(files)).add(" "))
+        aviso.put_sentence(Text().addf("g", f"{cmd}").add(" ").addf("g", " ".join(files)).add(" "))
         self.send_floating(aviso)
         fullcmd = "{} {}".format(cmd, " ".join(files_to_open))
         outfile = tempfile.NamedTemporaryFile(delete=False)

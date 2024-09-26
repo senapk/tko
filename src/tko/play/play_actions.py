@@ -12,7 +12,7 @@ from tko.cmds.cmd_run import Run
 from tko.util.consts import Success
 from tko.util.param import Param
 
-from tko.util.sentence import Sentence
+from tko.util.text import Text
 
 from tko.play.fmt import Fmt
 from tko.play.floating import Floating
@@ -112,7 +112,7 @@ class PlayActions:
             self.gui.config.gen_graph = False
             self.fman.add_input(Floating().error()
                                 .put_text("")
-                                .put_sentence(Sentence().add("Instale o ").addf("r", "graphviz").add(" para poder gerar os grafos"))
+                                .put_sentence(Text().add("Instale o ").addf("r", "graphviz").add(" para poder gerar os grafos"))
                                 .put_text("")
                                 )
 

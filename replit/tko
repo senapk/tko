@@ -1363,6 +1363,45 @@ class PatternLoader:
         return unmatched
 
 
+class SeqColor:
+    terminal_styles = {
+        '.': '\033[0m', # Reset
+        '*': '\033[1m', # Bold
+        '/': '\033[3m', # Italic
+        '_': '\033[4m', # Underline
+        
+        'k': '\033[30m', # Black
+        'r': '\033[31m', # Red
+        'g': '\033[32m', # Green
+        'y': '\033[33m', # Yellow
+        'b': '\033[34m', # Blue
+        'm': '\033[35m', # Magenta
+        'c': '\033[36m', # Cyan
+        'w': '\033[37m', # White
+
+
+        'K': '\033[40m', # Background black
+        'W': '\033[47m', # Background white
+        "R": '\033[41m', # Background red
+        "G": '\033[42m', # Background green
+        "Y": '\033[43m', # Background yellow
+        "B": '\033[44m', # Background blue
+        "M": '\033[45m', # Background magenta
+        "C": '\033[46m', # Background cyan
+    }
+
+    @staticmethod
+    def colour(modifiers: str, text: str) -> str:
+        output = ''
+        for m in modifiers:
+            val = SeqColor.terminal_styles.get(m, '')
+            if val != '':
+                output += val
+        output += text
+        if len(modifiers) > 0:
+            output += SeqColor.terminal_styles.get('.', "")
+        return output
+
 class Token:
     def __init__(self, text: str = "", fmt: str = "", ):
         if not isinstance(text, str):
@@ -1379,7 +1418,7 @@ class Token:
         return len(self.text)
     
     def __add__(self, other: Any):
-        return Sentence().add(self).add(other)
+        return Text().add(self).add(other)
 
     def __str__(self):
         return f"('{self.text}', '{self.fmt}')"
@@ -1387,13 +1426,13 @@ class Token:
 def RToken(fmt: str, text: str) -> Token:
     return Token(text, fmt)
 
-class Sentence:
+class Text:
     def __init__(self, value: Union[str, Tuple[str, str]] = ""):
         self.data: List[Token] = []
         self.add(value)
     
     def clone(self):
-        other = Sentence()
+        other = Text()
         other.data = [v for v in self.data]
         return other
 
@@ -1413,7 +1452,7 @@ class Sentence:
         return self.len()
     
     def __add__(self, other: Any):
-        return Sentence().add(self).add(other)
+        return Text().add(self).add(other)
 
     def __eq__(self, other: Any):
         if len(self.data) != len(other.data):
@@ -1425,7 +1464,10 @@ class Sentence:
 
 
     def __str__(self):
-        return "".join([str(d) for d in self.resume()])
+        output = ""
+        for elem in self.resume():
+            output += SeqColor.colour(elem.fmt, elem.text)
+        return output
     
     def resume(self) -> List[Token]:
         if len(self.data) == 0:
@@ -1473,13 +1515,13 @@ class Sentence:
                 index += 1
         return self
 
-    def plus(self, qtd: int) -> Sentence:
-        output = Sentence()
+    def plus(self, qtd: int) -> Text:
+        output = Text()
         for i in range(qtd):
             output.add(self)
         return output
 
-    def add(self, value: Union[str, Token, Tuple[str, str], Sentence]):
+    def add(self, value: Union[str, Token, Tuple[str, str], Text]):
         if isinstance(value, str):
             if value != "":
                 for c in value:
@@ -1488,7 +1530,7 @@ class Sentence:
             if value.text != "":
                 for c in value.text:
                     self.data.append(Token(c, value.fmt))
-        elif isinstance(value, Sentence):
+        elif isinstance(value, Text):
             self.data += value.data
         else:
             raise TypeError("unsupported type '{}'".format(type(value)))
@@ -1539,24 +1581,6 @@ class Sentence:
     def get_text(self) -> str:
         return "".join([t.text for t in self.data])
 
-    def trim_alfa(self, limit: int):
-        i = len(self.data) - 1
-        size = len(self.data)
-        locked = False
-        while i >= 0 and size > limit:
-            if self.data[i].text == "[":
-                locked = False
-                i -= 1
-            elif self.data[i].text == "]":
-                locked = True
-                i -= 1
-            elif not locked and self.data[i].text != " ":
-                del self.data[i]
-                size -= 1
-                i -= 1
-            else:
-                i -= 1
-
     def cut_begin(self, qtd: int):
         if qtd > len(self.data):
             self.data = []
@@ -1572,14 +1596,90 @@ class Sentence:
             self.data = self.data[:width]
         return self
 
-    def join(self, array: List[Sentence]):
-        out = Sentence()
+    def join(self, array: List[Text]):
+        out = Text()
         for i, a in enumerate(array):
             if i != 0:
                 out.add(self)
             out.add(a)
         return out
-            
+
+
+    @staticmethod
+    def __preprocess(data):
+        # Primeira etapa: substitui << por \a
+        result1 = []
+        i = 0
+        while i < len(data):
+            if i < len(data) - 1 and data[i] == '<' and data[i + 1] == '<':
+                result1.append('\a')  # Usa o marcador \a para << 
+                i += 2  # Pula o próximo '<'
+            else:
+                result1.append(data[i])
+                i += 1
+
+        # Segunda etapa: substitui >> por \b, de trás para frente
+        result2 = []
+        i = len(result1) - 1
+        while i >= 0:
+            if i > 0 and result1[i] == '>' and result1[i - 1] == '>':
+                result2.append('\b')  # Usa o marcador \b para >>
+                i -= 2  # Pula o próximo '>'
+            else:
+                result2.append(result1[i])
+                i -= 1
+
+        # Inverter result2 para obter o resultado final
+        final_result = ''.join(result2[::-1])
+        return final_result
+
+    @staticmethod
+    def __extract(data):
+        data = Text.__preprocess(data)  # Preprocessar a string
+        texts: list[str] = [""]
+        placeholders: list[str] = []
+        destiny = texts  # Começa preenchendo textos"
+
+        for c in data:
+            if c == '<':
+                placeholders.append("")  # Inicia um novo placeholder
+                destiny = placeholders  # Muda o destino para placeholders
+            elif c == '>':
+                texts.append("")  # Volta para o texto
+                destiny = texts
+            else:
+                # Substitui \a e \b por < e >
+                if c == '\a':
+                    c = '<'
+                elif c == '\b':
+                    c = '>'
+                # Adiciona o caractere ao destino atual
+                destiny[-1] += c
+
+        # Garantir que o tamanho dos textos e placeholders sejam iguais
+        while len(texts) > len(placeholders):
+            placeholders.append("")
+
+        return texts, placeholders
+
+    @staticmethod
+    def make(text) -> Text:
+        # Extrair textos e placeholders
+        texts, placeholders = Text.__extract(text)
+        print(texts)
+        print(placeholders)
+        # Aplicar a função fn aos placeholders e montar o resultado final
+        output = Text()
+        for i in range(len(texts)):
+            output.add(texts[i])  # Texto normal
+            if i < len(placeholders) and placeholders[i]:  # Placeholder processado
+                elements = placeholders[i].split(":")
+                first = elements[0]
+                others = "".join(elements[1:])
+                output.addf(first, others)
+
+        return output
+
 
 
 class Flag:
@@ -1806,7 +1906,7 @@ class Fmt:
             stdscr.attroff(curses.A_UNDERLINE)
 
     @staticmethod
-    def write(y: int, x: int, sentence: Sentence):
+    def write(y: int, x: int, sentence: Text):
 
         # Escreve um texto na tela com cores diferentes
         lines, cols = Fmt.get_size()
@@ -1827,7 +1927,7 @@ class Fmt:
 
     @staticmethod
     def write_text(y: int, x: int, text: str):
-        Fmt.write(y, x, Sentence().add(text))
+        Fmt.write(y, x, Text().add(text))
 
 
     # @staticmethod
@@ -1844,15 +1944,15 @@ class Fmt:
     #     return input_str
 
     @staticmethod
-    def get_percent(value, pad = 0) -> Sentence:
+    def get_percent(value, pad = 0) -> Text:
         text = f"{str(value)}%".rjust(pad)
         if value == 100:
-            return Sentence().addf(Colors.mark_complete, "100%")
+            return Text().addf(Colors.mark_complete, "100%")
         if value >= 70:
-            return Sentence().addf(Colors.mark_required, text)
+            return Text().addf(Colors.mark_required, text)
         if value == 0:
-            return Sentence().addf(Colors.mark_nothing, text)
-        return Sentence().addf(Colors.mark_started, text)
+            return Text().addf(Colors.mark_nothing, text)
+        return Text().addf(Colors.mark_started, text)
     
     @staticmethod
     def getch():
@@ -1889,11 +1989,11 @@ class Frame:
         self._inner_dy = 0
         self._border = "rounded"
         self._filled = False
-        self._header: Sentence = Sentence()
+        self._header: Text = Text()
         self._halign = ""
         self._hprefix = ""
         self._hsuffix = ""
-        self._footer: Sentence = Sentence()
+        self._footer: Text = Text()
         self._falign = ""
         self._fprefix = ""
         self._fsuffix = ""
@@ -1925,7 +2025,7 @@ class Frame:
         hor = self.get_symbol("h")
         
         data.trim_end(pad)
-        sent = Sentence().addf(color, prefix).add(data).addf(color, suffix)
+        sent = Text().addf(color, prefix).add(data).addf(color, suffix)
         if symbol == "<":
             sent.ljust(dx, Token(hor, color))
         elif symbol == ">":
@@ -1935,10 +2035,10 @@ class Frame:
         return sent
 
     def get_header(self):
-        return Sentence().add(self._hprefix).add(self._header).add(self._hsuffix)
+        return Text().add(self._hprefix).add(self._header).add(self._hsuffix)
     
     def get_footer(self):
-        return Sentence().add(self._fprefix).add(self._footer).add(self._fsuffix)
+        return Text().add(self._fprefix).add(self._footer).add(self._fsuffix)
 
     def get_full_header(self):
         return self.__align_header_footer(self._header, self._halign, self._hprefix, self._hsuffix)
@@ -2009,14 +2109,14 @@ class Frame:
         self._border = "square"
         return self
 
-    def set_header(self, header: Sentence, align="<", prefix="", suffix=""):
+    def set_header(self, header: Text, align="<", prefix="", suffix=""):
         self._halign = align
         self._header = header
         self._hprefix = prefix
         self._hsuffix = suffix
         return self
 
-    def set_footer(self, footer: Sentence, align=">", prefix="", suffix=""):
+    def set_footer(self, footer: Text, align=">", prefix="", suffix=""):
         self._falign = align
         self._footer = footer
         self._fprefix = prefix
@@ -2031,13 +2131,13 @@ class Frame:
         self._filled = False
         return self
 
-    def print(self, x: int, sentence: Sentence):
+    def print(self, x: int, sentence: Text):
         self.write(self._print_index, x, sentence)
         self._print_index += 1
         return self
 
     # return y, x of the last character
-    def write(self, y: int, x: int, sentence: Sentence) -> bool:
+    def write(self, y: int, x: int, sentence: Text) -> bool:
         lines, cols = Fmt.get_size()
 
         x_min = max(-1, self._x)
@@ -2083,8 +2183,8 @@ class Frame:
         header = self.get_full_header()
         footer = self.get_full_footer()
 
-        above = Sentence().addf(color, up_left).add(header).addf(color, up_right)
-        below = Sentence().addf(color, down_left).add(footer).addf(color, down_right)
+        above = Text().addf(color, up_left).add(header).addf(color, up_right)
+        below = Text().addf(color, down_left).add(footer).addf(color, down_right)
 
         Fmt.write(y, x, above)
         if dy > 0:
@@ -2094,15 +2194,15 @@ class Frame:
                 Fmt.write(
                     y + i,
                     x,
-                    Sentence()
+                    Text()
                     .addf(color, ver)
                     .add(dx * self._fill_char)
                     .addf(color, ver),
                 )
         else:
             for i in range(1, dy + 1):
-                Fmt.write(y + i, x, Sentence().addf(color, ver))
-                Fmt.write(y + i, x + dx + 1, Sentence().addf(color, ver))
+                Fmt.write(y + i, x, Text().addf(color, ver))
+                Fmt.write(y + i, x + dx + 1, Text().addf(color, ver))
         return self
 
 
@@ -2110,7 +2210,7 @@ class Frame:
 class Floating:
     def __init__(self, _align=""):
         self._frame = Frame(0, 0)
-        self._content: List[Sentence] = []
+        self._content: List[Text] = []
         self._type = "warning"
         self._options = []
         self._options_index = 0
@@ -2133,10 +2233,10 @@ class Floating:
         self._floating_align = _align
 
     def set_header(self, text: str):
-        self._frame.set_header(Sentence().addf("/", text), "")
+        self._frame.set_header(Text().addf("/", text), "")
         return self
     
-    def set_header_sentence(self, sentence: Sentence):
+    def set_header_sentence(self, sentence: Text):
         self._frame.set_header(sentence, "")
         return self
     
@@ -2186,7 +2286,7 @@ class Floating:
         self._frame.set_fill()
         
         if self._type == "answer":
-            footer = Sentence().add(" ")
+            footer = Text().add(" ")
             for i, option in enumerate(self._options):
                 fmt = "kG" if i == self._options_index else ""
                 footer.addf(fmt, option).add(" ")
@@ -2195,20 +2295,20 @@ class Floating:
     def put_text(self, text: str):
         lines = text.split("\n")
         for line in lines:
-            self._content.append(Sentence().add(line))
+            self._content.append(Text().add(line))
         return self
 
-    def put_sentence(self, sentence: Sentence):
+    def put_sentence(self, sentence: Text):
         self._content.append(sentence)
         return self
     
     def set_content(self, content: List[str]):
-        self._content = [Sentence().add(x) for x in content]
+        self._content = [Text().add(x) for x in content]
         return self
 
     def _set_default_footer(self):
         if self._frame.get_footer().len() == 0:
-            label = Sentence().addf("/", " Pressione espaço ")
+            label = Text().addf("/", " Pressione espaço ")
             self._frame.set_footer(label, "", "─", "─")
         return self
 
@@ -2441,20 +2541,22 @@ def _colour(modifiers: str, text: str) -> str:
         val = TermColor.terminal_styles.get(m, '')
         if val != '':
             output += val
-    output += text + TermColor.terminal_styles.get('.', "")
+    output += text
+    if len(modifiers) > 0:
+        output += TermColor.terminal_styles.get('.', "")
     return output
 
-def term_colour(ftext: Sentence) -> str:
+def term_colour(ftext: Text) -> str:
     output = ""
-    for token in ftext.data:
-        output += _colour(token.fmt, token.text)
+    for elem in ftext.resume():
+        output += _colour(elem.fmt, elem.text)
     return output
 
-def term_print(ftext: Union[str, Sentence], **kwargs):
+def term_print(ftext: Union[str, Text], **kwargs):
     if isinstance(ftext, str):
         print(ftext, **kwargs)
     else:
-        print(term_colour(ftext), **kwargs)
+        print(ftext, **kwargs)
 
 
 class Report:
@@ -2484,14 +2586,14 @@ class Report:
 
     @staticmethod
     def centralize(
-        ftext: Union[Sentence, str],
+        ftext: Union[Text, str],
         sep: Optional[Union[str, Token]] = Token(" "),
         left_border: Optional[Union[str, Token]] = None,
         right_border: Optional[Union[str, Token]] = None,
-    ) -> Sentence:
+    ) -> Text:
 
         if isinstance(ftext, str) or isinstance(ftext, Token):
-            ftext = Sentence() + ftext
+            ftext = Text() + ftext
         if sep is None:
             sep = Token(" ")
         elif isinstance(sep, str):
@@ -2506,7 +2608,7 @@ class Report:
         pad = sep if size % 2 == 0 else Token("")
         tw = term_width - 2
         filler = Token(sep.text * (int(tw / 2 - size / 2)), sep.fmt)
-        return Sentence() + left_border + pad + filler + ftext + filler + right_border
+        return Text() + left_border + pad + filler + ftext + filler + right_border
 
 
 class Runner:
@@ -2772,7 +2874,7 @@ class Free:
         if show_compilling:
             image = random.choice(list(compilling.keys()))
             for line in compilling[image].split("\n"):
-                term_print(Report.centralize(Sentence().addf("y", line), Token(" ")))
+                term_print(Report.centralize(Text().addf("y", line), Token(" ")))
 
         if show_compilling:
             Runner.clear_screen()
@@ -2781,7 +2883,7 @@ class Free:
             print(solver.error_msg)
         else:
             cmd = solver.get_executable()
-            term_print(Report.centralize(Sentence(), "─"))
+            term_print(Report.centralize(Text(), "─"))
             answer = subprocess.run(cmd, shell=True, text=True)
             if answer.returncode != 0 and answer.returncode != 1:
                 print(Runner.decode_code(answer.returncode))
@@ -2789,7 +2891,7 @@ class Free:
         to_run_again = False
         if wait_input:
             term_print(Report.centralize("", "─"))
-            term_print(Sentence().addf("y", "Deseja compilar e executar novamente? [").addf("c", "S").addf("y", "/n]: "), end="")
+            term_print(Text().addf("y", "Deseja compilar e executar novamente? [").addf("c", "S").addf("y", "/n]: "), end="")
             valor = input()
             if valor != "n" and valor != "q":
                 if to_clear:
@@ -3058,15 +3160,15 @@ class Settings:
     def check_rootdir(self):
         if self.app._rootdir != "":
             return
-        term_print(Sentence().add("Pasta padrão para download de arquivos ").addf("r", "precisa").add(" ser definida."))
+        term_print(Text().add("Pasta padrão para download de arquivos ").addf("r", "precisa").add(" ser definida."))
         here_cwd = os.getcwd()
         qxcode = os.path.join(os.path.expanduser("~"), "qxcode")
 
         while True:
-            term_print(Sentence().addf("r", "1").add(" - ").add(here_cwd))
-            term_print(Sentence().addf("r", "2").add(" - ").add(qxcode))
-            term_print(Sentence().addf("r", "3").add(" - ").add("Outra pasta"))
-            term_print(Sentence().add("Default ").addf("r", "1").add(": "), end="")
+            term_print(Text().addf("r", "1").add(" - ").add(here_cwd))
+            term_print(Text().addf("r", "2").add(" - ").add(qxcode))
+            term_print(Text().addf("r", "3").add(" - ").add("Outra pasta"))
+            term_print(Text().add("Default ").addf("r", "1").add(": "), end="")
             op = input()
             if op == "":
                 op = "1"
@@ -3077,7 +3179,7 @@ class Settings:
                 home_qxcode = qxcode
                 break
             if op == "3":
-                term_print(Sentence().addf("y", "Navegue até o diretório desejado e execute o tko novamente."))
+                term_print(Text().addf("y", "Navegue até o diretório desejado e execute o tko novamente."))
                 exit(1)
 
         if not os.path.exists(home_qxcode):
@@ -3097,7 +3199,7 @@ class Settings:
                 print("Escolha um dos repositórios para abrir:")
                 options: Dict[int, str] = {}
                 for i, alias in enumerate(self.reps, start=1):
-                    term_print(Sentence().addf("r", str(i)).add(f" - {alias}"))
+                    term_print(Text().addf("r", str(i)).add(f" - {alias}"))
                     options[i] = alias
                 while True:
                     try:
@@ -3146,10 +3248,10 @@ class Border:
         return self.app.has_borders()
 
     def border(self, color: str, data: str):
-        return Sentence().add(self.roundL(color)).addf(color, data).add(self.roundR(color))
+        return Text().add(self.roundL(color)).addf(color, data).add(self.roundR(color))
 
     def border_sharp(self, color: str, data: str):
-        return Sentence().add(self.sharpL(color)).addf(color, data).add(self.sharpR(color))
+        return Text().add(self.sharpL(color)).addf(color, data).add(self.sharpR(color))
 
     def roundL(self, color: str) -> Token:
         return Token("", color.lower()) if self.has_borders() else Token(" ", color)
@@ -3164,7 +3266,7 @@ class Border:
         return Token("", color.lower()) if self.has_borders() else Token(" ", color)
 
     def build_bar(self, text: str, percent: float, length: int, fmt_true: str = "/kC",
-                  fmt_false: str = "/kY", round=True) -> Sentence:
+                  fmt_false: str = "/kY", round=True) -> Text:
         if round and (len(text) >= length - 2):
             text = " " + text
 
@@ -3184,7 +3286,7 @@ class Border:
             xp_bar.data[-1] = self.roundR(xp_bar.data[-1].fmt)
         return xp_bar
 
-    def get_flag_sentence(self, flag: Flag, pad: int = 0, button_mode: bool = True) -> Sentence:
+    def get_flag_sentence(self, flag: Flag, pad: int = 0, button_mode: bool = True) -> Text:
         char = flag.get_keycode()
         text = flag.get_name()
         color = "M" 
@@ -3194,16 +3296,16 @@ class Border:
             symbol = symbols.success if flag.is_true() else symbols.failure
         if not button_mode:
             color = color.lower()
-        extra = Sentence()
+        extra = Text()
         filler = " "
         if pad > 2:
             extra.addf(color, (pad - 2 - len(text)) * filler)
 
-        mid = Sentence().addf(color, symbol.text).addf(color, " ").addf(color, text).add(extra).addf(color, f"[{char}]")
+        mid = Text().addf(color, symbol.text).addf(color, " ").addf(color, text).add(extra).addf(color, f"[{char}]")
         if button_mode:
-            middle = Sentence().add(self.roundL(color)).add(mid).add(self.roundR(color))
+            middle = Text().add(self.roundL(color)).add(mid).add(self.roundR(color))
         else:
-            middle = Sentence().add(" ").add(mid).add(" ")
+            middle = Text().add(" ").add(mid).add(" ")
         return middle
 
 
@@ -3211,7 +3313,7 @@ def empty_fn():
     pass
 
 class ConfigItem:
-    def __init__(self, flag: Flag, fn: Callable[[], None], sentence: Sentence = Sentence() ):
+    def __init__(self, flag: Flag, fn: Callable[[], None], sentence: Text = Text() ):
         self.flag = flag
         self.fn: Callable[[], None] = fn
         self.sentence = sentence
@@ -3251,14 +3353,14 @@ class Config:
         if self.index == -1:
             self.index = self.size - 1
 
-    def mark_focused(self, index, elem: Flag) -> Sentence:
+    def mark_focused(self, index, elem: Flag) -> Text:
         pad = 14 if index == self.index else 14
         sentence = self.border.get_flag_sentence(elem, pad)
 
         if index == self.index and self.enabled:
             focus = self.colors.focused_item
             return sentence
-        return Sentence("    ").add(sentence)
+        return Text("    ").add(sentence)
 
     def graph_toggle(self):
         self.gen_graph = not self.gen_graph
@@ -3399,18 +3501,18 @@ class Unit:
 
         self.result: ExecutionResult = ExecutionResult.UNTESTED
 
-    def str(self, pad: bool = True) -> Sentence:
+    def str(self, pad: bool = True) -> Text:
         index = str(self.index).zfill(2)
         grade = str(self.grade_reduction).zfill(3)
         rep = "" if self.repeated is None else " [" + str(self.repeated) + "]"
-        op = Sentence() + ExecutionResult.get_symbol(self.result) + " " + self.result.value
+        op = Text() + ExecutionResult.get_symbol(self.result) + " " + self.result.value
         source = os.path.basename(self.source)
         if pad:
             source = self.source.ljust(self.source_pad)
         case = self.case
         if pad:
             case = self.case.ljust(self.case_pad)
-        return Sentence() + "(" + op + ")" + f"[{index}] GR:{grade} {source} ({case}){rep}"
+        return Text() + "(" + op + ")" + f"[{index}] GR:{grade} {source} ({case}){rep}"
 
 
 
@@ -3422,8 +3524,8 @@ class DiffBuilder:
     vunequal  = " DESIGUAL "
 
     @staticmethod
-    def make_line_arrow_up(a: str, b: str) -> Sentence:
-        hdiff = Sentence()
+    def make_line_arrow_up(a: str, b: str) -> Text:
+        hdiff = Text()
         first = True
         i = 0
         lim = max(len(a), len(b))
@@ -3441,29 +3543,29 @@ class DiffBuilder:
         return hdiff
 
     @staticmethod
-    def render_white(text: Sentence, color: str = "") -> Optional[Sentence]:
-        out = Sentence().add(text).replace(' ', Token(symbols.whitespace.text, color)).replace('\n', Token(symbols.newline.text, color))
+    def render_white(text: Text, color: str = "") -> Optional[Text]:
+        out = Text().add(text).replace(' ', Token(symbols.whitespace.text, color)).replace('\n', Token(symbols.newline.text, color))
 
         return out
 
     # create a string with both ta and tb side by side with a vertical bar in the middle
     @staticmethod
-    def side_by_side(ta: List[Sentence], tb: List[Sentence], unequal: Token = symbols.unequal) -> List[Sentence]:
+    def side_by_side(ta: List[Text], tb: List[Text], unequal: Token = symbols.unequal) -> List[Text]:
         cut = (Report.get_terminal_size() - 6) // 2
         upper = max(len(ta), len(tb))
-        data: List[Sentence] = []
+        data: List[Text] = []
 
         for i in range(upper):
-            a = ta[i] if i < len(ta) else Sentence("###############")
-            b = tb[i] if i < len(tb) else Sentence("###############")
+            a = ta[i] if i < len(ta) else Text("###############")
+            b = tb[i] if i < len(tb) else Text("###############")
             if len(a) < cut:
                 a = a.ljust(cut, Token(" "))
             # if len(a) > cut:
             #     a = a[:cut]
             if i >= len(ta) or i >= len(tb) or ta[i] != tb[i]:
-                data.append(Sentence() + unequal + " " + a + " " + unequal + " " + b)
+                data.append(Text() + unequal + " " + a + " " + unequal + " " + b)
             else:
-                data.append(Sentence() + symbols.vbar + " " + a + " " + symbols.vbar + " " + b)
+                data.append(Text() + symbols.vbar + " " + a + " " + symbols.vbar + " " + b)
 
         return data
 
@@ -3471,7 +3573,7 @@ class DiffBuilder:
     # b_text -> clean full expected
     # first_failure -> index of the first line unmatched 
     @staticmethod
-    def first_failure_diff(a_text: str, b_text: str, first_failure: int) -> List[Sentence]:
+    def first_failure_diff(a_text: str, b_text: str, first_failure: int) -> List[Text]:
         def get(vet, index):
             if index < len(vet):
                 return DiffBuilder.render_white(vet[index])
@@ -3488,18 +3590,18 @@ class DiffBuilder:
         #     lbefore = get(a_render, first_failure - 1)
         #     greater = max(greater, len(lbefore))
 
-        out_a, out_b = DiffBuilder.colorize_2_lines_diff(Sentence(first_a), Sentence(first_b))
+        out_a, out_b = DiffBuilder.colorize_2_lines_diff(Text(first_a), Text(first_b))
         greater = max(len(out_a), len(out_b))
-        output: List[Sentence] = []
+        output: List[Text] = []
 
-        output.append(Sentence().add(symbols.vbar).add(" ").add(out_a.ljust(greater)).addf("g", " (esperado)"))
-        output.append(Sentence().add(symbols.vbar).add(" ").add(out_b.ljust(greater)).addf("r", " (recebido)"))
+        output.append(Text().add(symbols.vbar).add(" ").add(out_a.ljust(greater)).addf("g", " (esperado)"))
+        output.append(Text().add(symbols.vbar).add(" ").add(out_b.ljust(greater)).addf("r", " (recebido)"))
         diff = DiffBuilder.make_line_arrow_up(first_a, first_b)
-        output.append(Sentence().add(symbols.vbar).add(" ").add(diff.ljust(greater)).addf("b", " (primeiro)"))
+        output.append(Text().add(symbols.vbar).add(" ").add(diff.ljust(greater)).addf("b", " (primeiro)"))
         return output
 
     @staticmethod
-    def find_first_mismatch(line_a: Sentence, line_b: Sentence) -> int: 
+    def find_first_mismatch(line_a: Text, line_b: Text) -> int: 
         i = 0
         while i < len(line_a) and i < len(line_b):
             if line_a[i] != line_b[i]:
@@ -3508,22 +3610,22 @@ class DiffBuilder:
         return i
     
     @staticmethod
-    def colorize_2_lines_diff(la: Sentence, lb: Sentence, neut: str = "", exp: str = "g", rec: str = "r") -> Tuple[Sentence, Sentence]:
+    def colorize_2_lines_diff(la: Text, lb: Text, neut: str = "", exp: str = "g", rec: str = "r") -> Tuple[Text, Text]:
         pos = DiffBuilder.find_first_mismatch(la, lb)
         lat = la.get_text()
         lbt = lb.get_text()
-        a_out = Sentence().addf(neut, lat[0:pos]).addf(exp, lat[pos:])
-        b_out = Sentence().addf(neut, lbt[0:pos]).addf(rec, lbt[pos:])
+        a_out = Text().addf(neut, lat[0:pos]).addf(exp, lat[pos:])
+        b_out = Text().addf(neut, lbt[0:pos]).addf(rec, lbt[pos:])
         return a_out, b_out
 
     # return a tuple of two strings with the diff and the index of the  first mismatch line
     @staticmethod
-    def render_diff(a_text: str, b_text: str, pad: Optional[bool] = None) -> Tuple[List[Sentence], List[Sentence], int]:
+    def render_diff(a_text: str, b_text: str, pad: Optional[bool] = None) -> Tuple[List[Text], List[Text], int]:
         a_lines = a_text.splitlines()
         b_lines = b_text.splitlines()
 
-        a_output: List[Sentence] = []
-        b_output: List[Sentence] = []
+        a_output: List[Text] = []
+        b_output: List[Text] = []
 
         a_size = len(a_lines)
         b_size = len(b_lines)
@@ -3549,8 +3651,8 @@ class DiffBuilder:
         expected_color = "g"
         received_color = "r" if a_text != "" else ""
         for i in range(max_size):
-            a_data = Sentence(get(a_lines, i))
-            b_data = Sentence(get(b_lines, i))
+            a_data = Text(get(a_lines, i))
+            b_data = Text(get(b_lines, i))
             
             if i >= a_size or i >= b_size or a_lines[i] != b_lines[i]:
                 if first_failure == -1:
@@ -3565,8 +3667,8 @@ class DiffBuilder:
         return a_output, b_output, first_failure
 
     @staticmethod
-    def mount_up_down_diff(unit: Unit, curses=False) -> List[Sentence]:
-        output: List[Sentence] = []
+    def mount_up_down_diff(unit: Unit, curses=False) -> List[Text]:
+        output: List[Text] = []
 
         string_input = unit.input
         string_expected = unit.output
@@ -3577,7 +3679,7 @@ class DiffBuilder:
         if string_received is None:
             string_received = ""
         expected_lines, received_lines, first_failure = DiffBuilder.render_diff(string_expected, string_received)
-        string_input_list = [Sentence().add(symbols.vbar.text).add(" ").add(line) for line in string_input.split("\n")][:-1]
+        string_input_list = [Text().add(symbols.vbar.text).add(" ").add(line) for line in string_input.split("\n")][:-1]
         unequal = symbols.unequal
         if unit.result == ExecutionResult.EXECUTION_ERROR or unit.result == ExecutionResult.COMPILATION_ERROR or string_expected == "":
             unequal = symbols.vbar
@@ -3587,23 +3689,23 @@ class DiffBuilder:
         if not curses:
             output.append(Report.centralize("", symbols.hbar, "╭"))
             output.append(Report.centralize(unit.str(), " ", symbols.vbar))
-            output.append(Report.centralize(Sentence().addf(color, DiffBuilder.vinput), symbols.hbar, "├"))
+            output.append(Report.centralize(Text().addf(color, DiffBuilder.vinput), symbols.hbar, "├"))
         else:
             if no_diff_mode:
-                output.append(Report.centralize(Sentence().addf(color, DiffBuilder.vreceived), symbols.hbar, "╭"))
+                output.append(Report.centralize(Text().addf(color, DiffBuilder.vreceived), symbols.hbar, "╭"))
             else:
-                output.append(Report.centralize(Sentence().addf(color, DiffBuilder.vinput), symbols.hbar, "╭"))
+                output.append(Report.centralize(Text().addf(color, DiffBuilder.vinput), symbols.hbar, "╭"))
 
 
         output += string_input_list
             
         if string_expected != "":
-            output.append(Report.centralize(Sentence().addf("g", DiffBuilder.vexpected), symbols.hbar, "├"))
+            output.append(Report.centralize(Text().addf("g", DiffBuilder.vexpected), symbols.hbar, "├"))
             output += expected_lines
         # output.append("\n".join(expected_lines))
         rcolor = "r" if (string_expected != "" and string_expected != string_received) else "g"
         if no_diff_mode == False:
-            output.append(Report.centralize(Sentence().addf(rcolor, DiffBuilder.vreceived), symbols.hbar, "├"))
+            output.append(Report.centralize(Text().addf(rcolor, DiffBuilder.vreceived), symbols.hbar, "├"))
         output +=  received_lines
 
         include_rendering = False
@@ -3613,31 +3715,31 @@ class DiffBuilder:
             include_rendering = False
 
         if include_rendering:
-            output.append(Report.centralize(Sentence().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├"))
+            output.append(Report.centralize(Text().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├"))
             output += DiffBuilder.first_failure_diff(string_expected, string_received, first_failure)
         output.append(Report.centralize("",  symbols.hbar, "╰"))
 
         return output
 
     @staticmethod
-    def put_left_equal(exp_lines: List[Sentence], rec_lines: List[Sentence], unequal: Token = symbols.unequal):
+    def put_left_equal(exp_lines: List[Text], rec_lines: List[Text], unequal: Token = symbols.unequal):
 
         max_size = max(len(exp_lines), len(rec_lines))
 
         for i in range(max_size):
             if i >= len(exp_lines) or i >= len(rec_lines) or (exp_lines[i] != rec_lines[i]):
-                exp_lines[i] = Sentence() + unequal + " " + exp_lines[i]
-                rec_lines[i] = Sentence() + unequal + " " + rec_lines[i]
+                exp_lines[i] = Text() + unequal + " " + exp_lines[i]
+                rec_lines[i] = Text() + unequal + " " + rec_lines[i]
             else:
-                exp_lines[i] = Sentence() + symbols.vbar + " " + exp_lines[i]
-                rec_lines[i] = Sentence() + symbols.vbar + " " + rec_lines[i]
+                exp_lines[i] = Text() + symbols.vbar + " " + exp_lines[i]
+                rec_lines[i] = Text() + symbols.vbar + " " + rec_lines[i]
         
         return exp_lines, rec_lines
             
     @staticmethod
-    def title_side_by_side(left: Sentence, right: Sentence, filler: Token = Token(" "), middle: Token = Token(" "), prefix: Token = Token()) -> Sentence:
+    def title_side_by_side(left: Text, right: Text, filler: Token = Token(" "), middle: Token = Token(" "), prefix: Token = Token()) -> Text:
         half = int((Report.get_terminal_size() - len(middle)) / 2)
-        line = Sentence()
+        line = Text()
         a = left
         a = a.center(half, filler)
         if len(a) > half:
@@ -3651,13 +3753,13 @@ class DiffBuilder:
         line += b
         if prefix != "":
             line.data[0].text = line.data[0].text[1:]
-            line = Sentence() + prefix + line
+            line = Text() + prefix + line
         return line
 
     @staticmethod
-    def mount_side_by_side_diff(unit: Unit, curses=False) -> List[Sentence]:
+    def mount_side_by_side_diff(unit: Unit, curses=False) -> List[Text]:
 
-        output: List[Sentence] = []
+        output: List[Text] = []
 
         string_input = unit.input
         string_expected = unit.output
@@ -3673,27 +3775,27 @@ class DiffBuilder:
             output.append(Report.centralize("", hbar, "╭"))
             output.append(Report.centralize(unit.str(), " ", "│"))
         input_color = "b" if string_expected != string_received else "g"
-        input_headera = Sentence().addf(input_color, DiffBuilder.vinput)
-        input_headerb = Sentence().addf(input_color, DiffBuilder.vinput)
+        input_headera = Text().addf(input_color, DiffBuilder.vinput)
+        input_headerb = Text().addf(input_color, DiffBuilder.vinput)
         if not curses:
             output.append(DiffBuilder.title_side_by_side(input_headera, input_headerb, hbar, Token("┬"), Token("├")))
         else:
-            output.append(Report.centralize(Sentence().addf(input_color, DiffBuilder.vinput),  symbols.hbar, "╭"))
+            output.append(Report.centralize(Text().addf(input_color, DiffBuilder.vinput),  symbols.hbar, "╭"))
             # output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, TK("┬"), TK("╭")))
 
         if string_input != "":
-            lines = [Sentence(x) for x in string_input.split("\n")[:-1]]
+            lines = [Text(x) for x in string_input.split("\n")[:-1]]
             output += DiffBuilder.side_by_side(lines, lines)
-        expected_header = Sentence().addf("g", DiffBuilder.vexpected)
+        expected_header = Text().addf("g", DiffBuilder.vexpected)
         rcolor = "r" if string_expected != string_received else "g"
-        received_header = Sentence().addf(rcolor, DiffBuilder.vreceived)
+        received_header = Text().addf(rcolor, DiffBuilder.vreceived)
         output.append(DiffBuilder.title_side_by_side(expected_header, received_header, hbar, Token("┼"), Token("├")))
         unequal = symbols.unequal
         if unit.result == ExecutionResult.EXECUTION_ERROR or unit.result == ExecutionResult.COMPILATION_ERROR:
             unequal = symbols.vbar
         output += DiffBuilder.side_by_side(expected_lines, received_lines, unequal)
         if unit.result != ExecutionResult.EXECUTION_ERROR and unit.result != ExecutionResult.COMPILATION_ERROR and string_expected != string_received:
-            output.append(Report.centralize(Sentence().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├"))
+            output.append(Report.centralize(Text().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├"))
             output += DiffBuilder.first_failure_diff(string_expected, string_received, first_failure)
             output.append(Report.centralize("",  symbols.hbar, "╰"))
         else:
@@ -4211,7 +4313,7 @@ class Wdir:
                 unit.case = LabelFactory().label(unit.case).index(number).generate()
                 number += 1
 
-    def unit_list_resume(self) -> List[Sentence]:
+    def unit_list_resume(self) -> List[Text]:
         return [unit.str() for unit in self.__unit_list]
 
     def sources_names(self) -> List[Tuple[str, int]]:
@@ -4231,13 +4333,13 @@ class Wdir:
             out = [os.path.basename(path) for path in path_list]
         return out
 
-    def resume(self) -> Sentence:
+    def resume(self) -> Text:
         sources = ["{}({})".format(name, str(count).rjust(2, "0")) for name, count in self.sources_names()]
-        __sources = Sentence().add("Testes:").add("[").addf("y", ", ".join(sources)).add("]")
+        __sources = Text().add("Testes:").add("[").addf("y", ", ".join(sources)).add("]")
 
-        __solvers = Sentence().add("Códigos:").add("[").addf("g", ", ".join(self.solvers_names())).add("]")
+        __solvers = Text().add("Códigos:").add("[").addf("g", ", ".join(self.solvers_names())).add("]")
 
-        return Sentence().add(__solvers).add(" ").add(__sources)
+        return Text().add(__solvers).add(" ").add(__sources)
 
 
 
@@ -4362,19 +4464,23 @@ class LogAction(enum.Enum):
 
 
 class ActionData:
-    def __init__(self, timestamp: str, action_id: str, rep: str = "", task: str = "", payload: str = ""):
+    def __init__(self, timestamp: str, action_value: str, rep: str = "", task: str = "", payload: str = ""):
         self.timestamp = timestamp
-        self.action: str = action_id
+        self.action_value: str = action_value
         self.rep = rep
         self.task = task
         self.payload = payload
         self.hash = ""
 
-    def action_self_same_task(self, other):
-        return self.action == LogAction.SELF and other.action == LogAction.SELF and self.rep == other.rep and self.task == other.task
+    def action_self_same_task(self, other: ActionData):
+        if self.action_value != LogAction.SELF.value:
+            return False
+        if other.action_value != LogAction.SELF.value:
+            return False
+        return self.rep == other.rep and self.task == other.task
 
     def __str__(self):
-        return f'{self.timestamp}, {self.action}, {self.rep}, {self.task}, {self.payload}'
+        return f'{self.timestamp}, {self.action_value}, {self.rep}, {self.task}, {self.payload}'
 
 class Logger:
     instance = None
@@ -4461,11 +4567,11 @@ class Logger:
         with open(self.get_log_file(), 'a', newline='') as file:
             writer = csv.writer(file)
             ad = action_data
-            writer.writerow([ad.hash, ad.timestamp, ad.action, ad.rep, ad.task, ad.payload])
+            writer.writerow([ad.hash, ad.timestamp, ad.action_value, ad.rep, ad.task, ad.payload])
             self.last_hash = ad.hash
 
     def store_in_cached(self, action_data: ActionData) -> bool:
-        if self.cached_action is None and action_data.action == LogAction.SELF:
+        if self.cached_action is None and action_data.action_value == LogAction.SELF.value:
             return True
         if self.cached_action is not None and self.cached_action.action_self_same_task(action_data):
             return True
@@ -4488,6 +4594,7 @@ class Logger:
             self.cached_action = action_data
         else:
             self.push_to_file(action_data)
+
 
 class Task:
 
@@ -4539,20 +4646,20 @@ class Task:
             return "g"
         return "w"  
 
-    def get_grade_symbol(self, min_value: Optional[int] = None) -> Sentence:
+    def get_grade_symbol(self, min_value: Optional[int] = None) -> Text:
         
         if min_value is None:
             min_value = self.default_min_value
         color = self.get_grade_color(min_value)
         if self.grade == 0:
-            return Sentence().addf(color, symbols.uncheck.text)
+            return Text().addf(color, symbols.uncheck.text)
         if self.grade < min_value:
-            return Sentence().addf(color, str(self.grade))
+            return Text().addf(color, str(self.grade))
         if self.grade < 10:
-            return Sentence().addf(color, str(self.grade))
+            return Text().addf(color, str(self.grade))
         if self.grade == 10:
-            return Sentence().addf(color, symbols.check.text)
-        return Sentence().add("0")
+            return Text().addf(color, symbols.check.text)
+        return Text().add("0")
 
     def get_percent(self):
         if self.grade == 0:
@@ -4756,18 +4863,18 @@ class Quest:
         output = f"{line} {tasks_size} {key}{self.title} {self.skills} {self.requires}"
         return output
 
-    def get_resume_by_percent(self) -> Sentence:
+    def get_resume_by_percent(self) -> Text:
         value = self.get_percent()
-        return Sentence().addf(self.get_grade_color(), (str(value) + "%").rjust(4))
+        return Text().addf(self.get_grade_color(), (str(value) + "%").rjust(4))
     
-    def get_requirement(self) -> Sentence:
+    def get_requirement(self) -> Text:
         if self.qmin is not None:
-            return Sentence().addf("y", f"[{self.qmin}%]")
+            return Text().addf("y", f"[{self.qmin}%]")
         if self.tmin is not None:
-            return Sentence().addf("y", f"[t>{self.tmin - 1}]")
-        return Sentence()
+            return Text().addf("y", f"[t>{self.tmin - 1}]")
+        return Text()
 
-    def get_resume_by_tasks(self) -> Sentence:
+    def get_resume_by_tasks(self) -> Text:
         tmin = self.tmin if self.tmin is not None else 7
         total = len([t for t in self.__tasks if not t.opt])
         plus = len([t for t in self.__tasks if t.opt])
@@ -4775,7 +4882,7 @@ class Quest:
         output = f"{count}/{total}"
         if plus > 0:
             output += f"+{plus}"
-        return Sentence().addf(self.get_grade_color(), "(" + output + ")")
+        return Text().addf(self.get_grade_color(), "(" + output + ")")
 
     def get_grade_color(self) -> str:
         if self.not_started():
@@ -4986,13 +5093,13 @@ class Cluster:
             total += q.get_percent()
         return total // len(self.quests)
 
-    def get_resume_by_percent(self) -> Sentence:
-        return Sentence().addf(self.get_grade_color(), f"{self.get_percent()}%".rjust(4))
+    def get_resume_by_percent(self) -> Text:
+        return Text().addf(self.get_grade_color(), f"{self.get_percent()}%".rjust(4))
 
     def get_resume_by_quests(self):
         total = len(self.quests)
         count = len([q for q in self.quests if q.is_complete()])
-        return Sentence().addf(self.get_grade_color(), f"({count}/{total})")
+        return Text().addf(self.get_grade_color(), f"({count}/{total})")
         
 
 
@@ -5328,7 +5435,7 @@ class Game:
 
 
 class Entry:
-    def __init__(self, obj: Union[Task, Quest, Cluster], sentence: Sentence):
+    def __init__(self, obj: Union[Task, Quest, Cluster], sentence: Text):
         self.obj = obj
         self.sentence = sentence
 
@@ -5414,7 +5521,7 @@ class TaskTree:
         if self.max_title < min_value:
             self.max_title = min_value
 
-    def str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool, min_value=1) -> Sentence:
+    def str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool, min_value=1) -> Text:
         # downloadable_in_focus = False
         rootdir = self.app._rootdir
         down_symbol = Token(" ")
@@ -5431,7 +5538,7 @@ class TaskTree:
 
         color_aval = "" if quest_reachable else "r"
 
-        output = Sentence()
+        output = Text()
         output.add(" ").addf(color_aval, lig_cluster)
         output.add(" ")
         output.addf(color_aval, lig_quest)
@@ -5468,13 +5575,13 @@ class TaskTree:
             
         return output
 
-    def str_quest(self, has_kids: bool, focus_color: str, q: Quest, lig: str) -> Sentence:
+    def str_quest(self, has_kids: bool, focus_color: str, q: Quest, lig: str) -> Text:
         con = "━─"
         if q.key in self.expanded and has_kids:
             con = "─┯"
 
         color_reachable = "" if q.is_reachable() else "r"
-        output: Sentence = Sentence().addf(color_reachable, " " + lig + con)
+        output: Text = Text().addf(color_reachable, " " + lig + con)
 
         in_focus = focus_color != ""
         if in_focus:
@@ -5518,8 +5625,8 @@ class TaskTree:
         return output
 
 
-    def str_cluster(self, has_kids: bool, focus_color: str, cluster: Cluster) -> Sentence:
-        output: Sentence = Sentence()
+    def str_cluster(self, has_kids: bool, focus_color: str, cluster: Cluster) -> Text:
+        output: Text = Text()
         opening = "━─"
         if cluster.key in self.expanded and has_kids:
             opening = "─┯"
@@ -5753,10 +5860,10 @@ class TaskTree:
         level[9] = Token("Adequada", 'g')
         level[10] = Token("Confiante", "g")
 
-        msg1 = Sentence("Na minha ").addf("b", "última").add(" resolução desta questão, minha ").addf("y", "capacidade ")
-        msg2 = Sentence("de ").addf("y", "resolver").add(" o exercício e ").addf("y", "compreender").add(" técnicas e conceitos,")
-        msg3 = Sentence().addf("b", "sem utilizar").add(" de ajuda externa (monitoria, IA, professor)  ")
-        msg4 = Sentence("pode ser definida como ").add(level[grade])
+        msg1 = Text("Na minha ").addf("b", "última").add(" resolução desta questão, minha ").addf("y", "capacidade ")
+        msg2 = Text("de ").addf("y", "resolver").add(" o exercício e ").addf("y", "compreender").add(" técnicas e conceitos,")
+        msg3 = Text().addf("b", "sem utilizar").add(" de ajuda externa (monitoria, IA, professor)  ")
+        msg4 = Text("pode ser definida como ").add(level[grade])
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             obj.set_grade(grade)
@@ -5873,7 +5980,7 @@ class TaskTree:
             elif self.index_selected >= dy + self.index_begin:  # desceu na tela
                 self.index_begin = self.index_selected - dy + 1
 
-        sentences: List[Sentence] = []
+        sentences: List[Text] = []
         for i in range(self.index_begin, len(self.items)):
             sentences.append(self.items[i].sentence)
         return sentences
@@ -6001,11 +6108,11 @@ class Opener:
         folder = os.path.dirname(os.path.abspath(files_to_open[0]));
         aviso = (Floating("v>")
                 .warning()
-                .put_sentence(Sentence().add("Pasta: ").addf("g", folder).add(" "))
+                .put_sentence(Text().add("Pasta: ").addf("g", folder).add(" "))
                 .put_text("Abrindo arquivos com o comando")
                 )
         files = [os.path.basename(path) for path in files_to_open]
-        aviso.put_sentence(Sentence().addf("g", f"{cmd}").add(" ").addf("g", " ".join(files)).add(" "))
+        aviso.put_sentence(Text().addf("g", f"{cmd}").add(" ").addf("g", " ".join(files)).add(" "))
         self.send_floating(aviso)
         fullcmd = "{} {}".format(cmd, " ".join(files_to_open))
         outfile = tempfile.NamedTemporaryFile(delete=False)
@@ -6110,11 +6217,11 @@ class Tester:
         if align == "v":
             init_y = dy - len(lines) - 1
         for i, line in enumerate(lines):
-            info = Sentence().addf(color, line).center(dx - 2, Token(" ", " "))
+            info = Text().addf(color, line).center(dx - 2, Token(" ", " "))
             if clear:
-                Fmt.write(i + init_y, 1, Sentence(" " * info.len()))
+                Fmt.write(i + init_y, 1, Text(" " * info.len()))
             else:
-                Fmt.write(i + init_y, 1, Sentence().addf(color, line).center(dx - 2, Token(" ", " ")))
+                Fmt.write(i + init_y, 1, Text().addf(color, line).center(dx - 2, Token(" ", " ")))
 
     def show_success(self):
         if self.settings.app.has_images():
@@ -6182,7 +6289,7 @@ class Tester:
 
         _, cols = Fmt.get_size()
         for i in range(len(bar)):
-            Fmt.write(i + y_init, cols - 1, Sentence().add(bar[i]))
+            Fmt.write(i + y_init, cols - 1, Text().add(bar[i]))
 
     def get_folder(self):
         source_list = self.wdir.get_source_list()
@@ -6269,12 +6376,12 @@ class Tester:
         running_color = "R"
 
         # building activity
-        activity = Sentence().add(self.borders.border(activity_color, self.get_folder()))
+        activity = Text().add(self.borders.border(activity_color, self.get_folder()))
 
         # building solvers
-        solvers = Sentence()
+        solvers = Text()
         if len(self.get_solver_names()) > 1:
-            solvers.add(Sentence().add(self.borders.roundL("R")).addf("R", f"{GuiActions.tab}").add(self.borders.sharpR("R")))
+            solvers.add(Text().add(self.borders.roundL("R")).addf("R", f"{GuiActions.tab}").add(self.borders.sharpR("R")))
         for i, solver in enumerate(self.get_solver_names()):
             if len(self.get_solver_names()) > 1:
                 solvers.add(" ")
@@ -6286,16 +6393,16 @@ class Tester:
         # replacing with count if running
         done = len(self.results)
         full = len(self.wdir.get_unit_list())
-        count_missing = Sentence().add(self.borders.border(running_color, f"({done}/{full})"))
+        count_missing = Text().add(self.borders.border(running_color, f"({done}/{full})"))
         if self.mode == SeqMode.running:
             if  self.locked_index:
-                solvers = Sentence().add(self.borders.border("R", "Executando atividade travada"))
+                solvers = Text().add(self.borders.border("R", "Executando atividade travada"))
             else:
                 solvers = count_missing
 
         # building sources
-        source_names = Sentence(", ").join([Sentence().addf(sources_color, f"{name[0]}({name[1]})") for name in self.wdir.sources_names()])
-        sources = Sentence().add(self.borders.roundL(sources_color)).add(source_names).add(self.borders.roundR(sources_color))
+        source_names = Text(", ").join([Text().addf(sources_color, f"{name[0]}({name[1]})") for name in self.wdir.sources_names()])
+        sources = Text().add(self.borders.roundL(sources_color)).add(source_names).add(self.borders.roundR(sources_color))
 
         # merging activity, solvers and sources in header
         delta = frame.get_dx() - solvers.len()
@@ -6307,9 +6414,9 @@ class Tester:
             delta_right = delta - delta_left
             right = max(1, delta_right - sources.len())
 
-        return Sentence().add(activity).add("─" * left).add(solvers).add("─" * right).add(sources)
+        return Text().add(activity).add("─" * left).add(solvers).add("─" * right).add(sources)
 
-    def build_unit_list(self, frame: Frame) -> Sentence:
+    def build_unit_list(self, frame: Frame) -> Text:
         done_list = self.results
         if len(done_list) > 0 and self.locked_index:
             _, index = done_list[self.focused_index]
@@ -6326,7 +6433,7 @@ class Tester:
         i = 0
         show_focused_index = not self.wdir.get_solver().compile_error and not self.mode == SeqMode.intro and not self.is_all_right()
         
-        output = Sentence()
+        output = Text()
         if self.wdir.has_tests():
             output.add(self.get_fixed_arrow())
         else:
@@ -6358,9 +6465,9 @@ class Tester:
         output.data = output.data[:3 * 6] + output.data[3 * 6 + to_remove:]
         return output
 
-    def get_fixed_arrow(self) -> Sentence:
+    def get_fixed_arrow(self) -> Text:
         
-        output = Sentence()
+        output = Text()
         # diff
         diff = self.settings.app.get_diff_mode()
         if diff == DiffMode.DOWN:
@@ -6397,14 +6504,14 @@ class Tester:
         if not self.wdir.has_tests():
             return
         value = self.get_focused_unit()
-        info = Sentence()
+        info = Text()
         if self.wdir.get_solver().compile_error:
             info = self.borders.border("R", "Erro de compilação")
         elif value is not None and not self.is_all_right() and not self.mode == SeqMode.intro:
             info = value.str(pad = False)
             # if self.locked_index:
             #     info = self.borders.border(focused_unit_color, info.get_text())
-        frame.write(0, 0, Sentence().add(info).center(frame.get_dx()))
+        frame.write(0, 0, Text().add(info).center(frame.get_dx()))
 
     def draw_top_bar(self):
         # construir mais uma solução
@@ -6417,10 +6524,10 @@ class Tester:
         
     def two_column_mode(self):
         _, cols = Fmt.get_size()
-        return cols < Sentence(" ").join(self.make_bottom_line()).len() + 2
+        return cols < Text(" ").join(self.make_bottom_line()).len() + 2
 
-    def make_bottom_line(self) -> List[Sentence]:
-        cmds: List[Sentence] = []
+    def make_bottom_line(self) -> List[Text]:
+        cmds: List[Text] = []
         if self.app.has_full_hud():
             # rodar
             cmds.append(self.borders.border("M", f"{GuiActions.rodar} [{GuiKeys.rodar}]"))
@@ -6448,7 +6555,7 @@ class Tester:
             if value == "0":
                 value = symbols.infinity.text
             cmds.append(
-                Sentence()
+                Text()
                     .add(self.borders.roundL("M"))
                     .add(RToken("M", "{} {}[{}]".format(GuiActions.tempo, value, GuiKeys.tempo)))
                     .add(self.borders.roundR("M"))
@@ -6469,10 +6576,10 @@ class Tester:
             line = self.make_bottom_line()
             one = line[0:2] + line[-2:]
             two = line[2:-2]
-            Fmt.write(lines - 2, 0, Sentence(" ").join(one).center(cols, Token(" ")))
-            Fmt.write(lines - 1, 0, Sentence(" ").join(two).center(cols, Token(" ")))
+            Fmt.write(lines - 2, 0, Text(" ").join(one).center(cols, Token(" ")))
+            Fmt.write(lines - 1, 0, Text(" ").join(two).center(cols, Token(" ")))
         else:
-            out = Sentence(" ").join(self.make_bottom_line())
+            out = Text(" ").join(self.make_bottom_line())
             # if Fmt.get_size()[1] % 2 == 0:
             #     out.add("-")
             Fmt.write(lines - 1, 0, out.center(cols, Token(" ")))
@@ -6502,7 +6609,7 @@ class Tester:
         
         if self.wdir.get_solver().compile_error:
             received = self.wdir.get_solver().error_msg
-            line_list = [Sentence().add(line) for line in received.split("\n")]
+            line_list = [Text().add(line) for line in received.split("\n")]
         elif self.settings.app.get_diff_mode() == DiffMode.DOWN or not self.wdir.has_tests():
             line_list = DiffBuilder.mount_up_down_diff(unit, curses=True)
         else:
@@ -6519,7 +6626,7 @@ class Tester:
         if self.init < self.length:
             line_list = line_list[self.init:]
         for i, line in enumerate(line_list):
-            frame.write(i, 0, Sentence().add(line))
+            frame.write(i, 0, Text().add(line))
 
         self.draw_scrollbar()
         return
@@ -6671,8 +6778,8 @@ class Tester:
             self.fman.add_input(
                 Floating("v>").warning()
                 .put_text("Atividade travada")
-                .put_sentence(Sentence("Aperte ").addf("g", GuiKeys.travar).add(" para destravar"))
-                .put_sentence(Sentence("Use ").addf("g", "Enter").add(" para rodar os testes"))
+                .put_sentence(Text("Aperte ").addf("g", GuiKeys.travar).add(" para destravar"))
+                .put_sentence(Text("Use ").addf("g", "Enter").add(" para rodar os testes"))
             )
 
     def change_limit(self):
@@ -6847,7 +6954,7 @@ class Run:
         if self.wdir is None:
             return
 
-        term_print(Sentence().add(symbols.opening).add(self.wdir.resume()), end="")
+        term_print(Text().add(symbols.opening).add(self.wdir.resume()), end="")
         term_print(" [", end="")
         first = True
         for unit in self.wdir.get_unit_list():
@@ -6859,7 +6966,7 @@ class Run:
             if solver is None:
                 raise Warning("Solver vazio")
             unit.result = UnitRunner.run_unit(solver, unit)
-            term_print(Sentence() + ExecutionResult.get_symbol(unit.result), end="")
+            term_print(Text() + ExecutionResult.get_symbol(unit.result), end="")
         term_print("]")
 
     def __print_diff(self):
@@ -6918,7 +7025,7 @@ class Run:
         if self.wdir is None:
             return False
         if not self.wdir.has_solver() and not self.wdir.has_tests():
-            term_print(Sentence().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
+            term_print(Text().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
             return True
         return False
     
@@ -7273,38 +7380,38 @@ class Gui:
         self.colors = self.settings.colors
 
         self.app = Settings().app
-        self.wrap_size = Sentence(" ").join(self.build_bottom_array()).len()
+        self.wrap_size = Text(" ").join(self.build_bottom_array()).len()
 
     def get_help_others_after(self):
         color = "Y" if self.tree.in_focus else "W"
-        help_others_after: List[Sentence] = [
-            Sentence() + RToken(color, f"{GuiActions.baixar} [{GuiKeys.down_task}]"),
-            Sentence() + RToken("Y", f"{GuiActions.navegar} [wasd]")
+        help_others_after: List[Text] = [
+            Text() + RToken(color, f"{GuiActions.baixar} [{GuiKeys.down_task}]"),
+            Text() + RToken("Y", f"{GuiActions.navegar} [wasd]")
         ]
         return help_others_after
 
     def get_help_basic(self):
         color = "Y" if self.tree.in_focus else "W"
-        help_basic: List[Sentence] = [
-            Sentence() + RToken(color, f"{GuiActions.pesquisar}[{GuiKeys.pesquisar}]"),
-            Sentence() + RToken(color, f"{GuiActions.marcar} {GuiKeys.inc_grade}{GuiKeys.dec_grade}"),
+        help_basic: List[Text] = [
+            Text() + RToken(color, f"{GuiActions.pesquisar}[{GuiKeys.pesquisar}]"),
+            Text() + RToken(color, f"{GuiActions.marcar} {GuiKeys.inc_grade}{GuiKeys.dec_grade}"),
         ]
         return help_basic
 
     def get_help_fixed(self):
         color = "C" if self.tree.in_focus else "W"
-        help_fixed: List[Sentence] = [
-            Sentence() + RToken("C", f" {GuiActions.sair}  [{GuiKeys.key_quit}]"),
-            Sentence() + RToken(color, f"{GuiActions.editar} [{GuiKeys.edit}]"),
-            Sentence() + RToken("G", f"{GuiActions.ativar} [↲]"),
+        help_fixed: List[Text] = [
+            Text() + RToken("C", f" {GuiActions.sair}  [{GuiKeys.key_quit}]"),
+            Text() + RToken(color, f"{GuiActions.editar} [{GuiKeys.edit}]"),
+            Text() + RToken("G", f"{GuiActions.ativar} [↲]"),
         ]
         return help_fixed
 
     def get_help_others_before(self):
         color = "Y" if self.tree.in_focus else "W"
-        help_others_before: List[Sentence] = [
-            Sentence() + RToken("Y", f" {GuiActions.ajuda} [{GuiKeys.key_help}]"),
-            Sentence() + RToken(color, f"{GuiActions.github} [{GuiKeys.github_open}]"),
+        help_others_before: List[Text] = [
+            Text() + RToken("Y", f" {GuiActions.ajuda} [{GuiKeys.key_help}]"),
+            Text() + RToken(color, f"{GuiActions.github} [{GuiKeys.github_open}]"),
         ]
         return help_others_before
 
@@ -7320,7 +7427,7 @@ class Gui:
 
 
     def show_main_bar(self, frame: Frame):
-        top = Sentence()
+        top = Text()
         if self.two_column_mode() and self.app.has_full_hud() and not Flags.config.is_true():
             top.add(self.style.get_flag_sentence(Flags.config)).add(" ")
 
@@ -7336,18 +7443,18 @@ class Gui:
         half = top.len() // 2
         x = frame.get_x()
         dy, dx = Fmt.get_size()
-        full = Sentence().add("─" * ((dx//2) - x - 2 - half)).add(top)
+        full = Text().add("─" * ((dx//2) - x - 2 - half)).add(top)
         frame.set_header(full, "<")
         
         if self.two_column_mode() and not Flags.config.is_true():
             elems = self.build_bottom_array()
-            line_up = Sentence(" ").join(elems[0 : 2] + elems[-2:])
+            line_up = Text(" ").join(elems[0 : 2] + elems[-2:])
             half = line_up.len() // 2
             _, adx = Fmt.get_size()
             if adx % 2 == 1:
                 adx += 1 
             x = frame.get_x()
-            full = Sentence().add("─" * ((adx//2) - x - 2 - half)).add(line_up)
+            full = Text().add("─" * ((adx//2) - x - 2 - half)).add(line_up)
             frame.set_footer(full, "<")
         frame.draw()
 
@@ -7372,12 +7479,12 @@ class Gui:
         done = self.colors.main_bar_done + "/"
         todo = self.colors.main_bar_todo + "/"
         total_bar = self.style.build_bar(text, total_perc / 100, dx - 2, done, todo)
-        frame_xp.set_header(Sentence().addf("/", "Skills"), "^", "{", "}")
-        frame_xp.set_footer(Sentence().add(" ").add(self.app._rootdir).add(" "), "^")
+        frame_xp.set_header(Text().addf("/", "Skills"), "^", "{", "}")
+        frame_xp.set_footer(Text().add(" ").add(self.app._rootdir).add(" "), "^")
         frame_xp.draw()
 
         total, obt = self.game.get_skills_resume([self.game.quests[key] for key in self.game.available_quests])
-        elements: List[Sentence] = []
+        elements: List[Text] = []
         for skill, value in total.items():
             if Flags.percent.is_true():
                 text = f"{skill}:{int(100 * obt[skill] / value)}%"
@@ -7396,10 +7503,10 @@ class Gui:
             frame_xp.print(1, skill_bar)
             if line_breaks > 0:
                 line_breaks -= 1
-                frame_xp.print(1, Sentence())
+                frame_xp.print(1, Text())
 
     def show_config_bar(self, frame: Frame):
-        frame.set_header(Sentence().addf("/", "Config"), "^", "{", "}")
+        frame.set_header(Text().addf("/", "Config"), "^", "{", "}")
         frame.draw()
         elements = self.config.get_elements()
         dy, dx = frame.get_inner()
@@ -7419,7 +7526,7 @@ class Gui:
             if index == target and self.config.enabled:
                 text = item.flag.get_description()
                 focus = self.colors.focused_item
-                Fmt.write(y + index + 1, cols - dx - len(text) - 4, Sentence().addf(focus, f" {text} ").add(self.style.sharpR(focus)))
+                Fmt.write(y + index + 1, cols - dx - len(text) - 4, Text().addf(focus, f" {text} ").add(self.style.sharpR(focus)))
             index += 1
             # if line_breaks > 0:
             #     line_breaks -= 1
@@ -7430,8 +7537,8 @@ class Gui:
         _, cols = Fmt.get_size()
         return cols < self.wrap_size + 2 and self.app.has_full_hud()
 
-    def build_list_sentence(self, items: List[Sentence]) -> List[Sentence]:
-        out: List[Sentence] = []
+    def build_list_sentence(self, items: List[Text]) -> List[Text]:
+        out: List[Text] = []
         for x in items:
             color_ini = x.data[0].fmt
             color_end = x.data[-1].fmt
@@ -7442,16 +7549,16 @@ class Gui:
                 left = self.style.sharpL(color_ini)
                 right = self.style.sharpR(color_end)
                 middle.data = x.data[1:]
-            out.append(Sentence().add(left).add(middle).add(right))
+            out.append(Text().add(left).add(middle).add(right))
         return out
 
     def build_bottom_array(self):
-        array: List[Sentence] = []
+        array: List[Text] = []
         array += self.get_help_others_before()
         array += self.get_help_fixed()
         color = "G" if self.app.has_full_hud() else "Y"
         symbol = symbols.success if self.app.has_full_hud() else symbols.failure
-        array.append(Sentence() + RToken(color, f"{symbol.text} {GuiActions.hud}  [{GuiKeys.hud}]"))
+        array.append(Text() + RToken(color, f"{symbol.text} {GuiActions.hud}  [{GuiKeys.hud}]"))
         array += self.get_help_others_after()
 
         return self.build_list_sentence(array)
@@ -7460,14 +7567,14 @@ class Gui:
         lines, cols = Fmt.get_size()
         elems = self.build_bottom_array()
         if self.two_column_mode():
-            line_down = Sentence(" ").join(elems[2:-2])
+            line_down = Text(" ").join(elems[2:-2])
             Fmt.write(lines - 1, 0, line_down.center(cols))
         else:
             if self.app.has_full_hud():
-                line_all = Sentence(" ").join(elems)
+                line_all = Text(" ").join(elems)
                 Fmt.write(lines - 1, 0, line_all.center(cols))
             else:
-                line_main = Sentence(" ").join(elems[2: -2]) # alignment adjust
+                line_main = Text(" ").join(elems[2: -2]) # alignment adjust
                 Fmt.write(lines - 1, 0, line_main.center(cols))   
 
     def make_xp_button(self, size):
@@ -7493,12 +7600,12 @@ class Gui:
         skills = self.style.get_flag_sentence(Flags.skills)
         others = self.app.has_full_hud()
 
-        pre: List[Sentence] = []
+        pre: List[Text] = []
         pre.append(marcar)
         if others and not self.two_column_mode():
             pre.append(config)
 
-        pos: List[Sentence] = []
+        pos: List[Text] = []
         if others and not self.two_column_mode():
             pos.append(skills)
         pos.append(pesquisar)
@@ -7506,21 +7613,21 @@ class Gui:
         limit = self.wrap_size
         if frame.get_dx() < self.wrap_size:
             limit = frame.get_dx()
-        size = limit - Sentence(" ").join(pre + pos).len() - 2
+        size = limit - Text(" ").join(pre + pos).len() - 2
         main_label = self.make_xp_button(size)
-        info = Sentence(" ").join(pre + [main_label] + pos)
+        info = Text(" ").join(pre + [main_label] + pos)
         frame.write(0, 0, info.center(frame.get_dx()))
 
 
     def show_help_config(self):
         _help: Floating = Floating("v>").warning().set_ljust_text().set_header(" Configurações ")
         self.fman.add_input(_help)
-        _help.put_sentence(Sentence() + f"      Mínimo " + RToken("r", f"[{Flags.minimum.get_keycode()}]") + " - Mostrar os requisitos mínimos para completar a missão")
-        _help.put_sentence(Sentence() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_keycode()}]") + " - Mostrar quanto de experiência cada atividade fornece")
-        _help.put_sentence(Sentence() + f"  Percentual " + RToken("r", f"[{Flags.percent.get_keycode()}]") + " - Mostrar os valores em percentual")
-        _help.put_sentence(Sentence() + f"  ModoAdmin " + RToken("r", f"Shift + [A]") + " - Liberar acesso a todas as missões" )
-        _help.put_sentence(Sentence() + f"  PastaRaiz " + RToken("r", f"Shift + [{GuiKeys.set_root_dir}]") + " - Mudar a pasta padrão de download do tko" )
-        _help.put_sentence(Sentence() + f"  Linguagem " + RToken("r", f"Shift + [{GuiKeys.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
+        _help.put_sentence(Text() + f"      Mínimo " + RToken("r", f"[{Flags.minimum.get_keycode()}]") + " - Mostrar os requisitos mínimos para completar a missão")
+        _help.put_sentence(Text() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_keycode()}]") + " - Mostrar quanto de experiência cada atividade fornece")
+        _help.put_sentence(Text() + f"  Percentual " + RToken("r", f"[{Flags.percent.get_keycode()}]") + " - Mostrar os valores em percentual")
+        _help.put_sentence(Text() + f"  ModoAdmin " + RToken("r", f"Shift + [A]") + " - Liberar acesso a todas as missões" )
+        _help.put_sentence(Text() + f"  PastaRaiz " + RToken("r", f"Shift + [{GuiKeys.set_root_dir}]") + " - Mudar a pasta padrão de download do tko" )
+        _help.put_sentence(Text() + f"  Linguagem " + RToken("r", f"Shift + [{GuiKeys.set_lang}]") + " - Mudar a linguagem de download dos rascunhos" )
 
 
     def show_help(self):
@@ -7529,22 +7636,22 @@ class Gui:
         _help: Floating = Floating("v>").set_ljust_text()
         self.fman.add_input(_help)
 
-        _help.set_header_sentence(Sentence().add(" Ajuda "))
+        _help.set_header_sentence(Text().add(" Ajuda "))
         # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Sentence("    Ajuda ").addf("r", GuiKeys.key_help).add("  Abre essa tela de ajuda")
+        _help.put_sentence(Text("    Ajuda ").addf("r", GuiKeys.key_help).add("  Abre essa tela de ajuda")
         )
 
-        _help.put_sentence(Sentence("  ").addf("r", "Shift + B")
+        _help.put_sentence(Text("  ").addf("r", "Shift + B")
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
-        _help.put_sentence(Sentence() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
-        _help.put_sentence(Sentence() + f"{GuiActions.github} " + RToken("r", f"{GuiKeys.github_open}") + "  Abre tarefa em uma aba do browser")
-        _help.put_sentence(Sentence() + f"   {GuiActions.baixar} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
-        _help.put_sentence(Sentence() + f"   {GuiActions.editar} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
-        _help.put_sentence(Sentence() + f"   {GuiActions.ativar} " + RToken("r", "↲") + "  Interage com o elemento")
-        _help.put_sentence(Sentence() + f"   {GuiActions.marcar} " + RToken("r", f"{GuiKeys.inc_grade}") + RToken("r", f"{GuiKeys.dec_grade}") + " Muda a pontuação da tarefa")
-        _help.put_sentence(Sentence())
-        _help.put_sentence(Sentence() + "Você pode mudar o editor padrão com o comando")
-        _help.put_sentence(Sentence() + RToken("g", "             tko config --editor <comando>"))
+        _help.put_sentence(Text() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
+        _help.put_sentence(Text() + f"{GuiActions.github} " + RToken("r", f"{GuiKeys.github_open}") + "  Abre tarefa em uma aba do browser")
+        _help.put_sentence(Text() + f"   {GuiActions.baixar} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
+        _help.put_sentence(Text() + f"   {GuiActions.editar} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
+        _help.put_sentence(Text() + f"   {GuiActions.ativar} " + RToken("r", "↲") + "  Interage com o elemento")
+        _help.put_sentence(Text() + f"   {GuiActions.marcar} " + RToken("r", f"{GuiKeys.inc_grade}") + RToken("r", f"{GuiKeys.dec_grade}") + " Muda a pontuação da tarefa")
+        _help.put_sentence(Text())
+        _help.put_sentence(Text() + "Você pode mudar o editor padrão com o comando")
+        _help.put_sentence(Text() + RToken("g", "             tko config --editor <comando>"))
 
 
     def build_xp_bar(self) -> Tuple[str, float]:
@@ -7579,7 +7686,7 @@ class Gui:
         max_len = max([len(line) for line in parrot_lines])
         yinit = 1
         for y, line in enumerate(parrot_lines):
-            Fmt.write(yinit + y, cols - max_len - 2, Sentence().addf("g", line))
+            Fmt.write(yinit + y, cols - max_len - 2, Text().addf("g", line))
 
     def show_items(self):
         border_color = "r" if Flags.admin.is_true() else ""
@@ -7619,7 +7726,7 @@ class Gui:
         if Flags.config.is_true():
             frame_flags = Frame(mid_y, cols - flags_sx).set_size(mid_sy, flags_sx).set_border_color(border_color)
             self.show_config_bar(frame_flags)
-            Fmt.write(1, cols - left_size - 3, Sentence().addf("r", f" {GuiActions.tab} "))
+            Fmt.write(1, cols - left_size - 3, Text().addf("r", f" {GuiActions.tab} "))
 
         if Flags.skills.is_true():
             frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)
@@ -7937,7 +8044,7 @@ class PlayActions:
             self.gui.config.gen_graph = False
             self.fman.add_input(Floating().error()
                                 .put_text("")
-                                .put_sentence(Sentence().add("Instale o ").addf("r", "graphviz").add(" para poder gerar os grafos"))
+                                .put_sentence(Text().add("Instale o ").addf("r", "graphviz").add(" para poder gerar os grafos"))
                                 .put_text("")
                                 )
 

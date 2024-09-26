@@ -1,5 +1,5 @@
 from typing import List, Dict, Any
-from ..util.sentence import Sentence
+from ..util.text import Text
 
 
 class Flag:

@@ -10,7 +10,7 @@ from ..util.param import Param
 from .loader import Loader
 from .solver_builder import SolverBuilder
 
-from ..util.sentence import Sentence
+from ..util.text import Text
 from ..util.symbols import symbols
 from ..util.label_factory import LabelFactory
 from ..settings.rep_settings import languages_avaliable
@@ -207,7 +207,7 @@ class Wdir:
                 unit.case = LabelFactory().label(unit.case).index(number).generate()
                 number += 1
 
-    def unit_list_resume(self) -> List[Sentence]:
+    def unit_list_resume(self) -> List[Text]:
         return [unit.str() for unit in self.__unit_list]
 
     def sources_names(self) -> List[Tuple[str, int]]:
@@ -227,10 +227,10 @@ class Wdir:
             out = [os.path.basename(path) for path in path_list]
         return out
 
-    def resume(self) -> Sentence:
+    def resume(self) -> Text:
         sources = ["{}({})".format(name, str(count).rjust(2, "0")) for name, count in self.sources_names()]
-        __sources = Sentence().add("Testes:").add("[").addf("y", ", ".join(sources)).add("]")
+        __sources = Text().add("Testes:").add("[").addf("y", ", ".join(sources)).add("]")
 
-        __solvers = Sentence().add("Códigos:").add("[").addf("g", ", ".join(self.solvers_names())).add("]")
+        __solvers = Text().add("Códigos:").add("[").addf("g", ", ".join(self.solvers_names())).add("]")
 
-        return Sentence().add(__solvers).add(" ").add(__sources)
+        return Text().add(__solvers).add(" ").add(__sources)

@@ -1,4 +1,4 @@
-from .sentence import Token
+from .text import Token
 
 class __Symbols:
 

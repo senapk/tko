@@ -5,7 +5,7 @@ from typing import Any, Dict, Callable, Tuple
 from ..settings.settings import Settings
 from ..settings.app_settings import AppSettings
 from ..settings.rep_settings import languages_avaliable, RepData
-from ..util.sentence import Sentence
+from ..util.text import Text
 from .fmt import Fmt
 from .search import Search
 from .input_manager import InputManager

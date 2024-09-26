@@ -3,7 +3,7 @@ from typing import List, Any, Dict, Tuple, Union, Set
 from ..settings.app_settings import AppSettings
 from ..settings.rep_settings import RepData
 
-from ..util.sentence import Sentence, Token
+from ..util.text import Text, Token
 from ..util.to_asc import SearchAsc, uni_to_asc
 from .flags import Flags
 from ..game.game import Game
@@ -20,7 +20,7 @@ from tko.play.floating import Floating
 import os
 
 class Entry:
-    def __init__(self, obj: Union[Task, Quest, Cluster], sentence: Sentence):
+    def __init__(self, obj: Union[Task, Quest, Cluster], sentence: Text):
         self.obj = obj
         self.sentence = sentence
 
@@ -106,7 +106,7 @@ class TaskTree:
         if self.max_title < min_value:
             self.max_title = min_value
 
-    def str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool, min_value=1) -> Sentence:
+    def str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool, min_value=1) -> Text:
         # downloadable_in_focus = False
         rootdir = self.app._rootdir
         down_symbol = Token(" ")
@@ -123,7 +123,7 @@ class TaskTree:
 
         color_aval = "" if quest_reachable else "r"
 
-        output = Sentence()
+        output = Text()
         output.add(" ").addf(color_aval, lig_cluster)
         output.add(" ")
         output.addf(color_aval, lig_quest)
@@ -160,13 +160,13 @@ class TaskTree:
             
         return output
 
-    def str_quest(self, has_kids: bool, focus_color: str, q: Quest, lig: str) -> Sentence:
+    def str_quest(self, has_kids: bool, focus_color: str, q: Quest, lig: str) -> Text:
         con = "━─"
         if q.key in self.expanded and has_kids:
             con = "─┯"
 
         color_reachable = "" if q.is_reachable() else "r"
-        output: Sentence = Sentence().addf(color_reachable, " " + lig + con)
+        output: Text = Text().addf(color_reachable, " " + lig + con)
 
         in_focus = focus_color != ""
         if in_focus:
@@ -210,8 +210,8 @@ class TaskTree:
         return output
 
 
-    def str_cluster(self, has_kids: bool, focus_color: str, cluster: Cluster) -> Sentence:
-        output: Sentence = Sentence()
+    def str_cluster(self, has_kids: bool, focus_color: str, cluster: Cluster) -> Text:
+        output: Text = Text()
         opening = "━─"
         if cluster.key in self.expanded and has_kids:
             opening = "─┯"
@@ -445,10 +445,10 @@ class TaskTree:
         level[9] = Token("Adequada", 'g')
         level[10] = Token("Confiante", "g")
 
-        msg1 = Sentence("Na minha ").addf("b", "última").add(" resolução desta questão, minha ").addf("y", "capacidade ")
-        msg2 = Sentence("de ").addf("y", "resolver").add(" o exercício e ").addf("y", "compreender").add(" técnicas e conceitos,")
-        msg3 = Sentence().addf("b", "sem utilizar").add(" de ajuda externa (monitoria, IA, professor)  ")
-        msg4 = Sentence("pode ser definida como ").add(level[grade])
+        msg1 = Text("Na minha ").addf("b", "última").add(" resolução desta questão, minha ").addf("y", "capacidade ")
+        msg2 = Text("de ").addf("y", "resolver").add(" o exercício e ").addf("y", "compreender").add(" técnicas e conceitos,")
+        msg3 = Text().addf("b", "sem utilizar").add(" de ajuda externa (monitoria, IA, professor)  ")
+        msg4 = Text("pode ser definida como ").add(level[grade])
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             obj.set_grade(grade)
@@ -565,7 +565,7 @@ class TaskTree:
             elif self.index_selected >= dy + self.index_begin:  # desceu na tela
                 self.index_begin = self.index_selected - dy + 1
 
-        sentences: List[Sentence] = []
+        sentences: List[Text] = []
         for i in range(self.index_begin, len(self.items)):
             sentences.append(self.items[i].sentence)
         return sentences

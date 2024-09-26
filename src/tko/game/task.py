@@ -1,6 +1,6 @@
 from typing import Dict, Optional, Tuple
 from ..util.symbols import symbols
-from ..util.sentence import Sentence
+from ..util.text import Text
 from tko.util.logger import Logger, LogAction
 import re
 import os
@@ -55,20 +55,20 @@ class Task:
             return "g"
         return "w"  
 
-    def get_grade_symbol(self, min_value: Optional[int] = None) -> Sentence:
+    def get_grade_symbol(self, min_value: Optional[int] = None) -> Text:
         
         if min_value is None:
             min_value = self.default_min_value
         color = self.get_grade_color(min_value)
         if self.grade == 0:
-            return Sentence().addf(color, symbols.uncheck.text)
+            return Text().addf(color, symbols.uncheck.text)
         if self.grade < min_value:
-            return Sentence().addf(color, str(self.grade))
+            return Text().addf(color, str(self.grade))
         if self.grade < 10:
-            return Sentence().addf(color, str(self.grade))
+            return Text().addf(color, str(self.grade))
         if self.grade == 10:
-            return Sentence().addf(color, symbols.check.text)
-        return Sentence().add("0")
+            return Text().addf(color, symbols.check.text)
+        return Text().add("0")
 
     def get_percent(self):
         if self.grade == 0:

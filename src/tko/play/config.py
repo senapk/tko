@@ -3,7 +3,7 @@ from tko.play.floating import Floating
 from tko.play.floating_manager import FloatingManager
 from tko.play.border import Border
 from tko.settings.settings import Settings
-from tko.util.sentence import Sentence
+from tko.util.text import Text
 from tko.play.border import Border
 from typing import List, Tuple, Union, Callable
 from tko.play.functors import FlagFunctor
@@ -13,7 +13,7 @@ def empty_fn():
     pass
 
 class ConfigItem:
-    def __init__(self, flag: Flag, fn: Callable[[], None], sentence: Sentence = Sentence() ):
+    def __init__(self, flag: Flag, fn: Callable[[], None], sentence: Text = Text() ):
         self.flag = flag
         self.fn: Callable[[], None] = fn
         self.sentence = sentence
@@ -53,14 +53,14 @@ class Config:
         if self.index == -1:
             self.index = self.size - 1
 
-    def mark_focused(self, index, elem: Flag) -> Sentence:
+    def mark_focused(self, index, elem: Flag) -> Text:
         pad = 14 if index == self.index else 14
         sentence = self.border.get_flag_sentence(elem, pad)
 
         if index == self.index and self.enabled:
             focus = self.colors.focused_item
             return sentence
-        return Sentence("    ").add(sentence)
+        return Text("    ").add(sentence)
 
     def graph_toggle(self):
         self.gen_graph = not self.gen_graph

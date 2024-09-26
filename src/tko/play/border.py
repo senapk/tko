@@ -1,5 +1,5 @@
 from .flags import Flag
-from ..util.sentence import Sentence, Token
+from ..util.text import Text, Token
 from ..settings.app_settings import AppSettings
 from tko.util.symbols import symbols
 
@@ -11,10 +11,10 @@ class Border:
         return self.app.has_borders()
 
     def border(self, color: str, data: str):
-        return Sentence().add(self.roundL(color)).addf(color, data).add(self.roundR(color))
+        return Text().add(self.roundL(color)).addf(color, data).add(self.roundR(color))
 
     def border_sharp(self, color: str, data: str):
-        return Sentence().add(self.sharpL(color)).addf(color, data).add(self.sharpR(color))
+        return Text().add(self.sharpL(color)).addf(color, data).add(self.sharpR(color))
 
     def roundL(self, color: str) -> Token:
         return Token("", color.lower()) if self.has_borders() else Token(" ", color)
@@ -29,7 +29,7 @@ class Border:
         return Token("", color.lower()) if self.has_borders() else Token(" ", color)
 
     def build_bar(self, text: str, percent: float, length: int, fmt_true: str = "/kC",
-                  fmt_false: str = "/kY", round=True) -> Sentence:
+                  fmt_false: str = "/kY", round=True) -> Text:
         if round and (len(text) >= length - 2):
             text = " " + text
 
@@ -49,7 +49,7 @@ class Border:
             xp_bar.data[-1] = self.roundR(xp_bar.data[-1].fmt)
         return xp_bar
 
-    def get_flag_sentence(self, flag: Flag, pad: int = 0, button_mode: bool = True) -> Sentence:
+    def get_flag_sentence(self, flag: Flag, pad: int = 0, button_mode: bool = True) -> Text:
         char = flag.get_keycode()
         text = flag.get_name()
         color = "M" 
@@ -59,14 +59,14 @@ class Border:
             symbol = symbols.success if flag.is_true() else symbols.failure
         if not button_mode:
             color = color.lower()
-        extra = Sentence()
+        extra = Text()
         filler = " "
         if pad > 2:
             extra.addf(color, (pad - 2 - len(text)) * filler)
 
-        mid = Sentence().addf(color, symbol.text).addf(color, " ").addf(color, text).add(extra).addf(color, f"[{char}]")
+        mid = Text().addf(color, symbol.text).addf(color, " ").addf(color, text).add(extra).addf(color, f"[{char}]")
         if button_mode:
-            middle = Sentence().add(self.roundL(color)).add(mid).add(self.roundR(color))
+            middle = Text().add(self.roundL(color)).add(mid).add(self.roundR(color))
         else:
-            middle = Sentence().add(" ").add(mid).add(" ")
+            middle = Text().add(" ").add(mid).add(" ")
         return middle

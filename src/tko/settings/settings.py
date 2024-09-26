@@ -5,7 +5,7 @@ from .app_settings import AppSettings
 import os
 import appdirs
 from ..util.term_color import term_print
-from ..util.sentence import Sentence
+from ..util.text import Text
 from ..play.colors import Colors
 from ..util.term_color import term_print
 from tko.util.report import Report
@@ -105,15 +105,15 @@ class Settings:
     def check_rootdir(self):
         if self.app._rootdir != "":
             return
-        term_print(Sentence().add("Pasta padrão para download de arquivos ").addf("r", "precisa").add(" ser definida."))
+        term_print(Text().add("Pasta padrão para download de arquivos ").addf("r", "precisa").add(" ser definida."))
         here_cwd = os.getcwd()
         qxcode = os.path.join(os.path.expanduser("~"), "qxcode")
 
         while True:
-            term_print(Sentence().addf("r", "1").add(" - ").add(here_cwd))
-            term_print(Sentence().addf("r", "2").add(" - ").add(qxcode))
-            term_print(Sentence().addf("r", "3").add(" - ").add("Outra pasta"))
-            term_print(Sentence().add("Default ").addf("r", "1").add(": "), end="")
+            term_print(Text().addf("r", "1").add(" - ").add(here_cwd))
+            term_print(Text().addf("r", "2").add(" - ").add(qxcode))
+            term_print(Text().addf("r", "3").add(" - ").add("Outra pasta"))
+            term_print(Text().add("Default ").addf("r", "1").add(": "), end="")
             op = input()
             if op == "":
                 op = "1"
@@ -124,7 +124,7 @@ class Settings:
                 home_qxcode = qxcode
                 break
             if op == "3":
-                term_print(Sentence().addf("y", "Navegue até o diretório desejado e execute o tko novamente."))
+                term_print(Text().addf("y", "Navegue até o diretório desejado e execute o tko novamente."))
                 exit(1)
 
         if not os.path.exists(home_qxcode):
@@ -144,7 +144,7 @@ class Settings:
                 print("Escolha um dos repositórios para abrir:")
                 options: Dict[int, str] = {}
                 for i, alias in enumerate(self.reps, start=1):
-                    term_print(Sentence().addf("r", str(i)).add(f" - {alias}"))
+                    term_print(Text().addf("r", str(i)).add(f" - {alias}"))
                     options[i] = alias
                 while True:
                     try:

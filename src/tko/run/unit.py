@@ -1,6 +1,6 @@
 from typing import Optional
 from ..util.consts import ExecutionResult
-from ..util.sentence import Sentence
+from ..util.text import Text
 import os
 
 class Unit:
@@ -19,15 +19,15 @@ class Unit:
 
         self.result: ExecutionResult = ExecutionResult.UNTESTED
 
-    def str(self, pad: bool = True) -> Sentence:
+    def str(self, pad: bool = True) -> Text:
         index = str(self.index).zfill(2)
         grade = str(self.grade_reduction).zfill(3)
         rep = "" if self.repeated is None else " [" + str(self.repeated) + "]"
-        op = Sentence() + ExecutionResult.get_symbol(self.result) + " " + self.result.value
+        op = Text() + ExecutionResult.get_symbol(self.result) + " " + self.result.value
         source = os.path.basename(self.source)
         if pad:
             source = self.source.ljust(self.source_pad)
         case = self.case
         if pad:
             case = self.case.ljust(self.case_pad)
-        return Sentence() + "(" + op + ")" + f"[{index}] GR:{grade} {source} ({case}){rep}"
+        return Text() + "(" + op + ")" + f"[{index}] GR:{grade} {source} ({case}){rep}"

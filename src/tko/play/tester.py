@@ -22,7 +22,7 @@ from tko.run.wdir import Wdir
 from tko.settings.settings import Settings
 from tko.util.consts import ExecutionResult, Success
 from tko.util.freerun import Free
-from tko.util.sentence import RToken, Sentence, Token
+from tko.util.text import RToken, Text, Token
 from tko.util.symbols import symbols
 from tko.util.consts import DiffMode
 from tko.play.input_manager import InputManager
@@ -86,11 +86,11 @@ class Tester:
         if align == "v":
             init_y = dy - len(lines) - 1
         for i, line in enumerate(lines):
-            info = Sentence().addf(color, line).center(dx - 2, Token(" ", " "))
+            info = Text().addf(color, line).center(dx - 2, Token(" ", " "))
             if clear:
-                Fmt.write(i + init_y, 1, Sentence(" " * info.len()))
+                Fmt.write(i + init_y, 1, Text(" " * info.len()))
             else:
-                Fmt.write(i + init_y, 1, Sentence().addf(color, line).center(dx - 2, Token(" ", " ")))
+                Fmt.write(i + init_y, 1, Text().addf(color, line).center(dx - 2, Token(" ", " ")))
 
     def show_success(self):
         if self.settings.app.has_images():
@@ -158,7 +158,7 @@ class Tester:
 
         _, cols = Fmt.get_size()
         for i in range(len(bar)):
-            Fmt.write(i + y_init, cols - 1, Sentence().add(bar[i]))
+            Fmt.write(i + y_init, cols - 1, Text().add(bar[i]))
 
     def get_folder(self):
         source_list = self.wdir.get_source_list()
@@ -245,12 +245,12 @@ class Tester:
         running_color = "R"
 
         # building activity
-        activity = Sentence().add(self.borders.border(activity_color, self.get_folder()))
+        activity = Text().add(self.borders.border(activity_color, self.get_folder()))
 
         # building solvers
-        solvers = Sentence()
+        solvers = Text()
         if len(self.get_solver_names()) > 1:
-            solvers.add(Sentence().add(self.borders.roundL("R")).addf("R", f"{GuiActions.tab}").add(self.borders.sharpR("R")))
+            solvers.add(Text().add(self.borders.roundL("R")).addf("R", f"{GuiActions.tab}").add(self.borders.sharpR("R")))
         for i, solver in enumerate(self.get_solver_names()):
             if len(self.get_solver_names()) > 1:
                 solvers.add(" ")
@@ -262,16 +262,16 @@ class Tester:
         # replacing with count if running
         done = len(self.results)
         full = len(self.wdir.get_unit_list())
-        count_missing = Sentence().add(self.borders.border(running_color, f"({done}/{full})"))
+        count_missing = Text().add(self.borders.border(running_color, f"({done}/{full})"))
         if self.mode == SeqMode.running:
             if  self.locked_index:
-                solvers = Sentence().add(self.borders.border("R", "Executando atividade travada"))
+                solvers = Text().add(self.borders.border("R", "Executando atividade travada"))
             else:
                 solvers = count_missing
 
         # building sources
-        source_names = Sentence(", ").join([Sentence().addf(sources_color, f"{name[0]}({name[1]})") for name in self.wdir.sources_names()])
-        sources = Sentence().add(self.borders.roundL(sources_color)).add(source_names).add(self.borders.roundR(sources_color))
+        source_names = Text(", ").join([Text().addf(sources_color, f"{name[0]}({name[1]})") for name in self.wdir.sources_names()])
+        sources = Text().add(self.borders.roundL(sources_color)).add(source_names).add(self.borders.roundR(sources_color))
 
         # merging activity, solvers and sources in header
         delta = frame.get_dx() - solvers.len()
@@ -283,9 +283,9 @@ class Tester:
             delta_right = delta - delta_left
             right = max(1, delta_right - sources.len())
 
-        return Sentence().add(activity).add("─" * left).add(solvers).add("─" * right).add(sources)
+        return Text().add(activity).add("─" * left).add(solvers).add("─" * right).add(sources)
 
-    def build_unit_list(self, frame: Frame) -> Sentence:
+    def build_unit_list(self, frame: Frame) -> Text:
         done_list = self.results
         if len(done_list) > 0 and self.locked_index:
             _, index = done_list[self.focused_index]
@@ -302,7 +302,7 @@ class Tester:
         i = 0
         show_focused_index = not self.wdir.get_solver().compile_error and not self.mode == SeqMode.intro and not self.is_all_right()
         
-        output = Sentence()
+        output = Text()
         if self.wdir.has_tests():
             output.add(self.get_fixed_arrow())
         else:
@@ -334,9 +334,9 @@ class Tester:
         output.data = output.data[:3 * 6] + output.data[3 * 6 + to_remove:]
         return output
 
-    def get_fixed_arrow(self) -> Sentence:
+    def get_fixed_arrow(self) -> Text:
         
-        output = Sentence()
+        output = Text()
         # diff
         diff = self.settings.app.get_diff_mode()
         if diff == DiffMode.DOWN:
@@ -373,14 +373,14 @@ class Tester:
         if not self.wdir.has_tests():
             return
         value = self.get_focused_unit()
-        info = Sentence()
+        info = Text()
         if self.wdir.get_solver().compile_error:
             info = self.borders.border("R", "Erro de compilação")
         elif value is not None and not self.is_all_right() and not self.mode == SeqMode.intro:
             info = value.str(pad = False)
             # if self.locked_index:
             #     info = self.borders.border(focused_unit_color, info.get_text())
-        frame.write(0, 0, Sentence().add(info).center(frame.get_dx()))
+        frame.write(0, 0, Text().add(info).center(frame.get_dx()))
 
     def draw_top_bar(self):
         # construir mais uma solução
@@ -393,10 +393,10 @@ class Tester:
         
     def two_column_mode(self):
         _, cols = Fmt.get_size()
-        return cols < Sentence(" ").join(self.make_bottom_line()).len() + 2
+        return cols < Text(" ").join(self.make_bottom_line()).len() + 2
 
-    def make_bottom_line(self) -> List[Sentence]:
-        cmds: List[Sentence] = []
+    def make_bottom_line(self) -> List[Text]:
+        cmds: List[Text] = []
         if self.app.has_full_hud():
             # rodar
             cmds.append(self.borders.border("M", f"{GuiActions.rodar} [{GuiKeys.rodar}]"))
@@ -424,7 +424,7 @@ class Tester:
             if value == "0":
                 value = symbols.infinity.text
             cmds.append(
-                Sentence()
+                Text()
                     .add(self.borders.roundL("M"))
                     .add(RToken("M", "{} {}[{}]".format(GuiActions.tempo, value, GuiKeys.tempo)))
                     .add(self.borders.roundR("M"))
@@ -445,10 +445,10 @@ class Tester:
             line = self.make_bottom_line()
             one = line[0:2] + line[-2:]
             two = line[2:-2]
-            Fmt.write(lines - 2, 0, Sentence(" ").join(one).center(cols, Token(" ")))
-            Fmt.write(lines - 1, 0, Sentence(" ").join(two).center(cols, Token(" ")))
+            Fmt.write(lines - 2, 0, Text(" ").join(one).center(cols, Token(" ")))
+            Fmt.write(lines - 1, 0, Text(" ").join(two).center(cols, Token(" ")))
         else:
-            out = Sentence(" ").join(self.make_bottom_line())
+            out = Text(" ").join(self.make_bottom_line())
             # if Fmt.get_size()[1] % 2 == 0:
             #     out.add("-")
             Fmt.write(lines - 1, 0, out.center(cols, Token(" ")))
@@ -478,7 +478,7 @@ class Tester:
         
         if self.wdir.get_solver().compile_error:
             received = self.wdir.get_solver().error_msg
-            line_list = [Sentence().add(line) for line in received.split("\n")]
+            line_list = [Text().add(line) for line in received.split("\n")]
         elif self.settings.app.get_diff_mode() == DiffMode.DOWN or not self.wdir.has_tests():
             line_list = DiffBuilder.mount_up_down_diff(unit, curses=True)
         else:
@@ -495,7 +495,7 @@ class Tester:
         if self.init < self.length:
             line_list = line_list[self.init:]
         for i, line in enumerate(line_list):
-            frame.write(i, 0, Sentence().add(line))
+            frame.write(i, 0, Text().add(line))
 
         self.draw_scrollbar()
         return
@@ -647,8 +647,8 @@ class Tester:
             self.fman.add_input(
                 Floating("v>").warning()
                 .put_text("Atividade travada")
-                .put_sentence(Sentence("Aperte ").addf("g", GuiKeys.travar).add(" para destravar"))
-                .put_sentence(Sentence("Use ").addf("g", "Enter").add(" para rodar os testes"))
+                .put_sentence(Text("Aperte ").addf("g", GuiKeys.travar).add(" para destravar"))
+                .put_sentence(Text("Use ").addf("g", "Enter").add(" para rodar os testes"))
             )
 
     def change_limit(self):
