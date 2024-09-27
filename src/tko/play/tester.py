@@ -14,7 +14,7 @@ from tko.play.images import compilling, executing, images, intro, random_get, su
 from tko.play.keys import GuiActions, GuiKeys, GuiKeys
 from tko.play.opener import Opener
 from tko.run.diff_builder import DiffBuilder
-from tko.util.report import Report
+from tko.util.raw_terminal import RawTerminal
 from tko.run.solver_builder import CompileError
 from tko.run.unit import Unit
 from tko.run.unit_runner import UnitRunner
@@ -474,7 +474,7 @@ class Tester:
         if self.is_all_right():
             self.show_success()
             return
-        Report.set_terminal_size(cols)
+        RawTerminal.set_terminal_size(cols)
         
         if self.wdir.get_solver().compile_error:
             received = self.wdir.get_solver().error_msg

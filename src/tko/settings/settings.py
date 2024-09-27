@@ -4,11 +4,10 @@ from .rep_settings import RepData, RepSource
 from .app_settings import AppSettings
 import os
 import appdirs
-from ..util.term_color import term_print
-from ..util.text import Text
-from ..play.colors import Colors
-from ..util.term_color import term_print
-from tko.util.report import Report
+
+from tko.util.text import Text
+from tko.play.colors import Colors
+from tko.util.raw_terminal import RawTerminal
 
 def singleton(class_):
     instances = {}
@@ -105,15 +104,15 @@ class Settings:
     def check_rootdir(self):
         if self.app._rootdir != "":
             return
-        term_print(Text().add("Pasta padrão para download de arquivos ").addf("r", "precisa").add(" ser definida."))
+        print(Text().add("Pasta padrão para download de arquivos ").addf("r", "precisa").add(" ser definida."))
         here_cwd = os.getcwd()
         qxcode = os.path.join(os.path.expanduser("~"), "qxcode")
 
         while True:
-            term_print(Text().addf("r", "1").add(" - ").add(here_cwd))
-            term_print(Text().addf("r", "2").add(" - ").add(qxcode))
-            term_print(Text().addf("r", "3").add(" - ").add("Outra pasta"))
-            term_print(Text().add("Default ").addf("r", "1").add(": "), end="")
+            print(Text().addf("r", "1").add(" - ").add(here_cwd))
+            print(Text().addf("r", "2").add(" - ").add(qxcode))
+            print(Text().addf("r", "3").add(" - ").add("Outra pasta"))
+            print(Text().add("Default ").addf("r", "1").add(": "), end="")
             op = input()
             if op == "":
                 op = "1"
@@ -124,13 +123,13 @@ class Settings:
                 home_qxcode = qxcode
                 break
             if op == "3":
-                term_print(Text().addf("y", "Navegue até o diretório desejado e execute o tko novamente."))
+                print(Text().addf("y", "Navegue até o diretório desejado e execute o tko novamente."))
                 exit(1)
 
         if not os.path.exists(home_qxcode):
             os.makedirs(home_qxcode)
-        term_print("Pasta padrão para download de arquivos foi definida em: " + home_qxcode)
-        term_print(Report.centralize("", "-"))
+        print("Pasta padrão para download de arquivos foi definida em: " + home_qxcode)
+        print(RawTerminal.centralize("", "-"))
         self.app._rootdir = home_qxcode
         self.save_settings();
         return self
@@ -144,7 +143,7 @@ class Settings:
                 print("Escolha um dos repositórios para abrir:")
                 options: Dict[int, str] = {}
                 for i, alias in enumerate(self.reps, start=1):
-                    term_print(Text().addf("r", str(i)).add(f" - {alias}"))
+                    print(Text().addf("r", str(i)).add(f" - {alias}"))
                     options[i] = alias
                 while True:
                     try:

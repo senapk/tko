@@ -4,17 +4,16 @@ import shutil
 import subprocess
 
 from ..run.wdir import Wdir
-from ..util.consts import DiffCount, ExecutionResult
-from ..util.param import Param
+from tko.util.consts import DiffCount, ExecutionResult
+from tko.util.param import Param
 from ..run.diff_builder import DiffBuilder
-from ..util.text import Text, Token
+from tko.util.text import Text, Token
 
-from ..util.consts import Success
-from ..util.report import Report
-from ..util.term_color import term_print
-from ..util.symbols import symbols
+from tko.util.consts import Success
+from tko.util.raw_terminal import RawTerminal
+from tko.util.symbols import symbols
 
-from ..util.freerun import Free
+from tko.util.freerun import Free
 from ..play.tester import Tester
 from ..run.unit_runner import UnitRunner
 from ..game.task import Task
@@ -96,7 +95,7 @@ class Run:
         if self.param.filter:
             old_dir = os.getcwd()
 
-            term_print(Report.centralize(" Entrando no modo de filtragem ", "═"))
+            print(RawTerminal.centralize(" Entrando no modo de filtragem ", "═"))
             FilterMode.deep_copy_and_change_dir()  
             # search for target outside . dir and redirect target
             new_target_list = []
@@ -111,20 +110,20 @@ class Run:
         if self.wdir is None:
             return
 
-        term_print(Text().add(symbols.opening).add(self.wdir.resume()), end="")
-        term_print(" [", end="")
+        print(Text().add(symbols.opening).add(self.wdir.resume()), end="")
+        print(" [", end="")
         first = True
         for unit in self.wdir.get_unit_list():
             if first:
                 first = False
             else:
-                term_print(" ", end="")
+                print(" ", end="")
             solver = self.wdir.get_solver()
             if solver is None:
                 raise Warning("Solver vazio")
             unit.result = UnitRunner.run_unit(solver, unit)
-            term_print(Text() + ExecutionResult.get_symbol(unit.result), end="")
-        term_print("]")
+            print(Text() + ExecutionResult.get_symbol(unit.result), end="")
+        print("]")
 
     def __print_diff(self):
         if self.wdir is None or not self.wdir.has_solver():
@@ -134,7 +133,7 @@ class Run:
             return
         
         if self.wdir.get_solver().compile_error:
-            term_print(self.wdir.get_solver().error_msg)
+            print(self.wdir.get_solver().error_msg)
             return
         
         results = [unit.result for unit in self.wdir.get_unit_list()]
@@ -143,17 +142,17 @@ class Run:
         
         if not self.param.compact:
             for elem in self.wdir.unit_list_resume():
-                term_print(elem)
+                print(elem)
         
         if self.param.diff_count == DiffCount.FIRST:
             # printing only the first wrong case
             wrong = [unit for unit in self.wdir.get_unit_list() if unit.result != ExecutionResult.SUCCESS][0]
             if self.param.diff_mode == DiffMode.DOWN:
                 for line in DiffBuilder.mount_up_down_diff(wrong):
-                    term_print(line)
+                    print(line)
             else:
                 for line in DiffBuilder.mount_side_by_side_diff(wrong):
-                    term_print(line)
+                    print(line)
             return
 
         if self.param.diff_count == DiffCount.ALL:
@@ -161,10 +160,10 @@ class Run:
                 if unit.result != ExecutionResult.SUCCESS:
                     if self.param.diff_mode:
                         for line in DiffBuilder.mount_up_down_diff(unit):
-                            term_print(line)
+                            print(line)
                     else:
                         for line in DiffBuilder.mount_side_by_side_diff(unit):
-                            term_print(line)
+                            print(line)
 
     def build_wdir(self):
         self.wdir_builded = True
@@ -182,7 +181,7 @@ class Run:
         if self.wdir is None:
             return False
         if not self.wdir.has_solver() and not self.wdir.has_tests():
-            term_print(Text().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
+            print(Text().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
             return True
         return False
     
@@ -192,10 +191,10 @@ class Run:
 
         # list mode
         if not self.wdir.has_solver() and self.wdir.has_tests():
-            term_print(Report.centralize(" Nenhum arquivo de código encontrado. Listando casos de teste.", Token("╌")), flush=True)
-            term_print(self.wdir.resume())
+            print(RawTerminal.centralize(" Nenhum arquivo de código encontrado. Listando casos de teste.", Token("╌")), flush=True)
+            print(self.wdir.resume())
             for line in self.wdir.unit_list_resume():
-                term_print(line)
+                print(line)
             return True
         return False
 
@@ -241,6 +240,6 @@ class Run:
             cdiff.set_autorun(self.__autorun)
             cdiff.run()
         else:
-            term_print(Report.centralize(" Testando o código com os casos de teste ", "═"))
+            print(RawTerminal.centralize(" Testando o código com os casos de teste ", "═"))
             self.__print_top_line()
             self.__print_diff()

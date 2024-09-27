@@ -4,7 +4,7 @@ from ..util.symbols import symbols
 from ..util.text import Text, Token
 from ..util.consts import ExecutionResult
 from .unit import Unit
-from ..util.report import Report
+from ..util.raw_terminal import RawTerminal
 
 class DiffBuilder:
 
@@ -41,7 +41,7 @@ class DiffBuilder:
     # create a string with both ta and tb side by side with a vertical bar in the middle
     @staticmethod
     def side_by_side(ta: List[Text], tb: List[Text], unequal: Token = symbols.unequal) -> List[Text]:
-        cut = (Report.get_terminal_size() - 6) // 2
+        cut = (RawTerminal.get_terminal_size() - 6) // 2
         upper = max(len(ta), len(tb))
         data: List[Text] = []
 
@@ -124,7 +124,7 @@ class DiffBuilder:
 
         cut: int = 0
         if pad is True:
-            cut = (Report.get_terminal_size() - 6) // 2
+            cut = (RawTerminal.get_terminal_size() - 6) // 2
 
         max_size = max(a_size, b_size)
 
@@ -177,25 +177,25 @@ class DiffBuilder:
 
         color = "b" if string_expected != string_received else "g"
         if not curses:
-            output.append(Report.centralize("", symbols.hbar, "╭"))
-            output.append(Report.centralize(unit.str(), " ", symbols.vbar))
-            output.append(Report.centralize(Text().addf(color, DiffBuilder.vinput), symbols.hbar, "├"))
+            output.append(RawTerminal.centralize("", symbols.hbar, "╭"))
+            output.append(RawTerminal.centralize(unit.str(), " ", symbols.vbar))
+            output.append(RawTerminal.centralize(Text().addf(color, DiffBuilder.vinput), symbols.hbar, "├"))
         else:
             if no_diff_mode:
-                output.append(Report.centralize(Text().addf(color, DiffBuilder.vreceived), symbols.hbar, "╭"))
+                output.append(RawTerminal.centralize(Text().addf(color, DiffBuilder.vreceived), symbols.hbar, "╭"))
             else:
-                output.append(Report.centralize(Text().addf(color, DiffBuilder.vinput), symbols.hbar, "╭"))
+                output.append(RawTerminal.centralize(Text().addf(color, DiffBuilder.vinput), symbols.hbar, "╭"))
 
 
         output += string_input_list
             
         if string_expected != "":
-            output.append(Report.centralize(Text().addf("g", DiffBuilder.vexpected), symbols.hbar, "├"))
+            output.append(RawTerminal.centralize(Text().addf("g", DiffBuilder.vexpected), symbols.hbar, "├"))
             output += expected_lines
         # output.append("\n".join(expected_lines))
         rcolor = "r" if (string_expected != "" and string_expected != string_received) else "g"
         if no_diff_mode == False:
-            output.append(Report.centralize(Text().addf(rcolor, DiffBuilder.vreceived), symbols.hbar, "├"))
+            output.append(RawTerminal.centralize(Text().addf(rcolor, DiffBuilder.vreceived), symbols.hbar, "├"))
         output +=  received_lines
 
         include_rendering = False
@@ -205,9 +205,9 @@ class DiffBuilder:
             include_rendering = False
 
         if include_rendering:
-            output.append(Report.centralize(Text().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├"))
+            output.append(RawTerminal.centralize(Text().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├"))
             output += DiffBuilder.first_failure_diff(string_expected, string_received, first_failure)
-        output.append(Report.centralize("",  symbols.hbar, "╰"))
+        output.append(RawTerminal.centralize("",  symbols.hbar, "╰"))
 
         return output
 
@@ -228,7 +228,7 @@ class DiffBuilder:
             
     @staticmethod
     def title_side_by_side(left: Text, right: Text, filler: Token = Token(" "), middle: Token = Token(" "), prefix: Token = Token()) -> Text:
-        half = int((Report.get_terminal_size() - len(middle)) / 2)
+        half = int((RawTerminal.get_terminal_size() - len(middle)) / 2)
         line = Text()
         a = left
         a = a.center(half, filler)
@@ -262,15 +262,15 @@ class DiffBuilder:
 
         expected_lines, received_lines, first_failure = DiffBuilder.render_diff(string_expected, string_received, True)
         if not curses:
-            output.append(Report.centralize("", hbar, "╭"))
-            output.append(Report.centralize(unit.str(), " ", "│"))
+            output.append(RawTerminal.centralize("", hbar, "╭"))
+            output.append(RawTerminal.centralize(unit.str(), " ", "│"))
         input_color = "b" if string_expected != string_received else "g"
         input_headera = Text().addf(input_color, DiffBuilder.vinput)
         input_headerb = Text().addf(input_color, DiffBuilder.vinput)
         if not curses:
             output.append(DiffBuilder.title_side_by_side(input_headera, input_headerb, hbar, Token("┬"), Token("├")))
         else:
-            output.append(Report.centralize(Text().addf(input_color, DiffBuilder.vinput),  symbols.hbar, "╭"))
+            output.append(RawTerminal.centralize(Text().addf(input_color, DiffBuilder.vinput),  symbols.hbar, "╭"))
             # output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, TK("┬"), TK("╭")))
 
         if string_input != "":
@@ -285,10 +285,10 @@ class DiffBuilder:
             unequal = symbols.vbar
         output += DiffBuilder.side_by_side(expected_lines, received_lines, unequal)
         if unit.result != ExecutionResult.EXECUTION_ERROR and unit.result != ExecutionResult.COMPILATION_ERROR and string_expected != string_received:
-            output.append(Report.centralize(Text().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├"))
+            output.append(RawTerminal.centralize(Text().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├"))
             output += DiffBuilder.first_failure_diff(string_expected, string_received, first_failure)
-            output.append(Report.centralize("",  symbols.hbar, "╰"))
+            output.append(RawTerminal.centralize("",  symbols.hbar, "╰"))
         else:
-            output.append(Report.centralize("┴",  symbols.hbar, "╰"))
+            output.append(RawTerminal.centralize("┴",  symbols.hbar, "╰"))
 
         return output

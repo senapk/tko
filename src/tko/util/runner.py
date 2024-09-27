@@ -2,8 +2,6 @@ import subprocess
 from typing import Tuple, Optional
 import os
 from subprocess import PIPE
-from .term_color import term_print
-from .report import Report
 
 class Runner:
     def __init__(self):
@@ -23,8 +21,6 @@ class Runner:
         except subprocess.TimeoutExpired:
             err = "fail: processo abortado depois de {} segundos".format(timeout)
             return 1, "", err
-
-
 
     @staticmethod
     def clear_screen():

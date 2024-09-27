@@ -10,18 +10,18 @@ from tko.cmds.cmd_run import Run
 from tko.cmds.cmd_build import CmdBuild
 from tko.cmds.cmd_config import CmdConfig, ConfigParams
 from tko.util.logger import LogAction, Logger, LoggerFS
+from tko.util.text import AnsiColor
 
-from .util.param import Param
-from .util.pattern import PatternLoader
-from .util.consts import DiffCount, DiffMode
+from tko.util.param import Param
+from tko.util.pattern import PatternLoader
+from tko.util.consts import DiffCount, DiffMode
 from .settings.settings import Settings
 
-from .util.guide import tko_guide
-from .util.guide import bash_guide
+from tko.util.guide import tko_guide
+from tko.util.guide import bash_guide
 
-from .util.report import Report
-from .util.term_color import TermColor
-from .util.symbols import symbols
+from tko.util.raw_terminal import RawTerminal
+from tko.util.symbols import symbols
 from tko.settings.check_version import CheckVersion
 
 from .__init__ import __version__
@@ -238,16 +238,16 @@ class Parser:
 def exec(parser: argparse.ArgumentParser, args):
     settings = Settings()
     if args.w is not None:
-        Report.set_terminal_size(args.w)
+        RawTerminal.set_terminal_size(args.w)
     if args.c:
         settings.set_settings_file(args.c)
     settings.load_settings()
     Logger.instance = Logger(LoggerFS(settings))
 
     if args.m:
-        TermColor.enabled = False
+        AnsiColor.enabled = False
     else:
-        TermColor.enabled = True
+        AnsiColor.enabled = True
         symbols.set_colors()
 
     if args.v:
