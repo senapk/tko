@@ -20,7 +20,8 @@ class CmdPlay:
 
             # passing a lambda function to the play class to save the settings
             play = Play(settings=settings, game=game, rep=rep)
-            logger = Logger.get_instance().set_rep(rep_alias)
+            logger: Logger = Logger.get_instance()
+            logger.set_rep(rep_alias)
             logger.record_event(LogAction.OPEN)
             print(f"Abrindo repositório de {rep_alias}")
             reload = play.play()

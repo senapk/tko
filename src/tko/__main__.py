@@ -9,7 +9,7 @@ from tko.cmds.cmd_down import CmdDown
 from tko.cmds.cmd_run import Run
 from tko.cmds.cmd_build import CmdBuild
 from tko.cmds.cmd_config import CmdConfig, ConfigParams
-from tko.util.logger import LogAction, Logger
+from tko.util.logger import LogAction, Logger, LoggerFS
 
 from .util.param import Param
 from .util.pattern import PatternLoader
@@ -242,8 +242,7 @@ def exec(parser: argparse.ArgumentParser, args):
     if args.c:
         settings.set_settings_file(args.c)
     settings.load_settings()
-    logger = Logger.get_instance()
-    logger.set_settings(settings)
+    Logger.instance = Logger(LoggerFS(settings))
 
     if args.m:
         TermColor.enabled = False

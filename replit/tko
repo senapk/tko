@@ -24,6 +24,7 @@ import math
 import configparser
 import csv
 import hashlib
+from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
 __version__ = "0.32.1"
@@ -4453,6 +4454,8 @@ class CmdBuild:
         return True
 
 
+
+
 class LogAction(enum.Enum):
     NONE = 'NONE'
     OPEN = 'OPEN'
@@ -4482,78 +4485,6 @@ class ActionData:
     def __str__(self):
         return f'{self.timestamp}, {self.action_value}, {self.rep}, {self.task}, {self.payload}'
 
-class Logger:
-    instance = None
-    COMP_ERROR = "COMPILATION_ERROR"
-    grade_action_cache: str | None = None
-
-    @staticmethod
-    def get_instance():
-        if Logger.instance is None:
-            Logger.instance = Logger()
-        return Logger.instance
-
-    def __init__(self):
-        self.settings: Settings | None = None
-        self.last_hash: str = ""
-        self.rep_alias: str = ""
-        self.cached_action: ActionData | None = None
-
-    def get_settings(self) -> Settings:
-        if self.settings is None:
-            raise Exception("Settings not set")
-        return self.settings
-
-    def set_settings(self, settings: Settings):
-        self.settings = settings
-        return self
-
-    def set_rep(self, rep_alias: str):
-        self.rep_alias = rep_alias
-        self.last_hash = self.get_last_hash()
-        return self
-
-    def get_last_hash(self) -> str:
-        # open csv file and get last hash
-        log_file = self.get_log_file()
-        if not os.path.exists(log_file):
-            return ""
-        with open(log_file, 'r') as file:
-            reader = csv.reader(file)
-            rows = list(reader)
-            if len(rows) == 0:
-                return ""
-            return rows[-1][0]
-
-    def check_log_file_integrity(self):
-        log_file = self.get_log_file()
-        if not os.path.exists(log_file):
-            return False
-        with open(log_file, 'r') as file:
-            reader = csv.reader(file)
-            rows = list(reader)
-            for i in range(1, len(rows)):
-                hash_anterior = rows[i-1][0]
-
-                hash = rows[i][0]
-                timestamp = rows[i][1]
-                action = rows[i][2]
-                rep = rows[i][3]
-                task = rows[i][4]
-                payload = rows[i][5]
-
-                action_data = ActionData(timestamp, action, rep, task, payload)
-                calc_hash = self.generate_hash(action_data, hash_anterior)
-                if calc_hash != hash:
-                    print('Erro de continuidade na linha {}: {}'.format(str(i + 1).rjust(4), rows[i]))
-        return True
-
-
-    def get_log_file(self):
-        rootdir = self.get_settings().app.get_rootdir()
-        log_file = "rep_log.csv"
-        return os.path.join(rootdir, self.rep_alias, log_file)
-
     @staticmethod
     def generate_hash(action_data: ActionData, last_hash: str):
         comprimento = 6
@@ -4561,14 +4492,131 @@ class Logger:
         hash_completo = hashlib.sha256(input_str.encode()).hexdigest()
         return hash_completo[:comprimento]  # Retorna os primeiros 'comprimento' caracteres do hash
 
-    def push_to_file(self, action_data: ActionData):
-        action_data.hash = self.generate_hash(action_data, self.last_hash)
+class LoggerStore(ABC):
+    @abstractmethod
+    def push_to_file(self, action_data: ActionData, last_hash: str):
+        pass
+
+    @abstractmethod
+    def get_action_entries(self) -> list[ActionData]:
+        pass
+
+    @abstractmethod
+    def set_rep(self, rep_alias: str) -> None:
+        pass
+
+    @abstractmethod
+    def get_last_hash(self) -> str:
+        pass
+
+class LoggerFS(LoggerStore):
+
+    def __init__(self, settings: Settings):
+        self.log_file: str | None = None
+        self.settings = settings
+        self.rep_alias = ""
+
+    def set_rep(self, rep_alias: str):
+        self.rep_alias = rep_alias
+        return self
+
+    def set_log_file(self, log_file: str):
+        self.log_file = log_file
+        return self
+    
+    def get_log_file(self) -> str:
+        if self.log_file is not None:
+            return self.log_file
+        rootdir = self.settings.app.get_rootdir()
+        log_file = "rep_log.csv"
+        return os.path.join(rootdir, self.rep_alias, log_file)
+    
+    @staticmethod
+    def row_to_action_data(row: list[str]) -> ActionData:
+        hash = row[0]
+        timestamp = row[1]
+        action_value = row[2]
+        rep = row[3]
+        task = row[4]
+        payload = row[5]
+        action_data = ActionData(timestamp, action_value, rep, task, payload)
+        action_data.hash = hash
+        return action_data
+
+    def push_to_file(self, action_data: ActionData, last_hash: str):
+        action_data.hash = ActionData.generate_hash(action_data, last_hash)
         
         with open(self.get_log_file(), 'a', newline='') as file:
             writer = csv.writer(file)
             ad = action_data
             writer.writerow([ad.hash, ad.timestamp, ad.action_value, ad.rep, ad.task, ad.payload])
-            self.last_hash = ad.hash
+            return ad.hash
+
+    def get_action_entries(self) -> list[ActionData]:
+        log_file = self.get_log_file()
+        if not os.path.exists(log_file):
+            return []
+        with open(log_file, 'r') as file:
+            reader = csv.reader(file)
+            rows = list(reader)
+            return [self.row_to_action_data(row) for row in rows]
+
+    def get_last_hash(self) -> str:
+        return self.get_action_entries()[-1].hash if len(self.get_action_entries()) > 0 else ""
+
+class LoggerMemory(LoggerStore):
+    def __init__(self):
+        self.entries: list[ActionData] = []
+        self.rep_alias = ""
+
+    def set_rep(self, rep_alias: str):
+        self.rep_alias = rep_alias
+        return self
+
+    def push_to_file(self, action_data: ActionData, last_hash: str):
+        action_data.hash = ActionData.generate_hash(action_data, last_hash)
+        self.entries.append(action_data)
+        return action_data.hash
+
+    def get_action_entries(self) -> list[ActionData]:
+        return self.entries
+
+    def get_last_hash(self) -> str:
+        return self.entries[-1].hash if len(self.entries) > 0 else ""
+
+class Logger:
+    instance: None | Logger = None
+    COMP_ERROR = "COMPILATION_ERROR"
+
+    @staticmethod
+    def get_instance() -> Logger:
+        if Logger.instance is None:
+            raise Exception("Logger not initialized")
+        return Logger.instance
+
+    def __init__(self, logger_store: LoggerStore):
+        self.last_hash: str | None = None
+        self.rep_alias: str = ""
+        self.cached_action: ActionData | None = None
+        self.fs = logger_store
+
+    def set_rep(self, rep_alias: str):
+        self.rep_alias = rep_alias
+        self.fs.set_rep(rep_alias)
+        return self
+
+    def check_log_file_integrity(self) -> list[str]:
+        entries = self.fs.get_action_entries()
+        if len(entries) == 0:
+            return []
+        hash = entries[0].hash
+        output: list[str] = []
+
+        for i in range(1, len(entries)):
+            calculated_hash = ActionData.generate_hash(entries[i], hash)
+            if calculated_hash != entries[i].hash:
+                output.append(f"Hash mismatch line {i}: {str(entries[i])}")
+        return output
 
     def store_in_cached(self, action_data: ActionData) -> bool:
         if self.cached_action is None and action_data.action_value == LogAction.SELF.value:
@@ -4579,21 +4627,28 @@ class Logger:
 
     def record_event(self, action: LogAction, task: str = "", payload: str = ""):
         if self.rep_alias == "":
-            return
+            raise Exception("Rep not set")
         action_data = ActionData(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), action.value, self.rep_alias, task, payload)
-        
+        self.record_action_data(action_data)
+
+    def get_last_hash(self) -> str:
+        if self.last_hash is None:
+            self.last_hash = self.fs.get_last_hash()
+        return self.last_hash
+
+    def record_action_data(self, action_data: ActionData):
         if self.store_in_cached(action_data):
             self.cached_action = action_data
             return
         
         if self.cached_action is not None:
-            self.push_to_file(self.cached_action)
+            self.last_hash = self.fs.push_to_file(self.cached_action, self.get_last_hash())
             self.cached_action = None
         
         if self.store_in_cached(action_data):
             self.cached_action = action_data
         else:
-            self.push_to_file(action_data)
+            self.last_hash = self.fs.push_to_file(action_data, self.get_last_hash())
 
 
 class Task:
@@ -8347,7 +8402,8 @@ class CmdPlay:
 
             # passing a lambda function to the play class to save the settings
             play = Play(settings=settings, game=game, rep=rep)
-            logger = Logger.get_instance().set_rep(rep_alias)
+            logger: Logger = Logger.get_instance()
+            logger.set_rep(rep_alias)
             logger.record_event(LogAction.OPEN)
             print(f"Abrindo repositório de {rep_alias}")
             reload = play.play()
@@ -8578,8 +8634,7 @@ def exec(parser: argparse.ArgumentParser, args):
     if args.c:
         settings.set_settings_file(args.c)
     settings.load_settings()
-    logger = Logger.get_instance()
-    logger.set_settings(settings)
+    Logger.instance = Logger(LoggerFS(settings))
 
     if args.m:
         TermColor.enabled = False
