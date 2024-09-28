@@ -8,11 +8,18 @@ import os
 
 class CmdRep:
     @staticmethod
-    def log(args):
+    def check(args):
         rep = args.alias
         logger = Logger.get_instance()
         logger.set_rep(rep)
-        logger.check_log_file_integrity()
+        output = logger.check_log_file_integrity()
+        if len(output) == 0:
+            print(f"Arquivo de log do repositório {rep} está íntegro.")
+        else:
+            print(f"Arquivo de log do repositório {rep} está corrompido.")
+            print("Erros:")
+            for error in output:
+                print(f"- {error}")
 
     @staticmethod
     def list(_args):

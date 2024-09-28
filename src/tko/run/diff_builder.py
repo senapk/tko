@@ -50,12 +50,10 @@ class DiffBuilder:
             b = tb[i] if i < len(tb) else Text("###############")
             if len(a) < cut:
                 a = a.ljust(cut, Token(" "))
-            # if len(a) > cut:
-            #     a = a[:cut]
             if i >= len(ta) or i >= len(tb) or ta[i] != tb[i]:
-                data.append(Text() + unequal + " " + a + " " + unequal + " " + b)
+                data.append(Text() + unequal + " " + a + " " + unequal + " " + b + " " + symbols.vbar)
             else:
-                data.append(Text() + symbols.vbar + " " + a + " " + symbols.vbar + " " + b)
+                data.append(Text() + symbols.vbar + " " + a + " " + symbols.vbar + " " + b + " " + symbols.vbar)
 
         return data
 
@@ -83,11 +81,11 @@ class DiffBuilder:
         out_a, out_b = DiffBuilder.colorize_2_lines_diff(Text(first_a), Text(first_b))
         greater = max(len(out_a), len(out_b))
         output: List[Text] = []
-
-        output.append(Text().add(symbols.vbar).add(" ").add(out_a.ljust(greater)).addf("g", " (esperado)"))
-        output.append(Text().add(symbols.vbar).add(" ").add(out_b.ljust(greater)).addf("r", " (recebido)"))
+        width = RawTerminal.get_terminal_size() - 13
+        output.append(Text().add(" ").add(out_a.ljust(greater)).trim_end(width).addf("g", " (esperado)"))
+        output.append(Text().add(" ").add(out_b.ljust(greater)).trim_end(width).addf("r", " (recebido)"))
         diff = DiffBuilder.make_line_arrow_up(first_a, first_b)
-        output.append(Text().add(symbols.vbar).add(" ").add(diff.ljust(greater)).addf("b", " (primeiro)"))
+        output.append(Text().add(" ").add(diff.ljust(greater)).trim_end(width).addf("b", " (primeiro)"))
         return output
 
     @staticmethod
@@ -160,6 +158,8 @@ class DiffBuilder:
     def mount_up_down_diff(unit: Unit, curses=False) -> List[Text]:
         output: List[Text] = []
 
+        width = RawTerminal.get_terminal_size() - 1
+
         string_input = unit.input
         string_expected = unit.output
         string_received = unit.user
@@ -177,26 +177,30 @@ class DiffBuilder:
 
         color = "b" if string_expected != string_received else "g"
         if not curses:
-            output.append(RawTerminal.centralize("", symbols.hbar, "╭"))
-            output.append(RawTerminal.centralize(unit.str(), " ", symbols.vbar))
-            output.append(RawTerminal.centralize(Text().addf(color, DiffBuilder.vinput), symbols.hbar, "├"))
+            output.append(RawTerminal.centralize("", symbols.hbar, "╭", "╮"))
+            output.append(RawTerminal.centralize(unit.str(), " ", symbols.vbar, symbols.vbar))
+            output.append(RawTerminal.centralize(Text().addf(color, DiffBuilder.vinput), symbols.hbar, "├", "┤"))
         else:
             if no_diff_mode:
                 output.append(RawTerminal.centralize(Text().addf(color, DiffBuilder.vreceived), symbols.hbar, "╭"))
             else:
                 output.append(RawTerminal.centralize(Text().addf(color, DiffBuilder.vinput), symbols.hbar, "╭"))
 
+        for line in string_input_list:
+            output.append(line.ljust(width, Token(" ")).add(symbols.vbar))
 
-        output += string_input_list
-            
         if string_expected != "":
-            output.append(RawTerminal.centralize(Text().addf("g", DiffBuilder.vexpected), symbols.hbar, "├"))
-            output += expected_lines
+            output.append(RawTerminal.centralize(Text().addf("g", DiffBuilder.vexpected), symbols.hbar, "├", "┤"))
+            for line in expected_lines:
+                output.append(line.ljust(width, Token(" ")).add(symbols.vbar))
+            
         # output.append("\n".join(expected_lines))
         rcolor = "r" if (string_expected != "" and string_expected != string_received) else "g"
         if no_diff_mode == False:
-            output.append(RawTerminal.centralize(Text().addf(rcolor, DiffBuilder.vreceived), symbols.hbar, "├"))
-        output +=  received_lines
+            output.append(RawTerminal.centralize(Text().addf(rcolor, DiffBuilder.vreceived), symbols.hbar, "├", "┤"))
+        
+        for line in received_lines:
+            output.append(line.ljust(width, Token(" ")).trim_end(width).add(symbols.vbar))
 
         include_rendering = False
         if string_expected != string_received and string_expected != "":
@@ -205,9 +209,10 @@ class DiffBuilder:
             include_rendering = False
 
         if include_rendering:
-            output.append(RawTerminal.centralize(Text().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├"))
-            output += DiffBuilder.first_failure_diff(string_expected, string_received, first_failure)
-        output.append(RawTerminal.centralize("",  symbols.hbar, "╰"))
+            output.append(RawTerminal.centralize(Text().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├", "┤"))
+            for line in DiffBuilder.first_failure_diff(string_expected, string_received, first_failure):
+                output.append(Text("│").add(line).ljust(width, Token(" ")).add("│"))
+        output.append(RawTerminal.centralize("",  symbols.hbar, "╰", "╯"))
 
         return output
 
@@ -227,7 +232,7 @@ class DiffBuilder:
         return exp_lines, rec_lines
             
     @staticmethod
-    def title_side_by_side(left: Text, right: Text, filler: Token = Token(" "), middle: Token = Token(" "), prefix: Token = Token()) -> Text:
+    def title_side_by_side(left: Text, right: Text, filler: Token = Token(" "), middle: Token = Token(" "), prefix: Token = Token(), posfix: Token = Token()) -> Text:
         half = int((RawTerminal.get_terminal_size() - len(middle)) / 2)
         line = Text()
         a = left
@@ -244,6 +249,9 @@ class DiffBuilder:
         if prefix != "":
             line.data[0].text = line.data[0].text[1:]
             line = Text() + prefix + line
+        if posfix != "":
+            line.data[-1].text = line.data[-1].text[:-1]
+            line += posfix
         return line
 
     @staticmethod
@@ -262,13 +270,13 @@ class DiffBuilder:
 
         expected_lines, received_lines, first_failure = DiffBuilder.render_diff(string_expected, string_received, True)
         if not curses:
-            output.append(RawTerminal.centralize("", hbar, "╭"))
-            output.append(RawTerminal.centralize(unit.str(), " ", "│"))
+            output.append(RawTerminal.centralize("", hbar, "╭", "╮"))
+            output.append(RawTerminal.centralize(unit.str(), " ", "│", "│"))
         input_color = "b" if string_expected != string_received else "g"
         input_headera = Text().addf(input_color, DiffBuilder.vinput)
         input_headerb = Text().addf(input_color, DiffBuilder.vinput)
         if not curses:
-            output.append(DiffBuilder.title_side_by_side(input_headera, input_headerb, hbar, Token("┬"), Token("├")))
+            output.append(DiffBuilder.title_side_by_side(input_headera, input_headerb, hbar, Token("┬"), Token("├"), Token("┤")))
         else:
             output.append(RawTerminal.centralize(Text().addf(input_color, DiffBuilder.vinput),  symbols.hbar, "╭"))
             # output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, TK("┬"), TK("╭")))
@@ -279,16 +287,18 @@ class DiffBuilder:
         expected_header = Text().addf("g", DiffBuilder.vexpected)
         rcolor = "r" if string_expected != string_received else "g"
         received_header = Text().addf(rcolor, DiffBuilder.vreceived)
-        output.append(DiffBuilder.title_side_by_side(expected_header, received_header, hbar, Token("┼"), Token("├")))
+        output.append(DiffBuilder.title_side_by_side(expected_header, received_header, hbar, Token("┼"), Token("├"), Token("┤")))
         unequal = symbols.unequal
         if unit.result == ExecutionResult.EXECUTION_ERROR or unit.result == ExecutionResult.COMPILATION_ERROR:
             unequal = symbols.vbar
         output += DiffBuilder.side_by_side(expected_lines, received_lines, unequal)
         if unit.result != ExecutionResult.EXECUTION_ERROR and unit.result != ExecutionResult.COMPILATION_ERROR and string_expected != string_received:
-            output.append(RawTerminal.centralize(Text().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├"))
-            output += DiffBuilder.first_failure_diff(string_expected, string_received, first_failure)
-            output.append(RawTerminal.centralize("",  symbols.hbar, "╰"))
+            output.append(RawTerminal.centralize(Text().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├", "┤"))
+            for line in DiffBuilder.first_failure_diff(string_expected, string_received, first_failure):
+                width = RawTerminal.get_terminal_size() - 1
+                output.append(Text("│").add(line).ljust(width, Token(" ")).add("│"))
+            output.append(RawTerminal.centralize("",  symbols.hbar, "╰", "╯"))
         else:
-            output.append(RawTerminal.centralize("┴",  symbols.hbar, "╰"))
+            output.append(RawTerminal.centralize("┴",  symbols.hbar, "╰", "╯"))
 
         return output

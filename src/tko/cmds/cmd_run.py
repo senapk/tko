@@ -20,6 +20,7 @@ from ..game.task import Task
 from ..play.opener import Opener
 from tko.settings.settings import Settings
 from tko.util.consts import DiffMode
+from tko.util.logger import Logger, LogAction, LoggerFS
 
 class FilterMode:
     @staticmethod
@@ -73,6 +74,11 @@ class Run:
     def set_task(self, task: Task):
         self.__task = task
         return self
+    
+    def get_task(self) -> Task:
+        if self.__task is None:
+            raise Warning("Task não definida")
+        return self.__task
 
     def execute(self):
         if not self.wdir_builded:
@@ -82,11 +88,35 @@ class Run:
             return
         if self.__list_mode():
             return
+        
+        Logger.instance = Logger(logger_store=LoggerFS(self.settings))
+        logger = Logger.instance
+        rep_task = self.identity_rep_and_task_by_path()
+        if rep_task is not None:
+            rep, task_key = rep_task
+            logger.set_rep(rep)
+            if self.__task is None:
+                task = Task()
+                task.key = task_key
+                self.__task = task
+
         if self.__free_run():
             return
-        self.__diff_mode()
+        self.__show_diff()
         return
 
+    def identity_rep_and_task_by_path(self) -> tuple[str, str] | None:
+        rootdir = self.settings.app.get_rootdir()
+        solver_path = os.path.abspath(self.wdir.get_solver().path_list[0])
+        if not solver_path.startswith(rootdir):
+            return None
+        pieces = solver_path[len(rootdir):].split(os.sep)
+        if len(pieces) < 2:
+            return None
+        rep = pieces[1]
+        task = pieces[2] if len(pieces) > 2 else ""
+        return (rep, task)
+    
     def __remove_duplicates(self):
         # remove duplicates in target list keeping the order
         self.target_list = list(dict.fromkeys(self.target_list))
@@ -202,6 +232,7 @@ class Run:
         if self.wdir is None:
             return False
         if self.wdir.has_solver() and (not self.wdir.has_tests()) and not self.__curses_mode:
+            Logger.get_instance().record_event(LogAction.FREE, self.get_task().key)
             Free.free_run(self.wdir.get_solver(), show_compilling=False, to_clear=False, wait_input=False)
             return True
         return False
@@ -225,7 +256,7 @@ class Run:
         opener.set_language(lang)
         return opener
 
-    def __diff_mode(self):
+    def __show_diff(self):
         if self.wdir is None:
             return
         
@@ -243,3 +274,6 @@ class Run:
             print(RawTerminal.centralize(" Testando o código com os casos de teste ", "═"))
             self.__print_top_line()
             self.__print_diff()
+            correct = [unit for unit in self.wdir.get_unit_list() if unit.result == ExecutionResult.SUCCESS]
+            percent = (len(correct) * 100) // len(self.wdir.get_unit_list())
+            Logger.get_instance().record_event(LogAction.TEST, self.get_task().key, str(percent) + "%")

@@ -29,7 +29,7 @@ from .__init__ import __version__
 
 class Main:
     @staticmethod
-    def exec(args):
+    def test(args):
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         if args.quiet:
@@ -165,7 +165,7 @@ class Parser:
         group = parser_r.add_mutually_exclusive_group()
         group.add_argument('--down', '-d', action='store_true', help="diff mode up-to-down.")
         group.add_argument('--side', '-s', action='store_true', help="diff mode side-by-side.")
-        parser_r.set_defaults(func=Main.exec)
+        parser_r.set_defaults(func=Main.test)
 
     def add_parser_build(self):
         parser_b = self.subparsers.add_parser('build', parents=[self.parent_manip], help='build a test target.')
@@ -223,9 +223,9 @@ class Parser:
         repo_graph.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be graphed.')
         repo_graph.set_defaults(func=CmdRep.graph)
 
-        repo_log = subpar_repo.add_parser("log", help="validates log of the repository.")
+        repo_log = subpar_repo.add_parser("check", help="validates log of the repository.")
         repo_log.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be log.')
-        repo_log.set_defaults(func=CmdRep.log)
+        repo_log.set_defaults(func=CmdRep.check)
 
     def add_parser_play(self):
         parser_p = self.subparsers.add_parser('play', help='play a game.')
