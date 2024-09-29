@@ -1431,9 +1431,12 @@ def RToken(fmt: str, text: str) -> Token:
     return Token(text, fmt)
 
 class Text:
-    def __init__(self, value: str | Token = "",):
+    def __init__(self, value: str = "", *args):
+        if not isinstance(value, str):
+            raise TypeError("value must be a string")
         self.data: List[Token] = []
-        self.add(value)
+        if value != "": 
+            self.__process_placeholders(value, *args)
     
     def clone(self):
         other = Text()
@@ -1446,6 +1449,32 @@ class Text:
             for c in d.text:
                 self.data.append(Token(c, d.fmt))
         return self
+
+    def split(self, sep: str) -> List[Text]:
+        output = []
+        current = Text()
+        for d in self.data:
+            if d.text == sep:
+                output.append(current)
+                current = Text()
+            else:
+                current.add(d)
+        output.append(current)
+        return output
+
+    def slice(self, start: int | None = None, end: int | None = None) -> Text:
+        if start is None:
+            start = 0
+        while start < 0:
+            start = len(self) + start
+        if end is None:
+            end = len(self)
+        while end < 0:
+            end = len(self) + end
+        output = Text()
+        for i in range(start, end):
+            output.add(self[i])
+        return output
 
     def __getitem__(self, index: int) -> Token:
         if index < 0 or index >= len(self):
@@ -1486,15 +1515,6 @@ class Text:
                 new_data[-1].text = d.text
                 new_data[-1].fmt = d.fmt
         return new_data
-    
-    def resume_val_fmt(self) -> Tuple[str, str]:
-        fmt = []
-        val = []
-        for d in self.data:
-            fmt.append(" " if d.fmt == "" else d.fmt[0])
-            val.append(d.text)
-        return "".join(val), "".join(fmt)
-
 
     # search for a value inside the tokens and replace it with a new value and fmt
     def replace(self, old: str, token: Token):
@@ -1542,10 +1562,13 @@ class Text:
             raise TypeError("unsupported type '{}'".format(type(value)))
         return self
     
-    def addf(self, fmt: str, text: Any):
-        if not isinstance(text, str):
-            raise TypeError("fmt must be a string")
-        self.add(Token(text, fmt))
+    def addf(self, fmt: str, value: str | Token | Text | None):
+        if isinstance(value, str):
+            self.add(Token(value, fmt))
+        elif isinstance(value, Token):
+            self.add(Token(value.text, fmt))
+        elif isinstance(value, Text):
+            self.add(Token(value.get_text(), fmt))
         return self
 
     def ljust(self, width: int, filler: Token = Token(" ")):
@@ -1597,8 +1620,8 @@ class Text:
         missing = width - self.len() - 2
         left = missing // 2
         right = missing - left
-        filler_left = Text(sep).plus(left)
-        filler_right = Text(sep).plus(right)
+        filler_left = Text().add(sep).plus(left)
+        filler_right = Text().add(sep).plus(right)
         return Text() + left_border + filler_left + self + filler_right + right_border
     
     def len(self):
@@ -1632,7 +1655,6 @@ class Text:
                 out.add(self)
             out.add(a)
         return out
-
 
     @staticmethod
     def __preprocess(data):
@@ -1691,22 +1713,22 @@ class Text:
 
         return texts, placeholders
 
-    def cformat(self, *args) -> Text:
-        # Extrair textos e placeholders
-        text = self.get_text()
+    def __process_placeholders(self, text, *args) -> None:
+        params = list(args)
         texts, placeholders = Text.__extract(text)
+        while len(params) < len(placeholders):
+            params.append("")
         # Aplicar a função fn aos placeholders e montar o resultado final
-        output = Text()
         for i in range(len(texts)):
-            output.add(texts[i])  # Texto normal
-            if i < len(placeholders) and placeholders[i]:  # Placeholder processado
-                elements = placeholders[i].split(":")
-                first = elements[0]
-                others = "".join(elements[1:])
-                output.addf(first, others)
-
-        self.data = output.data
-        return self
+            value = texts[i]
+            self.add(value)
+            
+            fmt = placeholders[i]
+            value = params[i]
+            if fmt == "":
+                self.add(value)
+            else:
+                self.addf(fmt, value)
 
 
 
@@ -1933,30 +1955,45 @@ class Fmt:
         if underline:
             stdscr.attroff(curses.A_UNDERLINE)
 
+    # break in lines and cut everything that is out of the box
     @staticmethod
-    def write(y: int, x: int, sentence: Text):
-
-        # Escreve um texto na tela com cores diferentes
-        lines, cols = Fmt.get_size()
-        if y < 0 or y >= lines:
-            return
-        for token in sentence.resume():
-            fmt = token.fmt
-            text = token.text
+    def cut_box(y: int, x: int, box_y: int, box_x: int, sentence: Text) -> list[Text]:
+        lines: list[Text] = sentence.split("\n")
+        output: list[Text] = []
+        for line in lines:
+            if y >= box_y:
+                break
             if x < 0:
-                if x + len(text) >= 0:
-                    text = text[-x:]
-                    x = 0
-            if x < cols:
-                if x + len(text) >= cols:
-                    text = text[:cols - x]
-                Fmt.stroke(y, x, fmt, text)
-            x += len(text)  # Move a posição x para a direita após o texto
+                line.data = line.data[-x:]
+                x = 0
+            if x + len(line) > box_x:
+                line.data = line.data[:box_x - x]
+            output.append(line)
+            y += 1
+        return lines
 
     @staticmethod
-    def write_text(y: int, x: int, text: str):
-        Fmt.write(y, x, Text().add(text))
+    def position_tokens(text_lines: list[Text], y: int, x: int) -> list[tuple[int, int, Token]]:
+        output: list[Tuple[int, int, Token]] = []
+        for i, line in enumerate(text_lines):
+            dx = 0
+            for token in line.resume():
+                output.append((y + i, x + dx, token))
+                dx += len(token)
+        return output
 
+    @staticmethod
+    def write(y: int, x: int, sentence: Text | str):
+        if isinstance(sentence, str):
+            data: Text = Text().add(sentence)
+        else:
+            data = sentence
+
+        lines, cols = Fmt.get_size()
+        text_lines = Fmt.cut_box(y, x, lines, cols, data)
+        positions = Fmt.position_tokens(text_lines, y, x)
+        for y, x, token in positions:
+            Fmt.stroke(y, x, token.fmt, token.text)
 
     # @staticmethod
     # def get_user_input(stdscr, prompt: str) -> str:
@@ -1983,28 +2020,26 @@ class Fmt:
         return Text().addf(Colors.mark_started, text)
     
     @staticmethod
-    def getch():
+    def get_screen() -> curses.window:
         if Fmt.__scr is None:
             raise Exception("Fmt.__scr não foi inicializado")
-        return Fmt.__scr.getch()
+        return Fmt.__scr
+
+    @staticmethod
+    def getch():
+        return Fmt.get_screen().getch()
 
     @staticmethod
     def clear():
-        if Fmt.__scr is None:
-            raise Exception("Fmt.__scr não foi inicializado")
-        Fmt.__scr.erase()
+        Fmt.get_screen().erase()
 
     @staticmethod
     def refresh():
-        if Fmt.__scr is None:
-            raise Exception("Fmt.__scr não foi inicializado")
-        Fmt.__scr.refresh()
+        Fmt.get_screen().refresh()
 
     @staticmethod
     def get_size() -> Tuple[int, int]:
-        if Fmt.__scr is None:
-            raise Exception("Fmt.__scr não foi inicializado")
-        return Fmt.__scr.getmaxyx()
+        return Fmt.get_screen().getmaxyx()
         
 
 
@@ -2579,7 +2614,7 @@ class DiffBuilder:
         b_render = b_text.splitlines(True)
         first_a = get(a_render, first_failure)
         first_b = get(b_render, first_failure)
-        out_a, out_b = DiffBuilder.colorize_2_lines_diff(Text(first_a), Text(first_b))
+        out_a, out_b = DiffBuilder.colorize_2_lines_diff(Text().add(first_a), Text().add(first_b))
         if out_a is None:
             out_a = Text()
         if out_b is None:
@@ -6676,10 +6711,10 @@ class Tester:
             received = self.wdir.get_solver().error_msg
             line_list = [Text().add(line) for line in received.split("\n")]
         elif self.settings.app.get_diff_mode() == DiffMode.DOWN or not self.wdir.has_tests():
-            ud_diff = DownDiff(cols - 1, unit)
+            ud_diff = DownDiff(cols, unit)
             line_list = ud_diff.build_diff()
         else:
-            ss_diff = SideDiff(cols - 1, unit)
+            ss_diff = SideDiff(cols, unit)
             line_list = ss_diff.build_diff()
 
         self.length = max(1, len(line_list))
@@ -8725,6 +8760,6 @@ def main():
     #     print(e)
     #     sys.exit(1)
 
-
-if __name__ == '__main__':
+# NÃO RETIRE ESSA TAG POR CAUSA DO MERGE DO REPLIT
+if __name__ == '__main__': # MERGE_INSERT 
     main()

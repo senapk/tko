@@ -1,7 +1,7 @@
 import curses
 from typing import Dict, Tuple
-from ..util.text import Text
-from .colors import Colors
+from tko.util.text import Text, Token
+from tko.play.colors import Colors
 
 class Fmt:
     __scr = None
@@ -95,30 +95,45 @@ class Fmt:
         if underline:
             stdscr.attroff(curses.A_UNDERLINE)
 
+    # break in lines and cut everything that is out of the box
     @staticmethod
-    def write(y: int, x: int, sentence: Text):
-
-        # Escreve um texto na tela com cores diferentes
-        lines, cols = Fmt.get_size()
-        if y < 0 or y >= lines:
-            return
-        for token in sentence.resume():
-            fmt = token.fmt
-            text = token.text
+    def cut_box(y: int, x: int, box_y: int, box_x: int, sentence: Text) -> list[Text]:
+        lines: list[Text] = sentence.split("\n")
+        output: list[Text] = []
+        for line in lines:
+            if y >= box_y:
+                break
             if x < 0:
-                if x + len(text) >= 0:
-                    text = text[-x:]
-                    x = 0
-            if x < cols:
-                if x + len(text) >= cols:
-                    text = text[:cols - x]
-                Fmt.stroke(y, x, fmt, text)
-            x += len(text)  # Move a posição x para a direita após o texto
+                line.data = line.data[-x:]
+                x = 0
+            if x + len(line) > box_x:
+                line.data = line.data[:box_x - x]
+            output.append(line)
+            y += 1
+        return lines
 
     @staticmethod
-    def write_text(y: int, x: int, text: str):
-        Fmt.write(y, x, Text().add(text))
+    def position_tokens(text_lines: list[Text], y: int, x: int) -> list[tuple[int, int, Token]]:
+        output: list[Tuple[int, int, Token]] = []
+        for i, line in enumerate(text_lines):
+            dx = 0
+            for token in line.resume():
+                output.append((y + i, x + dx, token))
+                dx += len(token)
+        return output
 
+    @staticmethod
+    def write(y: int, x: int, sentence: Text | str):
+        if isinstance(sentence, str):
+            data: Text = Text().add(sentence)
+        else:
+            data = sentence
+
+        lines, cols = Fmt.get_size()
+        text_lines = Fmt.cut_box(y, x, lines, cols, data)
+        positions = Fmt.position_tokens(text_lines, y, x)
+        for y, x, token in positions:
+            Fmt.stroke(y, x, token.fmt, token.text)
 
     # @staticmethod
     # def get_user_input(stdscr, prompt: str) -> str:
@@ -145,26 +160,24 @@ class Fmt:
         return Text().addf(Colors.mark_started, text)
     
     @staticmethod
-    def getch():
+    def get_screen() -> curses.window:
         if Fmt.__scr is None:
             raise Exception("Fmt.__scr não foi inicializado")
-        return Fmt.__scr.getch()
+        return Fmt.__scr
+
+    @staticmethod
+    def getch():
+        return Fmt.get_screen().getch()
 
     @staticmethod
     def clear():
-        if Fmt.__scr is None:
-            raise Exception("Fmt.__scr não foi inicializado")
-        Fmt.__scr.erase()
+        Fmt.get_screen().erase()
 
     @staticmethod
     def refresh():
-        if Fmt.__scr is None:
-            raise Exception("Fmt.__scr não foi inicializado")
-        Fmt.__scr.refresh()
+        Fmt.get_screen().refresh()
 
     @staticmethod
     def get_size() -> Tuple[int, int]:
-        if Fmt.__scr is None:
-            raise Exception("Fmt.__scr não foi inicializado")
-        return Fmt.__scr.getmaxyx()
+        return Fmt.get_screen().getmaxyx()
         

@@ -62,6 +62,8 @@ class Merge:
                 elif line.startswith("import") or line.startswith("from "):
                     if line not in self.imports:
                         self.imports.append(line)
+                elif "__name__" in line and not "MERGE_INSERT" in line:
+                    break
                 else:
                     output.append(line)
             

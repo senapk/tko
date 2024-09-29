@@ -53,7 +53,7 @@ class DiffBuilder:
         b_render = b_text.splitlines(True)
         first_a = get(a_render, first_failure)
         first_b = get(b_render, first_failure)
-        out_a, out_b = DiffBuilder.colorize_2_lines_diff(Text(first_a), Text(first_b))
+        out_a, out_b = DiffBuilder.colorize_2_lines_diff(Text().add(first_a), Text().add(first_b))
         if out_a is None:
             out_a = Text()
         if out_b is None:

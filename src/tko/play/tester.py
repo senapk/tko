@@ -482,10 +482,10 @@ class Tester:
             received = self.wdir.get_solver().error_msg
             line_list = [Text().add(line) for line in received.split("\n")]
         elif self.settings.app.get_diff_mode() == DiffMode.DOWN or not self.wdir.has_tests():
-            ud_diff = DownDiff(cols - 1, unit)
+            ud_diff = DownDiff(cols, unit)
             line_list = ud_diff.build_diff()
         else:
-            ss_diff = SideDiff(cols - 1, unit)
+            ss_diff = SideDiff(cols, unit)
             line_list = ss_diff.build_diff()
 
         self.length = max(1, len(line_list))
