@@ -3,10 +3,12 @@ import os
 import shutil
 import subprocess
 
+from ..run.diff_builder_down import DownDiff
+
 from ..run.wdir import Wdir
 from tko.util.consts import DiffCount, ExecutionResult
 from tko.util.param import Param
-from ..run.diff_builder import DiffBuilder
+from ..run.diff_builder_side import SideDiff
 from tko.util.text import Text, Token
 
 from tko.util.consts import Success
@@ -125,7 +127,7 @@ class Run:
         if self.param.filter:
             old_dir = os.getcwd()
 
-            print(RawTerminal.centralize(" Entrando no modo de filtragem ", "═"))
+            print(Text(" Entrando no modo de filtragem ").center(RawTerminal.get_terminal_size(), "═"))
             FilterMode.deep_copy_and_change_dir()  
             # search for target outside . dir and redirect target
             new_target_list = []
@@ -173,15 +175,18 @@ class Run:
         if not self.param.compact:
             for elem in self.wdir.unit_list_resume():
                 print(elem)
+
         
         if self.param.diff_count == DiffCount.FIRST:
             # printing only the first wrong case
             wrong = [unit for unit in self.wdir.get_unit_list() if unit.result != ExecutionResult.SUCCESS][0]
             if self.param.diff_mode == DiffMode.DOWN:
-                for line in DiffBuilder.mount_up_down_diff(wrong):
+                ud_diff_builder = DownDiff(RawTerminal.get_terminal_size(), wrong).to_insert_header()
+                for line in ud_diff_builder.build_diff():
                     print(line)
             else:
-                for line in DiffBuilder.mount_side_by_side_diff(wrong):
+                ss_diff_builder = SideDiff(RawTerminal.get_terminal_size(), wrong).to_insert_header(True)
+                for line in ss_diff_builder.build_diff():
                     print(line)
             return
 
@@ -189,10 +194,10 @@ class Run:
             for unit in self.wdir.get_unit_list():
                 if unit.result != ExecutionResult.SUCCESS:
                     if self.param.diff_mode:
-                        for line in DiffBuilder.mount_up_down_diff(unit):
+                        for line in ud_diff_builder.build_diff(unit):
                             print(line)
                     else:
-                        for line in DiffBuilder.mount_side_by_side_diff(unit):
+                        for line in ss_diff_builder.build_diff(unit):
                             print(line)
 
     def build_wdir(self):
@@ -221,7 +226,7 @@ class Run:
 
         # list mode
         if not self.wdir.has_solver() and self.wdir.has_tests():
-            print(RawTerminal.centralize(" Nenhum arquivo de código encontrado. Listando casos de teste.", Token("╌")), flush=True)
+            print(Text(" Nenhum arquivo de código encontrado. Listando casos de teste.").center(RawTerminal.get_terminal_size(), Token("╌")), flush=True)
             print(self.wdir.resume())
             for line in self.wdir.unit_list_resume():
                 print(line)
@@ -232,7 +237,8 @@ class Run:
         if self.wdir is None:
             return False
         if self.wdir.has_solver() and (not self.wdir.has_tests()) and not self.__curses_mode:
-            Logger.get_instance().record_event(LogAction.FREE, self.get_task().key)
+            if self.__task is not None:
+                Logger.get_instance().record_event(LogAction.FREE, self.get_task().key)
             Free.free_run(self.wdir.get_solver(), show_compilling=False, to_clear=False, wait_input=False)
             return True
         return False
@@ -271,9 +277,10 @@ class Run:
             cdiff.set_autorun(self.__autorun)
             cdiff.run()
         else:
-            print(RawTerminal.centralize(" Testando o código com os casos de teste ", "═"))
+            print(Text(" Testando o código com os casos de teste ").center(RawTerminal.get_terminal_size(), "═"))
             self.__print_top_line()
             self.__print_diff()
             correct = [unit for unit in self.wdir.get_unit_list() if unit.result == ExecutionResult.SUCCESS]
             percent = (len(correct) * 100) // len(self.wdir.get_unit_list())
-            Logger.get_instance().record_event(LogAction.TEST, self.get_task().key, str(percent) + "%")
+            if self.__task is not None:
+                Logger.get_instance().record_event(LogAction.TEST, self.get_task().key, str(percent) + "%")

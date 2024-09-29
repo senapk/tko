@@ -15,7 +15,7 @@ class Free:
         if show_compilling:
             image = random.choice(list(compilling.keys()))
             for line in compilling[image].split("\n"):
-                print(RawTerminal.centralize(Text().addf("y", line), Token(" ")))
+                print(Text().addf("y", line).center(RawTerminal.get_terminal_size(), Token(" ")))
 
         if show_compilling:
             Runner.clear_screen()
@@ -24,14 +24,14 @@ class Free:
             print(solver.error_msg)
         else:
             cmd = solver.get_executable()
-            print(RawTerminal.centralize(Text(), "─"))
+            print(Text().center(RawTerminal.get_terminal_size(), Token("─")))
             answer = subprocess.run(cmd, shell=True, text=True)
             if answer.returncode != 0 and answer.returncode != 1:
                 print(Runner.decode_code(answer.returncode))
         solver.reset()
         to_run_again = False
         if wait_input:
-            print(RawTerminal.centralize("", "─"))
+            print(Text().center(RawTerminal.get_terminal_size(), Token("─")))
             print(Text().addf("y", "Deseja compilar e executar novamente? [").addf("c", "S").addf("y", "/n]: "), end="")
             valor = input()
             if valor != "n" and valor != "q":

@@ -1431,7 +1431,7 @@ def RToken(fmt: str, text: str) -> Token:
     return Token(text, fmt)
 
 class Text:
-    def __init__(self, value: Union[str, Tuple[str, str]] = ""):
+    def __init__(self, value: str | Token = "",):
         self.data: List[Token] = []
         self.add(value)
     
@@ -1525,7 +1525,9 @@ class Text:
             output.add(self)
         return output
 
-    def add(self, value: Union[str, Token, Tuple[str, str], Text]):
+    def add(self, value: str | Token | Text | None):
+        if value is None:
+            return self
         if isinstance(value, str):
             if value != "":
                 for c in value:
@@ -1564,7 +1566,9 @@ class Text:
             self.data = prefix + self.data
         return self
     
-    def center(self, width: int, filler: Token = Token(" ")):
+    def center(self, width: int, filler: Token | str  = " "):
+        if isinstance(filler, str):
+            filler = Token(filler)
         total = self.len()
         char = " " if filler.text == "" else filler.text[0]
         fmt = filler.fmt
@@ -1575,6 +1579,27 @@ class Text:
             suffix = [Token(char, fmt) for _ in range(right)]
             self.data = prefix + self.data + suffix
         return self
+
+    def fold_in(
+        self, width: int, sep: str | Token = " ", left_border: str | Token = " ", right_border: str | Token  = " "
+    ) -> Text:
+        if isinstance(sep, str):
+            sep = Token(sep)
+        if isinstance(left_border, str):
+            left_border = Token(left_border)
+        if isinstance(right_border, str):
+            right_border = Token(right_border)
+
+        available = width - len(left_border) - len(right_border)
+        if self.len() > available:
+            self.trim_end(available)
+            return Text() + left_border + self + right_border
+        missing = width - self.len() - 2
+        left = missing // 2
+        right = missing - left
+        filler_left = Text(sep).plus(left)
+        filler_right = Text(sep).plus(right)
+        return Text() + left_border + filler_left + self + filler_right + right_border
     
     def len(self):
         return len(self.data)
@@ -1615,7 +1640,7 @@ class Text:
         result1 = []
         i = 0
         while i < len(data):
-            if i < len(data) - 1 and data[i] == '<' and data[i + 1] == '<':
+            if i < len(data) - 1 and data[i] == '{' and data[i + 1] == '{':
                 result1.append('\a')  # Usa o marcador \a para << 
                 i += 2  # Pula o próximo '<'
             else:
@@ -1626,7 +1651,7 @@ class Text:
         result2 = []
         i = len(result1) - 1
         while i >= 0:
-            if i > 0 and result1[i] == '>' and result1[i - 1] == '>':
+            if i > 0 and result1[i] == '}' and result1[i - 1] == '}':
                 result2.append('\b')  # Usa o marcador \b para >>
                 i -= 2  # Pula o próximo '>'
             else:
@@ -1645,18 +1670,18 @@ class Text:
         destiny = texts  # Começa preenchendo textos"
 
         for c in data:
-            if c == '<':
+            if c == '{':
                 placeholders.append("")  # Inicia um novo placeholder
                 destiny = placeholders  # Muda o destino para placeholders
-            elif c == '>':
+            elif c == '}':
                 texts.append("")  # Volta para o texto
                 destiny = texts
             else:
                 # Substitui \a e \b por < e >
                 if c == '\a':
-                    c = '<'
+                    c = '{'
                 elif c == '\b':
-                    c = '>'
+                    c = '}'
                 # Adiciona o caractere ao destino atual
                 destiny[-1] += c
 
@@ -1666,12 +1691,10 @@ class Text:
 
         return texts, placeholders
 
-    @staticmethod
-    def make(text) -> Text:
+    def cformat(self, *args) -> Text:
         # Extrair textos e placeholders
+        text = self.get_text()
         texts, placeholders = Text.__extract(text)
-        print(texts)
-        print(placeholders)
         # Aplicar a função fn aos placeholders e montar o resultado final
         output = Text()
         for i in range(len(texts)):
@@ -1682,7 +1705,8 @@ class Text:
                 others = "".join(elements[1:])
                 output.addf(first, others)
 
-        return output
+        self.data = output.data
+        return self
 
 
 
@@ -2422,10 +2446,7 @@ class RawTerminal:
 
     @staticmethod
     def __get_terminal_size() -> int:
-        term_width = shutil.get_terminal_size().columns
-        if term_width % 2 == 0:
-            term_width -= 1
-        return term_width
+        return shutil.get_terminal_size().columns
 
     @staticmethod
     def get_terminal_size():
@@ -2435,36 +2456,18 @@ class RawTerminal:
 
     @staticmethod
     def set_terminal_size(value: int):
-        if value % 2 == 0:
-            value -= 1
         RawTerminal.__term_width = value
 
     @staticmethod
-    def centralize(
-        ftext: Union[Text, str],
-        sep: Optional[Union[str, Token]] = Token(" "),
-        left_border: Optional[Union[str, Token]] = None,
-        right_border: Optional[Union[str, Token]] = None,
-    ) -> Text:
+    def centralize(text: Text | str, filler: Token | str = Token(" ")):
+        if isinstance(filler, str):
+            filler = Token(filler)
 
-        if isinstance(ftext, str) or isinstance(ftext, Token):
-            ftext = Text() + ftext
-        if sep is None:
-            sep = Token(" ")
-        elif isinstance(sep, str):
-            sep = Token(sep)
-        if left_border is None:
-            left_border = sep
-        if right_border is None:
-            right_border = sep
-        term_width = RawTerminal.get_terminal_size()
-
-        size = len(ftext)
-        pad = sep if size % 2 == 0 else Token("")
-        tw = term_width - 2
-        filler = Token(sep.text * (int(tw / 2 - size / 2)), sep.fmt)
-        return Text() + left_border + pad + filler + ftext + filler + right_border
-
+        if isinstance(text, str):
+            text = Text(text)
+        width = RawTerminal.get_terminal_size()
+        return text.center(width, filler)
+    
 
 class __Symbols:
 
@@ -2523,6 +2526,126 @@ class __Symbols:
         self.equalbar.fmt = "g"
 
 symbols = __Symbols()
+
+
+
+class DiffBuilder:
+    vinput    = " INSERIDO "
+    vexpected = " ESPERADO "
+    vreceived = " RECEBIDO "
+    vunequal  = " DESIGUAL "
+
+    def __init__(self, width: int):
+        self.width = width
+        self.curses = False
+
+    def set_curses(self):
+        self.curses = True
+        return self
+
+    @staticmethod
+    def make_line_arrow_up(a: str, b: str) -> Text:
+        hdiff = Text()
+        first = True
+        i = 0
+        lim = max(len(a), len(b))
+        while i < lim:
+            if i >= len(a) or i >= len(b) or a[i] != b[i]:
+                if first:
+                    first = False
+                    hdiff += symbols.arrow_up
+                    return hdiff
+            else:
+                hdiff += " "
+            i += 1
+        while len(hdiff) < lim:
+            hdiff += " "
+        return hdiff
+
+    @staticmethod
+    def render_white(text: Text, color: str = "") -> Optional[Text]:
+        out = Text().add(text).replace(' ', Token(symbols.whitespace.text, color)).replace('\n', Token(symbols.newline.text, color))
+        return out
+
+    def first_failure_diff(self, a_text: str, b_text: str | None, first_failure: int) -> List[Text]:
+        if b_text is None:
+            b_text = ""
+        def get(vet, index):
+            if index < len(vet):
+                return DiffBuilder.render_white(vet[index])
+            return ""
+
+        a_render = a_text.splitlines(True)
+        b_render = b_text.splitlines(True)
+        first_a = get(a_render, first_failure)
+        first_b = get(b_render, first_failure)
+        out_a, out_b = DiffBuilder.colorize_2_lines_diff(Text(first_a), Text(first_b))
+        if out_a is None:
+            out_a = Text()
+        if out_b is None:
+            out_b = Text()
+        greater = max(len(out_a), len(out_b))
+        output: List[Text] = []
+        width = self.width - 13
+        output.append(Text().add(" ").add(out_a.ljust(greater)).trim_end(width).addf("g", " (esperado)"))
+        output.append(Text().add(" ").add(out_b.ljust(greater)).trim_end(width).addf("r", " (recebido)"))
+        diff = DiffBuilder.make_line_arrow_up(first_a, first_b)
+        output.append(Text().add(" ").add(diff.ljust(greater)).trim_end(width).addf("b", " (primeiro)"))
+        return output
+
+    @staticmethod
+    def colorize_2_lines_diff(la: Text | None, lb: Text | None, neut: str = "", exp: str = "g", rec: str = "r") -> Tuple[Text | None, Text | None]:
+        pos = DiffBuilder.find_first_mismatch(la, lb)
+        if la is not None:
+            lat = la.get_text()
+            la = Text().addf(neut, lat[0:pos]).addf(exp, lat[pos:])
+        if lb is not None:
+            lbt = lb.get_text()
+            lb = Text().addf(neut, lbt[0:pos]).addf(rec, lbt[pos:])
+        return la, lb
+
+    @staticmethod
+    def find_first_mismatch(line_a: Text | None, line_b: Text | None) -> int: 
+        if line_a is None or line_b is None:
+            return 0
+        i = 0
+        while i < len(line_a) and i < len(line_b):
+            if line_a[i] != line_b[i]:
+                return i
+            i += 1
+        return i
+
+    # return a tuple of two strings with the diff and the index of the first mismatch line
+    def render_diff(self, a_text: str, b_text: str | None) -> Tuple[List[Tuple[Text | None, Text | None]], int]:
+        if b_text is None:
+            b_text = ""
+        a_lines = a_text.splitlines()
+        b_lines = b_text.splitlines()
+        output: list[tuple[Text | None, Text | None]] = []
+        a_size = len(a_lines)
+        b_size = len(b_lines)
+        first_failure = -1
+        max_size = max(a_size, b_size)
+
+        # lambda function to return element in index i or empty if out of bounds
+        def get(vet, index) -> Text | None:
+            if index < len(vet):
+                return Text(vet[index])
+            return None
+        
+        expected_color = "g"
+        received_color = "r" if a_text != "" else ""
+        for i in range(max_size):
+            a_data = get(a_lines, i)
+            b_data = get(b_lines, i)
+            if a_data is None or b_data is None or a_data != b_data:
+                if first_failure == -1:
+                    first_failure = i
+                a_out, b_out = DiffBuilder.colorize_2_lines_diff(a_data, b_data, "y", expected_color, received_color)
+                output.append((a_out, b_out))
+            else:
+                output.append((a_data, b_data))
+        return output, first_failure
 
 class LabelFactory:
     def __init__(self):
@@ -2829,7 +2952,7 @@ class Free:
         if show_compilling:
             image = random.choice(list(compilling.keys()))
             for line in compilling[image].split("\n"):
-                print(RawTerminal.centralize(Text().addf("y", line), Token(" ")))
+                print(Text().addf("y", line).center(RawTerminal.get_terminal_size(), Token(" ")))
 
         if show_compilling:
             Runner.clear_screen()
@@ -2838,14 +2961,14 @@ class Free:
             print(solver.error_msg)
         else:
             cmd = solver.get_executable()
-            print(RawTerminal.centralize(Text(), "─"))
+            print(Text().center(RawTerminal.get_terminal_size(), Token("─")))
             answer = subprocess.run(cmd, shell=True, text=True)
             if answer.returncode != 0 and answer.returncode != 1:
                 print(Runner.decode_code(answer.returncode))
         solver.reset()
         to_run_again = False
         if wait_input:
-            print(RawTerminal.centralize("", "─"))
+            print(Text().center(RawTerminal.get_terminal_size(), Token("─")))
             print(Text().addf("y", "Deseja compilar e executar novamente? [").addf("c", "S").addf("y", "/n]: "), end="")
             valor = input()
             if valor != "n" and valor != "q":
@@ -3442,14 +3565,14 @@ class CmdConfig:
         settings.save_settings()
 
 class Unit:
-    def __init__(self, case: str = "", inp: str = "", outp: str = "", grade: Optional[int] = None, source: str = ""):
+    def __init__(self, case: str = "", input_data: str = "", expected: str = "", grade: Optional[int] = None, source: str = ""):
         self.source = source  # stores the source file of the unit
         self.source_pad = 0  # stores the pad to justify the source file
         self.case = case  # name
         self.case_pad = 0  # stores the pad to justify the case name
-        self.input = inp  # input
-        self.output = outp  # expected output
-        self.user: Optional[str] = None  # solver generated answer
+        self.input = input_data  # input
+        self.expected = expected  # expected output
+        self.received: Optional[str] = None  # solver generated answer
         self.grade: Optional[int] = grade  # None represents proportional gr, 100 represents all
         self.grade_reduction: int = 0  # if grade is None, this atribute should be filled with the right grade reduction
         self.index = 0
@@ -3469,305 +3592,6 @@ class Unit:
         if pad:
             case = self.case.ljust(self.case_pad)
         return Text() + "(" + op + ")" + f"[{index}] GR:{grade} {source} ({case}){rep}"
-
-
-
-class DiffBuilder:
-
-    vinput    = " INSERIDO "
-    vexpected = " ESPERADO "
-    vreceived = " RECEBIDO "
-    vunequal  = " DESIGUAL "
-
-    @staticmethod
-    def make_line_arrow_up(a: str, b: str) -> Text:
-        hdiff = Text()
-        first = True
-        i = 0
-        lim = max(len(a), len(b))
-        while i < lim:
-            if i >= len(a) or i >= len(b) or a[i] != b[i]:
-                if first:
-                    first = False
-                    hdiff += symbols.arrow_up
-                    return hdiff
-            else:
-                hdiff += " "
-            i += 1
-        while len(hdiff) < lim:
-            hdiff += " "
-        return hdiff
-
-    @staticmethod
-    def render_white(text: Text, color: str = "") -> Optional[Text]:
-        out = Text().add(text).replace(' ', Token(symbols.whitespace.text, color)).replace('\n', Token(symbols.newline.text, color))
-
-        return out
-
-    # create a string with both ta and tb side by side with a vertical bar in the middle
-    @staticmethod
-    def side_by_side(ta: List[Text], tb: List[Text], unequal: Token = symbols.unequal) -> List[Text]:
-        cut = (RawTerminal.get_terminal_size() - 6) // 2
-        upper = max(len(ta), len(tb))
-        data: List[Text] = []
-
-        for i in range(upper):
-            a = ta[i] if i < len(ta) else Text("###############")
-            b = tb[i] if i < len(tb) else Text("###############")
-            if len(a) < cut:
-                a = a.ljust(cut, Token(" "))
-            if i >= len(ta) or i >= len(tb) or ta[i] != tb[i]:
-                data.append(Text() + unequal + " " + a + " " + unequal + " " + b + " " + symbols.vbar)
-            else:
-                data.append(Text() + symbols.vbar + " " + a + " " + symbols.vbar + " " + b + " " + symbols.vbar)
-
-        return data
-
-    # a_text -> clean full received
-    # b_text -> clean full expected
-    # first_failure -> index of the first line unmatched 
-    @staticmethod
-    def first_failure_diff(a_text: str, b_text: str, first_failure: int) -> List[Text]:
-        def get(vet, index):
-            if index < len(vet):
-                return DiffBuilder.render_white(vet[index])
-            return ""
-
-        a_render = a_text.splitlines(True)
-        b_render = b_text.splitlines(True)
-
-        first_a = get(a_render, first_failure)
-        first_b = get(b_render, first_failure)
-        # greater = max(len(first_a), len(first_b))
-
-        # if first_failure > 0:
-        #     lbefore = get(a_render, first_failure - 1)
-        #     greater = max(greater, len(lbefore))
-
-        out_a, out_b = DiffBuilder.colorize_2_lines_diff(Text(first_a), Text(first_b))
-        greater = max(len(out_a), len(out_b))
-        output: List[Text] = []
-        width = RawTerminal.get_terminal_size() - 13
-        output.append(Text().add(" ").add(out_a.ljust(greater)).trim_end(width).addf("g", " (esperado)"))
-        output.append(Text().add(" ").add(out_b.ljust(greater)).trim_end(width).addf("r", " (recebido)"))
-        diff = DiffBuilder.make_line_arrow_up(first_a, first_b)
-        output.append(Text().add(" ").add(diff.ljust(greater)).trim_end(width).addf("b", " (primeiro)"))
-        return output
-
-    @staticmethod
-    def find_first_mismatch(line_a: Text, line_b: Text) -> int: 
-        i = 0
-        while i < len(line_a) and i < len(line_b):
-            if line_a[i] != line_b[i]:
-                return i
-            i += 1
-        return i
-    
-    @staticmethod
-    def colorize_2_lines_diff(la: Text, lb: Text, neut: str = "", exp: str = "g", rec: str = "r") -> Tuple[Text, Text]:
-        pos = DiffBuilder.find_first_mismatch(la, lb)
-        lat = la.get_text()
-        lbt = lb.get_text()
-        a_out = Text().addf(neut, lat[0:pos]).addf(exp, lat[pos:])
-        b_out = Text().addf(neut, lbt[0:pos]).addf(rec, lbt[pos:])
-        return a_out, b_out
-
-    # return a tuple of two strings with the diff and the index of the  first mismatch line
-    @staticmethod
-    def render_diff(a_text: str, b_text: str, pad: Optional[bool] = None) -> Tuple[List[Text], List[Text], int]:
-        a_lines = a_text.splitlines()
-        b_lines = b_text.splitlines()
-
-        a_output: List[Text] = []
-        b_output: List[Text] = []
-
-        a_size = len(a_lines)
-        b_size = len(b_lines)
-        
-        first_failure = -1
-
-        cut: int = 0
-        if pad is True:
-            cut = (RawTerminal.get_terminal_size() - 6) // 2
-
-        max_size = max(a_size, b_size)
-
-        # lambda function to return element in index i or empty if out of bounds
-        def get(vet, index):
-            out = ""
-            if index < len(vet):
-                out = vet[index]
-            if pad is None:
-                return out
-            return out[:cut].ljust(cut)
-
-        # get = lambda vet, i: vet[i] if i < len(vet) else ""
-        expected_color = "g"
-        received_color = "r" if a_text != "" else ""
-        for i in range(max_size):
-            a_data = Text(get(a_lines, i))
-            b_data = Text(get(b_lines, i))
-            
-            if i >= a_size or i >= b_size or a_lines[i] != b_lines[i]:
-                if first_failure == -1:
-                    first_failure = i
-                a_out, b_out = DiffBuilder.colorize_2_lines_diff(a_data, b_data, "y", expected_color, received_color)
-                a_output.append(a_out)
-                b_output.append(b_out)
-            else:
-                a_output.append(a_data)
-                b_output.append(b_data)
-
-        return a_output, b_output, first_failure
-
-    @staticmethod
-    def mount_up_down_diff(unit: Unit, curses=False) -> List[Text]:
-        output: List[Text] = []
-
-        width = RawTerminal.get_terminal_size() - 1
-
-        string_input = unit.input
-        string_expected = unit.output
-        string_received = unit.user
-
-        no_diff_mode = string_input == "" and string_expected == ""
-
-        if string_received is None:
-            string_received = ""
-        expected_lines, received_lines, first_failure = DiffBuilder.render_diff(string_expected, string_received)
-        string_input_list = [Text().add(symbols.vbar.text).add(" ").add(line) for line in string_input.split("\n")][:-1]
-        unequal = symbols.unequal
-        if unit.result == ExecutionResult.EXECUTION_ERROR or unit.result == ExecutionResult.COMPILATION_ERROR or string_expected == "":
-            unequal = symbols.vbar
-        expected_lines, received_lines = DiffBuilder.put_left_equal(expected_lines, received_lines, unequal)
-
-        color = "b" if string_expected != string_received else "g"
-        if not curses:
-            output.append(RawTerminal.centralize("", symbols.hbar, "╭", "╮"))
-            output.append(RawTerminal.centralize(unit.str(), " ", symbols.vbar, symbols.vbar))
-            output.append(RawTerminal.centralize(Text().addf(color, DiffBuilder.vinput), symbols.hbar, "├", "┤"))
-        else:
-            if no_diff_mode:
-                output.append(RawTerminal.centralize(Text().addf(color, DiffBuilder.vreceived), symbols.hbar, "╭"))
-            else:
-                output.append(RawTerminal.centralize(Text().addf(color, DiffBuilder.vinput), symbols.hbar, "╭"))
-
-        for line in string_input_list:
-            output.append(line.ljust(width, Token(" ")).add(symbols.vbar))
-
-        if string_expected != "":
-            output.append(RawTerminal.centralize(Text().addf("g", DiffBuilder.vexpected), symbols.hbar, "├", "┤"))
-            for line in expected_lines:
-                output.append(line.ljust(width, Token(" ")).add(symbols.vbar))
-            
-        # output.append("\n".join(expected_lines))
-        rcolor = "r" if (string_expected != "" and string_expected != string_received) else "g"
-        if no_diff_mode == False:
-            output.append(RawTerminal.centralize(Text().addf(rcolor, DiffBuilder.vreceived), symbols.hbar, "├", "┤"))
-        
-        for line in received_lines:
-            output.append(line.ljust(width, Token(" ")).trim_end(width).add(symbols.vbar))
-
-        include_rendering = False
-        if string_expected != string_received and string_expected != "":
-            include_rendering = True
-        if unit.result == ExecutionResult.EXECUTION_ERROR or unit.result == ExecutionResult.COMPILATION_ERROR:
-            include_rendering = False
-
-        if include_rendering:
-            output.append(RawTerminal.centralize(Text().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├", "┤"))
-            for line in DiffBuilder.first_failure_diff(string_expected, string_received, first_failure):
-                output.append(Text("│").add(line).ljust(width, Token(" ")).add("│"))
-        output.append(RawTerminal.centralize("",  symbols.hbar, "╰", "╯"))
-
-        return output
-
-    @staticmethod
-    def put_left_equal(exp_lines: List[Text], rec_lines: List[Text], unequal: Token = symbols.unequal):
-
-        max_size = max(len(exp_lines), len(rec_lines))
-
-        for i in range(max_size):
-            if i >= len(exp_lines) or i >= len(rec_lines) or (exp_lines[i] != rec_lines[i]):
-                exp_lines[i] = Text() + unequal + " " + exp_lines[i]
-                rec_lines[i] = Text() + unequal + " " + rec_lines[i]
-            else:
-                exp_lines[i] = Text() + symbols.vbar + " " + exp_lines[i]
-                rec_lines[i] = Text() + symbols.vbar + " " + rec_lines[i]
-        
-        return exp_lines, rec_lines
-            
-    @staticmethod
-    def title_side_by_side(left: Text, right: Text, filler: Token = Token(" "), middle: Token = Token(" "), prefix: Token = Token(), posfix: Token = Token()) -> Text:
-        half = int((RawTerminal.get_terminal_size() - len(middle)) / 2)
-        line = Text()
-        a = left
-        a = a.center(half, filler)
-        if len(a) > half:
-            a = a.trim_end(half)
-        line += a
-        line += middle
-        b = right
-        b = b.center(half, filler)
-        if len(b) > half:
-            b = b.trim_end(half)
-        line += b
-        if prefix != "":
-            line.data[0].text = line.data[0].text[1:]
-            line = Text() + prefix + line
-        if posfix != "":
-            line.data[-1].text = line.data[-1].text[:-1]
-            line += posfix
-        return line
-
-    @staticmethod
-    def mount_side_by_side_diff(unit: Unit, curses=False) -> List[Text]:
-
-        output: List[Text] = []
-
-        string_input = unit.input
-        string_expected = unit.output
-        string_received = unit.user
-        if string_received is None:
-            string_received = ""
-        # dotted = "-"
-        # vertical_separator = symbols.vbar
-        hbar = symbols.hbar
-
-        expected_lines, received_lines, first_failure = DiffBuilder.render_diff(string_expected, string_received, True)
-        if not curses:
-            output.append(RawTerminal.centralize("", hbar, "╭", "╮"))
-            output.append(RawTerminal.centralize(unit.str(), " ", "│", "│"))
-        input_color = "b" if string_expected != string_received else "g"
-        input_headera = Text().addf(input_color, DiffBuilder.vinput)
-        input_headerb = Text().addf(input_color, DiffBuilder.vinput)
-        if not curses:
-            output.append(DiffBuilder.title_side_by_side(input_headera, input_headerb, hbar, Token("┬"), Token("├"), Token("┤")))
-        else:
-            output.append(RawTerminal.centralize(Text().addf(input_color, DiffBuilder.vinput),  symbols.hbar, "╭"))
-            # output.append(Diff.title_side_by_side(input_headera, input_headerb, hbar, TK("┬"), TK("╭")))
-
-        if string_input != "":
-            lines = [Text(x) for x in string_input.split("\n")[:-1]]
-            output += DiffBuilder.side_by_side(lines, lines)
-        expected_header = Text().addf("g", DiffBuilder.vexpected)
-        rcolor = "r" if string_expected != string_received else "g"
-        received_header = Text().addf(rcolor, DiffBuilder.vreceived)
-        output.append(DiffBuilder.title_side_by_side(expected_header, received_header, hbar, Token("┼"), Token("├"), Token("┤")))
-        unequal = symbols.unequal
-        if unit.result == ExecutionResult.EXECUTION_ERROR or unit.result == ExecutionResult.COMPILATION_ERROR:
-            unequal = symbols.vbar
-        output += DiffBuilder.side_by_side(expected_lines, received_lines, unequal)
-        if unit.result != ExecutionResult.EXECUTION_ERROR and unit.result != ExecutionResult.COMPILATION_ERROR and string_expected != string_received:
-            output.append(RawTerminal.centralize(Text().addf("b", DiffBuilder.vunequal),  symbols.hbar, "├", "┤"))
-            for line in DiffBuilder.first_failure_diff(string_expected, string_received, first_failure):
-                width = RawTerminal.get_terminal_size() - 1
-                output.append(Text("│").add(line).ljust(width, Token(" ")).add("│"))
-            output.append(RawTerminal.centralize("",  symbols.hbar, "╰", "╯"))
-        else:
-            output.append(RawTerminal.centralize("┴",  symbols.hbar, "╰", "╯"))
-
-        return output
 
 
 
@@ -3956,7 +3780,7 @@ class Loader:
                     unit.input = value + ("" if value.endswith("\n") else "\n")
                 with open(os.path.join(folder, m.output_file)) as f:
                     value = f.read()
-                    unit.output = value + ("" if value.endswith("\n") else "\n")
+                    unit.expected = value + ("" if value.endswith("\n") else "\n")
                 unit_list.append(unit)
         except FileNotFoundError as e:
             print(str(e))
@@ -3996,18 +3820,238 @@ class UnitRunner:
     @staticmethod
     def run_unit(solver: SolverBuilder, unit: Unit, timeout: Optional[float]=None) -> ExecutionResult:
         if solver.compile_error:
-            unit.user = solver.error_msg
+            unit.received = solver.error_msg
             return ExecutionResult.COMPILATION_ERROR
         cmd = solver.get_executable()
         if timeout == 0:
             timeout = None
         return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input, timeout)
-        unit.user = stdout + stderr
+        unit.received = stdout + stderr
         if return_code != 0:
             return ExecutionResult.EXECUTION_ERROR
-        if unit.user == unit.output:
+        if unit.received == unit.expected:
             return ExecutionResult.SUCCESS
         return ExecutionResult.WRONG_OUTPUT
+
+
+
+
+class DownDiff:
+    def __init__(self, width: int, unit: Unit):
+        self.width = width
+        self.curses = False
+        self.db = DiffBuilder(width)
+        self.unit = unit
+        self.output: List[Text] = []
+        self.__to_insert_header = False
+        self.no_diff_mode = self.unit.input == "" and self.unit.expected == ""
+        self.expected_received, self.first_failure = self.db.render_diff(self.unit.expected, self.unit.received)
+
+    def to_insert_header(self):
+        self.__to_insert_header = True
+        return self
+
+    def set_curses(self):
+        self.curses = True
+        return self
+
+    @staticmethod
+    def put_left_equal(exp_rec_list: List[Tuple[Text | None, Text | None]], unequal: Token = symbols.unequal):
+
+        output: List[Tuple[Text, Text]] = []
+        for exp, rec in exp_rec_list:
+            if exp is None or rec is None or exp != rec:
+                exp_lines = Text() + unequal + " " + exp
+                rec_lines = Text() + unequal + " " + rec
+            else:
+                exp_lines = Text() + symbols.vbar + " " + exp
+                rec_lines = Text() + symbols.vbar + " " + rec
+            output.append((exp_lines, rec_lines))
+        return output
+
+    def insert_header(self):
+        self.output.append(Text("").fold_in(self.width, symbols.hbar, "╭", "╮"))
+        self.output.append(self.unit.str().fold_in(self.width, " ", symbols.vbar, symbols.vbar))
+
+    def insert_input(self):
+        color = "g" if self.unit.expected == self.unit.received else "b"
+        # header
+        if self.__to_insert_header:
+            self.output.append(Text().addf(color, DiffBuilder.vinput).fold_in(self.width, symbols.hbar, "├", "┤"))
+        else:
+            self.output.append(Text().addf(color, DiffBuilder.vinput).fold_in(self.width, symbols.hbar, "╭", "╮"))
+        # lines
+        for line in self.unit.input.split("\n")[:-1]:
+            self.output.append(Text().add(symbols.vbar).add(" ").add(line).ljust(self.width - 1, Token(" ")).add(symbols.vbar))
+
+    def insert_expected(self):
+        if self.no_diff_mode:
+            return
+        # color = "g" if self.unit.expected == self.unit.received else "b"
+        # self.output.append(Text().addf(color, DiffBuilder.vreceived).fold_in(self.width, symbols.hbar, "╭", "╮"))
+        if self.unit.expected == "":
+            return
+        self.output.append(Text().addf("g", DiffBuilder.vexpected).fold_in(self.width, symbols.hbar, "├", "┤"))
+        for line, _ in self.expected_received:
+            if line is not None:
+                self.output.append(line.ljust(self.width - 1, Token(" ")).add(symbols.vbar))
+
+    def insert_received(self):
+        # headers
+        color = "r" if self.unit.expected == self.unit.received else "g"
+        if self.no_diff_mode:
+            color = "g"
+            self.output.append(Text().addf(color, DiffBuilder.vreceived).fold_in(self.width, symbols.hbar, "╭", "╮"))
+        else:
+            self.output.append(Text().addf(color, DiffBuilder.vreceived).fold_in(self.width, symbols.hbar, "├", "┤"))
+
+        # lines
+        for _, line in self.expected_received:
+            if line is not None:
+                self.output.append(line.ljust(self.width - 1, Token(" ")).trim_end(self.width).add(symbols.vbar))
+
+    def insert_first_line_diff(self):
+        include_rendering = False
+        if self.unit.expected != self.unit.received and self.unit.expected != "":
+            include_rendering = True
+        if self.unit.result == ExecutionResult.EXECUTION_ERROR or self.unit.result == ExecutionResult.COMPILATION_ERROR:
+            include_rendering = False
+
+        if not include_rendering:
+            return
+        self.output.append(Text().addf("b", DiffBuilder.vunequal).fold_in(self.width, symbols.hbar, "├", "┤"))
+        for line in self.db.first_failure_diff(self.unit.expected, self.unit.received, self.first_failure):
+            self.output.append(Text("│").add(line).ljust(self.width - 1, Token(" ")).add("│"))
+
+    def end_frame(self):
+        self.output.append(Text("").fold_in(self.width, symbols.hbar, "╰", "╯"))
+
+    def build_diff(self) -> List[Text]:
+        if self.__to_insert_header:
+            self.insert_header()
+        if not self.no_diff_mode:
+            self.insert_input()
+        symb = symbols.unequal
+        if self.unit.result == ExecutionResult.EXECUTION_ERROR or self.unit.result == ExecutionResult.COMPILATION_ERROR or self.unit.expected == "":
+            symb = symbols.vbar
+        self.expected_received = self.put_left_equal(self.expected_received, symb)
+        self.insert_expected()
+        self.insert_received()
+        self.insert_first_line_diff()
+        self.end_frame()
+
+        return self.output
+
+
+
+
+class SideDiff:
+    def __init__(self, width: int, unit: Unit):
+        self.width = width
+        self.curses = False
+        self.db = DiffBuilder(width)
+        self.unit: Unit = unit
+        self.output: List[Text] = []
+        self.__to_insert_header = False
+        self.expected_received, self.first_failure = self.db.render_diff(self.unit.expected, self.unit.received)
+
+    def set_curses(self):
+        self.curses = True
+        return self
+
+    def split_screen(self, a: Text | None, b: Text | None, unequal: Token = symbols.vbar) -> Text:
+        avaliable = self.width - 7 # 2 spaces before, 2 spaces after, 3 between
+        cut = avaliable // 2
+        if a is None or b is None or a != b:
+            symb = unequal
+        else:
+            symb = symbols.vbar
+        ta = Text() + a
+        tb = Text() + b
+        ta = ta.ljust(cut, Token(" ")).trim_end(cut)
+        tb = tb.ljust(cut, Token(" ")).trim_end(cut)
+        line = symb + " " + ta + " " + symb + " " + tb + " "
+        if self.width % 2 == 0:
+            line += " "
+        return line + symbols.vbar
+
+    def title_side_by_side(self, left: Text, right: Text, filler: Token = Token(" "), middle: Token = Token(" "), prefix: Token = Token(), posfix: Token = Token()) -> Text:
+        avaliable = self.width - len(prefix) - len(posfix) - len(middle)
+        half = avaliable // 2
+        line = Text() + prefix
+
+        a = left
+        a = a.center(half, filler)
+        if len(a) > half:
+            a = a.trim_end(half)
+        line += a
+        line += middle
+        b = right
+        b = b.center(half, filler)
+        if len(b) > half:
+            b = b.trim_end(half)
+        line += b
+        if self.width % 2 == 0:
+            line += filler
+        line += posfix
+        return line
+
+    def to_insert_header(self, value: bool):
+        self.__to_insert_header = value
+        return self
+
+    def _insert_header(self):
+        self.output.append(Text("").fold_in(self.width, symbols.hbar, "╭", "╮"))
+        self.output.append(self.unit.str().fold_in(self.width, " ", "│", "│"))
+
+    def _insert_input(self):
+        # input header
+        input_color = "b" if self.unit.expected != self.unit.received else "g"
+        input_headera = Text().addf(input_color, DiffBuilder.vinput)
+        input_headerb = Text().addf(input_color, DiffBuilder.vinput)
+        if self.__to_insert_header:
+            self.output.append(self.title_side_by_side(input_headera, input_headerb, symbols.hbar, Token("┬"), Token("├"), Token("┤")))
+        else:
+            self.output.append(Text().addf(input_color, DiffBuilder.vinput).fold_in(self.width, symbols.hbar, "╭", "╮"))
+
+        # input lines
+        if self.unit.input != "":
+            lines = [Text(x) for x in self.unit.input.split("\n")[:-1]]
+            for l in lines:
+                self.output.append(self.split_screen(l, l))
+    
+    def _insert_expected_received(self):
+        # expected and received header
+        expected_header = Text().addf("g", DiffBuilder.vexpected)
+        rcolor = "r" if self.unit.expected != self.unit.received else "g"
+        received_header = Text().addf(rcolor, DiffBuilder.vreceived)
+        self.output.append(self.title_side_by_side(expected_header, received_header, symbols.hbar, Token("┼"), Token("├"), Token("┤")))
+        # expected and received lines
+        symbol = symbols.unequal
+        if self.unit.result == ExecutionResult.EXECUTION_ERROR or self.unit.result == ExecutionResult.COMPILATION_ERROR:
+            symbol = symbols.vbar
+        for exp, rec in self.expected_received:
+            self.output.append(self.split_screen(exp, rec, symbol))
+
+    def _insert_first_line_diff(self):
+        self.output.append(Text().addf("b", DiffBuilder.vunequal).fold_in(self.width, symbols.hbar, "├", "┤"))
+        for line in self.db.first_failure_diff(self.unit.expected, self.unit.received, self.first_failure):
+            width = self.width - 1
+            self.output.append(Text("│").add(line).ljust(width, Token(" ")).add("│"))
+        
+    def _finish(self):
+        self.output.append(Text("").fold_in(self.width, symbols.hbar, "╰", "╯"))
+
+    def build_diff(self) -> List[Text]:
+        self.output = []
+        if self.__to_insert_header:
+            self._insert_header()
+        self._insert_input()
+        self._insert_expected_received()
+        self._insert_first_line_diff()
+        self._finish()
+        
+        return self.output
 
 class Param:
 
@@ -4217,7 +4261,7 @@ class Wdir:
     def calc_grade(self) -> int:
         grade = 100
         for case in self.__unit_list:
-            if not case.repeated and (case.user is None or case.output != case.user):
+            if not case.repeated and (case.received is None or case.expected != case.received):
                 grade -= case.grade_reduction
         return max(0, grade)
 
@@ -4320,7 +4364,7 @@ class Writer:
     def to_vpl(unit: Unit):
         text = "case=" + unit.case + "\n"
         text += "input=" + unit.input
-        text += "output=\"" + unit.output + "\"\n"
+        text += "output=\"" + unit.expected + "\"\n"
         if unit.grade is None:
             text += "\n"
         else:
@@ -4336,8 +4380,8 @@ class Writer:
             text += " " + str(unit.grade) + "%"
         text += '\n' + unit.input
         text += "========\n"
-        text += unit.output
-        if unit.output != '' and unit.output[-1] != '\n':
+        text += unit.expected
+        if unit.expected != '' and unit.expected[-1] != '\n':
             text += '\n'
         text += "<<<<<<<<\n"
         return text
@@ -4348,7 +4392,7 @@ class Writer:
         with open(os.path.join(folder, file_source.input_file), "w") as f:
             f.write(unit.input)
         with open(os.path.join(folder, file_source.output_file), "w") as f:
-            f.write(unit.output)
+            f.write(unit.expected)
 
     @staticmethod
     def save_target(target: str, unit_list: List[Unit], force: bool = False):
@@ -6460,8 +6504,6 @@ class Tester:
         else:
             output.add(self.borders.border("R", "Nenhum teste encontrado"))
 
-            
-
         for unit_result, index in done_list + todo_list:
             foco = i == self.focused_index
             token = self.get_token(unit_result)
@@ -6626,15 +6668,19 @@ class Tester:
         if self.is_all_right():
             self.show_success()
             return
-        RawTerminal.set_terminal_size(cols)
         
+        diff_builder = DiffBuilder(cols)
+        diff_builder.set_curses()
+
         if self.wdir.get_solver().compile_error:
             received = self.wdir.get_solver().error_msg
             line_list = [Text().add(line) for line in received.split("\n")]
         elif self.settings.app.get_diff_mode() == DiffMode.DOWN or not self.wdir.has_tests():
-            line_list = DiffBuilder.mount_up_down_diff(unit, curses=True)
+            ud_diff = DownDiff(cols - 1, unit)
+            line_list = ud_diff.build_diff()
         else:
-            line_list = DiffBuilder.mount_side_by_side_diff(unit, curses=True)
+            ss_diff = SideDiff(cols - 1, unit)
+            line_list = ss_diff.build_diff()
 
         self.length = max(1, len(line_list))
 
@@ -6649,7 +6695,7 @@ class Tester:
         for i, line in enumerate(line_list):
             frame.write(i, 0, Text().add(line))
 
-        self.draw_scrollbar()
+        # self.draw_scrollbar()
         return
 
     def get_solver_names(self):
@@ -6886,6 +6932,7 @@ class Tester:
 
 
 
+
 class FilterMode:
     @staticmethod
     def deep_copy_and_change_dir():
@@ -6989,7 +7036,7 @@ class Run:
         if self.param.filter:
             old_dir = os.getcwd()
 
-            print(RawTerminal.centralize(" Entrando no modo de filtragem ", "═"))
+            print(Text(" Entrando no modo de filtragem ").center(RawTerminal.get_terminal_size(), "═"))
             FilterMode.deep_copy_and_change_dir()  
             # search for target outside . dir and redirect target
             new_target_list = []
@@ -7037,15 +7084,18 @@ class Run:
         if not self.param.compact:
             for elem in self.wdir.unit_list_resume():
                 print(elem)
+
         
         if self.param.diff_count == DiffCount.FIRST:
             # printing only the first wrong case
             wrong = [unit for unit in self.wdir.get_unit_list() if unit.result != ExecutionResult.SUCCESS][0]
             if self.param.diff_mode == DiffMode.DOWN:
-                for line in DiffBuilder.mount_up_down_diff(wrong):
+                ud_diff_builder = DownDiff(RawTerminal.get_terminal_size(), wrong).to_insert_header()
+                for line in ud_diff_builder.build_diff():
                     print(line)
             else:
-                for line in DiffBuilder.mount_side_by_side_diff(wrong):
+                ss_diff_builder = SideDiff(RawTerminal.get_terminal_size(), wrong).to_insert_header(True)
+                for line in ss_diff_builder.build_diff():
                     print(line)
             return
 
@@ -7053,10 +7103,10 @@ class Run:
             for unit in self.wdir.get_unit_list():
                 if unit.result != ExecutionResult.SUCCESS:
                     if self.param.diff_mode:
-                        for line in DiffBuilder.mount_up_down_diff(unit):
+                        for line in ud_diff_builder.build_diff(unit):
                             print(line)
                     else:
-                        for line in DiffBuilder.mount_side_by_side_diff(unit):
+                        for line in ss_diff_builder.build_diff(unit):
                             print(line)
 
     def build_wdir(self):
@@ -7085,7 +7135,7 @@ class Run:
 
         # list mode
         if not self.wdir.has_solver() and self.wdir.has_tests():
-            print(RawTerminal.centralize(" Nenhum arquivo de código encontrado. Listando casos de teste.", Token("╌")), flush=True)
+            print(Text(" Nenhum arquivo de código encontrado. Listando casos de teste.").center(RawTerminal.get_terminal_size(), Token("╌")), flush=True)
             print(self.wdir.resume())
             for line in self.wdir.unit_list_resume():
                 print(line)
@@ -7096,7 +7146,8 @@ class Run:
         if self.wdir is None:
             return False
         if self.wdir.has_solver() and (not self.wdir.has_tests()) and not self.__curses_mode:
-            Logger.get_instance().record_event(LogAction.FREE, self.get_task().key)
+            if self.__task is not None:
+                Logger.get_instance().record_event(LogAction.FREE, self.get_task().key)
             Free.free_run(self.wdir.get_solver(), show_compilling=False, to_clear=False, wait_input=False)
             return True
         return False
@@ -7135,12 +7186,13 @@ class Run:
             cdiff.set_autorun(self.__autorun)
             cdiff.run()
         else:
-            print(RawTerminal.centralize(" Testando o código com os casos de teste ", "═"))
+            print(Text(" Testando o código com os casos de teste ").center(RawTerminal.get_terminal_size(), "═"))
             self.__print_top_line()
             self.__print_diff()
             correct = [unit for unit in self.wdir.get_unit_list() if unit.result == ExecutionResult.SUCCESS]
             percent = (len(correct) * 100) // len(self.wdir.get_unit_list())
-            Logger.get_instance().record_event(LogAction.TEST, self.get_task().key, str(percent) + "%")
+            if self.__task is not None:
+                Logger.get_instance().record_event(LogAction.TEST, self.get_task().key, str(percent) + "%")
 
 
 

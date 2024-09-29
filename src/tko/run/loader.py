@@ -191,7 +191,7 @@ class Loader:
                     unit.input = value + ("" if value.endswith("\n") else "\n")
                 with open(os.path.join(folder, m.output_file)) as f:
                     value = f.read()
-                    unit.output = value + ("" if value.endswith("\n") else "\n")
+                    unit.expected = value + ("" if value.endswith("\n") else "\n")
                 unit_list.append(unit)
         except FileNotFoundError as e:
             print(str(e))

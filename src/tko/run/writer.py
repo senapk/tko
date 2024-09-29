@@ -17,7 +17,7 @@ class Writer:
     def to_vpl(unit: Unit):
         text = "case=" + unit.case + "\n"
         text += "input=" + unit.input
-        text += "output=\"" + unit.output + "\"\n"
+        text += "output=\"" + unit.expected + "\"\n"
         if unit.grade is None:
             text += "\n"
         else:
@@ -33,8 +33,8 @@ class Writer:
             text += " " + str(unit.grade) + "%"
         text += '\n' + unit.input
         text += "========\n"
-        text += unit.output
-        if unit.output != '' and unit.output[-1] != '\n':
+        text += unit.expected
+        if unit.expected != '' and unit.expected[-1] != '\n':
             text += '\n'
         text += "<<<<<<<<\n"
         return text
@@ -45,7 +45,7 @@ class Writer:
         with open(os.path.join(folder, file_source.input_file), "w") as f:
             f.write(unit.input)
         with open(os.path.join(folder, file_source.output_file), "w") as f:
-            f.write(unit.output)
+            f.write(unit.expected)
 
     @staticmethod
     def save_target(target: str, unit_list: List[Unit], force: bool = False):

@@ -145,7 +145,7 @@ class Wdir:
     def calc_grade(self) -> int:
         grade = 100
         for case in self.__unit_list:
-            if not case.repeated and (case.user is None or case.output != case.user):
+            if not case.repeated and (case.received is None or case.expected != case.received):
                 grade -= case.grade_reduction
         return max(0, grade)
 

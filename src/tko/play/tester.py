@@ -27,6 +27,8 @@ from tko.util.symbols import symbols
 from tko.util.consts import DiffMode
 from tko.play.input_manager import InputManager
 from tko.util.logger import LogAction, Logger
+from tko.run.diff_builder_down import DownDiff
+from tko.run.diff_builder_side import SideDiff
 
 
 class SeqMode(enum.Enum):
@@ -308,8 +310,6 @@ class Tester:
         else:
             output.add(self.borders.border("R", "Nenhum teste encontrado"))
 
-            
-
         for unit_result, index in done_list + todo_list:
             foco = i == self.focused_index
             token = self.get_token(unit_result)
@@ -474,15 +474,19 @@ class Tester:
         if self.is_all_right():
             self.show_success()
             return
-        RawTerminal.set_terminal_size(cols)
         
+        diff_builder = DiffBuilder(cols)
+        diff_builder.set_curses()
+
         if self.wdir.get_solver().compile_error:
             received = self.wdir.get_solver().error_msg
             line_list = [Text().add(line) for line in received.split("\n")]
         elif self.settings.app.get_diff_mode() == DiffMode.DOWN or not self.wdir.has_tests():
-            line_list = DiffBuilder.mount_up_down_diff(unit, curses=True)
+            ud_diff = DownDiff(cols - 1, unit)
+            line_list = ud_diff.build_diff()
         else:
-            line_list = DiffBuilder.mount_side_by_side_diff(unit, curses=True)
+            ss_diff = SideDiff(cols - 1, unit)
+            line_list = ss_diff.build_diff()
 
         self.length = max(1, len(line_list))
 
@@ -497,7 +501,7 @@ class Tester:
         for i, line in enumerate(line_list):
             frame.write(i, 0, Text().add(line))
 
-        self.draw_scrollbar()
+        # self.draw_scrollbar()
         return
 
     def get_solver_names(self):
