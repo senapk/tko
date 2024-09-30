@@ -167,7 +167,7 @@ class Tester:
             unit.result = UnitRunner.run_unit(solver, unit, self.settings.app._timeout)
             self.results.append((unit.result, index))
             success = [result for result, _ in self.results if result == ExecutionResult.SUCCESS]
-            self.task.test_progress = (len(success) * 100) // len(self.wdir.get_unit_list())
+            self.task.progress = (len(success) * 100) // len(self.wdir.get_unit_list())
             self.focused_index = index
 
         if len(self.unit_list) == 0:

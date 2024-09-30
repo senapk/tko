@@ -44,6 +44,16 @@ class __Symbols:
         self.sharpR = Token("")
         self.sharpL = Token("")
 
+        self.emoji_vazio = Token("✗", "r") #"❌"
+        self.emoji_confiante = Token("●", "g")#"😎"
+        self.emoji_capaz     = Token("◕", "y")#"😌"
+        self.emoji_inseguro  = Token("◑", "m")#"😬"
+        self.emoji_confuso   = Token("◔", "r")#"😕"
+
+        self.emoji_alone = Token("A", "g")#"💖" # "✋"
+        self.emoji_dicas = Token("B", "y") # "💡"
+        self.emoji_codes = Token("C", "m")#"💚" #"🤝"
+        self.emoji_guide = Token("D", "r")#"💙" # "🧭"
 
     def set_colors(self):
         self.opening.fmt = "b"

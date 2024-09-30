@@ -1,21 +1,22 @@
 from typing import List, Any, Dict, Tuple, Union, Set
 
-from ..settings.app_settings import AppSettings
-from ..settings.rep_settings import RepData
+from tko.settings.app_settings import AppSettings
+from tko.settings.rep_settings import RepData
 
-from ..util.text import Text, Token
-from ..util.to_asc import SearchAsc, uni_to_asc
-from .flags import Flags
-from ..game.game import Game
-from ..game.cluster import Cluster
-from ..game.quest import Quest
-from ..game.task import Task
-from .border import Border
-from .colors import Colors
-from ..util.symbols import symbols
-from ..settings.settings import Settings
+from tko.util.text import Text, Token
+from tko.util.to_asc import SearchAsc, uni_to_asc
+from tko.play.flags import Flags
+from tko.game.game import Game
+from tko.game.cluster import Cluster
+from tko.game.quest import Quest
+from tko.game.task import Task
+from tko.play.border import Border
+from tko.play.colors import Colors
+from tko.util.symbols import symbols
+from tko.settings.settings import Settings
 from tko.play.floating_manager import FloatingManager
 from tko.play.floating import Floating
+from tko.play.grade_message import GradeMessage
 
 import os
 
@@ -91,7 +92,7 @@ class TaskTree:
         self.new_items = [item for item in self.new_items if item not in self.expanded]
 
     def update_max_title(self):
-        min_value = 20
+        min_value = 50
         items = []
         for c in self.game.clusters.values():
             if c.key in self.game.available_clusters:
@@ -127,9 +128,9 @@ class TaskTree:
         output.add(" ").addf(color_aval, lig_cluster)
         output.add(" ")
         output.addf(color_aval, lig_quest)
-        output.add(down_symbol)
-        output.add(" ")
-        output.add(t.get_grade_symbol(min_value))
+        output.add(down_symbol).add(" ")
+        output.add(GradeMessage().grade_to_emojis(t.self_grade)).add(" ")
+        output.add(t.get_prog_symbol())
 
         if in_focus:
             output.add(self.style.roundL(focus_color))
@@ -142,7 +143,7 @@ class TaskTree:
 
         done = color + "g"
         todo = color
-        perc = t.test_progress
+        perc = t.progress
         output.add(self.style.build_bar(t.title, perc / 100, len(t.title), done, todo, round=False))
         # output.addf(color, t.title)
 
@@ -415,7 +416,7 @@ class TaskTree:
                     if value is not None:
                         t.set_grade(value)
                     else:
-                        value = 10 if t.grade < 10 else 0
+                        value = 10 if t.self_grade < 10 else 0
                         t.set_grade(value)
         elif isinstance(obj, Quest):
             if obj.key not in self.expanded:
@@ -426,42 +427,48 @@ class TaskTree:
                     if value is not None:
                         t.set_grade(value)
                     else:
-                        value = 10 if t.grade < 10 else 0
+                        value = 10 if t.self_grade < 10 else 0
                         t.set_grade(value)
         else:
-            obj.set_grade(10 if obj.grade < 10 else 0)
+            obj.set_grade(10 if obj.self_grade < 10 else 0)
 
     def set_grade(self, grade: int):
-        level: Dict[int, Token] = {}
-        level[0] = Token("Nenhuma", "r")
-        level[1] = Token("Muito Baixa", "r")
-        level[2] = Token("Baixa", "r")
-        level[3] = Token("Parcial e Com Lacunas", "r")
-        level[4] = Token("Superficial", "y")
-        level[5] = Token("Razoável", "y")
-        level[6] = Token("Com Lacunas", "y")
-        level[7] = Token("Média", "g")
-        level[8] = Token("Aceitável", "g")
-        level[9] = Token("Adequada", 'g')
-        level[10] = Token("Confiante", "g")
 
-        msg1 = Text("Na minha ").addf("b", "última").add(" resolução desta questão, minha ").addf("y", "capacidade ")
-        msg2 = Text("de ").addf("y", "resolver").add(" o exercício e ").addf("y", "compreender").add(" técnicas e conceitos,")
-        msg3 = Text().addf("b", "sem utilizar").add(" de ajuda externa (monitoria, IA, professor)  ")
-        msg4 = Text("pode ser definida como ").add(level[grade])
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             obj.set_grade(grade)
             self.fman.add_input(
-                Floating("v").warning().put_sentence(msg1).put_sentence(msg2).put_sentence(msg3).put_sentence(msg4)
+                Floating("v").warning().set_header(" Auto avaliação ").set_ljust_text().set_content(GradeMessage().format(grade).split("\n"))
             )
+
+    def set_progress(self, prog: int):
+
+        obj = self.items[self.index_selected].obj
+        if isinstance(obj, Task):
+            obj.progress = prog
+
+    def prog_plus(self):
+        obj = self.items[self.index_selected].obj
+        if isinstance(obj, Task):
+            progress = obj.progress + 10
+            if progress > 100:
+                progress = 100
+            self.set_progress(progress)
+
+    def prog_less(self):
+        obj = self.items[self.index_selected].obj
+        if isinstance(obj, Task):
+            progress = obj.progress - 10
+            if progress < 0:
+                progress = 0
+            self.set_progress(progress)
 
     def inc_grade(self):
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
-            grade = obj.grade + 1
-            if grade == 11:
-                grade = 10
+            grade = obj.self_grade + 1
+            if grade > 9:
+                grade = 9
             self.set_grade(grade)
         else:
             self.unfold(obj)
@@ -470,7 +477,7 @@ class TaskTree:
     def dec_grade(self):
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
-            grade = obj.grade - 1
+            grade = obj.self_grade - 1
             if grade == -1:
                 grade = 0
             self.set_grade(grade)

@@ -12,8 +12,8 @@ class Task:
         self.line = ""
         self.key = ""
 
-        self.grade: int = 0 #valor de 0 a 10
-        self.test_progress: int = 0 #valor de 0 a 100
+        self.self_grade: int = 0 #valor de 0 a 9
+        self.progress: int = 0 #valor de 0 a 100
         self.main_index: int = 0
 
         self.qskills: Dict[str, int] = {} # default quest skills
@@ -28,70 +28,72 @@ class Task:
 
     def load_from_db(self, value: str):
         if ":" not in value:
-            self.grade = int(value)
+            self.self_grade = int(value)
         else:
             v = value.split(":")
             if len(v) == 3:
-                self.grade = int(v[0])
+                self.self_grade = int(v[0])
                 self.main_index = int(v[1])
-                self.test_progress = int(v[2])
+                self.progress = int(v[2])
 
     def save_to_db(self) -> str:
-        return f"{self.grade}:{self.main_index}:{self.test_progress}"
+        return f"{self.self_grade}:{self.main_index}:{self.progress}"
     
     def is_db_empty(self) -> bool:
-        return self.grade == 0 and self.main_index == 0 and self.test_progress == 0
+        return self.self_grade == 0 and self.main_index == 0 and self.progress == 0
 
-    def get_grade_color(self, min_value: Optional[int] = None) -> str:
+    def get_prog_color(self, min_value: Optional[int] = None) -> str:
         if min_value is None:
             min_value = self.default_min_value
-        if self.grade == 0:
+        prog = self.progress // 10
+        if prog == 0:
             return "m"
-        if self.grade < min_value:
+        if prog < min_value:
             return "r"
-        if self.grade < 10:
+        if prog < 10:
             return "y"
-        if self.grade == 10:
+        if prog == 10:
             return "g"
         return "w"  
 
-    def get_grade_symbol(self, min_value: Optional[int] = None) -> Text:
+    def get_prog_symbol(self, min_value: Optional[int] = None) -> Text:
         
         if min_value is None:
             min_value = self.default_min_value
-        color = self.get_grade_color(min_value)
-        if self.grade == 0:
+        color = self.get_prog_color(min_value)
+        prog = self.progress // 10
+        if prog == 0:
             return Text().addf(color, symbols.uncheck.text)
-        if self.grade < min_value:
-            return Text().addf(color, str(self.grade))
-        if self.grade < 10:
-            return Text().addf(color, str(self.grade))
-        if self.grade == 10:
+        if prog < min_value:
+            return Text().addf(color, str(prog))
+        if prog < 10:
+            return Text().addf(color, str(prog))
+        if prog == 10:
             return Text().addf(color, symbols.check.text)
         return Text().add("0")
 
     def get_percent(self):
-        if self.grade == 0:
+        if self.self_grade == 0:
             return 0
-        if self.grade == 10:
+        if self.self_grade == 10:
             return 100
-        return self.grade * 10
+        return self.self_grade * 10
     
     def is_complete(self):
-        return self.grade == 10
+        return self.self_grade == 10
 
     def not_started(self):
-        return self.grade == 0
+        return self.self_grade == 0
     
     def in_progress(self):
-        return self.grade > 0 and self.grade < 10
+        return self.self_grade > 0 and self.self_grade < 10
 
     def set_grade(self, grade: int):
         grade = int(grade)
-        if grade >= 0 and grade <= 10:
-            if grade != self.grade:
+        if grade >= 0 and grade < 10:
+            if grade != self.self_grade:
                 Logger.get_instance().record_event(LogAction.SELF, self.key, str(grade))
-                self.grade = grade
+                self.self_grade = grade
         else:
             print(f"Grade inválida: {grade}")
     
@@ -106,7 +108,7 @@ class Task:
     def __str__(self):
         line = str(self.line_number).rjust(3)
         key = "" if self.key == self.title else self.key + " "
-        return f"{line}    {self.grade} {key}{self.title} {self.skills} {self.link}"
+        return f"{line}    {self.self_grade} {key}{self.title} {self.skills} {self.link}"
     
     def is_downloadable(self):
         return f"@{self.key}" in self.title

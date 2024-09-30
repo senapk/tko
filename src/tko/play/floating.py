@@ -29,6 +29,7 @@ class Floating:
 
     def set_align(self, _align: str):
         self._floating_align = _align
+        return self
 
     def set_header(self, text: str):
         self._frame.set_header(Text().addf("/", text), "")

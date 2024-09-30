@@ -50,7 +50,7 @@ class Quest:
         tmin = self.tmin if self.tmin is not None else 7
         total = len([t for t in self.__tasks if not t.opt])
         plus = len([t for t in self.__tasks if t.opt])
-        count = len([t for t in self.__tasks if t.grade >= tmin])
+        count = len([t for t in self.__tasks if t.self_grade >= tmin])
         output = f"{count}/{total}"
         if plus > 0:
             output += f"+{plus}"
@@ -71,7 +71,7 @@ class Quest:
         # task complete mode
         if self.tmin is not None:
             for t in self.__tasks:
-                if not t.opt and t.grade < self.tmin:
+                if not t.opt and t.self_grade < self.tmin:
                     return False
         return True
 
@@ -100,8 +100,8 @@ class Quest:
         obtained = 0
         for t in self.__tasks:
             total += t.xp
-            if t.grade > 0:
-                obtained += t.xp * t.grade // 10
+            if t.self_grade > 0:
+                obtained += t.xp * t.self_grade // 10
 
         return obtained, total
         
@@ -115,7 +115,7 @@ class Quest:
         if self.is_complete():
             return False
         for t in self.__tasks:
-            if t.grade != 0:
+            if t.self_grade != 0:
                 return True
         return False
 

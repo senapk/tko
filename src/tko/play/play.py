@@ -111,10 +111,10 @@ class Play:
             cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
             cman.add_str(GuiKeys.activate, self.actions.select_task)
             cman.add_int(InputManager.tab, self.process_tab)
-            cman.add_str(GuiKeys.expand, self.tree.process_expand)
-            cman.add_str(GuiKeys.expand2, self.tree.process_expand)
-            cman.add_str(GuiKeys.collapse, self.tree.process_collapse)
-            cman.add_str(GuiKeys.collapse2, self.tree.process_collapse)
+            cman.add_str(GuiKeys.prog_plus, self.tree.prog_plus)
+            cman.add_str(GuiKeys.prog_plus2, self.tree.prog_plus)
+            cman.add_str(GuiKeys.prog_less, self.tree.prog_less)
+            cman.add_str(GuiKeys.prog_less2, self.tree.prog_less)
             cman.add_str(GuiKeys.github_open, self.actions.open_link)
             cman.add_str(GuiKeys.down_task, self.actions.down_task)
             cman.add_str(GuiKeys.inc_grade, self.tree.inc_grade)
@@ -122,10 +122,9 @@ class Play:
             cman.add_str(GuiKeys.dec_grade, self.tree.dec_grade)
             cman.add_str(GuiKeys.dec_grade2, self.tree.dec_grade)
             cman.add_str(GuiKeys.edit, lambda: self.actions.open_code())
-            for value in range(1, 10):
+            for value in range(10):
                 cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
             cman.add_str("'", GradeFunctor(0, self.tree.set_grade))
-            cman.add_str("0", GradeFunctor(10, self.tree.set_grade))
         
         cman.add_str(GuiKeys.key_help, self.gui.show_help)
         

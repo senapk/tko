@@ -47,8 +47,8 @@ class Gui:
     def get_help_basic(self):
         color = "Y" if self.tree.in_focus else "W"
         help_basic: List[Text] = [
-            Text() + RToken(color, f"{GuiActions.pesquisar}[{GuiKeys.pesquisar}]"),
-            Text() + RToken(color, f"{GuiActions.marcar} {GuiKeys.inc_grade}{GuiKeys.dec_grade}"),
+            Text() + RToken(color, f"{GuiActions.marcar} {GuiKeys.prog_less}{GuiKeys.prog_plus}"),
+            Text() + RToken(color, f"{GuiActions.modelo} {GuiKeys.inc_grade}{GuiKeys.dec_grade}"),
         ]
         return help_basic
 
@@ -330,8 +330,8 @@ class Gui:
     def show_opening(self):
         if Fmt.get_size()[1] < 100:
             return
-        if not self.app.has_images():
-            return
+        # if not self.app.has_images():
+        #     return
         _, cols = Fmt.get_size()
         
         now = datetime.datetime.now()

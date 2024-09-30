@@ -95,26 +95,37 @@ def random_get(dic: dict, str_key: str, mode:str = "static"):
 
 opening: Dict[str, str] = {}
 
-opening["parrot"] = r"""
-                           .    
-                          | \/| 
-                          ) )|/|
-                    _----. /.'.'
-.-._________..      .' @ _\  .' 
-'.._______.   '.   /    (_| .') 
-  '._____.  /   '-/      | _.'  
-   '.______ (         ) ) \     
-     '..____ '._       )  )     
-        .' __.--\  , ,  // ((   
-        '.'     |  \/   (_.'(   
-                '   \ .'        
-                 \   (          
-                  \   '.        
-                   \ \ '.)      
-                    '-'-'       
-"""
+# opening["parrot"] = r"""
+#                            .    
+#                           | \/| 
+#                           ) )|/|
+#                     _----. /.'.'
+# .-._________..      .' @ _\  .' 
+# '.._______.   '.   /    (_| .') 
+#   '._____.  /   '-/      | _.'  
+#    '.______ (         ) ) \     
+#      '..____ '._       )  )     
+#         .' __.--\  , ,  // ((   
+#         '.'     |  \/   (_.'(   
+#                 '   \ .'        
+#                  \   (          
+#                   \   '.        
+#                    \ \ '.)      
+#                     '-'-'       
+# """
 
 opening["estuda"] = r"""
+O modelo de avaliação usa 3 notas.
+Autonomia, Compreensão, Progresso.
+Progresso é QUANTO você fez.
+Autonomia e Compreensão são COMO.
+Use -+ para marcar o COMO.
+O QUANTO é gerado automaticamente
+pelos testes.
+Autonomia  : ● ◕ ◑ ◔
+Compreensão: A B C D
+Progressao : 0123456789✓
+
  ,`````.          __||||___       
 ' Estuda`,       /_  ___   \      
 'carniça!`.     /@ \/@  \   \     
@@ -128,58 +139,57 @@ opening["estuda"] = r"""
            (______(((_(((______(@)
 """
 
+# opening["alien3"] = r"""
+#            \.   \.      __,-"-.__      ./   ./
+#        \.   \`.  \`.-'"" _,="=._ ""`-.'/  .'/   ./
+#         \`.  \_`-''      _,="=._      ``-'_/  .'/
+#          \ `-',-._   _.  _,="=._  ,_   _.-,`-' /
+#       \. /`,-',-._ ""  \ _,="=._ /   ""_.-,`-,'\ ./
+#        \`-'  /    `-._  "       "  _.-'    \  `-'/
+#        /)   (   BOM   \    ,-.    / ESTUDO  )   (\
+#     ,-'"     `-.       \  /   \  /       .-'     "`-,
+#   ,'_._         `-.____/ /  _  \ \____.-'         _._`,
+#  /,'   `.                \_/ \_/                .'   `,\
+# /'       )                  _                  (       `\
+#         /   _,-'"`-.  ,++|T|||T|++.  .-'"`-,_   \
+#        / ,-'        \/|`|`|`|'|'|'|\/        `-, \
+#       /,'             | | | | | | |             `,\
+#      /'               ` | | | | | '               `\
+# """
 
-opening["alien3"] = r"""
-           \.   \.      __,-"-.__      ./   ./
-       \.   \`.  \`.-'"" _,="=._ ""`-.'/  .'/   ./
-        \`.  \_`-''      _,="=._      ``-'_/  .'/
-         \ `-',-._   _.  _,="=._  ,_   _.-,`-' /
-      \. /`,-',-._ ""  \ _,="=._ /   ""_.-,`-,'\ ./
-       \`-'  /    `-._  "       "  _.-'    \  `-'/
-       /)   (   BOM   \    ,-.    / ESTUDO  )   (\
-    ,-'"     `-.       \  /   \  /       .-'     "`-,
-  ,'_._         `-.____/ /  _  \ \____.-'         _._`,
- /,'   `.                \_/ \_/                .'   `,\
-/'       )                  _                  (       `\
-        /   _,-'"`-.  ,++|T|||T|++.  .-'"`-,_   \
-       / ,-'        \/|`|`|`|'|'|'|\/        `-, \
-      /,'             | | | | | | |             `,\
-     /'               ` | | | | | '               `\
-"""
+# opening["alien4"] = r"""
+#             ______              ______
+#            /___   \___\ || /___/   ___\
+#           //\]/\ ___  \\||//  ___ /\[/\\
+#           \\/[\//  _)   \/   (_  \\/]\//
+#            \___/ _/   o    o   \_ \___/
+#                _/                \_
+#               //'VvvvvvvvvvvvvvvV'\\
+#              ( \.'^^^^^^^^^^^^^^'./ )
+#               \____   . .. .   ____/
+#    ________        \ . .''. . /        ________
+#   /______  \________)________(________/ _______\
+#  /|       \ \  Estuda seu miserável  / /       |\
+# (\|____   / /                        \ \   ____|/)
+# """
 
-opening["alien4"] = r"""
-            ______              ______
-           /___   \___\ || /___/   ___\
-          //\]/\ ___  \\||//  ___ /\[/\\
-          \\/[\//  _)   \/   (_  \\/]\//
-           \___/ _/   o    o   \_ \___/
-               _/                \_
-              //'VvvvvvvvvvvvvvvV'\\
-             ( \.'^^^^^^^^^^^^^^'./ )
-              \____   . .. .   ____/
-   ________        \ . .''. . /        ________
-  /______  \________)________(________/ _______\
- /|       \ \  Estuda seu miserável  / /       |\
-(\|____   / /                        \ \   ____|/)
-"""
-
-opening["alien5"] = r"""
-                   ⢀⡀⠤⠤⠤⠄ ⠒⠢⣄    
-                ⡠⠐⢈⠄        ⢸⠓⠄  
-              ⠐⠈⠠⠊         ⡠⠊ ⠈⢂ 
-            ⢀⠊ ⡐⠁        ⢠⢊⠔⠈   ⠆
-           ⣠⡃ ⢰    ⢀⡠⠄⠐⠒ ⢸⢜⠄     
-          ⡐⣁⡑ ⠘  ⢀⠔⢁⣀⣤⣤⣤⣒⣤ ⠈    ⡄
-          ⢫⣿⢧ ⢸  ⣡⣶⣯⠭⢄⣀⣼⡏⠁⢀⡤   ⢐⠁
-          ⢠⢿⣾⣧⠈ ⢠⣿⣿⣗⢢⣤⣿⡿⢋ ⡏    ⡌ 
-   Gosto  ⠘⠳⠙⠻  ⠰⠿⠟⠛⠻⢍⠫⠒⠁⡰   ⢀⠜  
-    de    ⠘⢄          ⢀⠠⢊ ⡇⢠⠒⠁   
-   comer    ⠈⢦⠂    ⢠⠊⠁ ⢀⠄ ⡇⢸     
- cérebros    ⠘⢄⡄⢤⢄ ⠘⡄  ⡀⠄⢊⡅⡆⢆    
-    de         ⢊   ⠈⢁⠴⠅⣀⣀⠘⢣⠠⠈⠢⢀  
-  alunos       ⠈⠢⢄⣀⡠⠊  ⠈⢣ ⠈⠃⠡  ⠉⠐
-preguiçosos             ⠰⠇  ⠐⡑⠤⢀ 
-"""
+# opening["alien5"] = r"""
+#                    ⢀⡀⠤⠤⠤⠄ ⠒⠢⣄    
+#                 ⡠⠐⢈⠄        ⢸⠓⠄  
+#               ⠐⠈⠠⠊         ⡠⠊ ⠈⢂ 
+#             ⢀⠊ ⡐⠁        ⢠⢊⠔⠈   ⠆
+#            ⣠⡃ ⢰    ⢀⡠⠄⠐⠒ ⢸⢜⠄     
+#           ⡐⣁⡑ ⠘  ⢀⠔⢁⣀⣤⣤⣤⣒⣤ ⠈    ⡄
+#           ⢫⣿⢧ ⢸  ⣡⣶⣯⠭⢄⣀⣼⡏⠁⢀⡤   ⢐⠁
+#           ⢠⢿⣾⣧⠈ ⢠⣿⣿⣗⢢⣤⣿⡿⢋ ⡏    ⡌ 
+#    Gosto  ⠘⠳⠙⠻  ⠰⠿⠟⠛⠻⢍⠫⠒⠁⡰   ⢀⠜  
+#     de    ⠘⢄          ⢀⠠⢊ ⡇⢠⠒⠁   
+#    comer    ⠈⢦⠂    ⢠⠊⠁ ⢀⠄ ⡇⢸     
+#  cérebros    ⠘⢄⡄⢤⢄ ⠘⡄  ⡀⠄⢊⡅⡆⢆    
+#     de         ⢊   ⠈⢁⠴⠅⣀⣀⠘⢣⠠⠈⠢⢀  
+#   alunos       ⠈⠢⢄⣀⡠⠊  ⠈⢣ ⠈⠃⠡  ⠉⠐
+# preguiçosos             ⠰⠇  ⠐⡑⠤⢀ 
+# """
 
 intro: Dict[str, str] = {}
 # intro["shark"] = r"""
@@ -821,11 +831,10 @@ class GuiActions:
     baixar = "Baixar"
     ativar = "Ativar"
     navegar = "←↓→"
-    marcar = "Marcar"
+    marcar = "Quanto"
     desmarcar = "Desmarcar"
-    colapsar = "Colapsar"
     pesquisar = "Buscar"
-
+    modelo = " Como?"
 
 class GuiKeys:
     left = "a"
@@ -838,10 +847,10 @@ class GuiKeys:
     down_task = "b"
     activate = "\n"
     key_help = "?"
-    expand = ">"
-    expand2 = "."
-    collapse = "<"
-    collapse2 = ","
+    prog_plus = ">"
+    prog_plus2 = "."
+    prog_less = "<"
+    prog_less2 = ","
     inc_grade = "+"
     inc_grade2 = "="
     dec_grade = "-"
@@ -1518,23 +1527,17 @@ class Text:
 
     # search for a value inside the tokens and replace it with a new value and fmt
     def replace(self, old: str, token: Token):
-        old_list: List[str] = [c for c in old]
-        new_list = [c for c in token.text]
-        new_list.reverse()
-
         index = 0
-        while index < len(self.data) - len(old_list) + 1:
-            found = True
-            for i in range(len(old_list)):
-                if self.data[index + i].text != old_list[i]:
-                    found = False
-                    break
-            if found:
-                for _ in range(len(old_list)):
-                    del self.data[index]
-                for c in new_list:
-                    self.data.insert(index, Token(c, token.fmt))
-                index += len(new_list)
+        while True:
+            if index + len(old) > len(self.data):
+                break
+            sub = "".join([t.text for t in self.data[index:index + len(old)]])
+            if sub == old:
+                pre = self.data[:index]
+                mid = [Token(t, token.fmt) for t in token.text]
+                pos = self.data[index + len(old):]
+                self.data = pre + mid + pos
+                index += len(token.text)
             else:
                 index += 1
         return self
@@ -2334,6 +2337,7 @@ class Floating:
 
     def set_align(self, _align: str):
         self._floating_align = _align
+        return self
 
     def set_header(self, text: str):
         self._frame.set_header(Text().addf("/", text), "")
@@ -2588,6 +2592,16 @@ class __Symbols:
         self.sharpR = Token("")
         self.sharpL = Token("")
 
+        self.emoji_vazio = Token("✗", "r") #"❌"
+        self.emoji_confiante = Token("●", "g")#"😎"
+        self.emoji_capaz     = Token("◕", "y")#"😌"
+        self.emoji_inseguro  = Token("◑", "m")#"😬"
+        self.emoji_confuso   = Token("◔", "r")#"😕"
+
+        self.emoji_alone = Token("A", "g")#"💖" # "✋"
+        self.emoji_dicas = Token("B", "y") # "💡"
+        self.emoji_codes = Token("C", "m")#"💚" #"🤝"
+        self.emoji_guide = Token("D", "r")#"💙" # "🧭"
 
     def set_colors(self):
         self.opening.fmt = "b"
@@ -2601,6 +2615,115 @@ class __Symbols:
         self.equalbar.fmt = "g"
 
 symbols = __Symbols()
+
+
+class GradeMessage:
+    def __init__(self):
+        self.msg = r"""
+  Não Fiz  │Compreensão→│Superficial│    Básico │Funcional │   Profundo 
+↓Autonomia │            │$1 Confuso  │$2 Inseguro │$3 Capaz   │$4 Confiante
+───────────┼────────────┼───────────┼───────────┼──────────┼────────────
+Sem   Ajuda│$5  Sozinho  │           │           │ [7] 90%  │ [9]  110%  
+Pouca Ajuda│$6  Dicas    │           │           │ [6] 75%  │ [8]  100%  
+Muita Ajuda│$7  Códigos  │           │ [3]  35%  │ [5] 60%  │            
+Tutorial   │$8  Guiado   │ [1]  15%  │ [2]  25%  │ [4] 45%  │            
+"""[1:-1]
+        self.emoji: Dict[str, Token] = {
+            "$1": symbols.emoji_confuso,
+            "$2": symbols.emoji_inseguro,
+            "$3": symbols.emoji_capaz,
+            "$4": symbols.emoji_confiante,
+            "$5": symbols.emoji_alone,
+            "$6": symbols.emoji_dicas,
+            "$7": symbols.emoji_codes,
+            "$8": symbols.emoji_guide
+        }
+
+        self.axes: Dict[int, list[str]] = {}
+        self.load_axes()
+
+    @staticmethod
+    def grade_to_emojis(grade: int) -> Text:
+        if grade == 10:
+             grade = 8
+        decode_dict = {
+                0: (Token("-"), Token("-", " ")),
+                1: (symbols.emoji_guide, symbols.emoji_confuso),
+                2: (symbols.emoji_guide, symbols.emoji_inseguro),
+                3: (symbols.emoji_codes, symbols.emoji_inseguro),
+                4: (symbols.emoji_guide, symbols.emoji_capaz),
+                5: (symbols.emoji_codes, symbols.emoji_capaz),
+                6: (symbols.emoji_dicas, symbols.emoji_capaz),
+                7: (symbols.emoji_alone, symbols.emoji_capaz),
+                8: (symbols.emoji_dicas, symbols.emoji_confiante),
+                9: (symbols.emoji_alone, symbols.emoji_confiante)
+        }
+        a = decode_dict[grade][0]
+        b = decode_dict[grade][1]
+        return Text("{} {}", b, a)
+
+    def load_axes(self):
+            sozinho = "Sozinho"
+            dicas   = "Dicas  "
+            codigos = "Códigos"
+            guiado  = "Guiado "
+            
+            superficial = "Superficial"
+            basico = "    Básico "
+            funcional = "Funcional "
+            profundo = "   Profundo "
+
+            sem_ajuda   = "Sem   Ajuda"
+            pouca_ajuda = "Pouca Ajuda"
+            muita_ajuda = "Muita Ajuda"
+            tutorial    = "Tutorial   "
+
+            confuso   = "Confuso "
+            inseguro  = "Inseguro"
+            capaz     = "Capaz  "
+            confiante = "Confiante"
+
+            self.axes = {
+                1: [tutorial, guiado, superficial, confuso],
+                2: [tutorial, guiado, basico, inseguro],
+                3: [muita_ajuda, codigos, basico, inseguro],
+                4: [tutorial, guiado, funcional, capaz],
+                5: [muita_ajuda, codigos, funcional, capaz],
+                6: [pouca_ajuda, dicas, funcional, capaz],
+                7: [sem_ajuda, sozinho, funcional, capaz],
+                8: [pouca_ajuda, dicas, profundo, confiante],
+                9: [sem_ajuda, sozinho, profundo, confiante]
+            }
+
+    def format(self, grade: int):
+            headers = [Token("Compreensão→", "B"), Token("↓Autonomia ", "M")]
+
+            value: Text = Text(self.msg)
+            if grade != 0:
+                for h in headers:
+                    value = value.replace(h.text, h)
+            pos = value.get_text().find(" [{}] ".format(grade))
+            if pos != -1:
+                while True:
+                    if pos >= len(value) or value.data[pos].text == "│" or value.data[pos].text == "\n":
+                        break
+                    value.data[pos].fmt = "G"
+                    pos += 1
+            if grade > 0 and grade < 10:
+                value = value.replace(self.axes[grade][0], Token(self.axes[grade][0], "M"))
+                value = value.replace(self.axes[grade][1], Token(self.axes[grade][1], "g"))
+                value = value.replace(self.axes[grade][2], Token(self.axes[grade][2], "B"))
+                value = value.replace(self.axes[grade][3], Token(self.axes[grade][3], "g"))
+
+                value = value.replace("  Não Fiz  ", Token("           "))
+            elif grade == 0:
+                value = value.replace("  Não Fiz  ", Token("  Não Fiz  ", "R"))
+
+            for k, v in self.emoji.items():
+                value = value.replace(k, v)
+
+            return value
+    
 
 
 
@@ -4743,8 +4866,8 @@ class Task:
         self.line = ""
         self.key = ""
 
-        self.grade: int = 0 #valor de 0 a 10
-        self.test_progress: int = 0 #valor de 0 a 100
+        self.self_grade: int = 0 #valor de 0 a 9
+        self.progress: int = 0 #valor de 0 a 100
         self.main_index: int = 0
 
         self.qskills: Dict[str, int] = {} # default quest skills
@@ -4759,70 +4882,72 @@ class Task:
 
     def load_from_db(self, value: str):
         if ":" not in value:
-            self.grade = int(value)
+            self.self_grade = int(value)
         else:
             v = value.split(":")
             if len(v) == 3:
-                self.grade = int(v[0])
+                self.self_grade = int(v[0])
                 self.main_index = int(v[1])
-                self.test_progress = int(v[2])
+                self.progress = int(v[2])
 
     def save_to_db(self) -> str:
-        return f"{self.grade}:{self.main_index}:{self.test_progress}"
+        return f"{self.self_grade}:{self.main_index}:{self.progress}"
     
     def is_db_empty(self) -> bool:
-        return self.grade == 0 and self.main_index == 0 and self.test_progress == 0
+        return self.self_grade == 0 and self.main_index == 0 and self.progress == 0
 
-    def get_grade_color(self, min_value: Optional[int] = None) -> str:
+    def get_prog_color(self, min_value: Optional[int] = None) -> str:
         if min_value is None:
             min_value = self.default_min_value
-        if self.grade == 0:
+        prog = self.progress // 10
+        if prog == 0:
             return "m"
-        if self.grade < min_value:
+        if prog < min_value:
             return "r"
-        if self.grade < 10:
+        if prog < 10:
             return "y"
-        if self.grade == 10:
+        if prog == 10:
             return "g"
         return "w"  
 
-    def get_grade_symbol(self, min_value: Optional[int] = None) -> Text:
+    def get_prog_symbol(self, min_value: Optional[int] = None) -> Text:
         
         if min_value is None:
             min_value = self.default_min_value
-        color = self.get_grade_color(min_value)
-        if self.grade == 0:
+        color = self.get_prog_color(min_value)
+        prog = self.progress // 10
+        if prog == 0:
             return Text().addf(color, symbols.uncheck.text)
-        if self.grade < min_value:
-            return Text().addf(color, str(self.grade))
-        if self.grade < 10:
-            return Text().addf(color, str(self.grade))
-        if self.grade == 10:
+        if prog < min_value:
+            return Text().addf(color, str(prog))
+        if prog < 10:
+            return Text().addf(color, str(prog))
+        if prog == 10:
             return Text().addf(color, symbols.check.text)
         return Text().add("0")
 
     def get_percent(self):
-        if self.grade == 0:
+        if self.self_grade == 0:
             return 0
-        if self.grade == 10:
+        if self.self_grade == 10:
             return 100
-        return self.grade * 10
+        return self.self_grade * 10
     
     def is_complete(self):
-        return self.grade == 10
+        return self.self_grade == 10
 
     def not_started(self):
-        return self.grade == 0
+        return self.self_grade == 0
     
     def in_progress(self):
-        return self.grade > 0 and self.grade < 10
+        return self.self_grade > 0 and self.self_grade < 10
 
     def set_grade(self, grade: int):
         grade = int(grade)
-        if grade >= 0 and grade <= 10:
-            if grade != self.grade:
+        if grade >= 0 and grade < 10:
+            if grade != self.self_grade:
                 Logger.get_instance().record_event(LogAction.SELF, self.key, str(grade))
-                self.grade = grade
+                self.self_grade = grade
         else:
             print(f"Grade inválida: {grade}")
     
@@ -4837,7 +4962,7 @@ class Task:
     def __str__(self):
         line = str(self.line_number).rjust(3)
         key = "" if self.key == self.title else self.key + " "
-        return f"{line}    {self.grade} {key}{self.title} {self.skills} {self.link}"
+        return f"{line}    {self.self_grade} {key}{self.title} {self.skills} {self.link}"
     
     def is_downloadable(self):
         return f"@{self.key}" in self.title
@@ -5018,7 +5143,7 @@ class Quest:
         tmin = self.tmin if self.tmin is not None else 7
         total = len([t for t in self.__tasks if not t.opt])
         plus = len([t for t in self.__tasks if t.opt])
-        count = len([t for t in self.__tasks if t.grade >= tmin])
+        count = len([t for t in self.__tasks if t.self_grade >= tmin])
         output = f"{count}/{total}"
         if plus > 0:
             output += f"+{plus}"
@@ -5039,7 +5164,7 @@ class Quest:
         # task complete mode
         if self.tmin is not None:
             for t in self.__tasks:
-                if not t.opt and t.grade < self.tmin:
+                if not t.opt and t.self_grade < self.tmin:
                     return False
         return True
 
@@ -5068,8 +5193,8 @@ class Quest:
         obtained = 0
         for t in self.__tasks:
             total += t.xp
-            if t.grade > 0:
-                obtained += t.xp * t.grade // 10
+            if t.self_grade > 0:
+                obtained += t.xp * t.self_grade // 10
 
         return obtained, total
         
@@ -5083,7 +5208,7 @@ class Quest:
         if self.is_complete():
             return False
         for t in self.__tasks:
-            if t.grade != 0:
+            if t.self_grade != 0:
                 return True
         return False
 
@@ -5375,26 +5500,26 @@ class Game:
                     if s in total:
                         total[s] += t.skills[s]
                         if reachable:
-                            obtained[s] += int(t.skills[s] * t.grade/10)
+                            obtained[s] += int(t.skills[s] * t.self_grade/10)
                         else:
                             obtained[s] += 0
                     else:
                         total[s] = t.skills[s]
                         if reachable:
-                            obtained[s] = int(t.skills[s] * t.grade/10)
+                            obtained[s] = int(t.skills[s] * t.self_grade/10)
                         else:
                             obtained[s] = 0
                 for s in t.qskills:
                     if s in total:
                         total[s] += t.qskills[s]
                         if reachable:
-                            obtained[s] += int(t.qskills[s] * t.grade/10)
+                            obtained[s] += int(t.qskills[s] * t.self_grade/10)
                         else:
                             obtained[s] += 0
                     else:
                         total[s] = t.qskills[s]
                         if reachable:
-                            obtained[s] = int(t.qskills[s] * t.grade/10)
+                            obtained[s] = int(t.qskills[s] * t.self_grade/10)
                         else:
                             obtained[s] = 0
         return total, obtained
@@ -5646,7 +5771,7 @@ class TaskTree:
         self.new_items = [item for item in self.new_items if item not in self.expanded]
 
     def update_max_title(self):
-        min_value = 20
+        min_value = 50
         items = []
         for c in self.game.clusters.values():
             if c.key in self.game.available_clusters:
@@ -5682,9 +5807,9 @@ class TaskTree:
         output.add(" ").addf(color_aval, lig_cluster)
         output.add(" ")
         output.addf(color_aval, lig_quest)
-        output.add(down_symbol)
-        output.add(" ")
-        output.add(t.get_grade_symbol(min_value))
+        output.add(down_symbol).add(" ")
+        output.add(GradeMessage().grade_to_emojis(t.self_grade)).add(" ")
+        output.add(t.get_prog_symbol())
 
         if in_focus:
             output.add(self.style.roundL(focus_color))
@@ -5697,7 +5822,7 @@ class TaskTree:
 
         done = color + "g"
         todo = color
-        perc = t.test_progress
+        perc = t.progress
         output.add(self.style.build_bar(t.title, perc / 100, len(t.title), done, todo, round=False))
         # output.addf(color, t.title)
 
@@ -5970,7 +6095,7 @@ class TaskTree:
                     if value is not None:
                         t.set_grade(value)
                     else:
-                        value = 10 if t.grade < 10 else 0
+                        value = 10 if t.self_grade < 10 else 0
                         t.set_grade(value)
         elif isinstance(obj, Quest):
             if obj.key not in self.expanded:
@@ -5981,42 +6106,48 @@ class TaskTree:
                     if value is not None:
                         t.set_grade(value)
                     else:
-                        value = 10 if t.grade < 10 else 0
+                        value = 10 if t.self_grade < 10 else 0
                         t.set_grade(value)
         else:
-            obj.set_grade(10 if obj.grade < 10 else 0)
+            obj.set_grade(10 if obj.self_grade < 10 else 0)
 
     def set_grade(self, grade: int):
-        level: Dict[int, Token] = {}
-        level[0] = Token("Nenhuma", "r")
-        level[1] = Token("Muito Baixa", "r")
-        level[2] = Token("Baixa", "r")
-        level[3] = Token("Parcial e Com Lacunas", "r")
-        level[4] = Token("Superficial", "y")
-        level[5] = Token("Razoável", "y")
-        level[6] = Token("Com Lacunas", "y")
-        level[7] = Token("Média", "g")
-        level[8] = Token("Aceitável", "g")
-        level[9] = Token("Adequada", 'g')
-        level[10] = Token("Confiante", "g")
 
-        msg1 = Text("Na minha ").addf("b", "última").add(" resolução desta questão, minha ").addf("y", "capacidade ")
-        msg2 = Text("de ").addf("y", "resolver").add(" o exercício e ").addf("y", "compreender").add(" técnicas e conceitos,")
-        msg3 = Text().addf("b", "sem utilizar").add(" de ajuda externa (monitoria, IA, professor)  ")
-        msg4 = Text("pode ser definida como ").add(level[grade])
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             obj.set_grade(grade)
             self.fman.add_input(
-                Floating("v").warning().put_sentence(msg1).put_sentence(msg2).put_sentence(msg3).put_sentence(msg4)
+                Floating("v").warning().set_header(" Auto avaliação ").set_ljust_text().set_content(GradeMessage().format(grade).split("\n"))
             )
+
+    def set_progress(self, prog: int):
+
+        obj = self.items[self.index_selected].obj
+        if isinstance(obj, Task):
+            obj.progress = prog
+
+    def prog_plus(self):
+        obj = self.items[self.index_selected].obj
+        if isinstance(obj, Task):
+            progress = obj.progress + 10
+            if progress > 100:
+                progress = 100
+            self.set_progress(progress)
+
+    def prog_less(self):
+        obj = self.items[self.index_selected].obj
+        if isinstance(obj, Task):
+            progress = obj.progress - 10
+            if progress < 0:
+                progress = 0
+            self.set_progress(progress)
 
     def inc_grade(self):
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
-            grade = obj.grade + 1
-            if grade == 11:
-                grade = 10
+            grade = obj.self_grade + 1
+            if grade > 9:
+                grade = 9
             self.set_grade(grade)
         else:
             self.unfold(obj)
@@ -6025,7 +6156,7 @@ class TaskTree:
     def dec_grade(self):
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
-            grade = obj.grade - 1
+            grade = obj.self_grade - 1
             if grade == -1:
                 grade = 0
             self.set_grade(grade)
@@ -6436,7 +6567,7 @@ class Tester:
             unit.result = UnitRunner.run_unit(solver, unit, self.settings.app._timeout)
             self.results.append((unit.result, index))
             success = [result for result, _ in self.results if result == ExecutionResult.SUCCESS]
-            self.task.test_progress = (len(success) * 100) // len(self.wdir.get_unit_list())
+            self.task.progress = (len(success) * 100) // len(self.wdir.get_unit_list())
             self.focused_index = index
 
         if len(self.unit_list) == 0:
@@ -7526,8 +7657,8 @@ class Gui:
     def get_help_basic(self):
         color = "Y" if self.tree.in_focus else "W"
         help_basic: List[Text] = [
-            Text() + RToken(color, f"{GuiActions.pesquisar}[{GuiKeys.pesquisar}]"),
-            Text() + RToken(color, f"{GuiActions.marcar} {GuiKeys.inc_grade}{GuiKeys.dec_grade}"),
+            Text() + RToken(color, f"{GuiActions.marcar} {GuiKeys.prog_less}{GuiKeys.prog_plus}"),
+            Text() + RToken(color, f"{GuiActions.modelo} {GuiKeys.inc_grade}{GuiKeys.dec_grade}"),
         ]
         return help_basic
 
@@ -7809,8 +7940,8 @@ class Gui:
     def show_opening(self):
         if Fmt.get_size()[1] < 100:
             return
-        if not self.app.has_images():
-            return
+        # if not self.app.has_images():
+        #     return
         _, cols = Fmt.get_size()
         
         now = datetime.datetime.now()
@@ -8359,10 +8490,10 @@ class Play:
             cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
             cman.add_str(GuiKeys.activate, self.actions.select_task)
             cman.add_int(InputManager.tab, self.process_tab)
-            cman.add_str(GuiKeys.expand, self.tree.process_expand)
-            cman.add_str(GuiKeys.expand2, self.tree.process_expand)
-            cman.add_str(GuiKeys.collapse, self.tree.process_collapse)
-            cman.add_str(GuiKeys.collapse2, self.tree.process_collapse)
+            cman.add_str(GuiKeys.prog_plus, self.tree.prog_plus)
+            cman.add_str(GuiKeys.prog_plus2, self.tree.prog_plus)
+            cman.add_str(GuiKeys.prog_less, self.tree.prog_less)
+            cman.add_str(GuiKeys.prog_less2, self.tree.prog_less)
             cman.add_str(GuiKeys.github_open, self.actions.open_link)
             cman.add_str(GuiKeys.down_task, self.actions.down_task)
             cman.add_str(GuiKeys.inc_grade, self.tree.inc_grade)
@@ -8370,10 +8501,9 @@ class Play:
             cman.add_str(GuiKeys.dec_grade, self.tree.dec_grade)
             cman.add_str(GuiKeys.dec_grade2, self.tree.dec_grade)
             cman.add_str(GuiKeys.edit, lambda: self.actions.open_code())
-            for value in range(1, 10):
+            for value in range(10):
                 cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
             cman.add_str("'", GradeFunctor(0, self.tree.set_grade))
-            cman.add_str("0", GradeFunctor(10, self.tree.set_grade))
         
         cman.add_str(GuiKeys.key_help, self.gui.show_help)
         

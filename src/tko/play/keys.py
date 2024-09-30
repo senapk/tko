@@ -12,11 +12,10 @@ class GuiActions:
     baixar = "Baixar"
     ativar = "Ativar"
     navegar = "←↓→"
-    marcar = "Marcar"
+    marcar = "Quanto"
     desmarcar = "Desmarcar"
-    colapsar = "Colapsar"
     pesquisar = "Buscar"
-
+    modelo = " Como?"
 
 class GuiKeys:
     left = "a"
@@ -29,10 +28,10 @@ class GuiKeys:
     down_task = "b"
     activate = "\n"
     key_help = "?"
-    expand = ">"
-    expand2 = "."
-    collapse = "<"
-    collapse2 = ","
+    prog_plus = ">"
+    prog_plus2 = "."
+    prog_less = "<"
+    prog_less2 = ","
     inc_grade = "+"
     inc_grade2 = "="
     dec_grade = "-"

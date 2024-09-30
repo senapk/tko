@@ -139,26 +139,26 @@ class Game:
                     if s in total:
                         total[s] += t.skills[s]
                         if reachable:
-                            obtained[s] += int(t.skills[s] * t.grade/10)
+                            obtained[s] += int(t.skills[s] * t.self_grade/10)
                         else:
                             obtained[s] += 0
                     else:
                         total[s] = t.skills[s]
                         if reachable:
-                            obtained[s] = int(t.skills[s] * t.grade/10)
+                            obtained[s] = int(t.skills[s] * t.self_grade/10)
                         else:
                             obtained[s] = 0
                 for s in t.qskills:
                     if s in total:
                         total[s] += t.qskills[s]
                         if reachable:
-                            obtained[s] += int(t.qskills[s] * t.grade/10)
+                            obtained[s] += int(t.qskills[s] * t.self_grade/10)
                         else:
                             obtained[s] += 0
                     else:
                         total[s] = t.qskills[s]
                         if reachable:
-                            obtained[s] = int(t.qskills[s] * t.grade/10)
+                            obtained[s] = int(t.qskills[s] * t.self_grade/10)
                         else:
                             obtained[s] = 0
         return total, obtained
