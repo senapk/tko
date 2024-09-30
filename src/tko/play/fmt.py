@@ -3,6 +3,24 @@ from typing import Dict, Tuple
 from tko.util.text import Text, Token
 from tko.play.colors import Colors
 
+class TextPosition:
+    def __init__(self, y: int, x: int, text: Text):
+        self.y = y
+        self.x = x
+        self.text = text
+
+    def __str__(self):
+        return f"{self.y}:{self.x}:{self.text}"
+    
+class TokenPosition:
+    def __init__(self, y: int, x: int, token: Token):
+        self.y = y
+        self.x = x
+        self.token = token
+
+    def __str__(self):
+        return f"{self.y}:{self.x}:{self.token}"
+
 class Fmt:
     __scr = None
     # Definindo constantes para as cores
@@ -97,29 +115,35 @@ class Fmt:
 
     # break in lines and cut everything that is out of the box
     @staticmethod
-    def cut_box(y: int, x: int, box_y: int, box_x: int, sentence: Text) -> list[Text]:
+    def cut_box(y: int, x: int, box_y: int, box_x: int, sentence: Text) -> list[TextPosition]:
         lines: list[Text] = sentence.split("\n")
-        output: list[Text] = []
+        output: list[TextPosition] = []
         for line in lines:
+            px = x
+            if y < 0:
+                y += 1
+                continue
             if y >= box_y:
                 break
-            if x < 0:
-                line.data = line.data[-x:]
-                x = 0
-            if x + len(line) > box_x:
-                line.data = line.data[:box_x - x]
-            output.append(line)
+            if px < 0:
+                line.data = line.data[-px:]
+                px = 0
+            if px + len(line) > box_x:
+                line.data = line.data[:box_x - px]
+            output.append(TextPosition(y, px, line))
             y += 1
-        return lines
+        return output
 
     @staticmethod
-    def position_tokens(text_lines: list[Text], y: int, x: int) -> list[tuple[int, int, Token]]:
-        output: list[Tuple[int, int, Token]] = []
-        for i, line in enumerate(text_lines):
-            dx = 0
+    def split_in_tokens(text_lines: list[TextPosition]) -> list[TokenPosition]:
+        output: list[TokenPosition] = []
+        for text_pos in text_lines:
+            y = text_pos.y
+            x = text_pos.x
+            line = text_pos.text
             for token in line.resume():
-                output.append((y + i, x + dx, token))
-                dx += len(token)
+                output.append(TokenPosition(y, x, token))
+                x += len(token)
         return output
 
     @staticmethod
@@ -131,8 +155,12 @@ class Fmt:
 
         lines, cols = Fmt.get_size()
         text_lines = Fmt.cut_box(y, x, lines, cols, data)
-        positions = Fmt.position_tokens(text_lines, y, x)
-        for y, x, token in positions:
+        token_list = Fmt.split_in_tokens(text_lines)
+        for token_pos in token_list:
+            y = token_pos.y
+            x = token_pos.x
+            token = token_pos.token
+            # print(f"y:{y}, x:{x}, fmt:{token.fmt}, len:{len(token.text)}")
             Fmt.stroke(y, x, token.fmt, token.text)
 
     # @staticmethod
@@ -181,3 +209,22 @@ class Fmt:
     def get_size() -> Tuple[int, int]:
         return Fmt.get_screen().getmaxyx()
         
+
+def test_fmt(scr):
+    curses.curs_set(0)  # Esconde o cursor
+    Fmt.init_colors()  # Inicializa as cores
+    Fmt.set_scr(scr)  # Define o scr como global
+
+    output = Text("..")
+    for i in range(60):
+        output.addf("r", str(i) + " ")
+    for i in range(15):
+        Fmt.write(i - 2, -1, output)
+    scr.getch()
+
+if __name__ == "__main__":
+    curses.wrapper(test_fmt)
+    # values = Fmt.cut_box(-2, -1, 10, 10, Text().add("1234\n56\n789").addf("r", "1\n23").addf("g", "456"))
+    # print([str(v) for v in values])
+    # tokens = Fmt.split_in_tokens(values)
+    # print(", ".join([str(v) for v in tokens]))

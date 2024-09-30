@@ -45,7 +45,7 @@ class Tester:
         self.exit = False
 
         self.task = Task()
-        self.init = 1000   # index of first line to show
+        self.diff_first_line = 1000   # index of first line to show
         self.length = 1  # length of diff
         self.space = 0  # dy space for draw
         self.mode: SeqMode = SeqMode.intro
@@ -108,59 +108,6 @@ class Tester:
     def show_executing(self, clear=False):
         out = executing
         self.print_centered_image(out, "y", clear, "v")
-
-    def draw_scrollbar(self):
-        y_init = 3
-        # if len(self.results_fail) == 0:
-        #     return
-        tr = "╮"
-        br = "╯"
-        vbar = "│"
-        bar = []
-
-        if self.length > self.space:
-            total = self.space
-            _begin = False
-            _end = False
-            if self.init == 0:
-                _begin = True
-            if self.init == self.length - self.space:
-                _end = True
-
-            pre = int((self.init / self.length) * total)
-            mid = int((self.space / self.length) * total)
-            pos = (max(0, total - pre - mid))
-
-            if _begin:
-                pre -= 1
-            if _end:
-                pos -= 1
-
-            if self.init > 0 and pre == 0:
-                pre = 1
-                pos -= 1
-
-            if _begin:
-                bar.append(tr)
-            for _ in range(pre):
-                bar.append(vbar)
-            for _ in range(mid):
-                bar.append("┃")
-            for _ in range(pos):
-                bar.append(vbar)
-            if _end:
-                bar.append(br)
-
-        else:
-            bar.append(tr)
-            for i in range(self.length - 2):
-                bar.append(vbar)
-            bar.append(br)
-
-
-        _, cols = Fmt.get_size()
-        for i in range(len(bar)):
-            Fmt.write(i + y_init, cols - 1, Text().add(bar[i]))
 
     def get_folder(self):
         source_list = self.wdir.get_source_list()
@@ -469,7 +416,7 @@ class Tester:
         self.space = lines - 4
         if self.two_column_mode():
             self.space = lines - 5
-        frame = Frame(2, -1).set_inner(self.space, cols - 1).set_border_square()
+        frame = Frame(2, -1).set_inner(self.space, cols).set_border_square()
 
         if self.is_all_right():
             self.show_success()
@@ -490,18 +437,16 @@ class Tester:
 
         self.length = max(1, len(line_list))
 
-        if self.length - self.init < self.space:
-            self.init = max(0, self.length - self.space)
+        if self.length - self.diff_first_line < self.space:
+            self.diff_first_line = max(0, self.length - self.space)
 
-        if self.init >= self.length:
-            self.init = self.length - 1
+        if self.diff_first_line >= self.length:
+            self.diff_first_line = self.length - 1
 
-        if self.init < self.length:
-            line_list = line_list[self.init:]
+        if self.diff_first_line < self.length:
+            line_list = line_list[self.diff_first_line:]
         for i, line in enumerate(line_list):
             frame.write(i, 0, Text().add(line))
-
-        # self.draw_scrollbar()
         return
 
     def get_solver_names(self):
@@ -603,7 +548,7 @@ class Tester:
             return
         if not self.wdir.get_solver().compile_error:
             self.focused_index = max(0, self.focused_index - 1)
-            self.init = 1000
+            self.diff_first_line = 1000
 
     def go_right(self):
         if self.mode == SeqMode.intro:
@@ -617,17 +562,17 @@ class Tester:
             return
         if not self.wdir.get_solver().compile_error:
             self.focused_index = min(len(self.wdir.get_unit_list()) - 1, self.focused_index + 1)
-            self.init = 1000
+            self.diff_first_line = 1000
 
     def go_down(self):
         if self.mode == SeqMode.intro:
             self.mode = SeqMode.select
-        self.init += 1
+        self.diff_first_line += 1
 
     def go_up(self):
         if self.mode == SeqMode.intro:
             self.mode = SeqMode.select
-        self.init = max(0, self.init - 1)
+        self.diff_first_line = max(0, self.diff_first_line - 1)
 
     def change_main(self):
         if len(self.get_solver_names()) == 1:
