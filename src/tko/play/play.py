@@ -102,8 +102,8 @@ class Play:
         cman.add_str(GuiKeys.collapse, self.tree.process_collapse)
         cman.add_str(GuiKeys.borders, self.app.toggle_borders)
         cman.add_str(GuiKeys.images, self.app.toggle_images)
-        for value in range(10):
-            cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
+        # for value in range(10):
+        #     cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
     
         cman.add_str(GuiKeys.key_help, self.gui.show_help)
         

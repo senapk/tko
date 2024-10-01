@@ -463,8 +463,8 @@ class TaskTree:
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             grade = obj.self_grade + 1
-            if grade > 9:
-                grade = 9
+            if grade >= 10:
+                grade = 10
             self.set_grade(grade)
         else:
             self.unfold(obj)

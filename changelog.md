@@ -1,5 +1,9 @@
 # Changelog
 
+- 0.34.0
+  - add: command palette
+- 0.33.0
+  - add: self grade
 - 0.32.0
   - add: message with self grade meaning
 - 0.31.0

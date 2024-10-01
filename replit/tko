@@ -27,7 +27,7 @@ import hashlib
 from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.32.1"
+__version__ = "0.34.0"
 
 
 class CheckVersion:
@@ -1961,6 +1961,8 @@ class Fmt:
             if y == lines - 1:
                 if x + len(text) <= cols:
                     pass
+        except ValueError as _e:
+            pass
             # lines, cols = stdscr.getmaxyx()
             # stdscr.addstr(10, 10, f"y:{y}, x:{x}, fmt:{fmt}, len:{len(text)} lines:{lines}, cols:{cols}")
             # stdscr.addstr(1, 0, text)
@@ -2718,10 +2720,10 @@ class GradeMessage:
   Não Fiz  │Compreensão→│Superficial│    Básico │Funcional │   Profundo 
 ↓Autonomia │            │$1 Confuso  │$2 Inseguro │$3 Capaz   │$4 Confiante
 ───────────┼────────────┼───────────┼───────────┼──────────┼────────────
-Sem   Ajuda│$5  Sozinho  │           │           │ [7] 90%  │ [9]  110%  
-Pouca Ajuda│$6  Dicas    │           │           │ [6] 75%  │ [8]  100%  
-Muita Ajuda│$7  Códigos  │           │ [3]  35%  │ [5] 60%  │            
-Tutorial   │$8  Guiado   │ [1]  15%  │ [2]  25%  │ [4] 45%  │            
+Sem   Ajuda│$5  Sozinho  │           │           │   [8]    │    [10]    
+Pouca Ajuda│$6  Dicas    │           │    [4]    │   [7]    │    [9]     
+Muita Ajuda│$7  Códigos  │           │    [3]    │   [6]    │            
+Tutorial   │$8  Guiado   │    [1]    │    [2]    │   [5]    │            
 """[1:-1]
         self.emoji: Dict[str, Token] = {
             "$1": symbols.emoji_confuso,
@@ -2739,19 +2741,18 @@ Tutorial   │$8  Guiado   │ [1]  15%  │ [2]  25%  │ [4] 45%  │
 
     @staticmethod
     def grade_to_emojis(grade: int) -> Text:
-        if grade == 10:
-             grade = 8
         decode_dict = {
                 0: (Token("-"), Token("-", " ")),
                 1: (symbols.emoji_guide, symbols.emoji_confuso),
                 2: (symbols.emoji_guide, symbols.emoji_inseguro),
                 3: (symbols.emoji_codes, symbols.emoji_inseguro),
-                4: (symbols.emoji_guide, symbols.emoji_capaz),
-                5: (symbols.emoji_codes, symbols.emoji_capaz),
-                6: (symbols.emoji_dicas, symbols.emoji_capaz),
-                7: (symbols.emoji_alone, symbols.emoji_capaz),
-                8: (symbols.emoji_dicas, symbols.emoji_confiante),
-                9: (symbols.emoji_alone, symbols.emoji_confiante)
+                4: (symbols.emoji_dicas, symbols.emoji_inseguro),
+                5: (symbols.emoji_guide, symbols.emoji_capaz),
+                6: (symbols.emoji_codes, symbols.emoji_capaz),
+                7: (symbols.emoji_dicas, symbols.emoji_capaz),
+                8: (symbols.emoji_alone, symbols.emoji_capaz),
+                9: (symbols.emoji_dicas, symbols.emoji_confiante),
+                10: (symbols.emoji_alone, symbols.emoji_confiante)
         }
         a = decode_dict[grade][0]
         b = decode_dict[grade][1]
@@ -2782,12 +2783,13 @@ Tutorial   │$8  Guiado   │ [1]  15%  │ [2]  25%  │ [4] 45%  │
                 1: [tutorial, guiado, superficial, confuso],
                 2: [tutorial, guiado, basico, inseguro],
                 3: [muita_ajuda, codigos, basico, inseguro],
-                4: [tutorial, guiado, funcional, capaz],
-                5: [muita_ajuda, codigos, funcional, capaz],
-                6: [pouca_ajuda, dicas, funcional, capaz],
-                7: [sem_ajuda, sozinho, funcional, capaz],
-                8: [pouca_ajuda, dicas, profundo, confiante],
-                9: [sem_ajuda, sozinho, profundo, confiante]
+                4: [pouca_ajuda, dicas, basico, inseguro],
+                5: [tutorial, guiado, funcional, capaz],
+                6: [muita_ajuda, codigos, funcional, capaz],
+                7: [pouca_ajuda, dicas, funcional, capaz],
+                8: [sem_ajuda, sozinho, funcional, capaz],
+                9: [pouca_ajuda, dicas, profundo, confiante],
+                10: [sem_ajuda, sozinho, profundo, confiante]
             }
 
     def format(self, grade: int):
@@ -2797,14 +2799,15 @@ Tutorial   │$8  Guiado   │ [1]  15%  │ [2]  25%  │ [4] 45%  │
             if grade != 0:
                 for h in headers:
                     value = value.replace(h.text, h)
-            pos = value.get_text().find(" [{}] ".format(grade))
+            info = str(grade)
+            pos = value.get_text().find(" [{}] ".format(info))
             if pos != -1:
                 while True:
                     if pos >= len(value) or value.data[pos].text == "│" or value.data[pos].text == "\n":
                         break
                     value.data[pos].fmt = "G"
                     pos += 1
-            if grade > 0 and grade < 10:
+            if grade > 0 and grade <= 10:
                 value = value.replace(self.axes[grade][0], Token(self.axes[grade][0], "M"))
                 value = value.replace(self.axes[grade][1], Token(self.axes[grade][1], "g"))
                 value = value.replace(self.axes[grade][2], Token(self.axes[grade][2], "B"))
@@ -4986,7 +4989,7 @@ class Task:
 
     def set_grade(self, grade: int):
         grade = int(grade)
-        if grade >= 0 and grade < 10:
+        if grade >= 0 and grade <= 10:
             if grade != self.self_grade:
                 Logger.get_instance().record_event(LogAction.SELF, self.key, str(grade))
                 self.self_grade = grade
@@ -6184,8 +6187,8 @@ class TaskTree:
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             grade = obj.self_grade + 1
-            if grade > 9:
-                grade = 9
+            if grade >= 10:
+                grade = 10
             self.set_grade(grade)
         else:
             self.unfold(obj)
@@ -8616,8 +8619,8 @@ class Play:
         cman.add_str(GuiKeys.collapse, self.tree.process_collapse)
         cman.add_str(GuiKeys.borders, self.app.toggle_borders)
         cman.add_str(GuiKeys.images, self.app.toggle_images)
-        for value in range(10):
-            cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
+        # for value in range(10):
+        #     cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
     
         cman.add_str(GuiKeys.key_help, self.gui.show_help)
         

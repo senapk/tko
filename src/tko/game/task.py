@@ -90,7 +90,7 @@ class Task:
 
     def set_grade(self, grade: int):
         grade = int(grade)
-        if grade >= 0 and grade < 10:
+        if grade >= 0 and grade <= 10:
             if grade != self.self_grade:
                 Logger.get_instance().record_event(LogAction.SELF, self.key, str(grade))
                 self.self_grade = grade

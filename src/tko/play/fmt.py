@@ -102,6 +102,8 @@ class Fmt:
             if y == lines - 1:
                 if x + len(text) <= cols:
                     pass
+        except ValueError as _e:
+            pass
             # lines, cols = stdscr.getmaxyx()
             # stdscr.addstr(10, 10, f"y:{y}, x:{x}, fmt:{fmt}, len:{len(text)} lines:{lines}, cols:{cols}")
             # stdscr.addstr(1, 0, text)
