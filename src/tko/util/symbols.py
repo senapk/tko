@@ -55,6 +55,7 @@ class __Symbols:
         self.emoji_dicas = Token("B", "y") # "💡"
         self.emoji_codes = Token("C", "m")#"💚" #"🤝"
         self.emoji_guide = Token("D", "r")#"💙" # "🧭"
+        self.cursor = Token("┊")
 
     def set_colors(self):
         self.opening.fmt = "b"

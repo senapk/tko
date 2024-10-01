@@ -15,6 +15,7 @@ class InputManager:
     esc = 27
     plus = 465
     minus = 464
+    delete = 330
 
     def __init__(self):
         # stores a function than can return another function

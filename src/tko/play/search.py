@@ -4,6 +4,7 @@ from tko.play.tasktree import TaskTree
 from tko.play.flags import Flags
 from tko.play.floating import Floating
 from tko.play.floating_manager import FloatingManager
+from tko.play.input_manager import InputManager
 
 import curses
 from typing import List
@@ -73,7 +74,6 @@ class Search:
                 self.tree.index_selected = i
                 break
 
-
     def process_search(self, key):
         if key == 27:
             self.search_mode = False
@@ -87,7 +87,7 @@ class Search:
             self.tree.move_up()
         elif key == curses.KEY_DOWN:
             self.tree.move_down()
-        elif key == 127 or key == 263 or key == 330:
+        elif key == InputManager.backspace1 or key == InputManager.backspace2 or key == InputManager.delete:
             self.tree.search_text = self.tree.search_text[:-1]
         elif key >= 32 and key < 127:
             self.tree.search_text += chr(key).lower()

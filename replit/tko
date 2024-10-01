@@ -888,6 +888,7 @@ class InputManager:
     esc = 27
     plus = 465
     minus = 464
+    delete = 330
 
     def __init__(self):
         # stores a function than can return another function
@@ -2307,6 +2308,109 @@ class Frame:
         return self
 
 
+
+class RawTerminal:
+    __term_width: Optional[int] = None
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def __get_terminal_size() -> int:
+        return shutil.get_terminal_size().columns
+
+    @staticmethod
+    def get_terminal_size():
+        if RawTerminal.__term_width is None:
+            return RawTerminal.__get_terminal_size()
+        return RawTerminal.__term_width
+
+    @staticmethod
+    def set_terminal_size(value: int):
+        RawTerminal.__term_width = value
+
+    @staticmethod
+    def centralize(text: Text | str, filler: Token | str = Token(" ")):
+        if isinstance(filler, str):
+            filler = Token(filler)
+
+        if isinstance(text, str):
+            text = Text(text)
+        width = RawTerminal.get_terminal_size()
+        return text.center(width, filler)
+    
+
+class __Symbols:
+
+    def __init__(self):
+        self.downloaded = Token("▼")
+        self.to_download = Token("▽")
+        self.cant_download = Token("◉")
+        self.opening = Token("=> ")
+        self.neutral = Token("»")
+        self.success = Token("✓")
+        self.failure = Token("✗")
+        self.wrong = Token("ω")
+        self.compilation = Token("ϲ")
+        self.execution = Token("ϵ")
+        self.unequal = Token("├")
+        self.equalbar = Token("│")
+        self.hbar = Token("─")
+        self.vbar = Token("│")
+
+        self.whitespace = Token("·")
+        # self.whitespace = Token("␣")
+        
+        # self.newline = Token("¶")
+        self.newline = Token("↲")
+        # self.newline = Token("⏎")
+
+        self.cfill = Token("_")
+        self.tab = Token("    ")
+        self.arrow_up = Token("↑")
+
+        self.check = Token("✓")
+        self.uncheck = Token("✗")
+        # self.opcheck = Token("ⴲ")
+        # self.opuncheck = Token("ⵔ")
+        self.infinity = Token("∞")
+        self.locked_free = Token("⇉")
+        self.locked_locked = Token("⇟")
+        self.left_toggle = Token("━─")
+        self.right_toggle = Token("─━")
+        self.timer = Token("⏰") # ⌛⏰
+        self.diff_down = Token("⇕")
+        self.diff_left = Token("⇔")
+        self.sharpR = Token("")
+        self.sharpL = Token("")
+        self.action = Token("◎", "b")
+
+        self.emoji_vazio = Token("✗", "r") #"❌"
+        self.emoji_confiante = Token("●", "g")#"😎"
+        self.emoji_capaz     = Token("◕", "y")#"😌"
+        self.emoji_inseguro  = Token("◑", "m")#"😬"
+        self.emoji_confuso   = Token("◔", "r")#"😕"
+
+        self.emoji_alone = Token("A", "g")#"💖" # "✋"
+        self.emoji_dicas = Token("B", "y") # "💡"
+        self.emoji_codes = Token("C", "m")#"💚" #"🤝"
+        self.emoji_guide = Token("D", "r")#"💙" # "🧭"
+        self.cursor = Token("┊")
+
+    def set_colors(self):
+        self.opening.fmt = "b"
+        self.neutral.fmt = "b"
+        self.success.fmt = "g"
+        self.failure.fmt = "r"
+        self.wrong.fmt = "r"
+        self.compilation.fmt = "y"
+        self.execution.fmt = "y"
+        self.unequal.fmt = "r"
+        self.equalbar.fmt = "g"
+
+symbols = __Symbols()
+
+
 class Floating:
     def __init__(self, _align=""):
         self._frame = Frame(0, 0)
@@ -2453,6 +2557,7 @@ class Floating:
     def get_input(self) -> int:
         self.draw()
         key: int = Fmt.getch()
+        key = InputManager.fix_cedilha(Fmt.get_screen(), key)
         if self._type == "warning" or self._type == "error":
             if key < 300:
                 self._enable = False
@@ -2473,6 +2578,7 @@ class FloatingInputData:
         self.shortcut = shortcut
         self.exit_on_action = False
 
+
     def set_exit_on_action(self, value: bool):
         self.exit_on_action = value
         return self
@@ -2485,6 +2591,7 @@ class FloatingInput(Floating):
         self._frame.set_border_color("g")
         self._exit_on_action = True
         self.right_dx = 5 # shortcut space
+        self.search_text: List[str] = []
 
     def calc_dy_dx(self):
         dy, dx = super().calc_dy_dx()
@@ -2497,10 +2604,39 @@ class FloatingInput(Floating):
         self._exit_on_action = value
         return self
 
+    def match_search(self, index: int):
+        return "".join(self.search_text) in self._options[index].label().get_text().lower()
+
+    def next_option(self):
+        if not self.match_search(self._index):
+            self._index = 0
+        steps = len(self._options)
+        index = self._index
+        while steps > 0:
+            index = (index + 1) % len(self._options)
+            if self.match_search(index):
+                self._index = index
+                return
+            steps -= 1
+    
+    def prev_option(self):
+        if not self.match_search(self._index):
+            self._index = 0
+        steps = len(self._options)
+        index = self._index
+        while steps > 0:
+            index = (index - 1) % len(self._options)
+            if self.match_search(index):
+                self._index = index
+                return
+            steps -= 1
+
     def write_content(self):
         options: List[Text] = []
         dx = self._frame.get_dx() - self.right_dx
         for i, option in enumerate(self._options):
+            if not "".join(self.search_text) in option.label().get_text().lower():
+                continue
             text = Text().add(option.label()).ljust(dx)
             if option.shortcut != "":
                 if len(option.shortcut) > 1:
@@ -2510,7 +2646,8 @@ class FloatingInput(Floating):
             fmt = "B" if i == self._index else ""
             text.set_background(fmt)
             options.append(text)
-            
+        
+        self._frame.write(0, 0, Text("Busca: ") + "".join(self.search_text) + symbols.cursor)
         y = 1
         for line in self._content + options:
             x = 0
@@ -2532,13 +2669,18 @@ class FloatingInput(Floating):
     def get_input(self) -> int:
         self.draw()
         key: int = Fmt.getch()
+        key = InputManager.fix_cedilha(Fmt.get_screen(), key)
         
         if key == curses.KEY_UP:
-            self._index = (self._index - 1) % len(self._options)
+            self.prev_option()
         elif key == curses.KEY_DOWN:
-            self._index = (self._index + 1) % len(self._options)
+            self.next_option()
         elif key == 27:
             self._enable = False
+        elif key == InputManager.backspace1 or key == InputManager.backspace2 or key == InputManager.delete:
+            self.search_text = self.search_text[:-1]
+        elif key >= 32 and key < 127:
+            self.search_text += chr(key).lower()
         elif key == ord('\n'):
             if self._exit_on_action or self._options[self._index].exit_on_action:
                 self._enable = False
@@ -2547,6 +2689,7 @@ class FloatingInput(Floating):
         else:
             return key
         return -1
+
 
 
 class FloatingManager:
@@ -2567,108 +2710,6 @@ class FloatingManager:
 
     def get_input(self) -> int:
         return self.input_layer[0].get_input()
-
-
-
-class RawTerminal:
-    __term_width: Optional[int] = None
-
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def __get_terminal_size() -> int:
-        return shutil.get_terminal_size().columns
-
-    @staticmethod
-    def get_terminal_size():
-        if RawTerminal.__term_width is None:
-            return RawTerminal.__get_terminal_size()
-        return RawTerminal.__term_width
-
-    @staticmethod
-    def set_terminal_size(value: int):
-        RawTerminal.__term_width = value
-
-    @staticmethod
-    def centralize(text: Text | str, filler: Token | str = Token(" ")):
-        if isinstance(filler, str):
-            filler = Token(filler)
-
-        if isinstance(text, str):
-            text = Text(text)
-        width = RawTerminal.get_terminal_size()
-        return text.center(width, filler)
-    
-
-class __Symbols:
-
-    def __init__(self):
-        self.downloaded = Token("▼")
-        self.to_download = Token("▽")
-        self.cant_download = Token("◉")
-        self.opening = Token("=> ")
-        self.neutral = Token("»")
-        self.success = Token("✓")
-        self.failure = Token("✗")
-        self.wrong = Token("ω")
-        self.compilation = Token("ϲ")
-        self.execution = Token("ϵ")
-        self.unequal = Token("├")
-        self.equalbar = Token("│")
-        self.hbar = Token("─")
-        self.vbar = Token("│")
-
-        self.whitespace = Token("·")
-        # self.whitespace = Token("␣")
-        
-        # self.newline = Token("¶")
-        self.newline = Token("↲")
-        # self.newline = Token("⏎")
-
-        self.cfill = Token("_")
-        self.tab = Token("    ")
-        self.arrow_up = Token("↑")
-
-        self.check = Token("✓")
-        self.uncheck = Token("✗")
-        # self.opcheck = Token("ⴲ")
-        # self.opuncheck = Token("ⵔ")
-        self.infinity = Token("∞")
-        self.locked_free = Token("⇉")
-        self.locked_locked = Token("⇟")
-        self.left_toggle = Token("━─")
-        self.right_toggle = Token("─━")
-        self.timer = Token("⏰") # ⌛⏰
-        self.diff_down = Token("⇕")
-        self.diff_left = Token("⇔")
-        self.sharpR = Token("")
-        self.sharpL = Token("")
-        self.action = Token("◎", "b")
-
-        self.emoji_vazio = Token("✗", "r") #"❌"
-        self.emoji_confiante = Token("●", "g")#"😎"
-        self.emoji_capaz     = Token("◕", "y")#"😌"
-        self.emoji_inseguro  = Token("◑", "m")#"😬"
-        self.emoji_confuso   = Token("◔", "r")#"😕"
-
-        self.emoji_alone = Token("A", "g")#"💖" # "✋"
-        self.emoji_dicas = Token("B", "y") # "💡"
-        self.emoji_codes = Token("C", "m")#"💚" #"🤝"
-        self.emoji_guide = Token("D", "r")#"💙" # "🧭"
-
-    def set_colors(self):
-        self.opening.fmt = "b"
-        self.neutral.fmt = "b"
-        self.success.fmt = "g"
-        self.failure.fmt = "r"
-        self.wrong.fmt = "r"
-        self.compilation.fmt = "y"
-        self.execution.fmt = "y"
-        self.unequal.fmt = "r"
-        self.equalbar.fmt = "g"
-
-symbols = __Symbols()
 
 
 class GradeMessage:
@@ -6329,7 +6370,6 @@ class Search:
                 self.tree.index_selected = i
                 break
 
-
     def process_search(self, key):
         if key == 27:
             self.search_mode = False
@@ -6343,7 +6383,7 @@ class Search:
             self.tree.move_up()
         elif key == curses.KEY_DOWN:
             self.tree.move_down()
-        elif key == 127 or key == 263 or key == 330:
+        elif key == InputManager.backspace1 or key == InputManager.backspace2 or key == InputManager.delete:
             self.tree.search_text = self.tree.search_text[:-1]
         elif key >= 32 and key < 127:
             self.tree.search_text += chr(key).lower()
@@ -7828,7 +7868,7 @@ class Gui:
 
     def make_xp_button(self, size):
         if self.search.search_mode:
-            text = " Busca: " + self.tree.search_text + "┊"
+            text = " Busca: " + self.tree.search_text + symbols.cursor.text
             percent = 0.0
             done = "W"
             todo = "W"

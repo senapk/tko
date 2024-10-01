@@ -4,6 +4,8 @@ from ..util.text import Text, Token
 from .fmt import Fmt
 import curses
 from typing import Callable
+from tko.play.input_manager import InputManager
+from tko.util.symbols import symbols
 
 class Floating:
     def __init__(self, _align=""):
@@ -151,6 +153,7 @@ class Floating:
     def get_input(self) -> int:
         self.draw()
         key: int = Fmt.getch()
+        key = InputManager.fix_cedilha(Fmt.get_screen(), key)
         if self._type == "warning" or self._type == "error":
             if key < 300:
                 self._enable = False
@@ -171,6 +174,7 @@ class FloatingInputData:
         self.shortcut = shortcut
         self.exit_on_action = False
 
+
     def set_exit_on_action(self, value: bool):
         self.exit_on_action = value
         return self
@@ -183,6 +187,7 @@ class FloatingInput(Floating):
         self._frame.set_border_color("g")
         self._exit_on_action = True
         self.right_dx = 5 # shortcut space
+        self.search_text: List[str] = []
 
     def calc_dy_dx(self):
         dy, dx = super().calc_dy_dx()
@@ -195,10 +200,39 @@ class FloatingInput(Floating):
         self._exit_on_action = value
         return self
 
+    def match_search(self, index: int):
+        return "".join(self.search_text) in self._options[index].label().get_text().lower()
+
+    def next_option(self):
+        if not self.match_search(self._index):
+            self._index = 0
+        steps = len(self._options)
+        index = self._index
+        while steps > 0:
+            index = (index + 1) % len(self._options)
+            if self.match_search(index):
+                self._index = index
+                return
+            steps -= 1
+    
+    def prev_option(self):
+        if not self.match_search(self._index):
+            self._index = 0
+        steps = len(self._options)
+        index = self._index
+        while steps > 0:
+            index = (index - 1) % len(self._options)
+            if self.match_search(index):
+                self._index = index
+                return
+            steps -= 1
+
     def write_content(self):
         options: List[Text] = []
         dx = self._frame.get_dx() - self.right_dx
         for i, option in enumerate(self._options):
+            if not "".join(self.search_text) in option.label().get_text().lower():
+                continue
             text = Text().add(option.label()).ljust(dx)
             if option.shortcut != "":
                 if len(option.shortcut) > 1:
@@ -208,7 +242,8 @@ class FloatingInput(Floating):
             fmt = "B" if i == self._index else ""
             text.set_background(fmt)
             options.append(text)
-            
+        
+        self._frame.write(0, 0, Text("Busca: ") + "".join(self.search_text) + symbols.cursor)
         y = 1
         for line in self._content + options:
             x = 0
@@ -230,13 +265,18 @@ class FloatingInput(Floating):
     def get_input(self) -> int:
         self.draw()
         key: int = Fmt.getch()
+        key = InputManager.fix_cedilha(Fmt.get_screen(), key)
         
         if key == curses.KEY_UP:
-            self._index = (self._index - 1) % len(self._options)
+            self.prev_option()
         elif key == curses.KEY_DOWN:
-            self._index = (self._index + 1) % len(self._options)
+            self.next_option()
         elif key == 27:
             self._enable = False
+        elif key == InputManager.backspace1 or key == InputManager.backspace2 or key == InputManager.delete:
+            self.search_text = self.search_text[:-1]
+        elif key >= 32 and key < 127:
+            self.search_text += chr(key).lower()
         elif key == ord('\n'):
             if self._exit_on_action or self._options[self._index].exit_on_action:
                 self._enable = False

@@ -167,7 +167,7 @@ class Gui:
 
     def make_xp_button(self, size):
         if self.search.search_mode:
-            text = " Busca: " + self.tree.search_text + "┊"
+            text = " Busca: " + self.tree.search_text + symbols.cursor.text
             percent = 0.0
             done = "W"
             todo = "W"
