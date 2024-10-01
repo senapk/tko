@@ -200,8 +200,11 @@ class FloatingInput(Floating):
         dx = self._frame.get_dx() - self.right_dx
         for i, option in enumerate(self._options):
             text = Text().add(option.label()).ljust(dx)
-            if option.shortcut:
-                text.add(f" [{option.shortcut}]")
+            if option.shortcut != "":
+                if len(option.shortcut) > 1:
+                    text.add(" " + option.shortcut)
+                else:
+                    text.add(f" [{option.shortcut}]")
             fmt = "B" if i == self._index else ""
             text.set_background(fmt)
             options.append(text)

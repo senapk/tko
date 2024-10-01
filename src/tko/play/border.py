@@ -49,7 +49,7 @@ class Border:
             xp_bar.data[-1] = self.roundR(xp_bar.data[-1].fmt)
         return xp_bar
 
-    def get_flag_sentence(self, flag: Flag, pad: int = 0, button_mode: bool = True) -> Text:
+    def get_flag_sentence(self, flag: Flag, pad: int = 0, button_mode: bool = True, include_symbol: bool = True, include_key: bool = True) -> Text:
         char = flag.get_keycode()
         text = flag.get_name()
         color = "M" 
@@ -64,7 +64,12 @@ class Border:
         if pad > 2:
             extra.addf(color, (pad - 2 - len(text)) * filler)
 
-        mid = Text().addf(color, symbol.text).addf(color, " ").addf(color, text).add(extra).addf(color, f"[{char}]")
+        mid = Text()
+        if include_symbol:
+            mid.addf(color, symbol.text).addf(color, " ")
+        mid.addf(color, text)
+        if include_key:
+            mid.add(extra).addf(color, f"[{char}]")
         if button_mode:
             middle = Text().add(self.roundL(color)).add(mid).add(self.roundR(color))
         else:

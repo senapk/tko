@@ -5,11 +5,13 @@ from typing import Any, Dict, Callable, Tuple
 from ..settings.settings import Settings
 from ..settings.app_settings import AppSettings
 from ..settings.rep_settings import languages_avaliable, RepData
-from ..util.text import Text
+from ..util.text import Text, Token
 from tko.play.floating import Floating, FloatingInput, FloatingInputData
 from .fmt import Fmt
 from .search import Search
 from .input_manager import InputManager
+from tko.util.symbols import symbols
+from tko.play.play_palette import PlayPalette
 
 
 from .floating import Floating
@@ -46,7 +48,7 @@ class Play:
         self.graph_ext = ""
 
         self.actions = PlayActions(self.gui)
-
+        self.play_palette = PlayPalette(self.actions)
 
 
     def save_to_json(self):
@@ -63,86 +65,53 @@ class Play:
             Floating().put_text("\nAté a próxima\n").set_exit_fn(set_exit).warning()
         ),
 
-    def toggle_config(self):
-        if Flags.config.is_true():
-            Flags.config.toggle()
-            self.gui.config.disable()
-        else:
-            Flags.config.toggle()
-            self.gui.config.enable()
-            if Flags.skills.is_true():
-                Flags.skills.toggle()
-
     def toggle_skills(self):
-        if Flags.skills.is_true():
-            Flags.skills.toggle()
-        else:
-            Flags.skills.toggle()
-            if Flags.config.is_true():
-                Flags.config.toggle()
-            
-    def process_tab(self):
-        if Flags.config.is_true():
-            self.gui.config.enable()
+        Flags.skills.toggle()
 
     def make_callback(self) -> InputManager:
         cman = InputManager()
 
-        cman.add_int(curses.KEY_RESIZE, self.gui.disable_on_resize)
         cman.add_str(GuiKeys.key_quit, self.send_quit_msg)
         cman.add_int(InputManager.esc, self.send_quit_msg)
         cman.add_int(curses.KEY_BACKSPACE, self.send_quit_msg)
 
-        if Flags.config.is_true() and self.gui.config.enabled:
-            cman.add_str(GuiKeys.up, self.gui.config.move_up)
-            cman.add_int(curses.KEY_UP, self.gui.config.move_up)
-            cman.add_str(GuiKeys.down, self.gui.config.move_down)
-            cman.add_int(curses.KEY_DOWN, self.gui.config.move_down)
-            cman.add_str(GuiKeys.activate, self.gui.config.activate_selected)
-            cman.add_int(InputManager.tab, self.gui.config.disable)
-        else:
-            cman.add_str(GuiKeys.up, self.tree.move_up)
-            cman.add_int(curses.KEY_UP, self.tree.move_up)
-            cman.add_str(GuiKeys.down, self.tree.move_down)
-            cman.add_int(curses.KEY_DOWN, self.tree.move_down)
-            cman.add_str(GuiKeys.left, self.tree.arrow_left)
-            cman.add_int(curses.KEY_LEFT, self.tree.arrow_left)
-            cman.add_str(GuiKeys.right, self.tree.arrow_right)
-            cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
-            cman.add_str(GuiKeys.activate, self.actions.select_task)
-            cman.add_int(InputManager.tab, self.process_tab)
-            cman.add_str(GuiKeys.prog_plus, self.tree.inc_progress)
-            cman.add_str(GuiKeys.prog_plus2, self.tree.inc_progress)
-            cman.add_str(GuiKeys.prog_less, self.tree.dec_progress)
-            cman.add_str(GuiKeys.prog_less2, self.tree.dec_progress)
-            cman.add_str(GuiKeys.github_open, self.actions.open_link)
-            cman.add_str(GuiKeys.down_task, self.actions.down_task)
-            cman.add_str(GuiKeys.inc_grade, self.tree.inc_self_grade)
-            cman.add_str(GuiKeys.inc_grade2, self.tree.inc_self_grade)
-            cman.add_int(InputManager.plus, self.tree.inc_self_grade)
-            cman.add_str(GuiKeys.dec_grade, self.tree.dec_self_grade)
-            cman.add_str(GuiKeys.dec_grade2, self.tree.dec_self_grade)
-            cman.add_int(InputManager.minus, self.tree.dec_self_grade)
-            cman.add_str(GuiKeys.edit, lambda: self.actions.open_code())
-            for value in range(10):
-                cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
-        
+
+        cman.add_str(GuiKeys.up, self.tree.move_up)
+        cman.add_int(curses.KEY_UP, self.tree.move_up)
+        cman.add_str(GuiKeys.down, self.tree.move_down)
+        cman.add_int(curses.KEY_DOWN, self.tree.move_down)
+        cman.add_str(GuiKeys.left, self.tree.arrow_left)
+        cman.add_int(curses.KEY_LEFT, self.tree.arrow_left)
+        cman.add_str(GuiKeys.right, self.tree.arrow_right)
+        cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
+        cman.add_str(GuiKeys.activate, self.actions.select_task)
+        cman.add_str(GuiKeys.inc_prog, self.tree.inc_progress)
+        cman.add_str(GuiKeys.prog_plus2, self.tree.inc_progress)
+        cman.add_str(GuiKeys.dec_prog, self.tree.dec_progress)
+        cman.add_str(GuiKeys.prog_less2, self.tree.dec_progress)
+        cman.add_str(GuiKeys.github_open, self.actions.open_link)
+        cman.add_str(GuiKeys.down_task, self.actions.down_task)
+        cman.add_str(GuiKeys.inc_self, self.tree.inc_self_grade)
+        cman.add_str(GuiKeys.inc_grade2, self.tree.inc_self_grade)
+        cman.add_int(InputManager.plus, self.tree.inc_self_grade)
+        cman.add_str(GuiKeys.dec_self, self.tree.dec_self_grade)
+        cman.add_str(GuiKeys.dec_grade2, self.tree.dec_self_grade)
+        cman.add_int(InputManager.minus, self.tree.dec_self_grade)
+        cman.add_str(GuiKeys.edit, lambda: self.actions.open_code())
+        cman.add_str(GuiKeys.expand, self.tree.process_expand)
+        cman.add_str(GuiKeys.collapse, self.tree.process_collapse)
+        cman.add_str(GuiKeys.borders, self.app.toggle_borders)
+        cman.add_str(GuiKeys.images, self.app.toggle_images)
+        for value in range(10):
+            cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
+    
         cman.add_str(GuiKeys.key_help, self.gui.show_help)
         
-        for flag in self.flagsman.others:
+        for flag in self.flagsman.flags.values():
             cman.add_str(flag.get_keycode(), FlagFunctor(flag))
 
-        config_elements = self.gui.config.get_elements()
-        for element in config_elements:
-            key = element.flag.get_keycode()
-            fn = element.fn
-            cman.add_str(key, fn)
-
-        cman.add_str(Flags.config.get_keycode(), self.toggle_config)
-        cman.add_str(Flags.skills.get_keycode(), self.toggle_skills)
-        cman.add_str(GuiKeys.hud, self.app.toggle_hud)
-        cman.add_str("/", self.gui.search.toggle_search)
-        cman.add_str("p", self.command_pallete)
+        cman.add_str(GuiKeys.search, self.gui.search.toggle_search)
+        cman.add_str(GuiKeys.palette, self.play_palette.command_pallete)
 
         return cman
         
@@ -206,125 +175,6 @@ class Play:
                 if lang in options:
                     break
             self.rep.set_lang(lang)
-
-    def command_pallete(self):
-        options: list[FloatingInputData] = []
-
-        def icon(value: bool):
-            return "✓" if value else "✗"
-        
-        options.append(
-            FloatingInputData(
-                lambda: Text(" ◎ Tarefa: {y} para repositório local", "Baixar"),
-                self.actions.down_task,
-                GuiKeys.down_task
-            ).set_exit_on_action(True)
-        )
-
-        options.append(
-            FloatingInputData(
-                lambda: Text(" ◎ Tarefa: abrir {y} com a descrição", "GitHub"),
-                self.actions.open_link,
-                GuiKeys.github_open
-            ).set_exit_on_action(True)
-        )
-
-        options.append(
-            FloatingInputData(
-                lambda: Text(" ◎ Tarefa: {y} arquivos na IDE", "Editar"),
-                self.actions.open_code,
-                GuiKeys.edit
-            ).set_exit_on_action(True)
-        )
-
-        options.append(
-            FloatingInputData(
-                lambda: Text(" ◎ Mostrar {y}", "Ajuda"),
-                self.gui.show_help,
-                GuiKeys.key_help
-            )
-        )
-
-        options.append(
-            FloatingInputData(
-                lambda: Text(" {} Mostrar {y}", icon(self.app.has_borders()), "Bordas"),
-                self.app.toggle_borders,
-                GuiKeys.borders
-            )
-        )
-        
-        options.append(
-            FloatingInputData(
-                lambda: Text(" {} Mostrar {y}", icon(self.app.has_images()), "Imagens"),
-                self.app.toggle_images, 
-                GuiKeys.images
-            )
-        )
-
-        options.append(
-            FloatingInputData(
-                lambda: Text(" {} Mostrar {y}", icon(Flags.percent.is_true()), "Percentual"),
-                Flags.percent.toggle, 
-                Flags.percent.get_keycode()
-            )
-        )
-
-        options.append(
-            FloatingInputData(
-                lambda: Text(" {} Mostrar {y} para completar a missão", icon(Flags.minimum.is_true()), "Mínimo"),
-                Flags.minimum.toggle,
-                Flags.minimum.get_keycode()
-            )
-        )
-
-        options.append(
-            FloatingInputData(
-                lambda: Text(" {} Mostrar {y} das tarefas", icon(Flags.reward.is_true()), "Recompensa"),
-                Flags.reward.toggle, 
-                Flags.reward.get_keycode()
-            )
-        )
-
-        options.append(
-            FloatingInputData(
-                lambda: Text(" {} Mostrar {y}", icon(Flags.skills.is_true()), "Skills"),
-                Flags.skills.toggle, 
-                Flags.skills.get_keycode()
-            )
-        )
-
-        options.append(
-            FloatingInputData(
-                lambda: Text(" {} Modo {y}: Habilitar todas as tarefas", icon(Flags.admin.is_true()), "Admin"),
-                Flags.admin.toggle,
-                Flags.admin.get_keycode()
-            )
-        )
-
-        options.append(
-            FloatingInputData(
-                lambda: Text(" ◎ Gerar {y} de dependências", "Grafo"),
-                self.actions.generate_graph,
-                GuiKeys.graph
-            )
-        )
-
-        options.append(
-            FloatingInputData(
-                lambda: Text(" ◎ Mudar {y} de download de rascunhos", "Linguagem"),
-                self.gui.config.set_language,
-                GuiKeys.set_lang
-            ).set_exit_on_action(True)
-        )
-
-        self.fman.add_input(
-            FloatingInput("^").set_text_ljust()
-                      .set_header(" Selecione uma ação da lista ")
-                      .set_options(options)
-                      .set_exit_on_enter(False)
-                      .set_footer(" Use Enter para aplicar e Esc para Sair ")
-        )
-
 
 
     def play(self):

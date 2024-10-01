@@ -6,7 +6,7 @@ from typing import List, Optional, Tuple
 from tko.game.task import Task
 from tko.play.border import Border
 from tko.play.flags import Flags
-from tko.play.floating import Floating
+from tko.play.floating import Floating, FloatingInput, FloatingInputData
 from tko.play.floating_manager import FloatingManager
 from tko.play.fmt import Fmt
 from tko.play.frame import Frame
@@ -285,11 +285,7 @@ class Tester:
         
         output = Text()
         # diff
-        diff = self.settings.app.get_diff_mode()
-        if diff == DiffMode.DOWN:
-            diff_text = symbols.diff_down.text
-        else:
-            diff_text = symbols.diff_left.text
+        diff_text = self.get_diff_symbol()
         output.addf("B", f" {GuiKeys.diff} {diff_text} ")
         if self.settings.app.has_borders():
             output.addf("Mb", symbols.sharpR.text)
@@ -342,64 +338,56 @@ class Tester:
         _, cols = Fmt.get_size()
         return cols < Text(" ").join(self.make_bottom_line()).len() + 2
 
+    def get_diff_symbol(self) -> str:
+        if self.settings.app.get_diff_mode() == DiffMode.DOWN:
+            return symbols.diff_down.text
+        return symbols.diff_left.text
+
     def make_bottom_line(self) -> List[Text]:
         cmds: List[Text] = []
-        if self.app.has_full_hud():
-            # rodar
-            cmds.append(self.borders.border("M", f"{GuiActions.rodar} [{GuiKeys.rodar}]"))
-            # fixar
-            color = "G" if self.locked_index else "M"
-            symbol = symbols.success if self.locked_index else symbols.failure
-            travar = f"{symbol.text} {GuiActions.fixar}[{GuiKeys.travar}]"
-            cmds.append(self.borders.border(color, travar))
+
+        # diff mode
+        # text = f"{self.get_diff_symbol()} Diff [{GuiKeys.diff}]"
+        # cmds.append(self.borders.border("C", text))
         # sair
-        cmds.append(self.borders.border("C", f" {GuiActions.sair}  [{GuiKeys.sair}]"))
+        # cmds.append(self.borders.border("C", f" {GuiActions.sair}  [{GuiKeys.sair}]"))
         # editar
-        if self.opener is not None:
-            cmds.append(self.borders.border("C", f"{GuiActions.editar} [{GuiKeys.editar}]"))
+        # tempo
+        # value = str(self.settings.app.get_timeout())
+        # if value == "0":
+        #     value = symbols.infinity.text
+        # cmds.append(
+        #     Text()
+        #         .add(self.borders.roundL("M"))
+        #         .add(RToken("M", "{} {}[{}]".format(GuiActions.tempo, value, GuiKeys.tempo)))
+        #         .add(self.borders.roundR("M"))
+        # )
+        # fixar
+        color = "R" if self.locked_index else "G"
+        symbol = symbols.success if self.locked_index else symbols.failure
+        travar = f"{symbol.text} {GuiActions.fixar}[{GuiKeys.travar}]"
+        cmds.append(self.borders.border(color, travar))
+
+        text = f"{GuiActions.paleta} [{GuiKeys.palette}]"
+        cmds.append(self.borders.border("Y", text))
         # ativar
-        cmds.append(self.borders.border("G", f"{GuiActions.ativar} [{symbols.newline.text}]"))
-        
-        # hud
-        color = "G" if self.app.has_full_hud() else "Y"
-        symbol = symbols.success if self.app.has_full_hud() else symbols.failure
-        cmds.append(self.borders.border(color, f"{symbol.text} {GuiActions.hud}  [{GuiKeys.hud}]"))
+        cmds.append(self.borders.border("R", f"{GuiActions.activate} [{symbols.newline.text}]"))
+        #editar
+        if self.opener is not None:
+            cmds.append(self.borders.border("Y", f"{GuiActions.edit} [{GuiKeys.editar}]"))
+        # rodar
+        cmds.append(self.borders.border("G", f"{GuiActions.rodar} [{GuiKeys.rodar}]"))
 
-        if self.app.has_full_hud():
-            # tempo
-            value = str(self.settings.app.get_timeout())
-            if value == "0":
-                value = symbols.infinity.text
-            cmds.append(
-                Text()
-                    .add(self.borders.roundL("M"))
-                    .add(RToken("M", "{} {}[{}]".format(GuiActions.tempo, value, GuiKeys.tempo)))
-                    .add(self.borders.roundR("M"))
-            )
-            # diff mode
-            if self.settings.app.get_diff_mode() == DiffMode.DOWN:
-                text = f"{symbols.diff_down.text} Diff [{GuiKeys.diff}]"
-            else:
-                text = f"{symbols.diff_left.text} Diff [{GuiKeys.diff}]"
 
-            cmds.append(self.borders.border("M", text))
+
             
         return cmds
 
     def show_bottom_line(self):
         lines, cols = Fmt.get_size()
-        if self.two_column_mode():
-            line = self.make_bottom_line()
-            one = line[0:2] + line[-2:]
-            two = line[2:-2]
-            Fmt.write(lines - 2, 0, Text(" ").join(one).center(cols, Token(" ")))
-            Fmt.write(lines - 1, 0, Text(" ").join(two).center(cols, Token(" ")))
-        else:
-            out = Text(" ").join(self.make_bottom_line())
-            # if Fmt.get_size()[1] % 2 == 0:
-            #     out.add("-")
-            Fmt.write(lines - 1, 0, out.center(cols, Token(" ")))
- 
+        out = Text(" ").join(self.make_bottom_line())
+        Fmt.write(lines - 1, 0, out.center(cols, Token(" ")))
+
     def is_all_right(self):
         if self.locked_index or len(self.results) == 0:
             return False
@@ -593,12 +581,17 @@ class Tester:
             for i in range(len(self.results)):
                 _, index = self.results[i]
                 self.results[i] = (ExecutionResult.UNTESTED, index)
-            self.fman.add_input(
-                Floating("v>").warning()
-                .put_text("Atividade travada")
-                .put_sentence(Text("Aperte ").addf("g", GuiKeys.travar).add(" para destravar"))
-                .put_sentence(Text("Use ").addf("g", "Enter").add(" para rodar os testes"))
-            )
+            # self.fman.add_input(
+            #     Floating("v>").warning()
+            #     .put_text("Atividade travada")
+            #     .put_sentence(Text("Aperte ").addf("g", GuiKeys.travar).add(" para destravar"))
+            #     .put_sentence(Text("Use ").addf("g", "Enter").add(" para rodar os testes"))
+            # )
+
+    def get_time_limit_symbol(self):
+        if self.settings.app.get_timeout() == 0:
+            return symbols.infinity.text
+        return str(self.settings.app.get_timeout())
 
     def change_limit(self):
             valor = self.settings.app._timeout
@@ -610,12 +603,11 @@ class Tester:
                 valor = 0
             self.settings.app.set_timeout(valor)
             self.settings.save_settings()
-            nome = "∞" if valor == 0 else str(valor)
-            self.fman.add_input(
-                Floating("v>").warning()
-                .put_text("Limite de tempo de execução alterado para")
-                .put_text(f"{nome} segundos")
-            )
+            # self.fman.add_input(
+            #     Floating("v>").warning()
+            #     .put_text("Limite de tempo de execução alterado para")
+            #     .put_text(f"{self.get_time_limit_symbol()} segundos")
+            # )
 
     def process_key(self, key):
         if key == ord('q') or key == InputManager.backspace1 or key == InputManager.backspace2:
@@ -646,20 +638,82 @@ class Tester:
                 self.opener.load_folders_and_open()
         elif key == ord(GuiKeys.tempo):
             self.change_limit()
-        elif key == ord(GuiKeys.hud):
-            self.settings.app.toggle_hud()
             self.settings.save_settings()
         elif key == ord(GuiKeys.diff):
             self.settings.app.toggle_diff()
             self.settings.save_settings()
-        elif key == ord(GuiKeys.border):
+        elif key == ord(GuiKeys.borders):
             self.settings.app.toggle_borders()
             self.settings.save_settings()
         elif key == ord(GuiKeys.images):
             self.settings.app.toggle_images()
             self.settings.save_settings()
+        elif key == ord(GuiKeys.palette):
+            self.command_pallete()
         elif key != -1 and key != curses.KEY_RESIZE:
             self.send_char_not_found(key)
+
+    def command_pallete(self):
+        options: list[FloatingInputData] = []
+
+        def icon(value: bool):
+            return "✓" if value else "✗"
+        
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Mudar arquivo {y} de execução", symbols.action, "principal"),
+                self.change_main,
+                "TAB"
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Mudar modo {y}}", self.get_diff_symbol(), "Diff"),
+                self.app.toggle_diff,
+                GuiKeys.diff
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Mudar {y} máximo de execução: {r}", symbols.action, "Tempo", self.get_time_limit_symbol()),
+                self.change_limit,
+                GuiKeys.tempo
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} {y} a execução em no caso de teste selecionado", icon(self.locked_index), "Fixar"),
+                self.lock_unit,
+                GuiKeys.travar
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Mostrar {y}", icon(self.app.has_borders()), "Bordas"),
+                self.app.toggle_borders,
+                GuiKeys.borders
+            )
+        )
+        
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Mostrar {y}", icon(self.app.has_images()), "Imagens"),
+                self.app.toggle_images, 
+                GuiKeys.images
+            )
+        )
+
+        self.fman.add_input(
+            FloatingInput("v").set_text_ljust()
+                      .set_header(" Selecione uma ação da lista ")
+                      .set_options(options)
+                      .set_exit_on_enter(False)
+                      .set_footer(" Use Enter para aplicar e Esc para Sair ")
+        )
 
     def run(self):
         while True:

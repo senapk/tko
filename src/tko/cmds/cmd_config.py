@@ -27,11 +27,6 @@ class CmdConfig:
             action = True
             settings.app.set_borders(param.borders == "1")
             print("Borders now is: " + str("True" if param.borders == "1" else "False"))
-        if param.hud is not None:
-            action = True
-            settings.app.set_full_hud(param.hud == "1")
-            print("HUD now is: " + str("True" if param.hud == "1" else "False"))
-
         if param.side:
             action = True
             settings.app.set_diff_mode(DiffMode.SIDE)

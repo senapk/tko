@@ -34,11 +34,11 @@ opening: Dict[str, str] = {}
 opening["estuda"] = r"""
 O modelo de avaliação usa 3 notas.
 Autonomia, Compreensão, Progresso.
-Progresso é QUANTO você fez.
+Progresso é o QUANTO você fez.
 Autonomia e Compreensão são COMO.
 Use -+ para marcar o COMO.
 O QUANTO é gerado automaticamente
-pelos testes.
+pelos testes ou usando <>.
 Progressao : ✓ 9...0
 Autonomia  : ● ◕ ◑ ◔
 Compreensão: A B C D

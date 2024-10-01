@@ -7,7 +7,6 @@ class AppSettings:
         self._diff_mode = str(DiffMode.SIDE)
         self._lang_default = ""
         self._last_rep = ""
-        self._full_hud = True
         self._use_images = False
         self._use_borders = False
         self._editor = "code"
@@ -20,16 +19,6 @@ class AppSettings:
         for key, value in attr_dict.items():
             if hasattr(self, key) and type(getattr(self, key)) == type(value):
                 setattr(self, key, value)
-        return self
-    
-    def toggle_hud(self):
-        self._full_hud = not self._full_hud
-
-    def has_full_hud(self):
-        return self._full_hud
-    
-    def set_full_hud(self, value: bool):
-        self._full_hud = value
         return self
 
     def toggle_diff(self):

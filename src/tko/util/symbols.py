@@ -43,6 +43,7 @@ class __Symbols:
         self.diff_left = Token("⇔")
         self.sharpR = Token("")
         self.sharpL = Token("")
+        self.action = Token("◎", "b")
 
         self.emoji_vazio = Token("✗", "r") #"❌"
         self.emoji_confiante = Token("●", "g")#"😎"
