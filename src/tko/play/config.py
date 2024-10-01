@@ -1,5 +1,5 @@
 from tko.play.flags import Flag, Flags, FlagsMan
-from tko.play.floating import Floating
+from tko.play.floating import Floating, FloatingInput
 from tko.play.floating_manager import FloatingManager
 from tko.play.border import Border
 from tko.settings.settings import Settings
@@ -92,8 +92,8 @@ class Config:
         if only_if_empty and self.rep.get_lang() != "":
             return
 
-        def back(value):
-            self.rep.set_lang(value)
+        def back(value: str):
+            self.rep.set_lang(value.strip())
             self.rep.save_data_to_json()
             self.fman.add_input(
                 Floating()
@@ -104,12 +104,11 @@ class Config:
             )
 
         self.fman.add_input(
-            Floating()
+            FloatingInput()
+            .put_text(" Escolha a extensão default para os rascunhos ")
             .put_text("")
-            .put_text("Escolha a extensão default para os rascunhos")
-            .put_text("")
-            .put_text("Selecione e tecle Enter.")
-            .put_text("")
-            .set_options(languages_avaliable)
+            .set_options([c.ljust(4) for c in languages_avaliable])
+            .set_default_index(languages_avaliable.index(self.rep.get_lang()))
+            .set_footer(" Pressione Enter para confirmar ")
             .answer(back)
         )

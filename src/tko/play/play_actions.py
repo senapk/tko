@@ -123,7 +123,7 @@ class PlayActions:
         if isinstance(obj, Task) and obj.key in obj.title:
             task: Task = obj
             down_frame = (
-                Floating("v>").warning().set_ljust_text().set_header(" Baixando tarefa ")
+                Floating("v>").warning().set_text_ljust().set_header(" Baixando tarefa ")
             )
             down_frame.put_text(f"\ntko down {self.rep.alias} {task.key} -l {lang}\n")
             self.fman.add_input(down_frame)

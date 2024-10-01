@@ -274,7 +274,7 @@ class Gui:
 
 
     def show_help_config(self):
-        _help: Floating = Floating("v>").warning().set_ljust_text().set_header(" Configurações ")
+        _help: Floating = Floating("v>").warning().set_text_ljust().set_header(" Configurações ")
         self.fman.add_input(_help)
         _help.put_sentence(Text() + f"      Mínimo " + RToken("r", f"[{Flags.minimum.get_keycode()}]") + " - Mostrar os requisitos mínimos para completar a missão")
         _help.put_sentence(Text() + f"  Recompensa " + RToken("r", f"[{Flags.reward.get_keycode()}]") + " - Mostrar quanto de experiência cada atividade fornece")
@@ -287,7 +287,7 @@ class Gui:
     def show_help(self):
         # def empty(value):
         #     pass
-        _help: Floating = Floating("v>").set_ljust_text()
+        _help: Floating = Floating("v>").set_text_ljust()
         self.fman.add_input(_help)
 
         _help.set_header_sentence(Text().add(" Ajuda "))

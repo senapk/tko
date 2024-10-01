@@ -438,7 +438,7 @@ class TaskTree:
         if isinstance(obj, Task):
             obj.set_grade(grade)
             self.fman.add_input(
-                Floating("v").warning().set_header(" Auto avaliação ").set_ljust_text().set_content(GradeMessage().format(grade).split("\n"))
+                Floating("v").warning().set_header(" Auto avaliação ").set_text_ljust().set_content(GradeMessage().format(grade).split("\n"))
             )
 
     def set_progress(self, prog: int):

@@ -3,15 +3,13 @@ from .frame import Frame
 from ..util.text import Text
 from .fmt import Fmt
 import curses
-
+from abc import ABC
 
 class Floating:
     def __init__(self, _align=""):
         self._frame = Frame(0, 0)
         self._content: List[Text] = []
         self._type = "warning"
-        self._options = []
-        self._options_index = 0
         self._fn_answer = None
         self._enable = True
         self._extra_exit: List[int] = []
@@ -23,11 +21,15 @@ class Floating:
     def disable(self):
         self._enable = False
 
-    def set_ljust_text(self):
+    def set_text_ljust(self):
         self._centralize = False
         return self
 
-    def set_align(self, _align: str):
+    def set_text_center(self):
+        self._centralize = True
+        return self
+
+    def set_frame_align(self, _align: str):
         self._floating_align = _align
         return self
 
@@ -37,6 +39,10 @@ class Floating:
     
     def set_header_sentence(self, sentence: Text):
         self._frame.set_header(sentence, "")
+        return self
+    
+    def set_footer(self, text: str):
+        self._frame.set_footer(Text().addf("/", text), "")
         return self
     
     def set_exit_key(self, key: str):
@@ -73,23 +79,20 @@ class Floating:
     def is_enable(self):
         return self._enable
 
-    def __setup_frame(self):
+    def calc_dy_dx(self):
         header_len = self._frame.get_header().len()
         footer_len = self._frame.get_footer().len()
         data = [x.len() for x in self._content] + [header_len, footer_len]
         max_dx = max(data)
         dx = max_dx
         dy = len(self._content)
+        return dy, dx
+
+    def setup_frame(self):
+        dy, dx = self.calc_dy_dx()
         self._frame.set_inner(dy, dx)
         self._set_xy(dy, dx)
         self._frame.set_fill()
-        
-        if self._type == "answer":
-            footer = Text().add(" ")
-            for i, option in enumerate(self._options):
-                fmt = "kG" if i == self._options_index else ""
-                footer.addf(fmt, option).add(" ")
-            self._frame.set_footer(footer, "^")
 
     def put_text(self, text: str):
         lines = text.split("\n")
@@ -98,7 +101,8 @@ class Floating:
         return self
 
     def put_sentence(self, sentence: Text):
-        self._content.append(sentence)
+        for line in sentence.split("\n"):
+            self._content.append(line)
         return self
     
     def set_content(self, content: List[str]):
@@ -117,8 +121,6 @@ class Floating:
                 self.set_header(" Aviso ")
             elif self._type == "error":
                 self.set_header(" Erro ")
-            elif self._type == "answer":
-                self.set_header(" Pergunta ")
 
     def warning(self):
         self._type = "warning"
@@ -126,7 +128,7 @@ class Floating:
         return self
     
     def error(self):
-        self._type = "warning"
+        self._type = "error"
         self._frame.set_border_color("r")
         return self
     
@@ -136,17 +138,15 @@ class Floating:
         self._fn_answer = fn_answer
         return self
 
-    def set_options(self, options: List[str]):
-        self._options = options
-        return self
-
     def draw(self):
         self._set_default_header()
         self._set_default_footer()
-        self.__setup_frame()
+        self.setup_frame()
         self._frame.draw()
-        y = 0
+        self.write_content()
 
+    def write_content(self):
+        y = 0
         for line in self._content:
             x = 0
             if self._centralize:
@@ -168,21 +168,65 @@ class Floating:
                 if key == ord(" ") or key == 27:
                     return -1
                 return key
-        if self._type == "answer":
-            if key == curses.KEY_LEFT:
-                self._options_index = (self._options_index - 1) % len(self._options)
-            elif key == curses.KEY_RIGHT:
-                self._options_index = (self._options_index + 1) % len(self._options)
-            elif key == 27:
-                self._enable = False
-            elif key == ord('\n'):
-                self._enable = False
-                if self._fn_answer is not None:
-                    self._fn_answer(self._options[self._options_index])
-                if self._exit_fn is not None:
-                    self._exit_fn()
-                if self._exit_key is not None:
-                    return self._exit_key
-                return -1
+        
         return -1
         
+class FloatingInput(Floating):
+    def __init__(self, _align=""):
+        super().__init__(_align)
+        self._input = ""
+        self._max_input = 100
+        self._fn_input = None
+        self._options_index = 0
+
+    def calc_dy_dx(self):
+        dy, dx = super().calc_dy_dx()
+        dy += len(self._options)
+        return dy, dx
+
+    def write_content(self):
+        options: List[Text] = []
+        for i, option in enumerate(self._options):
+            fmt = "kG" if i == self._options_index else ""
+            options.append(Text().addf(fmt, option))
+            
+        y = 0
+        for line in self._content + options:
+            x = 0
+            if self._centralize:
+                x = (self._frame.get_dx() - line.len()) // 2
+            self._frame.write(y, x, line)
+            y += 1
+
+        return self
+
+    def set_options(self, options: List[str]):
+        self._options = options
+        return self
+    
+    def set_default_index(self, index: int):
+        self._options_index = index
+        return self
+
+    def get_input(self) -> int:
+        self.draw()
+        key: int = Fmt.getch()
+        
+        if key == curses.KEY_UP:
+            self._options_index = (self._options_index - 1) % len(self._options)
+        elif key == curses.KEY_DOWN:
+            self._options_index = (self._options_index + 1) % len(self._options)
+        elif key == 27:
+            self._enable = False
+        elif key == ord('\n'):
+            self._enable = False
+            if self._fn_answer is not None:
+                self._fn_answer(self._options[self._options_index])
+            if self._exit_fn is not None:
+                self._exit_fn()
+            if self._exit_key is not None:
+                return self._exit_key
+            return -1
+        else:
+            return key
+        return -1
