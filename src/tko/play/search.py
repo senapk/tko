@@ -27,7 +27,7 @@ class Search:
             self.tree.update_tree(admin_mode=True)
             self.tree.process_expand()
             self.tree.process_expand()
-            self.fman.add_input(Floating(">v").warning().put_text("Digite o texto\nVavegue até o elemnto desejado\ne aperte Enter"))
+            self.fman.add_input(Floating(">v").warning().put_text("Digite o texto\nNavegue até o elemento desejado\ne aperte Enter"))
     
     def finish_search(self):
         self.search_mode = False

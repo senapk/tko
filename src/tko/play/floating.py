@@ -1,16 +1,15 @@
 from typing import List
 from .frame import Frame
-from ..util.text import Text
+from ..util.text import Text, Token
 from .fmt import Fmt
 import curses
-from abc import ABC
+from typing import Callable
 
 class Floating:
     def __init__(self, _align=""):
         self._frame = Frame(0, 0)
         self._content: List[Text] = []
         self._type = "warning"
-        self._fn_answer = None
         self._enable = True
         self._extra_exit: List[int] = []
         self._exit_fn = None
@@ -131,12 +130,6 @@ class Floating:
         self._type = "error"
         self._frame.set_border_color("r")
         return self
-    
-    def answer(self, fn_answer):
-        self._type = "answer"
-        self._frame.set_border_color("g")
-        self._fn_answer = fn_answer
-        return self
 
     def draw(self):
         self._set_default_header()
@@ -171,26 +164,49 @@ class Floating:
         
         return -1
         
+class FloatingInputData:
+    def __init__(self, label: Callable[[], Text], action: Callable[[], None], shortcut: str = ""):
+        self.label = label
+        self.action = action
+        self.shortcut = shortcut
+        self.exit_on_action = False
+
+    def set_exit_on_action(self, value: bool):
+        self.exit_on_action = value
+        return self
+
 class FloatingInput(Floating):
     def __init__(self, _align=""):
         super().__init__(_align)
-        self._input = ""
-        self._max_input = 100
-        self._fn_input = None
-        self._options_index = 0
+        self._index = 0
+        self._options: List[FloatingInputData] = []
+        self._frame.set_border_color("g")
+        self._exit_on_action = True
+        self.right_dx = 5 # shortcut space
 
     def calc_dy_dx(self):
         dy, dx = super().calc_dy_dx()
-        dy += len(self._options)
-        return dy, dx
+        dy += len(self._options) + 2
+        for option in self._options:
+            dx = max(dx, len(option.label()))
+        return dy, dx + self.right_dx
+    
+    def set_exit_on_enter(self, value: bool):
+        self._exit_on_action = value
+        return self
 
     def write_content(self):
         options: List[Text] = []
+        dx = self._frame.get_dx() - self.right_dx
         for i, option in enumerate(self._options):
-            fmt = "kG" if i == self._options_index else ""
-            options.append(Text().addf(fmt, option))
+            text = Text().add(option.label()).ljust(dx)
+            if option.shortcut:
+                text.add(f" [{option.shortcut}]")
+            fmt = "B" if i == self._index else ""
+            text.set_background(fmt)
+            options.append(text)
             
-        y = 0
+        y = 1
         for line in self._content + options:
             x = 0
             if self._centralize:
@@ -200,12 +216,12 @@ class FloatingInput(Floating):
 
         return self
 
-    def set_options(self, options: List[str]):
+    def set_options(self, options: List[FloatingInputData]):
         self._options = options
         return self
     
     def set_default_index(self, index: int):
-        self._options_index = index
+        self._index = index
         return self
 
     def get_input(self) -> int:
@@ -213,19 +229,15 @@ class FloatingInput(Floating):
         key: int = Fmt.getch()
         
         if key == curses.KEY_UP:
-            self._options_index = (self._options_index - 1) % len(self._options)
+            self._index = (self._index - 1) % len(self._options)
         elif key == curses.KEY_DOWN:
-            self._options_index = (self._options_index + 1) % len(self._options)
+            self._index = (self._index + 1) % len(self._options)
         elif key == 27:
             self._enable = False
         elif key == ord('\n'):
-            self._enable = False
-            if self._fn_answer is not None:
-                self._fn_answer(self._options[self._options_index])
-            if self._exit_fn is not None:
-                self._exit_fn()
-            if self._exit_key is not None:
-                return self._exit_key
+            if self._exit_on_action or self._options[self._index].exit_on_action:
+                self._enable = False
+            self._options[self._index].action()
             return -1
         else:
             return key

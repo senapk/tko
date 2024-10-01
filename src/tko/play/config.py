@@ -1,5 +1,5 @@
 from tko.play.flags import Flag, Flags, FlagsMan
-from tko.play.floating import Floating, FloatingInput
+from tko.play.floating import Floating, FloatingInput, FloatingInputData
 from tko.play.floating_manager import FloatingManager
 from tko.play.border import Border
 from tko.settings.settings import Settings
@@ -81,34 +81,46 @@ class Config:
         elements.append(ConfigItem(images, self.app.toggle_images))
        
         language = Flag().set_name("Linguagem").set_values([]).set_keycode("L")      .set_description("Muda a linguagem de download dos rascunhos  ")
-        elements.append(ConfigItem(language, lambda: self.set_language(False)))
+        elements.append(ConfigItem(language, self.set_language))
 
         if Flags.config.is_true():
             for i in range(len(elements)):
                 elements[i].sentence = self.mark_focused(i, elements[i].flag)
         return elements
 
-    def set_language(self, only_if_empty=True):
-        if only_if_empty and self.rep.get_lang() != "":
-            return
-
-        def back(value: str):
-            self.rep.set_lang(value.strip())
-            self.rep.save_data_to_json()
-            self.fman.add_input(
-                Floating()
-                .put_text("")
-                .put_text("Linguagem alterada para " + value)
-                .put_text("")
-                .warning()
-            )
+    def set_language(self):
+        options: List[FloatingInputData] = []
+        for lang in languages_avaliable:
+            options.append(FloatingInputData(StrFunctor(lang), SetLangFunctor(self.rep, self.fman, lang)))
 
         self.fman.add_input(
-            FloatingInput()
-            .put_text(" Escolha a extensão default para os rascunhos ")
-            .put_text("")
-            .set_options([c.ljust(4) for c in languages_avaliable])
+            FloatingInput("^")
+            .set_header(" Escolha a extensão default para os rascunhos ")
+            .set_options(options)
             .set_default_index(languages_avaliable.index(self.rep.get_lang()))
             .set_footer(" Pressione Enter para confirmar ")
-            .answer(back)
+        )
+
+class StrFunctor:
+    def __init__(self, data: str):
+        self.value = data
+    
+    def __call__(self):
+        return self.value
+
+class SetLangFunctor:
+    def __init__(self, rep: RepData, fman: FloatingManager, lang: str):
+        self.rep = rep
+        self.fman = fman
+        self.value = lang
+
+    def __call__(self):
+        self.rep.set_lang(self.value.strip())
+        self.rep.save_data_to_json()
+        self.fman.add_input(
+            Floating()
+            .put_text("")
+            .put_text("Linguagem alterada para " + self.value)
+            .put_text("")
+            .warning()
         )

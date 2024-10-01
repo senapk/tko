@@ -11,7 +11,7 @@ from tko.play.border import Border
 from tko.play.search import Search
 from tko.play.config import Config
 from tko.play.images import opening, random_get
-from tko.play.floating import Floating
+from tko.play.floating import Floating, FloatingInput
 from tko.play.floating_manager import FloatingManager
 from tko.play.flags import Flag, Flags, FlagsMan
 from tko.play.tasktree import TaskTree

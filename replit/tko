@@ -11,7 +11,6 @@ import os
 from urllib.request import urlopen
 import urllib
 import curses
-from abc import ABC
 import datetime
 import random
 import tempfile
@@ -1450,6 +1449,12 @@ class Text:
         if value != "": 
             self.__process_placeholders(value, *args)
     
+    def set_background(self, fmt: str):
+        for d in self.data:
+            lower_only = "".join([c for c in d.fmt if c.islower()])
+            d.fmt = fmt + lower_only
+        return self
+
     def clone(self):
         other = Text()
         other.data = [v for v in self.data]
@@ -2320,7 +2325,6 @@ class Floating:
         self._frame = Frame(0, 0)
         self._content: List[Text] = []
         self._type = "warning"
-        self._fn_answer = None
         self._enable = True
         self._extra_exit: List[int] = []
         self._exit_fn = None
@@ -2441,12 +2445,6 @@ class Floating:
         self._type = "error"
         self._frame.set_border_color("r")
         return self
-    
-    def answer(self, fn_answer):
-        self._type = "answer"
-        self._frame.set_border_color("g")
-        self._fn_answer = fn_answer
-        return self
 
     def draw(self):
         self._set_default_header()
@@ -2481,26 +2479,49 @@ class Floating:
         
         return -1
         
+class FloatingInputData:
+    def __init__(self, label: Callable[[], Text], action: Callable[[], None], shortcut: str = ""):
+        self.label = label
+        self.action = action
+        self.shortcut = shortcut
+        self.exit_on_action = False
+
+    def set_exit_on_action(self, value: bool):
+        self.exit_on_action = value
+        return self
+
 class FloatingInput(Floating):
     def __init__(self, _align=""):
         super().__init__(_align)
-        self._input = ""
-        self._max_input = 100
-        self._fn_input = None
-        self._options_index = 0
+        self._index = 0
+        self._options: List[FloatingInputData] = []
+        self._frame.set_border_color("g")
+        self._exit_on_action = True
+        self.right_dx = 5 # shortcut space
 
     def calc_dy_dx(self):
         dy, dx = super().calc_dy_dx()
-        dy += len(self._options)
-        return dy, dx
+        dy += len(self._options) + 2
+        for option in self._options:
+            dx = max(dx, len(option.label()))
+        return dy, dx + self.right_dx
+    
+    def set_exit_on_enter(self, value: bool):
+        self._exit_on_action = value
+        return self
 
     def write_content(self):
         options: List[Text] = []
+        dx = self._frame.get_dx() - self.right_dx
         for i, option in enumerate(self._options):
-            fmt = "kG" if i == self._options_index else ""
-            options.append(Text().addf(fmt, option))
+            text = Text().add(option.label()).ljust(dx)
+            if option.shortcut:
+                text.add(f" [{option.shortcut}]")
+            fmt = "B" if i == self._index else ""
+            text.set_background(fmt)
+            options.append(text)
             
-        y = 0
+        y = 1
         for line in self._content + options:
             x = 0
             if self._centralize:
@@ -2510,12 +2531,12 @@ class FloatingInput(Floating):
 
         return self
 
-    def set_options(self, options: List[str]):
+    def set_options(self, options: List[FloatingInputData]):
         self._options = options
         return self
     
     def set_default_index(self, index: int):
-        self._options_index = index
+        self._index = index
         return self
 
     def get_input(self) -> int:
@@ -2523,19 +2544,15 @@ class FloatingInput(Floating):
         key: int = Fmt.getch()
         
         if key == curses.KEY_UP:
-            self._options_index = (self._options_index - 1) % len(self._options)
+            self._index = (self._index - 1) % len(self._options)
         elif key == curses.KEY_DOWN:
-            self._options_index = (self._options_index + 1) % len(self._options)
+            self._index = (self._index + 1) % len(self._options)
         elif key == 27:
             self._enable = False
         elif key == ord('\n'):
-            self._enable = False
-            if self._fn_answer is not None:
-                self._fn_answer(self._options[self._options_index])
-            if self._exit_fn is not None:
-                self._exit_fn()
-            if self._exit_key is not None:
-                return self._exit_key
+            if self._exit_on_action or self._options[self._index].exit_on_action:
+                self._enable = False
+            self._options[self._index].action()
             return -1
         else:
             return key
@@ -3704,37 +3721,50 @@ class Config:
         elements.append(ConfigItem(images, self.app.toggle_images))
        
         language = Flag().set_name("Linguagem").set_values([]).set_keycode("L")      .set_description("Muda a linguagem de download dos rascunhos  ")
-        elements.append(ConfigItem(language, lambda: self.set_language(False)))
+        elements.append(ConfigItem(language, self.set_language))
 
         if Flags.config.is_true():
             for i in range(len(elements)):
                 elements[i].sentence = self.mark_focused(i, elements[i].flag)
         return elements
 
-    def set_language(self, only_if_empty=True):
-        if only_if_empty and self.rep.get_lang() != "":
-            return
-
-        def back(value: str):
-            self.rep.set_lang(value.strip())
-            self.rep.save_data_to_json()
-            self.fman.add_input(
-                Floating()
-                .put_text("")
-                .put_text("Linguagem alterada para " + value)
-                .put_text("")
-                .warning()
-            )
+    def set_language(self):
+        options: List[FloatingInputData] = []
+        for lang in languages_avaliable:
+            options.append(FloatingInputData(StrFunctor(lang), SetLangFunctor(self.rep, self.fman, lang)))
 
         self.fman.add_input(
-            FloatingInput()
-            .put_text(" Escolha a extensão default para os rascunhos ")
-            .put_text("")
-            .set_options([c.ljust(4) for c in languages_avaliable])
+            FloatingInput("^")
+            .set_header(" Escolha a extensão default para os rascunhos ")
+            .set_options(options)
             .set_default_index(languages_avaliable.index(self.rep.get_lang()))
             .set_footer(" Pressione Enter para confirmar ")
-            .answer(back)
         )
+
+class StrFunctor:
+    def __init__(self, data: str):
+        self.value = data
+    
+    def __call__(self):
+        return self.value
+
+class SetLangFunctor:
+    def __init__(self, rep: RepData, fman: FloatingManager, lang: str):
+        self.rep = rep
+        self.fman = fman
+        self.value = lang
+
+    def __call__(self):
+        self.rep.set_lang(self.value.strip())
+        self.rep.save_data_to_json()
+        self.fman.add_input(
+            Floating()
+            .put_text("")
+            .put_text("Linguagem alterada para " + self.value)
+            .put_text("")
+            .warning()
+        )
+
 
 
 class ConfigParams:
@@ -6331,7 +6361,7 @@ class Search:
             self.tree.update_tree(admin_mode=True)
             self.tree.process_expand()
             self.tree.process_expand()
-            self.fman.add_input(Floating(">v").warning().put_text("Digite o texto\nVavegue até o elemnto desejado\ne aperte Enter"))
+            self.fman.add_input(Floating(">v").warning().put_text("Digite o texto\nNavegue até o elemento desejado\ne aperte Enter"))
     
     def finish_search(self):
         self.search_mode = False
@@ -8563,6 +8593,7 @@ class Play:
         cman.add_str(Flags.skills.get_keycode(), self.toggle_skills)
         cman.add_str(GuiKeys.hud, self.app.toggle_hud)
         cman.add_str("/", self.gui.search.toggle_search)
+        cman.add_str("p", self.command_pallete)
 
         return cman
         
@@ -8627,8 +8658,127 @@ class Play:
                     break
             self.rep.set_lang(lang)
 
-    def play(self):
+    def command_pallete(self):
+        options: list[FloatingInputData] = []
 
+        def icon(value: bool):
+            return "✓" if value else "✗"
+        
+        options.append(
+            FloatingInputData(
+                lambda: Text(" ◎ Tarefa: {y} para repositório local", "Baixar"),
+                self.actions.down_task,
+                GuiKeys.down_task
+            ).set_exit_on_action(True)
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" ◎ Tarefa: abrir {y} com a descrição", "GitHub"),
+                self.actions.open_link,
+                GuiKeys.github_open
+            ).set_exit_on_action(True)
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" ◎ Tarefa: {y} arquivos na IDE", "Editar"),
+                self.actions.open_code,
+                GuiKeys.edit
+            ).set_exit_on_action(True)
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" ◎ Mostrar {y}", "Ajuda"),
+                self.gui.show_help,
+                GuiKeys.key_help
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Mostrar {y}", icon(self.app.has_borders()), "Bordas"),
+                self.app.toggle_borders,
+                GuiKeys.borders
+            )
+        )
+        
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Mostrar {y}", icon(self.app.has_images()), "Imagens"),
+                self.app.toggle_images, 
+                GuiKeys.images
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Mostrar {y}", icon(Flags.percent.is_true()), "Percentual"),
+                Flags.percent.toggle, 
+                Flags.percent.get_keycode()
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Mostrar {y} para completar a missão", icon(Flags.minimum.is_true()), "Mínimo"),
+                Flags.minimum.toggle,
+                Flags.minimum.get_keycode()
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Mostrar {y} das tarefas", icon(Flags.reward.is_true()), "Recompensa"),
+                Flags.reward.toggle, 
+                Flags.reward.get_keycode()
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Mostrar {y}", icon(Flags.skills.is_true()), "Skills"),
+                Flags.skills.toggle, 
+                Flags.skills.get_keycode()
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Modo {y}: Habilitar todas as tarefas", icon(Flags.admin.is_true()), "Admin"),
+                Flags.admin.toggle,
+                Flags.admin.get_keycode()
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" ◎ Gerar {y} de dependências", "Grafo"),
+                self.actions.generate_graph,
+                GuiKeys.graph
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" ◎ Mudar {y} de download de rascunhos", "Linguagem"),
+                self.gui.config.set_language,
+                GuiKeys.set_lang
+            ).set_exit_on_action(True)
+        )
+
+        self.fman.add_input(
+            FloatingInput("^").set_text_ljust()
+                      .set_header(" Selecione uma ação da lista ")
+                      .set_options(options)
+                      .set_exit_on_enter(False)
+                      .set_footer(" Use Enter para aplicar e Esc para Sair ")
+        )
+
+
+
+    def play(self):
         self.check_lang_in_text_mode()
 
         while True:

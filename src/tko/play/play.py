@@ -6,6 +6,7 @@ from ..settings.settings import Settings
 from ..settings.app_settings import AppSettings
 from ..settings.rep_settings import languages_avaliable, RepData
 from ..util.text import Text
+from tko.play.floating import Floating, FloatingInput, FloatingInputData
 from .fmt import Fmt
 from .search import Search
 from .input_manager import InputManager
@@ -141,6 +142,7 @@ class Play:
         cman.add_str(Flags.skills.get_keycode(), self.toggle_skills)
         cman.add_str(GuiKeys.hud, self.app.toggle_hud)
         cman.add_str("/", self.gui.search.toggle_search)
+        cman.add_str("p", self.command_pallete)
 
         return cman
         
@@ -205,8 +207,127 @@ class Play:
                     break
             self.rep.set_lang(lang)
 
-    def play(self):
+    def command_pallete(self):
+        options: list[FloatingInputData] = []
 
+        def icon(value: bool):
+            return "✓" if value else "✗"
+        
+        options.append(
+            FloatingInputData(
+                lambda: Text(" ◎ Tarefa: {y} para repositório local", "Baixar"),
+                self.actions.down_task,
+                GuiKeys.down_task
+            ).set_exit_on_action(True)
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" ◎ Tarefa: abrir {y} com a descrição", "GitHub"),
+                self.actions.open_link,
+                GuiKeys.github_open
+            ).set_exit_on_action(True)
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" ◎ Tarefa: {y} arquivos na IDE", "Editar"),
+                self.actions.open_code,
+                GuiKeys.edit
+            ).set_exit_on_action(True)
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" ◎ Mostrar {y}", "Ajuda"),
+                self.gui.show_help,
+                GuiKeys.key_help
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Mostrar {y}", icon(self.app.has_borders()), "Bordas"),
+                self.app.toggle_borders,
+                GuiKeys.borders
+            )
+        )
+        
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Mostrar {y}", icon(self.app.has_images()), "Imagens"),
+                self.app.toggle_images, 
+                GuiKeys.images
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Mostrar {y}", icon(Flags.percent.is_true()), "Percentual"),
+                Flags.percent.toggle, 
+                Flags.percent.get_keycode()
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Mostrar {y} para completar a missão", icon(Flags.minimum.is_true()), "Mínimo"),
+                Flags.minimum.toggle,
+                Flags.minimum.get_keycode()
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Mostrar {y} das tarefas", icon(Flags.reward.is_true()), "Recompensa"),
+                Flags.reward.toggle, 
+                Flags.reward.get_keycode()
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Mostrar {y}", icon(Flags.skills.is_true()), "Skills"),
+                Flags.skills.toggle, 
+                Flags.skills.get_keycode()
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Modo {y}: Habilitar todas as tarefas", icon(Flags.admin.is_true()), "Admin"),
+                Flags.admin.toggle,
+                Flags.admin.get_keycode()
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" ◎ Gerar {y} de dependências", "Grafo"),
+                self.actions.generate_graph,
+                GuiKeys.graph
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" ◎ Mudar {y} de download de rascunhos", "Linguagem"),
+                self.gui.config.set_language,
+                GuiKeys.set_lang
+            ).set_exit_on_action(True)
+        )
+
+        self.fman.add_input(
+            FloatingInput("^").set_text_ljust()
+                      .set_header(" Selecione uma ação da lista ")
+                      .set_options(options)
+                      .set_exit_on_enter(False)
+                      .set_footer(" Use Enter para aplicar e Esc para Sair ")
+        )
+
+
+
+    def play(self):
         self.check_lang_in_text_mode()
 
         while True:
