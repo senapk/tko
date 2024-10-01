@@ -13,6 +13,8 @@ class InputManager:
     special_double_key = 195
     cedilha = 167
     esc = 27
+    plus = 465
+    minus = 464
 
     def __init__(self):
         # stores a function than can return another function

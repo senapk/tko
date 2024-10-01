@@ -447,7 +447,7 @@ class TaskTree:
         if isinstance(obj, Task):
             obj.progress = prog
 
-    def prog_plus(self):
+    def inc_progress(self):
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             progress = obj.progress + 10
@@ -455,7 +455,7 @@ class TaskTree:
                 progress = 100
             self.set_progress(progress)
 
-    def prog_less(self):
+    def dec_progress(self):
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             progress = obj.progress - 10
@@ -463,7 +463,7 @@ class TaskTree:
                 progress = 0
             self.set_progress(progress)
 
-    def inc_grade(self):
+    def inc_self_grade(self):
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             grade = obj.self_grade + 1
@@ -474,7 +474,7 @@ class TaskTree:
             self.unfold(obj)
 
     
-    def dec_grade(self):
+    def dec_self_grade(self):
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             grade = obj.self_grade - 1

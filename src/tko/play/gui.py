@@ -327,9 +327,9 @@ class Gui:
 
         return text, percent
 
-    def show_opening(self):
-        if Fmt.get_size()[1] < 100:
-            return
+    def show_opening(self, frame: Frame):
+        # if Fmt.get_size()[1] < 100:
+        #     return
         # if not self.app.has_images():
         #     return
         _, cols = Fmt.get_size()
@@ -340,7 +340,7 @@ class Gui:
         max_len = max([len(line) for line in parrot_lines])
         yinit = 1
         for y, line in enumerate(parrot_lines):
-            Fmt.write(yinit + y, cols - max_len - 2, Text().addf("g", line))
+            frame.write(y, 80, Text().addf("g", line))
 
     def show_items(self):
         border_color = "r" if Flags.admin.is_true() else ""
@@ -363,8 +363,6 @@ class Gui:
             skills_sx = left_size #max(20, main_sx // 4)
         elif Flags.config.is_true():
             flags_sx = left_size
-        else:
-            self.show_opening()
         
         task_sx = main_sx - flags_sx - skills_sx
 
@@ -376,7 +374,7 @@ class Gui:
         if task_sx > 5: 
             frame_main = Frame(mid_y, 0).set_size(mid_sy, task_sx).set_border_color(border_color)
             self.show_main_bar(frame_main)
-
+        self.show_opening(frame_main)
         if Flags.config.is_true():
             frame_flags = Frame(mid_y, cols - flags_sx).set_size(mid_sy, flags_sx).set_border_color(border_color)
             self.show_config_bar(frame_flags)

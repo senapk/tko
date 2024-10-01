@@ -137,7 +137,7 @@ Progressao : 0123456789✓
                   \______/\\\\    
             _______ ||_||_______  
            (______(((_(((______(@)
-"""
+"""[1:]
 
 # opening["alien3"] = r"""
 #            \.   \.      __,-"-.__      ./   ./
@@ -885,6 +885,8 @@ class InputManager:
     special_double_key = 195
     cedilha = 167
     esc = 27
+    plus = 465
+    minus = 464
 
     def __init__(self):
         # stores a function than can return another function
@@ -6126,7 +6128,7 @@ class TaskTree:
         if isinstance(obj, Task):
             obj.progress = prog
 
-    def prog_plus(self):
+    def inc_progress(self):
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             progress = obj.progress + 10
@@ -6134,7 +6136,7 @@ class TaskTree:
                 progress = 100
             self.set_progress(progress)
 
-    def prog_less(self):
+    def dec_progress(self):
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             progress = obj.progress - 10
@@ -6142,7 +6144,7 @@ class TaskTree:
                 progress = 0
             self.set_progress(progress)
 
-    def inc_grade(self):
+    def inc_self_grade(self):
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             grade = obj.self_grade + 1
@@ -6153,7 +6155,7 @@ class TaskTree:
             self.unfold(obj)
 
     
-    def dec_grade(self):
+    def dec_self_grade(self):
         obj = self.items[self.index_selected].obj
         if isinstance(obj, Task):
             grade = obj.self_grade - 1
@@ -7937,9 +7939,9 @@ class Gui:
 
         return text, percent
 
-    def show_opening(self):
-        if Fmt.get_size()[1] < 100:
-            return
+    def show_opening(self, frame: Frame):
+        # if Fmt.get_size()[1] < 100:
+        #     return
         # if not self.app.has_images():
         #     return
         _, cols = Fmt.get_size()
@@ -7950,7 +7952,7 @@ class Gui:
         max_len = max([len(line) for line in parrot_lines])
         yinit = 1
         for y, line in enumerate(parrot_lines):
-            Fmt.write(yinit + y, cols - max_len - 2, Text().addf("g", line))
+            frame.write(y, 80, Text().addf("g", line))
 
     def show_items(self):
         border_color = "r" if Flags.admin.is_true() else ""
@@ -7973,8 +7975,6 @@ class Gui:
             skills_sx = left_size #max(20, main_sx // 4)
         elif Flags.config.is_true():
             flags_sx = left_size
-        else:
-            self.show_opening()
         
         task_sx = main_sx - flags_sx - skills_sx
 
@@ -7986,7 +7986,7 @@ class Gui:
         if task_sx > 5: 
             frame_main = Frame(mid_y, 0).set_size(mid_sy, task_sx).set_border_color(border_color)
             self.show_main_bar(frame_main)
-
+        self.show_opening(frame_main)
         if Flags.config.is_true():
             frame_flags = Frame(mid_y, cols - flags_sx).set_size(mid_sy, flags_sx).set_border_color(border_color)
             self.show_config_bar(frame_flags)
@@ -8478,7 +8478,6 @@ class Play:
             cman.add_int(curses.KEY_DOWN, self.gui.config.move_down)
             cman.add_str(GuiKeys.activate, self.gui.config.activate_selected)
             cman.add_int(InputManager.tab, self.gui.config.disable)
-    
         else:
             cman.add_str(GuiKeys.up, self.tree.move_up)
             cman.add_int(curses.KEY_UP, self.tree.move_up)
@@ -8490,20 +8489,21 @@ class Play:
             cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
             cman.add_str(GuiKeys.activate, self.actions.select_task)
             cman.add_int(InputManager.tab, self.process_tab)
-            cman.add_str(GuiKeys.prog_plus, self.tree.prog_plus)
-            cman.add_str(GuiKeys.prog_plus2, self.tree.prog_plus)
-            cman.add_str(GuiKeys.prog_less, self.tree.prog_less)
-            cman.add_str(GuiKeys.prog_less2, self.tree.prog_less)
+            cman.add_str(GuiKeys.prog_plus, self.tree.inc_progress)
+            cman.add_str(GuiKeys.prog_plus2, self.tree.inc_progress)
+            cman.add_str(GuiKeys.prog_less, self.tree.dec_progress)
+            cman.add_str(GuiKeys.prog_less2, self.tree.dec_progress)
             cman.add_str(GuiKeys.github_open, self.actions.open_link)
             cman.add_str(GuiKeys.down_task, self.actions.down_task)
-            cman.add_str(GuiKeys.inc_grade, self.tree.inc_grade)
-            cman.add_str(GuiKeys.inc_grade2, self.tree.inc_grade)
-            cman.add_str(GuiKeys.dec_grade, self.tree.dec_grade)
-            cman.add_str(GuiKeys.dec_grade2, self.tree.dec_grade)
+            cman.add_str(GuiKeys.inc_grade, self.tree.inc_self_grade)
+            cman.add_str(GuiKeys.inc_grade2, self.tree.inc_self_grade)
+            cman.add_int(InputManager.plus, self.tree.inc_self_grade)
+            cman.add_str(GuiKeys.dec_grade, self.tree.dec_self_grade)
+            cman.add_str(GuiKeys.dec_grade2, self.tree.dec_self_grade)
+            cman.add_int(InputManager.minus, self.tree.dec_self_grade)
             cman.add_str(GuiKeys.edit, lambda: self.actions.open_code())
             for value in range(10):
                 cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
-            cman.add_str("'", GradeFunctor(0, self.tree.set_grade))
         
         cman.add_str(GuiKeys.key_help, self.gui.show_help)
         

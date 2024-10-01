@@ -99,7 +99,6 @@ class Play:
             cman.add_int(curses.KEY_DOWN, self.gui.config.move_down)
             cman.add_str(GuiKeys.activate, self.gui.config.activate_selected)
             cman.add_int(InputManager.tab, self.gui.config.disable)
-    
         else:
             cman.add_str(GuiKeys.up, self.tree.move_up)
             cman.add_int(curses.KEY_UP, self.tree.move_up)
@@ -111,20 +110,21 @@ class Play:
             cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
             cman.add_str(GuiKeys.activate, self.actions.select_task)
             cman.add_int(InputManager.tab, self.process_tab)
-            cman.add_str(GuiKeys.prog_plus, self.tree.prog_plus)
-            cman.add_str(GuiKeys.prog_plus2, self.tree.prog_plus)
-            cman.add_str(GuiKeys.prog_less, self.tree.prog_less)
-            cman.add_str(GuiKeys.prog_less2, self.tree.prog_less)
+            cman.add_str(GuiKeys.prog_plus, self.tree.inc_progress)
+            cman.add_str(GuiKeys.prog_plus2, self.tree.inc_progress)
+            cman.add_str(GuiKeys.prog_less, self.tree.dec_progress)
+            cman.add_str(GuiKeys.prog_less2, self.tree.dec_progress)
             cman.add_str(GuiKeys.github_open, self.actions.open_link)
             cman.add_str(GuiKeys.down_task, self.actions.down_task)
-            cman.add_str(GuiKeys.inc_grade, self.tree.inc_grade)
-            cman.add_str(GuiKeys.inc_grade2, self.tree.inc_grade)
-            cman.add_str(GuiKeys.dec_grade, self.tree.dec_grade)
-            cman.add_str(GuiKeys.dec_grade2, self.tree.dec_grade)
+            cman.add_str(GuiKeys.inc_grade, self.tree.inc_self_grade)
+            cman.add_str(GuiKeys.inc_grade2, self.tree.inc_self_grade)
+            cman.add_int(InputManager.plus, self.tree.inc_self_grade)
+            cman.add_str(GuiKeys.dec_grade, self.tree.dec_self_grade)
+            cman.add_str(GuiKeys.dec_grade2, self.tree.dec_self_grade)
+            cman.add_int(InputManager.minus, self.tree.dec_self_grade)
             cman.add_str(GuiKeys.edit, lambda: self.actions.open_code())
             for value in range(10):
                 cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
-            cman.add_str("'", GradeFunctor(0, self.tree.set_grade))
         
         cman.add_str(GuiKeys.key_help, self.gui.show_help)
         
