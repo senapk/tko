@@ -73,7 +73,7 @@ class RepData:
     __tasks = "tasks"
     __flags = "flags"
     __lang = "lang"
-    __index = "index"
+    __selected = "index"
 
     defaults = {
         __expanded: [],
@@ -81,11 +81,11 @@ class RepData:
         __flags: {},
         __new_items: [],
         __lang: "",
-        __index: 0
+        __selected: ""
     }
 
-    def get_index(self) -> int:
-        return self.__get(RepData.__index)
+    def get_selected(self) -> str:
+        return self.__get(RepData.__selected)
 
     def get_expanded(self) -> List[str]:
         return self.__get(RepData.__expanded)
@@ -117,8 +117,8 @@ class RepData:
     def set_lang(self, value: str):
         return self.__set(RepData.__lang, value)
     
-    def set_index(self, value: int):
-        return self.__set(RepData.__index, value)
+    def set_selected(self, value: str):
+        return self.__set(RepData.__selected, value)
 
     def __get(self, key: str) -> Any:
         if key not in self.defaults:
@@ -156,6 +156,4 @@ class RepData:
         return self
 
     def __str__(self) -> str:
-        return (
-            f"data: {self.data}\n"
-        )
+        return ( f"data: {self.data}\n" )

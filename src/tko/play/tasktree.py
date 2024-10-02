@@ -17,16 +17,9 @@ from tko.settings.settings import Settings
 from tko.play.floating_manager import FloatingManager
 from tko.play.floating import Floating
 from tko.play.grade_message import GradeMessage
+from tko.game.tree_item import TreeItem
 
 import os
-
-class Entry:
-    def __init__(self, obj: Union[Task, Quest, Cluster], sentence: Text):
-        self.obj = obj
-        self.sentence = sentence
-
-    def get(self):
-        return self.sentence
 
 class TaskTree:
 
@@ -38,8 +31,8 @@ class TaskTree:
         self.fman = fman
         self.style = Border(settings.app)
         self.colors = settings.colors
-        self.items: List[Entry] = []
-        self.index_selected = 0
+        self.items: List[TreeItem] = []
+        self.selected_item: str = ""
         self.index_begin = 0
         self.max_title = 0
         self.search_text = ""
@@ -50,7 +43,7 @@ class TaskTree:
     def load_from_rep(self):
         self.new_items: List[str] = [v for v in self.rep.get_new_items()]
         self.expanded: List[str] = [v for v in self.rep.get_expanded()]
-        self.index_selected = self.rep.get_index()
+        self.selected_item = self.rep.get_selected()
 
         tasks = self.rep.get_tasks()
         for key, serial in tasks.items():
@@ -60,7 +53,7 @@ class TaskTree:
     def save_on_rep(self):
         self.rep.set_expanded(self.expanded)
         self.rep.set_new_items([x for x in set(self.new_items)])
-        self.rep.set_index(self.index_selected)
+        self.rep.set_selected(self.selected_item)
         tasks = {}
         for t in self.game.tasks.values():
             if not t.is_db_empty():
@@ -286,62 +279,62 @@ class TaskTree:
     #                     return True
     #     return False
 
-    def get_focus_color(self, item: Union[Quest, Cluster], index: int) -> str:
-        if index != self.index_selected:
-            return ""
-        if not item.is_reachable() and not Flags.admin.is_true():
+    def get_focus_color(self, item: Union[Quest, Cluster]) -> str:
+        if not item.is_reachable() and Flags.admin.is_true():
             return "R"
         return self.colors.focused_item
 
-    def filter_by_search(self) -> Set[str]:
+    def filter_by_search(self) -> Tuple[Set[str], str | None]:
         matches: Set[str] = set()
         search = SearchAsc(self.search_text)
+        first: None | str = None
         for cluster in self.game.clusters.values():
             if search.inside(cluster.title):
                 matches.add(cluster.key)
+                first = first or cluster.key
             for quest in cluster.quests:
                 if search.inside(quest.title):
+                    first = first or quest.key
                     matches.add(cluster.key)
                     matches.add(quest.key)
                 for task in quest.get_tasks():
                     if search.inside(task.title):
+                        first = first or task.key
                         matches.add(cluster.key)
                         matches.add(quest.key)
                         matches.add(task.key)
-        return matches
+        return (matches, first)
 
-    def try_add(self, filtered, matcher, item, sentence):
+    def try_add(self, filtered: set[str], matcher: SearchAsc, item: TreeItem):
         if self.search_text == "":
-            self.items.append(Entry(item, sentence))
+            self.items.append(item)
             return True
         if item.key in filtered:
-            pos = matcher.find(sentence.get_text())
+            pos = matcher.find(item.sentence.get_text())
             found = pos != -1
             if found:
                 for i in range(pos, pos + len(self.search_text)):
-                    sentence.data[i].fmt = "Y"
-            self.items.append(Entry(item, sentence))
+                    item.sentence.data[i].fmt = "Y"
+            self.items.append(item)
             return True
         return False
 
     def reload_sentences(self):
         self.update_max_title()
-        index = 0
         self.items = []
         available_quests = self.game.available_quests
         available_clusters = self.game.available_clusters
 
-        filtered = self.filter_by_search()
+        filtered, _ = self.filter_by_search()
         matcher = SearchAsc(self.search_text)
 
         clusters = [self.game.clusters[key] for key in available_clusters if key in filtered]
         for cluster in clusters:
             quests = [q for q in cluster.quests if q.key in available_quests if q.key in filtered]
-            focus_color = self.get_focus_color(cluster, index)
-            sentence = self.str_cluster(len(quests) > 0, focus_color, cluster)
+            focus_color = self.get_focus_color(cluster) if self.selected_item == cluster.get_key() else ""
+            cluster.sentence = self.str_cluster(len(quests) > 0, focus_color, cluster)
 
-            if self.try_add(filtered, matcher, cluster, sentence):
-                index += 1
+            self.try_add(filtered, matcher, cluster)
 
             if cluster.key not in self.expanded:  # adicionou o cluster, mas não adicione as quests
                 continue
@@ -349,24 +342,19 @@ class TaskTree:
             for q in quests:
                 tasks =[t for t in q.get_tasks() if t.key in filtered]
                 lig = "├" if q != quests[-1] else "╰"
-                focus_color = self.get_focus_color(q, index)
-                sentence = self.str_quest(len(tasks) > 0, focus_color, q, lig)
+                focus_color = self.get_focus_color(q) if self.selected_item == q.get_key() else ""
+                q.sentence = self.str_quest(len(tasks) > 0, focus_color, q, lig)
 
                 # self.items.append(Entry(q, sentence))
-                if self.try_add(filtered, matcher, q, sentence):
-                    index += 1
+                self.try_add(filtered, matcher, q)
                 if q.key in self.expanded:
                     for t in tasks:
                         ligc = "│" if q != quests[-1] else " "
                         ligq = "├ " if t != tasks[-1] else "╰ "
                         min_value = 7 if q.tmin is None else q.tmin
-                        focus_color = self.get_focus_color(q, index)
-                        sentence = self.str_task(focus_color, t, ligc, ligq, q.is_reachable(), min_value)
-                        if self.try_add(filtered, matcher, t, sentence):
-                            index += 1
-
-        if self.index_selected >= len(self.items):
-            self.index_selected = len(self.items) - 1
+                        focus_color = self.get_focus_color(q) if self.selected_item == t.get_key() else ""
+                        t.sentence = self.str_task(focus_color, t, ligc, ligq, q.is_reachable(), min_value)
+                        self.try_add(filtered, matcher, t)
 
 
     def process_collapse(self):
@@ -390,9 +378,18 @@ class TaskTree:
                 if qkey not in self.expanded:
                     self.expanded.append(qkey)
 
+    def get_selected_index(self) -> int:
+        for i, item in enumerate(self.items):
+            if item.key == self.selected_item:
+                return i
+        return 0
+
+    def get_selected(self) -> TreeItem:
+        index = self.get_selected_index()
+        return self.items[index]
 
     def mass_mark(self):
-        obj = self.items[self.index_selected].obj
+        obj = self.get_selected()
         if isinstance(obj, Cluster):
             cluster: Cluster = obj
             if cluster.key not in self.expanded:
@@ -425,12 +422,12 @@ class TaskTree:
                     else:
                         value = 10 if t.self_grade < 10 else 0
                         t.set_grade(value)
-        else:
+        elif isinstance(obj, Task):
             obj.set_grade(10 if obj.self_grade < 10 else 0)
 
     def set_grade(self, grade: int):
 
-        obj = self.items[self.index_selected].obj
+        obj = self.get_selected()
         if isinstance(obj, Task):
             obj.set_grade(grade)
             self.fman.add_input(
@@ -439,12 +436,12 @@ class TaskTree:
 
     def set_progress(self, prog: int):
 
-        obj = self.items[self.index_selected].obj
+        obj = self.get_selected()
         if isinstance(obj, Task):
             obj.progress = prog
 
     def inc_progress(self):
-        obj = self.items[self.index_selected].obj
+        obj = self.get_selected()
         if isinstance(obj, Task):
             progress = obj.progress + 10
             if progress > 100:
@@ -452,7 +449,7 @@ class TaskTree:
             self.set_progress(progress)
 
     def dec_progress(self):
-        obj = self.items[self.index_selected].obj
+        obj = self.get_selected()
         if isinstance(obj, Task):
             progress = obj.progress - 10
             if progress < 0:
@@ -460,7 +457,7 @@ class TaskTree:
             self.set_progress(progress)
 
     def inc_self_grade(self):
-        obj = self.items[self.index_selected].obj
+        obj = self.get_selected()
         if isinstance(obj, Task):
             grade = obj.self_grade + 1
             if grade >= 10:
@@ -471,7 +468,7 @@ class TaskTree:
 
     
     def dec_self_grade(self):
-        obj = self.items[self.index_selected].obj
+        obj = obj = self.get_selected()
         if isinstance(obj, Task):
             grade = obj.self_grade - 1
             if grade == -1:
@@ -480,41 +477,52 @@ class TaskTree:
         else:
             self.fold(obj)
 
+    def set_selected_by_index(self, index: int):
+        if index < 0:
+            index = 0
+        if index >= len(self.items):
+            index = len(self.items) - 1
+        self.selected_item = self.items[index].key
+
     def arrow_right(self):
-        obj = self.items[self.index_selected].obj
+        index = self.get_selected_index()
+        obj = self.items[index]
         if isinstance(obj, Cluster):
             if not self.unfold(obj):
-                self.index_selected += 1
+                self.set_selected_by_index(index + 1)
         elif isinstance(obj, Quest):
             if not self.unfold(obj):
                 while True:
-                    self.index_selected += 1
-                    obj = self.items[self.index_selected].obj
+                    index += 1
+                    if index >= len(self.items):
+                        break
+                    obj = self.items[index]
                     if isinstance(obj, Cluster) or isinstance(obj, Quest):
                         break
-                    if self.index_selected == len(self.items) - 1:
-                        break
+                self.set_selected_by_index(index)
         elif isinstance(obj, Task):
             while True:
-                obj = self.items[self.index_selected].obj
+                obj = self.items[index]
                 if isinstance(obj, Quest) or isinstance(obj, Cluster):
                     break
-                if self.index_selected == len(self.items) - 1:
+                if index == len(self.items) - 1:
                     break
-                self.index_selected += 1
+                index += 1
+            self.set_selected_by_index(index)
 
     def arrow_left(self):
-        obj = self.items[self.index_selected].obj
+        index = self.get_selected_index()
+        obj = self.items[index]
         if isinstance(obj, Quest):
             if not self.fold(obj):
                 while True:
-                    if self.index_selected == 0:
+                    if self.selected_item == 0:
                         break
-                    self.index_selected -= 1
-                    obj = self.items[self.index_selected].obj
+                    index -= 1
+                    obj = self.items[index]
                     if isinstance(obj, Cluster) or isinstance(obj, Quest) and obj.key in self.expanded:
                         break
-                    if self.index_selected == 0:
+                    if self.selected_item == 0:
                         break
         elif isinstance(obj, Cluster):
             if obj.key in self.expanded:
@@ -526,29 +534,30 @@ class TaskTree:
                         pass
             else:
                 while True:
-                    if self.index_selected == 0:
+                    if self.selected_item == 0:
                         break
-                    self.index_selected -= 1
-                    obj = self.items[self.index_selected].obj
+                    index -= 1
+                    obj = self.items[index]
                     if isinstance(obj, Cluster) or isinstance(obj, Quest):
                         break
-                    if self.index_selected == 0:
+                    if self.selected_item == 0:
                         break
         elif isinstance(obj, Task):
             while True:
-                obj = self.items[self.index_selected].obj
+                obj = self.items[index]
                 if isinstance(obj, Quest):
                     break
-                self.index_selected -= 1
+                index -= 1
+        self.set_selected_by_index(index)
 
-    def unfold(self, obj: Union[Task, Quest, Cluster]) -> bool:
+    def unfold(self, obj: TreeItem) -> bool:
         if isinstance(obj, Quest) or isinstance(obj, Cluster):
             if obj.key not in self.expanded:
                 self.expanded.append(obj.key)
                 return True
         return False
 
-    def fold(self, obj: Union[Task, Quest, Cluster]) -> bool:
+    def fold(self, obj: TreeItem) -> bool:
         if isinstance(obj, Quest) or isinstance(obj, Cluster):
             if obj.key in self.expanded:
                 self.expanded.remove(obj.key)
@@ -560,24 +569,24 @@ class TaskTree:
                 self.unfold(obj)
 
     def get_senteces(self, dy):
+        index = self.get_selected_index()
         if len(self.items) < dy:
             self.index_begin = 0
         else:
-            if self.index_selected < self.index_begin:  # subiu na tela
-                self.index_begin = self.index_selected
-            elif self.index_selected >= dy + self.index_begin:  # desceu na tela
-                self.index_begin = self.index_selected - dy + 1
+            if index < self.index_begin:  # subiu na tela
+                self.index_begin = index
+            elif index >= dy + self.index_begin:  # desceu na tela
+                self.index_begin = index - dy + 1
 
         sentences: List[Text] = []
         for i in range(self.index_begin, len(self.items)):
             sentences.append(self.items[i].sentence)
         return sentences
 
-    def get_selected(self):
-        return self.items[self.index_selected].obj
-
     def move_up(self):
-        self.index_selected = max(0, self.index_selected - 1)
+        index = self.get_selected_index()
+        self.set_selected_by_index(index - 1)
 
     def move_down(self):
-        self.index_selected = min(len(self.items) - 1, self.index_selected + 1)
+        index = self.get_selected_index()
+        self.set_selected_by_index(min(len(self.items) - 1, index + 1))

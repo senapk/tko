@@ -4,13 +4,14 @@ from ..util.text import Text
 from tko.util.logger import Logger, LogAction
 import re
 import os
+from tko.game.tree_item import TreeItem
 
-class Task:
+class Task(TreeItem):
 
     def __init__(self):
+        super().__init__()
         self.line_number = 0
         self.line = ""
-        self.key = ""
 
         self.self_grade: int = 0 #valor de 0 a 9
         self.progress: int = 0 #valor de 0 a 100
@@ -21,10 +22,10 @@ class Task:
         self.xp: int = 0
         
         self.opt: bool = False
-        self.title = ""
         self.link = ""
 
         self.default_min_value = 7 # default min grade to complete task
+
 
     def load_from_db(self, value: str):
         if ":" not in value:

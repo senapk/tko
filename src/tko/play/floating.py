@@ -262,6 +262,12 @@ class FloatingInput(Floating):
         self._index = index
         return self
 
+    def update_index(self):
+        for i, _ in enumerate(self._options):
+            if self.match_search(i):
+                self._index = i
+                return
+
     def get_input(self) -> int:
         self.draw()
         key: int = Fmt.getch()
@@ -275,8 +281,10 @@ class FloatingInput(Floating):
             self._enable = False
         elif key == InputManager.backspace1 or key == InputManager.backspace2 or key == InputManager.delete:
             self.search_text = self.search_text[:-1]
+            self.update_index()
         elif key >= 32 and key < 127:
             self.search_text += chr(key).lower()
+            self.update_index()
         elif key == ord('\n'):
             if self._exit_on_action or self._options[self._index].exit_on_action:
                 self._enable = False

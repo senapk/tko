@@ -119,7 +119,7 @@ class PlayActions:
     def down_task(self):
 
         lang = self.rep.get_lang() 
-        obj = self.tree.items[self.tree.index_selected].obj
+        obj = self.tree.get_selected()
         if isinstance(obj, Task) and obj.key in obj.title:
             task: Task = obj
             down_frame = (
@@ -159,21 +159,23 @@ class PlayActions:
     def select_task(self):
         rootdir = self.app._rootdir
         
-        obj = self.tree.items[self.tree.index_selected].obj
+        obj = self.tree.get_selected()
 
         if isinstance(obj, Quest) or isinstance(obj, Cluster):
             self.tree.toggle(obj)
             return
 
         rep_dir = os.path.join(rootdir, self.rep.alias)
-        task: Task = obj
-        if not task.is_downloadable():
-            self.open_link()
-            return
-        if not task.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
-            self.down_task()
-            return
-        return self.run_selected_task(task, rep_dir)
+        if isinstance(obj, Task):
+            task: Task = obj
+            if not task.is_downloadable():
+                self.open_link()
+                return
+            if not task.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
+                self.down_task()
+                return
+            return self.run_selected_task(task, rep_dir)
+        raise Exception("Objeto não reconhecido")
         
     def run_selected_task(self, task: Task, rep_dir: str):
         folder = os.path.join(rep_dir, task.key)

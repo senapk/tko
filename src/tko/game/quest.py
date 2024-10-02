@@ -3,14 +3,13 @@ from .task import Task
 from ..util.text import Text
 from ..util.remote import get_md_link
 import re
+from tko.game.tree_item import TreeItem
 
-
-class Quest:
+class Quest(TreeItem):
     def __init__(self):
+        super().__init__()
         self.line_number = 0
         self.line = ""
-        self.key = ""
-        self.title = ""
         self.__tasks: List[Task] = []
         self.skills: Dict[str, int] = {}  # s:skill
         self.cluster = ""
@@ -21,7 +20,7 @@ class Quest:
         self.tmin: Optional[int] = None  # t: ou ter no mínimo esse valor de todas as tarefas
         self.filename = ""
         self.__is_reachable: bool = False
-        
+
     def is_reachable(self)-> bool:
         return self.__is_reachable
 

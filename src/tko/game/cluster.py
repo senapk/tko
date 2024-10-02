@@ -1,16 +1,17 @@
 from typing import List, Optional
 from .quest import Quest
 from ..util.text import Text
+from tko.game.tree_item import TreeItem
 
-
-class Cluster:
+class Cluster(TreeItem):
     def __init__(self, line_number: int = 0, title: str = "", key: str = "", color: Optional[str] = None):
+        super().__init__()
         self.line_number = line_number
-        self.title: str = title
-        self.key: str = key
         self.quests: List[Quest] = []
         self.color: Optional[str] = color
         self.__is_reachable = False
+        self.key = key
+        self.title = title
 
     def is_reachable(self):
         return self.__is_reachable

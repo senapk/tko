@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.34.2
+  - add: better search mode
 - 0.34.1
   - add: small bug fixes
 - 0.34.0
