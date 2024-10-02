@@ -27,7 +27,7 @@ import hashlib
 from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.34.0"
+__version__ = "0.34.1"
 
 
 class CheckVersion:
@@ -821,20 +821,20 @@ class GuiActions:
     tab = "↔TAB"
     leave   = "Sair"
     edit = "Editar"
-    rodar  = " Rodar"
+    interact  = "Interagir"
     principal = "Principal"
-    fixar  = "Fixar"
-    tempo = "Tempo"
+    limite = "Limite"
     github = "Github"
-    ajuda = "Ajuda"
-    baixar = "Baixar"
+    help = "Ajuda"
+    download = "Baixar"
     activate = "Ativar"
-    navegar = "←↓→"
+    navigate = "←↓→"
     progress = "Quanto"
-    desmarcar = "Desmarcar"
-    search = "Procurar"
+    uncheck = "Desmarcar"
+    search = "Pesquisar"
     self_grade = " Como "
-    paleta = "Paleta"
+    palette = "Paleta"
+    all = "Todos"
 
 class GuiKeys:
     left = "a"
@@ -865,13 +865,12 @@ class GuiKeys:
     search = "/"
     graph = "G"
     diff = "m"
-    rodar = "r"
-    testar = "\n"
-    principal = "\t"
-    sair   = "q"
-    editar = "e"
-    travar = "f"
-    tempo  = "t"
+    interact = "i"
+    test = "\n"
+    main = "\t"
+    quit   = "q"
+    lock = "t"
+    limite  = "l"
     expand = "]"
     collapse = "["
 
@@ -1824,7 +1823,7 @@ class Flags:
     percent = Flag().set_name("Percentual").set_keycode("P").set_values(["1", "0"]).set_description("Mostra todos os valores em porcentagem      ")
     admin = Flag().set_name("Admin").set_keycode("A").set_values(["0", "1"])       .set_description("Habilitas todas as missões e tarefas        ")
     skills = Flag().set_name("Skills").set_keycode("S").set_values(["0", "1"]).set_description("Mostra a barra de skills")
-    flags = Flag().set_name("Flags").set_keycode("F").set_values(["1", "0"])       .set_description("Mostra a barra de Flags ")
+    flags = Flag().set_name("Flags").set_keycode("F").set_values(["0", "1"])       .set_description("Mostra a barra de Flags ")
 
 class FlagsMan:
     def __init__(self, data: Dict[str, int]):
@@ -6373,6 +6372,11 @@ class Search:
                 self.tree.index_selected = i
                 break
 
+    # update index to match the first item that matches the search
+    def update_index(self):
+        pass
+
+
     def process_search(self, key):
         if key == 27:
             self.search_mode = False
@@ -6748,7 +6752,7 @@ class Tester:
         free = symbols.locked_free.text
         locked = symbols.locked_locked.text
         symbol = locked if self.locked_index else free
-        output.addf(color, f" {GuiKeys.travar} {symbol} ").add(self.borders.sharpR(color))
+        output.addf(color, f" {GuiKeys.lock} {symbol} ").add(self.borders.sharpR(color))
 
         return output
 
@@ -6803,20 +6807,21 @@ class Tester:
         #         .add(self.borders.roundR("M"))
         # )
         # fixar
-        color = "R" if self.locked_index else "G"
-        symbol = symbols.success if self.locked_index else symbols.failure
-        travar = f"{symbol.text} {GuiActions.fixar}[{GuiKeys.travar}]"
+        color = "R" if self.locked_index else "B"
+        symbol = symbols.success if not self.locked_index else symbols.failure
+        # name = "Único" if self.locked_index else "Todos"
+        travar = f"{symbol.text} {GuiActions.all}[{GuiKeys.lock}]"
         cmds.append(self.borders.border(color, travar))
 
-        text = f"{GuiActions.paleta} [{GuiKeys.palette}]"
+        text = f"{GuiActions.palette} [{GuiKeys.palette}]"
         cmds.append(self.borders.border("Y", text))
         # ativar
-        cmds.append(self.borders.border("R", f"{GuiActions.activate} [{symbols.newline.text}]"))
+        cmds.append(self.borders.border("G", f"Testar [{symbols.newline.text}]"))
         #editar
         if self.opener is not None:
-            cmds.append(self.borders.border("Y", f"{GuiActions.edit} [{GuiKeys.editar}]"))
+            cmds.append(self.borders.border("Y", f"{GuiActions.edit} [{GuiKeys.edit}]"))
         # rodar
-        cmds.append(self.borders.border("G", f"{GuiActions.rodar} [{GuiKeys.rodar}]"))
+        cmds.append(self.borders.border("B", f"{GuiActions.interact} [{GuiKeys.interact}]"))
 
 
 
@@ -6972,7 +6977,7 @@ class Tester:
         if self.mode == SeqMode.finished:
             self.mode = SeqMode.select
         if self.locked_index:
-            self.fman.add_input(Floating("v>").warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(GuiKeys.travar)))
+            self.fman.add_input(Floating("v>").warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(GuiKeys.lock)))
             return
         if not self.wdir.get_solver().compile_error:
             self.focused_index = max(0, self.focused_index - 1)
@@ -6986,7 +6991,7 @@ class Tester:
         if self.mode == SeqMode.finished:
             self.mode = SeqMode.select
         if self.locked_index:
-            self.fman.add_input(Floating("v>").warning().put_text("→\nAtividade travada\nAperte {} para destravar".format(GuiKeys.travar)))
+            self.fman.add_input(Floating("v>").warning().put_text("→\nAtividade travada\nAperte {} para destravar".format(GuiKeys.lock)))
             return
         if not self.wdir.get_solver().compile_error:
             self.focused_index = min(len(self.wdir.get_unit_list()) - 1, self.focused_index + 1)
@@ -7065,18 +7070,18 @@ class Tester:
             self.go_down()
         elif key == curses.KEY_UP or key == ord(GuiKeys.up):
             self.go_up()
-        elif key == ord(GuiKeys.principal):
+        elif key == ord(GuiKeys.main):
             self.change_main()
-        elif key == ord(GuiKeys.rodar):
+        elif key == ord(GuiKeys.interact):
             return self.run_exec_mode()
-        elif key == ord(GuiKeys.testar):
+        elif key == ord(GuiKeys.test):
             self.run_test_mode()
-        elif key == ord(GuiKeys.travar):
+        elif key == ord(GuiKeys.lock):
             self.lock_unit()
-        elif key == ord(GuiKeys.editar):
+        elif key == ord(GuiKeys.edit):
             if self.opener is not None:
                 self.opener.load_folders_and_open()
-        elif key == ord(GuiKeys.tempo):
+        elif key == ord(GuiKeys.limite):
             self.change_limit()
             self.settings.save_settings()
         elif key == ord(GuiKeys.diff):
@@ -7117,17 +7122,17 @@ class Tester:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mudar {y} máximo de execução: {r}", symbols.action, "Tempo", self.get_time_limit_symbol()),
+                lambda: Text(" {} Mudar {y} de tempo de execução: {r}", symbols.action, "Limite", self.get_time_limit_symbol()),
                 self.change_limit,
-                GuiKeys.tempo
+                GuiKeys.limite
             )
         )
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} {y} a execução em no caso de teste selecionado", icon(self.locked_index), "Fixar"),
+                lambda: Text(" {} Testar {y} os casos ou apenas o selecionado", icon(not self.locked_index), "Todos"),
                 self.lock_unit,
-                GuiKeys.travar
+                GuiKeys.lock
             )
         )
 
@@ -7743,11 +7748,11 @@ class Gui:
     def get_help_fixed(self):
         help_fixed: List[Text] = [
             Text() + RToken("C", f" {GuiActions.leave}  [{GuiKeys.key_quit}]"),
-            Text() + RToken("Y", f"{GuiActions.paleta} [{GuiKeys.palette}]"),
-            Text() + RToken("R", f"{GuiActions.activate} [↲]"),
+            Text() + RToken("Y", f"{GuiActions.palette} [{GuiKeys.palette}]"),
+            Text() + RToken("G", f"{GuiActions.activate} [↲]"),
             Text() + RToken("Y", f"{GuiActions.edit} [{GuiKeys.edit}]"),
             # Text() + RToken("C", f"{GuiActions.navegar} [wasd]")
-            Text() + RToken("C", f"{GuiActions.search} {GuiKeys.search}")
+            Text() + RToken("C", f"{GuiActions.search} [{GuiKeys.search}]")
         ]
         return help_fixed
 
@@ -7813,8 +7818,8 @@ class Gui:
         else:
             text = f" XPTotal:{xp.get_xp_total_obtained()}"
 
-        done = self.colors.main_bar_done + "/"
-        todo = self.colors.main_bar_todo + "/"
+        done = self.colors.main_bar_done
+        todo = self.colors.main_bar_todo
         total_bar = self.style.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Text().addf("/", "Skills"), "^", "{", "}")
         frame_xp.set_footer(Text().add(" ").add(self.app._rootdir).add(" "), "^")
@@ -7828,8 +7833,8 @@ class Gui:
             else:
                 text = f"{skill}:{obt[skill]}/{value}"
             perc = obt[skill] / value
-            done = self.colors.progress_skill_done + "/"
-            todo = self.colors.progress_skill_todo + "/"
+            done = self.colors.progress_skill_done
+            todo = self.colors.progress_skill_todo
             skill_bar = self.style.build_bar(text, perc, dx - 2, done, todo)
             elements.append(skill_bar)
             
@@ -7926,7 +7931,7 @@ class Gui:
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
         _help.put_sentence(Text() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
         _help.put_sentence(Text() + f"{GuiActions.github} " + RToken("r", f"{GuiKeys.github_open}") + "  Abre tarefa em uma aba do browser")
-        _help.put_sentence(Text() + f"   {GuiActions.baixar} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
+        _help.put_sentence(Text() + f"   {GuiActions.download} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
         _help.put_sentence(Text() + f"   {GuiActions.edit} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
         _help.put_sentence(Text() + f"   {GuiActions.activate} " + RToken("r", "↲") + "  Interage com o elemento")
         _help.put_sentence(Text() + f"   {GuiActions.progress} " + RToken("r", f"{GuiKeys.inc_self}") + RToken("r", f"{GuiKeys.dec_self}") + " Muda a autoavaliação")
@@ -8520,7 +8525,7 @@ class PlayPalette:
                 lambda: Text(" {} Gerar {y} de dependências", symbols.action, "Grafo"),
                 self.actions.generate_graph,
                 GuiKeys.graph
-            )
+            ).set_exit_on_action(True)
         )
 
         options.append(

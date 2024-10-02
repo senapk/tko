@@ -308,7 +308,7 @@ class Tester:
         free = symbols.locked_free.text
         locked = symbols.locked_locked.text
         symbol = locked if self.locked_index else free
-        output.addf(color, f" {GuiKeys.travar} {symbol} ").add(self.borders.sharpR(color))
+        output.addf(color, f" {GuiKeys.lock} {symbol} ").add(self.borders.sharpR(color))
 
         return output
 
@@ -363,20 +363,21 @@ class Tester:
         #         .add(self.borders.roundR("M"))
         # )
         # fixar
-        color = "R" if self.locked_index else "G"
-        symbol = symbols.success if self.locked_index else symbols.failure
-        travar = f"{symbol.text} {GuiActions.fixar}[{GuiKeys.travar}]"
+        color = "R" if self.locked_index else "B"
+        symbol = symbols.success if not self.locked_index else symbols.failure
+        # name = "Único" if self.locked_index else "Todos"
+        travar = f"{symbol.text} {GuiActions.all}[{GuiKeys.lock}]"
         cmds.append(self.borders.border(color, travar))
 
-        text = f"{GuiActions.paleta} [{GuiKeys.palette}]"
+        text = f"{GuiActions.palette} [{GuiKeys.palette}]"
         cmds.append(self.borders.border("Y", text))
         # ativar
-        cmds.append(self.borders.border("R", f"{GuiActions.activate} [{symbols.newline.text}]"))
+        cmds.append(self.borders.border("G", f"Testar [{symbols.newline.text}]"))
         #editar
         if self.opener is not None:
-            cmds.append(self.borders.border("Y", f"{GuiActions.edit} [{GuiKeys.editar}]"))
+            cmds.append(self.borders.border("Y", f"{GuiActions.edit} [{GuiKeys.edit}]"))
         # rodar
-        cmds.append(self.borders.border("G", f"{GuiActions.rodar} [{GuiKeys.rodar}]"))
+        cmds.append(self.borders.border("B", f"{GuiActions.interact} [{GuiKeys.interact}]"))
 
 
 
@@ -532,7 +533,7 @@ class Tester:
         if self.mode == SeqMode.finished:
             self.mode = SeqMode.select
         if self.locked_index:
-            self.fman.add_input(Floating("v>").warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(GuiKeys.travar)))
+            self.fman.add_input(Floating("v>").warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(GuiKeys.lock)))
             return
         if not self.wdir.get_solver().compile_error:
             self.focused_index = max(0, self.focused_index - 1)
@@ -546,7 +547,7 @@ class Tester:
         if self.mode == SeqMode.finished:
             self.mode = SeqMode.select
         if self.locked_index:
-            self.fman.add_input(Floating("v>").warning().put_text("→\nAtividade travada\nAperte {} para destravar".format(GuiKeys.travar)))
+            self.fman.add_input(Floating("v>").warning().put_text("→\nAtividade travada\nAperte {} para destravar".format(GuiKeys.lock)))
             return
         if not self.wdir.get_solver().compile_error:
             self.focused_index = min(len(self.wdir.get_unit_list()) - 1, self.focused_index + 1)
@@ -625,18 +626,18 @@ class Tester:
             self.go_down()
         elif key == curses.KEY_UP or key == ord(GuiKeys.up):
             self.go_up()
-        elif key == ord(GuiKeys.principal):
+        elif key == ord(GuiKeys.main):
             self.change_main()
-        elif key == ord(GuiKeys.rodar):
+        elif key == ord(GuiKeys.interact):
             return self.run_exec_mode()
-        elif key == ord(GuiKeys.testar):
+        elif key == ord(GuiKeys.test):
             self.run_test_mode()
-        elif key == ord(GuiKeys.travar):
+        elif key == ord(GuiKeys.lock):
             self.lock_unit()
-        elif key == ord(GuiKeys.editar):
+        elif key == ord(GuiKeys.edit):
             if self.opener is not None:
                 self.opener.load_folders_and_open()
-        elif key == ord(GuiKeys.tempo):
+        elif key == ord(GuiKeys.limite):
             self.change_limit()
             self.settings.save_settings()
         elif key == ord(GuiKeys.diff):
@@ -677,17 +678,17 @@ class Tester:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mudar {y} máximo de execução: {r}", symbols.action, "Tempo", self.get_time_limit_symbol()),
+                lambda: Text(" {} Mudar {y} de tempo de execução: {r}", symbols.action, "Limite", self.get_time_limit_symbol()),
                 self.change_limit,
-                GuiKeys.tempo
+                GuiKeys.limite
             )
         )
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} {y} a execução em no caso de teste selecionado", icon(self.locked_index), "Fixar"),
+                lambda: Text(" {} Testar {y} os casos ou apenas o selecionado", icon(not self.locked_index), "Todos"),
                 self.lock_unit,
-                GuiKeys.travar
+                GuiKeys.lock
             )
         )
 

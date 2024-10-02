@@ -74,6 +74,11 @@ class Search:
                 self.tree.index_selected = i
                 break
 
+    # update index to match the first item that matches the search
+    def update_index(self):
+        pass
+
+
     def process_search(self, key):
         if key == 27:
             self.search_mode = False

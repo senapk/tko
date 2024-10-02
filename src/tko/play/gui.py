@@ -39,11 +39,11 @@ class Gui:
     def get_help_fixed(self):
         help_fixed: List[Text] = [
             Text() + RToken("C", f" {GuiActions.leave}  [{GuiKeys.key_quit}]"),
-            Text() + RToken("Y", f"{GuiActions.paleta} [{GuiKeys.palette}]"),
-            Text() + RToken("R", f"{GuiActions.activate} [↲]"),
+            Text() + RToken("Y", f"{GuiActions.palette} [{GuiKeys.palette}]"),
+            Text() + RToken("G", f"{GuiActions.activate} [↲]"),
             Text() + RToken("Y", f"{GuiActions.edit} [{GuiKeys.edit}]"),
             # Text() + RToken("C", f"{GuiActions.navegar} [wasd]")
-            Text() + RToken("C", f"{GuiActions.search} {GuiKeys.search}")
+            Text() + RToken("C", f"{GuiActions.search} [{GuiKeys.search}]")
         ]
         return help_fixed
 
@@ -109,8 +109,8 @@ class Gui:
         else:
             text = f" XPTotal:{xp.get_xp_total_obtained()}"
 
-        done = self.colors.main_bar_done + "/"
-        todo = self.colors.main_bar_todo + "/"
+        done = self.colors.main_bar_done
+        todo = self.colors.main_bar_todo
         total_bar = self.style.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Text().addf("/", "Skills"), "^", "{", "}")
         frame_xp.set_footer(Text().add(" ").add(self.app._rootdir).add(" "), "^")
@@ -124,8 +124,8 @@ class Gui:
             else:
                 text = f"{skill}:{obt[skill]}/{value}"
             perc = obt[skill] / value
-            done = self.colors.progress_skill_done + "/"
-            todo = self.colors.progress_skill_todo + "/"
+            done = self.colors.progress_skill_done
+            todo = self.colors.progress_skill_todo
             skill_bar = self.style.build_bar(text, perc, dx - 2, done, todo)
             elements.append(skill_bar)
             
@@ -222,7 +222,7 @@ class Gui:
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
         _help.put_sentence(Text() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
         _help.put_sentence(Text() + f"{GuiActions.github} " + RToken("r", f"{GuiKeys.github_open}") + "  Abre tarefa em uma aba do browser")
-        _help.put_sentence(Text() + f"   {GuiActions.baixar} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
+        _help.put_sentence(Text() + f"   {GuiActions.download} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
         _help.put_sentence(Text() + f"   {GuiActions.edit} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
         _help.put_sentence(Text() + f"   {GuiActions.activate} " + RToken("r", "↲") + "  Interage com o elemento")
         _help.put_sentence(Text() + f"   {GuiActions.progress} " + RToken("r", f"{GuiKeys.inc_self}") + RToken("r", f"{GuiKeys.dec_self}") + " Muda a autoavaliação")

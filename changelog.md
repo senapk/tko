@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.34.1
+  - add: small bug fixes
 - 0.34.0
   - add: command palette
 - 0.33.0
