@@ -184,7 +184,7 @@ class FloatingInput(Floating):
         super().__init__(_align)
         self._index = 0
         self._options: List[FloatingInputData] = []
-        self._frame.set_border_color("g")
+        self._frame.set_border_color("m")
         self._exit_on_action = True
         self.right_dx = 5 # shortcut space
         self.search_text: List[str] = []
@@ -239,7 +239,7 @@ class FloatingInput(Floating):
                     text.add(" " + option.shortcut)
                 else:
                     text.add(f" [{option.shortcut}]")
-            fmt = "B" if i == self._index else ""
+            fmt = "M" if i == self._index else ""
             text.set_background(fmt)
             options.append(text)
         
