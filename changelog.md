@@ -1,5 +1,12 @@
 # Changelog
 
+- 0.35.2
+  - add: mass mark on palette
+  - fix: bug in search mode when no results
+  - fix: bug in search mode when need activate admin
+  - fix: bug in admin mode frame color
+- 0.35.1
+  - rm: bug in set language
 - 0.35.0
   - rm. removed dependence from graphviz using pydot instead
 - 0.34.2

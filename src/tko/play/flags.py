@@ -32,23 +32,12 @@ class Flag:
         self._index = _index
         return self
 
-    def location(self, value: str):
-        self._location = value
-        return self
-
     def get_values(self):
         return self._values
 
     def toggle(self):
         self._index = (self._index + 1) % len(self._values)
         return self
-    
-    def set_bool(self):
-        self._bool = True
-        return self
-    
-    def is_bool(self):
-        return self._bool
 
     def get_value(self) -> str:
         return self._values[self._index % len(self._values)]
@@ -58,9 +47,6 @@ class Flag:
             if v == value:
                 self._index = i
                 break
-
-    def is_true(self):
-        return self.get_value() == "1"
 
     def get_name(self) -> str:
         return self._name
@@ -74,6 +60,9 @@ class Flag:
     def get_index(self) -> int:
         return self._index
     
+    def __bool__(self) -> bool:
+        return self.get_value() == "1"
+    
 
 class Flags:
     minimum = Flag().set_name("Mínimo").set_keycode("M").set_values(["0", "1"])    .set_description("Mostra os requisitos para completar a missão")
@@ -81,7 +70,8 @@ class Flags:
     percent = Flag().set_name("Percentual").set_keycode("P").set_values(["1", "0"]).set_description("Mostra todos os valores em porcentagem      ")
     admin = Flag().set_name("Admin").set_keycode("A").set_values(["0", "1"])       .set_description("Habilitas todas as missões e tarefas        ")
     skills = Flag().set_name("Skills").set_keycode("S").set_values(["0", "1"]).set_description("Mostra a barra de skills")
-    flags = Flag().set_name("Flags").set_keycode("F").set_values(["0", "1"])       .set_description("Mostra a barra de Flags ")
+    # flags = Flag().set_name("Flags").set_keycode("F").set_values(["0", "1"])       .set_description("Mostra a barra de Flags ")
+    devel = Flag().set_name("Devel").set_values(["0", "1"])
 
 class FlagsMan:
     def __init__(self, data: Dict[str, int]):

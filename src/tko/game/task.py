@@ -24,6 +24,9 @@ class Task(TreeItem):
         self.opt: bool = False
         self.link = ""
 
+        self.quest_key = ""
+        self.cluster_key = ""
+
         self.default_min_value = 7 # default min grade to complete task
 
 

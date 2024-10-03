@@ -32,13 +32,23 @@ class TaskTree:
         self.style = Border(settings.app)
         self.colors = settings.colors
         self.items: List[TreeItem] = []
+        self.all_items: Dict[str, TreeItem] = {}
         self.selected_item: str = ""
         self.index_begin = 0
         self.max_title = 0
         self.search_text = ""
+        self.load_all_items()
         self.load_from_rep()
-        self.update_tree(admin_mode=Flags.admin.is_true(), first_loop=True)
+        self.update_tree(admin_mode=Flags.admin, first_loop=True)
         self.reload_sentences()
+
+    def load_all_items(self):
+        for c in self.game.clusters.values():
+            self.all_items[c.key] = c
+            for q in c.quests:
+                self.all_items[q.key] = q
+                for t in q.get_tasks():
+                    self.all_items[t.key] = t
 
     def load_from_rep(self):
         self.new_items: List[str] = [v for v in self.rep.get_new_items()]
@@ -142,7 +152,7 @@ class TaskTree:
             output.add(" ")
 
 
-        if Flags.reward.is_true():
+        if Flags.reward:
             xp = ""
             for s, v in t.skills.items():
                 xp += f" +{s}:{v}"
@@ -180,19 +190,19 @@ class TaskTree:
         else:
             output.add(" ")
 
-        if Flags.percent.is_true():
+        if Flags.percent:
             output.add(" ").add(q.get_resume_by_percent())
         else:
             output.add(" ").add(q.get_resume_by_tasks())
 
-        if Flags.minimum.is_true():
+        if Flags.minimum:
             output.add(" ").add(q.get_requirement())
 
-        if Flags.reward.is_true():
+        if Flags.reward:
             xp = ""
             for s, v in q.skills.items():
                 xp += f" +{s}:{v}"
-            output.addf(self.colors.task_skills, " " + xp)
+            output.addf(self.colors.task_skills, xp)
 
         if q.key in self.new_items:
             output.addf(self.colors.task_new, " [new]")
@@ -230,7 +240,7 @@ class TaskTree:
             output.add(" ")
 
 
-        if Flags.percent.is_true():
+        if Flags.percent:
             output.add(" ").add(cluster.get_resume_by_percent())
         else:
             output.add(" ").add(cluster.get_resume_by_quests())
@@ -280,7 +290,7 @@ class TaskTree:
     #     return False
 
     def get_focus_color(self, item: Union[Quest, Cluster]) -> str:
-        if not item.is_reachable() and Flags.admin.is_true():
+        if not item.is_reachable() and Flags.admin:
             return "R"
         return self.colors.focused_item
 

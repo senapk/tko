@@ -519,6 +519,8 @@ class Tester:
             self.unit_list = [unit for unit in self.wdir.get_unit_list()]
 
     def send_char_not_found(self, key):
+        if not Flags.devel:
+            return
         self.fman.add_input(Floating("v>").error()
                     .put_text("Tecla")
                     .put_text(f"char {chr(key)}")

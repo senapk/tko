@@ -55,8 +55,8 @@ class Border:
         color = "M" 
         symbol = symbols.neutral
         if len(flag.get_values()) > 0:
-            color = "G" if flag.is_true() else "Y"
-            symbol = symbols.success if flag.is_true() else symbols.failure
+            color = "G" if flag else "Y"
+            symbol = symbols.success if flag else symbols.failure
         if not button_mode:
             color = color.lower()
         extra = Text()

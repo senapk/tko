@@ -231,7 +231,7 @@ class FloatingInput(Floating):
         options: List[Text] = []
         dx = self._frame.get_dx() - self.right_dx
         for i, option in enumerate(self._options):
-            if not "".join(self.search_text) in option.label().get_text().lower():
+            if not self.match_search(i):
                 continue
             text = Text().add(option.label()).ljust(dx)
             if option.shortcut != "":
@@ -267,6 +267,7 @@ class FloatingInput(Floating):
             if self.match_search(i):
                 self._index = i
                 return
+        self._index = -1
 
     def get_input(self) -> int:
         self.draw()
@@ -277,7 +278,7 @@ class FloatingInput(Floating):
             self.prev_option()
         elif key == curses.KEY_DOWN:
             self.next_option()
-        elif key == 27:
+        elif key == InputManager.esc:
             self._enable = False
         elif key == InputManager.backspace1 or key == InputManager.backspace2 or key == InputManager.delete:
             self.search_text = self.search_text[:-1]
@@ -288,7 +289,8 @@ class FloatingInput(Floating):
         elif key == ord('\n'):
             if self._exit_on_action or self._options[self._index].exit_on_action:
                 self._enable = False
-            self._options[self._index].action()
+            if self._index != -1:
+                self._options[self._index].action()
             return -1
         else:
             return key

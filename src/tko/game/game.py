@@ -243,7 +243,7 @@ class Game:
                     self.clusters[key] = cluster
                     self.ordered_clusters.append(key)
                     active_cluster = cluster
-                quest.cluster = active_cluster.key
+                quest.cluster_key = active_cluster.key
                 active_cluster.quests.append(quest)
                 continue
 
@@ -257,6 +257,9 @@ class Game:
                     exit(1)
                 if self.filename is not None:
                     active_quest.add_task(task, self.filename)
+                task.quest_key = active_quest.key
+                if active_cluster is not None:
+                    task.cluster_key = active_cluster.key
 
         self.clear_empty()
 

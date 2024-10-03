@@ -47,46 +47,47 @@ class Gui:
         ]
         return help_fixed
 
-    def make_flags_bar(self) -> Text:
-        lista: list[Flag] = []
-        lista.append(Flags.flags)
-        lista.append(Flags.skills)
-        lista.append(Flags.admin)
-        lista.append(Flags.percent)
-        lista.append(Flags.minimum)
-        lista.append(Flags.reward)
-        value = "1" if self.settings.app.has_borders() else "0"
-        borders = Flag().set_values([value]).set_name("Bordas").set_keycode("B")
-        lista.append(borders)
-        value = "1" if self.settings.app.has_images() else "0"
-        images = Flag().set_values([value]).set_name("Imagens").set_keycode("I")
-        lista.append(images)
+    # def make_flags_bar(self) -> Text:
+    #     lista: list[Flag] = []
+    #     lista.append(Flags.flags)
+    #     lista.append(Flags.skills)
+    #     lista.append(Flags.admin)
+    #     lista.append(Flags.percent)
+    #     lista.append(Flags.minimum)
+    #     lista.append(Flags.reward)
+    #     value = "1" if self.settings.app.has_borders() else "0"
+    #     borders = Flag().set_values([value]).set_name("Bordas").set_keycode("B")
+    #     lista.append(borders)
+    #     value = "1" if self.settings.app.has_images() else "0"
+    #     images = Flag().set_values([value]).set_name("Imagens").set_keycode("I")
+    #     lista.append(images)
 
-        values = [self.style.get_flag_sentence(flag, 0 , True, False, False) for flag in lista]
-        return Text("").join(values)
+    #     values = [self.style.get_flag_sentence(flag, 0 , True, False, False) for flag in lista]
+    #     return Text("").join(values)
 
     def center_header_footer(self, value: Text, frame: Frame) -> Text:
         half = value.len() // 2
         x = frame.get_x()
         dy, dx = Fmt.get_size()
-        full = Text().add("─" * ((dx//2) - x - 2 - half)).add(value)
+        color = "r" if Flags.admin else ""
+        full = Text().addf(color, "─" * ((dx//2) - x - 2 - half)).add(value)
         return full
 
     def show_main_bar(self, frame: Frame):
         top = Text()
         alias_color = "R"
         top.add(self.style.border(alias_color, self.rep.alias.upper()))
-        if Flags.admin.is_true():
-            color = "W" if Flags.admin.is_true() else "K"
+        if Flags.admin:
+            color = "W" if Flags.admin else "K"
             top.add(self.style.border(color, "ADMIN"))
         top.add(self.style.border("G", self.rep.get_lang().upper()))
         full = self.center_header_footer(top, frame)
         frame.set_header(full, "<")
         
-        if Flags.flags.is_true():
-            value = self.make_flags_bar()
-            full = self.center_header_footer(value, frame)
-            frame.set_footer(full, "<")
+        # if Flags.flags:
+        #     value = self.make_flags_bar()
+        #     full = self.center_header_footer(value, frame)
+        #     frame.set_footer(full, "<")
         frame.draw()
 
         dy, dx = frame.get_inner()
@@ -104,7 +105,7 @@ class Gui:
         total_perc = int(
             100 * (xp.get_xp_total_obtained() / xp.get_xp_total_available())
         )
-        if Flags.percent.is_true():
+        if Flags.percent:
             text = f" XPTotal:{total_perc}%"
         else:
             text = f" XPTotal:{xp.get_xp_total_obtained()}"
@@ -119,7 +120,7 @@ class Gui:
         total, obt = self.game.get_skills_resume([self.game.quests[key] for key in self.game.available_quests])
         elements: List[Text] = []
         for skill, value in total.items():
-            if Flags.percent.is_true():
+            if Flags.percent:
                 text = f"{skill}:{int(100 * obt[skill] / value)}%"
             else:
                 text = f"{skill}:{obt[skill]}/{value}"
@@ -240,7 +241,7 @@ class Gui:
             # lang = self.rep.get_lang().upper()
             level = xp.get_level()
             percent = float(xp.get_xp_level_current()) / float(xp.get_xp_level_needed())
-            if Flags.percent.is_true():
+            if Flags.percent:
                 xpobt = int(100 * xp.get_xp_level_current() / xp.get_xp_level_needed())
                 text = "Level:{} XP:{}%".format(level, xpobt)
             else:
@@ -263,10 +264,10 @@ class Gui:
         max_len = max([len(line) for line in parrot_lines])
         yinit = 1
         for y, line in enumerate(parrot_lines):
-            frame.write(y, 80, Text().addf("g", line))
+            frame.write(y, self.tree.max_title + 27, Text().addf("g", line))
 
     def show_items(self):
-        border_color = "r" if Flags.admin.is_true() else ""
+        border_color = "r" if Flags.admin else ""
         Fmt.clear()
         self.tree.reload_sentences()
         lines, cols = Fmt.get_size()
@@ -281,7 +282,7 @@ class Gui:
         left_size = 25
         skills_sx = 0
         flags_sx = 0
-        if Flags.skills.is_true():
+        if Flags.skills:
             skills_sx = left_size #max(20, main_sx // 4)
         
         task_sx = main_sx - flags_sx - skills_sx
@@ -296,6 +297,6 @@ class Gui:
             self.show_main_bar(frame_main)
         self.show_opening(frame_main)
 
-        if Flags.skills.is_true():
+        if Flags.skills:
             frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)
             self.show_skills_bar(frame_skills)

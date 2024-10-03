@@ -12,13 +12,13 @@ class Quest(TreeItem):
         self.line = ""
         self.__tasks: List[Task] = []
         self.skills: Dict[str, int] = {}  # s:skill
-        self.cluster = ""
         self.requires = []  # r:quest_key
         self.requires_ptr = []
         self.opt = False  # opt
         self.qmin: Optional[int] = None  # q:  minimo de 50 porcento da pontuação total para completar
         self.tmin: Optional[int] = None  # t: ou ter no mínimo esse valor de todas as tarefas
         self.filename = ""
+        self.cluster_key = ""
         self.__is_reachable: bool = False
 
     def is_reachable(self)-> bool:
@@ -214,7 +214,7 @@ class QuestParser:
 
         self.quest.line = self.line
         self.quest.line_number = self.line_num
-        self.quest.cluster = ""
+        self.quest.cluster_key = ""
 
         if self.match_full_pattern():
             return self.finish_quest()

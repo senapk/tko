@@ -28,7 +28,7 @@ import hashlib
 from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.35.0"
+__version__ = "0.35.2"
 
 
 class CheckVersion:
@@ -1773,23 +1773,12 @@ class Flag:
         self._index = _index
         return self
 
-    def location(self, value: str):
-        self._location = value
-        return self
-
     def get_values(self):
         return self._values
 
     def toggle(self):
         self._index = (self._index + 1) % len(self._values)
         return self
-    
-    def set_bool(self):
-        self._bool = True
-        return self
-    
-    def is_bool(self):
-        return self._bool
 
     def get_value(self) -> str:
         return self._values[self._index % len(self._values)]
@@ -1799,9 +1788,6 @@ class Flag:
             if v == value:
                 self._index = i
                 break
-
-    def is_true(self):
-        return self.get_value() == "1"
 
     def get_name(self) -> str:
         return self._name
@@ -1815,6 +1801,9 @@ class Flag:
     def get_index(self) -> int:
         return self._index
     
+    def __bool__(self) -> bool:
+        return self.get_value() == "1"
+    
 
 class Flags:
     minimum = Flag().set_name("Mínimo").set_keycode("M").set_values(["0", "1"])    .set_description("Mostra os requisitos para completar a missão")
@@ -1822,7 +1811,8 @@ class Flags:
     percent = Flag().set_name("Percentual").set_keycode("P").set_values(["1", "0"]).set_description("Mostra todos os valores em porcentagem      ")
     admin = Flag().set_name("Admin").set_keycode("A").set_values(["0", "1"])       .set_description("Habilitas todas as missões e tarefas        ")
     skills = Flag().set_name("Skills").set_keycode("S").set_values(["0", "1"]).set_description("Mostra a barra de skills")
-    flags = Flag().set_name("Flags").set_keycode("F").set_values(["0", "1"])       .set_description("Mostra a barra de Flags ")
+    # flags = Flag().set_name("Flags").set_keycode("F").set_values(["0", "1"])       .set_description("Mostra a barra de Flags ")
+    devel = Flag().set_name("Devel").set_values(["0", "1"])
 
 class FlagsMan:
     def __init__(self, data: Dict[str, int]):
@@ -2651,7 +2641,7 @@ class FloatingInput(Floating):
         options: List[Text] = []
         dx = self._frame.get_dx() - self.right_dx
         for i, option in enumerate(self._options):
-            if not "".join(self.search_text) in option.label().get_text().lower():
+            if not self.match_search(i):
                 continue
             text = Text().add(option.label()).ljust(dx)
             if option.shortcut != "":
@@ -2687,6 +2677,7 @@ class FloatingInput(Floating):
             if self.match_search(i):
                 self._index = i
                 return
+        self._index = -1
 
     def get_input(self) -> int:
         self.draw()
@@ -2697,7 +2688,7 @@ class FloatingInput(Floating):
             self.prev_option()
         elif key == curses.KEY_DOWN:
             self.next_option()
-        elif key == 27:
+        elif key == InputManager.esc:
             self._enable = False
         elif key == InputManager.backspace1 or key == InputManager.backspace2 or key == InputManager.delete:
             self.search_text = self.search_text[:-1]
@@ -2708,7 +2699,8 @@ class FloatingInput(Floating):
         elif key == ord('\n'):
             if self._exit_on_action or self._options[self._index].exit_on_action:
                 self._enable = False
-            self._options[self._index].action()
+            if self._index != -1:
+                self._options[self._index].action()
             return -1
         else:
             return key
@@ -3678,8 +3670,8 @@ class Border:
         color = "M" 
         symbol = symbols.neutral
         if len(flag.get_values()) > 0:
-            color = "G" if flag.is_true() else "Y"
-            symbol = symbols.success if flag.is_true() else symbols.failure
+            color = "G" if flag else "Y"
+            symbol = symbols.success if flag else symbols.failure
         if not button_mode:
             color = color.lower()
         extra = Text()
@@ -3711,7 +3703,7 @@ class LanguageSetter:
     def set_language(self):
         options: List[FloatingInputData] = []
         for lang in languages_avaliable:
-            options.append(FloatingInputData(StrFunctor(lang), SetLangFunctor(self.rep, self.fman, lang)))
+            options.append(FloatingInputData(TextFunctor(lang), SetLangFunctor(self.rep, self.fman, lang)))
 
         self.fman.add_input(
             FloatingInput("^")
@@ -3721,12 +3713,12 @@ class LanguageSetter:
             .set_footer(" Pressione Enter para confirmar ")
         )
 
-class StrFunctor:
+class TextFunctor:
     def __init__(self, data: str):
         self.value = data
     
     def __call__(self):
-        return self.value
+        return Text(self.value)
 
 class SetLangFunctor:
     def __init__(self, rep: RepData, fman: FloatingManager, lang: str):
@@ -4927,6 +4919,9 @@ class Task(TreeItem):
         self.opt: bool = False
         self.link = ""
 
+        self.quest_key = ""
+        self.cluster_key = ""
+
         self.default_min_value = 7 # default min grade to complete task
 
 
@@ -5154,13 +5149,13 @@ class Quest(TreeItem):
         self.line = ""
         self.__tasks: List[Task] = []
         self.skills: Dict[str, int] = {}  # s:skill
-        self.cluster = ""
         self.requires = []  # r:quest_key
         self.requires_ptr = []
         self.opt = False  # opt
         self.qmin: Optional[int] = None  # q:  minimo de 50 porcento da pontuação total para completar
         self.tmin: Optional[int] = None  # t: ou ter no mínimo esse valor de todas as tarefas
         self.filename = ""
+        self.cluster_key = ""
         self.__is_reachable: bool = False
 
     def is_reachable(self)-> bool:
@@ -5356,7 +5351,7 @@ class QuestParser:
 
         self.quest.line = self.line
         self.quest.line_number = self.line_num
-        self.quest.cluster = ""
+        self.quest.cluster_key = ""
 
         if self.match_full_pattern():
             return self.finish_quest()
@@ -5652,7 +5647,7 @@ class Game:
                     self.clusters[key] = cluster
                     self.ordered_clusters.append(key)
                     active_cluster = cluster
-                quest.cluster = active_cluster.key
+                quest.cluster_key = active_cluster.key
                 active_cluster.quests.append(quest)
                 continue
 
@@ -5666,6 +5661,9 @@ class Game:
                     exit(1)
                 if self.filename is not None:
                     active_quest.add_task(task, self.filename)
+                task.quest_key = active_quest.key
+                if active_cluster is not None:
+                    task.cluster_key = active_cluster.key
 
         self.clear_empty()
 
@@ -5758,13 +5756,23 @@ class TaskTree:
         self.style = Border(settings.app)
         self.colors = settings.colors
         self.items: List[TreeItem] = []
+        self.all_items: Dict[str, TreeItem] = {}
         self.selected_item: str = ""
         self.index_begin = 0
         self.max_title = 0
         self.search_text = ""
+        self.load_all_items()
         self.load_from_rep()
-        self.update_tree(admin_mode=Flags.admin.is_true(), first_loop=True)
+        self.update_tree(admin_mode=Flags.admin, first_loop=True)
         self.reload_sentences()
+
+    def load_all_items(self):
+        for c in self.game.clusters.values():
+            self.all_items[c.key] = c
+            for q in c.quests:
+                self.all_items[q.key] = q
+                for t in q.get_tasks():
+                    self.all_items[t.key] = t
 
     def load_from_rep(self):
         self.new_items: List[str] = [v for v in self.rep.get_new_items()]
@@ -5868,7 +5876,7 @@ class TaskTree:
             output.add(" ")
 
 
-        if Flags.reward.is_true():
+        if Flags.reward:
             xp = ""
             for s, v in t.skills.items():
                 xp += f" +{s}:{v}"
@@ -5906,19 +5914,19 @@ class TaskTree:
         else:
             output.add(" ")
 
-        if Flags.percent.is_true():
+        if Flags.percent:
             output.add(" ").add(q.get_resume_by_percent())
         else:
             output.add(" ").add(q.get_resume_by_tasks())
 
-        if Flags.minimum.is_true():
+        if Flags.minimum:
             output.add(" ").add(q.get_requirement())
 
-        if Flags.reward.is_true():
+        if Flags.reward:
             xp = ""
             for s, v in q.skills.items():
                 xp += f" +{s}:{v}"
-            output.addf(self.colors.task_skills, " " + xp)
+            output.addf(self.colors.task_skills, xp)
 
         if q.key in self.new_items:
             output.addf(self.colors.task_new, " [new]")
@@ -5956,7 +5964,7 @@ class TaskTree:
             output.add(" ")
 
 
-        if Flags.percent.is_true():
+        if Flags.percent:
             output.add(" ").add(cluster.get_resume_by_percent())
         else:
             output.add(" ").add(cluster.get_resume_by_quests())
@@ -6006,7 +6014,7 @@ class TaskTree:
     #     return False
 
     def get_focus_color(self, item: Union[Quest, Cluster]) -> str:
-        if not item.is_reachable() and Flags.admin.is_true():
+        if not item.is_reachable() and Flags.admin:
             return "R"
         return self.colors.focused_item
 
@@ -6333,76 +6341,64 @@ class Search:
         if self.search_mode:
             self.backup_expanded = [v for v in self.tree.expanded]
             self.backup_index_selected = self.tree.selected_item
-            self.backup_admin_mode = Flags.admin.is_true()
+            self.backup_admin_mode = Flags.admin
             self.tree.update_tree(admin_mode=True)
             self.tree.process_expand()
             self.tree.process_expand()
-            self.fman.add_input(Floating(">v").warning().put_text("Digite o texto\nNavegue até o elemento desejado\ne aperte Enter"))
+            #self.fman.add_input(Floating(">v").warning().put_text("Digite o texto\nNavegue até o elemento desejado\ne aperte Enter"))
     
     def finish_search(self):
+        if self.tree.selected_item == "":
+            self.cancel_search()
+            return
+
         self.search_mode = False
-        unit = self.tree.get_selected()
-        self.tree.selected_item = ""
         self.tree.search_text = ""
-        if self.backup_admin_mode == False:
-            self.tree.update_tree(admin_mode=False)
+        selected_key = self.tree.selected_item
+        self.tree.update_tree(self.backup_admin_mode) # usa o mode de antes e vê se acha
         self.tree.reload_sentences()
     
         found = False
-        for i, item in enumerate(self.tree.items):
-            if item == unit:
-                self.tree.selected_item = item.get_key()
+        for unit in self.tree.items:
+            if unit.key == selected_key:
                 found = True
                 break
 
         if not found:
-            self.fman.add_input(Floating(">v").warning().put_text("Elemento não acessível no modo normal.\nEntrando no modo Admin\npara habilitar acesso"))
+            # self.fman.add_input(Floating(">v").warning().put_text("Elemento não acessível no modo normal.\nEntrando no modo Admin\npara habilitar acesso"))
             Flags.admin.toggle()
             self.tree.update_tree(True)
             self.tree.reload_sentences()
         
-        self.tree.process_collapse()
-        self.tree.process_collapse()
-        self.tree.selected_item = unit.get_key()
+        self.tree.expanded = []
+        unit = self.tree.all_items[selected_key]
+        with open("log.txt", "a") as f:
+                f.write(f"Selected: {selected_key} {type(unit)} \n")
+
         if isinstance(unit, Task):
-            for cluster_key in self.game.available_clusters:
-                cluster = self.game.clusters[cluster_key]
-                for quest in cluster.quests:
-                    for task in quest.get_tasks():
-                        if task == unit:
-                            self.tree.expanded = [cluster.key, quest.key]
+            with open("log.txt", "a") as f:
+                f.write(f"Selected: {selected_key} {unit.cluster_key} {unit.quest_key} \n")
+            self.tree.expanded = [unit.cluster_key, unit.quest_key]
         elif isinstance(unit, Quest):
-            for cluster_key in self.game.available_clusters:
-                cluster = self.game.clusters[cluster_key]
-                for quest in cluster.quests:
-                    if quest == unit:
-                        self.tree.expanded = [cluster.key]
+            self.tree.expanded = [unit.key, unit.cluster_key]
         self.tree.reload_sentences()
-        for i, item in enumerate(self.tree.items):
-            if item== unit:
-                self.tree.selected_item = item.get_key()
-                break
 
     # update index to match the first item that matches the search
     def update_index(self):
-        filtered, first = self.tree.filter_by_search()
-        self.tree.selected_item = first if first is not None else self.tree.selected_item
-        # if first is not None:
-        #     for i, item in enumerate(self.tree.items):
-        #         if item.get_key() == first:
-        #             self.tree.selected_item = item.get_key()
-        #             break
+        _, first = self.tree.filter_by_search()
+        self.tree.selected_item = first if first is not None else ""
 
-
-    def process_search(self, key):
-        if key == 27:
+    def cancel_search(self):
             self.search_mode = False
             self.tree.search_text = ""
             self.tree.expanded = [v for v in self.backup_expanded]
             self.tree.selected_item = self.backup_index_selected
+
+    def process_search(self, key):
+        if key == InputManager.esc:
+            self.cancel_search()
         elif key == ord("\n"):
             self.finish_search()
-    
         elif key == curses.KEY_UP:
             self.tree.move_up()
         elif key == curses.KEY_DOWN:
@@ -6982,6 +6978,8 @@ class Tester:
             self.unit_list = [unit for unit in self.wdir.get_unit_list()]
 
     def send_char_not_found(self, key):
+        if not Flags.devel:
+            return
         self.fman.add_input(Floating("v>").error()
                     .put_text("Tecla")
                     .put_text(f"char {chr(key)}")
@@ -7772,46 +7770,47 @@ class Gui:
         ]
         return help_fixed
 
-    def make_flags_bar(self) -> Text:
-        lista: list[Flag] = []
-        lista.append(Flags.flags)
-        lista.append(Flags.skills)
-        lista.append(Flags.admin)
-        lista.append(Flags.percent)
-        lista.append(Flags.minimum)
-        lista.append(Flags.reward)
-        value = "1" if self.settings.app.has_borders() else "0"
-        borders = Flag().set_values([value]).set_name("Bordas").set_keycode("B")
-        lista.append(borders)
-        value = "1" if self.settings.app.has_images() else "0"
-        images = Flag().set_values([value]).set_name("Imagens").set_keycode("I")
-        lista.append(images)
+    # def make_flags_bar(self) -> Text:
+    #     lista: list[Flag] = []
+    #     lista.append(Flags.flags)
+    #     lista.append(Flags.skills)
+    #     lista.append(Flags.admin)
+    #     lista.append(Flags.percent)
+    #     lista.append(Flags.minimum)
+    #     lista.append(Flags.reward)
+    #     value = "1" if self.settings.app.has_borders() else "0"
+    #     borders = Flag().set_values([value]).set_name("Bordas").set_keycode("B")
+    #     lista.append(borders)
+    #     value = "1" if self.settings.app.has_images() else "0"
+    #     images = Flag().set_values([value]).set_name("Imagens").set_keycode("I")
+    #     lista.append(images)
 
-        values = [self.style.get_flag_sentence(flag, 0 , True, False, False) for flag in lista]
-        return Text("").join(values)
+    #     values = [self.style.get_flag_sentence(flag, 0 , True, False, False) for flag in lista]
+    #     return Text("").join(values)
 
     def center_header_footer(self, value: Text, frame: Frame) -> Text:
         half = value.len() // 2
         x = frame.get_x()
         dy, dx = Fmt.get_size()
-        full = Text().add("─" * ((dx//2) - x - 2 - half)).add(value)
+        color = "r" if Flags.admin else ""
+        full = Text().addf(color, "─" * ((dx//2) - x - 2 - half)).add(value)
         return full
 
     def show_main_bar(self, frame: Frame):
         top = Text()
         alias_color = "R"
         top.add(self.style.border(alias_color, self.rep.alias.upper()))
-        if Flags.admin.is_true():
-            color = "W" if Flags.admin.is_true() else "K"
+        if Flags.admin:
+            color = "W" if Flags.admin else "K"
             top.add(self.style.border(color, "ADMIN"))
         top.add(self.style.border("G", self.rep.get_lang().upper()))
         full = self.center_header_footer(top, frame)
         frame.set_header(full, "<")
         
-        if Flags.flags.is_true():
-            value = self.make_flags_bar()
-            full = self.center_header_footer(value, frame)
-            frame.set_footer(full, "<")
+        # if Flags.flags:
+        #     value = self.make_flags_bar()
+        #     full = self.center_header_footer(value, frame)
+        #     frame.set_footer(full, "<")
         frame.draw()
 
         dy, dx = frame.get_inner()
@@ -7829,7 +7828,7 @@ class Gui:
         total_perc = int(
             100 * (xp.get_xp_total_obtained() / xp.get_xp_total_available())
         )
-        if Flags.percent.is_true():
+        if Flags.percent:
             text = f" XPTotal:{total_perc}%"
         else:
             text = f" XPTotal:{xp.get_xp_total_obtained()}"
@@ -7844,7 +7843,7 @@ class Gui:
         total, obt = self.game.get_skills_resume([self.game.quests[key] for key in self.game.available_quests])
         elements: List[Text] = []
         for skill, value in total.items():
-            if Flags.percent.is_true():
+            if Flags.percent:
                 text = f"{skill}:{int(100 * obt[skill] / value)}%"
             else:
                 text = f"{skill}:{obt[skill]}/{value}"
@@ -7965,7 +7964,7 @@ class Gui:
             # lang = self.rep.get_lang().upper()
             level = xp.get_level()
             percent = float(xp.get_xp_level_current()) / float(xp.get_xp_level_needed())
-            if Flags.percent.is_true():
+            if Flags.percent:
                 xpobt = int(100 * xp.get_xp_level_current() / xp.get_xp_level_needed())
                 text = "Level:{} XP:{}%".format(level, xpobt)
             else:
@@ -7988,10 +7987,10 @@ class Gui:
         max_len = max([len(line) for line in parrot_lines])
         yinit = 1
         for y, line in enumerate(parrot_lines):
-            frame.write(y, 80, Text().addf("g", line))
+            frame.write(y, self.tree.max_title + 27, Text().addf("g", line))
 
     def show_items(self):
-        border_color = "r" if Flags.admin.is_true() else ""
+        border_color = "r" if Flags.admin else ""
         Fmt.clear()
         self.tree.reload_sentences()
         lines, cols = Fmt.get_size()
@@ -8006,7 +8005,7 @@ class Gui:
         left_size = 25
         skills_sx = 0
         flags_sx = 0
-        if Flags.skills.is_true():
+        if Flags.skills:
             skills_sx = left_size #max(20, main_sx // 4)
         
         task_sx = main_sx - flags_sx - skills_sx
@@ -8021,7 +8020,7 @@ class Gui:
             self.show_main_bar(frame_main)
         self.show_opening(frame_main)
 
-        if Flags.skills.is_true():
+        if Flags.skills:
             frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)
             self.show_skills_bar(frame_skills)
 
@@ -8468,14 +8467,6 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar barra de {y}", icon(Flags.flags.is_true()), "Flags"),
-                Flags.flags.toggle,
-                Flags.flags.get_keycode()
-            )
-        )
-
-        options.append(
-            FloatingInputData(
                 lambda: Text(" {} Mostrar {y}", icon(self.app.has_borders()), "Bordas"),
                 self.app.toggle_borders,
                 GuiKeys.borders
@@ -8492,7 +8483,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y}", icon(Flags.percent.is_true()), "Percentual"),
+                lambda: Text(" {} Mostrar {y}", icon(Flags.percent), "Percentual"),
                 Flags.percent.toggle, 
                 Flags.percent.get_keycode()
             )
@@ -8500,7 +8491,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y} para completar a missão", icon(Flags.minimum.is_true()), "Mínimo"),
+                lambda: Text(" {} Mostrar {y} para completar a missão", icon(Flags.minimum), "Mínimo"),
                 Flags.minimum.toggle,
                 Flags.minimum.get_keycode()
             )
@@ -8508,7 +8499,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y} das tarefas", icon(Flags.reward.is_true()), "Recompensa"),
+                lambda: Text(" {} Mostrar {y} das tarefas", icon(Flags.reward), "Recompensa"),
                 Flags.reward.toggle, 
                 Flags.reward.get_keycode()
             )
@@ -8516,7 +8507,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y}", icon(Flags.skills.is_true()), "Skills"),
+                lambda: Text(" {} Mostrar {y}", icon(Flags.skills), "Skills"),
                 Flags.skills.toggle, 
                 Flags.skills.get_keycode()
             )
@@ -8524,7 +8515,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Modo {y}: Habilitar todas as tarefas", icon(Flags.admin.is_true()), "Admin"),
+                lambda: Text(" {} Modo {y}: Habilitar todas as tarefas", icon(Flags.admin), "Admin"),
                 Flags.admin.toggle,
                 Flags.admin.get_keycode()
             )
@@ -8543,6 +8534,22 @@ class PlayPalette:
                 lambda: Text(" {} Mudar {y} de download de rascunhos", symbols.action, "Linguagem"),
                 self.gui.language.set_language,
                 GuiKeys.set_lang
+            ).set_exit_on_action(True)
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Devel: Habilita mensagens de {y}", icon(Flags.devel), "Debug"),
+                Flags.devel.toggle,
+                ""
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text(" {} Devel: Marcar em {y}", symbols.action, "Massa"),
+                self.gui.tree.mass_mark,
+                ""
             ).set_exit_on_action(True)
         )
 
@@ -8569,6 +8576,7 @@ class Play:
         if self.rep.get_lang() == "":
             self.rep.set_lang(self.app._lang_default)
         self.flagsman = FlagsMan(self.rep.get_flags())
+        Flags.admin.set_value("0")
         self.fman = FloatingManager()
         self.tree = TaskTree(self.settings, game, rep, self.fman)
         self.gui = Gui(tree=self.tree, flagsman=self.flagsman, fman=self.fman)
@@ -8648,6 +8656,9 @@ class Play:
         return cman
         
     def send_char_not_found(self, key):
+        if not Flags.devel:
+            return
+
         exclude_str = [ord(v) for v in [" ", "a", "d", "\n"]]
         exclude_int = [ -1, InputManager.esc, InputManager.left, InputManager.right ]
         if key in exclude_int + exclude_str:
@@ -8665,7 +8676,7 @@ class Play:
         Fmt.set_scr(scr)  # Define o scr como global
 
         while True:
-            self.tree.update_tree(admin_mode=Flags.admin.is_true() or self.gui.search.search_mode)
+            self.tree.update_tree(admin_mode=Flags.admin or self.gui.search.search_mode)
             self.fman.draw_warnings()
             cman = self.make_callback()
             self.gui.show_items()

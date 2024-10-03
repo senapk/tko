@@ -37,6 +37,7 @@ class Play:
         if self.rep.get_lang() == "":
             self.rep.set_lang(self.app._lang_default)
         self.flagsman = FlagsMan(self.rep.get_flags())
+        Flags.admin.set_value("0")
         self.fman = FloatingManager()
         self.tree = TaskTree(self.settings, game, rep, self.fman)
         self.gui = Gui(tree=self.tree, flagsman=self.flagsman, fman=self.fman)
@@ -116,6 +117,9 @@ class Play:
         return cman
         
     def send_char_not_found(self, key):
+        if not Flags.devel:
+            return
+
         exclude_str = [ord(v) for v in [" ", "a", "d", "\n"]]
         exclude_int = [ -1, InputManager.esc, InputManager.left, InputManager.right ]
         if key in exclude_int + exclude_str:
@@ -133,7 +137,7 @@ class Play:
         Fmt.set_scr(scr)  # Define o scr como global
 
         while True:
-            self.tree.update_tree(admin_mode=Flags.admin.is_true() or self.gui.search.search_mode)
+            self.tree.update_tree(admin_mode=Flags.admin or self.gui.search.search_mode)
             self.fman.draw_warnings()
             cman = self.make_callback()
             self.gui.show_items()
