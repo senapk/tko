@@ -1,11 +1,11 @@
 from typing import List, Dict, Tuple, Optional
 from .quest import Quest
 from .game import Game
-import subprocess
-import os
+import pydot # type: ignore
 
 
 class Graph:
+    graph_generated: bool = False
 
     colorlist: List[Tuple[str, str]] = [
             ("aquamarine3", "aquamarine4"),
@@ -162,13 +162,9 @@ class Graph:
         # saida.append("@enduml")
         saida.append("")
 
-        dot_file = os.path.join(os.path.dirname(self.path) + "graph.dot")
+        # dot_file = os.path.join(os.path.dirname(self.path) + "graph.dot")
+        # open(dot_file, "w").write("\n".join(saida))
         out_file = self.path
-        open(dot_file, "w").write("\n".join(saida))
-
-        # if self.graph_ext == ".png":
-        subprocess.run(["dot", "-Tpng", dot_file, "-o", out_file])
-        # elif self.graph_ext == ".svg":
-        #     subprocess.run(["dot", "-Tsvg", dot_file, "-o", out_file])
-        # else:
-        #     print("Formato de imagem não suportado")
+        data = "\n".join(saida)
+        graph_dot  = pydot.graph_from_dot_data(data)[0]
+        graph_dot.write_png(out_file)

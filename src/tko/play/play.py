@@ -102,8 +102,8 @@ class Play:
         cman.add_str(GuiKeys.collapse, self.tree.process_collapse)
         cman.add_str(GuiKeys.borders, self.app.toggle_borders)
         cman.add_str(GuiKeys.images, self.app.toggle_images)
-        # for value in range(10):
-        #     cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
+        cman.add_str(GuiKeys.set_lang, self.gui.language.set_language)
+        cman.add_str(GuiKeys.graph, self.actions.generate_graph)
     
         cman.add_str(GuiKeys.key_help, self.gui.show_help)
         
@@ -135,8 +135,6 @@ class Play:
         while True:
             self.tree.update_tree(admin_mode=Flags.admin.is_true() or self.gui.search.search_mode)
             self.fman.draw_warnings()
-            if self.gui.config.gen_graph:
-                self.actions.generate_graph()
             cman = self.make_callback()
             self.gui.show_items()
 

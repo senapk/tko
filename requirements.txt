@@ -5,6 +5,7 @@
 # Example requirements
 appdirs
 types-appdirs
+pydot
 
 # PyPI package deployment
 build

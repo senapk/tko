@@ -100,21 +100,13 @@ class PlayActions:
             )
 
     def generate_graph(self):
-        try:
-            Graph(self.game).set_path(self.gen_graph_path()).set_opt(False).generate()
-            path = self.gen_graph_path()
-            # self.fman.add_input(Floating().put_text(f"\nGrafo gerado em\n {path} \n"))
-            if not self.graph_opened:
-                opener = Opener(self.settings)
-                opener.open_files([path])
-                self.graph_opened = True
-        except FileNotFoundError as _:
-            self.gui.config.gen_graph = False
-            self.fman.add_input(Floating().error()
-                                .put_text("")
-                                .put_sentence(Text().add("Instale o ").addf("r", "graphviz").add(" para poder gerar os grafos"))
-                                .put_text("")
-                                )
+        Graph(self.game).set_path(self.gen_graph_path()).set_opt(False).generate()
+        path = self.gen_graph_path()
+        if not self.graph_opened:
+            opener = Opener(self.settings)
+            opener.open_files([path])
+            self.graph_opened = True
+
 
     def down_task(self):
 

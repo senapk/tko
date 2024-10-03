@@ -20,6 +20,7 @@ import urllib.request
 import urllib.error
 import shutil
 import re
+import pydot # type: ignore
 import math
 import configparser
 import csv
@@ -27,7 +28,7 @@ import hashlib
 from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.34.2"
+__version__ = "0.35.0"
 
 
 class CheckVersion:
@@ -3699,30 +3700,13 @@ class Border:
         return middle
 
 
-def empty_fn():
-    pass
 
-class ConfigItem:
-    def __init__(self, flag: Flag, fn: Callable[[], None], sentence: Text = Text() ):
-        self.flag = flag
-        self.fn: Callable[[], None] = fn
-        self.sentence = sentence
-
-
-class Config:
-    def __init__(self, settings: Settings, rep: RepData, flagsman: FlagsMan, fman: FloatingManager):
-        self.index: int = 0
+class LanguageSetter:
+    def __init__(self, rep: RepData, flagsman: FlagsMan, fman: FloatingManager):
         self.flagsman = flagsman
-        self.border = Border(settings.app)
-        self.gen_graph: bool = False
-        self.app = settings.app
-        self.colors = settings.colors
         self.fman = fman
         self.rep = rep
 
-
-    def graph_toggle(self):
-        self.gen_graph = not self.gen_graph
 
     def set_language(self):
         options: List[FloatingInputData] = []
@@ -7482,6 +7466,7 @@ class Run:
 
 
 class Graph:
+    graph_generated: bool = False
 
     colorlist: List[Tuple[str, str]] = [
             ("aquamarine3", "aquamarine4"),
@@ -7638,16 +7623,12 @@ class Graph:
         # saida.append("@enduml")
         saida.append("")
 
-        dot_file = os.path.join(os.path.dirname(self.path) + "graph.dot")
+        # dot_file = os.path.join(os.path.dirname(self.path) + "graph.dot")
+        # open(dot_file, "w").write("\n".join(saida))
         out_file = self.path
-        open(dot_file, "w").write("\n".join(saida))
-
-        # if self.graph_ext == ".png":
-        subprocess.run(["dot", "-Tpng", dot_file, "-o", out_file])
-        # elif self.graph_ext == ".svg":
-        #     subprocess.run(["dot", "-Tsvg", dot_file, "-o", out_file])
-        # else:
-        #     print("Formato de imagem não suportado")
+        data = "\n".join(saida)
+        graph_dot  = pydot.graph_from_dot_data(data)[0]
+        graph_dot.write_png(out_file)
 
 
 
@@ -7774,7 +7755,7 @@ class Gui:
         self.settings = tree.settings
         self.search = Search(tree=self.tree, fman=self.fman)
         self.style: Border = Border(self.settings.app)
-        self.config = Config(self.settings, self.rep, self.flagsman, self.fman)
+        self.language = LanguageSetter(self.rep, self.flagsman, self.fman)
         self.colors = self.settings.colors
 
         self.app = Settings().app
@@ -8344,21 +8325,13 @@ class PlayActions:
             )
 
     def generate_graph(self):
-        try:
-            Graph(self.game).set_path(self.gen_graph_path()).set_opt(False).generate()
-            path = self.gen_graph_path()
-            # self.fman.add_input(Floating().put_text(f"\nGrafo gerado em\n {path} \n"))
-            if not self.graph_opened:
-                opener = Opener(self.settings)
-                opener.open_files([path])
-                self.graph_opened = True
-        except FileNotFoundError as _:
-            self.gui.config.gen_graph = False
-            self.fman.add_input(Floating().error()
-                                .put_text("")
-                                .put_sentence(Text().add("Instale o ").addf("r", "graphviz").add(" para poder gerar os grafos"))
-                                .put_text("")
-                                )
+        Graph(self.game).set_path(self.gen_graph_path()).set_opt(False).generate()
+        path = self.gen_graph_path()
+        if not self.graph_opened:
+            opener = Opener(self.settings)
+            opener.open_files([path])
+            self.graph_opened = True
+
 
     def down_task(self):
 
@@ -8568,7 +8541,7 @@ class PlayPalette:
         options.append(
             FloatingInputData(
                 lambda: Text(" {} Mudar {y} de download de rascunhos", symbols.action, "Linguagem"),
-                self.gui.config.set_language,
+                self.gui.language.set_language,
                 GuiKeys.set_lang
             ).set_exit_on_action(True)
         )
@@ -8661,8 +8634,8 @@ class Play:
         cman.add_str(GuiKeys.collapse, self.tree.process_collapse)
         cman.add_str(GuiKeys.borders, self.app.toggle_borders)
         cman.add_str(GuiKeys.images, self.app.toggle_images)
-        # for value in range(10):
-        #     cman.add_str(str(value), GradeFunctor(int(value), self.tree.set_grade))
+        cman.add_str(GuiKeys.set_lang, self.gui.language.set_language)
+        cman.add_str(GuiKeys.graph, self.actions.generate_graph)
     
         cman.add_str(GuiKeys.key_help, self.gui.show_help)
         
@@ -8694,8 +8667,6 @@ class Play:
         while True:
             self.tree.update_tree(admin_mode=Flags.admin.is_true() or self.gui.search.search_mode)
             self.fman.draw_warnings()
-            if self.gui.config.gen_graph:
-                self.actions.generate_graph()
             cman = self.make_callback()
             self.gui.show_items()
 

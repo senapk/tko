@@ -24,14 +24,14 @@ NIX_FILE="${REP}/replit.nix"
 if [ ! -f "$NIX_FILE" ]; then
     echo "{ pkgs }: {" > $NIX_FILE
     echo "  deps = [" >> $NIX_FILE
-    echo "    pkgs.graphviz" >> $NIX_FILE
+    echo "    pkgs.python3Packages.pydot" >> $NIX_FILE
     echo "    pkgs.python3" >> $NIX_FILE
     echo "  ];" >> $NIX_FILE
     echo "}" >> $NIX_FILE
     echo "Arquivo $NIX_FILE criado com pacotes."
 else
-    if ! grep -q "pkgs.graphviz" "$NIX_FILE"; then
-        sed -i '/deps = \[/a\    pkgs.graphviz' $NIX_FILE
+    if ! grep -q "pkgs.python3Packages.pydot" "$NIX_FILE"; then
+        sed -i '/deps = \[/a\    pkgs.python3Packages.pydot' $NIX_FILE
     fi    
     if ! grep -q "pkgs.python3" "$NIX_FILE"; then
         sed -i '/deps = \[/a\    pkgs.python3' $NIX_FILE

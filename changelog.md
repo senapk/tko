@@ -1,5 +1,7 @@
 # Changelog
 
+- 0.35.0
+  - rm. removed dependence from graphviz using pydot instead
 - 0.34.2
   - add: better search mode
 - 0.34.1

@@ -9,7 +9,7 @@ from tko.play.fmt import Fmt
 from tko.play.frame import Frame
 from tko.play.border import Border
 from tko.play.search import Search
-from tko.play.config import Config
+from tko.play.language_setter import LanguageSetter
 from tko.play.images import opening, random_get
 from tko.play.floating import Floating, FloatingInput
 from tko.play.floating_manager import FloatingManager
@@ -30,7 +30,7 @@ class Gui:
         self.settings = tree.settings
         self.search = Search(tree=self.tree, fman=self.fman)
         self.style: Border = Border(self.settings.app)
-        self.config = Config(self.settings, self.rep, self.flagsman, self.fman)
+        self.language = LanguageSetter(self.rep, self.flagsman, self.fman)
         self.colors = self.settings.colors
 
         self.app = Settings().app
