@@ -6372,12 +6372,8 @@ class Search:
         
         self.tree.expanded = []
         unit = self.tree.all_items[selected_key]
-        with open("log.txt", "a") as f:
-                f.write(f"Selected: {selected_key} {type(unit)} \n")
 
         if isinstance(unit, Task):
-            with open("log.txt", "a") as f:
-                f.write(f"Selected: {selected_key} {unit.cluster_key} {unit.quest_key} \n")
             self.tree.expanded = [unit.cluster_key, unit.quest_key]
         elif isinstance(unit, Quest):
             self.tree.expanded = [unit.key, unit.cluster_key]
