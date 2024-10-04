@@ -330,22 +330,22 @@ Default language extension now is: js
 
 ### Sintaxe TIO
 
-```txt
->>>>>>>>
+```bash
+#INPUT
 entrada
 ...
-========
+#OUTPUT
 saída
 ...
-<<<<<<<<
+#END
 
->>>>>>>>
+#INPUT
 entrada
 ...
-========
+#OUTPUT
 saída
 ...
-<<<<<<<<
+#END
 ```
 
 ---
@@ -355,33 +355,33 @@ saída
 Vamos escrever alguns testes para o problema proposto. Crie um arquivo chamado `testes.tio` e vamos inserir algumas entradas para o problema proposto.
 
 ```txt
->>>>>>>>
+#INPUT
 4
 2
-========
+#OUTPUT
 2
-<<<<<<<<
+#END
 
->>>>>>>>
+#INPUT
 3
 2
-========
+#OUTPUT
 1.50
-<<<<<<<<
+#END
 
->>>>>>>>
+#INPUT
 5
 4
-========
+#OUTPUT
 1.25
-<<<<<<<<
+#END
 
->>>>>>>>
+#INPUT
 1
 3
-========
+#OUTPUT
 0.33
-<<<<<<<<
+#END
 ```
 
 ## Convertendo entre formatos

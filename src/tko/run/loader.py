@@ -95,7 +95,7 @@ class VplParser:
 
 
 class Loader:
-    regex_tio = r"^ *>>>>>>>> *(.*?)\n(.*?)^ *======== *\n(.*?)^ *<<<<<<<< *\n?"
+    regex_tio = r"^ *#INPUT *(.*?)\n(.*?)^ *#OUTPUT *\n(.*?)^ *#END *\n?"
 
     def __init__(self):
         pass

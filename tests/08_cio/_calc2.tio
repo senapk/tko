@@ -1,15 +1,15 @@
->>>>>>>> iniciar mostrar e recarregar
+#INPUT iniciar mostrar e recarregar
 init 5
 show
 end
-========
+#OUTPUT
 $init 5
 $show
 display = 0.00, battery = 0
 $end
-<<<<<<<<
+#END
 
->>>>>>>> charge
+#INPUT charge
 init 5
 show
 charge 3
@@ -17,7 +17,7 @@ show
 charge 1
 show
 end
-========
+#OUTPUT
 $init 5
 $show
 display = 0.00, battery = 0
@@ -28,9 +28,9 @@ $charge 1
 $show
 display = 0.00, battery = 4
 $end
-<<<<<<<<
+#END
 
->>>>>>>> boundary
+#INPUT boundary
 init 5
 show
 charge 3
@@ -40,7 +40,7 @@ show
 charge 2
 show
 end
-========
+#OUTPUT
 $init 5
 $show
 display = 0.00, battery = 0
@@ -54,9 +54,9 @@ $charge 2
 $show
 display = 0.00, battery = 5
 $end
-<<<<<<<<
+#END
 
->>>>>>>> reset
+#INPUT reset
 init 5
 show
 charge 3
@@ -71,7 +71,7 @@ show
 charge 3
 show
 end
-========
+#OUTPUT
 $init 5
 $show
 display = 0.00, battery = 0
@@ -92,24 +92,24 @@ $charge 3
 $show
 display = 0.00, battery = 4
 $end
-<<<<<<<<
+#END
 
->>>>>>>> somando
+#INPUT somando
 init 2
 charge 2
 sum 4 3
 show
 end
-========
+#OUTPUT
 $init 2
 $charge 2
 $sum 4 3
 $show
 display = 7.00, battery = 1
 $end
-<<<<<<<<
+#END
 
->>>>>>>> gastando bateria
+#INPUT gastando bateria
 init 2
 charge 2
 sum 4 3
@@ -117,7 +117,7 @@ show
 sum 2 3
 show
 end
-========
+#OUTPUT
 $init 2
 $charge 2
 $sum 4 3
@@ -127,9 +127,9 @@ $sum 2 3
 $show
 display = 5.00, battery = 0
 $end
-<<<<<<<<
+#END
 
->>>>>>>> sem bateria
+#INPUT sem bateria
 init 2
 charge 2
 sum 4 3
@@ -138,7 +138,7 @@ sum 2 3
 show
 sum -4 -1
 end
-========
+#OUTPUT
 $init 2
 $charge 2
 $sum 4 3
@@ -150,9 +150,9 @@ display = 5.00, battery = 0
 $sum -4 -1
 fail: bateria insuficiente
 $end
-<<<<<<<<
+#END
 
->>>>>>>> recarregando
+#INPUT recarregando
 init 2
 charge 2
 sum 4 3
@@ -165,7 +165,7 @@ show
 sum -4 -2
 show
 end
-========
+#OUTPUT
 $init 2
 $charge 2
 $sum 4 3
@@ -183,24 +183,24 @@ $sum -4 -2
 $show
 display = -6.00, battery = 0
 $end
-<<<<<<<<
+#END
 
->>>>>>>> dividindo
+#INPUT dividindo
 init 3
 charge 3
 div 6 3
 show
 end
-========
+#OUTPUT
 $init 3
 $charge 3
 $div 6 3
 $show
 display = 2.00, battery = 2
 $end
-<<<<<<<<
+#END
 
->>>>>>>> dividindo por zero gastando bateria
+#INPUT dividindo por zero gastando bateria
 init 3
 charge 3
 div 6 3
@@ -208,7 +208,7 @@ show
 div 7 0
 show
 end
-========
+#OUTPUT
 $init 3
 $charge 3
 $div 6 3
@@ -219,9 +219,9 @@ fail: divisao por zero
 $show
 display = 2.00, battery = 1
 $end
-<<<<<<<<
+#END
 
->>>>>>>> gastando bateria
+#INPUT gastando bateria
 init 3
 charge 3
 div 6 3
@@ -232,7 +232,7 @@ div 7 2
 div 10 2
 show
 end
-========
+#OUTPUT
 $init 3
 $charge 3
 $div 6 3
@@ -248,4 +248,4 @@ fail: bateria insuficiente
 $show
 display = 3.50, battery = 0
 $end
-<<<<<<<<
+#END

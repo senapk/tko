@@ -28,7 +28,7 @@ import hashlib
 from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
-__version__ = "0.35.2"
+__version__ = "1.0.0"
 
 
 class CheckVersion:
@@ -3924,7 +3924,7 @@ class VplParser:
 
 
 class Loader:
-    regex_tio = r"^ *>>>>>>>> *(.*?)\n(.*?)^ *======== *\n(.*?)^ *<<<<<<<< *\n?"
+    regex_tio = r"^ *#INPUT *(.*?)\n(.*?)^ *#OUTPUT *\n(.*?)^ *#END *\n?"
 
     def __init__(self):
         pass
@@ -4613,17 +4613,17 @@ class Writer:
 
     @staticmethod
     def to_tio(unit: Unit):
-        text = ">>>>>>>>"
+        text = "#INPUT"
         if unit.case != '':
             text += " " + unit.case
         if unit.grade is not None:
             text += " " + str(unit.grade) + "%"
         text += '\n' + unit.input
-        text += "========\n"
+        text += "#OUTPUT\n"
         text += unit.expected
         if unit.expected != '' and unit.expected[-1] != '\n':
             text += '\n'
-        text += "<<<<<<<<\n"
+        text += "#END\n"
         return text
 
     @staticmethod
@@ -7281,6 +7281,8 @@ class Run:
 
     def identity_rep_and_task_by_path(self) -> tuple[str, str] | None:
         rootdir = self.settings.app.get_rootdir()
+        if len(self.wdir.get_solver().path_list) == 0:
+            return None
         solver_path = os.path.abspath(self.wdir.get_solver().path_list[0])
         if not solver_path.startswith(rootdir):
             return None
@@ -7366,10 +7368,12 @@ class Run:
             for unit in self.wdir.get_unit_list():
                 if unit.result != ExecutionResult.SUCCESS:
                     if self.param.diff_mode:
-                        for line in ud_diff_builder.build_diff(unit):
+                        ud_diff_builder = DownDiff(RawTerminal.get_terminal_size(), unit).to_insert_header()
+                        for line in ud_diff_builder.build_diff():
                             print(line)
                     else:
-                        for line in ss_diff_builder.build_diff(unit):
+                        ss_diff_builder = SideDiff(RawTerminal.get_terminal_size(), unit).to_insert_header(True)
+                        for line in ss_diff_builder.build_diff():
                             print(line)
 
     def build_wdir(self):
@@ -7398,7 +7402,7 @@ class Run:
 
         # list mode
         if not self.wdir.has_solver() and self.wdir.has_tests():
-            print(Text(" Nenhum arquivo de código encontrado. Listando casos de teste.").center(RawTerminal.get_terminal_size(), Token("╌")), flush=True)
+            print(Text("Nenhum arquivo de código encontrado. Listando casos de teste.").center(RawTerminal.get_terminal_size(), Token("╌")), flush=True)
             print(self.wdir.resume())
             for line in self.wdir.unit_list_resume():
                 print(line)

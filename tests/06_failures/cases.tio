@@ -1,19 +1,19 @@
->>>>>>>> inicializar
+#INPUT inicializar
 show
 end
-========
+#OUTPUT
 $show
 pass: 0, gas: 0, km: 0
 $end
-<<<<<<<<
+#END
 
->>>>>>>> entrar
+#INPUT entrar
 show
 enter
 enter
 show
 end
-========
+#OUTPUT
 $show
 pass: 0, gas: 0, km: 0
 $enter
@@ -21,9 +21,9 @@ $enter
 $show
 pass: 2, gas: 0, km: 0
 $end
-<<<<<<<<
+#END
 
->>>>>>>> limite
+#INPUT limite
 show
 enter
 enter
@@ -31,7 +31,7 @@ show
 enter
 show
 end
-========
+#OUTPUT
 $show
 pass: 0, gas: 0, km: 0
 $enter
@@ -43,9 +43,9 @@ fail: limite de pessoas atingido
 $show
 pass: 2, gas: 0, km: 0
 $end
-<<<<<<<<
+#END
 
->>>>>>>> sair
+#INPUT sair
 show
 enter
 enter
@@ -55,7 +55,7 @@ show
 leave
 show
 end
-========
+#OUTPUT
 $show
 pass: 0, gas: 0, km: 0
 $enter
@@ -70,9 +70,9 @@ $leave
 $show
 pass: 1, gas: 0, km: 0
 $end
-<<<<<<<<
+#END
 
->>>>>>>> limite saida
+#INPUT limite saida
 show
 enter
 enter
@@ -85,7 +85,7 @@ leave
 leave
 show
 end
-========
+#OUTPUT
 $show
 pass: 0, gas: 0, km: 0
 $enter
@@ -105,34 +105,34 @@ fail: nao ha ninguem no carro
 $show
 pass: 0, gas: 0, km: 0
 $end
-<<<<<<<<
+#END
 
->>>>>>>> abastecer
+#INPUT abastecer
 fuel 60
 show
 end
-========
+#OUTPUT
 $fuel 60
 $show
 pass: 0, gas: 60, km: 0
 $end
-<<<<<<<<
+#END
 
->>>>>>>> dirigir vazio
+#INPUT dirigir vazio
 fuel 60
 show
 drive 10
 end
-========
+#OUTPUT
 $fuel 60
 $show
 pass: 0, gas: 60, km: 0
 $drive 10
 fail: nao ha ninguem no carro
 $end
-<<<<<<<<
+#END
 
->>>>>>>> dirigir
+#INPUT dirigir
 fuel 60
 show
 drive 10
@@ -140,7 +140,7 @@ enter
 drive 10
 show
 end
-========
+#OUTPUT
 $fuel 60
 $show
 pass: 0, gas: 60, km: 0
@@ -151,9 +151,9 @@ $drive 10
 $show
 pass: 1, gas: 50, km: 10
 $end
-<<<<<<<<
+#END
 
->>>>>>>> para longe
+#INPUT para longe
 fuel 60
 show
 drive 10
@@ -164,7 +164,7 @@ drive 70
 drive 10
 show
 end
-========
+#OUTPUT
 $fuel 60
 $show
 pass: 0, gas: 60, km: 0
@@ -181,9 +181,9 @@ fail: tanque vazio
 $show
 pass: 1, gas: 0, km: 60
 $end
-<<<<<<<<
+#END
 
->>>>>>>> enchendo o tanque
+#INPUT enchendo o tanque
 fuel 60
 show
 drive 10
@@ -196,7 +196,7 @@ show
 fuel 200
 show
 end
-========
+#OUTPUT
 $fuel 60
 $show
 pass: 0, gas: 60, km: 0
@@ -216,4 +216,4 @@ $fuel 200
 $show
 pass: 1, gas: 100, km: 60
 $end
-<<<<<<<<
+#END

@@ -1,4 +1,4 @@
->>>>>>>> iniciar mostrar e recarregar
+#INPUT iniciar mostrar e recarregar
 init 5
 show
 charge 3
@@ -6,7 +6,7 @@ show
 charge 1
 show
 end
-========
+#OUTPUT
 $init 5
 $show
 display = 0.00, battery = 0
@@ -17,9 +17,9 @@ $charge 1
 $show
 display = 0.00, battery = 4
 $end
-<<<<<<<<
+#END
 
->>>>>>>> boundary
+#INPUT boundary
 init 5
 show
 charge 3
@@ -29,7 +29,7 @@ show
 charge 2
 show
 end
-========
+#OUTPUT
 $init 5
 $show
 display = 0.00, battery = 0
@@ -43,10 +43,10 @@ $charge 2
 $show
 display = 0.00, battery = 5
 $end
-<<<<<<<<
+#END
 
 
->>>>>>>> novo teste
+#INPUT novo teste
 init 10
 show
 charge 3
@@ -56,7 +56,7 @@ show
 charge 2
 show
 end
-========
+#OUTPUT
 $init 10
 $show
 display = 0.00, battery = 0
@@ -70,4 +70,4 @@ $charge 2
 $show
 display = 0.00, battery = 5
 $end
-<<<<<<<<
+#END

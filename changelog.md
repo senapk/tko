@@ -1,5 +1,7 @@
 # Changelog
 
+- 1.0.0
+  - add: changed tio model to #INPUT, #OUTPUT, #END
 - 0.35.2
   - add: mass mark on palette
   - fix: bug in search mode when no results

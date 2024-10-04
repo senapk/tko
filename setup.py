@@ -9,7 +9,6 @@ long_description = (here / "Readme.md").read_text(
 # with open(here / 'requirements.txt') as fp:  # read requirements.txt
 #     install_reqs = [r.rstrip() for r in fp.readlines() if not r.startswith('#')]
 
-
 def get_version():
     file = here / "src/tko/__init__.py"
     return re.search(
@@ -40,7 +39,7 @@ setup(
     packages=find_packages(where="src"),  # Required
     python_requires=">=3.8, <4",
     # Optional, additional pip packages to be installed by this package installation
-    install_requires=["windows-curses; platform_system=='Windows'", "appdirs"],
+    install_requires=["windows-curses; platform_system=='Windows'", "appdirs", "pydot"],
     extras_require={
         "dev": ["check-manifest"],
         "test": ["coverage", "pytest"],

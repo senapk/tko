@@ -109,6 +109,8 @@ class Run:
 
     def identity_rep_and_task_by_path(self) -> tuple[str, str] | None:
         rootdir = self.settings.app.get_rootdir()
+        if len(self.wdir.get_solver().path_list) == 0:
+            return None
         solver_path = os.path.abspath(self.wdir.get_solver().path_list[0])
         if not solver_path.startswith(rootdir):
             return None
@@ -194,10 +196,12 @@ class Run:
             for unit in self.wdir.get_unit_list():
                 if unit.result != ExecutionResult.SUCCESS:
                     if self.param.diff_mode:
-                        for line in ud_diff_builder.build_diff(unit):
+                        ud_diff_builder = DownDiff(RawTerminal.get_terminal_size(), unit).to_insert_header()
+                        for line in ud_diff_builder.build_diff():
                             print(line)
                     else:
-                        for line in ss_diff_builder.build_diff(unit):
+                        ss_diff_builder = SideDiff(RawTerminal.get_terminal_size(), unit).to_insert_header(True)
+                        for line in ss_diff_builder.build_diff():
                             print(line)
 
     def build_wdir(self):
@@ -226,7 +230,7 @@ class Run:
 
         # list mode
         if not self.wdir.has_solver() and self.wdir.has_tests():
-            print(Text(" Nenhum arquivo de código encontrado. Listando casos de teste.").center(RawTerminal.get_terminal_size(), Token("╌")), flush=True)
+            print(Text("Nenhum arquivo de código encontrado. Listando casos de teste.").center(RawTerminal.get_terminal_size(), Token("╌")), flush=True)
             print(self.wdir.resume())
             for line in self.wdir.unit_list_resume():
                 print(line)
