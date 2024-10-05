@@ -95,7 +95,9 @@ class VplParser:
 
 
 class Loader:
-    regex_tio = r"^ *#INPUT *(.*?)\n(.*?)^ *#OUTPUT *\n(.*?)^ *#END *\n?"
+    # regex_tio = r"^ *#INPUT *(.*?)\n(.*?)^ *#OUTPUT *\n(.*?)^ *#END *\n?"
+    regex_tio = r"^#INPUT#* *(.*?)\n(.*?)^#OUTPUT=* *\n(.*?)^#END *\n?"
+    regex_tio_origin = r"^>>>>>>>> *(.*?)\n(.*?)^======== *\n(.*?)^<<<<<<<<"
 
     def __init__(self):
         pass
@@ -160,6 +162,7 @@ class Loader:
             return value, None
 
         matches = re.findall(Loader.regex_tio, text, re.MULTILINE | re.DOTALL)
+        matches += re.findall(Loader.regex_tio_origin, text, re.MULTILINE | re.DOTALL)
         unit_list = []
         for m in matches:
             case, grade = parse_case_grade(m[0])

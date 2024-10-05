@@ -1,5 +1,7 @@
 # Changelog
 
+- 1.0.1
+  - add: support to old tio model
 - 1.0.0
   - add: changed tio model to #INPUT, #OUTPUT, #END
 - 0.35.2

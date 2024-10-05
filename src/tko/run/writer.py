@@ -26,17 +26,17 @@ class Writer:
 
     @staticmethod
     def to_tio(unit: Unit):
-        text = "#INPUT"
+        text = "#INPUT############################################"
         if unit.case != '':
             text += " " + unit.case
         if unit.grade is not None:
             text += " " + str(unit.grade) + "%"
         text += '\n' + unit.input
-        text += "#OUTPUT\n"
+        text += "#OUTPUT===========================================\n"
         text += unit.expected
         if unit.expected != '' and unit.expected[-1] != '\n':
             text += '\n'
-        text += "#END\n"
+        text += "#END##############################################\n"
         return text
 
     @staticmethod
@@ -50,13 +50,14 @@ class Writer:
     @staticmethod
     def save_target(target: str, unit_list: List[Unit], force: bool = False):
         def ask_overwrite(file):
-            print("file " + file + " found. Overwrite? (y/n):")
-            resp = input()
-            if resp.lower() == 'y':
-                print("overwrite allowed")
-                return True
-            print("overwrite denied\n")
-            return False
+            # print("file " + file + " found. Overwrite? (y/n):")
+            # resp = input()
+            # if resp.lower() == 'y':
+            #     print("overwrite allowed")
+            #     return True
+            # print("overwrite denied\n")
+            # return False
+            return True
 
         def save_dir(_target: str, _unit_list):
             folder = _target
@@ -84,8 +85,8 @@ class Writer:
                 with open(_target, "w") as f:
                     f.write(_new)
 
-                    if not force:
-                        print("file " + _target + " wrote")
+                #     if not force:
+                print("file " + _target + " wrote")
 
         target_type = Identifier.get_type(target)
         if target_type == IdentifierType.OBI:
