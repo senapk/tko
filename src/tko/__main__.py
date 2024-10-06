@@ -70,7 +70,7 @@ class Main:
     def build(args):
         PatternLoader.pattern = args.pattern
         manip = Param.Manip().set_unlabel(args.unlabel).set_to_sort(args.sort).set_to_number(args.number)
-        build = CmdBuild(args.target, args.target_list, manip, args.force)
+        build = CmdBuild(args.target, args.target_list, manip)
         build.execute()
 
     @staticmethod
@@ -82,8 +82,11 @@ class Main:
 
     @staticmethod
     def down(args):
-        settings = Settings().check_rootdir()
-        CmdDown.execute(args.course, args.activity, args.language, settings, print)
+        settings = Settings()
+        settings.check_rootdir()
+        cmd_down = CmdDown(rep_alias=args.course, task_key=args.activity, settings=settings)
+        cmd_down.set_language(args.language).set_fnprint(print)
+        cmd_down.execute()
 
     @staticmethod
     def config(args):
@@ -171,7 +174,6 @@ class Parser:
         parser_b = self.subparsers.add_parser('build', parents=[self.parent_manip], help='build a test target.')
         parser_b.add_argument('target', metavar='T_OUT', type=str, help='target to be build.')
         parser_b.add_argument('target_list', metavar='T', type=str, nargs='+', help='input test targets.')
-        parser_b.add_argument('--force', '-f', action='store_true', help='enable overwrite.')
         parser_b.set_defaults(func=Main.build)
 
     def add_parser_down(self):

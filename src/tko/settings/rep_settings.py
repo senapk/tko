@@ -2,7 +2,7 @@ from typing import Any, Dict, List
 import os
 import json
 import urllib
-from ..util.remote import RemoteCfg, Absolute
+from ..util.remote import RemoteUrl, Absolute
 
 languages_avaliable = ["c", "cpp", "py", "ts", "js", "java", "go"]
 
@@ -30,9 +30,9 @@ class RepSource:
         if self.url != "" and (self.file == "" or not os.path.exists(self.file)):
             cache_file = os.path.join(rep_dir, ".cache.md")
             os.makedirs(rep_dir, exist_ok=True)
-            cfg = RemoteCfg(self.url)
+            ru = RemoteUrl(self.url)
             try:
-                cfg.download_absolute(cache_file)
+                ru.download_absolute_to(cache_file)
             except urllib.error.URLError:
                 print("fail: Não foi possível baixar o arquivo do repositório")
                 if os.path.exists(cache_file):

@@ -102,8 +102,8 @@ class Settings:
     #     return self
 
     def check_rootdir(self):
-        if self.app._rootdir != "":
-            return
+        if self.app.get_rootdir() != "":
+            return self
         print(Text().add("Pasta padrão para download de arquivos ").addf("r", "precisa").add(" ser definida."))
         here_cwd = os.getcwd()
         qxcode = os.path.join(os.path.expanduser("~"), "qxcode")

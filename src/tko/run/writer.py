@@ -48,17 +48,7 @@ class Writer:
             f.write(unit.expected)
 
     @staticmethod
-    def save_target(target: str, unit_list: List[Unit], force: bool = False):
-        def ask_overwrite(file):
-            # print("file " + file + " found. Overwrite? (y/n):")
-            # resp = input()
-            # if resp.lower() == 'y':
-            #     print("overwrite allowed")
-            #     return True
-            # print("overwrite denied\n")
-            # return False
-            return True
-
+    def save_target(target: str, unit_list: List[Unit], quiet: bool) -> bool:
         def save_dir(_target: str, _unit_list):
             folder = _target
             pattern_loader = PatternLoader()
@@ -78,15 +68,15 @@ class Writer:
             if file_exists:
                 _old = open(_target).read()
                 if _old == _new:
-                    print("no changes in test file")
-                    return
+                    if not quiet:
+                        print("no changes in test file")
+                    return False
 
-            if not file_exists or (file_exists and (force or ask_overwrite(_target))):
-                with open(_target, "w") as f:
-                    f.write(_new)
-
-                #     if not force:
-                print("file " + _target + " wrote")
+            with open(_target, "w") as f:
+                f.write(_new)
+                if not quiet:
+                    print("file " + _target + " wrote")
+                return True
 
         target_type = Identifier.get_type(target)
         if target_type == IdentifierType.OBI:
@@ -95,3 +85,5 @@ class Writer:
             save_file(target, unit_list)
         else:
             print("fail: target " + target + " do not supported for build operation\n")
+            return False
+        return True

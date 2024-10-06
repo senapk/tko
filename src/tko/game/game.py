@@ -2,8 +2,9 @@ from typing import List, Dict, Optional, Tuple
 from .cluster import Cluster
 from .quest import Quest, QuestParser
 from .task import Task, TaskParser
-from ..util.remote import get_md_link
+from ..util.get_md_link import get_md_link
 from ..util.to_asc import uni_to_asc
+import yaml # type: ignore
 
 import re
 import os
@@ -28,23 +29,22 @@ class Game:
 
         self.token_level_one = "level_one"
         self.token_level_mult = "level_mult"
-        self.level_one = 100
-        self.level_mult = 1.5
+        self.level_one: int = 100
+        self.level_mult: float = 1.5
 
         self.filename = None
         if file is not None:
             self.filename = file
             self.parse_file(file)
 
-    def parse_xp(self, line: str):
-        values = load_html_tags(line)
-        if values is not None:
-            tags = values.split(" ")
-            for t in tags:
-                if t.startswith(self.token_level_one):
-                    self.level_one = int(t.split(":")[1])
-                if t.startswith(self.token_level_mult):
-                    self.level_mult = float(t.split(":")[1])
+    def parse_xp(self, content):
+        if content.startswith('---'):
+            front_matter = content.split('---')[1].strip()
+            yaml_data = yaml.safe_load(front_matter)
+            if self.token_level_one in yaml_data:
+                self.level_one = int(yaml_data[self.token_level_one])
+            if self.token_level_mult in yaml_data:
+                self.level_mult = float(yaml_data[self.token_level_mult])
 
     def get_task(self, key: str) -> Task:
         if key in self.tasks:
@@ -221,12 +221,12 @@ class Game:
 
     def parse_file(self, file):
         self.filename = file
-        lines = open(file, encoding="utf-8").read().split("\n")
+        content = open(file, encoding="utf-8").read()
+        lines = content.split("\n")
         active_quest = None
         active_cluster = None
 
-        if len(lines) > 0:
-            self.parse_xp(lines[0])
+        self.parse_xp(content)
 
         for line_num, line in enumerate(lines):
             cluster = self.load_cluster(line, line_num)

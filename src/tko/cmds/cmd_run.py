@@ -24,7 +24,8 @@ from tko.settings.settings import Settings
 from tko.util.consts import DiffMode
 from tko.util.logger import Logger, LogAction, LoggerFS
 
-class FilterMode:
+
+class TKOFilterMode:
     @staticmethod
     def deep_copy_and_change_dir():
         # path to ~/.tko_filter
@@ -130,7 +131,7 @@ class Run:
             old_dir = os.getcwd()
 
             print(Text(" Entrando no modo de filtragem ").center(RawTerminal.get_terminal_size(), "═"))
-            FilterMode.deep_copy_and_change_dir()  
+            TKOFilterMode.deep_copy_and_change_dir()  
             # search for target outside . dir and redirect target
             new_target_list = []
             for target in self.target_list:

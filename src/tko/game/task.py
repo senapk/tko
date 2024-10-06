@@ -16,13 +16,14 @@ class Task(TreeItem):
         self.self_grade: int = 0 #valor de 0 a 9
         self.progress: int = 0 #valor de 0 a 100
         self.main_index: int = 0
+        self.downloadable = False
 
         self.qskills: Dict[str, int] = {} # default quest skills
         self.skills: Dict[str, int] = {} # local skills
         self.xp: int = 0
         
         self.opt: bool = False
-        self.link = ""
+        self.link: str = ""
 
         self.quest_key = ""
         self.cluster_key = ""
@@ -115,7 +116,7 @@ class Task(TreeItem):
         return f"{line}    {self.self_grade} {key}{self.title} {self.skills} {self.link}"
     
     def is_downloadable(self):
-        return f"@{self.key}" in self.title
+        return self.downloadable
     
     def is_downloaded_for_lang(self, rep_dir: str, lang: str) -> bool:
         folder = os.path.join(rep_dir, self.key)
@@ -126,16 +127,18 @@ class Task(TreeItem):
             return False
         return True
 
+"""
+- [ ] qq coisa [@label_opcional complemento] <!-- tags opcionais -->
+
+se tem arroba, então é baixável?
+pra ser baixável tem que ter label
+coisas não baixáveis, tem um link e o link pode ser a
+
+"""
 class TaskParser:
 
     @staticmethod
-    def load_html_tags(task: Task):                   
-        pattern = r"<!--\s*(.*?)\s*-->"
-        match = re.search(pattern, task.line)
-        if not match:
-            return
-
-        tags_raw = match.group(1).strip()
+    def __load_tags(task: Task, tags_raw: str):
         tags = [tag.strip() for tag in tags_raw.split(" ")]
         task.opt = "opt" in tags
         for t in tags:
@@ -146,102 +149,26 @@ class TaskParser:
                 task.key = t[1:]
 
     @staticmethod
-    def parse_item_with_link(line) -> Tuple[bool, str, str]:
-        pattern = r"\ *-.*\[(.*?)\]\((.+?)\)"
+    def parse_line(line: str, line_num: int) -> Optional[Task]:
+        pattern = r'\s*?- \[ \].*?\[([^\]]+)\]\(([^)]+)\)(?:\s*<!--(.*?)-->)?'
+
         match = re.match(pattern, line)
-        if match:
-            return True, match.group(1), match.group(2)
-        return False, "", ""
-    
-    @staticmethod
-    def parse_task_with_link(line) -> Tuple[bool, str, str]:
-        pattern = r"\ *- \[ \].*\[(.*?)\]\((.+?)\)"
-        match = re.match(pattern, line)
-        if match:
-            return True, match.group(1), match.group(2)
-        return False, "", ""
-
-    @staticmethod
-    def parse_arroba_from_title_link(titulo, link) -> Tuple[bool, str]:
-        pattern = r'@\w+'
-        match = re.search(pattern, titulo)
-        if not match:
-            return False, ""
-        key = match.group(0)[1:]
-        if not (key + "/Readme.md") in link:
-            return False, ""
-        return True, key
-
-    # - [Titulo com @palavra em algum lugar](link/@palavra/Readme.md) <!-- tag1 tag2 tag3 -->
-    @staticmethod
-    def __parse_coding_task(line, line_num) -> Optional[Task]:
-        if line == "":
+        if match is None:
             return None
-        line = line.lstrip()
-
-        found, titulo, link = TaskParser.parse_item_with_link(line)
-        if not found:
-            return None
-        found, key = TaskParser.parse_arroba_from_title_link(titulo, link)
-        if not found:
-            return None
-
         task = Task()
-
-        task.line = line
         task.line_number = line_num
-        task.key = key
-        task.title = titulo
-        task.link = link
-        TaskParser.load_html_tags(task)
+        task.line = line
+        task.opt = False
+        task.title = match.group(1).strip()
+        task.link = match.group(2).strip()
+        if match.group(3) is not None:
+            TaskParser.__load_tags(task, match.group(3))
+        
+        for item in task.title.split(" "):
+            if item.startswith("@"):
+                task.key = item[1:]
+                task.downloadable = True
+        if task.key == "":
+            task.key = task.link
 
         return task
-
-    # se com - [ ], não precisa das tags dentro do html, o key será dado pelo título
-    # se tiver as tags dentro do html, se alguma começar com @, o key será dado por ela
-    # - [ ] [Título](link)
-    # - [ ] [Título](link) <!-- tag1 tag2 tag3 -->
-    # - [Título](link) <!-- tag1 tag2 tag3 -->
-    @staticmethod
-    def __parse_reading_task(line, line_num) -> Optional[Task]:
-        if line == "":
-            return None
-        line = line.lstrip()
-
-        found, titulo, link = TaskParser.parse_task_with_link(line)
-
-        if found:
-            task = Task()
-            task.key = link
-            task.title = titulo
-            task.link = link
-            task.line = line
-            task.line_number = line_num
-            TaskParser.load_html_tags(task)
-            return task
-        
-        task = Task()
-        found, titulo, link = TaskParser.parse_item_with_link(line)
-        task.key = ""
-        if found:
-            task.link = link
-            task.line = line
-            task.line_number = line_num
-            TaskParser.load_html_tags(task)
-            if task.key == "": # item with links needs a key
-                return None
-            task.title = titulo
-            return task
-
-        return None
-
-    @staticmethod
-    def parse_line(line, line_num) -> Optional[Task]:
-        task = TaskParser.__parse_coding_task(line, line_num)
-        
-        if task is not None:
-            return task
-        task = TaskParser.__parse_reading_task(line, line_num)
-        if task is not None:
-            return task
-        return None

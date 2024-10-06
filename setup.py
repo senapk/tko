@@ -39,7 +39,7 @@ setup(
     packages=find_packages(where="src"),  # Required
     python_requires=">=3.8, <4",
     # Optional, additional pip packages to be installed by this package installation
-    install_requires=["windows-curses; platform_system=='Windows'", "appdirs", "pydot"],
+    install_requires=["windows-curses; platform_system=='Windows'", "appdirs", "pydot", "pyyaml", "feno"],
     extras_require={
         "dev": ["check-manifest"],
         "test": ["coverage", "pytest"],

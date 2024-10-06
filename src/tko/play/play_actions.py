@@ -124,7 +124,12 @@ class PlayActions:
                 down_frame.put_text(text)
                 down_frame.draw()
                 Fmt.refresh()
-            result = CmdDown.execute(self.rep.alias, task.key, lang, self.settings, fnprint, self.game)
+
+            cmd_down = CmdDown(rep_alias=self.rep.alias, task_key=task.key, settings=self.settings)
+            cmd_down.set_game(self.game)
+            cmd_down.set_fnprint(fnprint)
+            cmd_down.set_language(lang)
+            result = cmd_down.execute()
             if result:
                 Logger.get_instance().record_event(LogAction.DOWN, task.key)
 

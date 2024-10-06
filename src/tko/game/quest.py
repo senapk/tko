@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Tuple
 from .task import Task
 from ..util.text import Text
-from ..util.remote import get_md_link
+from tko.util.get_md_link import get_md_link
 import re
 from tko.game.tree_item import TreeItem
 
@@ -153,7 +153,7 @@ class QuestParser:
         return self.quest
 
     def match_full_pattern(self):
-        fullpattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->.*$"
+        fullpattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->(.*)$"
         match = re.match(fullpattern, self.line)
 
         if not match:
@@ -162,11 +162,6 @@ class QuestParser:
         tags_raw = match.group(2).strip()
         tags = [tag.strip() for tag in tags_raw.split()]
 
-        # key
-        keys = [t[1:] for t in tags if t.startswith("@")]
-        if len(keys) > 0:
-            self.quest.key = keys[0]
-
         # skills
         skills = [t[1:] for t in tags if t.startswith("+")]
         if len(skills) > 0:
@@ -174,16 +169,19 @@ class QuestParser:
             for s in skills:
                 k, v = s.split(":")
                 self.quest.skills[k] = int(v)
-        # requires
-        self.quest.requires = [t[2:] for t in tags if t.startswith("r:")]
-
         self.quest.opt = "opt" in tags
-        # type
-        # try:
-        #     self.quest.type = [t[1:] for t in tags if t.startswith("#")][0]
-        # except:
-        #     self.quest.type = "main"
         
+        # requires
+        self.quest.requires = []
+        if match.group(3).strip() != "":
+            pieces = match.group(3).strip().split("[](")
+            del pieces[0]
+            for p in pieces:
+                key = p.split(")")[0]
+                if key[0] == "#":
+                    key = key[1:]
+                self.quest.requires.append(key)
+
         # quest percent
         qmin = [t[2:] for t in tags if t.startswith("q:")]
         
@@ -199,14 +197,6 @@ class QuestParser:
                 exit(1)
         return True
 
-    def __match_minimal_pattern(self):
-        minipattern = r"^#+\s*(.*?)\s*$"
-        match = re.match(minipattern, self.line)
-        if match:
-            self.quest.title = match.group(1).strip()
-            return True
-        return False
-
     def parse_quest(self, filename, line, line_num) -> Optional[Quest]:
         self.line = line
         self.line_num = line_num
@@ -218,8 +208,5 @@ class QuestParser:
 
         if self.match_full_pattern():
             return self.finish_quest()
-        
-        if self.__match_minimal_pattern():
-            return self.finish_quest()
-        
+                
         return None
