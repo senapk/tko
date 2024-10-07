@@ -29,7 +29,7 @@ import hashlib
 from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
-__version__ = "1.1.2"
+__version__ = "1.1.3"
 
 
 class CheckVersion:
@@ -849,14 +849,17 @@ class GuiKeys:
     down_task = "b"
     activate = "\n"
     key_help = "?"
-    inc_prog = ">"
-    prog_plus2 = "."
-    dec_prog = "<"
-    prog_less2 = ","
-    inc_self = "+"
-    inc_grade2 = "="
-    dec_self = "-"
-    dec_grade2 = "_"
+    
+    inc_prog1 = "+"
+    inc_prog2 = "="
+    dec_prog1 = "-"
+    dec_prog2 = "_"
+    
+    inc_self1 = ">"
+    inc_self2 = "."
+    dec_self1 = "<"
+    dec_self2 = ","
+    
     set_root_dir = "D"
     set_lang = "L"
     github_open = "g"
@@ -875,6 +878,7 @@ class GuiKeys:
     limite  = "l"
     expand = "]"
     collapse = "["
+    mass = "Y"
 
 class InputManager:
     backspace1 = 127
@@ -7852,8 +7856,8 @@ class Gui:
 
     def show_top_bar(self, frame: Frame):
         lista = [
-            Text() + RToken("Y", f"{GuiActions.self_grade} {GuiKeys.inc_self}{GuiKeys.dec_self}"),
-            Text() + RToken("Y", f"{GuiActions.progress} {GuiKeys.dec_prog}{GuiKeys.inc_prog}"),
+            Text() + RToken("Y", f"{GuiActions.self_grade} {GuiKeys.inc_self1}{GuiKeys.dec_self2}"),
+            Text() + RToken("Y", f"{GuiActions.progress} {GuiKeys.dec_prog1}{GuiKeys.inc_prog1}"),
             # Text() + RToken("Y", f"{GuiActions.pesquisar} {GuiKeys.pesquisar}"),
         ]
         help = self.build_list_sentence(lista)
@@ -7895,7 +7899,7 @@ class Gui:
         _help.put_sentence(Text() + f"   {GuiActions.download} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
         _help.put_sentence(Text() + f"   {GuiActions.edit} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
         _help.put_sentence(Text() + f"   {GuiActions.activate} " + RToken("r", "↲") + "  Interage com o elemento")
-        _help.put_sentence(Text() + f"   {GuiActions.progress} " + RToken("r", f"{GuiKeys.inc_self}") + RToken("r", f"{GuiKeys.dec_self}") + " Muda a autoavaliação")
+        _help.put_sentence(Text() + f"   {GuiActions.progress} " + RToken("r", f"{GuiKeys.inc_self1}") + RToken("r", f"{GuiKeys.dec_self2}") + " Muda a autoavaliação")
         _help.put_sentence(Text())
         _help.put_sentence(Text() + "Você pode mudar o editor padrão com o comando")
         _help.put_sentence(Text() + RToken("g", "             tko config --editor <comando>"))
@@ -8631,17 +8635,17 @@ class Play:
         cman.add_str(GuiKeys.right, self.tree.arrow_right)
         cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
         cman.add_str(GuiKeys.activate, self.actions.select_task)
-        cman.add_str(GuiKeys.inc_prog, self.tree.inc_progress)
-        cman.add_str(GuiKeys.prog_plus2, self.tree.inc_progress)
-        cman.add_str(GuiKeys.dec_prog, self.tree.dec_progress)
-        cman.add_str(GuiKeys.prog_less2, self.tree.dec_progress)
+        cman.add_str(GuiKeys.inc_prog1, self.tree.inc_progress)
+        cman.add_str(GuiKeys.inc_prog2, self.tree.inc_progress)
+        cman.add_str(GuiKeys.dec_prog1, self.tree.dec_progress)
+        cman.add_str(GuiKeys.dec_prog2, self.tree.dec_progress)
         cman.add_str(GuiKeys.github_open, self.actions.open_link)
         cman.add_str(GuiKeys.down_task, self.actions.down_task)
-        cman.add_str(GuiKeys.inc_self, self.tree.inc_self_grade)
-        cman.add_str(GuiKeys.inc_grade2, self.tree.inc_self_grade)
+        cman.add_str(GuiKeys.inc_self1, self.tree.inc_self_grade)
+        cman.add_str(GuiKeys.inc_self2, self.tree.inc_self_grade)
         cman.add_int(InputManager.plus, self.tree.inc_self_grade)
-        cman.add_str(GuiKeys.dec_self, self.tree.dec_self_grade)
-        cman.add_str(GuiKeys.dec_grade2, self.tree.dec_self_grade)
+        cman.add_str(GuiKeys.dec_self1, self.tree.dec_self_grade)
+        cman.add_str(GuiKeys.dec_self2, self.tree.dec_self_grade)
         cman.add_int(InputManager.minus, self.tree.dec_self_grade)
         cman.add_str(GuiKeys.edit, lambda: self.actions.open_code())
         cman.add_str(GuiKeys.expand, self.tree.process_expand)
@@ -8650,6 +8654,8 @@ class Play:
         cman.add_str(GuiKeys.images, self.app.toggle_images)
         cman.add_str(GuiKeys.set_lang, self.gui.language.set_language)
         cman.add_str(GuiKeys.graph, self.actions.generate_graph)
+        if Flags.admin:
+            cman.add_str(GuiKeys.mass, self.tree.mass_mark)
     
         cman.add_str(GuiKeys.key_help, self.gui.show_help)
         

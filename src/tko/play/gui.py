@@ -183,8 +183,8 @@ class Gui:
 
     def show_top_bar(self, frame: Frame):
         lista = [
-            Text() + RToken("Y", f"{GuiActions.self_grade} {GuiKeys.inc_self}{GuiKeys.dec_self}"),
-            Text() + RToken("Y", f"{GuiActions.progress} {GuiKeys.dec_prog}{GuiKeys.inc_prog}"),
+            Text() + RToken("Y", f"{GuiActions.self_grade} {GuiKeys.inc_self1}{GuiKeys.dec_self2}"),
+            Text() + RToken("Y", f"{GuiActions.progress} {GuiKeys.dec_prog1}{GuiKeys.inc_prog1}"),
             # Text() + RToken("Y", f"{GuiActions.pesquisar} {GuiKeys.pesquisar}"),
         ]
         help = self.build_list_sentence(lista)
@@ -226,7 +226,7 @@ class Gui:
         _help.put_sentence(Text() + f"   {GuiActions.download} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
         _help.put_sentence(Text() + f"   {GuiActions.edit} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
         _help.put_sentence(Text() + f"   {GuiActions.activate} " + RToken("r", "↲") + "  Interage com o elemento")
-        _help.put_sentence(Text() + f"   {GuiActions.progress} " + RToken("r", f"{GuiKeys.inc_self}") + RToken("r", f"{GuiKeys.dec_self}") + " Muda a autoavaliação")
+        _help.put_sentence(Text() + f"   {GuiActions.progress} " + RToken("r", f"{GuiKeys.inc_self1}") + RToken("r", f"{GuiKeys.dec_self2}") + " Muda a autoavaliação")
         _help.put_sentence(Text())
         _help.put_sentence(Text() + "Você pode mudar o editor padrão com o comando")
         _help.put_sentence(Text() + RToken("g", "             tko config --editor <comando>"))
