@@ -150,7 +150,7 @@ class TaskParser:
 
     @staticmethod
     def parse_line(line: str, line_num: int) -> Optional[Task]:
-        pattern = r'\s*?- \[ \].*?\[([^\]]+)\]\(([^)]+)\)(?:\s*<!--(.*?)-->)?'
+        pattern = r'\s*?- \[ \](.*?)\[([^\]]+)\]\(([^)]+)\)(?:\s*<!--(.*?)-->)?'
 
         match = re.match(pattern, line)
         if match is None:
@@ -160,8 +160,11 @@ class TaskParser:
         task.line = line
         task.opt = False
         task.title = match.group(1).strip()
-        task.link = match.group(2).strip()
-        if match.group(3) is not None:
+        if task.title != "":
+            task.title += " "
+        task.title += match.group(2).strip()
+        task.link = match.group(3).strip()
+        if match.group(4) is not None:
             TaskParser.__load_tags(task, match.group(3))
         
         for item in task.title.split(" "):

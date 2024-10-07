@@ -1,5 +1,8 @@
 # Changelog
 
+- 1.1.0
+  - refactor: down
+  - update: quest and task parsers and models
 - 1.0.1
   - add: support to old tio model
 - 1.0.0

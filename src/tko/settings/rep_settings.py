@@ -2,7 +2,7 @@ from typing import Any, Dict, List
 import os
 import json
 import urllib
-from ..util.remote import RemoteUrl, Absolute
+from ..util.remote_url import RemoteUrl, Absolute
 
 languages_avaliable = ["c", "cpp", "py", "ts", "js", "java", "go"]
 

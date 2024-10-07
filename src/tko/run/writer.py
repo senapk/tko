@@ -26,17 +26,17 @@ class Writer:
 
     @staticmethod
     def to_tio(unit: Unit):
-        text = "#INPUT############################################"
+        text  = ">>>>>>>> INSERT"
         if unit.case != '':
             text += " " + unit.case
         if unit.grade is not None:
             text += " " + str(unit.grade) + "%"
         text += '\n' + unit.input
-        text += "#OUTPUT===========================================\n"
+        text += "======== EXPECT\n"
         text += unit.expected
         if unit.expected != '' and unit.expected[-1] != '\n':
             text += '\n'
-        text += "#END##############################################\n"
+        text += "<<<<<<<< FINISH\n"
         return text
 
     @staticmethod

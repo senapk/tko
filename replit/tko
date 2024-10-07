@@ -24,14 +24,12 @@ import yaml # type: ignore
 import pydot # type: ignore
 import math
 import configparser
-from feno.remote_md import RemoteLink # type: ignore
-from feno.remote_md import Absolute # type: ignore
 import csv
 import hashlib
 from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
-__version__ = "1.0.1"
+__version__ = "1.1.1"
 
 
 class CheckVersion:
@@ -991,198 +989,6 @@ def get_md_link(title: str) -> str:
         elif c.isalnum():
             out += c
     return out
-
-
-
-class RemoteUrl:
-    def __init__(self, url: str):
-        self.raw_link: str | None = ""
-        self.remote: RemoteLink | None = None
-
-        if url.startswith("https://gist.githubusercontent.com"):
-            self.raw_link = url
-        else:
-            self.remote = RemoteLink().identify_from_url(url)
-        self.file = ""
-
-    def get_raw_url(self):
-        if self.raw_link:
-            return self.raw_link
-        if self.remote is None:
-            return ""
-        return "https://raw.githubusercontent.com/" + self.remote.user + "/" + self.remote.repo + "/" + self.remote.branch + "/" + self.remote.folder + "/" + self.remote.file
-
-    def download_absolute_to(self, filename: str):
-        [tempfile, __content] = urllib.request.urlretrieve(self.get_raw_url(), filename)
-        content = ""
-        try:
-            content = open(tempfile, encoding="utf-8").read()
-        except:
-            content = open(tempfile).read()
-        if self.remote is not None:
-            content = Absolute.relative_to_absolute(content, self.remote)
-        with open(filename, "w", encoding="utf-8") as f:
-            f.write(content.encode("utf-8").decode("utf-8"))
-        return
-
-    def __str__(self):
-        return self.get_raw_url()
-
-
-languages_avaliable = ["c", "cpp", "py", "ts", "js", "java", "go"]
-
-class RepSource:
-    def __init__(self, file: str = "", url: str = ""):
-        self.file: str = ""
-        if file != "":
-            self.file = os.path.abspath(file)
-        self.url: str = url
-
-    def set_file(self, file: str):
-        self.file = os.path.abspath(file)
-        return self
-
-    def set_url(self, url: str):
-        self.url = url
-        return self
-
-    def get_file_or_cache(self, rep_dir: str) -> str:
-        # arquivo existe e é local
-        if self.file != "" and os.path.exists(self.file) and self.url == "":
-            return self.file
-
-        # arquivo não existe e é remoto
-        if self.url != "" and (self.file == "" or not os.path.exists(self.file)):
-            cache_file = os.path.join(rep_dir, ".cache.md")
-            os.makedirs(rep_dir, exist_ok=True)
-            ru = RemoteUrl(self.url)
-            try:
-                ru.download_absolute_to(cache_file)
-            except urllib.error.URLError:
-                print("fail: Não foi possível baixar o arquivo do repositório")
-                if os.path.exists(cache_file):
-                    print("Usando arquivo do cache")
-                else:
-                    raise Warning("fail: Arquivo do cache não encontrado")
-            return cache_file
-
-        raise ValueError("fail: arquivo não encontrado ou configurações inválidas para o repositório")
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "file": self.file,
-            "url": self.url
-        }
-
-    def from_dict(self, data: Dict[str, Any]):
-        self.file = data.get("file", "")
-        self.url = data.get("url", "")
-        return self    
-
-class RepData:
-
-    def __init__(self, rootdir: str, alias: str, json_file: str = ""):
-        self.json_file: str = json_file
-        self.data: Dict[str, Any] = {}
-        self.rootdir = rootdir
-        self.alias = alias
-
-    def get_rootdir(self) -> str:
-        return self.rootdir
-
-    def get_rep_dir(self) -> str:
-        return os.path.join(self.rootdir, self.alias)
-
-    __expanded = "expanded"
-    __new_items = "new_items"
-    __tasks = "tasks"
-    __flags = "flags"
-    __lang = "lang"
-    __selected = "index"
-
-    defaults = {
-        __expanded: [],
-        __tasks: {},
-        __flags: {},
-        __new_items: [],
-        __lang: "",
-        __selected: ""
-    }
-
-    def get_selected(self) -> str:
-        return self.__get(RepData.__selected)
-
-    def get_expanded(self) -> List[str]:
-        return self.__get(RepData.__expanded)
-
-    def get_new_items(self) -> List[str]:
-        return self.__get(RepData.__new_items)
-    
-    def get_tasks(self) -> Dict[str, Any]:
-        return self.__get(RepData.__tasks)
-    
-    def get_flags(self) -> Dict[str, Any]:
-        return self.__get(RepData.__flags)
-    
-    def get_lang(self) -> str:
-        return self.__get(RepData.__lang)
-
-    def set_expanded(self, value: List[str]):
-        return self.__set(RepData.__expanded, value)
-    
-    def set_new_items(self, value: List[str]):
-        return self.__set(RepData.__new_items, value)
-    
-    def set_tasks(self, value: Dict[str, str]):
-        return self.__set(RepData.__tasks, value)
-    
-    def set_flags(self, value: Dict[str, Any]):
-        return self.__set(RepData.__flags, value)
-    
-    def set_lang(self, value: str):
-        return self.__set(RepData.__lang, value)
-    
-    def set_selected(self, value: str):
-        return self.__set(RepData.__selected, value)
-
-    def __get(self, key: str) -> Any:
-        if key not in self.defaults:
-            raise ValueError(f"Key {key} not found in RepSettings")
-        value = self.data.get(key, RepData.defaults[key])
-        if type(value) != type(RepData.defaults[key]):
-            return RepData.defaults[key]
-        return value
-
-    def __set(self, key: str, value: Any):
-        self.data[key] = value
-        return self
-
-    def load_defaults(self):
-        for key in RepData.defaults:
-            self.data[key] = RepData.defaults[key]
-        return self
-
-    def load_data_from_json(self):
-        with open(self.json_file, encoding="utf-8") as f:
-            self.data = json.load(f)
-        return self
-
-
-    def save_data_to_json(self):
-        if not os.path.exists(os.path.dirname(self.json_file)):
-            os.makedirs(os.path.dirname(self.json_file))
-        # filter keys that are not in defaults
-        for key in list(self.data.keys()):
-            if key not in RepData.defaults:
-                del self.data[key]
-
-        with open(self.json_file, "w", encoding="utf-8") as f:
-            f.write(json.dumps(self.data, indent=4))
-        return self
-
-    def __str__(self) -> str:
-        return ( f"data: {self.data}\n" )
-
 
 
 class FileSource:
@@ -2830,6 +2636,356 @@ class DiffBuilder:
                 output.append((a_data, b_data))
         return output, first_failure
 
+
+
+
+class RemoteLink:
+    def __init__(self):
+        self.user = ""
+        self.repo = ""
+        self.branch = ""
+        self.folder = ""
+        self.file = ""
+
+    def identify_from_url(self, url: str):
+        if url.startswith("https://raw.githubusercontent.com"):
+            url = url.replace("https://raw.githubusercontent.com/", "")
+            elements = url.split("/")
+            self.user = elements[0]
+            self.repo = elements[1]
+            if elements[2] != "refs":
+                raise ValueError("Invalid URL")
+            if elements[3] != "heads":
+                raise ValueError("Invalid URL")
+            self.branch = elements[4]
+            self.folder = "/".join(elements[5:-1])
+            self.file = elements[-1]
+        elif url.endswith(".md"):
+            url = url.replace("https://github.com/", "")
+            elements = url.split("/")
+            self.user = elements[0]
+            self.repo = elements[1]
+            if elements[2] != "blob":
+                raise ValueError("Invalid URL")
+            self.branch = elements[3]
+            self.folder = "/".join(elements[4:-1])
+            self.file = elements[-1]
+        else:
+            url = url.replace("https://github.com/", "")
+            elements = url.split("/")
+            self.user = elements[0]
+            self.repo = elements[1]
+            if elements[2] != "tree":
+                raise ValueError("Invalid URL")
+            self.branch = elements[3]
+            self.folder = "/".join(elements[4:])
+        return self
+
+class RemoteCfg:
+    def __init__(self, target: str):
+        self.target = target
+        self.remote: RemoteLink = RemoteLink()
+        self.cfg_path: str | None = None
+        self.__load_cfg_path(target)
+        self.__parse_cfg()
+
+    def cfg_exists(self):
+        return self.cfg_path is not None
+
+    def get_cfg_path(self):
+        if self.cfg_path is None:
+            raise Exception("cfg_path not set")
+        return self.cfg_path
+
+    def calc_link_for_local_file(self):
+        base_cfg_file = os.path.dirname(os.path.abspath(self.get_cfg_path()))
+        base_source_file = os.path.dirname(os.path.abspath(self.target))
+        if not base_source_file.startswith(base_cfg_file):
+            raise Exception("File not match with remote cfg")
+        folder = os.path.relpath(base_source_file, base_cfg_file)
+        self.remote.folder = folder
+        return self.remote
+
+    def __parse_cfg(self):
+        if self.cfg_path is None:
+            return
+        config = configparser.ConfigParser()
+        config.read(self.get_cfg_path())
+
+        self.remote.user = config["DEFAULT"]["user"]
+        self.remote.repo = config["DEFAULT"]["rep"]
+        self.remote.branch = config["DEFAULT"]["branch"]
+
+    def __load_cfg_path(self, target: str):
+        # look for the remote.cfg file in the current folder
+        # if not found, look for it in the parent folder
+        # if not found, look for it in the parent's parent folder ...
+
+        path = os.path.dirname(os.path.abspath(target))
+        while path != "/":
+            cfg_path = os.path.join(path, "remote.cfg")
+            if os.path.isfile(cfg_path):
+                self.cfg_path = cfg_path
+                break
+            path = os.path.dirname(path)
+
+
+class Absolute:
+
+    # processa o conteúdo trocando os links locais para links absolutos utilizando a url remota
+    @staticmethod
+    def __replace_remote(content: str, remote_raw: str, remote_view: str, remote_folder: str) -> str:
+        if content is None or content == "":
+            return ""
+        if not remote_raw.endswith("/"):
+            remote_raw += "/"
+        if not remote_view.endswith("/"):
+            remote_view += "/"
+        if not remote_folder.endswith("/"):
+            remote_folder += "/"
+
+        #trocando todas as imagens com link local
+        regex = r"!\[(.*?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
+        subst = "![\\1](" + remote_raw + "\\3)"
+        result = re.sub(regex, subst, content, 0)
+
+
+        regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?/)\)"
+        subst = "[\\1](" + remote_folder + "\\3)"
+        result = re.sub(regex, subst, result, 0)
+
+        #trocando todos os links locais cujo conteudo nao seja vazio
+        regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
+        subst = "[\\1](" + remote_view + "\\3)"
+        result = re.sub(regex, subst, result, 0)
+
+        return result
+
+    @staticmethod
+    def relative_to_absolute(content: str, rl: RemoteLink):
+        folder = rl.folder
+        user_repo = os.path.join(rl.user, rl.repo)
+        remote_raw    = os.path.join("https://raw.githubusercontent.com", user_repo, rl.branch , folder)
+        remote_view    = os.path.join("https://github.com/", user_repo, "blob", rl.branch, folder)
+        remote_folder = os.path.join("https://github.com/", user_repo, "tree", rl.branch, folder)
+        return Absolute.__replace_remote(content, remote_raw, remote_view, remote_folder)
+
+
+    @staticmethod
+    def convert_or_copy_or_print(source: str, target: str | None):
+        content = open(source).read()
+        cfg = RemoteCfg(source)
+        if cfg.cfg_exists():
+            content = Absolute.relative_to_absolute(content, cfg.calc_link_for_local_file())
+        if target is not None:
+            with open(target, "w") as f:
+                f.write(content)
+        else:
+            print(content)
+        
+
+def main_remote():
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument('target', metavar='T', type=str, help='folders')
+    # arg_parser.add_argument("--remote", "-r", action="store_true", help="convert local file to remote file")
+    arg_parser.add_argument("--output", "-o", type=str, help="output file")
+    args = arg_parser.parse_args()
+
+    Absolute.convert_or_copy_or_print(args.target, args.output)
+
+
+
+
+
+class RemoteUrl:
+    def __init__(self, url: str):
+        self.raw_link: str | None = ""
+        self.remote: RemoteLink | None = None
+
+        if url.startswith("https://gist.githubusercontent.com"):
+            self.raw_link = url
+        else:
+            self.remote = RemoteLink().identify_from_url(url)
+        self.file = ""
+
+    def get_raw_url(self):
+        if self.raw_link:
+            return self.raw_link
+        if self.remote is None:
+            return ""
+        return "https://raw.githubusercontent.com/" + self.remote.user + "/" + self.remote.repo + "/" + self.remote.branch + "/" + self.remote.folder + "/" + self.remote.file
+
+    def download_absolute_to(self, filename: str):
+        [tempfile, __content] = urllib.request.urlretrieve(self.get_raw_url(), filename)
+        content = ""
+        try:
+            content = open(tempfile, encoding="utf-8").read()
+        except:
+            content = open(tempfile).read()
+        if self.remote is not None:
+            content = Absolute.relative_to_absolute(content, self.remote)
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(content.encode("utf-8").decode("utf-8"))
+        return
+
+    def __str__(self):
+        return self.get_raw_url()
+
+
+languages_avaliable = ["c", "cpp", "py", "ts", "js", "java", "go"]
+
+class RepSource:
+    def __init__(self, file: str = "", url: str = ""):
+        self.file: str = ""
+        if file != "":
+            self.file = os.path.abspath(file)
+        self.url: str = url
+
+    def set_file(self, file: str):
+        self.file = os.path.abspath(file)
+        return self
+
+    def set_url(self, url: str):
+        self.url = url
+        return self
+
+    def get_file_or_cache(self, rep_dir: str) -> str:
+        # arquivo existe e é local
+        if self.file != "" and os.path.exists(self.file) and self.url == "":
+            return self.file
+
+        # arquivo não existe e é remoto
+        if self.url != "" and (self.file == "" or not os.path.exists(self.file)):
+            cache_file = os.path.join(rep_dir, ".cache.md")
+            os.makedirs(rep_dir, exist_ok=True)
+            ru = RemoteUrl(self.url)
+            try:
+                ru.download_absolute_to(cache_file)
+            except urllib.error.URLError:
+                print("fail: Não foi possível baixar o arquivo do repositório")
+                if os.path.exists(cache_file):
+                    print("Usando arquivo do cache")
+                else:
+                    raise Warning("fail: Arquivo do cache não encontrado")
+            return cache_file
+
+        raise ValueError("fail: arquivo não encontrado ou configurações inválidas para o repositório")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "file": self.file,
+            "url": self.url
+        }
+
+    def from_dict(self, data: Dict[str, Any]):
+        self.file = data.get("file", "")
+        self.url = data.get("url", "")
+        return self    
+
+class RepData:
+
+    def __init__(self, rootdir: str, alias: str, json_file: str = ""):
+        self.json_file: str = json_file
+        self.data: Dict[str, Any] = {}
+        self.rootdir = rootdir
+        self.alias = alias
+
+    def get_rootdir(self) -> str:
+        return self.rootdir
+
+    def get_rep_dir(self) -> str:
+        return os.path.join(self.rootdir, self.alias)
+
+    __expanded = "expanded"
+    __new_items = "new_items"
+    __tasks = "tasks"
+    __flags = "flags"
+    __lang = "lang"
+    __selected = "index"
+
+    defaults = {
+        __expanded: [],
+        __tasks: {},
+        __flags: {},
+        __new_items: [],
+        __lang: "",
+        __selected: ""
+    }
+
+    def get_selected(self) -> str:
+        return self.__get(RepData.__selected)
+
+    def get_expanded(self) -> List[str]:
+        return self.__get(RepData.__expanded)
+
+    def get_new_items(self) -> List[str]:
+        return self.__get(RepData.__new_items)
+    
+    def get_tasks(self) -> Dict[str, Any]:
+        return self.__get(RepData.__tasks)
+    
+    def get_flags(self) -> Dict[str, Any]:
+        return self.__get(RepData.__flags)
+    
+    def get_lang(self) -> str:
+        return self.__get(RepData.__lang)
+
+    def set_expanded(self, value: List[str]):
+        return self.__set(RepData.__expanded, value)
+    
+    def set_new_items(self, value: List[str]):
+        return self.__set(RepData.__new_items, value)
+    
+    def set_tasks(self, value: Dict[str, str]):
+        return self.__set(RepData.__tasks, value)
+    
+    def set_flags(self, value: Dict[str, Any]):
+        return self.__set(RepData.__flags, value)
+    
+    def set_lang(self, value: str):
+        return self.__set(RepData.__lang, value)
+    
+    def set_selected(self, value: str):
+        return self.__set(RepData.__selected, value)
+
+    def __get(self, key: str) -> Any:
+        if key not in self.defaults:
+            raise ValueError(f"Key {key} not found in RepSettings")
+        value = self.data.get(key, RepData.defaults[key])
+        if type(value) != type(RepData.defaults[key]):
+            return RepData.defaults[key]
+        return value
+
+    def __set(self, key: str, value: Any):
+        self.data[key] = value
+        return self
+
+    def load_defaults(self):
+        for key in RepData.defaults:
+            self.data[key] = RepData.defaults[key]
+        return self
+
+    def load_data_from_json(self):
+        with open(self.json_file, encoding="utf-8") as f:
+            self.data = json.load(f)
+        return self
+
+
+    def save_data_to_json(self):
+        if not os.path.exists(os.path.dirname(self.json_file)):
+            os.makedirs(os.path.dirname(self.json_file))
+        # filter keys that are not in defaults
+        for key in list(self.data.keys()):
+            if key not in RepData.defaults:
+                del self.data[key]
+
+        with open(self.json_file, "w", encoding="utf-8") as f:
+            f.write(json.dumps(self.data, indent=4))
+        return self
+
+    def __str__(self) -> str:
+        return ( f"data: {self.data}\n" )
+
 class LabelFactory:
     def __init__(self):
         self._label = ""
@@ -3798,7 +3954,7 @@ class VplParser:
 
 class Loader:
     # regex_tio = r"^ *#INPUT *(.*?)\n(.*?)^ *#OUTPUT *\n(.*?)^ *#END *\n?"
-    regex_tio = r"^#INPUT#* *(.*?)\n(.*?)^#OUTPUT=* *\n(.*?)^#END *\n?"
+    regex_tio = r"^\s*[>]* ?INSERT[ ]*([^\n]*?)\n(.*?)^\s*[=]* ?EXPECT[ ]*\n(.*?)^\s*[<]* ?FINISH*$"
     regex_tio_origin = r"^>>>>>>>> *(.*?)\n(.*?)^======== *\n(.*?)^<<<<<<<<"
 
     def __init__(self):
@@ -4489,17 +4645,17 @@ class Writer:
 
     @staticmethod
     def to_tio(unit: Unit):
-        text = "#INPUT############################################"
+        text  = ">>>>>>>> INSERT"
         if unit.case != '':
             text += " " + unit.case
         if unit.grade is not None:
             text += " " + str(unit.grade) + "%"
         text += '\n' + unit.input
-        text += "#OUTPUT===========================================\n"
+        text += "======== EXPECT\n"
         text += unit.expected
         if unit.expected != '' and unit.expected[-1] != '\n':
             text += '\n'
-        text += "#END##############################################\n"
+        text += "<<<<<<<< FINISH\n"
         return text
 
     @staticmethod
@@ -4919,7 +5075,7 @@ class TaskParser:
 
     @staticmethod
     def parse_line(line: str, line_num: int) -> Optional[Task]:
-        pattern = r'\s*?- \[ \].*?\[([^\]]+)\]\(([^)]+)\)(?:\s*<!--(.*?)-->)?'
+        pattern = r'\s*?- \[ \](.*?)\[([^\]]+)\]\(([^)]+)\)(?:\s*<!--(.*?)-->)?'
 
         match = re.match(pattern, line)
         if match is None:
@@ -4929,8 +5085,11 @@ class TaskParser:
         task.line = line
         task.opt = False
         task.title = match.group(1).strip()
-        task.link = match.group(2).strip()
-        if match.group(3) is not None:
+        if task.title != "":
+            task.title += " "
+        task.title += match.group(2).strip()
+        task.link = match.group(3).strip()
+        if match.group(4) is not None:
             TaskParser.__load_tags(task, match.group(3))
         
         for item in task.title.split(" "):

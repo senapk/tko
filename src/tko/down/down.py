@@ -5,7 +5,7 @@ import os
 import urllib.error
 import urllib.request
 import tempfile
-from tko.util.remote import RemoteUrl
+from tko.util.remote_url import RemoteUrl
 from typing import Callable, Tuple
 
 

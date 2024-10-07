@@ -9,7 +9,7 @@ from tko.down.down import DownProblem
 
 from tko.settings.settings import Settings
 from tko.game.game import Game
-from tko.util.remote import RemoteUrl
+from tko.util.remote_url import RemoteUrl
 from tko.cmds.cmd_build import CmdBuild
 from tko.util.param import Param
 
