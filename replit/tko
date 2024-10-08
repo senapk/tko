@@ -29,7 +29,7 @@ import hashlib
 from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 
 
 class CheckVersion:
@@ -3352,7 +3352,7 @@ class SolverBuilder:
         self.path_list: List[str] = [os.path.normpath(SolverBuilder.__add_dot_bar(path)) for path in solver_list]
         
         if len(self.path_list) > 0:
-            self.cache_dir = os.path.join(os.path.dirname(self.path_list[0]), ".cache")
+            self.cache_dir = os.path.join(os.path.dirname(self.path_list[0]), ".tko_cache")
         else:
             self.cache_dir = tempfile.mkdtemp()
         self.clear_cache()

@@ -1,5 +1,7 @@
 # Changelog
 
+- 1.2.1
+  - add: change .cache to .tko_cache
 - 1.2.0
   - fix: self reference bug in quests
 - 1.1.4
