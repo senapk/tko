@@ -36,7 +36,7 @@ class Writer:
         text += unit.expected
         if unit.expected != '' and unit.expected[-1] != '\n':
             text += '\n'
-        text += "<<<<<<<< FINISH\n"
+        text += "<<<<<<<< FINISH\n\n"
         return text
 
     @staticmethod

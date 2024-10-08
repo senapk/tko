@@ -34,55 +34,27 @@ class VplParser:
                    + "output=" + self.output \
                    + "gr=" + str(self.grade)
 
-    regex_vpl_basic = r"case= *([ \S]*) *\n *input *=(.*?)^ *output *=(.*)"
-    regex_vpl_extended = r"case= *([ \S]*) *\n *input *=(.*?)^ *output *=(.*?)^ *grade *reduction *= *(\S*)% *\n?"
+    regex_vpl_basic = r"[cC]ase *= *([ \S]*) *\n *[iI]nput *=([\s\S]*?)^ *[oO]utput *=([\s\S]*?)(?=^ *[cC]ase *=|\Z)"
+    regex_grade_reduction = r"([\s\S]*) *[Gg]rade [rR]eduction *= *(.*)%"
 
     @staticmethod
     def filter_quotes(x):
         return x[1:-2] if x.startswith('"') else x
 
     @staticmethod
-    def split_cases(text: str) -> List[str]:
-        regex = r"^ *[Cc]ase *="
-        subst = "case="
-        text = re.sub(regex, subst, text, 0, re.MULTILINE | re.DOTALL)
-        return ["case=" + t for t in text.split("case=")][1:]
-
-    @staticmethod
-    def extract_extended(text) -> Optional[CaseData]:
-        f = re.match(VplParser.regex_vpl_extended, text, re.MULTILINE | re.DOTALL)
-        if f is None:
-            return None
-        try:
-            gr = int(f.group(4))
-        except ValueError:
-            gr = None
-        return VplParser.CaseData(f.group(1), f.group(2), f.group(3), gr)
-
-    @staticmethod
-    def extract_basic(text) -> Optional[CaseData]:
-        m = re.match(VplParser.regex_vpl_basic, text, re.MULTILINE | re.DOTALL)
-        if m is None:
-            return None
-        return VplParser.CaseData(m.group(1), m.group(2), m.group(3), None)
-
-    @staticmethod
     def parse_vpl(content: str) -> List[CaseData]:
-        text_cases = VplParser.split_cases(content)
-        seq: List[VplParser.CaseData] = []
-
-        for text in text_cases:
-            case = VplParser.extract_extended(text)
-            if case is not None:
-                seq.append(case)
-                continue
-            case = VplParser.extract_basic(text)
-            if case is not None:
-                seq.append(case)
-                continue
-            print("invalid case: " + text)
-            exit(1)
-        return seq
+        output: List[VplParser.CaseData] = []
+        for m in re.finditer(VplParser.regex_vpl_basic, content, re.MULTILINE):
+            str_case = m.group(1)
+            str_input = m.group(2)
+            str_output = m.group(3)
+            grade: int | None = None
+            gr = re.match(VplParser.regex_grade_reduction, str_output, re.MULTILINE)
+            if gr is not None:
+                str_output = gr.group(1)
+                grade = int(gr.group(2))
+            output.append(VplParser.CaseData(str_case, str_input, str_output, grade))
+        return output
 
     @staticmethod
     def to_vpl(unit: CaseData):
@@ -209,7 +181,7 @@ class Loader:
             #      source = PreScript.process_source(source)
             with open(source, encoding="utf-8") as f:
                 content = f.read()
-            if source.endswith(".vpl"):
+            if source.endswith(".vpl") or source.endswith(".cases"):
                 return Loader.parse_vpl(content, source)
             elif source.endswith(".tio"):
                 return Loader.parse_tio(content, source)

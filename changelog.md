@@ -1,5 +1,7 @@
 # Changelog
 
+- 1.2.2
+  - fix: regex improved for .vpl files
 - 1.2.1
   - add: change .cache to .tko_cache
 - 1.2.0
