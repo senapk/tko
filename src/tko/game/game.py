@@ -192,6 +192,13 @@ class Game:
             c.title = c.title.strip()
 
         self.quests = valid_quests
+        # verificar auto dependencia
+        for q in self.quests.values():
+            for r in q.requires:
+                if q.key == r:
+                    print(f"Erro: auto refência {q.line_number} {q.line}")
+                    exit(1)
+
 
         # verificar se todas as quests requeridas existem e adicionar o ponteiro
         for q in self.quests.values():

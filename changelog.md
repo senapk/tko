@@ -1,5 +1,9 @@
 # Changelog
 
+- 1.2.0
+  - fix: self reference bug in quests
+- 1.1.4
+  - add: refactor filter mode and pattern
 - 1.1.0
   - refactor: down
   - update: quest and task parsers and models

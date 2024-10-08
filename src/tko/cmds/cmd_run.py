@@ -23,6 +23,7 @@ from ..play.opener import Opener
 from tko.settings.settings import Settings
 from tko.util.consts import DiffMode
 from tko.util.logger import Logger, LogAction, LoggerFS
+from tko.util.code_filter import CodeFilter
 
 
 class TKOFilterMode:
@@ -31,13 +32,14 @@ class TKOFilterMode:
         # path to ~/.tko_filter
         filter_path = os.path.join(os.path.expanduser("~"), ".tko_filter")
 
+        CodeFilter.cf_recursive(".", filter_path, force=True)
         # verify if filter command is available
-        if shutil.which("filter_code") is None:
-            print("ERROR: comando de filtragem não encontrado")
-            print("Instale o feno com 'pip install feno'")
-            exit(1)
+        # if shutil.which("filter_code") is None:
+        #     print("ERROR: comando de filtragem não encontrado")
+        #     print("Instale o feno com 'pip install feno'")
+        #     exit(1)
 
-        subprocess.run(["filter_code", "-rf", ".", "-o", filter_path])
+        # subprocess.run(["filter_code", "-rf", ".", "-o", filter_path])
 
         os.chdir(filter_path)
 

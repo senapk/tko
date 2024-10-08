@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Dict, List, Optional, Tuple
 from .task import Task
 from ..util.text import Text
@@ -12,8 +13,8 @@ class Quest(TreeItem):
         self.line = ""
         self.__tasks: List[Task] = []
         self.skills: Dict[str, int] = {}  # s:skill
-        self.requires = []  # r:quest_key
-        self.requires_ptr = []
+        self.requires: List[str] = []  # r:quest_key
+        self.requires_ptr: List[Quest] = []
         self.opt = False  # opt
         self.qmin: Optional[int] = None  # q:  minimo de 50 porcento da pontuação total para completar
         self.tmin: Optional[int] = None  # t: ou ter no mínimo esse valor de todas as tarefas
