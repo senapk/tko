@@ -1,20 +1,20 @@
-#INPUT
+>>>>>>>> INSERT
 1
 2
-#OUTPUT
+======== EXPECT
 3
-#END
+<<<<<<<< FINISH
 
-#INPUT
+>>>>>>>> INSERT
 6
 2
-#OUTPUT
+======== EXPECT
 8
-#END
+<<<<<<<< FINISH
 
-#INPUT
+>>>>>>>> INSERT
 6
 2
-#OUTPUT
+======== EXPECT
 8
-#END
+<<<<<<<< FINISH

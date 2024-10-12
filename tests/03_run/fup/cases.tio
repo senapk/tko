@@ -1,58 +1,58 @@
-#INPUT duas raízes
+>>>>>>>> INSERT duas raízes
 1
 2
 3
-#OUTPUT
+======== EXPECT
 0.44
 -5.07
-#END
+<<<<<<<< FINISH
 
-#INPUT duas raízes
+>>>>>>>> INSERT duas raízes
 3.0
 -7.0
 4.0
-#OUTPUT
+======== EXPECT
 1.33
 1.00
-#END
+<<<<<<<< FINISH
 
-#INPUT uma raiz
+>>>>>>>> INSERT uma raiz
 9.0
 -12.0
 4.0
-#OUTPUT
+======== EXPECT
 0.67
-#END
+<<<<<<<< FINISH
 
-#INPUT sem raízes
+>>>>>>>> INSERT sem raízes
 5.0
 3.0
 5.0
-#OUTPUT
+======== EXPECT
 nao ha raiz real
-#END
+<<<<<<<< FINISH
 
-#INPUT 05
+>>>>>>>> INSERT 05
 1.0
 -1.0
 -20.0
-#OUTPUT
+======== EXPECT
 5.00
 -4.00
-#END
+<<<<<<<< FINISH
 
-#INPUT 06
+>>>>>>>> INSERT 06
 2.00
 0.00
 0.00
-#OUTPUT
+======== EXPECT
 0.00
-#END
+<<<<<<<< FINISH
 
-#INPUT 07
+>>>>>>>> INSERT 07
 5.3
 3.4
 19.2
-#OUTPUT
+======== EXPECT
 nao ha raiz real
-#END
+<<<<<<<< FINISH

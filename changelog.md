@@ -1,5 +1,8 @@
 # Changelog
 
+- 1.3.0
+  - add: local rep mode
+  - fix: filter mode
 - 1.2.2
   - fix: regex improved for .vpl files
 - 1.2.1

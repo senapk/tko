@@ -4,7 +4,7 @@ import urllib.request
 import urllib.error
 import json
 
-from tko.settings.rep_settings import RepData
+from tko.settings.repository import Repository
 from tko.down.down import DownProblem
 
 from tko.settings.settings import Settings
@@ -15,18 +15,12 @@ from tko.util.param import Param
 
 
 class CmdDown:
-    def __init__(self, rep_alias: str, task_key: str, settings: Settings):
-        self.rep_alias = rep_alias
+    def __init__(self, rep: Repository, task_key: str, settings: Settings):
+        self.rep = rep
         self.task_key = task_key
         self.settings = settings
         self.game: Game | None = None
         self.language: str | None = None
-    
-        self.rep_dir = os.path.join(self.settings.app.get_rootdir(), self.rep_alias)
-        self.rep_source = self.settings.get_rep_source(self.rep_alias)
-        self.rep_data = self.settings.get_rep_data(self.rep_alias)
-
-
         self.destiny_folder: str = ""
         self.readme_path: str = ""
         self.cache_url: str = ""
@@ -48,7 +42,7 @@ class CmdDown:
         if self.game is not None:
             return self.game
         try:
-            file = self.rep_source.get_file_or_cache(self.rep_dir)
+            file = self.rep.load_index_or_cache()
         except urllib.error.HTTPError:
             DownProblem.fnprint("falha: Verifique sua internet")
         return Game(file)
@@ -80,7 +74,7 @@ class CmdDown:
             return False
 
     def build_cases_from_readme(self):
-        cases_tio_target = os.path.join(self.rep_dir, self.task_key, "cases.tio")
+        cases_tio_target = os.path.join(self.rep.get_rep_dir(), self.task_key, "cases.tio")
         param = Param.Manip()
         cb = CmdBuild(cases_tio_target, [self.readme_path], param)
         cb.set_quiet(True)
@@ -94,7 +88,7 @@ class CmdDown:
         
         readme_remote_url = RemoteUrl(item.link)
         self.cache_url = os.path.dirname(readme_remote_url.get_raw_url()) + "/.cache/"
-        self.destiny_folder = os.path.abspath(os.path.join(self.settings.app.get_rootdir(), self.rep_alias, self.task_key))
+        self.destiny_folder = os.path.abspath(os.path.join(self.rep.get_rep_dir(), self.task_key))
         self.readme_path =  os.path.join(self.destiny_folder, "Readme.md")
         self.mapi_file = os.path.join(self.destiny_folder, "mapi.json")
         if not self.download_readme(readme_remote_url):
@@ -117,7 +111,7 @@ class CmdDown:
         return True
 
     def check_and_select_language(self) -> str:
-        language_def = self.rep_data.get_lang()
+        language_def = self.rep.get_lang()
         if language_def == "":
             language_def = Settings().app.get_lang_default()
 

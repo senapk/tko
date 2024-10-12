@@ -1,10 +1,10 @@
 from __future__ import annotations
 from typing import Dict, List, Optional, Tuple
-from .task import Task
-from ..util.text import Text
+from tko.game.task import Task
+from tko.util.text import Text
 from tko.util.get_md_link import get_md_link
-import re
 from tko.game.tree_item import TreeItem
+import re
 
 class Quest(TreeItem):
     def __init__(self):

@@ -4,7 +4,7 @@ from .opener import Opener
 from typing import Any, Dict, Callable, Tuple
 from ..settings.settings import Settings
 from ..settings.app_settings import AppSettings
-from ..settings.rep_settings import languages_avaliable, RepData
+from ..settings.repository import languages_avaliable, Repository
 from ..util.text import Text, Token
 from tko.play.floating import Floating, FloatingInput, FloatingInputData
 from .fmt import Fmt
@@ -26,11 +26,11 @@ import os
 import curses
 
 class Play:
-    def __init__(self, settings: Settings, game: Game, rep: RepData):
+    def __init__(self, settings: Settings, rep: Repository):
         self.settings = settings
         self.app = settings.app
         self.rep = rep
-        self.game: Game = game
+        self.game: Game = rep.game
 
         self.exit = False
 
@@ -39,7 +39,7 @@ class Play:
         self.flagsman = FlagsMan(self.rep.get_flags())
         Flags.admin.set_value("0")
         self.fman = FloatingManager()
-        self.tree = TaskTree(self.settings, game, rep, self.fman)
+        self.tree = TaskTree(self.settings, rep, self.fman)
         self.gui = Gui(tree=self.tree, flagsman=self.flagsman, fman=self.fman)
 
         if len(self.rep.get_tasks()) == 0:

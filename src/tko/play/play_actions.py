@@ -12,11 +12,9 @@ from tko.cmds.cmd_run import Run
 from tko.util.consts import Success
 from tko.util.param import Param
 
-from tko.util.text import Text
 
 from tko.play.fmt import Fmt
 from tko.play.floating import Floating
-from tko.play.flags import Flags
 from tko.play.gui import Gui
 from tko.play.opener import Opener
 
@@ -37,7 +35,7 @@ class PlayActions:
         self.gui = gui
 
     def gen_graph_path(self) -> str:
-        return os.path.join(self.app._rootdir, self.rep.alias, "graph.png")
+        return os.path.join(self.rep.get_rep_dir(), "graph.png")
         
 
     def open_link_without_stdout_stderr(self, link: str):
@@ -48,7 +46,7 @@ class PlayActions:
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
             task: Task = obj
-            folder = os.path.join(self.app._rootdir, self.rep.alias, task.key)
+            folder = os.path.join(self.rep.get_rep_dir(), task.key)
             if os.path.exists(folder):
                 opener = Opener(self.settings).set_fman(self.fman)
                 opener.set_target([folder]).set_language(self.rep.get_lang())
@@ -117,7 +115,7 @@ class PlayActions:
             down_frame = (
                 Floating("v>").warning().set_text_ljust().set_header(" Baixando tarefa ")
             )
-            down_frame.put_text(f"\ntko down {self.rep.alias} {task.key} -l {lang}\n")
+            # down_frame.put_text(f"\ntko down {self.rep.alias} {task.key} -l {lang}\n")
             self.fman.add_input(down_frame)
 
             def fnprint(text):
@@ -125,7 +123,7 @@ class PlayActions:
                 down_frame.draw()
                 Fmt.refresh()
 
-            cmd_down = CmdDown(rep_alias=self.rep.alias, task_key=task.key, settings=self.settings)
+            cmd_down = CmdDown(rep=self.rep, task_key=task.key, settings=self.settings)
             cmd_down.set_game(self.game)
             cmd_down.set_fnprint(fnprint)
             cmd_down.set_language(lang)
@@ -154,15 +152,13 @@ class PlayActions:
                 )
     
     def select_task(self):
-        rootdir = self.app._rootdir
-        
         obj = self.tree.get_selected()
 
         if isinstance(obj, Quest) or isinstance(obj, Cluster):
             self.tree.toggle(obj)
             return
 
-        rep_dir = os.path.join(rootdir, self.rep.alias)
+        rep_dir = self.rep.get_rep_dir()
         if isinstance(obj, Task):
             task: Task = obj
             if not task.is_downloadable():

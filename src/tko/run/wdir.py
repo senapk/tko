@@ -13,7 +13,7 @@ from .solver_builder import SolverBuilder
 from ..util.text import Text
 from ..util.symbols import symbols
 from ..util.label_factory import LabelFactory
-from ..settings.rep_settings import languages_avaliable
+from ..settings.repository import languages_avaliable
 class Wdir:
     def __init__(self):
         self.__autoload = False
@@ -109,7 +109,6 @@ class Wdir:
 
         solvers = [target for target in target_list if Identifier.get_type(target) == IdentifierType.SOLVER]
         sources = [target for target in target_list if Identifier.get_type(target) != IdentifierType.SOLVER]
-        
 
         self.set_solver(solvers)
         self.set_sources(sources)

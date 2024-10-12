@@ -4,6 +4,7 @@ from tko.play.opener import Opener
 from tko.settings.settings import Settings
 from tko.util.text import Text, Token,  RToken
 from tko.util.symbols import symbols
+import os
 
 from tko.play.fmt import Fmt
 from tko.play.frame import Frame
@@ -76,7 +77,9 @@ class Gui:
     def show_main_bar(self, frame: Frame):
         top = Text()
         alias_color = "R"
-        top.add(self.style.border(alias_color, self.rep.alias.upper()))
+        dirname = self.rep.get_rep_dir()
+        dirname = os.path.basename(dirname).upper()
+        top.add(self.style.border(alias_color, dirname))
         if Flags.admin:
             color = "W" if Flags.admin else "K"
             top.add(self.style.border(color, "ADMIN"))
@@ -114,7 +117,7 @@ class Gui:
         todo = self.colors.main_bar_todo
         total_bar = self.style.build_bar(text, total_perc / 100, dx - 2, done, todo)
         frame_xp.set_header(Text().addf("/", "Skills"), "^", "{", "}")
-        frame_xp.set_footer(Text().add(" ").add(self.app._rootdir).add(" "), "^")
+        frame_xp.set_footer(Text().add(" ").add(" "), "^")
         frame_xp.draw()
 
         total, obt = self.game.get_skills_resume([self.game.quests[key] for key in self.game.available_quests])
@@ -183,7 +186,7 @@ class Gui:
 
     def show_top_bar(self, frame: Frame):
         lista = [
-            Text() + RToken("Y", f"{GuiActions.self_grade} {GuiKeys.inc_self1}{GuiKeys.dec_self2}"),
+            Text() + RToken("Y", f"{GuiActions.self_grade} {GuiKeys.inc_self1}{GuiKeys.dec_self1}"),
             Text() + RToken("Y", f"{GuiActions.progress} {GuiKeys.dec_prog1}{GuiKeys.inc_prog1}"),
             # Text() + RToken("Y", f"{GuiActions.pesquisar} {GuiKeys.pesquisar}"),
         ]

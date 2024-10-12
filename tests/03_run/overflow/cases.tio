@@ -1,11 +1,11 @@
-#INPUT
+>>>>>>>> INSERT
 1
 2
 3
 4
-#OUTPUT
+======== EXPECT
 1
 2
 3
 4
-#END
+<<<<<<<< FINISH

@@ -1,10 +1,10 @@
 from typing import Dict, Optional, Tuple
-from ..util.symbols import symbols
-from ..util.text import Text
-from tko.util.logger import Logger, LogAction
+from tko.util.symbols import symbols
+from tko.util.text import Text
+# from tko.util.logger import Logger, LogAction
+from tko.game.tree_item import TreeItem
 import re
 import os
-from tko.game.tree_item import TreeItem
 
 class Task(TreeItem):
 
@@ -12,11 +12,10 @@ class Task(TreeItem):
         super().__init__()
         self.line_number = 0
         self.line = ""
-
+        self.downloadable = False
         self.self_grade: int = 0 #valor de 0 a 9
         self.progress: int = 0 #valor de 0 a 100
         self.main_index: int = 0
-        self.downloadable = False
 
         self.qskills: Dict[str, int] = {} # default quest skills
         self.skills: Dict[str, int] = {} # local skills
@@ -97,7 +96,6 @@ class Task(TreeItem):
         grade = int(grade)
         if grade >= 0 and grade <= 10:
             if grade != self.self_grade:
-                Logger.get_instance().record_event(LogAction.SELF, self.key, str(grade))
                 self.self_grade = grade
         else:
             print(f"Grade inválida: {grade}")
@@ -117,7 +115,7 @@ class Task(TreeItem):
     
     def is_downloadable(self):
         return self.downloadable
-    
+
     def is_downloaded_for_lang(self, rep_dir: str, lang: str) -> bool:
         folder = os.path.join(rep_dir, self.key)
         if not os.path.isfile(os.path.join(folder, "Readme.md")):

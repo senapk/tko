@@ -76,17 +76,21 @@ class Main:
     @staticmethod
     def play(args):
         settings = Settings()
-        settings.check_rootdir()
-        CmdPlay.execute(args.repo, settings)
+        CmdPlay(settings).set_alias(args.repo).execute()
         CheckVersion().version_check()
 
     @staticmethod
-    def down(args):
+    def open(args):
         settings = Settings()
-        settings.check_rootdir()
-        cmd_down = CmdDown(rep_alias=args.course, task_key=args.activity, settings=settings)
-        cmd_down.set_language(args.language).set_fnprint(print)
-        cmd_down.execute()
+        CmdPlay(settings).set_folder(args.folder).execute()
+
+    # @staticmethod
+    # def down(args):
+    #     settings = Settings()
+    #     settings.check_rootdir()
+    #     cmd_down = CmdDown(rep=args.course, task_key=args.activity, settings=settings)
+    #     cmd_down.set_language(args.language).set_fnprint(print)
+    #     cmd_down.execute()
 
     @staticmethod
     def config(args):
@@ -118,10 +122,11 @@ class Parser:
         self.add_parser_run()
         self.add_parser_exec()
         self.add_parser_build()
-        self.add_parser_down()
+        # self.add_parser_down()
         self.add_parser_config()
         self.add_parser_repo()
         self.add_parser_play()
+        self.add_parser_open()
 
     def add_parser_global(self):
         self.parser.add_argument('-c', metavar='CONFIG_FILE', type=str, help='config json file.')
@@ -176,12 +181,12 @@ class Parser:
         parser_b.add_argument('target_list', metavar='T', type=str, nargs='+', help='input test targets.')
         parser_b.set_defaults(func=Main.build)
 
-    def add_parser_down(self):
-        parser_d = self.subparsers.add_parser('down', help='download problem from repository.')
-        parser_d.add_argument('course', type=str, nargs='?', help=" [ fup | ed | poo ].")
-        parser_d.add_argument('activity', type=str, nargs='?', help="activity @label.")
-        parser_d.add_argument('--language', '-l', type=str, nargs='?', help="[ c | cpp | js | ts | py | java ]")
-        parser_d.set_defaults(func=Main.down)
+    # def add_parser_down(self):
+    #     parser_d = self.subparsers.add_parser('down', help='download problem from repository.')
+    #     parser_d.add_argument('course', type=str, nargs='?', help=" [ fup | ed | poo ].")
+    #     parser_d.add_argument('activity', type=str, nargs='?', help="activity @label.")
+    #     parser_d.add_argument('--language', '-l', type=str, nargs='?', help="[ c | cpp | js | ts | py | java ]")
+    #     parser_d.set_defaults(func=Main.down)
 
     def add_parser_config(self):
         parser_s = self.subparsers.add_parser('config', help='settings tool.')
@@ -194,7 +199,7 @@ class Parser:
         g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
         g_lang.add_argument("--ask", action='store_true', help='ask language extension every time.')
 
-        parser_s.add_argument("--root", metavar="path", type=str, help='set root directory.')
+        # parser_s.add_argument("--root", metavar="path", type=str, help='set root directory.')
         parser_s.add_argument("--editor", metavar="cmd", type=str, help='set editor command.')
         parser_s.add_argument("--borders", metavar="0or1", type=str, help='enable borders.')
         parser_s.add_argument("--hud", metavar="0or1", type=str, help='enable hud.')
@@ -231,10 +236,13 @@ class Parser:
 
     def add_parser_play(self):
         parser_p = self.subparsers.add_parser('play', help='play a game.')
-        parser_p.add_argument('repo', metavar='repo', type=str, nargs="?", default="__ask", help='repository to be played.')
-        # parser_p.add_argument("--graph", "-g", action='store_true', help='generate graph of the game using graphviz.')
-        # parser_p.add_argument("--svg", "-s", action='store_true', help='generate graph in svg instead png.')
+        parser_p.add_argument('repo', metavar='repo', type=str, help='global repository to be played.')
         parser_p.set_defaults(func=Main.play)
+
+    def add_parser_open(self):
+        parser_p = self.subparsers.add_parser('open', help='open a folder with a repository.')
+        parser_p.add_argument('folder', metavar='folder', type=str, help='folder.')
+        parser_p.set_defaults(func=Main.open)
 
 
 def exec(parser: argparse.ArgumentParser, args):

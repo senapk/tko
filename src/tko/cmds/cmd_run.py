@@ -3,12 +3,11 @@ import os
 import shutil
 import subprocess
 
-from ..run.diff_builder_down import DownDiff
-
-from ..run.wdir import Wdir
+from tko.run.diff_builder_down import DownDiff
+from tko.run.wdir import Wdir
 from tko.util.consts import DiffCount, ExecutionResult
 from tko.util.param import Param
-from ..run.diff_builder_side import SideDiff
+from tko.run.diff_builder_side import SideDiff
 from tko.util.text import Text, Token
 
 from tko.util.consts import Success
@@ -16,15 +15,15 @@ from tko.util.raw_terminal import RawTerminal
 from tko.util.symbols import symbols
 
 from tko.util.freerun import Free
-from ..play.tester import Tester
-from ..run.unit_runner import UnitRunner
-from ..game.task import Task
-from ..play.opener import Opener
+from tko.play.tester import Tester
+from tko.run.unit_runner import UnitRunner
+from tko.game.task import Task
+from tko.play.opener import Opener
 from tko.settings.settings import Settings
 from tko.util.consts import DiffMode
 from tko.util.logger import Logger, LogAction, LoggerFS
 from tko.util.code_filter import CodeFilter
-
+from tko.settings.repository import Repository
 
 class TKOFilterMode:
     @staticmethod
@@ -94,35 +93,26 @@ class Run:
         if self.__list_mode():
             return
         
-        Logger.instance = Logger(logger_store=LoggerFS(self.settings))
-        logger = Logger.instance
-        rep_task = self.identity_rep_and_task_by_path()
-        if rep_task is not None:
-            rep, task_key = rep_task
-            logger.set_rep(rep)
-            if self.__task is None:
-                task = Task()
-                task.key = task_key
-                self.__task = task
+        if self.wdir.has_solver():
+            if self.wdir.get_solver().path_list:
+                Logger.instance = Logger(LoggerFS(self.settings))
+                logger = Logger.instance
+                solver_path = self.wdir.get_solver().path_list[0]
+                dirname = os.path.dirname(os.path.abspath(solver_path))
+                task_key = os.path.basename(dirname)
+                upper_dir = os.path.dirname(dirname)
+                log_file = os.path.join(upper_dir, Repository.LOG_FILE)
+                if os.path.exists(log_file):
+                    logger.set_log_file(log_file)
+                if self.__task is None:
+                    task = Task()
+                    task.key = task_key
+                    self.__task = task
 
         if self.__free_run():
             return
         self.__show_diff()
         return
-
-    def identity_rep_and_task_by_path(self) -> tuple[str, str] | None:
-        rootdir = self.settings.app.get_rootdir()
-        if len(self.wdir.get_solver().path_list) == 0:
-            return None
-        solver_path = os.path.abspath(self.wdir.get_solver().path_list[0])
-        if not solver_path.startswith(rootdir):
-            return None
-        pieces = solver_path[len(rootdir):].split(os.sep)
-        if len(pieces) < 2:
-            return None
-        rep = pieces[1]
-        task = pieces[2] if len(pieces) > 2 else ""
-        return (rep, task)
     
     def __remove_duplicates(self):
         # remove duplicates in target list keeping the order

@@ -1,7 +1,7 @@
 from typing import List, Any, Dict, Tuple, Union, Set
 
 from tko.settings.app_settings import AppSettings
-from tko.settings.rep_settings import RepData
+from tko.settings.repository import Repository
 
 from tko.util.text import Text, Token
 from tko.util.to_asc import SearchAsc, uni_to_asc
@@ -23,10 +23,10 @@ import os
 
 class TaskTree:
 
-    def __init__(self, settings: Settings, game: Game, rep: RepData, fman: FloatingManager):
+    def __init__(self, settings: Settings, rep: Repository, fman: FloatingManager):
         self.settings = settings
         self.app = settings.app
-        self.game = game
+        self.game = rep.game
         self.rep = rep
         self.fman = fman
         self.style = Border(settings.app)
@@ -108,12 +108,11 @@ class TaskTree:
 
     def str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool, min_value=1) -> Text:
         # downloadable_in_focus = False
-        rootdir = self.app._rootdir
         down_symbol = Token(" ")
         in_focus = focus_color != ""
         down_symbol = symbols.cant_download
-        rep_dir = os.path.join(self.app.get_rootdir(), self.rep.alias)
-        if t.is_downloadable() and rootdir != "":
+        rep_dir = self.rep.get_rep_dir()
+        if t.is_downloadable():
             if t.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
                 down_symbol = symbols.downloaded
                 # if in_focus:
@@ -439,6 +438,7 @@ class TaskTree:
 
         obj = self.get_selected()
         if isinstance(obj, Task):
+            # Logger.get_instance().record_event(LogAction.SELF, self.key, str(grade))
             obj.set_grade(grade)
             self.fman.add_input(
                 Floating("v").warning().set_header(" Auto avaliação ").set_text_ljust().set_content(GradeMessage().format(grade).split("\n"))

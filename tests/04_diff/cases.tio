@@ -1,4 +1,4 @@
-#INPUT
-#OUTPUT
+>>>>>>>> INSERT
+======== EXPECT
 1
-#END
+<<<<<<<< FINISH

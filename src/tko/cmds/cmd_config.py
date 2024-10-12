@@ -43,12 +43,6 @@ class CmdConfig:
             action = True
             settings.app._lang_default = ""
             print("Language extension will be asked always.")
-
-        if param.root:
-            action = True
-            path = os.path.abspath(param.root)
-            settings.app._rootdir = path
-            print("Root directory now is: " + path)
         
         if param.editor:
             action = True
@@ -58,7 +52,6 @@ class CmdConfig:
         if not action:
             action = True
             print(settings.get_settings_file())
-            print("Rootdir: {}".format(settings.app.get_rootdir()))
             print("Diff   : {}".format(str(settings.app.get_diff_mode())))
             print("Editor : {}".format(settings.app.get_editor()))
             print("Bordas : {}".format(settings.app.has_borders()))

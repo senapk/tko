@@ -2,8 +2,8 @@ from typing import List, Dict, Optional, Tuple
 from .cluster import Cluster
 from .quest import Quest, QuestParser
 from .task import Task, TaskParser
-from ..util.get_md_link import get_md_link
-from ..util.to_asc import uni_to_asc
+from tko.util.get_md_link import get_md_link
+from tko.util.to_asc import uni_to_asc
 import yaml # type: ignore
 
 import re
@@ -258,10 +258,10 @@ class Game:
             if task is not None:
                 
                 if active_quest is None:
-                    print(f"Task {task.key} não está dentro de uma quest")
-                    print(f"{file}:{task.line_number}")
-                    print(f"  {task}")
-                    exit(1)
+                    active_quest = Quest()
+                    active_quest.title = "Sem Quest"
+                    active_quest.key = "SemQuest"
+                    self.quests[active_quest.key] = active_quest
                 if self.filename is not None:
                     active_quest.add_task(task, self.filename)
                 task.quest_key = active_quest.key

@@ -1,6 +1,6 @@
 from typing import List, Optional
-from .quest import Quest
-from ..util.text import Text
+from tko.game.quest import Quest
+from tko.util.text import Text
 from tko.game.tree_item import TreeItem
 
 class Cluster(TreeItem):

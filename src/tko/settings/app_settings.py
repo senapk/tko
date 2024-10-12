@@ -3,7 +3,6 @@ from tko.util.consts import DiffMode
 class AppSettings:
 
     def __init__(self):
-        self._rootdir = ""
         self._diff_mode = str(DiffMode.SIDE)
         self._lang_default = ""
         self._last_rep = ""
@@ -33,9 +32,6 @@ class AppSettings:
     def toggle_images(self):
         self._use_images = not self._use_images
 
-    def set_rootdir(self, rootdir: str):
-        self._rootdir = rootdir
-        return self
 
     def set_diff_mode(self, diff_mode: DiffMode):
         self._diff_mode = str(diff_mode)
@@ -64,9 +60,6 @@ class AppSettings:
     def set_timeout(self, timeout: int):
         self._timeout = timeout
         return self
-
-    def get_rootdir(self) -> str:
-        return self._rootdir
 
     def get_diff_mode(self) -> DiffMode:
         if self._diff_mode == DiffMode.SIDE.value:
