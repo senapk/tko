@@ -20,9 +20,15 @@ def singleton(class_):
 class Settings:
     CFG_FILE = "settings.json"
 
+
     def __init__(self):
-        self.remote: Dict[str, str] = {}
-        self.reps: Dict[str, str] = {}
+        self.__remote = "remote"
+        self.__folder = "folders"
+        self.__appcfg = "appcfg"
+        self.__colors = "colors"
+
+        self.dict_alias_remote: Dict[str, str] = {}
+        self.dict_alias_folder: Dict[str, str] = {}
         self.app = AppSettings()
         self.colors = Colors()
 
@@ -44,51 +50,61 @@ class Settings:
         return self.settings_file
 
     def reset(self):
-        self.remote = {}
-        self.remote["fup"] = "https://github.com/qxcodefup/arcade/blob/master/Readme.md"
-        self.remote["ed"] = "https://github.com/qxcodeed/arcade/blob/master/Readme.md"
-        self.remote["poo"] = "https://github.com/qxcodepoo/arcade/blob/master/Readme.md"
-        self.reps = {}
+        self.dict_alias_remote = {}
+        self.dict_alias_remote["fup"] = "https://github.com/qxcodefup/arcade/blob/master/Readme.md"
+        self.dict_alias_remote["ed"] = "https://github.com/qxcodeed/arcade/blob/master/Readme.md"
+        self.dict_alias_remote["poo"] = "https://github.com/qxcodepoo/arcade/blob/master/Readme.md"
+        self.dict_alias_folder = {}
         self.app = AppSettings()
         self.colors = Colors()
         return self
 
-    def set_remote(self, alias: str, url_or_path: str):
-        self.remote[alias] = url_or_path
+    def set_alias_remote(self, alias: str, url_or_path: str):
+        if not(url_or_path.startswith("http:") or url_or_path.startswith("https:")):
+            url_or_path = os.path.abspath(url_or_path)
+        self.dict_alias_remote[alias] = url_or_path
         return self
 
-    def get_remote(self, alias: str) -> str:
-        if alias in self.remote:
-            return self.remote[alias]
-        raise Warning(f"Repositório {alias} não encontrado")
+    def has_alias_remote(self, alias: str) -> bool:
+        return alias in self.dict_alias_remote
 
-    def set_rep_folder(self, course: str, folder: str):
-        self.reps[course] = folder
+    def get_alias_remote(self, alias: str) -> str:
+        if alias in self.dict_alias_remote:
+            return self.dict_alias_remote[alias]
+        raise Warning(f"Repositório remoto {alias} não encontrado")
+
+    def set_alias_folder(self, course: str, folder: str):
+        self.dict_alias_folder[course] = folder
         return self
     
-    def has_rep_folder(self, course: str) -> bool:
-        return course in self.reps
+    def has_alias_folder(self, course: str) -> bool:
+        return course in self.dict_alias_folder
 
-    def get_rep_folder(self, course: str) -> str:
-        if course in self.reps:
-            folder = self.reps[course]
+    def del_alias_folder(self, course: str):
+        if course in self.dict_alias_folder:
+            del self.dict_alias_folder[course]
+        return self
+
+    def get_alias_folder(self, course: str) -> str:
+        if course in self.dict_alias_folder:
+            folder = self.dict_alias_folder[course]
             if not isinstance(folder, str):
                 self.reset()
                 self.save_settings()
-                return self.get_rep_folder(course)
+                return self.get_alias_folder(course)
             else:
                 return folder
-        raise Warning(f"Curso {course} não encontrado")
+        raise Warning(f"Não registrada pasta local para {course}")
     
     def load_settings(self):
         try:
             settings_file = self.get_settings_file() # assure right loading if value == ""
             with open(settings_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                self.remote = data.get("remote", {})
-                self.reps = data.get("reps", {})
-                self.app = AppSettings().from_dict(data.get("geral", {}))
-                self.colors = Colors().from_dict(data.get("colors", {}))
+                self.dict_alias_remote = data.get(self.__remote, {})
+                self.dict_alias_folder = data.get(self.__folder, {})
+                self.app = AppSettings().from_dict(data.get(self.__appcfg, {}))
+                self.colors = Colors().from_dict(data.get(self.__colors, {}))
         except (FileNotFoundError, json.decoder.JSONDecodeError) as _e:
             self.reset()
             self.save_settings()
@@ -155,10 +171,10 @@ class Settings:
     def save_settings(self):
         file = self.get_settings_file()
         value = {
-            "remote": self.remote,
-            "reps": self.reps,
-            "geral": self.app.to_dict(),
-            "colors": self.colors.to_dict()
+            self.__remote: self.dict_alias_remote,
+            self.__folder: self.dict_alias_folder,
+            self.__appcfg: self.app.to_dict(),
+            self.__colors: self.colors.to_dict()
         }
         with open(file, "w", encoding="utf-8") as f:
             json.dump(value, f, indent=4)

@@ -1,5 +1,10 @@
 # Changelog
 
+- 1.3.2
+  - add: readme.md to autoload testes if any .tio, .vpl or .cases file is found
+- 1.3.1
+  - add: simple model to describe readme tasks, quests and clusters
+  - fix: tasks without quest or cluster added in unamed quests and clusters
 - 1.3.0
   - add: local rep mode
   - fix: filter mode
@@ -352,11 +357,11 @@
   - new improvements on guide and config
   - updating config
 - 0.2.2
-  - removing [local][home] option
-  - adding [local][lang] for default extension language
+  - removing \[local][home] option
+  - adding \[local][lang] for default extension language
 - 0.2.1
   - improving SettingsParser
-  - creating entry [LOCAL][home] in settings for problems directory
+  - creating entry \[LOCAL][home] in settings for problems directory
   - adding config --home to set home directory
 - 0.2.0
   - use up_down diff auto if term size is low
@@ -386,7 +391,7 @@
   - fixed diff first failure mode
 - 0.1.2
   - added tko config -d to change default diff mode
-  - added tko run [--updown | --sideby] to select diff mode
+  - added tko run \[--updown | --sideby] to select diff mode
   - added more tests for run mode
   - checking if target files exist before run
   - integrating list, exec and run in tko

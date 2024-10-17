@@ -100,7 +100,6 @@ class Main:
         param.down = args.down
         param.lang = args.lang
         param.ask = args.ask
-        param.root = args.root
         param.editor = args.editor
         param.borders = args.borders
         param.hud = args.hud
@@ -124,7 +123,7 @@ class Parser:
         self.add_parser_build()
         # self.add_parser_down()
         self.add_parser_config()
-        self.add_parser_repo()
+        self.add_parser_rep()
         self.add_parser_play()
         self.add_parser_open()
 
@@ -206,7 +205,7 @@ class Parser:
 
         parser_s.set_defaults(func=Main.config)
 
-    def add_parser_repo(self):
+    def add_parser_rep(self):
         parser_repo = self.subparsers.add_parser('rep', help='manipulate repositories.')
         subpar_repo = parser_repo.add_subparsers(title='subcommands', help='help for subcommand.')
 
@@ -215,8 +214,7 @@ class Parser:
 
         repo_add = subpar_repo.add_parser('add', help='add a repository.')
         repo_add.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be added.')
-        repo_add.add_argument('--url', '-u', type=str, help='add a repository url to the settings file.')
-        repo_add.add_argument('--file', '-f', type=str, help='add a repository file to the settings file.')
+        repo_add.add_argument('value', metavar='value', type=str, help='url or path of the repository to be added.')
         repo_add.set_defaults(func=CmdRep.add)
 
         repo_rm = subpar_repo.add_parser('rm', help='remove a repository.')

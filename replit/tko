@@ -29,7 +29,7 @@ import hashlib
 from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
-__version__ = "1.3.0"
+__version__ = "1.3.2"
 
 
 class CheckVersion:
@@ -118,12 +118,12 @@ opening: Dict[str, str] = {}
 
 opening["estuda"] = r"""
 O modelo de avaliação usa 3 notas.
-Autonomia, Compreensão, Progresso.
+Progresso, Autonomia e Compreensão
 Progresso é o QUANTO você fez.
+Ele é gerado automaticamente pelos
+testes ou manualmente usando +-.
 Autonomia e Compreensão são COMO.
-Use -+ para marcar o COMO.
-O QUANTO é gerado automaticamente
-pelos testes ou usando <>.
+Use <> para marcar COMO você fez.
 Progressao : ✓ 9...0
 Autonomia  : ● ◕ ◑ ◔
 Compreensão: A B C D
@@ -2282,9 +2282,10 @@ class RawTerminal:
 class __Symbols:
 
     def __init__(self):
-        self.downloaded = Token("▼")
-        self.to_download = Token("▽")
-        self.cant_download = Token("◉")
+        self.task_remote_downloaded = Token("▼")
+        self.task_remote_to_download = Token("▲")
+        self.task_local = Token("▶")
+        self.task_to_visit = Token("◉")
         self.opening = Token("=> ")
         self.neutral = Token("»")
         self.success = Token("✓")
@@ -2329,6 +2330,7 @@ class __Symbols:
         self.emoji_capaz     = Token("◕", "y")#"😌"
         self.emoji_inseguro  = Token("◑", "m")#"😬"
         self.emoji_confuso   = Token("◔", "r")#"😕"
+        self.emoji_nao_fiz   = Token("ⵔ")
 
         self.emoji_alone = Token("A", "g")#"💖" # "✋"
         self.emoji_dicas = Token("B", "y") # "💡"
@@ -2689,7 +2691,7 @@ Tutorial   │$8  Guiado   │    [1]    │    [2]    │   [5]    │
     @staticmethod
     def grade_to_emojis(grade: int) -> Text:
         decode_dict = {
-                0: (Token("-"), Token("-", " ")),
+                0: (Token("-"), symbols.emoji_nao_fiz),
                 1: (symbols.emoji_guide, symbols.emoji_confuso),
                 2: (symbols.emoji_guide, symbols.emoji_inseguro),
                 3: (symbols.emoji_codes, symbols.emoji_inseguro),
@@ -2795,7 +2797,6 @@ class Task(TreeItem):
 
         self.default_min_value = 7 # default min grade to complete task
 
-
     def load_from_db(self, value: str):
         if ":" not in value:
             self.self_grade = int(value)
@@ -2879,24 +2880,40 @@ class Task(TreeItem):
         key = "" if self.key == self.title else self.key + " "
         return f"{line}    {self.self_grade} {key}{self.title} {self.skills} {self.link}"
     
+    def has_remote_link(self):
+        return self.link.startswith("http:") or self.link.startswith("https:")
+
+    def has_at_symbol(self):
+        return any([s.startswith("@") for s in self.title.split(" ")])
+
     def is_downloadable(self):
         return self.downloadable
 
-    def is_downloaded_for_lang(self, rep_dir: str, lang: str) -> bool:
-        folder = os.path.join(rep_dir, self.key)
-        if not os.path.isfile(os.path.join(folder, "Readme.md")):
+    def is_downloaded_for_lang(self, task_dir: str, lang: str) -> bool:
+        if not os.path.isfile(os.path.join(task_dir, "Readme.md")):
             return False
-        files = os.listdir(folder)
+        files = os.listdir(task_dir)
         if not any([f.endswith("." + lang) for f in files]):
             return False
         return True
 
 """
-- [ ] qq coisa [@label_opcional complemento] <!-- tags opcionais -->
+Usar @ ou # para definir a chave da tarefa
+Pode ser incluído no título da tarefa que está entre os [] ou nas tags url
+Exemplo:
+- [ ] [@banana Título da tarefa](https://tal_coias/Readme.md) 
+Chave: "banana"
+Título: "@banana Título da tarefa"
+link: "https://tal_coias/Readme.md"
+É uma tarefa de download
 
-se tem arroba, então é baixável?
-pra ser baixável tem que ter label
-coisas não baixáveis, tem um link e o link pode ser a
+----------
+Nessas tarefas que não serão baixadas para o repositório, se não for inserido o #, será utilizado como chave o link da tarefa
+- [ ] [#banana Título da tarefa](https://tal_coias/Readme.md)
+Chave: "banana"
+Título: "#banana Título da tarefa"
+link: "https://tal_coias/Readme.md"
+
 
 """
 class TaskParser:
@@ -2910,6 +2927,9 @@ class TaskParser:
                 key, value = t[1:].split(":")
                 task.skills[key] = int(value)
             elif t.startswith("@"):
+                task.key = t[1:]
+                task.downloadable = True
+            elif t.startswith("#"):
                 task.key = t[1:]
 
     @staticmethod
@@ -2927,6 +2947,7 @@ class TaskParser:
         if task.title != "":
             task.title += " "
         task.title += match.group(2).strip()
+        task.title = task.title.replace("`", "")
         task.link = match.group(3).strip()
         if match.group(4) is not None:
             TaskParser.__load_tags(task, match.group(3))
@@ -2935,14 +2956,17 @@ class TaskParser:
             if item.startswith("@"):
                 task.key = item[1:]
                 task.downloadable = True
+            if item.startswith("#"):
+                task.key = item[1:]
         if task.key == "":
             task.key = task.link
-
         return task
 
 class Quest(TreeItem):
-    def __init__(self):
+    def __init__(self, title: str = "", key: str = ""):
         super().__init__()
+        self.key = key
+        self.title = title
         self.line_number = 0
         self.line = ""
         self.__tasks: List[Task] = []
@@ -2961,6 +2985,7 @@ class Quest(TreeItem):
 
     def set_reachable(self, value: bool):
         self.__is_reachable = value
+        return self
 
     def __str__(self):
         line = str(self.line_number).rjust(3)
@@ -3087,15 +3112,37 @@ class QuestParser:
 
         return self.quest
 
-    def match_full_pattern(self):
-        fullpattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->(.*)$"
-        match = re.match(fullpattern, self.line)
-
-        if not match:
+    def match_full_pattern(self) -> bool:
+        if not self.line.startswith("### "):
             return False
-        self.quest.title = match.group(1).strip()
-        tags_raw = match.group(2).strip()
-        tags = [tag.strip() for tag in tags_raw.split()]
+        line = self.line[4:]
+        
+        pieces: list[str] = line.split("<!--")
+
+        # html tags
+        if len(pieces) > 1:
+            middle_end: list[str] = pieces[1].split("-->")
+            middle: str = middle_end[0]
+            end: str = middle_end[1]
+            line = pieces[0] + end # removendo raw text
+            self.process_raw_tags(middle)
+
+        self.quest.title = line
+        if "[](" in line:
+            pieces = line.split("[](")
+            self.quest.title = pieces[0]
+
+            del pieces[0]
+            for p in pieces:
+                key = p.split(")")[0]
+                if key[0] == "#":
+                    key = key[1:]
+                self.quest.requires.append(key)
+ 
+        return True
+
+    def process_raw_tags(self, raw_tags):
+        tags = [tag.strip() for tag in raw_tags.split(" ")]
 
         # skills
         skills = [t[1:] for t in tags if t.startswith("+")]
@@ -3105,17 +3152,6 @@ class QuestParser:
                 k, v = s.split(":")
                 self.quest.skills[k] = int(v)
         self.quest.opt = "opt" in tags
-        
-        # requires
-        self.quest.requires = []
-        if match.group(3).strip() != "":
-            pieces = match.group(3).strip().split("[](")
-            del pieces[0]
-            for p in pieces:
-                key = p.split(")")[0]
-                if key[0] == "#":
-                    key = key[1:]
-                self.quest.requires.append(key)
 
         # quest percent
         qmin = [t[2:] for t in tags if t.startswith("q:")]
@@ -3130,7 +3166,7 @@ class QuestParser:
             if self.quest.tmin > 10:
                 print("fail: tmin > 10")
                 exit(1)
-        return True
+
 
     def parse_quest(self, filename, line, line_num) -> Optional[Quest]:
         self.line = line
@@ -3624,7 +3660,7 @@ class SolverBuilder:
         self.path_list: List[str] = [os.path.normpath(SolverBuilder.__add_dot_bar(path)) for path in solver_list]
         
         if len(self.path_list) > 0:
-            self.cache_dir = os.path.join(os.path.dirname(self.path_list[0]), ".tko_cache")
+            self.cache_dir = os.path.join(os.path.dirname(self.path_list[0]), ".build")
         else:
             self.cache_dir = tempfile.mkdtemp()
         self.clear_cache()
@@ -3906,24 +3942,25 @@ class Game:
     # se existir um cluster nessa linha, insere na lista de clusters e 
     # retorno o objeto cluster inserido
     def load_cluster(self, line: str, line_num: int) -> Optional[Cluster]:
-        pattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->\s*$"
-        match = re.match(pattern, line)
-        if not match:
+        if not line.startswith("## "):
             return None
-        titulo = match.group(1)
-        tags_raw = match.group(2).strip()
-        tags = [tag.strip() for tag in tags_raw.split(" ")]
-        if "group" not in tags:
-            return None
-        
-        keys = [tag[1:] for tag in tags if tag.startswith("@")]
+        line = line[3:]
+
+        titulo = line
+        tags_raw = ""
+        if "<!--" in line:
+            pieces = line.split("<!--")
+            titulo = pieces[0]
+            middle_end = pieces[1].split("-->")
+            tags_raw = middle_end[0]
+            titulo += middle_end[1]
+
+        tags = [tag.strip() for tag in tags_raw.split(" ")]        
         key = uni_to_asc(get_md_link(titulo))
         try:
             color = [tag[2:] for tag in tags if tag.startswith("c:")][0]
         except IndexError as _e:
             color = None
-        if len(keys) > 0:
-            key = keys[0]
         
         cluster = Cluster(line_num, titulo, key, color)
 
@@ -4078,53 +4115,54 @@ class Game:
             visited: List[str] = []
             dfs(q, visited)
 
-    def parse_file(self, file):
-        self.filename = file
-        content = open(file, encoding="utf-8").read()
-        lines = content.split("\n")
-        active_quest = None
-        active_cluster = None
+    def tie_cluster_quest(self, cluster: Cluster, quest: Quest):
+        quest.cluster_key = cluster.key
+        cluster.quests.append(quest)
 
+    def create_unamed_quest(self, cluster):
+        key = cluster.key + "_Sem_Missão"
+        quest: Quest = Quest("Sem Missão", key)
+        self.quests[key] = quest
+        self.tie_cluster_quest(cluster, quest)
+        return quest
+
+    def parse_file(self, filename: str):
+        self.filename = filename
+        content = open(filename, encoding="utf-8").read()
+        lines = content.split("\n")
         self.parse_xp(content)
+
+        key = "Sem Grupo"
+        active_cluster: Cluster = Cluster(0, key, key)
+        self.clusters[key] = active_cluster
+        self.ordered_clusters.append(key)
+        
+        active_quest: Quest = self.create_unamed_quest(active_cluster)
 
         for line_num, line in enumerate(lines):
             cluster = self.load_cluster(line, line_num)
             if cluster is not None:
                 active_cluster = cluster
+                active_quest = self.create_unamed_quest(active_cluster)
                 continue
             
             quest = self.load_quest(line, line_num)
             if quest is not None:
                 active_quest = quest
-                if active_cluster is None:
-                    key = "Sem Grupo"
-                    cluster = Cluster(0, key, key)
-                    self.clusters[key] = cluster
-                    self.ordered_clusters.append(key)
-                    active_cluster = cluster
-                quest.cluster_key = active_cluster.key
-                active_cluster.quests.append(quest)
+                self.tie_cluster_quest(active_cluster, active_quest)
                 continue
 
             task = self.load_task(line, line_num)
             if task is not None:
-                
-                if active_quest is None:
-                    active_quest = Quest()
-                    active_quest.title = "Sem Quest"
-                    active_quest.key = "SemQuest"
-                    self.quests[active_quest.key] = active_quest
-                if self.filename is not None:
-                    active_quest.add_task(task, self.filename)
+                active_quest.add_task(task, filename)
                 task.quest_key = active_quest.key
-                if active_cluster is not None:
-                    task.cluster_key = active_cluster.key
+                task.cluster_key = active_cluster.key
 
         self.clear_empty()
 
         self.validate_requirements()
         for t in self.tasks.values():
-            t.process_link(os.path.dirname(file) + "/")
+            t.process_link(os.path.dirname(filename) + "/")
 
     def clear_empty(self):
 
@@ -4200,54 +4238,67 @@ class Game:
 languages_avaliable = ["c", "cpp", "py", "ts", "js", "java", "go"]
 
 class Repository:
-    CFG_FILE = "rep.json"
-    LOG_FILE = "rep_log.csv"
+    CFG_FILE = "repository.json"
+    LOG_FILE = "history.csv"
+    DAILY_FILE = "daily.json"
     INDEX_FILE = "Readme.md"
+    REMOTE_TASK_FOLDER = "remote"
 
     def __init__(self, folder: str):
         self.folder: str = folder
         self.data: Dict[str, Any] = {}
         self.game = Game()
 
+    def get_remote_task_folder(self, label: str) -> str:
+        return os.path.abspath(os.path.join(self.folder, Repository.REMOTE_TASK_FOLDER, label))
+
+    def is_local_dir(self, path):
+        rep_dir = self.get_rep_dir()
+        path = os.path.abspath(path)
+        return os.path.commonpath([rep_dir, path]) == rep_dir
+
     def load_game(self):
         self.game.parse_file(self.load_index_or_cache())
         return self
 
-    def get_json_file(self) -> str:
-        return os.path.join(self.folder, Repository.CFG_FILE)
+    def get_repository_file(self) -> str:
+        return os.path.abspath(os.path.join(self.folder, Repository.CFG_FILE))
     
-    def get_log_file(self) -> str:
-        return os.path.join(self.folder, Repository.LOG_FILE)
+    def get_history_file(self) -> str:
+        return os.path.abspath(os.path.join(self.folder, Repository.LOG_FILE))
     
-    def get_index_path(self) -> str:
-        return os.path.join(self.folder, Repository.INDEX_FILE)
+    def get_default_readme_path(self) -> str:
+        return os.path.abspath(os.path.join(self.folder, Repository.INDEX_FILE))
 
     def get_rep_dir(self) -> str:
-        return self.folder
+        return os.path.abspath(self.folder)
 
     def load_index_or_cache(self) -> str:
         file: str = self.get_local_file()
-        url: str = self.get_remote_url()
+        remote: str = self.get_remote_source()
         # arquivo existe e é local
-        if file != "" and os.path.exists(file) and url == "":
+        if file != "" and os.path.exists(file) and remote == "":
             return file
+        
+        if not remote.startswith("http:)") and not remote.startswith("https:"):
+            return remote
 
         # arquivo não existe e é remoto
-        if url != "" and (file == "" or not os.path.exists(file)):
-            cache_file = self.get_index_path()
+        if remote != "" and (file == "" or not os.path.exists(file)):
+            cache_file = self.get_default_readme_path()
             os.makedirs(self.folder, exist_ok=True)
-            ru = RemoteUrl(url)
+            ru = RemoteUrl(remote)
             try:
                 ru.download_absolute_to(cache_file)
             except urllib.error.URLError:
-                print("fail: Não foi possível baixar o arquivo do repositório")
+                print("Não foi possível baixar o arquivo do repositório")
                 if os.path.exists(cache_file):
                     print("Usando arquivo do cache")
                 else:
                     raise Warning("fail: Arquivo do cache não encontrado")
             return cache_file
 
-        raise ValueError("fail: arquivo não encontrado ou configurações inválidas para o repositório")
+        raise Warning("fail: arquivo não encontrado ou configurações inválidas para o repositório")
 
     __remote_url = "remote"  #remote url
     __local_file = "local"  #local file
@@ -4276,10 +4327,10 @@ class Repository:
         self.__set(Repository.__local_file, value)
         return self
 
-    def get_remote_url(self) -> str:
+    def get_remote_source(self) -> str:
         return self.__get(Repository.__remote_url)
     
-    def set_remote_url(self, value: str):
+    def set_remote_source(self, value: str):
         self.__set(Repository.__remote_url, value)
         return self
 
@@ -4335,32 +4386,32 @@ class Repository:
         self.data[key] = value
         return self
 
-    def load_defaults(self):
-        for key in Repository.defaults:
-            self.data[key] = Repository.defaults[key]
+    def create_empty_config_file(self, point_to_local_readme: bool = False):
+        if point_to_local_readme:
+            self.set_local_file(self.get_default_readme_path())
+        self.save_data_to_config_file()
         return self
 
-    def load_data_from_json(self):
-        if not os.path.exists(self.get_json_file()):
-            print("Criando arquivo de configuração")
-            self.load_defaults()
-            if os.path.exists(self.get_index_path()):
-                self.set_local_file(self.get_index_path())
-            self.save_data_to_json()
-            return self
-        with open(self.get_json_file(), encoding="utf-8") as f:
+    def has_local_config_file(self) -> bool:
+        return os.path.exists(self.get_repository_file())
+
+    def load_data_from_config_file(self):
+        with open(self.get_repository_file(), encoding="utf-8") as f:
             self.data = json.load(f)
         return self
 
-
-    def save_data_to_json(self):
-        json_file = self.get_json_file()
+    def save_data_to_config_file(self):
+        json_file = self.get_repository_file()
         if not os.path.exists(os.path.dirname(json_file)):
             os.makedirs(os.path.dirname(json_file))
         # filter keys that are not in defaults
         for key in list(self.data.keys()):
             if key not in Repository.defaults:
                 del self.data[key]
+
+        for key in Repository.defaults:
+            if key not in self.data:
+                self.data[key] = Repository.defaults[key]
 
         with open(json_file, "w", encoding="utf-8") as f:
             f.write(json.dumps(self.data, indent=4))
@@ -4669,7 +4720,6 @@ class AppSettings:
     def toggle_images(self):
         self._use_images = not self._use_images
 
-
     def set_diff_mode(self, diff_mode: DiffMode):
         self._diff_mode = str(diff_mode)
         return self
@@ -4722,6 +4772,7 @@ class AppSettings:
         return self._timeout
 
 
+
 def singleton(class_):
     instances = {}
     def getinstance(*args, **kwargs):
@@ -4734,9 +4785,15 @@ def singleton(class_):
 class Settings:
     CFG_FILE = "settings.json"
 
+
     def __init__(self):
-        self.remote: Dict[str, str] = {}
-        self.reps: Dict[str, str] = {}
+        self.__remote = "remote"
+        self.__folder = "folders"
+        self.__appcfg = "appcfg"
+        self.__colors = "colors"
+
+        self.dict_alias_remote: Dict[str, str] = {}
+        self.dict_alias_folder: Dict[str, str] = {}
         self.app = AppSettings()
         self.colors = Colors()
 
@@ -4757,51 +4814,61 @@ class Settings:
         return self.settings_file
 
     def reset(self):
-        self.remote = {}
-        self.remote["fup"] = "https://github.com/qxcodefup/arcade/blob/master/Readme.md"
-        self.remote["ed"] = "https://github.com/qxcodeed/arcade/blob/master/Readme.md"
-        self.remote["poo"] = "https://github.com/qxcodepoo/arcade/blob/master/Readme.md"
-        self.reps = {}
+        self.dict_alias_remote = {}
+        self.dict_alias_remote["fup"] = "https://github.com/qxcodefup/arcade/blob/master/Readme.md"
+        self.dict_alias_remote["ed"] = "https://github.com/qxcodeed/arcade/blob/master/Readme.md"
+        self.dict_alias_remote["poo"] = "https://github.com/qxcodepoo/arcade/blob/master/Readme.md"
+        self.dict_alias_folder = {}
         self.app = AppSettings()
         self.colors = Colors()
         return self
 
-    def set_remote(self, alias: str, url_or_path: str):
-        self.remote[alias] = url_or_path
+    def set_alias_remote(self, alias: str, url_or_path: str):
+        if not(url_or_path.startswith("http:") or url_or_path.startswith("https:")):
+            url_or_path = os.path.abspath(url_or_path)
+        self.dict_alias_remote[alias] = url_or_path
         return self
 
-    def get_remote(self, alias: str) -> str:
-        if alias in self.remote:
-            return self.remote[alias]
-        raise Warning(f"Repositório {alias} não encontrado")
+    def has_alias_remote(self, alias: str) -> bool:
+        return alias in self.dict_alias_remote
 
-    def set_rep_folder(self, course: str, folder: str):
-        self.reps[course] = folder
+    def get_alias_remote(self, alias: str) -> str:
+        if alias in self.dict_alias_remote:
+            return self.dict_alias_remote[alias]
+        raise Warning(f"Repositório remoto {alias} não encontrado")
+
+    def set_alias_folder(self, course: str, folder: str):
+        self.dict_alias_folder[course] = folder
         return self
     
-    def has_rep_folder(self, course: str) -> bool:
-        return course in self.reps
+    def has_alias_folder(self, course: str) -> bool:
+        return course in self.dict_alias_folder
 
-    def get_rep_folder(self, course: str) -> str:
-        if course in self.reps:
-            folder = self.reps[course]
+    def del_alias_folder(self, course: str):
+        if course in self.dict_alias_folder:
+            del self.dict_alias_folder[course]
+        return self
+
+    def get_alias_folder(self, course: str) -> str:
+        if course in self.dict_alias_folder:
+            folder = self.dict_alias_folder[course]
             if not isinstance(folder, str):
                 self.reset()
                 self.save_settings()
-                return self.get_rep_folder(course)
+                return self.get_alias_folder(course)
             else:
                 return folder
-        raise Warning(f"Curso {course} não encontrado")
+        raise Warning(f"Não registrada pasta local para {course}")
     
     def load_settings(self):
         try:
             settings_file = self.get_settings_file() # assure right loading if value == ""
             with open(settings_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                self.remote = data.get("remote", {})
-                self.reps = data.get("reps", {})
-                self.app = AppSettings().from_dict(data.get("geral", {}))
-                self.colors = Colors().from_dict(data.get("colors", {}))
+                self.dict_alias_remote = data.get(self.__remote, {})
+                self.dict_alias_folder = data.get(self.__folder, {})
+                self.app = AppSettings().from_dict(data.get(self.__appcfg, {}))
+                self.colors = Colors().from_dict(data.get(self.__colors, {}))
         except (FileNotFoundError, json.decoder.JSONDecodeError) as _e:
             self.reset()
             self.save_settings()
@@ -4868,10 +4935,10 @@ class Settings:
     def save_settings(self):
         file = self.get_settings_file()
         value = {
-            "remote": self.remote,
-            "reps": self.reps,
-            "geral": self.app.to_dict(),
-            "colors": self.colors.to_dict()
+            self.__remote: self.dict_alias_remote,
+            self.__folder: self.dict_alias_folder,
+            self.__appcfg: self.app.to_dict(),
+            self.__colors: self.colors.to_dict()
         }
         with open(file, "w", encoding="utf-8") as f:
             json.dump(value, f, indent=4)
@@ -5049,7 +5116,12 @@ class TaskTree:
                         if q.key in self.expanded:
                             for t in q.get_tasks():
                                 items.append(len(t.title) + 6)
-        self.max_title = max(items)
+
+        # print("debug", self.game.available_clusters)
+        # print("debug", self.game.available_quests)
+        self.max_title = min_value
+        if len(items) > 0:
+            self.max_title = max(items)
         if self.max_title < min_value:
             self.max_title = min_value
 
@@ -5057,15 +5129,15 @@ class TaskTree:
         # downloadable_in_focus = False
         down_symbol = Token(" ")
         in_focus = focus_color != ""
-        down_symbol = symbols.cant_download
-        rep_dir = self.rep.get_rep_dir()
+        down_symbol = symbols.task_to_visit
+        if not t.has_remote_link():
+            down_symbol = symbols.task_local
+        task_dir = self.rep.get_remote_task_folder(t.key)
         if t.is_downloadable():
-            if t.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
-                down_symbol = symbols.downloaded
-                # if in_focus:
-                #     downloadable_in_focus = True
+            if t.is_downloaded_for_lang(task_dir, self.rep.get_lang()):
+                down_symbol = symbols.task_remote_downloaded
             else:
-                down_symbol = symbols.to_download
+                down_symbol = symbols.task_remote_to_download
 
         color_aval = "" if quest_reachable else "r"
 
@@ -5089,8 +5161,12 @@ class TaskTree:
         done = color + "g"
         todo = color
         perc = t.progress
-        output.add(self.style.build_bar(t.title, perc / 100, len(t.title), done, todo, round=False))
-        # output.addf(color, t.title)
+        # output.add(self.style.build_bar(t.title, perc / 100, len(t.title), done, todo, round=False))
+        for word in t.title.split(" "):
+            if word.startswith("@") or word.startswith("#"):
+                output.addf(color + "g", word + " ")
+            else:
+                output.addf(color, word + " ")
 
         if in_focus:
             output.add(self.style.roundR(focus_color))
@@ -5275,6 +5351,19 @@ class TaskTree:
             return True
         return False
 
+    def force_show_single_cluster_and_quest(self, clusters: List[Cluster]):
+        if self.search_text != "":
+            return
+        if len(clusters) != 1:
+            return
+        cluster = clusters[0]
+        if cluster.key not in self.expanded:
+            self.expanded.append(cluster.key)
+        if len(cluster.quests) == 1:
+            if cluster.quests[0].key not in self.expanded:
+                self.expanded.append(cluster.quests[0].key)
+
+
     def reload_sentences(self):
         self.update_max_title()
         self.items = []
@@ -5285,6 +5374,9 @@ class TaskTree:
         matcher = SearchAsc(self.search_text)
 
         clusters = [self.game.clusters[key] for key in available_clusters if key in filtered]
+
+        self.force_show_single_cluster_and_quest(clusters)
+
         for cluster in clusters:
             quests = [q for q in cluster.quests if q.key in available_quests if q.key in filtered]
             focus_color = self.get_focus_color(cluster) if self.selected_item == cluster.get_key() else ""
@@ -5743,7 +5835,7 @@ class SetLangFunctor:
 
     def __call__(self):
         self.rep.set_lang(self.value.strip())
-        self.rep.save_data_to_json()
+        self.rep.save_data_to_config_file()
         self.fman.add_input(
             Floating()
             .put_text("")
@@ -5921,9 +6013,8 @@ class Gui:
 
     def show_top_bar(self, frame: Frame):
         lista = [
-            Text() + RToken("Y", f"{GuiActions.self_grade} {GuiKeys.inc_self1}{GuiKeys.dec_self1}"),
+            Text() + RToken("Y", f"{GuiActions.self_grade} {GuiKeys.dec_self1}{GuiKeys.inc_self1}"),
             Text() + RToken("Y", f"{GuiActions.progress} {GuiKeys.dec_prog1}{GuiKeys.inc_prog1}"),
-            # Text() + RToken("Y", f"{GuiActions.pesquisar} {GuiKeys.pesquisar}"),
         ]
         help = self.build_list_sentence(lista)
         self_grade = help[0]
@@ -5934,11 +6025,7 @@ class Gui:
         pre.append(progress)
 
         pos: List[Text] = []
-        # pos.append(pesquisar)
-        # skills = self.style.get_flag_sentence(Flags.skills)
         pos.append(self_grade)
-        # pos.append(skills)
-
 
         limit = frame.get_dx()
         size = limit - Text(" ").join(pre + pos).len() - 2
@@ -5960,11 +6047,11 @@ class Gui:
         _help.put_sentence(Text("  ").addf("r", "Shift + B")
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
         _help.put_sentence(Text() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
-        _help.put_sentence(Text() + f"{GuiActions.github} " + RToken("r", f"{GuiKeys.github_open}") + "  Abre tarefa em uma aba do browser")
+        _help.put_sentence(Text() + f"   {GuiActions.github} " + RToken("r", f"{GuiKeys.github_open}") + "  Abre tarefa em uma aba do browser")
         _help.put_sentence(Text() + f"   {GuiActions.download} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
         _help.put_sentence(Text() + f"   {GuiActions.edit} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
         _help.put_sentence(Text() + f"   {GuiActions.activate} " + RToken("r", "↲") + "  Interage com o elemento")
-        _help.put_sentence(Text() + f"   {GuiActions.progress} " + RToken("r", f"{GuiKeys.inc_self1}") + RToken("r", f"{GuiKeys.dec_self2}") + " Muda a autoavaliação")
+        _help.put_sentence(Text() + f"    {GuiActions.self_grade}" + RToken("r", f"{GuiKeys.dec_self1}") + RToken("r", f"{GuiKeys.inc_self1}") + " Muda a autoavaliação")
         _help.put_sentence(Text())
         _help.put_sentence(Text() + "Você pode mudar o editor padrão com o comando")
         _help.put_sentence(Text() + RToken("g", "             tko config --editor <comando>"))
@@ -5972,7 +6059,8 @@ class Gui:
 
     def build_xp_bar(self) -> Tuple[str, float]:
         xp = XP(self.game)
-        if xp.get_xp_total_obtained() == xp.get_xp_total_available():
+        available = xp.get_xp_total_available()
+        if available > 0 and xp.get_xp_total_obtained() == available:
             text = "Você atingiu o máximo de xp!"
             percent = 100.0
         else:
@@ -6703,7 +6791,10 @@ class Wdir:
         files = [os.path.join(folder, f) for f in files]
         files = [f for f in files if os.path.isfile(f)]
 
-        sources = [target for target in files if target.endswith(".tio")]
+        sources: list[str] = [target for target in files if target.endswith(".tio") or target.endswith(".vpl") or target.endswith(".cases")]
+        if len(sources) == 0:
+            sources = [target for target in files if target.endswith("Readme.md")]
+
         if self.__lang != "":
             solvers = [target for target in files if target.endswith("." + self.__lang)]
         else:
@@ -7396,9 +7487,9 @@ class Tester:
             extrap = self.borders.roundL(token.fmt)
             extras = self.borders.roundR(token.fmt)
             if foco and show_focused_index:
-                token.fmt = token.fmt.lower() + "C"
-                extrap = self.borders.roundL("C")
-                extras = self.borders.roundR("C")
+                token.fmt = token.fmt.lower() + ""
+                extrap = Token(" ") #self.borders.roundL("")
+                extras = Token(" ") #self.borders.roundR("")
             if self.locked_index and not foco:
                 output.add("  ").addf(token.fmt.lower(), str(index).zfill(2)).addf(token.fmt.lower(), token.text).add(" ")
             else:
@@ -7880,14 +7971,6 @@ class TKOFilterMode:
         filter_path = os.path.join(os.path.expanduser("~"), ".tko_filter")
 
         CodeFilter.cf_recursive(".", filter_path, force=True)
-        # verify if filter command is available
-        # if shutil.which("filter_code") is None:
-        #     print("ERROR: comando de filtragem não encontrado")
-        #     print("Instale o feno com 'pip install feno'")
-        #     exit(1)
-
-        # subprocess.run(["filter_code", "-rf", ".", "-o", filter_path])
-
         os.chdir(filter_path)
 
 class Run:
@@ -7906,9 +7989,9 @@ class Run:
         self.__lang = ""
         self.__task: Optional[Task] = None
         self.__opener: Optional[Opener] = None
-        self.__autorun: bool = True
+        self.__run_without_ask: bool = True
 
-    def set_curses(self, value:bool=True, success: Success=Success.RANDOM):
+    def set_curses(self, value:bool=True):
         self.__curses_mode = value
         return self
    
@@ -7920,8 +8003,8 @@ class Run:
         self.__opener = opener
         return self
 
-    def set_autorun(self, value:bool):
-        self.__autorun = value
+    def set_run_without_ask(self, value:bool):
+        self.__run_without_ask = value
 
     def set_task(self, task: Task):
         self.__task = task
@@ -8119,7 +8202,7 @@ class Run:
                 cdiff.set_opener(self.__opener)
             else:
                 cdiff.set_opener(self.__create_opener_for_wdir())
-            cdiff.set_autorun(self.__autorun)
+            cdiff.set_autorun(self.__run_without_ask)
             cdiff.run()
         else:
             print(Text(" Testando o código com os casos de teste ").center(RawTerminal.get_terminal_size(), "═"))
@@ -8135,10 +8218,10 @@ class Run:
 class CmdRep:
     @staticmethod
     def check(args):
-        folder = Settings().get_rep_folder(args.alias)
-        rep = Repository(folder).load_data_from_json().load_game()
+        folder = Settings().get_alias_folder(args.alias)
+        rep = Repository(folder).load_data_from_config_file().load_game()
         logger = Logger.get_instance()
-        logger.set_log_file(rep.get_log_file())
+        logger.set_log_file(rep.get_history_file())
 
         output = logger.check_log_file_integrity()
         if len(output) == 0:
@@ -8157,20 +8240,14 @@ class CmdRep:
 
     @staticmethod
     def add(args):
-        value = args.url if args.url else args.file
-        settings = Settings().set_remote(args.alias, value)
-        # if args.url:
-        #     rep.set_url(args.url)
-        # elif args.file:
-        #     rep.set_file(args.file)
-        # settings.remote[args.alias] = rep
+        settings = Settings().set_alias_remote(args.alias, args.value)
         settings.save_settings()
 
     @staticmethod
     def rm(args):
         sp = Settings()
-        if args.alias in sp.remote:
-            sp.remote.pop(args.alias)
+        if args.alias in sp.dict_alias_remote:
+            sp.dict_alias_remote.pop(args.alias)
             sp.save_settings()
         else:
             print("Repository not found.")
@@ -8184,8 +8261,8 @@ class CmdRep:
     @staticmethod
     def graph(args):
         settings = Settings()
-        folder:str = settings.get_rep_folder(args.alias)
-        rep = Repository(folder).load_data_from_json().load_game()
+        folder:str = settings.get_alias_folder(args.alias)
+        rep = Repository(folder).load_data_from_config_file().load_game()
         rep.game.check_cycle()
         Graph(rep.game).generate()
 
@@ -8271,7 +8348,7 @@ class DownProblem:
     def __create_file(content, path, label=""):
         with open(path, "w", encoding="utf-8") as f:
             f.write(content)
-        DownProblem.fnprint("  " + path + " " + label)
+        DownProblem.fnprint(path + " " + label)
 
     @staticmethod
     def unpack_json(loaded, destiny, lang: str):
@@ -8291,14 +8368,14 @@ class DownProblem:
         if not os.path.exists(path):
             with open(path, "w", encoding="utf-8") as f:
                 f.write(content.encode("utf-8").decode("utf-8"))
-            DownProblem.fnprint("  " + path + " (Novo)")
+            DownProblem.fnprint(path + " (Novo)")
         else:
             if open(path, encoding="utf-8").read() != content:
-                DownProblem.fnprint("  " + path + " (Atualizado)")
+                DownProblem.fnprint(path + " (Atualizado)")
                 with open(path, "w", encoding="utf-8") as f:
                     f.write(content)
             else:
-                DownProblem.fnprint("  " + path + " (Inalterado)")
+                DownProblem.fnprint(path + " (Inalterado)")
 
     @staticmethod
     def down_readme(readme_path: str,  remote_url: RemoteUrl):
@@ -8312,7 +8389,7 @@ class DownProblem:
         if not os.path.exists(destiny):
             os.makedirs(destiny, exist_ok=True)
         else:
-            DownProblem.fnprint("  Pasta do problema "+ destiny + " encontrada, juntando conteúdo.")
+            DownProblem.fnprint("Pasta do problema "+ destiny + " encontrada, juntando conteúdo.")
 
     @staticmethod
     def check_draft_existence(loaded_json, destiny: str, language: str, cache_url: str) -> bool:
@@ -8324,7 +8401,7 @@ class DownProblem:
         try:
             draft_path = os.path.join(destiny, "draft." + language)
             urllib.request.urlretrieve(cache_url + "draft." + language, draft_path)
-            DownProblem.fnprint("  " + draft_path + " (Rascunho)")
+            DownProblem.fnprint(draft_path + " (Rascunho)")
             return True
         except urllib.error.HTTPError:  # draft not found
             return False
@@ -8339,9 +8416,9 @@ class DownProblem:
                     f.write(Drafts.drafts[language])
                 else:
                     f.write("")
-            DownProblem.fnprint("  " + draft_path + " (Vazio)")
+            DownProblem.fnprint(draft_path + " (Vazio)")
         else:
-            DownProblem.fnprint("  " + draft_path + " (Não sobrescrito)")
+            DownProblem.fnprint(draft_path + " (Não sobrescrito)")
 
 
 
@@ -8389,10 +8466,10 @@ class CmdDown:
             DownProblem.down_readme(self.readme_path, readme_remote_url)
             return True
         except urllib.error.HTTPError:
-            DownProblem.fnprint("  falha: Arquivo de descrição não encontrado")
+            DownProblem.fnprint("falha: Arquivo de descrição não encontrado")
             return False
         except urllib.error.URLError:
-            DownProblem.fnprint("  falha: Não consegui baixar a atividade, verifique sua internet")
+            DownProblem.fnprint("falha: Não consegui baixar a atividade, verifique sua internet")
             return False
 
     def download_mapi(self) -> bool:
@@ -8402,7 +8479,7 @@ class CmdDown:
         except urllib.error.HTTPError:
             return False
         except urllib.error.URLError:
-            DownProblem.fnprint("  falha: não consegui baixar a atividade, verifique sua internet")
+            DownProblem.fnprint("falha: não consegui baixar a atividade, verifique sua internet")
             return False
 
     def build_cases_from_readme(self):
@@ -8420,7 +8497,7 @@ class CmdDown:
         
         readme_remote_url = RemoteUrl(item.link)
         self.cache_url = os.path.dirname(readme_remote_url.get_raw_url()) + "/.cache/"
-        self.destiny_folder = os.path.abspath(os.path.join(self.rep.get_rep_dir(), self.task_key))
+        self.destiny_folder = self.rep.get_remote_task_folder(self.task_key)
         self.readme_path =  os.path.join(self.destiny_folder, "Readme.md")
         self.mapi_file = os.path.join(self.destiny_folder, "mapi.json")
         if not self.download_readme(readme_remote_url):
@@ -8451,7 +8528,7 @@ class CmdDown:
             if language_def != "":
                 self.language = language_def
             else:
-                print("  Escolha uma extensão para os rascunhos: [c, cpp, py, ts, js, java]: ", end="")
+                print("Escolha uma extensão para os rascunhos: [c, cpp, py, ts, js, java]: ", end="")
                 self.language = input()
         return self.language
 
@@ -8482,11 +8559,16 @@ class PlayActions:
         outfile = tempfile.NamedTemporaryFile(delete=False)
         subprocess.Popen("python3 -m webbrowser -t {}".format(link), stdout=outfile, stderr=outfile, shell=True)
 
+    def get_task_folder(self, task: Task) -> str:
+        if task.is_downloadable():
+            return self.rep.get_remote_task_folder(task.key)
+        return os.path.abspath(os.path.dirname(task.link))
+
     def open_code(self):
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
             task: Task = obj
-            folder = os.path.join(self.rep.get_rep_dir(), task.key)
+            folder = self.rep.get_remote_task_folder(task.key)
             if os.path.exists(folder):
                 opener = Opener(self.settings).set_fman(self.fman)
                 opener.set_target([folder]).set_language(self.rep.get_lang())
@@ -8546,51 +8628,75 @@ class PlayActions:
             self.graph_opened = True
 
 
-    def down_task(self):
+    def down_remote_task(self):
 
-        lang = self.rep.get_lang() 
         obj = self.tree.get_selected()
-        if isinstance(obj, Task) and obj.key in obj.title:
-            task: Task = obj
-            down_frame = (
-                Floating("v>").warning().set_text_ljust().set_header(" Baixando tarefa ")
+        
+        if isinstance(obj, Quest):
+            self.fman.add_input(
+                Floating("v>")
+                .put_text("\nEssa é uma missão.")
+                .put_text("\nVocê só pode baixar tarefas.\n")
+                .error()
             )
-            # down_frame.put_text(f"\ntko down {self.rep.alias} {task.key} -l {lang}\n")
-            self.fman.add_input(down_frame)
-
-            def fnprint(text):
-                down_frame.put_text(text)
-                down_frame.draw()
-                Fmt.refresh()
-
-            cmd_down = CmdDown(rep=self.rep, task_key=task.key, settings=self.settings)
-            cmd_down.set_game(self.game)
-            cmd_down.set_fnprint(fnprint)
-            cmd_down.set_language(lang)
-            result = cmd_down.execute()
-            if result:
-                Logger.get_instance().record_event(LogAction.DOWN, task.key)
-
-        else:
-            if isinstance(obj, Quest):
-                self.fman.add_input(
-                    Floating("v>")
-                    .put_text("\nEssa é uma missão.")
-                    .put_text("\nVocê só pode baixar tarefas.\n")
-                    .error()
-                )
-            elif isinstance(obj, Cluster):
-                self.fman.add_input(
-                    Floating("v>")
-                    .put_text("\nEsse é um grupo.")
-                    .put_text("\nVocê só pode baixar tarefas.\n")
-                    .error()
-                )
-            else:
-                self.fman.add_input(
-                    Floating("v>").put_text("\nEssa não é uma tarefa de código.\n").error()
-                )
+            return
+        if isinstance(obj, Cluster):
+            self.fman.add_input(
+                Floating("v>")
+                .put_text("\nEsse é um grupo.")
+                .put_text("\nVocê só pode baixar tarefas.\n")
+                .error()
+            )
+        if not isinstance(obj, Task):
+            return
+        self.__down_remote_task(obj)
     
+    def __down_remote_task(self, task: Task):
+        if not task.is_downloadable():
+            self.fman.add_input(
+                Floating("v>").put_text("\nEssa não é uma tarefa de baixável.\n").error()
+            )
+            return
+        lang = self.rep.get_lang() 
+        down_frame = (
+            Floating("v>").warning().set_text_ljust().set_header(" Baixando tarefa ")
+        )
+        # down_frame.put_text(f"\ntko down {self.rep.alias} {task.key} -l {lang}\n")
+        self.fman.add_input(down_frame)
+
+        def fnprint(text):
+            down_frame.put_text(text)
+            down_frame.draw()
+            Fmt.refresh()
+
+        cmd_down = CmdDown(rep=self.rep, task_key=task.key, settings=self.settings)
+        cmd_down.set_game(self.game)
+        cmd_down.set_fnprint(fnprint)
+        cmd_down.set_language(lang)
+        result = cmd_down.execute()
+        if result:
+            Logger.get_instance().record_event(LogAction.DOWN, task.key)
+
+
+
+    @staticmethod
+    def is_web_link(link: str) -> bool:
+        return link.startswith("http:") or link.startswith("https:")
+
+    def select_task_action(self, task: Task):
+        if not task.is_downloadable(): # remote task with url link
+            if self.is_web_link(task.link):
+                self.open_link()
+            else: # local task
+                task_dir = os.path.abspath(os.path.dirname(task.link))
+                return self.run_selected_task(task, task_dir)
+        else: # downloadable task
+            task_dir = self.rep.get_remote_task_folder(task.key)
+            if not task.is_downloaded_for_lang(task_dir, self.rep.get_lang()):
+                self.__down_remote_task(task)
+            else:
+                return self.run_selected_task(task, task_dir)
+
     def select_task(self):
         obj = self.tree.get_selected()
 
@@ -8598,43 +8704,29 @@ class PlayActions:
             self.tree.toggle(obj)
             return
 
-        rep_dir = self.rep.get_rep_dir()
         if isinstance(obj, Task):
-            task: Task = obj
-            if not task.is_downloadable():
-                self.open_link()
-                return
-            if not task.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
-                self.down_task()
-                return
-            return self.run_selected_task(task, rep_dir)
+            return self.select_task_action(obj)
+
         raise Exception("Objeto não reconhecido")
         
-    def run_selected_task(self, task: Task, rep_dir: str):
-        folder = os.path.join(rep_dir, task.key)
-        run = Run(self.settings, [folder], None, Param.Basic())
+    def run_selected_task(self, task: Task, task_dir: str):
+        folder = task_dir
+        run = Run(settings=self.settings, target_list=[folder], exec_cmd=None, param=Param.Basic())
         run.set_lang(self.rep.get_lang())
         opener = Opener(self.settings).set_language(self.rep.get_lang()).set_target([folder])
         run.set_opener(opener)
-        run.set_autorun(False)
-        if self.app.has_images():
-            run.set_curses(True, Success.RANDOM)
-        else:
-            run.set_curses(True, Success.FIXED)
+        run.set_run_without_ask(False)
+        run.set_curses(True)
         run.set_task(task)
 
         run.build_wdir()
+        
         if not run.wdir.has_solver():
-            msg = Floating("v>").error()
+            DownProblem.create_default_draft(task_dir, self.rep.get_lang())
+            msg = Floating("v>").warning()
             msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.rep.get_lang()))
-            msg.put_text("Arquivos encontrados na pasta:\n")
-            folder = run.wdir.get_autoload_folder()
-            file_list = [file for file in os.listdir(folder) if os.path.isfile(os.path.join(folder, file))]
-            for file in file_list:
-                msg.put_text(file)
-            msg.put_text("")
+            msg.put_text("\nUm arquivo de rascunho foi criado em {}.".format(task_dir))
             self.fman.add_input(msg)
-            return
         return run.execute
 
 class PlayPalette:
@@ -8653,7 +8745,7 @@ class PlayPalette:
         options.append(
             FloatingInputData(
                 lambda: Text(" {} Tarefa: {y} para repositório local", symbols.action, "Baixar"),
-                self.actions.down_task,
+                self.actions.down_remote_task,
                 GuiKeys.down_task
             ).set_exit_on_action(True)
         )
@@ -8812,7 +8904,7 @@ class Play:
         self.tree.save_on_rep()
         self.rep.set_flags(self.flagsman.get_data())
         self.settings.save_settings()
-        self.rep.save_data_to_json()
+        self.rep.save_data_to_config_file()
 
     def send_quit_msg(self):
         def set_exit():
@@ -8847,7 +8939,7 @@ class Play:
         cman.add_str(GuiKeys.dec_prog1, self.tree.dec_progress)
         cman.add_str(GuiKeys.dec_prog2, self.tree.dec_progress)
         cman.add_str(GuiKeys.github_open, self.actions.open_link)
-        cman.add_str(GuiKeys.down_task, self.actions.down_task)
+        cman.add_str(GuiKeys.down_task, self.actions.down_remote_task)
         cman.add_str(GuiKeys.inc_self1, self.tree.inc_self_grade)
         cman.add_str(GuiKeys.inc_self2, self.tree.inc_self_grade)
         cman.add_int(InputManager.plus, self.tree.inc_self_grade)
@@ -8956,27 +9048,54 @@ class CmdPlay:
         self.folder = ""
 
     def set_alias(self, rep_alias: str):
-        if self.settings.has_rep_folder(rep_alias):
-            folder = self.settings.get_rep_folder(rep_alias)
-            print(f"Abrindo repositório de {rep_alias} em {folder}")
-            rep = Repository(folder).load_data_from_json().load_game()
-        elif rep_alias in self.settings.remote:
+        if self.settings.has_alias_folder(rep_alias):
+            folder = self.settings.get_alias_folder(rep_alias)
+            rep = Repository(folder)
+            if rep.has_local_config_file():
+                rep.load_data_from_config_file().load_game()
+                print(Text("Abrindo repositório de {g} em {g}", rep_alias, folder))
+                self.rep = rep
+                self.alias = rep_alias
+                return self
+            else:
+                print(f"Repositório {rep_alias} não encontrado em {folder}")
+                self.settings.del_alias_folder(rep_alias)
+                # vai para o próximo bloco
+
+        if rep_alias in self.settings.dict_alias_remote:
+            print(Text("Repositório remoto {g} encontrado", rep_alias))
             folder = CmdPlay.choose_destiny(rep_alias)
             os.makedirs(folder, exist_ok=True)
             rep = Repository(folder)
-            rep.set_remote_url(self.settings.get_remote(rep_alias))
-            rep.save_data_to_json()
-            rep.load_data_from_json()
+            rep.set_remote_source(self.settings.get_alias_remote(rep_alias))
+            rep.save_data_to_config_file()
+            rep.load_data_from_config_file()
             rep.load_game()
-            self.settings.set_rep_folder(rep_alias, folder)
-        else:
-            raise Warning("Repositório remoto não encontrado")
-        self.rep = rep
-        return self
+            self.settings.set_alias_folder(rep_alias, folder)
+            self.rep = rep
+            self.alias = rep_alias
+            return self
+        
+        raise Warning(Text("Repositório remoto {r} não encontrado", rep_alias))
 
     def set_folder(self, folder: str):
         self.folder = folder
-        self.rep = Repository(folder).load_data_from_json().load_game()
+        
+        self.rep = Repository(folder)
+        if not os.path.exists(folder):
+            raise Warning("Repositório não encontrado")
+        if not os.path.exists(self.rep.get_repository_file()):
+            print("Arquivo de configuração do repositório não encontrado")
+            print("Você deseja criar um repositorio na pasta {}? ".format(folder), end="")
+            print("s/n: ", end="")
+            op = input()
+            if op == "s":
+                self.rep.create_empty_config_file(point_to_local_readme=True)
+                self.settings.set_alias_folder(self.alias, folder)
+                print("Repositório criado com sucesso")
+            else:
+                raise Warning("Repositório não encontrado")
+        self.rep.load_data_from_config_file().load_game()
         return self
 
 
@@ -8985,14 +9104,13 @@ class CmdPlay:
             raise Warning("Repositório não encontrado")
         
         logger: Logger = Logger.get_instance()
-        logger.set_log_file(self.rep.get_log_file())
+        logger.set_log_file(self.rep.get_history_file())
         logger.record_event(LogAction.OPEN)
         target = ""
         if self.folder != "":
             target = self.folder
         else:
             target = self.alias
-        print(f"Abrindo repositório {target}")
         play = Play(self.settings, self.rep)
         play.play()
         logger.record_event(LogAction.QUIT)
@@ -9000,7 +9118,7 @@ class CmdPlay:
 
     @staticmethod
     def choose_destiny(rep_alias):
-        print(Text().add("Repositório ainda não foi criado, onde você deseja criá-lo?"))
+        print(Text().add("Repositório local ainda não foi criado, onde você deseja criá-lo?"))
         here_cwd = os.path.join(os.getcwd(), rep_alias)
         qxcode = os.path.join(os.path.expanduser("~"), "qxcode", rep_alias)
 
@@ -9106,7 +9224,6 @@ class Main:
         param.down = args.down
         param.lang = args.lang
         param.ask = args.ask
-        param.root = args.root
         param.editor = args.editor
         param.borders = args.borders
         param.hud = args.hud
@@ -9130,7 +9247,7 @@ class Parser:
         self.add_parser_build()
         # self.add_parser_down()
         self.add_parser_config()
-        self.add_parser_repo()
+        self.add_parser_rep()
         self.add_parser_play()
         self.add_parser_open()
 
@@ -9212,7 +9329,7 @@ class Parser:
 
         parser_s.set_defaults(func=Main.config)
 
-    def add_parser_repo(self):
+    def add_parser_rep(self):
         parser_repo = self.subparsers.add_parser('rep', help='manipulate repositories.')
         subpar_repo = parser_repo.add_subparsers(title='subcommands', help='help for subcommand.')
 
@@ -9221,8 +9338,7 @@ class Parser:
 
         repo_add = subpar_repo.add_parser('add', help='add a repository.')
         repo_add.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be added.')
-        repo_add.add_argument('--url', '-u', type=str, help='add a repository url to the settings file.')
-        repo_add.add_argument('--file', '-f', type=str, help='add a repository file to the settings file.')
+        repo_add.add_argument('value', metavar='value', type=str, help='url or path of the repository to be added.')
         repo_add.set_defaults(func=CmdRep.add)
 
         repo_rm = subpar_repo.add_parser('rm', help='remove a repository.')

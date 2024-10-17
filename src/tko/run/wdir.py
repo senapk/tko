@@ -77,7 +77,10 @@ class Wdir:
         files = [os.path.join(folder, f) for f in files]
         files = [f for f in files if os.path.isfile(f)]
 
-        sources = [target for target in files if target.endswith(".tio")]
+        sources: list[str] = [target for target in files if target.endswith(".tio") or target.endswith(".vpl") or target.endswith(".cases")]
+        if len(sources) == 0:
+            sources = [target for target in files if target.endswith("Readme.md")]
+
         if self.__lang != "":
             solvers = [target for target in files if target.endswith("." + self.__lang)]
         else:

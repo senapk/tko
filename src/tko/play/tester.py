@@ -263,9 +263,9 @@ class Tester:
             extrap = self.borders.roundL(token.fmt)
             extras = self.borders.roundR(token.fmt)
             if foco and show_focused_index:
-                token.fmt = token.fmt.lower() + "C"
-                extrap = self.borders.roundL("C")
-                extras = self.borders.roundR("C")
+                token.fmt = token.fmt.lower() + ""
+                extrap = Token(" ") #self.borders.roundL("")
+                extras = Token(" ") #self.borders.roundR("")
             if self.locked_index and not foco:
                 output.add("  ").addf(token.fmt.lower(), str(index).zfill(2)).addf(token.fmt.lower(), token.text).add(" ")
             else:

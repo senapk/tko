@@ -54,24 +54,25 @@ class Game:
     # se existir um cluster nessa linha, insere na lista de clusters e 
     # retorno o objeto cluster inserido
     def load_cluster(self, line: str, line_num: int) -> Optional[Cluster]:
-        pattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->\s*$"
-        match = re.match(pattern, line)
-        if not match:
+        if not line.startswith("## "):
             return None
-        titulo = match.group(1)
-        tags_raw = match.group(2).strip()
-        tags = [tag.strip() for tag in tags_raw.split(" ")]
-        if "group" not in tags:
-            return None
-        
-        keys = [tag[1:] for tag in tags if tag.startswith("@")]
+        line = line[3:]
+
+        titulo = line
+        tags_raw = ""
+        if "<!--" in line:
+            pieces = line.split("<!--")
+            titulo = pieces[0]
+            middle_end = pieces[1].split("-->")
+            tags_raw = middle_end[0]
+            titulo += middle_end[1]
+
+        tags = [tag.strip() for tag in tags_raw.split(" ")]        
         key = uni_to_asc(get_md_link(titulo))
         try:
             color = [tag[2:] for tag in tags if tag.startswith("c:")][0]
         except IndexError as _e:
             color = None
-        if len(keys) > 0:
-            key = keys[0]
         
         cluster = Cluster(line_num, titulo, key, color)
 
@@ -226,53 +227,54 @@ class Game:
             visited: List[str] = []
             dfs(q, visited)
 
-    def parse_file(self, file):
-        self.filename = file
-        content = open(file, encoding="utf-8").read()
-        lines = content.split("\n")
-        active_quest = None
-        active_cluster = None
+    def tie_cluster_quest(self, cluster: Cluster, quest: Quest):
+        quest.cluster_key = cluster.key
+        cluster.quests.append(quest)
 
+    def create_unamed_quest(self, cluster):
+        key = cluster.key + "_Sem_Missão"
+        quest: Quest = Quest("Sem Missão", key)
+        self.quests[key] = quest
+        self.tie_cluster_quest(cluster, quest)
+        return quest
+
+    def parse_file(self, filename: str):
+        self.filename = filename
+        content = open(filename, encoding="utf-8").read()
+        lines = content.split("\n")
         self.parse_xp(content)
+
+        key = "Sem Grupo"
+        active_cluster: Cluster = Cluster(0, key, key)
+        self.clusters[key] = active_cluster
+        self.ordered_clusters.append(key)
+        
+        active_quest: Quest = self.create_unamed_quest(active_cluster)
 
         for line_num, line in enumerate(lines):
             cluster = self.load_cluster(line, line_num)
             if cluster is not None:
                 active_cluster = cluster
+                active_quest = self.create_unamed_quest(active_cluster)
                 continue
             
             quest = self.load_quest(line, line_num)
             if quest is not None:
                 active_quest = quest
-                if active_cluster is None:
-                    key = "Sem Grupo"
-                    cluster = Cluster(0, key, key)
-                    self.clusters[key] = cluster
-                    self.ordered_clusters.append(key)
-                    active_cluster = cluster
-                quest.cluster_key = active_cluster.key
-                active_cluster.quests.append(quest)
+                self.tie_cluster_quest(active_cluster, active_quest)
                 continue
 
             task = self.load_task(line, line_num)
             if task is not None:
-                
-                if active_quest is None:
-                    active_quest = Quest()
-                    active_quest.title = "Sem Quest"
-                    active_quest.key = "SemQuest"
-                    self.quests[active_quest.key] = active_quest
-                if self.filename is not None:
-                    active_quest.add_task(task, self.filename)
+                active_quest.add_task(task, filename)
                 task.quest_key = active_quest.key
-                if active_cluster is not None:
-                    task.cluster_key = active_cluster.key
+                task.cluster_key = active_cluster.key
 
         self.clear_empty()
 
         self.validate_requirements()
         for t in self.tasks.values():
-            t.process_link(os.path.dirname(file) + "/")
+            t.process_link(os.path.dirname(filename) + "/")
 
     def clear_empty(self):
 

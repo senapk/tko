@@ -7,8 +7,10 @@ from tko.game.tree_item import TreeItem
 import re
 
 class Quest(TreeItem):
-    def __init__(self):
+    def __init__(self, title: str = "", key: str = ""):
         super().__init__()
+        self.key = key
+        self.title = title
         self.line_number = 0
         self.line = ""
         self.__tasks: List[Task] = []
@@ -27,6 +29,7 @@ class Quest(TreeItem):
 
     def set_reachable(self, value: bool):
         self.__is_reachable = value
+        return self
 
     def __str__(self):
         line = str(self.line_number).rjust(3)
@@ -153,15 +156,37 @@ class QuestParser:
 
         return self.quest
 
-    def match_full_pattern(self):
-        fullpattern = r"^#+\s*(.*?)<!--\s*(.*?)\s*-->(.*)$"
-        match = re.match(fullpattern, self.line)
-
-        if not match:
+    def match_full_pattern(self) -> bool:
+        if not self.line.startswith("### "):
             return False
-        self.quest.title = match.group(1).strip()
-        tags_raw = match.group(2).strip()
-        tags = [tag.strip() for tag in tags_raw.split()]
+        line = self.line[4:]
+        
+        pieces: list[str] = line.split("<!--")
+
+        # html tags
+        if len(pieces) > 1:
+            middle_end: list[str] = pieces[1].split("-->")
+            middle: str = middle_end[0]
+            end: str = middle_end[1]
+            line = pieces[0] + end # removendo raw text
+            self.process_raw_tags(middle)
+
+        self.quest.title = line
+        if "[](" in line:
+            pieces = line.split("[](")
+            self.quest.title = pieces[0]
+
+            del pieces[0]
+            for p in pieces:
+                key = p.split(")")[0]
+                if key[0] == "#":
+                    key = key[1:]
+                self.quest.requires.append(key)
+ 
+        return True
+
+    def process_raw_tags(self, raw_tags):
+        tags = [tag.strip() for tag in raw_tags.split(" ")]
 
         # skills
         skills = [t[1:] for t in tags if t.startswith("+")]
@@ -171,17 +196,6 @@ class QuestParser:
                 k, v = s.split(":")
                 self.quest.skills[k] = int(v)
         self.quest.opt = "opt" in tags
-        
-        # requires
-        self.quest.requires = []
-        if match.group(3).strip() != "":
-            pieces = match.group(3).strip().split("[](")
-            del pieces[0]
-            for p in pieces:
-                key = p.split(")")[0]
-                if key[0] == "#":
-                    key = key[1:]
-                self.quest.requires.append(key)
 
         # quest percent
         qmin = [t[2:] for t in tags if t.startswith("q:")]
@@ -196,7 +210,7 @@ class QuestParser:
             if self.quest.tmin > 10:
                 print("fail: tmin > 10")
                 exit(1)
-        return True
+
 
     def parse_quest(self, filename, line, line_num) -> Optional[Quest]:
         self.line = line

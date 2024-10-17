@@ -29,7 +29,6 @@ class Task(TreeItem):
 
         self.default_min_value = 7 # default min grade to complete task
 
-
     def load_from_db(self, value: str):
         if ":" not in value:
             self.self_grade = int(value)
@@ -113,24 +112,40 @@ class Task(TreeItem):
         key = "" if self.key == self.title else self.key + " "
         return f"{line}    {self.self_grade} {key}{self.title} {self.skills} {self.link}"
     
+    def has_remote_link(self):
+        return self.link.startswith("http:") or self.link.startswith("https:")
+
+    def has_at_symbol(self):
+        return any([s.startswith("@") for s in self.title.split(" ")])
+
     def is_downloadable(self):
         return self.downloadable
 
-    def is_downloaded_for_lang(self, rep_dir: str, lang: str) -> bool:
-        folder = os.path.join(rep_dir, self.key)
-        if not os.path.isfile(os.path.join(folder, "Readme.md")):
+    def is_downloaded_for_lang(self, task_dir: str, lang: str) -> bool:
+        if not os.path.isfile(os.path.join(task_dir, "Readme.md")):
             return False
-        files = os.listdir(folder)
+        files = os.listdir(task_dir)
         if not any([f.endswith("." + lang) for f in files]):
             return False
         return True
 
 """
-- [ ] qq coisa [@label_opcional complemento] <!-- tags opcionais -->
+Usar @ ou # para definir a chave da tarefa
+Pode ser incluído no título da tarefa que está entre os [] ou nas tags url
+Exemplo:
+- [ ] [@banana Título da tarefa](https://tal_coias/Readme.md) 
+Chave: "banana"
+Título: "@banana Título da tarefa"
+link: "https://tal_coias/Readme.md"
+É uma tarefa de download
 
-se tem arroba, então é baixável?
-pra ser baixável tem que ter label
-coisas não baixáveis, tem um link e o link pode ser a
+----------
+Nessas tarefas que não serão baixadas para o repositório, se não for inserido o #, será utilizado como chave o link da tarefa
+- [ ] [#banana Título da tarefa](https://tal_coias/Readme.md)
+Chave: "banana"
+Título: "#banana Título da tarefa"
+link: "https://tal_coias/Readme.md"
+
 
 """
 class TaskParser:
@@ -144,6 +159,9 @@ class TaskParser:
                 key, value = t[1:].split(":")
                 task.skills[key] = int(value)
             elif t.startswith("@"):
+                task.key = t[1:]
+                task.downloadable = True
+            elif t.startswith("#"):
                 task.key = t[1:]
 
     @staticmethod
@@ -161,6 +179,7 @@ class TaskParser:
         if task.title != "":
             task.title += " "
         task.title += match.group(2).strip()
+        task.title = task.title.replace("`", "")
         task.link = match.group(3).strip()
         if match.group(4) is not None:
             TaskParser.__load_tags(task, match.group(3))
@@ -169,7 +188,8 @@ class TaskParser:
             if item.startswith("@"):
                 task.key = item[1:]
                 task.downloadable = True
+            if item.startswith("#"):
+                task.key = item[1:]
         if task.key == "":
             task.key = task.link
-
         return task

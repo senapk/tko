@@ -12,6 +12,7 @@ from tko.cmds.cmd_run import Run
 from tko.util.consts import Success
 from tko.util.param import Param
 
+from tko.down.down import DownProblem
 
 from tko.play.fmt import Fmt
 from tko.play.floating import Floating
@@ -42,11 +43,16 @@ class PlayActions:
         outfile = tempfile.NamedTemporaryFile(delete=False)
         subprocess.Popen("python3 -m webbrowser -t {}".format(link), stdout=outfile, stderr=outfile, shell=True)
 
+    def get_task_folder(self, task: Task) -> str:
+        if task.is_downloadable():
+            return self.rep.get_remote_task_folder(task.key)
+        return os.path.abspath(os.path.dirname(task.link))
+
     def open_code(self):
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
             task: Task = obj
-            folder = os.path.join(self.rep.get_rep_dir(), task.key)
+            folder = self.rep.get_remote_task_folder(task.key)
             if os.path.exists(folder):
                 opener = Opener(self.settings).set_fman(self.fman)
                 opener.set_target([folder]).set_language(self.rep.get_lang())
@@ -106,51 +112,75 @@ class PlayActions:
             self.graph_opened = True
 
 
-    def down_task(self):
+    def down_remote_task(self):
 
-        lang = self.rep.get_lang() 
         obj = self.tree.get_selected()
-        if isinstance(obj, Task) and obj.key in obj.title:
-            task: Task = obj
-            down_frame = (
-                Floating("v>").warning().set_text_ljust().set_header(" Baixando tarefa ")
+        
+        if isinstance(obj, Quest):
+            self.fman.add_input(
+                Floating("v>")
+                .put_text("\nEssa é uma missão.")
+                .put_text("\nVocê só pode baixar tarefas.\n")
+                .error()
             )
-            # down_frame.put_text(f"\ntko down {self.rep.alias} {task.key} -l {lang}\n")
-            self.fman.add_input(down_frame)
-
-            def fnprint(text):
-                down_frame.put_text(text)
-                down_frame.draw()
-                Fmt.refresh()
-
-            cmd_down = CmdDown(rep=self.rep, task_key=task.key, settings=self.settings)
-            cmd_down.set_game(self.game)
-            cmd_down.set_fnprint(fnprint)
-            cmd_down.set_language(lang)
-            result = cmd_down.execute()
-            if result:
-                Logger.get_instance().record_event(LogAction.DOWN, task.key)
-
-        else:
-            if isinstance(obj, Quest):
-                self.fman.add_input(
-                    Floating("v>")
-                    .put_text("\nEssa é uma missão.")
-                    .put_text("\nVocê só pode baixar tarefas.\n")
-                    .error()
-                )
-            elif isinstance(obj, Cluster):
-                self.fman.add_input(
-                    Floating("v>")
-                    .put_text("\nEsse é um grupo.")
-                    .put_text("\nVocê só pode baixar tarefas.\n")
-                    .error()
-                )
-            else:
-                self.fman.add_input(
-                    Floating("v>").put_text("\nEssa não é uma tarefa de código.\n").error()
-                )
+            return
+        if isinstance(obj, Cluster):
+            self.fman.add_input(
+                Floating("v>")
+                .put_text("\nEsse é um grupo.")
+                .put_text("\nVocê só pode baixar tarefas.\n")
+                .error()
+            )
+        if not isinstance(obj, Task):
+            return
+        self.__down_remote_task(obj)
     
+    def __down_remote_task(self, task: Task):
+        if not task.is_downloadable():
+            self.fman.add_input(
+                Floating("v>").put_text("\nEssa não é uma tarefa de baixável.\n").error()
+            )
+            return
+        lang = self.rep.get_lang() 
+        down_frame = (
+            Floating("v>").warning().set_text_ljust().set_header(" Baixando tarefa ")
+        )
+        # down_frame.put_text(f"\ntko down {self.rep.alias} {task.key} -l {lang}\n")
+        self.fman.add_input(down_frame)
+
+        def fnprint(text):
+            down_frame.put_text(text)
+            down_frame.draw()
+            Fmt.refresh()
+
+        cmd_down = CmdDown(rep=self.rep, task_key=task.key, settings=self.settings)
+        cmd_down.set_game(self.game)
+        cmd_down.set_fnprint(fnprint)
+        cmd_down.set_language(lang)
+        result = cmd_down.execute()
+        if result:
+            Logger.get_instance().record_event(LogAction.DOWN, task.key)
+
+
+
+    @staticmethod
+    def is_web_link(link: str) -> bool:
+        return link.startswith("http:") or link.startswith("https:")
+
+    def select_task_action(self, task: Task):
+        if not task.is_downloadable(): # remote task with url link
+            if self.is_web_link(task.link):
+                self.open_link()
+            else: # local task
+                task_dir = os.path.abspath(os.path.dirname(task.link))
+                return self.run_selected_task(task, task_dir)
+        else: # downloadable task
+            task_dir = self.rep.get_remote_task_folder(task.key)
+            if not task.is_downloaded_for_lang(task_dir, self.rep.get_lang()):
+                self.__down_remote_task(task)
+            else:
+                return self.run_selected_task(task, task_dir)
+
     def select_task(self):
         obj = self.tree.get_selected()
 
@@ -158,41 +188,27 @@ class PlayActions:
             self.tree.toggle(obj)
             return
 
-        rep_dir = self.rep.get_rep_dir()
         if isinstance(obj, Task):
-            task: Task = obj
-            if not task.is_downloadable():
-                self.open_link()
-                return
-            if not task.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
-                self.down_task()
-                return
-            return self.run_selected_task(task, rep_dir)
+            return self.select_task_action(obj)
+
         raise Exception("Objeto não reconhecido")
         
-    def run_selected_task(self, task: Task, rep_dir: str):
-        folder = os.path.join(rep_dir, task.key)
-        run = Run(self.settings, [folder], None, Param.Basic())
+    def run_selected_task(self, task: Task, task_dir: str):
+        folder = task_dir
+        run = Run(settings=self.settings, target_list=[folder], exec_cmd=None, param=Param.Basic())
         run.set_lang(self.rep.get_lang())
         opener = Opener(self.settings).set_language(self.rep.get_lang()).set_target([folder])
         run.set_opener(opener)
-        run.set_autorun(False)
-        if self.app.has_images():
-            run.set_curses(True, Success.RANDOM)
-        else:
-            run.set_curses(True, Success.FIXED)
+        run.set_run_without_ask(False)
+        run.set_curses(True)
         run.set_task(task)
 
         run.build_wdir()
+        
         if not run.wdir.has_solver():
-            msg = Floating("v>").error()
+            DownProblem.create_default_draft(task_dir, self.rep.get_lang())
+            msg = Floating("v>").warning()
             msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.rep.get_lang()))
-            msg.put_text("Arquivos encontrados na pasta:\n")
-            folder = run.wdir.get_autoload_folder()
-            file_list = [file for file in os.listdir(folder) if os.path.isfile(os.path.join(folder, file))]
-            for file in file_list:
-                msg.put_text(file)
-            msg.put_text("")
+            msg.put_text("\nUm arquivo de rascunho foi criado em {}.".format(task_dir))
             self.fman.add_input(msg)
-            return
         return run.execute

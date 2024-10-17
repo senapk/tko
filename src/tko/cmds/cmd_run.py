@@ -32,14 +32,6 @@ class TKOFilterMode:
         filter_path = os.path.join(os.path.expanduser("~"), ".tko_filter")
 
         CodeFilter.cf_recursive(".", filter_path, force=True)
-        # verify if filter command is available
-        # if shutil.which("filter_code") is None:
-        #     print("ERROR: comando de filtragem não encontrado")
-        #     print("Instale o feno com 'pip install feno'")
-        #     exit(1)
-
-        # subprocess.run(["filter_code", "-rf", ".", "-o", filter_path])
-
         os.chdir(filter_path)
 
 class Run:
@@ -58,9 +50,9 @@ class Run:
         self.__lang = ""
         self.__task: Optional[Task] = None
         self.__opener: Optional[Opener] = None
-        self.__autorun: bool = True
+        self.__run_without_ask: bool = True
 
-    def set_curses(self, value:bool=True, success: Success=Success.RANDOM):
+    def set_curses(self, value:bool=True):
         self.__curses_mode = value
         return self
    
@@ -72,8 +64,8 @@ class Run:
         self.__opener = opener
         return self
 
-    def set_autorun(self, value:bool):
-        self.__autorun = value
+    def set_run_without_ask(self, value:bool):
+        self.__run_without_ask = value
 
     def set_task(self, task: Task):
         self.__task = task
@@ -271,7 +263,7 @@ class Run:
                 cdiff.set_opener(self.__opener)
             else:
                 cdiff.set_opener(self.__create_opener_for_wdir())
-            cdiff.set_autorun(self.__autorun)
+            cdiff.set_autorun(self.__run_without_ask)
             cdiff.run()
         else:
             print(Text(" Testando o código com os casos de teste ").center(RawTerminal.get_terminal_size(), "═"))

@@ -16,7 +16,7 @@ class DownProblem:
     def __create_file(content, path, label=""):
         with open(path, "w", encoding="utf-8") as f:
             f.write(content)
-        DownProblem.fnprint("  " + path + " " + label)
+        DownProblem.fnprint(path + " " + label)
 
     @staticmethod
     def unpack_json(loaded, destiny, lang: str):
@@ -36,14 +36,14 @@ class DownProblem:
         if not os.path.exists(path):
             with open(path, "w", encoding="utf-8") as f:
                 f.write(content.encode("utf-8").decode("utf-8"))
-            DownProblem.fnprint("  " + path + " (Novo)")
+            DownProblem.fnprint(path + " (Novo)")
         else:
             if open(path, encoding="utf-8").read() != content:
-                DownProblem.fnprint("  " + path + " (Atualizado)")
+                DownProblem.fnprint(path + " (Atualizado)")
                 with open(path, "w", encoding="utf-8") as f:
                     f.write(content)
             else:
-                DownProblem.fnprint("  " + path + " (Inalterado)")
+                DownProblem.fnprint(path + " (Inalterado)")
 
     @staticmethod
     def down_readme(readme_path: str,  remote_url: RemoteUrl):
@@ -57,7 +57,7 @@ class DownProblem:
         if not os.path.exists(destiny):
             os.makedirs(destiny, exist_ok=True)
         else:
-            DownProblem.fnprint("  Pasta do problema "+ destiny + " encontrada, juntando conteúdo.")
+            DownProblem.fnprint("Pasta do problema "+ destiny + " encontrada, juntando conteúdo.")
 
     @staticmethod
     def check_draft_existence(loaded_json, destiny: str, language: str, cache_url: str) -> bool:
@@ -69,7 +69,7 @@ class DownProblem:
         try:
             draft_path = os.path.join(destiny, "draft." + language)
             urllib.request.urlretrieve(cache_url + "draft." + language, draft_path)
-            DownProblem.fnprint("  " + draft_path + " (Rascunho)")
+            DownProblem.fnprint(draft_path + " (Rascunho)")
             return True
         except urllib.error.HTTPError:  # draft not found
             return False
@@ -84,6 +84,6 @@ class DownProblem:
                     f.write(Drafts.drafts[language])
                 else:
                     f.write("")
-            DownProblem.fnprint("  " + draft_path + " (Vazio)")
+            DownProblem.fnprint(draft_path + " (Vazio)")
         else:
-            DownProblem.fnprint("  " + draft_path + " (Não sobrescrito)")
+            DownProblem.fnprint(draft_path + " (Não sobrescrito)")

@@ -18,7 +18,7 @@ class SolverBuilder:
         self.path_list: List[str] = [os.path.normpath(SolverBuilder.__add_dot_bar(path)) for path in solver_list]
         
         if len(self.path_list) > 0:
-            self.cache_dir = os.path.join(os.path.dirname(self.path_list[0]), ".tko_cache")
+            self.cache_dir = os.path.join(os.path.dirname(self.path_list[0]), ".build")
         else:
             self.cache_dir = tempfile.mkdtemp()
         self.clear_cache()

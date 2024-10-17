@@ -102,7 +102,12 @@ class TaskTree:
                         if q.key in self.expanded:
                             for t in q.get_tasks():
                                 items.append(len(t.title) + 6)
-        self.max_title = max(items)
+
+        # print("debug", self.game.available_clusters)
+        # print("debug", self.game.available_quests)
+        self.max_title = min_value
+        if len(items) > 0:
+            self.max_title = max(items)
         if self.max_title < min_value:
             self.max_title = min_value
 
@@ -110,15 +115,15 @@ class TaskTree:
         # downloadable_in_focus = False
         down_symbol = Token(" ")
         in_focus = focus_color != ""
-        down_symbol = symbols.cant_download
-        rep_dir = self.rep.get_rep_dir()
+        down_symbol = symbols.task_to_visit
+        if not t.has_remote_link():
+            down_symbol = symbols.task_local
+        task_dir = self.rep.get_remote_task_folder(t.key)
         if t.is_downloadable():
-            if t.is_downloaded_for_lang(rep_dir, self.rep.get_lang()):
-                down_symbol = symbols.downloaded
-                # if in_focus:
-                #     downloadable_in_focus = True
+            if t.is_downloaded_for_lang(task_dir, self.rep.get_lang()):
+                down_symbol = symbols.task_remote_downloaded
             else:
-                down_symbol = symbols.to_download
+                down_symbol = symbols.task_remote_to_download
 
         color_aval = "" if quest_reachable else "r"
 
@@ -142,8 +147,12 @@ class TaskTree:
         done = color + "g"
         todo = color
         perc = t.progress
-        output.add(self.style.build_bar(t.title, perc / 100, len(t.title), done, todo, round=False))
-        # output.addf(color, t.title)
+        # output.add(self.style.build_bar(t.title, perc / 100, len(t.title), done, todo, round=False))
+        for word in t.title.split(" "):
+            if word.startswith("@") or word.startswith("#"):
+                output.addf(color + "g", word + " ")
+            else:
+                output.addf(color, word + " ")
 
         if in_focus:
             output.add(self.style.roundR(focus_color))
@@ -328,6 +337,19 @@ class TaskTree:
             return True
         return False
 
+    def force_show_single_cluster_and_quest(self, clusters: List[Cluster]):
+        if self.search_text != "":
+            return
+        if len(clusters) != 1:
+            return
+        cluster = clusters[0]
+        if cluster.key not in self.expanded:
+            self.expanded.append(cluster.key)
+        if len(cluster.quests) == 1:
+            if cluster.quests[0].key not in self.expanded:
+                self.expanded.append(cluster.quests[0].key)
+
+
     def reload_sentences(self):
         self.update_max_title()
         self.items = []
@@ -338,6 +360,9 @@ class TaskTree:
         matcher = SearchAsc(self.search_text)
 
         clusters = [self.game.clusters[key] for key in available_clusters if key in filtered]
+
+        self.force_show_single_cluster_and_quest(clusters)
+
         for cluster in clusters:
             quests = [q for q in cluster.quests if q.key in available_quests if q.key in filtered]
             focus_color = self.get_focus_color(cluster) if self.selected_item == cluster.get_key() else ""

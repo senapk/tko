@@ -56,7 +56,7 @@ class Play:
         self.tree.save_on_rep()
         self.rep.set_flags(self.flagsman.get_data())
         self.settings.save_settings()
-        self.rep.save_data_to_json()
+        self.rep.save_data_to_config_file()
 
     def send_quit_msg(self):
         def set_exit():
@@ -91,7 +91,7 @@ class Play:
         cman.add_str(GuiKeys.dec_prog1, self.tree.dec_progress)
         cman.add_str(GuiKeys.dec_prog2, self.tree.dec_progress)
         cman.add_str(GuiKeys.github_open, self.actions.open_link)
-        cman.add_str(GuiKeys.down_task, self.actions.down_task)
+        cman.add_str(GuiKeys.down_task, self.actions.down_remote_task)
         cman.add_str(GuiKeys.inc_self1, self.tree.inc_self_grade)
         cman.add_str(GuiKeys.inc_self2, self.tree.inc_self_grade)
         cman.add_int(InputManager.plus, self.tree.inc_self_grade)

@@ -32,7 +32,6 @@ class AppSettings:
     def toggle_images(self):
         self._use_images = not self._use_images
 
-
     def set_diff_mode(self, diff_mode: DiffMode):
         self._diff_mode = str(diff_mode)
         return self

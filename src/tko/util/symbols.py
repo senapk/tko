@@ -3,9 +3,10 @@ from .text import Token
 class __Symbols:
 
     def __init__(self):
-        self.downloaded = Token("▼")
-        self.to_download = Token("▽")
-        self.cant_download = Token("◉")
+        self.task_remote_downloaded = Token("▼")
+        self.task_remote_to_download = Token("▲")
+        self.task_local = Token("▶")
+        self.task_to_visit = Token("◉")
         self.opening = Token("=> ")
         self.neutral = Token("»")
         self.success = Token("✓")
@@ -50,6 +51,7 @@ class __Symbols:
         self.emoji_capaz     = Token("◕", "y")#"😌"
         self.emoji_inseguro  = Token("◑", "m")#"😬"
         self.emoji_confuso   = Token("◔", "r")#"😕"
+        self.emoji_nao_fiz   = Token("ⵔ")
 
         self.emoji_alone = Token("A", "g")#"💖" # "✋"
         self.emoji_dicas = Token("B", "y") # "💡"

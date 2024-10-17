@@ -57,10 +57,10 @@ class CmdDown:
             DownProblem.down_readme(self.readme_path, readme_remote_url)
             return True
         except urllib.error.HTTPError:
-            DownProblem.fnprint("  falha: Arquivo de descrição não encontrado")
+            DownProblem.fnprint("falha: Arquivo de descrição não encontrado")
             return False
         except urllib.error.URLError:
-            DownProblem.fnprint("  falha: Não consegui baixar a atividade, verifique sua internet")
+            DownProblem.fnprint("falha: Não consegui baixar a atividade, verifique sua internet")
             return False
 
     def download_mapi(self) -> bool:
@@ -70,7 +70,7 @@ class CmdDown:
         except urllib.error.HTTPError:
             return False
         except urllib.error.URLError:
-            DownProblem.fnprint("  falha: não consegui baixar a atividade, verifique sua internet")
+            DownProblem.fnprint("falha: não consegui baixar a atividade, verifique sua internet")
             return False
 
     def build_cases_from_readme(self):
@@ -88,7 +88,7 @@ class CmdDown:
         
         readme_remote_url = RemoteUrl(item.link)
         self.cache_url = os.path.dirname(readme_remote_url.get_raw_url()) + "/.cache/"
-        self.destiny_folder = os.path.abspath(os.path.join(self.rep.get_rep_dir(), self.task_key))
+        self.destiny_folder = self.rep.get_remote_task_folder(self.task_key)
         self.readme_path =  os.path.join(self.destiny_folder, "Readme.md")
         self.mapi_file = os.path.join(self.destiny_folder, "mapi.json")
         if not self.download_readme(readme_remote_url):
@@ -119,6 +119,6 @@ class CmdDown:
             if language_def != "":
                 self.language = language_def
             else:
-                print("  Escolha uma extensão para os rascunhos: [c, cpp, py, ts, js, java]: ", end="")
+                print("Escolha uma extensão para os rascunhos: [c, cpp, py, ts, js, java]: ", end="")
                 self.language = input()
         return self.language

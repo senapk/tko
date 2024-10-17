@@ -186,9 +186,8 @@ class Gui:
 
     def show_top_bar(self, frame: Frame):
         lista = [
-            Text() + RToken("Y", f"{GuiActions.self_grade} {GuiKeys.inc_self1}{GuiKeys.dec_self1}"),
+            Text() + RToken("Y", f"{GuiActions.self_grade} {GuiKeys.dec_self1}{GuiKeys.inc_self1}"),
             Text() + RToken("Y", f"{GuiActions.progress} {GuiKeys.dec_prog1}{GuiKeys.inc_prog1}"),
-            # Text() + RToken("Y", f"{GuiActions.pesquisar} {GuiKeys.pesquisar}"),
         ]
         help = self.build_list_sentence(lista)
         self_grade = help[0]
@@ -199,11 +198,7 @@ class Gui:
         pre.append(progress)
 
         pos: List[Text] = []
-        # pos.append(pesquisar)
-        # skills = self.style.get_flag_sentence(Flags.skills)
         pos.append(self_grade)
-        # pos.append(skills)
-
 
         limit = frame.get_dx()
         size = limit - Text(" ").join(pre + pos).len() - 2
@@ -225,11 +220,11 @@ class Gui:
         _help.put_sentence(Text("  ").addf("r", "Shift + B")
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
         _help.put_sentence(Text() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
-        _help.put_sentence(Text() + f"{GuiActions.github} " + RToken("r", f"{GuiKeys.github_open}") + "  Abre tarefa em uma aba do browser")
+        _help.put_sentence(Text() + f"   {GuiActions.github} " + RToken("r", f"{GuiKeys.github_open}") + "  Abre tarefa em uma aba do browser")
         _help.put_sentence(Text() + f"   {GuiActions.download} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
         _help.put_sentence(Text() + f"   {GuiActions.edit} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
         _help.put_sentence(Text() + f"   {GuiActions.activate} " + RToken("r", "↲") + "  Interage com o elemento")
-        _help.put_sentence(Text() + f"   {GuiActions.progress} " + RToken("r", f"{GuiKeys.inc_self1}") + RToken("r", f"{GuiKeys.dec_self2}") + " Muda a autoavaliação")
+        _help.put_sentence(Text() + f"    {GuiActions.self_grade}" + RToken("r", f"{GuiKeys.dec_self1}") + RToken("r", f"{GuiKeys.inc_self1}") + " Muda a autoavaliação")
         _help.put_sentence(Text())
         _help.put_sentence(Text() + "Você pode mudar o editor padrão com o comando")
         _help.put_sentence(Text() + RToken("g", "             tko config --editor <comando>"))
@@ -237,7 +232,8 @@ class Gui:
 
     def build_xp_bar(self) -> Tuple[str, float]:
         xp = XP(self.game)
-        if xp.get_xp_total_obtained() == xp.get_xp_total_available():
+        available = xp.get_xp_total_available()
+        if available > 0 and xp.get_xp_total_obtained() == available:
             text = "Você atingiu o máximo de xp!"
             percent = 100.0
         else:
