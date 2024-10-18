@@ -224,6 +224,10 @@ class Parser:
         repo_reset = subpar_repo.add_parser('reset', help='reset all repositories to factory default.')
         repo_reset.set_defaults(func=CmdRep.reset)
 
+        repo_upgrade = subpar_repo.add_parser('upgrade', help='upgrade a repository to a newer version.')
+        repo_upgrade.add_argument('folder', metavar='folder', type=str, help='folder of the repository to be upgraded.')
+        repo_upgrade.set_defaults(func=CmdRep.upgrade)
+
         repo_graph = subpar_repo.add_parser('graph', help='generate graph of the repository.')
         repo_graph.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be graphed.')
         repo_graph.set_defaults(func=CmdRep.graph)

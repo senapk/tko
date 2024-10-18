@@ -24,6 +24,21 @@ class CmdRep:
                 print(f"- {error}")
 
     @staticmethod
+    def upgrade(args):
+        folder = args.folder
+        if os.path.exists(os.path.join(folder, "rep.json")):
+            os.rename(os.path.join(folder, "rep.json"), os.path.join(folder, "repository.json"))
+        remote_folder = os.path.join(folder, "remote")
+        os.makedirs(remote_folder, exist_ok=True)
+        for entry in os.listdir(folder):
+            path = os.path.join(folder, entry)
+            if entry == "remote":
+                continue
+            if os.path.isdir(path):
+                os.rename(path, os.path.join(remote_folder, entry))
+        print(f"Repositório {folder} foi atualizado.")
+
+    @staticmethod
     def list(_args):
         settings = Settings()
         print(f"SettingsFile\n- {settings.settings_file}")

@@ -1,5 +1,10 @@
 # Changelog
 
+- 1.3.4
+  - fix: regex error in windows
+- 1.3.3
+  - add: version in repository.cfg
+  - add: tko rep upgrade folder
 - 1.3.2
   - add: readme.md to autoload testes if any .tio, .vpl or .cases file is found
 - 1.3.1

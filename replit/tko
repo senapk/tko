@@ -29,7 +29,7 @@ import hashlib
 from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
-__version__ = "1.3.2"
+__version__ = "1.3.3"
 
 
 class CheckVersion:
@@ -4300,6 +4300,7 @@ class Repository:
 
         raise Warning("fail: arquivo não encontrado ou configurações inválidas para o repositório")
 
+    __version = "version"
     __remote_url = "remote"  #remote url
     __local_file = "local"  #local file
     __expanded = "expanded"
@@ -4310,6 +4311,7 @@ class Repository:
     __selected = "index"
 
     defaults = {
+        __version: "0.0.0",
         __remote_url: "",
         __local_file: "",
         __expanded: [],
@@ -4319,6 +4321,13 @@ class Repository:
         __lang: "",
         __selected: ""
     }
+
+    def get_version(self) -> str:
+        return self.__get(Repository.__version)
+    
+    def set_version(self, value: str):
+        self.__set(Repository.__version, value)
+        return self
 
     def get_local_file(self) -> str:
         return self.__get(Repository.__local_file)
@@ -8233,6 +8242,21 @@ class CmdRep:
                 print(f"- {error}")
 
     @staticmethod
+    def upgrade(args):
+        folder = args.folder
+        if os.path.exists(os.path.join(folder, "rep.json")):
+            os.rename(os.path.join(folder, "rep.json"), os.path.join(folder, "repository.json"))
+        remote_folder = os.path.join(folder, "remote")
+        os.makedirs(remote_folder, exist_ok=True)
+        for entry in os.listdir(folder):
+            path = os.path.join(folder, entry)
+            if entry == "remote":
+                continue
+            if os.path.isdir(path):
+                os.rename(path, os.path.join(remote_folder, entry))
+        print(f"Repositório {folder} foi atualizado.")
+
+    @staticmethod
     def list(_args):
         settings = Settings()
         print(f"SettingsFile\n- {settings.settings_file}")
@@ -9347,6 +9371,10 @@ class Parser:
 
         repo_reset = subpar_repo.add_parser('reset', help='reset all repositories to factory default.')
         repo_reset.set_defaults(func=CmdRep.reset)
+
+        repo_upgrade = subpar_repo.add_parser('upgrade', help='upgrade a repository to a newer version.')
+        repo_upgrade.add_argument('folder', metavar='folder', type=str, help='folder of the repository to be upgraded.')
+        repo_upgrade.set_defaults(func=CmdRep.upgrade)
 
         repo_graph = subpar_repo.add_parser('graph', help='generate graph of the repository.')
         repo_graph.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be graphed.')
