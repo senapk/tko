@@ -144,10 +144,6 @@ class TaskTree:
         if in_focus:
             color = "k" + focus_color
 
-        done = color + "g"
-        todo = color
-        perc = t.progress
-        # output.add(self.style.build_bar(t.title, perc / 100, len(t.title), done, todo, round=False))
         for word in t.title.split(" "):
             if word.startswith("@") or word.startswith("#"):
                 output.addf(color + "g", word + " ")

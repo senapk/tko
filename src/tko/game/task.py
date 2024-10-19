@@ -26,8 +26,13 @@ class Task(TreeItem):
 
         self.quest_key = ""
         self.cluster_key = ""
+        self.folder: str = ""
 
         self.default_min_value = 7 # default min grade to complete task
+
+    def set_folder(self, folder: str):
+        self.folder = folder
+        return self
 
     def load_from_db(self, value: str):
         if ":" not in value:

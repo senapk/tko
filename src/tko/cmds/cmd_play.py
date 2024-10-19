@@ -72,15 +72,15 @@ class CmdPlay:
         
         logger: Logger = Logger.get_instance()
         logger.set_log_file(self.rep.get_history_file())
-        logger.record_event(LogAction.OPEN)
-        target = ""
-        if self.folder != "":
-            target = self.folder
-        else:
-            target = self.alias
+        logger.record_other_event(LogAction.OPEN)
+        # target = ""
+        # if self.folder != "":
+        #     target = self.folder
+        # else:
+        #     target = self.alias
         play = Play(self.settings, self.rep)
         play.play()
-        logger.record_event(LogAction.QUIT)
+        logger.record_other_event(LogAction.QUIT)
 
 
     @staticmethod

@@ -159,27 +159,21 @@ class PlayActions:
         cmd_down.set_language(lang)
         result = cmd_down.execute()
         if result:
-            Logger.get_instance().record_event(LogAction.DOWN, task.key)
+            Logger.get_instance().record_other_event(LogAction.DOWN, task.key)
 
 
-
-    @staticmethod
-    def is_web_link(link: str) -> bool:
-        return link.startswith("http:") or link.startswith("https:")
 
     def select_task_action(self, task: Task):
         if not task.is_downloadable(): # remote task with url link
-            if self.is_web_link(task.link):
+            if task.folder == "":
                 self.open_link()
             else: # local task
-                task_dir = os.path.abspath(os.path.dirname(task.link))
-                return self.run_selected_task(task, task_dir)
+                return self.run_selected_task(task, task.folder)
         else: # downloadable task
-            task_dir = self.rep.get_remote_task_folder(task.key)
-            if not task.is_downloaded_for_lang(task_dir, self.rep.get_lang()):
+            if not task.is_downloaded_for_lang(task.folder, self.rep.get_lang()):
                 self.__down_remote_task(task)
             else:
-                return self.run_selected_task(task, task_dir)
+                return self.run_selected_task(task, task.folder)
 
     def select_task(self):
         obj = self.tree.get_selected()

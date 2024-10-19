@@ -29,6 +29,7 @@ from tko.play.input_manager import InputManager
 from tko.util.logger import LogAction, Logger
 from tko.run.diff_builder_down import DownDiff
 from tko.run.diff_builder_side import SideDiff
+from tko.play.tracker import Tracker
 
 
 class SeqMode(enum.Enum):
@@ -38,13 +39,13 @@ class SeqMode(enum.Enum):
     finished = 3
 
 class Tester:
-    def __init__(self, settings: Settings, wdir: Wdir):
+    def __init__(self, settings: Settings, wdir: Wdir, task: Task):
         self.results: List[Tuple[ExecutionResult, int]] = []
         self.wdir = wdir
         self.unit_list = [unit for unit in wdir.get_unit_list()] # unit list to be consumed
         self.exit = False
 
-        self.task = Task()
+        self.task = task
         self.diff_first_line = 1000   # index of first line to show
         self.length = 1  # length of diff
         self.space = 0  # dy space for draw
@@ -71,10 +72,6 @@ class Tester:
     def set_autorun(self, value:bool):
         if value:
             self.mode = SeqMode.running
-        return self
-    
-    def set_task(self, task: Task):
-        self.task = task
         return self
 
     def set_exit(self):
@@ -109,13 +106,14 @@ class Tester:
         out = executing
         self.print_centered_image(out, "y", clear, "v")
 
-    def get_folder(self):
-        source_list = self.wdir.get_source_list()
-        if source_list:
-            folder = os.path.abspath(source_list[0])
-        else:
-            folder = os.path.abspath(self.wdir.get_solver().path_list[0])
-        return folder.split(os.sep)[-2]
+    def get_folder(self) -> str:
+        return os.path.basename(self.task.folder)
+        # source_list = [os.path.abspath(x) for x in self.wdir.get_source_list()]
+        # if source_list:
+        #     folder = os.path.abspath(source_list[0])
+        # else:
+        #     folder = os.path.abspath(self.wdir.get_solver().path_list[0])
+        # return folder.split(os.sep)[-2]
 
     def get_focused_unit(self) -> Unit:
         if not self.wdir.has_tests():
@@ -138,6 +136,21 @@ class Tester:
         else:
             return Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "W")
 
+    def store_test_track(self, result: int):
+        tracker = Tracker()
+        tracker.set_folder(self.task.folder)
+        tracker.set_files(self.wdir.get_solver().path_list)
+        tracker.set_percentage(result)
+        tracker.store()
+
+    def store_other_track(self, result: str | None = None):
+        tracker = Tracker()
+        tracker.set_folder(self.task.folder)
+        tracker.set_files(self.wdir.get_solver().path_list)
+        if result is not None:
+            tracker.set_result(result)
+        tracker.store()
+
     def process_one(self):
 
         if self.mode != SeqMode.running:
@@ -146,7 +159,9 @@ class Tester:
         solver = self.wdir.get_solver()
 
         if solver.compile_error:
-            Logger.get_instance().record_event(LogAction.TEST, self.task.key, Logger.COMP_ERROR)
+            Logger.get_instance().record_compilation_error(self.task.key)
+            self.store_other_track(Logger.COMP_ERROR)
+
             self.mode = SeqMode.finished
             while len(self.unit_list) > 0:
                 index = len(self.results)
@@ -183,8 +198,9 @@ class Tester:
                 else:
                     done_list.append(data)
             self.results = fail_list + done_list
-            percent = (100 * len(done_list)) // len(self.results)
-            Logger.get_instance().record_event(LogAction.TEST, self.task.key, str(percent) + "%")
+            percent: int = (100 * len(done_list)) // len(self.results)
+            Logger.get_instance().record_test_result(self.task.key, percent)
+            self.store_test_track(percent)
 
 
     def build_top_line_header(self, frame):
@@ -496,14 +512,14 @@ class Tester:
             self.wdir.autoload()
             self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index])
         self.mode = SeqMode.finished
-        Logger.get_instance().record_event(LogAction.FREE, self.task.key)
+        Logger.get_instance().record_freerun(self.task.key)
+        self.store_other_track(Logger.FREE_EXEC)
         return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True)
 
     def run_test_mode(self):
         self.mode = SeqMode.running
         if self.wdir.is_autoload():
             self.wdir.autoload() # reload sources and solvers
-        
         self.wdir.build() # reload cases
 
         Fmt.clear()
@@ -731,7 +747,8 @@ class Tester:
                             break
                     except CompileError as e:
                         self.mode = SeqMode.finished
-                        Logger.get_instance().record_event(LogAction.TEST, self.task.key, Logger.COMP_ERROR)
+                        Logger.get_instance().record_compilation_error(self.task.key)
+                        self.store_other_track(Logger.COMP_ERROR)
                         print(e)
                         input("Pressione enter para continuar")
                         break

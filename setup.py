@@ -46,7 +46,7 @@ setup(
     },  # Optional
     tests_require=["pytest"],
     test_suite="tests",
-    entry_points={"console_scripts": ["tko=tko.__main__:main"]},
+    entry_points={"console_scripts": ["tko=tko.__main__:main", "tracker=tko.play.track:Tracker.main"]},
     project_urls={
         "Bug Reports": "https://github.com/senapk/tko/issues",
         "Source": "https://github.com/senapk/tko/",

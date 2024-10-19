@@ -16,6 +16,7 @@ from tko.util.symbols import symbols
 
 from tko.util.freerun import Free
 from tko.play.tester import Tester
+from tko.play.tracker import Tracker
 from tko.run.unit_runner import UnitRunner
 from tko.game.task import Task
 from tko.play.opener import Opener
@@ -76,6 +77,13 @@ class Run:
             raise Warning("Task não definida")
         return self.__task
 
+    def update_task_using_solver_path(self, task_key: str, dirname: str):
+        if self.__task is None:
+            task = Task()
+            task.key = task_key
+            task.folder = dirname
+            self.__task = task
+
     def execute(self):
         if not self.wdir_builded:
             self.build_wdir()
@@ -96,10 +104,7 @@ class Run:
                 log_file = os.path.join(upper_dir, Repository.LOG_FILE)
                 if os.path.exists(log_file):
                     logger.set_log_file(log_file)
-                if self.__task is None:
-                    task = Task()
-                    task.key = task_key
-                    self.__task = task
+                self.update_task_using_solver_path(task_key, dirname)
 
         if self.__free_run():
             return
@@ -227,7 +232,7 @@ class Run:
             return False
         if self.wdir.has_solver() and (not self.wdir.has_tests()) and not self.__curses_mode:
             if self.__task is not None:
-                Logger.get_instance().record_event(LogAction.FREE, self.get_task().key)
+                Logger.get_instance().record_freerun(self.get_task().key)
             Free.free_run(self.wdir.get_solver(), show_compilling=False, to_clear=False, wait_input=False)
             return True
         return False
@@ -255,10 +260,11 @@ class Run:
         if self.wdir is None:
             return
         
+        if self.__task is None:
+            raise Warning("Task não definida")
+        
         if self.__curses_mode:
-            cdiff = Tester(self.settings, self.wdir)
-            if self.__task is not None:
-                cdiff.set_task(self.__task)
+            cdiff = Tester(self.settings, self.wdir, self.__task)
             if self.__opener is not None:
                 cdiff.set_opener(self.__opener)
             else:
@@ -272,4 +278,9 @@ class Run:
             correct = [unit for unit in self.wdir.get_unit_list() if unit.result == ExecutionResult.SUCCESS]
             percent = (len(correct) * 100) // len(self.wdir.get_unit_list())
             if self.__task is not None:
-                Logger.get_instance().record_event(LogAction.TEST, self.get_task().key, str(percent) + "%")
+                Logger.get_instance().record_test_result(self.get_task().key, percent)
+                tracker = Tracker()
+                tracker.set_folder(self.__task.folder)
+                tracker.set_files(self.wdir.get_solver().path_list)
+                tracker.set_percentage(percent)
+                tracker.store()

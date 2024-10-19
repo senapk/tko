@@ -3,10 +3,10 @@ from .text import Token
 class __Symbols:
 
     def __init__(self):
-        self.task_remote_downloaded = Token("▼")
+        self.task_remote_downloaded = Token("▼", "g")
         self.task_remote_to_download = Token("▲")
-        self.task_local = Token("▶")
-        self.task_to_visit = Token("◉")
+        self.task_local = Token("▶", "g")
+        self.task_to_visit = Token("◉", "b")
         self.opening = Token("=> ")
         self.neutral = Token("»")
         self.success = Token("✓")

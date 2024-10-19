@@ -4,7 +4,6 @@ build/
 dist/
 *.egg-info/
 *.egg
-*.py
 __pycache__/
 *.so
 *~
@@ -15,10 +14,9 @@ __pycache__/
 temp
 
 todo.md
-
+.vscode
 # virtualenv
 .idea*
 .venv*
 venv*/
 ENV*/
-todo.md

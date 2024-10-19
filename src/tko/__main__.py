@@ -247,6 +247,7 @@ class Parser:
         parser_p.set_defaults(func=Main.open)
 
 
+
 def exec(parser: argparse.ArgumentParser, args):
     settings = Settings()
     if args.w is not None:

@@ -13,18 +13,18 @@ import urllib
 import curses
 import datetime
 import random
+import shutil
+import csv
 import tempfile
 import subprocess
 import enum
 import urllib.request
 import urllib.error
-import shutil
 import re
 import yaml # type: ignore
 import pydot # type: ignore
 import math
 import configparser
-import csv
 import hashlib
 from abc import ABC, abstractmethod
 from subprocess import PIPE
@@ -931,6 +931,117 @@ class InputManager:
             if value == InputManager.cedilha: #ç
                 value = ord("c")
         return value
+
+class Track:
+    def __init__(self):
+        self.timestamp = ""
+        self.files: list[str] = []
+        self.result: str = ""
+
+    def set_timestamp(self, timestamp: str):
+        self.timestamp = timestamp
+        return self
+    
+    def set_files(self, files: list[str]):
+        self.files = [os.path.basename(f) for f in files]
+        return self
+    
+    def set_result(self, result: str):
+        self.result = result
+        return self
+    
+    def track_to_column(self):
+        return [self.timestamp, self.result, ";".join(self.files)]
+
+
+class Tracker:
+
+    def __init__(self):
+        self._files: list[str] = []
+        self._folder: str = ""
+        self._result: str = "None"
+        self.log_file = "track.csv"
+        self.track_folder = ".track"
+        self.prefix = "log:"
+        self.posfix = ":"
+        self.timestamp_size = len(self.prefix + self.get_timestamp() + self.posfix)
+
+    def set_files(self, files: list[str]):
+        self._files = [os.path.abspath(f) for f in files]
+        return self
+    
+    def set_result(self, result: str):
+        self._result = result
+        return self
+    
+    def set_percentage(self, percentage: int):
+        self._result = "{}%".format(str(percentage).ljust(3, "0"))
+        return self
+
+    def get_log_full_path(self):
+        return os.path.join(self._folder, self.log_file)
+
+    def set_folder(self, folder: str):
+        self._folder = os.path.join(folder, self.track_folder)
+        return self
+    
+    # in format: YYYY-MM-DD HH:MM:SS
+    def get_timestamp(self):
+        return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+    def get_file_history(self, file: str, file_list: list[str]):
+        filename = os.path.basename(file)
+        file_list = [f for f in file_list if f[self.timestamp_size:] == filename]
+        return sorted(file_list)
+
+    def save_file_with_timestamp_prefix(self, timestamp: str, file: str) -> str:
+        filename = os.path.basename(file)
+        destination = os.path.join(self._folder, f"{self.prefix}{timestamp}{self.posfix}{filename}")
+        shutil.copy(file, destination)
+        return destination
+        
+
+    def store(self):
+        os.makedirs(self._folder, exist_ok=True)
+        file_list = os.listdir(self._folder)
+        file_list = [f for f in file_list if f.startswith(self.prefix)]
+
+        files_in_this_version: list[str] = []
+        timestamp = self.get_timestamp()
+
+        for file in self._files:
+            saved_files = self.get_file_history(file, file_list)
+            last_file = saved_files[-1] if len(saved_files) > 0 else ""
+            if last_file == "":
+                stored = self.save_file_with_timestamp_prefix(timestamp, file)
+                files_in_this_version.append(stored)
+                # print("Saved file: ", stored)
+            else:
+                change_time = os.path.getmtime(file)
+                last_time = os.path.getmtime(os.path.join(self._folder, last_file))
+                if change_time > last_time:
+                    stored = self.save_file_with_timestamp_prefix(timestamp, file)
+                    # print("Updated file: ", file)
+                    files_in_this_version.append(stored)
+                else:
+                    files_in_this_version.append(last_file)
+        
+
+        log_file = self.get_log_full_path()
+        track = Track().set_timestamp(timestamp).set_files(files_in_this_version).set_result(self._result)
+        with open(log_file, mode="a") as f:
+            writer = csv.writer(f)
+            writer.writerow(track.track_to_column())
+
+    @staticmethod
+    def main():
+        parser = argparse.ArgumentParser(description="Track files changes.")
+        parser.add_argument("files", metavar="files", type=str, nargs="+", help="files to be tracked.")
+        args = parser.parse_args()
+        
+        tracker = Tracker().set_folder(".track").set_files(args.files)
+        tracker.store()
+
 tko_guide = """
        ╔════ TKO GUIA COMPACTO ════╗
 ╔══════╩═════ BAIXAR PROBLEMA ═════╩═══════╗
@@ -2282,10 +2393,10 @@ class RawTerminal:
 class __Symbols:
 
     def __init__(self):
-        self.task_remote_downloaded = Token("▼")
+        self.task_remote_downloaded = Token("▼", "g")
         self.task_remote_to_download = Token("▲")
-        self.task_local = Token("▶")
-        self.task_to_visit = Token("◉")
+        self.task_local = Token("▶", "g")
+        self.task_to_visit = Token("◉", "b")
         self.opening = Token("=> ")
         self.neutral = Token("»")
         self.success = Token("✓")
@@ -2794,8 +2905,13 @@ class Task(TreeItem):
 
         self.quest_key = ""
         self.cluster_key = ""
+        self.folder: str = ""
 
         self.default_min_value = 7 # default min grade to complete task
+
+    def set_folder(self, folder: str):
+        self.folder = folder
+        return self
 
     def load_from_db(self, value: str):
         if ":" not in value:
@@ -4257,8 +4373,23 @@ class Repository:
         path = os.path.abspath(path)
         return os.path.commonpath([rep_dir, path]) == rep_dir
 
+    @staticmethod
+    def is_web_link(link: str) -> bool:
+        return link.startswith("http:") or link.startswith("https:")
+
+    def set_task_folder(self, task: Task):
+        if not task.is_downloadable():
+            if not self.is_web_link(task.link):
+                task_dir = os.path.abspath(os.path.dirname(task.link))
+                task.set_folder(task_dir)
+        else: # downloadable task
+            task_dir = self.get_remote_task_folder(task.key)
+            task.set_folder(task_dir)
+
     def load_game(self):
         self.game.parse_file(self.load_index_or_cache())
+        for task in self.game.tasks.values():
+            self.set_task_folder(task)
         return self
 
     def get_repository_file(self) -> str:
@@ -5167,10 +5298,6 @@ class TaskTree:
         if in_focus:
             color = "k" + focus_color
 
-        done = color + "g"
-        todo = color
-        perc = t.progress
-        # output.add(self.style.build_bar(t.title, perc / 100, len(t.title), done, todo, round=False))
         for word in t.title.split(" "):
             if word.startswith("@") or word.startswith("#"):
                 output.addf(color + "g", word + " ")
@@ -7200,7 +7327,8 @@ class LoggerMemory(LoggerStore):
 
 class Logger:
     instance: None | Logger = None
-    COMP_ERROR = "COMPILATION_ERROR"
+    COMP_ERROR = "COMP"
+    FREE_EXEC = "FREE"
 
     @staticmethod
     def get_instance() -> Logger:
@@ -7238,7 +7366,16 @@ class Logger:
             return True
         return False
 
-    def record_event(self, action: LogAction, task_key: str = "", payload: str = ""):
+    def record_compilation_error(self, task_key: str):
+        self.record_other_event(LogAction.TEST, task_key, self.COMP_ERROR)
+    
+    def record_test_result(self, task_key: str, result: int):
+        self.record_other_event(LogAction.TEST, task_key, str(result) + "%")
+
+    def record_freerun(self, task_key: str):
+        self.record_other_event(LogAction.FREE, task_key)
+
+    def record_other_event(self, action: LogAction, task_key: str = "", payload: str = ""):
         action_data = ActionData(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), action.value, task_key, payload)
         self.record_action_data(action_data)
 
@@ -7271,13 +7408,13 @@ class SeqMode(enum.Enum):
     finished = 3
 
 class Tester:
-    def __init__(self, settings: Settings, wdir: Wdir):
+    def __init__(self, settings: Settings, wdir: Wdir, task: Task):
         self.results: List[Tuple[ExecutionResult, int]] = []
         self.wdir = wdir
         self.unit_list = [unit for unit in wdir.get_unit_list()] # unit list to be consumed
         self.exit = False
 
-        self.task = Task()
+        self.task = task
         self.diff_first_line = 1000   # index of first line to show
         self.length = 1  # length of diff
         self.space = 0  # dy space for draw
@@ -7304,10 +7441,6 @@ class Tester:
     def set_autorun(self, value:bool):
         if value:
             self.mode = SeqMode.running
-        return self
-    
-    def set_task(self, task: Task):
-        self.task = task
         return self
 
     def set_exit(self):
@@ -7342,13 +7475,14 @@ class Tester:
         out = executing
         self.print_centered_image(out, "y", clear, "v")
 
-    def get_folder(self):
-        source_list = self.wdir.get_source_list()
-        if source_list:
-            folder = os.path.abspath(source_list[0])
-        else:
-            folder = os.path.abspath(self.wdir.get_solver().path_list[0])
-        return folder.split(os.sep)[-2]
+    def get_folder(self) -> str:
+        return os.path.basename(self.task.folder)
+        # source_list = [os.path.abspath(x) for x in self.wdir.get_source_list()]
+        # if source_list:
+        #     folder = os.path.abspath(source_list[0])
+        # else:
+        #     folder = os.path.abspath(self.wdir.get_solver().path_list[0])
+        # return folder.split(os.sep)[-2]
 
     def get_focused_unit(self) -> Unit:
         if not self.wdir.has_tests():
@@ -7371,6 +7505,21 @@ class Tester:
         else:
             return Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "W")
 
+    def store_test_track(self, result: int):
+        tracker = Tracker()
+        tracker.set_folder(self.task.folder)
+        tracker.set_files(self.wdir.get_solver().path_list)
+        tracker.set_percentage(result)
+        tracker.store()
+
+    def store_other_track(self, result: str | None = None):
+        tracker = Tracker()
+        tracker.set_folder(self.task.folder)
+        tracker.set_files(self.wdir.get_solver().path_list)
+        if result is not None:
+            tracker.set_result(result)
+        tracker.store()
+
     def process_one(self):
 
         if self.mode != SeqMode.running:
@@ -7379,7 +7528,9 @@ class Tester:
         solver = self.wdir.get_solver()
 
         if solver.compile_error:
-            Logger.get_instance().record_event(LogAction.TEST, self.task.key, Logger.COMP_ERROR)
+            Logger.get_instance().record_compilation_error(self.task.key)
+            self.store_other_track(Logger.COMP_ERROR)
+
             self.mode = SeqMode.finished
             while len(self.unit_list) > 0:
                 index = len(self.results)
@@ -7416,8 +7567,9 @@ class Tester:
                 else:
                     done_list.append(data)
             self.results = fail_list + done_list
-            percent = (100 * len(done_list)) // len(self.results)
-            Logger.get_instance().record_event(LogAction.TEST, self.task.key, str(percent) + "%")
+            percent: int = (100 * len(done_list)) // len(self.results)
+            Logger.get_instance().record_test_result(self.task.key, percent)
+            self.store_test_track(percent)
 
 
     def build_top_line_header(self, frame):
@@ -7729,14 +7881,14 @@ class Tester:
             self.wdir.autoload()
             self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index])
         self.mode = SeqMode.finished
-        Logger.get_instance().record_event(LogAction.FREE, self.task.key)
+        Logger.get_instance().record_freerun(self.task.key)
+        self.store_other_track(Logger.FREE_EXEC)
         return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True)
 
     def run_test_mode(self):
         self.mode = SeqMode.running
         if self.wdir.is_autoload():
             self.wdir.autoload() # reload sources and solvers
-        
         self.wdir.build() # reload cases
 
         Fmt.clear()
@@ -7964,7 +8116,8 @@ class Tester:
                             break
                     except CompileError as e:
                         self.mode = SeqMode.finished
-                        Logger.get_instance().record_event(LogAction.TEST, self.task.key, Logger.COMP_ERROR)
+                        Logger.get_instance().record_compilation_error(self.task.key)
+                        self.store_other_track(Logger.COMP_ERROR)
                         print(e)
                         input("Pressione enter para continuar")
                         break
@@ -8024,6 +8177,13 @@ class Run:
             raise Warning("Task não definida")
         return self.__task
 
+    def update_task_using_solver_path(self, task_key: str, dirname: str):
+        if self.__task is None:
+            task = Task()
+            task.key = task_key
+            task.folder = dirname
+            self.__task = task
+
     def execute(self):
         if not self.wdir_builded:
             self.build_wdir()
@@ -8044,10 +8204,7 @@ class Run:
                 log_file = os.path.join(upper_dir, Repository.LOG_FILE)
                 if os.path.exists(log_file):
                     logger.set_log_file(log_file)
-                if self.__task is None:
-                    task = Task()
-                    task.key = task_key
-                    self.__task = task
+                self.update_task_using_solver_path(task_key, dirname)
 
         if self.__free_run():
             return
@@ -8175,7 +8332,7 @@ class Run:
             return False
         if self.wdir.has_solver() and (not self.wdir.has_tests()) and not self.__curses_mode:
             if self.__task is not None:
-                Logger.get_instance().record_event(LogAction.FREE, self.get_task().key)
+                Logger.get_instance().record_freerun(self.get_task().key)
             Free.free_run(self.wdir.get_solver(), show_compilling=False, to_clear=False, wait_input=False)
             return True
         return False
@@ -8203,10 +8360,11 @@ class Run:
         if self.wdir is None:
             return
         
+        if self.__task is None:
+            raise Warning("Task não definida")
+        
         if self.__curses_mode:
-            cdiff = Tester(self.settings, self.wdir)
-            if self.__task is not None:
-                cdiff.set_task(self.__task)
+            cdiff = Tester(self.settings, self.wdir, self.__task)
             if self.__opener is not None:
                 cdiff.set_opener(self.__opener)
             else:
@@ -8220,7 +8378,12 @@ class Run:
             correct = [unit for unit in self.wdir.get_unit_list() if unit.result == ExecutionResult.SUCCESS]
             percent = (len(correct) * 100) // len(self.wdir.get_unit_list())
             if self.__task is not None:
-                Logger.get_instance().record_event(LogAction.TEST, self.get_task().key, str(percent) + "%")
+                Logger.get_instance().record_test_result(self.get_task().key, percent)
+                tracker = Tracker()
+                tracker.set_folder(self.__task.folder)
+                tracker.set_files(self.wdir.get_solver().path_list)
+                tracker.set_percentage(percent)
+                tracker.store()
 
 
 
@@ -8699,27 +8862,21 @@ class PlayActions:
         cmd_down.set_language(lang)
         result = cmd_down.execute()
         if result:
-            Logger.get_instance().record_event(LogAction.DOWN, task.key)
+            Logger.get_instance().record_other_event(LogAction.DOWN, task.key)
 
 
-
-    @staticmethod
-    def is_web_link(link: str) -> bool:
-        return link.startswith("http:") or link.startswith("https:")
 
     def select_task_action(self, task: Task):
         if not task.is_downloadable(): # remote task with url link
-            if self.is_web_link(task.link):
+            if task.folder == "":
                 self.open_link()
             else: # local task
-                task_dir = os.path.abspath(os.path.dirname(task.link))
-                return self.run_selected_task(task, task_dir)
+                return self.run_selected_task(task, task.folder)
         else: # downloadable task
-            task_dir = self.rep.get_remote_task_folder(task.key)
-            if not task.is_downloaded_for_lang(task_dir, self.rep.get_lang()):
+            if not task.is_downloaded_for_lang(task.folder, self.rep.get_lang()):
                 self.__down_remote_task(task)
             else:
-                return self.run_selected_task(task, task_dir)
+                return self.run_selected_task(task, task.folder)
 
     def select_task(self):
         obj = self.tree.get_selected()
@@ -9129,15 +9286,15 @@ class CmdPlay:
         
         logger: Logger = Logger.get_instance()
         logger.set_log_file(self.rep.get_history_file())
-        logger.record_event(LogAction.OPEN)
-        target = ""
-        if self.folder != "":
-            target = self.folder
-        else:
-            target = self.alias
+        logger.record_other_event(LogAction.OPEN)
+        # target = ""
+        # if self.folder != "":
+        #     target = self.folder
+        # else:
+        #     target = self.alias
         play = Play(self.settings, self.rep)
         play.play()
-        logger.record_event(LogAction.QUIT)
+        logger.record_other_event(LogAction.QUIT)
 
 
     @staticmethod
@@ -9393,6 +9550,7 @@ class Parser:
         parser_p = self.subparsers.add_parser('open', help='open a folder with a repository.')
         parser_p.add_argument('folder', metavar='folder', type=str, help='folder.')
         parser_p.set_defaults(func=Main.open)
+
 
 
 def exec(parser: argparse.ArgumentParser, args):
