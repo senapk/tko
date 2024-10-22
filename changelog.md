@@ -1,5 +1,7 @@
 # Changelog
 
+- 1.4.3
+  - fix: downloading required, keep and upload
 - 1.4.2
   - fix: removing debug messages
 - 1.4.1

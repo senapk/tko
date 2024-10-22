@@ -613,7 +613,7 @@ class Tester:
         return str(self.settings.app.get_timeout())
 
     def change_limit(self):
-            valor = self.settings.app._timeout
+            valor = self.settings.app.get_timeout()
             if valor == 0:
                 valor = 1
             else:
@@ -622,11 +622,7 @@ class Tester:
                 valor = 0
             self.settings.app.set_timeout(valor)
             self.settings.save_settings()
-            # self.fman.add_input(
-            #     Floating("v>").warning()
-            #     .put_text("Limite de tempo de execução alterado para")
-            #     .put_text(f"{self.get_time_limit_symbol()} segundos")
-            # )
+
 
     def process_key(self, key):
         if key == ord('q') or any([key == x for x in InputManager.backspace_list]):

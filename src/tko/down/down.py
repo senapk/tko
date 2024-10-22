@@ -24,6 +24,14 @@ class DownProblem:
         for entry in loaded["upload"]:
             if entry["name"] == "vpl_evaluate.cases":
                 DownProblem.__compare_and_save(entry["contents"], os.path.join(destiny, "cases.tio"))
+            else:
+                DownProblem.__compare_and_save(entry["contents"], os.path.join(destiny, entry["name"]))
+
+        for entry in loaded["required"]:
+            DownProblem.__compare_and_save(entry["contents"], os.path.join(destiny, entry["name"]))
+        
+        for entry in loaded["keep"]:
+            DownProblem.__compare_and_save(entry["contents"], os.path.join(destiny, entry["name"]))
 
         if "draft" in loaded:
             if lang in loaded["draft"]:
@@ -61,8 +69,10 @@ class DownProblem:
 
     @staticmethod
     def check_draft_existence(loaded_json, destiny: str, language: str, cache_url: str) -> bool:
-        if len(loaded_json["required"]) == 1:  # you already have the students file
-            return True
+        if len(loaded_json["required"]) > 0:  # you already have the students file
+            for entry in loaded_json["required"]:
+                if entry["name"].endswith("." + language):
+                    return True
 
         if "draft" in loaded_json and language in loaded_json["draft"]:
             return True
