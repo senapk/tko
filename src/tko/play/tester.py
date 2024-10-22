@@ -629,16 +629,16 @@ class Tester:
             # )
 
     def process_key(self, key):
-        if key == ord('q') or key == InputManager.backspace1 or key == InputManager.backspace2:
+        if key == ord('q') or any([key == x for x in InputManager.backspace_list]):
             self.set_exit()
         elif key == InputManager.esc:
             if self.locked_index:
                 self.locked_index = False
             else:
                 self.set_exit()
-        elif key == curses.KEY_LEFT or key == ord(GuiKeys.left):
+        elif any([key == x for x in InputManager.left_list]) or key == ord(GuiKeys.left):
             self.go_left()
-        elif key == curses.KEY_RIGHT or key == ord(GuiKeys.right):
+        elif any([key == x for x in InputManager.right_list]) or key == ord(GuiKeys.right):
             self.go_right()
         elif key == curses.KEY_DOWN or key == ord(GuiKeys.down):
             self.go_down()

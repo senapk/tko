@@ -17,6 +17,10 @@ from tko.play.floating_manager import FloatingManager
 from tko.play.flags import Flag, Flags, FlagsMan
 from tko.play.tasktree import TaskTree
 
+from tko.game.quest import Quest
+from tko.game.task import Task
+from tko.game.cluster import Cluster
+
 from typing import List, Any, Dict, Callable, Tuple
 import datetime
 
@@ -41,12 +45,33 @@ class Gui:
         help_fixed: List[Text] = [
             Text() + RToken("C", f" {GuiActions.leave}  [{GuiKeys.key_quit}]"),
             Text() + RToken("Y", f"{GuiActions.palette} [{GuiKeys.palette}]"),
-            Text() + RToken("G", f"{GuiActions.activate} [↲]"),
+            Text() + RToken("G", f"{self.get_activate_label()} [↲]"),
             Text() + RToken("Y", f"{GuiActions.edit} [{GuiKeys.edit}]"),
             # Text() + RToken("C", f"{GuiActions.navegar} [wasd]")
             Text() + RToken("C", f"{GuiActions.search} [{GuiKeys.search}]")
         ]
         return help_fixed
+
+    def get_activate_label(self):
+        output: str = "GuiActions.activate"
+        obj = self.tree.get_selected()
+        if isinstance(obj, Quest):
+            quest: Quest = obj
+            if quest.key in self.tree.expanded:
+                output = "Contrair"
+            else:
+                output = "Expandir"
+        elif isinstance(obj, Cluster):
+            cluster: Cluster = obj
+            if cluster.key in self.tree.expanded:
+                output = "Contrair"
+            else:
+                output = "Expandir"
+        elif isinstance(obj, Task):
+            output = self.tree.get_task_action(obj)
+
+        return output
+    
 
     # def make_flags_bar(self) -> Text:
     #     lista: list[Flag] = []

@@ -280,7 +280,7 @@ class FloatingInput(Floating):
             self.next_option()
         elif key == InputManager.esc:
             self._enable = False
-        elif key == InputManager.backspace1 or key == InputManager.backspace2 or key == InputManager.delete:
+        elif any([key == x for x in InputManager.backspace_list]) or key == InputManager.delete:
             self.search_text = self.search_text[:-1]
             self.update_index()
         elif key >= 32 and key < 127:

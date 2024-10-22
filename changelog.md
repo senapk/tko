@@ -1,5 +1,10 @@
 # Changelog
 
+- 1.4.0
+  - fix: removing tracker from cmds
+  - fix: ajusting tracker extensions
+  - add: activate change label according with task action
+  - fix: diff with test --all
 - 1.3.4
   - fix: regex error in windows
 - 1.3.3

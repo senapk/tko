@@ -123,7 +123,7 @@ class Play:
             return
 
         exclude_str = [ord(v) for v in [" ", "a", "d", "\n"]]
-        exclude_int = [ -1, InputManager.esc, InputManager.left, InputManager.right ]
+        exclude_int = [ -1, InputManager.esc] + InputManager.backspace_list + InputManager.left_list + InputManager.right_list + InputManager.up_list + InputManager.down_list
         if key in exclude_int + exclude_str:
             return
         self.fman.add_input(

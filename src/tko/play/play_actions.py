@@ -19,9 +19,12 @@ from tko.play.floating import Floating
 from tko.play.gui import Gui
 from tko.play.opener import Opener
 
+from tko.play.tasktree import TaskAction
+
 import os
 import tempfile
 import subprocess
+
 
 class PlayActions:
 
@@ -162,18 +165,25 @@ class PlayActions:
             Logger.get_instance().record_other_event(LogAction.DOWN, task.key)
 
 
-
     def select_task_action(self, task: Task):
-        if not task.is_downloadable(): # remote task with url link
-            if task.folder == "":
-                self.open_link()
-            else: # local task
-                return self.run_selected_task(task, task.folder)
-        else: # downloadable task
-            if not task.is_downloaded_for_lang(task.folder, self.rep.get_lang()):
-                self.__down_remote_task(task)
-            else:
-                return self.run_selected_task(task, task.folder)
+        action = self.tree.get_task_action(task)
+        if action == TaskAction.BAIXAR:
+            return self.__down_remote_task(task)
+        elif action == TaskAction.VISITAR:
+            return self.open_link()
+        elif action == TaskAction.EXECUTAR:
+            return self.run_selected_task(task, task.folder)
+
+        # if not task.is_downloadable(): # remote task with url link
+        #     if task.folder == "":
+        #         self.open_link()
+        #     else: # local task
+        #         return self.run_selected_task(task, task.folder)
+        # else: # downloadable task
+        #     if not task.is_downloaded_for_lang(task.folder, self.rep.get_lang()):
+        #         self.__down_remote_task(task)
+        #     else:
+        #         return self.run_selected_task(task, task.folder)
 
     def select_task(self):
         obj = self.tree.get_selected()

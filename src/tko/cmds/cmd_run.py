@@ -185,7 +185,7 @@ class Run:
         if self.param.diff_count == DiffCount.ALL:
             for unit in self.wdir.get_unit_list():
                 if unit.result != ExecutionResult.SUCCESS:
-                    if self.param.diff_mode:
+                    if self.param.diff_mode == DiffMode.DOWN:
                         ud_diff_builder = DownDiff(RawTerminal.get_terminal_size(), unit).to_insert_header()
                         for line in ud_diff_builder.build_diff():
                             print(line)

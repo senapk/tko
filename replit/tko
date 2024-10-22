@@ -29,7 +29,7 @@ import hashlib
 from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
-__version__ = "1.3.4"
+__version__ = "1.4.0"
 
 
 class CheckVersion:
@@ -881,10 +881,11 @@ class GuiKeys:
     mass = "Y"
 
 class InputManager:
-    backspace1 = 127
-    backspace2 = 263
-    left = 260
-    right = 261
+    backspace_list = [8, 127, 263, curses.KEY_BACKSPACE]
+    left_list = [260, curses.KEY_LEFT]
+    right_list = [261, curses.KEY_RIGHT]
+    up_list = [259, curses.KEY_UP]
+    down_list = [258, curses.KEY_DOWN]
     a = 97
     d = 100
     tab = 9
@@ -962,9 +963,10 @@ class Tracker:
         self._result: str = "None"
         self.log_file = "track.csv"
         self.track_folder = ".track"
-        self.prefix = "log:"
+        self.extension = ".log"
         self.posfix = ":"
-        self.timestamp_size = len(self.prefix + self.get_timestamp() + self.posfix)
+        self.timestamp_size = len(self.get_timestamp() + self.posfix)
+        self.extension_size = len(self.extension)
 
     def set_files(self, files: list[str]):
         self._files = [os.path.abspath(f) for f in files]
@@ -991,12 +993,14 @@ class Tracker:
 
     def get_file_history(self, file: str, file_list: list[str]):
         filename = os.path.basename(file)
-        file_list = [f for f in file_list if f[self.timestamp_size:] == filename]
+        print("debug", file_list, filename)
+        file_list = [f for f in file_list if f[self.timestamp_size:-self.extension_size] == filename]
+        print("debug", file_list, filename)
         return sorted(file_list)
 
     def save_file_with_timestamp_prefix(self, timestamp: str, file: str) -> str:
         filename = os.path.basename(file)
-        destination = os.path.join(self._folder, f"{self.prefix}{timestamp}{self.posfix}{filename}")
+        destination = os.path.join(self._folder, f"{timestamp}{self.posfix}{filename}{self.extension}")
         shutil.copy(file, destination)
         return destination
         
@@ -1004,7 +1008,7 @@ class Tracker:
     def store(self):
         os.makedirs(self._folder, exist_ok=True)
         file_list = os.listdir(self._folder)
-        file_list = [f for f in file_list if f.startswith(self.prefix)]
+        file_list = [f for f in file_list if f.endswith(self.extension)]
 
         files_in_this_version: list[str] = []
         timestamp = self.get_timestamp()
@@ -2736,7 +2740,7 @@ class FloatingInput(Floating):
             self.next_option()
         elif key == InputManager.esc:
             self._enable = False
-        elif key == InputManager.backspace1 or key == InputManager.backspace2 or key == InputManager.delete:
+        elif any([key == x for x in InputManager.backspace_list]) or key == InputManager.delete:
             self.search_text = self.search_text[:-1]
             self.update_index()
         elif key >= 32 and key < 127:
@@ -5174,6 +5178,11 @@ class Border:
 
 
 
+class TaskAction:
+    BAIXAR   = " Baixar "
+    EXECUTAR = "Executar"
+    VISITAR  = "Visitar "
+
 class TaskTree:
 
     def __init__(self, settings: Settings, rep: Repository, fman: FloatingManager):
@@ -5776,6 +5785,19 @@ class TaskTree:
         self.set_selected_by_index(min(len(self.items) - 1, index + 1))
 
 
+    # return a TaskAction
+    def get_task_action(self, task: Task) -> str:
+        if not task.is_downloadable(): # remote task with url link
+            if task.folder == "":
+                return TaskAction.VISITAR
+            else: # local task
+                return TaskAction.EXECUTAR
+        else: # downloadable task
+            if not task.is_downloaded_for_lang(task.folder, self.rep.get_lang()):
+                return TaskAction.BAIXAR
+            else:
+                return TaskAction.EXECUTAR
+
 class Search:
     def __init__(self, tree: TaskTree, fman: FloatingManager):
         self.tree = tree
@@ -5845,11 +5867,11 @@ class Search:
             self.cancel_search()
         elif key == ord("\n"):
             self.finish_search()
-        elif key == curses.KEY_UP:
+        elif any([key == x for x in InputManager.up_list]):
             self.tree.move_up()
-        elif key == curses.KEY_DOWN:
+        elif any([key == x for x in InputManager.down_list]):
             self.tree.move_down()
-        elif key == InputManager.backspace1 or key == InputManager.backspace2 or key == InputManager.delete:
+        elif any([key == x for x in InputManager.backspace_list]):
             self.tree.search_text = self.tree.search_text[:-1]
             self.update_index()
         elif key >= 32 and key < 127:
@@ -5982,6 +6004,7 @@ class SetLangFunctor:
 
 
 
+
 class Gui:
 
     def __init__(self, tree: TaskTree, flagsman: FlagsMan, fman: FloatingManager):
@@ -6003,12 +6026,33 @@ class Gui:
         help_fixed: List[Text] = [
             Text() + RToken("C", f" {GuiActions.leave}  [{GuiKeys.key_quit}]"),
             Text() + RToken("Y", f"{GuiActions.palette} [{GuiKeys.palette}]"),
-            Text() + RToken("G", f"{GuiActions.activate} [↲]"),
+            Text() + RToken("G", f"{self.get_activate_label()} [↲]"),
             Text() + RToken("Y", f"{GuiActions.edit} [{GuiKeys.edit}]"),
             # Text() + RToken("C", f"{GuiActions.navegar} [wasd]")
             Text() + RToken("C", f"{GuiActions.search} [{GuiKeys.search}]")
         ]
         return help_fixed
+
+    def get_activate_label(self):
+        output: str = "GuiActions.activate"
+        obj = self.tree.get_selected()
+        if isinstance(obj, Quest):
+            quest: Quest = obj
+            if quest.key in self.tree.expanded:
+                output = "Contrair"
+            else:
+                output = "Expandir"
+        elif isinstance(obj, Cluster):
+            cluster: Cluster = obj
+            if cluster.key in self.tree.expanded:
+                output = "Contrair"
+            else:
+                output = "Expandir"
+        elif isinstance(obj, Task):
+            output = self.tree.get_task_action(obj)
+
+        return output
+    
 
     # def make_flags_bar(self) -> Text:
     #     lista: list[Flag] = []
@@ -7997,16 +8041,16 @@ class Tester:
             # )
 
     def process_key(self, key):
-        if key == ord('q') or key == InputManager.backspace1 or key == InputManager.backspace2:
+        if key == ord('q') or any([key == x for x in InputManager.backspace_list]):
             self.set_exit()
         elif key == InputManager.esc:
             if self.locked_index:
                 self.locked_index = False
             else:
                 self.set_exit()
-        elif key == curses.KEY_LEFT or key == ord(GuiKeys.left):
+        elif any([key == x for x in InputManager.left_list]) or key == ord(GuiKeys.left):
             self.go_left()
-        elif key == curses.KEY_RIGHT or key == ord(GuiKeys.right):
+        elif any([key == x for x in InputManager.right_list]) or key == ord(GuiKeys.right):
             self.go_right()
         elif key == curses.KEY_DOWN or key == ord(GuiKeys.down):
             self.go_down()
@@ -8284,7 +8328,7 @@ class Run:
         if self.param.diff_count == DiffCount.ALL:
             for unit in self.wdir.get_unit_list():
                 if unit.result != ExecutionResult.SUCCESS:
-                    if self.param.diff_mode:
+                    if self.param.diff_mode == DiffMode.DOWN:
                         ud_diff_builder = DownDiff(RawTerminal.get_terminal_size(), unit).to_insert_header()
                         for line in ud_diff_builder.build_diff():
                             print(line)
@@ -8725,6 +8769,8 @@ class CmdDown:
 
 
 
+
+
 class PlayActions:
 
     def __init__(self, gui: Gui):
@@ -8864,18 +8910,25 @@ class PlayActions:
             Logger.get_instance().record_other_event(LogAction.DOWN, task.key)
 
 
-
     def select_task_action(self, task: Task):
-        if not task.is_downloadable(): # remote task with url link
-            if task.folder == "":
-                self.open_link()
-            else: # local task
-                return self.run_selected_task(task, task.folder)
-        else: # downloadable task
-            if not task.is_downloaded_for_lang(task.folder, self.rep.get_lang()):
-                self.__down_remote_task(task)
-            else:
-                return self.run_selected_task(task, task.folder)
+        action = self.tree.get_task_action(task)
+        if action == TaskAction.BAIXAR:
+            return self.__down_remote_task(task)
+        elif action == TaskAction.VISITAR:
+            return self.open_link()
+        elif action == TaskAction.EXECUTAR:
+            return self.run_selected_task(task, task.folder)
+
+        # if not task.is_downloadable(): # remote task with url link
+        #     if task.folder == "":
+        #         self.open_link()
+        #     else: # local task
+        #         return self.run_selected_task(task, task.folder)
+        # else: # downloadable task
+        #     if not task.is_downloaded_for_lang(task.folder, self.rep.get_lang()):
+        #         self.__down_remote_task(task)
+        #     else:
+        #         return self.run_selected_task(task, task.folder)
 
     def select_task(self):
         obj = self.tree.get_selected()
@@ -9151,7 +9204,7 @@ class Play:
             return
 
         exclude_str = [ord(v) for v in [" ", "a", "d", "\n"]]
-        exclude_int = [ -1, InputManager.esc, InputManager.left, InputManager.right ]
+        exclude_int = [ -1, InputManager.esc] + InputManager.backspace_list + InputManager.left_list + InputManager.right_list + InputManager.up_list + InputManager.down_list
         if key in exclude_int + exclude_str:
             return
         self.fman.add_input(

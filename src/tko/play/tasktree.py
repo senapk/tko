@@ -19,7 +19,11 @@ from tko.play.floating import Floating
 from tko.play.grade_message import GradeMessage
 from tko.game.tree_item import TreeItem
 
-import os
+
+class TaskAction:
+    BAIXAR   = " Baixar "
+    EXECUTAR = "Executar"
+    VISITAR  = "Visitar "
 
 class TaskTree:
 
@@ -621,3 +625,17 @@ class TaskTree:
     def move_down(self):
         index = self.get_selected_index()
         self.set_selected_by_index(min(len(self.items) - 1, index + 1))
+
+
+    # return a TaskAction
+    def get_task_action(self, task: Task) -> str:
+        if not task.is_downloadable(): # remote task with url link
+            if task.folder == "":
+                return TaskAction.VISITAR
+            else: # local task
+                return TaskAction.EXECUTAR
+        else: # downloadable task
+            if not task.is_downloaded_for_lang(task.folder, self.rep.get_lang()):
+                return TaskAction.BAIXAR
+            else:
+                return TaskAction.EXECUTAR

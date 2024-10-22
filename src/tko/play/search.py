@@ -78,11 +78,11 @@ class Search:
             self.cancel_search()
         elif key == ord("\n"):
             self.finish_search()
-        elif key == curses.KEY_UP:
+        elif any([key == x for x in InputManager.up_list]):
             self.tree.move_up()
-        elif key == curses.KEY_DOWN:
+        elif any([key == x for x in InputManager.down_list]):
             self.tree.move_down()
-        elif key == InputManager.backspace1 or key == InputManager.backspace2 or key == InputManager.delete:
+        elif any([key == x for x in InputManager.backspace_list]):
             self.tree.search_text = self.tree.search_text[:-1]
             self.update_index()
         elif key >= 32 and key < 127:

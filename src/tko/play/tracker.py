@@ -34,9 +34,10 @@ class Tracker:
         self._result: str = "None"
         self.log_file = "track.csv"
         self.track_folder = ".track"
-        self.prefix = "log:"
+        self.extension = ".log"
         self.posfix = ":"
-        self.timestamp_size = len(self.prefix + self.get_timestamp() + self.posfix)
+        self.timestamp_size = len(self.get_timestamp() + self.posfix)
+        self.extension_size = len(self.extension)
 
     def set_files(self, files: list[str]):
         self._files = [os.path.abspath(f) for f in files]
@@ -63,12 +64,14 @@ class Tracker:
 
     def get_file_history(self, file: str, file_list: list[str]):
         filename = os.path.basename(file)
-        file_list = [f for f in file_list if f[self.timestamp_size:] == filename]
+        print("debug", file_list, filename)
+        file_list = [f for f in file_list if f[self.timestamp_size:-self.extension_size] == filename]
+        print("debug", file_list, filename)
         return sorted(file_list)
 
     def save_file_with_timestamp_prefix(self, timestamp: str, file: str) -> str:
         filename = os.path.basename(file)
-        destination = os.path.join(self._folder, f"{self.prefix}{timestamp}{self.posfix}{filename}")
+        destination = os.path.join(self._folder, f"{timestamp}{self.posfix}{filename}{self.extension}")
         shutil.copy(file, destination)
         return destination
         
@@ -76,7 +79,7 @@ class Tracker:
     def store(self):
         os.makedirs(self._folder, exist_ok=True)
         file_list = os.listdir(self._folder)
-        file_list = [f for f in file_list if f.startswith(self.prefix)]
+        file_list = [f for f in file_list if f.endswith(self.extension)]
 
         files_in_this_version: list[str] = []
         timestamp = self.get_timestamp()
