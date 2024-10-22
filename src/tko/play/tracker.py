@@ -64,9 +64,7 @@ class Tracker:
 
     def get_file_history(self, file: str, file_list: list[str]):
         filename = os.path.basename(file)
-        print("debug", file_list, filename)
         file_list = [f for f in file_list if f[self.timestamp_size:-self.extension_size] == filename]
-        print("debug", file_list, filename)
         return sorted(file_list)
 
     def save_file_with_timestamp_prefix(self, timestamp: str, file: str) -> str:
