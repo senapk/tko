@@ -1,5 +1,7 @@
 # Changelog
 
+- 1.4.1
+  - fix: cases with simple readme mode in play
 - 1.4.0
   - fix: removing tracker from cmds
   - fix: ajusting tracker extensions

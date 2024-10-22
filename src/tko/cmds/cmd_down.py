@@ -73,8 +73,8 @@ class CmdDown:
             DownProblem.fnprint("falha: não consegui baixar a atividade, verifique sua internet")
             return False
 
-    def build_cases_from_readme(self):
-        cases_tio_target = os.path.join(self.rep.get_rep_dir(), self.task_key, "cases.tio")
+    def build_cases_from_readme(self, destiny_folder: str):
+        cases_tio_target = os.path.join(destiny_folder, "cases.tio")
         param = Param.Manip()
         cb = CmdBuild(cases_tio_target, [self.readme_path], param)
         cb.set_quiet(True)
@@ -104,7 +104,7 @@ class CmdDown:
             if not DownProblem.check_draft_existence(loaded_json, self.destiny_folder, lang, self.cache_url):
                 DownProblem.create_default_draft(self.destiny_folder, lang)
         else:
-            self.build_cases_from_readme()
+            self.build_cases_from_readme(self.destiny_folder)
             DownProblem.create_default_draft(self.destiny_folder, lang)
         DownProblem.fnprint("")
         DownProblem.fnprint("Atividade baixada com sucesso")
