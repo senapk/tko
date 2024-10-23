@@ -1,11 +1,12 @@
 from tko.util.consts import DiffMode
+from tko.util.text import Text
 
 class AppSettings:
 
     def __init__(self):
         self._diff_mode = str(DiffMode.SIDE)
-        self._lang_default = ""
-        self._last_rep = ""
+        # self._lang_default = ""
+        # self._last_rep = ""
         self._use_images = False
         self._use_borders = False
         self._editor = "code"
@@ -40,16 +41,20 @@ class AppSettings:
         self._side_size_min = side_size_min
         return self
 
-    def set_lang_default(self, lang_default: str):
-        self._lang_default = lang_default
-        return self
+    # def set_lang_default(self, lang_default: str):
+    #     self._lang_default = lang_default
+    #     return self
 
-    def set_last_rep(self, last_rep: str):
-        self._last_rep = last_rep
-        return self
+    # def set_last_rep(self, last_rep: str):
+    #     self._last_rep = last_rep
+    #     return self
 
     def set_borders(self, borders: bool):
         self._use_borders = borders
+        return self
+    
+    def set_images(self, images: bool):
+        self._use_images = images
         return self
 
     def set_editor(self, editor: str):
@@ -65,11 +70,11 @@ class AppSettings:
             return DiffMode.SIDE
         return DiffMode.DOWN
 
-    def get_lang_default(self) -> str:
-        return self._lang_default
+    # def get_lang_default(self) -> str:
+    #     return self._lang_default
 
-    def get_last_rep(self) -> str:
-        return self._last_rep
+    # def get_last_rep(self) -> str:
+    #     return self._last_rep
 
     def has_images(self) -> bool:
         return self._use_images
@@ -82,3 +87,13 @@ class AppSettings:
 
     def get_timeout(self) -> int:
         return self._timeout
+
+    def __str__(self):
+        output: list[str] = []
+        output.append(str(Text("{g}", "Configurações globais:")))
+        output.append("- Diff    : {}".format(str(self.get_diff_mode().value)))
+        output.append("- Editor  : {}".format(self.get_editor()))
+        output.append("- Bordas  : {}".format(self.has_borders()))
+        output.append("- Images  : {}".format(self.has_images()))
+        output.append("- Timeout : {}".format(self.get_timeout()))
+        return "\n".join(output)

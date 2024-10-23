@@ -74,7 +74,7 @@ class Main:
         build.execute()
 
     @staticmethod
-    def play(args):
+    def load(args):
         settings = Settings()
         CmdPlay(settings).set_alias(args.repo).execute()
         CheckVersion().version_check()
@@ -98,13 +98,17 @@ class Main:
         param = ConfigParams()
         param.side = args.side
         param.down = args.down
-        param.lang = args.lang
-        param.ask = args.ask
+        param.images = args.images
         param.editor = args.editor
         param.borders = args.borders
-        param.hud = args.hud
+        param.timeout = args.timeout
 
         CmdConfig.execute(settings, param)
+
+    @staticmethod
+    def list(_args):
+        settings = Settings()
+        print(str(settings))
 
 
 class Parser:
@@ -124,8 +128,11 @@ class Parser:
         # self.add_parser_down()
         self.add_parser_config()
         self.add_parser_rep()
-        self.add_parser_play()
-        self.add_parser_open()
+        # self.add_parser_load()
+        # self.add_parser_open()
+        # self.add_parser_save()
+        # self.add_parser_init()
+
 
     def add_parser_global(self):
         self.parser.add_argument('-c', metavar='CONFIG_FILE', type=str, help='config json file.')
@@ -188,63 +195,72 @@ class Parser:
     #     parser_d.set_defaults(func=Main.down)
 
     def add_parser_config(self):
-        parser_s = self.subparsers.add_parser('config', help='settings tool.')
+        parser_cfg = self.subparsers.add_parser('config', help='settings tool.')
+        subpar_repo = parser_cfg.add_subparsers(title='subcommands', help='help for subcommand.')
 
-        g_diff = parser_s.add_mutually_exclusive_group()
+        cfg_reset = subpar_repo.add_parser('reset', help='reset all repositories, folders and values to factory default.')
+        cfg_reset.set_defaults(func=CmdRep.reset)
+
+        cfg_set = subpar_repo.add_parser('set', help='set default config values.')
+
+        g_diff = cfg_set.add_mutually_exclusive_group()
         g_diff.add_argument('--side', action='store_true', help='set side_by_side diff mode.')
         g_diff.add_argument('--down', action='store_true', help='set up_to_down   diff mode.')
 
-        g_lang = parser_s.add_mutually_exclusive_group()
-        g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
-        g_lang.add_argument("--ask", action='store_true', help='ask language extension every time.')
+        # g_lang = parser_s.add_mutually_exclusive_group()
+        # g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
+        # g_lang.add_argument("--ask", action='store_true', help='ask language extension every time.')
 
         # parser_s.add_argument("--root", metavar="path", type=str, help='set root directory.')
-        parser_s.add_argument("--editor", metavar="cmd", type=str, help='set editor command.')
-        parser_s.add_argument("--borders", metavar="0or1", type=str, help='enable borders.')
-        parser_s.add_argument("--hud", metavar="0or1", type=str, help='enable hud.')
+        cfg_set.add_argument("--editor", metavar="cmd", type=str, help='set editor command.')
+        cfg_set.add_argument("--borders", metavar="[0|1]", type=str, help='enable borders.')
+        cfg_set.add_argument("--images", metavar="[0|1]", type=str, help='enable images.')
+        cfg_set.add_argument("--timeout", metavar="sec", type=int, help='set timeout.')
 
-        parser_s.set_defaults(func=Main.config)
+        cfg_set.set_defaults(func=Main.config)
+
+        cfg_list = subpar_repo.add_parser('list', help='list default config values.')
+        cfg_list.set_defaults(func=Main.list)
+
+
 
     def add_parser_rep(self):
-        parser_repo = self.subparsers.add_parser('rep', help='manipulate repositories.')
+
+        parser_repo = self.subparsers.add_parser('rep', help='Repository tools.')
         subpar_repo = parser_repo.add_subparsers(title='subcommands', help='help for subcommand.')
 
-        repo_list = subpar_repo.add_parser('list', help='list all repositories')
-        repo_list.set_defaults(func=CmdRep.list)
+        # repo_reset = subpar_repo.add_parser('reset', help='reset all repositories and folders to factory default.')
+        # repo_reset.set_defaults(func=CmdRep.reset)
 
-        repo_add = subpar_repo.add_parser('add', help='add a repository.')
-        repo_add.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be added.')
-        repo_add.add_argument('value', metavar='value', type=str, help='url or path of the repository to be added.')
-        repo_add.set_defaults(func=CmdRep.add)
-
-        repo_rm = subpar_repo.add_parser('rm', help='remove a repository.')
-        repo_rm.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be removed.')
-        repo_rm.set_defaults(func=CmdRep.rm)
-
-        repo_reset = subpar_repo.add_parser('reset', help='reset all repositories to factory default.')
-        repo_reset.set_defaults(func=CmdRep.reset)
-
-        repo_upgrade = subpar_repo.add_parser('upgrade', help='upgrade a repository to a newer version.')
-        repo_upgrade.add_argument('folder', metavar='folder', type=str, help='folder of the repository to be upgraded.')
-        repo_upgrade.set_defaults(func=CmdRep.upgrade)
-
-        repo_graph = subpar_repo.add_parser('graph', help='generate graph of the repository.')
-        repo_graph.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be graphed.')
-        repo_graph.set_defaults(func=CmdRep.graph)
+        # repo_graph = subpar_repo.add_parser('graph', help='generate graph of the repository.')
+        # repo_graph.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be graphed.')
+        # repo_graph.set_defaults(func=CmdRep.graph)
 
         repo_log = subpar_repo.add_parser("check", help="validates log of the repository.")
-        repo_log.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be log.')
+        repo_log.add_argument('folder', type=str, help='folder to be checked.')
         repo_log.set_defaults(func=CmdRep.check)
 
-    def add_parser_play(self):
-        parser_p = self.subparsers.add_parser('play', help='play a game.')
-        parser_p.add_argument('repo', metavar='repo', type=str, help='global repository to be played.')
-        parser_p.set_defaults(func=Main.play)
+    # def add_parser_save(self):
+    #     parser_p = self.subparsers.add_parser('save', help='Save a repository folder with a global alias.')
+    #     parser_p.add_argument('folder', type=str, help='repository folder.')
+    #     parser_p.add_argument('alias', type=str, help='repository alias.')
+    #     parser_p.set_defaults(func=CmdRep.save)
 
-    def add_parser_open(self):
-        parser_p = self.subparsers.add_parser('open', help='open a folder with a repository.')
-        parser_p.add_argument('folder', metavar='folder', type=str, help='folder.')
-        parser_p.set_defaults(func=Main.open)
+    # def add_parser_load(self):
+    #     parser_p = self.subparsers.add_parser('load', help='load a saved repository.')
+    #     parser_p.add_argument('alias', type=str, help='repository alias.')
+    #     parser_p.set_defaults(func=CmdRep.load)
+
+    # def add_parser_open(self):
+    #     parser_p = self.subparsers.add_parser('open', help='open a folder with a repository.')
+    #     parser_p.add_argument('folder', metavar='folder', type=str, help='folder.')
+    #     parser_p.set_defaults(func=CmdRep.open)
+
+
+    # def add_parser_init(self):
+    #     parser_p = self.subparsers.add_parser('open', help='open a folder with a repository.')
+    #     parser_p.add_argument('folder', metavar='folder', type=str, help='folder.')
+    #     parser_p.set_defaults(func=CmdRep.init)
 
 
 

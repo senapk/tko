@@ -180,15 +180,31 @@ class Settings:
             json.dump(value, f, indent=4)
         return self
 
-    # def __str__(self):
-    #     output = ["Repositories:"]
-    #     maxlen = max([len(key) for key in self.remote])
-    #     for key in self.remote:
-    #         prefix = f"- {key.ljust(maxlen)}"
-    #         if self.remote[key].file and self.remote[key].url:
-    #             output.append(f"{prefix} : dual   : {self.remote[key].url} ; {self.remote[key].file}")
-    #         elif self.remote[key].url:
-    #             output.append(f"{prefix} : remote : {self.remote[key].url}")
-    #         else:
-    #             output.append(f"{prefix} : local  : {self.remote[key].file}")
-    #     return "\n".join(output)
+    def __str__(self):
+        output = []
+        output.append(str(Text("{g}", "Arquivo de configuração:")))
+        output.append("- " + self.get_settings_file())
+        output.append("")
+        output.append(str(Text("{g}", "Repositórios remotos cadastrados:")))
+        max_alias = max([len(key) for key in self.dict_alias_remote])
+        for key in self.dict_alias_remote:
+            output.append("- {} : {}".format(key.ljust(max_alias), self.dict_alias_remote[key]))
+        output.append("")
+        output.append(str(Text("{g}", "Repositórios locais salvos:")))
+        max_alias = max([len(key) for key in self.dict_alias_folder])
+        for key in self.dict_alias_folder:
+            output.append("- {} : {}".format(key.ljust(max_alias), self.dict_alias_folder[key]))
+
+        app_str = str(self.app)
+        return "\n".join(output) + "\n\n" + app_str
+
+        # maxlen = max([len(key) for key in self.remote])
+        # for key in self.remote:
+        #     prefix = f"- {key.ljust(maxlen)}"
+        #     if self.remote[key].file and self.remote[key].url:
+        #         output.append(f"{prefix} : dual   : {self.remote[key].url} ; {self.remote[key].file}")
+        #     elif self.remote[key].url:
+        #         output.append(f"{prefix} : remote : {self.remote[key].url}")
+        #     else:
+        #         output.append(f"{prefix} : local  : {self.remote[key].file}")
+        # return "\n".join(output)

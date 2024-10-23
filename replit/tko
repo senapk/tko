@@ -4833,8 +4833,8 @@ class AppSettings:
 
     def __init__(self):
         self._diff_mode = str(DiffMode.SIDE)
-        self._lang_default = ""
-        self._last_rep = ""
+        # self._lang_default = ""
+        # self._last_rep = ""
         self._use_images = False
         self._use_borders = False
         self._editor = "code"
@@ -4869,16 +4869,20 @@ class AppSettings:
         self._side_size_min = side_size_min
         return self
 
-    def set_lang_default(self, lang_default: str):
-        self._lang_default = lang_default
-        return self
+    # def set_lang_default(self, lang_default: str):
+    #     self._lang_default = lang_default
+    #     return self
 
-    def set_last_rep(self, last_rep: str):
-        self._last_rep = last_rep
-        return self
+    # def set_last_rep(self, last_rep: str):
+    #     self._last_rep = last_rep
+    #     return self
 
     def set_borders(self, borders: bool):
         self._use_borders = borders
+        return self
+    
+    def set_images(self, images: bool):
+        self._use_images = images
         return self
 
     def set_editor(self, editor: str):
@@ -4894,11 +4898,11 @@ class AppSettings:
             return DiffMode.SIDE
         return DiffMode.DOWN
 
-    def get_lang_default(self) -> str:
-        return self._lang_default
+    # def get_lang_default(self) -> str:
+    #     return self._lang_default
 
-    def get_last_rep(self) -> str:
-        return self._last_rep
+    # def get_last_rep(self) -> str:
+    #     return self._last_rep
 
     def has_images(self) -> bool:
         return self._use_images
@@ -4912,6 +4916,15 @@ class AppSettings:
     def get_timeout(self) -> int:
         return self._timeout
 
+    def __str__(self):
+        output: list[str] = []
+        output.append(str(Text("{g}", "Configurações globais:")))
+        output.append("- Diff    : {}".format(str(self.get_diff_mode().value)))
+        output.append("- Editor  : {}".format(self.get_editor()))
+        output.append("- Bordas  : {}".format(self.has_borders()))
+        output.append("- Images  : {}".format(self.has_images()))
+        output.append("- Timeout : {}".format(self.get_timeout()))
+        return "\n".join(output)
 
 
 def singleton(class_):
@@ -5085,18 +5098,34 @@ class Settings:
             json.dump(value, f, indent=4)
         return self
 
-    # def __str__(self):
-    #     output = ["Repositories:"]
-    #     maxlen = max([len(key) for key in self.remote])
-    #     for key in self.remote:
-    #         prefix = f"- {key.ljust(maxlen)}"
-    #         if self.remote[key].file and self.remote[key].url:
-    #             output.append(f"{prefix} : dual   : {self.remote[key].url} ; {self.remote[key].file}")
-    #         elif self.remote[key].url:
-    #             output.append(f"{prefix} : remote : {self.remote[key].url}")
-    #         else:
-    #             output.append(f"{prefix} : local  : {self.remote[key].file}")
-    #     return "\n".join(output)
+    def __str__(self):
+        output = []
+        output.append(str(Text("{g}", "Arquivo de configuração:")))
+        output.append("- " + self.get_settings_file())
+        output.append("")
+        output.append(str(Text("{g}", "Repositórios remotos cadastrados:")))
+        max_alias = max([len(key) for key in self.dict_alias_remote])
+        for key in self.dict_alias_remote:
+            output.append("- {} : {}".format(key.ljust(max_alias), self.dict_alias_remote[key]))
+        output.append("")
+        output.append(str(Text("{g}", "Repositórios locais salvos:")))
+        max_alias = max([len(key) for key in self.dict_alias_folder])
+        for key in self.dict_alias_folder:
+            output.append("- {} : {}".format(key.ljust(max_alias), self.dict_alias_folder[key]))
+
+        app_str = str(self.app)
+        return "\n".join(output) + "\n\n" + app_str
+
+        # maxlen = max([len(key) for key in self.remote])
+        # for key in self.remote:
+        #     prefix = f"- {key.ljust(maxlen)}"
+        #     if self.remote[key].file and self.remote[key].url:
+        #         output.append(f"{prefix} : dual   : {self.remote[key].url} ; {self.remote[key].file}")
+        #     elif self.remote[key].url:
+        #         output.append(f"{prefix} : remote : {self.remote[key].url}")
+        #     else:
+        #         output.append(f"{prefix} : local  : {self.remote[key].file}")
+        # return "\n".join(output)
 
 
 class Border:
@@ -6310,15 +6339,13 @@ class ConfigParams:
     def __init__(self):
         self.side: bool = False
         self.down: bool = False
-        self.lang: str | None = None
-        self.ask: bool = False
-        self.root: str | None = None
+        self.images: str | None = None
         self.editor: str | None = None
-        self.hud: str | None = None
         self.borders: str | None = None
+        self.timeout: int | None = None
 
     def __str__(self):
-        return f"side: {self.side}, down: {self.down}, lang: {self.lang}, ask: {self.ask}, root: {self.root}, editor: {self.editor}"
+        return f"side: {self.side}, down: {self.down}, timeout: {self.timeout}, editor: {self.editor}, borders: {self.borders}, images: {self.images}"
 
 class CmdConfig:
         
@@ -6330,6 +6357,11 @@ class CmdConfig:
             action = True
             settings.app.set_borders(param.borders == "1")
             print("Borders now is: " + str("True" if param.borders == "1" else "False"))
+        if param.images is not None:
+            action = True
+            settings.app.set_images(param.images == "1")
+            print("Images now is: " + str("True" if param.images == "1" else "False"))
+            
         if param.side:
             action = True
             settings.app.set_diff_mode(DiffMode.SIDE)
@@ -6338,29 +6370,28 @@ class CmdConfig:
             action = True
             settings.app.set_diff_mode(DiffMode.DOWN)
             print("Diff mode now is: UP_DOWN")
-        if param.lang:
-            action = True
-            settings.app._lang_default = param.lang
-            print("Default language extension now is:", param.lang)
-        if param.ask:
-            action = True
-            settings.app._lang_default = ""
-            print("Language extension will be asked always.")
+        # if param.lang:
+        #     action = True
+        #     settings.app._lang_default = param.lang
+        #     print("Default language extension now is:", param.lang)
+        # if param.ask:
+        #     action = True
+        #     settings.app._lang_default = ""
+        #     print("Language extension will be asked always.")
         
         if param.editor:
             action = True
             settings.app._editor = param.editor
             print(f"Novo comando para abrir arquivos de código: {param.editor}")
 
+        if param.timeout is not None:
+            action = True
+            settings.app.set_timeout(param.timeout)
+            print(f"Novo timeout: {param.timeout}")
+
         if not action:
             action = True
-            print(settings.get_settings_file())
-            print("Diff   : {}".format(str(settings.app.get_diff_mode())))
-            print("Editor : {}".format(settings.app.get_editor()))
-            print("Bordas : {}".format(settings.app.has_borders()))
-            print("Images : {}".format(settings.app.has_images()))
-            value = settings.app.get_lang_default()
-            print("Linguagem default: {}".format("Não definido" if value == "" else value))
+            print(str(settings))
 
         settings.save_settings()
 
@@ -8755,8 +8786,6 @@ class CmdDown:
 
     def check_and_select_language(self) -> str:
         language_def = self.rep.get_lang()
-        if language_def == "":
-            language_def = Settings().app.get_lang_default()
 
         if self.language is None:
             if language_def != "":
@@ -9119,8 +9148,6 @@ class Play:
 
         self.exit = False
 
-        if self.rep.get_lang() == "":
-            self.rep.set_lang(self.app._lang_default)
         self.flagsman = FlagsMan(self.rep.get_flags())
         Flags.admin.set_value("0")
         self.fman = FloatingManager()
@@ -9435,7 +9462,7 @@ class Main:
         build.execute()
 
     @staticmethod
-    def play(args):
+    def load(args):
         settings = Settings()
         CmdPlay(settings).set_alias(args.repo).execute()
         CheckVersion().version_check()
@@ -9459,13 +9486,17 @@ class Main:
         param = ConfigParams()
         param.side = args.side
         param.down = args.down
-        param.lang = args.lang
-        param.ask = args.ask
+        param.images = args.images
         param.editor = args.editor
         param.borders = args.borders
-        param.hud = args.hud
+        param.timeout = args.timeout
 
         CmdConfig.execute(settings, param)
+
+    @staticmethod
+    def list(_args):
+        settings = Settings()
+        print(str(settings))
 
 
 class Parser:
@@ -9485,8 +9516,11 @@ class Parser:
         # self.add_parser_down()
         self.add_parser_config()
         self.add_parser_rep()
-        self.add_parser_play()
-        self.add_parser_open()
+        # self.add_parser_load()
+        # self.add_parser_open()
+        # self.add_parser_save()
+        # self.add_parser_init()
+
 
     def add_parser_global(self):
         self.parser.add_argument('-c', metavar='CONFIG_FILE', type=str, help='config json file.')
@@ -9549,63 +9583,72 @@ class Parser:
     #     parser_d.set_defaults(func=Main.down)
 
     def add_parser_config(self):
-        parser_s = self.subparsers.add_parser('config', help='settings tool.')
+        parser_cfg = self.subparsers.add_parser('config', help='settings tool.')
+        subpar_repo = parser_cfg.add_subparsers(title='subcommands', help='help for subcommand.')
 
-        g_diff = parser_s.add_mutually_exclusive_group()
+        cfg_reset = subpar_repo.add_parser('reset', help='reset all repositories, folders and values to factory default.')
+        cfg_reset.set_defaults(func=CmdRep.reset)
+
+        cfg_set = subpar_repo.add_parser('set', help='set default config values.')
+
+        g_diff = cfg_set.add_mutually_exclusive_group()
         g_diff.add_argument('--side', action='store_true', help='set side_by_side diff mode.')
         g_diff.add_argument('--down', action='store_true', help='set up_to_down   diff mode.')
 
-        g_lang = parser_s.add_mutually_exclusive_group()
-        g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
-        g_lang.add_argument("--ask", action='store_true', help='ask language extension every time.')
+        # g_lang = parser_s.add_mutually_exclusive_group()
+        # g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
+        # g_lang.add_argument("--ask", action='store_true', help='ask language extension every time.')
 
         # parser_s.add_argument("--root", metavar="path", type=str, help='set root directory.')
-        parser_s.add_argument("--editor", metavar="cmd", type=str, help='set editor command.')
-        parser_s.add_argument("--borders", metavar="0or1", type=str, help='enable borders.')
-        parser_s.add_argument("--hud", metavar="0or1", type=str, help='enable hud.')
+        cfg_set.add_argument("--editor", metavar="cmd", type=str, help='set editor command.')
+        cfg_set.add_argument("--borders", metavar="[0|1]", type=str, help='enable borders.')
+        cfg_set.add_argument("--images", metavar="[0|1]", type=str, help='enable images.')
+        cfg_set.add_argument("--timeout", metavar="sec", type=int, help='set timeout.')
 
-        parser_s.set_defaults(func=Main.config)
+        cfg_set.set_defaults(func=Main.config)
+
+        cfg_list = subpar_repo.add_parser('list', help='list default config values.')
+        cfg_list.set_defaults(func=Main.list)
+
+
 
     def add_parser_rep(self):
-        parser_repo = self.subparsers.add_parser('rep', help='manipulate repositories.')
+
+        parser_repo = self.subparsers.add_parser('rep', help='Repository tools.')
         subpar_repo = parser_repo.add_subparsers(title='subcommands', help='help for subcommand.')
 
-        repo_list = subpar_repo.add_parser('list', help='list all repositories')
-        repo_list.set_defaults(func=CmdRep.list)
+        # repo_reset = subpar_repo.add_parser('reset', help='reset all repositories and folders to factory default.')
+        # repo_reset.set_defaults(func=CmdRep.reset)
 
-        repo_add = subpar_repo.add_parser('add', help='add a repository.')
-        repo_add.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be added.')
-        repo_add.add_argument('value', metavar='value', type=str, help='url or path of the repository to be added.')
-        repo_add.set_defaults(func=CmdRep.add)
-
-        repo_rm = subpar_repo.add_parser('rm', help='remove a repository.')
-        repo_rm.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be removed.')
-        repo_rm.set_defaults(func=CmdRep.rm)
-
-        repo_reset = subpar_repo.add_parser('reset', help='reset all repositories to factory default.')
-        repo_reset.set_defaults(func=CmdRep.reset)
-
-        repo_upgrade = subpar_repo.add_parser('upgrade', help='upgrade a repository to a newer version.')
-        repo_upgrade.add_argument('folder', metavar='folder', type=str, help='folder of the repository to be upgraded.')
-        repo_upgrade.set_defaults(func=CmdRep.upgrade)
-
-        repo_graph = subpar_repo.add_parser('graph', help='generate graph of the repository.')
-        repo_graph.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be graphed.')
-        repo_graph.set_defaults(func=CmdRep.graph)
+        # repo_graph = subpar_repo.add_parser('graph', help='generate graph of the repository.')
+        # repo_graph.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be graphed.')
+        # repo_graph.set_defaults(func=CmdRep.graph)
 
         repo_log = subpar_repo.add_parser("check", help="validates log of the repository.")
-        repo_log.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be log.')
+        repo_log.add_argument('folder', type=str, help='folder to be checked.')
         repo_log.set_defaults(func=CmdRep.check)
 
-    def add_parser_play(self):
-        parser_p = self.subparsers.add_parser('play', help='play a game.')
-        parser_p.add_argument('repo', metavar='repo', type=str, help='global repository to be played.')
-        parser_p.set_defaults(func=Main.play)
+    # def add_parser_save(self):
+    #     parser_p = self.subparsers.add_parser('save', help='Save a repository folder with a global alias.')
+    #     parser_p.add_argument('folder', type=str, help='repository folder.')
+    #     parser_p.add_argument('alias', type=str, help='repository alias.')
+    #     parser_p.set_defaults(func=CmdRep.save)
 
-    def add_parser_open(self):
-        parser_p = self.subparsers.add_parser('open', help='open a folder with a repository.')
-        parser_p.add_argument('folder', metavar='folder', type=str, help='folder.')
-        parser_p.set_defaults(func=Main.open)
+    # def add_parser_load(self):
+    #     parser_p = self.subparsers.add_parser('load', help='load a saved repository.')
+    #     parser_p.add_argument('alias', type=str, help='repository alias.')
+    #     parser_p.set_defaults(func=CmdRep.load)
+
+    # def add_parser_open(self):
+    #     parser_p = self.subparsers.add_parser('open', help='open a folder with a repository.')
+    #     parser_p.add_argument('folder', metavar='folder', type=str, help='folder.')
+    #     parser_p.set_defaults(func=CmdRep.open)
+
+
+    # def add_parser_init(self):
+    #     parser_p = self.subparsers.add_parser('open', help='open a folder with a repository.')
+    #     parser_p.add_argument('folder', metavar='folder', type=str, help='folder.')
+    #     parser_p.set_defaults(func=CmdRep.init)
 
 
 

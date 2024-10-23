@@ -112,8 +112,6 @@ class CmdDown:
 
     def check_and_select_language(self) -> str:
         language_def = self.rep.get_lang()
-        if language_def == "":
-            language_def = Settings().app.get_lang_default()
 
         if self.language is None:
             if language_def != "":

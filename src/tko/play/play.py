@@ -34,8 +34,6 @@ class Play:
 
         self.exit = False
 
-        if self.rep.get_lang() == "":
-            self.rep.set_lang(self.app._lang_default)
         self.flagsman = FlagsMan(self.rep.get_flags())
         Flags.admin.set_value("0")
         self.fman = FloatingManager()
