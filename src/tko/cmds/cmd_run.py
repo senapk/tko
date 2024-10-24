@@ -100,10 +100,11 @@ class Run:
                 solver_path = self.wdir.get_solver().path_list[0]
                 dirname = os.path.dirname(os.path.abspath(solver_path))
                 task_key = os.path.basename(dirname)
-                upper_dir = os.path.dirname(dirname)
-                log_file = os.path.join(upper_dir, Repository.LOG_FILE)
-                if os.path.exists(log_file):
-                    logger.set_log_file(log_file)
+                repo_path = Repository.rec_search_for_repo(dirname)
+                if repo_path != "":
+                    rep = Repository(repo_path)
+                    logger.set_history_file(rep.get_history_file())
+                    # logger.set_daily(rep.get_daily_file())
                 self.update_task_using_solver_path(task_key, dirname)
 
         if self.__free_run():

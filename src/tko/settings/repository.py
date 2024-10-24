@@ -21,6 +21,14 @@ class Repository:
         self.data: Dict[str, Any] = {}
         self.game = Game()
 
+    @staticmethod
+    def rec_search_for_repo(folder: str) -> str:
+        if os.path.exists(os.path.join(folder, Repository.CONFIG_FOLDER, Repository.CFG_FILE)):
+            return folder
+        if folder == "/":
+            return ""
+        return Repository.rec_search_for_repo(os.path.abspath(os.path.join(folder, "..")))
+
     def get_remote_task_folder(self, label: str) -> str:
         return os.path.abspath(os.path.join(self.folder, Repository.REMOTE_TASK_FOLDER, label))
 

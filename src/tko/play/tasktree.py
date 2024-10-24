@@ -18,6 +18,7 @@ from tko.play.floating_manager import FloatingManager
 from tko.play.floating import Floating
 from tko.play.grade_message import GradeMessage
 from tko.game.tree_item import TreeItem
+from tko.util.logger import Logger, LogAction
 
 
 class TaskAction:
@@ -463,7 +464,7 @@ class TaskTree:
 
         obj = self.get_selected()
         if isinstance(obj, Task):
-            # Logger.get_instance().record_event(LogAction.SELF, self.key, str(grade))
+            Logger.get_instance().record_other_event(LogAction.SELF, obj.key, str(grade))
             obj.set_grade(grade)
             self.fman.add_input(
                 Floating("v").warning().set_header(" Auto avaliação ").set_text_ljust().set_content(GradeMessage().format(grade).split("\n"))
@@ -473,7 +474,10 @@ class TaskTree:
 
         obj = self.get_selected()
         if isinstance(obj, Task):
+            if obj.progress == prog:
+                return
             obj.progress = prog
+            Logger.get_instance().record_other_event(LogAction.PROG, obj.key, str(prog))
 
     def inc_progress(self):
         obj = self.get_selected()

@@ -8,7 +8,7 @@ class TestLogger(unittest.TestCase):
     def setUp(self):
         self.logger_store = LoggerMemory()
         self.logger = Logger(self.logger_store)
-        self.logger.set_log_file("test_rep")
+        self.logger.set_history_file("test_rep")
 
 
     def test_record_event(self):

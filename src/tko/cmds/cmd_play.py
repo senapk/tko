@@ -69,7 +69,7 @@ class CmdPlay:
             raise Warning("Repositório não encontrado")
         
         logger: Logger = Logger.get_instance()
-        logger.set_log_file(self.rep.get_history_file())
+        logger.set_history_file(self.rep.get_history_file())
         logger.record_other_event(LogAction.OPEN)
         # target = ""
         # if self.folder != "":
@@ -77,6 +77,7 @@ class CmdPlay:
         # else:
         #     target = self.alias
         play = Play(self.settings, self.rep)
+        logger.set_daily(self.rep.get_daily_file(), play.game.tasks)
         play.play()
         logger.record_other_event(LogAction.QUIT)
 

@@ -3,6 +3,8 @@ import csv
 import hashlib
 import datetime
 from tko.settings.settings import Settings
+from tko.util.daily import DailyLog
+from tko.game.task import Task
 import enum
 import os
 
@@ -16,6 +18,7 @@ class LogAction(enum.Enum):
     FREE = 'FREE' 
     TEST = 'TEST' # CORRECT|WRONG|COMPILE|RUNTIME
     SELF = 'SELF' # int
+    PROG = 'PROG' # int
     QUIT = 'QUIT'
 
 
@@ -151,9 +154,25 @@ class Logger:
         self.last_hash: str | None = None
         self.cached_action: ActionData | None = None
         self.fs = logger_store
+        self.daily: DailyLog | None = None
 
-    def set_log_file(self, log_file: str):
+    def set_history_file(self, log_file: str):
         self.fs.set_log_file(log_file)
+        return self
+    
+    @staticmethod
+    def today() -> str:
+        return datetime.datetime.now().strftime('%Y-%m-%d')
+
+    def set_daily(self, daily_file: str, tasks: dict[str, Task]):
+        self.daily = DailyLog(daily_file)
+        today = Logger.today()
+        changed = False
+        for task in tasks.values():
+            if self.daily.log_task(today, task.key, task.progress, task.self_grade, save_on_change=False):
+                changed = True
+        if changed:
+            self.daily.save()
         return self
 
     def check_log_file_integrity(self) -> list[str]:
@@ -181,7 +200,7 @@ class Logger:
         self.record_other_event(LogAction.TEST, task_key, self.COMP_ERROR)
     
     def record_test_result(self, task_key: str, result: int):
-        self.record_other_event(LogAction.TEST, task_key, str(result) + "%")
+        self.record_other_event(LogAction.TEST, task_key, str(result))
 
     def record_freerun(self, task_key: str):
         self.record_other_event(LogAction.FREE, task_key)
@@ -196,6 +215,8 @@ class Logger:
         return self.last_hash
 
     def record_action_data(self, action_data: ActionData):
+        self.log_daily(action_data)
+
         if self.store_in_cached(action_data):
             self.cached_action = action_data
             return
@@ -208,3 +229,18 @@ class Logger:
             self.cached_action = action_data
         else:
             self.last_hash = self.fs.push_to_file(action_data, self.get_last_hash())
+
+
+    def log_daily(self, action_data: ActionData):
+        if self.daily is None:
+            return
+        if action_data.action_value == LogAction.SELF.value:
+            self.daily.log_task(Logger.today(), key=action_data.task_key, self_grade=int(action_data.payload))
+        elif action_data.action_value == LogAction.PROG.value:
+            self.daily.log_task(Logger.today(), key=action_data.task_key, progress=int(action_data.payload))
+        elif action_data.action_value == LogAction.TEST.value:
+            try:
+                result = int(action_data.payload)                
+                self.daily.log_task(Logger.today(), key=action_data.task_key, progress=result)
+            except ValueError:
+                pass

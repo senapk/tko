@@ -12,7 +12,7 @@ class CmdRep:
         folder = Settings().get_alias_folder(args.alias)
         rep = Repository(folder).load_data_from_config_file().load_game()
         logger = Logger.get_instance()
-        logger.set_log_file(rep.get_history_file())
+        logger.set_history_file(rep.get_history_file())
 
         output = logger.check_log_file_integrity()
         if len(output) == 0:

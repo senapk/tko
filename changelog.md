@@ -1,5 +1,7 @@
 # Changelog
 
+- 1.6.0
+  - add: added daily.json to keep track of daily progress
 - 1.5.0
   - add: refactored local repositories and commands
 - 1.4.3
