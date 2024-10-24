@@ -1,5 +1,7 @@
 # Changelog
 
+- 1.5.0
+  - add: refactored local repositories and commands
 - 1.4.3
   - fix: downloading required, keep and upload
 - 1.4.2

@@ -45,13 +45,11 @@ class CmdPlay:
         
         raise Warning(Text("Repositório remoto {r} não encontrado", rep_alias))
 
-    def set_folder(self, folder: str):
+    def load_folder(self, folder: str):
         self.folder = folder
         
         self.rep = Repository(folder)
-        if not os.path.exists(folder):
-            raise Warning("Repositório não encontrado")
-        if not os.path.exists(self.rep.get_repository_file()):
+        if not self.rep.has_local_config_file():
             print("Arquivo de configuração do repositório não encontrado")
             print("Você deseja criar um repositorio na pasta {}? ".format(folder), end="")
             print("s/n: ", end="")

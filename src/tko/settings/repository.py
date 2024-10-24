@@ -14,6 +14,7 @@ class Repository:
     DAILY_FILE = "daily.json"
     INDEX_FILE = "Readme.md"
     REMOTE_TASK_FOLDER = "remote"
+    CONFIG_FOLDER = ".tko"
 
     def __init__(self, folder: str):
         self.folder: str = folder
@@ -48,10 +49,13 @@ class Repository:
         return self
 
     def get_repository_file(self) -> str:
-        return os.path.abspath(os.path.join(self.folder, Repository.CFG_FILE))
+        return os.path.abspath(os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.CFG_FILE))
     
     def get_history_file(self) -> str:
-        return os.path.abspath(os.path.join(self.folder, Repository.LOG_FILE))
+        return os.path.abspath(os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.LOG_FILE))
+    
+    def get_daily_file(self) -> str:
+        return os.path.abspath(os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.DAILY_FILE))
     
     def get_default_readme_path(self) -> str:
         return os.path.abspath(os.path.join(self.folder, Repository.INDEX_FILE))

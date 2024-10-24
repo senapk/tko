@@ -73,8 +73,8 @@ class Settings:
             return self.dict_alias_remote[alias]
         raise Warning(f"Repositório remoto {alias} não encontrado")
 
-    def set_alias_folder(self, course: str, folder: str):
-        self.dict_alias_folder[course] = folder
+    def set_alias_folder(self, alias: str, folder: str):
+        self.dict_alias_folder[alias] = folder
         return self
     
     def has_alias_folder(self, course: str) -> bool:
