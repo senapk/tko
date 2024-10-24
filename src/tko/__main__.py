@@ -84,9 +84,19 @@ class Main:
         settings = Settings()
         if settings.has_alias_folder(args.alias):
             folder = settings.get_alias_folder(args.alias)
+            if not os.path.exists(folder):
+                settings.del_alias_folder(args.alias)
+                settings.save_settings()
+                print(Text("{r}: o diretório {g} não existe mais.", "Falha", folder))
+                return
+            rep = Repository(folder)
+            if not rep.has_local_config_file():
+                print(Text("{r}: o diretório {g} não é um repositório válido.", "Falha", folder))
+                return
             CmdPlay(settings).load_folder(folder).execute()
         else:
             print(Text("{r}: não existe nenhuma repositório local cadastrado para o atalho {g}.", "Falha", args.alias))
+            print(Text("{g}: utilize o comando '{y}' para iniciar um repositório local.", "Atenção", "tko start " + args.alias))
         CheckVersion().version_check()
 
     @staticmethod

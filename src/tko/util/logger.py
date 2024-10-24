@@ -30,12 +30,12 @@ class ActionData:
         self.payload = payload
         self.hash = ""
 
-    def action_self_same_task(self, other: ActionData):
-        if self.action_value != LogAction.SELF.value:
-            return False
-        if other.action_value != LogAction.SELF.value:
-            return False
-        return self.task_key == other.task_key
+    def just_replace_cache(self, other: ActionData):
+        if self.action_value == LogAction.SELF.value and other.action_value == LogAction.SELF.value and self.task_key == other.task_key:
+            return True
+        if self.action_value == LogAction.PROG.value and other.action_value == LogAction.PROG.value and self.task_key == other.task_key:
+            return True
+        return False
 
     def __str__(self):
         return f'{self.timestamp}, {self.action_value}, {self.task_key}, {self.payload}'
@@ -190,9 +190,9 @@ class Logger:
         return output
 
     def store_in_cached(self, action_data: ActionData) -> bool:
-        if self.cached_action is None and action_data.action_value == LogAction.SELF.value:
+        if self.cached_action is None and (action_data.action_value == LogAction.SELF.value or action_data.action_value == LogAction.PROG.value):
             return True
-        if self.cached_action is not None and self.cached_action.action_self_same_task(action_data):
+        if self.cached_action is not None and self.cached_action.just_replace_cache(action_data):
             return True
         return False
 
