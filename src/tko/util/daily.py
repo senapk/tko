@@ -1,5 +1,6 @@
 import json
 import os
+from tko.util.decoder import Decoder
 
 class TaskData:
     def __init__(self, key: str = "", progress: int = 0, seft_grade: int = 0):
@@ -36,7 +37,8 @@ class DailyLog:
         history = {}
         try:
             if os.path.exists(self.json_file):
-                with open(self.json_file, 'r') as f:
+                encoding = Decoder.get_encoding(self.json_file)
+                with open(self.json_file, 'r', encoding=encoding) as f:
                     history = json.load(f)
         except:
             pass
@@ -100,5 +102,5 @@ class DailyLog:
         history = {}
         for day, task_data in self.history.items():
             history[day] = [str(task) for task in task_data.values()]
-        with open(self.json_file, 'w') as f:
+        with open(self.json_file, 'w', encoding="utf-8") as f:
             json.dump(history, f, indent=4)

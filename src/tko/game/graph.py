@@ -159,11 +159,9 @@ class Graph:
                 saida.append(f"  {self.info(q)} [shape={shape} color={color} penwidth={width} fillcolor={fillcolor} ]")
 
         saida.append("}")
-        # saida.append("@enduml")
+
         saida.append("")
 
-        # dot_file = os.path.join(os.path.dirname(self.path) + "graph.dot")
-        # open(dot_file, "w").write("\n".join(saida))
         out_file = self.path
         data = "\n".join(saida)
         graph_dot  = pydot.graph_from_dot_data(data)[0]

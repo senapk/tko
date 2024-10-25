@@ -4,6 +4,7 @@ import configparser
 import argparse
 
 from typing import List, Optional
+from tko.util.decoder import Decoder
 
 
 class RemoteLink:
@@ -139,13 +140,12 @@ class Absolute:
 
     @staticmethod
     def convert_or_copy_or_print(source: str, target: str | None):
-        content = open(source).read()
+        content = Decoder.load(source)
         cfg = RemoteCfg(source)
         if cfg.cfg_exists():
             content = Absolute.relative_to_absolute(content, cfg.calc_link_for_local_file())
         if target is not None:
-            with open(target, "w") as f:
-                f.write(content)
+            Decoder.save(target, content)
         else:
             print(content)
         

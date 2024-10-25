@@ -1,9 +1,10 @@
 from typing import List, Dict, Optional, Tuple
-from .cluster import Cluster
-from .quest import Quest, QuestParser
-from .task import Task, TaskParser
+from tko.game.cluster import Cluster
+from tko.game.quest import Quest, QuestParser
+from tko.game.task import Task, TaskParser
 from tko.util.get_md_link import get_md_link
 from tko.util.to_asc import uni_to_asc
+from tko.util.decoder import Decoder
 import yaml # type: ignore
 
 import re
@@ -240,7 +241,7 @@ class Game:
 
     def parse_file(self, filename: str):
         self.filename = filename
-        content = open(filename, encoding="utf-8").read()
+        content = Decoder.load(filename)
         lines = content.split("\n")
         self.parse_xp(content)
 

@@ -6,7 +6,7 @@ from ..util.identifier import Identifier
 from ..util.pattern import PatternLoader
 from ..util.consts import IdentifierType
 from .unit import Unit
-
+from tko.util.decoder import Decoder
 
 class Writer:
 
@@ -42,9 +42,9 @@ class Writer:
     @staticmethod
     def save_dir_files(folder: str, pattern_loader: PatternLoader, label: str, unit: Unit) -> None:
         file_source = pattern_loader.make_file_source(label)
-        with open(os.path.join(folder, file_source.input_file), "w") as f:
+        with open(os.path.join(folder, file_source.input_file), "w", encoding="utf-8") as f:
             f.write(unit.input)
-        with open(os.path.join(folder, file_source.output_file), "w") as f:
+        with open(os.path.join(folder, file_source.output_file), "w", encoding="utf-8") as f:
             f.write(unit.expected)
 
     @staticmethod
@@ -66,13 +66,13 @@ class Writer:
             file_exists = os.path.isfile(_target)
 
             if file_exists:
-                _old = open(_target).read()
+                _old = Decoder.load(_target)
                 if _old == _new:
                     if not quiet:
                         print("no changes in test file")
                     return False
 
-            with open(_target, "w") as f:
+            with open(_target, "w", encoding="utf-8") as f:
                 f.write(_new)
                 if not quiet:
                     print("file " + _target + " wrote")

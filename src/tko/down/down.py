@@ -7,6 +7,7 @@ import urllib.request
 import tempfile
 from tko.util.remote_url import RemoteUrl
 from typing import Callable, Tuple
+from tko.util.decoder import Decoder
 
 
 class DownProblem:
@@ -14,8 +15,7 @@ class DownProblem:
 
     @staticmethod
     def __create_file(content, path, label=""):
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(content)
+        Decoder.save(path, content)
         DownProblem.fnprint(path + " " + label)
 
     @staticmethod
@@ -42,14 +42,13 @@ class DownProblem:
     @staticmethod
     def __compare_and_save(content: str, path: str):
         if not os.path.exists(path):
-            with open(path, "w", encoding="utf-8") as f:
-                f.write(content.encode("utf-8").decode("utf-8"))
+            Decoder.save(path, content)
             DownProblem.fnprint(path + " (Novo)")
         else:
-            if open(path, encoding="utf-8").read() != content:
+            path_content = Decoder.load(path)
+            if path_content != content:
                 DownProblem.fnprint(path + " (Atualizado)")
-                with open(path, "w", encoding="utf-8") as f:
-                    f.write(content)
+                Decoder.save(path, content)
             else:
                 DownProblem.fnprint(path + " (Inalterado)")
 
@@ -57,7 +56,7 @@ class DownProblem:
     def down_readme(readme_path: str,  remote_url: RemoteUrl):
         temp_file = tempfile.mktemp()
         remote_url.download_absolute_to(temp_file)
-        content = open(temp_file, encoding="utf-8").read()
+        content = Decoder.load(temp_file)
         DownProblem.__compare_and_save(content, readme_path)
     
     @staticmethod

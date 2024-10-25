@@ -5,6 +5,7 @@ import datetime
 from tko.settings.settings import Settings
 from tko.util.daily import DailyLog
 from tko.game.task import Task
+from tko.util.decoder import Decoder
 import enum
 import os
 
@@ -98,7 +99,7 @@ class LoggerFS(LoggerStore):
         action_data.hash = ActionData.generate_hash(action_data, last_hash)
         if not os.path.exists(os.path.dirname(log_file)):
             os.makedirs(os.path.dirname(log_file))
-        with open(log_file, 'a', newline='') as file:
+        with open(log_file, 'a', encoding="utf-8", newline='') as file:
             writer = csv.writer(file)
             ad = action_data
             writer.writerow([ad.hash, ad.timestamp, ad.action_value, ad.task_key, ad.payload])
@@ -110,7 +111,8 @@ class LoggerFS(LoggerStore):
             return []
         if not os.path.exists(log_file):
             return []
-        with open(log_file, 'r') as file:
+        encoding = Decoder.get_encoding(log_file)
+        with open(log_file, 'r', encoding=encoding) as file:
             reader = csv.reader(file)
             rows = list(reader)
             return [self.row_to_action_data(row) for row in rows]

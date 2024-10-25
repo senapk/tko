@@ -1,5 +1,7 @@
 # Changelog
 
+- 1.6.2
+  - fix: encoding error
 - 1.6.1
   - fix: progress cache invalidation on logger
 - 1.6.0

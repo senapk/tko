@@ -5,7 +5,7 @@ import os
 
 from .unit import Unit
 from ..util.pattern import PatternLoader
-
+from tko.util.decoder import Decoder
 
 class VplParser:
     @staticmethod
@@ -161,12 +161,12 @@ class Loader:
                 unit = Unit()
                 unit.source = os.path.join(folder, m.label)
                 unit.grade = 100
-                with open(os.path.join(folder, m.input_file)) as f:
-                    value = f.read()
-                    unit.input = value + ("" if value.endswith("\n") else "\n")
-                with open(os.path.join(folder, m.output_file)) as f:
-                    value = f.read()
-                    unit.expected = value + ("" if value.endswith("\n") else "\n")
+                input_file = os.path.join(folder, m.input_file)
+                value = Decoder.load(input_file)
+                unit.input = value + ("" if value.endswith("\n") else "\n")
+                output_file = os.path.join(folder, m.output_file)
+                value = Decoder.load(output_file)
+                unit.expected = value + ("" if value.endswith("\n") else "\n")
                 unit_list.append(unit)
         except FileNotFoundError as e:
             print(str(e))
@@ -179,8 +179,7 @@ class Loader:
         if os.path.isfile(source):
             #  if PreScript.exists():
             #      source = PreScript.process_source(source)
-            with open(source, encoding="utf-8") as f:
-                content = f.read()
+            content = Decoder.load(source)
             if source.endswith(".vpl") or source.endswith(".cases"):
                 return Loader.parse_vpl(content, source)
             elif source.endswith(".tio"):

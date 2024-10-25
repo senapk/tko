@@ -4,6 +4,7 @@ import argparse
 import sys
 
 from tko.util.text import Text
+from tko.util.decoder import Decoder
 
 from tko.cmds.cmd_rep import CmdRep
 from tko.cmds.cmd_play import CmdPlay
@@ -145,11 +146,9 @@ class Main:
             index = rep.get_default_readme_path()
             print("Nenhuma fonte foi informada, utilizando o arquivo {} como fonte".format(index))
             if not os.path.exists(index):
-                with open(index, "w") as f:
-                    f.write("# Repositório\n\n")
-                    f.write("## Grupo\n\n")
-                    f.write("### Missão\n\n")
-                    f.write("- [ ] [#google Abra o google](https://www.google.com)\n")
+                content = "# Repositório\n\n## Grupo\n\n### Missão\n\n- [ ] [#google Abra o google](https://www.google.com)\n"
+                Decoder.save(index, content)
+
         else:
             settings = Settings()
             source: str = ""

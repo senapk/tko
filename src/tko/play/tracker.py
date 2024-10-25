@@ -102,7 +102,7 @@ class Tracker:
 
         log_file = self.get_log_full_path()
         track = Track().set_timestamp(timestamp).set_files(files_in_this_version).set_result(self._result)
-        with open(log_file, mode="a") as f:
+        with open(log_file, encoding="utf-8", mode="a") as f:
             writer = csv.writer(f)
             writer.writerow(track.track_to_column())
 

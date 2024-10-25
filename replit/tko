@@ -29,7 +29,8 @@ import hashlib
 from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
-__version__ = "1.6.1"
+import chardet # type: ignore
+__version__ = "1.6.2"
 
 
 class CheckVersion:
@@ -1031,7 +1032,7 @@ class Tracker:
 
         log_file = self.get_log_full_path()
         track = Track().set_timestamp(timestamp).set_files(files_in_this_version).set_result(self._result)
-        with open(log_file, mode="a") as f:
+        with open(log_file, encoding="utf-8", mode="a") as f:
             writer = csv.writer(f)
             writer.writerow(track.track_to_column())
 
@@ -1106,359 +1107,6 @@ def get_md_link(title: str) -> str:
         elif c.isalnum():
             out += c
     return out
-
-class TaskData:
-    def __init__(self, key: str = "", progress: int = 0, seft_grade: int = 0):
-        self.key = key
-        self.progress = progress
-        self.seft_grade = seft_grade
-
-    def decode(self, serial: str):
-        key, progress, seft_grade = serial.split(":")
-        self.key = key
-        self.progress = int(progress)
-        self.seft_grade = int(seft_grade)
-
-    def __eq__(self, other):
-        return self.progress == other.progress and self.seft_grade == other.seft_grade
-
-
-    def __str__(self):
-        return f'{self.key}:{self.progress}:{self.seft_grade}'
-    
-
-    
-class DailyLog:
-    def __init__(self, json_file: str):
-        # dict[day, dict[task_key, TaskLog]]
-        self.history: dict[str, dict[str, TaskData]] = {}
-        self.json_file = json_file
-        self.load_json()
-
-        self.resume: dict[str, TaskData] = {}
-        self.generate_resume()
-
-    def load_json(self):
-        history = {}
-        try:
-            if os.path.exists(self.json_file):
-                with open(self.json_file, 'r') as f:
-                    history = json.load(f)
-        except:
-            pass
-
-        self.history = {}
-        for day, serial_list in history.items():
-            self.history[day] = {}
-            for serial in serial_list:
-                task_data = TaskData()
-                task_data.decode(serial)
-                self.history[day][task_data.key] = task_data
-
-    def generate_resume(self):
-        self.resume = {}
-        #sort by tasklogrep by day
-        for day in sorted(self.history.keys()):
-            for task_key, task_log in self.history[day].items():
-                self.resume[task_key] = task_log
-
-    # def match_actual_state(self, day: str, actual_state: dict[str, TaskData]):
-    #     if day not in self.history:
-    #         self.history[day] = {}
-    #     changed = False
-    #     for _, task_data in actual_state.items():
-    #         if self.__check_add_task(day, task_data):
-    #                 changed = True
-        
-    #     if changed:
-    #         self.save()
-
-    def __check_add_task(self, day: str, task_data: TaskData) -> bool:
-        data = self.resume.get(task_data.key, None)
-
-        # não tinha, e ainda está zerado, não precisa salvar
-        if data is None and task_data.progress == 0 and task_data.seft_grade == 0:
-            return False
-        
-        # tinha, e está diferente, precisa salvar
-        if data is None or data != task_data:
-            if day not in self.history:
-                self.history[day] = {}
-            self.history[day][task_data.key] = task_data
-            self.resume[task_data.key] = task_data
-            return True
-        return False
-    
-    def log_task(self, day: str, key: str, progress: int = -1, self_grade: int = -1, save_on_change: bool = True):
-        actual_progress = self.resume.get(key, TaskData(key, 0, 0)).progress
-        actual_seft_grade = self.resume.get(key, TaskData(key, 0, 0)).seft_grade
-        if progress == -1:
-            progress = actual_progress
-        if self_grade == -1:
-            self_grade = actual_seft_grade
-        if self.__check_add_task(day, TaskData(key, progress, self_grade)):
-            if save_on_change:
-                self.save()
-            return True
-        return False
-
-    def save(self):
-        history = {}
-        for day, task_data in self.history.items():
-            history[day] = [str(task) for task in task_data.values()]
-        with open(self.json_file, 'w') as f:
-            json.dump(history, f, indent=4)
-
-
-class Mark:
-    def __init__(self, marker, indent):
-        self.marker: str = marker
-        self.indent: int = indent
-
-    def __str__(self):
-        return f"{self.marker}:{self.indent}"
-
-class Mode:
-    ADD = "ADD!"
-    COM = "COM!"
-    ACT = "ACT!"
-    DEL = "DEL!"
-    opts = [ADD, COM, ACT, DEL]
-
-def get_comment(filename: str) -> str:
-    com = "//"
-    if filename.endswith(".py"):
-        com = "#"
-    elif filename.endswith(".puml"):
-        com = "'"
-    return com
-
-class Filter:
-    def __init__(self, filename):
-        self.filename = filename
-        self.stack = [Mark(Mode.ADD, 0)]
-        self.com = get_comment(filename)
-
-    def get_marker(self) -> str:
-        return self.stack[-1].marker
-
-    def get_indent(self) -> int:
-        return self.stack[-1].indent
-
-    def outside_scope(self, line):
-        stripped = line.strip()
-        left_spaces = len(line) - len(line.lstrip())
-        return stripped != "" and left_spaces < self.get_indent()
-
-    def has_single_mode_cmd(self, line: str) -> bool:
-        for marker in Mode.opts:
-            if line.strip() == self.com + marker:
-                return True
-        return False
-
-    def change_mode(self, line: str):
-        with_left = line.rstrip()
-        marker = with_left.lstrip()[len(self.com):]
-        len_spaces = len(with_left) - len(self.com + marker)
-        while len(self.stack) > 0 and self.stack[-1].indent >= len_spaces:
-            self.stack.pop()
-        self.stack.append(Mark(marker, len_spaces))
-
-    def search_temp_mode(self, line: str) -> Tuple[str, str]:
-        for marker in Mode.opts:
-            if line.endswith(self.com + marker):
-                return marker, line[:-len(self.com + marker)]
-        return "---", line
-
-    def __process(self, content: str) -> str:
-        lines = content.split("\n")
-        output = []
-        for line in lines:
-            while self.outside_scope(line):
-                self.stack.pop()
-            if self.has_single_mode_cmd(line):
-                self.change_mode(line)
-                continue
-            pre_marker = self.get_marker()
-            pos_marker, line = self.search_temp_mode(line)
-            marker = pos_marker if pos_marker != "---" else pre_marker
-
-            if marker == Mode.DEL:
-                continue
-            elif marker == Mode.ADD:
-                output.append(line)
-            elif marker == Mode.ACT:
-                prefix = " " * self.get_indent() + self.com + " "
-                if not line.startswith(prefix):
-                    prefix = prefix[:-1]
-                line = line.replace(prefix, " " * self.get_indent(), 1)
-                output.append(line)
-            elif marker == Mode.COM:
-                line = " " * self.get_indent() + self.com + " " + line[self.get_indent():]
-                output.append(line)
-
-        return "\n".join(output)
-    
-    def process(self, content: str) -> str:
-        return self.__process(content)
-
-def clean_com(target: str, content: str) -> str:
-    com = get_comment(target)
-    lines = content.split("\n")
-    output = [line for line in lines if not line.lstrip().startswith(com)]
-    return "\n".join(output)
-
-class DeepFilter:
-    extensions = [".md", ".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs", ".txt", ".go", ".cases", ".tio", ".vpl"]
-
-    def __init__(self):
-        self.cheat_mode = False
-        self.quiet_mode = False
-        self.indent = ""
-    
-    def print(self, *args, **kwargs):
-        if not self.quiet_mode:
-            print(self.indent, end="")
-            print(*args, **kwargs)
-
-    def set_indent(self, prefix: int):
-        self.indent = prefix * " "
-        return self
-
-    def set_quiet(self, value):
-        self.quiet_mode = (value == True)
-        return self
-    
-    def set_cheat(self, value):
-        self.cheat_mode = (value == True)
-        return self
-
-    def copy(self, source, destiny, deep: int):
-        if deep == 0:
-            return
-        if os.path.isdir(source):
-            chain = source.split(os.sep)
-            if len(chain) > 1 and chain[-1].startswith("."):
-                return
-            if not os.path.isdir(destiny):
-                os.makedirs(destiny)
-            for file in sorted(os.listdir(source)):
-                self.copy(os.path.join(source, file), os.path.join(destiny, file), deep - 1)
-        else:
-            filename = os.path.basename(source)
-
-            if not any([filename.endswith(ext) for ext in self.extensions]):
-                return
-            content = open(source, "r").read()
-
-            processed = Filter(filename).process(content)
-
-            if self.cheat_mode:
-                if processed != content:
-                    cleaned = clean_com(source, content)
-                    with open(destiny, "w") as f:
-                        f.write(cleaned)
-            elif processed != "":
-                with open(destiny, "w") as f:
-                    f.write(processed)
-            
-
-            line = ""
-            if self.cheat_mode:
-                if processed != content:
-                    line += "(cleaned ): "
-                else:
-                    line += "(disabled): "
-            else:
-                if processed == "":
-                    line += "(disabled): "
-                elif processed != content:
-                    line += "(filtered): "
-                else:
-                    line += "(        ): "
-            line += destiny
-
-            self.print(line)
-
-class CodeFilter:
-    @staticmethod
-    def open_file(path): 
-        if os.path.isfile(path):
-            with open(path) as f:
-                file_content = f.read()
-                return True, file_content
-        print("Warning: File", path, "not found")
-        return False, "" 
-
-    @staticmethod
-    def cf_recursive(target_dir: str, output_dir: str, force: bool, cheat: bool = False, quiet: bool = False, indent: int = 0):
-        if output_dir is None:
-                print("Error: output is required in recursive mode")
-                exit()
-        if not os.path.isdir(target_dir):
-            print("Error: target must be a folder in recursive mode")
-            exit()
-        if os.path.exists(output_dir):
-            if not force:
-                print("Error: output folder already exists")
-                exit()
-            else:
-                # recursive delete all folder content without deleting the folder itself
-                for file in os.listdir(output_dir):
-                    path = os.path.join(output_dir, file)
-                    if os.path.isdir(path):
-                        shutil.rmtree(path)
-                    else:
-                        os.remove(path)
-
-        deep_filter = DeepFilter().set_cheat(cheat).set_quiet(quiet).set_indent(indent)
-        deep_filter.copy(target_dir, output_dir, 10)
-
-    @staticmethod
-    def cf_single_file(target, output, update, cheat):
-        file = target
-        success, content = CodeFilter.open_file(file)
-        if success:
-            if cheat:
-                content = clean_com(file, content)
-            else:
-                content = Filter(file).process(content)
-
-            if output:
-                if os.path.isfile(output):
-                    old = open(output).read()
-                    if old != content:
-                        open(output, "w").write(content)
-                else:                
-                    open(output, "w").write(content)
-            elif update:
-                with open(file, "w") as f:
-                    f.write(content)
-            else:
-                print(content)
-
-def cfmain():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('target', type=str, help='file or folder to process')
-    parser.add_argument('-u', '--update', action="store_true", help='update source file')
-    parser.add_argument('-c', '--cheat', action="store_true", help='recursive cheat mode cleaning comments on students files')
-    parser.add_argument('-o', '--output', type=str, help='output target')
-    parser.add_argument("-r", "--recursive", action="store_true", help="recursive mode")
-    parser.add_argument("-f", "--force", action="store_true", help="force mode")
-    parser.add_argument("-q", "--quiet", action="store_true", help="quiet mode")
-    parser.add_argument("-i", "--indent", type=int, default=0, help="indent using spaces")
-
-    args = parser.parse_args()
-
-    if args.cheat:
-        args.recursive = True
-
-    if args.recursive:
-        CodeFilter.cf_recursive(args.target, args.output, force=args.force, cheat=args.cheat, quiet=args.quiet, indent=args.indent)
-        exit()
-
-    CodeFilter.cf_single_file(args.target, args.output, args.update, args.cheat)
-
 
 
 class FileSource:
@@ -3572,203 +3220,6 @@ class DiffBuilder:
                 output.append((a_data, b_data))
         return output, first_failure
 
-
-
-
-class RemoteLink:
-    def __init__(self):
-        self.user = ""
-        self.repo = ""
-        self.branch = ""
-        self.folder = ""
-        self.file = ""
-
-    def identify_from_url(self, url: str):
-        if url.startswith("https://raw.githubusercontent.com"):
-            url = url.replace("https://raw.githubusercontent.com/", "")
-            elements = url.split("/")
-            self.user = elements[0]
-            self.repo = elements[1]
-            if elements[2] != "refs":
-                raise ValueError("Invalid URL")
-            if elements[3] != "heads":
-                raise ValueError("Invalid URL")
-            self.branch = elements[4]
-            self.folder = "/".join(elements[5:-1])
-            self.file = elements[-1]
-        elif url.endswith(".md"):
-            url = url.replace("https://github.com/", "")
-            elements = url.split("/")
-            self.user = elements[0]
-            self.repo = elements[1]
-            if elements[2] != "blob":
-                raise ValueError("Invalid URL")
-            self.branch = elements[3]
-            self.folder = "/".join(elements[4:-1])
-            self.file = elements[-1]
-        else:
-            url = url.replace("https://github.com/", "")
-            elements = url.split("/")
-            self.user = elements[0]
-            self.repo = elements[1]
-            if elements[2] != "tree":
-                raise ValueError("Invalid URL")
-            self.branch = elements[3]
-            self.folder = "/".join(elements[4:])
-        return self
-
-class RemoteCfg:
-    def __init__(self, target: str):
-        self.target = target
-        self.remote: RemoteLink = RemoteLink()
-        self.cfg_path: str | None = None
-        self.__load_cfg_path(target)
-        self.__parse_cfg()
-
-    def cfg_exists(self):
-        return self.cfg_path is not None
-
-    def get_cfg_path(self):
-        if self.cfg_path is None:
-            raise Exception("cfg_path not set")
-        return self.cfg_path
-
-    def calc_link_for_local_file(self):
-        base_cfg_file = os.path.dirname(os.path.abspath(self.get_cfg_path()))
-        base_source_file = os.path.dirname(os.path.abspath(self.target))
-        if not base_source_file.startswith(base_cfg_file):
-            raise Exception("File not match with remote cfg")
-        folder = os.path.relpath(base_source_file, base_cfg_file)
-        self.remote.folder = folder
-        return self.remote
-
-    def __parse_cfg(self):
-        if self.cfg_path is None:
-            return
-        config = configparser.ConfigParser()
-        config.read(self.get_cfg_path())
-
-        self.remote.user = config["DEFAULT"]["user"]
-        self.remote.repo = config["DEFAULT"]["rep"]
-        self.remote.branch = config["DEFAULT"]["branch"]
-
-    def __load_cfg_path(self, target: str):
-        # look for the remote.cfg file in the current folder
-        # if not found, look for it in the parent folder
-        # if not found, look for it in the parent's parent folder ...
-
-        path = os.path.dirname(os.path.abspath(target))
-        while path != "/":
-            cfg_path = os.path.join(path, "remote.cfg")
-            if os.path.isfile(cfg_path):
-                self.cfg_path = cfg_path
-                break
-            path = os.path.dirname(path)
-
-
-class Absolute:
-
-    # processa o conteúdo trocando os links locais para links absolutos utilizando a url remota
-    @staticmethod
-    def __replace_remote(content: str, remote_raw: str, remote_view: str, remote_folder: str) -> str:
-        if content is None or content == "":
-            return ""
-        if not remote_raw.endswith("/"):
-            remote_raw += "/"
-        if not remote_view.endswith("/"):
-            remote_view += "/"
-        if not remote_folder.endswith("/"):
-            remote_folder += "/"
-
-        #trocando todas as imagens com link local
-        regex = r"!\[(.*?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
-        subst = r"![\1](" + remote_raw + r"\3)"
-        result = re.sub(regex, subst, content, count=0, flags=0)
-
-        regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?/)\)"
-        subst = r"[\1](" + remote_folder + r"\3)"
-        result = re.sub(regex, subst, result, 0)
-
-        #trocando todos os links locais cujo conteudo nao seja vazio
-        regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
-        subst = r"[\1](" + remote_view + r"\3)"
-        result = re.sub(regex, subst, result, 0)
-
-        return result
-
-    @staticmethod
-    def relative_to_absolute(content: str, rl: RemoteLink):
-        folder = rl.folder
-        user_repo = "/".join([rl.user, rl.repo])
-        remote_raw    = "/".join(["https://raw.githubusercontent.com", user_repo, rl.branch , folder])
-        remote_view    = "/".join(["https://github.com", user_repo, "blob", rl.branch, folder])
-        remote_folder = "/".join(["https://github.com", user_repo, "tree", rl.branch, folder])
-        return Absolute.__replace_remote(content, remote_raw, remote_view, remote_folder)
-
-
-    @staticmethod
-    def convert_or_copy_or_print(source: str, target: str | None):
-        content = open(source).read()
-        cfg = RemoteCfg(source)
-        if cfg.cfg_exists():
-            content = Absolute.relative_to_absolute(content, cfg.calc_link_for_local_file())
-        if target is not None:
-            with open(target, "w") as f:
-                f.write(content)
-        else:
-            print(content)
-        
-
-def main_remote():
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument('target', metavar='T', type=str, help='folders')
-    # arg_parser.add_argument("--remote", "-r", action="store_true", help="convert local file to remote file")
-    arg_parser.add_argument("--output", "-o", type=str, help="output file")
-    args = arg_parser.parse_args()
-
-    Absolute.convert_or_copy_or_print(args.target, args.output)
-
-
-
-
-
-class RemoteUrl:
-    def __init__(self, url: str):
-        self.raw_link: str | None = ""
-        self.remote: RemoteLink | None = None
-
-        if not url.startswith("https://"):
-            raise ValueError("Invalid URL")
-
-        if url.startswith("https://gist.githubusercontent.com"):
-            self.raw_link = url
-        else:
-            self.remote = RemoteLink().identify_from_url(url)
-        self.file = ""
-
-    def get_raw_url(self):
-        if self.raw_link:
-            return self.raw_link
-        if self.remote is None:
-            return ""
-        return "https://raw.githubusercontent.com/" + self.remote.user + "/" + self.remote.repo + "/" + self.remote.branch + "/" + self.remote.folder + "/" + self.remote.file
-
-    def download_absolute_to(self, filename: str):
-        [tempfile, __content] = urllib.request.urlretrieve(self.get_raw_url(), filename)
-        content = ""
-        try:
-            content = open(tempfile, encoding="utf-8").read()
-        except:
-            content = open(tempfile).read()
-        if self.remote is not None:
-            content = Absolute.relative_to_absolute(content, self.remote)
-        with open(filename, "w", encoding="utf-8") as f:
-            f.write(content.encode("utf-8").decode("utf-8"))
-        return
-
-    def __str__(self):
-        return self.get_raw_url()
-
 class LabelFactory:
     def __init__(self):
         self._label = ""
@@ -3866,242 +3317,6 @@ class Runner:
 #             exit(1)
 
 
-
-
-class CompileError(Exception):
-    def __init__(self, message):
-        self.message = message
-
-    def __str__(self):
-        return self.message
-
-class SolverBuilder:
-    def __init__(self, solver_list: List[str]):
-        self.path_list: List[str] = [os.path.normpath(SolverBuilder.__add_dot_bar(path)) for path in solver_list]
-        
-        if len(self.path_list) > 0:
-            self.cache_dir = os.path.join(os.path.dirname(self.path_list[0]), ".build")
-        else:
-            self.cache_dir = tempfile.mkdtemp()
-        self.clear_cache()
-        self.error_msg: str = ""
-        self.__executable: str = ""
-        self.compile_error: bool = False
-
-    def check_tool(self, name):
-        if shutil.which(name) is None:
-            self.compile_error = True
-            raise CompileError("fail: comando '" + name + "' não foi encontrado")
-
-    def set_main(self, main: str):
-        list_main: List[str] = []
-        list_other: List[str] = []
-
-        for path in self.path_list:
-            if os.path.basename(path) == main:
-                list_main.append(path)
-            else:
-                list_other.append(path)
-        
-        self.path_list = list_main + list_other
-        return self
-
-    def set_executable(self, executable: str):
-        self.__executable = executable
-        return self
-
-    def clear_cache(self):
-        if os.path.exists(self.cache_dir):
-            shutil.rmtree(self.cache_dir)
-        os.makedirs(self.cache_dir, exist_ok=True)
-
-    def reset(self):
-        self.__executable = ""
-        self.compile_error = False
-        self.error_msg = ""
-        self.clear_cache()
-
-    def not_compiled(self):
-        return self.__executable == "" and not self.compile_error
-
-    def get_executable(self, force_rebuild=False) -> str:
-        if (len(self.path_list) > 0 and self.not_compiled()) or force_rebuild:
-            self.prepare_exec()
-        return self.__executable
-
-    def prepare_exec(self, free_run_mode: bool = False) -> None:
-        self.__executable = ""
-        path = self.path_list[0]
-        self.compile_error = False
-
-        if path.endswith(".py"):
-            self.__executable = "python " + path
-        elif path.endswith(".js"):
-            self.__prepare_js(free_run_mode)
-        elif path.endswith(".ts"):
-            self.__prepare_ts(free_run_mode)
-        elif path.endswith(".java"):
-            self.__prepare_java()
-        elif path.endswith(".c"):
-            self.__prepare_c()
-        elif path.endswith(".cpp"):
-            self.__prepare_cpp()
-        elif path.endswith(".go"):
-            self.__prepare_go()
-        elif path.endswith(".sql"):
-            self.__prepare_sql()
-        else:
-            self.__executable = path
-
-    def __prepare_java(self):
-        self.check_tool("javac")
-
-        solver = self.path_list[0]
-
-        filename = os.path.basename(solver)
-        # tempdir = os.path.dirname(self.path_list[0])
-
-        cmd = ["javac"] + self.path_list + ['-d', self.cache_dir]
-        cmdt = " ".join(cmd)
-        return_code, stdout, stderr = Runner.subprocess_run(cmdt)
-        if return_code != 0:
-            self.error_msg = stdout + stderr
-            self.compile_error = True
-        else:
-            self.__executable = "java -cp " + self.cache_dir + " " + filename[:-5]  # removing the .java
-
-    def comment_and_uncomment_node_input(self, free_run_mode: bool):
-        for i in range(len(self.path_list)):
-            path = self.path_list[i]
-            with open(path, "r") as f:
-                lines = f.readlines()
-            with open(path, "w") as f:
-                for line in lines:
-                    if free_run_mode:
-                        if '_TEST_ONLY_' in line and not line.startswith("//"):
-                            f.write("//" + line)
-                        elif '_FREE_ONLY' in line and line.startswith("// function"):
-                            f.write(line[3:])
-                        elif '_FREE_ONLY' in line and line.startswith("//"):
-                            f.write(line[2:])
-                        else:
-                            f.write(line)
-                    else:
-                        if '_FREE_ONLY_' in line and not line.startswith("//"):
-                            f.write("//" + line)
-                        elif '_TEST_ONLY' in line and line.startswith("// function"):
-                            f.write(line[3:])
-                        elif '_TEST_ONLY' in line and line.startswith("//"):
-                            f.write(line[2:])
-                        else:
-                            f.write(line)
-
-    def __prepare_js(self, free_run_mode: bool):
-        self.check_tool("node")
-        solver = self.path_list[0]
-        self.comment_and_uncomment_node_input(free_run_mode)
-        self.__executable = "node " + solver
-
-    def __prepare_go(self):
-        self.check_tool("go")
-        self.__executable = "go run " + " ".join(self.path_list)
-
-    def __prepare_sql(self):
-        self.check_tool("sqlite3")
-        self.__executable = "cat " + " ".join(self.path_list) + " | sqlite3"
-
-    def __prepare_ts(self, free_run_mode: bool):
-        self.comment_and_uncomment_node_input(free_run_mode)
-        
-        transpiler = "esbuild"
-        if os.name == "nt":
-            transpiler += ".cmd"
-
-        self.check_tool(transpiler)
-        self.check_tool("node")
-        source_list = self.path_list
-        cmd = [transpiler] + source_list + ["--outdir=" + self.cache_dir, "--format=cjs", "--log-level=error"]
-        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
-        if return_code != 0:
-            self.error_msg = stdout + stderr
-            self.compile_error = True
-        else:
-            new_source_list = []
-            for source in source_list:
-                new_source_list.append(os.path.join(self.cache_dir, os.path.basename(source)[:-2] + "js"))
-            self.__executable = "node " + " ".join(new_source_list)  # renaming solver to main
-    
-    def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
-        # solver = self.path_list[0]
-        tempdir = self.cache_dir
-        source_list = self.path_list
-        # print("Using the following source files: " + str([os.path.basename(x) for x in source_list]))
-        
-        exec_path = os.path.join(tempdir, ".a.out")
-        cmd = pre_args + source_list + ["-o", exec_path] + pos_args
-        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
-        if return_code != 0:
-            self.error_msg = stdout + stderr
-            self.compile_error = True
-        else:
-            self.__executable = exec_path
-
-    def __prepare_c(self):
-        self.check_tool("gcc")
-        pre = ["gcc", "-Wall"]
-        pos = ["-lm"]
-        self.__prepare_c_cpp(pre, pos)
-
-    def __prepare_cpp(self):
-        self.check_tool("g++")
-        pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror"]
-        pos: List[str] = []
-        self.__prepare_c_cpp(pre, pos)
-
-    @staticmethod
-    def __add_dot_bar(solver: str) -> str:
-        if os.sep not in solver and os.path.isfile("." + os.sep + solver):
-            solver = "." + os.sep + solver
-        return solver
-    
-
-class Free:
-    @staticmethod
-    def free_run(solver: SolverBuilder, show_compilling:bool=True, to_clear: bool=True, wait_input:bool=True) -> bool:
-
-        if to_clear:
-            Runner.clear_screen()
-        if show_compilling:
-            image = random.choice(list(compilling.keys()))
-            for line in compilling[image].split("\n"):
-                print(Text().addf("y", line).center(RawTerminal.get_terminal_size(), Token(" ")))
-
-        if show_compilling:
-            Runner.clear_screen()
-        solver.prepare_exec(free_run_mode=True)
-        if solver.compile_error:
-            print(solver.error_msg)
-        else:
-            cmd = solver.get_executable()
-            print(Text().center(RawTerminal.get_terminal_size(), Token("─")))
-            answer = subprocess.run(cmd, shell=True, text=True)
-            if answer.returncode != 0 and answer.returncode != 1:
-                print(Runner.decode_code(answer.returncode))
-        solver.reset()
-        to_run_again = False
-        if wait_input:
-            print(Text().center(RawTerminal.get_terminal_size(), Token("─")))
-            print(Text().addf("y", "Deseja compilar e executar novamente? [").addf("c", "S").addf("y", "/n]: "), end="")
-            valor = input()
-            if valor != "n" and valor != "q":
-                if to_clear:
-                    Runner.clear_screen()
-                to_run_again = True
-        if to_clear:
-            Runner.clear_screen()
-
-        return to_run_again
-
 def uni_to_asc(input_str: str):
     nfkd_form = unicodedata.normalize('NFKD', input_str)
     return u"".join([c for c in nfkd_form if not unicodedata.combining(c)])
@@ -4115,786 +3330,6 @@ class SearchAsc:
     
     def inside(self, title: str) -> bool:
         return self.find(title) != -1
-
-
-def load_html_tags(task: str) -> Optional[str]:
-    pattern = r"<!--\s*(.*?)\s*-->"
-    match = re.search(pattern, task)
-    if not match:
-        return None
-    return match.group(1).strip()
-
-
-class Game:
-    def __init__(self, file: Optional[str] = None):
-        self.ordered_clusters: List[str] = [] # ordered clusters
-        self.clusters: Dict[str, Cluster] = {} 
-        self.quests: Dict[str, Quest] = {}  # quests indexed by quest key
-        self.tasks: Dict[str, Task] = {}  # tasks indexed by task key
-
-        self.available_quests: List[str] = []
-        self.available_clusters: List[str] = []
-
-        self.token_level_one = "level_one"
-        self.token_level_mult = "level_mult"
-        self.level_one: int = 100
-        self.level_mult: float = 1.5
-
-        self.filename = None
-        if file is not None:
-            self.filename = file
-            self.parse_file(file)
-
-    def parse_xp(self, content):
-        if content.startswith('---'):
-            front_matter = content.split('---')[1].strip()
-            yaml_data = yaml.safe_load(front_matter)
-            if self.token_level_one in yaml_data:
-                self.level_one = int(yaml_data[self.token_level_one])
-            if self.token_level_mult in yaml_data:
-                self.level_mult = float(yaml_data[self.token_level_mult])
-
-    def get_task(self, key: str) -> Task:
-        if key in self.tasks:
-            return self.tasks[key]
-        raise Warning(f"fail: tarefa '{key}' não encontrada no curso")
-
-    # se existir um cluster nessa linha, insere na lista de clusters e 
-    # retorno o objeto cluster inserido
-    def load_cluster(self, line: str, line_num: int) -> Optional[Cluster]:
-        if not line.startswith("## "):
-            return None
-        line = line[3:]
-
-        titulo = line
-        tags_raw = ""
-        if "<!--" in line:
-            pieces = line.split("<!--")
-            titulo = pieces[0]
-            middle_end = pieces[1].split("-->")
-            tags_raw = middle_end[0]
-            titulo += middle_end[1]
-
-        tags = [tag.strip() for tag in tags_raw.split(" ")]        
-        key = uni_to_asc(get_md_link(titulo))
-        try:
-            color = [tag[2:] for tag in tags if tag.startswith("c:")][0]
-        except IndexError as _e:
-            color = None
-        
-        cluster = Cluster(line_num, titulo, key, color)
-
-        if key in self.clusters.keys():
-            c = self.clusters[key]
-            print(f"Cluster {key} já existe")
-            print(f"{self.filename}:{line_num}")
-            print(f"{self.filename}:{c.line_number}")
-            print("  " + str(c))
-            print("  " + str(cluster))
-            exit(1)
-                
-        self.clusters[key] = cluster
-        self.ordered_clusters.append(key)
-        return cluster
-                
-    def load_quest(self, line, line_num) -> Optional[Quest]:
-        quest = QuestParser().parse_quest(self.filename, line, line_num + 1)
-        if quest is None:
-            return None
-        if quest.key in self.quests:
-            print(f"Quest {quest.key} já existe")
-            print(f"{self.filename}:{quest.line_number}")
-            print(f"{self.filename}:{self.quests[quest.key].line_number}")
-            print("  " + str(quest))
-            print("  " + str(self.quests[quest.key]))
-            exit(1)
-        self.quests[quest.key] = quest
-        return quest
-
-    def load_task(self, line, line_num) -> Optional[Task]:
-        if line == "":
-            return None
-        task = TaskParser.parse_line(line, line_num + 1)
-        if task is None:
-            return None
-        
-        if task.key in self.tasks:
-            print(f"Task {task.key} já existe")
-            print(f"{self.filename}:{task.line_number}")
-            print(f"{self.filename}:{self.tasks[task.key].line_number}")
-            print("  " + str(task))
-            print("  " + str(self.tasks[task.key]))
-            exit(1)
-        self.tasks[task.key] = task
-        return task
-
-    def get_xp_resume(self):
-        total = 0
-        obtained = 0
-        for q in self.quests.values():
-            o, t = q.get_xp()
-            total += t
-            obtained += o
-        return obtained, total
-
-    def get_skills_resume(self, avaliable_quests: List[Quest]) -> Tuple[Dict[str, int], Dict[str, int]]:
-        total: Dict[str, int] = {}
-        obtained: Dict[str, int] = {}
-        avaliable_keys = [q.key for q in avaliable_quests]
-        for q in self.quests.values():
-            reachable = q.key in avaliable_keys
-            for t in q.get_tasks():
-                for s in t.skills:
-                    if s in total:
-                        total[s] += t.skills[s]
-                        if reachable:
-                            obtained[s] += int(t.skills[s] * t.self_grade/10)
-                        else:
-                            obtained[s] += 0
-                    else:
-                        total[s] = t.skills[s]
-                        if reachable:
-                            obtained[s] = int(t.skills[s] * t.self_grade/10)
-                        else:
-                            obtained[s] = 0
-                for s in t.qskills:
-                    if s in total:
-                        total[s] += t.qskills[s]
-                        if reachable:
-                            obtained[s] += int(t.qskills[s] * t.self_grade/10)
-                        else:
-                            obtained[s] += 0
-                    else:
-                        total[s] = t.qskills[s]
-                        if reachable:
-                            obtained[s] = int(t.qskills[s] * t.self_grade/10)
-                        else:
-                            obtained[s] = 0
-        return total, obtained
-
-    # Verificar se todas as quests requeridas existem e adiciona o ponteiro
-    # Verifica se todas as quests tem tarefas
-    def validate_requirements(self):
-
-        # verify is there are keys repeated between quests, tasks and groups
-
-        keys = [c.key for c in self.clusters.values()] +\
-               [k for k in self.quests.keys()] +\
-               [k for k in self.tasks.keys()]
-
-        # print chaves repetidas
-        for k in keys:
-            if keys.count(k) > 1:
-                print(f"Chave repetida: {k}")
-                exit(1)
-
-        # remove all quests without tasks
-        valid_quests = {}
-        for k, q in self.quests.items():
-            if len(q.get_tasks()) > 0:
-                valid_quests[k] = q
-
-        # trim titles
-        for q in self.quests.values():
-            q.title = q.title.strip()
-        for c in self.clusters.values():
-            c.title = c.title.strip()
-
-        self.quests = valid_quests
-        # verificar auto dependencia
-        for q in self.quests.values():
-            for r in q.requires:
-                if q.key == r:
-                    print(f"Erro: auto refência {q.line_number} {q.line}")
-                    exit(1)
-
-
-        # verificar se todas as quests requeridas existem e adicionar o ponteiro
-        for q in self.quests.values():
-            for r in q.requires:
-                if r in self.quests:
-                    q.requires_ptr.append(self.quests[r])
-                else:
-                    # print(f"keys: {self.quests.keys()}")
-                    print(f"Quest\n{self.filename}:{q.line_number}\n{str(q)}\nrequer {r} que não existe")
-                    exit(1)
-
-    def check_cycle(self):
-        def dfs(qx, visitedx):
-            if len(visitedx) > 0:
-                if visitedx[0] == qx.key:
-                    print(f"Cycle detected: {visitedx}")
-                    exit(1)
-            if q.key in visitedx:
-                return
-            visitedx.append(q.key)
-            for r in q.requires_ptr:
-                dfs(r, visitedx)
-
-        for q in self.quests.values():
-            visited: List[str] = []
-            dfs(q, visited)
-
-    def tie_cluster_quest(self, cluster: Cluster, quest: Quest):
-        quest.cluster_key = cluster.key
-        cluster.quests.append(quest)
-
-    def create_unamed_quest(self, cluster):
-        key = cluster.key + "_Sem_Missão"
-        quest: Quest = Quest("Sem Missão", key)
-        self.quests[key] = quest
-        self.tie_cluster_quest(cluster, quest)
-        return quest
-
-    def parse_file(self, filename: str):
-        self.filename = filename
-        content = open(filename, encoding="utf-8").read()
-        lines = content.split("\n")
-        self.parse_xp(content)
-
-        key = "Sem Grupo"
-        active_cluster: Cluster = Cluster(0, key, key)
-        self.clusters[key] = active_cluster
-        self.ordered_clusters.append(key)
-        
-        active_quest: Quest = self.create_unamed_quest(active_cluster)
-
-        for line_num, line in enumerate(lines):
-            cluster = self.load_cluster(line, line_num)
-            if cluster is not None:
-                active_cluster = cluster
-                active_quest = self.create_unamed_quest(active_cluster)
-                continue
-            
-            quest = self.load_quest(line, line_num)
-            if quest is not None:
-                active_quest = quest
-                self.tie_cluster_quest(active_cluster, active_quest)
-                continue
-
-            task = self.load_task(line, line_num)
-            if task is not None:
-                active_quest.add_task(task, filename)
-                task.quest_key = active_quest.key
-                task.cluster_key = active_cluster.key
-
-        self.clear_empty()
-
-        self.validate_requirements()
-        for t in self.tasks.values():
-            t.process_link(os.path.dirname(filename) + "/")
-
-    def clear_empty(self):
-
-        # apagando quests vazias da lista de quests
-        for k in list(self.quests.keys()):
-            if len(self.quests[k].get_tasks()) == 0:
-                del self.quests[k]
-
-        # apagando quests vazias dos clusters e clusters vazios
-        ordered_clusters: List[str] = []
-        clusters: Dict[str, Cluster] = {}
-        for key in self.ordered_clusters:
-            cluster = self.clusters[key]
-            quests = [q for q in cluster.quests if len(q.get_tasks()) > 0]
-            if len(quests) > 0:
-                cluster.quests = quests
-                clusters[cluster.key] = cluster
-                ordered_clusters.append(cluster.key)
-
-        self.ordered_clusters = ordered_clusters
-        self.clusters = clusters
-
-    @staticmethod
-    def __is_reachable_quest(q: Quest, cache: Dict[str, bool]):
-        if q.key in cache:
-            return cache[q.key]
-
-        if len(q.requires_ptr) == 0:
-            cache[q.key] = True
-            return True
-        cache[q.key] = all([r.is_complete() and Game.__is_reachable_quest(r, cache) for r in q.requires_ptr])
-        return cache[q.key]
-
-    # def __get_reachable_quests(self):
-    #     # cache needs to be reseted before each call
-    #     cache: Dict[str, bool] = {}
-    #     return [q for q in self.quests.values() if Game.__is_reachable_quest(q, cache)]
-
-    def update_reachable_and_available(self, admin_mode: bool):
-        for q in self.quests.values():
-            q.set_reachable(False)
-        for c in self.clusters.values():
-            c.set_reachable(False)
-
-        cache: Dict[str, bool] = {}
-        for c in self.clusters.values():
-            for q in c.quests:
-                if Game.__is_reachable_quest(q, cache):
-                    q.set_reachable(True)
-                    c.set_reachable(True)
-
-        self.available_quests = []
-        self.available_clusters = []
-        if admin_mode:
-            self.available_quests = [key for key in self.quests.keys()]
-            self.available_clusters = [key for key in self.clusters.keys()]
-        else:
-            self.available_quests = [q.key for q in self.quests.values() if q.is_reachable()]
-            self.available_clusters = [c.key for c in self.clusters.values() if c.is_reachable()]
-
-
-    def __str__(self):
-        output = []
-        for c in self.clusters.values():
-            output.append(str(c))
-            for q in c.quests:
-                output.append(str(q))
-                for t in q.get_tasks():
-                    output.append(str(t))
-        return "\n".join(output)
-
-
-languages_avaliable = ["c", "cpp", "py", "ts", "js", "java", "go"]
-
-class Repository:
-    CFG_FILE = "repository.json"
-    LOG_FILE = "history.csv"
-    DAILY_FILE = "daily.json"
-    INDEX_FILE = "Readme.md"
-    REMOTE_TASK_FOLDER = "remote"
-    CONFIG_FOLDER = ".tko"
-
-    def __init__(self, folder: str):
-        self.folder: str = folder
-        self.data: Dict[str, Any] = {}
-        self.game = Game()
-
-    @staticmethod
-    def rec_search_for_repo(folder: str) -> str:
-        if os.path.exists(os.path.join(folder, Repository.CONFIG_FOLDER, Repository.CFG_FILE)):
-            return folder
-        if folder == "/":
-            return ""
-        return Repository.rec_search_for_repo(os.path.abspath(os.path.join(folder, "..")))
-
-    def get_remote_task_folder(self, label: str) -> str:
-        return os.path.abspath(os.path.join(self.folder, Repository.REMOTE_TASK_FOLDER, label))
-
-    def is_local_dir(self, path):
-        rep_dir = self.get_rep_dir()
-        path = os.path.abspath(path)
-        return os.path.commonpath([rep_dir, path]) == rep_dir
-
-    @staticmethod
-    def is_web_link(link: str) -> bool:
-        return link.startswith("http:") or link.startswith("https:")
-
-    def set_task_folder(self, task: Task):
-        if not task.is_downloadable():
-            if not self.is_web_link(task.link):
-                task_dir = os.path.abspath(os.path.dirname(task.link))
-                task.set_folder(task_dir)
-        else: # downloadable task
-            task_dir = self.get_remote_task_folder(task.key)
-            task.set_folder(task_dir)
-
-    def load_game(self):
-        self.game.parse_file(self.load_index_or_cache())
-        for task in self.game.tasks.values():
-            self.set_task_folder(task)
-        return self
-
-    def get_repository_file(self) -> str:
-        return os.path.abspath(os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.CFG_FILE))
-    
-    def get_history_file(self) -> str:
-        return os.path.abspath(os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.LOG_FILE))
-    
-    def get_daily_file(self) -> str:
-        return os.path.abspath(os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.DAILY_FILE))
-    
-    def get_default_readme_path(self) -> str:
-        return os.path.abspath(os.path.join(self.folder, Repository.INDEX_FILE))
-
-    def get_rep_dir(self) -> str:
-        return os.path.abspath(self.folder)
-
-    def load_index_or_cache(self) -> str:
-        file: str = self.get_local_file()
-        remote: str = self.get_remote_source()
-        # arquivo existe e é local
-        if file != "" and os.path.exists(file) and remote == "":
-            return file
-        
-        if not remote.startswith("http:)") and not remote.startswith("https:"):
-            return remote
-
-        # arquivo não existe e é remoto
-        if remote != "" and (file == "" or not os.path.exists(file)):
-            cache_file = self.get_default_readme_path()
-            os.makedirs(self.folder, exist_ok=True)
-            ru = RemoteUrl(remote)
-            try:
-                ru.download_absolute_to(cache_file)
-            except urllib.error.URLError:
-                print("Não foi possível baixar o arquivo do repositório")
-                if os.path.exists(cache_file):
-                    print("Usando arquivo do cache")
-                else:
-                    raise Warning("fail: Arquivo do cache não encontrado")
-            return cache_file
-
-        raise Warning("fail: arquivo não encontrado ou configurações inválidas para o repositório")
-
-    __version = "version"
-    __remote_url = "remote"  #remote url
-    __local_file = "local"  #local file
-    __expanded = "expanded"
-    __new_items = "new_items"
-    __tasks = "tasks"
-    __flags = "flags"
-    __lang = "lang"
-    __selected = "index"
-
-    defaults = {
-        __version: "0.0.0",
-        __remote_url: "",
-        __local_file: "",
-        __expanded: [],
-        __tasks: {},
-        __flags: {},
-        __new_items: [],
-        __lang: "",
-        __selected: ""
-    }
-
-    def get_version(self) -> str:
-        return self.__get(Repository.__version)
-    
-    def set_version(self, value: str):
-        self.__set(Repository.__version, value)
-        return self
-
-    def get_local_file(self) -> str:
-        return self.__get(Repository.__local_file)
-    
-    def set_local_file(self, value: str):
-        self.__set(Repository.__local_file, value)
-        return self
-
-    def get_remote_source(self) -> str:
-        return self.__get(Repository.__remote_url)
-    
-    def set_remote_source(self, value: str):
-        self.__set(Repository.__remote_url, value)
-        return self
-
-    def get_selected(self) -> str:
-        return self.__get(Repository.__selected)
-
-    def get_expanded(self) -> List[str]:
-        return self.__get(Repository.__expanded)
-
-    def get_new_items(self) -> List[str]:
-        return self.__get(Repository.__new_items)
-    
-    def get_tasks(self) -> Dict[str, Any]:
-        return self.__get(Repository.__tasks)
-    
-    def get_flags(self) -> Dict[str, Any]:
-        return self.__get(Repository.__flags)
-    
-    def get_lang(self) -> str:
-        return self.__get(Repository.__lang)
-
-    def set_expanded(self, value: List[str]):
-        return self.__set(Repository.__expanded, value)
-    
-    def set_new_items(self, value: List[str]):
-        return self.__set(Repository.__new_items, value)
-    
-    def set_tasks(self, value: Dict[str, str]):
-        self.__set(Repository.__tasks, value)
-        return self
-    
-    def set_flags(self, value: Dict[str, Any]):
-        self.__set(Repository.__flags, value)
-        return self
-    
-    def set_lang(self, value: str):
-        self.__set(Repository.__lang, value)
-        return self
-    
-    def set_selected(self, value: str):
-        self.__set(Repository.__selected, value)
-        return self
-
-    def __get(self, key: str) -> Any:
-        if key not in self.defaults:
-            raise ValueError(f"Key {key} not found in RepSettings")
-        value = self.data.get(key, Repository.defaults[key])
-        if type(value) != type(Repository.defaults[key]):
-            return Repository.defaults[key]
-        return value
-
-    def __set(self, key: str, value: Any):
-        self.data[key] = value
-        return self
-
-    def create_empty_config_file(self, point_to_local_readme: bool = False):
-        if point_to_local_readme:
-            self.set_local_file(self.get_default_readme_path())
-        self.save_data_to_config_file()
-        return self
-
-    def has_local_config_file(self) -> bool:
-        return os.path.exists(self.get_repository_file())
-
-    def load_data_from_config_file(self):
-        with open(self.get_repository_file(), encoding="utf-8") as f:
-            self.data = json.load(f)
-        return self
-
-    def save_data_to_config_file(self):
-        json_file = self.get_repository_file()
-        if not os.path.exists(os.path.dirname(json_file)):
-            os.makedirs(os.path.dirname(json_file))
-        # filter keys that are not in defaults
-        for key in list(self.data.keys()):
-            if key not in Repository.defaults:
-                del self.data[key]
-
-        for key in Repository.defaults:
-            if key not in self.data:
-                self.data[key] = Repository.defaults[key]
-
-        with open(json_file, "w", encoding="utf-8") as f:
-            f.write(json.dumps(self.data, indent=4))
-        return self
-
-    def __str__(self) -> str:
-        return ( f"data: {self.data}\n" )
-
-
-
-class Graph:
-    graph_generated: bool = False
-
-    colorlist: List[Tuple[str, str]] = [
-            ("aquamarine3", "aquamarine4"),
-            ("bisque3", "bisque4"),
-            ("brown3", "brown4"),
-            ("chartreuse3", "chartreuse4"),
-            ("coral3", "coral4"),
-            ("cyan3", "cyan4"),
-            ("darkgoldenrod3", "darkgoldenrod4"),
-            ("darkolivegreen3", "darkolivegreen4"),
-            ("darkorchid3", "darkorchid4"),
-            ("darkseagreen3", "darkseagreen4"),
-            ("darkslategray3", "darkslategray4"),
-            ("deeppink3", "deeppink4"),
-            ("deepskyblue3", "deepskyblue4"),
-            ("dodgerblue3", "dodgerblue4"),
-            ("firebrick3", "firebrick4"),
-            ("gold3", "gold4"),
-            ("green3", "green4"),
-            ("hotpink3", "hotpink4"),
-            ("indianred3", "indianred4"),
-            ("khaki3", "khaki4"),
-            ("lightblue3", "lightblue4"),
-            ("lightcoral", "lightcoral"),
-            ("lightcyan3", "lightcyan4"),
-            ("lightgoldenrod3", "lightgoldenrod4"),
-            ("lightgreen", "lightgreen"),
-            ("lightpink3", "lightpink4"),
-            ("lightsalmon3", "lightsalmon4"),
-            ("lightseagreen", "lightseagreen"),
-            ("lightskyblue3", "lightskyblue4"),
-            ("lightsteelblue3", "lightsteelblue4"),
-            ("lightyellow3", "lightyellow4"),
-            ("magenta3", "magenta4"),
-            ("maroon3", "maroon4"),
-            ("mediumorchid3", "mediumorchid4"),
-            ("mediumpurple3", "mediumpurple4"),
-            ("mediumspringgreen", "mediumspringgreen"),
-            ("mediumturquoise", "mediumturquoise"),
-            ("mediumvioletred", "mediumvioletred"),
-            ("mistyrose3", "mistyrose4"),
-            ("navajowhite3", "navajowhite4"),
-            ("olivedrab3", "olivedrab4"),
-            ("orange3", "orange4"),
-            ("orangered3", "orangered4"),
-            ("orchid3", "orchid4"),
-            ("palegreen3", "palegreen4"),
-            ("paleturquoise3", "paleturquoise4"),
-            ("palevioletred3", "palevioletred4")
-            ]
-
-    def __init__(self, game: Game):
-        self.game = game
-        self.path = "graph.png"
-        self.opt = False
-        self.reachable = [q.key for q in self.game.quests.values() if q.is_reachable()]
-        # self.reachable = [key for key in self.game.quests.keys()]
-
-        self.counts: Dict[str, str] = {}
-        for q in self.game.quests.values():
-            done = len([t for t in q.get_tasks() if t.is_complete()])
-            init = len([t for t in q.get_tasks() if t.in_progress()])
-            todo = len([t for t in q.get_tasks() if t.not_started()])
-            self.counts[q.key] = f"{done} / {done + init + todo}"
-
-    def set_path(self, path: str):
-        self.path = path
-        return self
-
-    def set_opt(self, opt: bool):
-        self.opt = opt
-        return self
-
-    def set_counts(self, counts: Dict[str, str]):
-        self.counts = counts
-        return self
-    
-    def set_output(self, output: str):
-        self.output = output
-        return self
-
-    def info(self, qx: Quest):
-        text = f'{qx.title.strip()}'
-        if self.reachable is None or self.counts is None:
-            return f'"{text}"'
-        return f'"{text}\\n{self.counts[qx.key]}"'
-
-    def is_reachable_or_next(self, q: Quest):
-        if self.reachable is None:
-            return True
-        if q.key in self.reachable:
-            return True
-        for r in q.requires_ptr:
-            if r.key in self.reachable:
-                return True
-        return False
-
-    def generate(self):
-        saida = ["digraph diag {", '  node [penwidth=1, style="rounded,filled", shape=box]']
-
-        targets = [q for q in self.game.quests.values()]
-        for q in targets:
-            token = "->"
-            if len(q.requires_ptr) > 0:
-                for r in q.requires_ptr:
-                    extra = ""
-                    if self.reachable is not None:
-                        if q.key not in self.reachable and not r.is_complete():
-                            extra = "[style=dotted]"
-                    saida.append(f"  {self.info(r)} {token} {self.info(q)} {extra}")
-            else:
-                v = '  "Início"'
-                saida.append(f"{v} {token} {self.info(q)}")
-
-        for i, c in enumerate(self.game.clusters.values()):
-            # cluster_targets = [q for q in c.quests if self.is_reachable_or_next(q)]
-            cluster_targets = [q for q in c.quests]
-            for q in cluster_targets:
-                if self.opt:
-                    if q.opt:
-                        fillcolor = "pink"
-                    else:
-                        fillcolor = "lime"
-                else:
-                    if c.color is not None:
-                        fillcolor = c.color
-                    else:
-                        fillcolor = self.colorlist[i][0]
-
-                    if q.opt:
-                        fillcolor = f'"{fillcolor};0.9:orange"'
-                    else:
-                        fillcolor = f'"{fillcolor};0.9:lime"'
-                shape = "ellipse"
-                color = "black"
-                width = 1
-                if self.reachable is not None:
-                    if q.key not in self.reachable:
-                        color = "white"
-                    else:
-                        width = 3
-                        color = q.get_grade_color()
-                        if color == "g":
-                            color = "green"
-                        elif color == "r":
-                            color = "red"
-                        elif color == "y":
-                            color = "yellow"
-                        elif color == "m":
-                            color = "magenta"
-                saida.append(f"  {self.info(q)} [shape={shape} color={color} penwidth={width} fillcolor={fillcolor} ]")
-
-        saida.append("}")
-        # saida.append("@enduml")
-        saida.append("")
-
-        # dot_file = os.path.join(os.path.dirname(self.path) + "graph.dot")
-        # open(dot_file, "w").write("\n".join(saida))
-        out_file = self.path
-        data = "\n".join(saida)
-        graph_dot  = pydot.graph_from_dot_data(data)[0]
-        graph_dot.write_png(out_file)
-
-
-class XP:
-    token_level_one = "level_one"
-    token_level_mult = "level_mult"
-    level_one: int = 100
-    level_mult: float = 1.5
-    
-    def __init__(self, game: Game):
-        self.game = game
-        self.obtained = 0
-        self.avaliable = 0
-        self.update()
-        self.level = self.get_level()
-    
-    def update(self):
-        self.obtained, self.avaliable = self.game.get_xp_resume()
-
-    def get_level(self) -> int:
-        return self.calc_level(self.obtained)
-
-    def get_xp_level_current(self) -> int:
-        xp_prev = self.calc_xp(self.level)
-        atual = self.obtained - xp_prev
-        return atual
-
-    def get_xp_level_needed(self) -> int:
-        xp_next = self.calc_xp(self.level + 1)
-        xp_prev = self.calc_xp(self.level)
-        return xp_next - xp_prev
-
-    def get_xp_total_obtained(self) -> int:
-        return self.obtained
-
-    def get_xp_total_available(self) -> int:
-        return self.avaliable
-
-    def calc_level(self, xp) -> int:
-        level = 1
-        while self.calc_xp(level) <= xp:
-            level += 1
-        return level - 1
-    
-    def calc_xp(self, level: int) -> int:
-        total = 0
-        for i in range(level - 1):
-            total += self.game.level_one * (int(self.game.level_mult) ** i)
-        return int(total)
-
-
-
-
-
 
 
 class ExecutionResult(enum.Enum):
@@ -5041,208 +3476,6 @@ class AppSettings:
         output.append("- Timeout : {}".format(self.get_timeout()))
         return "\n".join(output)
 
-
-def singleton(class_):
-    instances = {}
-    def getinstance(*args, **kwargs):
-        if class_ not in instances:
-            instances[class_] = class_(*args, **kwargs)
-        return instances[class_]
-    return getinstance
-
-@singleton
-class Settings:
-    CFG_FILE = "settings.json"
-
-
-    def __init__(self):
-        self.__remote = "remote"
-        self.__folder = "folders"
-        self.__appcfg = "appcfg"
-        self.__colors = "colors"
-
-        self.dict_alias_remote: Dict[str, str] = {}
-        self.dict_alias_folder: Dict[str, str] = {}
-        self.app = AppSettings()
-        self.colors = Colors()
-
-        self.settings_file = ""
-
-    def set_settings_file(self, path: str):
-        self.settings_file = path
-        return self
-
-    def get_settings_file(self) -> str:
-        if self.settings_file is None or self.settings_file == "":
-            self.package_name = "tko"
-            default_filename = self.CFG_FILE
-            self.settings_file = os.path.abspath(default_filename)  # backup for replit, dont remove
-        
-        if not os.path.exists(self.settings_file):
-            os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
-        return self.settings_file
-
-    def reset(self):
-        self.dict_alias_remote = {}
-        self.dict_alias_remote["fup"] = "https://github.com/qxcodefup/arcade/blob/master/Readme.md"
-        self.dict_alias_remote["ed"] = "https://github.com/qxcodeed/arcade/blob/master/Readme.md"
-        self.dict_alias_remote["poo"] = "https://github.com/qxcodepoo/arcade/blob/master/Readme.md"
-        self.dict_alias_folder = {}
-        self.app = AppSettings()
-        self.colors = Colors()
-        return self
-
-    def set_alias_remote(self, alias: str, url_or_path: str):
-        if not(url_or_path.startswith("http:") or url_or_path.startswith("https:")):
-            url_or_path = os.path.abspath(url_or_path)
-        self.dict_alias_remote[alias] = url_or_path
-        return self
-
-    def has_alias_remote(self, alias: str) -> bool:
-        return alias in self.dict_alias_remote
-
-    def get_alias_remote(self, alias: str) -> str:
-        if alias in self.dict_alias_remote:
-            return self.dict_alias_remote[alias]
-        raise Warning(f"Repositório remoto {alias} não encontrado")
-
-    def set_alias_folder(self, alias: str, folder: str):
-        self.dict_alias_folder[alias] = os.path.abspath(folder)
-        return self
-    
-    def has_alias_folder(self, course: str) -> bool:
-        return course in self.dict_alias_folder
-
-    def del_alias_folder(self, course: str):
-        if course in self.dict_alias_folder:
-            del self.dict_alias_folder[course]
-        return self
-
-    def get_alias_folder(self, course: str) -> str:
-        if course in self.dict_alias_folder:
-            folder = self.dict_alias_folder[course]
-            if not isinstance(folder, str):
-                self.reset()
-                self.save_settings()
-                return self.get_alias_folder(course)
-            else:
-                return folder
-        raise Warning(f"Não registrada pasta local para {course}")
-    
-    def load_settings(self):
-        try:
-            settings_file = self.get_settings_file() # assure right loading if value == ""
-            with open(settings_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                self.dict_alias_remote = data.get(self.__remote, {})
-                self.dict_alias_folder = data.get(self.__folder, {})
-                self.app = AppSettings().from_dict(data.get(self.__appcfg, {}))
-                self.colors = Colors().from_dict(data.get(self.__colors, {}))
-        except (FileNotFoundError, json.decoder.JSONDecodeError) as _e:
-            self.reset()
-            self.save_settings()
-        return self
-
-    # def check_rootdir(self):
-    #     if self.app.get_rootdir() != "":
-    #         return self
-    #     print(Text().add("Pasta padrão para download de arquivos ").addf("r", "precisa").add(" ser definida."))
-    #     here_cwd = os.getcwd()
-    #     qxcode = os.path.join(os.path.expanduser("~"), "qxcode")
-
-    #     while True:
-    #         print(Text().addf("r", "1").add(" - ").add(here_cwd))
-    #         print(Text().addf("r", "2").add(" - ").add(qxcode))
-    #         print(Text().addf("r", "3").add(" - ").add("Outra pasta"))
-    #         print(Text().add("Default ").addf("r", "1").add(": "), end="")
-    #         op = input()
-    #         if op == "":
-    #             op = "1"
-    #         if op == "1":
-    #             home_qxcode = here_cwd
-    #             break
-    #         if op == "2":
-    #             home_qxcode = qxcode
-    #             break
-    #         if op == "3":
-    #             print(Text().addf("y", "Navegue até o diretório desejado e execute o tko novamente."))
-    #             exit(1)
-
-    #     if not os.path.exists(home_qxcode):
-    #         os.makedirs(home_qxcode)
-    #     print("Pasta padrão para download de arquivos foi definida em: " + home_qxcode)
-    #     print(RawTerminal.centralize("", "-"))
-    #     self.app._rootdir = home_qxcode
-    #     self.save_settings();
-    #     return self
-    
-    # def check_rep_alias(self, rep_alias: str):
-    #     if rep_alias == "__ask":
-    #         last = self.app.get_last_rep()
-    #         if last != "" and last in self.remote:
-    #             rep_alias = last
-    #         else:
-    #             print("Escolha um dos repositórios para abrir:")
-    #             options: Dict[int, str] = {}
-    #             for i, alias in enumerate(self.remote, start=1):
-    #                 print(Text().addf("r", str(i)).add(f" - {alias}"))
-    #                 options[i] = alias
-    #             while True:
-    #                 try:
-    #                     print("Digite o número do repositório desejado: ", end="")
-    #                     index = int(input())
-    #                     if index in options:
-    #                         rep_alias = options[index]
-    #                         self.app.set_last_rep(rep_alias)
-    #                         self.save_settings()
-    #                         break
-    #                 except ValueError:
-    #                     pass
-    #                 print("Digite um número válido")
-    #     return rep_alias
-    
-    def save_settings(self):
-        file = self.get_settings_file()
-        value = {
-            self.__remote: self.dict_alias_remote,
-            self.__folder: self.dict_alias_folder,
-            self.__appcfg: self.app.to_dict(),
-            self.__colors: self.colors.to_dict()
-        }
-        with open(file, "w", encoding="utf-8") as f:
-            json.dump(value, f, indent=4)
-        return self
-
-    def __str__(self):
-        output = []
-        output.append(str(Text("{g}", "Arquivo de configuração:")))
-        output.append("- " + self.get_settings_file())
-        output.append("")
-        output.append(str(Text("{g}", "Repositórios remotos cadastrados:")))
-        max_alias = max([len(key) for key in self.dict_alias_remote])
-        for key in self.dict_alias_remote:
-            output.append("- {} : {}".format(key.ljust(max_alias), self.dict_alias_remote[key]))
-        output.append("")
-        output.append(str(Text("{g}", "Repositórios locais salvos:")))
-        max_alias = max([len(key) for key in self.dict_alias_folder])
-        for key in self.dict_alias_folder:
-            output.append("- {} : {}".format(key.ljust(max_alias), self.dict_alias_folder[key]))
-
-        app_str = str(self.app)
-        return "\n".join(output) + "\n\n" + app_str
-
-        # maxlen = max([len(key) for key in self.remote])
-        # for key in self.remote:
-        #     prefix = f"- {key.ljust(maxlen)}"
-        #     if self.remote[key].file and self.remote[key].url:
-        #         output.append(f"{prefix} : dual   : {self.remote[key].url} ; {self.remote[key].file}")
-        #     elif self.remote[key].url:
-        #         output.append(f"{prefix} : remote : {self.remote[key].url}")
-        #     else:
-        #         output.append(f"{prefix} : local  : {self.remote[key].file}")
-        # return "\n".join(output)
-
-
 class Border:
     def __init__(self, app: AppSettings):
         self.app = app
@@ -5317,113 +3550,6 @@ class Border:
         return middle
 
 
-
-class LanguageSetter:
-    def __init__(self, rep: Repository, flagsman: FlagsMan, fman: FloatingManager):
-        self.flagsman = flagsman
-        self.fman = fman
-        self.rep = rep
-
-
-    def set_language(self):
-        options: List[FloatingInputData] = []
-        for lang in languages_avaliable:
-            options.append(FloatingInputData(TextFunctor(lang), SetLangFunctor(self.rep, self.fman, lang)))
-
-        self.fman.add_input(
-            FloatingInput("^")
-            .set_header(" Escolha a extensão default para os rascunhos ")
-            .set_options(options)
-            .set_default_index(languages_avaliable.index(self.rep.get_lang()))
-            .set_footer(" Pressione Enter para confirmar ")
-        )
-
-class TextFunctor:
-    def __init__(self, data: str):
-        self.value = data
-    
-    def __call__(self):
-        return Text(self.value)
-
-class SetLangFunctor:
-    def __init__(self, rep: Repository, fman: FloatingManager, lang: str):
-        self.rep = rep
-        self.fman = fman
-        self.value = lang
-
-    def __call__(self):
-        self.rep.set_lang(self.value.strip())
-        self.rep.save_data_to_config_file()
-        self.fman.add_input(
-            Floating()
-            .put_text("")
-            .put_text("Linguagem alterada para " + self.value)
-            .put_text("")
-            .warning()
-        )
-
-
-
-class ConfigParams:
-    def __init__(self):
-        self.side: bool = False
-        self.down: bool = False
-        self.images: str | None = None
-        self.editor: str | None = None
-        self.borders: str | None = None
-        self.timeout: int | None = None
-
-    def __str__(self):
-        return f"side: {self.side}, down: {self.down}, timeout: {self.timeout}, editor: {self.editor}, borders: {self.borders}, images: {self.images}"
-
-class CmdConfig:
-        
-    @staticmethod
-    def execute(settings: Settings, param: ConfigParams):
-        action = False
-
-        if param.borders is not None:
-            action = True
-            settings.app.set_borders(param.borders == "1")
-            print("Borders now is: " + str("True" if param.borders == "1" else "False"))
-        if param.images is not None:
-            action = True
-            settings.app.set_images(param.images == "1")
-            print("Images now is: " + str("True" if param.images == "1" else "False"))
-            
-        if param.side:
-            action = True
-            settings.app.set_diff_mode(DiffMode.SIDE)
-            print("Diff mode now is: SIDE_BY_SIDE")
-        if param.down:
-            action = True
-            settings.app.set_diff_mode(DiffMode.DOWN)
-            print("Diff mode now is: UP_DOWN")
-        # if param.lang:
-        #     action = True
-        #     settings.app._lang_default = param.lang
-        #     print("Default language extension now is:", param.lang)
-        # if param.ask:
-        #     action = True
-        #     settings.app._lang_default = ""
-        #     print("Language extension will be asked always.")
-        
-        if param.editor:
-            action = True
-            settings.app._editor = param.editor
-            print(f"Novo comando para abrir arquivos de código: {param.editor}")
-
-        if param.timeout is not None:
-            action = True
-            settings.app.set_timeout(param.timeout)
-            print(f"Novo timeout: {param.timeout}")
-
-        if not action:
-            action = True
-            print(str(settings))
-
-        settings.save_settings()
-
 class Unit:
     def __init__(self, case: str = "", input_data: str = "", expected: str = "", grade: Optional[int] = None, source: str = ""):
         self.source = source  # stores the source file of the unit
@@ -5453,220 +3579,6 @@ class Unit:
             case = self.case.ljust(self.case_pad)
         return Text() + "(" + op + ")" + f"[{index}] GR:{grade} {source} ({case}){rep}"
 
-
-
-
-class VplParser:
-    @staticmethod
-    def finish(text):
-        return text if text.endswith("\n") else text + "\n"
-
-    @staticmethod
-    def unwrap(text):
-        while text.endswith("\n"):
-            text = text[:-1]
-        if text.startswith("\"") and text.endswith("\""):
-            text = text[1:-1]
-        return VplParser.finish(text)
-
-    @staticmethod
-    class CaseData:
-        def __init__(self, case="", inp="", outp="", grade: Optional[int] = None):
-            self.case: str = case
-            self.input: str = VplParser.finish(inp)
-            self.output: str = VplParser.unwrap(VplParser.finish(outp))
-            self.grade: Optional[int] = grade
-
-        def __str__(self):
-            return "case=" + self.case + '\n' \
-                   + "input=" + self.input \
-                   + "output=" + self.output \
-                   + "gr=" + str(self.grade)
-
-    regex_vpl_basic = r"[cC]ase *= *([ \S]*) *\n *[iI]nput *=([\s\S]*?)^ *[oO]utput *=([\s\S]*?)(?=^ *[cC]ase *=|\Z)"
-    regex_grade_reduction = r"([\s\S]*) *[Gg]rade [rR]eduction *= *(.*)%"
-
-    @staticmethod
-    def filter_quotes(x):
-        return x[1:-2] if x.startswith('"') else x
-
-    @staticmethod
-    def parse_vpl(content: str) -> List[CaseData]:
-        output: List[VplParser.CaseData] = []
-        for m in re.finditer(VplParser.regex_vpl_basic, content, re.MULTILINE):
-            str_case = m.group(1)
-            str_input = m.group(2)
-            str_output = m.group(3)
-            grade: int | None = None
-            gr = re.match(VplParser.regex_grade_reduction, str_output, re.MULTILINE)
-            if gr is not None:
-                str_output = gr.group(1)
-                grade = int(gr.group(2))
-            output.append(VplParser.CaseData(str_case, str_input, str_output, grade))
-        return output
-
-    @staticmethod
-    def to_vpl(unit: CaseData):
-        text = "case=" + unit.case + "\n"
-        text += "input=" + unit.input
-        text += "output=\"" + unit.output + "\"\n"
-        if unit.grade is not None:
-            text += "grade reduction=" + str(unit.grade) + "%\n"
-        return text
-
-
-class Loader:
-    # regex_tio = r"^ *#INPUT *(.*?)\n(.*?)^ *#OUTPUT *\n(.*?)^ *#END *\n?"
-    regex_tio = r"^\s*[>]* ?INSERT[ ]*([^\n]*?)\n(.*?)^\s*[=]* ?EXPECT[ ]*\n(.*?)^\s*[<]* ?FINISH*$"
-    regex_tio_origin = r"^>>>>>>>> *(.*?)\n(.*?)^======== *\n(.*?)^<<<<<<<<"
-
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def parse_cio(text, source):
-        unit_list = []
-        text = "\n" + text
-
-        pattern = r'```.*?\n(.*?)```'  # get only inside code blocks
-        code = re.findall(pattern, text, re.MULTILINE | re.DOTALL)
-        # join all code blocks found
-        text = "\n" + "\n".join(code)
-
-        pieces = []  # header, input, output
-
-        open_case = False
-        for line in text.split("\n"):
-            if line.startswith("#__case") or line.startswith("#TEST_CASE"):
-                pieces.append({"header": line, "input": [], "output": []})
-                open_case = True
-            elif open_case:
-                pieces[-1]["output"].append(line)
-                if line.startswith("$end"):
-                    open_case = False
-
-        # concatenando testes contínuos e finalizando testes sem $end
-        for i in range(len(pieces)):
-            output = pieces[i]["output"]
-            if output[-1] != "$end" and i < len(pieces) - 1:
-                pieces[i + 1]["output"] = output + pieces[i + 1]["output"]
-                output.append("$end")
-
-        # removendo linhas vazias e criando input das linhas com $
-        for piece in pieces:
-            piece["input"] = [line[1:] for line in piece["output"] if line.startswith("$")]
-            piece["output"] = [line for line in piece["output"] if line != "" and not line.startswith("#")]
-
-        for piece in pieces:
-            case = " ".join(piece["header"].split(" ")[1:])
-            inp = "\n".join(piece["input"]) + "\n"
-            output = "\n".join(piece["output"]) + "\n"
-            unit_list.append(Unit(case, inp, output, None, source))
-
-        return unit_list
-
-    @staticmethod
-    def parse_tio(text: str, source: str = "") -> List[Unit]:
-
-        # identifica se tem grade e retorna case name e grade
-        def parse_case_grade(value: str) -> Tuple[str, Optional[int]]:
-            if value.endswith("%"):
-                words = value.split(" ")
-                last = value.split(" ")[-1]
-                _case = " ".join(words[:-1])
-                grade_str = last[:-1]           # ultima palavra sem %
-                try:
-                    _grade = int(grade_str)
-                    return _case, _grade
-                except ValueError:
-                    pass
-            return value, None
-
-        matches = re.findall(Loader.regex_tio, text, re.MULTILINE | re.DOTALL)
-        matches += re.findall(Loader.regex_tio_origin, text, re.MULTILINE | re.DOTALL)
-        unit_list = []
-        for m in matches:
-            case, grade = parse_case_grade(m[0])
-            unit_list.append(Unit(case, m[1], m[2], grade, source))
-        return unit_list
-
-    @staticmethod
-    def parse_vpl(text: str, source: str = "") -> List[Unit]:
-        data_list = VplParser.parse_vpl(text)
-        output: List[Unit] = []
-        for m in data_list:
-            output.append(Unit(m.case, m.input, m.output, m.grade, source))
-        return output
-
-    @staticmethod
-    def parse_dir(folder) -> List[Unit]:
-        pattern_loader = PatternLoader()
-        files = sorted(os.listdir(folder))
-        matches = pattern_loader.get_file_sources(files)
-
-        unit_list: List[Unit] = []
-        try:
-            for m in matches:
-                unit = Unit()
-                unit.source = os.path.join(folder, m.label)
-                unit.grade = 100
-                with open(os.path.join(folder, m.input_file)) as f:
-                    value = f.read()
-                    unit.input = value + ("" if value.endswith("\n") else "\n")
-                with open(os.path.join(folder, m.output_file)) as f:
-                    value = f.read()
-                    unit.expected = value + ("" if value.endswith("\n") else "\n")
-                unit_list.append(unit)
-        except FileNotFoundError as e:
-            print(str(e))
-        return unit_list
-
-    @staticmethod
-    def parse_source(source: str) -> List[Unit]:
-        if os.path.isdir(source):
-            return Loader.parse_dir(source)
-        if os.path.isfile(source):
-            #  if PreScript.exists():
-            #      source = PreScript.process_source(source)
-            with open(source, encoding="utf-8") as f:
-                content = f.read()
-            if source.endswith(".vpl") or source.endswith(".cases"):
-                return Loader.parse_vpl(content, source)
-            elif source.endswith(".tio"):
-                return Loader.parse_tio(content, source)
-            elif source.endswith(".md"):
-                tests = Loader.parse_tio(content, source)
-                tests += Loader.parse_cio(content, source)
-                return tests
-            else:
-                print("warning: target format do not supported: " + source)  # make this a raise
-        else:
-            raise FileNotFoundError('warning: unable to find: ' + source)
-        return []
-
-
-
-class UnitRunner:
-
-    def __init__(self):
-        pass
-
-    # run a unit using a solver and return if the result is correct
-    @staticmethod
-    def run_unit(solver: SolverBuilder, unit: Unit, timeout: Optional[float]=None) -> ExecutionResult:
-        if solver.compile_error:
-            unit.received = solver.error_msg
-            return ExecutionResult.COMPILATION_ERROR
-        cmd = solver.get_executable()
-        if timeout == 0:
-            timeout = None
-        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input, timeout)
-        unit.received = stdout + stderr
-        if return_code != 0:
-            return ExecutionResult.EXECUTION_ERROR
-        if unit.received == unit.expected:
-            return ExecutionResult.SUCCESS
-        return ExecutionResult.WRONG_OUTPUT
 
 
 
@@ -5962,6 +3874,2164 @@ class Identifier:
             return IdentifierType.VPL
         else:
             return IdentifierType.SOLVER
+# ignore missing import 
+
+class Decoder:
+
+    @staticmethod
+    def load(file_path: str) -> str:
+        with open(file_path, "rb") as file:
+            raw_data = file.read()
+            enc_dict = chardet.detect(raw_data)
+            encoding = enc_dict["encoding"]
+            if encoding is None:
+                encoding = "utf-8"
+            try:
+                content = raw_data.decode(encoding)
+            except UnicodeDecodeError as e:
+                content = raw_data.decode("utf-8")
+            return content
+
+    @staticmethod
+    def save(file_path: str, content: str):
+        with open(file_path, "w", encoding="utf-8") as file:
+            file.write(content)
+
+    @staticmethod
+    def get_encoding(file_path: str) -> str:
+        with open(file_path, "rb") as file:
+            raw_data = file.read()
+            encoding = chardet.detect(raw_data)["encoding"]
+            if encoding is None:
+                encoding = "utf-8"
+            return encoding
+
+
+def load_html_tags(task: str) -> Optional[str]:
+    pattern = r"<!--\s*(.*?)\s*-->"
+    match = re.search(pattern, task)
+    if not match:
+        return None
+    return match.group(1).strip()
+
+
+class Game:
+    def __init__(self, file: Optional[str] = None):
+        self.ordered_clusters: List[str] = [] # ordered clusters
+        self.clusters: Dict[str, Cluster] = {} 
+        self.quests: Dict[str, Quest] = {}  # quests indexed by quest key
+        self.tasks: Dict[str, Task] = {}  # tasks indexed by task key
+
+        self.available_quests: List[str] = []
+        self.available_clusters: List[str] = []
+
+        self.token_level_one = "level_one"
+        self.token_level_mult = "level_mult"
+        self.level_one: int = 100
+        self.level_mult: float = 1.5
+
+        self.filename = None
+        if file is not None:
+            self.filename = file
+            self.parse_file(file)
+
+    def parse_xp(self, content):
+        if content.startswith('---'):
+            front_matter = content.split('---')[1].strip()
+            yaml_data = yaml.safe_load(front_matter)
+            if self.token_level_one in yaml_data:
+                self.level_one = int(yaml_data[self.token_level_one])
+            if self.token_level_mult in yaml_data:
+                self.level_mult = float(yaml_data[self.token_level_mult])
+
+    def get_task(self, key: str) -> Task:
+        if key in self.tasks:
+            return self.tasks[key]
+        raise Warning(f"fail: tarefa '{key}' não encontrada no curso")
+
+    # se existir um cluster nessa linha, insere na lista de clusters e 
+    # retorno o objeto cluster inserido
+    def load_cluster(self, line: str, line_num: int) -> Optional[Cluster]:
+        if not line.startswith("## "):
+            return None
+        line = line[3:]
+
+        titulo = line
+        tags_raw = ""
+        if "<!--" in line:
+            pieces = line.split("<!--")
+            titulo = pieces[0]
+            middle_end = pieces[1].split("-->")
+            tags_raw = middle_end[0]
+            titulo += middle_end[1]
+
+        tags = [tag.strip() for tag in tags_raw.split(" ")]        
+        key = uni_to_asc(get_md_link(titulo))
+        try:
+            color = [tag[2:] for tag in tags if tag.startswith("c:")][0]
+        except IndexError as _e:
+            color = None
+        
+        cluster = Cluster(line_num, titulo, key, color)
+
+        if key in self.clusters.keys():
+            c = self.clusters[key]
+            print(f"Cluster {key} já existe")
+            print(f"{self.filename}:{line_num}")
+            print(f"{self.filename}:{c.line_number}")
+            print("  " + str(c))
+            print("  " + str(cluster))
+            exit(1)
+                
+        self.clusters[key] = cluster
+        self.ordered_clusters.append(key)
+        return cluster
+                
+    def load_quest(self, line, line_num) -> Optional[Quest]:
+        quest = QuestParser().parse_quest(self.filename, line, line_num + 1)
+        if quest is None:
+            return None
+        if quest.key in self.quests:
+            print(f"Quest {quest.key} já existe")
+            print(f"{self.filename}:{quest.line_number}")
+            print(f"{self.filename}:{self.quests[quest.key].line_number}")
+            print("  " + str(quest))
+            print("  " + str(self.quests[quest.key]))
+            exit(1)
+        self.quests[quest.key] = quest
+        return quest
+
+    def load_task(self, line, line_num) -> Optional[Task]:
+        if line == "":
+            return None
+        task = TaskParser.parse_line(line, line_num + 1)
+        if task is None:
+            return None
+        
+        if task.key in self.tasks:
+            print(f"Task {task.key} já existe")
+            print(f"{self.filename}:{task.line_number}")
+            print(f"{self.filename}:{self.tasks[task.key].line_number}")
+            print("  " + str(task))
+            print("  " + str(self.tasks[task.key]))
+            exit(1)
+        self.tasks[task.key] = task
+        return task
+
+    def get_xp_resume(self):
+        total = 0
+        obtained = 0
+        for q in self.quests.values():
+            o, t = q.get_xp()
+            total += t
+            obtained += o
+        return obtained, total
+
+    def get_skills_resume(self, avaliable_quests: List[Quest]) -> Tuple[Dict[str, int], Dict[str, int]]:
+        total: Dict[str, int] = {}
+        obtained: Dict[str, int] = {}
+        avaliable_keys = [q.key for q in avaliable_quests]
+        for q in self.quests.values():
+            reachable = q.key in avaliable_keys
+            for t in q.get_tasks():
+                for s in t.skills:
+                    if s in total:
+                        total[s] += t.skills[s]
+                        if reachable:
+                            obtained[s] += int(t.skills[s] * t.self_grade/10)
+                        else:
+                            obtained[s] += 0
+                    else:
+                        total[s] = t.skills[s]
+                        if reachable:
+                            obtained[s] = int(t.skills[s] * t.self_grade/10)
+                        else:
+                            obtained[s] = 0
+                for s in t.qskills:
+                    if s in total:
+                        total[s] += t.qskills[s]
+                        if reachable:
+                            obtained[s] += int(t.qskills[s] * t.self_grade/10)
+                        else:
+                            obtained[s] += 0
+                    else:
+                        total[s] = t.qskills[s]
+                        if reachable:
+                            obtained[s] = int(t.qskills[s] * t.self_grade/10)
+                        else:
+                            obtained[s] = 0
+        return total, obtained
+
+    # Verificar se todas as quests requeridas existem e adiciona o ponteiro
+    # Verifica se todas as quests tem tarefas
+    def validate_requirements(self):
+
+        # verify is there are keys repeated between quests, tasks and groups
+
+        keys = [c.key for c in self.clusters.values()] +\
+               [k for k in self.quests.keys()] +\
+               [k for k in self.tasks.keys()]
+
+        # print chaves repetidas
+        for k in keys:
+            if keys.count(k) > 1:
+                print(f"Chave repetida: {k}")
+                exit(1)
+
+        # remove all quests without tasks
+        valid_quests = {}
+        for k, q in self.quests.items():
+            if len(q.get_tasks()) > 0:
+                valid_quests[k] = q
+
+        # trim titles
+        for q in self.quests.values():
+            q.title = q.title.strip()
+        for c in self.clusters.values():
+            c.title = c.title.strip()
+
+        self.quests = valid_quests
+        # verificar auto dependencia
+        for q in self.quests.values():
+            for r in q.requires:
+                if q.key == r:
+                    print(f"Erro: auto refência {q.line_number} {q.line}")
+                    exit(1)
+
+
+        # verificar se todas as quests requeridas existem e adicionar o ponteiro
+        for q in self.quests.values():
+            for r in q.requires:
+                if r in self.quests:
+                    q.requires_ptr.append(self.quests[r])
+                else:
+                    # print(f"keys: {self.quests.keys()}")
+                    print(f"Quest\n{self.filename}:{q.line_number}\n{str(q)}\nrequer {r} que não existe")
+                    exit(1)
+
+    def check_cycle(self):
+        def dfs(qx, visitedx):
+            if len(visitedx) > 0:
+                if visitedx[0] == qx.key:
+                    print(f"Cycle detected: {visitedx}")
+                    exit(1)
+            if q.key in visitedx:
+                return
+            visitedx.append(q.key)
+            for r in q.requires_ptr:
+                dfs(r, visitedx)
+
+        for q in self.quests.values():
+            visited: List[str] = []
+            dfs(q, visited)
+
+    def tie_cluster_quest(self, cluster: Cluster, quest: Quest):
+        quest.cluster_key = cluster.key
+        cluster.quests.append(quest)
+
+    def create_unamed_quest(self, cluster):
+        key = cluster.key + "_Sem_Missão"
+        quest: Quest = Quest("Sem Missão", key)
+        self.quests[key] = quest
+        self.tie_cluster_quest(cluster, quest)
+        return quest
+
+    def parse_file(self, filename: str):
+        self.filename = filename
+        content = Decoder.load(filename)
+        lines = content.split("\n")
+        self.parse_xp(content)
+
+        key = "Sem Grupo"
+        active_cluster: Cluster = Cluster(0, key, key)
+        self.clusters[key] = active_cluster
+        self.ordered_clusters.append(key)
+        
+        active_quest: Quest = self.create_unamed_quest(active_cluster)
+
+        for line_num, line in enumerate(lines):
+            cluster = self.load_cluster(line, line_num)
+            if cluster is not None:
+                active_cluster = cluster
+                active_quest = self.create_unamed_quest(active_cluster)
+                continue
+            
+            quest = self.load_quest(line, line_num)
+            if quest is not None:
+                active_quest = quest
+                self.tie_cluster_quest(active_cluster, active_quest)
+                continue
+
+            task = self.load_task(line, line_num)
+            if task is not None:
+                active_quest.add_task(task, filename)
+                task.quest_key = active_quest.key
+                task.cluster_key = active_cluster.key
+
+        self.clear_empty()
+
+        self.validate_requirements()
+        for t in self.tasks.values():
+            t.process_link(os.path.dirname(filename) + "/")
+
+    def clear_empty(self):
+
+        # apagando quests vazias da lista de quests
+        for k in list(self.quests.keys()):
+            if len(self.quests[k].get_tasks()) == 0:
+                del self.quests[k]
+
+        # apagando quests vazias dos clusters e clusters vazios
+        ordered_clusters: List[str] = []
+        clusters: Dict[str, Cluster] = {}
+        for key in self.ordered_clusters:
+            cluster = self.clusters[key]
+            quests = [q for q in cluster.quests if len(q.get_tasks()) > 0]
+            if len(quests) > 0:
+                cluster.quests = quests
+                clusters[cluster.key] = cluster
+                ordered_clusters.append(cluster.key)
+
+        self.ordered_clusters = ordered_clusters
+        self.clusters = clusters
+
+    @staticmethod
+    def __is_reachable_quest(q: Quest, cache: Dict[str, bool]):
+        if q.key in cache:
+            return cache[q.key]
+
+        if len(q.requires_ptr) == 0:
+            cache[q.key] = True
+            return True
+        cache[q.key] = all([r.is_complete() and Game.__is_reachable_quest(r, cache) for r in q.requires_ptr])
+        return cache[q.key]
+
+    # def __get_reachable_quests(self):
+    #     # cache needs to be reseted before each call
+    #     cache: Dict[str, bool] = {}
+    #     return [q for q in self.quests.values() if Game.__is_reachable_quest(q, cache)]
+
+    def update_reachable_and_available(self, admin_mode: bool):
+        for q in self.quests.values():
+            q.set_reachable(False)
+        for c in self.clusters.values():
+            c.set_reachable(False)
+
+        cache: Dict[str, bool] = {}
+        for c in self.clusters.values():
+            for q in c.quests:
+                if Game.__is_reachable_quest(q, cache):
+                    q.set_reachable(True)
+                    c.set_reachable(True)
+
+        self.available_quests = []
+        self.available_clusters = []
+        if admin_mode:
+            self.available_quests = [key for key in self.quests.keys()]
+            self.available_clusters = [key for key in self.clusters.keys()]
+        else:
+            self.available_quests = [q.key for q in self.quests.values() if q.is_reachable()]
+            self.available_clusters = [c.key for c in self.clusters.values() if c.is_reachable()]
+
+
+    def __str__(self):
+        output = []
+        for c in self.clusters.values():
+            output.append(str(c))
+            for q in c.quests:
+                output.append(str(q))
+                for t in q.get_tasks():
+                    output.append(str(t))
+        return "\n".join(output)
+
+
+
+class Graph:
+    graph_generated: bool = False
+
+    colorlist: List[Tuple[str, str]] = [
+            ("aquamarine3", "aquamarine4"),
+            ("bisque3", "bisque4"),
+            ("brown3", "brown4"),
+            ("chartreuse3", "chartreuse4"),
+            ("coral3", "coral4"),
+            ("cyan3", "cyan4"),
+            ("darkgoldenrod3", "darkgoldenrod4"),
+            ("darkolivegreen3", "darkolivegreen4"),
+            ("darkorchid3", "darkorchid4"),
+            ("darkseagreen3", "darkseagreen4"),
+            ("darkslategray3", "darkslategray4"),
+            ("deeppink3", "deeppink4"),
+            ("deepskyblue3", "deepskyblue4"),
+            ("dodgerblue3", "dodgerblue4"),
+            ("firebrick3", "firebrick4"),
+            ("gold3", "gold4"),
+            ("green3", "green4"),
+            ("hotpink3", "hotpink4"),
+            ("indianred3", "indianred4"),
+            ("khaki3", "khaki4"),
+            ("lightblue3", "lightblue4"),
+            ("lightcoral", "lightcoral"),
+            ("lightcyan3", "lightcyan4"),
+            ("lightgoldenrod3", "lightgoldenrod4"),
+            ("lightgreen", "lightgreen"),
+            ("lightpink3", "lightpink4"),
+            ("lightsalmon3", "lightsalmon4"),
+            ("lightseagreen", "lightseagreen"),
+            ("lightskyblue3", "lightskyblue4"),
+            ("lightsteelblue3", "lightsteelblue4"),
+            ("lightyellow3", "lightyellow4"),
+            ("magenta3", "magenta4"),
+            ("maroon3", "maroon4"),
+            ("mediumorchid3", "mediumorchid4"),
+            ("mediumpurple3", "mediumpurple4"),
+            ("mediumspringgreen", "mediumspringgreen"),
+            ("mediumturquoise", "mediumturquoise"),
+            ("mediumvioletred", "mediumvioletred"),
+            ("mistyrose3", "mistyrose4"),
+            ("navajowhite3", "navajowhite4"),
+            ("olivedrab3", "olivedrab4"),
+            ("orange3", "orange4"),
+            ("orangered3", "orangered4"),
+            ("orchid3", "orchid4"),
+            ("palegreen3", "palegreen4"),
+            ("paleturquoise3", "paleturquoise4"),
+            ("palevioletred3", "palevioletred4")
+            ]
+
+    def __init__(self, game: Game):
+        self.game = game
+        self.path = "graph.png"
+        self.opt = False
+        self.reachable = [q.key for q in self.game.quests.values() if q.is_reachable()]
+        # self.reachable = [key for key in self.game.quests.keys()]
+
+        self.counts: Dict[str, str] = {}
+        for q in self.game.quests.values():
+            done = len([t for t in q.get_tasks() if t.is_complete()])
+            init = len([t for t in q.get_tasks() if t.in_progress()])
+            todo = len([t for t in q.get_tasks() if t.not_started()])
+            self.counts[q.key] = f"{done} / {done + init + todo}"
+
+    def set_path(self, path: str):
+        self.path = path
+        return self
+
+    def set_opt(self, opt: bool):
+        self.opt = opt
+        return self
+
+    def set_counts(self, counts: Dict[str, str]):
+        self.counts = counts
+        return self
+    
+    def set_output(self, output: str):
+        self.output = output
+        return self
+
+    def info(self, qx: Quest):
+        text = f'{qx.title.strip()}'
+        if self.reachable is None or self.counts is None:
+            return f'"{text}"'
+        return f'"{text}\\n{self.counts[qx.key]}"'
+
+    def is_reachable_or_next(self, q: Quest):
+        if self.reachable is None:
+            return True
+        if q.key in self.reachable:
+            return True
+        for r in q.requires_ptr:
+            if r.key in self.reachable:
+                return True
+        return False
+
+    def generate(self):
+        saida = ["digraph diag {", '  node [penwidth=1, style="rounded,filled", shape=box]']
+
+        targets = [q for q in self.game.quests.values()]
+        for q in targets:
+            token = "->"
+            if len(q.requires_ptr) > 0:
+                for r in q.requires_ptr:
+                    extra = ""
+                    if self.reachable is not None:
+                        if q.key not in self.reachable and not r.is_complete():
+                            extra = "[style=dotted]"
+                    saida.append(f"  {self.info(r)} {token} {self.info(q)} {extra}")
+            else:
+                v = '  "Início"'
+                saida.append(f"{v} {token} {self.info(q)}")
+
+        for i, c in enumerate(self.game.clusters.values()):
+            # cluster_targets = [q for q in c.quests if self.is_reachable_or_next(q)]
+            cluster_targets = [q for q in c.quests]
+            for q in cluster_targets:
+                if self.opt:
+                    if q.opt:
+                        fillcolor = "pink"
+                    else:
+                        fillcolor = "lime"
+                else:
+                    if c.color is not None:
+                        fillcolor = c.color
+                    else:
+                        fillcolor = self.colorlist[i][0]
+
+                    if q.opt:
+                        fillcolor = f'"{fillcolor};0.9:orange"'
+                    else:
+                        fillcolor = f'"{fillcolor};0.9:lime"'
+                shape = "ellipse"
+                color = "black"
+                width = 1
+                if self.reachable is not None:
+                    if q.key not in self.reachable:
+                        color = "white"
+                    else:
+                        width = 3
+                        color = q.get_grade_color()
+                        if color == "g":
+                            color = "green"
+                        elif color == "r":
+                            color = "red"
+                        elif color == "y":
+                            color = "yellow"
+                        elif color == "m":
+                            color = "magenta"
+                saida.append(f"  {self.info(q)} [shape={shape} color={color} penwidth={width} fillcolor={fillcolor} ]")
+
+        saida.append("}")
+
+        saida.append("")
+
+        out_file = self.path
+        data = "\n".join(saida)
+        graph_dot  = pydot.graph_from_dot_data(data)[0]
+        graph_dot.write_png(out_file)
+
+
+class XP:
+    token_level_one = "level_one"
+    token_level_mult = "level_mult"
+    level_one: int = 100
+    level_mult: float = 1.5
+    
+    def __init__(self, game: Game):
+        self.game = game
+        self.obtained = 0
+        self.avaliable = 0
+        self.update()
+        self.level = self.get_level()
+    
+    def update(self):
+        self.obtained, self.avaliable = self.game.get_xp_resume()
+
+    def get_level(self) -> int:
+        return self.calc_level(self.obtained)
+
+    def get_xp_level_current(self) -> int:
+        xp_prev = self.calc_xp(self.level)
+        atual = self.obtained - xp_prev
+        return atual
+
+    def get_xp_level_needed(self) -> int:
+        xp_next = self.calc_xp(self.level + 1)
+        xp_prev = self.calc_xp(self.level)
+        return xp_next - xp_prev
+
+    def get_xp_total_obtained(self) -> int:
+        return self.obtained
+
+    def get_xp_total_available(self) -> int:
+        return self.avaliable
+
+    def calc_level(self, xp) -> int:
+        level = 1
+        while self.calc_xp(level) <= xp:
+            level += 1
+        return level - 1
+    
+    def calc_xp(self, level: int) -> int:
+        total = 0
+        for i in range(level - 1):
+            total += self.game.level_one * (int(self.game.level_mult) ** i)
+        return int(total)
+
+
+
+
+
+
+
+class VplParser:
+    @staticmethod
+    def finish(text):
+        return text if text.endswith("\n") else text + "\n"
+
+    @staticmethod
+    def unwrap(text):
+        while text.endswith("\n"):
+            text = text[:-1]
+        if text.startswith("\"") and text.endswith("\""):
+            text = text[1:-1]
+        return VplParser.finish(text)
+
+    @staticmethod
+    class CaseData:
+        def __init__(self, case="", inp="", outp="", grade: Optional[int] = None):
+            self.case: str = case
+            self.input: str = VplParser.finish(inp)
+            self.output: str = VplParser.unwrap(VplParser.finish(outp))
+            self.grade: Optional[int] = grade
+
+        def __str__(self):
+            return "case=" + self.case + '\n' \
+                   + "input=" + self.input \
+                   + "output=" + self.output \
+                   + "gr=" + str(self.grade)
+
+    regex_vpl_basic = r"[cC]ase *= *([ \S]*) *\n *[iI]nput *=([\s\S]*?)^ *[oO]utput *=([\s\S]*?)(?=^ *[cC]ase *=|\Z)"
+    regex_grade_reduction = r"([\s\S]*) *[Gg]rade [rR]eduction *= *(.*)%"
+
+    @staticmethod
+    def filter_quotes(x):
+        return x[1:-2] if x.startswith('"') else x
+
+    @staticmethod
+    def parse_vpl(content: str) -> List[CaseData]:
+        output: List[VplParser.CaseData] = []
+        for m in re.finditer(VplParser.regex_vpl_basic, content, re.MULTILINE):
+            str_case = m.group(1)
+            str_input = m.group(2)
+            str_output = m.group(3)
+            grade: int | None = None
+            gr = re.match(VplParser.regex_grade_reduction, str_output, re.MULTILINE)
+            if gr is not None:
+                str_output = gr.group(1)
+                grade = int(gr.group(2))
+            output.append(VplParser.CaseData(str_case, str_input, str_output, grade))
+        return output
+
+    @staticmethod
+    def to_vpl(unit: CaseData):
+        text = "case=" + unit.case + "\n"
+        text += "input=" + unit.input
+        text += "output=\"" + unit.output + "\"\n"
+        if unit.grade is not None:
+            text += "grade reduction=" + str(unit.grade) + "%\n"
+        return text
+
+
+class Loader:
+    # regex_tio = r"^ *#INPUT *(.*?)\n(.*?)^ *#OUTPUT *\n(.*?)^ *#END *\n?"
+    regex_tio = r"^\s*[>]* ?INSERT[ ]*([^\n]*?)\n(.*?)^\s*[=]* ?EXPECT[ ]*\n(.*?)^\s*[<]* ?FINISH*$"
+    regex_tio_origin = r"^>>>>>>>> *(.*?)\n(.*?)^======== *\n(.*?)^<<<<<<<<"
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def parse_cio(text, source):
+        unit_list = []
+        text = "\n" + text
+
+        pattern = r'```.*?\n(.*?)```'  # get only inside code blocks
+        code = re.findall(pattern, text, re.MULTILINE | re.DOTALL)
+        # join all code blocks found
+        text = "\n" + "\n".join(code)
+
+        pieces = []  # header, input, output
+
+        open_case = False
+        for line in text.split("\n"):
+            if line.startswith("#__case") or line.startswith("#TEST_CASE"):
+                pieces.append({"header": line, "input": [], "output": []})
+                open_case = True
+            elif open_case:
+                pieces[-1]["output"].append(line)
+                if line.startswith("$end"):
+                    open_case = False
+
+        # concatenando testes contínuos e finalizando testes sem $end
+        for i in range(len(pieces)):
+            output = pieces[i]["output"]
+            if output[-1] != "$end" and i < len(pieces) - 1:
+                pieces[i + 1]["output"] = output + pieces[i + 1]["output"]
+                output.append("$end")
+
+        # removendo linhas vazias e criando input das linhas com $
+        for piece in pieces:
+            piece["input"] = [line[1:] for line in piece["output"] if line.startswith("$")]
+            piece["output"] = [line for line in piece["output"] if line != "" and not line.startswith("#")]
+
+        for piece in pieces:
+            case = " ".join(piece["header"].split(" ")[1:])
+            inp = "\n".join(piece["input"]) + "\n"
+            output = "\n".join(piece["output"]) + "\n"
+            unit_list.append(Unit(case, inp, output, None, source))
+
+        return unit_list
+
+    @staticmethod
+    def parse_tio(text: str, source: str = "") -> List[Unit]:
+
+        # identifica se tem grade e retorna case name e grade
+        def parse_case_grade(value: str) -> Tuple[str, Optional[int]]:
+            if value.endswith("%"):
+                words = value.split(" ")
+                last = value.split(" ")[-1]
+                _case = " ".join(words[:-1])
+                grade_str = last[:-1]           # ultima palavra sem %
+                try:
+                    _grade = int(grade_str)
+                    return _case, _grade
+                except ValueError:
+                    pass
+            return value, None
+
+        matches = re.findall(Loader.regex_tio, text, re.MULTILINE | re.DOTALL)
+        matches += re.findall(Loader.regex_tio_origin, text, re.MULTILINE | re.DOTALL)
+        unit_list = []
+        for m in matches:
+            case, grade = parse_case_grade(m[0])
+            unit_list.append(Unit(case, m[1], m[2], grade, source))
+        return unit_list
+
+    @staticmethod
+    def parse_vpl(text: str, source: str = "") -> List[Unit]:
+        data_list = VplParser.parse_vpl(text)
+        output: List[Unit] = []
+        for m in data_list:
+            output.append(Unit(m.case, m.input, m.output, m.grade, source))
+        return output
+
+    @staticmethod
+    def parse_dir(folder) -> List[Unit]:
+        pattern_loader = PatternLoader()
+        files = sorted(os.listdir(folder))
+        matches = pattern_loader.get_file_sources(files)
+
+        unit_list: List[Unit] = []
+        try:
+            for m in matches:
+                unit = Unit()
+                unit.source = os.path.join(folder, m.label)
+                unit.grade = 100
+                input_file = os.path.join(folder, m.input_file)
+                value = Decoder.load(input_file)
+                unit.input = value + ("" if value.endswith("\n") else "\n")
+                output_file = os.path.join(folder, m.output_file)
+                value = Decoder.load(output_file)
+                unit.expected = value + ("" if value.endswith("\n") else "\n")
+                unit_list.append(unit)
+        except FileNotFoundError as e:
+            print(str(e))
+        return unit_list
+
+    @staticmethod
+    def parse_source(source: str) -> List[Unit]:
+        if os.path.isdir(source):
+            return Loader.parse_dir(source)
+        if os.path.isfile(source):
+            #  if PreScript.exists():
+            #      source = PreScript.process_source(source)
+            content = Decoder.load(source)
+            if source.endswith(".vpl") or source.endswith(".cases"):
+                return Loader.parse_vpl(content, source)
+            elif source.endswith(".tio"):
+                return Loader.parse_tio(content, source)
+            elif source.endswith(".md"):
+                tests = Loader.parse_tio(content, source)
+                tests += Loader.parse_cio(content, source)
+                return tests
+            else:
+                print("warning: target format do not supported: " + source)  # make this a raise
+        else:
+            raise FileNotFoundError('warning: unable to find: ' + source)
+        return []
+
+
+
+
+class CompileError(Exception):
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return self.message
+
+class SolverBuilder:
+    def __init__(self, solver_list: List[str]):
+        self.path_list: List[str] = [os.path.normpath(SolverBuilder.__add_dot_bar(path)) for path in solver_list]
+        
+        if len(self.path_list) > 0:
+            self.cache_dir = os.path.join(os.path.dirname(self.path_list[0]), ".build")
+        else:
+            self.cache_dir = tempfile.mkdtemp()
+        self.clear_cache()
+        self.error_msg: str = ""
+        self.__executable: str = ""
+        self.compile_error: bool = False
+
+    def check_tool(self, name):
+        if shutil.which(name) is None:
+            self.compile_error = True
+            raise CompileError("fail: comando '" + name + "' não foi encontrado")
+
+    def set_main(self, main: str):
+        list_main: List[str] = []
+        list_other: List[str] = []
+
+        for path in self.path_list:
+            if os.path.basename(path) == main:
+                list_main.append(path)
+            else:
+                list_other.append(path)
+        
+        self.path_list = list_main + list_other
+        return self
+
+    def set_executable(self, executable: str):
+        self.__executable = executable
+        return self
+
+    def clear_cache(self):
+        if os.path.exists(self.cache_dir):
+            shutil.rmtree(self.cache_dir)
+        os.makedirs(self.cache_dir, exist_ok=True)
+
+    def reset(self):
+        self.__executable = ""
+        self.compile_error = False
+        self.error_msg = ""
+        self.clear_cache()
+
+    def not_compiled(self):
+        return self.__executable == "" and not self.compile_error
+
+    def get_executable(self, force_rebuild=False) -> str:
+        if (len(self.path_list) > 0 and self.not_compiled()) or force_rebuild:
+            self.prepare_exec()
+        return self.__executable
+
+    def prepare_exec(self, free_run_mode: bool = False) -> None:
+        self.__executable = ""
+        path = self.path_list[0]
+        self.compile_error = False
+
+        if path.endswith(".py"):
+            self.__executable = "python " + path
+        elif path.endswith(".js"):
+            self.__prepare_js(free_run_mode)
+        elif path.endswith(".ts"):
+            self.__prepare_ts(free_run_mode)
+        elif path.endswith(".java"):
+            self.__prepare_java()
+        elif path.endswith(".c"):
+            self.__prepare_c()
+        elif path.endswith(".cpp"):
+            self.__prepare_cpp()
+        elif path.endswith(".go"):
+            self.__prepare_go()
+        elif path.endswith(".sql"):
+            self.__prepare_sql()
+        else:
+            self.__executable = path
+
+    def __prepare_java(self):
+        self.check_tool("javac")
+
+        solver = self.path_list[0]
+
+        filename = os.path.basename(solver)
+        # tempdir = os.path.dirname(self.path_list[0])
+
+        cmd = ["javac"] + self.path_list + ['-d', self.cache_dir]
+        cmdt = " ".join(cmd)
+        return_code, stdout, stderr = Runner.subprocess_run(cmdt)
+        if return_code != 0:
+            self.error_msg = stdout + stderr
+            self.compile_error = True
+        else:
+            self.__executable = "java -cp " + self.cache_dir + " " + filename[:-5]  # removing the .java
+
+    def comment_and_uncomment_node_input(self, free_run_mode: bool):
+        for i in range(len(self.path_list)):
+            path = self.path_list[i]
+            encoding = Decoder.get_encoding(path)
+            with open(path, "r", encoding=encoding) as f:
+                lines = f.readlines()
+            with open(path, "w", encoding="utf-8") as f:
+                for line in lines:
+                    if free_run_mode:
+                        if '_TEST_ONLY_' in line and not line.startswith("//"):
+                            f.write("//" + line)
+                        elif '_FREE_ONLY' in line and line.startswith("// function"):
+                            f.write(line[3:])
+                        elif '_FREE_ONLY' in line and line.startswith("//"):
+                            f.write(line[2:])
+                        else:
+                            f.write(line)
+                    else:
+                        if '_FREE_ONLY_' in line and not line.startswith("//"):
+                            f.write("//" + line)
+                        elif '_TEST_ONLY' in line and line.startswith("// function"):
+                            f.write(line[3:])
+                        elif '_TEST_ONLY' in line and line.startswith("//"):
+                            f.write(line[2:])
+                        else:
+                            f.write(line)
+
+    def __prepare_js(self, free_run_mode: bool):
+        self.check_tool("node")
+        solver = self.path_list[0]
+        self.comment_and_uncomment_node_input(free_run_mode)
+        self.__executable = "node " + solver
+
+    def __prepare_go(self):
+        self.check_tool("go")
+        self.__executable = "go run " + " ".join(self.path_list)
+
+    def __prepare_sql(self):
+        self.check_tool("sqlite3")
+        self.__executable = "cat " + " ".join(self.path_list) + " | sqlite3"
+
+    def __prepare_ts(self, free_run_mode: bool):
+        self.comment_and_uncomment_node_input(free_run_mode)
+        
+        transpiler = "esbuild"
+        if os.name == "nt":
+            transpiler += ".cmd"
+
+        self.check_tool(transpiler)
+        self.check_tool("node")
+        source_list = self.path_list
+        cmd = [transpiler] + source_list + ["--outdir=" + self.cache_dir, "--format=cjs", "--log-level=error"]
+        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
+        if return_code != 0:
+            self.error_msg = stdout + stderr
+            self.compile_error = True
+        else:
+            new_source_list = []
+            for source in source_list:
+                new_source_list.append(os.path.join(self.cache_dir, os.path.basename(source)[:-2] + "js"))
+            self.__executable = "node " + " ".join(new_source_list)  # renaming solver to main
+    
+    def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
+        # solver = self.path_list[0]
+        tempdir = self.cache_dir
+        source_list = self.path_list
+        # print("Using the following source files: " + str([os.path.basename(x) for x in source_list]))
+        
+        exec_path = os.path.join(tempdir, ".a.out")
+        cmd = pre_args + source_list + ["-o", exec_path] + pos_args
+        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
+        if return_code != 0:
+            self.error_msg = stdout + stderr
+            self.compile_error = True
+        else:
+            self.__executable = exec_path
+
+    def __prepare_c(self):
+        self.check_tool("gcc")
+        pre = ["gcc", "-Wall"]
+        pos = ["-lm"]
+        self.__prepare_c_cpp(pre, pos)
+
+    def __prepare_cpp(self):
+        self.check_tool("g++")
+        pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror"]
+        pos: List[str] = []
+        self.__prepare_c_cpp(pre, pos)
+
+    @staticmethod
+    def __add_dot_bar(solver: str) -> str:
+        if os.sep not in solver and os.path.isfile("." + os.sep + solver):
+            solver = "." + os.sep + solver
+        return solver
+    
+
+
+class UnitRunner:
+
+    def __init__(self):
+        pass
+
+    # run a unit using a solver and return if the result is correct
+    @staticmethod
+    def run_unit(solver: SolverBuilder, unit: Unit, timeout: Optional[float]=None) -> ExecutionResult:
+        if solver.compile_error:
+            unit.received = solver.error_msg
+            return ExecutionResult.COMPILATION_ERROR
+        cmd = solver.get_executable()
+        if timeout == 0:
+            timeout = None
+        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input, timeout)
+        unit.received = stdout + stderr
+        if return_code != 0:
+            return ExecutionResult.EXECUTION_ERROR
+        if unit.received == unit.expected:
+            return ExecutionResult.SUCCESS
+        return ExecutionResult.WRONG_OUTPUT
+
+
+
+class Writer:
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def to_vpl(unit: Unit):
+        text = "case=" + unit.case + "\n"
+        text += "input=" + unit.input
+        text += "output=\"" + unit.expected + "\"\n"
+        if unit.grade is None:
+            text += "\n"
+        else:
+            text += "grade reduction=" + str(unit.grade).zfill(3) + "%\n"
+        return text
+
+    @staticmethod
+    def to_tio(unit: Unit):
+        text  = ">>>>>>>> INSERT"
+        if unit.case != '':
+            text += " " + unit.case
+        if unit.grade is not None:
+            text += " " + str(unit.grade) + "%"
+        text += '\n' + unit.input
+        text += "======== EXPECT\n"
+        text += unit.expected
+        if unit.expected != '' and unit.expected[-1] != '\n':
+            text += '\n'
+        text += "<<<<<<<< FINISH\n\n"
+        return text
+
+    @staticmethod
+    def save_dir_files(folder: str, pattern_loader: PatternLoader, label: str, unit: Unit) -> None:
+        file_source = pattern_loader.make_file_source(label)
+        with open(os.path.join(folder, file_source.input_file), "w", encoding="utf-8") as f:
+            f.write(unit.input)
+        with open(os.path.join(folder, file_source.output_file), "w", encoding="utf-8") as f:
+            f.write(unit.expected)
+
+    @staticmethod
+    def save_target(target: str, unit_list: List[Unit], quiet: bool) -> bool:
+        def save_dir(_target: str, _unit_list):
+            folder = _target
+            pattern_loader = PatternLoader()
+            number = 0
+            for unit in _unit_list:
+                Writer.save_dir_files(folder, pattern_loader, str(number).zfill(2), unit)
+                number += 1
+
+        def save_file(_target, _unit_list):
+            if _target.endswith(".tio"):
+                _new = "\n".join([Writer.to_tio(unit) for unit in _unit_list])
+            else:
+                _new = "\n".join([Writer.to_vpl(unit) for unit in _unit_list])
+
+            file_exists = os.path.isfile(_target)
+
+            if file_exists:
+                _old = Decoder.load(_target)
+                if _old == _new:
+                    if not quiet:
+                        print("no changes in test file")
+                    return False
+
+            with open(_target, "w", encoding="utf-8") as f:
+                f.write(_new)
+                if not quiet:
+                    print("file " + _target + " wrote")
+                return True
+
+        target_type = Identifier.get_type(target)
+        if target_type == IdentifierType.OBI:
+            save_dir(target, unit_list)
+        elif target_type == IdentifierType.TIO or target_type == IdentifierType.VPL:
+            save_file(target, unit_list)
+        else:
+            print("fail: target " + target + " do not supported for build operation\n")
+            return False
+        return True
+
+
+class TaskData:
+    def __init__(self, key: str = "", progress: int = 0, seft_grade: int = 0):
+        self.key = key
+        self.progress = progress
+        self.seft_grade = seft_grade
+
+    def decode(self, serial: str):
+        key, progress, seft_grade = serial.split(":")
+        self.key = key
+        self.progress = int(progress)
+        self.seft_grade = int(seft_grade)
+
+    def __eq__(self, other):
+        return self.progress == other.progress and self.seft_grade == other.seft_grade
+
+
+    def __str__(self):
+        return f'{self.key}:{self.progress}:{self.seft_grade}'
+    
+
+    
+class DailyLog:
+    def __init__(self, json_file: str):
+        # dict[day, dict[task_key, TaskLog]]
+        self.history: dict[str, dict[str, TaskData]] = {}
+        self.json_file = json_file
+        self.load_json()
+
+        self.resume: dict[str, TaskData] = {}
+        self.generate_resume()
+
+    def load_json(self):
+        history = {}
+        try:
+            if os.path.exists(self.json_file):
+                encoding = Decoder.get_encoding(self.json_file)
+                with open(self.json_file, 'r', encoding=encoding) as f:
+                    history = json.load(f)
+        except:
+            pass
+
+        self.history = {}
+        for day, serial_list in history.items():
+            self.history[day] = {}
+            for serial in serial_list:
+                task_data = TaskData()
+                task_data.decode(serial)
+                self.history[day][task_data.key] = task_data
+
+    def generate_resume(self):
+        self.resume = {}
+        #sort by tasklogrep by day
+        for day in sorted(self.history.keys()):
+            for task_key, task_log in self.history[day].items():
+                self.resume[task_key] = task_log
+
+    # def match_actual_state(self, day: str, actual_state: dict[str, TaskData]):
+    #     if day not in self.history:
+    #         self.history[day] = {}
+    #     changed = False
+    #     for _, task_data in actual_state.items():
+    #         if self.__check_add_task(day, task_data):
+    #                 changed = True
+        
+    #     if changed:
+    #         self.save()
+
+    def __check_add_task(self, day: str, task_data: TaskData) -> bool:
+        data = self.resume.get(task_data.key, None)
+
+        # não tinha, e ainda está zerado, não precisa salvar
+        if data is None and task_data.progress == 0 and task_data.seft_grade == 0:
+            return False
+        
+        # tinha, e está diferente, precisa salvar
+        if data is None or data != task_data:
+            if day not in self.history:
+                self.history[day] = {}
+            self.history[day][task_data.key] = task_data
+            self.resume[task_data.key] = task_data
+            return True
+        return False
+    
+    def log_task(self, day: str, key: str, progress: int = -1, self_grade: int = -1, save_on_change: bool = True):
+        actual_progress = self.resume.get(key, TaskData(key, 0, 0)).progress
+        actual_seft_grade = self.resume.get(key, TaskData(key, 0, 0)).seft_grade
+        if progress == -1:
+            progress = actual_progress
+        if self_grade == -1:
+            self_grade = actual_seft_grade
+        if self.__check_add_task(day, TaskData(key, progress, self_grade)):
+            if save_on_change:
+                self.save()
+            return True
+        return False
+
+    def save(self):
+        history = {}
+        for day, task_data in self.history.items():
+            history[day] = [str(task) for task in task_data.values()]
+        with open(self.json_file, 'w', encoding="utf-8") as f:
+            json.dump(history, f, indent=4)
+
+
+
+class Mark:
+    def __init__(self, marker, indent):
+        self.marker: str = marker
+        self.indent: int = indent
+
+    def __str__(self):
+        return f"{self.marker}:{self.indent}"
+
+class Mode:
+    ADD = "ADD!"
+    COM = "COM!"
+    ACT = "ACT!"
+    DEL = "DEL!"
+    opts = [ADD, COM, ACT, DEL]
+
+def get_comment(filename: str) -> str:
+    com = "//"
+    if filename.endswith(".py"):
+        com = "#"
+    elif filename.endswith(".puml"):
+        com = "'"
+    return com
+
+class Filter:
+    def __init__(self, filename):
+        self.filename = filename
+        self.stack = [Mark(Mode.ADD, 0)]
+        self.com = get_comment(filename)
+
+    def get_marker(self) -> str:
+        return self.stack[-1].marker
+
+    def get_indent(self) -> int:
+        return self.stack[-1].indent
+
+    def outside_scope(self, line):
+        stripped = line.strip()
+        left_spaces = len(line) - len(line.lstrip())
+        return stripped != "" and left_spaces < self.get_indent()
+
+    def has_single_mode_cmd(self, line: str) -> bool:
+        for marker in Mode.opts:
+            if line.strip() == self.com + marker:
+                return True
+        return False
+
+    def change_mode(self, line: str):
+        with_left = line.rstrip()
+        marker = with_left.lstrip()[len(self.com):]
+        len_spaces = len(with_left) - len(self.com + marker)
+        while len(self.stack) > 0 and self.stack[-1].indent >= len_spaces:
+            self.stack.pop()
+        self.stack.append(Mark(marker, len_spaces))
+
+    def search_temp_mode(self, line: str) -> Tuple[str, str]:
+        for marker in Mode.opts:
+            if line.endswith(self.com + marker):
+                return marker, line[:-len(self.com + marker)]
+        return "---", line
+
+    def __process(self, content: str) -> str:
+        lines = content.split("\n")
+        output = []
+        for line in lines:
+            while self.outside_scope(line):
+                self.stack.pop()
+            if self.has_single_mode_cmd(line):
+                self.change_mode(line)
+                continue
+            pre_marker = self.get_marker()
+            pos_marker, line = self.search_temp_mode(line)
+            marker = pos_marker if pos_marker != "---" else pre_marker
+
+            if marker == Mode.DEL:
+                continue
+            elif marker == Mode.ADD:
+                output.append(line)
+            elif marker == Mode.ACT:
+                prefix = " " * self.get_indent() + self.com + " "
+                if not line.startswith(prefix):
+                    prefix = prefix[:-1]
+                line = line.replace(prefix, " " * self.get_indent(), 1)
+                output.append(line)
+            elif marker == Mode.COM:
+                line = " " * self.get_indent() + self.com + " " + line[self.get_indent():]
+                output.append(line)
+
+        return "\n".join(output)
+    
+    def process(self, content: str) -> str:
+        return self.__process(content)
+
+def clean_com(target: str, content: str) -> str:
+    com = get_comment(target)
+    lines = content.split("\n")
+    output = [line for line in lines if not line.lstrip().startswith(com)]
+    return "\n".join(output)
+
+class DeepFilter:
+    extensions = [".md", ".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs", ".txt", ".go", ".cases", ".tio", ".vpl"]
+
+    def __init__(self):
+        self.cheat_mode = False
+        self.quiet_mode = False
+        self.indent = ""
+    
+    def print(self, *args, **kwargs):
+        if not self.quiet_mode:
+            print(self.indent, end="")
+            print(*args, **kwargs)
+
+    def set_indent(self, prefix: int):
+        self.indent = prefix * " "
+        return self
+
+    def set_quiet(self, value):
+        self.quiet_mode = (value == True)
+        return self
+    
+    def set_cheat(self, value):
+        self.cheat_mode = (value == True)
+        return self
+
+    def copy(self, source, destiny, deep: int):
+        if deep == 0:
+            return
+        if os.path.isdir(source):
+            chain = source.split(os.sep)
+            if len(chain) > 1 and chain[-1].startswith("."):
+                return
+            if not os.path.isdir(destiny):
+                os.makedirs(destiny)
+            for file in sorted(os.listdir(source)):
+                self.copy(os.path.join(source, file), os.path.join(destiny, file), deep - 1)
+        else:
+            filename = os.path.basename(source)
+
+            if not any([filename.endswith(ext) for ext in self.extensions]):
+                return
+            content = Decoder.load(source)
+
+            processed = Filter(filename).process(content)
+
+            if self.cheat_mode:
+                if processed != content:
+                    cleaned = clean_com(source, content)
+                    Decoder.save(destiny, cleaned)
+            elif processed != "":
+                Decoder.save(destiny, processed)
+            
+
+            line = ""
+            if self.cheat_mode:
+                if processed != content:
+                    line += "(cleaned ): "
+                else:
+                    line += "(disabled): "
+            else:
+                if processed == "":
+                    line += "(disabled): "
+                elif processed != content:
+                    line += "(filtered): "
+                else:
+                    line += "(        ): "
+            line += destiny
+
+            self.print(line)
+
+class CodeFilter:
+    @staticmethod
+    def open_file(path): 
+        if os.path.isfile(path):
+            file_content = Decoder.load(path)
+            return True, file_content
+        print("Warning: File", path, "not found")
+        return False, "" 
+
+    @staticmethod
+    def cf_recursive(target_dir: str, output_dir: str, force: bool, cheat: bool = False, quiet: bool = False, indent: int = 0):
+        if output_dir is None:
+                print("Error: output is required in recursive mode")
+                exit()
+        if not os.path.isdir(target_dir):
+            print("Error: target must be a folder in recursive mode")
+            exit()
+        if os.path.exists(output_dir):
+            if not force:
+                print("Error: output folder already exists")
+                exit()
+            else:
+                # recursive delete all folder content without deleting the folder itself
+                for file in os.listdir(output_dir):
+                    path = os.path.join(output_dir, file)
+                    if os.path.isdir(path):
+                        shutil.rmtree(path)
+                    else:
+                        os.remove(path)
+
+        deep_filter = DeepFilter().set_cheat(cheat).set_quiet(quiet).set_indent(indent)
+        deep_filter.copy(target_dir, output_dir, 10)
+
+    @staticmethod
+    def cf_single_file(target, output, update, cheat):
+        file = target
+        success, content = CodeFilter.open_file(file)
+        if success:
+            if cheat:
+                content = clean_com(file, content)
+            else:
+                content = Filter(file).process(content)
+
+            if output:
+                if os.path.isfile(output):
+                    old = Decoder.load(output)
+                    if old != content:
+                        Decoder.save(output, content)
+                else:
+                    Decoder.save(output, content)
+            elif update:
+                Decoder.save(file, content)
+            else:
+                print(content)
+
+def cfmain():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('target', type=str, help='file or folder to process')
+    parser.add_argument('-u', '--update', action="store_true", help='update source file')
+    parser.add_argument('-c', '--cheat', action="store_true", help='recursive cheat mode cleaning comments on students files')
+    parser.add_argument('-o', '--output', type=str, help='output target')
+    parser.add_argument("-r", "--recursive", action="store_true", help="recursive mode")
+    parser.add_argument("-f", "--force", action="store_true", help="force mode")
+    parser.add_argument("-q", "--quiet", action="store_true", help="quiet mode")
+    parser.add_argument("-i", "--indent", type=int, default=0, help="indent using spaces")
+
+    args = parser.parse_args()
+
+    if args.cheat:
+        args.recursive = True
+
+    if args.recursive:
+        CodeFilter.cf_recursive(args.target, args.output, force=args.force, cheat=args.cheat, quiet=args.quiet, indent=args.indent)
+        exit()
+
+    CodeFilter.cf_single_file(args.target, args.output, args.update, args.cheat)
+
+
+
+
+class RemoteLink:
+    def __init__(self):
+        self.user = ""
+        self.repo = ""
+        self.branch = ""
+        self.folder = ""
+        self.file = ""
+
+    def identify_from_url(self, url: str):
+        if url.startswith("https://raw.githubusercontent.com"):
+            url = url.replace("https://raw.githubusercontent.com/", "")
+            elements = url.split("/")
+            self.user = elements[0]
+            self.repo = elements[1]
+            if elements[2] != "refs":
+                raise ValueError("Invalid URL")
+            if elements[3] != "heads":
+                raise ValueError("Invalid URL")
+            self.branch = elements[4]
+            self.folder = "/".join(elements[5:-1])
+            self.file = elements[-1]
+        elif url.endswith(".md"):
+            url = url.replace("https://github.com/", "")
+            elements = url.split("/")
+            self.user = elements[0]
+            self.repo = elements[1]
+            if elements[2] != "blob":
+                raise ValueError("Invalid URL")
+            self.branch = elements[3]
+            self.folder = "/".join(elements[4:-1])
+            self.file = elements[-1]
+        else:
+            url = url.replace("https://github.com/", "")
+            elements = url.split("/")
+            self.user = elements[0]
+            self.repo = elements[1]
+            if elements[2] != "tree":
+                raise ValueError("Invalid URL")
+            self.branch = elements[3]
+            self.folder = "/".join(elements[4:])
+        return self
+
+class RemoteCfg:
+    def __init__(self, target: str):
+        self.target = target
+        self.remote: RemoteLink = RemoteLink()
+        self.cfg_path: str | None = None
+        self.__load_cfg_path(target)
+        self.__parse_cfg()
+
+    def cfg_exists(self):
+        return self.cfg_path is not None
+
+    def get_cfg_path(self):
+        if self.cfg_path is None:
+            raise Exception("cfg_path not set")
+        return self.cfg_path
+
+    def calc_link_for_local_file(self):
+        base_cfg_file = os.path.dirname(os.path.abspath(self.get_cfg_path()))
+        base_source_file = os.path.dirname(os.path.abspath(self.target))
+        if not base_source_file.startswith(base_cfg_file):
+            raise Exception("File not match with remote cfg")
+        folder = os.path.relpath(base_source_file, base_cfg_file)
+        self.remote.folder = folder
+        return self.remote
+
+    def __parse_cfg(self):
+        if self.cfg_path is None:
+            return
+        config = configparser.ConfigParser()
+        config.read(self.get_cfg_path())
+
+        self.remote.user = config["DEFAULT"]["user"]
+        self.remote.repo = config["DEFAULT"]["rep"]
+        self.remote.branch = config["DEFAULT"]["branch"]
+
+    def __load_cfg_path(self, target: str):
+        # look for the remote.cfg file in the current folder
+        # if not found, look for it in the parent folder
+        # if not found, look for it in the parent's parent folder ...
+
+        path = os.path.dirname(os.path.abspath(target))
+        while path != "/":
+            cfg_path = os.path.join(path, "remote.cfg")
+            if os.path.isfile(cfg_path):
+                self.cfg_path = cfg_path
+                break
+            path = os.path.dirname(path)
+
+
+class Absolute:
+
+    # processa o conteúdo trocando os links locais para links absolutos utilizando a url remota
+    @staticmethod
+    def __replace_remote(content: str, remote_raw: str, remote_view: str, remote_folder: str) -> str:
+        if content is None or content == "":
+            return ""
+        if not remote_raw.endswith("/"):
+            remote_raw += "/"
+        if not remote_view.endswith("/"):
+            remote_view += "/"
+        if not remote_folder.endswith("/"):
+            remote_folder += "/"
+
+        #trocando todas as imagens com link local
+        regex = r"!\[(.*?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
+        subst = r"![\1](" + remote_raw + r"\3)"
+        result = re.sub(regex, subst, content, count=0, flags=0)
+
+        regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?/)\)"
+        subst = r"[\1](" + remote_folder + r"\3)"
+        result = re.sub(regex, subst, result, 0)
+
+        #trocando todos os links locais cujo conteudo nao seja vazio
+        regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
+        subst = r"[\1](" + remote_view + r"\3)"
+        result = re.sub(regex, subst, result, 0)
+
+        return result
+
+    @staticmethod
+    def relative_to_absolute(content: str, rl: RemoteLink):
+        folder = rl.folder
+        user_repo = "/".join([rl.user, rl.repo])
+        remote_raw    = "/".join(["https://raw.githubusercontent.com", user_repo, rl.branch , folder])
+        remote_view    = "/".join(["https://github.com", user_repo, "blob", rl.branch, folder])
+        remote_folder = "/".join(["https://github.com", user_repo, "tree", rl.branch, folder])
+        return Absolute.__replace_remote(content, remote_raw, remote_view, remote_folder)
+
+
+    @staticmethod
+    def convert_or_copy_or_print(source: str, target: str | None):
+        content = Decoder.load(source)
+        cfg = RemoteCfg(source)
+        if cfg.cfg_exists():
+            content = Absolute.relative_to_absolute(content, cfg.calc_link_for_local_file())
+        if target is not None:
+            Decoder.save(target, content)
+        else:
+            print(content)
+        
+
+def main_remote():
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument('target', metavar='T', type=str, help='folders')
+    # arg_parser.add_argument("--remote", "-r", action="store_true", help="convert local file to remote file")
+    arg_parser.add_argument("--output", "-o", type=str, help="output file")
+    args = arg_parser.parse_args()
+
+    Absolute.convert_or_copy_or_print(args.target, args.output)
+
+
+
+
+
+class RemoteUrl:
+    def __init__(self, url: str):
+        self.raw_link: str | None = ""
+        self.remote: RemoteLink | None = None
+
+        if not url.startswith("https://"):
+            raise ValueError("Invalid URL")
+
+        if url.startswith("https://gist.githubusercontent.com"):
+            self.raw_link = url
+        else:
+            self.remote = RemoteLink().identify_from_url(url)
+        self.file = ""
+
+    def get_raw_url(self):
+        if self.raw_link:
+            return self.raw_link
+        if self.remote is None:
+            return ""
+        return "https://raw.githubusercontent.com/" + self.remote.user + "/" + self.remote.repo + "/" + self.remote.branch + "/" + self.remote.folder + "/" + self.remote.file
+
+    def download_absolute_to(self, filename: str):
+        [tempfile, __content] = urllib.request.urlretrieve(self.get_raw_url(), filename)
+        content = ""
+        content = Decoder.load(tempfile)
+        if self.remote is not None:
+            content = Absolute.relative_to_absolute(content, self.remote)
+        Decoder.save(filename, content)
+        return
+
+    def __str__(self):
+        return self.get_raw_url()
+
+
+languages_avaliable = ["c", "cpp", "py", "ts", "js", "java", "go"]
+
+class Repository:
+    CFG_FILE = "repository.json"
+    LOG_FILE = "history.csv"
+    DAILY_FILE = "daily.json"
+    INDEX_FILE = "Readme.md"
+    REMOTE_TASK_FOLDER = "remote"
+    CONFIG_FOLDER = ".tko"
+
+    def __init__(self, folder: str):
+        self.folder: str = folder
+        self.data: Dict[str, Any] = {}
+        self.game = Game()
+
+    @staticmethod
+    def rec_search_for_repo(folder: str) -> str:
+        if os.path.exists(os.path.join(folder, Repository.CONFIG_FOLDER, Repository.CFG_FILE)):
+            return folder
+        if folder == "/":
+            return ""
+        return Repository.rec_search_for_repo(os.path.abspath(os.path.join(folder, "..")))
+
+    def get_remote_task_folder(self, label: str) -> str:
+        return os.path.abspath(os.path.join(self.folder, Repository.REMOTE_TASK_FOLDER, label))
+
+    def is_local_dir(self, path):
+        rep_dir = self.get_rep_dir()
+        path = os.path.abspath(path)
+        return os.path.commonpath([rep_dir, path]) == rep_dir
+
+    @staticmethod
+    def is_web_link(link: str) -> bool:
+        return link.startswith("http:") or link.startswith("https:")
+
+    def set_task_folder(self, task: Task):
+        if not task.is_downloadable():
+            if not self.is_web_link(task.link):
+                task_dir = os.path.abspath(os.path.dirname(task.link))
+                task.set_folder(task_dir)
+        else: # downloadable task
+            task_dir = self.get_remote_task_folder(task.key)
+            task.set_folder(task_dir)
+
+    def load_game(self):
+        self.game.parse_file(self.load_index_or_cache())
+        for task in self.game.tasks.values():
+            self.set_task_folder(task)
+        return self
+
+    def get_repository_file(self) -> str:
+        return os.path.abspath(os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.CFG_FILE))
+    
+    def get_history_file(self) -> str:
+        return os.path.abspath(os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.LOG_FILE))
+    
+    def get_daily_file(self) -> str:
+        return os.path.abspath(os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.DAILY_FILE))
+    
+    def get_default_readme_path(self) -> str:
+        return os.path.abspath(os.path.join(self.folder, Repository.INDEX_FILE))
+
+    def get_rep_dir(self) -> str:
+        return os.path.abspath(self.folder)
+
+    def load_index_or_cache(self) -> str:
+        file: str = self.get_local_file()
+        remote: str = self.get_remote_source()
+        # arquivo existe e é local
+        if file != "" and os.path.exists(file) and remote == "":
+            return file
+        
+        if not remote.startswith("http:)") and not remote.startswith("https:"):
+            return remote
+
+        # arquivo não existe e é remoto
+        if remote != "" and (file == "" or not os.path.exists(file)):
+            cache_file = self.get_default_readme_path()
+            os.makedirs(self.folder, exist_ok=True)
+            ru = RemoteUrl(remote)
+            try:
+                ru.download_absolute_to(cache_file)
+            except urllib.error.URLError:
+                print("Não foi possível baixar o arquivo do repositório")
+                if os.path.exists(cache_file):
+                    print("Usando arquivo do cache")
+                else:
+                    raise Warning("fail: Arquivo do cache não encontrado")
+            return cache_file
+
+        raise Warning("fail: arquivo não encontrado ou configurações inválidas para o repositório")
+
+    __version = "version"
+    __remote_url = "remote"  #remote url
+    __local_file = "local"  #local file
+    __expanded = "expanded"
+    __new_items = "new_items"
+    __tasks = "tasks"
+    __flags = "flags"
+    __lang = "lang"
+    __selected = "index"
+
+    defaults = {
+        __version: "0.0.0",
+        __remote_url: "",
+        __local_file: "",
+        __expanded: [],
+        __tasks: {},
+        __flags: {},
+        __new_items: [],
+        __lang: "",
+        __selected: ""
+    }
+
+    def get_version(self) -> str:
+        return self.__get(Repository.__version)
+    
+    def set_version(self, value: str):
+        self.__set(Repository.__version, value)
+        return self
+
+    def get_local_file(self) -> str:
+        return self.__get(Repository.__local_file)
+    
+    def set_local_file(self, value: str):
+        self.__set(Repository.__local_file, value)
+        return self
+
+    def get_remote_source(self) -> str:
+        return self.__get(Repository.__remote_url)
+    
+    def set_remote_source(self, value: str):
+        self.__set(Repository.__remote_url, value)
+        return self
+
+    def get_selected(self) -> str:
+        return self.__get(Repository.__selected)
+
+    def get_expanded(self) -> List[str]:
+        return self.__get(Repository.__expanded)
+
+    def get_new_items(self) -> List[str]:
+        return self.__get(Repository.__new_items)
+    
+    def get_tasks(self) -> Dict[str, Any]:
+        return self.__get(Repository.__tasks)
+    
+    def get_flags(self) -> Dict[str, Any]:
+        return self.__get(Repository.__flags)
+    
+    def get_lang(self) -> str:
+        return self.__get(Repository.__lang)
+
+    def set_expanded(self, value: List[str]):
+        return self.__set(Repository.__expanded, value)
+    
+    def set_new_items(self, value: List[str]):
+        return self.__set(Repository.__new_items, value)
+    
+    def set_tasks(self, value: Dict[str, str]):
+        self.__set(Repository.__tasks, value)
+        return self
+    
+    def set_flags(self, value: Dict[str, Any]):
+        self.__set(Repository.__flags, value)
+        return self
+    
+    def set_lang(self, value: str):
+        self.__set(Repository.__lang, value)
+        return self
+    
+    def set_selected(self, value: str):
+        self.__set(Repository.__selected, value)
+        return self
+
+    def __get(self, key: str) -> Any:
+        if key not in self.defaults:
+            raise ValueError(f"Key {key} not found in RepSettings")
+        value = self.data.get(key, Repository.defaults[key])
+        if type(value) != type(Repository.defaults[key]):
+            return Repository.defaults[key]
+        return value
+
+    def __set(self, key: str, value: Any):
+        self.data[key] = value
+        return self
+
+    def create_empty_config_file(self, point_to_local_readme: bool = False):
+        if point_to_local_readme:
+            self.set_local_file(self.get_default_readme_path())
+        self.save_data_to_config_file()
+        return self
+
+    def has_local_config_file(self) -> bool:
+        return os.path.exists(self.get_repository_file())
+
+    def load_data_from_config_file(self):
+        encoding = Decoder.get_encoding(self.get_repository_file())
+        with open(self.get_repository_file(), encoding=encoding) as f:
+            self.data = json.load(f)
+        return self
+
+    def save_data_to_config_file(self):
+        json_file = self.get_repository_file()
+        if not os.path.exists(os.path.dirname(json_file)):
+            os.makedirs(os.path.dirname(json_file))
+        # filter keys that are not in defaults
+        for key in list(self.data.keys()):
+            if key not in Repository.defaults:
+                del self.data[key]
+
+        for key in Repository.defaults:
+            if key not in self.data:
+                self.data[key] = Repository.defaults[key]
+
+        with open(json_file, "w", encoding="utf-8") as f:
+            f.write(json.dumps(self.data, indent=4))
+        return self
+
+    def __str__(self) -> str:
+        return ( f"data: {self.data}\n" )
+
+
+
+def singleton(class_):
+    instances = {}
+    def getinstance(*args, **kwargs):
+        if class_ not in instances:
+            instances[class_] = class_(*args, **kwargs)
+        return instances[class_]
+    return getinstance
+
+@singleton
+class Settings:
+    CFG_FILE = "settings.json"
+
+
+    def __init__(self):
+        self.__remote = "remote"
+        self.__folder = "folders"
+        self.__appcfg = "appcfg"
+        self.__colors = "colors"
+
+        self.dict_alias_remote: Dict[str, str] = {}
+        self.dict_alias_folder: Dict[str, str] = {}
+        self.app = AppSettings()
+        self.colors = Colors()
+
+        self.settings_file = ""
+
+    def set_settings_file(self, path: str):
+        self.settings_file = path
+        return self
+
+    def get_settings_file(self) -> str:
+        if self.settings_file is None or self.settings_file == "":
+            self.package_name = "tko"
+            default_filename = self.CFG_FILE
+            self.settings_file = os.path.abspath(default_filename)  # backup for replit, dont remove
+        
+        if not os.path.exists(self.settings_file):
+            os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
+        return self.settings_file
+
+    def reset(self):
+        self.dict_alias_remote = {}
+        self.dict_alias_remote["fup"] = "https://github.com/qxcodefup/arcade/blob/master/Readme.md"
+        self.dict_alias_remote["ed"] = "https://github.com/qxcodeed/arcade/blob/master/Readme.md"
+        self.dict_alias_remote["poo"] = "https://github.com/qxcodepoo/arcade/blob/master/Readme.md"
+        self.dict_alias_folder = {}
+        self.app = AppSettings()
+        self.colors = Colors()
+        return self
+
+    def set_alias_remote(self, alias: str, url_or_path: str):
+        if not(url_or_path.startswith("http:") or url_or_path.startswith("https:")):
+            url_or_path = os.path.abspath(url_or_path)
+        self.dict_alias_remote[alias] = url_or_path
+        return self
+
+    def has_alias_remote(self, alias: str) -> bool:
+        return alias in self.dict_alias_remote
+
+    def get_alias_remote(self, alias: str) -> str:
+        if alias in self.dict_alias_remote:
+            return self.dict_alias_remote[alias]
+        raise Warning(f"Repositório remoto {alias} não encontrado")
+
+    def set_alias_folder(self, alias: str, folder: str):
+        self.dict_alias_folder[alias] = os.path.abspath(folder)
+        return self
+    
+    def has_alias_folder(self, course: str) -> bool:
+        return course in self.dict_alias_folder
+
+    def del_alias_folder(self, course: str):
+        if course in self.dict_alias_folder:
+            del self.dict_alias_folder[course]
+        return self
+
+    def get_alias_folder(self, course: str) -> str:
+        if course in self.dict_alias_folder:
+            folder = self.dict_alias_folder[course]
+            if not isinstance(folder, str):
+                self.reset()
+                self.save_settings()
+                return self.get_alias_folder(course)
+            else:
+                return folder
+        raise Warning(f"Não registrada pasta local para {course}")
+    
+    def load_settings(self):
+        try:
+            settings_file = self.get_settings_file() # assure right loading if value == ""
+            encoding = Decoder.get_encoding(settings_file)
+            with open(settings_file, "r", encoding=encoding) as f:
+                data = json.load(f)
+                self.dict_alias_remote = data.get(self.__remote, {})
+                self.dict_alias_folder = data.get(self.__folder, {})
+                self.app = AppSettings().from_dict(data.get(self.__appcfg, {}))
+                self.colors = Colors().from_dict(data.get(self.__colors, {}))
+        except (FileNotFoundError, json.decoder.JSONDecodeError) as _e:
+            self.reset()
+            self.save_settings()
+        return self
+
+    # def check_rootdir(self):
+    #     if self.app.get_rootdir() != "":
+    #         return self
+    #     print(Text().add("Pasta padrão para download de arquivos ").addf("r", "precisa").add(" ser definida."))
+    #     here_cwd = os.getcwd()
+    #     qxcode = os.path.join(os.path.expanduser("~"), "qxcode")
+
+    #     while True:
+    #         print(Text().addf("r", "1").add(" - ").add(here_cwd))
+    #         print(Text().addf("r", "2").add(" - ").add(qxcode))
+    #         print(Text().addf("r", "3").add(" - ").add("Outra pasta"))
+    #         print(Text().add("Default ").addf("r", "1").add(": "), end="")
+    #         op = input()
+    #         if op == "":
+    #             op = "1"
+    #         if op == "1":
+    #             home_qxcode = here_cwd
+    #             break
+    #         if op == "2":
+    #             home_qxcode = qxcode
+    #             break
+    #         if op == "3":
+    #             print(Text().addf("y", "Navegue até o diretório desejado e execute o tko novamente."))
+    #             exit(1)
+
+    #     if not os.path.exists(home_qxcode):
+    #         os.makedirs(home_qxcode)
+    #     print("Pasta padrão para download de arquivos foi definida em: " + home_qxcode)
+    #     print(RawTerminal.centralize("", "-"))
+    #     self.app._rootdir = home_qxcode
+    #     self.save_settings();
+    #     return self
+    
+    # def check_rep_alias(self, rep_alias: str):
+    #     if rep_alias == "__ask":
+    #         last = self.app.get_last_rep()
+    #         if last != "" and last in self.remote:
+    #             rep_alias = last
+    #         else:
+    #             print("Escolha um dos repositórios para abrir:")
+    #             options: Dict[int, str] = {}
+    #             for i, alias in enumerate(self.remote, start=1):
+    #                 print(Text().addf("r", str(i)).add(f" - {alias}"))
+    #                 options[i] = alias
+    #             while True:
+    #                 try:
+    #                     print("Digite o número do repositório desejado: ", end="")
+    #                     index = int(input())
+    #                     if index in options:
+    #                         rep_alias = options[index]
+    #                         self.app.set_last_rep(rep_alias)
+    #                         self.save_settings()
+    #                         break
+    #                 except ValueError:
+    #                     pass
+    #                 print("Digite um número válido")
+    #     return rep_alias
+    
+    def save_settings(self):
+        file = self.get_settings_file()
+        value = {
+            self.__remote: self.dict_alias_remote,
+            self.__folder: self.dict_alias_folder,
+            self.__appcfg: self.app.to_dict(),
+            self.__colors: self.colors.to_dict()
+        }
+        with open(file, "w", encoding="utf-8") as f:
+            json.dump(value, f, indent=4)
+        return self
+
+    def __str__(self):
+        output = []
+        output.append(str(Text("{g}", "Arquivo de configuração:")))
+        output.append("- " + self.get_settings_file())
+        output.append("")
+        output.append(str(Text("{g}", "Repositórios remotos cadastrados:")))
+        max_alias = max([len(key) for key in self.dict_alias_remote])
+        for key in self.dict_alias_remote:
+            output.append("- {} : {}".format(key.ljust(max_alias), self.dict_alias_remote[key]))
+        output.append("")
+        output.append(str(Text("{g}", "Repositórios locais salvos:")))
+        max_alias = max([len(key) for key in self.dict_alias_folder])
+        for key in self.dict_alias_folder:
+            output.append("- {} : {}".format(key.ljust(max_alias), self.dict_alias_folder[key]))
+
+        app_str = str(self.app)
+        return "\n".join(output) + "\n\n" + app_str
+
+        # maxlen = max([len(key) for key in self.remote])
+        # for key in self.remote:
+        #     prefix = f"- {key.ljust(maxlen)}"
+        #     if self.remote[key].file and self.remote[key].url:
+        #         output.append(f"{prefix} : dual   : {self.remote[key].url} ; {self.remote[key].file}")
+        #     elif self.remote[key].url:
+        #         output.append(f"{prefix} : remote : {self.remote[key].url}")
+        #     else:
+        #         output.append(f"{prefix} : local  : {self.remote[key].file}")
+        # return "\n".join(output)
+
+
+
+class LanguageSetter:
+    def __init__(self, rep: Repository, flagsman: FlagsMan, fman: FloatingManager):
+        self.flagsman = flagsman
+        self.fman = fman
+        self.rep = rep
+
+
+    def set_language(self):
+        options: List[FloatingInputData] = []
+        for lang in languages_avaliable:
+            options.append(FloatingInputData(TextFunctor(lang), SetLangFunctor(self.rep, self.fman, lang)))
+
+        self.fman.add_input(
+            FloatingInput("^")
+            .set_header(" Escolha a extensão default para os rascunhos ")
+            .set_options(options)
+            .set_default_index(languages_avaliable.index(self.rep.get_lang()))
+            .set_footer(" Pressione Enter para confirmar ")
+        )
+
+class TextFunctor:
+    def __init__(self, data: str):
+        self.value = data
+    
+    def __call__(self):
+        return Text(self.value)
+
+class SetLangFunctor:
+    def __init__(self, rep: Repository, fman: FloatingManager, lang: str):
+        self.rep = rep
+        self.fman = fman
+        self.value = lang
+
+    def __call__(self):
+        self.rep.set_lang(self.value.strip())
+        self.rep.save_data_to_config_file()
+        self.fman.add_input(
+            Floating()
+            .put_text("")
+            .put_text("Linguagem alterada para " + self.value)
+            .put_text("")
+            .warning()
+        )
+
+
+
+class ConfigParams:
+    def __init__(self):
+        self.side: bool = False
+        self.down: bool = False
+        self.images: str | None = None
+        self.editor: str | None = None
+        self.borders: str | None = None
+        self.timeout: int | None = None
+
+    def __str__(self):
+        return f"side: {self.side}, down: {self.down}, timeout: {self.timeout}, editor: {self.editor}, borders: {self.borders}, images: {self.images}"
+
+class CmdConfig:
+        
+    @staticmethod
+    def execute(settings: Settings, param: ConfigParams):
+        action = False
+
+        if param.borders is not None:
+            action = True
+            settings.app.set_borders(param.borders == "1")
+            print("Borders now is: " + str("True" if param.borders == "1" else "False"))
+        if param.images is not None:
+            action = True
+            settings.app.set_images(param.images == "1")
+            print("Images now is: " + str("True" if param.images == "1" else "False"))
+            
+        if param.side:
+            action = True
+            settings.app.set_diff_mode(DiffMode.SIDE)
+            print("Diff mode now is: SIDE_BY_SIDE")
+        if param.down:
+            action = True
+            settings.app.set_diff_mode(DiffMode.DOWN)
+            print("Diff mode now is: UP_DOWN")
+        # if param.lang:
+        #     action = True
+        #     settings.app._lang_default = param.lang
+        #     print("Default language extension now is:", param.lang)
+        # if param.ask:
+        #     action = True
+        #     settings.app._lang_default = ""
+        #     print("Language extension will be asked always.")
+        
+        if param.editor:
+            action = True
+            settings.app._editor = param.editor
+            print(f"Novo comando para abrir arquivos de código: {param.editor}")
+
+        if param.timeout is not None:
+            action = True
+            settings.app.set_timeout(param.timeout)
+            print(f"Novo timeout: {param.timeout}")
+
+        if not action:
+            action = True
+            print(str(settings))
+
+        settings.save_settings()
 
 
 
@@ -6190,90 +6260,6 @@ class Wdir:
 
 
 
-
-
-class Writer:
-
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def to_vpl(unit: Unit):
-        text = "case=" + unit.case + "\n"
-        text += "input=" + unit.input
-        text += "output=\"" + unit.expected + "\"\n"
-        if unit.grade is None:
-            text += "\n"
-        else:
-            text += "grade reduction=" + str(unit.grade).zfill(3) + "%\n"
-        return text
-
-    @staticmethod
-    def to_tio(unit: Unit):
-        text  = ">>>>>>>> INSERT"
-        if unit.case != '':
-            text += " " + unit.case
-        if unit.grade is not None:
-            text += " " + str(unit.grade) + "%"
-        text += '\n' + unit.input
-        text += "======== EXPECT\n"
-        text += unit.expected
-        if unit.expected != '' and unit.expected[-1] != '\n':
-            text += '\n'
-        text += "<<<<<<<< FINISH\n\n"
-        return text
-
-    @staticmethod
-    def save_dir_files(folder: str, pattern_loader: PatternLoader, label: str, unit: Unit) -> None:
-        file_source = pattern_loader.make_file_source(label)
-        with open(os.path.join(folder, file_source.input_file), "w") as f:
-            f.write(unit.input)
-        with open(os.path.join(folder, file_source.output_file), "w") as f:
-            f.write(unit.expected)
-
-    @staticmethod
-    def save_target(target: str, unit_list: List[Unit], quiet: bool) -> bool:
-        def save_dir(_target: str, _unit_list):
-            folder = _target
-            pattern_loader = PatternLoader()
-            number = 0
-            for unit in _unit_list:
-                Writer.save_dir_files(folder, pattern_loader, str(number).zfill(2), unit)
-                number += 1
-
-        def save_file(_target, _unit_list):
-            if _target.endswith(".tio"):
-                _new = "\n".join([Writer.to_tio(unit) for unit in _unit_list])
-            else:
-                _new = "\n".join([Writer.to_vpl(unit) for unit in _unit_list])
-
-            file_exists = os.path.isfile(_target)
-
-            if file_exists:
-                _old = open(_target).read()
-                if _old == _new:
-                    if not quiet:
-                        print("no changes in test file")
-                    return False
-
-            with open(_target, "w") as f:
-                f.write(_new)
-                if not quiet:
-                    print("file " + _target + " wrote")
-                return True
-
-        target_type = Identifier.get_type(target)
-        if target_type == IdentifierType.OBI:
-            save_dir(target, unit_list)
-        elif target_type == IdentifierType.TIO or target_type == IdentifierType.VPL:
-            save_file(target, unit_list)
-        else:
-            print("fail: target " + target + " do not supported for build operation\n")
-            return False
-        return True
-
-
-
 class CmdBuild:
 
     def __init__(self, target_out: str, source_list: List[str], param: Param.Manip):
@@ -6386,7 +6372,7 @@ class LoggerFS(LoggerStore):
         action_data.hash = ActionData.generate_hash(action_data, last_hash)
         if not os.path.exists(os.path.dirname(log_file)):
             os.makedirs(os.path.dirname(log_file))
-        with open(log_file, 'a', newline='') as file:
+        with open(log_file, 'a', encoding="utf-8", newline='') as file:
             writer = csv.writer(file)
             ad = action_data
             writer.writerow([ad.hash, ad.timestamp, ad.action_value, ad.task_key, ad.payload])
@@ -6398,7 +6384,8 @@ class LoggerFS(LoggerStore):
             return []
         if not os.path.exists(log_file):
             return []
-        with open(log_file, 'r') as file:
+        encoding = Decoder.get_encoding(log_file)
+        with open(log_file, 'r', encoding=encoding) as file:
             reader = csv.reader(file)
             rows = list(reader)
             return [self.row_to_action_data(row) for row in rows]
@@ -7623,6 +7610,111 @@ class Gui:
 
 
 
+class CmdRep:
+    @staticmethod
+    def check(args):
+        folder = Settings().get_alias_folder(args.alias)
+        rep = Repository(folder).load_data_from_config_file().load_game()
+        logger = Logger.get_instance()
+        logger.set_history_file(rep.get_history_file())
+
+        output = logger.check_log_file_integrity()
+        if len(output) == 0:
+            print(f"Arquivo de log do repositório {rep} está íntegro.")
+        else:
+            print(f"Arquivo de log do repositório {rep} está corrompido.")
+            print("Erros:")
+            for error in output:
+                print(f"- {error}")
+
+    @staticmethod
+    def upgrade(args):
+        folder = args.folder
+        if os.path.exists(os.path.join(folder, "rep.json")):
+            os.rename(os.path.join(folder, "rep.json"), os.path.join(folder, "repository.json"))
+        remote_folder = os.path.join(folder, "remote")
+        os.makedirs(remote_folder, exist_ok=True)
+        for entry in os.listdir(folder):
+            path = os.path.join(folder, entry)
+            if entry == "remote":
+                continue
+            if os.path.isdir(path):
+                os.rename(path, os.path.join(remote_folder, entry))
+        print(f"Repositório {folder} foi atualizado.")
+
+    @staticmethod
+    def list(_args):
+        settings = Settings()
+        print(f"SettingsFile\n- {settings.settings_file}")
+        print(str(settings))
+
+    @staticmethod
+    def add(args):
+        settings = Settings().set_alias_remote(args.alias, args.value)
+        settings.save_settings()
+
+    @staticmethod
+    def rm(args):
+        sp = Settings()
+        if args.alias in sp.dict_alias_remote:
+            sp.dict_alias_remote.pop(args.alias)
+            sp.save_settings()
+        else:
+            print("Repository not found.")
+
+    @staticmethod
+    def reset(_):
+        sp = Settings().reset()
+        print(sp.settings_file)
+        sp.save_settings()
+
+    @staticmethod
+    def graph(args):
+        settings = Settings()
+        folder:str = settings.get_alias_folder(args.alias)
+        rep = Repository(folder).load_data_from_config_file().load_game()
+        rep.game.check_cycle()
+        Graph(rep.game).generate()
+
+
+class Free:
+    @staticmethod
+    def free_run(solver: SolverBuilder, show_compilling:bool=True, to_clear: bool=True, wait_input:bool=True) -> bool:
+
+        if to_clear:
+            Runner.clear_screen()
+        if show_compilling:
+            image = random.choice(list(compilling.keys()))
+            for line in compilling[image].split("\n"):
+                print(Text().addf("y", line).center(RawTerminal.get_terminal_size(), Token(" ")))
+
+        if show_compilling:
+            Runner.clear_screen()
+        solver.prepare_exec(free_run_mode=True)
+        if solver.compile_error:
+            print(solver.error_msg)
+        else:
+            cmd = solver.get_executable()
+            print(Text().center(RawTerminal.get_terminal_size(), Token("─")))
+            answer = subprocess.run(cmd, shell=True, text=True)
+            if answer.returncode != 0 and answer.returncode != 1:
+                print(Runner.decode_code(answer.returncode))
+        solver.reset()
+        to_run_again = False
+        if wait_input:
+            print(Text().center(RawTerminal.get_terminal_size(), Token("─")))
+            print(Text().addf("y", "Deseja compilar e executar novamente? [").addf("c", "S").addf("y", "/n]: "), end="")
+            valor = input()
+            if valor != "n" and valor != "q":
+                if to_clear:
+                    Runner.clear_screen()
+                to_run_again = True
+        if to_clear:
+            Runner.clear_screen()
+
+        return to_run_again
+
+
 
 class SeqMode(enum.Enum):
     intro = 0
@@ -8606,77 +8698,11 @@ class Run:
                 tracker.store()
 
 
-
-class CmdRep:
-    @staticmethod
-    def check(args):
-        folder = Settings().get_alias_folder(args.alias)
-        rep = Repository(folder).load_data_from_config_file().load_game()
-        logger = Logger.get_instance()
-        logger.set_history_file(rep.get_history_file())
-
-        output = logger.check_log_file_integrity()
-        if len(output) == 0:
-            print(f"Arquivo de log do repositório {rep} está íntegro.")
-        else:
-            print(f"Arquivo de log do repositório {rep} está corrompido.")
-            print("Erros:")
-            for error in output:
-                print(f"- {error}")
-
-    @staticmethod
-    def upgrade(args):
-        folder = args.folder
-        if os.path.exists(os.path.join(folder, "rep.json")):
-            os.rename(os.path.join(folder, "rep.json"), os.path.join(folder, "repository.json"))
-        remote_folder = os.path.join(folder, "remote")
-        os.makedirs(remote_folder, exist_ok=True)
-        for entry in os.listdir(folder):
-            path = os.path.join(folder, entry)
-            if entry == "remote":
-                continue
-            if os.path.isdir(path):
-                os.rename(path, os.path.join(remote_folder, entry))
-        print(f"Repositório {folder} foi atualizado.")
-
-    @staticmethod
-    def list(_args):
-        settings = Settings()
-        print(f"SettingsFile\n- {settings.settings_file}")
-        print(str(settings))
-
-    @staticmethod
-    def add(args):
-        settings = Settings().set_alias_remote(args.alias, args.value)
-        settings.save_settings()
-
-    @staticmethod
-    def rm(args):
-        sp = Settings()
-        if args.alias in sp.dict_alias_remote:
-            sp.dict_alias_remote.pop(args.alias)
-            sp.save_settings()
-        else:
-            print("Repository not found.")
-
-    @staticmethod
-    def reset(_):
-        sp = Settings().reset()
-        print(sp.settings_file)
-        sp.save_settings()
-
-    @staticmethod
-    def graph(args):
-        settings = Settings()
-        folder:str = settings.get_alias_folder(args.alias)
-        rep = Repository(folder).load_data_from_config_file().load_game()
-        rep.game.check_cycle()
-        Graph(rep.game).generate()
-
 class Title:
     @staticmethod
     def extract_title(readme_file):
-        title = open(readme_file).read().split("\n")[0]
+        content = Decoder.load(readme_file)
+        title = content.split("\n")[0]
         parts = title.split(" ")
         if parts[0].count("#") == len(parts[0]):
             del parts[0]
@@ -8753,8 +8779,7 @@ class DownProblem:
 
     @staticmethod
     def __create_file(content, path, label=""):
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(content)
+        Decoder.save(path, content)
         DownProblem.fnprint(path + " " + label)
 
     @staticmethod
@@ -8781,14 +8806,13 @@ class DownProblem:
     @staticmethod
     def __compare_and_save(content: str, path: str):
         if not os.path.exists(path):
-            with open(path, "w", encoding="utf-8") as f:
-                f.write(content.encode("utf-8").decode("utf-8"))
+            Decoder.save(path, content)
             DownProblem.fnprint(path + " (Novo)")
         else:
-            if open(path, encoding="utf-8").read() != content:
+            path_content = Decoder.load(path)
+            if path_content != content:
                 DownProblem.fnprint(path + " (Atualizado)")
-                with open(path, "w", encoding="utf-8") as f:
-                    f.write(content)
+                Decoder.save(path, content)
             else:
                 DownProblem.fnprint(path + " (Inalterado)")
 
@@ -8796,7 +8820,7 @@ class DownProblem:
     def down_readme(readme_path: str,  remote_url: RemoteUrl):
         temp_file = tempfile.mktemp()
         remote_url.download_absolute_to(temp_file)
-        content = open(temp_file, encoding="utf-8").read()
+        content = Decoder.load(temp_file)
         DownProblem.__compare_and_save(content, readme_path)
     
     @staticmethod
@@ -8923,7 +8947,8 @@ class CmdDown:
         lang = self.check_and_select_language()
         
         if self.download_mapi():
-            with open(self.mapi_file, encoding="utf-8") as f:
+            encoding = Decoder.get_encoding(self.mapi_file)
+            with open(self.mapi_file, encoding=encoding) as f:
                 loaded_json = json.load(f)
             os.remove(self.mapi_file)
             DownProblem.unpack_json(loaded_json, self.destiny_folder, lang)
@@ -9681,11 +9706,9 @@ class Main:
             index = rep.get_default_readme_path()
             print("Nenhuma fonte foi informada, utilizando o arquivo {} como fonte".format(index))
             if not os.path.exists(index):
-                with open(index, "w") as f:
-                    f.write("# Repositório\n\n")
-                    f.write("## Grupo\n\n")
-                    f.write("### Missão\n\n")
-                    f.write("- [ ] [#google Abra o google](https://www.google.com)\n")
+                content = "# Repositório\n\n## Grupo\n\n### Missão\n\n- [ ] [#google Abra o google](https://www.google.com)\n"
+                Decoder.save(index, content)
+
         else:
             settings = Settings()
             source: str = ""

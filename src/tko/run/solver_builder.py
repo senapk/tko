@@ -4,7 +4,8 @@ import os
 from typing import List
 import shutil
 
-from ..util.runner import Runner
+from tko.util.runner import Runner
+from tko.util.decoder import Decoder
 
 class CompileError(Exception):
     def __init__(self, message):
@@ -111,9 +112,10 @@ class SolverBuilder:
     def comment_and_uncomment_node_input(self, free_run_mode: bool):
         for i in range(len(self.path_list)):
             path = self.path_list[i]
-            with open(path, "r") as f:
+            encoding = Decoder.get_encoding(path)
+            with open(path, "r", encoding=encoding) as f:
                 lines = f.readlines()
-            with open(path, "w") as f:
+            with open(path, "w", encoding="utf-8") as f:
                 for line in lines:
                     if free_run_mode:
                         if '_TEST_ONLY_' in line and not line.startswith("//"):

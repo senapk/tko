@@ -7,6 +7,7 @@ import appdirs
 
 from tko.util.text import Text
 from tko.play.colors import Colors
+from tko.util.decoder import Decoder
 
 def singleton(class_):
     instances = {}
@@ -99,7 +100,8 @@ class Settings:
     def load_settings(self):
         try:
             settings_file = self.get_settings_file() # assure right loading if value == ""
-            with open(settings_file, "r", encoding="utf-8") as f:
+            encoding = Decoder.get_encoding(settings_file)
+            with open(settings_file, "r", encoding=encoding) as f:
                 data = json.load(f)
                 self.dict_alias_remote = data.get(self.__remote, {})
                 self.dict_alias_folder = data.get(self.__folder, {})

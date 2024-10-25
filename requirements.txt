@@ -6,6 +6,8 @@
 appdirs
 types-appdirs
 pydot
+chardet
+types-chardet
 
 # PyPI package deployment
 build

@@ -12,6 +12,7 @@ from tko.game.game import Game
 from tko.util.remote_url import RemoteUrl
 from tko.cmds.cmd_build import CmdBuild
 from tko.util.param import Param
+from tko.util.decoder import Decoder
 
 
 class CmdDown:
@@ -97,7 +98,8 @@ class CmdDown:
         lang = self.check_and_select_language()
         
         if self.download_mapi():
-            with open(self.mapi_file, encoding="utf-8") as f:
+            encoding = Decoder.get_encoding(self.mapi_file)
+            with open(self.mapi_file, encoding=encoding) as f:
                 loaded_json = json.load(f)
             os.remove(self.mapi_file)
             DownProblem.unpack_json(loaded_json, self.destiny_folder, lang)

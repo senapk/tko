@@ -2,9 +2,10 @@ from typing import Any, Dict, List
 import os
 import json
 import urllib
-from ..util.remote_url import RemoteUrl, Absolute
+from tko.util.remote_url import RemoteUrl, Absolute
 from tko.game.game import Game
 from tko.game.task import Task
+from tko.util.decoder import Decoder
 
 languages_avaliable = ["c", "cpp", "py", "ts", "js", "java", "go"]
 
@@ -203,7 +204,8 @@ class Repository:
         return os.path.exists(self.get_repository_file())
 
     def load_data_from_config_file(self):
-        with open(self.get_repository_file(), encoding="utf-8") as f:
+        encoding = Decoder.get_encoding(self.get_repository_file())
+        with open(self.get_repository_file(), encoding=encoding) as f:
             self.data = json.load(f)
         return self
 
