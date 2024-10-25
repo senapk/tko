@@ -1,5 +1,5 @@
 # ignore missing import 
-import chardet # ignore missing import
+import chardet # type: ignore
 
 class Decoder:
 
