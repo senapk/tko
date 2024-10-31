@@ -13,7 +13,7 @@ from .solver_builder import SolverBuilder
 from ..util.text import Text
 from ..util.symbols import symbols
 from ..util.label_factory import LabelFactory
-from ..settings.repository import languages_avaliable
+from ..settings.repository import available_languages
 class Wdir:
     def __init__(self):
         self.__autoload = False
@@ -84,7 +84,7 @@ class Wdir:
         if self.__lang != "":
             solvers = [target for target in files if target.endswith("." + self.__lang)]
         else:
-            solvers = [target for target in files if any([target.endswith("." + lang) for lang in languages_avaliable])]
+            solvers = [target for target in files if any([target.endswith("." + lang) for lang in available_languages])]
 
         solvers = sorted(solvers)
 
@@ -115,15 +115,6 @@ class Wdir:
 
         self.set_solver(solvers)
         self.set_sources(sources)
-        return self
-
-    def set_cmd(self, exec_cmd: Optional[str]):
-        if exec_cmd is None:
-            return self
-        if self.__solver is not None:
-            print("fail: if using --cmd, don't pass source files to target")
-        self.__solver = SolverBuilder([])
-        self.__solver.set_executable(exec_cmd)
         return self
 
     def build(self):
@@ -188,7 +179,7 @@ class Wdir:
         for unit in self.__unit_list:
             unit.index = index
             index += 1
-            search = [x for x in new_list if x.input == unit.input]
+            search = [x for x in new_list if x.inserted == unit.inserted]
             if len(search) > 0:
                 unit.repeated = search[0].index
             new_list.append(unit)
@@ -199,7 +190,7 @@ class Wdir:
         # filtering marked repeated
         self.__unit_list = [unit for unit in self.__unit_list if unit.repeated is None]
         if param.to_sort:
-            self.__unit_list.sort(key=lambda v: len(v.input))
+            self.__unit_list.sort(key=lambda v: len(v.inserted))
         if param.unlabel:
             for unit in self.__unit_list:
                 unit.case = ""

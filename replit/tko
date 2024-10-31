@@ -30,7 +30,7 @@ from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
 import chardet # type: ignore
-__version__ = "1.6.2"
+__version__ = "1.7.0"
 
 
 class CheckVersion:
@@ -3556,7 +3556,7 @@ class Unit:
         self.source_pad = 0  # stores the pad to justify the source file
         self.case = case  # name
         self.case_pad = 0  # stores the pad to justify the case name
-        self.input = input_data  # input
+        self.inserted = input_data  # input
         self.expected = expected  # expected output
         self.received: Optional[str] = None  # solver generated answer
         self.grade: Optional[int] = grade  # None represents proportional gr, 100 represents all
@@ -3591,7 +3591,7 @@ class DownDiff:
         self.unit = unit
         self.output: List[Text] = []
         self.__to_insert_header = False
-        self.no_diff_mode = self.unit.input == "" and self.unit.expected == ""
+        self.no_diff_mode = self.unit.inserted == "" and self.unit.expected == ""
         self.expected_received, self.first_failure = self.db.render_diff(self.unit.expected, self.unit.received)
 
     def to_insert_header(self):
@@ -3628,7 +3628,7 @@ class DownDiff:
         else:
             self.output.append(Text().addf(color, DiffBuilder.vinput).fold_in(self.width, symbols.hbar, "╭", "╮"))
         # lines
-        for line in self.unit.input.split("\n")[:-1]:
+        for line in self.unit.inserted.split("\n")[:-1]:
             self.output.append(Text().add(symbols.vbar).add(" ").add(line).ljust(self.width - 1, Token(" ")).add(symbols.vbar))
 
     def insert_expected(self):
@@ -3762,8 +3762,8 @@ class SideDiff:
             self.output.append(Text().addf(input_color, DiffBuilder.vinput).fold_in(self.width, symbols.hbar, "╭", "╮"))
 
         # input lines
-        if self.unit.input != "":
-            lines = [Text(x) for x in self.unit.input.split("\n")[:-1]]
+        if self.unit.inserted != "":
+            lines = [Text(x) for x in self.unit.inserted.split("\n")[:-1]]
             for l in lines:
                 self.output.append(self.split_screen(l, l))
     
@@ -4515,8 +4515,8 @@ class VplParser:
     @staticmethod
     def to_vpl(unit: CaseData):
         text = "case=" + unit.case + "\n"
-        text += "input=" + unit.input
-        text += "output=\"" + unit.output + "\"\n"
+        text += "inserted=" + unit.input
+        text += "expected=\"" + unit.output + "\"\n"
         if unit.grade is not None:
             text += "grade reduction=" + str(unit.grade) + "%\n"
         return text
@@ -4524,7 +4524,7 @@ class VplParser:
 
 class Loader:
     # regex_tio = r"^ *#INPUT *(.*?)\n(.*?)^ *#OUTPUT *\n(.*?)^ *#END *\n?"
-    regex_tio = r"^\s*[>]* ?INSERT[ ]*([^\n]*?)\n(.*?)^\s*[=]* ?EXPECT[ ]*\n(.*?)^\s*[<]* ?FINISH*$"
+    regex_tio = r"^[ ]*[>]+ ?INSERT[ ]*([^\n]*?)\n([\s\S]*?)^[ ]*[=]+ ?EXPECT[ ]*\n([\s\S]*?)^[ ]*[<]+ ?FINISH*$"
     regex_tio_origin = r"^>>>>>>>> *(.*?)\n(.*?)^======== *\n(.*?)^<<<<<<<<"
 
     def __init__(self):
@@ -4590,7 +4590,8 @@ class Loader:
             return value, None
 
         matches = re.findall(Loader.regex_tio, text, re.MULTILINE | re.DOTALL)
-        matches += re.findall(Loader.regex_tio_origin, text, re.MULTILINE | re.DOTALL)
+        if len(matches) == 0:
+            matches += re.findall(Loader.regex_tio_origin, text, re.MULTILINE | re.DOTALL)
         unit_list = []
         for m in matches:
             case, grade = parse_case_grade(m[0])
@@ -4619,7 +4620,7 @@ class Loader:
                 unit.grade = 100
                 input_file = os.path.join(folder, m.input_file)
                 value = Decoder.load(input_file)
-                unit.input = value + ("" if value.endswith("\n") else "\n")
+                unit.inserted = value + ("" if value.endswith("\n") else "\n")
                 output_file = os.path.join(folder, m.output_file)
                 value = Decoder.load(output_file)
                 unit.expected = value + ("" if value.endswith("\n") else "\n")
@@ -4721,6 +4722,10 @@ class SolverBuilder:
 
         if path.endswith(".py"):
             self.__executable = "python " + path
+        elif path.endswith(".mk"):
+            self.__prepare_make()
+        elif path.endswith(".sh"):
+            self.__prepare_sh()
         elif path.endswith(".js"):
             self.__prepare_js(free_run_mode)
         elif path.endswith(".ts"):
@@ -4733,8 +4738,8 @@ class SolverBuilder:
             self.__prepare_cpp()
         elif path.endswith(".go"):
             self.__prepare_go()
-        elif path.endswith(".sql"):
-            self.__prepare_sql()
+        # elif path.endswith(".sql"):
+        #     self.__prepare_sql()
         else:
             self.__executable = path
 
@@ -4782,6 +4787,22 @@ class SolverBuilder:
                         else:
                             f.write(line)
 
+    def __prepare_make(self):
+        self.check_tool("make")
+        solver = os.path.abspath(self.path_list[0])
+        folder = os.path.dirname(solver)
+        cmd = "make -s -C {} -f {} build".format(folder, solver)
+        return_code, stdout, stderr = Runner.subprocess_run(cmd)
+        if return_code != 0:
+            self.error_msg = stdout + stderr
+            self.compile_error = True
+        else:
+            self.__executable = "make -s -C {} -f {} run".format(folder, solver)
+
+    def __prepare_sh(self):
+        self.check_tool("bash")
+        self.__executable = "bash " + " ".join(self.path_list)
+
     def __prepare_js(self, free_run_mode: bool):
         self.check_tool("node")
         solver = self.path_list[0]
@@ -4792,9 +4813,9 @@ class SolverBuilder:
         self.check_tool("go")
         self.__executable = "go run " + " ".join(self.path_list)
 
-    def __prepare_sql(self):
-        self.check_tool("sqlite3")
-        self.__executable = "cat " + " ".join(self.path_list) + " | sqlite3"
+    # def __prepare_sql(self):
+    #     self.check_tool("sqlite3")
+    #     self.__executable = "cat " + " ".join(self.path_list) + " | sqlite3"
 
     def __prepare_ts(self, free_run_mode: bool):
         self.comment_and_uncomment_node_input(free_run_mode)
@@ -4866,7 +4887,7 @@ class UnitRunner:
         cmd = solver.get_executable()
         if timeout == 0:
             timeout = None
-        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input, timeout)
+        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.inserted, timeout)
         unit.received = stdout + stderr
         if return_code != 0:
             return ExecutionResult.EXECUTION_ERROR
@@ -4884,7 +4905,7 @@ class Writer:
     @staticmethod
     def to_vpl(unit: Unit):
         text = "case=" + unit.case + "\n"
-        text += "input=" + unit.input
+        text += "input=" + unit.inserted
         text += "output=\"" + unit.expected + "\"\n"
         if unit.grade is None:
             text += "\n"
@@ -4899,7 +4920,7 @@ class Writer:
             text += " " + unit.case
         if unit.grade is not None:
             text += " " + str(unit.grade) + "%"
-        text += '\n' + unit.input
+        text += '\n' + unit.inserted
         text += "======== EXPECT\n"
         text += unit.expected
         if unit.expected != '' and unit.expected[-1] != '\n':
@@ -4911,7 +4932,7 @@ class Writer:
     def save_dir_files(folder: str, pattern_loader: PatternLoader, label: str, unit: Unit) -> None:
         file_source = pattern_loader.make_file_source(label)
         with open(os.path.join(folder, file_source.input_file), "w", encoding="utf-8") as f:
-            f.write(unit.input)
+            f.write(unit.inserted)
         with open(os.path.join(folder, file_source.output_file), "w", encoding="utf-8") as f:
             f.write(unit.expected)
 
@@ -5161,7 +5182,7 @@ def clean_com(target: str, content: str) -> str:
     return "\n".join(output)
 
 class DeepFilter:
-    extensions = [".md", ".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs", ".txt", ".go", ".cases", ".tio", ".vpl"]
+    extensions = [".md", ".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs", ".txt", ".go", "sh", ".cases", ".tio", ".vpl"]
 
     def __init__(self):
         self.cheat_mode = False
@@ -5500,7 +5521,7 @@ class RemoteUrl:
         return self.get_raw_url()
 
 
-languages_avaliable = ["c", "cpp", "py", "ts", "js", "java", "go"]
+available_languages = ["c", "cpp", "py", "ts", "js", "java", "go", "sh", "mk"]
 
 class Repository:
     CFG_FILE = "repository.json"
@@ -5519,9 +5540,10 @@ class Repository:
     def rec_search_for_repo(folder: str) -> str:
         if os.path.exists(os.path.join(folder, Repository.CONFIG_FOLDER, Repository.CFG_FILE)):
             return folder
-        if folder == "/":
+        new_folder = os.path.dirname(folder)
+        if new_folder == folder:
             return ""
-        return Repository.rec_search_for_repo(os.path.abspath(os.path.join(folder, "..")))
+        return Repository.rec_search_for_repo(new_folder)
 
     def get_remote_task_folder(self, label: str) -> str:
         return os.path.abspath(os.path.join(self.folder, Repository.REMOTE_TASK_FOLDER, label))
@@ -5936,14 +5958,14 @@ class LanguageSetter:
 
     def set_language(self):
         options: List[FloatingInputData] = []
-        for lang in languages_avaliable:
+        for lang in available_languages:
             options.append(FloatingInputData(TextFunctor(lang), SetLangFunctor(self.rep, self.fman, lang)))
 
         self.fman.add_input(
             FloatingInput("^")
             .set_header(" Escolha a extensão default para os rascunhos ")
             .set_options(options)
-            .set_default_index(languages_avaliable.index(self.rep.get_lang()))
+            .set_default_index(available_languages.index(self.rep.get_lang()))
             .set_footer(" Pressione Enter para confirmar ")
         )
 
@@ -6105,7 +6127,7 @@ class Wdir:
         if self.__lang != "":
             solvers = [target for target in files if target.endswith("." + self.__lang)]
         else:
-            solvers = [target for target in files if any([target.endswith("." + lang) for lang in languages_avaliable])]
+            solvers = [target for target in files if any([target.endswith("." + lang) for lang in available_languages])]
 
         solvers = sorted(solvers)
 
@@ -6136,15 +6158,6 @@ class Wdir:
 
         self.set_solver(solvers)
         self.set_sources(sources)
-        return self
-
-    def set_cmd(self, exec_cmd: Optional[str]):
-        if exec_cmd is None:
-            return self
-        if self.__solver is not None:
-            print("fail: if using --cmd, don't pass source files to target")
-        self.__solver = SolverBuilder([])
-        self.__solver.set_executable(exec_cmd)
         return self
 
     def build(self):
@@ -6209,7 +6222,7 @@ class Wdir:
         for unit in self.__unit_list:
             unit.index = index
             index += 1
-            search = [x for x in new_list if x.input == unit.input]
+            search = [x for x in new_list if x.inserted == unit.inserted]
             if len(search) > 0:
                 unit.repeated = search[0].index
             new_list.append(unit)
@@ -6220,7 +6233,7 @@ class Wdir:
         # filtering marked repeated
         self.__unit_list = [unit for unit in self.__unit_list if unit.repeated is None]
         if param.to_sort:
-            self.__unit_list.sort(key=lambda v: len(v.input))
+            self.__unit_list.sort(key=lambda v: len(v.inserted))
         if param.unlabel:
             for unit in self.__unit_list:
                 unit.case = ""
@@ -8448,10 +8461,9 @@ class TKOFilterMode:
 
 class Run:
 
-    def __init__(self, settings: Settings, target_list: List[str], exec_cmd: Optional[str], param: Optional[Param.Basic]):
+    def __init__(self, settings: Settings, target_list: List[str], param: Optional[Param.Basic]):
         self.settings = settings
         self.target_list: List[str] = target_list
-        self.exec_cmd: Optional[str] = exec_cmd
         if param is None:
             self.param = Param.Basic()
         else:
@@ -8488,13 +8500,6 @@ class Run:
             raise Warning("Task não definida")
         return self.__task
 
-    def update_task_using_solver_path(self, task_key: str, dirname: str):
-        if self.__task is None:
-            task = Task()
-            task.key = task_key
-            task.folder = dirname
-            self.__task = task
-
     def execute(self):
         if not self.wdir_builded:
             self.build_wdir()
@@ -8516,7 +8521,8 @@ class Run:
                     rep = Repository(repo_path)
                     logger.set_history_file(rep.get_history_file())
                     # logger.set_daily(rep.get_daily_file())
-                self.update_task_using_solver_path(task_key, dirname)
+                self.fill_task()
+                # self.update_task_using_solver_path(task_key, dirname)
 
         if self.__free_run():
             return
@@ -8611,7 +8617,7 @@ class Run:
         self.__remove_duplicates()
         self.__change_targets_to_filter_mode()
         try:
-            self.wdir = Wdir().set_curses(self.__curses_mode).set_lang(self.__lang).set_target_list(self.target_list).set_cmd(self.exec_cmd).build().filter(self.param)
+            self.wdir = Wdir().set_curses(self.__curses_mode).set_lang(self.__lang).set_target_list(self.target_list).build().filter(self.param)
         except FileNotFoundError as e:
             if self.wdir.has_solver():
                 self.wdir.get_solver().error_msg += str(e)
@@ -8663,20 +8669,39 @@ class Run:
                 if folder not in folders:
                     folders.append(folder)
         opener.set_target(folders)
-        solver_zero = self.wdir.get_solver().path_list[0]
-        lang = solver_zero.split(".")[-1]
-        opener.set_language(lang)
+        if self.wdir.get_solver().path_list:
+            solver_zero = self.wdir.get_solver().path_list[0]
+            lang = solver_zero.split(".")[-1]
+            opener.set_language(lang)
         return opener
+
+    def fill_task(self):
+        task = Task()
+        sources = self.wdir.get_source_list()
+        solver = self.wdir.get_solver()
+        if len(sources) > 0:
+            task.folder = os.path.abspath(sources[0])
+        elif solver is not None and solver.path_list:
+            task.folder = os.path.abspath(self.wdir.get_solver().path_list[0])
+        else:
+            task.folder = os.path.abspath(os.getcwd())
+        
+        if os.path.isfile(task.folder):
+            task.folder = os.path.dirname(task.folder)
+
+        self.key = os.path.dirname(task.folder)
+
+        self.__task = task
 
     def __show_diff(self):
         if self.wdir is None:
             return
         
         if self.__task is None:
-            raise Warning("Task não definida")
+            self.fill_task()
         
         if self.__curses_mode:
-            cdiff = Tester(self.settings, self.wdir, self.__task)
+            cdiff = Tester(self.settings, self.wdir, self.get_task())
             if self.__opener is not None:
                 cdiff.set_opener(self.__opener)
             else:
@@ -8768,8 +8793,23 @@ public class draft {
         r"}""\n"
     )
 
+    make_draft = r"""
+SRC = solver.cpp
+EXEC = .build/solver.out
+INPUT_FILE = .build/input.txt
 
-    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft, 'java': java_draft, 'go': go_draft}
+build: $(SRC)
+	g++ -Wall $(SRC) -o $(EXEC)
+
+# A entrada é coletada pelo cat
+# Depois é repassada para o executável
+run: $(EXEC)
+	@cat > $(INPUT_FILE)
+	./$(EXEC) < $(INPUT_FILE)
+"""[1:]
+
+
+    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft, 'java': java_draft, 'go': go_draft, 'mk': make_draft}
 
 
 
@@ -8851,6 +8891,7 @@ class DownProblem:
     def create_default_draft(destiny: str, language: str):
         filename = "draft."
         draft_path = os.path.join(destiny, filename + language)
+
         if not os.path.exists(draft_path):
             with open(draft_path, "w", encoding="utf-8") as f:
                 if language in Drafts.drafts:
@@ -8968,7 +9009,7 @@ class CmdDown:
             if language_def != "":
                 self.language = language_def
             else:
-                print("Escolha uma extensão para os rascunhos: [c, cpp, py, ts, js, java]: ", end="")
+                print("Escolha uma extensão para os rascunhos: [{}]: ".format(", ".join(available_languages)), end="")
                 self.language = input()
         return self.language
 
@@ -9154,7 +9195,7 @@ class PlayActions:
         
     def run_selected_task(self, task: Task, task_dir: str):
         folder = task_dir
-        run = Run(settings=self.settings, target_list=[folder], exec_cmd=None, param=Param.Basic())
+        run = Run(settings=self.settings, target_list=[folder], param=Param.Basic())
         run.set_lang(self.rep.get_lang())
         opener = Opener(self.settings).set_language(self.rep.get_lang()).set_target([folder])
         run.set_opener(opener)
@@ -9459,7 +9500,7 @@ class Play:
     def check_lang_in_text_mode(self):
         lang = self.rep.get_lang()
         if lang == "":
-            options = languages_avaliable
+            options = available_languages
             print("\nLinguagem padrão ainda não foi definida.\n")
             while True:
                 print("Escolha entre as opções a seguir ", end="")
@@ -9618,7 +9659,7 @@ class Main:
             param.set_diff_mode(DiffMode.SIDE)
         elif args.down:
             param.set_diff_mode(DiffMode.DOWN)
-        cmd_run = Run(settings, args.target_list, args.cmd, param)
+        cmd_run = Run(settings, args.target_list, param)
         cmd_run.execute()
 
     @staticmethod
@@ -9629,7 +9670,7 @@ class Main:
         param.set_diff_mode(settings.app.get_diff_mode())
         if args.filter:
             param.set_filter(True)
-        cmd_run = Run(settings, args.target_list, args.cmd, param)
+        cmd_run = Run(settings, args.target_list, param)
         cmd_run.set_curses()
         cmd_run.execute()
 
@@ -9811,7 +9852,7 @@ class Parser:
         parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='run with test cases using curses.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
-        parser_r.add_argument("--cmd", type=str, help="bash command to run code")
+        # parser_r.add_argument("--cmd", type=str, help="bash command to run code")
         parser_r.set_defaults(func=Main.run)
 
     def add_parser_exec(self):
@@ -9819,7 +9860,7 @@ class Parser:
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
         parser_r.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures')
-        parser_r.add_argument("--cmd", type=str, help="bash command to run code")
+        # parser_r.add_argument("--cmd", type=str, help="bash command to run code")
 
         group_n = parser_r.add_mutually_exclusive_group()
         group_n.add_argument('--quiet', '-q', action='store_true', help='quiet mode, do not show any failure.')
@@ -9983,3 +10024,32 @@ def main():
 # NÃO RETIRE ESSA TAG POR CAUSA DO MERGE DO REPLIT
 if __name__ == '__main__': # MERGE_INSERT 
     main()
+
+
+class Compare:
+    @staticmethod
+    def load_and_save(filename, received):
+        folder = "compare"
+        if not os.path.isdir(folder):
+            os.mkdir(folder)
+        rec = os.path.join(folder, filename + ".rec")
+        exp = os.path.join(folder, filename + ".exp")
+        open(rec, "w").write(received)
+        if os.path.isfile(exp):
+            expected = open(exp).read()
+        else:
+            open(exp, "w").write(received)
+            expected = received
+        return expected, received
+    
+    @staticmethod
+    def text(capsys, file: str, cmd: str):
+        Compare.list(capsys, file, cmd.split(" "))
+
+    @staticmethod
+    def list(capsys, file: str, cmd_list: list[str]):
+        parser = Parser().parser
+        args = parser.parse_args(cmd_list)
+        exec(parser, args)
+        expected, received = Compare.load_and_save(file, capsys.readouterr().out)
+        assert expected == received

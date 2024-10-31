@@ -9,7 +9,7 @@ class Unit:
         self.source_pad = 0  # stores the pad to justify the source file
         self.case = case  # name
         self.case_pad = 0  # stores the pad to justify the case name
-        self.input = input_data  # input
+        self.inserted = input_data  # input
         self.expected = expected  # expected output
         self.received: Optional[str] = None  # solver generated answer
         self.grade: Optional[int] = grade  # None represents proportional gr, 100 represents all

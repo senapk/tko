@@ -4,7 +4,7 @@ from .opener import Opener
 from typing import Any, Dict, Callable, Tuple
 from ..settings.settings import Settings
 from ..settings.app_settings import AppSettings
-from ..settings.repository import languages_avaliable, Repository
+from ..settings.repository import available_languages, Repository
 from ..util.text import Text, Token
 from tko.play.floating import Floating, FloatingInput, FloatingInputData
 from .fmt import Fmt
@@ -168,7 +168,7 @@ class Play:
     def check_lang_in_text_mode(self):
         lang = self.rep.get_lang()
         if lang == "":
-            options = languages_avaliable
+            options = available_languages
             print("\nLinguagem padrão ainda não foi definida.\n")
             while True:
                 print("Escolha entre as opções a seguir ", end="")

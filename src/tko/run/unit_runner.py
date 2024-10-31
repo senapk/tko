@@ -19,7 +19,7 @@ class UnitRunner:
         cmd = solver.get_executable()
         if timeout == 0:
             timeout = None
-        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.input, timeout)
+        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.inserted, timeout)
         unit.received = stdout + stderr
         if return_code != 0:
             return ExecutionResult.EXECUTION_ERROR

@@ -7,7 +7,7 @@ from tko.game.game import Game
 from tko.game.task import Task
 from tko.util.decoder import Decoder
 
-languages_avaliable = ["c", "cpp", "py", "ts", "js", "java", "go"]
+available_languages = ["c", "cpp", "py", "ts", "js", "java", "go", "sh", "mk"]
 
 class Repository:
     CFG_FILE = "repository.json"
@@ -26,9 +26,10 @@ class Repository:
     def rec_search_for_repo(folder: str) -> str:
         if os.path.exists(os.path.join(folder, Repository.CONFIG_FOLDER, Repository.CFG_FILE)):
             return folder
-        if folder == "/":
+        new_folder = os.path.dirname(folder)
+        if new_folder == folder:
             return ""
-        return Repository.rec_search_for_repo(os.path.abspath(os.path.join(folder, "..")))
+        return Repository.rec_search_for_repo(new_folder)
 
     def get_remote_task_folder(self, label: str) -> str:
         return os.path.abspath(os.path.join(self.folder, Repository.REMOTE_TASK_FOLDER, label))

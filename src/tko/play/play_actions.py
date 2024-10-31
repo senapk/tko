@@ -199,7 +199,7 @@ class PlayActions:
         
     def run_selected_task(self, task: Task, task_dir: str):
         folder = task_dir
-        run = Run(settings=self.settings, target_list=[folder], exec_cmd=None, param=Param.Basic())
+        run = Run(settings=self.settings, target_list=[folder], param=Param.Basic())
         run.set_lang(self.rep.get_lang())
         opener = Opener(self.settings).set_language(self.rep.get_lang()).set_target([folder])
         run.set_opener(opener)

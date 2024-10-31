@@ -16,7 +16,7 @@ class Writer:
     @staticmethod
     def to_vpl(unit: Unit):
         text = "case=" + unit.case + "\n"
-        text += "input=" + unit.input
+        text += "input=" + unit.inserted
         text += "output=\"" + unit.expected + "\"\n"
         if unit.grade is None:
             text += "\n"
@@ -31,7 +31,7 @@ class Writer:
             text += " " + unit.case
         if unit.grade is not None:
             text += " " + str(unit.grade) + "%"
-        text += '\n' + unit.input
+        text += '\n' + unit.inserted
         text += "======== EXPECT\n"
         text += unit.expected
         if unit.expected != '' and unit.expected[-1] != '\n':
@@ -43,7 +43,7 @@ class Writer:
     def save_dir_files(folder: str, pattern_loader: PatternLoader, label: str, unit: Unit) -> None:
         file_source = pattern_loader.make_file_source(label)
         with open(os.path.join(folder, file_source.input_file), "w", encoding="utf-8") as f:
-            f.write(unit.input)
+            f.write(unit.inserted)
         with open(os.path.join(folder, file_source.output_file), "w", encoding="utf-8") as f:
             f.write(unit.expected)
 

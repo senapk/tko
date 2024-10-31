@@ -37,10 +37,9 @@ class TKOFilterMode:
 
 class Run:
 
-    def __init__(self, settings: Settings, target_list: List[str], exec_cmd: Optional[str], param: Optional[Param.Basic]):
+    def __init__(self, settings: Settings, target_list: List[str], param: Optional[Param.Basic]):
         self.settings = settings
         self.target_list: List[str] = target_list
-        self.exec_cmd: Optional[str] = exec_cmd
         if param is None:
             self.param = Param.Basic()
         else:
@@ -77,13 +76,6 @@ class Run:
             raise Warning("Task não definida")
         return self.__task
 
-    def update_task_using_solver_path(self, task_key: str, dirname: str):
-        if self.__task is None:
-            task = Task()
-            task.key = task_key
-            task.folder = dirname
-            self.__task = task
-
     def execute(self):
         if not self.wdir_builded:
             self.build_wdir()
@@ -105,7 +97,8 @@ class Run:
                     rep = Repository(repo_path)
                     logger.set_history_file(rep.get_history_file())
                     # logger.set_daily(rep.get_daily_file())
-                self.update_task_using_solver_path(task_key, dirname)
+                self.fill_task()
+                # self.update_task_using_solver_path(task_key, dirname)
 
         if self.__free_run():
             return
@@ -200,7 +193,7 @@ class Run:
         self.__remove_duplicates()
         self.__change_targets_to_filter_mode()
         try:
-            self.wdir = Wdir().set_curses(self.__curses_mode).set_lang(self.__lang).set_target_list(self.target_list).set_cmd(self.exec_cmd).build().filter(self.param)
+            self.wdir = Wdir().set_curses(self.__curses_mode).set_lang(self.__lang).set_target_list(self.target_list).build().filter(self.param)
         except FileNotFoundError as e:
             if self.wdir.has_solver():
                 self.wdir.get_solver().error_msg += str(e)
@@ -252,20 +245,39 @@ class Run:
                 if folder not in folders:
                     folders.append(folder)
         opener.set_target(folders)
-        solver_zero = self.wdir.get_solver().path_list[0]
-        lang = solver_zero.split(".")[-1]
-        opener.set_language(lang)
+        if self.wdir.get_solver().path_list:
+            solver_zero = self.wdir.get_solver().path_list[0]
+            lang = solver_zero.split(".")[-1]
+            opener.set_language(lang)
         return opener
+
+    def fill_task(self):
+        task = Task()
+        sources = self.wdir.get_source_list()
+        solver = self.wdir.get_solver()
+        if len(sources) > 0:
+            task.folder = os.path.abspath(sources[0])
+        elif solver is not None and solver.path_list:
+            task.folder = os.path.abspath(self.wdir.get_solver().path_list[0])
+        else:
+            task.folder = os.path.abspath(os.getcwd())
+        
+        if os.path.isfile(task.folder):
+            task.folder = os.path.dirname(task.folder)
+
+        self.key = os.path.dirname(task.folder)
+
+        self.__task = task
 
     def __show_diff(self):
         if self.wdir is None:
             return
         
         if self.__task is None:
-            raise Warning("Task não definida")
+            self.fill_task()
         
         if self.__curses_mode:
-            cdiff = Tester(self.settings, self.wdir, self.__task)
+            cdiff = Tester(self.settings, self.wdir, self.get_task())
             if self.__opener is not None:
                 cdiff.set_opener(self.__opener)
             else:

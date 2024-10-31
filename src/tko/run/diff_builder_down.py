@@ -16,7 +16,7 @@ class DownDiff:
         self.unit = unit
         self.output: List[Text] = []
         self.__to_insert_header = False
-        self.no_diff_mode = self.unit.input == "" and self.unit.expected == ""
+        self.no_diff_mode = self.unit.inserted == "" and self.unit.expected == ""
         self.expected_received, self.first_failure = self.db.render_diff(self.unit.expected, self.unit.received)
 
     def to_insert_header(self):
@@ -53,7 +53,7 @@ class DownDiff:
         else:
             self.output.append(Text().addf(color, DiffBuilder.vinput).fold_in(self.width, symbols.hbar, "╭", "╮"))
         # lines
-        for line in self.unit.input.split("\n")[:-1]:
+        for line in self.unit.inserted.split("\n")[:-1]:
             self.output.append(Text().add(symbols.vbar).add(" ").add(line).ljust(self.width - 1, Token(" ")).add(symbols.vbar))
 
     def insert_expected(self):

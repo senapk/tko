@@ -1,5 +1,8 @@
 # Changelog
 
+- 1.7.0
+  - fix: regex loading pattern for tio
+  - refactor: pytests
 - 1.6.2
   - fix: encoding error
 - 1.6.1

@@ -78,8 +78,8 @@ class SideDiff:
             self.output.append(Text().addf(input_color, DiffBuilder.vinput).fold_in(self.width, symbols.hbar, "╭", "╮"))
 
         # input lines
-        if self.unit.input != "":
-            lines = [Text(x) for x in self.unit.input.split("\n")[:-1]]
+        if self.unit.inserted != "":
+            lines = [Text(x) for x in self.unit.inserted.split("\n")[:-1]]
             for l in lines:
                 self.output.append(self.split_screen(l, l))
     

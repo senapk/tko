@@ -7,7 +7,7 @@ from tko.util.text import Text
 from tko.play.border import Border
 from typing import List, Tuple, Union, Callable
 from tko.play.functors import FlagFunctor
-from tko.settings.repository import Repository, languages_avaliable
+from tko.settings.repository import Repository, available_languages
 
 
 class LanguageSetter:
@@ -19,14 +19,14 @@ class LanguageSetter:
 
     def set_language(self):
         options: List[FloatingInputData] = []
-        for lang in languages_avaliable:
+        for lang in available_languages:
             options.append(FloatingInputData(TextFunctor(lang), SetLangFunctor(self.rep, self.fman, lang)))
 
         self.fman.add_input(
             FloatingInput("^")
             .set_header(" Escolha a extensão default para os rascunhos ")
             .set_options(options)
-            .set_default_index(languages_avaliable.index(self.rep.get_lang()))
+            .set_default_index(available_languages.index(self.rep.get_lang()))
             .set_footer(" Pressione Enter para confirmar ")
         )
 

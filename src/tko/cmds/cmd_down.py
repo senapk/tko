@@ -13,6 +13,7 @@ from tko.util.remote_url import RemoteUrl
 from tko.cmds.cmd_build import CmdBuild
 from tko.util.param import Param
 from tko.util.decoder import Decoder
+from tko.settings.repository import available_languages
 
 
 class CmdDown:
@@ -119,6 +120,6 @@ class CmdDown:
             if language_def != "":
                 self.language = language_def
             else:
-                print("Escolha uma extensão para os rascunhos: [c, cpp, py, ts, js, java]: ", end="")
+                print("Escolha uma extensão para os rascunhos: [{}]: ".format(", ".join(available_languages)), end="")
                 self.language = input()
         return self.language

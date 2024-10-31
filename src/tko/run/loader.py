@@ -59,8 +59,8 @@ class VplParser:
     @staticmethod
     def to_vpl(unit: CaseData):
         text = "case=" + unit.case + "\n"
-        text += "input=" + unit.input
-        text += "output=\"" + unit.output + "\"\n"
+        text += "inserted=" + unit.input
+        text += "expected=\"" + unit.output + "\"\n"
         if unit.grade is not None:
             text += "grade reduction=" + str(unit.grade) + "%\n"
         return text
@@ -68,7 +68,7 @@ class VplParser:
 
 class Loader:
     # regex_tio = r"^ *#INPUT *(.*?)\n(.*?)^ *#OUTPUT *\n(.*?)^ *#END *\n?"
-    regex_tio = r"^\s*[>]* ?INSERT[ ]*([^\n]*?)\n(.*?)^\s*[=]* ?EXPECT[ ]*\n(.*?)^\s*[<]* ?FINISH*$"
+    regex_tio = r"^[ ]*[>]+ ?INSERT[ ]*([^\n]*?)\n([\s\S]*?)^[ ]*[=]+ ?EXPECT[ ]*\n([\s\S]*?)^[ ]*[<]+ ?FINISH*$"
     regex_tio_origin = r"^>>>>>>>> *(.*?)\n(.*?)^======== *\n(.*?)^<<<<<<<<"
 
     def __init__(self):
@@ -134,7 +134,8 @@ class Loader:
             return value, None
 
         matches = re.findall(Loader.regex_tio, text, re.MULTILINE | re.DOTALL)
-        matches += re.findall(Loader.regex_tio_origin, text, re.MULTILINE | re.DOTALL)
+        if len(matches) == 0:
+            matches += re.findall(Loader.regex_tio_origin, text, re.MULTILINE | re.DOTALL)
         unit_list = []
         for m in matches:
             case, grade = parse_case_grade(m[0])
@@ -163,7 +164,7 @@ class Loader:
                 unit.grade = 100
                 input_file = os.path.join(folder, m.input_file)
                 value = Decoder.load(input_file)
-                unit.input = value + ("" if value.endswith("\n") else "\n")
+                unit.inserted = value + ("" if value.endswith("\n") else "\n")
                 output_file = os.path.join(folder, m.output_file)
                 value = Decoder.load(output_file)
                 unit.expected = value + ("" if value.endswith("\n") else "\n")

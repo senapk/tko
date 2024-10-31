@@ -87,6 +87,7 @@ class DownProblem:
     def create_default_draft(destiny: str, language: str):
         filename = "draft."
         draft_path = os.path.join(destiny, filename + language)
+
         if not os.path.exists(draft_path):
             with open(draft_path, "w", encoding="utf-8") as f:
                 if language in Drafts.drafts:

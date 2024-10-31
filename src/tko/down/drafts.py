@@ -58,5 +58,20 @@ public class draft {
         r"}""\n"
     )
 
+    make_draft = r"""
+SRC = solver.cpp
+EXEC = .build/solver.out
+INPUT_FILE = .build/input.txt
 
-    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft, 'java': java_draft, 'go': go_draft}
+build: $(SRC)
+	g++ -Wall $(SRC) -o $(EXEC)
+
+# A entrada é coletada pelo cat
+# Depois é repassada para o executável
+run: $(EXEC)
+	@cat > $(INPUT_FILE)
+	./$(EXEC) < $(INPUT_FILE)
+"""[1:]
+
+
+    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft, 'java': java_draft, 'go': go_draft, 'mk': make_draft}

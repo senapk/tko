@@ -58,7 +58,7 @@ class Main:
             param.set_diff_mode(DiffMode.SIDE)
         elif args.down:
             param.set_diff_mode(DiffMode.DOWN)
-        cmd_run = Run(settings, args.target_list, args.cmd, param)
+        cmd_run = Run(settings, args.target_list, param)
         cmd_run.execute()
 
     @staticmethod
@@ -69,7 +69,7 @@ class Main:
         param.set_diff_mode(settings.app.get_diff_mode())
         if args.filter:
             param.set_filter(True)
-        cmd_run = Run(settings, args.target_list, args.cmd, param)
+        cmd_run = Run(settings, args.target_list, param)
         cmd_run.set_curses()
         cmd_run.execute()
 
@@ -251,7 +251,7 @@ class Parser:
         parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='run with test cases using curses.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
-        parser_r.add_argument("--cmd", type=str, help="bash command to run code")
+        # parser_r.add_argument("--cmd", type=str, help="bash command to run code")
         parser_r.set_defaults(func=Main.run)
 
     def add_parser_exec(self):
@@ -259,7 +259,7 @@ class Parser:
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
         parser_r.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures')
-        parser_r.add_argument("--cmd", type=str, help="bash command to run code")
+        # parser_r.add_argument("--cmd", type=str, help="bash command to run code")
 
         group_n = parser_r.add_mutually_exclusive_group()
         group_n.add_argument('--quiet', '-q', action='store_true', help='quiet mode, do not show any failure.')

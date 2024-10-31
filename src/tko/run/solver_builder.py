@@ -75,6 +75,10 @@ class SolverBuilder:
 
         if path.endswith(".py"):
             self.__executable = "python " + path
+        elif path.endswith(".mk"):
+            self.__prepare_make()
+        elif path.endswith(".sh"):
+            self.__prepare_sh()
         elif path.endswith(".js"):
             self.__prepare_js(free_run_mode)
         elif path.endswith(".ts"):
@@ -87,8 +91,8 @@ class SolverBuilder:
             self.__prepare_cpp()
         elif path.endswith(".go"):
             self.__prepare_go()
-        elif path.endswith(".sql"):
-            self.__prepare_sql()
+        # elif path.endswith(".sql"):
+        #     self.__prepare_sql()
         else:
             self.__executable = path
 
@@ -136,6 +140,22 @@ class SolverBuilder:
                         else:
                             f.write(line)
 
+    def __prepare_make(self):
+        self.check_tool("make")
+        solver = os.path.abspath(self.path_list[0])
+        folder = os.path.dirname(solver)
+        cmd = "make -s -C {} -f {} build".format(folder, solver)
+        return_code, stdout, stderr = Runner.subprocess_run(cmd)
+        if return_code != 0:
+            self.error_msg = stdout + stderr
+            self.compile_error = True
+        else:
+            self.__executable = "make -s -C {} -f {} run".format(folder, solver)
+
+    def __prepare_sh(self):
+        self.check_tool("bash")
+        self.__executable = "bash " + " ".join(self.path_list)
+
     def __prepare_js(self, free_run_mode: bool):
         self.check_tool("node")
         solver = self.path_list[0]
@@ -146,9 +166,9 @@ class SolverBuilder:
         self.check_tool("go")
         self.__executable = "go run " + " ".join(self.path_list)
 
-    def __prepare_sql(self):
-        self.check_tool("sqlite3")
-        self.__executable = "cat " + " ".join(self.path_list) + " | sqlite3"
+    # def __prepare_sql(self):
+    #     self.check_tool("sqlite3")
+    #     self.__executable = "cat " + " ".join(self.path_list) + " | sqlite3"
 
     def __prepare_ts(self, free_run_mode: bool):
         self.comment_and_uncomment_node_input(free_run_mode)
