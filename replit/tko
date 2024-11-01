@@ -33,7 +33,6 @@ import unicodedata
 import chardet # type: ignore
 __version__ = "1.8.0"
 
-
 class CheckVersion:
 
     link = "https://raw.githubusercontent.com/senapk/tko/master/src/tko/__init__.py"
@@ -86,7 +85,6 @@ class Colors:
             if hasattr(self, key):
                 setattr(self, key, value)
         return self
-
 
 def random_get(dic: dict, str_key: str, mode:str = "static"):
     if mode == "static":
@@ -714,7 +712,6 @@ Meu precioso!
        ⠽⢀⣤⡀ ⢠⣤⡈⠉⠁⠠⠤  ⠘⠿⠋⠁     
          ⠉⠛⠿⠶⢾⣭⢤⡾ ⠠⠒          
 """
-
 class GuiActions:
     tab = "↔TAB"
     leave   = "Sair"
@@ -939,7 +936,6 @@ class Tracker:
         
         tracker = Tracker().set_folder(".track").set_files(args.files)
         tracker.store()
-
 tko_guide = """
        ╔════ TKO GUIA COMPACTO ════╗
 ╔══════╩═════ BAIXAR PROBLEMA ═════╩═══════╗
@@ -1065,7 +1061,6 @@ class PatternLoader:
             matched.append(source.output_file)
         unmatched = [file for file in filename_list if file not in matched]
         return unmatched
-
 
 class AnsiColor:
     enabled = True
@@ -1525,7 +1520,6 @@ class FlagsMan:
                 data[name] = flag.get_index()
         return data
 
-
 class FlagFunctor:
     def __init__(self, flag: Flag):
         self.flag = flag
@@ -1540,7 +1534,6 @@ class GradeFunctor:
 
     def __call__(self):
         self.fn(self.grade)
-
 
 class TextPosition:
     def __init__(self, y: int, x: int, text: Text):
@@ -1989,7 +1982,6 @@ class Frame:
                 Fmt.write(y + i, x + dx + 1, Text().addf(color, ver))
         return self
 
-
 class TreeItem:
     def __init__(self):
         self.sentence = Text()
@@ -2004,7 +1996,6 @@ class TreeItem:
     
     def get_sentence(self):
         return self.sentence
-
 
 
 class RawTerminal:
@@ -2110,7 +2101,6 @@ class __Symbols:
 
 symbols = __Symbols()
 
-
 class Floating:
     def __init__(self, _align=""):
         self._frame = Frame(0, 0)
@@ -2200,13 +2190,13 @@ class Floating:
         self._frame.set_fill()
 
     def put_text(self, text: str):
-        lines = text.split("\n")
+        lines = text.splitlines()
         for line in lines:
             self._content.append(Text().add(line))
         return self
 
     def put_sentence(self, sentence: Text):
-        for line in sentence.split("\n"):
+        for line in sentence.split('\n'):
             self._content.append(line)
         return self
     
@@ -2401,7 +2391,6 @@ class FloatingInput(Floating):
         return -1
 
 
-
 class FloatingManager:
     def __init__(self):
         self.input_layer: List[Floating] = []
@@ -2420,7 +2409,6 @@ class FloatingManager:
 
     def get_input(self) -> int:
         return self.input_layer[0].get_input()
-
 
 class GradeMessage:
     def __init__(self):
@@ -2530,7 +2518,6 @@ Tutorial   │$8  Guiado   │    [1]    │    [2]    │   [5]    │
 
             return value
     
-
 # from tko.util.logger import Logger, LogAction
 
 class Task(TreeItem):
@@ -2946,7 +2933,6 @@ class QuestParser:
                 
         return None
 
-
 class Cluster(TreeItem):
     def __init__(self, line_number: int = 0, title: str = "", key: str = "", color: Optional[str] = None):
         super().__init__()
@@ -2994,7 +2980,6 @@ class Cluster(TreeItem):
         count = len([q for q in self.quests if q.is_complete()])
         return Text().addf(self.get_grade_color(), f"({count}/{total})")
         
-
 
 
 class DiffBuilder:
@@ -3114,7 +3099,6 @@ class DiffBuilder:
             else:
                 output.append((a_data, b_data))
         return output, first_failure
-
 class LabelFactory:
     def __init__(self):
         self._label = ""
@@ -3157,7 +3141,6 @@ class LabelFactory:
                 return " ".join(split_label[1:])
             except ValueError:
                 return label
-
 
 class Runner:
     def __init__(self):
@@ -3210,7 +3193,6 @@ class Runner:
 #         except FileNotFoundError:
 #             print("\n\nCommand not found: " + " ".join(cmd_list))
 #             exit(1)
-
 
 def uni_to_asc(input_str: str):
     nfkd_form = unicodedata.normalize('NFKD', input_str)
@@ -3272,7 +3254,6 @@ class IdentifierType(enum.Enum):
 class Success(enum.Enum):
     RANDOM = "RANDOM"
     FIXED = "FIXED"
-
 
 class AppSettings:
 
@@ -3444,7 +3425,6 @@ class Border:
             middle = Text().add(" ").add(mid).add(" ")
         return middle
 
-
 class Unit:
     def __init__(self, case: str = "", input_data: str = "", expected: str = "", grade: Optional[int] = None, source: str = ""):
         self.source = source  # stores the source file of the unit
@@ -3473,7 +3453,6 @@ class Unit:
         if pad:
             case = self.case.ljust(self.case_pad)
         return Text() + "(" + op + ")" + f"[{index}] GR:{grade} {source} ({case}){rep}"
-
 
 
 
@@ -3523,7 +3502,7 @@ class DownDiff:
         else:
             self.output.append(Text().addf(color, DiffBuilder.vinput).fold_in(self.width, symbols.hbar, "╭", "╮"))
         # lines
-        for line in self.unit.inserted.split("\n")[:-1]:
+        for line in self.unit.inserted.splitlines():
             self.output.append(Text().add(symbols.vbar).add(" ").add(line).ljust(self.width - 1, Token(" ")).add(symbols.vbar))
 
     def insert_expected(self):
@@ -3658,7 +3637,7 @@ class SideDiff:
 
         # input lines
         if self.unit.inserted != "":
-            lines = [Text(x) for x in self.unit.inserted.split("\n")[:-1]]
+            lines = [Text(x) for x in self.unit.inserted.splitlines()]
             for l in lines:
                 self.output.append(self.split_screen(l, l))
     
@@ -3752,7 +3731,6 @@ class Param:
             return self
 
 
-
 class Identifier:
     def __init__(self):
         pass
@@ -3779,12 +3757,13 @@ class Decoder:
             raw_data = file.read()
             enc_dict = chardet.detect(raw_data)
             encoding = enc_dict["encoding"]
-            if encoding is None:
+            if encoding is None or enc_dict["confidence"] < 0.90:
                 encoding = "utf-8"
+                
             try:
                 content = raw_data.decode(encoding)
             except UnicodeDecodeError as e:
-                content = raw_data.decode("utf-8")
+                content = raw_data.decode(enc_dict["encoding"])
             return content
 
     @staticmethod
@@ -3796,8 +3775,9 @@ class Decoder:
     def get_encoding(file_path: str) -> str:
         with open(file_path, "rb") as file:
             raw_data = file.read()
-            encoding = chardet.detect(raw_data)["encoding"]
-            if encoding is None:
+            enc_dict = chardet.detect(raw_data)
+            encoding = enc_dict["encoding"]
+            if encoding is None or enc_dict["confidence"] < 0.90:
                 encoding = "utf-8"
             return encoding
 
@@ -4034,7 +4014,7 @@ class Game:
     def parse_file(self, filename: str):
         self.filename = filename
         content = Decoder.load(filename)
-        lines = content.split("\n")
+        lines = content.splitlines()
         self.parse_xp(content)
 
         key = "Sem Grupo"
@@ -4138,7 +4118,6 @@ class Game:
                 for t in q.get_tasks():
                     output.append(str(t))
         return "\n".join(output)
-
 
 
 class Graph:
@@ -4304,7 +4283,6 @@ class Graph:
         graph_dot  = pydot.graph_from_dot_data(data)[0]
         graph_dot.write_png(out_file)
 
-
 class XP:
     token_level_one = "level_one"
     token_level_mult = "level_mult"
@@ -4351,7 +4329,6 @@ class XP:
         for i in range(level - 1):
             total += self.game.level_one * (int(self.game.level_mult) ** i)
         return int(total)
-
 
 
 
@@ -4438,7 +4415,7 @@ class Loader:
         pieces = []  # header, input, output
 
         open_case = False
-        for line in text.split("\n"):
+        for line in text.splitlines():
             if line.startswith("#__case") or line.startswith("#TEST_CASE"):
                 pieces.append({"header": line, "input": [], "output": []})
                 open_case = True
@@ -4545,7 +4522,6 @@ class Loader:
         else:
             raise FileNotFoundError('warning: unable to find: ' + source)
         return []
-
 
 
 class CompileError(Exception):
@@ -4887,7 +4863,6 @@ class Writer:
             return False
         return True
 
-
 class TaskData:
     def __init__(self, key: str = "", progress: int = 0, seft_grade: int = 0):
         self.key = key
@@ -4992,7 +4967,6 @@ class DailyLog:
             json.dump(history, f, indent=4)
 
 
-
 class Mark:
     def __init__(self, marker, indent):
         self.marker: str = marker
@@ -5054,7 +5028,7 @@ class Filter:
         return "---", line
 
     def __process(self, content: str) -> str:
-        lines = content.split("\n")
+        lines = content.splitlines()
         output = []
         for line in lines:
             while self.outside_scope(line):
@@ -5087,7 +5061,7 @@ class Filter:
 
 def clean_com(target: str, content: str) -> str:
     com = get_comment(target)
-    lines = content.split("\n")
+    lines = content.splitlines()
     output = [line for line in lines if not line.lstrip().startswith(com)]
     return "\n".join(output)
 
@@ -5430,7 +5404,6 @@ class RemoteUrl:
     def __str__(self):
         return self.get_raw_url()
 
-
 available_languages = ["c", "cpp", "py", "ts", "java", "go", "yaml"]
 
 class Repository:
@@ -5655,7 +5628,6 @@ class Repository:
         return ( f"data: {self.data}\n" )
 
 
-
 def singleton(class_):
     instances = {}
     def getinstance(*args, **kwargs):
@@ -5858,7 +5830,6 @@ class Settings:
         # return "\n".join(output)
 
 
-
 class LanguageSetter:
     def __init__(self, rep: Repository, flagsman: FlagsMan, fman: FloatingManager):
         self.flagsman = flagsman
@@ -5902,7 +5873,6 @@ class SetLangFunctor:
             .put_text("")
             .warning()
         )
-
 
 
 class ConfigParams:
@@ -6182,7 +6152,6 @@ class Wdir:
         return Text().add(__solvers).add(" ").add(__sources)
 
 
-
 class CmdBuild:
 
     def __init__(self, target_out: str, source_list: List[str], param: Param.Manip):
@@ -6204,7 +6173,6 @@ class CmdBuild:
             print(str(e))
             return False
         return True
-
 
 
 
@@ -6890,7 +6858,7 @@ class TaskTree:
             Logger.get_instance().record_other_event(LogAction.SELF, obj.key, str(grade))
             obj.set_grade(grade)
             self.fman.add_input(
-                Floating("v").warning().set_header(" Auto avaliação ").set_text_ljust().set_content(GradeMessage().format(grade).split("\n"))
+                Floating("v").warning().set_header(" Auto avaliação ").set_text_ljust().set_content(GradeMessage().format(grade).splitlines())
             )
 
     def set_progress(self, prog: int):
@@ -7146,7 +7114,6 @@ class Search:
         elif key >= 32 and key < 127:
             self.tree.search_text += chr(key).lower()
             self.update_index()
-
 
 
 class Opener:
@@ -7491,7 +7458,7 @@ class Gui:
         
         now = datetime.datetime.now()
         parrot = random_get(opening, str(now.hour))
-        parrot_lines = parrot.split("\n")
+        parrot_lines = parrot.splitlines()
         max_len = max([len(line) for line in parrot_lines])
         yinit = 1
         for y, line in enumerate(parrot_lines):
@@ -7531,7 +7498,6 @@ class Gui:
         if Flags.skills:
             frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)
             self.show_skills_bar(frame_skills)
-
 
 
 class CmdRep:
@@ -7600,7 +7566,6 @@ class CmdRep:
         rep.game.check_cycle()
         Graph(rep.game).generate()
 
-
 class Free:
     @staticmethod
     def free_run(solver: SolverBuilder, show_compilling:bool=True, to_clear: bool=True, wait_input:bool=True) -> bool:
@@ -7609,7 +7574,7 @@ class Free:
             Runner.clear_screen()
         if show_compilling:
             image = random.choice(list(compilling.keys()))
-            for line in compilling[image].split("\n"):
+            for line in compilling[image].splitlines():
                 print(Text().addf("y", line).center(RawTerminal.get_terminal_size(), Token(" ")))
 
         if show_compilling:
@@ -7690,7 +7655,7 @@ class Tester:
 
     def print_centered_image(self, image: str, color: str, clear=False, align: str = "."):
         dy, dx = Fmt.get_size()
-        lines = image.split("\n")[1:]
+        lines = image.splitlines()[1:]
         init_y = 4
         if align == "v":
             init_y = dy - len(lines) - 1
@@ -8042,7 +8007,7 @@ class Tester:
 
         if self.wdir.get_solver().compile_error:
             received = self.wdir.get_solver().error_msg
-            line_list = [Text().add(line) for line in received.split("\n")]
+            line_list = [Text().add(line) for line in received.splitlines()]
         elif self.settings.app.get_diff_mode() == DiffMode.DOWN or not self.wdir.has_tests():
             ud_diff = DownDiff(cols, unit)
             line_list = ud_diff.build_diff()
@@ -8362,7 +8327,6 @@ class Tester:
 
 
 
-
 class TKOFilterMode:
     @staticmethod
     def deep_copy_and_change_dir():
@@ -8635,12 +8599,11 @@ class Run:
                 tracker.set_percentage(percent)
                 tracker.store()
 
-
 class Title:
     @staticmethod
     def extract_title(readme_file):
         content = Decoder.load(readme_file)
-        title = content.split("\n")[0]
+        title = content.splitlines()[0]
         parts = title.split(" ")
         if parts[0].count("#") == len(parts[0]):
             del parts[0]
@@ -8930,7 +8893,6 @@ class CmdDown:
                 print("Escolha uma extensão para os rascunhos: [{}]: ".format(", ".join(available_languages)), end="")
                 self.language = input()
         return self.language
-
 
 
 
@@ -9439,7 +9401,6 @@ class Play:
             else:
                 output()
 
-
 class CmdPlay:
     def __init__(self, settings: Settings):
         self.settings = settings
@@ -9944,7 +9905,6 @@ def main():
 # NÃO RETIRE ESSA TAG POR CAUSA DO MERGE DO REPLIT
 if __name__ == '__main__': # MERGE_INSERT 
     main()
-
 
 class Compare:
     @staticmethod

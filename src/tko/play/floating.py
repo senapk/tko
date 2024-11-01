@@ -96,13 +96,13 @@ class Floating:
         self._frame.set_fill()
 
     def put_text(self, text: str):
-        lines = text.split("\n")
+        lines = text.splitlines()
         for line in lines:
             self._content.append(Text().add(line))
         return self
 
     def put_sentence(self, sentence: Text):
-        for line in sentence.split("\n"):
+        for line in sentence.split('\n'):
             self._content.append(line)
         return self
     

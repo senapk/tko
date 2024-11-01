@@ -53,7 +53,7 @@ class DownDiff:
         else:
             self.output.append(Text().addf(color, DiffBuilder.vinput).fold_in(self.width, symbols.hbar, "╭", "╮"))
         # lines
-        for line in self.unit.inserted.split("\n")[:-1]:
+        for line in self.unit.inserted.splitlines():
             self.output.append(Text().add(symbols.vbar).add(" ").add(line).ljust(self.width - 1, Token(" ")).add(symbols.vbar))
 
     def insert_expected(self):

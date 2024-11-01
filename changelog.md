@@ -1,5 +1,7 @@
 # Changelog
 
+- 1.8.1
+  - add: splitlines instead split("\n")
 - 1.8.0
   - add: yaml file to support any language
   - rm: old description in Readme

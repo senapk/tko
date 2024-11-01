@@ -87,7 +87,7 @@ class Loader:
         pieces = []  # header, input, output
 
         open_case = False
-        for line in text.split("\n"):
+        for line in text.splitlines():
             if line.startswith("#__case") or line.startswith("#TEST_CASE"):
                 pieces.append({"header": line, "input": [], "output": []})
                 open_case = True

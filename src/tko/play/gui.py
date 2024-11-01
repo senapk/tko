@@ -284,7 +284,7 @@ class Gui:
         
         now = datetime.datetime.now()
         parrot = random_get(opening, str(now.hour))
-        parrot_lines = parrot.split("\n")
+        parrot_lines = parrot.splitlines()
         max_len = max([len(line) for line in parrot_lines])
         yinit = 1
         for y, line in enumerate(parrot_lines):

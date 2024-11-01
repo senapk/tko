@@ -49,7 +49,7 @@ class Merge:
 
         with open(file, "r") as f:
             content = f.read()
-            lines = content.split("\n")
+            lines = content.splitlines()
             output = []
             for line in lines:
                 if  line.startswith("from __future__") or ("appdirs" in line) or line.startswith("from typing"):

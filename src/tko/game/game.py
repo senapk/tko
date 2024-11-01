@@ -242,7 +242,7 @@ class Game:
     def parse_file(self, filename: str):
         self.filename = filename
         content = Decoder.load(filename)
-        lines = content.split("\n")
+        lines = content.splitlines()
         self.parse_xp(content)
 
         key = "Sem Grupo"

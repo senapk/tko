@@ -14,7 +14,7 @@ class Free:
             Runner.clear_screen()
         if show_compilling:
             image = random.choice(list(compilling.keys()))
-            for line in compilling[image].split("\n"):
+            for line in compilling[image].splitlines():
                 print(Text().addf("y", line).center(RawTerminal.get_terminal_size(), Token(" ")))
 
         if show_compilling:

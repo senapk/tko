@@ -79,7 +79,7 @@ class SideDiff:
 
         # input lines
         if self.unit.inserted != "":
-            lines = [Text(x) for x in self.unit.inserted.split("\n")[:-1]]
+            lines = [Text(x) for x in self.unit.inserted.splitlines()]
             for l in lines:
                 self.output.append(self.split_screen(l, l))
     

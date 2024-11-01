@@ -80,7 +80,7 @@ class Tester:
 
     def print_centered_image(self, image: str, color: str, clear=False, align: str = "."):
         dy, dx = Fmt.get_size()
-        lines = image.split("\n")[1:]
+        lines = image.splitlines()[1:]
         init_y = 4
         if align == "v":
             init_y = dy - len(lines) - 1
@@ -432,7 +432,7 @@ class Tester:
 
         if self.wdir.get_solver().compile_error:
             received = self.wdir.get_solver().error_msg
-            line_list = [Text().add(line) for line in received.split("\n")]
+            line_list = [Text().add(line) for line in received.splitlines()]
         elif self.settings.app.get_diff_mode() == DiffMode.DOWN or not self.wdir.has_tests():
             ud_diff = DownDiff(cols, unit)
             line_list = ud_diff.build_diff()
