@@ -3,9 +3,10 @@ import tempfile
 import os
 from typing import List
 import shutil
-
+from tko.util.text import Text
 from tko.util.runner import Runner
 from tko.util.decoder import Decoder
+import yaml #type: ignore
 
 class CompileError(Exception):
     def __init__(self, message):
@@ -24,7 +25,7 @@ class SolverBuilder:
             self.cache_dir = tempfile.mkdtemp()
         self.clear_cache()
         self.error_msg: str = ""
-        self.__executable: str = ""
+        self.__executable: tuple[str, str | None] = ("", None) # executavel e pasta
         self.compile_error: bool = False
 
     def check_tool(self, name):
@@ -45,8 +46,8 @@ class SolverBuilder:
         self.path_list = list_main + list_other
         return self
 
-    def set_executable(self, executable: str):
-        self.__executable = executable
+    def set_executable(self, executable: str, folder: str | None = None):
+        self.__executable = (executable, folder)
         return self
 
     def clear_cache(self):
@@ -55,30 +56,32 @@ class SolverBuilder:
         os.makedirs(self.cache_dir, exist_ok=True)
 
     def reset(self):
-        self.__executable = ""
+        self.__executable = ("", None)
         self.compile_error = False
         self.error_msg = ""
         self.clear_cache()
 
     def not_compiled(self):
-        return self.__executable == "" and not self.compile_error
+        cmd, folder = self.__executable
+        return cmd == "" and not self.compile_error
 
-    def get_executable(self, force_rebuild=False) -> str:
+    def get_executable(self, force_rebuild=False) -> tuple[str, str | None]:
         if (len(self.path_list) > 0 and self.not_compiled()) or force_rebuild:
             self.prepare_exec()
-        return self.__executable
+        cmd, folder = self.__executable
+        return (cmd, None if folder == "" else folder)
 
     def prepare_exec(self, free_run_mode: bool = False) -> None:
-        self.__executable = ""
+        self.set_executable("")
         path = self.path_list[0]
         self.compile_error = False
 
         if path.endswith(".py"):
-            self.__executable = "python " + path
+            self.set_executable("python " + path)
+        elif path.endswith(".yaml"):
+            self.__prepare_yaml()
         elif path.endswith(".mk"):
             self.__prepare_make()
-        elif path.endswith(".sh"):
-            self.__prepare_sh()
         elif path.endswith(".js"):
             self.__prepare_js(free_run_mode)
         elif path.endswith(".ts"):
@@ -94,7 +97,7 @@ class SolverBuilder:
         # elif path.endswith(".sql"):
         #     self.__prepare_sql()
         else:
-            self.__executable = path
+            self.set_executable(path)
 
     def __prepare_java(self):
         self.check_tool("javac")
@@ -111,7 +114,7 @@ class SolverBuilder:
             self.error_msg = stdout + stderr
             self.compile_error = True
         else:
-            self.__executable = "java -cp " + self.cache_dir + " " + filename[:-5]  # removing the .java
+            self.set_executable("java -cp " + self.cache_dir + " " + filename[:-5])  # removing the .java
 
     def comment_and_uncomment_node_input(self, free_run_mode: bool):
         for i in range(len(self.path_list)):
@@ -140,6 +143,23 @@ class SolverBuilder:
                         else:
                             f.write(line)
 
+    def __prepare_yaml(self):
+        solver = os.path.abspath(self.path_list[0])
+        folder = os.path.dirname(solver)
+        content = Decoder.load(solver)
+        yaml_data = yaml.safe_load(content)
+
+        if "build" in yaml_data and yaml_data["build"] is not None:
+            build_cmd = yaml_data["build"]
+            return_code, stdout, stderr = Runner.subprocess_run(build_cmd, folder = folder)
+            if return_code != 0:
+                self.error_msg = stdout + stderr
+                self.compile_error = True
+                return
+        if not "run" in yaml_data:
+            raise Warning(Text("{r}: Seu arquivo yaml precisa ter um campo {g} ", "Falha", "run:"))
+        self.set_executable(yaml_data["run"], folder)
+
     def __prepare_make(self):
         self.check_tool("make")
         solver = os.path.abspath(self.path_list[0])
@@ -150,21 +170,17 @@ class SolverBuilder:
             self.error_msg = stdout + stderr
             self.compile_error = True
         else:
-            self.__executable = "make -s -C {} -f {} run".format(folder, solver)
-
-    def __prepare_sh(self):
-        self.check_tool("bash")
-        self.__executable = "bash " + " ".join(self.path_list)
+            self.set_executable("make -s -C {} -f {} run".format(folder, solver))
 
     def __prepare_js(self, free_run_mode: bool):
         self.check_tool("node")
         solver = self.path_list[0]
         self.comment_and_uncomment_node_input(free_run_mode)
-        self.__executable = "node " + solver
+        self.set_executable("node " + solver)
 
     def __prepare_go(self):
         self.check_tool("go")
-        self.__executable = "go run " + " ".join(self.path_list)
+        self.set_executable("go run " + " ".join(self.path_list))
 
     # def __prepare_sql(self):
     #     self.check_tool("sqlite3")
@@ -189,7 +205,7 @@ class SolverBuilder:
             new_source_list = []
             for source in source_list:
                 new_source_list.append(os.path.join(self.cache_dir, os.path.basename(source)[:-2] + "js"))
-            self.__executable = "node " + " ".join(new_source_list)  # renaming solver to main
+            self.set_executable("node " + " ".join(new_source_list))  # renaming solver to main
     
     def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
         # solver = self.path_list[0]
@@ -204,7 +220,7 @@ class SolverBuilder:
             self.error_msg = stdout + stderr
             self.compile_error = True
         else:
-            self.__executable = exec_path
+            self.set_executable(exec_path)
 
     def __prepare_c(self):
         self.check_tool("gcc")

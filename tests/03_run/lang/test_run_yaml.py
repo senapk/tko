@@ -10,9 +10,9 @@ class Test:
     def setup_method(cls):
         os.chdir(Path(__file__).parent)
 
-    def test_run_cmd(self, capsys):
-        cmd2 = ["-w", "50", "-m", "test", "solver.yaml", "cases.tio"]
-        Compare.list(capsys, "out1", cmd2)
+    def test_run_mixed_side(self, capsys):
+        cmd = "-w 80 -m test solver.yaml cases.tio -as"
+        Compare.text(capsys, "out1", cmd)
 
 
 if __name__ == '__main__':

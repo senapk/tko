@@ -1,5 +1,11 @@
 # Changelog
 
+- 1.8.0
+  - add: yaml file to support any language
+  - rm: old description in Readme
+- 1.7.1
+  - fix: image shortcuts
+  - fix: better error msg for start and play
 - 1.7.0
   - fix: regex loading pattern for tio
   - refactor: pytests

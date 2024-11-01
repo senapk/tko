@@ -54,13 +54,16 @@ class Opener:
         files = os.listdir(folder)
         files_to_open = []
         for f in files:
-            allowed = [self.language]
-            if self.language == "c" or self.language== "cpp":
-                allowed.append("h")
-                allowed.append("hpp")
-            if not f.endswith(tuple(allowed)):
+            path = os.path.join(folder, f)
+            if not os.path.isfile(path):
                 continue
-            files_to_open.append(os.path.join(folder, f))
+            # allowed = [self.language]
+            # if self.language == "c" or self.language== "cpp":
+            #     allowed.append("h")
+            #     allowed.append("hpp")
+            # if not f.endswith(tuple(allowed)):
+            #     continue
+            files_to_open.append(path)
         return files_to_open
 
     @staticmethod

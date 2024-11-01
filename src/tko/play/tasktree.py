@@ -108,8 +108,6 @@ class TaskTree:
                             for t in q.get_tasks():
                                 items.append(len(t.title) + 6)
 
-        # print("debug", self.game.available_clusters)
-        # print("debug", self.game.available_quests)
         self.max_title = min_value
         if len(items) > 0:
             self.max_title = max(items)

@@ -23,9 +23,11 @@ class Free:
         if solver.compile_error:
             print(solver.error_msg)
         else:
-            cmd = solver.get_executable()
+            cmd, folder = solver.get_executable()
+            if folder == "":
+                folder = None
             print(Text().center(RawTerminal.get_terminal_size(), Token("─")))
-            answer = subprocess.run(cmd, shell=True, text=True)
+            answer = subprocess.run(cmd, cwd=folder, shell=True, text=True)
             if answer.returncode != 0 and answer.returncode != 1:
                 print(Runner.decode_code(answer.returncode))
         solver.reset()

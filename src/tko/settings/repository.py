@@ -7,7 +7,7 @@ from tko.game.game import Game
 from tko.game.task import Task
 from tko.util.decoder import Decoder
 
-available_languages = ["c", "cpp", "py", "ts", "js", "java", "go", "sh", "mk"]
+available_languages = ["c", "cpp", "py", "ts", "java", "go", "yaml"]
 
 class Repository:
     CFG_FILE = "repository.json"

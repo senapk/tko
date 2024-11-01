@@ -96,8 +96,9 @@ class Main:
                 return
             CmdPlay(settings).load_folder(folder).execute()
         else:
-            print(Text("{r}: não existe nenhuma repositório local cadastrado para o atalho {g}.", "Falha", args.alias))
-            print(Text("{g}: utilize o comando '{y}' para iniciar um repositório local.", "Atenção", "tko start " + args.alias))
+            print(Text("{r}: não existe nenhum repositório local cadastrado para o atalho {y}.", "Falha", args.alias))
+            print(Text("{g}: utilize o comando {y} para iniciar um repositório local.", "Atenção", "tko start [fup|poo|ed]"))
+            print(Text("{g}: {y}", "Exemplo", "tko start fup"))
         CheckVersion().version_check()
 
     @staticmethod
@@ -173,6 +174,8 @@ class Main:
         remote: str = args.remote
         Main.__init(remote=remote, url=None, file=None, folder=remote, save=remote)
         print(Text("Repositório {g} criado com sucesso na pasta {g}", remote, os.path.abspath(remote)))
+        print(Text("O atalho {g} foi vinculado a essa pasta, para acessá-lo", remote))
+        print(Text("basta utilizar o comando {g}", "tko play " + remote))
 
     # @staticmethod
     # def down(args):
@@ -248,18 +251,16 @@ class Parser:
         return parent_manip
 
     def add_parser_run(self):
-        parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='run with test cases using curses.')
+        parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='Run with test cases using curses.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
-        # parser_r.add_argument("--cmd", type=str, help="bash command to run code")
         parser_r.set_defaults(func=Main.run)
 
     def add_parser_exec(self):
-        parser_r = self.subparsers.add_parser('test', parents=[self.parent_basic], help='run with test cases.')
+        parser_r = self.subparsers.add_parser('test', parents=[self.parent_basic], help='Run with test cases using raw terminal.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
         parser_r.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures')
-        # parser_r.add_argument("--cmd", type=str, help="bash command to run code")
 
         group_n = parser_r.add_mutually_exclusive_group()
         group_n.add_argument('--quiet', '-q', action='store_true', help='quiet mode, do not show any failure.')
@@ -272,7 +273,7 @@ class Parser:
         parser_r.set_defaults(func=Main.test)
 
     def add_parser_build(self):
-        parser_b = self.subparsers.add_parser('build', parents=[self.parent_manip], help='build a test target.')
+        parser_b = self.subparsers.add_parser('build', parents=[self.parent_manip], help='Build a test target.')
         parser_b.add_argument('target', metavar='T_OUT', type=str, help='target to be build.')
         parser_b.add_argument('target_list', metavar='T', type=str, nargs='+', help='input test targets.')
         parser_b.set_defaults(func=Main.build)
@@ -285,7 +286,7 @@ class Parser:
     #     parser_d.set_defaults(func=Main.down)
 
     def add_parser_config(self):
-        parser_cfg = self.subparsers.add_parser('config', help='settings tool.')
+        parser_cfg = self.subparsers.add_parser('config', help='Settings tool.')
         subpar_repo = parser_cfg.add_subparsers(title='subcommands', help='help for subcommand.')
 
         cfg_reset = subpar_repo.add_parser('reset', help='reset all repositories, folders and values to factory default.')
@@ -316,7 +317,7 @@ class Parser:
 
     def add_parser_rep_tools(self):
 
-        parser_repo = self.subparsers.add_parser('rep', help='Repository tools.')
+        parser_repo = self.subparsers.add_parser('rep', help='Repository validation tools.')
         subpar_repo = parser_repo.add_subparsers(title='subcommands', help='help for subcommand.')
 
         # repo_reset = subpar_repo.add_parser('reset', help='reset all repositories and folders to factory default.')
@@ -414,6 +415,7 @@ def main():
         print("\n\nKeyboard Interrupt")
         sys.exit(1)
     except Warning as w:
+        print("")
         print(w)
         sys.exit(1)
     # except Exception as e:

@@ -24,13 +24,14 @@ import re
 import yaml # type: ignore
 import pydot # type: ignore
 import math
+import yaml #type: ignore
 import configparser
 import hashlib
 from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
 import chardet # type: ignore
-__version__ = "1.7.0"
+__version__ = "1.8.0"
 
 
 class CheckVersion:
@@ -142,24 +143,6 @@ Compreensão: A B C D
            (______(((_(((______(@)
 """[1:]
 
-# opening["alien3"] = r"""
-#            \.   \.      __,-"-.__      ./   ./
-#        \.   \`.  \`.-'"" _,="=._ ""`-.'/  .'/   ./
-#         \`.  \_`-''      _,="=._      ``-'_/  .'/
-#          \ `-',-._   _.  _,="=._  ,_   _.-,`-' /
-#       \. /`,-',-._ ""  \ _,="=._ /   ""_.-,`-,'\ ./
-#        \`-'  /    `-._  "       "  _.-'    \  `-'/
-#        /)   (   BOM   \    ,-.    / ESTUDO  )   (\
-#     ,-'"     `-.       \  /   \  /       .-'     "`-,
-#   ,'_._         `-.____/ /  _  \ \____.-'         _._`,
-#  /,'   `.                \_/ \_/                .'   `,\
-# /'       )                  _                  (       `\
-#         /   _,-'"`-.  ,++|T|||T|++.  .-'"`-,_   \
-#        / ,-'        \/|`|`|`|'|'|'|\/        `-, \
-#       /,'             | | | | | | |             `,\
-#      /'               ` | | | | | '               `\
-# """
-
 # opening["alien4"] = r"""
 #             ______              ______
 #            /___   \___\ || /___/   ___\
@@ -195,46 +178,19 @@ Compreensão: A B C D
 # """
 
 intro: Dict[str, str] = {}
-# intro["shark"] = r"""
-#   _________         .    . r -> Roda sem testar             
-#  (..       \_    ,  |\  /| ↲ -> Testa usando casos de teste 
-#   \       O  \  /|  \ \/ / f -> FIXA a execução para        
-#    \______    \/ |   \  /       um único caso de teste      
-#       vvvv\    \ |   /  |  TAB  Muda o arquivo PRINCIPAL    
-#       \^^^^  ==   \_/   |       para problemas de múltiplos 
-#        `\_   ===    \.  |       arquivos de código fonte    
-#        / /\_   \ /      |  m -> muda o MODO diff de vertical
-#        |/   \_  \|      /       para modo diff horizontal   
-#               \________/   t -> define o limite de TEMPO    
-#                            setas -> muda o teste            
-# """
-
-# intro["cat"] = r"""
-#  ,_     _          r -> Roda sem testar             
-#  |\\_,-~/          ↲ -> Testa usando casos de teste 
-#  / _  _ |    ,--.  f -> FIXA a execução para        
-# (  @  @ )   / ,-'       um único caso de teste      
-#  \  _T_/-._( (     TAB  Muda o arquivo PRINCIPAL    
-#  /         `. \         para problemas de múltiplos 
-# |         _  \ |        arquivos de código fonte    
-#  \ \ ,  /      |   m -> muda o MODO diff de vertical
-#   || |-_\__   /         para modo diff horizontal   
-#  ((_/`(____,-'     t -> define o limite de TEMPO    
-#                    setas -> muda o teste            
-# """
 
 intro["elephant"] = r"""
-        ⣀⣀                r -> Roda sem testar             
+        ⣀⣀                i -> Executa no modo Interativo  
       ⣰⣿⣿⣿⣿⣦⣀⣀⣀           ↲ -> Testa usando casos de teste 
-      ⢿⣿⠟⠋⠉    ⠉⠑⠢⣄⡀      f -> FIXA a execução para        
-     ⢠⠞⠁           ⠙⢿⣿⣿⣦⡀      um único caso de teste      
+      ⢿⣿⠟⠋⠉    ⠉⠑⠢⣄⡀      t -> Alterana entre rodar Todos  
+     ⢠⠞⠁           ⠙⢿⣿⣿⣦⡀      ou um único caso de teste   
  ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇ TAB  Muda o arquivo PRINCIPAL    
 ⣾⣿⣿⣦⣼⡀ ⢺⣿⣿⡿⠃    ⣠⣤⣄  ⠈⡿⠋       para problemas de múltiplos 
 ⢿⣿⣿⣿⣿⣇ ⠤⠌⠁ ⡀⢲⡶⠄⢸⣏⣿⣿   ⡇        arquivos de código fonte    
 ⠈⢿⣿⣿⣿⣿⣷⣄⡀  ⠈⠉⠓⠂ ⠙⠛⠛⠠ ⡸⠁   m -> muda o MODO diff de vertical
   ⠻⣿⣿⣿⣿⣿⣿⣷⣦⣄⣀    ⠑ ⣠⠞⠁         para modo diff horizontal   
-   ⢸⡏⠉⠛⠛⠛⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⡄      t -> define o limite de TEMPO    
-   ⠸        ⠈⠉⠛⢿⣿⣿⣿⣿⡄     setas -> muda o teste            
+   ⢸⡏⠉⠛⠛⠛⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⡄      l -> define o Limite de tempo    
+   ⠸        ⠈⠉⠛⢿⣿⣿⣿⣿⡄     esquerda direita -> muda o teste 
 """
 
 compilling: Dict[str, str] = {}
@@ -251,14 +207,6 @@ compilling: Dict[str, str] = {}
 # ░ ░          ░ ░         ░             ░      ░  ░     ░  ░         ░    ░        ░ ░  
 # ░                                                                      ░               
 # """
-
-
-numbers = r"""
-  __    __     _   ____  ____   ___   ___   ___  ____  ____  ___  
- /  \  /  \   / ) (___ \( __ \ / _ \ / __) / __)(__  )/ _  \/ _ \ 
-(  0 )(_/ /  / /   / __/ (__ ((__  ((___ \(  _ \  / / ) _  (\__  )
- \__/  (__) (_/   (____)(____/  (__/(____/ \___/ (_/  \____/(___/ 
-"""
 
 
 executing: str = r"""
@@ -279,16 +227,6 @@ compilling["computer"] = r"""
  ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═════╝  ╚═════╝ 
 """
 
-# compilling["edge]"] = r"""
-# ▄█▄    ████▄ █▀▄▀█ █ ▄▄  ▄█ █    ██      ▄   ██▄   ████▄
-# █▀ ▀▄  █   █ █ █ █ █   █ ██ █    █ █      █  █  █  █   █
-# █   ▀  █   █ █ ▄ █ █▀▀▀  ██ █    █▄▄█ ██   █ █   █ █   █
-# █▄  ▄▀ ▀████ █   █ █     ▐█ ███▄ █  █ █ █  █ █  █  ▀████
-# ▀███▀           █   █     ▐     ▀   █ █  █ █ ███▀       
-#                ▀     ▀             █  █   ██            
-#                                   ▀                     
-# """
-
 success: Dict[str, str] = {}
 
 
@@ -300,49 +238,6 @@ success["success"] = r"""
 ███████║╚██████╔╝╚██████╗███████╗███████║███████║╚██████╔╝
 ╚══════╝ ╚═════╝  ╚═════╝╚══════╝╚══════╝╚══════╝ ╚═════╝ 
 """
-
-# success["success3"] = r"""
-#   ██████  █    ██  ▄████▄  ▓█████   ██████   ██████  ▒█████  
-# ▒██    ▒  ██  ▓██▒▒██▀ ▀█  ▓█   ▀ ▒██    ▒ ▒██    ▒ ▒██▒  ██▒
-# ░ ▓██▄   ▓██  ▒██░▒▓█    ▄ ▒███   ░ ▓██▄   ░ ▓██▄   ▒██░  ██▒
-#   ▒   ██▒▓▓█  ░██░▒▓▓▄ ▄██▒▒▓█  ▄   ▒   ██▒  ▒   ██▒▒██   ██░
-# ▒██████▒▒▒▒█████▓ ▒ ▓███▀ ░░▒████▒▒██████▒▒▒██████▒▒░ ████▓▒░
-# ▒ ▒▓▒ ▒ ░░▒▓▒ ▒ ▒ ░ ░▒ ▒  ░░░ ▒░ ░▒ ▒▓▒ ▒ ░▒ ▒▓▒ ▒ ░░ ▒░▒░▒░ 
-# ░ ░▒  ░ ░░░▒░ ░ ░   ░  ▒    ░ ░  ░░ ░▒  ░ ░░ ░▒  ░ ░  ░ ▒ ▒░ 
-# ░  ░  ░   ░░░ ░ ░ ░           ░   ░  ░  ░  ░  ░  ░  ░ ░ ░ ▒  
-#       ░     ░     ░ ░         ░  ░      ░        ░      ░ ░  
-#                   ░                                          
-# """
-
-# success["success4"] = r"""
-#   █████████                                                       
-#  ███░░░░░███                                                      
-# ░███    ░░░  █████ ████  ██████   ██████   █████   █████   ██████ 
-# ░░█████████ ░░███ ░███  ███░░███ ███░░███ ███░░   ███░░   ███░░███
-#  ░░░░░░░░███ ░███ ░███ ░███ ░░░ ░███████ ░░█████ ░░█████ ░███ ░███
-#  ███    ░███ ░███ ░███ ░███  ███░███░░░   ░░░░███ ░░░░███░███ ░███
-# ░░█████████  ░░████████░░██████ ░░██████  ██████  ██████ ░░██████ 
-#  ░░░░░░░░░    ░░░░░░░░  ░░░░░░   ░░░░░░  ░░░░░░  ░░░░░░   ░░░░░░  
-# """
-
-# success["success5"] = r"""
-# .▄▄ · ▄• ▄▌ ▄▄· ▄▄▄ ..▄▄ · .▄▄ ·       
-# ▐█ ▀. █▪██▌▐█ ▌▪▀▄.▀·▐█ ▀. ▐█ ▀. ▪     
-# ▄▀▀▀█▄█▌▐█▌██ ▄▄▐▀▀▪▄▄▀▀▀█▄▄▀▀▀█▄ ▄█▀▄ 
-# ▐█▄▪▐█▐█▄█▌▐███▌▐█▄▄▌▐█▄▪▐█▐█▄▪▐█▐█▌.▐▌
-#  ▀▀▀▀  ▀▀▀ ·▀▀▀  ▀▀▀  ▀▀▀▀  ▀▀▀▀  ▀█▄▀▪
-# """
-
-# success["success6"] = r"""
-#    ▄▄▄▄▄   ▄   ▄█▄    ▄███▄     ▄▄▄▄▄    ▄▄▄▄▄   ████▄
-#   █     ▀▄  █  █▀ ▀▄  █▀   ▀   █     ▀▄ █     ▀▄ █   █
-# ▄  ▀▀▀▀▄ █   █ █   ▀  ██▄▄   ▄  ▀▀▀▀▄ ▄  ▀▀▀▀▄   █   █
-#  ▀▄▄▄▄▀  █   █ █▄  ▄▀ █▄   ▄▀ ▀▄▄▄▄▀   ▀▄▄▄▄▀    ▀████
-#          █▄ ▄█ ▀███▀  ▀███▀                           
-#           ▀▀▀                                         
-# """
-
-# --------------------------------------------------------------
 
 images: Dict[str, str] = {}
 
@@ -3269,9 +3164,9 @@ class Runner:
         pass
 
     @staticmethod
-    def subprocess_run(cmd: str, input_data: str = "", timeout:Optional[float] = None) -> Tuple[int, str, str]:
+    def subprocess_run(cmd: str, input_data: str = "", timeout:Optional[float] = None, folder: str | None = None) -> Tuple[int, str, str]:
         try:
-            answer = subprocess.run(cmd, shell=True, input=input_data, stdout=PIPE, stderr=PIPE, text=True, timeout=timeout)
+            answer = subprocess.run(cmd, cwd=folder, shell=True, input=input_data, stdout=PIPE, stderr=PIPE, text=True, timeout=timeout)
             err = ""
             if answer.returncode != 0:
                 err = answer.stderr + Runner.decode_code(answer.returncode)
@@ -4653,7 +4548,6 @@ class Loader:
 
 
 
-
 class CompileError(Exception):
     def __init__(self, message):
         self.message = message
@@ -4671,7 +4565,7 @@ class SolverBuilder:
             self.cache_dir = tempfile.mkdtemp()
         self.clear_cache()
         self.error_msg: str = ""
-        self.__executable: str = ""
+        self.__executable: tuple[str, str | None] = ("", None) # executavel e pasta
         self.compile_error: bool = False
 
     def check_tool(self, name):
@@ -4692,8 +4586,8 @@ class SolverBuilder:
         self.path_list = list_main + list_other
         return self
 
-    def set_executable(self, executable: str):
-        self.__executable = executable
+    def set_executable(self, executable: str, folder: str | None = None):
+        self.__executable = (executable, folder)
         return self
 
     def clear_cache(self):
@@ -4702,30 +4596,32 @@ class SolverBuilder:
         os.makedirs(self.cache_dir, exist_ok=True)
 
     def reset(self):
-        self.__executable = ""
+        self.__executable = ("", None)
         self.compile_error = False
         self.error_msg = ""
         self.clear_cache()
 
     def not_compiled(self):
-        return self.__executable == "" and not self.compile_error
+        cmd, folder = self.__executable
+        return cmd == "" and not self.compile_error
 
-    def get_executable(self, force_rebuild=False) -> str:
+    def get_executable(self, force_rebuild=False) -> tuple[str, str | None]:
         if (len(self.path_list) > 0 and self.not_compiled()) or force_rebuild:
             self.prepare_exec()
-        return self.__executable
+        cmd, folder = self.__executable
+        return (cmd, None if folder == "" else folder)
 
     def prepare_exec(self, free_run_mode: bool = False) -> None:
-        self.__executable = ""
+        self.set_executable("")
         path = self.path_list[0]
         self.compile_error = False
 
         if path.endswith(".py"):
-            self.__executable = "python " + path
+            self.set_executable("python " + path)
+        elif path.endswith(".yaml"):
+            self.__prepare_yaml()
         elif path.endswith(".mk"):
             self.__prepare_make()
-        elif path.endswith(".sh"):
-            self.__prepare_sh()
         elif path.endswith(".js"):
             self.__prepare_js(free_run_mode)
         elif path.endswith(".ts"):
@@ -4741,7 +4637,7 @@ class SolverBuilder:
         # elif path.endswith(".sql"):
         #     self.__prepare_sql()
         else:
-            self.__executable = path
+            self.set_executable(path)
 
     def __prepare_java(self):
         self.check_tool("javac")
@@ -4758,7 +4654,7 @@ class SolverBuilder:
             self.error_msg = stdout + stderr
             self.compile_error = True
         else:
-            self.__executable = "java -cp " + self.cache_dir + " " + filename[:-5]  # removing the .java
+            self.set_executable("java -cp " + self.cache_dir + " " + filename[:-5])  # removing the .java
 
     def comment_and_uncomment_node_input(self, free_run_mode: bool):
         for i in range(len(self.path_list)):
@@ -4787,6 +4683,23 @@ class SolverBuilder:
                         else:
                             f.write(line)
 
+    def __prepare_yaml(self):
+        solver = os.path.abspath(self.path_list[0])
+        folder = os.path.dirname(solver)
+        content = Decoder.load(solver)
+        yaml_data = yaml.safe_load(content)
+
+        if "build" in yaml_data and yaml_data["build"] is not None:
+            build_cmd = yaml_data["build"]
+            return_code, stdout, stderr = Runner.subprocess_run(build_cmd, folder = folder)
+            if return_code != 0:
+                self.error_msg = stdout + stderr
+                self.compile_error = True
+                return
+        if not "run" in yaml_data:
+            raise Warning(Text("{r}: Seu arquivo yaml precisa ter um campo {g} ", "Falha", "run:"))
+        self.set_executable(yaml_data["run"], folder)
+
     def __prepare_make(self):
         self.check_tool("make")
         solver = os.path.abspath(self.path_list[0])
@@ -4797,21 +4710,17 @@ class SolverBuilder:
             self.error_msg = stdout + stderr
             self.compile_error = True
         else:
-            self.__executable = "make -s -C {} -f {} run".format(folder, solver)
-
-    def __prepare_sh(self):
-        self.check_tool("bash")
-        self.__executable = "bash " + " ".join(self.path_list)
+            self.set_executable("make -s -C {} -f {} run".format(folder, solver))
 
     def __prepare_js(self, free_run_mode: bool):
         self.check_tool("node")
         solver = self.path_list[0]
         self.comment_and_uncomment_node_input(free_run_mode)
-        self.__executable = "node " + solver
+        self.set_executable("node " + solver)
 
     def __prepare_go(self):
         self.check_tool("go")
-        self.__executable = "go run " + " ".join(self.path_list)
+        self.set_executable("go run " + " ".join(self.path_list))
 
     # def __prepare_sql(self):
     #     self.check_tool("sqlite3")
@@ -4836,7 +4745,7 @@ class SolverBuilder:
             new_source_list = []
             for source in source_list:
                 new_source_list.append(os.path.join(self.cache_dir, os.path.basename(source)[:-2] + "js"))
-            self.__executable = "node " + " ".join(new_source_list)  # renaming solver to main
+            self.set_executable("node " + " ".join(new_source_list))  # renaming solver to main
     
     def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
         # solver = self.path_list[0]
@@ -4851,7 +4760,7 @@ class SolverBuilder:
             self.error_msg = stdout + stderr
             self.compile_error = True
         else:
-            self.__executable = exec_path
+            self.set_executable(exec_path)
 
     def __prepare_c(self):
         self.check_tool("gcc")
@@ -4884,10 +4793,11 @@ class UnitRunner:
         if solver.compile_error:
             unit.received = solver.error_msg
             return ExecutionResult.COMPILATION_ERROR
-        cmd = solver.get_executable()
+        cmd, folder = solver.get_executable()
         if timeout == 0:
             timeout = None
-        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.inserted, timeout)
+
+        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.inserted, timeout, folder)
         unit.received = stdout + stderr
         if return_code != 0:
             return ExecutionResult.EXECUTION_ERROR
@@ -5521,7 +5431,7 @@ class RemoteUrl:
         return self.get_raw_url()
 
 
-available_languages = ["c", "cpp", "py", "ts", "js", "java", "go", "sh", "mk"]
+available_languages = ["c", "cpp", "py", "ts", "java", "go", "yaml"]
 
 class Repository:
     CFG_FILE = "repository.json"
@@ -6623,8 +6533,6 @@ class TaskTree:
                             for t in q.get_tasks():
                                 items.append(len(t.title) + 6)
 
-        # print("debug", self.game.available_clusters)
-        # print("debug", self.game.available_quests)
         self.max_title = min_value
         if len(items) > 0:
             self.max_title = max(items)
@@ -7285,13 +7193,16 @@ class Opener:
         files = os.listdir(folder)
         files_to_open = []
         for f in files:
-            allowed = [self.language]
-            if self.language == "c" or self.language== "cpp":
-                allowed.append("h")
-                allowed.append("hpp")
-            if not f.endswith(tuple(allowed)):
+            path = os.path.join(folder, f)
+            if not os.path.isfile(path):
                 continue
-            files_to_open.append(os.path.join(folder, f))
+            # allowed = [self.language]
+            # if self.language == "c" or self.language== "cpp":
+            #     allowed.append("h")
+            #     allowed.append("hpp")
+            # if not f.endswith(tuple(allowed)):
+            #     continue
+            files_to_open.append(path)
         return files_to_open
 
     @staticmethod
@@ -7707,9 +7618,11 @@ class Free:
         if solver.compile_error:
             print(solver.error_msg)
         else:
-            cmd = solver.get_executable()
+            cmd, folder = solver.get_executable()
+            if folder == "":
+                folder = None
             print(Text().center(RawTerminal.get_terminal_size(), Token("─")))
-            answer = subprocess.run(cmd, shell=True, text=True)
+            answer = subprocess.run(cmd, cwd=folder, shell=True, text=True)
             if answer.returncode != 0 and answer.returncode != 1:
                 print(Runner.decode_code(answer.returncode))
         solver.reset()
@@ -8807,6 +8720,11 @@ run: $(EXEC)
 	@cat > $(INPUT_FILE)
 	./$(EXEC) < $(INPUT_FILE)
 """[1:]
+    
+    yaml_draft = r"""
+build: comando para construir o executável
+run: comando para rodar o programa
+"""[1:]
 
 
     drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft, 'java': java_draft, 'go': go_draft, 'mk': make_draft}
@@ -9697,8 +9615,9 @@ class Main:
                 return
             CmdPlay(settings).load_folder(folder).execute()
         else:
-            print(Text("{r}: não existe nenhuma repositório local cadastrado para o atalho {g}.", "Falha", args.alias))
-            print(Text("{g}: utilize o comando '{y}' para iniciar um repositório local.", "Atenção", "tko start " + args.alias))
+            print(Text("{r}: não existe nenhum repositório local cadastrado para o atalho {y}.", "Falha", args.alias))
+            print(Text("{g}: utilize o comando {y} para iniciar um repositório local.", "Atenção", "tko start [fup|poo|ed]"))
+            print(Text("{g}: {y}", "Exemplo", "tko start fup"))
         CheckVersion().version_check()
 
     @staticmethod
@@ -9774,6 +9693,8 @@ class Main:
         remote: str = args.remote
         Main.__init(remote=remote, url=None, file=None, folder=remote, save=remote)
         print(Text("Repositório {g} criado com sucesso na pasta {g}", remote, os.path.abspath(remote)))
+        print(Text("O atalho {g} foi vinculado a essa pasta, para acessá-lo", remote))
+        print(Text("basta utilizar o comando {g}", "tko play " + remote))
 
     # @staticmethod
     # def down(args):
@@ -9849,18 +9770,16 @@ class Parser:
         return parent_manip
 
     def add_parser_run(self):
-        parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='run with test cases using curses.')
+        parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='Run with test cases using curses.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
-        # parser_r.add_argument("--cmd", type=str, help="bash command to run code")
         parser_r.set_defaults(func=Main.run)
 
     def add_parser_exec(self):
-        parser_r = self.subparsers.add_parser('test', parents=[self.parent_basic], help='run with test cases.')
+        parser_r = self.subparsers.add_parser('test', parents=[self.parent_basic], help='Run with test cases using raw terminal.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
         parser_r.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures')
-        # parser_r.add_argument("--cmd", type=str, help="bash command to run code")
 
         group_n = parser_r.add_mutually_exclusive_group()
         group_n.add_argument('--quiet', '-q', action='store_true', help='quiet mode, do not show any failure.')
@@ -9873,7 +9792,7 @@ class Parser:
         parser_r.set_defaults(func=Main.test)
 
     def add_parser_build(self):
-        parser_b = self.subparsers.add_parser('build', parents=[self.parent_manip], help='build a test target.')
+        parser_b = self.subparsers.add_parser('build', parents=[self.parent_manip], help='Build a test target.')
         parser_b.add_argument('target', metavar='T_OUT', type=str, help='target to be build.')
         parser_b.add_argument('target_list', metavar='T', type=str, nargs='+', help='input test targets.')
         parser_b.set_defaults(func=Main.build)
@@ -9886,7 +9805,7 @@ class Parser:
     #     parser_d.set_defaults(func=Main.down)
 
     def add_parser_config(self):
-        parser_cfg = self.subparsers.add_parser('config', help='settings tool.')
+        parser_cfg = self.subparsers.add_parser('config', help='Settings tool.')
         subpar_repo = parser_cfg.add_subparsers(title='subcommands', help='help for subcommand.')
 
         cfg_reset = subpar_repo.add_parser('reset', help='reset all repositories, folders and values to factory default.')
@@ -9917,7 +9836,7 @@ class Parser:
 
     def add_parser_rep_tools(self):
 
-        parser_repo = self.subparsers.add_parser('rep', help='Repository tools.')
+        parser_repo = self.subparsers.add_parser('rep', help='Repository validation tools.')
         subpar_repo = parser_repo.add_subparsers(title='subcommands', help='help for subcommand.')
 
         # repo_reset = subpar_repo.add_parser('reset', help='reset all repositories and folders to factory default.')
@@ -10015,6 +9934,7 @@ def main():
         print("\n\nKeyboard Interrupt")
         sys.exit(1)
     except Warning as w:
+        print("")
         print(w)
         sys.exit(1)
     # except Exception as e:

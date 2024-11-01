@@ -72,6 +72,11 @@ run: $(EXEC)
 	@cat > $(INPUT_FILE)
 	./$(EXEC) < $(INPUT_FILE)
 """[1:]
+    
+    yaml_draft = r"""
+build: comando para construir o executável
+run: comando para rodar o programa
+"""[1:]
 
 
     drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft, 'java': java_draft, 'go': go_draft, 'mk': make_draft}

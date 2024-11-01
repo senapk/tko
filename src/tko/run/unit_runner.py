@@ -16,10 +16,11 @@ class UnitRunner:
         if solver.compile_error:
             unit.received = solver.error_msg
             return ExecutionResult.COMPILATION_ERROR
-        cmd = solver.get_executable()
+        cmd, folder = solver.get_executable()
         if timeout == 0:
             timeout = None
-        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.inserted, timeout)
+
+        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.inserted, timeout, folder)
         unit.received = stdout + stderr
         if return_code != 0:
             return ExecutionResult.EXECUTION_ERROR
