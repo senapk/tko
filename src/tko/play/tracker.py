@@ -91,10 +91,8 @@ class Tracker:
                 # print("Saved file: ", stored)
             else:
                 change_time = os.path.getmtime(file)
-                print("debug", last_file, change_time)
                 last_file_path = os.path.join(self._folder, last_file)
                 last_time = os.path.getmtime(last_file_path)
-                print("debug", last_file, last_time)
 
                 if change_time > last_time:
                     stored = self.save_file_with_timestamp_prefix(timestamp, file)
