@@ -1,5 +1,7 @@
 # Changelog
 
+- 1.8.3
+  - fix: searching error if empty entry
 - 1.8.1
   - add: splitlines instead split("\n")
 - 1.8.0

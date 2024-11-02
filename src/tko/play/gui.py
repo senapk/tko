@@ -52,9 +52,12 @@ class Gui:
         ]
         return help_fixed
 
-    def get_activate_label(self):
-        output: str = "GuiActions.activate"
-        obj = self.tree.get_selected()
+    def get_activate_label(self) -> str:
+        output: str = GuiActions.activate
+        try:
+            obj = self.tree.get_selected()
+        except IndexError:
+            return "Retornar"
         if isinstance(obj, Quest):
             quest: Quest = obj
             if quest.key in self.tree.expanded:

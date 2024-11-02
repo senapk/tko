@@ -31,7 +31,7 @@ from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
 import chardet # type: ignore
-__version__ = "1.8.2"
+__version__ = "1.8.3"
 
 class CheckVersion:
 
@@ -6811,8 +6811,11 @@ class TaskTree:
         return 0
 
     def get_selected(self) -> TreeItem:
-        index = self.get_selected_index()
-        return self.items[index]
+        if len(self.items) > 0:
+            index = self.get_selected_index()
+            return self.items[index]
+        raise IndexError("No item selected")
+            
 
     def mass_mark(self):
         obj = self.get_selected()
@@ -7226,9 +7229,12 @@ class Gui:
         ]
         return help_fixed
 
-    def get_activate_label(self):
-        output: str = "GuiActions.activate"
-        obj = self.tree.get_selected()
+    def get_activate_label(self) -> str:
+        output: str = GuiActions.activate
+        try:
+            obj = self.tree.get_selected()
+        except IndexError:
+            return "Retornar"
         if isinstance(obj, Quest):
             quest: Quest = obj
             if quest.key in self.tree.expanded:
