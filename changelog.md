@@ -1,5 +1,7 @@
 # Changelog
 
+- 1.8.4
+  - fix: rewriting ts and js files without changes in tracking
 - 1.8.3
   - fix: searching error if empty entry
 - 1.8.1

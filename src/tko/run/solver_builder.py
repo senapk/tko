@@ -7,6 +7,7 @@ from tko.util.text import Text
 from tko.util.runner import Runner
 from tko.util.decoder import Decoder
 import yaml #type: ignore
+import io
 
 class CompileError(Exception):
     def __init__(self, message):
@@ -121,27 +122,36 @@ class SolverBuilder:
             path = self.path_list[i]
             encoding = Decoder.get_encoding(path)
             with open(path, "r", encoding=encoding) as f:
-                lines = f.readlines()
-            with open(path, "w", encoding="utf-8") as f:
-                for line in lines:
-                    if free_run_mode:
-                        if '_TEST_ONLY_' in line and not line.startswith("//"):
-                            f.write("//" + line)
-                        elif '_FREE_ONLY' in line and line.startswith("// function"):
-                            f.write(line[3:])
-                        elif '_FREE_ONLY' in line and line.startswith("//"):
-                            f.write(line[2:])
-                        else:
-                            f.write(line)
+                content = f.read()
+                lines = content.splitlines(keepends=True)
+                
+            f = io.StringIO()
+
+            for line in lines:
+                if free_run_mode:
+                    if '_TEST_ONLY_' in line and not line.startswith("//"):
+                        f.write("//" + line)
+                    elif '_FREE_ONLY' in line and line.startswith("// function"):
+                        f.write(line[3:])
+                    elif '_FREE_ONLY' in line and line.startswith("//"):
+                        f.write(line[2:])
                     else:
-                        if '_FREE_ONLY_' in line and not line.startswith("//"):
-                            f.write("//" + line)
-                        elif '_TEST_ONLY' in line and line.startswith("// function"):
-                            f.write(line[3:])
-                        elif '_TEST_ONLY' in line and line.startswith("//"):
-                            f.write(line[2:])
-                        else:
-                            f.write(line)
+                        f.write(line)
+                else:
+                    if '_FREE_ONLY_' in line and not line.startswith("//"):
+                        f.write("//" + line)
+                    elif '_TEST_ONLY' in line and line.startswith("// function"):
+                        f.write(line[3:])
+                    elif '_TEST_ONLY' in line and line.startswith("//"):
+                        f.write(line[2:])
+                    else:
+                        f.write(line)
+            
+            result = f.getvalue()
+            f.close()
+            if result != content:
+                with open(path, "w", encoding="utf-8") as f:
+                    f.write(result)
 
     def __prepare_yaml(self):
         solver = os.path.abspath(self.path_list[0])
