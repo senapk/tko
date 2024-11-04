@@ -1,5 +1,7 @@
 # Changelog
 
+- 1.8.5
+  - fix: interactive msg
 - 1.8.4
   - fix: rewriting ts and js files without changes in tracking
 - 1.8.3

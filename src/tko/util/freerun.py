@@ -34,7 +34,8 @@ class Free:
         to_run_again = False
         if wait_input:
             print(Text().center(RawTerminal.get_terminal_size(), Token("─")))
-            print(Text().addf("y", "Deseja compilar e executar novamente? [").addf("c", "S").addf("y", "/n]: "), end="")
+            print(Text("Para [recompilar e] reexecutar digite: {y}", "<enter>"))
+            print(Text("Para voltar para tela anterior digite: {y}", "q<enter>"))
             valor = input()
             if valor != "n" and valor != "q":
                 if to_clear:
