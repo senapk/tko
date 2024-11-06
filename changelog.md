@@ -1,5 +1,7 @@
 # Changelog
 
+- 1.8.6
+  - fix: change esbuild command to npx esbuild to allow local instalation
 - 1.8.5
   - fix: interactive msg
 - 1.8.4

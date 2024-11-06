@@ -36,22 +36,10 @@ Você precisará do compilador próprio da linguagem que for programar, instale 
 - c/c++: `gcc` ou `g++`
 - java: `javac`
 - python: `python3`
-- javascript: `node`
 - typescript: `node`, `esbuild`, `readline-sync`
+- Você pode utilizar qualquer outra linguagens que quiser, basta instalar o compilador correspondente e definir o comando de compilação e execução correspondente.
 
-### typescript
-
-```bash
-# para instalar o esbuild, use o npm
-# se estiver no windows, abra o terminal do powershell como admin
-# no linux use sudo
-npm install -g esbuild typescript
-
-# inicie o tko com tko play e ele vai perguntar a pasta de instalação padrão
-# após definir, navegue até a pasta e rode os comandos
-npm i --save-dev @types/node
-npm install readline-sync
-```
+Os comandos para instalar e configurar os compiladores para cada linguagem estão disponíveis no [linux.md](install/linux.md).
 
 ## Para interagir com os repositórios, navegar, baixar, testar
 

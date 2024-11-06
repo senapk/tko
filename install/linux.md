@@ -1,86 +1,65 @@
 # Instalação no Linux
 
-## Ubuntu
-
-### Instalação básica
-
-Para instalar, no ubuntu, debian e derivados, execute o comando:
+## Instalação básica
 
 ```bash
-sudo apt install python3-pip
-pip install tko
+# instalando o python
+sudo apt install python3 python3-pip # no ubuntu e derivados
+sudo pacman -S python-pip            # arch e derivados
 
+# instalando o tko
+pip  install tko  # versões antigas do ubuntu
+pipx install tko  # arch e versões mais novas do ubuntu
+
+# Em algumas distros, o pip(x) não adiciona o path dos binários instalados localmente.
+# Se ao executar o comando tko você receber um erro de comando não encontrado
+# execute o comando abaixo
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 ```
 
-### Atualizar
+### Atualizando seu tko
 
 Para atualizar, basta executar o comando:
 
 ```bash
-pip install tko --force
+pip install tko --upgrade # versões antigas do ubuntu
+pipx upgrade tko          # arch e versões mais novas do ubuntu
 ```
 
-### Instalando os compiladores
+### Instalando os compiladores (node, c, c++ e java)
 
-Para instalar com compiladores das linguagens que você for utilizar, execute o comando:
+Para instalar com compiladores das linguagens que você for utilizar, execute o comando apropriado
+
+- Ubuntu
 
 ```bash
-
 ## se for usar nodejs
 sudo apt install nodejs
-
-## se for utilizar typescript
-npm install -g esbuild
-npm i --save-dev @types/node
-npm install readline-sync
-
 ## se for utilizar java
 sudo apt install openjdk-11-jdk
-
 ## se for utilizar g++ ou gcc
 sudo apt install build-essential
-
-## se for utilizar python
-sudo apt install python3
 ```
 
-## Arch e Manjaro
-
-### Instalação básica Arch
-
-No arch e manjaro, execute o comando:
-
-```bash
-sudo pacman -S python-pip
-pipx install tko
-```
-
-### Atualizar no arch
-
-Para atualizar, basta executar o comando:
-
-```bash
-pipx install tko --force
-```
-
-### Instalando os compiladores no Arch
+- Arch
 
 Para instalar com compiladores das linguagens que você for utilizar, execute o comando:
 
 ```bash
 ## nodejs
 sudo pacman -S nodejs
-
-## typescript
-npm install -g esbuild
-npm i --save-dev @types/node
-npm install readline-sync
-
 ## java
 sudo pacman -S jdk-openjdk
-
 ## g++ ou gcc
 sudo pacman -S base-devel
 
+```
+
+### Typescript
+
+Navegue até a pasta onde quer instalar os módulos do node e execute os comandos.
+
+```bash
+npm install --save-dev @types/node
+npm install typescript esbuild readline-sync
 ```

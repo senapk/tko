@@ -11,48 +11,7 @@
 
 ## Instalando o TKO
 
-Depois de criar o codespace, abra o terminal e execute o comando:
-
-```bash
-
-pip install tko
-
-# depois de instalado, defina a pasta atual 
-# como padrão para download
-tko config --root .
-```
-
-## Instalando ferramentas para linguagens de programação
-
-Python, c, c++, javascript, java e go não precisam de nenhum software adicional.
-
-Para typescript, você precisa instalar o `esbuild`.
-
-```bash
-npm install -g esbuild typescript
-npm i --save-dev @types/node
-npm install readline-sync
-```
-
-Se precisar refazer a instalação dos módulos por algum motivo, execute:
-
-```bash
-rm -rf node_modules package-lock.json package.json
-```
-
-E refaça os comandos da instalação.
-
-## Adicionando alguns atalhos úteis no bash
-
-```bash
-echo "" >> ~/.bashrc
-echo "alias update='pip install tko --upgrade'" >> ~/.bashrc
-echo "alias play='tko play'" >> ~/.bashrc
-echo "alias run='tko run'" >> ~/.bashrc
-echo "" >> ~/.bashrc
-```
-
-Reinicie o terminal com Control D para reiniciar o bash
+Depois de criar o codespace, abra o terminal e execute os comandos em [install/linux.md](linux.md) para instalar as ferramentas necessárias para as linguagens de programação que você for utilizar.
 
 ## Salvando os dados no repositório
 

@@ -199,12 +199,13 @@ class SolverBuilder:
     def __prepare_ts(self, free_run_mode: bool):
         self.comment_and_uncomment_node_input(free_run_mode)
         
-        transpiler = "esbuild"
+        transpiler = "npx"
         if os.name == "nt":
             transpiler += ".cmd"
 
         self.check_tool(transpiler)
         self.check_tool("node")
+        transpiler = "npx esbuild"
         source_list = self.path_list
         cmd = [transpiler] + source_list + ["--outdir=" + self.cache_dir, "--format=cjs", "--log-level=error"]
         return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
