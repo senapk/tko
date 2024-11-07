@@ -3,6 +3,8 @@ import os
 import shutil
 import argparse
 import csv
+from tko.play.patch_history import PatchHistory, PatchVersion
+from tko.util.decoder import Decoder
 
 class Track:
     def __init__(self):
@@ -34,10 +36,7 @@ class Tracker:
         self._result: str = "None"
         self.log_file = "track.csv"
         self.track_folder = ".track"
-        self.extension = ".log"
-        self.posfix = ":"
-        self.timestamp_size = len(self.get_timestamp() + self.posfix)
-        self.extension_size = len(self.extension)
+        self.extension = ".json"
 
     def set_files(self, files: list[str]):
         self._files = [os.path.abspath(f) for f in files]
@@ -62,17 +61,20 @@ class Tracker:
     def get_timestamp(self):
         return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-    def get_file_history(self, file: str, file_list: list[str]):
-        filename = os.path.basename(file)
-        file_list = [f for f in file_list if f[self.timestamp_size:-self.extension_size] == filename]
-        return sorted(file_list)
-
+    # return timestamp of the last version of the file
     def save_file_with_timestamp_prefix(self, timestamp: str, file: str) -> str:
         filename = os.path.basename(file)
-        destination = os.path.join(self._folder, f"{timestamp}{self.posfix}{filename}{self.extension}")
-        shutil.copy(file, destination)
-        return destination
-        
+        ph = PatchHistory()
+        json_file = destination = os.path.join(self._folder, f"{filename}{self.extension}")
+        ph.set_json_file(json_file)
+        ph.load_json()
+
+        content = Decoder.load(file)
+        last_version = ph.store_version(timestamp, content)
+        if last_version == timestamp:
+            ph.save_json()
+            return timestamp
+        return last_version
 
     def store(self):
         os.makedirs(self._folder, exist_ok=True)
@@ -83,24 +85,9 @@ class Tracker:
         timestamp = self.get_timestamp()
 
         for file in self._files:
-            saved_files = self.get_file_history(file, file_list)
-            last_file = saved_files[-1] if len(saved_files) > 0 else ""
-            if last_file == "":
-                stored = self.save_file_with_timestamp_prefix(timestamp, file)
-                files_in_this_version.append(stored)
-                # print("Saved file: ", stored)
-            else:
-                change_time = os.path.getmtime(file)
-                last_file_path = os.path.join(self._folder, last_file)
-                last_time = os.path.getmtime(last_file_path)
-
-                if change_time > last_time:
-                    stored = self.save_file_with_timestamp_prefix(timestamp, file)
-                    # print("Updated file: ", file)
-                    files_in_this_version.append(stored)
-                else:
-                    files_in_this_version.append(last_file)
-        
+            stored = self.save_file_with_timestamp_prefix(timestamp, file)
+            filename = os.path.basename(file)
+            files_in_this_version.append(filename + ":" + stored)
 
         log_file = self.get_log_full_path()
         track = Track().set_timestamp(timestamp).set_files(files_in_this_version).set_result(self._result)

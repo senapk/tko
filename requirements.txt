@@ -8,6 +8,7 @@ types-appdirs
 pydot
 chardet
 types-chardet
+diff_match_patch
 
 # PyPI package deployment
 build

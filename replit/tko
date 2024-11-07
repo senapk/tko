@@ -12,6 +12,7 @@ from urllib.request import urlopen
 import urllib
 import curses
 import datetime
+from diff_match_patch import diff_match_patch # type: ignore
 import random
 import shutil
 import csv
@@ -32,7 +33,7 @@ from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
 import chardet # type: ignore
-__version__ = "1.8.6"
+__version__ = "1.9.0"
 
 class CheckVersion:
 
@@ -86,6 +87,93 @@ class Colors:
             if hasattr(self, key):
                 setattr(self, key, value)
         return self
+
+
+class PatchVersion:
+    def __init__(self, label: str, content: str):
+        self.label: str = label
+        self.content: str = content
+    
+    def __str__(self):
+        return "{}:{}".format(self.label, self.content)
+
+
+class PatchHistory:
+    def __init__(self):
+        # the last element is the integral last version
+        # all the other elements are patches to be applied
+        self.patches: list[PatchVersion] = [] 
+        self.json_file: str | None = None
+
+    def set_json_file(self, path: str):
+        self.json_file = path
+
+    def load_json(self):
+        if not self.json_file:
+            return
+        if os.path.exists(self.json_file):
+            try:
+                with open(self.json_file, 'r') as file:
+                    data = json.load(file)
+                    for patch in data["patches"]:
+                        self.patches.append(PatchVersion(patch["label"], patch["content"]))
+            except:
+                pass
+
+    # save patches, label and content to json file
+    def save_json(self):
+        if not self.json_file:
+            return
+        with open(self.json_file, 'w') as file:
+            json.dump(self.to_json(), file, indent=4)
+
+    # store a new version of the file in json
+    # return the label of the last version stored
+    def store_version(self, label: str, new_content: str) -> str:
+        if not self.patches:
+            self.patches.append(PatchVersion(label, new_content))
+            return label
+        
+        dmp = diff_match_patch()
+        last = self.patches[-1]
+        del self.patches[-1]
+
+        patch = dmp.patch_make(new_content, last.content)
+        if not patch: # não houve mudança
+            return last.label
+        
+        patch_text = dmp.patch_toText(patch)
+        self.patches.append(PatchVersion(last.label, patch_text))
+        self.patches.append(PatchVersion(label, new_content))
+        return label
+
+    def restore_all(self) -> list[PatchVersion]:
+        output: list[PatchVersion] = []
+        if not self.patches:
+            return output
+        last = self.patches[-1]
+        output.append(PatchVersion(last.label, last.content))
+        index = len(self.patches) -2
+        dmp = diff_match_patch()
+        while index >= 0:
+            label = self.patches[index].label
+            patch = dmp.patch_fromText(self.patches[index].content)
+            original = output[-1].content
+            new_content = dmp.patch_apply(patch, original)[0]
+            output.append(PatchVersion(label, new_content))
+            index -= 1
+        output.reverse()
+        return output
+
+    def to_json(self):
+        data: dict = {}
+        data["patches"] = []
+        for patch in self.patches:
+            data["patches"].append({"label": patch.label, "content": patch.content})
+        return data
+    
+    def __str__(self):
+        return str(self.to_json())
 
 def random_get(dic: dict, str_key: str, mode:str = "static"):
     if mode == "static":
@@ -826,119 +914,6 @@ class InputManager:
             if value == InputManager.cedilha: #ç
                 value = ord("c")
         return value
-
-class Track:
-    def __init__(self):
-        self.timestamp = ""
-        self.files: list[str] = []
-        self.result: str = ""
-
-    def set_timestamp(self, timestamp: str):
-        self.timestamp = timestamp
-        return self
-    
-    def set_files(self, files: list[str]):
-        self.files = [os.path.basename(f) for f in files]
-        return self
-    
-    def set_result(self, result: str):
-        self.result = result
-        return self
-    
-    def track_to_column(self):
-        return [self.timestamp, self.result, ";".join(self.files)]
-
-
-class Tracker:
-
-    def __init__(self):
-        self._files: list[str] = []
-        self._folder: str = ""
-        self._result: str = "None"
-        self.log_file = "track.csv"
-        self.track_folder = ".track"
-        self.extension = ".log"
-        self.posfix = ":"
-        self.timestamp_size = len(self.get_timestamp() + self.posfix)
-        self.extension_size = len(self.extension)
-
-    def set_files(self, files: list[str]):
-        self._files = [os.path.abspath(f) for f in files]
-        return self
-    
-    def set_result(self, result: str):
-        self._result = result
-        return self
-    
-    def set_percentage(self, percentage: int):
-        self._result = "{}%".format(str(percentage).ljust(3, "0"))
-        return self
-
-    def get_log_full_path(self):
-        return os.path.join(self._folder, self.log_file)
-
-    def set_folder(self, folder: str):
-        self._folder = os.path.join(folder, self.track_folder)
-        return self
-    
-    # in format: YYYY-MM-DD HH:MM:SS
-    def get_timestamp(self):
-        return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-
-    def get_file_history(self, file: str, file_list: list[str]):
-        filename = os.path.basename(file)
-        file_list = [f for f in file_list if f[self.timestamp_size:-self.extension_size] == filename]
-        return sorted(file_list)
-
-    def save_file_with_timestamp_prefix(self, timestamp: str, file: str) -> str:
-        filename = os.path.basename(file)
-        destination = os.path.join(self._folder, f"{timestamp}{self.posfix}{filename}{self.extension}")
-        shutil.copy(file, destination)
-        return destination
-        
-
-    def store(self):
-        os.makedirs(self._folder, exist_ok=True)
-        file_list = os.listdir(self._folder)
-        file_list = [f for f in file_list if f.endswith(self.extension)]
-
-        files_in_this_version: list[str] = []
-        timestamp = self.get_timestamp()
-
-        for file in self._files:
-            saved_files = self.get_file_history(file, file_list)
-            last_file = saved_files[-1] if len(saved_files) > 0 else ""
-            if last_file == "":
-                stored = self.save_file_with_timestamp_prefix(timestamp, file)
-                files_in_this_version.append(stored)
-                # print("Saved file: ", stored)
-            else:
-                change_time = os.path.getmtime(file)
-                last_file_path = os.path.join(self._folder, last_file)
-                last_time = os.path.getmtime(last_file_path)
-
-                if change_time > last_time:
-                    stored = self.save_file_with_timestamp_prefix(timestamp, file)
-                    # print("Updated file: ", file)
-                    files_in_this_version.append(stored)
-                else:
-                    files_in_this_version.append(last_file)
-        
-
-        log_file = self.get_log_full_path()
-        track = Track().set_timestamp(timestamp).set_files(files_in_this_version).set_result(self._result)
-        with open(log_file, encoding="utf-8", mode="a") as f:
-            writer = csv.writer(f)
-            writer.writerow(track.track_to_column())
-
-    @staticmethod
-    def main():
-        parser = argparse.ArgumentParser(description="Track files changes.")
-        parser.add_argument("files", metavar="files", type=str, nargs="+", help="files to be tracked.")
-        args = parser.parse_args()
-        
-        tracker = Tracker().set_folder(".track").set_files(args.files)
-        tracker.store()
 tko_guide = """
        ╔════ TKO GUIA COMPACTO ════╗
 ╔══════╩═════ BAIXAR PROBLEMA ═════╩═══════╗
@@ -3783,6 +3758,104 @@ class Decoder:
             if encoding is None or enc_dict["confidence"] < 0.90:
                 encoding = "utf-8"
             return encoding
+
+class Track:
+    def __init__(self):
+        self.timestamp = ""
+        self.files: list[str] = []
+        self.result: str = ""
+
+    def set_timestamp(self, timestamp: str):
+        self.timestamp = timestamp
+        return self
+    
+    def set_files(self, files: list[str]):
+        self.files = [os.path.basename(f) for f in files]
+        return self
+    
+    def set_result(self, result: str):
+        self.result = result
+        return self
+    
+    def track_to_column(self):
+        return [self.timestamp, self.result, ";".join(self.files)]
+
+
+class Tracker:
+
+    def __init__(self):
+        self._files: list[str] = []
+        self._folder: str = ""
+        self._result: str = "None"
+        self.log_file = "track.csv"
+        self.track_folder = ".track"
+        self.extension = ".json"
+
+    def set_files(self, files: list[str]):
+        self._files = [os.path.abspath(f) for f in files]
+        return self
+    
+    def set_result(self, result: str):
+        self._result = result
+        return self
+    
+    def set_percentage(self, percentage: int):
+        self._result = "{}%".format(str(percentage).ljust(3, "0"))
+        return self
+
+    def get_log_full_path(self):
+        return os.path.join(self._folder, self.log_file)
+
+    def set_folder(self, folder: str):
+        self._folder = os.path.join(folder, self.track_folder)
+        return self
+    
+    # in format: YYYY-MM-DD HH:MM:SS
+    def get_timestamp(self):
+        return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+    # return timestamp of the last version of the file
+    def save_file_with_timestamp_prefix(self, timestamp: str, file: str) -> str:
+        filename = os.path.basename(file)
+        ph = PatchHistory()
+        json_file = destination = os.path.join(self._folder, f"{filename}{self.extension}")
+        ph.set_json_file(json_file)
+        ph.load_json()
+
+        content = Decoder.load(file)
+        last_version = ph.store_version(timestamp, content)
+        if last_version == timestamp:
+            ph.save_json()
+            return timestamp
+        return last_version
+
+    def store(self):
+        os.makedirs(self._folder, exist_ok=True)
+        file_list = os.listdir(self._folder)
+        file_list = [f for f in file_list if f.endswith(self.extension)]
+
+        files_in_this_version: list[str] = []
+        timestamp = self.get_timestamp()
+
+        for file in self._files:
+            stored = self.save_file_with_timestamp_prefix(timestamp, file)
+            filename = os.path.basename(file)
+            files_in_this_version.append(filename + ":" + stored)
+
+        log_file = self.get_log_full_path()
+        track = Track().set_timestamp(timestamp).set_files(files_in_this_version).set_result(self._result)
+        with open(log_file, encoding="utf-8", mode="a") as f:
+            writer = csv.writer(f)
+            writer.writerow(track.track_to_column())
+
+    @staticmethod
+    def main():
+        parser = argparse.ArgumentParser(description="Track files changes.")
+        parser.add_argument("files", metavar="files", type=str, nargs="+", help="files to be tracked.")
+        args = parser.parse_args()
+        
+        tracker = Tracker().set_folder(".track").set_files(args.files)
+        tracker.store()
 
 
 def load_html_tags(task: str) -> Optional[str]:

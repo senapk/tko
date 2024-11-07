@@ -1,5 +1,7 @@
 # Changelog
 
+- 1.9.0
+  - add: tracker now uses incremental patches do store changes in a single json per file
 - 1.8.6
   - fix: change esbuild command to npx esbuild to allow local instalation
 - 1.8.5
