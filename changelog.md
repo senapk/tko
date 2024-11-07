@@ -1,5 +1,7 @@
 # Changelog
 
+- 1.9.1
+  - add: dependence mismatch
 - 1.9.0
   - add: tracker now uses incremental patches do store changes in a single json per file
 - 1.8.6
