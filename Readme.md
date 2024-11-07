@@ -15,21 +15,26 @@ O TKO é um sistema de testes para programação competitiva. Ele é capaz de ro
 
 ### Windows
 
-- Vamos instalar o WSL e o vscode no WSL
+- Vamos instalar o WSL. Abra o powershell e digite
 
 ```bash
-# instale o wls
 wsl --install
-
-# dê enter e reinicie o computador e abra o terminal o wsl pelo 
-# aplicativo de nome ubuntu
-# Abra o vscode pelo windows e instale a extensão WSL 
-# com 30 M de downloads
-# Abra O TERMINAL DO WSL e digite
-code .
-# para finalizar a configuração do vscode no WSL
-# abra o terminal do wsl e siga os passos da instalação para Ubuntu
 ```
+
+- Aceite as opções e espere terminar a instalação. Reinicie o computador.
+- Agora vamos configurar o vscode pra funcionar com o WSL.
+- Instale o vscode normalmente pelo windows.
+- Abra o vscode pelo windows e instale a extensão WSL com 30 M de downloads
+- No lançador de aplicativos do windows, procure por "WSL" e abra o terminal do ubuntu
+- Digite o comando abaixo em qualquer pasta para configurar vscode no ubuntu
+
+```bash
+code .
+```
+
+- Esse comando irá instalar os componenetes necessários para abrir o vscode pelo wsl.
+- Agora, sempre que quiser abrir um repositório, abra o terminal do ubuntu, navegue até a pasta do repositório e execute o comando `code .`
+- Vamos seguir para falta o tko e os compiladores no seu novo linux ubuntu no wsl.
 
 ### Instalando o Python e o pipx
 
@@ -43,9 +48,10 @@ sudo pacman -S python-pipx
 ### Instalando o tko
 
 ```bash
-# instalando o tko
-pip  install tko  # versões antigas do ubuntu
-pipx install tko  # arch e versões mais novas do ubuntu
+# versões antigas do ubuntu
+pip  install tko  
+# arch e versões mais novas do ubuntu
+pipx install tko  
 
 # Em algumas distros, o pip(x) não adiciona o path dos binários instalados localmente.
 # Se ao executar o comando tko você receber um erro de comando não encontrado
@@ -55,7 +61,7 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 
 ## Atualizando seu tko
 
-Para atualizar, basta executar o comando:
+Para atualizar o tko para versão mais recente, basta executar o comando:
 
 ```bash
 pip install tko --upgrade # versões antigas do ubuntu
@@ -98,7 +104,7 @@ npm install typescript esbuild readline-sync
 
 ## Para interagir com os repositórios, navegar, baixar, testar
 
-Os `[]` e `<>` indicam onde devem ser colocados os comandos. Os `|` indicam opções.
+Os `[]` e `<>` indicam onde devem ser colocados os parâmetros. Os `|` indicam opções.
 
 ```bash
 # primeiro crie um repositório local na pasta local
