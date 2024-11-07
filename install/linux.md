@@ -2,11 +2,18 @@
 
 ## Instalação básica
 
-```bash
-# instalando o python
-sudo apt install python3 python3-pip # no ubuntu e derivados
-sudo pacman -S python-pip            # arch e derivados
+### Instalando o Python e o pipx
 
+```bash
+# ubuntu e wsl
+sudo apt install -y python3-pip pipx
+# arch
+sudo pacman -S python-pipx
+```
+
+### Instalando o tko
+
+```bash
 # instalando o tko
 pip  install tko  # versões antigas do ubuntu
 pipx install tko  # arch e versões mais novas do ubuntu
@@ -17,49 +24,45 @@ pipx install tko  # arch e versões mais novas do ubuntu
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 ```
 
-### Atualizando seu tko
+## Atualizando seu tko
 
 Para atualizar, basta executar o comando:
 
 ```bash
 pip install tko --upgrade # versões antigas do ubuntu
-pipx upgrade tko          # arch e versões mais novas do ubuntu
+pipx upgrade tko          # arch, ubuntu e wsl
 ```
 
-### Instalando os compiladores (node, c, c++ e java)
+## Instalando os compiladores
 
-Para instalar com compiladores das linguagens que você for utilizar, execute o comando apropriado
+- Você pode utilizar qualquer outra linguagens que quiser, basta instalar o compilador correspondente e definir o comando de compilação e execução correspondentes.
 
-- Ubuntu
+### WSL e Ubuntu
 
 ```bash
-## se for usar nodejs
-sudo apt install nodejs
-## se for utilizar java
-sudo apt install openjdk-11-jdk
-## se for utilizar g++ ou gcc
+# C e C++
 sudo apt install build-essential
+# Python
+sudo apt install python3
+# Java
+sudo apt install openjdk-11-jdk
+# Typescript
+sudo apt install nodejs
+npm install --save-dev @types/node
+npm install typescript esbuild readline-sync
 ```
 
-- Arch
-
-Para instalar com compiladores das linguagens que você for utilizar, execute o comando:
+### Arch
 
 ```bash
-## nodejs
-sudo pacman -S nodejs
-## java
-sudo pacman -S jdk-openjdk
-## g++ ou gcc
+# C e C++
 sudo pacman -S base-devel
-
-```
-
-### Typescript
-
-Navegue até a pasta onde quer instalar os módulos do node e execute os comandos.
-
-```bash
+# Python
+sudo pacman -S python3
+# Java
+sudo pacman -S jdk-openjdk
+# Typescript
+sudo pacman -S nodejs
 npm install --save-dev @types/node
 npm install typescript esbuild readline-sync
 ```

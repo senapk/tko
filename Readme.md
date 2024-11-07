@@ -11,49 +11,127 @@ O TKO é um sistema de testes para programação competitiva. Ele é capaz de ro
 - [ED - Estrutura de Dados](https://github.com/qxcodeed/arcade)
 - [POO - Programação Orientada a Objetos](https://github.com/qxcodepoo/arcade)
 
-![intro](install/intro.webp)
-
 ## Instalação
 
-| [Windows](install/windows.md) | [Linux](install/linux.md) | [Replit](replit/Readme.md) | [Codespace](install/codespace.md) |
-| ------- | ----- | ------ | --------- |
-| [![_](install/windows.jpg)](install/windows.md) | [![_](install/linux.jpg)](install/linux.md)       | [![_](install/replit.jpg)](replit/Readme.md) | [![_](install/codespace.jpg)](install/codespace.md) |
+### Windows
+
+- Vamos instalar o WSL e o vscode no WSL
 
 ```bash
-# instalar utilizando o gerenciador de pacotes do python
-# se estiver no windows, abra o terminal do powershell como admin
-# se estiver no linux, use sudo
-pip install tko
+# instale o wls
+wsl --install
 
-# ou diretamente pelo github
-pip install git+https://github.com/senapk/tko.git
+# dê enter e reinicie o computador e abra o terminal o wsl pelo 
+# aplicativo de nome ubuntu
+# Abra o vscode pelo windows e instale a extensão WSL 
+# com 30 M de downloads
+# Abra O TERMINAL DO WSL e digite
+code .
+# para finalizar a configuração do vscode no WSL
+# abra o terminal do wsl e siga os passos da instalação para Ubuntu
 ```
 
-## Dependências
+### Instalando o Python e o pipx
 
-Você precisará do compilador próprio da linguagem que for programar, instale manualmente no seu sistema. Se estiver no replit, o template da linguagem já vem com o compilador instalado.
+```bash
+# ubuntu e wsl
+sudo apt install -y python3-pip pipx
+# arch
+sudo pacman -S python-pipx
+```
 
-- c/c++: `gcc` ou `g++`
-- java: `javac`
-- python: `python3`
-- typescript: `node`, `esbuild`, `readline-sync`
-- Você pode utilizar qualquer outra linguagens que quiser, basta instalar o compilador correspondente e definir o comando de compilação e execução correspondente.
+### Instalando o tko
 
-Os comandos para instalar e configurar os compiladores para cada linguagem estão disponíveis no [linux.md](install/linux.md).
+```bash
+# instalando o tko
+pip  install tko  # versões antigas do ubuntu
+pipx install tko  # arch e versões mais novas do ubuntu
+
+# Em algumas distros, o pip(x) não adiciona o path dos binários instalados localmente.
+# Se ao executar o comando tko você receber um erro de comando não encontrado
+# execute o comando abaixo
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+```
+
+## Atualizando seu tko
+
+Para atualizar, basta executar o comando:
+
+```bash
+pip install tko --upgrade # versões antigas do ubuntu
+pipx upgrade tko          # arch, ubuntu e wsl
+```
+
+## Instalando os compiladores
+
+- Você pode utilizar qualquer outra linguagens que quiser, basta instalar o compilador correspondente e definir o comando de compilação e execução correspondentes.
+
+### WSL e Ubuntu
+
+```bash
+# C e C++
+sudo apt install build-essential
+# Python
+sudo apt install python3
+# Java
+sudo apt install openjdk-11-jdk
+# Typescript
+sudo apt install nodejs
+npm install --save-dev @types/node
+npm install typescript esbuild readline-sync
+```
+
+### Arch
+
+```bash
+# C e C++
+sudo pacman -S base-devel
+# Python
+sudo pacman -S python3
+# Java
+sudo pacman -S jdk-openjdk
+# Typescript
+sudo pacman -S nodejs
+npm install --save-dev @types/node
+npm install typescript esbuild readline-sync
+```
 
 ## Para interagir com os repositórios, navegar, baixar, testar
+
+Os `[]` e `<>` indicam onde devem ser colocados os comandos. Os `|` indicam opções.
 
 ```bash
 # primeiro crie um repositório local na pasta local
 tko start [poo | fup | ed]
 
+# exemplo: tko start fup
+
 # agora abra o repositório para interagir com ele
 tko play [ poo | fup | ed ]
+# exemplo: tko play fup
 
-# exemplo
-tko start fup # apenas a primeira vez
-tko play fup  # sempre que quiser abrir o repositório
+# caso queira abrir uma pasta que contém um repositório local
+# não inclua os <> no nome da pasta
+tko open <pasta>
 ```
+
+## Programando em uma linguagem diferente de C, C++, Java, Python e Typescript
+
+- Qual for escolher a linguagem que deseja utilizar, escolha `yaml`. Na pasta de cada atividade será criado um arquivo de rascunho chamado `draft.yaml` com os seguintes campos:
+
+```yaml
+build:
+run:
+```
+
+- Preencha os campos `build` e `run` com os comandos de compilação e execução da sua linguagem. Exemplo, em c++ para um arquivo fonte chamado solver.cpp, o `draft.yaml` ficaria assim:
+
+```yaml
+build: g++ -Wall solver.cpp -o solver.out
+run: ./solver.out
+```
+
+Adapte para os comandos da sua linguagem e o nome dos arquivos da pasta.
 
 ## Criando os testes
 
