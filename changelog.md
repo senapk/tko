@@ -1,5 +1,7 @@
 # Changelog
 
+- 1.9.2
+  - add: removed global folders, only cmds tko init and tko play are avaliable now
 - 1.9.1
   - add: dependence mismatch
 - 1.9.0

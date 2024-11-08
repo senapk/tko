@@ -21,10 +21,6 @@ from tko.util.consts import DiffCount, DiffMode
 from tko.settings.settings import Settings
 
 from tko.settings.repository import Repository
-
-from tko.util.guide import tko_guide
-from tko.util.guide import bash_guide
-
 from tko.util.raw_terminal import RawTerminal
 from tko.util.symbols import symbols
 from tko.settings.check_version import CheckVersion
@@ -80,41 +76,41 @@ class Main:
         build = CmdBuild(args.target, args.target_list, manip)
         build.execute()
 
-    @staticmethod
-    def play(args):
-        settings = Settings()
-        if settings.has_alias_folder(args.alias):
-            folder = settings.get_alias_folder(args.alias)
-            if not os.path.exists(folder):
-                settings.del_alias_folder(args.alias)
-                settings.save_settings()
-                print(Text("{r}: o diretório {g} não existe mais.", "Falha", folder))
-                return
-            rep = Repository(folder)
-            if not rep.has_local_config_file():
-                print(Text("{r}: o diretório {g} não é um repositório válido.", "Falha", folder))
-                return
-            CmdPlay(settings).load_folder(folder).execute()
-        else:
-            print(Text("{r}: não existe nenhum repositório local cadastrado para o atalho {y}.", "Falha", args.alias))
-            print(Text("{g}: utilize o comando {y} para iniciar um repositório local.", "Atenção", "tko start [fup|poo|ed]"))
-            print(Text("{g}: {y}", "Exemplo", "tko start fup"))
-        CheckVersion().version_check()
+    # @staticmethod
+    # def play(args):
+    #     settings = Settings()
+    #     if settings.has_alias_folder(args.alias):
+    #         folder = settings.get_alias_folder(args.alias)
+    #         if not os.path.exists(folder):
+    #             settings.del_alias_folder(args.alias)
+    #             settings.save_settings()
+    #             print(Text("{r}: o diretório {g} não existe mais.", "Falha", folder))
+    #             return
+    #         rep = Repository(folder)
+    #         if not rep.has_local_config_file():
+    #             print(Text("{r}: o diretório {g} não é um repositório válido.", "Falha", folder))
+    #             return
+    #         CmdPlay(settings).load_folder(folder).execute()
+    #     else:
+    #         print(Text("{r}: não existe nenhum repositório local cadastrado para o atalho {y}.", "Falha", args.alias))
+    #         print(Text("{g}: utilize o comando {y} para iniciar um repositório local.", "Atenção", "tko start [fup|poo|ed]"))
+    #         print(Text("{g}: {y}", "Exemplo", "tko start fup"))
+    #     CheckVersion().version_check()
 
-    @staticmethod
-    def save(args):
-        if not os.path.exists(args.folder) or not os.path.isdir(args.folder):
-            print(Text("{r}: o diretório {g} não existe.", "Falha", args.folder))
-            return
+    # @staticmethod
+    # def save(args):
+    #     if not os.path.exists(args.folder) or not os.path.isdir(args.folder):
+    #         print(Text("{r}: o diretório {g} não existe.", "Falha", args.folder))
+    #         return
 
-        settings = Settings()
-        rep = Repository(args.folder)
-        if not rep.has_local_config_file():
-            print(Text("{r}: o diretório {g} não é um repositório válido.", "Falha", args.folder))
-            return
+    #     settings = Settings()
+    #     rep = Repository(args.folder)
+    #     if not rep.has_local_config_file():
+    #         print(Text("{r}: o diretório {g} não é um repositório válido.", "Falha", args.folder))
+    #         return
         
-        settings.set_alias_folder(args.alias, args.folder)
-        print(Text("{g}: repositório {g} salvo com o atalho {g}.", "Sucesso", args.folder, args.alias))
+    #     settings.set_alias_folder(args.alias, args.folder)
+    #     print(Text("{g}: repositório {g} salvo com o atalho {g}.", "Sucesso", args.folder, args.alias))
 
     # @staticmethod
     # def play(args):
@@ -124,6 +120,7 @@ class Main:
     def open(args):
         settings = Settings()
         CmdPlay(settings).load_folder(args.folder).execute()
+        CheckVersion().version_check()
 
     @staticmethod
     def init(args):
@@ -131,14 +128,16 @@ class Main:
         url: str | None = args.url
         file: str | None = args.file
         folder: str | None = args.folder
-        save: str | None = args.save
-        Main.__init(remote=remote, url=url, file=file, folder=folder, save=save)
+        Main.__init(remote=remote, url=url, file=file, folder=folder)
 
     @staticmethod
-    def __init(remote: str | None, url: str | None, file: str | None, folder: str | None, save: str | None):
+    def __init(remote: str | None, url: str | None, file: str | None, folder: str | None):
         if folder is None:
             folder = os.getcwd()
-            print("Deseja criar um repositório em " + folder + "? (s/n): ", end="")
+            if remote is not None:
+                folder = os.path.join(folder, remote)
+            print(Text("A pasta onde deve ser criada o repositório {r} foi informada.", "não"))
+            print(Text("Deseja criar o repositório na pasta {y} ? ({g}/{r}): ", folder, "s", "n"), end="")
             op = input()
             if op == "n":
                 return
@@ -164,26 +163,18 @@ class Main:
                 source = file
             rep.set_remote_source(source)
         rep.save_data_to_config_file()
-        if save is not None:
-            settings = Settings()
-            settings.set_alias_folder(save, folder)
-            settings.save_settings()
-
-    @staticmethod
-    def start(args):
-        remote: str = args.remote
-        Main.__init(remote=remote, url=None, file=None, folder=remote, save=remote)
-        print(Text("Repositório {g} criado com sucesso na pasta {g}", remote, os.path.abspath(remote)))
-        print(Text("O atalho {g} foi vinculado a essa pasta, para acessá-lo", remote))
-        print(Text("basta utilizar o comando {g}", "tko play " + remote))
+        # print(Text("Repositório iniciado com sucesso em {g}", os.path.abspath(rep.folder)))
+        rel_path = os.path.relpath(rep.folder, os.getcwd())
+        print(Text("Voce pode acessar o repositório com o comando {g} {y}", "tko play", "<pasta>"))
+        print(Text("Por exemplo: {g} {y}", "tko play", rel_path))
 
     # @staticmethod
-    # def down(args):
-    #     settings = Settings()
-    #     settings.check_rootdir()
-    #     cmd_down = CmdDown(rep=args.course, task_key=args.activity, settings=settings)
-    #     cmd_down.set_language(args.language).set_fnprint(print)
-    #     cmd_down.execute()
+    # def start(args):
+    #     remote: str = args.remote
+    #     Main.__init(remote=remote, url=None, file=None, folder=remote, save=remote)
+    #     print(Text("Repositório {g} criado com sucesso na pasta {g}", remote, os.path.abspath(remote)))
+    #     print(Text("O atalho {g} foi vinculado a essa pasta, para acessá-lo", remote))
+    #     print(Text("basta utilizar o comando {g}", "tko play " + remote))
 
     @staticmethod
     def config(args):
@@ -342,18 +333,18 @@ class Parser:
         # parser_load.add_argument('alias', type=str, help='repository alias.')
         # parser_load.set_defaults(func=Main.load)
 
-        parser_play = self.subparsers.add_parser('play', help='Load and play a saved repository.')
-        parser_play.add_argument('alias', type=str, help='repository alias.')
-        parser_play.set_defaults(func=Main.play)
+        parser_play = self.subparsers.add_parser('play', help='Load and play a folder with a repository.')
+        parser_play.add_argument('folder', type=str, help='repository folder.')
+        parser_play.set_defaults(func=Main.open)
 
-        parser_open = self.subparsers.add_parser('open', help='Open a folder with a repository.')
-        parser_open.add_argument('folder', type=str, help='folder.')
-        parser_open.set_defaults(func=Main.open)
+        # parser_open = self.subparsers.add_parser('open', help='Open a folder with a repository.')
+        # parser_open.add_argument('folder', type=str, help='folder.')
+        # parser_open.set_defaults(func=Main.open)
 
-        parser_save = self.subparsers.add_parser('save', help='Save a repository in a global alias.')
-        parser_save.add_argument('alias', type=str, help='alias.')
-        parser_save.add_argument('folder', type=str, help='folder.')
-        parser_save.set_defaults(func=Main.save)
+        # parser_save = self.subparsers.add_parser('save', help='Save a repository in a global alias.')
+        # parser_save.add_argument('alias', type=str, help='alias.')
+        # parser_save.add_argument('folder', type=str, help='folder.')
+        # parser_save.set_defaults(func=Main.save)
 
         parser_init = self.subparsers.add_parser('init', help='Initialize a repository in a folder.')
 
@@ -363,12 +354,11 @@ class Parser:
         source.add_argument('--file', type=str, help='remote or local file.')
 
         parser_init.add_argument('--folder', type=str, help='local directory.')
-        parser_init.add_argument('--save', metavar="alias", type=str, help='save in global alias.')
         parser_init.set_defaults(func=Main.init)
 
-        parser_start = self.subparsers.add_parser('start', help='Initialize a repository in a folder with a remote source and save in alias.')
-        parser_start.add_argument('remote', type=str, help='remote source [fup|ed|poo].')
-        parser_start.set_defaults(func=Main.start)
+        # parser_start = self.subparsers.add_parser('start', help='Initialize a repository in a folder with a remote source and save in alias.')
+        # parser_start.add_argument('remote', type=str, help='remote source [fup|ed|poo].')
+        # parser_start.set_defaults(func=Main.start)
 
 
     # def add_parser_open(self):
