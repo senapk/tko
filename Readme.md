@@ -36,11 +36,13 @@ code .
 - Agora, sempre que quiser abrir um repositório, abra o terminal do ubuntu, navegue até a pasta do repositório e execute o comando `code .`
 - Vamos seguir para falta o tko e os compiladores no seu novo linux ubuntu no wsl.
 
-### Instalando o Python e o pipx
+### Instalando o Python e o pip
 
 ```bash
+
 # ubuntu e wsl
-sudo apt install -y python3-pip pipx
+sudo apt update
+sudo apt install -y pipx
 # arch
 sudo pacman -S python-pipx
 ```
@@ -48,14 +50,9 @@ sudo pacman -S python-pipx
 ### Instalando o tko
 
 ```bash
-# versões antigas do ubuntu
-pip  install tko  
-# arch e versões mais novas do ubuntu
-pipx install tko  
+pipx install tko # use pip se não tiver o pipx
 
-# Em algumas distros, o pip(x) não adiciona o path dos binários instalados localmente.
-# Se ao executar o comando tko você receber um erro de comando não encontrado
-# execute o comando abaixo
+# adicione o path do pip para o bash
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 ```
 
