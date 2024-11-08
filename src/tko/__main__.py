@@ -76,46 +76,6 @@ class Main:
         build = CmdBuild(args.target, args.target_list, manip)
         build.execute()
 
-    # @staticmethod
-    # def play(args):
-    #     settings = Settings()
-    #     if settings.has_alias_folder(args.alias):
-    #         folder = settings.get_alias_folder(args.alias)
-    #         if not os.path.exists(folder):
-    #             settings.del_alias_folder(args.alias)
-    #             settings.save_settings()
-    #             print(Text("{r}: o diretório {g} não existe mais.", "Falha", folder))
-    #             return
-    #         rep = Repository(folder)
-    #         if not rep.has_local_config_file():
-    #             print(Text("{r}: o diretório {g} não é um repositório válido.", "Falha", folder))
-    #             return
-    #         CmdPlay(settings).load_folder(folder).execute()
-    #     else:
-    #         print(Text("{r}: não existe nenhum repositório local cadastrado para o atalho {y}.", "Falha", args.alias))
-    #         print(Text("{g}: utilize o comando {y} para iniciar um repositório local.", "Atenção", "tko start [fup|poo|ed]"))
-    #         print(Text("{g}: {y}", "Exemplo", "tko start fup"))
-    #     CheckVersion().version_check()
-
-    # @staticmethod
-    # def save(args):
-    #     if not os.path.exists(args.folder) or not os.path.isdir(args.folder):
-    #         print(Text("{r}: o diretório {g} não existe.", "Falha", args.folder))
-    #         return
-
-    #     settings = Settings()
-    #     rep = Repository(args.folder)
-    #     if not rep.has_local_config_file():
-    #         print(Text("{r}: o diretório {g} não é um repositório válido.", "Falha", args.folder))
-    #         return
-        
-    #     settings.set_alias_folder(args.alias, args.folder)
-    #     print(Text("{g}: repositório {g} salvo com o atalho {g}.", "Sucesso", args.folder, args.alias))
-
-    # @staticmethod
-    # def play(args):
-    #     print(Text("{g}: utilize o comando '{y}' para abrir um repositório local cadastrado.", "Atenção", "tko load " + args.alias))
-
     @staticmethod
     def open(args):
         settings = Settings()

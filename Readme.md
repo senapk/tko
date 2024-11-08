@@ -108,17 +108,13 @@ Os `[]` e `<>` indicam onde devem ser colocados os parâmetros. Os `|` indicam o
 
 ```bash
 # primeiro crie um repositório local na pasta local
-tko start [poo | fup | ed]
-
-# exemplo: tko start fup
+tko init --remote [poo | fup | ed]
+# exemplo tko init --remote fup
 
 # agora abra o repositório para interagir com ele
-tko play [ poo | fup | ed ]
+tko play <pasta_do_repositório>
 # exemplo: tko play fup
 
-# caso queira abrir uma pasta que contém um repositório local
-# não inclua os <> no nome da pasta
-tko open <pasta>
 ```
 
 ## Programando em uma linguagem diferente de C, C++, Java, Python e Typescript
