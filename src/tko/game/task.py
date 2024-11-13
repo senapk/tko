@@ -1,7 +1,6 @@
 from typing import Dict, Optional, Tuple
 from tko.util.symbols import symbols
 from tko.util.text import Text
-# from tko.util.logger import Logger, LogAction
 from tko.game.tree_item import TreeItem
 import re
 import os
@@ -96,11 +95,17 @@ class Task(TreeItem):
     def in_progress(self):
         return self.self_grade > 0 and self.self_grade < 10
 
+    def set_progress(self, progress: int):
+        progress = int(progress)
+        if progress >= 0 and progress <= 100:
+            self.progress = progress
+        else:
+            print(f"Progresso inválido: {progress}")
+
     def set_grade(self, grade: int):
         grade = int(grade)
         if grade >= 0 and grade <= 10:
-            if grade != self.self_grade:
-                self.self_grade = grade
+            self.self_grade = grade
         else:
             print(f"Grade inválida: {grade}")
     

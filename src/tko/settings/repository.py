@@ -15,6 +15,7 @@ class Repository:
     DAILY_FILE = "daily.json"
     INDEX_FILE = "Readme.md"
     REMOTE_TASK_FOLDER = "remote"
+    TRACK_FOLDER = "track"
     CONFIG_FOLDER = ".tko"
 
     def __init__(self, folder: str):

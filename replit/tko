@@ -14,7 +14,6 @@ import curses
 import datetime
 from diff_match_patch import diff_match_patch # type: ignore
 import random
-import shutil
 import csv
 import tempfile
 import subprocess
@@ -25,6 +24,7 @@ import re
 import yaml # type: ignore
 import pydot # type: ignore
 import math
+import shutil
 import yaml #type: ignore
 import io
 import configparser
@@ -33,7 +33,7 @@ from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
 import chardet # type: ignore
-__version__ = "1.9.2"
+__version__ = "1.9.3"
 
 class CheckVersion:
 
@@ -2390,15 +2390,26 @@ class FloatingManager:
 
 class GradeMessage:
     def __init__(self):
+#         self.msg2 = r"""
+#   Não Fiz  │Compreensão→│Superficial│    Básico │Funcional │   Profundo 
+# ↓Autonomia │            │$1 Confuso  │$2 Inseguro │$3 Capaz   │$4 Confiante
+# ───────────┼────────────┼───────────┼───────────┼──────────┼────────────
+# Sem   Ajuda│$5  Sozinho  │           │           │   [8]    │    [10]    
+# Pouca Ajuda│$6  Dicas    │           │    [4]    │   [7]    │    [9]     
+# Muita Ajuda│$7  Códigos  │           │    [3]    │   [6]    │            
+# Tutorial   │$8  Guiado   │    [1]    │    [2]    │   [5]    │            
+# """[1:-1]
+        
         self.msg = r"""
-  Não Fiz  │Compreensão→│Superficial│    Básico │Funcional │   Profundo 
-↓Autonomia │            │$1 Confuso  │$2 Inseguro │$3 Capaz   │$4 Confiante
-───────────┼────────────┼───────────┼───────────┼──────────┼────────────
-Sem   Ajuda│$5  Sozinho  │           │           │   [8]    │    [10]    
-Pouca Ajuda│$6  Dicas    │           │    [4]    │   [7]    │    [9]     
-Muita Ajuda│$7  Códigos  │           │    [3]    │   [6]    │            
-Tutorial   │$8  Guiado   │    [1]    │    [2]    │   [5]    │            
+           │Compreensão→│Superficial│  Básico   │ Funcional │  Profundo 
+↓Autonomia │  Não Fiz   │$1 Confuso  │$2 Inseguro │ $3 Capaz   │$4 Confiante
+───────────┼────────────┼───────────┼───────────┼───────────┼────────────
+Tutorial   │$8  Guiado   │    [1]    │    [2]    │    [5]    │           
+Muita Ajuda│$7  Códigos  │           │    [3]    │    [6]    │           
+Pouca Ajuda│$6  Dicas    │           │    [4]    │    [7]    │    [9]    
+Sem   Ajuda│$5  Sozinho  │           │           │    [8]    │    [10]   
 """[1:-1]
+        
         self.emoji: Dict[str, Token] = {
             "$1": symbols.emoji_confuso,
             "$2": symbols.emoji_inseguro,
@@ -2439,9 +2450,9 @@ Tutorial   │$8  Guiado   │    [1]    │    [2]    │   [5]    │
             guiado  = "Guiado "
             
             superficial = "Superficial"
-            basico = "    Básico "
-            funcional = "Funcional "
-            profundo = "   Profundo "
+            basico = "  Básico   "
+            funcional = " Funcional "
+            profundo = "  Profundo "
 
             sem_ajuda   = "Sem   Ajuda"
             pouca_ajuda = "Pouca Ajuda"
@@ -2467,20 +2478,30 @@ Tutorial   │$8  Guiado   │    [1]    │    [2]    │   [5]    │
             }
 
     def format(self, grade: int):
+            # pintando compreensão e autonomia
             headers = [Token("Compreensão→", "B"), Token("↓Autonomia ", "M")]
-
             value: Text = Text(self.msg)
             if grade != 0:
                 for h in headers:
                     value = value.replace(h.text, h)
-            info = str(grade)
-            pos = value.get_text().find(" [{}] ".format(info))
-            if pos != -1:
-                while True:
-                    if pos >= len(value) or value.data[pos].text == "│" or value.data[pos].text == "\n":
-                        break
-                    value.data[pos].fmt = "G"
-                    pos += 1
+
+            # marcando números com verde
+            for i in range (1, 11):
+                info = str(i)
+                pos = value.get_text().find("    [{}] ".format(info))
+                if pos != -1:
+                        value.data[pos + 5].text = ' ' # remove number
+                        value.data[pos + 6].text = ']' # fix 10
+                        value.data[pos + 7].text = ' ' # fix 10
+                        if i == grade:
+                            value.data[pos + 5].text = 'X'
+                            value.data[pos + 7].text = ' '
+                            value.data[pos + 4].fmt = "G"
+                            value.data[pos + 5].fmt = "G"
+                            value.data[pos + 6].fmt = "G"
+                        # pos += 1
+            
+            # marcando axes com a cor correspondente
             if grade > 0 and grade <= 10:
                 value = value.replace(self.axes[grade][0], Token(self.axes[grade][0], "M"))
                 value = value.replace(self.axes[grade][1], Token(self.axes[grade][1], "g"))
@@ -2488,15 +2509,17 @@ Tutorial   │$8  Guiado   │    [1]    │    [2]    │   [5]    │
                 value = value.replace(self.axes[grade][3], Token(self.axes[grade][3], "g"))
 
                 value = value.replace("  Não Fiz  ", Token("           "))
-            elif grade == 0:
-                value = value.replace("  Não Fiz  ", Token("  Não Fiz  ", "R"))
 
+            # marcando "Não Fiz" com a cor correspondente
+            elif grade == 0:
+                value = value.replace("  Não Fiz   ", Token("  Não Fiz   ", "R"))
+
+            # inserindo emojis
             for k, v in self.emoji.items():
                 value = value.replace(k, v)
 
             return value
     
-# from tko.util.logger import Logger, LogAction
 
 class Task(TreeItem):
 
@@ -2588,11 +2611,17 @@ class Task(TreeItem):
     def in_progress(self):
         return self.self_grade > 0 and self.self_grade < 10
 
+    def set_progress(self, progress: int):
+        progress = int(progress)
+        if progress >= 0 and progress <= 100:
+            self.progress = progress
+        else:
+            print(f"Progresso inválido: {progress}")
+
     def set_grade(self, grade: int):
         grade = int(grade)
         if grade >= 0 and grade <= 10:
-            if grade != self.self_grade:
-                self.self_grade = grade
+            self.self_grade = grade
         else:
             print(f"Grade inválida: {grade}")
     
@@ -3737,16 +3766,15 @@ class Decoder:
             encoding = enc_dict["encoding"]
             if encoding is None or enc_dict["confidence"] < 0.90:
                 encoding = "utf-8"
-                
             try:
                 content = raw_data.decode(encoding)
             except UnicodeDecodeError as e:
                 content = raw_data.decode(enc_dict["encoding"])
-            return content
+            return content.replace('\r\n', '\n')
 
     @staticmethod
     def save(file_path: str, content: str):
-        with open(file_path, "w", encoding="utf-8") as file:
+        with open(file_path, "w", encoding="utf-8", newline='\n') as file:
             file.write(content)
 
     @staticmethod
@@ -3800,7 +3828,7 @@ class Tracker:
         return self
     
     def set_percentage(self, percentage: int):
-        self._result = "{}%".format(str(percentage).ljust(3, "0"))
+        self._result = "{}%".format(str(percentage).rjust(3, "0"))
         return self
 
     def get_log_full_path(self):
@@ -3818,7 +3846,7 @@ class Tracker:
     def save_file_with_timestamp_prefix(self, timestamp: str, file: str) -> str:
         filename = os.path.basename(file)
         ph = PatchHistory()
-        json_file = destination = os.path.join(self._folder, f"{filename}{self.extension}")
+        json_file = os.path.join(self._folder, f"{filename}{self.extension}")
         ph.set_json_file(json_file)
         ph.load_json()
 
@@ -4832,7 +4860,7 @@ class SolverBuilder:
 
     def __prepare_cpp(self):
         self.check_tool("g++")
-        pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror"]
+        pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror", "-Wno-deprecated"]
         pos: List[str] = []
         self.__prepare_c_cpp(pre, pos)
 
@@ -5498,6 +5526,7 @@ class Repository:
     DAILY_FILE = "daily.json"
     INDEX_FILE = "Readme.md"
     REMOTE_TASK_FOLDER = "remote"
+    TRACK_FOLDER = "track"
     CONFIG_FOLDER = ".tko"
 
     def __init__(self, folder: str):
@@ -6847,7 +6876,7 @@ class TaskTree:
             Logger.get_instance().record_other_event(LogAction.SELF, obj.key, str(grade))
             obj.set_grade(grade)
             self.fman.add_input(
-                Floating("v").warning().set_header(" Auto avaliação ").set_text_ljust().set_content(GradeMessage().format(grade).split("\n"))
+                Floating().warning().set_header(" Auto avaliação ").set_text_ljust().set_content(GradeMessage().format(grade).split("\n"))
             )
 
     def set_progress(self, prog: int):
@@ -6856,7 +6885,7 @@ class TaskTree:
         if isinstance(obj, Task):
             if obj.progress == prog:
                 return
-            obj.progress = prog
+            obj.set_progress(prog)
             Logger.get_instance().record_other_event(LogAction.PROG, obj.key, str(prog))
 
     def inc_progress(self):
@@ -7551,7 +7580,6 @@ class CmdRep:
 
     @staticmethod
     def graph(args):
-        settings = Settings()
         rep = Repository(args.folder).load_data_from_config_file().load_game()
         rep.game.check_cycle()
         Graph(rep.game).generate()
@@ -7674,12 +7702,6 @@ class Tester:
 
     def get_folder(self) -> str:
         return os.path.basename(self.task.folder)
-        # source_list = [os.path.abspath(x) for x in self.wdir.get_source_list()]
-        # if source_list:
-        #     folder = os.path.abspath(source_list[0])
-        # else:
-        #     folder = os.path.abspath(self.wdir.get_solver().path_list[0])
-        # return folder.split(os.sep)[-2]
 
     def get_focused_unit(self) -> Unit:
         if not self.wdir.has_tests():
@@ -7745,10 +7767,8 @@ class Tester:
             index = len(self.results)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
-            unit.result = UnitRunner.run_unit(solver, unit, self.settings.app._timeout)
+            unit.result = UnitRunner.run_unit(solver, unit, self.settings.app.get_timeout())
             self.results.append((unit.result, index))
-            success = [result for result, _ in self.results if result == ExecutionResult.SUCCESS]
-            self.task.progress = (len(success) * 100) // len(self.wdir.get_unit_list())
             self.focused_index = index
 
         if len(self.unit_list) == 0:
@@ -7765,6 +7785,7 @@ class Tester:
                     done_list.append(data)
             self.results = fail_list + done_list
             percent: int = (100 * len(done_list)) // len(self.results)
+            self.task.progress = percent
             Logger.get_instance().record_test_result(self.task.key, percent)
             self.store_test_track(percent)
 
@@ -7845,9 +7866,11 @@ class Tester:
             extrap = self.borders.roundL(token.fmt)
             extras = self.borders.roundR(token.fmt)
             if foco and show_focused_index:
-                token.fmt = token.fmt.lower() + ""
-                extrap = Token(" ") #self.borders.roundL("")
-                extras = Token(" ") #self.borders.roundR("")
+                # token.fmt = token.fmt.lower() + ""
+                extrap = Token("(")
+                extras = Token(")")
+                # extrap = Token(" ") #self.borders.roundL("")
+                # extras = Token(" ") #self.borders.roundR("")
             if self.locked_index and not foco:
                 output.add("  ").addf(token.fmt.lower(), str(index).zfill(2)).addf(token.fmt.lower(), token.text).add(" ")
             else:
@@ -9041,17 +9064,6 @@ class PlayActions:
         elif action == TaskAction.EXECUTAR:
             return self.run_selected_task(task, task.folder)
 
-        # if not task.is_downloadable(): # remote task with url link
-        #     if task.folder == "":
-        #         self.open_link()
-        #     else: # local task
-        #         return self.run_selected_task(task, task.folder)
-        # else: # downloadable task
-        #     if not task.is_downloaded_for_lang(task.folder, self.rep.get_lang()):
-        #         self.__down_remote_task(task)
-        #     else:
-        #         return self.run_selected_task(task, task.folder)
-
     def select_task(self):
         obj = self.tree.get_selected()
 
@@ -9276,7 +9288,6 @@ class Play:
         cman.add_str(GuiKeys.key_quit, self.send_quit_msg)
         cman.add_int(InputManager.esc, self.send_quit_msg)
         cman.add_int(curses.KEY_BACKSPACE, self.send_quit_msg)
-
 
         cman.add_str(GuiKeys.up, self.tree.move_up)
         cman.add_int(curses.KEY_UP, self.tree.move_up)

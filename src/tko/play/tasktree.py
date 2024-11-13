@@ -468,7 +468,7 @@ class TaskTree:
             Logger.get_instance().record_other_event(LogAction.SELF, obj.key, str(grade))
             obj.set_grade(grade)
             self.fman.add_input(
-                Floating("v").warning().set_header(" Auto avaliação ").set_text_ljust().set_content(GradeMessage().format(grade).split("\n"))
+                Floating().warning().set_header(" Auto avaliação ").set_text_ljust().set_content(GradeMessage().format(grade).split("\n"))
             )
 
     def set_progress(self, prog: int):
@@ -477,7 +477,7 @@ class TaskTree:
         if isinstance(obj, Task):
             if obj.progress == prog:
                 return
-            obj.progress = prog
+            obj.set_progress(prog)
             Logger.get_instance().record_other_event(LogAction.PROG, obj.key, str(prog))
 
     def inc_progress(self):

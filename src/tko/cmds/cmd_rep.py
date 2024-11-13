@@ -65,7 +65,6 @@ class CmdRep:
 
     @staticmethod
     def graph(args):
-        settings = Settings()
         rep = Repository(args.folder).load_data_from_config_file().load_game()
         rep.game.check_cycle()
         Graph(rep.game).generate()

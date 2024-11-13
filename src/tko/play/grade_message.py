@@ -4,15 +4,26 @@ from tko.util.symbols import symbols
 
 class GradeMessage:
     def __init__(self):
+#         self.msg2 = r"""
+#   Não Fiz  │Compreensão→│Superficial│    Básico │Funcional │   Profundo 
+# ↓Autonomia │            │$1 Confuso  │$2 Inseguro │$3 Capaz   │$4 Confiante
+# ───────────┼────────────┼───────────┼───────────┼──────────┼────────────
+# Sem   Ajuda│$5  Sozinho  │           │           │   [8]    │    [10]    
+# Pouca Ajuda│$6  Dicas    │           │    [4]    │   [7]    │    [9]     
+# Muita Ajuda│$7  Códigos  │           │    [3]    │   [6]    │            
+# Tutorial   │$8  Guiado   │    [1]    │    [2]    │   [5]    │            
+# """[1:-1]
+        
         self.msg = r"""
-  Não Fiz  │Compreensão→│Superficial│    Básico │Funcional │   Profundo 
-↓Autonomia │            │$1 Confuso  │$2 Inseguro │$3 Capaz   │$4 Confiante
-───────────┼────────────┼───────────┼───────────┼──────────┼────────────
-Sem   Ajuda│$5  Sozinho  │           │           │   [8]    │    [10]    
-Pouca Ajuda│$6  Dicas    │           │    [4]    │   [7]    │    [9]     
-Muita Ajuda│$7  Códigos  │           │    [3]    │   [6]    │            
-Tutorial   │$8  Guiado   │    [1]    │    [2]    │   [5]    │            
+           │Compreensão→│Superficial│  Básico   │ Funcional │  Profundo 
+↓Autonomia │  Não Fiz   │$1 Confuso  │$2 Inseguro │ $3 Capaz   │$4 Confiante
+───────────┼────────────┼───────────┼───────────┼───────────┼────────────
+Tutorial   │$8  Guiado   │    [1]    │    [2]    │    [5]    │           
+Muita Ajuda│$7  Códigos  │           │    [3]    │    [6]    │           
+Pouca Ajuda│$6  Dicas    │           │    [4]    │    [7]    │    [9]    
+Sem   Ajuda│$5  Sozinho  │           │           │    [8]    │    [10]   
 """[1:-1]
+        
         self.emoji: Dict[str, Token] = {
             "$1": symbols.emoji_confuso,
             "$2": symbols.emoji_inseguro,
@@ -53,9 +64,9 @@ Tutorial   │$8  Guiado   │    [1]    │    [2]    │   [5]    │
             guiado  = "Guiado "
             
             superficial = "Superficial"
-            basico = "    Básico "
-            funcional = "Funcional "
-            profundo = "   Profundo "
+            basico = "  Básico   "
+            funcional = " Funcional "
+            profundo = "  Profundo "
 
             sem_ajuda   = "Sem   Ajuda"
             pouca_ajuda = "Pouca Ajuda"
@@ -81,20 +92,30 @@ Tutorial   │$8  Guiado   │    [1]    │    [2]    │   [5]    │
             }
 
     def format(self, grade: int):
+            # pintando compreensão e autonomia
             headers = [Token("Compreensão→", "B"), Token("↓Autonomia ", "M")]
-
             value: Text = Text(self.msg)
             if grade != 0:
                 for h in headers:
                     value = value.replace(h.text, h)
-            info = str(grade)
-            pos = value.get_text().find(" [{}] ".format(info))
-            if pos != -1:
-                while True:
-                    if pos >= len(value) or value.data[pos].text == "│" or value.data[pos].text == "\n":
-                        break
-                    value.data[pos].fmt = "G"
-                    pos += 1
+
+            # marcando números com verde
+            for i in range (1, 11):
+                info = str(i)
+                pos = value.get_text().find("    [{}] ".format(info))
+                if pos != -1:
+                        value.data[pos + 5].text = ' ' # remove number
+                        value.data[pos + 6].text = ']' # fix 10
+                        value.data[pos + 7].text = ' ' # fix 10
+                        if i == grade:
+                            value.data[pos + 5].text = 'X'
+                            value.data[pos + 7].text = ' '
+                            value.data[pos + 4].fmt = "G"
+                            value.data[pos + 5].fmt = "G"
+                            value.data[pos + 6].fmt = "G"
+                        # pos += 1
+            
+            # marcando axes com a cor correspondente
             if grade > 0 and grade <= 10:
                 value = value.replace(self.axes[grade][0], Token(self.axes[grade][0], "M"))
                 value = value.replace(self.axes[grade][1], Token(self.axes[grade][1], "g"))
@@ -102,9 +123,12 @@ Tutorial   │$8  Guiado   │    [1]    │    [2]    │   [5]    │
                 value = value.replace(self.axes[grade][3], Token(self.axes[grade][3], "g"))
 
                 value = value.replace("  Não Fiz  ", Token("           "))
-            elif grade == 0:
-                value = value.replace("  Não Fiz  ", Token("  Não Fiz  ", "R"))
 
+            # marcando "Não Fiz" com a cor correspondente
+            elif grade == 0:
+                value = value.replace("  Não Fiz   ", Token("  Não Fiz   ", "R"))
+
+            # inserindo emojis
             for k, v in self.emoji.items():
                 value = value.replace(k, v)
 

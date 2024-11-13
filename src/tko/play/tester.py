@@ -14,19 +14,18 @@ from tko.play.images import compilling, executing, images, intro, random_get, su
 from tko.play.keys import GuiActions, GuiKeys, GuiKeys
 from tko.play.opener import Opener
 from tko.run.diff_builder import DiffBuilder
-from tko.util.raw_terminal import RawTerminal
 from tko.run.solver_builder import CompileError
 from tko.run.unit import Unit
 from tko.run.unit_runner import UnitRunner
 from tko.run.wdir import Wdir
 from tko.settings.settings import Settings
-from tko.util.consts import ExecutionResult, Success
+from tko.util.consts import ExecutionResult
 from tko.util.freerun import Free
-from tko.util.text import RToken, Text, Token
+from tko.util.text import  Text, Token
 from tko.util.symbols import symbols
 from tko.util.consts import DiffMode
 from tko.play.input_manager import InputManager
-from tko.util.logger import LogAction, Logger
+from tko.util.logger import Logger
 from tko.run.diff_builder_down import DownDiff
 from tko.run.diff_builder_side import SideDiff
 from tko.play.tracker import Tracker
@@ -108,12 +107,6 @@ class Tester:
 
     def get_folder(self) -> str:
         return os.path.basename(self.task.folder)
-        # source_list = [os.path.abspath(x) for x in self.wdir.get_source_list()]
-        # if source_list:
-        #     folder = os.path.abspath(source_list[0])
-        # else:
-        #     folder = os.path.abspath(self.wdir.get_solver().path_list[0])
-        # return folder.split(os.sep)[-2]
 
     def get_focused_unit(self) -> Unit:
         if not self.wdir.has_tests():
@@ -179,10 +172,8 @@ class Tester:
             index = len(self.results)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
-            unit.result = UnitRunner.run_unit(solver, unit, self.settings.app._timeout)
+            unit.result = UnitRunner.run_unit(solver, unit, self.settings.app.get_timeout())
             self.results.append((unit.result, index))
-            success = [result for result, _ in self.results if result == ExecutionResult.SUCCESS]
-            self.task.progress = (len(success) * 100) // len(self.wdir.get_unit_list())
             self.focused_index = index
 
         if len(self.unit_list) == 0:
@@ -199,6 +190,7 @@ class Tester:
                     done_list.append(data)
             self.results = fail_list + done_list
             percent: int = (100 * len(done_list)) // len(self.results)
+            self.task.progress = percent
             Logger.get_instance().record_test_result(self.task.key, percent)
             self.store_test_track(percent)
 
@@ -279,9 +271,11 @@ class Tester:
             extrap = self.borders.roundL(token.fmt)
             extras = self.borders.roundR(token.fmt)
             if foco and show_focused_index:
-                token.fmt = token.fmt.lower() + ""
-                extrap = Token(" ") #self.borders.roundL("")
-                extras = Token(" ") #self.borders.roundR("")
+                # token.fmt = token.fmt.lower() + ""
+                extrap = Token("(")
+                extras = Token(")")
+                # extrap = Token(" ") #self.borders.roundL("")
+                # extras = Token(" ") #self.borders.roundR("")
             if self.locked_index and not foco:
                 output.add("  ").addf(token.fmt.lower(), str(index).zfill(2)).addf(token.fmt.lower(), token.text).add(" ")
             else:

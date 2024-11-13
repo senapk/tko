@@ -241,7 +241,7 @@ class SolverBuilder:
 
     def __prepare_cpp(self):
         self.check_tool("g++")
-        pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror"]
+        pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror", "-Wno-deprecated"]
         pos: List[str] = []
         self.__prepare_c_cpp(pre, pos)
 

@@ -1,7 +1,5 @@
 from typing import List, Optional
 import os
-import shutil
-import subprocess
 
 from tko.run.diff_builder_down import DownDiff
 from tko.run.wdir import Wdir
@@ -10,7 +8,6 @@ from tko.util.param import Param
 from tko.run.diff_builder_side import SideDiff
 from tko.util.text import Text, Token
 
-from tko.util.consts import Success
 from tko.util.raw_terminal import RawTerminal
 from tko.util.symbols import symbols
 

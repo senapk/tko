@@ -74,7 +74,6 @@ class Play:
         cman.add_int(InputManager.esc, self.send_quit_msg)
         cman.add_int(curses.KEY_BACKSPACE, self.send_quit_msg)
 
-
         cman.add_str(GuiKeys.up, self.tree.move_up)
         cman.add_int(curses.KEY_UP, self.tree.move_up)
         cman.add_str(GuiKeys.down, self.tree.move_down)

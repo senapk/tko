@@ -9,7 +9,6 @@ from tko.settings.settings import Settings
 from tko.cmds.cmd_down import CmdDown
 from tko.cmds.cmd_run import Run
 
-from tko.util.consts import Success
 from tko.util.param import Param
 
 from tko.down.down import DownProblem
@@ -173,17 +172,6 @@ class PlayActions:
             return self.open_link()
         elif action == TaskAction.EXECUTAR:
             return self.run_selected_task(task, task.folder)
-
-        # if not task.is_downloadable(): # remote task with url link
-        #     if task.folder == "":
-        #         self.open_link()
-        #     else: # local task
-        #         return self.run_selected_task(task, task.folder)
-        # else: # downloadable task
-        #     if not task.is_downloaded_for_lang(task.folder, self.rep.get_lang()):
-        #         self.__down_remote_task(task)
-        #     else:
-        #         return self.run_selected_task(task, task.folder)
 
     def select_task(self):
         obj = self.tree.get_selected()

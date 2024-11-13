@@ -45,6 +45,9 @@ sudo apt update
 sudo apt install -y pipx
 # arch
 sudo pacman -S python-pipx
+# codespaces on ubuntu 22.04
+pip install pipx
+
 ```
 
 ### Instalando o tko
@@ -62,7 +65,7 @@ Para atualizar o tko para versão mais recente, basta executar o comando:
 
 ```bash
 pip install tko --upgrade # versões antigas do ubuntu
-pipx upgrade tko          # arch, ubuntu e wsl
+pipx upgrade tko          # codespace, arch, ubuntu e wsl
 ```
 
 ## Instalando os compiladores
@@ -80,6 +83,7 @@ sudo apt install python3
 sudo apt install openjdk-11-jdk
 # Typescript
 sudo apt install nodejs
+sudo apt install npm # wsl e ubuntu 24.04
 npm install --save-dev @types/node
 npm install typescript esbuild readline-sync
 ```
@@ -94,7 +98,7 @@ sudo pacman -S python3
 # Java
 sudo pacman -S jdk-openjdk
 # Typescript
-sudo pacman -S nodejs
+sudo pacman -S nodejs npm
 npm install --save-dev @types/node
 npm install typescript esbuild readline-sync
 ```

@@ -1,5 +1,10 @@
 # Changelog
 
+- 1.9.3
+  - fix: tracker storing percentage using ljust instead rjust
+  - fix: changed symbol to focus test case to ()
+  - fix: dealing with crlf in windows
+  - fix: adding -Wno-deprecated to c++ compiler
 - 1.9.2
   - add: removed global folders, only cmds tko init and tko play are avaliable now
 - 1.9.1

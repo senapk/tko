@@ -1,9 +1,8 @@
 import datetime
 import os
-import shutil
 import argparse
 import csv
-from tko.play.patch_history import PatchHistory, PatchVersion
+from tko.play.patch_history import PatchHistory
 from tko.util.decoder import Decoder
 
 class Track:
@@ -47,7 +46,7 @@ class Tracker:
         return self
     
     def set_percentage(self, percentage: int):
-        self._result = "{}%".format(str(percentage).ljust(3, "0"))
+        self._result = "{}%".format(str(percentage).rjust(3, "0"))
         return self
 
     def get_log_full_path(self):
@@ -65,7 +64,7 @@ class Tracker:
     def save_file_with_timestamp_prefix(self, timestamp: str, file: str) -> str:
         filename = os.path.basename(file)
         ph = PatchHistory()
-        json_file = destination = os.path.join(self._folder, f"{filename}{self.extension}")
+        json_file = os.path.join(self._folder, f"{filename}{self.extension}")
         ph.set_json_file(json_file)
         ph.load_json()
 
