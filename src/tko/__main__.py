@@ -79,7 +79,11 @@ class Main:
     @staticmethod
     def open(args):
         settings = Settings()
-        CmdPlay(settings).load_folder(args.folder).execute()
+        folder = args.folder
+        rec_folder = Repository.rec_search_for_repo(folder)
+        if rec_folder != "":
+            folder = rec_folder
+        CmdPlay(settings).load_folder(folder).execute()
         CheckVersion().version_check()
 
     @staticmethod
@@ -122,7 +126,7 @@ class Main:
             elif file is not None:
                 source = file
             rep.set_remote_source(source)
-        rep.save_data_to_config_file()
+        rep.save_config()
         # print(Text("Repositório iniciado com sucesso em {g}", os.path.abspath(rep.folder)))
         rel_path = os.path.relpath(rep.folder, os.getcwd())
         print(Text("Voce pode acessar o repositório com o comando {g} {y}", "tko play", "<pasta>"))

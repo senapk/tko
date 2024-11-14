@@ -45,7 +45,7 @@ class SetLangFunctor:
 
     def __call__(self):
         self.rep.set_lang(self.value.strip())
-        self.rep.save_data_to_config_file()
+        self.rep.save_config()
         self.fman.add_input(
             Floating()
             .put_text("")

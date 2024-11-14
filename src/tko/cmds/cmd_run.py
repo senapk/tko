@@ -43,10 +43,12 @@ class Run:
             self.param = param
         self.wdir: Wdir = Wdir()
         self.wdir_builded = False
+        self.rep: Repository | None
         self.__curses_mode: bool = False
         self.__lang = ""
-        self.__task: Optional[Task] = None
-        self.__opener: Optional[Opener] = None
+        self.__rep: Repository | None = None
+        self.__task: Task | None = None
+        self.__opener: Opener | None = None
         self.__run_without_ask: bool = True
 
     def set_curses(self, value:bool=True):
@@ -64,7 +66,8 @@ class Run:
     def set_run_without_ask(self, value:bool):
         self.__run_without_ask = value
 
-    def set_task(self, task: Task):
+    def set_task(self, rep: Repository, task: Task):
+        self.__rep = rep
         self.__task = task
         return self
     
@@ -79,22 +82,24 @@ class Run:
 
         if self.__missing_target():
             return
+        
         if self.__list_mode():
             return
         
         if self.wdir.has_solver():
-            if self.wdir.get_solver().path_list:
-                Logger.instance = Logger(LoggerFS(self.settings))
-                logger = Logger.instance
+            fill_task = False
+            if self.__rep is None:
                 solver_path = self.wdir.get_solver().path_list[0]
                 dirname = os.path.dirname(os.path.abspath(solver_path))
-                task_key = os.path.basename(dirname)
-                repo_path = Repository.rec_search_for_repo(dirname)
-                if repo_path != "":
-                    rep = Repository(repo_path)
-                    logger.set_history_file(rep.get_history_file())
-                    # logger.set_daily(rep.get_daily_file())
+                self.__load_rep_and_task(dirname)
+
+            if self.__task is None:
                 self.fill_task()
+
+            if self.__rep is not None:
+                Logger.instance = Logger(LoggerFS(self.settings))
+                logger = Logger.instance
+                logger.set_history_file(self.__rep.get_history_file())
                 # self.update_task_using_solver_path(task_key, dirname)
 
         if self.__free_run():
@@ -102,6 +107,20 @@ class Run:
         self.__show_diff()
         return
     
+    def __load_rep_and_task(self, dirname: str):
+        repo_path = Repository.rec_search_for_repo(dirname)
+        if repo_path == "":
+            return
+        rep = Repository(repo_path).load_config().load_game()
+        task_key = rep.get_key_from_task_folder(dirname)
+        if task_key == "":
+            return
+        task = rep.game.tasks.get(task_key)
+        if task is None:
+            return
+        self.__rep = rep
+        self.__task = task
+
     def __remove_duplicates(self):
         # remove duplicates in target list keeping the order
         self.target_list = list(dict.fromkeys(self.target_list))
@@ -288,9 +307,12 @@ class Run:
             correct = [unit for unit in self.wdir.get_unit_list() if unit.result == ExecutionResult.SUCCESS]
             percent = (len(correct) * 100) // len(self.wdir.get_unit_list())
             if self.__task is not None:
+                track_folder = self.__task.get_track_folder()
+                if track_folder is None:
+                    return
                 Logger.get_instance().record_test_result(self.get_task().key, percent)
                 tracker = Tracker()
-                tracker.set_folder(self.__task.folder)
+                tracker.set_folder(track_folder)
                 tracker.set_files(self.wdir.get_solver().path_list)
                 tracker.set_percentage(percent)
                 tracker.store()

@@ -43,7 +43,6 @@ class Tester:
         self.wdir = wdir
         self.unit_list = [unit for unit in wdir.get_unit_list()] # unit list to be consumed
         self.exit = False
-
         self.task = task
         self.diff_first_line = 1000   # index of first line to show
         self.length = 1  # length of diff
@@ -106,7 +105,11 @@ class Tester:
         self.print_centered_image(out, "y", clear, "v")
 
     def get_folder(self) -> str:
-        return os.path.basename(self.task.folder)
+        folder = self.task.get_folder()
+        if folder is None:
+            raise Warning("Folder is None")
+    
+        return os.path.basename(folder)
 
     def get_focused_unit(self) -> Unit:
         if not self.wdir.has_tests():
@@ -130,15 +133,21 @@ class Tester:
             return Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "W")
 
     def store_test_track(self, result: int):
+        folder = self.task.get_track_folder()
+        if folder is None:
+            return
         tracker = Tracker()
-        tracker.set_folder(self.task.folder)
+        tracker.set_folder(folder)
         tracker.set_files(self.wdir.get_solver().path_list)
         tracker.set_percentage(result)
         tracker.store()
 
     def store_other_track(self, result: str | None = None):
+        folder = self.task.get_track_folder()
+        if folder is None:
+            return
         tracker = Tracker()
-        tracker.set_folder(self.task.folder)
+        tracker.set_folder(folder)
         tracker.set_files(self.wdir.get_solver().path_list)
         if result is not None:
             tracker.set_result(result)

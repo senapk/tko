@@ -82,7 +82,9 @@ class LoggerFS(LoggerStore):
     def get_log_file(self) -> str | None:
         return self.log_file
     
-    def row_to_action_data(self, row: list[str]) -> ActionData:
+    def row_to_action_data(self, row: list[str]) -> ActionData | None:
+        if len(row) < 5:
+            return None
         hash = row[0]
         timestamp = row[1]
         action_value = row[2]
@@ -115,7 +117,12 @@ class LoggerFS(LoggerStore):
         with open(log_file, 'r', encoding=encoding) as file:
             reader = csv.reader(file)
             rows = list(reader)
-            return [self.row_to_action_data(row) for row in rows]
+            output: list[ActionData] = []
+            for row in rows:
+                action_data = self.row_to_action_data(row)
+                if action_data is not None:
+                    output.append(action_data)
+            return output
 
     def get_last_hash(self) -> str:
         return self.get_action_entries()[-1].hash if len(self.get_action_entries()) > 0 else ""

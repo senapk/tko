@@ -90,7 +90,7 @@ class CmdDown:
         
         readme_remote_url = RemoteUrl(item.link)
         self.cache_url = os.path.dirname(readme_remote_url.get_raw_url()) + "/.cache/"
-        self.destiny_folder = self.rep.get_remote_task_folder(self.task_key)
+        self.destiny_folder = self.rep.get_label_task_folder(self.task_key)
         self.readme_path =  os.path.join(self.destiny_folder, "Readme.md")
         self.mapi_file = os.path.join(self.destiny_folder, "mapi.json")
         if not self.download_readme(readme_remote_url):

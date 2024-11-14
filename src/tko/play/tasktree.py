@@ -121,7 +121,7 @@ class TaskTree:
         down_symbol = symbols.task_to_visit
         if not t.has_remote_link():
             down_symbol = symbols.task_local
-        task_dir = self.rep.get_remote_task_folder(t.key)
+        task_dir = self.rep.get_label_task_folder(t.key)
         if t.is_downloadable():
             if t.is_downloaded_for_lang(task_dir, self.rep.get_lang()):
                 down_symbol = symbols.task_remote_downloaded
@@ -640,7 +640,8 @@ class TaskTree:
             else: # local task
                 return TaskAction.EXECUTAR
         else: # downloadable task
-            if not task.is_downloaded_for_lang(task.folder, self.rep.get_lang()):
+            folder = task.get_folder()
+            if folder is not None and not task.is_downloaded_for_lang(folder, self.rep.get_lang()):
                 return TaskAction.BAIXAR
             else:
                 return TaskAction.EXECUTAR

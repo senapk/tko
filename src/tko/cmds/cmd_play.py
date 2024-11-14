@@ -21,7 +21,7 @@ class CmdPlay:
             print(Text("{g}: Navegue ou passe o caminho até a pasta do repositório e tente novamente.", "Ação"))
             print(Text("{g}: Ou use {y} para criar um novo repositório.", "Ação","tko init --remote [fup|poo|ed]"))
             raise Warning(Text("{r}: {y} {}", "Erro:", folder, "não contém um repositório do tko"))
-        self.rep.load_data_from_config_file().load_game()
+        self.rep.load_config().load_game()
         return self
 
 

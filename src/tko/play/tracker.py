@@ -53,7 +53,7 @@ class Tracker:
         return os.path.join(self._folder, self.log_file)
 
     def set_folder(self, folder: str):
-        self._folder = os.path.join(folder, self.track_folder)
+        self._folder = folder
         return self
     
     # in format: YYYY-MM-DD HH:MM:SS

@@ -47,14 +47,14 @@ class PlayActions:
 
     def get_task_folder(self, task: Task) -> str:
         if task.is_downloadable():
-            return self.rep.get_remote_task_folder(task.key)
+            return self.rep.get_label_task_folder(task.key)
         return os.path.abspath(os.path.dirname(task.link))
 
     def open_code(self):
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
             task: Task = obj
-            folder = self.rep.get_remote_task_folder(task.key)
+            folder = self.rep.get_label_task_folder(task.key)
             if os.path.exists(folder):
                 opener = Opener(self.settings).set_fman(self.fman)
                 opener.set_target([folder]).set_language(self.rep.get_lang())
@@ -171,7 +171,10 @@ class PlayActions:
         elif action == TaskAction.VISITAR:
             return self.open_link()
         elif action == TaskAction.EXECUTAR:
-            return self.run_selected_task(task, task.folder)
+            folder = task.get_folder()
+            if not folder:
+                raise Warning("Folder não encontrado")
+            return self.run_selected_task(task, folder)
 
     def select_task(self):
         obj = self.tree.get_selected()
@@ -193,7 +196,7 @@ class PlayActions:
         run.set_opener(opener)
         run.set_run_without_ask(False)
         run.set_curses(True)
-        run.set_task(task)
+        run.set_task(self.rep, task)
 
         run.build_wdir()
         

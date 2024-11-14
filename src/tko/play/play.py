@@ -54,7 +54,7 @@ class Play:
         self.tree.save_on_rep()
         self.rep.set_flags(self.flagsman.get_data())
         self.settings.save_settings()
-        self.rep.save_data_to_config_file()
+        self.rep.save_config()
 
     def send_quit_msg(self):
         def set_exit():

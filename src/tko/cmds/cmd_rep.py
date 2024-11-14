@@ -9,7 +9,7 @@ import os
 class CmdRep:
     @staticmethod
     def check(args):
-        rep = Repository(args.folder).load_data_from_config_file().load_game()
+        rep = Repository(args.folder).load_config().load_game()
         logger = Logger.get_instance()
         logger.set_history_file(rep.get_history_file())
 
@@ -65,6 +65,6 @@ class CmdRep:
 
     @staticmethod
     def graph(args):
-        rep = Repository(args.folder).load_data_from_config_file().load_game()
+        rep = Repository(args.folder).load_config().load_game()
         rep.game.check_cycle()
         Graph(rep.game).generate()

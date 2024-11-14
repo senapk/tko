@@ -1,5 +1,13 @@
 # Changelog
 
+- 2.0.0
+  - fix: open rep with json error
+  - fix: open history.csv with git diff markers
+  - fix: rename remote to database
+  - fix: change repository.json to repository.yaml
+- 1.9.4
+  - fix: rec folder search in play
+  - fix: filter mode eating last new line
 - 1.9.3
   - fix: tracker storing percentage using ljust instead rjust
   - fix: changed symbol to focus test case to ()

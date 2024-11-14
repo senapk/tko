@@ -67,7 +67,7 @@ class Filter:
         return "---", line
 
     def __process(self, content: str) -> str:
-        lines = content.splitlines()
+        lines = content.splitlines(keepends=True)
         output = []
         for line in lines:
             while self.outside_scope(line):
@@ -93,7 +93,7 @@ class Filter:
                 line = " " * self.get_indent() + self.com + " " + line[self.get_indent():]
                 output.append(line)
 
-        return "\n".join(output)
+        return "".join(output)
     
     def process(self, content: str) -> str:
         return self.__process(content)

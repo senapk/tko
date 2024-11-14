@@ -10,6 +10,7 @@ import os
 import json
 from urllib.request import urlopen
 import urllib
+import yaml # type: ignore
 import curses
 import datetime
 from diff_match_patch import diff_match_patch # type: ignore
@@ -21,7 +22,6 @@ import enum
 import urllib.request
 import urllib.error
 import re
-import yaml # type: ignore
 import pydot # type: ignore
 import math
 import shutil
@@ -33,7 +33,7 @@ from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
 import chardet # type: ignore
-__version__ = "1.9.3"
+__version__ = "2.0.0"
 
 class CheckVersion:
 
@@ -2541,13 +2541,24 @@ class Task(TreeItem):
 
         self.quest_key = ""
         self.cluster_key = ""
-        self.folder: str = ""
+        self.folder: str | None = None
+        self.track_folder: str | None = None
 
         self.default_min_value = 7 # default min grade to complete task
 
     def set_folder(self, folder: str):
         self.folder = folder
         return self
+    
+    def get_folder(self) -> str | None:
+        return self.folder
+    
+    def set_track_folder(self, folder: str):
+        self.track_folder = folder
+        return self
+    
+    def get_track_folder(self) -> str | None:
+        return self.track_folder
 
     def load_from_db(self, value: str):
         if ":" not in value:
@@ -3835,7 +3846,7 @@ class Tracker:
         return os.path.join(self._folder, self.log_file)
 
     def set_folder(self, folder: str):
-        self._folder = os.path.join(folder, self.track_folder)
+        self._folder = folder
         return self
     
     # in format: YYYY-MM-DD HH:MM:SS
@@ -5142,7 +5153,7 @@ class Filter:
         return "---", line
 
     def __process(self, content: str) -> str:
-        lines = content.splitlines()
+        lines = content.splitlines(keepends=True)
         output = []
         for line in lines:
             while self.outside_scope(line):
@@ -5168,7 +5179,7 @@ class Filter:
                 line = " " * self.get_indent() + self.com + " " + line[self.get_indent():]
                 output.append(line)
 
-        return "\n".join(output)
+        return "".join(output)
     
     def process(self, content: str) -> str:
         return self.__process(content)
@@ -5521,11 +5532,12 @@ class RemoteUrl:
 available_languages = ["c", "cpp", "py", "ts", "java", "go", "yaml"]
 
 class Repository:
-    CFG_FILE = "repository.json"
+    OLD_CFG_FILE = "repository.json"
+    CFG_FILE = "repository.yaml"
     LOG_FILE = "history.csv"
     DAILY_FILE = "daily.json"
     INDEX_FILE = "Readme.md"
-    REMOTE_TASK_FOLDER = "remote"
+    DATABASE_FOLDER = "database"
     TRACK_FOLDER = "track"
     CONFIG_FOLDER = ".tko"
 
@@ -5533,18 +5545,63 @@ class Repository:
         self.folder: str = folder
         self.data: Dict[str, Any] = {}
         self.game = Game()
+        self.upgrade_version()
+
+    def upgrade_version(self):
+        # rename remote to database
+        old_remote = os.path.join(self.folder, "remote")
+        new_remote = os.path.join(self.folder, Repository.DATABASE_FOLDER)
+        if os.path.isdir(old_remote):
+            os.rename(old_remote, new_remote)
+        
+        # for each folder under database, if has a .track folder, move to .tko/track/<folder>
+        for folder in os.listdir(new_remote):
+            folder = os.path.abspath(os.path.join(new_remote, folder))
+            track_folder = os.path.join(folder, ".track")
+            if os.path.isdir(track_folder):
+                key = os.path.basename(folder)
+                new_track_folder = os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.TRACK_FOLDER, key)
+                os.makedirs(new_track_folder, exist_ok=True)
+                for file in os.listdir(track_folder):
+                    os.rename(os.path.join(track_folder, file), os.path.join(new_track_folder, file))
+                os.rmdir(track_folder)
+
+        # search for .tko/repository.json and reencode to yaml
+        old_json = os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.OLD_CFG_FILE)
+        new_yaml = os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.CFG_FILE)
+        if os.path.exists(old_json):
+            with open(old_json, "r") as f:
+                data = json.load(f)
+            with open(new_yaml, "w") as f:
+                yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+            os.remove(old_json)
+
+        return self
 
     @staticmethod
     def rec_search_for_repo(folder: str) -> str:
+        folder = os.path.abspath(folder)
         if os.path.exists(os.path.join(folder, Repository.CONFIG_FOLDER, Repository.CFG_FILE)):
+            return folder
+        if os.path.exists(os.path.join(folder, Repository.CONFIG_FOLDER, Repository.OLD_CFG_FILE)):
             return folder
         new_folder = os.path.dirname(folder)
         if new_folder == folder:
             return ""
         return Repository.rec_search_for_repo(new_folder)
 
-    def get_remote_task_folder(self, label: str) -> str:
-        return os.path.abspath(os.path.join(self.folder, Repository.REMOTE_TASK_FOLDER, label))
+    def get_key_from_task_folder(self, folder: str) -> str:
+        label = os.path.basename(folder)
+        task_folder = self.get_label_task_folder(label)
+        if task_folder == folder:
+            return label
+        return ""
+
+    def get_track_task_folder(self, label: str) -> str:
+        return os.path.abspath(os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.TRACK_FOLDER, label))
+
+    def get_label_task_folder(self, label: str) -> str:
+        return os.path.abspath(os.path.join(self.folder, Repository.DATABASE_FOLDER, label))
 
     def is_local_dir(self, path):
         rep_dir = self.get_rep_dir()
@@ -5555,20 +5612,27 @@ class Repository:
     def is_web_link(link: str) -> bool:
         return link.startswith("http:") or link.startswith("https:")
 
-    def set_task_folder(self, task: Task):
+    def __set_task_folders(self, task: Task):
         if not task.is_downloadable():
+            # atividade local
             if not self.is_web_link(task.link):
                 task_dir = os.path.abspath(os.path.dirname(task.link))
                 task.set_folder(task_dir)
         else: # downloadable task
-            task_dir = self.get_remote_task_folder(task.key)
+            task_dir = self.get_label_task_folder(task.key)
             task.set_folder(task_dir)
+            task.set_track_folder(self.get_track_task_folder(task.key))
 
     def load_game(self):
+        if self.data == {}:
+            self.load_config()
         self.game.parse_file(self.load_index_or_cache())
         for task in self.game.tasks.values():
-            self.set_task_folder(task)
+            self.__set_task_folders(task)
         return self
+
+    def get_old_repository_file(self) -> str:
+        return os.path.abspath(os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.OLD_CFG_FILE))
 
     def get_repository_file(self) -> str:
         return os.path.abspath(os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.CFG_FILE))
@@ -5613,6 +5677,7 @@ class Repository:
         raise Warning("fail: arquivo não encontrado ou configurações inválidas para o repositório")
 
     __version = "version"
+    __actual_version = "0.0.1"
     __remote_url = "remote"  #remote url
     __local_file = "local"  #local file
     __expanded = "expanded"
@@ -5623,7 +5688,7 @@ class Repository:
     __selected = "index"
 
     defaults = {
-        __version: "0.0.0",
+        __version: __actual_version,
         __remote_url: "",
         __local_file: "",
         __expanded: [],
@@ -5710,19 +5775,24 @@ class Repository:
     def create_empty_config_file(self, point_to_local_readme: bool = False):
         if point_to_local_readme:
             self.set_local_file(self.get_default_readme_path())
-        self.save_data_to_config_file()
+        self.save_config()
         return self
 
     def has_local_config_file(self) -> bool:
-        return os.path.exists(self.get_repository_file())
+        return os.path.exists(self.get_repository_file()) or os.path.exists(self.get_old_repository_file())
 
-    def load_data_from_config_file(self):
+    def load_config(self):
         encoding = Decoder.get_encoding(self.get_repository_file())
-        with open(self.get_repository_file(), encoding=encoding) as f:
-            self.data = json.load(f)
+        try:
+            with open(self.get_repository_file(), encoding=encoding) as f:
+                # self.data = json.load(f)
+                self.data = yaml.safe_load(f)
+        except:
+            raise Warning(Text("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.get_repository_file(), "corrompido"))
         return self
 
-    def save_data_to_config_file(self):
+    def save_config(self):
+        self.set_version(self.__actual_version)
         json_file = self.get_repository_file()
         if not os.path.exists(os.path.dirname(json_file)):
             os.makedirs(os.path.dirname(json_file))
@@ -5736,7 +5806,8 @@ class Repository:
                 self.data[key] = Repository.defaults[key]
 
         with open(json_file, "w", encoding="utf-8") as f:
-            f.write(json.dumps(self.data, indent=4))
+            # f.write(json.dumps(self.data, indent=4))
+            yaml.dump(self.data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
         return self
 
     def __str__(self) -> str:
@@ -5880,7 +5951,7 @@ class SetLangFunctor:
 
     def __call__(self):
         self.rep.set_lang(self.value.strip())
-        self.rep.save_data_to_config_file()
+        self.rep.save_config()
         self.fman.add_input(
             Floating()
             .put_text("")
@@ -6261,7 +6332,9 @@ class LoggerFS(LoggerStore):
     def get_log_file(self) -> str | None:
         return self.log_file
     
-    def row_to_action_data(self, row: list[str]) -> ActionData:
+    def row_to_action_data(self, row: list[str]) -> ActionData | None:
+        if len(row) < 5:
+            return None
         hash = row[0]
         timestamp = row[1]
         action_value = row[2]
@@ -6294,7 +6367,12 @@ class LoggerFS(LoggerStore):
         with open(log_file, 'r', encoding=encoding) as file:
             reader = csv.reader(file)
             rows = list(reader)
-            return [self.row_to_action_data(row) for row in rows]
+            output: list[ActionData] = []
+            for row in rows:
+                action_data = self.row_to_action_data(row)
+                if action_data is not None:
+                    output.append(action_data)
+            return output
 
     def get_last_hash(self) -> str:
         return self.get_action_entries()[-1].hash if len(self.get_action_entries()) > 0 else ""
@@ -6529,7 +6607,7 @@ class TaskTree:
         down_symbol = symbols.task_to_visit
         if not t.has_remote_link():
             down_symbol = symbols.task_local
-        task_dir = self.rep.get_remote_task_folder(t.key)
+        task_dir = self.rep.get_label_task_folder(t.key)
         if t.is_downloadable():
             if t.is_downloaded_for_lang(task_dir, self.rep.get_lang()):
                 down_symbol = symbols.task_remote_downloaded
@@ -7048,7 +7126,8 @@ class TaskTree:
             else: # local task
                 return TaskAction.EXECUTAR
         else: # downloadable task
-            if not task.is_downloaded_for_lang(task.folder, self.rep.get_lang()):
+            folder = task.get_folder()
+            if folder is not None and not task.is_downloaded_for_lang(folder, self.rep.get_lang()):
                 return TaskAction.BAIXAR
             else:
                 return TaskAction.EXECUTAR
@@ -7524,7 +7603,7 @@ class Gui:
 class CmdRep:
     @staticmethod
     def check(args):
-        rep = Repository(args.folder).load_data_from_config_file().load_game()
+        rep = Repository(args.folder).load_config().load_game()
         logger = Logger.get_instance()
         logger.set_history_file(rep.get_history_file())
 
@@ -7580,7 +7659,7 @@ class CmdRep:
 
     @staticmethod
     def graph(args):
-        rep = Repository(args.folder).load_data_from_config_file().load_game()
+        rep = Repository(args.folder).load_config().load_game()
         rep.game.check_cycle()
         Graph(rep.game).generate()
 
@@ -7638,7 +7717,6 @@ class Tester:
         self.wdir = wdir
         self.unit_list = [unit for unit in wdir.get_unit_list()] # unit list to be consumed
         self.exit = False
-
         self.task = task
         self.diff_first_line = 1000   # index of first line to show
         self.length = 1  # length of diff
@@ -7701,7 +7779,11 @@ class Tester:
         self.print_centered_image(out, "y", clear, "v")
 
     def get_folder(self) -> str:
-        return os.path.basename(self.task.folder)
+        folder = self.task.get_folder()
+        if folder is None:
+            raise Warning("Folder is None")
+    
+        return os.path.basename(folder)
 
     def get_focused_unit(self) -> Unit:
         if not self.wdir.has_tests():
@@ -7725,15 +7807,21 @@ class Tester:
             return Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "W")
 
     def store_test_track(self, result: int):
+        folder = self.task.get_track_folder()
+        if folder is None:
+            return
         tracker = Tracker()
-        tracker.set_folder(self.task.folder)
+        tracker.set_folder(folder)
         tracker.set_files(self.wdir.get_solver().path_list)
         tracker.set_percentage(result)
         tracker.store()
 
     def store_other_track(self, result: str | None = None):
+        folder = self.task.get_track_folder()
+        if folder is None:
+            return
         tracker = Tracker()
-        tracker.set_folder(self.task.folder)
+        tracker.set_folder(folder)
         tracker.set_files(self.wdir.get_solver().path_list)
         if result is not None:
             tracker.set_result(result)
@@ -8361,10 +8449,12 @@ class Run:
             self.param = param
         self.wdir: Wdir = Wdir()
         self.wdir_builded = False
+        self.rep: Repository | None
         self.__curses_mode: bool = False
         self.__lang = ""
-        self.__task: Optional[Task] = None
-        self.__opener: Optional[Opener] = None
+        self.__rep: Repository | None = None
+        self.__task: Task | None = None
+        self.__opener: Opener | None = None
         self.__run_without_ask: bool = True
 
     def set_curses(self, value:bool=True):
@@ -8382,7 +8472,8 @@ class Run:
     def set_run_without_ask(self, value:bool):
         self.__run_without_ask = value
 
-    def set_task(self, task: Task):
+    def set_task(self, rep: Repository, task: Task):
+        self.__rep = rep
         self.__task = task
         return self
     
@@ -8397,22 +8488,24 @@ class Run:
 
         if self.__missing_target():
             return
+        
         if self.__list_mode():
             return
         
         if self.wdir.has_solver():
-            if self.wdir.get_solver().path_list:
-                Logger.instance = Logger(LoggerFS(self.settings))
-                logger = Logger.instance
+            fill_task = False
+            if self.__rep is None:
                 solver_path = self.wdir.get_solver().path_list[0]
                 dirname = os.path.dirname(os.path.abspath(solver_path))
-                task_key = os.path.basename(dirname)
-                repo_path = Repository.rec_search_for_repo(dirname)
-                if repo_path != "":
-                    rep = Repository(repo_path)
-                    logger.set_history_file(rep.get_history_file())
-                    # logger.set_daily(rep.get_daily_file())
+                self.__load_rep_and_task(dirname)
+
+            if self.__task is None:
                 self.fill_task()
+
+            if self.__rep is not None:
+                Logger.instance = Logger(LoggerFS(self.settings))
+                logger = Logger.instance
+                logger.set_history_file(self.__rep.get_history_file())
                 # self.update_task_using_solver_path(task_key, dirname)
 
         if self.__free_run():
@@ -8420,6 +8513,20 @@ class Run:
         self.__show_diff()
         return
     
+    def __load_rep_and_task(self, dirname: str):
+        repo_path = Repository.rec_search_for_repo(dirname)
+        if repo_path == "":
+            return
+        rep = Repository(repo_path).load_config().load_game()
+        task_key = rep.get_key_from_task_folder(dirname)
+        if task_key == "":
+            return
+        task = rep.game.tasks.get(task_key)
+        if task is None:
+            return
+        self.__rep = rep
+        self.__task = task
+
     def __remove_duplicates(self):
         # remove duplicates in target list keeping the order
         self.target_list = list(dict.fromkeys(self.target_list))
@@ -8606,9 +8713,12 @@ class Run:
             correct = [unit for unit in self.wdir.get_unit_list() if unit.result == ExecutionResult.SUCCESS]
             percent = (len(correct) * 100) // len(self.wdir.get_unit_list())
             if self.__task is not None:
+                track_folder = self.__task.get_track_folder()
+                if track_folder is None:
+                    return
                 Logger.get_instance().record_test_result(self.get_task().key, percent)
                 tracker = Tracker()
-                tracker.set_folder(self.__task.folder)
+                tracker.set_folder(track_folder)
                 tracker.set_files(self.wdir.get_solver().path_list)
                 tracker.set_percentage(percent)
                 tracker.store()
@@ -8874,7 +8984,7 @@ class CmdDown:
         
         readme_remote_url = RemoteUrl(item.link)
         self.cache_url = os.path.dirname(readme_remote_url.get_raw_url()) + "/.cache/"
-        self.destiny_folder = self.rep.get_remote_task_folder(self.task_key)
+        self.destiny_folder = self.rep.get_label_task_folder(self.task_key)
         self.readme_path =  os.path.join(self.destiny_folder, "Readme.md")
         self.mapi_file = os.path.join(self.destiny_folder, "mapi.json")
         if not self.download_readme(readme_remote_url):
@@ -8938,14 +9048,14 @@ class PlayActions:
 
     def get_task_folder(self, task: Task) -> str:
         if task.is_downloadable():
-            return self.rep.get_remote_task_folder(task.key)
+            return self.rep.get_label_task_folder(task.key)
         return os.path.abspath(os.path.dirname(task.link))
 
     def open_code(self):
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
             task: Task = obj
-            folder = self.rep.get_remote_task_folder(task.key)
+            folder = self.rep.get_label_task_folder(task.key)
             if os.path.exists(folder):
                 opener = Opener(self.settings).set_fman(self.fman)
                 opener.set_target([folder]).set_language(self.rep.get_lang())
@@ -9062,7 +9172,10 @@ class PlayActions:
         elif action == TaskAction.VISITAR:
             return self.open_link()
         elif action == TaskAction.EXECUTAR:
-            return self.run_selected_task(task, task.folder)
+            folder = task.get_folder()
+            if not folder:
+                raise Warning("Folder não encontrado")
+            return self.run_selected_task(task, folder)
 
     def select_task(self):
         obj = self.tree.get_selected()
@@ -9084,7 +9197,7 @@ class PlayActions:
         run.set_opener(opener)
         run.set_run_without_ask(False)
         run.set_curses(True)
-        run.set_task(task)
+        run.set_task(self.rep, task)
 
         run.build_wdir()
         
@@ -9269,7 +9382,7 @@ class Play:
         self.tree.save_on_rep()
         self.rep.set_flags(self.flagsman.get_data())
         self.settings.save_settings()
-        self.rep.save_data_to_config_file()
+        self.rep.save_config()
 
     def send_quit_msg(self):
         def set_exit():
@@ -9417,7 +9530,7 @@ class CmdPlay:
             print(Text("{g}: Navegue ou passe o caminho até a pasta do repositório e tente novamente.", "Ação"))
             print(Text("{g}: Ou use {y} para criar um novo repositório.", "Ação","tko init --remote [fup|poo|ed]"))
             raise Warning(Text("{r}: {y} {}", "Erro:", folder, "não contém um repositório do tko"))
-        self.rep.load_data_from_config_file().load_game()
+        self.rep.load_config().load_game()
         return self
 
 
@@ -9519,7 +9632,11 @@ class Main:
     @staticmethod
     def open(args):
         settings = Settings()
-        CmdPlay(settings).load_folder(args.folder).execute()
+        folder = args.folder
+        rec_folder = Repository.rec_search_for_repo(folder)
+        if rec_folder != "":
+            folder = rec_folder
+        CmdPlay(settings).load_folder(folder).execute()
         CheckVersion().version_check()
 
     @staticmethod
@@ -9562,7 +9679,7 @@ class Main:
             elif file is not None:
                 source = file
             rep.set_remote_source(source)
-        rep.save_data_to_config_file()
+        rep.save_config()
         # print(Text("Repositório iniciado com sucesso em {g}", os.path.abspath(rep.folder)))
         rel_path = os.path.relpath(rep.folder, os.getcwd())
         print(Text("Voce pode acessar o repositório com o comando {g} {y}", "tko play", "<pasta>"))
