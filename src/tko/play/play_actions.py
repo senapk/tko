@@ -46,15 +46,15 @@ class PlayActions:
         subprocess.Popen("python3 -m webbrowser -t {}".format(link), stdout=outfile, stderr=outfile, shell=True)
 
     def get_task_folder(self, task: Task) -> str:
-        if task.is_downloadable():
-            return self.rep.get_label_task_folder(task.key)
-        return os.path.abspath(os.path.dirname(task.link))
+        if task.folder is None:
+            raise Exception("Folder não encontrado")
+        return task.folder
 
     def open_code(self):
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
             task: Task = obj
-            folder = self.rep.get_label_task_folder(task.key)
+            folder = self.rep.get_task_folder_for_label(task.key)
             if os.path.exists(folder):
                 opener = Opener(self.settings).set_fman(self.fman)
                 opener.set_target([folder]).set_language(self.rep.get_lang())
@@ -77,15 +77,15 @@ class PlayActions:
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
             task: Task = obj
-            if task.link.startswith("http"):
+            if task.visitable_url != "":
                 try:
-                    self.open_link_without_stdout_stderr(task.link)
+                    self.open_link_without_stdout_stderr(task.visitable_url)
                 except Exception as _:
                     pass
             self.fman.add_input(
                 Floating("v>")
                 .set_header(" Abrindo link ")
-                .put_text("\n " + task.link + " \n")
+                .put_text("\n " + task.visitable_url + " \n")
                 .warning()
             )
         elif isinstance(obj, Quest):
@@ -138,7 +138,7 @@ class PlayActions:
         self.__down_remote_task(obj)
     
     def __down_remote_task(self, task: Task):
-        if not task.is_downloadable():
+        if task.download_link == "":
             self.fman.add_input(
                 Floating("v>").put_text("\nEssa não é uma tarefa de baixável.\n").error()
             )

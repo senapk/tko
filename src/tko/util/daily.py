@@ -9,10 +9,15 @@ class TaskData:
         self.seft_grade = seft_grade
 
     def decode(self, serial: str):
-        key, progress, seft_grade = serial.split(":")
-        self.key = key
-        self.progress = int(progress)
-        self.seft_grade = int(seft_grade)
+        pieces = serial.split(":")
+        if len(pieces) == 3:
+            try:
+                self.key = pieces[0]
+                self.progress = int(pieces[1])
+                self.seft_grade = int(pieces[2])
+            except:
+                pass
+
 
     def __eq__(self, other):
         return self.progress == other.progress and self.seft_grade == other.seft_grade

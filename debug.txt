@@ -1,2 +1,0 @@
-carregando de /home/lion/qxcode/poo/.tko/repository.json
-salvando em /home/lion/qxcode/poo/.tko/repository.json

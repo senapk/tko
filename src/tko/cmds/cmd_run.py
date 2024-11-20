@@ -220,7 +220,8 @@ class Run:
         if self.wdir is None:
             return False
         if not self.wdir.has_solver() and not self.wdir.has_tests():
-            print(Text().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
+            if not self.__curses_mode:
+                print(Text().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
             return True
         return False
     

@@ -89,13 +89,13 @@ class Main:
     @staticmethod
     def init(args):
         remote: str | None = args.remote
-        url: str | None = args.url
-        file: str | None = args.file
+        source: str | None = args.source
         folder: str | None = args.folder
-        Main.__init(remote=remote, url=url, file=file, folder=folder)
+        Main.__init(remote=remote, source=source, folder=folder)
 
     @staticmethod
-    def __init(remote: str | None, url: str | None, file: str | None, folder: str | None):
+    def __init(remote: str | None, source: str | None, folder: str | None):
+
         if folder is None:
             folder = os.getcwd()
             if remote is not None:
@@ -105,40 +105,38 @@ class Main:
             op = input()
             if op == "n":
                 return
+
+        path_old = Repository.rec_search_for_repo(folder)
+        if path_old is not None:
+            folder = path_old
+            print(Text("Já existe um repositório em {r}.", path_old))
+            print(Text("Deseja sobrescrever as configurações do repositório em {y} ? ({g}/{r}): ", folder, "s", "n"), end="")
+            op = input()
+            if op == "n":
+                return
+        
         rep = Repository(os.path.abspath(folder))
-        if remote is None and url is None and file is None:
+        if source is None:
             index = rep.get_default_readme_path()
+            rep.set_rep_source(index)
             print("Nenhuma fonte foi informada, utilizando o arquivo {} como fonte".format(index))
             if not os.path.exists(index):
                 content = "# Repositório\n\n## Grupo\n\n### Missão\n\n- [ ] [#google Abra o google](https://www.google.com)\n"
                 Decoder.save(index, content)
-
         else:
             settings = Settings()
-            source: str = ""
             if remote is not None:
                 if settings.has_alias_remote(remote):
                     source = settings.get_alias_remote(remote)
                 else:
                     raise Warning("fail: alias remoto não encontrado.")
-            elif url is not None:
-                source = url
-            elif file is not None:
-                source = file
-            rep.set_remote_source(source)
+            rep.set_rep_source(source)
         rep.save_config()
         # print(Text("Repositório iniciado com sucesso em {g}", os.path.abspath(rep.folder)))
         rel_path = os.path.relpath(rep.folder, os.getcwd())
         print(Text("Voce pode acessar o repositório com o comando {g} {y}", "tko play", "<pasta>"))
         print(Text("Por exemplo: {g} {y}", "tko play", rel_path))
 
-    # @staticmethod
-    # def start(args):
-    #     remote: str = args.remote
-    #     Main.__init(remote=remote, url=None, file=None, folder=remote, save=remote)
-    #     print(Text("Repositório {g} criado com sucesso na pasta {g}", remote, os.path.abspath(remote)))
-    #     print(Text("O atalho {g} foi vinculado a essa pasta, para acessá-lo", remote))
-    #     print(Text("basta utilizar o comando {g}", "tko play " + remote))
 
     @staticmethod
     def config(args):
@@ -150,7 +148,6 @@ class Main:
         param.editor = args.editor
         param.borders = args.borders
         param.timeout = args.timeout
-
         CmdConfig.execute(settings, param)
 
     @staticmethod
@@ -173,13 +170,9 @@ class Parser:
         self.add_parser_run()
         self.add_parser_exec()
         self.add_parser_build()
-        # self.add_parser_down()
         self.add_parser_config()
         self.add_parser_rep_tools()
         self.add_parser_rep_actions()
-        # self.add_parser_open()
-        # self.add_parser_save()
-        # self.add_parser_init()
 
 
     def add_parser_global(self):
@@ -253,11 +246,6 @@ class Parser:
         g_diff.add_argument('--side', action='store_true', help='set side_by_side diff mode.')
         g_diff.add_argument('--down', action='store_true', help='set up_to_down   diff mode.')
 
-        # g_lang = parser_s.add_mutually_exclusive_group()
-        # g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
-        # g_lang.add_argument("--ask", action='store_true', help='ask language extension every time.')
-
-        # parser_s.add_argument("--root", metavar="path", type=str, help='set root directory.')
         cfg_set.add_argument("--editor", metavar="cmd", type=str, help='set editor command.')
         cfg_set.add_argument("--borders", metavar="[0|1]", type=str, help='enable borders.')
         cfg_set.add_argument("--images", metavar="[0|1]", type=str, help='enable images.')
@@ -269,70 +257,32 @@ class Parser:
         cfg_list.set_defaults(func=Main.list)
 
 
-
     def add_parser_rep_tools(self):
 
         parser_repo = self.subparsers.add_parser('rep', help='Repository validation tools.')
+
         subpar_repo = parser_repo.add_subparsers(title='subcommands', help='help for subcommand.')
-
-        # repo_reset = subpar_repo.add_parser('reset', help='reset all repositories and folders to factory default.')
-        # repo_reset.set_defaults(func=CmdRep.reset)
-
-        # repo_graph = subpar_repo.add_parser('graph', help='generate graph of the repository.')
-        # repo_graph.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be graphed.')
-        # repo_graph.set_defaults(func=CmdRep.graph)
-
         repo_log = subpar_repo.add_parser("check", help="validates log of the repository.")
         repo_log.add_argument('folder', type=str, help='folder to be checked.')
         repo_log.set_defaults(func=CmdRep.check)
 
-    # def add_parser_save(self):
-    #     parser_p = self.subparsers.add_parser('save', help='Save a repository folder with a global alias.')
-    #     parser_p.add_argument('folder', type=str, help='repository folder.')
-    #     parser_p.add_argument('alias', type=str, help='repository alias.')
-    #     parser_p.set_defaults(func=CmdRep.save)
+
 
     def add_parser_rep_actions(self):
-        # parser_load = self.subparsers.add_parser('load', help='Load a saved repository.')
-        # parser_load.add_argument('alias', type=str, help='repository alias.')
-        # parser_load.set_defaults(func=Main.load)
-
-        parser_play = self.subparsers.add_parser('play', help='Load and play a folder with a repository.')
-        parser_play.add_argument('folder', type=str, help='repository folder.')
+        parser_play = self.subparsers.add_parser('play', help='Open a folder with a repository.')
+        parser_play.add_argument('folder', type=str, nargs='?', default='.', help='repository folder.')
         parser_play.set_defaults(func=Main.open)
 
-        # parser_open = self.subparsers.add_parser('open', help='Open a folder with a repository.')
-        # parser_open.add_argument('folder', type=str, help='folder.')
-        # parser_open.set_defaults(func=Main.open)
-
-        # parser_save = self.subparsers.add_parser('save', help='Save a repository in a global alias.')
-        # parser_save.add_argument('alias', type=str, help='alias.')
-        # parser_save.add_argument('folder', type=str, help='folder.')
-        # parser_save.set_defaults(func=Main.save)
+        parser_open = self.subparsers.add_parser('open', help='Open a folder with a repository.')
+        parser_open.add_argument('folder', type=str, nargs='?', default='.', help='repository folder.')
+        parser_open.set_defaults(func=Main.open)
 
         parser_init = self.subparsers.add_parser('init', help='Initialize a repository in a folder.')
-
         source = parser_init.add_mutually_exclusive_group()
         source.add_argument('--remote', type=str, help='remote source [fup|ed|poo].')
-        source.add_argument('--url', type=str, help='remote url.')
-        source.add_argument('--file', type=str, help='remote or local file.')
-
+        source.add_argument('--source', type=str, help='http url or local file.')
         parser_init.add_argument('--folder', type=str, help='local directory.')
         parser_init.set_defaults(func=Main.init)
-
-        # parser_start = self.subparsers.add_parser('start', help='Initialize a repository in a folder with a remote source and save in alias.')
-        # parser_start.add_argument('remote', type=str, help='remote source [fup|ed|poo].')
-        # parser_start.set_defaults(func=Main.start)
-
-
-    # def add_parser_open(self):
-
-
-    # def add_parser_init(self):
-    #     parser_p = self.subparsers.add_parser('open', help='open a folder with a repository.')
-    #     parser_p.add_argument('folder', metavar='folder', type=str, help='folder.')
-    #     parser_p.set_defaults(func=CmdRep.init)
-
 
 
 def exec(parser: argparse.ArgumentParser, args):

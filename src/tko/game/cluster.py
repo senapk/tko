@@ -7,11 +7,22 @@ class Cluster(TreeItem):
     def __init__(self, line_number: int = 0, title: str = "", key: str = "", color: Optional[str] = None):
         super().__init__()
         self.line_number = line_number
-        self.quests: List[Quest] = []
+        self.__quests: List[Quest] = []
         self.color: Optional[str] = color
         self.__is_reachable = False
         self.key = key
         self.title = title
+
+    def add_quest(self, quest: Quest):
+        self.__quests.append(quest)
+        return self
+
+    def remove_empty_quests(self):
+        self.__quests = [q for q in self.__quests if len(q.get_tasks()) > 0]
+        return self
+
+    def get_quests(self) -> List[Quest]:
+        return self.__quests
 
     def is_reachable(self):
         return self.__is_reachable
@@ -22,7 +33,7 @@ class Cluster(TreeItem):
 
     def __str__(self):
         line = str(self.line_number).rjust(3)
-        quests_size = str(len(self.quests)).rjust(2, "0")
+        quests_size = str(len(self.__quests)).rjust(2, "0")
         key = "" if self.key == self.title else self.key + " "
         return f"{line} {quests_size} {key}{self.title}"
     
@@ -38,15 +49,15 @@ class Cluster(TreeItem):
 
     def get_percent(self):
         total = 0
-        for q in self.quests:
+        for q in self.__quests:
             total += q.get_percent()
-        return total // len(self.quests)
+        return total // len(self.__quests)
 
     def get_resume_by_percent(self) -> Text:
         return Text().addf(self.get_grade_color(), f"{self.get_percent()}%".rjust(4))
 
     def get_resume_by_quests(self):
-        total = len(self.quests)
-        count = len([q for q in self.quests if q.is_complete()])
+        total = len(self.__quests)
+        count = len([q for q in self.__quests if q.is_complete()])
         return Text().addf(self.get_grade_color(), f"({count}/{total})")
         

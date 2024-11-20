@@ -122,7 +122,7 @@ class Graph:
 
         for i, c in enumerate(self.game.clusters.values()):
             # cluster_targets = [q for q in c.quests if self.is_reachable_or_next(q)]
-            cluster_targets = [q for q in c.quests]
+            cluster_targets = [q for q in c.__quests]
             for q in cluster_targets:
                 if self.opt:
                     if q.opt:

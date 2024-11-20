@@ -50,7 +50,7 @@ class TaskTree:
     def load_all_items(self):
         for c in self.game.clusters.values():
             self.all_items[c.key] = c
-            for q in c.quests:
+            for q in c.get_quests():
                 self.all_items[q.key] = q
                 for t in q.get_tasks():
                     self.all_items[t.key] = t
@@ -102,7 +102,7 @@ class TaskTree:
             if c.key in self.game.available_clusters:
                 items.append(len(c.title))
                 if c.key in self.expanded:
-                    for q in [q for q in c.quests if q.key in self.game.available_quests]:
+                    for q in [q for q in c.get_quests() if q.key in self.game.available_quests]:
                         items.append(len(q.title) + 2)
                         if q.key in self.expanded:
                             for t in q.get_tasks():
@@ -119,11 +119,10 @@ class TaskTree:
         down_symbol = Token(" ")
         in_focus = focus_color != ""
         down_symbol = symbols.task_to_visit
-        if not t.has_remote_link():
+        if t.local:
             down_symbol = symbols.task_local
-        task_dir = self.rep.get_label_task_folder(t.key)
-        if t.is_downloadable():
-            if t.is_downloaded_for_lang(task_dir, self.rep.get_lang()):
+        if t.download_link != "":
+            if t.is_downloaded_for_lang(self.rep.get_lang()):
                 down_symbol = symbols.task_remote_downloaded
             else:
                 down_symbol = symbols.task_remote_to_download
@@ -309,7 +308,7 @@ class TaskTree:
             if search.inside(cluster.title):
                 matches.add(cluster.key)
                 first = first or cluster.key
-            for quest in cluster.quests:
+            for quest in cluster.get_quests():
                 if search.inside(quest.title):
                     first = first or quest.key
                     matches.add(cluster.key)
@@ -336,17 +335,17 @@ class TaskTree:
             return True
         return False
 
-    def force_show_single_cluster_and_quest(self, clusters: List[Cluster]):
-        if self.search_text != "":
-            return
-        if len(clusters) != 1:
-            return
-        cluster = clusters[0]
-        if cluster.key not in self.expanded:
-            self.expanded.append(cluster.key)
-        if len(cluster.quests) == 1:
-            if cluster.quests[0].key not in self.expanded:
-                self.expanded.append(cluster.quests[0].key)
+    # def force_show_single_cluster_and_quest(self, clusters: List[Cluster]):
+    #     if self.search_text != "":
+    #         return
+    #     if len(clusters) != 1:
+    #         return
+    #     cluster = clusters[0]
+    #     if cluster.key not in self.expanded:
+    #         self.expanded.append(cluster.key)
+    #     if len(cluster.get_quests()) == 1:
+    #         if cluster.get_quests()[0].key not in self.expanded:
+    #             self.expanded.append(cluster.get_quests()[0].key)
 
 
     def reload_sentences(self):
@@ -360,10 +359,10 @@ class TaskTree:
 
         clusters = [self.game.clusters[key] for key in available_clusters if key in filtered]
 
-        self.force_show_single_cluster_and_quest(clusters)
+        # self.force_show_single_cluster_and_quest(clusters)
 
         for cluster in clusters:
-            quests = [q for q in cluster.quests if q.key in available_quests if q.key in filtered]
+            quests = [q for q in cluster.get_quests() if q.key in available_quests if q.key in filtered]
             focus_color = self.get_focus_color(cluster) if self.selected_item == cluster.get_key() else ""
             cluster.sentence = self.str_cluster(len(quests) > 0, focus_color, cluster)
 
@@ -432,7 +431,7 @@ class TaskTree:
                 self.expanded.append(cluster.key)
                 return
             full_open = True
-            for q in cluster.quests:
+            for q in cluster.get_quests():
                 if q.key in self.game.available_quests and q.key not in self.expanded:
                     self.expanded.append(q.key)
                     full_open = False
@@ -440,7 +439,7 @@ class TaskTree:
                 return
 
             value = None
-            for q in obj.quests:
+            for q in obj.get_quests():
                 for t in q.get_tasks():
                     if value is not None:
                         t.set_grade(value)
@@ -550,50 +549,64 @@ class TaskTree:
                 index += 1
             self.set_selected_by_index(index)
 
+    def walk_left_on_quest(self, index: int):
+        while True:
+            if index == 0:
+                break
+            index -= 1
+            obj = self.items[index]
+            if isinstance(obj, Cluster) or isinstance(obj, Quest) and obj.key in self.expanded:
+                break
+            if index == 0:
+                break
+        self.set_selected_by_index(index)
+
+    def walk_left_on_cluster(self, index: int):
+        while True:
+            if index == 0:
+                break
+            index -= 1
+            obj = self.items[index]
+            if isinstance(obj, Cluster) or isinstance(obj, Quest):
+                break
+            if index == 0:
+                break
+        self.set_selected_by_index(index)
+
     def arrow_left(self):
         index = self.get_selected_index()
         obj = self.items[index]
         if isinstance(obj, Quest):
             if not self.fold(obj):
-                while True:
-                    if self.selected_item == 0:
-                        break
-                    index -= 1
-                    obj = self.items[index]
-                    if isinstance(obj, Cluster) or isinstance(obj, Quest) and obj.key in self.expanded:
-                        break
-                    if self.selected_item == 0:
-                        break
+                self.walk_left_on_quest(index)
+            return
         elif isinstance(obj, Cluster):
             if obj.key in self.expanded:
                 self.expanded.remove(obj.key)
-                for q in obj.quests:
+                for q in obj.get_quests():
                     try:
                         self.expanded.remove(q.key)
                     except ValueError:
                         pass
             else:
-                while True:
-                    if self.selected_item == 0:
-                        break
-                    index -= 1
-                    obj = self.items[index]
-                    if isinstance(obj, Cluster) or isinstance(obj, Quest):
-                        break
-                    if self.selected_item == 0:
-                        break
+                self.walk_left_on_cluster(index)
+            return
         elif isinstance(obj, Task):
             while True:
                 obj = self.items[index]
                 if isinstance(obj, Quest):
                     break
                 index -= 1
-        self.set_selected_by_index(index)
+            self.set_selected_by_index(index)
 
     def unfold(self, obj: TreeItem) -> bool:
         if isinstance(obj, Quest) or isinstance(obj, Cluster):
             if obj.key not in self.expanded:
                 self.expanded.append(obj.key)
+                if isinstance(obj, Cluster):
+                    cluster: Cluster = obj
+                    if len(cluster.get_quests()) == 1:
+                        self.expanded.append(cluster.get_quests()[0].key)
                 return True
         return False
 
@@ -601,6 +614,12 @@ class TaskTree:
         if isinstance(obj, Quest) or isinstance(obj, Cluster):
             if obj.key in self.expanded:
                 self.expanded.remove(obj.key)
+                if isinstance(obj, Quest):
+                    quest: Quest = obj
+                    cluster = self.game.clusters[quest.cluster_key]
+                    if len(cluster.get_quests()) == 1:
+                        self.expanded.remove(cluster.key)
+                        self.selected_item = cluster.key
                 return True
         return False
 
@@ -634,14 +653,12 @@ class TaskTree:
 
     # return a TaskAction
     def get_task_action(self, task: Task) -> str:
-        if not task.is_downloadable(): # remote task with url link
-            if task.folder == "":
-                return TaskAction.VISITAR
-            else: # local task
+        if task.visit:
+            return TaskAction.VISITAR
+        if task.local: # local task
                 return TaskAction.EXECUTAR
         else: # downloadable task
-            folder = task.get_folder()
-            if folder is not None and not task.is_downloaded_for_lang(folder, self.rep.get_lang()):
+            if not task.is_downloaded_for_lang(self.rep.get_lang()):
                 return TaskAction.BAIXAR
             else:
                 return TaskAction.EXECUTAR

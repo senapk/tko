@@ -13,14 +13,14 @@ class TestSimple(unittest.TestCase):
     def test_reading_task(self):
         task: Task = TaskParser.parse_line("- [ ] [tarefa um](wiki/tarefa.md)", 0)
         assert task.key == "wiki/tarefa.md"
-        assert task.link == "wiki/tarefa.md"
+        assert task.__link == "wiki/tarefa.md"
         assert task.self_grade == 0
         assert task.title == "tarefa um"
 
     def test_coding_local_task(self):
         task: Task = TaskParser.parse_line("- [ ] [minha @boneca quebrou](base/boneca/Readme.md)", 0)
         assert task.key == "boneca"
-        assert task.link == "base/boneca/Readme.md"
+        assert task.__link == "base/boneca/Readme.md"
         assert task.self_grade == 0
         assert task.title == "minha @boneca quebrou"
 

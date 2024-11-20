@@ -243,6 +243,16 @@ class SolverBuilder:
         self.check_tool("g++")
         pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror", "-Wno-deprecated"]
         pos: List[str] = []
+        # fmt_lib = False
+        # for path in self.path_list:
+        #     if os.path.isfile(path):
+        #         content = Decoder.load(path)
+        #         if "#include <fmt" in content:
+        #             fmt_lib = True
+        #             break
+        # if fmt_lib:
+        #     pos.append("-lfmt")
+
         self.__prepare_c_cpp(pre, pos)
 
     @staticmethod

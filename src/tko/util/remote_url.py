@@ -19,7 +19,10 @@ class RemoteUrl:
         if url.startswith("https://gist.githubusercontent.com"):
             self.raw_link = url
         else:
-            self.remote = RemoteLink().identify_from_url(url)
+            try:
+                self.remote = RemoteLink().identify_from_url(url)
+            except:
+                raise Warning("URL inválida para download: {}".format(url))
         self.file = ""
 
     def get_raw_url(self):

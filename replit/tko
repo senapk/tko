@@ -2521,13 +2521,20 @@ Sem   Ajuda│$5  Sozinho  │           │           │    [8]    │    [10]
             return value
     
 
+class TaskTypes:
+    visitable_url = 0 # task link to url 
+    select_folder = 1 # task link to a [file|folder] and remote to [local file|none]
+    down_from_url = 2 # task link to url
+    down_from_dir = 3 # task link to a [file] and remote as file outside folder
+
+
 class Task(TreeItem):
 
     def __init__(self):
         super().__init__()
         self.line_number = 0
         self.line = ""
-        self.downloadable = False
+
         self.self_grade: int = 0 #valor de 0 a 9
         self.progress: int = 0 #valor de 0 a 100
         self.main_index: int = 0
@@ -2535,12 +2542,17 @@ class Task(TreeItem):
         self.qskills: Dict[str, int] = {} # default quest skills
         self.skills: Dict[str, int] = {} # local skills
         self.xp: int = 0
-        
+
         self.opt: bool = False
-        self.link: str = ""
+        self.visit: bool = False
+        self.local: bool = False
+
+        self.download_link: str = ""
+        self.visitable_url: str = ""
 
         self.quest_key = ""
         self.cluster_key = ""
+
         self.folder: str | None = None
         self.track_folder: str | None = None
 
@@ -2635,60 +2647,65 @@ class Task(TreeItem):
             self.self_grade = grade
         else:
             print(f"Grade inválida: {grade}")
-    
-    def process_link(self, base_file):
-        if self.link.startswith("http"):
-            return
-        if self.link.startswith("./"):
-            self.link = self.link[2:]
-        # todo trocar / por \\ se windows
-        self.link = base_file + self.link
+
+    def get_download_link(self) -> str:
+        return self.download_link
+
+    def get_visitable_url(self) -> str:
+        return self.visitable_url
 
     def __str__(self):
-        line = str(self.line_number).rjust(3)
+        lnum = str(self.line_number).rjust(3)
         key = "" if self.key == self.title else self.key + " "
-        return f"{line}    {self.self_grade} {key}{self.title} {self.skills} {self.link}"
-    
-    def has_remote_link(self):
-        return self.link.startswith("http:") or self.link.startswith("https:")
+        return f"{lnum} grade:{self.self_grade} key:{key} title:{self.title} skills:{self.skills} down:{self.download_link} vis:{self.visitable_url}"
 
     def has_at_symbol(self):
         return any([s.startswith("@") for s in self.title.split(" ")])
 
-    def is_downloadable(self):
-        return self.downloadable
-
-    def is_downloaded_for_lang(self, task_dir: str, lang: str) -> bool:
-        if not os.path.isfile(os.path.join(task_dir, "Readme.md")):
+    def is_downloaded_for_lang(self, lang: str) -> bool:
+        if self.folder is None or not os.path.isdir(self.folder):
             return False
-        files = os.listdir(task_dir)
+        files = os.listdir(self.folder)
         if not any([f.endswith("." + lang) for f in files]):
             return False
         return True
 
 """
-Usar @ ou # para definir a chave da tarefa
+down_from_url = 2 # task link to url
+down_from_dir = 3 # task link to a [file] and remote as file outside folder
+visitable_url = 0 # task link to url 
+select_folder = 1 # task link to a [file|folder] and remote to [local file|none]
+
+----------
+
+Usar @ para definir a chave da tarefa
 Pode ser incluído no título da tarefa que está entre os [] ou nas tags url
 Exemplo:
 - [ ] [@banana Título da tarefa](https://tal_coias/Readme.md) 
 Chave: "banana"
 Título: "@banana Título da tarefa"
 link: "https://tal_coias/Readme.md"
-É uma tarefa de download
 
 ----------
-Nessas tarefas que não serão baixadas para o repositório, se não for inserido o #, será utilizado como chave o link da tarefa
-- [ ] [#banana Título da tarefa](https://tal_coias/Readme.md)
-Chave: "banana"
-Título: "#banana Título da tarefa"
-link: "https://tal_coias/Readme.md"
+Se a flag visit estiver no html a tarefa será para ser visitada apenas
+Exemplo:
+- [ ] [@banana Título da tarefa](https://tal_coias/Readme.md) <!-- visit -->
+
+----------
+Se o link for um arquivo ou pasta
+- [ ] [@banana Título da tarefa](tal_coias/Readme.md)
+
 
 
 """
 class TaskParser:
 
-    @staticmethod
-    def __load_tags(task: Task, tags_raw: str):
+    def __init__(self, index_path: str):
+        self.index_path = index_path
+        self.task = Task()
+
+    def __load_tags(self, tags_raw: str):
+        task = self.task
         tags = [tag.strip() for tag in tags_raw.split(" ")]
         task.opt = "opt" in tags
         for t in tags:
@@ -2697,39 +2714,73 @@ class TaskParser:
                 task.skills[key] = int(value)
             elif t.startswith("@"):
                 task.key = t[1:]
-                task.downloadable = True
-            elif t.startswith("#"):
-                task.key = t[1:]
 
-    @staticmethod
-    def parse_line(line: str, line_num: int) -> Optional[Task]:
+    def parse_line(self, line: str, line_num: int) -> Optional[Task]:
         pattern = r'\s*?- \[ \](.*?)\[([^\]]+)\]\(([^)]+)\)(?:\s*<!--(.*?)-->)?'
 
         match = re.match(pattern, line)
         if match is None:
             return None
-        task = Task()
+        task = self.task
         task.line_number = line_num
         task.line = line
-        task.opt = False
         task.title = match.group(1).strip()
         if task.title != "":
             task.title += " "
         task.title += match.group(2).strip()
         task.title = task.title.replace("`", "")
-        task.link = match.group(3).strip()
-        if match.group(4) is not None:
-            TaskParser.__load_tags(task, match.group(3))
         
+        if match.group(4) is not None:
+            self.__load_tags(match.group(4))
+
         for item in task.title.split(" "):
             if item.startswith("@"):
                 task.key = item[1:]
-                task.downloadable = True
-            if item.startswith("#"):
+            elif item.startswith("#"):
+                task.visit = True
                 task.key = item[1:]
+            elif item.startswith("!"):
+                task.local = True
+                task.key = item[1:]
+
+        #remove last non alfa char from key
+        allowed = "0123456789_abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        key = ""
+        for c in task.key:
+            if c in allowed:
+                key += c
+            else:
+                break
+        task.key = key
+
+        link = match.group(3).strip()
+        self.adjust_links(link)
+        
         if task.key == "":
-            task.key = task.link
+            task.key = get_md_link(link)
         return task
+    
+    def adjust_links(self, link: str):
+        task = self.task
+        if task.visit:
+            task.visitable_url = link
+            task.download_link = ""
+            return
+        
+        if task.local:
+            task.folder = link
+            task.download_link = ""
+            task.visitable_url = ""
+            return
+
+        if link.startswith("http") and self.task.key != "":
+            task.download_link = link
+            task.visitable_url = link
+            return
+        
+        basedir = os.path.dirname(self.index_path)
+        task.download_link = os.path.join(basedir, link)
+        task.visitable_url = ""
 
 class Quest(TreeItem):
     def __init__(self, title: str = "", key: str = ""):
@@ -2955,11 +3006,22 @@ class Cluster(TreeItem):
     def __init__(self, line_number: int = 0, title: str = "", key: str = "", color: Optional[str] = None):
         super().__init__()
         self.line_number = line_number
-        self.quests: List[Quest] = []
+        self.__quests: List[Quest] = []
         self.color: Optional[str] = color
         self.__is_reachable = False
         self.key = key
         self.title = title
+
+    def add_quest(self, quest: Quest):
+        self.__quests.append(quest)
+        return self
+
+    def remove_empty_quests(self):
+        self.__quests = [q for q in self.__quests if len(q.get_tasks()) > 0]
+        return self
+
+    def get_quests(self) -> List[Quest]:
+        return self.__quests
 
     def is_reachable(self):
         return self.__is_reachable
@@ -2970,7 +3032,7 @@ class Cluster(TreeItem):
 
     def __str__(self):
         line = str(self.line_number).rjust(3)
-        quests_size = str(len(self.quests)).rjust(2, "0")
+        quests_size = str(len(self.__quests)).rjust(2, "0")
         key = "" if self.key == self.title else self.key + " "
         return f"{line} {quests_size} {key}{self.title}"
     
@@ -2986,18 +3048,77 @@ class Cluster(TreeItem):
 
     def get_percent(self):
         total = 0
-        for q in self.quests:
+        for q in self.__quests:
             total += q.get_percent()
-        return total // len(self.quests)
+        return total // len(self.__quests)
 
     def get_resume_by_percent(self) -> Text:
         return Text().addf(self.get_grade_color(), f"{self.get_percent()}%".rjust(4))
 
     def get_resume_by_quests(self):
-        total = len(self.quests)
-        count = len([q for q in self.quests if q.is_complete()])
+        total = len(self.__quests)
+        count = len([q for q in self.__quests if q.is_complete()])
         return Text().addf(self.get_grade_color(), f"({count}/{total})")
         
+
+
+
+
+class GameValidator:
+    def __init__(self, filename: str, clusters: Dict[str, Cluster], 
+                 quests: Dict[str, Quest], tasks: Dict[str, Task]):
+        self.filename = filename
+        self.clusters: Dict[str, Cluster] = clusters
+        self.quests: Dict[str, Quest] = {}
+        self.tasks: Dict[str, Task] = {}
+        
+    def validate(self):
+        self.__validate_requirements()
+        self.__check_cycle()
+        return self
+
+    def __validate_requirements(self):
+        # verify is there are keys repeated between quests, tasks and groups
+        keys = [c.key for c in self.clusters.values()] +\
+               [k for k in self.quests.keys()] +\
+               [k for k in self.tasks.keys()]
+
+        # print chaves repetidas
+        for k in keys:
+            if keys.count(k) > 1:
+                print(f"Chave repetida: {k}")
+                exit(1)
+
+        # trim titles
+        for q in self.quests.values():
+            q.title = q.title.strip()
+        for c in self.clusters.values():
+            c.title = c.title.strip()
+
+        # verificar auto dependencia
+        for q in self.quests.values():
+            for r in q.requires:
+                if q.key == r:
+                    print(f"Erro: auto refência {q.line_number} {q.line}")
+                    exit(1)
+
+
+    # call after create_requirements_pointers
+    def __check_cycle(self):
+        def dfs(qx, visitedx):
+            if len(visitedx) > 0:
+                if visitedx[0] == qx.key:
+                    print(f"Cycle detected: {visitedx}")
+                    exit(1)
+            if q.key in visitedx:
+                return
+            visitedx.append(q.key)
+            for r in q.requires_ptr:
+                dfs(r, visitedx)
+
+        for q in self.quests.values():
+            visited: List[str] = []
+            dfs(q, visited)
 
 
 class DiffBuilder:
@@ -3225,6 +3346,181 @@ class SearchAsc:
     
     def inside(self, title: str) -> bool:
         return self.find(title) != -1
+
+
+
+class GameBuilder:
+    def __init__(self, filename: str):
+        self.ordered_clusters: List[str] = [] # ordered clusters
+        self.clusters: Dict[str, Cluster] = {}
+        self.active_cluster: Cluster | None = None
+        self.active_quest: Quest | None = None
+        self.filename = filename
+
+    def build_from(self, content: str, folder: str):
+        self.__parse_file_content(content)
+        self.__parse_folder_for_user_tasks(folder)
+        self.__clear_empty()
+        self.__create_requirements_pointers()
+        self.__create_cross_references()
+        return self
+
+    def collect_tasks(self) -> dict[str, Task]:
+        tasks: Dict[str, Task] = {}
+        for cluster in self.clusters.values():
+            for quest in cluster.get_quests():
+                for task in quest.get_tasks():
+                    tasks[task.key] = task
+        return tasks
+
+    def collect_quests(self) -> dict[str, Quest]:
+        quests: Dict[str, Quest] = {}
+        for cluster in self.clusters.values():
+            for quest in cluster.get_quests():
+                quests[quest.key] = quest
+        return quests
+
+    def __create_requirements_pointers(self):
+        quests = self.collect_quests()
+        # verificar se todas as quests requeridas existem e adicionar o ponteiro
+        for q in quests.values():
+            for r in q.requires:
+                if r in quests:
+                    q.requires_ptr.append(quests[r])
+                else:
+                    # print(f"keys: {self.quests.keys()}")
+                    print(f"Quest\n{self.filename}:{q.line_number}\n{str(q)}\nrequer {r} que não existe")
+                    exit(1)
+
+    def __parse_folder_for_user_tasks(self, folder: str):
+        local_tasks_cluster: Cluster = Cluster(0, "Atividades Locais", "local_task_cluster")
+        self.__add_cluster(local_tasks_cluster)
+        tasks = self.collect_tasks()
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        for entry in os.listdir(folder):
+            path = os.path.join(folder, entry)
+            if not os.path.isdir(path):
+                continue
+            if entry in tasks:
+                continue
+            # create task for folder
+            task = Task()
+            task.key = entry
+            task.title = entry
+            task.local = True
+            task.folder = path
+            self.__add_task(task)
+
+    def __parse_file_content(self, content: str):
+        lines = content.splitlines()
+        for line_num, line in enumerate(lines):
+            cluster = self.__load_cluster(line, line_num)
+            if cluster is not None:
+                self.__add_cluster(cluster)
+                continue
+            
+            quest = QuestParser().parse_quest(self.filename, line, line_num + 1)
+            if quest is not None:
+                self.__add_quest(quest)
+                continue
+            
+            tp = TaskParser(self.filename)
+            task = tp.parse_line(line, line_num + 1)
+            if task is not None:
+                self.__add_task(task)
+
+    def __get_active_cluster(self) -> Cluster:
+        if self.active_cluster is None:
+            raise Warning("Active Cluster Missing")
+        return self.active_cluster
+
+    def __get_active_quest(self) -> Quest:
+        if self.active_quest is None:
+            raise Warning("Active Quest Missing")
+        return self.active_quest
+
+    def __add_cluster(self, cluster: Cluster):
+        self.clusters[cluster.key] = cluster
+        self.ordered_clusters.append(cluster.key)
+        self.active_cluster = cluster
+        self.active_quest = None
+
+    def __add_quest(self, quest: Quest):
+        self.__get_active_cluster().add_quest(quest)
+        self.active_quest = quest
+
+    def __add_task(self, task: Task):
+        if self.active_cluster is None:
+            ckey = "sem_cluster"
+            self.__add_cluster(Cluster(0, "Sem Cluster", ckey))
+        if self.active_quest is None:
+            qkey = self.__get_active_cluster().key + "_sem_quest"
+            self.__add_quest(Quest("Sem Quest", qkey))
+        self.__get_active_quest().add_task(task, self.filename)
+
+    # se existir um cluster nessa linha, insere na lista de clusters e 
+    # retorno o objeto cluster inserido
+    def __load_cluster(self, line: str, line_num: int) -> None | Cluster:
+        if not line.startswith("## "):
+            return None
+        line = line[3:]
+
+        titulo = line
+        tags_raw = ""
+        if "<!--" in line:
+            pieces = line.split("<!--")
+            titulo = pieces[0]
+            middle_end = pieces[1].split("-->")
+            tags_raw = middle_end[0]
+            titulo += middle_end[1]
+
+        tags = [tag.strip() for tag in tags_raw.split(" ")]        
+        key = uni_to_asc(get_md_link(titulo))
+        try:
+            color = [tag[2:] for tag in tags if tag.startswith("c:")][0]
+        except IndexError as _e:
+            color = None
+        
+        cluster = Cluster(line_num, titulo, key, color)
+
+        if key in self.clusters.keys():
+            c = self.clusters[key]
+            print(f"Cluster {key} já existe")
+            print(f"{self.filename}:{line_num}")
+            print(f"{self.filename}:{c.line_number}")
+            print("  " + str(c))
+            print("  " + str(cluster))
+            exit(1)
+                
+        self.clusters[key] = cluster
+        self.ordered_clusters.append(key)
+        return cluster
+
+    def __clear_empty(self): #call before create_cross_references
+
+        # apagando quests vazias da lista de quests
+        for cluster in self.clusters.values():
+            cluster.remove_empty_quests()
+
+        # apagando quests vazias dos clusters e clusters vazios
+        ordered_clusters: List[str] = []
+        clusters: Dict[str, Cluster] = {}
+        for key in self.ordered_clusters:
+            cluster = self.clusters[key]
+            if len(cluster.get_quests()) > 0:
+                ordered_clusters.append(cluster.key)
+                clusters[cluster.key] = cluster
+        self.ordered_clusters = ordered_clusters
+        self.clusters = clusters
+
+    def __create_cross_references(self): #call after clear_empty
+        for cluster in self.clusters.values():
+            for quest in cluster.get_quests():
+                quest.cluster_key = cluster.key
+                for task in quest.get_tasks():
+                    task.cluster_key = cluster.key
+                    task.quest_key = quest.key
 
 
 class ExecutionResult(enum.Enum):
@@ -3771,6 +4067,9 @@ class Decoder:
 
     @staticmethod
     def load(file_path: str) -> str:
+        if not os.path.exists(file_path):
+
+            raise Exception("Arquivo {} não encontrado".format(os.path.abspath(file_path)))
         with open(file_path, "rb") as file:
             raw_data = file.read()
             enc_dict = chardet.detect(raw_data)
@@ -3785,6 +4084,9 @@ class Decoder:
 
     @staticmethod
     def save(file_path: str, content: str):
+        base_path = os.path.dirname(file_path)
+        if not os.path.exists(base_path):
+            os.makedirs(base_path)
         with open(file_path, "w", encoding="utf-8", newline='\n') as file:
             file.write(content)
 
@@ -3897,7 +4199,10 @@ class Tracker:
         tracker.store()
 
 
-def load_html_tags(task: str) -> Optional[str]:
+
+
+
+def load_html_tags(task: str) -> None | str:
     pattern = r"<!--\s*(.*?)\s*-->"
     match = re.search(pattern, task)
     if not match:
@@ -3906,7 +4211,7 @@ def load_html_tags(task: str) -> Optional[str]:
 
 
 class Game:
-    def __init__(self, file: Optional[str] = None):
+    def __init__(self):
         self.ordered_clusters: List[str] = [] # ordered clusters
         self.clusters: Dict[str, Cluster] = {} 
         self.quests: Dict[str, Quest] = {}  # quests indexed by quest key
@@ -3920,10 +4225,6 @@ class Game:
         self.level_one: int = 100
         self.level_mult: float = 1.5
 
-        self.filename = None
-        if file is not None:
-            self.filename = file
-            self.parse_file(file)
 
     def parse_xp(self, content):
         if content.startswith('---'):
@@ -3938,75 +4239,6 @@ class Game:
         if key in self.tasks:
             return self.tasks[key]
         raise Warning(f"fail: tarefa '{key}' não encontrada no curso")
-
-    # se existir um cluster nessa linha, insere na lista de clusters e 
-    # retorno o objeto cluster inserido
-    def load_cluster(self, line: str, line_num: int) -> Optional[Cluster]:
-        if not line.startswith("## "):
-            return None
-        line = line[3:]
-
-        titulo = line
-        tags_raw = ""
-        if "<!--" in line:
-            pieces = line.split("<!--")
-            titulo = pieces[0]
-            middle_end = pieces[1].split("-->")
-            tags_raw = middle_end[0]
-            titulo += middle_end[1]
-
-        tags = [tag.strip() for tag in tags_raw.split(" ")]        
-        key = uni_to_asc(get_md_link(titulo))
-        try:
-            color = [tag[2:] for tag in tags if tag.startswith("c:")][0]
-        except IndexError as _e:
-            color = None
-        
-        cluster = Cluster(line_num, titulo, key, color)
-
-        if key in self.clusters.keys():
-            c = self.clusters[key]
-            print(f"Cluster {key} já existe")
-            print(f"{self.filename}:{line_num}")
-            print(f"{self.filename}:{c.line_number}")
-            print("  " + str(c))
-            print("  " + str(cluster))
-            exit(1)
-                
-        self.clusters[key] = cluster
-        self.ordered_clusters.append(key)
-        return cluster
-                
-    def load_quest(self, line, line_num) -> Optional[Quest]:
-        quest = QuestParser().parse_quest(self.filename, line, line_num + 1)
-        if quest is None:
-            return None
-        if quest.key in self.quests:
-            print(f"Quest {quest.key} já existe")
-            print(f"{self.filename}:{quest.line_number}")
-            print(f"{self.filename}:{self.quests[quest.key].line_number}")
-            print("  " + str(quest))
-            print("  " + str(self.quests[quest.key]))
-            exit(1)
-        self.quests[quest.key] = quest
-        return quest
-
-    def load_task(self, line, line_num) -> Optional[Task]:
-        if line == "":
-            return None
-        task = TaskParser.parse_line(line, line_num + 1)
-        if task is None:
-            return None
-        
-        if task.key in self.tasks:
-            print(f"Task {task.key} já existe")
-            print(f"{self.filename}:{task.line_number}")
-            print(f"{self.filename}:{self.tasks[task.key].line_number}")
-            print("  " + str(task))
-            print("  " + str(self.tasks[task.key]))
-            exit(1)
-        self.tasks[task.key] = task
-        return task
 
     def get_xp_resume(self):
         total = 0
@@ -4052,148 +4284,31 @@ class Game:
                             obtained[s] = 0
         return total, obtained
 
-    # Verificar se todas as quests requeridas existem e adiciona o ponteiro
-    # Verifica se todas as quests tem tarefas
-    def validate_requirements(self):
 
-        # verify is there are keys repeated between quests, tasks and groups
-
-        keys = [c.key for c in self.clusters.values()] +\
-               [k for k in self.quests.keys()] +\
-               [k for k in self.tasks.keys()]
-
-        # print chaves repetidas
-        for k in keys:
-            if keys.count(k) > 1:
-                print(f"Chave repetida: {k}")
-                exit(1)
-
-        # remove all quests without tasks
-        valid_quests = {}
-        for k, q in self.quests.items():
-            if len(q.get_tasks()) > 0:
-                valid_quests[k] = q
-
-        # trim titles
-        for q in self.quests.values():
-            q.title = q.title.strip()
-        for c in self.clusters.values():
-            c.title = c.title.strip()
-
-        self.quests = valid_quests
-        # verificar auto dependencia
-        for q in self.quests.values():
-            for r in q.requires:
-                if q.key == r:
-                    print(f"Erro: auto refência {q.line_number} {q.line}")
-                    exit(1)
-
-
-        # verificar se todas as quests requeridas existem e adicionar o ponteiro
-        for q in self.quests.values():
-            for r in q.requires:
-                if r in self.quests:
-                    q.requires_ptr.append(self.quests[r])
-                else:
-                    # print(f"keys: {self.quests.keys()}")
-                    print(f"Quest\n{self.filename}:{q.line_number}\n{str(q)}\nrequer {r} que não existe")
-                    exit(1)
-
-    def check_cycle(self):
-        def dfs(qx, visitedx):
-            if len(visitedx) > 0:
-                if visitedx[0] == qx.key:
-                    print(f"Cycle detected: {visitedx}")
-                    exit(1)
-            if q.key in visitedx:
-                return
-            visitedx.append(q.key)
-            for r in q.requires_ptr:
-                dfs(r, visitedx)
-
-        for q in self.quests.values():
-            visited: List[str] = []
-            dfs(q, visited)
-
-    def tie_cluster_quest(self, cluster: Cluster, quest: Quest):
-        quest.cluster_key = cluster.key
-        cluster.quests.append(quest)
-
-    def create_unamed_quest(self, cluster):
-        key = cluster.key + "_Sem_Missão"
-        quest: Quest = Quest("Sem Missão", key)
-        self.quests[key] = quest
-        self.tie_cluster_quest(cluster, quest)
-        return quest
-
-    def parse_file(self, filename: str):
+    def parse_file_and_folder(self, filename: str, folder: str):
         self.filename = filename
         content = Decoder.load(filename)
-        lines = content.splitlines()
         self.parse_xp(content)
 
-        key = "Sem Grupo"
-        active_cluster: Cluster = Cluster(0, key, key)
-        self.clusters[key] = active_cluster
-        self.ordered_clusters.append(key)
-        
-        active_quest: Quest = self.create_unamed_quest(active_cluster)
+        gb = GameBuilder(filename).build_from(content, folder)
+        self.ordered_clusters = gb.ordered_clusters
+        self.clusters = gb.clusters
+        self.quests = gb.collect_quests()
+        self.tasks = gb.collect_tasks()
+        GameValidator(filename, self.clusters, self.quests, self.tasks).validate()
 
-        for line_num, line in enumerate(lines):
-            cluster = self.load_cluster(line, line_num)
-            if cluster is not None:
-                active_cluster = cluster
-                active_quest = self.create_unamed_quest(active_cluster)
-                continue
-            
-            quest = self.load_quest(line, line_num)
-            if quest is not None:
-                active_quest = quest
-                self.tie_cluster_quest(active_cluster, active_quest)
-                continue
-
-            task = self.load_task(line, line_num)
-            if task is not None:
-                active_quest.add_task(task, filename)
-                task.quest_key = active_quest.key
-                task.cluster_key = active_cluster.key
-
-        self.clear_empty()
-
-        self.validate_requirements()
-        for t in self.tasks.values():
-            t.process_link(os.path.dirname(filename) + "/")
-
-    def clear_empty(self):
-
-        # apagando quests vazias da lista de quests
-        for k in list(self.quests.keys()):
-            if len(self.quests[k].get_tasks()) == 0:
-                del self.quests[k]
-
-        # apagando quests vazias dos clusters e clusters vazios
-        ordered_clusters: List[str] = []
-        clusters: Dict[str, Cluster] = {}
-        for key in self.ordered_clusters:
-            cluster = self.clusters[key]
-            quests = [q for q in cluster.quests if len(q.get_tasks()) > 0]
-            if len(quests) > 0:
-                cluster.quests = quests
-                clusters[cluster.key] = cluster
-                ordered_clusters.append(cluster.key)
-
-        self.ordered_clusters = ordered_clusters
-        self.clusters = clusters
+        # for t in self.tasks.values():
+        #     t.get_link(os.path.dirname(filename) + "/")
 
     @staticmethod
-    def __is_reachable_quest(q: Quest, cache: Dict[str, bool]):
+    def is_reachable_quest(q: Quest, cache: Dict[str, bool]):
         if q.key in cache:
             return cache[q.key]
 
         if len(q.requires_ptr) == 0:
             cache[q.key] = True
             return True
-        cache[q.key] = all([r.is_complete() and Game.__is_reachable_quest(r, cache) for r in q.requires_ptr])
+        cache[q.key] = all([r.is_complete() and Game.is_reachable_quest(r, cache) for r in q.requires_ptr])
         return cache[q.key]
 
     # def __get_reachable_quests(self):
@@ -4209,8 +4324,8 @@ class Game:
 
         cache: Dict[str, bool] = {}
         for c in self.clusters.values():
-            for q in c.quests:
-                if Game.__is_reachable_quest(q, cache):
+            for q in c.get_quests():
+                if Game.is_reachable_quest(q, cache):
                     q.set_reachable(True)
                     c.set_reachable(True)
 
@@ -4227,11 +4342,17 @@ class Game:
     def __str__(self):
         output = []
         for c in self.clusters.values():
-            output.append(str(c))
-            for q in c.quests:
-                output.append(str(q))
+            output.append("# " + str(c))
+            for q in c.get_quests():
+                output.append("  - " + str(q))
                 for t in q.get_tasks():
-                    output.append(str(t))
+                    output.append("    - " + str(t))
+        output.append(100 * "-")
+        for q in self.quests.values():
+            output.append(str(q))
+        output.append(100 * "-")
+        for t in self.tasks.values():
+            output.append(str(t))
         return "\n".join(output)
 
 
@@ -4353,7 +4474,7 @@ class Graph:
 
         for i, c in enumerate(self.game.clusters.values()):
             # cluster_targets = [q for q in c.quests if self.is_reachable_or_next(q)]
-            cluster_targets = [q for q in c.quests]
+            cluster_targets = [q for q in c.__quests]
             for q in cluster_targets:
                 if self.opt:
                     if q.opt:
@@ -4873,6 +4994,16 @@ class SolverBuilder:
         self.check_tool("g++")
         pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror", "-Wno-deprecated"]
         pos: List[str] = []
+        # fmt_lib = False
+        # for path in self.path_list:
+        #     if os.path.isfile(path):
+        #         content = Decoder.load(path)
+        #         if "#include <fmt" in content:
+        #             fmt_lib = True
+        #             break
+        # if fmt_lib:
+        #     pos.append("-lfmt")
+
         self.__prepare_c_cpp(pre, pos)
 
     @staticmethod
@@ -4995,10 +5126,15 @@ class TaskData:
         self.seft_grade = seft_grade
 
     def decode(self, serial: str):
-        key, progress, seft_grade = serial.split(":")
-        self.key = key
-        self.progress = int(progress)
-        self.seft_grade = int(seft_grade)
+        pieces = serial.split(":")
+        if len(pieces) == 3:
+            try:
+                self.key = pieces[0]
+                self.progress = int(pieces[1])
+                self.seft_grade = int(pieces[2])
+            except:
+                pass
+
 
     def __eq__(self, other):
         return self.progress == other.progress and self.seft_grade == other.seft_grade
@@ -5507,7 +5643,10 @@ class RemoteUrl:
         if url.startswith("https://gist.githubusercontent.com"):
             self.raw_link = url
         else:
-            self.remote = RemoteLink().identify_from_url(url)
+            try:
+                self.remote = RemoteLink().identify_from_url(url)
+            except:
+                raise Warning("URL inválida para download: {}".format(url))
         self.file = ""
 
     def get_raw_url(self):
@@ -5555,16 +5694,17 @@ class Repository:
             os.rename(old_remote, new_remote)
         
         # for each folder under database, if has a .track folder, move to .tko/track/<folder>
-        for folder in os.listdir(new_remote):
-            folder = os.path.abspath(os.path.join(new_remote, folder))
-            track_folder = os.path.join(folder, ".track")
-            if os.path.isdir(track_folder):
-                key = os.path.basename(folder)
-                new_track_folder = os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.TRACK_FOLDER, key)
-                os.makedirs(new_track_folder, exist_ok=True)
-                for file in os.listdir(track_folder):
-                    os.rename(os.path.join(track_folder, file), os.path.join(new_track_folder, file))
-                os.rmdir(track_folder)
+        if os.path.isdir(new_remote):
+            for folder in os.listdir(new_remote):
+                folder = os.path.abspath(os.path.join(new_remote, folder))
+                track_folder = os.path.join(folder, ".track")
+                if os.path.isdir(track_folder):
+                    key = os.path.basename(folder)
+                    new_track_folder = os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.TRACK_FOLDER, key)
+                    os.makedirs(new_track_folder, exist_ok=True)
+                    for file in os.listdir(track_folder):
+                        os.rename(os.path.join(track_folder, file), os.path.join(new_track_folder, file))
+                    os.rmdir(track_folder)
 
         # search for .tko/repository.json and reencode to yaml
         old_json = os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.OLD_CFG_FILE)
@@ -5592,7 +5732,7 @@ class Repository:
 
     def get_key_from_task_folder(self, folder: str) -> str:
         label = os.path.basename(folder)
-        task_folder = self.get_label_task_folder(label)
+        task_folder = self.get_task_folder_for_label(label)
         if task_folder == folder:
             return label
         return ""
@@ -5600,7 +5740,7 @@ class Repository:
     def get_track_task_folder(self, label: str) -> str:
         return os.path.abspath(os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.TRACK_FOLDER, label))
 
-    def get_label_task_folder(self, label: str) -> str:
+    def get_task_folder_for_label(self, label: str) -> str:
         return os.path.abspath(os.path.join(self.folder, Repository.DATABASE_FOLDER, label))
 
     def is_local_dir(self, path):
@@ -5613,28 +5753,28 @@ class Repository:
         return link.startswith("http:") or link.startswith("https:")
 
     def __set_task_folders(self, task: Task):
-        if not task.is_downloadable():
-            # atividade local
-            if not self.is_web_link(task.link):
-                task_dir = os.path.abspath(os.path.dirname(task.link))
-                task.set_folder(task_dir)
-        else: # downloadable task
-            task_dir = self.get_label_task_folder(task.key)
-            task.set_folder(task_dir)
-            task.set_track_folder(self.get_track_task_folder(task.key))
+        if task.visit:
+            return
+        task.set_track_folder(self.get_track_task_folder(task.key))
+        if not task.local:
+            task.set_folder(self.get_task_folder_for_label(task.key))
 
     def load_game(self):
         if self.data == {}:
             self.load_config()
-        self.game.parse_file(self.load_index_or_cache())
+        database_folder = os.path.join(self.folder, Repository.DATABASE_FOLDER)
+        cache_or_index = self.load_index_or_cache()
+        self.game.parse_file_and_folder(cache_or_index, database_folder)
+        
         for task in self.game.tasks.values():
             self.__set_task_folders(task)
+        
         return self
 
-    def get_old_repository_file(self) -> str:
+    def get_old_config_file(self) -> str:
         return os.path.abspath(os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.OLD_CFG_FILE))
 
-    def get_repository_file(self) -> str:
+    def get_config_file(self) -> str:
         return os.path.abspath(os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.CFG_FILE))
     
     def get_history_file(self) -> str:
@@ -5649,37 +5789,38 @@ class Repository:
     def get_rep_dir(self) -> str:
         return os.path.abspath(self.folder)
 
+    def __load_local_file(self, source: str) -> str:
+        # test if file is inside or outside the repository
+        source = os.path.abspath(os.path.join(self.folder, self.CONFIG_FOLDER, source))
+        if not os.path.exists(source):
+            raise Warning(Text("{r}: Arquivo fonte do repositório {y} não foi encontrado", "Erro", source))
+        return source
+
+
+
     def load_index_or_cache(self) -> str:
-        file: str = self.get_local_file()
-        remote: str = self.get_remote_source()
-        # arquivo existe e é local
-        if file != "" and os.path.exists(file) and remote == "":
-            return file
+        source = self.get_rep_source()
+
+        if not source.startswith("http:") and not source.startswith("https:"):        
+            return self.__load_local_file(source)
         
-        if not remote.startswith("http:)") and not remote.startswith("https:"):
-            return remote
-
         # arquivo não existe e é remoto
-        if remote != "" and (file == "" or not os.path.exists(file)):
-            cache_file = self.get_default_readme_path()
-            os.makedirs(self.folder, exist_ok=True)
-            ru = RemoteUrl(remote)
-            try:
-                ru.download_absolute_to(cache_file)
-            except urllib.error.URLError:
-                print("Não foi possível baixar o arquivo do repositório")
-                if os.path.exists(cache_file):
-                    print("Usando arquivo do cache")
-                else:
-                    raise Warning("fail: Arquivo do cache não encontrado")
-            return cache_file
-
-        raise Warning("fail: arquivo não encontrado ou configurações inválidas para o repositório")
+        cache_file = self.get_default_readme_path()
+        os.makedirs(self.folder, exist_ok=True)
+        ru = RemoteUrl(source)
+        try:
+            ru.download_absolute_to(cache_file)
+        except urllib.error.URLError:
+            print("Não foi possível baixar o arquivo do repositório")
+            if os.path.exists(cache_file):
+                print("Usando arquivo do cache")
+            else:
+                raise Warning("fail: Arquivo do cache não encontrado")
+        return cache_file
 
     __version = "version"
     __actual_version = "0.0.1"
-    __remote_url = "remote"  #remote url
-    __local_file = "local"  #local file
+    __source = "remote"  #remote url or local file or remote file
     __expanded = "expanded"
     __new_items = "new_items"
     __tasks = "tasks"
@@ -5689,8 +5830,7 @@ class Repository:
 
     defaults = {
         __version: __actual_version,
-        __remote_url: "",
-        __local_file: "",
+        __source: "",
         __expanded: [],
         __tasks: {},
         __flags: {},
@@ -5706,18 +5846,11 @@ class Repository:
         self.__set(Repository.__version, value)
         return self
 
-    def get_local_file(self) -> str:
-        return self.__get(Repository.__local_file)
+    def get_rep_source(self) -> str:
+        return self.__get(Repository.__source)
     
-    def set_local_file(self, value: str):
-        self.__set(Repository.__local_file, value)
-        return self
-
-    def get_remote_source(self) -> str:
-        return self.__get(Repository.__remote_url)
-    
-    def set_remote_source(self, value: str):
-        self.__set(Repository.__remote_url, value)
+    def set_rep_source(self, value: str):
+        self.__set(Repository.__source, value)
         return self
 
     def get_selected(self) -> str:
@@ -5774,26 +5907,26 @@ class Repository:
 
     def create_empty_config_file(self, point_to_local_readme: bool = False):
         if point_to_local_readme:
-            self.set_local_file(self.get_default_readme_path())
+            self.set_rep_source(self.get_default_readme_path())
         self.save_config()
         return self
 
     def has_local_config_file(self) -> bool:
-        return os.path.exists(self.get_repository_file()) or os.path.exists(self.get_old_repository_file())
+        return os.path.exists(self.get_config_file()) or os.path.exists(self.get_old_config_file())
 
     def load_config(self):
-        encoding = Decoder.get_encoding(self.get_repository_file())
+        encoding = Decoder.get_encoding(self.get_config_file())
         try:
-            with open(self.get_repository_file(), encoding=encoding) as f:
+            with open(self.get_config_file(), encoding=encoding) as f:
                 # self.data = json.load(f)
                 self.data = yaml.safe_load(f)
         except:
-            raise Warning(Text("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.get_repository_file(), "corrompido"))
+            raise Warning(Text("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.get_config_file(), "corrompido"))
         return self
 
     def save_config(self):
         self.set_version(self.__actual_version)
-        json_file = self.get_repository_file()
+        json_file = self.get_config_file()
         if not os.path.exists(os.path.dirname(json_file)):
             os.makedirs(os.path.dirname(json_file))
         # filter keys that are not in defaults
@@ -6536,7 +6669,7 @@ class TaskTree:
     def load_all_items(self):
         for c in self.game.clusters.values():
             self.all_items[c.key] = c
-            for q in c.quests:
+            for q in c.get_quests():
                 self.all_items[q.key] = q
                 for t in q.get_tasks():
                     self.all_items[t.key] = t
@@ -6588,7 +6721,7 @@ class TaskTree:
             if c.key in self.game.available_clusters:
                 items.append(len(c.title))
                 if c.key in self.expanded:
-                    for q in [q for q in c.quests if q.key in self.game.available_quests]:
+                    for q in [q for q in c.get_quests() if q.key in self.game.available_quests]:
                         items.append(len(q.title) + 2)
                         if q.key in self.expanded:
                             for t in q.get_tasks():
@@ -6605,11 +6738,10 @@ class TaskTree:
         down_symbol = Token(" ")
         in_focus = focus_color != ""
         down_symbol = symbols.task_to_visit
-        if not t.has_remote_link():
+        if t.local:
             down_symbol = symbols.task_local
-        task_dir = self.rep.get_label_task_folder(t.key)
-        if t.is_downloadable():
-            if t.is_downloaded_for_lang(task_dir, self.rep.get_lang()):
+        if t.download_link != "":
+            if t.is_downloaded_for_lang(self.rep.get_lang()):
                 down_symbol = symbols.task_remote_downloaded
             else:
                 down_symbol = symbols.task_remote_to_download
@@ -6795,7 +6927,7 @@ class TaskTree:
             if search.inside(cluster.title):
                 matches.add(cluster.key)
                 first = first or cluster.key
-            for quest in cluster.quests:
+            for quest in cluster.get_quests():
                 if search.inside(quest.title):
                     first = first or quest.key
                     matches.add(cluster.key)
@@ -6822,17 +6954,17 @@ class TaskTree:
             return True
         return False
 
-    def force_show_single_cluster_and_quest(self, clusters: List[Cluster]):
-        if self.search_text != "":
-            return
-        if len(clusters) != 1:
-            return
-        cluster = clusters[0]
-        if cluster.key not in self.expanded:
-            self.expanded.append(cluster.key)
-        if len(cluster.quests) == 1:
-            if cluster.quests[0].key not in self.expanded:
-                self.expanded.append(cluster.quests[0].key)
+    # def force_show_single_cluster_and_quest(self, clusters: List[Cluster]):
+    #     if self.search_text != "":
+    #         return
+    #     if len(clusters) != 1:
+    #         return
+    #     cluster = clusters[0]
+    #     if cluster.key not in self.expanded:
+    #         self.expanded.append(cluster.key)
+    #     if len(cluster.get_quests()) == 1:
+    #         if cluster.get_quests()[0].key not in self.expanded:
+    #             self.expanded.append(cluster.get_quests()[0].key)
 
 
     def reload_sentences(self):
@@ -6846,10 +6978,10 @@ class TaskTree:
 
         clusters = [self.game.clusters[key] for key in available_clusters if key in filtered]
 
-        self.force_show_single_cluster_and_quest(clusters)
+        # self.force_show_single_cluster_and_quest(clusters)
 
         for cluster in clusters:
-            quests = [q for q in cluster.quests if q.key in available_quests if q.key in filtered]
+            quests = [q for q in cluster.get_quests() if q.key in available_quests if q.key in filtered]
             focus_color = self.get_focus_color(cluster) if self.selected_item == cluster.get_key() else ""
             cluster.sentence = self.str_cluster(len(quests) > 0, focus_color, cluster)
 
@@ -6918,7 +7050,7 @@ class TaskTree:
                 self.expanded.append(cluster.key)
                 return
             full_open = True
-            for q in cluster.quests:
+            for q in cluster.get_quests():
                 if q.key in self.game.available_quests and q.key not in self.expanded:
                     self.expanded.append(q.key)
                     full_open = False
@@ -6926,7 +7058,7 @@ class TaskTree:
                 return
 
             value = None
-            for q in obj.quests:
+            for q in obj.get_quests():
                 for t in q.get_tasks():
                     if value is not None:
                         t.set_grade(value)
@@ -7036,50 +7168,64 @@ class TaskTree:
                 index += 1
             self.set_selected_by_index(index)
 
+    def walk_left_on_quest(self, index: int):
+        while True:
+            if index == 0:
+                break
+            index -= 1
+            obj = self.items[index]
+            if isinstance(obj, Cluster) or isinstance(obj, Quest) and obj.key in self.expanded:
+                break
+            if index == 0:
+                break
+        self.set_selected_by_index(index)
+
+    def walk_left_on_cluster(self, index: int):
+        while True:
+            if index == 0:
+                break
+            index -= 1
+            obj = self.items[index]
+            if isinstance(obj, Cluster) or isinstance(obj, Quest):
+                break
+            if index == 0:
+                break
+        self.set_selected_by_index(index)
+
     def arrow_left(self):
         index = self.get_selected_index()
         obj = self.items[index]
         if isinstance(obj, Quest):
             if not self.fold(obj):
-                while True:
-                    if self.selected_item == 0:
-                        break
-                    index -= 1
-                    obj = self.items[index]
-                    if isinstance(obj, Cluster) or isinstance(obj, Quest) and obj.key in self.expanded:
-                        break
-                    if self.selected_item == 0:
-                        break
+                self.walk_left_on_quest(index)
+            return
         elif isinstance(obj, Cluster):
             if obj.key in self.expanded:
                 self.expanded.remove(obj.key)
-                for q in obj.quests:
+                for q in obj.get_quests():
                     try:
                         self.expanded.remove(q.key)
                     except ValueError:
                         pass
             else:
-                while True:
-                    if self.selected_item == 0:
-                        break
-                    index -= 1
-                    obj = self.items[index]
-                    if isinstance(obj, Cluster) or isinstance(obj, Quest):
-                        break
-                    if self.selected_item == 0:
-                        break
+                self.walk_left_on_cluster(index)
+            return
         elif isinstance(obj, Task):
             while True:
                 obj = self.items[index]
                 if isinstance(obj, Quest):
                     break
                 index -= 1
-        self.set_selected_by_index(index)
+            self.set_selected_by_index(index)
 
     def unfold(self, obj: TreeItem) -> bool:
         if isinstance(obj, Quest) or isinstance(obj, Cluster):
             if obj.key not in self.expanded:
                 self.expanded.append(obj.key)
+                if isinstance(obj, Cluster):
+                    cluster: Cluster = obj
+                    if len(cluster.get_quests()) == 1:
+                        self.expanded.append(cluster.get_quests()[0].key)
                 return True
         return False
 
@@ -7087,6 +7233,12 @@ class TaskTree:
         if isinstance(obj, Quest) or isinstance(obj, Cluster):
             if obj.key in self.expanded:
                 self.expanded.remove(obj.key)
+                if isinstance(obj, Quest):
+                    quest: Quest = obj
+                    cluster = self.game.clusters[quest.cluster_key]
+                    if len(cluster.get_quests()) == 1:
+                        self.expanded.remove(cluster.key)
+                        self.selected_item = cluster.key
                 return True
         return False
 
@@ -7120,14 +7272,12 @@ class TaskTree:
 
     # return a TaskAction
     def get_task_action(self, task: Task) -> str:
-        if not task.is_downloadable(): # remote task with url link
-            if task.folder == "":
-                return TaskAction.VISITAR
-            else: # local task
+        if task.visit:
+            return TaskAction.VISITAR
+        if task.local: # local task
                 return TaskAction.EXECUTAR
         else: # downloadable task
-            folder = task.get_folder()
-            if folder is not None and not task.is_downloaded_for_lang(folder, self.rep.get_lang()):
+            if not task.is_downloaded_for_lang(self.rep.get_lang()):
                 return TaskAction.BAIXAR
             else:
                 return TaskAction.EXECUTAR
@@ -8626,7 +8776,8 @@ class Run:
         if self.wdir is None:
             return False
         if not self.wdir.has_solver() and not self.wdir.has_tests():
-            print(Text().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
+            if not self.__curses_mode:
+                print(Text().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
             return True
         return False
     
@@ -8934,14 +9085,6 @@ class CmdDown:
         self.language = language
         return self
     
-    def get_game(self):
-        if self.game is not None:
-            return self.game
-        try:
-            file = self.rep.load_index_or_cache()
-        except urllib.error.HTTPError:
-            DownProblem.fnprint("falha: Verifique sua internet")
-        return Game(file)
 
     def remove_empty_destiny_folder(self):
         if len(os.listdir(self.destiny_folder)) == 0:
@@ -8977,14 +9120,14 @@ class CmdDown:
         cb.execute()
 
     def execute(self) -> bool:
-        item = self.get_game().get_task(self.task_key)
-        if not item.link.startswith("http"):
+        item = self.rep.game.get_task(self.task_key)
+        if item.download_link == "":
             DownProblem.fnprint("falha: link para atividade não é um link remoto")
             return False
-        
-        readme_remote_url = RemoteUrl(item.link)
+
+        readme_remote_url = RemoteUrl(item.download_link)
         self.cache_url = os.path.dirname(readme_remote_url.get_raw_url()) + "/.cache/"
-        self.destiny_folder = self.rep.get_label_task_folder(self.task_key)
+        self.destiny_folder = self.rep.get_task_folder_for_label(self.task_key)
         self.readme_path =  os.path.join(self.destiny_folder, "Readme.md")
         self.mapi_file = os.path.join(self.destiny_folder, "mapi.json")
         if not self.download_readme(readme_remote_url):
@@ -9047,15 +9190,15 @@ class PlayActions:
         subprocess.Popen("python3 -m webbrowser -t {}".format(link), stdout=outfile, stderr=outfile, shell=True)
 
     def get_task_folder(self, task: Task) -> str:
-        if task.is_downloadable():
-            return self.rep.get_label_task_folder(task.key)
-        return os.path.abspath(os.path.dirname(task.link))
+        if task.folder is None:
+            raise Exception("Folder não encontrado")
+        return task.folder
 
     def open_code(self):
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
             task: Task = obj
-            folder = self.rep.get_label_task_folder(task.key)
+            folder = self.rep.get_task_folder_for_label(task.key)
             if os.path.exists(folder):
                 opener = Opener(self.settings).set_fman(self.fman)
                 opener.set_target([folder]).set_language(self.rep.get_lang())
@@ -9078,15 +9221,15 @@ class PlayActions:
         obj = self.tree.get_selected()
         if isinstance(obj, Task):
             task: Task = obj
-            if task.link.startswith("http"):
+            if task.visitable_url != "":
                 try:
-                    self.open_link_without_stdout_stderr(task.link)
+                    self.open_link_without_stdout_stderr(task.visitable_url)
                 except Exception as _:
                     pass
             self.fman.add_input(
                 Floating("v>")
                 .set_header(" Abrindo link ")
-                .put_text("\n " + task.link + " \n")
+                .put_text("\n " + task.visitable_url + " \n")
                 .warning()
             )
         elif isinstance(obj, Quest):
@@ -9139,7 +9282,7 @@ class PlayActions:
         self.__down_remote_task(obj)
     
     def __down_remote_task(self, task: Task):
-        if not task.is_downloadable():
+        if task.download_link == "":
             self.fman.add_input(
                 Floating("v>").put_text("\nEssa não é uma tarefa de baixável.\n").error()
             )
@@ -9642,13 +9785,13 @@ class Main:
     @staticmethod
     def init(args):
         remote: str | None = args.remote
-        url: str | None = args.url
-        file: str | None = args.file
+        source: str | None = args.source
         folder: str | None = args.folder
-        Main.__init(remote=remote, url=url, file=file, folder=folder)
+        Main.__init(remote=remote, source=source, folder=folder)
 
     @staticmethod
-    def __init(remote: str | None, url: str | None, file: str | None, folder: str | None):
+    def __init(remote: str | None, source: str | None, folder: str | None):
+
         if folder is None:
             folder = os.getcwd()
             if remote is not None:
@@ -9658,40 +9801,38 @@ class Main:
             op = input()
             if op == "n":
                 return
+
+        path_old = Repository.rec_search_for_repo(folder)
+        if path_old is not None:
+            folder = path_old
+            print(Text("Já existe um repositório em {r}.", path_old))
+            print(Text("Deseja sobrescrever as configurações do repositório em {y} ? ({g}/{r}): ", folder, "s", "n"), end="")
+            op = input()
+            if op == "n":
+                return
+        
         rep = Repository(os.path.abspath(folder))
-        if remote is None and url is None and file is None:
+        if source is None:
             index = rep.get_default_readme_path()
+            rep.set_rep_source(index)
             print("Nenhuma fonte foi informada, utilizando o arquivo {} como fonte".format(index))
             if not os.path.exists(index):
                 content = "# Repositório\n\n## Grupo\n\n### Missão\n\n- [ ] [#google Abra o google](https://www.google.com)\n"
                 Decoder.save(index, content)
-
         else:
             settings = Settings()
-            source: str = ""
             if remote is not None:
                 if settings.has_alias_remote(remote):
                     source = settings.get_alias_remote(remote)
                 else:
                     raise Warning("fail: alias remoto não encontrado.")
-            elif url is not None:
-                source = url
-            elif file is not None:
-                source = file
-            rep.set_remote_source(source)
+            rep.set_rep_source(source)
         rep.save_config()
         # print(Text("Repositório iniciado com sucesso em {g}", os.path.abspath(rep.folder)))
         rel_path = os.path.relpath(rep.folder, os.getcwd())
         print(Text("Voce pode acessar o repositório com o comando {g} {y}", "tko play", "<pasta>"))
         print(Text("Por exemplo: {g} {y}", "tko play", rel_path))
 
-    # @staticmethod
-    # def start(args):
-    #     remote: str = args.remote
-    #     Main.__init(remote=remote, url=None, file=None, folder=remote, save=remote)
-    #     print(Text("Repositório {g} criado com sucesso na pasta {g}", remote, os.path.abspath(remote)))
-    #     print(Text("O atalho {g} foi vinculado a essa pasta, para acessá-lo", remote))
-    #     print(Text("basta utilizar o comando {g}", "tko play " + remote))
 
     @staticmethod
     def config(args):
@@ -9703,7 +9844,6 @@ class Main:
         param.editor = args.editor
         param.borders = args.borders
         param.timeout = args.timeout
-
         CmdConfig.execute(settings, param)
 
     @staticmethod
@@ -9726,13 +9866,9 @@ class Parser:
         self.add_parser_run()
         self.add_parser_exec()
         self.add_parser_build()
-        # self.add_parser_down()
         self.add_parser_config()
         self.add_parser_rep_tools()
         self.add_parser_rep_actions()
-        # self.add_parser_open()
-        # self.add_parser_save()
-        # self.add_parser_init()
 
 
     def add_parser_global(self):
@@ -9806,11 +9942,6 @@ class Parser:
         g_diff.add_argument('--side', action='store_true', help='set side_by_side diff mode.')
         g_diff.add_argument('--down', action='store_true', help='set up_to_down   diff mode.')
 
-        # g_lang = parser_s.add_mutually_exclusive_group()
-        # g_lang.add_argument("--lang", '-l', metavar='ext', type=str, help="set default language extension.")
-        # g_lang.add_argument("--ask", action='store_true', help='ask language extension every time.')
-
-        # parser_s.add_argument("--root", metavar="path", type=str, help='set root directory.')
         cfg_set.add_argument("--editor", metavar="cmd", type=str, help='set editor command.')
         cfg_set.add_argument("--borders", metavar="[0|1]", type=str, help='enable borders.')
         cfg_set.add_argument("--images", metavar="[0|1]", type=str, help='enable images.')
@@ -9822,70 +9953,32 @@ class Parser:
         cfg_list.set_defaults(func=Main.list)
 
 
-
     def add_parser_rep_tools(self):
 
         parser_repo = self.subparsers.add_parser('rep', help='Repository validation tools.')
+
         subpar_repo = parser_repo.add_subparsers(title='subcommands', help='help for subcommand.')
-
-        # repo_reset = subpar_repo.add_parser('reset', help='reset all repositories and folders to factory default.')
-        # repo_reset.set_defaults(func=CmdRep.reset)
-
-        # repo_graph = subpar_repo.add_parser('graph', help='generate graph of the repository.')
-        # repo_graph.add_argument('alias', metavar='alias', type=str, help='alias of the repository to be graphed.')
-        # repo_graph.set_defaults(func=CmdRep.graph)
-
         repo_log = subpar_repo.add_parser("check", help="validates log of the repository.")
         repo_log.add_argument('folder', type=str, help='folder to be checked.')
         repo_log.set_defaults(func=CmdRep.check)
 
-    # def add_parser_save(self):
-    #     parser_p = self.subparsers.add_parser('save', help='Save a repository folder with a global alias.')
-    #     parser_p.add_argument('folder', type=str, help='repository folder.')
-    #     parser_p.add_argument('alias', type=str, help='repository alias.')
-    #     parser_p.set_defaults(func=CmdRep.save)
+
 
     def add_parser_rep_actions(self):
-        # parser_load = self.subparsers.add_parser('load', help='Load a saved repository.')
-        # parser_load.add_argument('alias', type=str, help='repository alias.')
-        # parser_load.set_defaults(func=Main.load)
-
-        parser_play = self.subparsers.add_parser('play', help='Load and play a folder with a repository.')
-        parser_play.add_argument('folder', type=str, help='repository folder.')
+        parser_play = self.subparsers.add_parser('play', help='Open a folder with a repository.')
+        parser_play.add_argument('folder', type=str, nargs='?', default='.', help='repository folder.')
         parser_play.set_defaults(func=Main.open)
 
-        # parser_open = self.subparsers.add_parser('open', help='Open a folder with a repository.')
-        # parser_open.add_argument('folder', type=str, help='folder.')
-        # parser_open.set_defaults(func=Main.open)
-
-        # parser_save = self.subparsers.add_parser('save', help='Save a repository in a global alias.')
-        # parser_save.add_argument('alias', type=str, help='alias.')
-        # parser_save.add_argument('folder', type=str, help='folder.')
-        # parser_save.set_defaults(func=Main.save)
+        parser_open = self.subparsers.add_parser('open', help='Open a folder with a repository.')
+        parser_open.add_argument('folder', type=str, nargs='?', default='.', help='repository folder.')
+        parser_open.set_defaults(func=Main.open)
 
         parser_init = self.subparsers.add_parser('init', help='Initialize a repository in a folder.')
-
         source = parser_init.add_mutually_exclusive_group()
         source.add_argument('--remote', type=str, help='remote source [fup|ed|poo].')
-        source.add_argument('--url', type=str, help='remote url.')
-        source.add_argument('--file', type=str, help='remote or local file.')
-
+        source.add_argument('--source', type=str, help='http url or local file.')
         parser_init.add_argument('--folder', type=str, help='local directory.')
         parser_init.set_defaults(func=Main.init)
-
-        # parser_start = self.subparsers.add_parser('start', help='Initialize a repository in a folder with a remote source and save in alias.')
-        # parser_start.add_argument('remote', type=str, help='remote source [fup|ed|poo].')
-        # parser_start.set_defaults(func=Main.start)
-
-
-    # def add_parser_open(self):
-
-
-    # def add_parser_init(self):
-    #     parser_p = self.subparsers.add_parser('open', help='open a folder with a repository.')
-    #     parser_p.add_argument('folder', metavar='folder', type=str, help='folder.')
-    #     parser_p.set_defaults(func=CmdRep.init)
-
 
 
 def exec(parser: argparse.ArgumentParser, args):

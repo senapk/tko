@@ -40,14 +40,6 @@ class CmdDown:
         self.language = language
         return self
     
-    def get_game(self):
-        if self.game is not None:
-            return self.game
-        try:
-            file = self.rep.load_index_or_cache()
-        except urllib.error.HTTPError:
-            DownProblem.fnprint("falha: Verifique sua internet")
-        return Game(file)
 
     def remove_empty_destiny_folder(self):
         if len(os.listdir(self.destiny_folder)) == 0:
@@ -83,14 +75,14 @@ class CmdDown:
         cb.execute()
 
     def execute(self) -> bool:
-        item = self.get_game().get_task(self.task_key)
-        if not item.link.startswith("http"):
+        item = self.rep.game.get_task(self.task_key)
+        if item.download_link == "":
             DownProblem.fnprint("falha: link para atividade não é um link remoto")
             return False
-        
-        readme_remote_url = RemoteUrl(item.link)
+
+        readme_remote_url = RemoteUrl(item.download_link)
         self.cache_url = os.path.dirname(readme_remote_url.get_raw_url()) + "/.cache/"
-        self.destiny_folder = self.rep.get_label_task_folder(self.task_key)
+        self.destiny_folder = self.rep.get_task_folder_for_label(self.task_key)
         self.readme_path =  os.path.join(self.destiny_folder, "Readme.md")
         self.mapi_file = os.path.join(self.destiny_folder, "mapi.json")
         if not self.download_readme(readme_remote_url):

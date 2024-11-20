@@ -2,8 +2,16 @@ from typing import Dict, Optional, Tuple
 from tko.util.symbols import symbols
 from tko.util.text import Text
 from tko.game.tree_item import TreeItem
+from tko.util.get_md_link import get_md_link
 import re
 import os
+
+class TaskTypes:
+    visitable_url = 0 # task link to url 
+    select_folder = 1 # task link to a [file|folder] and remote to [local file|none]
+    down_from_url = 2 # task link to url
+    down_from_dir = 3 # task link to a [file] and remote as file outside folder
+
 
 class Task(TreeItem):
 
@@ -11,7 +19,7 @@ class Task(TreeItem):
         super().__init__()
         self.line_number = 0
         self.line = ""
-        self.downloadable = False
+
         self.self_grade: int = 0 #valor de 0 a 9
         self.progress: int = 0 #valor de 0 a 100
         self.main_index: int = 0
@@ -19,12 +27,17 @@ class Task(TreeItem):
         self.qskills: Dict[str, int] = {} # default quest skills
         self.skills: Dict[str, int] = {} # local skills
         self.xp: int = 0
-        
+
         self.opt: bool = False
-        self.link: str = ""
+        self.visit: bool = False
+        self.local: bool = False
+
+        self.download_link: str = ""
+        self.visitable_url: str = ""
 
         self.quest_key = ""
         self.cluster_key = ""
+
         self.folder: str | None = None
         self.track_folder: str | None = None
 
@@ -119,60 +132,65 @@ class Task(TreeItem):
             self.self_grade = grade
         else:
             print(f"Grade inválida: {grade}")
-    
-    def process_link(self, base_file):
-        if self.link.startswith("http"):
-            return
-        if self.link.startswith("./"):
-            self.link = self.link[2:]
-        # todo trocar / por \\ se windows
-        self.link = base_file + self.link
+
+    def get_download_link(self) -> str:
+        return self.download_link
+
+    def get_visitable_url(self) -> str:
+        return self.visitable_url
 
     def __str__(self):
-        line = str(self.line_number).rjust(3)
+        lnum = str(self.line_number).rjust(3)
         key = "" if self.key == self.title else self.key + " "
-        return f"{line}    {self.self_grade} {key}{self.title} {self.skills} {self.link}"
-    
-    def has_remote_link(self):
-        return self.link.startswith("http:") or self.link.startswith("https:")
+        return f"{lnum} grade:{self.self_grade} key:{key} title:{self.title} skills:{self.skills} down:{self.download_link} vis:{self.visitable_url}"
 
     def has_at_symbol(self):
         return any([s.startswith("@") for s in self.title.split(" ")])
 
-    def is_downloadable(self):
-        return self.downloadable
-
-    def is_downloaded_for_lang(self, task_dir: str, lang: str) -> bool:
-        if not os.path.isfile(os.path.join(task_dir, "Readme.md")):
+    def is_downloaded_for_lang(self, lang: str) -> bool:
+        if self.folder is None or not os.path.isdir(self.folder):
             return False
-        files = os.listdir(task_dir)
+        files = os.listdir(self.folder)
         if not any([f.endswith("." + lang) for f in files]):
             return False
         return True
 
 """
-Usar @ ou # para definir a chave da tarefa
+down_from_url = 2 # task link to url
+down_from_dir = 3 # task link to a [file] and remote as file outside folder
+visitable_url = 0 # task link to url 
+select_folder = 1 # task link to a [file|folder] and remote to [local file|none]
+
+----------
+
+Usar @ para definir a chave da tarefa
 Pode ser incluído no título da tarefa que está entre os [] ou nas tags url
 Exemplo:
 - [ ] [@banana Título da tarefa](https://tal_coias/Readme.md) 
 Chave: "banana"
 Título: "@banana Título da tarefa"
 link: "https://tal_coias/Readme.md"
-É uma tarefa de download
 
 ----------
-Nessas tarefas que não serão baixadas para o repositório, se não for inserido o #, será utilizado como chave o link da tarefa
-- [ ] [#banana Título da tarefa](https://tal_coias/Readme.md)
-Chave: "banana"
-Título: "#banana Título da tarefa"
-link: "https://tal_coias/Readme.md"
+Se a flag visit estiver no html a tarefa será para ser visitada apenas
+Exemplo:
+- [ ] [@banana Título da tarefa](https://tal_coias/Readme.md) <!-- visit -->
+
+----------
+Se o link for um arquivo ou pasta
+- [ ] [@banana Título da tarefa](tal_coias/Readme.md)
+
 
 
 """
 class TaskParser:
 
-    @staticmethod
-    def __load_tags(task: Task, tags_raw: str):
+    def __init__(self, index_path: str):
+        self.index_path = index_path
+        self.task = Task()
+
+    def __load_tags(self, tags_raw: str):
+        task = self.task
         tags = [tag.strip() for tag in tags_raw.split(" ")]
         task.opt = "opt" in tags
         for t in tags:
@@ -181,36 +199,70 @@ class TaskParser:
                 task.skills[key] = int(value)
             elif t.startswith("@"):
                 task.key = t[1:]
-                task.downloadable = True
-            elif t.startswith("#"):
-                task.key = t[1:]
 
-    @staticmethod
-    def parse_line(line: str, line_num: int) -> Optional[Task]:
+    def parse_line(self, line: str, line_num: int) -> Optional[Task]:
         pattern = r'\s*?- \[ \](.*?)\[([^\]]+)\]\(([^)]+)\)(?:\s*<!--(.*?)-->)?'
 
         match = re.match(pattern, line)
         if match is None:
             return None
-        task = Task()
+        task = self.task
         task.line_number = line_num
         task.line = line
-        task.opt = False
         task.title = match.group(1).strip()
         if task.title != "":
             task.title += " "
         task.title += match.group(2).strip()
         task.title = task.title.replace("`", "")
-        task.link = match.group(3).strip()
-        if match.group(4) is not None:
-            TaskParser.__load_tags(task, match.group(3))
         
+        if match.group(4) is not None:
+            self.__load_tags(match.group(4))
+
         for item in task.title.split(" "):
             if item.startswith("@"):
                 task.key = item[1:]
-                task.downloadable = True
-            if item.startswith("#"):
+            elif item.startswith("#"):
+                task.visit = True
                 task.key = item[1:]
+            elif item.startswith("!"):
+                task.local = True
+                task.key = item[1:]
+
+        #remove last non alfa char from key
+        allowed = "0123456789_abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        key = ""
+        for c in task.key:
+            if c in allowed:
+                key += c
+            else:
+                break
+        task.key = key
+
+        link = match.group(3).strip()
+        self.adjust_links(link)
+        
         if task.key == "":
-            task.key = task.link
+            task.key = get_md_link(link)
         return task
+    
+    def adjust_links(self, link: str):
+        task = self.task
+        if task.visit:
+            task.visitable_url = link
+            task.download_link = ""
+            return
+        
+        if task.local:
+            task.folder = link
+            task.download_link = ""
+            task.visitable_url = ""
+            return
+
+        if link.startswith("http") and self.task.key != "":
+            task.download_link = link
+            task.visitable_url = link
+            return
+        
+        basedir = os.path.dirname(self.index_path)
+        task.download_link = os.path.join(basedir, link)
+        task.visitable_url = ""
