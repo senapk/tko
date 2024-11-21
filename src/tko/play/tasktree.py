@@ -359,8 +359,6 @@ class TaskTree:
 
         clusters = [self.game.clusters[key] for key in available_clusters if key in filtered]
 
-        # self.force_show_single_cluster_and_quest(clusters)
-
         for cluster in clusters:
             quests = [q for q in cluster.get_quests() if q.key in available_quests if q.key in filtered]
             focus_color = self.get_focus_color(cluster) if self.selected_item == cluster.get_key() else ""
@@ -387,6 +385,16 @@ class TaskTree:
                         focus_color = self.get_focus_color(q) if self.selected_item == t.get_key() else ""
                         t.sentence = self.str_task(focus_color, t, ligc, ligq, q.is_reachable(), min_value)
                         self.try_add(filtered, matcher, t)
+        if self.items:
+            found = False
+            for item in self.items:
+                if item.get_key() == self.selected_item:
+                    found = True
+                    break
+            if found == False:
+                self.selected_item = self.items[0].get_key()
+                self.reload_sentences()
+                
 
 
     def process_collapse(self):

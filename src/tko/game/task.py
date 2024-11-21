@@ -253,7 +253,8 @@ class TaskParser:
             return
         
         if task.local:
-            task.folder = link
+            dirname = os.path.dirname(self.index_path)
+            task.folder = os.path.dirname(os.path.abspath(os.path.join(dirname, link)))
             task.download_link = ""
             task.visitable_url = ""
             return

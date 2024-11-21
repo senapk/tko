@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from typing import List, Dict, Tuple, Optional, Any, Callable, Union, Set
 import argparse
+import argcomplete
 import sys
 import os
 import json
@@ -2768,7 +2769,8 @@ class TaskParser:
             return
         
         if task.local:
-            task.folder = link
+            dirname = os.path.dirname(self.index_path)
+            task.folder = os.path.dirname(os.path.abspath(os.path.join(dirname, link)))
             task.download_link = ""
             task.visitable_url = ""
             return
@@ -5796,15 +5798,12 @@ class Repository:
             raise Warning(Text("{r}: Arquivo fonte do repositório {y} não foi encontrado", "Erro", source))
         return source
 
-
-
-    def load_index_or_cache(self) -> str:
+    def __is_remote_source(self) -> bool:
         source = self.get_rep_source()
-
-        if not source.startswith("http:") and not source.startswith("https:"):        
-            return self.__load_local_file(source)
-        
-        # arquivo não existe e é remoto
+        return source.startswith("http:") or source.startswith("https:")
+    
+    def down_source_from_remote_url(self):
+        source = self.get_rep_source()
         cache_file = self.get_default_readme_path()
         os.makedirs(self.folder, exist_ok=True)
         ru = RemoteUrl(source)
@@ -5817,6 +5816,13 @@ class Repository:
             else:
                 raise Warning("fail: Arquivo do cache não encontrado")
         return cache_file
+
+    def load_index_or_cache(self) -> str:
+        source = self.get_rep_source()
+
+        if self.__is_remote_source():
+            return self.down_source_from_remote_url()
+        return self.__load_local_file(source)
 
     __version = "version"
     __actual_version = "0.0.1"
@@ -6978,8 +6984,6 @@ class TaskTree:
 
         clusters = [self.game.clusters[key] for key in available_clusters if key in filtered]
 
-        # self.force_show_single_cluster_and_quest(clusters)
-
         for cluster in clusters:
             quests = [q for q in cluster.get_quests() if q.key in available_quests if q.key in filtered]
             focus_color = self.get_focus_color(cluster) if self.selected_item == cluster.get_key() else ""
@@ -7006,6 +7010,16 @@ class TaskTree:
                         focus_color = self.get_focus_color(q) if self.selected_item == t.get_key() else ""
                         t.sentence = self.str_task(focus_color, t, ligc, ligq, q.is_reachable(), min_value)
                         self.try_add(filtered, matcher, t)
+        if self.items:
+            found = False
+            for item in self.items:
+                if item.get_key() == self.selected_item:
+                    found = True
+                    break
+            if found == False:
+                self.selected_item = self.items[0].get_key()
+                self.reload_sentences()
+                
 
 
     def process_collapse(self):
@@ -9000,7 +9014,7 @@ class DownProblem:
                     DownProblem.__create_file(file["contents"], path, "(Rascunho)")
 
     @staticmethod
-    def __compare_and_save(content: str, path: str):
+    def  __compare_and_save(content: str, path: str):
         if not os.path.exists(path):
             Decoder.save(path, content)
             DownProblem.fnprint(path + " (Novo)")
@@ -9119,14 +9133,10 @@ class CmdDown:
         cb.set_quiet(True)
         cb.execute()
 
-    def execute(self) -> bool:
-        item = self.rep.game.get_task(self.task_key)
-        if item.download_link == "":
-            DownProblem.fnprint("falha: link para atividade não é um link remoto")
-            return False
-
-        readme_remote_url = RemoteUrl(item.download_link)
-        self.cache_url = os.path.dirname(readme_remote_url.get_raw_url()) + "/.cache/"
+    def download_from_url(self, task_source: str) -> bool:
+        readme_remote_url = RemoteUrl(task_source)
+        remote_url = readme_remote_url.get_raw_url()
+        self.cache_url = os.path.dirname(remote_url) + "/.cache/"
         self.destiny_folder = self.rep.get_task_folder_for_label(self.task_key)
         self.readme_path =  os.path.join(self.destiny_folder, "Readme.md")
         self.mapi_file = os.path.join(self.destiny_folder, "mapi.json")
@@ -9149,6 +9159,42 @@ class CmdDown:
         DownProblem.fnprint("")
         DownProblem.fnprint("Atividade baixada com sucesso")
         return True
+
+    def download_from_external_file(self, task_source: str) -> bool:
+        if not os.path.exists(task_source):
+            DownProblem.fnprint("Arquivo fonte não encontrado")
+        self.cache_url = os.path.join(os.path.dirname(task_source), ".cache")
+        self.destiny_folder = self.rep.get_task_folder_for_label(self.task_key)
+        self.readme_path =  os.path.join(self.destiny_folder, "Readme.md")
+        self.mapi_file = os.path.join(self.cache_url, "mapi.json")
+        os.makedirs(self.destiny_folder, exist_ok=True)
+        Decoder.save(self.readme_path, Decoder.load(task_source))
+
+        lang = self.check_and_select_language()
+        
+        if os.path.isfile(self.mapi_file):
+            encoding = Decoder.get_encoding(self.mapi_file)
+            with open(self.mapi_file, encoding=encoding) as f:
+                loaded_json = json.load(f)
+            DownProblem.unpack_json(loaded_json, self.destiny_folder, lang)
+            if not DownProblem.check_draft_existence(loaded_json, self.destiny_folder, lang, self.cache_url):
+                DownProblem.create_default_draft(self.destiny_folder, lang)
+        else:
+            self.build_cases_from_readme(self.destiny_folder)
+            DownProblem.create_default_draft(self.destiny_folder, lang)
+        DownProblem.fnprint("")
+        DownProblem.fnprint("Atividade baixada com sucesso")
+        return True
+
+    def execute(self) -> bool:
+        item = self.rep.game.get_task(self.task_key)
+        if item.download_link == "":
+            DownProblem.fnprint("falha: link para atividade não possui link para download")
+            return False
+        task_source = item.download_link
+        if task_source.startswith("http:") or task_source.startswith("https:"):
+            return self.download_from_url(task_source)
+        return self.download_from_external_file(task_source)
 
     def check_and_select_language(self) -> str:
         language_def = self.rep.get_lang()
@@ -9803,7 +9849,7 @@ class Main:
                 return
 
         path_old = Repository.rec_search_for_repo(folder)
-        if path_old is not None:
+        if path_old != "":
             folder = path_old
             print(Text("Já existe um repositório em {r}.", path_old))
             print(Text("Deseja sobrescrever as configurações do repositório em {y} ? ({g}/{r}): ", folder, "s", "n"), end="")
@@ -9826,6 +9872,9 @@ class Main:
                     source = settings.get_alias_remote(remote)
                 else:
                     raise Warning("fail: alias remoto não encontrado.")
+            source = os.path.abspath(source)
+            if source.startswith(folder):
+                source = os.path.relpath(source, os.path.dirname(rep.get_config_file()))
             rep.set_rep_source(source)
         rep.save_config()
         # print(Text("Repositório iniciado com sucesso em {g}", os.path.abspath(rep.folder)))
@@ -10008,6 +10057,7 @@ def exec(parser: argparse.ArgumentParser, args):
 def main():
     try:
         parser = Parser().parser
+        argcomplete.autocomplete(parser)
         args = parser.parse_args()
         exec(parser, args)
         sys.exit(0)

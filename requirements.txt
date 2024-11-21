@@ -9,6 +9,7 @@ pydot
 chardet
 types-chardet
 diff_match_patch
+argcomplete
 
 # PyPI package deployment
 build

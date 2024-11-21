@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import argcomplete
 import sys
 
 from tko.util.text import Text
@@ -107,7 +108,7 @@ class Main:
                 return
 
         path_old = Repository.rec_search_for_repo(folder)
-        if path_old is not None:
+        if path_old != "":
             folder = path_old
             print(Text("Já existe um repositório em {r}.", path_old))
             print(Text("Deseja sobrescrever as configurações do repositório em {y} ? ({g}/{r}): ", folder, "s", "n"), end="")
@@ -130,6 +131,9 @@ class Main:
                     source = settings.get_alias_remote(remote)
                 else:
                     raise Warning("fail: alias remoto não encontrado.")
+            source = os.path.abspath(source)
+            if source.startswith(folder):
+                source = os.path.relpath(source, os.path.dirname(rep.get_config_file()))
             rep.set_rep_source(source)
         rep.save_config()
         # print(Text("Repositório iniciado com sucesso em {g}", os.path.abspath(rep.folder)))
@@ -312,6 +316,7 @@ def exec(parser: argparse.ArgumentParser, args):
 def main():
     try:
         parser = Parser().parser
+        argcomplete.autocomplete(parser)
         args = parser.parse_args()
         exec(parser, args)
         sys.exit(0)

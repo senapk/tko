@@ -137,15 +137,12 @@ class Repository:
             raise Warning(Text("{r}: Arquivo fonte do repositório {y} não foi encontrado", "Erro", source))
         return source
 
-
-
-    def load_index_or_cache(self) -> str:
+    def __is_remote_source(self) -> bool:
         source = self.get_rep_source()
-
-        if not source.startswith("http:") and not source.startswith("https:"):        
-            return self.__load_local_file(source)
-        
-        # arquivo não existe e é remoto
+        return source.startswith("http:") or source.startswith("https:")
+    
+    def down_source_from_remote_url(self):
+        source = self.get_rep_source()
         cache_file = self.get_default_readme_path()
         os.makedirs(self.folder, exist_ok=True)
         ru = RemoteUrl(source)
@@ -158,6 +155,13 @@ class Repository:
             else:
                 raise Warning("fail: Arquivo do cache não encontrado")
         return cache_file
+
+    def load_index_or_cache(self) -> str:
+        source = self.get_rep_source()
+
+        if self.__is_remote_source():
+            return self.down_source_from_remote_url()
+        return self.__load_local_file(source)
 
     __version = "version"
     __actual_version = "0.0.1"

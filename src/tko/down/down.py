@@ -40,7 +40,7 @@ class DownProblem:
                     DownProblem.__create_file(file["contents"], path, "(Rascunho)")
 
     @staticmethod
-    def __compare_and_save(content: str, path: str):
+    def  __compare_and_save(content: str, path: str):
         if not os.path.exists(path):
             Decoder.save(path, content)
             DownProblem.fnprint(path + " (Novo)")

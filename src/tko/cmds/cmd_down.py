@@ -4,6 +4,7 @@ import urllib.request
 import urllib.error
 import json
 
+from tko.game.task import Task
 from tko.settings.repository import Repository
 from tko.down.down import DownProblem
 
@@ -74,14 +75,10 @@ class CmdDown:
         cb.set_quiet(True)
         cb.execute()
 
-    def execute(self) -> bool:
-        item = self.rep.game.get_task(self.task_key)
-        if item.download_link == "":
-            DownProblem.fnprint("falha: link para atividade não é um link remoto")
-            return False
-
-        readme_remote_url = RemoteUrl(item.download_link)
-        self.cache_url = os.path.dirname(readme_remote_url.get_raw_url()) + "/.cache/"
+    def download_from_url(self, task_source: str) -> bool:
+        readme_remote_url = RemoteUrl(task_source)
+        remote_url = readme_remote_url.get_raw_url()
+        self.cache_url = os.path.dirname(remote_url) + "/.cache/"
         self.destiny_folder = self.rep.get_task_folder_for_label(self.task_key)
         self.readme_path =  os.path.join(self.destiny_folder, "Readme.md")
         self.mapi_file = os.path.join(self.destiny_folder, "mapi.json")
@@ -104,6 +101,42 @@ class CmdDown:
         DownProblem.fnprint("")
         DownProblem.fnprint("Atividade baixada com sucesso")
         return True
+
+    def download_from_external_file(self, task_source: str) -> bool:
+        if not os.path.exists(task_source):
+            DownProblem.fnprint("Arquivo fonte não encontrado")
+        self.cache_url = os.path.join(os.path.dirname(task_source), ".cache")
+        self.destiny_folder = self.rep.get_task_folder_for_label(self.task_key)
+        self.readme_path =  os.path.join(self.destiny_folder, "Readme.md")
+        self.mapi_file = os.path.join(self.cache_url, "mapi.json")
+        os.makedirs(self.destiny_folder, exist_ok=True)
+        Decoder.save(self.readme_path, Decoder.load(task_source))
+
+        lang = self.check_and_select_language()
+        
+        if os.path.isfile(self.mapi_file):
+            encoding = Decoder.get_encoding(self.mapi_file)
+            with open(self.mapi_file, encoding=encoding) as f:
+                loaded_json = json.load(f)
+            DownProblem.unpack_json(loaded_json, self.destiny_folder, lang)
+            if not DownProblem.check_draft_existence(loaded_json, self.destiny_folder, lang, self.cache_url):
+                DownProblem.create_default_draft(self.destiny_folder, lang)
+        else:
+            self.build_cases_from_readme(self.destiny_folder)
+            DownProblem.create_default_draft(self.destiny_folder, lang)
+        DownProblem.fnprint("")
+        DownProblem.fnprint("Atividade baixada com sucesso")
+        return True
+
+    def execute(self) -> bool:
+        item = self.rep.game.get_task(self.task_key)
+        if item.download_link == "":
+            DownProblem.fnprint("falha: link para atividade não possui link para download")
+            return False
+        task_source = item.download_link
+        if task_source.startswith("http:") or task_source.startswith("https:"):
+            return self.download_from_url(task_source)
+        return self.download_from_external_file(task_source)
 
     def check_and_select_language(self) -> str:
         language_def = self.rep.get_lang()
