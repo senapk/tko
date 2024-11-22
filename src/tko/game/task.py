@@ -78,7 +78,7 @@ class Task(TreeItem):
             min_value = self.default_min_value
         prog = self.progress // 10
         if prog == 0:
-            return "m"
+            return "c"
         if prog < min_value:
             return "r"
         if prog < 10:
@@ -94,7 +94,7 @@ class Task(TreeItem):
         color = self.get_prog_color(min_value)
         prog = self.progress // 10
         if prog == 0:
-            return Text().addf(color, symbols.uncheck.text)
+            return Text().addf(color, "0")
         if prog < min_value:
             return Text().addf(color, str(prog))
         if prog < 10:
@@ -197,10 +197,8 @@ class TaskParser:
             if t.startswith("+"):
                 key, value = t[1:].split(":")
                 task.skills[key] = int(value)
-            elif t.startswith("@"):
-                task.key = t[1:]
 
-    def parse_line(self, line: str, line_num: int) -> Optional[Task]:
+    def parse_line(self, line: str, line_num: int = 0) -> Optional[Task]:
         pattern = r'\s*?- \[ \](.*?)\[([^\]]+)\]\(([^)]+)\)(?:\s*<!--(.*?)-->)?'
 
         match = re.match(pattern, line)
@@ -242,7 +240,7 @@ class TaskParser:
         self.adjust_links(link)
         
         if task.key == "":
-            task.key = get_md_link(link)
+            task.key = link
         return task
     
     def adjust_links(self, link: str):
@@ -264,6 +262,7 @@ class TaskParser:
             task.visitable_url = link
             return
         
+        # downloadable task from a file in filesystem
         basedir = os.path.dirname(self.index_path)
         task.download_link = os.path.join(basedir, link)
         task.visitable_url = ""

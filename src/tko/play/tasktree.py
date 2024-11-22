@@ -123,9 +123,9 @@ class TaskTree:
             down_symbol = symbols.task_local
         if t.download_link != "":
             if t.is_downloaded_for_lang(self.rep.get_lang()):
-                down_symbol = symbols.task_remote_downloaded
+                down_symbol = symbols.task_downloaded
             else:
-                down_symbol = symbols.task_remote_to_download
+                down_symbol = symbols.task_to_download
 
         color_aval = "" if quest_reachable else "r"
 
@@ -385,6 +385,7 @@ class TaskTree:
                         focus_color = self.get_focus_color(q) if self.selected_item == t.get_key() else ""
                         t.sentence = self.str_task(focus_color, t, ligc, ligq, q.is_reachable(), min_value)
                         self.try_add(filtered, matcher, t)
+        # verifying if has any selected item
         if self.items:
             found = False
             for item in self.items:
@@ -394,7 +395,6 @@ class TaskTree:
             if found == False:
                 self.selected_item = self.items[0].get_key()
                 self.reload_sentences()
-                
 
 
     def process_collapse(self):

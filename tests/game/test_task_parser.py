@@ -5,11 +5,11 @@
 import unittest
 
 
-from tko.game.task import Task, TaskParser
+from tko.game.task import Task, TaskParser # type: ignore
 
 class TestSimple(unittest.TestCase):
     def test_1(self):
-        task = TaskParser.parse_line("- [ ] [@label complemente](r.md)", 0)
+        task = TaskParser("arquivo.md").parse_line("- [ ] [@label complemente](r.md)", 0)
         assert task is not None
 
 

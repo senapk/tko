@@ -4,19 +4,10 @@ from tko.util.symbols import symbols
 
 class GradeMessage:
     def __init__(self):
-#         self.msg2 = r"""
-#   Não Fiz  │Compreensão→│Superficial│    Básico │Funcional │   Profundo 
-# ↓Autonomia │            │$1 Confuso  │$2 Inseguro │$3 Capaz   │$4 Confiante
-# ───────────┼────────────┼───────────┼───────────┼──────────┼────────────
-# Sem   Ajuda│$5  Sozinho  │           │           │   [8]    │    [10]    
-# Pouca Ajuda│$6  Dicas    │           │    [4]    │   [7]    │    [9]     
-# Muita Ajuda│$7  Códigos  │           │    [3]    │   [6]    │            
-# Tutorial   │$8  Guiado   │    [1]    │    [2]    │   [5]    │            
-# """[1:-1]
         
         self.msg = r"""
            │Compreensão→│Superficial│  Básico   │ Funcional │  Profundo 
-↓Autonomia │  Não Fiz   │$1 Confuso  │$2 Inseguro │ $3 Capaz   │$4 Confiante
+↓Autonomia │   Não Fiz  │$1 Confuso  │$2 Inseguro │ $3 Capaz   │$4 Confiante
 ───────────┼────────────┼───────────┼───────────┼───────────┼────────────
 Tutorial   │$8  Guiado   │    [1]    │    [2]    │    [5]    │           
 Muita Ajuda│$7  Códigos  │           │    [3]    │    [6]    │           
@@ -25,14 +16,14 @@ Sem   Ajuda│$5  Sozinho  │           │           │    [8]    │    [10]
 """[1:-1]
         
         self.emoji: Dict[str, Token] = {
-            "$1": symbols.emoji_confuso,
-            "$2": symbols.emoji_inseguro,
-            "$3": symbols.emoji_capaz,
-            "$4": symbols.emoji_confiante,
-            "$5": symbols.emoji_alone,
-            "$6": symbols.emoji_dicas,
-            "$7": symbols.emoji_codes,
-            "$8": symbols.emoji_guide
+            "$1": symbols.compreensao_d,
+            "$2": symbols.compreensao_c,
+            "$3": symbols.compreensao_b,
+            "$4": symbols.compreensao_a,
+            "$5": symbols.suporte_a,
+            "$6": symbols.suporte_b,
+            "$7": symbols.suporte_c,
+            "$8": symbols.suporte_d
         }
 
         self.axes: Dict[int, list[str]] = {}
@@ -41,21 +32,21 @@ Sem   Ajuda│$5  Sozinho  │           │           │    [8]    │    [10]
     @staticmethod
     def grade_to_emojis(grade: int) -> Text:
         decode_dict = {
-                0: (Token("-"), symbols.emoji_nao_fiz),
-                1: (symbols.emoji_guide, symbols.emoji_confuso),
-                2: (symbols.emoji_guide, symbols.emoji_inseguro),
-                3: (symbols.emoji_codes, symbols.emoji_inseguro),
-                4: (symbols.emoji_dicas, symbols.emoji_inseguro),
-                5: (symbols.emoji_guide, symbols.emoji_capaz),
-                6: (symbols.emoji_codes, symbols.emoji_capaz),
-                7: (symbols.emoji_dicas, symbols.emoji_capaz),
-                8: (symbols.emoji_alone, symbols.emoji_capaz),
-                9: (symbols.emoji_dicas, symbols.emoji_confiante),
-                10: (symbols.emoji_alone, symbols.emoji_confiante)
+                0: (symbols.suporte_e, symbols.compreensao_e),
+                1: (symbols.suporte_d, symbols.compreensao_d),
+                2: (symbols.suporte_d, symbols.compreensao_c),
+                3: (symbols.suporte_c, symbols.compreensao_c),
+                4: (symbols.suporte_b, symbols.compreensao_c),
+                5: (symbols.suporte_d, symbols.compreensao_b),
+                6: (symbols.suporte_c, symbols.compreensao_b),
+                7: (symbols.suporte_b, symbols.compreensao_b),
+                8: (symbols.suporte_a, symbols.compreensao_b),
+                9: (symbols.suporte_b, symbols.compreensao_a),
+                10: (symbols.suporte_a, symbols.compreensao_a)
         }
         a = decode_dict[grade][0]
         b = decode_dict[grade][1]
-        return Text("{} {}", b, a)
+        return Text("{} {}", a, b)
 
     def load_axes(self):
             sozinho = "Sozinho"
@@ -95,9 +86,9 @@ Sem   Ajuda│$5  Sozinho  │           │           │    [8]    │    [10]
             # pintando compreensão e autonomia
             headers = [Token("Compreensão→", "B"), Token("↓Autonomia ", "M")]
             value: Text = Text(self.msg)
-            if grade != 0:
-                for h in headers:
-                    value = value.replace(h.text, h)
+            # if grade != 0:
+            for h in headers:
+                value = value.replace(h.text, h)
 
             # marcando números com verde
             for i in range (1, 11):
@@ -115,18 +106,18 @@ Sem   Ajuda│$5  Sozinho  │           │           │    [8]    │    [10]
                             value.data[pos + 6].fmt = "G"
                         # pos += 1
             
+            pos = value.get_text().find("Não Fiz")
+            value.data[pos - 3] = symbols.suporte_e
+            value.data[pos - 2] = symbols.compreensao_e
             # marcando axes com a cor correspondente
             if grade > 0 and grade <= 10:
                 value = value.replace(self.axes[grade][0], Token(self.axes[grade][0], "M"))
                 value = value.replace(self.axes[grade][1], Token(self.axes[grade][1], "g"))
                 value = value.replace(self.axes[grade][2], Token(self.axes[grade][2], "B"))
                 value = value.replace(self.axes[grade][3], Token(self.axes[grade][3], "g"))
-
-                value = value.replace("  Não Fiz  ", Token("           "))
-
             # marcando "Não Fiz" com a cor correspondente
             elif grade == 0:
-                value = value.replace("  Não Fiz   ", Token("  Não Fiz   ", "R"))
+                value = value.replace("Não Fiz", Token("Não Fiz", "R"))
 
             # inserindo emojis
             for k, v in self.emoji.items():

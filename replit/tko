@@ -2011,8 +2011,12 @@ class RawTerminal:
 class __Symbols:
 
     def __init__(self):
-        self.task_remote_downloaded = Token("▼", "g")
-        self.task_remote_to_download = Token("▲")
+        self.set_unicode()
+        # self.set_ascii()
+
+    def set_unicode(self):
+        self.task_downloaded = Token("▼", "g")
+        self.task_to_download = Token("▲")
         self.task_local = Token("▶", "g")
         self.task_to_visit = Token("◉", "b")
         self.opening = Token("=> ")
@@ -2027,12 +2031,8 @@ class __Symbols:
         self.hbar = Token("─")
         self.vbar = Token("│")
 
-        self.whitespace = Token("·")
-        # self.whitespace = Token("␣")
-        
-        # self.newline = Token("¶")
+        self.whitespace = Token("·") #Token("␣")
         self.newline = Token("↲")
-        # self.newline = Token("⏎")
 
         self.cfill = Token("_")
         self.tab = Token("    ")
@@ -2040,32 +2040,83 @@ class __Symbols:
 
         self.check = Token("✓")
         self.uncheck = Token("✗")
-        # self.opcheck = Token("ⴲ")
-        # self.opuncheck = Token("ⵔ")
+
         self.infinity = Token("∞")
         self.locked_free = Token("⇉")
         self.locked_locked = Token("⇟")
         self.left_toggle = Token("━─")
         self.right_toggle = Token("─━")
-        self.timer = Token("⏰") # ⌛⏰
+        self.timer = Token("⏰")
         self.diff_down = Token("⇕")
         self.diff_left = Token("⇔")
         self.sharpR = Token("")
         self.sharpL = Token("")
         self.action = Token("◎", "b")
 
-        self.emoji_vazio = Token("✗", "r") #"❌"
-        self.emoji_confiante = Token("●", "g")#"😎"
-        self.emoji_capaz     = Token("◕", "y")#"😌"
-        self.emoji_inseguro  = Token("◑", "m")#"😬"
-        self.emoji_confuso   = Token("◔", "r")#"😕"
-        self.emoji_nao_fiz   = Token("ⵔ")
+        # self.emoji_confiante = Token("●", "g")
+        # self.emoji_capaz     = Token("◕", "y")
+        # self.emoji_inseguro  = Token("◑", "m")
+        # self.emoji_confuso   = Token("◔", "r")
+        # self.emoji_nao_fiz   = Token("ⵔ")
 
-        self.emoji_alone = Token("A", "g")#"💖" # "✋"
-        self.emoji_dicas = Token("B", "y") # "💡"
-        self.emoji_codes = Token("C", "m")#"💚" #"🤝"
-        self.emoji_guide = Token("D", "r")#"💙" # "🧭"
+        # self.emoji_confiante = Token("■", "g")
+        # self.emoji_capaz     = Token("◨", "y")
+        # self.emoji_inseguro  = Token("◧", "m")
+        # self.emoji_confuso   = Token("◱", "r")
+        # self.emoji_nao_fiz   = Token("□")
+
+        self.compreensao_a = Token("█", "g")
+        self.compreensao_b = Token("▅", "y")
+        self.compreensao_c = Token("▃", "m")
+        self.compreensao_d = Token("▂", "r")
+        self.compreensao_e = Token("▁", "c")
+
+        self.suporte_a = Token("A", "g")
+        self.suporte_b = Token("B", "y")
+        self.suporte_c = Token("C", "m")
+        self.suporte_d = Token("D", "r")
+        self.suporte_e = Token("E", "c")
         self.cursor = Token("┊")
+
+    # def set_ascii(self):
+    #     self.task_downloaded = Token("D", "g")
+    #     self.task_to_download = Token("X")
+    #     self.task_local = Token(">", "g")
+    #     self.task_to_visit = Token("◉", "b")
+    #     self.whitespace = Token("¨")
+    #     self.newline = Token("~")
+
+    #     self.cfill = Token("_")
+    #     self.tab = Token("    ")
+    #     self.arrow_up = Token("|")
+
+    #     self.check = Token("A")
+    #     self.uncheck = Token("0")
+
+    #     self.infinity = Token("0")
+    #     self.locked_free = Token(">")
+    #     self.locked_locked = Token("v")
+    #     self.left_toggle = Token("━─")
+    #     self.right_toggle = Token("─━")
+    #     self.timer = Token("l")
+    #     self.diff_down = Token("|")
+    #     self.diff_left = Token("─")
+    #     self.sharpR = Token("")
+    #     self.sharpL = Token("")
+    #     self.action = Token("◎", "b")
+
+    #     self.emoji_vazio = Token("✗", "r")
+    #     self.emoji_confiante = Token("A", "g")
+    #     self.emoji_capaz     = Token("B", "y")
+    #     self.emoji_inseguro  = Token("C", "m")
+    #     self.emoji_confuso   = Token("D", "r")
+    #     self.emoji_nao_fiz   = Token("E")
+
+    #     self.emoji_alone = Token("A", "g")
+    #     self.emoji_dicas = Token("B", "y")
+    #     self.emoji_codes = Token("C", "m")
+    #     self.emoji_guide = Token("D", "r")
+    #     self.cursor = Token("|")
 
     def set_colors(self):
         self.opening.fmt = "b"
@@ -2391,19 +2442,10 @@ class FloatingManager:
 
 class GradeMessage:
     def __init__(self):
-#         self.msg2 = r"""
-#   Não Fiz  │Compreensão→│Superficial│    Básico │Funcional │   Profundo 
-# ↓Autonomia │            │$1 Confuso  │$2 Inseguro │$3 Capaz   │$4 Confiante
-# ───────────┼────────────┼───────────┼───────────┼──────────┼────────────
-# Sem   Ajuda│$5  Sozinho  │           │           │   [8]    │    [10]    
-# Pouca Ajuda│$6  Dicas    │           │    [4]    │   [7]    │    [9]     
-# Muita Ajuda│$7  Códigos  │           │    [3]    │   [6]    │            
-# Tutorial   │$8  Guiado   │    [1]    │    [2]    │   [5]    │            
-# """[1:-1]
         
         self.msg = r"""
            │Compreensão→│Superficial│  Básico   │ Funcional │  Profundo 
-↓Autonomia │  Não Fiz   │$1 Confuso  │$2 Inseguro │ $3 Capaz   │$4 Confiante
+↓Autonomia │   Não Fiz  │$1 Confuso  │$2 Inseguro │ $3 Capaz   │$4 Confiante
 ───────────┼────────────┼───────────┼───────────┼───────────┼────────────
 Tutorial   │$8  Guiado   │    [1]    │    [2]    │    [5]    │           
 Muita Ajuda│$7  Códigos  │           │    [3]    │    [6]    │           
@@ -2412,14 +2454,14 @@ Sem   Ajuda│$5  Sozinho  │           │           │    [8]    │    [10]
 """[1:-1]
         
         self.emoji: Dict[str, Token] = {
-            "$1": symbols.emoji_confuso,
-            "$2": symbols.emoji_inseguro,
-            "$3": symbols.emoji_capaz,
-            "$4": symbols.emoji_confiante,
-            "$5": symbols.emoji_alone,
-            "$6": symbols.emoji_dicas,
-            "$7": symbols.emoji_codes,
-            "$8": symbols.emoji_guide
+            "$1": symbols.compreensao_d,
+            "$2": symbols.compreensao_c,
+            "$3": symbols.compreensao_b,
+            "$4": symbols.compreensao_a,
+            "$5": symbols.suporte_a,
+            "$6": symbols.suporte_b,
+            "$7": symbols.suporte_c,
+            "$8": symbols.suporte_d
         }
 
         self.axes: Dict[int, list[str]] = {}
@@ -2428,21 +2470,21 @@ Sem   Ajuda│$5  Sozinho  │           │           │    [8]    │    [10]
     @staticmethod
     def grade_to_emojis(grade: int) -> Text:
         decode_dict = {
-                0: (Token("-"), symbols.emoji_nao_fiz),
-                1: (symbols.emoji_guide, symbols.emoji_confuso),
-                2: (symbols.emoji_guide, symbols.emoji_inseguro),
-                3: (symbols.emoji_codes, symbols.emoji_inseguro),
-                4: (symbols.emoji_dicas, symbols.emoji_inseguro),
-                5: (symbols.emoji_guide, symbols.emoji_capaz),
-                6: (symbols.emoji_codes, symbols.emoji_capaz),
-                7: (symbols.emoji_dicas, symbols.emoji_capaz),
-                8: (symbols.emoji_alone, symbols.emoji_capaz),
-                9: (symbols.emoji_dicas, symbols.emoji_confiante),
-                10: (symbols.emoji_alone, symbols.emoji_confiante)
+                0: (symbols.suporte_e, symbols.compreensao_e),
+                1: (symbols.suporte_d, symbols.compreensao_d),
+                2: (symbols.suporte_d, symbols.compreensao_c),
+                3: (symbols.suporte_c, symbols.compreensao_c),
+                4: (symbols.suporte_b, symbols.compreensao_c),
+                5: (symbols.suporte_d, symbols.compreensao_b),
+                6: (symbols.suporte_c, symbols.compreensao_b),
+                7: (symbols.suporte_b, symbols.compreensao_b),
+                8: (symbols.suporte_a, symbols.compreensao_b),
+                9: (symbols.suporte_b, symbols.compreensao_a),
+                10: (symbols.suporte_a, symbols.compreensao_a)
         }
         a = decode_dict[grade][0]
         b = decode_dict[grade][1]
-        return Text("{} {}", b, a)
+        return Text("{} {}", a, b)
 
     def load_axes(self):
             sozinho = "Sozinho"
@@ -2482,9 +2524,9 @@ Sem   Ajuda│$5  Sozinho  │           │           │    [8]    │    [10]
             # pintando compreensão e autonomia
             headers = [Token("Compreensão→", "B"), Token("↓Autonomia ", "M")]
             value: Text = Text(self.msg)
-            if grade != 0:
-                for h in headers:
-                    value = value.replace(h.text, h)
+            # if grade != 0:
+            for h in headers:
+                value = value.replace(h.text, h)
 
             # marcando números com verde
             for i in range (1, 11):
@@ -2502,18 +2544,18 @@ Sem   Ajuda│$5  Sozinho  │           │           │    [8]    │    [10]
                             value.data[pos + 6].fmt = "G"
                         # pos += 1
             
+            pos = value.get_text().find("Não Fiz")
+            value.data[pos - 3] = symbols.suporte_e
+            value.data[pos - 2] = symbols.compreensao_e
             # marcando axes com a cor correspondente
             if grade > 0 and grade <= 10:
                 value = value.replace(self.axes[grade][0], Token(self.axes[grade][0], "M"))
                 value = value.replace(self.axes[grade][1], Token(self.axes[grade][1], "g"))
                 value = value.replace(self.axes[grade][2], Token(self.axes[grade][2], "B"))
                 value = value.replace(self.axes[grade][3], Token(self.axes[grade][3], "g"))
-
-                value = value.replace("  Não Fiz  ", Token("           "))
-
             # marcando "Não Fiz" com a cor correspondente
             elif grade == 0:
-                value = value.replace("  Não Fiz   ", Token("  Não Fiz   ", "R"))
+                value = value.replace("Não Fiz", Token("Não Fiz", "R"))
 
             # inserindo emojis
             for k, v in self.emoji.items():
@@ -2594,7 +2636,7 @@ class Task(TreeItem):
             min_value = self.default_min_value
         prog = self.progress // 10
         if prog == 0:
-            return "m"
+            return "c"
         if prog < min_value:
             return "r"
         if prog < 10:
@@ -2610,7 +2652,7 @@ class Task(TreeItem):
         color = self.get_prog_color(min_value)
         prog = self.progress // 10
         if prog == 0:
-            return Text().addf(color, symbols.uncheck.text)
+            return Text().addf(color, "0")
         if prog < min_value:
             return Text().addf(color, str(prog))
         if prog < 10:
@@ -2713,10 +2755,8 @@ class TaskParser:
             if t.startswith("+"):
                 key, value = t[1:].split(":")
                 task.skills[key] = int(value)
-            elif t.startswith("@"):
-                task.key = t[1:]
 
-    def parse_line(self, line: str, line_num: int) -> Optional[Task]:
+    def parse_line(self, line: str, line_num: int = 0) -> Optional[Task]:
         pattern = r'\s*?- \[ \](.*?)\[([^\]]+)\]\(([^)]+)\)(?:\s*<!--(.*?)-->)?'
 
         match = re.match(pattern, line)
@@ -2758,7 +2798,7 @@ class TaskParser:
         self.adjust_links(link)
         
         if task.key == "":
-            task.key = get_md_link(link)
+            task.key = link
         return task
     
     def adjust_links(self, link: str):
@@ -2780,6 +2820,7 @@ class TaskParser:
             task.visitable_url = link
             return
         
+        # downloadable task from a file in filesystem
         basedir = os.path.dirname(self.index_path)
         task.download_link = os.path.join(basedir, link)
         task.visitable_url = ""
@@ -6748,9 +6789,9 @@ class TaskTree:
             down_symbol = symbols.task_local
         if t.download_link != "":
             if t.is_downloaded_for_lang(self.rep.get_lang()):
-                down_symbol = symbols.task_remote_downloaded
+                down_symbol = symbols.task_downloaded
             else:
-                down_symbol = symbols.task_remote_to_download
+                down_symbol = symbols.task_to_download
 
         color_aval = "" if quest_reachable else "r"
 
@@ -7010,6 +7051,7 @@ class TaskTree:
                         focus_color = self.get_focus_color(q) if self.selected_item == t.get_key() else ""
                         t.sentence = self.str_task(focus_color, t, ligc, ligq, q.is_reachable(), min_value)
                         self.try_add(filtered, matcher, t)
+        # verifying if has any selected item
         if self.items:
             found = False
             for item in self.items:
@@ -7019,7 +7061,6 @@ class TaskTree:
             if found == False:
                 self.selected_item = self.items[0].get_key()
                 self.reload_sentences()
-                
 
 
     def process_collapse(self):

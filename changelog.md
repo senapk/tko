@@ -5,6 +5,8 @@
   - fix: open history.csv with git diff markers
   - fix: rename remote to database
   - fix: change repository.json to repository.yaml
+  - fix: grade message feedback
+  - fix: colors and order in task view
 - 1.9.4
   - fix: rec folder search in play
   - fix: filter mode eating last new line

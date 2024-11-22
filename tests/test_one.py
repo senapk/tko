@@ -5,24 +5,31 @@
 import unittest
 
 
-from tko.game.task import TaskParser, Task
+from tko.game.task import TaskParser, Task # type: ignore
 
 
 class TestSimple(unittest.TestCase):
 
-    def test_reading_task(self):
-        task: Task = TaskParser.parse_line("- [ ] [tarefa um](wiki/tarefa.md)", 0)
+    def test_local_task(self):
+        task: Task = TaskParser("arquivo.md").parse_line("- [ ] [tarefa um](wiki/tarefa.md)")
         assert task.key == "wiki/tarefa.md"
-        assert task.__link == "wiki/tarefa.md"
-        assert task.self_grade == 0
+        assert task.get_download_link() == "wiki/tarefa.md"
+        assert task.get_visitable_url() == ""
         assert task.title == "tarefa um"
 
+    def test_remote_task(self):
+        task: Task = TaskParser("arquivo.md").parse_line("- [ ] @tarefa [faz tal coisa](https://wiki/tarefa.md)")
+        assert task.key == "tarefa"
+        assert task.get_download_link() == "https://wiki/tarefa.md"
+        assert task.get_visitable_url() == "https://wiki/tarefa.md"
+        assert task.title == "@tarefa faz tal coisa"
+
     def test_coding_local_task(self):
-        task: Task = TaskParser.parse_line("- [ ] [minha @boneca quebrou](base/boneca/Readme.md)", 0)
+        task: Task = TaskParser("arquivo.md").parse_line("- [ ] [minha !boneca quebrou](base/boneca/Readme.md)", 0)
         assert task.key == "boneca"
-        assert task.__link == "base/boneca/Readme.md"
-        assert task.self_grade == 0
-        assert task.title == "minha @boneca quebrou"
+        assert task.get_download_link() == ""
+        assert task.get_visitable_url() == ""
+        assert task.title == "minha !boneca quebrou"
 
 
 if __name__ == '__main__':
