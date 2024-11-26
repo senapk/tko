@@ -40,8 +40,8 @@ class Play:
         self.tree = TaskTree(self.settings, rep, self.fman)
         self.gui = Gui(tree=self.tree, flagsman=self.flagsman, fman=self.fman)
 
-        if len(self.rep.get_tasks()) == 0:
-            self.gui.show_help()
+        # if len(self.rep.get_tasks()) == 0:
+        #     self.gui.show_help()
 
         self.first_loop = True
         self.graph_ext = ""

@@ -25,6 +25,7 @@ from tko.settings.repository import Repository
 from tko.util.raw_terminal import RawTerminal
 from tko.util.symbols import symbols
 from tko.settings.check_version import CheckVersion
+from tko.settings.repository_starter import RepStarter
 
 import os
 
@@ -92,54 +93,7 @@ class Main:
         remote: str | None = args.remote
         source: str | None = args.source
         folder: str | None = args.folder
-        Main.__init(remote=remote, source=source, folder=folder)
-
-    @staticmethod
-    def __init(remote: str | None, source: str | None, folder: str | None):
-
-        if folder is None:
-            folder = os.getcwd()
-            if remote is not None:
-                folder = os.path.join(folder, remote)
-            print(Text("A pasta onde deve ser criada o repositório {r} foi informada.", "não"))
-            print(Text("Deseja criar o repositório na pasta {y} ? ({g}/{r}): ", folder, "s", "n"), end="")
-            op = input()
-            if op == "n":
-                return
-
-        path_old = Repository.rec_search_for_repo(folder)
-        if path_old != "":
-            folder = path_old
-            print(Text("Já existe um repositório em {r}.", path_old))
-            print(Text("Deseja sobrescrever as configurações do repositório em {y} ? ({g}/{r}): ", folder, "s", "n"), end="")
-            op = input()
-            if op == "n":
-                return
-        
-        rep = Repository(os.path.abspath(folder))
-        if source is None:
-            index = rep.get_default_readme_path()
-            rep.set_rep_source(index)
-            print("Nenhuma fonte foi informada, utilizando o arquivo {} como fonte".format(index))
-            if not os.path.exists(index):
-                content = "# Repositório\n\n## Grupo\n\n### Missão\n\n- [ ] [#google Abra o google](https://www.google.com)\n"
-                Decoder.save(index, content)
-        else:
-            settings = Settings()
-            if remote is not None:
-                if settings.has_alias_remote(remote):
-                    source = settings.get_alias_remote(remote)
-                else:
-                    raise Warning("fail: alias remoto não encontrado.")
-            source = os.path.abspath(source)
-            if source.startswith(folder):
-                source = os.path.relpath(source, os.path.dirname(rep.get_config_file()))
-            rep.set_rep_source(source)
-        rep.save_config()
-        # print(Text("Repositório iniciado com sucesso em {g}", os.path.abspath(rep.folder)))
-        rel_path = os.path.relpath(rep.folder, os.getcwd())
-        print(Text("Voce pode acessar o repositório com o comando {g} {y}", "tko play", "<pasta>"))
-        print(Text("Por exemplo: {g} {y}", "tko play", rel_path))
+        RepStarter(remote=remote, source=source, folder=folder)
 
 
     @staticmethod
@@ -283,9 +237,9 @@ class Parser:
 
         parser_init = self.subparsers.add_parser('init', help='Initialize a repository in a folder.')
         source = parser_init.add_mutually_exclusive_group()
-        source.add_argument('--remote', type=str, help='remote source [fup|ed|poo].')
-        source.add_argument('--source', type=str, help='http url or local file.')
-        parser_init.add_argument('--folder', type=str, help='local directory.')
+        source.add_argument('--remote', '-r', type=str, help='remote source [fup|ed|poo].')
+        source.add_argument('--source', '-s', type=str, help='http url or local file.')
+        parser_init.add_argument('--folder', '-f', type=str, help='local directory.')
         parser_init.set_defaults(func=Main.init)
 
 

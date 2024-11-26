@@ -1,5 +1,9 @@
 # Changelog
 
+- 2.0.2
+  - fix: small error in init
+- 2.0.1
+  - fix: critical bug initializing rep with remote source
 - 2.0.0
   - fix: open rep with json error
   - fix: open history.csv with git diff markers
