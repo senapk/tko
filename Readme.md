@@ -47,13 +47,13 @@ sudo apt update && sudo apt install -y build-essential pipx && pipx install tko
 #### Arch Linux e Derivados
 
 ```bash
-sudo pacman -S base-devel python-pipx && pipx install tko
+sudo pacman -S --noconfirm base-devel python-pipx && pipx install tko
 ```
 
 #### Codespaces
 
 ```bash
-pip install pipx && pipx install tko
+sudo apt update && sudo apt install -y python3-pip && pip install pipx && pipx install tko
 ```
 
 ### Adicionando o tko no path
