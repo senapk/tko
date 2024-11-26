@@ -36,25 +36,29 @@ code .
 - Agora, sempre que quiser abrir um repositório, abra o terminal do ubuntu, navegue até a pasta do repositório e execute o comando `code .`
 - Vamos seguir para falta o tko e os compiladores no seu novo linux ubuntu no wsl.
 
-### Instalando o Python e o pip
+### Instalando o Python, pipx e o tko e ferramentas básicas de desenvolvimento
+
+#### Windows com WSL e Ubuntu
 
 ```bash
-
-# ubuntu e wsl
-sudo apt update
-sudo apt install -y pipx
-# arch
-sudo pacman -S python-pipx
-# codespaces on ubuntu 22.04
-pip install pipx
-
+sudo apt update && sudo apt install -y build-essential pipx && pipx install tko
 ```
 
-### Instalando o tko
+#### Arch Linux e Derivados
 
 ```bash
-pipx install tko # use pip se não tiver o pipx
+sudo pacman -S base-devel python-pipx && pipx install tko
+```
 
+#### Codespaces
+
+```bash
+pip install pipx && pipx install tko
+```
+
+### Adicionando o tko no path
+
+```bash
 # adicione o path do pip para o bash
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 ```
@@ -64,7 +68,6 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 Para atualizar o tko para versão mais recente, basta executar o comando:
 
 ```bash
-pip install tko --upgrade # versões antigas do ubuntu
 pipx upgrade tko          # codespace, arch, ubuntu e wsl
 ```
 
@@ -75,15 +78,10 @@ pipx upgrade tko          # codespace, arch, ubuntu e wsl
 ### WSL e Ubuntu
 
 ```bash
-# C e C++
-sudo apt install build-essential
-# Python
-sudo apt install python3
 # Java
 sudo apt install openjdk-11-jdk
 # Typescript
-sudo apt install nodejs
-sudo apt install npm # wsl e ubuntu 24.04
+sudo apt install nodejs npm
 npm install --save-dev @types/node
 npm install typescript esbuild readline-sync
 ```
@@ -91,10 +89,6 @@ npm install typescript esbuild readline-sync
 ### Arch
 
 ```bash
-# C e C++
-sudo pacman -S base-devel
-# Python
-sudo pacman -S python3
 # Java
 sudo pacman -S jdk-openjdk
 # Typescript
@@ -113,8 +107,8 @@ tko init --remote [poo | fup | ed]
 # exemplo tko init --remote fup
 
 # agora abra o repositório para interagir com ele
-tko play <pasta_do_repositório>
-# exemplo: tko play fup
+tko open <pasta_do_repositório>
+# exemplo: tko open fup
 
 ```
 
