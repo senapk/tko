@@ -5734,8 +5734,12 @@ class Repository:
         old_remote = os.path.join(self.folder, "remote")
         new_remote = os.path.join(self.folder, Repository.DATABASE_FOLDER)
         if os.path.isdir(old_remote):
-            os.rename(old_remote, new_remote)
-        
+            try:
+                os.rename(old_remote, new_remote)
+            except:
+                print("Não foi possível renomear a pasta remote para database")
+                print("Verifique se existe algo importante na pasta remote e a apague manualmente")
+
         # for each folder under database, if has a .track folder, move to .tko/track/<folder>
         if os.path.isdir(new_remote):
             for folder in os.listdir(new_remote):
@@ -5746,7 +5750,10 @@ class Repository:
                     new_track_folder = os.path.join(self.folder, Repository.CONFIG_FOLDER, Repository.TRACK_FOLDER, key)
                     os.makedirs(new_track_folder, exist_ok=True)
                     for file in os.listdir(track_folder):
-                        os.rename(os.path.join(track_folder, file), os.path.join(new_track_folder, file))
+                        try:
+                            os.rename(os.path.join(track_folder, file), os.path.join(new_track_folder, file))
+                        except:
+                            pass
                     os.rmdir(track_folder)
 
         # search for .tko/repository.json and reencode to yaml

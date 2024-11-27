@@ -1,5 +1,7 @@
 # Changelog
 
+- 2.0.3
+  - fix: fix version migration
 - 2.0.2
   - fix: small error in init
 - 2.0.1
