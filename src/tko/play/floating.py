@@ -243,7 +243,7 @@ class FloatingInput(Floating):
             text.set_background(fmt)
             options.append(text)
         
-        self._frame.write(0, 0, Text("Busca: ") + "".join(self.search_text) + symbols.cursor)
+        self._frame.write(0, 0, Text.format("Busca: ") + "".join(self.search_text) + symbols.cursor)
         y = 1
         for line in self._content + options:
             x = 0

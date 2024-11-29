@@ -46,7 +46,7 @@ Sem   Ajuda│$5  Sozinho  │           │           │    [8]    │    [10]
         }
         a = decode_dict[grade][0]
         b = decode_dict[grade][1]
-        return Text("{} {}", a, b)
+        return Text.format("{} {}", a, b)
 
     def load_axes(self):
             sozinho = "Sozinho"
@@ -85,7 +85,7 @@ Sem   Ajuda│$5  Sozinho  │           │           │    [8]    │    [10]
     def format(self, grade: int):
             # pintando compreensão e autonomia
             headers = [Token("Compreensão→", "B"), Token("↓Autonomia ", "M")]
-            value: Text = Text(self.msg)
+            value: Text = Text().add(self.msg)
             # if grade != 0:
             for h in headers:
                 value = value.replace(h.text, h)

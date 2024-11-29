@@ -85,7 +85,7 @@ class Tester:
         for i, line in enumerate(lines):
             info = Text().addf(color, line).center(dx - 2, Token(" ", " "))
             if clear:
-                Fmt.write(i + init_y, 1, Text(" " * info.len()))
+                Fmt.write(i + init_y, 1, Text().add(" " * info.len()))
             else:
                 Fmt.write(i + init_y, 1, Text().addf(color, line).center(dx - 2, Token(" ", " ")))
 
@@ -236,7 +236,7 @@ class Tester:
                 solvers = count_missing
 
         # building sources
-        source_names = Text(", ").join([Text().addf(sources_color, f"{name[0]}({name[1]})") for name in self.wdir.sources_names()])
+        source_names = Text().add(", ").join([Text().addf(sources_color, f"{name[0]}({name[1]})") for name in self.wdir.sources_names()])
         sources = Text().add(self.borders.roundL(sources_color)).add(source_names).add(self.borders.roundR(sources_color))
 
         # merging activity, solvers and sources in header
@@ -355,7 +355,7 @@ class Tester:
         
     def two_column_mode(self):
         _, cols = Fmt.get_size()
-        return cols < Text(" ").join(self.make_bottom_line()).len() + 2
+        return cols < Text().add(" ").join(self.make_bottom_line()).len() + 2
 
     def get_diff_symbol(self) -> str:
         if self.settings.app.get_diff_mode() == DiffMode.DOWN:
@@ -405,7 +405,7 @@ class Tester:
 
     def show_bottom_line(self):
         lines, cols = Fmt.get_size()
-        out = Text(" ").join(self.make_bottom_line())
+        out = Text().add(" ").join(self.make_bottom_line())
         Fmt.write(lines - 1, 0, out.center(cols, Token(" ")))
 
     def is_all_right(self):
@@ -603,12 +603,6 @@ class Tester:
             for i in range(len(self.results)):
                 _, index = self.results[i]
                 self.results[i] = (ExecutionResult.UNTESTED, index)
-            # self.fman.add_input(
-            #     Floating("v>").warning()
-            #     .put_text("Atividade travada")
-            #     .put_sentence(Text("Aperte ").addf("g", GuiKeys.travar).add(" para destravar"))
-            #     .put_sentence(Text("Use ").addf("g", "Enter").add(" para rodar os testes"))
-            # )
 
     def get_time_limit_symbol(self):
         if self.settings.app.get_timeout() == 0:
@@ -679,7 +673,7 @@ class Tester:
         
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mudar arquivo {y} de execução", symbols.action, "principal"),
+                lambda: Text.format(" {} Mudar arquivo {y} de execução", symbols.action, "principal"),
                 self.change_main,
                 "TAB"
             )
@@ -687,7 +681,7 @@ class Tester:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mudar modo {y}}", self.get_diff_symbol(), "Diff"),
+                lambda: Text.format(" {} Mudar modo {y}}", self.get_diff_symbol(), "Diff"),
                 self.app.toggle_diff,
                 GuiKeys.diff
             )
@@ -695,7 +689,7 @@ class Tester:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mudar {y} de tempo de execução: {r}", symbols.action, "Limite", self.get_time_limit_symbol()),
+                lambda: Text.format(" {} Mudar {y} de tempo de execução: {r}", symbols.action, "Limite", self.get_time_limit_symbol()),
                 self.change_limit,
                 GuiKeys.limite
             )
@@ -703,7 +697,7 @@ class Tester:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Testar {y} os casos ou apenas o selecionado", icon(not self.locked_index), "Todos"),
+                lambda: Text.format(" {} Testar {y} os casos ou apenas o selecionado", icon(not self.locked_index), "Todos"),
                 self.lock_unit,
                 GuiKeys.lock
             )
@@ -711,7 +705,7 @@ class Tester:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y}", icon(self.app.has_borders()), "Bordas"),
+                lambda: Text.format(" {} Mostrar {y}", icon(self.app.has_borders()), "Bordas"),
                 self.app.toggle_borders,
                 GuiKeys.borders
             )
@@ -719,7 +713,7 @@ class Tester:
         
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y}", icon(self.app.has_images()), "Imagens"),
+                lambda: Text.format(" {} Mostrar {y}", icon(self.app.has_images()), "Imagens"),
                 self.app.toggle_images, 
                 GuiKeys.images
             )

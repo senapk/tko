@@ -141,7 +141,7 @@ class Repository:
         # test if file is inside or outside the repository
         source = os.path.abspath(os.path.join(self.folder, self.CONFIG_FOLDER, source))
         if not os.path.exists(source):
-            raise Warning(Text("{r}: Arquivo fonte do repositório {y} não foi encontrado", "Erro", source))
+            raise Warning(Text.format("{r}: Arquivo fonte do repositório {y} não foi encontrado", "Erro", source))
         return source
 
     def __is_remote_source(self) -> bool:
@@ -273,7 +273,7 @@ class Repository:
                 # self.data = json.load(f)
                 self.data = yaml.safe_load(f)
         except:
-            raise Warning(Text("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.get_config_file(), "corrompido"))
+            raise Warning(Text.format("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.get_config_file(), "corrompido"))
         return self
 
     def save_config(self):

@@ -21,7 +21,7 @@ class PlayPalette:
         
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Tarefa: {y} para repositório local", symbols.action, "Baixar"),
+                lambda: Text.format(" {} Tarefa: {y} para repositório local", symbols.action, "Baixar"),
                 self.actions.down_remote_task,
                 GuiKeys.down_task
             ).set_exit_on_action(True)
@@ -29,7 +29,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Tarefa: Abrir {y} com a descrição", symbols.action, "GitHub"),
+                lambda: Text.format(" {} Tarefa: Abrir {y} com a descrição", symbols.action, "GitHub"),
                 self.actions.open_link,
                 GuiKeys.github_open
             ).set_exit_on_action(True)
@@ -37,7 +37,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Tarefa: {y} arquivos na IDE", symbols.action, "Editar"),
+                lambda: Text.format(" {} Tarefa: {y} arquivos na IDE", symbols.action, "Editar"),
                 self.actions.open_code,
                 GuiKeys.edit
             ).set_exit_on_action(True)
@@ -45,7 +45,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y}", symbols.action, "Ajuda"),
+                lambda: Text.format(" {} Mostrar {y}", symbols.action, "Ajuda"),
                 self.gui.show_help,
                 GuiKeys.key_help
             ).set_exit_on_action(True)
@@ -53,7 +53,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y}", icon(self.app.has_borders()), "Bordas"),
+                lambda: Text.format(" {} Mostrar {y}", icon(self.app.has_borders()), "Bordas"),
                 self.app.toggle_borders,
                 GuiKeys.borders
             )
@@ -61,7 +61,7 @@ class PlayPalette:
         
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y}", icon(self.app.has_images()), "Imagens"),
+                lambda: Text.format(" {} Mostrar {y}", icon(self.app.has_images()), "Imagens"),
                 self.app.toggle_images, 
                 GuiKeys.images
             )
@@ -69,7 +69,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y}", icon(Flags.percent), "Percentual"),
+                lambda: Text.format(" {} Mostrar {y}", icon(Flags.percent), "Percentual"),
                 Flags.percent.toggle, 
                 Flags.percent.get_keycode()
             )
@@ -77,7 +77,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y} para completar a missão", icon(Flags.minimum), "Mínimo"),
+                lambda: Text.format(" {} Mostrar {y} para completar a missão", icon(Flags.minimum), "Mínimo"),
                 Flags.minimum.toggle,
                 Flags.minimum.get_keycode()
             )
@@ -85,7 +85,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y} das tarefas", icon(Flags.reward), "Recompensa"),
+                lambda: Text.format(" {} Mostrar {y} das tarefas", icon(Flags.reward), "Recompensa"),
                 Flags.reward.toggle, 
                 Flags.reward.get_keycode()
             )
@@ -93,7 +93,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y}", icon(Flags.skills), "Skills"),
+                lambda: Text.format(" {} Mostrar {y}", icon(Flags.skills), "Skills"),
                 Flags.skills.toggle, 
                 Flags.skills.get_keycode()
             )
@@ -101,7 +101,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Modo {y}: Habilitar todas as tarefas", icon(Flags.admin), "Admin"),
+                lambda: Text.format(" {} Modo {y}: Habilitar todas as tarefas", icon(Flags.admin), "Admin"),
                 Flags.admin.toggle,
                 Flags.admin.get_keycode()
             )
@@ -109,7 +109,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Gerar {y} de dependências", symbols.action, "Grafo"),
+                lambda: Text.format(" {} Gerar {y} de dependências", symbols.action, "Grafo"),
                 self.actions.generate_graph,
                 GuiKeys.graph
             ).set_exit_on_action(True)
@@ -117,7 +117,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mudar {y} de download de rascunhos", symbols.action, "Linguagem"),
+                lambda: Text.format(" {} Mudar {y} de download de rascunhos", symbols.action, "Linguagem"),
                 self.gui.language.set_language,
                 GuiKeys.set_lang
             ).set_exit_on_action(True)
@@ -125,7 +125,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Devel: Habilita mensagens de {y}", icon(Flags.devel), "Debug"),
+                lambda: Text.format(" {} Devel: Habilita mensagens de {y}", icon(Flags.devel), "Debug"),
                 Flags.devel.toggle,
                 ""
             )
@@ -133,7 +133,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Devel: Marcar em {y}", symbols.action, "Massa"),
+                lambda: Text.format(" {} Devel: Marcar em {y}", symbols.action, "Massa"),
                 self.gui.tree.mass_mark,
                 ""
             ).set_exit_on_action(True)

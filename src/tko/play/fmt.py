@@ -217,7 +217,7 @@ def test_fmt(scr):
     Fmt.init_colors()  # Inicializa as cores
     Fmt.set_scr(scr)  # Define o scr como global
 
-    output = Text("..")
+    output = Text.format("..")
     for i in range(60):
         output.addf("r", str(i) + " ")
     for i in range(15):

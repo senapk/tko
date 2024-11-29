@@ -35,7 +35,7 @@ class TextFunctor:
         self.value = data
     
     def __call__(self):
-        return Text(self.value)
+        return Text().add(self.value)
 
 class SetLangFunctor:
     def __init__(self, rep: Repository, fman: FloatingManager, lang: str):

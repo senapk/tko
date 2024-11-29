@@ -99,10 +99,10 @@ class Settings:
 
     def __str__(self):
         output = []
-        output.append(str(Text("{g}", "Arquivo de configuração:")))
+        output.append(str(Text.format("{g}", "Arquivo de configuração:")))
         output.append("- " + self.get_settings_file())
         output.append("")
-        output.append(str(Text("{g}", "Repositórios remotos cadastrados:")))
+        output.append(str(Text.format("{g}", "Repositórios remotos cadastrados:")))
         max_alias = max([len(key) for key in self.dict_alias_remote])
         for key in self.dict_alias_remote:
             output.append("- {} : {}".format(key.ljust(max_alias), self.dict_alias_remote[key]))

@@ -34,7 +34,7 @@ from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
 import chardet # type: ignore
-__version__ = "2.0.3"
+__version__ = "2.0.4"
 
 class CheckVersion:
 
@@ -1108,13 +1108,17 @@ def RToken(fmt: str, text: str) -> Token:
     return Token(text, fmt)
 
 class Text:
-    def __init__(self, value: str = "", *args):
+    def __init__(self):
+        self.data: List[Token] = []
+
+    @staticmethod
+    def format(value: str = "", *args):
         if not isinstance(value, str):
             raise TypeError("value must be a string")
-        self.data: List[Token] = []
-        if value != "": 
-            self.__process_placeholders(value, *args)
-    
+        text = Text()
+        text.__process_placeholders(value, *args)
+        return text
+
     def set_background(self, fmt: str):
         for d in self.data:
             lower_only = "".join([c for c in d.fmt if c.islower()])
@@ -1266,7 +1270,7 @@ class Text:
             self.data = prefix + self.data
         return self
     
-    def center(self, width: int, filler: Token | str  = " "):
+    def center(self, width: int, filler: Token):
         if isinstance(filler, str):
             filler = Token(filler)
         total = self.len()
@@ -1728,7 +1732,7 @@ def test_fmt(scr):
     Fmt.init_colors()  # Inicializa as cores
     Fmt.set_scr(scr)  # Define o scr como global
 
-    output = Text("..")
+    output = Text.format("..")
     for i in range(60):
         output.addf("r", str(i) + " ")
     for i in range(15):
@@ -2000,12 +2004,16 @@ class RawTerminal:
     @staticmethod
     def centralize(text: Text | str, filler: Token | str = Token(" ")):
         if isinstance(filler, str):
-            filler = Token(filler)
+            filler2: Token = Token(filler)
+        else:
+            filler2 = filler
 
         if isinstance(text, str):
-            text = Text(text)
+            text2: Text = Text().add(text)
+        else:
+            text2 = text
         width = RawTerminal.get_terminal_size()
-        return text.center(width, filler)
+        return text2.center(width, filler2)
     
 
 class __Symbols:
@@ -2367,7 +2375,7 @@ class FloatingInput(Floating):
             text.set_background(fmt)
             options.append(text)
         
-        self._frame.write(0, 0, Text("Busca: ") + "".join(self.search_text) + symbols.cursor)
+        self._frame.write(0, 0, Text.format("Busca: ") + "".join(self.search_text) + symbols.cursor)
         y = 1
         for line in self._content + options:
             x = 0
@@ -2484,7 +2492,7 @@ Sem   Ajuda│$5  Sozinho  │           │           │    [8]    │    [10]
         }
         a = decode_dict[grade][0]
         b = decode_dict[grade][1]
-        return Text("{} {}", a, b)
+        return Text.format("{} {}", a, b)
 
     def load_axes(self):
             sozinho = "Sozinho"
@@ -2523,7 +2531,7 @@ Sem   Ajuda│$5  Sozinho  │           │           │    [8]    │    [10]
     def format(self, grade: int):
             # pintando compreensão e autonomia
             headers = [Token("Compreensão→", "B"), Token("↓Autonomia ", "M")]
-            value: Text = Text(self.msg)
+            value: Text = Text().add(self.msg)
             # if grade != 0:
             for h in headers:
                 value = value.replace(h.text, h)
@@ -3265,7 +3273,7 @@ class DiffBuilder:
         # lambda function to return element in index i or empty if out of bounds
         def get(vet, index) -> Text | None:
             if index < len(vet):
-                return Text(vet[index])
+                return Text().add(vet[index])
             return None
         
         expected_color = "g"
@@ -3701,7 +3709,7 @@ class AppSettings:
 
     def __str__(self):
         output: list[str] = []
-        output.append(str(Text("{g}", "Configurações globais:")))
+        output.append(str(Text.format("{g}", "Configurações globais:")))
         output.append("- Diff    : {}".format(str(self.get_diff_mode().value)))
         output.append("- Editor  : {}".format(self.get_editor()))
         output.append("- Bordas  : {}".format(self.has_borders()))
@@ -3848,7 +3856,7 @@ class DownDiff:
         return output
 
     def insert_header(self):
-        self.output.append(Text("").fold_in(self.width, symbols.hbar, "╭", "╮"))
+        self.output.append(Text().fold_in(self.width, symbols.hbar, "╭", "╮"))
         self.output.append(self.unit.str().fold_in(self.width, " ", symbols.vbar, symbols.vbar))
 
     def insert_input(self):
@@ -3899,10 +3907,10 @@ class DownDiff:
             return
         self.output.append(Text().addf("b", DiffBuilder.vunequal).fold_in(self.width, symbols.hbar, "├", "┤"))
         for line in self.db.first_failure_diff(self.unit.expected, self.unit.received, self.first_failure):
-            self.output.append(Text("│").add(line).ljust(self.width - 1, Token(" ")).add("│"))
+            self.output.append(Text().add("│").add(line).ljust(self.width - 1, Token(" ")).add("│"))
 
     def end_frame(self):
-        self.output.append(Text("").fold_in(self.width, symbols.hbar, "╰", "╯"))
+        self.output.append(Text().fold_in(self.width, symbols.hbar, "╰", "╯"))
 
     def build_diff(self) -> List[Text]:
         if self.__to_insert_header:
@@ -3979,7 +3987,7 @@ class SideDiff:
         return self
 
     def _insert_header(self):
-        self.output.append(Text("").fold_in(self.width, symbols.hbar, "╭", "╮"))
+        self.output.append(Text().fold_in(self.width, symbols.hbar, "╭", "╮"))
         self.output.append(self.unit.str().fold_in(self.width, " ", "│", "│"))
 
     def _insert_input(self):
@@ -3994,7 +4002,7 @@ class SideDiff:
 
         # input lines
         if self.unit.inserted != "":
-            lines = [Text(x) for x in self.unit.inserted.splitlines()]
+            lines = [Text().add(x) for x in self.unit.inserted.splitlines()]
             for l in lines:
                 self.output.append(self.split_screen(l, l))
     
@@ -4015,10 +4023,10 @@ class SideDiff:
         self.output.append(Text().addf("b", DiffBuilder.vunequal).fold_in(self.width, symbols.hbar, "├", "┤"))
         for line in self.db.first_failure_diff(self.unit.expected, self.unit.received, self.first_failure):
             width = self.width - 1
-            self.output.append(Text("│").add(line).ljust(width, Token(" ")).add("│"))
+            self.output.append(Text().add("│").add(line).ljust(width, Token(" ")).add("│"))
         
     def _finish(self):
-        self.output.append(Text("").fold_in(self.width, symbols.hbar, "╰", "╯"))
+        self.output.append(Text().fold_in(self.width, symbols.hbar, "╰", "╯"))
 
     def build_diff(self) -> List[Text]:
         self.output = []
@@ -4961,7 +4969,7 @@ class SolverBuilder:
                 self.compile_error = True
                 return
         if not "run" in yaml_data:
-            raise Warning(Text("{r}: Seu arquivo yaml precisa ter um campo {g} ", "Falha", "run:"))
+            raise Warning(Text.format("{r}: Seu arquivo yaml precisa ter um campo {g} ", "Falha", "run:"))
         self.set_executable(yaml_data["run"], folder)
 
     def __prepare_make(self):
@@ -5843,7 +5851,7 @@ class Repository:
         # test if file is inside or outside the repository
         source = os.path.abspath(os.path.join(self.folder, self.CONFIG_FOLDER, source))
         if not os.path.exists(source):
-            raise Warning(Text("{r}: Arquivo fonte do repositório {y} não foi encontrado", "Erro", source))
+            raise Warning(Text.format("{r}: Arquivo fonte do repositório {y} não foi encontrado", "Erro", source))
         return source
 
     def __is_remote_source(self) -> bool:
@@ -5975,7 +5983,7 @@ class Repository:
                 # self.data = json.load(f)
                 self.data = yaml.safe_load(f)
         except:
-            raise Warning(Text("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.get_config_file(), "corrompido"))
+            raise Warning(Text.format("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.get_config_file(), "corrompido"))
         return self
 
     def save_config(self):
@@ -6090,10 +6098,10 @@ class Settings:
 
     def __str__(self):
         output = []
-        output.append(str(Text("{g}", "Arquivo de configuração:")))
+        output.append(str(Text.format("{g}", "Arquivo de configuração:")))
         output.append("- " + self.get_settings_file())
         output.append("")
-        output.append(str(Text("{g}", "Repositórios remotos cadastrados:")))
+        output.append(str(Text.format("{g}", "Repositórios remotos cadastrados:")))
         max_alias = max([len(key) for key in self.dict_alias_remote])
         for key in self.dict_alias_remote:
             output.append("- {} : {}".format(key.ljust(max_alias), self.dict_alias_remote[key]))
@@ -6141,8 +6149,8 @@ class RepStarter:
     
     def print_end_msg(self):
         rel_path = os.path.relpath(self.rep.folder, os.getcwd())
-        print(Text("Voce pode acessar o repositório com o comando {g} {y}", "tko play", "<pasta>"))
-        print(Text("Por exemplo: {g} {y}", "tko play", rel_path))
+        print(Text.format("Voce pode acessar o repositório com o comando {g} {y}", "tko play", "<pasta>"))
+        print(Text.format("Por exemplo: {g} {y}", "tko play", rel_path))
 
     def set_folder(self, folder: str | None, remote: str | None) -> bool:
         if folder is not None:
@@ -6152,8 +6160,8 @@ class RepStarter:
         self.folder = os.path.abspath(os.getcwd())
         if remote is not None:
             self.folder = os.path.join(self.folder, remote)
-        print(Text("A pasta onde deve ser criada o repositório {r} foi informada.", "não"))
-        print(Text("Deseja criar o repositório na pasta {y} ? ({g}/{r}): ", self.folder, "s", "n"), end="")
+        print(Text.format("A pasta onde deve ser criada o repositório {r} foi informada.", "não"))
+        print(Text.format("Deseja criar o repositório na pasta {y} ? ({g}/{r}): ", self.folder, "s", "n"), end="")
         op = input()
         if op == "n":
             return False
@@ -6163,8 +6171,8 @@ class RepStarter:
         path_old = Repository.rec_search_for_repo(self.folder)
         if path_old != "":
             self.folder = path_old
-            print(Text("Já existe um repositório em {r}.", path_old))
-            print(Text("Deseja sobrescrever as configurações do repositório em {y} ? ({g}/{r}): ", self.folder, "s", "n"), end="")
+            print(Text.format("Já existe um repositório em {r}.", path_old))
+            print(Text.format("Deseja sobrescrever as configurações do repositório em {y} ? ({g}/{r}): ", self.folder, "s", "n"), end="")
             op = input()
             if op == "n":
                 return None
@@ -6204,7 +6212,7 @@ class TextFunctor:
         self.value = data
     
     def __call__(self):
-        return Text(self.value)
+        return Text().add(self.value)
 
 class SetLangFunctor:
     def __init__(self, rep: Repository, fman: FloatingManager, lang: str):
@@ -7007,7 +7015,7 @@ class TaskTree:
             return "R"
         return self.colors.focused_item
 
-    def __filter_by_search(self) -> Tuple[Set[str], str | None]:
+    def filter_by_search(self) -> Tuple[Set[str], str | None]:
         matches: Set[str] = set()
         search = SearchAsc(self.search_text)
         first: None | str = None
@@ -7048,7 +7056,7 @@ class TaskTree:
         available_quests = self.game.available_quests
         available_clusters = self.game.available_clusters
 
-        filtered, _ = self.__filter_by_search()
+        filtered, _ = self.filter_by_search()
         matcher = SearchAsc(self.search_text)
 
         clusters = [self.game.clusters[key] for key in available_clusters if key in filtered]
@@ -7416,7 +7424,7 @@ class Search:
 
     # update index to match the first item that matches the search
     def update_index(self):
-        _, first = self.tree.__filter_by_search()
+        _, first = self.tree.filter_by_search()
         self.tree.selected_item = first if first is not None else ""
 
     def cancel_search(self):
@@ -7574,25 +7582,6 @@ class Gui:
             output = self.tree.get_task_action(obj)
 
         return output
-    
-
-    # def make_flags_bar(self) -> Text:
-    #     lista: list[Flag] = []
-    #     lista.append(Flags.flags)
-    #     lista.append(Flags.skills)
-    #     lista.append(Flags.admin)
-    #     lista.append(Flags.percent)
-    #     lista.append(Flags.minimum)
-    #     lista.append(Flags.reward)
-    #     value = "1" if self.settings.app.has_borders() else "0"
-    #     borders = Flag().set_values([value]).set_name("Bordas").set_keycode("B")
-    #     lista.append(borders)
-    #     value = "1" if self.settings.app.has_images() else "0"
-    #     images = Flag().set_values([value]).set_name("Imagens").set_keycode("I")
-    #     lista.append(images)
-
-    #     values = [self.style.get_flag_sentence(flag, 0 , True, False, False) for flag in lista]
-    #     return Text("").join(values)
 
     def center_header_footer(self, value: Text, frame: Frame) -> Text:
         half = value.len() // 2
@@ -7694,7 +7683,7 @@ class Gui:
     def show_bottom_bar(self):
         lines, cols = Fmt.get_size()
         elems = self.build_bottom_array()
-        line_main = Text(" ").join(elems) # alignment adjust
+        line_main = Text().add(" ").join(elems) # alignment adjust
         Fmt.write(lines - 1, 0, line_main.center(cols))
 
     def make_xp_button(self, size):
@@ -7729,9 +7718,9 @@ class Gui:
         pos.append(self_grade)
 
         limit = frame.get_dx()
-        size = limit - Text(" ").join(pre + pos).len() - 2
+        size = limit - Text().add(" ").join(pre + pos).len() - 2
         main_label = self.make_xp_button(size)
-        info = Text(" ").join(pre + [main_label] + pos)
+        info = Text().add(" ").join(pre + [main_label] + pos)
         frame.write(0, 0, info.center(frame.get_dx()))
 
     def show_help(self):
@@ -7742,10 +7731,10 @@ class Gui:
 
         _help.set_header_sentence(Text().add(" Ajuda "))
         # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Text("    Ajuda ").addf("r", GuiKeys.key_help).add("  Abre essa tela de ajuda")
+        _help.put_sentence(Text.format("    Ajuda ").addf("r", GuiKeys.key_help).add("  Abre essa tela de ajuda")
         )
 
-        _help.put_sentence(Text("  ").addf("r", "Shift + B")
+        _help.put_sentence(Text.format("  ").addf("r", "Shift + B")
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
         _help.put_sentence(Text() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
         _help.put_sentence(Text() + f"   {GuiActions.github} " + RToken("r", f"{GuiKeys.github_open}") + "  Abre tarefa em uma aba do browser")
@@ -7920,8 +7909,8 @@ class Free:
         to_run_again = False
         if wait_input:
             print(Text().center(RawTerminal.get_terminal_size(), Token("─")))
-            print(Text("Para [recompilar e] reexecutar digite: {y}", "<enter>"))
-            print(Text("Para voltar para tela anterior digite: {y}", "q<enter>"))
+            print(Text.format("Para [recompilar e] reexecutar digite: {y}", "<enter>"))
+            print(Text.format("Para voltar para tela anterior digite: {y}", "q<enter>"))
             valor = input()
             if valor != "n" and valor != "q":
                 if to_clear:
@@ -7988,7 +7977,7 @@ class Tester:
         for i, line in enumerate(lines):
             info = Text().addf(color, line).center(dx - 2, Token(" ", " "))
             if clear:
-                Fmt.write(i + init_y, 1, Text(" " * info.len()))
+                Fmt.write(i + init_y, 1, Text().add(" " * info.len()))
             else:
                 Fmt.write(i + init_y, 1, Text().addf(color, line).center(dx - 2, Token(" ", " ")))
 
@@ -8139,7 +8128,7 @@ class Tester:
                 solvers = count_missing
 
         # building sources
-        source_names = Text(", ").join([Text().addf(sources_color, f"{name[0]}({name[1]})") for name in self.wdir.sources_names()])
+        source_names = Text().add(", ").join([Text().addf(sources_color, f"{name[0]}({name[1]})") for name in self.wdir.sources_names()])
         sources = Text().add(self.borders.roundL(sources_color)).add(source_names).add(self.borders.roundR(sources_color))
 
         # merging activity, solvers and sources in header
@@ -8258,7 +8247,7 @@ class Tester:
         
     def two_column_mode(self):
         _, cols = Fmt.get_size()
-        return cols < Text(" ").join(self.make_bottom_line()).len() + 2
+        return cols < Text().add(" ").join(self.make_bottom_line()).len() + 2
 
     def get_diff_symbol(self) -> str:
         if self.settings.app.get_diff_mode() == DiffMode.DOWN:
@@ -8308,7 +8297,7 @@ class Tester:
 
     def show_bottom_line(self):
         lines, cols = Fmt.get_size()
-        out = Text(" ").join(self.make_bottom_line())
+        out = Text().add(" ").join(self.make_bottom_line())
         Fmt.write(lines - 1, 0, out.center(cols, Token(" ")))
 
     def is_all_right(self):
@@ -8506,12 +8495,6 @@ class Tester:
             for i in range(len(self.results)):
                 _, index = self.results[i]
                 self.results[i] = (ExecutionResult.UNTESTED, index)
-            # self.fman.add_input(
-            #     Floating("v>").warning()
-            #     .put_text("Atividade travada")
-            #     .put_sentence(Text("Aperte ").addf("g", GuiKeys.travar).add(" para destravar"))
-            #     .put_sentence(Text("Use ").addf("g", "Enter").add(" para rodar os testes"))
-            # )
 
     def get_time_limit_symbol(self):
         if self.settings.app.get_timeout() == 0:
@@ -8582,7 +8565,7 @@ class Tester:
         
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mudar arquivo {y} de execução", symbols.action, "principal"),
+                lambda: Text.format(" {} Mudar arquivo {y} de execução", symbols.action, "principal"),
                 self.change_main,
                 "TAB"
             )
@@ -8590,7 +8573,7 @@ class Tester:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mudar modo {y}}", self.get_diff_symbol(), "Diff"),
+                lambda: Text.format(" {} Mudar modo {y}}", self.get_diff_symbol(), "Diff"),
                 self.app.toggle_diff,
                 GuiKeys.diff
             )
@@ -8598,7 +8581,7 @@ class Tester:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mudar {y} de tempo de execução: {r}", symbols.action, "Limite", self.get_time_limit_symbol()),
+                lambda: Text.format(" {} Mudar {y} de tempo de execução: {r}", symbols.action, "Limite", self.get_time_limit_symbol()),
                 self.change_limit,
                 GuiKeys.limite
             )
@@ -8606,7 +8589,7 @@ class Tester:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Testar {y} os casos ou apenas o selecionado", icon(not self.locked_index), "Todos"),
+                lambda: Text.format(" {} Testar {y} os casos ou apenas o selecionado", icon(not self.locked_index), "Todos"),
                 self.lock_unit,
                 GuiKeys.lock
             )
@@ -8614,7 +8597,7 @@ class Tester:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y}", icon(self.app.has_borders()), "Bordas"),
+                lambda: Text.format(" {} Mostrar {y}", icon(self.app.has_borders()), "Bordas"),
                 self.app.toggle_borders,
                 GuiKeys.borders
             )
@@ -8622,7 +8605,7 @@ class Tester:
         
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y}", icon(self.app.has_images()), "Imagens"),
+                lambda: Text.format(" {} Mostrar {y}", icon(self.app.has_images()), "Imagens"),
                 self.app.toggle_images, 
                 GuiKeys.images
             )
@@ -8764,7 +8747,7 @@ class Run:
         if self.param.filter:
             old_dir = os.getcwd()
 
-            print(Text(" Entrando no modo de filtragem ").center(RawTerminal.get_terminal_size(), "═"))
+            print(Text.format(" Entrando no modo de filtragem ").center(RawTerminal.get_terminal_size(), "═"))
             TKOFilterMode.deep_copy_and_change_dir()  
             # search for target outside . dir and redirect target
             new_target_list = []
@@ -8866,7 +8849,7 @@ class Run:
 
         # list mode
         if not self.wdir.has_solver() and self.wdir.has_tests():
-            print(Text("Nenhum arquivo de código encontrado. Listando casos de teste.").center(RawTerminal.get_terminal_size(), Token("╌")), flush=True)
+            print(Text.format("Nenhum arquivo de código encontrado. Listando casos de teste.").center(RawTerminal.get_terminal_size(), Token("╌")), flush=True)
             print(self.wdir.resume())
             for line in self.wdir.unit_list_resume():
                 print(line)
@@ -8937,7 +8920,7 @@ class Run:
             cdiff.set_autorun(self.__run_without_ask)
             cdiff.run()
         else:
-            print(Text(" Testando o código com os casos de teste ").center(RawTerminal.get_terminal_size(), "═"))
+            print(Text.format(" Testando o código com os casos de teste ").center(RawTerminal.get_terminal_size(), "═"))
             self.__print_top_line()
             self.__print_diff()
             correct = [unit for unit in self.wdir.get_unit_list() if unit.result == ExecutionResult.SUCCESS]
@@ -9478,7 +9461,7 @@ class PlayPalette:
         
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Tarefa: {y} para repositório local", symbols.action, "Baixar"),
+                lambda: Text.format(" {} Tarefa: {y} para repositório local", symbols.action, "Baixar"),
                 self.actions.down_remote_task,
                 GuiKeys.down_task
             ).set_exit_on_action(True)
@@ -9486,7 +9469,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Tarefa: Abrir {y} com a descrição", symbols.action, "GitHub"),
+                lambda: Text.format(" {} Tarefa: Abrir {y} com a descrição", symbols.action, "GitHub"),
                 self.actions.open_link,
                 GuiKeys.github_open
             ).set_exit_on_action(True)
@@ -9494,7 +9477,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Tarefa: {y} arquivos na IDE", symbols.action, "Editar"),
+                lambda: Text.format(" {} Tarefa: {y} arquivos na IDE", symbols.action, "Editar"),
                 self.actions.open_code,
                 GuiKeys.edit
             ).set_exit_on_action(True)
@@ -9502,7 +9485,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y}", symbols.action, "Ajuda"),
+                lambda: Text.format(" {} Mostrar {y}", symbols.action, "Ajuda"),
                 self.gui.show_help,
                 GuiKeys.key_help
             ).set_exit_on_action(True)
@@ -9510,7 +9493,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y}", icon(self.app.has_borders()), "Bordas"),
+                lambda: Text.format(" {} Mostrar {y}", icon(self.app.has_borders()), "Bordas"),
                 self.app.toggle_borders,
                 GuiKeys.borders
             )
@@ -9518,7 +9501,7 @@ class PlayPalette:
         
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y}", icon(self.app.has_images()), "Imagens"),
+                lambda: Text.format(" {} Mostrar {y}", icon(self.app.has_images()), "Imagens"),
                 self.app.toggle_images, 
                 GuiKeys.images
             )
@@ -9526,7 +9509,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y}", icon(Flags.percent), "Percentual"),
+                lambda: Text.format(" {} Mostrar {y}", icon(Flags.percent), "Percentual"),
                 Flags.percent.toggle, 
                 Flags.percent.get_keycode()
             )
@@ -9534,7 +9517,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y} para completar a missão", icon(Flags.minimum), "Mínimo"),
+                lambda: Text.format(" {} Mostrar {y} para completar a missão", icon(Flags.minimum), "Mínimo"),
                 Flags.minimum.toggle,
                 Flags.minimum.get_keycode()
             )
@@ -9542,7 +9525,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y} das tarefas", icon(Flags.reward), "Recompensa"),
+                lambda: Text.format(" {} Mostrar {y} das tarefas", icon(Flags.reward), "Recompensa"),
                 Flags.reward.toggle, 
                 Flags.reward.get_keycode()
             )
@@ -9550,7 +9533,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mostrar {y}", icon(Flags.skills), "Skills"),
+                lambda: Text.format(" {} Mostrar {y}", icon(Flags.skills), "Skills"),
                 Flags.skills.toggle, 
                 Flags.skills.get_keycode()
             )
@@ -9558,7 +9541,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Modo {y}: Habilitar todas as tarefas", icon(Flags.admin), "Admin"),
+                lambda: Text.format(" {} Modo {y}: Habilitar todas as tarefas", icon(Flags.admin), "Admin"),
                 Flags.admin.toggle,
                 Flags.admin.get_keycode()
             )
@@ -9566,7 +9549,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Gerar {y} de dependências", symbols.action, "Grafo"),
+                lambda: Text.format(" {} Gerar {y} de dependências", symbols.action, "Grafo"),
                 self.actions.generate_graph,
                 GuiKeys.graph
             ).set_exit_on_action(True)
@@ -9574,7 +9557,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Mudar {y} de download de rascunhos", symbols.action, "Linguagem"),
+                lambda: Text.format(" {} Mudar {y} de download de rascunhos", symbols.action, "Linguagem"),
                 self.gui.language.set_language,
                 GuiKeys.set_lang
             ).set_exit_on_action(True)
@@ -9582,7 +9565,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Devel: Habilita mensagens de {y}", icon(Flags.devel), "Debug"),
+                lambda: Text.format(" {} Devel: Habilita mensagens de {y}", icon(Flags.devel), "Debug"),
                 Flags.devel.toggle,
                 ""
             )
@@ -9590,7 +9573,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text(" {} Devel: Marcar em {y}", symbols.action, "Massa"),
+                lambda: Text.format(" {} Devel: Marcar em {y}", symbols.action, "Massa"),
                 self.gui.tree.mass_mark,
                 ""
             ).set_exit_on_action(True)
@@ -9780,10 +9763,10 @@ class CmdPlay:
         self.folder = folder
         self.rep = Repository(folder)
         if not self.rep.has_local_config_file():
-            print(Text("{r}: O parâmetro para o comando {g} {y} deve a pasta onde você iniciou o repositório.", "Erro", "tko play", "<pasta>"))
-            print(Text("{g}: Navegue ou passe o caminho até a pasta do repositório e tente novamente.", "Ação"))
-            print(Text("{g}: Ou use {y} para criar um novo repositório.", "Ação","tko init --remote [fup|poo|ed]"))
-            raise Warning(Text("{r}: {y} {}", "Erro:", folder, "não contém um repositório do tko"))
+            print(Text.format("{r}: O parâmetro para o comando {g} {y} deve a pasta onde você iniciou o repositório.", "Erro", "tko play", "<pasta>"))
+            print(Text.format("{g}: Navegue ou passe o caminho até a pasta do repositório e tente novamente.", "Ação"))
+            print(Text.format("{g}: Ou use {y} para criar um novo repositório.", "Ação","tko init --remote [fup|poo|ed]"))
+            raise Warning(Text.format("{r}: {y} {}", "Erro:", folder, "não contém um repositório do tko"))
         self.rep.load_config().load_game()
         return self
 

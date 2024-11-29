@@ -26,10 +26,14 @@ class RawTerminal:
     @staticmethod
     def centralize(text: Text | str, filler: Token | str = Token(" ")):
         if isinstance(filler, str):
-            filler = Token(filler)
+            filler2: Token = Token(filler)
+        else:
+            filler2 = filler
 
         if isinstance(text, str):
-            text = Text(text)
+            text2: Text = Text().add(text)
+        else:
+            text2 = text
         width = RawTerminal.get_terminal_size()
-        return text.center(width, filler)
+        return text2.center(width, filler2)
     

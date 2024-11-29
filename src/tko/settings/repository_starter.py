@@ -43,8 +43,8 @@ class RepStarter:
     
     def print_end_msg(self):
         rel_path = os.path.relpath(self.rep.folder, os.getcwd())
-        print(Text("Voce pode acessar o repositório com o comando {g} {y}", "tko play", "<pasta>"))
-        print(Text("Por exemplo: {g} {y}", "tko play", rel_path))
+        print(Text.format("Voce pode acessar o repositório com o comando {g} {y}", "tko play", "<pasta>"))
+        print(Text.format("Por exemplo: {g} {y}", "tko play", rel_path))
 
     def set_folder(self, folder: str | None, remote: str | None) -> bool:
         if folder is not None:
@@ -54,8 +54,8 @@ class RepStarter:
         self.folder = os.path.abspath(os.getcwd())
         if remote is not None:
             self.folder = os.path.join(self.folder, remote)
-        print(Text("A pasta onde deve ser criada o repositório {r} foi informada.", "não"))
-        print(Text("Deseja criar o repositório na pasta {y} ? ({g}/{r}): ", self.folder, "s", "n"), end="")
+        print(Text.format("A pasta onde deve ser criada o repositório {r} foi informada.", "não"))
+        print(Text.format("Deseja criar o repositório na pasta {y} ? ({g}/{r}): ", self.folder, "s", "n"), end="")
         op = input()
         if op == "n":
             return False
@@ -65,8 +65,8 @@ class RepStarter:
         path_old = Repository.rec_search_for_repo(self.folder)
         if path_old != "":
             self.folder = path_old
-            print(Text("Já existe um repositório em {r}.", path_old))
-            print(Text("Deseja sobrescrever as configurações do repositório em {y} ? ({g}/{r}): ", self.folder, "s", "n"), end="")
+            print(Text.format("Já existe um repositório em {r}.", path_old))
+            print(Text.format("Deseja sobrescrever as configurações do repositório em {y} ? ({g}/{r}): ", self.folder, "s", "n"), end="")
             op = input()
             if op == "n":
                 return None

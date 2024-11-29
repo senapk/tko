@@ -64,7 +64,7 @@ class Search:
 
     # update index to match the first item that matches the search
     def update_index(self):
-        _, first = self.tree.__filter_by_search()
+        _, first = self.tree.filter_by_search()
         self.tree.selected_item = first if first is not None else ""
 
     def cancel_search(self):

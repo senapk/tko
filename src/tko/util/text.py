@@ -68,13 +68,17 @@ def RToken(fmt: str, text: str) -> Token:
     return Token(text, fmt)
 
 class Text:
-    def __init__(self, value: str = "", *args):
+    def __init__(self):
+        self.data: List[Token] = []
+
+    @staticmethod
+    def format(value: str = "", *args):
         if not isinstance(value, str):
             raise TypeError("value must be a string")
-        self.data: List[Token] = []
-        if value != "": 
-            self.__process_placeholders(value, *args)
-    
+        text = Text()
+        text.__process_placeholders(value, *args)
+        return text
+
     def set_background(self, fmt: str):
         for d in self.data:
             lower_only = "".join([c for c in d.fmt if c.islower()])
@@ -226,7 +230,7 @@ class Text:
             self.data = prefix + self.data
         return self
     
-    def center(self, width: int, filler: Token | str  = " "):
+    def center(self, width: int, filler: Token):
         if isinstance(filler, str):
             filler = Token(filler)
         total = self.len()
@@ -368,7 +372,5 @@ class Text:
                 self.addf(fmt, value)
 
 if __name__ == "__main__":
-    # print(Text("comida {c:gelada}"))
-    # print(Text("comida {c:gelada} e {r:quente}"))
-    print(Text("a {b} está com {}", "agua", Text("{g}", "capim")))
+    print(Text.format("a {b} está com {}", "agua", Text.format("{g}", "capim")))
     

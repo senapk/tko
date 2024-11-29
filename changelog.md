@@ -1,5 +1,8 @@
 # Changelog
 
+- 2.0.4
+  - fix: critical error in search
+  - fix: error sending { } as output of program
 - 2.0.3
   - fix: fix version migration
 - 2.0.2

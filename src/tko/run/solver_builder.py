@@ -167,7 +167,7 @@ class SolverBuilder:
                 self.compile_error = True
                 return
         if not "run" in yaml_data:
-            raise Warning(Text("{r}: Seu arquivo yaml precisa ter um campo {g} ", "Falha", "run:"))
+            raise Warning(Text.format("{r}: Seu arquivo yaml precisa ter um campo {g} ", "Falha", "run:"))
         self.set_executable(yaml_data["run"], folder)
 
     def __prepare_make(self):

@@ -42,7 +42,7 @@ class DownDiff:
         return output
 
     def insert_header(self):
-        self.output.append(Text("").fold_in(self.width, symbols.hbar, "╭", "╮"))
+        self.output.append(Text().fold_in(self.width, symbols.hbar, "╭", "╮"))
         self.output.append(self.unit.str().fold_in(self.width, " ", symbols.vbar, symbols.vbar))
 
     def insert_input(self):
@@ -93,10 +93,10 @@ class DownDiff:
             return
         self.output.append(Text().addf("b", DiffBuilder.vunequal).fold_in(self.width, symbols.hbar, "├", "┤"))
         for line in self.db.first_failure_diff(self.unit.expected, self.unit.received, self.first_failure):
-            self.output.append(Text("│").add(line).ljust(self.width - 1, Token(" ")).add("│"))
+            self.output.append(Text().add("│").add(line).ljust(self.width - 1, Token(" ")).add("│"))
 
     def end_frame(self):
-        self.output.append(Text("").fold_in(self.width, symbols.hbar, "╰", "╯"))
+        self.output.append(Text().fold_in(self.width, symbols.hbar, "╰", "╯"))
 
     def build_diff(self) -> List[Text]:
         if self.__to_insert_header:

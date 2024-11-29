@@ -34,8 +34,8 @@ class Free:
         to_run_again = False
         if wait_input:
             print(Text().center(RawTerminal.get_terminal_size(), Token("─")))
-            print(Text("Para [recompilar e] reexecutar digite: {y}", "<enter>"))
-            print(Text("Para voltar para tela anterior digite: {y}", "q<enter>"))
+            print(Text.format("Para [recompilar e] reexecutar digite: {y}", "<enter>"))
+            print(Text.format("Para voltar para tela anterior digite: {y}", "q<enter>"))
             valor = input()
             if valor != "n" and valor != "q":
                 if to_clear:

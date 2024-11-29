@@ -64,7 +64,7 @@ class SideDiff:
         return self
 
     def _insert_header(self):
-        self.output.append(Text("").fold_in(self.width, symbols.hbar, "╭", "╮"))
+        self.output.append(Text().fold_in(self.width, symbols.hbar, "╭", "╮"))
         self.output.append(self.unit.str().fold_in(self.width, " ", "│", "│"))
 
     def _insert_input(self):
@@ -79,7 +79,7 @@ class SideDiff:
 
         # input lines
         if self.unit.inserted != "":
-            lines = [Text(x) for x in self.unit.inserted.splitlines()]
+            lines = [Text().add(x) for x in self.unit.inserted.splitlines()]
             for l in lines:
                 self.output.append(self.split_screen(l, l))
     
@@ -100,10 +100,10 @@ class SideDiff:
         self.output.append(Text().addf("b", DiffBuilder.vunequal).fold_in(self.width, symbols.hbar, "├", "┤"))
         for line in self.db.first_failure_diff(self.unit.expected, self.unit.received, self.first_failure):
             width = self.width - 1
-            self.output.append(Text("│").add(line).ljust(width, Token(" ")).add("│"))
+            self.output.append(Text().add("│").add(line).ljust(width, Token(" ")).add("│"))
         
     def _finish(self):
-        self.output.append(Text("").fold_in(self.width, symbols.hbar, "╰", "╯"))
+        self.output.append(Text().fold_in(self.width, symbols.hbar, "╰", "╯"))
 
     def build_diff(self) -> List[Text]:
         self.output = []

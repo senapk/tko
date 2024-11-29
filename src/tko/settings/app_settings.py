@@ -90,7 +90,7 @@ class AppSettings:
 
     def __str__(self):
         output: list[str] = []
-        output.append(str(Text("{g}", "Configurações globais:")))
+        output.append(str(Text.format("{g}", "Configurações globais:")))
         output.append("- Diff    : {}".format(str(self.get_diff_mode().value)))
         output.append("- Editor  : {}".format(self.get_editor()))
         output.append("- Bordas  : {}".format(self.has_borders()))

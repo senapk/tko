@@ -83,21 +83,21 @@ class TestSimple(unittest.TestCase):
         assert "".join([x.fmt for x in bar.get_data()]) == "rggrggggrbbrb"
 
     def test_text_replace2(self):
-        bar = Text("123456789")
+        bar = Text.format("123456789")
         bar.replace("123", Token("abc", "r"))
-        assert str(bar) == str(Text("{r}456789", "abc"))
+        assert str(bar) == str(Text.format("{r}456789", "abc"))
 
-        bar = Text("123456789")
+        bar = Text.format("123456789")
         bar.replace("123", Token("ab", "r"))
-        assert str(bar) == str(Text("{r}456789", "ab"))
+        assert str(bar) == str(Text.format("{r}456789", "ab"))
 
-        bar = Text("0123412789")
+        bar = Text.format("0123412789")
         bar.replace("12", Token("a", "r"))
-        assert str(bar) == str(Text("0{r}34{r}789", "a", "a"))
+        assert str(bar) == str(Text.format("0{r}34{r}789", "a", "a"))
 
-        bar = Text("0123412789")
+        bar = Text.format("0123412789")
         bar.replace("12", Token("abcd", "r"))
-        assert str(bar) == str(Text("0{r}34{r}789", "abcd", "abcd"))
+        assert str(bar) == str(Text.format("0{r}34{r}789", "abcd", "abcd"))
 
 
     def test_resume1(self):
@@ -121,15 +121,15 @@ class TestSimple(unittest.TestCase):
         assert sentence.slice() == Text().addf("g", "text1") + Token("text2", "r")
 
     def test_format(self):
-        text1 = Text("brasil é {g} e {y}", "verde", "amarelo")
-        text2 = Text("brasil é ").addf("g", "verde").add(" e ").addf("y", "amarelo")
+        text1 = Text.format("brasil é {g} e {y}", "verde", "amarelo")
+        text2 = Text.format("brasil é ").addf("g", "verde").add(" e ").addf("y", "amarelo")
         assert str(text1) == str(text2)
 
-        text1 = Text("ceu é {b}, ouro é {}", "azul", Token("amarelo", "y"))
+        text1 = Text.format("ceu é {b}, ouro é {}", "azul", Token("amarelo", "y"))
         text2 = Text().add("ceu é ").addf("b", "azul").add(", ouro é ").addf("y", "amarelo")
         assert str(text1) == str(text2)
 
-        text1 = Text("sangue é {}, mar é {c}", Text("{r}", "vermelho"), Token("ciano", "r"))
+        text1 = Text.format("sangue é {}, mar é {c}", Text.format("{r}", "vermelho"), Token("ciano", "r"))
         text2 = Text().add("sangue é ").addf("r", "vermelho").add(", mar é ").addf("c", "ciano")
         assert str(text1) == str(text2)
 

@@ -74,25 +74,6 @@ class Gui:
             output = self.tree.get_task_action(obj)
 
         return output
-    
-
-    # def make_flags_bar(self) -> Text:
-    #     lista: list[Flag] = []
-    #     lista.append(Flags.flags)
-    #     lista.append(Flags.skills)
-    #     lista.append(Flags.admin)
-    #     lista.append(Flags.percent)
-    #     lista.append(Flags.minimum)
-    #     lista.append(Flags.reward)
-    #     value = "1" if self.settings.app.has_borders() else "0"
-    #     borders = Flag().set_values([value]).set_name("Bordas").set_keycode("B")
-    #     lista.append(borders)
-    #     value = "1" if self.settings.app.has_images() else "0"
-    #     images = Flag().set_values([value]).set_name("Imagens").set_keycode("I")
-    #     lista.append(images)
-
-    #     values = [self.style.get_flag_sentence(flag, 0 , True, False, False) for flag in lista]
-    #     return Text("").join(values)
 
     def center_header_footer(self, value: Text, frame: Frame) -> Text:
         half = value.len() // 2
@@ -194,7 +175,7 @@ class Gui:
     def show_bottom_bar(self):
         lines, cols = Fmt.get_size()
         elems = self.build_bottom_array()
-        line_main = Text(" ").join(elems) # alignment adjust
+        line_main = Text().add(" ").join(elems) # alignment adjust
         Fmt.write(lines - 1, 0, line_main.center(cols))
 
     def make_xp_button(self, size):
@@ -229,9 +210,9 @@ class Gui:
         pos.append(self_grade)
 
         limit = frame.get_dx()
-        size = limit - Text(" ").join(pre + pos).len() - 2
+        size = limit - Text().add(" ").join(pre + pos).len() - 2
         main_label = self.make_xp_button(size)
-        info = Text(" ").join(pre + [main_label] + pos)
+        info = Text().add(" ").join(pre + [main_label] + pos)
         frame.write(0, 0, info.center(frame.get_dx()))
 
     def show_help(self):
@@ -242,10 +223,10 @@ class Gui:
 
         _help.set_header_sentence(Text().add(" Ajuda "))
         # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
-        _help.put_sentence(Text("    Ajuda ").addf("r", GuiKeys.key_help).add("  Abre essa tela de ajuda")
+        _help.put_sentence(Text.format("    Ajuda ").addf("r", GuiKeys.key_help).add("  Abre essa tela de ajuda")
         )
 
-        _help.put_sentence(Text("  ").addf("r", "Shift + B")
+        _help.put_sentence(Text.format("  ").addf("r", "Shift + B")
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
         _help.put_sentence(Text() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
         _help.put_sentence(Text() + f"   {GuiActions.github} " + RToken("r", f"{GuiKeys.github_open}") + "  Abre tarefa em uma aba do browser")

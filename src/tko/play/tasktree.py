@@ -258,7 +258,7 @@ class TaskTree:
             return "R"
         return self.colors.focused_item
 
-    def __filter_by_search(self) -> Tuple[Set[str], str | None]:
+    def filter_by_search(self) -> Tuple[Set[str], str | None]:
         matches: Set[str] = set()
         search = SearchAsc(self.search_text)
         first: None | str = None
@@ -299,7 +299,7 @@ class TaskTree:
         available_quests = self.game.available_quests
         available_clusters = self.game.available_clusters
 
-        filtered, _ = self.__filter_by_search()
+        filtered, _ = self.filter_by_search()
         matcher = SearchAsc(self.search_text)
 
         clusters = [self.game.clusters[key] for key in available_clusters if key in filtered]

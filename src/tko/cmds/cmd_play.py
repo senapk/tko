@@ -17,10 +17,10 @@ class CmdPlay:
         self.folder = folder
         self.rep = Repository(folder)
         if not self.rep.has_local_config_file():
-            print(Text("{r}: O parâmetro para o comando {g} {y} deve a pasta onde você iniciou o repositório.", "Erro", "tko play", "<pasta>"))
-            print(Text("{g}: Navegue ou passe o caminho até a pasta do repositório e tente novamente.", "Ação"))
-            print(Text("{g}: Ou use {y} para criar um novo repositório.", "Ação","tko init --remote [fup|poo|ed]"))
-            raise Warning(Text("{r}: {y} {}", "Erro:", folder, "não contém um repositório do tko"))
+            print(Text.format("{r}: O parâmetro para o comando {g} {y} deve a pasta onde você iniciou o repositório.", "Erro", "tko play", "<pasta>"))
+            print(Text.format("{g}: Navegue ou passe o caminho até a pasta do repositório e tente novamente.", "Ação"))
+            print(Text.format("{g}: Ou use {y} para criar um novo repositório.", "Ação","tko init --remote [fup|poo|ed]"))
+            raise Warning(Text.format("{r}: {y} {}", "Erro:", folder, "não contém um repositório do tko"))
         self.rep.load_config().load_game()
         return self
 

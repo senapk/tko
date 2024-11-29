@@ -104,7 +104,7 @@ class DiffBuilder:
         # lambda function to return element in index i or empty if out of bounds
         def get(vet, index) -> Text | None:
             if index < len(vet):
-                return Text(vet[index])
+                return Text().add(vet[index])
             return None
         
         expected_color = "g"
