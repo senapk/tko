@@ -214,9 +214,9 @@ Ele é gerado automaticamente pelos
 testes ou manualmente usando +-.
 Autonomia e Compreensão são COMO.
 Use <> para marcar COMO você fez.
-Progressao : ✓ 9...0
-Autonomia  : ● ◕ ◑ ◔
-Compreensão: A B C D
+Progressao : ✓ 9.... 0
+Compreensão: A B C D E
+Autonomia  : █ ▅ ▃ ▂ ▁
 
  ,`````.          __||||___       
 ' Estuda`,       /_  ___   \      
@@ -1270,7 +1270,7 @@ class Text:
             self.data = prefix + self.data
         return self
     
-    def center(self, width: int, filler: Token):
+    def center(self, width: int, filler: Token = Token(" ")):
         if isinstance(filler, str):
             filler = Token(filler)
         total = self.len()
@@ -7497,12 +7497,12 @@ class Opener:
             path = os.path.join(folder, f)
             if not os.path.isfile(path):
                 continue
-            # allowed = [self.language]
-            # if self.language == "c" or self.language== "cpp":
-            #     allowed.append("h")
-            #     allowed.append("hpp")
-            # if not f.endswith(tuple(allowed)):
-            #     continue
+            allowed = [self.language]
+            if self.language == "c" or self.language== "cpp":
+                allowed.append("h")
+                allowed.append("hpp")
+            if not f.endswith(tuple(allowed)):
+                continue
             files_to_open.append(path)
         return files_to_open
 

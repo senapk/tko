@@ -39,9 +39,9 @@ Ele é gerado automaticamente pelos
 testes ou manualmente usando +-.
 Autonomia e Compreensão são COMO.
 Use <> para marcar COMO você fez.
-Progressao : ✓ 9...0
-Autonomia  : ● ◕ ◑ ◔
-Compreensão: A B C D
+Progressao : ✓ 9.... 0
+Compreensão: A B C D E
+Autonomia  : █ ▅ ▃ ▂ ▁
 
  ,`````.          __||||___       
 ' Estuda`,       /_  ___   \      

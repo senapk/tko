@@ -1,5 +1,8 @@
 # Changelog
 
+- 2.0.5
+  - fix: main image owl
+  - fix: stop open cases.tio in opener
 - 2.0.4
   - fix: critical error in search
   - fix: error sending { } as output of program

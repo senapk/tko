@@ -230,7 +230,7 @@ class Text:
             self.data = prefix + self.data
         return self
     
-    def center(self, width: int, filler: Token):
+    def center(self, width: int, filler: Token = Token(" ")):
         if isinstance(filler, str):
             filler = Token(filler)
         total = self.len()
