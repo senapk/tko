@@ -34,7 +34,7 @@ from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
 import chardet # type: ignore
-__version__ = "2.0.4"
+__version__ = "2.0.5"
 
 class CheckVersion:
 
