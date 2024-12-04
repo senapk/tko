@@ -209,7 +209,7 @@ class Frame:
         below = Text().addf(color, down_left).add(footer).addf(color, down_right)
 
         Fmt.write(y, x, above)
-        if dy > 0:
+        if dy >= 0:
             Fmt.write(y + dy + 1, x, below)
         if self._filled:
             for i in range(1, dy + 1):

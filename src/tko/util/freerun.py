@@ -8,7 +8,7 @@ import random
 
 class Free:
     @staticmethod
-    def free_run(solver: SolverBuilder, show_compilling:bool=True, to_clear: bool=True, wait_input:bool=True) -> bool:
+    def free_run(solver: SolverBuilder, show_compilling:bool=True, to_clear: bool=True, wait_input:bool=True, header: Text = Text()) -> bool:
 
         if to_clear:
             Runner.clear_screen()
@@ -26,7 +26,10 @@ class Free:
             cmd, folder = solver.get_executable()
             if folder == "":
                 folder = None
-            print(Text().center(RawTerminal.get_terminal_size(), Token("─")))
+            if header.len() == 0:
+                print(Text().center(RawTerminal.get_terminal_size(), Token("─")))
+            else:
+                print(header.center(RawTerminal.get_terminal_size(), Token("─")))
             answer = subprocess.run(cmd, cwd=folder, shell=True, text=True)
             if answer.returncode != 0 and answer.returncode != 1:
                 print(Runner.decode_code(answer.returncode))

@@ -38,9 +38,9 @@ class __Symbols:
         self.locked_locked = Token("⇟")
         self.left_toggle = Token("━─")
         self.right_toggle = Token("─━")
-        self.timer = Token("⏰")
-        self.diff_down = Token("⇕")
-        self.diff_left = Token("⇔")
+        self.timer = Token("⏳") #⏰
+        self.diff_down = Token("↓")
+        self.diff_left = Token("→")
         self.sharpR = Token("")
         self.sharpL = Token("")
         self.action = Token("◎", "b")

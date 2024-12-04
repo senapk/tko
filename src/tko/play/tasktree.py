@@ -22,9 +22,9 @@ from tko.util.logger import Logger, LogAction
 
 
 class TaskAction:
-    BAIXAR   = " Baixar "
-    EXECUTAR = "Executar"
-    VISITAR  = "Visitar "
+    BAIXAR   = "  Baixar "
+    EXECUTAR = " Executar"
+    VISITAR  = " Visitar "
 
 class TaskTree:
 

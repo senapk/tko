@@ -29,6 +29,7 @@ from tko.util.logger import Logger
 from tko.run.diff_builder_down import DownDiff
 from tko.run.diff_builder_side import SideDiff
 from tko.play.tracker import Tracker
+from tko.util.raw_terminal import RawTerminal
 
 
 class SeqMode(enum.Enum):
@@ -204,7 +205,7 @@ class Tester:
             self.store_test_track(percent)
 
 
-    def build_top_line_header(self, frame):
+    def build_top_line_header(self, frame_dx):
         activity_color = "C"
         solver_color = "W"
         sources_color = "Y"
@@ -237,10 +238,13 @@ class Tester:
 
         # building sources
         source_names = Text().add(", ").join([Text().addf(sources_color, f"{name[0]}({name[1]})") for name in self.wdir.sources_names()])
-        sources = Text().add(self.borders.roundL(sources_color)).add(source_names).add(self.borders.roundR(sources_color))
+        if self.wdir.has_tests():
+            sources = Text().add(self.borders.roundL(sources_color)).add(source_names).add(self.borders.roundR(sources_color))
+        else:
+            sources = Text().add(self.borders.border("R", "Nenhum teste cadastrado"))
 
         # merging activity, solvers and sources in header
-        delta = frame.get_dx() - solvers.len()
+        delta = frame_dx - solvers.len()
         left = 1
         right = 1
         if delta > 0:
@@ -248,8 +252,8 @@ class Tester:
             left = max(1, delta_left - activity.len())
             delta_right = delta - delta_left
             right = max(1, delta_right - sources.len())
-
-        return Text().add(activity).add("─" * left).add(solvers).add("─" * right).add(sources)
+        filler = "─" if self.wdir.has_tests() else " "
+        return Text().add(activity).add(filler * left).add(solvers).add(filler * right).add(sources)
 
     def build_unit_list(self, frame: Frame) -> Text:
         done_list = self.results
@@ -269,10 +273,8 @@ class Tester:
         show_focused_index = not self.wdir.get_solver().compile_error and not self.mode == SeqMode.intro and not self.is_all_right()
         
         output = Text()
-        if self.wdir.has_tests():
-            output.add(self.get_fixed_arrow())
-        else:
-            output.add(self.borders.border("R", "Nenhum teste encontrado"))
+        output.add(self.get_fixed_arrow())
+
 
         for unit_result, index in done_list + todo_list:
             foco = i == self.focused_index
@@ -306,22 +308,21 @@ class Tester:
         # diff
         diff_text = self.get_diff_symbol()
         output.addf("B", f" {GuiKeys.diff} {diff_text} ")
-        if self.settings.app.has_borders():
-            output.addf("Mb", symbols.sharpR.text)
-        else:
-            output.addf("B", " ")
-
+        # if self.settings.app.has_borders():
+        #     output.addf("Mb", symbols.sharpR.text)
+        # else:
+        #     output.addf("B", " ")
         # timer
-        timer = symbols.timer.text
-        value = str(self.settings.app.get_timeout())
-        if value == "0":
-            value = symbols.infinity.text
-        output.addf("M", f"{timer} {value}  ")
+        # timer = symbols.timer.text
+        # value = str(self.settings.app.get_timeout())
+        # if value == "0":
+        #     value = symbols.infinity.text
+        # output.addf("M", f"{timer}l {value}  ")
         color = "R" if self.locked_index else "G"
         if self.settings.app.has_borders():
-            output.addf(color + "m", symbols.sharpR.text)
+            output.addf(color + "b", symbols.sharpR.text)
         else:
-            output.addf("M", " ")
+            output.addf("B", " ")
 
         # travar
         free = symbols.locked_free.text
@@ -347,15 +348,16 @@ class Tester:
     def draw_top_bar(self):
         # construir mais uma solução
         _, cols = Fmt.get_size()
-        frame = Frame(0, 0).set_size(3, cols)
-        frame.set_header(self.build_top_line_header(frame))
+        size = 1
+        if self.wdir.has_tests():
+            size = 3
+        frame = Frame(0, 0).set_size(size, cols)
+        if not self.wdir.has_tests():        
+            frame.set_border_none()
+        frame.set_header(self.build_top_line_header(frame.get_dx()))
         self.draw_top_bar_content(frame)
         frame.set_footer(self.build_unit_list(frame), "")
         frame.draw()
-        
-    def two_column_mode(self):
-        _, cols = Fmt.get_size()
-        return cols < Text().add(" ").join(self.make_bottom_line()).len() + 2
 
     def get_diff_symbol(self) -> str:
         if self.settings.app.get_diff_mode() == DiffMode.DOWN:
@@ -364,25 +366,7 @@ class Tester:
 
     def make_bottom_line(self) -> List[Text]:
         cmds: List[Text] = []
-
-        # diff mode
-        # text = f"{self.get_diff_symbol()} Diff [{GuiKeys.diff}]"
-        # cmds.append(self.borders.border("C", text))
-        # sair
-        # cmds.append(self.borders.border("C", f" {GuiActions.sair}  [{GuiKeys.sair}]"))
-        # editar
-        # tempo
-        # value = str(self.settings.app.get_timeout())
-        # if value == "0":
-        #     value = symbols.infinity.text
-        # cmds.append(
-        #     Text()
-        #         .add(self.borders.roundL("M"))
-        #         .add(RToken("M", "{} {}[{}]".format(GuiActions.tempo, value, GuiKeys.tempo)))
-        #         .add(self.borders.roundR("M"))
-        # )
-        # fixar
-        color = "R" if self.locked_index else "B"
+        color = "R" if self.locked_index else "C"
         symbol = symbols.success if not self.locked_index else symbols.failure
         # name = "Único" if self.locked_index else "Todos"
         travar = f"{symbol.text} {GuiActions.all}[{GuiKeys.lock}]"
@@ -391,15 +375,12 @@ class Tester:
         text = f"{GuiActions.palette} [{GuiKeys.palette}]"
         cmds.append(self.borders.border("Y", text))
         # ativar
-        cmds.append(self.borders.border("G", f"Testar [{symbols.newline.text}]"))
+        cmds.append(self.borders.border("G", f"{symbols.timer.text}{self.get_time_limit_symbol()} Testar[{symbols.newline.text}] "))
         #editar
         if self.opener is not None:
             cmds.append(self.borders.border("Y", f"{GuiActions.edit} [{GuiKeys.edit}]"))
         # rodar
-        cmds.append(self.borders.border("B", f"{GuiActions.interact} [{GuiKeys.interact}]"))
-
-
-
+        cmds.append(self.borders.border("C", f"{GuiActions.interact} [{GuiKeys.interact}]"))
             
         return cmds
 
@@ -421,10 +402,13 @@ class Tester:
     def draw_main(self):
         unit = self.get_focused_unit()
         lines, cols = Fmt.get_size()
-        self.space = lines - 4
-        if self.two_column_mode():
-            self.space = lines - 5
-        frame = Frame(2, -1).set_inner(self.space, cols).set_border_square()
+        if self.wdir.has_tests():
+            y_out = 2
+            self.space = lines - 4
+        else:
+            y_out = 0
+            self.space = lines - 2
+        frame = Frame(y_out, -1).set_inner(self.space, cols)
 
         if self.is_all_right():
             self.show_success()
@@ -517,7 +501,8 @@ class Tester:
         self.mode = SeqMode.finished
         Logger.get_instance().record_freerun(self.task.key)
         self.store_other_track(Logger.FREE_EXEC)
-        return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True)
+        header = self.build_top_line_header(RawTerminal.get_terminal_size())
+        return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True, header=header)
 
     def run_test_mode(self):
         self.mode = SeqMode.running

@@ -1,5 +1,7 @@
 # Changelog
 
+- 2.1.0
+  - tester screen refactored and interactive mode improved
 - 2.0.5
   - fix: main image owl
   - fix: stop open cases.tio in opener
