@@ -26,8 +26,8 @@ class Search:
             self.backup_index_selected = self.tree.selected_item
             self.backup_admin_mode = Flags.admin
             self.tree.update_tree(admin_mode=True)
-            self.tree.process_expand()
-            self.tree.process_expand()
+            self.tree.process_expand_all()
+            self.tree.process_expand_all()
             #self.fman.add_input(Floating(">v").warning().put_text("Digite o texto\nNavegue até o elemento desejado\ne aperte Enter"))
     
     def finish_search(self):
@@ -37,21 +37,18 @@ class Search:
 
         self.search_mode = False
         self.tree.search_text = ""
+        is_admin = Flags.admin.get_value() == "1"
         selected_key = self.tree.selected_item
-        self.tree.update_tree(self.backup_admin_mode) # usa o mode de antes e vê se acha
+        item = self.tree.all_items[selected_key]
+        reachable = True
+        if isinstance(item, Task):
+            reachable = self.game.quests[item.quest_key].is_reachable()
+        elif isinstance(item, Quest):
+            reachable = item.is_reachable()
+        if not reachable:
+            Flags.admin.set_value("1")
+        self.tree.update_tree(Flags.admin) # usa o mode de antes e vê se acha
         self.tree.reload_sentences()
-    
-        found = False
-        for unit in self.tree.items:
-            if unit.key == selected_key:
-                found = True
-                break
-
-        if not found:
-            # self.fman.add_input(Floating(">v").warning().put_text("Elemento não acessível no modo normal.\nEntrando no modo Admin\npara habilitar acesso"))
-            Flags.admin.toggle()
-            self.tree.update_tree(True)
-            self.tree.reload_sentences()
         
         self.tree.expanded = []
         unit = self.tree.all_items[selected_key]

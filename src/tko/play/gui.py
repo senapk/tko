@@ -57,19 +57,21 @@ class Gui:
         try:
             obj = self.tree.get_selected()
         except IndexError:
-            return "Retornar"
+            return " Retornar"
         if isinstance(obj, Quest):
             quest: Quest = obj
-            if quest.key in self.tree.expanded:
-                output = "Contrair"
+            if not Flags.admin and not quest.is_reachable():
+                output = "Bloqueado"
+            elif quest.key in self.tree.expanded:
+                output = " Contrair"
             else:
-                output = "Expandir"
+                output = " Expandir"
         elif isinstance(obj, Cluster):
             cluster: Cluster = obj
             if cluster.key in self.tree.expanded:
-                output = "Contrair"
+                output = " Contrair"
             else:
-                output = "Expandir"
+                output = " Expandir"
         elif isinstance(obj, Task):
             output = self.tree.get_task_action(obj)
 
@@ -129,7 +131,8 @@ class Gui:
         frame_xp.set_footer(Text().add(" ").add(" "), "^")
         frame_xp.draw()
 
-        total, obt = self.game.get_skills_resume([self.game.quests[key] for key in self.game.available_quests])
+        reachable_quests = [q for q in self.game.quests.values() if q.is_reachable()]
+        total, obt = self.game.get_skills_resume(reachable_quests)
         elements: List[Text] = []
         for skill, value in total.items():
             if Flags.percent:

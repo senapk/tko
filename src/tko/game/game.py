@@ -28,9 +28,6 @@ class Game:
         self.quests: Dict[str, Quest] = {}  # quests indexed by quest key
         self.tasks: Dict[str, Task] = {}  # tasks indexed by task key
 
-        self.available_quests: List[str] = []
-        self.available_clusters: List[str] = []
-
         self.token_level_one = "level_one"
         self.token_level_mult = "level_mult"
         self.level_one: int = 100
@@ -127,7 +124,7 @@ class Game:
     #     cache: Dict[str, bool] = {}
     #     return [q for q in self.quests.values() if Game.__is_reachable_quest(q, cache)]
 
-    def update_reachable_and_available(self, admin_mode: bool):
+    def update_reachable_and_available(self):
         for q in self.quests.values():
             q.set_reachable(False)
         for c in self.clusters.values():
@@ -139,15 +136,6 @@ class Game:
                 if Game.is_reachable_quest(q, cache):
                     q.set_reachable(True)
                     c.set_reachable(True)
-
-        self.available_quests = []
-        self.available_clusters = []
-        if admin_mode:
-            self.available_quests = [key for key in self.quests.keys()]
-            self.available_clusters = [key for key in self.clusters.keys()]
-        else:
-            self.available_quests = [q.key for q in self.quests.values() if q.is_reachable()]
-            self.available_clusters = [c.key for c in self.clusters.values() if c.is_reachable()]
 
 
     def __str__(self):

@@ -1,5 +1,7 @@
 # Changelog
 
+- 2.2.0
+  - refactor tasktree quest dependencies
 - 2.1.0
   - tester screen refactored and interactive mode improved
 - 2.0.5

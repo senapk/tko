@@ -56,7 +56,7 @@ class TaskTree:
                     self.all_items[t.key] = t
 
     def load_from_rep(self):
-        self.new_items: List[str] = [v for v in self.rep.get_new_items()]
+        # self.new_items: List[str] = [v for v in self.rep.get_new_items()]
         self.expanded: List[str] = [v for v in self.rep.get_expanded()]
         self.selected_item = self.rep.get_selected()
 
@@ -67,7 +67,7 @@ class TaskTree:
 
     def save_on_rep(self):
         self.rep.set_expanded(self.expanded)
-        self.rep.set_new_items([x for x in set(self.new_items)])
+        # self.rep.set_new_items([x for x in set(self.new_items)])
         self.rep.set_selected(self.selected_item)
         tasks = {}
         for t in self.game.tasks.values():
@@ -77,31 +77,35 @@ class TaskTree:
 
     def update_tree(self, admin_mode: bool, first_loop: bool = False):
         if not admin_mode:
-            old_reachable = self.game.available_clusters + self.game.available_quests
+            reachable_clusters = [c.key for c in self.game.clusters.values() if c.is_reachable()]
+            reachable_quests = [q.key for q in self.game.quests.values() if q.is_reachable()]
+            old_reachable = reachable_clusters + reachable_quests
 
-        self.game.update_reachable_and_available(admin_mode)
+        self.game.update_reachable_and_available()
             
         if not admin_mode:
-            available_keys = self.game.available_quests + self.game.available_clusters
+            reachable_clusters = [c.key for c in self.game.clusters.values() if c.is_reachable()]
+            reachable_quests = [q.key for q in self.game.quests.values() if q.is_reachable()]
+            reachable_keys = reachable_quests + list(self.game.clusters.keys())
             for key in self.expanded:
-                if key not in available_keys:
+                if key not in reachable_keys:
                     self.expanded.remove(key)
-            if not first_loop:
-                for key in available_keys:
-                    if key not in old_reachable and key not in self.new_items:
-                        self.new_items.append(key)
+            # if not first_loop:
+            #     for key in reachable_keys:
+            #         if key not in old_reachable and key not in self.new_items:
+            #             self.new_items.append(key)
 
         # remove expanded items from new
-        self.new_items = [item for item in self.new_items if item not in self.expanded]
+        # self.new_items = [item for item in self.new_items if item not in self.expanded]
 
     def __update_max_title(self):
         min_value = 50
         items = []
         for c in self.game.clusters.values():
-            if c.key in self.game.available_clusters:
+            if c.key in self.game.clusters.keys():
                 items.append(len(c.title))
                 if c.key in self.expanded:
-                    for q in [q for q in c.get_quests() if q.key in self.game.available_quests]:
+                    for q in c.get_quests():
                         items.append(len(q.title) + 2)
                         if q.key in self.expanded:
                             for t in q.get_tasks():
@@ -126,7 +130,7 @@ class TaskTree:
             else:
                 down_symbol = symbols.task_to_download
 
-        color_aval = "" if quest_reachable else "r"
+        color_aval = "g" if quest_reachable else "r"
 
         output = Text()
         output.add(" ").addf(color_aval, lig_cluster)
@@ -170,25 +174,37 @@ class TaskTree:
         if q.key in self.expanded and has_kids:
             con = "─┯"
 
-        color_reachable = "" if q.is_reachable() else "r"
+        color_reachable = "g" if q.is_reachable() else "r"
         output: Text = Text().addf(color_reachable, " " + lig + con)
 
         in_focus = focus_color != ""
+
+        if focus_color == "":
+            item_key = self.selected_item
+            if item_key in list(self.game.quests.keys()):
+                quest = self.game.quests[item_key]
+                if q.key in quest.requires:
+                    focus_color = "g"
+                elif quest.key in q.requires:
+                    focus_color = "r"
+
         if in_focus:
             output.add(self.style.roundL(focus_color))
         else:
             output.add(" ")
 
-        color = ""
-        if in_focus:
-            color = "k" + focus_color
+        # color = ""
+        # if in_focus:
+        #     color = "k" + focus_color
 
         title = q.title
         title = title.ljust(self.max_title - 2, ".")
 
-        done = color + self.colors.task_text_done
-        todo = color + self.colors.task_text_todo
-        output.add(self.style.build_bar(title, q.get_percent() / 100, len(title), done, todo, round=False))
+        output.addf(focus_color, title)
+
+        # done = color + self.colors.task_text_done
+        # todo = color + self.colors.task_text_todo
+        # output.add(self.style.build_bar(title, q.get_percent() / 100, len(title), done, todo, round=False))
 
         if in_focus:
             output.add(self.style.roundR(focus_color))
@@ -209,8 +225,8 @@ class TaskTree:
                 xp += f" +{s}:{v}"
             output.addf(self.colors.task_skills, xp)
 
-        if q.key in self.new_items:
-            output.addf(self.colors.task_new, " [new]")
+        # if q.key in self.new_items:
+        #     output.addf(self.colors.task_new, " [new]")
 
         return output
 
@@ -219,7 +235,7 @@ class TaskTree:
         opening = "━─"
         if cluster.key in self.expanded and has_kids:
             opening = "─┯"
-        color_reachable = "" if cluster.is_reachable() else "r"
+        color_reachable = "g" if cluster.is_reachable() else "r"
         output.addf(color_reachable, opening)
 
         color = ""
@@ -233,10 +249,10 @@ class TaskTree:
         else:
             output.add(" ")
 
-        done = color + self.colors.task_text_done
-        todo = color + self.colors.task_text_todo
-
-        output.add(self.style.build_bar(title, cluster.get_percent() / 100, len(title), done, todo, round=False))
+        output.addf(color, title)
+        # done = color + self.colors.task_text_done
+        # todo = color + self.colors.task_text_todo
+        # output.add(self.style.build_bar(title, cluster.get_percent() / 100, len(title), done, todo, round=False))
 
         if focus_color != "":
             output.add(self.style.roundR(focus_color))
@@ -248,14 +264,14 @@ class TaskTree:
             output.add(" ").add(cluster.get_resume_by_percent())
         else:
             output.add(" ").add(cluster.get_resume_by_quests())
-        if cluster.key in self.new_items:
-            output.addf(self.colors.task_new, " [new]")
+        # if cluster.key in self.new_items:
+        #     output.addf(self.colors.task_new, " [new]")
 
         return output
 
     def __get_focus_color(self, item: Union[Quest, Cluster]) -> str:
-        if not item.is_reachable() and Flags.admin:
-            return "R"
+        # if not item.is_reachable():
+        #     return "R"
         return self.colors.focused_item
 
     def filter_by_search(self) -> Tuple[Set[str], str | None]:
@@ -296,16 +312,14 @@ class TaskTree:
     def reload_sentences(self):
         self.__update_max_title()
         self.items = []
-        available_quests = self.game.available_quests
-        available_clusters = self.game.available_clusters
 
         filtered, _ = self.filter_by_search()
         matcher = SearchAsc(self.search_text)
 
-        clusters = [self.game.clusters[key] for key in available_clusters if key in filtered]
+        clusters = [self.game.clusters[key] for key in self.game.clusters.keys() if key in filtered]
 
         for cluster in clusters:
-            quests = [q for q in cluster.get_quests() if q.key in available_quests if q.key in filtered]
+            quests = [q for q in cluster.get_quests() if q.key in self.game.quests.keys() if q.key in filtered]
             focus_color = self.__get_focus_color(cluster) if self.selected_item == cluster.get_key() else ""
             cluster.sentence = self.__str_cluster(len(quests) > 0, focus_color, cluster)
 
@@ -341,24 +355,24 @@ class TaskTree:
                 self.selected_item = self.items[0].get_key()
                 self.reload_sentences()
 
-    def process_collapse(self):
-        if any([q in self.expanded for q in self.game.available_quests]):
-            self.expanded = [key for key in self.expanded if key not in self.game.available_quests]
+    def process_collapse_all(self):
+        if any([q in self.expanded for q in self.game.quests.keys()]):
+            self.expanded = [key for key in self.expanded if key not in self.game.quests.keys()]
         else:
             self.expanded = []
 
-    def process_expand(self):
+    def process_expand_all(self):
         # if any cluster outside expanded
         expand_clusters = False
-        for ckey in self.game.available_clusters:
+        for ckey in self.game.clusters.keys():
             if ckey not in self.expanded:
                 expand_clusters = True
         if expand_clusters:
-            for ckey in self.game.available_clusters:
+            for ckey in self.game.clusters.keys():
                 if ckey not in self.expanded:
                     self.expanded.append(ckey)
         else:
-            for qkey in self.game.available_quests:
+            for qkey in self.game.quests.keys():
                 if qkey not in self.expanded:
                     self.expanded.append(qkey)
 
@@ -383,7 +397,7 @@ class TaskTree:
                 return
             full_open = True
             for q in cluster.get_quests():
-                if q.key in self.game.available_quests and q.key not in self.expanded:
+                if q.key in self.game.quests.keys() and q.key not in self.expanded:
                     self.expanded.append(q.key)
                     full_open = False
             if not full_open:
@@ -550,6 +564,8 @@ class TaskTree:
             self.set_selected_by_index(index)
 
     def unfold(self, obj: TreeItem) -> bool:
+        if isinstance(obj, Quest) and not obj.is_reachable() and not Flags.admin:
+            return False
         if isinstance(obj, Quest) or isinstance(obj, Cluster):
             if obj.key not in self.expanded:
                 self.expanded.append(obj.key)
