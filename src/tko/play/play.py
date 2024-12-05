@@ -100,6 +100,7 @@ class Play:
         cman.add_str(GuiKeys.collapse, self.tree.process_collapse_all)
         cman.add_str(GuiKeys.borders, self.app.toggle_borders)
         cman.add_str(GuiKeys.images, self.app.toggle_images)
+        cman.add_str(GuiKeys.hidden, self.app.toggle_hidden)
         cman.add_str(GuiKeys.set_lang, self.gui.language.set_language)
         cman.add_str(GuiKeys.graph, self.actions.generate_graph)
         if Flags.admin:

@@ -58,3 +58,4 @@ class GuiKeys:
     expand = "]"
     collapse = "["
     mass = "Y"
+    hidden = "E"

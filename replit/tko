@@ -34,7 +34,7 @@ from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
 import chardet # type: ignore
-__version__ = "2.2.0"
+__version__ = "2.2.1"
 
 class CheckVersion:
 
@@ -862,6 +862,7 @@ class GuiKeys:
     expand = "]"
     collapse = "["
     mass = "Y"
+    hidden = "E"
 
 class InputManager:
     backspace_list = [8, 127, 263, curses.KEY_BACKSPACE]
@@ -1481,7 +1482,6 @@ class Flags:
     percent = Flag().set_name("Percentual").set_keycode("P").set_values(["1", "0"]).set_description("Mostra todos os valores em porcentagem      ")
     admin = Flag().set_name("Admin").set_keycode("A").set_values(["0", "1"])       .set_description("Habilitas todas as missões e tarefas        ")
     skills = Flag().set_name("Skills").set_keycode("S").set_values(["0", "1"]).set_description("Mostra a barra de skills")
-    # flags = Flag().set_name("Flags").set_keycode("F").set_values(["0", "1"])       .set_description("Mostra a barra de Flags ")
     devel = Flag().set_name("Devel").set_values(["0", "1"])
 
 class FlagsMan:
@@ -3624,8 +3624,7 @@ class AppSettings:
 
     def __init__(self):
         self._diff_mode = str(DiffMode.SIDE)
-        # self._lang_default = ""
-        # self._last_rep = ""
+        self._show_hidden = True
         self._use_images = False
         self._use_borders = False
         self._editor = "code"
@@ -3651,6 +3650,9 @@ class AppSettings:
     
     def toggle_images(self):
         self._use_images = not self._use_images
+    
+    def toggle_hidden(self):
+        self._show_hidden = not self._show_hidden
 
     def set_diff_mode(self, diff_mode: DiffMode):
         self._diff_mode = str(diff_mode)
@@ -3667,6 +3669,10 @@ class AppSettings:
     # def set_last_rep(self, last_rep: str):
     #     self._last_rep = last_rep
     #     return self
+
+    def set_show_hidden(self, show_hidden: bool):
+        self._show_hidden = show_hidden
+        return self
 
     def set_borders(self, borders: bool):
         self._use_borders = borders
@@ -3694,6 +3700,9 @@ class AppSettings:
 
     # def get_last_rep(self) -> str:
     #     return self._last_rep
+
+    def show_hidden(self) -> bool:
+        return self._show_hidden
 
     def has_images(self) -> bool:
         return self._use_images
@@ -7063,10 +7072,16 @@ class TaskTree:
         filtered, _ = self.filter_by_search()
         matcher = SearchAsc(self.search_text)
 
+        hide = not self.app.show_hidden() and not Flags.admin
+
         clusters = [self.game.clusters[key] for key in self.game.clusters.keys() if key in filtered]
+        if hide:
+            clusters = [c for c in clusters if c.is_reachable()]
 
         for cluster in clusters:
             quests = [q for q in cluster.get_quests() if q.key in self.game.quests.keys() if q.key in filtered]
+            if hide:
+                quests = [q for q in quests if q.is_reachable()]
             focus_color = self.__get_focus_color(cluster) if self.selected_item == cluster.get_key() else ""
             cluster.sentence = self.__str_cluster(len(quests) > 0, focus_color, cluster)
 
@@ -9491,7 +9506,15 @@ class PlayPalette:
                 GuiKeys.borders
             )
         )
-        
+
+        options.append(
+            FloatingInputData(
+                lambda: Text.format(" {} Mostrar atividades {y}", icon(self.app.show_hidden()), "Escondidas"),
+                self.app.toggle_hidden, 
+                GuiKeys.hidden
+            )
+        )
+
         options.append(
             FloatingInputData(
                 lambda: Text.format(" {} Mostrar {y}", icon(self.app.has_images()), "Imagens"),
@@ -9658,6 +9681,7 @@ class Play:
         cman.add_str(GuiKeys.collapse, self.tree.process_collapse_all)
         cman.add_str(GuiKeys.borders, self.app.toggle_borders)
         cman.add_str(GuiKeys.images, self.app.toggle_images)
+        cman.add_str(GuiKeys.hidden, self.app.toggle_hidden)
         cman.add_str(GuiKeys.set_lang, self.gui.language.set_language)
         cman.add_str(GuiKeys.graph, self.actions.generate_graph)
         if Flags.admin:

@@ -318,10 +318,16 @@ class TaskTree:
         filtered, _ = self.filter_by_search()
         matcher = SearchAsc(self.search_text)
 
+        hide = not self.app.show_hidden() and not Flags.admin
+
         clusters = [self.game.clusters[key] for key in self.game.clusters.keys() if key in filtered]
+        if hide:
+            clusters = [c for c in clusters if c.is_reachable()]
 
         for cluster in clusters:
             quests = [q for q in cluster.get_quests() if q.key in self.game.quests.keys() if q.key in filtered]
+            if hide:
+                quests = [q for q in quests if q.is_reachable()]
             focus_color = self.__get_focus_color(cluster) if self.selected_item == cluster.get_key() else ""
             cluster.sentence = self.__str_cluster(len(quests) > 0, focus_color, cluster)
 

@@ -5,8 +5,7 @@ class AppSettings:
 
     def __init__(self):
         self._diff_mode = str(DiffMode.SIDE)
-        # self._lang_default = ""
-        # self._last_rep = ""
+        self._show_hidden = True
         self._use_images = False
         self._use_borders = False
         self._editor = "code"
@@ -32,6 +31,9 @@ class AppSettings:
     
     def toggle_images(self):
         self._use_images = not self._use_images
+    
+    def toggle_hidden(self):
+        self._show_hidden = not self._show_hidden
 
     def set_diff_mode(self, diff_mode: DiffMode):
         self._diff_mode = str(diff_mode)
@@ -48,6 +50,10 @@ class AppSettings:
     # def set_last_rep(self, last_rep: str):
     #     self._last_rep = last_rep
     #     return self
+
+    def set_show_hidden(self, show_hidden: bool):
+        self._show_hidden = show_hidden
+        return self
 
     def set_borders(self, borders: bool):
         self._use_borders = borders
@@ -75,6 +81,9 @@ class AppSettings:
 
     # def get_last_rep(self) -> str:
     #     return self._last_rep
+
+    def show_hidden(self) -> bool:
+        return self._show_hidden
 
     def has_images(self) -> bool:
         return self._use_images

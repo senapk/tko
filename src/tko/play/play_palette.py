@@ -58,7 +58,15 @@ class PlayPalette:
                 GuiKeys.borders
             )
         )
-        
+
+        options.append(
+            FloatingInputData(
+                lambda: Text.format(" {} Mostrar atividades {y}", icon(self.app.show_hidden()), "Escondidas"),
+                self.app.toggle_hidden, 
+                GuiKeys.hidden
+            )
+        )
+
         options.append(
             FloatingInputData(
                 lambda: Text.format(" {} Mostrar {y}", icon(self.app.has_images()), "Imagens"),
