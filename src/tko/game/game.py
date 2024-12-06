@@ -127,6 +127,7 @@ class Game:
     def update_reachable_and_available(self):
         for q in self.quests.values():
             q.set_reachable(False)
+            q.update_tasks_reachable()
         for c in self.clusters.values():
             c.set_reachable(False)
 

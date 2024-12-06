@@ -18,6 +18,7 @@ class Quest(TreeItem):
         self.requires: List[str] = []  # r:quest_key
         self.requires_ptr: List[Quest] = []
         self.opt = False  # opt
+        self.prog = False  # progressive tasks
         self.qmin: Optional[int] = None  # q:  minimo de 50 porcento da pontuação total para completar
         self.tmin: Optional[int] = None  # t: ou ter no mínimo esse valor de todas as tarefas
         self.filename = ""
@@ -30,6 +31,20 @@ class Quest(TreeItem):
     def set_reachable(self, value: bool):
         self.__is_reachable = value
         return self
+    
+    def update_tasks_reachable(self):
+        if not self.prog:
+            for t in self.__tasks:
+                t.set_reachable(True)
+            return
+        reach = True
+        for i in range(len(self.__tasks)):
+            if i == 0:
+                self.__tasks[i].set_reachable(True)
+            else:
+                if self.__tasks[i-1].get_total_percent() < 50:
+                    reach = False
+                self.__tasks[i].set_reachable(reach)
 
     def __str__(self):
         line = str(self.line_number).rjust(3)
@@ -130,8 +145,6 @@ class Quest(TreeItem):
         return True
 
 
-
-
 class QuestParser:
     quest: Quest
 
@@ -196,6 +209,7 @@ class QuestParser:
                 k, v = s.split(":")
                 self.quest.skills[k] = int(v)
         self.quest.opt = "opt" in tags
+        self.quest.prog = "prog" in tags
 
         # quest percent
         qmin = [t[2:] for t in tags if t.startswith("q:")]

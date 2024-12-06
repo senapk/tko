@@ -1,5 +1,7 @@
 # Changelog
 
+- 2.2.2
+  - refactor tasktree with yellow markers for dependencies
 - 2.2.0
   - refactor tasktree quest dependencies
 - 2.1.0

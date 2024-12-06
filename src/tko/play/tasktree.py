@@ -117,8 +117,7 @@ class TaskTree:
         if self.max_title < min_value:
             self.max_title = min_value
 
-    def __str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool, min_value=1) -> Text:
-        # downloadable_in_focus = False
+    def __str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool) -> Text:
         down_symbol = Token(" ")
         in_focus = focus_color != ""
         down_symbol = symbols.task_to_visit
@@ -130,12 +129,20 @@ class TaskTree:
             else:
                 down_symbol = symbols.task_to_download
 
-        color_aval = "g" if quest_reachable else "r"
+        color_aval = "g" if quest_reachable and t.is_reachable() else "r"
+        color_lig_task = color_aval
+        if self.app.show_hidden() == False and not Flags.admin:
+            quest = self.game.quests[t.quest_key]
+            if quest.prog:
+                if t.key != self.game.quests[t.quest_key].get_tasks()[-1].key:
+                    if t.get_total_percent() < 50:
+                        color_lig_task = "y"
+                    
 
         output = Text()
         output.add(" ").addf(color_aval, lig_cluster)
         output.add(" ")
-        output.addf(color_aval, lig_quest)
+        output.addf(color_lig_task, lig_quest)
         output.add(down_symbol).add(" ")
         output.add(t.get_prog_symbol()).add(" ")
         output.add(GradeMessage().grade_to_emojis(t.self_grade))
@@ -162,6 +169,10 @@ class TaskTree:
         else:
             output.add(" ")
 
+        if Flags.percent:
+            output.ljust(self.max_title + 10, Token(" "))
+            prog = t.get_total_percent()
+            output.addf("y", str(prog).rjust(3, " ") + "%")
 
         if Flags.reward:
             xp = ""
@@ -177,6 +188,13 @@ class TaskTree:
             con = "─┯"
 
         color_reachable = "g" if q.is_reachable() else "r"
+        if self.app.show_hidden() == False and not Flags.admin:
+            for quest in self.game.quests.values():
+                if quest.is_reachable() == False:
+                    if q.key in quest.requires:
+                        color_reachable = "y"
+                        break
+
         output: Text = Text().addf(color_reachable, " " + lig + con)
 
         in_focus = focus_color != ""
@@ -185,8 +203,9 @@ class TaskTree:
             item_key = self.selected_item
             if item_key in list(self.game.quests.keys()):
                 quest = self.game.quests[item_key]
-                if q.key in quest.requires:
-                    focus_color = "y"
+                if not quest.is_reachable():
+                    if q.key in quest.requires:
+                        focus_color = "y"
                 # elif quest.key in q.requires:
                 #     focus_color = "r"
 
@@ -200,7 +219,7 @@ class TaskTree:
         #     color = "k" + focus_color
 
         title = q.title
-        title = title.ljust(self.max_title - 2, ".")
+        title = title.ljust(self.max_title + 3, ".")
 
         output.addf(focus_color, title)
 
@@ -245,7 +264,7 @@ class TaskTree:
             color = "k" + focus_color
         title = cluster.title
 
-        title = cluster.title.ljust(self.max_title, ".")
+        title = cluster.title.ljust(self.max_title + 5, ".")
         if focus_color != "":
             output.add(self.style.roundL(focus_color))
         else:
@@ -338,6 +357,8 @@ class TaskTree:
 
             for q in quests:
                 tasks =[t for t in q.get_tasks() if t.key in filtered]
+                if hide:
+                    tasks = [t for t in tasks if t.is_reachable()]
                 lig = "├" if q != quests[-1] else "╰"
                 focus_color = self.__get_focus_color(q) if self.selected_item == q.get_key() else ""
                 q.sentence = self.__str_quest(len(tasks) > 0, focus_color, q, lig)
@@ -348,9 +369,8 @@ class TaskTree:
                     for t in tasks:
                         ligc = "│" if q != quests[-1] else " "
                         ligq = "├ " if t != tasks[-1] else "╰ "
-                        min_value = 7 if q.tmin is None else q.tmin
                         focus_color = self.__get_focus_color(q) if self.selected_item == t.get_key() else ""
-                        t.sentence = self.__str_task(focus_color, t, ligc, ligq, q.is_reachable(), min_value)
+                        t.sentence = self.__str_task(focus_color, t, ligc, ligq, q.is_reachable())
                         self.__try_add(filtered, matcher, t)
         # verifying if has any selected item
         if self.items:

@@ -61,17 +61,17 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar atividades {y}", icon(self.app.show_hidden()), "Escondidas"),
-                self.app.toggle_hidden, 
-                GuiKeys.hidden
+                lambda: Text.format(" {} Mostrar {y}", icon(self.app.has_images()), "Imagens"),
+                self.app.toggle_images, 
+                GuiKeys.images
             )
         )
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y}", icon(self.app.has_images()), "Imagens"),
-                self.app.toggle_images, 
-                GuiKeys.images
+                lambda: Text.format(" {} Mostrar atividades {y}", icon(self.app.show_hidden()), "Escondidas"),
+                self.app.toggle_hidden, 
+                GuiKeys.hidden
             )
         )
 

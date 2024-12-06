@@ -34,7 +34,7 @@ from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
 import chardet # type: ignore
-__version__ = "2.2.1"
+__version__ = "2.2.2"
 
 class CheckVersion:
 
@@ -2606,8 +2606,15 @@ class Task(TreeItem):
 
         self.folder: str | None = None
         self.track_folder: str | None = None
-
+        self.__is_reachable = False
         self.default_min_value = 7 # default min grade to complete task
+
+    def set_reachable(self, reachable: bool):
+        self.__is_reachable = reachable
+        return self
+
+    def is_reachable(self) -> bool:
+        return self.__is_reachable
 
     def set_folder(self, folder: str):
         self.folder = folder
@@ -2676,6 +2683,10 @@ class Task(TreeItem):
             return 100
         return self.self_grade * 10
     
+    def get_total_percent(self):
+        # return (self.self_grade * 10 + self.progress) // 2
+        return self.self_grade * self.progress // 10
+
     def is_complete(self):
         return self.self_grade == 10
 
@@ -2845,6 +2856,7 @@ class Quest(TreeItem):
         self.requires: List[str] = []  # r:quest_key
         self.requires_ptr: List[Quest] = []
         self.opt = False  # opt
+        self.prog = False  # progressive tasks
         self.qmin: Optional[int] = None  # q:  minimo de 50 porcento da pontuação total para completar
         self.tmin: Optional[int] = None  # t: ou ter no mínimo esse valor de todas as tarefas
         self.filename = ""
@@ -2857,6 +2869,20 @@ class Quest(TreeItem):
     def set_reachable(self, value: bool):
         self.__is_reachable = value
         return self
+    
+    def update_tasks_reachable(self):
+        if not self.prog:
+            for t in self.__tasks:
+                t.set_reachable(True)
+            return
+        reach = True
+        for i in range(len(self.__tasks)):
+            if i == 0:
+                self.__tasks[i].set_reachable(True)
+            else:
+                if self.__tasks[i-1].get_total_percent() < 50:
+                    reach = False
+                self.__tasks[i].set_reachable(reach)
 
     def __str__(self):
         line = str(self.line_number).rjust(3)
@@ -2957,8 +2983,6 @@ class Quest(TreeItem):
         return True
 
 
-
-
 class QuestParser:
     quest: Quest
 
@@ -3023,6 +3047,7 @@ class QuestParser:
                 k, v = s.split(":")
                 self.quest.skills[k] = int(v)
         self.quest.opt = "opt" in tags
+        self.quest.prog = "prog" in tags
 
         # quest percent
         qmin = [t[2:] for t in tags if t.startswith("q:")]
@@ -3624,7 +3649,7 @@ class AppSettings:
 
     def __init__(self):
         self._diff_mode = str(DiffMode.SIDE)
-        self._show_hidden = True
+        self._show_hidden = False
         self._use_images = False
         self._use_borders = False
         self._editor = "code"
@@ -4376,6 +4401,7 @@ class Game:
     def update_reachable_and_available(self):
         for q in self.quests.values():
             q.set_reachable(False)
+            q.update_tasks_reachable()
         for c in self.clusters.values():
             c.set_reachable(False)
 
@@ -6871,8 +6897,7 @@ class TaskTree:
         if self.max_title < min_value:
             self.max_title = min_value
 
-    def __str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool, min_value=1) -> Text:
-        # downloadable_in_focus = False
+    def __str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool) -> Text:
         down_symbol = Token(" ")
         in_focus = focus_color != ""
         down_symbol = symbols.task_to_visit
@@ -6884,12 +6909,20 @@ class TaskTree:
             else:
                 down_symbol = symbols.task_to_download
 
-        color_aval = "g" if quest_reachable else "r"
+        color_aval = "g" if quest_reachable and t.is_reachable() else "r"
+        color_lig_task = color_aval
+        if self.app.show_hidden() == False and not Flags.admin:
+            quest = self.game.quests[t.quest_key]
+            if quest.prog:
+                if t.key != self.game.quests[t.quest_key].get_tasks()[-1].key:
+                    if t.get_total_percent() < 50:
+                        color_lig_task = "y"
+                    
 
         output = Text()
         output.add(" ").addf(color_aval, lig_cluster)
         output.add(" ")
-        output.addf(color_aval, lig_quest)
+        output.addf(color_lig_task, lig_quest)
         output.add(down_symbol).add(" ")
         output.add(t.get_prog_symbol()).add(" ")
         output.add(GradeMessage().grade_to_emojis(t.self_grade))
@@ -6916,6 +6949,10 @@ class TaskTree:
         else:
             output.add(" ")
 
+        if Flags.percent:
+            output.ljust(self.max_title + 10, Token(" "))
+            prog = t.get_total_percent()
+            output.addf("y", str(prog).rjust(3, " ") + "%")
 
         if Flags.reward:
             xp = ""
@@ -6931,6 +6968,13 @@ class TaskTree:
             con = "─┯"
 
         color_reachable = "g" if q.is_reachable() else "r"
+        if self.app.show_hidden() == False and not Flags.admin:
+            for quest in self.game.quests.values():
+                if quest.is_reachable() == False:
+                    if q.key in quest.requires:
+                        color_reachable = "y"
+                        break
+
         output: Text = Text().addf(color_reachable, " " + lig + con)
 
         in_focus = focus_color != ""
@@ -6939,8 +6983,9 @@ class TaskTree:
             item_key = self.selected_item
             if item_key in list(self.game.quests.keys()):
                 quest = self.game.quests[item_key]
-                if q.key in quest.requires:
-                    focus_color = "y"
+                if not quest.is_reachable():
+                    if q.key in quest.requires:
+                        focus_color = "y"
                 # elif quest.key in q.requires:
                 #     focus_color = "r"
 
@@ -6954,7 +6999,7 @@ class TaskTree:
         #     color = "k" + focus_color
 
         title = q.title
-        title = title.ljust(self.max_title - 2, ".")
+        title = title.ljust(self.max_title + 3, ".")
 
         output.addf(focus_color, title)
 
@@ -6999,7 +7044,7 @@ class TaskTree:
             color = "k" + focus_color
         title = cluster.title
 
-        title = cluster.title.ljust(self.max_title, ".")
+        title = cluster.title.ljust(self.max_title + 5, ".")
         if focus_color != "":
             output.add(self.style.roundL(focus_color))
         else:
@@ -7092,6 +7137,8 @@ class TaskTree:
 
             for q in quests:
                 tasks =[t for t in q.get_tasks() if t.key in filtered]
+                if hide:
+                    tasks = [t for t in tasks if t.is_reachable()]
                 lig = "├" if q != quests[-1] else "╰"
                 focus_color = self.__get_focus_color(q) if self.selected_item == q.get_key() else ""
                 q.sentence = self.__str_quest(len(tasks) > 0, focus_color, q, lig)
@@ -7102,9 +7149,8 @@ class TaskTree:
                     for t in tasks:
                         ligc = "│" if q != quests[-1] else " "
                         ligq = "├ " if t != tasks[-1] else "╰ "
-                        min_value = 7 if q.tmin is None else q.tmin
                         focus_color = self.__get_focus_color(q) if self.selected_item == t.get_key() else ""
-                        t.sentence = self.__str_task(focus_color, t, ligc, ligq, q.is_reachable(), min_value)
+                        t.sentence = self.__str_task(focus_color, t, ligc, ligq, q.is_reachable())
                         self.__try_add(filtered, matcher, t)
         # verifying if has any selected item
         if self.items:
@@ -9509,17 +9555,17 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar atividades {y}", icon(self.app.show_hidden()), "Escondidas"),
-                self.app.toggle_hidden, 
-                GuiKeys.hidden
+                lambda: Text.format(" {} Mostrar {y}", icon(self.app.has_images()), "Imagens"),
+                self.app.toggle_images, 
+                GuiKeys.images
             )
         )
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y}", icon(self.app.has_images()), "Imagens"),
-                self.app.toggle_images, 
-                GuiKeys.images
+                lambda: Text.format(" {} Mostrar atividades {y}", icon(self.app.show_hidden()), "Escondidas"),
+                self.app.toggle_hidden, 
+                GuiKeys.hidden
             )
         )
 

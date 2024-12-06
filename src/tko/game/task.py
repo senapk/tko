@@ -40,8 +40,15 @@ class Task(TreeItem):
 
         self.folder: str | None = None
         self.track_folder: str | None = None
-
+        self.__is_reachable = False
         self.default_min_value = 7 # default min grade to complete task
+
+    def set_reachable(self, reachable: bool):
+        self.__is_reachable = reachable
+        return self
+
+    def is_reachable(self) -> bool:
+        return self.__is_reachable
 
     def set_folder(self, folder: str):
         self.folder = folder
@@ -110,6 +117,10 @@ class Task(TreeItem):
             return 100
         return self.self_grade * 10
     
+    def get_total_percent(self):
+        # return (self.self_grade * 10 + self.progress) // 2
+        return self.self_grade * self.progress // 10
+
     def is_complete(self):
         return self.self_grade == 10
 

@@ -5,7 +5,7 @@ class AppSettings:
 
     def __init__(self):
         self._diff_mode = str(DiffMode.SIDE)
-        self._show_hidden = True
+        self._show_hidden = False
         self._use_images = False
         self._use_borders = False
         self._editor = "code"
