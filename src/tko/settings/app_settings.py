@@ -4,7 +4,7 @@ from tko.util.text import Text
 class AppSettings:
 
     def __init__(self):
-        self._diff_mode = str(DiffMode.SIDE)
+        self._diff_mode = DiffMode.SIDE.value
         self._show_hidden = False
         self._use_images = False
         self._use_borders = False
@@ -36,7 +36,7 @@ class AppSettings:
         self._show_hidden = not self._show_hidden
 
     def set_diff_mode(self, diff_mode: DiffMode):
-        self._diff_mode = str(diff_mode)
+        self._diff_mode = diff_mode.value
         return self
 
     def set_side_size_min(self, side_size_min: int):
