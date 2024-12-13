@@ -42,11 +42,15 @@ class Gui:
 
 
     def get_help_fixed(self):
+        selected = self.tree.get_selected()
+        color = "W"
+        if isinstance(selected, Task):
+            color = "Y"
         help_fixed: List[Text] = [
-            Text() + RToken("C", f" {GuiActions.leave}  [{GuiKeys.key_quit}]"),
-            Text() + RToken("Y", f"{GuiActions.palette} [{GuiKeys.palette}]"),
+            Text() + RToken("C", f"{GuiActions.palette} [{GuiKeys.palette}]"),
+            Text() + RToken(color, f"{GuiActions.evaluate}[.]"),
             Text() + RToken("G", f"{self.get_activate_label()} [↲]"),
-            Text() + RToken("Y", f"{GuiActions.edit} [{GuiKeys.edit}]"),
+            Text() + RToken(color, f"{GuiActions.edit} [{GuiKeys.edit}]"),
             # Text() + RToken("C", f"{GuiActions.navegar} [wasd]")
             Text() + RToken("C", f"{GuiActions.search} [{GuiKeys.search}]")
         ]
@@ -198,19 +202,18 @@ class Gui:
 
     def show_top_bar(self, frame: Frame):
         lista = [
-            Text() + RToken("Y", f"{GuiActions.self_grade} {GuiKeys.dec_self1}{GuiKeys.inc_self1}"),
-            Text() + RToken("Y", f"{GuiActions.progress} {GuiKeys.dec_prog1}{GuiKeys.inc_prog1}"),
+            Text() + RToken("Y", f"Sair  [q]"),
+            Text() + RToken("Y", f"Ajuda [?]"),
         ]
         help = self.build_list_sentence(lista)
-        self_grade = help[0]
-        progress = help[1]
-        # pesquisar = help[2]
+        search = help[0]
+        evaluate = help[1]
 
         pre: List[Text] = []
-        pre.append(progress)
+        pre.append(search)
 
         pos: List[Text] = []
-        pos.append(self_grade)
+        pos.append(evaluate)
 
         limit = frame.get_dx()
         size = limit - Text().add(" ").join(pre + pos).len() - 2
@@ -224,7 +227,7 @@ class Gui:
         _help: Floating = Floating("v>").set_text_ljust()
         self.fman.add_input(_help)
 
-        _help.set_header_sentence(Text().add(" Ajuda "))
+        _help.set_header_text(Text().add(" Ajuda "))
         # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
         _help.put_sentence(Text.format("    Ajuda ").addf("r", GuiKeys.key_help).add("  Abre essa tela de ajuda")
         )
@@ -232,11 +235,15 @@ class Gui:
         _help.put_sentence(Text.format("  ").addf("r", "Shift + B")
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
         _help.put_sentence(Text() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
+        _help.put_sentence(Text() + f"   {GuiActions.palette} " + RToken("r", f"{GuiKeys.palette}") + "  Abre o menu de ações e configurações")
         _help.put_sentence(Text() + f"   {GuiActions.github} " + RToken("r", f"{GuiKeys.github_open}") + "  Abre tarefa em uma aba do browser")
         _help.put_sentence(Text() + f"   {GuiActions.download} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
         _help.put_sentence(Text() + f"   {GuiActions.edit} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
-        _help.put_sentence(Text() + f"   {GuiActions.activate} " + RToken("r", "↲") + "  Interage com o elemento")
-        _help.put_sentence(Text() + f"    {GuiActions.self_grade}" + RToken("r", f"{GuiKeys.dec_self1}") + RToken("r", f"{GuiKeys.inc_self1}") + " Muda a autoavaliação")
+        _help.put_sentence(Text() + f"   {GuiActions.activate} " + RToken("r", "↲") + "  Interage com o elemento de acordo com o contexto")
+        _help.put_sentence(Text() + "             (baixar, visitar, escolher, compactar, expandir)")
+        _help.put_sentence(Text() + f"  {GuiActions.evaluate} " + RToken("r", ".") + "  Abre tela para auto avaliação")
+        _help.put_sentence(Text() + f"{GuiActions.search} " + RToken("r", f"{GuiKeys.search}") + "  Abre a barra de pesquisa")
+
         _help.put_sentence(Text())
         _help.put_sentence(Text() + "Você pode mudar o editor padrão com o comando")
         _help.put_sentence(Text() + RToken("g", "             tko config --editor <comando>"))
@@ -263,10 +270,8 @@ class Gui:
         return text, percent
 
     def show_opening(self, frame: Frame):
-        # if Fmt.get_size()[1] < 100:
-        #     return
-        # if not self.app.has_images():
-        #     return
+        if not self.app.has_images():
+            return
         _, cols = Fmt.get_size()
         
         now = datetime.datetime.now()

@@ -34,7 +34,7 @@ from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
 import chardet # type: ignore
-__version__ = "2.2.3"
+__version__ = "2.3.0"
 
 class CheckVersion:
 
@@ -207,16 +207,15 @@ opening: Dict[str, str] = {}
 # """
 
 opening["estuda"] = r"""
-O modelo de avaliação usa 3 notas.
-Progresso, Autonomia e Compreensão
-Progresso é o QUANTO você fez.
-Ele é gerado automaticamente pelos
-testes ou manualmente usando +-.
-Autonomia e Compreensão são COMO.
-Use <> para marcar COMO você fez.
-Progressao : ✓ 9.... 0
-Compreensão: A B C D E
-Autonomia  : █ ▅ ▃ ▂ ▁
+O modelo de avaliação usa 3 notas 
+  Cobertura: quanto da atividade você fez
+  Autonomia: quanta ajuda você precisou
+             (ChatGpt, Copilot, Monitoria)
+Compreensão: quanto você entendeu do que fez
+
+Cobertura   : 0 1 ... 9 ✓
+Autonomia   : x E D C B A
+Compreensão : x ▁ ▂ ▃ ▅ █    
 
  ,`````.          __||||___       
 ' Estuda`,       /_  ___   \      
@@ -814,11 +813,10 @@ class GuiActions:
     download = "Baixar"
     activate = "Ativar"
     navigate = "←↓→"
-    progress = "Quanto"
     uncheck = "Desmarcar"
     search = "Pesquisar"
-    self_grade = " Como "
     palette = "Paleta"
+    evaluate = "Avaliar"
     all = "Todos"
 
 class GuiKeys:
@@ -832,17 +830,8 @@ class GuiKeys:
     down_task = "b"
     activate = "\n"
     key_help = "?"
-    
-    inc_prog1 = "+"
-    inc_prog2 = "="
-    dec_prog1 = "-"
-    dec_prog2 = "_"
-    
-    inc_self1 = ">"
-    inc_self2 = "."
-    dec_self1 = "<"
-    dec_self2 = ","
-    
+        
+    evaluate = "j"
     set_root_dir = "D"
     set_lang = "L"
     github_open = "g"
@@ -852,6 +841,7 @@ class GuiKeys:
     borders = "B"
     search = "/"
     graph = "G"
+    evaluate = "."
     diff = "m"
     interact = "i"
     test = "\n"
@@ -2073,17 +2063,19 @@ class __Symbols:
         # self.emoji_confuso   = Token("◱", "r")
         # self.emoji_nao_fiz   = Token("□")
 
-        self.compreensao_a = Token("█", "g")
-        self.compreensao_b = Token("▅", "y")
-        self.compreensao_c = Token("▃", "m")
-        self.compreensao_d = Token("▂", "r")
-        self.compreensao_e = Token("▁", "c")
+        self.hability_a = Token("█", "g")
+        self.hability_b = Token("▅", "y")
+        self.hability_c = Token("▃", "m")
+        self.hability_d = Token("▂", "r")
+        self.hability_e = Token("▁", "c")
+        self.hability_x = Token("x", "")
 
-        self.suporte_a = Token("A", "g")
-        self.suporte_b = Token("B", "y")
-        self.suporte_c = Token("C", "m")
-        self.suporte_d = Token("D", "r")
-        self.suporte_e = Token("E", "c")
+        self.autonomy_a = Token("A", "g")
+        self.autonomy_b = Token("B", "y")
+        self.autonomy_c = Token("C", "m")
+        self.autonomy_d = Token("D", "r")
+        self.autonomy_e = Token("E", "c")
+        self.autonomy_x = Token("x", "")
         self.cursor = Token("┊")
 
     # def set_ascii(self):
@@ -2139,6 +2131,434 @@ class __Symbols:
 
 symbols = __Symbols()
 
+class GradeMessage:
+    def __init__(self):
+        
+        self.msg = r"""
+           │Compreensão→│Superficial│  Básico   │ Funcional │  Profundo 
+↓Autonomia │   Não Fiz  │$1 Confuso  │$2 Inseguro │ $3 Capaz   │$4 Confiante
+───────────┼────────────┼───────────┼───────────┼───────────┼────────────
+Tutorial   │$8  Guiado   │    [1]    │    [2]    │    [5]    │           
+Muita Ajuda│$7  Códigos  │           │    [3]    │    [6]    │           
+Pouca Ajuda│$6  Dicas    │           │    [4]    │    [7]    │    [9]    
+Sem   Ajuda│$5  Sozinho  │           │           │    [8]    │    [10]   
+"""[1:-1]
+        
+        self.emoji: Dict[str, Token] = {
+            "$1": symbols.hability_d,
+            "$2": symbols.hability_c,
+            "$3": symbols.hability_b,
+            "$4": symbols.hability_a,
+            "$5": symbols.autonomy_a,
+            "$6": symbols.autonomy_b,
+            "$7": symbols.autonomy_c,
+            "$8": symbols.autonomy_d
+        }
+
+        self.axes: Dict[int, list[str]] = {}
+        self.load_axes()
+
+    @staticmethod
+    def autonomy_emoji(value):
+         return [symbols.autonomy_x,
+                 symbols.autonomy_e, 
+                 symbols.autonomy_d,
+                 symbols.autonomy_c,
+                 symbols.autonomy_b,
+                 symbols.autonomy_a][value]
+
+    @staticmethod
+    def hability_emoji(value):
+         return [symbols.hability_x,
+                 symbols.hability_e, 
+                 symbols.hability_d,
+                 symbols.hability_c,
+                 symbols.hability_b,
+                 symbols.hability_a][value]
+
+    @staticmethod
+    def grade_to_emojis(grade: int) -> Text:
+        decode_dict = {
+                0: (symbols.autonomy_e, symbols.hability_e),
+                1: (symbols.autonomy_d, symbols.hability_d),
+                2: (symbols.autonomy_d, symbols.hability_c),
+                3: (symbols.autonomy_c, symbols.hability_c),
+                4: (symbols.autonomy_b, symbols.hability_c),
+                5: (symbols.autonomy_d, symbols.hability_b),
+                6: (symbols.autonomy_c, symbols.hability_b),
+                7: (symbols.autonomy_b, symbols.hability_b),
+                8: (symbols.autonomy_a, symbols.hability_b),
+                9: (symbols.autonomy_b, symbols.hability_a),
+                10: (symbols.autonomy_a, symbols.hability_a)
+        }
+        a = decode_dict[grade][0]
+        b = decode_dict[grade][1]
+        return Text.format("{} {}", a, b)
+
+    def load_axes(self):
+            sozinho = "Sozinho"
+            dicas   = "Dicas  "
+            codigos = "Códigos"
+            guiado  = "Guiado "
+            
+            superficial = "Superficial"
+            basico = "  Básico   "
+            funcional = " Funcional "
+            profundo = "  Profundo "
+
+            sem_ajuda   = "Sem   Ajuda"
+            pouca_ajuda = "Pouca Ajuda"
+            muita_ajuda = "Muita Ajuda"
+            tutorial    = "Tutorial   "
+
+            confuso   = "Confuso "
+            inseguro  = "Inseguro"
+            capaz     = "Capaz  "
+            confiante = "Confiante"
+
+            self.axes = {
+                1: [tutorial, guiado, superficial, confuso],
+                2: [tutorial, guiado, basico, inseguro],
+                3: [muita_ajuda, codigos, basico, inseguro],
+                4: [pouca_ajuda, dicas, basico, inseguro],
+                5: [tutorial, guiado, funcional, capaz],
+                6: [muita_ajuda, codigos, funcional, capaz],
+                7: [pouca_ajuda, dicas, funcional, capaz],
+                8: [sem_ajuda, sozinho, funcional, capaz],
+                9: [pouca_ajuda, dicas, profundo, confiante],
+                10: [sem_ajuda, sozinho, profundo, confiante]
+            }
+
+    def format(self, grade: int):
+            # pintando compreensão e autonomia
+            headers = [Token("Compreensão→", "B"), Token("↓Autonomia ", "M")]
+            value: Text = Text().add(self.msg)
+            # if grade != 0:
+            for h in headers:
+                value = value.replace(h.text, h)
+
+            # marcando números com verde
+            for i in range (1, 11):
+                info = str(i)
+                pos = value.get_text().find("    [{}] ".format(info))
+                if pos != -1:
+                        value.data[pos + 5].text = ' ' # remove number
+                        value.data[pos + 6].text = ']' # fix 10
+                        value.data[pos + 7].text = ' ' # fix 10
+                        if i == grade:
+                            value.data[pos + 5].text = 'X'
+                            value.data[pos + 7].text = ' '
+                            value.data[pos + 4].fmt = "G"
+                            value.data[pos + 5].fmt = "G"
+                            value.data[pos + 6].fmt = "G"
+                        # pos += 1
+            
+            pos = value.get_text().find("Não Fiz")
+            value.data[pos - 3] = symbols.autonomy_e
+            value.data[pos - 2] = symbols.hability_e
+            # marcando axes com a cor correspondente
+            if grade > 0 and grade <= 10:
+                value = value.replace(self.axes[grade][0], Token(self.axes[grade][0], "M"))
+                value = value.replace(self.axes[grade][1], Token(self.axes[grade][1], "g"))
+                value = value.replace(self.axes[grade][2], Token(self.axes[grade][2], "B"))
+                value = value.replace(self.axes[grade][3], Token(self.axes[grade][3], "g"))
+            # marcando "Não Fiz" com a cor correspondente
+            elif grade == 0:
+                value = value.replace("Não Fiz", Token("Não Fiz", "R"))
+
+            # inserindo emojis
+            for k, v in self.emoji.items():
+                value = value.replace(k, v)
+
+            return value
+    
+
+class TaskTypes:
+    visitable_url = 0 # task link to url 
+    select_folder = 1 # task link to a [file|folder] and remote to [local file|none]
+    down_from_url = 2 # task link to url
+    down_from_dir = 3 # task link to a [file] and remote as file outside folder
+
+
+class Task(TreeItem):
+
+    def __init__(self):
+        super().__init__()
+        self.line_number = 0
+        self.line = ""
+
+        self.coverage: int = 0 # valor de 0 a 100
+        self.autonomy: int = 0 # valor de 0 a 5
+        self.ability: int = 0 # valor de 0 a 5
+        self.main_idx: int = 0
+
+        self.qskills: Dict[str, int] = {} # default quest skills
+        self.skills: Dict[str, int] = {} # local skills
+        self.xp: int = 0
+
+        self.opt: bool = False
+        self.visit: bool = False
+        self.local: bool = False
+
+        self.download_link: str = ""
+        self.visitable_url: str = ""
+
+        self.quest_key = ""
+        self.cluster_key = ""
+
+        self.folder: str | None = None
+        self.track_folder: str | None = None
+        self.__is_reachable = False
+        self.default_min_value = 7 # default min grade to complete task
+
+    def set_reachable(self, reachable: bool):
+        self.__is_reachable = reachable
+        return self
+
+    def is_reachable(self) -> bool:
+        return self.__is_reachable
+
+    def set_folder(self, folder: str):
+        self.folder = folder
+        return self
+    
+    def get_folder(self) -> str | None:
+        return self.folder
+    
+    def set_track_folder(self, folder: str):
+        self.track_folder = folder
+        return self
+    
+    def get_track_folder(self) -> str | None:
+        return self.track_folder
+
+    def set_autonomy_ability(self, value: int):
+        opts = [(0, 0), (1, 1), (1, 2), (2, 2), (3, 2), (1, 3), (2, 3), (3, 3), (4, 3), (3, 4), (4, 4)]
+        self.autonomy = opts[value][0]
+        self.ability = opts[value][1]
+
+
+    def load_from_db(self, value: str):
+        if ":" not in value:
+            self.set_autonomy_ability(int(value))
+        else:
+            v = value.split(":")
+            if len(v) == 3:
+                self.set_autonomy_ability(int(v[0]))
+                self.main_idx = int(v[1])
+                self.coverage = int(v[2])
+            elif len(v) == 4:
+                self.coverage = (int(v[0]))
+                self.autonomy = (int(v[1]))
+                self.ability = (int(v[2]))
+                self.main_idx = (int(v[3]))
+
+    def save_to_db(self) -> str:
+        return f"{self.coverage}:{self.autonomy}:{self.ability}:{self.main_idx}"
+    
+    def is_db_empty(self) -> bool:
+        return self.autonomy == 0 and self.ability == 0 and self.main_idx == 0 and self.coverage == 0
+
+    def get_prog_color(self, min_value: Optional[int] = None) -> str:
+        if min_value is None:
+            min_value = self.default_min_value
+        prog = self.coverage // 10
+        if prog == 0:
+            return "c"
+        if prog < min_value:
+            return "r"
+        if prog < 10:
+            return "y"
+        if prog == 10:
+            return "g"
+        return "w"  
+
+    def get_prog_symbol(self, min_value: Optional[int] = None) -> Text:
+        
+        if min_value is None:
+            min_value = self.default_min_value
+        color = self.get_prog_color(min_value)
+        prog = self.coverage // 10
+        if prog == 0:
+            return Text().add("x")
+        if prog < min_value:
+            return Text().addf(color, str(prog))
+        if prog < 10:
+            return Text().addf(color, str(prog))
+        if prog == 10:
+            return Text().addf(color, symbols.check.text)
+        return Text().add("0")
+
+    def get_percent(self):
+        return (self.autonomy / 5) * (self.ability / 5) * self.coverage
+    
+    def get_ratio(self) -> float:
+        return self.get_percent() / 10.0
+
+    def is_complete(self):
+        return self.get_percent() == 100
+
+    def not_started(self):
+        return self.get_percent() == 0
+    
+    def in_progress(self):
+        return self.get_percent() > 0 and self.get_percent() < 100
+
+    def set_coverage(self, coverage: int):
+        coverage = int(coverage)
+        if coverage >= 0 and coverage <= 100:
+            self.coverage = coverage
+        else:
+            print(f"Progresso inválido: {coverage}")
+
+    def set_autonomy(self, value: int):
+        value = int(value)
+        if value >= 0 and value <= 5:
+            self.autonomy = value
+        else:
+            print(f"Autonomia inválida: {value}")
+
+    def set_hability(self, value: int):
+        value = int(value)
+        if value >= 0 and value <= 5:
+            self.ability = value
+        else:
+            print(f"Compreensão inválida: {value}")
+
+    def get_download_link(self) -> str:
+        return self.download_link
+
+    def get_visitable_url(self) -> str:
+        return self.visitable_url
+
+    def __str__(self):
+        lnum = str(self.line_number).rjust(3)
+        key = "" if self.key == self.title else self.key + " "
+        return f"{lnum} grade:{self.autonomy}:{self.ability} key:{key} title:{self.title} skills:{self.skills} down:{self.download_link} vis:{self.visitable_url}"
+
+    def has_at_symbol(self):
+        return any([s.startswith("@") for s in self.title.split(" ")])
+
+    def is_downloaded_for_lang(self, lang: str) -> bool:
+        if self.folder is None or not os.path.isdir(self.folder):
+            return False
+        files = os.listdir(self.folder)
+        if not any([f.endswith("." + lang) for f in files]):
+            return False
+        return True
+
+"""
+down_from_url = 2 # task link to url
+down_from_dir = 3 # task link to a [file] and remote as file outside folder
+visitable_url = 0 # task link to url 
+select_folder = 1 # task link to a [file|folder] and remote to [local file|none]
+
+----------
+
+Usar @ para definir a chave da tarefa
+Pode ser incluído no título da tarefa que está entre os [] ou nas tags url
+Exemplo:
+- [ ] [@banana Título da tarefa](https://tal_coias/Readme.md) 
+Chave: "banana"
+Título: "@banana Título da tarefa"
+link: "https://tal_coias/Readme.md"
+
+----------
+Se a flag visit estiver no html a tarefa será para ser visitada apenas
+Exemplo:
+- [ ] [@banana Título da tarefa](https://tal_coias/Readme.md) <!-- visit -->
+
+----------
+Se o link for um arquivo ou pasta
+- [ ] [@banana Título da tarefa](tal_coias/Readme.md)
+
+
+
+"""
+class TaskParser:
+
+    def __init__(self, index_path: str):
+        self.index_path = index_path
+        self.task = Task()
+
+    def __load_tags(self, tags_raw: str):
+        task = self.task
+        tags = [tag.strip() for tag in tags_raw.split(" ")]
+        task.opt = "opt" in tags
+        for t in tags:
+            if t.startswith("+"):
+                key, value = t[1:].split(":")
+                task.skills[key] = int(value)
+
+    def parse_line(self, line: str, line_num: int = 0) -> Optional[Task]:
+        pattern = r'\s*?- \[ \](.*?)\[([^\]]+)\]\(([^)]+)\)(?:\s*<!--(.*?)-->)?'
+
+        match = re.match(pattern, line)
+        if match is None:
+            return None
+        task = self.task
+        task.line_number = line_num
+        task.line = line
+        task.title = match.group(1).strip()
+        if task.title != "":
+            task.title += " "
+        task.title += match.group(2).strip()
+        task.title = task.title.replace("`", "")
+        
+        if match.group(4) is not None:
+            self.__load_tags(match.group(4))
+
+        for item in task.title.split(" "):
+            if item.startswith("@"):
+                task.key = item[1:]
+            elif item.startswith("#"):
+                task.visit = True
+                task.key = item[1:]
+            elif item.startswith("!"):
+                task.local = True
+                task.key = item[1:]
+
+        #remove last non alfa char from key
+        allowed = "0123456789_abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        key = ""
+        for c in task.key:
+            if c in allowed:
+                key += c
+            else:
+                break
+        task.key = key
+
+        link = match.group(3).strip()
+        self.adjust_links(link)
+        
+        if task.key == "":
+            task.key = link
+        return task
+    
+    def adjust_links(self, link: str):
+        task = self.task
+        if task.visit:
+            task.visitable_url = link
+            task.download_link = ""
+            return
+        
+        if task.local:
+            dirname = os.path.dirname(self.index_path)
+            task.folder = os.path.dirname(os.path.abspath(os.path.join(dirname, link)))
+            task.download_link = ""
+            task.visitable_url = ""
+            return
+
+        if link.startswith("http") and self.task.key != "":
+            task.download_link = link
+            task.visitable_url = link
+            return
+        
+        # downloadable task from a file in filesystem
+        basedir = os.path.dirname(self.index_path)
+        task.download_link = os.path.join(basedir, link)
+        task.visitable_url = ""
+
 class Floating:
     def __init__(self, _align=""):
         self._frame = Frame(0, 0)
@@ -2170,12 +2590,16 @@ class Floating:
         self._frame.set_header(Text().addf("/", text), "")
         return self
     
-    def set_header_sentence(self, sentence: Text):
+    def set_header_text(self, sentence: Text):
         self._frame.set_header(sentence, "")
         return self
     
     def set_footer(self, text: str):
         self._frame.set_footer(Text().addf("/", text), "")
+        return self
+    
+    def set_footer_text(self, sentence: Text):
+        self._frame.set_footer(sentence, "")
         return self
     
     def set_exit_key(self, key: str):
@@ -2299,6 +2723,107 @@ class Floating:
         
         return -1
         
+class FloatingGrade(Floating):
+    def __init__(self, task: Task, _align=""):
+        super().__init__(_align)
+        self._task = task
+        self._line = 0
+        self.set_text_ljust()
+        self._frame.set_border_color("g")
+        self.set_header_text(Text.format("{y/}", " Utilize os direcionais para  marcar "))
+        self.set_footer_text(Text.format("{y/}", " Pressione Enter para confirmar "))
+
+        self.grades_index = [task.coverage // 10, task.autonomy, task.ability]
+        self.coverage = ["x", "1", "2", "3", "4", "5", "6", "7", "8", "9", "✓"]
+        self.coverage_msg = [
+            "Não fiz", 
+            "Fiz 10%", 
+            "Fiz 20%", 
+            "Fiz 30%", 
+            "Fiz 40%",
+            "Fiz 50%",
+            "Fiz 60%",
+            "Fiz 70%",
+            "Fiz 80%",
+            "Fiz 90%",
+            "Fiz 100%"]
+        self.autonomy = [x.text for x in [symbols.autonomy_x, symbols.autonomy_e, symbols.autonomy_d, symbols.autonomy_c, symbols.autonomy_b, symbols.autonomy_a]]
+        self.autonomy_msg = [
+            "Não fiz             ", 
+            "Copiei              ", 
+            "Fiz guiado          ", 
+            "Fiz com muita ajuda ", 
+            "Fiz com ajuda       ", 
+            "Fiz sem ajuda       "
+            ]
+        self.hability = [x.text for x in [symbols.hability_x, symbols.hability_e, symbols.hability_d, symbols.hability_c, symbols.hability_b, symbols.hability_a]]
+        self.hability_msg = [
+            "Não fiz            ", 
+            "Não entendi        ", 
+            "Entendi uma parte  ", 
+            "Entendi boa parte  ", 
+            "Entendi quase tudo ", 
+            "Entendi tudo       "
+            ]
+        self.grades_value = [self.coverage, self.autonomy, self.hability]
+        self.grades_msg = [self.coverage_msg, self.autonomy_msg, self.hability_msg]
+
+    
+    def update_content(self):
+        self._content = []
+        self._content.append(Text())
+        coverage_text = Text().add("   ").addf("Y" if self._line == 0 else "", "Cobertura").add("  ")
+        for i, c in enumerate(self.coverage):
+            coverage_text.addf("C" if i == self.grades_index[0] else "", c)
+        coverage_text.add("  ").addf("m", self.coverage_msg[self.grades_index[0]])
+        self._content.append(coverage_text)
+        # self._content.append(Text())
+        hability_text = Text().add("   ").addf("Y" if self._line == 1 else "", "Autonomia").add("  ")
+        for i, c in enumerate(self.autonomy):
+            hability_text.addf("G" if i == self.grades_index[1] else "", c).add(" ")
+        hability_text.add(" ").addf("m", self.autonomy_msg[self.grades_index[1]])
+        self._content.append(hability_text)
+        # self._content.append(Text())
+        autonomy_text = Text().add(" ").addf("Y" if self._line == 2 else "", "Compreensão").add("  ")
+        for i, c in enumerate(self.hability):
+            autonomy_text.addf("yW" if i == self.grades_index[2] else "", c).add(" ")
+        autonomy_text.add(" ").addf("m", self.hability_msg[self.grades_index[2]])
+        self._content.append(autonomy_text)
+        self._content.append(Text())
+        
+    def draw(self):
+        self._set_default_header()
+        self._set_default_footer()
+        self.setup_frame()
+        self._frame.draw()
+        self.update_content()
+        self.write_content()
+
+    def change_task(self):
+        self._task.set_coverage(self.grades_index[0] * 10)
+        self._task.set_autonomy(self.grades_index[1])
+        self._task.set_hability(self.grades_index[2])
+
+    def get_input(self) -> int:
+        self.draw()
+        key: int = Fmt.getch()
+        key = InputManager.fix_cedilha(Fmt.get_screen(), key)
+        if key == curses.KEY_UP or key == ord('w'):
+            self._line = max(self._line - 1, 0)
+        elif key == curses.KEY_DOWN or key == ord('s'):
+            self._line = min(self._line + 1, 2)
+        elif key == curses.KEY_LEFT or key == ord('a'):
+            self.grades_index[self._line] = max(self.grades_index[self._line] - 1, 0)
+            self.change_task()
+        elif key == curses.KEY_RIGHT or key == ord('d'):
+            self.grades_index[self._line] = min(self.grades_index[self._line] + 1, len(self.grades_value[self._line]) - 1)
+            self.change_task()
+        elif key == ord('\n') or key == curses.KEY_BACKSPACE or key == InputManager.esc:
+            self._enable = False
+            if self._exit_fn is not None:
+                self._exit_fn()        
+        return -1
+
 class FloatingInputData:
     def __init__(self, label: Callable[[], Text], action: Callable[[], None], shortcut: str = ""):
         self.label = label
@@ -2448,402 +2973,6 @@ class FloatingManager:
     def get_input(self) -> int:
         return self.input_layer[0].get_input()
 
-class GradeMessage:
-    def __init__(self):
-        
-        self.msg = r"""
-           │Compreensão→│Superficial│  Básico   │ Funcional │  Profundo 
-↓Autonomia │   Não Fiz  │$1 Confuso  │$2 Inseguro │ $3 Capaz   │$4 Confiante
-───────────┼────────────┼───────────┼───────────┼───────────┼────────────
-Tutorial   │$8  Guiado   │    [1]    │    [2]    │    [5]    │           
-Muita Ajuda│$7  Códigos  │           │    [3]    │    [6]    │           
-Pouca Ajuda│$6  Dicas    │           │    [4]    │    [7]    │    [9]    
-Sem   Ajuda│$5  Sozinho  │           │           │    [8]    │    [10]   
-"""[1:-1]
-        
-        self.emoji: Dict[str, Token] = {
-            "$1": symbols.compreensao_d,
-            "$2": symbols.compreensao_c,
-            "$3": symbols.compreensao_b,
-            "$4": symbols.compreensao_a,
-            "$5": symbols.suporte_a,
-            "$6": symbols.suporte_b,
-            "$7": symbols.suporte_c,
-            "$8": symbols.suporte_d
-        }
-
-        self.axes: Dict[int, list[str]] = {}
-        self.load_axes()
-
-    @staticmethod
-    def grade_to_emojis(grade: int) -> Text:
-        decode_dict = {
-                0: (symbols.suporte_e, symbols.compreensao_e),
-                1: (symbols.suporte_d, symbols.compreensao_d),
-                2: (symbols.suporte_d, symbols.compreensao_c),
-                3: (symbols.suporte_c, symbols.compreensao_c),
-                4: (symbols.suporte_b, symbols.compreensao_c),
-                5: (symbols.suporte_d, symbols.compreensao_b),
-                6: (symbols.suporte_c, symbols.compreensao_b),
-                7: (symbols.suporte_b, symbols.compreensao_b),
-                8: (symbols.suporte_a, symbols.compreensao_b),
-                9: (symbols.suporte_b, symbols.compreensao_a),
-                10: (symbols.suporte_a, symbols.compreensao_a)
-        }
-        a = decode_dict[grade][0]
-        b = decode_dict[grade][1]
-        return Text.format("{} {}", a, b)
-
-    def load_axes(self):
-            sozinho = "Sozinho"
-            dicas   = "Dicas  "
-            codigos = "Códigos"
-            guiado  = "Guiado "
-            
-            superficial = "Superficial"
-            basico = "  Básico   "
-            funcional = " Funcional "
-            profundo = "  Profundo "
-
-            sem_ajuda   = "Sem   Ajuda"
-            pouca_ajuda = "Pouca Ajuda"
-            muita_ajuda = "Muita Ajuda"
-            tutorial    = "Tutorial   "
-
-            confuso   = "Confuso "
-            inseguro  = "Inseguro"
-            capaz     = "Capaz  "
-            confiante = "Confiante"
-
-            self.axes = {
-                1: [tutorial, guiado, superficial, confuso],
-                2: [tutorial, guiado, basico, inseguro],
-                3: [muita_ajuda, codigos, basico, inseguro],
-                4: [pouca_ajuda, dicas, basico, inseguro],
-                5: [tutorial, guiado, funcional, capaz],
-                6: [muita_ajuda, codigos, funcional, capaz],
-                7: [pouca_ajuda, dicas, funcional, capaz],
-                8: [sem_ajuda, sozinho, funcional, capaz],
-                9: [pouca_ajuda, dicas, profundo, confiante],
-                10: [sem_ajuda, sozinho, profundo, confiante]
-            }
-
-    def format(self, grade: int):
-            # pintando compreensão e autonomia
-            headers = [Token("Compreensão→", "B"), Token("↓Autonomia ", "M")]
-            value: Text = Text().add(self.msg)
-            # if grade != 0:
-            for h in headers:
-                value = value.replace(h.text, h)
-
-            # marcando números com verde
-            for i in range (1, 11):
-                info = str(i)
-                pos = value.get_text().find("    [{}] ".format(info))
-                if pos != -1:
-                        value.data[pos + 5].text = ' ' # remove number
-                        value.data[pos + 6].text = ']' # fix 10
-                        value.data[pos + 7].text = ' ' # fix 10
-                        if i == grade:
-                            value.data[pos + 5].text = 'X'
-                            value.data[pos + 7].text = ' '
-                            value.data[pos + 4].fmt = "G"
-                            value.data[pos + 5].fmt = "G"
-                            value.data[pos + 6].fmt = "G"
-                        # pos += 1
-            
-            pos = value.get_text().find("Não Fiz")
-            value.data[pos - 3] = symbols.suporte_e
-            value.data[pos - 2] = symbols.compreensao_e
-            # marcando axes com a cor correspondente
-            if grade > 0 and grade <= 10:
-                value = value.replace(self.axes[grade][0], Token(self.axes[grade][0], "M"))
-                value = value.replace(self.axes[grade][1], Token(self.axes[grade][1], "g"))
-                value = value.replace(self.axes[grade][2], Token(self.axes[grade][2], "B"))
-                value = value.replace(self.axes[grade][3], Token(self.axes[grade][3], "g"))
-            # marcando "Não Fiz" com a cor correspondente
-            elif grade == 0:
-                value = value.replace("Não Fiz", Token("Não Fiz", "R"))
-
-            # inserindo emojis
-            for k, v in self.emoji.items():
-                value = value.replace(k, v)
-
-            return value
-    
-
-class TaskTypes:
-    visitable_url = 0 # task link to url 
-    select_folder = 1 # task link to a [file|folder] and remote to [local file|none]
-    down_from_url = 2 # task link to url
-    down_from_dir = 3 # task link to a [file] and remote as file outside folder
-
-
-class Task(TreeItem):
-
-    def __init__(self):
-        super().__init__()
-        self.line_number = 0
-        self.line = ""
-
-        self.self_grade: int = 0 #valor de 0 a 9
-        self.progress: int = 0 #valor de 0 a 100
-        self.main_index: int = 0
-
-        self.qskills: Dict[str, int] = {} # default quest skills
-        self.skills: Dict[str, int] = {} # local skills
-        self.xp: int = 0
-
-        self.opt: bool = False
-        self.visit: bool = False
-        self.local: bool = False
-
-        self.download_link: str = ""
-        self.visitable_url: str = ""
-
-        self.quest_key = ""
-        self.cluster_key = ""
-
-        self.folder: str | None = None
-        self.track_folder: str | None = None
-        self.__is_reachable = False
-        self.default_min_value = 7 # default min grade to complete task
-
-    def set_reachable(self, reachable: bool):
-        self.__is_reachable = reachable
-        return self
-
-    def is_reachable(self) -> bool:
-        return self.__is_reachable
-
-    def set_folder(self, folder: str):
-        self.folder = folder
-        return self
-    
-    def get_folder(self) -> str | None:
-        return self.folder
-    
-    def set_track_folder(self, folder: str):
-        self.track_folder = folder
-        return self
-    
-    def get_track_folder(self) -> str | None:
-        return self.track_folder
-
-    def load_from_db(self, value: str):
-        if ":" not in value:
-            self.self_grade = int(value)
-        else:
-            v = value.split(":")
-            if len(v) == 3:
-                self.self_grade = int(v[0])
-                self.main_index = int(v[1])
-                self.progress = int(v[2])
-
-    def save_to_db(self) -> str:
-        return f"{self.self_grade}:{self.main_index}:{self.progress}"
-    
-    def is_db_empty(self) -> bool:
-        return self.self_grade == 0 and self.main_index == 0 and self.progress == 0
-
-    def get_prog_color(self, min_value: Optional[int] = None) -> str:
-        if min_value is None:
-            min_value = self.default_min_value
-        prog = self.progress // 10
-        if prog == 0:
-            return "c"
-        if prog < min_value:
-            return "r"
-        if prog < 10:
-            return "y"
-        if prog == 10:
-            return "g"
-        return "w"  
-
-    def get_prog_symbol(self, min_value: Optional[int] = None) -> Text:
-        
-        if min_value is None:
-            min_value = self.default_min_value
-        color = self.get_prog_color(min_value)
-        prog = self.progress // 10
-        if prog == 0:
-            return Text().addf(color, "0")
-        if prog < min_value:
-            return Text().addf(color, str(prog))
-        if prog < 10:
-            return Text().addf(color, str(prog))
-        if prog == 10:
-            return Text().addf(color, symbols.check.text)
-        return Text().add("0")
-
-    def get_percent(self):
-        if self.self_grade == 0:
-            return 0
-        if self.self_grade == 10:
-            return 100
-        return self.self_grade * 10
-    
-    def get_total_percent(self):
-        # return (self.self_grade * 10 + self.progress) // 2
-        return self.self_grade * self.progress // 10
-
-    def is_complete(self):
-        return self.self_grade == 10
-
-    def not_started(self):
-        return self.self_grade == 0
-    
-    def in_progress(self):
-        return self.self_grade > 0 and self.self_grade < 10
-
-    def set_progress(self, progress: int):
-        progress = int(progress)
-        if progress >= 0 and progress <= 100:
-            self.progress = progress
-        else:
-            print(f"Progresso inválido: {progress}")
-
-    def set_grade(self, grade: int):
-        grade = int(grade)
-        if grade >= 0 and grade <= 10:
-            self.self_grade = grade
-        else:
-            print(f"Grade inválida: {grade}")
-
-    def get_download_link(self) -> str:
-        return self.download_link
-
-    def get_visitable_url(self) -> str:
-        return self.visitable_url
-
-    def __str__(self):
-        lnum = str(self.line_number).rjust(3)
-        key = "" if self.key == self.title else self.key + " "
-        return f"{lnum} grade:{self.self_grade} key:{key} title:{self.title} skills:{self.skills} down:{self.download_link} vis:{self.visitable_url}"
-
-    def has_at_symbol(self):
-        return any([s.startswith("@") for s in self.title.split(" ")])
-
-    def is_downloaded_for_lang(self, lang: str) -> bool:
-        if self.folder is None or not os.path.isdir(self.folder):
-            return False
-        files = os.listdir(self.folder)
-        if not any([f.endswith("." + lang) for f in files]):
-            return False
-        return True
-
-"""
-down_from_url = 2 # task link to url
-down_from_dir = 3 # task link to a [file] and remote as file outside folder
-visitable_url = 0 # task link to url 
-select_folder = 1 # task link to a [file|folder] and remote to [local file|none]
-
-----------
-
-Usar @ para definir a chave da tarefa
-Pode ser incluído no título da tarefa que está entre os [] ou nas tags url
-Exemplo:
-- [ ] [@banana Título da tarefa](https://tal_coias/Readme.md) 
-Chave: "banana"
-Título: "@banana Título da tarefa"
-link: "https://tal_coias/Readme.md"
-
-----------
-Se a flag visit estiver no html a tarefa será para ser visitada apenas
-Exemplo:
-- [ ] [@banana Título da tarefa](https://tal_coias/Readme.md) <!-- visit -->
-
-----------
-Se o link for um arquivo ou pasta
-- [ ] [@banana Título da tarefa](tal_coias/Readme.md)
-
-
-
-"""
-class TaskParser:
-
-    def __init__(self, index_path: str):
-        self.index_path = index_path
-        self.task = Task()
-
-    def __load_tags(self, tags_raw: str):
-        task = self.task
-        tags = [tag.strip() for tag in tags_raw.split(" ")]
-        task.opt = "opt" in tags
-        for t in tags:
-            if t.startswith("+"):
-                key, value = t[1:].split(":")
-                task.skills[key] = int(value)
-
-    def parse_line(self, line: str, line_num: int = 0) -> Optional[Task]:
-        pattern = r'\s*?- \[ \](.*?)\[([^\]]+)\]\(([^)]+)\)(?:\s*<!--(.*?)-->)?'
-
-        match = re.match(pattern, line)
-        if match is None:
-            return None
-        task = self.task
-        task.line_number = line_num
-        task.line = line
-        task.title = match.group(1).strip()
-        if task.title != "":
-            task.title += " "
-        task.title += match.group(2).strip()
-        task.title = task.title.replace("`", "")
-        
-        if match.group(4) is not None:
-            self.__load_tags(match.group(4))
-
-        for item in task.title.split(" "):
-            if item.startswith("@"):
-                task.key = item[1:]
-            elif item.startswith("#"):
-                task.visit = True
-                task.key = item[1:]
-            elif item.startswith("!"):
-                task.local = True
-                task.key = item[1:]
-
-        #remove last non alfa char from key
-        allowed = "0123456789_abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        key = ""
-        for c in task.key:
-            if c in allowed:
-                key += c
-            else:
-                break
-        task.key = key
-
-        link = match.group(3).strip()
-        self.adjust_links(link)
-        
-        if task.key == "":
-            task.key = link
-        return task
-    
-    def adjust_links(self, link: str):
-        task = self.task
-        if task.visit:
-            task.visitable_url = link
-            task.download_link = ""
-            return
-        
-        if task.local:
-            dirname = os.path.dirname(self.index_path)
-            task.folder = os.path.dirname(os.path.abspath(os.path.join(dirname, link)))
-            task.download_link = ""
-            task.visitable_url = ""
-            return
-
-        if link.startswith("http") and self.task.key != "":
-            task.download_link = link
-            task.visitable_url = link
-            return
-        
-        # downloadable task from a file in filesystem
-        basedir = os.path.dirname(self.index_path)
-        task.download_link = os.path.join(basedir, link)
-        task.visitable_url = ""
-
 class Quest(TreeItem):
     def __init__(self, title: str = "", key: str = ""):
         super().__init__()
@@ -2880,7 +3009,7 @@ class Quest(TreeItem):
             if i == 0:
                 self.__tasks[i].set_reachable(True)
             else:
-                if self.__tasks[i-1].get_total_percent() < 50:
+                if self.__tasks[i-1].get_percent() < 50:
                     reach = False
                 self.__tasks[i].set_reachable(reach)
 
@@ -2903,10 +3032,10 @@ class Quest(TreeItem):
         return Text()
 
     def get_resume_by_tasks(self) -> Text:
-        tmin = self.tmin if self.tmin is not None else 7
+        tmin = self.tmin if self.tmin is not None else 70
         total = len([t for t in self.__tasks if not t.opt])
         plus = len([t for t in self.__tasks if t.opt])
-        count = len([t for t in self.__tasks if t.self_grade >= tmin])
+        count = len([t for t in self.__tasks if t.get_percent() >= tmin])
         output = f"{count}/{total}"
         if plus > 0:
             output += f"+{plus}"
@@ -2927,7 +3056,7 @@ class Quest(TreeItem):
         # task complete mode
         if self.tmin is not None:
             for t in self.__tasks:
-                if not t.opt and t.self_grade < self.tmin:
+                if not t.opt and t.get_percent() < self.tmin:
                     return False
         return True
 
@@ -2956,8 +3085,8 @@ class Quest(TreeItem):
         obtained = 0
         for t in self.__tasks:
             total += t.xp
-            if t.self_grade > 0:
-                obtained += t.xp * t.self_grade // 10
+            if t.get_percent() > 0:
+                obtained += int(t.xp * t.get_ratio())
 
         return obtained, total
         
@@ -2965,13 +3094,13 @@ class Quest(TreeItem):
         obtained, total = self.get_xp()
         if total == 0:
             return 0
-        return obtained * 100 // total
+        return obtained * 10 // total
 
     def in_progress(self):
         if self.is_complete():
             return False
         for t in self.__tasks:
-            if t.self_grade != 0:
+            if t.get_percent() != 0:
                 return True
         return False
 
@@ -3650,7 +3779,7 @@ class AppSettings:
     def __init__(self):
         self._diff_mode = DiffMode.SIDE.value
         self._show_hidden = False
-        self._use_images = False
+        self._use_images = True
         self._use_borders = False
         self._editor = "code"
         self._timeout = 1
@@ -4342,26 +4471,26 @@ class Game:
                     if s in total:
                         total[s] += t.skills[s]
                         if reachable:
-                            obtained[s] += int(t.skills[s] * t.self_grade/10)
+                            obtained[s] += int(t.skills[s] * t.get_ratio())
                         else:
                             obtained[s] += 0
                     else:
                         total[s] = t.skills[s]
                         if reachable:
-                            obtained[s] = int(t.skills[s] * t.self_grade/10)
+                            obtained[s] = int(t.skills[s] * t.get_ratio())
                         else:
                             obtained[s] = 0
                 for s in t.qskills:
                     if s in total:
                         total[s] += t.qskills[s]
                         if reachable:
-                            obtained[s] += int(t.qskills[s] * t.self_grade/10)
+                            obtained[s] += int(t.qskills[s] * t.get_ratio())
                         else:
                             obtained[s] += 0
                     else:
                         total[s] = t.qskills[s]
                         if reachable:
-                            obtained[s] = int(t.qskills[s] * t.self_grade/10)
+                            obtained[s] = int(t.qskills[s] * t.get_ratio())
                         else:
                             obtained[s] = 0
         return total, obtained
@@ -5194,28 +5323,27 @@ class Writer:
         return True
 
 class TaskData:
-    def __init__(self, key: str = "", progress: int = 0, seft_grade: int = 0):
+    def __init__(self, key: str = "", coverage: int = 0, autonomy: int = 0):
         self.key = key
-        self.progress = progress
-        self.seft_grade = seft_grade
+        self.coverage = coverage
+        self.autonomy = autonomy
 
     def decode(self, serial: str):
         pieces = serial.split(":")
         if len(pieces) == 3:
             try:
                 self.key = pieces[0]
-                self.progress = int(pieces[1])
-                self.seft_grade = int(pieces[2])
+                self.coverage = int(pieces[1])
+                self.autonomy = int(pieces[2])
             except:
                 pass
 
-
     def __eq__(self, other):
-        return self.progress == other.progress and self.seft_grade == other.seft_grade
+        return self.coverage == other.coverage and self.autonomy == other.autonomy
 
 
     def __str__(self):
-        return f'{self.key}:{self.progress}:{self.seft_grade}'
+        return f'{self.key}:{self.coverage}:{self.autonomy}'
     
 
     
@@ -5269,7 +5397,7 @@ class DailyLog:
         data = self.resume.get(task_data.key, None)
 
         # não tinha, e ainda está zerado, não precisa salvar
-        if data is None and task_data.progress == 0 and task_data.seft_grade == 0:
+        if data is None and task_data.coverage == 0 and task_data.autonomy == 0:
             return False
         
         # tinha, e está diferente, precisa salvar
@@ -5281,14 +5409,14 @@ class DailyLog:
             return True
         return False
     
-    def log_task(self, day: str, key: str, progress: int = -1, self_grade: int = -1, save_on_change: bool = True):
-        actual_progress = self.resume.get(key, TaskData(key, 0, 0)).progress
-        actual_seft_grade = self.resume.get(key, TaskData(key, 0, 0)).seft_grade
-        if progress == -1:
-            progress = actual_progress
-        if self_grade == -1:
-            self_grade = actual_seft_grade
-        if self.__check_add_task(day, TaskData(key, progress, self_grade)):
+    def log_task(self, day: str, key: str, coverage: int = -1, autonomy: int = -1, save_on_change: bool = True):
+        actual_coverage = self.resume.get(key, TaskData(key, 0, 0)).coverage
+        actual_autonomy = self.resume.get(key, TaskData(key, 0, 0)).autonomy
+        if coverage == -1:
+            coverage = actual_coverage
+        if autonomy == -1:
+            autonomy = actual_autonomy
+        if self.__check_add_task(day, TaskData(key, coverage, autonomy)):
             if save_on_change:
                 self.save()
             return True
@@ -6575,13 +6703,6 @@ class ActionData:
         self.payload = payload
         self.hash = ""
 
-    def just_replace_cache(self, other: ActionData):
-        if self.action_value == LogAction.SELF.value and other.action_value == LogAction.SELF.value and self.task_key == other.task_key:
-            return True
-        if self.action_value == LogAction.PROG.value and other.action_value == LogAction.PROG.value and self.task_key == other.task_key:
-            return True
-        return False
-
     def __str__(self):
         return f'{self.timestamp}, {self.action_value}, {self.task_key}, {self.payload}'
 
@@ -6705,7 +6826,6 @@ class Logger:
 
     def __init__(self, logger_store: LoggerStore):
         self.last_hash: str | None = None
-        self.cached_action: ActionData | None = None
         self.fs = logger_store
         self.daily: DailyLog | None = None
 
@@ -6722,7 +6842,7 @@ class Logger:
         today = Logger.today()
         changed = False
         for task in tasks.values():
-            if self.daily.log_task(today, task.key, task.progress, task.self_grade, save_on_change=False):
+            if self.daily.log_task(today, task.key, task.coverage, task.autonomy, save_on_change=False):
                 changed = True
         if changed:
             self.daily.save()
@@ -6742,23 +6862,31 @@ class Logger:
             hash = calculated_hash
         return output
 
-    def store_in_cached(self, action_data: ActionData) -> bool:
-        if self.cached_action is None and (action_data.action_value == LogAction.SELF.value or action_data.action_value == LogAction.PROG.value):
-            return True
-        if self.cached_action is not None and self.cached_action.just_replace_cache(action_data):
-            return True
-        return False
+    def record_down(self, task_key: str):
+        self.__record_other_event(LogAction.DOWN, task_key)
 
     def record_compilation_error(self, task_key: str):
-        self.record_other_event(LogAction.TEST, task_key, self.COMP_ERROR)
+        self.__record_other_event(LogAction.TEST, task_key, self.COMP_ERROR)
     
     def record_test_result(self, task_key: str, result: int):
-        self.record_other_event(LogAction.TEST, task_key, str(result))
+        self.__record_other_event(LogAction.TEST, task_key, str(result))
 
     def record_freerun(self, task_key: str):
-        self.record_other_event(LogAction.FREE, task_key)
+        self.__record_other_event(LogAction.FREE, task_key)
 
-    def record_other_event(self, action: LogAction, task_key: str = "", payload: str = ""):
+    def record_self_grade(self, task_key: str, autonomy: int, ability: int):
+        self.__record_other_event(LogAction.SELF, task_key, f"0{autonomy}{ability}")
+    
+    def record_progress(self, task_key: str, coverage: int):
+        self.__record_other_event(LogAction.PROG, task_key, str(coverage))
+
+    def record_open(self):
+        self.__record_other_event(LogAction.OPEN)
+    
+    def record_quit(self):
+        self.__record_other_event(LogAction.QUIT)
+
+    def __record_other_event(self, action: LogAction, task_key: str = "", payload: str = ""):
         action_data = ActionData(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), action.value, task_key, payload)
         self.record_action_data(action_data)
 
@@ -6769,32 +6897,20 @@ class Logger:
 
     def record_action_data(self, action_data: ActionData):
         self.log_daily(action_data)
-
-        if self.store_in_cached(action_data):
-            self.cached_action = action_data
-            return
-        
-        if self.cached_action is not None:
-            self.last_hash = self.fs.push_to_file(self.cached_action, self.get_last_hash())
-            self.cached_action = None
-        
-        if self.store_in_cached(action_data):
-            self.cached_action = action_data
-        else:
-            self.last_hash = self.fs.push_to_file(action_data, self.get_last_hash())
+        self.last_hash = self.fs.push_to_file(action_data, self.get_last_hash())
 
 
     def log_daily(self, action_data: ActionData):
         if self.daily is None:
             return
         if action_data.action_value == LogAction.SELF.value:
-            self.daily.log_task(Logger.today(), key=action_data.task_key, self_grade=int(action_data.payload))
+            self.daily.log_task(Logger.today(), key=action_data.task_key, autonomy=int(action_data.payload))
         elif action_data.action_value == LogAction.PROG.value:
-            self.daily.log_task(Logger.today(), key=action_data.task_key, progress=int(action_data.payload))
+            self.daily.log_task(Logger.today(), key=action_data.task_key, coverage=int(action_data.payload))
         elif action_data.action_value == LogAction.TEST.value:
             try:
                 result = int(action_data.payload)                
-                self.daily.log_task(Logger.today(), key=action_data.task_key, progress=result)
+                self.daily.log_task(Logger.today(), key=action_data.task_key, coverage=result)
             except ValueError:
                 pass
 
@@ -6915,7 +7031,7 @@ class TaskTree:
             quest = self.game.quests[t.quest_key]
             if quest.prog:
                 if t.key != self.game.quests[t.quest_key].get_tasks()[-1].key:
-                    if t.get_total_percent() < 50:
+                    if t.get_percent() < 50:
                         color_lig_task = "y"
                     
 
@@ -6925,7 +7041,8 @@ class TaskTree:
         output.addf(color_lig_task, lig_quest)
         output.add(down_symbol).add(" ")
         output.add(t.get_prog_symbol()).add(" ")
-        output.add(GradeMessage().grade_to_emojis(t.self_grade))
+        output.add(GradeMessage.autonomy_emoji(t.autonomy)).add(" ")
+        output.add(GradeMessage.hability_emoji(t.ability))
 
         if in_focus:
             output.add(self.style.roundL(focus_color))
@@ -6951,7 +7068,7 @@ class TaskTree:
 
         if Flags.percent:
             output.ljust(self.max_title + 10, Token(" "))
-            prog = t.get_total_percent()
+            prog = int(t.get_percent())
             output.addf("y", str(prog).rjust(3, " ") + "%")
 
         if Flags.reward:
@@ -7215,10 +7332,10 @@ class TaskTree:
             for q in obj.get_quests():
                 for t in q.get_tasks():
                     if value is not None:
-                        t.set_grade(value)
+                        self.set_grade(t, value[0], value[1], value[2])
                     else:
-                        value = 10 if t.self_grade < 10 else 0
-                        t.set_grade(value)
+                        value = (100, 5, 5) if t.get_percent() < 100 else (0, 0, 0)
+                        self.set_grade(t, value[0], value[1], value[2])
         elif isinstance(obj, Quest):
             if obj.key not in self.expanded:
                 self.expanded.append(obj.key)
@@ -7226,67 +7343,23 @@ class TaskTree:
                 value = None
                 for t in obj.get_tasks():
                     if value is not None:
-                        t.set_grade(value)
+                        self.set_grade(t, value[0], value[1], value[2])
                     else:
-                        value = 10 if t.self_grade < 10 else 0
-                        t.set_grade(value)
+                        value = (100, 5, 5) if t.get_percent() < 100 else (0, 0, 0)
+                        self.set_grade(t, value[0], value[1], value[2])
         elif isinstance(obj, Task):
-            obj.set_grade(10 if obj.self_grade < 10 else 0)
+            value = (100, 5, 5) if obj.get_percent() < 100 else (0, 0, 0)
+            self.set_grade(obj, value[0], value[1], value[2])
 
-    def set_grade(self, grade: int):
-
-        obj = self.get_selected()
+    def set_grade(self, task: Task, coverage: int, autonomy: int, ability: int):
+        obj = task
         if isinstance(obj, Task):
-            Logger.get_instance().record_other_event(LogAction.SELF, obj.key, str(grade))
-            obj.set_grade(grade)
-            self.fman.add_input(
-                Floating().warning().set_header(" Auto avaliação ").set_text_ljust().set_content(GradeMessage().format(grade).split("\n"))
-            )
+            Logger.get_instance().record_self_grade(obj.key, autonomy, ability)
+            Logger.get_instance().record_progress(obj.key, coverage)
+            obj.set_coverage(coverage)
+            obj.set_autonomy(autonomy)
+            obj.set_hability(ability)
 
-    def set_progress(self, prog: int):
-
-        obj = self.get_selected()
-        if isinstance(obj, Task):
-            if obj.progress == prog:
-                return
-            obj.set_progress(prog)
-            Logger.get_instance().record_other_event(LogAction.PROG, obj.key, str(prog))
-
-    def inc_progress(self):
-        obj = self.get_selected()
-        if isinstance(obj, Task):
-            progress = obj.progress + 10
-            if progress > 100:
-                progress = 100
-            self.set_progress(progress)
-
-    def dec_progress(self):
-        obj = self.get_selected()
-        if isinstance(obj, Task):
-            progress = obj.progress - 10
-            if progress < 0:
-                progress = 0
-            self.set_progress(progress)
-
-    def inc_self_grade(self):
-        obj = self.get_selected()
-        if isinstance(obj, Task):
-            grade = obj.self_grade + 1
-            if grade >= 10:
-                grade = 10
-            self.set_grade(grade)
-        else:
-            self.unfold(obj)
-
-    def dec_self_grade(self):
-        obj = obj = self.get_selected()
-        if isinstance(obj, Task):
-            grade = obj.self_grade - 1
-            if grade == -1:
-                grade = 0
-            self.set_grade(grade)
-        else:
-            self.fold(obj)
 
     def set_selected_by_index(self, index: int):
         if index < 0:
@@ -7614,11 +7687,15 @@ class Gui:
 
 
     def get_help_fixed(self):
+        selected = self.tree.get_selected()
+        color = "W"
+        if isinstance(selected, Task):
+            color = "Y"
         help_fixed: List[Text] = [
-            Text() + RToken("C", f" {GuiActions.leave}  [{GuiKeys.key_quit}]"),
-            Text() + RToken("Y", f"{GuiActions.palette} [{GuiKeys.palette}]"),
+            Text() + RToken("C", f"{GuiActions.palette} [{GuiKeys.palette}]"),
+            Text() + RToken(color, f"{GuiActions.evaluate}[.]"),
             Text() + RToken("G", f"{self.get_activate_label()} [↲]"),
-            Text() + RToken("Y", f"{GuiActions.edit} [{GuiKeys.edit}]"),
+            Text() + RToken(color, f"{GuiActions.edit} [{GuiKeys.edit}]"),
             # Text() + RToken("C", f"{GuiActions.navegar} [wasd]")
             Text() + RToken("C", f"{GuiActions.search} [{GuiKeys.search}]")
         ]
@@ -7770,19 +7847,18 @@ class Gui:
 
     def show_top_bar(self, frame: Frame):
         lista = [
-            Text() + RToken("Y", f"{GuiActions.self_grade} {GuiKeys.dec_self1}{GuiKeys.inc_self1}"),
-            Text() + RToken("Y", f"{GuiActions.progress} {GuiKeys.dec_prog1}{GuiKeys.inc_prog1}"),
+            Text() + RToken("Y", f"Sair  [q]"),
+            Text() + RToken("Y", f"Ajuda [?]"),
         ]
         help = self.build_list_sentence(lista)
-        self_grade = help[0]
-        progress = help[1]
-        # pesquisar = help[2]
+        search = help[0]
+        evaluate = help[1]
 
         pre: List[Text] = []
-        pre.append(progress)
+        pre.append(search)
 
         pos: List[Text] = []
-        pos.append(self_grade)
+        pos.append(evaluate)
 
         limit = frame.get_dx()
         size = limit - Text().add(" ").join(pre + pos).len() - 2
@@ -7796,7 +7872,7 @@ class Gui:
         _help: Floating = Floating("v>").set_text_ljust()
         self.fman.add_input(_help)
 
-        _help.set_header_sentence(Text().add(" Ajuda "))
+        _help.set_header_text(Text().add(" Ajuda "))
         # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
         _help.put_sentence(Text.format("    Ajuda ").addf("r", GuiKeys.key_help).add("  Abre essa tela de ajuda")
         )
@@ -7804,11 +7880,15 @@ class Gui:
         _help.put_sentence(Text.format("  ").addf("r", "Shift + B")
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
         _help.put_sentence(Text() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
+        _help.put_sentence(Text() + f"   {GuiActions.palette} " + RToken("r", f"{GuiKeys.palette}") + "  Abre o menu de ações e configurações")
         _help.put_sentence(Text() + f"   {GuiActions.github} " + RToken("r", f"{GuiKeys.github_open}") + "  Abre tarefa em uma aba do browser")
         _help.put_sentence(Text() + f"   {GuiActions.download} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
         _help.put_sentence(Text() + f"   {GuiActions.edit} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
-        _help.put_sentence(Text() + f"   {GuiActions.activate} " + RToken("r", "↲") + "  Interage com o elemento")
-        _help.put_sentence(Text() + f"    {GuiActions.self_grade}" + RToken("r", f"{GuiKeys.dec_self1}") + RToken("r", f"{GuiKeys.inc_self1}") + " Muda a autoavaliação")
+        _help.put_sentence(Text() + f"   {GuiActions.activate} " + RToken("r", "↲") + "  Interage com o elemento de acordo com o contexto")
+        _help.put_sentence(Text() + "             (baixar, visitar, escolher, compactar, expandir)")
+        _help.put_sentence(Text() + f"  {GuiActions.evaluate} " + RToken("r", ".") + "  Abre tela para auto avaliação")
+        _help.put_sentence(Text() + f"{GuiActions.search} " + RToken("r", f"{GuiKeys.search}") + "  Abre a barra de pesquisa")
+
         _help.put_sentence(Text())
         _help.put_sentence(Text() + "Você pode mudar o editor padrão com o comando")
         _help.put_sentence(Text() + RToken("g", "             tko config --editor <comando>"))
@@ -7835,10 +7915,8 @@ class Gui:
         return text, percent
 
     def show_opening(self, frame: Frame):
-        # if Fmt.get_size()[1] < 100:
-        #     return
-        # if not self.app.has_images():
-        #     return
+        if not self.app.has_images():
+            return
         _, cols = Fmt.get_size()
         
         now = datetime.datetime.now()
@@ -8161,7 +8239,7 @@ class Tester:
                     done_list.append(data)
             self.results = fail_list + done_list
             percent: int = (100 * len(done_list)) // len(self.results)
-            self.task.progress = percent
+            self.task.coverage = percent
             Logger.get_instance().record_test_result(self.task.key, percent)
             self.store_test_track(percent)
 
@@ -8183,7 +8261,7 @@ class Tester:
             if len(self.get_solver_names()) > 1:
                 solvers.add(" ")
             color = solver_color
-            if i == self.task.main_index:
+            if i == self.task.main_idx:
                 color = "G"
             solvers.add(self.borders.border(color, solver))
         
@@ -8327,14 +8405,15 @@ class Tester:
 
     def make_bottom_line(self) -> List[Text]:
         cmds: List[Text] = []
-        color = "R" if self.locked_index else "C"
+        text = f"{GuiActions.palette} [{GuiKeys.palette}]"
+        cmds.append(self.borders.border("C", text))
+
+        color = "R" if self.locked_index else "Y"
         symbol = symbols.success if not self.locked_index else symbols.failure
         # name = "Único" if self.locked_index else "Todos"
         travar = f"{symbol.text} {GuiActions.all}[{GuiKeys.lock}]"
         cmds.append(self.borders.border(color, travar))
 
-        text = f"{GuiActions.palette} [{GuiKeys.palette}]"
-        cmds.append(self.borders.border("Y", text))
         # ativar
         cmds.append(self.borders.border("G", f"{symbols.timer.text}{self.get_time_limit_symbol()} Testar[{symbols.newline.text}] "))
         #editar
@@ -8458,7 +8537,7 @@ class Tester:
         self.mode = SeqMode.running
         if self.wdir.is_autoload():
             self.wdir.autoload()
-            self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index])
+            self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_idx])
         self.mode = SeqMode.finished
         Logger.get_instance().record_freerun(self.task.key)
         self.store_other_track(Logger.FREE_EXEC)
@@ -8472,7 +8551,7 @@ class Tester:
         self.wdir.build() # reload cases
 
         Fmt.clear()
-        self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index]).reset() # clear old compilation
+        self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_idx]).reset() # clear old compilation
         
         if self.locked_index:
             for i in range(len(self.results)):
@@ -8539,7 +8618,7 @@ class Tester:
                 .put_text("de solução será o principal.")
             )
             return
-        self.task.main_index = (self.task.main_index + 1) % len(self.get_solver_names())
+        self.task.main_idx = (self.task.main_idx + 1) % len(self.get_solver_names())
 
     def lock_unit(self):
         self.locked_index = not self.locked_index
@@ -9405,6 +9484,20 @@ class PlayActions:
             opener.open_files([path])
             self.graph_opened = True
 
+    def register_action(self, task: Task):
+        Logger.get_instance().record_self_grade(task.key, task.autonomy, task.ability)
+        Logger.get_instance().record_progress(task.key, task.coverage)
+        
+    def evaluate(self):
+        obj = self.tree.get_selected()
+        
+        if isinstance(obj, Task):
+            self.fman.add_input(
+                FloatingGrade(obj, "").set_exit_fn(
+                    lambda: self.register_action(obj)
+                )
+            )
+            return
 
     def down_remote_task(self):
 
@@ -9443,7 +9536,7 @@ class PlayActions:
         self.fman.add_input(down_frame)
 
         def fnprint(text):
-            down_frame.put_text(text)
+            down_frame.put_text(" " + text)
             down_frame.draw()
             Fmt.refresh()
 
@@ -9453,7 +9546,7 @@ class PlayActions:
         cmd_down.set_language(lang)
         result = cmd_down.execute()
         if result:
-            Logger.get_instance().record_other_event(LogAction.DOWN, task.key)
+            Logger.get_instance().record_down(task.key)
 
 
     def select_task_action(self, task: Task):
@@ -9699,7 +9792,7 @@ class Play:
 
         cman.add_str(GuiKeys.key_quit, self.send_quit_msg)
         cman.add_int(InputManager.esc, self.send_quit_msg)
-        cman.add_int(curses.KEY_BACKSPACE, self.send_quit_msg)
+        # cman.add_int(curses.KEY_BACKSPACE, self.send_quit_msg)
 
         cman.add_str(GuiKeys.up, self.tree.move_up)
         cman.add_int(curses.KEY_UP, self.tree.move_up)
@@ -9710,18 +9803,8 @@ class Play:
         cman.add_str(GuiKeys.right, self.tree.arrow_right)
         cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
         cman.add_str(GuiKeys.activate, self.actions.select_task)
-        cman.add_str(GuiKeys.inc_prog1, self.tree.inc_progress)
-        cman.add_str(GuiKeys.inc_prog2, self.tree.inc_progress)
-        cman.add_str(GuiKeys.dec_prog1, self.tree.dec_progress)
-        cman.add_str(GuiKeys.dec_prog2, self.tree.dec_progress)
         cman.add_str(GuiKeys.github_open, self.actions.open_link)
         cman.add_str(GuiKeys.down_task, self.actions.down_remote_task)
-        cman.add_str(GuiKeys.inc_self1, self.tree.inc_self_grade)
-        cman.add_str(GuiKeys.inc_self2, self.tree.inc_self_grade)
-        cman.add_int(InputManager.plus, self.tree.inc_self_grade)
-        cman.add_str(GuiKeys.dec_self1, self.tree.dec_self_grade)
-        cman.add_str(GuiKeys.dec_self2, self.tree.dec_self_grade)
-        cman.add_int(InputManager.minus, self.tree.dec_self_grade)
         cman.add_str(GuiKeys.edit, lambda: self.actions.open_code())
         cman.add_str(GuiKeys.expand, self.tree.process_expand_all)
         cman.add_str(GuiKeys.collapse, self.tree.process_collapse_all)
@@ -9730,6 +9813,8 @@ class Play:
         cman.add_str(GuiKeys.hidden, self.app.toggle_hidden)
         cman.add_str(GuiKeys.set_lang, self.gui.language.set_language)
         cman.add_str(GuiKeys.graph, self.actions.generate_graph)
+        cman.add_int(curses.KEY_BACKSPACE, self.actions.evaluate)
+        cman.add_str(GuiKeys.evaluate, self.actions.evaluate)
         if Flags.admin:
             cman.add_str(GuiKeys.mass, self.tree.mass_mark)
     
@@ -9840,11 +9925,11 @@ class CmdPlay:
         
         logger: Logger = Logger.get_instance()
         logger.set_history_file(self.rep.get_history_file())
-        logger.record_other_event(LogAction.OPEN)
+        logger.record_open()
         play = Play(self.settings, self.rep)
         logger.set_daily(self.rep.get_daily_file(), play.game.tasks)
         play.play()
-        logger.record_other_event(LogAction.QUIT)
+        logger.record_quit()
 
 
     # @staticmethod

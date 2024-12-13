@@ -10,11 +10,10 @@ class GuiActions:
     download = "Baixar"
     activate = "Ativar"
     navigate = "←↓→"
-    progress = "Quanto"
     uncheck = "Desmarcar"
     search = "Pesquisar"
-    self_grade = " Como "
     palette = "Paleta"
+    evaluate = "Avaliar"
     all = "Todos"
 
 class GuiKeys:
@@ -28,17 +27,8 @@ class GuiKeys:
     down_task = "b"
     activate = "\n"
     key_help = "?"
-    
-    inc_prog1 = "+"
-    inc_prog2 = "="
-    dec_prog1 = "-"
-    dec_prog2 = "_"
-    
-    inc_self1 = ">"
-    inc_self2 = "."
-    dec_self1 = "<"
-    dec_self2 = ","
-    
+        
+    evaluate = "j"
     set_root_dir = "D"
     set_lang = "L"
     github_open = "g"
@@ -48,6 +38,7 @@ class GuiKeys:
     borders = "B"
     search = "/"
     graph = "G"
+    evaluate = "."
     diff = "m"
     interact = "i"
     test = "\n"

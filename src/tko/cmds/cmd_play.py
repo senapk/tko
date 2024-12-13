@@ -31,11 +31,11 @@ class CmdPlay:
         
         logger: Logger = Logger.get_instance()
         logger.set_history_file(self.rep.get_history_file())
-        logger.record_other_event(LogAction.OPEN)
+        logger.record_open()
         play = Play(self.settings, self.rep)
         logger.set_daily(self.rep.get_daily_file(), play.game.tasks)
         play.play()
-        logger.record_other_event(LogAction.QUIT)
+        logger.record_quit()
 
 
     # @staticmethod

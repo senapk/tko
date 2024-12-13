@@ -72,7 +72,7 @@ class Play:
 
         cman.add_str(GuiKeys.key_quit, self.send_quit_msg)
         cman.add_int(InputManager.esc, self.send_quit_msg)
-        cman.add_int(curses.KEY_BACKSPACE, self.send_quit_msg)
+        # cman.add_int(curses.KEY_BACKSPACE, self.send_quit_msg)
 
         cman.add_str(GuiKeys.up, self.tree.move_up)
         cman.add_int(curses.KEY_UP, self.tree.move_up)
@@ -83,18 +83,8 @@ class Play:
         cman.add_str(GuiKeys.right, self.tree.arrow_right)
         cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
         cman.add_str(GuiKeys.activate, self.actions.select_task)
-        cman.add_str(GuiKeys.inc_prog1, self.tree.inc_progress)
-        cman.add_str(GuiKeys.inc_prog2, self.tree.inc_progress)
-        cman.add_str(GuiKeys.dec_prog1, self.tree.dec_progress)
-        cman.add_str(GuiKeys.dec_prog2, self.tree.dec_progress)
         cman.add_str(GuiKeys.github_open, self.actions.open_link)
         cman.add_str(GuiKeys.down_task, self.actions.down_remote_task)
-        cman.add_str(GuiKeys.inc_self1, self.tree.inc_self_grade)
-        cman.add_str(GuiKeys.inc_self2, self.tree.inc_self_grade)
-        cman.add_int(InputManager.plus, self.tree.inc_self_grade)
-        cman.add_str(GuiKeys.dec_self1, self.tree.dec_self_grade)
-        cman.add_str(GuiKeys.dec_self2, self.tree.dec_self_grade)
-        cman.add_int(InputManager.minus, self.tree.dec_self_grade)
         cman.add_str(GuiKeys.edit, lambda: self.actions.open_code())
         cman.add_str(GuiKeys.expand, self.tree.process_expand_all)
         cman.add_str(GuiKeys.collapse, self.tree.process_collapse_all)
@@ -103,6 +93,8 @@ class Play:
         cman.add_str(GuiKeys.hidden, self.app.toggle_hidden)
         cman.add_str(GuiKeys.set_lang, self.gui.language.set_language)
         cman.add_str(GuiKeys.graph, self.actions.generate_graph)
+        cman.add_int(curses.KEY_BACKSPACE, self.actions.evaluate)
+        cman.add_str(GuiKeys.evaluate, self.actions.evaluate)
         if Flags.admin:
             cman.add_str(GuiKeys.mass, self.tree.mass_mark)
     

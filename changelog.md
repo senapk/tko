@@ -1,5 +1,7 @@
 # Changelog
 
+- 2.3.0
+  - add: new evaluate menu
 - 2.2.3
   - fix: change diff mode
 - 2.2.2

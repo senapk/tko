@@ -31,13 +31,6 @@ class ActionData:
         self.payload = payload
         self.hash = ""
 
-    def just_replace_cache(self, other: ActionData):
-        if self.action_value == LogAction.SELF.value and other.action_value == LogAction.SELF.value and self.task_key == other.task_key:
-            return True
-        if self.action_value == LogAction.PROG.value and other.action_value == LogAction.PROG.value and self.task_key == other.task_key:
-            return True
-        return False
-
     def __str__(self):
         return f'{self.timestamp}, {self.action_value}, {self.task_key}, {self.payload}'
 
@@ -161,7 +154,6 @@ class Logger:
 
     def __init__(self, logger_store: LoggerStore):
         self.last_hash: str | None = None
-        self.cached_action: ActionData | None = None
         self.fs = logger_store
         self.daily: DailyLog | None = None
 
@@ -178,7 +170,7 @@ class Logger:
         today = Logger.today()
         changed = False
         for task in tasks.values():
-            if self.daily.log_task(today, task.key, task.progress, task.self_grade, save_on_change=False):
+            if self.daily.log_task(today, task.key, task.coverage, task.autonomy, save_on_change=False):
                 changed = True
         if changed:
             self.daily.save()
@@ -198,23 +190,31 @@ class Logger:
             hash = calculated_hash
         return output
 
-    def store_in_cached(self, action_data: ActionData) -> bool:
-        if self.cached_action is None and (action_data.action_value == LogAction.SELF.value or action_data.action_value == LogAction.PROG.value):
-            return True
-        if self.cached_action is not None and self.cached_action.just_replace_cache(action_data):
-            return True
-        return False
+    def record_down(self, task_key: str):
+        self.__record_other_event(LogAction.DOWN, task_key)
 
     def record_compilation_error(self, task_key: str):
-        self.record_other_event(LogAction.TEST, task_key, self.COMP_ERROR)
+        self.__record_other_event(LogAction.TEST, task_key, self.COMP_ERROR)
     
     def record_test_result(self, task_key: str, result: int):
-        self.record_other_event(LogAction.TEST, task_key, str(result))
+        self.__record_other_event(LogAction.TEST, task_key, str(result))
 
     def record_freerun(self, task_key: str):
-        self.record_other_event(LogAction.FREE, task_key)
+        self.__record_other_event(LogAction.FREE, task_key)
 
-    def record_other_event(self, action: LogAction, task_key: str = "", payload: str = ""):
+    def record_self_grade(self, task_key: str, autonomy: int, ability: int):
+        self.__record_other_event(LogAction.SELF, task_key, f"0{autonomy}{ability}")
+    
+    def record_progress(self, task_key: str, coverage: int):
+        self.__record_other_event(LogAction.PROG, task_key, str(coverage))
+
+    def record_open(self):
+        self.__record_other_event(LogAction.OPEN)
+    
+    def record_quit(self):
+        self.__record_other_event(LogAction.QUIT)
+
+    def __record_other_event(self, action: LogAction, task_key: str = "", payload: str = ""):
         action_data = ActionData(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), action.value, task_key, payload)
         self.record_action_data(action_data)
 
@@ -225,31 +225,19 @@ class Logger:
 
     def record_action_data(self, action_data: ActionData):
         self.log_daily(action_data)
-
-        if self.store_in_cached(action_data):
-            self.cached_action = action_data
-            return
-        
-        if self.cached_action is not None:
-            self.last_hash = self.fs.push_to_file(self.cached_action, self.get_last_hash())
-            self.cached_action = None
-        
-        if self.store_in_cached(action_data):
-            self.cached_action = action_data
-        else:
-            self.last_hash = self.fs.push_to_file(action_data, self.get_last_hash())
+        self.last_hash = self.fs.push_to_file(action_data, self.get_last_hash())
 
 
     def log_daily(self, action_data: ActionData):
         if self.daily is None:
             return
         if action_data.action_value == LogAction.SELF.value:
-            self.daily.log_task(Logger.today(), key=action_data.task_key, self_grade=int(action_data.payload))
+            self.daily.log_task(Logger.today(), key=action_data.task_key, autonomy=int(action_data.payload))
         elif action_data.action_value == LogAction.PROG.value:
-            self.daily.log_task(Logger.today(), key=action_data.task_key, progress=int(action_data.payload))
+            self.daily.log_task(Logger.today(), key=action_data.task_key, coverage=int(action_data.payload))
         elif action_data.action_value == LogAction.TEST.value:
             try:
                 result = int(action_data.payload)                
-                self.daily.log_task(Logger.today(), key=action_data.task_key, progress=result)
+                self.daily.log_task(Logger.today(), key=action_data.task_key, coverage=result)
             except ValueError:
                 pass

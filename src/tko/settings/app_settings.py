@@ -6,7 +6,7 @@ class AppSettings:
     def __init__(self):
         self._diff_mode = DiffMode.SIDE.value
         self._show_hidden = False
-        self._use_images = False
+        self._use_images = True
         self._use_borders = False
         self._editor = "code"
         self._timeout = 1

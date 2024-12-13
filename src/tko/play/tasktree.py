@@ -135,7 +135,7 @@ class TaskTree:
             quest = self.game.quests[t.quest_key]
             if quest.prog:
                 if t.key != self.game.quests[t.quest_key].get_tasks()[-1].key:
-                    if t.get_total_percent() < 50:
+                    if t.get_percent() < 50:
                         color_lig_task = "y"
                     
 
@@ -145,7 +145,8 @@ class TaskTree:
         output.addf(color_lig_task, lig_quest)
         output.add(down_symbol).add(" ")
         output.add(t.get_prog_symbol()).add(" ")
-        output.add(GradeMessage().grade_to_emojis(t.self_grade))
+        output.add(GradeMessage.autonomy_emoji(t.autonomy)).add(" ")
+        output.add(GradeMessage.hability_emoji(t.ability))
 
         if in_focus:
             output.add(self.style.roundL(focus_color))
@@ -171,7 +172,7 @@ class TaskTree:
 
         if Flags.percent:
             output.ljust(self.max_title + 10, Token(" "))
-            prog = t.get_total_percent()
+            prog = int(t.get_percent())
             output.addf("y", str(prog).rjust(3, " ") + "%")
 
         if Flags.reward:
@@ -435,10 +436,10 @@ class TaskTree:
             for q in obj.get_quests():
                 for t in q.get_tasks():
                     if value is not None:
-                        t.set_grade(value)
+                        self.set_grade(t, value[0], value[1], value[2])
                     else:
-                        value = 10 if t.self_grade < 10 else 0
-                        t.set_grade(value)
+                        value = (100, 5, 5) if t.get_percent() < 100 else (0, 0, 0)
+                        self.set_grade(t, value[0], value[1], value[2])
         elif isinstance(obj, Quest):
             if obj.key not in self.expanded:
                 self.expanded.append(obj.key)
@@ -446,67 +447,23 @@ class TaskTree:
                 value = None
                 for t in obj.get_tasks():
                     if value is not None:
-                        t.set_grade(value)
+                        self.set_grade(t, value[0], value[1], value[2])
                     else:
-                        value = 10 if t.self_grade < 10 else 0
-                        t.set_grade(value)
+                        value = (100, 5, 5) if t.get_percent() < 100 else (0, 0, 0)
+                        self.set_grade(t, value[0], value[1], value[2])
         elif isinstance(obj, Task):
-            obj.set_grade(10 if obj.self_grade < 10 else 0)
+            value = (100, 5, 5) if obj.get_percent() < 100 else (0, 0, 0)
+            self.set_grade(obj, value[0], value[1], value[2])
 
-    def set_grade(self, grade: int):
-
-        obj = self.get_selected()
+    def set_grade(self, task: Task, coverage: int, autonomy: int, ability: int):
+        obj = task
         if isinstance(obj, Task):
-            Logger.get_instance().record_other_event(LogAction.SELF, obj.key, str(grade))
-            obj.set_grade(grade)
-            self.fman.add_input(
-                Floating().warning().set_header(" Auto avaliação ").set_text_ljust().set_content(GradeMessage().format(grade).split("\n"))
-            )
+            Logger.get_instance().record_self_grade(obj.key, autonomy, ability)
+            Logger.get_instance().record_progress(obj.key, coverage)
+            obj.set_coverage(coverage)
+            obj.set_autonomy(autonomy)
+            obj.set_hability(ability)
 
-    def set_progress(self, prog: int):
-
-        obj = self.get_selected()
-        if isinstance(obj, Task):
-            if obj.progress == prog:
-                return
-            obj.set_progress(prog)
-            Logger.get_instance().record_other_event(LogAction.PROG, obj.key, str(prog))
-
-    def inc_progress(self):
-        obj = self.get_selected()
-        if isinstance(obj, Task):
-            progress = obj.progress + 10
-            if progress > 100:
-                progress = 100
-            self.set_progress(progress)
-
-    def dec_progress(self):
-        obj = self.get_selected()
-        if isinstance(obj, Task):
-            progress = obj.progress - 10
-            if progress < 0:
-                progress = 0
-            self.set_progress(progress)
-
-    def inc_self_grade(self):
-        obj = self.get_selected()
-        if isinstance(obj, Task):
-            grade = obj.self_grade + 1
-            if grade >= 10:
-                grade = 10
-            self.set_grade(grade)
-        else:
-            self.unfold(obj)
-
-    def dec_self_grade(self):
-        obj = obj = self.get_selected()
-        if isinstance(obj, Task):
-            grade = obj.self_grade - 1
-            if grade == -1:
-                grade = 0
-            self.set_grade(grade)
-        else:
-            self.fold(obj)
 
     def set_selected_by_index(self, index: int):
         if index < 0:

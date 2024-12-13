@@ -3,28 +3,27 @@ import os
 from tko.util.decoder import Decoder
 
 class TaskData:
-    def __init__(self, key: str = "", progress: int = 0, seft_grade: int = 0):
+    def __init__(self, key: str = "", coverage: int = 0, autonomy: int = 0):
         self.key = key
-        self.progress = progress
-        self.seft_grade = seft_grade
+        self.coverage = coverage
+        self.autonomy = autonomy
 
     def decode(self, serial: str):
         pieces = serial.split(":")
         if len(pieces) == 3:
             try:
                 self.key = pieces[0]
-                self.progress = int(pieces[1])
-                self.seft_grade = int(pieces[2])
+                self.coverage = int(pieces[1])
+                self.autonomy = int(pieces[2])
             except:
                 pass
 
-
     def __eq__(self, other):
-        return self.progress == other.progress and self.seft_grade == other.seft_grade
+        return self.coverage == other.coverage and self.autonomy == other.autonomy
 
 
     def __str__(self):
-        return f'{self.key}:{self.progress}:{self.seft_grade}'
+        return f'{self.key}:{self.coverage}:{self.autonomy}'
     
 
     
@@ -78,7 +77,7 @@ class DailyLog:
         data = self.resume.get(task_data.key, None)
 
         # não tinha, e ainda está zerado, não precisa salvar
-        if data is None and task_data.progress == 0 and task_data.seft_grade == 0:
+        if data is None and task_data.coverage == 0 and task_data.autonomy == 0:
             return False
         
         # tinha, e está diferente, precisa salvar
@@ -90,14 +89,14 @@ class DailyLog:
             return True
         return False
     
-    def log_task(self, day: str, key: str, progress: int = -1, self_grade: int = -1, save_on_change: bool = True):
-        actual_progress = self.resume.get(key, TaskData(key, 0, 0)).progress
-        actual_seft_grade = self.resume.get(key, TaskData(key, 0, 0)).seft_grade
-        if progress == -1:
-            progress = actual_progress
-        if self_grade == -1:
-            self_grade = actual_seft_grade
-        if self.__check_add_task(day, TaskData(key, progress, self_grade)):
+    def log_task(self, day: str, key: str, coverage: int = -1, autonomy: int = -1, save_on_change: bool = True):
+        actual_coverage = self.resume.get(key, TaskData(key, 0, 0)).coverage
+        actual_autonomy = self.resume.get(key, TaskData(key, 0, 0)).autonomy
+        if coverage == -1:
+            coverage = actual_coverage
+        if autonomy == -1:
+            autonomy = actual_autonomy
+        if self.__check_add_task(day, TaskData(key, coverage, autonomy)):
             if save_on_change:
                 self.save()
             return True

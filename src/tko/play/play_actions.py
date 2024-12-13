@@ -14,7 +14,7 @@ from tko.util.param import Param
 from tko.down.down import DownProblem
 
 from tko.play.fmt import Fmt
-from tko.play.floating import Floating
+from tko.play.floating import Floating, FloatingGrade
 from tko.play.gui import Gui
 from tko.play.opener import Opener
 
@@ -113,6 +113,20 @@ class PlayActions:
             opener.open_files([path])
             self.graph_opened = True
 
+    def register_action(self, task: Task):
+        Logger.get_instance().record_self_grade(task.key, task.autonomy, task.ability)
+        Logger.get_instance().record_progress(task.key, task.coverage)
+        
+    def evaluate(self):
+        obj = self.tree.get_selected()
+        
+        if isinstance(obj, Task):
+            self.fman.add_input(
+                FloatingGrade(obj, "").set_exit_fn(
+                    lambda: self.register_action(obj)
+                )
+            )
+            return
 
     def down_remote_task(self):
 
@@ -151,7 +165,7 @@ class PlayActions:
         self.fman.add_input(down_frame)
 
         def fnprint(text):
-            down_frame.put_text(text)
+            down_frame.put_text(" " + text)
             down_frame.draw()
             Fmt.refresh()
 
@@ -161,7 +175,7 @@ class PlayActions:
         cmd_down.set_language(lang)
         result = cmd_down.execute()
         if result:
-            Logger.get_instance().record_other_event(LogAction.DOWN, task.key)
+            Logger.get_instance().record_down(task.key)
 
 
     def select_task_action(self, task: Task):

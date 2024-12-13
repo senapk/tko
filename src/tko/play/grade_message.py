@@ -16,33 +16,51 @@ Sem   Ajuda│$5  Sozinho  │           │           │    [8]    │    [10]
 """[1:-1]
         
         self.emoji: Dict[str, Token] = {
-            "$1": symbols.compreensao_d,
-            "$2": symbols.compreensao_c,
-            "$3": symbols.compreensao_b,
-            "$4": symbols.compreensao_a,
-            "$5": symbols.suporte_a,
-            "$6": symbols.suporte_b,
-            "$7": symbols.suporte_c,
-            "$8": symbols.suporte_d
+            "$1": symbols.hability_d,
+            "$2": symbols.hability_c,
+            "$3": symbols.hability_b,
+            "$4": symbols.hability_a,
+            "$5": symbols.autonomy_a,
+            "$6": symbols.autonomy_b,
+            "$7": symbols.autonomy_c,
+            "$8": symbols.autonomy_d
         }
 
         self.axes: Dict[int, list[str]] = {}
         self.load_axes()
 
     @staticmethod
+    def autonomy_emoji(value):
+         return [symbols.autonomy_x,
+                 symbols.autonomy_e, 
+                 symbols.autonomy_d,
+                 symbols.autonomy_c,
+                 symbols.autonomy_b,
+                 symbols.autonomy_a][value]
+
+    @staticmethod
+    def hability_emoji(value):
+         return [symbols.hability_x,
+                 symbols.hability_e, 
+                 symbols.hability_d,
+                 symbols.hability_c,
+                 symbols.hability_b,
+                 symbols.hability_a][value]
+
+    @staticmethod
     def grade_to_emojis(grade: int) -> Text:
         decode_dict = {
-                0: (symbols.suporte_e, symbols.compreensao_e),
-                1: (symbols.suporte_d, symbols.compreensao_d),
-                2: (symbols.suporte_d, symbols.compreensao_c),
-                3: (symbols.suporte_c, symbols.compreensao_c),
-                4: (symbols.suporte_b, symbols.compreensao_c),
-                5: (symbols.suporte_d, symbols.compreensao_b),
-                6: (symbols.suporte_c, symbols.compreensao_b),
-                7: (symbols.suporte_b, symbols.compreensao_b),
-                8: (symbols.suporte_a, symbols.compreensao_b),
-                9: (symbols.suporte_b, symbols.compreensao_a),
-                10: (symbols.suporte_a, symbols.compreensao_a)
+                0: (symbols.autonomy_e, symbols.hability_e),
+                1: (symbols.autonomy_d, symbols.hability_d),
+                2: (symbols.autonomy_d, symbols.hability_c),
+                3: (symbols.autonomy_c, symbols.hability_c),
+                4: (symbols.autonomy_b, symbols.hability_c),
+                5: (symbols.autonomy_d, symbols.hability_b),
+                6: (symbols.autonomy_c, symbols.hability_b),
+                7: (symbols.autonomy_b, symbols.hability_b),
+                8: (symbols.autonomy_a, symbols.hability_b),
+                9: (symbols.autonomy_b, symbols.hability_a),
+                10: (symbols.autonomy_a, symbols.hability_a)
         }
         a = decode_dict[grade][0]
         b = decode_dict[grade][1]
@@ -107,8 +125,8 @@ Sem   Ajuda│$5  Sozinho  │           │           │    [8]    │    [10]
                         # pos += 1
             
             pos = value.get_text().find("Não Fiz")
-            value.data[pos - 3] = symbols.suporte_e
-            value.data[pos - 2] = symbols.compreensao_e
+            value.data[pos - 3] = symbols.autonomy_e
+            value.data[pos - 2] = symbols.hability_e
             # marcando axes com a cor correspondente
             if grade > 0 and grade <= 10:
                 value = value.replace(self.axes[grade][0], Token(self.axes[grade][0], "M"))

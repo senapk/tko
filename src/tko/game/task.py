@@ -20,9 +20,10 @@ class Task(TreeItem):
         self.line_number = 0
         self.line = ""
 
-        self.self_grade: int = 0 #valor de 0 a 9
-        self.progress: int = 0 #valor de 0 a 100
-        self.main_index: int = 0
+        self.coverage: int = 0 # valor de 0 a 100
+        self.autonomy: int = 0 # valor de 0 a 5
+        self.ability: int = 0 # valor de 0 a 5
+        self.main_idx: int = 0
 
         self.qskills: Dict[str, int] = {} # default quest skills
         self.skills: Dict[str, int] = {} # local skills
@@ -64,26 +65,37 @@ class Task(TreeItem):
     def get_track_folder(self) -> str | None:
         return self.track_folder
 
+    def set_autonomy_ability(self, value: int):
+        opts = [(0, 0), (1, 1), (1, 2), (2, 2), (3, 2), (1, 3), (2, 3), (3, 3), (4, 3), (3, 4), (4, 4)]
+        self.autonomy = opts[value][0]
+        self.ability = opts[value][1]
+
+
     def load_from_db(self, value: str):
         if ":" not in value:
-            self.self_grade = int(value)
+            self.set_autonomy_ability(int(value))
         else:
             v = value.split(":")
             if len(v) == 3:
-                self.self_grade = int(v[0])
-                self.main_index = int(v[1])
-                self.progress = int(v[2])
+                self.set_autonomy_ability(int(v[0]))
+                self.main_idx = int(v[1])
+                self.coverage = int(v[2])
+            elif len(v) == 4:
+                self.coverage = (int(v[0]))
+                self.autonomy = (int(v[1]))
+                self.ability = (int(v[2]))
+                self.main_idx = (int(v[3]))
 
     def save_to_db(self) -> str:
-        return f"{self.self_grade}:{self.main_index}:{self.progress}"
+        return f"{self.coverage}:{self.autonomy}:{self.ability}:{self.main_idx}"
     
     def is_db_empty(self) -> bool:
-        return self.self_grade == 0 and self.main_index == 0 and self.progress == 0
+        return self.autonomy == 0 and self.ability == 0 and self.main_idx == 0 and self.coverage == 0
 
     def get_prog_color(self, min_value: Optional[int] = None) -> str:
         if min_value is None:
             min_value = self.default_min_value
-        prog = self.progress // 10
+        prog = self.coverage // 10
         if prog == 0:
             return "c"
         if prog < min_value:
@@ -99,9 +111,9 @@ class Task(TreeItem):
         if min_value is None:
             min_value = self.default_min_value
         color = self.get_prog_color(min_value)
-        prog = self.progress // 10
+        prog = self.coverage // 10
         if prog == 0:
-            return Text().addf(color, "0")
+            return Text().add("x")
         if prog < min_value:
             return Text().addf(color, str(prog))
         if prog < 10:
@@ -111,38 +123,40 @@ class Task(TreeItem):
         return Text().add("0")
 
     def get_percent(self):
-        if self.self_grade == 0:
-            return 0
-        if self.self_grade == 10:
-            return 100
-        return self.self_grade * 10
+        return (self.autonomy / 5) * (self.ability / 5) * self.coverage
     
-    def get_total_percent(self):
-        # return (self.self_grade * 10 + self.progress) // 2
-        return self.self_grade * self.progress // 10
+    def get_ratio(self) -> float:
+        return self.get_percent() / 10.0
 
     def is_complete(self):
-        return self.self_grade == 10
+        return self.get_percent() == 100
 
     def not_started(self):
-        return self.self_grade == 0
+        return self.get_percent() == 0
     
     def in_progress(self):
-        return self.self_grade > 0 and self.self_grade < 10
+        return self.get_percent() > 0 and self.get_percent() < 100
 
-    def set_progress(self, progress: int):
-        progress = int(progress)
-        if progress >= 0 and progress <= 100:
-            self.progress = progress
+    def set_coverage(self, coverage: int):
+        coverage = int(coverage)
+        if coverage >= 0 and coverage <= 100:
+            self.coverage = coverage
         else:
-            print(f"Progresso inválido: {progress}")
+            print(f"Progresso inválido: {coverage}")
 
-    def set_grade(self, grade: int):
-        grade = int(grade)
-        if grade >= 0 and grade <= 10:
-            self.self_grade = grade
+    def set_autonomy(self, value: int):
+        value = int(value)
+        if value >= 0 and value <= 5:
+            self.autonomy = value
         else:
-            print(f"Grade inválida: {grade}")
+            print(f"Autonomia inválida: {value}")
+
+    def set_hability(self, value: int):
+        value = int(value)
+        if value >= 0 and value <= 5:
+            self.ability = value
+        else:
+            print(f"Compreensão inválida: {value}")
 
     def get_download_link(self) -> str:
         return self.download_link
@@ -153,7 +167,7 @@ class Task(TreeItem):
     def __str__(self):
         lnum = str(self.line_number).rjust(3)
         key = "" if self.key == self.title else self.key + " "
-        return f"{lnum} grade:{self.self_grade} key:{key} title:{self.title} skills:{self.skills} down:{self.download_link} vis:{self.visitable_url}"
+        return f"{lnum} grade:{self.autonomy}:{self.ability} key:{key} title:{self.title} skills:{self.skills} down:{self.download_link} vis:{self.visitable_url}"
 
     def has_at_symbol(self):
         return any([s.startswith("@") for s in self.title.split(" ")])

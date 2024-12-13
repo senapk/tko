@@ -42,7 +42,7 @@ class Quest(TreeItem):
             if i == 0:
                 self.__tasks[i].set_reachable(True)
             else:
-                if self.__tasks[i-1].get_total_percent() < 50:
+                if self.__tasks[i-1].get_percent() < 50:
                     reach = False
                 self.__tasks[i].set_reachable(reach)
 
@@ -65,10 +65,10 @@ class Quest(TreeItem):
         return Text()
 
     def get_resume_by_tasks(self) -> Text:
-        tmin = self.tmin if self.tmin is not None else 7
+        tmin = self.tmin if self.tmin is not None else 70
         total = len([t for t in self.__tasks if not t.opt])
         plus = len([t for t in self.__tasks if t.opt])
-        count = len([t for t in self.__tasks if t.self_grade >= tmin])
+        count = len([t for t in self.__tasks if t.get_percent() >= tmin])
         output = f"{count}/{total}"
         if plus > 0:
             output += f"+{plus}"
@@ -89,7 +89,7 @@ class Quest(TreeItem):
         # task complete mode
         if self.tmin is not None:
             for t in self.__tasks:
-                if not t.opt and t.self_grade < self.tmin:
+                if not t.opt and t.get_percent() < self.tmin:
                     return False
         return True
 
@@ -118,8 +118,8 @@ class Quest(TreeItem):
         obtained = 0
         for t in self.__tasks:
             total += t.xp
-            if t.self_grade > 0:
-                obtained += t.xp * t.self_grade // 10
+            if t.get_percent() > 0:
+                obtained += int(t.xp * t.get_ratio())
 
         return obtained, total
         
@@ -127,13 +127,13 @@ class Quest(TreeItem):
         obtained, total = self.get_xp()
         if total == 0:
             return 0
-        return obtained * 100 // total
+        return obtained * 10 // total
 
     def in_progress(self):
         if self.is_complete():
             return False
         for t in self.__tasks:
-            if t.self_grade != 0:
+            if t.get_percent() != 0:
                 return True
         return False
 

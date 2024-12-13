@@ -32,16 +32,15 @@ opening: Dict[str, str] = {}
 # """
 
 opening["estuda"] = r"""
-O modelo de avaliação usa 3 notas.
-Progresso, Autonomia e Compreensão
-Progresso é o QUANTO você fez.
-Ele é gerado automaticamente pelos
-testes ou manualmente usando +-.
-Autonomia e Compreensão são COMO.
-Use <> para marcar COMO você fez.
-Progressao : ✓ 9.... 0
-Compreensão: A B C D E
-Autonomia  : █ ▅ ▃ ▂ ▁
+O modelo de avaliação usa 3 notas 
+  Cobertura: quanto da atividade você fez
+  Autonomia: quanta ajuda você precisou
+             (ChatGpt, Copilot, Monitoria)
+Compreensão: quanto você entendeu do que fez
+
+Cobertura   : 0 1 ... 9 ✓
+Autonomia   : x E D C B A
+Compreensão : x ▁ ▂ ▃ ▅ █    
 
  ,`````.          __||||___       
 ' Estuda`,       /_  ___   \      

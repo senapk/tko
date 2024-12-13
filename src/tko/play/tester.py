@@ -200,7 +200,7 @@ class Tester:
                     done_list.append(data)
             self.results = fail_list + done_list
             percent: int = (100 * len(done_list)) // len(self.results)
-            self.task.progress = percent
+            self.task.coverage = percent
             Logger.get_instance().record_test_result(self.task.key, percent)
             self.store_test_track(percent)
 
@@ -222,7 +222,7 @@ class Tester:
             if len(self.get_solver_names()) > 1:
                 solvers.add(" ")
             color = solver_color
-            if i == self.task.main_index:
+            if i == self.task.main_idx:
                 color = "G"
             solvers.add(self.borders.border(color, solver))
         
@@ -366,14 +366,15 @@ class Tester:
 
     def make_bottom_line(self) -> List[Text]:
         cmds: List[Text] = []
-        color = "R" if self.locked_index else "C"
+        text = f"{GuiActions.palette} [{GuiKeys.palette}]"
+        cmds.append(self.borders.border("C", text))
+
+        color = "R" if self.locked_index else "Y"
         symbol = symbols.success if not self.locked_index else symbols.failure
         # name = "Único" if self.locked_index else "Todos"
         travar = f"{symbol.text} {GuiActions.all}[{GuiKeys.lock}]"
         cmds.append(self.borders.border(color, travar))
 
-        text = f"{GuiActions.palette} [{GuiKeys.palette}]"
-        cmds.append(self.borders.border("Y", text))
         # ativar
         cmds.append(self.borders.border("G", f"{symbols.timer.text}{self.get_time_limit_symbol()} Testar[{symbols.newline.text}] "))
         #editar
@@ -497,7 +498,7 @@ class Tester:
         self.mode = SeqMode.running
         if self.wdir.is_autoload():
             self.wdir.autoload()
-            self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index])
+            self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_idx])
         self.mode = SeqMode.finished
         Logger.get_instance().record_freerun(self.task.key)
         self.store_other_track(Logger.FREE_EXEC)
@@ -511,7 +512,7 @@ class Tester:
         self.wdir.build() # reload cases
 
         Fmt.clear()
-        self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_index]).reset() # clear old compilation
+        self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_idx]).reset() # clear old compilation
         
         if self.locked_index:
             for i in range(len(self.results)):
@@ -578,7 +579,7 @@ class Tester:
                 .put_text("de solução será o principal.")
             )
             return
-        self.task.main_index = (self.task.main_index + 1) % len(self.get_solver_names())
+        self.task.main_idx = (self.task.main_idx + 1) % len(self.get_solver_names())
 
     def lock_unit(self):
         self.locked_index = not self.locked_index
