@@ -34,7 +34,7 @@ from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
 import chardet # type: ignore
-__version__ = "2.3.0"
+__version__ = "2.3.1"
 
 class CheckVersion:
 
@@ -7307,14 +7307,14 @@ class TaskTree:
                 return i
         return 0
 
-    def get_selected(self) -> TreeItem:
+    def get_selected_throw(self) -> TreeItem:
         if len(self.items) > 0:
             index = self.get_selected_index()
             return self.items[index]
         raise IndexError("No item selected")
             
     def mass_mark(self):
-        obj = self.get_selected()
+        obj = self.get_selected_throw()
         if isinstance(obj, Cluster):
             cluster: Cluster = obj
             if cluster.key not in self.expanded:
@@ -7687,10 +7687,14 @@ class Gui:
 
 
     def get_help_fixed(self):
-        selected = self.tree.get_selected()
         color = "W"
-        if isinstance(selected, Task):
-            color = "Y"
+        try:
+            selected = self.tree.get_selected_throw()
+            if isinstance(selected, Task):
+                color = "Y"
+        except IndexError:
+            pass
+
         help_fixed: List[Text] = [
             Text() + RToken("C", f"{GuiActions.palette} [{GuiKeys.palette}]"),
             Text() + RToken(color, f"{GuiActions.evaluate}[.]"),
@@ -7704,7 +7708,7 @@ class Gui:
     def get_activate_label(self) -> str:
         output: str = GuiActions.activate
         try:
-            obj = self.tree.get_selected()
+            obj = self.tree.get_selected_throw()
         except IndexError:
             return " Retornar"
         if isinstance(obj, Quest):
@@ -9422,7 +9426,7 @@ class PlayActions:
         return task.folder
 
     def open_code(self):
-        obj = self.tree.get_selected()
+        obj = self.tree.get_selected_throw()
         if isinstance(obj, Task):
             task: Task = obj
             folder = self.rep.get_task_folder_for_label(task.key)
@@ -9445,7 +9449,7 @@ class PlayActions:
             )
 
     def open_link(self):
-        obj = self.tree.get_selected()
+        obj = self.tree.get_selected_throw()
         if isinstance(obj, Task):
             task: Task = obj
             if task.visitable_url != "":
@@ -9489,7 +9493,7 @@ class PlayActions:
         Logger.get_instance().record_progress(task.key, task.coverage)
         
     def evaluate(self):
-        obj = self.tree.get_selected()
+        obj = self.tree.get_selected_throw()
         
         if isinstance(obj, Task):
             self.fman.add_input(
@@ -9501,7 +9505,7 @@ class PlayActions:
 
     def down_remote_task(self):
 
-        obj = self.tree.get_selected()
+        obj = self.tree.get_selected_throw()
         
         if isinstance(obj, Quest):
             self.fman.add_input(
@@ -9562,7 +9566,7 @@ class PlayActions:
             return self.run_selected_task(task, folder)
 
     def select_task(self):
-        obj = self.tree.get_selected()
+        obj = self.tree.get_selected_throw()
 
         if isinstance(obj, Quest) or isinstance(obj, Cluster):
             self.tree.toggle(obj)

@@ -1,5 +1,7 @@
 # Changelog
 
+- 2.3.1
+  - fix: error in search
 - 2.3.0
   - add: new evaluate menu
 - 2.2.3

@@ -51,7 +51,7 @@ class PlayActions:
         return task.folder
 
     def open_code(self):
-        obj = self.tree.get_selected()
+        obj = self.tree.get_selected_throw()
         if isinstance(obj, Task):
             task: Task = obj
             folder = self.rep.get_task_folder_for_label(task.key)
@@ -74,7 +74,7 @@ class PlayActions:
             )
 
     def open_link(self):
-        obj = self.tree.get_selected()
+        obj = self.tree.get_selected_throw()
         if isinstance(obj, Task):
             task: Task = obj
             if task.visitable_url != "":
@@ -118,7 +118,7 @@ class PlayActions:
         Logger.get_instance().record_progress(task.key, task.coverage)
         
     def evaluate(self):
-        obj = self.tree.get_selected()
+        obj = self.tree.get_selected_throw()
         
         if isinstance(obj, Task):
             self.fman.add_input(
@@ -130,7 +130,7 @@ class PlayActions:
 
     def down_remote_task(self):
 
-        obj = self.tree.get_selected()
+        obj = self.tree.get_selected_throw()
         
         if isinstance(obj, Quest):
             self.fman.add_input(
@@ -191,7 +191,7 @@ class PlayActions:
             return self.run_selected_task(task, folder)
 
     def select_task(self):
-        obj = self.tree.get_selected()
+        obj = self.tree.get_selected_throw()
 
         if isinstance(obj, Quest) or isinstance(obj, Cluster):
             self.tree.toggle(obj)

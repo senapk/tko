@@ -411,14 +411,14 @@ class TaskTree:
                 return i
         return 0
 
-    def get_selected(self) -> TreeItem:
+    def get_selected_throw(self) -> TreeItem:
         if len(self.items) > 0:
             index = self.get_selected_index()
             return self.items[index]
         raise IndexError("No item selected")
             
     def mass_mark(self):
-        obj = self.get_selected()
+        obj = self.get_selected_throw()
         if isinstance(obj, Cluster):
             cluster: Cluster = obj
             if cluster.key not in self.expanded:

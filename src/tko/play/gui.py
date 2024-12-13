@@ -42,10 +42,14 @@ class Gui:
 
 
     def get_help_fixed(self):
-        selected = self.tree.get_selected()
         color = "W"
-        if isinstance(selected, Task):
-            color = "Y"
+        try:
+            selected = self.tree.get_selected_throw()
+            if isinstance(selected, Task):
+                color = "Y"
+        except IndexError:
+            pass
+
         help_fixed: List[Text] = [
             Text() + RToken("C", f"{GuiActions.palette} [{GuiKeys.palette}]"),
             Text() + RToken(color, f"{GuiActions.evaluate}[.]"),
@@ -59,7 +63,7 @@ class Gui:
     def get_activate_label(self) -> str:
         output: str = GuiActions.activate
         try:
-            obj = self.tree.get_selected()
+            obj = self.tree.get_selected_throw()
         except IndexError:
             return " Retornar"
         if isinstance(obj, Quest):
