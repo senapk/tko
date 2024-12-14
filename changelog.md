@@ -1,5 +1,7 @@
 # Changelog
 
+- 2.4.0
+  - add: new input for typescript
 - 2.3.1
   - fix: error in search
 - 2.3.0
