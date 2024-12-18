@@ -34,7 +34,7 @@ from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
 import chardet # type: ignore
-__version__ = "2.4.0"
+__version__ = "2.4.1"
 
 class CheckVersion:
 
@@ -4973,7 +4973,7 @@ class CompileError(Exception):
 class SolverBuilder:
     def __init__(self, solver_list: List[str]):
         self.path_list: List[str] = [os.path.normpath(SolverBuilder.__add_dot_bar(path)) for path in solver_list]
-        
+
         if len(self.path_list) > 0:
             self.cache_dir = os.path.join(os.path.dirname(self.path_list[0]), ".build")
         else:
@@ -4997,7 +4997,7 @@ class SolverBuilder:
                 list_main.append(path)
             else:
                 list_other.append(path)
-        
+
         self.path_list = list_main + list_other
         return self
 
@@ -5071,56 +5071,56 @@ class SolverBuilder:
         else:
             self.set_executable("java -cp " + self.cache_dir + " " + filename[:-5])  # removing the .java
 
-    def update_input_function(self, free_run_mode: bool, path_list: list[str]):
+    def update_input_function(self, free_run_mode: bool, path_list: list[str], copy_dir: str):
+        new_files: list[str] = []
+        for origin in self.path_list:
+            new_files.append(os.path.join(copy_dir, os.path.basename(origin)))
+
         for i in range(len(path_list)):
-            path = path_list[i]
-            encoding = Decoder.get_encoding(path)
-            with open(path, "r", encoding=encoding) as f:
+            origin = path_list[i]
+            destiny = new_files[i]
+
+            encoding = Decoder.get_encoding(origin)
+            with open(origin, "r", encoding=encoding) as f:
                 content = f.read()
                 lines = content.splitlines(keepends=True)
-                
-            f = io.StringIO()
 
-            test_input = r'function input(): string { let X: any = input; X.L = X.L || require("fs").readFileSync(0).toString().split(/\r?\n/); return X.L.shift(); } '
-            free_input = r'function input(): string { let X: any = input; X.P = X.P || require("readline-sync"); return X.P.question(); }'
+            io_source = io.StringIO()
+            io_target = io.StringIO()
+
             tag = "function input()"
-            for line in lines:
-                if free_run_mode:
-                    if line.startswith(tag):
-                        f.write(free_input + "\n")
-                    else:
-                        f.write(line)
-                else:
-                    if line.startswith(tag):
-                        f.write(test_input + "\n")
-                    else:
-                        f.write(line)
+            tag2 = "constinput=()=>"
 
-            # for line in lines:
-            #     if free_run_mode:
-            #         if '_TEST_ONLY_' in line and not line.startswith("//"):
-            #             f.write("//" + line)
-            #         elif '_FREE_ONLY' in line and line.startswith("// function"):
-            #             f.write(line[3:])
-            #         elif '_FREE_ONLY' in line and line.startswith("//"):
-            #             f.write(line[2:])
-            #         else:
-            #             f.write(line)
-            #     else:
-            #         if '_FREE_ONLY_' in line and not line.startswith("//"):
-            #             f.write("//" + line)
-            #         elif '_TEST_ONLY' in line and line.startswith("// function"):
-            #             f.write(line[3:])
-            #         elif '_TEST_ONLY' in line and line.startswith("//"):
-            #             f.write(line[2:])
-            #         else:
-            #             f.write(line)
-            
-            result = f.getvalue()
-            f.close()
+            if free_run_mode:
+                input_cmd = r'function input(): string { let X: any = input; X.P = X.P || require("readline-sync"); return X.P.question(); }'
+                input_tag = 'const input = () => ""; // INTERATIVO\n'
+            else:
+                input_cmd = r'function input(): string { let X: any = input; X.L = X.L || require("fs").readFileSync(0).toString().split(/\r?\n/); return X.L.shift(); } '
+                input_tag = 'const input = () => ""; // MODO_TESTE\n'
+
+            inserted: bool = False
+            for line in lines:
+                match = False
+                if not inserted:
+                    filtered = "".join([c for c in line if c != " "])
+                    match = filtered.startswith(tag2) or line.startswith(tag)
+                if match:
+                    inserted = True
+                    io_source.write(input_tag)
+                    io_target.write(input_cmd)
+                else:
+                    io_source.write(line)
+                    io_target.write(line)
+
+            result = io_source.getvalue()
             if result != content:
-                with open(path, "w", encoding="utf-8") as f:
-                    f.write(result)
+                with open(origin, "w", encoding="utf-8") as f:
+                    f.write(io_source.getvalue())
+            with open(destiny, "w", encoding="utf-8") as f:
+                f.write(io_target.getvalue())
+            io_source.close()
+            io_target.close()
+        return new_files
 
     def __prepare_yaml(self):
         solver = os.path.abspath(self.path_list[0])
@@ -5170,11 +5170,7 @@ class SolverBuilder:
         if os.path.exists(copy_dir):
             shutil.rmtree(copy_dir)
         os.makedirs(copy_dir, exist_ok=True)
-        new_files: list[str] = []
-        for path in self.path_list:
-            shutil.copy(path, copy_dir)
-            new_files.append(os.path.join(copy_dir, os.path.basename(path)))
-        self.update_input_function(free_run_mode, new_files)
+        new_files = self.update_input_function(free_run_mode, self.path_list, copy_dir)
         transpiler = "npx"
         if os.name == "nt":
             transpiler += ".cmd"
@@ -5193,13 +5189,13 @@ class SolverBuilder:
             for source in new_files:
                 new_source_list.append(os.path.join(self.cache_dir, os.path.basename(source)[:-2] + "js"))
             self.set_executable("node " + " ".join(new_source_list))  # renaming solver to main
-    
+
     def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
         # solver = self.path_list[0]
         tempdir = self.cache_dir
         source_list = self.path_list
         # print("Using the following source files: " + str([os.path.basename(x) for x in source_list]))
-        
+
         exec_path = os.path.join(tempdir, ".a.out")
         cmd = pre_args + source_list + ["-o", exec_path] + pos_args
         return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
@@ -5236,7 +5232,6 @@ class SolverBuilder:
         if os.sep not in solver and os.path.isfile("." + os.sep + solver):
             solver = "." + os.sep + solver
         return solver
-    
 
 
 class UnitRunner:
@@ -9107,24 +9102,11 @@ class Title:
         return title
 class Drafts:
     ts_draft = r"""
-function input(): string { let X: any = input; X.L = X.L || require("fs").readFileSync(0).toString().split(/\r?\n/); return X.L.shift(); } // _TEST_ONLY_
-// function input(): string { let X: any = input; X.P = X.P || require("readline-sync"); return X.P.question() } // _FREE_ONLY_
-function write(text: any, endl="\n") { process.stdout.write("" + text + endl); }
+const input = () => ""; //essa função será gerada pelo TKO na execução
 export {};
 
 function main() {
-    write("qxcode");
-}
-main();
-"""[1:]
-
-    js_draft = r"""
-function input() { let X = input; X.L = X.L || require("fs").readFileSync(0).toString().split(/\r?\n/); return X.L.shift(); }  // _TEST_ONLY_
-// function input() { let X = input; X.P = X.P || require("readline-sync"); return X.P.question() }  // _FREE_ONLY_
-function write(text, endl="\n") { process.stdout.write("" + text + endl); }
-
-function main() {
-    write("qxcode");
+    console.log("qxcode");
 }
 main();
 """[1:]
@@ -9164,21 +9146,6 @@ public class draft {
         r'    fmt.Println("qxcode")''\n'
         r"}""\n"
     )
-
-    make_draft = r"""
-SRC = solver.cpp
-EXEC = .build/solver.out
-INPUT_FILE = .build/input.txt
-
-build: $(SRC)
-	g++ -Wall $(SRC) -o $(EXEC)
-
-# A entrada é coletada pelo cat
-# Depois é repassada para o executável
-run: $(EXEC)
-	@cat > $(INPUT_FILE)
-	./$(EXEC) < $(INPUT_FILE)
-"""[1:]
     
     yaml_draft = r"""
 build: comando para construir o executável
@@ -9186,7 +9153,7 @@ run: comando para rodar o programa
 """[1:]
 
 
-    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'js': js_draft, 'java': java_draft, 'go': go_draft, 'mk': make_draft}
+    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'java': java_draft, 'go': go_draft, 'yaml': yaml_draft}
 
 
 

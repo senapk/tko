@@ -1,5 +1,8 @@
 # Changelog
 
+- 2.4.1
+  - add: draft for ts fixed
+  - add: code for replace input in ts improved
 - 2.4.0
   - add: new input for typescript
 - 2.3.1
