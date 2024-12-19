@@ -78,7 +78,6 @@ class Filter:
             pos_marker, line = self.search_temp_mode(line)
             if pos_marker != "---":
                 marker = pos_marker
-                print("carregando pos_marker", marker)
 
             if marker == Mode.DEL:
                 continue

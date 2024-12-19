@@ -34,7 +34,7 @@ from abc import ABC, abstractmethod
 from subprocess import PIPE
 import unicodedata
 import chardet # type: ignore
-__version__ = "2.4.2"
+__version__ = "2.4.3"
 
 class CheckVersion:
 
@@ -5520,7 +5520,6 @@ class Filter:
             pos_marker, line = self.search_temp_mode(line)
             if pos_marker != "---":
                 marker = pos_marker
-                print("carregando pos_marker", marker)
 
             if marker == Mode.DEL:
                 continue
