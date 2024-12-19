@@ -1,5 +1,7 @@
 # Changelog
 
+- 2.4.2
+  - add: filter updated to // ADD! instead //ADD!
 - 2.4.1
   - add: draft for ts fixed
   - add: code for replace input in ts improved

@@ -1,10 +1,8 @@
-import enum
 import os
 import argparse
 from typing import Tuple
 import shutil
-
-from tko.util.decoder import Decoder
+from .decoder import Decoder
 
 class Mark:
     def __init__(self, marker, indent):
@@ -47,27 +45,28 @@ class Filter:
         return stripped != "" and left_spaces < self.get_indent()
 
     def has_single_mode_cmd(self, line: str) -> bool:
+        stripped = line.strip()
         for marker in Mode.opts:
-            if line.strip() == self.com + marker:
+            if stripped == self.com + " " + marker:
                 return True
         return False
 
     def change_mode(self, line: str):
         with_left = line.rstrip()
-        marker = with_left.lstrip()[len(self.com):]
-        len_spaces = len(with_left) - len(self.com + marker)
+        marker = with_left.lstrip()[len(self.com) + 1:]
+        len_spaces = len(with_left) - len(self.com + marker + " ")
         while len(self.stack) > 0 and self.stack[-1].indent >= len_spaces:
             self.stack.pop()
         self.stack.append(Mark(marker, len_spaces))
 
     def search_temp_mode(self, line: str) -> Tuple[str, str]:
         for marker in Mode.opts:
-            if line.endswith(self.com + marker):
-                return marker, line[:-len(self.com + marker)]
+            if line.rstrip().endswith(self.com + " " + marker):
+                return marker, line[:-len(self.com + marker + " ")]
         return "---", line
 
     def __process(self, content: str) -> str:
-        lines = content.splitlines(keepends=True)
+        lines = content.splitlines()
         output = []
         for line in lines:
             while self.outside_scope(line):
@@ -75,9 +74,11 @@ class Filter:
             if self.has_single_mode_cmd(line):
                 self.change_mode(line)
                 continue
-            pre_marker = self.get_marker()
+            marker = self.get_marker()
             pos_marker, line = self.search_temp_mode(line)
-            marker = pos_marker if pos_marker != "---" else pre_marker
+            if pos_marker != "---":
+                marker = pos_marker
+                print("carregando pos_marker", marker)
 
             if marker == Mode.DEL:
                 continue
@@ -93,7 +94,7 @@ class Filter:
                 line = " " * self.get_indent() + self.com + " " + line[self.get_indent():]
                 output.append(line)
 
-        return "".join(output)
+        return "\n".join(output) + "\n"
     
     def process(self, content: str) -> str:
         return self.__process(content)
@@ -105,7 +106,7 @@ def clean_com(target: str, content: str) -> str:
     return "\n".join(output)
 
 class DeepFilter:
-    extensions = [".md", ".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs", ".txt", ".go", "sh", ".cases", ".tio", ".vpl"]
+    extensions = [".md", ".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs", ".txt", ".go"]
 
     def __init__(self):
         self.cheat_mode = False
@@ -130,6 +131,7 @@ class DeepFilter:
         return self
 
     def copy(self, source, destiny, deep: int):
+        # print("debug", source, destiny, deep)
         if deep == 0:
             return
         if os.path.isdir(source):
@@ -145,6 +147,7 @@ class DeepFilter:
 
             if not any([filename.endswith(ext) for ext in self.extensions]):
                 return
+
             content = Decoder.load(source)
 
             processed = Filter(filename).process(content)
@@ -155,7 +158,6 @@ class DeepFilter:
                     Decoder.save(destiny, cleaned)
             elif processed != "":
                 Decoder.save(destiny, processed)
-            
 
             line = ""
             if self.cheat_mode:
