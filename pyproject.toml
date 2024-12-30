@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rota"
-version = "0.1.0"
+version = "1.0.0"
 description = "Add your description here"
 authors = [
     { name = "Seu Nome", email = "seuemail@example.com" }
@@ -13,9 +13,14 @@ license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "appdirs>=1.4.4",
+    "chardet>=5.2.0",
+    "diff-match-patch>=20241021",
+    "pydot>=3.0.3",
     "pytest>=8.3.4",
     "pyyaml>=6.0.2",
+    "uniplot>=0.16.2",
 ]
 
 [project.scripts]
-rota = "rota.hello:main"
+rota = "rota.__main__:main"
