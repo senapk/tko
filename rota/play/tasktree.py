@@ -122,9 +122,9 @@ class TaskTree:
         down_symbol = Token(" ")
         in_focus = focus_color != ""
         down_symbol = symbols.task_to_visit
-        if t.link_type == Task.Types.STATIC_FOLDER:
+        if t.link_type == Task.Types.STATIC_FILE:
             down_symbol = symbols.task_local
-        if t.link_type == Task.Types.IMPORT_REMOTE or t.link_type == Task.Types.IMPORT_FOLDER:
+        if t.link_type == Task.Types.REMOTE_FILE or t.link_type == Task.Types.IMPORT_FILE:
             down_symbol = symbols.task_to_download
             if self.is_downloaded_for_lang(t):
                 down_symbol = symbols.task_downloaded
@@ -605,7 +605,7 @@ class TaskTree:
     def get_task_action(self, task: Task) -> str:
         if task.link_type == Task.Types.VISITABLE_URL:
             return TaskAction.VISITAR
-        if task.link_type == Task.Types.STATIC_FOLDER:
+        if task.link_type == Task.Types.STATIC_FILE:
             return TaskAction.EXECUTAR
         else: # downloadable task
             if not self.is_downloaded_for_lang(task):
@@ -614,8 +614,6 @@ class TaskTree:
                 return TaskAction.EXECUTAR
             
     def is_downloaded_for_lang(self, task: Task):
-        with open("debug.txt", "a") as f:
-            f.write(f"task: {task.key}\n")
         folder = task.get_folder()
         lang = self.rep.get_lang()
         if folder is None:

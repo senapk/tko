@@ -1,0 +1,20 @@
+{
+    "patches": [
+        {
+            "label": "primeira",
+            "content": "hoje eh tempo de louvar a deus"
+        },
+        {
+            "label": "segunda",
+            "content": "Hoje eh tempo de louvar a Deus"
+        },
+        {
+            "label": "terceira",
+            "content": "Hoje eh tempo de louvar a Deus\nem nos habita seu espirito"
+        },
+        {
+            "label": "quarta",
+            "content": "oje eh tempo de louvar a Deus\nem nos habita seu espirito"
+        }
+    ]
+}

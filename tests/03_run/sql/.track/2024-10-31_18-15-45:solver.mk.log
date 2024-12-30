@@ -1,0 +1,10 @@
+SRC = solver.cpp
+EXEC = .build/solver.out
+INPUT_FILE = .build/input.txt
+
+build: $(SRC)
+
+# A entrada é coletada pelo cat
+# Depois é repassada para o executável
+run: $(EXEC) input
+	cat create.sql solver.sql | sqlite3

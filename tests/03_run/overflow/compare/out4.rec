@@ -1,0 +1,20 @@
+═══════════════════ Testando o código com os casos de teste ════════════════════
+=> Códigos:[exception.py] Testes:[cases.tio(01)] [ϵ]
+(ϵ erro_execução__)[00] GR:100 cases.tio ()
+╭──────────────────────────────────────────────────────────────────────────────╮
+│                 (ϵ erro_execução__)[00] GR:100 cases.tio ()                  │
+├────────────── INSERIDO ──────────────┬────────────── INSERIDO ───────────────┤
+│ 1                                    │ 1                                     │
+│ 2                                    │ 2                                     │
+│ 3                                    │ 3                                     │
+│ 4                                    │ 4                                     │
+├────────────── ESPERADO ──────────────┼────────────── RECEBIDO ───────────────┤
+│ 1                                    │ Traceback (most recent call last):    │
+│ 2                                    │   File "/home/lion/Dropbox/gits/tool  │
+│ 3                                    │     raise Exception("Out")            │
+│ 4                                    │ Exception: Out                        │
+├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
+│ 1↲                                  (esperado)                               │
+│ Traceback·(most·recent·call·last):↲ (recebido)                               │
+│ ↑                                   (primeiro)                               │
+╰──────────────────────────────────────────────────────────────────────────────╯

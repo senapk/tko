@@ -18,7 +18,7 @@ class Repository:
     DAILY_FILE = "daily.json"
     INDEX_FILE = "Readme.md"
     TRACK_FOLDER = "track"
-    CONFIG_FOLDER = ".tko"
+    CONFIG_FOLDER = ".rota"
 
     def __init__(self, folder: str):
         self.root_folder: str = folder

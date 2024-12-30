@@ -1,0 +1,26 @@
+═══════════════════ Testando o código com os casos de teste ════════════════════
+=> Códigos:[solver.py] Testes:[cases.tio(07)] [ω ω ω ✓ ω ω ✓]
+(ω saída_incorreta)[00] GR:014 cases.tio (duas raízes)
+(ω saída_incorreta)[01] GR:014 cases.tio (duas raízes)
+(ω saída_incorreta)[02] GR:014 cases.tio (uma raiz   )
+(✓ saída_correta__)[03] GR:014 cases.tio (sem raízes )
+(ω saída_incorreta)[04] GR:014 cases.tio (05         )
+(ω saída_incorreta)[05] GR:014 cases.tio (06         )
+(✓ saída_correta__)[06] GR:014 cases.tio (07         )
+╭──────────────────────────────────────────────────────────────────────────────╮
+│            (ω saída_incorreta)[00] GR:014 cases.tio (duas raízes)            │
+├────────────────────────────────── INSERIDO ──────────────────────────────────┤
+│ 1                                                                            │
+│ 2                                                                            │
+│ 3                                                                            │
+├────────────────────────────────── ESPERADO ──────────────────────────────────┤
+├ 0.44                                                                         │
+├ -5.07                                                                        │
+├────────────────────────────────── RECEBIDO ──────────────────────────────────┤
+├ nao ha raiz real                                                             │
+├                                                                              │
+├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
+│ 0.44↲             (esperado)                                                 │
+│ nao·ha·raiz·real↲ (recebido)                                                 │
+│ ↑                 (primeiro)                                                 │
+╰──────────────────────────────────────────────────────────────────────────────╯

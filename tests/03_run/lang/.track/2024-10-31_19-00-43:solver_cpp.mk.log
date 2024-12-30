@@ -1,0 +1,29 @@
+SRC = $(wildcard *.cpp)                      # Todos os arquivos .cpp do diretório atual
+BUILD_DIR = .build                            # Diretório para arquivos compilados
+OBJS = $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(SRC))  # Substitui .cpp por .build/.o
+EXEC = $(BUILD_DIR)/solver.out
+INPUT_FILE = $(BUILD_DIR)/input.txt
+
+CXXFLAGS = -std=c++17 -Wall -Werror                          # Flags de compilação para o g++
+
+# Regra para compilar o executável
+build: $(EXEC)
+
+# Compila o executável a partir dos objetos
+$(EXEC): $(OBJS)
+	mkdir -p $(BUILD_DIR)
+	g++ $(CXXFLAGS) $(OBJS) -o $(EXEC)
+
+# Regra para compilar cada .cpp em .o dentro de .build
+$(BUILD_DIR)/%.o: %.cpp
+	mkdir -p $(BUILD_DIR)
+	g++ $(CXXFLAGS) -c $< -o $@
+
+# Regra para rodar o programa
+run: $(EXEC)
+	@cat > $(INPUT_FILE)
+	./$(EXEC) < $(INPUT_FILE)
+
+# Limpa os arquivos .o e o executável
+clean:
+	rm -f $(OBJS) $(EXEC)

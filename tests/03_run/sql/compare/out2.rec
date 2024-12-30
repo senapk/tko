@@ -1,0 +1,17 @@
+═══════════════════ Testando o código com os casos de teste ════════════════════
+=> Códigos:[solver.yaml] Testes:[wrong.tio(01)] [ω]
+(ω saída_incorreta)[00] GR:100 wrong.tio ()
+╭──────────────────────────────────────────────────────────────────────────────╮
+│                 (ω saída_incorreta)[00] GR:100 wrong.tio ()                  │
+├────────────── INSERIDO ──────────────┬────────────── INSERIDO ───────────────┤
+├────────────── ESPERADO ──────────────┼────────────── RECEBIDO ───────────────┤
+│ 1|Átila Augusto|Rua Pé de Pano|Porto │ 1|Átila Augusto|Rua Pé de Pano|Porto  │
+│ 2|Antônio Carlos Mamel|Av. Pinheiros │ 2|Antônio Carlos Mamel|Av. Pinheiros  │
+│ 3|Luiza Augusta Mhor,|Rua Salto Gran │ 3|Luiza Augusta Mhor,|Rua Salto Gran  │
+├ 4|Jane Este|Av 7 de setembro|Erechim ├ 4|Jane Ester|Av 7 de setembro|Erechi  │
+│ 5|Marcos Antônio dos Santos|Av Farra │ 5|Marcos Antônio dos Santos|Av Farra  │
+├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
+│ 4|Jane·Este|Av·7·de·setembro|Erechim|RS|800↲  (esperado)                     │
+│ 4|Jane·Ester|Av·7·de·setembro|Erechim|RS|800↲ (recebido)                     │
+│            ↑                                  (primeiro)                     │
+╰──────────────────────────────────────────────────────────────────────────────╯

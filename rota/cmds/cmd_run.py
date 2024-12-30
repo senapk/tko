@@ -322,10 +322,8 @@ class Run:
         percent = (len(correct) * 100) // len(self.wdir.get_unit_list())
         if self.__task is None:
             return
-        print("debug task existe")
         if self.__track_folder == "":
             return
-        print("debug task track folder existe")
         Logger.get_instance().record_test_result(self.get_task().key, percent)
         tracker = Tracker()
         tracker.set_folder(self.__track_folder)

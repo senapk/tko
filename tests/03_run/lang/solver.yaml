@@ -1,0 +1,2 @@
+build: g++ -Wall -std=c++17 main.cpp lib.cpp -o solver.out
+run: ./solver.out

@@ -134,9 +134,9 @@ class CmdDown:
 
     def execute(self) -> bool:
         task = self.rep.game.get_task(self.task_key)
-        if task.link_type == Task.Types.IMPORT_REMOTE:
+        if task.link_type == Task.Types.REMOTE_FILE:
             return self.download_from_url(task.link)
-        if task.link_type == Task.Types.IMPORT_FOLDER:
+        if task.link_type == Task.Types.IMPORT_FILE:
             return self.download_from_external_file(task.link)
         DownProblem.fnprint("falha: link para atividade não possui link para download")
         return False

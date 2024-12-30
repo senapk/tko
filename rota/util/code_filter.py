@@ -130,7 +130,6 @@ class DeepFilter:
         return self
 
     def copy(self, source, destiny, deep: int):
-        # print("debug", source, destiny, deep)
         if deep == 0:
             return
         if os.path.isdir(source):

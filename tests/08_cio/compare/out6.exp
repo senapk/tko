@@ -1,0 +1,29 @@
+════ Testando o código com os casos de teste ═════
+=> Códigos:[empty.py] Testes:[_calc2.tio(11)] [ω ω ω ω ω ω ω ω ω ω ω]
+(ω saída_incorreta)[00] GR:009 _calc2.tio (iniciar mostrar e recarregar       )
+(ω saída_incorreta)[01] GR:009 _calc2.tio (charge                             )
+(ω saída_incorreta)[02] GR:009 _calc2.tio (boundary                           )
+(ω saída_incorreta)[03] GR:009 _calc2.tio (reset                              )
+(ω saída_incorreta)[04] GR:009 _calc2.tio (somando                            )
+(ω saída_incorreta)[05] GR:009 _calc2.tio (gastando bateria                   )
+(ω saída_incorreta)[06] GR:009 _calc2.tio (sem bateria                        )
+(ω saída_incorreta)[07] GR:009 _calc2.tio (recarregando                       )
+(ω saída_incorreta)[08] GR:009 _calc2.tio (dividindo                          )
+(ω saída_incorreta)[09] GR:009 _calc2.tio (dividindo por zero gastando bateria)
+(ω saída_incorreta)[10] GR:009 _calc2.tio (gastando bateria                   )
+╭────────────────────────────────────────────────╮
+│(ω saída_incorreta)[00] GR:009 _calc2.tio (inici│
+├────── INSERIDO ───────┬────── INSERIDO ────────┤
+│ init 5                │ init 5                 │
+│ show                  │ show                   │
+│ end                   │ end                    │
+├────── ESPERADO ───────┼────── RECEBIDO ────────┤
+├ $init 5               ├                        │
+├ $show                 ├                        │
+├ display = 0.00, batte ├                        │
+├ $end                  ├                        │
+├─────────────────── DESIGUAL ───────────────────┤
+│ $init·5↲ (esperado)                            │
+│ ↲        (recebido)                            │
+│ ↑        (primeiro)                            │
+╰────────────────────────────────────────────────╯

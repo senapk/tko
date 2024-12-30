@@ -14,9 +14,9 @@ class Task(TreeItem):
     class Types(enum.Enum):
         UNDEFINED = 0
         VISITABLE_URL = 1
-        STATIC_FOLDER = 2 # static folder inside database
-        IMPORT_REMOTE = 3 # url link do download file
-        IMPORT_FOLDER = 4 # source folder outside database to import files
+        STATIC_FILE = 2 # static folder inside database
+        REMOTE_FILE = 3 # url link do download file
+        IMPORT_FILE = 4 # source folder outside database to import files
 
         def __str__(self):
             return self.name
@@ -247,25 +247,25 @@ class TaskParser:
             raise Warning(f"Chave não definida para tarefa: {link}")
 
         if link.startswith("http:") or link.startswith("https:"):
-            task.set_folder(os.path.join(self.database_folder, task.key))
-            task.link_type = Task.Types.IMPORT_REMOTE
+            task.set_folder(os.path.relpath(os.path.join(self.database_folder, task.key)))
+            task.link_type = Task.Types.REMOTE_FILE
             return
 
         if not os.path.isabs(link):
             basedir = os.path.dirname(self.index_path)
             link = os.path.join(basedir, link)
-            task.link = link
+            task.link = os.path.relpath(link)
         # verify if file exists
         # update link using index_path to update de relative path
         if not os.path.isfile(link):
             raise Warning(f"Arquivo não encontrado: {link}")
 
         # verify if file is inside database_folder/folder
-        task_folder = os.path.abspath(os.path.join(self.database_folder, task.key))
-        task.set_folder(task_folder)
-        if link.startswith(task_folder):
-            task.link_type = Task.Types.STATIC_FOLDER
+        abs_task_folder = os.path.abspath(os.path.join(self.database_folder, task.key))
+        task.set_folder(os.path.relpath(abs_task_folder))
+        if link.startswith(abs_task_folder):
+            task.link_type = Task.Types.STATIC_FILE
             return
         
-        task.link_type = Task.Types.IMPORT_FOLDER
+        task.link_type = Task.Types.IMPORT_FILE
         return

@@ -1,0 +1,73 @@
+>>>>>>>> INSERT iniciar mostrar e recarregar
+init 5
+show
+charge 3
+show
+charge 1
+show
+end
+======== EXPECT
+$init 5
+$show
+display = 0.00, battery = 0
+$charge 3
+$show
+display = 0.00, battery = 3
+$charge 1
+$show
+display = 0.00, battery = 4
+$end
+<<<<<<<< FINISH
+
+>>>>>>>> INSERT boundary
+init 5
+show
+charge 3
+show
+charge 1
+show
+charge 2
+show
+end
+======== EXPECT
+$init 5
+$show
+display = 0.00, battery = 0
+$charge 3
+$show
+display = 0.00, battery = 3
+$charge 1
+$show
+display = 0.00, battery = 4
+$charge 2
+$show
+display = 0.00, battery = 5
+$end
+<<<<<<<< FINISH
+
+
+>>>>>>>> INSERT novo teste
+init 10
+show
+charge 3
+show
+charge 1
+show
+charge 2
+show
+end
+======== EXPECT
+$init 10
+$show
+display = 0.00, battery = 0
+$charge 3
+$show
+display = 0.00, battery = 3
+$charge 1
+$show
+display = 0.00, battery = 4
+$charge 2
+$show
+display = 0.00, battery = 5
+$end
+<<<<<<<< FINISH

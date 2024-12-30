@@ -77,7 +77,7 @@ class PlayActions:
         obj = self.tree.get_selected_throw()
         if isinstance(obj, Task):
             task: Task = obj
-            if task.link_type == Task.Types.VISITABLE_URL or task.link_type == Task.Types.IMPORT_REMOTE:
+            if task.link_type == Task.Types.VISITABLE_URL or task.link_type == Task.Types.REMOTE_FILE:
                 try:
                     self.open_link_without_stdout_stderr(task.link)
                 except Exception as _:
@@ -152,7 +152,7 @@ class PlayActions:
         self.__down_remote_task(obj)
     
     def __down_remote_task(self, task: Task):
-        if task.link_type != Task.Types.IMPORT_REMOTE and task.link_type != Task.Types.IMPORT_FOLDER:
+        if task.link_type != Task.Types.REMOTE_FILE and task.link_type != Task.Types.IMPORT_FILE:
             self.fman.add_input(
                 Floating("v>").put_text("\nEssa não é uma tarefa de baixável.\n").error()
             )

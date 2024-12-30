@@ -1,0 +1,530 @@
+# Changelog
+
+- 2.5.4
+  - change task info in repo to {} key value string
+- 2.5.3
+  - settings.json moved to settings.yaml
+- 2.5.2
+  - task types refactored to # and @
+  - remote source from rep can be url, inside readme or outside readme
+  - task source can be static inside database, remote url or import from outside database folder
+  - history store pick and back actions
+  - rm draft old pattern outside mapi.json
+- 2.5.1
+  - add: pipx message
+  - add: better bars for understanding
+- 2.5.0
+  - add: task graph at the side of the tree task
+- 2.4.3
+  - add: filter updated to // ADD! instead //ADD!
+- 2.4.1
+  - add: draft for ts fixed
+  - add: code for replace input in ts improved
+- 2.4.0
+  - add: new input for typescript
+- 2.3.1
+  - fix: error in search
+- 2.3.0
+  - add: new evaluate menu
+- 2.2.3
+  - fix: change diff mode
+- 2.2.2
+  - refactor tasktree with yellow markers for dependencies
+- 2.2.0
+  - refactor tasktree quest dependencies
+- 2.1.0
+  - tester screen refactored and interactive mode improved
+- 2.0.5
+  - fix: main image owl
+  - fix: stop open cases.tio in opener
+- 2.0.4
+  - fix: critical error in search
+  - fix: error sending { } as output of program
+- 2.0.3
+  - fix: fix version migration
+- 2.0.2
+  - fix: small error in init
+- 2.0.1
+  - fix: critical bug initializing rep with remote source
+- 2.0.0
+  - fix: open rep with json error
+  - fix: open history.csv with git diff markers
+  - fix: rename remote to database
+  - fix: change repository.json to repository.yaml
+  - fix: grade message feedback
+  - fix: colors and order in task view
+- 1.9.4
+  - fix: rec folder search in play
+  - fix: filter mode eating last new line
+- 1.9.3
+  - fix: tracker storing percentage using ljust instead rjust
+  - fix: changed symbol to focus test case to ()
+  - fix: dealing with crlf in windows
+  - fix: adding -Wno-deprecated to c++ compiler
+- 1.9.2
+  - add: removed global folders, only cmds tko init and tko play are avaliable now
+- 1.9.1
+  - add: dependence mismatch
+- 1.9.0
+  - add: tracker now uses incremental patches do store changes in a single json per file
+- 1.8.6
+  - fix: change esbuild command to npx esbuild to allow local instalation
+- 1.8.5
+  - fix: interactive msg
+- 1.8.4
+  - fix: rewriting ts and js files without changes in tracking
+- 1.8.3
+  - fix: searching error if empty entry
+- 1.8.1
+  - add: splitlines instead split("\n")
+- 1.8.0
+  - add: yaml file to support any language
+  - rm: old description in Readme
+- 1.7.1
+  - fix: image shortcuts
+  - fix: better error msg for start and play
+- 1.7.0
+  - fix: regex loading pattern for tio
+  - refactor: pytests
+- 1.6.2
+  - fix: encoding error
+- 1.6.1
+  - fix: progress cache invalidation on logger
+- 1.6.0
+  - add: added daily.json to keep track of daily progress
+- 1.5.0
+  - add: refactored local repositories and commands
+- 1.4.3
+  - fix: downloading required, keep and upload
+- 1.4.2
+  - fix: removing debug messages
+- 1.4.1
+  - fix: cases with simple readme mode in play
+- 1.4.0
+  - fix: removing tracker from cmds
+  - fix: ajusting tracker extensions
+  - add: activate change label according with task action
+  - fix: diff with test --all
+- 1.3.4
+  - fix: regex error in windows
+- 1.3.3
+  - add: version in repository.cfg
+  - add: tko rep upgrade folder
+- 1.3.2
+  - add: readme.md to autoload testes if any .tio, .vpl or .cases file is found
+- 1.3.1
+  - add: simple model to describe readme tasks, quests and clusters
+  - fix: tasks without quest or cluster added in unamed quests and clusters
+- 1.3.0
+  - add: local rep mode
+  - fix: filter mode
+- 1.2.2
+  - fix: regex improved for .vpl files
+- 1.2.1
+  - add: change .cache to .tko_cache
+- 1.2.0
+  - fix: self reference bug in quests
+- 1.1.4
+  - add: refactor filter mode and pattern
+- 1.1.0
+  - refactor: down
+  - update: quest and task parsers and models
+- 1.0.1
+  - add: support to old tio model
+- 1.0.0
+  - add: changed tio model to #INPUT, #OUTPUT, #END
+- 0.35.2
+  - add: mass mark on palette
+  - fix: bug in search mode when no results
+  - fix: bug in search mode when need activate admin
+  - fix: bug in admin mode frame color
+- 0.35.1
+  - rm: bug in set language
+- 0.35.0
+  - rm. removed dependence from graphviz using pydot instead
+- 0.34.2
+  - add: better search mode
+- 0.34.1
+  - add: small bug fixes
+- 0.34.0
+  - add: command palette
+- 0.33.0
+  - add: self grade
+- 0.32.0
+  - add: message with self grade meaning
+- 0.31.0
+  - add: log mode enabled
+- 0.30.0
+  - add: time and diff view in tester arrow
+- 0.29.0
+  - add: improved drafts for ts and js
+- 0.28.0
+  - add: config options to borders and hud
+- 0.27.0
+  - fix: removed ts-node dependence
+  - add: change go command to test command
+- 0.26.0
+  - add: auto change mode in diff or free for typescript and javascript
+- 0.25.1
+  - fix: golang support multifiles
+- 0.25.0
+  - add: ts-node and readline-sync support for typescript
+- 0.24.4
+  - add: check update function
+- 0.24.3
+  - fix: many small desing features
+  - add: editor command working in run
+  - refactor: editor command
+- 0.24.0
+  - add: new config mode
+- 0.23.7
+  - fix: message to choose rep
+- 0.23.6
+  - fix: webbroser msgs on screen
+- 0.23.5
+  - refactor: style using self, pcolor class created
+- 0.23.3
+  - refactor: play_actions
+  - refactor: search
+  - add: graph
+- 0.23.2
+  - add: update border symbol for non nerdfonts
+  - fix: entering cdiff after quit
+  - add: min value for max_title
+- 0.23.1
+  - fix: remove default borders for linux
+- 0.23.0
+  - change Principal apperence in cdiff
+- 0.22.9
+  - add: disable fortune messages
+- 0.22.8
+  - fix: new items bug
+- 0.22.7
+  - fix: reset solver in run
+- 0.22.6
+  - refactor: settings files
+- 0.22.5
+  - fix: esc_delay for windows
+- 0.22.4
+  - add: tko run skip intro
+- 0.22.3
+  - fix: fix in cdiff help
+- 0.22.2
+  - add: go to end of the diff auto
+  - fix: timeout 0
+  - add: button align
+- 0.22.0
+  - add: small align fixes
+- 0.21.4
+  - add: small fixed when no internet
+- 0.21.3
+  - add: search mode with tree joins
+- 0.21.1
+  - add: random images on opening
+- 0.21.0
+  - add: auto ajustment in config and inventary bar
+- 0.20.8
+  - search finished
+- 0.20.6
+  - border default for linux
+  - align of buttons in other mode
+- 0.20.1
+  - add: timeout to execution
+- 0.20.0
+  - add: lock unit to test
+- 0.19.6
+  - add: floating if trying download without internet
+  - add: after success, dont focus unit
+- 0.19.5
+  - add: command not found open as a floating
+- 0.19.4
+  - add: better msg after open code command
+  - fix: cdiff showing focused unit only in wrong output
+- 0.19.3
+  - add: better error dealing when compiler not found
+- 0.19.2
+  - fix: enconding for windows downloading
+- 0.19.1
+  - fix: error in compile mode
+- 0.18.9
+  - add: changind default editor to open files instead folder
+- 0.18.8
+  - fix: improved help message on opening
+- 0.18.7
+  - fix: tko run loading wrong files
+- 0.18.6
+  - fix: error opening new rep
+- 0.18.4
+  - add: fix align bottom bar
+  - add: fix scrollbar
+- 0.18.3
+  - add: changing increase and decrease to + e -
+- 0.18.1
+  - add: cache mode
+- 0.17.5
+  - add: tasks show progress
+  - add: [] used to increase and decrease grade
+- 0.17.4
+  - fix: free run mode missing
+- 0.17.2
+  - add: added golang support
+  - add: improved drafts for all languages
+- 0.17.0
+  - fix: compilling error on play
+  - fix: missing entries on keys
+  - add: open folder on replit and pc using code
+  - add: geral settings with editor option
+- 0.16.0
+  - add: select main file in play
+  - add: loop in exec mode
+- 0.15.7
+  - add: auto update on replit
+  - add: xpbar moved to top
+- 0.15.6
+  - add: saving index on rep
+  - add: change message for control D in Windows
+- 0.15.5
+  - add: adding rounded corners using nerdfonts and mono color
+- 0.15.4
+  - add: each rep has his own json file inside rep folder
+- 0.15.3
+  - fix: bug on play loading errors in wrong order
+- 0.15.2
+  - add: filter solver in autoload by rep language
+  - add: show downloaded in play only if selected language was found
+  - add: rebuild wdir for better error dealing
+- 0.15.0
+  - add: compilling msgs in execution and testing
+- 0.14.8
+  - fix:.format fix
+- 0.14.7
+  - add: free run mode on play
+- 0.14.5
+  - add: cdiff show first the errors, and show count while processing
+- 0.14.4
+  - add: changing filter name to filter_code
+- 0.14.0
+  - add: tko fortune on play quit
+  - add: key not found in play mode
+- 0.13.5
+  - add: tko down downloads to rootdir instead localdir
+- 0.13.1
+  - add: help msg improved
+- 0.13.0
+  - add: root and lang set by default in replit
+- 0.12.16
+  - fix: showing path in run based in cases.tio
+- 0.12.15
+  - fix: removing .h from autoloading
+- 0.12.14
+  - fix: adjustments in interface
+- 0.12.2
+  - fix: lutil c compiler on windows
+- 0.12.1
+  - fix: down error in print
+- 0.12.0
+  - add: better warnings
+- 0.11.9
+  - add: help improved
+- 0.11.8
+  - add: color for help bar improved
+  - add: if rep empty, show help in start
+- 0.11.6
+  - add: playrun integrated
+- 0.11.5
+  - add: visual dots for incomplete path
+- 0.11.3
+  - fix: default settings
+- 0.11.1
+  - fix: help in play mode bug
+- 0.11.0
+  - add: tests using pytest
+  - run with curses polished
+- 0.10.3
+  - add: run in curses mode
+- 0.9.93
+  - add: down working with curses and with print
+- 0.9.7
+  - add: curses as requirement
+  - add: Input class for errors
+- 0.9.6
+  - add: adaptative frame mode
+- 0.9.0
+  - add: frame mode improved
+- 0.8.7
+  - fix: missing __init__py for run module
+- 0.8.6
+  - fix: module dependencies
+- 0.8.5
+  - add: subfolders and color fix
+- 0.8.0
+  - add: curses mode on tko play
+- 0.7.2
+  - fix: not loading case names
+- 0.7.1
+  - fix: error loading coding tasks
+- 0.7.0
+  - add: color adjustments
+- 0.6.13
+  - fix: better error msgs in parsing quests
+  - fix: Optional instead | None
+- 0.6.12
+  - fix: 3.10 compatibility
+- 0.6.11
+  - add: opt mode
+- 0.6.9:
+  - fix: 3.8 compatibility
+- 0.6.7
+  - fix: error imports
+- 0.6.6
+  - fix: clear for windows
+- 0.6.5
+  - fix: skills count
+- 0.6.4
+  - add: basic xp features
+- 0.6.3
+  - add: rotate quest text
+- 0.6.2
+  - add: graph with textcolor white black for opt
+  - fix: change italic to opt
+- 0.6.1
+  - add: total xp
+- 0.6.0
+  - fix: minimum requirement
+  - fix: opt in tasks
+  - add: global root for tko
+  - add: small improvements in interface
+- 0.5.9
+  - add: png mode in graph for default
+- 0.5.8
+  - fix: quests parser with tags
+  - add: change in play view, tmin changes color on marks
+  - fix: graph view
+- 0.5.7
+  - add: counter and perc moved to the right
+- 0.5.6
+  - add: graph mode standalone and inside play
+- 0.5.4
+  - add: separator in Complete|Iniciado|Pendente
+- 0.5.3
+  - fix: task cut to term size
+- 0.5.2
+  - fix ascii and color
+- 0.5.1
+  - fix: windows compatibility
+  - add: small improvements in visual guides
+- 0.5.0
+  - add: repo mode
+  - add: play mode
+  - add: settings update
+- 0.4.2
+  - fix: removed debug on down
+  - add: improved description
+- 0.4.1
+  - fix: removing duplicated parameters in run command
+- 0.4.0
+- 0.3.9
+  - fix: down dont create src folder
+- 0.3.8
+  - fix: filter mode calling filter command from feno package
+- 0.3.7
+  - fix: filter mode with empty files
+  - fix: action class to poo mode
+  - fix: remove auto select entry point for java and typescript
+  - fix: remove download keep and required from config to use drafts only
+- 0.3.6
+  - add compact mode to run
+- 0.3.5:
+  - update filter mode
+- 0.3.4:
+  - cio mode update parser
+- 0.3.3:
+  - improved filter mode for fun
+  - fixed bud in grade reduction show for build a .tio file
+- 0.3.2:
+  - search for "public static void main" in multi file java solvers
+  - search for file without "export" in multi file typescript solvers
+- 0.3.1:
+  - update filter class
+- 0.3.0:
+  - multi-file tko download
+- 0.2.8:
+  - search for "public static void main" in multi file java solvers
+  - only filter and copy source files
+- 0.2.7:
+  - Filter mode updated to only source files and all source files in folder
+- 0.2.6:
+  - Guides updated: tko -g and tko -b
+  - Added filter mode on run command to make it easier to create problems and drafts
+  - Creating a replit version without dependencies
+- 0.2.5: 11/mar/2024
+  - remove folder if empty and no problem has been downloaded
+  - fix bashrc for replit
+- 0.2.4: 11/mar/2024
+  - new improvements on guide and config
+  - fix: error in message when problem without draft was downloaded
+- 0.2.3: 11/mar/2024
+  - new improvements on guide and config
+  - updating config
+- 0.2.2
+  - removing \[local][home] option
+  - adding \[local][lang] for default extension language
+- 0.2.1
+  - improving SettingsParser
+  - creating entry \[LOCAL][home] in settings for problems directory
+  - adding config --home to set home directory
+- 0.2.0
+  - use up_down diff auto if term size is low
+  - rename from solver. to draft.
+  - added min_term_size config
+  - change down to "down course activity -l language"
+- 0.1.9
+  - change name in diff from MISMATCH to WHITESPACE
+  - fixing encoding problems in windows
+- 0.1.8
+  - remove ├ marks in execution errors
+- 0.1.7
+  - removed resume from free run
+  - added sqlite3 native support
+  - fixed unequal char to ├
+  - remove mismatch field in execution errors
+- 0.1.6
+  - flushing after each execution
+  - support for bash commands in run
+  - more test cases
+  - fixed unequal char to ╪, that looks better than ≠
+- 0.1.5
+  - fixed draft for typescript
+- 0.1.4
+  - fixed acesso invalido no caso de não haver erro de execução
+- 0.1.3
+  - fixed diff first failure mode
+- 0.1.2
+  - added tko config -d to change default diff mode
+  - added tko run \[--updown | --sideby] to select diff mode
+  - added more tests for run mode
+  - checking if target files exist before run
+  - integrating list, exec and run in tko
+  - disabling update subcommand
+- 0.1.1
+  - added -m monocolor option
+  - improved layout for both diff
+- 0.1.0
+  - added bash guide with -b
+  - added tko guide with -g
+- 0.0.9
+  - removed tab from wdir.resume
+  - fixed type in whitespace
+  - added mismatch arrow
+  - added -g option to show simple guide
+- 0.0.8
+  - add colors in diff inside the line
+- 0.0.7
+  - fix esbuild incompatibility in windows
+- 0.0.6
+  - fix wls incompatibility
+- 0.0.5
+  - adding draft models to down
+  - removing conversion in js and ts entry code
+  - adding --config to tko
+  - changing @ for _ in downloaded problems folder name

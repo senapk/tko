@@ -1,0 +1,20 @@
+{
+    "patches": [
+        {
+            "label": "primeira",
+            "content": "@@ -1,5 +1,5 @@\n-H\n+h\n oje \n@@ -23,8 +23,8 @@\n r a \n-D\n+d\n eus\n"
+        },
+        {
+            "label": "segunda",
+            "content": "@@ -27,31 +27,4 @@\n Deus\n-%0Aem nos habita seu espirito\n"
+        },
+        {
+            "label": "terceira",
+            "content": "@@ -1,8 +1,9 @@\n+H\n oje eh t\n"
+        },
+        {
+            "label": "quarta",
+            "content": "oje eh tempo de louvar a Deus\nem nos habita seu espirito"
+        }
+    ]
+}

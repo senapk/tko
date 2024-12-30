@@ -1,0 +1,26 @@
+═══════════════════ Testando o código com os casos de teste ════════════════════
+=> Códigos:[draft.ts] Testes:[cases.tio(10)] [ω ω ω ω ω ω ω ω ω ω]
+(ω saída_incorreta)[00] GR:010 cases.tio (inicializar      )
+(ω saída_incorreta)[01] GR:010 cases.tio (entrar           )
+(ω saída_incorreta)[02] GR:010 cases.tio (limite           )
+(ω saída_incorreta)[03] GR:010 cases.tio (sair             )
+(ω saída_incorreta)[04] GR:010 cases.tio (limite saida     )
+(ω saída_incorreta)[05] GR:010 cases.tio (abastecer        )
+(ω saída_incorreta)[06] GR:010 cases.tio (dirigir vazio    )
+(ω saída_incorreta)[07] GR:010 cases.tio (dirigir          )
+(ω saída_incorreta)[08] GR:010 cases.tio (para longe       )
+(ω saída_incorreta)[09] GR:010 cases.tio (enchendo o tanque)
+╭──────────────────────────────────────────────────────────────────────────────╮
+│         (ω saída_incorreta)[00] GR:010 cases.tio (inicializar      )         │
+├────────────── INSERIDO ──────────────┬────────────── INSERIDO ───────────────┤
+│ show                                 │ show                                  │
+│ end                                  │ end                                   │
+├────────────── ESPERADO ──────────────┼────────────── RECEBIDO ───────────────┤
+│ $show                                │ $show                                 │
+├ pass: 0, gas: 0, km: 0               ├ pass: 0, gas: 1, km: 0                │
+│ $end                                 │ $end                                  │
+├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
+│ pass:·0,·gas:·0,·km:·0↲ (esperado)                                           │
+│ pass:·0,·gas:·1,·km:·0↲ (recebido)                                           │
+│               ↑         (primeiro)                                           │
+╰──────────────────────────────────────────────────────────────────────────────╯
