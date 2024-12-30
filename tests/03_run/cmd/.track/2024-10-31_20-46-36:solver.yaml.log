@@ -1,2 +1,0 @@
-build: make
-run: .build/solver.out
