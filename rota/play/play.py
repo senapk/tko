@@ -25,7 +25,7 @@ from .functors import FlagFunctor, GradeFunctor
 import os
 import curses
 
-class Play:
+class Open:
     def __init__(self, settings: Settings, rep: Repository):
         self.settings = settings
         self.app = settings.app

@@ -1,5 +1,7 @@
 # Changelog
 
+- 2.5.5
+  - fix: windows curses using pyproject.toml
 - 2.5.4
   - change task info in repo to {} key value string
 - 2.5.3

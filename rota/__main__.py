@@ -7,7 +7,7 @@ from rota.util.text import Text
 from rota.util.decoder import Decoder
 
 from rota.cmds.cmd_rep import CmdRep
-from rota.cmds.cmd_play import CmdPlay
+from rota.cmds.cmd_play import CmdOpen
 from rota.cmds.cmd_down import CmdDown
 from rota.cmds.cmd_run import Run
 from rota.cmds.cmd_build import CmdBuild
@@ -84,7 +84,7 @@ class Main:
         rec_folder = Repository.rec_search_for_repo(folder)
         if rec_folder != "":
             folder = rec_folder
-        CmdPlay(settings).load_folder(folder).execute()
+        CmdOpen(settings).load_folder(folder).execute()
         CheckVersion().version_check()
 
     @staticmethod

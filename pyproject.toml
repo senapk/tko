@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rota"
-version = "1.0.2"
+version = "2.5.5"
 description = "Add your description here"
 authors = [
     { name = "Seu Nome", email = "seuemail@example.com" }
@@ -20,6 +20,7 @@ dependencies = [
     "pytest>=8.3.4",
     "pyyaml>=6.0.2",
     "uniplot>=0.16.2",
+    "windows-curses; platform_system=='Windows'"
 ]
 
 [project.scripts]

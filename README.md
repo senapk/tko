@@ -3,9 +3,9 @@
   "MD041": false
 } -->
 
-# tko
+# ROTA
 
-O TKO é um sistema de testes para programação competitiva. Ele é capaz de rodar testes em várias linguagens de programação e em vários formatos de testes. Ele está integrado com os repositórios de atividades das disciplinas de programação da UFC de Quixadá permitindo baixar as atividades e rodar os testes.
+O ROTA é um sistema de testes para programação competitiva. Ele é capaz de rodar testes em várias linguagens de programação e em vários formatos de testes. Ele está integrado com os repositórios de atividades das disciplinas de programação da UFC de Quixadá permitindo baixar as atividades e rodar os testes.
 
 - [FUP - Fundamentos de Programação](https://github.com/qxcodefup/arcade)
 - [ED - Estrutura de Dados](https://github.com/qxcodeed/arcade)
@@ -13,7 +13,22 @@ O TKO é um sistema de testes para programação competitiva. Ele é capaz de ro
 
 ## Instalação
 
-### Windows
+### Windows SEM WSL
+
+- Instale o python pelo instalador do site oficial.
+- Marque a caixinha opção para adicionar o python ao path quando for instalar. `Add python.exe to PATH`
+- Abra o powershell e digite:
+
+```bash
+pip install pipx
+pipx install rota
+pipx ensurepath
+```
+
+- Reinicie o powershell. Sempre que quiser atualizar o `rota`, basta executar o comando `pipx upgrade rota`.
+- Sem o WSL, você precisará instalar manualmente os compiladores que precisar, por exemplo, o `g++` para C++, o `javac` para Java, o `python` para Python e o `node e npm` para Typescript.
+
+### Windows via WSL
 
 - Vamos instalar o WSL. Abra o powershell e digite
 
@@ -34,41 +49,41 @@ code .
 
 - Esse comando irá instalar os componenetes necessários para abrir o vscode pelo wsl.
 - Agora, sempre que quiser abrir um repositório, abra o terminal do ubuntu, navegue até a pasta do repositório e execute o comando `code .`
-- Vamos seguir para falta o tko e os compiladores no seu novo linux ubuntu no wsl.
+- Vamos seguir para falta o ROTA e os compiladores no seu novo linux ubuntu no wsl.
 
-### Instalando o Python, pipx e o tko e ferramentas básicas de desenvolvimento
+### Instalando o Python, pipx e o ROTA e ferramentas básicas de desenvolvimento
 
 #### Windows com WSL e Ubuntu
 
 ```bash
-sudo apt update && sudo apt install -y build-essential pipx && pipx install tko
+sudo apt update && sudo apt install -y build-essential pipx && pipx install rota
 ```
 
 #### Arch Linux e Derivados
 
 ```bash
-sudo pacman -S --noconfirm base-devel python-pipx && pipx install tko
+sudo pacman -S --noconfirm base-devel python-pipx && pipx install rota
 ```
 
 #### Codespaces
 
 ```bash
-sudo apt update && sudo apt install -y python3-pip && pip install pipx && pipx install tko
+sudo apt update && sudo apt install -y python3-pip && pip install pipx && pipx install rota
 ```
 
-### Adicionando o tko no path
+### Adicionando o rota no path
 
 ```bash
 # adicione o path do pip para o bash
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 ```
 
-## Atualizando seu tko
+## Atualizando o rota
 
-Para atualizar o tko para versão mais recente, basta executar o comando:
+Para atualizar o rota para versão mais recente, basta executar o comando:
 
 ```bash
-pipx upgrade tko          # codespace, arch, ubuntu e wsl
+pipx upgrade rota          # windows, codespace, arch, ubuntu e wsl
 ```
 
 ## Instalando os compiladores
@@ -103,12 +118,12 @@ Os `[]` e `<>` indicam onde devem ser colocados os parâmetros. Os `|` indicam o
 
 ```bash
 # primeiro crie um repositório local na pasta local
-tko init --remote [poo | fup | ed]
-# exemplo tko init --remote fup
+rota init --remote [poo | fup | ed]
+# exemplo rota init --remote fup
 
 # agora abra o repositório para interagir com ele
-tko open <pasta_do_repositório>
-# exemplo: tko open fup
+rota open <pasta_do_repositório>
+# exemplo: rota open fup
 
 ```
 
@@ -138,7 +153,7 @@ Se preferir trabalhar com o modelo de testes em arquivos separados, você pode d
 
 ```bash
 $ mkdir pasta
-$ tko build pasta cases.tio
+$ rota build pasta cases.tio
 $ ls pasta
 00.in 00.sol 01.in 01.sol 02.in 02.sol 03.in 03.sol 04.in 04.sol
 ```
@@ -146,7 +161,7 @@ $ ls pasta
 Para rodar a partir da pasta com os testes descompactados, basta passar o nome da pasta como parâmetro.
 
 ```bash
-tko run Solver.java pasta
+rota run Solver.java pasta
 ```
 
 Se quiser utilizar um nome padrão diferente para leitura ou escrita das pastas, veja a seção de [Convertendo entre formatos](#convertendo-entre-formatos).
@@ -154,16 +169,16 @@ Se quiser utilizar um nome padrão diferente para leitura ou escrita das pastas,
 ## Convertendo entre formatos
 
 - Gerando um `t.vpl`
-  - `tko build t.vpl testes.tio`
+  - `rota build t.vpl testes.tio`
 - Gerando um `t.tio` a partir do `Readme.md`e de um `extra.tio`.
-  - `tko build t.tio Readme.md extra.tio`
-- Para extrair os testes para uma pasta com um arquivo para entrada e outro para saída, crie uma pasta vazia e passe para o primeiro parâmetro do `tko build`.
+  - `rota build t.tio Readme.md extra.tio`
+- Para extrair os testes para uma pasta com um arquivo para entrada e outro para saída, crie uma pasta vazia e passe para o primeiro parâmetro do `rota build`.
 
 ```bash
 $ ls
 cases.tio  draft.c  Readme.md
 $ mkdir pasta
-$ tko build pasta cases.tio 
+$ rota build pasta cases.tio 
 $ ls pasta/
 00.in   02.sol  05.in   07.sol  10.in   12.sol  15.in   17.sol  20.in   22.sol
 00.sol  03.in   05.sol  08.in   10.sol  13.in   15.sol  18.in   20.sol  23.in
@@ -176,7 +191,7 @@ $ ls pasta/
   - Vamos refazer o comando acima, mas colocando "-p in.@ out.@"
 
 ```bash
-$ tko build pasta/ cases.tio -p "in.@ out.@"
+$ rota build pasta/ cases.tio -p "in.@ out.@"
 $ ls pasta/
 in.00  in.05  in.10  in.15  in.20   out.01  out.06  out.11  out.16  out.21
 in.01  in.06  in.11  in.16  in.21   out.02  out.07  out.12  out.17  out.22
