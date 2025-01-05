@@ -19,7 +19,7 @@ from rota.play.floating_manager import FloatingManager
 from rota.play.floating import Floating
 from rota.play.grade_message import GradeMessage
 from rota.game.tree_item import TreeItem
-from rota.util.logger import Logger, LogAction
+from rota.settings.logger import Logger
 
 
 class TaskAction:
@@ -61,10 +61,10 @@ class TaskTree:
         self.expanded: List[str] = [v for v in self.rep.get_expanded()]
         self.selected_item = self.rep.get_selected()
 
-        tasks = self.rep.get_tasks()
-        for key, serial in tasks.items():
-            if key in self.game.tasks:
-                self.game.tasks[key].load_from_db(serial)
+        # tasks = self.rep.get_tasks()
+        # for key, serial in tasks.items():
+        #     if key in self.game.tasks:
+        #         self.game.tasks[key].load_from_db(serial)
 
     def save_on_rep(self):
         self.rep.set_expanded(self.expanded)
@@ -146,7 +146,7 @@ class TaskTree:
         output.add(down_symbol).add(" ")
         output.add(t.get_prog_symbol()).add(" ")
         output.add(GradeMessage.autonomy_emoji(t.autonomy)).add(" ")
-        output.add(GradeMessage.hability_emoji(t.ability))
+        output.add(GradeMessage.skill_emoji(t.skill))
 
         if in_focus:
             output.add(self.style.roundL(focus_color))
@@ -455,14 +455,13 @@ class TaskTree:
             value = (100, 5, 5) if obj.get_percent() < 100 else (0, 0, 0)
             self.set_grade(obj, value[0], value[1], value[2])
 
-    def set_grade(self, task: Task, coverage: int, autonomy: int, ability: int):
+    def set_grade(self, task: Task, coverage: int, autonomy: int, skill: int):
         obj = task
         if isinstance(obj, Task):
-            Logger.get_instance().record_self_grade(obj.key, autonomy, ability)
-            Logger.get_instance().record_progress(obj.key, coverage)
+            Logger.get_instance().record_self_grade(obj.key, coverage, autonomy, skill)
             obj.set_coverage(coverage)
             obj.set_autonomy(autonomy)
-            obj.set_hability(ability)
+            obj.set_skill(skill)
 
 
     def set_selected_by_index(self, index: int):

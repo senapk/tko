@@ -182,7 +182,7 @@ class FloatingGrade(Floating):
         self.set_header_text(Text.format("{y/}", " Utilize os direcionais para  marcar "))
         self.set_footer_text(Text.format("{y/}", " Pressione Enter para confirmar "))
 
-        self.grades_index = [task.coverage // 10, task.autonomy, task.ability]
+        self.grades_index = [task.coverage // 10, task.autonomy, task.skill]
         self.coverage = ["x", "1", "2", "3", "4", "5", "6", "7", "8", "9", "✓"]
         self.coverage_msg = [
             "Não fiz", 
@@ -205,8 +205,8 @@ class FloatingGrade(Floating):
             "Fiz com ajuda       ", 
             "Fiz sem ajuda       "
             ]
-        self.hability = [x.text for x in [symbols.hability_x, symbols.hability_e, symbols.hability_d, symbols.hability_c, symbols.hability_b, symbols.hability_a]]
-        self.hability_msg = [
+        self.skill = [x.text for x in [symbols.skill_x, symbols.skill_e, symbols.skill_d, symbols.skill_c, symbols.skill_b, symbols.skill_a]]
+        self.skill_msg = [
             "Não fiz            ", 
             "Não entendi        ", 
             "Entendi uma parte  ", 
@@ -214,8 +214,8 @@ class FloatingGrade(Floating):
             "Entendi quase tudo ", 
             "Entendi tudo       "
             ]
-        self.grades_value = [self.coverage, self.autonomy, self.hability]
-        self.grades_msg = [self.coverage_msg, self.autonomy_msg, self.hability_msg]
+        self.grades_value = [self.coverage, self.autonomy, self.skill]
+        self.grades_msg = [self.coverage_msg, self.autonomy_msg, self.skill_msg]
 
     
     def update_content(self):
@@ -227,16 +227,16 @@ class FloatingGrade(Floating):
         coverage_text.add("  ").addf("m", self.coverage_msg[self.grades_index[0]])
         self._content.append(coverage_text)
         # self._content.append(Text())
-        hability_text = Text().add("   ").addf("Y" if self._line == 1 else "", "Autonomia").add("  ")
+        skill_text = Text().add("   ").addf("Y" if self._line == 1 else "", "Autonomia").add("  ")
         for i, c in enumerate(self.autonomy):
-            hability_text.addf("G" if i == self.grades_index[1] else "", c).add(" ")
-        hability_text.add(" ").addf("m", self.autonomy_msg[self.grades_index[1]])
-        self._content.append(hability_text)
+            skill_text.addf("G" if i == self.grades_index[1] else "", c).add(" ")
+        skill_text.add(" ").addf("m", self.autonomy_msg[self.grades_index[1]])
+        self._content.append(skill_text)
         # self._content.append(Text())
         autonomy_text = Text().add(" ").addf("Y" if self._line == 2 else "", "Compreensão").add("  ")
-        for i, c in enumerate(self.hability):
+        for i, c in enumerate(self.skill):
             autonomy_text.addf("yW" if i == self.grades_index[2] else "", c).add(" ")
-        autonomy_text.add(" ").addf("m", self.hability_msg[self.grades_index[2]])
+        autonomy_text.add(" ").addf("m", self.skill_msg[self.grades_index[2]])
         self._content.append(autonomy_text)
         self._content.append(Text())
         
@@ -251,7 +251,7 @@ class FloatingGrade(Floating):
     def change_task(self):
         self._task.set_coverage(self.grades_index[0] * 10)
         self._task.set_autonomy(self.grades_index[1])
-        self._task.set_hability(self.grades_index[2])
+        self._task.set_skill(self.grades_index[2])
 
     def get_input(self) -> int:
         self.draw()

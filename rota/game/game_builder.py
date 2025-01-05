@@ -1,8 +1,9 @@
+from rota.game.task_parser import TaskParser
 from rota.game.cluster import Cluster
 from rota.game.quest import Quest
 from rota.game.task import Task
 from rota.game.quest import Quest, QuestParser
-from rota.game.task import Task, TaskParser
+from rota.game.task import Task
 from rota.util.get_md_link import get_md_link
 from rota.util.to_asc import uni_to_asc
 import os

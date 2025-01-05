@@ -92,7 +92,7 @@ class Open:
         cman.add_str(GuiKeys.images, self.app.toggle_images)
         cman.add_str(GuiKeys.hidden, self.app.toggle_hidden)
         cman.add_str(GuiKeys.set_lang, self.gui.language.set_language)
-        cman.add_str(GuiKeys.graph, self.actions.generate_graph)
+        # cman.add_str(GuiKeys.graph, self.actions.generate_graph)
         cman.add_int(curses.KEY_BACKSPACE, self.actions.evaluate)
         cman.add_str(GuiKeys.evaluate, self.actions.evaluate)
         if Flags.admin:

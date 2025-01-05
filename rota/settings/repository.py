@@ -12,16 +12,16 @@ import yaml # type: ignore
 available_languages = ["c", "cpp", "py", "ts", "java", "go", "yaml"]
 
 class Repository:
-    OLD_CFG_FILE = "repository.json"
+    OLD_CFG_FILE = "repository.json" # reprecated
     NEW_CFG_FILE = "repository.yaml"
     LOG_FILE = "history.csv"
-    DAILY_FILE = "daily.json"
+    DAILY_FILE = "daily.yaml"
     INDEX_FILE = "Readme.md"
     TRACK_FOLDER = "track"
     CONFIG_FOLDER = ".rota"
 
     def __init__(self, folder: str):
-        self.root_folder: str = folder
+        self.root_folder: str = Repository.rec_search_for_repo(folder)
         self.data: Dict[str, Any] = {}
         self.game = Game()
         self.upgrade_version()
@@ -74,8 +74,14 @@ class Repository:
         database_folder = os.path.join(self.root_folder, self.get_database_folder())
         cache_or_index = self.load_index_or_cache()
         self.game.parse_file_and_folder(cache_or_index, database_folder)
-                
+        self.__load_tasks_from_rep_into_game()
         return self
+    
+    def __load_tasks_from_rep_into_game(self):
+        tasks = self.get_tasks()
+        for key, serial in tasks.items():
+            if key in self.game.tasks:
+                self.game.tasks[key].load_from_db(serial)
 
     def get_old_config_file(self) -> str:
         return os.path.abspath(os.path.join(self.root_folder, Repository.CONFIG_FOLDER, Repository.OLD_CFG_FILE))
@@ -235,9 +241,17 @@ class Repository:
 
     def load_config(self):
         encoding = Decoder.get_encoding(self.get_config_file())
+        if os.path.exists(self.get_old_config_file()):
+            try:
+                with open(self.get_old_config_file(), encoding=encoding) as f:
+                    self.data = json.load(f)
+                with open(self.get_config_file(), "w", encoding="utf-8") as f:
+                    yaml.dump(self.data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+                os.remove(self.get_old_config_file())
+            except:
+                pass
         try:
             with open(self.get_config_file(), encoding=encoding) as f:
-                # self.data = json.load(f)
                 self.data = yaml.safe_load(f)
         except:
             raise Warning(Text.format("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.get_config_file(), "corrompido"))

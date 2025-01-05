@@ -276,7 +276,7 @@ class Gui:
 
     def print_task_graph(self, frame, x, task_key: str, width: int, height: int):
         tg = TaskGraph(self.settings, self.rep, task_key, width, height)
-        if len(tg.get_collected()) == 1:
+        if len(tg.collected) == 1:
             return False
         graph = tg.get_graph()
         for y, line in enumerate(graph):

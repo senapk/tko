@@ -1,9 +1,9 @@
 from rota.game.cluster import Cluster
 from rota.game.quest import Quest
 from rota.game.task import Task
-from rota.game.graph import Graph
+# from rota.game.graph import Graph
 
-from rota.util.logger import Logger, LogAction
+from rota.settings.logger import Logger
 from rota.settings.settings import Settings
 
 from rota.cmds.cmd_down import CmdDown
@@ -105,17 +105,16 @@ class PlayActions:
                 .error()
             )
 
-    def generate_graph(self):
-        Graph(self.game).set_path(self.gen_graph_path()).set_opt(False).generate()
-        path = self.gen_graph_path()
-        if not self.graph_opened:
-            opener = Opener(self.settings)
-            opener.open_files([path])
-            self.graph_opened = True
+    # def generate_graph(self):
+    #     Graph(self.game).set_path(self.gen_graph_path()).set_opt(False).generate()
+    #     path = self.gen_graph_path()
+    #     if not self.graph_opened:
+    #         opener = Opener(self.settings)
+    #         opener.open_files([path])
+    #         self.graph_opened = True
 
     def register_action(self, task: Task):
-        Logger.get_instance().record_self_grade(task.key, task.autonomy, task.ability)
-        Logger.get_instance().record_progress(task.key, task.coverage)
+        Logger.get_instance().record_self_grade(task.key, task.coverage, task.autonomy, task.skill)
         
     def evaluate(self):
         obj = self.tree.get_selected_throw()

@@ -2,7 +2,7 @@ from rota.settings.settings import Settings
 from rota.game.game import Game
 from rota.settings.repository import Repository
 from rota.play.play import Open
-from rota.util.logger import Logger, LogAction
+from rota.settings.logger import Logger
 from typing import Dict
 from rota.util.text import Text
 import os
@@ -30,10 +30,9 @@ class CmdOpen:
             raise Warning("Repositório não encontrado")
         
         logger: Logger = Logger.get_instance()
-        logger.set_history_file(self.rep.get_history_file())
+        logger.set_log_files(self.rep.get_history_file())
         logger.record_open()
         play = Open(self.settings, self.rep)
-        logger.set_daily(self.rep.get_daily_file(), play.game.tasks)
         play.play()
         logger.record_quit()
 

@@ -19,7 +19,7 @@ from rota.game.task import Task
 from rota.play.opener import Opener
 from rota.settings.settings import Settings
 from rota.util.consts import DiffMode
-from rota.util.logger import Logger, LogAction, LoggerFS
+from rota.settings.logger import Logger
 from rota.util.code_filter import CodeFilter
 from rota.settings.repository import Repository
 
@@ -107,9 +107,9 @@ class Run:
                 self.__fill_task()
 
             if self.__rep is not None:
-                Logger.instance = Logger(LoggerFS(self.settings))
-                logger = Logger.instance
-                logger.set_history_file(self.__rep.get_history_file())
+                logger = Logger.get_instance()
+                history_file = self.__rep.get_history_file()
+                logger.set_log_files(history_file)
 
         if self.__free_run():
             return

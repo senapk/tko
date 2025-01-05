@@ -2,9 +2,6 @@ from typing import Dict, Optional, Tuple
 from rota.util.symbols import symbols
 from rota.util.text import Text
 from rota.game.tree_item import TreeItem
-from rota.util.get_md_link import get_md_link
-import re
-import os
 import enum
 
 
@@ -28,7 +25,7 @@ class Task(TreeItem):
 
         self.coverage: int = 0 # valor de 0 a 100
         self.autonomy: int = 0 # valor de 0 a 5
-        self.ability: int = 0 # valor de 0 a 5
+        self.skill: int = 0 # valor de 0 a 5
         self.main_idx: int = 0
 
         self.qskills: Dict[str, int] = {} # default quest skills
@@ -62,10 +59,12 @@ class Task(TreeItem):
     def get_folder(self) -> str | None:
         return self.folder
     
-    def set_autonomy_ability(self, value: int):
+    @staticmethod
+    def decode_autonomy_skill(value: int) -> Tuple[int, int]:
         opts = [(0, 0), (1, 1), (1, 2), (2, 2), (3, 2), (1, 3), (2, 3), (3, 3), (4, 3), (3, 4), (4, 4)]
-        self.autonomy = opts[value][0]
-        self.ability = opts[value][1]
+        autonomy = opts[value][0]
+        skill = opts[value][1]
+        return autonomy, skill
 
     def load_from_db(self, value: str):
         if value.startswith("{"):
@@ -80,28 +79,28 @@ class Task(TreeItem):
                 elif k == "aut":
                     self.autonomy = int(val)
                 elif k == "hab":
-                    self.ability = int(val)
+                    self.skill = int(val)
                 elif k == "idx":
                     self.main_idx = int(val)
         elif ":" not in value:
-            self.set_autonomy_ability(int(value))
+            self.autonomy, self.skill = Task.decode_autonomy_skill(int(value))
         else:
             v = value.split(":")
             if len(v) == 3:
-                self.set_autonomy_ability(int(v[0]))
+                self.autonomy, self.skill = Task.decode_autonomy_skill(int(v[0]))
                 self.main_idx = int(v[1])
                 self.coverage = int(v[2])
             elif len(v) == 4:
                 self.coverage = (int(v[0]))
                 self.autonomy = (int(v[1]))
-                self.ability = (int(v[2]))
+                self.skill    = (int(v[2]))
                 self.main_idx = (int(v[3]))
 
     def save_to_db(self) -> str:
-        return "{" + f"cov:{self.coverage}, aut:{self.autonomy}, hab:{self.ability}, idx:{self.main_idx}" + "}"
+        return "{" + f"cov:{self.coverage}, aut:{self.autonomy}, hab:{self.skill}, idx:{self.main_idx}" + "}"
     
     def is_db_empty(self) -> bool:
-        return self.autonomy == 0 and self.ability == 0 and self.main_idx == 0 and self.coverage == 0
+        return self.autonomy == 0 and self.skill == 0 and self.main_idx == 0 and self.coverage == 0
 
     def get_prog_color(self, min_value: Optional[int] = None) -> str:
         if min_value is None:
@@ -134,7 +133,7 @@ class Task(TreeItem):
         return Text().add("0")
 
     def get_percent(self):
-        return (self.autonomy / 5) * (self.ability / 5) * self.coverage
+        return (self.autonomy / 5) * (self.skill / 5) * self.coverage
     
     def get_ratio(self) -> float:
         return self.get_percent() / 10.0
@@ -162,110 +161,17 @@ class Task(TreeItem):
         else:
             print(f"Autonomia inválida: {value}")
 
-    def set_hability(self, value: int):
+    def set_skill(self, value: int):
         value = int(value)
         if value >= 0 and value <= 5:
-            self.ability = value
+            self.skill = value
         else:
             print(f"Compreensão inválida: {value}")
 
     def __str__(self):
         lnum = str(self.line_number).rjust(3)
         key = "" if self.key == self.title else self.key + " "
-        return f"{lnum} grade:{self.autonomy}:{self.ability} key:{key} title:{self.title} skills:{self.skills} remote:{self.link} type:{self.link_type} folder:{self.folder}"
+        return f"{lnum} grade:{self.autonomy}:{self.skill} key:{key} title:{self.title} skills:{self.skills} remote:{self.link} type:{self.link_type} folder:{self.folder}"
 
     def has_at_symbol(self):
         return any([s.startswith("@") for s in self.title.split(" ")])
-
-class TaskParser:
-
-    def __init__(self, index_path: str, database_folder: str):
-        self.index_path = os.path.abspath(index_path) # path of Repository Root Readme file
-        self.database_folder = os.path.abspath(database_folder)
-        self.task = Task()
-
-    def __load_tags(self, tags_raw: str):
-        task = self.task
-        tags = [tag.strip() for tag in tags_raw.split(" ")]
-        task.opt = "opt" in tags
-        for t in tags:
-            if t.startswith("+"):
-                key, value = t[1:].split(":")
-                task.skills[key] = int(value)
-
-    def parse_line(self, line: str, line_num: int = 0) -> Optional[Task]:
-        pattern = r'\s*?- \[ \](.*?)\[([^\]]+)\]\(([^)]+)\)(?:\s*<!--(.*?)-->)?'
-
-        match = re.match(pattern, line)
-        if match is None:
-            return None
-        task = self.task
-        task.line_number = line_num
-        task.line = line
-        task.title = match.group(1).strip()
-        if task.title != "":
-            task.title += " "
-        task.title += match.group(2).strip()
-        task.title = task.title.replace("`", "")
-        
-        if match.group(4) is not None:
-            self.__load_tags(match.group(4))
-
-        for item in task.title.split(" "):
-            if item.startswith("@"):
-                task.key = item[1:]
-            elif item.startswith("#"):
-                task.key = item[1:]
-                task.link_type = Task.Types.VISITABLE_URL
-
-        #remove last non alfa char from key
-        allowed = "0123456789_abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        key = ""
-        for c in task.key:
-            if c in allowed:
-                key += c
-            else:
-                break
-        task.key = key
-
-        link = match.group(3).strip()
-        self.select_link_type(link)
-        
-        if task.key == "":
-            task.key = link
-        return task
-    
-    def select_link_type(self, link: str):
-        task = self.task
-        task.link = link
-
-        if task.link_type == Task.Types.VISITABLE_URL:
-            # open both url and files
-            return
-
-        if self.task.key == "":
-            raise Warning(f"Chave não definida para tarefa: {link}")
-
-        if link.startswith("http:") or link.startswith("https:"):
-            task.set_folder(os.path.relpath(os.path.join(self.database_folder, task.key)))
-            task.link_type = Task.Types.REMOTE_FILE
-            return
-
-        if not os.path.isabs(link):
-            basedir = os.path.dirname(self.index_path)
-            link = os.path.join(basedir, link)
-            task.link = os.path.relpath(link)
-        # verify if file exists
-        # update link using index_path to update de relative path
-        if not os.path.isfile(link):
-            raise Warning(f"Arquivo não encontrado: {link}")
-
-        # verify if file is inside database_folder/folder
-        abs_task_folder = os.path.abspath(os.path.join(self.database_folder, task.key))
-        task.set_folder(os.path.relpath(abs_task_folder))
-        if link.startswith(abs_task_folder):
-            task.link_type = Task.Types.STATIC_FILE
-            return
-        
-        task.link_type = Task.Types.IMPORT_FILE
-        return

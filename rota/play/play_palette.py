@@ -115,13 +115,13 @@ class PlayPalette:
             )
         )
 
-        options.append(
-            FloatingInputData(
-                lambda: Text.format(" {} Gerar {y} de dependências", symbols.action, "Grafo"),
-                self.actions.generate_graph,
-                GuiKeys.graph
-            ).set_exit_on_action(True)
-        )
+        # options.append(
+        #     FloatingInputData(
+        #         lambda: Text.format(" {} Gerar {y} de dependências", symbols.action, "Grafo"),
+        #         self.actions.generate_graph,
+        #         GuiKeys.graph
+        #     ).set_exit_on_action(True)
+        # )
 
         options.append(
             FloatingInputData(
@@ -136,6 +136,14 @@ class PlayPalette:
                 lambda: Text.format(" {} Devel: Habilita mensagens de {y}", icon(Flags.devel), "Debug"),
                 Flags.devel.toggle,
                 ""
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text.format(" {} Muda o gráfico {y}", icon(Flags.graph), "Graph"),
+                Flags.graph.toggle,
+                Flags.graph.get_keycode()
             )
         )
 

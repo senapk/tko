@@ -166,7 +166,7 @@ wheels = [
 
 [[package]]
 name = "rota"
-version = "1.0.0"
+version = "2.5.5"
 source = { editable = "." }
 dependencies = [
     { name = "appdirs" },
@@ -176,6 +176,7 @@ dependencies = [
     { name = "pytest" },
     { name = "pyyaml" },
     { name = "uniplot" },
+    { name = "windows-curses", marker = "platform_system == 'Windows'" },
 ]
 
 [package.metadata]
@@ -187,6 +188,7 @@ requires-dist = [
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "uniplot", specifier = ">=0.16.2" },
+    { name = "windows-curses", marker = "platform_system == 'Windows'" },
 ]
 
 [[package]]
@@ -199,4 +201,13 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/61/3f/016f2eabca0fef982c3dac2be9b7626ebf7971ea735fdcfcb13537c875a5/uniplot-0.16.2.tar.gz", hash = "sha256:30f96e12f2f2e675ddd77914c50652803b01144380b6612ba8557dcd446a5db0", size = 27408 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b3/4e/11aa686f626cd9009770ac6268593d088c04c6bad8541f2850b419f2d743/uniplot-0.16.2-py3-none-any.whl", hash = "sha256:3d42653822c3c8176fff806fe2834cd7b6594c2d5dfbad3e62749e9e3fe85665", size = 30940 },
+]
+
+[[package]]
+name = "windows-curses"
+version = "2.4.0"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/86/66/0a83825bd45f5cbd8dbeb7f96497e1162b355cbabd956b4960efceb04dc2/windows_curses-2.4.0-cp312-cp312-win32.whl", hash = "sha256:e165db84de30039f6da6bded9aa2f88e3c1ae7be11dc7c84416cbe6ba0ac4f29", size = 71403 },
+    { url = "https://files.pythonhosted.org/packages/07/fc/5faaef1ec5921953cc7c87ff60a5af751769cb996caab828ceb21f13ee95/windows_curses-2.4.0-cp312-cp312-win_amd64.whl", hash = "sha256:f50d02833a7e7866b9f42d62febbdf83c6703575240e9bbdd1446d09d70505d3", size = 81752 },
 ]

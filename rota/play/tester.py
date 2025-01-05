@@ -25,7 +25,7 @@ from rota.util.text import  Text, Token
 from rota.util.symbols import symbols
 from rota.util.consts import DiffMode
 from rota.play.input_manager import InputManager
-from rota.util.logger import Logger
+from rota.settings.logger import Logger
 from rota.run.diff_builder_down import DownDiff
 from rota.run.diff_builder_side import SideDiff
 from rota.play.tracker import Tracker
@@ -166,7 +166,7 @@ class Tester:
         solver = self.wdir.get_solver()
 
         if solver.compile_error:
-            Logger.get_instance().record_compilation_error(self.task.key)
+            Logger.get_instance().record_compilation_execution_error(self.task.key)
             self.store_other_track(Logger.COMP_ERROR)
 
             self.mode = SeqMode.finished
@@ -731,7 +731,7 @@ class Tester:
                             break
                     except CompileError as e:
                         self.mode = SeqMode.finished
-                        Logger.get_instance().record_compilation_error(self.task.key)
+                        Logger.get_instance().record_compilation_execution_error(self.task.key)
                         self.store_other_track(Logger.COMP_ERROR)
                         print(e)
                         input("Pressione enter para continuar")

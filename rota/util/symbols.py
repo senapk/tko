@@ -57,12 +57,12 @@ class __Symbols:
         # self.emoji_confuso   = Token("◱", "r")
         # self.emoji_nao_fiz   = Token("□")
 
-        self.hability_a = Token("▇", "g")
-        self.hability_b = Token("▆", "y")
-        self.hability_c = Token("▅", "m")
-        self.hability_d = Token("▄", "r")
-        self.hability_e = Token("▂", "c")
-        self.hability_x = Token("▁", "")
+        self.skill_a = Token("▇", "g")
+        self.skill_b = Token("▆", "y")
+        self.skill_c = Token("▅", "m")
+        self.skill_d = Token("▄", "r")
+        self.skill_e = Token("▂", "c")
+        self.skill_x = Token("▁", "")
 
         self.autonomy_a = Token("A", "g")
         self.autonomy_b = Token("B", "y")

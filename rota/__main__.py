@@ -12,7 +12,7 @@ from rota.cmds.cmd_down import CmdDown
 from rota.cmds.cmd_run import Run
 from rota.cmds.cmd_build import CmdBuild
 from rota.cmds.cmd_config import CmdConfig, ConfigParams
-from rota.util.logger import LogAction, Logger, LoggerFS
+from rota.settings.logger import Logger
 from rota.util.text import AnsiColor
 
 from rota.util.param import Param
@@ -223,6 +223,10 @@ class Parser:
         repo_log.add_argument('folder', type=str, help='folder to be checked.')
         repo_log.set_defaults(func=CmdRep.check)
 
+        repo_resume = subpar_repo.add_parser("resume", help="resume log of the repository.")
+        repo_resume.add_argument('folder', type=str, help='folder to be checked.')
+        repo_resume.set_defaults(func=CmdRep.resume)
+
 
 
     def add_parser_rep_actions(self):
@@ -245,7 +249,7 @@ def exec(parser: argparse.ArgumentParser, args):
     if args.c:
         settings.set_settings_file(args.c)
     settings.load_settings()
-    Logger.instance = Logger(LoggerFS(settings))
+    Logger.instance = Logger()
 
     if args.m:
         AnsiColor.enabled = False
