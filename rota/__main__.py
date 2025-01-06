@@ -227,6 +227,10 @@ class Parser:
         repo_resume.add_argument('folder', type=str, help='folder to be checked.')
         repo_resume.set_defaults(func=CmdRep.resume)
 
+        repo_resume = subpar_repo.add_parser("graph", help="resume log of the repository.")
+        repo_resume.add_argument('folder', type=str, help='folder to be checked.')
+        repo_resume.set_defaults(func=CmdRep.graph)
+
 
 
     def add_parser_rep_actions(self):

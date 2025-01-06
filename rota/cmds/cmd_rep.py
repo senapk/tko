@@ -4,6 +4,7 @@ from rota.settings.repository import Repository
 from rota.settings.settings import Settings
 from rota.settings.logger import Logger
 from rota.game.task import Task
+from rota.play.week_graph import WeekGraph
 import yaml # type: ignore
 import os
 
@@ -77,10 +78,13 @@ class CmdRep:
                 tasks[task.key] = TaskResume().set_coverage(task.coverage).set_autonomy(task.autonomy).set_skill(task.skill)
 
         for key in history_resume:
-            if key not in tasks:
-                continue
             entry = history_resume[key]
-            tasks[key].set_elapsed(entry.get_minutes()).set_attempts(entry.attempts)
+            elapsed = entry.get_minutes()
+            attempts = entry.attempts
+            if elapsed > 0 or attempts > 0:
+                if key not in tasks:
+                    tasks[key] = TaskResume()
+                tasks[key].set_elapsed(entry.get_minutes()).set_attempts(entry.attempts)
         
         tasks_str: dict[str, dict[str, int]] = {}
         for key in tasks:
@@ -88,6 +92,28 @@ class CmdRep:
 
         print (yaml.dump(tasks_str, sort_keys=False))
 
+    @staticmethod
+    def graph(args):
+        rep = Repository(args.folder).load_config().load_game()
+        logger = Logger.get_instance()
+        logger.set_log_files(rep.get_history_file())
+        wg = WeekGraph(100, 24, week_mode=True)
+        image = wg.get_graph()
+        week = wg.get_collected()
+        pad = " " * 11
+        print(f"{pad}{image[0]}")
+        print(f"{pad}{image[1]}")
+        image = image[2:]
+
+        for i, line in enumerate(image):
+            if i < len(week):
+                print(f"{i + 1} - {week[i]}h ", end="")
+            else:
+                print(pad, end="")
+            print(line)
+
+        # for i in range(len(week)):
+        #     print(f"{i} - {week[i]}h")
 
     @staticmethod
     def upgrade(args):

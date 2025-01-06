@@ -1,5 +1,7 @@
 # Changelog
 
+- 2.6.0
+  - add: week and day graphs
 - 2.5.5
   - fix: windows curses using pyproject.toml
 - 2.5.4

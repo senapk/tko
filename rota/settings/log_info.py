@@ -1,3 +1,4 @@
+from __future__ import annotations
 from rota.settings.log_action import LogAction
 from rota.game.task import Task
 import datetime
@@ -46,6 +47,17 @@ class LogInfo:
     
     def set_elapsed(self, value: datetime.timedelta):
         self.elapsed = value
+        return self
+    
+    def calc_and_set_elapsed(self, last: LogInfo, limit_minutes: int, format: str):
+        last_time = datetime.datetime.strptime(last.timestamp, format)
+        current_time = datetime.datetime.strptime(self.timestamp, format)
+        diff = current_time - last_time
+        if diff.total_seconds() < limit_minutes * 60:
+            elapsed = last.elapsed + diff
+        else:
+            elapsed = last.elapsed
+        self.elapsed = elapsed
         return self
         
     def to_dict(self) -> dict[str, str]:

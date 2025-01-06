@@ -21,6 +21,7 @@ from rota.game.quest import Quest
 from rota.game.task import Task
 from rota.game.cluster import Cluster
 from rota.play.task_graph import TaskGraph
+from rota.play.week_graph import WeekGraph
 
 from typing import List, Any, Dict, Callable, Tuple
 import datetime
@@ -275,7 +276,16 @@ class Gui:
         return text, percent
 
     def print_task_graph(self, frame, x, task_key: str, width: int, height: int):
-        tg = TaskGraph(self.settings, self.rep, task_key, width, height)
+        tg = TaskGraph(self.settings, self.rep, task_key, width, height, minutes_mode=not Flags.graph)
+        if len(tg.collected) == 1:
+            return False
+        graph = tg.get_graph()
+        for y, line in enumerate(graph):
+            frame.write(y, x, Text().addf("g", line))
+        return True
+    
+    def print_week_graph(self, frame, x, width: int, height: int):
+        tg = WeekGraph(width, height, week_mode=Flags.graph)
         if len(tg.collected) == 1:
             return False
         graph = tg.get_graph()
@@ -296,15 +306,19 @@ class Gui:
         distance = 27
         try:
             selected = self.tree.get_selected_throw()
+            width = cols - self.tree.max_title - distance - 7
+            if width < 5:
+                width = 5
+            height = lines - 4
+            if height < 3:
+                height = 3
             if isinstance(selected, Task):
-                width = cols - self.tree.max_title - distance - 7
-                if width < 5:
-                    width = 5
-                height = lines - 4
-                if height < 3:
-                    height = 3
                 if self.print_task_graph(frame, self.tree.max_title + distance, selected.key, width, height):
                     return
+            elif isinstance(selected, Cluster) or isinstance(selected, Quest):
+                if self.print_week_graph(frame, self.tree.max_title + distance, width, height):
+                    return
+
         except IndexError:
             pass
         for y, line in enumerate(parrot_lines):

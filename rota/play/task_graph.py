@@ -6,7 +6,7 @@ from rota.play.flags import Flags
 from uniplot import plot_to_string # type: ignore
 
 class TaskGraph:
-    def __init__(self, settings: Settings, rep: Repository, task_key: str, width: int, height: int):
+    def __init__(self, settings: Settings, rep: Repository, task_key: str, width: int, height: int, minutes_mode: bool = False):
         self.settings = settings
         self.rep = rep
         self.task_key = task_key
@@ -14,6 +14,7 @@ class TaskGraph:
         self.height = height
         self.collected: list[float] = []
         self.eixo: list[float] = []
+        self.minutes_mode = minutes_mode
         self.__collect()
 
     def __collect(self):
@@ -31,7 +32,7 @@ class TaskGraph:
                 collected.append(last)
             else:
                 collected.append(last)
-            if Flags.graph:
+            if self.minutes_mode:
                 eixo.append(ad.elapsed.total_seconds() / 60)
             else:
                 eixo.append(count)
@@ -42,7 +43,7 @@ class TaskGraph:
 
     def get_graph(self) -> list[str]:
         title = self.task_key
-        if Flags.graph:
+        if self.minutes_mode:
             title += " (% / minutos)"
         else:
             title += " (% / testes )"

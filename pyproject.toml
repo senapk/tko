@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rota"
-version = "2.5.5"
+version = "2.6.0"
 description = "Add your description here"
 authors = [
     { name = "Seu Nome", email = "seuemail@example.com" }

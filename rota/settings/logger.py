@@ -3,6 +3,7 @@ from rota.settings.history_file import HistoryFile
 from rota.settings.log_action import LogAction
 from rota.settings.listener_daily import DailyListener
 from rota.settings.listener_task import TaskListener
+from rota.settings.listener_week import WeekListener
 import os
 
 class Logger:
@@ -19,10 +20,12 @@ class Logger:
         self.history: None | HistoryFile = None
         self.daily = DailyListener()
         self.tasks = TaskListener()
+        self.week = WeekListener()
 
     def set_log_files(self, log_file: str) -> Logger:
-        self.history = HistoryFile(log_file, [self.daily.listener, self.tasks.listener])
-        # print(self.tasks)
+        self.history = HistoryFile(log_file, [self.daily.listener, self.tasks.listener, self.week.listener])
+        # resume = self.week.resume()
+        # print("\n".join([f"{x.weed_day} {x.elapsed}" for x in resume.values()]))
         return self
     
     def get_history_file(self) -> HistoryFile:
