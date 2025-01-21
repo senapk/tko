@@ -44,10 +44,31 @@ class WeekGraph:
         return output
 
     def get_graph(self) -> list[str]:
+        collected: list[float] = []
+        eixo: list[int] = []
         if self.week_mode:
             title = " (horas / semana)"
-            result = plot_to_string(ys=self.collected, title=title, lines=True, y_min=0, width=self.width, height=self.height)
+            week = 1
+            for value in self.collected:
+                eixo.append(week)
+                collected.append(0)
+                eixo.append(week)
+                collected.append(value)
+                eixo.append(week)
+                collected.append(0)
+                week += 1
+            result = plot_to_string(xs=eixo, ys=collected, title=title, lines=True, y_min=0, width=self.width, height=self.height, y_unit="h", x_unit="s")
         else:
             title = " (horas /  dia  )"
-            result = plot_to_string(ys=self.collected, title=title, lines=False, y_min=0, width=self.width, height=self.height)
+            day = 1
+            for value in self.collected:
+                eixo.append(day)
+                collected.append(0)
+                eixo.append(day)
+                collected.append(value)
+                eixo.append(day)
+                collected.append(0)
+                day += 1
+
+            result = plot_to_string(xs=eixo, ys=collected, title=title, lines=True, y_min=0, width=self.width, height=self.height, y_unit="h", x_unit="d")
         return result

@@ -284,8 +284,8 @@ class Gui:
             frame.write(y, x, Text().addf("g", line))
         return True
     
-    def print_week_graph(self, frame, x, width: int, height: int):
-        tg = WeekGraph(width, height, week_mode=Flags.graph)
+    def print_week_graph(self, frame, x, width: int, height: int, week_mode: bool = False):
+        tg = WeekGraph(width, height, week_mode)
         if len(tg.collected) == 1:
             return False
         graph = tg.get_graph()
@@ -316,7 +316,8 @@ class Gui:
                 if self.print_task_graph(frame, self.tree.max_title + distance, selected.key, width, height):
                     return
             elif isinstance(selected, Cluster) or isinstance(selected, Quest):
-                if self.print_week_graph(frame, self.tree.max_title + distance, width, height):
+                week_mode = isinstance(selected, Cluster)
+                if self.print_week_graph(frame, self.tree.max_title + distance, width, height, week_mode):
                     return
 
         except IndexError:
