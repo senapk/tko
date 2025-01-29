@@ -6,8 +6,8 @@ import unittest
 import os
 from pathlib import Path
 
-from rota.game.task_parser import TaskParser
-from rota.game.task import Task # type: ignore
+from tko.game.task_parser import TaskParser
+from tko.game.task import Task # type: ignore
 
 class Test:
     @classmethod

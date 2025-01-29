@@ -1,7 +1,7 @@
 import unittest
-from rota.play.border import Border
-from rota.settings.app_settings import AppSettings
-from rota.util.text import Text
+from tko.play.border import Border
+from tko.settings.app_settings import AppSettings
+from tko.util.text import Text
 
 class Test:    
     def test_convert(self):

@@ -2,8 +2,8 @@ import unittest
 import os
 from pathlib import Path
 
-from rota.__main__ import exec, Parser #type: ignore
-from rota.util.compare import Compare # type: ignore
+from tko.__main__ import exec, Parser #type: ignore
+from tko.util.compare import Compare # type: ignore
 
 class Test:
     @classmethod

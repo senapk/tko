@@ -1,8 +1,8 @@
 import unittest
 
 
-from rota.util.text import Text, Token
-from rota.play.fmt import Fmt
+from tko.util.text import Text, Token
+from tko.play.fmt import Fmt
 
 class TestSimple(unittest.TestCase):
     def test_split_1(self):

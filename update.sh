@@ -1,6 +1,6 @@
 #!/bin/bash
 ./update_version.py
-rm -r dist
+rm -rf dist
 uv build
 # read token from token.txt
-uv publish --token $(cat ~/.pypi_rota.txt)
+uv publish --token $(cat ~/.pypi_tko.txt)

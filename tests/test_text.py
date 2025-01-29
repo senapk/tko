@@ -5,7 +5,7 @@
 import unittest
 
 
-from rota.util.text import Text, Token
+from tko.util.text import Text, Token
 
 class TestSimple(unittest.TestCase):
     def test_token_creation(self):

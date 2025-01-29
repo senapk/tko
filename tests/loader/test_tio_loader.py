@@ -1,7 +1,7 @@
 
 import unittest
-from rota.run.loader import Loader
-from rota.run.unit import Unit
+from tko.run.loader import Loader
+from tko.run.unit import Unit
 
 readme_text = """
 # É positivo

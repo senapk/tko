@@ -1,7 +1,7 @@
 # import unittest
 # from datetime import datetime
 # from unittest.mock import MagicMock
-# from rota.util.logger import Logger, LoggerMemory, ActionData.Type, ActionData
+# from tko.util.logger import Logger, LoggerMemory, ActionData.Type, ActionData
 
 # class TestLogger(unittest.TestCase):
 

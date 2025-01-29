@@ -5,7 +5,7 @@
 import unittest
 
 
-from rota.play.patch_history import PatchHistory # type: ignore
+from tko.play.patch_history import PatchHistory # type: ignore
 import os
 from pathlib import Path
 

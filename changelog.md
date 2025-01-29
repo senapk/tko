@@ -1,5 +1,13 @@
 # Changelog
 
+- 2.6.6
+  - fix: compilation error
+- 2.6.5
+  - fix: init
+- 2.6.3
+  - fix: init
+- 2.6.1
+  - week graphs on cluster, day graphs on quests
 - 2.6.0
   - add: week and day graphs
 - 2.5.5
@@ -387,7 +395,7 @@
 - 0.6.4
   - add: basic xp features
 - 0.6.3
-  - add: rotate quest text
+  - add: tkote quest text
 - 0.6.2
   - add: graph with textcolor white black for opt
   - fix: change italic to opt
