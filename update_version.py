@@ -2,7 +2,7 @@
 
 import sys
 version = ""
-with open("tko/__init__.py") as f:
+with open("src/tko/__init__.py") as f:
     for line in f:
         if line.startswith("__version__"):
             version = line.split("=")[1].strip().strip('"')

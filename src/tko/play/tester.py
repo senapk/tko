@@ -516,7 +516,12 @@ class Tester:
         self.wdir.build() # reload cases
 
         Fmt.clear()
-        self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_idx]).reset() # clear old compilation
+
+        solver_names = self.get_solver_names()
+        solver_size = len(solver_names)
+        index = self.task.main_idx
+        solver_selected = solver_names[index % solver_size]
+        self.wdir.get_solver().set_main(solver_selected).reset() # clear old compilation
         
         if self.locked_index:
             for i in range(len(self.results)):

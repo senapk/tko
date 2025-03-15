@@ -100,14 +100,16 @@ class CmdRep:
         wg = WeekGraph(100, 24, week_mode=True)
         image = wg.get_graph()
         week = wg.get_collected()
-        pad = " " * 11
+        pad = " " * 12
         print(f"{pad}{image[0]}")
         print(f"{pad}{image[1]}")
         image = image[2:]
 
         for i, line in enumerate(image):
             if i < len(week):
-                print(f"{i + 1} - {week[i]}h ", end="")
+                index = i + 1
+                index_pad = str(index).rjust(2, " ")
+                print(f"{index_pad} - {week[i]}h ", end="")
             else:
                 print(pad, end="")
             print(line)

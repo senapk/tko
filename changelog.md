@@ -1,5 +1,9 @@
 # Changelog
 
+- 2.6.8
+  - fix: error if selecting .hpp file in c++ mode
+- 2.6.7
+  - fix: bug invalid idx in tester
 - 2.6.6
   - fix: compilation error
 - 2.6.5

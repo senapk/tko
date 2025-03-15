@@ -32,7 +32,7 @@ import configparser
 from subprocess import PIPE
 import unicodedata
 import chardet # type: ignore
-__version__ = "2.6.6"
+__version__ = "2.6.8"
 
 
 class LogAction:
@@ -5770,9 +5770,9 @@ class SolverBuilder:
             self.__prepare_ts(free_run_mode)
         elif path.endswith(".java"):
             self.__prepare_java()
-        elif path.endswith(".c"):
+        elif path.endswith(".c") or path.endswith(".h"):
             self.__prepare_c()
-        elif path.endswith(".cpp"):
+        elif path.endswith(".cpp") or path.endswith(".hpp"):
             self.__prepare_cpp()
         elif path.endswith(".go"):
             self.__prepare_go()
@@ -5920,7 +5920,8 @@ class SolverBuilder:
     def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
         # solver = self.path_list[0]
         tempdir = self.cache_dir
-        source_list = self.path_list
+        source_list = [x for x in self.path_list if not x.endswith(".h") and not x.endswith(".hpp")]
+
         # print("Using the following source files: " + str([os.path.basename(x) for x in source_list]))
 
         exec_path = os.path.join(tempdir, ".a.out")
@@ -7041,14 +7042,16 @@ class CmdRep:
         wg = WeekGraph(100, 24, week_mode=True)
         image = wg.get_graph()
         week = wg.get_collected()
-        pad = " " * 11
+        pad = " " * 12
         print(f"{pad}{image[0]}")
         print(f"{pad}{image[1]}")
         image = image[2:]
 
         for i, line in enumerate(image):
             if i < len(week):
-                print(f"{i + 1} - {week[i]}h ", end="")
+                index = i + 1
+                index_pad = str(index).rjust(2, " ")
+                print(f"{index_pad} - {week[i]}h ", end="")
             else:
                 print(pad, end="")
             print(line)
@@ -9016,7 +9019,12 @@ class Tester:
         self.wdir.build() # reload cases
 
         Fmt.clear()
-        self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_idx]).reset() # clear old compilation
+
+        solver_names = self.get_solver_names()
+        solver_size = len(solver_names)
+        index = self.task.main_idx
+        solver_selected = solver_names[index % solver_size]
+        self.wdir.get_solver().set_main(solver_selected).reset() # clear old compilation
         
         if self.locked_index:
             for i in range(len(self.results)):

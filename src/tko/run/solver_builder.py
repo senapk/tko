@@ -89,9 +89,9 @@ class SolverBuilder:
             self.__prepare_ts(free_run_mode)
         elif path.endswith(".java"):
             self.__prepare_java()
-        elif path.endswith(".c"):
+        elif path.endswith(".c") or path.endswith(".h"):
             self.__prepare_c()
-        elif path.endswith(".cpp"):
+        elif path.endswith(".cpp") or path.endswith(".hpp"):
             self.__prepare_cpp()
         elif path.endswith(".go"):
             self.__prepare_go()
@@ -239,7 +239,8 @@ class SolverBuilder:
     def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
         # solver = self.path_list[0]
         tempdir = self.cache_dir
-        source_list = self.path_list
+        source_list = [x for x in self.path_list if not x.endswith(".h") and not x.endswith(".hpp")]
+
         # print("Using the following source files: " + str([os.path.basename(x) for x in source_list]))
 
         exec_path = os.path.join(tempdir, ".a.out")
