@@ -198,21 +198,21 @@ class FloatingGrade(Floating):
             "Fiz 100%"]
         self.autonomy = [x.text for x in [symbols.autonomy_x, symbols.autonomy_e, symbols.autonomy_d, symbols.autonomy_c, symbols.autonomy_b, symbols.autonomy_a]]
         self.autonomy_msg = [
-            "Não fiz             ", 
-            "Copiei              ", 
-            "Fiz guiado          ", 
-            "Fiz com muita ajuda ", 
-            "Fiz com ajuda       ", 
-            "Fiz sem ajuda       "
+            "Não fiz                                     ",
+            "Copiei o código de um colega e estudei      ",
+            "Fiz com ajuda de IA (copilot | gpt | outros)", 
+            "Fiz seguindo aula, vídeo, colega ou monitor ", 
+            "Criei os códigos, mas tirei pequenas dúvidas", 
+            "Fiz completamente sozinho e sem consulta    " 
             ]
         self.skill = [x.text for x in [symbols.skill_x, symbols.skill_e, symbols.skill_d, symbols.skill_c, symbols.skill_b, symbols.skill_a]]
         self.skill_msg = [
-            "Não fiz            ", 
-            "Não entendi        ", 
-            "Entendi uma parte  ", 
-            "Entendi boa parte  ", 
-            "Entendi quase tudo ", 
-            "Entendi tudo       "
+            "Consigo refazer menos de 30% sem consulta", 
+            "Consigo refazer ao menos 30% sem consulta",
+            "Consigo refazer ao menos 50% sem consulta", 
+            "Consigo refazer ao menos 70% sem consulta", 
+            "Consigo refazer ao menos 90% sem consulta", 
+            "Consigo refazer 100% sem consulta        " 
             ]
         self.grades_value = [self.coverage, self.autonomy, self.skill]
         self.grades_msg = [self.coverage_msg, self.autonomy_msg, self.skill_msg]
@@ -221,19 +221,22 @@ class FloatingGrade(Floating):
     def update_content(self):
         self._content = []
         self._content.append(Text())
-        coverage_text = Text().add("   ").addf("Y" if self._line == 0 else "", "Cobertura").add("  ")
+        self._content.append(Text().add("   Pontue de acordo com a última fez que você (re)fez a tarefa do zero"))
+        self._content.append(Text())
+        
+        coverage_text = Text().add(" ").addf("Y" if self._line == 0 else "", "Quanto você fez?").add("  ")
         for i, c in enumerate(self.coverage):
             coverage_text.addf("C" if i == self.grades_index[0] else "", c)
         coverage_text.add("  ").addf("m", self.coverage_msg[self.grades_index[0]])
         self._content.append(coverage_text)
         # self._content.append(Text())
-        skill_text = Text().add("   ").addf("Y" if self._line == 1 else "", "Autonomia").add("  ")
+        skill_text = Text().add(" ").addf("Y" if self._line == 1 else "", " Como foi feito?").add("  ")
         for i, c in enumerate(self.autonomy):
             skill_text.addf("G" if i == self.grades_index[1] else "", c).add(" ")
         skill_text.add(" ").addf("m", self.autonomy_msg[self.grades_index[1]])
         self._content.append(skill_text)
         # self._content.append(Text())
-        autonomy_text = Text().add(" ").addf("Y" if self._line == 2 else "", "Compreensão").add("  ")
+        autonomy_text = Text().add(" ").addf("Y" if self._line == 2 else "", "Quanto aprendeu?").add("  ")
         for i, c in enumerate(self.skill):
             autonomy_text.addf("yW" if i == self.grades_index[2] else "", c).add(" ")
         autonomy_text.add(" ").addf("m", self.skill_msg[self.grades_index[2]])

@@ -54,7 +54,7 @@ class Gui:
 
         help_fixed: List[Text] = [
             Text() + RToken("C", f"{GuiActions.palette} [{GuiKeys.palette}]"),
-            Text() + RToken(color, f"{GuiActions.evaluate}[.]"),
+            Text() + RToken(color, f"{GuiActions.evaluate}[{GuiKeys.evaluate}]"),
             Text() + RToken("G", f"{self.get_activate_label()} [↲]"),
             Text() + RToken(color, f"{GuiActions.edit} [{GuiKeys.edit}]"),
             # Text() + RToken("C", f"{GuiActions.navegar} [wasd]")
@@ -247,7 +247,7 @@ class Gui:
         _help.put_sentence(Text() + f"   {GuiActions.edit} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
         _help.put_sentence(Text() + f"   {GuiActions.activate} " + RToken("r", "↲") + "  Interage com o elemento de acordo com o contexto")
         _help.put_sentence(Text() + "             (baixar, visitar, escolher, compactar, expandir)")
-        _help.put_sentence(Text() + f"  {GuiActions.evaluate} " + RToken("r", ".") + "  Abre tela para auto avaliação")
+        _help.put_sentence(Text() + f"  {GuiActions.evaluate} " + RToken("r", GuiKeys.evaluate) + "  Abre tela para auto avaliação")
         _help.put_sentence(Text() + f"{GuiActions.search} " + RToken("r", f"{GuiKeys.search}") + "  Abre a barra de pesquisa")
 
         _help.put_sentence(Text())

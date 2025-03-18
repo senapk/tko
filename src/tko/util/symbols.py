@@ -63,6 +63,7 @@ class __Symbols:
         self.skill_d = Token("▄", "r")
         self.skill_e = Token("▂", "c")
         self.skill_x = Token("▁", "")
+        self.skill_list = [self.skill_x, self.skill_e, self.skill_d, self.skill_c, self.skill_b, self.skill_a]
 
         self.autonomy_a = Token("A", "g")
         self.autonomy_b = Token("B", "y")
@@ -70,6 +71,8 @@ class __Symbols:
         self.autonomy_d = Token("D", "r")
         self.autonomy_e = Token("E", "c")
         self.autonomy_x = Token("x", "")
+        self.autonomy_list = [self.autonomy_x, self.autonomy_e, self.autonomy_d, self.autonomy_c, self.autonomy_b, self.autonomy_a]
+        
         self.cursor = Token("┊")
 
     # def set_ascii(self):

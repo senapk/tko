@@ -17,7 +17,8 @@ from tko.util.symbols import symbols
 from tko.settings.settings import Settings
 from tko.play.floating_manager import FloatingManager
 from tko.play.floating import Floating
-from tko.play.grade_message import GradeMessage
+# from tko.play.grade_message import GradeMessage
+from tko.util.symbols import symbols
 from tko.game.tree_item import TreeItem
 from tko.settings.logger import Logger
 
@@ -145,8 +146,8 @@ class TaskTree:
         output.addf(color_lig_task, lig_quest)
         output.add(down_symbol).add(" ")
         output.add(t.get_prog_symbol()).add(" ")
-        output.add(GradeMessage.autonomy_emoji(t.autonomy)).add(" ")
-        output.add(GradeMessage.skill_emoji(t.skill))
+        output.add(symbols.autonomy_list[t.autonomy]).add(" ")
+        output.add(symbols.skill_list[t.skill])
 
         if in_focus:
             output.add(self.style.roundL(focus_color))

@@ -17,19 +17,17 @@ class GuiActions:
     all = "Todos"
 
 class GuiKeys:
-    left = "a"
-    right = "d"
-    down = "s"
-    up = "w"
+    left = "h"
+    right = "l"
+    down = "j"
+    up = "k"
 
     palette = "p"
     images = "I"
-    down_task = "b"
+    down_task = "d"
     activate = "\n"
     key_help = "?"
         
-    evaluate = "j"
-    set_root_dir = "D"
     set_lang = "L"
     github_open = "g"
     key_quit = "q"
@@ -38,9 +36,9 @@ class GuiKeys:
     borders = "B"
     search = "/"
     graph = "G"
-    evaluate = "."
+    evaluate = "a"
+    interact = "i" # Interact in manual input
     diff = "m"
-    interact = "i"
     test = "\n"
     main = "\t"
     quit   = "q"

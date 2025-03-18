@@ -46,6 +46,6 @@ class TaskGraph:
         if self.minutes_mode:
             title += " (% / minutos)"
         else:
-            title += " (% / testes )"
+            title += " (% / execuções)"
         result = plot_to_string(xs=self.eixo, ys=self.collected, title=title, lines=True, y_max=101, y_min=0, width=self.width, height=self.height)
         return result

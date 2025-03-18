@@ -1,5 +1,8 @@
 # Changelog
 
+- 2.7.0
+  - add: feedback evaluate changed and keys for evaluate
+  - add: using hjkl instead asdw
 - 2.6.8
   - fix: error if selecting .hpp file in c++ mode
 - 2.6.7
