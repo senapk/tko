@@ -71,4 +71,6 @@ class WeekGraph:
                 day += 1
 
             result = plot_to_string(xs=eixo, ys=collected, title=title, lines=True, y_min=0, width=self.width, height=self.height, y_unit="h", x_unit="d")
+            if isinstance(result, str):
+                return result.splitlines()
         return result

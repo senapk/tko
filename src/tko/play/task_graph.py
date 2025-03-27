@@ -48,4 +48,7 @@ class TaskGraph:
         else:
             title += " (% / execuções)"
         result = plot_to_string(xs=self.eixo, ys=self.collected, title=title, lines=True, y_max=101, y_min=0, width=self.width, height=self.height)
+        
+        if isinstance(result, str):
+            return result.splitlines()
         return result

@@ -1,5 +1,7 @@
 # Changelog
 
+- 2.8.1
+  - fixed weird behavior in graph in codespace generating str instead list\[str\]
 - 2.8.0
   - fixed time icon in tester
   - fixed naming of all buttons
