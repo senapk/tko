@@ -32,7 +32,7 @@ import configparser
 from subprocess import PIPE
 import unicodedata
 import chardet # type: ignore
-__version__ = "2.7.0"
+__version__ = "2.7.1"
 
 
 class LogAction:
@@ -886,6 +886,7 @@ class GuiKeys:
     search = "/"
     graph = "G"
     evaluate = "a"
+    interact = "i" # Interact in manual input
     diff = "m"
     test = "\n"
     main = "\t"
@@ -9815,7 +9816,7 @@ class PlayActions:
 
 
     def select_task_action(self, task: Task):
-        action = self.tree.get_task_action(task)
+        _, action = self.tree.get_task_action(task)
         if action == TaskAction.BAIXAR:
             return self.__down_remote_task(task)
         elif action == TaskAction.VISITAR:

@@ -24,9 +24,12 @@ from tko.settings.logger import Logger
 
 
 class TaskAction:
-    BAIXAR   = "  Baixar "
-    EXECUTAR = " Executar"
-    VISITAR  = " Visitar "
+    BAIXAR   = "Baixar  "
+    EXECUTAR = "Escolher"
+    VISITAR  = "Visitar "
+    EXPANDIR = "Expandir"
+    CONTRAIR = "Contrair"
+    BLOQUEIO = "Travado"
 
 class TaskTree:
 
@@ -146,8 +149,8 @@ class TaskTree:
         output.addf(color_lig_task, lig_quest)
         output.add(down_symbol).add(" ")
         output.add(t.get_prog_symbol()).add(" ")
-        output.add(symbols.autonomy_list[t.autonomy]).add(" ")
-        output.add(symbols.skill_list[t.skill])
+        output.add(symbols.approach_list[t.autonomy]).add(" ")
+        output.add(symbols.autonomy_list[t.skill])
 
         if in_focus:
             output.add(self.style.roundL(focus_color))
@@ -602,17 +605,16 @@ class TaskTree:
         self.set_selected_by_index(min(len(self.items) - 1, index + 1))
 
     # return a TaskAction
-    def get_task_action(self, task: Task) -> str:
+    def get_task_action(self, task: Task) -> tuple[str, str]:
         if task.link_type == Task.Types.VISITABLE_URL:
-            return TaskAction.VISITAR
+            return ("B", TaskAction.VISITAR)
         if task.link_type == Task.Types.STATIC_FILE:
-            return TaskAction.EXECUTAR
-        else: # downloadable task
-            if not self.is_downloaded_for_lang(task):
-                return TaskAction.BAIXAR
-            else:
-                return TaskAction.EXECUTAR
-            
+            return ("G", TaskAction.EXECUTAR)
+        
+        if not self.is_downloaded_for_lang(task):
+            return ("Y", TaskAction.BAIXAR)
+        return ("G", TaskAction.EXECUTAR)
+        
     def is_downloaded_for_lang(self, task: Task):
         folder = task.get_folder()
         lang = self.rep.get_lang()

@@ -15,8 +15,9 @@ from tko.play.images import opening, random_get
 from tko.play.floating import Floating, FloatingInput
 from tko.play.floating_manager import FloatingManager
 from tko.play.flags import Flag, Flags, FlagsMan
-from tko.play.tasktree import TaskTree
+from tko.play.tasktree import TaskTree, TaskAction
 
+from tko.play.keys import GuiKeys
 from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.game.cluster import Cluster
@@ -51,41 +52,43 @@ class Gui:
                 color = "Y"
         except IndexError:
             pass
-
+        act_color, act_text = self.get_activate_label()
         help_fixed: List[Text] = [
-            Text() + RToken("C", f"{GuiActions.palette} [{GuiKeys.palette}]"),
-            Text() + RToken(color, f"{GuiActions.evaluate}[{GuiKeys.evaluate}]"),
-            Text() + RToken("G", f"{self.get_activate_label()} [↲]"),
+            Text() + RToken("C", f"{GuiActions.config} [{GuiKeys.palette}]"),
+            Text() + RToken(color, f"{GuiActions.grade} [{GuiKeys.grade_play}]"),
+            Text() + RToken(act_color, f"{act_text} [↲]"),
             Text() + RToken(color, f"{GuiActions.edit} [{GuiKeys.edit}]"),
             # Text() + RToken("C", f"{GuiActions.navegar} [wasd]")
             Text() + RToken("C", f"{GuiActions.search} [{GuiKeys.search}]")
         ]
         return help_fixed
 
-    def get_activate_label(self) -> str:
+    def get_activate_label(self) -> tuple[str, str]:
         output: str = GuiActions.activate
         try:
             obj = self.tree.get_selected_throw()
         except IndexError:
-            return " Retornar"
+            return "R", " Retornar"
         if isinstance(obj, Quest):
             quest: Quest = obj
             if not Flags.admin and not quest.is_reachable():
-                output = "Bloqueado"
+                output = TaskAction.BLOQUEIO
             elif quest.key in self.tree.expanded:
-                output = " Contrair"
+                output = TaskAction.CONTRAIR
             else:
-                output = " Expandir"
+                output = TaskAction.EXPANDIR
+            return "Y", output
         elif isinstance(obj, Cluster):
             cluster: Cluster = obj
             if cluster.key in self.tree.expanded:
-                output = " Contrair"
+                output = TaskAction.CONTRAIR
             else:
-                output = " Expandir"
+                output = TaskAction.EXPANDIR
+            return "Y", output
         elif isinstance(obj, Task):
-            output = self.tree.get_task_action(obj)
-
-        return output
+            color, output = self.tree.get_task_action(obj)
+            return color, output
+        return "R", " ERRO"
 
     def center_header_footer(self, value: Text, frame: Frame) -> Text:
         half = value.len() // 2
@@ -240,15 +243,15 @@ class Gui:
 
         _help.put_sentence(Text.format("  ").addf("r", "Shift + B")
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
-        _help.put_sentence(Text() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
-        _help.put_sentence(Text() + f"   {GuiActions.palette} " + RToken("r", f"{GuiKeys.palette}") + "  Abre o menu de ações e configurações")
-        _help.put_sentence(Text() + f"   {GuiActions.github} " + RToken("r", f"{GuiKeys.github_open}") + "  Abre tarefa em uma aba do browser")
+        _help.put_sentence(Text() + "" + RToken("g", "setas") + ", " + RToken("g", f"{GuiKeys.left}{GuiKeys.down}{GuiKeys.up}{GuiKeys.right}")  + "  Para navegar entre os elementos")
+        _help.put_sentence(Text() + f"   {GuiActions.config} " + RToken("r", f"{GuiKeys.palette}") + "  Abre o menu de ações e configurações")
+        _help.put_sentence(Text() + f"   {GuiActions.github} " + RToken("r", f"{GuiKeys.github_web}") + "  Abre tarefa em uma aba do browser")
         _help.put_sentence(Text() + f"   {GuiActions.download} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
         _help.put_sentence(Text() + f"   {GuiActions.edit} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
         _help.put_sentence(Text() + f"   {GuiActions.activate} " + RToken("r", "↲") + "  Interage com o elemento de acordo com o contexto")
         _help.put_sentence(Text() + "             (baixar, visitar, escolher, compactar, expandir)")
-        _help.put_sentence(Text() + f"  {GuiActions.evaluate} " + RToken("r", GuiKeys.evaluate) + "  Abre tela para auto avaliação")
-        _help.put_sentence(Text() + f"{GuiActions.search} " + RToken("r", f"{GuiKeys.search}") + "  Abre a barra de pesquisa")
+        _help.put_sentence(Text() + f"  {GuiActions.grade} " + RToken("r", GuiKeys.grade_play) + "  Abre tela para auto avaliação")
+        _help.put_sentence(Text() + f"    {GuiActions.search} " + RToken("r", f"{GuiKeys.search}") + "  Abre a barra de pesquisa")
 
         _help.put_sentence(Text())
         _help.put_sentence(Text() + "Você pode mudar o editor padrão com o comando")
@@ -275,55 +278,62 @@ class Gui:
 
         return text, percent
 
-    def print_task_graph(self, frame, x, task_key: str, width: int, height: int):
-        tg = TaskGraph(self.settings, self.rep, task_key, width, height, minutes_mode=not Flags.graph)
+    def get_task_graph(self, task_key: str, width: int, height: int) -> tuple[bool, list[str]]:
+        minutes_mode = Flags.graph.get_value() == "1"
+        tg = TaskGraph(self.settings, self.rep, task_key, width, height, minutes_mode=minutes_mode)
         if len(tg.collected) == 1:
-            return False
+            return False, []
         graph = tg.get_graph()
-        for y, line in enumerate(graph):
-            frame.write(y, x, Text().addf("g", line))
-        return True
+        # for y, line in enumerate(graph):
+        #     frame.write(y, x, Text().addf("g", line))
+        return True, graph
     
-    def print_week_graph(self, frame, x, width: int, height: int, week_mode: bool = False):
+    def get_week_graph(self, width: int, height: int) -> tuple[bool, list[str]]:
+        week_mode = Flags.graph.get_value() == "1"
         tg = WeekGraph(width, height, week_mode)
         if len(tg.collected) == 1:
-            return False
+            return False, []
         graph = tg.get_graph()
-        for y, line in enumerate(graph):
-            frame.write(y, x, Text().addf("g", line))
-        return True
+        # for y, line in enumerate(graph):
+        #     frame.write(y, x, Text().addf("g", line))
+        return True, graph
 
-    def show_opening(self, frame: Frame):
-        if not self.app.get_use_images():
-            return
+    def show_graphs(self, frame: Frame):
         lines, cols = frame.get_inner()
         
         now = datetime.datetime.now()
-        parrot = random_get(opening, str(now.hour))
-        parrot_lines = parrot.splitlines()
-        max_len = max([len(line) for line in parrot_lines])
-        yinit = 1
-        distance = 27
+        # parrot = random_get(opening, str(now.hour))
+        distance = 18
+        made = False
         try:
             selected = self.tree.get_selected_throw()
+        except IndexError:
+            selected = None
+        if Flags.graph.get_value() != "0":
             width = cols - self.tree.max_title - distance - 7
             if width < 5:
                 width = 5
-            height = lines - 4
+            height = lines - 5
             if height < 3:
                 height = 3
             if isinstance(selected, Task):
-                if self.print_task_graph(frame, self.tree.max_title + distance, selected.key, width, height):
-                    return
+                made, list_data = self.get_task_graph(selected.key, width, height)
             elif isinstance(selected, Cluster) or isinstance(selected, Quest):
-                week_mode = isinstance(selected, Cluster)
-                if self.print_week_graph(frame, self.tree.max_title + distance, width, height, week_mode):
-                    return
-
-        except IndexError:
-            pass
-        for y, line in enumerate(parrot_lines):
-            frame.write(y, self.tree.max_title + distance, Text().addf("g", line))
+                made, list_data = self.get_week_graph(width, height)
+        if not made:
+            list_data = opening["estuda"].splitlines()
+        is_task = isinstance(selected, Task)
+        op_one = "minutos " if is_task else "h/semana"
+        op_two = "execuções" if is_task else "  h/dia  "
+        border = Border(self.settings.app)
+        view_button = Text().add("  ").add(border.border("C", f"Mudar Visão [{GuiKeys.graph}]"))
+        view_value = Flags.graph.get_value()
+        view_button.add(" ").addf("M" if view_value == "0" else "Y", f" Nenhum ")
+        view_button.add(" ").addf("M" if view_value == "1" else "Y", f" {op_one} ")
+        view_button.add(" ").addf("M" if view_value == "2" else "Y", f" {op_two} ")
+        frame.write(0, self.tree.max_title + distance, view_button)
+        for y, line in enumerate(list_data):
+            frame.write(y + 1, self.tree.max_title + distance, Text().addf("g", line))
 
     def show_items(self):
         border_color = "r" if Flags.admin else ""
@@ -354,7 +364,7 @@ class Gui:
         if task_sx > 5: 
             frame_main = Frame(mid_y, 0).set_size(mid_sy, task_sx).set_border_color(border_color)
             self.show_main_bar(frame_main)
-        self.show_opening(frame_main)
+        self.show_graphs(frame_main)
 
         if Flags.skills:
             frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)

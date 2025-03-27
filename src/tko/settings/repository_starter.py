@@ -43,8 +43,8 @@ class RepStarter:
     
     def print_end_msg(self):
         rel_path = os.path.relpath(self.rep.root_folder, os.getcwd())
-        print(Text.format("Voce pode acessar o repositório com o comando {g} {y}", "tko play", "<pasta>"))
-        print(Text.format("Por exemplo: {g} {y}", "tko play", rel_path))
+        print(Text.format("Voce pode acessar o repositório com o comando {g} {y}", "tko open", "<pasta>"))
+        print(Text.format("Por exemplo: {g} {y}", "tko open", rel_path))
 
     def set_folder(self, folder: str | None, remote: str | None) -> bool:
         if folder is not None:

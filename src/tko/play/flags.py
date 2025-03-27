@@ -1,6 +1,6 @@
 from typing import List, Dict, Any
-from ..util.text import Text
-
+from tko.util.text import Text
+from tko.play.keys import GuiKeys
 
 class Flag:
     def __init__(self):
@@ -70,7 +70,7 @@ class Flags:
     percent = Flag().set_name("Percentual").set_keycode("P").set_values(["1", "0"]).set_description("Mostra todos os valores em porcentagem      ")
     admin = Flag().set_name("Admin").set_keycode("A").set_values(["0", "1"])       .set_description("Habilitas todas as missões e tarefas        ")
     skills = Flag().set_name("Skills").set_keycode("S").set_values(["0", "1"]).set_description("Mostra a barra de skills")
-    graph = Flag().set_name("Graph").set_keycode("G").set_values(["0", "1"]).set_description("Muda o Gráfico")
+    graph = Flag().set_name("Graph").set_keycode(GuiKeys.graph).set_values(["0", "1", "2"]).set_description("Muda o Gráfico")
     devel = Flag().set_name("Devel").set_values(["0", "1"])
 
 class FlagsMan:

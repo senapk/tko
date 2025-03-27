@@ -3,6 +3,7 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 # from tko.game.graph import Graph
 
+from tko.play.floating_grade import FloatingGrade
 from tko.settings.logger import Logger
 from tko.settings.settings import Settings
 
@@ -14,7 +15,7 @@ from tko.util.param import Param
 from tko.cmds.cmd_down import DownProblem
 
 from tko.play.fmt import Fmt
-from tko.play.floating import Floating, FloatingGrade
+from tko.play.floating import Floating
 from tko.play.gui import Gui
 from tko.play.opener import Opener
 
@@ -178,7 +179,7 @@ class PlayActions:
 
 
     def select_task_action(self, task: Task):
-        action = self.tree.get_task_action(task)
+        _, action = self.tree.get_task_action(task)
         if action == TaskAction.BAIXAR:
             return self.__down_remote_task(task)
         elif action == TaskAction.VISITAR:

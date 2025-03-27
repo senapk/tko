@@ -32,19 +32,22 @@ opening: Dict[str, str] = {}
 # """
 
 opening["estuda"] = r"""
-O modelo de avaliação usa 3 notas 
-  Cobertura: quanto da atividade você fez
-  Autonomia: quanta ajuda você precisou
-             (ChatGpt, Copilot, Monitoria)
-Compreensão: quanto você entendeu do que fez
+------- O modelo de avaliação utiliza 3 critérios --------
 
-Cobertura   : 0 1 ... 9 ✓
-Autonomia   : x E D C B A
-Compreensão : x ▁ ▂ ▃ ▅ █    
+- Cobertura: quanto da atividade foi entregue\?
+  - Se houver testes, isso será calculado automaticamente
+- Abordagem: como foi a última execução da atividade\?
+  - Copiar, ChatGpt, Copilot, Aula, Monitoria, Sozinho
+- Autonomia: se refizer a atividade sozinho e SEM CONSULTA, 
+    quanto dela você se sente confiante para fazer\?
+
+Cobertura: (  fiz nada ) 0 1 ... 9 ✓ (entreguei tudo)
+Abordagem: (muita ajuda) x E D C B A (nenhum suporte)
+Autonomia: (não aprendi) x ▁ ▂ ▃ ▅ █ (refaço sozinho)
 
  ,`````.          __||||___       
 ' Estuda`,       /_  ___   \      
-'carniça!`.     /@ \/@  \   \     
+'miserável`.    /@ \/@  \   \     
  ` , . , '  `.. \__/\___/   /     
                  \_\/______/      
                  /     /\\\\\     
@@ -92,17 +95,17 @@ Compreensão : x ▁ ▂ ▃ ▅ █
 intro: Dict[str, str] = {}
 
 intro["elephant"] = r"""
-        ⣀⣀                i -> Executa no modo Interativo  
-      ⣰⣿⣿⣿⣿⣦⣀⣀⣀           ↲ -> Testa usando casos de teste 
-      ⢿⣿⠟⠋⠉    ⠉⠑⠢⣄⡀      t -> Alterana entre rodar Todos  
-     ⢠⠞⠁           ⠙⢿⣿⣿⣦⡀      ou um único caso de teste   
- ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇ TAB  Muda o arquivo PRINCIPAL    
-⣾⣿⣿⣦⣼⡀ ⢺⣿⣿⡿⠃    ⣠⣤⣄  ⠈⡿⠋       para problemas de múltiplos 
-⢿⣿⣿⣿⣿⣇ ⠤⠌⠁ ⡀⢲⡶⠄⢸⣏⣿⣿   ⡇        arquivos de código fonte    
-⠈⢿⣿⣿⣿⣿⣷⣄⡀  ⠈⠉⠓⠂ ⠙⠛⠛⠠ ⡸⠁   m -> muda o MODO diff de vertical
-  ⠻⣿⣿⣿⣿⣿⣿⣷⣦⣄⣀    ⠑ ⣠⠞⠁         para modo diff horizontal   
-   ⢸⡏⠉⠛⠛⠛⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⡄      l -> define o Limite de tempo    
-   ⠸        ⠈⠉⠛⢿⣿⣿⣿⣿⡄     esquerda direita -> muda o teste 
+        ⣀⣀                                                                      
+      ⣰⣿⣿⣿⣿⣦⣀⣀⣀           ↲ -> avalia usando os testes cadastrados no cases.tio 
+      ⢿⣿⠟⠋⠉    ⠉⠑⠢⣄⡀      r -> compila e (r)oda fazendo entrada de dados manual 
+     ⢠⠞⠁           ⠙⢿⣿⣿⣦⡀                                                       
+ ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇ TAB -> Muda o arquivo PRINCIPAL se múltiplos arquivos 
+⣾⣿⣿⣦⣼⡀ ⢺⣿⣿⡿⠃    ⣠⣤⣄  ⠈⡿⠋                                                        
+⢿⣿⣿⣿⣿⣇ ⠤⠌⠁ ⡀⢲⡶⠄⢸⣏⣿⣿   ⡇   d -> muda o modo (d)iff de vertical para horizontal   
+⠈⢿⣿⣿⣿⣿⣷⣄⡀  ⠈⠉⠓⠂ ⠙⠛⠛⠠ ⡸⠁   u -> trava a avaliação em (u)m único caso de teste    
+  ⠻⣿⣿⣿⣿⣿⣿⣷⣦⣄⣀    ⠑ ⣠⠞⠁    t -> define o limite de (t)empo para execução         
+   ⢸⡏⠉⠛⠛⠛⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⡄                                                            
+   ⠸        ⠈⠉⠛⢿⣿⣿⣿⣿⡄     esquerda direita -> muda o teste apresentado          
 """
 
 compilling: Dict[str, str] = {}

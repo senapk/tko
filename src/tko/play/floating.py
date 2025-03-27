@@ -6,7 +6,6 @@ import curses
 from typing import Callable
 from tko.play.input_manager import InputManager
 from tko.util.symbols import symbols
-from tko.game.task import Task
 
 class Floating:
     def __init__(self, _align=""):
@@ -172,110 +171,6 @@ class Floating:
         
         return -1
         
-class FloatingGrade(Floating):
-    def __init__(self, task: Task, _align=""):
-        super().__init__(_align)
-        self._task = task
-        self._line = 0
-        self.set_text_ljust()
-        self._frame.set_border_color("g")
-        self.set_header_text(Text.format("{y/}", " Utilize os direcionais para  marcar "))
-        self.set_footer_text(Text.format("{y/}", " Pressione Enter para confirmar "))
-
-        self.grades_index = [task.coverage // 10, task.autonomy, task.skill]
-        self.coverage = ["x", "1", "2", "3", "4", "5", "6", "7", "8", "9", "✓"]
-        self.coverage_msg = [
-            "Não fiz", 
-            "Fiz 10%", 
-            "Fiz 20%", 
-            "Fiz 30%", 
-            "Fiz 40%",
-            "Fiz 50%",
-            "Fiz 60%",
-            "Fiz 70%",
-            "Fiz 80%",
-            "Fiz 90%",
-            "Fiz 100%"]
-        self.autonomy = [x.text for x in [symbols.autonomy_x, symbols.autonomy_e, symbols.autonomy_d, symbols.autonomy_c, symbols.autonomy_b, symbols.autonomy_a]]
-        self.autonomy_msg = [
-            "Não fiz                                     ",
-            "Copiei o código de um colega e estudei      ",
-            "Fiz com ajuda de IA (copilot | gpt | outros)", 
-            "Fiz seguindo aula, vídeo, colega ou monitor ", 
-            "Criei os códigos, mas tirei pequenas dúvidas", 
-            "Fiz completamente sozinho e sem consulta    " 
-            ]
-        self.skill = [x.text for x in [symbols.skill_x, symbols.skill_e, symbols.skill_d, symbols.skill_c, symbols.skill_b, symbols.skill_a]]
-        self.skill_msg = [
-            "Consigo refazer menos de 30% sem consulta", 
-            "Consigo refazer ao menos 30% sem consulta",
-            "Consigo refazer ao menos 50% sem consulta", 
-            "Consigo refazer ao menos 70% sem consulta", 
-            "Consigo refazer ao menos 90% sem consulta", 
-            "Consigo refazer 100% sem consulta        " 
-            ]
-        self.grades_value = [self.coverage, self.autonomy, self.skill]
-        self.grades_msg = [self.coverage_msg, self.autonomy_msg, self.skill_msg]
-
-    
-    def update_content(self):
-        self._content = []
-        self._content.append(Text())
-        self._content.append(Text().add("   Pontue de acordo com a última fez que você (re)fez a tarefa do zero"))
-        self._content.append(Text())
-        
-        coverage_text = Text().add(" ").addf("Y" if self._line == 0 else "", "Quanto você fez?").add("  ")
-        for i, c in enumerate(self.coverage):
-            coverage_text.addf("C" if i == self.grades_index[0] else "", c)
-        coverage_text.add("  ").addf("m", self.coverage_msg[self.grades_index[0]])
-        self._content.append(coverage_text)
-        # self._content.append(Text())
-        skill_text = Text().add(" ").addf("Y" if self._line == 1 else "", " Como foi feito?").add("  ")
-        for i, c in enumerate(self.autonomy):
-            skill_text.addf("G" if i == self.grades_index[1] else "", c).add(" ")
-        skill_text.add(" ").addf("m", self.autonomy_msg[self.grades_index[1]])
-        self._content.append(skill_text)
-        # self._content.append(Text())
-        autonomy_text = Text().add(" ").addf("Y" if self._line == 2 else "", "Quanto aprendeu?").add("  ")
-        for i, c in enumerate(self.skill):
-            autonomy_text.addf("yW" if i == self.grades_index[2] else "", c).add(" ")
-        autonomy_text.add(" ").addf("m", self.skill_msg[self.grades_index[2]])
-        self._content.append(autonomy_text)
-        self._content.append(Text())
-        
-    def draw(self):
-        self._set_default_header()
-        self._set_default_footer()
-        self.setup_frame()
-        self._frame.draw()
-        self.update_content()
-        self.write_content()
-
-    def change_task(self):
-        self._task.set_coverage(self.grades_index[0] * 10)
-        self._task.set_autonomy(self.grades_index[1])
-        self._task.set_skill(self.grades_index[2])
-
-    def get_input(self) -> int:
-        self.draw()
-        key: int = Fmt.getch()
-        key = InputManager.fix_cedilha(Fmt.get_screen(), key)
-        if key == curses.KEY_UP or key == ord('w'):
-            self._line = max(self._line - 1, 0)
-        elif key == curses.KEY_DOWN or key == ord('s'):
-            self._line = min(self._line + 1, 2)
-        elif key == curses.KEY_LEFT or key == ord('a'):
-            self.grades_index[self._line] = max(self.grades_index[self._line] - 1, 0)
-            self.change_task()
-        elif key == curses.KEY_RIGHT or key == ord('d'):
-            self.grades_index[self._line] = min(self.grades_index[self._line] + 1, len(self.grades_value[self._line]) - 1)
-            self.change_task()
-        elif key == ord('\n') or key == curses.KEY_BACKSPACE or key == InputManager.esc:
-            self._enable = False
-            if self._exit_fn is not None:
-                self._exit_fn()        
-        return -1
-
 class FloatingInputData:
     def __init__(self, label: Callable[[], Text], action: Callable[[], None], shortcut: str = ""):
         self.label = label

@@ -57,21 +57,21 @@ class __Symbols:
         # self.emoji_confuso   = Token("◱", "r")
         # self.emoji_nao_fiz   = Token("□")
 
-        self.skill_a = Token("▇", "g")
-        self.skill_b = Token("▆", "y")
-        self.skill_c = Token("▅", "m")
-        self.skill_d = Token("▄", "r")
-        self.skill_e = Token("▂", "c")
-        self.skill_x = Token("▁", "")
-        self.skill_list = [self.skill_x, self.skill_e, self.skill_d, self.skill_c, self.skill_b, self.skill_a]
-
-        self.autonomy_a = Token("A", "g")
-        self.autonomy_b = Token("B", "y")
-        self.autonomy_c = Token("C", "m")
-        self.autonomy_d = Token("D", "r")
-        self.autonomy_e = Token("E", "c")
-        self.autonomy_x = Token("x", "")
+        self.autonomy_a = Token("▇", "g")
+        self.autonomy_b = Token("▆", "y")
+        self.autonomy_c = Token("▅", "m")
+        self.autonomy_d = Token("▄", "r")
+        self.autonomy_e = Token("▂", "c")
+        self.autonomy_x = Token("▁", "")
         self.autonomy_list = [self.autonomy_x, self.autonomy_e, self.autonomy_d, self.autonomy_c, self.autonomy_b, self.autonomy_a]
+
+        self.approach_a = Token("A", "g")
+        self.approach_b = Token("B", "y")
+        self.approach_c = Token("C", "m")
+        self.approach_d = Token("D", "r")
+        self.approach_e = Token("E", "c")
+        self.approach_x = Token("x", "")
+        self.approach_list = [self.approach_x, self.approach_e, self.approach_d, self.approach_c, self.approach_b, self.approach_a]
         
         self.cursor = Token("┊")
 

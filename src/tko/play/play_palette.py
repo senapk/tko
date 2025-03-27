@@ -31,7 +31,7 @@ class PlayPalette:
             FloatingInputData(
                 lambda: Text.format(" {} Tarefa: Abrir {y} com a descrição", symbols.action, "GitHub"),
                 self.actions.open_link,
-                GuiKeys.github_open
+                GuiKeys.github_web
             ).set_exit_on_action(True)
         )
 

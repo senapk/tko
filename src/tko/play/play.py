@@ -83,7 +83,7 @@ class Open:
         cman.add_str(GuiKeys.right, self.tree.arrow_right)
         cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
         cman.add_str(GuiKeys.activate, self.actions.select_task)
-        cman.add_str(GuiKeys.github_open, self.actions.open_link)
+        cman.add_str(GuiKeys.github_web, self.actions.open_link)
         cman.add_str(GuiKeys.down_task, self.actions.down_remote_task)
         cman.add_str(GuiKeys.edit, lambda: self.actions.open_code())
         cman.add_str(GuiKeys.expand, self.tree.process_expand_all)
@@ -94,7 +94,7 @@ class Open:
         cman.add_str(GuiKeys.set_lang, self.gui.language.set_language)
         # cman.add_str(GuiKeys.graph, self.actions.generate_graph)
         cman.add_int(curses.KEY_BACKSPACE, self.actions.evaluate)
-        cman.add_str(GuiKeys.evaluate, self.actions.evaluate)
+        cman.add_str(GuiKeys.grade_play, self.actions.evaluate)
         if Flags.admin:
             cman.add_str(GuiKeys.mass, self.tree.mass_mark)
     

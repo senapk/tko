@@ -1,5 +1,11 @@
 # Changelog
 
+- 2.8.0
+  - fixed time icon in tester
+  - fixed naming of all buttons
+  - fixed graph showing in play
+  - graph selector with g in 3 options
+  - removed reward from tasktree
 - 2.7.0
   - add: feedback evaluate changed and keys for evaluate
   - add: using hjkl instead asdw

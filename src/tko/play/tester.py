@@ -370,22 +370,20 @@ class Tester:
 
     def make_bottom_line(self) -> List[Text]:
         cmds: List[Text] = []
-        text = f"{GuiActions.palette} [{GuiKeys.palette}]"
+        text = f"{GuiActions.config} [{GuiKeys.palette}]"
         cmds.append(self.borders.border("C", text))
 
-        color = "R" if self.locked_index else "Y"
-        symbol = symbols.success if not self.locked_index else symbols.failure
-        # name = "Único" if self.locked_index else "Todos"
-        travar = f"{symbol.text} {GuiActions.all}[{GuiKeys.lock}]"
-        cmds.append(self.borders.border(color, travar))
+        color ="Y"
+        limite = f"{GuiActions.time_limit} {self.get_time_limit_symbol()} [{GuiKeys.limite}]"
+        cmds.append(self.borders.border(color, limite))
 
         # ativar
-        cmds.append(self.borders.border("G", f"{symbols.timer.text}{self.get_time_limit_symbol()} Testar[{symbols.newline.text}] "))
+        cmds.append(self.borders.border("G", f"{GuiActions.evaluate_tester} [{symbols.newline.text}]"))
         #editar
         if self.opener is not None:
             cmds.append(self.borders.border("Y", f"{GuiActions.edit} [{GuiKeys.edit}]"))
         # rodar
-        cmds.append(self.borders.border("C", f"{GuiActions.interact} [{GuiKeys.interact}]"))
+        cmds.append(self.borders.border("C", f"{GuiActions.execute_tester} [{GuiKeys.execute_tester}]"))
             
         return cmds
 
@@ -632,11 +630,11 @@ class Tester:
             self.go_down()
         elif key == curses.KEY_UP or key == ord(GuiKeys.up):
             self.go_up()
-        elif key == ord(GuiKeys.main):
+        elif key == ord(GuiKeys.toggle_main):
             self.change_main()
-        elif key == ord(GuiKeys.interact):
+        elif key == ord(GuiKeys.execute_tester):
             return self.run_exec_mode()
-        elif key == ord(GuiKeys.test):
+        elif key == ord(GuiKeys.evaluate):
             self.run_test_mode()
         elif key == ord(GuiKeys.lock):
             self.lock_unit()
