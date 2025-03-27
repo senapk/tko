@@ -111,7 +111,7 @@ class TaskTree:
                 items.append(len(c.title))
                 if c.key in self.expanded:
                     for q in c.get_quests():
-                        items.append(len(q.title) + 2)
+                        items.append(len(q.get_full_title()) + 2)
                         if q.key in self.expanded:
                             for t in q.get_tasks():
                                 items.append(len(t.title) + 6)
@@ -179,11 +179,11 @@ class TaskTree:
             prog = int(t.get_percent())
             output.addf("y", str(prog).rjust(3, " ") + "%")
 
-        if Flags.reward:
-            xp = ""
-            for s, v in t.skills.items():
-                xp += f" +{s}:{v}"
-            output.addf(self.colors.task_skills, xp)
+        # if Flags.reward:
+        #     xp = ""
+        #     for s, v in t.skills.items():
+        #         xp += f" +{s}:{v}"
+        #     output.addf(self.colors.task_skills, xp)
             
         return output
 
@@ -223,7 +223,7 @@ class TaskTree:
         # if in_focus:
         #     color = "k" + focus_color
 
-        title = q.title
+        title = q.get_full_title()
         title = title.ljust(self.max_title + 3, ".")
 
         output.addf(focus_color, title)
@@ -242,14 +242,14 @@ class TaskTree:
         else:
             output.add(" ").add(q.get_resume_by_tasks())
 
-        if Flags.minimum:
-            output.add(" ").add(q.get_requirement())
+        # if Flags.minimum:
+        #     output.add(" ").add(q.get_requirement())
 
-        if Flags.reward:
-            xp = ""
-            for s, v in q.skills.items():
-                xp += f" +{s}:{v}"
-            output.addf(self.colors.task_skills, xp)
+        # if Flags.reward:
+        #     xp = ""
+        #     for s, v in q.skills.items():
+        #         xp += f" +{s}:{v}"
+        #     output.addf(self.colors.task_skills, xp)
 
         # if q.key in self.new_items:
         #     output.addf(self.colors.task_new, " [new]")

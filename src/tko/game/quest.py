@@ -4,6 +4,7 @@ from tko.game.task import Task
 from tko.util.text import Text
 from tko.util.get_md_link import get_md_link
 from tko.game.tree_item import TreeItem
+from tko.play.flags import Flags
 import re
 
 class Quest(TreeItem):
@@ -24,6 +25,18 @@ class Quest(TreeItem):
         self.filename = ""
         self.cluster_key = ""
         self.__is_reachable: bool = False
+
+    def get_full_title(self):
+        output = self.title
+        if Flags.minimum:
+            output += " " + self.get_requirement().get_text()
+        if Flags.reward:
+            xp = ""
+            for s, v in self.skills.items():
+                xp += f" +{s}:{v}"
+            output += xp
+        return output
+
 
     def is_reachable(self)-> bool:
         return self.__is_reachable

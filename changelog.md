@@ -1,5 +1,7 @@
 # Changelog
 
+- 2.8.3
+  - moving requirement and minimun inside text
 - 2.8.2
   - fixed weird behavior in graph in codespace generating str instead list\[str\]
 - 2.8.1
