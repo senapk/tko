@@ -32,7 +32,7 @@ import configparser
 from subprocess import PIPE
 import unicodedata
 import chardet # type: ignore
-__version__ = "2.7.1"
+__version__ = "2.8.0"
 
 
 class LogAction:
@@ -253,19 +253,22 @@ opening: Dict[str, str] = {}
 # """
 
 opening["estuda"] = r"""
-O modelo de avaliação usa 3 notas 
-  Cobertura: quanto da atividade você fez
-  Autonomia: quanta ajuda você precisou
-             (ChatGpt, Copilot, Monitoria)
-Compreensão: quanto você entendeu do que fez
+------- O modelo de avaliação utiliza 3 critérios --------
 
-Cobertura   : 0 1 ... 9 ✓
-Autonomia   : x E D C B A
-Compreensão : x ▁ ▂ ▃ ▅ █    
+- Cobertura: quanto da atividade foi entregue\?
+  - Se houver testes, isso será calculado automaticamente
+- Abordagem: como foi a última execução da atividade\?
+  - Copiar, ChatGpt, Copilot, Aula, Monitoria, Sozinho
+- Autonomia: se refizer a atividade sozinho e SEM CONSULTA, 
+    quanto dela você se sente confiante para fazer\?
+
+Cobertura: (  fiz nada ) 0 1 ... 9 ✓ (entreguei tudo)
+Abordagem: (muita ajuda) x E D C B A (nenhum suporte)
+Autonomia: (não aprendi) x ▁ ▂ ▃ ▅ █ (refaço sozinho)
 
  ,`````.          __||||___       
 ' Estuda`,       /_  ___   \      
-'carniça!`.     /@ \/@  \   \     
+'miserável`.    /@ \/@  \   \     
  ` , . , '  `.. \__/\___/   /     
                  \_\/______/      
                  /     /\\\\\     
@@ -313,17 +316,17 @@ Compreensão : x ▁ ▂ ▃ ▅ █
 intro: Dict[str, str] = {}
 
 intro["elephant"] = r"""
-        ⣀⣀                i -> Executa no modo Interativo  
-      ⣰⣿⣿⣿⣿⣦⣀⣀⣀           ↲ -> Testa usando casos de teste 
-      ⢿⣿⠟⠋⠉    ⠉⠑⠢⣄⡀      t -> Alterana entre rodar Todos  
-     ⢠⠞⠁           ⠙⢿⣿⣿⣦⡀      ou um único caso de teste   
- ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇ TAB  Muda o arquivo PRINCIPAL    
-⣾⣿⣿⣦⣼⡀ ⢺⣿⣿⡿⠃    ⣠⣤⣄  ⠈⡿⠋       para problemas de múltiplos 
-⢿⣿⣿⣿⣿⣇ ⠤⠌⠁ ⡀⢲⡶⠄⢸⣏⣿⣿   ⡇        arquivos de código fonte    
-⠈⢿⣿⣿⣿⣿⣷⣄⡀  ⠈⠉⠓⠂ ⠙⠛⠛⠠ ⡸⠁   m -> muda o MODO diff de vertical
-  ⠻⣿⣿⣿⣿⣿⣿⣷⣦⣄⣀    ⠑ ⣠⠞⠁         para modo diff horizontal   
-   ⢸⡏⠉⠛⠛⠛⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⡄      l -> define o Limite de tempo    
-   ⠸        ⠈⠉⠛⢿⣿⣿⣿⣿⡄     esquerda direita -> muda o teste 
+        ⣀⣀                                                                      
+      ⣰⣿⣿⣿⣿⣦⣀⣀⣀           ↲ -> avalia usando os testes cadastrados no cases.tio 
+      ⢿⣿⠟⠋⠉    ⠉⠑⠢⣄⡀      r -> compila e (r)oda fazendo entrada de dados manual 
+     ⢠⠞⠁           ⠙⢿⣿⣿⣦⡀                                                       
+ ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇ TAB -> Muda o arquivo PRINCIPAL se múltiplos arquivos 
+⣾⣿⣿⣦⣼⡀ ⢺⣿⣿⡿⠃    ⣠⣤⣄  ⠈⡿⠋                                                        
+⢿⣿⣿⣿⣿⣇ ⠤⠌⠁ ⡀⢲⡶⠄⢸⣏⣿⣿   ⡇   d -> muda o modo (d)iff de vertical para horizontal   
+⠈⢿⣿⣿⣿⣿⣷⣄⡀  ⠈⠉⠓⠂ ⠙⠛⠛⠠ ⡸⠁   u -> trava a avaliação em (u)m único caso de teste    
+  ⠻⣿⣿⣿⣿⣿⣿⣷⣦⣄⣀    ⠑ ⣠⠞⠁    t -> define o limite de (t)empo para execução         
+   ⢸⡏⠉⠛⠛⠛⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⡄                                                            
+   ⠸        ⠈⠉⠛⢿⣿⣿⣿⣿⡄     esquerda direita -> muda o teste apresentado          
 """
 
 compilling: Dict[str, str] = {}
@@ -851,18 +854,20 @@ class GuiActions:
     tab = "↔TAB"
     leave   = "Sair"
     edit = "Editar"
-    interact  = "Interagir"
     principal = "Principal"
-    limite = "Limite"
-    github = "Github"
+    github = "Web   "
     help = "Ajuda"
     download = "Baixar"
     activate = "Ativar"
     navigate = "←↓→"
     uncheck = "Desmarcar"
-    search = "Pesquisar"
-    palette = "Paleta"
-    evaluate = "Avaliar"
+    search = "Busca"
+    config = "Config"
+    grade = "Pontuar"
+    # tester frame
+    time_limit = "Tempo"
+    evaluate_tester = "Avaliar "
+    execute_tester  = "Rodar"
     all = "Todos"
 
 class GuiKeys:
@@ -871,28 +876,28 @@ class GuiKeys:
     down = "j"
     up = "k"
 
-    palette = "p"
+    palette = "c"
     images = "I"
     down_task = "d"
     activate = "\n"
     key_help = "?"
         
     set_lang = "L"
-    github_open = "g"
+    github_web = "w"
     key_quit = "q"
     edit= "e"
     colors = "C"
     borders = "B"
     search = "/"
-    graph = "G"
-    evaluate = "a"
-    interact = "i" # Interact in manual input
-    diff = "m"
-    test = "\n"
-    main = "\t"
+    graph = "v"
+    grade_play = "p"
+    execute_tester = "r" # Interact in manual input
+    diff = "d"
+    evaluate = "\n"
+    toggle_main = "\t"
     quit   = "q"
-    lock = "t"
-    limite  = "l"
+    lock = "u"
+    limite  = "t"
     expand = "]"
     collapse = "["
     mass = "Y"
@@ -1643,7 +1648,6 @@ class CheckVersion:
         except:
             return None
 
-
 class Flag:
     def __init__(self):
         self._name: str = ""
@@ -1712,7 +1716,7 @@ class Flags:
     percent = Flag().set_name("Percentual").set_keycode("P").set_values(["1", "0"]).set_description("Mostra todos os valores em porcentagem      ")
     admin = Flag().set_name("Admin").set_keycode("A").set_values(["0", "1"])       .set_description("Habilitas todas as missões e tarefas        ")
     skills = Flag().set_name("Skills").set_keycode("S").set_values(["0", "1"]).set_description("Mostra a barra de skills")
-    graph = Flag().set_name("Graph").set_keycode("G").set_values(["0", "1"]).set_description("Muda o Gráfico")
+    graph = Flag().set_name("Graph").set_keycode(GuiKeys.graph).set_values(["0", "1", "2"]).set_description("Muda o Gráfico")
     devel = Flag().set_name("Devel").set_values(["0", "1"])
 
 class FlagsMan:
@@ -2304,21 +2308,21 @@ class __Symbols:
         # self.emoji_confuso   = Token("◱", "r")
         # self.emoji_nao_fiz   = Token("□")
 
-        self.skill_a = Token("▇", "g")
-        self.skill_b = Token("▆", "y")
-        self.skill_c = Token("▅", "m")
-        self.skill_d = Token("▄", "r")
-        self.skill_e = Token("▂", "c")
-        self.skill_x = Token("▁", "")
-        self.skill_list = [self.skill_x, self.skill_e, self.skill_d, self.skill_c, self.skill_b, self.skill_a]
-
-        self.autonomy_a = Token("A", "g")
-        self.autonomy_b = Token("B", "y")
-        self.autonomy_c = Token("C", "m")
-        self.autonomy_d = Token("D", "r")
-        self.autonomy_e = Token("E", "c")
-        self.autonomy_x = Token("x", "")
+        self.autonomy_a = Token("▇", "g")
+        self.autonomy_b = Token("▆", "y")
+        self.autonomy_c = Token("▅", "m")
+        self.autonomy_d = Token("▄", "r")
+        self.autonomy_e = Token("▂", "c")
+        self.autonomy_x = Token("▁", "")
         self.autonomy_list = [self.autonomy_x, self.autonomy_e, self.autonomy_d, self.autonomy_c, self.autonomy_b, self.autonomy_a]
+
+        self.approach_a = Token("A", "g")
+        self.approach_b = Token("B", "y")
+        self.approach_c = Token("C", "m")
+        self.approach_d = Token("D", "r")
+        self.approach_e = Token("E", "c")
+        self.approach_x = Token("x", "")
+        self.approach_list = [self.approach_x, self.approach_e, self.approach_d, self.approach_c, self.approach_b, self.approach_a]
         
         self.cursor = Token("┊")
 
@@ -2374,6 +2378,319 @@ class __Symbols:
         self.equalbar.fmt = "g"
 
 symbols = __Symbols()
+
+class Floating:
+    def __init__(self, _align=""):
+        self._frame = Frame(0, 0)
+        self._content: List[Text] = []
+        self._type = "warning"
+        self._enable = True
+        self._extra_exit: List[int] = []
+        self._exit_fn = None
+        self._exit_key = None
+        self._centralize = True
+        self._floating_align = _align
+
+    def disable(self):
+        self._enable = False
+
+    def set_text_ljust(self):
+        self._centralize = False
+        return self
+
+    def set_text_center(self):
+        self._centralize = True
+        return self
+
+    def set_frame_align(self, _align: str):
+        self._floating_align = _align
+        return self
+
+    def set_header(self, text: str):
+        self._frame.set_header(Text().addf("/", text), "")
+        return self
+    
+    def set_header_text(self, sentence: Text):
+        self._frame.set_header(sentence, "")
+        return self
+    
+    def set_footer(self, text: str):
+        self._frame.set_footer(Text().addf("/", text), "")
+        return self
+    
+    def set_footer_text(self, sentence: Text):
+        self._frame.set_footer(sentence, "")
+        return self
+    
+    def set_exit_key(self, key: str):
+        self._exit_key = ord(key)
+        return self
+
+    def set_exit_fn(self, fn):
+        self._exit_fn = fn
+        return self
+
+    def _set_xy(self, dy, dx):
+        valid = "<>^v"
+        for c in self._floating_align:
+            if c not in valid:
+                raise ValueError("Invalid align " + c)
+
+        lines, cols = Fmt.get_size()
+
+        x = (cols - dx) // 2
+        if "<" in self._floating_align:
+            x = 1
+        elif ">" in self._floating_align:
+            x = cols - dx - 3
+
+        y = (lines - dy) // 2
+        if "^" in self._floating_align:
+            y = 1
+        elif "v" in self._floating_align:
+            y = lines - dy - 5
+
+        self._frame.set_pos(y, x)
+        return self
+            
+    def is_enable(self):
+        return self._enable
+
+    def calc_dy_dx(self):
+        header_len = self._frame.get_header().len()
+        footer_len = self._frame.get_footer().len()
+        data = [x.len() for x in self._content] + [header_len, footer_len]
+        max_dx = max(data)
+        dx = max_dx
+        dy = len(self._content)
+        return dy, dx
+
+    def setup_frame(self):
+        dy, dx = self.calc_dy_dx()
+        self._frame.set_inner(dy, dx)
+        self._set_xy(dy, dx)
+        self._frame.set_fill()
+
+    def put_text(self, text: str):
+        lines = text.splitlines()
+        for line in lines:
+            self._content.append(Text().add(line))
+        return self
+
+    def put_sentence(self, sentence: Text):
+        for line in sentence.split('\n'):
+            self._content.append(line)
+        return self
+    
+    def set_content(self, content: List[str]):
+        self._content = [Text().add(x) for x in content]
+        return self
+
+    def _set_default_footer(self):
+        if self._frame.get_footer().len() == 0:
+            label = Text().addf("/", " Pressione espaço ")
+            self._frame.set_footer(label, "", "─", "─")
+        return self
+
+    def _set_default_header(self):
+        if self._frame.get_header().len() == 0:
+            if self._type == "warning":
+                self.set_header(" Aviso ")
+            elif self._type == "error":
+                self.set_header(" Erro ")
+
+    def warning(self):
+        self._type = "warning"
+        self._frame.set_border_color("y")
+        return self
+    
+    def error(self):
+        self._type = "error"
+        self._frame.set_border_color("r")
+        return self
+
+    def draw(self):
+        self._set_default_header()
+        self._set_default_footer()
+        self.setup_frame()
+        self._frame.draw()
+        self.write_content()
+
+    def write_content(self):
+        y = 0
+        for line in self._content:
+            x = 0
+            if self._centralize:
+                x = (self._frame.get_dx() - line.len()) // 2
+            self._frame.write(y, x, line)
+            y += 1
+        return self
+
+    def get_input(self) -> int:
+        self.draw()
+        key: int = Fmt.getch()
+        key = InputManager.fix_cedilha(Fmt.get_screen(), key)
+        if self._type == "warning" or self._type == "error":
+            if key < 300:
+                self._enable = False
+                if self._exit_fn is not None:
+                    self._exit_fn()
+                if self._exit_key is not None:
+                    return self._exit_key
+                if key == ord(" ") or key == 27:
+                    return -1
+                return key
+        
+        return -1
+        
+class FloatingInputData:
+    def __init__(self, label: Callable[[], Text], action: Callable[[], None], shortcut: str = ""):
+        self.label = label
+        self.action = action
+        self.shortcut = shortcut
+        self.exit_on_action = False
+
+
+    def set_exit_on_action(self, value: bool):
+        self.exit_on_action = value
+        return self
+
+class FloatingInput(Floating):
+    def __init__(self, _align=""):
+        super().__init__(_align)
+        self._index = 0
+        self._options: List[FloatingInputData] = []
+        self._frame.set_border_color("m")
+        self._exit_on_action = True
+        self.right_dx = 5 # shortcut space
+        self.search_text: List[str] = []
+
+    def calc_dy_dx(self):
+        dy, dx = super().calc_dy_dx()
+        dy += len(self._options) + 2
+        for option in self._options:
+            dx = max(dx, len(option.label()))
+        return dy, dx + self.right_dx
+    
+    def set_exit_on_enter(self, value: bool):
+        self._exit_on_action = value
+        return self
+
+    def match_search(self, index: int):
+        return "".join(self.search_text) in self._options[index].label().get_text().lower()
+
+    def next_option(self):
+        if not self.match_search(self._index):
+            self._index = 0
+        steps = len(self._options)
+        index = self._index
+        while steps > 0:
+            index = (index + 1) % len(self._options)
+            if self.match_search(index):
+                self._index = index
+                return
+            steps -= 1
+    
+    def prev_option(self):
+        if not self.match_search(self._index):
+            self._index = 0
+        steps = len(self._options)
+        index = self._index
+        while steps > 0:
+            index = (index - 1) % len(self._options)
+            if self.match_search(index):
+                self._index = index
+                return
+            steps -= 1
+
+    def write_content(self):
+        options: List[Text] = []
+        dx = self._frame.get_dx() - self.right_dx
+        for i, option in enumerate(self._options):
+            if not self.match_search(i):
+                continue
+            text = Text().add(option.label()).ljust(dx)
+            if option.shortcut != "":
+                if len(option.shortcut) > 1:
+                    text.add(" " + option.shortcut)
+                else:
+                    text.add(f" [{option.shortcut}]")
+            fmt = "M" if i == self._index else ""
+            text.set_background(fmt)
+            options.append(text)
+        
+        self._frame.write(0, 0, Text.format("Busca: ") + "".join(self.search_text) + symbols.cursor)
+        y = 1
+        for line in self._content + options:
+            x = 0
+            if self._centralize:
+                x = (self._frame.get_dx() - line.len()) // 2
+            self._frame.write(y, x, line)
+            y += 1
+
+        return self
+
+    def set_options(self, options: List[FloatingInputData]):
+        self._options = options
+        return self
+    
+    def set_default_index(self, index: int):
+        self._index = index
+        return self
+
+    def update_index(self):
+        for i, _ in enumerate(self._options):
+            if self.match_search(i):
+                self._index = i
+                return
+        self._index = -1
+
+    def get_input(self) -> int:
+        self.draw()
+        key: int = Fmt.getch()
+        key = InputManager.fix_cedilha(Fmt.get_screen(), key)
+        
+        if key == curses.KEY_UP:
+            self.prev_option()
+        elif key == curses.KEY_DOWN:
+            self.next_option()
+        elif key == InputManager.esc:
+            self._enable = False
+        elif any([key == x for x in InputManager.backspace_list]) or key == InputManager.delete:
+            self.search_text = self.search_text[:-1]
+            self.update_index()
+        elif key >= 32 and key < 127:
+            self.search_text += chr(key).lower()
+            self.update_index()
+        elif key == ord('\n'):
+            if self._exit_on_action or self._options[self._index].exit_on_action:
+                self._enable = False
+            if self._index != -1:
+                self._options[self._index].action()
+            return -1
+        else:
+            return key
+        return -1
+
+
+class FloatingManager:
+    def __init__(self):
+        self.input_layer: List[Floating] = []
+
+    def add_input(self, floating: Floating):
+        self.input_layer.append(floating)
+
+    def draw_warnings(self):
+        if len(self.input_layer) > 0 and self.input_layer[0].is_enable():
+            self.input_layer[0].draw()
+
+    def has_floating(self) -> bool:
+        while len(self.input_layer) > 0 and not self.input_layer[0].is_enable():
+            self.input_layer = self.input_layer[1:]
+        return len(self.input_layer) > 0 and self.input_layer[0].is_enable()
+
+    def get_input(self) -> int:
+        return self.input_layer[0].get_input()
 
 
 
@@ -2787,170 +3104,9 @@ class DailyListener:
         with open(self.daily_file, 'w') as file:
             file.write(str(self))
 
-class Floating:
-    def __init__(self, _align=""):
-        self._frame = Frame(0, 0)
-        self._content: List[Text] = []
-        self._type = "warning"
-        self._enable = True
-        self._extra_exit: List[int] = []
-        self._exit_fn = None
-        self._exit_key = None
-        self._centralize = True
-        self._floating_align = _align
 
-    def disable(self):
-        self._enable = False
 
-    def set_text_ljust(self):
-        self._centralize = False
-        return self
 
-    def set_text_center(self):
-        self._centralize = True
-        return self
-
-    def set_frame_align(self, _align: str):
-        self._floating_align = _align
-        return self
-
-    def set_header(self, text: str):
-        self._frame.set_header(Text().addf("/", text), "")
-        return self
-    
-    def set_header_text(self, sentence: Text):
-        self._frame.set_header(sentence, "")
-        return self
-    
-    def set_footer(self, text: str):
-        self._frame.set_footer(Text().addf("/", text), "")
-        return self
-    
-    def set_footer_text(self, sentence: Text):
-        self._frame.set_footer(sentence, "")
-        return self
-    
-    def set_exit_key(self, key: str):
-        self._exit_key = ord(key)
-        return self
-
-    def set_exit_fn(self, fn):
-        self._exit_fn = fn
-        return self
-
-    def _set_xy(self, dy, dx):
-        valid = "<>^v"
-        for c in self._floating_align:
-            if c not in valid:
-                raise ValueError("Invalid align " + c)
-
-        lines, cols = Fmt.get_size()
-
-        x = (cols - dx) // 2
-        if "<" in self._floating_align:
-            x = 1
-        elif ">" in self._floating_align:
-            x = cols - dx - 3
-
-        y = (lines - dy) // 2
-        if "^" in self._floating_align:
-            y = 1
-        elif "v" in self._floating_align:
-            y = lines - dy - 5
-
-        self._frame.set_pos(y, x)
-        return self
-            
-    def is_enable(self):
-        return self._enable
-
-    def calc_dy_dx(self):
-        header_len = self._frame.get_header().len()
-        footer_len = self._frame.get_footer().len()
-        data = [x.len() for x in self._content] + [header_len, footer_len]
-        max_dx = max(data)
-        dx = max_dx
-        dy = len(self._content)
-        return dy, dx
-
-    def setup_frame(self):
-        dy, dx = self.calc_dy_dx()
-        self._frame.set_inner(dy, dx)
-        self._set_xy(dy, dx)
-        self._frame.set_fill()
-
-    def put_text(self, text: str):
-        lines = text.splitlines()
-        for line in lines:
-            self._content.append(Text().add(line))
-        return self
-
-    def put_sentence(self, sentence: Text):
-        for line in sentence.split('\n'):
-            self._content.append(line)
-        return self
-    
-    def set_content(self, content: List[str]):
-        self._content = [Text().add(x) for x in content]
-        return self
-
-    def _set_default_footer(self):
-        if self._frame.get_footer().len() == 0:
-            label = Text().addf("/", " Pressione espaço ")
-            self._frame.set_footer(label, "", "─", "─")
-        return self
-
-    def _set_default_header(self):
-        if self._frame.get_header().len() == 0:
-            if self._type == "warning":
-                self.set_header(" Aviso ")
-            elif self._type == "error":
-                self.set_header(" Erro ")
-
-    def warning(self):
-        self._type = "warning"
-        self._frame.set_border_color("y")
-        return self
-    
-    def error(self):
-        self._type = "error"
-        self._frame.set_border_color("r")
-        return self
-
-    def draw(self):
-        self._set_default_header()
-        self._set_default_footer()
-        self.setup_frame()
-        self._frame.draw()
-        self.write_content()
-
-    def write_content(self):
-        y = 0
-        for line in self._content:
-            x = 0
-            if self._centralize:
-                x = (self._frame.get_dx() - line.len()) // 2
-            self._frame.write(y, x, line)
-            y += 1
-        return self
-
-    def get_input(self) -> int:
-        self.draw()
-        key: int = Fmt.getch()
-        key = InputManager.fix_cedilha(Fmt.get_screen(), key)
-        if self._type == "warning" or self._type == "error":
-            if key < 300:
-                self._enable = False
-                if self._exit_fn is not None:
-                    self._exit_fn()
-                if self._exit_key is not None:
-                    return self._exit_key
-                if key == ord(" ") or key == 27:
-                    return -1
-                return key
-        
-        return -1
-        
 class FloatingGrade(Floating):
     def __init__(self, task: Task, _align=""):
         super().__init__(_align)
@@ -2964,10 +3120,10 @@ class FloatingGrade(Floating):
         self.grades_index = [task.coverage // 10, task.autonomy, task.skill]
         self.coverage = ["x", "1", "2", "3", "4", "5", "6", "7", "8", "9", "✓"]
         self.coverage_msg = [
-            "Não fiz", 
-            "Fiz 10%", 
-            "Fiz 20%", 
-            "Fiz 30%", 
+            "Não fiz",
+            "Fiz 10%",
+            "Fiz 20%",
+            "Fiz 30%",
             "Fiz 40%",
             "Fiz 50%",
             "Fiz 60%",
@@ -2975,53 +3131,57 @@ class FloatingGrade(Floating):
             "Fiz 80%",
             "Fiz 90%",
             "Fiz 100%"]
-        self.autonomy = [x.text for x in [symbols.autonomy_x, symbols.autonomy_e, symbols.autonomy_d, symbols.autonomy_c, symbols.autonomy_b, symbols.autonomy_a]]
-        self.autonomy_msg = [
+        self.approach = [x.text for x in [symbols.approach_x, symbols.approach_e, symbols.approach_d, symbols.approach_c, symbols.approach_b, symbols.approach_a]]
+        self.approach_msg = [
             "Não fiz                                     ",
             "Copiei o código de um colega e estudei      ",
-            "Fiz com ajuda de IA (copilot | gpt | outros)", 
-            "Fiz seguindo aula, vídeo, colega ou monitor ", 
-            "Criei os códigos, mas tirei pequenas dúvidas", 
-            "Fiz completamente sozinho e sem consulta    " 
+            "Fiz com ajuda de IA (copilot | gpt | outros)",
+            "Fiz seguindo aula, vídeo, colega ou monitor ",
+            "Criei os códigos, mas tirei pequenas dúvidas",
+            "Fiz completamente sozinho e sem consulta    "
             ]
-        self.skill = [x.text for x in [symbols.skill_x, symbols.skill_e, symbols.skill_d, symbols.skill_c, symbols.skill_b, symbols.skill_a]]
-        self.skill_msg = [
-            "Consigo refazer menos de 30% sem consulta", 
-            "Consigo refazer ao menos 30% sem consulta",
-            "Consigo refazer ao menos 50% sem consulta", 
-            "Consigo refazer ao menos 70% sem consulta", 
-            "Consigo refazer ao menos 90% sem consulta", 
-            "Consigo refazer 100% sem consulta        " 
+        self.autonomy = [x.text for x in [symbols.autonomy_x, symbols.autonomy_e, symbols.autonomy_d, symbols.autonomy_c, symbols.autonomy_b, symbols.autonomy_a]]
+        self.autonomy_msg = [
+            r"Consigo refazer menos de 30% sem consulta",
+            r"Consigo refazer ao menos 30% sem consulta",
+            r"Consigo refazer ao menos 50% sem consulta",
+            r"Consigo refazer ao menos 70% sem consulta",
+            r"Consigo refazer ao menos 90% sem consulta",
+            r"Consigo refazer 100% sem consulta        "
             ]
-        self.grades_value = [self.coverage, self.autonomy, self.skill]
-        self.grades_msg = [self.coverage_msg, self.autonomy_msg, self.skill_msg]
+        self.grades_value = [self.coverage, self.approach, self.autonomy]
+        self.grades_msg = [self.coverage_msg, self.approach_msg, self.autonomy_msg]
 
-    
+
     def update_content(self):
         self._content = []
         self._content.append(Text())
         self._content.append(Text().add("   Pontue de acordo com a última fez que você (re)fez a tarefa do zero"))
         self._content.append(Text())
-        
-        coverage_text = Text().add(" ").addf("Y" if self._line == 0 else "", "Quanto você fez?").add("  ")
+
+        coverage_question = "Cobertura: Quanto entregou?"
+        approach_question = "Abordagem: Como foi feito ?"
+        autonomy_question = "Autonomia: Quanto domina  ?"
+
+        coverage_text = Text().add(" ").addf("Y" if self._line == 0 else "", coverage_question).add("  ")
         for i, c in enumerate(self.coverage):
             coverage_text.addf("C" if i == self.grades_index[0] else "", c)
         coverage_text.add("  ").addf("m", self.coverage_msg[self.grades_index[0]])
         self._content.append(coverage_text)
         # self._content.append(Text())
-        skill_text = Text().add(" ").addf("Y" if self._line == 1 else "", " Como foi feito?").add("  ")
-        for i, c in enumerate(self.autonomy):
-            skill_text.addf("G" if i == self.grades_index[1] else "", c).add(" ")
-        skill_text.add(" ").addf("m", self.autonomy_msg[self.grades_index[1]])
-        self._content.append(skill_text)
+        approach_text = Text().add(" ").addf("Y" if self._line == 1 else "", approach_question).add("  ")
+        for i, c in enumerate(self.approach):
+            approach_text.addf("G" if i == self.grades_index[1] else "", c).add(" ")
+        approach_text.add(" ").addf("m", self.approach_msg[self.grades_index[1]])
+        self._content.append(approach_text)
         # self._content.append(Text())
-        autonomy_text = Text().add(" ").addf("Y" if self._line == 2 else "", "Quanto aprendeu?").add("  ")
-        for i, c in enumerate(self.skill):
+        autonomy_text = Text().add(" ").addf("Y" if self._line == 2 else "", autonomy_question).add("  ")
+        for i, c in enumerate(self.autonomy):
             autonomy_text.addf("yW" if i == self.grades_index[2] else "", c).add(" ")
-        autonomy_text.add(" ").addf("m", self.skill_msg[self.grades_index[2]])
+        autonomy_text.add(" ").addf("m", self.autonomy_msg[self.grades_index[2]])
         self._content.append(autonomy_text)
         self._content.append(Text())
-        
+
     def draw(self):
         self._set_default_header()
         self._set_default_footer()
@@ -3052,157 +3212,8 @@ class FloatingGrade(Floating):
         elif key == ord('\n') or key == curses.KEY_BACKSPACE or key == InputManager.esc:
             self._enable = False
             if self._exit_fn is not None:
-                self._exit_fn()        
+                self._exit_fn()
         return -1
-
-class FloatingInputData:
-    def __init__(self, label: Callable[[], Text], action: Callable[[], None], shortcut: str = ""):
-        self.label = label
-        self.action = action
-        self.shortcut = shortcut
-        self.exit_on_action = False
-
-
-    def set_exit_on_action(self, value: bool):
-        self.exit_on_action = value
-        return self
-
-class FloatingInput(Floating):
-    def __init__(self, _align=""):
-        super().__init__(_align)
-        self._index = 0
-        self._options: List[FloatingInputData] = []
-        self._frame.set_border_color("m")
-        self._exit_on_action = True
-        self.right_dx = 5 # shortcut space
-        self.search_text: List[str] = []
-
-    def calc_dy_dx(self):
-        dy, dx = super().calc_dy_dx()
-        dy += len(self._options) + 2
-        for option in self._options:
-            dx = max(dx, len(option.label()))
-        return dy, dx + self.right_dx
-    
-    def set_exit_on_enter(self, value: bool):
-        self._exit_on_action = value
-        return self
-
-    def match_search(self, index: int):
-        return "".join(self.search_text) in self._options[index].label().get_text().lower()
-
-    def next_option(self):
-        if not self.match_search(self._index):
-            self._index = 0
-        steps = len(self._options)
-        index = self._index
-        while steps > 0:
-            index = (index + 1) % len(self._options)
-            if self.match_search(index):
-                self._index = index
-                return
-            steps -= 1
-    
-    def prev_option(self):
-        if not self.match_search(self._index):
-            self._index = 0
-        steps = len(self._options)
-        index = self._index
-        while steps > 0:
-            index = (index - 1) % len(self._options)
-            if self.match_search(index):
-                self._index = index
-                return
-            steps -= 1
-
-    def write_content(self):
-        options: List[Text] = []
-        dx = self._frame.get_dx() - self.right_dx
-        for i, option in enumerate(self._options):
-            if not self.match_search(i):
-                continue
-            text = Text().add(option.label()).ljust(dx)
-            if option.shortcut != "":
-                if len(option.shortcut) > 1:
-                    text.add(" " + option.shortcut)
-                else:
-                    text.add(f" [{option.shortcut}]")
-            fmt = "M" if i == self._index else ""
-            text.set_background(fmt)
-            options.append(text)
-        
-        self._frame.write(0, 0, Text.format("Busca: ") + "".join(self.search_text) + symbols.cursor)
-        y = 1
-        for line in self._content + options:
-            x = 0
-            if self._centralize:
-                x = (self._frame.get_dx() - line.len()) // 2
-            self._frame.write(y, x, line)
-            y += 1
-
-        return self
-
-    def set_options(self, options: List[FloatingInputData]):
-        self._options = options
-        return self
-    
-    def set_default_index(self, index: int):
-        self._index = index
-        return self
-
-    def update_index(self):
-        for i, _ in enumerate(self._options):
-            if self.match_search(i):
-                self._index = i
-                return
-        self._index = -1
-
-    def get_input(self) -> int:
-        self.draw()
-        key: int = Fmt.getch()
-        key = InputManager.fix_cedilha(Fmt.get_screen(), key)
-        
-        if key == curses.KEY_UP:
-            self.prev_option()
-        elif key == curses.KEY_DOWN:
-            self.next_option()
-        elif key == InputManager.esc:
-            self._enable = False
-        elif any([key == x for x in InputManager.backspace_list]) or key == InputManager.delete:
-            self.search_text = self.search_text[:-1]
-            self.update_index()
-        elif key >= 32 and key < 127:
-            self.search_text += chr(key).lower()
-            self.update_index()
-        elif key == ord('\n'):
-            if self._exit_on_action or self._options[self._index].exit_on_action:
-                self._enable = False
-            if self._index != -1:
-                self._options[self._index].action()
-            return -1
-        else:
-            return key
-        return -1
-
-
-class FloatingManager:
-    def __init__(self):
-        self.input_layer: List[Floating] = []
-
-    def add_input(self, floating: Floating):
-        self.input_layer.append(floating)
-
-    def draw_warnings(self):
-        if len(self.input_layer) > 0 and self.input_layer[0].is_enable():
-            self.input_layer[0].draw()
-
-    def has_floating(self) -> bool:
-        while len(self.input_layer) > 0 and not self.input_layer[0].is_enable():
-            self.input_layer = self.input_layer[1:]
-        return len(self.input_layer) > 0 and self.input_layer[0].is_enable()
-
-    def get_input(self) -> int:
-        return self.input_layer[0].get_input()
 
 
 class TaskParser:
@@ -6684,8 +6695,8 @@ class RepStarter:
     
     def print_end_msg(self):
         rel_path = os.path.relpath(self.rep.root_folder, os.getcwd())
-        print(Text.format("Voce pode acessar o repositório com o comando {g} {y}", "tko play", "<pasta>"))
-        print(Text.format("Por exemplo: {g} {y}", "tko play", rel_path))
+        print(Text.format("Voce pode acessar o repositório com o comando {g} {y}", "tko open", "<pasta>"))
+        print(Text.format("Por exemplo: {g} {y}", "tko open", rel_path))
 
     def set_folder(self, folder: str | None, remote: str | None) -> bool:
         if folder is not None:
@@ -7104,9 +7115,12 @@ run: comando para rodar o programa
 
 
 class TaskAction:
-    BAIXAR   = "  Baixar "
-    EXECUTAR = " Executar"
-    VISITAR  = " Visitar "
+    BAIXAR   = "Baixar  "
+    EXECUTAR = "Escolher"
+    VISITAR  = "Visitar "
+    EXPANDIR = "Expandir"
+    CONTRAIR = "Contrair"
+    BLOQUEIO = "Travado"
 
 class TaskTree:
 
@@ -7226,8 +7240,8 @@ class TaskTree:
         output.addf(color_lig_task, lig_quest)
         output.add(down_symbol).add(" ")
         output.add(t.get_prog_symbol()).add(" ")
-        output.add(symbols.autonomy_list[t.autonomy]).add(" ")
-        output.add(symbols.skill_list[t.skill])
+        output.add(symbols.approach_list[t.autonomy]).add(" ")
+        output.add(symbols.autonomy_list[t.skill])
 
         if in_focus:
             output.add(self.style.roundL(focus_color))
@@ -7682,17 +7696,16 @@ class TaskTree:
         self.set_selected_by_index(min(len(self.items) - 1, index + 1))
 
     # return a TaskAction
-    def get_task_action(self, task: Task) -> str:
+    def get_task_action(self, task: Task) -> tuple[str, str]:
         if task.link_type == Task.Types.VISITABLE_URL:
-            return TaskAction.VISITAR
+            return ("B", TaskAction.VISITAR)
         if task.link_type == Task.Types.STATIC_FILE:
-            return TaskAction.EXECUTAR
-        else: # downloadable task
-            if not self.is_downloaded_for_lang(task):
-                return TaskAction.BAIXAR
-            else:
-                return TaskAction.EXECUTAR
-            
+            return ("G", TaskAction.EXECUTAR)
+        
+        if not self.is_downloaded_for_lang(task):
+            return ("Y", TaskAction.BAIXAR)
+        return ("G", TaskAction.EXECUTAR)
+        
     def is_downloaded_for_lang(self, task: Task):
         folder = task.get_folder()
         lang = self.rep.get_lang()
@@ -7873,41 +7886,43 @@ class Gui:
                 color = "Y"
         except IndexError:
             pass
-
+        act_color, act_text = self.get_activate_label()
         help_fixed: List[Text] = [
-            Text() + RToken("C", f"{GuiActions.palette} [{GuiKeys.palette}]"),
-            Text() + RToken(color, f"{GuiActions.evaluate}[{GuiKeys.evaluate}]"),
-            Text() + RToken("G", f"{self.get_activate_label()} [↲]"),
+            Text() + RToken("C", f"{GuiActions.config} [{GuiKeys.palette}]"),
+            Text() + RToken(color, f"{GuiActions.grade} [{GuiKeys.grade_play}]"),
+            Text() + RToken(act_color, f"{act_text} [↲]"),
             Text() + RToken(color, f"{GuiActions.edit} [{GuiKeys.edit}]"),
             # Text() + RToken("C", f"{GuiActions.navegar} [wasd]")
             Text() + RToken("C", f"{GuiActions.search} [{GuiKeys.search}]")
         ]
         return help_fixed
 
-    def get_activate_label(self) -> str:
+    def get_activate_label(self) -> tuple[str, str]:
         output: str = GuiActions.activate
         try:
             obj = self.tree.get_selected_throw()
         except IndexError:
-            return " Retornar"
+            return "R", " Retornar"
         if isinstance(obj, Quest):
             quest: Quest = obj
             if not Flags.admin and not quest.is_reachable():
-                output = "Bloqueado"
+                output = TaskAction.BLOQUEIO
             elif quest.key in self.tree.expanded:
-                output = " Contrair"
+                output = TaskAction.CONTRAIR
             else:
-                output = " Expandir"
+                output = TaskAction.EXPANDIR
+            return "Y", output
         elif isinstance(obj, Cluster):
             cluster: Cluster = obj
             if cluster.key in self.tree.expanded:
-                output = " Contrair"
+                output = TaskAction.CONTRAIR
             else:
-                output = " Expandir"
+                output = TaskAction.EXPANDIR
+            return "Y", output
         elif isinstance(obj, Task):
-            output = self.tree.get_task_action(obj)
-
-        return output
+            color, output = self.tree.get_task_action(obj)
+            return color, output
+        return "R", " ERRO"
 
     def center_header_footer(self, value: Text, frame: Frame) -> Text:
         half = value.len() // 2
@@ -8062,15 +8077,15 @@ class Gui:
 
         _help.put_sentence(Text.format("  ").addf("r", "Shift + B")
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
-        _help.put_sentence(Text() + "" + RToken("g", "setas") + ", " + RToken("g", "wasd")  + "  Para navegar entre os elementos")
-        _help.put_sentence(Text() + f"   {GuiActions.palette} " + RToken("r", f"{GuiKeys.palette}") + "  Abre o menu de ações e configurações")
-        _help.put_sentence(Text() + f"   {GuiActions.github} " + RToken("r", f"{GuiKeys.github_open}") + "  Abre tarefa em uma aba do browser")
+        _help.put_sentence(Text() + "" + RToken("g", "setas") + ", " + RToken("g", f"{GuiKeys.left}{GuiKeys.down}{GuiKeys.up}{GuiKeys.right}")  + "  Para navegar entre os elementos")
+        _help.put_sentence(Text() + f"   {GuiActions.config} " + RToken("r", f"{GuiKeys.palette}") + "  Abre o menu de ações e configurações")
+        _help.put_sentence(Text() + f"   {GuiActions.github} " + RToken("r", f"{GuiKeys.github_web}") + "  Abre tarefa em uma aba do browser")
         _help.put_sentence(Text() + f"   {GuiActions.download} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
         _help.put_sentence(Text() + f"   {GuiActions.edit} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
         _help.put_sentence(Text() + f"   {GuiActions.activate} " + RToken("r", "↲") + "  Interage com o elemento de acordo com o contexto")
         _help.put_sentence(Text() + "             (baixar, visitar, escolher, compactar, expandir)")
-        _help.put_sentence(Text() + f"  {GuiActions.evaluate} " + RToken("r", GuiKeys.evaluate) + "  Abre tela para auto avaliação")
-        _help.put_sentence(Text() + f"{GuiActions.search} " + RToken("r", f"{GuiKeys.search}") + "  Abre a barra de pesquisa")
+        _help.put_sentence(Text() + f"  {GuiActions.grade} " + RToken("r", GuiKeys.grade_play) + "  Abre tela para auto avaliação")
+        _help.put_sentence(Text() + f"    {GuiActions.search} " + RToken("r", f"{GuiKeys.search}") + "  Abre a barra de pesquisa")
 
         _help.put_sentence(Text())
         _help.put_sentence(Text() + "Você pode mudar o editor padrão com o comando")
@@ -8097,55 +8112,62 @@ class Gui:
 
         return text, percent
 
-    def print_task_graph(self, frame, x, task_key: str, width: int, height: int):
-        tg = TaskGraph(self.settings, self.rep, task_key, width, height, minutes_mode=not Flags.graph)
+    def get_task_graph(self, task_key: str, width: int, height: int) -> tuple[bool, list[str]]:
+        minutes_mode = Flags.graph.get_value() == "1"
+        tg = TaskGraph(self.settings, self.rep, task_key, width, height, minutes_mode=minutes_mode)
         if len(tg.collected) == 1:
-            return False
+            return False, []
         graph = tg.get_graph()
-        for y, line in enumerate(graph):
-            frame.write(y, x, Text().addf("g", line))
-        return True
+        # for y, line in enumerate(graph):
+        #     frame.write(y, x, Text().addf("g", line))
+        return True, graph
     
-    def print_week_graph(self, frame, x, width: int, height: int, week_mode: bool = False):
+    def get_week_graph(self, width: int, height: int) -> tuple[bool, list[str]]:
+        week_mode = Flags.graph.get_value() == "1"
         tg = WeekGraph(width, height, week_mode)
         if len(tg.collected) == 1:
-            return False
+            return False, []
         graph = tg.get_graph()
-        for y, line in enumerate(graph):
-            frame.write(y, x, Text().addf("g", line))
-        return True
+        # for y, line in enumerate(graph):
+        #     frame.write(y, x, Text().addf("g", line))
+        return True, graph
 
-    def show_opening(self, frame: Frame):
-        if not self.app.get_use_images():
-            return
+    def show_graphs(self, frame: Frame):
         lines, cols = frame.get_inner()
         
         now = datetime.datetime.now()
-        parrot = random_get(opening, str(now.hour))
-        parrot_lines = parrot.splitlines()
-        max_len = max([len(line) for line in parrot_lines])
-        yinit = 1
-        distance = 27
+        # parrot = random_get(opening, str(now.hour))
+        distance = 18
+        made = False
         try:
             selected = self.tree.get_selected_throw()
+        except IndexError:
+            selected = None
+        if Flags.graph.get_value() != "0":
             width = cols - self.tree.max_title - distance - 7
             if width < 5:
                 width = 5
-            height = lines - 4
+            height = lines - 5
             if height < 3:
                 height = 3
             if isinstance(selected, Task):
-                if self.print_task_graph(frame, self.tree.max_title + distance, selected.key, width, height):
-                    return
+                made, list_data = self.get_task_graph(selected.key, width, height)
             elif isinstance(selected, Cluster) or isinstance(selected, Quest):
-                week_mode = isinstance(selected, Cluster)
-                if self.print_week_graph(frame, self.tree.max_title + distance, width, height, week_mode):
-                    return
-
-        except IndexError:
-            pass
-        for y, line in enumerate(parrot_lines):
-            frame.write(y, self.tree.max_title + distance, Text().addf("g", line))
+                made, list_data = self.get_week_graph(width, height)
+        if not made:
+            list_data = opening["estuda"].splitlines()
+        is_task = isinstance(selected, Task)
+        op_one = "minutos " if is_task else "h/semana"
+        op_two = "execuções" if is_task else "  h/dia  "
+        border = Border(self.settings.app)
+        view_button = Text().add("  ").add(border.border("C", f"Mudar Visão [{GuiKeys.graph}]"))
+        view_value = Flags.graph.get_value()
+        view_button.add(" ").addf("M" if view_value == "0" else "Y", f" Nenhum ")
+        view_button.add(" ").addf("M" if view_value == "1" else "Y", f" {op_one} ")
+        view_button.add(" ").addf("M" if view_value == "2" else "Y", f" {op_two} ")
+        frame.write(0, self.tree.max_title + distance, view_button)
+        for y, line in enumerate(list_data):
+            frame.write(y + 1, self.tree.max_title + distance, Text().addf("g", line))
 
     def show_items(self):
         border_color = "r" if Flags.admin else ""
@@ -8176,7 +8198,7 @@ class Gui:
         if task_sx > 5: 
             frame_main = Frame(mid_y, 0).set_size(mid_sy, task_sx).set_border_color(border_color)
             self.show_main_bar(frame_main)
-        self.show_opening(frame_main)
+        self.show_graphs(frame_main)
 
         if Flags.skills:
             frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)
@@ -8736,22 +8758,20 @@ class Tester:
 
     def make_bottom_line(self) -> List[Text]:
         cmds: List[Text] = []
-        text = f"{GuiActions.palette} [{GuiKeys.palette}]"
+        text = f"{GuiActions.config} [{GuiKeys.palette}]"
         cmds.append(self.borders.border("C", text))
 
-        color = "R" if self.locked_index else "Y"
-        symbol = symbols.success if not self.locked_index else symbols.failure
-        # name = "Único" if self.locked_index else "Todos"
-        travar = f"{symbol.text} {GuiActions.all}[{GuiKeys.lock}]"
-        cmds.append(self.borders.border(color, travar))
+        color ="Y"
+        limite = f"{GuiActions.time_limit} {self.get_time_limit_symbol()} [{GuiKeys.limite}]"
+        cmds.append(self.borders.border(color, limite))
 
         # ativar
-        cmds.append(self.borders.border("G", f"{symbols.timer.text}{self.get_time_limit_symbol()} Testar[{symbols.newline.text}] "))
+        cmds.append(self.borders.border("G", f"{GuiActions.evaluate_tester} [{symbols.newline.text}]"))
         #editar
         if self.opener is not None:
             cmds.append(self.borders.border("Y", f"{GuiActions.edit} [{GuiKeys.edit}]"))
         # rodar
-        cmds.append(self.borders.border("C", f"{GuiActions.interact} [{GuiKeys.interact}]"))
+        cmds.append(self.borders.border("C", f"{GuiActions.execute_tester} [{GuiKeys.execute_tester}]"))
             
         return cmds
 
@@ -8998,11 +9018,11 @@ class Tester:
             self.go_down()
         elif key == curses.KEY_UP or key == ord(GuiKeys.up):
             self.go_up()
-        elif key == ord(GuiKeys.main):
+        elif key == ord(GuiKeys.toggle_main):
             self.change_main()
-        elif key == ord(GuiKeys.interact):
+        elif key == ord(GuiKeys.execute_tester):
             return self.run_exec_mode()
-        elif key == ord(GuiKeys.test):
+        elif key == ord(GuiKeys.evaluate):
             self.run_test_mode()
         elif key == ord(GuiKeys.lock):
             self.lock_unit()
@@ -9884,7 +9904,7 @@ class PlayPalette:
             FloatingInputData(
                 lambda: Text.format(" {} Tarefa: Abrir {y} com a descrição", symbols.action, "GitHub"),
                 self.actions.open_link,
-                GuiKeys.github_open
+                GuiKeys.github_web
             ).set_exit_on_action(True)
         )
 
@@ -10077,7 +10097,7 @@ class Open:
         cman.add_str(GuiKeys.right, self.tree.arrow_right)
         cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
         cman.add_str(GuiKeys.activate, self.actions.select_task)
-        cman.add_str(GuiKeys.github_open, self.actions.open_link)
+        cman.add_str(GuiKeys.github_web, self.actions.open_link)
         cman.add_str(GuiKeys.down_task, self.actions.down_remote_task)
         cman.add_str(GuiKeys.edit, lambda: self.actions.open_code())
         cman.add_str(GuiKeys.expand, self.tree.process_expand_all)
@@ -10088,7 +10108,7 @@ class Open:
         cman.add_str(GuiKeys.set_lang, self.gui.language.set_language)
         # cman.add_str(GuiKeys.graph, self.actions.generate_graph)
         cman.add_int(curses.KEY_BACKSPACE, self.actions.evaluate)
-        cman.add_str(GuiKeys.evaluate, self.actions.evaluate)
+        cman.add_str(GuiKeys.grade_play, self.actions.evaluate)
         if Flags.admin:
             cman.add_str(GuiKeys.mass, self.tree.mass_mark)
     
