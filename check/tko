@@ -32,7 +32,7 @@ import configparser
 from subprocess import PIPE
 import unicodedata
 import chardet # type: ignore
-__version__ = "2.8.0"
+__version__ = "2.8.1"
 
 
 class LogAction:
@@ -5015,6 +5015,8 @@ class WeekGraph:
                 day += 1
 
             result = plot_to_string(xs=eixo, ys=collected, title=title, lines=True, y_min=0, width=self.width, height=self.height, y_unit="h", x_unit="d")
+            if isinstance(result, str):
+                return result.splitlines()
         return result
 
 class Track:
@@ -6775,6 +6777,9 @@ class TaskGraph:
         else:
             title += " (% / execuções)"
         result = plot_to_string(xs=self.eixo, ys=self.collected, title=title, lines=True, y_max=101, y_min=0, width=self.width, height=self.height)
+        
+        if isinstance(result, str):
+            return result.splitlines()
         return result
 
 
