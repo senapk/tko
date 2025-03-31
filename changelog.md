@@ -1,5 +1,7 @@
 # Changelog
 
+- 2.8.4
+  - fix: error in graph loading many times set_log_files
 - 2.8.3
   - moving requirement and minimun inside text
 - 2.8.2

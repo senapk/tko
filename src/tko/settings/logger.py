@@ -23,6 +23,8 @@ class Logger:
         self.week = WeekListener()
 
     def set_log_files(self, log_file: str) -> Logger:
+        if self.history is not None:
+            return self
         self.history = HistoryFile(log_file, [self.daily.listener, self.tasks.listener, self.week.listener])
         # resume = self.week.resume()
         # print("\n".join([f"{x.weed_day} {x.elapsed}" for x in resume.values()]))
