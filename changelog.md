@@ -1,5 +1,8 @@
 # Changelog
 
+- 2.8.5
+  - add: update message inside tko open gui
+  - fix: error not loading all test cases in problem
 - 2.8.4
   - fix: error in graph loading many times set_log_files
 - 2.8.3

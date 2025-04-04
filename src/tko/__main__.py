@@ -4,8 +4,8 @@ import argparse
 import sys
 
 from tko.cmds.cmd_rep import CmdRep
-from tko.cmds.cmd_play import CmdOpen
-from tko.cmds.cmd_down import CmdDown
+from tko.cmds.cmd_open import CmdOpen
+from tko.cmds.cmd_down import CmdLineDown
 from tko.cmds.cmd_run import Run
 from tko.cmds.cmd_build import CmdBuild
 from tko.cmds.cmd_config import CmdConfig, ConfigParams
@@ -81,8 +81,19 @@ class Main:
         rec_folder = Repository.rec_search_for_repo(folder)
         if rec_folder != "":
             folder = rec_folder
-        CmdOpen(settings).load_folder(folder).execute()
-        CheckVersion().version_check()
+        action = CmdOpen(settings).load_folder(folder)
+        if not CheckVersion().is_updated():
+            action.set_need_update()
+        action.execute()
+
+    @staticmethod
+    def down(args):
+        settings = Settings()
+        folder = args.folder
+        rec_folder = Repository.rec_search_for_repo(folder)
+        if rec_folder != "":
+            folder = rec_folder
+        CmdLineDown(settings, folder, args.key).execute()
 
     @staticmethod
     def init(args):
@@ -235,9 +246,10 @@ class Parser:
         parser_open.add_argument('folder', type=str, nargs='?', default='.', help='repository folder.')
         parser_open.set_defaults(func=Main.open)
 
-        parser_play = self.subparsers.add_parser('play', help='Play a folder with a repository.')
-        parser_play.add_argument('folder', type=str, nargs='?', default='.', help='repository folder.')
-        parser_play.set_defaults(func=Main.open)
+        parser_down = self.subparsers.add_parser('down', help='Down a task from a repository.')
+        parser_down.add_argument('folder', type=str, nargs='?', default='.', help='repository folder.')
+        parser_down.add_argument('key', type=str, nargs='?', default='.', help='task key.')
+        parser_down.set_defaults(func=Main.down)
 
         parser_init = self.subparsers.add_parser('init', help='Initialize a repository in a folder.')
         source = parser_init.add_mutually_exclusive_group()

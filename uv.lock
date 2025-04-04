@@ -1,4 +1,5 @@
 version = 1
+revision = 1
 requires-python = ">=3.10"
 
 [[package]]
@@ -219,7 +220,7 @@ wheels = [
 
 [[package]]
 name = "tko"
-version = "2.6.6"
+version = "2.8.4"
 source = { editable = "." }
 dependencies = [
     { name = "appdirs" },
@@ -229,7 +230,7 @@ dependencies = [
     { name = "pytest" },
     { name = "pyyaml" },
     { name = "uniplot" },
-    { name = "windows-curses", marker = "platform_system == 'Windows'" },
+    { name = "windows-curses", marker = "sys_platform == 'win32'" },
 ]
 
 [package.metadata]
@@ -241,7 +242,7 @@ requires-dist = [
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "uniplot", specifier = ">=0.16.2" },
-    { name = "windows-curses", marker = "platform_system == 'Windows'" },
+    { name = "windows-curses", marker = "sys_platform == 'win32'" },
 ]
 
 [[package]]

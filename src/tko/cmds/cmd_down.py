@@ -16,6 +16,25 @@ from tko.util.param import Param
 from tko.util.decoder import Decoder
 from tko.down.drafts import Drafts
 from tko.settings.repository import available_languages
+from icecream import ic # type: ignore
+
+class CmdLineDown:
+    def __init__(self, settings: Settings, folder: str, task_key: str):
+        self.settings = settings
+        self.folder = folder
+        self.task_key = task_key
+        ic("entrei no cmdlinedown")
+        self.rep = Repository(folder)
+        
+    def execute(self):
+        ic(self.rep.get_config_file())
+        if not self.rep.has_local_config_file():
+            print("O parâmetro para o comando tko down deve a pasta onde você iniciou o repositório.")
+            print("Navegue ou passe o caminho até a pasta do repositório e tente novamente.")
+            return False
+        self.rep.load_config().load_game()
+        CmdDown(self.rep, self.task_key, self.settings).execute()
+        return True
 
 
 class CmdDown:
@@ -60,7 +79,9 @@ class CmdDown:
 
     def download_mapi(self) -> bool:
         try:
-            urllib.request.urlretrieve(self.cache_url + "mapi.json", self.mapi_file)
+            mapi_url = self.cache_url + "mapi.json"
+            ic(mapi_url)
+            urllib.request.urlretrieve(mapi_url, self.mapi_file)
             return True
         except urllib.error.HTTPError:
             return False
@@ -76,12 +97,14 @@ class CmdDown:
         cb.execute()
 
     def download_from_url(self, task_source: str) -> bool:
+        ic("baixando da url")
         readme_remote_url = RemoteUrl(task_source)
         remote_url = readme_remote_url.get_raw_url()
         self.cache_url = os.path.dirname(remote_url) + "/.cache/"
         self.destiny_folder = self.rep.get_task_folder_for_label(self.task_key)
         self.readme_path =  os.path.join(self.destiny_folder, "Readme.md")
         self.mapi_file = os.path.join(self.destiny_folder, "mapi.json")
+        ic(self.mapi_file)
 
         folder_created = DownProblem.create_problem_folder(self.destiny_folder)
         if not self.download_readme(readme_remote_url):
@@ -95,7 +118,8 @@ class CmdDown:
             encoding = Decoder.get_encoding(self.mapi_file)
             with open(self.mapi_file, encoding=encoding) as f:
                 loaded_json = json.load(f)
-            os.remove(self.mapi_file)
+            # os.remove(self.mapi_file)
+            DownProblem.unpack_problem_files(loaded_json, self.destiny_folder)
             if not DownProblem.unpack_json_drafts(loaded_json, self.destiny_folder, lang):
                 DownProblem.create_default_draft(self.destiny_folder, lang)
         else:
@@ -122,6 +146,7 @@ class CmdDown:
             encoding = Decoder.get_encoding(self.mapi_file)
             with open(self.mapi_file, encoding=encoding) as f:
                 loaded_json = json.load(f)
+            DownProblem.unpack_problem_files(loaded_json, self.destiny_folder)
             if not DownProblem.unpack_json_drafts(loaded_json, self.destiny_folder, lang):
                 if not folder_created:
                     DownProblem.create_default_draft(self.destiny_folder, lang)
@@ -133,6 +158,7 @@ class CmdDown:
         return True
 
     def execute(self) -> bool:
+        ic("debug", "entrei no execute")
         task = self.rep.game.get_task(self.task_key)
         if task.link_type == Task.Types.REMOTE_FILE:
             return self.download_from_url(task.link)
@@ -171,6 +197,23 @@ class DownProblem:
                     found = True
 
         return found
+
+    @staticmethod
+    def unpack_problem_files(loaded, destiny):
+        if "upload" in loaded:
+            for file in loaded["upload"]:
+                name = file["name"]
+                if name == "vpl_evaluate.cases":
+                    name = "cases.tio"
+                path = os.path.join(destiny, name)
+                DownProblem.compare_and_save(file["contents"], path)
+        if "keep" in loaded:
+            for file in loaded["keep"]:
+                name = file["name"]
+                if name == "vpl_evaluate.cases":
+                    name = "cases.tio"
+                path = os.path.join(destiny, name)
+                DownProblem.compare_and_save(file["contents"], path)
 
     @staticmethod
     def  compare_and_save(content: str, path: str):

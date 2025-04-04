@@ -1,7 +1,7 @@
 from tko.settings.settings import Settings
 from tko.game.game import Game
 from tko.settings.repository import Repository
-from tko.play.play import Open
+from tko.play.play import Play
 from tko.settings.logger import Logger
 from typing import Dict
 from tko.util.text import Text
@@ -10,8 +10,12 @@ import os
 class CmdOpen:
     def __init__(self, settings: Settings):
         self.settings = settings
+        self.need_update = False
         self.rep: Repository | None = None
         self.folder = ""
+
+    def set_need_update(self):
+        self.need_update = True
 
     def load_folder(self, folder: str):
         self.folder = folder
@@ -32,7 +36,9 @@ class CmdOpen:
         logger: Logger = Logger.get_instance()
         logger.set_log_files(self.rep.get_history_file())
         logger.record_open()
-        play = Open(self.settings, self.rep)
+        play = Play(self.settings, self.rep)
+        if self.need_update:
+            play.set_need_update()
         play.play()
         logger.record_quit()
 

@@ -26,7 +26,7 @@ class GuiKeys:
 
     palette = "c"
     images = "I"
-    down_task = "d"
+    down_task = "b"
     activate = "\n"
     key_help = "?"
         

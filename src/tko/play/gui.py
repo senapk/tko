@@ -40,9 +40,12 @@ class Gui:
         self.style: Border = Border(self.settings.app)
         self.language = LanguageSetter(self.rep, self.flagsman, self.fman)
         self.colors = self.settings.colors
+        self.need_update = False
 
         self.app = Settings().app
 
+    def set_need_update(self):
+        self.need_update = True
 
     def get_help_fixed(self):
         color = "W"
@@ -110,6 +113,10 @@ class Gui:
         top.add(self.style.border("G", self.rep.get_lang().upper()))
         full = self.center_header_footer(top, frame)
         frame.set_header(full, "<")
+        if self.need_update:
+            text = Text().addf("r", " TKO DESATUALIZADO!").addf("y"," Atualize com: ").addf("g", "pipx upgrade tko ")
+            text = self.center_header_footer(text, frame)
+            frame.set_footer(text, "<")
         
         # if Flags.flags:
         #     value = self.make_flags_bar()

@@ -25,7 +25,7 @@ from .functors import FlagFunctor, GradeFunctor
 import os
 import curses
 
-class Open:
+class Play:
     def __init__(self, settings: Settings, rep: Repository):
         self.settings = settings
         self.app = settings.app
@@ -49,6 +49,8 @@ class Open:
         self.actions = PlayActions(self.gui)
         self.play_palette = PlayPalette(self.actions)
 
+    def set_need_update(self):
+        self.gui.set_need_update()
 
     def save_to_json(self):
         self.tree.save_on_rep()
@@ -92,7 +94,6 @@ class Open:
         cman.add_str(GuiKeys.images, self.app.toggle_images)
         cman.add_str(GuiKeys.hidden, self.app.toggle_hidden)
         cman.add_str(GuiKeys.set_lang, self.gui.language.set_language)
-        # cman.add_str(GuiKeys.graph, self.actions.generate_graph)
         cman.add_int(curses.KEY_BACKSPACE, self.actions.evaluate)
         cman.add_str(GuiKeys.grade_play, self.actions.evaluate)
         if Flags.admin:
