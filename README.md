@@ -56,27 +56,71 @@ code .
 #### Windows com WSL e Ubuntu
 
 ```bash
-sudo apt update && sudo apt install -y build-essential pipx && pipx install tko
+# Instalando as ferramentas básicas de desenvolvimento
+sudo apt update && sudo apt install -y build-essential pipx wslu
+# Configurando o web browser
+grep -qxF 'export BROWSER="wslview"' ~/.bashrc || echo 'export BROWSER="wslview"' >> ~/.bashrc
+# Instalando o tko
+pipx install tko
+# Adicionando o tko no path
+grep -qxF 'export PATH="$HOME/.local/bin:$PATH"' ~/.bashrc || echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+# Reinicie o terminal
+# Teste a instalação com o comando
+tko --version
+
+# Instale os compiladores que você precisar
+# C, C++, Python já vem com o build-essential
+# Java
+sudo apt install openjdk-11-jdk
+# Node e npm
+sudo apt install nodejs npm
+# Typescript
+sudo apt install nodejs npm
+npm install --save-dev @types/node
+npm install typescript esbuild readline-sync
+# Go
+sudo apt install golang -y
 ```
 
 #### Arch Linux e Derivados
 
 ```bash
-sudo pacman -S --noconfirm base-devel python-pipx && pipx install tko
+# Instalando as ferramentas básicas de desenvolvimento
+sudo pacman -S --noconfirm base-devel python-pipx
+# Adicionando o tko no path
+grep -qxF 'export PATH="$HOME/.local/bin:$PATH"' ~/.bashrc || echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+# Reinicie o terminal
+# Instalando o tko
+pipx install tko
+# Teste a instalação com o comando
+tko --version
+
+# Instale os compiladores que você precisar
+# C, C++, Python já vem com o base-devel
+
+# Java
+sudo pacman -S jdk-openjdk
+# Node e npm
+sudo pacman -S nodejs npm
+# Typescript
+sudo pacman -S nodejs npm
+npm install --save-dev @types/node
+npm install typescript esbuild readline-sync
+# Go
+sudo pacman -S go
 ```
 
 #### Codespaces
 
 ```bash
 sudo apt update && sudo apt install -y python3-pip && pip install pipx && pipx install tko
+# Os compiladores, você pode usar os comandos do wsl/ubuntu
 ```
 
-### Adicionando o tko no path
+### Outros sistemas operacionais
 
-```bash
-# adicione o path do pip para o bash
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-```
+- Basta instalar o python e o pipx. Depois, instale o tko com o comando `pipx install tko`.
+- Para instalar os compiladores, você pode usar o gerenciador de pacotes do seu sistema operacional. Por exemplo, no MacOS, você pode usar o Homebrew para instalar o python, g++, java, node e npm.
 
 ## Atualizando o tko
 
@@ -84,32 +128,6 @@ Para atualizar o tko para versão mais recente, basta executar o comando:
 
 ```bash
 pipx upgrade tko          # windows, codespace, arch, ubuntu e wsl
-```
-
-## Instalando os compiladores
-
-- Você pode utilizar qualquer outra linguagens que quiser, basta instalar o compilador correspondente e definir o comando de compilação e execução correspondentes.
-
-### WSL e Ubuntu
-
-```bash
-# Java
-sudo apt install openjdk-11-jdk
-# Typescript
-sudo apt install nodejs npm
-npm install --save-dev @types/node
-npm install typescript esbuild readline-sync
-```
-
-### Arch
-
-```bash
-# Java
-sudo pacman -S jdk-openjdk
-# Typescript
-sudo pacman -S nodejs npm
-npm install --save-dev @types/node
-npm install typescript esbuild readline-sync
 ```
 
 ## Para interagir com os repositórios, navegar, baixar, testar
