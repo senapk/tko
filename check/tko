@@ -3321,6 +3321,7 @@ class Quest(TreeItem):
         self.__tasks: List[Task] = []
         self.skills: Dict[str, int] = {}  # s:skill
         self.requires: List[str] = []  # r:quest_key
+        self.languages: List[str] = []  # l:language
         self.requires_ptr: List[Quest] = []
         self.opt = False  # opt
         self.prog = False  # progressive tasks
@@ -3525,6 +3526,14 @@ class QuestParser:
             for s in skills:
                 k, v = s.split(":")
                 self.quest.skills[k] = int(v)
+
+        # languages
+        languages = [t[2:] for t in tags if t.startswith("l:")]
+        if len(languages) > 0:
+            self.quest.languages = []
+            for l in languages:
+                self.quest.languages.append(l)
+
         self.quest.opt = "opt" in tags
         self.quest.prog = "prog" in tags
 
@@ -3571,8 +3580,16 @@ class Cluster(TreeItem):
         self.__quests.append(quest)
         return self
 
-    def remove_empty_quests(self):
-        self.__quests = [q for q in self.__quests if len(q.get_tasks()) > 0]
+    def remove_empty_or_other_language(self, language: str):
+        # self.__quests = [q for q in self.__quests if len(q.get_tasks()) > 0]
+        quests: List[Quest] = []
+        for q in self.__quests:
+            if q.get_tasks() == 0:
+                continue
+            if len(q.languages) == 0 or language in q.languages:
+                quests.append(q)
+        self.__quests = quests
+
         return self
 
     def get_quests(self) -> List[Quest]:
@@ -3913,13 +3930,14 @@ class GameBuilder:
         self.active_cluster: Cluster | None = None
         self.active_quest: Quest | None = None
 
-    def build_from(self, content: str):
+    def build_from(self, content: str, language: str):
         self.__parse_file_content(content)
         self.__parse_database_for_user_tasks()
-        self.__clear_empty()
+        self.__clear_empty_or_other_language(language)
         self.__create_requirements_pointers()
         self.__create_cross_references()
         return self
+
 
     def collect_tasks(self) -> dict[str, Task]:
         tasks: Dict[str, Task] = {}
@@ -4053,11 +4071,11 @@ class GameBuilder:
         self.ordered_clusters.append(key)
         return cluster
 
-    def __clear_empty(self): #call before create_cross_references
+    def __clear_empty_or_other_language(self, language: str): #call before create_cross_references
 
         # apagando quests vazias da lista de quests
         for cluster in self.clusters.values():
-            cluster.remove_empty_quests()
+            cluster.remove_empty_or_other_language(language)
 
         # apagando quests vazias dos clusters e clusters vazios
         ordered_clusters: List[str] = []
@@ -5278,12 +5296,12 @@ class Game:
         return total, obtained
 
 
-    def parse_file_and_folder(self, filename: str, folder: str):
+    def parse_file_and_folder(self, filename: str, folder: str, language: str):
         self.filename = filename
         content = Decoder.load(filename)
         self.parse_xp(content)
 
-        gb = GameBuilder(filename, folder).build_from(content)
+        gb = GameBuilder(filename, folder).build_from(content, language)
         self.ordered_clusters = gb.ordered_clusters
         self.clusters = gb.clusters
         self.quests = gb.collect_quests()
@@ -6468,11 +6486,12 @@ class Repository:
             self.load_config()
         database_folder = os.path.join(self.root_folder, self.get_database_folder())
         cache_or_index = self.load_index_or_cache()
-        self.game.parse_file_and_folder(cache_or_index, database_folder)
+        self.game.parse_file_and_folder(cache_or_index, database_folder, self.get_lang())
         self.__load_tasks_from_rep_into_game()
         return self
     
     def __load_tasks_from_rep_into_game(self):
+        # load tasks from repository.yaml into game
         tasks = self.get_tasks()
         for key, serial in tasks.items():
             if key in self.game.tasks:
@@ -6819,7 +6838,7 @@ class LanguageSetter:
             .set_header(" Escolha a extensão default para os rascunhos ")
             .set_options(options)
             .set_default_index(available_languages.index(self.rep.get_lang()))
-            .set_footer(" Pressione Enter para confirmar ")
+            .set_footer(" Escolha e reinicie o tko para aplicar!!!!! ")
         )
 
 class TextFunctor:

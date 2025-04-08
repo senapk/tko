@@ -17,6 +17,7 @@ class Quest(TreeItem):
         self.__tasks: List[Task] = []
         self.skills: Dict[str, int] = {}  # s:skill
         self.requires: List[str] = []  # r:quest_key
+        self.languages: List[str] = []  # l:language
         self.requires_ptr: List[Quest] = []
         self.opt = False  # opt
         self.prog = False  # progressive tasks
@@ -221,6 +222,14 @@ class QuestParser:
             for s in skills:
                 k, v = s.split(":")
                 self.quest.skills[k] = int(v)
+
+        # languages
+        languages = [t[2:] for t in tags if t.startswith("l:")]
+        if len(languages) > 0:
+            self.quest.languages = []
+            for l in languages:
+                self.quest.languages.append(l)
+
         self.quest.opt = "opt" in tags
         self.quest.prog = "prog" in tags
 

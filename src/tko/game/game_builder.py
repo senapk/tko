@@ -20,13 +20,14 @@ class GameBuilder:
         self.active_cluster: Cluster | None = None
         self.active_quest: Quest | None = None
 
-    def build_from(self, content: str):
+    def build_from(self, content: str, language: str):
         self.__parse_file_content(content)
         self.__parse_database_for_user_tasks()
-        self.__clear_empty()
+        self.__clear_empty_or_other_language(language)
         self.__create_requirements_pointers()
         self.__create_cross_references()
         return self
+
 
     def collect_tasks(self) -> dict[str, Task]:
         tasks: Dict[str, Task] = {}
@@ -160,11 +161,11 @@ class GameBuilder:
         self.ordered_clusters.append(key)
         return cluster
 
-    def __clear_empty(self): #call before create_cross_references
+    def __clear_empty_or_other_language(self, language: str): #call before create_cross_references
 
         # apagando quests vazias da lista de quests
         for cluster in self.clusters.values():
-            cluster.remove_empty_quests()
+            cluster.remove_empty_or_other_language(language)
 
         # apagando quests vazias dos clusters e clusters vazios
         ordered_clusters: List[str] = []

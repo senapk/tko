@@ -93,12 +93,12 @@ class Game:
         return total, obtained
 
 
-    def parse_file_and_folder(self, filename: str, folder: str):
+    def parse_file_and_folder(self, filename: str, folder: str, language: str):
         self.filename = filename
         content = Decoder.load(filename)
         self.parse_xp(content)
 
-        gb = GameBuilder(filename, folder).build_from(content)
+        gb = GameBuilder(filename, folder).build_from(content, language)
         self.ordered_clusters = gb.ordered_clusters
         self.clusters = gb.clusters
         self.quests = gb.collect_quests()

@@ -27,7 +27,7 @@ class LanguageSetter:
             .set_header(" Escolha a extensão default para os rascunhos ")
             .set_options(options)
             .set_default_index(available_languages.index(self.rep.get_lang()))
-            .set_footer(" Pressione Enter para confirmar ")
+            .set_footer(" Escolha e reinicie o tko para aplicar!!!!! ")
         )
 
 class TextFunctor:

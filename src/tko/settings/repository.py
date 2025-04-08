@@ -77,11 +77,12 @@ class Repository:
             self.load_config()
         database_folder = os.path.join(self.root_folder, self.get_database_folder())
         cache_or_index = self.load_index_or_cache()
-        self.game.parse_file_and_folder(cache_or_index, database_folder)
+        self.game.parse_file_and_folder(cache_or_index, database_folder, self.get_lang())
         self.__load_tasks_from_rep_into_game()
         return self
     
     def __load_tasks_from_rep_into_game(self):
+        # load tasks from repository.yaml into game
         tasks = self.get_tasks()
         for key, serial in tasks.items():
             if key in self.game.tasks:
