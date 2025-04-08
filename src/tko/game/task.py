@@ -18,14 +18,19 @@ class Task(TreeItem):
         def __str__(self):
             return self.name
 
+    # default values for tasks
+    approach_max = 6
+    autonomy_max = 5
+
     def __init__(self):
+
         super().__init__()
         self.line_number = 0
         self.line = ""
 
         self.coverage: int = 0 # valor de 0 a 100
-        self.autonomy: int = 0 # valor de 0 a 5
-        self.skill: int = 0 # valor de 0 a 5
+        self.approach: int = 0 # valor de 0 a approach_max
+        self.autonomy: int = 0 # valor de 0 a autonomy_max
         self.main_idx: int = 0
 
         self.qskills: Dict[str, int] = {} # default quest skills
@@ -77,30 +82,30 @@ class Task(TreeItem):
                 if k == "cov":
                     self.coverage = int(val)
                 elif k == "aut":
-                    self.autonomy = int(val)
+                    self.approach = int(val)
                 elif k == "hab":
-                    self.skill = int(val)
+                    self.autonomy = int(val)
                 elif k == "idx":
                     self.main_idx = int(val)
         elif ":" not in value:
-            self.autonomy, self.skill = Task.decode_autonomy_skill(int(value))
+            self.approach, self.autonomy = Task.decode_autonomy_skill(int(value))
         else:
             v = value.split(":")
             if len(v) == 3:
-                self.autonomy, self.skill = Task.decode_autonomy_skill(int(v[0]))
+                self.approach, self.autonomy = Task.decode_autonomy_skill(int(v[0]))
                 self.main_idx = int(v[1])
                 self.coverage = int(v[2])
             elif len(v) == 4:
                 self.coverage = (int(v[0]))
-                self.autonomy = (int(v[1]))
-                self.skill    = (int(v[2]))
+                self.approach = (int(v[1]))
+                self.autonomy    = (int(v[2]))
                 self.main_idx = (int(v[3]))
 
     def save_to_db(self) -> str:
-        return "{" + f"cov:{self.coverage}, aut:{self.autonomy}, hab:{self.skill}, idx:{self.main_idx}" + "}"
+        return "{" + f"cov:{self.coverage}, aut:{self.approach}, hab:{self.autonomy}, idx:{self.main_idx}" + "}"
     
     def is_db_empty(self) -> bool:
-        return self.autonomy == 0 and self.skill == 0 and self.main_idx == 0 and self.coverage == 0
+        return self.approach == 0 and self.autonomy == 0 and self.main_idx == 0 and self.coverage == 0
 
     def get_prog_color(self, min_value: Optional[int] = None) -> str:
         if min_value is None:
@@ -133,13 +138,13 @@ class Task(TreeItem):
         return Text().add("0")
 
     def get_percent(self):
-        return (self.autonomy / 5) * (self.skill / 5) * self.coverage
+        return (self.approach + self.autonomy) * self.coverage // 10
     
     def get_ratio(self) -> float:
         return self.get_percent() / 10.0
 
     def is_complete(self):
-        return self.get_percent() == 100
+        return self.get_percent() >= 100
 
     def not_started(self):
         return self.get_percent() == 0
@@ -154,24 +159,24 @@ class Task(TreeItem):
         else:
             print(f"Progresso inválido: {coverage}")
 
-    def set_autonomy(self, value: int):
+    def set_approach(self, value: int):
         value = int(value)
-        if value >= 0 and value <= 5:
-            self.autonomy = value
+        if value >= 0 and value <= Task.approach_max:
+            self.approach = value
         else:
             print(f"Autonomia inválida: {value}")
 
-    def set_skill(self, value: int):
+    def set_autonomy(self, value: int):
         value = int(value)
-        if value >= 0 and value <= 5:
-            self.skill = value
+        if value >= 0 and value <= Task.autonomy_max:
+            self.autonomy = value
         else:
             print(f"Compreensão inválida: {value}")
 
     def __str__(self):
         lnum = str(self.line_number).rjust(3)
         key = "" if self.key == self.title else self.key + " "
-        return f"{lnum} grade:{self.autonomy}:{self.skill} key:{key} title:{self.title} skills:{self.skills} remote:{self.link} type:{self.link_type} folder:{self.folder}"
+        return f"{lnum} grade:{self.approach}:{self.autonomy} key:{key} title:{self.title} skills:{self.skills} remote:{self.link} type:{self.link_type} folder:{self.folder}"
 
     def has_at_symbol(self):
         return any([s.startswith("@") for s in self.title.split(" ")])

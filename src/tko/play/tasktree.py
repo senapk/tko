@@ -149,8 +149,8 @@ class TaskTree:
         output.addf(color_lig_task, lig_quest)
         output.add(down_symbol).add(" ")
         output.add(t.get_prog_symbol()).add(" ")
-        output.add(symbols.approach_list[t.autonomy]).add(" ")
-        output.add(symbols.autonomy_list[t.skill])
+        output.add(symbols.approach_list[t.approach]).add(" ")
+        output.add(symbols.autonomy_list[t.autonomy])
 
         if in_focus:
             output.add(self.style.roundL(focus_color))
@@ -464,8 +464,8 @@ class TaskTree:
         if isinstance(obj, Task):
             Logger.get_instance().record_self_grade(obj.key, coverage, autonomy, skill)
             obj.set_coverage(coverage)
-            obj.set_autonomy(autonomy)
-            obj.set_skill(skill)
+            obj.set_approach(autonomy)
+            obj.set_autonomy(skill)
 
 
     def set_selected_by_index(self, index: int):

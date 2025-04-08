@@ -19,7 +19,7 @@ class FloatingGrade(Floating):
         self.set_header_text(Text.format("{y/}", " Utilize os direcionais para  marcar "))
         self.set_footer_text(Text.format("{y/}", " Pressione Enter para confirmar "))
 
-        self.grades_index = [task.coverage // 10, task.autonomy, task.skill]
+        self.grades_index = [task.coverage // 10, task.approach, task.autonomy]
         self.coverage = ["x", "1", "2", "3", "4", "5", "6", "7", "8", "9", "✓"]
         self.coverage_msg = [
             "Não fiz",
@@ -33,14 +33,15 @@ class FloatingGrade(Floating):
             "Fiz 80%",
             "Fiz 90%",
             "Fiz 100%"]
-        self.approach = [x.text for x in [symbols.approach_x, symbols.approach_e, symbols.approach_d, symbols.approach_c, symbols.approach_b, symbols.approach_a]]
+        self.approach = [x.text for x in [symbols.approach_x, symbols.approach_e, symbols.approach_d, symbols.approach_c, symbols.approach_b, symbols.approach_a, symbols.approach_s]]
         self.approach_msg = [
             "Não fiz                                     ",
-            "Copiei o código de um colega e estudei      ",
+            "Peguei o código pronto e estudei ele        ",
             "Fiz com ajuda de IA (copilot | gpt | outros)",
             "Fiz seguindo aula, vídeo, colega ou monitor ",
-            "Criei os códigos, mas tirei pequenas dúvidas",
-            "Fiz completamente sozinho e sem consulta    "
+            "(Re)Fiz os códigos com algumas consultas    ",
+            "(Re)Fiz sozinho e sem consultar algoritmos  ",
+            "Fiz de primeira e sem consultar algoritmos  "
             ]
         self.autonomy = [x.text for x in [symbols.autonomy_x, symbols.autonomy_e, symbols.autonomy_d, symbols.autonomy_c, symbols.autonomy_b, symbols.autonomy_a]]
         self.autonomy_msg = [
@@ -73,7 +74,14 @@ class FloatingGrade(Floating):
         # self._content.append(Text())
         approach_text = Text().add(" ").addf("Y" if self._line == 1 else "", approach_question).add("  ")
         for i, c in enumerate(self.approach):
-            approach_text.addf("G" if i == self.grades_index[1] else "", c).add(" ")
+            approach_text.addf("G" if i == self.grades_index[1] else "", c).add("")
+            if c == "x":
+                approach_text.add("  ")
+            if c == "A":
+                approach_text.add("  ")
+            if c == "S":
+                approach_text.add(" ")
+        
         approach_text.add(" ").addf("m", self.approach_msg[self.grades_index[1]])
         self._content.append(approach_text)
         # self._content.append(Text())
@@ -94,8 +102,8 @@ class FloatingGrade(Floating):
 
     def change_task(self):
         self._task.set_coverage(self.grades_index[0] * 10)
-        self._task.set_autonomy(self.grades_index[1])
-        self._task.set_skill(self.grades_index[2])
+        self._task.set_approach(self.grades_index[1])
+        self._task.set_autonomy(self.grades_index[2])
 
     def get_input(self) -> int:
         self.draw()

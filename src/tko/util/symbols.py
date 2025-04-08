@@ -65,13 +65,14 @@ class __Symbols:
         self.autonomy_x = Token("▁", "")
         self.autonomy_list = [self.autonomy_x, self.autonomy_e, self.autonomy_d, self.autonomy_c, self.autonomy_b, self.autonomy_a]
 
+        self.approach_s = Token("S", "b")
         self.approach_a = Token("A", "g")
         self.approach_b = Token("B", "y")
         self.approach_c = Token("C", "m")
         self.approach_d = Token("D", "r")
         self.approach_e = Token("E", "c")
         self.approach_x = Token("x", "")
-        self.approach_list = [self.approach_x, self.approach_e, self.approach_d, self.approach_c, self.approach_b, self.approach_a]
+        self.approach_list = [self.approach_x, self.approach_e, self.approach_d, self.approach_c, self.approach_b, self.approach_a, self.approach_s]
         
         self.cursor = Token("┊")
 

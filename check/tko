@@ -32,7 +32,7 @@ import configparser
 from subprocess import PIPE
 import unicodedata
 import chardet # type: ignore
-__version__ = "2.9.0"
+__version__ = "3.0.0"
 
 
 class LogAction:
@@ -2318,13 +2318,14 @@ class __Symbols:
         self.autonomy_x = Token("▁", "")
         self.autonomy_list = [self.autonomy_x, self.autonomy_e, self.autonomy_d, self.autonomy_c, self.autonomy_b, self.autonomy_a]
 
+        self.approach_s = Token("S", "b")
         self.approach_a = Token("A", "g")
         self.approach_b = Token("B", "y")
         self.approach_c = Token("C", "m")
         self.approach_d = Token("D", "r")
         self.approach_e = Token("E", "c")
         self.approach_x = Token("x", "")
-        self.approach_list = [self.approach_x, self.approach_e, self.approach_d, self.approach_c, self.approach_b, self.approach_a]
+        self.approach_list = [self.approach_x, self.approach_e, self.approach_d, self.approach_c, self.approach_b, self.approach_a, self.approach_s]
         
         self.cursor = Token("┊")
 
@@ -2708,14 +2709,19 @@ class Task(TreeItem):
         def __str__(self):
             return self.name
 
+    # default values for tasks
+    approach_max = 6
+    autonomy_max = 5
+
     def __init__(self):
+
         super().__init__()
         self.line_number = 0
         self.line = ""
 
         self.coverage: int = 0 # valor de 0 a 100
-        self.autonomy: int = 0 # valor de 0 a 5
-        self.skill: int = 0 # valor de 0 a 5
+        self.approach: int = 0 # valor de 0 a approach_max
+        self.autonomy: int = 0 # valor de 0 a autonomy_max
         self.main_idx: int = 0
 
         self.qskills: Dict[str, int] = {} # default quest skills
@@ -2767,30 +2773,30 @@ class Task(TreeItem):
                 if k == "cov":
                     self.coverage = int(val)
                 elif k == "aut":
-                    self.autonomy = int(val)
+                    self.approach = int(val)
                 elif k == "hab":
-                    self.skill = int(val)
+                    self.autonomy = int(val)
                 elif k == "idx":
                     self.main_idx = int(val)
         elif ":" not in value:
-            self.autonomy, self.skill = Task.decode_autonomy_skill(int(value))
+            self.approach, self.autonomy = Task.decode_autonomy_skill(int(value))
         else:
             v = value.split(":")
             if len(v) == 3:
-                self.autonomy, self.skill = Task.decode_autonomy_skill(int(v[0]))
+                self.approach, self.autonomy = Task.decode_autonomy_skill(int(v[0]))
                 self.main_idx = int(v[1])
                 self.coverage = int(v[2])
             elif len(v) == 4:
                 self.coverage = (int(v[0]))
-                self.autonomy = (int(v[1]))
-                self.skill    = (int(v[2]))
+                self.approach = (int(v[1]))
+                self.autonomy    = (int(v[2]))
                 self.main_idx = (int(v[3]))
 
     def save_to_db(self) -> str:
-        return "{" + f"cov:{self.coverage}, aut:{self.autonomy}, hab:{self.skill}, idx:{self.main_idx}" + "}"
+        return "{" + f"cov:{self.coverage}, aut:{self.approach}, hab:{self.autonomy}, idx:{self.main_idx}" + "}"
     
     def is_db_empty(self) -> bool:
-        return self.autonomy == 0 and self.skill == 0 and self.main_idx == 0 and self.coverage == 0
+        return self.approach == 0 and self.autonomy == 0 and self.main_idx == 0 and self.coverage == 0
 
     def get_prog_color(self, min_value: Optional[int] = None) -> str:
         if min_value is None:
@@ -2823,13 +2829,13 @@ class Task(TreeItem):
         return Text().add("0")
 
     def get_percent(self):
-        return (self.autonomy / 5) * (self.skill / 5) * self.coverage
+        return (self.approach + self.autonomy) * self.coverage // 10
     
     def get_ratio(self) -> float:
         return self.get_percent() / 10.0
 
     def is_complete(self):
-        return self.get_percent() == 100
+        return self.get_percent() >= 100
 
     def not_started(self):
         return self.get_percent() == 0
@@ -2844,24 +2850,24 @@ class Task(TreeItem):
         else:
             print(f"Progresso inválido: {coverage}")
 
-    def set_autonomy(self, value: int):
+    def set_approach(self, value: int):
         value = int(value)
-        if value >= 0 and value <= 5:
-            self.autonomy = value
+        if value >= 0 and value <= Task.approach_max:
+            self.approach = value
         else:
             print(f"Autonomia inválida: {value}")
 
-    def set_skill(self, value: int):
+    def set_autonomy(self, value: int):
         value = int(value)
-        if value >= 0 and value <= 5:
-            self.skill = value
+        if value >= 0 and value <= Task.autonomy_max:
+            self.autonomy = value
         else:
             print(f"Compreensão inválida: {value}")
 
     def __str__(self):
         lnum = str(self.line_number).rjust(3)
         key = "" if self.key == self.title else self.key + " "
-        return f"{lnum} grade:{self.autonomy}:{self.skill} key:{key} title:{self.title} skills:{self.skills} remote:{self.link} type:{self.link_type} folder:{self.folder}"
+        return f"{lnum} grade:{self.approach}:{self.autonomy} key:{key} title:{self.title} skills:{self.skills} remote:{self.link} type:{self.link_type} folder:{self.folder}"
 
     def has_at_symbol(self):
         return any([s.startswith("@") for s in self.title.split(" ")])
@@ -3119,7 +3125,7 @@ class FloatingGrade(Floating):
         self.set_header_text(Text.format("{y/}", " Utilize os direcionais para  marcar "))
         self.set_footer_text(Text.format("{y/}", " Pressione Enter para confirmar "))
 
-        self.grades_index = [task.coverage // 10, task.autonomy, task.skill]
+        self.grades_index = [task.coverage // 10, task.approach, task.autonomy]
         self.coverage = ["x", "1", "2", "3", "4", "5", "6", "7", "8", "9", "✓"]
         self.coverage_msg = [
             "Não fiz",
@@ -3133,14 +3139,15 @@ class FloatingGrade(Floating):
             "Fiz 80%",
             "Fiz 90%",
             "Fiz 100%"]
-        self.approach = [x.text for x in [symbols.approach_x, symbols.approach_e, symbols.approach_d, symbols.approach_c, symbols.approach_b, symbols.approach_a]]
+        self.approach = [x.text for x in [symbols.approach_x, symbols.approach_e, symbols.approach_d, symbols.approach_c, symbols.approach_b, symbols.approach_a, symbols.approach_s]]
         self.approach_msg = [
             "Não fiz                                     ",
-            "Copiei o código de um colega e estudei      ",
+            "Peguei o código pronto e estudei ele        ",
             "Fiz com ajuda de IA (copilot | gpt | outros)",
             "Fiz seguindo aula, vídeo, colega ou monitor ",
-            "Criei os códigos, mas tirei pequenas dúvidas",
-            "Fiz completamente sozinho e sem consulta    "
+            "(Re)Fiz os códigos com algumas consultas    ",
+            "(Re)Fiz sozinho e sem consultar algoritmos  ",
+            "Fiz de primeira e sem consultar algoritmos  "
             ]
         self.autonomy = [x.text for x in [symbols.autonomy_x, symbols.autonomy_e, symbols.autonomy_d, symbols.autonomy_c, symbols.autonomy_b, symbols.autonomy_a]]
         self.autonomy_msg = [
@@ -3173,7 +3180,14 @@ class FloatingGrade(Floating):
         # self._content.append(Text())
         approach_text = Text().add(" ").addf("Y" if self._line == 1 else "", approach_question).add("  ")
         for i, c in enumerate(self.approach):
-            approach_text.addf("G" if i == self.grades_index[1] else "", c).add(" ")
+            approach_text.addf("G" if i == self.grades_index[1] else "", c).add("")
+            if c == "x":
+                approach_text.add("  ")
+            if c == "A":
+                approach_text.add("  ")
+            if c == "S":
+                approach_text.add(" ")
+        
         approach_text.add(" ").addf("m", self.approach_msg[self.grades_index[1]])
         self._content.append(approach_text)
         # self._content.append(Text())
@@ -3194,8 +3208,8 @@ class FloatingGrade(Floating):
 
     def change_task(self):
         self._task.set_coverage(self.grades_index[0] * 10)
-        self._task.set_autonomy(self.grades_index[1])
-        self._task.set_skill(self.grades_index[2])
+        self._task.set_approach(self.grades_index[1])
+        self._task.set_autonomy(self.grades_index[2])
 
     def get_input(self) -> int:
         self.draw()
@@ -6933,7 +6947,7 @@ class CmdRep:
         tasks: dict[str, TaskResume] = {}
         for task in repository_tasks.values():
             if task.coverage != 0:
-                tasks[task.key] = TaskResume().set_coverage(task.coverage).set_autonomy(task.autonomy).set_skill(task.skill)
+                tasks[task.key] = TaskResume().set_coverage(task.coverage).set_autonomy(task.approach).set_skill(task.autonomy)
 
         for key in history_resume:
             entry = history_resume[key]
@@ -7283,8 +7297,8 @@ class TaskTree:
         output.addf(color_lig_task, lig_quest)
         output.add(down_symbol).add(" ")
         output.add(t.get_prog_symbol()).add(" ")
-        output.add(symbols.approach_list[t.autonomy]).add(" ")
-        output.add(symbols.autonomy_list[t.skill])
+        output.add(symbols.approach_list[t.approach]).add(" ")
+        output.add(symbols.autonomy_list[t.autonomy])
 
         if in_focus:
             output.add(self.style.roundL(focus_color))
@@ -7598,8 +7612,8 @@ class TaskTree:
         if isinstance(obj, Task):
             Logger.get_instance().record_self_grade(obj.key, coverage, autonomy, skill)
             obj.set_coverage(coverage)
-            obj.set_autonomy(autonomy)
-            obj.set_skill(skill)
+            obj.set_approach(autonomy)
+            obj.set_autonomy(skill)
 
 
     def set_selected_by_index(self, index: int):
@@ -9858,7 +9872,7 @@ class PlayActions:
     #         self.graph_opened = True
 
     def register_action(self, task: Task):
-        Logger.get_instance().record_self_grade(task.key, task.coverage, task.autonomy, task.skill)
+        Logger.get_instance().record_self_grade(task.key, task.coverage, task.approach, task.autonomy)
         
     def evaluate(self):
         obj = self.tree.get_selected_throw()

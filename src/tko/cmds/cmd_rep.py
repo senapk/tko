@@ -75,7 +75,7 @@ class CmdRep:
         tasks: dict[str, TaskResume] = {}
         for task in repository_tasks.values():
             if task.coverage != 0:
-                tasks[task.key] = TaskResume().set_coverage(task.coverage).set_autonomy(task.autonomy).set_skill(task.skill)
+                tasks[task.key] = TaskResume().set_coverage(task.coverage).set_autonomy(task.approach).set_skill(task.autonomy)
 
         for key in history_resume:
             entry = history_resume[key]
