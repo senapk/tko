@@ -1,5 +1,7 @@
 # Changelog
 
+- 3.0.0
+  - add: s ranking in approach
 - 2.9.0
   - add: backup action to preserve repository.yaml
   - add: filter tree by language

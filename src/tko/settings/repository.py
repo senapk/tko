@@ -276,13 +276,22 @@ class Repository:
             if key not in self.data:
                 self.data[key] = Repository.defaults[key]
         yaml_file_new = yaml_file + ".new"
+        yaml_file_bkp = yaml_file + ".backup"
         with open(yaml_file_new, "w", encoding="utf-8") as f:
             yaml.dump(self.data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
         # copy file from yaml_file to yaml_file.backup
-        if os.path.exists(yaml_file):
-            os.rename(yaml_file, yaml_file + ".backup")
-        os.rename(yaml_file_new, yaml_file)
+        Repository.rename_file(yaml_file, yaml_file_bkp)
+        Repository.rename_file(yaml_file_new, yaml_file)
         return self
 
     def __str__(self) -> str:
         return ( f"data: {self.data}\n" )
+
+    @staticmethod
+    def rename_file(old_name: str, new_name: str):
+        if os.path.exists(old_name):
+            if os.path.exists(new_name):
+                os.remove(new_name)
+            os.rename(old_name, new_name)
+        else:
+            raise Warning(Text.format("O arquivo {y} não foi encontrado", old_name))
