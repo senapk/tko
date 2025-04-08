@@ -16,18 +16,15 @@ from tko.util.param import Param
 from tko.util.decoder import Decoder
 from tko.down.drafts import Drafts
 from tko.settings.repository import available_languages
-from icecream import ic # type: ignore
 
 class CmdLineDown:
     def __init__(self, settings: Settings, folder: str, task_key: str):
         self.settings = settings
         self.folder = folder
         self.task_key = task_key
-        ic("entrei no cmdlinedown")
         self.rep = Repository(folder)
         
     def execute(self):
-        ic(self.rep.get_config_file())
         if not self.rep.has_local_config_file():
             print("O parâmetro para o comando tko down deve a pasta onde você iniciou o repositório.")
             print("Navegue ou passe o caminho até a pasta do repositório e tente novamente.")
@@ -80,7 +77,6 @@ class CmdDown:
     def download_mapi(self) -> bool:
         try:
             mapi_url = self.cache_url + "mapi.json"
-            ic(mapi_url)
             urllib.request.urlretrieve(mapi_url, self.mapi_file)
             return True
         except urllib.error.HTTPError:
@@ -97,14 +93,12 @@ class CmdDown:
         cb.execute()
 
     def download_from_url(self, task_source: str) -> bool:
-        ic("baixando da url")
         readme_remote_url = RemoteUrl(task_source)
         remote_url = readme_remote_url.get_raw_url()
         self.cache_url = os.path.dirname(remote_url) + "/.cache/"
         self.destiny_folder = self.rep.get_task_folder_for_label(self.task_key)
         self.readme_path =  os.path.join(self.destiny_folder, "Readme.md")
         self.mapi_file = os.path.join(self.destiny_folder, "mapi.json")
-        ic(self.mapi_file)
 
         folder_created = DownProblem.create_problem_folder(self.destiny_folder)
         if not self.download_readme(readme_remote_url):
@@ -158,7 +152,6 @@ class CmdDown:
         return True
 
     def execute(self) -> bool:
-        ic("debug", "entrei no execute")
         task = self.rep.game.get_task(self.task_key)
         if task.link_type == Task.Types.REMOTE_FILE:
             return self.download_from_url(task.link)
