@@ -32,7 +32,7 @@ import configparser
 from subprocess import PIPE
 import unicodedata
 import chardet # type: ignore
-__version__ = "2.8.6"
+__version__ = "2.9.0"
 
 
 class LogAction:
