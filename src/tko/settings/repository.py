@@ -263,9 +263,9 @@ class Repository:
 
     def save_config(self):
         self.set_version(self.__actual_version)
-        json_file = self.get_config_file()
-        if not os.path.exists(os.path.dirname(json_file)):
-            os.makedirs(os.path.dirname(json_file))
+        yaml_file = self.get_config_file()
+        if not os.path.exists(os.path.dirname(yaml_file)):
+            os.makedirs(os.path.dirname(yaml_file))
         # filter keys that are not in defaults
         for key in list(self.data.keys()):
             if key not in Repository.defaults:
@@ -274,10 +274,13 @@ class Repository:
         for key in Repository.defaults:
             if key not in self.data:
                 self.data[key] = Repository.defaults[key]
-
-        with open(json_file, "w", encoding="utf-8") as f:
-            # f.write(json.dumps(self.data, indent=4))
+        yaml_file_new = yaml_file + ".new"
+        with open(yaml_file_new, "w", encoding="utf-8") as f:
             yaml.dump(self.data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        # copy file from yaml_file to yaml_file.backup
+        if os.path.exists(yaml_file):
+            os.rename(yaml_file, yaml_file + ".backup")
+        os.rename(yaml_file_new, yaml_file)
         return self
 
     def __str__(self) -> str:
