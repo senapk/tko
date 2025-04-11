@@ -28,11 +28,14 @@ import urllib.request
 import shutil
 import unicodedata
 from subprocess import PIPE
+import glob
+from os.path import getmtime
+import markdown
 import urllib.error
 import math
 import yaml #type: ignore
 import io
-__version__ = "3.0.1"
+__version__ = "3.1.1"
 
 class Drafts:
     ts_draft = r"""
@@ -1050,13 +1053,13 @@ class Decoder:
             try:
                 content = raw_data.decode(encoding)
             except UnicodeDecodeError as e:
-                content = raw_data.decode(enc_dict["encoding"])
+                content = raw_data.decode(enc_dict["encoding"] or "utf-8")
             return content.replace('\r\n', '\n')
 
     @staticmethod
     def save(file_path: str, content: str):
         base_path = os.path.dirname(file_path)
-        if not os.path.exists(base_path):
+        if base_path != "" and not os.path.exists(base_path):
             os.makedirs(base_path)
         with open(file_path, "w", encoding="utf-8", newline='\n') as file:
             file.write(content)
@@ -3109,200 +3112,6 @@ class RawTerminal:
         return text2.center(width, filler2)
     
 
-
-
-class RemoteLink:
-    def __init__(self):
-        self.user = ""
-        self.repo = ""
-        self.branch = ""
-        self.folder = ""
-        self.file = ""
-
-    def identify_from_url(self, url: str):
-        if url.startswith("https://raw.githubusercontent.com"):
-            url = url.replace("https://raw.githubusercontent.com/", "")
-            elements = url.split("/")
-            self.user = elements[0]
-            self.repo = elements[1]
-            if elements[2] != "refs":
-                raise ValueError("Invalid URL")
-            if elements[3] != "heads":
-                raise ValueError("Invalid URL")
-            self.branch = elements[4]
-            self.folder = "/".join(elements[5:-1])
-            self.file = elements[-1]
-        elif url.endswith(".md"):
-            url = url.replace("https://github.com/", "")
-            elements = url.split("/")
-            self.user = elements[0]
-            self.repo = elements[1]
-            if elements[2] != "blob":
-                raise ValueError("Invalid URL")
-            self.branch = elements[3]
-            self.folder = "/".join(elements[4:-1])
-            self.file = elements[-1]
-        else:
-            url = url.replace("https://github.com/", "")
-            elements = url.split("/")
-            self.user = elements[0]
-            self.repo = elements[1]
-            if elements[2] != "tree":
-                raise ValueError("Invalid URL")
-            self.branch = elements[3]
-            self.folder = "/".join(elements[4:])
-        return self
-
-class RemoteCfg:
-    def __init__(self, target: str):
-        self.target = target
-        self.remote: RemoteLink = RemoteLink()
-        self.cfg_path: str | None = None
-        self.__load_cfg_path(target)
-        self.__parse_cfg()
-
-    def cfg_exists(self):
-        return self.cfg_path is not None
-
-    def get_cfg_path(self):
-        if self.cfg_path is None:
-            raise Exception("cfg_path not set")
-        return self.cfg_path
-
-    def calc_link_for_local_file(self):
-        base_cfg_file = os.path.dirname(os.path.abspath(self.get_cfg_path()))
-        base_source_file = os.path.dirname(os.path.abspath(self.target))
-        if not base_source_file.startswith(base_cfg_file):
-            raise Exception("File not match with remote cfg")
-        folder = os.path.relpath(base_source_file, base_cfg_file)
-        self.remote.folder = folder
-        return self.remote
-
-    def __parse_cfg(self):
-        if self.cfg_path is None:
-            return
-        config = configparser.ConfigParser()
-        config.read(self.get_cfg_path())
-
-        self.remote.user = config["DEFAULT"]["user"]
-        self.remote.repo = config["DEFAULT"]["rep"]
-        self.remote.branch = config["DEFAULT"]["branch"]
-
-    def __load_cfg_path(self, target: str):
-        # look for the remote.cfg file in the current folder
-        # if not found, look for it in the parent folder
-        # if not found, look for it in the parent's parent folder ...
-
-        path = os.path.dirname(os.path.abspath(target))
-        while path != "/":
-            cfg_path = os.path.join(path, "remote.cfg")
-            if os.path.isfile(cfg_path):
-                self.cfg_path = cfg_path
-                break
-            path = os.path.dirname(path)
-
-
-class Absolute:
-
-    # processa o conteúdo trocando os links locais para links absolutos utilizando a url remota
-    @staticmethod
-    def __replace_remote(content: str, remote_raw: str, remote_view: str, remote_folder: str) -> str:
-        if content is None or content == "":
-            return ""
-        if not remote_raw.endswith("/"):
-            remote_raw += "/"
-        if not remote_view.endswith("/"):
-            remote_view += "/"
-        if not remote_folder.endswith("/"):
-            remote_folder += "/"
-
-        #trocando todas as imagens com link local
-        regex = r"!\[(.*?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
-        subst = r"![\1](" + remote_raw + r"\3)"
-        result = re.sub(regex, subst, content, count=0, flags=0)
-
-        regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?/)\)"
-        subst = r"[\1](" + remote_folder + r"\3)"
-        result = re.sub(regex, subst, result, 0)
-
-        #trocando todos os links locais cujo conteudo nao seja vazio
-        regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
-        subst = r"[\1](" + remote_view + r"\3)"
-        result = re.sub(regex, subst, result, 0)
-
-        return result
-
-    @staticmethod
-    def relative_to_absolute(content: str, rl: RemoteLink):
-        folder = rl.folder
-        user_repo = "/".join([rl.user, rl.repo])
-        remote_raw    = "/".join(["https://raw.githubusercontent.com", user_repo, rl.branch , folder])
-        remote_view    = "/".join(["https://github.com", user_repo, "blob", rl.branch, folder])
-        remote_folder = "/".join(["https://github.com", user_repo, "tree", rl.branch, folder])
-        return Absolute.__replace_remote(content, remote_raw, remote_view, remote_folder)
-
-
-    @staticmethod
-    def convert_or_copy_or_print(source: str, target: str | None):
-        content = Decoder.load(source)
-        cfg = RemoteCfg(source)
-        if cfg.cfg_exists():
-            content = Absolute.relative_to_absolute(content, cfg.calc_link_for_local_file())
-        if target is not None:
-            Decoder.save(target, content)
-        else:
-            print(content)
-        
-
-def main_remote():
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument('target', metavar='T', type=str, help='folders')
-    # arg_parser.add_argument("--remote", "-r", action="store_true", help="convert local file to remote file")
-    arg_parser.add_argument("--output", "-o", type=str, help="output file")
-    args = arg_parser.parse_args()
-
-    Absolute.convert_or_copy_or_print(args.target, args.output)
-
-
-
-
-
-class RemoteUrl:
-    def __init__(self, url: str):
-        self.raw_link: str | None = ""
-        self.remote: RemoteLink | None = None
-
-        if not url.startswith("https://"):
-            raise ValueError("Invalid URL")
-
-        if url.startswith("https://gist.githubusercontent.com"):
-            self.raw_link = url
-        else:
-            try:
-                self.remote = RemoteLink().identify_from_url(url)
-            except:
-                raise Warning("URL inválida para download: {}".format(url))
-        self.file = ""
-
-    def get_raw_url(self):
-        if self.raw_link:
-            return self.raw_link
-        if self.remote is None:
-            return ""
-        return "https://raw.githubusercontent.com/" + self.remote.user + "/" + self.remote.repo + "/" + self.remote.branch + "/" + self.remote.folder + "/" + self.remote.file
-
-    def download_absolute_to(self, filename: str):
-        [tempfile, __content] = urllib.request.urlretrieve(self.get_raw_url(), filename)
-        content = ""
-        content = Decoder.load(tempfile)
-        if self.remote is not None:
-            content = Absolute.relative_to_absolute(content, self.remote)
-        Decoder.save(filename, content)
-        return
-
-    def __str__(self):
-        return self.get_raw_url()
-
 class Title:
     @staticmethod
     def extract_title(readme_file):
@@ -3340,254 +3149,6 @@ class SearchAsc:
     
     def inside(self, title: str) -> bool:
         return self.find(title) != -1
-
-class Mark:
-    def __init__(self, marker, indent):
-        self.marker: str = marker
-        self.indent: int = indent
-
-    def __str__(self):
-        return f"{self.marker}:{self.indent}"
-
-class Mode:
-    ADD = "ADD!"
-    COM = "COM!"
-    ACT = "ACT!"
-    DEL = "DEL!"
-    opts = [ADD, COM, ACT, DEL]
-
-def get_comment(filename: str) -> str:
-    com = "//"
-    if filename.endswith(".py"):
-        com = "#"
-    elif filename.endswith(".puml"):
-        com = "'"
-    return com
-
-class Filter:
-    def __init__(self, filename):
-        self.filename = filename
-        self.stack = [Mark(Mode.ADD, 0)]
-        self.com = get_comment(filename)
-
-    def get_marker(self) -> str:
-        return self.stack[-1].marker
-
-    def get_indent(self) -> int:
-        return self.stack[-1].indent
-
-    def outside_scope(self, line):
-        stripped = line.strip()
-        left_spaces = len(line) - len(line.lstrip())
-        return stripped != "" and left_spaces < self.get_indent()
-
-    def has_single_mode_cmd(self, line: str) -> bool:
-        stripped = line.strip()
-        for marker in Mode.opts:
-            if stripped == self.com + " " + marker:
-                return True
-        return False
-
-    def change_mode(self, line: str):
-        with_left = line.rstrip()
-        marker = with_left.lstrip()[len(self.com) + 1:]
-        len_spaces = len(with_left) - len(self.com + marker + " ")
-        while len(self.stack) > 0 and self.stack[-1].indent >= len_spaces:
-            self.stack.pop()
-        self.stack.append(Mark(marker, len_spaces))
-
-    def search_temp_mode(self, line: str) -> Tuple[str, str]:
-        for marker in Mode.opts:
-            if line.rstrip().endswith(self.com + " " + marker):
-                return marker, line[:-len(self.com + marker + " ")]
-        return "---", line
-
-    def __process(self, content: str) -> str:
-        lines = content.splitlines()
-        output = []
-        for line in lines:
-            while self.outside_scope(line):
-                self.stack.pop()
-            if self.has_single_mode_cmd(line):
-                self.change_mode(line)
-                continue
-            marker = self.get_marker()
-            pos_marker, line = self.search_temp_mode(line)
-            if pos_marker != "---":
-                marker = pos_marker
-
-            if marker == Mode.DEL:
-                continue
-            elif marker == Mode.ADD:
-                output.append(line)
-            elif marker == Mode.ACT:
-                prefix = " " * self.get_indent() + self.com + " "
-                if not line.startswith(prefix):
-                    prefix = prefix[:-1]
-                line = line.replace(prefix, " " * self.get_indent(), 1)
-                output.append(line)
-            elif marker == Mode.COM:
-                line = " " * self.get_indent() + self.com + " " + line[self.get_indent():]
-                output.append(line)
-
-        return "\n".join(output) + "\n"
-    
-    def process(self, content: str) -> str:
-        return self.__process(content)
-
-def clean_com(target: str, content: str) -> str:
-    com = get_comment(target)
-    lines = content.splitlines()
-    output = [line for line in lines if not line.lstrip().startswith(com)]
-    return "\n".join(output)
-
-class DeepFilter:
-    extensions = [".md", ".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs", ".txt", ".go"]
-
-    def __init__(self):
-        self.cheat_mode = False
-        self.quiet_mode = False
-        self.indent = ""
-    
-    def print(self, *args, **kwargs):
-        if not self.quiet_mode:
-            print(self.indent, end="")
-            print(*args, **kwargs)
-
-    def set_indent(self, prefix: int):
-        self.indent = prefix * " "
-        return self
-
-    def set_quiet(self, value):
-        self.quiet_mode = (value == True)
-        return self
-    
-    def set_cheat(self, value):
-        self.cheat_mode = (value == True)
-        return self
-
-    def copy(self, source, destiny, deep: int):
-        if deep == 0:
-            return
-        if os.path.isdir(source):
-            chain = source.split(os.sep)
-            if len(chain) > 1 and chain[-1].startswith("."):
-                return
-            if not os.path.isdir(destiny):
-                os.makedirs(destiny)
-            for file in sorted(os.listdir(source)):
-                self.copy(os.path.join(source, file), os.path.join(destiny, file), deep - 1)
-        else:
-            filename = os.path.basename(source)
-
-            if not any([filename.endswith(ext) for ext in self.extensions]):
-                return
-
-            content = Decoder.load(source)
-
-            processed = Filter(filename).process(content)
-
-            if self.cheat_mode:
-                if processed != content:
-                    cleaned = clean_com(source, content)
-                    Decoder.save(destiny, cleaned)
-            elif processed != "":
-                Decoder.save(destiny, processed)
-
-            line = ""
-            if self.cheat_mode:
-                if processed != content:
-                    line += "(cleaned ): "
-                else:
-                    line += "(disabled): "
-            else:
-                if processed == "":
-                    line += "(disabled): "
-                elif processed != content:
-                    line += "(filtered): "
-                else:
-                    line += "(        ): "
-            line += destiny
-
-            self.print(line)
-
-class CodeFilter:
-    @staticmethod
-    def open_file(path): 
-        if os.path.isfile(path):
-            file_content = Decoder.load(path)
-            return True, file_content
-        print("Warning: File", path, "not found")
-        return False, "" 
-
-    @staticmethod
-    def cf_recursive(target_dir: str, output_dir: str, force: bool, cheat: bool = False, quiet: bool = False, indent: int = 0):
-        if output_dir is None:
-                print("Error: output is required in recursive mode")
-                exit()
-        if not os.path.isdir(target_dir):
-            print("Error: target must be a folder in recursive mode")
-            exit()
-        if os.path.exists(output_dir):
-            if not force:
-                print("Error: output folder already exists")
-                exit()
-            else:
-                # recursive delete all folder content without deleting the folder itself
-                for file in os.listdir(output_dir):
-                    path = os.path.join(output_dir, file)
-                    if os.path.isdir(path):
-                        shutil.rmtree(path)
-                    else:
-                        os.remove(path)
-
-        deep_filter = DeepFilter().set_cheat(cheat).set_quiet(quiet).set_indent(indent)
-        deep_filter.copy(target_dir, output_dir, 10)
-
-    @staticmethod
-    def cf_single_file(target, output, update, cheat):
-        file = target
-        success, content = CodeFilter.open_file(file)
-        if success:
-            if cheat:
-                content = clean_com(file, content)
-            else:
-                content = Filter(file).process(content)
-
-            if output:
-                if os.path.isfile(output):
-                    old = Decoder.load(output)
-                    if old != content:
-                        Decoder.save(output, content)
-                else:
-                    Decoder.save(output, content)
-            elif update:
-                Decoder.save(file, content)
-            else:
-                print(content)
-
-def cfmain():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('target', type=str, help='file or folder to process')
-    parser.add_argument('-u', '--update', action="store_true", help='update source file')
-    parser.add_argument('-c', '--cheat', action="store_true", help='recursive cheat mode cleaning comments on students files')
-    parser.add_argument('-o', '--output', type=str, help='output target')
-    parser.add_argument("-r", "--recursive", action="store_true", help="recursive mode")
-    parser.add_argument("-f", "--force", action="store_true", help="force mode")
-    parser.add_argument("-q", "--quiet", action="store_true", help="quiet mode")
-    parser.add_argument("-i", "--indent", type=int, default=0, help="indent using spaces")
-
-    args = parser.parse_args()
-
-    if args.cheat:
-        args.recursive = True
-
-    if args.recursive:
-        CodeFilter.cf_recursive(args.target, args.output, force=args.force, cheat=args.cheat, quiet=args.quiet, indent=args.indent)
-        exit()
-
-    CodeFilter.cf_single_file(args.target, args.output, args.update, args.cheat)
-
 
 class Runner:
     def __init__(self):
@@ -5473,6 +5034,542 @@ class Game:
             output.append(str(t))
         return "\n".join(output)
 
+class XP:
+    token_level_one = "level_one"
+    token_level_mult = "level_mult"
+    level_one: int = 100
+    level_mult: float = 1.5
+    
+    def __init__(self, game: Game):
+        self.game = game
+        self.obtained = 0
+        self.avaliable = 0
+        self.update()
+        self.level = self.get_level()
+    
+    def update(self):
+        self.obtained, self.avaliable = self.game.get_xp_resume()
+
+    def get_level(self) -> int:
+        return self.calc_level(self.obtained)
+
+    def get_xp_level_current(self) -> int:
+        xp_prev = self.calc_xp(self.level)
+        atual = self.obtained - xp_prev
+        return atual
+
+    def get_xp_level_needed(self) -> int:
+        xp_next = self.calc_xp(self.level + 1)
+        xp_prev = self.calc_xp(self.level)
+        return xp_next - xp_prev
+
+    def get_xp_total_obtained(self) -> int:
+        return self.obtained
+
+    def get_xp_total_available(self) -> int:
+        return self.avaliable
+
+    def calc_level(self, xp) -> int:
+        level = 1
+        while self.calc_xp(level) <= xp:
+            level += 1
+        return level - 1
+    
+    def calc_xp(self, level: int) -> int:
+        total = 0
+        for i in range(level - 1):
+            total += self.game.level_one * (int(self.game.level_mult) ** i)
+        return int(total)
+
+
+
+
+class Log:
+    _verbose = False
+    
+    @staticmethod
+    def set_verbose(verbose: bool):
+        Log._verbose = verbose
+
+    @staticmethod
+    def verbose(*args, **kwargs):
+        if Log._verbose:
+            print(*args, **kwargs)
+
+    @staticmethod
+    def resume(*args, **kwargs):
+        if not Log._verbose:
+            print(*args, **kwargs)
+            print("", end="", flush=True)
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+
+
+
+def get_label(line) -> Optional[str]:
+    if "@" not in line:
+        return None
+    label = line.split('@')[1].split(' ')[0].split(']')[0]
+    return label
+
+def get_hook_from_line(line, base) -> Optional[str]:
+    base = clear_base(base)
+    if "/Readme.md)" in line and base in line and not "https:" in line:
+        try:
+            hook = line.split(base + '/')[1].split('/')[0]
+            return hook
+        except:
+            print("fail: error in", line)
+            exit(1)
+            pass
+    return None
+
+def load_title_from_file(path) -> str:
+    data = Decoder.load(path)
+    header = data.splitlines()[0]
+    if (len(header) == 0):
+        print('fail: Empty header in ', path)
+        exit(1)
+    if not header.startswith('# '):
+        print('fail: first line should start with # in ', path)
+        exit(1)
+    words = header.split(' ')
+    if len(words) < 2:
+        print('fail: header must have any word ', path)
+        exit(1)
+    return " ".join(words[1:])
+
+def loading_titles_from_files(path):
+    print("debug", path)
+    content = Decoder.load(path)
+
+    lines = content.splitlines()
+
+    output = []
+
+    for line in lines:
+        match = re.search(r'\[([^\[]*?)\]\((.*?)\)', line)
+        data = line
+        if match:
+            link = match.group(2)
+            if link.endswith('md') and not link.startswith('http'):
+                if not os.path.isfile(link):
+                    print("fail:", link, ' not found')
+                else:
+                    title = load_title_from_file(match.group(2))
+                    data = line.replace(match.group(1), title)
+        output.append(data)
+
+    Decoder.save(path, '\n'.join(output))
+
+def clear_base(base):
+    if base[-1] == '/':
+        base = base[:-1]
+    if base[0] == '/':
+        base = base[1:]
+    if base[0] == '.':
+        base = base[1:]
+    return base
+
+def found_labels_mismatch(path, base) -> bool:
+    error_found = False
+    base = clear_base(base)
+    print("Checking mismatch in labels")
+    data = Decoder.load(path)
+    lines = data.splitlines()
+
+    not_ok = []
+    count_ok = 0
+    for line in lines:
+        hook = get_hook_from_line(line, base)
+        if hook is None:
+            continue
+        label = get_label(line)
+        if label is None:
+            print("fail: error in", line)
+            error_found = True
+            continue
+        if label == hook:
+            count_ok += 1
+        else:
+            not_ok.append("    ({} != {}): {}".format(label, hook, os.path.join(base, hook, 'Readme.md')))
+            error_found = True
+
+    print("- verified:", count_ok)
+    print("- mismatch:", len(not_ok))
+    for line in not_ok:
+        print(line)
+    return error_found
+
+# check for all folders in the base folder searching for missing labels
+def found_unused_hooks(path, base_dir) -> bool:
+    print("Checking for unused hooks")
+    data = Decoder.load(path)
+    lines = data.splitlines()
+    hooks_all = [get_hook_from_line(line, base_dir) for line in lines]
+    # create a set of hooks
+    hooks = set(hooks_all)
+
+    # create a list with folders in base dir if base/folder/Readme.md exists
+    folders = []
+    for folder in os.listdir(base_dir):
+        if os.path.isfile(base_dir + '/' + folder + '/Readme.md'):
+            folders.append(folder)
+
+    missing = [f for f in folders if f not in hooks]
+
+    if len(missing) > 0:
+        print("Missing entries:")
+        for m in missing:
+            title = load_title_from_file(os.path.join(base_dir, m, 'Readme.md'))
+            path = os.path.join(base_dir, m, 'Readme.md')
+            print("- [{}]({})".format(title, path))
+        return True
+    return False
+
+
+def indexer_main(args):
+    loading_titles_from_files(args.path)
+    if found_labels_mismatch(args.path, args.base):
+        exit(1)
+    if found_unused_hooks(args.path, args.base):
+        exit(1)
+
+
+class Older:
+    # return the last update for the most recent file in the directory
+    @staticmethod
+    def last_update(path: str) -> Tuple[str, float]:
+        value = None
+        if os.path.isfile(path):
+            value = (path, getmtime(path))
+        else:
+            file_list = list(glob.iglob(path + '/**', recursive=True))
+            file_list = [f for f in file_list if os.path.isfile(f)]
+            if len(file_list) == 0:
+                value = (path, getmtime(path))
+            else:
+                juntos = [(f, getmtime(f)) for f in file_list]
+                value = max(juntos, key=lambda x: x[1])
+        return value
+
+    # busca recursivamente o arquivo mais recente dentro os arquivos passados
+    @staticmethod
+    def find_older(targets) -> str:
+        best_file, best_time = Older.last_update(targets[0])
+        for target in targets[1:]:
+            file, time = Older.last_update(target)
+            if time > best_time:
+                best_file, best_time = file, time
+        return best_file
+
+def older_main(args):
+    print(Older.find_older(args.targets))
+
+
+def json_norm_join(*args):
+    return os.path.normpath(os.path.join(*args))
+
+# Format used to send additional files to VPL
+class JsonFile:
+    def __init__(self, name: str, contents: str):
+        self.name: str = name
+        self.contents: str = contents
+        self.encoding: int = 0
+
+    def __str__(self):
+        return self.name + ":" + self.contents + ":" + str(self.encoding)
+
+class JsonFileType(enum.Enum):
+    UPLOAD = 1
+    KEEP = 2
+    REQUIRED = 3
+
+
+class JsonVPL:
+    def __init__(self, title: str, description: str):
+        self.title: str = title
+        self.description: str = description
+        self.upload: List[JsonFile] = []
+        self.keep: List[JsonFile] = []
+        self.required: List[JsonFile] = []
+        self.draft: Dict[str, List[JsonFile]] = {}
+
+    def __add_file(self, ftype: JsonFileType, exec_file: str, rename=""):
+        data = Decoder.load(exec_file)
+        file_name = rename if rename != "" else exec_file.split(os.sep)[-1]
+        jfile = JsonFile(file_name, data)
+        if ftype == JsonFileType.UPLOAD:
+            self.upload.append(jfile)
+        elif ftype == JsonFileType.KEEP:
+            self.keep.append(jfile)
+        else:
+            self.required.append(jfile)
+    
+    def set_cases(self, exec_file: str):
+        self.__add_file(JsonFileType.UPLOAD, exec_file, "vpl_evaluate.cases")
+        return self
+
+    def add_upload(self, exec_file: str, rename=""):
+        self.__add_file(JsonFileType.UPLOAD, exec_file, rename)
+        return self
+
+    def add_keep(self, exec_file: str, rename=""):
+        self.__add_file(JsonFileType.KEEP, exec_file, rename)
+        return self
+
+    def add_required(self, exec_file: str, rename=""):
+        self.__add_file(JsonFileType.REQUIRED, exec_file, rename)
+        return self
+    
+    def add_draft(self, extension: str, exec_file: str):
+        if extension not in self.draft:
+            self.draft[extension] = []
+        data = Decoder.load(exec_file)
+        jfile = JsonFile(exec_file.split(os.sep)[-1], data)
+        self.draft[extension].append(jfile)
+        return self
+
+    def to_json(self) -> str:
+        return json.dumps(self, default=lambda o: o.__dict__, indent=4)
+
+    def load_config_json(self, cfg_json: str, source: str):
+        if os.path.isfile(cfg_json):
+            with open(cfg_json) as f:
+                cfg = json.load(f)
+                if "upload" in cfg:
+                    for file in cfg["upload"]:
+                        self.add_upload(json_norm_join(source, file))
+                if "keep" in cfg:
+                    for file in cfg["keep"]:
+                        self.add_keep(json_norm_join(source, file))
+                if "required" in cfg:
+                    for file in cfg["required"]:
+                        self.add_required(json_norm_join(source, file))
+            return True
+        return False
+    
+    def load_drafts(self, cache_draft: str):
+        found = False
+        if not os.path.isdir(cache_draft):
+            return False
+        for lang in os.listdir(cache_draft):
+            lang_path = json_norm_join(cache_draft, lang)
+            if os.path.isdir(lang_path):
+                for file in os.listdir(lang_path):
+                    file_path = json_norm_join(lang_path, file)
+                    self.add_draft(lang, file_path)
+                    found = True
+        return found
+
+    def __str__(self):
+        return self.to_json()
+
+class FenoTitle:
+    @staticmethod
+    def extract_title(readme_file):
+
+        folder = os.path.basename(os.path.dirname(readme_file))
+
+        title = Decoder.load(readme_file).splitlines()[0]
+        parts = title.split(" ")
+        if parts[0].count("#") == len(parts[0]):
+            del parts[0]
+        title = " ".join(parts)
+        return "@" + folder + ": " + title
+
+class RemoteLink:
+    def __init__(self):
+        self.user = ""
+        self.repo = ""
+        self.branch = ""
+        self.folder = ""
+        self.file = ""
+
+    def identify_from_url(self, url: str):
+        if url.startswith("https://raw.githubusercontent.com"):
+            url = url.replace("https://raw.githubusercontent.com/", "")
+            elements = url.split("/")
+            self.user = elements[0]
+            self.repo = elements[1]
+            if elements[2] != "refs":
+                raise ValueError("Invalid URL")
+            if elements[3] != "heads":
+                raise ValueError("Invalid URL")
+            self.branch = elements[4]
+            self.folder = "/".join(elements[5:-1])
+            self.file = elements[-1]
+        elif url.endswith(".md"):
+            url = url.replace("https://github.com/", "")
+            elements = url.split("/")
+            self.user = elements[0]
+            self.repo = elements[1]
+            if elements[2] != "blob":
+                raise ValueError("Invalid URL")
+            self.branch = elements[3]
+            self.folder = "/".join(elements[4:-1])
+            self.file = elements[-1]
+        else:
+            url = url.replace("https://github.com/", "")
+            elements = url.split("/")
+            self.user = elements[0]
+            self.repo = elements[1]
+            if elements[2] != "tree":
+                raise ValueError("Invalid URL")
+            self.branch = elements[3]
+            self.folder = "/".join(elements[4:])
+        return self
+
+class RemoteCfg:
+    def __init__(self, target: str, make_remote: bool):
+        self.target = target
+        self.remote: RemoteLink = RemoteLink()
+        self.cfg_path: str | None = None
+        if make_remote:
+            self.__load_cfg_path(target)
+            self.__parse_cfg()
+            if self.cfg_path is None:
+                print(Text.format("{r}: remote.cfg file not set", "fail"))
+
+    def cfg_exists(self):
+        return self.cfg_path is not None
+
+    def get_cfg_path(self):
+        if self.cfg_path is None:
+            raise Exception("cfg_path not set")
+        return self.cfg_path
+
+    def calc_link_for_local_file(self):
+        base_cfg_file = os.path.dirname(os.path.abspath(self.get_cfg_path()))
+        base_source_file = os.path.dirname(os.path.abspath(self.target))
+        if not base_source_file.startswith(base_cfg_file):
+            raise Exception("File not match with remote cfg")
+        folder = os.path.relpath(base_source_file, base_cfg_file)
+        self.remote.folder = folder
+        return self.remote
+
+    def __parse_cfg(self):
+        if self.cfg_path is None:
+            return
+        config = configparser.ConfigParser()
+        config.read(self.get_cfg_path())
+
+        self.remote.user = config["DEFAULT"]["user"]
+        self.remote.repo = config["DEFAULT"]["rep"]
+        self.remote.branch = config["DEFAULT"]["branch"]
+
+    def __load_cfg_path(self, target: str):
+        # look for the remote.cfg file in the current folder
+        # if not found, look for it in the parent folder
+        # if not found, look for it in the parent's parent folder ...
+
+        path = os.path.dirname(os.path.abspath(target))
+
+        while True:
+            cfg_path = os.path.join(path, "remote.cfg")
+            if os.path.isfile(cfg_path):
+                self.cfg_path = cfg_path
+                break
+            new_path = os.path.dirname(path)
+            if new_path == path:
+                break
+            path = new_path
+
+
+class Absolute:
+
+    # processa o conteúdo trocando os links locais para links absolutos utilizando a url remota
+    @staticmethod
+    def __replace_remote(content: str, remote_raw: str, remote_view: str, remote_folder: str) -> str:
+        if content is None or content == "":
+            return ""
+        if not remote_raw.endswith("/"):
+            remote_raw += "/"
+        if not remote_view.endswith("/"):
+            remote_view += "/"
+        if not remote_folder.endswith("/"):
+            remote_folder += "/"
+
+        #trocando todas as imagens com link local
+        regex = r"!\[(.*?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
+        subst = r"![\1](" + remote_raw + r"\3)"
+        result = re.sub(regex, subst, content, count=0, flags=0)
+
+        regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?/)\)"
+        subst = r"[\1](" + remote_folder + r"\3)"
+        result = re.sub(regex, subst, result, 0)
+
+        #trocando todos os links locais cujo conteudo nao seja vazio
+        regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
+        subst = r"[\1](" + remote_view + r"\3)"
+        result = re.sub(regex, subst, result, 0)
+
+        return result
+
+    @staticmethod
+    def relative_to_absolute(content: str, rl: RemoteLink):
+        folder = rl.folder
+        user_repo = "/".join([rl.user, rl.repo])
+        remote_raw    = "/".join(["https://raw.githubusercontent.com", user_repo, rl.branch , folder])
+        remote_view    = "/".join(["https://github.com", user_repo, "blob", rl.branch, folder])
+        remote_folder = "/".join(["https://github.com", user_repo, "tree", rl.branch, folder])
+        return Absolute.__replace_remote(content, remote_raw, remote_view, remote_folder)
+
+
+    @staticmethod
+    def convert_or_copy_or_print(source: str, target: str | None, make_remote: bool = False):
+        content = Decoder.load(source)
+        cfg = RemoteCfg(source, make_remote)
+        if cfg.cfg_exists():
+            content = Absolute.relative_to_absolute(content, cfg.calc_link_for_local_file())
+        if target is not None:
+            Decoder.save(target, content)
+        else:
+            print(content)
+        
+
+def remote_main(args):
+    Absolute.convert_or_copy_or_print(args.target, args.output)
+
+
+
+class RemoteUrl:
+    def __init__(self, url: str):
+        self.raw_link: str | None = ""
+        self.remote: RemoteLink | None = None
+
+        if not url.startswith("https://"):
+            raise ValueError("Invalid URL")
+
+        if url.startswith("https://gist.githubusercontent.com"):
+            self.raw_link = url
+        else:
+            try:
+                self.remote = RemoteLink().identify_from_url(url)
+            except:
+                raise Warning("URL inválida para download: {}".format(url))
+        self.file = ""
+
+    def get_raw_url(self):
+        if self.raw_link:
+            return self.raw_link
+        if self.remote is None:
+            return ""
+        return "https://raw.githubusercontent.com/" + self.remote.user + "/" + self.remote.repo + "/" + self.remote.branch + "/" + self.remote.folder + "/" + self.remote.file
+
+    def download_absolute_to(self, filename: str):
+        [tempfile, __content] = urllib.request.urlretrieve(self.get_raw_url(), filename)
+        content = ""
+        content = Decoder.load(tempfile)
+        if self.remote is not None:
+            content = Absolute.relative_to_absolute(content, self.remote)
+        Decoder.save(filename, content)
+        return
+
+    def __str__(self):
+        return self.get_raw_url()
+
 available_languages = ["c", "cpp", "py", "ts", "java", "go", "yaml"]
 
 class Repository:
@@ -6677,57 +6774,6 @@ class Opener:
     def __call__(self):
         self.load_folders_and_open()
 
-class XP:
-    token_level_one = "level_one"
-    token_level_mult = "level_mult"
-    level_one: int = 100
-    level_mult: float = 1.5
-    
-    def __init__(self, game: Game):
-        self.game = game
-        self.obtained = 0
-        self.avaliable = 0
-        self.update()
-        self.level = self.get_level()
-    
-    def update(self):
-        self.obtained, self.avaliable = self.game.get_xp_resume()
-
-    def get_level(self) -> int:
-        return self.calc_level(self.obtained)
-
-    def get_xp_level_current(self) -> int:
-        xp_prev = self.calc_xp(self.level)
-        atual = self.obtained - xp_prev
-        return atual
-
-    def get_xp_level_needed(self) -> int:
-        xp_next = self.calc_xp(self.level + 1)
-        xp_prev = self.calc_xp(self.level)
-        return xp_next - xp_prev
-
-    def get_xp_total_obtained(self) -> int:
-        return self.obtained
-
-    def get_xp_total_available(self) -> int:
-        return self.avaliable
-
-    def calc_level(self, xp) -> int:
-        level = 1
-        while self.calc_xp(level) <= xp:
-            level += 1
-        return level - 1
-    
-    def calc_xp(self, level: int) -> int:
-        total = 0
-        for i in range(level - 1):
-            total += self.game.level_one * (int(self.game.level_mult) ** i)
-        return int(total)
-
-
-
-
-
 
 
 
@@ -7080,6 +7126,901 @@ class Gui:
         if Flags.skills:
             frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)
             self.show_skills_bar(frame_skills)
+
+class Mark:
+    def __init__(self, marker, indent):
+        self.marker: str = marker
+        self.indent: int = indent
+
+    def __str__(self):
+        return f"{self.marker}:{self.indent}"
+
+class Mode:
+    ADD = "ADD!"
+    COM = "COM!"
+    ACT = "ACT!"
+    DEL = "DEL!"
+    opts = [ADD, COM, ACT, DEL]
+
+def get_comment(filename: str) -> str:
+    com = "//"
+    if filename.endswith(".py"):
+        com = "#"
+    elif filename.endswith(".hs"):
+        com = "--"
+    elif filename.endswith(".puml"):
+        com = "'"
+    return com
+
+class Filter:
+    def __init__(self, filename):
+        self.filename = filename
+        self.stack = [Mark(Mode.ADD, 0)]
+        self.com = get_comment(filename)
+        self.tab_char = "\t" if filename.endswith(".go") else " "
+
+    def get_marker(self) -> str:
+        return self.stack[-1].marker
+
+    def get_indent(self) -> int:
+        return self.stack[-1].indent
+
+    def outside_scope(self, line):
+        stripped = line.strip()
+        left_spaces = len(line) - len(line.lstrip())
+        return stripped != "" and left_spaces < self.get_indent()
+
+    def has_single_mode_cmd(self, line: str) -> bool:
+        stripped = line.strip()
+        for marker in Mode.opts:
+            if stripped == self.com + " " + marker:
+                return True
+        return False
+
+    def change_mode(self, line: str):
+        with_left = line.rstrip()
+        marker = with_left.lstrip()[len(self.com) + 1:]
+        len_spaces = len(with_left) - len(self.com + marker + " ")
+        while len(self.stack) > 0 and self.stack[-1].indent >= len_spaces:
+            self.stack.pop()
+        self.stack.append(Mark(marker, len_spaces))
+
+    def search_temp_mode(self, line: str) -> Tuple[str, str]:
+        for marker in Mode.opts:
+            if line.rstrip().endswith(self.com + " " + marker):
+                return marker, line[:-len(self.com + marker + " ")]
+        return "---", line
+
+    def __process(self, content: str) -> str:
+        lines = content.splitlines()
+        output = []
+        for line in lines:
+            while self.outside_scope(line):
+                self.stack.pop()
+            if self.has_single_mode_cmd(line):
+                self.change_mode(line)
+                continue
+            marker = self.get_marker()
+            pos_marker, line = self.search_temp_mode(line)
+            if pos_marker != "---":
+                marker = pos_marker
+
+            if marker == Mode.DEL:
+                continue
+            elif marker == Mode.ADD:
+                output.append(line)
+            elif marker == Mode.ACT:
+                prefix = self.tab_char * self.get_indent() + self.com + " "
+                if not line.startswith(prefix):
+                    prefix = prefix[:-1]
+                line = line.replace(prefix, self.tab_char * self.get_indent(), 1)
+                output.append(line)
+            elif marker == Mode.COM:
+                line = self.tab_char * self.get_indent() + self.com + " " + line[self.get_indent():]
+                output.append(line)
+
+        return "\n".join(output) + "\n"
+    
+    def process(self, content: str) -> str:
+        return self.__process(content)
+
+def clean_com(target: str, content: str) -> str:
+    com = get_comment(target)
+    lines = content.splitlines()
+    output = [line for line in lines if not line.lstrip().startswith(com)]
+    return "\n".join(output)
+
+class DeepFilter:
+    extensions = [".md", ".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs", ".txt", ".go"]
+
+    def __init__(self):
+        self.cheat_mode = False
+        self.quiet_mode = False
+        self.indent = ""
+    
+    def print(self, *args, **kwargs):
+        if not self.quiet_mode:
+            print(self.indent, end="")
+            print(*args, **kwargs)
+
+    def set_indent(self, prefix: int):
+        self.indent = prefix * " "
+        return self
+
+    def set_quiet(self, value):
+        self.quiet_mode = (value == True)
+        return self
+    
+    def set_cheat(self, value):
+        self.cheat_mode = (value == True)
+        return self
+
+    def copy(self, source, destiny, deep: int):
+        if deep == 0:
+            return
+        if os.path.isdir(source):
+            chain = source.split(os.sep)
+            if len(chain) > 1 and chain[-1].startswith("."):
+                return
+            if not os.path.isdir(destiny):
+                os.makedirs(destiny)
+            for file in sorted(os.listdir(source)):
+                self.copy(os.path.join(source, file), os.path.join(destiny, file), deep - 1)
+        else:
+            filename = os.path.basename(source)
+
+            if not any([filename.endswith(ext) for ext in self.extensions]):
+                return
+
+            content = Decoder.load(source)
+
+            processed = Filter(filename).process(content)
+
+            if self.cheat_mode:
+                if processed != content:
+                    cleaned = clean_com(source, content)
+                    Decoder.save(destiny, cleaned)
+            elif processed != "":
+                Decoder.save(destiny, processed)
+
+            line = ""
+            if self.cheat_mode:
+                if processed != content:
+                    line += "(cleaned ): "
+                else:
+                    line += "(disabled): "
+            else:
+                if processed == "":
+                    line += "(disabled): "
+                elif processed != content:
+                    line += "(filtered): "
+                else:
+                    line += "(        ): "
+            line += destiny
+
+            self.print(line)
+
+class CodeFilter:
+    @staticmethod
+    def open_file(path): 
+        if os.path.isfile(path):
+            file_content = Decoder.load(path)
+            return True, file_content
+        print("Warning: File", path, "not found")
+        return False, "" 
+
+    @staticmethod
+    def cf_recursive(target_dir: str, output_dir: str, force: bool, cheat: bool = False, quiet: bool = False, indent: int = 0):
+        if output_dir is None:
+                print("Error: output is required in recursive mode")
+                exit()
+        if not os.path.isdir(target_dir):
+            print("Error: target must be a folder in recursive mode")
+            exit()
+        if os.path.exists(output_dir):
+            if not force:
+                print("Error: output folder already exists")
+                exit()
+            else:
+                # recursive delete all folder content without deleting the folder itself
+                for file in os.listdir(output_dir):
+                    path = os.path.join(output_dir, file)
+                    if os.path.isdir(path):
+                        shutil.rmtree(path)
+                    else:
+                        os.remove(path)
+
+        deep_filter = DeepFilter().set_cheat(cheat).set_quiet(quiet).set_indent(indent)
+        deep_filter.copy(target_dir, output_dir, 10)
+
+    @staticmethod
+    def cf_single_file(target, output, update, cheat):
+        file = target
+        success, content = CodeFilter.open_file(file)
+        if success:
+            if cheat:
+                content = clean_com(file, content)
+            else:
+                content = Filter(file).process(content)
+
+            if output:
+                if os.path.isfile(output):
+                    old = Decoder.load(output)
+                    if old != content:
+                        Decoder.save(output, content)
+                else:
+                    Decoder.save(output, content)
+            elif update:
+                Decoder.save(file, content)
+            else:
+                print(content)
+
+def filter_main(args):
+    if args.cheat:
+        args.recursive = True
+
+    if args.recursive:
+        CodeFilter.cf_recursive(args.target, args.output, force=args.force, cheat=args.cheat, quiet=args.quiet, indent=args.indent)
+        exit()
+
+    CodeFilter.cf_single_file(args.target, args.output, args.update, args.cheat)
+
+class Cases:
+
+    @staticmethod
+    def run(cases_file, source_readme, source_dir):
+        # find all files in the directory terminatig with .tio or .vpl
+        files = list(glob.iglob(source_dir + '/**', recursive=True))
+        files = [f for f in files if os.path.isfile(f)]
+        files = [f for f in files if f.endswith(".tio") or f.endswith(".vpl")]
+        cmd = " ".join(["tko", "build", cases_file, source_readme] + files)
+        subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+
+class CssStyle:
+    data = "body,li{color:#000}body{line-height:1.4em;max-width:42em;padding:1em;margin:auto}li{margin:.2em 0 0;padding:0}h1,h2,h3,h4,h5,h6{border:0!important}h1,h2{margin-top:.5em;margin-bottom:.5em;border-bottom:2px solid navy!important}h2{margin-top:1em}code,pre{border-radius:3px}pre{overflow:auto;background-color:#f8f8f8;border:1px solid #2f6fab;padding:5px}pre code{background-color:inherit;border:0;padding:0}code{background-color:#ffffe0;border:1px solid orange;padding:0 .2em}a{text-decoration:underline}ol,ul{padding-left:30px}em{color:#b05000}table.text td,table.text th{vertical-align:top;border-top:1px solid #ccc;padding:5px}"
+    path = None
+    @staticmethod
+    def get_file():
+        if CssStyle.path is None:
+            CssStyle.path = tempfile.mktemp(suffix=".css")
+            Decoder.save(CssStyle.path, CssStyle.data)
+        return CssStyle.path
+    
+class HTML:
+
+    @staticmethod
+    def remove_css_link_from_html(html_file: str):
+        content = Decoder.load(html_file)
+        output = []
+        for line in content.splitlines():
+            if not line.startswith('  <link rel="stylesheet"'):
+                output.append(line)
+        Decoder.save(html_file, "\n".join(output))
+
+
+
+    @staticmethod
+    def pandoc_markdown_to_html(title: str, input_file: str, output_file: str, enable_latex: bool = True):
+        fulltitle = title.replace('!', '\\!').replace('?', '\\?')
+        cmd = ["pandoc", input_file, '--css', CssStyle.get_file(), '--metadata', 'pagetitle=' + fulltitle,
+            '-s', '-o', output_file]
+        if enable_latex:
+            cmd.append("--mathjax")
+        try:
+            p = subprocess.Popen(cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+            stdout, stderr = p.communicate()
+            if stdout != "" or stderr != "":
+                print(stdout)
+                print(stderr)
+            HTML.remove_css_link_from_html(output_file)
+
+        except Exception as e:
+            print("Erro no comando pandoc:", e)
+            exit(1)
+
+
+    @staticmethod
+    def python_markdown_to_html(title: str, input_file_md: str, output_file_html: str):
+        # Extensões mais comuns para melhorar a conversão
+        extensions = ['extra', 'codehilite', 'toc']
+
+        # Ler o conteúdo do arquivo markdown
+
+        md_content = Decoder.load(input_file_md)
+
+        # Converter markdown para HTML com as extensões
+        html_content = markdown.markdown(md_content, extensions=extensions)
+
+        # Criar estrutura básica de HTML com título
+        html_template = f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>{title}</title>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+        </head>
+        <body>
+            <h1>{title}</h1>
+            {html_content}
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+            <script>hljs.highlightAll();</script>
+        </body>
+        </html>
+        """
+
+        # Escrever o HTML gerado no arquivo de saída
+        Decoder.save(output_file_html, html_template)
+
+        print(f'Arquivo HTML gerado em: {output_file_html}')
+
+
+def html_main(args):
+    HTML.pandoc_markdown_to_html(args.title, args.input, args.output, not args.no_latex)
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+
+
+class Action(enum.Enum):
+    RUN = 1
+    CLEAN = 2
+
+class TocMaker:
+    @staticmethod
+    def __only_hashtags(x: str) -> bool:
+        return len(x) == x.count("#") and len(x) > 0
+
+    # generate md link for the text
+    @staticmethod
+    def __get_md_link(title: Optional[str]) -> str:
+        if title is None:
+            return ""
+        # remove html comments
+        if "<!--" in title and "-->" in title:
+            title = title.split("<!--")[0]
+
+        if "[](" in title:
+            title = title.split("[](")[0]
+
+        if title is None:
+            return ""
+        title = title.lstrip(" #")
+        title = title.lower()
+        out = ''
+        for c in title:
+            if c == ' ' or c == '-':
+                out += '-'
+            elif c == '_':
+                out += '_'
+            elif c == '\\':
+                pass
+            elif c.isalnum():
+                out += c
+        return out
+
+    @staticmethod
+    def __get_level(line: str) -> int:
+        return len(line.split(" ")[0])
+
+    @staticmethod
+    def __get_content(line: str) -> str:
+        if "<!--" in line and "-->" in line:
+            line = line.split("<!--")[0]
+        return " ".join(line.split(" ")[1:]).replace("\\", "\\\\")
+
+    @staticmethod
+    def __remove_code_fences(content: str) -> str:
+        regex = r"^```.*?```\n"
+        return re.sub(regex, "", content, 0, re.MULTILINE | re.DOTALL)
+
+
+    @staticmethod
+    def __extract_entries(content: str) -> List[Tuple[int, str]]:
+        content = TocMaker.__remove_code_fences(content)
+
+        lines = content.splitlines()
+        disable_tag = "[]()"
+        lines = [line for line in lines if TocMaker.__only_hashtags(line.split(" ")[0]) and line.find(disable_tag) == -1]
+
+        entries: List[Tuple[int, str]] = []
+        for line in lines:
+            level = TocMaker.__get_level(line)
+            text = "[" + TocMaker.__get_content(line) + "](#" + TocMaker.__get_md_link(line) + ")"
+            entries.append((level, text))
+        return entries
+
+    
+    @staticmethod
+    def execute_toch(content: str) -> str:
+        entries = TocMaker.__extract_entries(content)
+        links = [b for (a, b) in entries if a == 2]
+        table = ["--" for _ in links]
+        return " | ".join(links) + "\n" + " | ".join(table)
+        
+
+    @staticmethod
+    def execute_toc(content: str) -> str:
+        entries = TocMaker.__extract_entries(content)
+        toc_lines = ["  " * (level - 2) + "- " + link for (level, link) in entries if level > 1]
+        toc_text = "\n".join(toc_lines)
+        return toc_text
+
+class Toc:
+    @staticmethod
+    def execute(content: str, action: Action = Action.RUN) -> str:
+        regex = r"<!-- toc -->\n" + r"(.*?)"+ r"<!-- toc -->"
+        if action == Action.RUN:
+            new_toc = TocMaker.execute_toc(content)
+            subst = r"<!-- toc -->\n" + new_toc + r"\n<!-- toc -->"
+        else:
+            subst = r"<!-- toc -->\n<!-- toc -->"
+        return re.sub(regex, subst, content, 0, re.MULTILINE | re.DOTALL)
+
+class Toch:
+    @staticmethod
+    def execute(content: str, action: Action = Action.RUN) -> str:
+        regex = r"<!-- toch -->\n" + r"(.*?)"+ r"<!-- toch -->"
+        if action == Action.RUN:
+            new_toc = TocMaker.execute_toch(content)
+            subst = r"<!-- toch -->\n" + new_toc + r"\n<!-- toch -->"
+        else:
+            subst = r"<!-- toch -->\n<!-- toch -->"
+        return re.sub(regex, subst, content, 0, re.MULTILINE | re.DOTALL)
+
+class Links:
+
+    @staticmethod
+    def load_links(readme_dir, filter_dir):
+        def traverse_directory(directory, depth=0):
+            output = ""
+            if os.path.isdir(directory):
+                entries = sorted(os.listdir(directory))
+                for entry in entries:
+                    full_path = os.path.join(directory, entry)
+                    if os.path.isdir(full_path):
+                        output += "  " * depth + "- " + entry + "\n"
+                        output += traverse_directory(full_path, depth + 1)
+                    else:
+                        path = os.path.relpath(full_path, readme_dir).replace("\\", "/")
+                        output += "  " * depth + "- [" + entry + "](" + path + ")\n"
+            return output
+        
+        origin = os.path.join(readme_dir, filter_dir)
+        return traverse_directory(origin)
+
+    @staticmethod
+    def execute(path, content: str, action: Action = Action.RUN) -> str:
+        regex = r"<!-- links (\S*?) -->\n(.*?)<!-- links -->"
+        matches = re.finditer(regex, content, re.MULTILINE | re.DOTALL)
+        
+        # replace content of group 2 with load_links of group 1 for each match
+        for match in matches:
+            filter_dir = match.group(1)
+            lregex = r"<!-- links " + filter_dir + r" -->\n(.*?)<!-- links -->"
+            if action == Action.RUN:
+                readme_dir = os.path.normpath(os.path.dirname(path))
+                new_links = Links.load_links(readme_dir, filter_dir)
+                subst = r"<!-- links " + filter_dir + r" -->\n" + new_links + r"<!-- links -->"
+            else:
+                subst = r"<!-- links " + filter_dir + r" -->\n<!-- links -->"
+            content = re.sub(lregex, subst, content, 0, re.MULTILINE | re.DOTALL)
+
+        return content
+
+class Load:
+
+    @staticmethod
+    def extract_between_tags(content, tag):
+        regex = r"\[\[" + tag + r"\]\].*?^(.*)^[\S ]*\[\[" + tag + r"\]\]"
+        matches = re.finditer(regex, content, re.MULTILINE | re.DOTALL)
+        for match in matches:
+            return match.group(1)
+        return ""
+
+    @staticmethod
+    def rmcom(target: str, content: str) -> str:
+        com = "//"
+        if target.endswith(".py"):
+            com = "#"
+        if target.endswith(".puml"):
+            com = "'"
+        lines = content.splitlines()
+        output = []
+        for line in lines:
+            if not line.lstrip().startswith(com):
+                output.append(line)
+        return "\n".join(output)
+
+
+    @staticmethod
+    def execute(content: str, target_dir, action: Action = Action.RUN) -> str:
+        new_content = ""
+        last = 0
+
+        regex = r"<!-- load (\S*?) (\S*?) -->\n(.*?)<!-- load -->"
+        matches = re.finditer(regex, content, re.MULTILINE | re.DOTALL)
+        
+        for match in matches:
+            path = match.group(1)
+            abspath = os.path.abspath(os.path.join(target_dir, path))
+            tags = match.group(2)
+            words: List[str] = tags.split(":")
+
+            fenced: List[str] = [tag for tag in words if tag.startswith("fenced")]
+            words = [tag for tag in words if not tag.startswith("fenced")]
+
+            filter: List[str] = [tag for tag in words if tag.startswith("filter")]
+            words = [tag for tag in words if not tag.startswith("filter")]
+
+            rmcom: List[str] = [tag for tag in words if tag.startswith("rmcom")]
+            words = [tag for tag in words if not tag.startswith("rmcom")]
+
+
+            extract: List[str] = [tag for tag in words if tag.startswith("extract")]
+            words = [tag for tag in words if not tag.startswith("extract")]
+
+
+            ext = os.path.splitext(path)[1][1:]
+            if len(words) > 0:
+                ext = words[0]
+            if len(fenced) == 1:
+                parts = fenced[0].split("=")
+                if len(parts) == 2:
+                    ext = parts[1]
+
+
+            new_content += content[last:match.start()] # inserindo texto entre matches
+            last = match.end()
+            # new_content += "[](load)[](" + path + ")[](" + tags + ")\n"
+            new_content += "<!-- load " + path + " " + tags + " -->\n"
+
+            # se não for run, deve limpar o conteúdo não inserindo os arquivos
+            if action == Action.RUN:
+                if len(fenced) > 0:
+                    new_content += "\n```" + ext + "\n"
+                if os.path.isfile(abspath):
+                    if len(filter) > 0:
+                        data = Filter(path).process(Decoder.load(abspath)) + "\n"
+                        new_content += data
+                        if data[-1] != "\n":
+                            new_content += "\n"
+                    elif len(rmcom) > 0:
+                        full_data = Decoder.load(abspath)
+                        data =  Load.rmcom(abspath, full_data) + "\n"
+                        new_content += data
+                        if data[-1] != "\n":
+                            new_content += "\n"
+                    elif len(extract) > 0:
+                        tag = extract[0].split("=")[1]
+                        full_data = Decoder.load(abspath)
+                        data = Load.extract_between_tags(full_data, tag)
+                        new_content += data
+                        if len(data) == 0 or data[-1] != "\n":
+                            new_content += "\n"
+                    else:
+                        data = Decoder.load(abspath)
+                        new_content += data
+                        if data[-1] != "\n":
+                            new_content += "\n"
+                else:
+                    print("warning: file", path, "not found")
+                if fenced:
+                    new_content += "```\n\n"
+            new_content += "<!-- load -->"
+        
+        new_content += content[last:]
+        return new_content
+
+
+            
+
+class Save:
+    @staticmethod
+    # execute filename and content
+    def execute(file_content):
+        regex = r"\[\]\(save\)\[\]\((.*?)\)\n```[a-z]*\n(.*?)```\n\[\]\(save\)"
+        matches = re.finditer(regex, file_content, re.MULTILINE | re.DOTALL)
+        
+        for match in matches:
+            path = match.group(1)
+            content = match.group(2)
+            exists = os.path.isfile(path)
+            if exists:
+                content_old = Decoder.load(path)
+            if not exists or content != content_old:
+                Decoder.save(path, content)
+                print("file", path, "updated")
+
+class MdppMain:
+    @staticmethod
+    def fix_path(target):
+        target = os.path.normpath(target)
+        if os.path.isdir(target):
+            target = os.path.join(target, "Readme.md")
+        return target
+
+    @staticmethod
+    def open_file(path): 
+        if os.path.isfile(path):
+            file_content = Decoder.load(path)
+            return True, file_content
+        print("Warning: File", path, "not found")
+        return False, "" 
+
+class Mdpp:
+    @staticmethod
+    def update_file(target, action: Action = Action.RUN, quiet: bool = False) -> bool:
+        path = MdppMain.fix_path(target)
+        target_dir = os.path.dirname(path)
+        found, original = MdppMain.open_file(path)
+        if not found:
+            return False
+        updated = original
+        updated_toc = Toc.execute(updated, action)
+        updated_toc = Toch.execute(updated_toc, action)
+        if updated != updated_toc:
+            updated = updated_toc
+        updated = Load.execute(updated, target_dir, action)
+        updated = Links.execute(target, updated, action)
+        Save.execute(updated)
+        
+        if updated != original:
+            Decoder.save(path, updated)
+            # hook = os.path.abspath(path).split(os.sep)[-2]
+            return True
+
+        return False
+
+def mdpp_main(args):
+
+    if len(args.targets) == 0:
+        print("No targets selected")
+        exit()
+    
+    action = Action.RUN if not args.clean else Action.CLEAN
+
+    for target in args.targets:
+        Mdpp.update_file(target, action, args.quiet)
+
+def norm_join(*args):
+    return os.path.normpath(os.path.join(*args))
+
+class Actions:
+    def __init__(self, source_dir):
+        self.cache = norm_join(source_dir, ".cache")
+        self.target = norm_join(self.cache, "mapi.json")
+        self.source_dir = source_dir
+        self.hook = os.path.basename(os.path.abspath(source_dir))
+        self.source_readme = norm_join(self.source_dir, "Readme.md")
+        self.remote_readme = norm_join(self.cache, "Readme.md")
+        self.target_html = norm_join(self.cache, "q.html")
+        self.title = ""
+        self.cases = norm_join(self.cache, "q.tio")
+        self.config_json = norm_join(self.source_dir, "config.json")
+        self.mapi_json = norm_join(self.cache, "mapi.json")
+        self.cache_src = norm_join(self.cache, "draft")
+        self.vpl = None
+        self.make_remote: bool = False
+        self.use_pandoc: bool = False
+
+    def set_remote(self, make_remote: bool):
+        self.make_remote = make_remote
+        return self
+
+    def validate(self):
+        if self.hook == "node_modules" or self.hook.endswith(".json"):
+            return False
+        if not os.path.isdir(self.source_dir):
+            print(f"\n    fail: {self.source_dir} is not a directory")
+            return False
+        if not os.path.isfile(self.source_readme):
+            print(f"\n    fail: {self.source_readme} not found")
+            return False
+        return True
+
+    def load_title(self):
+        self.title = FenoTitle.extract_title(self.source_readme)
+
+    def create_cache(self):
+        if not os.path.exists(self.cache):
+            os.makedirs(self.cache)
+        return self
+    
+    def recreate_cache(self):
+        shutil.rmtree(self.cache)
+        os.makedirs(self.cache)
+        return self
+    
+    def need_rebuild(self):
+        if not os.path.exists(self.target):
+            return True
+        older = Older.find_older([self.source_dir, self.target])
+        if older == self.target:
+            return False
+
+        Log.resume("Changes ", end="")
+        Log.verbose(f"  Changes in {self.source_dir}")
+        return True
+    
+    def remote_md(self):
+        Absolute.convert_or_copy_or_print(self.source_readme, self.remote_readme, self.make_remote)
+        Log.verbose(f"  RemoteFile: {self.remote_readme}")
+    
+    # uses pandoc to generate html from markdown
+    def html(self, use_pandoc: bool):
+        title = FenoTitle.extract_title(self.source_readme)
+        if use_pandoc:
+            HTML.pandoc_markdown_to_html(title, self.remote_readme, self.target_html)
+        else:
+            HTML.python_markdown_to_html(title, self.remote_readme, self.target_html)
+        Log.resume("HTML ", end="")
+        Log.verbose(f"  HTML  file: {self.target_html}")
+
+    # uses tko to generate cases file
+    def build_cases(self):
+        Cases.run(self.cases, self.source_readme, self.source_dir)
+        Log.resume("Cases ", end="")
+        Log.verbose(f"  Cases file: {self.cases}")
+
+    def copy_drafts(self):
+        source_src = norm_join(self.source_dir, "src")
+        if os.path.isdir(source_src):
+            Log.resume("Drafts ", end="")
+            Log.verbose(f"  Drafts dir: {source_src}")
+            filter = DeepFilter().set_indent(4)
+            filter.copy(source_src, self.cache_src, 5)
+
+    def run_local_sh(self):
+        local_sh = norm_join(self.source_dir, "local.sh")
+        actual_chdir = os.getcwd()
+        if os.path.isfile(local_sh):
+            Log.verbose(f"  Execute local.sh")
+            os.chdir(self.source_dir)
+            subprocess.run("bash local.sh", shell=True)
+            os.chdir(actual_chdir)
+            Log.resume("Local.sh ", end="")
+
+    def init_vpl(self):
+        html_content = Decoder.load(self.target_html)
+        self.vpl = JsonVPL(self.title, html_content)
+        self.vpl.set_cases(self.cases)
+        if self.vpl.load_config_json(self.config_json, self.source_dir):
+            Log.resume("Required ", end="")
+            Log.verbose(f"  CfgVplJson: {self.config_json}")
+        if self.vpl.load_drafts(self.cache_src):
+            Log.resume("Drafts ", end="")
+
+    def create_mapi(self):
+        Decoder.save(self.mapi_json, str(self.vpl) + "\n")
+        Log.resume("Mapi ", end="")
+        Log.verbose(f"  Mapi  file: {self.mapi_json}")
+
+    def clean(self, erase: bool):
+        if erase:
+            Log.resume("Cleaning ", end="")
+            Log.verbose("  Cleaning  : html and cases files")
+            os.remove(self.cases)
+            os.remove(self.target_html)
+            os.remove(self.remote_readme)
+
+    # run mdpp script on source readme
+    def update_markdown(self):
+        if Mdpp.update_file(self.source_readme):
+            Log.resume("Mdpp ", end="")
+            Log.verbose(f"  Mdpp updading")
+
+def build_main(args):
+    Log.set_verbose(not args.brief)
+
+    if len(args.targets) == 0:
+        print("fail: No targets specified")
+        exit(1)
+
+    for target in args.targets:
+        hook = os.path.basename(os.path.abspath(target))
+
+        actions = Actions(target)\
+                    .set_remote(args.remote)
+
+        if not actions.validate():
+            continue
+
+        Log.resume("- " + hook, end=": [ ")
+        Log.verbose("- " + hook)
+
+        actions.load_title()
+        actions.create_cache()
+        actions.update_markdown()
+
+        if not args.check or actions.need_rebuild():
+            actions.recreate_cache() # erase .cache
+            actions.copy_drafts()
+            actions.run_local_sh()
+            actions.update_markdown() # se os drafts tiverem mudado o markdown precisa ser atualizado
+            actions.remote_md()
+            actions.html(use_pandoc=args.pandoc)
+            actions.build_cases()
+            actions.init_vpl()
+            actions.create_mapi()
+            actions.clean(args.erase)
+
+        Log.resume("]")
+
+
+
+def feno_main():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(title='subcommands', help='help for subcommand.')
+
+    # subparser for the 'build' command
+    parser_r = subparsers.add_parser('build', help='build .mapi file.')
+    parser_r.add_argument('targets', metavar='T', type=str, nargs='*', help='folders')
+    parser_r.add_argument("--check", "-c", action="store_true", help="Check if the file needs to be rebuilt")
+    parser_r.add_argument("--brief", "-b", action="store_true", help="Brief mode")
+    parser_r.add_argument("--pandoc", "-p", action="store_true", help="Use pandoc rather than python markdown")
+    parser_r.add_argument("--remote", "-r", action="store_true", help="Search for remote.cfg file and create absolute links")
+    parser_r.add_argument("--erase", "-e", action="store_true", help="Erase .html and .tio temp files")
+    parser_r.add_argument("--debug", "-d", action='store_true', help="Display debug msgs")
+    parser_r.set_defaults(func=build_main)
+
+    # subparser for the 'indexer' command
+    parser_i = subparsers.add_parser('indexer', help='index Readme file.')
+    parser_i.add_argument('path', type=str, help='Path to Markdown file')
+    parser_i.add_argument("base", type=str, help="Folder with the problems")
+    parser_i.set_defaults(func=indexer_main)
+
+    # subparser for the 'html' command
+    parser_h = subparsers.add_parser('html', help='generate HTML file from markdown file.')
+    parser_h.add_argument('input', type=str, help='Input markdown file')
+    parser_h.add_argument('output', type=str, help='Output HTML file')
+    parser_h.add_argument('--no-latex', action='store_true', help='Disable LaTeX math rendering')
+    parser_h.add_argument('--title', type=str, default="Problema", help='Title of the HTML file')
+    parser_h.set_defaults(func=html_main)
+
+    # subparser for the 'mdpp' command
+    parser_m = subparsers.add_parser('mdpp', help='preprocessor for markdown files.')
+    parser_m.add_argument('targets', metavar='T', type=str, nargs='*', help='Readmes or folders')
+    parser_m.add_argument('--quiet', '-q', action="store_true", help='quiet mode')
+    parser_m.add_argument('--clean', '-c', action="store_true", help='clean mode')
+    parser_m.set_defaults(func=mdpp_main)
+
+    # subparser for the 'older' command
+    parser_o = subparsers.add_parser('older', help='check if the source is newer than the target')
+    parser_o.add_argument('targets', type=str, nargs='+', help='Target files or directories')
+    parser_o.set_defaults(func=older_main)
+
+    # subparser for the 'remote' command
+    parser_rm = subparsers.add_parser('remote', help='create remote markdown file.')
+    parser_rm.add_argument('target', type=str, help='Folders')
+    parser_rm.add_argument('--output', '-o', type=str, help='Output file')
+    parser_rm.set_defaults(func=remote_main)
+
+    # subparser for the 'filter' command
+    parser_f = subparsers.add_parser('filter', help='filter code removing answers.')
+
+    parser_f.add_argument('target', type=str, help='file or folder to process')
+    parser_f.add_argument('-u', '--update', action="store_true", help='update source file')
+    parser_f.add_argument('-c', '--cheat', action="store_true", help='recursive cheat mode cleaning comments on students files')
+    parser_f.add_argument('-o', '--output', type=str, help='output target')
+    parser_f.add_argument("-r", "--recursive", action="store_true", help="recursive mode")
+    parser_f.add_argument("-f", "--force", action="store_true", help="force mode")
+    parser_f.add_argument("-q", "--quiet", action="store_true", help="quiet mode")
+    parser_f.add_argument("-i", "--indent", type=int, default=0, help="indent using spaces")
+    parser_f.set_defaults(func=filter_main)
+
+
+
+    args = parser.parse_args()
+
+
+    args = parser.parse_args()
+    if "func" not in args:
+        parser.print_help()
+        exit(1)
+    else:
+        args.func(args)
 
 
 class ConfigParams:

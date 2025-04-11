@@ -280,7 +280,7 @@ class Save:
                 Decoder.save(path, content)
                 print("file", path, "updated")
 
-class Main:
+class MdppMain:
     @staticmethod
     def fix_path(target):
         target = os.path.normpath(target)
@@ -299,9 +299,9 @@ class Main:
 class Mdpp:
     @staticmethod
     def update_file(target, action: Action = Action.RUN, quiet: bool = False) -> bool:
-        path = Main.fix_path(target)
+        path = MdppMain.fix_path(target)
         target_dir = os.path.dirname(path)
-        found, original = Main.open_file(path)
+        found, original = MdppMain.open_file(path)
         if not found:
             return False
         updated = original

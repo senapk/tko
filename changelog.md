@@ -1,5 +1,7 @@
 # Changelog
 
+- 3.1.1
+  - fix: renaming name conflicts to improve mypy tests
 - 3.1.0
   - add: feno integration
 - 3.0.0

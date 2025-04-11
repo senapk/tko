@@ -1,4 +1,4 @@
-from .title import Title
+from .title import FenoTitle
 from .jsontools import JsonVPL
 from .older import Older
 from .remote_md import Absolute
@@ -49,7 +49,7 @@ class Actions:
         return True
 
     def load_title(self):
-        self.title = Title.extract_title(self.source_readme)
+        self.title = FenoTitle.extract_title(self.source_readme)
 
     def create_cache(self):
         if not os.path.exists(self.cache):
@@ -78,7 +78,7 @@ class Actions:
     
     # uses pandoc to generate html from markdown
     def html(self, use_pandoc: bool):
-        title = Title.extract_title(self.source_readme)
+        title = FenoTitle.extract_title(self.source_readme)
         if use_pandoc:
             HTML.pandoc_markdown_to_html(title, self.remote_readme, self.target_html)
         else:

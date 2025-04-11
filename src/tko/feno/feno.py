@@ -9,7 +9,7 @@ from .remote_md import remote_main
 from tko.feno.filter import filter_main
 
 
-def main():
+def feno_main():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(title='subcommands', help='help for subcommand.')
 

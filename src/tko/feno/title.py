@@ -1,7 +1,7 @@
 import os
 from tko.util.decoder import Decoder
 
-class Title:
+class FenoTitle:
     @staticmethod
     def extract_title(readme_file):
 

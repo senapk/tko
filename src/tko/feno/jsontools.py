@@ -4,7 +4,8 @@ import json
 import os
 from tko.util.decoder import Decoder
 
-def norm_join(*args):
+
+def json_norm_join(*args):
     return os.path.normpath(os.path.join(*args))
 
 # Format used to send additional files to VPL
@@ -76,13 +77,13 @@ class JsonVPL:
                 cfg = json.load(f)
                 if "upload" in cfg:
                     for file in cfg["upload"]:
-                        self.add_upload(norm_join(source, file))
+                        self.add_upload(json_norm_join(source, file))
                 if "keep" in cfg:
                     for file in cfg["keep"]:
-                        self.add_keep(norm_join(source, file))
+                        self.add_keep(json_norm_join(source, file))
                 if "required" in cfg:
                     for file in cfg["required"]:
-                        self.add_required(norm_join(source, file))
+                        self.add_required(json_norm_join(source, file))
             return True
         return False
     
@@ -91,10 +92,10 @@ class JsonVPL:
         if not os.path.isdir(cache_draft):
             return False
         for lang in os.listdir(cache_draft):
-            lang_path = norm_join(cache_draft, lang)
+            lang_path = json_norm_join(cache_draft, lang)
             if os.path.isdir(lang_path):
                 for file in os.listdir(lang_path):
-                    file_path = norm_join(lang_path, file)
+                    file_path = json_norm_join(lang_path, file)
                     self.add_draft(lang, file_path)
                     found = True
         return found

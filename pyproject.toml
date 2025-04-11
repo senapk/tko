@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tko"
-version = "3.1.0"
+version = "3.1.1"
 description = "Add your description here"
 authors = [
     { name = "David", email = "sena.ufc@gmail.com" }
@@ -28,4 +28,4 @@ dependencies = [
 
 [project.scripts]
 tko = "tko.__main__:main"
-feno = "tko.feno.__main__:main"
+feno = "tko.feno.feno:main"
