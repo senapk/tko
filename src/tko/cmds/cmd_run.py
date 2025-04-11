@@ -20,7 +20,7 @@ from tko.play.opener import Opener
 from tko.settings.settings import Settings
 from tko.util.consts import DiffMode
 from tko.settings.logger import Logger
-from tko.util.code_filter import CodeFilter
+from tko.feno.filter import CodeFilter
 from tko.settings.repository import Repository
 
 class tkoFilterMode:

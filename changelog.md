@@ -1,5 +1,7 @@
 # Changelog
 
+- 3.1.0
+  - add: feno integration
 - 3.0.0
   - add: s ranking in approach
 - 2.9.0

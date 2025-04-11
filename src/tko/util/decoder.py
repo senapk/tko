@@ -18,13 +18,13 @@ class Decoder:
             try:
                 content = raw_data.decode(encoding)
             except UnicodeDecodeError as e:
-                content = raw_data.decode(enc_dict["encoding"])
+                content = raw_data.decode(enc_dict["encoding"] or "utf-8")
             return content.replace('\r\n', '\n')
 
     @staticmethod
     def save(file_path: str, content: str):
         base_path = os.path.dirname(file_path)
-        if not os.path.exists(base_path):
+        if base_path != "" and not os.path.exists(base_path):
             os.makedirs(base_path)
         with open(file_path, "w", encoding="utf-8", newline='\n') as file:
             file.write(content)

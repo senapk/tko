@@ -5,7 +5,7 @@ import configparser
 
 from typing import List, Optional
 import urllib.request
-from tko.util.remote_md import RemoteLink, RemoteCfg, Absolute
+from tko.feno.remote_md import RemoteLink, Absolute
 from tko.util.decoder import Decoder
 
 class RemoteUrl:

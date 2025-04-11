@@ -16,12 +16,15 @@ dependencies = [
     "appdirs>=1.4.4",
     "chardet>=5.2.0",
     "diff-match-patch>=20241021",
+    "markdown>=3.7",
     "pydot>=3.0.3",
     "pytest>=8.3.4",
     "pyyaml>=6.0.2",
+    "types-markdown>=3.7.0.20250322",
     "uniplot>=0.16.2",
-    "windows-curses; platform_system=='Windows'"
+    "windows-curses; platform_system=='Windows'",
 ]
 
 [project.scripts]
 tko = "tko.__main__:main"
+feno = "tko.feno.__main__:main"

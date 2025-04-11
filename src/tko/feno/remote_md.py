@@ -2,10 +2,8 @@ import os
 import re
 import configparser
 import argparse
-
-from typing import List, Optional
 from tko.util.decoder import Decoder
-
+from tko.util.text import Text
 
 class RemoteLink:
     def __init__(self):
@@ -50,12 +48,15 @@ class RemoteLink:
         return self
 
 class RemoteCfg:
-    def __init__(self, target: str):
+    def __init__(self, target: str, make_remote: bool):
         self.target = target
         self.remote: RemoteLink = RemoteLink()
         self.cfg_path: str | None = None
-        self.__load_cfg_path(target)
-        self.__parse_cfg()
+        if make_remote:
+            self.__load_cfg_path(target)
+            self.__parse_cfg()
+            if self.cfg_path is None:
+                print(Text.format("{r}: remote.cfg file not set", "fail"))
 
     def cfg_exists(self):
         return self.cfg_path is not None
@@ -90,12 +91,16 @@ class RemoteCfg:
         # if not found, look for it in the parent's parent folder ...
 
         path = os.path.dirname(os.path.abspath(target))
-        while path != "/":
+
+        while True:
             cfg_path = os.path.join(path, "remote.cfg")
             if os.path.isfile(cfg_path):
                 self.cfg_path = cfg_path
                 break
-            path = os.path.dirname(path)
+            new_path = os.path.dirname(path)
+            if new_path == path:
+                break
+            path = new_path
 
 
 class Absolute:
@@ -139,9 +144,9 @@ class Absolute:
 
 
     @staticmethod
-    def convert_or_copy_or_print(source: str, target: str | None):
+    def convert_or_copy_or_print(source: str, target: str | None, make_remote: bool = False):
         content = Decoder.load(source)
-        cfg = RemoteCfg(source)
+        cfg = RemoteCfg(source, make_remote)
         if cfg.cfg_exists():
             content = Absolute.relative_to_absolute(content, cfg.calc_link_for_local_file())
         if target is not None:
@@ -150,15 +155,5 @@ class Absolute:
             print(content)
         
 
-def main_remote():
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument('target', metavar='T', type=str, help='folders')
-    # arg_parser.add_argument("--remote", "-r", action="store_true", help="convert local file to remote file")
-    arg_parser.add_argument("--output", "-o", type=str, help="output file")
-    args = arg_parser.parse_args()
-
+def remote_main(args):
     Absolute.convert_or_copy_or_print(args.target, args.output)
-
-
-# if __name__ == "__main__":
-#     main()

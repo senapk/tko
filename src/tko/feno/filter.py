@@ -2,7 +2,7 @@ import os
 import argparse
 from typing import Tuple
 import shutil
-from .decoder import Decoder
+from ..util.decoder import Decoder
 
 class Mark:
     def __init__(self, marker, indent):
@@ -23,6 +23,8 @@ def get_comment(filename: str) -> str:
     com = "//"
     if filename.endswith(".py"):
         com = "#"
+    elif filename.endswith(".hs"):
+        com = "--"
     elif filename.endswith(".puml"):
         com = "'"
     return com
@@ -32,6 +34,7 @@ class Filter:
         self.filename = filename
         self.stack = [Mark(Mode.ADD, 0)]
         self.com = get_comment(filename)
+        self.tab_char = "\t" if filename.endswith(".go") else " "
 
     def get_marker(self) -> str:
         return self.stack[-1].marker
@@ -84,13 +87,13 @@ class Filter:
             elif marker == Mode.ADD:
                 output.append(line)
             elif marker == Mode.ACT:
-                prefix = " " * self.get_indent() + self.com + " "
+                prefix = self.tab_char * self.get_indent() + self.com + " "
                 if not line.startswith(prefix):
                     prefix = prefix[:-1]
-                line = line.replace(prefix, " " * self.get_indent(), 1)
+                line = line.replace(prefix, self.tab_char * self.get_indent(), 1)
                 output.append(line)
             elif marker == Mode.COM:
-                line = " " * self.get_indent() + self.com + " " + line[self.get_indent():]
+                line = self.tab_char * self.get_indent() + self.com + " " + line[self.get_indent():]
                 output.append(line)
 
         return "\n".join(output) + "\n"
@@ -229,19 +232,7 @@ class CodeFilter:
             else:
                 print(content)
 
-def cfmain():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('target', type=str, help='file or folder to process')
-    parser.add_argument('-u', '--update', action="store_true", help='update source file')
-    parser.add_argument('-c', '--cheat', action="store_true", help='recursive cheat mode cleaning comments on students files')
-    parser.add_argument('-o', '--output', type=str, help='output target')
-    parser.add_argument("-r", "--recursive", action="store_true", help="recursive mode")
-    parser.add_argument("-f", "--force", action="store_true", help="force mode")
-    parser.add_argument("-q", "--quiet", action="store_true", help="quiet mode")
-    parser.add_argument("-i", "--indent", type=int, default=0, help="indent using spaces")
-
-    args = parser.parse_args()
-
+def filter_main(args):
     if args.cheat:
         args.recursive = True
 
@@ -250,6 +241,3 @@ def cfmain():
         exit()
 
     CodeFilter.cf_single_file(args.target, args.output, args.update, args.cheat)
-
-if __name__ == '__main__':
-    cfmain()
