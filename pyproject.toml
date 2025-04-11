@@ -17,6 +17,7 @@ dependencies = [
     "chardet>=5.2.0",
     "diff-match-patch>=20241021",
     "markdown>=3.7",
+    "mypy>=1.15.0",
     "pydot>=3.0.3",
     "pytest>=8.3.4",
     "pyyaml>=6.0.2",
