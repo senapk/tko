@@ -280,7 +280,10 @@ class Repository:
         with open(yaml_file_new, "w", encoding="utf-8") as f:
             yaml.dump(self.data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
         # copy file from yaml_file to yaml_file.backup
-        Repository.rename_file(yaml_file, yaml_file_bkp)
+        try:
+            Repository.rename_file(yaml_file, yaml_file_bkp)
+        except:
+            pass
         Repository.rename_file(yaml_file_new, yaml_file)
         return self
 
