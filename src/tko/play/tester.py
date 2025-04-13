@@ -189,6 +189,12 @@ class Tester:
             unit.result = UnitRunner.run_unit(solver, unit, self.settings.app.get_timeout())
             self.results.append((unit.result, index))
             self.focused_index = index
+            if unit.result == ExecutionResult.EXECUTION_ERROR:
+                self.mode = SeqMode.finished
+                while len(self.unit_list) > 0:
+                    index = len(self.results)
+                    self.unit_list = self.unit_list[1:]
+                    self.results.append((ExecutionResult.EXECUTION_ERROR, index))
 
         if len(self.unit_list) == 0:
             self.mode = SeqMode.finished

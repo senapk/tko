@@ -1,5 +1,7 @@
 # Changelog
 
+- 3.5.0
+  - add: stop execution tests after first runtime error
 - 3.4.1
   - add: improving layout to show WASD option in all modes
 - 3.4.0
