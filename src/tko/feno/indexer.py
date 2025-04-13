@@ -43,9 +43,7 @@ def load_title_from_file(path) -> str:
     return " ".join(words[1:])
 
 def loading_titles_from_files(path):
-    print("debug", path)
     content = Decoder.load(path)
-
     lines = content.splitlines()
 
     output = []

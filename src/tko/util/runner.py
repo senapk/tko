@@ -8,9 +8,10 @@ class Runner:
         pass
 
     @staticmethod
-    def subprocess_run(cmd: str, input_data: str = "", timeout:Optional[float] = None, folder: str | None = None) -> Tuple[int, str, str]:
+    def subprocess_run(cmd: list[str], input_data: str = "", timeout:Optional[float] = None, folder: str | None = None) -> Tuple[int, str, str]:
         try:
-            answer = subprocess.run(cmd, cwd=folder, shell=True, input=input_data, stdout=PIPE, stderr=PIPE, text=True, timeout=timeout)
+            cmd_text = " ".join(cmd)
+            answer = subprocess.run(cmd_text, cwd=folder, shell=True, input=input_data, stdout=PIPE, stderr=PIPE, text=True, timeout=timeout)
             err = ""
             if answer.returncode != 0:
                 err = answer.stderr + Runner.decode_code(answer.returncode)

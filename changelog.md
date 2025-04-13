@@ -1,5 +1,7 @@
 # Changelog
 
+- 3.2.0
+  - fix: error in paths with spaces
 - 3.1.1
   - fix: renaming name conflicts to improve mypy tests
 - 3.1.0

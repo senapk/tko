@@ -26,7 +26,7 @@ class SolverBuilder:
             self.cache_dir = tempfile.mkdtemp()
         self.clear_cache()
         self.error_msg: str = ""
-        self.__executable: tuple[str, str | None] = ("", None) # executavel e pasta
+        self.__executable: tuple[list[str], str | None] = ([], None) # executavel e pasta
         self.compile_error: bool = False
 
     def check_tool(self, name):
@@ -47,8 +47,26 @@ class SolverBuilder:
         self.path_list = list_main + list_other
         return self
 
-    def set_executable(self, executable: str, folder: str | None = None):
-        self.__executable = (executable, folder)
+    def fix_spaces_in_path(self):
+        exec_list: list[str] = []
+        for path in self.path_list:
+            if " " in path:
+                exec_list.append(f'"{path}"')
+            else:
+                exec_list.append(path)
+        self.path_list = exec_list
+        # pass
+
+    def set_executable(self, command: list[str], files: list[str], folder: str | None = None):
+        if folder and " " in folder:
+            folder = '"' + folder + '"'
+        fix_files: list[str] = []
+        for path in files:
+            if " " in path:
+                fix_files.append(f'"{path}"')
+            else:
+                fix_files.append(path)
+        self.__executable = (command + fix_files, folder)
         return self
 
     def clear_cache(self):
@@ -57,65 +75,63 @@ class SolverBuilder:
         os.makedirs(self.cache_dir, exist_ok=True)
 
     def reset(self):
-        self.__executable = ("", None)
+        self.__executable = ([], None)
         self.compile_error = False
         self.error_msg = ""
         self.clear_cache()
 
     def not_compiled(self):
         cmd, folder = self.__executable
-        return cmd == "" and not self.compile_error
+        return len(cmd) == 0 and not self.compile_error
 
-    def get_executable(self, force_rebuild=False) -> tuple[str, str | None]:
+    def get_executable(self, force_rebuild=False) -> tuple[list[str], str | None]:
         if (len(self.path_list) > 0 and self.not_compiled()) or force_rebuild:
             self.prepare_exec()
         cmd, folder = self.__executable
         return (cmd, None if folder == "" else folder)
 
     def prepare_exec(self, free_run_mode: bool = False) -> None:
-        self.set_executable("")
-        path = self.path_list[0]
+        self.set_executable([], [])
+        path_list = self.path_list
+        first = path_list[0]
         self.compile_error = False
 
-        if path.endswith(".py"):
-            self.set_executable("python " + path)
-        elif path.endswith(".yaml"):
+        if first.endswith(".py"):
+            self.set_executable(["python"], path_list)
+        elif first.endswith(".yaml"):
             self.__prepare_yaml()
-        elif path.endswith(".mk"):
+        elif first.endswith(".mk"):
             self.__prepare_make()
-        elif path.endswith(".js"):
+        elif first.endswith(".js"):
             self.__prepare_js(free_run_mode)
-        elif path.endswith(".ts"):
+        elif first.endswith(".ts"):
             self.__prepare_ts(free_run_mode)
-        elif path.endswith(".java"):
+        elif first.endswith(".java"):
             self.__prepare_java()
-        elif path.endswith(".c") or path.endswith(".h"):
+        elif first.endswith(".c") or first.endswith(".h"):
             self.__prepare_c()
-        elif path.endswith(".cpp") or path.endswith(".hpp"):
+        elif first.endswith(".cpp") or first.endswith(".hpp"):
             self.__prepare_cpp()
-        elif path.endswith(".go"):
+        elif first.endswith(".go"):
             self.__prepare_go()
-        # elif path.endswith(".sql"):
-        #     self.__prepare_sql()
         else:
-            self.set_executable(path)
+            self.set_executable(path_list, [])
 
     def __prepare_java(self):
         self.check_tool("javac")
 
-        solver = self.path_list[0]
+        first = self.path_list[0]
 
-        filename = os.path.basename(solver)
+        filename = os.path.basename(first)
         # tempdir = os.path.dirname(self.path_list[0])
 
         cmd = ["javac"] + self.path_list + ['-d', self.cache_dir]
-        cmdt = " ".join(cmd)
-        return_code, stdout, stderr = Runner.subprocess_run(cmdt)
+        return_code, stdout, stderr = Runner.subprocess_run(cmd)
         if return_code != 0:
             self.error_msg = stdout + stderr
             self.compile_error = True
         else:
-            self.set_executable("java -cp " + self.cache_dir + " " + filename[:-5])  # removing the .java
+            self.set_executable(["java", "-cp "], [self.cache_dir, filename[:-5]])  # removing the .java
 
     def update_input_function(self, free_run_mode: bool, path_list: list[str], copy_dir: str):
         new_files: list[str] = []
@@ -175,7 +191,11 @@ class SolverBuilder:
         yaml_data = yaml.safe_load(content)
 
         if "build" in yaml_data and yaml_data["build"] is not None:
-            build_cmd = yaml_data["build"]
+            build_txt = yaml_data["build"]
+            if not isinstance(build_txt, str):
+                raise Warning(Text.format("{r}: O campo build deve ser uma string", "Falha"))
+            
+            build_cmd: list[str] = [build_txt]
             return_code, stdout, stderr = Runner.subprocess_run(build_cmd, folder = folder)
             if return_code != 0:
                 self.error_msg = stdout + stderr
@@ -183,32 +203,29 @@ class SolverBuilder:
                 return
         if not "run" in yaml_data:
             raise Warning(Text.format("{r}: Seu arquivo yaml precisa ter um campo {g} ", "Falha", "run:"))
-        self.set_executable(yaml_data["run"], folder)
+        if not isinstance(yaml_data["run"], str):
+            raise Warning(Text.format("{r}: O campo run deve ser uma lista", "Falha"))
+        self.set_executable([yaml_data["run"]], [], folder)
 
     def __prepare_make(self):
         self.check_tool("make")
         solver = os.path.abspath(self.path_list[0])
         folder = os.path.dirname(solver)
-        cmd = "make -s -C {} -f {} build".format(folder, solver)
+        cmd = ["make", "-s", "-C", folder, "-f", solver, "build"]
         return_code, stdout, stderr = Runner.subprocess_run(cmd)
         if return_code != 0:
             self.error_msg = stdout + stderr
             self.compile_error = True
         else:
-            self.set_executable("make -s -C {} -f {} run".format(folder, solver))
+            self.set_executable(["make", "-s", "-C", folder, "-f", solver, "run"], [])
 
     def __prepare_js(self, free_run_mode: bool):
         self.check_tool("node")
-        solver = self.path_list[0]
-        self.set_executable("node " + solver)
+        self.set_executable(["node"], self.path_list)
 
     def __prepare_go(self):
         self.check_tool("go")
-        self.set_executable("go run " + " ".join(self.path_list))
-
-    # def __prepare_sql(self):
-    #     self.check_tool("sqlite3")
-    #     self.__executable = "cat " + " ".join(self.path_list) + " | sqlite3"
+        self.set_executable(["go", "run"], self.path_list)
 
     def __prepare_ts(self, free_run_mode: bool):
         copy_dir = os.path.join(self.cache_dir, "src")
@@ -225,7 +242,7 @@ class SolverBuilder:
         self.check_tool("node")
         transpiler = "npx esbuild"
         cmd = [transpiler] + new_files + ["--outdir=" + self.cache_dir, "--format=cjs", "--log-level=error"]
-        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
+        return_code, stdout, stderr = Runner.subprocess_run(cmd)
 
         if return_code != 0:
             self.error_msg = stdout + stderr
@@ -234,7 +251,7 @@ class SolverBuilder:
             new_source_list = []
             for source in new_files:
                 new_source_list.append(os.path.join(self.cache_dir, os.path.basename(source)[:-2] + "js"))
-            self.set_executable("node " + " ".join(new_source_list))  # renaming solver to main
+            self.set_executable(["node"], new_source_list)  # renaming solver to main
 
     def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
         # solver = self.path_list[0]
@@ -245,12 +262,12 @@ class SolverBuilder:
 
         exec_path = os.path.join(tempdir, ".a.out")
         cmd = pre_args + source_list + ["-o", exec_path] + pos_args
-        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
+        return_code, stdout, stderr = Runner.subprocess_run(cmd)
         if return_code != 0:
             self.error_msg = stdout + stderr
             self.compile_error = True
         else:
-            self.set_executable(exec_path)
+            self.set_executable([], [exec_path])
 
     def __prepare_c(self):
         self.check_tool("gcc")

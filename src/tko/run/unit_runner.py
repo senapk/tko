@@ -19,7 +19,6 @@ class UnitRunner:
         cmd, folder = solver.get_executable()
         if timeout == 0:
             timeout = None
-
         return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.inserted, timeout, folder)
         unit.received = stdout + stderr
         if return_code != 0:
