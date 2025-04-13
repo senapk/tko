@@ -1,5 +1,7 @@
 # Changelog
 
+- 3.3.0
+  - add: using backup mode for repository.yaml and settings.yaml
 - 3.2.0
   - fix: error in paths with spaces
 - 3.1.1

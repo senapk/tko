@@ -45,6 +45,9 @@ class Settings:
         if not os.path.exists(self.settings_file):
             os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
         return self.settings_file
+    
+    def get_settings_backup_file(self) -> str:
+        return self.get_settings_file() + ".backup"
 
     def reset(self):
         self.dict_alias_remote = {}
@@ -72,14 +75,22 @@ class Settings:
     
     def load_settings(self):
         try:
-            settings_file = self.get_settings_file() # assure right loading if value == ""
+            settings_file = self.get_settings_file()
+            backup_file = self.get_settings_backup_file()
+
             encoding = Decoder.get_encoding(settings_file)
             with open(settings_file, "r", encoding=encoding) as f:
                 data = yaml.safe_load(f)
-                self.dict_alias_remote = data.get(self.__remote, {})
-                self.app = AppSettings().from_dict(data.get(self.__appcfg, {}))
-                self.colors = Colors().from_dict(data.get(self.__colors, {}))
-        except (FileNotFoundError, yaml.YAMLError) as e:
+            if data is None or not isinstance(data, dict) or len(data) == 0:
+                with open(backup_file, "w", encoding=encoding) as f:
+                    data = yaml.safe_load(f)
+            if data is None or not isinstance(data, dict) or len(data) == 0:
+                raise FileNotFoundError(f"Arquivo de configuração vazio: {settings_file}")
+            self.data = data
+            self.dict_alias_remote = data.get(self.__remote, {})
+            self.app = AppSettings().from_dict(data.get(self.__appcfg, {}))
+            self.colors = Colors().from_dict(data.get(self.__colors, {}))
+        except:
             self.reset()
             self.save_settings()
         return self
@@ -91,6 +102,11 @@ class Settings:
             self.__appcfg: self.app.to_dict(),
             self.__colors: self.colors.to_dict()
         }
+        backup_file = self.get_settings_backup_file()
+        if os.path.exists(file):
+            if os.path.exists(backup_file):
+                os.remove(backup_file)
+            os.rename(file, backup_file)
         with open(file, "w", encoding="utf-8") as f:
             yaml.dump(value, f)
         return self

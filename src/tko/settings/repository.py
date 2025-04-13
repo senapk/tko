@@ -12,8 +12,7 @@ import yaml # type: ignore
 available_languages = ["c", "cpp", "py", "ts", "java", "go", "yaml"]
 
 class Repository:
-    OLD_CFG_FILE = "repository.json" # reprecated
-    NEW_CFG_FILE = "repository.yaml"
+    CFG_FILE = "repository.yaml"
     LOG_FILE = "history.csv"
     DAILY_FILE = "daily.yaml"
     INDEX_FILE = "Readme.md"
@@ -36,9 +35,7 @@ class Repository:
     @staticmethod
     def rec_search_for_repo(folder: str) -> str:
         folder = os.path.abspath(folder)
-        if os.path.exists(os.path.join(folder, Repository.CONFIG_FOLDER, Repository.NEW_CFG_FILE)):
-            return folder
-        if os.path.exists(os.path.join(folder, Repository.CONFIG_FOLDER, Repository.OLD_CFG_FILE)):
+        if os.path.exists(os.path.join(folder, Repository.CONFIG_FOLDER, Repository.CFG_FILE)):
             return folder
         new_folder = os.path.dirname(folder)
         if new_folder == folder: # não encontrou, não tem mais como subir
@@ -88,11 +85,11 @@ class Repository:
             if key in self.game.tasks:
                 self.game.tasks[key].load_from_db(serial)
 
-    def get_old_config_file(self) -> str:
-        return os.path.abspath(os.path.join(self.root_folder, Repository.CONFIG_FOLDER, Repository.OLD_CFG_FILE))
-
     def get_config_file(self) -> str:
-        return os.path.abspath(os.path.join(self.root_folder, Repository.CONFIG_FOLDER, Repository.NEW_CFG_FILE))
+        return os.path.abspath(os.path.join(self.root_folder, Repository.CONFIG_FOLDER, Repository.CFG_FILE))
+    
+    def get_config_backup_file(self) -> str:
+        return self.get_config_file() + ".backup"
     
     def get_history_file(self) -> str:
         return os.path.abspath(os.path.join(self.root_folder, Repository.CONFIG_FOLDER, Repository.LOG_FILE))
@@ -242,22 +239,19 @@ class Repository:
         return self
 
     def has_local_config_file(self) -> bool:
-        return os.path.exists(self.get_config_file()) or os.path.exists(self.get_old_config_file())
+        return os.path.exists(self.get_config_file())
 
+    # config
     def load_config(self):
         encoding = Decoder.get_encoding(self.get_config_file())
-        if os.path.exists(self.get_old_config_file()):
-            try:
-                with open(self.get_old_config_file(), encoding=encoding) as f:
-                    self.data = json.load(f)
-                with open(self.get_config_file(), "w", encoding="utf-8") as f:
-                    yaml.dump(self.data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
-                os.remove(self.get_old_config_file())
-            except:
-                pass
         try:
             with open(self.get_config_file(), encoding=encoding) as f:
                 self.data = yaml.safe_load(f)
+            if self.data is None or not isinstance(self.data, dict) or len(self.data) == 0:
+                with open(self.get_config_backup_file(), "r", encoding=encoding) as f:
+                    self.data = yaml.safe_load(f)
+            if self.data is None or not isinstance(self.data, dict) or len(self.data) == 0:
+                raise FileNotFoundError(f"Arquivo de configuração vazio: {self.get_config_file()}")
         except:
             raise Warning(Text.format("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.get_config_file(), "corrompido"))
         return self
