@@ -5,6 +5,7 @@ from tko.play.flags import Flags
 from tko.play.floating import Floating
 from tko.play.floating_manager import FloatingManager
 from tko.play.input_manager import InputManager
+from tko.play.keys import GuiKeys
 from tko.play.fmt import Fmt
 import curses
 from typing import List
@@ -75,9 +76,9 @@ class Search:
             self.cancel_search()
         elif key == ord("\n"):
             self.finish_search()
-        elif any([key == x for x in InputManager.up_list]):
+        elif key == curses.KEY_UP or key == ord(GuiKeys.up):
             self.tree.move_up()
-        elif any([key == x for x in InputManager.down_list]):
+        elif key == curses.KEY_DOWN or key == ord(GuiKeys.down):
             self.tree.move_down()
         elif any([key == x for x in InputManager.backspace_list]):
             self.tree.search_text = self.tree.search_text[:-1]

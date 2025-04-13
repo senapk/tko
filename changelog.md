@@ -1,5 +1,11 @@
 # Changelog
 
+- 3.4.1
+  - add: improving layout to show WASD option in all modes
+- 3.4.0
+  - add: using ASDW to move up and down in all modes, search, grade, tree, tester
+- 3.3.1
+  - add: [] to move up and down in all modes
 - 3.3.0
   - add: using backup mode for repository.yaml and settings.yaml
 - 3.2.0

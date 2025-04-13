@@ -2,6 +2,7 @@ class GuiActions:
     tab = "↔TAB"
     leave   = "Sair"
     edit = "Editar"
+    move = "Mover"
     principal = "Principal"
     github = "Web   "
     help = "Ajuda"
@@ -19,10 +20,10 @@ class GuiActions:
     all = "Todos"
 
 class GuiKeys:
-    left = "h"
-    right = "l"
-    down = "j"
-    up = "k"
+    left = "A"
+    right = "D"
+    down = "S"
+    up = "W"
 
     palette = "c"
     images = "I"
@@ -46,7 +47,7 @@ class GuiKeys:
     quit   = "q"
     lock = "u"
     limite  = "t"
-    expand = "]"
-    collapse = "["
+    expand = ">"
+    collapse = "<"
     mass = "Y"
     hidden = "E"

@@ -4,6 +4,7 @@ from tko.play.fmt import Fmt
 from tko.play.input_manager import InputManager
 from tko.util.symbols import symbols
 from tko.util.text import Text
+from tko.play.keys import GuiKeys
 
 
 import curses
@@ -109,14 +110,14 @@ class FloatingGrade(Floating):
         self.draw()
         key: int = Fmt.getch()
         key = InputManager.fix_cedilha(Fmt.get_screen(), key)
-        if key == curses.KEY_UP or key == ord('w'):
+        if key == curses.KEY_UP or key == ord(GuiKeys.up):
             self._line = max(self._line - 1, 0)
-        elif key == curses.KEY_DOWN or key == ord('s'):
+        elif key == curses.KEY_DOWN or key == ord(GuiKeys.down):
             self._line = min(self._line + 1, 2)
-        elif key == curses.KEY_LEFT or key == ord('a'):
+        elif key == curses.KEY_LEFT or key == ord(GuiKeys.left):
             self.grades_index[self._line] = max(self.grades_index[self._line] - 1, 0)
             self.change_task()
-        elif key == curses.KEY_RIGHT or key == ord('d'):
+        elif key == curses.KEY_RIGHT or key == ord(GuiKeys.right):
             self.grades_index[self._line] = min(self.grades_index[self._line] + 1, len(self.grades_value[self._line]) - 1)
             self.change_task()
         elif key == ord('\n') or key == curses.KEY_BACKSPACE or key == InputManager.esc:

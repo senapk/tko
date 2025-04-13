@@ -4,10 +4,6 @@ import os
 
 class InputManager:
     backspace_list = [8, 127, 263, curses.KEY_BACKSPACE]
-    left_list = [260, curses.KEY_LEFT]
-    right_list = [261, curses.KEY_RIGHT]
-    up_list = [259, curses.KEY_UP]
-    down_list = [258, curses.KEY_DOWN]
     a = 97
     d = 100
     tab = 9

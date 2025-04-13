@@ -5,6 +5,7 @@ from .fmt import Fmt
 import curses
 from typing import Callable
 from tko.play.input_manager import InputManager
+from tko.play.keys import GuiKeys
 from tko.util.symbols import symbols
 
 class Floating:
@@ -278,9 +279,9 @@ class FloatingInput(Floating):
         key: int = Fmt.getch()
         key = InputManager.fix_cedilha(Fmt.get_screen(), key)
         
-        if key == curses.KEY_UP:
+        if key == curses.KEY_UP or key == ord(GuiKeys.up):
             self.prev_option()
-        elif key == curses.KEY_DOWN:
+        elif key == curses.KEY_DOWN or key == ord(GuiKeys.down):
             self.next_option()
         elif key == InputManager.esc:
             self._enable = False

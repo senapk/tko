@@ -370,21 +370,18 @@ class Tester:
 
     def make_bottom_line(self) -> List[Text]:
         cmds: List[Text] = []
+
+        cmds.append(self.borders.border("C", f"{GuiActions.move} [{GuiKeys.up}{GuiKeys.left}{GuiKeys.down}{GuiKeys.right}]"))
+        
         text = f"{GuiActions.config} [{GuiKeys.palette}]"
         cmds.append(self.borders.border("C", text))
-
-        color ="Y"
-        limite = f"{GuiActions.time_limit} {self.get_time_limit_symbol()} [{GuiKeys.limite}]"
-        cmds.append(self.borders.border(color, limite))
-
-        # ativar
         cmds.append(self.borders.border("G", f"{GuiActions.evaluate_tester} [{symbols.newline.text}]"))
-        #editar
+        cmds.append(self.borders.border("G", f"{GuiActions.execute_tester} [{GuiKeys.execute_tester}]"))
         if self.opener is not None:
             cmds.append(self.borders.border("Y", f"{GuiActions.edit} [{GuiKeys.edit}]"))
-        # rodar
-        cmds.append(self.borders.border("C", f"{GuiActions.execute_tester} [{GuiKeys.execute_tester}]"))
-            
+        limite = f"{GuiActions.time_limit} {self.get_time_limit_symbol()} [{GuiKeys.limite}]"
+        cmds.append(self.borders.border("Y", limite))
+
         return cmds
 
     def show_bottom_line(self):
@@ -622,9 +619,9 @@ class Tester:
                 self.locked_index = False
             else:
                 self.set_exit()
-        elif any([key == x for x in InputManager.left_list]) or key == ord(GuiKeys.left):
+        elif key == curses.KEY_LEFT or key == ord(GuiKeys.left):
             self.go_left()
-        elif any([key == x for x in InputManager.right_list]) or key == ord(GuiKeys.right):
+        elif key == curses.KEY_RIGHT or key == ord(GuiKeys.right):
             self.go_right()
         elif key == curses.KEY_DOWN or key == ord(GuiKeys.down):
             self.go_down()

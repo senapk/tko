@@ -93,7 +93,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y} das tarefas", icon(Flags.reward), "Recompensa"),
+                lambda: Text.format(" {} Mostrar {y} das tarefas", icon(Flags.reward), "Ganho"),
                 Flags.reward.toggle, 
                 Flags.reward.get_keycode()
             )
@@ -101,7 +101,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y}", icon(Flags.skills), "Skills"),
+                lambda: Text.format(" {} Mostrar {y} adquiridas", icon(Flags.skills), Flags.skills.get_name()),
                 Flags.skills.toggle, 
                 Flags.skills.get_keycode()
             )

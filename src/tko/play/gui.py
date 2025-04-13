@@ -57,12 +57,13 @@ class Gui:
             pass
         act_color, act_text = self.get_activate_label()
         help_fixed: List[Text] = [
+            Text() + RToken("C", f"{GuiActions.move} [{GuiKeys.up}{GuiKeys.left}{GuiKeys.down}{GuiKeys.right}]"),
             Text() + RToken("C", f"{GuiActions.config} [{GuiKeys.palette}]"),
-            Text() + RToken(color, f"{GuiActions.grade} [{GuiKeys.grade_play}]"),
             Text() + RToken(act_color, f"{act_text} [↲]"),
+            Text() + RToken("G", f"{GuiActions.search} [{GuiKeys.search}]"),
             Text() + RToken(color, f"{GuiActions.edit} [{GuiKeys.edit}]"),
+            Text() + RToken(color, f"{GuiActions.grade} [{GuiKeys.grade_play}]"),
             # Text() + RToken("C", f"{GuiActions.navegar} [wasd]")
-            Text() + RToken("C", f"{GuiActions.search} [{GuiKeys.search}]")
         ]
         return help_fixed
 

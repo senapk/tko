@@ -11,7 +11,7 @@ from .fmt import Fmt
 from .search import Search
 from .input_manager import InputManager
 from tko.util.symbols import symbols
-from tko.play.play_palette import PlayPalette
+from tko.play.play_config import PlayPalette
 
 
 from .floating import Floating
@@ -35,7 +35,6 @@ class Play:
         self.exit = False
 
         self.flagsman = FlagsMan(self.rep.get_flags())
-        Flags.admin.set_value("0")
         self.fman = FloatingManager()
         self.tree = TaskTree(self.settings, rep, self.fman)
         self.gui = Gui(tree=self.tree, flagsman=self.flagsman, fman=self.fman)
@@ -78,12 +77,16 @@ class Play:
 
         cman.add_str(GuiKeys.up, self.tree.move_up)
         cman.add_int(curses.KEY_UP, self.tree.move_up)
+
         cman.add_str(GuiKeys.down, self.tree.move_down)
         cman.add_int(curses.KEY_DOWN, self.tree.move_down)
-        cman.add_str(GuiKeys.left, self.tree.arrow_left)
+
         cman.add_int(curses.KEY_LEFT, self.tree.arrow_left)
+        cman.add_str(GuiKeys.left, self.tree.arrow_left)
+
         cman.add_str(GuiKeys.right, self.tree.arrow_right)
         cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
+        
         cman.add_str(GuiKeys.activate, self.actions.select_task)
         cman.add_str(GuiKeys.github_web, self.actions.open_link)
         cman.add_str(GuiKeys.down_task, self.actions.down_remote_task)
@@ -113,8 +116,8 @@ class Play:
         if not Flags.devel:
             return
 
-        exclude_str = [ord(v) for v in [" ", "a", "d", "\n"]]
-        exclude_int = [ -1, InputManager.esc] + InputManager.backspace_list + InputManager.left_list + InputManager.right_list + InputManager.up_list + InputManager.down_list
+        exclude_str = [ord(v) for v in [" ", "a", "d", "\n", GuiKeys.up, GuiKeys.down, GuiKeys.left, GuiKeys.right]]
+        exclude_int = [ -1, InputManager.esc] + InputManager.backspace_list
         if key in exclude_int + exclude_str:
             return
         self.fman.add_input(
