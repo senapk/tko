@@ -23,7 +23,7 @@ class Executable:
         self.__folder = folder
         self.__compiled: bool = False
         self.__compile_error = False
-        self.__error_msg: str = ""
+        self.__error_msg: Text = Text()
     
     def set_executable(self, cmd: list[str], files: list[str], folder: str | None = None):
         self.__compiled = True
@@ -38,12 +38,13 @@ class Executable:
         cmd = " ".join(self.__cmd) + " " + " ".join(self.__files)
         return cmd, None if self.__folder is None else self.__folder
 
-    def set_compile_error(self, error_msg: str = ""):
+    def set_compile_error(self, error_msg: Text | str):
         self.__compiled = True
         self.__compile_error = True
-        if isinstance(error_msg, Text):
-            error_msg = error_msg.get_str()
-        self.__error_msg = error_msg
+        if isinstance(error_msg, str):
+            self.__error_msg = Text().add(error_msg)
+        else:
+            self.__error_msg = error_msg
         return self
     
     def compiled(self):

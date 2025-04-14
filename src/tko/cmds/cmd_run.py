@@ -148,7 +148,7 @@ class Run:
         if self.param.filter:
             old_dir = os.getcwd()
 
-            print(Text.format(" Entrando no modo de filtragem ").center(RawTerminal.get_terminal_size(), "═"))
+            print(Text.format(" Entrando no modo de filtragem ").center(RawTerminal.get_terminal_size(), Token("═")))
             tkoFilterMode.deep_copy_and_change_dir()  
             # search for target outside . dir and redirect target
             new_target_list = []
@@ -316,7 +316,7 @@ class Run:
         cdiff.run()
 
     def __run_diff_on_raw_term(self):
-        print(Text.format(" Testando o código com os casos de teste ").center(RawTerminal.get_terminal_size(), "═"))
+        print(Text.format(" Testando o código com os casos de teste ").center(RawTerminal.get_terminal_size(), Token("═")))
         self.__print_top_line()
         self.__print_diff()
         correct = [unit for unit in self.wdir.get_unit_list() if unit.result == ExecutionResult.SUCCESS]
