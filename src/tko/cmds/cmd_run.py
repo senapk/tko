@@ -98,7 +98,7 @@ class Run:
         
         if self.wdir.has_solver():
             if self.__rep is None:
-                solver_path = self.wdir.get_solver().path_list[0]
+                solver_path = self.wdir.get_solver().args_list[0]
                 dirname = os.path.dirname(os.path.abspath(solver_path))
                 self.__try_load_rep(dirname)
                 self.__try_load_task(dirname)
@@ -185,8 +185,9 @@ class Run:
         if self.param.diff_count == DiffCount.QUIET:
             return
         
-        if self.wdir.get_solver().compile_error:
-            print(self.wdir.get_solver().error_msg)
+        if self.wdir.get_solver().has_compile_error():
+            exec, _ = self.wdir.get_solver().get_executable()
+            print(exec.get_error_msg())
             return
         
         results = [unit.result for unit in self.wdir.get_unit_list()]
@@ -231,8 +232,8 @@ class Run:
             self.wdir = Wdir().set_curses(self.__curses_mode).set_lang(self.__lang).set_target_list(self.target_list).build().filter(self.param)
         except FileNotFoundError as e:
             if self.wdir.has_solver():
-                self.wdir.get_solver().error_msg += str(e)
-                self.wdir.get_solver().compile_error = True
+                exec, _ = self.wdir.get_solver().get_executable()
+                exec.set_compile_error(str(e))
         return self.wdir
 
     def __missing_target(self) -> bool:
@@ -281,8 +282,8 @@ class Run:
                 if folder not in folders:
                     folders.append(folder)
         opener.set_target(folders)
-        if self.wdir.get_solver().path_list:
-            solver_zero = self.wdir.get_solver().path_list[0]
+        if self.wdir.get_solver().args_list:
+            solver_zero = self.wdir.get_solver().args_list[0]
             lang = solver_zero.split(".")[-1]
             opener.set_language(lang)
         return opener
@@ -293,8 +294,8 @@ class Run:
         solver = self.wdir.get_solver()
         if len(sources) > 0:
             task.folder = os.path.abspath(sources[0])
-        elif solver is not None and solver.path_list:
-            task.folder = os.path.abspath(self.wdir.get_solver().path_list[0])
+        elif solver is not None and solver.args_list:
+            task.folder = os.path.abspath(self.wdir.get_solver().args_list[0])
         else:
             task.folder = os.path.abspath(os.getcwd())
         
@@ -327,7 +328,7 @@ class Run:
         Logger.get_instance().record_test_result(self.get_task().key, percent)
         tracker = Tracker()
         tracker.set_folder(self.__track_folder)
-        tracker.set_files(self.wdir.get_solver().path_list)
+        tracker.set_files(self.wdir.get_solver().args_list)
         tracker.set_percentage(percent)
         tracker.store()
 

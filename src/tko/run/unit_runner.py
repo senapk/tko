@@ -13,10 +13,13 @@ class UnitRunner:
     # run a unit using a solver and return if the result is correct
     @staticmethod
     def run_unit(solver: SolverBuilder, unit: Unit, timeout: Optional[float]=None) -> ExecutionResult:
-        if solver.compile_error:
-            unit.received = solver.error_msg
+        exec, _ = solver.get_executable()
+        if solver.has_compile_error():
+            unit.received = exec.get_error_msg()
             return ExecutionResult.COMPILATION_ERROR
-        cmd, folder = solver.get_executable()
+        cmd, folder = exec.get_command()
+        if folder == "":
+            folder = None
         if timeout == 0:
             timeout = None
         return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.inserted, timeout, folder)

@@ -20,10 +20,12 @@ class Free:
         if show_compilling:
             Runner.clear_screen()
         solver.prepare_exec(free_run_mode=True)
-        if solver.compile_error:
-            print(solver.error_msg)
+        if solver.has_compile_error():
+            exec, _ = solver.get_executable()
+            print(exec.get_error_msg())
         else:
-            cmd, folder = solver.get_executable()
+            exec, _ = solver.get_executable()
+            cmd, folder = exec.get_command()
             if folder == "":
                 folder = None
             if header.len() == 0:

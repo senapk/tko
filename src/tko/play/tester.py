@@ -143,7 +143,7 @@ class Tester:
         track_folder = self.rep.get_track_task_folder(self.task.key)
         tracker = Tracker()
         tracker.set_folder(track_folder)
-        tracker.set_files(self.wdir.get_solver().path_list)
+        tracker.set_files(self.wdir.get_solver().args_list)
         tracker.set_percentage(result)
         tracker.store()
 
@@ -153,7 +153,7 @@ class Tester:
         track_folder = self.rep.get_track_task_folder(self.task.key)
         tracker = Tracker()
         tracker.set_folder(track_folder)
-        tracker.set_files(self.wdir.get_solver().path_list)
+        tracker.set_files(self.wdir.get_solver().args_list)
         if result is not None:
             tracker.set_result(result)
         tracker.store()
@@ -165,7 +165,7 @@ class Tester:
 
         solver = self.wdir.get_solver()
 
-        if solver.compile_error:
+        if solver.has_compile_error():
             Logger.get_instance().record_compilation_execution_error(self.task.key)
             self.store_other_track(ExecutionResult.COMPILATION_ERROR.value)
 
@@ -280,7 +280,7 @@ class Tester:
             i += 1
 
         i = 0
-        show_focused_index = not self.wdir.get_solver().compile_error and not self.mode == SeqMode.intro and not self.is_all_right()
+        show_focused_index = not self.wdir.get_solver().has_compile_error() and not self.mode == SeqMode.intro and not self.is_all_right()
         
         output = Text()
         output.add(self.get_fixed_arrow())
@@ -347,7 +347,7 @@ class Tester:
             return
         value = self.get_focused_unit()
         info = Text()
-        if self.wdir.get_solver().compile_error:
+        if self.wdir.get_solver().has_compile_error():
             info = self.borders.border("R", "Erro de compilação")
         elif value is not None and not self.is_all_right() and not self.mode == SeqMode.intro:
             info = value.str(pad = False)
@@ -423,8 +423,9 @@ class Tester:
         diff_builder = DiffBuilder(cols)
         diff_builder.set_curses()
 
-        if self.wdir.get_solver().compile_error:
-            received = self.wdir.get_solver().error_msg
+        if self.wdir.get_solver().has_compile_error():
+            exec, _ = self.wdir.get_solver().get_executable()
+            received = exec.get_error_msg()
             line_list = [Text().add(line) for line in received.splitlines()]
         elif self.settings.app.get_diff_mode() == DiffMode.DOWN or not self.wdir.has_tests():
             ud_diff = DownDiff(cols, unit)
@@ -552,7 +553,7 @@ class Tester:
         if self.locked_index:
             self.fman.add_input(Floating("v>").warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(GuiKeys.lock)))
             return
-        if not self.wdir.get_solver().compile_error:
+        if not self.wdir.get_solver().has_compile_error():
             self.focused_index = max(0, self.focused_index - 1)
             self.diff_first_line = 1000
 
@@ -566,7 +567,7 @@ class Tester:
         if self.locked_index:
             self.fman.add_input(Floating("v>").warning().put_text("→\nAtividade travada\nAperte {} para destravar".format(GuiKeys.lock)))
             return
-        if not self.wdir.get_solver().compile_error:
+        if not self.wdir.get_solver().has_compile_error():
             self.focused_index = min(len(self.wdir.get_unit_list()) - 1, self.focused_index + 1)
             self.diff_first_line = 1000
 

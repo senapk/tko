@@ -1,5 +1,7 @@
 # Changelog
 
+- 3.5.1
+  - fix: interactive mode in paths with spaces
 - 3.5.0
   - add: stop execution tests after first runtime error
 - 3.4.1

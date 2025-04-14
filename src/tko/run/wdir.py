@@ -213,7 +213,7 @@ class Wdir:
         return out
 
     def solvers_names(self) -> List[str]:
-        path_list = [] if self.__solver is None else self.__solver.path_list
+        path_list = [] if self.__solver is None else self.__solver.args_list
         if self.__solver is not None and len(path_list) == 0:  # free_cmd
             out = ["free cmd"]
         else:
