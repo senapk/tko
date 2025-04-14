@@ -326,7 +326,7 @@ class TaskTree:
             self.items.append(item)
             return True
         if item.key in filtered:
-            pos = matcher.find(item.sentence.get_text())
+            pos = matcher.find(item.sentence.get_str())
             found = pos != -1
             if found:
                 for i in range(pos, pos + len(self.search_text)):

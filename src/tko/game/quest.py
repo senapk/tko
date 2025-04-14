@@ -30,7 +30,7 @@ class Quest(TreeItem):
     def get_full_title(self):
         output = self.title
         if Flags.minimum:
-            output += " " + self.get_requirement().get_text()
+            output += " " + self.get_requirement().get_str()
         if Flags.reward:
             xp = ""
             for s, v in self.skills.items():

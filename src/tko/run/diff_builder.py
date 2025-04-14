@@ -71,10 +71,10 @@ class DiffBuilder:
     def colorize_2_lines_diff(la: Text | None, lb: Text | None, neut: str = "", exp: str = "g", rec: str = "r") -> Tuple[Text | None, Text | None]:
         pos = DiffBuilder.find_first_mismatch(la, lb)
         if la is not None:
-            lat = la.get_text()
+            lat = la.get_str()
             la = Text().addf(neut, lat[0:pos]).addf(exp, lat[pos:])
         if lb is not None:
-            lbt = lb.get_text()
+            lbt = lb.get_str()
             lb = Text().addf(neut, lbt[0:pos]).addf(rec, lbt[pos:])
         return la, lb
 

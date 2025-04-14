@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tko"
-version = "3.5.2"
+version = "3.5.3"
 description = "Add your description here"
 authors = [
     { name = "David", email = "sena.ufc@gmail.com" }

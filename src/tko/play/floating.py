@@ -206,7 +206,7 @@ class FloatingInput(Floating):
         return self
 
     def match_search(self, index: int):
-        return "".join(self.search_text) in self._options[index].label().get_text().lower()
+        return "".join(self.search_text) in self._options[index].label().get_str().lower()
 
     def next_option(self):
         if not self.match_search(self._index):

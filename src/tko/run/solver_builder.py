@@ -41,6 +41,8 @@ class Executable:
     def set_compile_error(self, error_msg: str = ""):
         self.__compiled = True
         self.__compile_error = True
+        if isinstance(error_msg, Text):
+            error_msg = error_msg.get_str()
         self.__error_msg = error_msg
         return self
     

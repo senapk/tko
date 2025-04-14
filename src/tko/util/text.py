@@ -72,7 +72,7 @@ class Text:
         self.data: List[Token] = []
 
     @staticmethod
-    def format(value: str = "", *args):
+    def format(value: str = "", *args) -> Text:
         if not isinstance(value, str):
             raise TypeError("value must be a string")
         text = Text()
@@ -209,7 +209,7 @@ class Text:
         elif isinstance(value, Token):
             self.add(Token(value.text, fmt))
         elif isinstance(value, Text):
-            self.add(Token(value.get_text(), fmt))
+            self.add(Token(value.get_str(), fmt))
         return self
 
     def ljust(self, width: int, filler: Token = Token(" ")):
@@ -271,7 +271,7 @@ class Text:
     def get_data(self):
         return self.data
     
-    def get_text(self) -> str:
+    def get_str(self) -> str:
         return "".join([t.text for t in self.data])
 
     def cut_begin(self, qtd: int):
