@@ -31,10 +31,16 @@ class Opener:
         return self
 
     def open_files(self, files_to_open: List[str]):
-        files_to_open = list(set(files_to_open))
+        files_raw = list(set(files_to_open))
+        files_patched: list[str] = []
+        for f in files_raw:
+            if " " in f and not f.startswith('"'):
+                files_patched.append(f'"{f}"')
+            else:
+                files_patched.append(f)
 
         cmd = self.settings.app.get_editor()
-        folder = os.path.dirname(os.path.abspath(files_to_open[0]));
+        folder = os.path.dirname(os.path.abspath(files_to_open[0]))
         aviso = (Floating("v>")
                 .warning()
                 .put_sentence(Text().add("Pasta: ").addf("g", folder).add(" "))
@@ -43,7 +49,7 @@ class Opener:
         files = [os.path.basename(path) for path in files_to_open]
         aviso.put_sentence(Text().addf("g", f"{cmd}").add(" ").addf("g", " ".join(files)).add(" "))
         self.send_floating(aviso)
-        fullcmd = "{} {}".format(cmd, " ".join(files_to_open))
+        fullcmd = "{} {}".format(cmd, " ".join(files_patched))
         outfile = tempfile.NamedTemporaryFile(delete=False)
         subprocess.Popen(fullcmd, stdout=outfile, stderr=outfile, shell=True)
 

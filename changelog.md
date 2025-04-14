@@ -1,5 +1,7 @@
 # Changelog
 
+- 3.5.2
+  - fix: fix opening editing files with spaces
 - 3.5.1
   - fix: interactive mode in paths with spaces
 - 3.5.0
