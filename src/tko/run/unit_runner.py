@@ -15,7 +15,7 @@ class UnitRunner:
     def run_unit(solver: SolverBuilder, unit: Unit, timeout: Optional[float]=None) -> ExecutionResult:
         exec, _ = solver.get_executable()
         if solver.has_compile_error():
-            unit.received = exec.get_error_msg()
+            unit.received = exec.get_error_msg().get_str()
             return ExecutionResult.COMPILATION_ERROR
         cmd, folder = exec.get_command()
         if folder == "":

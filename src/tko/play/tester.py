@@ -425,7 +425,7 @@ class Tester:
 
         if self.wdir.get_solver().has_compile_error():
             exec, _ = self.wdir.get_solver().get_executable()
-            received = exec.get_error_msg()
+            received = exec.get_error_msg().get_str()
             line_list = [Text().add(line) for line in received.splitlines()]
         elif self.settings.app.get_diff_mode() == DiffMode.DOWN or not self.wdir.has_tests():
             ud_diff = DownDiff(cols, unit)
