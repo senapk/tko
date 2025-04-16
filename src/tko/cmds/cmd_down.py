@@ -57,7 +57,6 @@ class CmdDown:
     def set_language(self, language: str):
         self.language = language
         return self
-    
 
     def remove_empty_destiny_folder(self):
         if len(os.listdir(self.destiny_folder)) == 0:
@@ -112,7 +111,7 @@ class CmdDown:
             encoding = Decoder.get_encoding(self.mapi_file)
             with open(self.mapi_file, encoding=encoding) as f:
                 loaded_json = json.load(f)
-            # os.remove(self.mapi_file)
+            os.remove(self.mapi_file)
             DownProblem.unpack_problem_files(loaded_json, self.destiny_folder)
             if not DownProblem.unpack_json_drafts(loaded_json, self.destiny_folder, lang):
                 DownProblem.create_default_draft(self.destiny_folder, lang)
@@ -230,12 +229,19 @@ class DownProblem:
     
     @staticmethod
     def create_problem_folder(destiny: str) -> bool:
-        if not os.path.exists(destiny):
-            os.makedirs(destiny, exist_ok=True)
-            return True
-        
-        DownProblem.fnprint("Pasta do problema "+ destiny + " encontrada, juntando conteúdo.")
-        return False
+        if os.path.exists(destiny): # move folder to 
+            count = 1
+            while True:
+                new_destiny = "{}+{}".format(destiny, count)
+                if not os.path.exists(new_destiny):
+                    shutil.move(destiny, new_destiny)
+                    DownProblem.fnprint("Antiga pasta do problema renomeada para " + new_destiny)
+                    break
+                else:
+                    count += 1
+            return False
+        os.makedirs(destiny, exist_ok=True)
+        return True
 
     @staticmethod
     def create_default_draft(destiny: str, language: str):

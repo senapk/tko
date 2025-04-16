@@ -1,5 +1,7 @@
 # Changelog
 
+- 3.5.6
+  - add: download problem again makes a backup of the previous version in label+index
 - 3.5.3
   - fix: command not found error
 - 3.5.2
