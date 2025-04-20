@@ -23,14 +23,12 @@ from tko.util.symbols import symbols
 from tko.settings.check_version import CheckVersion
 from tko.settings.repository_starter import RepStarter
 
-import os
-
 from tko.__init__ import __version__
 
 
 class Main:
     @staticmethod
-    def test(args):
+    def test(args: argparse.Namespace):
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         if args.quiet:
@@ -56,7 +54,7 @@ class Main:
         cmd_run.execute()
 
     @staticmethod
-    def run(args):
+    def run(args: argparse.Namespace):
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         settings = Settings()
@@ -68,14 +66,14 @@ class Main:
         cmd_run.execute()
 
     @staticmethod
-    def build(args):
+    def build(args: argparse.Namespace):
         PatternLoader.pattern = args.pattern
         manip = Param.Manip().set_unlabel(args.unlabel).set_to_sort(args.sort).set_to_number(args.number)
         build = CmdBuild(args.target, args.target_list, manip)
         build.execute()
 
     @staticmethod
-    def open(args):
+    def open(args: argparse.Namespace):
         settings = Settings()
         folder = args.folder
         rec_folder = Repository.rec_search_for_repo(folder)
@@ -87,7 +85,7 @@ class Main:
         action.execute()
 
     @staticmethod
-    def down(args):
+    def down(args: argparse.Namespace):
         settings = Settings()
         folder = args.folder
         rec_folder = Repository.rec_search_for_repo(folder)
@@ -96,7 +94,7 @@ class Main:
         CmdLineDown(settings, folder, args.key).execute()
 
     @staticmethod
-    def init(args):
+    def init(args: argparse.Namespace):
         remote: str | None = args.remote
         source: str | None = args.source
         folder: str | None = args.folder
@@ -104,7 +102,7 @@ class Main:
 
 
     @staticmethod
-    def config(args):
+    def config(args: argparse.Namespace):
         settings = Settings()
         param = ConfigParams()
         param.side = args.side
@@ -259,7 +257,7 @@ class Parser:
         parser_init.set_defaults(func=Main.init)
 
 
-def exec(parser: argparse.ArgumentParser, args):
+def exec(parser: argparse.ArgumentParser, args: argparse.Namespace):
     settings = Settings()
     if args.w is not None:
         RawTerminal.set_terminal_size(args.w)

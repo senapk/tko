@@ -2,7 +2,7 @@ from tko.util.decoder import Decoder
 
 class Title:
     @staticmethod
-    def extract_title(readme_file):
+    def extract_title(readme_file: str) -> str:
         content = Decoder.load(readme_file)
         title = content.splitlines()[0]
         parts = title.split(" ")

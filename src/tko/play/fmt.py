@@ -1,5 +1,5 @@
 import curses
-from typing import Dict, Tuple
+from typing import override
 from tko.util.text import Text, Token
 from tko.play.colors import Colors
 
@@ -9,6 +9,7 @@ class TextPosition:
         self.x = x
         self.text = text
 
+    @override
     def __str__(self):
         return f"{self.y}:{self.x}:{self.text}"
     
@@ -18,13 +19,14 @@ class TokenPosition:
         self.x = x
         self.token = token
 
+    @override
     def __str__(self):
         return f"{self.y}:{self.x}:{self.token}"
 
 class Fmt:
     __scr = None
     # Definindo constantes para as cores
-    color_pairs: Dict[str, int] = {}
+    color_pairs: dict[str, int] = {}
 
     COLOR_MAP = {
         'k': curses.COLOR_BLACK,
@@ -37,7 +39,7 @@ class Fmt:
         'w': curses.COLOR_WHITE,
     }
     @staticmethod
-    def set_scr(scr):
+    def set_scr(scr: curses.window):
         Fmt.__scr = scr
         Fmt.init_colors()
 
@@ -179,15 +181,16 @@ class Fmt:
     #     return input_str
 
     @staticmethod
-    def get_percent(value, pad = 0) -> Text:
+    def get_percent(value: int, pad: int = 0) -> Text:
+        colors = Colors()
         text = f"{str(value)}%".rjust(pad)
         if value == 100:
-            return Text().addf(Colors.mark_complete, "100%")
+            return Text().addf(colors.mark_complete, "100%")
         if value >= 70:
-            return Text().addf(Colors.mark_required, text)
+            return Text().addf(colors.mark_required, text)
         if value == 0:
-            return Text().addf(Colors.mark_nothing, text)
-        return Text().addf(Colors.mark_started, text)
+            return Text().addf(colors.mark_nothing, text)
+        return Text().addf(colors.mark_started, text)
     
     @staticmethod
     def get_screen() -> curses.window:
@@ -208,11 +211,11 @@ class Fmt:
         Fmt.get_screen().refresh()
 
     @staticmethod
-    def get_size() -> Tuple[int, int]:
+    def get_size() -> tuple[int, int]:
         return Fmt.get_screen().getmaxyx()
         
 
-def test_fmt(scr):
+def test_fmt(scr: curses.window):
     curses.curs_set(0)  # Esconde o cursor
     Fmt.init_colors()  # Inicializa as cores
     Fmt.set_scr(scr)  # Define o scr como global

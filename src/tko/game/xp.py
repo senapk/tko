@@ -1,5 +1,3 @@
-from typing import Optional
-import re
 from .game import Game
 
 class XP:
@@ -37,7 +35,7 @@ class XP:
     def get_xp_total_available(self) -> int:
         return self.avaliable
 
-    def calc_level(self, xp) -> int:
+    def calc_level(self, xp: int) -> int:
         level = 1
         while self.calc_xp(level) <= xp:
             level += 1
@@ -48,7 +46,3 @@ class XP:
         for i in range(level - 1):
             total += self.game.level_one * (int(self.game.level_mult) ** i)
         return int(total)
-
-
-
-

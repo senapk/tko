@@ -3,12 +3,14 @@ import argparse
 from typing import Tuple
 import shutil
 from ..util.decoder import Decoder
+from typing import Any, override
 
 class Mark:
-    def __init__(self, marker, indent):
+    def __init__(self, marker: str, indent: int):
         self.marker: str = marker
         self.indent: int = indent
 
+    @override
     def __str__(self):
         return f"{self.marker}:{self.indent}"
 
@@ -30,7 +32,7 @@ def get_comment(filename: str) -> str:
     return com
 
 class Filter:
-    def __init__(self, filename):
+    def __init__(self, filename: str):
         self.filename = filename
         self.stack = [Mark(Mode.ADD, 0)]
         self.com = get_comment(filename)
@@ -42,7 +44,7 @@ class Filter:
     def get_indent(self) -> int:
         return self.stack[-1].indent
 
-    def outside_scope(self, line):
+    def outside_scope(self, line: str):
         stripped = line.strip()
         left_spaces = len(line) - len(line.lstrip())
         return stripped != "" and left_spaces < self.get_indent()
@@ -70,7 +72,7 @@ class Filter:
 
     def __process(self, content: str) -> str:
         lines = content.splitlines()
-        output = []
+        output: list[str] = []
         for line in lines:
             while self.outside_scope(line):
                 self.stack.pop()
@@ -115,7 +117,7 @@ class DeepFilter:
         self.quiet_mode = False
         self.indent = ""
     
-    def print(self, *args, **kwargs):
+    def print(self, *args: str, **kwargs: Any):
         if not self.quiet_mode:
             print(self.indent, end="")
             print(*args, **kwargs)
@@ -124,15 +126,15 @@ class DeepFilter:
         self.indent = prefix * " "
         return self
 
-    def set_quiet(self, value):
+    def set_quiet(self, value: bool):
         self.quiet_mode = (value == True)
         return self
     
-    def set_cheat(self, value):
+    def set_cheat(self, value: bool):
         self.cheat_mode = (value == True)
         return self
 
-    def copy(self, source, destiny, deep: int):
+    def copy(self, source: str, destiny: str, deep: int):
         if deep == 0:
             return
         if os.path.isdir(source):
@@ -179,7 +181,7 @@ class DeepFilter:
 
 class CodeFilter:
     @staticmethod
-    def open_file(path): 
+    def open_file(path: str): 
         if os.path.isfile(path):
             file_content = Decoder.load(path)
             return True, file_content
@@ -188,9 +190,6 @@ class CodeFilter:
 
     @staticmethod
     def cf_recursive(target_dir: str, output_dir: str, force: bool, cheat: bool = False, quiet: bool = False, indent: int = 0):
-        if output_dir is None:
-                print("Error: output is required in recursive mode")
-                exit()
         if not os.path.isdir(target_dir):
             print("Error: target must be a folder in recursive mode")
             exit()
@@ -211,7 +210,7 @@ class CodeFilter:
         deep_filter.copy(target_dir, output_dir, 10)
 
     @staticmethod
-    def cf_single_file(target, output, update, cheat):
+    def cf_single_file(target: str, output: str, update: bool, cheat: bool):
         file = target
         success, content = CodeFilter.open_file(file)
         if success:
@@ -232,7 +231,7 @@ class CodeFilter:
             else:
                 print(content)
 
-def filter_main(args):
+def filter_main(args: argparse.Namespace):
     if args.cheat:
         args.recursive = True
 

@@ -1,11 +1,26 @@
 from __future__ import annotations
-from typing import List, Tuple, Optional
+from typing import override, Any
 import re
 import os
 
 from .unit import Unit
 from ..util.pattern import PatternLoader
 from tko.util.decoder import Decoder
+
+
+class CaseData:
+    def __init__(self, case: str="", inp: str="", outp: str="", grade: None | int = None):
+        self.case: str = case
+        self.input: str = VplParser.finish(inp)
+        self.output: str = VplParser.unwrap(VplParser.finish(outp))
+        self.grade: None | int = grade
+
+    @override
+    def __str__(self) -> str:
+        return "case=" + self.case + '\n' \
+                + "input=" + self.input \
+                + "output=" + self.output \
+                + "gr=" + str(self.grade)
 
 class VplParser:
     @staticmethod
@@ -20,30 +35,16 @@ class VplParser:
             text = text[1:-1]
         return VplParser.finish(text)
 
-    @staticmethod
-    class CaseData:
-        def __init__(self, case: str="", inp: str="", outp: str="", grade: Optional[int] = None):
-            self.case: str = case
-            self.input: str = VplParser.finish(inp)
-            self.output: str = VplParser.unwrap(VplParser.finish(outp))
-            self.grade: Optional[int] = grade
-
-        def __str__(self) -> str:
-            return "case=" + self.case + '\n' \
-                   + "input=" + self.input \
-                   + "output=" + self.output \
-                   + "gr=" + str(self.grade)
-
     regex_vpl_basic = r"[cC]ase *= *([ \S]*) *\n *[iI]nput *=([\s\S]*?)^ *[oO]utput *=([\s\S]*?)(?=^ *[cC]ase *=|\Z)"
     regex_grade_reduction = r"([\s\S]*) *[Gg]rade [rR]eduction *= *(.*)%"
 
     @staticmethod
-    def filter_quotes(x):
+    def filter_quotes(x: str):
         return x[1:-2] if x.startswith('"') else x
 
     @staticmethod
-    def parse_vpl(content: str) -> List[CaseData]:
-        output: List[VplParser.CaseData] = []
+    def parse_vpl(content: str) -> list[CaseData]:
+        output: list[CaseData] = []
         for m in re.finditer(VplParser.regex_vpl_basic, content, re.MULTILINE):
             str_case = m.group(1)
             str_input = m.group(2)
@@ -53,7 +54,7 @@ class VplParser:
             if gr is not None:
                 str_output = gr.group(1)
                 grade = int(gr.group(2))
-            output.append(VplParser.CaseData(str_case, str_input, str_output, grade))
+            output.append(CaseData(str_case, str_input, str_output, grade))
         return output
 
     @staticmethod
@@ -75,8 +76,8 @@ class Loader:
         pass
 
     @staticmethod
-    def parse_cio(text, source):
-        unit_list = []
+    def parse_cio(text: str, source: str):
+        unit_list: list[Unit] = []
         text = "\n" + text
 
         pattern = r'```.*?\n(.*?)```'  # get only inside code blocks
@@ -84,7 +85,7 @@ class Loader:
         # join all code blocks found
         text = "\n" + "\n".join(code)
 
-        pieces = []  # header, input, output
+        pieces: list[dict[str, Any]] = []  # header, input, output
 
         open_case = False
         for line in text.splitlines():
@@ -117,10 +118,10 @@ class Loader:
         return unit_list
 
     @staticmethod
-    def parse_tio(text: str, source: str = "") -> List[Unit]:
+    def parse_tio(text: str, source: str = "") -> list[Unit]:
 
         # identifica se tem grade e retorna case name e grade
-        def parse_case_grade(value: str) -> Tuple[str, Optional[int]]:
+        def parse_case_grade(value: str) -> tuple[str, None | int]:
             if value.endswith("%"):
                 words = value.split(" ")
                 last = value.split(" ")[-1]
@@ -136,27 +137,27 @@ class Loader:
         matches = re.findall(Loader.regex_tio, text, re.MULTILINE | re.DOTALL)
         if len(matches) == 0:
             matches += re.findall(Loader.regex_tio_origin, text, re.MULTILINE | re.DOTALL)
-        unit_list = []
+        unit_list: list[Unit] = []
         for m in matches:
             case, grade = parse_case_grade(m[0])
             unit_list.append(Unit(case, m[1], m[2], grade, source))
         return unit_list
 
     @staticmethod
-    def parse_vpl(text: str, source: str = "") -> List[Unit]:
+    def parse_vpl(text: str, source: str = "") -> list[Unit]:
         data_list = VplParser.parse_vpl(text)
-        output: List[Unit] = []
+        output: list[Unit] = []
         for m in data_list:
             output.append(Unit(m.case, m.input, m.output, m.grade, source))
         return output
 
     @staticmethod
-    def parse_dir(folder) -> List[Unit]:
+    def parse_dir(folder: str) -> list[Unit]:  # Updated return type to list[Unit]
         pattern_loader = PatternLoader()
         files = sorted(os.listdir(folder))
         matches = pattern_loader.get_file_sources(files)
 
-        unit_list: List[Unit] = []
+        unit_list: list[Unit] = []  # Updated type to list[Unit]
         try:
             for m in matches:
                 unit = Unit()
@@ -174,7 +175,7 @@ class Loader:
         return unit_list
 
     @staticmethod
-    def parse_source(source: str) -> List[Unit]:
+    def parse_source(source: str) -> list[Unit]:
         if os.path.isdir(source):
             return Loader.parse_dir(source)
         if os.path.isfile(source):

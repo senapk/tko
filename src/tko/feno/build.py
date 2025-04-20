@@ -9,14 +9,15 @@ from .mdpp import Mdpp
 from tko.feno.filter import DeepFilter
 from tko.util.decoder import Decoder
 import subprocess
+import argparse
 import os
 import shutil
 
-def norm_join(*args):
+def norm_join(*args: str) -> str:
     return os.path.normpath(os.path.join(*args))
 
 class Actions:
-    def __init__(self, source_dir):
+    def __init__(self, source_dir: str):
         self.cache = norm_join(source_dir, ".cache")
         self.target = norm_join(self.cache, "mapi.json")
         self.source_dir = source_dir
@@ -29,7 +30,7 @@ class Actions:
         self.config_json = norm_join(self.source_dir, "config.json")
         self.mapi_json = norm_join(self.cache, "mapi.json")
         self.cache_src = norm_join(self.cache, "draft")
-        self.vpl = None
+        self.vpl: JsonVPL | None = None
         self.make_remote: bool = False
         self.use_pandoc: bool = False
 
@@ -139,7 +140,7 @@ class Actions:
             Log.resume("Mdpp ", end="")
             Log.verbose(f"  Mdpp updading")
 
-def build_main(args):
+def build_main(args: argparse.Namespace):
     Log.set_verbose(not args.brief)
 
     if len(args.targets) == 0:

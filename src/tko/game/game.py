@@ -7,11 +7,10 @@ from tko.game.task import Task
 from tko.util.decoder import Decoder
 from tko.game.game_builder import GameBuilder
 from tko.game.game_validator import GameValidator
+from typing import override
 
 import yaml # type: ignore
-
 import re
-import os
 
 def load_html_tags(task: str) -> None | str:
     pattern = r"<!--\s*(.*?)\s*-->"
@@ -34,7 +33,7 @@ class Game:
         self.level_mult: float = 1.5
 
 
-    def parse_xp(self, content):
+    def parse_xp(self, content: str):
         if content.startswith('---'):
             front_matter = content.split('---')[1].strip()
             yaml_data = yaml.safe_load(front_matter)
@@ -138,9 +137,9 @@ class Game:
                     q.set_reachable(True)
                     c.set_reachable(True)
 
-
+    @override
     def __str__(self):
-        output = []
+        output: list[str] = []
         for c in self.clusters.values():
             output.append("# " + str(c))
             for q in c.get_quests():

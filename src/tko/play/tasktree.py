@@ -1,22 +1,18 @@
-from typing import List, Any, Dict, Tuple, Union, Set
+# from typing import 
 
-from tko.settings.app_settings import AppSettings
 from tko.settings.repository import Repository
 
 from tko.util.text import Text, Token
-from tko.util.to_asc import SearchAsc, uni_to_asc
+from tko.util.to_asc import SearchAsc
 from tko.play.flags import Flags
-from tko.game.game import Game
 from tko.game.cluster import Cluster
 from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.play.border import Border
-from tko.play.colors import Colors
 from tko.down.drafts import Drafts
 from tko.util.symbols import symbols
 from tko.settings.settings import Settings
 from tko.play.floating_manager import FloatingManager
-from tko.play.floating import Floating
 # from tko.play.grade_message import GradeMessage
 from tko.util.symbols import symbols
 from tko.game.tree_item import TreeItem
@@ -41,15 +37,15 @@ class TaskTree:
         self.fman = fman
         self.style = Border(settings.app)
         self.colors = settings.colors
-        self.items: List[TreeItem] = []
-        self.all_items: Dict[str, TreeItem] = {}
+        self.items: list[TreeItem] = []
+        self.all_items: dict[str, TreeItem] = {}
         self.selected_item: str = ""
-        self.index_begin = 0
-        self.max_title = 0
-        self.search_text = ""
+        self.index_begin: int = 0
+        self.max_title: int = 0
+        self.search_text: str = ""
         self.load_all_items()
         self.load_from_rep()
-        self.update_tree(admin_mode=Flags.admin, first_loop=True)
+        self.update_tree(admin_mode = Flags.admin.is_true(), first_loop=True)
         self.reload_sentences()
 
     def load_all_items(self):
@@ -61,8 +57,8 @@ class TaskTree:
                     self.all_items[t.key] = t
 
     def load_from_rep(self):
-        # self.new_items: List[str] = [v for v in self.rep.get_new_items()]
-        self.expanded: List[str] = [v for v in self.rep.get_expanded()]
+        # self.new_items: list[str] = [v for v in self.rep.get_new_items()]
+        self.expanded: list[str] = [v for v in self.rep.get_expanded()]
         self.selected_item = self.rep.get_selected()
 
         # tasks = self.rep.get_tasks()
@@ -74,7 +70,7 @@ class TaskTree:
         self.rep.set_expanded(self.expanded)
         # self.rep.set_new_items([x for x in set(self.new_items)])
         self.rep.set_selected(self.selected_item)
-        tasks = {}
+        tasks: dict[str, str] = {}
         for t in self.game.tasks.values():
             if not t.is_db_empty():
                 tasks[t.key] = t.save_to_db()
@@ -82,14 +78,14 @@ class TaskTree:
 
     def update_tree(self, admin_mode: bool, first_loop: bool = False):
         if not admin_mode:
-            reachable_clusters = [c.key for c in self.game.clusters.values() if c.is_reachable()]
+            # reachable_clusters = [c.key for c in self.game.clusters.values() if c.is_reachable()]
             reachable_quests = [q.key for q in self.game.quests.values() if q.is_reachable()]
-            old_reachable = reachable_clusters + reachable_quests
+            # old_reachable = reachable_clusters + reachable_quests
 
         self.game.update_reachable_and_available()
             
         if not admin_mode:
-            reachable_clusters = [c.key for c in self.game.clusters.values() if c.is_reachable()]
+            # reachable_clusters = [c.key for c in self.game.clusters.values() if c.is_reachable()]
             reachable_quests = [q.key for q in self.game.quests.values() if q.is_reachable()]
             reachable_keys = reachable_quests + list(self.game.clusters.keys())
             for key in self.expanded:
@@ -105,7 +101,7 @@ class TaskTree:
 
     def __update_max_title(self):
         min_value = 50
-        items = []
+        items: list[int] = []
         for c in self.game.clusters.values():
             if c.key in self.game.clusters.keys():
                 items.append(len(c.title))
@@ -295,13 +291,13 @@ class TaskTree:
 
         return output
 
-    def __get_focus_color(self, item: Union[Quest, Cluster]) -> str:
+    def __get_focus_color(self, item: Quest | Cluster) -> str:
         if not item.is_reachable():
             return "R"
         return self.colors.focused_item
 
-    def filter_by_search(self) -> Tuple[Set[str], str | None]:
-        matches: Set[str] = set()
+    def filter_by_search(self) -> tuple[set[str], str | None]:
+        matches: set[str] = set()
         search = SearchAsc(self.search_text)
         first: None | str = None
         for cluster in self.game.clusters.values():
@@ -375,7 +371,7 @@ class TaskTree:
                         ligc = "│" if q != quests[-1] else " "
                         ligq = "├ " if t != tasks[-1] else "╰ "
                         focus_color = self.__get_focus_color(q) if self.selected_item == t.get_key() else ""
-                        t.sentence = self.__str_task(focus_color, t, ligc, ligq, q.is_reachable())
+                        t.sentence = self.__str_task(focus_color, t, ligc, ligq, q.is_reachable()) # type: ignore
                         self.__try_add(filtered, matcher, t)
         # verifying if has any selected item
         if self.items:
@@ -461,11 +457,10 @@ class TaskTree:
 
     def set_grade(self, task: Task, coverage: int, autonomy: int, skill: int):
         obj = task
-        if isinstance(obj, Task):
-            Logger.get_instance().record_self_grade(obj.key, coverage, autonomy, skill)
-            obj.set_coverage(coverage)
-            obj.set_approach(autonomy)
-            obj.set_autonomy(skill)
+        Logger.get_instance().record_self_grade(obj.key, coverage, autonomy, skill)
+        obj.set_coverage(coverage)
+        obj.set_approach(autonomy)
+        obj.set_autonomy(skill)
 
 
     def set_selected_by_index(self, index: int):
@@ -577,11 +572,11 @@ class TaskTree:
                 return True
         return False
 
-    def toggle(self, obj: Union[Quest, Cluster]):
+    def toggle(self, obj: Quest | Cluster):
             if not self.fold(obj):
                 self.unfold(obj)
 
-    def get_senteces(self, dy):
+    def get_senteces(self, dy: int) -> list[Text]:
         index = self.get_selected_index()
         if len(self.items) < dy:
             self.index_begin = 0
@@ -591,7 +586,7 @@ class TaskTree:
             elif index >= dy + self.index_begin:  # desceu na tela
                 self.index_begin = index - dy + 1
 
-        sentences: List[Text] = []
+        sentences: list[Text] = []
         for i in range(self.index_begin, len(self.items)):
             sentences.append(self.items[i].sentence)
         return sentences

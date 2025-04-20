@@ -44,7 +44,7 @@ class InputManager:
             os.environ.setdefault('ESCDELAY', '25')
 
     @staticmethod
-    def fix_cedilha(scr, value: int) -> int:
+    def fix_cedilha(scr: curses.window, value: int) -> int:
         if value == InputManager.special_double_key:
             value = scr.getch()
             if value == InputManager.cedilha: #ç

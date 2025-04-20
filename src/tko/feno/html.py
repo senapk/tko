@@ -20,7 +20,7 @@ class HTML:
     @staticmethod
     def remove_css_link_from_html(html_file: str):
         content = Decoder.load(html_file)
-        output = []
+        output: list[str] = []
         for line in content.splitlines():
             if not line.startswith('  <link rel="stylesheet"'):
                 output.append(line)
@@ -85,5 +85,5 @@ class HTML:
         print(f'Arquivo HTML gerado em: {output_file_html}')
 
 
-def html_main(args):
+def html_main(args: argparse.Namespace):
     HTML.pandoc_markdown_to_html(args.title, args.input, args.output, not args.no_latex)

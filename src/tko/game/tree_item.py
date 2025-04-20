@@ -2,9 +2,9 @@ from tko.util.text import Text
 
 class TreeItem:
     def __init__(self):
-        self.sentence = Text()
-        self.key = ""
-        self.title = ""
+        self.sentence: Text = Text()
+        self.key: str = ""
+        self.title: str = ""
 
     def get_key(self):
         return self.key

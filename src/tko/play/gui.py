@@ -1,8 +1,7 @@
 from tko.play.keys import GuiActions, GuiKeys
 from tko.game.xp import XP
-from tko.play.opener import Opener
 from tko.settings.settings import Settings
-from tko.util.text import Text, Token,  RToken
+from tko.util.text import Text, RToken
 from tko.util.symbols import symbols
 import os
 
@@ -11,10 +10,10 @@ from tko.play.frame import Frame
 from tko.play.border import Border
 from tko.play.search import Search
 from tko.play.language_setter import LanguageSetter
-from tko.play.images import opening, random_get
-from tko.play.floating import Floating, FloatingInput
+from tko.play.images import opening
+from tko.play.floating import Floating
 from tko.play.floating_manager import FloatingManager
-from tko.play.flags import Flag, Flags, FlagsMan
+from tko.play.flags import Flags, FlagsMan
 from tko.play.tasktree import TaskTree, TaskAction
 
 from tko.play.keys import GuiKeys
@@ -23,9 +22,6 @@ from tko.game.task import Task
 from tko.game.cluster import Cluster
 from tko.play.task_graph import TaskGraph
 from tko.play.week_graph import WeekGraph
-
-from typing import List, Any, Dict, Callable, Tuple
-import datetime
 
 class Gui:
 
@@ -56,7 +52,7 @@ class Gui:
         except IndexError:
             pass
         act_color, act_text = self.get_activate_label()
-        help_fixed: List[Text] = [
+        help_fixed: list[Text] = [
             Text() + RToken("C", f"{GuiActions.move} [{GuiKeys.up}{GuiKeys.left}{GuiKeys.down}{GuiKeys.right}]"),
             Text() + RToken("C", f"{GuiActions.config} [{GuiKeys.palette}]"),
             Text() + RToken(act_color, f"{act_text} [↲]"),
@@ -97,7 +93,7 @@ class Gui:
     def center_header_footer(self, value: Text, frame: Frame) -> Text:
         half = value.len() // 2
         x = frame.get_x()
-        dy, dx = Fmt.get_size()
+        _, dx = Fmt.get_size()
         color = "r" if Flags.admin else ""
         full = Text().addf(color, "─" * ((dx//2) - x - 2 - half)).add(value)
         return full
@@ -134,7 +130,7 @@ class Gui:
 
 
 
-    def show_skills_bar(self, frame_xp):
+    def show_skills_bar(self, frame_xp: Frame):
         dy, dx = frame_xp.get_inner()
         xp = XP(self.game)
         total_perc = int(
@@ -154,7 +150,7 @@ class Gui:
 
         reachable_quests = [q for q in self.game.quests.values() if q.is_reachable()]
         total, obt = self.game.get_skills_resume(reachable_quests)
-        elements: List[Text] = []
+        elements: list[Text] = []
         for skill, value in total.items():
             if Flags.percent:
                 text = f"{skill}:{int(100 * obt[skill] / value)}%"
@@ -176,8 +172,8 @@ class Gui:
                 frame_xp.print(1, Text())
 
 
-    def build_list_sentence(self, items: List[Text]) -> List[Text]:
-        out: List[Text] = []
+    def build_list_sentence(self, items: list[Text]) -> list[Text]:
+        out: list[Text] = []
         for x in items:
             color_ini = x.data[0].fmt
             color_end = x.data[-1].fmt
@@ -192,7 +188,7 @@ class Gui:
         return out
 
     def build_bottom_array(self):
-        array: List[Text] = []
+        array: list[Text] = []
         array += self.get_help_fixed()
         return self.build_list_sentence(array)
 
@@ -202,7 +198,7 @@ class Gui:
         line_main = Text().add(" ").join(elems) # alignment adjust
         Fmt.write(lines - 1, 0, line_main.center(cols))
 
-    def make_xp_button(self, size):
+    def make_xp_button(self, size: int):
         if self.search.search_mode:
             text = " Busca: " + self.tree.search_text + symbols.cursor.text
             percent = 0.0
@@ -226,10 +222,10 @@ class Gui:
         search = help[0]
         evaluate = help[1]
 
-        pre: List[Text] = []
+        pre: list[Text] = []
         pre.append(search)
 
-        pos: List[Text] = []
+        pos: list[Text] = []
         pos.append(evaluate)
 
         limit = frame.get_dx()
@@ -266,7 +262,7 @@ class Gui:
         _help.put_sentence(Text() + RToken("g", "             tko config --editor <comando>"))
 
 
-    def build_xp_bar(self) -> Tuple[str, float]:
+    def build_xp_bar(self) -> tuple[str, float]:
         xp = XP(self.game)
         available = xp.get_xp_total_available()
         if available > 0 and xp.get_xp_total_obtained() == available:
@@ -309,10 +305,11 @@ class Gui:
     def show_graphs(self, frame: Frame):
         lines, cols = frame.get_inner()
         
-        now = datetime.datetime.now()
+        # now: datetime.datetime = datetime.datetime.now()
         # parrot = random_get(opening, str(now.hour))
         distance = 18
         made = False
+        list_data: list[str] = []
         try:
             selected = self.tree.get_selected_throw()
         except IndexError:
@@ -369,9 +366,9 @@ class Gui:
 
         # frame_bottom = Frame(lines - bottom_dy - 1, -1).set_size(bottom_dy + 2, cols + 2)
         self.show_bottom_bar()
-        if task_sx > 5: 
-            frame_main = Frame(mid_y, 0).set_size(mid_sy, task_sx).set_border_color(border_color)
-            self.show_main_bar(frame_main)
+        # if task_sx > 5: 
+        frame_main = Frame(mid_y, 0).set_size(mid_sy, task_sx).set_border_color(border_color)
+        self.show_main_bar(frame_main)
         self.show_graphs(frame_main)
 
         if Flags.skills:

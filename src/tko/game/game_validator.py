@@ -47,7 +47,7 @@ class GameValidator:
 
     # call after create_requirements_pointers
     def __check_cycle(self):
-        def dfs(qx, visitedx):
+        def dfs(qx: Quest, visitedx: List[str]):
             if len(visitedx) > 0:
                 if visitedx[0] == qx.key:
                     print(f"Cycle detected: {visitedx}")

@@ -1,10 +1,11 @@
-from typing import Callable
+from typing import Callable, Any
 import os
 import urllib.request
 import urllib.error
 import json
-import tempfile
 import shutil
+import tempfile
+
 
 from tko.game.task import Task
 from tko.settings.repository import Repository
@@ -62,7 +63,7 @@ class CmdDown:
         if len(os.listdir(self.destiny_folder)) == 0:
                 os.rmdir(self.destiny_folder)
 
-    def download_readme(self, readme_remote_url) -> bool:
+    def download_readme(self, readme_remote_url: RemoteUrl) -> bool:
         try:
             DownProblem.down_readme(self.readme_path, readme_remote_url)
             return True
@@ -152,7 +153,7 @@ class CmdDown:
         self.destiny_folder = self.rep.get_task_folder_for_label(self.task_key)
         self.readme_path =  os.path.join(self.destiny_folder, "Readme.md")
         self.mapi_file = os.path.join(self.cache_url, "mapi.json")
-        folder_created = DownProblem.backup_and_create_problem_folder(self.destiny_folder)
+        backup_folder = DownProblem.backup_and_create_problem_folder(self.destiny_folder)
         # Decoder.save(self.readme_path, Decoder.load(task_source))
         DownProblem.compare_and_save(Decoder.load(task_source), self.readme_path)
 
@@ -164,7 +165,7 @@ class CmdDown:
                 loaded_json = json.load(f)
             DownProblem.unpack_problem_files(loaded_json, self.destiny_folder)
             if not DownProblem.unpack_json_drafts(loaded_json, self.destiny_folder, lang):
-                if not folder_created:
+                if not backup_folder:
                     DownProblem.create_default_draft(self.destiny_folder, lang)
         else:
             self.build_cases_from_readme(self.destiny_folder)
@@ -197,12 +198,12 @@ class DownProblem:
     fnprint: Callable[[str], None] = print
 
     @staticmethod
-    def __create_file(content, path, label=""):
+    def __create_file(content: str, path: str, label: str=""):
         Decoder.save(path, content)
         DownProblem.fnprint(DownProblem.folder_and_file(path) + " " + label)
 
     @staticmethod
-    def unpack_json_drafts(loaded, destiny, lang: str) -> bool:
+    def unpack_json_drafts(loaded: dict[str, Any], destiny: str, lang: str) -> bool:
         found = False
         if "draft" in loaded:
             if lang in loaded["draft"]:
@@ -214,7 +215,7 @@ class DownProblem:
         return found
 
     @staticmethod
-    def unpack_problem_files(loaded, destiny):
+    def unpack_problem_files(loaded: dict[str, Any], destiny: str):
         if "upload" in loaded:
             for file in loaded["upload"]:
                 name = file["name"]

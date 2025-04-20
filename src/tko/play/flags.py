@@ -1,5 +1,4 @@
-from typing import List, Dict, Any
-from tko.util.text import Text
+from typing import Any
 from tko.play.keys import GuiKeys
 
 class Flag:
@@ -7,32 +6,32 @@ class Flag:
         self._name: str = ""
         self._text: str = ""  # description
         self._char: str = ""
-        self._values: List[str] = ["0", "1"]
+        self._values: list[str] = ["0", "1"]
         self._index: int = 0
         self._location: str = ""
         self._bool = True  # many options
 
-    def set_name(self, _name):
+    def set_name(self, _name: str):
         self._name = _name
         return self
 
-    def set_description(self, _text):
+    def set_description(self, _text: str):
         self._text = _text
         return self
 
-    def set_keycode(self, _key):
+    def set_keycode(self, _key: str):
         self._char = _key
         return self
 
-    def set_values(self, _values: List[str]):
+    def set_values(self, _values: list[str]):
         self._values = _values
         return self
 
-    def index(self, _index):
+    def index(self, _index: int):
         self._index = _index
         return self
 
-    def get_values(self):
+    def get_values(self) -> list[str]:
         return self._values
 
     def toggle(self):
@@ -60,6 +59,9 @@ class Flag:
     def get_index(self) -> int:
         return self._index
     
+    def is_true(self) -> bool:
+        return self.get_value() != "0"
+    
     def __bool__(self) -> bool:
         return self.get_value() == "1"
     
@@ -74,8 +76,8 @@ class Flags:
     devel = Flag().set_name("Devel").set_values(["0", "1"])
 
 class FlagsMan:
-    def __init__(self, data: Dict[str, int]):
-        self.flags: Dict[str, Flag] = {}
+    def __init__(self, data: dict[str, int]):
+        self.flags: dict[str, Flag] = {}
 
         for varname, flag in Flags.__dict__.items():
             if isinstance(flag, Flag):
@@ -85,8 +87,8 @@ class FlagsMan:
             if key in self.flags:
                 self.flags[key].index(_index)
 
-    def get_data(self) -> Dict[str, int]:
-        data = {}
+    def get_data(self) -> dict[str, int]:
+        data: dict[str, int] = {}
         for name, flag in self.flags.items():
             if len(flag.get_values()) > 1:
                 data[name] = flag.get_index()

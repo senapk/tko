@@ -1,5 +1,3 @@
-from tko.game.game import Game
-# from tko.game.graph import Graph
 from tko.settings.repository import Repository
 from tko.settings.settings import Settings
 from tko.settings.logger import Logger
@@ -7,6 +5,8 @@ from tko.game.task import Task
 from tko.play.week_graph import WeekGraph
 import yaml # type: ignore
 import os
+import argparse
+from typing import override
 
 class TaskResume:
     def __init__(self):
@@ -45,12 +45,13 @@ class TaskResume:
             "attempts": self.attempts
         }
 
+    @override
     def __str__(self):
         return f"coverage:{self.coverage}, autonomy:{self.autonomy}, skill:{self.skill}, elapsed:{self.elapsed}, attempts:{self.attempts}"
 
 class CmdRep:
     @staticmethod
-    def check(args):
+    def check(args: argparse.Namespace):
         rep = Repository(args.folder).load_config().load_game()
         logger = Logger.get_instance()
         logger.set_log_files(rep.get_history_file())
@@ -65,7 +66,7 @@ class CmdRep:
                 print(f"- {error}")
 
     @staticmethod
-    def resume(args):
+    def resume(args: argparse.Namespace):
         rep = Repository(args.folder).load_config().load_game()
         logger = Logger.get_instance()
         logger.set_log_files(rep.get_history_file())
@@ -93,7 +94,7 @@ class CmdRep:
         print (yaml.dump(tasks_str, sort_keys=False))
 
     @staticmethod
-    def graph(args):
+    def graph(args: argparse.Namespace):
         rep = Repository(args.folder).load_config().load_game()
         logger = Logger.get_instance()
         logger.set_log_files(rep.get_history_file())
@@ -118,8 +119,8 @@ class CmdRep:
         #     print(f"{i} - {week[i]}h")
 
     @staticmethod
-    def upgrade(args):
-        folder = args.folder
+    def upgrade(args: argparse.Namespace):
+        folder: str = args.folder
         if os.path.exists(os.path.join(folder, "rep.json")):
             os.rename(os.path.join(folder, "rep.json"), os.path.join(folder, "repository.json"))
         remote_folder = os.path.join(folder, "remote")
@@ -133,18 +134,18 @@ class CmdRep:
         print(f"Repositório {folder} foi atualizado.")
 
     @staticmethod
-    def list(_args):
+    def list(_args: argparse.Namespace):
         settings = Settings()
         print(f"SettingsFile\n- {settings.settings_file}")
         print(str(settings))
 
     @staticmethod
-    def add(args):
+    def add(args: argparse.Namespace):
         settings = Settings().set_alias_remote(args.alias, args.value)
         settings.save_settings()
 
     @staticmethod
-    def rm(args):
+    def rm(args: argparse.Namespace):
         sp = Settings()
         if args.alias in sp.dict_alias_remote:
             sp.dict_alias_remote.pop(args.alias)
@@ -153,7 +154,8 @@ class CmdRep:
             print("Repository not found.")
 
     @staticmethod
-    def reset(_):
+    def reset(args: argparse.Namespace):
+        _ = args
         sp = Settings().reset()
         print(sp.settings_file)
         sp.save_settings()

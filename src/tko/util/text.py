@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List,  Any, Tuple, Union
+from typing import Any, override
 
 class AnsiColor:
     enabled = True
@@ -45,11 +45,12 @@ class AnsiColor:
 
 class Token:
     def __init__(self, text: str = "", fmt: str = "", ):
-        if not isinstance(text, str):
+        if not isinstance(text, str): # type: ignore
             raise TypeError("text must be a string")
         self.text = text
         self.fmt = fmt
 
+    @override
     def __eq__(self, other: Any):
         if not isinstance(other, Token):
             return False
@@ -61,6 +62,7 @@ class Token:
     def __add__(self, other: Any):
         return Text().add(self).add(other)
 
+    @override
     def __str__(self):
         return f"({self.fmt}:{self.text})"
 
@@ -69,12 +71,12 @@ def RToken(fmt: str, text: str) -> Token:
 
 class Text:
     def __init__(self):
-        self.data: List[Token] = []
+        self.data: list[Token] = []
 
     @staticmethod
-    def format(value: str = "", *args) -> Text:
-        if not isinstance(value, str):
-            raise TypeError("value must be a string")
+    def format(value: str = "", *args: Any) -> Text:
+        # if not isinstance(value, str):
+        #     raise TypeError("value must be a string")
         text = Text()
         text.__process_placeholders(value, *args)
         return text
@@ -90,15 +92,15 @@ class Text:
         other.data = [v for v in self.data]
         return other
 
-    def setup(self, data: List[Token]):
+    def setup(self, data: list[Token]):
         self.data = []
         for d in data:
             for c in d.text:
                 self.data.append(Token(c, d.fmt))
         return self
 
-    def split(self, sep: str) -> List[Text]:
-        output = []
+    def split(self, sep: str) -> list[Text]:
+        output: list[Text] = []
         current = Text()
         for d in self.data:
             if d.text == sep:
@@ -134,6 +136,7 @@ class Text:
     def __add__(self, other: Any):
         return Text().add(self).add(other)
 
+    @override
     def __eq__(self, other: Any):
         if len(self.data) != len(other.data):
             return False
@@ -142,18 +145,18 @@ class Text:
                 return False
         return True
 
-
+    @override
     def __str__(self):
         output = ""
         for elem in self.resume():
             output += AnsiColor.colour(elem.fmt, elem.text)
         return output
     
-    def resume(self) -> List[Token]:
+    def resume(self) -> list[Token]:
         if len(self.data) == 0:
             return []
         
-        new_data: List[Token] = [Token("", self.data[0].fmt)]
+        new_data: list[Token] = [Token("", self.data[0].fmt)]
         for d in self.data:
             if d.fmt == new_data[-1].fmt:
                 new_data[-1].text += d.text
@@ -197,7 +200,7 @@ class Text:
             if value.text != "":
                 for c in value.text:
                     self.data.append(Token(c, value.fmt))
-        elif isinstance(value, Text):
+        elif isinstance(value, Text):  # type: ignore
             self.data += value.data
         else:
             raise TypeError("unsupported type '{}'".format(type(value)))
@@ -289,7 +292,7 @@ class Text:
             self.data = self.data[:width]
         return self
 
-    def join(self, array: List[Text]):
+    def join(self, array: list[Text]):
         out = Text()
         for i, a in enumerate(array):
             if i != 0:
@@ -298,9 +301,9 @@ class Text:
         return out
 
     @staticmethod
-    def __preprocess(data):
+    def __preprocess(data: str):
         # Primeira etapa: substitui << por \a
-        result1 = []
+        result1: list[str] = []
         i = 0
         while i < len(data):
             if i < len(data) - 1 and data[i] == '{' and data[i + 1] == '{':
@@ -311,7 +314,7 @@ class Text:
                 i += 1
 
         # Segunda etapa: substitui >> por \b, de trás para frente
-        result2 = []
+        result2: list[str] = []
         i = len(result1) - 1
         while i >= 0:
             if i > 0 and result1[i] == '}' and result1[i - 1] == '}':
@@ -326,7 +329,7 @@ class Text:
         return final_result
 
     @staticmethod
-    def __extract(data):
+    def __extract(data: str):
         data = Text.__preprocess(data)  # Preprocessar a string
         texts: list[str] = [""]
         placeholders: list[str] = []
@@ -354,7 +357,7 @@ class Text:
 
         return texts, placeholders
 
-    def __process_placeholders(self, text, *args) -> None:
+    def __process_placeholders(self, text: str, *args: Any) -> None:
         params = list(args)
         texts, placeholders = Text.__extract(text)
         while len(params) < len(placeholders):

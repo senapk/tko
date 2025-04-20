@@ -26,13 +26,13 @@ class LabelFactory:
         return label
 
     @staticmethod
-    def trim_spaces(text):
+    def trim_spaces(text: str):
         parts = text.split(" ")
         parts = [word for word in parts if word != '']
         return " ".join(parts)
 
     @staticmethod
-    def remove_old_index(label):
+    def remove_old_index(label: str) -> str:
         split_label = label.split(" ")
         if len(split_label) > 0:
             try:
@@ -40,3 +40,4 @@ class LabelFactory:
                 return " ".join(split_label[1:])
             except ValueError:
                 return label
+        return label

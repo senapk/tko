@@ -151,7 +151,7 @@ class Run:
             print(Text.format(" Entrando no modo de filtragem ").center(RawTerminal.get_terminal_size(), Token("═")))
             tkoFilterMode.deep_copy_and_change_dir()  
             # search for target outside . dir and redirect target
-            new_target_list = []
+            new_target_list: list[str] = []
             for target in self.target_list:
                 if ".." in target:
                     new_target_list.append(os.path.normpath(os.path.join(old_dir, target)))
@@ -160,9 +160,6 @@ class Run:
             self.target_list = new_target_list
 
     def __print_top_line(self):
-        if self.wdir is None:
-            return
-
         print(Text().add(symbols.opening).add(self.wdir.resume()), end="")
         print(" [", end="")
         first = True
@@ -172,16 +169,11 @@ class Run:
             else:
                 print(" ", end="")
             solver = self.wdir.get_solver()
-            if solver is None:
-                raise Warning("Solver vazio")
             unit.result = UnitRunner.run_unit(solver, unit)
             print(Text() + ExecutionResult.get_symbol(unit.result), end="")
         print("]")
 
     def __print_diff(self):
-        if self.wdir is None or not self.wdir.has_solver():
-            return
-        
         if self.param.diff_count == DiffCount.QUIET:
             return
         
@@ -237,8 +229,6 @@ class Run:
         return self.wdir
 
     def __missing_target(self) -> bool:
-        if self.wdir is None:
-            return False
         if not self.wdir.has_solver() and not self.wdir.has_tests():
             if not self.__curses_mode:
                 print(Text().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
@@ -246,9 +236,6 @@ class Run:
         return False
     
     def __list_mode(self) -> bool:
-        if self.wdir is None:
-            return False
-
         # list mode
         if not self.wdir.has_solver() and self.wdir.has_tests():
             print(Text.format("Nenhum arquivo de código encontrado. Listando casos de teste.").center(RawTerminal.get_terminal_size(), Token("╌")), flush=True)
@@ -259,8 +246,6 @@ class Run:
         return False
 
     def __free_run(self) -> bool:
-        if self.wdir is None:
-            return False
         if self.wdir.has_solver() and (not self.wdir.has_tests()) and not self.__curses_mode:
             if self.__task is not None:
                 Logger.get_instance().record_freerun(self.get_task().key)
@@ -270,7 +255,7 @@ class Run:
 
     def __create_opener_for_wdir(self) -> Opener:
         opener = Opener(self.settings)
-        folders = []
+        folders: list[str] = []
         targets = ["."]
         if self.target_list:
             targets = self.target_list
@@ -294,7 +279,7 @@ class Run:
         solver = self.wdir.get_solver()
         if len(sources) > 0:
             task.folder = os.path.abspath(sources[0])
-        elif solver is not None and solver.args_list:
+        elif solver.args_list:
             task.folder = os.path.abspath(self.wdir.get_solver().args_list[0])
         else:
             task.folder = os.path.abspath(os.getcwd())
@@ -333,9 +318,6 @@ class Run:
         tracker.store()
 
     def __show_diff(self):
-        if self.wdir is None:
-            return
-        
         if self.__task is None:
             self.__fill_task()
         

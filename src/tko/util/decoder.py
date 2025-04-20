@@ -1,5 +1,6 @@
 # ignore missing import 
-import chardet # type: ignore
+from typing import Any
+import chardet  # type: ignore
 import os
 
 class Decoder:
@@ -11,14 +12,14 @@ class Decoder:
             raise Exception("Arquivo {} não encontrado".format(os.path.abspath(file_path)))
         with open(file_path, "rb") as file:
             raw_data = file.read()
-            enc_dict = chardet.detect(raw_data)
-            encoding = enc_dict["encoding"]
-            if encoding is None or enc_dict["confidence"] < 0.90:
+            enc_dict: dict[str, Any] = chardet.detect(raw_data) # type: ignore
+            encoding: str = enc_dict["encoding"] or "utf-8" # type: ignore
+            if enc_dict["confidence"] < 0.90:
                 encoding = "utf-8"
             try:
-                content = raw_data.decode(encoding)
+                content = raw_data.decode(encoding)  # type: ignore
             except UnicodeDecodeError as e:
-                content = raw_data.decode(enc_dict["encoding"] or "utf-8")
+                content = raw_data.decode(enc_dict["encoding"] or "utf-8") # type: ignore
             return content.replace('\r\n', '\n')
 
     @staticmethod
@@ -33,8 +34,8 @@ class Decoder:
     def get_encoding(file_path: str) -> str:
         with open(file_path, "rb") as file:
             raw_data = file.read()
-            enc_dict = chardet.detect(raw_data)
-            encoding = enc_dict["encoding"]
+            enc_dict = chardet.detect(raw_data) # type: ignore
+            encoding = enc_dict["encoding"] # type: ignore
             if encoding is None or enc_dict["confidence"] < 0.90:
                 encoding = "utf-8"
-            return encoding
+            return encoding # type: ignore

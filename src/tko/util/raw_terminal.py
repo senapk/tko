@@ -1,10 +1,9 @@
-from typing import Optional, Union
 import shutil
 from .text import Text, Token
 
 
 class RawTerminal:
-    __term_width: Optional[int] = None
+    __term_width: None | int = None
 
     def __init__(self):
         pass

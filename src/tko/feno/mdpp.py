@@ -5,7 +5,6 @@ import re
 import os
 import argparse
 import enum
-from typing import Optional, List, Tuple
 from tko.feno.filter import Filter
 from tko.util.decoder import Decoder
 
@@ -21,7 +20,7 @@ class TocMaker:
 
     # generate md link for the text
     @staticmethod
-    def __get_md_link(title: Optional[str]) -> str:
+    def __get_md_link(title: str | None) -> str:
         if title is None:
             return ""
         # remove html comments
@@ -31,8 +30,6 @@ class TocMaker:
         if "[](" in title:
             title = title.split("[](")[0]
 
-        if title is None:
-            return ""
         title = title.lstrip(" #")
         title = title.lower()
         out = ''
@@ -64,14 +61,14 @@ class TocMaker:
 
 
     @staticmethod
-    def __extract_entries(content: str) -> List[Tuple[int, str]]:
+    def __extract_entries(content: str) -> list[tuple[int, str]]:
         content = TocMaker.__remove_code_fences(content)
 
         lines = content.splitlines()
         disable_tag = "[]()"
         lines = [line for line in lines if TocMaker.__only_hashtags(line.split(" ")[0]) and line.find(disable_tag) == -1]
 
-        entries: List[Tuple[int, str]] = []
+        entries: list[tuple[int, str]] = []
         for line in lines:
             level = TocMaker.__get_level(line)
             text = "[" + TocMaker.__get_content(line) + "](#" + TocMaker.__get_md_link(line) + ")"
@@ -119,8 +116,8 @@ class Toch:
 class Links:
 
     @staticmethod
-    def load_links(readme_dir, filter_dir):
-        def traverse_directory(directory, depth=0):
+    def load_links(readme_dir: str, filter_dir: str):
+        def traverse_directory(directory: str, depth: int = 0):
             output = ""
             if os.path.isdir(directory):
                 entries = sorted(os.listdir(directory))
@@ -138,7 +135,7 @@ class Links:
         return traverse_directory(origin)
 
     @staticmethod
-    def execute(path, content: str, action: Action = Action.RUN) -> str:
+    def execute(path: str, content: str, action: Action = Action.RUN) -> str:
         regex = r"<!-- links (\S*?) -->\n(.*?)<!-- links -->"
         matches = re.finditer(regex, content, re.MULTILINE | re.DOTALL)
         
@@ -159,7 +156,7 @@ class Links:
 class Load:
 
     @staticmethod
-    def extract_between_tags(content, tag):
+    def extract_between_tags(content: str, tag: str) -> str:
         regex = r"\[\[" + tag + r"\]\].*?^(.*)^[\S ]*\[\[" + tag + r"\]\]"
         matches = re.finditer(regex, content, re.MULTILINE | re.DOTALL)
         for match in matches:
@@ -174,7 +171,7 @@ class Load:
         if target.endswith(".puml"):
             com = "'"
         lines = content.splitlines()
-        output = []
+        output: list[str] = []
         for line in lines:
             if not line.lstrip().startswith(com):
                 output.append(line)
@@ -182,7 +179,7 @@ class Load:
 
 
     @staticmethod
-    def execute(content: str, target_dir, action: Action = Action.RUN) -> str:
+    def execute(content: str, target_dir: str, action: Action = Action.RUN) -> str:
         new_content = ""
         last = 0
 
@@ -193,19 +190,19 @@ class Load:
             path = match.group(1)
             abspath = os.path.abspath(os.path.join(target_dir, path))
             tags = match.group(2)
-            words: List[str] = tags.split(":")
+            words: list[str] = tags.split(":")
 
-            fenced: List[str] = [tag for tag in words if tag.startswith("fenced")]
+            fenced: list[str] = [tag for tag in words if tag.startswith("fenced")]
             words = [tag for tag in words if not tag.startswith("fenced")]
 
-            filter: List[str] = [tag for tag in words if tag.startswith("filter")]
+            filter: list[str] = [tag for tag in words if tag.startswith("filter")]
             words = [tag for tag in words if not tag.startswith("filter")]
 
-            rmcom: List[str] = [tag for tag in words if tag.startswith("rmcom")]
+            rmcom: list[str] = [tag for tag in words if tag.startswith("rmcom")]
             words = [tag for tag in words if not tag.startswith("rmcom")]
 
 
-            extract: List[str] = [tag for tag in words if tag.startswith("extract")]
+            extract: list[str] = [tag for tag in words if tag.startswith("extract")]
             words = [tag for tag in words if not tag.startswith("extract")]
 
 
@@ -266,10 +263,10 @@ class Load:
 class Save:
     @staticmethod
     # execute filename and content
-    def execute(file_content):
+    def execute(file_content: str) -> None:
         regex = r"\[\]\(save\)\[\]\((.*?)\)\n```[a-z]*\n(.*?)```\n\[\]\(save\)"
         matches = re.finditer(regex, file_content, re.MULTILINE | re.DOTALL)
-        
+        content_old = ""        
         for match in matches:
             path = match.group(1)
             content = match.group(2)
@@ -282,14 +279,14 @@ class Save:
 
 class MdppMain:
     @staticmethod
-    def fix_path(target):
+    def fix_path(target: str):
         target = os.path.normpath(target)
         if os.path.isdir(target):
             target = os.path.join(target, "Readme.md")
         return target
 
     @staticmethod
-    def open_file(path): 
+    def open_file(path: str) -> tuple[bool, str]: 
         if os.path.isfile(path):
             file_content = Decoder.load(path)
             return True, file_content
@@ -298,7 +295,7 @@ class MdppMain:
 
 class Mdpp:
     @staticmethod
-    def update_file(target, action: Action = Action.RUN, quiet: bool = False) -> bool:
+    def update_file(target: str, action: Action = Action.RUN, quiet: bool = False) -> bool:
         path = MdppMain.fix_path(target)
         target_dir = os.path.dirname(path)
         found, original = MdppMain.open_file(path)
@@ -320,7 +317,7 @@ class Mdpp:
 
         return False
 
-def mdpp_main(args):
+def mdpp_main(args: argparse.Namespace):
 
     if len(args.targets) == 0:
         print("No targets selected")

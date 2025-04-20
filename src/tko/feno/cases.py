@@ -5,7 +5,7 @@ import glob
 class Cases:
 
     @staticmethod
-    def run(cases_file, source_readme, source_dir):
+    def run(cases_file: str, source_readme: str, source_dir: str):
         # find all files in the directory terminatig with .tio or .vpl
         files = list(glob.iglob(source_dir + '/**', recursive=True))
         files = [f for f in files if os.path.isfile(f)]

@@ -1,28 +1,32 @@
 from __future__ import annotations
-from typing import Dict, List, Optional, Tuple
 from tko.game.task import Task
 from tko.util.text import Text
 from tko.util.get_md_link import get_md_link
 from tko.game.tree_item import TreeItem
 from tko.play.flags import Flags
-import re
+from typing import override
+
+def startswith(text: str, prefix: str) -> bool: 
+    if len(prefix) > len(text):
+        return False
+    return text[:len(prefix)] == prefix
 
 class Quest(TreeItem):
     def __init__(self, title: str = "", key: str = ""):
         super().__init__()
-        self.key = key
-        self.title = title
-        self.line_number = 0
-        self.line = ""
-        self.__tasks: List[Task] = []
-        self.skills: Dict[str, int] = {}  # s:skill
-        self.requires: List[str] = []  # r:quest_key
-        self.languages: List[str] = []  # l:language
-        self.requires_ptr: List[Quest] = []
+        self.key: str = key
+        self.title: str = title
+        self.line_number: int = 0
+        self.line: str = ""
+        self.__tasks: list[Task] = []
+        self.skills: dict[str, int] = {}  # s:skill
+        self.requires: list[str] = []  # r:quest_key
+        self.languages: list[str] = []  # l:language
+        self.requires_ptr: list[Quest] = []
         self.opt = False  # opt
         self.prog = False  # progressive tasks
-        self.qmin: Optional[int] = None  # q:  minimo de 50 porcento da pontuação total para completar
-        self.tmin: Optional[int] = None  # t: ou ter no mínimo esse valor de todas as tarefas
+        self.qmin: None | int = None  # q:  minimo de 50 porcento da pontuação total para completar
+        self.tmin: None | int = None  # t: ou ter no mínimo esse valor de todas as tarefas
         self.filename = ""
         self.cluster_key = ""
         self.__is_reachable: bool = False
@@ -60,6 +64,7 @@ class Quest(TreeItem):
                     reach = False
                 self.__tasks[i].set_reachable(reach)
 
+    @override
     def __str__(self):
         line = str(self.line_number).rjust(3)
         tasks_size = str(len(self.__tasks)).rjust(2, "0")
@@ -127,7 +132,7 @@ class Quest(TreeItem):
     def get_tasks(self):
         return self.__tasks
 
-    def get_xp(self) -> Tuple[int, int]:
+    def get_xp(self) -> tuple[int, int]:
         total = 0
         obtained = 0
         for t in self.__tasks:
@@ -164,11 +169,11 @@ class QuestParser:
 
     def __init__(self):
         self.quest = Quest()
-        self.line = ""
+        self.line: str = ""
         self.line_num = 0
         self.default_qmin_requirement = 50
         self.default_task_xp = 10
-        self.filename = ""
+        self.filename: str = ""
 
     def finish_quest(self) -> Quest:
 
@@ -184,7 +189,7 @@ class QuestParser:
         return self.quest
 
     def match_full_pattern(self) -> bool:
-        if not self.line.startswith("### "):
+        if not startswith(self.line, "### "):
             return False
         line = self.line[4:]
         
@@ -212,7 +217,7 @@ class QuestParser:
  
         return True
 
-    def process_raw_tags(self, raw_tags):
+    def process_raw_tags(self, raw_tags: str):
         tags = [tag.strip() for tag in raw_tags.split(" ")]
 
         # skills
@@ -248,7 +253,7 @@ class QuestParser:
                 exit(1)
 
 
-    def parse_quest(self, filename, line, line_num) -> Optional[Quest]:
+    def parse_quest(self, filename: str, line: str, line_num: int) -> None | Quest:
         self.line = line
         self.line_num = line_num
         self.filename = filename

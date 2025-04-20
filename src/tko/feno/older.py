@@ -24,7 +24,7 @@ class Older:
 
     # busca recursivamente o arquivo mais recente dentro os arquivos passados
     @staticmethod
-    def find_older(targets) -> str:
+    def find_older(targets: list[str]) -> str:
         best_file, best_time = Older.last_update(targets[0])
         for target in targets[1:]:
             file, time = Older.last_update(target)
@@ -32,5 +32,5 @@ class Older:
                 best_file, best_time = file, time
         return best_file
 
-def older_main(args):
+def older_main(args: argparse.Namespace):
     print(Older.find_older(args.targets))

@@ -1,9 +1,9 @@
 import unittest
 import os
 from pathlib import Path
-
+import pytest
 from tko.__main__ import exec, Parser #type: ignore
-from tko.util.compare import Compare # type: ignore
+from tko.util.compare import Compare
 
 class Test:
     @classmethod

@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 
 from tko.game.task_parser import TaskParser
-from tko.game.task import Task # type: ignore
+from tko.game.task import Task
 
 class Test:
     @classmethod
@@ -26,7 +26,7 @@ class Test:
     def test_file_not_found(self):
         # get path of this file
         try:
-            task = TaskParser("arquivo.md", "database").parse_line("- [ ] [@label complemente](database/label/f.md)", 0)
+            _ = TaskParser("arquivo.md", "database").parse_line("- [ ] [@label complemente](database/label/f.md)", 0)
         except Warning as e:
             assert str(e).startswith("Arquivo não encontrado")
             return

@@ -1,3 +1,5 @@
+from typing import Any
+
 class Log:
     _verbose = False
     
@@ -6,12 +8,12 @@ class Log:
         Log._verbose = verbose
 
     @staticmethod
-    def verbose(*args, **kwargs):
+    def verbose(*args: str, **kwargs: Any):
         if Log._verbose:
             print(*args, **kwargs)
 
     @staticmethod
-    def resume(*args, **kwargs):
+    def resume(*args: str, **kwargs: Any):
         if not Log._verbose:
             print(*args, **kwargs)
             print("", end="", flush=True)

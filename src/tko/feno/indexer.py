@@ -1,33 +1,30 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
-
-from typing import Optional, List
 import re
 import os
 import argparse
 from tko.util.decoder import Decoder
 
 
-def get_label(line) -> Optional[str]:
+def get_label(line: str) -> None | str:
     if "@" not in line:
         return None
     label = line.split('@')[1].split(' ')[0].split(']')[0]
     return label
 
-def get_hook_from_line(line, base) -> Optional[str]:
+def get_hook_from_line(line: str, base: str) -> None | str:
     base = clear_base(base)
     if "/Readme.md)" in line and base in line and not "https:" in line:
         try:
             hook = line.split(base + '/')[1].split('/')[0]
             return hook
-        except:
-            print("fail: error in", line)
+        except Exception as e:
+            print("fail: error in", line, "with exception:", e)
             exit(1)
             pass
     return None
 
-def load_title_from_file(path) -> str:
+def load_title_from_file(path: str) -> str:
     data = Decoder.load(path)
     header = data.splitlines()[0]
     if (len(header) == 0):
@@ -42,11 +39,11 @@ def load_title_from_file(path) -> str:
         exit(1)
     return " ".join(words[1:])
 
-def loading_titles_from_files(path):
+def loading_titles_from_files(path: str) -> None:
     content = Decoder.load(path)
     lines = content.splitlines()
 
-    output = []
+    output: list[str] = []
 
     for line in lines:
         match = re.search(r'\[([^\[]*?)\]\((.*?)\)', line)
@@ -63,7 +60,7 @@ def loading_titles_from_files(path):
 
     Decoder.save(path, '\n'.join(output))
 
-def clear_base(base):
+def clear_base(base: str) -> str:
     if base[-1] == '/':
         base = base[:-1]
     if base[0] == '/':
@@ -72,14 +69,14 @@ def clear_base(base):
         base = base[1:]
     return base
 
-def found_labels_mismatch(path, base) -> bool:
+def found_labels_mismatch(path: str, base: str) -> bool:
     error_found = False
     base = clear_base(base)
     print("Checking mismatch in labels")
     data = Decoder.load(path)
     lines = data.splitlines()
 
-    not_ok = []
+    not_ok: list[str] = []
     count_ok = 0
     for line in lines:
         hook = get_hook_from_line(line, base)
@@ -103,7 +100,7 @@ def found_labels_mismatch(path, base) -> bool:
     return error_found
 
 # check for all folders in the base folder searching for missing labels
-def found_unused_hooks(path, base_dir) -> bool:
+def found_unused_hooks(path: str, base_dir: str) -> bool:
     print("Checking for unused hooks")
     data = Decoder.load(path)
     lines = data.splitlines()
@@ -112,7 +109,7 @@ def found_unused_hooks(path, base_dir) -> bool:
     hooks = set(hooks_all)
 
     # create a list with folders in base dir if base/folder/Readme.md exists
-    folders = []
+    folders: list[str] = []
     for folder in os.listdir(base_dir):
         if os.path.isfile(base_dir + '/' + folder + '/Readme.md'):
             folders.append(folder)
@@ -129,7 +126,7 @@ def found_unused_hooks(path, base_dir) -> bool:
     return False
 
 
-def indexer_main(args):
+def indexer_main(args: argparse.Namespace):
     loading_titles_from_files(args.path)
     if found_labels_mismatch(args.path, args.base):
         exit(1)

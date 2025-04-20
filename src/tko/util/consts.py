@@ -1,7 +1,9 @@
+from __future__ import annotations
 import enum
-
+from typing import override
 from .symbols import symbols
 from .text import Token
+
 
 class ExecutionResult(enum.Enum):
     UNTESTED          = "não_verificado_"
@@ -11,7 +13,7 @@ class ExecutionResult(enum.Enum):
     EXECUTION_ERROR   = "erro_execução__"
 
     @staticmethod
-    def get_symbol(result) -> Token:
+    def get_symbol(result: ExecutionResult) -> Token:
         if result == ExecutionResult.UNTESTED:
             return symbols.neutral
         elif result == ExecutionResult.SUCCESS:
@@ -25,6 +27,7 @@ class ExecutionResult(enum.Enum):
         else:
             raise ValueError("Invalid result type")
 
+    @override
     def __str__(self):
         return self.value
 

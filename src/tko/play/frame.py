@@ -1,7 +1,5 @@
 from .fmt import Fmt
 from ..util.text import Text, Token
-from typing import Tuple
-
 
 class Frame:
     def __init__(self, y: int = 0, x: int = 0):
@@ -40,7 +38,7 @@ class Frame:
     def get_y(self):
         return self._y
 
-    def __align_header_footer(self, data, symbol, prefix, suffix):
+    def __align_header_footer(self, data: Text, symbol: str, prefix: str, suffix: str):
         dx = self._inner_dx
         color = self._border_color
         pad = dx - len(prefix) - len(suffix)
@@ -131,14 +129,14 @@ class Frame:
         self._border = "square"
         return self
 
-    def set_header(self, header: Text, align="<", prefix="", suffix=""):
+    def set_header(self, header: Text, align: str = "<", prefix: str = "", suffix: str = ""):
         self._halign = align
         self._header = header
         self._hprefix = prefix
         self._hsuffix = suffix
         return self
 
-    def set_footer(self, footer: Text, align=">", prefix="", suffix=""):
+    def set_footer(self, footer: Text, align: str = ">", prefix: str = "", suffix: str = ""):
         self._falign = align
         self._footer = footer
         self._fprefix = prefix
@@ -199,7 +197,7 @@ class Frame:
         up_right = self.get_symbol("ru")
         down_left = self.get_symbol("ld")
         down_right = self.get_symbol("rd")
-        hor = self.get_symbol("h")
+        # hor = self.get_symbol("h")
         ver = self.get_symbol("v")
 
         header = self.get_full_header()

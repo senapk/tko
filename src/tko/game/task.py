@@ -1,9 +1,8 @@
-from typing import Dict, Optional, Tuple
+from typing import override
 from tko.util.symbols import symbols
 from tko.util.text import Text
 from tko.game.tree_item import TreeItem
 import enum
-
 
 
 class Task(TreeItem):
@@ -15,6 +14,7 @@ class Task(TreeItem):
         REMOTE_FILE = 3 # url link do download file
         IMPORT_FILE = 4 # source folder outside database to import files
 
+        @override
         def __str__(self):
             return self.name
 
@@ -33,8 +33,8 @@ class Task(TreeItem):
         self.autonomy: int = 0 # valor de 0 a autonomy_max
         self.main_idx: int = 0
 
-        self.qskills: Dict[str, int] = {} # default quest skills
-        self.skills: Dict[str, int] = {} # local skills
+        self.qskills: dict[str, int] = {} # default quest skills
+        self.skills: dict[str, int] = {} # local skills
         self.xp: int = 0
 
         self.opt: bool = False
@@ -65,7 +65,7 @@ class Task(TreeItem):
         return self.folder
     
     @staticmethod
-    def decode_autonomy_skill(value: int) -> Tuple[int, int]:
+    def decode_autonomy_skill(value: int) -> tuple[int, int]:
         opts = [(0, 0), (1, 1), (1, 2), (2, 2), (3, 2), (1, 3), (2, 3), (3, 3), (4, 3), (3, 4), (4, 4)]
         autonomy = opts[value][0]
         skill = opts[value][1]
@@ -107,7 +107,7 @@ class Task(TreeItem):
     def is_db_empty(self) -> bool:
         return self.approach == 0 and self.autonomy == 0 and self.main_idx == 0 and self.coverage == 0
 
-    def get_prog_color(self, min_value: Optional[int] = None) -> str:
+    def get_prog_color(self, min_value: None | int = None) -> str:
         if min_value is None:
             min_value = self.default_min_value
         prog = self.coverage // 10
@@ -121,7 +121,7 @@ class Task(TreeItem):
             return "g"
         return "w"  
 
-    def get_prog_symbol(self, min_value: Optional[int] = None) -> Text:
+    def get_prog_symbol(self, min_value: None | int = None) -> Text:
         
         if min_value is None:
             min_value = self.default_min_value
@@ -173,6 +173,7 @@ class Task(TreeItem):
         else:
             print(f"Compreensão inválida: {value}")
 
+    @override
     def __str__(self):
         lnum = str(self.line_number).rjust(3)
         key = "" if self.key == self.title else self.key + " "

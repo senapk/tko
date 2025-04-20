@@ -2,6 +2,7 @@ from typing import List, Optional
 from tko.game.quest import Quest
 from tko.util.text import Text
 from tko.game.tree_item import TreeItem
+from typing import override
 
 class Cluster(TreeItem):
     def __init__(self, line_number: int = 0, title: str = "", key: str = "", color: Optional[str] = None):
@@ -21,7 +22,7 @@ class Cluster(TreeItem):
         # self.__quests = [q for q in self.__quests if len(q.get_tasks()) > 0]
         quests: List[Quest] = []
         for q in self.__quests:
-            if q.get_tasks() == 0:
+            if len(q.get_tasks()) == 0:
                 continue
             if len(q.languages) == 0 or language in q.languages:
                 quests.append(q)
@@ -39,6 +40,7 @@ class Cluster(TreeItem):
         self.__is_reachable = value
         return self
 
+    @override
     def __str__(self):
         line = str(self.line_number).rjust(3)
         quests_size = str(len(self.__quests)).rjust(2, "0")

@@ -3,7 +3,7 @@ from tko.util.decoder import Decoder
 
 class FenoTitle:
     @staticmethod
-    def extract_title(readme_file):
+    def extract_title(readme_file: str) -> str:
 
         folder = os.path.basename(os.path.dirname(readme_file))
 

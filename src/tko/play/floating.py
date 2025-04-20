@@ -1,22 +1,22 @@
 from typing import List
 from .frame import Frame
-from ..util.text import Text, Token
+from ..util.text import Text
 from .fmt import Fmt
 import curses
-from typing import Callable
+from typing import Callable, override
 from tko.play.input_manager import InputManager
 from tko.play.keys import GuiKeys
 from tko.util.symbols import symbols
 
 class Floating:
-    def __init__(self, _align=""):
+    def __init__(self, _align: str = ""):
         self._frame = Frame(0, 0)
         self._content: List[Text] = []
         self._type = "warning"
         self._enable = True
         self._extra_exit: List[int] = []
-        self._exit_fn = None
-        self._exit_key = None
+        self._exit_fn: Callable[[], None] | None = None
+        self._exit_key: None | int = None
         self._centralize = True
         self._floating_align = _align
 
@@ -55,11 +55,11 @@ class Floating:
         self._exit_key = ord(key)
         return self
 
-    def set_exit_fn(self, fn):
+    def set_exit_fn(self, fn: Callable[[], None]):
         self._exit_fn = fn
         return self
 
-    def _set_xy(self, dy, dx):
+    def _set_xy(self, dy: int, dx: int):
         valid = "<>^v"
         for c in self._floating_align:
             if c not in valid:
@@ -185,7 +185,7 @@ class FloatingInputData:
         return self
 
 class FloatingInput(Floating):
-    def __init__(self, _align=""):
+    def __init__(self, _align: str = ""):
         super().__init__(_align)
         self._index = 0
         self._options: List[FloatingInputData] = []
@@ -194,6 +194,7 @@ class FloatingInput(Floating):
         self.right_dx = 5 # shortcut space
         self.search_text: List[str] = []
 
+    @override
     def calc_dy_dx(self):
         dy, dx = super().calc_dy_dx()
         dy += len(self._options) + 2
@@ -232,6 +233,7 @@ class FloatingInput(Floating):
                 return
             steps -= 1
 
+    @override
     def write_content(self):
         options: List[Text] = []
         dx = self._frame.get_dx() - self.right_dx
@@ -274,6 +276,7 @@ class FloatingInput(Floating):
                 return
         self._index = -1
 
+    @override
     def get_input(self) -> int:
         self.draw()
         key: int = Fmt.getch()

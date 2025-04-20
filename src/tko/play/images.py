@@ -1,7 +1,7 @@
 from typing import Dict
 import random
 
-def random_get(dic: dict, str_key: str, mode:str = "static"):
+def random_get(dic: dict[str, str], str_key: str, mode:str = "static"):
     if mode == "static":
         count = sum([ord(c) for c in str_key])
         keys = list(dic.keys())

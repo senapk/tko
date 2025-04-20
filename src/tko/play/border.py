@@ -29,7 +29,7 @@ class Border:
         return Token("", color.lower()) if self.has_borders() else Token(" ", color)
 
     def build_bar(self, text: str, percent: float, length: int, fmt_true: str = "/kC",
-                  fmt_false: str = "/kY", round=True) -> Text:
+                  fmt_false: str = "/kY", round: bool = True) -> Text:
         if round and (len(text) >= length - 2):
             text = " " + text
 

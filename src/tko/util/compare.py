@@ -3,7 +3,7 @@ import os
 
 class Compare:
     @staticmethod
-    def load_and_save(filename, received):
+    def load_and_save(filename: str, received: str):
         folder = "compare"
         if not os.path.isdir(folder):
             os.mkdir(folder)
@@ -18,13 +18,13 @@ class Compare:
         return expected, received
     
     @staticmethod
-    def text(capsys, file: str, cmd: str):
+    def text(capsys: str, file: str, cmd: str):
         Compare.list(capsys, file, cmd.split(" "))
 
     @staticmethod
-    def list(capsys, file: str, cmd_list: list[str]):
+    def list(capsys: str, file: str, cmd_list: list[str]):
         parser = Parser().parser
         args = parser.parse_args(cmd_list)
         exec(parser, args)
-        expected, received = Compare.load_and_save(file, capsys.readouterr().out)
+        expected, received = Compare.load_and_save(file, capsys.readouterr().out) # type: ignore
         assert expected == received

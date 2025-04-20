@@ -5,13 +5,13 @@ from tko.play.input_manager import InputManager
 from tko.util.symbols import symbols
 from tko.util.text import Text
 from tko.play.keys import GuiKeys
-
+from typing import override
 
 import curses
 
 
 class FloatingGrade(Floating):
-    def __init__(self, task: Task, _align=""):
+    def __init__(self, task: Task, _align: str =""):
         super().__init__(_align)
         self._task = task
         self._line = 0
@@ -93,6 +93,7 @@ class FloatingGrade(Floating):
         self._content.append(autonomy_text)
         self._content.append(Text())
 
+    @override
     def draw(self):
         self._set_default_header()
         self._set_default_footer()
@@ -106,6 +107,7 @@ class FloatingGrade(Floating):
         self._task.set_approach(self.grades_index[1])
         self._task.set_autonomy(self.grades_index[2])
 
+    @override
     def get_input(self) -> int:
         self.draw()
         key: int = Fmt.getch()

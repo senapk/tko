@@ -3,9 +3,10 @@ from typing import List, Dict
 import json
 import os
 from tko.util.decoder import Decoder
+from typing import override
 
 
-def json_norm_join(*args):
+def json_norm_join(*args: str):
     return os.path.normpath(os.path.join(*args))
 
 # Format used to send additional files to VPL
@@ -15,6 +16,7 @@ class JsonFile:
         self.contents: str = contents
         self.encoding: int = 0
 
+    @override
     def __str__(self):
         return self.name + ":" + self.contents + ":" + str(self.encoding)
 
@@ -33,7 +35,7 @@ class JsonVPL:
         self.required: List[JsonFile] = []
         self.draft: Dict[str, List[JsonFile]] = {}
 
-    def __add_file(self, ftype: JsonFileType, exec_file: str, rename=""):
+    def __add_file(self, ftype: JsonFileType, exec_file: str, rename: str=""):
         data = Decoder.load(exec_file)
         file_name = rename if rename != "" else exec_file.split(os.sep)[-1]
         jfile = JsonFile(file_name, data)
@@ -48,15 +50,15 @@ class JsonVPL:
         self.__add_file(JsonFileType.UPLOAD, exec_file, "vpl_evaluate.cases")
         return self
 
-    def add_upload(self, exec_file: str, rename=""):
+    def add_upload(self, exec_file: str, rename: str=""):
         self.__add_file(JsonFileType.UPLOAD, exec_file, rename)
         return self
 
-    def add_keep(self, exec_file: str, rename=""):
+    def add_keep(self, exec_file: str, rename: str=""):
         self.__add_file(JsonFileType.KEEP, exec_file, rename)
         return self
 
-    def add_required(self, exec_file: str, rename=""):
+    def add_required(self, exec_file: str, rename: str=""):
         self.__add_file(JsonFileType.REQUIRED, exec_file, rename)
         return self
     
@@ -100,5 +102,6 @@ class JsonVPL:
                     found = True
         return found
 
+    @override
     def __str__(self):
         return self.to_json()

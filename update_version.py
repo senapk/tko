@@ -1,6 +1,5 @@
 #!/bin/env python
 
-import sys
 version = ""
 with open("src/tko/__init__.py") as f:
     for line in f:
