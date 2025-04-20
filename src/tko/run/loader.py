@@ -9,11 +9,11 @@ from tko.util.decoder import Decoder
 
 class VplParser:
     @staticmethod
-    def finish(text):
+    def finish(text: str):
         return text if text.endswith("\n") else text + "\n"
 
     @staticmethod
-    def unwrap(text):
+    def unwrap(text: str):
         while text.endswith("\n"):
             text = text[:-1]
         if text.startswith("\"") and text.endswith("\""):
@@ -22,13 +22,13 @@ class VplParser:
 
     @staticmethod
     class CaseData:
-        def __init__(self, case="", inp="", outp="", grade: Optional[int] = None):
+        def __init__(self, case: str="", inp: str="", outp: str="", grade: Optional[int] = None):
             self.case: str = case
             self.input: str = VplParser.finish(inp)
             self.output: str = VplParser.unwrap(VplParser.finish(outp))
             self.grade: Optional[int] = grade
 
-        def __str__(self):
+        def __str__(self) -> str:
             return "case=" + self.case + '\n' \
                    + "input=" + self.input \
                    + "output=" + self.output \

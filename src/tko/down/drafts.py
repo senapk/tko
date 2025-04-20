@@ -56,10 +56,10 @@ run: comando para rodar o programa
     drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'java': java_draft, 'go': go_draft, 'yaml': yaml_draft}
 
     @staticmethod
-    def load_drafs(folder: str, lang: str) -> list[str]:
+    def load_md_and_drafs(folder: str, lang: str) -> list[str]:
         folder = os.path.normpath(os.path.abspath(folder))
         draft_list: list[str] = []
-        allowed = [lang]
+        allowed = [lang, "md"]
         if lang == "c":
             allowed.append("h")
         if lang == "cpp":

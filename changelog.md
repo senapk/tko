@@ -1,5 +1,8 @@
 # Changelog
 
+- 3.6.0
+  - add: better download messages for down problem
+  - add: Opener now opens all md files in the folder with drafts
 - 3.5.6
   - add: download problem again makes a backup of the previous version in label+index
 - 3.5.3

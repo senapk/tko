@@ -99,10 +99,9 @@ class CmdDown:
         self.readme_path =  os.path.join(self.destiny_folder, "Readme.md")
         self.mapi_file = os.path.join(self.destiny_folder, "mapi.json")
 
-        folder_created = DownProblem.create_problem_folder(self.destiny_folder)
+        backup_folder = DownProblem.backup_and_create_problem_folder(self.destiny_folder)
         if not self.download_readme(readme_remote_url):
-            if folder_created:
-                self.remove_empty_destiny_folder()
+            self.remove_empty_destiny_folder()
             return False
         
         lang = self.check_and_select_language()
@@ -120,7 +119,31 @@ class CmdDown:
             DownProblem.create_default_draft(self.destiny_folder, lang)
         DownProblem.fnprint("")
         DownProblem.fnprint("Atividade baixada com sucesso")
+        if backup_folder != "":
+            if CmdDown.folder_equals(self.destiny_folder, backup_folder):
+                DownProblem.fnprint("Pastas {} e {} são iguais".format(os.path.basename(self.destiny_folder), os.path.basename(backup_folder)))
+                DownProblem.fnprint("Removendo pasta de backup {}".format(os.path.basename(backup_folder)))
+                shutil.rmtree(backup_folder)
+
         return True
+
+    @staticmethod
+    def folder_equals(folder1: str, folder2: str) -> bool:
+        """ Compare two folders and return if they have the same files with the same content """
+        if not os.path.exists(folder1) or not os.path.exists(folder2):
+            return False
+        if len(os.listdir(folder1)) != len(os.listdir(folder2)):
+            return False
+        for file in os.listdir(folder1):
+            path1 = os.path.join(folder1, file)
+            path2 = os.path.join(folder2, file)
+            if not os.path.isfile(path1) or not os.path.isfile(path2):
+                return False
+            with open(path1, "rb") as f1, open(path2, "rb") as f2:
+                if f1.read() != f2.read():
+                    return False
+        return True
+
 
     def download_from_external_file(self, task_source: str) -> bool:
         if not os.path.exists(task_source):
@@ -129,7 +152,7 @@ class CmdDown:
         self.destiny_folder = self.rep.get_task_folder_for_label(self.task_key)
         self.readme_path =  os.path.join(self.destiny_folder, "Readme.md")
         self.mapi_file = os.path.join(self.cache_url, "mapi.json")
-        folder_created = DownProblem.create_problem_folder(self.destiny_folder)
+        folder_created = DownProblem.backup_and_create_problem_folder(self.destiny_folder)
         # Decoder.save(self.readme_path, Decoder.load(task_source))
         DownProblem.compare_and_save(Decoder.load(task_source), self.readme_path)
 
@@ -176,7 +199,7 @@ class DownProblem:
     @staticmethod
     def __create_file(content, path, label=""):
         Decoder.save(path, content)
-        DownProblem.fnprint(path + " " + label)
+        DownProblem.fnprint(DownProblem.folder_and_file(path) + " " + label)
 
     @staticmethod
     def unpack_json_drafts(loaded, destiny, lang: str) -> bool:
@@ -208,17 +231,24 @@ class DownProblem:
                 DownProblem.compare_and_save(file["contents"], path)
 
     @staticmethod
+    def folder_and_file(path: str) -> str:
+        """ Return the folder and file name of the path """
+        folder = os.path.basename(os.path.dirname(path))
+        file = os.path.basename(path)
+        return os.path.join(folder, file)
+
+    @staticmethod
     def  compare_and_save(content: str, path: str):
         if not os.path.exists(path):
             Decoder.save(path, content)
-            DownProblem.fnprint(path + " (Novo)")
+            DownProblem.fnprint(DownProblem.folder_and_file(path) + " (Novo)")
         else:
             path_content = Decoder.load(path)
             if path_content != content:
-                DownProblem.fnprint(path + " (Atualizado)")
+                DownProblem.fnprint(DownProblem.folder_and_file(path) + " (Atualizado)")
                 Decoder.save(path, content)
             else:
-                DownProblem.fnprint(path + " (Inalterado)")
+                DownProblem.fnprint(DownProblem.folder_and_file(path) + " (Inalterado)")
 
     @staticmethod
     def down_readme(readme_path: str,  remote_url: RemoteUrl):
@@ -228,20 +258,28 @@ class DownProblem:
         DownProblem.compare_and_save(content, readme_path)
     
     @staticmethod
-    def create_problem_folder(destiny: str) -> bool:
+    def backup_and_create_problem_folder(destiny: str) -> str:
+        """ If destiny exists, rename it to destiny+1, destiny+2, etc.
+        If backup was created, return the new name.
+        If not, return empty string.
+        """
+        new_destiny = ""
         if os.path.exists(destiny): # move folder to 
             count = 1
             while True:
                 new_destiny = "{}+{}".format(destiny, count)
                 if not os.path.exists(new_destiny):
                     shutil.move(destiny, new_destiny)
-                    DownProblem.fnprint("Antiga pasta do problema renomeada para " + new_destiny)
+                    DownProblem.fnprint("Pasta {} já existe".format(os.path.basename(destiny)))
+                    DownProblem.fnprint("Renomeando para {}".format(os.path.basename(new_destiny)))
                     break
                 else:
                     count += 1
-            return False
+        nova = "" if new_destiny == "" else " nova"
+        DownProblem.fnprint("Criando{} pasta {}".format(nova, os.path.basename(destiny)))
         os.makedirs(destiny, exist_ok=True)
-        return True
+        DownProblem.fnprint("")
+        return new_destiny
 
     @staticmethod
     def create_default_draft(destiny: str, language: str):
@@ -254,6 +292,6 @@ class DownProblem:
                     f.write(Drafts.drafts[language])
                 else:
                     f.write("")
-            DownProblem.fnprint(draft_path + " (Vazio)")
+            DownProblem.fnprint(DownProblem.folder_and_file(draft_path) + " (Vazio)")
         else:
-            DownProblem.fnprint(draft_path + " (Não sobrescrito)")
+            DownProblem.fnprint(DownProblem.folder_and_file(draft_path) + " (Não sobrescrito)")

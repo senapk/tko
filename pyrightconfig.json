@@ -1,0 +1,12 @@
+{
+    "typeCheckingMode": "strict",
+    "reportMissingTypeStubs": true,
+    "reportUnnecessaryTypeIgnoreComment": true,
+    "reportImplicitOverride": true,
+    "reportUnknownMemberType": true,
+    "reportUnknownArgumentType": true,
+    "reportUnknownParameterType": true,
+    "reportUnknownVariableType": true,
+    "reportUnnecessaryCast": true
+  }
+  
