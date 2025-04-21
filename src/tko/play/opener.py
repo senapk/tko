@@ -65,7 +65,7 @@ class Opener:
 
     def load_folder(self, folder: str):
         files_to_open: List[str] = []
-        Opener.try_add(files_to_open, folder, "Readme.md")
+        # Opener.try_add(files_to_open, folder, "Readme.md")
         # Opener.try_add(files_to_open, folder, "cases.tio")
         files_to_open += Drafts.load_drafts_only(folder, self.language, ["md"])
         return files_to_open
