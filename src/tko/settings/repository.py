@@ -1,10 +1,8 @@
 from typing import Any, Dict, List
 import os
-import json
 import urllib
-from tko.util.remote_url import RemoteUrl, Absolute
+from tko.util.remote_url import RemoteUrl
 from tko.game.game import Game
-from tko.game.task import Task
 from tko.util.decoder import Decoder
 from tko.util.text import Text
 import yaml # type: ignore
@@ -60,7 +58,7 @@ class Repository:
     def get_task_folder_for_label(self, label: str) -> str:
         return os.path.abspath(os.path.join(self.root_folder, self.get_database_folder(), label))
 
-    def is_local_dir(self, path):
+    def is_local_dir(self, path: str) -> bool:
         rep_dir = self.get_rep_dir()
         path = os.path.abspath(path)
         return os.path.commonpath([rep_dir, path]) == rep_dir
@@ -121,7 +119,7 @@ class Repository:
         ru = RemoteUrl(source)
         try:
             ru.download_absolute_to(cache_file)
-        except urllib.error.URLError:
+        except urllib.error.URLError: # type: ignore
             print("Não foi possível baixar o arquivo do repositório")
             if os.path.exists(cache_file):
                 print("Usando arquivo do cache")
@@ -147,7 +145,7 @@ class Repository:
     __selected = "index"
     __database = "database"
 
-    defaults = {
+    defaults: dict[str, Any] = {
         __version: __actual_version,
         __database: "database",
         __source: "",
@@ -247,10 +245,10 @@ class Repository:
         try:
             with open(self.get_config_file(), encoding=encoding) as f:
                 self.data = yaml.safe_load(f)
-            if self.data is None or not isinstance(self.data, dict) or len(self.data) == 0:
+            if self.data is None or not isinstance(self.data, dict) or len(self.data) == 0: # type: ignore
                 with open(self.get_config_backup_file(), "r", encoding=encoding) as f:
                     self.data = yaml.safe_load(f)
-            if self.data is None or not isinstance(self.data, dict) or len(self.data) == 0:
+            if self.data is None or not isinstance(self.data, dict) or len(self.data) == 0: # type: ignore
                 raise FileNotFoundError(f"Arquivo de configuração vazio: {self.get_config_file()}")
         except:
             raise Warning(Text.format("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.get_config_file(), "corrompido"))

@@ -1,5 +1,7 @@
 # Changelog
 
+- 3.6.3
+  - Adding .mod to drafts in filter
 - 3.6.1
   - fix: error opening readme as language draft
 - 3.6.0
