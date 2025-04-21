@@ -1,7 +1,7 @@
 import unittest
 
 
-from tko.util.text import Text, Token
+from tko.util.text import Text
 from tko.play.fmt import Fmt
 
 class TestSimple(unittest.TestCase):

@@ -1,20 +1,20 @@
 import os
-from typing import Any, Dict
+from typing import Any, Dict, override
 from tko.settings.app_settings import AppSettings
 import appdirs  # type: ignore
-import yaml # type: ignore
+import yaml #type: ignore
 
 from tko.util.text import Text
 from tko.play.colors import Colors
 from tko.util.decoder import Decoder
 
-def singleton(class_):
+def singleton(class_): # type: ignore
     instances = {}
-    def getinstance(*args, **kwargs):
+    def getinstance(*args, **kwargs): # type: ignore
         if class_ not in instances:
             instances[class_] = class_(*args, **kwargs)
-        return instances[class_]
-    return getinstance
+        return instances[class_] # type: ignore
+    return getinstance # type: ignore
 
 @singleton
 class Settings:
@@ -30,17 +30,18 @@ class Settings:
         self.app = AppSettings()
         self.colors = Colors()
 
-        self.settings_file = ""
+        self.settings_file: str = ""
+        self.data: Dict[str, Any] = {}
 
     def set_settings_file(self, path: str):
         self.settings_file = path
         return self
 
     def get_settings_file(self) -> str:
-        if self.settings_file is None or self.settings_file == "":
+        if self.settings_file == "":
             self.package_name = "tko"
             default_filename = self.CFG_FILE
-            self.settings_file = os.path.join(appdirs.user_data_dir(self.package_name), default_filename)
+            self.settings_file = os.path.join(appdirs.user_data_dir(self.package_name), default_filename) # type: ignore
         
         if not os.path.exists(self.settings_file):
             os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
@@ -80,16 +81,16 @@ class Settings:
 
             encoding = Decoder.get_encoding(settings_file)
             with open(settings_file, "r", encoding=encoding) as f:
-                data = yaml.safe_load(f)
-            if data is None or not isinstance(data, dict) or len(data) == 0:
+                data: Any = yaml.safe_load(f)
+            if data is None or not isinstance(data, dict):
                 with open(backup_file, "w", encoding=encoding) as f:
                     data = yaml.safe_load(f)
-            if data is None or not isinstance(data, dict) or len(data) == 0:
+            if data is None or not isinstance(data, dict):
                 raise FileNotFoundError(f"Arquivo de configuração vazio: {settings_file}")
             self.data = data
-            self.dict_alias_remote = data.get(self.__remote, {})
-            self.app = AppSettings().from_dict(data.get(self.__appcfg, {}))
-            self.colors = Colors().from_dict(data.get(self.__colors, {}))
+            self.dict_alias_remote = data.get(self.__remote, {}) # type: ignore
+            self.app = AppSettings().from_dict(data.get(self.__appcfg, {})) # type: ignore
+            self.colors = Colors().from_dict(data.get(self.__colors, {})) # type: ignore
         except:
             self.reset()
             self.save_settings()
@@ -111,8 +112,9 @@ class Settings:
             yaml.dump(value, f)
         return self
 
+    @override
     def __str__(self):
-        output = []
+        output: list[str] = []
         output.append(str(Text.format("{g}", "Arquivo de configuração:")))
         output.append("- " + self.get_settings_file())
         output.append("")

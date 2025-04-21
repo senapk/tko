@@ -13,7 +13,9 @@ class Runner:
             answer = subprocess.run(cmd, cwd=folder, shell=True, input=input_data, stdout=PIPE, stderr=PIPE, text=True, timeout=timeout)
             err = ""
             if answer.returncode != 0:
+
                 err = answer.stderr + Runner.decode_code(answer.returncode)
+                # err += "\n" + cmd
             # if running on windows
             if os.name == "nt":
                 return answer.returncode, answer.stdout.encode("cp1252").decode("utf-8"), err

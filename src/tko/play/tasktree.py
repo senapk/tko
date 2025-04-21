@@ -615,7 +615,7 @@ class TaskTree:
         lang = self.rep.get_lang()
         if folder is None:
             return False
-        drafts = Drafts.load_md_and_drafs(folder, lang)
+        drafts = Drafts.load_drafts_only(folder, lang)
         if drafts:
             return True
         return False

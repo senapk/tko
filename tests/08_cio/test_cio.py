@@ -1,7 +1,6 @@
 import unittest
 import os
 from pathlib import Path
-import pytest
 from tko.__main__ import exec, Parser #type: ignore
 from tko.util.compare import Compare
 
@@ -10,15 +9,15 @@ class Test:
     def setup_method(cls):
         os.chdir(Path(__file__).parent)
     
-    def test_cio_1(self, capsys):
+    def test_cio_1(self, capsys): # type: ignore
         # path = os.path.join(Test.folder + "_calc.tio")
         # if os.path.exists(path):
         #     os.remove(path)
         # Compare.text(capsys, "out1", "build _calc.tio calc.md")
-        Compare.text(capsys, "out2", "-w 50 -m test _calc.tio")
+        Compare.text(capsys, "out2", "-w 50 -m test _calc.tio") 
         Compare.text(capsys, "out3", "-w 50 -m test _calc.tio empty.py")
         
-    def test_cio_2(self, capsys):
+    def test_cio_2(self, capsys): # type: ignore
         # path = os.path.join(Test.folder, "_calc2.tio")
         # if os.path.exists(path):
         #     os.remove(path)

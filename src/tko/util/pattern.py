@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import List
 import re
 
@@ -9,8 +10,6 @@ class FileSource:
         self.output_file = output_file
 
     def __eq__(self, other: FileSource) -> bool: # type: ignore
-        if not isinstance(other, FileSource):
-            return False
         return self.label == other.label and self.input_file == other.input_file and \
                 self.output_file == other.output_file
 

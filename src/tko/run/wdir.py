@@ -85,7 +85,7 @@ class Wdir:
         
         solver_list: list[str] = []
         if self.__lang != "":
-            solver_list = Drafts.load_md_and_drafs(folder, self.__lang)
+            solver_list = Drafts.load_drafts_only(folder, self.__lang)
         solver_list = sorted(solver_list)
 
         # if not self.__curses:

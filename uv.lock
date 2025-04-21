@@ -244,6 +244,8 @@ dependencies = [
     { name = "pyright" },
     { name = "pytest" },
     { name = "pyyaml" },
+    { name = "types-appdirs" },
+    { name = "types-chardet" },
     { name = "types-markdown" },
     { name = "uniplot" },
     { name = "windows-curses", marker = "sys_platform == 'win32'" },
@@ -260,9 +262,29 @@ requires-dist = [
     { name = "pyright", specifier = ">=1.1.399" },
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "pyyaml", specifier = ">=6.0.2" },
+    { name = "types-appdirs", specifier = ">=1.4.3.5" },
+    { name = "types-chardet", specifier = ">=5.0.4.6" },
     { name = "types-markdown", specifier = ">=3.7.0.20250322" },
     { name = "uniplot", specifier = ">=0.16.2" },
     { name = "windows-curses", marker = "sys_platform == 'win32'" },
+]
+
+[[package]]
+name = "types-appdirs"
+version = "1.4.3.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fe/dc/600964f9ee98f4afdb69be74cd8e1ca566635a76ada9af0046e44a778fbb/types-appdirs-1.4.3.5.tar.gz", hash = "sha256:83268da64585361bfa291f8f506a209276212a0497bd37f0512a939b3d69ff14", size = 2866 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cf/07/41f5b9b11f11855eb67760ed680330e0ce9136a44b51c24dd52edb1c4eb1/types_appdirs-1.4.3.5-py3-none-any.whl", hash = "sha256:337c750e423c40911d389359b4edabe5bbc2cdd5cd0bd0518b71d2839646273b", size = 2667 },
+]
+
+[[package]]
+name = "types-chardet"
+version = "5.0.4.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/dd/47/932d35ac07203e936e69102dc9570e83606d386bacb60696f0c403224e86/types-chardet-5.0.4.6.tar.gz", hash = "sha256:caf4c74cd13ccfd8b3313c314aba943b159de562a2573ed03137402b2bb37818", size = 4592 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/10/35/2a06c5c892eb1a0a4f4f74a6aff1ade05da82444af0190cf731761f2c46c/types_chardet-5.0.4.6-py3-none-any.whl", hash = "sha256:ea832d87e798abf1e4dfc73767807c2b7fee35d0003ae90348aea4ae00fb004d", size = 5853 },
 ]
 
 [[package]]

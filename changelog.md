@@ -1,5 +1,7 @@
 # Changelog
 
+- 3.6.1
+  - fix: error opening readme as language draft
 - 3.6.0
   - add: better download messages for down problem
   - add: Opener now opens all md files in the folder with drafts

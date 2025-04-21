@@ -9,10 +9,13 @@ from tko.util.decoder import Decoder
 import yaml #type: ignore
 import io
 
+from typing import override
+
 class CompileError(Exception):
-    def __init__(self, message):
+    def __init__(self, message: str):
         self.message = message
 
+    @override
     def __str__(self):
         return self.message
 
@@ -76,7 +79,7 @@ class SolverBuilder:
         self.clear_cache()
         self.__exec: Executable = Executable()
 
-    def check_tool(self, name):
+    def check_tool(self, name: str):
         if shutil.which(name) is None:
             self.__exec.set_compile_error(Text.format("{r}: O comando '" + name + "' não foi encontrado", "Falha")) 
             raise CompileError("fail: comando '" + name + "' não foi encontrado")
@@ -105,7 +108,7 @@ class SolverBuilder:
             shutil.rmtree(self.cache_dir)
         os.makedirs(self.cache_dir, exist_ok=True)
 
-    def get_executable(self, force_rebuild=False) -> tuple[Executable, bool]:
+    def get_executable(self, force_rebuild: bool = False) -> tuple[Executable, bool]:
         if self.args_list == []:
             return Executable(), False
         if self.__exec.has_compile_error():
@@ -245,6 +248,7 @@ class SolverBuilder:
 
     def __prepare_go(self):
         self.check_tool("go")
+        
         self.__exec.set_executable(["go", "run"], self.args_list)
 
     def __prepare_ts(self, free_run_mode: bool):
@@ -270,7 +274,7 @@ class SolverBuilder:
         if return_code != 0:
             self.__exec.set_compile_error(stdout + stderr)
         else:
-            new_source_list = []
+            new_source_list: list[str] = []
             for source in new_files:
                 new_source_list.append(os.path.join(self.cache_dir, os.path.basename(source)[:-2] + "js"))
             self.__exec.set_executable(["node"], new_source_list)  # renaming solver to main

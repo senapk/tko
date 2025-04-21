@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import override
+
 class TaskBasic:
     def __init__(self, key: str = ""):
         self.key = key
@@ -25,11 +28,12 @@ class TaskBasic:
         self.timestamp = timestamp
         return self
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, TaskBasic):
             return False
-        dr: TaskBasic = other
-        return self.coverage == dr.coverage and self.autonomy == dr.autonomy and self.skill == dr.skill
+        return self.coverage == other.coverage and self.autonomy == other.autonomy and self.skill == other.skill
 
+    @override
     def __str__(self):
         return "{" + f'k:{self.key}, c:{self.coverage}, a:{self.autonomy}, s:{self.skill}' + "}"
