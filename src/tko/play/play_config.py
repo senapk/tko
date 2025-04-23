@@ -90,13 +90,13 @@ class PlayPalette:
             )
         )
 
-        options.append(
-            FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y} das tarefas", icon(Flags.reward.is_true()), "Ganho"),
-                Flags.reward.toggle, 
-                Flags.reward.get_keycode()
-            )
-        )
+        # options.append(
+        #     FloatingInputData(
+        #         lambda: Text.format(" {} Mostrar {y} das tarefas", icon(Flags.reward.is_true()), "Ganho"),
+        #         Flags.reward.toggle, 
+        #         Flags.reward.get_keycode()
+        #     )
+        # )
 
         options.append(
             FloatingInputData(
@@ -108,7 +108,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Modo {y}: Habilitar todas as tarefas", icon(Flags.admin.is_true()), "Admin"),
+                lambda: Text.format(" {} Modo {y}: Habilita apenas tarefas recomendadas", icon(not Flags.admin.is_true()), "Gamer"),
                 Flags.admin.toggle,
                 Flags.admin.get_keycode()
             )

@@ -35,8 +35,8 @@ class Task(TreeItem):
 
         self.qskills: dict[str, int] = {} # default quest skills
         self.skills: dict[str, int] = {} # local skills
+        
         self.xp: int = 0
-
         self.opt: bool = False
         
         self.link = ""
@@ -65,7 +65,7 @@ class Task(TreeItem):
         return self.folder
     
     @staticmethod
-    def decode_autonomy_skill(value: int) -> tuple[int, int]:
+    def decode_approach_autonomy(value: int) -> tuple[int, int]:
         opts = [(0, 0), (1, 1), (1, 2), (2, 2), (3, 2), (1, 3), (2, 3), (3, 3), (4, 3), (3, 4), (4, 4)]
         autonomy = opts[value][0]
         skill = opts[value][1]
@@ -81,28 +81,28 @@ class Task(TreeItem):
                 val = val.strip()
                 if k == "cov":
                     self.coverage = int(val)
-                elif k == "aut":
+                elif k == "aut" or k == "appr":
                     self.approach = int(val)
-                elif k == "hab":
+                elif k == "hab" or k == "auto":
                     self.autonomy = int(val)
                 elif k == "idx":
                     self.main_idx = int(val)
         elif ":" not in value:
-            self.approach, self.autonomy = Task.decode_autonomy_skill(int(value))
+            self.approach, self.autonomy = Task.decode_approach_autonomy(int(value))
         else:
             v = value.split(":")
             if len(v) == 3:
-                self.approach, self.autonomy = Task.decode_autonomy_skill(int(v[0]))
+                self.approach, self.autonomy = Task.decode_approach_autonomy(int(v[0]))
                 self.main_idx = int(v[1])
                 self.coverage = int(v[2])
             elif len(v) == 4:
                 self.coverage = (int(v[0]))
                 self.approach = (int(v[1]))
-                self.autonomy    = (int(v[2]))
+                self.autonomy = (int(v[2]))
                 self.main_idx = (int(v[3]))
 
     def save_to_db(self) -> str:
-        return "{" + f"cov:{self.coverage}, aut:{self.approach}, hab:{self.autonomy}, idx:{self.main_idx}" + "}"
+        return "{" + f"cov:{self.coverage}, app:{self.approach}, auto:{self.autonomy}, idx:{self.main_idx}" + "}"
     
     def is_db_empty(self) -> bool:
         return self.approach == 0 and self.autonomy == 0 and self.main_idx == 0 and self.coverage == 0
@@ -136,6 +136,11 @@ class Task(TreeItem):
         if prog == 10:
             return Text().addf(color, symbols.check.text)
         return Text().add("0")
+
+    def get_xp(self) -> int:
+        if self.xp == 0:
+            return 1
+        return self.xp
 
     def get_percent(self):
         return (self.approach + self.autonomy) * self.coverage // 10

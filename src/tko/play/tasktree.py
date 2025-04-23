@@ -162,6 +162,10 @@ class TaskTree:
                 output.addf(color + "g", word + " ")
             elif word.startswith(":"):
                 output.addf(color + "y", word + " ")
+            elif word.startswith("*"):
+                output.addf(color + "c", word + " ")
+            elif word.startswith("+"):
+                output.addf(color + "c", word + " ")
             else:
                 output.addf(color, word + " ")
 
@@ -170,10 +174,9 @@ class TaskTree:
         else:
             output.add(" ")
 
-        if Flags.percent:
-            output.ljust(self.max_title + 10, Token(" "))
-            prog = int(t.get_percent())
-            output.addf("y", str(prog).rjust(3, " ") + "%")
+        output.ljust(self.max_title + 10, Token(" "))
+        prog = int(t.get_percent())
+        output.addf("y", str(prog).rjust(3, " ") + "%")
 
         # if Flags.reward:
         #     xp = ""

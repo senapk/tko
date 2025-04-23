@@ -1,5 +1,9 @@
 # Changelog
 
+- 3.8.0
+  - add: modo gamer
+  - add: loading xp from tasks
+  - add: quest percent loading using opt
 - 3.7.0
   - fix: error in uniplot
   - fix: refactor to pyright strict

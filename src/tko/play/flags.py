@@ -68,9 +68,9 @@ class Flag:
 
 class Flags:
     minimum = Flag().set_name("Mínimo").set_keycode("M").set_values(["0", "1"])    .set_description("Mostra os requisitos para completar a missão")
-    reward = Flag().set_name("Ganho").set_keycode("G").set_values(["0", "1"]) .set_description("Mostra a experiência obtida nas tarefas     ")
+    #reward = Flag().set_name("Ganho").set_keycode("G").set_values(["0", "1"]) .set_description("Mostra a experiência obtida nas tarefas     ")
     percent = Flag().set_name("Percentual").set_keycode("P").set_values(["1", "0"]).set_description("Mostra todos os valores em porcentagem      ")
-    admin = Flag().set_name("Root").set_keycode("R").set_values(["1", "0"])       .set_description("Habilitas todas as missões e tarefas        ")
+    admin = Flag().set_name("Root").set_keycode("G").set_values(["1", "0"])       .set_description("Habilitas todas as missões e tarefas        ")
     skills = Flag().set_name("Técnicas").set_keycode("T").set_values(["0", "1"]).set_description("Mostra a barra de skills")
     graph = Flag().set_name("Graph").set_keycode(GuiKeys.graph).set_values(["0", "1", "2"]).set_description("Muda o Gráfico")
     devel = Flag().set_name("Devel").set_values(["0", "1"])

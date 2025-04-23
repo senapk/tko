@@ -109,7 +109,7 @@ class LogInfo:
     
     def load_from_self(self, payload: str):
         if len(payload) == 1:
-            self.approach, self.autonomy = Task.decode_autonomy_skill(int(payload))
+            self.approach, self.autonomy = Task.decode_approach_autonomy(int(payload))
             return
     
         if len(payload) == 2:

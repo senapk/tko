@@ -10,14 +10,16 @@ class TaskParser:
         self.database_folder = os.path.abspath(database_folder)
         self.task = Task()
 
-    def __load_tags(self, tags_raw: str):
-        task = self.task
+    def __load_xp(self, tags_raw: str):
         tags = [tag.strip() for tag in tags_raw.split(" ")]
-        task.opt = "opt" in tags
         for t in tags:
             if t.startswith("+"):
-                key, value = t[1:].split(":")
-                task.skills[key] = int(value)
+                self.task.xp = int(t[1:])
+                self.task.opt = True
+            elif t.startswith("*"):
+                self.task.xp = int(t[1:])
+                self.task.opt = False
+            
 
     def parse_line(self, line: str, line_num: int = 0) -> Task | None:
         pattern = r'\s*?- \[ \](.*?)\[([^\]]+)\]\(([^)]+)\)(?:\s*<!--(.*?)-->)?'
@@ -33,9 +35,10 @@ class TaskParser:
             task.title += " "
         task.title += match.group(2).strip()
         task.title = task.title.replace("`", "")
+        self.__load_xp(task.title)
 
         if match.group(4) is not None:
-            self.__load_tags(match.group(4))
+            self.__load_xp(match.group(4))
 
         for item in task.title.split(" "):
             if item.startswith("@"):

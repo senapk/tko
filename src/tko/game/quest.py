@@ -3,7 +3,7 @@ from tko.game.task import Task
 from tko.util.text import Text
 from tko.util.get_md_link import get_md_link
 from tko.game.tree_item import TreeItem
-from tko.play.flags import Flags
+
 # from typing import override
 
 def startswith(text: str, prefix: str) -> bool: 
@@ -33,13 +33,13 @@ class Quest(TreeItem):
 
     def get_full_title(self):
         output = self.title
-        if Flags.minimum:
-            output += " " + self.get_requirement().get_str()
-        if Flags.reward:
-            xp = ""
-            for s, v in self.skills.items():
-                xp += f" +{s}:{v}"
-            output += xp
+        # if Flags.minimum:
+        #     output += " " + self.get_requirement().get_str()
+        # if Flags.reward:
+        #     xp = ""
+        #     for s, v in self.skills.items():
+        #         xp += f" +{s}:{v}"
+        #     output += xp
         return output
 
 
@@ -113,19 +113,14 @@ class Quest(TreeItem):
         return True
 
     def add_task(self, task: Task, filename: str):
-        if self.qmin is not None:
-            if task.opt:
-                print(f"Quests com requerimento de porcentagem não deve ter Tasks opcionais")
-                print(f"{filename}:{task.line_number} {task.key}")
-                exit(1)
-        task.qskills = self.skills
+        # task.qskills = self.skills
 
-        task.xp = 0
-        for s in task.skills:
-            task.xp += task.skills[s]
+        # task.xp = 0
+        # for s in task.skills:
+        #     task.xp += task.skills[s]
 
-        for s in task.qskills:
-            task.xp += task.qskills[s]
+        # for s in task.qskills:
+        #     task.xp += task.qskills[s]
         
         self.__tasks.append(task)
 
@@ -136,9 +131,10 @@ class Quest(TreeItem):
         total = 0
         obtained = 0
         for t in self.__tasks:
-            total += t.xp
+            if not t.opt:
+                total += t.get_xp()   
             if t.get_percent() > 0:
-                obtained += int(t.xp * t.get_ratio())
+                obtained += int(t.get_xp() * t.get_ratio())
 
         return obtained, total
         

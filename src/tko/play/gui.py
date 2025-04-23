@@ -90,11 +90,16 @@ class Gui:
             return color, output
         return "R", " ERRO"
 
+    def get_admin_color(self) -> str:
+        if Flags.admin:
+            return ""
+        return "g"
+
     def center_header_footer(self, value: Text, frame: Frame) -> Text:
         half = value.len() // 2
         x = frame.get_x()
         _, dx = Fmt.get_size()
-        color = "r" if Flags.admin else ""
+        color = self.get_admin_color()
         full = Text().addf(color, "─" * ((dx//2) - x - 2 - half)).add(value)
         return full
 
@@ -104,9 +109,9 @@ class Gui:
         dirname = self.rep.get_rep_dir()
         dirname = os.path.basename(dirname).upper()
         top.add(self.style.border(alias_color, dirname))
-        if Flags.admin:
+        if not Flags.admin:
             color = "W" if Flags.admin else "K"
-            top.add(self.style.border(color, "ADMIN"))
+            top.add(self.style.border(color, "GAMER"))
         top.add(self.style.border("G", self.rep.get_lang().upper()))
         full = self.center_header_footer(top, frame)
         frame.set_header(full, "<")
@@ -341,7 +346,7 @@ class Gui:
             frame.write(y + 1, self.tree.max_title + distance, Text().addf("g", line))
 
     def show_items(self):
-        border_color = "r" if Flags.admin else ""
+        border_color = self.get_admin_color()
         Fmt.clear()
         self.tree.reload_sentences()
         lines, cols = Fmt.get_size()
