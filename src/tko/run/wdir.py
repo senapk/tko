@@ -14,7 +14,6 @@ from tko.down.drafts import Drafts
 from tko.util.text import Text
 from tko.util.symbols import symbols
 from tko.util.label_factory import LabelFactory
-from tko.settings.repository import available_languages
 class Wdir:
     def __init__(self):
         self.__autoload = False
@@ -129,7 +128,7 @@ class Wdir:
                 pass
         if loading_failures > 0 and loading_failures == len(self.__source_list):
             raise FileNotFoundError("failure: nenhum arquivo de teste encontrado")
-        self.__unit_list = sum(self.__pack_list, [])
+        self.__unit_list = sum(self.__pack_list, []) # type: ignore
         self.__number_and_mark_duplicated()
         self.__calculate_grade()
         self.__pad()

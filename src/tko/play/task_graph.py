@@ -1,8 +1,6 @@
 from tko.settings.settings import Settings
 from tko.settings.repository import Repository
-from tko.settings.log_info import LogInfo
 from tko.settings.logger import Logger
-from tko.play.flags import Flags
 from uniplot import plot_to_string # type: ignore
 
 class TaskGraph:

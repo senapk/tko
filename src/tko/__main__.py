@@ -114,7 +114,7 @@ class Main:
         CmdConfig.execute(settings, param)
 
     @staticmethod
-    def list(_args):
+    def list(_args: argparse.Namespace):
         settings = Settings()
         print(str(settings))
 

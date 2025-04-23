@@ -3,7 +3,7 @@ import curses
 import os
 
 class InputManager:
-    backspace_list = [8, 127, 263, curses.KEY_BACKSPACE]
+    backspace_list: list[int] = [8, 127, 263, curses.KEY_BACKSPACE]
     a = 97
     d = 100
     tab = 9

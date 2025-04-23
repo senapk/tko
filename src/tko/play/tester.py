@@ -11,7 +11,7 @@ from tko.play.floating_manager import FloatingManager
 from tko.play.fmt import Fmt
 from tko.play.frame import Frame
 from tko.play.images import compilling, executing, images, intro, random_get, success
-from tko.play.keys import GuiActions, GuiKeys, GuiKeys
+from tko.play.keys import GuiActions, GuiKeys
 from tko.play.opener import Opener
 from tko.run.diff_builder import DiffBuilder
 from tko.run.solver_builder import CompileError
@@ -81,7 +81,7 @@ class Tester:
         self.exit = True
         return self
 
-    def print_centered_image(self, image: str, color: str, clear=False, align: str = "."):
+    def print_centered_image(self, image: str, color: str, clear: bool = False, align: str = "."):
         dy, dx = Fmt.get_size()
         lines = image.splitlines()[1:]
         init_y = 4
@@ -101,11 +101,11 @@ class Tester:
             out = random_get(success, self.get_folder(), "static")
         self.print_centered_image(out, "g")
         
-    def show_compilling(self, clear=False):
+    def show_compilling(self, clear: bool = False):
         out = random_get(compilling, self.get_folder(), "random")
         self.print_centered_image(out, "y", clear)
 
-    def show_executing(self, clear=False):
+    def show_executing(self, clear: bool = False):
         out = executing
         self.print_centered_image(out, "y", clear, "v")
 
@@ -215,7 +215,7 @@ class Tester:
             self.store_test_track(percent)
 
 
-    def build_top_line_header(self, frame_dx):
+    def build_top_line_header(self, frame_dx : int) -> Text:
         activity_color = "C"
         solver_color = "W"
         sources_color = "Y"
@@ -342,14 +342,14 @@ class Tester:
 
         return output
 
-    def draw_top_bar_content(self, frame):
+    def draw_top_bar_content(self, frame : Frame):
         if not self.wdir.has_tests():
             return
         value = self.get_focused_unit()
         info = Text()
         if self.wdir.get_solver().has_compile_error():
             info = self.borders.border("R", "Erro de compilação")
-        elif value is not None and not self.is_all_right() and not self.mode == SeqMode.intro:
+        elif not self.is_all_right() and not self.mode == SeqMode.intro:
             info = value.str(pad = False)
             # if self.locked_index:
             #     info = self.borders.border(focused_unit_color, info.get_text())
@@ -451,7 +451,7 @@ class Tester:
     def get_solver_names(self):
         return sorted(self.wdir.solvers_names())
     
-    def main(self, scr):
+    def main(self, scr: curses.window):
         InputManager.fix_esc_delay()
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
@@ -534,7 +534,7 @@ class Tester:
             self.results = []
             self.unit_list = [unit for unit in self.wdir.get_unit_list()]
 
-    def send_char_not_found(self, key):
+    def send_char_not_found(self, key: int):
         if not Flags.devel:
             return
         self.fman.add_input(Floating("v>").error()
@@ -618,7 +618,7 @@ class Tester:
             self.settings.save_settings()
 
 
-    def process_key(self, key):
+    def process_key(self, key: int):
         if key == ord('q') or any([key == x for x in InputManager.backspace_list]):
             self.set_exit()
         elif key == InputManager.esc:
@@ -726,8 +726,8 @@ class Tester:
 
     def run(self):
         while True:
-            free_run_fn = curses.wrapper(self.main)
-            if free_run_fn == None:
+            free_run_fn = curses.wrapper(self.main) # type: ignore
+            if free_run_fn is None:
                 Logger.get_instance().record_back(self.task.key)
                 break
             else:

@@ -3,7 +3,7 @@ from typing import List, Dict
 import json
 import os
 from tko.util.decoder import Decoder
-from typing import override
+# from typing import override
 
 
 def json_norm_join(*args: str):
@@ -16,7 +16,7 @@ class JsonFile:
         self.contents: str = contents
         self.encoding: int = 0
 
-    @override
+    # @override
     def __str__(self):
         return self.name + ":" + self.contents + ":" + str(self.encoding)
 
@@ -102,6 +102,6 @@ class JsonVPL:
                     found = True
         return found
 
-    @override
+    # @override
     def __str__(self):
         return self.to_json()

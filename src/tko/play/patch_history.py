@@ -52,11 +52,11 @@ class PatchHistory:
         last = self.patches[-1]
         del self.patches[-1]
 
-        patch = dmp.patch_make(new_content, last.content)
+        patch = dmp.patch_make(new_content, last.content) # type: ignore
         if not patch: # não houve mudança
             return last.label
         
-        patch_text = dmp.patch_toText(patch)
+        patch_text = dmp.patch_toText(patch) # type: ignore
         self.patches.append(PatchVersion(last.label, patch_text))
         self.patches.append(PatchVersion(label, new_content))
         return label
@@ -71,16 +71,16 @@ class PatchHistory:
         dmp = diff_match_patch()
         while index >= 0:
             label = self.patches[index].label
-            patch = dmp.patch_fromText(self.patches[index].content)
+            patch = dmp.patch_fromText(self.patches[index].content) # type: ignore
             original = output[-1].content
-            new_content = dmp.patch_apply(patch, original)[0]
-            output.append(PatchVersion(label, new_content))
+            new_content = dmp.patch_apply(patch, original)[0] # type: ignore
+            output.append(PatchVersion(label, new_content)) # type: ignore
             index -= 1
         output.reverse()
         return output
 
     def to_json(self):
-        data: dict = {}
+        data: dict[str, list[dict[str, str]]] = {}
         data["patches"] = []
         for patch in self.patches:
             data["patches"].append({"label": patch.label, "content": patch.content})

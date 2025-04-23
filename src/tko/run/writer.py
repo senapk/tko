@@ -49,7 +49,7 @@ class Writer:
 
     @staticmethod
     def save_target(target: str, unit_list: List[Unit], quiet: bool) -> bool:
-        def save_dir(_target: str, _unit_list):
+        def save_dir(_target: str, _unit_list: List[Unit]):
             folder = _target
             pattern_loader = PatternLoader()
             number = 0
@@ -57,7 +57,7 @@ class Writer:
                 Writer.save_dir_files(folder, pattern_loader, str(number).zfill(2), unit)
                 number += 1
 
-        def save_file(_target, _unit_list):
+        def save_file(_target: str, _unit_list: List[Unit]):
             if _target.endswith(".tio"):
                 _new = "\n".join([Writer.to_tio(unit) for unit in _unit_list])
             else:

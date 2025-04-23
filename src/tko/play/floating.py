@@ -3,7 +3,7 @@ from .frame import Frame
 from ..util.text import Text
 from .fmt import Fmt
 import curses
-from typing import Callable, override
+from typing import Callable
 from tko.play.input_manager import InputManager
 from tko.play.keys import GuiKeys
 from tko.util.symbols import symbols
@@ -194,7 +194,7 @@ class FloatingInput(Floating):
         self.right_dx = 5 # shortcut space
         self.search_text: List[str] = []
 
-    @override
+    # @override
     def calc_dy_dx(self):
         dy, dx = super().calc_dy_dx()
         dy += len(self._options) + 2
@@ -233,7 +233,7 @@ class FloatingInput(Floating):
                 return
             steps -= 1
 
-    @override
+    # @override
     def write_content(self):
         options: List[Text] = []
         dx = self._frame.get_dx() - self.right_dx
@@ -276,7 +276,7 @@ class FloatingInput(Floating):
                 return
         self._index = -1
 
-    @override
+    # @override
     def get_input(self) -> int:
         self.draw()
         key: int = Fmt.getch()

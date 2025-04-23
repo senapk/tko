@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, override
+from typing import Any, Dict
 from tko.settings.app_settings import AppSettings
 import appdirs  # type: ignore
 import yaml #type: ignore
@@ -112,7 +112,7 @@ class Settings:
             yaml.dump(value, f)
         return self
 
-    @override
+    # @override
     def __str__(self):
         output: list[str] = []
         output.append(str(Text.format("{g}", "Arquivo de configuração:")))

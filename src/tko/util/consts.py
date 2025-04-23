@@ -1,6 +1,6 @@
 from __future__ import annotations
 import enum
-from typing import override
+# from typing import override
 from .symbols import symbols
 from .text import Token
 
@@ -27,7 +27,7 @@ class ExecutionResult(enum.Enum):
         else:
             raise ValueError("Invalid result type")
 
-    @override
+    # @override
     def __str__(self):
         return self.value
 

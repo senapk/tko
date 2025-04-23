@@ -1,4 +1,4 @@
-from typing import override
+# from typing import override
 from tko.util.symbols import symbols
 from tko.util.text import Text
 from tko.game.tree_item import TreeItem
@@ -14,7 +14,7 @@ class Task(TreeItem):
         REMOTE_FILE = 3 # url link do download file
         IMPORT_FILE = 4 # source folder outside database to import files
 
-        @override
+        # @override
         def __str__(self):
             return self.name
 
@@ -173,7 +173,7 @@ class Task(TreeItem):
         else:
             print(f"Compreensão inválida: {value}")
 
-    @override
+    # @override
     def __str__(self):
         lnum = str(self.line_number).rjust(3)
         key = "" if self.key == self.title else self.key + " "

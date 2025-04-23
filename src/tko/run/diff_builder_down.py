@@ -5,16 +5,13 @@ from tko.util.symbols import symbols
 from tko.util.text import Text, Token
 
 
-from typing import List, Tuple
-
-
 class DownDiff:
     def __init__(self, width: int, unit: Unit):
         self.width = width
         self.curses = False
         self.db = DiffBuilder(width)
         self.unit = unit
-        self.output: List[Text] = []
+        self.output: list[Text] = []
         self.__to_insert_header = False
         self.no_diff_mode = self.unit.inserted == "" and self.unit.expected == ""
         self.expected_received, self.first_failure = self.db.render_diff(self.unit.expected, self.unit.received)
@@ -28,9 +25,9 @@ class DownDiff:
         return self
 
     @staticmethod
-    def put_left_equal(exp_rec_list: List[Tuple[Text | None, Text | None]], unequal: Token = symbols.unequal):
+    def put_left_equal(exp_rec_list: list[tuple[Text | None, Text | None]], unequal: Token = symbols.unequal) -> list[tuple[Text, Text]]:
 
-        output: List[Tuple[Text, Text]] = []
+        output: list[tuple[Text, Text]] = []
         for exp, rec in exp_rec_list:
             if exp is None or rec is None or exp != rec:
                 exp_lines = Text() + unequal + " " + exp
@@ -98,7 +95,7 @@ class DownDiff:
     def end_frame(self):
         self.output.append(Text().fold_in(self.width, symbols.hbar, "╰", "╯"))
 
-    def build_diff(self) -> List[Text]:
+    def build_diff(self) -> list[Text]:
         if self.__to_insert_header:
             self.insert_header()
         if not self.no_diff_mode:
@@ -106,7 +103,12 @@ class DownDiff:
         symb = symbols.unequal
         if self.unit.result == ExecutionResult.EXECUTION_ERROR or self.unit.result == ExecutionResult.COMPILATION_ERROR or self.unit.expected == "":
             symb = symbols.vbar
-        self.expected_received = self.put_left_equal(self.expected_received, symb)
+        left_equal = self.put_left_equal(self.expected_received, symb)
+
+        self.expected_received.clear()
+        for exp, rec in left_equal:
+            self.expected_received.append((exp, rec))
+
         self.insert_expected()
         self.insert_received()
         self.insert_first_line_diff()

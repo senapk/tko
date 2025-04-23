@@ -1,5 +1,5 @@
 import curses
-from typing import override
+# from typing import override
 from tko.util.text import Text, Token
 from tko.play.colors import Colors
 
@@ -9,7 +9,7 @@ class TextPosition:
         self.x = x
         self.text = text
 
-    @override
+    # @override
     def __str__(self):
         return f"{self.y}:{self.x}:{self.text}"
     
@@ -19,7 +19,7 @@ class TokenPosition:
         self.x = x
         self.token = token
 
-    @override
+    # @override
     def __str__(self):
         return f"{self.y}:{self.x}:{self.token}"
 

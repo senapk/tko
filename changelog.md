@@ -1,5 +1,8 @@
 # Changelog
 
+- 3.7.0
+  - fix: error in uniplot
+  - fix: refactor to pyright strict
 - 3.6.3
   - Adding .mod to drafts in filter
 - 3.6.1

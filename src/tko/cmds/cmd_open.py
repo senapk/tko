@@ -1,11 +1,8 @@
 from tko.settings.settings import Settings
-from tko.game.game import Game
 from tko.settings.repository import Repository
 from tko.play.play import Play
 from tko.settings.logger import Logger
-from typing import Dict
 from tko.util.text import Text
-import os
 
 class CmdOpen:
     def __init__(self, settings: Settings):

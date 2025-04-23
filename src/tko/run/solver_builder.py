@@ -9,13 +9,13 @@ from tko.util.decoder import Decoder
 import yaml #type: ignore
 import io
 
-from typing import override
+# from typing import override
 
 class CompileError(Exception):
     def __init__(self, message: str):
         self.message = message
 
-    @override
+    # @override
     def __str__(self):
         return self.message
 

@@ -1,28 +1,21 @@
 from .keys import GuiKeys
 from ..game.game import Game
-from .opener import Opener
-from typing import Any, Dict, Callable, Tuple
 from ..settings.settings import Settings
-from ..settings.app_settings import AppSettings
 from ..settings.repository import available_languages, Repository
-from ..util.text import Text, Token
-from tko.play.floating import Floating, FloatingInput, FloatingInputData
+from tko.play.floating import Floating
 from .fmt import Fmt
-from .search import Search
 from .input_manager import InputManager
-from tko.util.symbols import symbols
 from tko.play.play_config import PlayPalette
 
 
 from .floating import Floating
 from .floating_manager import FloatingManager
-from .flags import Flag, Flags, FlagsMan
+from .flags import Flags, FlagsMan
 from .tasktree import TaskTree
 from .gui import Gui
 from .play_actions import PlayActions
-from .functors import FlagFunctor, GradeFunctor
+from .functors import FlagFunctor
 
-import os
 import curses
 
 class Play:
@@ -63,7 +56,7 @@ class Play:
 
         self.fman.add_input(
             Floating().put_text("\nAté a próxima\n").set_exit_fn(set_exit).warning()
-        ),
+        )
 
     def toggle_skills(self):
         Flags.skills.toggle()
@@ -112,7 +105,7 @@ class Play:
 
         return cman
         
-    def send_char_not_found(self, key):
+    def send_char_not_found(self, key: int):
         if not Flags.devel:
             return
 
@@ -126,14 +119,14 @@ class Play:
                 .put_text(f"Tecla char {chr(key)} code {key} não reconhecida")
         )
 
-    def main(self, scr):
+    def main(self, scr: curses.window):
         InputManager.fix_esc_delay()
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
 
         while True:
-            self.tree.update_tree(admin_mode=Flags.admin or self.gui.search.search_mode)
+            self.tree.update_tree(admin_mode=Flags.admin.is_true() or self.gui.search.search_mode)
             self.fman.draw_warnings()
             cman = self.make_callback()
             self.gui.show_items()

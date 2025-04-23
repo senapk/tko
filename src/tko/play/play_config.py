@@ -4,7 +4,6 @@ from tko.util.symbols import symbols
 from tko.play.keys import GuiKeys
 from tko.play.flags import Flags
 from tko.play.play_actions import PlayActions
-from tko.play.floating_manager import FloatingManager
 
 class PlayPalette:
     def __init__(self, actions: PlayActions):
@@ -77,7 +76,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y}", icon(Flags.percent), "Percentual"),
+                lambda: Text.format(" {} Mostrar {y}", icon(Flags.percent.is_true()), "Percentual"),
                 Flags.percent.toggle, 
                 Flags.percent.get_keycode()
             )
@@ -85,7 +84,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y} para completar a missão", icon(Flags.minimum), "Mínimo"),
+                lambda: Text.format(" {} Mostrar {y} para completar a missão", icon(Flags.minimum.is_true()), "Mínimo"),
                 Flags.minimum.toggle,
                 Flags.minimum.get_keycode()
             )
@@ -93,7 +92,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y} das tarefas", icon(Flags.reward), "Ganho"),
+                lambda: Text.format(" {} Mostrar {y} das tarefas", icon(Flags.reward.is_true()), "Ganho"),
                 Flags.reward.toggle, 
                 Flags.reward.get_keycode()
             )
@@ -101,7 +100,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y} adquiridas", icon(Flags.skills), Flags.skills.get_name()),
+                lambda: Text.format(" {} Mostrar {y} adquiridas", icon(Flags.skills.is_true()), Flags.skills.get_name()),
                 Flags.skills.toggle, 
                 Flags.skills.get_keycode()
             )
@@ -109,7 +108,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Modo {y}: Habilitar todas as tarefas", icon(Flags.admin), "Admin"),
+                lambda: Text.format(" {} Modo {y}: Habilitar todas as tarefas", icon(Flags.admin.is_true()), "Admin"),
                 Flags.admin.toggle,
                 Flags.admin.get_keycode()
             )
@@ -133,7 +132,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Devel: Habilita mensagens de {y}", icon(Flags.devel), "Debug"),
+                lambda: Text.format(" {} Devel: Habilita mensagens de {y}", icon(Flags.devel.is_true()), "Debug"),
                 Flags.devel.toggle,
                 ""
             )
@@ -141,7 +140,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Muda o gráfico {y}", icon(Flags.graph), "Graph"),
+                lambda: Text.format(" {} Muda o gráfico {y}", icon(Flags.graph.is_true()), "Graph"),
                 Flags.graph.toggle,
                 Flags.graph.get_keycode()
             )

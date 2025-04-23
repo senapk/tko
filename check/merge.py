@@ -6,7 +6,7 @@
 
 import os
 from os.path import  join, isdir
-from typing import override
+# from typing import override
 
 print("Running merge for replit")
 
@@ -17,7 +17,7 @@ class Entry:
         self.dependencies: list[str] = []
         self.content = ""
 
-    @override
+    # @override
     def __str__(self):
         return f'{self.key}\n    {" ".join(self.dependencies)}'
 
@@ -104,7 +104,8 @@ class Merge:
         content.append("#!/usr/bin/env python3")
         content.append("# -*- coding: utf-8 -*-")
         content.append("from __future__ import annotations\n\n")
-        content.append("from typing import List, Dict, Tuple, Optional, Any, Callable, Union, Set, override")
+        # content.append("from typing import List, Dict, Tuple, Optional, Any, Callable, Union, Set, override")
+        content.append("from typing import List, Dict, Tuple, Optional, Any, Callable, Union, Set")
         content.append("\n".join(self.imports))
         init = self.parse_entry(f"{self.root}/__init__.py")
         content.append(init.content)

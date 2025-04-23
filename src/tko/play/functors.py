@@ -1,4 +1,5 @@
 from .flags import Flag
+from typing import Callable
 
 class FlagFunctor:
     def __init__(self, flag: Flag):
@@ -8,8 +9,8 @@ class FlagFunctor:
         self.flag.toggle()
 
 class GradeFunctor:
-    def __init__(self, grade: int, fn):
-        self.grade = grade
+    def __init__(self, grade: int, fn: Callable[[int], None]):
+        self.grade: int = grade
         self.fn = fn
 
     def __call__(self):

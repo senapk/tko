@@ -1,15 +1,20 @@
 from urllib.request import urlopen
-from typing import Optional
-from tko.util.text import Text
 from .. import __version__
 
-class CheckVersion:
 
+class CheckVersion:
     link = "https://raw.githubusercontent.com/senapk/tko/master/src/tko/__init__.py"
+    
+    buffer: str | None = None
+    init: bool = False
 
     def __init__(self):
+
         self.version: str = __version__
-        self.latest_version: Optional[str] = self.get_latest_version()
+        if not CheckVersion.init:
+            CheckVersion.buffer = self.get_latest_version()
+            CheckVersion.init = True
+        self.latest_version: str | None = CheckVersion.buffer
 
     def is_updated(self):
         if self.latest_version is None:

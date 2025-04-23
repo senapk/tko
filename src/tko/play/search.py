@@ -2,11 +2,9 @@ from tko.game.task import Task
 from tko.game.quest import Quest
 from tko.play.tasktree import TaskTree
 from tko.play.flags import Flags
-from tko.play.floating import Floating
 from tko.play.floating_manager import FloatingManager
 from tko.play.input_manager import InputManager
 from tko.play.keys import GuiKeys
-from tko.play.fmt import Fmt
 import curses
 from typing import List
 
@@ -25,7 +23,7 @@ class Search:
         if self.search_mode:
             self.backup_expanded = [v for v in self.tree.expanded]
             self.backup_index_selected = self.tree.selected_item
-            self.backup_admin_mode = Flags.admin
+            self.backup_admin_mode = Flags.admin.is_true()
             self.tree.update_tree(admin_mode=True)
             self.tree.process_expand_all()
             self.tree.process_expand_all()
@@ -38,7 +36,6 @@ class Search:
 
         self.search_mode = False
         self.tree.search_text = ""
-        is_admin = Flags.admin.get_value() == "1"
         selected_key = self.tree.selected_item
         item = self.tree.all_items[selected_key]
         reachable = True
@@ -48,7 +45,7 @@ class Search:
             reachable = item.is_reachable()
         if not reachable:
             Flags.admin.set_value("1")
-        self.tree.update_tree(Flags.admin) # usa o mode de antes e vê se acha
+        self.tree.update_tree(Flags.admin.is_true()) # usa o mode de antes e vê se acha
         self.tree.reload_sentences()
         
         self.tree.expanded = []
@@ -71,7 +68,7 @@ class Search:
             self.tree.expanded = [v for v in self.backup_expanded]
             self.tree.selected_item = self.backup_index_selected
 
-    def process_search(self, key):
+    def process_search(self, key: int):
         if key == InputManager.esc:
             self.cancel_search()
         elif key == ord("\n"):

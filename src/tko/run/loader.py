@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import override, Any
+# from typing import override
+from typing import Any
 import re
 import os
 
@@ -15,7 +16,7 @@ class CaseData:
         self.output: str = VplParser.unwrap(VplParser.finish(outp))
         self.grade: None | int = grade
 
-    @override
+    # @override
     def __str__(self) -> str:
         return "case=" + self.case + '\n' \
                 + "input=" + self.input \

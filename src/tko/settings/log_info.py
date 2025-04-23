@@ -9,8 +9,8 @@ class LogInfo:
         self.type: str = LogAction.Type.NONE.value
         self.key = ""
         self.coverage: int = -1
+        self.approach: int = -1
         self.autonomy: int = -1
-        self.skill: int = -1
         self.elapsed: datetime.timedelta = datetime.timedelta(0)
         self.attempts: int = 0
 
@@ -38,11 +38,11 @@ class LogInfo:
         return self
     
     def set_autonomy(self, value: int):
-        self.autonomy = value
+        self.approach = value
         return self
     
     def set_skill(self, value: int):
-        self.skill = value
+        self.autonomy = value
         return self
     
     def set_elapsed(self, value: datetime.timedelta):
@@ -65,8 +65,8 @@ class LogInfo:
             "type": self.type,
             "key": self.key,
             "coverage": str(self.coverage),
-            "autonomy": str(self.autonomy),
-            "skill": str(self.skill),
+            "autonomy": str(self.approach),
+            "skill": str(self.autonomy),
             "elapsed": str(int(self.elapsed.total_seconds() / 60)),
             "attempts": str(self.attempts)
         }
@@ -75,10 +75,10 @@ class LogInfo:
         output = "{" + f'time:{self.timestamp}, type:{self.type}, key:{self.key}'
         if self.coverage != -1:
             output += f', c:{self.coverage}'
+        if self.approach != -1:
+            output += f', a:{self.approach}'
         if self.autonomy != -1:
-            output += f', a:{self.autonomy}'
-        if self.skill != -1:
-            output += f', s:{self.skill}'
+            output += f', s:{self.autonomy}'
         if self.elapsed.total_seconds() > 0:
             minutes = int(self.elapsed.total_seconds() / 60)
             output += f', e:{minutes}'
@@ -109,17 +109,17 @@ class LogInfo:
     
     def load_from_self(self, payload: str):
         if len(payload) == 1:
-            self.autonomy, self.skill = Task.decode_autonomy_skill(int(payload))
+            self.approach, self.autonomy = Task.decode_autonomy_skill(int(payload))
             return
     
         if len(payload) == 2:
-            self.autonomy = int(payload[0])
-            self.skill = int(payload[1])
+            self.approach = int(payload[0])
+            self.autonomy = int(payload[1])
             return
         
         if len(payload) == 3 and payload[0] == "0":
-            self.autonomy = int(payload[1])
-            self.skill = int(payload[2])
+            self.approach = int(payload[1])
+            self.autonomy = int(payload[2])
             return
         
         if payload[0] == "{":
@@ -129,9 +129,9 @@ class LogInfo:
             for svalue in values:
                 k, v = svalue.split(":")
                 kv[k.strip()] = v.strip()
-            self.coverage = int(kv.get("c", -1))
-            self.autonomy = int(kv.get("a", -1))
-            self.skill = int(kv.get("s", -1))
+            self.coverage = int(kv.get("c", -1)) # type: ignore
+            self.approach = int(kv.get("a", -1)) # type: ignore
+            self.autonomy = int(kv.get("s", -1)) # type: ignore
             return
         
         raise Exception(f"Invalid SELF payload: {payload}")

@@ -15,7 +15,7 @@ class WeekGraph:
         days_minutes = logger.week.resume()
         if self.week_mode:
             self.collected = [0]
-            for day, value in days_minutes.items():
+            for _, value in days_minutes.items():
                 week_day = value.weed_day
                 elapsed = value.elapsed
                 if week_day == "Sunday":

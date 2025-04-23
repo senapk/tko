@@ -20,7 +20,7 @@ from tko.play.gui import Gui
 from tko.play.opener import Opener
 
 from tko.play.tasktree import TaskAction
-
+from typing import Callable
 import os
 import tempfile
 import subprocess
@@ -151,7 +151,7 @@ class PlayActions:
             return
         self.__down_remote_task(obj)
     
-    def __down_remote_task(self, task: Task):
+    def __down_remote_task(self, task: Task) -> None:
         if task.link_type != Task.Types.REMOTE_FILE and task.link_type != Task.Types.IMPORT_FILE:
             self.fman.add_input(
                 Floating("v>").put_text("\nEssa não é uma tarefa de baixável.\n").error()
@@ -164,7 +164,7 @@ class PlayActions:
         # down_frame.put_text(f"\ntko down {self.rep.alias} {task.key} -l {lang}\n")
         self.fman.add_input(down_frame)
 
-        def fnprint(text):
+        def fnprint(text: str):
             down_frame.put_text(" " + text)
             down_frame.draw()
             Fmt.refresh()
@@ -178,31 +178,32 @@ class PlayActions:
             Logger.get_instance().record_down(task.key)
 
 
-    def select_task_action(self, task: Task):
+    def select_task_action(self, task: Task) -> None:
         _, action = self.tree.get_task_action(task)
         if action == TaskAction.BAIXAR:
-            return self.__down_remote_task(task)
-        elif action == TaskAction.VISITAR:
-            return self.open_link()
-        elif action == TaskAction.EXECUTAR:
-            folder = task.get_folder()
-            if not folder:
-                raise Warning("Folder não encontrado")
-            return self.run_selected_task(task, folder)
+            self.__down_remote_task(task)
+            return
+        if action == TaskAction.VISITAR:
+            self.open_link()
+            return
+        folder = task.get_folder()
+        if not folder:
+            raise Warning("Folder não encontrado")
+        self.run_selected_task(task, folder)
 
-    def select_task(self):
+    def select_task(self) -> Callable[[], None]:
         obj = self.tree.get_selected_throw()
 
         if isinstance(obj, Quest) or isinstance(obj, Cluster):
             self.tree.toggle(obj)
-            return
+            return lambda: None
 
         if isinstance(obj, Task):
-            return self.select_task_action(obj)
+            return lambda: self.select_task_action(obj)
+        return lambda: None
 
-        raise Exception("Objeto não reconhecido")
         
-    def run_selected_task(self, task: Task, task_dir: str):
+    def run_selected_task(self, task: Task, task_dir: str) -> None:
         folder = task_dir
         run = Run(settings=self.settings, target_list=[folder], param=Param.Basic())
         run.set_lang(self.rep.get_lang())
@@ -220,4 +221,4 @@ class PlayActions:
             msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.rep.get_lang()))
             msg.put_text("\nUm arquivo de rascunho foi criado em {}.".format(task_dir))
             self.fman.add_input(msg)
-        return run.execute
+        run.execute()

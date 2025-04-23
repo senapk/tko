@@ -1,4 +1,4 @@
-from typing import override
+# from typing import override
 
 from tko.settings.settings import Settings
 from tko.util.consts import DiffMode
@@ -12,7 +12,7 @@ class ConfigParams:
         self.borders: str | None = None
         self.timeout: int | None = None
 
-    @override
+    # @override
     def __str__(self) -> str: 
         return f"side: {self.side}, down: {self.down}, timeout: {self.timeout}, editor: {self.editor}, borders: {self.borders}, images: {self.images}"
 

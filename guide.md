@@ -3,7 +3,8 @@
 ## Nova máquina
 
 - Instalar o uv e o python
-- python -v venv .venv
+- Criar o venv com o uv
+  - uv venv
 - source .venv/bin/activate
 - uv run tko
 

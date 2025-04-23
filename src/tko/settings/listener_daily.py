@@ -13,7 +13,7 @@ class DailyListener:
         decoder = LogInfo().decode(action)
         types = [LogAction.Type.TEST.value, LogAction.Type.PROG.value, LogAction.Type.SELF.value]
         if decoder.type in types:
-            self.log_task(decoder.timestamp, decoder.key, decoder.coverage, decoder.autonomy, decoder.skill)
+            self.log_task(decoder.timestamp, decoder.key, decoder.coverage, decoder.approach, decoder.autonomy)
 
     def set_daily_file(self, daily_file: str):
         self.daily_file = daily_file

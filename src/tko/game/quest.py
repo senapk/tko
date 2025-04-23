@@ -4,7 +4,7 @@ from tko.util.text import Text
 from tko.util.get_md_link import get_md_link
 from tko.game.tree_item import TreeItem
 from tko.play.flags import Flags
-from typing import override
+# from typing import override
 
 def startswith(text: str, prefix: str) -> bool: 
     if len(prefix) > len(text):
@@ -64,7 +64,7 @@ class Quest(TreeItem):
                     reach = False
                 self.__tasks[i].set_reachable(reach)
 
-    @override
+    # @override
     def __str__(self):
         line = str(self.line_number).rjust(3)
         tasks_size = str(len(self.__tasks)).rjust(2, "0")

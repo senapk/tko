@@ -1,5 +1,6 @@
 from tko.util.consts import DiffMode
 from tko.util.text import Text
+from typing import Any
 
 class AppSettings:
 
@@ -14,7 +15,7 @@ class AppSettings:
     def to_dict(self):
         return self.__dict__
     
-    def from_dict(self, attr_dict):
+    def from_dict(self, attr_dict: dict[str, Any]):
         for key, value in attr_dict.items():
             if hasattr(self, key) and type(getattr(self, key)) == type(value):
                 setattr(self, key, value)

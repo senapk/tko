@@ -1,4 +1,4 @@
-from typing import override
+# from typing import override
 import urllib.request
 from tko.feno.remote_md import RemoteLink, Absolute
 from tko.util.decoder import Decoder
@@ -36,6 +36,6 @@ class RemoteUrl:
         Decoder.save(filename, content)
         return
 
-    @override
+    # @override
     def __str__(self):
         return self.get_raw_url()

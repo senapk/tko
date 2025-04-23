@@ -36,7 +36,7 @@ class Flag:
 
     def toggle(self):
         self._index = (self._index + 1) % len(self._values)
-        return self
+        return None
 
     def get_value(self) -> str:
         return self._values[self._index % len(self._values)]

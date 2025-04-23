@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, override
+from typing import Any
 
 class AnsiColor:
     enabled = True
@@ -50,7 +50,7 @@ class Token:
         self.text = text
         self.fmt = fmt
 
-    @override
+    # @override
     def __eq__(self, other: Any):
         if not isinstance(other, Token):
             return False
@@ -62,7 +62,7 @@ class Token:
     def __add__(self, other: Any):
         return Text().add(self).add(other)
 
-    @override
+    # @override
     def __str__(self):
         return f"({self.fmt}:{self.text})"
 
@@ -136,7 +136,7 @@ class Text:
     def __add__(self, other: Any):
         return Text().add(self).add(other)
 
-    @override
+    # @override
     def __eq__(self, other: Any):
         if len(self.data) != len(other.data):
             return False
@@ -145,7 +145,7 @@ class Text:
                 return False
         return True
 
-    @override
+    # @override
     def __str__(self):
         output = ""
         for elem in self.resume():
@@ -185,7 +185,7 @@ class Text:
 
     def plus(self, qtd: int) -> Text:
         output = Text()
-        for i in range(qtd):
+        for _ in range(qtd):
             output.add(self)
         return output
 

@@ -6,7 +6,7 @@ from tko.play.week_graph import WeekGraph
 import yaml # type: ignore
 import os
 import argparse
-from typing import override
+# from typing import override
 
 class TaskResume:
     def __init__(self):
@@ -45,7 +45,7 @@ class TaskResume:
             "attempts": self.attempts
         }
 
-    @override
+    # @override
     def __str__(self):
         return f"coverage:{self.coverage}, autonomy:{self.autonomy}, skill:{self.skill}, elapsed:{self.elapsed}, attempts:{self.attempts}"
 

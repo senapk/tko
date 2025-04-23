@@ -7,7 +7,7 @@ from tko.game.task import Task
 from tko.util.decoder import Decoder
 from tko.game.game_builder import GameBuilder
 from tko.game.game_validator import GameValidator
-from typing import override
+# from typing import override
 
 import yaml # type: ignore
 import re
@@ -137,7 +137,7 @@ class Game:
                     q.set_reachable(True)
                     c.set_reachable(True)
 
-    @override
+    # @override
     def __str__(self):
         output: list[str] = []
         for c in self.clusters.values():

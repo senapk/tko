@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import Any
 
 from ..util.symbols import symbols
 from ..util.text import Text, Token
@@ -37,17 +37,16 @@ class DiffBuilder:
         return hdiff
 
     @staticmethod
-    def render_white(text: Text, color: str = "") -> Optional[Text]:
-        out = Text().add(text).replace(' ', Token(symbols.whitespace.text, color)).replace('\n', Token(symbols.newline.text, color))
-        return out
+    def render_white(text: Text, color: str = "") -> Text:
+        return Text().add(text).replace(' ', Token(symbols.whitespace.text, color)).replace('\n', Token(symbols.newline.text, color))
 
-    def first_failure_diff(self, a_text: str, b_text: str | None, first_failure: int) -> List[Text]:
+    def first_failure_diff(self, a_text: str, b_text: str | None, first_failure: int) -> list[Text]:
         if b_text is None:
             b_text = ""
-        def get(vet, index):
+        def get(vet: list[Any], index: int) -> Text:
             if index < len(vet):
                 return DiffBuilder.render_white(vet[index])
-            return ""
+            return Text()
 
         a_render = a_text.splitlines(True)
         b_render = b_text.splitlines(True)
@@ -59,16 +58,16 @@ class DiffBuilder:
         if out_b is None:
             out_b = Text()
         greater = max(len(out_a), len(out_b))
-        output: List[Text] = []
+        output: list[Text] = []
         width = self.width - 13
         output.append(Text().add(" ").add(out_a.ljust(greater)).trim_end(width).addf("g", " (esperado)"))
         output.append(Text().add(" ").add(out_b.ljust(greater)).trim_end(width).addf("r", " (recebido)"))
-        diff = DiffBuilder.make_line_arrow_up(first_a, first_b)
+        diff = DiffBuilder.make_line_arrow_up(first_a.get_str(), first_b.get_str())
         output.append(Text().add(" ").add(diff.ljust(greater)).trim_end(width).addf("b", " (primeiro)"))
         return output
 
     @staticmethod
-    def colorize_2_lines_diff(la: Text | None, lb: Text | None, neut: str = "", exp: str = "g", rec: str = "r") -> Tuple[Text | None, Text | None]:
+    def colorize_2_lines_diff(la: Text | None, lb: Text | None, neut: str = "", exp: str = "g", rec: str = "r") -> tuple[Text | None, Text | None]:
         pos = DiffBuilder.find_first_mismatch(la, lb)
         if la is not None:
             lat = la.get_str()
@@ -90,7 +89,7 @@ class DiffBuilder:
         return i
 
     # return a tuple of two strings with the diff and the index of the first mismatch line
-    def render_diff(self, a_text: str, b_text: str | None) -> Tuple[List[Tuple[Text | None, Text | None]], int]:
+    def render_diff(self, a_text: str, b_text: str | None) -> tuple[list[tuple[Text | None, Text | None]], int]:
         if b_text is None:
             b_text = ""
         a_lines = a_text.splitlines()
@@ -102,7 +101,7 @@ class DiffBuilder:
         max_size = max(a_size, b_size)
 
         # lambda function to return element in index i or empty if out of bounds
-        def get(vet, index) -> Text | None:
+        def get(vet: list[Any], index: int) -> Text | None:
             if index < len(vet):
                 return Text().add(vet[index])
             return None

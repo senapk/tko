@@ -1,12 +1,8 @@
-from tko.play.flags import Flag, Flags, FlagsMan
+from tko.play.flags import FlagsMan
 from tko.play.floating import Floating, FloatingInput, FloatingInputData
 from tko.play.floating_manager import FloatingManager
-from tko.play.border import Border
-from tko.settings.settings import Settings
 from tko.util.text import Text
-from tko.play.border import Border
-from typing import List, Tuple, Union, Callable
-from tko.play.functors import FlagFunctor
+from typing import List
 from tko.settings.repository import Repository, available_languages
 
 

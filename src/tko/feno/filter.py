@@ -3,14 +3,14 @@ import argparse
 from typing import Tuple
 import shutil
 from ..util.decoder import Decoder
-from typing import Any, override
+from typing import Any
 
 class Mark:
     def __init__(self, marker: str, indent: int):
         self.marker: str = marker
         self.indent: int = indent
 
-    @override
+    # @override
     def __str__(self):
         return f"{self.marker}:{self.indent}"
 

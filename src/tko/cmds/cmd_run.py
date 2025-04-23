@@ -78,7 +78,7 @@ class Run:
             raise Warning("Task não definida")
         return self.__task
 
-    def execute(self):
+    def execute(self) -> None:
         if len(self.target_list) == 0:
             self.__try_load_rep(".")
             self.__try_load_task(".")

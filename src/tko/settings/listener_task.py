@@ -1,7 +1,5 @@
 import yaml # type: ignore
-from tko.util.decoder import Decoder
 from tko.settings.log_action import LogAction
-from tko.settings.task_basic import TaskBasic
 from tko.settings.log_info import LogInfo
 import datetime
         
@@ -53,10 +51,10 @@ class TaskListener:
             for action in entries:
                 if action.coverage != -1:
                     info.set_coverage(action.coverage)
+                if action.approach != -1:
+                    info.set_autonomy(action.approach)
                 if action.autonomy != -1:
-                    info.set_autonomy(action.autonomy)
-                if action.skill != -1:
-                    info.set_skill(action.skill)
+                    info.set_skill(action.autonomy)
             output[key] = info
         return output
     

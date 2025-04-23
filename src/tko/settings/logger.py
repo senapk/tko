@@ -4,7 +4,6 @@ from tko.settings.log_action import LogAction
 from tko.settings.listener_daily import DailyListener
 from tko.settings.listener_task import TaskListener
 from tko.settings.listener_week import WeekListener
-import os
 
 class Logger:
     instance: None | Logger = None

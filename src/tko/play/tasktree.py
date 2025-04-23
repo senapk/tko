@@ -291,9 +291,14 @@ class TaskTree:
 
         return output
 
-    def __get_focus_color(self, item: Quest | Cluster) -> str:
+    def __get_focus_color_cluster(self, item: Cluster) -> str:
         if not item.is_reachable():
             return "R"
+        return self.colors.focused_item
+    
+    def __get_focus_color_quest(self, item: Quest) -> str:
+        if not item.is_reachable():
+                return "R"
         return self.colors.focused_item
 
     def filter_by_search(self) -> tuple[set[str], str | None]:
@@ -348,7 +353,7 @@ class TaskTree:
             quests = [q for q in cluster.get_quests() if q.key in self.game.quests.keys() if q.key in filtered]
             if hide:
                 quests = [q for q in quests if q.is_reachable()]
-            focus_color = self.__get_focus_color(cluster) if self.selected_item == cluster.get_key() else ""
+            focus_color = self.__get_focus_color_cluster(cluster) if self.selected_item == cluster.get_key() else ""
             cluster.sentence = self.__str_cluster(len(quests) > 0, focus_color, cluster)
 
             self.__try_add(filtered, matcher, cluster)
@@ -361,7 +366,8 @@ class TaskTree:
                 if hide:
                     tasks = [t for t in tasks if t.is_reachable()]
                 lig = "├" if q != quests[-1] else "╰"
-                focus_color = self.__get_focus_color(q) if self.selected_item == q.get_key() else ""
+                quest_focus_color: str = self.__get_focus_color_quest(q)
+                focus_color = quest_focus_color if self.selected_item == q.get_key() else ""
                 q.sentence = self.__str_quest(len(tasks) > 0, focus_color, q, lig)
 
                 # self.items.append(Entry(q, sentence))
@@ -370,8 +376,8 @@ class TaskTree:
                     for t in tasks:
                         ligc = "│" if q != quests[-1] else " "
                         ligq = "├ " if t != tasks[-1] else "╰ "
-                        focus_color = self.__get_focus_color(q) if self.selected_item == t.get_key() else ""
-                        t.sentence = self.__str_task(focus_color, t, ligc, ligq, q.is_reachable()) # type: ignore
+                        focus_color: str = quest_focus_color if self.selected_item == t.get_key() else ""
+                        t.sentence: Text = self.__str_task(focus_color, t, ligc, ligq, q.is_reachable()) # type: ignore
                         self.__try_add(filtered, matcher, t)
         # verifying if has any selected item
         if self.items:
