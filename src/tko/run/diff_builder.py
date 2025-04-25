@@ -43,9 +43,9 @@ class DiffBuilder:
     def first_failure_diff(self, a_text: str, b_text: str | None, first_failure: int) -> list[Text]:
         if b_text is None:
             b_text = ""
-        def get(vet: list[Any], index: int) -> Text:
-            if index < len(vet):
-                return DiffBuilder.render_white(vet[index])
+        def get(vet: list[str], index: int) -> Text:
+            if index >=0 and index < len(vet):
+                return DiffBuilder.render_white(Text().add(vet[index]))
             return Text()
 
         a_render = a_text.splitlines(True)
@@ -89,7 +89,9 @@ class DiffBuilder:
         return i
 
     # return a tuple of two strings with the diff and the index of the first mismatch line
-    def render_diff(self, a_text: str, b_text: str | None) -> tuple[list[tuple[Text | None, Text | None]], int]:
+    def render_diff(self, a_text: str | None, b_text: str | None) -> tuple[list[tuple[Text | None, Text | None]], int]:
+        if a_text is None:
+            a_text = ""
         if b_text is None:
             b_text = ""
         a_lines = a_text.splitlines()

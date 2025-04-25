@@ -14,12 +14,12 @@ class TaskBasic:
             self.coverage = value
         return self
 
-    def set_autonomy(self, value: int):
+    def set_approach(self, value: int):
         if value >= 0:
             self.autonomy = value
         return self
     
-    def set_skill(self, value: int):
+    def set_autonomy(self, value: int):
         if value >= 0:
             self.skill = value
         return self

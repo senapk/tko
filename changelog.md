@@ -1,5 +1,13 @@
 # Changelog
 
+- 3.9.5
+  - add: new imagens
+- 3.9.4
+  - fix: index error in diff
+- 3.9.2
+  - add: stars in percent
+- 3.9.0
+  - add: feedback improved with description, desire, effort
 - 3.8.0
   - add: modo gamer
   - add: loading xp from tasks

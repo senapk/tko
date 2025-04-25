@@ -30,7 +30,8 @@ class GuiKeys:
     down_task = "b"
     activate = "\n"
     key_help = "?"
-        
+    
+    # rate = "R"
     set_lang = "L"
     github_web = "w"
     key_quit = "q"

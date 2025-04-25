@@ -22,7 +22,7 @@ class DailyListener:
     def log_task(self, timestamp: str, key: str, coverage: int = -1, autonomy: int = -1, skill: int = -1):
         if key not in self.actual:
             self.actual[key] = TaskBasic(key)
-        self.actual[key].set_coverage(coverage).set_autonomy(autonomy).set_skill(skill)
+        self.actual[key].set_coverage(coverage).set_approach(autonomy).set_autonomy(skill)
 
         day = timestamp.split(" ")[0]
         if day not in self.history:
@@ -30,7 +30,7 @@ class DailyListener:
         if key not in self.history[day]:
             self.history[day][key] = self.actual[key]
         else:
-            self.history[day][key].set_coverage(coverage).set_autonomy(autonomy).set_skill(skill)
+            self.history[day][key].set_coverage(coverage).set_approach(autonomy).set_autonomy(skill)
         # self.save_yaml()
 
     def __str__(self) -> str:

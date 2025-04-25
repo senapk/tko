@@ -76,19 +76,19 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y}", icon(Flags.percent.is_true()), "Percentual"),
+                lambda: Text.format(" {} Mostrar {y} ou Estrelas", icon(Flags.percent.is_true()), "Percentual"),
                 Flags.percent.toggle, 
                 Flags.percent.get_keycode()
             )
         )
 
-        options.append(
-            FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y} para completar a missão", icon(Flags.minimum.is_true()), "Mínimo"),
-                Flags.minimum.toggle,
-                Flags.minimum.get_keycode()
-            )
-        )
+        # options.append(
+        #     FloatingInputData(
+        #         lambda: Text.format(" {} Mostrar {y} para completar a missão", icon(Flags.minimum.is_true()), "Mínimo"),
+        #         Flags.minimum.toggle,
+        #         Flags.minimum.get_keycode()
+        #     )
+        # )
 
         # options.append(
         #     FloatingInputData(

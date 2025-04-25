@@ -62,7 +62,7 @@ class __Symbols:
         self.autonomy_c = Token("▅", "m")
         self.autonomy_d = Token("▄", "r")
         self.autonomy_e = Token("▂", "c")
-        self.autonomy_x = Token("▁", "")
+        self.autonomy_x = Token("x", "")
         self.autonomy_list = [self.autonomy_x, self.autonomy_e, self.autonomy_d, self.autonomy_c, self.autonomy_b, self.autonomy_a]
 
         self.approach_s = Token("S", "b")
@@ -74,6 +74,18 @@ class __Symbols:
         self.approach_x = Token("x", "")
         self.approach_list = [self.approach_x, self.approach_e, self.approach_d, self.approach_c, self.approach_b, self.approach_a, self.approach_s]
         
+        self.desire_a = Token("5", "g")
+        self.desire_b = Token("4", "y")
+        self.desire_c = Token("3", "m")
+        self.desire_d = Token("2", "r")
+        self.desire_e = Token("1", "c")
+        self.desire_x = Token("x", "")
+        self.desire_list = [self.desire_x, self.desire_e, self.desire_d, self.desire_c, self.desire_b, self.desire_a]
+
+        self.star = Token("★", "g")
+        self.open_star = Token("☆")
+        self.mark = Token("✦", "g")
+
         self.cursor = Token("┊")
 
     # def set_ascii(self):

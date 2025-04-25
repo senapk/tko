@@ -148,6 +148,7 @@ class TaskTree:
         output.add(symbols.approach_list[t.approach]).add(" ")
         output.add(symbols.autonomy_list[t.autonomy])
 
+
         if in_focus:
             output.add(self.style.roundL(focus_color))
         else:
@@ -175,8 +176,17 @@ class TaskTree:
             output.add(" ")
 
         output.ljust(self.max_title + 10, Token(" "))
-        prog = int(t.get_percent())
-        output.addf("y", str(prog).rjust(3, " ") + "%")
+        if Flags.percent.is_true():
+            prog = int(t.get_percent())
+            output.addf("y", str(prog).rjust(3, " ") + "%")
+        else:
+            color_rate: list[str] = ["", "c", "g", "y", "m", "r"]
+            rate = (t.description + t.desire) / 2
+            for i in range(1, 6):
+                if rate >= i:
+                    output.addf(color_rate[t.effort], symbols.star)
+                else:
+                    output.addf(color_rate[t.effort], symbols.open_star)
 
         # if Flags.reward:
         #     xp = ""
@@ -236,10 +246,10 @@ class TaskTree:
         else:
             output.add(" ")
 
-        if Flags.percent:
-            output.add(" ").add(q.get_resume_by_percent())
-        else:
-            output.add(" ").add(q.get_resume_by_tasks())
+        # if Flags.percent:
+        output.add(" ").add(q.get_resume_by_percent())
+        # else:
+        #     output.add(" ").add(q.get_resume_by_tasks())
 
         # if Flags.minimum:
         #     output.add(" ").add(q.get_requirement())
@@ -285,10 +295,10 @@ class TaskTree:
             output.add(" ")
 
 
-        if Flags.percent:
-            output.add(" ").add(cluster.get_resume_by_percent())
-        else:
-            output.add(" ").add(cluster.get_resume_by_quests())
+        # if Flags.percent:
+        output.add(" ").add(cluster.get_resume_by_percent())
+        # else:
+        #     output.add(" ").add(cluster.get_resume_by_quests())
         # if cluster.key in self.new_items:
         #     output.addf(self.colors.task_new, " [new]")
 
