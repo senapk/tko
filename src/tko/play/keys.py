@@ -33,7 +33,7 @@ class GuiKeys:
     
     # rate = "R"
     set_lang = "L"
-    github_web = "w"
+    open_url = "u"
     key_quit = "q"
     edit= "e"
     colors = "C"

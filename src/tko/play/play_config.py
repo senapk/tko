@@ -28,9 +28,9 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Tarefa: Abrir {y} com a descrição", symbols.action, "GitHub"),
+                lambda: Text.format(" {} Tarefa: Abrir {y} com a descrição", symbols.action, "URL"),
                 self.actions.open_link,
-                GuiKeys.github_web
+                GuiKeys.open_url
             ).set_exit_on_action(True)
         )
 
@@ -140,7 +140,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Muda o gráfico {y}", icon(Flags.graph.is_true()), "Graph"),
+                lambda: Text.format(" {} Muda a {y} do gráfico", icon(Flags.graph.is_true()), "Visão"),
                 Flags.graph.toggle,
                 Flags.graph.get_keycode()
             )

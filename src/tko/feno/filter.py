@@ -64,11 +64,17 @@ class Filter:
             self.stack.pop()
         self.stack.append(Mark(marker, len_spaces))
 
-    def search_temp_mode(self, line: str) -> Tuple[str, str]:
+    def search_temp_mode(self, line: str) -> Tuple[str, int, str]:
         for marker in Mode.opts:
             if line.rstrip().endswith(self.com + " " + marker):
-                return marker, line[:-len(self.com + marker + " ")]
-        return "---", line
+                count: int = 0
+                for i in range(len(line)):
+                    if line[i] == " ":
+                        count += 1
+                    else:
+                        break
+                return marker, count, line[:-len(self.com + marker + " ")].rstrip()
+        return "---", 0, line
 
     def __process(self, content: str) -> str:
         lines = content.splitlines()
@@ -79,23 +85,25 @@ class Filter:
             if self.has_single_mode_cmd(line):
                 self.change_mode(line)
                 continue
-            marker = self.get_marker()
-            pos_marker, line = self.search_temp_mode(line)
-            if pos_marker != "---":
-                marker = pos_marker
+            marker: str = self.get_marker()
+            indent: int = self.get_indent()
+            temp_marker, temp_indent, line = self.search_temp_mode(line)
+            if temp_marker != "---":
+                marker = temp_marker
+                indent = temp_indent
 
             if marker == Mode.DEL:
                 continue
             elif marker == Mode.ADD:
                 output.append(line)
             elif marker == Mode.ACT:
-                prefix = self.tab_char * self.get_indent() + self.com + " "
+                prefix = self.tab_char * indent + self.com + " "
                 if not line.startswith(prefix):
                     prefix = prefix[:-1]
-                line = line.replace(prefix, self.tab_char * self.get_indent(), 1)
+                line = line.replace(prefix, self.tab_char * indent, 1)
                 output.append(line)
             elif marker == Mode.COM:
-                line = self.tab_char * self.get_indent() + self.com + " " + line[self.get_indent():]
+                line = self.tab_char * indent + self.com + " " + line[indent:]
                 output.append(line)
 
         return "\n".join(output) + "\n"
