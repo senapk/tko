@@ -424,7 +424,7 @@ class TaskTree:
                 if qkey not in self.expanded:
                     self.expanded.append(qkey)
 
-    def get_selected_index(self) -> int:
+    def  get_selected_index(self) -> int:
         for i, item in enumerate(self.items):
             if item.key == self.selected_item:
                 return i
@@ -611,10 +611,14 @@ class TaskTree:
         return sentences
 
     def move_up(self):
+        if len(self.items) == 0:
+            return
         index = self.get_selected_index()
         self.set_selected_by_index(index - 1)
 
     def move_down(self):
+        if len(self.items) == 0:
+            return
         index = self.get_selected_index()
         self.set_selected_by_index(min(len(self.items) - 1, index + 1))
 

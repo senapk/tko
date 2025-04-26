@@ -176,14 +176,14 @@ class FloatingGrade(Floating):
         self.draw()
         key: int = Fmt.getch()
         key = InputManager.fix_cedilha(Fmt.get_screen(), key)
-        if key == curses.KEY_UP or key == ord(GuiKeys.up):
+        if key == curses.KEY_UP or key == ord(GuiKeys.up) or key == ord(GuiKeys.up2):
             self._line = max(self._line - 1, 0)
-        elif key == curses.KEY_DOWN or key == ord(GuiKeys.down):
+        elif key == curses.KEY_DOWN or key == ord(GuiKeys.down) or key == ord(GuiKeys.down2):
             self._line = min(self._line + 1, len(self.grades_index) - 1)
-        elif key == curses.KEY_LEFT or key == ord(GuiKeys.left):
+        elif key == curses.KEY_LEFT or key == ord(GuiKeys.left) or key == ord(GuiKeys.left2):
             self.grades_index[self._line] = max(self.grades_index[self._line] - 1, 0)
             self.change_task()
-        elif key == curses.KEY_RIGHT or key == ord(GuiKeys.right):
+        elif key == curses.KEY_RIGHT or key == ord(GuiKeys.right) or key == ord(GuiKeys.right2):
             self.grades_index[self._line] = min(self.grades_index[self._line] + 1, len(self.grades_value[self._line]) - 1)
             self.change_task()
         elif key == ord("0"):

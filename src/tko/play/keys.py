@@ -25,6 +25,11 @@ class GuiKeys:
     down = "S"
     up = "W"
 
+    left2 = "H"
+    right2 = "L"
+    down2 = "J"
+    up2 = "K"
+
     palette = "c"
     images = "I"
     down_task = "b"
@@ -32,7 +37,7 @@ class GuiKeys:
     key_help = "?"
     
     # rate = "R"
-    set_lang = "L"
+    set_lang_drafts = "R"
     open_url = "u"
     key_quit = "q"
     edit= "e"

@@ -73,9 +73,9 @@ class Search:
             self.cancel_search()
         elif key == ord("\n"):
             self.finish_search()
-        elif key == curses.KEY_UP or key == ord(GuiKeys.up):
+        elif key == curses.KEY_UP or key == ord(GuiKeys.up) or key == ord(GuiKeys.up2):
             self.tree.move_up()
-        elif key == curses.KEY_DOWN or key == ord(GuiKeys.down):
+        elif key == curses.KEY_DOWN or key == ord(GuiKeys.down) or key == ord(GuiKeys.down2):
             self.tree.move_down()
         elif any([key == x for x in InputManager.backspace_list]):
             self.tree.search_text = self.tree.search_text[:-1]

@@ -1,5 +1,9 @@
 # Changelog
 
+- 4.0.0
+  - fix: search empty going down
+  - add: using u to open url
+  - add: adding HJLK to move
 - 3.9.5
   - add: new imagens
 - 3.9.4

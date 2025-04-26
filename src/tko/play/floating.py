@@ -282,9 +282,9 @@ class FloatingInput(Floating):
         key: int = Fmt.getch()
         key = InputManager.fix_cedilha(Fmt.get_screen(), key)
         
-        if key == curses.KEY_UP or key == ord(GuiKeys.up):
+        if key == curses.KEY_UP or key == ord(GuiKeys.up) or key == ord(GuiKeys.up2):
             self.prev_option()
-        elif key == curses.KEY_DOWN or key == ord(GuiKeys.down):
+        elif key == curses.KEY_DOWN or key == ord(GuiKeys.down) or key == ord(GuiKeys.down2):
             self.next_option()
         elif key == InputManager.esc:
             self._enable = False

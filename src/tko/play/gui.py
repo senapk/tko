@@ -252,7 +252,10 @@ class Gui:
 
         _help.put_sentence(Text.format("  ").addf("r", "Shift + B")
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
-        _help.put_sentence(Text() + "" + RToken("g", "setas") + ", " + RToken("g", f"{GuiKeys.left}{GuiKeys.down}{GuiKeys.up}{GuiKeys.right}")  + "  Para navegar entre os elementos")
+        _help.put_sentence(Text() + "  " + RToken("g", "setas") + "      Para navegar entre os elementos")
+        _help.put_sentence(Text() + "   " + RToken("g", f"{GuiKeys.left}{GuiKeys.down}{GuiKeys.up}{GuiKeys.right}")  + "      Para navegar entre os elementos")
+        _help.put_sentence(Text() + "   " + RToken("g", f"{GuiKeys.left2}{GuiKeys.down2}{GuiKeys.up2}{GuiKeys.right2}")  + "      Para navegar entre os elementos")
+    
         _help.put_sentence(Text() + f"   {GuiActions.config} " + RToken("r", f"{GuiKeys.palette}") + "  Abre o menu de ações e configurações")
         _help.put_sentence(Text() + f"   {GuiActions.github} " + RToken("r", f"{GuiKeys.open_url}") + "  Abre tarefa em uma aba do browser")
         _help.put_sentence(Text() + f"   {GuiActions.download} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")

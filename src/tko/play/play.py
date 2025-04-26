@@ -69,18 +69,22 @@ class Play:
         # cman.add_int(curses.KEY_BACKSPACE, self.send_quit_msg)
 
         cman.add_str(GuiKeys.up, self.tree.move_up)
+        cman.add_str(GuiKeys.up2, self.tree.move_up)
         cman.add_int(curses.KEY_UP, self.tree.move_up)
 
         cman.add_str(GuiKeys.down, self.tree.move_down)
+        cman.add_str(GuiKeys.down2, self.tree.move_down)
         cman.add_int(curses.KEY_DOWN, self.tree.move_down)
 
         cman.add_int(curses.KEY_LEFT, self.tree.arrow_left)
         cman.add_str(GuiKeys.left, self.tree.arrow_left)
+        cman.add_str(GuiKeys.left2, self.tree.arrow_left)
 
         cman.add_str(GuiKeys.right, self.tree.arrow_right)
+        cman.add_str(GuiKeys.right2, self.tree.arrow_right)
         cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
         
-        cman.add_str(GuiKeys.activate, self.actions.select_task)
+        cman.add_str(GuiKeys.activate, lambda: self.actions.select_task()) # type: ignore
         cman.add_str(GuiKeys.open_url, self.actions.open_link)
         cman.add_str(GuiKeys.down_task, self.actions.down_remote_task)
         cman.add_str(GuiKeys.edit, lambda: self.actions.open_code())
@@ -89,7 +93,7 @@ class Play:
         cman.add_str(GuiKeys.borders, self.app.toggle_borders)
         cman.add_str(GuiKeys.images, self.app.toggle_images)
         cman.add_str(GuiKeys.hidden, self.app.toggle_hidden)
-        cman.add_str(GuiKeys.set_lang, self.gui.language.set_language)
+        cman.add_str(GuiKeys.set_lang_drafts, self.gui.language.set_language)
         cman.add_int(curses.KEY_BACKSPACE, self.actions.evaluate)
         cman.add_str(GuiKeys.grade_play, self.actions.evaluate)
         if Flags.admin:
