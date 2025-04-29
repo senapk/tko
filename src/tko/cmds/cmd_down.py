@@ -124,7 +124,7 @@ class CmdDown:
             if CmdDown.folder_equals(self.destiny_folder, backup_folder):
                 DownProblem.fnprint("Pastas {} e {} são iguais".format(os.path.basename(self.destiny_folder), os.path.basename(backup_folder)))
                 DownProblem.fnprint("Removendo pasta de backup {}".format(os.path.basename(backup_folder)))
-                shutil.rmtree(backup_folder)
+                shutil.rmtree(backup_folder, ignore_errors=True)
 
         return True
 

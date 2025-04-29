@@ -210,7 +210,7 @@ class CodeFilter:
                 for file in os.listdir(output_dir):
                     path = os.path.join(output_dir, file)
                     if os.path.isdir(path):
-                        shutil.rmtree(path)
+                        shutil.rmtree(path, ignore_errors=True)
                     else:
                         os.remove(path)
 

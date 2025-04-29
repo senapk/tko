@@ -1,6 +1,7 @@
 from tko.util.consts import DiffMode
 from tko.util.text import Text
 from typing import Any
+import curses
 
 class AppSettings:
 
@@ -11,6 +12,32 @@ class AppSettings:
         self.use_borders = False
         self.editor = "code"
         self.timeout = 2
+        self.key_left: int = curses.KEY_LEFT
+        self.key_right: int = curses.KEY_RIGHT
+        self.key_up: int = curses.KEY_UP
+        self.key_down: int = curses.KEY_DOWN
+
+    def set_key_left(self, key: int):
+        self.key_left = key
+        return self
+    def set_key_right(self, key: int):
+        self.key_right = key
+        return self
+    def set_key_up(self, key: int):
+        self.key_up = key
+        return self
+    def set_key_down(self, key: int):
+        self.key_down = key
+        return self
+    
+    def get_key_left(self) -> int:
+        return self.key_left
+    def get_key_right(self) -> int:
+        return self.key_right
+    def get_key_up(self) -> int:
+        return self.key_up
+    def get_key_down(self) -> int:
+        return self.key_down
 
     def to_dict(self):
         return self.__dict__

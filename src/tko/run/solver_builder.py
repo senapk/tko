@@ -105,7 +105,7 @@ class SolverBuilder:
 
     def clear_cache(self):
         if os.path.exists(self.cache_dir):
-            shutil.rmtree(self.cache_dir)
+            shutil.rmtree(self.cache_dir, ignore_errors=True)
         os.makedirs(self.cache_dir, exist_ok=True)
 
     def get_executable(self, force_rebuild: bool = False) -> tuple[Executable, bool]:
@@ -255,7 +255,7 @@ class SolverBuilder:
         copy_dir = os.path.join(self.cache_dir, "src")
         # remove the cache dir
         if os.path.exists(copy_dir):
-            shutil.rmtree(copy_dir)
+            shutil.rmtree(copy_dir, ignore_errors=True)
         os.makedirs(copy_dir, exist_ok=True)
         new_files = self.update_input_function(free_run_mode, self.args_list, copy_dir)
         transpiler = "npx"

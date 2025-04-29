@@ -58,7 +58,7 @@ class Actions:
         return self
     
     def recreate_cache(self):
-        shutil.rmtree(self.cache)
+        shutil.rmtree(self.cache, ignore_errors=True)
         os.makedirs(self.cache)
         return self
     

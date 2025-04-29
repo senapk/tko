@@ -17,6 +17,7 @@ class GuiActions:
     time_limit = "Tempo"
     evaluate_tester = "Avaliar "
     execute_tester  = "Rodar"
+    calibrate = "Calibrar"
     all = "Todos"
 
 class GuiKeys:
@@ -29,6 +30,7 @@ class GuiKeys:
     right2 = "L"
     down2 = "J"
     up2 = "K"
+    calibrate = "C"
 
     palette = "c"
     images = "I"

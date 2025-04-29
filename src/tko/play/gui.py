@@ -242,7 +242,7 @@ class Gui:
     def show_help(self):
         # def empty(value):
         #     pass
-        _help: Floating = Floating("v>").set_text_ljust()
+        _help: Floating = Floating(self.settings, "v>").set_text_ljust()
         self.fman.add_input(_help)
 
         _help.set_header_text(Text().add(" Ajuda "))

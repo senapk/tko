@@ -5,14 +5,16 @@ from tko.play.input_manager import InputManager
 from tko.util.symbols import symbols
 from tko.util.text import Text
 from tko.play.keys import GuiKeys
+from tko.settings.settings import Settings
 # from typing import override
 
 import curses
 
 
 class FloatingGrade(Floating):
-    def __init__(self, task: Task, _align: str =""):
-        super().__init__(_align)
+    def __init__(self, task: Task, settings: Settings, _align: str =""):
+        super().__init__(settings, _align)
+        self.settings = settings
         self._task = task
         self._line = 0
         self.set_text_ljust()
@@ -176,14 +178,14 @@ class FloatingGrade(Floating):
         self.draw()
         key: int = Fmt.getch()
         key = InputManager.fix_cedilha(Fmt.get_screen(), key)
-        if key == curses.KEY_UP or key == ord(GuiKeys.up) or key == ord(GuiKeys.up2):
+        if key == self.settings.app.get_key_up() or key == ord(GuiKeys.up) or key == ord(GuiKeys.up2):
             self._line = max(self._line - 1, 0)
-        elif key == curses.KEY_DOWN or key == ord(GuiKeys.down) or key == ord(GuiKeys.down2):
+        elif key == self.settings.app.get_key_down() or key == ord(GuiKeys.down) or key == ord(GuiKeys.down2):
             self._line = min(self._line + 1, len(self.grades_index) - 1)
-        elif key == curses.KEY_LEFT or key == ord(GuiKeys.left) or key == ord(GuiKeys.left2):
+        elif key == self.settings.app.get_key_left() or key == ord(GuiKeys.left) or key == ord(GuiKeys.left2):
             self.grades_index[self._line] = max(self.grades_index[self._line] - 1, 0)
             self.change_task()
-        elif key == curses.KEY_RIGHT or key == ord(GuiKeys.right) or key == ord(GuiKeys.right2):
+        elif key == self.settings.app.get_key_right() or key == ord(GuiKeys.right) or key == ord(GuiKeys.right2):
             self.grades_index[self._line] = min(self.grades_index[self._line] + 1, len(self.grades_value[self._line]) - 1)
             self.change_task()
         elif key == ord("0"):

@@ -3,6 +3,7 @@ from ..game.game import Game
 from ..settings.settings import Settings
 from ..settings.repository import available_languages, Repository
 from tko.play.floating import Floating
+from tko.play.floating_calibrate import FloatingCalibrate
 from .fmt import Fmt
 from .input_manager import InputManager
 from tko.play.play_config import PlayPalette
@@ -55,7 +56,7 @@ class Play:
             self.exit = True
 
         self.fman.add_input(
-            Floating().put_text("\nAté a próxima\n").set_exit_fn(set_exit).warning()
+            Floating(self.settings).put_text("\nAté a próxima\n").set_exit_fn(set_exit).warning()
         )
 
     def toggle_skills(self):
@@ -70,19 +71,21 @@ class Play:
 
         cman.add_str(GuiKeys.up, self.tree.move_up)
         cman.add_str(GuiKeys.up2, self.tree.move_up)
-        cman.add_int(curses.KEY_UP, self.tree.move_up)
+        cman.add_int(self.app.get_key_up(), self.tree.move_up)
 
         cman.add_str(GuiKeys.down, self.tree.move_down)
         cman.add_str(GuiKeys.down2, self.tree.move_down)
-        cman.add_int(curses.KEY_DOWN, self.tree.move_down)
+        cman.add_int(self.app.get_key_down(), self.tree.move_down)
 
-        cman.add_int(curses.KEY_LEFT, self.tree.arrow_left)
+        cman.add_int(self.app.get_key_left(), self.tree.arrow_left)
         cman.add_str(GuiKeys.left, self.tree.arrow_left)
         cman.add_str(GuiKeys.left2, self.tree.arrow_left)
 
         cman.add_str(GuiKeys.right, self.tree.arrow_right)
         cman.add_str(GuiKeys.right2, self.tree.arrow_right)
-        cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
+        cman.add_int(self.app.get_key_right(), self.tree.arrow_right)
+
+        cman.add_str(GuiKeys.calibrate, lambda: self.fman.add_input(FloatingCalibrate(self.settings)))
         
         cman.add_str(GuiKeys.activate, lambda: self.actions.select_task()) # type: ignore
         cman.add_str(GuiKeys.open_url, self.actions.open_link)
@@ -118,7 +121,7 @@ class Play:
         if key in exclude_int + exclude_str:
             return
         self.fman.add_input(
-            Floating("v")
+            Floating(self.settings, "v")
                 .error()
                 .put_text(f"Tecla char {chr(key)} code {key} não reconhecida")
         )

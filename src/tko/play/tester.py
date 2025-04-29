@@ -468,7 +468,7 @@ class Tester:
                     try:
                         self.wdir.get_solver().prepare_exec()
                     except CompileError as e:
-                        self.fman.add_input(Floating("v>").error().put_text(e.message))
+                        self.fman.add_input(Floating(self.settings, "v>").error().put_text(e.message))
                         self.mode = SeqMode.finished
                     Fmt.clear()
                     self.draw_top_bar()
@@ -537,7 +537,7 @@ class Tester:
     def send_char_not_found(self, key: int):
         if not Flags.devel:
             return
-        self.fman.add_input(Floating("v>").error()
+        self.fman.add_input(Floating(self.settings, "v>").error()
                     .put_text("Tecla")
                     .put_text(f"char {chr(key)}")
                     .put_text(f"code {key}")
@@ -551,7 +551,7 @@ class Tester:
         if self.mode == SeqMode.finished:
             self.mode = SeqMode.select
         if self.locked_index:
-            self.fman.add_input(Floating("v>").warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(GuiKeys.lock)))
+            self.fman.add_input(Floating(self.settings, "v>").warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(GuiKeys.lock)))
             return
         if not self.wdir.get_solver().has_compile_error():
             self.focused_index = max(0, self.focused_index - 1)
@@ -565,7 +565,7 @@ class Tester:
         if self.mode == SeqMode.finished:
             self.mode = SeqMode.select
         if self.locked_index:
-            self.fman.add_input(Floating("v>").warning().put_text("→\nAtividade travada\nAperte {} para destravar".format(GuiKeys.lock)))
+            self.fman.add_input(Floating(self.settings, "v>").warning().put_text("→\nAtividade travada\nAperte {} para destravar".format(GuiKeys.lock)))
             return
         if not self.wdir.get_solver().has_compile_error():
             self.focused_index = min(len(self.wdir.get_unit_list()) - 1, self.focused_index + 1)
@@ -584,7 +584,7 @@ class Tester:
     def change_main(self):
         if len(self.get_solver_names()) == 1:
             self.fman.add_input(
-                Floating("v>").warning()
+                Floating(self.settings, "v>").warning()
                 .put_text("Seu projeto só tem um arquivo de solução")
                 .put_text("Essa funcionalidade troca qual dos arquivos")
                 .put_text("de solução será o principal.")
@@ -626,13 +626,13 @@ class Tester:
                 self.locked_index = False
             else:
                 self.set_exit()
-        elif key == curses.KEY_LEFT or key == ord(GuiKeys.left):
+        elif key == self.settings.app.get_key_left() or key == ord(GuiKeys.left) or key == ord(GuiKeys.left2):
             self.go_left()
-        elif key == curses.KEY_RIGHT or key == ord(GuiKeys.right):
+        elif key == self.settings.app.get_key_right() or key == ord(GuiKeys.right) or key == ord(GuiKeys.right2):
             self.go_right()
-        elif key == curses.KEY_DOWN or key == ord(GuiKeys.down):
+        elif key == self.settings.app.get_key_down() or key == ord(GuiKeys.down) or key == ord(GuiKeys.down2):
             self.go_down()
-        elif key == curses.KEY_UP or key == ord(GuiKeys.up):
+        elif key == self.settings.app.get_key_up() or key == ord(GuiKeys.up) or key == ord(GuiKeys.up2):
             self.go_up()
         elif key == ord(GuiKeys.toggle_main):
             self.change_main()
@@ -717,7 +717,7 @@ class Tester:
         )
 
         self.fman.add_input(
-            FloatingInput("v").set_text_ljust()
+            FloatingInput(self.settings, "v").set_text_ljust()
                       .set_header(" Selecione uma ação da lista ")
                       .set_options(options)
                       .set_exit_on_enter(False)

@@ -1,6 +1,11 @@
 # Changelog
 
+- 4.0.1
+  - add: clear buffer in tester run
+  - add: 
 - 4.0.0
+  - add: calibrate key up, left, down, right
+- 3.9.6
   - fix: search empty going down
   - add: using u to open url
   - add: adding HJLK to move

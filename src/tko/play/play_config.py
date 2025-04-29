@@ -4,6 +4,7 @@ from tko.util.symbols import symbols
 from tko.play.keys import GuiKeys
 from tko.play.flags import Flags
 from tko.play.play_actions import PlayActions
+from tko.play.floating_calibrate import FloatingCalibrate
 
 class PlayPalette:
     def __init__(self, actions: PlayActions):
@@ -40,6 +41,14 @@ class PlayPalette:
                 self.actions.open_code,
                 GuiKeys.edit
             ).set_exit_on_action(True)
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text.format(" {} Muda a {y} do gráfico", icon(Flags.graph.is_true()), "Visão"),
+                Flags.graph.toggle,
+                Flags.graph.get_keycode()
+            )
         )
 
         options.append(
@@ -130,6 +139,14 @@ class PlayPalette:
             ).set_exit_on_action(True)
         )
 
+        options.append(
+            FloatingInputData(
+                lambda: Text.format(" {} {y} as teclas direcionais", symbols.action, "Calibrar"),
+                lambda: self.fman.add_input(FloatingCalibrate(self.actions.settings)),
+                GuiKeys.calibrate
+            ).set_exit_on_action(True)
+        )
+
         # options.append(
         #     FloatingInputData(
         #         lambda: Text.format(" {} Devel: Habilita mensagens de {y}", icon(Flags.devel.is_true()), "Debug"),
@@ -137,14 +154,6 @@ class PlayPalette:
         #         ""
         #     )
         # )
-
-        options.append(
-            FloatingInputData(
-                lambda: Text.format(" {} Muda a {y} do gráfico", icon(Flags.graph.is_true()), "Visão"),
-                Flags.graph.toggle,
-                Flags.graph.get_keycode()
-            )
-        )
 
         # options.append(
         #     FloatingInputData(
@@ -155,7 +164,7 @@ class PlayPalette:
         # )
 
         self.fman.add_input(
-            FloatingInput("^").set_text_ljust()
+            FloatingInput(self.actions.settings, "^").set_text_ljust()
                       .set_header(" Selecione uma ação da lista ")
                       .set_options(options)
                       .set_exit_on_enter(False)

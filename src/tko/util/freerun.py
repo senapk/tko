@@ -5,6 +5,8 @@ from ..play.images import compilling
 from .runner import Runner
 from ..run.solver_builder import SolverBuilder
 import random
+import select
+import sys
 
 class Free:
     @staticmethod
@@ -38,9 +40,13 @@ class Free:
         solver.reset()
         to_run_again = False
         if wait_input:
+            while select.select([sys.stdin], [], [], 0)[0]:
+                sys.stdin.readline()
             print(Text().center(RawTerminal.get_terminal_size(), Token("─")))
             print(Text.format("Para [recompilar e] reexecutar digite: {y}", "<enter>"))
             print(Text.format("Para voltar para tela anterior digite: {y}", "q<enter>"))
+            # clear buffer before get input
+
             valor = input()
             if valor != "n" and valor != "q":
                 if to_clear:

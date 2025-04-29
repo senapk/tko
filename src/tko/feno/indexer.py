@@ -9,7 +9,7 @@ from tko.util.decoder import Decoder
 def get_label(line: str) -> None | str:
     if "@" not in line:
         return None
-    label = line.split('@')[1].split(' ')[0].split(']')[0]
+    label = line.split('@')[1].split(' ')[0].split(']')[0].split("`")[0]
     return label
 
 def get_hook_from_line(line: str, base: str) -> None | str:

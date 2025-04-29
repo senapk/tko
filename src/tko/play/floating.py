@@ -2,14 +2,14 @@ from typing import List
 from .frame import Frame
 from ..util.text import Text
 from .fmt import Fmt
-import curses
 from typing import Callable
 from tko.play.input_manager import InputManager
 from tko.play.keys import GuiKeys
 from tko.util.symbols import symbols
+from tko.settings.settings import Settings
 
 class Floating:
-    def __init__(self, _align: str = ""):
+    def __init__(self, settings: Settings, _align: str = ""):
         self._frame = Frame(0, 0)
         self._content: List[Text] = []
         self._type = "warning"
@@ -19,6 +19,7 @@ class Floating:
         self._exit_key: None | int = None
         self._centralize = True
         self._floating_align = _align
+        self.settings = settings
 
     def disable(self):
         self._enable = False
@@ -185,8 +186,8 @@ class FloatingInputData:
         return self
 
 class FloatingInput(Floating):
-    def __init__(self, _align: str = ""):
-        super().__init__(_align)
+    def __init__(self, settings: Settings, _align: str = ""):
+        super().__init__(settings, _align)
         self._index = 0
         self._options: List[FloatingInputData] = []
         self._frame.set_border_color("m")
@@ -282,13 +283,11 @@ class FloatingInput(Floating):
         key: int = Fmt.getch()
         key = InputManager.fix_cedilha(Fmt.get_screen(), key)
         
-        if key == curses.KEY_UP or key == ord(GuiKeys.up) or key == ord(GuiKeys.up2):
+        if key == self.settings.app.get_key_up() or key == ord(GuiKeys.up) or key == ord(GuiKeys.up2):
             self.prev_option()
-        elif key == curses.KEY_DOWN or key == ord(GuiKeys.down) or key == ord(GuiKeys.down2):
+        elif key == self.settings.app.get_key_down() or key == ord(GuiKeys.down) or key == ord(GuiKeys.down2):
             self.next_option()
-        elif key == InputManager.esc:
-            self._enable = False
-        elif any([key == x for x in InputManager.backspace_list]) or key == InputManager.delete:
+        elif key == self.settings.app.get_key_left() or key == ord(GuiKeys.left) or key == ord(GuiKeys.left2):
             self.search_text = self.search_text[:-1]
             self.update_index()
         elif key >= 32 and key < 127:
@@ -299,6 +298,11 @@ class FloatingInput(Floating):
                 self._enable = False
             if self._index != -1:
                 self._options[self._index].action()
+            return -1
+        elif key == InputManager.esc:
+            self._enable = False
+            if self._exit_fn is not None:
+                self._exit_fn()
             return -1
         else:
             return key
