@@ -7,7 +7,7 @@ from tko.util.decoder import Decoder
 from tko.util.text import Text
 import yaml # type: ignore
 
-available_languages = ["c", "cpp", "py", "ts", "java", "go", "yaml"]
+available_languages = ["c", "cpp", "py", "ts", "java", "go", "hs", "yaml"]
 
 class Repository:
     CFG_FILE = "repository.yaml"

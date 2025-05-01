@@ -4,22 +4,24 @@ from tko.play.floating_manager import FloatingManager
 from tko.util.text import Text
 from typing import List
 from tko.settings.repository import Repository, available_languages
+from tko.settings.settings import Settings
 
 
 class LanguageSetter:
-    def __init__(self, rep: Repository, flagsman: FlagsMan, fman: FloatingManager):
+    def __init__(self, settings: Settings, rep: Repository, flagsman: FlagsMan, fman: FloatingManager):
         self.flagsman = flagsman
         self.fman = fman
         self.rep = rep
+        self.settings = settings
 
 
     def set_language(self):
         options: List[FloatingInputData] = []
         for lang in available_languages:
-            options.append(FloatingInputData(TextFunctor(lang), SetLangFunctor(self.rep, self.fman, lang)))
+            options.append(FloatingInputData(TextFunctor(lang), SetLangFunctor(self.settings, self.rep, self.fman, lang)))
 
         self.fman.add_input(
-            FloatingInput("^")
+            FloatingInput(self.settings, "^")
             .set_header(" Escolha a extensão default para os rascunhos ")
             .set_options(options)
             .set_default_index(available_languages.index(self.rep.get_lang()))
@@ -34,16 +36,17 @@ class TextFunctor:
         return Text().add(self.value)
 
 class SetLangFunctor:
-    def __init__(self, rep: Repository, fman: FloatingManager, lang: str):
+    def __init__(self, settings: Settings, rep: Repository, fman: FloatingManager, lang: str):
         self.rep = rep
         self.fman = fman
         self.value = lang
+        self.settings = settings
 
     def __call__(self):
         self.rep.set_lang(self.value.strip())
         self.rep.save_config()
         self.fman.add_input(
-            Floating()
+            Floating(self.settings, "v>")
             .put_text("")
             .put_text("Linguagem alterada para " + self.value)
             .put_text("")

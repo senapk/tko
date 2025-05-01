@@ -137,6 +137,8 @@ class SolverBuilder:
             self.__prepare_ts(free_run_mode)
         elif first.endswith(".java"):
             self.__prepare_java()
+        elif first.endswith(".hs"):
+            self.__prepare_hs()
         elif first.endswith(".c") or first.endswith(".h"):
             self.__prepare_c()
         elif first.endswith(".cpp") or first.endswith(".hpp"):
@@ -290,6 +292,12 @@ class SolverBuilder:
             self.__exec.set_compile_error(stdout + stderr)
         else:
             self.__exec.set_executable([], [exec_path])
+
+    def __prepare_hs(self):
+        self.check_tool("runhaskell")
+        self.check_tool("ghc")
+        self.__exec.set_executable(["runhaskell"], self.args_list, "")
+
 
     def __prepare_c(self):
         self.check_tool("gcc")

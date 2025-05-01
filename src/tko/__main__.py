@@ -162,13 +162,13 @@ class Parser:
         return parent_manip
 
     def add_parser_run(self):
-        parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='Run with test cases using curses.')
+        parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='Run using curses.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
         parser_r.set_defaults(func=Main.run)
 
     def add_parser_exec(self):
-        parser_r = self.subparsers.add_parser('test', parents=[self.parent_basic], help='Run with test cases using raw terminal.')
+        parser_r = self.subparsers.add_parser('exec', parents=[self.parent_basic], help='Run using raw terminal.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
         parser_r.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures')

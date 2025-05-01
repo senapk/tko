@@ -1,8 +1,14 @@
 # Changelog
 
+- 4.1.1
+  - add: changing "tko test" to "tko exec"
+- 4.1.0
+  - add: haskell support
+- 4.0.2
+  - add: support to remote repositories beyond fup, ed, poo
 - 4.0.1
   - add: clear buffer in tester run
-  - add: 
+  - add: windows error erasing read-only files
 - 4.0.0
   - add: calibrate key up, left, down, right
 - 3.9.6

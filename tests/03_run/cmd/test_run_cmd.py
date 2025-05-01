@@ -11,7 +11,7 @@ class Test:
         os.chdir(Path(__file__).parent)
 
     def test_run_cmd(self, capsys):
-        cmd2 = ["-w", "50", "-m", "test", "solver.yaml", "cases.tio"]
+        cmd2 = ["-w", "50", "-m", "exec", "solver.yaml", "cases.tio"]
         Compare.list(capsys, "out1", cmd2)
 
 

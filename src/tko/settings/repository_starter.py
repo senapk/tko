@@ -33,9 +33,12 @@ class RepStarter:
             return
         
         if source is not None:
-            self.source = os.path.abspath(source)
-            if self.source.startswith(self.folder):
-                self.source = os.path.relpath(self.source, os.path.dirname(rep.get_config_file()))
+            if source.startswith("http"):
+                self.source = source
+            else:
+                self.source = os.path.abspath(source)
+                if self.source.startswith(self.folder):
+                    self.source = os.path.relpath(self.source, os.path.dirname(rep.get_config_file()))
             rep.set_rep_source(self.source)
             rep.save_config()
             self.print_end_msg()

@@ -27,8 +27,7 @@ class Search:
             self.tree.update_tree(admin_mode=True)
             self.tree.process_expand_all()
             self.tree.process_expand_all()
-            #self.fman.add_input(Floating(">v").warning().put_text("Digite o texto\nNavegue até o elemento desejado\ne aperte Enter"))
-    
+            
     def finish_search(self):
         if self.tree.selected_item == "":
             self.cancel_search()

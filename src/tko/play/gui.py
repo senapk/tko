@@ -34,7 +34,7 @@ class Gui:
         self.settings = tree.settings
         self.search = Search(tree=self.tree, fman=self.fman)
         self.style: Border = Border(self.settings.app)
-        self.language = LanguageSetter(self.rep, self.flagsman, self.fman)
+        self.language = LanguageSetter(self.settings, self.rep, self.flagsman, self.fman)
         self.colors = self.settings.colors
         self.need_update = False
 

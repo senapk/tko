@@ -51,9 +51,14 @@ public class draft {
 build: comando para construir o executável
 run: comando para rodar o programa
 """[1:]
+    
+    hs_draft = r"""
+main :: IO ()
+main = putStrLn "qxcode"
+"""[1:]
 
 
-    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'java': java_draft, 'go': go_draft, 'yaml': yaml_draft}
+    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'java': java_draft, 'go': go_draft, 'hs': hs_draft, 'yaml': yaml_draft}
 
     @staticmethod
     def load_drafts_only(folder: str, lang: str, extra: list[str] = []) -> list[str]:

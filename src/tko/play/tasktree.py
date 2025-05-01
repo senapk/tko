@@ -490,6 +490,8 @@ class TaskTree:
         self.selected_item = self.items[index].key
 
     def arrow_right(self):
+        if len(self.items) == 0:
+            return
         index = self.get_selected_index()
         obj = self.items[index]
         if isinstance(obj, Cluster):
@@ -540,6 +542,8 @@ class TaskTree:
         self.set_selected_by_index(index)
 
     def arrow_left(self):
+        if len(self.items) == 0:
+            return
         index = self.get_selected_index()
         obj = self.items[index]
         if isinstance(obj, Quest):
