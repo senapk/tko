@@ -1,5 +1,7 @@
 # Changelog
 
+- 4.1.2
+  - fix: feno indexer refactor
 - 4.1.1
   - add: changing "tko test" to "tko exec"
 - 4.1.0
