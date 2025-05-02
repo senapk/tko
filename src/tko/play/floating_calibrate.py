@@ -24,15 +24,19 @@ class FloatingCalibrate(Floating):
         self.set_key_content()
 
     def set_key_content(self):
+        def format(value: int) -> str:
+            if value == 0:
+                return "---"
+            return str(value)
         self._content = []
         color = "G" if self._index == 0 else ""
-        self._content.append(Text().addf(color, "Left  ").addf(color, str(self._options[0])))
+        self._content.append(Text().addf(color, "Left  ").addf(color, format(self._options[0])))
         color = "G" if self._index == 1 else ""
-        self._content.append(Text().addf(color, "Right ").addf(color, str(self._options[1])))
+        self._content.append(Text().addf(color, "Right ").addf(color, format(self._options[1])))
         color = "G" if self._index == 2 else ""
-        self._content.append(Text().addf(color, "Up    ").addf(color, str(self._options[2])))
+        self._content.append(Text().addf(color, "Up    ").addf(color, format(self._options[2])))
         color = "G" if self._index == 3 else ""
-        self._content.append(Text().addf(color, "Down  ").addf(color, str(self._options[3])))
+        self._content.append(Text().addf(color, "Down  ").addf(color, format(self._options[3])))
 
     # @override
     def get_input(self) -> int:
@@ -52,6 +56,9 @@ class FloatingCalibrate(Floating):
             return -1
         elif key > 128:
             self._options[self._index] = key
+            for i in range(len(self._options)):
+                if i != self._index and self._options[i] == key:
+                    self._options[i] = 0
             self._index += 1
             if self._index >= len(self._options):
                 self._index = 0

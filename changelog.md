@@ -1,5 +1,7 @@
 # Changelog
 
+- 4.1.3
+  - fix: calibrate avoiding duplicate key
 - 4.1.2
   - fix: feno indexer refactor
 - 4.1.1

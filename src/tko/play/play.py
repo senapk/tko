@@ -71,19 +71,27 @@ class Play:
 
         cman.add_str(GuiKeys.up, self.tree.move_up)
         cman.add_str(GuiKeys.up2, self.tree.move_up)
-        cman.add_int(self.app.get_key_up(), self.tree.move_up)
+        key_up = self.app.get_key_up()
+        if key_up != 0:
+            cman.add_int(key_up, self.tree.move_up)
 
         cman.add_str(GuiKeys.down, self.tree.move_down)
         cman.add_str(GuiKeys.down2, self.tree.move_down)
-        cman.add_int(self.app.get_key_down(), self.tree.move_down)
+        key_down = self.app.get_key_down()
+        if key_down != 0:
+            cman.add_int(key_down, self.tree.move_down)
 
-        cman.add_int(self.app.get_key_left(), self.tree.arrow_left)
         cman.add_str(GuiKeys.left, self.tree.arrow_left)
         cman.add_str(GuiKeys.left2, self.tree.arrow_left)
+        key_left = self.app.get_key_left()
+        if key_left != 0:
+            cman.add_int(key_left, self.tree.arrow_left)
 
         cman.add_str(GuiKeys.right, self.tree.arrow_right)
         cman.add_str(GuiKeys.right2, self.tree.arrow_right)
-        cman.add_int(self.app.get_key_right(), self.tree.arrow_right)
+        key_right = self.app.get_key_right()
+        if key_right != 0:
+            cman.add_int(key_right, self.tree.arrow_right)
 
         cman.add_str(GuiKeys.calibrate, lambda: self.fman.add_input(FloatingCalibrate(self.settings)))
         
