@@ -7,6 +7,24 @@ from ..run.solver_builder import SolverBuilder
 import random
 import select
 import sys
+import os
+
+if os.name == 'nt':  # Windows
+    import msvcrt
+
+    def input_available():
+        return msvcrt.kbhit()
+
+    def read_input():
+        return msvcrt.getwch()  # use getch() para byte
+else:  # Unix (Linux, macOS)
+    import select
+
+    def input_available():
+        return select.select([sys.stdin], [], [], 0)[0]
+
+    def read_input():
+        return sys.stdin.readline()
 
 class Free:
     @staticmethod
@@ -40,8 +58,8 @@ class Free:
         solver.reset()
         to_run_again = False
         if wait_input:
-            while select.select([sys.stdin], [], [], 0)[0]:
-                sys.stdin.readline()
+            while input_available():
+                read_input()
             print(Text().center(RawTerminal.get_terminal_size(), Token("─")))
             print(Text.format("Para [recompilar e] reexecutar digite: {y}", "<enter>"))
             print(Text.format("Para voltar para tela anterior digite: {y}", "q<enter>"))
