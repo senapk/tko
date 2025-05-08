@@ -293,6 +293,12 @@ class FloatingInput(Floating):
         elif key >= 32 and key < 127:
             self.search_text += chr(key).lower()
             self.update_index()
+        elif any([key == x for x in InputManager.backspace_list]):
+            if len(self.search_text) > 0:
+                self.search_text = self.search_text[:-1]
+            else:
+                self.search_text = []
+            self.update_index()
         elif key == ord('\n'):
             if self._exit_on_action or self._options[self._index].exit_on_action:
                 self._enable = False

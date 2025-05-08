@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tko"
+version = "4.1.5"
+description = "Add your description here"
+authors = [
+    { name = "David", email = "sena.ufc@gmail.com" }
+]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "appdirs>=1.4.4",
+    "chardet>=5.2.0",
+    "diff-match-patch>=20241021",
+    "markdown>=3.7",
+    "pip>=25.0.1",
+    "pydot>=3.0.3",
+    "pyright>=1.1.399",
+    "pytest>=8.3.4",
+    "pyyaml>=6.0.2",
+    "types-appdirs>=1.4.3.5",
+    "types-chardet>=5.0.4.6",
+    "types-markdown>=3.7.0.20250322",
+    "uniplot==0.17.1",
+    "windows-curses; platform_system=='Windows'",
+]
+
+[project.scripts]
+tko = "tko.__main__:main"
+feno = "tko.feno.feno:feno_main"
