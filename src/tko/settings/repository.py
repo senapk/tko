@@ -9,6 +9,15 @@ import yaml # type: ignore
 
 available_languages = ["c", "cpp", "py", "ts", "java", "go", "hs", "yaml"]
 
+def filter_git_merge_tags(lines: List[str]) -> List[str]:
+    # remove lines with <<<<<<<, =======, >>>>>>>>
+    filtered_lines: List[str] = []
+    for line in lines:
+        if line.startswith("<<<<<<<") or line.startswith("=======") or line.startswith(">>>>>>>"):
+            continue
+        filtered_lines.append(line)
+    return filtered_lines
+
 class Repository:
     CFG_FILE = "repository.yaml"
     LOG_FILE = "history.csv"
@@ -244,10 +253,14 @@ class Repository:
         encoding = Decoder.get_encoding(self.get_config_file())
         try:
             with open(self.get_config_file(), encoding=encoding) as f:
-                self.data = yaml.safe_load(f)
+                lines = f.readlines()
+                lines = filter_git_merge_tags(lines)
+                self.data = yaml.safe_load("\n".join(lines))
             if self.data is None or not isinstance(self.data, dict) or len(self.data) == 0: # type: ignore
                 with open(self.get_config_backup_file(), "r", encoding=encoding) as f:
-                    self.data = yaml.safe_load(f)
+                    lines = f.readlines()
+                    lines = filter_git_merge_tags(lines)
+                    self.data = yaml.safe_load("\n".join(lines))
             if self.data is None or not isinstance(self.data, dict) or len(self.data) == 0: # type: ignore
                 raise FileNotFoundError(f"Arquivo de configuração vazio: {self.get_config_file()}")
         except:

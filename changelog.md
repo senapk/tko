@@ -1,5 +1,8 @@
 # Changelog
 
+- 4.2.0
+  - fix: backspace in floating choice
+  - add: dealing with git merge tags in yaml config files
 - 4.1.3
   - fix: calibrate avoiding duplicate key
 - 4.1.2

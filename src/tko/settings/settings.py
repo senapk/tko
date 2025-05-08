@@ -7,6 +7,7 @@ import yaml #type: ignore
 from tko.util.text import Text
 from tko.play.colors import Colors
 from tko.util.decoder import Decoder
+from tko.settings.repository import filter_git_merge_tags
 
 def singleton(class_): # type: ignore
     instances = {}
@@ -81,10 +82,14 @@ class Settings:
 
             encoding = Decoder.get_encoding(settings_file)
             with open(settings_file, "r", encoding=encoding) as f:
-                data: Any = yaml.safe_load(f)
+                lines = f.readlines()
+                lines = filter_git_merge_tags(lines)
+                data: Any = yaml.safe_load("\n".join(lines))
             if data is None or not isinstance(data, dict):
-                with open(backup_file, "w", encoding=encoding) as f:
-                    data = yaml.safe_load(f)
+                with open(backup_file, "r", encoding=encoding) as f:
+                    lines = f.readlines()
+                    lines = filter_git_merge_tags(lines)
+                    data = yaml.safe_load("\n".join(lines))
             if data is None or not isinstance(data, dict):
                 raise FileNotFoundError(f"Arquivo de configuração vazio: {settings_file}")
             self.data = data
