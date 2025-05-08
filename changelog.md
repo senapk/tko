@@ -1,5 +1,8 @@
 # Changelog
 
+- 4.3.0
+  - add: graph progression improved
+  - add: graph cache
 - 4.2.0
   - fix: backspace in floating choice
   - add: dealing with git merge tags in yaml config files

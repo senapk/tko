@@ -13,11 +13,10 @@ class TaskGraph:
         self.collected: list[float] = []
         self.eixo: list[float] = []
         self.minutes_mode = minutes_mode
-        self.__collect()
+        self.logger = Logger.get_instance()
 
     def __collect(self):
-        logger = Logger.get_instance()
-        actions = logger.tasks.key_actions.get(self.task_key, [])
+        actions = self.logger.tasks.key_actions.get(self.task_key, [])
         types = ["TEST", "PROG", "SELF", "FAIL"]
         filtered = [ad for ad in actions if ad.type in types]
         collected: list[float] = [0]
@@ -25,10 +24,10 @@ class TaskGraph:
         eixo: list[float] = [0]
         count = 1
         for ad in filtered:
-            if ad.coverage != -1:
-                last = ad.coverage
+            if ad.coverage == -1 or ad.coverage == 0:
                 collected.append(last)
             else:
+                last = ad.coverage
                 collected.append(last)
             if self.minutes_mode:
                 eixo.append(ad.elapsed.total_seconds() / 60)
@@ -40,6 +39,11 @@ class TaskGraph:
         # self.eixo = list(range(len(collected)))
 
     def get_graph(self) -> list[str]:
+        lines: list[str] = self.logger.cache.get_task_cache(self.task_key)
+        if len(lines) > 0:
+            return lines
+        self.__collect()
+
         title = self.task_key
         if self.minutes_mode:
             title += " (% / minutos)"
