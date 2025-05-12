@@ -11,7 +11,7 @@ class Test:
         os.chdir(Path(__file__).parent)
 
     def test_run_mixed_side(self, capsys):
-        cmd = "-w 80 -m test solver.yaml cases.tio -as"
+        cmd = "-w 80 -m exec solver.yaml cases.tio -as"
         Compare.text(capsys, "out1", cmd)
 
 

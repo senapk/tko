@@ -15,7 +15,7 @@ class Test:
         Compare.list(capsys, "out1", cmd)
 
     def test_run_2(self, capsys):
-        cmd = ["-m", "exec", "solver.yaml", "wrong.tio"]
+        cmd = ["-m", "exec", "solver.yaml", "wrong.tio", "-s"]
         Compare.list(capsys, "out2", cmd)
 
 

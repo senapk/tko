@@ -11,11 +11,11 @@ class Test:
         os.chdir(Path(__file__).parent)
                 
     def test_run_mixed_1(self, capsys):
-        Compare.text(capsys, "out1", "-w 80 -m test cases.tio solver.py -s")
+        Compare.text(capsys, "out1", "-w 80 -m exec cases.tio solver.py -s")
 
 
     def test_run_mixed_2(self, capsys):
-        Compare.text(capsys, "out2", "-w 80 -m test cases.tio solver.py -d")
+        Compare.text(capsys, "out2", "-w 80 -m exec cases.tio solver.py -d")
 
 if __name__ == '__main__':
     unittest.main()

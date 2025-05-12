@@ -85,7 +85,8 @@ class SideDiff:
     
     def _insert_expected_received(self):
         # expected and received header
-        expected_header = Text().addf("g", DiffBuilder.vexpected)
+        ecolor = "g" if self.unit.expected == self.unit.received else "y"
+        expected_header = Text().addf(ecolor, DiffBuilder.vexpected)
         rcolor = "r" if self.unit.expected != self.unit.received else "g"
         received_header = Text().addf(rcolor, DiffBuilder.vreceived)
         self.output.append(self.title_side_by_side(expected_header, received_header, symbols.hbar, Token("┼"), Token("├"), Token("┤")))
@@ -97,13 +98,18 @@ class SideDiff:
             self.output.append(self.split_screen(exp, rec, symbol))
 
     def _insert_first_line_diff(self):
+        if self.unit.expected == self.unit.received or self.unit.expected == "":
+            return
         self.output.append(Text().addf("b", DiffBuilder.vunequal).fold_in(self.width, symbols.hbar, "├", "┤"))
         for line in self.db.first_failure_diff(self.unit.expected, self.unit.received, self.first_failure):
             width = self.width - 1
             self.output.append(Text().add("│").add(line).ljust(width, Token(" ")).add("│"))
         
     def _finish(self):
-        self.output.append(Text().fold_in(self.width, symbols.hbar, "╰", "╯"))
+        if self.unit.expected == self.unit.received or self.unit.expected == "":
+            self.output.append(Text().add("┴").fold_in(self.width, symbols.hbar, "╰", "╯"))
+        else:
+            self.output.append(Text().fold_in(self.width, symbols.hbar, "╰", "╯"))
 
     def build_diff(self) -> List[Text]:
         self.output = []

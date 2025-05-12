@@ -56,18 +56,17 @@ class DownDiff:
     def insert_expected(self):
         if self.no_diff_mode:
             return
-        # color = "g" if self.unit.expected == self.unit.received else "b"
-        # self.output.append(Text().addf(color, DiffBuilder.vreceived).fold_in(self.width, symbols.hbar, "╭", "╮"))
         if self.unit.expected == "":
             return
-        self.output.append(Text().addf("g", DiffBuilder.vexpected).fold_in(self.width, symbols.hbar, "├", "┤"))
+        color = "g" if self.unit.expected == self.unit.received else "y"
+        self.output.append(Text().addf(color, DiffBuilder.vexpected).fold_in(self.width, symbols.hbar, "├", "┤"))
         for line, _ in self.expected_received:
             if line is not None:
                 self.output.append(line.ljust(self.width - 1, Token(" ")).add(symbols.vbar))
 
     def insert_received(self):
         # headers
-        color = "r" if self.unit.expected == self.unit.received else "g"
+        color = "g" if self.unit.expected == self.unit.received else "r"
         if self.no_diff_mode:
             color = "g"
             self.output.append(Text().addf(color, DiffBuilder.vreceived).fold_in(self.width, symbols.hbar, "╭", "╮"))

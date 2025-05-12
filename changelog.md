@@ -1,5 +1,7 @@
 # Changelog
 
+- 4.4.0
+  - add: improved diff colors and layout
 - 4.3.0
   - add: graph progression improved
   - add: graph cache

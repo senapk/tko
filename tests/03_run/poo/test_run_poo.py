@@ -11,13 +11,13 @@ class Test:
         os.chdir(Path(__file__).parent)
             
     def test_run_mixed_1(self, capsys):
-        Compare.text(capsys, "out1", "-w 80 -m test draft.ts cases.tio")
+        Compare.text(capsys, "out1", "-w 80 -m exec draft.ts cases.tio -s")
 
     def test_run_mixed_2(self, capsys):
-        Compare.text(capsys, "out2", "-w 80 -m test solver.cpp cases.tio -s")
+        Compare.text(capsys, "out2", "-w 80 -m exec solver.cpp cases.tio -s")
 
     def test_run_mixed_3(self, capsys):
-        Compare.text(capsys, "out3", "-w 80 -m test draft.ts cases.tio -d")
+        Compare.text(capsys, "out3", "-w 80 -m exec draft.ts cases.tio -d")
 
 
 
