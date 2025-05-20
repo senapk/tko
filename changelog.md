@@ -1,5 +1,8 @@
 # Changelog
 
+- 4.5.0
+  - add: better floating messages
+  - add: html filter for pandoc versions
 - 4.4.0
   - add: improved diff colors and layout
 - 4.3.0

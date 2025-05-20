@@ -121,18 +121,12 @@ class Play:
         return cman
         
     def send_char_not_found(self, key: int):
-        if not Flags.devel:
-            return
-
         exclude_str = [ord(v) for v in [" ", "a", "d", "\n", GuiKeys.up, GuiKeys.down, GuiKeys.left, GuiKeys.right]]
         exclude_int = [ -1, InputManager.esc] + InputManager.backspace_list
         if key in exclude_int + exclude_str:
             return
-        self.fman.add_input(
-            Floating(self.settings, "v")
-                .error()
-                .put_text(f"Tecla char {chr(key)} code {key} não reconhecida")
-        )
+        self.fman.add_input( Floating(self.settings, "v>").error().put_text(f"Tecla char:{chr(key)}, code:{key}, não reconhecida") )
+
 
     def main(self, scr: curses.window):
         InputManager.fix_esc_delay()

@@ -73,9 +73,7 @@ class Flags:
     admin = Flag().set_name("Gamer").set_keycode("G").set_values(["1", "0"])       .set_description("Habilitas todas as missões e tarefas        ")
     skills = Flag().set_name("Técnicas").set_keycode("T").set_values(["0", "1"]).set_description("Mostra a barra de skills")
     graph = Flag().set_name("Graph").set_keycode(GuiKeys.graph).set_values(["0", "1", "2"]).set_description("Muda o Gráfico")
-    # rate = Flag().set_name("Rate").set_keycode(GuiKeys.rate).set_values(["0", "1"]).set_description("Muda a visão da pontuação marcada")
 
-    devel = Flag().set_name("Devel").set_values(["0", "1"])
 
 class FlagsMan:
     def __init__(self, data: dict[str, int]):

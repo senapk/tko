@@ -147,22 +147,6 @@ class PlayPalette:
             ).set_exit_on_action(True)
         )
 
-        # options.append(
-        #     FloatingInputData(
-        #         lambda: Text.format(" {} Devel: Habilita mensagens de {y}", icon(Flags.devel.is_true()), "Debug"),
-        #         Flags.devel.toggle,
-        #         ""
-        #     )
-        # )
-
-        # options.append(
-        #     FloatingInputData(
-        #         lambda: Text.format(" {} Devel: Marcar em {y}", symbols.action, "Massa"),
-        #         self.gui.tree.mass_mark,
-        #         ""
-        #     ).set_exit_on_action(True)
-        # )
-
         self.fman.add_input(
             FloatingInput(self.actions.settings, "^").set_text_ljust()
                       .set_header(" Selecione uma ação da lista ")

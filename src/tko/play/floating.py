@@ -72,13 +72,13 @@ class Floating:
         if "<" in self._floating_align:
             x = 1
         elif ">" in self._floating_align:
-            x = cols - dx - 3
+            x = cols - dx - 2
 
         y = (lines - dy) // 2
         if "^" in self._floating_align:
             y = 1
         elif "v" in self._floating_align:
-            y = lines - dy - 5
+            y = lines - dy - 2
 
         self._frame.set_pos(y, x)
         return self

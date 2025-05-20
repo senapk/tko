@@ -17,13 +17,61 @@ class CssStyle:
     
 class HTML:
 
+    css = r"""
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+""".splitlines()[1:]
+
     @staticmethod
-    def remove_css_link_from_html(html_file: str):
+    def fix_html_pandoc_version_differences(html_file: str):
         content = Decoder.load(html_file)
         output: list[str] = []
+        enable = True
         for line in content.splitlines():
-            if not line.startswith('  <link rel="stylesheet"'):
+            if line.startswith("    code span."):
+                enable = True
+            if line == "    /* CSS for syntax highlighting */":
                 output.append(line)
+                output.extend(HTML.css)
+                enable = False
+            if not line.startswith('  <link rel="stylesheet"') and enable:
+                output.append(line)
+            
+
+        
         Decoder.save(html_file, "\n".join(output))
 
 
@@ -41,7 +89,7 @@ class HTML:
             if stdout != "" or stderr != "":
                 print(stdout)
                 print(stderr)
-            HTML.remove_css_link_from_html(output_file)
+            HTML.fix_html_pandoc_version_differences(output_file)
 
         except Exception as e:
             print("Erro no comando pandoc:", e)

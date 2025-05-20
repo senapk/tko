@@ -5,7 +5,6 @@ from typing import List, Optional, Tuple
 
 from tko.game.task import Task
 from tko.play.border import Border
-from tko.play.flags import Flags
 from tko.play.floating import Floating, FloatingInput, FloatingInputData
 from tko.play.floating_manager import FloatingManager
 from tko.play.fmt import Fmt
@@ -534,16 +533,6 @@ class Tester:
             self.results = []
             self.unit_list = [unit for unit in self.wdir.get_unit_list()]
 
-    def send_char_not_found(self, key: int):
-        if not Flags.devel:
-            return
-        self.fman.add_input(Floating(self.settings, "v>").error()
-                    .put_text("Tecla")
-                    .put_text(f"char {chr(key)}")
-                    .put_text(f"code {key}")
-                    .put_text("não reconhecida")
-                    .put_text("")
-                    )
 
     def go_left(self):
         if self.mode == SeqMode.intro:
@@ -585,7 +574,7 @@ class Tester:
         if len(self.get_solver_names()) == 1:
             self.fman.add_input(
                 Floating(self.settings, "v>").warning()
-                .put_text("Seu projeto só tem um arquivo de solução")
+                .put_text("Seu projeto só tem um arquivo de solução.")
                 .put_text("Essa funcionalidade troca qual dos arquivos")
                 .put_text("de solução será o principal.")
             )
@@ -641,26 +630,31 @@ class Tester:
         elif key == ord(GuiKeys.evaluate):
             self.run_test_mode()
         elif key == ord(GuiKeys.lock):
+            self.fman.add_input(Floating(self.settings, "v>").warning().put_text("Função de travamento {}".format("ligada" if not self.locked_index else "desligada")))
             self.lock_unit()
         elif key == ord(GuiKeys.edit):
             if self.opener is not None:
                 self.opener.load_folders_and_open()
         elif key == ord(GuiKeys.limite):
             self.change_limit()
+            self.fman.add_input(Floating(self.settings, "v>").warning().put_text("Limite de execução alterado para {}".format(self.get_time_limit_symbol())))
             self.settings.save_settings()
         elif key == ord(GuiKeys.diff):
             self.settings.app.toggle_diff()
+            self.fman.add_input(Floating(self.settings, "v>").warning().put_text("Modo de Diff alterado para {}".format(self.settings.app.get_diff_mode().value)))
             self.settings.save_settings()
         elif key == ord(GuiKeys.borders):
             self.settings.app.toggle_borders()
+            self.fman.add_input(Floating(self.settings, "v>").warning().put_text("Modo de Bordas alterado para {}".format("ligado" if self.settings.app.get_use_borders() else "desligado")))
             self.settings.save_settings()
         elif key == ord(GuiKeys.images):
             self.settings.app.toggle_images()
+            self.fman.add_input(Floating(self.settings, "v>").warning().put_text("Modo de Imagens alterado para {}".format("ligado" if self.settings.app.get_use_images() else "desligado")))
             self.settings.save_settings()
         elif key == ord(GuiKeys.palette):
             self.command_pallete()
         elif key != -1 and key != curses.KEY_RESIZE:
-            self.send_char_not_found(key)
+            self.fman.add_input( Floating(self.settings, "v>").error().put_text(f"Tecla char:{chr(key)}, code:{key}, não reconhecida") )
 
     def command_pallete(self):
         options: list[FloatingInputData] = []
