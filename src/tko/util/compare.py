@@ -1,4 +1,4 @@
-from tko.__main__ import Parser, exec
+from tko.__main__ import Parser, execute
 import os
 
 class Compare:
@@ -25,6 +25,6 @@ class Compare:
     def list(capsys: str, file: str, cmd_list: list[str]):
         parser = Parser().parser
         args = parser.parse_args(cmd_list)
-        exec(parser, args)
+        execute(parser, args)
         expected, received = Compare.load_and_save(file, capsys.readouterr().out) # type: ignore
         assert expected == received

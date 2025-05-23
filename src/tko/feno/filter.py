@@ -118,7 +118,7 @@ def clean_com(target: str, content: str) -> str:
     return "\n".join(output)
 
 class DeepFilter:
-    extensions = [".md", ".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs", ".txt", ".go", ".mod"]
+    extensions = [".md", ".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs", ".txt", ".go", ".json"]
 
     def __init__(self):
         self.cheat_mode = False

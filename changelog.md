@@ -1,5 +1,10 @@
 # Changelog
 
+- 4.6.0
+  - add: Text class improved for better color handling
+  - add: tko run uses raw mode
+  - add: tko gui open curses mode
+  - add: config files for pytest find path correctly
 - 4.5.0
   - add: better floating messages
   - add: html filter for pandoc versions

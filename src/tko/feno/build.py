@@ -27,7 +27,6 @@ class Actions:
         self.target_html = norm_join(self.cache, "q.html")
         self.title = ""
         self.cases = norm_join(self.cache, "q.tio")
-        self.config_json = norm_join(self.source_dir, "config.json")
         self.mapi_json = norm_join(self.cache, "mapi.json")
         self.cache_src = norm_join(self.cache, "draft")
         self.vpl: JsonVPL | None = None
@@ -114,10 +113,7 @@ class Actions:
     def init_vpl(self):
         html_content = Decoder.load(self.target_html)
         self.vpl = JsonVPL(self.title, html_content)
-        self.vpl.set_cases(self.cases)
-        if self.vpl.load_config_json(self.config_json, self.source_dir):
-            Log.resume("Required ", end="")
-            Log.verbose(f"  CfgVplJson: {self.config_json}")
+        self.vpl.set_tests(self.cases)
         if self.vpl.load_drafts(self.cache_src):
             Log.resume("Drafts ", end="")
 

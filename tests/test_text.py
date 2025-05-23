@@ -4,12 +4,11 @@
 
 import unittest
 
-
-from tko.util.text import Text, Token
+from tko.util.text  import Text, Token
 
 class TestSimple(unittest.TestCase):
     def test_token_creation(self):
-        token = Token("text1","g")
+        token: Token = Token("text1","g")
         assert token.text == "text1"
         assert token.fmt == "g"
 
@@ -132,6 +131,38 @@ class TestSimple(unittest.TestCase):
         text1 = Text.format("sangue é {}, mar é {c}", Text.format("{r}", "vermelho"), Token("ciano", "r"))
         text2 = Text().add("sangue é ").addf("r", "vermelho").add(", mar é ").addf("c", "ciano")
         assert str(text1) == str(text2)
+
+    def test_format_default(self):
+        text1 = Text("b").add("banana").add(Token("uva", "g")).add(Text("r").add("ovo"))
+        assert text1.resume() == [Token("banana", "b"), Token("uva", "g"), Token("ovo", "r")]
+
+    def test_format_default2(self):
+        text1 = Text("b") + "banana" + " " + "madura"
+        text2 = Text("b").add("banana").add(" ").add("madura")
+        assert str(text1) == str(text2)
+        assert text1.resume() == [Token("banana madura", "b")]
+        text1 = Text("b") + "banana" + Text("r") + Token("madura", "g")
+        assert text1.resume() == [Token("banana", "b"), Token("madura", "g")]
+
+    def test_format_1(self):
+        text1 = Text.format("brasil é {g} e {y}", "verde", "amarelo", " e azul")
+        text2 = Text().add("brasil é ").addf("g", "verde").add(" e ").addf("y", "amarelo").add(" e azul")
+        assert str(text1) == str(text2)
+
+        text3 = Text.format("o brasil é {g:verde} e {y:amarelo}.")
+        text4 = Text.format("o brasil é {} e {}.", Token("verde", "g"), Token("amarelo", "y"))
+        assert str(text3) == str(text4)
+
+        text5 = Text() + "o brasil é " + Text("g") + "verde" + Text() + " e " + Text("y") + "amarelo"
+        print(text5)
+        print(text3)
+        assert text5.resume() == [Token("o brasil é"), Token("verde", "g"), Token(" e "), Token("amarelo", "y")]
+
+    def test_tuple(self):
+        text1 = Text() + ("g", "brasil") + " é " + ("r", "lindo")
+        print(text1)
+        print("chiclete")
+
 
 if __name__ == "__main__":
     unittest.main()

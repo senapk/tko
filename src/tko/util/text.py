@@ -44,7 +44,7 @@ class AnsiColor:
         return output
 
 class Token:
-    def __init__(self, text: str = "", fmt: str = "", ):
+    def __init__(self, text: str = "", fmt: str = ""):
         if not isinstance(text, str): # type: ignore
             raise TypeError("text must be a string")
         self.text = text
@@ -66,12 +66,10 @@ class Token:
     def __str__(self):
         return f"({self.fmt}:{self.text})"
 
-def RToken(fmt: str, text: str) -> Token:
-    return Token(text, fmt)
-
 class Text:
-    def __init__(self):
+    def __init__(self, default_fmt: str = ""):
         self.data: list[Token] = []
+        self.default_fmt = default_fmt
 
     @staticmethod
     def format(value: str = "", *args: Any) -> Text:
@@ -134,7 +132,7 @@ class Text:
         return self.len()
     
     def __add__(self, other: Any):
-        return Text().add(self).add(other)
+        return Text(self.default_fmt).add(self).add(other)
 
     # @override
     def __eq__(self, other: Any):
@@ -153,6 +151,7 @@ class Text:
         return output
     
     def resume(self) -> list[Token]:
+        # Group consecutive text with the same fmt
         if len(self.data) == 0:
             return []
         
@@ -183,25 +182,30 @@ class Text:
                 index += 1
         return self
 
-    def plus(self, qtd: int) -> Text:
+    def repeat(self, qtd: int) -> Text:
         output = Text()
         for _ in range(qtd):
             output.add(self)
         return output
 
-    def add(self, value: str | Token | Text | None):
+    def add(self, value: str | Token | Text | tuple[str, str] | None):
         if value is None:
             return self
         if isinstance(value, str):
             if value != "":
                 for c in value:
-                    self.data.append(Token(c))
+                    self.data.append(Token(c, self.default_fmt))
         elif isinstance(value, Token):
             if value.text != "":
                 for c in value.text:
                     self.data.append(Token(c, value.fmt))
         elif isinstance(value, Text):  # type: ignore
+            self.default_fmt = value.default_fmt
             self.data += value.data
+        elif isinstance(value, tuple) and len(value) == 2 and isinstance(value[0], str) and isinstance(value[1], str): # type: ignore
+            fmt, text = value
+            for c in text:
+                self.data.append(Token(c, fmt))
         else:
             raise TypeError("unsupported type '{}'".format(type(value)))
         return self
@@ -264,8 +268,8 @@ class Text:
         missing = width - self.len() - 2
         left = missing // 2
         right = missing - left
-        filler_left = Text().add(sep).plus(left)
-        filler_right = Text().add(sep).plus(right)
+        filler_left = Text().add(sep).repeat(left)
+        filler_right = Text().add(sep).repeat(right)
         return Text() + left_border + filler_left + self + filler_right + right_border
     
     def len(self):
@@ -329,7 +333,7 @@ class Text:
         return final_result
 
     @staticmethod
-    def __extract(data: str):
+    def __extract(data: str) -> list[tuple[str, str]]:
         data = Text.__preprocess(data)  # Preprocessar a string
         texts: list[str] = [""]
         placeholders: list[str] = []
@@ -343,7 +347,7 @@ class Text:
                 texts.append("")  # Volta para o texto
                 destiny = texts
             else:
-                # Substitui \a e \b por < e >
+                # Substitui \a e \b por { e }
                 if c == '\a':
                     c = '{'
                 elif c == '\b':
@@ -355,25 +359,51 @@ class Text:
         while len(texts) > len(placeholders):
             placeholders.append("")
 
-        return texts, placeholders
+        return list(zip(texts, placeholders))
+
+    def __process_fmt(self, fmt: str) -> tuple[str, str]:
+        if fmt == "":
+            return "", ""
+        if ":" in fmt:
+            parts: list[str] = fmt.split(":")
+            if len(parts) > 1:
+                return parts[0], ":".join(parts[1:])
+            if len(parts) == 1:
+                return parts[0], ""
+        return fmt, ""
 
     def __process_placeholders(self, text: str, *args: Any) -> None:
-        params = list(args)
-        texts, placeholders = Text.__extract(text)
-        while len(params) < len(placeholders):
-            params.append("")
-        # Aplicar a função fn aos placeholders e montar o resultado final
-        for i in range(len(texts)):
-            value = texts[i]
-            self.add(value)
-            
-            fmt = placeholders[i]
-            value = params[i]
+        params: list[str | Text | Token] = list(args)
+        for text_data, placeholder in Text.__extract(text):
+            self.add(text_data)
+            fmt, data = self.__process_fmt(placeholder)
+            if data == "" and len(params) > 0:
+                data = params[0]
+                params = params[1:]
             if fmt == "":
-                self.add(value)
+                self.add(data)
             else:
-                self.addf(fmt, value)
+                self.addf(fmt, data)
+        for elem in params:
+            self.add(elem)
+
+
 
 if __name__ == "__main__":
-    print(Text.format("a {b} está com {}", "agua", Text.format("{g}", "capim")))
-    
+    # Formatação usando placeholders {} e argumentos variádicos
+    # Cor de conteúdo no texto
+    print(Text.format("O Brasil é {b:azul}, {g:verde} e {y:amarelo}"))
+    # Cor no texto e conteúdo nos argumentos
+    print(Text.format("O Brasil é {b}, {g} e {y}.", "azul", "verde", "amarelo"))
+    # Carrega tupla, ou conteúdo ou nada
+    print(Text.format("O Brasil é {}, {g:verde} e {y}.", ("b", "azul"), "amarelo"))
+
+    # Funciona também por adição
+    print(Text() + "O Brasil é " + ("b", "azul") + ", " + ("g", "verde") + " e " + ("y", "amarelo"))
+    # Dá pra definir a formatação padrão para quando não for passado nada
+    print(Text("r") + "O Brasil é " + ("b", "azul") + ", " + ("g", "verde") + " e " + ("y", "amarelo"))
+    # A formatação pode incluir cores de fundo
+    print(Text("Yw") + "O Brasil é " + ("Rb", "azul") + ", " + ("Kg", "verde") + " e " + ("y", "amarelo"))
+
+    # Dá pra concatenar, somar ou passar por parâmetro
+    print(Text("R") + "Tudo em vermelho " + Text("G") + " e tudo em verde")

@@ -1,7 +1,7 @@
 from tko.play.keys import GuiActions, GuiKeys
 from tko.game.xp import XP
 from tko.settings.settings import Settings
-from tko.util.text import Text, RToken
+from tko.util.text import Text
 from tko.util.symbols import symbols
 import os
 
@@ -53,13 +53,12 @@ class Gui:
             pass
         act_color, act_text = self.get_activate_label()
         help_fixed: list[Text] = [
-            Text() + RToken("C", f"{GuiActions.move} [{GuiKeys.up}{GuiKeys.left}{GuiKeys.down}{GuiKeys.right}]"),
-            Text() + RToken("C", f"{GuiActions.config} [{GuiKeys.palette}]"),
-            Text() + RToken(act_color, f"{act_text} [↲]"),
-            Text() + RToken("G", f"{GuiActions.search} [{GuiKeys.search}]"),
-            Text() + RToken(color, f"{GuiActions.edit} [{GuiKeys.edit}]"),
-            Text() + RToken(color, f"{GuiActions.grade} [{GuiKeys.grade_play}]"),
-            # Text() + RToken("C", f"{GuiActions.navegar} [wasd]")
+            Text().addf("C", f"{GuiActions.move} [{GuiKeys.up}{GuiKeys.left}{GuiKeys.down}{GuiKeys.right}]"),
+            Text().addf("C", f"{GuiActions.config} [{GuiKeys.palette}]"),
+            Text().addf(act_color, f"{act_text} [↲]"),
+            Text().addf("G", f"{GuiActions.search} [{GuiKeys.search}]"),
+            Text().addf(color, f"{GuiActions.edit} [{GuiKeys.edit}]"),
+            Text().addf(color, f"{GuiActions.grade} [{GuiKeys.grade_play}]"),
         ]
         return help_fixed
 
@@ -220,8 +219,8 @@ class Gui:
 
     def show_top_bar(self, frame: Frame):
         lista = [
-            Text() + RToken("Y", f"Sair  [q]"),
-            Text() + RToken("Y", f"Ajuda [?]"),
+            Text().addf("Y", f"Sair  [q]"),
+            Text().addf("Y", f"Ajuda [?]"),
         ]
         help = self.build_list_sentence(lista)
         search = help[0]
@@ -252,22 +251,22 @@ class Gui:
 
         _help.put_sentence(Text.format("  ").addf("r", "Shift + B")
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
-        _help.put_sentence(Text() + "  " + RToken("g", "setas") + "      Para navegar entre os elementos")
-        _help.put_sentence(Text() + "   " + RToken("g", f"{GuiKeys.left}{GuiKeys.down}{GuiKeys.up}{GuiKeys.right}")  + "      Para navegar entre os elementos")
-        _help.put_sentence(Text() + "   " + RToken("g", f"{GuiKeys.left2}{GuiKeys.down2}{GuiKeys.up2}{GuiKeys.right2}")  + "      Para navegar entre os elementos")
+        _help.put_sentence(Text() + "  " + ("g", "setas") + "      Para navegar entre os elementos")
+        _help.put_sentence(Text() + "   " + ("g", f"{GuiKeys.left}{GuiKeys.down}{GuiKeys.up}{GuiKeys.right}")  + "      Para navegar entre os elementos")
+        _help.put_sentence(Text() + "   " + ("g", f"{GuiKeys.left2}{GuiKeys.down2}{GuiKeys.up2}{GuiKeys.right2}")  + "      Para navegar entre os elementos")
     
-        _help.put_sentence(Text() + f"   {GuiActions.config} " + RToken("r", f"{GuiKeys.palette}") + "  Abre o menu de ações e configurações")
-        _help.put_sentence(Text() + f"   {GuiActions.github} " + RToken("r", f"{GuiKeys.open_url}") + "  Abre tarefa em uma aba do browser")
-        _help.put_sentence(Text() + f"   {GuiActions.download} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
-        _help.put_sentence(Text() + f"   {GuiActions.edit} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
-        _help.put_sentence(Text() + f"   {GuiActions.activate} " + RToken("r", "↲") + "  Interage com o elemento de acordo com o contexto")
+        _help.put_sentence(Text() + f"   {GuiActions.config} " + ("r", f"{GuiKeys.palette}") + "  Abre o menu de ações e configurações")
+        _help.put_sentence(Text() + f"   {GuiActions.github} " + ("r", f"{GuiKeys.open_url}") + "  Abre tarefa em uma aba do browser")
+        _help.put_sentence(Text() + f"   {GuiActions.download} " + ("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
+        _help.put_sentence(Text() + f"   {GuiActions.edit} " + ("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
+        _help.put_sentence(Text() + f"   {GuiActions.activate} " + ("r", "↲") + "  Interage com o elemento de acordo com o contexto")
         _help.put_sentence(Text() + "             (baixar, visitar, escolher, compactar, expandir)")
-        _help.put_sentence(Text() + f"  {GuiActions.grade} " + RToken("r", GuiKeys.grade_play) + "  Abre tela para auto avaliação")
-        _help.put_sentence(Text() + f"    {GuiActions.search} " + RToken("r", f"{GuiKeys.search}") + "  Abre a barra de pesquisa")
+        _help.put_sentence(Text() + f"  {GuiActions.grade} " + ("r", GuiKeys.grade_play) + "  Abre tela para auto avaliação")
+        _help.put_sentence(Text() + f"    {GuiActions.search} " + ("r", f"{GuiKeys.search}") + "  Abre a barra de pesquisa")
 
         _help.put_sentence(Text())
         _help.put_sentence(Text() + "Você pode mudar o editor padrão com o comando")
-        _help.put_sentence(Text() + RToken("g", "             tko config --editor <comando>"))
+        _help.put_sentence(Text() + ("g", "             tko config --editor <comando>"))
 
 
     def build_xp_bar(self) -> tuple[str, float]:

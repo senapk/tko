@@ -114,7 +114,7 @@ class Main:
         CmdConfig.execute(settings, param)
 
     @staticmethod
-    def list(_args: argparse.Namespace):
+    def list(_: argparse.Namespace):
         settings = Settings()
         print(str(settings))
 
@@ -162,13 +162,13 @@ class Parser:
         return parent_manip
 
     def add_parser_run(self):
-        parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='Run using curses.')
+        parser_r = self.subparsers.add_parser('gui', parents=[self.parent_basic], help='Run using curses.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
         parser_r.set_defaults(func=Main.run)
 
     def add_parser_exec(self):
-        parser_r = self.subparsers.add_parser('exec', parents=[self.parent_basic], help='Run using raw terminal.')
+        parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='Run using raw terminal.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
         parser_r.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures')
@@ -257,7 +257,7 @@ class Parser:
         parser_init.set_defaults(func=Main.init)
 
 
-def exec(parser: argparse.ArgumentParser, args: argparse.Namespace):
+def execute(parser: argparse.ArgumentParser, args: argparse.Namespace):
     settings = Settings()
     if args.w is not None:
         RawTerminal.set_terminal_size(args.w)
@@ -285,7 +285,7 @@ def main():
     try:
         parser = Parser().parser
         args = parser.parse_args()
-        exec(parser, args)
+        execute(parser, args)
         sys.exit(0)
     except KeyboardInterrupt:
         print("\n\nKeyboard Interrupt")
