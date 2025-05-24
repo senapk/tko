@@ -118,7 +118,7 @@ def clean_com(target: str, content: str) -> str:
     return "\n".join(output)
 
 class DeepFilter:
-    extensions = [".md", ".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs", ".txt", ".go", ".json"]
+    extensions = [".md", ".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs", ".txt", ".go", ".json", ".mod", ".puml", ".sh", ".sql", ".yaml", ".exec", ".hide", ".tio"]
 
     def __init__(self):
         self.cheat_mode = False
@@ -145,6 +145,7 @@ class DeepFilter:
     def copy(self, source: str, destiny: str, deep: int):
         if deep == 0:
             return
+        
         if os.path.isdir(source):
             chain = source.split(os.sep)
             if len(chain) > 1 and chain[-1].startswith("."):
@@ -153,39 +154,49 @@ class DeepFilter:
                 os.makedirs(destiny)
             for file in sorted(os.listdir(source)):
                 self.copy(os.path.join(source, file), os.path.join(destiny, file), deep - 1)
-        else:
-            filename = os.path.basename(source)
+            return
+        
+        filename = os.path.basename(source)
+        folder = os.path.dirname(source)
+        deny_list = os.path.join(folder, ".deny")
+        if os.path.isfile(deny_list):
+            with open(deny_list) as f:
+                deny = [x.strip() for x in f.read().splitlines()]
+                if filename in deny:
+                    print("(disabled):", destiny)
+                    return
 
-            if not any([filename.endswith(ext) for ext in self.extensions]):
-                return
+        if not any([filename.endswith(ext) for ext in self.extensions]):
+            # print("(skipped ): ", filename)
+            return
 
-            content = Decoder.load(source)
+        content = Decoder.load(source)
 
-            processed = Filter(filename).process(content)
+        processed = Filter(filename).process(content)
 
-            if self.cheat_mode:
-                if processed != content:
-                    cleaned = clean_com(source, content)
-                    Decoder.save(destiny, cleaned)
-            elif processed != "":
-                Decoder.save(destiny, processed)
+        if self.cheat_mode:
+            if processed != content:
+                cleaned = clean_com(source, content)
+                Decoder.save(destiny, cleaned)
+        elif processed != "" and processed != "\n":
+            Decoder.save(destiny, processed)
 
-            line = ""
-            if self.cheat_mode:
-                if processed != content:
-                    line += "(cleaned ): "
-                else:
-                    line += "(disabled): "
+        line = ""
+        if self.cheat_mode:
+            if processed != content:
+                line += "(cleaned ): "
             else:
-                if processed == "":
-                    line += "(disabled): "
-                elif processed != content:
-                    line += "(filtered): "
-                else:
-                    line += "(        ): "
-            line += destiny
+                line += "(disabled): "
+        else:
+            if processed == "" or processed == "\n":
+                line += "(disabled): "
+            elif processed != content:
+                line += "(filtered): "
+            else:
+                line += "(        ): "
+        line += destiny
 
-            self.print(line)
+        self.print(line)
 
 class CodeFilter:
     @staticmethod

@@ -2,7 +2,7 @@ from .title import FenoTitle
 from .jsontools import JsonVPL
 from .older import Older
 from .remote_md import Absolute
-from .html import HTML
+# from .html import HTML
 from .cases import Cases
 from .log import Log
 from .mdpp import Mdpp
@@ -24,7 +24,7 @@ class Actions:
         self.hook = os.path.basename(os.path.abspath(source_dir))
         self.source_readme = norm_join(self.source_dir, "Readme.md")
         self.remote_readme = norm_join(self.cache, "Readme.md")
-        self.target_html = norm_join(self.cache, "q.html")
+        # self.target_html = norm_join(self.cache, "q.html")
         self.title = ""
         self.cases = norm_join(self.cache, "q.tio")
         self.mapi_json = norm_join(self.cache, "mapi.json")
@@ -77,14 +77,14 @@ class Actions:
         Log.verbose(f"  RemoteFile: {self.remote_readme}")
     
     # uses pandoc to generate html from markdown
-    def html(self, use_pandoc: bool):
-        title = FenoTitle.extract_title(self.source_readme)
-        if use_pandoc:
-            HTML.pandoc_markdown_to_html(title, self.remote_readme, self.target_html)
-        else:
-            HTML.python_markdown_to_html(title, self.remote_readme, self.target_html)
-        Log.resume("HTML ", end="")
-        Log.verbose(f"  HTML  file: {self.target_html}")
+    # def html(self, use_pandoc: bool):
+    #     title = FenoTitle.extract_title(self.source_readme)
+    #     if use_pandoc:
+    #         HTML.pandoc_markdown_to_html(title, self.remote_readme, self.target_html)
+    #     else:
+    #         HTML.python_markdown_to_html(title, self.remote_readme, self.target_html)
+    #     Log.resume("HTML ", end="")
+    #     Log.verbose(f"  HTML  file: {self.target_html}")
 
     # uses tko to generate cases file
     def build_cases(self):
@@ -111,8 +111,9 @@ class Actions:
             Log.resume("Local.sh ", end="")
 
     def init_vpl(self):
-        html_content = Decoder.load(self.target_html)
-        self.vpl = JsonVPL(self.title, html_content)
+        # html_content = Decoder.load(self.target_html)
+        md_content = Decoder.load(self.remote_readme)
+        self.vpl = JsonVPL(self.title, md_content)
         self.vpl.set_tests(self.cases)
         if self.vpl.load_drafts(self.cache_src):
             Log.resume("Drafts ", end="")
@@ -127,7 +128,7 @@ class Actions:
             Log.resume("Cleaning ", end="")
             Log.verbose("  Cleaning  : html and cases files")
             os.remove(self.cases)
-            os.remove(self.target_html)
+            # os.remove(self.target_html)
             os.remove(self.remote_readme)
 
     # run mdpp script on source readme
@@ -165,7 +166,7 @@ def build_main(args: argparse.Namespace):
             actions.run_local_sh()
             actions.update_markdown() # se os drafts tiverem mudado o markdown precisa ser atualizado
             actions.remote_md()
-            actions.html(use_pandoc=args.pandoc)
+            # actions.html(use_pandoc=args.pandoc)
             actions.build_cases()
             actions.init_vpl()
             actions.create_mapi()

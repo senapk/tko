@@ -154,9 +154,7 @@ class TestSimple(unittest.TestCase):
         assert str(text3) == str(text4)
 
         text5 = Text() + "o brasil é " + Text("g") + "verde" + Text() + " e " + Text("y") + "amarelo"
-        print(text5)
-        print(text3)
-        assert text5.resume() == [Token("o brasil é"), Token("verde", "g"), Token(" e "), Token("amarelo", "y")]
+        assert text5.resume() == [Token("o brasil é "), Token("verde", "g"), Token(" e "), Token("amarelo", "y")]
 
     def test_tuple(self):
         text1 = Text() + ("g", "brasil") + " é " + ("r", "lindo")

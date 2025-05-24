@@ -122,6 +122,8 @@ class Links:
             if os.path.isdir(directory):
                 entries = sorted(os.listdir(directory))
                 for entry in entries:
+                    if entry.startswith("."):
+                        continue
                     full_path = os.path.join(directory, entry)
                     if os.path.isdir(full_path):
                         output += "  " * depth + "- " + entry + "\n"

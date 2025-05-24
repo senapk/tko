@@ -5,6 +5,9 @@
   - add: tko run uses raw mode
   - add: tko gui open curses mode
   - add: config files for pytest find path correctly
+  - add: removing html from mapi.json
+  - add: .hide and .exec files to setup required and keep files
+  - add: remove old config.json support
 - 4.5.0
   - add: better floating messages
   - add: html filter for pandoc versions

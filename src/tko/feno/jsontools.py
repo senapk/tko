@@ -1,5 +1,5 @@
 import enum
-from typing import List, Dict
+from typing import Any
 import json
 import os
 from tko.util.decoder import Decoder
@@ -19,21 +19,30 @@ class JsonFile:
         self.contents: str = contents
         self.ftype: FileType = ftype
 
+    def to_json(self) -> dict[str, str]:
+        return {
+            "name" : self.name,
+            "contents": self.contents,
+            "type": self.ftype.value,
+        }
+
     # @override
     def __str__(self):
         return self.name + ":" + self.contents + ":" + str(self.ftype.value)
 
 class JsonVPL:
+    hide_extension = ".hide"
+    exec_extension = ".exec"
+
     def __init__(self, title: str, description: str):
         self.title: str = title
         self.description: str = description
-        self.tests: JsonFile | None = None 
-        self.draft: Dict[str, List[JsonFile]] = {}
+        self.upload: list[JsonFile] = []
+        self.draft: dict[str, list[JsonFile]] = {}
     
     def set_tests(self, exec_file: str):
         data = Decoder.load(exec_file)
-        filename = exec_file.split(os.sep)[-1]
-        self.tests = JsonFile(filename, data, FileType.HIDE)
+        self.upload.append(JsonFile("vpl_evaluate.cases", data, FileType.HIDE))
         return self
     
     def add_draft(self, extension: str, exec_file: str, ftype: FileType):
@@ -46,7 +55,13 @@ class JsonVPL:
         return self
 
     def to_json(self) -> str:
-        return json.dumps(self, default=lambda o: o.__dict__, indent=4)
+        json_dict = {
+            "title": self.title,
+            "description": self.description,
+            "upload": [x.to_json() for x in self.upload],
+            "draft": {k: [x.to_json() for x in v] for k, v in self.draft.items()},
+        }
+        return json.dumps(json_dict, indent=4, ensure_ascii=True)
     
     def load_drafts(self, cache_draft: str):
         found = False
@@ -56,21 +71,24 @@ class JsonVPL:
         folders = [f for f in folders if os.path.isdir(os.path.join(cache_draft, f))]
         for lang in folders:
             lang_path = json_norm_join(cache_draft, lang)
-            config_file = json_norm_join(lang_path, "config.json")
-            config_types: dict[str, list[str]] = { "hide": [], "exec": [] }
-            if os.path.isfile(config_file):
-                with open(config_file) as f:
-                    types = json.load(f)
-                    if "hide" in types:
-                        config_types["hide"] = types["hide"]
-                    if "exec" in types:
-                        config_types["exec"] = types["exec"]
+            hide_files: list[str] = []
+            hide_files_config = os.path.join(lang_path, JsonVPL.hide_extension)
+            if os.path.isfile(hide_files_config):
+                with open(hide_files_config) as f:
+                    hide_files = [x.strip() for x in f.read().splitlines()]
+            exec_files: list[str] = []
+            exec_files_config = os.path.join(lang_path, JsonVPL.exec_extension)
+            if os.path.isfile(exec_files_config):
+                with open(exec_files_config) as f:
+                    exec_files = [x.strip() for x in f.read().splitlines()]
 
             for file in os.listdir(lang_path):
+                if file.endswith(JsonVPL.hide_extension) or file.endswith(JsonVPL.exec_extension):
+                    continue
                 ftype = FileType.SHOW
-                if file in config_types["hide"]:
+                if file in hide_files:
                     ftype = FileType.HIDE
-                elif file in config_types["exec"]:
+                elif file in exec_files:
                     ftype = FileType.EXEC
                 file_path = json_norm_join(lang_path, file)
                 self.add_draft(lang, file_path, ftype)

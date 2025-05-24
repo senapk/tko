@@ -18,9 +18,9 @@ def feno_main():
     parser_r.add_argument('targets', metavar='T', type=str, nargs='*', help='folders')
     parser_r.add_argument("--check", "-c", action="store_true", help="Check if the file needs to be rebuilt")
     parser_r.add_argument("--brief", "-b", action="store_true", help="Brief mode")
-    parser_r.add_argument("--pandoc", "-p", action="store_true", help="Use pandoc rather than python markdown")
+    # parser_r.add_argument("--pandoc", "-p", action="store_true", help="Use pandoc rather than python markdown")
     parser_r.add_argument("--remote", "-r", action="store_true", help="Search for remote.cfg file and create absolute links")
-    parser_r.add_argument("--erase", "-e", action="store_true", help="Erase .html and .tio temp files")
+    parser_r.add_argument("--erase", "-e", action="store_true", help="Erase .md and .tio temp files")
     parser_r.add_argument("--debug", "-d", action='store_true', help="Display debug msgs")
     parser_r.set_defaults(func=build_main)
 
