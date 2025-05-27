@@ -34,7 +34,6 @@ def feno_main():
     parser_h = subparsers.add_parser('html', help='generate HTML file from markdown file.')
     parser_h.add_argument('input', type=str, help='Input markdown file')
     parser_h.add_argument('output', type=str, help='Output HTML file')
-    parser_h.add_argument('--no-latex', action='store_true', help='Disable LaTeX math rendering')
     parser_h.add_argument('--title', type=str, default="Problema", help='Title of the HTML file')
     parser_h.set_defaults(func=html_main)
 

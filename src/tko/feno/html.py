@@ -1,137 +1,184 @@
-import subprocess
-from subprocess import PIPE
-import tempfile
 import argparse
 import markdown
-from tko.util.decoder import Decoder
+from typing import Any
+from .title import FenoTitle
 
-class CssStyle:
-    data = "body,li{color:#000}body{line-height:1.4em;max-width:42em;padding:1em;margin:auto}li{margin:.2em 0 0;padding:0}h1,h2,h3,h4,h5,h6{border:0!important}h1,h2{margin-top:.5em;margin-bottom:.5em;border-bottom:2px solid navy!important}h2{margin-top:1em}code,pre{border-radius:3px}pre{overflow:auto;background-color:#f8f8f8;border:1px solid #2f6fab;padding:5px}pre code{background-color:inherit;border:0;padding:0}code{background-color:#ffffe0;border:1px solid orange;padding:0 .2em}a{text-decoration:underline}ol,ul{padding-left:30px}em{color:#b05000}table.text td,table.text th{vertical-align:top;border-top:1px solid #ccc;padding:5px}"
-    path = None
-    @staticmethod
-    def get_file():
-        if CssStyle.path is None:
-            CssStyle.path = tempfile.mktemp(suffix=".css")
-            Decoder.save(CssStyle.path, CssStyle.data)
-        return CssStyle.path
-    
-class HTML:
+def convert_lists_to_4_spaces(markdown_content: str) -> str:
+    """
+    Converte listas no conteúdo Markdown para usar 4 espaços como indentação.
 
-    css = r"""
-    html { -webkit-text-size-adjust: 100%; }
-    pre > code.sourceCode { white-space: pre; position: relative; }
-    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-    pre > code.sourceCode > span:empty { height: 1.2em; }
-    .sourceCode { overflow: visible; }
-    code.sourceCode > span { color: inherit; text-decoration: inherit; }
-    div.sourceCode { margin: 1em 0; }
-    pre.sourceCode { margin: 0; }
-    @media screen {
-    div.sourceCode { overflow: auto; }
-    }
-    @media print {
-    pre > code.sourceCode { white-space: pre-wrap; }
-    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-    }
-    pre.numberSource code
-      { counter-reset: source-line 0; }
-    pre.numberSource code > span
-      { position: relative; left: -4em; counter-increment: source-line; }
-    pre.numberSource code > span > a:first-child::before
-      { content: counter(source-line);
-        position: relative; left: -1em; text-align: right; vertical-align: baseline;
-        border: none; display: inline-block;
-        -webkit-touch-callout: none; -webkit-user-select: none;
-        -khtml-user-select: none; -moz-user-select: none;
-        -ms-user-select: none; user-select: none;
-        padding: 0 4px; width: 4em;
-        color: #aaaaaa;
-      }
-    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
-    div.sourceCode
-      {   }
-    @media screen {
-    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-    }
-""".splitlines()[1:]
+    Args:
+        markdown_content (str): O conteúdo Markdown a ser processado.
 
-    @staticmethod
-    def fix_html_pandoc_version_differences(html_file: str):
-        content = Decoder.load(html_file)
-        output: list[str] = []
-        enable = True
-        for line in content.splitlines():
-            if line.startswith("    code span."):
-                enable = True
-            if line == "    /* CSS for syntax highlighting */":
-                output.append(line)
-                output.extend(HTML.css)
-                enable = False
-            if not line.startswith('  <link rel="stylesheet"') and enable:
-                output.append(line)
-            
+    Returns:
+        str: O conteúdo Markdown com listas convertidas para 4 espaços.
+    """
+    lines = markdown_content.splitlines()
+    output_lines: list[str] = []
+    for line in lines:
+        lstrip = line.lstrip()
+        if lstrip.startswith('- '):
+            dif = len(line) - len(lstrip)
+            line = ' ' * (2 * dif) + lstrip
+        output_lines.append(line)
+    return '\n'.join(output_lines)
 
-        
-        Decoder.save(html_file, "\n".join(output))
+def convert_markdown_to_html(title: str, markdown_file_path: str, output_html_path: str):
+    """
+    Converte um arquivo Markdown para HTML, com suporte a tabelas, LaTeX e destaque de sintaxe.
 
+    Args:
+        markdown_file_path (str): O caminho para o arquivo Markdown de entrada.
+        output_html_path (str): O caminho para o arquivo HTML de saída.
+    """
+    try:
+        with open(markdown_file_path, 'r', encoding='utf-8') as f:
+            markdown_content = f.read()
+        markdown_content = convert_lists_to_4_spaces(markdown_content)
 
+        # Configura as extensões do Markdown
+        # 'tables': para renderizar tabelas
+        # 'fenced_code': para blocos de código com destaque de sintaxe
+        # 'pymdownx.arithmatex': para renderizar LaTeX (necessita MathJax ou KaTeX no HTML)
+        # 'pymdownx.highlight': para o destaque de sintaxe (depende de pygments)
+        extensions = [
+            'tables',
+            "pymdownx.superfences",
+            'pymdownx.arithmatex', # Usando arithmatex para LaTeX
+            'pymdownx.highlight',  # Usando highlight para destaque de sintaxe
+            'attr_list',           # Útil para atributos como classes em elementos
+        ]
+        extension_configs: dict[str, Any] = {
+            'pymdownx.arithmatex': {
+                'generic': True  # Habilita delimitadores genéricos para LaTeX ($...$ e $$...$$)
+            },
+            'pymdownx.highlight': {
+                'css_class': 'highlight', # Classe CSS para os blocos de código
+                'linenums': False,       # Não mostrar números de linha por padrão
+                'pygments_lang_class': True, # Adiciona classes de linguagem para Pygments
+            }
+        }
 
-    @staticmethod
-    def pandoc_markdown_to_html(title: str, input_file: str, output_file: str, enable_latex: bool = True):
-        fulltitle = title.replace('!', '\\!').replace('?', '\\?')
-        cmd = ["pandoc", input_file, '--css', CssStyle.get_file(), '--metadata', 'pagetitle=' + fulltitle,
-            '-s', '-o', output_file]
-        if enable_latex:
-            cmd.append("--mathjax")
-        try:
-            p = subprocess.Popen(cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
-            stdout, stderr = p.communicate()
-            if stdout != "" or stderr != "":
-                print(stdout)
-                print(stderr)
-            HTML.fix_html_pandoc_version_differences(output_file)
+        html_content = markdown.markdown(
+            markdown_content,
+            extensions=extensions,
+            extension_configs=extension_configs
+        )
 
-        except Exception as e:
-            print("Erro no comando pandoc:", e)
-            exit(1)
+        # Adiciona um CSS básico e o script do MathJax para o LaTeX
+        final_html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title}</title>
+    <style>
+        body {{ font-family: sans-serif; line-height: 1.6; margin: 20px; }}
+        pre {{ background-color: #f4f4f4; padding: 10px; border-radius: 5px; overflow-x: auto; }}
+        code {{ font-family: monospace; }}
+        table {{ border-collapse: collapse; width: 100%; }}
+        th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
+        th {{ background-color: #f2f2f2; }}
+        /* Estilos básicos para o destaque de sintaxe (gerado pelo pygments via pymdownx.highlight) */
+        .highlight .hll {{ background-color: #ffffcc }}
+        .highlight .c {{ color: #999988; font-style: italic }} /* Comment */
+        .highlight .err {{ color: #a61717; background-color: #e3d2d2 }} /* Error */
+        .highlight .k {{ color: #000000; font-weight: bold }} /* Keyword */
+        .highlight .o {{ color: #000000; font-weight: bold }} /* Operator */
+        .highlight .ch {{ color: #999988; font-style: italic }} /* Comment.Hashbang */
+        .highlight .cm {{ color: #999988; font-style: italic }} /* Comment.Multiline */
+        .highlight .cp {{ color: #999999; font-weight: bold; font-style: italic }} /* Comment.Preproc */
+        .highlight .cpf {{ color: #999988; font-style: italic }} /* Comment.PreprocFile */
+        .highlight .c1 {{ color: #999988; font-style: italic }} /* Comment.Single */
+        .highlight .cs {{ color: #999999; font-weight: bold; font-style: italic }} /* Comment.Special */
+        .highlight .gd {{ color: #000000; background-color: #ffdddd }} /* Generic.Deleted */
+        .highlight .ge {{ color: #000000; font-style: italic }} /* Generic.Emph */
+        .highlight .gr {{ color: #aa0000 }} /* Generic.Error */
+        .highlight .gh {{ color: #999999 }} /* Generic.Heading */
+        .highlight .gi {{ color: #000000; background-color: #ddffdd }} /* Generic.Inserted */
+        .highlight .go {{ color: #888888 }} /* Generic.Output */
+        .highlight .gp {{ color: #555555 }} /* Generic.Prompt */
+        .highlight .gs {{ font-weight: bold }} /* Generic.Strong */
+        .highlight .gu {{ color: #aaaaaa }} /* Generic.Subheading */
+        .highlight .gt {{ color: #aa0000 }} /* Generic.Traceback */
+        .highlight .kc {{ color: #000000; font-weight: bold }} /* Keyword.Constant */
+        .highlight .kd {{ color: #000000; font-weight: bold }} /* Keyword.Declaration */
+        .highlight .kn {{ color: #000000; font-weight: bold }} /* Keyword.Namespace */
+        .highlight .kp {{ color: #000000; font-weight: bold }} /* Keyword.Pseudo */
+        .highlight .kr {{ color: #000000; font-weight: bold }} /* Keyword.Reserved */
+        .highlight .kt {{ color: #445588; font-weight: bold }} /* Keyword.Type */
+        .highlight .m {{ color: #009999 }} /* Literal.Number */
+        .highlight .s {{ color: #dd1144 }} /* Literal.String */
+        .highlight .na {{ color: #008080 }} /* Name.Attribute */
+        .highlight .nb {{ color: #0086B3 }} /* Name.Builtin */
+        .highlight .nc {{ color: #445588; font-weight: bold }} /* Name.Class */
+        .highlight .no {{ color: #008080 }} /* Name.Constant */
+        .highlight .nd {{ color: #3c5d5d; font-weight: bold }} /* Name.Decorator */
+        .highlight .ni {{ color: #800080 }} /* Name.Entity */
+        .highlight .ne {{ color: #990000; font-weight: bold }} /* Name.Exception */
+        .highlight .nf {{ color: #990000; font-weight: bold }} /* Name.Function */
+        .highlight .nl {{ color: #990000; font-weight: bold }} /* Name.Label */
+        .highlight .nn {{ color: #555555; font-weight: bold }} /* Name.Namespace */
+        .highlight .nx {{ color: #990000; font-weight: bold }} /* Name.Other */
+        .highlight .py {{ color: #009999 }} /* Name.Property */
+        .highlight .p {{ color: #000000 }} /* Name.Punctuation */
+        .highlight .nv {{ color: #008080 }} /* Name.Variable */
+        .highlight .ow {{ color: #000000; font-weight: bold }} /* Operator.Word */
+        .highlight .w {{ color: #bbbbbb }} /* Text.Whitespace */
+        .highlight .mf {{ color: #009999 }} /* Literal.Number.Float */
+        .highlight .mh {{ color: #009999 }} /* Literal.Number.Hex */
+        .highlight .mi {{ color: #009999 }} /* Literal.Number.Integer */
+        .highlight .mo {{ color: #009999 }} /* Literal.Number.Oct */
+        .highlight .sb {{ color: #dd1144 }} /* Literal.String.Backtick */
+        .highlight .sc {{ color: #dd1144 }} /* Literal.String.Char */
+        .highlight .sd {{ color: #dd1144 }} /* Literal.String.Doc */
+        .highlight .s2 {{ color: #dd1144 }} /* Literal.String.Double */
+        .highlight .se {{ color: #dd1144 }} /* Literal.String.Escape */
+        .highlight .sh {{ color: #dd1144 }} /* Literal.String.Heredoc */
+        .highlight .si {{ color: #dd1144 }} /* Literal.String.Interpol */
+        .highlight .sx {{ color: #dd1144 }} /* Literal.String.Other */
+        .highlight .sr {{ color: #009926 }} /* Literal.String.Regex */
+        .highlight .s1 {{ color: #dd1144 }} /* Literal.String.Single */
+        .highlight .ss {{ color: #dd1144 }} /* Literal.String.Symbol */
+        .highlight .bp {{ color: #0086B3 }} /* Name.Builtin.Pseudo */
+        .highlight .vc {{ color: #008080 }} /* Name.Variable.Class */
+        .highlight .vg {{ color: #008080 }} /* Name.Variable.Global */
+        .highlight .vi {{ color: #008080 }} /* Name.Variable.Instance */
+        .highlight .il {{ color: #009999 }} /* Literal.Number.Integer.Long */
+    </style>
+    <script type="text/javascript" async
+      src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+    </script>
+</head>
+<body>
+{html_content}
+</body>
+</html>
+"""
 
+        with open(output_html_path, 'w', encoding='utf-8') as f:
+            f.write(final_html)
 
-    @staticmethod
-    def python_markdown_to_html(title: str, input_file_md: str, output_file_html: str):
-        # Extensões mais comuns para melhorar a conversão
-        extensions = ['extra', 'codehilite', 'toc']
+        # print(f"Conversão concluída: '{markdown_file_path}' -> '{output_html_path}'")
 
-        # Ler o conteúdo do arquivo markdown
-
-        md_content = Decoder.load(input_file_md)
-
-        # Converter markdown para HTML com as extensões
-        html_content = markdown.markdown(md_content, extensions=extensions)
-
-        # Criar estrutura básica de HTML com título
-        html_template = f"""
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>{title}</title>
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
-        </head>
-        <body>
-            <h1>{title}</h1>
-            {html_content}
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
-            <script>hljs.highlightAll();</script>
-        </body>
-        </html>
-        """
-
-        # Escrever o HTML gerado no arquivo de saída
-        Decoder.save(output_file_html, html_template)
-
-        print(f'Arquivo HTML gerado em: {output_file_html}')
-
+    except FileNotFoundError:
+        print(f"Erro: Arquivo Markdown não encontrado em '{markdown_file_path}'")
+    except Exception as e:
+        print(f"Ocorreu um erro durante a conversão: {e}")
 
 def html_main(args: argparse.Namespace):
-    HTML.pandoc_markdown_to_html(args.title, args.input, args.output, not args.no_latex)
+    # Verifica se os arquivos têm as extensões corretas
+    if not args.input.endswith('.md'):
+        print("Erro: O arquivo de entrada Markdown deve ter a extensão .md")
+        exit(1)
+    if not args.output.endswith('.html'):
+        print("Erro: O arquivo de saída HTML deve ter a extensão .html")
+        exit(1)
+
+    title: str = ""
+    if args.title:
+        title = args.title
+    else:
+        title = FenoTitle.extract_title(args.input)
+        
+    convert_markdown_to_html(title, args.input, args.output)

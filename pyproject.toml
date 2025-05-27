@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tko"
-version = "4.6.0"
+version = "4.6.1"
 description = "Add your description here"
 authors = [
     { name = "David", email = "sena.ufc@gmail.com" }
@@ -19,6 +19,8 @@ dependencies = [
     "markdown>=3.7",
     "pip>=25.0.1",
     "pydot>=3.0.3",
+    "pygments>=2.19.1",
+    "pymdown-extensions>=10.15",
     "pyright>=1.1.399",
     "pytest>=8.3.4",
     "pyyaml>=6.0.2",

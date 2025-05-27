@@ -1,5 +1,8 @@
 # Changelog
 
+
+- 4.6.1
+  - add: Inserting html in mapi.json without using pandoc
 - 4.6.0
   - add: Text class improved for better color handling
   - add: tko run uses raw mode
