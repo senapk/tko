@@ -29,6 +29,9 @@ from tko.__init__ import __version__
 class Main:
     @staticmethod
     def run(args: argparse.Namespace) -> int:
+        if args.tui:
+            return Main.tui(args)
+        
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         if args.quiet:
@@ -99,7 +102,9 @@ class Main:
         remote: str | None = args.remote
         source: str | None = args.source
         folder: str | None = args.folder
-        RepStarter(remote=remote, source=source, folder=folder)
+        language: str | None = args.language
+        database: str | None = args.database
+        RepStarter(remote=remote, source=source, folder=folder, language=language, database=database)
 
 
     @staticmethod
@@ -131,8 +136,8 @@ class Parser:
         self.add_parser_global()
         self.create_parent_basic()
         self.create_parent_manip()
+        self.add_parser_tui()
         self.add_parser_run()
-        self.add_parser_exec()
         self.add_parser_build()
         self.add_parser_config()
         self.add_parser_rep_tools()
@@ -162,16 +167,18 @@ class Parser:
                                   help='pattern load/save a folder, default: "@.in @.sol"')
         return parent_manip
 
-    def add_parser_run(self):
+    def add_parser_tui(self):
         parser_r = self.subparsers.add_parser('tui', parents=[self.parent_basic], help='Run using Terminal User Interface.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
         parser_r.set_defaults(func=Main.tui)
 
-    def add_parser_exec(self):
+    def add_parser_run(self):
         parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='Run using raw terminal.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
+
+        parser_r.add_argument("--tui", '-t', action='store_true', help='use TUI interface.')
         parser_r.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures')
 
         group_n = parser_r.add_mutually_exclusive_group()
@@ -248,6 +255,8 @@ class Parser:
         source.add_argument('--remote', '-r', type=str, help='remote source [fup|ed|poo].')
         source.add_argument('--source', '-s', type=str, help='http url or local file.')
         parser_init.add_argument('--folder', '-f', type=str, help='local directory.')
+        parser_init.add_argument('--language', '-l', type=str, help='draft language for the repository.')
+        parser_init.add_argument('--database', '-d', type=str, help='define database folder.')
         parser_init.set_defaults(func=Main.init)
 
 

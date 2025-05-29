@@ -1,5 +1,8 @@
 # Changelog
 
+- 4.7.1
+  - add: call tui from run using --tui or -t
+  - add: better error msgs creating a repo inside another
 - 4.7.0
   - fix: standalone run and tui generating log entries
 - 4.6.3
