@@ -78,7 +78,8 @@ class Run:
             raise Warning("Task não definida")
         return self.__task
 
-    def execute(self) -> None:
+    # return the percentage of correct cases
+    def execute(self) -> int:
         if len(self.target_list) == 0:
             self.__try_load_rep(".")
             self.__try_load_task(".")
@@ -91,10 +92,10 @@ class Run:
             self.build_wdir()
 
         if self.__missing_target():
-            return
+            return 0
         
         if self.__list_mode():
-            return
+            return 0
         
         if self.wdir.has_solver():
             if self.__rep is None:
@@ -112,9 +113,9 @@ class Run:
                 logger.set_log_files(history_file)
 
         if self.__free_run():
-            return
-        self.__show_diff()
-        return
+            return 0
+        percent = self.__show_diff()
+        return percent
     
     def __try_load_rep(self, dirname: str) -> bool:
         repo_path = Repository.rec_search_for_repo(dirname)
@@ -283,13 +284,14 @@ class Run:
             task.folder = os.path.abspath(self.wdir.get_solver().args_list[0])
         else:
             task.folder = os.path.abspath(os.getcwd())
-        
+
         if os.path.isfile(task.folder):
             task.folder = os.path.dirname(task.folder)
 
-        self.key = os.path.dirname(task.folder)
 
+        task.key = os.path.basename(task.folder)
         self.__task = task
+        self.__track_folder = self.__rep.get_track_task_folder(task.key) if self.__rep else ""
 
     def __run_diff_on_curses(self):
         cdiff = Tester(self.settings, self.__rep, self.wdir, self.get_task())
@@ -300,28 +302,30 @@ class Run:
         cdiff.set_autorun(self.__run_without_ask)
         cdiff.run()
 
-    def __run_diff_on_raw_term(self):
+    def __run_diff_on_raw_term(self) -> int:
         print(Text.format(" Testando o código com os casos de teste ").center(RawTerminal.get_terminal_size(), Token("═")))
         self.__print_top_line()
         self.__print_diff()
         correct = [unit for unit in self.wdir.get_unit_list() if unit.result == ExecutionResult.SUCCESS]
         percent = (len(correct) * 100) // len(self.wdir.get_unit_list())
         if self.__task is None:
-            return
+            return percent
         if self.__track_folder == "":
-            return
+            return percent
         Logger.get_instance().record_test_result(self.get_task().key, percent)
         tracker = Tracker()
         tracker.set_folder(self.__track_folder)
         tracker.set_files(self.wdir.get_solver().args_list)
         tracker.set_percentage(percent)
         tracker.store()
+        return percent
 
-    def __show_diff(self):
+    def __show_diff(self) -> int:
         if self.__task is None:
             self.__fill_task()
-        
         if self.__curses_mode:
             self.__run_diff_on_curses()
         else:
-            self.__run_diff_on_raw_term()
+            return self.__run_diff_on_raw_term()
+
+        return 0

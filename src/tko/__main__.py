@@ -28,7 +28,7 @@ from tko.__init__ import __version__
 
 class Main:
     @staticmethod
-    def test(args: argparse.Namespace):
+    def run(args: argparse.Namespace) -> int:
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         if args.quiet:
@@ -51,10 +51,10 @@ class Main:
         elif args.down:
             param.set_diff_mode(DiffMode.DOWN)
         cmd_run = Run(settings, args.target_list, param)
-        cmd_run.execute()
+        return cmd_run.execute()
 
     @staticmethod
-    def run(args: argparse.Namespace):
+    def tui(args: argparse.Namespace) -> int:
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         settings = Settings()
@@ -63,7 +63,7 @@ class Main:
             param.set_filter(True)
         cmd_run = Run(settings, args.target_list, param)
         cmd_run.set_curses()
-        cmd_run.execute()
+        return cmd_run.execute()
 
     @staticmethod
     def build(args: argparse.Namespace):
@@ -88,10 +88,11 @@ class Main:
     def down(args: argparse.Namespace):
         settings = Settings()
         folder = args.folder
+        print("Folder: ", folder)
         rec_folder = Repository.rec_search_for_repo(folder)
         if rec_folder != "":
             folder = rec_folder
-        CmdLineDown(settings, folder, args.key).execute()
+        CmdLineDown(settings, folder, args.label).execute()
 
     @staticmethod
     def init(args: argparse.Namespace):
@@ -162,10 +163,10 @@ class Parser:
         return parent_manip
 
     def add_parser_run(self):
-        parser_r = self.subparsers.add_parser('gui', parents=[self.parent_basic], help='Run using curses.')
+        parser_r = self.subparsers.add_parser('tui', parents=[self.parent_basic], help='Run using Terminal User Interface.')
         parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
         parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
-        parser_r.set_defaults(func=Main.run)
+        parser_r.set_defaults(func=Main.tui)
 
     def add_parser_exec(self):
         parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='Run using raw terminal.')
@@ -181,20 +182,13 @@ class Parser:
         group = parser_r.add_mutually_exclusive_group()
         group.add_argument('--down', '-d', action='store_true', help="diff mode up-to-down.")
         group.add_argument('--side', '-s', action='store_true', help="diff mode side-by-side.")
-        parser_r.set_defaults(func=Main.test)
+        parser_r.set_defaults(func=Main.run)
 
     def add_parser_build(self):
         parser_b = self.subparsers.add_parser('build', parents=[self.parent_manip], help='Build a test target.')
         parser_b.add_argument('target', metavar='T_OUT', type=str, help='target to be build.')
         parser_b.add_argument('target_list', metavar='T', type=str, nargs='+', help='input test targets.')
         parser_b.set_defaults(func=Main.build)
-
-    # def add_parser_down(self):
-    #     parser_d = self.subparsers.add_parser('down', help='download problem from repository.')
-    #     parser_d.add_argument('course', type=str, nargs='?', help=" [ fup | ed | poo ].")
-    #     parser_d.add_argument('activity', type=str, nargs='?', help="activity @label.")
-    #     parser_d.add_argument('--language', '-l', type=str, nargs='?', help="[ c | cpp | js | ts | py | java ]")
-    #     parser_d.set_defaults(func=Main.down)
 
     def add_parser_config(self):
         parser_cfg = self.subparsers.add_parser('config', help='Settings tool.')
@@ -245,8 +239,8 @@ class Parser:
         parser_open.set_defaults(func=Main.open)
 
         parser_down = self.subparsers.add_parser('down', help='Down a task from a repository.')
-        parser_down.add_argument('folder', type=str, nargs='?', default='.', help='repository folder.')
-        parser_down.add_argument('key', type=str, nargs='?', default='.', help='task key.')
+        parser_down.add_argument('folder', type=str, help='repository folder.')
+        parser_down.add_argument('label', type=str, help='task label.')
         parser_down.set_defaults(func=Main.down)
 
         parser_init = self.subparsers.add_parser('init', help='Initialize a repository in a folder.')
@@ -257,7 +251,7 @@ class Parser:
         parser_init.set_defaults(func=Main.init)
 
 
-def execute(parser: argparse.ArgumentParser, args: argparse.Namespace):
+def execute(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
     settings = Settings()
     if args.w is not None:
         RawTerminal.set_terminal_size(args.w)
@@ -275,11 +269,14 @@ def execute(parser: argparse.ArgumentParser, args: argparse.Namespace):
     if args.v:
         if args.v:
             print("tko version " + __version__)
+            return 0
     else:
         if "func" in args:
-            args.func(args)
+            code = args.func(args)
+            return code if code is not None else 0
         else:
             parser.print_help()
+    return 0
 
 def main():
     try:

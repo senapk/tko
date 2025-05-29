@@ -1,6 +1,11 @@
 # Changelog
 
-
+- 4.7.0
+  - fix: standalone run and tui generating log entries
+- 4.6.3
+  - add: return should be 0 if no error in tko run
+- 4.6.2
+  - add: Change gui mode to tui mode
 - 4.6.1
   - add: Inserting html in mapi.json without using pandoc
 - 4.6.0
