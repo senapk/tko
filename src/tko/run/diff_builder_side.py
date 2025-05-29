@@ -12,6 +12,7 @@ class DiffBuilderSide:
         self.unit: Unit = unit
         self.output: list[Text] = []
         self.__to_insert_header = False
+        self.__standalone_diff = False
         self.expected_received, self.first_failure = self.db.render_diff(self.unit.expected, self.unit.received)
 
     def set_curses(self):
@@ -59,6 +60,10 @@ class DiffBuilderSide:
         self.__to_insert_header = value
         return self
 
+    def standalone_diff(self):
+        self.__standalone_diff = True
+        return self
+
     def _insert_header(self):
         self.output.append(Text().fold_in(self.width, symbols.hbar, "╭", "╮"))
         self.output.append(self.unit.str().fold_in(self.width, " ", "│", "│"))
@@ -85,7 +90,10 @@ class DiffBuilderSide:
         expected_header = Text().addf(ecolor, DiffBuilder.vexpected)
         rcolor = "r" if self.unit.expected != self.unit.received else "g"
         received_header = Text().addf(rcolor, DiffBuilder.vreceived)
-        self.output.append(self.title_side_by_side(expected_header, received_header, symbols.hbar, Token("┼"), Token("├"), Token("┤")))
+        if self.__standalone_diff:
+            self.output.append(self.title_side_by_side(expected_header, received_header, symbols.hbar, Token("┬"), Token("╭"), Token("╮")))
+        else:
+            self.output.append(self.title_side_by_side(expected_header, received_header, symbols.hbar, Token("┼"), Token("├"), Token("┤")))
         # expected and received lines
         symbol = symbols.unequal
         if self.unit.result == ExecutionResult.EXECUTION_ERROR or self.unit.result == ExecutionResult.COMPILATION_ERROR:
@@ -111,7 +119,8 @@ class DiffBuilderSide:
         self.output = []
         if self.__to_insert_header:
             self._insert_header()
-        self._insert_input()
+        if not self.__standalone_diff:
+            self._insert_input()
         self._insert_expected_received()
         self._insert_first_line_diff()
         self._finish()

@@ -1,5 +1,7 @@
 # Changelog
 
+- 4.8.1
+  - add: improved standalone diff output
 - 4.8.0
   - add: tko diff now suport text comparison instead of only files
 - 4.7.2

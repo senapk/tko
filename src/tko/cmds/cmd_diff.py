@@ -30,8 +30,8 @@ def cmd_diff(args: argparse.Namespace) -> None:
     unit.expected = content_a
     unit.received = content_b
     if diff_mode == DiffMode.DOWN:
-        diff_builder = DiffBuilderDown(RawTerminal.get_terminal_size(), unit)
+        diff_builder = DiffBuilderDown(RawTerminal.get_terminal_size(), unit).standalone_diff()
     else:
-        diff_builder = DiffBuilderSide(RawTerminal.get_terminal_size(), unit)
+        diff_builder = DiffBuilderSide(RawTerminal.get_terminal_size(), unit).standalone_diff()
     for line in diff_builder.build_diff():
         print(line)

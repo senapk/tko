@@ -13,11 +13,16 @@ class DiffBuilderDown:
         self.unit = unit
         self.output: list[Text] = []
         self.__to_insert_header = False
+        self.__standalone_diff = False
         self.no_diff_mode = self.unit.inserted == "" and self.unit.expected == ""
         self.expected_received, self.first_failure = self.db.render_diff(self.unit.expected, self.unit.received)
 
     def to_insert_header(self):
         self.__to_insert_header = True
+        return self
+    
+    def standalone_diff(self):
+        self.__standalone_diff = True
         return self
 
     def set_curses(self):
@@ -59,7 +64,10 @@ class DiffBuilderDown:
         if self.unit.expected == "":
             return
         color = "g" if self.unit.expected == self.unit.received else "y"
-        self.output.append(Text().addf(color, DiffBuilder.vexpected).fold_in(self.width, symbols.hbar, "├", "┤"))
+        if self.__standalone_diff:
+            self.output.append(Text().addf(color, DiffBuilder.vexpected).fold_in(self.width, symbols.hbar, "╭", "╮"))
+        else:
+            self.output.append(Text().addf(color, DiffBuilder.vexpected).fold_in(self.width, symbols.hbar, "├", "┤"))
         for line, _ in self.expected_received:
             if line is not None:
                 self.output.append(line.ljust(self.width - 1, Token(" ")).add(symbols.vbar))
@@ -97,7 +105,7 @@ class DiffBuilderDown:
     def build_diff(self) -> list[Text]:
         if self.__to_insert_header:
             self.insert_header()
-        if not self.no_diff_mode:
+        if not self.no_diff_mode and not self.__standalone_diff:
             self.insert_input()
         symb = symbols.unequal
         if self.unit.result == ExecutionResult.EXECUTION_ERROR or self.unit.result == ExecutionResult.COMPILATION_ERROR or self.unit.expected == "":
