@@ -1,5 +1,7 @@
 # Changelog
 
+- 4.8.0
+  - add: tko diff now suport text comparison instead of only files
 - 4.7.2
   - fix: refator all files to remove typing List, Dict, Tuple, Set, Union, Optional
 - 4.7.1

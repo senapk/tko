@@ -209,8 +209,11 @@ class Parser:
     def add_parser_diff(self):
 
         parser_b = self.subparsers.add_parser('diff', help='Build a test target.')
-        parser_b.add_argument('file_a', type=str, help='first file to be compared.')
-        parser_b.add_argument('file_b', type=str, help='second file to be compared.')
+        exclusive_group_target = parser_b.add_mutually_exclusive_group(required=True)
+        exclusive_group_target.add_argument('--path', '-f', action='store_true', help='targets are paths.')
+        exclusive_group_target.add_argument('--text', '-t', action='store_true', help='compare two texts.')
+        parser_b.add_argument('target_a', type=str, help='first  target to be compared.')
+        parser_b.add_argument('target_b', type=str, help='second target to be compared.')
         exclusive_group = parser_b.add_mutually_exclusive_group()
         exclusive_group.add_argument('--side', '-s', action='store_true', help="diff mode side-by-side.")
         exclusive_group.add_argument('--down', '-d', action='store_true', help="diff mode up-to-down.")

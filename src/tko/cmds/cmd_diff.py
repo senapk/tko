@@ -9,19 +9,23 @@ from tko.run.unit import Unit
 
 
 def cmd_diff(args: argparse.Namespace) -> None:
-    file_a = args.file_a
-    file_b = args.file_b
+    target_a: str = args.target_a
+    target_b: str = args.target_b
     diff_mode = DiffMode.SIDE if args.side else DiffMode.DOWN
-    content_a: str = ""
-    if os.path.isfile(file_a):
-        content_a = open(file_a, 'r', encoding='utf-8').read()
+    if args.path:
+        content_a: str = ""
+        if os.path.isfile(target_a):
+            content_a = open(target_a, 'r', encoding='utf-8').read()
+        else:
+            content_a = "File not found: " + target_a
+        content_b: str = ""
+        if os.path.isfile(target_b):
+            content_b = open(target_b, 'r', encoding='utf-8').read()
+        else:
+            content_b = "File not found: " + target_b
     else:
-        content_a = "File not found: " + file_a
-    content_b: str = ""
-    if os.path.isfile(file_b):
-        content_b = open(file_b, 'r', encoding='utf-8').read()
-    else:
-        content_b = "File not found: " + file_b
+        content_a = target_a.replace('\\n', '\n')
+        content_b = target_b.replace('\\n', '\n')
     unit: Unit = Unit()
     unit.expected = content_a
     unit.received = content_b
