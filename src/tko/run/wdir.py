@@ -1,10 +1,8 @@
-from typing import List, Optional, Tuple
 import math
 import os
 
 from tko.util.identifier import Identifier
-
-from tko.util.consts import IdentifierType
+from tko.enums.identifier_type import IdentifierType
 from tko.run.unit import Unit
 from tko.util.param import Param
 from tko.run.loader import Loader
@@ -18,10 +16,10 @@ class Wdir:
     def __init__(self):
         self.__autoload = False
         self.__autoload_folder = ""
-        self.__solver: Optional[SolverBuilder] = None
-        self.__source_list: List[str] = []
-        self.__pack_list: List[List[Unit]] = []
-        self.__unit_list: List[Unit] = []
+        self.__solver: None | SolverBuilder = None
+        self.__source_list: list[str] = []
+        self.__pack_list: list[list[Unit]] = []
+        self.__unit_list: list[Unit] = []
         self.__curses = False
         self.__lang = ""
 
@@ -36,13 +34,13 @@ class Wdir:
             raise Warning("fail: Não foi encontrado arquivo de código")
         return self.__solver
     
-    def get_unit_list(self) -> List[Unit]:
+    def get_unit_list(self) -> list[Unit]:
         return self.__unit_list
 
     def get_unit(self, index: int) -> Unit:
         return self.__unit_list[index]
     
-    def get_source_list(self) -> List[str]:
+    def get_source_list(self) -> list[str]:
         return self.__source_list
 
     def set_curses(self, value: bool):
@@ -62,12 +60,12 @@ class Wdir:
     def get_autoload_folder(self) -> str:
         return self.__autoload_folder
 
-    def set_solver(self, solver_list: List[str]):
+    def set_solver(self, solver_list: list[str]):
         if len(solver_list) > 0:
             self.__solver = SolverBuilder(solver_list)
         return self
 
-    def set_sources(self, source_list: List[str]):
+    def set_sources(self, source_list: list[str]):
         self.__source_list = source_list
         return self
 
@@ -96,7 +94,7 @@ class Wdir:
         self.__autoload = True
         return self
 
-    def set_target_list(self, target_list: List[str]):
+    def set_target_list(self, target_list: list[str]):
         target_list = [os.path.normpath(t) for t in target_list]
         if len(target_list) == 0:
             target_list.append(".")
@@ -173,7 +171,7 @@ class Wdir:
 
     # number the cases and mark the repeated
     def __number_and_mark_duplicated(self):
-        new_list: List[Unit] = []
+        new_list: list[Unit] = []
         index = 0
         for unit in self.__unit_list:
             unit.index = index
@@ -199,11 +197,11 @@ class Wdir:
                 unit.case = LabelFactory().label(unit.case).index(number).generate()
                 number += 1
 
-    def unit_list_resume(self) -> List[Text]:
+    def unit_list_resume(self) -> list[Text]:
         return [unit.str() for unit in self.__unit_list]
 
-    def sources_names(self) -> List[Tuple[str, int]]:
-        out: List[Tuple[str, int]] = []
+    def sources_names(self) -> list[tuple[str, int]]:
+        out: list[tuple[str, int]] = []
         if len(self.__pack_list) == 0:
             out.append((symbols.failure.text, 0))
         for i in range(len(self.__pack_list)):
@@ -211,7 +209,7 @@ class Wdir:
             out.append((nome, len(self.__pack_list[i])))
         return out
 
-    def solvers_names(self) -> List[str]:
+    def solvers_names(self) -> list[str]:
         path_list = [] if self.__solver is None else self.__solver.args_list
         if self.__solver is not None and len(path_list) == 0:  # free_cmd
             out = ["free cmd"]

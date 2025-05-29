@@ -1,4 +1,4 @@
-from .game import Game
+from tko.game.game import Game
 
 class XP:
     token_level_one = "level_one"

@@ -1,20 +1,16 @@
 from tko.run.diff_builder import DiffBuilder
 from tko.run.unit import Unit
-from tko.util.consts import ExecutionResult
+from tko.enums.execution_result import ExecutionResult
 from tko.util.symbols import symbols
 from tko.util.text import Text, Token
 
-
-from typing import List
-
-
-class SideDiff:
+class DiffBuilderSide:
     def __init__(self, width: int, unit: Unit):
         self.width = width
         self.curses = False
         self.db = DiffBuilder(width)
         self.unit: Unit = unit
-        self.output: List[Text] = []
+        self.output: list[Text] = []
         self.__to_insert_header = False
         self.expected_received, self.first_failure = self.db.render_diff(self.unit.expected, self.unit.received)
 
@@ -111,7 +107,7 @@ class SideDiff:
         else:
             self.output.append(Text().fold_in(self.width, symbols.hbar, "╰", "╯"))
 
-    def build_diff(self) -> List[Text]:
+    def build_diff(self) -> list[Text]:
         self.output = []
         if self.__to_insert_header:
             self._insert_header()

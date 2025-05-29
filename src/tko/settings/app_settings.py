@@ -1,4 +1,4 @@
-from tko.util.consts import DiffMode
+from tko.enums.diff_mode import DiffMode
 from tko.util.text import Text
 from typing import Any
 import curses

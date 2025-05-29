@@ -1,7 +1,7 @@
 import argparse
 import markdown
 from typing import Any
-from .title import FenoTitle
+from tko.feno.title import FenoTitle
 
 def convert_lists_to_4_spaces(markdown_content: str) -> str:
     """

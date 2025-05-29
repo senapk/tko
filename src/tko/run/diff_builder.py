@@ -1,7 +1,5 @@
-from typing import Any
-
-from ..util.symbols import symbols
-from ..util.text import Text, Token
+from tko.util.symbols import symbols
+from tko.util.text import Text, Token
 
 class DiffBuilder:
     vinput    = " INSERIDO "

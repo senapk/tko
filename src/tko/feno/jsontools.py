@@ -1,5 +1,4 @@
 import enum
-from typing import Any
 import json
 import os
 from tko.util.decoder import Decoder

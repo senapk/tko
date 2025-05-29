@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict
+from typing import Any
 from tko.settings.app_settings import AppSettings
 import appdirs  # type: ignore
 import yaml #type: ignore
@@ -7,7 +7,7 @@ import yaml #type: ignore
 from tko.util.text import Text
 from tko.play.colors import Colors
 from tko.util.decoder import Decoder
-from tko.settings.repository import filter_git_merge_tags
+from tko.settings.repository import remove_git_merge_tags
 
 def singleton(class_): # type: ignore
     instances = {}
@@ -27,12 +27,12 @@ class Settings:
         self.__appcfg = "appcfg"
         self.__colors = "colors"
 
-        self.dict_alias_remote: Dict[str, str] = {}
+        self.dict_alias_remote: dict[str, str] = {}
         self.app = AppSettings()
         self.colors = Colors()
 
         self.settings_file: str = ""
-        self.data: Dict[str, Any] = {}
+        self.data: dict[str, Any] = {}
 
     def set_settings_file(self, path: str):
         self.settings_file = path
@@ -83,12 +83,12 @@ class Settings:
             encoding = Decoder.get_encoding(settings_file)
             with open(settings_file, "r", encoding=encoding) as f:
                 lines = f.readlines()
-                lines = filter_git_merge_tags(lines)
+                lines = remove_git_merge_tags(lines)
                 data: Any = yaml.safe_load("\n".join(lines))
             if data is None or not isinstance(data, dict):
                 with open(backup_file, "r", encoding=encoding) as f:
                     lines = f.readlines()
-                    lines = filter_git_merge_tags(lines)
+                    lines = remove_git_merge_tags(lines)
                     data = yaml.safe_load("\n".join(lines))
             if data is None or not isinstance(data, dict):
                 raise FileNotFoundError(f"Arquivo de configuração vazio: {settings_file}")

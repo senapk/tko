@@ -1,7 +1,6 @@
 import curses
 import enum
 import os
-from typing import List, Optional, Tuple
 
 from tko.game.task import Task
 from tko.play.border import Border
@@ -9,7 +8,7 @@ from tko.play.floating import Floating, FloatingInput, FloatingInputData
 from tko.play.floating_manager import FloatingManager
 from tko.play.fmt import Fmt
 from tko.play.frame import Frame
-from tko.play.images import compilling, executing, images, intro, random_get, success
+from tko.play.images import compilling_image, executing_image, images, intro, random_get, success_image
 from tko.play.keys import GuiActions, GuiKeys
 from tko.play.opener import Opener
 from tko.run.diff_builder import DiffBuilder
@@ -18,15 +17,15 @@ from tko.run.unit import Unit
 from tko.run.unit_runner import UnitRunner
 from tko.run.wdir import Wdir
 from tko.settings.settings import Settings
-from tko.util.consts import ExecutionResult
+from tko.enums.execution_result import ExecutionResult
 from tko.util.freerun import Free
 from tko.util.text import  Text, Token
 from tko.util.symbols import symbols
-from tko.util.consts import DiffMode
+from tko.enums.diff_mode import DiffMode
 from tko.play.input_manager import InputManager
 from tko.settings.logger import Logger
-from tko.run.diff_builder_down import DownDiff
-from tko.run.diff_builder_side import SideDiff
+from tko.run.diff_builder_down import DiffBuilderDown
+from tko.run.diff_builder_side import DiffBuilderSide
 from tko.play.tracker import Tracker
 from tko.util.raw_terminal import RawTerminal
 from tko.settings.repository import Repository
@@ -40,7 +39,7 @@ class SeqMode(enum.Enum):
 
 class Tester:
     def __init__(self, settings: Settings, rep: Repository | None, wdir: Wdir, task: Task):
-        self.results: List[Tuple[ExecutionResult, int]] = []
+        self.results: list[tuple[ExecutionResult, int]] = []
         self.wdir = wdir
         self.rep: Repository | None = rep
         self.unit_list = [unit for unit in wdir.get_unit_list()] # unit list to be consumed
@@ -57,10 +56,10 @@ class Tester:
 
         self.locked_index: bool = False
         self.focused_index = 0
-        self.resumes: List[str] = []
+        self.resumes: list[str] = []
 
         self.fman = FloatingManager()
-        self.opener: Optional[Opener] = None
+        self.opener: Opener | None = None
         self.dummy_unit = Unit()
 
         Logger.get_instance().record_pick(self.task.key)
@@ -97,15 +96,15 @@ class Tester:
         if self.settings.app.get_use_images():
             out = random_get(images, self.get_folder(), "static")
         else:
-            out = random_get(success, self.get_folder(), "static")
+            out = random_get(success_image, self.get_folder(), "static")
         self.print_centered_image(out, "g")
         
     def show_compilling(self, clear: bool = False):
-        out = random_get(compilling, self.get_folder(), "random")
+        out = random_get(compilling_image, self.get_folder(), "random")
         self.print_centered_image(out, "y", clear)
 
     def show_executing(self, clear: bool = False):
-        out = executing
+        out = executing_image
         self.print_centered_image(out, "y", clear, "v")
 
     def get_folder(self) -> str:
@@ -199,8 +198,8 @@ class Tester:
             self.mode = SeqMode.finished
             self.focused_index = 0
 
-            done_list: List[Tuple[ExecutionResult, int]] = []
-            fail_list: List[Tuple[ExecutionResult, int]] = []
+            done_list: list[tuple[ExecutionResult, int]] = []
+            fail_list: list[tuple[ExecutionResult, int]] = []
             for data in self.results:
                 unit_result, _ = data
                 if unit_result != ExecutionResult.SUCCESS:
@@ -269,7 +268,7 @@ class Tester:
         if len(done_list) > 0 and self.locked_index:
             _, index = done_list[self.focused_index]
             done_list[self.focused_index] = (self.get_focused_unit().result, index)
-        todo_list: List[Tuple[ExecutionResult, int]] = []
+        todo_list: list[tuple[ExecutionResult, int]] = []
         i = len(done_list)
         for _ in self.unit_list:
             if self.locked_index and i == self.focused_index:
@@ -373,8 +372,8 @@ class Tester:
             return symbols.diff_down.text
         return symbols.diff_left.text
 
-    def make_bottom_line(self) -> List[Text]:
-        cmds: List[Text] = []
+    def make_bottom_line(self) -> list[Text]:
+        cmds: list[Text] = []
 
         cmds.append(self.borders.border("C", f"{GuiActions.move} [{GuiKeys.up}{GuiKeys.left}{GuiKeys.down}{GuiKeys.right}]"))
         
@@ -427,10 +426,10 @@ class Tester:
             received = exec.get_error_msg().get_str()
             line_list = [Text().add(line) for line in received.splitlines()]
         elif self.settings.app.get_diff_mode() == DiffMode.DOWN or not self.wdir.has_tests():
-            ud_diff = DownDiff(cols, unit)
+            ud_diff = DiffBuilderDown(cols, unit)
             line_list = ud_diff.build_diff()
         else:
-            ss_diff = SideDiff(cols, unit)
+            ss_diff = DiffBuilderSide(cols, unit)
             line_list = ss_diff.build_diff()
 
         self.length = max(1, len(line_list))

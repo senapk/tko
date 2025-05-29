@@ -1,5 +1,7 @@
 from typing import Optional
-from .consts import DiffCount, DiffMode
+
+from tko.enums.diff_mode import DiffMode
+from tko.enums.diff_count import DiffCount
 
 class Param:
 

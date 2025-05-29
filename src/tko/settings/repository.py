@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 import os
 import urllib
 from tko.util.remote_url import RemoteUrl
@@ -9,9 +9,9 @@ import yaml # type: ignore
 
 available_languages = ["c", "cpp", "py", "ts", "java", "go", "hs", "yaml"]
 
-def filter_git_merge_tags(lines: List[str]) -> List[str]:
+def remove_git_merge_tags(lines: list[str]) -> list[str]:
     # remove lines with <<<<<<<, =======, >>>>>>>>
-    filtered_lines: List[str] = []
+    filtered_lines: list[str] = []
     for line in lines:
         if line.startswith("<<<<<<<") or line.startswith("=======") or line.startswith(">>>>>>>"):
             continue
@@ -32,7 +32,7 @@ class Repository:
         if rec_folder != "":
             self.root_folder = rec_folder
 
-        self.data: Dict[str, Any] = {}
+        self.data: dict[str, Any] = {}
         self.game = Game()
         self.upgrade_version()
 
@@ -190,32 +190,32 @@ class Repository:
     def get_selected(self) -> str:
         return self.__get(Repository.__selected)
 
-    def get_expanded(self) -> List[str]:
+    def get_expanded(self) -> list[str]:
         return self.__get(Repository.__expanded)
 
-    def get_new_items(self) -> List[str]:
+    def get_new_items(self) -> list[str]:
         return self.__get(Repository.__new_items)
     
-    def get_tasks(self) -> Dict[str, Any]:
+    def get_tasks(self) -> dict[str, Any]:
         return self.__get(Repository.__tasks)
     
-    def get_flags(self) -> Dict[str, Any]:
+    def get_flags(self) -> dict[str, Any]:
         return self.__get(Repository.__flags)
     
     def get_lang(self) -> str:
         return self.__get(Repository.__lang)
 
-    def set_expanded(self, value: List[str]):
+    def set_expanded(self, value: list[str]):
         return self.__set(Repository.__expanded, value)
     
-    def set_new_items(self, value: List[str]):
+    def set_new_items(self, value: list[str]):
         return self.__set(Repository.__new_items, value)
     
-    def set_tasks(self, value: Dict[str, str]):
+    def set_tasks(self, value: dict[str, str]):
         self.__set(Repository.__tasks, value)
         return self
     
-    def set_flags(self, value: Dict[str, Any]):
+    def set_flags(self, value: dict[str, Any]):
         self.__set(Repository.__flags, value)
         return self
     
@@ -254,12 +254,12 @@ class Repository:
         try:
             with open(self.get_config_file(), encoding=encoding) as f:
                 lines = f.readlines()
-                lines = filter_git_merge_tags(lines)
+                lines = remove_git_merge_tags(lines)
                 self.data = yaml.safe_load("\n".join(lines))
             if self.data is None or not isinstance(self.data, dict) or len(self.data) == 0: # type: ignore
                 with open(self.get_config_backup_file(), "r", encoding=encoding) as f:
                     lines = f.readlines()
-                    lines = filter_git_merge_tags(lines)
+                    lines = remove_git_merge_tags(lines)
                     self.data = yaml.safe_load("\n".join(lines))
             if self.data is None or not isinstance(self.data, dict) or len(self.data) == 0: # type: ignore
                 raise FileNotFoundError(f"Arquivo de configuração vazio: {self.get_config_file()}")

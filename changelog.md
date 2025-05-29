@@ -1,5 +1,7 @@
 # Changelog
 
+- 4.7.2
+  - fix: refator all files to remove typing List, Dict, Tuple, Set, Union, Optional
 - 4.7.1
   - add: call tui from run using --tui or -t
   - add: better error msgs creating a repo inside another

@@ -2,10 +2,8 @@ from tko.play.flags import FlagsMan
 from tko.play.floating import Floating, FloatingInput, FloatingInputData
 from tko.play.floating_manager import FloatingManager
 from tko.util.text import Text
-from typing import List
 from tko.settings.repository import Repository, available_languages
 from tko.settings.settings import Settings
-
 
 class LanguageSetter:
     def __init__(self, settings: Settings, rep: Repository, flagsman: FlagsMan, fman: FloatingManager):
@@ -16,7 +14,7 @@ class LanguageSetter:
 
 
     def set_language(self):
-        options: List[FloatingInputData] = []
+        options: list[FloatingInputData] = []
         for lang in available_languages:
             options.append(FloatingInputData(TextFunctor(lang), SetLangFunctor(self.settings, self.rep, self.fman, lang)))
 

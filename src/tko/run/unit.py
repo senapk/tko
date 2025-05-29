@@ -1,21 +1,20 @@
-from typing import Optional
-from ..util.consts import ExecutionResult
-from ..util.text import Text
+from tko.enums.execution_result import ExecutionResult
+from tko.util.text import Text
 import os
 
 class Unit:
-    def __init__(self, case: str = "", input_data: str = "", expected: str = "", grade: Optional[int] = None, source: str = ""):
+    def __init__(self, case: str = "", input_data: str = "", expected: str = "", grade: None | int = None, source: str = ""):
         self.source = source  # stores the source file of the unit
         self.source_pad = 0  # stores the pad to justify the source file
         self.case = case  # name
         self.case_pad = 0  # stores the pad to justify the case name
         self.inserted = input_data  # input
         self.expected = expected  # expected output
-        self.received: Optional[str] = None  # solver generated answer
-        self.grade: Optional[int] = grade  # None represents proportional gr, 100 represents all
+        self.received: None | str = None  # solver generated answer
+        self.grade: None | int = grade  # None represents proportional gr, 100 represents all
         self.grade_reduction: int = 0  # if grade is None, this atribute should be filled with the right grade reduction
         self.index = 0
-        self.repeated: Optional[int] = None
+        self.repeated: None | int = None
 
         self.result: ExecutionResult = ExecutionResult.UNTESTED
 

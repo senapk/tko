@@ -1,5 +1,5 @@
-from .fmt import Fmt
-from ..util.text import Text, Token
+from tko.play.fmt import Fmt
+from tko.util.text import Text, Token
 
 class Frame:
     def __init__(self, y: int = 0, x: int = 0):

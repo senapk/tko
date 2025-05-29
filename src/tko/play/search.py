@@ -5,7 +5,6 @@ from tko.play.flags import Flags
 from tko.play.floating_manager import FloatingManager
 from tko.play.input_manager import InputManager
 from tko.play.keys import GuiKeys
-from typing import List
 
 class Search:
     def __init__(self, tree: TaskTree, fman: FloatingManager):
@@ -13,7 +12,7 @@ class Search:
         self.game = tree.game
         self.fman = fman
         self.search_mode: bool = False
-        self.backup_expanded: List[str] = []
+        self.backup_expanded: list[str] = []
         self.backup_index_selected: str = ""
         self.backup_admin_mode: bool = False
         self.settings = tree.settings

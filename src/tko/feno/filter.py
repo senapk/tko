@@ -1,8 +1,7 @@
 import os
 import argparse
-from typing import Tuple
 import shutil
-from ..util.decoder import Decoder
+from tko.util.decoder import Decoder
 from typing import Any
 
 class Mark:
@@ -64,7 +63,7 @@ class Filter:
             self.stack.pop()
         self.stack.append(Mark(marker, len_spaces))
 
-    def search_temp_mode(self, line: str) -> Tuple[str, int, str]:
+    def search_temp_mode(self, line: str) -> tuple[str, int, str]:
         for marker in Mode.opts:
             if line.rstrip().endswith(self.com + " " + marker):
                 count: int = 0

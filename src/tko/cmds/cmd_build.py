@@ -1,12 +1,10 @@
-from typing import List
-from ..util.param import Param
-from ..run.wdir import Wdir
-from ..run.writer import Writer
-
+from tko.util.param import Param
+from tko.run.wdir import Wdir
+from tko.run.writer import Writer
 
 class CmdBuild:
 
-    def __init__(self, target_out: str, source_list: List[str], param: Param.Manip):
+    def __init__(self, target_out: str, source_list: list[str], param: Param.Manip):
         self.target_out = target_out
         self.source_list = source_list
         self.param = param

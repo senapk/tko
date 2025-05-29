@@ -1,8 +1,9 @@
 from __future__ import annotations
+from tko.util.symbols import symbols
+from tko.util.text import Token
+
+
 import enum
-# from typing import override
-from .symbols import symbols
-from .text import Token
 
 
 class ExecutionResult(enum.Enum):
@@ -30,24 +31,3 @@ class ExecutionResult(enum.Enum):
     # @override
     def __str__(self):
         return self.value
-
-class DiffMode(enum.Enum): # não mude os valores pois são utilizados no json
-    SIDE = "side"
-    DOWN = "down"
-
-class DiffCount(enum.Enum):
-    FIRST = "MODO: APENAS PRIMEIRO ERRO"
-    ALL   = "MODO: TODOS OS ERROS"
-    QUIET = "MODO: SILENCIOSO"
-
-
-class IdentifierType(enum.Enum):
-    OBI = "OBI"
-    MD = "MD"
-    TIO = "TIO"
-    VPL = "VPL"
-    SOLVER = "SOLVER"
-
-class Success(enum.Enum):
-    RANDOM = "RANDOM"
-    FIXED = "FIXED"

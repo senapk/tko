@@ -1,4 +1,4 @@
-from .flags import Flag
+from tko.play.flags import Flag
 from typing import Callable
 
 class FlagFunctor:

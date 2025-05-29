@@ -1,21 +1,19 @@
-from .keys import GuiKeys
-from ..game.game import Game
-from ..settings.settings import Settings
-from ..settings.repository import available_languages, Repository
+from tko.game.game import Game
+from tko.settings.settings import Settings
+from tko.settings.repository import available_languages, Repository
+from tko.play.keys import GuiKeys
 from tko.play.floating import Floating
 from tko.play.floating_calibrate import FloatingCalibrate
-from .fmt import Fmt
-from .input_manager import InputManager
-from tko.play.play_config import PlayPalette
-
-
-from .floating import Floating
-from .floating_manager import FloatingManager
-from .flags import Flags, FlagsMan
-from .tasktree import TaskTree
-from .gui import Gui
-from .play_actions import PlayActions
-from .functors import FlagFunctor
+from tko.play.fmt import Fmt
+from tko.play.input_manager import InputManager
+from tko.play.play_config import PlayConfig
+from tko.play.floating import Floating
+from tko.play.floating_manager import FloatingManager
+from tko.play.flags import Flags, FlagsMan
+from tko.play.tasktree import TaskTree
+from tko.play.gui import Gui
+from tko.play.play_actions import PlayActions
+from tko.play.flag_functors import FlagFunctor
 
 import curses
 
@@ -40,7 +38,7 @@ class Play:
         self.graph_ext = ""
 
         self.actions = PlayActions(self.gui)
-        self.play_palette = PlayPalette(self.actions)
+        self.play_palette = PlayConfig(self.actions)
 
     def set_need_update(self):
         self.gui.set_need_update()

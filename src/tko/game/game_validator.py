@@ -2,17 +2,13 @@ from tko.game.cluster import Cluster
 from tko.game.quest import Quest
 from tko.game.task import Task
 
-
-from typing import Dict, List
-
-
 class GameValidator:
-    def __init__(self, filename: str, clusters: Dict[str, Cluster], 
-                 quests: Dict[str, Quest], tasks: Dict[str, Task]):
+    def __init__(self, filename: str, clusters: dict[str, Cluster], 
+                 quests: dict[str, Quest], tasks: dict[str, Task]):
         self.filename = filename
-        self.clusters: Dict[str, Cluster] = clusters
-        self.quests: Dict[str, Quest] = {}
-        self.tasks: Dict[str, Task] = {}
+        self.clusters: dict[str, Cluster] = clusters
+        self.quests: dict[str, Quest] = {}
+        self.tasks: dict[str, Task] = {}
         
     def validate(self):
         self.__validate_requirements()
@@ -47,7 +43,7 @@ class GameValidator:
 
     # call after create_requirements_pointers
     def __check_cycle(self):
-        def dfs(qx: Quest, visitedx: List[str]):
+        def dfs(qx: Quest, visitedx: list[str]):
             if len(visitedx) > 0:
                 if visitedx[0] == qx.key:
                     print(f"Cycle detected: {visitedx}")
@@ -59,5 +55,5 @@ class GameValidator:
                 dfs(r, visitedx)
 
         for q in self.quests.values():
-            visited: List[str] = []
+            visited: list[str] = []
             dfs(q, visited)

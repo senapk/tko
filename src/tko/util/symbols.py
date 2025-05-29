@@ -1,4 +1,4 @@
-from .text import Token
+from tko.util.text import Token
 
 class __Symbols:
 

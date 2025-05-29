@@ -1,7 +1,7 @@
 # from typing import override
 
 from tko.settings.settings import Settings
-from tko.util.consts import DiffMode
+from tko.enums.diff_mode import DiffMode
 
 class ConfigParams:
     def __init__(self):

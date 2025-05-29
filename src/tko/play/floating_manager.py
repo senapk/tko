@@ -1,10 +1,8 @@
-from typing import List
-
-from .floating import Floating
+from tko.play.floating import Floating
 
 class FloatingManager:
     def __init__(self):
-        self.input_layer: List[Floating] = []
+        self.input_layer: list[Floating] = []
 
     def add_input(self, floating: Floating):
         self.input_layer.append(floating)

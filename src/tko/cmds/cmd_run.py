@@ -1,11 +1,11 @@
-from typing import List, Optional
 import os
 
-from tko.run.diff_builder_down import DownDiff
+from tko.enums.execution_result import ExecutionResult
+from tko.run.diff_builder_down import DiffBuilderDown
 from tko.run.wdir import Wdir
-from tko.util.consts import DiffCount, ExecutionResult
+from tko.enums.diff_count import DiffCount
 from tko.util.param import Param
-from tko.run.diff_builder_side import SideDiff
+from tko.run.diff_builder_side import DiffBuilderSide
 from tko.util.text import Text, Token
 
 from tko.util.raw_terminal import RawTerminal
@@ -18,7 +18,7 @@ from tko.run.unit_runner import UnitRunner
 from tko.game.task import Task
 from tko.play.opener import Opener
 from tko.settings.settings import Settings
-from tko.util.consts import DiffMode
+from tko.enums.diff_mode import DiffMode
 from tko.settings.logger import Logger
 from tko.feno.filter import CodeFilter
 from tko.settings.repository import Repository
@@ -34,9 +34,9 @@ class tkoFilterMode:
 
 class Run:
 
-    def __init__(self, settings: Settings, target_list: List[str], param: Optional[Param.Basic]):
+    def __init__(self, settings: Settings, target_list: list[str], param: None | Param.Basic):
         self.settings = settings
-        self.target_list: List[str] = target_list
+        self.target_list: list[str] = target_list
         if param is None:
             self.param = Param.Basic()
         else:
@@ -196,11 +196,11 @@ class Run:
             # printing only the first wrong case
             wrong = [unit for unit in self.wdir.get_unit_list() if unit.result != ExecutionResult.SUCCESS][0]
             if self.param.diff_mode == DiffMode.DOWN:
-                ud_diff_builder = DownDiff(RawTerminal.get_terminal_size(), wrong).to_insert_header()
+                ud_diff_builder = DiffBuilderDown(RawTerminal.get_terminal_size(), wrong).to_insert_header()
                 for line in ud_diff_builder.build_diff():
                     print(line)
             else:
-                ss_diff_builder = SideDiff(RawTerminal.get_terminal_size(), wrong).to_insert_header(True)
+                ss_diff_builder = DiffBuilderSide(RawTerminal.get_terminal_size(), wrong).to_insert_header(True)
                 for line in ss_diff_builder.build_diff():
                     print(line)
             return
@@ -209,11 +209,11 @@ class Run:
             for unit in self.wdir.get_unit_list():
                 if unit.result != ExecutionResult.SUCCESS:
                     if self.param.diff_mode == DiffMode.DOWN:
-                        ud_diff_builder = DownDiff(RawTerminal.get_terminal_size(), unit).to_insert_header()
+                        ud_diff_builder = DiffBuilderDown(RawTerminal.get_terminal_size(), unit).to_insert_header()
                         for line in ud_diff_builder.build_diff():
                             print(line)
                     else:
-                        ss_diff_builder = SideDiff(RawTerminal.get_terminal_size(), unit).to_insert_header(True)
+                        ss_diff_builder = DiffBuilderSide(RawTerminal.get_terminal_size(), unit).to_insert_header(True)
                         for line in ss_diff_builder.build_diff():
                             print(line)
 

@@ -1,11 +1,11 @@
 from tko.run.diff_builder import DiffBuilder
 from tko.run.unit import Unit
-from tko.util.consts import ExecutionResult
+from tko.enums.execution_result import ExecutionResult
 from tko.util.symbols import symbols
 from tko.util.text import Text, Token
 
 
-class DownDiff:
+class DiffBuilderDown:
     def __init__(self, width: int, unit: Unit):
         self.width = width
         self.curses = False

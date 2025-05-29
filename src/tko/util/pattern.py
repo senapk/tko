@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import List
 import re
 
 
@@ -40,10 +39,10 @@ class PatternLoader:
     def make_file_source(self, label: str) -> FileSource:
         return FileSource(label, self.input_pattern.replace("@", label), self.output_pattern.replace("@", label))
 
-    def get_file_sources(self, filename_list: List[str]) -> List[FileSource]:
+    def get_file_sources(self, filename_list: list[str]) -> list[FileSource]:
         input_re = self.input_pattern.replace(".", "\\.")
         input_re = input_re.replace("@", "(.*)")
-        file_source_list: List[FileSource] = []
+        file_source_list: list[FileSource] = []
         for filename in filename_list:
             match = re.findall(input_re, filename)
             if not match:
@@ -56,9 +55,9 @@ class PatternLoader:
                 file_source_list.append(file_source)
         return file_source_list
 
-    def get_odd_files(self, filename_list: List[str]) -> List[str]:
-        matched: List[str] = []
-        sources: List[FileSource] = self.get_file_sources(filename_list)
+    def get_odd_files(self, filename_list: list[str]) -> list[str]:
+        matched: list[str] = []
+        sources: list[FileSource] = self.get_file_sources(filename_list)
         for source in sources:
             matched.append(source.input_file)
             matched.append(source.output_file)

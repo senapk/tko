@@ -1,9 +1,7 @@
-from .unit import Unit
-from ..util.consts import ExecutionResult
-
-from ..util.runner import Runner
-from .solver_builder import SolverBuilder
-from typing import Optional
+from tko.run.unit import Unit
+from tko.enums.execution_result import ExecutionResult
+from tko.util.runner import Runner
+from tko.run.solver_builder import SolverBuilder
 
 class UnitRunner:
 
@@ -12,7 +10,7 @@ class UnitRunner:
 
     # run a unit using a solver and return if the result is correct
     @staticmethod
-    def run_unit(solver: SolverBuilder, unit: Unit, timeout: Optional[float]=None) -> ExecutionResult:
+    def run_unit(solver: SolverBuilder, unit: Unit, timeout: None | float = None) -> ExecutionResult:
         exec, _ = solver.get_executable()
         if solver.has_compile_error():
             unit.received = exec.get_error_msg().get_str()

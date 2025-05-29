@@ -1,5 +1,5 @@
 from urllib.request import urlopen
-from .. import __version__
+from tko import __version__
 
 
 class CheckVersion:

@@ -1,9 +1,9 @@
+from tko.util.text import Text, Token
+from tko.util.raw_terminal import RawTerminal
+from tko.util.runner import Runner
+from tko.play.images import compilling_image
+from tko.run.solver_builder import SolverBuilder
 import subprocess
-from .text import Text, Token
-from .raw_terminal import RawTerminal
-from ..play.images import compilling
-from .runner import Runner
-from ..run.solver_builder import SolverBuilder
 import random
 import select
 import sys
@@ -33,8 +33,8 @@ class Free:
         if to_clear:
             Runner.clear_screen()
         if show_compilling:
-            image = random.choice(list(compilling.keys()))
-            for line in compilling[image].splitlines():
+            image = random.choice(list(compilling_image.keys()))
+            for line in compilling_image[image].splitlines():
                 print(Text().addf("y", line).center(RawTerminal.get_terminal_size(), Token(" ")))
 
         if show_compilling:

@@ -1,11 +1,10 @@
 from __future__ import annotations
-# from typing import override
 from typing import Any
 import re
 import os
 
-from .unit import Unit
-from ..util.pattern import PatternLoader
+from tko.run.unit import Unit
+from tko.util.pattern import PatternLoader
 from tko.util.decoder import Decoder
 
 

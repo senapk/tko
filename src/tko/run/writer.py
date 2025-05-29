@@ -1,11 +1,9 @@
-from typing import List
 import os
 
-from ..util.identifier import Identifier
-
-from ..util.pattern import PatternLoader
-from ..util.consts import IdentifierType
-from .unit import Unit
+from tko.util.identifier import Identifier
+from tko.util.pattern import PatternLoader
+from tko.enums.identifier_type import IdentifierType
+from tko.run.unit import Unit
 from tko.util.decoder import Decoder
 
 class Writer:
@@ -48,8 +46,8 @@ class Writer:
             f.write(unit.expected)
 
     @staticmethod
-    def save_target(target: str, unit_list: List[Unit], quiet: bool) -> bool:
-        def save_dir(_target: str, _unit_list: List[Unit]):
+    def save_target(target: str, unit_list: list[Unit], quiet: bool) -> bool:
+        def save_dir(_target: str, _unit_list: list[Unit]):
             folder = _target
             pattern_loader = PatternLoader()
             number = 0
@@ -57,7 +55,7 @@ class Writer:
                 Writer.save_dir_files(folder, pattern_loader, str(number).zfill(2), unit)
                 number += 1
 
-        def save_file(_target: str, _unit_list: List[Unit]):
+        def save_file(_target: str, _unit_list: list[Unit]):
             if _target.endswith(".tio"):
                 _new = "\n".join([Writer.to_tio(unit) for unit in _unit_list])
             else:

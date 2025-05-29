@@ -1,7 +1,6 @@
-from typing import List
-from .frame import Frame
-from ..util.text import Text
-from .fmt import Fmt
+from tko.play.frame import Frame
+from tko.util.text import Text
+from tko.play.fmt import Fmt
 from typing import Callable
 from tko.play.input_manager import InputManager
 from tko.play.keys import GuiKeys
@@ -11,10 +10,10 @@ from tko.settings.settings import Settings
 class Floating:
     def __init__(self, settings: Settings, _align: str = ""):
         self._frame = Frame(0, 0)
-        self._content: List[Text] = []
+        self._content: list[Text] = []
         self._type = "warning"
         self._enable = True
-        self._extra_exit: List[int] = []
+        self._extra_exit: list[int] = []
         self._exit_fn: Callable[[], None] | None = None
         self._exit_key: None | int = None
         self._centralize = True
@@ -112,7 +111,7 @@ class Floating:
             self._content.append(line)
         return self
     
-    def set_content(self, content: List[str]):
+    def set_content(self, content: list[str]):
         self._content = [Text().add(x) for x in content]
         return self
 
@@ -189,11 +188,11 @@ class FloatingInput(Floating):
     def __init__(self, settings: Settings, _align: str = ""):
         super().__init__(settings, _align)
         self._index = 0
-        self._options: List[FloatingInputData] = []
+        self._options: list[FloatingInputData] = []
         self._frame.set_border_color("m")
         self._exit_on_action = True
         self.right_dx = 5 # shortcut space
-        self.search_text: List[str] = []
+        self.search_text: list[str] = []
 
     # @override
     def calc_dy_dx(self):
@@ -236,7 +235,7 @@ class FloatingInput(Floating):
 
     # @override
     def write_content(self):
-        options: List[Text] = []
+        options: list[Text] = []
         dx = self._frame.get_dx() - self.right_dx
         for i, option in enumerate(self._options):
             if not self.match_search(i):
@@ -262,7 +261,7 @@ class FloatingInput(Floating):
 
         return self
 
-    def set_options(self, options: List[FloatingInputData]):
+    def set_options(self, options: list[FloatingInputData]):
         self._options = options
         return self
     

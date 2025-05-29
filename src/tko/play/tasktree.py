@@ -1,7 +1,4 @@
-# from typing import 
-
 from tko.settings.repository import Repository
-
 from tko.util.text import Text, Token
 from tko.util.to_asc import SearchAsc
 from tko.play.flags import Flags
@@ -13,7 +10,6 @@ from tko.down.drafts import Drafts
 from tko.util.symbols import symbols
 from tko.settings.settings import Settings
 from tko.play.floating_manager import FloatingManager
-# from tko.play.grade_message import GradeMessage
 from tko.util.symbols import symbols
 from tko.game.tree_item import TreeItem
 from tko.settings.logger import Logger

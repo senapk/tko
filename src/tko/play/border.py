@@ -1,6 +1,6 @@
-from .flags import Flag
-from ..util.text import Text, Token
-from ..settings.app_settings import AppSettings
+from tko.play.flags import Flag
+from tko.util.text import Text, Token
+from tko.settings.app_settings import AppSettings
 from tko.util.symbols import symbols
 
 class Border:

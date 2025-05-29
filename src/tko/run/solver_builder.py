@@ -1,7 +1,6 @@
 import tempfile
 
 import os
-from typing import List
 import shutil
 from tko.util.text import Text
 from tko.util.runner import Runner
@@ -69,8 +68,8 @@ def fix_spaces(file_list: list[str]) -> list[str]:
     return fixed_list
 
 class SolverBuilder:
-    def __init__(self, args_list: List[str]):
-        self.args_list: List[str] = [os.path.normpath(SolverBuilder.__add_dot_bar(path)) for path in args_list]
+    def __init__(self, args_list: list[str]):
+        self.args_list: list[str] = [os.path.normpath(SolverBuilder.__add_dot_bar(path)) for path in args_list]
 
         if len(self.args_list) > 0:
             self.cache_dir = os.path.join(os.path.dirname(self.args_list[0]), ".build")
@@ -91,8 +90,8 @@ class SolverBuilder:
         return self.__exec.has_compile_error()
 
     def set_main(self, main: str):
-        list_main: List[str] = []
-        list_other: List[str] = []
+        list_main: list[str] = []
+        list_other: list[str] = []
 
         for path in self.args_list:
             if os.path.basename(path) == main:
@@ -281,7 +280,7 @@ class SolverBuilder:
                 new_source_list.append(os.path.join(self.cache_dir, os.path.basename(source)[:-2] + "js"))
             self.__exec.set_executable(["node"], new_source_list)  # renaming solver to main
 
-    def __prepare_c_cpp(self, pre_args: List[str], pos_args: List[str]):
+    def __prepare_c_cpp(self, pre_args: list[str], pos_args: list[str]):
         # solver = self.path_list[0]
         tempdir = self.cache_dir
         source_list = [x for x in self.args_list if not x.endswith(".h") and not x.endswith(".hpp")]
@@ -308,7 +307,7 @@ class SolverBuilder:
     def __prepare_cpp(self):
         self.check_tool("g++")
         pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror", "-Wno-deprecated"]
-        pos: List[str] = []
+        pos: list[str] = []
         self.__prepare_c_cpp(pre, pos)
 
     @staticmethod

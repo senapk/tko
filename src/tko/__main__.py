@@ -9,13 +9,17 @@ from tko.cmds.cmd_down import CmdLineDown
 from tko.cmds.cmd_run import Run
 from tko.cmds.cmd_build import CmdBuild
 from tko.cmds.cmd_config import CmdConfig, ConfigParams
+from tko.enums.diff_mode import DiffMode
 from tko.settings.logger import Logger
 from tko.util.text import AnsiColor
+from tko.enums.diff_count import DiffCount
 
 from tko.util.param import Param
 from tko.util.pattern import PatternLoader
-from tko.util.consts import DiffCount, DiffMode
+
 from tko.settings.settings import Settings
+from tko.cmds.cmd_diff import cmd_diff
+
 
 from tko.settings.repository import Repository
 from tko.util.raw_terminal import RawTerminal
@@ -74,6 +78,10 @@ class Main:
         manip = Param.Manip().set_unlabel(args.unlabel).set_to_sort(args.sort).set_to_number(args.number)
         build = CmdBuild(args.target, args.target_list, manip)
         build.execute()
+
+    @staticmethod
+    def diff(args: argparse.Namespace):
+        cmd_diff(args)
 
     @staticmethod
     def open(args: argparse.Namespace):
@@ -142,6 +150,7 @@ class Parser:
         self.add_parser_config()
         self.add_parser_rep_tools()
         self.add_parser_rep_actions()
+        self.add_parser_diff()
 
 
     def add_parser_global(self):
@@ -196,6 +205,16 @@ class Parser:
         parser_b.add_argument('target', metavar='T_OUT', type=str, help='target to be build.')
         parser_b.add_argument('target_list', metavar='T', type=str, nargs='+', help='input test targets.')
         parser_b.set_defaults(func=Main.build)
+
+    def add_parser_diff(self):
+
+        parser_b = self.subparsers.add_parser('diff', help='Build a test target.')
+        parser_b.add_argument('file_a', type=str, help='first file to be compared.')
+        parser_b.add_argument('file_b', type=str, help='second file to be compared.')
+        exclusive_group = parser_b.add_mutually_exclusive_group()
+        exclusive_group.add_argument('--side', '-s', action='store_true', help="diff mode side-by-side.")
+        exclusive_group.add_argument('--down', '-d', action='store_true', help="diff mode up-to-down.")
+        parser_b.set_defaults(func=Main.diff)
 
     def add_parser_config(self):
         parser_cfg = self.subparsers.add_parser('config', help='Settings tool.')

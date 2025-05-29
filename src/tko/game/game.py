@@ -1,5 +1,3 @@
-from typing import List, Dict, Tuple
-
 from tko.game.cluster import Cluster
 from tko.game.quest import Quest
 from tko.game.task import Task
@@ -22,10 +20,10 @@ def load_html_tags(task: str) -> None | str:
 
 class Game:
     def __init__(self):
-        self.ordered_clusters: List[str] = [] # ordered clusters
-        self.clusters: Dict[str, Cluster] = {} 
-        self.quests: Dict[str, Quest] = {}  # quests indexed by quest key
-        self.tasks: Dict[str, Task] = {}  # tasks indexed by task key
+        self.ordered_clusters: list[str] = [] # ordered clusters
+        self.clusters: dict[str, Cluster] = {} 
+        self.quests: dict[str, Quest] = {}  # quests indexed by quest key
+        self.tasks: dict[str, Task] = {}  # tasks indexed by task key
 
         self.token_level_one = "level_one"
         self.token_level_mult = "level_mult"
@@ -56,9 +54,9 @@ class Game:
             obtained += o
         return obtained, total
 
-    def get_skills_resume(self, avaliable_quests: List[Quest]) -> Tuple[Dict[str, int], Dict[str, int]]:
-        total: Dict[str, int] = {}
-        obtained: Dict[str, int] = {}
+    def get_skills_resume(self, avaliable_quests: list[Quest]) -> tuple[dict[str, int], dict[str, int]]:
+        total: dict[str, int] = {}
+        obtained: dict[str, int] = {}
         avaliable_keys = [q.key for q in avaliable_quests]
         for q in self.quests.values():
             reachable = q.key in avaliable_keys
@@ -108,7 +106,7 @@ class Game:
         #     t.get_link(os.path.dirname(filename) + "/")
 
     @staticmethod
-    def is_reachable_quest(q: Quest, cache: Dict[str, bool]):
+    def is_reachable_quest(q: Quest, cache: dict[str, bool]):
         if q.key in cache:
             return cache[q.key]
 
@@ -120,7 +118,7 @@ class Game:
 
     # def __get_reachable_quests(self):
     #     # cache needs to be reseted before each call
-    #     cache: Dict[str, bool] = {}
+    #     cache: dict[str, bool] = {}
     #     return [q for q in self.quests.values() if Game.__is_reachable_quest(q, cache)]
 
     def update_reachable_and_available(self):
@@ -130,7 +128,7 @@ class Game:
         for c in self.clusters.values():
             c.set_reachable(False)
 
-        cache: Dict[str, bool] = {}
+        cache: dict[str, bool] = {}
         for c in self.clusters.values():
             for q in c.get_quests():
                 if Game.is_reachable_quest(q, cache):

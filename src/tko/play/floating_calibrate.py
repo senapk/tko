@@ -1,6 +1,5 @@
-from typing import List
-from ..util.text import Text
-from .fmt import Fmt
+from tko.util.text import Text
+from tko.play.fmt import Fmt
 from tko.play.floating import Floating
 from tko.play.input_manager import InputManager
 from tko.settings.settings import Settings
@@ -13,7 +12,7 @@ class FloatingCalibrate(Floating):
         # self.set_text_ljust()
         self.set_footer(" Use Enter para salvar ou ESC para cancelar ")
         self._index = 0
-        self._options: List[int] = [settings.app.get_key_left(),
+        self._options: list[int] = [settings.app.get_key_left(),
                                    settings.app.get_key_right(),
                                    settings.app.get_key_up(),
                                    settings.app.get_key_down()]

@@ -1,11 +1,11 @@
 import argparse
 
-from .build import build_main
-from .indexer import indexer_main
-from .html import html_main
-from .mdpp import mdpp_main
-from .older import older_main
-from .remote_md import remote_main
+from tko.feno.build import build_main
+from tko.feno.indexer import indexer_main
+from tko.feno.html import html_main
+from tko.feno.mdpp import mdpp_main
+from tko.feno.older import older_main
+from tko.feno.remote_md import remote_main
 from tko.feno.filter import filter_main
 
 

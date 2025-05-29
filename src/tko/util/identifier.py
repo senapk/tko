@@ -1,4 +1,4 @@
-from tko.util.consts import IdentifierType
+from tko.enums.identifier_type import IdentifierType
 
 import os
 

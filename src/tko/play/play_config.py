@@ -6,7 +6,7 @@ from tko.play.flags import Flags
 from tko.play.play_actions import PlayActions
 from tko.play.floating_calibrate import FloatingCalibrate
 
-class PlayPalette:
+class PlayConfig:
     def __init__(self, actions: PlayActions):
         self.actions = actions
         self.app = self.actions.settings.app

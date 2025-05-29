@@ -1,4 +1,4 @@
-from typing import Dict, Callable, Optional
+from typing import Callable
 import curses
 import os
 
@@ -16,7 +16,7 @@ class InputManager:
 
     def __init__(self):
         # stores a function than can return another function
-        self.calls: Dict[int, Callable[[], Optional[Callable[[], None]]]] = {}
+        self.calls: dict[int, Callable[[], None | Callable[[], None]]] = {}
 
     def add_int(self, _key: int, fn: Callable[[], None]):
         if _key in self.calls.keys():

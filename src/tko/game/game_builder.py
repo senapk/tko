@@ -8,15 +8,12 @@ from tko.util.get_md_link import get_md_link
 from tko.util.to_asc import uni_to_asc
 import os
 
-from typing import Dict, List
-
-
 class GameBuilder:
     def __init__(self, filename: str, database_folder: str):
         self.filename = filename
         self.database_folder = database_folder
-        self.ordered_clusters: List[str] = [] # ordered clusters
-        self.clusters: Dict[str, Cluster] = {}
+        self.ordered_clusters: list[str] = [] # ordered clusters
+        self.clusters: dict[str, Cluster] = {}
         self.active_cluster: Cluster | None = None
         self.active_quest: Quest | None = None
 
@@ -30,7 +27,7 @@ class GameBuilder:
 
 
     def collect_tasks(self) -> dict[str, Task]:
-        tasks: Dict[str, Task] = {}
+        tasks: dict[str, Task] = {}
         for cluster in self.clusters.values():
             for quest in cluster.get_quests():
                 for task in quest.get_tasks():
@@ -38,7 +35,7 @@ class GameBuilder:
         return tasks
 
     def collect_quests(self) -> dict[str, Quest]:
-        quests: Dict[str, Quest] = {}
+        quests: dict[str, Quest] = {}
         for cluster in self.clusters.values():
             for quest in cluster.get_quests():
                 quests[quest.key] = quest
@@ -168,8 +165,8 @@ class GameBuilder:
             cluster.remove_empty_or_other_language(language)
 
         # apagando quests vazias dos clusters e clusters vazios
-        ordered_clusters: List[str] = []
-        clusters: Dict[str, Cluster] = {}
+        ordered_clusters: list[str] = []
+        clusters: dict[str, Cluster] = {}
         for key in self.ordered_clusters:
             cluster = self.clusters[key]
             if len(cluster.get_quests()) > 0:

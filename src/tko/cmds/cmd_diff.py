@@ -1,0 +1,33 @@
+from __future__ import annotations
+import argparse
+import os
+from tko.run.diff_builder_down import DiffBuilderDown
+from tko.run.diff_builder_side import DiffBuilderSide
+from tko.enums.diff_mode import DiffMode
+from tko.util.raw_terminal import RawTerminal
+from tko.run.unit import Unit
+
+
+def cmd_diff(args: argparse.Namespace) -> None:
+    file_a = args.file_a
+    file_b = args.file_b
+    diff_mode = DiffMode.SIDE if args.side else DiffMode.DOWN
+    content_a: str = ""
+    if os.path.isfile(file_a):
+        content_a = open(file_a, 'r', encoding='utf-8').read()
+    else:
+        content_a = "File not found: " + file_a
+    content_b: str = ""
+    if os.path.isfile(file_b):
+        content_b = open(file_b, 'r', encoding='utf-8').read()
+    else:
+        content_b = "File not found: " + file_b
+    unit: Unit = Unit()
+    unit.expected = content_a
+    unit.received = content_b
+    if diff_mode == DiffMode.DOWN:
+        diff_builder = DiffBuilderDown(RawTerminal.get_terminal_size(), unit)
+    else:
+        diff_builder = DiffBuilderSide(RawTerminal.get_terminal_size(), unit)
+    for line in diff_builder.build_diff():
+        print(line)

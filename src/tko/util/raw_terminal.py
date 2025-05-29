@@ -1,6 +1,5 @@
 import shutil
-from .text import Text, Token
-
+from tko.util.text import Text, Token
 
 class RawTerminal:
     __term_width: None | int = None
