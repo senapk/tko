@@ -1,5 +1,6 @@
 from tko.settings.logger import Logger
 from uniplot import plot_to_string # type: ignore
+from tko.util.text import Text
 
 class WeekGraph:
     def __init__(self, width: int, height: int, week_mode: bool = False):
@@ -43,7 +44,7 @@ class WeekGraph:
             output[i] = output[i].replace(".", ":").rjust(5, " ")
         return output
 
-    def get_graph(self) -> list[str]:
+    def get_graph(self) -> list[Text]:
         collected: list[float] = []
         eixo: list[int] = []
         if self.week_mode:
@@ -72,5 +73,5 @@ class WeekGraph:
 
             result = plot_to_string(xs=eixo, ys=collected, title=title, lines=True, y_min=0, width=self.width, height=self.height, y_unit="h", x_unit="d")
         if isinstance(result, str):
-            return result.splitlines()
-        return result
+            return [Text().add(x) for x in result.splitlines()]
+        return [Text().add(x) for x in result]

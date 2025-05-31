@@ -72,7 +72,7 @@ class Flags:
     percent = Flag().set_name("Percentual").set_keycode("P").set_values(["1", "0"]).set_description("Mostra todos os valores em porcentagem      ")
     admin = Flag().set_name("Gamer").set_keycode("G").set_values(["1", "0"])       .set_description("Habilitas todas as missões e tarefas        ")
     skills = Flag().set_name("Técnicas").set_keycode("T").set_values(["0", "1"]).set_description("Mostra a barra de skills")
-    graph = Flag().set_name("Graph").set_keycode(GuiKeys.graph).set_values(["0", "1", "2"]).set_description("Muda o Gráfico")
+    graph = Flag().set_name("Graph").set_keycode(GuiKeys.graph).set_values(["0", "1"]).set_description("Muda o Gráfico")
 
 
 class FlagsMan:

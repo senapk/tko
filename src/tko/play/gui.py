@@ -289,17 +289,16 @@ class Gui:
 
         return text, percent
 
-    def get_task_graph(self, task_key: str, width: int, height: int) -> tuple[bool, list[str]]:
-        minutes_mode = Flags.graph.get_value() == "1"
-        tg = TaskGraph(self.settings, self.rep, task_key, width, height, minutes_mode=minutes_mode)
-        if len(tg.collected) == 1:
+    def get_task_graph(self, task_key: str, width: int, height: int) -> tuple[bool, list[Text]]:
+        tg = TaskGraph(self.settings, self.rep, task_key, width, height)
+        if len(tg.collected_cov) == 1:
             return False, []
         graph = tg.get_graph()
         # for y, line in enumerate(graph):
         #     frame.write(y, x, Text().addf("g", line))
         return True, graph
-    
-    def get_week_graph(self, width: int, height: int) -> tuple[bool, list[str]]:
+
+    def get_week_graph(self, width: int, height: int) -> tuple[bool, list[Text]]:
         week_mode = Flags.graph.get_value() == "1"
         tg = WeekGraph(width, height, week_mode)
         if len(tg.collected) == 1:
@@ -316,12 +315,13 @@ class Gui:
         # parrot = random_get(opening, str(now.hour))
         distance = 18
         made = False
-        list_data: list[str] = []
+        list_data: list[Text] = []
         try:
             selected = self.tree.get_selected_throw()
         except IndexError:
             selected = None
-        if Flags.graph.get_value() != "0":
+        is_task = isinstance(selected, Task)
+        if Flags.graph.get_value() == "1" or not is_task:
             width = cols - self.tree.max_title - distance - 7
             if width < 5:
                 width = 5
@@ -333,19 +333,17 @@ class Gui:
             elif isinstance(selected, Cluster) or isinstance(selected, Quest):
                 made, list_data = self.get_week_graph(width, height)
         if not made:
-            list_data = opening["estuda"].splitlines()
-        is_task = isinstance(selected, Task)
-        op_one = "minutos " if is_task else "h/semana"
-        op_two = "execuções" if is_task else "  h/dia  "
+            list_data = [Text().add(x) for x in opening["estuda"].splitlines()]
+        op_one = "Nenhum" if is_task else "h/semana"
+        op_two = "Ligado" if is_task else "h/dia   "
         border = Border(self.settings.app)
         view_button = Text().add("  ").add(border.border("C", f"Mudar Visão [{GuiKeys.graph}]"))
         view_value = Flags.graph.get_value()
-        view_button.add(" ").addf("M" if view_value == "0" else "Y", f" Nenhum ")
-        view_button.add(" ").addf("M" if view_value == "1" else "Y", f" {op_one} ")
-        view_button.add(" ").addf("M" if view_value == "2" else "Y", f" {op_two} ")
+        view_button.add(" ").addf("M" if view_value == "0" else "Y", f" {op_one} ")
+        view_button.add(" ").addf("M" if view_value == "1" else "Y", f" {op_two} ")
         frame.write(0, self.tree.max_title + distance, view_button)
         for y, line in enumerate(list_data):
-            frame.write(y + 1, self.tree.max_title + distance, Text().addf("g", line))
+            frame.write(y + 1, self.tree.max_title + distance, line)
 
     def show_items(self):
         border_color = self.get_admin_color()

@@ -18,7 +18,6 @@ class AnsiColor:
         'c': '\033[36m', # Cyan
         'w': '\033[37m', # White
 
-
         'K': '\033[40m', # Background black
         'W': '\033[47m', # Background white
         "R": '\033[41m', # Background red
@@ -70,6 +69,31 @@ class Text:
     def __init__(self, default_fmt: str = ""):
         self.data: list[Token] = []
         self.default_fmt = default_fmt
+
+
+    # convert a strings formatted with terminal styles to a Text object
+    @staticmethod
+    def decode_raw(data: str) -> Text:
+        blue = '\033[34m'
+        magenta = '\033[35m'
+        reset = '\033[0m'
+        data = data.replace(blue, "\a").replace(magenta, "\b").replace(reset, "\t")
+        text = Text()
+        fmt = ""
+        for c in data:
+            if c == '\a':
+                fmt = 'b'
+            elif c == '\b':
+                fmt = 'm'
+            elif c == '\t':
+                fmt = ''
+            else:
+                if fmt == "":
+                    text.add(c)
+                else:
+                    text.add(Token(c, fmt))
+        return text
+
 
     @staticmethod
     def format(value: str = "", *args: Any) -> Text:
