@@ -13,7 +13,7 @@ class UnitRunner:
     def run_unit(solver: SolverBuilder, unit: Unit, timeout: None | float = None) -> ExecutionResult:
         exec, _ = solver.get_executable()
         if solver.has_compile_error():
-            unit.received = exec.get_error_msg().get_str()
+            unit.set_received(exec.get_error_msg().get_str())
             return ExecutionResult.COMPILATION_ERROR
         cmd, folder = exec.get_command()
         if folder == "":
@@ -21,9 +21,10 @@ class UnitRunner:
         if timeout == 0:
             timeout = None
         return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.inserted, timeout, folder)
-        unit.received = stdout + stderr
         if return_code != 0:
+            unit.set_received(stdout + stderr)
             return ExecutionResult.EXECUTION_ERROR
-        if unit.received == unit.expected:
+        unit.set_received(stdout)
+        if unit.get_received() == unit.get_expected():
             return ExecutionResult.SUCCESS
         return ExecutionResult.WRONG_OUTPUT

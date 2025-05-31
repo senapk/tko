@@ -9,14 +9,28 @@ class Unit:
         self.case = case  # name
         self.case_pad = 0  # stores the pad to justify the case name
         self.inserted = input_data  # input
-        self.expected = expected  # expected output
-        self.received: None | str = None  # solver generated answer
+        self.__expected = expected  # expected output
+        self.__received: None | str = None  # solver generated answer
         self.grade: None | int = grade  # None represents proportional gr, 100 represents all
         self.grade_reduction: int = 0  # if grade is None, this atribute should be filled with the right grade reduction
         self.index = 0
         self.repeated: None | int = None
 
         self.result: ExecutionResult = ExecutionResult.UNTESTED
+
+    def set_expected(self, expected: str):
+        self.__expected = "\n".join(expected.splitlines()) + "\n"
+        return self
+    
+    def get_expected(self) -> str:
+        return self.__expected
+    
+    def set_received(self, received: str):
+        self.__received = "\n".join(received.splitlines()) + "\n"
+        return self
+
+    def get_received(self) -> None | str:
+        return self.__received
 
     def str(self, pad: bool = True) -> Text:
         index = str(self.index).zfill(2)

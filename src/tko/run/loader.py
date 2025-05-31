@@ -168,7 +168,7 @@ class Loader:
                 unit.inserted = value + ("" if value.endswith("\n") else "\n")
                 output_file = os.path.join(folder, m.output_file)
                 value = Decoder.load(output_file)
-                unit.expected = value + ("" if value.endswith("\n") else "\n")
+                unit.set_expected(value + ("" if value.endswith("\n") else "\n"))
                 unit_list.append(unit)
         except FileNotFoundError as e:
             print(str(e))

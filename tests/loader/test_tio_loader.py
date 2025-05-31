@@ -71,16 +71,16 @@ class TestSimple:
         assert len(unit_list) == 5
         assert unit_list[0].case == "quebra"
         assert unit_list[0].inserted == "\n"
-        assert unit_list[0].expected == "\n"
+        assert unit_list[0].get_expected() == "\n"
 
         assert unit_list[1].case == "vazios"
         assert unit_list[1].inserted == ""
-        assert unit_list[1].expected == ""
+        assert unit_list[1].get_expected() == ""
 
         assert unit_list[2].case == ""
         assert unit_list[2].inserted == "-3\n"
-        assert unit_list[2].expected == "\n"
+        assert unit_list[2].get_expected() == "\n"
 
         assert unit_list[3].case == "3"
         assert unit_list[3].inserted == ""
-        assert unit_list[3].expected == "SIM\n"
+        assert unit_list[3].get_expected() == "SIM\n"

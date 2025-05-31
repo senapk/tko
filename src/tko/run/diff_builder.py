@@ -60,6 +60,7 @@ class DiffBuilder:
         width = self.width - 13
         output.append(Text().add(" ").add(out_a.ljust(greater)).trim_end(width).addf("y", " (esperado)"))
         output.append(Text().add(" ").add(out_b.ljust(greater)).trim_end(width).addf("r", " (recebido)"))
+        output.append(Text() + "".join([str(x) for x in out_b.resume()]))
         diff = DiffBuilder.make_line_arrow_up(first_a.get_str(), first_b.get_str())
         output.append(Text().add(" ").add(diff.ljust(greater)).trim_end(width).addf("b", " (primeiro)"))
         return output
@@ -94,8 +95,6 @@ class DiffBuilder:
             b_text = ""
         a_lines = a_text.splitlines(keepends=True)
         b_lines = b_text.splitlines(keepends=True)
-        a_lines = [line.replace("\r", "") for line in a_lines]
-        b_lines = [line.replace("\r", "") for line in b_lines]
         output: list[tuple[Text | None, Text | None]] = []
         a_size = len(a_lines)
         b_size = len(b_lines)
@@ -117,8 +116,8 @@ class DiffBuilder:
             if i >= a_size or i >= b_size or a_lines[i] != b_lines[i]:
                 if first_failure == -1:
                     first_failure = i
-            a_data = get_without_newline(a_lines, i)
-            b_data = get_without_newline(b_lines, i)
+            a_data: Text | None = get_without_newline(a_lines, i)
+            b_data: Text | None = get_without_newline(b_lines, i)
             a_out, b_out = DiffBuilder.colorize_2_lines_diff(a_data, b_data, "g", expected_color, received_color)
             output.append((a_out, b_out))
         return output, first_failure

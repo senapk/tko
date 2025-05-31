@@ -178,8 +178,8 @@ class Run:
             unit.result = UnitRunner.run_unit(solver, unit)
             print(Text() + ExecutionResult.get_symbol(unit.result), end="")
         print("]", end="")
+        print(f" {self.get_percent()}%", end="", flush=True)
         if self.__eval_mode:
-            print(f" {{total:{self.get_percent()}", end="", flush=True)
             if self.__rep is not None:
                 logger = Logger.get_instance()
                 entries = logger.tasks.key_actions.get(self.get_task().key, {})
@@ -187,9 +187,9 @@ class Run:
                     elapsed = entries[-1].elapsed.total_seconds() // 60
                     lines = entries[-1].lines
                     attempts = entries[-1].attempts
-                    print(f", minutos:{elapsed:.0f}, linhas:{lines}, tentativas:{attempts}", end="", flush=True)
-        print("}")
-
+                    print(f"{{minutos:{elapsed:.0f}, linhas:{lines}, tentativas:{attempts}}}", end="", flush=True)
+        print()
+        
     def __print_diff(self):
         if self.param.diff_count == DiffCount.QUIET or self.__eval_mode:
             return

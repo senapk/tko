@@ -27,8 +27,8 @@ def cmd_diff(args: argparse.Namespace) -> None:
         content_a = target_a.replace('\\n', '\n')
         content_b = target_b.replace('\\n', '\n')
     unit: Unit = Unit()
-    unit.expected = content_a
-    unit.received = content_b
+    unit.set_expected(content_a)
+    unit.set_received(content_b)
     if diff_mode == DiffMode.DOWN:
         diff_builder = DiffBuilderDown(RawTerminal.get_terminal_size(), unit).standalone_diff()
     else:

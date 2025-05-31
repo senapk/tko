@@ -64,7 +64,7 @@ class Token:
 
     # @override
     def __str__(self):
-        return f"({self.fmt}:{self.text})"
+        return f"({self.fmt}:{self.text}:{len(self.text)})"
 
 class Text:
     def __init__(self, default_fmt: str = ""):
@@ -235,10 +235,14 @@ class Text:
         if isinstance(value, str):
             if value != "":
                 for c in value:
+                    if len(c) != 1:
+                        raise ValueError("tuple text must be a single character string")
                     self.data.append(Token(c, self.default_fmt))
         elif isinstance(value, Token):
             if value.text != "":
                 for c in value.text:
+                    if len(c) != 1:
+                        raise ValueError("tuple text must be a single character string")
                     self.data.append(Token(c, value.fmt))
         elif isinstance(value, Text):  # type: ignore
             self.default_fmt = value.default_fmt
@@ -246,6 +250,8 @@ class Text:
         elif isinstance(value, tuple) and len(value) == 2 and isinstance(value[0], str) and isinstance(value[1], str): # type: ignore
             fmt, text = value
             for c in text:
+                if len(c) != 1:
+                    raise ValueError("tuple text must be a single character string")
                 self.data.append(Token(c, fmt))
         else:
             raise TypeError("unsupported type '{}'".format(type(value)))

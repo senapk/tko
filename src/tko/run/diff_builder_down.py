@@ -14,8 +14,8 @@ class DiffBuilderDown:
         self.output: list[Text] = []
         self.__to_insert_header = False
         self.__standalone_diff = False
-        self.no_diff_mode = self.unit.inserted == "" and self.unit.expected == ""
-        self.expected_received, self.first_failure = self.db.render_diff(self.unit.expected, self.unit.received)
+        self.no_diff_mode = self.unit.inserted == "" and self.unit.get_expected() == ""
+        self.expected_received, self.first_failure = self.db.render_diff(self.unit.get_expected(), self.unit.get_received())
 
     def to_insert_header(self):
         self.__to_insert_header = True
@@ -48,7 +48,7 @@ class DiffBuilderDown:
         self.output.append(self.unit.str().fold_in(self.width, " ", symbols.vbar, symbols.vbar))
 
     def insert_input(self):
-        color = "g" if self.unit.expected == self.unit.received else "b"
+        color = "g" if self.unit.get_expected() == self.unit.get_received() else "b"
         # header
         if self.__to_insert_header:
             self.output.append(Text().addf(color, DiffBuilder.vinput).fold_in(self.width, symbols.hbar, "├", "┤"))
@@ -61,9 +61,9 @@ class DiffBuilderDown:
     def insert_expected(self):
         if self.no_diff_mode:
             return
-        if self.unit.expected == "":
+        if self.unit.get_expected() == "":
             return
-        color = "g" if self.unit.expected == self.unit.received else "y"
+        color = "g" if self.unit.get_expected() == self.unit.get_received() else "y"
         if self.__standalone_diff:
             self.output.append(Text().addf(color, DiffBuilder.vexpected).fold_in(self.width, symbols.hbar, "╭", "╮"))
         else:
@@ -74,7 +74,7 @@ class DiffBuilderDown:
 
     def insert_received(self):
         # headers
-        color = "g" if self.unit.expected == self.unit.received else "r"
+        color = "g" if self.unit.get_expected() == self.unit.get_received() else "r"
         if self.no_diff_mode:
             color = "g"
             self.output.append(Text().addf(color, DiffBuilder.vreceived).fold_in(self.width, symbols.hbar, "╭", "╮"))
@@ -88,7 +88,7 @@ class DiffBuilderDown:
 
     def insert_first_line_diff(self):
         include_rendering = False
-        if self.unit.expected != self.unit.received and self.unit.expected != "":
+        if self.unit.get_expected() != self.unit.get_received() and self.unit.get_expected() != "":
             include_rendering = True
         if self.unit.result == ExecutionResult.EXECUTION_ERROR or self.unit.result == ExecutionResult.COMPILATION_ERROR:
             include_rendering = False
@@ -96,7 +96,7 @@ class DiffBuilderDown:
         if not include_rendering:
             return
         self.output.append(Text().addf("b", DiffBuilder.vunequal).fold_in(self.width, symbols.hbar, "├", "┤"))
-        for line in self.db.first_failure_diff(self.unit.expected, self.unit.received, self.first_failure):
+        for line in self.db.first_failure_diff(self.unit.get_expected(), self.unit.get_received(), self.first_failure):
             self.output.append(Text().add("│").add(line).ljust(self.width - 1, Token(" ")).add("│"))
 
     def end_frame(self):
@@ -108,7 +108,7 @@ class DiffBuilderDown:
         if not self.no_diff_mode and not self.__standalone_diff:
             self.insert_input()
         symb = symbols.unequal
-        if self.unit.result == ExecutionResult.EXECUTION_ERROR or self.unit.result == ExecutionResult.COMPILATION_ERROR or self.unit.expected == "":
+        if self.unit.result == ExecutionResult.EXECUTION_ERROR or self.unit.result == ExecutionResult.COMPILATION_ERROR or self.unit.get_expected() == "":
             symb = symbols.vbar
         left_equal = self.put_left_equal(self.expected_received, symb)
 

@@ -13,7 +13,7 @@ class DiffBuilderSide:
         self.output: list[Text] = []
         self.__to_insert_header = False
         self.__standalone_diff = False
-        self.expected_received, self.first_failure = self.db.render_diff(self.unit.expected, self.unit.received)
+        self.expected_received, self.first_failure = self.db.render_diff(self.unit.get_expected(), self.unit.get_received())
 
     def set_curses(self):
         self.curses = True
@@ -70,7 +70,7 @@ class DiffBuilderSide:
 
     def _insert_input(self):
         # input header
-        input_color = "b" if self.unit.expected != self.unit.received else "g"
+        input_color = "b" if self.unit.get_expected() != self.unit.get_received() else "g"
         input_headera = Text().addf(input_color, DiffBuilder.vinput)
         input_headerb = Text().addf(input_color, DiffBuilder.vinput)
         if self.__to_insert_header:
@@ -86,9 +86,9 @@ class DiffBuilderSide:
     
     def _insert_expected_received(self):
         # expected and received header
-        ecolor = "g" if self.unit.expected == self.unit.received else "y"
+        ecolor = "g" if self.unit.get_expected() == self.unit.get_received() else "y"
         expected_header = Text().addf(ecolor, DiffBuilder.vexpected)
-        rcolor = "r" if self.unit.expected != self.unit.received else "g"
+        rcolor = "r" if self.unit.get_expected() != self.unit.get_received() else "g"
         received_header = Text().addf(rcolor, DiffBuilder.vreceived)
         if self.__standalone_diff:
             self.output.append(self.title_side_by_side(expected_header, received_header, symbols.hbar, Token("┬"), Token("╭"), Token("╮")))
@@ -102,15 +102,15 @@ class DiffBuilderSide:
             self.output.append(self.split_screen(exp, rec, symbol))
 
     def _insert_first_line_diff(self):
-        if self.unit.expected == self.unit.received or self.unit.expected == "":
+        if self.unit.get_expected() == self.unit.get_received() or self.unit.get_expected() == "":
             return
         self.output.append(Text().addf("b", DiffBuilder.vunequal).fold_in(self.width, symbols.hbar, "├", "┤"))
-        for line in self.db.first_failure_diff(self.unit.expected, self.unit.received, self.first_failure):
+        for line in self.db.first_failure_diff(self.unit.get_expected(), self.unit.get_received(), self.first_failure):
             width = self.width - 1
             self.output.append(Text().add("│").add(line).ljust(width, Token(" ")).add("│"))
         
     def _finish(self):
-        if self.unit.expected == self.unit.received or self.unit.expected == "":
+        if self.unit.get_expected() == self.unit.get_received() or self.unit.get_expected() == "":
             self.output.append(Text().add("┴").fold_in(self.width, symbols.hbar, "╰", "╯"))
         else:
             self.output.append(Text().fold_in(self.width, symbols.hbar, "╰", "╯"))
