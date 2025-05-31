@@ -1,4 +1,3 @@
-import unittest
 from tko.play.border import Border
 from tko.settings.app_settings import AppSettings
 from tko.util.text import Text
@@ -52,6 +51,3 @@ class Test:
         app.use_borders = False
         res = Border(app).build_bar("abcdefghij", 0, 11, "G", "R", round=True)
         assert str(res) == str(Text.format("{R}", " abcdefghi "))
-
-if __name__ == '__main__':
-    unittest.main()

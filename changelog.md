@@ -1,5 +1,9 @@
 # Changelog
 
+- 4.9.0
+  - fix: all error of types in tests
+  - add: python command now uses python3 instead of python
+  - add: % in the end of the line in tko run
 - 4.8.1
   - add: improved standalone diff output
 - 4.8.0

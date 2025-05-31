@@ -29,9 +29,9 @@ class CmdOpen:
     def execute(self):
         if self.rep is None:
             raise Warning("Repositório não encontrado")
-        
+        Logger.instance = Logger(self.rep)
         logger: Logger = Logger.get_instance()
-        logger.set_log_files(self.rep.get_history_file())
+        logger.set_log_files(self.rep.get_history_file(), self.rep.get_track_folder())
         logger.record_open()
         play = Play(self.settings, self.rep)
         if self.need_update:

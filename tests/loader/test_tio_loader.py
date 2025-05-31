@@ -1,5 +1,4 @@
 
-import unittest
 from tko.run.loader import Loader
 from tko.run.unit import Unit
 
@@ -65,7 +64,7 @@ SIM
 
 
 
-class TestSimple(unittest.TestCase):
+class TestSimple:
     def test_tio_loader(self):
         unit_list: list[Unit] = Loader.parse_tio(readme_text, "string")
 
@@ -85,8 +84,3 @@ class TestSimple(unittest.TestCase):
         assert unit_list[3].case == "3"
         assert unit_list[3].inserted == ""
         assert unit_list[3].expected == "SIM\n"
-
-
-
-if __name__ == "__main__":
-    unittest.main()

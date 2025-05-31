@@ -2,6 +2,11 @@
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
 [project]
 name = "tko"
 version = "4.8.1"
@@ -11,12 +16,13 @@ authors = [
 ]
 license = "MIT"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "appdirs>=1.4.4",
     "chardet>=5.2.0",
     "diff-match-patch>=20241021",
     "markdown>=3.7",
+    "mypy>=1.16.0",
     "pip>=25.0.1",
     "pydot>=3.0.3",
     "pygments>=2.19.1",

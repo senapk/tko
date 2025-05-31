@@ -1,5 +1,5 @@
-import unittest
 import os
+import pytest
 from pathlib import Path
 
 from tko.__main__ import execute, Parser #type: ignore
@@ -10,15 +10,12 @@ class Test:
     def setup_method(cls):
         os.chdir(Path(__file__).parent)
 
-    def test_run_mixed_5(self, capsys):
+    def test_run_mixed_5(self, capsys: pytest.CaptureFixture[str]):
         Compare.text(capsys,  "out5", "-w 80 -m run cases.tio")
-    def test_run_mixed_6(self, capsys):
+    def test_run_mixed_6(self, capsys: pytest.CaptureFixture[str]):
         Compare.text(capsys,  "out6", "-w 80 -m run solver.py")
-    def test_run_mixed_7(self, capsys):
+    def test_run_mixed_7(self, capsys: pytest.CaptureFixture[str]):
         Compare.text(capsys,  "out7", "-w 80 -m run solver.py cases_empty.tio")
-    def test_run_mixed_8(self, capsys):
+    def test_run_mixed_8(self, capsys: pytest.CaptureFixture[str]):
         Compare.text(capsys,  "out8", "-w 80 -m run solver.py cases.tio -s")
         
-
-if __name__ == '__main__':
-    unittest.main()

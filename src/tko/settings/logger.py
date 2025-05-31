@@ -5,6 +5,7 @@ from tko.settings.listener_daily import DailyListener
 from tko.settings.listener_task import TaskListener
 from tko.settings.listener_week import WeekListener
 from tko.settings.listener_cache import CacheListener
+from tko.settings.repository import Repository
 
 class Logger:
     instance: None | Logger = None
@@ -15,7 +16,8 @@ class Logger:
             Logger.instance = Logger()
         return Logger.instance
 
-    def __init__(self):
+    def __init__(self, repository: Repository | None = None):
+        self.rep: Repository | None = repository
         self.last_hash: str | None = None
         self.history: None | HistoryFile = None
         self.daily = DailyListener()
@@ -23,9 +25,10 @@ class Logger:
         self.week = WeekListener()
         self.cache = CacheListener()
 
-    def set_log_files(self, log_file: str) -> Logger:
+    def set_log_files(self, log_file: str, track_folder: str) -> Logger:
         if self.history is not None:
             return self
+        self.tasks.set_track_folder(track_folder)
         self.history = HistoryFile(log_file, [self.daily.listener, 
                                               self.tasks.listener, 
                                               self.week.listener, 
@@ -67,12 +70,15 @@ class Logger:
     
     def record_test_result(self, task_key: str, result: int):
         self.__record_event(LogAction.Type.TEST, task_key, str(result))
+    
+    def record_file_alteration(self, task_key: str, line_count: int):
+        self.__record_event(LogAction.Type.SIZE, task_key, str(line_count))
 
     def record_freerun(self, task_key: str):
         self.__record_event(LogAction.Type.FREE, task_key)
 
-    def record_self_grade(self, task_key: str, coverage: int, autonomy: int, skill: int):
-        self.__record_event(LogAction.Type.SELF, task_key, "{" + f"c:{coverage},a:{autonomy},s:{skill}" + "}")
+    def record_self_grade(self, task_key: str, coverage: int, approach: int, autonomy: int, clear: int, fun: int, easy: int):
+        self.__record_event(LogAction.Type.SELF, task_key, "{" + f"c:{coverage},a:{approach},s:{autonomy},clear:{clear},fun:{fun},easy:{easy}" + "}")
 
     def record_open(self):
         self.__record_event(LogAction.Type.OPEN)

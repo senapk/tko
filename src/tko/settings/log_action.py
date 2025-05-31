@@ -12,10 +12,11 @@ class LogAction:
         FREE = 'FREE' # Free Compile and RUN
         FAIL = 'FAIL' # Compile error or Execution error
         TEST = 'TEST' # run test and Coverage %
-        SELF = 'SELF' # {c:{coverage}, a:{autonomy}, s:{skill}}
+        SELF = 'SELF' # {c:{coverage}, a:{approach}, s:{autonomy}} after added {clear:%d, fun:%d, easy:%d}
         PICK = 'PICK' # Enter problem
         BACK = 'BACK' # Leave problem
         PROG = 'PROG' # deprecated
+        SIZE = 'SIZE' # Problem files changes "{line_count:%d}"
 
     def __init__(self, action_value: str, task: str = "", payload: str = ""):
         self.hash = ""

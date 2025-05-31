@@ -1,14 +1,21 @@
-import yaml # type: ignore
+import yaml
+import os
 from tko.settings.log_action import LogAction
 from tko.settings.log_info import LogInfo
 import datetime
         
 class TaskListener:
+    TASK_CSV = "task_log.csv"
     def __init__(self):
         self.key_actions: dict[str, list[LogInfo]] = {}
         self.log_file: str | None = None
         self.format = '%Y-%m-%d %H:%M:%S'
         self.max_minutes = 60
+        self.track_folder: str | None = None
+
+    def set_track_folder(self, folder: str):
+        self.track_folder = folder
+        return self
 
     def listener(self, action: LogAction, new_entry: bool = False):
         decoder = LogInfo().decode(action)
@@ -26,8 +33,28 @@ class TaskListener:
             else:
                 elapsed = last_action.elapsed
             decoder.elapsed = elapsed
+            if decoder.type == LogAction.Type.SIZE.value:
+                decoder.attempts = last_action.attempts + 1
+            else:
+                decoder.attempts = last_action.attempts
+                decoder.lines = last_action.lines
+            
             self.key_actions[decoder.key].append(decoder)
-        # self.save_yaml()
+
+        if self.track_folder is None:
+            return
+        if not new_entry:
+            return
+        task_track_folder = os.path.join(self.track_folder, decoder.key)
+        os.makedirs(task_track_folder, exist_ok=True)
+        log_file = os.path.join(task_track_folder, self.TASK_CSV)
+        if os.path.exists(log_file):
+            with open(log_file, 'a') as file:
+                file.write(str(decoder) + '\n')
+        else:
+            with open(log_file, 'w') as file:
+                for entry in self.key_actions[decoder.key]:
+                    file.write(str(entry) + '\n')
 
     def set_task_file(self, value: str):
         self.log_file = value

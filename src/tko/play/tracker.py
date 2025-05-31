@@ -61,7 +61,7 @@ class Tracker:
         return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     # return timestamp of the last version of the file
-    def save_file_with_timestamp_prefix(self, timestamp: str, file: str) -> str:
+    def save_file_with_timestamp_prefix(self, timestamp: str, file: str) -> tuple[str, bool, int]:
         filename = os.path.basename(file)
         ph = PatchHistory()
         json_file = os.path.join(self._folder, f"{filename}{self.extension}")
@@ -72,10 +72,11 @@ class Tracker:
         last_version = ph.store_version(timestamp, content)
         if last_version == timestamp:
             ph.save_json()
-            return timestamp
-        return last_version
+            return timestamp, True, len(content.splitlines())
+        return last_version, False, len(content.splitlines())
 
-    def store(self):
+    # return True if any file was changed
+    def store(self) -> tuple[bool, int]:
         os.makedirs(self._folder, exist_ok=True)
         file_list = os.listdir(self._folder)
         file_list = [f for f in file_list if f.endswith(self.extension)]
@@ -83,16 +84,22 @@ class Tracker:
         files_in_this_version: list[str] = []
         timestamp = self.get_timestamp()
 
+        any_changes = False
+        total_size = 0
         for file in self._files:
-            stored = self.save_file_with_timestamp_prefix(timestamp, file)
+            stored, changed, size = self.save_file_with_timestamp_prefix(timestamp, file)
+            total_size += size
             filename = os.path.basename(file)
             files_in_this_version.append(filename + ":" + stored)
+            if changed:
+                any_changes = True
 
         log_file = self.get_log_full_path()
         track = Track().set_timestamp(timestamp).set_files(files_in_this_version).set_result(self._result)
         with open(log_file, encoding="utf-8", mode="a") as f:
             writer = csv.writer(f)
             writer.writerow(track.track_to_column())
+        return any_changes, total_size
 
     @staticmethod
     def main():

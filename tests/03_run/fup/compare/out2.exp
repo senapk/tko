@@ -1,5 +1,5 @@
 ═══════════════════ Testando o código com os casos de teste ════════════════════
-=> Códigos:[solver.cpp] Testes:[cases.tio(07)] [ϵ ω ω ϵ ω ω ϵ]
+=> Códigos:[solver.cpp] Testes:[cases.tio(07)] [ϵ ω ω ϵ ω ω ϵ] 0%
 (ϵ erro_execução__)[00] GR:014 cases.tio (duas raízes)
 (ω saída_incorreta)[01] GR:014 cases.tio (duas raízes)
 (ω saída_incorreta)[02] GR:014 cases.tio (uma raiz   )

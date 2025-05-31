@@ -1,6 +1,6 @@
 # ignore missing import 
 from typing import Any
-import chardet # type: ignore
+import chardet
 import os
 
 class Decoder:

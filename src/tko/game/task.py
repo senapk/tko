@@ -36,9 +36,9 @@ class Task(TreeItem):
         self.autonomy: int = 0 # valor de 0 a autonomy_max
         self.main_idx: int = 0
 
-        self.description: int = 0
-        self.desire: int = 0
-        self.effort: int = 0
+        self.howclear: int = 0
+        self.howfun: int = 0
+        self.howeasy: int = 0
 
         self.qskills: dict[str, int] = {} # default quest skills
         self.skills: dict[str, int] = {} # local skills
@@ -93,11 +93,11 @@ class Task(TreeItem):
                 elif k == "hab" or k == "auto":
                     self.autonomy = int(val)
                 elif k == "desc":
-                    self.description = int(val)
+                    self.howclear = int(val)
                 elif k == "desire":
-                    self.desire = int(val)
+                    self.howfun = int(val)
                 elif k == "effort":
-                    self.effort = int(val)
+                    self.howeasy = int(val)
                 elif k == "idx":
                     self.main_idx = int(val)
         elif ":" not in value:
@@ -115,7 +115,7 @@ class Task(TreeItem):
                 self.main_idx = (int(v[3]))
 
     def save_to_db(self) -> str:
-        return "{" + f"cov:{self.coverage}, appr:{self.approach}, auto:{self.autonomy}, desc:{self.description}, desire:{self.desire}, effort:{self.effort}, idx:{self.main_idx}" + "}"
+        return "{" + f"cov:{self.coverage}, appr:{self.approach}, auto:{self.autonomy}, desc:{self.howclear}, desire:{self.howfun}, effort:{self.howeasy}, idx:{self.main_idx}" + "}"
     
     def is_db_empty(self) -> bool:
         return self.approach == 0 and self.autonomy == 0 and self.main_idx == 0 and self.coverage == 0
@@ -194,21 +194,21 @@ class Task(TreeItem):
     def set_description(self, value: int):
         value = int(value)
         if value >= 0 and value <= Task.description_max:
-            self.description = value
+            self.howclear = value
         else:
             print(f"Descrição inválida: {value}")
     
     def set_desire(self, value: int):
         value = int(value)
         if value >= 0 and value <= Task.desire_max:
-            self.desire = value
+            self.howfun = value
         else:
             print(f"Interesse inválido: {value}")
 
     def set_effort(self, value: int):
         value = int(value)
         if value >= 0 and value <= Task.effort_max:
-            self.effort = value
+            self.howeasy = value
         else:
             print(f"Dedicação inválida: {value}")
 

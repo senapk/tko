@@ -1,15 +1,15 @@
-import unittest
 import os
 from pathlib import Path
-from tko.__main__ import execute, Parser #type: ignore
+from tko.__main__ import execute, Parser
 from tko.util.compare import Compare
+import pytest
 
 class Test:
     @classmethod
     def setup_method(cls):
         os.chdir(Path(__file__).parent)
     
-    def test_cio_1(self, capsys): # type: ignore
+    def test_cio_1(self, capsys: pytest.CaptureFixture[str]): # type: ignore
         # path = os.path.join(Test.folder + "_calc.tio")
         # if os.path.exists(path):
         #     os.remove(path)
@@ -17,7 +17,7 @@ class Test:
         Compare.text(capsys, "out2", "-w 50 -m run _calc.tio -d") 
         Compare.text(capsys, "out3", "-w 50 -m run _calc.tio empty.py -d")
         
-    def test_cio_2(self, capsys): # type: ignore
+    def test_cio_2(self, capsys: pytest.CaptureFixture[str]): # type: ignore
         # path = os.path.join(Test.folder, "_calc2.tio")
         # if os.path.exists(path):
         #     os.remove(path)
@@ -25,6 +25,3 @@ class Test:
         Compare.text(capsys, "out5", "-w 50 -m run _calc2.tio -d")
         Compare.text(capsys, "out6", "-w 50 -m run _calc2.tio empty.py -d")
         
-
-if __name__ == '__main__':
-    unittest.main()

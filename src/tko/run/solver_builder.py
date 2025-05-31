@@ -125,7 +125,7 @@ class SolverBuilder:
         first = self.args_list[0]
 
         if first.endswith(".py"):
-            self.__exec.set_executable(["python"], self.args_list, "")
+            self.__exec.set_executable(["python3"], self.args_list, "")
         elif first.endswith(".yaml"):
             self.__prepare_yaml()
         elif first.endswith(".mk"):

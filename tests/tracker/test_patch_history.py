@@ -2,9 +2,6 @@
 # testing in general, but rather to support the `find_packages` example in
 # setup.py that excludes installing the "tests" package
 
-import unittest
-
-
 from tko.play.patch_history import PatchHistory
 import os
 from pathlib import Path
@@ -84,7 +81,3 @@ class Test:
 
         with open("data2.json", "r") as f:
             assert f.read() == data2_expected
-
-
-if __name__ == "__main__":
-    unittest.main()

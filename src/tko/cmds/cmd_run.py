@@ -108,9 +108,10 @@ class Run:
                 self.__fill_task()
 
             if self.__rep is not None:
+
                 logger = Logger.get_instance()
                 history_file = self.__rep.get_history_file()
-                logger.set_log_files(history_file)
+                logger.set_log_files(history_file, self.__rep.get_track_folder())
 
         if self.__free_run():
             return 0
@@ -172,7 +173,8 @@ class Run:
             solver = self.wdir.get_solver()
             unit.result = UnitRunner.run_unit(solver, unit)
             print(Text() + ExecutionResult.get_symbol(unit.result), end="")
-        print("]")
+        print("]", end="")
+        print(f" {self.get_percent()}%", flush=True)
 
     def __print_diff(self):
         if self.param.diff_count == DiffCount.QUIET:
@@ -302,12 +304,16 @@ class Run:
         cdiff.set_autorun(self.__run_without_ask)
         cdiff.run()
 
+    def get_percent(self) -> int:
+        correct = [unit for unit in self.wdir.get_unit_list() if unit.result == ExecutionResult.SUCCESS]
+        percent = (len(correct) * 100) // len(self.wdir.get_unit_list())
+        return percent
+
     def __run_diff_on_raw_term(self) -> int:
         print(Text.format(" Testando o código com os casos de teste ").center(RawTerminal.get_terminal_size(), Token("═")))
         self.__print_top_line()
         self.__print_diff()
-        correct = [unit for unit in self.wdir.get_unit_list() if unit.result == ExecutionResult.SUCCESS]
-        percent = (len(correct) * 100) // len(self.wdir.get_unit_list())
+        percent = self.get_percent()
         if self.__task is None:
             return percent
         if self.__track_folder == "":
@@ -317,7 +323,9 @@ class Run:
         tracker.set_folder(self.__track_folder)
         tracker.set_files(self.wdir.get_solver().args_list)
         tracker.set_percentage(percent)
-        tracker.store()
+        has_changes, total_lines = tracker.store()
+        if has_changes:
+            Logger.get_instance().record_file_alteration(self.get_task().key, total_lines)
         return percent
 
     def __show_diff(self) -> int:

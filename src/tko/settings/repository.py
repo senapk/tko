@@ -20,7 +20,8 @@ def remove_git_merge_tags(lines: list[str]) -> list[str]:
 
 class Repository:
     CFG_FILE = "repository.yaml"
-    LOG_FILE = "history.csv"
+    GLOBAL_LOG_FILE = "history.csv"
+    TASK_LOG_FILE = "task_log.csv"
     DAILY_FILE = "daily.yaml"
     INDEX_FILE = "Readme.md"
     TRACK_FOLDER = "track"
@@ -61,6 +62,9 @@ class Repository:
         task_folder = self.get_task_folder_for_label(label)
         return task_folder == folder
 
+    def get_track_folder(self) -> str:
+        return os.path.abspath(os.path.join(self.root_folder, Repository.CONFIG_FOLDER, Repository.TRACK_FOLDER))
+
     def get_track_task_folder(self, label: str) -> str:
         return os.path.abspath(os.path.join(self.root_folder, Repository.CONFIG_FOLDER, Repository.TRACK_FOLDER, label))
 
@@ -99,7 +103,7 @@ class Repository:
         return self.get_config_file() + ".backup"
     
     def get_history_file(self) -> str:
-        return os.path.abspath(os.path.join(self.root_folder, Repository.CONFIG_FOLDER, Repository.LOG_FILE))
+        return os.path.abspath(os.path.join(self.root_folder, Repository.CONFIG_FOLDER, Repository.GLOBAL_LOG_FILE))
     
     def get_daily_file(self) -> str:
         return os.path.abspath(os.path.join(self.root_folder, Repository.CONFIG_FOLDER, Repository.DAILY_FILE))

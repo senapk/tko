@@ -11,8 +11,12 @@ class LogInfo:
         self.coverage: int = -1
         self.approach: int = -1
         self.autonomy: int = -1
+        self.howclear: int = -1
+        self.howfun: int = -1
+        self.howeasy: int = -1
         self.elapsed: datetime.timedelta = datetime.timedelta(0)
         self.attempts: int = 0
+        self.lines: int = -1
 
     def get_minutes(self) -> int:
         return int(self.elapsed.total_seconds() / 60)
@@ -48,6 +52,10 @@ class LogInfo:
     def set_elapsed(self, value: datetime.timedelta):
         self.elapsed = value
         return self
+
+    def set_lines(self, value: int):
+        self.lines = value
+        return self
     
     def calc_and_set_elapsed(self, last: LogInfo, limit_minutes: int, format: str):
         last_time = datetime.datetime.strptime(last.timestamp, format)
@@ -65,24 +73,38 @@ class LogInfo:
             "type": self.type,
             "key": self.key,
             "coverage": str(self.coverage),
-            "autonomy": str(self.approach),
-            "skill": str(self.autonomy),
+            "approach": str(self.approach),
+            "autonomy": str(self.autonomy),
+            "howclear": str(self.howclear),
+            "howfun": str(self.howfun),
+            "howeasy": str(self.howeasy),
             "elapsed": str(int(self.elapsed.total_seconds() / 60)),
-            "attempts": str(self.attempts)
+            "attempts": str(self.attempts),
+            "lines": str(self.lines)
         }
 
     def __str__(self) -> str:
-        output = "{" + f'time:{self.timestamp}, type:{self.type}, key:{self.key}'
+        output = f'time:{self.timestamp}, type:{self.type}, key:{self.key}'
         if self.coverage != -1:
             output += f', c:{self.coverage}'
         if self.approach != -1:
             output += f', a:{self.approach}'
         if self.autonomy != -1:
             output += f', s:{self.autonomy}'
+        if self.howclear != -1:
+            output += f', clear:{self.howclear}'
+        if self.howfun != -1:
+            output += f', fun:{self.howfun}'
+        if self.howeasy != -1:
+            output += f', easy:{self.howeasy}'
         if self.elapsed.total_seconds() > 0:
             minutes = int(self.elapsed.total_seconds() / 60)
             output += f', e:{minutes}'
-        return output + "}"
+        if self.attempts > 0:
+            output += f', att:{self.attempts}'
+        if self.lines != -1:
+            output += f', lines:{self.lines}'
+        return output
     
     def decode(self, action: LogAction):
         self.timestamp = action.timestamp
@@ -94,7 +116,8 @@ class LogInfo:
             self.load_from_prog(action.payload)
         elif action.type_value == LogAction.Type.SELF.value:
             self.load_from_self(action.payload)
-
+        elif action.type_value == LogAction.Type.SIZE.value:
+            self.load_from_size(action.payload)
         return self
 
     def load_from_test(self, payload: str):
@@ -105,6 +128,10 @@ class LogInfo:
     
     def load_from_prog(self, payload: str):
         self.coverage = int(payload)
+        return
+    
+    def load_from_size(self, payload: str):
+        self.lines = int(payload)
         return
     
     def load_from_self(self, payload: str):
@@ -125,13 +152,16 @@ class LogInfo:
         if payload[0] == "{":
             payload = payload[1:-1]
             values = payload.split(",")
-            kv = {}
+            kv: dict[str, str] = {}
             for svalue in values:
                 k, v = svalue.split(":")
                 kv[k.strip()] = v.strip()
-            self.coverage = int(kv.get("c", -1)) # type: ignore
-            self.approach = int(kv.get("a", -1)) # type: ignore
-            self.autonomy = int(kv.get("s", -1)) # type: ignore
+            self.coverage = int(kv.get("c", -1))
+            self.approach = int(kv.get("a", -1))
+            self.autonomy = int(kv.get("s", -1))
+            self.howclear = int(kv.get("clear", -1))
+            self.howfun = int(kv.get("fun", -1))
+            self.howeasy = int(kv.get("easy", -1))
             return
         
         raise Exception(f"Invalid SELF payload: {payload}")

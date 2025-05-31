@@ -2,7 +2,6 @@
 # testing in general, but rather to support the `find_packages` example in
 # setup.py that excludes installing the "tests" package
 
-import unittest
 import os
 from pathlib import Path
 
@@ -57,8 +56,3 @@ class Test:
         assert task.folder == "database/banana"
         assert task.link == "http://url.com/teste.md"
         assert task.link_type == Task.Types.REMOTE_FILE
-
-
-
-if __name__ == "__main__":
-    unittest.main()

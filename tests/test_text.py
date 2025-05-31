@@ -2,11 +2,10 @@
 # testing in general, but rather to support the `find_packages` example in
 # setup.py that excludes installing the "tests" package
 
-import unittest
 
 from tko.util.text  import Text, Token
 
-class TestSimple(unittest.TestCase):
+class TestSimple:
     def test_token_creation(self):
         token: Token = Token("text1","g")
         assert token.text == "text1"
@@ -160,7 +159,3 @@ class TestSimple(unittest.TestCase):
         text1 = Text() + ("g", "brasil") + " é " + ("r", "lindo")
         print(text1)
         print("chiclete")
-
-
-if __name__ == "__main__":
-    unittest.main()

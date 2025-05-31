@@ -54,7 +54,7 @@ class CmdRep:
     def check(args: argparse.Namespace):
         rep = Repository(args.folder).load_config().load_game()
         logger = Logger.get_instance()
-        logger.set_log_files(rep.get_history_file())
+        logger.set_log_files(rep.get_history_file(), rep.get_track_folder())
 
         output = logger.check_log_file_integrity()
         if len(output) == 0:
@@ -69,7 +69,7 @@ class CmdRep:
     def resume(args: argparse.Namespace):
         rep = Repository(args.folder).load_config().load_game()
         logger = Logger.get_instance()
-        logger.set_log_files(rep.get_history_file())
+        logger.set_log_files(rep.get_history_file(), rep.get_track_folder())
         history_resume = logger.tasks.resume()
         repository_tasks: dict[str, Task] = rep.game.tasks
 
@@ -97,7 +97,7 @@ class CmdRep:
     def graph(args: argparse.Namespace):
         rep = Repository(args.folder).load_config().load_game()
         logger = Logger.get_instance()
-        logger.set_log_files(rep.get_history_file())
+        logger.set_log_files(rep.get_history_file(), rep.get_track_folder())
         wg = WeekGraph(100, 24, week_mode=True)
         image = wg.get_graph()
         week = wg.get_collected()

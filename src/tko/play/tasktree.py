@@ -177,12 +177,12 @@ class TaskTree:
             output.addf("y", str(prog).rjust(3, " ") + "%")
         else:
             color_rate: list[str] = ["", "c", "g", "y", "m", "r"]
-            rate = (t.description + t.desire) / 2
+            rate = (t.howclear + t.howfun) / 2
             for i in range(1, 6):
                 if rate >= i:
-                    output.addf(color_rate[t.effort], symbols.star)
+                    output.addf(color_rate[t.howeasy], symbols.star)
                 else:
-                    output.addf(color_rate[t.effort], symbols.open_star)
+                    output.addf(color_rate[t.howeasy], symbols.open_star)
 
         # if Flags.reward:
         #     xp = ""

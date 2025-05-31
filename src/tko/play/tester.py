@@ -143,7 +143,9 @@ class Tester:
         tracker.set_folder(track_folder)
         tracker.set_files(self.wdir.get_solver().args_list)
         tracker.set_percentage(result)
-        tracker.store()
+        has_changes, total_lines = tracker.store()
+        if has_changes:
+            Logger.get_instance().record_file_alteration(self.task.key, total_lines)
 
     def store_other_track(self, result: str | None = None):
         if self.rep is None:
@@ -154,7 +156,9 @@ class Tester:
         tracker.set_files(self.wdir.get_solver().args_list)
         if result is not None:
             tracker.set_result(result)
-        tracker.store()
+        has_changes, total_lines = tracker.store()
+        if has_changes:
+            Logger.get_instance().record_file_alteration(self.task.key, total_lines)
 
     def process_one(self):
 

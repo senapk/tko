@@ -60,6 +60,13 @@ code .
 sudo apt update && sudo apt install -y build-essential pipx wslu
 # Configurando o web browser
 grep -qxF 'export BROWSER="wslview"' ~/.bashrc || echo 'export BROWSER="wslview"' >> ~/.bashrc
+# Verifique sua versão do python
+python --version
+# Se for menor que o 3.12, você vai precisar instalar o 3.12 manualmente
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+sudo apt install python3.12
+
 # Instalando o tko
 pipx install tko
 # Adicionando o tko no path

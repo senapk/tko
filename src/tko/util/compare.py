@@ -1,4 +1,5 @@
 from tko.__main__ import Parser, execute
+import pytest
 import os
 
 class Compare:
@@ -18,11 +19,11 @@ class Compare:
         return expected, received
     
     @staticmethod
-    def text(capsys: str, file: str, cmd: str):
+    def text(capsys: pytest.CaptureFixture[str], file: str, cmd: str):
         Compare.list(capsys, file, cmd.split(" "))
 
     @staticmethod
-    def list(capsys: str, file: str, cmd_list: list[str]):
+    def list(capsys: pytest.CaptureFixture[str], file: str, cmd_list: list[str]):
         parser = Parser().parser
         args = parser.parse_args(cmd_list)
         execute(parser, args)
