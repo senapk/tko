@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any
+import re
 
 class AnsiColor:
     enabled = True
@@ -74,24 +75,40 @@ class Text:
     # convert a strings formatted with terminal styles to a Text object
     @staticmethod
     def decode_raw(data: str) -> Text:
-        blue = '\033[34m'
-        magenta = '\033[35m'
-        reset = '\033[0m'
-        data = data.replace(blue, "\a").replace(magenta, "\b").replace(reset, "\t")
+        # Mapeamento direto de códigos ANSI para identificadores de formato
+        ansi_to_format: dict[str, str] = {
+            '\033[34m': 'b',  # Blue
+            '\033[35m': 'm',  # Magenta
+            '\033[0m': '',    # Reset
+            '\033[32m': 'g',  # Green
+        }
+
+        # Cria uma regex para encontrar qualquer um dos códigos ANSI
+        # O re.escape garante que caracteres especiais na chave sejam tratados literalmente
+        # O '|' cria uma alternância (OU)
+        pattern = '|'.join(re.escape(key) for key in ansi_to_format.keys())
+
         text = Text()
         fmt = ""
-        for c in data:
-            if c == '\a':
-                fmt = 'b'
-            elif c == '\b':
-                fmt = 'm'
-            elif c == '\t':
-                fmt = ''
-            else:
-                if fmt == "":
-                    text.add(c)
-                else:
-                    text.add(Token(c, fmt))
+        last_idx = 0
+
+        # Itera sobre todas as ocorrências dos códigos ANSI
+        for match in re.finditer(pattern, data):
+            # Adiciona os caracteres que não são códigos ANSI
+            if match.start() > last_idx:
+                for char in data[last_idx:match.start()]:
+                    text.add(Token(char, fmt))
+
+            # Atualiza o formato com base no código ANSI encontrado
+            ansi_code = match.group(0)
+            fmt = ansi_to_format[ansi_code]
+            last_idx = match.end()
+
+        # Adiciona quaisquer caracteres restantes após o último código ANSI
+        if last_idx < len(data):
+            for char in data[last_idx:]:
+                text.add(Token(char, fmt))
+
         return text
 
 
