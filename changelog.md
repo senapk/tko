@@ -1,5 +1,6 @@
 # Changelog
 
+- 5.1.0
 - 5.0.0
   - fix: \r\n error in diff
   - add: eval mode in tko run
