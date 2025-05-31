@@ -29,7 +29,10 @@ class TaskListener:
             current_time = datetime.datetime.strptime(decoder.timestamp, self.format)
             diff = current_time - last_time
             if diff.total_seconds() < self.max_minutes * 60:
-                elapsed = last_action.elapsed + diff
+                if diff.total_seconds() > 0:
+                    elapsed = last_action.elapsed + diff
+                else:
+                    elapsed = last_action.elapsed
             else:
                 elapsed = last_action.elapsed
             decoder.elapsed = elapsed

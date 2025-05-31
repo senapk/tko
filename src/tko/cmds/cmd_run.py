@@ -177,18 +177,17 @@ class Run:
             solver = self.wdir.get_solver()
             unit.result = UnitRunner.run_unit(solver, unit)
             aprint(Text() + ExecutionResult.get_symbol(unit.result), end="")
-        aprint("]", end="")
-        aprint(f" {self.get_percent()}%", end="", flush=True)
+        aprint("] ", end="")
         if self.__eval_mode:
             if self.__rep is not None:
                 logger = Logger.get_instance()
                 entries = logger.tasks.key_actions.get(self.get_task().key, {})
                 if entries:
-                    elapsed = entries[-1].elapsed.total_seconds() // 60
+                    elapsed = max(0, entries[-1].elapsed.total_seconds() // 60)
                     lines = entries[-1].lines
                     attempts = entries[-1].attempts
-                    aprint(f" {{minutos:{elapsed:.0f}, linhas:{lines}, tentativas:{attempts}}}", end="", flush=True)
-        aprint()
+                    aprint(f">> minutos:{elapsed:.0f}, linhas:{lines}, tentativas:{attempts}, ", end="", flush=True)
+        aprint(f"{self.get_percent()}%")
         
     def __print_diff(self):
         if self.param.diff_count == DiffCount.QUIET or self.__eval_mode:

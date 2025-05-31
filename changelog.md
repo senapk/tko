@@ -1,5 +1,8 @@
 # Changelog
 
+- 5.1.1
+  - add: changed run --eval info order
+  - fix: elapsed time if time decreases
 - 5.1.0
 - 5.0.0
   - fix: \r\n error in diff
