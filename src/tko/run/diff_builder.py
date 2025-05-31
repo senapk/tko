@@ -35,22 +35,22 @@ class DiffBuilder:
         return hdiff
 
     @staticmethod
-    def render_white(text: Text, color: str = "") -> Text:
-        return Text().add(text).replace(' ', Token(symbols.whitespace.text, color)).replace('\n', Token(symbols.newline.text, color))
+    def render_white(text: str, color: str = "") -> str:
+        return text.replace(' ', symbols.whitespace.text).replace('\n', symbols.newline.text)
 
     def first_failure_diff(self, a_text: str, b_text: str | None, first_failure: int) -> list[Text]:
         if b_text is None:
             b_text = ""
-        def get(vet: list[str], index: int) -> Text:
+        def get(vet: list[str], index: int) -> str:
             if index >=0 and index < len(vet):
-                return DiffBuilder.render_white(Text().add(vet[index]))
-            return Text()
+                return DiffBuilder.render_white(vet[index])
+            return ""
 
         a_render = a_text.splitlines(True)
         b_render = b_text.splitlines(True)
         first_a = get(a_render, first_failure)
         first_b = get(b_render, first_failure)
-        out_a, out_b = DiffBuilder.colorize_2_lines_diff(Text().add(first_a), Text().add(first_b))
+        out_a, out_b = DiffBuilder.colorize_2_lines_diff(first_a, first_b)
         if out_a is None:
             out_a = Text()
         if out_b is None:
@@ -60,27 +60,23 @@ class DiffBuilder:
         width = self.width - 13
         output.append(Text().add(" ").add(out_a.ljust(greater)).trim_end(width).addf("y", " (esperado)"))
         output.append(Text().add(" ").add(out_b.ljust(greater)).trim_end(width).addf("r", " (recebido)"))
-        t = Text()
-        for d in out_b.data:
-            t.add(f"{d.text},{d.fmt},")
-        output.append(t)
-        diff = DiffBuilder.make_line_arrow_up(first_a.get_str(), first_b.get_str())
+        diff = DiffBuilder.make_line_arrow_up(first_a, first_b)
         output.append(Text().add(" ").add(diff.ljust(greater)).trim_end(width).addf("b", " (primeiro)"))
         return output
 
     @staticmethod
-    def colorize_2_lines_diff(la: Text | None, lb: Text | None, neut: str = "g", exp: str = "y", rec: str = "r") -> tuple[Text | None, Text | None]:
+    def colorize_2_lines_diff(la: str | None, lb: str | None, neut: str = "g", exp: str = "y", rec: str = "r") -> tuple[Text | None, Text | None]:
         pos = DiffBuilder.find_first_mismatch(la, lb)
+        tla: Text | None = None
+        tlb: Text | None = None
         if la is not None:
-            lat = la.get_str()
-            la = Text().addf(neut, lat[0:pos]).addf(exp, lat[pos:])
+            tla = Text().addf(neut, la[0:pos]).addf(exp, la[pos:])
         if lb is not None:
-            lbt = lb.get_str()
-            lb = Text().addf(neut, lbt[0:pos]).addf(rec, lbt[pos:])
-        return la, lb
+            tlb = Text().addf(neut, lb[0:pos]).addf(rec, lb[pos:])
+        return tla, tlb
 
     @staticmethod
-    def find_first_mismatch(line_a: Text | None, line_b: Text | None) -> int: 
+    def find_first_mismatch(line_a: str | None, line_b: str | None) -> int: 
         if line_a is None or line_b is None:
             return 0
         i = 0
@@ -96,8 +92,8 @@ class DiffBuilder:
             a_text = ""
         if b_text is None:
             b_text = ""
-        a_lines = a_text.splitlines(keepends=True)
-        b_lines = b_text.splitlines(keepends=True)
+        a_lines: list[str] = a_text.splitlines(keepends=True)
+        b_lines: list[str] = b_text.splitlines(keepends=True)
         output: list[tuple[Text | None, Text | None]] = []
         a_size = len(a_lines)
         b_size = len(b_lines)
@@ -105,12 +101,12 @@ class DiffBuilder:
         max_size = max(a_size, b_size)
 
         # lambda function to return element in index i or empty if out of bounds
-        def get_without_newline(vet: list[str], index: int) -> Text | None:
+        def get_without_newline(vet: list[str], index: int) -> str | None:
             if index < len(vet):
                 data = vet[index]
                 if data.endswith("\n"):
                     data = data[:-1]
-                return Text().add(data)
+                return data
             return None
         
         expected_color = "y"
@@ -119,8 +115,8 @@ class DiffBuilder:
             if i >= a_size or i >= b_size or a_lines[i] != b_lines[i]:
                 if first_failure == -1:
                     first_failure = i
-            a_data: Text | None = get_without_newline(a_lines, i)
-            b_data: Text | None = get_without_newline(b_lines, i)
+            a_data: str | None = get_without_newline(a_lines, i)
+            b_data: str | None = get_without_newline(b_lines, i)
             a_out, b_out = DiffBuilder.colorize_2_lines_diff(a_data, b_data, "g", expected_color, received_color)
             output.append((a_out, b_out))
         return output, first_failure

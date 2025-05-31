@@ -156,6 +156,6 @@ class TestSimple:
         assert text5.resume() == [Token("o brasil é "), Token("verde", "g"), Token(" e "), Token("amarelo", "y")]
 
     def test_tuple(self):
-        text1 = Text() + ("g", "brasil") + " é " + ("r", "lindo")
+        text1 = Text().addf("g", "brasil").add(" é ").addf("r", "lindo")
         print(text1)
         print("chiclete")

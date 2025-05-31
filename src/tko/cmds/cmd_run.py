@@ -6,7 +6,7 @@ from tko.run.wdir import Wdir
 from tko.enums.diff_count import DiffCount
 from tko.util.param import Param
 from tko.run.diff_builder_side import DiffBuilderSide
-from tko.util.text import Text, Token
+from tko.util.text import Text, Token, aprint
 
 from tko.util.raw_terminal import RawTerminal
 from tko.util.symbols import symbols
@@ -154,7 +154,7 @@ class Run:
         if self.param.filter:
             old_dir = os.getcwd()
 
-            print(Text.format(" Entrando no modo de filtragem ").center(RawTerminal.get_terminal_size(), Token("═")))
+            aprint(Text.format(" Entrando no modo de filtragem ").center(RawTerminal.get_terminal_size(), Token("═")))
             tkoFilterMode.deep_copy_and_change_dir()  
             # search for target outside . dir and redirect target
             new_target_list: list[str] = []
@@ -166,19 +166,19 @@ class Run:
             self.target_list = new_target_list
 
     def __print_top_line(self):
-        print(Text().add(symbols.opening).add(self.wdir.resume()), end="")
-        print(" [", end="")
+        aprint(Text().add(symbols.opening).add(self.wdir.resume()), end="")
+        aprint(" [", end="")
         first = True
         for unit in self.wdir.get_unit_list():
             if first:
                 first = False
             else:
-                print(" ", end="")
+                aprint(" ", end="")
             solver = self.wdir.get_solver()
             unit.result = UnitRunner.run_unit(solver, unit)
-            print(Text() + ExecutionResult.get_symbol(unit.result), end="")
-        print("]", end="")
-        print(f" {self.get_percent()}%", end="", flush=True)
+            aprint(Text() + ExecutionResult.get_symbol(unit.result), end="")
+        aprint("]", end="")
+        aprint(f" {self.get_percent()}%", end="", flush=True)
         if self.__eval_mode:
             if self.__rep is not None:
                 logger = Logger.get_instance()
@@ -187,8 +187,8 @@ class Run:
                     elapsed = entries[-1].elapsed.total_seconds() // 60
                     lines = entries[-1].lines
                     attempts = entries[-1].attempts
-                    print(f"{{minutos:{elapsed:.0f}, linhas:{lines}, tentativas:{attempts}}}", end="", flush=True)
-        print()
+                    aprint(f"{{minutos:{elapsed:.0f}, linhas:{lines}, tentativas:{attempts}}}", end="", flush=True)
+        aprint()
         
     def __print_diff(self):
         if self.param.diff_count == DiffCount.QUIET or self.__eval_mode:
@@ -196,7 +196,7 @@ class Run:
         
         if self.wdir.get_solver().has_compile_error():
             exec, _ = self.wdir.get_solver().get_executable()
-            print(exec.get_error_msg())
+            aprint(exec.get_error_msg())
             return
         
         results = [unit.result for unit in self.wdir.get_unit_list()]
@@ -205,7 +205,7 @@ class Run:
         
         if not self.param.compact:
             for elem in self.wdir.unit_list_resume():
-                print(elem)
+                aprint(elem)
 
         
         if self.param.diff_count == DiffCount.FIRST:
@@ -214,11 +214,11 @@ class Run:
             if self.param.diff_mode == DiffMode.DOWN:
                 ud_diff_builder = DiffBuilderDown(RawTerminal.get_terminal_size(), wrong).to_insert_header()
                 for line in ud_diff_builder.build_diff():
-                    print(line)
+                    aprint(line)
             else:
                 ss_diff_builder = DiffBuilderSide(RawTerminal.get_terminal_size(), wrong).to_insert_header(True)
                 for line in ss_diff_builder.build_diff():
-                    print(line)
+                    aprint(line)
             return
 
         if self.param.diff_count == DiffCount.ALL:
@@ -227,11 +227,11 @@ class Run:
                     if self.param.diff_mode == DiffMode.DOWN:
                         ud_diff_builder = DiffBuilderDown(RawTerminal.get_terminal_size(), unit).to_insert_header()
                         for line in ud_diff_builder.build_diff():
-                            print(line)
+                            aprint(line)
                     else:
                         ss_diff_builder = DiffBuilderSide(RawTerminal.get_terminal_size(), unit).to_insert_header(True)
                         for line in ss_diff_builder.build_diff():
-                            print(line)
+                            aprint(line)
 
     def build_wdir(self):
         self.wdir_builded = True
@@ -248,17 +248,17 @@ class Run:
     def __missing_target(self) -> bool:
         if not self.wdir.has_solver() and not self.wdir.has_tests():
             if not self.__curses_mode:
-                print(Text().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
+                aprint(Text().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
             return True
         return False
     
     def __list_mode(self) -> bool:
         # list mode
         if not self.wdir.has_solver() and self.wdir.has_tests():
-            print(Text.format("Nenhum arquivo de código encontrado. Listando casos de teste.").center(RawTerminal.get_terminal_size(), Token("╌")), flush=True)
-            print(self.wdir.resume())
+            aprint(Text.format("Nenhum arquivo de código encontrado. Listando casos de teste.").center(RawTerminal.get_terminal_size(), Token("╌")), flush=True)
+            aprint(self.wdir.resume())
             for line in self.wdir.unit_list_resume():
-                print(line)
+                aprint(line)
             return True
         return False
 
@@ -324,7 +324,7 @@ class Run:
         return percent
 
     def __run_diff_on_raw_term(self) -> int:
-        print(Text.format(" Testando o código com os casos de teste ").center(RawTerminal.get_terminal_size(), Token("═")))
+        aprint(Text.format(" Testando o código com os casos de teste ").center(RawTerminal.get_terminal_size(), Token("═")))
         self.__print_top_line()
         self.__print_diff()
         percent = self.get_percent()

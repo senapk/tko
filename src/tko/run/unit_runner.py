@@ -27,4 +27,5 @@ class UnitRunner:
         unit.set_received(stdout)
         if unit.get_received() == unit.get_expected():
             return ExecutionResult.SUCCESS
+        print(f"\nExpected: size {len(unit.get_expected())}\n{unit.get_expected()}\nReceived: size {len(unit.get_received())}\n{unit.get_received()}")
         return ExecutionResult.WRONG_OUTPUT

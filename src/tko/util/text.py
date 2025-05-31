@@ -64,7 +64,10 @@ class Token:
 
     # @override
     def __str__(self):
-        return f"({self.fmt}:{self.text}:{len(self.text)})"
+        return f"({self.fmt}:{self.text})"
+
+def RToken(fmt: str, text: str) -> Token:
+    return Token(text, fmt)
 
 class Text:
     def __init__(self, default_fmt: str = ""):
@@ -79,8 +82,12 @@ class Text:
         ansi_to_format: dict[str, str] = {
             '\033[34m': 'b',  # Blue
             '\033[35m': 'm',  # Magenta
-            '\033[0m': '',    # Reset
             '\033[32m': 'g',  # Green
+            '\033[33m': 'y',  # Yellow
+            '\033[31m': 'r',  # Red
+            '\033[36m': 'c',  # Cyan
+            '\033[37m': 'w',  # White
+            '\033[0m': '',    # Reset
         }
 
         # Cria uma regex para encontrar qualquer um dos códigos ANSI
@@ -186,6 +193,9 @@ class Text:
 
     # @override
     def __str__(self):
+        return self.get_str()
+
+    def ansi(self) -> str:
         output = ""
         for elem in self.resume():
             output += AnsiColor.colour(elem.fmt, elem.text)
@@ -235,24 +245,14 @@ class Text:
         if isinstance(value, str):
             if value != "":
                 for c in value:
-                    if len(c) != 1:
-                        raise ValueError("tuple text must be a single character string")
                     self.data.append(Token(c, self.default_fmt))
         elif isinstance(value, Token):
             if value.text != "":
                 for c in value.text:
-                    if len(c) != 1:
-                        raise ValueError("tuple text must be a single character string")
                     self.data.append(Token(c, value.fmt))
         elif isinstance(value, Text):  # type: ignore
             self.default_fmt = value.default_fmt
-            self.data += value.data
-        elif isinstance(value, tuple) and len(value) == 2 and isinstance(value[0], str) and isinstance(value[1], str): # type: ignore
-            fmt, text = value
-            for c in text:
-                if len(c) != 1:
-                    raise ValueError("tuple text must be a single character string")
-                self.data.append(Token(c, fmt))
+            self.data += [x for x in value.data]
         else:
             raise TypeError("unsupported type '{}'".format(type(value)))
         return self
@@ -434,23 +434,26 @@ class Text:
         for elem in params:
             self.add(elem)
 
-
+def aprint(text: Text | str = "", end: str = "\n", flush: bool = True):
+    if isinstance(text, Text):
+        text = text.ansi()
+    print(text, end=end, flush=flush)
 
 if __name__ == "__main__":
     # Formatação usando placeholders {} e argumentos variádicos
     # Cor de conteúdo no texto
-    print(Text.format("O Brasil é {b:azul}, {g:verde} e {y:amarelo}"))
+    aprint(Text.format("O Brasil é {b:azul}, {g:verde} e {y:amarelo}"))
     # Cor no texto e conteúdo nos argumentos
-    print(Text.format("O Brasil é {b}, {g} e {y}.", "azul", "verde", "amarelo"))
+    aprint(Text.format("O Brasil é {b}, {g} e {y}.", "azul", "verde", "amarelo"))
     # Carrega tupla, ou conteúdo ou nada
-    print(Text.format("O Brasil é {}, {g:verde} e {y}.", ("b", "azul"), "amarelo"))
+    aprint(Text.format("O Brasil é {}, {g:verde} e {y}.", ("b", "azul"), "amarelo"))
 
     # Funciona também por adição
-    print(Text() + "O Brasil é " + ("b", "azul") + ", " + ("g", "verde") + " e " + ("y", "amarelo"))
+    aprint(Text() + "O Brasil é " + RToken("b", "azul") + ", " + ("g", "verde") + " e " + ("y", "amarelo"))
     # Dá pra definir a formatação padrão para quando não for passado nada
-    print(Text("r") + "O Brasil é " + ("b", "azul") + ", " + ("g", "verde") + " e " + ("y", "amarelo"))
+    aprint(Text("r") + "O Brasil é " + RToken("b", "azul") + ", " + RToken("g", "verde") + " e " + RToken("y", "amarelo"))
     # A formatação pode incluir cores de fundo
-    print(Text("Yw") + "O Brasil é " + ("Rb", "azul") + ", " + ("Kg", "verde") + " e " + ("y", "amarelo"))
+    aprint(Text("Yw") + "O Brasil é " + RToken("Rb", "azul") + ", " + RToken("Kg", "verde") + " e " + RToken("y", "amarelo"))
 
     # Dá pra concatenar, somar ou passar por parâmetro
-    print(Text("R") + "Tudo em vermelho " + Text("G") + " e tudo em verde")
+    aprint(Text("R") + "Tudo em vermelho " + Text("G") + " e tudo em verde")
