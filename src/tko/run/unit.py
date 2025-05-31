@@ -19,14 +19,14 @@ class Unit:
         self.result: ExecutionResult = ExecutionResult.UNTESTED
 
     def set_expected(self, expected: str):
-        self.__expected = "\n".join(expected.splitlines()) + "\n"
+        self.__expected = expected.replace("\r", "")
         return self
     
     def get_expected(self) -> str:
         return self.__expected
     
     def set_received(self, received: str):
-        self.__received = "\n".join(received.splitlines()) + "\n"
+        self.__received = received.replace("\r", "")
         return self
 
     def get_received(self) -> None | str:

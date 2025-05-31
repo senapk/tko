@@ -187,7 +187,7 @@ class Run:
                     elapsed = entries[-1].elapsed.total_seconds() // 60
                     lines = entries[-1].lines
                     attempts = entries[-1].attempts
-                    aprint(f"{{minutos:{elapsed:.0f}, linhas:{lines}, tentativas:{attempts}}}", end="", flush=True)
+                    aprint(f" {{minutos:{elapsed:.0f}, linhas:{lines}, tentativas:{attempts}}}", end="", flush=True)
         aprint()
         
     def __print_diff(self):
