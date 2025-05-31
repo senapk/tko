@@ -60,7 +60,10 @@ class DiffBuilder:
         width = self.width - 13
         output.append(Text().add(" ").add(out_a.ljust(greater)).trim_end(width).addf("y", " (esperado)"))
         output.append(Text().add(" ").add(out_b.ljust(greater)).trim_end(width).addf("r", " (recebido)"))
-        output.append(Text() + "".join([str(x) for x in out_b.resume()]))
+        t = Text()
+        for d in out_b.data:
+            t.add(f"{d.text},{d.fmt},")
+        output.append(t)
         diff = DiffBuilder.make_line_arrow_up(first_a.get_str(), first_b.get_str())
         output.append(Text().add(" ").add(diff.ljust(greater)).trim_end(width).addf("b", " (primeiro)"))
         return output
