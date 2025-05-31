@@ -94,6 +94,8 @@ class DiffBuilder:
             b_text = ""
         a_lines = a_text.splitlines(keepends=True)
         b_lines = b_text.splitlines(keepends=True)
+        a_lines = [line.replace("\r", "") for line in a_lines]
+        b_lines = [line.replace("\r", "") for line in b_lines]
         output: list[tuple[Text | None, Text | None]] = []
         a_size = len(a_lines)
         b_size = len(b_lines)

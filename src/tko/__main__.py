@@ -58,6 +58,9 @@ class Main:
         elif args.down:
             param.set_diff_mode(DiffMode.DOWN)
         cmd_run = Run(settings, args.target_list, param)
+        if args.eval:
+            cmd_run.set_eval_mode()
+
         return cmd_run.execute()
 
     @staticmethod
@@ -189,6 +192,7 @@ class Parser:
 
         parser_r.add_argument("--tui", '-t', action='store_true', help='use TUI interface.')
         parser_r.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures')
+        parser_r.add_argument('--eval', '-e', action='store_true', help='Evaluation mode.')
 
         group_n = parser_r.add_mutually_exclusive_group()
         group_n.add_argument('--quiet', '-q', action='store_true', help='quiet mode, do not show any failure.')

@@ -43,7 +43,6 @@ class Run:
             self.param = param
         self.wdir: Wdir = Wdir()
         self.wdir_builded = False
-        self.rep: Repository | None
         self.__curses_mode: bool = False
         self.__lang = ""
         self.__rep: Repository | None = None
@@ -51,6 +50,11 @@ class Run:
         self.__track_folder: str = ""
         self.__opener: Opener | None = None
         self.__run_without_ask: bool = True
+        self.__eval_mode: bool = False
+
+    def set_eval_mode(self):
+        self.__eval_mode = True
+        return self
 
     def set_curses(self, value:bool=True):
         self.__curses_mode = value
@@ -174,10 +178,20 @@ class Run:
             unit.result = UnitRunner.run_unit(solver, unit)
             print(Text() + ExecutionResult.get_symbol(unit.result), end="")
         print("]", end="")
-        print(f" {self.get_percent()}%", flush=True)
+        if self.__eval_mode:
+            print(f" {{total:{self.get_percent()}", end="", flush=True)
+            if self.__rep is not None:
+                logger = Logger.get_instance()
+                entries = logger.tasks.key_actions.get(self.get_task().key, {})
+                if entries:
+                    elapsed = entries[-1].elapsed.total_seconds() // 60
+                    lines = entries[-1].lines
+                    attempts = entries[-1].attempts
+                    print(f", minutos:{elapsed:.0f}, linhas:{lines}, tentativas:{attempts}", end="", flush=True)
+        print("}")
 
     def __print_diff(self):
-        if self.param.diff_count == DiffCount.QUIET:
+        if self.param.diff_count == DiffCount.QUIET or self.__eval_mode:
             return
         
         if self.wdir.get_solver().has_compile_error():
@@ -314,10 +328,9 @@ class Run:
         self.__print_top_line()
         self.__print_diff()
         percent = self.get_percent()
-        if self.__task is None:
+        if self.__task is None or self.__track_folder == "" or self.__eval_mode:
             return percent
-        if self.__track_folder == "":
-            return percent
+
         Logger.get_instance().record_test_result(self.get_task().key, percent)
         tracker = Tracker()
         tracker.set_folder(self.__track_folder)

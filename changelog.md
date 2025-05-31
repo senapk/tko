@@ -1,5 +1,8 @@
 # Changelog
 
+- 5.0.0
+  - fix: \r\n error in diff
+  - add: eval mode in tko run
 - 4.9.0
   - fix: all error of types in tests
   - add: python command now uses python3 instead of python
