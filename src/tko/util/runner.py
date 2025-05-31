@@ -9,7 +9,9 @@ class Runner:
     @staticmethod
     def subprocess_run(cmd: str, input_data: str = "", timeout: None | float = None, folder: str | None = None) -> tuple[int, str, str]:
         try:
-            answer = subprocess.run(cmd, cwd=folder, shell=True, input=input_data, stdout=PIPE, stderr=PIPE, text=True, timeout=timeout)
+            env = os.environ.copy()
+            env['NO_COLOR'] = '1'
+            answer = subprocess.run(cmd, cwd=folder, env=env, shell=True, input=input_data, stdout=PIPE, stderr=PIPE, text=True, timeout=timeout)
             err = ""
             if answer.returncode != 0:
 
