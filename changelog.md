@@ -1,5 +1,9 @@
 # Changelog
 
+- 5.1.3
+  - rm : eval mode no more forces quiet output
+- 5.1.2
+  - add: repository remote can be null or '' or removed to load only local files
 - 5.1.1
   - add: changed run --eval info order
   - fix: elapsed time if time decreases

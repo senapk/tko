@@ -1,7 +1,7 @@
 from tko.game.cluster import Cluster
 from tko.game.quest import Quest
 from tko.game.task import Task
-
+import os
 from tko.util.decoder import Decoder
 from tko.game.game_builder import GameBuilder
 from tko.game.game_validator import GameValidator
@@ -92,7 +92,10 @@ class Game:
 
     def parse_file_and_folder(self, filename: str, folder: str, language: str):
         self.filename = filename
-        content = Decoder.load(filename)
+        if filename == "" or not os.path.exists(filename):
+            content = ""
+        else:
+            content = Decoder.load(filename)
         self.parse_xp(content)
 
         gb = GameBuilder(filename, folder).build_from(content, language)

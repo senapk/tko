@@ -142,6 +142,8 @@ class Repository:
 
     def load_index_or_cache(self) -> str:
         source = self.get_rep_source()
+        if source == "":
+            return ""
 
         if self.__is_remote_source():
             return self.down_source_from_remote_url()

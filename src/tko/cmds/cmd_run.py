@@ -190,7 +190,7 @@ class Run:
         aprint(f"{self.get_percent()}%")
         
     def __print_diff(self):
-        if self.param.diff_count == DiffCount.QUIET or self.__eval_mode:
+        if self.param.diff_count == DiffCount.QUIET:
             return
         
         if self.wdir.get_solver().has_compile_error():
