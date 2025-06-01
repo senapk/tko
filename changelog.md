@@ -1,5 +1,9 @@
 # Changelog
 
+- 5.1.5
+  - add: runner with FORCE_COLOR=0 and NO_COLOR=1
+- 5.1.4
+  - fix: compact dont hide diff, use --none for this
 - 5.1.3
   - rm : eval mode no more forces quiet output
 - 5.1.2

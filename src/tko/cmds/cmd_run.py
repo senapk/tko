@@ -190,8 +190,6 @@ class Run:
         aprint(f"{self.get_percent()}%")
         
     def __print_diff(self):
-        if self.param.diff_count == DiffCount.QUIET:
-            return
         
         if self.wdir.get_solver().has_compile_error():
             exec, _ = self.wdir.get_solver().get_executable()
@@ -206,6 +204,8 @@ class Run:
             for elem in self.wdir.unit_list_resume():
                 aprint(elem)
 
+        if self.param.diff_count == DiffCount.NONE:
+            return
         
         if self.param.diff_count == DiffCount.FIRST:
             # printing only the first wrong case

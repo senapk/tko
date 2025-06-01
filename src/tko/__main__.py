@@ -38,8 +38,8 @@ class Main:
         
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
-        if args.quiet:
-            param.set_diff_count(DiffCount.QUIET)
+        if args.none:
+            param.set_diff_count(DiffCount.NONE)
         elif args.all:
             param.set_diff_count(DiffCount.ALL)
         else:
@@ -195,8 +195,8 @@ class Parser:
         parser_r.add_argument('--eval', '-e', action='store_true', help='Evaluation mode.')
 
         group_n = parser_r.add_mutually_exclusive_group()
-        group_n.add_argument('--quiet', '-q', action='store_true', help='quiet mode, do not show any failure.')
-        group_n.add_argument('--all', '-a', action='store_true', help='show all failures.')
+        group_n.add_argument('--none', action='store_true', help='do not show any failure.')
+        group_n.add_argument('--all', action='store_true', help='show all failures.')
 
         # add an exclusive group for diff mode
         group = parser_r.add_mutually_exclusive_group()
