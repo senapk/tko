@@ -2,9 +2,7 @@ from __future__ import annotations
 from tko.util.symbols import symbols
 from tko.util.text import Token
 
-
 import enum
-
 
 class ExecutionResult(enum.Enum):
     UNTESTED          = "não_verificado_"
@@ -16,15 +14,15 @@ class ExecutionResult(enum.Enum):
     @staticmethod
     def get_symbol(result: ExecutionResult) -> Token:
         if result == ExecutionResult.UNTESTED:
-            return symbols.neutral
+            return symbols.execution_result["untested"]
         elif result == ExecutionResult.SUCCESS:
-            return symbols.success
+            return symbols.execution_result["success"]
         elif result == ExecutionResult.WRONG_OUTPUT:
-            return symbols.wrong
+            return symbols.execution_result["wrong_output"]
         elif result == ExecutionResult.COMPILATION_ERROR:
-            return symbols.compilation
+            return symbols.execution_result["compilation_error"]
         elif result == ExecutionResult.EXECUTION_ERROR:
-            return symbols.execution
+            return symbols.execution_result["execution_error"]
         else:
             raise ValueError("Invalid result type")
 

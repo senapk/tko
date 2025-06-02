@@ -1,5 +1,7 @@
 # Changelog
 
+- 5.2.2
+  - add: eval mode without unicode symbols
 - 5.2.1
   - add: improvements on eval mode with timeout and abort in exec errors
 - 5.2.0

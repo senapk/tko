@@ -23,6 +23,14 @@ class __Symbols:
         self.hbar = Token("─")
         self.vbar = Token("│")
 
+        self.execution_result: dict[str, Token] = {
+            "untested": self.neutral,
+            "success": self.success,
+            "wrong_output": self.wrong,
+            "compilation_error": self.compilation,
+            "execution_error": self.execution,
+        }
+
         self.whitespace = Token("·") #Token("␣")
         self.newline = Token("↲")
 
