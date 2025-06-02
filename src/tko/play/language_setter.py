@@ -1,8 +1,9 @@
 from tko.play.flags import FlagsMan
 from tko.play.floating import Floating, FloatingInput, FloatingInputData
 from tko.play.floating_manager import FloatingManager
+from tko.settings.languages import available_languages
 from tko.util.text import Text
-from tko.settings.repository import Repository, available_languages
+from tko.settings.repository import Repository
 from tko.settings.settings import Settings
 
 class LanguageSetter:

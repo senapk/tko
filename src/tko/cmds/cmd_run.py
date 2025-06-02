@@ -50,10 +50,30 @@ class Run:
         self.__track_folder: str = ""
         self.__opener: Opener | None = None
         self.__run_without_ask: bool = True
+        self.__show_track_info: bool = False
+        self.__show_self_info: bool = False
         self.__eval_mode: bool = False
+        self.__complex_percent: bool = False
+        self.__no_run: bool = False
 
     def set_eval_mode(self):
         self.__eval_mode = True
+        return self
+
+    def show_track_info(self):
+        self.__show_track_info = True
+        return self
+    
+    def set_no_run(self):
+        self.__no_run = True
+        return self
+    
+    def show_self_info(self):
+        self.__show_self_info = True
+        return self
+
+    def set_complex_percent(self):
+        self.__complex_percent = True
         return self
 
     def set_curses(self, value:bool=True):
@@ -82,8 +102,7 @@ class Run:
             raise Warning("Task não definida")
         return self.__task
 
-    # return the percentage of correct cases
-    def execute(self) -> int:
+    def execute(self):
         if len(self.target_list) == 0:
             self.__try_load_rep(".")
             self.__try_load_task(".")
@@ -97,30 +116,38 @@ class Run:
 
         if self.__missing_target():
             return 0
-        
-        if self.__list_mode():
+
+        if not self.wdir.has_solver() and self.wdir.has_tests() and not self.__eval_mode:
+            self.__list_mode()
             return 0
         
         if self.wdir.has_solver():
-            if self.__rep is None:
-                solver_path = self.wdir.get_solver().args_list[0]
-                dirname = os.path.dirname(os.path.abspath(solver_path))
-                self.__try_load_rep(dirname)
-                self.__try_load_task(dirname)
+            self.__prepare_rep_task_logger()
 
-            if self.__task is None:
-                self.__fill_task()
-
-            if self.__rep is not None:
-
-                logger = Logger.get_instance()
-                history_file = self.__rep.get_history_file()
-                logger.set_log_files(history_file, self.__rep.get_track_folder())
-
-        if self.__free_run():
+        if self.wdir.has_solver() and not self.wdir.has_tests() and not self.__curses_mode and not self.__no_run:
+            if not self.__eval_mode:
+                self.__free_run()
+            else:
+                aprint(Text().addf("", "fail: ") + "Nenhum caso de teste encontrado.")
             return 0
-        percent = self.__show_diff()
-        return percent
+        
+        self.__show_diff()
+        return
+
+    def __prepare_rep_task_logger(self):
+        if self.__rep is None:
+            solver_path = self.wdir.get_solver().args_list[0]
+            dirname = os.path.dirname(os.path.abspath(solver_path))
+            self.__try_load_rep(dirname)
+            self.__try_load_task(dirname)
+
+        if self.__task is None:
+            self.__fill_task()
+
+        if self.__rep is not None:
+            logger = Logger.get_instance()
+            history_file = self.__rep.get_history_file()
+            logger.set_log_files(history_file, self.__rep.get_track_folder())
     
     def __try_load_rep(self, dirname: str) -> bool:
         repo_path = Repository.rec_search_for_repo(dirname)
@@ -164,30 +191,6 @@ class Run:
                 elif os.path.exists(target):
                     new_target_list.append(target)
             self.target_list = new_target_list
-
-    def __print_top_line(self):
-        aprint(Text().add(symbols.opening).add(self.wdir.resume()), end="")
-        aprint(" [", end="")
-        first = True
-        for unit in self.wdir.get_unit_list():
-            if first:
-                first = False
-            else:
-                aprint(" ", end="")
-            solver = self.wdir.get_solver()
-            unit.result = UnitRunner.run_unit(solver, unit)
-            aprint(Text() + ExecutionResult.get_symbol(unit.result), end="")
-        aprint("] ", end="")
-        if self.__eval_mode:
-            if self.__rep is not None:
-                logger = Logger.get_instance()
-                entries = logger.tasks.key_actions.get(self.get_task().key, {})
-                if entries:
-                    elapsed = max(0, entries[-1].elapsed.total_seconds() // 60)
-                    lines = entries[-1].lines
-                    attempts = entries[-1].attempts
-                    aprint(f">> minutos:{elapsed:.0f}, linhas:{lines}, tentativas:{attempts}, ", end="", flush=True)
-        aprint(f"{self.get_percent()}%")
         
     def __print_diff(self):
         
@@ -251,23 +254,19 @@ class Run:
             return True
         return False
     
-    def __list_mode(self) -> bool:
+    def __list_mode(self):
         # list mode
-        if not self.wdir.has_solver() and self.wdir.has_tests():
+        
+        if not self.__eval_mode:
             aprint(Text.format("Nenhum arquivo de código encontrado. Listando casos de teste.").center(RawTerminal.get_terminal_size(), Token("╌")), flush=True)
-            aprint(self.wdir.resume())
-            for line in self.wdir.unit_list_resume():
-                aprint(line)
-            return True
-        return False
+        aprint(self.wdir.resume_splitted())
+        for line in self.wdir.unit_list_resume():
+            aprint(line)
 
-    def __free_run(self) -> bool:
-        if self.wdir.has_solver() and (not self.wdir.has_tests()) and not self.__curses_mode:
-            if self.__task is not None:
-                Logger.get_instance().record_freerun(self.get_task().key)
-            Free.free_run(self.wdir.get_solver(), show_compilling=False, to_clear=False, wait_input=False)
-            return True
-        return False
+    def __free_run(self):        
+        if self.__task is not None:
+            Logger.get_instance().record_freerun(self.get_task().key)
+        Free.free_run(self.wdir.get_solver(), show_compilling=False, to_clear=False, wait_input=False)
 
     def __create_opener_for_wdir(self) -> Opener:
         opener = Opener(self.settings)
@@ -318,16 +317,19 @@ class Run:
         cdiff.run()
 
     def get_percent(self) -> int:
+        if self.__no_run:
+            return 0
         correct = [unit for unit in self.wdir.get_unit_list() if unit.result == ExecutionResult.SUCCESS]
         percent = (len(correct) * 100) // len(self.wdir.get_unit_list())
         return percent
 
     def __run_diff_on_raw_term(self) -> int:
-        aprint(Text.format(" Testando o código com os casos de teste ").center(RawTerminal.get_terminal_size(), Token("═")))
+        if not self.__eval_mode:
+            aprint(Text.format(" Testando o código com os casos de teste ").center(RawTerminal.get_terminal_size(), Token("═")))
         self.__print_top_line()
         self.__print_diff()
         percent = self.get_percent()
-        if self.__task is None or self.__track_folder == "" or self.__eval_mode:
+        if self.__task is None or self.__track_folder == "":
             return percent
 
         Logger.get_instance().record_test_result(self.get_task().key, percent)
@@ -349,3 +351,58 @@ class Run:
             return self.__run_diff_on_raw_term()
 
         return 0
+
+    def __print_top_line(self):
+        if self.__eval_mode:
+            key = self.get_task().key if self.__task is not None else ""
+            aprint(Text().addf("c", "@" + key + " ").add(symbols.opening).add("[").add(self.wdir.resume_join()).add("]"), end="")
+        else:
+            aprint(Text().add(symbols.opening).add(self.wdir.resume_splitted()), end="")
+        aprint(" [", end="")
+        first = True
+        for unit in self.wdir.get_unit_list():
+            if first:
+                first = False
+            else:
+                aprint(" ", end="")
+            solver = self.wdir.get_solver()
+            if self.__no_run:
+                unit.result = ExecutionResult.UNTESTED
+            else:
+                unit.result = UnitRunner.run_unit(solver, unit)
+            aprint(Text() + ExecutionResult.get_symbol(unit.result), end="")
+        aprint("] ", end="")
+        if self.__show_track_info:
+            if self.__rep is not None:
+                logger = Logger.get_instance()
+                entries = logger.tasks.key_actions.get(self.get_task().key, {})
+                if entries:
+                    elapsed = max(0, entries[-1].elapsed.total_seconds() // 60)
+                    lines = entries[-1].lines
+                    attempts = entries[-1].attempts
+                    aprint(Text().addf("g", f"min:{elapsed:.0f}, lines:{lines}, att:{attempts}, "), end="", flush=True)
+
+        coverage: int | None = None
+        approach: int | None = None
+        autonomy: int | None = None
+        if self.__show_self_info and self.__rep is not None:
+            task: Task | None = self.__rep.game.tasks.get(self.get_task().key)
+            if task is not None:
+                coverage = task.coverage
+                approach = task.approach
+                autonomy = task.autonomy
+                how_clear = task.how_clear
+                how_fun = task.how_fun
+                how_easy = task.how_easy
+                aprint(Text().addf("m", f"clear:{how_clear}, fun:{how_fun}, easy:{how_easy}, ").addf("y", f"cov:{coverage}, app:{approach}, aut:{autonomy}, "), end="", flush=True)
+        if self.__no_run:
+            percent: float = 0
+        else:
+            percent = self.get_percent()
+        if self.__complex_percent:
+            if coverage is not None and approach is not None and autonomy is not None:
+                if self.__no_run:
+                    percent = coverage
+                percent = (percent + (((approach + autonomy) * 100) / 11)) / 2
+
+        aprint(Text().addf("b", f"{percent:.0f}%"))

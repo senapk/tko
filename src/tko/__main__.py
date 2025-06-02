@@ -31,10 +31,39 @@ from tko.__init__ import __version__
 
 
 class Main:
+
     @staticmethod
-    def run(args: argparse.Namespace) -> int:
+    def eval(args: argparse.Namespace) -> int:
+        if args.norun and not args.self:
+            print("Nothing to do. If using --norun, you should choice at least --self.")
+            return 1
+        
+        PatternLoader.pattern = args.pattern
+        param = Param.Basic()
+        param.set_diff_count(DiffCount.NONE)
+        param.set_compact(True)
+
+        settings = Settings()
+        cmd_run = Run(settings, args.target_list, param)
+        cmd_run.set_eval_mode()
+        if args.norun:
+            cmd_run.set_no_run()
+        if args.track:
+            cmd_run.show_track_info()
+        if args.self:
+            cmd_run.show_self_info()
+        if args.complex:
+            cmd_run.set_complex_percent()
+        
+        cmd_run.execute()
+
+        return 0
+
+    @staticmethod
+    def run(args: argparse.Namespace) -> None:
         if args.tui:
-            return Main.tui(args)
+            Main.tui(args)
+            return
         
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
@@ -59,12 +88,12 @@ class Main:
             param.set_diff_mode(DiffMode.DOWN)
         cmd_run = Run(settings, args.target_list, param)
         if args.eval:
-            cmd_run.set_eval_mode()
+            cmd_run.show_track_info().show_self_info()
 
-        return cmd_run.execute()
+        cmd_run.execute()
 
     @staticmethod
-    def tui(args: argparse.Namespace) -> int:
+    def tui(args: argparse.Namespace) -> None:
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         settings = Settings()
@@ -73,7 +102,7 @@ class Main:
             param.set_filter(True)
         cmd_run = Run(settings, args.target_list, param)
         cmd_run.set_curses()
-        return cmd_run.execute()
+        cmd_run.execute()
 
     @staticmethod
     def build(args: argparse.Namespace):
@@ -154,6 +183,7 @@ class Parser:
         self.add_parser_rep_tools()
         self.add_parser_rep_actions()
         self.add_parser_diff()
+        self.add_parser_eval()
 
 
     def add_parser_global(self):
@@ -186,23 +216,36 @@ class Parser:
         parser_r.set_defaults(func=Main.tui)
 
     def add_parser_run(self):
-        parser_r = self.subparsers.add_parser('run', parents=[self.parent_basic], help='Run using raw terminal.')
-        parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
-        parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
+        parser = self.subparsers.add_parser('run', parents=[self.parent_basic], help='Run using raw terminal.')
+        parser.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
+        parser.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
 
-        parser_r.add_argument("--tui", '-t', action='store_true', help='use TUI interface.')
-        parser_r.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures')
-        parser_r.add_argument('--eval', '-e', action='store_true', help='Evaluation mode.')
+        group_a = parser.add_mutually_exclusive_group()
 
-        group_n = parser_r.add_mutually_exclusive_group()
-        group_n.add_argument('--none', action='store_true', help='do not show any failure.')
-        group_n.add_argument('--all', action='store_true', help='show all failures.')
+        group_a.add_argument("--tui", '-t', action='store_true', help='use TUI interface.')
+        group_a.add_argument('--eval', action='store_true', help='Get percent running testes')       
+
+        parser.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures')
+
+
+        group_n = parser.add_mutually_exclusive_group()
+        group_n.add_argument('--none', '-n', action='store_true', help='do not show any failure.')
+        group_n.add_argument('--all', '-a', action='store_true', help='show all failures.')
 
         # add an exclusive group for diff mode
-        group = parser_r.add_mutually_exclusive_group()
+        group = parser.add_mutually_exclusive_group()
         group.add_argument('--down', '-d', action='store_true', help="diff mode up-to-down.")
         group.add_argument('--side', '-s', action='store_true', help="diff mode side-by-side.")
-        parser_r.set_defaults(func=Main.run)
+        parser.set_defaults(func=Main.run)
+
+    def add_parser_eval(self):
+        parser = self.subparsers.add_parser('eval', parents=[self.parent_basic], help='Evaluate test cases or collect data.')
+        parser.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
+        parser.add_argument('--norun', '-n', action='store_true', help='Not calc coverage percent by running testes')
+        parser.add_argument('--self', '-s', action='store_true', help='Display coverage, approach, autonomy, howClear, howFun, howEasy')
+        parser.add_argument('--track', '-t', action='store_true', help='Display attemps, lines, elapsed')
+        parser.add_argument('--complex', '-c', action='store_true', help='Final Percent combines coverage, approach and autonomy')
+        parser.set_defaults(func=Main.eval)
 
     def add_parser_build(self):
         parser_b = self.subparsers.add_parser('build', parents=[self.parent_manip], help='Build a test target.')

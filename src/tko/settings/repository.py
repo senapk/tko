@@ -7,8 +7,6 @@ from tko.util.decoder import Decoder
 from tko.util.text import Text
 import yaml # type: ignore
 
-available_languages = ["c", "cpp", "py", "ts", "java", "go", "hs", "yaml"]
-
 def remove_git_merge_tags(lines: list[str]) -> list[str]:
     # remove lines with <<<<<<<, =======, >>>>>>>>
     filtered_lines: list[str] = []

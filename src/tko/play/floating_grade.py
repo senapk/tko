@@ -22,7 +22,7 @@ class FloatingGrade(Floating):
         self.set_header_text(Text.format("{y/}", " Utilize os direcionais e teclas - e + para  marcar "))
         self.set_footer_text(Text.format("{y/}", " Pressione Enter para confirmar "))
 
-        self.grades_index = [task.coverage // 10, task.approach, task.autonomy, task.howclear, task.howfun, task.howeasy]
+        self.grades_index = [task.coverage // 10, task.approach, task.autonomy, task.how_clear, task.how_fun, task.how_easy]
         self.coverage = ["x", "1", "2", "3", "4", "5", "6", "7", "8", "9", "✓"]
         self.coverage_msg = [
             Text().addf("m", "Não ").addf("y", "fiz"),

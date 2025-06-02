@@ -1,0 +1,1 @@
+available_languages = ["c", "cpp", "py", "ts", "java", "go", "hs", "yaml"]

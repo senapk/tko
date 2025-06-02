@@ -11,9 +11,9 @@ class LogInfo:
         self.coverage: int = -1
         self.approach: int = -1
         self.autonomy: int = -1
-        self.howclear: int = -1
-        self.howfun: int = -1
-        self.howeasy: int = -1
+        self.how_clear: int = -1
+        self.how_fun: int = -1
+        self.how_easy: int = -1
         self.elapsed: datetime.timedelta = datetime.timedelta(0)
         self.attempts: int = 0
         self.lines: int = -1
@@ -75,9 +75,9 @@ class LogInfo:
             "coverage": str(self.coverage),
             "approach": str(self.approach),
             "autonomy": str(self.autonomy),
-            "howclear": str(self.howclear),
-            "howfun": str(self.howfun),
-            "howeasy": str(self.howeasy),
+            "howclear": str(self.how_clear),
+            "howfun": str(self.how_fun),
+            "howeasy": str(self.how_easy),
             "elapsed": str(int(self.elapsed.total_seconds() / 60)),
             "attempts": str(self.attempts),
             "lines": str(self.lines)
@@ -91,12 +91,12 @@ class LogInfo:
             output += f', a:{self.approach}'
         if self.autonomy != -1:
             output += f', s:{self.autonomy}'
-        if self.howclear != -1:
-            output += f', clear:{self.howclear}'
-        if self.howfun != -1:
-            output += f', fun:{self.howfun}'
-        if self.howeasy != -1:
-            output += f', easy:{self.howeasy}'
+        if self.how_clear != -1:
+            output += f', clear:{self.how_clear}'
+        if self.how_fun != -1:
+            output += f', fun:{self.how_fun}'
+        if self.how_easy != -1:
+            output += f', easy:{self.how_easy}'
         if self.elapsed.total_seconds() > 0:
             minutes = int(self.elapsed.total_seconds() / 60)
             output += f', e:{minutes}'
@@ -159,9 +159,9 @@ class LogInfo:
             self.coverage = int(kv.get("c", -1))
             self.approach = int(kv.get("a", -1))
             self.autonomy = int(kv.get("s", -1))
-            self.howclear = int(kv.get("clear", -1))
-            self.howfun = int(kv.get("fun", -1))
-            self.howeasy = int(kv.get("easy", -1))
+            self.how_clear = int(kv.get("clear", -1))
+            self.how_fun = int(kv.get("fun", -1))
+            self.how_easy = int(kv.get("easy", -1))
             return
         
         raise Exception(f"Invalid SELF payload: {payload}")

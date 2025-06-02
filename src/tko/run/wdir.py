@@ -7,11 +7,12 @@ from tko.run.unit import Unit
 from tko.util.param import Param
 from tko.run.loader import Loader
 from tko.run.solver_builder import SolverBuilder
-
-from tko.down.drafts import Drafts
 from tko.util.text import Text
 from tko.util.symbols import symbols
 from tko.util.label_factory import LabelFactory
+from tko.down.drafts import Drafts
+from tko.settings.languages import available_languages
+
 class Wdir:
     def __init__(self):
         self.__autoload = False
@@ -83,6 +84,8 @@ class Wdir:
         solver_list: list[str] = []
         if self.__lang != "":
             solver_list = Drafts.load_drafts_only(folder, self.__lang)
+        else:
+            solver_list = Drafts.load_drafts_only(folder, "", extra=available_languages)
         solver_list = sorted(solver_list)
 
         # if not self.__curses:
@@ -217,10 +220,14 @@ class Wdir:
             out = [os.path.basename(path) for path in path_list]
         return out
 
-    def resume(self) -> Text:
+    def resume_splitted(self) -> Text:
         sources = ["{}({})".format(name, str(count).rjust(2, "0")) for name, count in self.sources_names()]
         __sources = Text().add("Testes:").add("[").addf("y", ", ".join(sources)).add("]")
-
         __solvers = Text().add("Códigos:").add("[").addf("g", ", ".join(self.solvers_names())).add("]")
-
         return Text().add(__solvers).add(" ").add(__sources)
+
+    def resume_join(self) -> Text:
+        sources = ["{}({})".format(name, str(count).rjust(2, "0")) for name, count in self.sources_names()]
+        __sources = Text().addf("y", ", ".join(sources))
+        __solvers = Text().addf("g", ", ".join(self.solvers_names()))
+        return Text().add(__solvers).add(", ").add(__sources)

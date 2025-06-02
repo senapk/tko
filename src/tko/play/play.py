@@ -1,6 +1,7 @@
 from tko.game.game import Game
+from tko.settings.languages import available_languages
 from tko.settings.settings import Settings
-from tko.settings.repository import available_languages, Repository
+from tko.settings.repository import Repository
 from tko.play.keys import GuiKeys
 from tko.play.floating import Floating
 from tko.play.floating_calibrate import FloatingCalibrate

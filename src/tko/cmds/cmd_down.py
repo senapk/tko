@@ -16,7 +16,7 @@ from tko.cmds.cmd_build import CmdBuild
 from tko.util.param import Param
 from tko.util.decoder import Decoder
 from tko.down.drafts import Drafts
-from tko.settings.repository import available_languages
+from tko.settings.languages import available_languages
 
 class CmdLineDown:
     def __init__(self, settings: Settings, folder: str, task_key: str):

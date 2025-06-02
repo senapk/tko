@@ -1,5 +1,10 @@
 # Changelog
 
+- 5.2.0
+  - add: eval mode in tko run
+  - refactor: modes --none and --all for show all diffs or none diffs
+- 5.1.6
+  - add: if task outside a repo, load any language in autoload
 - 5.1.5
   - add: runner with FORCE_COLOR=0 and NO_COLOR=1
 - 5.1.4

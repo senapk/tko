@@ -36,9 +36,9 @@ class Task(TreeItem):
         self.autonomy: int = 0 # valor de 0 a autonomy_max
         self.main_idx: int = 0
 
-        self.howclear: int = 0
-        self.howfun: int = 0
-        self.howeasy: int = 0
+        self.how_clear: int = 0
+        self.how_fun: int = 0
+        self.how_easy: int = 0
 
         self.qskills: dict[str, int] = {} # default quest skills
         self.skills: dict[str, int] = {} # local skills
@@ -93,11 +93,11 @@ class Task(TreeItem):
                 elif k == "hab" or k == "auto":
                     self.autonomy = int(val)
                 elif k == "desc":
-                    self.howclear = int(val)
+                    self.how_clear = int(val)
                 elif k == "desire":
-                    self.howfun = int(val)
+                    self.how_fun = int(val)
                 elif k == "effort":
-                    self.howeasy = int(val)
+                    self.how_easy = int(val)
                 elif k == "idx":
                     self.main_idx = int(val)
         elif ":" not in value:
@@ -115,7 +115,7 @@ class Task(TreeItem):
                 self.main_idx = (int(v[3]))
 
     def save_to_db(self) -> str:
-        return "{" + f"cov:{self.coverage}, appr:{self.approach}, auto:{self.autonomy}, desc:{self.howclear}, desire:{self.howfun}, effort:{self.howeasy}, idx:{self.main_idx}" + "}"
+        return "{" + f"cov:{self.coverage}, appr:{self.approach}, auto:{self.autonomy}, desc:{self.how_clear}, desire:{self.how_fun}, effort:{self.how_easy}, idx:{self.main_idx}" + "}"
     
     def is_db_empty(self) -> bool:
         return self.approach == 0 and self.autonomy == 0 and self.main_idx == 0 and self.coverage == 0
@@ -156,8 +156,9 @@ class Task(TreeItem):
         return self.xp
 
     def get_percent(self):
-        return (self.approach + self.autonomy) * self.coverage // 10
-    
+        app_aut = ((self.approach + self.autonomy) * 100) / 11
+        return (app_aut + self.coverage) / 2
+
     def get_ratio(self) -> float:
         return self.get_percent() / 10.0
 
@@ -194,21 +195,21 @@ class Task(TreeItem):
     def set_description(self, value: int):
         value = int(value)
         if value >= 0 and value <= Task.description_max:
-            self.howclear = value
+            self.how_clear = value
         else:
             print(f"Descrição inválida: {value}")
     
     def set_desire(self, value: int):
         value = int(value)
         if value >= 0 and value <= Task.desire_max:
-            self.howfun = value
+            self.how_fun = value
         else:
             print(f"Interesse inválido: {value}")
 
     def set_effort(self, value: int):
         value = int(value)
         if value >= 0 and value <= Task.effort_max:
-            self.howeasy = value
+            self.how_easy = value
         else:
             print(f"Dedicação inválida: {value}")
 

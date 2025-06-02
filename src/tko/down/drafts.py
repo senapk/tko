@@ -64,10 +64,12 @@ main = putStrLn "qxcode"
     def load_drafts_only(folder: str, lang: str, extra: list[str] = []) -> list[str]:
         folder = os.path.normpath(os.path.abspath(folder))
         draft_list: list[str] = []
-        allowed = [lang] + extra
-        if lang == "c":
+        allowed = extra
+        if lang != "":
+            allowed.append(lang)
+        if "c" in allowed:
             allowed.append("h")
-        if lang == "cpp":
+        if "cpp" in allowed:
             allowed.append("h")
             allowed.append("hpp")
         if not os.path.isdir(folder):
