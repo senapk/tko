@@ -4,7 +4,7 @@ import re
 import os
 
 from tko.run.unit import Unit
-from tko.util.pattern import PatternLoader
+from tko.util.pattern_loader import PatternLoader
 from tko.util.decoder import Decoder
 
 

@@ -54,7 +54,9 @@ class Run:
         self.__show_self_info: bool = False
         self.__eval_mode: bool = False
         self.__complex_percent: bool = False
+        self.__abord_on_exec_error: bool = False
         self.__no_run: bool = False
+        self.__timeout: int = 0
 
     def set_eval_mode(self):
         self.__eval_mode = True
@@ -74,6 +76,14 @@ class Run:
 
     def set_complex_percent(self):
         self.__complex_percent = True
+        return self
+
+    def set_abort_on_exec_error(self):
+        self.__abord_on_exec_error = True
+        return self
+    
+    def set_timeout(self, timeout: int):
+        self.__timeout = timeout
         return self
 
     def set_curses(self, value:bool=True):
@@ -360,16 +370,19 @@ class Run:
             aprint(Text().add(symbols.opening).add(self.wdir.resume_splitted()), end="")
         aprint(" [", end="")
         first = True
+        execution_error = False
         for unit in self.wdir.get_unit_list():
             if first:
                 first = False
             else:
                 aprint(" ", end="")
             solver = self.wdir.get_solver()
-            if self.__no_run:
+            if self.__no_run or (execution_error and self.__abord_on_exec_error):
                 unit.result = ExecutionResult.UNTESTED
             else:
-                unit.result = UnitRunner.run_unit(solver, unit)
+                unit.result = UnitRunner.run_unit(solver, unit, timeout=self.__timeout)
+                if unit.result == ExecutionResult.EXECUTION_ERROR:
+                    execution_error = True
             aprint(Text() + ExecutionResult.get_symbol(unit.result), end="")
         aprint("] ", end="")
         if self.__show_track_info:

@@ -1,5 +1,7 @@
 # Changelog
 
+- 5.2.1
+  - add: improvements on eval mode with timeout and abort in exec errors
 - 5.2.0
   - add: eval mode in tko run
   - refactor: modes --none and --all for show all diffs or none diffs

@@ -4,6 +4,7 @@ import argparse
 import sys
 
 from tko.cmds.cmd_rep import CmdRep
+from tko.cmds.cmd_eval import CmdEval
 from tko.cmds.cmd_open import CmdOpen
 from tko.cmds.cmd_down import CmdLineDown
 from tko.cmds.cmd_run import Run
@@ -15,7 +16,7 @@ from tko.util.text import AnsiColor
 from tko.enums.diff_count import DiffCount
 
 from tko.util.param import Param
-from tko.util.pattern import PatternLoader
+from tko.util.pattern_loader import PatternLoader
 
 from tko.settings.settings import Settings
 from tko.cmds.cmd_diff import cmd_diff
@@ -31,33 +32,17 @@ from tko.__init__ import __version__
 
 
 class Main:
-
     @staticmethod
     def eval(args: argparse.Namespace) -> int:
-        if args.norun and not args.self:
-            print("Nothing to do. If using --norun, you should choice at least --self.")
-            return 1
-        
         PatternLoader.pattern = args.pattern
-        param = Param.Basic()
-        param.set_diff_count(DiffCount.NONE)
-        param.set_compact(True)
-
-        settings = Settings()
-        cmd_run = Run(settings, args.target_list, param)
-        cmd_run.set_eval_mode()
-        if args.norun:
-            cmd_run.set_no_run()
-        if args.track:
-            cmd_run.show_track_info()
-        if args.self:
-            cmd_run.show_self_info()
-        if args.complex:
-            cmd_run.set_complex_percent()
-        
-        cmd_run.execute()
-
-        return 0
+        cmd = CmdEval()
+        cmd.set_target_list(args.target_list)
+        cmd.set_norun(args.norun)
+        cmd.set_track(args.track)
+        cmd.set_self(args.self)
+        cmd.set_complex(args.complex)
+        cmd.set_timeout(args.timeout)
+        return cmd.execute()
 
     @staticmethod
     def run(args: argparse.Namespace) -> None:
@@ -227,7 +212,6 @@ class Parser:
 
         parser.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures')
 
-
         group_n = parser.add_mutually_exclusive_group()
         group_n.add_argument('--none', '-n', action='store_true', help='do not show any failure.')
         group_n.add_argument('--all', '-a', action='store_true', help='show all failures.')
@@ -245,6 +229,7 @@ class Parser:
         parser.add_argument('--self', '-s', action='store_true', help='Display coverage, approach, autonomy, howClear, howFun, howEasy')
         parser.add_argument('--track', '-t', action='store_true', help='Display attemps, lines, elapsed')
         parser.add_argument('--complex', '-c', action='store_true', help='Final Percent combines coverage, approach and autonomy')
+        parser.add_argument('--timeout', type=int, help='Set timeout in seconds for each test case.')
         parser.set_defaults(func=Main.eval)
 
     def add_parser_build(self):
