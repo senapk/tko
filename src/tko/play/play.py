@@ -124,6 +124,8 @@ class Play:
         exclude_int = [ -1, InputManager.esc] + InputManager.backspace_list
         if key in exclude_int + exclude_str:
             return
+        if key < 0 or key > 255:
+            return
         self.fman.add_input( Floating(self.settings, "v>").error().put_text(f"Tecla char:{chr(key)}, code:{key}, não reconhecida") )
 
 

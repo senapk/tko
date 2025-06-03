@@ -42,6 +42,7 @@ class Main:
         cmd.set_self(args.self)
         cmd.set_complex(args.complex)
         cmd.set_timeout(args.timeout)
+        cmd.set_result_file(args.result_file)
         return cmd.execute()
 
     @staticmethod
@@ -230,6 +231,7 @@ class Parser:
         parser.add_argument('--track', '-t', action='store_true', help='Display attemps, lines, elapsed')
         parser.add_argument('--complex', '-c', action='store_true', help='Final Percent combines coverage, approach and autonomy')
         parser.add_argument('--timeout', type=int, help='Set timeout in seconds for each test case.')
+        parser.add_argument('--result_file', '-r', type=str, help='Save percent result in result_file.')
         parser.set_defaults(func=Main.eval)
 
     def add_parser_build(self):

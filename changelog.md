@@ -1,5 +1,10 @@
 # Changelog
 
+- 5.2.4
+  - fix: fix task graph colors
+  - fix: fix task graph line and time calculation
+- 5.2.3
+  - add: eval with report file option
 - 5.2.2
   - add: eval mode without unicode symbols
 - 5.2.1

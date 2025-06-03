@@ -141,8 +141,7 @@ class Run:
                 aprint(Text().addf("", "fail: ") + "Nenhum caso de teste encontrado.")
             return 0
         
-        self.__show_diff()
-        return
+        return self.__run_tests()
 
     def __prepare_rep_task_logger(self):
         if self.__rep is None:
@@ -317,7 +316,7 @@ class Run:
         self.__task = task
         self.__track_folder = self.__rep.get_track_task_folder(task.key) if self.__rep else ""
 
-    def __run_diff_on_curses(self):
+    def __run_test_on_curses(self):
         cdiff = Tester(self.settings, self.__rep, self.wdir, self.get_task())
         if self.__opener is not None:
             cdiff.set_opener(self.__opener)
@@ -326,43 +325,43 @@ class Run:
         cdiff.set_autorun(self.__run_without_ask)
         cdiff.run()
 
-    def get_percent(self) -> int:
+    def get_coverage(self) -> int:
         if self.__no_run:
             return 0
         correct = [unit for unit in self.wdir.get_unit_list() if unit.result == ExecutionResult.SUCCESS]
         percent = (len(correct) * 100) // len(self.wdir.get_unit_list())
         return percent
 
-    def __run_diff_on_raw_term(self) -> int:
+    def __run_tests_on_raw_term(self) -> int:
         if not self.__eval_mode:
             aprint(Text.format(" Testando o código com os casos de teste ").center(RawTerminal.get_terminal_size(), Token("═")))
-        self.__print_top_line()
+        percent = self.__run_all_tests_top_line()
         self.__print_diff()
-        percent = self.get_percent()
+        coverage = self.get_coverage()
         if self.__task is None or self.__track_folder == "":
-            return percent
+            return coverage
 
-        Logger.get_instance().record_test_result(self.get_task().key, percent)
+        Logger.get_instance().record_test_result(self.get_task().key, coverage)
         tracker = Tracker()
         tracker.set_folder(self.__track_folder)
         tracker.set_files(self.wdir.get_solver().args_list)
-        tracker.set_percentage(percent)
+        tracker.set_percentage(coverage)
         has_changes, total_lines = tracker.store()
         if has_changes:
             Logger.get_instance().record_file_alteration(self.get_task().key, total_lines)
         return percent
 
-    def __show_diff(self) -> int:
+    def __run_tests(self) -> int:
         if self.__task is None:
             self.__fill_task()
         if self.__curses_mode:
-            self.__run_diff_on_curses()
+            self.__run_test_on_curses()
         else:
-            return self.__run_diff_on_raw_term()
+            return self.__run_tests_on_raw_term()
 
         return 0
 
-    def __print_top_line(self):
+    def __run_all_tests_top_line(self) -> int:
         if self.__eval_mode:
             key = self.get_task().key if self.__task is not None else ""
             aprint(Text().addf("c", "@" + key + " ").add(symbols.opening).add("[").add(self.wdir.resume_join()).add("]"), end="")
@@ -393,7 +392,7 @@ class Run:
                     elapsed = max(0, entries[-1].elapsed.total_seconds() // 60)
                     lines = entries[-1].lines
                     attempts = entries[-1].attempts
-                    aprint(Text().addf("g", f"min:{elapsed:.0f}, lines:{lines}, att:{attempts}, "), end="", flush=True)
+                    aprint(Text().addf("g", f"min:{elapsed:.0f}, lines:{lines}, att:{attempts},").add(" "), end="", flush=True)
 
         coverage: int | None = None
         approach: int | None = None
@@ -407,15 +406,16 @@ class Run:
                 how_clear = task.how_clear
                 how_fun = task.how_fun
                 how_easy = task.how_easy
-                aprint(Text().addf("m", f"clear:{how_clear}, fun:{how_fun}, easy:{how_easy}, ").addf("y", f"cov:{coverage}, app:{approach}, aut:{autonomy}, "), end="", flush=True)
+                aprint(Text().addf("m", f"clear:{how_clear}, fun:{how_fun}, easy:{how_easy}, ").addf("y", f"cov:{coverage}, app:{approach}, aut:{autonomy},").add(" "), end="", flush=True)
         if self.__no_run:
             percent: float = 0
         else:
-            percent = self.get_percent()
+            percent = self.get_coverage()
         if self.__complex_percent:
             if coverage is not None and approach is not None and autonomy is not None:
                 if self.__no_run:
                     percent = coverage
                 percent = (percent + (((approach + autonomy) * 100) / 11)) / 2
 
-        aprint(Text().addf("b", f"{percent:.0f}%"))
+        aprint(f"{percent:.0f}%")
+        return round(percent)

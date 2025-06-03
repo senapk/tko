@@ -321,10 +321,10 @@ class Gui:
         except IndexError:
             selected = None
         is_task = isinstance(selected, Task)
+        width = cols - self.tree.max_title - distance - 7
+        if width < 5:
+            width = 5
         if Flags.graph.get_value() == "1" or not is_task:
-            width = cols - self.tree.max_title - distance - 7
-            if width < 5:
-                width = 5
             height = lines - 5
             if height < 3:
                 height = 3
@@ -341,6 +341,7 @@ class Gui:
         view_value = Flags.graph.get_value()
         view_button.add(" ").addf("M" if view_value == "0" else "Y", f" {op_one} ")
         view_button.add(" ").addf("M" if view_value == "1" else "Y", f" {op_two} ")
+        view_button = view_button.center(width)
         frame.write(0, self.tree.max_title + distance, view_button)
         for y, line in enumerate(list_data):
             frame.write(y + 1, self.tree.max_title + distance, line)

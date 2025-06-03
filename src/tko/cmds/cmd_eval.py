@@ -15,6 +15,7 @@ class CmdEval:
         self.load_self: bool = False
         self.complex: bool = False
         self.timeout: int = CmdEval.EVAL_TIMEOUT_DEFAULT
+        self.result_file: str | None = None
 
         symbols.execution_result["untested"] = Token("U", "")
         symbols.execution_result["success"] = Token("S", "g")
@@ -46,15 +47,19 @@ class CmdEval:
         if timeout is not None:
             self.timeout = timeout
         return self
+
+    def set_result_file(self, result_file: str | None = None):
+        self.result_file = result_file
+        return self
     
     def set_target_list(self, target_list: list[str]):
         self.target_list = target_list
         return self
 
-    def execute(self) -> int:
+    def execute(self) -> None:
         if self.norun and not self.load_self:
             print("Nothing to do. If using --norun, you should choice at least --self.")
-            return 1
+            return
         
         param = Param.Basic()
         param.set_diff_count(DiffCount.NONE)
@@ -73,6 +78,8 @@ class CmdEval:
             cmd_run.set_complex_percent()
         if self.timeout != 0:
             cmd_run.set_timeout(self.timeout)
-        cmd_run.execute()
+        percent = cmd_run.execute()
 
-        return 0    
+        if self.result_file:
+            with open(self.result_file, 'w') as f:
+                f.write(f"{percent}%\n")
