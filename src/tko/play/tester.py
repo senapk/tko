@@ -23,7 +23,7 @@ from tko.util.text import  Text, Token
 from tko.util.symbols import symbols
 from tko.enums.diff_mode import DiffMode
 from tko.play.input_manager import InputManager
-from tko.settings.logger import Logger
+from tko.logger.logger import Logger
 from tko.run.diff_builder_down import DiffBuilderDown
 from tko.run.diff_builder_side import DiffBuilderSide
 from tko.play.tracker import Tracker

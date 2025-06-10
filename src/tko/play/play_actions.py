@@ -4,7 +4,7 @@ from tko.game.task import Task
 # from tko.game.graph import Graph
 
 from tko.play.floating_grade import FloatingGrade
-from tko.settings.logger import Logger
+from tko.logger.logger import Logger
 from tko.settings.settings import Settings
 
 from tko.cmds.cmd_down import CmdDown

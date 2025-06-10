@@ -12,7 +12,7 @@ class LogAction:
         FREE = 'FREE' # Free Compile and RUN
         FAIL = 'FAIL' # Compile error or Execution error
         TEST = 'TEST' # run test and Coverage %
-        SELF = 'SELF' # {c:{coverage}, a:{approach}, s:{autonomy}} after added {clear:%d, fun:%d, easy:%d}
+        SELF = 'SELF' # {cov:{coverage}, app:{approach}, aut:{autonomy}} after added {clear:%d, fun:%d, easy:%d}
         PICK = 'PICK' # Enter problem
         BACK = 'BACK' # Leave problem
         PROG = 'PROG' # deprecated

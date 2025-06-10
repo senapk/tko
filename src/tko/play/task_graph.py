@@ -1,6 +1,6 @@
 from tko.settings.settings import Settings
 from tko.settings.repository import Repository
-from tko.settings.logger import Logger
+from tko.logger.logger import Logger
 from uniplot import plot_to_string # type: ignore
 from tko.util.text import Text
 
@@ -29,13 +29,13 @@ class TaskGraph:
         eixo: list[float] = [0]
         count = 1
         for ad in filtered:
-            if ad.coverage == -1 or ad.coverage == 0:
+            if ad.cov == -1 or ad.cov == 0:
                 collected_cov.append(last)
             else:
-                last = ad.coverage
+                last = ad.cov
                 collected_cov.append(last)
             collected_elapsed.append(ad.elapsed.total_seconds() / 60)
-            collected_lines.append(ad.lines)
+            collected_lines.append(ad.len)
             # if self.minutes_mode:
             #     eixo.append(ad.elapsed.total_seconds() / 60)
             # else:

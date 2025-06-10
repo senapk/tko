@@ -1,7 +1,7 @@
 import yaml
 import os
-from tko.settings.log_action import LogAction
-from tko.settings.log_info import LogInfo
+from tko.logger.log_action import LogAction
+from tko.logger.log_info import LogInfo
 import datetime
         
 class TaskListener:
@@ -37,10 +37,10 @@ class TaskListener:
                 elapsed = last_action.elapsed
             decoder.elapsed = elapsed
             if decoder.type == LogAction.Type.SIZE.value:
-                decoder.attempts = last_action.attempts + 1
+                decoder.att = last_action.att + 1
             else:
-                decoder.attempts = last_action.attempts
-                decoder.lines = last_action.lines
+                decoder.att = last_action.att
+                decoder.len = last_action.len
             
             self.key_actions[decoder.key].append(decoder)
 
@@ -79,12 +79,12 @@ class TaskListener:
             info.set_elapsed(entries[-1].elapsed)
             info.set_attempts(len([x for x in entries if x.type == "TEST" or x.type == "FAIL"]))
             for action in entries:
-                if action.coverage != -1:
-                    info.set_coverage(action.coverage)
-                if action.approach != -1:
-                    info.set_autonomy(action.approach)
-                if action.autonomy != -1:
-                    info.set_skill(action.autonomy)
+                if action.cov != -1:
+                    info.set_coverage(action.cov)
+                if action.app != -1:
+                    info.set_approach(action.app)
+                if action.aut != -1:
+                    info.set_autonomy(action.aut)
             output[key] = info
         return output
     

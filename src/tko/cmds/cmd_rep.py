@@ -1,6 +1,6 @@
 from tko.settings.repository import Repository
 from tko.settings.settings import Settings
-from tko.settings.logger import Logger
+from tko.logger.logger import Logger
 from tko.game.task import Task
 from tko.play.week_graph import WeekGraph
 import yaml # type: ignore
@@ -81,11 +81,11 @@ class CmdRep:
         for key in history_resume:
             entry = history_resume[key]
             elapsed = entry.get_minutes()
-            attempts = entry.attempts
+            attempts = entry.att
             if elapsed > 0 or attempts > 0:
                 if key not in tasks:
                     tasks[key] = TaskResume()
-                tasks[key].set_elapsed(entry.get_minutes()).set_attempts(entry.attempts)
+                tasks[key].set_elapsed(entry.get_minutes()).set_attempts(entry.att)
         
         tasks_str: dict[str, dict[str, int]] = {}
         for key in tasks:

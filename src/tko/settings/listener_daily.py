@@ -1,7 +1,7 @@
 import yaml # type: ignore
 from tko.settings.task_basic import TaskBasic
-from tko.settings.log_action import LogAction
-from tko.settings.log_info import LogInfo
+from tko.logger.log_action import LogAction
+from tko.logger.log_info import LogInfo
 
 class DailyListener:
     def __init__(self):
@@ -13,7 +13,7 @@ class DailyListener:
         decoder = LogInfo().decode(action)
         types = [LogAction.Type.TEST.value, LogAction.Type.PROG.value, LogAction.Type.SELF.value]
         if decoder.type in types:
-            self.log_task(decoder.timestamp, decoder.key, decoder.coverage, decoder.approach, decoder.autonomy)
+            self.log_task(decoder.timestamp, decoder.key, decoder.cov, decoder.app, decoder.aut)
 
     def set_daily_file(self, daily_file: str):
         self.daily_file = daily_file

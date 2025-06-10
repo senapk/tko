@@ -1,5 +1,5 @@
 from __future__ import annotations
-from tko.settings.log_action import LogAction
+from tko.logger.log_action import LogAction
 from tko.game.task import Task
 import datetime
 
@@ -8,15 +8,15 @@ class LogInfo:
         self.timestamp = ""
         self.type: str = LogAction.Type.NONE.value
         self.key = ""
-        self.coverage: int = -1
-        self.approach: int = -1
-        self.autonomy: int = -1
-        self.how_clear: int = -1
-        self.how_fun: int = -1
-        self.how_easy: int = -1
+        self.cov: int = -1
+        self.app: int = -1
+        self.aut: int = -1
+        self.att: int = 0
         self.elapsed: datetime.timedelta = datetime.timedelta(0)
-        self.attempts: int = 0
-        self.lines: int = -1
+        self.len: int = -1
+        self.clear: int = -1
+        self.fun: int = -1
+        self.easy: int = -1
 
     def get_minutes(self) -> int:
         return int(self.elapsed.total_seconds() / 60)
@@ -34,19 +34,19 @@ class LogInfo:
         return self
     
     def set_attempts(self, value: int):
-        self.attempts = value
+        self.att = value
         return self
     
     def set_coverage(self, value: int):
-        self.coverage = value
+        self.cov = value
+        return self
+    
+    def set_approach(self, value: int):
+        self.app = value
         return self
     
     def set_autonomy(self, value: int):
-        self.approach = value
-        return self
-    
-    def set_skill(self, value: int):
-        self.autonomy = value
+        self.aut = value
         return self
     
     def set_elapsed(self, value: datetime.timedelta):
@@ -54,7 +54,7 @@ class LogInfo:
         return self
 
     def set_lines(self, value: int):
-        self.lines = value
+        self.len = value
         return self
     
     def calc_and_set_elapsed(self, last: LogInfo, limit_minutes: int, format: str):
@@ -72,38 +72,38 @@ class LogInfo:
         return {
             "type": self.type,
             "key": self.key,
-            "coverage": str(self.coverage),
-            "approach": str(self.approach),
-            "autonomy": str(self.autonomy),
-            "howclear": str(self.how_clear),
-            "howfun": str(self.how_fun),
-            "howeasy": str(self.how_easy),
+            "cov": str(self.cov),
+            "app": str(self.app),
+            "aut": str(self.aut),
+            "clear": str(self.clear),
+            "fun": str(self.fun),
+            "easy": str(self.easy),
             "elapsed": str(int(self.elapsed.total_seconds() / 60)),
-            "attempts": str(self.attempts),
-            "lines": str(self.lines)
+            "att": str(self.att),
+            "len": str(self.len)
         }
 
     def __str__(self) -> str:
         output = f'time:{self.timestamp}, type:{self.type}, key:{self.key}'
-        if self.coverage != -1:
-            output += f', c:{self.coverage}'
-        if self.approach != -1:
-            output += f', a:{self.approach}'
-        if self.autonomy != -1:
-            output += f', s:{self.autonomy}'
-        if self.how_clear != -1:
-            output += f', clear:{self.how_clear}'
-        if self.how_fun != -1:
-            output += f', fun:{self.how_fun}'
-        if self.how_easy != -1:
-            output += f', easy:{self.how_easy}'
+        if self.cov != -1:
+            output += f', cov:{self.cov}'
+        if self.app != -1:
+            output += f', app:{self.app}'
+        if self.aut != -1:
+            output += f', aut:{self.aut}'
+        if self.clear != -1:
+            output += f', clear:{self.clear}'
+        if self.fun != -1:
+            output += f', fun:{self.fun}'
+        if self.easy != -1:
+            output += f', easy:{self.easy}'
         if self.elapsed.total_seconds() > 0:
             minutes = int(self.elapsed.total_seconds() / 60)
-            output += f', e:{minutes}'
-        if self.attempts > 0:
-            output += f', att:{self.attempts}'
-        if self.lines != -1:
-            output += f', lines:{self.lines}'
+            output += f', elapsed:{minutes}'
+        if self.att > 0:
+            output += f', att:{self.att}'
+        if self.len != -1:
+            output += f', len:{self.len}'
         return output
     
     def decode(self, action: LogAction):
@@ -118,35 +118,41 @@ class LogInfo:
             self.load_from_self(action.payload)
         elif action.type_value == LogAction.Type.SIZE.value:
             self.load_from_size(action.payload)
+        elif action.type_value == LogAction.Type.FAIL.value:
+            self.load_from_fail(action.payload)
         return self
+
+    def load_from_fail(self, payload: str):
+        if payload[0] == "{":
+            payload = payload[1:-1]
 
     def load_from_test(self, payload: str):
         try:
-            self.coverage = int(payload)
+            self.cov = int(payload)
         except:
             pass
     
     def load_from_prog(self, payload: str):
-        self.coverage = int(payload)
+        self.cov = int(payload)
         return
     
     def load_from_size(self, payload: str):
-        self.lines = int(payload)
+        self.len = int(payload)
         return
     
     def load_from_self(self, payload: str):
         if len(payload) == 1:
-            self.approach, self.autonomy = Task.decode_approach_autonomy(int(payload))
+            self.app, self.aut = Task.decode_approach_autonomy(int(payload))
             return
     
         if len(payload) == 2:
-            self.approach = int(payload[0])
-            self.autonomy = int(payload[1])
+            self.app = int(payload[0])
+            self.aut = int(payload[1])
             return
         
         if len(payload) == 3 and payload[0] == "0":
-            self.approach = int(payload[1])
-            self.autonomy = int(payload[2])
+            self.app = int(payload[1])
+            self.aut = int(payload[2])
             return
         
         if payload[0] == "{":
@@ -156,12 +162,24 @@ class LogInfo:
             for svalue in values:
                 k, v = svalue.split(":")
                 kv[k.strip()] = v.strip()
-            self.coverage = int(kv.get("c", -1))
-            self.approach = int(kv.get("a", -1))
-            self.autonomy = int(kv.get("s", -1))
-            self.how_clear = int(kv.get("clear", -1))
-            self.how_fun = int(kv.get("fun", -1))
-            self.how_easy = int(kv.get("easy", -1))
+            if "c" in kv:
+                self.cov = int(kv["c"])
+            if "a" in kv:
+                self.app = int(kv["a"])
+            if "s" in kv:
+                self.aut = int(kv["s"])
+            if "clear" in kv:
+                self.clear = int(kv["clear"])
+            if "fun" in kv:
+                self.fun = int(kv["fun"])
+            if "easy" in kv:
+                self.easy = int(kv["easy"])
+            if "cov" in kv:
+                self.cov = int(kv["cov"])
+            if "app" in kv:
+                self.app = int(kv["app"])
+            if "aut" in kv:
+                self.aut = int(kv["aut"])
             return
         
         raise Exception(f"Invalid SELF payload: {payload}")

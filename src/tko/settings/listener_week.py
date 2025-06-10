@@ -1,6 +1,6 @@
 import yaml # type: ignore
-from tko.settings.log_action import LogAction
-from tko.settings.log_info import LogInfo
+from tko.logger.log_action import LogAction
+from tko.logger.log_info import LogInfo
 import datetime
         
 class WeekData:

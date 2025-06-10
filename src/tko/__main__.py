@@ -11,7 +11,7 @@ from tko.cmds.cmd_run import Run
 from tko.cmds.cmd_build import CmdBuild
 from tko.cmds.cmd_config import CmdConfig, ConfigParams
 from tko.enums.diff_mode import DiffMode
-from tko.settings.logger import Logger
+from tko.logger.logger import Logger
 from tko.util.text import AnsiColor
 from tko.enums.diff_count import DiffCount
 

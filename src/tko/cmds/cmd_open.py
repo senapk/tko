@@ -1,7 +1,7 @@
 from tko.settings.settings import Settings
 from tko.settings.repository import Repository
 from tko.play.play import Play
-from tko.settings.logger import Logger
+from tko.logger.logger import Logger
 from tko.util.text import Text, aprint
 
 class CmdOpen:

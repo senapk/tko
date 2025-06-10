@@ -1,4 +1,4 @@
-from tko.settings.log_action import LogAction
+from tko.logger.log_action import LogAction
 from tko.util.decoder import Decoder
 
 import csv

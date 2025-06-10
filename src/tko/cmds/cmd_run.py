@@ -19,7 +19,7 @@ from tko.game.task import Task
 from tko.play.opener import Opener
 from tko.settings.settings import Settings
 from tko.enums.diff_mode import DiffMode
-from tko.settings.logger import Logger
+from tko.logger.logger import Logger
 from tko.feno.filter import CodeFilter
 from tko.settings.repository import Repository
 
@@ -390,8 +390,8 @@ class Run:
                 entries = logger.tasks.key_actions.get(self.get_task().key, {})
                 if entries:
                     elapsed = max(0, entries[-1].elapsed.total_seconds() // 60)
-                    lines = entries[-1].lines
-                    attempts = entries[-1].attempts
+                    lines = entries[-1].len
+                    attempts = entries[-1].att
                     aprint(Text().addf("g", f"min:{elapsed:.0f}, lines:{lines}, att:{attempts},").add(" "), end="", flush=True)
 
         coverage: int | None = None

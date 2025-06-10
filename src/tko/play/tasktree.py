@@ -12,7 +12,7 @@ from tko.settings.settings import Settings
 from tko.play.floating_manager import FloatingManager
 from tko.util.symbols import symbols
 from tko.game.tree_item import TreeItem
-from tko.settings.logger import Logger
+from tko.logger.logger import Logger
 
 
 class TaskAction:

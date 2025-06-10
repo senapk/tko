@@ -1,6 +1,6 @@
 from __future__ import annotations
-from tko.settings.history_file import HistoryFile
-from tko.settings.log_action import LogAction
+from tko.logger.history_file import HistoryFile
+from tko.logger.log_action import LogAction
 from tko.settings.listener_daily import DailyListener
 from tko.settings.listener_task import TaskListener
 from tko.settings.listener_week import WeekListener
@@ -78,7 +78,7 @@ class Logger:
         self.__record_event(LogAction.Type.FREE, task_key)
 
     def record_self_grade(self, task_key: str, coverage: int, approach: int, autonomy: int, clear: int, fun: int, easy: int):
-        self.__record_event(LogAction.Type.SELF, task_key, "{" + f"c:{coverage},a:{approach},s:{autonomy},clear:{clear},fun:{fun},easy:{easy}" + "}")
+        self.__record_event(LogAction.Type.SELF, task_key, "{" + f"cov:{coverage},app:{approach},aut:{autonomy},clear:{clear},fun:{fun},easy:{easy}" + "}")
 
     def record_open(self):
         self.__record_event(LogAction.Type.OPEN)

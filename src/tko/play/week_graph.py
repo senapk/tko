@@ -1,4 +1,4 @@
-from tko.settings.logger import Logger
+from tko.logger.logger import Logger
 from uniplot import plot_to_string # type: ignore
 from tko.util.text import Text
 

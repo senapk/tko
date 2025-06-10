@@ -1,5 +1,5 @@
 import yaml # type: ignore
-from tko.settings.log_action import LogAction
+from tko.logger.log_action import LogAction
 from tko.util.text import Text
 
 class CacheListener:
