@@ -43,7 +43,14 @@ class Main:
         cmd.set_complex(args.complex)
         cmd.set_timeout(args.timeout)
         cmd.set_result_file(args.result_file)
-        return cmd.execute()
+        if args.none:
+            cmd.set_diff(DiffCount.NONE)
+        elif args.all:
+            cmd.set_diff(DiffCount.ALL)
+        else:
+            cmd.set_diff(DiffCount.FIRST)
+        cmd.execute()
+        return 0
 
     @staticmethod
     def run(args: argparse.Namespace) -> None:
@@ -231,6 +238,11 @@ class Parser:
         parser.add_argument('--track', '-t', action='store_true', help='Display attemps, lines, elapsed')
         parser.add_argument('--complex', '-c', action='store_true', help='Final Percent combines coverage, approach and autonomy')
         parser.add_argument('--timeout', type=int, help='Set timeout in seconds for each test case.')
+
+        group_n = parser.add_mutually_exclusive_group()
+        group_n.add_argument('--none', action='store_true', help='do not show any failure.')
+        group_n.add_argument('--all', action='store_true', help='show all failures.')
+
         parser.add_argument('--result_file', '-r', type=str, help='Save percent result in result_file.')
         parser.set_defaults(func=Main.eval)
 
@@ -353,7 +365,6 @@ def main():
         print("\n\nKeyboard Interrupt")
         sys.exit(1)
     except Warning as w:
-        print("")
         print(w)
         sys.exit(1)
     # except Exception as e:

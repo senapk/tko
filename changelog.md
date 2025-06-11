@@ -1,5 +1,26 @@
 # Changelog
 
+- 5.3.14
+  - add: eval change lines to len
+- 5.3.13
+  - add: feno grading mode to load config or readme
+- 5.2.12
+  - rm: unused dependencies
+  - add: padding in eval mode
+- 5.2.11
+  - add: eval mode option to use --none or --all to show all diffs or none diffs
+- 5.2.10
+  - add: default timeout for eval now are 30 seconds
+- 5.2.9
+  - add: eval default uses first diff mode to better debug
+- 5.2.8
+  - add: eval dont store log or file version and add a pad after label
+- 5.2.7
+  - add: better self eval mode setting autonomy depending approach and if is leet code
+- 5.2.6
+  - add: better self eval mode setting autonomy depending approach
+- 5.2.5
+  - fix: regex to load .tio not accepting empty spaces after FINISH
 - 5.2.4
   - fix: fix task graph colors
   - fix: fix task graph line and time calculation

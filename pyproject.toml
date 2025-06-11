@@ -9,7 +9,7 @@ python_files = ["test_*.py"]
 
 [project]
 name = "tko"
-version = "5.2.4"
+version = "5.2.14"
 description = "Add your description here"
 authors = [
     { name = "David", email = "sena.ufc@gmail.com" }
@@ -22,13 +22,9 @@ dependencies = [
     "chardet>=5.2.0",
     "diff-match-patch>=20241021",
     "markdown>=3.7",
-    "mypy>=1.16.0",
     "pip>=25.0.1",
-    "pydot>=3.0.3",
     "pygments>=2.19.1",
     "pymdown-extensions>=10.15",
-    "pyright>=1.1.399",
-    "pytest>=8.3.4",
     "pyyaml>=6.0.2",
     "types-appdirs>=1.4.3.5",
     "types-chardet>=5.0.4.6",

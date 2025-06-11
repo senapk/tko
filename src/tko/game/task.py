@@ -21,9 +21,9 @@ class Task(TreeItem):
     # default values for tasks
     approach_max = 6
     autonomy_max = 5
-    description_max = 5
-    desire_max = 5
-    effort_max = 5
+    neat_max = 5
+    cool_max = 5
+    easy_max = 5
 
     def __init__(self):
 
@@ -36,9 +36,11 @@ class Task(TreeItem):
         self.autonomy: int = 0 # valor de 0 a autonomy_max
         self.main_idx: int = 0
 
-        self.how_clear: int = 0
-        self.how_fun: int = 0
+        self.how_neat: int = 0
+        self.how_cool: int = 0
         self.how_easy: int = 0
+
+        self.leet_code: bool = False # if the task is a leet task
 
         self.qskills: dict[str, int] = {} # default quest skills
         self.skills: dict[str, int] = {} # local skills
@@ -56,6 +58,11 @@ class Task(TreeItem):
         self.__is_reachable = False
         self.default_min_value = 7 # default min grade to complete task
 
+    def set_leet_code(self, value: bool):
+        self.leet_code = value
+        return self
+    def is_leet_code(self) -> bool:
+        return self.leet_code
 
     def set_reachable(self, reachable: bool):
         self.__is_reachable = reachable
@@ -86,17 +93,17 @@ class Task(TreeItem):
                 k, val = kv.split(":")
                 k = k.strip()
                 val = val.strip()
-                if k == "cov":
+                if k == "cov" or k == "cove":
                     self.coverage = int(val)
                 elif k == "aut" or k == "appr":
                     self.approach = int(val)
                 elif k == "hab" or k == "auto":
                     self.autonomy = int(val)
-                elif k == "desc":
-                    self.how_clear = int(val)
-                elif k == "desire":
-                    self.how_fun = int(val)
-                elif k == "effort":
+                elif k == "desc" or k == "neat":
+                    self.how_neat = int(val)
+                elif k == "desire" or k == "cool":
+                    self.how_cool = int(val)
+                elif k == "effort" or k == "easy":
                     self.how_easy = int(val)
                 elif k == "idx":
                     self.main_idx = int(val)
@@ -115,8 +122,8 @@ class Task(TreeItem):
                 self.main_idx = (int(v[3]))
 
     def save_to_db(self) -> str:
-        return "{" + f"cov:{self.coverage}, appr:{self.approach}, auto:{self.autonomy}, desc:{self.how_clear}, desire:{self.how_fun}, effort:{self.how_easy}, idx:{self.main_idx}" + "}"
-    
+        return "{" + f"cove:{self.coverage}, appr:{self.approach}, auto:{self.autonomy}, neat:{self.how_neat}, cool:{self.how_cool}, easy:{self.how_easy}, idx:{self.main_idx}" + "}"
+
     def is_db_empty(self) -> bool:
         return self.approach == 0 and self.autonomy == 0 and self.main_idx == 0 and self.coverage == 0
 
@@ -194,21 +201,21 @@ class Task(TreeItem):
 
     def set_description(self, value: int):
         value = int(value)
-        if value >= 0 and value <= Task.description_max:
-            self.how_clear = value
+        if value >= 0 and value <= Task.neat_max:
+            self.how_neat = value
         else:
             print(f"Descrição inválida: {value}")
     
     def set_desire(self, value: int):
         value = int(value)
-        if value >= 0 and value <= Task.desire_max:
-            self.how_fun = value
+        if value >= 0 and value <= Task.cool_max:
+            self.how_cool = value
         else:
             print(f"Interesse inválido: {value}")
 
     def set_effort(self, value: int):
         value = int(value)
-        if value >= 0 and value <= Task.effort_max:
+        if value >= 0 and value <= Task.easy_max:
             self.how_easy = value
         else:
             print(f"Dedicação inválida: {value}")

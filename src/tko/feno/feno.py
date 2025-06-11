@@ -7,6 +7,7 @@ from tko.feno.mdpp import mdpp_main
 from tko.feno.older import older_main
 from tko.feno.remote_md import remote_main
 from tko.feno.filter import filter_main
+from tko.feno.grading import Grading
 
 
 def feno_main():
@@ -68,10 +69,13 @@ def feno_main():
     parser_f.add_argument("-i", "--indent", type=int, default=0, help="indent using spaces")
     parser_f.set_defaults(func=filter_main)
 
+    parser_grading = subparsers.add_parser('grading', help='grade the tests.')
 
-
-    args = parser.parse_args()
-
+    parser_grading.add_argument("--output", "-o", type=str, help="Output file for the awarded grade.")
+    grading_exclusive = parser_grading.add_mutually_exclusive_group(required=True)
+    grading_exclusive.add_argument("--config", "-c", type=str, help="Path to the configuration file.")
+    grading_exclusive.add_argument("--readme", "-r", type=str, help="Path to the README file for questions")
+    parser_grading.set_defaults(func=Grading.main)
 
     args = parser.parse_args()
     if "func" not in args:

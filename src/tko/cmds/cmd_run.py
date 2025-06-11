@@ -33,6 +33,7 @@ class tkoFilterMode:
         os.chdir(filter_path)
 
 class Run:
+    EVAL_MODE_PAD = 14
 
     def __init__(self, settings: Settings, target_list: list[str], param: None | Param.Basic):
         self.settings = settings
@@ -338,9 +339,8 @@ class Run:
         percent = self.__run_all_tests_top_line()
         self.__print_diff()
         coverage = self.get_coverage()
-        if self.__task is None or self.__track_folder == "":
+        if self.__task is None or self.__track_folder == "" or self.__eval_mode:
             return coverage
-
         Logger.get_instance().record_test_result(self.get_task().key, coverage)
         tracker = Tracker()
         tracker.set_folder(self.__track_folder)
@@ -364,7 +364,7 @@ class Run:
     def __run_all_tests_top_line(self) -> int:
         if self.__eval_mode:
             key = self.get_task().key if self.__task is not None else ""
-            aprint(Text().addf("c", "@" + key + " ").add(symbols.opening).add("[").add(self.wdir.resume_join()).add("]"), end="")
+            aprint(Text().addf("c", f"@{key:<{self.EVAL_MODE_PAD}} ").add(symbols.opening).add("[").add(self.wdir.resume_join()).add("]"), end="")
         else:
             aprint(Text().add(symbols.opening).add(self.wdir.resume_splitted()), end="")
         aprint(" [", end="")
@@ -391,8 +391,10 @@ class Run:
                 if entries:
                     elapsed = max(0, entries[-1].elapsed.total_seconds() // 60)
                     lines = entries[-1].lines
+                    if lines == -1:
+                        lines = 0
                     attempts = entries[-1].attempts
-                    aprint(Text().addf("g", f"min:{elapsed:.0f}, lines:{lines}, att:{attempts},").add(" "), end="", flush=True)
+                    aprint(Text().addf("g", f"min:{elapsed:03.0f}, len:{lines:03d}, att:{attempts:03d},").add(" "), end="", flush=True)
 
         coverage: int | None = None
         approach: int | None = None
@@ -403,8 +405,8 @@ class Run:
                 coverage = task.coverage
                 approach = task.approach
                 autonomy = task.autonomy
-                how_clear = task.how_clear
-                how_fun = task.how_fun
+                how_clear = task.how_neat
+                how_fun = task.how_cool
                 how_easy = task.how_easy
                 aprint(Text().addf("m", f"clear:{how_clear}, fun:{how_fun}, easy:{how_easy}, ").addf("y", f"cov:{coverage}, app:{approach}, aut:{autonomy},").add(" "), end="", flush=True)
         if self.__no_run:
@@ -417,5 +419,5 @@ class Run:
                     percent = coverage
                 percent = (percent + (((approach + autonomy) * 100) / 11)) / 2
 
-        aprint(f"{percent:.0f}%")
+        aprint(f"{percent:03.0f}%")
         return round(percent)

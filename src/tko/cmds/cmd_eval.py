@@ -6,7 +6,7 @@ from tko.util.text import Token
 from tko.util.symbols import symbols
 
 class CmdEval:
-    EVAL_TIMEOUT_DEFAULT = 5
+    EVAL_TIMEOUT_DEFAULT = 30
     
     def __init__(self):
         self.target_list: list[str] = []
@@ -16,12 +16,17 @@ class CmdEval:
         self.complex: bool = False
         self.timeout: int = CmdEval.EVAL_TIMEOUT_DEFAULT
         self.result_file: str | None = None
+        self.diff = DiffCount.FIRST
 
         symbols.execution_result["untested"] = Token("U", "")
         symbols.execution_result["success"] = Token("S", "g")
         symbols.execution_result["wrong_output"] = Token("W", "r")
         symbols.execution_result["compilation_error"] = Token("C", "m")
         symbols.execution_result["execution_error"] = Token("E", "y")
+
+    def set_diff(self, diff: DiffCount):
+        self.diff = diff
+        return self
 
     def set_norun(self, value: bool | None = None):
         if value is not None:
@@ -46,6 +51,8 @@ class CmdEval:
     def set_timeout(self, timeout: int | None = None):
         if timeout is not None:
             self.timeout = timeout
+        else:
+            self.timeout = CmdEval.EVAL_TIMEOUT_DEFAULT
         return self
 
     def set_result_file(self, result_file: str | None = None):
@@ -62,7 +69,7 @@ class CmdEval:
             return
         
         param = Param.Basic()
-        param.set_diff_count(DiffCount.NONE)
+        param.set_diff_count(self.diff)
         param.set_compact(True)
 
         settings = Settings()
