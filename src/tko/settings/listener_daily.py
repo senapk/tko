@@ -1,7 +1,6 @@
 import yaml # type: ignore
-from tko.settings.task_basic import TaskBasic
-from tko.logger.log_action import LogAction
-from tko.logger.log_info import LogInfo
+from tko.logger.log_item_base import LogItemBase
+from tko.logger.log_enum_item import LogEnumItem
 
 class DailyListener:
     def __init__(self):
@@ -9,11 +8,10 @@ class DailyListener:
         self.actual: dict[str, TaskBasic] = {}
         self.daily_file: str | None
         
-    def listener(self, action: LogAction, new_entry: bool = False):
-        decoder = LogInfo().decode(action)
-        types = [LogAction.Type.TEST.value, LogAction.Type.PROG.value, LogAction.Type.SELF.value]
-        if decoder.type in types:
-            self.log_task(decoder.timestamp, decoder.key, decoder.cov, decoder.app, decoder.aut)
+    def listener(self, action: LogItemBase, new_entry: bool = False):
+        if action.get_key() == "":
+            return
+        self.log_task(action.get_timestamp(), action.get_key(), action.get_cov(), action.get_app(), action.get_aut())
 
     def set_daily_file(self, daily_file: str):
         self.daily_file = daily_file

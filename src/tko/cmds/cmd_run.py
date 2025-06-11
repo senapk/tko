@@ -403,10 +403,10 @@ class Run:
                 coverage = task.coverage
                 approach = task.approach
                 autonomy = task.autonomy
-                how_clear = task.how_clear
-                how_fun = task.how_fun
-                how_easy = task.how_easy
-                aprint(Text().addf("m", f"clear:{how_clear}, fun:{how_fun}, easy:{how_easy}, ").addf("y", f"cov:{coverage}, app:{approach}, aut:{autonomy},").add(" "), end="", flush=True)
+                neat = task.how_neat
+                cool = task.how_cool
+                easy = task.how_easy
+                aprint(Text().addf("m", f"neat:{neat}, cool:{cool}, easy:{easy}, ").addf("y", f"cov:{coverage}, app:{approach}, aut:{autonomy},").add(" "), end="", flush=True)
         if self.__no_run:
             percent: float = 0
         else:

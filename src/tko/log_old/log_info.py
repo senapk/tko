@@ -1,5 +1,5 @@
 from __future__ import annotations
-from tko.logger.log_action import LogAction
+from tko.log_old.log_action import LogAction
 from tko.game.task import Task
 import datetime
 

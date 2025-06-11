@@ -1,7 +1,7 @@
 import yaml
 import os
-from tko.logger.log_action import LogAction
-from tko.logger.log_info import LogInfo
+from tko.log_old.log_action import LogAction
+from tko.log_old.log_info import LogInfo
 import datetime
         
 class TaskListener:

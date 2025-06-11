@@ -36,8 +36,8 @@ class Task(TreeItem):
         self.autonomy: int = 0 # valor de 0 a autonomy_max
         self.main_idx: int = 0
 
-        self.how_clear: int = 0
-        self.how_fun: int = 0
+        self.how_neat: int = 0
+        self.how_cool: int = 0
         self.how_easy: int = 0
 
         self.qskills: dict[str, int] = {} # default quest skills
@@ -93,9 +93,9 @@ class Task(TreeItem):
                 elif k == "hab" or k == "auto":
                     self.autonomy = int(val)
                 elif k == "desc":
-                    self.how_clear = int(val)
+                    self.how_neat = int(val)
                 elif k == "desire":
-                    self.how_fun = int(val)
+                    self.how_cool = int(val)
                 elif k == "effort":
                     self.how_easy = int(val)
                 elif k == "idx":
@@ -115,7 +115,7 @@ class Task(TreeItem):
                 self.main_idx = (int(v[3]))
 
     def save_to_db(self) -> str:
-        return "{" + f"cov:{self.coverage}, appr:{self.approach}, auto:{self.autonomy}, desc:{self.how_clear}, desire:{self.how_fun}, effort:{self.how_easy}, idx:{self.main_idx}" + "}"
+        return "{" + f"cov:{self.coverage}, appr:{self.approach}, auto:{self.autonomy}, desc:{self.how_neat}, desire:{self.how_cool}, effort:{self.how_easy}, idx:{self.main_idx}" + "}"
     
     def is_db_empty(self) -> bool:
         return self.approach == 0 and self.autonomy == 0 and self.main_idx == 0 and self.coverage == 0
@@ -195,14 +195,14 @@ class Task(TreeItem):
     def set_description(self, value: int):
         value = int(value)
         if value >= 0 and value <= Task.description_max:
-            self.how_clear = value
+            self.how_neat = value
         else:
             print(f"Descrição inválida: {value}")
     
     def set_desire(self, value: int):
         value = int(value)
         if value >= 0 and value <= Task.desire_max:
-            self.how_fun = value
+            self.how_cool = value
         else:
             print(f"Interesse inválido: {value}")
 

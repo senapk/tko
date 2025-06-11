@@ -1,5 +1,7 @@
 # Changelog
 
+- 5.2.5
+  - fix: regex to load .tio not accepting empty spaces after FINISH
 - 5.2.4
   - fix: fix task graph colors
   - fix: fix task graph line and time calculation
