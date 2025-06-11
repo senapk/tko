@@ -69,7 +69,7 @@ class VplParser:
 
 class Loader:
     # regex_tio = r"^ *#INPUT *(.*?)\n(.*?)^ *#OUTPUT *\n(.*?)^ *#END *\n?"
-    regex_tio = r"^[ ]*[>]+ ?INSERT[ ]*([^\n]*?)\n([\s\S]*?)^[ ]*[=]+ ?EXPECT[ ]*\n([\s\S]*?)^[ ]*[<]+ ?FINISH*$"
+    regex_tio = r"^[ ]*[>]+ ?INSERT[ ]*([^\n]*?)\n([\s\S]*?)^[ ]*[=]+ ?EXPECT[ ]*\n([\s\S]*?)^[ ]*[<]+ ?FINISH[ ]*$"
     regex_tio_origin = r"^>>>>>>>> *(.*?)\n(.*?)^======== *\n(.*?)^<<<<<<<<"
 
     def __init__(self):
