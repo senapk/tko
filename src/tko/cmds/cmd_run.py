@@ -403,8 +403,8 @@ class Run:
                 coverage = task.coverage
                 approach = task.approach
                 autonomy = task.autonomy
-                how_clear = task.how_clear
-                how_fun = task.how_fun
+                how_clear = task.how_neat
+                how_fun = task.how_cool
                 how_easy = task.how_easy
                 aprint(Text().addf("m", f"clear:{how_clear}, fun:{how_fun}, easy:{how_easy}, ").addf("y", f"cov:{coverage}, app:{approach}, aut:{autonomy},").add(" "), end="", flush=True)
         if self.__no_run:

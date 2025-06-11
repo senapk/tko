@@ -1,5 +1,11 @@
 # Changelog
 
+- 5.2.7
+  - add: better self eval mode setting autonomy depending approach and if is leet code
+- 5.2.6
+  - add: better self eval mode setting autonomy depending approach
+- 5.2.5
+  - fix: regex to load .tio not accepting empty spaces after FINISH
 - 5.2.4
   - fix: fix task graph colors
   - fix: fix task graph line and time calculation
