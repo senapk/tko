@@ -10,60 +10,60 @@ import argparse
 
 class TaskResume:
     def __init__(self):
-        self.coverage = 0
-        self.autonomy = 0
-        self.skill = 0
-        self.elapsed = 0
-        self.attempts = 0
+        self.rate = 0
+        self.flow = 0
+        self.edge = 0
+        self.time = 0
+        self.runs = 0
 
     def set_coverage(self, value: int):
-        self.coverage = value
+        self.rate = value
         return self
     
     def set_autonomy(self, value: int):
-        self.autonomy = value
+        self.flow = value
         return self
     
     def set_skill(self, value: int):
-        self.skill = value
+        self.edge = value
         return self
     
     def set_elapsed(self, value: int):
-        self.elapsed = value
+        self.time = value
         return self
     
     def set_attempts(self, value: int):
-        self.attempts = value
+        self.runs = value
         return self
 
     def to_dict(self):
         return {
-            "coverage": self.coverage,
-            "autonomy": self.autonomy,
-            "skill": self.skill,
-            "elapsed": self.elapsed,
-            "attempts": self.attempts
+            "rate": self.rate,
+            "flow": self.flow,
+            "edge": self.edge,
+            "time": self.time,
+            "runs": self.runs
         }
 
     # @override
     def __str__(self):
-        return f"coverage:{self.coverage}, autonomy:{self.autonomy}, skill:{self.skill}, elapsed:{self.elapsed}, attempts:{self.attempts}"
+        return f"rate:{self.rate}, flow:{self.flow}, edge:{self.edge}, time:{self.time}, runs:{self.runs}"
 
 class CmdRep:
-    @staticmethod
-    def check(args: argparse.Namespace):
-        rep = Repository(args.folder).load_config().load_game()
-        logger = Logger.get_instance()
-        logger.set_log_files(rep.get_history_file(), rep.get_track_folder())
+    # @staticmethod
+    # def check(args: argparse.Namespace):
+    #     rep = Repository(args.folder).load_config().load_game()
+    #     logger = Logger.get_instance()
+    #     logger.set_log_files(rep.get_history_file(), rep.get_track_folder())
 
-        output = logger.check_log_file_integrity()
-        if len(output) == 0:
-            print(f"Arquivo de log do repositório {rep} está íntegro.")
-        else:
-            print(f"Arquivo de log do repositório {rep} está corrompido.")
-            print("Erros:")
-            for error in output:
-                print(f"- {error}")
+    #     output = logger.check_log_file_integrity()
+    #     if len(output) == 0:
+    #         print(f"Arquivo de log do repositório {rep} está íntegro.")
+    #     else:
+    #         print(f"Arquivo de log do repositório {rep} está corrompido.")
+    #         print("Erros:")
+    #         for error in output:
+    #             print(f"- {error}")
 
     @staticmethod
     def resume(args: argparse.Namespace):
@@ -75,8 +75,8 @@ class CmdRep:
 
         tasks: dict[str, TaskResume] = {}
         for task in repository_tasks.values():
-            if task.coverage != 0:
-                tasks[task.key] = TaskResume().set_coverage(task.coverage).set_autonomy(task.approach).set_skill(task.autonomy)
+            if task.rate != 0:
+                tasks[task.key] = TaskResume().set_coverage(task.rate).set_autonomy(task.flow).set_skill(task.edge)
 
         for key in history_resume:
             entry = history_resume[key]

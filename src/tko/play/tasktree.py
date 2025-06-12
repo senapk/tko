@@ -141,8 +141,8 @@ class TaskTree:
         output.addf(color_lig_task, lig_quest)
         output.add(down_symbol).add(" ")
         output.add(t.get_prog_symbol()).add(" ")
-        output.add(symbols.approach_list[t.approach]).add(" ")
-        output.add(symbols.autonomy_list[t.autonomy])
+        output.add(symbols.approach_list[t.flow]).add(" ")
+        output.add(symbols.autonomy_list[t.edge])
 
 
         if in_focus:
@@ -177,12 +177,12 @@ class TaskTree:
             output.addf("y", str(prog).rjust(3, " ") + "%")
         else:
             color_rate: list[str] = ["", "c", "g", "y", "m", "r"]
-            rate = (t.how_neat + t.how_cool) / 2
+            rate = (t.neat + t.cool) / 2
             for i in range(1, 6):
                 if rate >= i:
-                    output.addf(color_rate[t.how_easy], symbols.star)
+                    output.addf(color_rate[t.easy], symbols.star)
                 else:
-                    output.addf(color_rate[t.how_easy], symbols.open_star)
+                    output.addf(color_rate[t.easy], symbols.open_star)
 
         # if Flags.reward:
         #     xp = ""
@@ -470,12 +470,12 @@ class TaskTree:
             value = (100, 5, 5) if obj.get_percent() < 100 else (0, 0, 0)
             self.set_grade(obj, value[0], value[1], value[2])
 
-    def set_grade(self, task: Task, coverage: int, autonomy: int, skill: int):
+    def set_grade(self, task: Task, rate: int, flow: int, edge: int):
         obj = task
-        Logger.get_instance().record_self_grade(obj.key, coverage, autonomy, skill)
-        obj.set_coverage(coverage)
-        obj.set_approach(autonomy)
-        obj.set_autonomy(skill)
+        Logger.get_instance().record_self_grade(obj.key, rate, flow, edge)
+        obj.set_rate(rate)
+        obj.set_flow(flow)
+        obj.set_edge(edge)
 
 
     def set_selected_by_index(self, index: int):

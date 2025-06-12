@@ -115,7 +115,7 @@ class PlayActions:
     #         self.graph_opened = True
 
     def register_action(self, task: Task):
-        Logger.get_instance().record_self_grade(task.key, task.coverage, task.approach, task.autonomy, task.how_neat, task.how_cool, task.how_easy)
+        Logger.get_instance().record_self_grade(task.key, task.rate, task.flow, task.edge, task.neat, task.cool, task.easy)
 
     def evaluate(self):
         obj = self.tree.get_selected_throw()

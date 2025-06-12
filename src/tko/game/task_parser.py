@@ -46,6 +46,8 @@ class TaskParser:
             elif item.startswith("#"):
                 task.key = item[1:]
                 task.link_type = Task.Types.VISITABLE_URL
+            elif item == ":leet":
+                task.set_leet(True)
 
         #remove last non alfa char from key
         allowed = "0123456789_abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ"

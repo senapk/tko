@@ -212,7 +212,7 @@ class Tester:
                     done_list.append(data)
             self.results = fail_list + done_list
             percent: int = (100 * len(done_list)) // len(self.results)
-            self.task.coverage = percent
+            self.task.rate = percent
             Logger.get_instance().record_test_result(self.task.key, percent)
             self.store_test_track(percent)
 

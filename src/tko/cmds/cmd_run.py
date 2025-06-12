@@ -394,28 +394,28 @@ class Run:
                     attempts = entries[-1].att
                     aprint(Text().addf("g", f"min:{elapsed:.0f}, lines:{lines}, att:{attempts},").add(" "), end="", flush=True)
 
-        coverage: int | None = None
-        approach: int | None = None
-        autonomy: int | None = None
+        rate: int | None = None
+        flow: int | None = None
+        edge: int | None = None
         if self.__show_self_info and self.__rep is not None:
             task: Task | None = self.__rep.game.tasks.get(self.get_task().key)
             if task is not None:
-                coverage = task.coverage
-                approach = task.approach
-                autonomy = task.autonomy
-                neat = task.how_neat
-                cool = task.how_cool
-                easy = task.how_easy
-                aprint(Text().addf("m", f"neat:{neat}, cool:{cool}, easy:{easy}, ").addf("y", f"cov:{coverage}, app:{approach}, aut:{autonomy},").add(" "), end="", flush=True)
+                rate = task.rate
+                flow = task.flow
+                edge = task.edge
+                neat = task.neat
+                cool = task.cool
+                easy = task.easy
+                aprint(Text().addf("m", f"neat:{neat}, cool:{cool}, easy:{easy}, ").addf("y", f"rate:{rate}, flow:{flow}, edge:{edge},").add(" "), end="", flush=True)
         if self.__no_run:
             percent: float = 0
         else:
             percent = self.get_coverage()
         if self.__complex_percent:
-            if coverage is not None and approach is not None and autonomy is not None:
+            if rate is not None and flow is not None and edge is not None:
                 if self.__no_run:
-                    percent = coverage
-                percent = (percent + (((approach + autonomy) * 100) / 11)) / 2
+                    percent = rate
+                percent = (percent + (((flow + edge) * 100) / 11)) / 2
 
         aprint(f"{percent:.0f}%")
         return round(percent)

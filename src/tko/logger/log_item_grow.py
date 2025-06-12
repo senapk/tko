@@ -7,7 +7,7 @@ import datetime
 
 class LogItemGrow:
     def __init__(self):
-        self.attempts: int = 0
+        self.runs: int = 0
         self.versions: int = 0
         self.laststamp: str = ""
         self.elapsed: datetime.timedelta = datetime.timedelta(0)
@@ -30,7 +30,7 @@ class LogItemGrow:
         if isinstance(item, LogItemMove):
             self.move_list.append(item)
         elif isinstance(item, LogItemExec):
-            self.attempts += 1
+            self.runs += 1
             if item.get_len() > 0:
                 self.versions += 1
             self.exec_list.append(item)

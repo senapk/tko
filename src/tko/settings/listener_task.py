@@ -1,13 +1,13 @@
 import yaml
 import os
-from tko.log_old.log_action import LogAction
-from tko.log_old.log_info import LogInfo
+from tko.logger.log_item_base import LogItemBase
+from tko.logger.log_item_grow import LogItemGrow
 import datetime
         
 class TaskListener:
     TASK_CSV = "task_log.csv"
     def __init__(self):
-        self.key_actions: dict[str, list[LogInfo]] = {}
+        self.key_actions: dict[str, LogItemGrow] = {}
         self.log_file: str | None = None
         self.format = '%Y-%m-%d %H:%M:%S'
         self.max_minutes = 60
