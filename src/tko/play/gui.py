@@ -1,7 +1,7 @@
 from tko.play.keys import GuiActions, GuiKeys
 from tko.game.xp import XP
 from tko.settings.settings import Settings
-from tko.util.text import Text, RToken
+from tko.util.text import Text
 from tko.util.symbols import symbols
 import os
 
@@ -251,22 +251,22 @@ class Gui:
 
         _help.put_sentence(Text.format("  ").addf("r", "Shift + B")
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
-        _help.put_sentence(Text() + "  " + RToken("g", "setas") + "      Para navegar entre os elementos")
-        _help.put_sentence(Text() + "   " + RToken("g", f"{GuiKeys.left}{GuiKeys.down}{GuiKeys.up}{GuiKeys.right}")  + "      Para navegar entre os elementos")
-        _help.put_sentence(Text() + "   " + RToken("g", f"{GuiKeys.left2}{GuiKeys.down2}{GuiKeys.up2}{GuiKeys.right2}")  + "      Para navegar entre os elementos")
+        _help.put_sentence(Text() + "  " + Text.RToken("g", "setas") + "      Para navegar entre os elementos")
+        _help.put_sentence(Text() + "   " + Text.RToken("g", f"{GuiKeys.left}{GuiKeys.down}{GuiKeys.up}{GuiKeys.right}")  + "      Para navegar entre os elementos")
+        _help.put_sentence(Text() + "   " + Text.RToken("g", f"{GuiKeys.left2}{GuiKeys.down2}{GuiKeys.up2}{GuiKeys.right2}")  + "      Para navegar entre os elementos")
     
-        _help.put_sentence(Text() + f"   {GuiActions.config} " + RToken("r", f"{GuiKeys.palette}") + "  Abre o menu de ações e configurações")
-        _help.put_sentence(Text() + f"   {GuiActions.github} " + RToken("r", f"{GuiKeys.open_url}") + "  Abre tarefa em uma aba do browser")
-        _help.put_sentence(Text() + f"   {GuiActions.download} " + RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
-        _help.put_sentence(Text() + f"   {GuiActions.edit} " + RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
-        _help.put_sentence(Text() + f"   {GuiActions.activate} " + RToken("r", "↲") + "  Interage com o elemento de acordo com o contexto")
+        _help.put_sentence(Text() + f"   {GuiActions.config} " + Text.RToken("r", f"{GuiKeys.palette}") + "  Abre o menu de ações e configurações")
+        _help.put_sentence(Text() + f"   {GuiActions.github} " + Text.RToken("r", f"{GuiKeys.open_url}") + "  Abre tarefa em uma aba do browser")
+        _help.put_sentence(Text() + f"   {GuiActions.download} " + Text.RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
+        _help.put_sentence(Text() + f"   {GuiActions.edit} " + Text.RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
+        _help.put_sentence(Text() + f"   {GuiActions.activate} " + Text.RToken("r", "↲") + "  Interage com o elemento de acordo com o contexto")
         _help.put_sentence(Text() + "             (baixar, visitar, escolher, compactar, expandir)")
-        _help.put_sentence(Text() + f"  {GuiActions.grade} " + RToken("r", GuiKeys.grade_play) + "  Abre tela para auto avaliação")
-        _help.put_sentence(Text() + f"    {GuiActions.search} " + RToken("r", f"{GuiKeys.search}") + "  Abre a barra de pesquisa")
+        _help.put_sentence(Text() + f"  {GuiActions.grade} " + Text.RToken("r", GuiKeys.grade_play) + "  Abre tela para auto avaliação")
+        _help.put_sentence(Text() + f"    {GuiActions.search} " + Text.RToken("r", f"{GuiKeys.search}") + "  Abre a barra de pesquisa")
 
         _help.put_sentence(Text())
         _help.put_sentence(Text() + "Você pode mudar o editor padrão com o comando")
-        _help.put_sentence(Text() + RToken("g", "             tko config --editor <comando>"))
+        _help.put_sentence(Text() + Text.RToken("g", "             tko config --editor <comando>"))
 
 
     def build_xp_bar(self) -> tuple[str, float]:
@@ -291,7 +291,7 @@ class Gui:
 
     def get_task_graph(self, task_key: str, width: int, height: int) -> tuple[bool, list[Text]]:
         tg = TaskGraph(self.settings, self.rep, task_key, width, height)
-        if len(tg.collected_cov) == 1:
+        if len(tg.collected_rate) == 1:
             return False, []
         graph = tg.get_graph()
         # for y, line in enumerate(graph):
@@ -300,10 +300,9 @@ class Gui:
 
     def get_week_graph(self, width: int, height: int) -> tuple[bool, list[Text]]:
         week_mode = Flags.graph.get_value() == "1"
-        tg = WeekGraph(width, height, week_mode)
-        if len(tg.collected) == 1:
+        graph = WeekGraph(self.rep.logger, width, height, week_mode).get_graph()
+        if len(graph) == 0:
             return False, []
-        graph = tg.get_graph()
         # for y, line in enumerate(graph):
         #     frame.write(y, x, Text().addf("g", line))
         return True, graph
@@ -334,13 +333,13 @@ class Gui:
                 made, list_data = self.get_week_graph(width, height)
         if not made:
             list_data = [Text().add(x) for x in opening["estuda"].splitlines()]
-        op_one = "Nenhum" if is_task else "h/semana"
-        op_two = "Ligado" if is_task else "h/dia   "
+        op_one = "Ligado   " if is_task else "horas/sem"
+        op_two = "Desligado" if is_task else "horas/dia"
         border = Border(self.settings.app)
-        view_button = Text().add("  ").add(border.border("C", f"Mudar Visão [{GuiKeys.graph}]"))
+        view_button = Text().add("  ").add(border.border("C", f"Mudar Visão [TAB]"))
         view_value = Flags.graph.get_value()
-        view_button.add(" ").addf("M" if view_value == "0" else "Y", f" {op_one} ")
-        view_button.add(" ").addf("M" if view_value == "1" else "Y", f" {op_two} ")
+        view_button.add(" ").addf("C" if view_value == "0" else "Y", f" {op_one} ")
+        view_button.add(" ").addf("C" if view_value == "1" else "Y", f" {op_two} ")
         view_button = view_button.center(width)
         frame.write(0, self.tree.max_title + distance, view_button)
         for y, line in enumerate(list_data):

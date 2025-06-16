@@ -1,5 +1,5 @@
 from tko.settings.repository import Repository
-from tko.util.text import Text, Token
+from tko.util.text import Text
 from tko.util.to_asc import SearchAsc
 from tko.play.flags import Flags
 from tko.game.cluster import Cluster
@@ -12,8 +12,6 @@ from tko.settings.settings import Settings
 from tko.play.floating_manager import FloatingManager
 from tko.util.symbols import symbols
 from tko.game.tree_item import TreeItem
-from tko.logger.logger import Logger
-
 
 class TaskAction:
     BAIXAR   = "Baixar  "
@@ -115,7 +113,7 @@ class TaskTree:
             self.max_title = min_value
 
     def __str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool) -> Text:
-        down_symbol = Token(" ")
+        down_symbol = Text.Token(" ")
         in_focus = focus_color != ""
         down_symbol = symbols.task_to_visit
         if t.link_type == Task.Types.STATIC_FILE:
@@ -141,8 +139,8 @@ class TaskTree:
         output.addf(color_lig_task, lig_quest)
         output.add(down_symbol).add(" ")
         output.add(t.get_prog_symbol()).add(" ")
-        output.add(symbols.approach_list[t.flow]).add(" ")
-        output.add(symbols.autonomy_list[t.edge])
+        output.add(symbols.flow_list[t.info.flow]).add(" ")
+        output.add(symbols.edge_list[t.info.edge])
 
 
         if in_focus:
@@ -171,18 +169,18 @@ class TaskTree:
         else:
             output.add(" ")
 
-        output.ljust(self.max_title + 10, Token(" "))
+        output.ljust(self.max_title + 10, Text.Token(" "))
         if Flags.percent.is_true():
             prog = int(t.get_percent())
             output.addf("y", str(prog).rjust(3, " ") + "%")
         else:
             color_rate: list[str] = ["", "c", "g", "y", "m", "r"]
-            rate = (t.neat + t.cool) / 2
+            rate = (t.info.neat + t.info.cool) / 2
             for i in range(1, 6):
                 if rate >= i:
-                    output.addf(color_rate[t.easy], symbols.star)
+                    output.addf(color_rate[t.info.easy], symbols.star)
                 else:
-                    output.addf(color_rate[t.easy], symbols.open_star)
+                    output.addf(color_rate[t.info.easy], symbols.open_star)
 
         # if Flags.reward:
         #     xp = ""
@@ -432,50 +430,6 @@ class TaskTree:
             return self.items[index]
         raise IndexError("No item selected")
             
-    def mass_mark(self):
-        obj = self.get_selected_throw()
-        if isinstance(obj, Cluster):
-            cluster: Cluster = obj
-            if cluster.key not in self.expanded:
-                self.expanded.append(cluster.key)
-                return
-            full_open = True
-            for q in cluster.get_quests():
-                if q.key in self.game.quests.keys() and q.key not in self.expanded:
-                    self.expanded.append(q.key)
-                    full_open = False
-            if not full_open:
-                return
-
-            value = None
-            for q in obj.get_quests():
-                for t in q.get_tasks():
-                    if value is not None:
-                        self.set_grade(t, value[0], value[1], value[2])
-                    else:
-                        value = (100, 5, 5) if t.get_percent() < 100 else (0, 0, 0)
-                        self.set_grade(t, value[0], value[1], value[2])
-        elif isinstance(obj, Quest):
-            if obj.key not in self.expanded:
-                self.expanded.append(obj.key)
-            else:
-                value = None
-                for t in obj.get_tasks():
-                    if value is not None:
-                        self.set_grade(t, value[0], value[1], value[2])
-                    else:
-                        value = (100, 5, 5) if t.get_percent() < 100 else (0, 0, 0)
-                        self.set_grade(t, value[0], value[1], value[2])
-        elif isinstance(obj, Task):
-            value = (100, 5, 5) if obj.get_percent() < 100 else (0, 0, 0)
-            self.set_grade(obj, value[0], value[1], value[2])
-
-    def set_grade(self, task: Task, rate: int, flow: int, edge: int):
-        obj = task
-        Logger.get_instance().record_self_grade(obj.key, rate, flow, edge)
-        obj.set_rate(rate)
-        obj.set_flow(flow)
-        obj.set_edge(edge)
 
 
     def set_selected_by_index(self, index: int):

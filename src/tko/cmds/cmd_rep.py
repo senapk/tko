@@ -1,104 +1,46 @@
 from tko.settings.repository import Repository
 from tko.settings.settings import Settings
 from tko.logger.logger import Logger
-from tko.game.task import Task
+from tko.logger.log_resume import LogResume
+from tko.logger.log_sort import LogSort
 from tko.play.week_graph import WeekGraph
 import yaml # type: ignore
 import os
 import argparse
-# from typing import override
 
-class TaskResume:
-    def __init__(self):
-        self.rate = 0
-        self.flow = 0
-        self.edge = 0
-        self.time = 0
-        self.runs = 0
-
-    def set_coverage(self, value: int):
-        self.rate = value
-        return self
-    
-    def set_autonomy(self, value: int):
-        self.flow = value
-        return self
-    
-    def set_skill(self, value: int):
-        self.edge = value
-        return self
-    
-    def set_elapsed(self, value: int):
-        self.time = value
-        return self
-    
-    def set_attempts(self, value: int):
-        self.runs = value
-        return self
-
-    def to_dict(self):
-        return {
-            "rate": self.rate,
-            "flow": self.flow,
-            "edge": self.edge,
-            "time": self.time,
-            "runs": self.runs
-        }
-
-    # @override
-    def __str__(self):
-        return f"rate:{self.rate}, flow:{self.flow}, edge:{self.edge}, time:{self.time}, runs:{self.runs}"
 
 class CmdRep:
-    # @staticmethod
-    # def check(args: argparse.Namespace):
-    #     rep = Repository(args.folder).load_config().load_game()
-    #     logger = Logger.get_instance()
-    #     logger.set_log_files(rep.get_history_file(), rep.get_track_folder())
-
-    #     output = logger.check_log_file_integrity()
-    #     if len(output) == 0:
-    #         print(f"Arquivo de log do repositório {rep} está íntegro.")
-    #     else:
-    #         print(f"Arquivo de log do repositório {rep} está corrompido.")
-    #         print("Erros:")
-    #         for error in output:
-    #             print(f"- {error}")
+    @staticmethod
+    def show(args: argparse.Namespace):
+        rep = Repository(args.folder).load_config().load_game()
+        if args.weekgraph:
+            CmdRep.graph(rep, week_mode=True)
+        if args.daygraph:
+            CmdRep.graph(rep, week_mode=False)
+        if args.resume:
+            CmdRep.resume(rep)
 
     @staticmethod
-    def resume(args: argparse.Namespace):
-        rep = Repository(args.folder).load_config().load_game()
-        logger = Logger.get_instance()
-        logger.set_log_files(rep.get_history_file(), rep.get_track_folder())
-        history_resume = logger.tasks.resume()
-        repository_tasks: dict[str, Task] = rep.game.tasks
+    def resume(rep: Repository):
+        logger: Logger = rep.logger
+        tasks: dict[str, LogSort] = logger.tasks.task_dict
+        resume_dict: dict[str, LogResume] = {}
 
-        tasks: dict[str, TaskResume] = {}
-        for task in repository_tasks.values():
-            if task.rate != 0:
-                tasks[task.key] = TaskResume().set_coverage(task.rate).set_autonomy(task.flow).set_skill(task.edge)
-
-        for key in history_resume:
-            entry = history_resume[key]
-            elapsed = entry.get_minutes()
-            attempts = entry.att
-            if elapsed > 0 or attempts > 0:
-                if key not in tasks:
-                    tasks[key] = TaskResume()
-                tasks[key].set_elapsed(entry.get_minutes()).set_attempts(entry.att)
-        
-        tasks_str: dict[str, dict[str, int]] = {}
         for key in tasks:
-            tasks_str[key] = tasks[key].to_dict()
+            log_sort = tasks[key]
+            resume = LogResume().from_log_sort(log_sort)
+            resume_dict[key] = resume
+
+        
+        tasks_str: dict[str, dict[str, str]] = {}
+        for key, value in resume_dict.items():
+            tasks_str[key] = value.to_dict()
 
         print (yaml.dump(tasks_str, sort_keys=False))
 
     @staticmethod
-    def graph(args: argparse.Namespace):
-        rep = Repository(args.folder).load_config().load_game()
-        logger = Logger.get_instance()
-        logger.set_log_files(rep.get_history_file(), rep.get_track_folder())
-        wg = WeekGraph(100, 24, week_mode=True)
+    def graph(rep: Repository, week_mode: bool):
+        wg = WeekGraph(rep.logger, 100, 24, week_mode)
         image = wg.get_graph()
         week = wg.get_collected()
         pad = " " * 12

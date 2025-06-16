@@ -3,7 +3,8 @@ from uniplot import plot_to_string # type: ignore
 from tko.util.text import Text
 
 class WeekGraph:
-    def __init__(self, width: int, height: int, week_mode: bool = False):
+    def __init__(self, logger: Logger, width: int, height: int, week_mode: bool = False):
+        self.logger = logger
         self.width = width
         self.height = height
         self.week_mode = week_mode
@@ -12,12 +13,11 @@ class WeekGraph:
         self.__collect()
 
     def __collect(self):
-        logger = Logger.get_instance()
-        days_minutes = logger.week.resume()
+        days_minutes = self.logger.week.resume()
         if self.week_mode:
             self.collected = [0]
             for _, value in days_minutes.items():
-                week_day = value.weed_day
+                week_day = value.week_day
                 elapsed = value.elapsed
                 if week_day == "Sunday":
                     self.collected.append(0)
@@ -47,6 +47,8 @@ class WeekGraph:
     def get_graph(self) -> list[Text]:
         collected: list[float] = []
         eixo: list[int] = []
+        if not self.collected:
+            return []
         if self.week_mode:
             title = " (horas / semana)"
             week = 1

@@ -21,6 +21,10 @@ from tko.play.opener import Opener
 
 from tko.play.tasktree import TaskAction
 from typing import Callable
+
+from tko.logger.log_item_self import LogItemSelf
+from tko.logger.log_item_move import LogItemMove
+
 import os
 import tempfile
 import subprocess
@@ -115,7 +119,7 @@ class PlayActions:
     #         self.graph_opened = True
 
     def register_action(self, task: Task):
-        Logger.get_instance().record_self_grade(task.key, task.rate, task.flow, task.edge, task.neat, task.cool, task.easy)
+        self.rep.logger.store( LogItemSelf().set_key(task.key).set_info(task.info) )
 
     def evaluate(self):
         obj = self.tree.get_selected_throw()
@@ -175,7 +179,9 @@ class PlayActions:
         cmd_down.set_language(lang)
         result = cmd_down.execute()
         if result:
-            Logger.get_instance().record_down(task.key)
+            self.rep.logger.store(
+                LogItemMove().set_key(task.key).set_mode(LogItemMove.Mode.DOWN)
+            )
 
 
     def select_task_action(self, task: Task) -> None:

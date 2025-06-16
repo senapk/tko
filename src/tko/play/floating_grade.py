@@ -22,32 +22,32 @@ class FloatingGrade(Floating):
         self.set_header_text(Text.format("{y/}", " Utilize os direcionais e teclas - e + para  marcar "))
         self.set_footer_text(Text.format("{y/}", " Pressione Enter para confirmar "))
 
-        self.grades_index = [task.rate // 10, task.flow, task.edge, task.neat, task.cool, task.easy]
-        self.coverage = ["x", "1", "2", "3", "4", "5", "6", "7", "8", "9", "✓"]
-        self.coverage_msg = [
+        self.grades_index = [task.info.rate // 10, task.info.flow, task.info.edge, task.info.neat, task.info.cool, task.info.easy]
+        self.rate_opt = ["x", "1", "2", "3", "4", "5", "6", "7", "8", "9", "✓"]
+        self.rate_msg = [
             Text().addf("m", "Não ").addf("y", "fiz"),
-            Text().addf("m", "Fiz ").addf("y", "10%"),
-            Text().addf("m", "Fiz ").addf("y", "20%"),
-            Text().addf("m", "Fiz ").addf("y", "30%"),
-            Text().addf("m", "Fiz ").addf("y", "40%"),
-            Text().addf("m", "Fiz ").addf("y", "50%"),
-            Text().addf("m", "Fiz ").addf("y", "60%"),
-            Text().addf("m", "Fiz ").addf("y", "70%"),
-            Text().addf("m", "Fiz ").addf("y", "80%"),
-            Text().addf("m", "Fiz ").addf("y", "90%"),
-            Text().addf("m", "Fiz ").addf("y", "100%")]
-        self.approach = [x.text for x in [symbols.approach_x, symbols.approach_e, symbols.approach_d, symbols.approach_c, symbols.approach_b, symbols.approach_a, symbols.approach_s]]
-        self.approach_msg = [
+            Text().addf("y", " 10%"),
+            Text().addf("y", " 20%"),
+            Text().addf("y", " 30%"),
+            Text().addf("y", " 40%"),
+            Text().addf("y", " 50%"),
+            Text().addf("y", " 60%"),
+            Text().addf("y", " 70%"),
+            Text().addf("y", " 80%"),
+            Text().addf("y", " 90%"),
+            Text().addf("y", "100%")]
+        self.flow_opt = [x.text for x in [symbols.flow_x, symbols.flow_e, symbols.flow_d, symbols.flow_c, symbols.flow_b, symbols.flow_a, symbols.flow_s]]
+        self.flow_msg = [
             Text().addf("m", "Não fiz"),
-            Text().addf("m", "Peguei o código ").addf("y", "pronto").addf("m", " e estudei ele"),
-            Text().addf("m", "Fiz com ajuda de ").addf("y", "IA").addf("m", "(copilot|gpt|outros)"),
-            Text().addf("m", "Fiz").addf("y"," guiado ").addf("m", "por aula|vídeo|colega|monitor"),
-            Text().addf("y", "(Re)Fiz").addf("m", " os códigos").addf("m", " pesquisando"),
-            Text().addf("y", "Refiz sozinho").addf("m", " sem consultar algoritmos"),
-            Text().addf("y", "Fiz sozinho").addf("m", " sem consultar algoritmos")
+            Text().addf("m", "Fiz com ajuda ").addf("Y", "H").addf("y", "umana").addf("m", "(colega|monitor|...)"),
+            Text().addf("m", "Fiz com ajuda de ").addf("Y", "I").addf("y", "A").addf("m", "(copilot|gpt|...)"),
+            Text().addf("m", "Fiz ").addf("Y", "G").addf("y","uiado").addf("m", "/Copiando").addf("m", "(").addf("m", "aula|vídeo").addf("m", "|...)"),
+            Text().addf("m", "Fiz ").addf('Y', 'P').addf("y", "esquisando").addf("m", "(livros|sites|youtube|...)"),
+            Text().addf("m", "Fiz ").addf("m", "sem consultar ").addf('Y', 'A').addf("y", "lgoritmos"),
+            Text().addf("m", "Fiz ").addf("Y", 'S').addf("y", "ozinho").addf("m", " sem consultar nada")
             ]
-        self.autonomy = [x.text for x in [symbols.autonomy_x, symbols.autonomy_e, symbols.autonomy_d, symbols.autonomy_c, symbols.autonomy_b, symbols.autonomy_a]]
-        self.autonomy_msg = [
+        self.edge_opt = [x.text for x in [symbols.edge_x, symbols.edge_e, symbols.edge_d, symbols.edge_c, symbols.edge_b, symbols.edge_a]]
+        self.edge_msg = [
             Text().addf("m", "Não fiz        ").addf("y", "                         "),
             Text().addf("m", "Consigo refazer ").addf("y", ">= 30% sem consulta     "),
             Text().addf("m", "Consigo refazer ").addf("y", ">= 50% sem consulta     "),
@@ -56,7 +56,7 @@ class FloatingGrade(Floating):
             Text().addf("m", "Consigo refazer ").addf("y", "  100% sem consulta     ")
             ]
 
-        self.neat = [x.text for x in [symbols.cool_x, 
+        self.neat_opt = [x.text for x in [symbols.cool_x, 
                                              symbols.cool_e, 
                                              symbols.cool_d, 
                                              symbols.cool_c, 
@@ -73,7 +73,7 @@ class FloatingGrade(Floating):
             ]
         
        
-        self.cool = [x for x in self.neat]
+        self.cool_opt = [x for x in self.neat_opt]
         self.cool_msg = [
             Text().addf("m", "Sem opinião        ").addf("y", "                     "),
             Text().addf("m", "A atividade parece ").addf("y", "muito desinteressante"),
@@ -83,7 +83,7 @@ class FloatingGrade(Floating):
             Text().addf("m", "A atividade parece ").addf("y", "muito interessante   "),
             ]
 
-        self.easy = [x for x in self.neat]
+        self.easy_opt = [x for x in self.neat_opt]
         self.easy_msg = [
             Text().addf("m", "Sem opinião          ").addf("y", "                   "),
             Text().addf("m", "Resolver a atividade ").addf("y", "foi muito difícil  "),
@@ -93,73 +93,84 @@ class FloatingGrade(Floating):
             Text().addf("m", "Resolver a atividade ").addf("y", "foi muito fácil    "),
             ]
 
-        self.grades_value = [self.coverage, self.approach, self.autonomy, self.neat, self.cool, self.easy]
-        self.grades_msg = [self.coverage_msg, self.approach_msg, self.autonomy_msg, self.neat_msg, self.cool_msg, self.easy_msg]
+        self.grades_value = [self.rate_opt, self.flow_opt, self.edge_opt, self.neat_opt, self.cool_opt, self.easy_opt]
+        self.grades_msg = [self.rate_msg, self.flow_msg, self.edge_msg, self.neat_msg, self.cool_msg, self.easy_msg]
 
 
     def update_content(self):
         self._content = []
-        self._content.append(Text().add("         Pontue de acordo com a última fez que você (re)fez a tarefa do zero         "))
-        self._content.append(Text().add("╔══════════════════════════════════ Obrigatório ═════════════════════════════════════"))
-        coverage_question = "Cobertura: Quanto entregou?"
-        approach_question = "Abordagem: Como foi feito ?"
-        autonomy_question = "Autonomia: Quanto domina  ?"
+        self._content.append(Text().add("         Pontue de acordo com a última fez que você (re)fez a tarefa do zero           "))
+        width = 90
+        flow_value = self._task.get_flow_value()
+        edge_value = self._task.get_edge_value()
+        somatorio = (Text()
+                    # .addf('c', f'{self._task.info.get_rate()}%') .add(" * ")
+                    # .addf('c', f'{flow_value}%') .add(" * ")
+                    # .addf('c', f'{edge_value}%') .add(" = ")
+                    .addf('g', f'{round(self._task.get_percent()):>3}%'))
+
+        self._content.append(Text().add("╔") + Text().add(" Tarefa:").add(somatorio).add(" ").center(width, Text.Token("═", "")))
+        rate_question = "Cobertura: Quanto entregou?"
+        flow_question = "Abordagem: Como foi feito ?"
+        edge_question = "Autonomia: Quanto domina  ?"
         neat_question = "Descrição: É bem escrita  ?"
         cool_question = "Interesse: É interessante ?"
         easy_question = "Dedicação: É fácil        ?"
 
         opening = "╠═ "
         op_prefix = opening if not self._task.is_leet() else "║  "
-        coverage_text = Text().add(op_prefix).addf("Y" if self._line == 0 else "", coverage_question).add("  ")
-        for i, c in enumerate(self.coverage):
-            coverage_text.addf("C" if i == self.grades_index[0] else "", c)
-        coverage_text.add("  ").add(self.coverage_msg[self.grades_index[0]])
-        self._content.append(coverage_text)
+        rate_text = Text().add(op_prefix).addf("Y" if self._line == 0 else "", rate_question).add("  ")
+        for i, c in enumerate(self.rate_opt):
+            rate_text.addf("Y" if i == self.grades_index[0] else "", c)
+        rate_text.add("  ").add(self.rate_msg[self.grades_index[0]])
+        self._content.append(rate_text)
         # self._content.append(Text())
-        approach_text = Text().add(opening).addf("Y" if self._line == 1 else "", approach_question).add("  ")
-        for i, c in enumerate(self.approach):
-            approach_text.addf("G" if i == self.grades_index[1] else "", c).add("")
+        flow_text = Text().add(opening).addf("Y" if self._line == 1 else "", flow_question).add("  ")
+        for i, c in enumerate(self.flow_opt):
+            flow_text.addf("Y" if i == self.grades_index[1] else "", c).add("")
             if c == "x":
-                approach_text.add("  ")
-            if c == "A":
-                approach_text.add("  ")
+                flow_text.add("  ")
+            if c == "P":
+                flow_text.add("  ")
             if c == "S":
-                approach_text.add(" ")
-        
-        approach_text.add(" ").add(self.approach_msg[self.grades_index[1]])
-        self._content.append(approach_text)
+                flow_text.add(" ")
+
+
+        flow_text.add(" ").addf('y', f'{flow_value:>3}% ').add(self.flow_msg[self.grades_index[1]])
+        self._content.append(flow_text)
         # self._content.append(Text())
 
         prefix = opening
-        if self.done_alone():
+        if self.done_alone() or self.not_done():
             prefix = "║  "
-        autonomy_text = Text().add(prefix).addf("Y" if self._line == 2 else "", autonomy_question).add("  ")
-        for i, c in enumerate(self.autonomy):
-            autonomy_text.addf("yW" if i == self.grades_index[2] else "", c).add(" ")
-        autonomy_text.add(" ").add(self.autonomy_msg[self.grades_index[2]])
-        self._content.append(autonomy_text)
+        edge_text = Text().add(prefix).addf("Y" if self._line == 2 else "", edge_question).add("  ")
+        for i, c in enumerate(self.edge_opt):
+            edge_text.addf("y" if i == self.grades_index[2] else "", c).add(" ")
 
-        self._content.append(Text().add("╟─────────────────────────────────── Opcional ───────────────────────────────────────"))
+        edge_text.add(" ").addf('y', f'{edge_value:>3}% ')
+        # edge_text.add(" ").add(self.edge_msg[self.grades_index[2]])
+        self._content.append(edge_text)
+        self._content.append(Text().add("╟───────────────────────────────────── Opcional ───────────────────────────────────────────"))
 
         description_text = Text().add(opening).addf("Y" if self._line == 3 else "", neat_question).add("  ")
-        for i, c in enumerate(self.neat):
-            description_text.addf("yW" if i == self.grades_index[3] else "", c).add(" ")
+        for i, c in enumerate(self.neat_opt):
+            description_text.addf("Y" if i == self.grades_index[3] else "", c).add(" ")
         description_text.add(" ").add(self.neat_msg[self.grades_index[3]])
         self._content.append(description_text)
 
         desire_text = Text().add(opening).addf("Y" if self._line == 4 else "", cool_question).add("  ")
-        for i, c in enumerate(self.cool):
-            desire_text.addf("yW" if i == self.grades_index[4] else "", c).add(" ")
+        for i, c in enumerate(self.cool_opt):
+            desire_text.addf("Y" if i == self.grades_index[4] else "", c).add(" ")
         desire_text.add(" ").add(self.cool_msg[self.grades_index[4]])
         self._content.append(desire_text)
 
         effort_text = Text().add(opening).addf("Y" if self._line == 5 else "", easy_question).add("  ")
-        for i, c in enumerate(self.easy):
-            effort_text.addf("yW" if i == self.grades_index[5] else "", c).add(" ")
+        for i, c in enumerate(self.easy_opt):
+            effort_text.addf("Y" if i == self.grades_index[5] else "", c).add(" ")
         effort_text.add(" ").add(self.easy_msg[self.grades_index[5]])
         self._content.append(effort_text)
 
-        self._content.append(Text().add("╚════════════════════════════════════════════════════════════════════════════════════"))
+        self._content.append(Text().add("╚══════════════════════════════════════════════════════════════════════════════════════════"))
 
     # @override
     def draw(self):
@@ -172,15 +183,18 @@ class FloatingGrade(Floating):
 
     def change_task(self):
         if not self._task.is_leet ():
-            self._task.set_rate(self.grades_index[0] * 10)
-        self._task.set_flow(self.grades_index[1])
-        self._task.set_edge(self.grades_index[2])
-        self._task.set_neat(self.grades_index[3])
-        self._task.set_cool(self.grades_index[4])
-        self._task.set_easy(self.grades_index[5])
+            self._task.info.set_rate(self.grades_index[0] * 10)
+        self._task.info.set_flow(self.grades_index[1])
+        self._task.info.set_edge(self.grades_index[2])
+        self._task.info.set_neat(self.grades_index[3])
+        self._task.info.set_cool(self.grades_index[4])
+        self._task.info.set_easy(self.grades_index[5])
 
     def done_alone(self) -> bool:
         return self.grades_index[1] > 4
+    
+    def not_done(self) -> bool:
+        return self.grades_index[1] == 0
     
     def set_autonomy_max(self):
         self.grades_index[2] = 5
@@ -188,24 +202,32 @@ class FloatingGrade(Floating):
     def send_key_up(self):
         if not(self._task.is_leet() and self._line == 1):
             self._line = max(self._line - 1, 0)
-        if (self.done_alone() and self._line == 2):
+        if (self.done_alone() and self._line == 2) or (self.not_done() and self._line == 2):
             self._line = max(self._line - 1, 0)
 
     def send_key_down(self):
         self._line = min(self._line + 1, len(self.grades_index) - 1)
-        if self.done_alone() and self._line == 2:
+        if (self.done_alone() and self._line == 2) or (self.not_done() and self._line == 2):
             self._line = min(self._line + 1, len(self.grades_index) - 1)
 
     def send_key_left(self):
         self.grades_index[self._line] = max(self.grades_index[self._line] - 1, 0)
         if self._line == 1 and self.grades_index[1] < 4:
             self.grades_index[2] = 0
+        if self._line == 1 and self.done_alone() and self.grades_index[self._line] == 5:
+            self.set_autonomy_max()
+            self.grades_index[2] -= 1
         self.change_task()
 
     def send_key_right(self):
         self.grades_index[self._line] = min(self.grades_index[self._line] + 1, len(self.grades_value[self._line]) - 1)
-        if self._line == 1 and self.done_alone() and self.grades_index[self._line] > 4:
+        if self._line == 1 and self.done_alone() and self.grades_index[self._line] == 6:
             self.set_autonomy_max()
+        if self._line == 1 and self.done_alone() and self.grades_index[self._line] == 5:
+            self.set_autonomy_max()
+            self.grades_index[2] -= 1
+        if self._line == 2 and self.grades_index[1] < 6:
+            self.grades_index[2] = min(self.grades_index[2], 4)
         self.change_task()
 
     # @override

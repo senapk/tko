@@ -1,8 +1,10 @@
 from tko.settings.settings import Settings
 from tko.settings.repository import Repository
-from tko.logger.logger import Logger
 from uniplot import plot_to_string # type: ignore
 from tko.util.text import Text
+from tko.logger.log_sort import LogSort
+from tko.logger.log_item_exec import LogItemExec
+from tko.logger.delta import Delta
 
 class TaskGraph:
     def __init__(self, settings: Settings, rep: Repository, task_key: str, width: int, height: int):
@@ -11,38 +13,46 @@ class TaskGraph:
         self.task_key = task_key
         self.width = width
         self.height = height
-        self.collected_cov: list[float] = []
+        
+        self.collected_rate: list[float] = []
         self.collected_elapsed: list[float] = []
+        self.collected_lines: list[float] = []
+
         self.total_elapsed: float = 0.0
         self.max_lines: float = 0
+        self.actual_rate: float = 0.0
+        
         self.eixo: list[float] = []
-        self.logger = Logger.get_instance()
+        self.logger = rep.logger
 
     def __collect(self):
-        actions = self.logger.tasks.key_actions.get(self.task_key, [])
-        types = ["TEST", "PROG", "SELF", "FAIL"]
-        filtered = [ad for ad in actions if ad.type in types]
-        collected_cov: list[float] = [0]
+        key_dict: dict[str, LogSort] = self.logger.tasks.task_dict
+        if not self.task_key in key_dict:
+            return
+        
+        item_exec_list: list[tuple[Delta, LogItemExec]] = key_dict[self.task_key].exec_list
+        collected_rate: list[float] = [0]
         collected_elapsed: list[float] = [0]
         collected_lines: list[float] = [0]
         last = 0
         eixo: list[float] = [0]
         count = 1
-        for ad in filtered:
-            if ad.cov == -1 or ad.cov == 0:
-                collected_cov.append(last)
+        last_size = 0
+        for delta, item in item_exec_list:
+            if item.rate == -1 or item.rate == 0:
+                collected_rate.append(last)
             else:
-                last = ad.cov
-                collected_cov.append(last)
-            collected_elapsed.append(ad.elapsed.total_seconds() / 60)
-            collected_lines.append(ad.len)
-            # if self.minutes_mode:
-            #     eixo.append(ad.elapsed.total_seconds() / 60)
-            # else:
+                last = item.rate
+                collected_rate.append(last)
+            collected_elapsed.append(delta.accumulated.total_seconds() / 60)  # Convert to minutes
+            if item.size > 0:
+                last_size = item.size
+            collected_lines.append(last_size)
             eixo.append(count)
             count += 1
         self.total_elapsed = collected_elapsed[-1]
         self.max_lines = max(collected_lines)
+        self.actual_rate = collected_rate[-1] if collected_rate else 0
         if collected_elapsed[-1] != 0:
             for i in range(len(collected_elapsed)):
                 collected_elapsed[i] = collected_elapsed[i] / self.total_elapsed * 100
@@ -52,7 +62,7 @@ class TaskGraph:
                 if collected_lines[i] < 1:
                     collected_lines[i] = 0
 
-        self.collected_cov = collected_cov
+        self.collected_rate = collected_rate
         self.collected_elapsed = collected_elapsed
         self.collected_lines = collected_lines
         self.eixo = eixo
@@ -60,13 +70,15 @@ class TaskGraph:
 
     def get_graph(self) -> list[Text]:
         self.__collect()
+        if not self.eixo:
+            return []
         lines: list[Text] = []
         title = Text.format(" {C}", f" @{self.task_key} ")
+        title += Text.format(" {G}", f" Total: {self.actual_rate:.0f} % ")
         title += Text.format(" {B}", f" Tempo: {self.total_elapsed:.0f} min ")
-        title += Text.format(" {G}", f" Total: {self.collected_cov[-1]:.0f} % ")
         title += Text.format(" {M}", f" Linhas: {self.max_lines:.0f} ")
         # if len(self.collected_elapsed) > 1:
-        result = plot_to_string(xs=[self.eixo, self.eixo, self.eixo], ys=[self.collected_elapsed, self.collected_lines, self.collected_cov], lines=True, y_min=0, width=self.width, height=self.height)
+        result = plot_to_string(xs=[self.eixo, self.eixo, self.eixo], ys=[self.collected_elapsed, self.collected_lines, self.collected_rate], lines=True, y_min=0, width=self.width, height=self.height)
 
         if isinstance(result, str):
             result = result.splitlines()

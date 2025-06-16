@@ -1,5 +1,5 @@
 from tko.play.flags import Flag
-from tko.util.text import Text, Token
+from tko.util.text import Text
 from tko.settings.app_settings import AppSettings
 from tko.util.symbols import symbols
 
@@ -16,17 +16,17 @@ class Border:
     def border_sharp(self, color: str, data: str):
         return Text().add(self.sharpL(color)).addf(color, data).add(self.sharpR(color))
 
-    def roundL(self, color: str) -> Token:
-        return Token("", color.lower()) if self.has_borders() else Token(" ", color)
+    def roundL(self, color: str) -> Text.Token:
+        return Text.Token("", color.lower()) if self.has_borders() else Text.Token(" ", color)
 
-    def roundR(self, color: str) -> Token:
-        return Token("", color.lower()) if self.has_borders() else Token(" ", color)
+    def roundR(self, color: str) -> Text.Token:
+        return Text.Token("", color.lower()) if self.has_borders() else Text.Token(" ", color)
 
-    def sharpL(self, color: str) -> Token:
-        return Token("", color.lower()) if self.has_borders() else Token(" ", color)
+    def sharpL(self, color: str) -> Text.Token:
+        return Text.Token("", color.lower()) if self.has_borders() else Text.Token(" ", color)
 
     def sharpR(self, color: str):
-        return Token("", color.lower()) if self.has_borders() else Token(" ", color)
+        return Text.Token("", color.lower()) if self.has_borders() else Text.Token(" ", color)
 
     def build_bar(self, text: str, percent: float, length: int, fmt_true: str = "/kC",
                   fmt_false: str = "/kY", round: bool = True) -> Text:
@@ -42,7 +42,7 @@ class Border:
         
         full_line = text
         done_len = int(percent * length)
-        xp_bar = Token(full_line[:done_len], fmt_true) + Token(full_line[done_len:], fmt_false)
+        xp_bar = Text.Token(full_line[:done_len], fmt_true) + Text.Token(full_line[done_len:], fmt_false)
             
         if round:
             xp_bar.data[0] = self.roundL(xp_bar.data[0].fmt)

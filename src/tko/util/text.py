@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any
+
 import re
 
 class AnsiColor:
@@ -43,35 +44,38 @@ class AnsiColor:
             output += AnsiColor.terminal_styles.get('.', "")
         return output
 
-class Token:
-    def __init__(self, text: str = "", fmt: str = ""):
-        if not isinstance(text, str): # type: ignore
-            raise TypeError("text must be a string")
-        self.text = text
-        self.fmt = fmt
 
-    # @override
-    def __eq__(self, other: Any):
-        if not isinstance(other, Token):
-            return False
-        return self.text == other.text and self.fmt == other.fmt
-
-    def __len__(self):
-        return len(self.text)
-    
-    def __add__(self, other: Any):
-        return Text().add(self).add(other)
-
-    # @override
-    def __str__(self):
-        return f"({self.fmt}:{self.text})"
-
-def RToken(fmt: str, text: str) -> Token:
-    return Token(text, fmt)
 
 class Text:
+    @staticmethod
+    def RToken(fmt: str, text: str) -> Token:
+        return Text.Token(text, fmt)
+
+    class Token:
+        def __init__(self, text: str = "", fmt: str = ""):
+            if not isinstance(text, str): # type: ignore
+                raise TypeError("text must be a string")
+            self.text = text
+            self.fmt = fmt
+
+        # @override
+        def __eq__(self, other: Any):
+            if not isinstance(other, Text.Token):
+                return False
+            return self.text == other.text and self.fmt == other.fmt
+
+        def __len__(self):
+            return len(self.text)
+        
+        def __add__(self, other: Any):
+            return Text().add(self).add(other)
+
+        # @override
+        def __str__(self):
+            return f"({self.fmt}:{self.text})"
+        
     def __init__(self, default_fmt: str = ""):
-        self.data: list[Token] = []
+        self.data: list[Text.Token] = []
         self.default_fmt = default_fmt
 
 
@@ -104,7 +108,7 @@ class Text:
             # Adiciona os caracteres que não são códigos ANSI
             if match.start() > last_idx:
                 for char in data[last_idx:match.start()]:
-                    text.add(Token(char, fmt))
+                    text.add(Text.Token(char, fmt))
 
             # Atualiza o formato com base no código ANSI encontrado
             ansi_code = match.group(0)
@@ -114,7 +118,7 @@ class Text:
         # Adiciona quaisquer caracteres restantes após o último código ANSI
         if last_idx < len(data):
             for char in data[last_idx:]:
-                text.add(Token(char, fmt))
+                text.add(Text.Token(char, fmt))
 
         return text
 
@@ -138,11 +142,11 @@ class Text:
         other.data = [v for v in self.data]
         return other
 
-    def setup(self, data: list[Token]):
+    def setup(self, data: list[Text.Token]):
         self.data = []
         for d in data:
             for c in d.text:
-                self.data.append(Token(c, d.fmt))
+                self.data.append(Text.Token(c, d.fmt))
         return self
 
     def split(self, sep: str) -> list[Text]:
@@ -171,7 +175,7 @@ class Text:
             output.add(self[i])
         return output
 
-    def __getitem__(self, index: int) -> Token:
+    def __getitem__(self, index: int) -> Text.Token:
         if index < 0 or index >= len(self):
             raise IndexError("index out of range")
         return self.data[index]
@@ -193,7 +197,7 @@ class Text:
 
     # @override
     def __str__(self):
-        return self.get_str()
+        return self.ansi()
 
     def ansi(self) -> str:
         output = ""
@@ -201,23 +205,23 @@ class Text:
             output += AnsiColor.colour(elem.fmt, elem.text)
         return output
     
-    def resume(self) -> list[Token]:
+    def resume(self) -> list[Text.Token]:
         # Group consecutive text with the same fmt
         if len(self.data) == 0:
             return []
         
-        new_data: list[Token] = [Token("", self.data[0].fmt)]
+        new_data: list[Text.Token] = [Text.Token("", self.data[0].fmt)]
         for d in self.data:
             if d.fmt == new_data[-1].fmt:
                 new_data[-1].text += d.text
             else:
-                new_data.append(Token())
+                new_data.append(Text.Token())
                 new_data[-1].text = d.text
                 new_data[-1].fmt = d.fmt
         return new_data
 
     # search for a value inside the tokens and replace it with a new value and fmt
-    def replace(self, old: str, token: Token):
+    def replace(self, old: str, token: Text.Token):
         index = 0
         while True:
             if index + len(old) > len(self.data):
@@ -225,7 +229,7 @@ class Text:
             sub = "".join([t.text for t in self.data[index:index + len(old)]])
             if sub == old:
                 pre = self.data[:index]
-                mid = [Token(t, token.fmt) for t in token.text]
+                mid = [Text.Token(t, token.fmt) for t in token.text]
                 pos = self.data[index + len(old):]
                 self.data = pre + mid + pos
                 index += len(token.text)
@@ -239,17 +243,17 @@ class Text:
             output.add(self)
         return output
 
-    def add(self, value: str | Token | Text | tuple[str, str] | None):
+    def add(self, value: str | Text.Token | Text | tuple[str, str] | None):
         if value is None:
             return self
         if isinstance(value, str):
             if value != "":
                 for c in value:
-                    self.data.append(Token(c, self.default_fmt))
-        elif isinstance(value, Token):
+                    self.data.append(Text.Token(c, self.default_fmt))
+        elif isinstance(value, Text.Token):
             if value.text != "":
                 for c in value.text:
-                    self.data.append(Token(c, value.fmt))
+                    self.data.append(Text.Token(c, value.fmt))
         elif isinstance(value, Text):  # type: ignore
             self.default_fmt = value.default_fmt
             self.data += [x for x in value.data]
@@ -257,56 +261,56 @@ class Text:
             raise TypeError("unsupported type '{}'".format(type(value)))
         return self
     
-    def addf(self, fmt: str, value: str | Token | Text | None):
+    def addf(self, fmt: str, value: str | Text.Token | Text | None):
         if isinstance(value, str):
-            self.add(Token(value, fmt))
-        elif isinstance(value, Token):
-            self.add(Token(value.text, fmt))
+            self.add(Text.Token(value, fmt))
+        elif isinstance(value, Text.Token):
+            self.add(Text.Token(value.text, fmt))
         elif isinstance(value, Text):
-            self.add(Token(value.get_str(), fmt))
+            self.add(Text.Token(value.get_str(), fmt))
         return self
 
-    def ljust(self, width: int, filler: Token = Token(" ")):
+    def ljust(self, width: int, filler: Text.Token = Token(" ")):
         total = self.len()
         char = " " if filler.text == "" else filler.text[0]
         fmt = filler.fmt
         if total < width:
-            suffix = [Token(char, fmt) for _ in range(width - total)]
+            suffix = [Text.Token(char, fmt) for _ in range(width - total)]
             self.data = self.data + suffix
         return self
     
-    def rjust(self, width: int, filler: Token = Token(" ")):
+    def rjust(self, width: int, filler: Text.Token = Token(" ")):
         total = self.len()
         char = " " if filler.text == "" else filler.text[0]
         fmt = filler.fmt
         if total < width:
-            prefix = [Token(char, fmt) for _ in range(width - total)]
+            prefix = [Text.Token(char, fmt) for _ in range(width - total)]
             self.data = prefix + self.data
         return self
     
     def center(self, width: int, filler: Token = Token(" ")):
         if isinstance(filler, str):
-            filler = Token(filler)
+            filler = Text.Token(filler)
         total = self.len()
         char = " " if filler.text == "" else filler.text[0]
         fmt = filler.fmt
         if total < width:
             left = (width - total) // 2
             right = width - total - left
-            prefix = [Token(char, fmt) for _ in range(left)]
-            suffix = [Token(char, fmt) for _ in range(right)]
+            prefix = [Text.Token(char, fmt) for _ in range(left)]
+            suffix = [Text.Token(char, fmt) for _ in range(right)]
             self.data = prefix + self.data + suffix
         return self
 
     def fold_in(
-        self, width: int, sep: str | Token = " ", left_border: str | Token = " ", right_border: str | Token  = " "
+        self, width: int, sep: str | Text.Token = " ", left_border: str | Text.Token = " ", right_border: str | Text.Token  = " "
     ) -> Text:
         if isinstance(sep, str):
-            sep = Token(sep)
+            sep = Text.Token(sep)
         if isinstance(left_border, str):
-            left_border = Token(left_border)
+            left_border = Text.Token(left_border)
         if isinstance(right_border, str):
-            right_border = Token(right_border)
+            right_border = Text.Token(right_border)
 
         available = width - len(left_border) - len(right_border)
         if self.len() > available:
@@ -420,7 +424,7 @@ class Text:
         return fmt, ""
 
     def __process_placeholders(self, text: str, *args: Any) -> None:
-        params: list[str | Text | Token] = list(args)
+        params: list[str | Text | Text.Token] = list(args)
         for text_data, placeholder in Text.__extract(text):
             self.add(text_data)
             fmt, data = self.__process_fmt(placeholder)
@@ -434,26 +438,23 @@ class Text:
         for elem in params:
             self.add(elem)
 
-def aprint(text: Text | str = "", end: str = "\n", flush: bool = True):
-    if isinstance(text, Text):
-        text = text.ansi()
-    print(text, end=end, flush=flush)
+    
 
 if __name__ == "__main__":
     # Formatação usando placeholders {} e argumentos variádicos
     # Cor de conteúdo no texto
-    aprint(Text.format("O Brasil é {b:azul}, {g:verde} e {y:amarelo}"))
+    print(Text.format("O Brasil é {b:azul}, {g:verde} e {y:amarelo}"))
     # Cor no texto e conteúdo nos argumentos
-    aprint(Text.format("O Brasil é {b}, {g} e {y}.", "azul", "verde", "amarelo"))
+    print(Text.format("O Brasil é {b}, {g} e {y}.", "azul", "verde", "amarelo"))
     # Carrega tupla, ou conteúdo ou nada
-    aprint(Text.format("O Brasil é {}, {g:verde} e {y}.", ("b", "azul"), "amarelo"))
+    print(Text.format("O Brasil é {}, {g:verde} e {y}.", ("b", "azul"), "amarelo"))
 
     # Funciona também por adição
-    aprint(Text() + "O Brasil é " + RToken("b", "azul") + ", " + ("g", "verde") + " e " + ("y", "amarelo"))
+    print(Text() + "O Brasil é " + Text.RToken("b", "azul") + ", " + Text.RToken("g", "verde") + " e " + Text.RToken("y", "amarelo"))
     # Dá pra definir a formatação padrão para quando não for passado nada
-    aprint(Text("r") + "O Brasil é " + RToken("b", "azul") + ", " + RToken("g", "verde") + " e " + RToken("y", "amarelo"))
+    print(Text("r") + "O Brasil é " + Text.RToken("b", "azul") + ", " + Text.RToken("g", "verde") + " e " + Text.RToken("y", "amarelo"))
     # A formatação pode incluir cores de fundo
-    aprint(Text("Yw") + "O Brasil é " + RToken("Rb", "azul") + ", " + RToken("Kg", "verde") + " e " + RToken("y", "amarelo"))
+    print(Text("Yw") + "O Brasil é " + Text.RToken("Rb", "azul") + ", " + Text.RToken("Kg", "verde") + " e " + Text.RToken("y", "amarelo"))
 
     # Dá pra concatenar, somar ou passar por parâmetro
-    aprint(Text("R") + "Tudo em vermelho " + Text("G") + " e tudo em verde")
+    print(Text("R") + "Tudo em vermelho " + Text("G") + " e tudo em verde")

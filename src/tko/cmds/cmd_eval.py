@@ -2,7 +2,7 @@ from tko.cmds.cmd_run import Run
 from tko.util.param import Param
 from tko.settings.settings import Settings
 from tko.enums.diff_count import DiffCount
-from tko.util.text import Token
+from tko.util.text import Text
 from tko.util.symbols import symbols
 
 class CmdEval:
@@ -17,11 +17,11 @@ class CmdEval:
         self.timeout: int = CmdEval.EVAL_TIMEOUT_DEFAULT
         self.result_file: str | None = None
 
-        symbols.execution_result["untested"] = Token("U", "")
-        symbols.execution_result["success"] = Token("S", "g")
-        symbols.execution_result["wrong_output"] = Token("W", "r")
-        symbols.execution_result["compilation_error"] = Token("C", "m")
-        symbols.execution_result["execution_error"] = Token("E", "y")
+        symbols.execution_result["untested"] = Text.Token("U", "")
+        symbols.execution_result["success"] = Text.Token("S", "g")
+        symbols.execution_result["wrong_output"] = Text.Token("W", "r")
+        symbols.execution_result["compilation_error"] = Text.Token("C", "m")
+        symbols.execution_result["execution_error"] = Text.Token("E", "y")
 
     def set_norun(self, value: bool | None = None):
         if value is not None:

@@ -19,14 +19,13 @@ from tko.down.drafts import Drafts
 from tko.settings.languages import available_languages
 
 class CmdLineDown:
-    def __init__(self, settings: Settings, folder: str, task_key: str):
+    def __init__(self, settings: Settings, rep: Repository, task_key: str):
         self.settings = settings
-        self.folder = folder
+        self.rep = rep
         self.task_key = task_key
-        self.rep = Repository(folder)
         
     def execute(self):
-        if not self.rep.has_local_config_file():
+        if not self.rep.paths.has_local_config_file():
             print("O parâmetro para o comando tko down deve a pasta onde você iniciou o repositório.")
             print("Navegue ou passe o caminho até a pasta do repositório e tente novamente.")
             return False

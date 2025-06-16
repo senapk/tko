@@ -19,16 +19,17 @@ from tko.run.wdir import Wdir
 from tko.settings.settings import Settings
 from tko.enums.execution_result import ExecutionResult
 from tko.util.freerun import Free
-from tko.util.text import  Text, Token
+from tko.util.text import  Text
 from tko.util.symbols import symbols
 from tko.enums.diff_mode import DiffMode
 from tko.play.input_manager import InputManager
-from tko.logger.logger import Logger
 from tko.run.diff_builder_down import DiffBuilderDown
 from tko.run.diff_builder_side import DiffBuilderSide
 from tko.play.tracker import Tracker
 from tko.util.raw_terminal import RawTerminal
 from tko.settings.repository import Repository
+from tko.logger.log_item_exec import LogItemExec
+from tko.logger.log_item_move import LogItemMove
 
 
 class SeqMode(enum.Enum):
@@ -61,8 +62,10 @@ class Tester:
         self.fman = FloatingManager()
         self.opener: Opener | None = None
         self.dummy_unit = Unit()
-
-        Logger.get_instance().record_pick(self.task.key)
+        if self.rep:
+            self.rep.logger.store(
+                LogItemMove().set_mode(LogItemMove.Mode.PICK).set_key(self.task.key)
+            )
 
 
     def set_opener(self, opener: Opener):
@@ -86,11 +89,11 @@ class Tester:
         if align == "v":
             init_y = dy - len(lines) - 1
         for i, line in enumerate(lines):
-            info = Text().addf(color, line).center(dx - 2, Token(" ", " "))
+            info = Text().addf(color, line).center(dx - 2, Text.Token(" ", " "))
             if clear:
                 Fmt.write(i + init_y, 1, Text().add(" " * info.len()))
             else:
-                Fmt.write(i + init_y, 1, Text().addf(color, line).center(dx - 2, Token(" ", " ")))
+                Fmt.write(i + init_y, 1, Text().addf(color, line).center(dx - 2, Text.Token(" ", " ")))
 
     def show_success(self):
         if self.settings.app.get_use_images():
@@ -123,42 +126,28 @@ class Tester:
             return unit
         return self.wdir.get_unit(self.focused_index)
 
-    def get_token(self, result: ExecutionResult) -> Token:
+    def get_token(self, result: ExecutionResult) -> Text.Token:
         if result == ExecutionResult.SUCCESS:
-            return Token(ExecutionResult.get_symbol(ExecutionResult.SUCCESS).text, "G")
+            return Text.Token(ExecutionResult.get_symbol(ExecutionResult.SUCCESS).text, "G")
         elif result == ExecutionResult.WRONG_OUTPUT:
-            return Token(ExecutionResult.get_symbol(ExecutionResult.WRONG_OUTPUT).text, "R")
+            return Text.Token(ExecutionResult.get_symbol(ExecutionResult.WRONG_OUTPUT).text, "R")
         elif result == ExecutionResult.COMPILATION_ERROR:
-            return Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "W")
+            return Text.Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "W")
         elif result == ExecutionResult.EXECUTION_ERROR:
-            return Token(ExecutionResult.get_symbol(ExecutionResult.EXECUTION_ERROR).text, "Y")
+            return Text.Token(ExecutionResult.get_symbol(ExecutionResult.EXECUTION_ERROR).text, "Y")
         else:
-            return Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "W")
+            return Text.Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "W")
 
-    def store_test_track(self, result: int):
+    def store_version(self) -> tuple[bool, int]:
         if self.rep is None:
-            return
+            return False, 0
         track_folder = self.rep.get_track_task_folder(self.task.key)
         tracker = Tracker()
         tracker.set_folder(track_folder)
         tracker.set_files(self.wdir.get_solver().args_list)
-        tracker.set_percentage(result)
         has_changes, total_lines = tracker.store()
-        if has_changes:
-            Logger.get_instance().record_file_alteration(self.task.key, total_lines)
+        return has_changes, total_lines
 
-    def store_other_track(self, result: str | None = None):
-        if self.rep is None:
-            return
-        track_folder = self.rep.get_track_task_folder(self.task.key)
-        tracker = Tracker()
-        tracker.set_folder(track_folder)
-        tracker.set_files(self.wdir.get_solver().args_list)
-        if result is not None:
-            tracker.set_result(result)
-        has_changes, total_lines = tracker.store()
-        if has_changes:
-            Logger.get_instance().record_file_alteration(self.task.key, total_lines)
 
     def process_one(self):
 
@@ -168,8 +157,12 @@ class Tester:
         solver = self.wdir.get_solver()
 
         if solver.has_compile_error():
-            Logger.get_instance().record_compilation_execution_error(self.task.key)
-            self.store_other_track(ExecutionResult.COMPILATION_ERROR.value)
+            mode = LogItemExec.Mode.LOCK if self.locked_index else LogItemExec.Mode.FULL
+            changes, total_lines = self.store_version()
+            if self.rep:
+                self.rep.logger.store(
+                    LogItemExec().set_key(self.task.key).set_mode(mode).set_fail(LogItemExec.Fail.COMP).set_size(changes, total_lines)
+                )
 
             self.mode = SeqMode.finished
             while len(self.unit_list) > 0:
@@ -182,6 +175,13 @@ class Tester:
             self.mode = SeqMode.finished
             unit = self.get_focused_unit()
             unit.result = UnitRunner.run_unit(solver, unit, self.settings.app.timeout)
+
+            changes, total_lines = self.store_version()
+            rate = 100 if unit.result == ExecutionResult.SUCCESS else 0
+            if self.rep:
+                self.rep.logger.store(
+                    LogItemExec().set_key(self.task.key).set_mode(LogItemExec.Mode.LOCK).set_rate(rate).set_size(changes, total_lines)
+                )
             return
 
         if self.wdir.has_tests():
@@ -212,9 +212,14 @@ class Tester:
                     done_list.append(data)
             self.results = fail_list + done_list
             percent: int = (100 * len(done_list)) // len(self.results)
-            self.task.rate = percent
-            Logger.get_instance().record_test_result(self.task.key, percent)
-            self.store_test_track(percent)
+            self.task.info.rate = percent
+            mode = LogItemExec.Mode.LOCK if self.locked_index else LogItemExec.Mode.FULL
+            changes, total_lines = self.store_version()
+            if self.rep:
+                self.rep.save_config()
+                self.rep.logger.store(
+                    LogItemExec().set_key(self.task.key).set_mode(mode).set_rate(percent).set_size(changes, total_lines)
+                )
 
 
     def build_top_line_header(self, frame_dx : int) -> Text:
@@ -295,10 +300,10 @@ class Tester:
             extras = self.borders.roundR(token.fmt)
             if foco and show_focused_index:
                 # token.fmt = token.fmt.lower() + ""
-                extrap = Token("(")
-                extras = Token(")")
-                # extrap = Token(" ") #self.borders.roundL("")
-                # extras = Token(" ") #self.borders.roundR("")
+                extrap = Text.Token("(")
+                extras = Text.Token(")")
+                # extrap = Text.Token(" ") #self.borders.roundL("")
+                # extras = Text.Token(" ") #self.borders.roundR("")
             if self.locked_index and not foco:
                 output.add("  ").addf(token.fmt.lower(), str(index).zfill(2)).addf(token.fmt.lower(), token.text).add(" ")
             else:
@@ -395,7 +400,7 @@ class Tester:
     def show_bottom_line(self):
         lines, cols = Fmt.get_size()
         out = Text().add(" ").join(self.make_bottom_line())
-        Fmt.write(lines - 1, 0, out.center(cols, Token(" ")))
+        Fmt.write(lines - 1, 0, out.center(cols, Text.Token(" ")))
 
     def is_all_right(self):
         if self.locked_index or len(self.results) == 0:
@@ -508,8 +513,11 @@ class Tester:
             self.wdir.autoload()
             self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_idx])
         self.mode = SeqMode.finished
-        Logger.get_instance().record_freerun(self.task.key)
-        self.store_other_track("Execução Livre")
+        changes, total_lines = self.store_version()
+        if self.rep:
+            self.rep.logger.store(
+                LogItemExec().set_key(self.task.key).set_mode(LogItemExec.Mode.FREE).set_size(changes, total_lines)
+            )
         header = self.build_top_line_header(RawTerminal.get_terminal_size())
         return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True, header=header)
 
@@ -725,7 +733,10 @@ class Tester:
         while True:
             free_run_fn = curses.wrapper(self.main) # type: ignore
             if free_run_fn is None:
-                Logger.get_instance().record_back(self.task.key)
+                if self.rep:
+                    self.rep.logger.store(
+                            LogItemMove().set_mode(LogItemMove.Mode.BACK).set_key(self.task.key)
+                        )
                 break
             else:
                 while(True):
@@ -735,8 +746,10 @@ class Tester:
                             break
                     except CompileError as e:
                         self.mode = SeqMode.finished
-                        Logger.get_instance().record_compilation_execution_error(self.task.key)
-                        self.store_other_track(ExecutionResult.COMPILATION_ERROR.value)
+                        if self.rep:
+                            self.rep.logger.store(
+                                            LogItemExec().set_key(self.task.key).set_mode(LogItemExec.Mode.FREE).set_fail(LogItemExec.Fail.COMP)
+                                        )
                         print(e)
                         input("Pressione enter para continuar")
                         break

@@ -3,7 +3,7 @@ import re
 import configparser
 import argparse
 from tko.util.decoder import Decoder
-from tko.util.text import Text, aprint
+from tko.util.text import Text
 
 class RemoteLink:
     def __init__(self):
@@ -56,7 +56,7 @@ class RemoteCfg:
             self.__load_cfg_path(target)
             self.__parse_cfg()
             if self.cfg_path is None:
-                aprint(Text.format("{r}: remote.cfg file not set", "fail"))
+                print(Text.format("{r}: remote.cfg file not set", "fail"))
 
     def cfg_exists(self):
         return self.cfg_path is not None
@@ -152,7 +152,7 @@ class Absolute:
         if target is not None:
             Decoder.save(target, content)
         else:
-            aprint(content)
+            print(content)
         
 
 def remote_main(args: argparse.Namespace):

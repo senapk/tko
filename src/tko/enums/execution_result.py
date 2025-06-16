@@ -1,6 +1,6 @@
 from __future__ import annotations
 from tko.util.symbols import symbols
-from tko.util.text import Token
+from tko.util.text import Text
 
 import enum
 
@@ -12,7 +12,7 @@ class ExecutionResult(enum.Enum):
     EXECUTION_ERROR   = "erro_execução__"
 
     @staticmethod
-    def get_symbol(result: ExecutionResult) -> Token:
+    def get_symbol(result: ExecutionResult) -> Text.Token:
         if result == ExecutionResult.UNTESTED:
             return symbols.execution_result["untested"]
         elif result == ExecutionResult.SUCCESS:

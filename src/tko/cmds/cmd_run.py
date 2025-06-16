@@ -6,7 +6,7 @@ from tko.run.wdir import Wdir
 from tko.enums.diff_count import DiffCount
 from tko.util.param import Param
 from tko.run.diff_builder_side import DiffBuilderSide
-from tko.util.text import Text, Token, aprint
+from tko.util.text import Text
 
 from tko.util.raw_terminal import RawTerminal
 from tko.util.symbols import symbols
@@ -19,9 +19,13 @@ from tko.game.task import Task
 from tko.play.opener import Opener
 from tko.settings.settings import Settings
 from tko.enums.diff_mode import DiffMode
-from tko.logger.logger import Logger
 from tko.feno.filter import CodeFilter
 from tko.settings.repository import Repository
+from tko.logger.log_item_exec import LogItemExec
+from tko.logger.log_sort import LogSort
+from tko.logger.log_resume import LogResume
+from tko.settings.rep_paths import RepPaths
+
 
 class tkoFilterMode:
     @staticmethod
@@ -138,7 +142,7 @@ class Run:
             if not self.__eval_mode:
                 self.__free_run()
             else:
-                aprint(Text().addf("", "fail: ") + "Nenhum caso de teste encontrado.")
+                print(Text().addf("", "fail: ") + "Nenhum caso de teste encontrado.")
             return 0
         
         return self.__run_tests()
@@ -153,13 +157,8 @@ class Run:
         if self.__task is None:
             self.__fill_task()
 
-        if self.__rep is not None:
-            logger = Logger.get_instance()
-            history_file = self.__rep.get_history_file()
-            logger.set_log_files(history_file, self.__rep.get_track_folder())
-    
     def __try_load_rep(self, dirname: str) -> bool:
-        repo_path = Repository.rec_search_for_repo(dirname)
+        repo_path = RepPaths.rec_search_for_repo(dirname)
         if repo_path == "":
             return False
         rep = Repository(repo_path).load_config().load_game()
@@ -179,7 +178,7 @@ class Run:
         if task is None:
             return False
         self.__task = task
-        self.__track_folder = rep.get_track_task_folder(task_key)
+        self.__track_folder = rep.paths.get_track_task_folder(task_key)
         return True
 
     def __remove_duplicates(self):
@@ -190,7 +189,7 @@ class Run:
         if self.param.filter:
             old_dir = os.getcwd()
 
-            aprint(Text.format(" Entrando no modo de filtragem ").center(RawTerminal.get_terminal_size(), Token("═")))
+            print(Text.format(" Entrando no modo de filtragem ").center(RawTerminal.get_terminal_size(), Text.Token("═")))
             tkoFilterMode.deep_copy_and_change_dir()  
             # search for target outside . dir and redirect target
             new_target_list: list[str] = []
@@ -205,7 +204,7 @@ class Run:
         
         if self.wdir.get_solver().has_compile_error():
             exec, _ = self.wdir.get_solver().get_executable()
-            aprint(exec.get_error_msg())
+            print(exec.get_error_msg())
             return
         
         results = [unit.result for unit in self.wdir.get_unit_list()]
@@ -214,7 +213,7 @@ class Run:
         
         if not self.param.compact:
             for elem in self.wdir.unit_list_resume():
-                aprint(elem)
+                print(elem)
 
         if self.param.diff_count == DiffCount.NONE:
             return
@@ -225,11 +224,11 @@ class Run:
             if self.param.diff_mode == DiffMode.DOWN:
                 ud_diff_builder = DiffBuilderDown(RawTerminal.get_terminal_size(), wrong).to_insert_header()
                 for line in ud_diff_builder.build_diff():
-                    aprint(line)
+                    print(line)
             else:
                 ss_diff_builder = DiffBuilderSide(RawTerminal.get_terminal_size(), wrong).to_insert_header(True)
                 for line in ss_diff_builder.build_diff():
-                    aprint(line)
+                    print(line)
             return
 
         if self.param.diff_count == DiffCount.ALL:
@@ -238,11 +237,11 @@ class Run:
                     if self.param.diff_mode == DiffMode.DOWN:
                         ud_diff_builder = DiffBuilderDown(RawTerminal.get_terminal_size(), unit).to_insert_header()
                         for line in ud_diff_builder.build_diff():
-                            aprint(line)
+                            print(line)
                     else:
                         ss_diff_builder = DiffBuilderSide(RawTerminal.get_terminal_size(), unit).to_insert_header(True)
                         for line in ss_diff_builder.build_diff():
-                            aprint(line)
+                            print(line)
 
     def build_wdir(self):
         self.wdir_builded = True
@@ -259,7 +258,7 @@ class Run:
     def __missing_target(self) -> bool:
         if not self.wdir.has_solver() and not self.wdir.has_tests():
             if not self.__curses_mode:
-                aprint(Text().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
+                print(Text().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
             return True
         return False
     
@@ -267,14 +266,19 @@ class Run:
         # list mode
         
         if not self.__eval_mode:
-            aprint(Text.format("Nenhum arquivo de código encontrado. Listando casos de teste.").center(RawTerminal.get_terminal_size(), Token("╌")), flush=True)
-        aprint(self.wdir.resume_splitted())
+            print(Text.format("Nenhum arquivo de código encontrado. Listando casos de teste.").center(RawTerminal.get_terminal_size(), Text.Token("╌")), flush=True)
+        print(self.wdir.resume_splitted())
         for line in self.wdir.unit_list_resume():
-            aprint(line)
+            print(line)
 
     def __free_run(self):        
         if self.__task is not None:
-            Logger.get_instance().record_freerun(self.get_task().key)
+            changes, size = self.store_exec_diff()
+            if self.__rep:
+                self.__rep.logger.store(LogItemExec()
+                    .set_mode(LogItemExec.Mode.FREE)
+                    .set_key(self.__task.key)
+                    .set_size(changes, size))
         Free.free_run(self.wdir.get_solver(), show_compilling=False, to_clear=False, wait_input=False)
 
     def __create_opener_for_wdir(self) -> Opener:
@@ -314,7 +318,7 @@ class Run:
 
         task.key = os.path.basename(task.folder)
         self.__task = task
-        self.__track_folder = self.__rep.get_track_task_folder(task.key) if self.__rep else ""
+        self.__track_folder = self.__rep.paths.get_track_task_folder(task.key) if self.__rep else ""
 
     def __run_test_on_curses(self):
         cdiff = Tester(self.settings, self.__rep, self.wdir, self.get_task())
@@ -325,7 +329,7 @@ class Run:
         cdiff.set_autorun(self.__run_without_ask)
         cdiff.run()
 
-    def get_coverage(self) -> int:
+    def get_rate(self) -> int:
         if self.__no_run:
             return 0
         correct = [unit for unit in self.wdir.get_unit_list() if unit.result == ExecutionResult.SUCCESS]
@@ -334,22 +338,35 @@ class Run:
 
     def __run_tests_on_raw_term(self) -> int:
         if not self.__eval_mode:
-            aprint(Text.format(" Testando o código com os casos de teste ").center(RawTerminal.get_terminal_size(), Token("═")))
+            print(Text.format(" Testando o código com os casos de teste ").center(RawTerminal.get_terminal_size(), Text.Token("═")))
         percent = self.__run_all_tests_top_line()
         self.__print_diff()
-        coverage = self.get_coverage()
+        rate = self.get_rate()
         if self.__task is None or self.__track_folder == "":
-            return coverage
+            return rate
 
-        Logger.get_instance().record_test_result(self.get_task().key, coverage)
+        exec_mode = LogItemExec.Mode.FULL if self.param.index is None else LogItemExec.Mode.LOCK
+        exec_fail = LogItemExec.Fail.NONE
+        if self.wdir.get_solver().has_compile_error():
+            exec_fail = LogItemExec.Fail.COMP
+
+        changes, size = self.store_exec_diff()
+        if self.__rep:
+            self.__rep.logger.store(LogItemExec()
+                .set_mode(exec_mode)
+                .set_key(self.__task.key)
+                .set_size(changes, size)
+                .set_rate(rate)
+                .set_fail(exec_fail))
+
+        return percent
+
+    def store_exec_diff(self) -> tuple[bool, int]:
         tracker = Tracker()
         tracker.set_folder(self.__track_folder)
         tracker.set_files(self.wdir.get_solver().args_list)
-        tracker.set_percentage(coverage)
         has_changes, total_lines = tracker.store()
-        if has_changes:
-            Logger.get_instance().record_file_alteration(self.get_task().key, total_lines)
-        return percent
+        return has_changes, total_lines
 
     def __run_tests(self) -> int:
         if self.__task is None:
@@ -364,17 +381,17 @@ class Run:
     def __run_all_tests_top_line(self) -> int:
         if self.__eval_mode:
             key = self.get_task().key if self.__task is not None else ""
-            aprint(Text().addf("c", "@" + key + " ").add(symbols.opening).add("[").add(self.wdir.resume_join()).add("]"), end="")
+            print(Text().addf("c", "@" + key + " ").add(symbols.opening).add("[").add(self.wdir.resume_join()).add("]"), end="")
         else:
-            aprint(Text().add(symbols.opening).add(self.wdir.resume_splitted()), end="")
-        aprint(" [", end="")
+            print(Text().add(symbols.opening).add(self.wdir.resume_splitted()), end="")
+        print(" [", end="")
         first = True
         execution_error = False
         for unit in self.wdir.get_unit_list():
             if first:
                 first = False
             else:
-                aprint(" ", end="")
+                print(" ", end="")
             solver = self.wdir.get_solver()
             if self.__no_run or (execution_error and self.__abord_on_exec_error):
                 unit.result = ExecutionResult.UNTESTED
@@ -382,17 +399,15 @@ class Run:
                 unit.result = UnitRunner.run_unit(solver, unit, timeout=self.__timeout)
                 if unit.result == ExecutionResult.EXECUTION_ERROR:
                     execution_error = True
-            aprint(Text() + ExecutionResult.get_symbol(unit.result), end="")
-        aprint("] ", end="")
+            print(Text() + ExecutionResult.get_symbol(unit.result), end="")
+        print("] ", end="")
         if self.__show_track_info:
             if self.__rep is not None:
-                logger = Logger.get_instance()
-                entries = logger.tasks.key_actions.get(self.get_task().key, {})
-                if entries:
-                    elapsed = max(0, entries[-1].elapsed.total_seconds() // 60)
-                    lines = entries[-1].len
-                    attempts = entries[-1].att
-                    aprint(Text().addf("g", f"min:{elapsed:.0f}, lines:{lines}, att:{attempts},").add(" "), end="", flush=True)
+                logger = self.__rep.logger
+                log_sort: LogSort | None = logger.tasks.task_dict.get(self.get_task().key, None)
+                if log_sort is not None:
+                    log_resume = LogResume().from_log_sort(log_sort)
+                    print(Text().addf("g", f"time:{log_resume.time:.0f}, diff:{log_resume.diff}, runs:{log_resume.runs},").add(" "), end="", flush=True)
 
         rate: int | None = None
         flow: int | None = None
@@ -400,22 +415,22 @@ class Run:
         if self.__show_self_info and self.__rep is not None:
             task: Task | None = self.__rep.game.tasks.get(self.get_task().key)
             if task is not None:
-                rate = task.rate
-                flow = task.flow
-                edge = task.edge
-                neat = task.neat
-                cool = task.cool
-                easy = task.easy
-                aprint(Text().addf("m", f"neat:{neat}, cool:{cool}, easy:{easy}, ").addf("y", f"rate:{rate}, flow:{flow}, edge:{edge},").add(" "), end="", flush=True)
+                rate = task.info.rate
+                flow = task.info.flow
+                edge = task.info.edge
+                neat = task.info.neat
+                cool = task.info.cool
+                easy = task.info.easy
+                print(Text().addf("m", f"neat:{neat}, cool:{cool}, easy:{easy}, ").addf("y", f"rate:{rate}, flow:{flow}, edge:{edge},").add(" "), end="", flush=True)
         if self.__no_run:
             percent: float = 0
         else:
-            percent = self.get_coverage()
+            percent = self.get_rate()
         if self.__complex_percent:
             if rate is not None and flow is not None and edge is not None:
                 if self.__no_run:
                     percent = rate
                 percent = (percent + (((flow + edge) * 100) / 11)) / 2
 
-        aprint(f"{percent:.0f}%")
+        print(f"{percent:.0f}%")
         return round(percent)

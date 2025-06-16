@@ -106,8 +106,6 @@ class Play:
         cman.add_str(GuiKeys.set_lang_drafts, self.gui.language.set_language)
         cman.add_int(curses.KEY_BACKSPACE, self.actions.evaluate)
         cman.add_str(GuiKeys.grade_play, self.actions.evaluate)
-        if Flags.admin:
-            cman.add_str(GuiKeys.mass, self.tree.mass_mark)
     
         cman.add_str(GuiKeys.key_help, self.gui.show_help)
         

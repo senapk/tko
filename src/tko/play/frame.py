@@ -1,5 +1,5 @@
 from tko.play.fmt import Fmt
-from tko.util.text import Text, Token
+from tko.util.text import Text
 
 class Frame:
     def __init__(self, y: int = 0, x: int = 0):
@@ -47,11 +47,11 @@ class Frame:
         data.trim_end(pad)
         sent = Text().addf(color, prefix).add(data).addf(color, suffix)
         if symbol == "<":
-            sent.ljust(dx, Token(hor, color))
+            sent.ljust(dx, Text.Token(hor, color))
         elif symbol == ">":
-            sent.rjust(dx, Token(hor, color))
+            sent.rjust(dx, Text.Token(hor, color))
         else:
-            sent.center(dx, Token(hor, color))
+            sent.center(dx, Text.Token(hor, color))
         return sent
 
     def get_header(self):

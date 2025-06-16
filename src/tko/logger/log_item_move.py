@@ -1,30 +1,31 @@
+from __future__ import annotations
 from tko.logger.log_item_base import LogItemBase
-from tko.logger.log_enum_move import LogEnumMove
-from tko.logger.log_enum_item import LogEnumItem
 
+import enum
 
 class LogItemMove(LogItemBase):
-    def __init__(self):
-        super().__init__(LogEnumItem.MOVE)
-        self.action: LogEnumMove = LogEnumMove.NONE
+    class Mode(enum.Enum):
+        NONE = "NONE"
+        DOWN = "DOWN"
+        PICK = "PICK"
+        BACK = "BACK"
+        EDIT = "EDIT"
 
-    def set_action(self, action: LogEnumMove):
-        self.action = action
+    mode_str = "mode"
+    def __init__(self):
+        super().__init__(LogItemBase.Type.MOVE)
+        self.mode: LogItemMove.Mode = LogItemMove.Mode.NONE
+
+    def set_mode(self, action: LogItemMove.Mode):
+        self.mode = action
         return self
 
     def encode_line(self) -> str:
-        return f'{self.timestamp}, {self.type.value}, key:{self.task_key}, act:{self.action.value}'
+        return f'{super().encode_line()}, {self.mode_str}:{self.mode.value}'
 
-    def decode_line(self, parts: list[str]) -> bool:
-        self.timestamp = parts[0]
-        self.type = LogEnumItem(parts[1])
-        if self.type != LogEnumItem.MOVE:
-            return False
-        for part in parts[2:]:
-            if part.startswith("key:"):
-                self.task_key = part.split(":")[1]
-            elif part.startswith("act:"):
-                self.action = LogEnumMove(part.split(":")[1])
-        if self.task_key == "":
+    def identify_kv(self, kv: dict[str, str]) -> bool:
+        if self.mode_str in kv:
+            self.mode = LogItemMove.Mode(kv[self.mode_str])
+        if self.mode == LogItemMove.Mode.NONE:
             return False
         return True

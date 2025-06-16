@@ -2,7 +2,7 @@ from tko.run.diff_builder import DiffBuilder
 from tko.run.unit import Unit
 from tko.enums.execution_result import ExecutionResult
 from tko.util.symbols import symbols
-from tko.util.text import Text, Token
+from tko.util.text import Text
 
 class DiffBuilderSide:
     def __init__(self, width: int, unit: Unit):
@@ -19,7 +19,7 @@ class DiffBuilderSide:
         self.curses = True
         return self
 
-    def split_screen(self, a: Text | None, b: Text | None, unequal: Token = symbols.vbar) -> Text:
+    def split_screen(self, a: Text | None, b: Text | None, unequal: Text.Token = symbols.vbar) -> Text:
         avaliable = self.width - 7 # 2 spaces before, 2 spaces after, 3 between
         cut = avaliable // 2
         if a is None or b is None or a != b:
@@ -28,14 +28,14 @@ class DiffBuilderSide:
             symb = symbols.vbar
         ta = Text() + a
         tb = Text() + b
-        ta = ta.ljust(cut, Token(" ")).trim_end(cut)
-        tb = tb.ljust(cut, Token(" ")).trim_end(cut)
+        ta = ta.ljust(cut, Text.Token(" ")).trim_end(cut)
+        tb = tb.ljust(cut, Text.Token(" ")).trim_end(cut)
         line = symb + " " + ta + " " + symb + " " + tb + " "
         if self.width % 2 == 0:
             line += " "
         return line + symbols.vbar
 
-    def title_side_by_side(self, left: Text, right: Text, filler: Token = Token(" "), middle: Token = Token(" "), prefix: Token = Token(), posfix: Token = Token()) -> Text:
+    def title_side_by_side(self, left: Text, right: Text, filler: Text.Token = Text.Token(" "), middle: Text.Token = Text.Token(" "), prefix: Text.Token = Text.Token(), posfix: Text.Token = Text.Token()) -> Text:
         avaliable = self.width - len(prefix) - len(posfix) - len(middle)
         half = avaliable // 2
         line = Text() + prefix
@@ -74,7 +74,7 @@ class DiffBuilderSide:
         input_headera = Text().addf(input_color, DiffBuilder.vinput)
         input_headerb = Text().addf(input_color, DiffBuilder.vinput)
         if self.__to_insert_header:
-            self.output.append(self.title_side_by_side(input_headera, input_headerb, symbols.hbar, Token("┬"), Token("├"), Token("┤")))
+            self.output.append(self.title_side_by_side(input_headera, input_headerb, symbols.hbar, Text.Token("┬"), Text.Token("├"), Text.Token("┤")))
         else:
             self.output.append(Text().addf(input_color, DiffBuilder.vinput).fold_in(self.width, symbols.hbar, "╭", "╮"))
 
@@ -91,9 +91,9 @@ class DiffBuilderSide:
         rcolor = "r" if self.unit.get_expected() != self.unit.get_received() else "g"
         received_header = Text().addf(rcolor, DiffBuilder.vreceived)
         if self.__standalone_diff:
-            self.output.append(self.title_side_by_side(expected_header, received_header, symbols.hbar, Token("┬"), Token("╭"), Token("╮")))
+            self.output.append(self.title_side_by_side(expected_header, received_header, symbols.hbar, Text.Token("┬"), Text.Token("╭"), Text.Token("╮")))
         else:
-            self.output.append(self.title_side_by_side(expected_header, received_header, symbols.hbar, Token("┼"), Token("├"), Token("┤")))
+            self.output.append(self.title_side_by_side(expected_header, received_header, symbols.hbar, Text.Token("┼"), Text.Token("├"), Text.Token("┤")))
         # expected and received lines
         symbol = symbols.unequal
         if self.unit.result == ExecutionResult.EXECUTION_ERROR or self.unit.result == ExecutionResult.COMPILATION_ERROR:
@@ -107,7 +107,7 @@ class DiffBuilderSide:
         self.output.append(Text().addf("b", DiffBuilder.vunequal).fold_in(self.width, symbols.hbar, "├", "┤"))
         for line in self.db.first_failure_diff(self.unit.get_expected(), self.unit.get_received(), self.first_failure):
             width = self.width - 1
-            self.output.append(Text().add("│").add(line).ljust(width, Token(" ")).add("│"))
+            self.output.append(Text().add("│").add(line).ljust(width, Text.Token(" ")).add("│"))
         
     def _finish(self):
         if self.unit.get_expected() == self.unit.get_received() or self.unit.get_expected() == "":

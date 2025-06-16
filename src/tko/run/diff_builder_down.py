@@ -2,7 +2,7 @@ from tko.run.diff_builder import DiffBuilder
 from tko.run.unit import Unit
 from tko.enums.execution_result import ExecutionResult
 from tko.util.symbols import symbols
-from tko.util.text import Text, Token
+from tko.util.text import Text
 
 
 class DiffBuilderDown:
@@ -30,7 +30,7 @@ class DiffBuilderDown:
         return self
 
     @staticmethod
-    def put_left_equal(exp_rec_list: list[tuple[Text | None, Text | None]], unequal: Token = symbols.unequal) -> list[tuple[Text, Text]]:
+    def put_left_equal(exp_rec_list: list[tuple[Text | None, Text | None]], unequal: Text.Token = symbols.unequal) -> list[tuple[Text, Text]]:
 
         output: list[tuple[Text, Text]] = []
         for exp, rec in exp_rec_list:
@@ -56,7 +56,7 @@ class DiffBuilderDown:
             self.output.append(Text().addf(color, DiffBuilder.vinput).fold_in(self.width, symbols.hbar, "╭", "╮"))
         # lines
         for line in self.unit.inserted.splitlines():
-            self.output.append(Text().add(symbols.vbar).add(" ").add(line).ljust(self.width - 1, Token(" ")).add(symbols.vbar))
+            self.output.append(Text().add(symbols.vbar).add(" ").add(line).ljust(self.width - 1, Text.Token(" ")).add(symbols.vbar))
 
     def insert_expected(self):
         if self.no_diff_mode:
@@ -70,7 +70,7 @@ class DiffBuilderDown:
             self.output.append(Text().addf(color, DiffBuilder.vexpected).fold_in(self.width, symbols.hbar, "├", "┤"))
         for line, _ in self.expected_received:
             if line is not None:
-                self.output.append(line.ljust(self.width - 1, Token(" ")).add(symbols.vbar))
+                self.output.append(line.ljust(self.width - 1, Text.Token(" ")).add(symbols.vbar))
 
     def insert_received(self):
         # headers
@@ -84,7 +84,7 @@ class DiffBuilderDown:
         # lines
         for _, line in self.expected_received:
             if line is not None:
-                self.output.append(line.ljust(self.width - 1, Token(" ")).trim_end(self.width).add(symbols.vbar))
+                self.output.append(line.ljust(self.width - 1, Text.Token(" ")).trim_end(self.width).add(symbols.vbar))
 
     def insert_first_line_diff(self):
         include_rendering = False
@@ -97,7 +97,7 @@ class DiffBuilderDown:
             return
         self.output.append(Text().addf("b", DiffBuilder.vunequal).fold_in(self.width, symbols.hbar, "├", "┤"))
         for line in self.db.first_failure_diff(self.unit.get_expected(), self.unit.get_received(), self.first_failure):
-            self.output.append(Text().add("│").add(line).ljust(self.width - 1, Token(" ")).add("│"))
+            self.output.append(Text().add("│").add(line).ljust(self.width - 1, Text.Token(" ")).add("│"))
 
     def end_frame(self):
         self.output.append(Text().fold_in(self.width, symbols.hbar, "╰", "╯"))

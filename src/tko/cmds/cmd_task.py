@@ -1,0 +1,16 @@
+from tko.settings.settings import Settings
+from tko.settings.repository import Repository
+from tko.play.task_graph import TaskGraph
+from tko.util.raw_terminal import RawTerminal
+
+class CmdTask:
+    @staticmethod
+    def show_graph(settings: Settings, rep: Repository, task_key: str):
+        settings = settings
+        rep = rep
+        task_key = task_key
+        width = RawTerminal.get_terminal_size() // 2
+        height = round(width / 4)
+        graph = TaskGraph(settings, rep, task_key, width, height).get_graph()
+        for line in graph:
+            print(line)

@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import argparse
 import sys
+from icecream import ic
 
+from tko.cmds.cmd_task import CmdTask
 from tko.cmds.cmd_rep import CmdRep
 from tko.cmds.cmd_eval import CmdEval
 from tko.cmds.cmd_open import CmdOpen
@@ -11,7 +13,6 @@ from tko.cmds.cmd_run import Run
 from tko.cmds.cmd_build import CmdBuild
 from tko.cmds.cmd_config import CmdConfig, ConfigParams
 from tko.enums.diff_mode import DiffMode
-from tko.logger.logger import Logger
 from tko.util.text import AnsiColor
 from tko.enums.diff_count import DiffCount
 
@@ -26,7 +27,7 @@ from tko.settings.repository import Repository
 from tko.util.raw_terminal import RawTerminal
 from tko.util.symbols import symbols
 from tko.settings.check_version import CheckVersion
-from tko.settings.repository_starter import RepStarter
+from tko.settings.rep_starter import RepStarter
 
 from tko.__init__ import __version__
 
@@ -43,7 +44,8 @@ class Main:
         cmd.set_complex(args.complex)
         cmd.set_timeout(args.timeout)
         cmd.set_result_file(args.result_file)
-        return cmd.execute()
+        cmd.execute()
+        return 0
 
     @staticmethod
     def run(args: argparse.Namespace) -> None:
@@ -114,14 +116,19 @@ class Main:
         action.execute()
 
     @staticmethod
-    def down(args: argparse.Namespace):
+    def task(args: argparse.Namespace):
         settings = Settings()
         folder = args.folder
-        print("Folder: ", folder)
         rec_folder = Repository.rec_search_for_repo(folder)
         if rec_folder != "":
             folder = rec_folder
-        CmdLineDown(settings, folder, args.label).execute()
+        rep = Repository(folder)
+        if args.down:
+            CmdLineDown(settings, rep, args.label).execute()
+        if args.graph:
+            CmdTask.show_graph(settings, rep, args.label)
+
+
 
     @staticmethod
     def init(args: argparse.Namespace):
@@ -177,6 +184,7 @@ class Parser:
         self.parser.add_argument('-w', metavar='WIDTH', type=int, help="terminal width.")
         self.parser.add_argument('-v', action='store_true', help='show version.')
         self.parser.add_argument('-m', action='store_true', help='monochromatic.')
+        self.parser.add_argument('--debug', '-D', action='store_true', help='debug mode.')
 
     def create_parent_basic(self):
         parent_basic = argparse.ArgumentParser(add_help=False)
@@ -280,31 +288,30 @@ class Parser:
     def add_parser_rep_tools(self):
 
         parser_repo = self.subparsers.add_parser('rep', help='Repository validation tools.')
-
         subpar_repo = parser_repo.add_subparsers(title='subcommands', help='help for subcommand.')
-        repo_log = subpar_repo.add_parser("check", help="validates log of the repository.")
-        repo_log.add_argument('folder', type=str, help='folder to be checked.')
-        repo_log.set_defaults(func=CmdRep.check)
 
-        repo_resume = subpar_repo.add_parser("resume", help="resume log of the repository.")
-        repo_resume.add_argument('folder', type=str, help='folder to be checked.')
-        repo_resume.set_defaults(func=CmdRep.resume)
-
-        repo_resume = subpar_repo.add_parser("graph", help="resume log of the repository.")
-        repo_resume.add_argument('folder', type=str, help='folder to be checked.')
-        repo_resume.set_defaults(func=CmdRep.graph)
-
-
+        repo_show = subpar_repo.add_parser("show", help="show")
+        repo_show.add_argument('--folder', type=str, nargs='?', default='.', help='repository folder.')
+        exclusive_group = repo_show.add_mutually_exclusive_group(required=True)
+        exclusive_group.add_argument('--resume', action='store_true', help='resume repository log.')
+        exclusive_group.add_argument('--daygraph', action='store_true', help='show day graph of the repository.')
+        exclusive_group.add_argument('--weekgraph', action='store_true', help='show week graph of the repository.')
+        repo_show.set_defaults(func=CmdRep.show)
 
     def add_parser_rep_actions(self):
         parser_open = self.subparsers.add_parser('open', help='Open a folder with a repository.')
         parser_open.add_argument('folder', type=str, nargs='?', default='.', help='repository folder.')
         parser_open.set_defaults(func=Main.open)
 
-        parser_down = self.subparsers.add_parser('down', help='Down a task from a repository.')
-        parser_down.add_argument('folder', type=str, help='repository folder.')
+        parser_down = self.subparsers.add_parser('task', help='Task subcommands.')
         parser_down.add_argument('label', type=str, help='task label.')
-        parser_down.set_defaults(func=Main.down)
+        parser_down.add_argument('--folder', type=str, default='.', help='Repository folder.')
+        exclusive_group = parser_down.add_mutually_exclusive_group(required=True)
+        exclusive_group.add_argument('--down',  action='store_true', help="Download task from repository.")
+        exclusive_group.add_argument('--self', action='store_true', help="Self evaluate task in repository.")
+        exclusive_group.add_argument('--graph', action='store_true', help="Show task graph.")
+
+        parser_down.set_defaults(func=Main.task)
 
         parser_init = self.subparsers.add_parser('init', help='Initialize a repository in a folder.')
         source = parser_init.add_mutually_exclusive_group()
@@ -323,13 +330,19 @@ def execute(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
     if args.c:
         settings.set_settings_file(args.c)
     settings.load_settings()
-    Logger.instance = Logger()
 
     if args.m:
         AnsiColor.enabled = False
     else:
         AnsiColor.enabled = True
         symbols.set_colors()
+
+    if args.debug:
+        ic.configureOutput(includeContext=True, outputFunction=print)
+        ic.enable()
+        ic("Debug mode enabled")
+    else:
+        ic.disable()
 
     if args.v:
         if args.v:

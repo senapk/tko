@@ -1,5 +1,5 @@
 from tko.util.symbols import symbols
-from tko.util.text import Text, Token
+from tko.util.text import Text
 
 class DiffBuilder:
     vinput    = " INSERIDO "
