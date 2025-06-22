@@ -14,7 +14,7 @@ class TaskLine:
         self.link: str = ""
         self.pos: str = ""
     
-    def initByLine(self):
+    def init_by_line(self):
         regex = r'- \[ \](.*)\[(.+)\]\((.+)\)(.*)'
         match = re.search(regex, self.line)
         if match:
@@ -25,7 +25,7 @@ class TaskLine:
             self.pos = match.group(4)
         return None
 
-    def initByHook(self, hook: str):
+    def init_by_hook(self, hook: str):
         self.isTask = True
         self.link = os.path.join("base", hook, "Readme.md")
         self.pre = f" `@{hook}` "
@@ -62,7 +62,7 @@ class TaskLine:
         link = self.link
         data = Decoder.load(link)
         header = data.splitlines()[0]
-        if (len(header) == 0):
+        if len(header) == 0:
             print('fail: Empty header in ', link)
             exit(1)
         if not header.startswith('# '):
@@ -93,16 +93,16 @@ def loading_titles_from_files(path: str) -> list[TaskLine]:
     lines = content.splitlines()
 
     output: list[str] = []
-    taskLines = [TaskLine(line) for line in lines]
-    for taskLine in taskLines:
-        taskLine.initByLine()
+    task_lines = [TaskLine(line) for line in lines]
+    for taskLine in task_lines:
+        taskLine.init_by_line()
         line = taskLine.line
         if taskLine.isTask:
             line = taskLine.make_new_line()
         output.append(line)
 
     Decoder.save(path, '\n'.join(output))
-    return taskLines
+    return task_lines
 
 
 # def found_labels_mismatch(path: str, base: str) -> bool:
@@ -136,10 +136,10 @@ def loading_titles_from_files(path: str) -> list[TaskLine]:
 #     return error_found
 
 # check for all folders in the base folder searching for missing labels
-def found_unused_hooks(taskLines: list[TaskLine], base_dir: str) -> bool:
+def found_unused_hooks(task_lines: list[TaskLine], base_dir: str) -> bool:
     print("Checking for unused hooks")
     hooks_all: list[str] = []
-    for tline in taskLines:
+    for tline in task_lines:
         if tline.isTask:
             hook = tline.get_hook()
             if hook is not None:
@@ -159,16 +159,16 @@ def found_unused_hooks(taskLines: list[TaskLine], base_dir: str) -> bool:
         print("Missing entries:")
         print(missing)
         for m in missing:
-            taskLine = TaskLine()
-            taskLine.initByHook(m)
-            print(taskLine.make_new_line())
+            task_line = TaskLine()
+            task_line.init_by_hook(m)
+            print(task_line.make_new_line())
         return True
     return False
 
 
 def indexer_main(args: argparse.Namespace):
-    taskLines: list[TaskLine] = loading_titles_from_files(args.path)
+    task_lines: list[TaskLine] = loading_titles_from_files(args.path)
     # if found_labels_mismatch(args.path, args.base):
     #     exit(1)
-    if found_unused_hooks(taskLines, args.base):
+    if found_unused_hooks(task_lines, args.base):
         exit(1)

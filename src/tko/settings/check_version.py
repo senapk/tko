@@ -4,7 +4,6 @@ from tko import __version__
 
 class CheckVersion:
     link = "https://raw.githubusercontent.com/senapk/tko/master/src/tko/__init__.py"
-    
     buffer: str | None = None
     init: bool = False
 

@@ -8,7 +8,8 @@ wheels/
 check/tko
 # Virtual environments
 .venv
-.vscode
+.idea/
+.vscode/
 token.txt
 todo.md
 temp

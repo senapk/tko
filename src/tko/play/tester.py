@@ -1,6 +1,7 @@
 import curses
 import enum
 import os
+from typing import Callable, Optional
 
 from tko.game.task import Task
 from tko.play.border import Border
@@ -82,7 +83,8 @@ class Tester:
         self.exit = True
         return self
 
-    def print_centered_image(self, image: str, color: str, clear: bool = False, align: str = "."):
+    @staticmethod
+    def print_centered_image(image: str, color: str, clear: bool = False, align: str = "."):
         dy, dx = Fmt.get_size()
         lines = image.splitlines()[1:]
         init_y = 4
@@ -100,15 +102,16 @@ class Tester:
             out = random_get(images, self.get_folder(), "static")
         else:
             out = random_get(success_image, self.get_folder(), "static")
-        self.print_centered_image(out, "g")
+        Tester.print_centered_image(out, "g")
         
     def show_compilling(self, clear: bool = False):
         out = random_get(compilling_image, self.get_folder(), "random")
-        self.print_centered_image(out, "y", clear)
+        Tester.print_centered_image(out, "y", clear)
 
-    def show_executing(self, clear: bool = False):
+    @staticmethod
+    def show_executing(clear: bool = False):
         out = executing_image
-        self.print_centered_image(out, "y", clear, "v")
+        Tester.print_centered_image(out, "y", clear, "v")
 
     def get_folder(self) -> str:
         folder = self.task.get_folder()
@@ -126,7 +129,8 @@ class Tester:
             return unit
         return self.wdir.get_unit(self.focused_index)
 
-    def get_token(self, result: ExecutionResult) -> Text.Token:
+    @staticmethod
+    def get_token(result: ExecutionResult) -> Text.Token:
         if result == ExecutionResult.SUCCESS:
             return Text.Token(ExecutionResult.get_symbol(ExecutionResult.SUCCESS).text, "G")
         elif result == ExecutionResult.WRONG_OUTPUT:
@@ -141,7 +145,7 @@ class Tester:
     def store_version(self) -> tuple[bool, int]:
         if self.rep is None:
             return False, 0
-        track_folder = self.rep.get_track_task_folder(self.task.key)
+        track_folder = self.rep.paths.get_track_task_folder(self.task.key)
         tracker = Tracker()
         tracker.set_folder(track_folder)
         tracker.set_files(self.wdir.get_solver().args_list)
@@ -234,7 +238,7 @@ class Tester:
         # building solvers
         solvers = Text()
         if len(self.get_solver_names()) > 1:
-            solvers.add(Text().add(self.borders.roundL("R")).addf("R", f"{GuiActions.tab}").add(self.borders.sharpR("R")))
+            solvers.add(Text().add(self.borders.round_l("R")).addf("R", f"{GuiActions.tab}").add(self.borders.sharp_r("R")))
         for i, solver in enumerate(self.get_solver_names()):
             if len(self.get_solver_names()) > 1:
                 solvers.add(" ")
@@ -256,7 +260,7 @@ class Tester:
         # building sources
         source_names = Text().add(", ").join([Text().addf(sources_color, f"{name[0]}({name[1]})") for name in self.wdir.sources_names()])
         if self.wdir.has_tests():
-            sources = Text().add(self.borders.roundL(sources_color)).add(source_names).add(self.borders.roundR(sources_color))
+            sources = Text().add(self.borders.round_l(sources_color)).add(source_names).add(self.borders.round_r(sources_color))
         else:
             sources = Text().add(self.borders.border("R", "Nenhum teste cadastrado"))
 
@@ -295,9 +299,9 @@ class Tester:
 
         for unit_result, index in done_list + todo_list:
             foco = i == self.focused_index
-            token = self.get_token(unit_result)
-            extrap = self.borders.roundL(token.fmt)
-            extras = self.borders.roundR(token.fmt)
+            token = Tester.get_token(unit_result)
+            extrap = self.borders.round_l(token.fmt)
+            extras = self.borders.round_r(token.fmt)
             if foco and show_focused_index:
                 # token.fmt = token.fmt.lower() + ""
                 extrap = Text.Token("(")
@@ -337,7 +341,7 @@ class Tester:
         # output.addf("M", f"{timer}l {value}  ")
         color = "R" if self.locked_index else "G"
         if self.settings.app.get_use_borders():
-            output.addf(color + "b", symbols.sharpR.text)
+            output.addf(color + "b", symbols.sharp_r.text)
         else:
             output.addf("B", " ")
 
@@ -345,7 +349,7 @@ class Tester:
         free = symbols.locked_free.text
         locked = symbols.locked_locked.text
         symbol = locked if self.locked_index else free
-        output.addf(color, f" {GuiKeys.lock} {symbol} ").add(self.borders.sharpR(color))
+        output.addf(color, f" {GuiKeys.lock} {symbol} ").add(self.borders.sharp_r(color))
 
         return output
 
@@ -384,9 +388,8 @@ class Tester:
     def make_bottom_line(self) -> list[Text]:
         cmds: list[Text] = []
 
-        cmds.append(self.borders.border("C", f"{GuiActions.move} [{GuiKeys.up}{GuiKeys.left}{GuiKeys.down}{GuiKeys.right}]"))
-        
         text = f"{GuiActions.config} [{GuiKeys.palette}]"
+        cmds.append(self.borders.border("C", f"{GuiActions.move} [{GuiKeys.up}{GuiKeys.left}{GuiKeys.down}{GuiKeys.right}]"))
         cmds.append(self.borders.border("C", text))
         cmds.append(self.borders.border("G", f"{GuiActions.evaluate_tester} [{symbols.newline.text}]"))
         cmds.append(self.borders.border("G", f"{GuiActions.execute_tester} [{GuiKeys.execute_tester}]"))
@@ -431,8 +434,8 @@ class Tester:
         diff_builder.set_curses()
 
         if self.wdir.get_solver().has_compile_error():
-            exec, _ = self.wdir.get_solver().get_executable()
-            received = exec.get_error_msg().get_str()
+            executable, _ = self.wdir.get_solver().get_executable()
+            received = executable.get_error_msg().get_str()
             line_list = [Text().add(line) for line in received.splitlines()]
         elif self.settings.app.get_diff_mode() == DiffMode.DOWN or not self.wdir.has_tests():
             ud_diff = DiffBuilderDown(cols, unit)
@@ -458,13 +461,12 @@ class Tester:
     def get_solver_names(self):
         return sorted(self.wdir.solvers_names())
     
-    def main(self, scr: curses.window):
+    def main(self, scr: curses.window) -> Optional[Callable[[], bool]]:
         InputManager.fix_esc_delay()
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
         while not self.exit:
-
             Fmt.clear()
             if self.mode == SeqMode.running:
                 if self.wdir.get_solver().not_compiled():
@@ -485,7 +487,7 @@ class Tester:
             self.draw_top_bar()
 
             if self.mode == SeqMode.intro:
-                self.print_centered_image(random_get(intro, self.get_folder()), "y")
+                Tester.print_centered_image(random_get(intro, self.get_folder()), "y")
             else:
                 self.draw_main()
             
@@ -506,8 +508,9 @@ class Tester:
             fn_exec = self.process_key(key)
             if fn_exec is not None:
                 return fn_exec
+        return None
 
-    def run_exec_mode(self):
+    def run_exec_mode(self) -> Callable[[], bool]:
         self.mode = SeqMode.running
         if self.wdir.is_autoload():
             self.wdir.autoload()
@@ -519,7 +522,7 @@ class Tester:
                 LogItemExec().set_key(self.task.key).set_mode(LogItemExec.Mode.FREE).set_size(changes, total_lines)
             )
         header = self.build_top_line_header(RawTerminal.get_terminal_size())
-        return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True, header=header)
+        return lambda: Free.free_run(self.wdir.get_solver(), show_compilation=True, to_clear=True, wait_input=True, header=header)
 
     def run_test_mode(self):
         self.mode = SeqMode.running
@@ -617,8 +620,7 @@ class Tester:
             self.settings.app.set_timeout(valor)
             self.settings.save_settings()
 
-
-    def process_key(self, key: int):
+    def process_key(self, key: int) -> Optional[Callable[[], bool]]:
         if key == ord('q') or any([key == x for x in InputManager.backspace_list]):
             self.set_exit()
         elif key == InputManager.esc:
@@ -666,6 +668,7 @@ class Tester:
             self.command_pallete()
         elif key != -1 and key != curses.KEY_RESIZE:
             self.fman.add_input( Floating(self.settings, "v>").error().put_text(f"Tecla char:{chr(key)}, code:{key}, não reconhecida") )
+        return None
 
     def command_pallete(self):
         options: list[FloatingInputData] = []
@@ -739,10 +742,10 @@ class Tester:
                         )
                 break
             else:
-                while(True):
+                while True:
                     try:
                         repeat = free_run_fn()
-                        if repeat == False:
+                        if not repeat:
                             break
                     except CompileError as e:
                         self.mode = SeqMode.finished

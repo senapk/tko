@@ -90,7 +90,6 @@ class Fmt:
             except KeyError:
                 # print("Cor não encontrada: " + fg + bg)
                 raise(Exception("Cor não encontrada: " + source_fmt))
-                exit(1)
         if italic:
             stdscr.attron(curses.A_ITALIC)
         if underline:
@@ -228,9 +227,3 @@ def test_fmt(scr: curses.window):
         Fmt.write(i - 2, -1, output)
     scr.getch()
 
-if __name__ == "__main__":
-    curses.wrapper(test_fmt)
-    # values = Fmt.cut_box(-2, -1, 10, 10, Text().add("1234\n56\n789").addf("r", "1\n23").addf("g", "456"))
-    # print([str(v) for v in values])
-    # tokens = Fmt.split_in_tokens(values)
-    # print(", ".join([str(v) for v in tokens]))

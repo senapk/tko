@@ -174,8 +174,7 @@ class Task(TreeItem):
         return self.get_percent() == 0
     
     def in_progress(self):
-        return self.get_percent() > 0 and self.get_percent() < 100
-
+        return 0 < self.get_percent() < 100
 
     # @override
     def __str__(self):

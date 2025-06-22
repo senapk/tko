@@ -13,12 +13,10 @@ def cmd_diff(args: argparse.Namespace) -> None:
     target_b: str = args.target_b
     diff_mode = DiffMode.SIDE if args.side else DiffMode.DOWN
     if args.path:
-        content_a: str = ""
         if os.path.isfile(target_a):
             content_a = open(target_a, 'r', encoding='utf-8').read()
         else:
             content_a = "File not found: " + target_a
-        content_b: str = ""
         if os.path.isfile(target_b):
             content_b = open(target_b, 'r', encoding='utf-8').read()
         else:

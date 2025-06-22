@@ -10,7 +10,7 @@ class CmdEval:
     
     def __init__(self):
         self.target_list: list[str] = []
-        self.norun: bool = False
+        self.no_run: bool = False
         self.track: bool = False
         self.load_self: bool = False
         self.complex: bool = False
@@ -23,9 +23,9 @@ class CmdEval:
         symbols.execution_result["compilation_error"] = Text.Token("C", "m")
         symbols.execution_result["execution_error"] = Text.Token("E", "y")
 
-    def set_norun(self, value: bool | None = None):
+    def set_no_run(self, value: bool | None = None):
         if value is not None:
-            self.norun = value
+            self.no_run = value
         return self
     
     def set_track(self, value: bool | None = None):
@@ -57,7 +57,7 @@ class CmdEval:
         return self
 
     def execute(self) -> None:
-        if self.norun and not self.load_self:
+        if self.no_run and not self.load_self:
             print("Nothing to do. If using --norun, you should choice at least --self.")
             return
         
@@ -68,7 +68,7 @@ class CmdEval:
         settings = Settings()
         cmd_run = Run(settings, self.target_list, param)
         cmd_run.set_eval_mode().set_abort_on_exec_error()
-        if self.norun:
+        if self.no_run:
             cmd_run.set_no_run()
         if self.track:
             cmd_run.show_track_info()

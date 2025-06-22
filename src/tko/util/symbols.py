@@ -3,10 +3,6 @@ from tko.util.text import Text
 class __Symbols:
 
     def __init__(self):
-        self.set_unicode()
-        # self.set_ascii()
-
-    def set_unicode(self):
         self.task_downloaded = Text.Token("▼", "g")
         self.task_to_download = Text.Token("▲")
         self.task_local = Text.Token("▶", "g")

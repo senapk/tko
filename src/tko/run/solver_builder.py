@@ -19,7 +19,11 @@ class CompileError(Exception):
         return self.message
 
 class Executable:
-    def __init__(self, cmd: list[str] = [], files: list[str] = [], folder: str | None= None):
+    def __init__(self, cmd: list[str] | None = None, files: list[str] | None =  None, folder: str | None= None):
+        if cmd is None:
+            cmd = []
+        if files is None:
+            files = []
         self.__cmd = cmd
         self.__files = files
         self.__folder = folder
@@ -108,7 +112,7 @@ class SolverBuilder:
         os.makedirs(self.cache_dir, exist_ok=True)
 
     def get_executable(self, force_rebuild: bool = False) -> tuple[Executable, bool]:
-        if self.args_list == []:
+        if not self.args_list:
             return Executable(), False
         if self.__exec.has_compile_error():
             return self.__exec, False
@@ -131,7 +135,7 @@ class SolverBuilder:
         elif first.endswith(".mk"):
             self.__prepare_make()
         elif first.endswith(".js"):
-            self.__prepare_js(free_run_mode)
+            self.__prepare_js()
         elif first.endswith(".ts"):
             self.__prepare_ts(free_run_mode)
         elif first.endswith(".java"):
@@ -243,7 +247,7 @@ class SolverBuilder:
         else:
             self.__exec.set_executable(["make", "-s", "-C", folder, "-f", solver, "run"], [])
 
-    def __prepare_js(self, free_run_mode: bool):
+    def __prepare_js(self):
         self.check_tool("node")
         self.__exec.set_executable(["node"], self.args_list)
 

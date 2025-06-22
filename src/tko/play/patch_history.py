@@ -79,8 +79,7 @@ class PatchHistory:
         return output
 
     def to_json(self):
-        data: dict[str, list[dict[str, str]]] = {}
-        data["patches"] = []
+        data: dict[str, list[dict[str, str]]] = {"patches": []}
         for patch in self.patches:
             data["patches"].append({"label": patch.label, "content": patch.content})
         return data

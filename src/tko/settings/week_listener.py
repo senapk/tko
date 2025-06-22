@@ -15,6 +15,7 @@ class WeekListener:
         self.format = '%Y-%m-%d %H:%M:%S'
 
     def listener(self, item: LogItemBase, new_entry: bool = False):
+        _ = new_entry
         day = item.timestamp.split(" ")[0]
 
         if day not in self.day_actions:

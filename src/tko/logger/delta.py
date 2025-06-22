@@ -21,7 +21,7 @@ class Delta:
         seconds = round(total_seconds) % 60
         return f'{minutes:03d}:{seconds:02d}' 
     
-    def create(self, mode: Delta.Mode, last_item: Delta | None, datetime: dt.datetime) -> Delta:
+    def create(self, mode: Mode, last_item: Delta | None, datetime: dt.datetime) -> Delta:
         if mode.action == Delta.Mode.Action.without_inc_time:
             return self.__create_without_inc_time(last_item, datetime)
         elif mode.action == Delta.Mode.Action.incrementing_time:

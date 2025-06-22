@@ -46,7 +46,7 @@ class CmdConfig:
         # if param.ask:
         #     action = True
         #     settings.app._lang_default = ""
-        #     print("Language extension will be asked always.")
+        #     print("Language extension will asked be always.")
         
         if param.editor:
             action = True
@@ -59,7 +59,6 @@ class CmdConfig:
             print(f"Novo timeout: {param.timeout}")
 
         if not action:
-            action = True
             print(str(settings))
 
         settings.save_settings()

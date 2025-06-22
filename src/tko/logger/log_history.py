@@ -12,7 +12,9 @@ from typing import Callable
 
 class LogHistory:
 
-    def __init__(self, rep_folder: str, listeners: list[Callable[[LogItemBase, bool], None]] = []):
+    def __init__(self, rep_folder: str, listeners: list[Callable[[LogItemBase, bool], None]] | None = None):
+        if listeners is None:
+            listeners = []
         self.paths = RepPaths(rep_folder)
         self.log_folder: str = self.paths.get_log_folder()
         self.listeners: list[Callable[[LogItemBase, bool], None]] = listeners

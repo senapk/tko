@@ -14,12 +14,12 @@ class LogItemBase(ABC):
 
     key_str = "k"
     version_str = "v"
-    def __init__(self, type: LogItemBase.Type):
+    def __init__(self, log_type: LogItemBase.Type):
         self.name = ""
         self.vers: int = 1
         self.datetime: dt.datetime = dt.datetime.fromordinal(1)
         self.timestamp: str = ""
-        self.type: LogItemBase.Type = type
+        self.type: LogItemBase.Type = log_type
 
     def set_key(self, key: str):
         self.name = key

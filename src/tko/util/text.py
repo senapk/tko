@@ -48,7 +48,7 @@ class AnsiColor:
 
 class Text:
     @staticmethod
-    def RToken(fmt: str, text: str) -> Token:
+    def r_token(fmt: str, text: str) -> Token:
         return Text.Token(text, fmt)
 
     class Token:
@@ -339,9 +339,6 @@ class Text:
             self.data = self.data[qtd:]
         return self
 
-    def trim_spaces(self, limit: int):
-        return self
-
     def trim_end(self, width: int):
         if self.len() > width:
             self.data = self.data[:width]
@@ -412,7 +409,8 @@ class Text:
 
         return list(zip(texts, placeholders))
 
-    def __process_fmt(self, fmt: str) -> tuple[str, str]:
+    @staticmethod
+    def __process_fmt(fmt: str) -> tuple[str, str]:
         if fmt == "":
             return "", ""
         if ":" in fmt:
@@ -427,7 +425,7 @@ class Text:
         params: list[str | Text | Text.Token] = list(args)
         for text_data, placeholder in Text.__extract(text):
             self.add(text_data)
-            fmt, data = self.__process_fmt(placeholder)
+            fmt, data = Text.__process_fmt(placeholder)
             if data == "" and len(params) > 0:
                 data = params[0]
                 params = params[1:]
@@ -450,11 +448,11 @@ if __name__ == "__main__":
     print(Text.format("O Brasil é {}, {g:verde} e {y}.", ("b", "azul"), "amarelo"))
 
     # Funciona também por adição
-    print(Text() + "O Brasil é " + Text.RToken("b", "azul") + ", " + Text.RToken("g", "verde") + " e " + Text.RToken("y", "amarelo"))
+    print(Text() + "O Brasil é " + Text.r_token("b", "azul") + ", " + Text.r_token("g", "verde") + " e " + Text.r_token("y", "amarelo"))
     # Dá pra definir a formatação padrão para quando não for passado nada
-    print(Text("r") + "O Brasil é " + Text.RToken("b", "azul") + ", " + Text.RToken("g", "verde") + " e " + Text.RToken("y", "amarelo"))
+    print(Text("r") + "O Brasil é " + Text.r_token("b", "azul") + ", " + Text.r_token("g", "verde") + " e " + Text.r_token("y", "amarelo"))
     # A formatação pode incluir cores de fundo
-    print(Text("Yw") + "O Brasil é " + Text.RToken("Rb", "azul") + ", " + Text.RToken("Kg", "verde") + " e " + Text.RToken("y", "amarelo"))
+    print(Text("Yw") + "O Brasil é " + Text.r_token("Rb", "azul") + ", " + Text.r_token("Kg", "verde") + " e " + Text.r_token("y", "amarelo"))
 
     # Dá pra concatenar, somar ou passar por parâmetro
     print(Text("R") + "Tudo em vermelho " + Text("G") + " e tudo em verde")

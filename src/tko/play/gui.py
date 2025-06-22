@@ -1,4 +1,4 @@
-from tko.play.keys import GuiActions, GuiKeys
+from tko.play.keys import GuiActions
 from tko.game.xp import XP
 from tko.settings.settings import Settings
 from tko.util.text import Text
@@ -63,7 +63,6 @@ class Gui:
         return help_fixed
 
     def get_activate_label(self) -> tuple[str, str]:
-        output: str = GuiActions.activate
         try:
             obj = self.tree.get_selected_throw()
         except IndexError:
@@ -89,23 +88,25 @@ class Gui:
             return color, output
         return "R", " ERRO"
 
-    def get_admin_color(self) -> str:
+    @staticmethod
+    def get_admin_color() -> str:
         if Flags.admin:
             return ""
         return "g"
 
-    def center_header_footer(self, value: Text, frame: Frame) -> Text:
+    @staticmethod
+    def center_header_footer(value: Text, frame: Frame) -> Text:
         half = value.len() // 2
         x = frame.get_x()
         _, dx = Fmt.get_size()
-        color = self.get_admin_color()
+        color = Gui.get_admin_color()
         full = Text().addf(color, "─" * ((dx//2) - x - 2 - half)).add(value)
         return full
 
     def show_main_bar(self, frame: Frame):
         top = Text()
         alias_color = "R"
-        dirname = self.rep.get_rep_dir()
+        dirname: str = self.rep.paths.get_rep_dir()
         dirname = os.path.basename(dirname).upper()
         top.add(self.style.border(alias_color, dirname))
         if not Flags.admin:
@@ -181,12 +182,12 @@ class Gui:
         for x in items:
             color_ini = x.data[0].fmt
             color_end = x.data[-1].fmt
-            left = self.style.roundL(color_ini)
-            right = self.style.roundR(color_end)
+            left = self.style.round_l(color_ini)
+            right = self.style.round_r(color_end)
             middle = x.clone()
             if x.data[0].text == "!":
-                left = self.style.sharpL(color_ini)
-                right = self.style.sharpR(color_end)
+                left = self.style.sharp_l(color_ini)
+                right = self.style.sharp_r(color_end)
                 middle.data = x.data[1:]
             out.append(Text().add(left).add(middle).add(right))
         return out
@@ -222,15 +223,13 @@ class Gui:
             Text().addf("Y", f"Sair  [q]"),
             Text().addf("Y", f"Ajuda [?]"),
         ]
-        help = self.build_list_sentence(lista)
-        search = help[0]
-        evaluate = help[1]
+        help_list = self.build_list_sentence(lista)
+        search = help_list[0]
+        evaluate = help_list[1]
 
-        pre: list[Text] = []
-        pre.append(search)
+        pre: list[Text] = [search]
 
-        pos: list[Text] = []
-        pos.append(evaluate)
+        pos: list[Text] = [evaluate]
 
         limit = frame.get_dx()
         size = limit - Text().add(" ").join(pre + pos).len() - 2
@@ -245,34 +244,33 @@ class Gui:
         self.fman.add_input(_help)
 
         _help.set_header_text(Text().add(" Ajuda "))
-        # _help.put_text(" Movimentação ".center(dx, symbols.hbar.text))
         _help.put_sentence(Text.format("    Ajuda ").addf("r", GuiKeys.key_help).add("  Abre essa tela de ajuda")
         )
 
         _help.put_sentence(Text.format("  ").addf("r", "Shift + B")
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
-        _help.put_sentence(Text() + "  " + Text.RToken("g", "setas") + "      Para navegar entre os elementos")
-        _help.put_sentence(Text() + "   " + Text.RToken("g", f"{GuiKeys.left}{GuiKeys.down}{GuiKeys.up}{GuiKeys.right}")  + "      Para navegar entre os elementos")
-        _help.put_sentence(Text() + "   " + Text.RToken("g", f"{GuiKeys.left2}{GuiKeys.down2}{GuiKeys.up2}{GuiKeys.right2}")  + "      Para navegar entre os elementos")
+        _help.put_sentence(Text() + "  " + Text.r_token("g", "setas") + "      Para navegar entre os elementos")
+        _help.put_sentence(Text() + "   " + Text.r_token("g", f"{GuiKeys.left}{GuiKeys.down}{GuiKeys.up}{GuiKeys.right}") + "      Para navegar entre os elementos")
+        _help.put_sentence(Text() + "   " + Text.r_token("g", f"{GuiKeys.left2}{GuiKeys.down2}{GuiKeys.up2}{GuiKeys.right2}") + "      Para navegar entre os elementos")
     
-        _help.put_sentence(Text() + f"   {GuiActions.config} " + Text.RToken("r", f"{GuiKeys.palette}") + "  Abre o menu de ações e configurações")
-        _help.put_sentence(Text() + f"   {GuiActions.github} " + Text.RToken("r", f"{GuiKeys.open_url}") + "  Abre tarefa em uma aba do browser")
-        _help.put_sentence(Text() + f"   {GuiActions.download} " + Text.RToken("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
-        _help.put_sentence(Text() + f"   {GuiActions.edit} " + Text.RToken("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
-        _help.put_sentence(Text() + f"   {GuiActions.activate} " + Text.RToken("r", "↲") + "  Interage com o elemento de acordo com o contexto")
+        _help.put_sentence(Text() + f"   {GuiActions.config} " + Text.r_token("r", f"{GuiKeys.palette}") + "  Abre o menu de ações e configurações")
+        _help.put_sentence(Text() + f"   {GuiActions.github} " + Text.r_token("r", f"{GuiKeys.open_url}") + "  Abre tarefa em uma aba do browser")
+        _help.put_sentence(Text() + f"   {GuiActions.download} " + Text.r_token("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
+        _help.put_sentence(Text() + f"   {GuiActions.edit} " + Text.r_token("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
+        _help.put_sentence(Text() + f"   {GuiActions.activate} " + Text.r_token("r", "↲") + "  Interage com o elemento de acordo com o contexto")
         _help.put_sentence(Text() + "             (baixar, visitar, escolher, compactar, expandir)")
-        _help.put_sentence(Text() + f"  {GuiActions.grade} " + Text.RToken("r", GuiKeys.grade_play) + "  Abre tela para auto avaliação")
-        _help.put_sentence(Text() + f"    {GuiActions.search} " + Text.RToken("r", f"{GuiKeys.search}") + "  Abre a barra de pesquisa")
+        _help.put_sentence(Text() + f"  {GuiActions.grade} " + Text.r_token("r", GuiKeys.grade_play) + "  Abre tela para auto avaliação")
+        _help.put_sentence(Text() + f"    {GuiActions.search} " + Text.r_token("r", f"{GuiKeys.search}") + "  Abre a barra de pesquisa")
 
         _help.put_sentence(Text())
         _help.put_sentence(Text() + "Você pode mudar o editor padrão com o comando")
-        _help.put_sentence(Text() + Text.RToken("g", "             tko config --editor <comando>"))
+        _help.put_sentence(Text() + Text.r_token("g", "             tko config --editor <comando>"))
 
 
     def build_xp_bar(self) -> tuple[str, float]:
         xp = XP(self.game)
         available = xp.get_xp_total_available()
-        if available > 0 and xp.get_xp_total_obtained() == available:
+        if 0 < available == xp.get_xp_total_obtained():
             text = "Você atingiu o máximo de xp!"
             percent = 100.0
         else:

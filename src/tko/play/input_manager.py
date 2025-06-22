@@ -2,6 +2,8 @@ from typing import Callable
 import curses
 import os
 
+FN_VOID = Callable[[], None]
+
 class InputManager:
     backspace_list: list[int] = [8, 127, 263, curses.KEY_BACKSPACE]
     a = 97
@@ -16,7 +18,7 @@ class InputManager:
 
     def __init__(self):
         # stores a function than can return another function
-        self.calls: dict[int, Callable[[], None | Callable[[], None]]] = {}
+        self.calls: dict[int, Callable[[], FN_VOID] | Callable[[], None]] = {}
 
     def add_int(self, _key: int, fn: Callable[[], None]):
         if _key in self.calls.keys():

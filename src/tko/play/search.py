@@ -78,6 +78,6 @@ class Search:
         elif any([key == x for x in InputManager.backspace_list]):
             self.tree.search_text = self.tree.search_text[:-1]
             self.update_index()
-        elif key >= 32 and key < 127:
+        elif 32 <= key < 127:
             self.tree.search_text += chr(key).lower()
             self.update_index()

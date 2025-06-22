@@ -1,46 +1,49 @@
 # Cuidado com a bateria da @calculadora2
 
 <!-- toch -->
+
 [Intro](#intro) | [Draft](#draft) | [Guide](#guide) | [Shell](#shell)
 -- | -- | -- | --
+
 <!-- toch -->
 
 ![cover](cover.jpg)
 
-
-O objetivo dessa atividade é implementar uma calculadora a bateria. Se há bateria, ela executa operações de soma e divisão. É possível também mostrar a quantidade de bateria e recarregar a calculadora. Ela avisa quando está sem bateria e se há tentativa de divisão por 0.
+O objetivo dessa atividade é implementar uma calculadora a bateria. Se há bateria, ela executa operações de soma e
+divisão. É possível também mostrar a quantidade de bateria e recarregar a calculadora. Ela avisa quando está sem bateria
+e se há tentativa de divisão por 0.
 
 ***
 
 ## Intro
 
 - Iniciar: `$init M`
-  - ações
-    - Inicia a calculadora com uma quantidade máxima de bateria M.
+    - ações
+        - Inicia a calculadora com uma quantidade máxima de bateria M.
 - Mostrar: `$show`
-  - ações
-    - Mostra o resultado da última operação bem-sucedida no display e o estado atual da bateria.
-    - Exemplo de formatação: `display = {%.2f}, bateria = {%.2f}`
+    - ações
+        - Mostra o resultado da última operação bem-sucedida no display e o estado atual da bateria.
+        - Exemplo de formatação: `display = {%.2f}, bateria = {%.2f}`
 - Recarregar: `$charge V`
-  - ações
-    - Recarrega um valor V à bateria.
-    - Não recarregar além do valor máximo.
-  - erros
-    - nenhum, se tentar recarregar além do valor máximo, recarregue apenas o necessário.
+    - ações
+        - Recarrega um valor V à bateria.
+        - Não recarregar além do valor máximo.
+    - erros
+        - nenhum, se tentar recarregar além do valor máximo, recarregue apenas o necessário.
 - Somar: `$sum A B`
-  - ações
-    - Realiza uma operação de soma de A + B colocando o resultado no display.
-    - Consume 1 ponto de bateria.
-  - erros
-    - `fail: bateria insuficiente`, se não conseguir gastar a bateria.
+    - ações
+        - Realiza uma operação de soma de A + B colocando o resultado no display.
+        - Consume 1 ponto de bateria.
+    - erros
+        - `fail: bateria insuficiente`, se não conseguir gastar a bateria.
 
 - Dividir: `$div A B`
-  - ações
-    - Realiza uma operação de divisão de A / B colocando o resultado no display
-    - Consume 1 ponto de bateria.
-  - erros
-    - `fail: bateria insuficiente`, se não conseguir gastar a bateria.
-    - `fail: divisão por zero`, se gastou a bateria, mas tentou dividir por 0.
+    - ações
+        - Realiza uma operação de divisão de A / B colocando o resultado no display
+        - Consume 1 ponto de bateria.
+    - erros
+        - `fail: bateria insuficiente`, se não conseguir gastar a bateria.
+        - `fail: divisão por zero`, se gastou a bateria, mas tentou dividir por 0.
 
 - Finalizar: `$end`
 
@@ -49,16 +52,17 @@ O objetivo dessa atividade é implementar uma calculadora a bateria. Se há bate
 ## Draft
 
 <!-- draft -->
+
 - cpp
-  - [calculator.hpp](.cache/lang/cpp/calculator.hpp)
-  - [fn.hpp](.cache/lang/cpp/fn.hpp)
-  - [shell.cpp](.cache/lang/cpp/shell.cpp)
+    - [calculator.hpp](.cache/lang/cpp/calculator.hpp)
+    - [fn.hpp](.cache/lang/cpp/fn.hpp)
+    - [shell.cpp](.cache/lang/cpp/shell.cpp)
 - java
-  - [Calculator.java](.cache/lang/java/Calculator.java)
-  - [Shell.java](.cache/lang/java/Shell.java)
+    - [Calculator.java](.cache/lang/java/Calculator.java)
+    - [Shell.java](.cache/lang/java/Shell.java)
 - ts
-  - [calculator.ts](.cache/lang/ts/calculator.ts)
-  - [shell.ts](.cache/lang/ts/shell.ts)
+    - [calculator.ts](.cache/lang/ts/calculator.ts)
+    - [shell.ts](.cache/lang/ts/shell.ts)
 
 <!-- draft -->
 

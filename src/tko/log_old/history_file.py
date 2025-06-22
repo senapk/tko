@@ -8,7 +8,9 @@ from typing import Callable
 
 class HistoryFile:
 
-    def __init__(self, history_file: str | None = None, listeners: list[Callable[[LogAction, bool], None]] = []):
+    def __init__(self, history_file: str | None = None, listeners: list[Callable[[LogAction, bool], None]] | None = None):
+        if listeners is None:
+            listeners = []
         self.history_file: str | None = history_file
         self.listeners: list[Callable[[LogAction, bool], None]] = listeners
         self.entries: list[LogAction] = HistoryFile.__load_file(history_file)

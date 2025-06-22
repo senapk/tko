@@ -20,6 +20,7 @@ def load_html_tags(task: str) -> None | str:
 
 class Game:
     def __init__(self):
+        self.filename: str = ""
         self.ordered_clusters: list[str] = [] # ordered clusters
         self.clusters: dict[str, Cluster] = {} 
         self.quests: dict[str, Quest] = {}  # quests indexed by quest key
@@ -103,7 +104,7 @@ class Game:
         self.clusters = gb.clusters
         self.quests = gb.collect_quests()
         self.tasks = gb.collect_tasks()
-        GameValidator(filename, self.clusters, self.quests, self.tasks).validate()
+        GameValidator(filename, self.clusters).validate()
 
         # for t in self.tasks.values():
         #     t.get_link(os.path.dirname(filename) + "/")

@@ -27,7 +27,7 @@ from tko.logger.log_resume import LogResume
 from tko.settings.rep_paths import RepPaths
 
 
-class tkoFilterMode:
+class TkoFilterMode:
     @staticmethod
     def deep_copy_and_change_dir():
         # path to ~/.tko_filter
@@ -190,7 +190,7 @@ class Run:
             old_dir = os.getcwd()
 
             print(Text.format(" Entrando no modo de filtragem ").center(RawTerminal.get_terminal_size(), Text.Token("═")))
-            tkoFilterMode.deep_copy_and_change_dir()  
+            TkoFilterMode.deep_copy_and_change_dir()
             # search for target outside . dir and redirect target
             new_target_list: list[str] = []
             for target in self.target_list:
@@ -203,8 +203,8 @@ class Run:
     def __print_diff(self):
         
         if self.wdir.get_solver().has_compile_error():
-            exec, _ = self.wdir.get_solver().get_executable()
-            print(exec.get_error_msg())
+            executable, _ = self.wdir.get_solver().get_executable()
+            print(executable.get_error_msg())
             return
         
         results = [unit.result for unit in self.wdir.get_unit_list()]
@@ -251,8 +251,8 @@ class Run:
             self.wdir = Wdir().set_curses(self.__curses_mode).set_lang(self.__lang).set_target_list(self.target_list).build().filter(self.param)
         except FileNotFoundError as e:
             if self.wdir.has_solver():
-                exec, _ = self.wdir.get_solver().get_executable()
-                exec.set_compile_error(str(e))
+                executable, _ = self.wdir.get_solver().get_executable()
+                executable.set_compile_error(str(e))
         return self.wdir
 
     def __missing_target(self) -> bool:
@@ -279,7 +279,7 @@ class Run:
                     .set_mode(LogItemExec.Mode.FREE)
                     .set_key(self.__task.key)
                     .set_size(changes, size))
-        Free.free_run(self.wdir.get_solver(), show_compilling=False, to_clear=False, wait_input=False)
+        Free.free_run(self.wdir.get_solver(), show_compilation=False, to_clear=False, wait_input=False)
 
     def __create_opener_for_wdir(self) -> Opener:
         opener = Opener(self.settings)

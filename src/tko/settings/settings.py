@@ -27,6 +27,7 @@ class Settings:
         self.__appcfg = "appcfg"
         self.__colors = "colors"
 
+        self.package_name = 'tko'
         self.dict_alias_remote: dict[str, str] = {}
         self.app = AppSettings()
         self.colors = Colors()
@@ -40,7 +41,6 @@ class Settings:
 
     def get_settings_file(self) -> str:
         if self.settings_file == "":
-            self.package_name = "tko"
             default_filename = self.CFG_FILE
             self.settings_file = os.path.join(appdirs.user_data_dir(self.package_name), default_filename) # type: ignore
         
@@ -52,10 +52,11 @@ class Settings:
         return self.get_settings_file() + ".backup"
 
     def reset(self):
-        self.dict_alias_remote = {}
-        self.dict_alias_remote["fup"] = "https://github.com/qxcodefup/arcade/blob/master/Readme.md"
-        self.dict_alias_remote["ed"] = "https://github.com/qxcodeed/arcade/blob/master/Readme.md"
-        self.dict_alias_remote["poo"] = "https://github.com/qxcodepoo/arcade/blob/master/Readme.md"
+        self.dict_alias_remote = {
+            "fup": "https://github.com/qxcodefup/arcade/blob/master/Readme.md",
+            "ed": "https://github.com/qxcodeed/arcade/blob/master/Readme.md",
+            "poo": "https://github.com/qxcodepoo/arcade/blob/master/Readme.md"
+        }
 
         self.app = AppSettings()
         self.colors = Colors()

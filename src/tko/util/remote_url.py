@@ -29,7 +29,6 @@ class RemoteUrl:
 
     def download_absolute_to(self, filename: str):
         [tempfile, __content] = urllib.request.urlretrieve(self.get_raw_url(), filename)
-        content = ""
         content = Decoder.load(tempfile)
         if self.remote is not None:
             content = Absolute.relative_to_absolute(content, self.remote)

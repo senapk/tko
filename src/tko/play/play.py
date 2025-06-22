@@ -3,7 +3,6 @@ from tko.settings.languages import available_languages
 from tko.settings.settings import Settings
 from tko.settings.repository import Repository
 from tko.play.keys import GuiKeys
-from tko.play.floating import Floating
 from tko.play.floating_calibrate import FloatingCalibrate
 from tko.play.fmt import Fmt
 from tko.play.input_manager import InputManager
@@ -57,9 +56,6 @@ class Play:
         self.fman.add_input(
             Floating(self.settings).put_text("\nAté a próxima\n").set_exit_fn(set_exit).warning()
         )
-
-    def toggle_skills(self):
-        Flags.skills.toggle()
 
     def make_callback(self) -> InputManager:
         cman = InputManager()

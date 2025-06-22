@@ -3,8 +3,7 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 
 class GameValidator:
-    def __init__(self, filename: str, clusters: dict[str, Cluster], 
-                 quests: dict[str, Quest], tasks: dict[str, Task]):
+    def __init__(self, filename: str, clusters: dict[str, Cluster]):
         self.filename = filename
         self.clusters: dict[str, Cluster] = clusters
         self.quests: dict[str, Quest] = {}

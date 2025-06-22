@@ -22,42 +22,42 @@ class TaskInfo:
         self.easy: int = 0
     
     def set_rate(self, value: int):
-        if value >= 0 and value <= TaskInfo.rate_max:
+        if 0 <= value <= TaskInfo.rate_max:
             self.rate = value
             return self
         else:
             raise ValueError(f"Invalid {TaskInfo.rate_str}:{value}")
     
     def set_flow(self, value: int):
-        if value >= 0 and value <= TaskInfo.flow_max:
+        if 0 <= value <= TaskInfo.flow_max:
             self.flow = value
             return self
         else:
             raise ValueError(f"Invalid {TaskInfo.flow_str}:{value}")
 
     def set_edge(self, value: int):
-        if value >= 0 and value <= TaskInfo.edge_max:
+        if 0 <= value <= TaskInfo.edge_max:
             self.edge = value
             return self
         else:
             raise ValueError(f"Invalid {TaskInfo.edge_str}:{value}")
 
     def set_neat(self, value: int):
-        if value >= 0 and value <= TaskInfo.neat_max:
+        if 0 <= value <= TaskInfo.neat_max:
             self.neat = value
             return self
         else:
             raise ValueError(f"Invalid {TaskInfo.neat_str}:{value}")
         
     def set_cool(self, value: int):
-        if value >= 0 and value <= TaskInfo.cool_max:
+        if 0 <= value <= TaskInfo.cool_max:
             self.cool = value
             return self
         else:
             raise ValueError(f"Invalid {TaskInfo.cool_str}:{value}")
 
     def set_easy(self, value: int):
-        if value >= 0 and value <= TaskInfo.easy_max:
+        if 0 <= value <= TaskInfo.easy_max:
             self.easy = value
             return self
         else:
@@ -92,13 +92,9 @@ class TaskInfo:
             self.easy = int(kv[TaskInfo.easy_str])
 
     def get_kv(self) -> dict[str, str]:
-        kv: dict[str, str] = {}
-        kv[TaskInfo.rate_str] = str(self.rate)
-        kv[TaskInfo.flow_str] = str(self.flow)
-        kv[TaskInfo.edge_str] = str(self.edge)
-        kv[TaskInfo.neat_str] = str(self.neat)
-        kv[TaskInfo.cool_str] = str(self.cool)
-        kv[TaskInfo.easy_str] = str(self.easy)
+        kv: dict[str, str] = {TaskInfo.rate_str: str(self.rate), TaskInfo.flow_str: str(self.flow),
+                              TaskInfo.edge_str: str(self.edge), TaskInfo.neat_str: str(self.neat),
+                              TaskInfo.cool_str: str(self.cool), TaskInfo.easy_str: str(self.easy)}
         return kv
     
     def get_filled_kv(self) -> dict[str, str]:

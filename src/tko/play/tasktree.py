@@ -7,7 +7,6 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.play.border import Border
 from tko.down.drafts import Drafts
-from tko.util.symbols import symbols
 from tko.settings.settings import Settings
 from tko.play.floating_manager import FloatingManager
 from tko.util.symbols import symbols
@@ -39,7 +38,8 @@ class TaskTree:
         self.search_text: str = ""
         self.load_all_items()
         self.load_from_rep()
-        self.update_tree(admin_mode = Flags.admin.is_true(), first_loop=True)
+        self.expanded: list[str] = []
+        self.update_tree(admin_mode = Flags.admin.is_true())
         self.reload_sentences()
 
     def load_all_items(self):
@@ -70,10 +70,10 @@ class TaskTree:
                 tasks[t.key] = t.save_to_db()
         self.rep.set_tasks(tasks)
 
-    def update_tree(self, admin_mode: bool, first_loop: bool = False):
-        if not admin_mode:
+    def update_tree(self, admin_mode: bool):
+        #if not admin_mode:
             # reachable_clusters = [c.key for c in self.game.clusters.values() if c.is_reachable()]
-            reachable_quests = [q.key for q in self.game.quests.values() if q.is_reachable()]
+            # reachable_quests = [q.key for q in self.game.quests.values() if q.is_reachable()]
             # old_reachable = reachable_clusters + reachable_quests
 
         self.game.update_reachable_and_available()
@@ -113,7 +113,7 @@ class TaskTree:
             self.max_title = min_value
 
     def __str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool) -> Text:
-        down_symbol = Text.Token(" ")
+        # down_symbol = Text.Token(" ")
         in_focus = focus_color != ""
         down_symbol = symbols.task_to_visit
         if t.link_type == Task.Types.STATIC_FILE:
@@ -144,7 +144,7 @@ class TaskTree:
 
 
         if in_focus:
-            output.add(self.style.roundL(focus_color))
+            output.add(self.style.round_l(focus_color))
         else:
             output.add(" ")
 
@@ -165,7 +165,7 @@ class TaskTree:
                 output.addf(color, word + " ")
 
         if in_focus:
-            output.add(self.style.roundR(focus_color))
+            output.add(self.style.round_r(focus_color))
         else:
             output.add(" ")
 
@@ -198,7 +198,7 @@ class TaskTree:
         color_reachable = "g" if q.is_reachable() else "r"
         if self.app.get_show_hidden() == False and not Flags.admin:
             for quest in self.game.quests.values():
-                if quest.is_reachable() == False:
+                if not quest.is_reachable():
                     if q.key in quest.requires:
                         color_reachable = "y"
                         break
@@ -218,7 +218,7 @@ class TaskTree:
                 #     focus_color = "r"
 
         if in_focus:
-            output.add(self.style.roundL(focus_color))
+            output.add(self.style.round_l(focus_color))
         else:
             output.add(" ")
 
@@ -236,7 +236,7 @@ class TaskTree:
         # output.add(self.style.build_bar(title, q.get_percent() / 100, len(title), done, todo, round=False))
 
         if in_focus:
-            output.add(self.style.roundR(focus_color))
+            output.add(self.style.round_r(focus_color))
         else:
             output.add(" ")
 
@@ -270,11 +270,10 @@ class TaskTree:
         color = ""
         if focus_color != "":
             color = "k" + focus_color
-        title = cluster.title
 
         title = cluster.title.ljust(self.max_title + 5, ".")
         if focus_color != "":
-            output.add(self.style.roundL(focus_color))
+            output.add(self.style.round_l(focus_color))
         else:
             output.add(" ")
 
@@ -284,7 +283,7 @@ class TaskTree:
         # output.add(self.style.build_bar(title, cluster.get_percent() / 100, len(title), done, todo, round=False))
 
         if focus_color != "":
-            output.add(self.style.roundR(focus_color))
+            output.add(self.style.round_r(focus_color))
         else:
             output.add(" ")
 
@@ -327,7 +326,7 @@ class TaskTree:
                         matches.add(cluster.key)
                         matches.add(quest.key)
                         matches.add(task.key)
-        return (matches, first)
+        return matches, first
 
     def __try_add(self, filtered: set[str], matcher: SearchAsc, item: TreeItem):
         if self.search_text == "":
@@ -386,14 +385,14 @@ class TaskTree:
                         focus_color: str = quest_focus_color if self.selected_item == t.get_key() else ""
                         t.sentence: Text = self.__str_task(focus_color, t, ligc, ligq, q.is_reachable()) # type: ignore
                         self.__try_add(filtered, matcher, t)
-        # verifying if has any selected item
+        # verifying if it has any selected item
         if self.items:
             found = False
             for item in self.items:
                 if item.get_key() == self.selected_item:
                     found = True
                     break
-            if found == False:
+            if not found:
                 self.selected_item = self.items[0].get_key()
                 self.reload_sentences()
 
@@ -579,13 +578,13 @@ class TaskTree:
     # return a TaskAction
     def get_task_action(self, task: Task) -> tuple[str, str]:
         if task.link_type == Task.Types.VISITABLE_URL:
-            return ("B", TaskAction.VISITAR)
+            return "B", TaskAction.VISITAR
         if task.link_type == Task.Types.STATIC_FILE:
-            return ("G", TaskAction.EXECUTAR)
+            return "G", TaskAction.EXECUTAR
         
         if not self.is_downloaded_for_lang(task):
-            return ("Y", TaskAction.BAIXAR)
-        return ("G", TaskAction.EXECUTAR)
+            return "Y", TaskAction.BAIXAR
+        return "G", TaskAction.EXECUTAR
         
     def is_downloaded_for_lang(self, task: Task):
         folder = task.get_folder()

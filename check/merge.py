@@ -82,16 +82,18 @@ class Merge:
                     exit(1)
                 self.entries.append(entry)
 
-    def is_free(self, entry: Entry, tree: dict[str, Entry]):
+    @staticmethod
+    def is_free(entry: Entry, tree: dict[str, Entry]):
         for dep in entry.dependencies:
             if dep in tree.keys():
                 return False
         return True
 
-    def extract_one(self, tree: dict[str, Entry]) -> Entry:
+    @staticmethod
+    def extract_one(tree: dict[str, Entry]) -> Entry:
         for key in tree:
             entry = tree[key]
-            if self.is_free(entry, tree):       
+            if Merge.is_free(entry, tree):
                 aux = entry
                 del tree[key]
                 return aux
@@ -115,7 +117,7 @@ class Merge:
 
         index = 0
         while len(tree) > 0:
-            free = self.extract_one(tree)
+            free = Merge.extract_one(tree)
             print(f'{index} - {free.key}')
             index += 1
             content.append(free.content)

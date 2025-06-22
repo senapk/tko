@@ -57,7 +57,8 @@ class Tracker:
         return self
     
     # in format: YYYY-MM-DD HH:MM:SS
-    def get_timestamp(self):
+    @staticmethod
+    def get_timestamp():
         return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     # return timestamp of the last version of the file
@@ -78,8 +79,8 @@ class Tracker:
     # return True if any file was changed
     def store(self) -> tuple[bool, int]:
         os.makedirs(self._folder, exist_ok=True)
-        file_list = os.listdir(self._folder)
-        file_list = [f for f in file_list if f.endswith(self.extension)]
+        #file_list = os.listdir(self._folder)
+        #file_list = [f for f in file_list if f.endswith(self.extension)]
 
         files_in_this_version: list[str] = []
         timestamp = self.get_timestamp()

@@ -10,6 +10,7 @@ class TaskListener:
         self.last_key: str = ""
 
     def listener(self, item: LogItemBase, new_entry: bool = False):
+        _ = new_entry
         without_inc_time = Delta.Mode(Delta.Mode.Action.without_inc_time)
         LogSort.add_to_list(without_inc_time, self.item_time, item)
         cumulative = True

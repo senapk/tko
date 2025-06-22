@@ -1,7 +1,5 @@
 from tko.game.task_parser import TaskParser
 from tko.game.cluster import Cluster
-from tko.game.quest import Quest
-from tko.game.task import Task
 from tko.game.quest import Quest, QuestParser
 from tko.game.task import Task
 from tko.util.get_md_link import get_md_link
@@ -118,7 +116,7 @@ class GameBuilder:
         if self.active_quest is None:
             qkey = self.__get_active_cluster().key + "_sem_quest"
             self.__add_quest(Quest("Sem Quest", qkey))
-        self.__get_active_quest().add_task(task, self.filename)
+        self.__get_active_quest().add_task(task)
 
     # se existir um cluster nessa linha, insere na lista de clusters e 
     # retorno o objeto cluster inserido

@@ -82,7 +82,7 @@ class Frame:
         return self
 
     def get_inner(self):
-        return (self._inner_dy, self._inner_dx)
+        return self._inner_dy, self._inner_dx
 
     def get_size(self):
         return self._inner_dy + 2, self._inner_dx + 2

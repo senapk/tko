@@ -2,9 +2,10 @@ import enum
 import json
 import os
 from tko.util.decoder import Decoder
+from pathlib import Path
 
-def json_norm_join(*args: str):
-    return os.path.normpath(os.path.join(*args))
+def json_norm_join(*args: str) -> str:
+    return str(Path(*args).resolve())
 
 class FileType(enum.Enum):
     SHOW = "show" # visível para o aluno como required

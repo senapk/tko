@@ -247,7 +247,7 @@ class Repository:
         return self
 
     def __str__(self) -> str:
-        return ( f"data: {self.data}\n" )
+        return f"data: {self.data}\n"
 
     @staticmethod
     def rename_file(old_name: str, new_name: str):
