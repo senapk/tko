@@ -1,3 +1,5 @@
+from __future__ import annotations
+from tko.logger.old_log_loader import OldLogLoader
 from tko.logger.log_item_base import LogItemBase
 from tko.logger.log_item_self import LogItemSelf
 from tko.logger.log_item_exec import LogItemExec
@@ -7,8 +9,9 @@ from tko.settings.rep_paths import RepPaths
 import datetime as dt
 
 from tko.util.decoder import Decoder
-import os
 from typing import Callable
+import os
+
 
 class LogHistory:
 
@@ -18,10 +21,18 @@ class LogHistory:
         self.paths = RepPaths(rep_folder)
         self.log_folder: str = self.paths.get_log_folder()
         self.listeners: list[Callable[[LogItemBase, bool], None]] = listeners
-        self.entries: list[LogItemBase] = LogHistory.__load_folder(rep_folder)
+        self.entries: list[LogItemBase] = []
+        self.entries.extend(self.__load_old_log())
+        self.entries.extend(self.__load_folder())
         for entry in self.entries:
             for listener in self.listeners:
                 listener(entry, False)
+
+
+    def __load_old_log(self) -> list[LogItemBase]:
+        self.old_log_file = self.paths.get_old_history_file()
+        loader = OldLogLoader(self.paths.get_rep_dir())
+        return loader.base_list
 
     def get_entries(self) -> list[LogItemBase]:
         return self.entries
@@ -53,10 +64,8 @@ class LogHistory:
         self.__append_action_data(item)
         return item
 
-    @staticmethod
-    def __load_folder(log_folder: str | None) -> list[LogItemBase]:
-        if log_folder is None:
-            return []
+    def __load_folder(self) -> list[LogItemBase]:
+        log_folder = self.paths.get_log_folder()
         if not os.path.exists(log_folder):
             return []
         if not os.path.isdir(log_folder):
