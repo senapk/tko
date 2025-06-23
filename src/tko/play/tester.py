@@ -330,7 +330,7 @@ class Tester:
         diff_text = self.get_diff_symbol()
         output.addf("B", f" {GuiKeys.diff} {diff_text} ")
         # if self.settings.app.has_borders():
-        #     output.addf("Mb", symbols.sharpR.text)
+        #     output.addf("Mb", symbols.sharp_r.text)
         # else:
         #     output.addf("B", " ")
         # timer

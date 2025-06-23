@@ -45,7 +45,7 @@ class __Symbols:
         self.timer = Text.Token("⏳") #⏰
         self.diff_down = Text.Token("↓")
         self.diff_left = Text.Token("→")
-        self.sharpR = Text.Token("")
+        self.sharp_r = Text.Token("")
         self.sharpL = Text.Token("")
         self.action = Text.Token("◎", "b")
 
@@ -115,7 +115,7 @@ class __Symbols:
     #     self.timer = Text.Token("l")
     #     self.diff_down = Text.Token("|")
     #     self.diff_left = Text.Token("─")
-    #     self.sharpR = Text.Token("")
+    #     self.sharp_r = Text.Token("")
     #     self.sharpL = Text.Token("")
     #     self.action = Text.Token("◎", "b")
 
