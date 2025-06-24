@@ -1,5 +1,7 @@
 # Changelog
 
+- 6.0.0
+  - add: refactored all log system
 - 5.3.14
   - add: eval change lines to len
 - 5.3.13
