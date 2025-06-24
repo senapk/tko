@@ -4,11 +4,14 @@ from tko.logger.log_item_base import LogItemBase
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove
 from tko.logger.log_item_self import LogItemSelf
+from tko.play.patch_history import PatchHistory, PatchInfo
+from tko.play.tracker import Tracker, Track
 from tko.settings.rep_paths import RepPaths
 from tko.util.decoder import Decoder
 import enum
 import csv
 import os
+from icecream import ic
 
 class LogAction:
     def __init__(self, hash: str, timestamp: str, action: str, task: str, payload: str):
@@ -32,6 +35,62 @@ class AType(enum.Enum):
     PROG = 'PROG' # deprecated
     SIZE = 'SIZE' # Problem files changes "{line_count:%d}"
 
+
+class TrackerLoader:
+    @staticmethod
+    def load_file_versions(task_track_folder: str) -> dict[str, dict[str, PatchInfo]]:
+        files: list[str] = os.listdir(task_track_folder)
+        files = [f for f in files if f.endswith(Tracker.extension)]
+        file_versions: dict[str, dict[str, PatchInfo]] = {}
+        for f in files:
+            file_name = f[:-len(Tracker.extension)]
+            file_path = os.path.join(task_track_folder, f)
+            if not os.path.isfile(file_path):
+                continue
+            try:
+                patch_history: list[PatchInfo] = PatchHistory().set_json_file(file_path).load_json().restore_all()
+                file_versions[file_name] = {}
+                for patch in patch_history:
+                    file_versions[file_name][patch.label] = patch
+            except Exception as e:
+                ic(f"Error loading patch history from {file_path}: {e}")
+        return file_versions
+
+    @staticmethod
+    def load_track_csv(task_track_folder: str) -> list[Track]:
+        csv_file = os.path.join(task_track_folder, "track.csv")
+        if not os.path.exists(csv_file):
+            ic(f"CSV file {csv_file} does not exist.")
+            return []
+        return Tracker.load_from_log(csv_file)
+
+    @staticmethod
+    def load_from_task_track(task_track_folder: str) -> dict[str, LogItemExec]:
+        task = os.path.basename(task_track_folder)
+        tracks: list[Track] = TrackerLoader.load_track_csv(task_track_folder)
+        file_versions: dict[str, dict[str, PatchInfo]] = TrackerLoader.load_file_versions(task_track_folder)
+        output: dict[str, LogItemExec] = {}
+        for track in tracks:
+            track_datetime = Tracker.get_timestamp_from_string(track.timestamp)
+
+            item = LogItemExec().set_datetime(track_datetime).set_key(task)
+            rate = 0
+            try:
+                rate = int(track.result[:-1])  # Remove '%' and convert to int
+            except ValueError:
+                pass
+            item.set_rate(rate)
+            lines = 0
+            for file_stamp in track.file_stamp_list:
+                file, stamp = file_stamp.split(":")
+                if file in file_versions:
+                    if stamp in file_versions[file]:
+                        patch_info = file_versions[file][stamp]
+                        lines += patch_info.lines
+            item.set_size(True, lines)
+            output[item.get_timestamp()] = item
+        return output
+
 class OldLogLoader:
     def __init__(self, rep_folder: str):
         self.rep_folder = rep_folder
@@ -39,13 +98,53 @@ class OldLogLoader:
         self.base_list: list[LogItemBase] = []
         self.base_dict: dict[str, LogItemBase] = {}
 
-        self.old_log_file = self.paths.get_old_history_file()
-        self.entries: list[LogAction] = self.__load_file(self.old_log_file)
-        for e in self.entries:
+        self.merge_old_log_into_base()
+        self.merge_track_into_base()
+
+        # with open("log2.txt", "w", encoding="utf-8") as log_file:
+        #     for key, item in self.base_dict.items():
+        #         log_file.write(f"{key}: {item.encode_line()}\n")
+
+    def merge_old_log_into_base(self):
+        old_log_file = self.paths.get_old_history_file()
+        entries: list[LogAction] = OldLogLoader.__load_file(old_log_file)
+        for e in entries:
             item = OldLogLoader.__convert_to_base_list(e)
             if item is not None:
                 self.base_list.append(item)
-                self.base_dict[item.get_timestamp()] = item
+                key = item.get_timestamp().replace(" ", "_").replace(":", "-")
+                self.base_dict[key] = item
+
+    def merge_track_into_base(self) -> None:
+        track_exec_list: dict[str, LogItemExec] = self.load_from_track_folder()
+        for time, item_from_track in track_exec_list.items():
+            done: bool = False
+            if time in self.base_dict:
+                item = self.base_dict[time]
+                if isinstance(item, LogItemExec):
+                    item_exec: LogItemExec = item
+                    item_exec.set_size(True, item_from_track.get_size())
+                    done = True
+            if not done:
+                item_exec = LogItemExec().set_timestamp(time).set_key(item_from_track.get_key())
+                item_exec.set_rate(item_from_track.get_rate())
+                item_exec.set_size(True, item_from_track.get_size())
+                self.base_list.append(item_exec)
+                self.base_dict[time] = item_exec        
+
+    def load_from_track_folder(self) -> dict[str, LogItemExec]:
+        output: dict[str, LogItemExec] = {}
+        track_folder = self.paths.get_track_folder()
+        entries = os.listdir(track_folder)
+        for e in entries:
+            folder_path = os.path.join(track_folder, e)
+            if not os.path.isdir(folder_path):
+                continue
+            dict_stamp_exec: dict[str, LogItemExec] = TrackerLoader.load_from_task_track(folder_path)
+            output.update(dict_stamp_exec)
+
+        return output
+            
 
     @staticmethod
     def decode_self(e: LogAction) -> LogItemSelf:

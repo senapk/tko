@@ -62,7 +62,7 @@ class LogItemExec(LogItemBase):
         if self.fail_str in kv:
             self.fail = LogItemExec.Fail(kv[self.fail_str])
         
-        if self.name == "":
+        if self.key == "":
             return False
         if self.rate == -1 and self.size == -1 and self.fail == LogItemExec.Fail.NONE:
             return False

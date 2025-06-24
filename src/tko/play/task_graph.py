@@ -39,12 +39,12 @@ class TaskGraph:
         count = 1
         last_size = 0
         for delta, item in item_exec_list:
-            if item.rate == -1 or item.rate == 0:
+            if item.rate == -1:
                 collected_rate.append(last)
             else:
                 last = item.rate
                 collected_rate.append(last)
-            collected_elapsed.append(delta.accumulated.total_seconds() / 60)  # Convert to minutes
+            collected_elapsed.append(delta.accumulated.total_seconds())  # Convert to minutes
             if item.size > 0:
                 last_size = item.size
             collected_lines.append(last_size)
@@ -74,11 +74,14 @@ class TaskGraph:
             return []
         lines: list[Text] = []
         title = Text.format(" {C}", f" @{self.task_key} ")
-        title += Text.format(" {G}", f" Total: {self.actual_rate:.0f} % ")
-        title += Text.format(" {B}", f" Tempo: {self.total_elapsed:.0f} min ")
-        title += Text.format(" {M}", f" Linhas: {self.max_lines:.0f} ")
+        title += Text.format(" {G}", f" Total {self.actual_rate:.0f}% ")
+        time_h: int = int(self.total_elapsed) // 3600
+        time_m: int = (int(self.total_elapsed) % 3600) // 60
+        time = f"{time_h:02.0f}h {time_m:.0f}min" if time_h > 0 else f"{time_m:.0f}min"
+        title += Text.format(" {B}", f" Tempo {time} ")
+        title += Text.format(" {M}", f" Linhas {self.max_lines:.0f} ")
         # if len(self.collected_elapsed) > 1:
-        result = plot_to_string(xs=[self.eixo, self.eixo, self.eixo], ys=[self.collected_elapsed, self.collected_lines, self.collected_rate], lines=True, y_min=0, width=self.width, height=self.height)
+        result = plot_to_string(xs=[self.eixo, self.eixo, self.eixo], ys=[self.collected_elapsed, self.collected_lines, self.collected_rate], lines=[True, True, True], y_min=0, y_max=101, width=self.width, height=self.height)
 
         if isinstance(result, str):
             result = result.splitlines()

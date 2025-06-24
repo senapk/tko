@@ -36,9 +36,9 @@ class TaskTree:
         self.index_begin: int = 0
         self.max_title: int = 0
         self.search_text: str = ""
+        self.expanded: list[str] = []
         self.load_all_items()
         self.load_from_rep()
-        self.expanded: list[str] = []
         self.update_tree(admin_mode = Flags.admin.is_true())
         self.reload_sentences()
 

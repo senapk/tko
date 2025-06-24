@@ -18,7 +18,7 @@ class TaskListener:
         if delta.elapsed.total_seconds() / 60 > self.minutes_limit:
             cumulative = False
         
-        new_key = item.get_name()
+        new_key = item.get_key()
         old_key = self.last_key
         if new_key != "" and old_key != "" and new_key != old_key:
             cumulative = False
