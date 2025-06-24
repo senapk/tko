@@ -9,7 +9,7 @@ class Logger:
     def __init__(self, rep_folder: str):
         self.tasks = TaskListener()
         self.week = WeekListener()
-        self.history = LogHistory(rep_folder, [self.tasks.listener, self.week.listener])
+        self.history = LogHistory(rep_folder, [self.tasks.handle_log_entry, self.week.handle_entry_incoming])
     
     def store(self, action: LogItemBase):
         self.history.append_new_action(action)

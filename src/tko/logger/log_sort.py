@@ -4,7 +4,6 @@ from tko.logger.log_item_move import LogItemMove
 from tko.logger.log_item_self import LogItemSelf
 from tko.logger.delta import Delta
 
-
 class LogSort:
     def __init__(self):
         self.base_list: list[tuple[Delta, LogItemBase]] = []
@@ -13,14 +12,10 @@ class LogSort:
         self.move_list: list[tuple[Delta, LogItemMove]] = []
         self.self_list: list[tuple[Delta, LogItemSelf]] = []
 
-    def add_item(self, mode: Delta.Mode, base: LogItemBase) -> tuple[Delta, LogItemBase]:
-        last_delta: Delta | None = None
-        if self.base_list:
-            last_delta, _ = self.base_list[-1]
-        delta = Delta().create(mode, last_delta, base.get_datetime())
-        self.base_list.append((delta, base))
-        self.__sort_by_instance(delta, base)
-        return delta, base
+    def add_item(self, mode: Delta.Mode, item: LogItemBase) -> tuple[Delta, LogItemBase]:
+        delta = LogSort.add_to_list(mode, self.base_list, item)
+        self.__sort_by_instance(delta, item)
+        return delta, item
 
     def __sort_by_instance(self, delta: Delta, base: LogItemBase) -> None:
         if isinstance(base, LogItemExec):
@@ -38,10 +33,10 @@ class LogSort:
     @staticmethod
     def add_to_list(
         mode: Delta.Mode, base_list: list[tuple[Delta, LogItemBase]], item: LogItemBase
-    ) -> tuple[Delta, LogItemBase]:
+    ) -> Delta:
         last_delta: Delta | None = None
         if base_list:
             last_delta, _ = base_list[-1]
         delta = Delta().create(mode, last_delta, item.get_datetime())
         base_list.append((delta, item))
-        return delta, item
+        return delta

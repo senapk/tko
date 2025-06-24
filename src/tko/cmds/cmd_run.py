@@ -118,11 +118,13 @@ class Run:
 
     def execute(self):
         if len(self.target_list) == 0:
-            self.__try_load_rep(".")
+            if self.__rep is None:
+                self.__try_load_rep(".")
             self.__try_load_task(".")
 
         elif len(self.target_list) == 1 and os.path.isdir(self.target_list[0]):
-            self.__try_load_rep(self.target_list[0])
+            if self.__rep is None:
+                self.__try_load_rep(self.target_list[0])
             self.__try_load_task(self.target_list[0])
 
         if not self.wdir_builded:

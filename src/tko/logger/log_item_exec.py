@@ -64,8 +64,6 @@ class LogItemExec(LogItemBase):
         
         if self.key == "":
             return False
-        if self.rate == -1 and self.size == -1 and self.fail == LogItemExec.Fail.NONE:
-            return False
         return True
 
     def encode_line(self) -> str:

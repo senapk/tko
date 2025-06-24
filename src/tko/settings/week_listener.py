@@ -14,7 +14,7 @@ class WeekListener:
         self.log_file: str | None = None
         self.format = '%Y-%m-%d %H:%M:%S'
 
-    def listener(self, item: LogItemBase, new_entry: bool = False):
+    def handle_entry_incoming(self, item: LogItemBase, new_entry: bool = False):
         _ = new_entry
         day = item.timestamp.split(" ")[0]
 

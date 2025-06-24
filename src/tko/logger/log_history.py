@@ -22,8 +22,21 @@ class LogHistory:
         self.log_folder: str = self.paths.get_log_folder()
         self.listeners: list[Callable[[LogItemBase, bool], None]] = listeners
         self.entries: list[LogItemBase] = []
-        self.entries.extend(self.__load_old_log())
-        self.entries.extend(self.__load_folder())
+        # self.entries.extend(self.__load_old_log())
+        new_log_entries = self.__load_daily_log_folder()
+        # avoid duplicated entries
+        item_index: dict[str, int] = {}
+        for i, item in enumerate(self.entries):
+            item_index[item.get_timestamp()] = i
+
+        for item in new_log_entries:
+            timestamp = item.get_timestamp()
+            if timestamp in item_index:
+                index = item_index[timestamp]
+                self.entries[index] = item
+            else:
+                self.entries.append(item)
+        
         for entry in self.entries:
             for listener in self.listeners:
                 listener(entry, False)
@@ -40,16 +53,6 @@ class LogHistory:
     def get_log_folder(self) -> str | None:
         return self.log_folder
 
-    def __append_action_data(self, item_base: LogItemBase):
-        self.entries.append(item_base)
-        for listener in self.listeners:
-            listener(item_base, True)
-        log_folder = self.get_log_folder()
-        if log_folder is None:
-            return
-        log_file = LogHistory.log_file_for_day(log_folder, item_base.get_datetime())
-        with open(log_file, 'a', encoding="utf-8", newline='') as file:
-            file.write(f'{item_base.encode_line()}\n')
 
     @staticmethod
     def log_file_for_day(folder: str, datetime: dt.datetime) -> str:
@@ -58,13 +61,21 @@ class LogHistory:
             os.makedirs(folder)
         return os.path.abspath(os.path.join(folder, f"{date_str}.log"))
 
-    def append_new_action(self, item: LogItemBase) -> LogItemBase:
+    def append_new_action(self, item_base: LogItemBase) -> LogItemBase:
         now_str, now_dt = Delta.now()
-        item.set_timestamp(now_str, now_dt)
-        self.__append_action_data(item)
-        return item
+        item_base.set_timestamp(now_str, now_dt)
+        self.entries.append(item_base)
+        for listener in self.listeners:
+            listener(item_base, True)
 
-    def __load_folder(self) -> list[LogItemBase]:
+        log_folder = self.get_log_folder()
+        if log_folder is not None:
+            log_file = LogHistory.log_file_for_day(log_folder, item_base.get_datetime())
+            with open(log_file, 'a', encoding="utf-8", newline='') as file:
+                file.write(f'{item_base.encode_line()}\n')
+        return item_base
+
+    def __load_daily_log_folder(self) -> list[LogItemBase]:
         log_folder = self.paths.get_log_folder()
         if not os.path.exists(log_folder):
             return []
