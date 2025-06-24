@@ -46,7 +46,7 @@ class GuiKeys:
     colors = "C"
     borders = "B"
     search = "/"
-    graph = "v"
+    graph = "\t"
     grade_play = "p"
     execute_tester = "r" # Interact in manual input
     diff = "d"
@@ -57,5 +57,4 @@ class GuiKeys:
     limite  = "t"
     expand = ">"
     collapse = "<"
-    mass = "Y"
     hidden = "E"

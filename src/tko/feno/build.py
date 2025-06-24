@@ -8,13 +8,15 @@ from tko.feno.log import Log
 from tko.feno.mdpp import Mdpp
 from tko.feno.filter import DeepFilter
 from tko.util.decoder import Decoder
+from pathlib import Path
 import subprocess
 import argparse
 import os
 import shutil
 
 def norm_join(*args: str) -> str:
-    return os.path.normpath(os.path.join(*args))
+    return str(Path(*args).resolve())
+
 
 class Actions:
     def __init__(self, source_dir: str):
@@ -55,12 +57,12 @@ class Actions:
         if not os.path.exists(self.cache):
             os.makedirs(self.cache)
         return self
-    
+
     def recreate_cache(self):
         shutil.rmtree(self.cache, ignore_errors=True)
         os.makedirs(self.cache)
         return self
-    
+
     def need_rebuild(self):
         if not os.path.exists(self.target):
             return True
@@ -71,11 +73,11 @@ class Actions:
         Log.resume("Changes ", end="")
         Log.verbose(f"  Changes in {self.source_dir}")
         return True
-    
+
     def remote_md(self):
         Absolute.convert_or_copy_or_print(self.source_readme, self.remote_readme, self.make_remote)
         Log.verbose(f"  RemoteFile: {self.remote_readme}")
-    
+
     def html(self):
         title = FenoTitle.extract_title(self.source_readme)
         convert_markdown_to_html(title, self.remote_readme, self.target_html)
@@ -133,6 +135,7 @@ class Actions:
             Log.resume("Mdpp ", end="")
             Log.verbose(f"  Mdpp updading")
 
+
 def build_main(args: argparse.Namespace):
     Log.set_verbose(not args.brief)
 
@@ -143,8 +146,8 @@ def build_main(args: argparse.Namespace):
     for target in args.targets:
         hook = os.path.basename(os.path.abspath(target))
 
-        actions = Actions(target)\
-                    .set_remote(args.remote)
+        actions = Actions(target) \
+            .set_remote(args.remote)
 
         if not actions.validate():
             continue
@@ -157,10 +160,10 @@ def build_main(args: argparse.Namespace):
         actions.update_markdown()
 
         if not args.check or actions.need_rebuild():
-            actions.recreate_cache() # erase .cache
+            actions.recreate_cache()  # erase .cache
             actions.copy_drafts()
             actions.run_local_sh()
-            actions.update_markdown() # se os drafts tiverem mudado o markdown precisa ser atualizado
+            actions.update_markdown()  # se os drafts tiverem mudado o markdown precisa ser atualizado
             actions.remote_md()
             actions.html()
             actions.build_cases()

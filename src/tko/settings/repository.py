@@ -5,7 +5,9 @@ from tko.util.remote_url import RemoteUrl
 from tko.game.game import Game
 from tko.util.decoder import Decoder
 from tko.util.text import Text
+from tko.logger.logger import Logger
 import yaml # type: ignore
+from tko.settings.rep_paths import RepPaths
 
 def remove_git_merge_tags(lines: list[str]) -> list[str]:
     # remove lines with <<<<<<<, =======, >>>>>>>>
@@ -17,37 +19,36 @@ def remove_git_merge_tags(lines: list[str]) -> list[str]:
     return filtered_lines
 
 class Repository:
-    CFG_FILE = "repository.yaml"
-    GLOBAL_LOG_FILE = "history.csv"
-    TASK_LOG_FILE = "task_log.csv"
-    DAILY_FILE = "daily.yaml"
-    INDEX_FILE = "Readme.md"
-    TRACK_FOLDER = "track"
-    CONFIG_FOLDER = ".tko"
 
     def __init__(self, folder: str):
-        self.root_folder: str = folder
-        rec_folder = Repository.rec_search_for_repo(folder)
-        if rec_folder != "":
-            self.root_folder = rec_folder
+        rep_folder: str = folder
+        recursive_folder = RepPaths.rec_search_for_repo(folder)
+        if recursive_folder != "":
+            rep_folder = recursive_folder
+        self.paths = RepPaths(rep_folder)
 
         self.data: dict[str, Any] = {}
         self.game = Game()
-        self.upgrade_version()
+        self.logger: Logger = Logger(rep_folder)
 
-    def upgrade_version(self):
-        return self
+    def is_local_dir(self, path: str) -> bool:
+        rep_dir = self.paths.get_rep_dir()
+        path = os.path.abspath(path)
+        return os.path.commonpath([rep_dir, path]) == rep_dir
 
     @staticmethod
-    def rec_search_for_repo(folder: str) -> str:
-        folder = os.path.abspath(folder)
-        if os.path.exists(os.path.join(folder, Repository.CONFIG_FOLDER, Repository.CFG_FILE)):
-            return folder
-        new_folder = os.path.dirname(folder)
-        if new_folder == folder: # não encontrou, não tem mais como subir
-            return ""
-        return Repository.rec_search_for_repo(new_folder)
+    def is_web_link(link: str) -> bool:
+        return link.startswith("http:") or link.startswith("https:")
 
+    def load_game(self):
+        if self.data == {}:
+            self.load_config()
+        database_folder = os.path.join(self.paths.root_folder, self.get_database_folder())
+        cache_or_index = self.load_index_or_cache()
+        self.game.parse_file_and_folder(cache_or_index, database_folder, self.get_lang())
+        self.__load_tasks_from_rep_into_game()
+        return self
+    
     def get_key_from_task_folder(self, folder: str) -> str:
         label = os.path.basename(folder)
         task_folder = self.get_task_folder_for_label(label)
@@ -59,33 +60,7 @@ class Repository:
         label = os.path.basename(folder)
         task_folder = self.get_task_folder_for_label(label)
         return task_folder == folder
-
-    def get_track_folder(self) -> str:
-        return os.path.abspath(os.path.join(self.root_folder, Repository.CONFIG_FOLDER, Repository.TRACK_FOLDER))
-
-    def get_track_task_folder(self, label: str) -> str:
-        return os.path.abspath(os.path.join(self.root_folder, Repository.CONFIG_FOLDER, Repository.TRACK_FOLDER, label))
-
-    def get_task_folder_for_label(self, label: str) -> str:
-        return os.path.abspath(os.path.join(self.root_folder, self.get_database_folder(), label))
-
-    def is_local_dir(self, path: str) -> bool:
-        rep_dir = self.get_rep_dir()
-        path = os.path.abspath(path)
-        return os.path.commonpath([rep_dir, path]) == rep_dir
-
-    @staticmethod
-    def is_web_link(link: str) -> bool:
-        return link.startswith("http:") or link.startswith("https:")
-
-    def load_game(self):
-        if self.data == {}:
-            self.load_config()
-        database_folder = os.path.join(self.root_folder, self.get_database_folder())
-        cache_or_index = self.load_index_or_cache()
-        self.game.parse_file_and_folder(cache_or_index, database_folder, self.get_lang())
-        self.__load_tasks_from_rep_into_game()
-        return self
+    
     
     def __load_tasks_from_rep_into_game(self):
         # load tasks from repository.yaml into game
@@ -94,30 +69,16 @@ class Repository:
             if key in self.game.tasks:
                 self.game.tasks[key].load_from_db(serial)
 
-    def get_config_file(self) -> str:
-        return os.path.abspath(os.path.join(self.root_folder, Repository.CONFIG_FOLDER, Repository.CFG_FILE))
-    
-    def get_config_backup_file(self) -> str:
-        return self.get_config_file() + ".backup"
-    
-    def get_history_file(self) -> str:
-        return os.path.abspath(os.path.join(self.root_folder, Repository.CONFIG_FOLDER, Repository.GLOBAL_LOG_FILE))
-    
-    def get_daily_file(self) -> str:
-        return os.path.abspath(os.path.join(self.root_folder, Repository.CONFIG_FOLDER, Repository.DAILY_FILE))
-    
-    def get_default_readme_path(self) -> str:
-        return os.path.abspath(os.path.join(self.root_folder, Repository.INDEX_FILE))
+    def get_task_folder_for_label(self, label: str) -> str:
+        return os.path.abspath(os.path.join(self.paths.root_folder, self.get_database_folder(), label))
 
-    def get_rep_dir(self) -> str:
-        return os.path.abspath(self.root_folder)
 
     def __load_local_file(self, source: str) -> str:
         # test if file is inside or outside the repository
-        source = os.path.abspath(os.path.join(self.root_folder, self.CONFIG_FOLDER, source))
-        if not os.path.exists(source):
+        source_full = os.path.join(self.paths.get_config_folder(), source)
+        if not os.path.exists(source_full):
             raise Warning(Text.format("{r}: Arquivo fonte do repositório {y} não foi encontrado", "Erro", source))
-        return source
+        return source_full
 
     def __is_remote_source(self) -> bool:
         source = self.get_rep_source()
@@ -125,8 +86,8 @@ class Repository:
     
     def down_source_from_remote_url(self):
         source = self.get_rep_source()
-        cache_file = self.get_default_readme_path()
-        os.makedirs(self.root_folder, exist_ok=True)
+        cache_file = self.paths.get_default_readme_path()
+        os.makedirs(self.paths.root_folder, exist_ok=True)
         ru = RemoteUrl(source)
         try:
             ru.download_absolute_to(cache_file)
@@ -151,7 +112,6 @@ class Repository:
     __actual_version = "0.0.1"
     __source = "remote"  #remote url or local file or remote file
     __expanded = "expanded"
-    __new_items = "new_items"
     __tasks = "tasks"
     __flags = "flags"
     __lang = "lang"
@@ -165,7 +125,6 @@ class Repository:
         __expanded: [],
         __tasks: {},
         __flags: {},
-        __new_items: [],
         __lang: "",
         __selected: ""
     }
@@ -197,9 +156,6 @@ class Repository:
     def get_expanded(self) -> list[str]:
         return self.__get(Repository.__expanded)
 
-    def get_new_items(self) -> list[str]:
-        return self.__get(Repository.__new_items)
-    
     def get_tasks(self) -> dict[str, Any]:
         return self.__get(Repository.__tasks)
     
@@ -211,9 +167,6 @@ class Repository:
 
     def set_expanded(self, value: list[str]):
         return self.__set(Repository.__expanded, value)
-    
-    def set_new_items(self, value: list[str]):
-        return self.__set(Repository.__new_items, value)
     
     def set_tasks(self, value: dict[str, str]):
         self.__set(Repository.__tasks, value)
@@ -245,35 +198,32 @@ class Repository:
 
     def create_empty_config_file(self, point_to_local_readme: bool = False):
         if point_to_local_readme:
-            self.set_rep_source(self.get_default_readme_path())
+            self.set_rep_source(self.paths.get_default_readme_path())
         self.save_config()
         return self
 
-    def has_local_config_file(self) -> bool:
-        return os.path.exists(self.get_config_file())
-
     # config
     def load_config(self):
-        encoding = Decoder.get_encoding(self.get_config_file())
+        encoding = Decoder.get_encoding(self.paths.get_config_file())
         try:
-            with open(self.get_config_file(), encoding=encoding) as f:
+            with open(self.paths.get_config_file(), encoding=encoding) as f:
                 lines = f.readlines()
                 lines = remove_git_merge_tags(lines)
                 self.data = yaml.safe_load("\n".join(lines))
             if self.data is None or not isinstance(self.data, dict) or len(self.data) == 0: # type: ignore
-                with open(self.get_config_backup_file(), "r", encoding=encoding) as f:
+                with open(self.paths.get_config_backup_file(), "r", encoding=encoding) as f:
                     lines = f.readlines()
                     lines = remove_git_merge_tags(lines)
                     self.data = yaml.safe_load("\n".join(lines))
             if self.data is None or not isinstance(self.data, dict) or len(self.data) == 0: # type: ignore
-                raise FileNotFoundError(f"Arquivo de configuração vazio: {self.get_config_file()}")
+                raise FileNotFoundError(f"Arquivo de configuração vazio: {self.paths.get_config_file()}")
         except:
-            raise Warning(Text.format("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.get_config_file(), "corrompido"))
+            raise Warning(Text.format("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.paths.get_config_file(), "corrompido"))
         return self
 
     def save_config(self):
         self.set_version(self.__actual_version)
-        yaml_file = self.get_config_file()
+        yaml_file = self.paths.get_config_file()
         if not os.path.exists(os.path.dirname(yaml_file)):
             os.makedirs(os.path.dirname(yaml_file))
         # filter keys that are not in defaults
@@ -297,7 +247,7 @@ class Repository:
         return self
 
     def __str__(self) -> str:
-        return ( f"data: {self.data}\n" )
+        return f"data: {self.data}\n"
 
     @staticmethod
     def rename_file(old_name: str, new_name: str):

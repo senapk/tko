@@ -1,6 +1,7 @@
 import curses
 import enum
 import os
+from typing import Callable, Optional
 
 from tko.game.task import Task
 from tko.play.border import Border
@@ -19,16 +20,17 @@ from tko.run.wdir import Wdir
 from tko.settings.settings import Settings
 from tko.enums.execution_result import ExecutionResult
 from tko.util.freerun import Free
-from tko.util.text import  Text, Token
+from tko.util.text import  Text
 from tko.util.symbols import symbols
 from tko.enums.diff_mode import DiffMode
 from tko.play.input_manager import InputManager
-from tko.settings.logger import Logger
 from tko.run.diff_builder_down import DiffBuilderDown
 from tko.run.diff_builder_side import DiffBuilderSide
 from tko.play.tracker import Tracker
 from tko.util.raw_terminal import RawTerminal
 from tko.settings.repository import Repository
+from tko.logger.log_item_exec import LogItemExec
+from tko.logger.log_item_move import LogItemMove
 
 
 class SeqMode(enum.Enum):
@@ -61,8 +63,10 @@ class Tester:
         self.fman = FloatingManager()
         self.opener: Opener | None = None
         self.dummy_unit = Unit()
-
-        Logger.get_instance().record_pick(self.task.key)
+        if self.rep:
+            self.rep.logger.store(
+                LogItemMove().set_mode(LogItemMove.Mode.PICK).set_key(self.task.key)
+            )
 
 
     def set_opener(self, opener: Opener):
@@ -79,33 +83,35 @@ class Tester:
         self.exit = True
         return self
 
-    def print_centered_image(self, image: str, color: str, clear: bool = False, align: str = "."):
+    @staticmethod
+    def print_centered_image(image: str, color: str, clear: bool = False, align: str = "."):
         dy, dx = Fmt.get_size()
         lines = image.splitlines()[1:]
         init_y = 4
         if align == "v":
             init_y = dy - len(lines) - 1
         for i, line in enumerate(lines):
-            info = Text().addf(color, line).center(dx - 2, Token(" ", " "))
+            info = Text().addf(color, line).center(dx - 2, Text.Token(" ", " "))
             if clear:
                 Fmt.write(i + init_y, 1, Text().add(" " * info.len()))
             else:
-                Fmt.write(i + init_y, 1, Text().addf(color, line).center(dx - 2, Token(" ", " ")))
+                Fmt.write(i + init_y, 1, Text().addf(color, line).center(dx - 2, Text.Token(" ", " ")))
 
     def show_success(self):
         if self.settings.app.get_use_images():
             out = random_get(images, self.get_folder(), "static")
         else:
             out = random_get(success_image, self.get_folder(), "static")
-        self.print_centered_image(out, "g")
+        Tester.print_centered_image(out, "g")
         
     def show_compilling(self, clear: bool = False):
         out = random_get(compilling_image, self.get_folder(), "random")
-        self.print_centered_image(out, "y", clear)
+        Tester.print_centered_image(out, "y", clear)
 
-    def show_executing(self, clear: bool = False):
+    @staticmethod
+    def show_executing(clear: bool = False):
         out = executing_image
-        self.print_centered_image(out, "y", clear, "v")
+        Tester.print_centered_image(out, "y", clear, "v")
 
     def get_folder(self) -> str:
         folder = self.task.get_folder()
@@ -123,42 +129,29 @@ class Tester:
             return unit
         return self.wdir.get_unit(self.focused_index)
 
-    def get_token(self, result: ExecutionResult) -> Token:
+    @staticmethod
+    def get_token(result: ExecutionResult) -> Text.Token:
         if result == ExecutionResult.SUCCESS:
-            return Token(ExecutionResult.get_symbol(ExecutionResult.SUCCESS).text, "G")
+            return Text.Token(ExecutionResult.get_symbol(ExecutionResult.SUCCESS).text, "G")
         elif result == ExecutionResult.WRONG_OUTPUT:
-            return Token(ExecutionResult.get_symbol(ExecutionResult.WRONG_OUTPUT).text, "R")
+            return Text.Token(ExecutionResult.get_symbol(ExecutionResult.WRONG_OUTPUT).text, "R")
         elif result == ExecutionResult.COMPILATION_ERROR:
-            return Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "W")
+            return Text.Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "W")
         elif result == ExecutionResult.EXECUTION_ERROR:
-            return Token(ExecutionResult.get_symbol(ExecutionResult.EXECUTION_ERROR).text, "Y")
+            return Text.Token(ExecutionResult.get_symbol(ExecutionResult.EXECUTION_ERROR).text, "Y")
         else:
-            return Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "W")
+            return Text.Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "W")
 
-    def store_test_track(self, result: int):
+    def store_version(self) -> tuple[bool, int]:
         if self.rep is None:
-            return
-        track_folder = self.rep.get_track_task_folder(self.task.key)
+            return False, 0
+        track_folder = self.rep.paths.get_track_task_folder(self.task.key)
         tracker = Tracker()
         tracker.set_folder(track_folder)
         tracker.set_files(self.wdir.get_solver().args_list)
-        tracker.set_percentage(result)
         has_changes, total_lines = tracker.store()
-        if has_changes:
-            Logger.get_instance().record_file_alteration(self.task.key, total_lines)
+        return has_changes, total_lines
 
-    def store_other_track(self, result: str | None = None):
-        if self.rep is None:
-            return
-        track_folder = self.rep.get_track_task_folder(self.task.key)
-        tracker = Tracker()
-        tracker.set_folder(track_folder)
-        tracker.set_files(self.wdir.get_solver().args_list)
-        if result is not None:
-            tracker.set_result(result)
-        has_changes, total_lines = tracker.store()
-        if has_changes:
-            Logger.get_instance().record_file_alteration(self.task.key, total_lines)
 
     def process_one(self):
 
@@ -168,8 +161,12 @@ class Tester:
         solver = self.wdir.get_solver()
 
         if solver.has_compile_error():
-            Logger.get_instance().record_compilation_execution_error(self.task.key)
-            self.store_other_track(ExecutionResult.COMPILATION_ERROR.value)
+            mode = LogItemExec.Mode.LOCK if self.locked_index else LogItemExec.Mode.FULL
+            changes, total_lines = self.store_version()
+            if self.rep:
+                self.rep.logger.store(
+                    LogItemExec().set_key(self.task.key).set_mode(mode).set_fail(LogItemExec.Fail.COMP).set_size(changes, total_lines)
+                )
 
             self.mode = SeqMode.finished
             while len(self.unit_list) > 0:
@@ -182,6 +179,13 @@ class Tester:
             self.mode = SeqMode.finished
             unit = self.get_focused_unit()
             unit.result = UnitRunner.run_unit(solver, unit, self.settings.app.timeout)
+
+            changes, total_lines = self.store_version()
+            rate = 100 if unit.result == ExecutionResult.SUCCESS else 0
+            if self.rep:
+                self.rep.logger.store(
+                    LogItemExec().set_key(self.task.key).set_mode(LogItemExec.Mode.LOCK).set_rate(rate).set_size(changes, total_lines)
+                )
             return
 
         if self.wdir.has_tests():
@@ -212,9 +216,14 @@ class Tester:
                     done_list.append(data)
             self.results = fail_list + done_list
             percent: int = (100 * len(done_list)) // len(self.results)
-            self.task.coverage = percent
-            Logger.get_instance().record_test_result(self.task.key, percent)
-            self.store_test_track(percent)
+            self.task.info.rate = percent
+            mode = LogItemExec.Mode.LOCK if self.locked_index else LogItemExec.Mode.FULL
+            changes, total_lines = self.store_version()
+            if self.rep:
+                self.rep.save_config()
+                self.rep.logger.store(
+                    LogItemExec().set_key(self.task.key).set_mode(mode).set_rate(percent).set_size(changes, total_lines)
+                )
 
 
     def build_top_line_header(self, frame_dx : int) -> Text:
@@ -229,7 +238,7 @@ class Tester:
         # building solvers
         solvers = Text()
         if len(self.get_solver_names()) > 1:
-            solvers.add(Text().add(self.borders.roundL("R")).addf("R", f"{GuiActions.tab}").add(self.borders.sharpR("R")))
+            solvers.add(Text().add(self.borders.round_l("R")).addf("R", f"{GuiActions.tab}").add(self.borders.sharp_r("R")))
         for i, solver in enumerate(self.get_solver_names()):
             if len(self.get_solver_names()) > 1:
                 solvers.add(" ")
@@ -251,7 +260,7 @@ class Tester:
         # building sources
         source_names = Text().add(", ").join([Text().addf(sources_color, f"{name[0]}({name[1]})") for name in self.wdir.sources_names()])
         if self.wdir.has_tests():
-            sources = Text().add(self.borders.roundL(sources_color)).add(source_names).add(self.borders.roundR(sources_color))
+            sources = Text().add(self.borders.round_l(sources_color)).add(source_names).add(self.borders.round_r(sources_color))
         else:
             sources = Text().add(self.borders.border("R", "Nenhum teste cadastrado"))
 
@@ -290,15 +299,15 @@ class Tester:
 
         for unit_result, index in done_list + todo_list:
             foco = i == self.focused_index
-            token = self.get_token(unit_result)
-            extrap = self.borders.roundL(token.fmt)
-            extras = self.borders.roundR(token.fmt)
+            token = Tester.get_token(unit_result)
+            extrap = self.borders.round_l(token.fmt)
+            extras = self.borders.round_r(token.fmt)
             if foco and show_focused_index:
                 # token.fmt = token.fmt.lower() + ""
-                extrap = Token("(")
-                extras = Token(")")
-                # extrap = Token(" ") #self.borders.roundL("")
-                # extras = Token(" ") #self.borders.roundR("")
+                extrap = Text.Token("(")
+                extras = Text.Token(")")
+                # extrap = Text.Token(" ") #self.borders.roundL("")
+                # extras = Text.Token(" ") #self.borders.roundR("")
             if self.locked_index and not foco:
                 output.add("  ").addf(token.fmt.lower(), str(index).zfill(2)).addf(token.fmt.lower(), token.text).add(" ")
             else:
@@ -321,7 +330,7 @@ class Tester:
         diff_text = self.get_diff_symbol()
         output.addf("B", f" {GuiKeys.diff} {diff_text} ")
         # if self.settings.app.has_borders():
-        #     output.addf("Mb", symbols.sharpR.text)
+        #     output.addf("Mb", symbols.sharp_r.text)
         # else:
         #     output.addf("B", " ")
         # timer
@@ -332,7 +341,7 @@ class Tester:
         # output.addf("M", f"{timer}l {value}  ")
         color = "R" if self.locked_index else "G"
         if self.settings.app.get_use_borders():
-            output.addf(color + "b", symbols.sharpR.text)
+            output.addf(color + "b", symbols.sharp_r.text)
         else:
             output.addf("B", " ")
 
@@ -340,7 +349,7 @@ class Tester:
         free = symbols.locked_free.text
         locked = symbols.locked_locked.text
         symbol = locked if self.locked_index else free
-        output.addf(color, f" {GuiKeys.lock} {symbol} ").add(self.borders.sharpR(color))
+        output.addf(color, f" {GuiKeys.lock} {symbol} ").add(self.borders.sharp_r(color))
 
         return output
 
@@ -379,9 +388,8 @@ class Tester:
     def make_bottom_line(self) -> list[Text]:
         cmds: list[Text] = []
 
-        cmds.append(self.borders.border("C", f"{GuiActions.move} [{GuiKeys.up}{GuiKeys.left}{GuiKeys.down}{GuiKeys.right}]"))
-        
         text = f"{GuiActions.config} [{GuiKeys.palette}]"
+        cmds.append(self.borders.border("C", f"{GuiActions.move} [{GuiKeys.up}{GuiKeys.left}{GuiKeys.down}{GuiKeys.right}]"))
         cmds.append(self.borders.border("C", text))
         cmds.append(self.borders.border("G", f"{GuiActions.evaluate_tester} [{symbols.newline.text}]"))
         cmds.append(self.borders.border("G", f"{GuiActions.execute_tester} [{GuiKeys.execute_tester}]"))
@@ -395,7 +403,7 @@ class Tester:
     def show_bottom_line(self):
         lines, cols = Fmt.get_size()
         out = Text().add(" ").join(self.make_bottom_line())
-        Fmt.write(lines - 1, 0, out.center(cols, Token(" ")))
+        Fmt.write(lines - 1, 0, out.center(cols, Text.Token(" ")))
 
     def is_all_right(self):
         if self.locked_index or len(self.results) == 0:
@@ -426,8 +434,8 @@ class Tester:
         diff_builder.set_curses()
 
         if self.wdir.get_solver().has_compile_error():
-            exec, _ = self.wdir.get_solver().get_executable()
-            received = exec.get_error_msg().get_str()
+            executable, _ = self.wdir.get_solver().get_executable()
+            received = executable.get_error_msg().get_str()
             line_list = [Text().add(line) for line in received.splitlines()]
         elif self.settings.app.get_diff_mode() == DiffMode.DOWN or not self.wdir.has_tests():
             ud_diff = DiffBuilderDown(cols, unit)
@@ -453,13 +461,12 @@ class Tester:
     def get_solver_names(self):
         return sorted(self.wdir.solvers_names())
     
-    def main(self, scr: curses.window):
+    def main(self, scr: curses.window) -> Optional[Callable[[], bool]]:
         InputManager.fix_esc_delay()
         curses.curs_set(0)  # Esconde o cursor
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
         while not self.exit:
-
             Fmt.clear()
             if self.mode == SeqMode.running:
                 if self.wdir.get_solver().not_compiled():
@@ -480,7 +487,7 @@ class Tester:
             self.draw_top_bar()
 
             if self.mode == SeqMode.intro:
-                self.print_centered_image(random_get(intro, self.get_folder()), "y")
+                Tester.print_centered_image(random_get(intro, self.get_folder()), "y")
             else:
                 self.draw_main()
             
@@ -501,17 +508,21 @@ class Tester:
             fn_exec = self.process_key(key)
             if fn_exec is not None:
                 return fn_exec
+        return None
 
-    def run_exec_mode(self):
+    def run_exec_mode(self) -> Callable[[], bool]:
         self.mode = SeqMode.running
         if self.wdir.is_autoload():
             self.wdir.autoload()
             self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_idx])
         self.mode = SeqMode.finished
-        Logger.get_instance().record_freerun(self.task.key)
-        self.store_other_track("Execução Livre")
+        changes, total_lines = self.store_version()
+        if self.rep:
+            self.rep.logger.store(
+                LogItemExec().set_key(self.task.key).set_mode(LogItemExec.Mode.FREE).set_size(changes, total_lines)
+            )
         header = self.build_top_line_header(RawTerminal.get_terminal_size())
-        return lambda: Free.free_run(self.wdir.get_solver(), show_compilling=True, to_clear=True, wait_input=True, header=header)
+        return lambda: Free.free_run(self.wdir.get_solver(), show_compilation=True, to_clear=True, wait_input=True, header=header)
 
     def run_test_mode(self):
         self.mode = SeqMode.running
@@ -609,8 +620,7 @@ class Tester:
             self.settings.app.set_timeout(valor)
             self.settings.save_settings()
 
-
-    def process_key(self, key: int):
+    def process_key(self, key: int) -> Optional[Callable[[], bool]]:
         if key == ord('q') or any([key == x for x in InputManager.backspace_list]):
             self.set_exit()
         elif key == InputManager.esc:
@@ -658,6 +668,7 @@ class Tester:
             self.command_pallete()
         elif key != -1 and key != curses.KEY_RESIZE:
             self.fman.add_input( Floating(self.settings, "v>").error().put_text(f"Tecla char:{chr(key)}, code:{key}, não reconhecida") )
+        return None
 
     def command_pallete(self):
         options: list[FloatingInputData] = []
@@ -725,18 +736,23 @@ class Tester:
         while True:
             free_run_fn = curses.wrapper(self.main) # type: ignore
             if free_run_fn is None:
-                Logger.get_instance().record_back(self.task.key)
+                if self.rep:
+                    self.rep.logger.store(
+                            LogItemMove().set_mode(LogItemMove.Mode.BACK).set_key(self.task.key)
+                        )
                 break
             else:
-                while(True):
+                while True:
                     try:
                         repeat = free_run_fn()
-                        if repeat == False:
+                        if not repeat:
                             break
                     except CompileError as e:
                         self.mode = SeqMode.finished
-                        Logger.get_instance().record_compilation_execution_error(self.task.key)
-                        self.store_other_track(ExecutionResult.COMPILATION_ERROR.value)
+                        if self.rep:
+                            self.rep.logger.store(
+                                            LogItemExec().set_key(self.task.key).set_mode(LogItemExec.Mode.FREE).set_fail(LogItemExec.Fail.COMP)
+                                        )
                         print(e)
                         input("Pressione enter para continuar")
                         break

@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from tko.__main__ import execute, Parser
 from tko.util.compare import Compare
 import pytest
 

@@ -112,7 +112,7 @@ class Quest(TreeItem):
                     return False
         return True
 
-    def add_task(self, task: Task, filename: str):
+    def add_task(self, task: Task):
         # task.qskills = self.skills
 
         # task.xp = 0

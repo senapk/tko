@@ -1,5 +1,5 @@
 from tko.settings.repository import Repository
-from tko.util.text import Text, Token
+from tko.util.text import Text
 from tko.util.to_asc import SearchAsc
 from tko.play.flags import Flags
 from tko.game.cluster import Cluster
@@ -7,13 +7,10 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.play.border import Border
 from tko.down.drafts import Drafts
-from tko.util.symbols import symbols
 from tko.settings.settings import Settings
 from tko.play.floating_manager import FloatingManager
 from tko.util.symbols import symbols
 from tko.game.tree_item import TreeItem
-from tko.settings.logger import Logger
-
 
 class TaskAction:
     BAIXAR   = "Baixar  "
@@ -39,9 +36,10 @@ class TaskTree:
         self.index_begin: int = 0
         self.max_title: int = 0
         self.search_text: str = ""
+        self.expanded: list[str] = []
         self.load_all_items()
         self.load_from_rep()
-        self.update_tree(admin_mode = Flags.admin.is_true(), first_loop=True)
+        self.update_tree(admin_mode = Flags.admin.is_true())
         self.reload_sentences()
 
     def load_all_items(self):
@@ -68,14 +66,14 @@ class TaskTree:
         self.rep.set_selected(self.selected_item)
         tasks: dict[str, str] = {}
         for t in self.game.tasks.values():
-            if not t.is_db_empty():
+            if len(t.info.get_filled_kv()) != 0:
                 tasks[t.key] = t.save_to_db()
         self.rep.set_tasks(tasks)
 
-    def update_tree(self, admin_mode: bool, first_loop: bool = False):
-        if not admin_mode:
+    def update_tree(self, admin_mode: bool):
+        #if not admin_mode:
             # reachable_clusters = [c.key for c in self.game.clusters.values() if c.is_reachable()]
-            reachable_quests = [q.key for q in self.game.quests.values() if q.is_reachable()]
+            # reachable_quests = [q.key for q in self.game.quests.values() if q.is_reachable()]
             # old_reachable = reachable_clusters + reachable_quests
 
         self.game.update_reachable_and_available()
@@ -115,7 +113,7 @@ class TaskTree:
             self.max_title = min_value
 
     def __str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool) -> Text:
-        down_symbol = Token(" ")
+        # down_symbol = Text.Token(" ")
         in_focus = focus_color != ""
         down_symbol = symbols.task_to_visit
         if t.link_type == Task.Types.STATIC_FILE:
@@ -141,12 +139,12 @@ class TaskTree:
         output.addf(color_lig_task, lig_quest)
         output.add(down_symbol).add(" ")
         output.add(t.get_prog_symbol()).add(" ")
-        output.add(symbols.approach_list[t.approach]).add(" ")
-        output.add(symbols.autonomy_list[t.autonomy])
+        output.add(symbols.flow_list[t.info.flow]).add(" ")
+        output.add(symbols.edge_list[t.info.edge])
 
 
         if in_focus:
-            output.add(self.style.roundL(focus_color))
+            output.add(self.style.round_l(focus_color))
         else:
             output.add(" ")
 
@@ -167,22 +165,22 @@ class TaskTree:
                 output.addf(color, word + " ")
 
         if in_focus:
-            output.add(self.style.roundR(focus_color))
+            output.add(self.style.round_r(focus_color))
         else:
             output.add(" ")
 
-        output.ljust(self.max_title + 10, Token(" "))
+        output.ljust(self.max_title + 10, Text.Token(" "))
         if Flags.percent.is_true():
             prog = int(t.get_percent())
             output.addf("y", str(prog).rjust(3, " ") + "%")
         else:
             color_rate: list[str] = ["", "c", "g", "y", "m", "r"]
-            rate = (t.how_neat + t.how_cool) / 2
+            rate = (t.info.neat + t.info.cool) / 2
             for i in range(1, 6):
                 if rate >= i:
-                    output.addf(color_rate[t.how_easy], symbols.star)
+                    output.addf(color_rate[t.info.easy], symbols.star)
                 else:
-                    output.addf(color_rate[t.how_easy], symbols.open_star)
+                    output.addf(color_rate[t.info.easy], symbols.open_star)
 
         # if Flags.reward:
         #     xp = ""
@@ -200,7 +198,7 @@ class TaskTree:
         color_reachable = "g" if q.is_reachable() else "r"
         if self.app.get_show_hidden() == False and not Flags.admin:
             for quest in self.game.quests.values():
-                if quest.is_reachable() == False:
+                if not quest.is_reachable():
                     if q.key in quest.requires:
                         color_reachable = "y"
                         break
@@ -220,7 +218,7 @@ class TaskTree:
                 #     focus_color = "r"
 
         if in_focus:
-            output.add(self.style.roundL(focus_color))
+            output.add(self.style.round_l(focus_color))
         else:
             output.add(" ")
 
@@ -238,7 +236,7 @@ class TaskTree:
         # output.add(self.style.build_bar(title, q.get_percent() / 100, len(title), done, todo, round=False))
 
         if in_focus:
-            output.add(self.style.roundR(focus_color))
+            output.add(self.style.round_r(focus_color))
         else:
             output.add(" ")
 
@@ -272,11 +270,10 @@ class TaskTree:
         color = ""
         if focus_color != "":
             color = "k" + focus_color
-        title = cluster.title
 
         title = cluster.title.ljust(self.max_title + 5, ".")
         if focus_color != "":
-            output.add(self.style.roundL(focus_color))
+            output.add(self.style.round_l(focus_color))
         else:
             output.add(" ")
 
@@ -286,7 +283,7 @@ class TaskTree:
         # output.add(self.style.build_bar(title, cluster.get_percent() / 100, len(title), done, todo, round=False))
 
         if focus_color != "":
-            output.add(self.style.roundR(focus_color))
+            output.add(self.style.round_r(focus_color))
         else:
             output.add(" ")
 
@@ -329,7 +326,7 @@ class TaskTree:
                         matches.add(cluster.key)
                         matches.add(quest.key)
                         matches.add(task.key)
-        return (matches, first)
+        return matches, first
 
     def __try_add(self, filtered: set[str], matcher: SearchAsc, item: TreeItem):
         if self.search_text == "":
@@ -388,14 +385,14 @@ class TaskTree:
                         focus_color: str = quest_focus_color if self.selected_item == t.get_key() else ""
                         t.sentence: Text = self.__str_task(focus_color, t, ligc, ligq, q.is_reachable()) # type: ignore
                         self.__try_add(filtered, matcher, t)
-        # verifying if has any selected item
+        # verifying if it has any selected item
         if self.items:
             found = False
             for item in self.items:
                 if item.get_key() == self.selected_item:
                     found = True
                     break
-            if found == False:
+            if not found:
                 self.selected_item = self.items[0].get_key()
                 self.reload_sentences()
 
@@ -432,50 +429,6 @@ class TaskTree:
             return self.items[index]
         raise IndexError("No item selected")
             
-    def mass_mark(self):
-        obj = self.get_selected_throw()
-        if isinstance(obj, Cluster):
-            cluster: Cluster = obj
-            if cluster.key not in self.expanded:
-                self.expanded.append(cluster.key)
-                return
-            full_open = True
-            for q in cluster.get_quests():
-                if q.key in self.game.quests.keys() and q.key not in self.expanded:
-                    self.expanded.append(q.key)
-                    full_open = False
-            if not full_open:
-                return
-
-            value = None
-            for q in obj.get_quests():
-                for t in q.get_tasks():
-                    if value is not None:
-                        self.set_grade(t, value[0], value[1], value[2])
-                    else:
-                        value = (100, 5, 5) if t.get_percent() < 100 else (0, 0, 0)
-                        self.set_grade(t, value[0], value[1], value[2])
-        elif isinstance(obj, Quest):
-            if obj.key not in self.expanded:
-                self.expanded.append(obj.key)
-            else:
-                value = None
-                for t in obj.get_tasks():
-                    if value is not None:
-                        self.set_grade(t, value[0], value[1], value[2])
-                    else:
-                        value = (100, 5, 5) if t.get_percent() < 100 else (0, 0, 0)
-                        self.set_grade(t, value[0], value[1], value[2])
-        elif isinstance(obj, Task):
-            value = (100, 5, 5) if obj.get_percent() < 100 else (0, 0, 0)
-            self.set_grade(obj, value[0], value[1], value[2])
-
-    def set_grade(self, task: Task, coverage: int, autonomy: int, skill: int):
-        obj = task
-        Logger.get_instance().record_self_grade(obj.key, coverage, autonomy, skill)
-        obj.set_coverage(coverage)
-        obj.set_approach(autonomy)
-        obj.set_autonomy(skill)
 
 
     def set_selected_by_index(self, index: int):
@@ -625,13 +578,13 @@ class TaskTree:
     # return a TaskAction
     def get_task_action(self, task: Task) -> tuple[str, str]:
         if task.link_type == Task.Types.VISITABLE_URL:
-            return ("B", TaskAction.VISITAR)
+            return "B", TaskAction.VISITAR
         if task.link_type == Task.Types.STATIC_FILE:
-            return ("G", TaskAction.EXECUTAR)
+            return "G", TaskAction.EXECUTAR
         
         if not self.is_downloaded_for_lang(task):
-            return ("Y", TaskAction.BAIXAR)
-        return ("G", TaskAction.EXECUTAR)
+            return "Y", TaskAction.BAIXAR
+        return "G", TaskAction.EXECUTAR
         
     def is_downloaded_for_lang(self, task: Task):
         folder = task.get_folder()

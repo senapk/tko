@@ -24,13 +24,6 @@ def convert_lists_to_4_spaces(markdown_content: str) -> str:
     return '\n'.join(output_lines)
 
 def convert_markdown_to_html(title: str, markdown_file_path: str, output_html_path: str):
-    """
-    Converte um arquivo Markdown para HTML, com suporte a tabelas, LaTeX e destaque de sintaxe.
-
-    Args:
-        markdown_file_path (str): O caminho para o arquivo Markdown de entrada.
-        output_html_path (str): O caminho para o arquivo HTML de saída.
-    """
     try:
         with open(markdown_file_path, 'r', encoding='utf-8') as f:
             markdown_content = f.read()

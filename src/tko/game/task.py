@@ -2,10 +2,12 @@
 from tko.util.symbols import symbols
 from tko.util.text import Text
 from tko.game.tree_item import TreeItem
+from tko.game.task_info import TaskInfo
 import enum
 
 
 class Task(TreeItem):
+    str_index = "idx"
 
     class Types(enum.Enum):
         UNDEFINED = 0
@@ -18,29 +20,14 @@ class Task(TreeItem):
         def __str__(self):
             return self.name
 
-    # default values for tasks
-    approach_max = 6
-    autonomy_max = 5
-    neat_max = 5
-    cool_max = 5
-    easy_max = 5
-
     def __init__(self):
 
         super().__init__()
         self.line_number = 0
         self.line = ""
-
-        self.coverage: int = 0 # valor de 0 a 100
-        self.approach: int = 0 # valor de 0 a approach_max
-        self.autonomy: int = 0 # valor de 0 a autonomy_max
+        self.info = TaskInfo()
         self.main_idx: int = 0
-
-        self.how_neat: int = 0
-        self.how_cool: int = 0
-        self.how_easy: int = 0
-
-        self.leet_code: bool = False # if the task is a leet task
+        self.leet: bool = False # if the task is a leet task
 
         self.qskills: dict[str, int] = {} # default quest skills
         self.skills: dict[str, int] = {} # local skills
@@ -58,11 +45,12 @@ class Task(TreeItem):
         self.__is_reachable = False
         self.default_min_value = 7 # default min grade to complete task
 
-    def set_leet_code(self, value: bool):
-        self.leet_code = value
+    def set_leet(self, value: bool):
+        self.leet = value
         return self
-    def is_leet_code(self) -> bool:
-        return self.leet_code
+    
+    def is_leet(self) -> bool:
+        return self.leet
 
     def set_reachable(self, reachable: bool):
         self.__is_reachable = reachable
@@ -85,52 +73,64 @@ class Task(TreeItem):
         skill = opts[value][1]
         return autonomy, skill
 
+    def decode_from_dict(self, value: str):
+        value_list = value[1:-1]
+        kv_dict: dict[str, str] = {}
+        key_values = value_list.split(",")
+        for kv in key_values:
+            (k, val) = kv.split(":")
+            kv_dict[k.strip()] = val.strip()
+        
+        self.info.load_from_kv(kv_dict)
+        if self.str_index in kv_dict:
+            self.main_idx = int(kv_dict[self.str_index])
+
+        for k, val in kv_dict.items():
+            if k == "cov":
+                self.info.rate = int(val)
+            elif k == "aut" or k == "appr":
+                self.info.flow = int(val)
+            elif k == "hab" or k == "auto":
+                self.info.edge = int(val)
+            elif k == "desc":
+                self.info.neat = int(val)
+            elif k == "desire":
+                self.info.cool = int(val)
+            elif k == "effort":
+                self.info.easy = int(val)
+
     def load_from_db(self, value: str):
         if value.startswith("{"):
-            value_list = value[1:-1]
-            key_values = value_list.split(",")
-            for kv in key_values:
-                k, val = kv.split(":")
-                k = k.strip()
-                val = val.strip()
-                if k == "cov" or k == "cove":
-                    self.coverage = int(val)
-                elif k == "aut" or k == "appr":
-                    self.approach = int(val)
-                elif k == "hab" or k == "auto":
-                    self.autonomy = int(val)
-                elif k == "desc" or k == "neat":
-                    self.how_neat = int(val)
-                elif k == "desire" or k == "cool":
-                    self.how_cool = int(val)
-                elif k == "effort" or k == "easy":
-                    self.how_easy = int(val)
-                elif k == "idx":
-                    self.main_idx = int(val)
+            self.decode_from_dict(value)
         elif ":" not in value:
-            self.approach, self.autonomy = Task.decode_approach_autonomy(int(value))
+            self.info.flow, self.info.edge = Task.decode_approach_autonomy(int(value))
         else:
             v = value.split(":")
             if len(v) == 3:
-                self.approach, self.autonomy = Task.decode_approach_autonomy(int(v[0]))
+                self.info.flow, self.info.edge = Task.decode_approach_autonomy(int(v[0]))
                 self.main_idx = int(v[1])
-                self.coverage = int(v[2])
+                self.info.rate = int(v[2])
             elif len(v) == 4:
-                self.coverage = (int(v[0]))
-                self.approach = (int(v[1]))
-                self.autonomy = (int(v[2]))
+                self.info.rate = (int(v[0]))
+                self.info.flow = (int(v[1]))
+                self.info.edge = (int(v[2]))
                 self.main_idx = (int(v[3]))
+            else:
+                raise ValueError(f"Invalid task value format: {value}. Expected format is 'flow:edge:main_idx:rate' or '{self.str_index}:value'.")
 
     def save_to_db(self) -> str:
-        return "{" + f"cove:{self.coverage}, appr:{self.approach}, auto:{self.autonomy}, neat:{self.how_neat}, cool:{self.how_cool}, easy:{self.how_easy}, idx:{self.main_idx}" + "}"
+        kv_dict = self.info.get_filled_kv()
+        if self.main_idx != 0:
+            kv_dict[self.str_index] = str(self.main_idx)
+        return "{" + ", ".join(f"{k}:{v}" for k, v in kv_dict.items()) + "}"
 
     def is_db_empty(self) -> bool:
-        return self.approach == 0 and self.autonomy == 0 and self.main_idx == 0 and self.coverage == 0
+        return len(self.info.get_filled_kv()) == 0
 
     def get_prog_color(self, min_value: None | int = None) -> str:
         if min_value is None:
             min_value = self.default_min_value
-        prog = self.coverage // 10
+        prog = self.info.rate // 10
         if prog == 0:
             return "c"
         if prog < min_value:
@@ -141,12 +141,28 @@ class Task(TreeItem):
             return "g"
         return "w"  
 
+    def get_edge_value(self) -> int:
+        return self.info.edge * 20
+    
+    def get_flow_value(self) -> int:
+        if self.info.flow > 4:
+            return 100
+        if self.info.flow == 1:
+            return 80
+        if self.info.flow == 2:
+            return 80
+        if self.info.flow == 3:
+            return 80
+        if self.info.flow == 4:
+            return 80
+        return 0
+
     def get_prog_symbol(self, min_value: None | int = None) -> Text:
         
         if min_value is None:
             min_value = self.default_min_value
         color = self.get_prog_color(min_value)
-        prog = self.coverage // 10
+        prog = self.info.rate // 10
         if prog == 0:
             return Text().add("x")
         if prog < min_value:
@@ -163,8 +179,9 @@ class Task(TreeItem):
         return self.xp
 
     def get_percent(self):
-        app_aut = ((self.approach + self.autonomy) * 100) / 11
-        return (app_aut + self.coverage) / 2
+        flow = self.get_flow_value()
+        edge = self.get_edge_value()
+        return (flow * edge * (self.info.rate / 10)) / 1000
 
     def get_ratio(self) -> float:
         return self.get_percent() / 10.0
@@ -176,55 +193,13 @@ class Task(TreeItem):
         return self.get_percent() == 0
     
     def in_progress(self):
-        return self.get_percent() > 0 and self.get_percent() < 100
-
-    def set_coverage(self, coverage: int):
-        coverage = int(coverage)
-        if coverage >= 0 and coverage <= 100:
-            self.coverage = coverage
-        else:
-            print(f"Progresso inválido: {coverage}")
-
-    def set_approach(self, value: int):
-        value = int(value)
-        if value >= 0 and value <= Task.approach_max:
-            self.approach = value
-        else:
-            print(f"Autonomia inválida: {value}")
-
-    def set_autonomy(self, value: int):
-        value = int(value)
-        if value >= 0 and value <= Task.autonomy_max:
-            self.autonomy = value
-        else:
-            print(f"Compreensão inválida: {value}")
-
-    def set_description(self, value: int):
-        value = int(value)
-        if value >= 0 and value <= Task.neat_max:
-            self.how_neat = value
-        else:
-            print(f"Descrição inválida: {value}")
-    
-    def set_desire(self, value: int):
-        value = int(value)
-        if value >= 0 and value <= Task.cool_max:
-            self.how_cool = value
-        else:
-            print(f"Interesse inválido: {value}")
-
-    def set_effort(self, value: int):
-        value = int(value)
-        if value >= 0 and value <= Task.easy_max:
-            self.how_easy = value
-        else:
-            print(f"Dedicação inválida: {value}")
+        return 0 < self.get_percent() < 100
 
     # @override
     def __str__(self):
         lnum = str(self.line_number).rjust(3)
         key = "" if self.key == self.title else self.key + " "
-        return f"{lnum} grade:{self.approach}:{self.autonomy} key:{key} title:{self.title} skills:{self.skills} remote:{self.link} type:{self.link_type} folder:{self.folder}"
+        return f"{lnum} key:{key} title:{self.title} skills:{self.skills} remote:{self.link} type:{self.link_type} folder:{self.folder}"
 
     def has_at_symbol(self):
         return any([s.startswith("@") for s in self.title.split(" ")])

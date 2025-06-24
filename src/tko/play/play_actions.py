@@ -4,7 +4,6 @@ from tko.game.task import Task
 # from tko.game.graph import Graph
 
 from tko.play.floating_grade import FloatingGrade
-from tko.settings.logger import Logger
 from tko.settings.settings import Settings
 
 from tko.cmds.cmd_down import CmdDown
@@ -21,6 +20,10 @@ from tko.play.opener import Opener
 
 from tko.play.tasktree import TaskAction
 from typing import Callable
+
+from tko.logger.log_item_self import LogItemSelf
+from tko.logger.log_item_move import LogItemMove
+
 import os
 import tempfile
 import subprocess
@@ -39,14 +42,15 @@ class PlayActions:
         self.gui = gui
 
     def gen_graph_path(self) -> str:
-        return os.path.join(self.rep.get_rep_dir(), "graph.png")
+        return os.path.join(self.rep.paths.get_rep_dir(), "graph.png")
         
-
-    def open_link_without_stdout_stderr(self, link: str):
+    @staticmethod
+    def open_link_without_stdout_stderr(link: str):
         outfile = tempfile.NamedTemporaryFile(delete=False)
         subprocess.Popen("python3 -m webbrowser -t {}".format(link), stdout=outfile, stderr=outfile, shell=True)
 
-    def get_task_folder(self, task: Task) -> str:
+    @staticmethod
+    def get_task_folder(task: Task) -> str:
         if task.folder is None:
             raise Exception("Folder não encontrado")
         return task.folder
@@ -80,7 +84,7 @@ class PlayActions:
             task: Task = obj
             if task.link_type == Task.Types.VISITABLE_URL or task.link_type == Task.Types.REMOTE_FILE:
                 try:
-                    self.open_link_without_stdout_stderr(task.link)
+                    PlayActions.open_link_without_stdout_stderr(task.link)
                 except Exception as _:
                     pass
             self.fman.add_input(
@@ -115,15 +119,16 @@ class PlayActions:
     #         self.graph_opened = True
 
     def register_action(self, task: Task):
-        Logger.get_instance().record_self_grade(task.key, task.coverage, task.approach, task.autonomy, task.how_neat, task.how_cool, task.how_easy)
+        self.rep.logger.store( LogItemSelf().set_key(task.key).set_info(task.info) )
 
     def evaluate(self):
         obj = self.tree.get_selected_throw()
         
         if isinstance(obj, Task):
+            task: Task = obj
             self.fman.add_input(
                 FloatingGrade(obj, self.settings, "").set_exit_fn(
-                    lambda: self.register_action(obj)
+                    lambda: self.register_action(task)
                 )
             )
             return
@@ -175,7 +180,9 @@ class PlayActions:
         cmd_down.set_language(lang)
         result = cmd_down.execute()
         if result:
-            Logger.get_instance().record_down(task.key)
+            self.rep.logger.store(
+                LogItemMove().set_key(task.key).set_mode(LogItemMove.Mode.DOWN)
+            )
 
 
     def select_task_action(self, task: Task) -> None:
@@ -199,7 +206,8 @@ class PlayActions:
             return lambda: None
 
         if isinstance(obj, Task):
-            return lambda: self.select_task_action(obj)
+            task: Task = obj
+            return lambda: self.select_task_action(task)
         return lambda: None
 
         

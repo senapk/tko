@@ -289,7 +289,7 @@ class FloatingInput(Floating):
         elif key == self.settings.app.get_key_left() or key == ord(GuiKeys.left) or key == ord(GuiKeys.left2):
             self.search_text = self.search_text[:-1]
             self.update_index()
-        elif key >= 32 and key < 127:
+        elif 32 <= key < 127:
             self.search_text += chr(key).lower()
             self.update_index()
         elif any([key == x for x in InputManager.backspace_list]):

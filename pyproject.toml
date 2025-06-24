@@ -21,6 +21,7 @@ dependencies = [
     "appdirs>=1.4.4",
     "chardet>=5.2.0",
     "diff-match-patch>=20241021",
+    "icecream>=2.1.4",
     "markdown>=3.7",
     "pip>=25.0.1",
     "pygments>=2.19.1",

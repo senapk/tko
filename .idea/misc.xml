@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12 (tko)" project-jdk-type="Python SDK" />
+  <component name="Black">
+    <option name="sdkName" value="uv (tko)" />
+  </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="uv (tko)" project-jdk-type="Python SDK" />
   <component name="PythonCompatibilityInspectionAdvertiser">
     <option name="version" value="3" />
   </component>

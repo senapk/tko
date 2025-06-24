@@ -1,5 +1,5 @@
 import shutil
-from tko.util.text import Text, Token
+from tko.util.text import Text
 
 class RawTerminal:
     __term_width: None | int = None
@@ -22,9 +22,9 @@ class RawTerminal:
         RawTerminal.__term_width = value
 
     @staticmethod
-    def centralize(text: Text | str, filler: Token | str = Token(" ")):
+    def centralize(text: Text | str, filler: Text.Token | str = Text.Token(" ")):
         if isinstance(filler, str):
-            filler2: Token = Token(filler)
+            filler2: Text.Token = Text.Token(filler)
         else:
             filler2 = filler
 

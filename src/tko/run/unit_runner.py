@@ -11,11 +11,11 @@ class UnitRunner:
     # run a unit using a solver and return if the result is correct
     @staticmethod
     def run_unit(solver: SolverBuilder, unit: Unit, timeout: None | float = None) -> ExecutionResult:
-        exec, _ = solver.get_executable()
+        executable, _ = solver.get_executable()
         if solver.has_compile_error():
-            unit.set_received(exec.get_error_msg().get_str())
+            unit.set_received(executable.get_error_msg().get_str())
             return ExecutionResult.COMPILATION_ERROR
-        cmd, folder = exec.get_command()
+        cmd, folder = executable.get_command()
         if folder == "":
             folder = None
         if timeout == 0:

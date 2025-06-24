@@ -50,9 +50,9 @@ class Opener:
         outfile = tempfile.NamedTemporaryFile(delete=False)
         subprocess.Popen(fullcmd, stdout=outfile, stderr=outfile, shell=True)
 
-    def send_floating(self, Floating: Floating):
+    def send_floating(self, floating: Floating):
         if self.fman is not None:
-            self.fman.add_input(Floating)
+            self.fman.add_input(floating)
 
     @staticmethod
     def try_add(files_to_open: list[str], folder: str, file: str):

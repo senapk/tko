@@ -81,7 +81,6 @@ class Wdir:
             source_list = [target for target in files if target.endswith(".md")]
         source_list = [os.path.join(folder, x) for x in source_list]
         
-        solver_list: list[str] = []
         if self.__lang != "":
             solver_list = Drafts.load_drafts_only(folder, self.__lang)
         else:

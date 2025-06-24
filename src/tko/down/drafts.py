@@ -61,7 +61,9 @@ main = putStrLn "qxcode"
     drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'java': java_draft, 'go': go_draft, 'hs': hs_draft, 'yaml': yaml_draft}
 
     @staticmethod
-    def load_drafts_only(folder: str, lang: str, extra: list[str] = []) -> list[str]:
+    def load_drafts_only(folder: str, lang: str, extra: list[str] | None = None) -> list[str]:
+        if extra is None:
+            extra = []
         folder = os.path.normpath(os.path.abspath(folder))
         draft_list: list[str] = []
         allowed = extra

@@ -3,6 +3,7 @@ from tko.util.text import Text
 from typing import Any
 import curses
 
+
 class AppSettings:
 
     def __init__(self):
@@ -20,28 +21,34 @@ class AppSettings:
     def set_key_left(self, key: int):
         self.key_left = key
         return self
+
     def set_key_right(self, key: int):
         self.key_right = key
         return self
+
     def set_key_up(self, key: int):
         self.key_up = key
         return self
+
     def set_key_down(self, key: int):
         self.key_down = key
         return self
-    
+
     def get_key_left(self) -> int:
         return self.key_left
+
     def get_key_right(self) -> int:
         return self.key_right
+
     def get_key_up(self) -> int:
         return self.key_up
+
     def get_key_down(self) -> int:
         return self.key_down
 
     def to_dict(self):
         return self.__dict__
-    
+
     def from_dict(self, attr_dict: dict[str, Any]):
         for key, value in attr_dict.items():
             if hasattr(self, key) and type(getattr(self, key)) == type(value):
@@ -56,10 +63,10 @@ class AppSettings:
 
     def toggle_borders(self):
         self.use_borders = not self.use_borders
-    
+
     def toggle_images(self):
         self.use_images = not self.use_images
-    
+
     def toggle_hidden(self):
         self.show_hidden = not self.show_hidden
 
@@ -74,7 +81,7 @@ class AppSettings:
     def set_use_borders(self, borders: bool):
         self.use_borders = borders
         return self
-    
+
     def set_use_images(self, images: bool):
         self.use_images = images
         return self
@@ -114,11 +121,10 @@ class AppSettings:
         return self.timeout
 
     def __str__(self):
-        output: list[str] = []
-        output.append(str(Text.format("{g}", "Configurações globais:")))
-        output.append("- Diff    : {}".format(str(self.get_diff_mode().value)))
-        output.append("- Editor  : {}".format(self.get_editor()))
-        output.append("- Bordas  : {}".format(self.get_use_borders()))
-        output.append("- Images  : {}".format(self.get_use_images()))
-        output.append("- Timeout : {}".format(self.get_timeout()))
+        output: list[str] = [str(Text.format("{g}", "Configurações globais:")),
+                             "- Diff    : {}".format(str(self.get_diff_mode().value)),
+                             "- Editor  : {}".format(self.get_editor()),
+                             "- Bordas  : {}".format(self.get_use_borders()),
+                             "- Images  : {}".format(self.get_use_images()),
+                             "- Timeout : {}".format(self.get_timeout())]
         return "\n".join(output)

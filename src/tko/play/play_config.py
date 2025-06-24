@@ -1,5 +1,5 @@
 from tko.play.floating import FloatingInputData, FloatingInput
-from tko.util.text import Text, Token
+from tko.util.text import Text
 from tko.util.symbols import symbols
 from tko.play.keys import GuiKeys
 from tko.play.flags import Flags
@@ -17,7 +17,7 @@ class PlayConfig:
         options: list[FloatingInputData] = []
 
         def icon(value: bool):
-            return Token("✓", "g") if value else Token("✗", "r")
+            return Text.Token("✓", "g") if value else Text.Token("✗", "r")
         
         options.append(
             FloatingInputData(
