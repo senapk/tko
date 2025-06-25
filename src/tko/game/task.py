@@ -87,7 +87,7 @@ class Task(TreeItem):
 
         # deprecated
         for k, val in kv_dict.items():
-            if k == "cov":
+            if k == "cov" or k == 'cove':
                 self.info.rate = int(val)
             elif k == "aut" or k == "appr":
                 self.info.flow = int(val)

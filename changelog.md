@@ -1,5 +1,7 @@
 # Changelog
 
+- 6.0.4
+  - add: fix not loading cove tag for coverage
 - 6.0.3
   - add: daily progress throughout the course
 - 6.0.2
