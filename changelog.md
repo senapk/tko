@@ -1,5 +1,7 @@
 # Changelog
 
+- 6.0.6
+  - add: mono color mode for tko rep graph
 - 6.0.5
   - add: fix tko rep graph and tko rep resume
 - 6.0.4

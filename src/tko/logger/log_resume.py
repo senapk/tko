@@ -3,15 +3,15 @@ from tko.logger.log_sort import LogSort
 
 class LogResume:
     def __init__(self):
-        self.time: int = 0
+        self.time: int = 0 # elapsed time in minutes
         self.time_str: str = "time"
-        self.diff: int = 0
+        self.diff: int = 0 # number of versions
         self.diff_str: str = "diff"
-        self.runs: int = 0
-        self.runs_str: str = "runs"
-        self.size: int = 0
+        self.runs: int = 0 # number of runs
+        self.runs_str: str = "runs"   
+        self.size: int = 0 # lines
         self.size_str: str = "size"
-        self.auto: int = 0
+        self.auto: int = 0 # number of self evaluations
         self.auto_str: str = "auto"
         self.info: TaskInfo = TaskInfo()
 

@@ -304,6 +304,7 @@ class Parser:
 
         repo_graph = subpar_repo.add_parser("graph", help="graph")
         repo_graph.add_argument('--folder', '-f', type=str, nargs='?', default='.', help='repository folder.')
+        repo_graph.add_argument('--mono', '-m', action='store_true', help='monochrome mode.')
         repo_graph.add_argument('--width', '-W', type=int, default=100, help='graph width.')
         repo_graph.add_argument('--height', '-H', type=int, default=24, help='graph height.')
         repo_graph.set_defaults(func=CmdRep.graph)

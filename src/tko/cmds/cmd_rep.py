@@ -4,6 +4,7 @@ from tko.logger.logger import Logger
 from tko.logger.log_resume import LogResume
 from tko.logger.log_sort import LogSort
 from tko.play.week_graph import DailyGraph
+from tko.util.text import Text
 import yaml # type: ignore
 import os
 import argparse
@@ -35,7 +36,10 @@ class CmdRep:
         dg = DailyGraph(rep.logger, args.width, args.height)
         image = dg.get_graph()
         for line in image:
-            print(line)
+            if args.mono:
+                print(line.get_str())
+            else:
+                print(line)
 
 
     @staticmethod
