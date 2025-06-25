@@ -302,13 +302,15 @@ class Parser:
         parser_repo = self.subparsers.add_parser('rep', help='Repository validation tools.')
         subpar_repo = parser_repo.add_subparsers(title='subcommands', help='help for subcommand.')
 
-        repo_show = subpar_repo.add_parser("show", help="show")
-        repo_show.add_argument('--folder', type=str, nargs='?', default='.', help='repository folder.')
-        exclusive_group = repo_show.add_mutually_exclusive_group(required=True)
-        exclusive_group.add_argument('--resume', action='store_true', help='resume repository log.')
-        exclusive_group.add_argument('--daygraph', action='store_true', help='show day graph of the repository.')
-        exclusive_group.add_argument('--weekgraph', action='store_true', help='show week graph of the repository.')
-        repo_show.set_defaults(func=CmdRep.show)
+        repo_graph = subpar_repo.add_parser("graph", help="graph")
+        repo_graph.add_argument('--folder', '-f', type=str, nargs='?', default='.', help='repository folder.')
+        repo_graph.add_argument('--width', '-W', type=int, default=100, help='graph width.')
+        repo_graph.add_argument('--height', '-H', type=int, default=24, help='graph height.')
+        repo_graph.set_defaults(func=CmdRep.graph)
+
+        repo_resume = subpar_repo.add_parser("resume", help="resume")
+        repo_resume.add_argument('--folder', '-f', type=str, nargs='?', default='.', help='repository folder.')
+        repo_resume.set_defaults(func=CmdRep.resume)
 
     def add_parser_rep_actions(self):
         parser_open = self.subparsers.add_parser('open', help='Open a folder with a repository.')

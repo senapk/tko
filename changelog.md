@@ -1,5 +1,7 @@
 # Changelog
 
+- 6.0.5
+  - add: fix tko rep graph and tko rep resume
 - 6.0.4
   - add: fix not loading cove tag for coverage
 - 6.0.3

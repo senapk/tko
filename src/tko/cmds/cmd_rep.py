@@ -11,17 +11,8 @@ import argparse
 
 class CmdRep:
     @staticmethod
-    def show(args: argparse.Namespace):
+    def resume(args: argparse.Namespace):
         rep = Repository(args.folder).load_config().load_game()
-        if args.weekgraph:
-            CmdRep.graph(rep, week_mode=True)
-        if args.daygraph:
-            CmdRep.graph(rep, week_mode=False)
-        if args.resume:
-            CmdRep.resume(rep)
-
-    @staticmethod
-    def resume(rep: Repository):
         logger: Logger = rep.logger
         tasks: dict[str, LogSort] = logger.tasks.task_dict
         resume_dict: dict[str, LogResume] = {}
@@ -39,26 +30,13 @@ class CmdRep:
         print (yaml.dump(tasks_str, sort_keys=False))
 
     @staticmethod
-    def graph(rep: Repository, week_mode: bool):
-        wg = DailyGraph(rep.logger, 100, 24, week_mode)
-        image = wg.get_graph()
-        week = wg.get_collected()
-        pad = " " * 12
-        print(f"{pad}{image[0]}")
-        print(f"{pad}{image[1]}")
-        image = image[2:]
-
-        for i, line in enumerate(image):
-            if i < len(week):
-                index = i + 1
-                index_pad = str(index).rjust(2, " ")
-                print(f"{index_pad} - {week[i]}h ", end="")
-            else:
-                print(pad, end="")
+    def graph(args: argparse.Namespace):
+        rep = Repository(args.folder).load_config().load_game()
+        dg = DailyGraph(rep.logger, args.width, args.height)
+        image = dg.get_graph()
+        for line in image:
             print(line)
 
-        # for i in range(len(week)):
-        #     print(f"{i} - {week[i]}h")
 
     @staticmethod
     def upgrade(args: argparse.Namespace):
