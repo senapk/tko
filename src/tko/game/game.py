@@ -55,40 +55,28 @@ class Game:
             obtained += o
         return obtained, total
 
-    def get_skills_resume(self, avaliable_quests: list[Quest]) -> tuple[dict[str, int], dict[str, int]]:
-        total: dict[str, int] = {}
-        obtained: dict[str, int] = {}
+    def get_skills_resume(self, avaliable_quests: list[Quest]) -> tuple[dict[str, float], dict[str, float]]:
+        available: dict[str, float] = {}
+        obtained: dict[str, float] = {}
         avaliable_keys = [q.key for q in avaliable_quests]
         for q in self.quests.values():
             reachable = q.key in avaliable_keys
             for t in q.get_tasks():
-                for s in t.skills:
-                    if s in total:
-                        total[s] += t.skills[s]
-                        if reachable:
-                            obtained[s] += int(t.skills[s] * t.get_ratio())
-                        else:
-                            obtained[s] += 0
-                    else:
-                        total[s] = t.skills[s]
-                        if reachable:
-                            obtained[s] = int(t.skills[s] * t.get_ratio())
-                        else:
-                            obtained[s] = 0
+                # for s in t.skills:
+                #     if not (s in total):
+                #         total[s] = 0
+                #     total[s] += t.skills[s]
+                #     if reachable:
+                #         obtained[s] = t.skills[s] * t.get_ratio()
+                #     else:
+                #         obtained[s] = 0
                 for s in t.qskills:
-                    if s in total:
-                        total[s] += t.qskills[s]
-                        if reachable:
-                            obtained[s] += int(t.qskills[s] * t.get_ratio())
-                        else:
-                            obtained[s] += 0
-                    else:
-                        total[s] = t.qskills[s]
-                        if reachable:
-                            obtained[s] = int(t.qskills[s] * t.get_ratio())
-                        else:
-                            obtained[s] = 0
-        return total, obtained
+                    available[s] = available.get(s, 0) + t.qskills[s]
+                    if reachable:
+                        obtained[s] = obtained.get(s, 0) + (t.qskills[s] * t.get_ratio())
+                    # else:
+                    #     obtained[s] = 0
+        return available, obtained
 
 
     def parse_file_and_folder(self, filename: str, folder: str, language: str):

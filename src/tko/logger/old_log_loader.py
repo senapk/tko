@@ -135,6 +135,8 @@ class OldLogLoader:
     def load_from_track_folder(self) -> dict[str, LogItemExec]:
         output: dict[str, LogItemExec] = {}
         track_folder = self.paths.get_track_folder()
+        if not os.path.exists(track_folder):
+            return output
         entries = os.listdir(track_folder)
         for e in entries:
             folder_path = os.path.join(track_folder, e)

@@ -26,7 +26,6 @@ class Repository:
         if recursive_folder != "":
             rep_folder = recursive_folder
         self.paths = RepPaths(rep_folder)
-
         self.data: dict[str, Any] = {}
         self.game = Game()
         self.logger: Logger = Logger(rep_folder)

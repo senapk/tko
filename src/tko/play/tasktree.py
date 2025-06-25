@@ -171,7 +171,7 @@ class TaskTree:
 
         output.ljust(self.max_title + 10, Text.Token(" "))
         if Flags.percent.is_true():
-            prog = int(t.get_percent())
+            prog = round(t.get_percent())
             output.addf("y", str(prog).rjust(3, " ") + "%")
         else:
             color_rate: list[str] = ["", "c", "g", "y", "m", "r"]

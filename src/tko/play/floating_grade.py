@@ -25,7 +25,7 @@ class FloatingGrade(Floating):
         self.grades_index = [task.info.rate // 10, task.info.flow, task.info.edge, task.info.neat, task.info.cool, task.info.easy]
         self.rate_opt = ["x", "1", "2", "3", "4", "5", "6", "7", "8", "9", "✓"]
         self.rate_msg = [
-            Text().addf("m", "Não ").addf("y", "fiz"),
+            Text().addf("g", "Não ").addf("y", "fiz"),
             Text().addf("y", " 10%"),
             Text().addf("y", " 20%"),
             Text().addf("y", " 30%"),
@@ -38,22 +38,22 @@ class FloatingGrade(Floating):
             Text().addf("y", "100%")]
         self.flow_opt = [x.text for x in [symbols.flow_x, symbols.flow_e, symbols.flow_d, symbols.flow_c, symbols.flow_b, symbols.flow_a, symbols.flow_s]]
         self.flow_msg = [
-            Text().addf("m", "Não fiz"),
-            Text().addf("m", "Fiz com ajuda ").addf("Y", "H").addf("y", "umana").addf("m", "(colega|monitor|...)"),
-            Text().addf("m", "Fiz com ajuda de ").addf("Y", "I").addf("y", "A").addf("m", "(copilot|gpt|...)"),
-            Text().addf("m", "Fiz ").addf("Y", "G").addf("y","uiado").addf("m", "/Copiando").addf("m", "(").addf("m", "aula|vídeo").addf("m", "|...)"),
-            Text().addf("m", "Fiz ").addf('Y', 'P').addf("y", "esquisando").addf("m", "(livros|sites|youtube|...)"),
-            Text().addf("m", "Fiz ").addf("m", "sem consultar ").addf('Y', 'A').addf("y", "lgoritmos"),
-            Text().addf("m", "Fiz ").addf("Y", 'S').addf("y", "ozinho").addf("m", " sem consultar nada")
+            Text().addf("g", "Não fiz"),
+            Text().addf("g", "Fiz com ajuda ").addf("Y", "H").addf("y", "umana").addf("g", "(colega|monitor|...)"),
+            Text().addf("g", "Fiz com ajuda de ").addf("Y", "I").addf("y", "A").addf("g", "(copilot|gpt|...)"),
+            Text().addf("g", "Fiz ").addf("Y", "G").addf("y","uiado").addf("g", "/Copiando").addf("g", "(").addf("g", "aula|vídeo").addf("g", "|...)"),
+            Text().addf("g", "Fiz ").addf('Y', 'P').addf("y", "esquisando").addf("g", "(livros|sites|youtube|...)"),
+            Text().addf("g", "Fiz ").addf("g", "sem consultar ").addf('Y', 'A').addf("y", "lgoritmos"),
+            Text().addf("g", "Fiz ").addf("Y", 'S').addf("y", "ozinho").addf("g", " sem consultar nada")
             ]
         self.edge_opt = [x.text for x in [symbols.edge_x, symbols.edge_e, symbols.edge_d, symbols.edge_c, symbols.edge_b, symbols.edge_a]]
         self.edge_msg = [
-            Text().addf("m", "Não fiz        ").addf("y", "                         "),
-            Text().addf("m", "Consigo refazer ").addf("y", ">= 30% sem consulta     "),
-            Text().addf("m", "Consigo refazer ").addf("y", ">= 50% sem consulta     "),
-            Text().addf("m", "Consigo refazer ").addf("y", ">= 70% sem consulta     "),
-            Text().addf("m", "Consigo refazer ").addf("y", ">= 90% sem consulta     "),
-            Text().addf("m", "Consigo refazer ").addf("y", "  100% sem consulta     ")
+            Text().addf("g", "Não fiz        ").addf("y", "                         "),
+            Text().addf("g", "Consigo refazer ").addf("y", ">= 30% sem consulta     "),
+            Text().addf("g", "Consigo refazer ").addf("y", ">= 50% sem consulta     "),
+            Text().addf("g", "Consigo refazer ").addf("y", ">= 70% sem consulta     "),
+            Text().addf("g", "Consigo refazer ").addf("y", ">= 90% sem consulta     "),
+            Text().addf("g", "Consigo refazer ").addf("y", "  100% sem consulta     ")
             ]
 
         self.neat_opt = [x.text for x in [symbols.cool_x, 
@@ -64,33 +64,33 @@ class FloatingGrade(Floating):
                                              symbols.cool_a]]
  
         self.neat_msg = [
-            Text().addf("m", "Sem opinião               "),
-            Text().addf("m", "A descrição da atividades ").addf("y", "é confusa     "),
-            Text().addf("m", "A descrição da atividades ").addf("y", "é insuficiente"),
-            Text().addf("m", "A descrição da atividades ").addf("y", "é razoável    "),
-            Text().addf("m", "A descrição da atividades ").addf("y", "é adequada    "),
-            Text().addf("m", "A descrição da atividades ").addf("y", "é excelente   ")
+            Text().addf("g", "Sem opinião               "),
+            Text().addf("g", "A descrição da atividades ").addf("y", "é confusa     "),
+            Text().addf("g", "A descrição da atividades ").addf("y", "é insuficiente"),
+            Text().addf("g", "A descrição da atividades ").addf("y", "é razoável    "),
+            Text().addf("g", "A descrição da atividades ").addf("y", "é adequada    "),
+            Text().addf("g", "A descrição da atividades ").addf("y", "é excelente   ")
             ]
         
        
         self.cool_opt = [x for x in self.neat_opt]
         self.cool_msg = [
-            Text().addf("m", "Sem opinião        ").addf("y", "                     "),
-            Text().addf("m", "A atividade parece ").addf("y", "muito desinteressante"),
-            Text().addf("m", "A atividade parece ").addf("y", "desinteressante      "),
-            Text().addf("m", "A atividade parece ").addf("y", "indiferente          "),
-            Text().addf("m", "A atividade parece ").addf("y", "interessante         "),
-            Text().addf("m", "A atividade parece ").addf("y", "muito interessante   "),
+            Text().addf("g", "Sem opinião        ").addf("y", "                     "),
+            Text().addf("g", "A atividade parece ").addf("y", "muito desinteressante"),
+            Text().addf("g", "A atividade parece ").addf("y", "desinteressante      "),
+            Text().addf("g", "A atividade parece ").addf("y", "indiferente          "),
+            Text().addf("g", "A atividade parece ").addf("y", "interessante         "),
+            Text().addf("g", "A atividade parece ").addf("y", "muito interessante   "),
             ]
 
         self.easy_opt = [x for x in self.neat_opt]
         self.easy_msg = [
-            Text().addf("m", "Sem opinião          ").addf("y", "                   "),
-            Text().addf("m", "Resolver a atividade ").addf("y", "foi muito difícil  "),
-            Text().addf("m", "Resolver a atividade ").addf("y", "foi difícil        "),
-            Text().addf("m", "Resolver a atividade ").addf("y", "foi razoável       "),
-            Text().addf("m", "Resolver a atividade ").addf("y", "foi fácil          "),
-            Text().addf("m", "Resolver a atividade ").addf("y", "foi muito fácil    "),
+            Text().addf("g", "Sem opinião          ").addf("y", "                   "),
+            Text().addf("g", "Resolver a atividade ").addf("y", "foi muito difícil  "),
+            Text().addf("g", "Resolver a atividade ").addf("y", "foi difícil        "),
+            Text().addf("g", "Resolver a atividade ").addf("y", "foi razoável       "),
+            Text().addf("g", "Resolver a atividade ").addf("y", "foi fácil          "),
+            Text().addf("g", "Resolver a atividade ").addf("y", "foi muito fácil    "),
             ]
 
         self.grades_value = [self.rate_opt, self.flow_opt, self.edge_opt, self.neat_opt, self.cool_opt, self.easy_opt]
@@ -215,8 +215,8 @@ class FloatingGrade(Floating):
 
     def send_key_left(self):
         self.grades_index[self._line] = max(self.grades_index[self._line] - 1, 0)
-        if self._line == 1 and self.grades_index[1] < 4:
-            self.grades_index[2] = 0
+        # if self._line == 1 and self.grades_index[1] < 5:
+        #     self.grades_index[2] = 0
         if self._line == 1 and self.done_alone() and self.grades_index[self._line] == 5:
             self.set_autonomy_max()
             self.grades_index[2] -= 1

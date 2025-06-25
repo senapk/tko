@@ -73,7 +73,7 @@ class Quest(TreeItem):
         return output
 
     def get_resume_by_percent(self) -> Text:
-        value = self.get_percent()
+        value: int = round(self.get_percent())
         return Text().addf(self.get_grade_color(), (str(value) + "%").rjust(4))
     
     def get_requirement(self) -> Text:
@@ -113,36 +113,28 @@ class Quest(TreeItem):
         return True
 
     def add_task(self, task: Task):
-        # task.qskills = self.skills
-
-        # task.xp = 0
-        # for s in task.skills:
-        #     task.xp += task.skills[s]
-
-        # for s in task.qskills:
-        #     task.xp += task.qskills[s]
-        
+        task.qskills = self.skills        
         self.__tasks.append(task)
 
     def get_tasks(self):
         return self.__tasks
 
-    def get_xp(self) -> tuple[int, int]:
-        total = 0
-        obtained = 0
+    def get_xp(self) -> tuple[float, float]:
+        total = 0.0
+        obtained = 0.0
         for t in self.__tasks:
             if not t.opt:
                 total += t.get_xp()   
             if t.get_percent() > 0:
-                obtained += int(t.get_xp() * t.get_ratio())
+                obtained += t.get_xp() * t.get_ratio()
 
         return obtained, total
         
-    def get_percent(self):
+    def get_percent(self) -> float:
         obtained, total = self.get_xp()
         if total == 0:
-            return 0
-        return obtained * 10 // total
+            return 0.0
+        return (obtained * 100.0) / total
 
     def in_progress(self):
         if self.is_complete():

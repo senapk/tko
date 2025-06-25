@@ -43,7 +43,7 @@ class Task(TreeItem):
 
         self.folder: str | None = None # the place where are the test case file
         self.__is_reachable = False
-        self.default_min_value = 7 # default min grade to complete task
+        self.default_min_value = 5 # default min grade to complete task
 
     def set_leet(self, value: bool):
         self.leet = value
@@ -85,6 +85,7 @@ class Task(TreeItem):
         if self.str_index in kv_dict:
             self.main_idx = int(kv_dict[self.str_index])
 
+        # deprecated
         for k, val in kv_dict.items():
             if k == "cov":
                 self.info.rate = int(val)
@@ -102,6 +103,7 @@ class Task(TreeItem):
     def load_from_db(self, value: str):
         if value.startswith("{"):
             self.decode_from_dict(value)
+        # deprecated
         elif ":" not in value:
             self.info.flow, self.info.edge = Task.decode_approach_autonomy(int(value))
         else:
@@ -142,20 +144,18 @@ class Task(TreeItem):
         return "w"  
 
     def get_edge_value(self) -> int:
-        return self.info.edge * 20
+        edge = self.info.edge
+        # deprecated
+        if self.info.flow < 6 and edge == 5:
+            edge = 4
+        return edge * 20
     
     def get_flow_value(self) -> int:
         if self.info.flow > 4:
             return 100
-        if self.info.flow == 1:
-            return 80
-        if self.info.flow == 2:
-            return 80
-        if self.info.flow == 3:
-            return 80
-        if self.info.flow == 4:
-            return 80
-        return 0
+        if self.info.flow == 0:
+            return 0
+        return 80
 
     def get_prog_symbol(self, min_value: None | int = None) -> Text:
         
@@ -178,13 +178,53 @@ class Task(TreeItem):
             return 1
         return self.xp
 
+    @staticmethod
+    def get_harmonic_mean(a: float, b: float, c: float) -> float:
+        if a == 0 or b == 0 or c == 0:
+            return 0.0
+        return 3 / (1.0 / a + 1.0 / b + 1.0 / c)
+
+    @staticmethod
+    def get_square_mean(a: float, b: float, c: float) -> float:
+        if a == 0 or b == 0 or c == 0:
+            return 0.0
+        return ((a * b * c) ** 0.5) / 10.0
+    
+    @staticmethod
+    def get_cubic_square(a: float, b: float, c: float) -> float:
+        if a == 0 or b == 0 or c == 0:
+            return 0.0
+        return ((a * b * c) ** (1/3))
+
+    @staticmethod
+    def get_product(a: float, b: float, c: float) -> float:
+        if a == 0 or b == 0 or c == 0:
+            return 0.0
+        return (a * b * c) / 10000
+    
+    @staticmethod
+    def get_sigmoid(a: float, b: float, c: float) -> float:
+        x = a * b * c / 1000.0
+        k = 0.011  # steepness of the curve
+        x0 = 500.0
+        # return 1 / (1 + np.exp(-k * (x - x0))) #numpy sigmoid function
+        v = 1 / (1 + (2.71828 ** (-k * (x - x0))))  # using e constant directly for compatibility
+        return v * 100.0
+
     def get_percent(self):
-        flow = self.get_flow_value()
-        edge = self.get_edge_value()
-        return (flow * edge * (self.info.rate / 10)) / 1000
+        # hardcoded gambi for compatibility
+        rate = float(self.info.rate)
+        flow = float(self.get_flow_value())
+        edge = float(self.get_edge_value())
+
+        # return Task.get_square_mean(flow, edge, rate)
+        # return Task.get_harmonic_mean(flow, edge, rate)
+        # return Task.get_cubic_square(flow, edge, rate)
+        return Task.get_sigmoid(flow, edge, rate)
+
 
     def get_ratio(self) -> float:
-        return self.get_percent() / 10.0
+        return self.get_percent() / 100.0
 
     def is_complete(self):
         return self.get_percent() >= 100

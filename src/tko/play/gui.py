@@ -144,7 +144,7 @@ class Gui:
         if Flags.percent:
             text = f" XPTotal:{total_perc}%"
         else:
-            text = f" XPTotal:{xp.get_xp_total_obtained()}"
+            text = f" XPTotal:{round(xp.get_xp_total_obtained())}"
 
         done = self.colors.main_bar_done
         todo = self.colors.main_bar_todo
@@ -158,10 +158,10 @@ class Gui:
         elements: list[Text] = []
         for skill, value in total.items():
             if Flags.percent:
-                text = f"{skill}:{int(100 * obt[skill] / value)}%"
+                text = f"{skill}:{int(100 * obt.get(skill, 0) / value)}%"
             else:
-                text = f"{skill}:{obt[skill]}/{value}"
-            perc = obt[skill] / value
+                text = f"{skill}:{round(obt.get(skill, 0))}/{round(value)}"
+            perc = obt.get(skill, 0) / value
             done = self.colors.progress_skill_done
             todo = self.colors.progress_skill_todo
             skill_bar = self.style.build_bar(text, perc, dx - 2, done, todo)
@@ -281,8 +281,8 @@ class Gui:
                 xpobt = int(100 * xp.get_xp_level_current() / xp.get_xp_level_needed())
                 text = "Level:{} XP:{}%".format(level, xpobt)
             else:
-                xpobt1 = xp.get_xp_level_current()
-                xpobt2 = xp.get_xp_level_needed()
+                xpobt1 = round(xp.get_xp_level_current())
+                xpobt2 = round(xp.get_xp_level_needed())
                 text = "Level:{} XP:{}/{}".format(level, xpobt1, xpobt2)
 
         return text, percent

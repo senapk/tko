@@ -1,5 +1,11 @@
 # Changelog
 
+- 6.0.1
+  - add: change task value to use sigmoid
+  - fix: skills and xp in task tree
+  - fix: color in floating feedback
+  - fix: fix old values for edge 5 if flow < 6
+  - fix: erro opening a non existing repository
 - 6.0.0
   - add: refactored all log system
 - 5.3.14

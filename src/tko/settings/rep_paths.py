@@ -15,11 +15,11 @@ class RepPaths:
 
     @staticmethod
     def rec_search_for_repo(folder: str) -> str:
-        folder = os.path.abspath(folder)
-        if os.path.exists(os.path.join(folder, RepPaths.CONFIG_FOLDER, RepPaths.CFG_FILE)):
-            return folder
-        new_folder = os.path.dirname(folder)
-        if new_folder == folder: # não encontrou, não tem mais como subir
+        abs_folder: str = os.path.abspath(folder)
+        if os.path.exists(os.path.join(abs_folder, RepPaths.CONFIG_FOLDER, RepPaths.CFG_FILE)):
+            return abs_folder
+        new_folder = os.path.dirname(abs_folder)
+        if new_folder == abs_folder: # não encontrou, não tem mais como subir
             return ""
         return RepPaths.rec_search_for_repo(new_folder)
     
