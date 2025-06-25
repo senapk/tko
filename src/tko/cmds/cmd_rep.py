@@ -3,7 +3,7 @@ from tko.settings.settings import Settings
 from tko.logger.logger import Logger
 from tko.logger.log_resume import LogResume
 from tko.logger.log_sort import LogSort
-from tko.play.week_graph import WeekGraph
+from tko.play.week_graph import DailyGraph
 import yaml # type: ignore
 import os
 import argparse
@@ -40,7 +40,7 @@ class CmdRep:
 
     @staticmethod
     def graph(rep: Repository, week_mode: bool):
-        wg = WeekGraph(rep.logger, 100, 24, week_mode)
+        wg = DailyGraph(rep.logger, 100, 24, week_mode)
         image = wg.get_graph()
         week = wg.get_collected()
         pad = " " * 12

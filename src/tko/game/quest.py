@@ -73,7 +73,7 @@ class Quest(TreeItem):
         return output
 
     def get_resume_by_percent(self) -> Text:
-        value: int = round(self.get_percent())
+        value: int = min(100, round(self.get_percent()))
         return Text().addf(self.get_grade_color(), (str(value) + "%").rjust(4))
     
     def get_requirement(self) -> Text:

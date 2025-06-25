@@ -242,6 +242,13 @@ class TaskTree:
 
         # if Flags.percent:
         output.add(" ").add(q.get_resume_by_percent())
+        all_tasks_done = True
+        for t in q.get_tasks():
+            if not t.is_complete():
+                all_tasks_done = False
+                break
+        if all_tasks_done:
+            output.add("🌟")
         # else:
         #     output.add(" ").add(q.get_resume_by_tasks())
 

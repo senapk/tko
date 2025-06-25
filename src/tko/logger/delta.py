@@ -69,7 +69,13 @@ class Delta:
     def encode_format(value: dt.datetime) -> str:
         return dt.datetime.strftime(value, Delta.format)
     
-    
+    @staticmethod
+    def format_h_min(hours: float) -> str:
+        if hours < 0:
+            return "00:00"
+        h = int(hours)
+        m = int((hours - h) * 60)
+        return f"{h:02d}h {m:02d}m"
 
     @staticmethod
     def week_day(day: str) -> str:

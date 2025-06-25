@@ -140,8 +140,12 @@ class GameBuilder:
             color = [tag[2:] for tag in tags if tag.startswith("c:")][0]
         except IndexError as _e:
             color = None
+            
+
         
         cluster = Cluster(line_num, titulo, key, color)
+        if "main" in tags:
+            cluster.main_cluster = True
 
         if key in self.clusters.keys():
             c = self.clusters[key]

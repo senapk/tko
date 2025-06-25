@@ -1,79 +1,95 @@
 from tko.logger.logger import Logger
-from uniplot import plot_to_string # type: ignore
+from uniplot import plot_to_string
 from tko.util.text import Text
+from tko.logger.delta import Delta
 
-class WeekGraph:
-    def __init__(self, logger: Logger, width: int, height: int, week_mode: bool = False):
+class DailyGraph:
+    def __init__(self, logger: Logger, width: int, height: int):
         self.logger = logger
         self.width = width
         self.height = height
-        self.week_mode = week_mode
-        self.collected: list[float] = []
+        self.daily: list[float] = []
+        self.accumulates: list[float] = []
         self.eixo: list[float] = []
         self.__collect()
 
     def __collect(self):
         days_minutes = self.logger.week.resume()
-        if self.week_mode:
-            self.collected = [0]
-            for _, value in days_minutes.items():
-                week_day = value.week_day
-                elapsed = value.elapsed
-                if week_day == "Sunday":
-                    self.collected.append(0)
-                self.collected[-1] += elapsed
+        sorted_keys = sorted(days_minutes.keys())
+        # if self.week_mode:
+        #     self.collected = [0]
+        #     self.accumulates = [0]
+        #     # with open("debug.txt", "a") as debug_file:
+        #     #     debug_file.write(f"sorted_keys: {sorted_keys}\n")
+        #     for item in sorted_keys:
+        #         week_day = days_minutes[item].week_day
+        #         elapsed = days_minutes[item].elapsed
+        #         if week_day == "Sunday":
+        #             self.collected.append(0)
+        #             self.accumulates.append(0)
+        #             self.accumulates[-1] += self.collected[-1]
+        #         self.collected[-1] += elapsed
+        #         self.accumulates[-1] += elapsed
+        # else:
+        self.daily = [0]
+        self.accumulates = [0]
+        for item in sorted_keys:
+            self.daily.append(days_minutes[item].elapsed_seconds)
+            self.accumulates.append(self.accumulates[-1] + days_minutes[item].elapsed_seconds)
+        
+        for i, value in enumerate(self.daily):
+            self.daily[i] = value / 3600
+        for i, value in enumerate(self.accumulates):
+            self.accumulates[i] = value / 3600
 
-        else:
-            self.collected = []
-            for value in days_minutes.values():
-                self.collected.append(value.elapsed)
-        # convertendo de minutos pra horas/minutos
-        for i in range(len(self.collected)):
-            value = self.collected[i]
-            hours = value // 60
-            minutes = value % 60
-            self.collected[i] = hours + minutes / 100.0
-        self.eixo = list(range(len(self.collected)))
-        # self.eixo = list(range(len(collected)))
+        self.eixo = list(range(len(self.daily)))
 
-    def get_collected(self) -> list[str]:
-        output: list[str] = []
-        for value in self.collected:
-            output.append(f"{value:.2f}")
-        for i in range(len(output)):
-            output[i] = output[i].replace(".", ":").rjust(5, " ")
-        return output
+    # def get_collected(self) -> list[str]:
+    #     output: list[str] = []
+    #     for value in self.collected:
+    #         output.append(f"{value:.2f}")
+    #     for i in range(len(output)):
+    #         output[i] = output[i].replace(".", ":").rjust(5, " ")
+    #     return output
 
     def get_graph(self) -> list[Text]:
-        collected: list[float] = []
-        eixo: list[int] = []
-        if not self.collected:
+        # collected: list[float] = []
+        # eixo: list[int] = []
+        if not self.daily:
             return []
-        if self.week_mode:
-            title = " (horas / semana)"
-            week = 1
-            for value in self.collected:
-                eixo.append(week)
-                collected.append(0)
-                eixo.append(week)
-                collected.append(value)
-                eixo.append(week)
-                collected.append(0)
-                week += 1
-            result = plot_to_string(xs=eixo, ys=collected, title=title, lines=True, y_min=0, width=self.width, height=self.height, y_unit="h", x_unit="s")
-        else:
-            title = " (horas /  dia  )"
-            day = 1
-            for value in self.collected:
-                eixo.append(day)
-                collected.append(0)
-                eixo.append(day)
-                collected.append(value)
-                eixo.append(day)
-                collected.append(0)
-                day += 1
 
-            result = plot_to_string(xs=eixo, ys=collected, title=title, lines=True, y_min=0, width=self.width, height=self.height, y_unit="h", x_unit="d")
+        daily: list[float] = [x for x in self.daily]
+        accumulates: list[float] = [x for x in self.accumulates]
+
+        max_daily = max(daily) if daily else 0
+        max_accumulates = max(accumulates) if accumulates else 0
+
+        for i in range(len(daily)):
+            daily[i] = daily[i] / max_daily * 100 if max_daily > 0 else 0
+            accumulates[i] = accumulates[i] / max_accumulates * 100 if max_accumulates > 0 else 0
+
+        eixo: list[int] = []
+        bar: list[float] = []
+        day = 1
+        for value in daily:
+            eixo.append(day)
+            bar.append(0)
+            eixo.append(day)
+            bar.append(value)
+            eixo.append(day)
+            bar.append(0)
+            day += 1
+
+
+        result: list[str] = plot_to_string(xs=[eixo, self.eixo], ys=[bar, accumulates], lines=[True, True], y_min=0, width=self.width, height=self.height, y_unit="%", x_unit="d")
+
         if isinstance(result, str):
-            return [Text().add(x) for x in result.splitlines()]
-        return [Text().add(x) for x in result]
+            result = result.splitlines()
+        lines: list[Text] = []
+        for line in result:
+            lines.append(Text.decode_raw(line))
+
+        lines.append(Text().addf("C", " Máximo diário: ").addf("{C}", f"{Delta.format_h_min(max_daily)} ")
+                     .add(" ").addf("M", " Acumulado: ").addf("M", f"{Delta.format_h_min(max_accumulates)} ")
+                     .center(self.width))
+        return lines

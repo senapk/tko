@@ -72,7 +72,6 @@ class TaskGraph:
         self.__collect()
         if not self.eixo:
             return []
-        lines: list[Text] = []
         title = Text.format(" {C}", f" @{self.task_key} ")
         title += Text.format(" {G}", f" Total {self.actual_rate:.0f}% ")
         time_h: int = int(self.total_elapsed) // 3600
@@ -81,11 +80,12 @@ class TaskGraph:
         title += Text.format(" {B}", f" Tempo {time} ")
         title += Text.format(" {M}", f" Linhas {self.max_lines:.0f} ")
         # if len(self.collected_elapsed) > 1:
-        result = plot_to_string(xs=[self.eixo, self.eixo, self.eixo], ys=[self.collected_elapsed, self.collected_lines, self.collected_rate], lines=[True, True, True], y_min=0, y_max=101, width=self.width, height=self.height)
+        result = plot_to_string(xs=[self.eixo, self.eixo, self.eixo], ys=[self.collected_elapsed, self.collected_lines, self.collected_rate], lines=[True, True, True], y_min=0, y_max=101, width=self.width, height=self.height, y_unit="%", x_unit="runs")
 
         if isinstance(result, str):
             result = result.splitlines()
 
+        lines: list[Text] = []
         for line in result:
             lines.append(Text.decode_raw(line))
         title = title.center(self.width)

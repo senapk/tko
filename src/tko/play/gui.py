@@ -21,7 +21,7 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.game.cluster import Cluster
 from tko.play.task_graph import TaskGraph
-from tko.play.week_graph import WeekGraph
+from tko.play.week_graph import DailyGraph
 
 class Gui:
 
@@ -296,9 +296,8 @@ class Gui:
         #     frame.write(y, x, Text().addf("g", line))
         return True, graph
 
-    def get_week_graph(self, width: int, height: int) -> tuple[bool, list[Text]]:
-        week_mode = Flags.graph.get_value() == "1"
-        graph = WeekGraph(self.rep.logger, width, height, week_mode).get_graph()
+    def get_daily_graph(self, width: int, height: int) -> tuple[bool, list[Text]]:
+        graph = DailyGraph(self.rep.logger, width, height).get_graph()
         if len(graph) == 0:
             return False, []
         # for y, line in enumerate(graph):
@@ -317,22 +316,21 @@ class Gui:
             selected = self.tree.get_selected_throw()
         except IndexError:
             selected = None
-        is_task = isinstance(selected, Task)
         width = cols - self.tree.max_title - distance - 7
         if width < 5:
             width = 5
-        if Flags.graph.get_value() == "1" or not is_task:
+        if Flags.graph.get_value() == "1":
             height = lines - 5
             if height < 3:
                 height = 3
             if isinstance(selected, Task):
                 made, list_data = self.get_task_graph(selected.key, width, height)
             elif isinstance(selected, Cluster) or isinstance(selected, Quest):
-                made, list_data = self.get_week_graph(width, height)
+                made, list_data = self.get_daily_graph(width, height)
         if not made:
             list_data = [Text().add(x) for x in opening["estuda"].splitlines()]
-        op_one = "Ligado   " if is_task else "horas/sem"
-        op_two = "Desligado" if is_task else "horas/dia"
+        op_one = "Ligado   "
+        op_two = "Desligado"
         border = Border(self.settings.app)
         view_button = Text().add("  ").add(border.border("C", f"Mudar Visão [TAB]"))
         view_value = Flags.graph.get_value()

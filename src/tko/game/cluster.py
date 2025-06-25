@@ -12,6 +12,7 @@ class Cluster(TreeItem):
         self.__is_reachable = False
         self.key = key
         self.title = title
+        self.main_cluster: bool = False  # if this is the main cluster, used to count skills and levels
 
     def add_quest(self, quest: Quest):
         self.__quests.append(quest)
@@ -56,14 +57,14 @@ class Cluster(TreeItem):
             return "y"
         return "g"
 
-    def get_percent(self):
+    def get_percent(self) -> float:
         total = 0
         for q in self.__quests:
             total += q.get_percent()
         return total // len(self.__quests)
 
     def get_resume_by_percent(self) -> Text:
-        return Text().addf(self.get_grade_color(), f"{self.get_percent()}%".rjust(4))
+        return Text().addf(self.get_grade_color(), f"{round(self.get_percent())}%".rjust(4))
 
     def get_resume_by_quests(self):
         total = len(self.__quests)

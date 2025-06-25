@@ -227,7 +227,7 @@ class Task(TreeItem):
         return self.get_percent() / 100.0
 
     def is_complete(self):
-        return self.get_percent() >= 100
+        return self.get_percent() >= 70
 
     def not_started(self):
         return self.get_percent() == 0

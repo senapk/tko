@@ -4,19 +4,18 @@ from tko.logger.log_sort import LogSort
 from tko.logger.delta import Delta
         
 class WeekData:
-    def __init__(self, week_day: str = "", elapsed: int = 0):
+    def __init__(self, week_day: str = "", elapsed_seconds: int = 0):
         self.week_day = week_day
-        self.elapsed = elapsed
+        self.elapsed_seconds = elapsed_seconds
 
 class WeekListener:
     def __init__(self):
         self.day_actions: dict[str, LogSort] = {}
         self.log_file: str | None = None
-        self.format = '%Y-%m-%d %H:%M:%S'
 
     def handle_entry_incoming(self, item: LogItemBase, new_entry: bool = False):
         _ = new_entry
-        day = item.timestamp.split(" ")[0]
+        day = item.datetime.strftime('%Y-%m-%d')
 
         if day not in self.day_actions:
             self.day_actions[day] = LogSort()
@@ -36,15 +35,15 @@ class WeekListener:
                 day = Delta.next_day(day)
 
         output: dict[str, WeekData] = {}
-        for day in self.day_actions:
+        for day, log_sort in self.day_actions.items():
             week_day = Delta.week_day(day)
-            base_list = self.day_actions[day].base_list
+            base_list = log_sort.base_list
             if base_list:
                 delta, _ = base_list[-1]
-                elapsed = delta.accumulated.total_seconds() // 60
+                elapsed = int(delta.accumulated.total_seconds())
             else:
                 elapsed = 0
-            output[day] = WeekData(week_day=week_day, elapsed=int(elapsed))
+            output[day] = WeekData(week_day=week_day, elapsed_seconds=elapsed)
         return output
     
     def save_yaml(self):

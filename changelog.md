@@ -1,5 +1,7 @@
 # Changelog
 
+- 6.0.3
+  - add: daily progress throughout the course
 - 6.0.2
   - add: adjusted skill calculation
 - 6.0.1
