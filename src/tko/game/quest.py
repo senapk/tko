@@ -213,8 +213,11 @@ class QuestParser:
         if len(skills) > 0:
             self.quest.skills = {}
             for s in skills:
-                k, v = s.split(":")
-                self.quest.skills[k] = int(v)
+                try:
+                    k, v = s.split(":")
+                    self.quest.skills[k] = int(v)
+                except ValueError:
+                    self.quest.skills[s] = 1  # default value is 1 if not specified
 
         # languages
         languages = [t[2:] for t in tags if t.startswith("l:")]

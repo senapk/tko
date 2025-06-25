@@ -58,9 +58,9 @@ class Game:
     def get_skills_resume(self, avaliable_quests: list[Quest]) -> tuple[dict[str, float], dict[str, float]]:
         available: dict[str, float] = {}
         obtained: dict[str, float] = {}
-        avaliable_keys = [q.key for q in avaliable_quests]
+        # avaliable_keys = [q.key for q in avaliable_quests]
         for q in self.quests.values():
-            reachable = q.key in avaliable_keys
+            # reachable = q.key in avaliable_keys
             for t in q.get_tasks():
                 # for s in t.skills:
                 #     if not (s in total):
@@ -71,11 +71,17 @@ class Game:
                 #     else:
                 #         obtained[s] = 0
                 for s in t.qskills:
-                    available[s] = available.get(s, 0) + t.qskills[s]
-                    if reachable:
-                        obtained[s] = obtained.get(s, 0) + (t.qskills[s] * t.get_ratio())
+                    available[s] = available.get(s, 0) + t.qskills[s] * t.get_xp()
+                    # if reachable:
+                    obtained[s] = obtained.get(s, 0) + (t.qskills[s] * t.get_xp() * t.get_ratio())
                     # else:
                     #     obtained[s] = 0
+        for key, value in available.items():
+            if value == 0:
+                del available[key]
+        for key, value in obtained.items():
+            if value == 0:
+                del obtained[key]
         return available, obtained
 
 

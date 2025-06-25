@@ -1,5 +1,7 @@
 # Changelog
 
+- 6.0.2
+  - add: adjusted skill calculation
 - 6.0.1
   - add: change task value to use sigmoid
   - fix: skills and xp in task tree
