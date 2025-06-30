@@ -1,45 +1,94 @@
 from tko.settings.repository import Repository
 from tko.settings.settings import Settings
 from tko.logger.logger import Logger
-from tko.logger.log_resume import LogResume
+from tko.logger.task_resume import TaskResume
 from tko.logger.log_sort import LogSort
 from tko.play.week_graph import DailyGraph
-from tko.util.text import Text
+from tko.tejo.collected_data import CollectedData
 import yaml # type: ignore
+import json
 import os
 import argparse
-
+    
 
 class CmdRep:
     @staticmethod
-    def resume(args: argparse.Namespace):
-        rep = Repository(args.folder).load_config().load_game()
+    def resume(rep: Repository) -> dict[str, TaskResume]:
         logger: Logger = rep.logger
         tasks: dict[str, LogSort] = logger.tasks.task_dict
-        resume_dict: dict[str, LogResume] = {}
+        resume_dict: dict[str, TaskResume] = {}
 
         for key in tasks:
             log_sort = tasks[key]
-            resume = LogResume().from_log_sort(log_sort)
+            resume = TaskResume().from_log_sort(log_sort)
             resume_dict[key] = resume
 
-        
-        tasks_str: dict[str, dict[str, str]] = {}
-        for key, value in resume_dict.items():
-            tasks_str[key] = value.to_dict()
-
-        print (yaml.dump(tasks_str, sort_keys=False))
+        return resume_dict
 
     @staticmethod
-    def graph(args: argparse.Namespace):
-        rep = Repository(args.folder).load_config().load_game()
-        dg = DailyGraph(rep.logger, args.width, args.height)
+    def graph(rep: Repository, width: int, height: int, colored: bool) -> str:
+        dg = DailyGraph(rep.logger, width, height)
         image = dg.get_graph()
-        for line in image:
-            if args.mono:
-                print(line.get_str())
-            else:
-                print(line)
+        if not colored:
+            return "\n".join([x.get_str() for x in image])
+        return "\n".join([str(x) for x in image])
+
+    @staticmethod
+    def load_game_tasks(rep: Repository) -> list[CollectedData.Quest]:
+        game = rep.game
+        if not game:
+            return []
+        output: list[CollectedData.Quest] = []
+        for cluster_key in game.ordered_clusters:
+            cluster = game.clusters[cluster_key]
+            opt_quest = not cluster.main_cluster
+            for quest in cluster.get_quests():
+                output_quest = CollectedData.Quest(quest.key, opt=opt_quest)
+                for task in quest.get_tasks():
+                    output_quest.tasks.append(CollectedData.Task(key=task.key, value=task.xp, is_leet=task.is_leet(), opt=task.opt))
+                output.append(output_quest)
+        return output
+
+    @staticmethod
+    def collect(args: argparse.Namespace):
+        rep = Repository(args.folder)
+        if not rep.found():
+            path = os.path.abspath(args.folder)
+            print(f"Repository not found in {path}")
+            return
+        rep.load_config().load_game()
+        data = CollectedData()
+
+        if args.daily:
+            graph = CmdRep.graph(rep, args.width, args.height, args.color == 1)
+            data.graph = graph
+            if not args.json:
+                print(graph)
+
+        if args.resume:
+            resume_data = CmdRep.resume(rep)
+            data.resume = resume_data
+            if not args.json:
+                for key, value in resume_data.items():
+                    print(f"{key}: {value.to_dict()}")
+
+        if args.log:
+            log_data = rep.logger.history.get_entries()
+            data.log = [str(entry) for entry in log_data]
+            if not args.json:
+                for entry in log_data:
+                    print(entry)
+        
+        if args.game:
+            game_data = CmdRep.load_game_tasks(rep)
+            data.game = game_data
+            if not args.json:
+                for quest in game_data:
+                    print(str(quest))
+
+        if args.json:
+            # print(yaml.dump(data))
+            print(json.dumps(data, indent=4, default=lambda o: o.__dict__))
 
 
     @staticmethod

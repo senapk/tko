@@ -231,10 +231,6 @@ class TaskTree:
 
         output.addf(focus_color, title)
 
-        # done = color + self.colors.task_text_done
-        # todo = color + self.colors.task_text_todo
-        # output.add(self.style.build_bar(title, q.get_percent() / 100, len(title), done, todo, round=False))
-
         if in_focus:
             output.add(self.style.round_r(focus_color))
         else:
@@ -285,9 +281,6 @@ class TaskTree:
             output.add(" ")
 
         output.addf(color, title)
-        # done = color + self.colors.task_text_done
-        # todo = color + self.colors.task_text_todo
-        # output.add(self.style.build_bar(title, cluster.get_percent() / 100, len(title), done, todo, round=False))
 
         if focus_color != "":
             output.add(self.style.round_r(focus_color))

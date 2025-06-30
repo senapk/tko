@@ -131,8 +131,10 @@ class Main:
         rep = Repository(folder)
         if args.down:
             CmdLineDown(settings, rep, args.label).execute()
+        width: int  = args.graph[0]
+        height: int  = args.graph[1]
         if args.graph:
-            CmdTask.show_graph(settings, rep, args.label)
+            CmdTask.show_graph(settings, rep, args.label, width, height)
 
     @staticmethod
     def init(args: argparse.Namespace):
@@ -223,9 +225,9 @@ class Parser:
         group_a = parser.add_mutually_exclusive_group()
 
         group_a.add_argument("--tui", '-t', action='store_true', help='use TUI interface.')
-        group_a.add_argument('--eval', action='store_true', help='Get percent running testes')
+        group_a.add_argument('--eval', action='store_true', help='get percent running testes')
 
-        parser.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures')
+        parser.add_argument('--compact', '-c', action='store_true', help='do not show case descriptions in failures')
 
         group_n = parser.add_mutually_exclusive_group()
         group_n.add_argument('--none', '-n', action='store_true', help='do not show any failure.')
@@ -241,29 +243,28 @@ class Parser:
         parser = self.subparsers.add_parser('eval', parents=[self.parent_basic],
                                             help='Evaluate test cases or collect data.')
         parser.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
-        parser.add_argument('--norun', '-n', action='store_true', help='Not calc coverage percent by running testes')
+        parser.add_argument('--norun', '-n', action='store_true', help='not calc rate percent by running testes')
         parser.add_argument('--self', '-s', action='store_true',
-                            help='Display coverage, approach, autonomy, howClear, howFun, howEasy')
-        parser.add_argument('--track', '-t', action='store_true', help='Display attemps, lines, elapsed')
+                            help='display rate, flow, edge, neat, cool, easy values')
+        parser.add_argument('--track', '-t', action='store_true', help='display attemps, lines, elapsed')
         parser.add_argument('--complex', '-c', action='store_true',
-                            help='Final Percent combines coverage, approach and autonomy')
-        parser.add_argument('--timeout', type=int, help='Set timeout in seconds for each test case.')
+                            help='final percent combines coverage, approach and autonomy')
+        parser.add_argument('--timeout', type=int, help='set timeout in seconds for each test case.')
 
         group_n = parser.add_mutually_exclusive_group()
         group_n.add_argument('--none', action='store_true', help='do not show any failure.')
         group_n.add_argument('--all', action='store_true', help='show all failures.')
-
-        parser.add_argument('--result_file', '-r', type=str, help='Save percent result in result_file.')
+        parser.add_argument('--result_file', '-r', type=str, help='save percent result in result_file.')
         parser.set_defaults(func=Main.eval)
 
     def add_parser_build(self):
-        parser_b = self.subparsers.add_parser('build', parents=[self.parent_manip], help='Build a test target.')
+        parser_b = self.subparsers.add_parser('build', parents=[self.parent_manip], help='build a test target.')
         parser_b.add_argument('target', metavar='T_OUT', type=str, help='target to be build.')
         parser_b.add_argument('target_list', metavar='T', type=str, nargs='+', help='input test targets.')
         parser_b.set_defaults(func=Main.build)
 
     def add_parser_diff(self):
-        parser_b = self.subparsers.add_parser('diff', help='Build a test target.')
+        parser_b = self.subparsers.add_parser('diff', help='build a test target.')
         exclusive_group_target = parser_b.add_mutually_exclusive_group(required=True)
         exclusive_group_target.add_argument('--path', '-f', action='store_true', help='targets are paths.')
         exclusive_group_target.add_argument('--text', '-t', action='store_true', help='compare two texts.')
@@ -275,7 +276,7 @@ class Parser:
         parser_b.set_defaults(func=Main.diff)
 
     def add_parser_config(self):
-        parser_cfg = self.subparsers.add_parser('config', help='Settings tool.')
+        parser_cfg = self.subparsers.add_parser('config', help='settings tool.')
         subpar_repo = parser_cfg.add_subparsers(title='subcommands', help='help for subcommand.')
 
         cfg_reset = subpar_repo.add_parser('reset',
@@ -299,19 +300,21 @@ class Parser:
         cfg_list.set_defaults(func=Main.list)
 
     def add_parser_rep_tools(self):
-        parser_repo = self.subparsers.add_parser('rep', help='Repository validation tools.')
+        parser_repo = self.subparsers.add_parser('rep', help='repository tools.')
+        parser_repo.add_argument('folder', type=str, nargs='?', default='.', help='repository folder.')
         subpar_repo = parser_repo.add_subparsers(title='subcommands', help='help for subcommand.')
 
-        repo_graph = subpar_repo.add_parser("graph", help="graph")
-        repo_graph.add_argument('--folder', '-f', type=str, nargs='?', default='.', help='repository folder.')
-        repo_graph.add_argument('--mono', '-m', action='store_true', help='monochrome mode.')
-        repo_graph.add_argument('--width', '-W', type=int, default=100, help='graph width.')
-        repo_graph.add_argument('--height', '-H', type=int, default=24, help='graph height.')
-        repo_graph.set_defaults(func=CmdRep.graph)
+        repo_collect = subpar_repo.add_parser("collect", help="graph")
+        repo_collect.add_argument("--json", action='store_true', help="collect as json data")
+        repo_collect.add_argument("--resume", action='store_true', help="collect resume")
+        repo_collect.add_argument("--log", action='store_true', help="collect history log")
+        repo_collect.add_argument('--game', action='store_true', help="collect game info")
+        repo_collect.add_argument('--daily', action='store_true', help="daily graph")
+        repo_collect.add_argument('--width', type=int, default=100, help="daily graph width")
+        repo_collect.add_argument('--height', type=int, default=10, help="daily graph height")
+        repo_collect.add_argument('--color', type=int, default=1, help="daily graph color [0|1]")
 
-        repo_resume = subpar_repo.add_parser("resume", help="resume")
-        repo_resume.add_argument('--folder', '-f', type=str, nargs='?', default='.', help='repository folder.')
-        repo_resume.set_defaults(func=CmdRep.resume)
+        repo_collect.set_defaults(func=CmdRep.collect)
 
     def add_parser_rep_actions(self):
         parser_open = self.subparsers.add_parser('open', help='Open a folder with a repository.')
@@ -323,8 +326,8 @@ class Parser:
         parser_down.add_argument('--folder', type=str, default='.', help='Repository folder.')
         exclusive_group = parser_down.add_mutually_exclusive_group(required=True)
         exclusive_group.add_argument('--down', action='store_true', help="Download task from repository.")
-        exclusive_group.add_argument('--self', action='store_true', help="Self evaluate task in repository.")
-        exclusive_group.add_argument('--graph', action='store_true', help="Show task graph.")
+        # exclusive_group.add_argument('--self', action='store_true', help="Self evaluate task in repository.") # TODO
+        exclusive_group.add_argument('--graph', nargs=2, type=int, metavar=('WIDTH', 'HEIGHT'), help="show task graph.")
 
         parser_down.set_defaults(func=Main.task)
 

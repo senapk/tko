@@ -146,9 +146,9 @@ class Gui:
         else:
             text = f" XPTotal:{round(xp.get_xp_total_obtained())}"
 
-        done = self.colors.main_bar_done
-        todo = self.colors.main_bar_todo
-        total_bar = self.style.build_bar(text, total_perc / 100, dx - 2, done, todo)
+        done_color = self.colors.main_bar_done
+        todo_color = self.colors.main_bar_todo
+        total_bar = self.style.build_bar(text, total_perc / 100, dx - 2, done_color, todo_color)
         frame_xp.set_header(Text().addf("/", "Skills"), "^", "{", "}")
         frame_xp.set_footer(Text().add(" ").add(" "), "^")
         frame_xp.draw()
@@ -162,9 +162,9 @@ class Gui:
             else:
                 text = f"{skill}:{round(obt.get(skill, 0))}/{round(value)}"
             perc = obt.get(skill, 0) / value
-            done = self.colors.progress_skill_done
-            todo = self.colors.progress_skill_todo
-            skill_bar = self.style.build_bar(text, perc, dx - 2, done, todo)
+            done_color = self.colors.progress_skill_done
+            todo_color = self.colors.progress_skill_todo
+            skill_bar = self.style.build_bar(text, perc, dx - 2, done_color, todo_color)
             elements.append(skill_bar)
             
         elements.append(total_bar)
@@ -207,15 +207,15 @@ class Gui:
         if self.search.search_mode:
             text = " Busca: " + self.tree.search_text + symbols.cursor.text
             percent = 0.0
-            done = "W"
-            todo = "W"
+            done_color = "W"
+            todo_color = "W"
             text = text.ljust(size)
         else:
             text, percent = self.build_xp_bar()
-            done = self.colors.main_bar_done
-            todo = self.colors.main_bar_todo
+            done_color = self.colors.main_bar_done
+            todo_color = self.colors.main_bar_todo
             text = text.center(size)
-        xpbar = self.style.build_bar(text, percent, len(text), done, todo)
+        xpbar = self.style.build_bar(text, percent, len(text), done_color, todo_color)
         return xpbar
 
     def show_top_bar(self, frame: Frame):

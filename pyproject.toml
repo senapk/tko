@@ -37,3 +37,4 @@ dependencies = [
 [project.scripts]
 tko = "tko.__main__:main"
 feno = "tko.feno.feno:feno_main"
+tejo = "tko.tejo.tejo:tejo_main"

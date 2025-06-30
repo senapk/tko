@@ -17,8 +17,8 @@ def remove_git_merge_tags(lines: list[str]) -> list[str]:
             continue
         filtered_lines.append(line)
     return filtered_lines
-
 class Repository:
+
 
     def __init__(self, folder: str):
         rep_folder: str = folder
@@ -29,6 +29,9 @@ class Repository:
         self.data: dict[str, Any] = {}
         self.game = Game()
         self.logger: Logger = Logger(rep_folder)
+
+    def found(self):
+        return os.path.isfile(self.paths.get_config_file())
 
     def is_local_dir(self, path: str) -> bool:
         rep_dir = self.paths.get_rep_dir()

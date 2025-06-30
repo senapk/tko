@@ -68,7 +68,7 @@ class DailyGraph:
             daily[i] = daily[i] / max_daily * 100 if max_daily > 0 else 0
             accumulates[i] = accumulates[i] / max_accumulates * 100 if max_accumulates > 0 else 0
 
-        eixo: list[int] = []
+        eixo: list[float] = []
         bar: list[float] = []
         day = 1
         for value in daily:
@@ -80,8 +80,10 @@ class DailyGraph:
             bar.append(0)
             day += 1
 
+        eixo = [x / 7 for x in eixo]
+        self.eixo = [x / 7 for x in self.eixo]
 
-        result: list[str] = plot_to_string(xs=[eixo, self.eixo], ys=[bar, accumulates], lines=[True, True], y_min=0, width=self.width, height=self.height, y_unit="%", x_unit="d")
+        result: list[str] = plot_to_string(xs=[eixo, self.eixo], ys=[bar, accumulates], lines=[True, True], y_min=0,width=self.width, height=self.height, y_unit="%", x_unit="w")
 
         if isinstance(result, str):
             result = result.splitlines()

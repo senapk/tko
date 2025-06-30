@@ -1,5 +1,7 @@
 # Changelog
 
+- 6.0.7
+  - add: changing x label for daily graph for week count
 - 6.0.6
   - add: mono color mode for tko rep graph
 - 6.0.5
