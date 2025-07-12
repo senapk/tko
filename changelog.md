@@ -1,5 +1,10 @@
 # Changelog
 
+- 6.1.1
+  - fix: floating grade grade error
+- 6.1.1
+  - fix: run outside repository
+  - fix: patch pytest
 - 6.1.0
   - add: mico classroom scripts
 - 6.0.7

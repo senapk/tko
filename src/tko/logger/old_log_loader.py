@@ -53,14 +53,14 @@ class TrackerLoader:
                 for patch in patch_history:
                     file_versions[file_name][patch.label] = patch
             except Exception as e:
-                print(f"Error loading patch history from {file_path}: {e}")
+                ic(f"Error loading patch history from {file_path}: {e}")
         return file_versions
 
     @staticmethod
     def load_track_csv(task_track_folder: str) -> list[Track]:
         csv_file = os.path.join(task_track_folder, "track.csv")
         if not os.path.exists(csv_file):
-            print(f"CSV file {csv_file} does not exist.")
+            ic(f"CSV file {csv_file} does not exist.")
             return []
         return Tracker.load_from_log(csv_file)
 

@@ -25,6 +25,7 @@ from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_sort import LogSort
 from tko.logger.task_resume import TaskResume
 from tko.settings.rep_paths import RepPaths
+from icecream import ic
 
 
 class TkoFilterMode:
@@ -276,8 +277,8 @@ class Run:
 
     def __free_run(self):        
         if self.__task is not None:
-            changes, size = self.store_exec_diff()
             if self.__rep:
+                changes, size = self.store_exec_diff()
                 self.__rep.logger.store(LogItemExec()
                     .set_mode(LogItemExec.Mode.FREE)
                     .set_key(self.__task.key)

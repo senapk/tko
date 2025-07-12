@@ -6,47 +6,6 @@ from tko.play.patch_history import PatchHistory
 import os
 from pathlib import Path
 
-data_expected = r"""{
-    "patches": [
-        {
-            "label": "primeira",
-            "content": "@@ -1,5 +1,5 @@\n-H\n+h\n oje \n@@ -23,8 +23,8 @@\n r a \n-D\n+d\n eus\n"
-        },
-        {
-            "label": "segunda",
-            "content": "@@ -27,31 +27,4 @@\n Deus\n-%0Aem nos habita seu espirito\n"
-        },
-        {
-            "label": "terceira",
-            "content": "@@ -1,8 +1,9 @@\n+H\n oje eh t\n"
-        },
-        {
-            "label": "quarta",
-            "content": "oje eh tempo de louvar a Deus\nem nos habita seu espirito"
-        }
-    ]
-}"""
-
-data2_expected = r"""{
-    "patches": [
-        {
-            "label": "primeira",
-            "content": "hoje eh tempo de louvar a deus"
-        },
-        {
-            "label": "segunda",
-            "content": "Hoje eh tempo de louvar a Deus"
-        },
-        {
-            "label": "terceira",
-            "content": "Hoje eh tempo de louvar a Deus\nem nos habita seu espirito"
-        },
-        {
-            "label": "quarta",
-            "content": "oje eh tempo de louvar a Deus\nem nos habita seu espirito"
-        }
-    ]
-}"""
 
 class Test:
     @classmethod
@@ -67,6 +26,9 @@ class Test:
         ph.set_json_file("data.json")
         ph.save_json()
 
+        with open("expected1.json", "r") as f:
+            data_expected = f.read()
+
         with open("data.json", "r") as f:
             assert f.read() == data_expected
 
@@ -78,6 +40,9 @@ class Test:
         ph3.patches = restored
         ph3.set_json_file("data2.json")
         ph3.save_json()
+
+        with open("expected2.json", "r") as f:
+            data2_expected = f.read()
 
         with open("data2.json", "r") as f:
             assert f.read() == data2_expected

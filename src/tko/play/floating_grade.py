@@ -6,6 +6,7 @@ from tko.util.symbols import symbols
 from tko.util.text import Text
 from tko.play.keys import GuiKeys
 from tko.settings.settings import Settings
+from tko.game.task_grader import TaskGrader
 # from typing import override
 
 import curses
@@ -16,6 +17,7 @@ class FloatingGrade(Floating):
         super().__init__(settings, _align)
         self.settings = settings
         self._task = task
+        self._grader = TaskGrader(task.info)
         self._line = 0 if not task.is_leet() else 1
         self.set_text_ljust()
         self._frame.set_border_color("g")
@@ -101,8 +103,8 @@ class FloatingGrade(Floating):
         self._content = []
         self._content.append(Text().add("         Pontue de acordo com a última fez que você (re)fez a tarefa do zero           "))
         width = 90
-        flow_value = self._task.get_flow_value()
-        edge_value = self._task.get_edge_value()
+        flow_value = self._grader.get_flow_percent()
+        edge_value = self._grader.get_edge_percent()
         somatorio = (Text()
                     # .addf('c', f'{self._task.info.get_rate()}%') .add(" * ")
                     # .addf('c', f'{flow_value}%') .add(" * ")
