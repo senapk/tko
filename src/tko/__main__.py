@@ -185,114 +185,114 @@ class Parser:
         self.add_parser_eval()
 
     def add_parser_global(self):
-        self.parser.add_argument('-c', metavar='CONFIG_FILE', type=str, help='config json file.')
-        self.parser.add_argument('-w', metavar='WIDTH', type=int, help="terminal width.")
-        self.parser.add_argument('-v', action='store_true', help='show version.')
-        self.parser.add_argument('-m', action='store_true', help='monochromatic.')
-        self.parser.add_argument('--debug', '-D', action='store_true', help='debug mode.')
+        self.parser.add_argument('-c', metavar='CONFIG_FILE', type=str, help='Config json file.')
+        self.parser.add_argument('-w', metavar='WIDTH', type=int, help="Terminal width.")
+        self.parser.add_argument('-v', action='store_true', help='Show version.')
+        self.parser.add_argument('-m', action='store_true', help='Monochromatic.')
+        self.parser.add_argument('--debug', '-D', action='store_true', help='Debug mode.')
 
     @staticmethod
     def create_parent_basic():
         parent_basic = argparse.ArgumentParser(add_help=False)
-        parent_basic.add_argument('--index', '-i', metavar="I", type=int, help='run a specific index.')
+        parent_basic.add_argument('--index', '-i', metavar="I", type=int, help='Run a specific index.')
         parent_basic.add_argument('--pattern', '-p', metavar="P", type=str, default='@.in @.sol',
-                                  help='pattern load/save a folder, default: "@.in @.sol"')
+                                  help='Pattern load/save a folder, default: "@.in @.sol"')
         return parent_basic
 
     @staticmethod
     def create_parent_manip():
         parent_manip = argparse.ArgumentParser(add_help=False)
-        parent_manip.add_argument('--width', '-w', type=int, help="term width.")
-        parent_manip.add_argument('--unlabel', '-u', action='store_true', help='remove all labels.')
-        parent_manip.add_argument('--number', '-n', action='store_true', help='number labels.')
-        parent_manip.add_argument('--sort', '-s', action='store_true', help="sort test cases by input size.")
+        parent_manip.add_argument('--width', '-w', type=int, help="Terminal width.")
+        parent_manip.add_argument('--unlabel', '-u', action='store_true', help='Remove all labels.')
+        parent_manip.add_argument('--number', '-n', action='store_true', help='Number labels.')
+        parent_manip.add_argument('--sort', '-s', action='store_true', help="Sort test cases by input size.")
         parent_manip.add_argument('--pattern', '-p', metavar="@.in @.out", type=str, default='@.in @.sol',
-                                  help='pattern load/save a folder, default: "@.in @.sol"')
+                                  help='Pattern load/save a folder, default: "@.in @.sol"')
         return parent_manip
 
     def add_parser_tui(self):
         parser_r = self.subparsers.add_parser('tui', parents=[self.parent_basic],
                                               help='Run using Terminal User Interface.')
-        parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
-        parser_r.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
+        parser_r.add_argument('target_list', metavar='T', type=str, nargs='*', help='Solvers, test cases or folders.')
+        parser_r.add_argument('--filter', '-f', action='store_true', help='Filter solver in temp dir before run')
         parser_r.set_defaults(func=Main.tui)
 
     def add_parser_run(self):
         parser = self.subparsers.add_parser('run', parents=[self.parent_basic], help='Run using raw terminal.')
-        parser.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
-        parser.add_argument('--filter', '-f', action='store_true', help='filter solver in temp dir before run')
+        parser.add_argument('target_list', metavar='T', type=str, nargs='*', help='Solvers, test cases or folders.')
+        parser.add_argument('--filter', '-f', action='store_true', help='Filter solver in temp dir before run')
 
         group_a = parser.add_mutually_exclusive_group()
 
-        group_a.add_argument("--tui", '-t', action='store_true', help='use TUI interface.')
-        group_a.add_argument('--eval', action='store_true', help='get percent running testes')
+        group_a.add_argument("--tui", '-t', action='store_true', help='Use TUI interface.')
+        group_a.add_argument('--eval', action='store_true', help='Get percent running tests.')
 
-        parser.add_argument('--compact', '-c', action='store_true', help='do not show case descriptions in failures')
+        parser.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures.')
 
         group_n = parser.add_mutually_exclusive_group()
-        group_n.add_argument('--none', '-n', action='store_true', help='do not show any failure.')
-        group_n.add_argument('--all', '-a', action='store_true', help='show all failures.')
+        group_n.add_argument('--none', '-n', action='store_true', help='Do not show any failure.')
+        group_n.add_argument('--all', '-a', action='store_true', help='Show all failures.')
 
         # add an exclusive group for diff mode
         group = parser.add_mutually_exclusive_group()
-        group.add_argument('--down', '-d', action='store_true', help="diff mode up-to-down.")
-        group.add_argument('--side', '-s', action='store_true', help="diff mode side-by-side.")
+        group.add_argument('--down', '-d', action='store_true', help="Diff mode up-to-down.")
+        group.add_argument('--side', '-s', action='store_true', help="Diff mode side-by-side.")
         parser.set_defaults(func=Main.run)
 
     def add_parser_eval(self):
         parser = self.subparsers.add_parser('eval', parents=[self.parent_basic],
                                             help='Evaluate test cases or collect data.')
-        parser.add_argument('target_list', metavar='T', type=str, nargs='*', help='solvers, test cases or folders.')
-        parser.add_argument('--norun', '-n', action='store_true', help='not calc rate percent by running testes')
+        parser.add_argument('target_list', metavar='T', type=str, nargs='*', help='Solvers, test cases or folders.')
+        parser.add_argument('--norun', '-n', action='store_true', help='Not calc rate percent by running tests')
         parser.add_argument('--self', '-s', action='store_true',
-                            help='display rate, flow, edge, neat, cool, easy values')
-        parser.add_argument('--track', '-t', action='store_true', help='display attemps, lines, elapsed')
+                            help='Display rate, flow, edge, neat, cool, easy values')
+        parser.add_argument('--track', '-t', action='store_true', help='Display attempts, lines, elapsed')
         parser.add_argument('--complex', '-c', action='store_true',
-                            help='final percent combines coverage, approach and autonomy')
-        parser.add_argument('--timeout', type=int, help='set timeout in seconds for each test case.')
+                            help='Final percent combines coverage, approach and autonomy')
+        parser.add_argument('--timeout', type=int, help='Set timeout in seconds for each test case.')
 
         group_n = parser.add_mutually_exclusive_group()
-        group_n.add_argument('--none', action='store_true', help='do not show any failure.')
-        group_n.add_argument('--all', action='store_true', help='show all failures.')
-        parser.add_argument('--result_file', '-r', type=str, help='save percent result in result_file.')
+        group_n.add_argument('--none', action='store_true', help='Do not show any failure.')
+        group_n.add_argument('--all', action='store_true', help='Show all failures.')
+        parser.add_argument('--result_file', '-r', type=str, help='Save percent result in result_file.')
         parser.set_defaults(func=Main.eval)
 
     def add_parser_build(self):
-        parser_b = self.subparsers.add_parser('build', parents=[self.parent_manip], help='build a test target.')
-        parser_b.add_argument('target', metavar='T_OUT', type=str, help='target to be build.')
-        parser_b.add_argument('target_list', metavar='T', type=str, nargs='+', help='input test targets.')
+        parser_b = self.subparsers.add_parser('build', parents=[self.parent_manip], help='Build a test target.')
+        parser_b.add_argument('target', metavar='T_OUT', type=str, help='Target to be built.')
+        parser_b.add_argument('target_list', metavar='T', type=str, nargs='+', help='Input test targets.')
         parser_b.set_defaults(func=Main.build)
 
     def add_parser_diff(self):
-        parser_b = self.subparsers.add_parser('diff', help='build a test target.')
+        parser_b = self.subparsers.add_parser('diff', help='Show diff for 2 inputs or files.')
         exclusive_group_target = parser_b.add_mutually_exclusive_group(required=True)
-        exclusive_group_target.add_argument('--path', '-f', action='store_true', help='targets are paths.')
-        exclusive_group_target.add_argument('--text', '-t', action='store_true', help='compare two texts.')
-        parser_b.add_argument('target_a', type=str, help='first  target to be compared.')
-        parser_b.add_argument('target_b', type=str, help='second target to be compared.')
+        exclusive_group_target.add_argument('--path', '-f', action='store_true', help='Targets are paths.')
+        exclusive_group_target.add_argument('--text', '-t', action='store_true', help='Compare two texts.')
+        parser_b.add_argument('target_a', type=str, help='First target to be compared.')
+        parser_b.add_argument('target_b', type=str, help='Second target to be compared.')
         exclusive_group = parser_b.add_mutually_exclusive_group()
-        exclusive_group.add_argument('--side', '-s', action='store_true', help="diff mode side-by-side.")
-        exclusive_group.add_argument('--down', '-d', action='store_true', help="diff mode up-to-down.")
+        exclusive_group.add_argument('--side', '-s', action='store_true', help="Diff mode side-by-side.")
+        exclusive_group.add_argument('--down', '-d', action='store_true', help="Diff mode up-to-down.")
         parser_b.set_defaults(func=Main.diff)
 
     def add_parser_config(self):
-        parser_cfg = self.subparsers.add_parser('config', help='settings tool.')
-        subpar_repo = parser_cfg.add_subparsers(title='subcommands', help='help for subcommand.')
+        parser_cfg = self.subparsers.add_parser('config', help='Settings tool.')
+        subpar_repo = parser_cfg.add_subparsers(title='subcommands', help='Help for subcommand.')
 
         cfg_reset = subpar_repo.add_parser('reset',
-                                           help='reset all repositories, folders and values to factory default.')
+                                           help='Reset all repositories, folders and values to factory default.')
         cfg_reset.set_defaults(func=CmdRep.reset)
 
-        cfg_set = subpar_repo.add_parser('set', help='set default config values.')
+        cfg_set = subpar_repo.add_parser('set', help='Set default config values.')
 
         g_diff = cfg_set.add_mutually_exclusive_group()
-        g_diff.add_argument('--side', action='store_true', help='set side_by_side diff mode.')
-        g_diff.add_argument('--down', action='store_true', help='set up_to_down   diff mode.')
+        g_diff.add_argument('--side', action='store_true', help='Set side_by_side diff mode.')
+        g_diff.add_argument('--down', action='store_true', help='Set up_to_down   diff mode.')
 
-        cfg_set.add_argument("--editor", metavar="cmd", type=str, help='set editor command.')
-        cfg_set.add_argument("--borders", metavar="[0|1]", type=str, help='enable borders.')
-        cfg_set.add_argument("--images", metavar="[0|1]", type=str, help='enable images.')
-        cfg_set.add_argument("--timeout", metavar="sec", type=int, help='set timeout.')
+        cfg_set.add_argument("--editor", metavar="cmd", type=str, help='Set editor command.')
+        cfg_set.add_argument("--borders", metavar="[0|1]", type=str, help='Enable borders.')
+        cfg_set.add_argument("--images", metavar="[0|1]", type=str, help='Enable images.')
+        cfg_set.add_argument("--timeout", metavar="sec", type=int, help='Set timeout.')
 
         cfg_set.set_defaults(func=Main.config)
 
@@ -300,48 +300,48 @@ class Parser:
         cfg_list.set_defaults(func=Main.list)
 
     def add_parser_rep_tools(self):
-        parser_repo = self.subparsers.add_parser('rep', help='repository tools.')
-        parser_repo.add_argument('folder', type=str, nargs='?', default='.', help='repository folder.')
-        subpar_repo = parser_repo.add_subparsers(title='subcommands', help='help for subcommand.')
+        parser_repo = self.subparsers.add_parser('rep', help='Repository tools.')
+        parser_repo.add_argument('folder', type=str, nargs='?', default='.', help='Repository folder.')
+        subpar_repo = parser_repo.add_subparsers(title='subcommands', help='Help for subcommand.')
 
-        repo_update = subpar_repo.add_parser("update", help="update repository cache.")
+        repo_update = subpar_repo.add_parser("update", help="Update repository cache.")
         repo_update.set_defaults(func=CmdRep.update)
 
 
-        repo_collect = subpar_repo.add_parser("collect", help="collect data")
-        repo_collect.add_argument("--json", action='store_true', help="collect as json data")
-        repo_collect.add_argument("--resume", action='store_true', help="collect resume")
-        repo_collect.add_argument("--log", action='store_true', help="collect history log")
-        repo_collect.add_argument('--game', action='store_true', help="collect game info")
-        repo_collect.add_argument('--daily', action='store_true', help="daily graph")
-        repo_collect.add_argument('--width', type=int, default=100, help="daily graph width")
-        repo_collect.add_argument('--height', type=int, default=10, help="daily graph height")
-        repo_collect.add_argument('--color', type=int, default=1, help="daily graph color [0|1]")
+        repo_collect = subpar_repo.add_parser("collect", help="Collect data")
+        repo_collect.add_argument("--json", action='store_true', help="Collect as json data")
+        repo_collect.add_argument("--resume", action='store_true', help="Collect resume")
+        repo_collect.add_argument("--log", action='store_true', help="Collect history log")
+        repo_collect.add_argument('--game', action='store_true', help="Collect game info")
+        repo_collect.add_argument('--daily', action='store_true', help="Daily graph")
+        repo_collect.add_argument('--width', type=int, default=100, help="Daily graph width")
+        repo_collect.add_argument('--height', type=int, default=10, help="Daily graph height")
+        repo_collect.add_argument('--color', type=int, default=1, help="Daily graph color [0|1]")
 
         repo_collect.set_defaults(func=CmdRep.collect_main)
 
     def add_parser_rep_actions(self):
         parser_open = self.subparsers.add_parser('open', help='Open a folder with a repository.')
-        parser_open.add_argument('folder', type=str, nargs='?', default='.', help='repository folder.')
+        parser_open.add_argument('folder', type=str, nargs='?', default='.', help='Repository folder.')
         parser_open.set_defaults(func=Main.open)
 
         parser_down = self.subparsers.add_parser('task', help='Task subcommands.')
-        parser_down.add_argument('label', type=str, help='task label.')
+        parser_down.add_argument('label', type=str, help='Task label.')
         parser_down.add_argument('--folder', type=str, default='.', help='Repository folder.')
         exclusive_group = parser_down.add_mutually_exclusive_group(required=True)
         exclusive_group.add_argument('--down', action='store_true', help="Download task from repository.")
         # exclusive_group.add_argument('--self', action='store_true', help="Self evaluate task in repository.") # TODO
-        exclusive_group.add_argument('--graph', nargs=2, type=int, metavar=('WIDTH', 'HEIGHT'), help="show task graph.")
+        exclusive_group.add_argument('--graph', nargs=2, type=int, metavar=('WIDTH', 'HEIGHT'), help="Show task graph.")
 
         parser_down.set_defaults(func=Main.task)
 
         parser_init = self.subparsers.add_parser('init', help='Initialize a repository in a folder.')
         source = parser_init.add_mutually_exclusive_group()
-        source.add_argument('--remote', '-r', type=str, help='remote source [fup|ed|poo].')
-        source.add_argument('--source', '-s', type=str, help='http url or local file.')
-        parser_init.add_argument('--folder', '-f', type=str, help='local directory.')
-        parser_init.add_argument('--language', '-l', type=str, help='draft language for the repository.')
-        parser_init.add_argument('--database', '-d', type=str, help='define database folder.')
+        source.add_argument('--remote', '-r', type=str, help='Remote source [fup|ed|poo].')
+        source.add_argument('--source', '-s', type=str, help='HTTP url or local file.')
+        parser_init.add_argument('--folder', '-f', type=str, help='Local directory.')
+        parser_init.add_argument('--language', '-l', type=str, help='Draft language for the repository.')
+        parser_init.add_argument('--database', '-d', type=str, help='Define database folder.')
         parser_init.set_defaults(func=Main.init)
 
 

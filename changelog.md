@@ -1,5 +1,7 @@
 # Changelog
 
+- 6.1.0
+  - add: mico classroom scripts
 - 6.0.7
   - add: changing x label for daily graph for week count
 - 6.0.6

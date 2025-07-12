@@ -9,7 +9,6 @@ from tko.cmds.cmd_rep import CmdRep
 from tko.game.task_info import TaskInfo
 from tko.game.quest_grader import QuestGrader
 import subprocess
-from icecream import ic
 
 import re
 import os
