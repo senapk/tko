@@ -58,27 +58,14 @@ class Game:
     def get_skills_resume(self, avaliable_quests: list[Quest]) -> tuple[dict[str, float], dict[str, float]]:
         available: dict[str, float] = {}
         obtained: dict[str, float] = {}
-        # avaliable_keys = [q.key for q in avaliable_quests]
         for c in self.clusters.values():
             if not c.main_cluster:
                 continue
             for q in c.get_quests():
-                # reachable = q.key in avaliable_keys
                 for t in q.get_tasks():
-                    # for s in t.skills:
-                    #     if not (s in total):
-                    #         total[s] = 0
-                    #     total[s] += t.skills[s]
-                    #     if reachable:
-                    #         obtained[s] = t.skills[s] * t.get_ratio()
-                    #     else:
-                    #         obtained[s] = 0
-                    for s in t.qskills:
-                        available[s] = available.get(s, 0) + t.qskills[s] * t.get_xp()
-                        # if reachable:
-                        obtained[s] = obtained.get(s, 0) + (t.qskills[s] * t.get_xp() * t.get_ratio())
-                        # else:
-                        #     obtained[s] = 0
+                    for s in t.skills:
+                        available[s] = available.get(s, 0) + t.skills[s] * t.get_xp()
+                        obtained[s] = obtained.get(s, 0) + (t.skills[s] * t.get_xp() * t.get_ratio())
         for key, value in available.items():
             if value == 0:
                 del available[key]

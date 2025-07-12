@@ -113,5 +113,5 @@ class TaskInfo:
             kv[TaskInfo.easy_str] = str(self.easy)
 
         return kv
-
-            
+    
+    

@@ -1,8 +1,8 @@
 from __future__ import annotations
 from tko.game.task import Task
 from tko.util.text import Text
-from tko.util.get_md_link import get_md_link
 from tko.game.tree_item import TreeItem
+from tko.game.quest_grader import QuestGrader
 
 # from typing import override
 
@@ -19,29 +19,23 @@ class Quest(TreeItem):
         self.line_number: int = 0
         self.line: str = ""
         self.__tasks: list[Task] = []
-        self.skills: dict[str, int] = {}  # s:skill
-        self.requires: list[str] = []  # r:quest_key
-        self.languages: list[str] = []  # l:language
+        self.requires: list[str] = []  # 
         self.requires_ptr: list[Quest] = []
-        self.opt = False  # opt
-        self.prog = False  # progressive tasks
-        self.qmin: None | int = None  # q:  minimo de 50 porcento da pontuação total para completar
-        self.tmin: None | int = None  # t: ou ter no mínimo esse valor de todas as tarefas
+        self.prog = False  # progressive tasks, only allow next task if previous is >= 50%
+        self.skills: dict[str, int] = {}  # s:{skill} to be applied to all tasks
+        self.languages: list[str] = []  # l:language to filter what is showed to user based in default language
+        self.qmin: int = 50  # q:{value} 50 percent to complete quest
+        self.value: int = 1  # v:{value} quest value in cluster wheighted average
         self.filename = ""
         self.cluster_key = ""
         self.__is_reachable: bool = False
 
+    def get_value(self) -> int:
+        return self.value
+
     def get_full_title(self):
         output = self.title
-        # if Flags.minimum:
-        #     output += " " + self.get_requirement().get_str()
-        # if Flags.reward:
-        #     xp = ""
-        #     for s, v in self.skills.items():
-        #         xp += f" +{s}:{v}"
-        #     output += xp
         return output
-
 
     def is_reachable(self)-> bool:
         return self.__is_reachable
@@ -77,21 +71,7 @@ class Quest(TreeItem):
         return Text().addf(self.get_grade_color(), (str(value) + "%").rjust(4))
     
     def get_requirement(self) -> Text:
-        if self.qmin is not None:
-            return Text().addf("y", f"[{self.qmin}%]")
-        if self.tmin is not None:
-            return Text().addf("y", f"[t>{self.tmin - 1}]")
-        return Text()
-
-    def get_resume_by_tasks(self) -> Text:
-        tmin = self.tmin if self.tmin is not None else 70
-        total = len([t for t in self.__tasks if not t.opt])
-        plus = len([t for t in self.__tasks if t.opt])
-        count = len([t for t in self.__tasks if t.get_percent() >= tmin])
-        output = f"{count}/{total}"
-        if plus > 0:
-            output += f"+{plus}"
-        return Text().addf(self.get_grade_color(), "(" + output + ")")
+        return Text().addf("y", f"[{self.qmin}%]")
 
     def get_grade_color(self) -> str:
         if self.not_started():
@@ -103,38 +83,27 @@ class Quest(TreeItem):
         return "y"
 
     def is_complete(self):
-        if self.qmin is not None:
-            return self.get_percent() >= self.qmin
-        # task complete mode
-        if self.tmin is not None:
-            for t in self.__tasks:
-                if not t.opt and t.get_percent() < self.tmin:
-                    return False
-        return True
+        return self.get_percent() >= self.qmin
 
     def add_task(self, task: Task):
-        task.qskills = self.skills        
+        task.skills.update(self.skills)  # apply quest skills to task
         self.__tasks.append(task)
 
     def get_tasks(self):
         return self.__tasks
 
     def get_xp(self) -> tuple[float, float]:
-        total = 0.0
-        obtained = 0.0
+        """
+        Returns a tuple of (earned_xp, total_xp)
+        """
+        tasks_info: list[QuestGrader.Elem] = []
         for t in self.__tasks:
-            if not t.opt:
-                total += t.get_xp()   
-            if t.get_percent() > 0:
-                obtained += t.get_xp() * t.get_ratio()
-
-        return obtained, total
+            tasks_info.append(QuestGrader.Elem(t.opt, t.xp, t.get_percent()))
+        return QuestGrader.calc_xp_earned_total(tasks_info)
         
     def get_percent(self) -> float:
         obtained, total = self.get_xp()
-        if total == 0:
-            return 0.0
-        return (obtained * 100.0) / total
+        return QuestGrader.get_percent(obtained, total)
 
     def in_progress(self):
         if self.is_complete():
@@ -150,110 +119,3 @@ class Quest(TreeItem):
         if self.in_progress():
             return False
         return True
-
-
-class QuestParser:
-    quest: Quest
-
-    def __init__(self):
-        self.quest = Quest()
-        self.line: str = ""
-        self.line_num = 0
-        self.default_qmin_requirement = 50
-        self.default_task_xp = 10
-        self.filename: str = ""
-
-    def finish_quest(self) -> Quest:
-
-        if self.quest.key == "":
-            self.quest.key = get_md_link(self.quest.title)
-
-        if len(self.quest.skills) == 0:
-            self.quest.skills["xp"] = self.default_task_xp
-        
-        if self.quest.qmin is None and self.quest.tmin is None:
-            self.quest.qmin = self.default_qmin_requirement
-
-        return self.quest
-
-    def match_full_pattern(self) -> bool:
-        if not startswith(self.line, "### "):
-            return False
-        line = self.line[4:]
-        
-        pieces: list[str] = line.split("<!--")
-
-        # html tags
-        if len(pieces) > 1:
-            middle_end: list[str] = pieces[1].split("-->")
-            middle: str = middle_end[0]
-            end: str = middle_end[1]
-            line = pieces[0] + end # removendo raw text
-            self.process_raw_tags(middle)
-
-        self.quest.title = line
-        if "[](" in line:
-            pieces = line.split("[](")
-            self.quest.title = pieces[0]
-
-            del pieces[0]
-            for p in pieces:
-                key = p.split(")")[0]
-                if key[0] == "#":
-                    key = key[1:]
-                self.quest.requires.append(key)
- 
-        return True
-
-    def process_raw_tags(self, raw_tags: str):
-        tags = [tag.strip() for tag in raw_tags.split(" ")]
-
-        # skills
-        skills = [t[1:] for t in tags if t.startswith("+")]
-        if len(skills) > 0:
-            self.quest.skills = {}
-            for s in skills:
-                try:
-                    k, v = s.split(":")
-                    self.quest.skills[k] = int(v)
-                except ValueError:
-                    self.quest.skills[s] = 1  # default value is 1 if not specified
-
-        # languages
-        languages = [t[2:] for t in tags if t.startswith("l:")]
-        if len(languages) > 0:
-            self.quest.languages = []
-            for l in languages:
-                self.quest.languages.append(l)
-
-        self.quest.opt = "opt" in tags
-        self.quest.prog = "prog" in tags
-
-        # quest percent
-        qmin = [t[2:] for t in tags if t.startswith("q:")]
-        
-        if len(qmin) > 0:
-            self.quest.qmin = int(qmin[0])
-
-        # task min value requirement
-        tmin = [t[2:] for t in tags if t.startswith("t:")]
-        if len(tmin) > 0:
-            self.quest.tmin = int(tmin[0])
-            if self.quest.tmin > 10:
-                print("fail: tmin > 10")
-                exit(1)
-
-
-    def parse_quest(self, filename: str, line: str, line_num: int) -> None | Quest:
-        self.line = line
-        self.line_num = line_num
-        self.filename = filename
-
-        self.quest.line = self.line
-        self.quest.line_number = self.line_num
-        self.quest.cluster_key = ""
-
-        if self.match_full_pattern():
-            return self.finish_quest()
-                
-        return None

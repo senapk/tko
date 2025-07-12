@@ -304,7 +304,11 @@ class Parser:
         parser_repo.add_argument('folder', type=str, nargs='?', default='.', help='repository folder.')
         subpar_repo = parser_repo.add_subparsers(title='subcommands', help='help for subcommand.')
 
-        repo_collect = subpar_repo.add_parser("collect", help="graph")
+        repo_update = subpar_repo.add_parser("update", help="update repository cache.")
+        repo_update.set_defaults(func=CmdRep.update)
+
+
+        repo_collect = subpar_repo.add_parser("collect", help="collect data")
         repo_collect.add_argument("--json", action='store_true', help="collect as json data")
         repo_collect.add_argument("--resume", action='store_true', help="collect resume")
         repo_collect.add_argument("--log", action='store_true', help="collect history log")
@@ -314,7 +318,7 @@ class Parser:
         repo_collect.add_argument('--height', type=int, default=10, help="daily graph height")
         repo_collect.add_argument('--color', type=int, default=1, help="daily graph color [0|1]")
 
-        repo_collect.set_defaults(func=CmdRep.collect)
+        repo_collect.set_defaults(func=CmdRep.collect_main)
 
     def add_parser_rep_actions(self):
         parser_open = self.subparsers.add_parser('open', help='Open a folder with a repository.')

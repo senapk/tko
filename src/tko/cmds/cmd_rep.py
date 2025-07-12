@@ -1,10 +1,11 @@
+from __future__ import annotations
 from tko.settings.repository import Repository
 from tko.settings.settings import Settings
 from tko.logger.logger import Logger
 from tko.logger.task_resume import TaskResume
 from tko.logger.log_sort import LogSort
 from tko.play.week_graph import DailyGraph
-from tko.tejo.collected_data import CollectedData
+from tko.mico.collected import Collected, Game
 import yaml # type: ignore
 import json
 import os
@@ -12,6 +13,18 @@ import argparse
     
 
 class CmdRep:
+    class CollectParams:
+        def __init__(self):
+            self.folder: str = ""
+            self.width: int = 10
+            self.height: int = 10
+            self.daily: bool = False
+            self.resume: bool = False
+            self.game: bool = False
+            self.log: bool = False
+            self.json_output: bool = False
+            self.colored: int = 1
+
     @staticmethod
     def resume(rep: Repository) -> dict[str, TaskResume]:
         logger: Logger = rep.logger
@@ -20,7 +33,7 @@ class CmdRep:
 
         for key in tasks:
             log_sort = tasks[key]
-            resume = TaskResume().from_log_sort(log_sort)
+            resume = TaskResume(key).from_log_sort(log_sort)
             resume_dict[key] = resume
 
         return resume_dict
@@ -34,77 +47,93 @@ class CmdRep:
         return "\n".join([str(x) for x in image])
 
     @staticmethod
-    def load_game_tasks(rep: Repository) -> list[CollectedData.Quest]:
+    def load_game_as_cluster_list(rep: Repository) -> list[Game.Cluster]:
         game = rep.game
         if not game:
             return []
-        output: list[CollectedData.Quest] = []
+        output: list[Game.Cluster] = []
         for cluster_key in game.ordered_clusters:
             cluster = game.clusters[cluster_key]
-            opt_quest = not cluster.main_cluster
+            output_cluster = Game.Cluster(cluster.key)
+            output.append(output_cluster)
             for quest in cluster.get_quests():
-                output_quest = CollectedData.Quest(quest.key, opt=opt_quest)
+                output_quest = Game.Quest(quest.key, quest.value)
+                output_cluster.quests.append(output_quest)
                 for task in quest.get_tasks():
-                    output_quest.tasks.append(CollectedData.Task(key=task.key, value=task.xp, is_leet=task.is_leet(), opt=task.opt))
-                output.append(output_quest)
+                    output_quest.tasks.append(Game.Task(key=task.key, value=task.xp, is_leet=task.is_leet(), opt=task.opt))
         return output
 
     @staticmethod
-    def collect(args: argparse.Namespace):
-        rep = Repository(args.folder)
-        if not rep.found():
-            path = os.path.abspath(args.folder)
-            print(f"Repository not found in {path}")
-            return
-        rep.load_config().load_game()
-        data = CollectedData()
+    def collect_main(args: argparse.Namespace):
+        params = CmdRep.CollectParams()
+        params.folder = args.folder
+        params.width = args.width
+        params.height = args.height
+        params.daily = args.daily
+        params.resume = args.resume
+        params.game = args.game
+        params.log = args.log
+        params.json_output = args.json
+        params.colored = args.color
+        data = CmdRep.collect(params)
 
-        if args.daily:
-            graph = CmdRep.graph(rep, args.width, args.height, args.color == 1)
+        if params.json_output:
+            # print(yaml.dump(data))
+            print(json.dumps(data.to_dict(), indent=4, ensure_ascii=False))
+
+    @staticmethod
+    def collect(param: CollectParams) -> Collected:
+        rep = Repository(param.folder)
+        if not rep.found():
+            path = os.path.abspath(param.folder)
+            print(f"Repository not found in {path}")
+            return Collected()
+        
+        rep.load_config().load_game()
+        data = Collected()
+
+        if param.daily:
+            graph = CmdRep.graph(rep, param.width, param.height, param.colored == 1)
             data.graph = graph
-            if not args.json:
+            if not param.json_output:
                 print(graph)
 
-        if args.resume:
+        if param.resume:
             resume_data = CmdRep.resume(rep)
             data.resume = resume_data
-            if not args.json:
+            if not param.json_output:
                 for key, value in resume_data.items():
                     print(f"{key}: {value.to_dict()}")
 
-        if args.log:
+        if param.log:
             log_data = rep.logger.history.get_entries()
             data.log = [str(entry) for entry in log_data]
-            if not args.json:
+            if not param.json_output:
                 for entry in log_data:
                     print(entry)
-        
-        if args.game:
-            game_data = CmdRep.load_game_tasks(rep)
-            data.game = game_data
-            if not args.json:
-                for quest in game_data:
-                    print(str(quest))
 
-        if args.json:
-            # print(yaml.dump(data))
-            print(json.dumps(data, indent=4, default=lambda o: o.__dict__))
+        if param.game:
+            game_data = CmdRep.load_game_as_cluster_list(rep)
+            data.clusters = game_data
+            if not param.json_output:
+                for cluster in game_data:
+                    print(str(cluster))
+
+        return data
 
 
     @staticmethod
-    def upgrade(args: argparse.Namespace):
-        folder: str = args.folder
-        if os.path.exists(os.path.join(folder, "rep.json")):
-            os.rename(os.path.join(folder, "rep.json"), os.path.join(folder, "repository.json"))
-        remote_folder = os.path.join(folder, "remote")
-        os.makedirs(remote_folder, exist_ok=True)
-        for entry in os.listdir(folder):
-            path = os.path.join(folder, entry)
-            if entry == "remote":
-                continue
-            if os.path.isdir(path):
-                os.rename(path, os.path.join(remote_folder, entry))
-        print(f"Repositório {folder} foi atualizado.")
+    def update(args: argparse.Namespace):
+        folder = args.folder
+        if not os.path.isdir(folder):
+            print(f"Folder {folder} does not exist.")
+            return
+        rep = Repository(folder)
+        if not rep.found():
+            print(f"Folder {folder} is not a valid tko repository.")
+            return
+        rep.load_config().load_game()
+        print(f"Repositório cache atualizado.")
 
     @staticmethod
     def list(_args: argparse.Namespace):

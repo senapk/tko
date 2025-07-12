@@ -245,8 +245,6 @@ class TaskTree:
                 break
         if all_tasks_done:
             output.add("🌟")
-        # else:
-        #     output.add(" ").add(q.get_resume_by_tasks())
 
         # if Flags.minimum:
         #     output.add(" ").add(q.get_requirement())

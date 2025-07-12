@@ -16,21 +16,6 @@ class DailyGraph:
     def __collect(self):
         days_minutes = self.logger.week.resume()
         sorted_keys = sorted(days_minutes.keys())
-        # if self.week_mode:
-        #     self.collected = [0]
-        #     self.accumulates = [0]
-        #     # with open("debug.txt", "a") as debug_file:
-        #     #     debug_file.write(f"sorted_keys: {sorted_keys}\n")
-        #     for item in sorted_keys:
-        #         week_day = days_minutes[item].week_day
-        #         elapsed = days_minutes[item].elapsed
-        #         if week_day == "Sunday":
-        #             self.collected.append(0)
-        #             self.accumulates.append(0)
-        #             self.accumulates[-1] += self.collected[-1]
-        #         self.collected[-1] += elapsed
-        #         self.accumulates[-1] += elapsed
-        # else:
         self.daily = [0]
         self.accumulates = [0]
         for item in sorted_keys:

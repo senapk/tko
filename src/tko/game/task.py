@@ -3,6 +3,7 @@ from tko.util.symbols import symbols
 from tko.util.text import Text
 from tko.game.tree_item import TreeItem
 from tko.game.task_info import TaskInfo
+from tko.game.task_grader import TaskGrader
 import enum
 
 
@@ -26,11 +27,10 @@ class Task(TreeItem):
         self.line_number = 0
         self.line = ""
         self.info = TaskInfo()
+        self.grader = TaskGrader(self.info)
         self.main_idx: int = 0
-        self.leet: bool = False # if the task is a leet task
-
-        self.qskills: dict[str, int] = {} # default quest skills
-        self.skills: dict[str, int] = {} # local skills
+        self.leet: bool = False # if the task is a leet task, rate must be marked by running test cases
+        self.skills: dict[str, int] = {} # skills
         
         self.xp: int = 0
         self.opt: bool = False
@@ -143,22 +143,7 @@ class Task(TreeItem):
             return "g"
         return "w"  
 
-    def get_edge_value(self) -> int:
-        edge = self.info.edge
-        # deprecated
-        if self.info.flow < 6 and edge == 5:
-            edge = 4
-        return edge * 20
-    
-    def get_flow_value(self) -> int:
-        if self.info.flow > 4:
-            return 100
-        if self.info.flow == 0:
-            return 0
-        return 80
-
     def get_prog_symbol(self, min_value: None | int = None) -> Text:
-        
         if min_value is None:
             min_value = self.default_min_value
         color = self.get_prog_color(min_value)
@@ -178,62 +163,20 @@ class Task(TreeItem):
             return 1
         return self.xp
 
-    @staticmethod
-    def get_harmonic_mean(a: float, b: float, c: float) -> float:
-        if a == 0 or b == 0 or c == 0:
-            return 0.0
-        return 3 / (1.0 / a + 1.0 / b + 1.0 / c)
-
-    @staticmethod
-    def get_square_mean(a: float, b: float, c: float) -> float:
-        if a == 0 or b == 0 or c == 0:
-            return 0.0
-        return ((a * b * c) ** 0.5) / 10.0
-    
-    @staticmethod
-    def get_cubic_square(a: float, b: float, c: float) -> float:
-        if a == 0 or b == 0 or c == 0:
-            return 0.0
-        return ((a * b * c) ** (1/3))
-
-    @staticmethod
-    def get_product(a: float, b: float, c: float) -> float:
-        if a == 0 or b == 0 or c == 0:
-            return 0.0
-        return (a * b * c) / 10000
-    
-    @staticmethod
-    def get_sigmoid(a: float, b: float, c: float) -> float:
-        x = a * b * c / 1000.0
-        k = 0.011  # steepness of the curve
-        x0 = 500.0
-        # return 1 / (1 + np.exp(-k * (x - x0))) #numpy sigmoid function
-        v = 1 / (1 + (2.71828 ** (-k * (x - x0))))  # using e constant directly for compatibility
-        return v * 100.0
-
-    def get_percent(self):
-        # hardcoded gambi for compatibility
-        rate = float(self.info.rate)
-        flow = float(self.get_flow_value())
-        edge = float(self.get_edge_value())
-
-        # return Task.get_square_mean(flow, edge, rate)
-        # return Task.get_harmonic_mean(flow, edge, rate)
-        # return Task.get_cubic_square(flow, edge, rate)
-        return Task.get_sigmoid(flow, edge, rate)
-
+    def get_percent(self) -> float:
+        return self.grader.get_percent()
 
     def get_ratio(self) -> float:
-        return self.get_percent() / 100.0
+        return self.grader.get_ratio()
 
     def is_complete(self):
-        return self.get_percent() >= 70
+        return self.grader.get_percent() >= 70
 
     def not_started(self):
-        return self.get_percent() == 0
-    
+        return self.grader.get_percent() == 0
+
     def in_progress(self):
-        return 0 < self.get_percent() < 100
+        return 0 < self.grader.get_percent() < 100
 
     # @override
     def __str__(self):

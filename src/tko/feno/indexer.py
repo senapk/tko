@@ -82,8 +82,10 @@ class TaskLine:
                 pre = self.pre
                 pos = self.pos
                 if label is not None:
-                    pre = self.pre.replace("@" + label, "@" + hook)
-                    pos = self.pos.replace("@" + label, "@" + hook)
+                    if label != hook and not label.startswith(hook + "_"):
+                        print(f"Warning: label:{label}, hook:{hook}")
+                    # pre = self.pre.replace("@" + label, "@" + hook)
+                    # pos = self.pos.replace("@" + label, "@" + hook)
                 title = self.load_title_from_link()
                 return f"- [ ]{pre}[{title}]({self.link}){pos}"
         return self.line

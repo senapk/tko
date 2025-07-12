@@ -1,6 +1,7 @@
+from tko.game.quest_parser import QuestParser
 from tko.game.task_parser import TaskParser
 from tko.game.cluster import Cluster
-from tko.game.quest import Quest, QuestParser
+from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.util.get_md_link import get_md_link
 from tko.util.to_asc import uni_to_asc
@@ -101,7 +102,8 @@ class GameBuilder:
 
     def __add_cluster(self, cluster: Cluster):
         self.clusters[cluster.key] = cluster
-        self.ordered_clusters.append(cluster.key)
+        if not cluster.key in self.ordered_clusters:
+            self.ordered_clusters.append(cluster.key)
         self.active_cluster = cluster
         self.active_quest = None
 

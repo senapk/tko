@@ -59,9 +59,13 @@ class Cluster(TreeItem):
 
     def get_percent(self) -> float:
         total = 0
+        weighted_total = 0
         for q in self.__quests:
-            total += q.get_percent()
-        return total // len(self.__quests)
+            total += q.get_percent() * q.get_value()
+            weighted_total += q.get_value()
+        if weighted_total == 0:
+            return 0.0
+        return total / weighted_total
 
     def get_resume_by_percent(self) -> Text:
         return Text().addf(self.get_grade_color(), f"{round(self.get_percent())}%".rjust(4))
