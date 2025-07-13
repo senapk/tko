@@ -73,7 +73,7 @@ class Flags:
     admin = Flag().set_name("Gamer").set_keycode("G").set_values(["1", "0"])       .set_description("Habilitas todas as missões e tarefas        ")
     skills = Flag().set_name("Trilhas").set_keycode("t").set_values(["0", "1", "2"]).set_description("Mostra a barra de trilhas de habilidades")
     graph = Flag().set_name("Graph").set_keycode(GuiKeys.graph).set_values(["0", "1"]).set_description("Muda o Gráfico")
-
+    hidden = Flag().set_name("Escondidas").set_keycode(GuiKeys.hidden).set_values(["0", "1"]).set_description("Mostra as atividades escondidas")
 
 class FlagsMan:
     def __init__(self, data: dict[str, int]):

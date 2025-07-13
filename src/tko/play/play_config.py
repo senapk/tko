@@ -77,9 +77,9 @@ class PlayConfig:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar atividades {y}", icon(self.app.get_show_hidden()), "Escondidas"),
-                self.app.toggle_hidden, 
-                GuiKeys.hidden
+                lambda: Text.format(" {} Mostrar atividades {y}", icon(Flags.hidden.is_true()), "Escondidas"),
+                Flags.hidden.toggle,
+                Flags.hidden.get_keycode()
             )
         )
 

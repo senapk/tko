@@ -125,7 +125,7 @@ class TaskTree:
     
         color_aval = "g" if quest_reachable and t.is_reachable() else "r"
         color_lig_task = color_aval
-        if self.app.get_show_hidden() == False and not Flags.admin:
+        if not Flags.hidden.is_true() and not Flags.admin.is_true():
             quest = self.game.quests[t.quest_key]
             if quest.prog:
                 if t.key != self.game.quests[t.quest_key].get_tasks()[-1].key:
@@ -196,7 +196,7 @@ class TaskTree:
             con = "─┯"
 
         color_reachable = "g" if q.is_reachable() else "r"
-        if self.app.get_show_hidden() == False and not Flags.admin:
+        if Flags.hidden.is_true() and not Flags.admin.is_true():
             for quest in self.game.quests.values():
                 if not quest.is_reachable():
                     if q.key in quest.requires:
@@ -349,7 +349,7 @@ class TaskTree:
         filtered, _ = self.filter_by_search()
         matcher = SearchAsc(self.search_text)
 
-        hide = not self.app.get_show_hidden() and not Flags.admin
+        hide = not Flags.hidden.is_true() and not Flags.admin.is_true()
 
         clusters = [self.game.clusters[key] for key in self.game.clusters.keys() if key in filtered]
         if hide:

@@ -42,8 +42,6 @@ class PlayActions:
         self.graph_opened: bool = False
         self.gui = gui
 
-    def gen_graph_path(self) -> str:
-        return os.path.join(self.rep.paths.get_rep_dir(), "graph.png")
         
     @staticmethod
     def open_link_without_stdout_stderr(link: str):
@@ -110,14 +108,6 @@ class PlayActions:
                 .put_text("de tarefas.\n")
                 .error()
             )
-
-    # def generate_graph(self):
-    #     Graph(self.game).set_path(self.gen_graph_path()).set_opt(False).generate()
-    #     path = self.gen_graph_path()
-    #     if not self.graph_opened:
-    #         opener = Opener(self.settings)
-    #         opener.open_files([path])
-    #         self.graph_opened = True
 
     def register_action(self, task: Task):
         self.rep.logger.store( LogItemSelf().set_key(task.key).set_info(task.info) )
