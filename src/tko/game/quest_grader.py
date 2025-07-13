@@ -13,9 +13,8 @@ class QuestGrader:
         total_xp = 0.0
         earned_xp = 0.0
         for elem in tasks:
-            if not elem.opt:
-                total_xp += elem.value
-            if elem.percent > 0:
+            total_xp += elem.value
+            if elem.percent > 1:
                 earned_xp += elem.value * (elem.percent / 100.0)
         return earned_xp, total_xp
     

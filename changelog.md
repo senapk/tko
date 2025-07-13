@@ -1,5 +1,7 @@
 # Changelog
 
+- 6.3.0
+  - fix: track calculation
 - 6.2.0
   - add: main bar showing only opened skills
 - 6.1.1

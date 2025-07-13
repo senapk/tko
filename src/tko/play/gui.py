@@ -145,7 +145,7 @@ class Gui:
 
         elements: list[Text] = []
         for skill, value in complete.items():
-            if Flags.percent:
+            if Flags.skills.get_value() == "1":
                 obtained_value = int(100 * obtained.get(skill, 0) / priority.get(skill, 1))
                 possible_value = int(100 * value / priority.get(skill, 1))
                 text = f"{skill}: {obtained_value:03d}%  {possible_value:03d}%"
@@ -236,9 +236,12 @@ class Gui:
             if value < 1:
                 keys_to_remove.append(skill)
         for key in keys_to_remove:
-            del obtained[key]
-            del priority[key]
-            del complete[key]
+            if key in obtained:
+                del obtained[key]
+            if key in priority:
+                del priority[key]
+            if key in complete:
+                del complete[key]
 
         qtd = len(obtained)
         if qtd == 0:
@@ -400,7 +403,7 @@ class Gui:
         left_size = 29
         skills_sx = 0
         flags_sx = 0
-        if Flags.skills:
+        if Flags.skills.get_value() != "0":
             skills_sx = left_size #max(20, main_sx // 4)
         
         task_sx = main_sx - flags_sx - skills_sx
@@ -415,6 +418,6 @@ class Gui:
         self.show_main_bar(frame_main)
         self.show_graphs(frame_main)
 
-        if Flags.skills:
+        if Flags.skills.get_value() != "0":
             frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)
             self.show_skills_bar(frame_skills)

@@ -3,6 +3,7 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 # from tko.game.graph import Graph
 
+from icecream import ic
 from tko.play.floating_grade import FloatingGrade
 from tko.settings.settings import Settings
 
@@ -126,11 +127,16 @@ class PlayActions:
         
         if isinstance(obj, Task):
             task: Task = obj
-            self.fman.add_input(
-                FloatingGrade(obj, self.settings, "").set_exit_fn(
-                    lambda: self.register_action(task)
+            if ic.enabled:
+                task.info.rate = 100
+                task.info.flow = task.info.flow_max
+                task.info.edge = task.info.edge_max
+            else:
+                self.fman.add_input(
+                    FloatingGrade(obj, self.settings, "").set_exit_fn(
+                        lambda: self.register_action(task)
+                    )
                 )
-            )
             return
 
     def down_remote_task(self):

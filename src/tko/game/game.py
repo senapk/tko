@@ -61,15 +61,13 @@ class Game:
         complete: dict[str, float] = {}
         obtained: dict[str, float] = {}
         for c in self.clusters.values():
-            if not c.main_cluster:
-                continue
             for q in c.get_quests():
                 for t in q.get_tasks():
-                    for s in t.skills:
-                        obtained[s] = obtained.get(s, 0) + (t.skills[s] * t.get_xp() * t.get_ratio())
+                    for skill, value in t.skills.items():
+                        obtained[skill] = obtained.get(skill, 0) + (value * t.get_xp() * t.get_ratio())
                         if not t.is_optional():
-                            priority[s] = priority.get(s, 0) + t.skills[s] * t.get_xp()
-                        complete[s] = complete.get(s, 0) + t.skills[s] * t.get_xp()
+                            priority[skill] = priority.get(skill, 0) + value * t.get_xp()
+                        complete[skill] = complete.get(skill, 0) + value * t.get_xp()
         for key, value in priority.items():
             if value == 0:
                 del priority[key]
