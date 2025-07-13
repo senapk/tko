@@ -227,9 +227,11 @@ class TaskTree:
         #     color = "k" + focus_color
 
         title = q.get_full_title()
-        title = title.ljust(self.max_title + 3, ".")
-
-        output.addf(focus_color, title)
+        title = title.ljust(self.max_title + 3, Text.Token("."))
+        if focus_color != "":
+            output.addf(focus_color, title)
+        else:
+            output.add(title)
 
         if in_focus:
             output.add(self.style.round_r(focus_color))

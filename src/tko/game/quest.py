@@ -3,6 +3,7 @@ from tko.game.task import Task
 from tko.util.text import Text
 from tko.game.tree_item import TreeItem
 from tko.game.quest_grader import QuestGrader
+from tko.play.flags import Flags
 
 # from typing import override
 
@@ -33,8 +34,14 @@ class Quest(TreeItem):
     def get_value(self) -> int:
         return self.value
 
-    def get_full_title(self):
-        output = self.title
+    def get_full_title(self) -> Text:
+        output = Text().add(self.title)
+        if Flags.skills.get_value() != "0":
+            for skill, value in self.skills.items():
+                if value > 1:
+                    output.addf('y', f" {skill}*{value}")
+                else:
+                    output.addf('y', f" {skill}")
         return output
 
     def is_reachable(self)-> bool:

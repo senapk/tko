@@ -1,5 +1,7 @@
 # Changelog
 
+- 6.3.1
+  - add: show track on quest title
 - 6.3.0
   - fix: track calculation
 - 6.2.0
