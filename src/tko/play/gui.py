@@ -221,26 +221,58 @@ class Gui:
             done_color = "W"
             todo_color = "W"
             text = text.ljust(size)
-        else:
-            text, percent = self.build_xp_bar()
+            return self.style.build_bar(text, percent, len(text), done_color, todo_color)
+            # text, percent = self.build_xp_bar()
+            # done_color = self.colors.main_bar_done
+            # todo_color = self.colors.main_bar_todo
+            # text = text.center(size)
+            # xpbar = self.style.build_bar(text, percent, len(text), done_color, todo_color)
+
+        reachable_quests = [q for q in self.game.quests.values() if q.is_reachable()]
+        obtained, priority, complete = self.game.get_skills_resume(reachable_quests)
+
+        keys_to_remove: list[str] = []
+        for skill, value in obtained.items():
+            if value < 1:
+                keys_to_remove.append(skill)
+        for key in keys_to_remove:
+            del obtained[key]
+            del priority[key]
+            del complete[key]
+
+        qtd = len(obtained)
+        if qtd == 0:
+            text = " Nenhuma habilidade disponível "
+            percent = 0.0
+            return self.style.build_bar(text, percent, size, "W", "W")
+        
+        skill_size = int(size / qtd)
+
+        elements: list[Text] = []
+        for skill, _ in complete.items():
+            text = f"{skill}"
+            perc = obtained.get(skill, 0) / priority.get(skill, 1)
             done_color = self.colors.main_bar_done
             todo_color = self.colors.main_bar_todo
-            text = text.center(size)
-        xpbar = self.style.build_bar(text, percent, len(text), done_color, todo_color)
+            # text = text.rjust(skill_size - 4)
+            skill_bar = self.style.build_bar(text=text, percent=perc, length=skill_size - 2, fmt_true=done_color, fmt_false=todo_color, rounded=False)
+            elements.append(skill_bar)
+        cover_color = 'K'
+        xpbar = Text().add(self.style.round_l(cover_color)).addf(cover_color.lower(), '█')
+        for skill_bar in elements:
+            xpbar.add(skill_bar).addf(cover_color.lower(), '█')
+        xpbar.add(self.style.round_r(cover_color))
+
         return xpbar
 
     def show_top_bar(self, frame: Frame):
         lista = [
-            Text().addf("Y", f"Sair  [q]"),
-            Text().addf("Y", f"Ajuda [?]"),
+            Text().addf("Y", f"Trilhas[t]"),
+            Text().addf("Y", f"Ajuda[?]"),
         ]
         help_list = self.build_list_sentence(lista)
-        search = help_list[0]
-        evaluate = help_list[1]
-
-        pre: list[Text] = [search]
-
-        pos: list[Text] = [evaluate]
+        pre: list[Text] = [help_list[0]]
+        pos: list[Text] = [help_list[1]]
 
         limit = frame.get_dx()
         size = limit - Text().add(" ").join(pre + pos).len() - 2

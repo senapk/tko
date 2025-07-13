@@ -1,5 +1,7 @@
 # Changelog
 
+- 6.2.0
+  - add: main bar showing only opened skills
 - 6.1.1
   - fix: floating grade grade error
 - 6.1.1
