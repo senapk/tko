@@ -2,7 +2,7 @@ from tko.play.flags import Flag
 from tko.util.text import Text
 from tko.settings.app_settings import AppSettings
 from tko.util.symbols import symbols
-
+import math
 
 class Border:
     def __init__(self, app: AppSettings):
@@ -30,8 +30,8 @@ class Border:
         return Text.Token("", color.lower()) if self.has_borders() else Text.Token(" ", color)
 
     def build_bar(self, text: str, percent: float, length: int, fmt_true: str = "/kC",
-                  fmt_false: str = "/kY", round: bool = True) -> Text:
-        if round and (len(text) >= length - 2):
+                  fmt_false: str = "/kY", rounded: bool = True) -> Text:
+        if rounded and (len(text) >= length - 2):
             text = " " + text
 
         if length > len(text):
@@ -41,11 +41,11 @@ class Border:
         elif length < len(text):
             text = text[:length]
 
-        full_line = text
-        done_len = int(percent * length)
+        full_line: str = text
+        done_len: int = round(percent * length)
         xp_bar = Text.Token(full_line[:done_len], fmt_true) + Text.Token(full_line[done_len:], fmt_false)
 
-        if round:
+        if rounded:
             xp_bar.data[0] = self.round_l(xp_bar.data[0].fmt)
             xp_bar.data[-1] = self.round_r(xp_bar.data[-1].fmt)
         return xp_bar

@@ -170,17 +170,17 @@ class TaskTree:
             output.add(" ")
 
         output.ljust(self.max_title + 10, Text.Token(" "))
-        if Flags.percent.is_true():
-            prog = round(t.get_percent())
-            output.addf("y", str(prog).rjust(3, " ") + "%")
-        else:
-            color_rate: list[str] = ["", "c", "g", "y", "m", "r"]
-            rate = (t.info.neat + t.info.cool) / 2
-            for i in range(1, 6):
-                if rate >= i:
-                    output.addf(color_rate[t.info.easy], symbols.star)
-                else:
-                    output.addf(color_rate[t.info.easy], symbols.open_star)
+        # if Flags.percent.is_true():
+        prog = round(t.get_percent())
+        output.addf("y", str(prog).rjust(3, " ") + "%")
+        # else:
+        #     color_rate: list[str] = ["", "c", "g", "y", "m", "r"]
+        #     rate = (t.info.neat + t.info.cool) / 2
+        #     for i in range(1, 6):
+        #         if rate >= i:
+        #             output.addf(color_rate[t.info.easy], symbols.star)
+        #         else:
+        #             output.addf(color_rate[t.info.easy], symbols.open_star)
 
         # if Flags.reward:
         #     xp = ""

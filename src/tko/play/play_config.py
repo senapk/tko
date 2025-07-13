@@ -85,31 +85,15 @@ class PlayConfig:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y} ou Estrelas", icon(Flags.percent.is_true()), "Percentual"),
+                lambda: Text.format(" {} Mostrar {y}", icon(Flags.percent.is_true()), "Percentual"),
                 Flags.percent.toggle, 
                 Flags.percent.get_keycode()
             )
         )
 
-        # options.append(
-        #     FloatingInputData(
-        #         lambda: Text.format(" {} Mostrar {y} para completar a missão", icon(Flags.minimum.is_true()), "Mínimo"),
-        #         Flags.minimum.toggle,
-        #         Flags.minimum.get_keycode()
-        #     )
-        # )
-
-        # options.append(
-        #     FloatingInputData(
-        #         lambda: Text.format(" {} Mostrar {y} das tarefas", icon(Flags.reward.is_true()), "Ganho"),
-        #         Flags.reward.toggle, 
-        #         Flags.reward.get_keycode()
-        #     )
-        # )
-
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y} adquiridas", icon(Flags.skills.is_true()), Flags.skills.get_name()),
+                lambda: Text.format(" {} Mostrar {y}", icon(Flags.skills.is_true()), Flags.skills.get_name()),
                 Flags.skills.toggle, 
                 Flags.skills.get_keycode()
             )

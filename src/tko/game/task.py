@@ -45,6 +45,9 @@ class Task(TreeItem):
         self.__is_reachable = False
         self.default_min_value = 5 # default min grade to complete task
 
+    def is_optional(self) -> bool:
+        return self.opt
+
     def set_leet(self, value: bool):
         self.leet = value
         return self

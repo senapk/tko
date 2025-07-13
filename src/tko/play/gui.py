@@ -137,38 +137,49 @@ class Gui:
 
     def show_skills_bar(self, frame_xp: Frame):
         dy, dx = frame_xp.get_inner()
-        xp = XP(self.game)
-        total_perc = int(
-            100 * (xp.get_xp_total_obtained() / xp.get_xp_total_available())
-        )
-        if Flags.percent:
-            text = f" XPTotal:{total_perc}%"
-        else:
-            text = f" XPTotal:{round(xp.get_xp_total_obtained())}"
+        reachable_quests = [q for q in self.game.quests.values() if q.is_reachable()]
+        obtained, priority, complete = self.game.get_skills_resume(reachable_quests)
 
-        done_color = self.colors.main_bar_done
-        todo_color = self.colors.main_bar_todo
-        total_bar = self.style.build_bar(text, total_perc / 100, dx - 2, done_color, todo_color)
-        frame_xp.set_header(Text().addf("/", "Skills"), "^", "{", "}")
-        frame_xp.set_footer(Text().add(" ").add(" "), "^")
+        frame_xp.set_header(Text().addf("/", "Trilhas"), "^", "{", "}")
         frame_xp.draw()
 
-        reachable_quests = [q for q in self.game.quests.values() if q.is_reachable()]
-        total, obt = self.game.get_skills_resume(reachable_quests)
         elements: list[Text] = []
-        for skill, value in total.items():
+        for skill, value in complete.items():
             if Flags.percent:
-                text = f"{skill}:{int(100 * obt.get(skill, 0) / value)}%"
+                obtained_value = int(100 * obtained.get(skill, 0) / priority.get(skill, 1))
+                possible_value = int(100 * value / priority.get(skill, 1))
+                text = f"{skill}: {obtained_value:03d}%  {possible_value:03d}%"
             else:
-                text = f"{skill}:{round(obt.get(skill, 0))}/{round(value)}"
-            perc = obt.get(skill, 0) / value
+                obtained_value = round(obtained.get(skill, 0))
+                priority_value = round(priority.get(skill, 0))
+                complete_value = round(value)
+                text = f"{skill}:{obtained_value:03d}/{priority_value:03d}/{complete_value:03d}"
+                # text = f"{skill}:{round(obtained.get(skill, 0))}/{round(value)}"
+            perc = obtained.get(skill, 0) / priority.get(skill, 1)
             done_color = self.colors.progress_skill_done
             todo_color = self.colors.progress_skill_todo
-            skill_bar = self.style.build_bar(text, perc, dx - 2, done_color, todo_color)
+            text = text.rjust(dx - 4)
+            skill_bar = self.style.build_bar(text=text, percent=perc, length=dx - 2, fmt_true=done_color, fmt_false=todo_color)
             elements.append(skill_bar)
-            
+        
+        # Total bar
+        total_obtained, total_priority, total_complete = self.game.sum_xp(obtained, priority, complete)
+        if total_priority == 0:
+            grade = 0
+        else:
+            grade = total_obtained / total_priority * 10.0
+
+        if Flags.percent:
+            text = f" Nota: {grade:.1f}       "
+        else:
+            text = f" Total:{round(total_obtained):03d}/{round(total_priority):03d}/{round(total_complete):03d}"
+        text = text.rjust(dx - 4)
+        done_color = self.colors.main_bar_done
+        todo_color = self.colors.main_bar_todo
+        total_bar = self.style.build_bar(text, total_obtained / total_priority, dx - 2, done_color, todo_color)
         elements.append(total_bar)
 
+        # printing calculating line breaks
         line_breaks = dy - len(elements)
         for skill_bar in elements:
             frame_xp.print(1, skill_bar)
@@ -354,7 +365,7 @@ class Gui:
         bottom_dy = 1 # quantas linhas o fundo usa
         mid_y = top_dy # onde o meio começa
         mid_sy = main_sy - top_dy - bottom_dy # tamanho do meio
-        left_size = 25
+        left_size = 29
         skills_sx = 0
         flags_sx = 0
         if Flags.skills:
