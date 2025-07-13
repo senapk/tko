@@ -167,7 +167,10 @@ class Task(TreeItem):
         return self.xp
 
     def get_percent(self) -> float:
-        return self.grader.get_percent()
+        value = self.grader.get_percent()
+        if value < 0.1:
+            return 0.0
+        return value
 
     def get_ratio(self) -> float:
         return self.grader.get_ratio()

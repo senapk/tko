@@ -6,6 +6,7 @@ from tko.util.decoder import Decoder
 from tko.game.game_builder import GameBuilder
 from tko.game.game_validator import GameValidator
 # from typing import override
+from icecream import ic
 
 import yaml # type: ignore
 import re
@@ -64,19 +65,18 @@ class Game:
             for q in c.get_quests():
                 for t in q.get_tasks():
                     for skill, value in t.skills.items():
-                        obtained[skill] = obtained.get(skill, 0) + (value * t.get_xp() * t.get_ratio())
+                        gvalue = (value * t.get_xp() * t.get_ratio())
+                        if gvalue < 0.1:
+                            gvalue = 0
+                        obtained[skill] = obtained.get(skill, 0) + gvalue
                         if not t.is_optional():
                             priority[skill] = priority.get(skill, 0) + value * t.get_xp()
                         complete[skill] = complete.get(skill, 0) + value * t.get_xp()
-        for key, value in priority.items():
-            if value == 0:
-                del priority[key]
-        for key, value in obtained.items():
-            if value == 0:
-                del obtained[key]
-        for key, value in complete.items():
-            if value == 0:
-                del complete[key]
+
+        # remove all keys with value 0
+        # obtained = {k: v for k, v in obtained.items() if v > 0}
+        # priority = {k: v for k, v in priority.items() if v > 0}
+        # complete = {k: v for k, v in complete.items() if v > 0}
         return obtained, priority, complete
 
     def sum_xp(self, obtained: dict[str, float], priority: dict[str, float], complete: dict[str, float]) -> tuple[float, float, float]:
@@ -84,6 +84,8 @@ class Game:
         total_priority = 0
         total_complete = 0
         for key, value in complete.items():
+            if obtained.get(key, 0) > 0:
+                ic("Warning: skill", key, "has", value, "XP in complete tasks")
             total_obtained += obtained.get(key, 0)
             total_priority += priority.get(key, 0)
             total_complete += value

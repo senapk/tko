@@ -169,14 +169,15 @@ class Gui:
         else:
             grade = total_obtained / total_priority * 10.0
 
-        if Flags.percent:
+        if Flags.skills.get_value() == "1":
             text = f" Nota: {grade:.1f}       "
         else:
-            text = f" Total:{round(total_obtained):03d}/{round(total_priority):03d}/{round(total_complete):03d}"
+            text = f"Nota: {grade:.1f} :{round(total_obtained):03d}/{round(total_priority):03d}/{round(total_complete):03d}"
         text = text.rjust(dx - 4)
         done_color = self.colors.main_bar_done
         todo_color = self.colors.main_bar_todo
-        total_bar = self.style.build_bar(text, total_obtained / total_priority, dx - 2, done_color, todo_color)
+        percent = total_obtained / total_priority if total_priority > 0 else 0.0
+        total_bar = self.style.build_bar(text, percent , dx - 2, done_color, todo_color)
         elements.append(total_bar)
 
         # printing calculating line breaks

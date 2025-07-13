@@ -1,5 +1,9 @@
 # Changelog
 
+- 6.3.3
+  - fix: track error sum floats
+- 6.3.2
+  - fix: track error if no tracks defined
 - 6.3.1
   - add: show track on quest title
 - 6.3.0
