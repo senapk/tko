@@ -15,6 +15,7 @@ class Colors:
         self.mark_started: str = "r"
         self.mark_required: str = "y"
         self.mark_complete: str = "g"
+        self.filters: str = "Y"
     
     def to_dict(self):
         return self.__dict__

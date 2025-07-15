@@ -22,7 +22,8 @@ class Search:
         if self.search_mode:
             self.backup_expanded = [v for v in self.tree.expanded]
             self.backup_index_selected = self.tree.selected_item
-            self.backup_admin_mode = Flags.admin.is_true()
+            self.backup_admin_mode = Flags.quests.get_value() == "2"
+            Flags.tasks.set_value("0")
             self.tree.update_tree(admin_mode=True)
             self.tree.process_expand_all()
             self.tree.process_expand_all()
@@ -42,8 +43,8 @@ class Search:
         elif isinstance(item, Quest):
             reachable = item.is_reachable()
         if not reachable:
-            Flags.admin.set_value("1")
-        self.tree.update_tree(Flags.admin.is_true()) # usa o mode de antes e vê se acha
+            Flags.quests.set_value("2")
+        self.tree.update_tree(Flags.quests.get_value() == "2") # usa o mode de antes e vê se acha
         self.tree.reload_sentences()
         
         self.tree.expanded = []
@@ -71,9 +72,9 @@ class Search:
             self.cancel_search()
         elif key == ord("\n"):
             self.finish_search()
-        elif key == self.settings.app.get_key_up() or key == ord(GuiKeys.up) or key == ord(GuiKeys.up2):
+        elif key == self.settings.app.get_key_up() or key == ord(GuiKeys.up):
             self.tree.move_up()
-        elif key == self.settings.app.get_key_down() or key == ord(GuiKeys.down) or key == ord(GuiKeys.down2):
+        elif key == self.settings.app.get_key_down() or key == ord(GuiKeys.down):
             self.tree.move_down()
         elif any([key == x for x in InputManager.backspace_list]):
             self.tree.search_text = self.tree.search_text[:-1]

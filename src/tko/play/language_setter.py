@@ -49,5 +49,5 @@ class SetLangFunctor:
             .put_text("")
             .put_text("Linguagem alterada para " + self.value)
             .put_text("")
-            .warning()
+            .set_warning()
         )

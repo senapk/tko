@@ -5,6 +5,7 @@ class Flag:
     def __init__(self):
         self._name: str = ""
         self._text: str = ""  # description
+        self._msgs: list[str] = []
         self._char: str = ""
         self._values: list[str] = ["0", "1"]
         self._index: int = 0
@@ -17,6 +18,13 @@ class Flag:
 
     def set_description(self, _text: str):
         self._text = _text
+        return self
+    
+    def get_msgs(self) -> list[str]:
+        return self._msgs
+    
+    def set_msgs(self, msgs: list[str]):
+        self._msgs = msgs
         return self
 
     def set_keycode(self, _key: str):
@@ -67,14 +75,18 @@ class Flag:
     
 
 class Flags:
-    minimum = Flag().set_name("Mínimo").set_keycode("M").set_values(["0", "1"])    .set_description("Mostra os requisitos para completar a missão")
-    #reward = Flag().set_name("Ganho").set_keycode("G").set_values(["0", "1"]) .set_description("Mostra a experiência obtida nas tarefas     ")
-    percent = Flag().set_name("Percentual").set_keycode("P").set_values(["1", "0"]).set_description("Mostra todos os valores em porcentagem      ")
-    admin = Flag().set_name("Gamer").set_keycode("G").set_values(["1", "0"])       .set_description("Habilitas todas as missões e tarefas        ")
-    skills = Flag().set_name("Trilhas").set_keycode("t").set_values(["0", "1", "2"]).set_description("Mostra a barra de trilhas de habilidades")
-    graph = Flag().set_name("Graph").set_keycode(GuiKeys.graph).set_values(["0", "1"]).set_description("Muda o Gráfico")
-    hidden = Flag().set_name("Escondidas").set_keycode(GuiKeys.hidden).set_values(["0", "1"]).set_description("Mostra as atividades escondidas")
-
+    quests = (Flag().set_name("Tópicos").set_keycode(GuiKeys.show_quests).set_description("Habilitas todas as missões e tarefas")
+                    .set_values(["0", "1", "2"])
+                    .set_msgs(["Mostrar apenas quests disponíveis", "Mostrar todas as quests sem habilitar", "Habilitar todas as quests"]))
+    tracks = (Flag().set_name("Trilhas").set_keycode(GuiKeys.tracks).set_description("Mostra a barra de trilhas de habilidades")
+                    .set_values(["0", "1", "2"])
+                    .set_msgs(["Desabilitar painel de trilhas", "Mostrar painel de trilhas por porcentagem", "Mostrar painel de trilhas por xp"]))
+    tasks = (Flag().set_name("Tarefas").set_keycode(GuiKeys.show_tasks).set_description("Mostra as atividades concluídas")
+                    .set_values(["0", "1", "2"])
+                    .set_msgs(["Mostrar todas as tarefas", "Ocultar tarefas com 100%", "Ocultar tarefas com >70%"]))
+    graph = (Flag().set_name("Graph").set_keycode(GuiKeys.graph).set_description("Muda o Gráfico")
+                    .set_values(["0", "1"])
+                    .set_msgs(["Desabilitar gráficos de acompanhamento", "Mostrar gráficos de acompanhamento"]))
 class FlagsMan:
     def __init__(self, data: dict[str, int]):
         self.flags: dict[str, Flag] = {}

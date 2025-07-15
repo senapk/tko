@@ -25,11 +25,6 @@ class GuiKeys:
     right = "D"
     down = "S"
     up = "W"
-
-    left2 = "H"
-    right2 = "L"
-    down2 = "J"
-    up2 = "K"
     calibrate = "C"
 
     palette = "c"
@@ -39,14 +34,17 @@ class GuiKeys:
     key_help = "?"
     
     # rate = "R"
-    set_lang_drafts = "R"
+    set_lang_drafts = "L"
     open_url = "u"
     key_quit = "q"
     edit= "e"
     colors = "C"
     borders = "B"
+    graph = "1"
+    tracks = "2"
+    show_quests = "3"
+    show_tasks = "4"
     search = "/"
-    graph = "\t"
     grade_play = "p"
     execute_tester = "r" # Interact in manual input
     diff = "d"
@@ -57,4 +55,3 @@ class GuiKeys:
     limite  = "t"
     expand = ">"
     collapse = "<"
-    hidden = "E"

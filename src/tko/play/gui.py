@@ -69,7 +69,7 @@ class Gui:
             return "R", " Retornar"
         if isinstance(obj, Quest):
             quest: Quest = obj
-            if not Flags.admin and not quest.is_reachable():
+            if Flags.quests.get_value() != "2" and not quest.is_reachable():
                 output = TaskAction.BLOQUEIO
             elif quest.key in self.tree.expanded:
                 output = TaskAction.CONTRAIR
@@ -90,9 +90,11 @@ class Gui:
 
     @staticmethod
     def get_admin_color() -> str:
-        if Flags.admin:
-            return ""
-        return "g"
+        if Flags.quests.get_value() == "0":
+            return "g"
+        if Flags.quests.get_value() == "1":
+            return "y"
+        return "c"
 
     @staticmethod
     def center_header_footer(value: Text, frame: Frame) -> Text:
@@ -104,21 +106,56 @@ class Gui:
         return full
 
     def show_main_bar(self, frame: Frame):
+        color = self.settings.colors.filters
         top = Text()
+
+        graph: str = f"Gráficos [{GuiKeys.graph}]"
+        for i in range(2):
+            if Flags.graph.get_value() == str(i):
+                graph += symbols.closed_circle.text
+            else:
+                graph += symbols.open_circle.text
+        top.add(self.style.border(color, graph))
+
+        trilhas: str = (f"Trilhas[{GuiKeys.tracks}]")
+        for i in range(3):
+            if Flags.tracks.get_value() == str(i):
+                trilhas += symbols.closed_circle.text
+            else:
+                trilhas += symbols.open_circle.text
+        top.add(self.style.border(color, trilhas))
+
+        quests: str = f"Tópicos [{GuiKeys.show_quests}]"
+        for i in range(3):
+            if Flags.quests.get_value() == str(i):
+                quests += symbols.closed_circle.text
+            else:
+                quests += symbols.open_circle.text
+        top.add(self.style.border(color, quests))
+
+        tasks: str = f"Tarefas [{GuiKeys.show_tasks}]"
+        for i in range(3):
+            if Flags.tasks.get_value() == str(i):
+                tasks += symbols.closed_circle.text
+            else:
+                tasks += symbols.open_circle.text
+        top.add(self.style.border(color, tasks))
+        
+
+
+        # full = self.center_header_footer(top, frame)
+        frame.set_header(top, "^")
+        # footer            
+        text = Text()
         alias_color = "R"
         dirname: str = self.rep.paths.get_rep_dir()
         dirname = os.path.basename(dirname).upper()
-        top.add(self.style.border(alias_color, dirname))
-        if not Flags.admin:
-            color = "W" if Flags.admin else "K"
-            top.add(self.style.border(color, "GAMER"))
-        top.add(self.style.border("G", self.rep.get_lang().upper()))
-        full = self.center_header_footer(top, frame)
-        frame.set_header(full, "<")
+        text.add(self.style.border(alias_color, dirname))
+        text.add(self.style.border("G", self.rep.get_lang().upper()))
         if self.need_update:
             text = Text().addf("r", " TKO DESATUALIZADO!").addf("y"," Atualize com: ").addf("g", "pipx upgrade tko ")
-            text = self.center_header_footer(text, frame)
-            frame.set_footer(text, "<")
+        text = self.center_header_footer(text, frame)
+        frame.set_footer(text, "<")
         
         # if Flags.flags:
         #     value = self.make_flags_bar()
@@ -145,7 +182,7 @@ class Gui:
 
         elements: list[Text] = []
         for skill, value in complete.items():
-            if Flags.skills.get_value() == "1":
+            if Flags.tracks.get_value() == "1":
                 obtained_value = int(100 * obtained.get(skill, 0) / priority.get(skill, 1))
                 possible_value = int(100 * value / priority.get(skill, 1))
                 text = f"{skill}: {obtained_value:03d}%  {possible_value:03d}%"
@@ -169,7 +206,7 @@ class Gui:
         else:
             grade = total_obtained / total_priority * 10.0
 
-        if Flags.skills.get_value() == "1":
+        if Flags.tracks.get_value() == "1":
             text = f" Nota: {grade:.1f}       "
         else:
             text = f"Nota: {grade:.1f} :{round(total_obtained):03d}/{round(total_priority):03d}/{round(total_complete):03d}"
@@ -271,7 +308,7 @@ class Gui:
 
     def show_top_bar(self, frame: Frame):
         lista = [
-            Text().addf("Y", f"Trilhas[t]"),
+            Text().addf('Y', f"Sair [q]"),
             Text().addf("Y", f"Ajuda[?]"),
         ]
         help_list = self.build_list_sentence(lista)
@@ -298,7 +335,6 @@ class Gui:
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
         _help.put_sentence(Text() + "  " + Text.r_token("g", "setas") + "      Para navegar entre os elementos")
         _help.put_sentence(Text() + "   " + Text.r_token("g", f"{GuiKeys.left}{GuiKeys.down}{GuiKeys.up}{GuiKeys.right}") + "      Para navegar entre os elementos")
-        _help.put_sentence(Text() + "   " + Text.r_token("g", f"{GuiKeys.left2}{GuiKeys.down2}{GuiKeys.up2}{GuiKeys.right2}") + "      Para navegar entre os elementos")
     
         _help.put_sentence(Text() + f"   {GuiActions.config} " + Text.r_token("r", f"{GuiKeys.palette}") + "  Abre o menu de ações e configurações")
         _help.put_sentence(Text() + f"   {GuiActions.github} " + Text.r_token("r", f"{GuiKeys.open_url}") + "  Abre tarefa em uma aba do browser")
@@ -314,25 +350,25 @@ class Gui:
         _help.put_sentence(Text() + Text.r_token("g", "             tko config --editor <comando>"))
 
 
-    def build_xp_bar(self) -> tuple[str, float]:
-        xp = XP(self.game)
-        available = xp.get_xp_total_available()
-        if 0 < available == xp.get_xp_total_obtained():
-            text = "Você atingiu o máximo de xp!"
-            percent = 100.0
-        else:
-            # lang = self.rep.get_lang().upper()
-            level = xp.get_level()
-            percent = float(xp.get_xp_level_current()) / float(xp.get_xp_level_needed())
-            if Flags.percent:
-                xpobt = int(100 * xp.get_xp_level_current() / xp.get_xp_level_needed())
-                text = "Level:{} XP:{}%".format(level, xpobt)
-            else:
-                xpobt1 = round(xp.get_xp_level_current())
-                xpobt2 = round(xp.get_xp_level_needed())
-                text = "Level:{} XP:{}/{}".format(level, xpobt1, xpobt2)
+    # def build_xp_bar(self) -> tuple[str, float]:
+    #     xp = XP(self.game)
+    #     available = xp.get_xp_total_available()
+    #     if 0 < available == xp.get_xp_total_obtained():
+    #         text = "Você atingiu o máximo de xp!"
+    #         percent = 100.0
+    #     else:
+    #         # lang = self.rep.get_lang().upper()
+    #         level = xp.get_level()
+    #         percent = float(xp.get_xp_level_current()) / float(xp.get_xp_level_needed())
+    #         if Flags.percent:
+    #             xpobt = int(100 * xp.get_xp_level_current() / xp.get_xp_level_needed())
+    #             text = "Level:{} XP:{}%".format(level, xpobt)
+    #         else:
+    #             xpobt1 = round(xp.get_xp_level_current())
+    #             xpobt2 = round(xp.get_xp_level_needed())
+    #             text = "Level:{} XP:{}/{}".format(level, xpobt1, xpobt2)
 
-        return text, percent
+    #     return text, percent
 
     def get_task_graph(self, task_key: str, width: int, height: int) -> tuple[bool, list[Text]]:
         tg = TaskGraph(self.settings, self.rep, task_key, width, height)
@@ -367,7 +403,7 @@ class Gui:
         if width < 5:
             width = 5
         if Flags.graph.get_value() == "1":
-            height = lines - 5
+            height = lines - 4
             if height < 3:
                 height = 3
             if isinstance(selected, Task):
@@ -376,17 +412,8 @@ class Gui:
                 made, list_data = self.get_daily_graph(width, height)
         if not made:
             list_data = [Text().add(x) for x in opening["estuda"].splitlines()]
-        op_one = "Ligado   "
-        op_two = "Desligado"
-        border = Border(self.settings.app)
-        view_button = Text().add("  ").add(border.border("C", f"Mudar Visão [TAB]"))
-        view_value = Flags.graph.get_value()
-        view_button.add(" ").addf("C" if view_value == "0" else "Y", f" {op_one} ")
-        view_button.add(" ").addf("C" if view_value == "1" else "Y", f" {op_two} ")
-        view_button = view_button.center(width)
-        frame.write(0, self.tree.max_title + distance, view_button)
         for y, line in enumerate(list_data):
-            frame.write(y + 1, self.tree.max_title + distance, line)
+            frame.write(y, self.tree.max_title + distance, line)
 
     def show_items(self):
         border_color = self.get_admin_color()
@@ -404,7 +431,7 @@ class Gui:
         left_size = 29
         skills_sx = 0
         flags_sx = 0
-        if Flags.skills.get_value() != "0":
+        if Flags.tracks.get_value() != "0":
             skills_sx = left_size #max(20, main_sx // 4)
         
         task_sx = main_sx - flags_sx - skills_sx
@@ -419,6 +446,6 @@ class Gui:
         self.show_main_bar(frame_main)
         self.show_graphs(frame_main)
 
-        if Flags.skills.get_value() != "0":
+        if Flags.tracks.get_value() != "0":
             frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)
             self.show_skills_bar(frame_skills)

@@ -242,13 +242,13 @@ class FloatingGrade(Floating):
         self.draw()
         key: int = Fmt.getch()
         key = InputManager.fix_cedilha(Fmt.get_screen(), key)
-        if key == self.settings.app.get_key_up() or key == ord(GuiKeys.up) or key == ord(GuiKeys.up2):
+        if key == self.settings.app.get_key_up() or key == ord(GuiKeys.up):
             self.send_key_up()
-        elif key == self.settings.app.get_key_down() or key == ord(GuiKeys.down) or key == ord(GuiKeys.down2):
+        elif key == self.settings.app.get_key_down() or key == ord(GuiKeys.down):
             self.send_key_down()
-        elif key == self.settings.app.get_key_left() or key == ord(GuiKeys.left) or key == ord(GuiKeys.left2):
+        elif key == self.settings.app.get_key_left() or key == ord(GuiKeys.left):
             self.send_key_left()
-        elif key == self.settings.app.get_key_right() or key == ord(GuiKeys.right) or key == ord(GuiKeys.right2):
+        elif key == self.settings.app.get_key_right() or key == ord(GuiKeys.right):
             self.send_key_right()
         elif key == ord("+") or key == ord("="):
             for _ in range(10):

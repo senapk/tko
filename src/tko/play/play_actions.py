@@ -67,14 +67,14 @@ class PlayActions:
                 self.fman.add_input(
                     Floating(self.settings, "v>")
                     .put_text("\nO arquivo de código não foi encontrado.\n")
-                    .error()
+                    .set_error()
                 )
         else:
             self.fman.add_input(
                 Floating(self.settings, "v>")
                 .put_text("\nVocê só pode abrir o código")
                 .put_text("de tarefas baixadas.\n")
-                .error()
+                .set_error()
             )
 
     def open_link(self):
@@ -90,7 +90,7 @@ class PlayActions:
                 Floating(self.settings, "v>")
                 .set_header(" Abrindo link ")
                 .put_text("\n " + task.link + " \n")
-                .warning()
+                .set_warning()
             )
         elif isinstance(obj, Quest):
             self.fman.add_input(
@@ -98,7 +98,7 @@ class PlayActions:
                 .put_text("\nEssa é uma missão.")
                 .put_text("\nVocê só pode abrir o link")
                 .put_text("de tarefas.\n")
-                .error()
+                .set_error()
             )
         else:
             self.fman.add_input(
@@ -106,7 +106,7 @@ class PlayActions:
                 .put_text("\nEsse é um grupo.")
                 .put_text("\nVocê só pode abrir o link")
                 .put_text("de tarefas.\n")
-                .error()
+                .set_error()
             )
 
     def register_action(self, task: Task):
@@ -138,7 +138,7 @@ class PlayActions:
                 Floating(self.settings, "v>")
                 .put_text("\nEssa é uma missão.")
                 .put_text("\nVocê só pode baixar tarefas.\n")
-                .error()
+                .set_error()
             )
             return
         if isinstance(obj, Cluster):
@@ -146,7 +146,7 @@ class PlayActions:
                 Floating(self.settings, "v>")
                 .put_text("\nEsse é um grupo.")
                 .put_text("\nVocê só pode baixar tarefas.\n")
-                .error()
+                .set_error()
             )
         if not isinstance(obj, Task):
             return
@@ -155,12 +155,12 @@ class PlayActions:
     def __down_remote_task(self, task: Task) -> None:
         if task.link_type != Task.Types.REMOTE_FILE and task.link_type != Task.Types.IMPORT_FILE:
             self.fman.add_input(
-                Floating(self.settings, "v>").put_text("\nEssa não é uma tarefa de baixável.\n").error()
+                Floating(self.settings, "v>").put_text("\nEssa não é uma tarefa de baixável.\n").set_error()
             )
             return
         lang = self.rep.get_lang() 
         down_frame = (
-            Floating(self.settings, "v>").warning().set_text_ljust().set_header(" Baixando tarefa ")
+            Floating(self.settings, "v>").set_warning().set_text_ljust().set_header(" Baixando tarefa ")
         )
         # down_frame.put_text(f"\ntko down {self.rep.alias} {task.key} -l {lang}\n")
         self.fman.add_input(down_frame)
@@ -221,7 +221,7 @@ class PlayActions:
         
         if not run.wdir.has_solver():
             DownProblem.create_default_draft(task_dir, self.rep.get_lang())
-            msg = Floating(self.settings, "v>").warning()
+            msg = Floating(self.settings, "v>").set_warning()
             msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.rep.get_lang()))
             msg.put_text("\nUm arquivo de rascunho foi criado em {}.".format(task_dir))
             self.fman.add_input(msg)

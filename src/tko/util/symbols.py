@@ -30,6 +30,9 @@ class __Symbols:
         self.whitespace = Text.Token("·") #Text.Token("␣")
         self.newline = Text.Token("↲")
 
+        self.open_circle = Text.Token("○")
+        self.closed_circle = Text.Token("●")
+
         self.cfill = Text.Token("_")
         self.tab = Text.Token("    ")
         self.arrow_up = Text.Token("↑")

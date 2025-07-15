@@ -45,14 +45,6 @@ class PlayConfig:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Muda a {y} do gráfico", icon(Flags.graph.is_true()), "Visão"),
-                Flags.graph.toggle,
-                Flags.graph.get_keycode()
-            )
-        )
-
-        options.append(
-            FloatingInputData(
                 lambda: Text.format(" {} Mostrar {y}", symbols.action, "Ajuda"),
                 self.gui.show_help,
                 GuiKeys.key_help
@@ -74,46 +66,6 @@ class PlayConfig:
                 GuiKeys.images
             )
         )
-
-        options.append(
-            FloatingInputData(
-                lambda: Text.format(" {} Mostrar atividades {y}", icon(Flags.hidden.is_true()), "Escondidas"),
-                Flags.hidden.toggle,
-                Flags.hidden.get_keycode()
-            )
-        )
-
-        options.append(
-            FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y}", icon(Flags.percent.is_true()), "Percentual"),
-                Flags.percent.toggle, 
-                Flags.percent.get_keycode()
-            )
-        )
-
-        options.append(
-            FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y}", icon(Flags.skills.is_true()), Flags.skills.get_name()),
-                Flags.skills.toggle, 
-                Flags.skills.get_keycode()
-            )
-        )
-
-        options.append(
-            FloatingInputData(
-                lambda: Text.format(" {} Modo {y}: Habilita apenas tarefas recomendadas", icon(not Flags.admin.is_true()), "Gamer"),
-                Flags.admin.toggle,
-                Flags.admin.get_keycode()
-            )
-        )
-
-        # options.append(
-        #     FloatingInputData(
-        #         lambda: Text.format(" {} Gerar {y} de dependências", symbols.action, "Grafo"),
-        #         self.actions.generate_graph,
-        #         GuiKeys.graph
-        #     ).set_exit_on_action(True)
-        # )
 
         options.append(
             FloatingInputData(

@@ -1,5 +1,7 @@
 # Changelog
 
+- 6.4.0
+  - add: filter controls enabled
 - 6.3.3
   - fix: track error sum floats
 - 6.3.2

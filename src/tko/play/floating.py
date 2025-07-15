@@ -6,12 +6,19 @@ from tko.play.input_manager import InputManager
 from tko.play.keys import GuiKeys
 from tko.util.symbols import symbols
 from tko.settings.settings import Settings
+import enum
+
+
+class FloatingType(enum.Enum):
+    WARNING = "warning"
+    ERROR = "error"
 
 class Floating:
+
     def __init__(self, settings: Settings, _align: str = ""):
         self._frame = Frame(0, 0)
         self._content: list[Text] = []
-        self._type = "warning"
+        self._type: FloatingType = FloatingType.WARNING
         self._enable = True
         self._extra_exit: list[int] = []
         self._exit_fn: Callable[[], None] | None = None
@@ -123,18 +130,19 @@ class Floating:
 
     def _set_default_header(self):
         if self._frame.get_header().len() == 0:
-            if self._type == "warning":
+            if self._type == FloatingType.WARNING:
                 self.set_header(" Aviso ")
-            elif self._type == "error":
+            elif self._type == FloatingType.ERROR:
                 self.set_header(" Erro ")
 
-    def warning(self):
-        self._type = "warning"
+    def set_warning(self):
+        self._type = FloatingType.WARNING
         self._frame.set_border_color("y")
         return self
-    
-    def error(self):
-        self._type = "error"
+
+
+    def set_error(self):
+        self._type = FloatingType.ERROR
         self._frame.set_border_color("r")
         return self
 
@@ -159,7 +167,7 @@ class Floating:
         self.draw()
         key: int = Fmt.getch()
         key = InputManager.fix_cedilha(Fmt.get_screen(), key)
-        if self._type == "warning" or self._type == "error":
+        if self._type == FloatingType.WARNING or self._type == FloatingType.ERROR:
             if key < 300:
                 self._enable = False
                 if self._exit_fn is not None:
@@ -282,11 +290,11 @@ class FloatingInput(Floating):
         key: int = Fmt.getch()
         key = InputManager.fix_cedilha(Fmt.get_screen(), key)
         
-        if key == self.settings.app.get_key_up() or key == ord(GuiKeys.up) or key == ord(GuiKeys.up2):
+        if key == self.settings.app.get_key_up() or key == ord(GuiKeys.up):
             self.prev_option()
-        elif key == self.settings.app.get_key_down() or key == ord(GuiKeys.down) or key == ord(GuiKeys.down2):
+        elif key == self.settings.app.get_key_down() or key == ord(GuiKeys.down):
             self.next_option()
-        elif key == self.settings.app.get_key_left() or key == ord(GuiKeys.left) or key == ord(GuiKeys.left2):
+        elif key == self.settings.app.get_key_left() or key == ord(GuiKeys.left):
             self.search_text = self.search_text[:-1]
             self.update_index()
         elif 32 <= key < 127:

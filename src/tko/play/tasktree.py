@@ -39,7 +39,7 @@ class TaskTree:
         self.expanded: list[str] = []
         self.load_all_items()
         self.load_from_rep()
-        self.update_tree(admin_mode = Flags.admin.is_true())
+        self.update_tree(admin_mode = Flags.quests.get_value() == "2")
         self.reload_sentences()
 
     def load_all_items(self):
@@ -125,7 +125,7 @@ class TaskTree:
     
         color_aval = "g" if quest_reachable and t.is_reachable() else "r"
         color_lig_task = color_aval
-        if not Flags.hidden.is_true() and not Flags.admin.is_true():
+        if Flags.quests.get_value() == "0":
             quest = self.game.quests[t.quest_key]
             if quest.prog:
                 if t.key != self.game.quests[t.quest_key].get_tasks()[-1].key:
@@ -141,7 +141,6 @@ class TaskTree:
         output.add(t.get_prog_symbol()).add(" ")
         output.add(symbols.flow_list[t.info.flow]).add(" ")
         output.add(symbols.edge_list[t.info.edge])
-
 
         if in_focus:
             output.add(self.style.round_l(focus_color))
@@ -169,34 +168,21 @@ class TaskTree:
         else:
             output.add(" ")
 
-        output.ljust(self.max_title + 10, Text.Token(" "))
-        # if Flags.percent.is_true():
+        output.ljust(self.max_title + 9, Text.Token(" "))
         prog = round(t.get_percent())
         output.addf("y", str(prog).rjust(3, " ") + "%")
-        # else:
-        #     color_rate: list[str] = ["", "c", "g", "y", "m", "r"]
-        #     rate = (t.info.neat + t.info.cool) / 2
-        #     for i in range(1, 6):
-        #         if rate >= i:
-        #             output.addf(color_rate[t.info.easy], symbols.star)
-        #         else:
-        #             output.addf(color_rate[t.info.easy], symbols.open_star)
-
-        # if Flags.reward:
-        #     xp = ""
-        #     for s, v in t.skills.items():
-        #         xp += f" +{s}:{v}"
-        #     output.addf(self.colors.task_skills, xp)
-            
         return output
 
     def __str_quest(self, has_kids: bool, focus_color: str, q: Quest, lig: str) -> Text:
-        con = "━─"
-        if q.key in self.expanded and has_kids:
-            con = "─┯"
+        con = "┄┄"
+        n_visible, n_hidden = self.count_visible_hidden_tasks(q)
+        if n_visible > 0:
+            con = "━─" if n_hidden == 0 else "━┄"
+            if q.key in self.expanded and has_kids:
+                con = "─╮" if n_hidden == 0 else "┄╮"
 
         color_reachable = "g" if q.is_reachable() else "r"
-        if Flags.hidden.is_true() and not Flags.admin.is_true():
+        if Flags.quests.get_value() == "1":
             for quest in self.game.quests.values():
                 if not quest.is_reachable():
                     if q.key in quest.requires:
@@ -214,17 +200,11 @@ class TaskTree:
                 if not quest.is_reachable():
                     if q.key in quest.requires:
                         focus_color = "y"
-                # elif quest.key in q.requires:
-                #     focus_color = "r"
 
         if in_focus:
             output.add(self.style.round_l(focus_color))
         else:
             output.add(" ")
-
-        # color = ""
-        # if in_focus:
-        #     color = "k" + focus_color
 
         title = q.get_full_title()
         title = title.ljust(self.max_title + 3, Text.Token("."))
@@ -238,8 +218,8 @@ class TaskTree:
         else:
             output.add(" ")
 
-        # if Flags.percent:
-        output.add(" ").add(q.get_resume_by_percent())
+        output.add(q.get_resume_by_percent())
+
         all_tasks_done = True
         for t in q.get_tasks():
             if not t.is_complete():
@@ -247,18 +227,6 @@ class TaskTree:
                 break
         if all_tasks_done:
             output.add("🌟")
-
-        # if Flags.minimum:
-        #     output.add(" ").add(q.get_requirement())
-
-        # if Flags.reward:
-        #     xp = ""
-        #     for s, v in q.skills.items():
-        #         xp += f" +{s}:{v}"
-        #     output.addf(self.colors.task_skills, xp)
-
-        # if q.key in self.new_items:
-        #     output.addf(self.colors.task_new, " [new]")
 
         return output
 
@@ -287,13 +255,8 @@ class TaskTree:
         else:
             output.add(" ")
 
+        output.add(cluster.get_resume_by_percent())
 
-        # if Flags.percent:
-        output.add(" ").add(cluster.get_resume_by_percent())
-        # else:
-        #     output.add(" ").add(cluster.get_resume_by_quests())
-        # if cluster.key in self.new_items:
-        #     output.addf(self.colors.task_new, " [new]")
 
         return output
 
@@ -342,14 +305,32 @@ class TaskTree:
             return True
         return False
 
+    def is_hide_tasks(self, task: Task) -> bool:
+        if Flags.tasks.get_value() == "1" and task.get_percent() > 99:
+            return True
+        if Flags.tasks.get_value() == "2" and task.get_percent() > 70:
+            return True
+        return False
+
+    def remove_empty_quests(self):
+        for c in self.game.clusters.values():
+            if c.key not in self.expanded:
+                continue
+            for q in c.get_quests():
+                if q.key not in self.expanded:
+                    continue
+                visible, _ = self.count_visible_hidden_tasks(q)
+                if visible == 0:
+                    self.expanded.remove(q.key)
+
     def reload_sentences(self):
         self.__update_max_title()
         self.items = []
-
+        self.remove_empty_quests()
         filtered, _ = self.filter_by_search()
         matcher = SearchAsc(self.search_text)
 
-        hide = not Flags.hidden.is_true() and not Flags.admin.is_true()
+        hide = Flags.quests.get_value() == "0"
 
         clusters = [self.game.clusters[key] for key in self.game.clusters.keys() if key in filtered]
         if hide:
@@ -376,14 +357,23 @@ class TaskTree:
                 focus_color = quest_focus_color if self.selected_item == q.get_key() else ""
                 q.sentence = self.__str_quest(len(tasks) > 0, focus_color, q, lig)
 
-                # self.items.append(Entry(q, sentence))
+                full_task_size = len(tasks)
+                tasks = [t for t in tasks if not self.is_hide_tasks(t)]
+                filtered_tasks_size = len(tasks)
+                has_hidden_tasks = full_task_size != filtered_tasks_size
+
                 self.__try_add(filtered, matcher, q)
                 if q.key in self.expanded:
                     for t in tasks:
+                        if has_hidden_tasks:
+                            ligq = "┆ " if t != tasks[-1] else "╰ "
+                        else:
+                            ligq = "├ " if t != tasks[-1] else "╰ "
                         ligc = "│" if q != quests[-1] else " "
-                        ligq = "├ " if t != tasks[-1] else "╰ "
                         focus_color: str = quest_focus_color if self.selected_item == t.get_key() else ""
                         t.sentence: Text = self.__str_task(focus_color, t, ligc, ligq, q.is_reachable()) # type: ignore
+                        # if self.is_hide_tasks(t):
+                        #     continue
                         self.__try_add(filtered, matcher, t)
         # verifying if it has any selected item
         if self.items:
@@ -518,9 +508,16 @@ class TaskTree:
                 index -= 1
             self.set_selected_by_index(index)
 
+    def is_admin_mode(self) -> bool:
+        return Flags.quests.get_value() == "2"
+
     def unfold(self, obj: TreeItem) -> bool:
-        if isinstance(obj, Quest) and not obj.is_reachable() and not Flags.admin:
+        if isinstance(obj, Quest) and not obj.is_reachable() and not self.is_admin_mode():
             return False
+        if isinstance(obj, Quest):
+            visible, _ = self.count_visible_hidden_tasks(obj)
+            if visible == 0:
+                return False
         if isinstance(obj, Quest) or isinstance(obj, Cluster):
             if obj.key not in self.expanded:
                 self.expanded.append(obj.key)
@@ -530,6 +527,16 @@ class TaskTree:
                         self.expanded.append(cluster.get_quests()[0].key)
                 return True
         return False
+
+    def count_visible_hidden_tasks(self, quest: Quest) -> tuple[int, int]:
+        visible = 0
+        hidden = 0
+        for t in quest.get_tasks():
+            if not self.is_hide_tasks(t):
+                visible += 1
+            else:
+                hidden += 1
+        return visible, hidden
 
     def fold(self, obj: TreeItem) -> bool:
         if isinstance(obj, Quest) or isinstance(obj, Cluster):

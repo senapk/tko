@@ -31,30 +31,27 @@ opening: dict[str, str] = {}
 # """
 
 opening["estuda"] = r"""
-------- O modelo de avaliação utiliza 3 critérios --------
 
-- Cobertura: quanto da atividade foi entregue\?
-  - Se houver testes, isso será calculado automaticamente
-- Abordagem: como foi a última execução da atividade\?
-  - Copiar, ChatGpt, Copilot, Aula, Monitoria, Sozinho
-- Autonomia: se refizer a atividade sozinho e SEM CONSULTA,
-    quanto dela você se sente confiante para fazer\?
+      ▄▖         ▐▘      ▘                ▗   ▄▖
+      ▌ ▛▌▛▛▌▛▌  ▜▘▌▌▛▌▛▘▌▛▌▛▌▀▌  ▀▌  ▛▌▛▌▜▘▀▌▗▘
+      ▙▖▙▌▌▌▌▙▌  ▐ ▙▌▌▌▙▖▌▙▌▌▌█▌  █▌  ▌▌▙▌▐▖█▌▗ 
+                                          
+- Após fazer a atividades, você usa o comando de pontuar,
+usando o 'p' ou o 'backspace', e informa como fez a atividade.
 
-Cobertura: (  fiz nada ) 0 1 ... 9 ✓ (entreguei tudo)
-Abordagem: (muita ajuda) x E D C B A (nenhum suporte)
+  - Cobertura: quanto da atividade foi entregue?
+    - Se houver testes, isso será calculado automaticamente
+  - Abordagem: precisou de algum tipo de ajuda pra fazer?
+    - Humana, IA, Guiado, Pesquisa, Sozinho?
+  - Autonomia: se refizesse a atividade sozinho e SEM CONSULTA,
+    - quanto dela você se sente confiante para fazer?
+
+- Você pode e deve refazer a atividade outras vezes com menos 
+ou nenhum suporte para estudar, reavaliar e melhorar sua nota.
+
+Cobertura: (  fiz nada ) 0123456789✓ (entreguei tudo)
+Abordagem: (qual ajuda ) x  HIGP  AS (nenhuma ajuda )
 Autonomia: (não aprendi) x ▁ ▂ ▃ ▅ █ (refaço sozinho)
-
- ,`````.          __||||___       
-' Estuda`,       /_  ___   \      
-'miserável`.    /@ \/@  \   \     
- ` , . , '  `.. \__/\___/   /     
-                 \_\/______/      
-                 /     /\\\\\     
-                |     |\\\\\\     
-                 \      \\\\\\    
-                  \______/\\\\    
-            _______ ||_||_______  
-           (______(((_(((______(@)
 """[1:]
 
 # opening["alien4"] = r"""

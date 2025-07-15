@@ -54,7 +54,7 @@ class Play:
             self.exit = True
 
         self.fman.add_input(
-            Floating(self.settings).put_text("\nAté a próxima\n").set_exit_fn(set_exit).warning()
+            Floating(self.settings).put_text("\nAté a próxima\n").set_exit_fn(set_exit).set_warning()
         )
 
     def make_callback(self) -> InputManager:
@@ -65,25 +65,21 @@ class Play:
         # cman.add_int(curses.KEY_BACKSPACE, self.send_quit_msg)
 
         cman.add_str(GuiKeys.up, self.tree.move_up)
-        cman.add_str(GuiKeys.up2, self.tree.move_up)
         key_up = self.app.get_key_up()
         if key_up != 0:
             cman.add_int(key_up, self.tree.move_up)
 
         cman.add_str(GuiKeys.down, self.tree.move_down)
-        cman.add_str(GuiKeys.down2, self.tree.move_down)
         key_down = self.app.get_key_down()
         if key_down != 0:
             cman.add_int(key_down, self.tree.move_down)
 
         cman.add_str(GuiKeys.left, self.tree.arrow_left)
-        cman.add_str(GuiKeys.left2, self.tree.arrow_left)
         key_left = self.app.get_key_left()
         if key_left != 0:
             cman.add_int(key_left, self.tree.arrow_left)
 
         cman.add_str(GuiKeys.right, self.tree.arrow_right)
-        cman.add_str(GuiKeys.right2, self.tree.arrow_right)
         key_right = self.app.get_key_right()
         if key_right != 0:
             cman.add_int(key_right, self.tree.arrow_right)
@@ -105,7 +101,7 @@ class Play:
         cman.add_str(GuiKeys.key_help, self.gui.show_help)
         
         for flag in self.flagsman.flags.values():
-            cman.add_str(flag.get_keycode(), FlagFunctor(flag))
+            cman.add_str(flag.get_keycode(), FlagFunctor(flag, self.fman, self.settings))
 
         cman.add_str(GuiKeys.search, self.gui.search.toggle_search)
         cman.add_str(GuiKeys.palette, self.play_palette.command_pallete)
@@ -119,7 +115,7 @@ class Play:
             return
         if key < 0 or key > 255:
             return
-        self.fman.add_input( Floating(self.settings, "v>").error().put_text(f"Tecla char:{chr(key)}, code:{key}, não reconhecida") )
+        self.fman.add_input( Floating(self.settings, "v>").set_error().put_text(f"Tecla char:{chr(key)}, code:{key}, não reconhecida") )
 
 
     def main(self, scr: curses.window):
@@ -129,7 +125,7 @@ class Play:
         Fmt.set_scr(scr)  # Define o scr como global
 
         while True:
-            self.tree.update_tree(admin_mode=Flags.admin.is_true() or self.gui.search.search_mode)
+            self.tree.update_tree(admin_mode=Flags.quests.get_value() == "2" or self.gui.search.search_mode)
             self.fman.draw_warnings()
             cman = self.make_callback()
             self.gui.show_items()
