@@ -14,19 +14,20 @@ class Search:
         self.search_mode: bool = False
         self.backup_expanded: list[str] = []
         self.backup_index_selected: str = ""
-        self.backup_admin_mode: bool = False
+        self.backup_admin_mode: str = ""
         self.settings = tree.settings
 
     def toggle_search(self):
-        self.search_mode = not self.search_mode
-        if self.search_mode:
+        if not self.search_mode:
             self.backup_expanded = [v for v in self.tree.expanded]
             self.backup_index_selected = self.tree.selected_item
-            self.backup_admin_mode = Flags.quests.get_value() == "2"
+            self.backup_admin_mode = Flags.quests.get_value()
             Flags.tasks.set_value("0")
+            Flags.quests.set_value("2")
             self.tree.update_tree(admin_mode=True)
             self.tree.process_expand_all()
             self.tree.process_expand_all()
+        self.search_mode = not self.search_mode
             
     def finish_search(self):
         if self.tree.selected_item == "":
@@ -44,6 +45,8 @@ class Search:
             reachable = item.is_reachable()
         if not reachable:
             Flags.quests.set_value("2")
+        else:
+            Flags.quests.set_value(self.backup_admin_mode)
         self.tree.update_tree(Flags.quests.get_value() == "2") # usa o mode de antes e vê se acha
         self.tree.reload_sentences()
         

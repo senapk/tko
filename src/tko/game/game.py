@@ -101,7 +101,8 @@ class Game:
             content = Decoder.load(filename)
         self.parse_xp(content)
 
-        gb = GameBuilder(filename, folder).build_from(content, language)
+        gb = GameBuilder(filename, folder)
+        gb.build_from(content, language)
         self.ordered_clusters = gb.ordered_clusters
         self.clusters = gb.clusters
         self.quests = gb.collect_quests()

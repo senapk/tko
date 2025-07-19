@@ -2,6 +2,7 @@ from tko.game.task import Task
 
 import os
 import re
+from icecream import ic
 
 class TaskParser:
 
@@ -75,13 +76,12 @@ class TaskParser:
             return
 
         if self.task.key == "":
-            raise Warning(f"Chave não definida para tarefa: {link}")
+            raise Warning(f"Parsing {self.index_path}, Chave de tarefa não definida: {link}")
 
         if link.startswith("http:") or link.startswith("https:"):
             task.set_folder(os.path.relpath(os.path.join(self.database_folder, task.key)))
             task.link_type = Task.Types.REMOTE_FILE
             return
-
         if not os.path.isabs(link):
             basedir = os.path.dirname(self.index_path)
             link = os.path.join(basedir, link)
@@ -89,7 +89,7 @@ class TaskParser:
         # verify if file exists
         # update link using index_path to update de relative path
         if not os.path.isfile(link):
-            raise Warning(f"Arquivo não encontrado: {link}")
+            raise Warning(f"Parsing {self.index_path}, Arquivo de tarefa não encontrado: {link}")
 
         # verify if file is inside database_folder/folder
         abs_task_folder = os.path.abspath(os.path.join(self.database_folder, task.key))

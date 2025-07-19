@@ -8,6 +8,7 @@ from tko.util.text import Text
 from tko.logger.logger import Logger
 import yaml # type: ignore
 from tko.settings.rep_paths import RepPaths
+from icecream import ic
 
 def remove_git_merge_tags(lines: list[str]) -> list[str]:
     # remove lines with <<<<<<<, =======, >>>>>>>>

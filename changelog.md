@@ -1,5 +1,8 @@
 # Changelog
 
+- 6.4.1
+  - fix: search mode error
+  - fix: better msg error for parsing Readme.md
 - 6.4.0
   - add: filter controls enabled
 - 6.3.3

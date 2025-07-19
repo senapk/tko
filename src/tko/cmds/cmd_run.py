@@ -138,7 +138,6 @@ class Run:
         if not self.wdir.has_solver() and self.wdir.has_tests() and not self.__eval_mode:
             self.__list_mode()
             return 0
-        
         if self.wdir.has_solver():
             self.__prepare_rep_task_logger()
 
@@ -148,7 +147,6 @@ class Run:
             else:
                 print(Text().addf("", "fail: ") + "Nenhum caso de teste encontrado.")
             return 0
-        
         return self.__run_tests()
 
     def __prepare_rep_task_logger(self):
@@ -165,7 +163,9 @@ class Run:
         repo_path = RepPaths.rec_search_for_repo(dirname)
         if repo_path == "":
             return False
-        rep = Repository(repo_path).load_config().load_game()
+        rep = Repository(repo_path)
+        rep.load_config()
+        rep.load_game()
         self.__rep = rep
         if rep.get_lang() != "":
             self.__lang = rep.get_lang()

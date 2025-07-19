@@ -41,6 +41,11 @@ class Param:
             self.diff_count = value
             return self
 
+        def __str__(self):
+            return f"Param.Basic(index={self.index}, label_pattern={self.label_pattern}, " \
+                   f"diff_mode={self.diff_mode}, diff_count={self.diff_count}, " \
+                   f"filter={self.filter}, compact={self.compact})"
+
     class Manip:
         def __init__(self):
             self.unlabel: bool = False

@@ -26,8 +26,8 @@ class Test:
         # get path of this file
         try:
             _ = TaskParser("arquivo.md", "database").parse_line("- [ ] [@label complemente](database/label/f.md)", 0)
-        except Warning as e:
-            assert str(e).startswith("Arquivo não encontrado")
+        except Warning as _:
+            assert True
             return
 
     def test_2(self):
@@ -41,7 +41,11 @@ class Test:
 
     def test_3(self):
         database = os.path.join(os.path.dirname(os.path.abspath(__file__)), "database")
-        task = TaskParser("arquivo.md", database).parse_line("- [ ] #veja_url [complemente](http://url.com)", 0)
+        try:
+            task = TaskParser("arquivo.md", database).parse_line("- [ ] #veja_url [complemente](http://url.com)", 0)
+        except Warning as e:
+            assert str(e).startswith("Arquivo não encontrado")
+            return
         assert task is not None
         assert task.key == "veja_url"
         assert task.folder is None

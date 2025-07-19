@@ -51,14 +51,8 @@ class TaskTree:
                     self.all_items[t.key] = t
 
     def load_from_rep(self):
-        # self.new_items: list[str] = [v for v in self.rep.get_new_items()]
         self.expanded: list[str] = [v for v in self.rep.get_expanded()]
         self.selected_item = self.rep.get_selected()
-
-        # tasks = self.rep.get_tasks()
-        # for key, serial in tasks.items():
-        #     if key in self.game.tasks:
-        #         self.game.tasks[key].load_from_db(serial)
 
     def save_on_rep(self):
         self.rep.set_expanded(self.expanded)
@@ -71,27 +65,13 @@ class TaskTree:
         self.rep.set_tasks(tasks)
 
     def update_tree(self, admin_mode: bool):
-        #if not admin_mode:
-            # reachable_clusters = [c.key for c in self.game.clusters.values() if c.is_reachable()]
-            # reachable_quests = [q.key for q in self.game.quests.values() if q.is_reachable()]
-            # old_reachable = reachable_clusters + reachable_quests
-
         self.game.update_reachable_and_available()
-            
         if not admin_mode:
-            # reachable_clusters = [c.key for c in self.game.clusters.values() if c.is_reachable()]
             reachable_quests = [q.key for q in self.game.quests.values() if q.is_reachable()]
             reachable_keys = reachable_quests + list(self.game.clusters.keys())
             for key in self.expanded:
                 if key not in reachable_keys:
                     self.expanded.remove(key)
-            # if not first_loop:
-            #     for key in reachable_keys:
-            #         if key not in old_reachable and key not in self.new_items:
-            #             self.new_items.append(key)
-
-        # remove expanded items from new
-        # self.new_items = [item for item in self.new_items if item not in self.expanded]
 
     def __update_max_title(self):
         min_value = 50
