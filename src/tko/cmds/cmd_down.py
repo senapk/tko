@@ -91,6 +91,54 @@ class CmdDown:
         cb.set_quiet(True)
         cb.execute()
 
+    def find_folder_for_drafts(self, destiny_folder: str, lang: str) -> str:
+        drafts_folder = os.path.join(destiny_folder, lang)
+        files_under_destiny = os.listdir(destiny_folder)
+        on_root = False
+        for file in files_under_destiny:
+            if file.endswith(f".{lang}"):
+                drafts_folder = os.path.join(destiny_folder, file)
+                on_root = True
+                break
+
+        if not on_root and not os.path.exists(drafts_folder):
+            os.makedirs(drafts_folder, exist_ok=True)
+            return drafts_folder
+        
+        count = 1
+        while True:
+            drafts_backup_folder = os.path.join(destiny_folder, f"_{lang}.{count}")
+            if not os.path.exists(drafts_backup_folder):
+                drafts_folder = drafts_backup_folder
+                os.makedirs(drafts_folder, exist_ok=True)
+                break
+            count += 1
+        DownProblem.fnprint("")
+        DownProblem.fnprint(f"Criando nova pasta de rascunhos: {os.path.basename(drafts_folder)}")
+        DownProblem.fnprint(f"Você precisa manualmente copiar os novos rascunhos")
+        return drafts_folder
+
+    def check_and_remove_draft(self, drafts_folder: str, lang: str) -> None:
+        destiny_folder = os.path.dirname(drafts_folder)
+        parts = drafts_folder.split(".")
+        if len(parts) > 1:
+            try:
+                count = int(parts[-1])
+                if count == 1:
+                    last_path = os.path.join(destiny_folder, lang)
+                else:
+                    last = count - 1
+                    last_path = ".".join(parts[:-1]) + f".{last}"
+                if os.path.exists(last_path):
+                    if self.folder_equals(drafts_folder, last_path):
+                        lastname = os.path.basename(last_path)
+                        newname = os.path.basename(drafts_folder)
+                        DownProblem.fnprint("")
+                        DownProblem.fnprint(f"Pasta {newname} igual a {lastname}, removendo {newname}")
+                        shutil.rmtree(drafts_folder)
+            except ValueError:
+                pass
+
     def download_from_url(self, task_source: str) -> bool:
         readme_remote_url = RemoteUrl(task_source)
         remote_url = readme_remote_url.get_raw_url()
@@ -98,33 +146,32 @@ class CmdDown:
         self.destiny_folder = self.rep.get_task_folder_for_label(self.task_key)
         self.readme_path =  os.path.join(self.destiny_folder, "Readme.md")
         self.mapi_file = os.path.join(self.destiny_folder, "mapi.json")
-
-        backup_folder = DownProblem.backup_and_create_problem_folder(self.destiny_folder)
+        # backup_folder = DownProblem.backup_and_create_problem_folder(self.destiny_folder)
+        os.makedirs(self.destiny_folder, exist_ok=True)
         if not self.download_readme(readme_remote_url):
             self.remove_empty_destiny_folder()
             return False
         
         lang = self.check_and_select_language()
-        
+        drafts_done: bool = False
         if self.download_mapi():
             encoding = Decoder.get_encoding(self.mapi_file)
             with open(self.mapi_file, encoding=encoding) as f:
                 loaded_json = json.load(f)
             os.remove(self.mapi_file)
             DownProblem.unpack_problem_files(loaded_json, self.destiny_folder)
-            if not DownProblem.unpack_json_drafts(loaded_json, self.destiny_folder, lang):
-                DownProblem.create_default_draft(self.destiny_folder, lang)
+            drafts_folder = self.find_folder_for_drafts(self.destiny_folder, lang)
+            if DownProblem.unpack_json_drafts(loaded_json, drafts_folder, lang):
+                drafts_done = True
         else:
+            drafts_folder = self.find_folder_for_drafts(self.destiny_folder, lang)
             self.build_cases_from_readme(self.destiny_folder)
-            DownProblem.create_default_draft(self.destiny_folder, lang)
+
+        if not drafts_done:
+            DownProblem.create_default_draft(drafts_folder, lang)
+        self.check_and_remove_draft(drafts_folder, lang)
         DownProblem.fnprint("")
         DownProblem.fnprint("Atividade baixada com sucesso")
-        if backup_folder != "":
-            if CmdDown.folder_equals(self.destiny_folder, backup_folder):
-                DownProblem.fnprint("Pastas {} e {} são iguais".format(os.path.basename(self.destiny_folder), os.path.basename(backup_folder)))
-                DownProblem.fnprint("Removendo pasta de backup {}".format(os.path.basename(backup_folder)))
-                shutil.rmtree(backup_folder, ignore_errors=True)
-
         return True
 
     @staticmethod
@@ -197,9 +244,9 @@ class DownProblem:
     fnprint: Callable[[str], None] = print
 
     @staticmethod
-    def __create_file(content: str, path: str, label: str=""):
+    def __create_file(content: str, path: str, label: str="", parts: int = 2):
         Decoder.save(path, content)
-        DownProblem.fnprint(DownProblem.folder_and_file(path) + " " + label)
+        DownProblem.fnprint(DownProblem.folder_and_file(path, parts) + " " + label)
 
     @staticmethod
     def unpack_json_drafts(loaded: dict[str, Any], destiny: str, lang: str) -> bool:
@@ -208,7 +255,7 @@ class DownProblem:
             if lang in loaded["draft"]:
                 for file in loaded["draft"][lang]:
                     path = os.path.join(destiny, file["name"])
-                    DownProblem.__create_file(file["contents"], path, "(Rascunho)")
+                    DownProblem.__create_file(file["contents"], path, "(Rascunho)", 3)
                     found = True
 
         return found
@@ -231,11 +278,11 @@ class DownProblem:
                 DownProblem.compare_and_save(file["contents"], path)
 
     @staticmethod
-    def folder_and_file(path: str) -> str:
+    def folder_and_file(path: str, parts: int = 2) -> str:
         """ Return the folder and file name of the path """
-        folder = os.path.basename(os.path.dirname(path))
-        file = os.path.basename(path)
-        return os.path.join(folder, file)
+        pieces = path.split(os.sep)
+        pieces = pieces[-parts:]  # Get the last 'parts' elements
+        return os.path.join(*pieces)
 
     @staticmethod
     def  compare_and_save(content: str, path: str):
@@ -263,35 +310,35 @@ class DownProblem:
         If backup was created, return the new name.
         If not, return empty string.
         """
-        new_destiny = ""
-        if os.path.exists(destiny): # move folder to 
-            count = 1
-            while True:
-                new_destiny = "{}+{}".format(destiny, count)
-                if not os.path.exists(new_destiny):
-                    shutil.move(destiny, new_destiny)
-                    DownProblem.fnprint("Pasta {} já existe".format(os.path.basename(destiny)))
-                    DownProblem.fnprint("Renomeando para {}".format(os.path.basename(new_destiny)))
-                    break
-                else:
-                    count += 1
-        nova = "" if new_destiny == "" else " nova"
-        DownProblem.fnprint("Criando{} pasta {}".format(nova, os.path.basename(destiny)))
+        # new_destiny = ""
+        # if os.path.exists(destiny): # move folder to 
+        #     count = 1
+        #     while True:
+        #         new_destiny = "{}+{}".format(destiny, count)
+        #         if not os.path.exists(new_destiny):
+        #             shutil.move(destiny, new_destiny)
+        #             DownProblem.fnprint("Pasta {} já existe".format(os.path.basename(destiny)))
+        #             DownProblem.fnprint("Renomeando para {}".format(os.path.basename(new_destiny)))
+        #             break
+        #         else:
+        #             count += 1
+        # nova = "" if new_destiny == "" else " nova"
+        # DownProblem.fnprint("Criando{} pasta {}".format(nova, os.path.basename(destiny)))
         os.makedirs(destiny, exist_ok=True)
-        DownProblem.fnprint("")
-        return new_destiny
+        # DownProblem.fnprint("")
+        return ""
 
     @staticmethod
     def create_default_draft(destiny: str, language: str):
         filename = "draft."
         draft_path = os.path.join(destiny, filename + language)
-
+        os.makedirs(os.path.dirname(draft_path), exist_ok=True)
         if not os.path.exists(draft_path):
             with open(draft_path, "w", encoding="utf-8") as f:
                 if language in Drafts.drafts:
                     f.write(Drafts.drafts[language])
                 else:
                     f.write("")
-            DownProblem.fnprint(DownProblem.folder_and_file(draft_path) + " (Vazio)")
+            DownProblem.fnprint(DownProblem.folder_and_file(draft_path, 3) + " (Vazio)")
         else:
-            DownProblem.fnprint(DownProblem.folder_and_file(draft_path) + " (Não sobrescrito)")
+            DownProblem.fnprint(DownProblem.folder_and_file(draft_path, 3) + " (Não sobrescrito)")
