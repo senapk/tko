@@ -2,7 +2,6 @@ from tko.play.floating import FloatingInputData, FloatingInput
 from tko.util.text import Text
 from tko.util.symbols import symbols
 from tko.play.keys import GuiKeys
-from tko.play.flags import Flags
 from tko.play.play_actions import PlayActions
 from tko.play.floating_calibrate import FloatingCalibrate
 
@@ -40,6 +39,14 @@ class PlayConfig:
                 lambda: Text.format(" {} Tarefa: {y} arquivos na IDE", symbols.action, "Editar"),
                 self.actions.open_code,
                 GuiKeys.edit
+            ).set_exit_on_action(True)
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text.format(" {} Tarefa: {y} pasta", symbols.action, "Apagar"),
+                self.actions.delete_folder,
+                ""
             ).set_exit_on_action(True)
         )
 

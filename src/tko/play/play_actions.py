@@ -12,7 +12,7 @@ from tko.cmds.cmd_run import Run
 
 from tko.util.param import Param
 
-from tko.cmds.cmd_down import DownProblem
+from tko.cmds.cmd_down import DownActions
 
 from tko.play.fmt import Fmt
 from tko.play.floating import Floating
@@ -26,6 +26,7 @@ from tko.logger.log_item_self import LogItemSelf
 from tko.logger.log_item_move import LogItemMove
 
 import os
+import shutil
 import tempfile
 import subprocess
 
@@ -53,6 +54,38 @@ class PlayActions:
         if task.folder is None:
             raise Exception("Folder não encontrado")
         return task.folder
+
+    def delete_folder(self):
+        obj = self.tree.get_selected_throw()
+        if isinstance(obj, Task):
+            task: Task = obj
+            folder = self.get_task_folder(task)
+            if os.path.exists(folder):
+                try:
+                    shutil.rmtree(folder)
+                    self.fman.add_input(
+                        Floating(self.settings, "v>")
+                        .put_text(f"\nPasta {folder} apagada com sucesso.\n")
+                        .set_warning()
+                    )
+                except OSError as e:
+                    self.fman.add_input(
+                        Floating(self.settings, "v>")
+                        .put_text(f"\nErro ao apagar a pasta {folder}: {e}\n")
+                        .set_error()
+                    )
+            else:
+                self.fman.add_input(
+                    Floating(self.settings, "v>")
+                    .put_text("\nPasta não encontrada.\n")
+                    .set_error()
+                )
+        else:
+            self.fman.add_input(
+                Floating(self.settings, "v>")
+                .put_text("\nVocê só pode apagar pastas de tarefas.\n")
+                .set_error()
+            )
 
     def open_code(self):
         obj = self.tree.get_selected_throw()
@@ -216,13 +249,14 @@ class PlayActions:
         run.set_run_without_ask(False)
         run.set_curses(True)
         run.set_task(self.rep, task)
-
         run.build_wdir()
         
         if not run.wdir.has_solver():
-            DownProblem.create_default_draft(task_dir, self.rep.get_lang())
+            lang = self.rep.get_lang()
+            draft_folder = os.path.join(folder, lang)
+            DownActions().create_default_draft(draft_folder, self.rep.get_lang())
             msg = Floating(self.settings, "v>").set_warning()
             msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.rep.get_lang()))
-            msg.put_text("\nUm arquivo de rascunho foi criado em {}.".format(task_dir))
+            msg.put_text("\nUm arquivo de rascunho vazio foi criado em {}.".format(draft_folder))
             self.fman.add_input(msg)
         run.execute()

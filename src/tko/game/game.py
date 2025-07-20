@@ -84,8 +84,6 @@ class Game:
         total_priority = 0
         total_complete = 0
         for key, value in complete.items():
-            if obtained.get(key, 0) > 0:
-                ic("Warning: skill", key, "has", value, "XP in complete tasks")
             total_obtained += obtained.get(key, 0)
             total_priority += priority.get(key, 0)
             total_complete += value

@@ -183,8 +183,8 @@ class Gui:
         elements: list[Text] = []
         for skill, value in complete.items():
             if Flags.tracks.get_value() == "1":
-                obtained_value = int(100 * obtained.get(skill, 0) / priority.get(skill, 1))
-                possible_value = int(100 * value / priority.get(skill, 1))
+                obtained_value = round(100 * obtained.get(skill, 0) / priority.get(skill, 1))
+                possible_value = round(100 * value / priority.get(skill, 1))
                 text = f"{skill}: {obtained_value:03d}%  {possible_value:03d}%"
             else:
                 obtained_value = round(obtained.get(skill, 0))

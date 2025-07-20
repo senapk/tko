@@ -410,8 +410,8 @@ class Run:
                 logger = self.__rep.logger
                 log_sort: LogSort | None = logger.tasks.task_dict.get(self.get_task().key, None)
                 if log_sort is not None:
-                    log_resume = TaskResume().from_log_sort(log_sort)
-                    print(Text().addf("g", f"time:{log_resume.minutes:.0f}, diff:{log_resume.versions}, runs:{log_resume.executions},").add(" "), end="", flush=True)
+                    log_resume = TaskResume(self.get_task().key).from_log_sort(log_sort)
+                    print(Text().addf("g", f"time:{log_resume.resume.minutes:.0f}, diff:{log_resume.resume.versions}, runs:{log_resume.resume.executions},").add(" "), end="", flush=True)
 
         rate: int | None = None
         flow: int | None = None

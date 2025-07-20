@@ -103,14 +103,14 @@ class TaskTree:
             if self.is_downloaded_for_lang(t):
                 down_symbol = symbols.task_downloaded
     
-        color_aval = "g" if quest_reachable and t.is_reachable() else "r"
+        color_aval = "g" if quest_reachable and t.is_reachable() else "y"
         color_lig_task = color_aval
         if Flags.quests.get_value() == "0":
             quest = self.game.quests[t.quest_key]
             if quest.prog:
                 if t.key != self.game.quests[t.quest_key].get_tasks()[-1].key:
                     if t.get_percent() < 50:
-                        color_lig_task = "y"
+                        color_lig_task = "r"
                     
 
         output = Text()
@@ -161,13 +161,19 @@ class TaskTree:
             if q.key in self.expanded and has_kids:
                 con = "─╮" if n_hidden == 0 else "┄╮"
 
-        color_reachable = "g" if q.is_reachable() else "r"
-        if Flags.quests.get_value() == "1":
-            for quest in self.game.quests.values():
-                if not quest.is_reachable():
-                    if q.key in quest.requires:
-                        color_reachable = "y"
-                        break
+        if q.is_reachable():
+            color_reachable = "g"
+        elif Flags.quests.get_value() == "1":
+            color_reachable = "r"
+        else:
+            color_reachable = "y"
+        # if q.is_reachable() else "r"
+        #     if Flags.quests.get_value() == "1" and not q.is_reachable():
+        #         for quest in self.game.quests.values():
+        #             if not quest.is_reachable():
+        #                 if q.key in quest.requires:
+        #                     color_reachable = "y"
+        #                     break
 
         output: Text = Text().addf(color_reachable, " " + lig + con)
 
@@ -215,7 +221,7 @@ class TaskTree:
         opening = "━─"
         if cluster.key in self.expanded and has_kids:
             opening = "─┯"
-        color_reachable = "g" if cluster.is_reachable() else "r"
+        color_reachable = "g" if cluster.is_reachable() else "y"
         output.addf(color_reachable, opening)
 
         color = ""

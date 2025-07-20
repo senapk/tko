@@ -1,5 +1,10 @@
 # Changelog
 
+- 6.5.0
+  - add: betters colors for task tree
+  - add: better logic for download tasks again
+  - add: config option to delete task folder
+  - fix: round error in percentage
 - 6.4.1
   - fix: search mode error
   - fix: better msg error for parsing Readme.md

@@ -42,7 +42,7 @@ class Border:
             text = text[:length]
 
         full_line: str = text
-        done_len: int = int(percent * length)
+        done_len: int = round(percent * length)
         xp_bar = Text.Token(full_line[:done_len], fmt_true) + Text.Token(full_line[done_len:], fmt_false)
 
         if rounded:
