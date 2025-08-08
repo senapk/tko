@@ -22,9 +22,9 @@ class DailyListener:
 
         mode = Delta.Mode(Delta.Mode.Action.with_time_threshold, minutes_limit=60)
         self.day_actions[day].add_item(mode, item)
-        delta, _ = self.day_actions[day].base_list[-1]
-        if day == "2025-07-17":
-            print(f"Added item for day {day}: {item} with result {delta}")  # debug
+        # delta, _ = self.day_actions[day].base_list[-1]
+
+        # print(f"Added item for day {day}: {item} with result {delta}") 
 
     def resume(self):
         days = sorted(self.day_actions.keys())

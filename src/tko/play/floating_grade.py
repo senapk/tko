@@ -50,12 +50,12 @@ class FloatingGrade(Floating):
             ]
         self.edge_opt = [x.text for x in [symbols.edge_x, symbols.edge_e, symbols.edge_d, symbols.edge_c, symbols.edge_b, symbols.edge_a]]
         self.edge_msg = [
-            Text().addf("g", "Não fiz        ").addf("y", "                         "),
-            Text().addf("g", "Consigo refazer ").addf("y", ">= 30% sem consulta     "),
-            Text().addf("g", "Consigo refazer ").addf("y", ">= 50% sem consulta     "),
-            Text().addf("g", "Consigo refazer ").addf("y", ">= 70% sem consulta     "),
-            Text().addf("g", "Consigo refazer ").addf("y", ">= 90% sem consulta     "),
-            Text().addf("g", "Consigo refazer ").addf("y", "  100% sem consulta     ")
+            Text().addf("g", "Não fiz                                   "),
+            Text().addf("g", "Entendi com clareza o problema            "),
+            Text().addf("g", "Entendi a estrutura do algoritmo          "),
+            Text().addf("g", "Consigo refazer a estrutura básica sozinho"),
+            Text().addf("g", "Consigo refazer sozinho com algum esforço "),
+            Text().addf("g", "Me sinto confortável em ensinar como fazer")
             ]
 
         self.neat_opt = [x.text for x in [symbols.cool_x, 
@@ -150,7 +150,7 @@ class FloatingGrade(Floating):
             edge_text.addf("y" if i == self.grades_index[2] else "", c).add(" ")
 
         edge_text.add(" ").addf('y', f'{edge_value:>3}% ')
-        # edge_text.add(" ").add(self.edge_msg[self.grades_index[2]])
+        edge_text.add(self.edge_msg[self.grades_index[2]])
         self._content.append(edge_text)
         self._content.append(Text().add("╟───────────────────────────────────── Opcional ───────────────────────────────────────────"))
 

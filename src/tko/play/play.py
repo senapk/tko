@@ -30,12 +30,9 @@ class Play:
         self.fman = FloatingManager()
         self.tree = TaskTree(self.settings, rep, self.fman)
         self.gui = Gui(tree=self.tree, flagsman=self.flagsman, fman=self.fman)
-
+        Flags.xray.set_value("0")
         # if len(self.rep.get_tasks()) == 0:
         #     self.gui.show_help()
-
-        self.first_loop = True
-        self.graph_ext = ""
 
         self.actions = PlayActions(self.gui)
         self.play_palette = PlayConfig(self.actions)
@@ -150,8 +147,6 @@ class Play:
 
             self.tree.reload_sentences()
             self.save_to_json()
-            if self.first_loop:
-                self.first_loop = False
 
     def check_lang_in_text_mode(self):
         lang = self.rep.get_lang()

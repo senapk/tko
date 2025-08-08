@@ -22,8 +22,8 @@ class LogHistory:
         self.log_folder: str = self.paths.get_log_folder()
         self.listeners: list[Callable[[LogItemBase, bool], None]] = listeners
         self.entries: dict[dt.datetime, LogItemBase] = {}
-        self.entries.update(self.__load_daily_log_folder())
         self.entries.update(self.__load_old_log())
+        self.entries.update(self.__load_daily_log_folder())
         # avoid duplicated entries
         sorted_entries = sorted(self.entries.items(), key=lambda x: x[0])
         

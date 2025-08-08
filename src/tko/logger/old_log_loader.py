@@ -99,12 +99,8 @@ class OldLogLoader:
         self.base_dict: dict[dt.datetime, LogItemBase] = {}
 
         self.merge_old_log_into_base()
-        # self.merge_track_into_base()
-
-        # with open("log2.txt", "w", encoding="utf-8") as log_file:
-        #     for key, item in self.base_dict.items():
-        #         log_file.write(f"{key}: {item.encode_line()}\n")
-
+        self.merge_track_into_base()
+    
     def merge_old_log_into_base(self):
         old_log_file = self.paths.get_old_history_file()
         entries: list[LogAction] = OldLogLoader.__load_file(old_log_file)

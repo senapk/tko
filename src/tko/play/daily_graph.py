@@ -12,7 +12,7 @@ class DailyGraph:
         self.daily: list[float] = []
         self.accumulates: list[float] = []
         self.eixo: list[float] = []
-        self.raw_text: list[str] = []
+        # self.raw_text: list[str] = []
         self.__collect()
 
     def __collect(self):
@@ -24,6 +24,8 @@ class DailyGraph:
         for item in sorted_keys:
             self.daily.append(days_info[item].elapsed_seconds)
             self.accumulates.append(self.accumulates[-1] + days_info[item].elapsed_seconds)
+            # if days_info[item].elapsed_seconds > 0:
+            #     self.raw_text.append(f"{days_info[item].day} {days_info[item].week_day} {Delta.format_h_min(days_info[item].elapsed_seconds / 3600)}")
         
         for i, value in enumerate(self.daily):
             self.daily[i] = value / 3600
@@ -76,9 +78,7 @@ class DailyGraph:
         if isinstance(result, str):
             result = result.splitlines()
         lines: list[Text] = []
-        # for line in self.raw_text:
-        #     lines.append(Text().add(line))
-        # return lines # debug
+
         for line in result:
             lines.append(Text.decode_raw(line))
 

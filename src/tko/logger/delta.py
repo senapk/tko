@@ -20,7 +20,7 @@ class Delta:
         total_seconds = elapsed.total_seconds()
         minutes = round(total_seconds // 60)
         seconds = round(total_seconds) % 60
-        return f'{minutes:03d}:{seconds:02d}' #debug 
+        return f'{minutes:03d}:{seconds:02d}'
     
     def create(self, mode: Mode, last_item: Delta | None, datetime: dt.datetime) -> Delta:
         self.mode = mode

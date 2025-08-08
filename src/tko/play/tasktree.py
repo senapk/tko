@@ -84,7 +84,8 @@ class TaskTree:
                         items.append(len(q.get_full_title()) + 2)
                         if q.key in self.expanded:
                             for t in q.get_tasks():
-                                items.append(len(t.title) + 6)
+                                extra = 0 if not Flags.xray.is_true() else 6
+                                items.append(len(t.title) + extra + 6)
 
         self.max_title = min_value
         if len(items) > 0:
@@ -142,6 +143,14 @@ class TaskTree:
                 output.addf(color + "c", word + " ")
             else:
                 output.addf(color, word + " ")
+
+        if Flags.xray.is_true():
+            logsort = self.rep.logger.tasks.task_dict.get(t.key, None)
+            if logsort is not None:
+                if len(logsort.base_list) > 0:
+                    delta, _ = logsort.base_list[-1]
+                    output.addf(focus_color + "y", f" {delta.accumulated.seconds // 60}min")
+
 
         if in_focus:
             output.add(self.style.round_r(focus_color))

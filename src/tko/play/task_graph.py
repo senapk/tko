@@ -4,7 +4,9 @@ from uniplot import plot_to_string # type: ignore
 from tko.util.text import Text
 from tko.logger.log_sort import LogSort
 from tko.logger.log_item_exec import LogItemExec
+from tko.logger.log_item_base import LogItemBase
 from tko.logger.delta import Delta
+from tko.play.flags import Flags
 
 class TaskGraph:
     def __init__(self, settings: Settings, rep: Repository, task_key: str, width: int, height: int):
@@ -24,13 +26,22 @@ class TaskGraph:
         
         self.eixo: list[float] = []
         self.logger = rep.logger
+        self.versions = 0
 
-    def __collect(self):
-        key_dict: dict[str, LogSort] = self.logger.tasks.task_dict
-        if not self.task_key in key_dict:
+        self.log_sort: LogSort | None = None
+        if task_key in self.logger.tasks.task_dict:
+            self.log_sort = self.logger.tasks.task_dict[task_key]
+
+        if self.log_sort is None:
             return
+        self.versions = len(self.log_sort.diff_list)
+        self.raw_text: list[Text] = []
+        all_entries: list[tuple[Delta, LogItemBase]] = self.log_sort.base_list
+        for delta, item in all_entries:
+            self.raw_text.append(Text().add(str(item)).add(f" acc:{delta.accumulated}"))
         
-        item_exec_list: list[tuple[Delta, LogItemExec]] = key_dict[self.task_key].exec_list
+
+        item_exec_list: list[tuple[Delta, LogItemExec]] = self.log_sort.exec_list
         collected_rate: list[float] = [0]
         collected_elapsed: list[float] = [0]
         collected_lines: list[float] = [0]
@@ -69,7 +80,6 @@ class TaskGraph:
         # self.eixo = list(range(len(collected)))
 
     def get_graph(self) -> list[Text]:
-        self.__collect()
         if not self.eixo:
             return []
         title = Text.format(" {C}", f" @{self.task_key} ")
@@ -79,6 +89,9 @@ class TaskGraph:
         time = f"{time_h:02.0f}h {time_m:.0f}min" if time_h > 0 else f"{time_m:.0f}min"
         title += Text.format(" {B}", f" Tempo {time} ")
         title += Text.format(" {M}", f" Linhas {self.max_lines:.0f} ")
+        title += Text.format(" {R}", f" Versões {self.versions} ")
+        if Flags.xray.is_true():
+            return self.raw_text
         # if len(self.collected_elapsed) > 1:
         result = plot_to_string(xs=[self.eixo, self.eixo, self.eixo], ys=[self.collected_elapsed, self.collected_lines, self.collected_rate], lines=[True, True, True], y_min=0, y_max=101, width=self.width, height=self.height, y_unit="%", x_unit="runs")
 

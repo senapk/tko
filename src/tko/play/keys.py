@@ -27,6 +27,8 @@ class GuiKeys:
     up = "W"
     calibrate = "C"
 
+    xray = "X"
+
     palette = "c"
     images = "I"
     down_task = "b"

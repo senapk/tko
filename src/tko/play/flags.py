@@ -87,6 +87,9 @@ class Flags:
     graph = (Flag().set_name("Graph").set_keycode(GuiKeys.graph).set_description("Muda o Gráfico")
                     .set_values(["0", "1"])
                     .set_msgs(["Desabilitar gráficos de acompanhamento", "Mostrar gráficos de acompanhamento"]))
+    xray = (Flag().set_name("X-Ray").set_keycode(GuiKeys.xray).set_description("Muda o modo X-Ray")
+                    .set_values(["0", "1"])
+                    .set_msgs(["Desabilitar modo X-Ray", "Ativar modo X-Ray"]))
 class FlagsMan:
     def __init__(self, data: dict[str, int]):
         self.flags: dict[str, Flag] = {}
