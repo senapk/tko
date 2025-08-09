@@ -2,6 +2,7 @@ from tko.logger.logger import Logger
 from uniplot import plot_to_string
 from tko.util.text import Text
 from tko.logger.delta import Delta
+from icecream import ic # type: ignore
 
 class DailyGraph:
     def __init__(self, logger: Logger, width: int, height: int):
@@ -11,16 +12,18 @@ class DailyGraph:
         self.daily: list[float] = []
         self.accumulates: list[float] = []
         self.eixo: list[float] = []
+        self.raw_text: list[str] = []
         self.__collect()
 
     def __collect(self):
-        days_minutes = self.logger.week.resume()
-        sorted_keys = sorted(days_minutes.keys())
+        days_info = self.logger.daily.resume()
+        sorted_keys = sorted(days_info.keys())
+        
         self.daily = [0]
         self.accumulates = [0]
         for item in sorted_keys:
-            self.daily.append(days_minutes[item].elapsed_seconds)
-            self.accumulates.append(self.accumulates[-1] + days_minutes[item].elapsed_seconds)
+            self.daily.append(days_info[item].elapsed_seconds)
+            self.accumulates.append(self.accumulates[-1] + days_info[item].elapsed_seconds)
         
         for i, value in enumerate(self.daily):
             self.daily[i] = value / 3600
@@ -73,6 +76,9 @@ class DailyGraph:
         if isinstance(result, str):
             result = result.splitlines()
         lines: list[Text] = []
+        # for line in self.raw_text:
+        #     lines.append(Text().add(line))
+        # return lines # debug
         for line in result:
             lines.append(Text.decode_raw(line))
 

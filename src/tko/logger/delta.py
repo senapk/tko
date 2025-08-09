@@ -6,6 +6,7 @@ import enum
 class Delta:
     format = '%Y-%m-%d %H:%M:%S'
     def __init__(self):
+        self.mode: Delta.Mode | None = None
         self.datetime: dt.datetime = dt.datetime.fromordinal(1)
         self.elapsed: dt.timedelta = dt.timedelta()
         self.accumulated: dt.timedelta = dt.timedelta()
@@ -19,9 +20,10 @@ class Delta:
         total_seconds = elapsed.total_seconds()
         minutes = round(total_seconds // 60)
         seconds = round(total_seconds) % 60
-        return f'{minutes:03d}:{seconds:02d}' 
+        return f'{minutes:03d}:{seconds:02d}' #debug 
     
     def create(self, mode: Mode, last_item: Delta | None, datetime: dt.datetime) -> Delta:
+        self.mode = mode
         if mode.action == Delta.Mode.Action.without_inc_time:
             return self.__create_without_inc_time(last_item, datetime)
         elif mode.action == Delta.Mode.Action.incrementing_time:
@@ -34,25 +36,24 @@ class Delta:
     def __create_without_inc_time(self, last_item: Delta | None, datetime: dt.datetime) -> Delta:
         if last_item is None:
             self.datetime = datetime
-            self.elapsed = dt.timedelta()
+            self.elapsed = dt.timedelta(seconds=0)
             return self
 
         self.datetime = datetime
-        self.elapsed = datetime - last_item.datetime
+        if last_item.datetime < datetime:
+            self.elapsed = datetime - last_item.datetime
         self.accumulated = last_item.accumulated
         return self
 
     def __create_incrementing_time(self, last_item: Delta | None, datetime: dt.datetime) -> Delta:
         self.__create_without_inc_time(last_item, datetime)
-        seconds = self.elapsed.total_seconds()
-        if last_item is not None and seconds > 0:
+        if last_item is not None and self.elapsed > dt.timedelta(seconds=0):
             self.accumulated += self.elapsed
         return self
 
     def __create_with_time_threshold(self, last_item: Delta | None, datetime: dt.datetime, minutes_limit: int) -> Delta:
         self.__create_without_inc_time(last_item, datetime)
-        seconds = self.elapsed.total_seconds()
-        if last_item is not None and seconds > 0 and seconds / 60 < minutes_limit:
+        if last_item is not None and self.elapsed > dt.timedelta(seconds=0) and self.elapsed < dt.timedelta(minutes=minutes_limit):
             self.accumulated += self.elapsed
         return self
 

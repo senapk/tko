@@ -8,10 +8,11 @@ from tko.play.patch_history import PatchHistory, PatchInfo
 from tko.play.tracker import Tracker, Track
 from tko.settings.rep_paths import RepPaths
 from tko.util.decoder import Decoder
-import enum
+import datetime as dt
 import csv
+import enum
 import os
-from icecream import ic
+from icecream import ic # type: ignore
 
 class LogAction:
     def __init__(self, hash: str, timestamp: str, action: str, task: str, payload: str):
@@ -36,7 +37,7 @@ class AType(enum.Enum):
     SIZE = 'SIZE' # Problem files changes "{line_count:%d}"
 
 
-class TrackerLoader:
+class TrackerLoader: # deprecated
     @staticmethod
     def load_file_versions(task_track_folder: str) -> dict[str, dict[str, PatchInfo]]:
         files: list[str] = os.listdir(task_track_folder)
@@ -65,11 +66,11 @@ class TrackerLoader:
         return Tracker.load_from_log(csv_file)
 
     @staticmethod
-    def load_from_task_track(task_track_folder: str) -> dict[str, LogItemExec]:
+    def load_from_task_track(task_track_folder: str) -> dict[dt.datetime, LogItemExec]:
         task = os.path.basename(task_track_folder)
         tracks: list[Track] = TrackerLoader.load_track_csv(task_track_folder)
         file_versions: dict[str, dict[str, PatchInfo]] = TrackerLoader.load_file_versions(task_track_folder)
-        output: dict[str, LogItemExec] = {}
+        output: dict[dt.datetime, LogItemExec] = {}
         for track in tracks:
             track_datetime = Tracker.get_timestamp_from_string(track.timestamp)
 
@@ -88,18 +89,17 @@ class TrackerLoader:
                         patch_info = file_versions[file][stamp]
                         lines += patch_info.lines
             item.set_size(True, lines)
-            output[item.get_timestamp()] = item
+            output[item.get_datetime()] = item
         return output
 
 class OldLogLoader:
     def __init__(self, rep_folder: str):
         self.rep_folder = rep_folder
         self.paths = RepPaths(rep_folder)
-        self.base_list: list[LogItemBase] = []
-        self.base_dict: dict[str, LogItemBase] = {}
+        self.base_dict: dict[dt.datetime, LogItemBase] = {}
 
         self.merge_old_log_into_base()
-        self.merge_track_into_base()
+        # self.merge_track_into_base()
 
         # with open("log2.txt", "w", encoding="utf-8") as log_file:
         #     for key, item in self.base_dict.items():
@@ -111,12 +111,10 @@ class OldLogLoader:
         for e in entries:
             item = OldLogLoader.__convert_to_base_list(e)
             if item is not None:
-                self.base_list.append(item)
-                key = item.get_timestamp().replace(" ", "_").replace(":", "-")
-                self.base_dict[key] = item
+                self.base_dict[item.get_datetime()] = item
 
     def merge_track_into_base(self) -> None:
-        track_exec_list: dict[str, LogItemExec] = self.load_from_track_folder()
+        track_exec_list: dict[dt.datetime, LogItemExec] = self.load_from_track_folder()
         for time, item_from_track in track_exec_list.items():
             done: bool = False
             if time in self.base_dict:
@@ -126,14 +124,13 @@ class OldLogLoader:
                     item_exec.set_size(True, item_from_track.get_size())
                     done = True
             if not done:
-                item_exec = LogItemExec().set_timestamp(time).set_key(item_from_track.get_key())
+                item_exec = LogItemExec().set_datetime(time).set_key(item_from_track.get_key())
                 item_exec.set_rate(item_from_track.get_rate())
                 item_exec.set_size(True, item_from_track.get_size())
-                self.base_list.append(item_exec)
                 self.base_dict[time] = item_exec        
 
-    def load_from_track_folder(self) -> dict[str, LogItemExec]:
-        output: dict[str, LogItemExec] = {}
+    def load_from_track_folder(self) -> dict[dt.datetime, LogItemExec]:
+        output: dict[dt.datetime, LogItemExec] = {}
         track_folder = self.paths.get_track_folder()
         if not os.path.exists(track_folder):
             return output
@@ -142,7 +139,7 @@ class OldLogLoader:
             folder_path = os.path.join(track_folder, e)
             if not os.path.isdir(folder_path):
                 continue
-            dict_stamp_exec: dict[str, LogItemExec] = TrackerLoader.load_from_task_track(folder_path)
+            dict_stamp_exec: dict[dt.datetime, LogItemExec] = TrackerLoader.load_from_task_track(folder_path)
             output.update(dict_stamp_exec)
 
         return output

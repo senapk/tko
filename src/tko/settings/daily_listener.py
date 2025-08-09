@@ -1,46 +1,57 @@
-# import yaml # type: ignore
-# from tko.logger.log_item_base import LogItemBase
-# from tko.logger.log_enum_item import LogEnumItem
-
-# class DailyListener:
-#     def __init__(self):
-#         self.history: dict[str, dict[str, TaskBasic]] = {} # dict[day, dict[key, [key, cov, how]]]
-#         self.actual: dict[str, TaskBasic] = {}
-#         self.daily_file: str | None
+import yaml # type: ignore
+from tko.logger.log_item_base import LogItemBase
+from tko.logger.log_sort import LogSort
+from tko.logger.delta import Delta
         
-#     def listener(self, action: LogItemBase, new_entry: bool = False):
-#         if action.get_key() == "":
-#             return
-#         self.log_task(action.get_timestamp(), action.get_key(), action.get_cov(), action.get_app(), action.get_aut())
+class DayInfo:
+    def __init__(self, day:str = "", week_day: str = "", elapsed_seconds: int = 0):
+        self.day = day
+        self.week_day = week_day
+        self.elapsed_seconds = elapsed_seconds
 
-#     def set_daily_file(self, daily_file: str):
-#         self.daily_file = daily_file
-#         return self
+class DailyListener:
+    def __init__(self):
+        self.day_actions: dict[str, LogSort] = {}
+        self.log_file: str | None = None
 
-#     def log_task(self, timestamp: str, key: str, coverage: int = -1, autonomy: int = -1, skill: int = -1):
-#         if key not in self.actual:
-#             self.actual[key] = TaskBasic(key)
-#         self.actual[key].set_coverage(coverage).set_approach(autonomy).set_autonomy(skill)
+    def handle_entry_incoming(self, item: LogItemBase, new_entry: bool = False):
+        day = item.datetime.strftime('%Y-%m-%d')
 
-#         day = timestamp.split(" ")[0]
-#         if day not in self.history:
-#             self.history[day] = {}
-#         if key not in self.history[day]:
-#             self.history[day][key] = self.actual[key]
-#         else:
-#             self.history[day][key].set_coverage(coverage).set_approach(autonomy).set_autonomy(skill)
-#         # self.save_yaml()
+        if day not in self.day_actions:
+            self.day_actions[day] = LogSort()
 
-#     def __str__(self) -> str:
-#         output: dict[str, dict[str, str]] = {}
-#         for day in sorted(self.history.keys()):
-#             output[day] = {}
-#             for key in self.history[day]:
-#                 output[day][key] = str(self.history[day][key])
-#         return yaml.dump(output)
+        mode = Delta.Mode(Delta.Mode.Action.with_time_threshold, minutes_limit=60)
+        self.day_actions[day].add_item(mode, item)
+        delta, _ = self.day_actions[day].base_list[-1]
+        if day == "2025-07-17":
+            print(f"Added item for day {day}: {item} with result {delta}")  # debug
+
+    def resume(self):
+        days = sorted(self.day_actions.keys())
+        if days:
+            day = days[0]
+            last = days[-1]
+            while True:
+                if day not in self.day_actions:
+                    self.day_actions[day] = LogSort()
+                if day == last:
+                    break
+                day = Delta.next_day(day)
+
+        output: dict[str, DayInfo] = {}
+        for day, log_sort in self.day_actions.items():
+            week_day = Delta.week_day(day)
+            base_list = log_sort.base_list
+            if base_list:
+                delta, _ = base_list[-1]
+                elapsed = int(delta.accumulated.total_seconds())
+            else:
+                elapsed = 0
+            output[day] = DayInfo(day = day, week_day=week_day, elapsed_seconds=elapsed)
+        return output
     
-#     def save_yaml(self):
-#         if self.daily_file is None:
-#             return
-#         with open(self.daily_file, 'w') as file:
-#             file.write(str(self))
+    def save_yaml(self):
+        if self.log_file is None:
+            return
+        with open(self.log_file, 'w') as file:
+            yaml.dump(self.day_actions, file)

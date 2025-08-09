@@ -4,7 +4,7 @@ from tko.settings.settings import Settings
 from tko.logger.logger import Logger
 from tko.logger.task_resume import TaskResume
 from tko.logger.log_sort import LogSort
-from tko.play.week_graph import DailyGraph
+from tko.play.daily_graph import DailyGraph
 from tko.mico.collected import Collected, Game
 import yaml # type: ignore
 import json
@@ -39,7 +39,7 @@ class CmdRep:
         return resume_dict
 
     @staticmethod
-    def graph(rep: Repository, width: int, height: int, colored: bool) -> str:
+    def daily_graph(rep: Repository, width: int, height: int, colored: bool) -> str:
         dg = DailyGraph(rep.logger, width, height)
         image = dg.get_graph()
         if not colored:
@@ -93,7 +93,7 @@ class CmdRep:
         data = Collected()
 
         if param.daily:
-            graph = CmdRep.graph(rep, param.width, param.height, param.colored == 1)
+            graph = CmdRep.daily_graph(rep, param.width, param.height, param.colored == 1)
             data.graph = graph
             if not param.json_output:
                 print(graph)
@@ -106,10 +106,10 @@ class CmdRep:
                     print(f"{key}: {value.to_dict()}")
 
         if param.log:
-            log_data = rep.logger.history.get_entries()
-            data.log = [str(entry) for entry in log_data]
+            log_data = sorted(rep.logger.history.get_entries().items(), key=lambda x: x[0])
+            data.log = [str(entry) for _, entry in log_data]
             if not param.json_output:
-                for entry in log_data:
+                for _, entry in log_data:
                     print(entry)
 
         if param.game:

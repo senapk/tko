@@ -3,6 +3,7 @@ from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove
 from tko.logger.log_item_self import LogItemSelf
 from tko.logger.delta import Delta
+from icecream import ic # type: ignore
 
 class LogSort:
     def __init__(self):
@@ -12,11 +13,10 @@ class LogSort:
         self.move_list: list[tuple[Delta, LogItemMove]] = []
         self.self_list: list[tuple[Delta, LogItemSelf]] = []
 
-    def add_item(self, mode: Delta.Mode, item: LogItemBase) -> tuple[Delta, LogItemBase]:
+    def add_item(self, mode: Delta.Mode, item: LogItemBase) -> None:
         delta = LogSort.add_to_list(mode, self.base_list, item)
         self.__sort_by_instance(delta, item)
-        return delta, item
-
+    
     def __sort_by_instance(self, delta: Delta, base: LogItemBase) -> None:
         if isinstance(base, LogItemExec):
             self.exec_list.append((delta, base))

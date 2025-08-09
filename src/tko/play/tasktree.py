@@ -161,19 +161,13 @@ class TaskTree:
             if q.key in self.expanded and has_kids:
                 con = "─╮" if n_hidden == 0 else "┄╮"
 
-        if q.is_reachable():
-            color_reachable = "g"
-        elif Flags.quests.get_value() == "1":
-            color_reachable = "r"
-        else:
-            color_reachable = "y"
-        # if q.is_reachable() else "r"
-        #     if Flags.quests.get_value() == "1" and not q.is_reachable():
-        #         for quest in self.game.quests.values():
-        #             if not quest.is_reachable():
-        #                 if q.key in quest.requires:
-        #                     color_reachable = "y"
-        #                     break
+        color_reachable = "g" if q.is_reachable() else "r"
+        if Flags.quests.get_value() == "1":
+            for quest in self.game.quests.values():
+                if not quest.is_reachable():
+                    if q.key in quest.requires:
+                        color_reachable = "y"
+                        break
 
         output: Text = Text().addf(color_reachable, " " + lig + con)
 

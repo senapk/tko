@@ -1,5 +1,4 @@
 from tko.play.keys import GuiActions
-from tko.game.xp import XP
 from tko.settings.settings import Settings
 from tko.util.text import Text
 from tko.util.symbols import symbols
@@ -21,7 +20,7 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.game.cluster import Cluster
 from tko.play.task_graph import TaskGraph
-from tko.play.week_graph import DailyGraph
+from tko.play.daily_graph import DailyGraph
 
 class Gui:
 
