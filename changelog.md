@@ -1,5 +1,7 @@
 # Changelog
 
+- 7.0.0
+  - del: legacy code for XP, old log loading, old task markup
 - 6.5.0
   - add: betters colors for task tree
   - add: better logic for download tasks again
