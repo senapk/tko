@@ -1,4 +1,5 @@
 from __future__ import annotations
+from tko.logger.old_log_loader import OldLogLoader
 from tko.logger.log_item_base import LogItemBase
 from tko.logger.log_item_self import LogItemSelf
 from tko.logger.log_item_exec import LogItemExec
@@ -21,6 +22,7 @@ class LogHistory:
         self.log_folder: str = self.paths.get_log_folder()
         self.listeners: list[Callable[[LogItemBase, bool], None]] = listeners
         self.entries: dict[dt.datetime, LogItemBase] = {}
+        self.entries.update(self.__load_old_log())
         self.entries.update(self.__load_daily_log_folder())
         # avoid duplicated entries
         sorted_entries = sorted(self.entries.items(), key=lambda x: x[0])
@@ -28,6 +30,11 @@ class LogHistory:
         for _, item in sorted_entries:
             for listener in self.listeners:
                 listener(item, False)
+
+    def __load_old_log(self) -> dict[dt.datetime, LogItemBase]:
+        self.old_log_file = self.paths.get_old_history_file()
+        loader = OldLogLoader(self.paths.get_rep_dir())
+        return loader.base_dict
 
     def get_entries(self) -> dict[dt.datetime, LogItemBase]:
         return self.entries
