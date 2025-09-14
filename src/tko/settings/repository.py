@@ -18,8 +18,9 @@ def remove_git_merge_tags(lines: list[str]) -> list[str]:
             continue
         filtered_lines.append(line)
     return filtered_lines
-class Repository:
 
+
+class Repository:
 
     def __init__(self, folder: str):
         rep_folder: str = folder

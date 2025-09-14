@@ -6,6 +6,7 @@ class TaskInfo:
     cool_max: int = 5
     easy_max: int = 5
 
+
     rate_str: str = "rate"
     flow_str: str = "flow"
     edge_str: str = "edge"
@@ -13,14 +14,44 @@ class TaskInfo:
     cool_str: str = "cool"
     easy_str: str = "easy"
 
+    alone_max = 10
+    alone_str: str = "alone" # doing alone, no help
+    human_str: str = "human" # using human help: friend or monitor
+    iagen_str: str = "iagen" # using AI generation: gpt-4, dalle-3
+    guide_str: str = "guide" # using guide: tutorial, doc, class, youtube
+    other_str: str = "other" # using other help: book, search, forum
+
     def __init__(self):
         self.rate: int = 0
-        self.flow: int = 0
-        self.edge: int = 0
-        self.neat: int = 0
-        self.cool: int = 0
-        self.easy: int = 0
+
+        self.flow: int = 0 # deprecated
+        self.edge: int = 0 # deprecated
+        self.neat: int = 0 # deprecated
+        self.cool: int = 0 # deprecated
+        self.easy: int = 0 # deprecated
+
+        self.alone: int = 0
+        self.human: str = ""
+        self.iagen: str = ""
+        self.guide: str = ""
+        self.other: str = ""
+
+    def set_human(self, value: str):
+        self.human = value
+        return self
     
+    def set_iagen(self, value: str):
+        self.iagen = value
+        return self
+    
+    def set_guide(self, value: str):
+        self.guide = value
+        return self
+    
+    def set_other(self, value: str):
+        self.other = value
+        return self
+
     def set_rate(self, value: int):
         if 0 <= value <= TaskInfo.rate_max:
             self.rate = value
@@ -76,6 +107,17 @@ class TaskInfo:
     def get_easy(self) -> int:
         return self.easy
     
+    def get_human(self) -> str:
+        return self.human
+    def get_iagen(self) -> str:
+        return self.iagen
+    def get_guide(self) -> str:
+        return self.guide
+    def get_other(self) -> str:
+        return self.other
+    def get_alone(self) -> int:
+        return self.alone
+    
 
     def load_from_kv(self, kv: dict[str, str]):
         if TaskInfo.rate_str in kv:
@@ -90,11 +132,25 @@ class TaskInfo:
             self.cool = int(kv[TaskInfo.cool_str])
         if TaskInfo.easy_str in kv:
             self.easy = int(kv[TaskInfo.easy_str])
+        if TaskInfo.human_str in kv:
+            self.human = kv[TaskInfo.human_str]
+        if TaskInfo.iagen_str in kv:
+            self.iagen = kv[TaskInfo.iagen_str]
+        if TaskInfo.guide_str in kv:
+            self.guide = kv[TaskInfo.guide_str]
+        if TaskInfo.other_str in kv:
+            self.other = kv[TaskInfo.other_str]
+        if TaskInfo.alone_str in kv:
+            self.alone = int(kv[TaskInfo.alone_str])
+        return self
 
     def get_kv(self) -> dict[str, str]:
         kv: dict[str, str] = {TaskInfo.rate_str: str(self.rate), TaskInfo.flow_str: str(self.flow),
                               TaskInfo.edge_str: str(self.edge), TaskInfo.neat_str: str(self.neat),
-                              TaskInfo.cool_str: str(self.cool), TaskInfo.easy_str: str(self.easy)}
+                              TaskInfo.cool_str: str(self.cool), TaskInfo.easy_str: str(self.easy),
+                              TaskInfo.human_str: self.human, TaskInfo.iagen_str: self.iagen,
+                              TaskInfo.guide_str: self.guide, TaskInfo.other_str: self.other,
+                              TaskInfo.alone_str: str(self.alone)}
         return kv
     
     def get_filled_kv(self) -> dict[str, str]:
@@ -111,6 +167,16 @@ class TaskInfo:
             kv[TaskInfo.cool_str] = str(self.cool)
         if self.easy > 0:
             kv[TaskInfo.easy_str] = str(self.easy)
+        if self.human:
+            kv[TaskInfo.human_str] = self.human
+        if self.iagen:
+            kv[TaskInfo.iagen_str] = self.iagen
+        if self.guide:       
+            kv[TaskInfo.guide_str] = self.guide
+        if self.other:
+            kv[TaskInfo.other_str] = self.other
+        if self.alone > 0:
+            kv[TaskInfo.alone_str] = str(self.alone)
 
         return kv
     
