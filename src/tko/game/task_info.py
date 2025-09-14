@@ -20,6 +20,7 @@ class TaskInfo:
     iagen_str: str = "iagen" # using AI generation: gpt-4, dalle-3
     guide_str: str = "guide" # using guide: tutorial, doc, class, youtube
     other_str: str = "other" # using other help: book, search, forum
+    study_str: str = "study" # study time spent in minutes
 
     def __init__(self):
         self.rate: int = 0
@@ -35,6 +36,17 @@ class TaskInfo:
         self.iagen: str = ""
         self.guide: str = ""
         self.other: str = ""
+        self.study: int = 0
+
+    def set_study(self, value: int):
+        if value >= 0:
+            self.study = value
+            return self
+        else:
+            raise ValueError(f"Invalid study minutes:{value}")
+
+    def get_study(self) -> int:
+        return self.study
 
     def set_human(self, value: str):
         self.human = value
@@ -51,6 +63,13 @@ class TaskInfo:
     def set_other(self, value: str):
         self.other = value
         return self
+    
+    def set_alone(self, value: int):
+        if 0 <= value <= TaskInfo.alone_max:
+            self.alone = value
+            return self
+        else:
+            raise ValueError(f"Invalid {TaskInfo.alone_str}:{value}")
 
     def set_rate(self, value: int):
         if 0 <= value <= TaskInfo.rate_max:
@@ -142,15 +161,23 @@ class TaskInfo:
             self.other = kv[TaskInfo.other_str]
         if TaskInfo.alone_str in kv:
             self.alone = int(kv[TaskInfo.alone_str])
+        if TaskInfo.study_str in kv:
+            self.study = int(kv[TaskInfo.study_str])
         return self
 
     def get_kv(self) -> dict[str, str]:
-        kv: dict[str, str] = {TaskInfo.rate_str: str(self.rate), TaskInfo.flow_str: str(self.flow),
-                              TaskInfo.edge_str: str(self.edge), TaskInfo.neat_str: str(self.neat),
-                              TaskInfo.cool_str: str(self.cool), TaskInfo.easy_str: str(self.easy),
-                              TaskInfo.human_str: self.human, TaskInfo.iagen_str: self.iagen,
-                              TaskInfo.guide_str: self.guide, TaskInfo.other_str: self.other,
-                              TaskInfo.alone_str: str(self.alone)}
+        kv: dict[str, str] = {TaskInfo.rate_str: str(self.rate), 
+                              TaskInfo.flow_str: str(self.flow),
+                              TaskInfo.edge_str: str(self.edge), 
+                              TaskInfo.neat_str: str(self.neat),
+                              TaskInfo.cool_str: str(self.cool), 
+                              TaskInfo.easy_str: str(self.easy),
+                              TaskInfo.human_str: self.human,
+                              TaskInfo.iagen_str: self.iagen,
+                              TaskInfo.guide_str: self.guide, 
+                              TaskInfo.other_str: self.other,
+                              TaskInfo.alone_str: str(self.alone), 
+                              TaskInfo.study_str: str(self.study)}
         return kv
     
     def get_filled_kv(self) -> dict[str, str]:
@@ -177,6 +204,8 @@ class TaskInfo:
             kv[TaskInfo.other_str] = self.other
         if self.alone > 0:
             kv[TaskInfo.alone_str] = str(self.alone)
+        if self.study > 0:
+            kv[TaskInfo.study_str] = str(self.study)
 
         return kv
     

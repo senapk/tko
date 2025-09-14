@@ -31,6 +31,7 @@ from tko.util.raw_terminal import RawTerminal
 from tko.settings.repository import Repository
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove
+from tko.util.symbols import symbols
 
 
 class SeqMode(enum.Enum):
@@ -389,7 +390,7 @@ class Tester:
         cmds: list[Text] = []
 
         text = f"{GuiActions.config} [{GuiKeys.palette}]"
-        cmds.append(self.borders.border("C", f"{GuiActions.move} [{GuiKeys.up}{GuiKeys.left}{GuiKeys.down}{GuiKeys.right}]"))
+        cmds.append(self.borders.border("C", f"Mover  [setas]"))
         cmds.append(self.borders.border("C", text))
         cmds.append(self.borders.border("G", f"{GuiActions.evaluate_tester} [{symbols.newline.text}]"))
         cmds.append(self.borders.border("G", f"{GuiActions.execute_tester} [{GuiKeys.execute_tester}]"))
@@ -501,11 +502,16 @@ class Tester:
                 continue
 
             if self.fman.has_floating():
-                key = self.fman.get_input()
-            else:
-                key = Fmt.getch()
+                self.fman.draw()
 
-            fn_exec = self.process_key(key)
+            # o input tem que ser depois do draw para mostrar o floating
+            value = InputManager.get_and_remap_keys(scr, self.app)
+            
+            if self.fman.has_floating():
+                # if consumed, value becomes -1
+                value = self.fman.process_input(value)
+
+            fn_exec = self.process_key(value)
             if fn_exec is not None:
                 return fn_exec
         return None
@@ -628,13 +634,13 @@ class Tester:
                 self.locked_index = False
             else:
                 self.set_exit()
-        elif key == self.settings.app.get_key_left() or key == ord(GuiKeys.left):
+        elif key == curses.KEY_LEFT:
             self.go_left()
-        elif key == self.settings.app.get_key_right() or key == ord(GuiKeys.right):
+        elif key == curses.KEY_RIGHT:
             self.go_right()
-        elif key == self.settings.app.get_key_down() or key == ord(GuiKeys.down):
+        elif key == curses.KEY_DOWN:
             self.go_down()
-        elif key == self.settings.app.get_key_up() or key == ord(GuiKeys.up):
+        elif key == curses.KEY_UP:
             self.go_up()
         elif key == ord(GuiKeys.toggle_main):
             self.change_main()
@@ -725,7 +731,7 @@ class Tester:
         )
 
         self.fman.add_input(
-            FloatingInput(self.settings, "v").set_text_ljust()
+            FloatingInput(self.settings, "").set_text_ljust()
                       .set_header(" Selecione uma ação da lista ")
                       .set_options(options)
                       .set_exit_on_enter(False)

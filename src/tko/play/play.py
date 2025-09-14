@@ -23,7 +23,6 @@ class Play:
         self.app = settings.app
         self.rep = rep
         self.game: Game = rep.game
-
         self.exit = False
 
         self.flagsman = FlagsMan(self.rep.get_flags())
@@ -56,30 +55,12 @@ class Play:
 
         cman.add_str(GuiKeys.key_quit, self.send_quit_msg)
         cman.add_int(InputManager.esc, self.send_quit_msg)
-        # cman.add_int(curses.KEY_BACKSPACE, self.send_quit_msg)
-
-        cman.add_str(GuiKeys.up, self.tree.move_up)
-        key_up = self.app.get_key_up()
-        if key_up != 0:
-            cman.add_int(key_up, self.tree.move_up)
-
-        cman.add_str(GuiKeys.down, self.tree.move_down)
-        key_down = self.app.get_key_down()
-        if key_down != 0:
-            cman.add_int(key_down, self.tree.move_down)
-
-        cman.add_str(GuiKeys.left, self.tree.arrow_left)
-        key_left = self.app.get_key_left()
-        if key_left != 0:
-            cman.add_int(key_left, self.tree.arrow_left)
-
-        cman.add_str(GuiKeys.right, self.tree.arrow_right)
-        key_right = self.app.get_key_right()
-        if key_right != 0:
-            cman.add_int(key_right, self.tree.arrow_right)
+        cman.add_int(curses.KEY_UP, self.tree.move_up)
+        cman.add_int(curses.KEY_DOWN, self.tree.move_down)
+        cman.add_int(curses.KEY_LEFT, self.tree.arrow_left)
+        cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
 
         cman.add_str(GuiKeys.calibrate, lambda: self.fman.add_input(FloatingCalibrate(self.settings)))
-        
         cman.add_str(GuiKeys.activate, lambda: self.actions.select_task()) # type: ignore
         cman.add_str(GuiKeys.open_url, self.actions.open_link)
         cman.add_str(GuiKeys.down_task, self.actions.down_remote_task)
@@ -89,9 +70,8 @@ class Play:
         cman.add_str(GuiKeys.borders, self.app.toggle_borders)
         cman.add_str(GuiKeys.images, self.app.toggle_images)
         cman.add_str(GuiKeys.set_lang_drafts, self.gui.language.set_language)
-        cman.add_int(curses.KEY_BACKSPACE, self.actions.evaluate)
         cman.add_str(GuiKeys.grade_play, self.actions.evaluate)
-    
+        cman.add_str(GuiKeys.grade_play2, self.actions.evaluate)
         cman.add_str(GuiKeys.key_help, self.gui.show_help)
         
         for flag in self.flagsman.flags.values():
@@ -103,8 +83,8 @@ class Play:
         return cman
         
     def send_char_not_found(self, key: int):
-        exclude_str = [ord(v) for v in [" ", "a", "d", "\n", GuiKeys.up, GuiKeys.down, GuiKeys.left, GuiKeys.right]]
-        exclude_int = [ -1, InputManager.esc] + InputManager.backspace_list
+        exclude_str = [ord(v) for v in [" ", "a", "d", "\n"]]
+        exclude_int = [ -1, InputManager.esc, curses.KEY_UP, curses.KEY_DOWN, curses.KEY_LEFT, curses.KEY_RIGHT] + InputManager.backspace_list
         if key in exclude_int + exclude_str:
             return
         if key < 0 or key > 255:
@@ -125,11 +105,15 @@ class Play:
             self.gui.show_items()
 
             if self.fman.has_floating():
-                value: int = self.fman.get_input()
-            else:
-                value = scr.getch()
-                value = InputManager.fix_cedilha(scr, value)
+                self.fman.draw()
 
+            # o input tem que ser depois do draw para mostrar o floating
+            value = InputManager.get_and_remap_keys(scr, self.app)
+            
+            if self.fman.has_floating():
+                # if consumed, value becomes -1
+                value = self.fman.process_input(value)
+                
             if self.exit:
                 break
 

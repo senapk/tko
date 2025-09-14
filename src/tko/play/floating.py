@@ -3,11 +3,10 @@ from tko.util.text import Text
 from tko.play.fmt import Fmt
 from typing import Callable
 from tko.play.input_manager import InputManager
-from tko.play.keys import GuiKeys
 from tko.util.symbols import symbols
 from tko.settings.settings import Settings
 import enum
-
+import curses
 
 class FloatingType(enum.Enum):
     WARNING = "warning"
@@ -163,10 +162,8 @@ class Floating:
             y += 1
         return self
 
-    def get_input(self) -> int:
-        self.draw()
-        key: int = Fmt.getch()
-        key = InputManager.fix_cedilha(Fmt.get_screen(), key)
+    def process_input(self, key: int) -> int:
+        # self.draw()
         if self._type == FloatingType.WARNING or self._type == FloatingType.ERROR:
             if key < 300:
                 self._enable = False
@@ -285,16 +282,14 @@ class FloatingInput(Floating):
         self._index = -1
 
     # @override
-    def get_input(self) -> int:
-        self.draw()
-        key: int = Fmt.getch()
-        key = InputManager.fix_cedilha(Fmt.get_screen(), key)
+    def process_input(self, key: int) -> int:
+        # self.draw()
         
-        if key == self.settings.app.get_key_up() or key == ord(GuiKeys.up):
+        if key == curses.KEY_UP:
             self.prev_option()
-        elif key == self.settings.app.get_key_down() or key == ord(GuiKeys.down):
+        elif key == curses.KEY_DOWN:
             self.next_option()
-        elif key == self.settings.app.get_key_left() or key == ord(GuiKeys.left):
+        elif key == curses.KEY_LEFT:
             self.search_text = self.search_text[:-1]
             self.update_index()
         elif 32 <= key < 127:

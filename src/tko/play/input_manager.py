@@ -1,4 +1,6 @@
 from typing import Callable
+from tko.settings.app_settings import AppSettings
+from tko.play.keys import GuiKeys
 import curses
 import os
 
@@ -46,9 +48,20 @@ class InputManager:
             os.environ.setdefault('ESCDELAY', '25')
 
     @staticmethod
-    def fix_cedilha(scr: curses.window, value: int) -> int:
+    def get_and_remap_keys(scr: curses.window, app: AppSettings) -> int:
+        value = scr.getch()
         if value == InputManager.special_double_key:
             value = scr.getch()
             if value == InputManager.cedilha: #ç
                 value = ord("c")
+        elif value == app.key_down:
+            value = curses.KEY_DOWN
+        elif value == app.key_up:
+            value = curses.KEY_UP
+        elif value == app.key_left:
+            value = curses.KEY_LEFT
+        elif value == app.key_right:
+            value = curses.KEY_RIGHT
+        # elif value > ord('A') and value < ord('Z'):
+        #     value += 32 # convert to lowercase
         return value

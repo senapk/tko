@@ -132,10 +132,10 @@ class Task(TreeItem):
     def is_db_empty(self) -> bool:
         return len(self.info.get_filled_kv()) == 0
 
-    def get_prog_color(self, min_value: None | int = None) -> str:
+    def get_prog_color(self, value: int, min_value: None | int = None) -> str:
         if min_value is None:
             min_value = self.default_min_value
-        prog = self.info.rate // 10
+        prog = value
         if prog == 0:
             return "c"
         if prog < min_value:
@@ -146,11 +146,11 @@ class Task(TreeItem):
             return "g"
         return "w"  
 
-    def get_prog_symbol(self, min_value: None | int = None) -> Text:
+    def get_prog_symbol(self, value: int, min_value: None | int = None) -> Text:
         if min_value is None:
             min_value = self.default_min_value
-        color = self.get_prog_color(min_value)
-        prog = self.info.rate // 10
+        color = self.get_prog_color(value, min_value)
+        prog = value
         if prog == 0:
             return Text().add("x")
         if prog < min_value:

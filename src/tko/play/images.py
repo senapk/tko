@@ -31,27 +31,36 @@ opening: dict[str, str] = {}
 # """
 
 opening["estuda"] = r"""
-
-      ▄▖         ▐▘      ▘                ▗   ▄▖
-      ▌ ▛▌▛▛▌▛▌  ▜▘▌▌▛▌▛▘▌▛▌▛▌▀▌  ▀▌  ▛▌▛▌▜▘▀▌▗▘
-      ▙▖▙▌▌▌▌▙▌  ▐ ▙▌▌▌▙▖▌▙▌▌▌█▌  █▌  ▌▌▙▌▐▖█▌▗ 
+▄▖         ▐▘      ▘                 ▐▘▘▜ ▗       ▄▖
+▌ ▛▌▛▛▌▛▌  ▜▘▌▌▛▌▛▘▌▛▌▛▌▀▌▛▛▌  ▛▌▛▘  ▜▘▌▐ ▜▘▛▘▛▌▛▘▗▘
+▙▖▙▌▌▌▌▙▌  ▐ ▙▌▌▌▙▖▌▙▌▌▌█▌▌▌▌  ▙▌▄▌  ▐ ▌▐▖▐▖▌ ▙▌▄▌▗ 
+                                                    
+Os botões de 1 a 4 habilitam os filtros de exibição.
+- Gráficos: mostra os gráficos de acompanhamento.
+- Trilhas : mostra a barra lateral de trilhas de habilidades.
+- Tópicos : mostra as missões (recomendadas ou todas).
+- Tarefas : esconde as atividades já concluídas.
+▄▖         ▐▘      ▘                ▗   ▄▖
+▌ ▛▌▛▛▌▛▌  ▜▘▌▌▛▌▛▘▌▛▌▛▌▀▌  ▀▌  ▛▌▛▌▜▘▀▌▗▘
+▙▖▙▌▌▌▌▙▌  ▐ ▙▌▌▌▙▖▌▙▌▌▌█▌  █▌  ▌▌▙▌▐▖█▌▗ 
                                           
-- Após fazer a atividades, você usa o comando de pontuar,
-usando o 'p' ou o 'backspace', e informa como fez a atividade.
+- Após fazer ou refazer uma atividade, você usa o comando de pontuar,
+usando o 'p' ou o '.', e informe como fez a atividade.
+       ⢀⣠⣤⣴⡾⠻⢶⣤⡀ 
+     ⢀⣶⠟⠉⠉    ⠉⢷⡄  - Quanto da atividade foi entregue?
+   ⠉⢿⣿⣿⣿⠏⠈⢿⣿⣿⣿⡿⢟⣿    - Se houver testes, isso será calculado automaticamente
+    ⢸⡏ ⢠⣀ ⢀⡤   ⢨⣿  - Quanto conseguiu fazer antes de consultar ajuda?
+    ⠸⣿⡀ ⠉⠉⠉  ⢀⣠⡾⠃  - Se utilizou alguma ajuda, qual foi?
+     ⠈⠻⠷⠶⣶⡶⠾⠿⠛⠉      - Humana? Quem?
+ ⢀⡀     ⢀⣿           - IA? Qual? Como?
+⠿⢿⣧⡀    ⣸⣟           - Guiada seguindo aula ou vídeo?
+  ⠘⢿⡄ ⣠⡾⢻⣿⣄          - Outros? Pesquisando na documentação ou exemplos?
+    ⢿⣴⡟ ⢸⡏⠹⣧       - Qual tempo estimado em minutos de estudo + implementação?
+    ⠈⠛  ⢸⣟ ⠹⣧    
+- Você pode e deve refazer a atividade do zero quantas vezes quiser e
+reavaliar e melhorar sua nota.
 
-  - Cobertura: quanto da atividade foi entregue?
-    - Se houver testes, isso será calculado automaticamente
-  - Abordagem: precisou de algum tipo de ajuda pra fazer?
-    - Humana, IA, Guiado, Pesquisa, Sozinho?
-  - Autonomia: se refizesse a atividade sozinho e SEM CONSULTA,
-    - quanto dela você se sente confiante para fazer?
 
-- Você pode e deve refazer a atividade outras vezes com menos 
-ou nenhum suporte para estudar, reavaliar e melhorar sua nota.
-
-Cobertura: (  fiz nada ) 0123456789✓ (entreguei tudo)
-Abordagem: (qual ajuda ) x  HIGP  AS (nenhuma ajuda )
-Autonomia: (não aprendi) x ▁ ▂ ▃ ▅ █ (refaço sozinho)
 """[1:]
 
 # opening["alien4"] = r"""

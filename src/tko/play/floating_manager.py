@@ -16,5 +16,8 @@ class FloatingManager:
             self.input_layer = self.input_layer[1:]
         return len(self.input_layer) > 0 and self.input_layer[0].is_enable()
 
-    def get_input(self) -> int:
-        return self.input_layer[0].get_input()
+    def draw(self) -> None:
+        self.input_layer[0].draw()
+
+    def process_input(self, key: int) -> int:
+        return self.input_layer[0].process_input(key)

@@ -52,7 +52,7 @@ class Gui:
             pass
         act_color, act_text = self.get_activate_label()
         help_fixed: list[Text] = [
-            Text().addf("C", f"{GuiActions.move} [{GuiKeys.up}{GuiKeys.left}{GuiKeys.down}{GuiKeys.right}]"),
+            Text().addf("C", f"{GuiActions.filter} [1234]"),
             Text().addf("C", f"{GuiActions.config} [{GuiKeys.palette}]"),
             Text().addf(act_color, f"{act_text} [↲]"),
             Text().addf("G", f"{GuiActions.search} [{GuiKeys.search}]"),
@@ -332,8 +332,8 @@ class Gui:
 
         _help.put_sentence(Text.format("  ").addf("r", "Shift + B")
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
-        _help.put_sentence(Text() + "  " + Text.r_token("g", "setas") + "      Para navegar entre os elementos")
-        _help.put_sentence(Text() + "   " + Text.r_token("g", f"{GuiKeys.left}{GuiKeys.down}{GuiKeys.up}{GuiKeys.right}") + "      Para navegar entre os elementos")
+        _help.put_sentence(Text() + "  " + Text.r_token("g", f"Shift + {GuiKeys.calibrate}") + "  Para calibrar os direcionais do teclado")
+        _help.put_sentence(Text() + "  " + Text.r_token("g", " setas") + "     Para navegar entre os elementos")
     
         _help.put_sentence(Text() + f"   {GuiActions.config} " + Text.r_token("r", f"{GuiKeys.palette}") + "  Abre o menu de ações e configurações")
         _help.put_sentence(Text() + f"   {GuiActions.github} " + Text.r_token("r", f"{GuiKeys.open_url}") + "  Abre tarefa em uma aba do browser")

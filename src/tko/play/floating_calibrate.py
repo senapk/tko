@@ -38,10 +38,8 @@ class FloatingCalibrate(Floating):
         self._content.append(Text().addf(color, "Down  ").addf(color, format_value(self._options[3])))
 
     # @override
-    def get_input(self) -> int:
-        self.draw()
-        key: int = Fmt.getch()
-        key = InputManager.fix_cedilha(Fmt.get_screen(), key)
+    def process_input(self, key: int) -> int:
+        # self.draw()
         
         if key == InputManager.esc:
             self._enable = False

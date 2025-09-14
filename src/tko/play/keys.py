@@ -2,7 +2,7 @@ class GuiActions:
     tab = "↔TAB"
     leave   = "Sair"
     edit = "Editar"
-    move = "Mover"
+    filter = "Filtrar"
     principal = "Principal"
     github = "Web   "
     help = "Ajuda"
@@ -21,10 +21,6 @@ class GuiActions:
     all = "Todos"
 
 class GuiKeys:
-    left = "A"
-    right = "D"
-    down = "S"
-    up = "W"
     calibrate = "C"
 
     xray = "X"
@@ -48,6 +44,7 @@ class GuiKeys:
     show_tasks = "4"
     search = "/"
     grade_play = "p"
+    grade_play2 = "."
     execute_tester = "r" # Interact in manual input
     diff = "d"
     evaluate = "\n"

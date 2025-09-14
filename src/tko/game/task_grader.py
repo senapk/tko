@@ -38,30 +38,16 @@ class TaskGrader:
         # v = 1 / (1 + (2.71828 ** (-k * (x - x0))))  # using e constant directly for compatibility
         return v * 100.0
 
-    def get_edge_percent(self) -> int:
-        edge = self.info.edge
-        # deprecated
-        if self.info.flow < 6 and edge == 5:
-            edge = 4
-        return edge * 20
-    
-    def get_flow_percent(self) -> int:
-        if self.info.flow > 4:
-            return 100
-        if self.info.flow == 0:
-            return 0
-        return 80    
+
 
     def get_percent(self):
         # hardcoded gambi for compatibility
         rate = float(self.info.rate)
-        flow = float(self.get_flow_percent())
-        edge = float(self.get_edge_percent())
-
+        alone = float(self.info.alone) * 10
         # return Task.get_square_mean(flow, edge, rate)
         # return Task.get_harmonic_mean(flow, edge, rate)
         # return Task.get_cubic_square(flow, edge, rate)
-        return TaskGrader.get_sigmoid(flow, edge, rate)
+        return TaskGrader.get_product(rate, alone, 100) 
 
 
     def get_ratio(self) -> float:

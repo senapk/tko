@@ -85,7 +85,7 @@ class TaskTree:
                         if q.key in self.expanded:
                             for t in q.get_tasks():
                                 extra = 0 if not Flags.xray.is_true() else 6
-                                items.append(len(t.title) + extra + 6)
+                                items.append(len(t.title) + extra + 9)
 
         self.max_title = min_value
         if len(items) > 0:
@@ -119,9 +119,14 @@ class TaskTree:
         output.add(" ")
         output.addf(color_lig_task, lig_quest)
         output.add(down_symbol).add(" ")
-        output.add(t.get_prog_symbol()).add(" ")
-        output.add(symbols.flow_list[t.info.flow]).add(" ")
-        output.add(symbols.edge_list[t.info.edge])
+        rate = t.info.rate // 10
+        output.add(t.get_prog_symbol(rate)).add(" ")
+        alone = t.info.alone
+        output.add(t.get_prog_symbol(alone)).add(" ")
+        output.addf("g" if t.info.human else "", "H")
+        output.addf("g" if t.info.iagen else "", "I")
+        output.addf("g" if t.info.guide else "", "G")
+        output.addf("g" if t.info.other else "", "O")
 
         if in_focus:
             output.add(self.style.round_l(focus_color))
@@ -171,7 +176,7 @@ class TaskTree:
                 con = "─╮" if n_hidden == 0 else "┄╮"
 
         color_reachable = "g" if q.is_reachable() else "r"
-        if Flags.quests.get_value() == "1":
+        if Flags.quests.get_value() == "2":
             for quest in self.game.quests.values():
                 if not quest.is_reachable():
                     if q.key in quest.requires:
