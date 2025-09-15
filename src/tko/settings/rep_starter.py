@@ -6,7 +6,7 @@ from tko.settings.rep_paths import RepPaths
 from tko.settings.settings import Settings
 
 class RepStarter:
-    def __init__(self, remote: str | None, source: str | None, folder: str | None, language: str | None = None, database: str | None = None):
+    def __init__(self, remote: str | None, source: str | None, folder: str | None, language: str | None = None, database: str | None = None, filters: list[str] | None = None):
         self.folder: str = ""
         # if folder is set, use folder, else use remote if remote, else .
         if not self.set_folder(folder, remote):
@@ -44,6 +44,8 @@ class RepStarter:
         if database is not None:
             rep.set_database_folder(database)
             print(Text.format("A pasta com as questões foi definida para {y}.", database))
+        if filters is not None:
+            rep.set_filter_view(filters)
         rep.save_config()
         self.print_end_msg()
 

@@ -91,7 +91,7 @@ class Game:
 
 
 
-    def parse_file_and_folder(self, filename: str, folder: str, language: str):
+    def parse_file_and_folder(self, filename: str, folder: str, language: str, quest_filter: list[str]):
         self.filename = filename
         if filename == "" or not os.path.exists(filename):
             content = ""
@@ -99,7 +99,7 @@ class Game:
             content = Decoder.load(filename)
         self.parse_xp(content)
 
-        gb = GameBuilder(filename, folder)
+        gb = GameBuilder(filename, folder, quest_filter)
         gb.build_from(content, language)
         self.ordered_clusters = gb.ordered_clusters
         self.clusters = gb.clusters

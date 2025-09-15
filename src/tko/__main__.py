@@ -143,7 +143,8 @@ class Main:
         folder: str | None = args.folder
         language: str | None = args.language
         database: str | None = args.database
-        RepStarter(remote=remote, source=source, folder=folder, language=language, database=database)
+        filters: list[str] | None = args.filter
+        RepStarter(remote=remote, source=source, folder=folder, language=language, database=database, filters=filters)
 
     @staticmethod
     def config(args: argparse.Namespace):
@@ -342,6 +343,7 @@ class Parser:
         parser_init.add_argument('--folder', '-f', type=str, help='Local directory.')
         parser_init.add_argument('--language', '-l', type=str, help='Draft language for the repository.')
         parser_init.add_argument('--database', '-d', type=str, help='Define database folder.')
+        parser_init.add_argument('--filter', type=str, nargs='+', help='Only accept quests this patterns.')
         parser_init.set_defaults(func=Main.init)
 
 

@@ -9,13 +9,14 @@ import os
 from icecream import ic
 
 class GameBuilder:
-    def __init__(self, filename: str, database_folder: str):
+    def __init__(self, filename: str, database_folder: str, quests_filter_view: list[str]):
         self.filename = filename
         self.database_folder = database_folder
         self.ordered_clusters: list[str] = [] # ordered clusters
         self.clusters: dict[str, Cluster] = {}
         self.active_cluster: Cluster | None = None
         self.active_quest: Quest | None = None
+        self.quests_filter_view: list[str] = quests_filter_view
 
     def build_from(self, content: str, language: str):
         self.__parse_file_content(content)
@@ -42,6 +43,9 @@ class GameBuilder:
         return quests
 
     def __create_requirements_pointers(self):
+        if len(self.quests_filter_view) > 0:
+            return
+
         quests = self.collect_quests()
         # verificar se todas as quests requeridas existem e adicionar o ponteiro
         for q in quests.values():
@@ -167,7 +171,7 @@ class GameBuilder:
 
         # apagando quests vazias da lista de quests
         for cluster in self.clusters.values():
-            cluster.remove_empty_or_other_language(language)
+            cluster.remove_empty_and_other_language_and_filtered(language, self.quests_filter_view)
 
         # apagando quests vazias dos clusters e clusters vazios
         ordered_clusters: list[str] = []

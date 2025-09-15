@@ -49,7 +49,7 @@ class Repository:
             self.load_config()
         database_folder = os.path.join(self.paths.root_folder, self.get_database_folder())
         cache_or_index = self.load_index_or_cache()
-        self.game.parse_file_and_folder(cache_or_index, database_folder, self.get_lang())
+        self.game.parse_file_and_folder(cache_or_index, database_folder, self.get_lang(), self.get_filter_view())
         self.__load_tasks_from_rep_into_game()
         return self
     
@@ -121,6 +121,7 @@ class Repository:
     __lang = "lang"
     __selected = "index"
     __database = "database"
+    __filter = "filter"
 
     defaults: dict[str, Any] = {
         __version: __actual_version,
@@ -130,8 +131,15 @@ class Repository:
         __tasks: {},
         __flags: {},
         __lang: "",
-        __selected: ""
+        __selected: "",
+        __filter: []
     }
+
+    def get_filter_view(self) -> list[str]:
+        return self.__get(Repository.__filter)
+    
+    def set_filter_view(self, value: list[str]):
+        self.__set(Repository.__filter, value)
 
     def get_database_folder(self) -> str:
         return self.__get(Repository.__database)
