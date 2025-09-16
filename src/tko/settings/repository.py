@@ -8,7 +8,7 @@ from tko.util.text import Text
 from tko.logger.logger import Logger
 import yaml # type: ignore
 from tko.settings.rep_paths import RepPaths
-from icecream import ic
+from icecream import ic # type: ignore
 
 def remove_git_merge_tags(lines: list[str]) -> list[str]:
     # remove lines with <<<<<<<, =======, >>>>>>>>
@@ -18,6 +18,101 @@ def remove_git_merge_tags(lines: list[str]) -> list[str]:
             continue
         filtered_lines.append(line)
     return filtered_lines
+
+class Source:
+    def __init__(self, alias: str = "", link: str = ""):
+        self.alias = alias
+        self.link = link
+        self.last_cache: str = ""
+        self.filter: list[str] = []
+    
+    def set_alias(self, alias: str):
+        self.alias = alias
+        return self
+
+    def set_link(self, link: str):
+        self.link = link
+        return self
+    
+    def set_last_cache(self, last_cache: str):
+        self.last_cache = last_cache
+        return self
+    
+    def set_filter(self, filter: list[str]):
+        self.filter = filter
+        return self
+
+    def load_from_dict(self, data: dict[str, Any]):
+        if "alias" in data and isinstance(data["alias"], str):
+            self.alias = data["alias"]
+        if "link" in data and isinstance(data["link"], str):
+            self.link = data["link"]
+        if "last_cache" in data and isinstance(data["last_cache"], str):
+            self.last_cache = data["last_cache"]
+        if "filter" in data and isinstance(data["filter"], list):
+            self.filter = data["filter"]
+    
+    def save_to_dict(self) -> dict[str, Any]:
+        return {
+            "alias": self.alias,
+            "link": self.link,
+            "last_cache": self.last_cache,
+            "filter": self.filter
+        }
+
+class RepData:
+    def __init__(self):
+        self.version: str = ""
+        self.source: Source = Source("", "")
+        self.expanded: list[str] = []
+        self.tasks: dict[str, Any] = {}
+        self.flags: dict[str, Any] = {}
+        self.lang: str = ""
+        self.selected: str = ""
+        self.database: str = "database"
+
+    def _safe_load(self, data: dict[str, Any], key: str, target_type: type, default_value: Any = None):
+        """Helper method to safely load a value from a dictionary."""
+        if key in data and isinstance(data[key], target_type):
+            return data[key]
+        return default_value
+
+    def load_from_dict(self, data: dict[str, Any]):
+        try:
+            # Load simple fields
+            self.version = self._safe_load(data, "version", str, self.version)
+            self.expanded = self._safe_load(data, "expanded", list, self.expanded)
+            self.tasks = self._safe_load(data, "tasks", dict, self.tasks)
+            self.flags = self._safe_load(data, "flags", dict, self.flags)
+            self.lang = self._safe_load(data, "lang", str, self.lang)
+            self.selected = self._safe_load(data, "selected", str, self.selected)
+            self.database = self._safe_load(data, "database", str, self.database)
+
+            # Load the 'source' field with specific validation
+            if "source" in data:
+                source_data = data["source"]
+                if isinstance(source_data, dict):
+                    self.source.load_from_dict(source_data) # type: ignore
+                else:
+                    raise TypeError("The 'source' field must be a dictionary.")
+
+        except (KeyError, TypeError) as e:
+            print(f"Error loading data from dictionary: {e}")
+            # Optionally, you can re-raise the exception or handle it differently
+            # raise ValueError("Malformed data for RepData") from e
+
+    def save_to_dict(self) -> dict[str, Any]:
+        return {
+            "version": self.version,
+            "source": self.source.save_to_dict(),
+            "expanded": self.expanded,
+            "tasks": self.tasks,
+            "flags": self.flags,
+            "lang": self.lang,
+            "selected": self.selected,
+            "database": self.database
+        }
+
 
 
 class Repository:
@@ -30,7 +125,7 @@ class Repository:
         self.paths = RepPaths(rep_folder)
         self.data: dict[str, Any] = {}
         self.game = Game()
-        self.logger: Logger = Logger(rep_folder)
+        self.logger: Logger = Logger(rep_folder) 
 
     def found(self):
         return os.path.isfile(self.paths.get_config_file())
@@ -48,8 +143,9 @@ class Repository:
         if self.data == {}:
             self.load_config()
         database_folder = os.path.join(self.paths.root_folder, self.get_database_folder())
-        cache_or_index = self.load_index_or_cache()
-        self.game.parse_file_and_folder(cache_or_index, database_folder, self.get_lang(), self.get_filter_view())
+        for source in  self.get_rep_sources():
+            cache_or_index = self.load_index_or_cache(source)
+            self.game.parse_file_and_folder(cache_or_index, database_folder, self.get_lang(), self.get_filter_view())
         self.__load_tasks_from_rep_into_game()
         return self
     
@@ -77,22 +173,20 @@ class Repository:
         return os.path.abspath(os.path.join(self.paths.root_folder, self.get_database_folder(), label))
 
 
-    def __load_local_file(self, source: str) -> str:
+    def __load_local_file(self, source: Source) -> str:
         # test if file is inside or outside the repository
-        source_full = os.path.join(self.paths.get_config_folder(), source)
+        source_full = os.path.join(self.paths.get_config_folder(), source.link)
         if not os.path.exists(source_full):
             raise Warning(Text.format("{r}: Arquivo fonte do repositório {y} não foi encontrado", "Erro", source))
         return source_full
 
-    def __is_remote_source(self) -> bool:
-        source = self.get_rep_source()
-        return source.startswith("http:") or source.startswith("https:")
-    
-    def down_source_from_remote_url(self):
-        source = self.get_rep_source()
+    def __is_remote_source(self, source: Source) -> bool:
+        return source.link.startswith("http:") or source.link.startswith("https:")
+
+    def down_source_from_remote_url(self, source: Source):
         cache_file = self.paths.get_default_readme_path()
         os.makedirs(self.paths.root_folder, exist_ok=True)
-        ru = RemoteUrl(source)
+        ru = RemoteUrl(source.link)
         try:
             ru.download_absolute_to(cache_file)
         except urllib.error.URLError: # type: ignore
@@ -103,13 +197,12 @@ class Repository:
                 raise Warning("fail: Arquivo do cache não encontrado")
         return cache_file
 
-    def load_index_or_cache(self) -> str:
-        source = self.get_rep_source()
-        if source == "":
+    def load_index_or_cache(self, source: Source) -> str:
+        if source.link == "":
             return ""
 
-        if self.__is_remote_source():
-            return self.down_source_from_remote_url()
+        if self.__is_remote_source(source):
+            return self.down_source_from_remote_url(source)
         return self.__load_local_file(source)
 
     __version = "version"
@@ -126,7 +219,7 @@ class Repository:
     defaults: dict[str, Any] = {
         __version: __actual_version,
         __database: "database",
-        __source: "",
+        __source:  ,
         __expanded: [],
         __tasks: {},
         __flags: {},
