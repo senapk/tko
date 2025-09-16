@@ -9,7 +9,7 @@ python_files = ["test_*.py"]
 
 [project]
 name = "tko"
-version = "7.0.0"
+version = "7.1.0"
 description = "Add your description here"
 authors = [
     { name = "David", email = "sena.ufc@gmail.com" }
