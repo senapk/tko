@@ -150,7 +150,7 @@ class Gui:
         dirname: str = self.rep.paths.get_rep_dir()
         dirname = os.path.basename(dirname).upper()
         text.add(self.style.border(alias_color, dirname))
-        text.add(self.style.border("G", self.rep.get_lang().upper()))
+        text.add(self.style.border("G", self.rep.data.lang.upper()))
         if self.need_update:
             text = Text().addf("r", " TKO DESATUALIZADO!").addf("y"," Atualize com: ").addf("g", "pipx upgrade tko ")
         text = self.center_header_footer(text, frame)

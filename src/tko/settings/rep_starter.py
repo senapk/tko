@@ -1,7 +1,7 @@
 import os
 from tko.util.text import Text
 from tko.util.decoder import Decoder
-from tko.settings.repository import Repository
+from tko.settings.repository import Repository, Source
 from tko.settings.rep_paths import RepPaths
 from tko.settings.settings import Settings
 
@@ -17,6 +17,9 @@ class RepStarter:
             return
         self.rep = rep
 
+        if filters is None:
+            filters = []
+
         if source is None and remote is None:
             print(Text.format("Nenhuma fonte foi informada, criando repositório vazio."))
             self.create_empty_rep()
@@ -27,25 +30,25 @@ class RepStarter:
             if not settings.has_alias_remote(remote):
                 raise Warning("fail: alias remoto não encontrado.")
             self.source = settings.get_alias_remote(remote)
-            rep.set_rep_source(self.source)
+            rep.data.sources.append(Source(remote, self.source, filters=filters))
         elif source is not None:
             if source.startswith("http"):
                 print(Text.format("Criando repositório apontando para link remota {y}.", source))
                 self.source = source
+                rep.data.sources.append(Source("remote", self.source, filters=filters))
             else:
                 print(Text.format("Criando repositório apontando para arquivo local {y}.", source))
                 self.source = os.path.abspath(source)
                 if self.source.startswith(self.folder):
                     self.source = os.path.relpath(self.source, os.path.dirname(rep.paths.get_config_file()))
-            rep.set_rep_source(self.source)
+                rep.data.sources.append(Source("local", self.source, filters=filters))
         if language is not None:
-            rep.set_lang(language)
+            rep.data.lang = language
             print(Text.format("A linguagem do repositório foi definida como {y}.", language))
         if database is not None:
-            rep.set_database_folder(database)
+            rep.data.database = database
             print(Text.format("A pasta com as questões foi definida para {y}.", database))
-        if filters is not None:
-            rep.set_filter_view(filters)
+
         rep.save_config()
         self.print_end_msg()
 
@@ -85,7 +88,7 @@ class RepStarter:
     
     def create_empty_rep(self):
         index = self.rep.paths.get_default_readme_path()
-        self.rep.set_rep_source(index)
+        self.rep.data.sources = [Source("empty", index)]
         print("Nenhuma fonte foi informada, utilizando o arquivo {} como fonte".format(index))
         if not os.path.exists(index):
             content = "# Repositório\n\n## Grupo\n\n### Missão\n\n- [ ] [#google Abra o google](https://www.google.com)\n"

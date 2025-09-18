@@ -51,18 +51,18 @@ class TaskTree:
                     self.all_items[t.key] = t
 
     def load_from_rep(self):
-        self.expanded: list[str] = [v for v in self.rep.get_expanded()]
-        self.selected_item = self.rep.get_selected()
+        self.expanded: list[str] = [v for v in self.rep.data.expanded]
+        self.selected_item = self.rep.data.selected
 
     def save_on_rep(self):
-        self.rep.set_expanded(self.expanded)
+        self.rep.data.expanded = self.expanded
         # self.rep.set_new_items([x for x in set(self.new_items)])
-        self.rep.set_selected(self.selected_item)
+        self.rep.data.selected = self.selected_item
         tasks: dict[str, str] = {}
         for t in self.game.tasks.values():
             if len(t.info.get_filled_kv()) != 0:
                 tasks[t.key] = t.save_to_db()
-        self.rep.set_tasks(tasks)
+        self.rep.data.tasks = tasks
 
     def update_tree(self, admin_mode: bool):
         self.game.update_reachable_and_available()
@@ -589,7 +589,7 @@ class TaskTree:
         
     def is_downloaded_for_lang(self, task: Task):
         folder = task.get_folder()
-        lang = self.rep.get_lang()
+        lang = self.rep.data.lang
         if folder is None:
             return False
         drafts = Drafts.load_drafts_only(folder, lang)

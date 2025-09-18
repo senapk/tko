@@ -20,11 +20,11 @@ def remove_git_merge_tags(lines: list[str]) -> list[str]:
     return filtered_lines
 
 class Source:
-    def __init__(self, alias: str = "", link: str = ""):
+    def __init__(self, alias: str = "", link: str = "", filters: list[str] | None = None):
         self.alias = alias
         self.link = link
         self.last_cache: str = ""
-        self.filter: list[str] = []
+        self.filter: list[str] = [] if filters is None else filters
     
     def set_alias(self, alias: str):
         self.alias = alias
@@ -51,6 +51,7 @@ class Source:
             self.last_cache = data["last_cache"]
         if "filter" in data and isinstance(data["filter"], list):
             self.filter = data["filter"]
+        return self
     
     def save_to_dict(self) -> dict[str, Any]:
         return {
@@ -63,7 +64,7 @@ class Source:
 class RepData:
     def __init__(self):
         self.version: str = ""
-        self.source: Source = Source("", "")
+        self.sources: list[Source] = []
         self.expanded: list[str] = []
         self.tasks: dict[str, Any] = {}
         self.flags: dict[str, Any] = {}
@@ -89,12 +90,12 @@ class RepData:
             self.database = self._safe_load(data, "database", str, self.database)
 
             # Load the 'source' field with specific validation
-            if "source" in data:
-                source_data = data["source"]
-                if isinstance(source_data, dict):
-                    self.source.load_from_dict(source_data) # type: ignore
+            if "sources" in data:
+                source_data: list[dict[str, Any]] = data["sources"]
+                if isinstance(source_data, list): # type: ignore
+                    self.sources = [Source().load_from_dict(x) for x in source_data]
                 else:
-                    raise TypeError("The 'source' field must be a dictionary.")
+                    raise TypeError("The 'sources' field must be a list.")
 
         except (KeyError, TypeError) as e:
             print(f"Error loading data from dictionary: {e}")
@@ -104,7 +105,7 @@ class RepData:
     def save_to_dict(self) -> dict[str, Any]:
         return {
             "version": self.version,
-            "source": self.source.save_to_dict(),
+            "sources": [x.save_to_dict() for x in self.sources],
             "expanded": self.expanded,
             "tasks": self.tasks,
             "flags": self.flags,
@@ -123,7 +124,7 @@ class Repository:
         if recursive_folder != "":
             rep_folder = recursive_folder
         self.paths = RepPaths(rep_folder)
-        self.data: dict[str, Any] = {}
+        self.data: RepData = RepData()
         self.game = Game()
         self.logger: Logger = Logger(rep_folder) 
 
@@ -140,12 +141,12 @@ class Repository:
         return link.startswith("http:") or link.startswith("https:")
 
     def load_game(self):
-        if self.data == {}:
+        if self.data.database == "":
             self.load_config()
-        database_folder = os.path.join(self.paths.root_folder, self.get_database_folder())
-        for source in  self.get_rep_sources():
+        database_folder = os.path.join(self.paths.root_folder, self.data.database)
+        for source in  self.data.sources:
             cache_or_index = self.load_index_or_cache(source)
-            self.game.parse_file_and_folder(cache_or_index, database_folder, self.get_lang(), self.get_filter_view())
+            self.game.parse_file_and_folder(cache_or_index, database_folder, self.data.lang, source.filter)
         self.__load_tasks_from_rep_into_game()
         return self
     
@@ -164,13 +165,13 @@ class Repository:
     
     def __load_tasks_from_rep_into_game(self):
         # load tasks from repository.yaml into game
-        tasks = self.get_tasks()
+        tasks = self.data.tasks
         for key, serial in tasks.items():
             if key in self.game.tasks:
                 self.game.tasks[key].load_from_db(serial)
 
     def get_task_folder_for_label(self, label: str) -> str:
-        return os.path.abspath(os.path.join(self.paths.root_folder, self.get_database_folder(), label))
+        return os.path.abspath(os.path.join(self.paths.root_folder, self.data.database, label))
 
 
     def __load_local_file(self, source: Source) -> str:
@@ -205,144 +206,46 @@ class Repository:
             return self.down_source_from_remote_url(source)
         return self.__load_local_file(source)
 
-    __version = "version"
-    __actual_version = "0.0.1"
-    __source = "remote"  #remote url or local file or remote file
-    __expanded = "expanded"
-    __tasks = "tasks"
-    __flags = "flags"
-    __lang = "lang"
-    __selected = "index"
-    __database = "database"
-    __filter = "filter"
-
-    defaults: dict[str, Any] = {
-        __version: __actual_version,
-        __database: "database",
-        __source:  ,
-        __expanded: [],
-        __tasks: {},
-        __flags: {},
-        __lang: "",
-        __selected: "",
-        __filter: []
-    }
-
-    def get_filter_view(self) -> list[str]:
-        return self.__get(Repository.__filter)
-    
-    def set_filter_view(self, value: list[str]):
-        self.__set(Repository.__filter, value)
-
-    def get_database_folder(self) -> str:
-        return self.__get(Repository.__database)
-
-    def set_database_folder(self, value: str):
-        self.__set(Repository.__database, value)
-        return self
-
-    def get_version(self) -> str:
-        return self.__get(Repository.__version)
-    
-    def set_version(self, value: str):
-        self.__set(Repository.__version, value)
-        return self
-
-    def get_rep_source(self) -> str:
-        return self.__get(Repository.__source)
-    
-    def set_rep_source(self, value: str):
-        self.__set(Repository.__source, value)
-        return self
-
-    def get_selected(self) -> str:
-        return self.__get(Repository.__selected)
-
-    def get_expanded(self) -> list[str]:
-        return self.__get(Repository.__expanded)
-
-    def get_tasks(self) -> dict[str, Any]:
-        return self.__get(Repository.__tasks)
-    
-    def get_flags(self) -> dict[str, Any]:
-        return self.__get(Repository.__flags)
-    
-    def get_lang(self) -> str:
-        return self.__get(Repository.__lang)
-
-    def set_expanded(self, value: list[str]):
-        return self.__set(Repository.__expanded, value)
-    
-    def set_tasks(self, value: dict[str, str]):
-        self.__set(Repository.__tasks, value)
-        return self
-    
-    def set_flags(self, value: dict[str, Any]):
-        self.__set(Repository.__flags, value)
-        return self
-    
-    def set_lang(self, value: str):
-        self.__set(Repository.__lang, value)
-        return self
-    
-    def set_selected(self, value: str):
-        self.__set(Repository.__selected, value)
-        return self
-
-    def __get(self, key: str) -> Any:
-        if key not in self.defaults:
-            raise ValueError(f"Key {key} not found in RepSettings")
-        value = self.data.get(key, Repository.defaults[key])
-        if type(value) != type(Repository.defaults[key]):
-            return Repository.defaults[key]
-        return value
-
-    def __set(self, key: str, value: Any):
-        self.data[key] = value
-        return self
 
     def create_empty_config_file(self, point_to_local_readme: bool = False):
         if point_to_local_readme:
-            self.set_rep_source(self.paths.get_default_readme_path())
+            self.data.sources.append(Source("local",self.paths.get_default_readme_path()))
         self.save_config()
         return self
 
     # config
     def load_config(self):
         encoding = Decoder.get_encoding(self.paths.get_config_file())
+        local_data: dict[str, Any] = {}
         try:
             with open(self.paths.get_config_file(), encoding=encoding) as f:
                 lines = f.readlines()
                 lines = remove_git_merge_tags(lines)
-                self.data = yaml.safe_load("\n".join(lines))
-            if self.data is None or not isinstance(self.data, dict) or len(self.data) == 0: # type: ignore
+                local_data = yaml.safe_load("\n".join(lines))
+            if local_data is None or not isinstance(self.data, dict) or len(self.data) == 0: # type: ignore
                 with open(self.paths.get_config_backup_file(), "r", encoding=encoding) as f:
                     lines = f.readlines()
                     lines = remove_git_merge_tags(lines)
-                    self.data = yaml.safe_load("\n".join(lines))
-            if self.data is None or not isinstance(self.data, dict) or len(self.data) == 0: # type: ignore
+                    local_data = yaml.safe_load("\n".join(lines))
+            if local_data is None or not isinstance(local_data, dict) or len(local_data) == 0: # type: ignore
                 raise FileNotFoundError(f"Arquivo de configuração vazio: {self.paths.get_config_file()}")
         except:
             raise Warning(Text.format("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.paths.get_config_file(), "corrompido"))
+        if local_data["version"] == "0.0.1":
+            local_data["sources"] = [Source("legacy", local_data["remote"], local_data["filter"]).save_to_dict()]
+        self.data.load_from_dict(local_data)
+
         return self
 
     def save_config(self):
-        self.set_version(self.__actual_version)
+        self.data.version = "0.2"
         yaml_file = self.paths.get_config_file()
         if not os.path.exists(os.path.dirname(yaml_file)):
             os.makedirs(os.path.dirname(yaml_file))
-        # filter keys that are not in defaults
-        for key in list(self.data.keys()):
-            if key not in Repository.defaults:
-                del self.data[key]
-
-        for key in Repository.defaults:
-            if key not in self.data:
-                self.data[key] = Repository.defaults[key]
         yaml_file_new = yaml_file + ".new"
         yaml_file_bkp = yaml_file + ".backup"
         with open(yaml_file_new, "w", encoding="utf-8") as f:
-            yaml.dump(self.data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+            yaml.dump(self.data.save_to_dict(), f, default_flow_style=False, allow_unicode=True, sort_keys=False)
         # copy file from yaml_file to yaml_file.backup
         try:
             Repository.rename_file(yaml_file, yaml_file_bkp)

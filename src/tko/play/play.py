@@ -25,7 +25,7 @@ class Play:
         self.game: Game = rep.game
         self.exit = False
 
-        self.flagsman = FlagsMan(self.rep.get_flags())
+        self.flagsman = FlagsMan(self.rep.data.flags)
         self.fman = FloatingManager()
         self.tree = TaskTree(self.settings, rep, self.fman)
         self.gui = Gui(tree=self.tree, flagsman=self.flagsman, fman=self.fman)
@@ -38,7 +38,7 @@ class Play:
 
     def save_to_json(self):
         self.tree.save_on_rep()
-        self.rep.set_flags(self.flagsman.get_data())
+        self.rep.data.flags = self.flagsman.get_data()
         self.settings.save_settings()
         self.rep.save_config()
 
@@ -130,7 +130,7 @@ class Play:
             self.save_to_json()
 
     def check_lang_in_text_mode(self):
-        lang = self.rep.get_lang()
+        lang = self.rep.data.lang
         if lang == "":
             options = available_languages
             print("\nLinguagem padrão ainda não foi definida.\n")
@@ -140,7 +140,7 @@ class Play:
                 lang = input()
                 if lang in options:
                     break
-            self.rep.set_lang(lang)
+            self.rep.data.lang = lang
 
 
     def play(self):
