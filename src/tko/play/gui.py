@@ -349,26 +349,6 @@ class Gui:
         _help.put_sentence(Text() + Text.r_token("g", "             tko config --editor <comando>"))
 
 
-    # def build_xp_bar(self) -> tuple[str, float]:
-    #     xp = XP(self.game)
-    #     available = xp.get_xp_total_available()
-    #     if 0 < available == xp.get_xp_total_obtained():
-    #         text = "Você atingiu o máximo de xp!"
-    #         percent = 100.0
-    #     else:
-    #         # lang = self.rep.get_lang().upper()
-    #         level = xp.get_level()
-    #         percent = float(xp.get_xp_level_current()) / float(xp.get_xp_level_needed())
-    #         if Flags.percent:
-    #             xpobt = int(100 * xp.get_xp_level_current() / xp.get_xp_level_needed())
-    #             text = "Level:{} XP:{}%".format(level, xpobt)
-    #         else:
-    #             xpobt1 = round(xp.get_xp_level_current())
-    #             xpobt2 = round(xp.get_xp_level_needed())
-    #             text = "Level:{} XP:{}/{}".format(level, xpobt1, xpobt2)
-
-    #     return text, percent
-
     def get_task_graph(self, task_key: str, width: int, height: int) -> tuple[bool, list[Text]]:
         tg = TaskGraph(self.settings, self.rep, task_key, width, height)
         if len(tg.collected_rate) == 1:

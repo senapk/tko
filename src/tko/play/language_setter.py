@@ -23,7 +23,7 @@ class LanguageSetter:
             FloatingInput(self.settings, "^")
             .set_header(" Escolha a extensão default para os rascunhos ")
             .set_options(options)
-            .set_default_index(available_languages.index(self.rep.get_lang()))
+            .set_default_index(available_languages.index(self.rep.data.get_lang()))
             .set_footer(" Escolha e reinicie o tko para aplicar!!!!! ")
         )
 
@@ -42,7 +42,7 @@ class SetLangFunctor:
         self.settings = settings
 
     def __call__(self):
-        self.rep.set_lang(self.value.strip())
+        self.rep.data.set_lang(self.value.strip())
         self.rep.save_config()
         self.fman.add_input(
             Floating(self.settings, "v>")

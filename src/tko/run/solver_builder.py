@@ -129,7 +129,7 @@ class SolverBuilder:
         first = self.args_list[0]
 
         if first.endswith(".py"):
-            self.__exec.set_executable(["python3"], self.args_list, "")
+            self.__prepare_python()
         elif first.endswith(".yaml"):
             self.__prepare_yaml()
         elif first.endswith(".mk"):
@@ -150,6 +150,12 @@ class SolverBuilder:
             self.__prepare_go()
         else:
             self.__exec.set_executable(self.args_list, [], "")
+
+    def __prepare_python(self):
+        cmd_name = "python3"
+        if shutil.which(cmd_name) is None:
+            cmd_name = "python"
+        self.__exec.set_executable([cmd_name], self.args_list, "")
 
     def __prepare_java(self):
         self.check_tool("javac")

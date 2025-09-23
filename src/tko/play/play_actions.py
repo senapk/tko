@@ -94,7 +94,7 @@ class PlayActions:
             folder = self.rep.get_task_folder_for_label(task.key)
             if os.path.exists(folder):
                 opener = Opener(self.settings).set_fman(self.fman)
-                opener.set_target([folder]).set_language(self.rep.get_lang())
+                opener.set_target([folder]).set_language(self.rep.data.get_lang())
                 opener.load_folders_and_open()
             else:
                 self.fman.add_input(
@@ -191,7 +191,7 @@ class PlayActions:
                 Floating(self.settings, "v>").put_text("\nEssa não é uma tarefa de baixável.\n").set_error()
             )
             return
-        lang = self.rep.get_lang() 
+        lang = self.rep.data.get_lang() 
         down_frame = (
             Floating(self.settings, "v>").set_warning().set_text_ljust().set_header(" Baixando tarefa ")
         )
@@ -243,8 +243,8 @@ class PlayActions:
     def run_selected_task(self, task: Task, task_dir: str) -> None:
         folder = task_dir
         run = Run(settings=self.settings, target_list=[folder], param=Param.Basic())
-        run.set_lang(self.rep.get_lang())
-        opener = Opener(self.settings).set_language(self.rep.get_lang()).set_target([folder])
+        run.set_lang(self.rep.data.lang)
+        opener = Opener(self.settings).set_language(self.rep.data.get_lang()).set_target([folder])
         run.set_opener(opener)
         run.set_run_without_ask(False)
         run.set_curses(True)
@@ -252,11 +252,11 @@ class PlayActions:
         run.build_wdir()
         
         if not run.wdir.has_solver():
-            lang = self.rep.get_lang()
+            lang = self.rep.data.get_lang()
             draft_folder = os.path.join(folder, lang)
-            DownActions().create_default_draft(draft_folder, self.rep.get_lang())
+            DownActions().create_default_draft(draft_folder, self.rep.data.get_lang())
             msg = Floating(self.settings, "v>").set_warning()
-            msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.rep.get_lang()))
+            msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.rep.data.get_lang()))
             msg.put_text("\nUm arquivo de rascunho vazio foi criado em {}.".format(draft_folder))
             self.fman.add_input(msg)
         run.execute()

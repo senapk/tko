@@ -24,7 +24,8 @@ class Source:
         self.alias = alias
         self.link = link
         self.last_cache: str = ""
-        self.filter: list[str] = [] if filters is None else filters
+        self.filters: list[str] | None = [] if filters is None else filters
+        self.database: str = ""
     
     def set_alias(self, alias: str):
         self.alias = alias
@@ -37,10 +38,17 @@ class Source:
     def set_last_cache(self, last_cache: str):
         self.last_cache = last_cache
         return self
-    
-    def set_filter(self, filter: list[str]):
-        self.filter = filter
+
+    def set_filters(self, filters: list[str] | None):
+        self.filters = filters
         return self
+    
+    def set_database(self, path: str):
+        self.database = path
+        return self
+    
+    def get_database(self) -> str:
+        return self.database
 
     def load_from_dict(self, data: dict[str, Any]):
         if "alias" in data and isinstance(data["alias"], str):
@@ -50,7 +58,9 @@ class Source:
         if "last_cache" in data and isinstance(data["last_cache"], str):
             self.last_cache = data["last_cache"]
         if "filter" in data and isinstance(data["filter"], list):
-            self.filter = data["filter"]
+            self.filters = data["filter"]
+        if "database" in data and isinstance(data["database"], str):
+            self.database = data["database"]
         return self
     
     def save_to_dict(self) -> dict[str, Any]:
@@ -58,7 +68,8 @@ class Source:
             "alias": self.alias,
             "link": self.link,
             "last_cache": self.last_cache,
-            "filter": self.filter
+            "filter": self.filters, 
+            "database": self.database
         }
 
 class RepData:
@@ -70,7 +81,35 @@ class RepData:
         self.flags: dict[str, Any] = {}
         self.lang: str = ""
         self.selected: str = ""
-        self.database: str = "database"
+
+    def get_sources(self) -> list[Source]:
+        return self.sources
+    
+    def get_expanded(self) -> list[str]:
+        return self.expanded
+
+    def get_tasks(self) -> dict[str, Any]:
+        return self.tasks
+
+    def get_flags(self) -> dict[str, Any]:
+        return self.flags
+
+    def get_lang(self) -> str:
+        return self.lang
+    
+    def get_selected(self) -> str:
+        return self.selected
+    
+    def get_database(self) -> str:
+        return self.database
+    
+    def set_lang(self, lang: str):
+        self.lang = lang
+        return self
+    
+    def set_database(self, database: str):
+        self.database = database
+        return self
 
     def _safe_load(self, data: dict[str, Any], key: str, target_type: type, default_value: Any = None):
         """Helper method to safely load a value from a dictionary."""
@@ -146,7 +185,7 @@ class Repository:
         database_folder = os.path.join(self.paths.root_folder, self.data.database)
         for source in  self.data.sources:
             cache_or_index = self.load_index_or_cache(source)
-            self.game.parse_file_and_folder(cache_or_index, database_folder, self.data.lang, source.filter)
+            self.game.parse_file_and_folder(cache_or_index, database_folder, self.data.lang, source.filters)
         self.__load_tasks_from_rep_into_game()
         return self
     
@@ -232,7 +271,7 @@ class Repository:
         except:
             raise Warning(Text.format("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.paths.get_config_file(), "corrompido"))
         if local_data["version"] == "0.0.1":
-            local_data["sources"] = [Source("legacy", local_data["remote"], local_data["filter"]).save_to_dict()]
+            local_data["sources"] = [Source("legacy", local_data["remote"], local_data.get("filter", None)).save_to_dict()]
         self.data.load_from_dict(local_data)
 
         return self

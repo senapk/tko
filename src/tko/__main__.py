@@ -138,6 +138,12 @@ class Main:
 
     @staticmethod
     def init(args: argparse.Namespace):
+        folder: str | None = args.folder
+        language: str | None = args.language
+        RepStarter(remote=remote, source=source, folder=folder, language=language, database=database, filters=filters)
+
+    @staticmethod
+    def source(args: argparse.Namespace):
         remote: str | None = args.remote
         source: str | None = args.source
         folder: str | None = args.folder
@@ -333,18 +339,22 @@ class Parser:
         exclusive_group.add_argument('--down', action='store_true', help="Download task from repository.")
         # exclusive_group.add_argument('--self', action='store_true', help="Self evaluate task in repository.") # TODO
         exclusive_group.add_argument('--graph', nargs=2, type=int, metavar=('WIDTH', 'HEIGHT'), help="Show task graph.")
-
         parser_down.set_defaults(func=Main.task)
 
-        parser_init = self.subparsers.add_parser('init', help='Initialize a repository in a folder.')
-        source = parser_init.add_mutually_exclusive_group()
-        source.add_argument('--remote', '-r', type=str, help='Remote source [fup|ed|poo].')
-        source.add_argument('--source', '-s', type=str, help='HTTP url or local file.')
+        parser_init = self.subparsers.add_parser('init', help='Initialize a empty repository in a folder.')
         parser_init.add_argument('--folder', '-f', type=str, help='Local directory.')
         parser_init.add_argument('--language', '-l', type=str, help='Draft language for the repository.')
-        parser_init.add_argument('--database', '-d', type=str, help='Define database folder.')
-        parser_init.add_argument('--filter', type=str, nargs='+', help='Only accept quests this patterns.')
         parser_init.set_defaults(func=Main.init)
+
+
+        parser_source = self.subparsers.add_parser('source', help='Adds a source to a repository folder.')
+        parser_source.add_argument('--folder', '-f', type=str, help='Repository folder.')
+        source_from = parser_source.add_mutually_exclusive_group()
+        source_from.add_argument('--source', '-s', type=str, help='HTTP url or local file.')
+        source_from.add_argument('--remote', '-r', type=str, help='Remote source [fup|ed|poo].')
+        parser_source.add_argument('--alias', type=str, help='Alias for the remote.')
+        parser_source.add_argument('--filters', type=str, nargs='+', help='Only accept quests this patterns.')
+        parser_source.set_defaults(func=Main.source)
 
 
 def execute(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:

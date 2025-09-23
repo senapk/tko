@@ -27,7 +27,7 @@ class Cluster(TreeItem):
             if len(filter_list) > 0:
                 allow = False
                 for filter in filter_list:
-                    if filter in q.title:
+                    if filter in q.title or filter in q.get_key():
                         allow = True
                         break
                 if not allow:

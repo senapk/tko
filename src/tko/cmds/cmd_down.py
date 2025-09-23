@@ -228,7 +228,7 @@ class CmdDown:
         return False
 
     def check_and_select_language(self) -> str:
-        language_def = self.rep.get_lang()
+        language_def = self.rep.data.get_lang()
 
         if self.language == "":
             if language_def != "":

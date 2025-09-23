@@ -122,7 +122,7 @@ class FloatingGrade(Floating):
             ("✓", Text().addf("y", " 100%"))]
 
         self.rate_slide  = InputSlide(Text().add("Quanto alcançou nessa sprint        ?"), progression, self._task.info.rate // 10)
-        self.alone_slide = InputSlide(Text().add("Quanto fez antes de procurar ajuda  ?"), progression, self._task.info.alone)
+        self.alone_slide = InputSlide(Text().add("Quanto fez só, por tentativa e erro ?"), progression, self._task.info.alone)
         self.human_text  =  InputText(Text().add("Ajuda Humana   (monitor, amigo, ...)?"), self._task.info.human)
         self.iagen_text  =  InputText(Text().add("Ajuda IA         (copilot, gpt, ...)?"), self._task.info.iagen)
         self.guide_text  =  InputText(Text().add("Ajuda Guiada      (aula, vídeo, ...)?"), self._task.info.guide)

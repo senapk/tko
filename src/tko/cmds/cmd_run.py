@@ -163,12 +163,12 @@ class Run:
         repo_path = RepPaths.rec_search_for_repo(dirname)
         if repo_path == "":
             return False
-        rep = Repository(repo_path)
+        rep: Repository = Repository(repo_path)
         rep.load_config()
         rep.load_game()
         self.__rep = rep
-        if rep.get_lang() != "":
-            self.__lang = rep.get_lang()
+        if rep.data.get_lang() != "":
+            self.__lang = rep.data.get_lang()
         return True
 
     def __try_load_task(self, dirname: str) -> bool:
