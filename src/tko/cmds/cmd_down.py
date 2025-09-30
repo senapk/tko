@@ -304,7 +304,7 @@ class DownActions:
                 self.send_to_print(self.folder_and_file(path) + " (Inalterado)")
 
     def down_readme(self, readme_path: str,  remote_url: RemoteUrl):
-        temp_file = tempfile.mktemp()
+        _, temp_file= tempfile.mkstemp()
         remote_url.download_absolute_to(temp_file)
         content = Decoder.load(temp_file)
         self.compare_and_save(content, readme_path)

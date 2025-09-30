@@ -3,18 +3,17 @@ from tko.util.get_md_link import get_md_link
 
 
 class QuestParser:
-    quest: Quest
-
-    def __init__(self):
-        self.quest = Quest()
+    def __init__(self, source_alias: str):
+        self.source_alias = source_alias
+        self.quest = Quest().set_database(source_alias)
         self.line: str = ""
         self.line_num = 0
         self.filename: str = ""
 
     def finish_quest(self) -> Quest:
 
-        if self.quest.key == "":
-            self.quest.key = get_md_link(self.quest.title)
+        if self.quest.get_only_key() == "":
+            self.quest.set_key(get_md_link(self.quest.get_title()))
         return self.quest
 
     def match_full_pattern(self) -> bool:
@@ -32,18 +31,17 @@ class QuestParser:
             line = pieces[0] + end # removendo raw text
             self.process_raw_tags(middle)
 
-        self.quest.title = line
+        self.quest.set_title(line)
         if "[](" in line:
             pieces = line.split("[](")
-            self.quest.title = pieces[0]
+            self.quest.set_title(pieces[0])
 
             del pieces[0]
             for p in pieces:
                 key = p.split(")")[0]
                 if key[0] == "#":
                     key = key[1:]
-                self.quest.requires.append(key)
-
+                self.quest.add_require_key(key)
         return True
 
     def process_raw_tags(self, raw_tags: str):
@@ -66,7 +64,6 @@ class QuestParser:
             self.quest.languages = []
             for l in languages:
                 self.quest.languages.append(l)
-        self.quest.prog = "prog" in tags
 
         # quest percent
         qmin = [t[2:] for t in tags if t.startswith("q:")]

@@ -1,5 +1,5 @@
 from tko.logger.logger import Logger
-from uniplot import plot_to_string
+from uniplot import plot_to_string # type: ignore
 from tko.util.text import Text
 from tko.logger.delta import Delta
 from icecream import ic # type: ignore

@@ -54,13 +54,13 @@ class CmdRep:
         output: list[Game.Cluster] = []
         for cluster_key in game.ordered_clusters:
             cluster = game.clusters[cluster_key]
-            output_cluster = Game.Cluster(cluster.key)
+            output_cluster = Game.Cluster(cluster.get_db_key())
             output.append(output_cluster)
             for quest in cluster.get_quests():
-                output_quest = Game.Quest(quest.key, quest.value)
+                output_quest = Game.Quest(quest.get_db_key(), quest.value)
                 output_cluster.quests.append(output_quest)
                 for task in quest.get_tasks():
-                    output_quest.tasks.append(Game.Task(key=task.key, value=task.xp, is_leet=task.is_leet(), opt=task.opt))
+                    output_quest.tasks.append(Game.Task(key=task.get_db_key(), value=task.xp, is_leet=task.is_leet(), opt=task.opt))
         return output
 
     @staticmethod

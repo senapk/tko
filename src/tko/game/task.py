@@ -5,6 +5,7 @@ from tko.game.tree_item import TreeItem
 from tko.game.task_info import TaskInfo
 from tko.game.task_grader import TaskGrader
 import enum
+import os
 
 
 class Task(TreeItem):
@@ -40,8 +41,7 @@ class Task(TreeItem):
 
         self.quest_key = ""
         self.cluster_key = ""
-
-        self.folder: str | None = None # the place where are the test case file
+        self.__rep_folder_path: str | None = None
         self.__is_reachable = False
         self.default_min_value = 5 # default min grade to complete task
 
@@ -62,12 +62,14 @@ class Task(TreeItem):
     def is_reachable(self) -> bool:
         return self.__is_reachable
 
-    def set_folder(self, folder: str):
-        self.folder = folder
+    def set_rep_folder(self, path: str):
+        self.__rep_folder_path = path
         return self
-    
-    def get_folder(self) -> str | None:
-        return self.folder
+
+    def try_get_folder(self) -> str:
+        if self.__rep_folder_path is None:
+            raise Warning("Repository folder path not set for task " + self.get_db_key())
+        return os.path.abspath(os.path.join(self.__rep_folder_path, self.get_database(), self.get_only_key()))
     
     @staticmethod
     def decode_approach_autonomy(value: int) -> tuple[int, int]:
@@ -187,8 +189,8 @@ class Task(TreeItem):
     # @override
     def __str__(self):
         lnum = str(self.line_number).rjust(3)
-        key = "" if self.key == self.title else self.key + " "
-        return f"{lnum} key:{key} title:{self.title} skills:{self.skills} remote:{self.link} type:{self.link_type} folder:{self.folder}"
+        key = "" if self.get_db_key() == self.get_title() else self.get_db_key() + " "
+        return f"{lnum} key:{key} title:{self.get_title()} skills:{self.skills} remote:{self.link} type:{self.link_type} folder:{self.try_get_folder()}"
 
     def has_at_symbol(self):
-        return any([s.startswith("@") for s in self.title.split(" ")])
+        return any([s.startswith("@") for s in self.get_title().split(" ")])

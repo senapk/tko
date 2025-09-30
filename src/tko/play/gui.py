@@ -70,14 +70,14 @@ class Gui:
             quest: Quest = obj
             if Flags.quests.get_value() != "2" and not quest.is_reachable():
                 output = TaskAction.BLOQUEIO
-            elif quest.key in self.tree.expanded:
+            elif quest.get_db_key() in self.tree.expanded:
                 output = TaskAction.CONTRAIR
             else:
                 output = TaskAction.EXPANDIR
             return "Y", output
         elif isinstance(obj, Cluster):
             cluster: Cluster = obj
-            if cluster.key in self.tree.expanded:
+            if cluster.get_db_key() in self.tree.expanded:
                 output = TaskAction.CONTRAIR
             else:
                 output = TaskAction.EXPANDIR
@@ -386,7 +386,7 @@ class Gui:
             if height < 3:
                 height = 3
             if isinstance(selected, Task):
-                made, list_data = self.get_task_graph(selected.key, width, height)
+                made, list_data = self.get_task_graph(selected.get_db_key(), width, height)
             elif isinstance(selected, Cluster) or isinstance(selected, Quest):
                 made, list_data = self.get_daily_graph(width, height)
         if not made:

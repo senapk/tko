@@ -1,6 +1,7 @@
 import enum
 import json
 import os
+from typing import Any
 from tko.util.decoder import Decoder
 from pathlib import Path
 
@@ -55,7 +56,7 @@ class JsonVPL:
         return self
 
     def to_json(self) -> str:
-        json_dict = {
+        json_dict: dict[str, Any] = {
             "title": self.title,
             "description": self.description,
             "upload": [x.to_json() for x in self.upload],

@@ -25,7 +25,7 @@ from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_sort import LogSort
 from tko.logger.task_resume import TaskResume
 from tko.settings.rep_paths import RepPaths
-from icecream import ic
+from icecream import ic # type: ignore
 
 
 class TkoFilterMode:
@@ -281,7 +281,7 @@ class Run:
                 changes, size = self.store_exec_diff()
                 self.__rep.logger.store(LogItemExec()
                     .set_mode(LogItemExec.Mode.FREE)
-                    .set_key(self.__task.key)
+                    .set_key(self.__task.get_db_key() )
                     .set_size(changes, size))
         Free.free_run(self.wdir.get_solver(), show_compilation=False, to_clear=False, wait_input=False)
 
@@ -309,20 +309,37 @@ class Run:
         task = Task()
         sources = self.wdir.get_source_list()
         solver = self.wdir.get_solver()
+
+        
         if len(sources) > 0:
-            task.folder = os.path.abspath(sources[0])
+            target_path = os.path.abspath(sources[0])
         elif solver.args_list:
-            task.folder = os.path.abspath(self.wdir.get_solver().args_list[0])
+            target_path = os.path.abspath(self.wdir.get_solver().args_list[0])
         else:
-            task.folder = os.path.abspath(os.getcwd())
+            target_path = os.path.abspath(os.getcwd())
 
-        if os.path.isfile(task.folder):
-            task.folder = os.path.dirname(task.folder)
+        if os.path.isfile(target_path):
+            target_path = os.path.dirname(target_path)
 
+        #break path in pieces rep_folder/database/key
+        pieces = target_path.split(os.sep)
+        if len(pieces) >= 3:
+            task.set_key(pieces[-1])
+            task.set_database(pieces[-2])
+            task.set_rep_folder(os.sep.join(pieces[:-2]))
+        elif len(pieces) == 2:
+            task.set_key(pieces[-1])
+            task.set_database(pieces[-2])
+            task.set_rep_folder(os.sep)
+        else:
+            task.set_key(pieces[-1])
+            task.set_database("")
+            task.set_rep_folder(os.sep)
 
-        task.key = os.path.basename(task.folder)
         self.__task = task
-        self.__track_folder = self.__rep.paths.get_track_task_folder(task.key) if self.__rep else ""
+        self.__track_folder = ""
+        if self.__rep:
+            self.__track_folder = self.__rep.paths.get_track_task_folder(task.get_db_key())
 
     def __run_test_on_curses(self):
         cdiff = Tester(self.settings, self.__rep, self.wdir, self.get_task())
@@ -358,7 +375,7 @@ class Run:
         if self.__rep:
             self.__rep.logger.store(LogItemExec()
                 .set_mode(exec_mode)
-                .set_key(self.__task.key)
+                .set_key(self.__task.get_db_key())
                 .set_size(changes, size)
                 .set_rate(rate)
                 .set_fail(exec_fail))
@@ -384,7 +401,7 @@ class Run:
 
     def __run_all_tests_top_line(self) -> int:
         if self.__eval_mode:
-            key = self.get_task().key if self.__task is not None else ""
+            key = self.get_task().get_db_key() if self.__task is not None else ""
             print(Text().addf("c", f"@{key:<{self.EVAL_MODE_PAD}} ").add(symbols.opening).add("[").add(self.wdir.resume_join()).add("]"), end="")
         else:
             print(Text().add(symbols.opening).add(self.wdir.resume_splitted()), end="")
@@ -408,16 +425,16 @@ class Run:
         if self.__show_track_info:
             if self.__rep is not None:
                 logger = self.__rep.logger
-                log_sort: LogSort | None = logger.tasks.task_dict.get(self.get_task().key, None)
+                log_sort: LogSort | None = logger.tasks.task_dict.get(self.get_task().get_db_key(), None)
                 if log_sort is not None:
-                    log_resume = TaskResume(self.get_task().key).from_log_sort(log_sort)
+                    log_resume = TaskResume(self.get_task().get_db_key()).from_log_sort(log_sort)
                     print(Text().addf("g", f"time:{log_resume.resume.minutes:.0f}, diff:{log_resume.resume.versions}, runs:{log_resume.resume.executions},").add(" "), end="", flush=True)
 
         rate: int | None = None
         flow: int | None = None
         edge: int | None = None
         if self.__show_self_info and self.__rep is not None:
-            task: Task | None = self.__rep.game.tasks.get(self.get_task().key)
+            task: Task | None = self.__rep.game.tasks.get(self.get_task().get_db_key())
             if task is not None:
                 rate = task.info.rate
                 flow = task.info.flow

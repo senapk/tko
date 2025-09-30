@@ -3,7 +3,7 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 # from tko.game.graph import Graph
 
-from icecream import ic
+from icecream import ic # type: ignore
 from tko.play.floating_grade import FloatingGrade
 from tko.settings.settings import Settings
 
@@ -51,9 +51,7 @@ class PlayActions:
 
     @staticmethod
     def get_task_folder(task: Task) -> str:
-        if task.folder is None:
-            raise Exception("Folder não encontrado")
-        return task.folder
+        return task.try_get_folder()
 
     def delete_folder(self):
         obj = self.tree.get_selected_throw()
@@ -91,7 +89,7 @@ class PlayActions:
         obj = self.tree.get_selected_throw()
         if isinstance(obj, Task):
             task: Task = obj
-            folder = self.rep.get_task_folder_for_label(task.key)
+            folder = self.rep.get_task_folder_for_label(task.get_db_key())
             if os.path.exists(folder):
                 opener = Opener(self.settings).set_fman(self.fman)
                 opener.set_target([folder]).set_language(self.rep.data.get_lang())
@@ -143,7 +141,7 @@ class PlayActions:
             )
 
     def register_action(self, task: Task):
-        self.rep.logger.store( LogItemSelf().set_key(task.key).set_info(task.info) )
+        self.rep.logger.store( LogItemSelf().set_key(task.get_db_key()).set_info(task.info) )
 
     def evaluate(self):
         obj = self.tree.get_selected_throw()
@@ -203,14 +201,14 @@ class PlayActions:
             down_frame.draw()
             Fmt.refresh()
 
-        cmd_down = CmdDown(rep=self.rep, task_key=task.key, settings=self.settings)
+        cmd_down = CmdDown(rep=self.rep, task_key=task.get_db_key(), settings=self.settings)
         cmd_down.set_game(self.game)
         cmd_down.set_fnprint(fnprint)
         cmd_down.set_language(lang)
         result = cmd_down.execute()
         if result:
             self.rep.logger.store(
-                LogItemMove().set_key(task.key).set_mode(LogItemMove.Mode.DOWN)
+                LogItemMove().set_key(task.get_db_key()).set_mode(LogItemMove.Mode.DOWN)
             )
 
 
@@ -222,22 +220,27 @@ class PlayActions:
         if action == TaskAction.VISITAR:
             self.open_link()
             return
-        folder = task.get_folder()
+        folder = task.try_get_folder()
         if not folder:
             raise Warning("Folder não encontrado")
         self.run_selected_task(task, folder)
 
     def select_task(self) -> Callable[[], None]:
-        obj = self.tree.get_selected_throw()
+        try:
+            obj = self.tree.get_selected_throw()
 
-        if isinstance(obj, Quest) or isinstance(obj, Cluster):
-            self.tree.toggle(obj)
-            return lambda: None
+            if isinstance(obj, Quest) or isinstance(obj, Cluster):
+                self.tree.toggle(obj)
+                return lambda: None
 
-        if isinstance(obj, Task):
-            task: Task = obj
-            return lambda: self.select_task_action(task)
+            if isinstance(obj, Task):
+                task: Task = obj
+                return lambda: self.select_task_action(task)
+        except IndexError as _:
+            pass
+
         return lambda: None
+        
 
         
     def run_selected_task(self, task: Task, task_dir: str) -> None:

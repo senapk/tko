@@ -104,7 +104,7 @@ class Settings:
     
     def save_settings(self):
         file = self.get_settings_file()
-        value = {
+        value: dict[str, Any] = {
             self.__remote: self.dict_alias_remote,
             self.__appcfg: self.app.to_dict(),
             self.__colors: self.colors.to_dict()

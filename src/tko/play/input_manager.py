@@ -1,6 +1,5 @@
 from typing import Callable
 from tko.settings.app_settings import AppSettings
-from tko.play.keys import GuiKeys
 import curses
 import os
 

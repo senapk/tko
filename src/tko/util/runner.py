@@ -12,15 +12,28 @@ class Runner:
             env = os.environ.copy()
             env['NO_COLOR'] = '1'
             env['FORCE_COLOR'] = '0'
-            answer = subprocess.run(cmd, cwd=folder, env=env, shell=True, input=input_data, stdout=PIPE, stderr=PIPE, text=True, timeout=timeout)
+            answer = subprocess.run(cmd, 
+                                    cwd=folder, 
+                                    env=env, 
+                                    shell=True, 
+                                    input=input_data, 
+                                    stdout=PIPE, 
+                                    stderr=PIPE, 
+                                    timeout=timeout, 
+                                    text=True, 
+                                    encoding="utf-8"
+                                    )
             err = ""
             if answer.returncode != 0:
 
                 err = answer.stderr + Runner.decode_code(answer.returncode)
                 # err += "\n" + cmd
             # if running on windows
-            if os.name == "nt":
-                return answer.returncode, answer.stdout.encode("cp1252").decode("utf-8"), err
+            # if os.name == "nt":
+            #     try:
+            #         return answer.returncode, answer.stdout.encode("cp1252").decode("utf-8"), err
+            #     except UnicodeDecodeError:
+            #         pass
             return answer.returncode, answer.stdout, err
         except subprocess.TimeoutExpired:
             err = "fail: processo abortado depois de {} segundos".format(timeout)

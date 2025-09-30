@@ -5,8 +5,9 @@ import os
 from tko.util.decoder import Decoder
 from tko.game.game_builder import GameBuilder
 from tko.game.game_validator import GameValidator
+from tko.settings.rep_source import RepSource
 # from typing import override
-from icecream import ic
+from icecream import ic # type: ignore
 
 import yaml # type: ignore
 import re
@@ -21,26 +22,11 @@ def load_html_tags(task: str) -> None | str:
 
 class Game:
     def __init__(self):
-        self.filename: str = ""
+        self.sources: list[RepSource] = []
         self.ordered_clusters: list[str] = [] # ordered clusters
         self.clusters: dict[str, Cluster] = {} 
         self.quests: dict[str, Quest] = {}  # quests indexed by quest key
         self.tasks: dict[str, Task] = {}  # tasks indexed by task key
-
-        self.token_level_one = "level_one"
-        self.token_level_mult = "level_mult"
-        self.level_one: int = 100
-        self.level_mult: float = 1.5
-
-
-    def parse_xp(self, content: str):
-        if content.startswith('---'):
-            front_matter = content.split('---')[1].strip()
-            yaml_data = yaml.safe_load(front_matter)
-            if self.token_level_one in yaml_data:
-                self.level_one = int(yaml_data[self.token_level_one])
-            if self.token_level_mult in yaml_data:
-                self.level_mult = float(yaml_data[self.token_level_mult])
 
     def get_task(self, key: str) -> Task:
         if key in self.tasks:
@@ -90,36 +76,47 @@ class Game:
         return total_obtained, total_priority, total_complete
 
 
-
-    def parse_file_and_folder(self, filename: str, folder: str, language: str, quest_filter: list[str]):
-        self.filename = filename
-        if filename == "" or not os.path.exists(filename):
+    def load_sources(self, sources: list[RepSource], language: str):
+        for source in sources:
+            # print("debug loading", source.alias, source.cache_path)
+            filename = source.cache_path
+            filters = source.filters
             content = ""
-        else:
-            content = Decoder.load(filename)
-        self.parse_xp(content)
+            if filename == "":
+                pass
+            elif not os.path.exists(filename):
+                print(f"Aviso: fonte {filename} não encontrada")
+            else:
+                content = Decoder.load(filename)
 
-        gb = GameBuilder(filename, folder, quest_filter)
-        gb.build_from(content, language)
-        self.ordered_clusters = gb.ordered_clusters
-        self.clusters = gb.clusters
-        self.quests = gb.collect_quests()
-        self.tasks = gb.collect_tasks()
-        GameValidator(filename, self.clusters).validate()
+            gb = GameBuilder(source.database, filename, filters, source.get_rep_folder())
+            gb.build_from(content, language)
+            for cluster_key in gb.ordered_clusters:
+                self.ordered_clusters.append(source.database + "@" + cluster_key)
+            for cluster in gb.clusters.values():
+                self.clusters[cluster.get_db_key()] = cluster
+
+            gb_quests = gb.collect_quests()
+            gb_tasks = gb.collect_tasks()
+            for quest in gb_quests.values():
+                self.quests[quest.get_db_key()] = quest
+            for task in gb_tasks.values():
+                self.tasks[task.get_db_key()] = task
+        GameValidator(self.clusters).validate()
 
         # for t in self.tasks.values():
         #     t.get_link(os.path.dirname(filename) + "/")
 
     @staticmethod
     def is_reachable_quest(q: Quest, cache: dict[str, bool]):
-        if q.key in cache:
-            return cache[q.key]
+        if q.get_db_key() in cache:
+            return cache[q.get_db_key()]
 
         if len(q.requires_ptr) == 0:
-            cache[q.key] = True
+            cache[q.get_db_key()] = True
             return True
-        cache[q.key] = all([r.is_complete() and Game.is_reachable_quest(r, cache) for r in q.requires_ptr])
-        return cache[q.key]
+        cache[q.get_db_key()] = all([r.is_complete() and Game.is_reachable_quest(r, cache) for r in q.requires_ptr])
+        return cache[q.get_db_key()]
 
     # def __get_reachable_quests(self):
     #     # cache needs to be reseted before each call

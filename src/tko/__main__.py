@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 import sys
-from icecream import ic
+from icecream import ic # type: ignore
 
 from tko.cmds.cmd_task import CmdTask
 from tko.cmds.cmd_rep import CmdRep
@@ -28,6 +28,7 @@ from tko.util.raw_terminal import RawTerminal
 from tko.util.symbols import symbols
 from tko.settings.check_version import CheckVersion
 from tko.settings.rep_starter import RepStarter
+from tko.settings.rep_source_actions import RepSourceActions
 
 from tko.__init__ import __version__
 
@@ -140,17 +141,31 @@ class Main:
     def init(args: argparse.Namespace):
         folder: str | None = args.folder
         language: str | None = args.language
-        RepStarter(remote=remote, source=source, folder=folder, language=language, database=database, filters=filters)
+        RepStarter(folder=folder, language=language)
 
     @staticmethod
-    def source(args: argparse.Namespace):
-        remote: str | None = args.remote
-        source: str | None = args.source
+    def source_list(args: argparse.Namespace):
         folder: str | None = args.folder
-        language: str | None = args.language
-        database: str | None = args.database
-        filters: list[str] | None = args.filter
-        RepStarter(remote=remote, source=source, folder=folder, language=language, database=database, filters=filters)
+        rep_actions = RepSourceActions(folder)
+        rep_actions.list_sources()
+
+    @staticmethod
+    def source_add(args: argparse.Namespace):
+        remote: str | None = args.remote
+        link: str | None = args.link 
+        folder: str | None = args.folder
+        alias: str = args.alias
+        filters: list[str] | None = args.filters
+        rep_actions = RepSourceActions(folder)
+        rep_actions.add_source(alias=alias, remote=remote, link=link, filters=filters)
+
+    @staticmethod
+    def source_enable(args: argparse.Namespace):
+        alias: str = args.alias
+        folder: str | None = args.folder
+        filters: list[str] | None = args.filters
+        rep_actions = RepSourceActions(folder)
+        rep_actions.source_enable(alias=alias, filters=filters)
 
     @staticmethod
     def config(args: argparse.Namespace):
@@ -348,13 +363,26 @@ class Parser:
 
 
         parser_source = self.subparsers.add_parser('source', help='Adds a source to a repository folder.')
-        parser_source.add_argument('--folder', '-f', type=str, help='Repository folder.')
-        source_from = parser_source.add_mutually_exclusive_group()
-        source_from.add_argument('--source', '-s', type=str, help='HTTP url or local file.')
+        sub_source = parser_source.add_subparsers(title='source commands', help='help for subcommand.')
+        # create subcommands inside source
+        source_add = sub_source.add_parser("add", help="Add a new task source")
+        source_add.add_argument('alias', type=str, help='Alias for the remote.')
+        source_add.add_argument('--folder', '-f', type=str, help='Repository folder.')
+        source_from = source_add.add_mutually_exclusive_group()
+        source_from.add_argument('--link', '-l', type=str, help='HTTP url or local file.')
         source_from.add_argument('--remote', '-r', type=str, help='Remote source [fup|ed|poo].')
-        parser_source.add_argument('--alias', type=str, help='Alias for the remote.')
-        parser_source.add_argument('--filters', type=str, nargs='+', help='Only accept quests this patterns.')
-        parser_source.set_defaults(func=Main.source)
+        source_add.add_argument('--filters', type=str, nargs='*', help='Only show enabled items')
+        source_add.set_defaults(func=Main.source_add)
+
+        source_list = sub_source.add_parser("list", help="List sources")
+        source_list.add_argument('--folder', '-f', type=str, help='Repository folder.')
+        source_list.set_defaults(func=Main.source_list)
+
+        source_enable = sub_source.add_parser("enable", help="Enable filters on a source")
+        source_enable.add_argument('alias', type=str, help='Alias for the remote.')
+        source_enable.add_argument('--folder', '-f', type=str, help='Repository folder.')
+        source_enable.add_argument('--filters', type=str, nargs='*', help='Only show enabled items')
+        source_enable.set_defaults(func=Main.source_enable)
 
 
 def execute(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:

@@ -5,9 +5,9 @@ class RepPaths:
     OLD_HISTORY_FILE = "history.csv"
     TASK_LOG_FILE = "task_log.csv"
     DAILY_FILE = "daily.yaml"
-    INDEX_FILE = "Readme.md"
     TRACK_FOLDER = "track"
     LOG_FOLDER = "log"
+    CACHE_FOLDER = "cache"
     CONFIG_FOLDER = ".tko"
 
     def __init__(self, rep_dir: str):
@@ -28,6 +28,9 @@ class RepPaths:
 
     def get_log_folder(self) -> str:
         return os.path.abspath(os.path.join(self.root_folder, RepPaths.CONFIG_FOLDER, RepPaths.LOG_FOLDER))
+    
+    def get_cache_folder(self) -> str:
+        return os.path.abspath(os.path.join(self.root_folder, RepPaths.CONFIG_FOLDER, RepPaths.CACHE_FOLDER))
 
     def get_track_task_folder(self, label: str) -> str:
         return os.path.abspath(os.path.join(self.root_folder, RepPaths.CONFIG_FOLDER, RepPaths.TRACK_FOLDER, label))
@@ -43,9 +46,6 @@ class RepPaths:
     
     def get_old_history_file(self) -> str:
         return os.path.abspath(os.path.join(self.root_folder, RepPaths.CONFIG_FOLDER, RepPaths.OLD_HISTORY_FILE))
-
-    def get_default_readme_path(self) -> str:
-        return os.path.abspath(os.path.join(self.root_folder, RepPaths.INDEX_FILE))
 
     def get_rep_dir(self) -> str:
         return os.path.abspath(self.root_folder)

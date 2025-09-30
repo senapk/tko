@@ -4,7 +4,6 @@ from tko.play.tasktree import TaskTree
 from tko.play.flags import Flags
 from tko.play.floating_manager import FloatingManager
 from tko.play.input_manager import InputManager
-from tko.play.keys import GuiKeys
 import curses
 
 class Search:
@@ -52,7 +51,7 @@ class Search:
         if isinstance(unit, Task):
             self.tree.expanded = [unit.cluster_key, unit.quest_key]
         elif isinstance(unit, Quest):
-            self.tree.expanded = [unit.key, unit.cluster_key]
+            self.tree.expanded = [unit.get_db_key(), unit.cluster_key]
         self.tree.reload_sentences()
 
     # update index to match the first item that matches the search

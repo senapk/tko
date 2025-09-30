@@ -66,7 +66,7 @@ class Tester:
         self.dummy_unit = Unit()
         if self.rep:
             self.rep.logger.store(
-                LogItemMove().set_mode(LogItemMove.Mode.PICK).set_key(self.task.key)
+                LogItemMove().set_mode(LogItemMove.Mode.PICK).set_key(self.task.get_db_key())
             )
 
 
@@ -115,10 +115,7 @@ class Tester:
         Tester.print_centered_image(out, "y", clear, "v")
 
     def get_folder(self) -> str:
-        folder = self.task.get_folder()
-        if folder is None:
-            raise Warning("Folder is None")
-    
+        folder = self.task.try_get_folder()
         return os.path.basename(folder)
 
     def get_focused_unit(self) -> Unit:
@@ -146,7 +143,7 @@ class Tester:
     def store_version(self) -> tuple[bool, int]:
         if self.rep is None:
             return False, 0
-        track_folder = self.rep.paths.get_track_task_folder(self.task.key)
+        track_folder = self.rep.paths.get_track_task_folder(self.task.get_db_key())
         tracker = Tracker()
         tracker.set_folder(track_folder)
         tracker.set_files(self.wdir.get_solver().args_list)
@@ -166,7 +163,7 @@ class Tester:
             changes, total_lines = self.store_version()
             if self.rep:
                 self.rep.logger.store(
-                    LogItemExec().set_key(self.task.key).set_mode(mode).set_fail(LogItemExec.Fail.COMP).set_size(changes, total_lines)
+                    LogItemExec().set_key(self.task.get_db_key()).set_mode(mode).set_fail(LogItemExec.Fail.COMP).set_size(changes, total_lines)
                 )
 
             self.mode = SeqMode.finished
@@ -185,7 +182,7 @@ class Tester:
             rate = 100 if unit.result == ExecutionResult.SUCCESS else 0
             if self.rep:
                 self.rep.logger.store(
-                    LogItemExec().set_key(self.task.key).set_mode(LogItemExec.Mode.LOCK).set_rate(rate).set_size(changes, total_lines)
+                    LogItemExec().set_key(self.task.get_db_key()).set_mode(LogItemExec.Mode.LOCK).set_rate(rate).set_size(changes, total_lines)
                 )
             return
 
@@ -223,7 +220,7 @@ class Tester:
             if self.rep:
                 self.rep.save_config()
                 self.rep.logger.store(
-                    LogItemExec().set_key(self.task.key).set_mode(mode).set_rate(percent).set_size(changes, total_lines)
+                    LogItemExec().set_key(self.task.get_db_key()).set_mode(mode).set_rate(percent).set_size(changes, total_lines)
                 )
 
 
@@ -390,7 +387,7 @@ class Tester:
         cmds: list[Text] = []
 
         text = f"{GuiActions.config} [{GuiKeys.palette}]"
-        cmds.append(self.borders.border("C", f"Mover  [setas]"))
+        cmds.append(self.borders.border("C", f"Voltar[Esc][q]"))
         cmds.append(self.borders.border("C", text))
         cmds.append(self.borders.border("G", f"{GuiActions.evaluate_tester} [{symbols.newline.text}]"))
         cmds.append(self.borders.border("G", f"{GuiActions.execute_tester} [{GuiKeys.execute_tester}]"))
@@ -525,7 +522,7 @@ class Tester:
         changes, total_lines = self.store_version()
         if self.rep:
             self.rep.logger.store(
-                LogItemExec().set_key(self.task.key).set_mode(LogItemExec.Mode.FREE).set_size(changes, total_lines)
+                LogItemExec().set_key(self.task.get_db_key()).set_mode(LogItemExec.Mode.FREE).set_size(changes, total_lines)
             )
         header = self.build_top_line_header(RawTerminal.get_terminal_size())
         return lambda: Free.free_run(self.wdir.get_solver(), show_compilation=True, to_clear=True, wait_input=True, header=header)
@@ -744,7 +741,7 @@ class Tester:
             if free_run_fn is None:
                 if self.rep:
                     self.rep.logger.store(
-                            LogItemMove().set_mode(LogItemMove.Mode.BACK).set_key(self.task.key)
+                            LogItemMove().set_mode(LogItemMove.Mode.BACK).set_key(self.task.get_db_key())
                         )
                 break
             else:
@@ -757,7 +754,7 @@ class Tester:
                         self.mode = SeqMode.finished
                         if self.rep:
                             self.rep.logger.store(
-                                            LogItemExec().set_key(self.task.key).set_mode(LogItemExec.Mode.FREE).set_fail(LogItemExec.Fail.COMP)
+                                            LogItemExec().set_key(self.task.get_db_key()).set_mode(LogItemExec.Mode.FREE).set_fail(LogItemExec.Fail.COMP)
                                         )
                         print(e)
                         input("Pressione enter para continuar")

@@ -10,24 +10,23 @@ class Cluster(TreeItem):
         self.__quests: list[Quest] = []
         self.color: None | str = color
         self.__is_reachable = False
-        self.key = key
-        self.title = title
-        self.main_cluster: bool = False  # if this is the main cluster, used to count skills and levels
+        self.set_key(key)
+        self.set_title(title)
 
     def add_quest(self, quest: Quest):
         self.__quests.append(quest)
         return self
-
-    def remove_empty_and_other_language_and_filtered(self, language: str, filter_list: list[str]):
+    
+    def remove_empty_and_other_language_and_filtered(self, language: str, filter_list: list[str] | None):
         # self.__quests = [q for q in self.__quests if len(q.get_tasks()) > 0]
         quests: list[Quest] = []
         for q in self.__quests:
             if len(q.get_tasks()) == 0:
                 continue
-            if len(filter_list) > 0:
+            if filter_list is not None:
                 allow = False
                 for filter in filter_list:
-                    if filter in q.title or filter in q.get_key():
+                    if filter in q.get_title() or filter in q.get_db_key():
                         allow = True
                         break
                 if not allow:
@@ -52,9 +51,9 @@ class Cluster(TreeItem):
     def __str__(self):
         line = str(self.line_number).rjust(3)
         quests_size = str(len(self.__quests)).rjust(2, "0")
-        key = "" if self.key == self.title else self.key + " "
-        return f"{line} {quests_size} {key}{self.title}"
-    
+        key = "" if self.get_db_key() == self.get_title() else self.get_db_key()
+        return f"{line} {quests_size} {key} {self.get_title()}"
+
     def get_grade_color(self) -> str:
         perc = self.get_percent()
         if perc == 0:

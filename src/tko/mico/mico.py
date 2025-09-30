@@ -4,7 +4,7 @@ import argparse
 from .collect import Collect
 from .pull import Pull
 from .join import Join, update_reference_rep
-from icecream import ic
+from icecream import ic # type: ignore
 
 def pull(args: argparse.Namespace) -> None:
     for target in args.targets:

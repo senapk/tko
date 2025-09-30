@@ -15,14 +15,13 @@ def startswith(text: str, prefix: str) -> bool:
 class Quest(TreeItem):
     def __init__(self, title: str = "", key: str = ""):
         super().__init__()
-        self.key: str = key
-        self.title: str = title
+        self.set_key(key)
+        self.set_title(title)
         self.line_number: int = 0
         self.line: str = ""
         self.__tasks: list[Task] = []
         self.requires: list[str] = []  # 
         self.requires_ptr: list[Quest] = []
-        self.prog = False  # progressive tasks, only allow next task if previous is >= 50%
         self.skills: dict[str, int] = {}  # s:{skill} to be applied to all tasks
         self.languages: list[str] = []  # l:language to filter what is showed to user based in default language
         self.qmin: int = 50  # q:{value} 50 percent to complete quest
@@ -31,11 +30,14 @@ class Quest(TreeItem):
         self.cluster_key = ""
         self.__is_reachable: bool = False
 
+    def add_require_key(self, key: str):
+        self.requires.append(self.get_database() + "@" + key)
+
     def get_value(self) -> int:
         return self.value
 
     def get_full_title(self) -> Text:
-        output = Text().add(self.title)
+        output = Text().add(self.get_title())
         if Flags.tracks.get_value() != "0":
             for skill, value in self.skills.items():
                 if value > 1:
@@ -52,25 +54,16 @@ class Quest(TreeItem):
         return self
     
     def update_tasks_reachable(self):
-        if not self.prog:
-            for t in self.__tasks:
-                t.set_reachable(True)
-            return
-        reach = True
-        for i in range(len(self.__tasks)):
-            if i == 0:
-                self.__tasks[i].set_reachable(True)
-            else:
-                if self.__tasks[i-1].get_percent() < 50:
-                    reach = False
-                self.__tasks[i].set_reachable(reach)
+        for t in self.__tasks:
+            t.set_reachable(True)
+        return
 
     # @override
     def __str__(self):
         line = str(self.line_number).rjust(3)
         tasks_size = str(len(self.__tasks)).rjust(2, "0")
-        key = "" if self.key == self.title else self.key + " "
-        output = f"{line} {tasks_size} {key}{self.title} {self.skills} {self.requires}"
+        key = "" if self.get_db_key() == self.get_title() else self.get_db_key() + " "
+        output = f"{line} {tasks_size} {key}{self.get_title()} {self.skills} {self.requires}"
         return output
 
     def get_resume_by_percent(self) -> Text:

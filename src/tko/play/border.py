@@ -2,7 +2,6 @@ from tko.play.flags import Flag
 from tko.util.text import Text
 from tko.settings.app_settings import AppSettings
 from tko.util.symbols import symbols
-import math
 
 class Border:
     def __init__(self, app: AppSettings):

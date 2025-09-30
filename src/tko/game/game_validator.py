@@ -3,8 +3,7 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 
 class GameValidator:
-    def __init__(self, filename: str, clusters: dict[str, Cluster]):
-        self.filename = filename
+    def __init__(self, clusters: dict[str, Cluster]):
         self.clusters: dict[str, Cluster] = clusters
         self.quests: dict[str, Quest] = {}
         self.tasks: dict[str, Task] = {}
@@ -16,7 +15,7 @@ class GameValidator:
 
     def __validate_requirements(self):
         # verify is there are keys repeated between quests, tasks and groups
-        keys = [c.key for c in self.clusters.values()] +\
+        keys = [c.get_db_key() for c in self.clusters.values()] +\
                [k for k in self.quests.keys()] +\
                [k for k in self.tasks.keys()]
 
@@ -28,14 +27,14 @@ class GameValidator:
 
         # trim titles
         for q in self.quests.values():
-            q.title = q.title.strip()
+            q.set_title(q.get_title().strip())
         for c in self.clusters.values():
-            c.title = c.title.strip()
+            c.set_title(c.get_title().strip())
 
         # verificar auto dependencia
         for q in self.quests.values():
             for r in q.requires:
-                if q.key == r:
+                if q.get_db_key() == r:
                     print(f"Erro: auto refência {q.line_number} {q.line}")
                     exit(1)
 
@@ -44,12 +43,12 @@ class GameValidator:
     def __check_cycle(self):
         def dfs(qx: Quest, visitedx: list[str]):
             if len(visitedx) > 0:
-                if visitedx[0] == qx.key:
+                if visitedx[0] == qx.get_db_key():
                     print(f"Cycle detected: {visitedx}")
                     exit(1)
-            if q.key in visitedx:
+            if q.get_db_key() in visitedx:
                 return
-            visitedx.append(q.key)
+            visitedx.append(q.get_db_key())
             for r in q.requires_ptr:
                 dfs(r, visitedx)
 

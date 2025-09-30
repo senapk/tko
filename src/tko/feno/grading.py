@@ -36,7 +36,7 @@ class MyTest:
 
     
     def run(self):
-        temp_file = tempfile.mktemp(prefix="temp_result_file", suffix=".txt")
+        _, temp_file = tempfile.mkstemp(prefix="temp_result_file", suffix=".txt")
         extra: list[str] = []
         if self.param:
             extra = self.param.split(" ")
@@ -150,4 +150,3 @@ def running_prefix():
 
 def grading_prefix():
     print("[TKO GRADING] ", flush=True, end='')
-
