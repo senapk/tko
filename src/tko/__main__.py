@@ -141,7 +141,14 @@ class Main:
     def init(args: argparse.Namespace):
         folder: str | None = args.folder
         language: str | None = args.language
-        RepStarter(folder=folder, language=language)
+        rep_starter = RepStarter(folder=folder, language=language)
+        ok: bool = rep_starter.execute()
+        remote: str | None = args.remote
+        enable: list[str] | None = args.enable
+        if ok and remote is not None:
+            rep_actions = RepSourceActions(folder)
+            rep_actions.add_source(alias=remote, remote=remote, link=None, filters=enable)
+        rep_starter.print_end_msg()
 
     @staticmethod
     def source_list(args: argparse.Namespace):
@@ -155,17 +162,18 @@ class Main:
         link: str | None = args.link 
         folder: str | None = args.folder
         alias: str = args.alias
-        filters: list[str] | None = args.filters
+        enable: list[str] | None = args.enable
         rep_actions = RepSourceActions(folder)
-        rep_actions.add_source(alias=alias, remote=remote, link=link, filters=filters)
+        rep_actions.add_source(alias=alias, remote=remote, link=link, filters=enable)
+        rep_actions.print_end_msg()
 
     @staticmethod
     def source_enable(args: argparse.Namespace):
         alias: str = args.alias
         folder: str | None = args.folder
-        filters: list[str] | None = args.filters
+        enable: list[str] | None = args.enable
         rep_actions = RepSourceActions(folder)
-        rep_actions.source_enable(alias=alias, filters=filters)
+        rep_actions.source_enable(alias=alias, filters=enable)
 
     @staticmethod
     def config(args: argparse.Namespace):
@@ -359,6 +367,8 @@ class Parser:
         parser_init = self.subparsers.add_parser('init', help='Initialize a empty repository in a folder.')
         parser_init.add_argument('--folder', '-f', type=str, help='Local directory.')
         parser_init.add_argument('--language', '-l', type=str, help='Draft language for the repository.')
+        parser_init.add_argument('--remote', '-r', type=str, help='Init with remote source [fup|ed|poo].')
+        parser_init.add_argument('--enable', type=str, nargs='*', help='Only show enabled items')
         parser_init.set_defaults(func=Main.init)
 
 
@@ -366,12 +376,12 @@ class Parser:
         sub_source = parser_source.add_subparsers(title='source commands', help='help for subcommand.')
         # create subcommands inside source
         source_add = sub_source.add_parser("add", help="Add a new task source")
-        source_add.add_argument('alias', type=str, help='Alias for the remote.')
         source_add.add_argument('--folder', '-f', type=str, help='Repository folder.')
+        source_add.add_argument('alias', type=str, help='Alias for the remote.')
         source_from = source_add.add_mutually_exclusive_group()
         source_from.add_argument('--link', '-l', type=str, help='HTTP url or local file.')
         source_from.add_argument('--remote', '-r', type=str, help='Remote source [fup|ed|poo].')
-        source_add.add_argument('--filters', type=str, nargs='*', help='Only show enabled items')
+        source_add.add_argument('--enable', type=str, nargs='*', help='Only show enabled items')
         source_add.set_defaults(func=Main.source_add)
 
         source_list = sub_source.add_parser("list", help="List sources")
@@ -379,9 +389,9 @@ class Parser:
         source_list.set_defaults(func=Main.source_list)
 
         source_enable = sub_source.add_parser("enable", help="Enable filters on a source")
-        source_enable.add_argument('alias', type=str, help='Alias for the remote.')
         source_enable.add_argument('--folder', '-f', type=str, help='Repository folder.')
-        source_enable.add_argument('--filters', type=str, nargs='*', help='Only show enabled items')
+        source_enable.add_argument('alias', type=str, help='Alias for the remote.')
+        source_enable.add_argument('enable', type=str, nargs='*', help='Only show enabled items')
         source_enable.set_defaults(func=Main.source_enable)
 
 

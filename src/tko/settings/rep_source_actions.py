@@ -80,9 +80,11 @@ class RepSourceActions:
                 if source.startswith(self.folder):
                     source = os.path.relpath(source, os.path.dirname(rep.paths.get_config_file()))
                 rep.data.set_source(rep.get_default_local_source())
-        rep = rep
 
-        rep.save_config()
-        rel_path = os.path.relpath(rep.paths.get_rep_dir(), os.getcwd())
+        self.rep.save_config()
+   
+
+    def print_end_msg(self):
+        rel_path = os.path.relpath(self.rep.paths.get_rep_dir(), os.getcwd())
         print(Text.format("Voce pode acessar o repositório com o comando {g} {y}", "tko open", "<pasta>"))
         print(Text.format("Por exemplo: {g} {y}", "tko open", rel_path))

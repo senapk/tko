@@ -9,20 +9,22 @@ class RepStarter:
         self.folder: str = os.path.abspath(os.getcwd())
         if folder is not None:
             self.folder = os.path.abspath(folder)
+        self.language = language
 
+    def execute(self) -> bool:
         rep = self.create_repository()
         if rep is None:
-            return
+            return False
         
         self.rep = rep
         self.create_empty_rep()
 
-        if language is not None:
-            rep.data.lang = language
-            print(Text.format("A linguagem do repositório foi definida como {y}.", language))
+        if self.language is not None:
+            rep.data.lang = self.language
+            print(Text.format("A linguagem do repositório foi definida como {y}.", self.language))
         
         rep.save_config()
-        self.print_end_msg()
+        return True
 
     def print_end_msg(self):
         rel_path = os.path.relpath(self.rep.paths.get_rep_dir(), os.getcwd())
