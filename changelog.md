@@ -1,5 +1,7 @@
 # Changelog
 
+- 7.2.2
+  - add: multi source mode
 - 7.0.0
   - del: legacy code for XP, old log loading, old task markup
 - 6.5.0

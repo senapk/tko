@@ -70,7 +70,7 @@ sudo apt install python3.12
 # Instalando o tko
 pipx install tko
 # Adicionando o tko no path
-grep -qxF 'export PATH="$HOME/.local/bin:$PATH"' ~/.bashrc || echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+pipx ensurepath
 # Reinicie o terminal
 # Teste a instalação com o comando
 tko --version
@@ -117,13 +117,6 @@ npm install typescript esbuild readline-sync
 sudo pacman -S go
 ```
 
-#### Codespaces
-
-```bash
-sudo apt update && sudo apt install -y python3-pip && pip install pipx && pipx install tko
-# Os compiladores, você pode usar os comandos do wsl/ubuntu
-```
-
 ### Outros sistemas operacionais
 
 - Basta instalar o python e o pipx. Depois, instale o tko com o comando `pipx install tko`.
@@ -143,14 +136,25 @@ Os `[]` e `<>` indicam onde devem ser colocados os parâmetros. Os `|` indicam o
 
 ```bash
 # primeiro crie um repositório local na pasta local
-tko init --remote [poo | fup | ed]
-# exemplo tko init --remote fup
-
+mkdir myrep
+cd myrep
+tko init --remote [poo | fup | ed] --lang [c | cpp | java | py | ts]
 # agora abra o repositório para interagir com ele
-tko open <pasta_do_repositório>
+tko open .
 # exemplo: tko open fup
-
 ```
+
+## Para utilizar múltiplas fontes de atividades
+
+```bash
+# crie um repositório
+mkdir myrep
+cd myrep
+tko init
+# adicione as fontes que desejar
+tko source add --remote [poo | fup | ed] --alias <nome> [--link <url>] [--enable <filtro> ...]
+# exemplo: t
+
 
 ## Programando em uma linguagem diferente de C, C++, Java, Python e Typescript
 

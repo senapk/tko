@@ -3,7 +3,6 @@ from tko.settings.rep_source import RepSource
 from tko.settings.repository import Repository
 from tko.settings.settings import Settings
 from tko.util.text import Text
-import json
 
 import os
 
@@ -57,7 +56,7 @@ class RepSourceActions:
             raise Warning("fail: fonte não encontrada.")
         rep.save_config()
             
-    def add_source(self, alias: str, remote: str | None, link: str | None, filters: list[str] | None = None) -> None:
+    def add_source(self, remote: str | None, alias: str, link: str | None, filters: list[str] | None = None) -> None:
         rep = self.rep
         if link is None and remote is None:
             print("Você precisa informar o endereço da fonte")

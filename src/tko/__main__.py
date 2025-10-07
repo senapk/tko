@@ -164,7 +164,7 @@ class Main:
         alias: str = args.alias
         enable: list[str] | None = args.enable
         rep_actions = RepSourceActions(folder)
-        rep_actions.add_source(alias=alias, remote=remote, link=link, filters=enable)
+        rep_actions.add_source(remote=remote, alias=alias, link=link, filters=enable)
         rep_actions.print_end_msg()
 
     @staticmethod
@@ -368,7 +368,7 @@ class Parser:
         parser_init.add_argument('--folder', '-f', type=str, help='Local directory.')
         parser_init.add_argument('--language', '-l', type=str, help='Draft language for the repository.')
         parser_init.add_argument('--remote', '-r', type=str, help='Init with remote source [fup|ed|poo].')
-        parser_init.add_argument('--enable', type=str, nargs='*', help='Only show enabled items')
+        parser_init.add_argument('--enable', '-e', type=str, nargs='*', help='Only show enabled items')
         parser_init.set_defaults(func=Main.init)
 
 
@@ -381,7 +381,7 @@ class Parser:
         source_from = source_add.add_mutually_exclusive_group()
         source_from.add_argument('--link', '-l', type=str, help='HTTP url or local file.')
         source_from.add_argument('--remote', '-r', type=str, help='Remote source [fup|ed|poo].')
-        source_add.add_argument('--enable', type=str, nargs='*', help='Only show enabled items')
+        source_add.add_argument('--enable', '-e', type=str, nargs='*', help='Only show enabled items')
         source_add.set_defaults(func=Main.source_add)
 
         source_list = sub_source.add_parser("list", help="List sources")
