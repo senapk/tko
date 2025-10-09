@@ -20,7 +20,12 @@ class UnitRunner:
             folder = None
         if timeout == 0:
             timeout = None
-        return_code, stdout, stderr = Runner.subprocess_run(cmd, unit.inserted, timeout, folder)
+        return_code, stdout, stderr = Runner.subprocess_run(
+            cmd = cmd, 
+            input_data = unit.inserted,
+            timeout = timeout, 
+            folder = folder,
+            shell_mode=executable.need_shell_mode)
         if return_code != 0:
             unit.set_received(stdout + stderr)
             return ExecutionResult.EXECUTION_ERROR

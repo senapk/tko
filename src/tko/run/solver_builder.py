@@ -30,6 +30,7 @@ class Executable:
         self.__compiled: bool = False
         self.__compile_error = False
         self.__error_msg: Text = Text()
+        self.need_shell_mode: bool = False # subprocess needs bash mode to process symbols like & or |
     
     def set_executable(self, cmd: list[str], files: list[str], folder: str | None = None):
         self.__compiled = True
@@ -41,7 +42,10 @@ class Executable:
         return self
     
     def get_command(self) -> tuple[str, str | None]:
-        cmd = " ".join(self.__cmd) + " " + " ".join(self.__files)
+        cmd = ""
+        if self.__cmd:
+            cmd += " ".join(self.__cmd) + " "
+        cmd += " ".join(self.__files)
         return cmd, None if self.__folder is None else self.__folder
 
     def set_compile_error(self, error_msg: Text | str):
@@ -226,6 +230,7 @@ class SolverBuilder:
         folder = os.path.dirname(solver)
         content = Decoder.load(solver)
         yaml_data = yaml.safe_load(content)
+        self.__exec.need_shell_mode = True
 
         if "build" in yaml_data and yaml_data["build"] is not None:
             build_txt = yaml_data["build"]
@@ -273,7 +278,7 @@ class SolverBuilder:
         if os.name == "nt":
             transpiler += ".cmd"
 
-        new_files = [os.path.abspath(x) for x in new_files]
+        new_files = [os.path.abspath(x) for x in new_files]        
         self.cache_dir = os.path.abspath(self.cache_dir)
 
         self.check_tool(transpiler)

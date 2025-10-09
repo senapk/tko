@@ -7,25 +7,26 @@ class Runner:
         pass
 
     @staticmethod
-    def subprocess_run(cmd: str, input_data: str = "", timeout: None | float = None, folder: str | None = None) -> tuple[int, str, str]:
+    def subprocess_run(cmd: str, input_data: str = "", timeout: None | float = None, folder: str | None = None, shell_mode: bool = False) -> tuple[int, str, str]:
         try:
             env = os.environ.copy()
             env['NO_COLOR'] = '1'
             env['FORCE_COLOR'] = '0'
-            answer = subprocess.run(cmd, 
+            cmd_list = cmd.split(" ")
+
+            answer = subprocess.run(cmd_list, 
                                     cwd=folder, 
                                     env=env, 
-                                    shell=True, 
+                                    shell=shell_mode, 
                                     input=input_data, 
                                     stdout=PIPE, 
                                     stderr=PIPE, 
                                     timeout=timeout, 
                                     text=True, 
-                                    encoding="utf-8"
+                                    encoding="utf-8" if shell_mode == False else None
                                     )
             err = ""
             if answer.returncode != 0:
-
                 err = answer.stderr + Runner.decode_code(answer.returncode)
                 # err += "\n" + cmd
             # if running on windows

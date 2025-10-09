@@ -1,2 +1,32 @@
 ═══════════════════ Testando o código com os casos de teste ════════════════════
-=> Códigos:[solver.yaml] Testes:[cases.tio(01)] [✓] 100%
+=> Códigos:[solver.yaml] Testes:[cases.tio(01)] [ϵ] 0%
+(ϵ erro_execução__)[00] GR:100 cases.tio ()
+╭──────────────────────────────────────────────────────────────────────────────╮
+│                 (ϵ erro_execução__)[00] GR:100 cases.tio ()                  │
+├────────────── INSERIDO ──────────────┬────────────── INSERIDO ───────────────┤
+├────────────── ESPERADO ──────────────┼────────────── RECEBIDO ───────────────┤
+│ 1|Átila Augusto|Rua Pé de Pano|Porto │ CREATE TABLE customers (              │
+│ 2|Antônio Carlos Mamel|Av. Pinheiros │   id NUMERIC PRIMARY KEY,             │
+│ 3|Luiza Augusta Mhor,|Rua Salto Gran │   name CHARACTER VARYING (255),       │
+│ 4|Jane Ester|Av 7 de setembro|Erechi │   street CHARACTER VARYING (255),     │
+│ 5|Marcos Antônio dos Santos|Av Farra │   city CHARACTER VARYING (255),       │
+│                                      │   state CHAR (2),                     │
+│                                      │   credit_limit NUMERIC                │
+│                                      │ );                                    │
+│                                      │                                       │
+│                                      │ INSERT INTO customers (id, name, str  │
+│                                      │ VALUES                                │
+│                                      │   (1,	'Átila Augusto',	'Rua Pé de Pa  │
+│                                      │   (2,	'Antônio Carlos Mamel',	'Av. P  │
+│                                      │   (3,	'Luiza Augusta Mhor,',	'Rua Sa  │
+│                                      │   (4,	'Jane Ester',	'Av 7 de setembr  │
+│                                      │   (5,	'Marcos Antônio dos Santos',	'  │
+│                                      │ SELECT * FROM customers;              │
+│                                      │ cat: '|': No such file or directory   │
+│                                      │ cat: sqlite3: No such file or direct  │
+│                                      │ cat: '': No such file or directory    │
+├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
+│ 1|Átila·Augusto|Rua·Pé·de·Pano|Porto·Alegre|RS|700↲ (esperado)               │
+│ CREATE·TABLE·customers·(↲                           (recebido)               │
+│ ↑                                                   (primeiro)               │
+╰──────────────────────────────────────────────────────────────────────────────╯
