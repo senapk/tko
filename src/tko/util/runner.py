@@ -12,18 +12,18 @@ class Runner:
             env = os.environ.copy()
             env['NO_COLOR'] = '1'
             env['FORCE_COLOR'] = '0'
-            cmd_list = cmd.split(" ")
 
-            answer = subprocess.run(cmd_list, 
+            # cmd_run = cmd if shell_mode else cmd.split(" ")
+            
+            answer = subprocess.run(cmd, 
                                     cwd=folder, 
                                     env=env, 
-                                    shell=shell_mode, 
+                                    shell=True, 
                                     input=input_data, 
                                     stdout=PIPE, 
                                     stderr=PIPE, 
                                     timeout=timeout, 
-                                    text=True, 
-                                    encoding="utf-8" if shell_mode == False else None
+                                    text=True
                                     )
             err = ""
             if answer.returncode != 0:

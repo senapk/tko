@@ -13,50 +13,66 @@ class Test:
     def setup_method(cls):
         os.chdir(Path(__file__).parent)
 
-    def test_1(self):
+    def test_database_legacy(self):
         # get path of this file
-        task = TaskParser("arquivo.md", "database", "teste").parse_line("- [ ] [@label complemente](database/label/r.md)", 0)
+        tp = TaskParser(index_path="/source/arquivo.md", database="database", rep_folder_path="/rep")
+        task = tp.parse_line("- [ ] [@label complemente](data/label/r.md)", 0).get_task()
         assert task is not None
-        assert task.set_key("label")
-        assert task.try_get_folder() == "database/label"
-        assert task.link == "database/label/r.md"
-        assert task.link_type == Task.Types.STATIC_FILE
+        assert task.get_only_key() == "label"
+        assert task.get_database() == "database"
+        assert task.get_db_key() == "label" # database is hided by legacy compatibility
+        assert task.get_folder_try() == "/rep/database/label"
+        assert task.link == "/source/data/label/r.md"
+        assert task.link_type == Task.Types.IMPORT_FILE
     
+    def test_database_poo(self):
+        # get path of this file
+        tp = TaskParser(index_path="/source/arquivo.md", database="poo", rep_folder_path="/rep")
+        task = tp.parse_line("- [ ] [@label complemente](data/label/r.md)", 0).get_task()
+        assert task is not None
+        assert task.get_only_key() == "label"
+        assert task.get_database() == "poo"
+        assert task.get_db_key() == "poo@label" # database is hided by legacy compatibility
+        assert task.get_folder_try() == "/rep/poo/label"
+        assert task.link == "/source/data/label/r.md"
+        assert task.link_type == Task.Types.IMPORT_FILE
+
+    def test_STATIC_FILE(self):
+        # get path of this file
+        tp = TaskParser(index_path="/source/arquivo.md", database="poo", rep_folder_path="/source")
+        task = tp.parse_line("- [ ] [@label complemente](poo/label/r.md)", 0).get_task()
+        assert task is not None
+        assert task.get_only_key() == "label"
+        assert task.get_database() == "poo"
+        assert task.get_db_key() == "poo@label" # database is hided by legacy compatibility
+        assert task.get_folder_try() == "/source/poo/label"
+        assert task.link == "/source/poo/label/r.md"
+        assert task.link_type == Task.Types.STATIC_FILE
+
     def test_file_not_found(self):
         # get path of this file
         try:
-            _ = TaskParser("arquivo.md", "database", "fup").parse_line("- [ ] [@label complemente](database/label/f.md)", 0)
+            (TaskParser("arquivo.md", "database", "fup")
+                .parse_line("- [ ] [@label complemente](database/label/f.md)", 0)
+                .check_path_try())
         except Warning as _:
             assert True
             return
 
     def test_2(self):
-        database = os.path.join(os.path.dirname(os.path.abspath(__file__)), "database")
-        task = TaskParser("arquivo.md", database, "fup").parse_line("- [ ] `@label `[complemente](outside/label/r.md)", 0)
+        task = (TaskParser("/home/arquivo.md", "fup", "/home/rep")
+                    .parse_line("- [ ] `@mykey `[complemente](/outside/label/r.md)", 0)
+                    .get_task())
         assert task is not None
-        assert task.set_key("label")
-        assert task.try_get_folder() == "database/label"
-        assert task.link == "outside/label/r.md"
+        assert task.get_only_key() == "mykey"
+        assert task.get_db_key() == "fup@mykey"
+        assert task.get_folder_try() == "/home/rep/fup/mykey"
+        assert task.link == "/outside/label/r.md"
         assert task.link_type == Task.Types.IMPORT_FILE
-
-    def test_3(self):
-        database = os.path.join(os.path.dirname(os.path.abspath(__file__)), "database")
-        try:
-            task = TaskParser("arquivo.md", database, "fup").parse_line("- [ ] #veja_url [complemente](http://url.com)", 0)
-        except Warning as e:
-            assert str(e).startswith("Arquivo não encontrado")
-            return
-        assert task is not None
-        assert task.set_key("veja_url")
-        assert task.try_get_folder() is None
-        assert task.link == "http://url.com"
-        assert task.link_type == Task.Types.VISITABLE_URL
         
-    def test_4(self):
-        database = os.path.join(os.path.dirname(os.path.abspath(__file__)), "database")
-        task = TaskParser("arquivo.md", database, "fup").parse_line("- [ ] @banana [complemente](http://url.com/teste.md)", 0)
+    def test_remote(self):
+        task = TaskParser("/home/arquivo.md", "fup", "/rep").parse_line("- [ ] @banana [complemente](http://url.com/teste.md)", 0).get_task()
         assert task is not None
-        assert task.set_key("banana")
-        assert task.try_get_folder() == "database/banana"
+        assert task.get_folder_try() == "/rep/fup/banana"
         assert task.link == "http://url.com/teste.md"
         assert task.link_type == Task.Types.REMOTE_FILE

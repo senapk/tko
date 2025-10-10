@@ -26,8 +26,8 @@ Task can be:
 class TaskParser:
 
     def __init__(self, index_path: str, database: str, rep_folder_path: str):
-        self.index_path = os.path.abspath(index_path) # path of Repository Root Readme file
-        self.database_folder = os.path.abspath(os.path.join(rep_folder_path, database)) # path of database folder inside rep
+        self.index_path = index_path # path of Repository Root Readme file
+        self.database_folder = os.path.join(rep_folder_path, database) # path of database folder inside rep
         self.task = Task().set_database(database).set_rep_folder(rep_folder_path)
 
     def __load_xp(self, tags_raw: str):
@@ -41,12 +41,12 @@ class TaskParser:
                 self.task.opt = False
             
 
-    def parse_line(self, line: str, line_num: int = 0) -> Task | None:
+    def parse_line(self, line: str, line_num: int = 0):
         pattern = r'\s*?- \[ \](.*?)\[([^\]]+)\]\(([^)]+)\)(?:\s*<!--(.*?)-->)?'
 
         match = re.match(pattern, line)
         if match is None:
-            return None
+            return self
         task = self.task
         task.line_number = line_num
         task.line = line
@@ -81,13 +81,16 @@ class TaskParser:
         task.set_key(key)
 
         link = match.group(3).strip()
-        self.select_link_type(link)
+        self.__select_link_type(link)
 
         if task.get_only_key() == "":
             task.set_key(link)
-        return task
+        return self
 
-    def select_link_type(self, link: str):
+    def get_task(self) -> Task | None:
+        return self.task
+
+    def __select_link_type(self, link: str):
         task = self.task
         task.link = link
 
@@ -101,15 +104,20 @@ class TaskParser:
         if link.startswith("http:") or link.startswith("https:"):
             task.link_type = Task.Types.REMOTE_FILE
             return
-        if not os.path.isabs(link):
-            basedir = os.path.dirname(self.index_path)
-            link = os.path.join(basedir, link)
-            task.link = os.path.relpath(link)
-        # verify if file exists
-        # update link using index_path to update de relative path
-        if not os.path.isfile(link):
-            raise Warning(f"Parsing {self.index_path}, Arquivo de tarefa não encontrado: {link}")
-
 
         task.link_type = Task.Types.IMPORT_FILE
-        return
+
+        # set task link using relpath to index_path
+        if not os.path.isabs(link):
+            basedir = os.path.dirname(self.index_path)
+            task.link = os.path.join(basedir, link)
+
+        if task.link.startswith(task.get_folder_try()):
+            task.link_type = Task.Types.STATIC_FILE
+
+
+    def check_path_try(self):
+        if self.task.link_type == Task.Types.IMPORT_FILE:
+            if not os.path.isfile(self.task.link):
+                raise Warning(f"Parsing {self.index_path}, Arquivo de tarefa não encontrado: {self.task.link}")
+        return self

@@ -51,7 +51,7 @@ class PlayActions:
 
     @staticmethod
     def get_task_folder(task: Task) -> str:
-        return task.try_get_folder()
+        return task.get_folder_try()
 
     def delete_folder(self):
         obj = self.tree.get_selected_throw()
@@ -220,7 +220,7 @@ class PlayActions:
         if action == TaskAction.VISITAR:
             self.open_link()
             return
-        folder = task.try_get_folder()
+        folder = task.get_folder_try()
         if not folder:
             raise Warning("Folder não encontrado")
         self.run_selected_task(task, folder)

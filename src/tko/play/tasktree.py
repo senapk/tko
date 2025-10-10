@@ -597,7 +597,7 @@ class TaskTree:
         
     def is_downloaded_for_lang(self, task: Task):
         try:
-            folder = task.try_get_folder()
+            folder = task.get_folder_try()
         except:
             return False
         lang = self.rep.data.lang

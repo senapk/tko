@@ -66,10 +66,10 @@ class Task(TreeItem):
         self.__rep_folder_path = path
         return self
 
-    def try_get_folder(self) -> str:
+    def get_folder_try(self) -> str:
         if self.__rep_folder_path is None:
             raise Warning("Repository folder path not set for task " + self.get_db_key())
-        return os.path.abspath(os.path.join(self.__rep_folder_path, self.get_database(), self.get_only_key()))
+        return os.path.join(self.__rep_folder_path, self.get_database(), self.get_only_key())
     
     @staticmethod
     def decode_approach_autonomy(value: int) -> tuple[int, int]:
@@ -190,7 +190,7 @@ class Task(TreeItem):
     def __str__(self):
         lnum = str(self.line_number).rjust(3)
         key = "" if self.get_db_key() == self.get_title() else self.get_db_key() + " "
-        return f"{lnum} key:{key} title:{self.get_title()} skills:{self.skills} remote:{self.link} type:{self.link_type} folder:{self.try_get_folder()}"
+        return f"{lnum} key:{key} title:{self.get_title()} skills:{self.skills} remote:{self.link} type:{self.link_type} folder:{self.get_folder_try()}"
 
     def has_at_symbol(self):
         return any([s.startswith("@") for s in self.get_title().split(" ")])

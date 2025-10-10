@@ -95,7 +95,7 @@ class GameBuilder:
                 continue
 
             tp = TaskParser(self.filename, self.database, self.rep_folder)
-            task = tp.parse_line(line, line_num + 1)
+            task = tp.parse_line(line, line_num + 1).check_path_try().get_task()
             if task is not None:
                 self.__add_task(task)
 

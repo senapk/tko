@@ -115,7 +115,7 @@ class Tester:
         Tester.print_centered_image(out, "y", clear, "v")
 
     def get_folder(self) -> str:
-        folder = self.task.try_get_folder()
+        folder = self.task.get_folder_try()
         return os.path.basename(folder)
 
     def get_focused_unit(self) -> Unit:

@@ -7,6 +7,7 @@ import subprocess
 import random
 import sys
 import os
+from subprocess import PIPE
 
 if os.name == 'nt':  # Windows
     import msvcrt
