@@ -5,14 +5,14 @@ class RepSource:
     class Keys:
         DATABASE = "database"
         LINK = "link"
-        CACHE_PATH = "cache_path"
+        TARGET_PATH = "cache_path" # deprecated
         CACHE_TIMESTAMP = "cache_timestamp"
         FILTERS = "filters"
 
     def __init__(self, database: str, link: str, filters: list[str] | None):
         self.database = database
         self.link = link
-        self.cache_path: str = ""
+        self.target_path: str = ""
         self.cache_timestamp: str = ""
         self.filters: list[str] | None = filters
         self.local_rep_folder: str | None = None
@@ -26,8 +26,8 @@ class RepSource:
         self.link = link
         return self
 
-    def set_cache_path(self, cache_path: str):
-        self.cache_path = cache_path
+    def set_target_path(self, cache_path: str):
+        self.target_path = cache_path
         return self
 
     def set_cache_timestamp(self, cache_timestamp: str):
@@ -42,7 +42,7 @@ class RepSource:
         self.local_rep_folder = rep_folder
         self.local_cache_folder = cache_folder
 
-    def get_local_cache_path(self) -> str:
+    def get_default_cache_path(self) -> str:
         if self.local_cache_folder is None:
             raise ValueError("Local cache folder is not set")
         return os.path.abspath(os.path.join(self.local_cache_folder, self.database + ".md"))
@@ -62,8 +62,8 @@ class RepSource:
 
         if Keys.LINK in data and isinstance(data[Keys.LINK], str):
             self.link = data[Keys.LINK]
-        if Keys.CACHE_PATH in data and isinstance(data[Keys.CACHE_PATH], str):
-            self.cache_path = data[Keys.CACHE_PATH]
+        if Keys.TARGET_PATH in data and isinstance(data[Keys.TARGET_PATH], str):
+            self.target_path = data[Keys.TARGET_PATH]
         if Keys.CACHE_TIMESTAMP in data and isinstance(data[Keys.CACHE_TIMESTAMP], str):
             self.cache_timestamp = data[Keys.CACHE_TIMESTAMP]
         if Keys.FILTERS in data and isinstance(data[Keys.FILTERS], list):
@@ -75,7 +75,7 @@ class RepSource:
         return {
             Keys.DATABASE: self.database,
             Keys.LINK: self.link,
-            Keys.CACHE_PATH: self.cache_path,
+            Keys.TARGET_PATH: self.target_path,
             Keys.CACHE_TIMESTAMP: self.cache_timestamp,
             Keys.FILTERS: self.filters
         }

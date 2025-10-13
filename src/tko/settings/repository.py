@@ -89,8 +89,8 @@ class Repository:
     def __is_remote_source(self, source: RepSource) -> bool:
         return source.link.startswith("http:") or source.link.startswith("https:")
 
-    def down_source_from_remote_url(self, source: RepSource):
-        cache_file = source.get_local_cache_path()
+    def down_source_from_remote_url(self, source: RepSource) -> None:
+        cache_file = source.get_default_cache_path()
         os.makedirs(self.paths.get_cache_folder(), exist_ok=True)
         ru = RemoteUrl(source.link)
         try:
@@ -101,18 +101,18 @@ class Repository:
                 print("Usando arquivo do cache")
             else:
                 raise Warning("fail: Arquivo do cache não encontrado")
-        return cache_file
 
     def update_cache_path(self, source: RepSource) -> None:
         if source.link == "":
-            source.cache_path = ""
+            source.target_path = ""
             return
 
         if self.__is_remote_source(source):
             now_str, now_dt = Delta.now()
             # verify if cache file exists and is less than 1 hour old
-            cache_file = source.get_local_cache_path()
-            if os.path.exists(cache_file) and source.cache_timestamp != "":
+            cache_file = source.get_default_cache_path()
+            source.target_path = cache_file
+            if os.path.isfile(cache_file) and source.cache_timestamp != "":
                 last_dt = Delta.decode_format(source.cache_timestamp)
                 if (now_dt - last_dt).total_seconds() < Repository.cache_time_for_remote_source:
                     time_missing = Repository.cache_time_for_remote_source - (now_dt - last_dt).total_seconds()
@@ -120,15 +120,15 @@ class Repository:
                     print(f"Usando cache do repositório {source.database} ({source.link}), atualizado há {r} minutos")
                     return
 
-            source.cache_path = self.down_source_from_remote_url(source)
+            self.down_source_from_remote_url(source)
             source.cache_timestamp = now_str
             return
         
         # local source
         if os.path.abspath(source.link) == source.link: # absolute path
-            source.cache_path = source.link
+            source.target_path = source.link
         else: # relative path
-            source.cache_path = os.path.join(self.paths.get_rep_dir(), source.link)
+            source.target_path = os.path.join(self.paths.get_rep_dir(), source.link)
 
 
     # configwa

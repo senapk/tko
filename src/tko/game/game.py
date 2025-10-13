@@ -79,7 +79,7 @@ class Game:
     def load_sources(self, sources: list[RepSource], language: str):
         for source in sources:
             # print("debug loading", source.alias, source.cache_path)
-            filename = source.cache_path
+            filename = source.get_default_cache_path()
             filters = source.filters
             content = ""
             if filename == "":
