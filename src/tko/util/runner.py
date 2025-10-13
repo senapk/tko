@@ -7,18 +7,16 @@ class Runner:
         pass
 
     @staticmethod
-    def subprocess_run(cmd: str, input_data: str = "", timeout: None | float = None, folder: str | None = None, shell_mode: bool = False) -> tuple[int, str, str]:
+    def subprocess_run(cmd: str | list[str], input_data: str = "", timeout: None | float = None, folder: str | None = None, shell_mode: bool = False) -> tuple[int, str, str]:
         try:
             env = os.environ.copy()
             env['NO_COLOR'] = '1'
             env['FORCE_COLOR'] = '0'
-
-            # cmd_run = cmd if shell_mode else cmd.split(" ")
             
             answer = subprocess.run(cmd, 
                                     cwd=folder, 
                                     env=env, 
-                                    shell=True, 
+                                    shell= True if isinstance(cmd, str) else False, 
                                     input=input_data, 
                                     stdout=PIPE, 
                                     stderr=PIPE, 
@@ -28,14 +26,7 @@ class Runner:
             err = ""
             if answer.returncode != 0:
                 err = answer.stderr + Runner.decode_code(answer.returncode)
-                # err += "\n" + cmd
-            # if running on windows
-            # if os.name == "nt":
-            #     try:
-            #         return answer.returncode, answer.stdout.encode("cp1252").decode("utf-8"), err
-            #     except UnicodeDecodeError:
-            #         pass
-            return answer.returncode, answer.stdout, err
+            return answer.returncode, answer.stdout, err + "\n" + " ".join(cmd)
         except subprocess.TimeoutExpired:
             err = "fail: processo abortado depois de {} segundos".format(timeout)
             return 1, "", err

@@ -1,5 +1,8 @@
 # Changelog
 
+- 7.3
+  - spaces and accents problem fixed
+  - paths with spaces fixed
 - 7.2.2
   - add: multi source mode
 - 7.0.0

@@ -85,11 +85,18 @@ class Game:
             if filename == "":
                 pass
             elif not os.path.exists(filename):
-                print(f"Aviso: fonte {filename} não encontrada")
+                if source.database != source.LOCAL_SOURCE_DATABASE:
+                    print(f"Aviso: fonte {filename} não encontrada")
             else:
                 content = Decoder.load(filename)
 
-            gb = GameBuilder(source.database, filename, filters, source.get_rep_folder())
+            gb = GameBuilder(
+                source_db=source.database, 
+                filename=filename, 
+                quests_filter_view=filters, 
+                rep_folder=source.get_rep_folder(), 
+                load_local=source.database == source.LOCAL_SOURCE_DATABASE
+            )
             gb.build_from(content, language)
             for cluster_key in gb.ordered_clusters:
                 self.ordered_clusters.append(source.database + "@" + cluster_key)

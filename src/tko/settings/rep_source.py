@@ -2,6 +2,7 @@ from typing import Any
 import os
 
 class RepSource:
+    LOCAL_SOURCE_DATABASE = "local"
     class Keys:
         DATABASE = "database"
         LINK = "link"

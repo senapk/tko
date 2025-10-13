@@ -4,18 +4,19 @@ from tko.play.play import Play
 from tko.util.text import Text
 
 class CmdOpen:
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings, force_update: bool):
         self.settings = settings
         self.need_update = False
         self.rep: Repository | None = None
         self.folder = ""
+        self.force_update = force_update
 
     def set_need_update(self):
         self.need_update = True
 
     def load_folder(self, folder: str):
         self.folder = folder
-        self.rep = Repository(folder)
+        self.rep = Repository(folder, self.force_update)
         if not self.rep.paths.has_local_config_file():
             print(Text.format("{r}: O parâmetro para o comando {g} {y} deve a pasta onde você iniciou o repositório.", "Erro", "tko open", "<pasta>"))
             print(Text.format("{g}: Navegue ou passe o caminho até a pasta do repositório e tente novamente.", "Ação"))

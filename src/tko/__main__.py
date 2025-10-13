@@ -113,11 +113,12 @@ class Main:
     @staticmethod
     def open(args: argparse.Namespace):
         settings = Settings()
+        update: bool = args.update
         folder = args.folder
         rec_folder = RepPaths.rec_search_for_repo(folder)
         if rec_folder != "":
             folder = rec_folder
-        action = CmdOpen(settings).load_folder(folder)
+        action = CmdOpen(settings, update).load_folder(folder)
         if not CheckVersion().is_updated():
             action.set_need_update()
         action.execute()
@@ -353,6 +354,7 @@ class Parser:
     def add_parser_rep_actions(self):
         parser_open = self.subparsers.add_parser('open', help='Open a folder with a repository.')
         parser_open.add_argument('folder', type=str, nargs='?', default='.', help='Repository folder.')
+        parser_open.add_argument('--update', '-u', action='store_true', help='Force update.')
         parser_open.set_defaults(func=Main.open)
 
         parser_down = self.subparsers.add_parser('task', help='Task subcommands.')

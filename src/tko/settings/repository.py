@@ -26,7 +26,7 @@ def remove_git_merge_tags(lines: list[str]) -> list[str]:
 class Repository:
     cache_time_for_remote_source = 3600 # seconds
 
-    def __init__(self, folder: str):
+    def __init__(self, folder: str, force_update: bool = False):
         rep_folder: str = folder
         recursive_folder = RepPaths.rec_search_for_repo(folder)
         if recursive_folder != "":
@@ -35,6 +35,7 @@ class Repository:
         self.data: RepData = RepData()
         self.game = Game()
         self.logger: Logger = Logger(rep_folder) 
+        self.force_update: bool = force_update
 
     def found(self):
         return os.path.isfile(self.paths.get_config_file())
@@ -112,12 +113,12 @@ class Repository:
             # verify if cache file exists and is less than 1 hour old
             cache_file = source.get_default_cache_path()
             source.target_path = cache_file
-            if os.path.isfile(cache_file) and source.cache_timestamp != "":
+            if not self.force_update and os.path.isfile(cache_file) and source.cache_timestamp != "":
                 last_dt = Delta.decode_format(source.cache_timestamp)
                 if (now_dt - last_dt).total_seconds() < Repository.cache_time_for_remote_source:
                     time_missing = Repository.cache_time_for_remote_source - (now_dt - last_dt).total_seconds()
                     r = int(time_missing / 60)
-                    print(f"Usando cache do repositório {source.database} ({source.link}), atualizado há {r} minutos")
+                    print(f"Usando cache do repositório {source.database} ({source.link}), próxima atualização em {r} minutos")
                     return
 
             self.down_source_from_remote_url(source)
@@ -162,7 +163,7 @@ class Repository:
         return self
 
     def get_default_local_source(self) -> RepSource:
-        source = RepSource(database="local", link="", filters=None)
+        source = RepSource(database=RepSource.LOCAL_SOURCE_DATABASE, link="", filters=None)
         source.set_local_info(self.paths.get_rep_dir(), self.paths.get_cache_folder())
         return source
 

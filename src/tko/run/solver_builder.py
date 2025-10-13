@@ -24,29 +24,22 @@ class Executable:
             cmd = []
         if files is None:
             files = []
-        self.__cmd = cmd
-        self.__files = files
-        self.__folder = folder
+        self.__cmd_list: list[str] = cmd
+        self.__folder: str | None = folder
         self.__compiled: bool = False
-        self.__compile_error = False
+        self.__compile_error: bool = False
         self.__error_msg: Text = Text()
         self.need_shell_mode: bool = False # subprocess needs bash mode to process symbols like & or |
     
     def set_executable(self, cmd: list[str], files: list[str], folder: str | None = None):
         self.__compiled = True
-        self.__cmd = cmd
-        if folder is not None and " " in folder:
-            folder = '"' + folder + '"'
-        self.__files = fix_spaces(files)
+        self.__cmd_list = cmd
+        self.__files = files
         self.__folder = folder
         return self
     
-    def get_command(self) -> tuple[str, str | None]:
-        cmd = ""
-        if self.__cmd:
-            cmd += " ".join(self.__cmd) + " "
-        cmd += " ".join(self.__files)
-        return cmd, None if self.__folder is None else self.__folder
+    def get_command(self) -> tuple[list[str], str | None]:
+        return self.__cmd_list + self.__files, self.__folder
 
     def set_compile_error(self, error_msg: Text | str):
         self.__compiled = True
@@ -65,15 +58,6 @@ class Executable:
     
     def get_error_msg(self):
         return self.__error_msg
-
-def fix_spaces(file_list: list[str]) -> list[str]:
-    fixed_list: list[str] = []
-    for path in file_list:
-        if " " in path and not path.startswith('"'):
-            fixed_list.append(f'"{path}"')
-        else:
-            fixed_list.append(path)
-    return fixed_list
 
 class SolverBuilder:
     def __init__(self, args_list: list[str]):
@@ -167,12 +151,12 @@ class SolverBuilder:
         first = self.args_list[0]
 
         filename = os.path.basename(first)
-        cmd = ["javac"] + fix_spaces(self.args_list) + ['-d', self.cache_dir]
-        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
+        cmd: list[str] = ["javac"] + self.args_list + ['-d', self.cache_dir]
+        return_code, stdout, stderr = Runner.subprocess_run(cmd)
         if return_code != 0:
             self.__exec.set_compile_error(stdout + stderr)
         else:
-            self.__exec.set_executable(["java", "-cp "], [self.cache_dir, filename[:-5]])  # removing the .java
+            self.__exec.set_executable(["java", "-cp"], [self.cache_dir, filename[:-5]])  # removing the .java
 
     def update_input_function(self, free_run_mode: bool, path_list: list[str], copy_dir: str):
         new_files: list[str] = []
@@ -252,7 +236,7 @@ class SolverBuilder:
         solver = os.path.abspath(self.args_list[0])
         folder = os.path.dirname(solver)
         cmd = ["make", "-s", "-C", folder, "-f", solver, "build"]
-        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
+        return_code, stdout, stderr = Runner.subprocess_run(cmd)
         if return_code != 0:
             self.__exec.set_compile_error(stdout + stderr)
         else:
@@ -285,7 +269,7 @@ class SolverBuilder:
         self.check_tool("node")
         transpiler = "npx esbuild"
         cmd = [transpiler] + new_files + ["--outdir=" + self.cache_dir, "--format=cjs", "--log-level=error"]
-        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
+        return_code, stdout, stderr = Runner.subprocess_run(cmd)
 
         if return_code != 0:
             self.__exec.set_compile_error(stdout + stderr)
@@ -296,12 +280,11 @@ class SolverBuilder:
             self.__exec.set_executable(["node"], new_source_list)  # renaming solver to main
 
     def __prepare_c_cpp(self, pre_args: list[str], pos_args: list[str]):
-        # solver = self.path_list[0]
         tempdir = self.cache_dir
         source_list = [x for x in self.args_list if not x.endswith(".h") and not x.endswith(".hpp")]
         exec_path = os.path.join(tempdir, ".a.out")
         cmd = pre_args + source_list + ["-o", exec_path] + pos_args
-        return_code, stdout, stderr = Runner.subprocess_run(" ".join(cmd))
+        return_code, stdout, stderr = Runner.subprocess_run(cmd)
         if return_code != 0:
             self.__exec.set_compile_error(stdout + stderr)
         else:

@@ -9,7 +9,7 @@ import os
 from icecream import ic # type: ignore
 
 class GameBuilder:
-    def __init__(self, source_db: str, filename: str, quests_filter_view: list[str] | None, rep_folder: str):
+    def __init__(self, source_db: str, filename: str, quests_filter_view: list[str] | None, rep_folder: str, load_local: bool = False):
         self.source_db = source_db
         self.filename = filename
         self.rep_folder = rep_folder
@@ -20,10 +20,12 @@ class GameBuilder:
         self.active_cluster: Cluster | None = None
         self.active_quest: Quest | None = None
         self.quests_filter_view: list[str] | None = quests_filter_view
+        self.load_local = load_local
 
     def build_from(self, content: str, language: str):
         self.__parse_file_content(content)
-        self.__parse_database_for_user_tasks()
+        if self.load_local:
+            self.__parse_database_for_user_tasks()
         self.__clear_empty_or_other_language(language)
         self.__create_requirements_pointers()
         self.__create_cross_references()
@@ -79,6 +81,7 @@ class GameBuilder:
             task.set_key(entry)
             task.set_rep_folder(self.rep_folder)
             task.set_database(self.source_db)
+            task.link_type = Task.Types.STATIC_FILE
             self.__add_task(task)
 
     def __parse_file_content(self, content: str):
