@@ -39,7 +39,12 @@ class Executable:
         return self
     
     def get_command(self) -> tuple[list[str], str | None]:
-        return self.__cmd_list + self.__files, self.__folder
+        cmd: list[str] | str = self.__cmd_list
+        if isinstance(cmd, str):
+            cmd += " " + " ".join(self.__files)
+        else:
+            cmd += self.__files
+        return cmd, self.__folder
 
     def set_compile_error(self, error_msg: Text | str):
         self.__compiled = True
@@ -229,7 +234,7 @@ class SolverBuilder:
             raise Warning(Text.format("{r}: Seu arquivo yaml precisa ter um campo {g} ", "Falha", "run:"))
         if not isinstance(yaml_data["run"], str):
             raise Warning(Text.format("{r}: O campo run deve ser uma lista", "Falha"))
-        self.__exec.set_executable([yaml_data["run"]], [], folder)
+        self.__exec.set_executable(yaml_data["run"], [], folder)
 
     def __prepare_make(self):
         self.check_tool("make")
@@ -267,8 +272,8 @@ class SolverBuilder:
 
         self.check_tool(transpiler)
         self.check_tool("node")
-        transpiler = "npx esbuild"
-        cmd = [transpiler] + new_files + ["--outdir=" + self.cache_dir, "--format=cjs", "--log-level=error"]
+        transpiler = ["npx", "esbuild"]
+        cmd: list[str] = transpiler + new_files + ["--outdir=" + self.cache_dir, "--format=cjs", "--log-level=error"]
         return_code, stdout, stderr = Runner.subprocess_run(cmd)
 
         if return_code != 0:
@@ -277,7 +282,7 @@ class SolverBuilder:
             new_source_list: list[str] = []
             for source in new_files:
                 new_source_list.append(os.path.join(self.cache_dir, os.path.basename(source)[:-2] + "js"))
-            self.__exec.set_executable(["node"], new_source_list)  # renaming solver to main
+            self.__exec.set_executable(cmd=["node"], files=new_source_list)  # renaming solver to main
 
     def __prepare_c_cpp(self, pre_args: list[str], pos_args: list[str]):
         tempdir = self.cache_dir

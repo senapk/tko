@@ -7,7 +7,6 @@ import subprocess
 import random
 import sys
 import os
-from subprocess import PIPE
 
 if os.name == 'nt':  # Windows
     import msvcrt
@@ -52,7 +51,7 @@ class Free:
                 print(Text().center(RawTerminal.get_terminal_size(), Text.Token("─")))
             else:
                 print(header.center(RawTerminal.get_terminal_size(), Text.Token("─")))
-            answer = subprocess.run(cmd, cwd=folder, shell=True, text=True)
+            answer = subprocess.run(cmd, cwd=folder, shell=True if isinstance(cmd, str) else False, text=True)
             if answer.returncode != 0 and answer.returncode != 1:
                 print(Runner.decode_code(answer.returncode))
         solver.reset()

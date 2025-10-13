@@ -2,6 +2,7 @@ import subprocess
 import os
 from subprocess import PIPE
 
+
 class Runner:
     def __init__(self):
         pass
@@ -26,7 +27,7 @@ class Runner:
             err = ""
             if answer.returncode != 0:
                 err = answer.stderr + Runner.decode_code(answer.returncode)
-            return answer.returncode, answer.stdout, err + "\n" + " ".join(cmd)
+            return answer.returncode, answer.stdout, err
         except subprocess.TimeoutExpired:
             err = "fail: processo abortado depois de {} segundos".format(timeout)
             return 1, "", err

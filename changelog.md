@@ -1,6 +1,9 @@
 # Changelog
 
-- 7.3
+- 7.3.1
+  - fix ts run
+  - fix all tests
+- 7.3.0
   - spaces and accents problem fixed
   - paths with spaces fixed
 - 7.2.2
