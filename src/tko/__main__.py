@@ -164,9 +164,12 @@ class Main:
         folder: str | None = args.folder
         alias: str = args.alias
         enable: list[str] | None = args.enable
-        rep_actions = RepSourceActions(folder)
-        rep_actions.add_source(remote=remote, alias=alias, link=link, filters=enable)
-        rep_actions.print_end_msg()
+        try:
+            rep_actions = RepSourceActions(folder)
+            rep_actions.add_source(remote=remote, alias=alias, link=link, filters=enable)
+            rep_actions.print_end_msg()
+        except ValueError as e:
+            print(f"Erro ao adicionar fonte: {e}")
 
     @staticmethod
     def source_enable(args: argparse.Namespace):

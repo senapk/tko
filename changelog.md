@@ -1,5 +1,7 @@
 # Changelog
 
+- 7.3.2
+  - fix: local source working
 - 7.3.1
   - fix ts run
   - fix all tests

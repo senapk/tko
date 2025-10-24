@@ -16,8 +16,7 @@ class RepSourceActions:
 
         path = RepPaths.rec_search_for_repo(folder)
         if path == "":
-            print("Repositório não encontrado")
-            return
+            raise ValueError("Repositório não encontrado")
         self.folder = folder
         self.rep = Repository(path).load_config()
     
@@ -78,7 +77,8 @@ class RepSourceActions:
                 source = os.path.abspath(link)
                 if source.startswith(self.folder):
                     source = os.path.relpath(source, os.path.dirname(rep.paths.get_config_file()))
-                rep.data.set_source(rep.get_default_local_source())
+                print("debug", source)
+                rep.data.set_source(RepSource(database=alias, link=source, filters=filters))
 
         self.rep.save_config()
    
