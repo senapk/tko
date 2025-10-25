@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 from typing import Any
 from tko.settings.app_settings import AppSettings
@@ -20,15 +21,21 @@ def singleton(class_): # type: ignore
 @singleton
 class Settings:
     CFG_FILE = "settings.yaml"
-
+    class Defaults:
+        alias_git = {
+            "poo": "https://github.com/qxcodepoo/arcade.git",
+            "fup": "https://github.com/qxcodefup/arcade.git",
+            "ed": "https://github.com/qxcodeed/arcade.git"
+        }
 
     def __init__(self):
-        self.__remote = "remote"
+        self.__gitrepos = "gitrepos"
         self.__appcfg = "appcfg"
         self.__colors = "colors"
 
         self.package_name = 'tko'
         self.dict_alias_remote: dict[str, str] = {}
+        self.dict_alias_git: dict[str, str] = {}
         self.app = AppSettings()
         self.colors = Colors()
 
@@ -52,30 +59,29 @@ class Settings:
         return self.get_settings_file() + ".backup"
 
     def reset(self):
-        self.dict_alias_remote = {
-            "fup": "https://github.com/qxcodefup/arcade/blob/master/Readme.md",
-            "ed": "https://github.com/qxcodeed/arcade/blob/master/Readme.md",
-            "poo": "https://github.com/qxcodepoo/arcade/blob/master/Readme.md"
+        self.dict_alias_git = {
+            "poo": "https://github.com/qxcodepoo/arcade.git",
+            "fup": "https://github.com/qxcodefup/arcade.git",
+            "ed": "https://github.com/qxcodeed/arcade.git"
         }
 
         self.app = AppSettings()
         self.colors = Colors()
         return self
 
-    def set_alias_remote(self, alias: str, url_or_path: str):
-        if not(url_or_path.startswith("http:") or url_or_path.startswith("https:")):
-            url_or_path = os.path.abspath(url_or_path)
-        self.dict_alias_remote[alias] = url_or_path
+
+    def set_alias_git(self, alias: str, git_url: str):
+        self.dict_alias_git[alias] = git_url
         return self
 
-    def has_alias_remote(self, alias: str) -> bool:
-        return alias in self.dict_alias_remote
+    def get_alias_git(self, alias: str) -> str:
+        if alias in self.dict_alias_git:
+            return self.dict_alias_git[alias]
+        raise Warning(f"Repositório git label {alias} não encontrado")
 
-    def get_alias_remote(self, alias: str) -> str:
-        if alias in self.dict_alias_remote:
-            return self.dict_alias_remote[alias]
-        raise Warning(f"Repositório remoto {alias} não encontrado")
-    
+    def has_alias_git(self, alias: str) -> bool:
+        return alias in self.dict_alias_git
+
     def load_settings(self):
         try:
             settings_file = self.get_settings_file()
@@ -94,9 +100,9 @@ class Settings:
             if data is None or not isinstance(data, dict):
                 raise FileNotFoundError(f"Arquivo de configuração vazio: {settings_file}")
             self.data = data
-            self.dict_alias_remote = data.get(self.__remote, {}) # type: ignore
-            self.app = AppSettings().from_dict(data.get(self.__appcfg, {})) # type: ignore
-            self.colors = Colors().from_dict(data.get(self.__colors, {})) # type: ignore
+            self.dict_alias_git = data.get(self.__gitrepos, self.Defaults.alias_git) # type: ignore
+            self.app = AppSettings().from_dict(data.get(self.__appcfg, AppSettings())) # type: ignore
+            self.colors = Colors().from_dict(data.get(self.__colors, Colors())) # type: ignore
         except:
             self.reset()
             self.save_settings()
@@ -105,7 +111,7 @@ class Settings:
     def save_settings(self):
         file = self.get_settings_file()
         value: dict[str, Any] = {
-            self.__remote: self.dict_alias_remote,
+            self.__gitrepos: self.dict_alias_git,
             self.__appcfg: self.app.to_dict(),
             self.__colors: self.colors.to_dict()
         }

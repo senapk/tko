@@ -76,7 +76,7 @@ class RepData:
             if "sources" in data:
                 source_data: list[dict[str, Any]] = data["sources"]
                 if isinstance(source_data, list): # type: ignore
-                    self.__sources = [RepSource("", "", None).load_from_dict(x) for x in source_data]
+                    self.__sources = [RepSource("", "", RepSource.Type.LINK, None).load_from_dict(x) for x in source_data]
                 else:
                     raise TypeError("The 'sources' field must be a list.")
 

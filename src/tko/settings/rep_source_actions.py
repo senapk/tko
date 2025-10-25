@@ -3,7 +3,7 @@ from tko.settings.rep_source import RepSource
 from tko.settings.repository import Repository
 from tko.settings.settings import Settings
 from tko.util.text import Text
-
+import subprocess
 import os
 
 class RepSourceActions:
@@ -54,34 +54,48 @@ class RepSourceActions:
         if not found:
             raise Warning("fail: fonte não encontrada.")
         rep.save_config()
-            
-    def add_source(self, remote: str | None, alias: str, link: str | None, filters: list[str] | None = None) -> None:
+
+    def add_source(self, alias: str, remote: str | None, link: str | None, clone: str | None, branch: str = "master", filters: list[str] | None = None) -> None:
         rep = self.rep
-        if link is None and remote is None:
+        if link is None and remote is None and clone is None:
             print("Você precisa informar o endereço da fonte")
         elif remote is not None:
             print(Text.format("Adicionando fonte remota apontando para repositório remoto {y}.", remote))
-            source: str = ""
+            url: str = ""
             settings = Settings()
-            if not settings.has_alias_remote(remote):
-                raise Warning("fail: alias remoto não encontrado.")
-            source = settings.get_alias_remote(remote)
-            rep.data.set_source(RepSource(database=remote, link=source, filters=filters))
+            if not settings.has_alias_git(remote):
+                raise Warning("fail: alias git remoto não encontrado.")
+            url = settings.get_alias_git(remote)
+            self.git_clone_repository(url, alias, filters, branch)
         elif link is not None:
             if link.startswith("http"):
                 print(Text.format("Adicionando fonte remota apontando para link remota {y}.", link))
                 source = link
-                rep.data.set_source(RepSource(database=alias, link=source, filters=filters))
+                rep.data.set_source(RepSource(database=alias, link=source, source_type=RepSource.Type.LINK, filters=filters))
             else:
                 print(Text.format("Adicionando fonte local apontando para arquivo local {y}.", link))
                 source = os.path.abspath(link)
                 if source.startswith(self.folder):
                     source = os.path.relpath(source, os.path.dirname(rep.paths.get_config_file()))
-                print("debug", source)
-                rep.data.set_source(RepSource(database=alias, link=source, filters=filters))
+                rep.data.set_source(RepSource(database=alias, link=source, source_type=RepSource.Type.FILE, filters=filters))
+        elif clone is not None:
+            self.git_clone_repository(clone, alias, filters, branch)
 
         self.rep.save_config()
    
+
+    def git_clone_repository(self, link: str, alias: str, filters: list[str] | None, branch: str) -> None:
+        print(Text.format("Clonando repositório remoto {y}.", link))
+        cache_path = self.rep.paths.get_cache_folder()
+        target = os.path.join(cache_path, alias)
+        os.makedirs(target, exist_ok=True)
+        result = subprocess.run(["git", "clone", "--depth", "1", link, target], capture_output=True, text=True)
+        if result.returncode != 0:
+            print(Text.format("fail: Não foi possível clonar o repositório {y}.\nErro: {r}", link, result.stderr.strip()))
+            return
+        print(Text.format("Repositório clonado com sucesso em {y}.", target))
+        self.rep.data.set_source(RepSource(database=alias, link=os.path.join(cache_path, alias, "Readme.md"), source_type=RepSource.Type.CLONE, filters=filters).set_branch(branch))
+
 
     def print_end_msg(self):
         rel_path = os.path.relpath(self.rep.paths.get_rep_dir(), os.getcwd())

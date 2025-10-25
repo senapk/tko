@@ -144,11 +144,11 @@ class Main:
         language: str | None = args.language
         rep_starter = RepStarter(folder=folder, language=language)
         ok: bool = rep_starter.execute()
-        remote: str | None = args.remote
+        remote: str | None = args.git
         enable: list[str] | None = args.enable
         if ok and remote is not None:
             rep_actions = RepSourceActions(folder)
-            rep_actions.add_source(alias=remote, remote=remote, link=None, filters=enable)
+            rep_actions.add_source(alias=remote, remote=remote, link=None, clone=None, filters=enable)
         rep_starter.print_end_msg()
 
     @staticmethod
@@ -161,12 +161,16 @@ class Main:
     def source_add(args: argparse.Namespace):
         remote: str | None = args.remote
         link: str | None = args.link 
+        clone: str | None = args.clone
+        branch: str = args.branch
+
         folder: str | None = args.folder
+        
         alias: str = args.alias
         enable: list[str] | None = args.enable
         try:
             rep_actions = RepSourceActions(folder)
-            rep_actions.add_source(remote=remote, alias=alias, link=link, filters=enable)
+            rep_actions.add_source(alias=alias, remote=remote, link=link, branch=branch, clone=clone, filters=enable)
             rep_actions.print_end_msg()
         except ValueError as e:
             print(f"Erro ao adicionar fonte: {e}")
@@ -372,7 +376,7 @@ class Parser:
         parser_init = self.subparsers.add_parser('init', help='Initialize a empty repository in a folder.')
         parser_init.add_argument('--folder', '-f', type=str, help='Local directory.')
         parser_init.add_argument('--language', '-l', type=str, help='Draft language for the repository.')
-        parser_init.add_argument('--remote', '-r', type=str, help='Init with remote source [fup|ed|poo].')
+        parser_init.add_argument('--git', '-g', '-r', type=str, help='Init with remote git source [fup|ed|poo].')
         parser_init.add_argument('--enable', '-e', type=str, nargs='*', help='Only show enabled items')
         parser_init.set_defaults(func=Main.init)
 
@@ -385,8 +389,10 @@ class Parser:
         source_add.add_argument('alias', type=str, help='Alias for the remote.')
         source_from = source_add.add_mutually_exclusive_group()
         source_from.add_argument('--link', '-l', type=str, help='HTTP url or local file.')
-        source_from.add_argument('--remote', '-r', type=str, help='Remote source [fup|ed|poo].')
+        source_from.add_argument('--git', '-g', type=str, help='Remote git source [fup|ed|poo].')
+        source_from.add_argument('--clone', '-c', type=str, metavar=('URL'), help='Clone a rep with a Readme.md source.')
         source_add.add_argument('--enable', '-e', type=str, nargs='*', help='Only show enabled items')
+        source_add.add_argument('--branch', '-b', type=str, default='master', help='Branch name for clone source')
         source_add.set_defaults(func=Main.source_add)
 
         source_list = sub_source.add_parser("list", help="List sources")

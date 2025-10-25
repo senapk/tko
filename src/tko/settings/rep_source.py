@@ -1,23 +1,40 @@
+from __future__ import annotations
 from typing import Any
 import os
+from enum import Enum
+
 
 class RepSource:
     LOCAL_SOURCE_DATABASE = "local"
+
+    class Type(Enum):
+        LINK = "remote"
+        FILE = "local"
+        CLONE = "clone"
+
     class Keys:
         DATABASE = "database"
         LINK = "link"
+        TYPE = "type"
         TARGET_PATH = "cache_path" # deprecated
         CACHE_TIMESTAMP = "cache_timestamp"
         FILTERS = "filters"
+        BRANCH = "branch"
 
-    def __init__(self, database: str, link: str, filters: list[str] | None):
+    def __init__(self, database: str, link: str, source_type: RepSource.Type, filters: list[str] | None):
         self.database = database
         self.link = link
+        self.source_type = source_type
         self.target_path: str = ""
         self.cache_timestamp: str = ""
+        self.branch: str | None = None
         self.filters: list[str] | None = filters
         self.local_rep_folder: str | None = None
         self.local_cache_folder: str | None = None
+
+    def set_branch(self, branch: str | None):
+        self.branch = branch
+        return self
 
     def set_database(self, database: str):
         self.database = database
@@ -63,6 +80,23 @@ class RepSource:
 
         if Keys.LINK in data and isinstance(data[Keys.LINK], str):
             self.link = data[Keys.LINK]
+        if Keys.BRANCH in data and isinstance(data[Keys.BRANCH], str):
+            self.branch = data[Keys.BRANCH]
+        else:
+            self.branch = "master"
+        if Keys.TYPE in data and isinstance(data[Keys.TYPE], str):
+            type_str = data[Keys.TYPE]
+            if type_str == RepSource.Type.LINK.value:
+                self.source_type = RepSource.Type.LINK
+            elif type_str == RepSource.Type.FILE.value:
+                self.source_type = RepSource.Type.FILE
+            elif type_str == RepSource.Type.CLONE.value:
+                self.source_type = RepSource.Type.CLONE
+        else:
+            if self.link.startswith("http"):
+                self.source_type = RepSource.Type.LINK
+            else:
+                self.source_type = RepSource.Type.FILE
         if Keys.TARGET_PATH in data and isinstance(data[Keys.TARGET_PATH], str):
             self.target_path = data[Keys.TARGET_PATH]
         if Keys.CACHE_TIMESTAMP in data and isinstance(data[Keys.CACHE_TIMESTAMP], str):
@@ -76,6 +110,8 @@ class RepSource:
         return {
             Keys.DATABASE: self.database,
             Keys.LINK: self.link,
+            Keys.TYPE: self.source_type.value,
+            Keys.BRANCH: self.branch,
             Keys.TARGET_PATH: self.target_path,
             Keys.CACHE_TIMESTAMP: self.cache_timestamp,
             Keys.FILTERS: self.filters

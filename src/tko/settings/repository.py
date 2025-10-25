@@ -13,6 +13,10 @@ from tko.settings.rep_paths import RepPaths
 from icecream import ic # type: ignore
 from tko.logger.delta import Delta
 from tko.settings.legacy import Legacy
+from datetime import datetime
+from tko.util.runner import Runner
+
+
 
 def remove_git_merge_tags(lines: list[str]) -> list[str]:
     # remove lines with <<<<<<<, =======, >>>>>>>>
@@ -44,10 +48,6 @@ class Repository:
         rep_dir = self.paths.get_rep_dir()
         path = os.path.abspath(path)
         return os.path.commonpath([rep_dir, path]) == rep_dir
-
-    @staticmethod
-    def is_web_link(link: str) -> bool:
-        return link.startswith("http:") or link.startswith("https:")
 
     def load_game(self):
         if not self.data.get_sources():
@@ -86,45 +86,77 @@ class Repository:
             label = parts[1]
         return os.path.abspath(os.path.join(self.paths.root_folder, source, label))
 
-
-    def __is_remote_source(self, source: RepSource) -> bool:
-        return source.link.startswith("http:") or source.link.startswith("https:")
-
-    def down_source_from_remote_url(self, source: RepSource) -> None:
+    def down_source_from_remote_url(self, source: RepSource) -> bool:
         cache_file = source.get_default_cache_path()
         os.makedirs(self.paths.get_cache_folder(), exist_ok=True)
         ru = RemoteUrl(source.link)
         try:
             ru.download_absolute_to(cache_file)
+            return True
         except urllib.error.URLError: # type: ignore
             print(f"Não foi possível baixar o arquivo do repositório alias:{source.database}, link:{source.link}")
             if os.path.exists(cache_file):
                 print("Usando arquivo do cache")
             else:
                 raise Warning("fail: Arquivo do cache não encontrado")
+        return False
+
+    def run_git_cmd(self, cmd_list: list[str], folder: str)-> bool:
+        error, stdout, stderr = Runner.subprocess_run(cmd_list, folder=folder, timeout=60)
+        if error != 0:
+            print(f"Não foi possível atualizar o repositório clonado em {folder}. Erro: {stdout}\n{stderr}")
+            return False
+        return True
+
+    def git_pull_repository(self, source: RepSource) -> bool:
+        basedir = os.path.dirname(source.link)
+        branch_name = source.branch if source.branch is not None else "master"
+        print("Verificando atualizações do repositório clonado em", basedir)
+        if not self.run_git_cmd(["git", "fetch", "--all"], basedir):
+            return False
+        if not self.run_git_cmd(["git", "reset", "--hard", f"origin/{branch_name}"], folder=basedir):
+            return False
+        if not self.run_git_cmd(["git", "clean", "-df"], folder=basedir):
+            return False
+        return True
+
+
+    def is_in_cache(self, source: RepSource, now_dt: datetime) -> bool:
+        last_dt = Delta.decode_format(source.cache_timestamp)
+        if (now_dt - last_dt).total_seconds() < Repository.cache_time_for_remote_source:
+            time_missing = Repository.cache_time_for_remote_source - (now_dt - last_dt).total_seconds()
+            r = int(time_missing / 60)
+            print(f"Usando cache do repositório {source.database} ({source.link}), próxima atualização em {r} minutos")
+            return True
+        return False
 
     def update_cache_path(self, source: RepSource) -> None:
         if source.link == "":
             source.target_path = ""
             return
 
-        if self.__is_remote_source(source):
+        if source.source_type == RepSource.Type.LINK:
             now_str, now_dt = Delta.now()
             # verify if cache file exists and is less than 1 hour old
             cache_file = source.get_default_cache_path()
             source.target_path = cache_file
             if not self.force_update and os.path.isfile(cache_file) and source.cache_timestamp != "":
-                last_dt = Delta.decode_format(source.cache_timestamp)
-                if (now_dt - last_dt).total_seconds() < Repository.cache_time_for_remote_source:
-                    time_missing = Repository.cache_time_for_remote_source - (now_dt - last_dt).total_seconds()
-                    r = int(time_missing / 60)
-                    print(f"Usando cache do repositório {source.database} ({source.link}), próxima atualização em {r} minutos")
+                if self.is_in_cache(source, now_dt):
                     return
-
-            self.down_source_from_remote_url(source)
-            source.cache_timestamp = now_str
+            if self.down_source_from_remote_url(source):
+                source.cache_timestamp = now_str
             return
         
+        if source.source_type == RepSource.Type.CLONE:
+            now_str, now_dt = Delta.now()
+            if not self.force_update and source.cache_timestamp != "":
+                if self.is_in_cache(source, now_dt):
+                    return
+            source.target_path = source.link
+            if self.git_pull_repository(source):
+                source.cache_timestamp = now_str
+            return
+
         # local source
         if os.path.abspath(source.link) == source.link: # absolute path
             source.target_path = source.link
@@ -152,7 +184,7 @@ class Repository:
             raise Warning(Text.format("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.paths.get_config_file(), "corrompido"))
         if local_data["version"] == "0.0.1":
             local_data["sources"] = [
-                RepSource(database=Legacy.LEGACY_DATABASE, link=local_data["remote"], filters=local_data.get("filter", None)).save_to_dict(),
+                RepSource(database=Legacy.LEGACY_DATABASE, link=local_data["remote"], source_type=RepSource.Type.LINK, filters=local_data.get("filter", None)).save_to_dict(),
                 self.get_default_local_source().save_to_dict()
             ]
         self.data.load_from_dict(local_data)
@@ -163,7 +195,7 @@ class Repository:
         return self
 
     def get_default_local_source(self) -> RepSource:
-        source = RepSource(database=RepSource.LOCAL_SOURCE_DATABASE, link="", filters=None)
+        source = RepSource(database=RepSource.LOCAL_SOURCE_DATABASE, link="", source_type=RepSource.Type.FILE, filters=None)
         source.set_local_info(self.paths.get_rep_dir(), self.paths.get_cache_folder())
         return source
 

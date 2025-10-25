@@ -1,5 +1,10 @@
 # Changelog
 
+- 7.4.0
+  - add: new local source mode
+  - fix: better error messages
+  - default repositories using git clone mode
+  - parameter changed from -r to -g for 'init' and 'source' add
 - 7.3.2
   - fix: local source working
 - 7.3.1
