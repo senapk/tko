@@ -1,6 +1,7 @@
 import tempfile
 
 import os
+import sys
 import shutil
 from tko.util.text import Text
 from tko.util.runner import Runner
@@ -145,9 +146,8 @@ class SolverBuilder:
             self.__exec.set_executable(self.args_list, [], "")
 
     def __prepare_python(self):
-        cmd_name = "python3"
-        if shutil.which(cmd_name) is None:
-            cmd_name = "python"
+        cmd_name = sys.executable
+        
         self.__exec.set_executable([cmd_name], self.args_list, "")
 
     def __prepare_java(self):
