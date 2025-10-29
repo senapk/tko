@@ -17,6 +17,7 @@ from tko.util.param import Param
 from tko.util.decoder import Decoder
 from tko.down.drafts import Drafts
 from tko.settings.languages import available_languages
+from tko.feno.remote_md import Absolute
 
 class CmdLineDown:
     def __init__(self, settings: Settings, rep: Repository, task_key: str):
@@ -193,7 +194,11 @@ class CmdDown:
             self.actions.send_to_print(f"Arquivo fonte não encontrado para carregar a atividade {self.task_key}")
             return False
         os.makedirs(self.destiny_folder, exist_ok=True)
-        self.actions.compare_and_save(Decoder.load(task_source), self.readme_path)
+        source_folder_abs = os.path.dirname(task_source)
+        source_folder_rel = os.path.relpath(source_folder_abs, self.destiny_folder)
+        content = Decoder.load(task_source)
+        content = Absolute.change_to_relative_folder(content, source_folder_rel)
+        self.actions.compare_and_save(content, self.readme_path)
         mapi_file = os.path.join(os.path.dirname(task_source), ".cache", "mapi.json")
         self.download_readme_cases_and_drafts(mapi_file)
         return True

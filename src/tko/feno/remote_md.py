@@ -107,7 +107,7 @@ class Absolute:
 
     # processa o conteúdo trocando os links locais para links absolutos utilizando a url remota
     @staticmethod
-    def __replace_remote(content: str, remote_raw: str, remote_view: str, remote_folder: str) -> str:
+    def __replace_remote(content: str, remote_raw: str, remote_view: str, remote_folder: str, is_local = False) -> str:
         if content == "":
             return ""
         if not remote_raw.endswith("/"):
@@ -117,14 +117,16 @@ class Absolute:
         if not remote_folder.endswith("/"):
             remote_folder += "/"
 
-        #trocando todas as imagens com link local
-        regex = r"!\[(.*?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
-        subst = r"![\1](" + remote_raw + r"\3)"
-        result = re.sub(regex, subst, content, count=0, flags=0)
+        result = content
+        if not is_local:
+            #trocando todas as imagens com link local
+            regex = r"!\[(.*?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
+            subst = r"![\1](" + remote_raw + r"\3)"
+            result = re.sub(regex, subst, result, count=0, flags=0)
 
-        regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?/)\)"
-        subst = r"[\1](" + remote_folder + r"\3)"
-        result = re.sub(regex, subst, result, 0)
+            regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?/)\)"
+            subst = r"[\1](" + remote_folder + r"\3)"
+            result = re.sub(regex, subst, result, 0)
 
         #trocando todos os links locais cujo conteudo nao seja vazio
         regex = r"\[(.+?)\]\((\s*?)([^#:\s]*?)(\s*?)\)"
@@ -140,8 +142,12 @@ class Absolute:
         remote_raw    = "/".join(["https://raw.githubusercontent.com", user_repo, rl.branch , folder])
         remote_view    = "/".join(["https://github.com", user_repo, "blob", rl.branch, folder])
         remote_folder = "/".join(["https://github.com", user_repo, "tree", rl.branch, folder])
-        return Absolute.__replace_remote(content, remote_raw, remote_view, remote_folder)
+        return Absolute.__replace_remote(content, remote_raw, remote_view, remote_folder, is_local = False)
 
+    @staticmethod
+    def change_to_relative_folder(content: str, relative_folder: str):
+        folder = relative_folder
+        return Absolute.__replace_remote(content, folder, folder, folder, is_local = True)
 
     @staticmethod
     def convert_or_copy_or_print(source: str, target: str | None, make_remote: bool = False):
