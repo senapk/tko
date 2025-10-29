@@ -1,5 +1,7 @@
 # Changelog
 
+- 7.4.2
+  - fix: os.sep erros on local download for windows
 - 7.4.1
   - fix: relative link do local folder figures in clone or external file rep mode
 - 7.4.0

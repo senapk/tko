@@ -107,15 +107,16 @@ class Absolute:
 
     # processa o conteúdo trocando os links locais para links absolutos utilizando a url remota
     @staticmethod
-    def __replace_remote(content: str, remote_raw: str, remote_view: str, remote_folder: str, is_local = False) -> str:
+    def __replace_remote(content: str, remote_raw: str, remote_view: str, remote_folder: str, is_local: bool = False) -> str:
+        sep = os.sep if is_local else "/"
         if content == "":
             return ""
         if not remote_raw.endswith("/"):
-            remote_raw += "/"
+            remote_raw += sep
         if not remote_view.endswith("/"):
-            remote_view += "/"
+            remote_view += sep
         if not remote_folder.endswith("/"):
-            remote_folder += "/"
+            remote_folder += sep
 
         result = content
         if not is_local:
