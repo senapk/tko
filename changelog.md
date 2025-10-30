@@ -1,5 +1,7 @@
 # Changelog
 
+- 7.4.3
+  - fix: windows \ fixed in Absolute
 - 7.4.2
   - fix: os.sep erros on local download for windows
 - 7.4.1
