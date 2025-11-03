@@ -2,7 +2,7 @@ import os
 from tko.util.text import Text
 from tko.settings.repository import Repository
 from tko.settings.rep_paths import RepPaths
-
+import shutil
 class RepStarter:
     def __init__(self, folder: str | None, language: str | None = None):
         # if folder is set, use folder, else use local folder.
@@ -18,7 +18,11 @@ class RepStarter:
         
         self.rep = rep
         self.create_empty_rep()
-
+        # erase cache folder to avoid conflicts
+        cache_folder = rep.paths.get_cache_folder()
+        if os.path.exists(cache_folder):
+            shutil.rmtree(cache_folder)
+        os.makedirs(cache_folder, exist_ok=True)
         if self.language is not None:
             rep.data.lang = self.language
             print(Text.format("A linguagem do repositório foi definida como {y}.", self.language))

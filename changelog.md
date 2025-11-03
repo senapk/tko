@@ -1,5 +1,8 @@
 # Changelog
 
+- 7.4.4
+  - fix: clone mode fix if cache missing
+  - fix: link and file rewrite in RepSource
 - 7.4.3
   - fix: windows \ fixed in Absolute
 - 7.4.2

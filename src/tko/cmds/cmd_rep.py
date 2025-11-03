@@ -53,6 +53,7 @@ class CmdRep:
             return []
         output: list[Game.Cluster] = []
         for cluster_key in game.ordered_clusters:
+            cluster_key = cluster_key.replace("database@", "")
             cluster = game.clusters[cluster_key]
             output_cluster = Game.Cluster(cluster.get_db_key())
             output.append(output_cluster)
@@ -141,19 +142,6 @@ class CmdRep:
         print(f"SettingsFile\n- {settings.settings_file}")
         print(str(settings))
 
-    @staticmethod
-    def add(args: argparse.Namespace):
-        settings = Settings().set_alias_remote(args.alias, args.value)
-        settings.save_settings()
-
-    @staticmethod
-    def rm(args: argparse.Namespace):
-        sp = Settings()
-        if args.alias in sp.dict_alias_remote:
-            sp.dict_alias_remote.pop(args.alias)
-            sp.save_settings()
-        else:
-            print("Repository not found.")
 
     @staticmethod
     def reset(args: argparse.Namespace):

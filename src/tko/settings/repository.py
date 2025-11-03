@@ -87,14 +87,14 @@ class Repository:
         return os.path.abspath(os.path.join(self.paths.root_folder, source, label))
 
     def down_source_from_remote_url(self, source: RepSource) -> bool:
-        cache_file = source.get_default_cache_path()
+        cache_file = source.get_cache_folder()
         os.makedirs(self.paths.get_cache_folder(), exist_ok=True)
-        ru = RemoteUrl(source.link)
+        ru = RemoteUrl(source.get_url_link())
         try:
             ru.download_absolute_to(cache_file)
             return True
         except urllib.error.URLError: # type: ignore
-            print(f"Não foi possível baixar o arquivo do repositório alias:{source.database}, link:{source.link}")
+            print(f"Não foi possível baixar o arquivo do repositório alias:{source.database}, link:{source.get_url_link()}")
             if os.path.exists(cache_file):
                 print("Usando arquivo do cache")
             else:
@@ -109,7 +109,7 @@ class Repository:
         return True
 
     def git_pull_repository(self, source: RepSource) -> bool:
-        basedir = os.path.dirname(source.link)
+        basedir = source.get_git_folder()
         branch_name = source.branch if source.branch is not None else "master"
         print("Verificando atualizações do repositório clonado em", basedir)
         if not self.run_git_cmd(["git", "fetch", "--all"], basedir):
@@ -123,24 +123,31 @@ class Repository:
 
     def is_in_cache(self, source: RepSource, now_dt: datetime) -> bool:
         last_dt = Delta.decode_format(source.cache_timestamp)
+        if os.path.isfile(source.get_file_path()) == False:
+            return False
         if (now_dt - last_dt).total_seconds() < Repository.cache_time_for_remote_source:
             time_missing = Repository.cache_time_for_remote_source - (now_dt - last_dt).total_seconds()
             r = int(time_missing / 60)
-            print(f"Usando cache do repositório {source.database} ({source.link}), próxima atualização em {r} minutos")
+            print(f"Usando cache do repositório {source.database} ({source.get_url_link()}), próxima atualização em {r} minutos")
             return True
         return False
 
+    def clone_repository_git(self, link: str, target: str) -> bool:
+        os.makedirs(target, exist_ok=True)
+        result = self.run_git_cmd(["git", "clone", "--depth", "1", link, target], folder=".")
+        if not result:
+            print(Text.format("fail: Não foi possível clonar o repositório {y}.\nErro: {r}", link))
+            return False
+        return True
+
     def update_cache_path(self, source: RepSource) -> None:
-        if source.link == "":
-            source.target_path = ""
+        if source.source_type == RepSource.Type.FILE:
             return
 
         if source.source_type == RepSource.Type.LINK:
             now_str, now_dt = Delta.now()
             # verify if cache file exists and is less than 1 hour old
-            cache_file = source.get_default_cache_path()
-            source.target_path = cache_file
-            if not self.force_update and os.path.isfile(cache_file) and source.cache_timestamp != "":
+            if not self.force_update and os.path.isfile(source.get_file_path()) and source.cache_timestamp != "":
                 if self.is_in_cache(source, now_dt):
                     return
             if self.down_source_from_remote_url(source):
@@ -149,20 +156,15 @@ class Repository:
         
         if source.source_type == RepSource.Type.CLONE:
             now_str, now_dt = Delta.now()
-            if not self.force_update and source.cache_timestamp != "":
+            if not self.force_update and source.cache_timestamp != "" and os.path.exists(source.get_file_path()):
                 if self.is_in_cache(source, now_dt):
                     return
-            source.target_path = source.link
-            if self.git_pull_repository(source):
+
+            if not os.path.exists(source.get_file_path()) and self.clone_repository_git(source.get_url_link(), source.get_git_folder()):
+                source.cache_timestamp = now_str
+            elif self.git_pull_repository(source):
                 source.cache_timestamp = now_str
             return
-
-        # local source
-        if os.path.abspath(source.link) == source.link: # absolute path
-            source.target_path = source.link
-        else: # relative path
-            source.target_path = os.path.join(self.paths.get_rep_dir(), source.link)
-
 
     # configwa
     def load_config(self):

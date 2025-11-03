@@ -186,8 +186,10 @@ class Join:
         graph_color, graph_mono = class_task.get_default_graph_joined()
         class_graph = Join.join_student_daily_graph(user_info_map)
         with open(graph_color, "w", encoding="utf-8") as f:
+            print(f"Saving daily color graph to {graph_color}")
             f.write(class_graph)
         with open(graph_mono, "w", encoding="utf-8") as f:
+            print(f"Saving daily mono graph to {graph_mono}")
             f.write(clear_ansi_codes(class_graph))
 
     @staticmethod
@@ -195,6 +197,7 @@ class Join:
         class_task = ClassTask(target).load_from_file()
         collected_path = class_task.get_default_collected()
         user_info_map = Join.decode_students_collected_file(collected_path)
+        print(f"Users collected: {len(user_info_map)}")
         Join.save_daily_graphs(class_task, user_info_map)
         ref_folder = class_task.get_reference_rep()
         if ref_folder is not None:
@@ -209,14 +212,17 @@ class Join:
         # simple csv
         grid: Grid = Grid(user_info_map).set_reference(reference)
         path = class_task.get_default_simple_csv()
+        print(f"Generating simple CSV at {path}")
         CSV.save_csv(path, CSV.format_sheet(grid.build_csv()))
 
         # quest csv
         grid.set_include_tasks(False)
         path = class_task.get_default_quest_csv()
+        print(f"Generating quest CSV at {path}")
         CSV.save_csv(path, CSV.format_sheet(grid.build_csv()))
 
         # full csv
         grid.set_include_tasks(True).set_task_resume_to_str_function(task_resume_to_full_str)
         path = class_task.get_default_full_csv()
+        print(f"Generating full CSV at {path}")
         CSV.save_csv(path, CSV.format_sheet(grid.build_csv()))

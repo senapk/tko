@@ -3,7 +3,6 @@ from tko.settings.rep_source import RepSource
 from tko.settings.repository import Repository
 from tko.settings.settings import Settings
 from tko.util.text import Text
-import subprocess
 import os
 
 class RepSourceActions:
@@ -31,7 +30,8 @@ class RepSourceActions:
         print("Fontes configuradas:")
         for source in sources:
             print(Text.format("- Rótulo: {y}", source.database))
-            print(Text.format("  - Link ou Caminho: {y}", source.link))
+            print(Text.format("  - Link ou Caminho: {y}", source.get_url_link()))
+            print(Text.format("  - File Path     : {y}", source.get_file_path()))
             print(Text.format("  - Filtragem      : {y}", "Desativado" if source.filters is None else 'Ativado'))
             for f in source.filters or []:
                 print(f"    - {f}")
@@ -88,13 +88,10 @@ class RepSourceActions:
         print(Text.format("Clonando repositório remoto {y}.", link))
         cache_path = self.rep.paths.get_cache_folder()
         target = os.path.join(cache_path, alias)
-        os.makedirs(target, exist_ok=True)
-        result = subprocess.run(["git", "clone", "--depth", "1", link, target], capture_output=True, text=True)
-        if result.returncode != 0:
-            print(Text.format("fail: Não foi possível clonar o repositório {y}.\nErro: {r}", link, result.stderr.strip()))
+        if not self.rep.clone_repository_git(link, target):
             return
         print(Text.format("Repositório clonado com sucesso em {y}.", target))
-        self.rep.data.set_source(RepSource(database=alias, link=os.path.join(cache_path, alias, "Readme.md"), source_type=RepSource.Type.CLONE, filters=filters).set_branch(branch))
+        self.rep.data.set_source(RepSource(database=alias, link=link, source_type=RepSource.Type.CLONE, filters=filters).set_branch(branch))
 
 
     def print_end_msg(self):

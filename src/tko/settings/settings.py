@@ -34,7 +34,6 @@ class Settings:
         self.__colors = "colors"
 
         self.package_name = 'tko'
-        self.dict_alias_remote: dict[str, str] = {}
         self.dict_alias_git: dict[str, str] = {}
         self.app = AppSettings()
         self.colors = Colors()
@@ -59,11 +58,7 @@ class Settings:
         return self.get_settings_file() + ".backup"
 
     def reset(self):
-        self.dict_alias_git = {
-            "poo": "https://github.com/qxcodepoo/arcade.git",
-            "fup": "https://github.com/qxcodefup/arcade.git",
-            "ed": "https://github.com/qxcodeed/arcade.git"
-        }
+        self.dict_alias_git = self.Defaults.alias_git.copy()
 
         self.app = AppSettings()
         self.colors = Colors()
@@ -101,6 +96,8 @@ class Settings:
                 raise FileNotFoundError(f"Arquivo de configuração vazio: {settings_file}")
             self.data = data
             self.dict_alias_git = data.get(self.__gitrepos, self.Defaults.alias_git) # type: ignore
+            if len(self.dict_alias_git.keys()) == 0: # type: ignore
+                self.dict_alias_git = self.Defaults.alias_git.copy()
             self.app = AppSettings().from_dict(data.get(self.__appcfg, AppSettings())) # type: ignore
             self.colors = Colors().from_dict(data.get(self.__colors, Colors())) # type: ignore
         except:
@@ -131,9 +128,9 @@ class Settings:
         output.append("- " + self.get_settings_file())
         output.append("")
         output.append(str(Text.format("{g}", "Repositórios remotos cadastrados:")))
-        max_alias = max([len(key) for key in self.dict_alias_remote])
-        for key in self.dict_alias_remote:
-            output.append("- {} : {}".format(key.ljust(max_alias), self.dict_alias_remote[key]))
+        max_alias = max([len(key) for key in self.dict_alias_git])
+        for key in self.dict_alias_git:
+            output.append("- {} : {}".format(key.ljust(max_alias), self.dict_alias_git[key]))
         output.append("")
         
         app_str = str(self.app)

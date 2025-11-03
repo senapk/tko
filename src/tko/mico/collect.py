@@ -41,4 +41,5 @@ class Collect:
         collected_path = class_task.get_default_collected()
         os.makedirs(os.path.dirname(collected_path), exist_ok=True)
         with open(collected_path, "w", encoding="utf-8") as f:
+            print(f"Saving collected data to {collected_path}")
             json.dump(student_text_map, f, indent=4, ensure_ascii=False)
