@@ -87,8 +87,9 @@ class Repository:
         return os.path.abspath(os.path.join(self.paths.root_folder, source, label))
 
     def down_source_from_remote_url(self, source: RepSource) -> bool:
-        cache_file = source.get_cache_folder()
+        cache_file = source.get_file_path()
         os.makedirs(self.paths.get_cache_folder(), exist_ok=True)
+        #print("debug", source.get_url_link(), cache_file)
         ru = RemoteUrl(source.get_url_link())
         try:
             ru.download_absolute_to(cache_file)

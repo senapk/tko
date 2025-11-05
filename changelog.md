@@ -1,5 +1,9 @@
 # Changelog
 
+- 7.4.6
+  - fix: remove debug msg
+- 7.4.5
+  - fix: remote legacy error
 - 7.4.4
   - fix: clone mode fix if cache missing
   - fix: link and file rewrite in RepSource

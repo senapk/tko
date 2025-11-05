@@ -36,6 +36,7 @@ class Gui:
         self.language = LanguageSetter(self.settings, self.rep, self.flagsman, self.fman)
         self.colors = self.settings.colors
         self.need_update = False
+        self.xray_offset = 0
 
         self.app = Settings().app
 
@@ -391,8 +392,22 @@ class Gui:
                 made, list_data = self.get_daily_graph(width, height)
         if not made:
             list_data = [Text().add(x) for x in opening["estuda"].splitlines()]
-        for y, line in enumerate(list_data):
-            frame.write(y, self.tree.max_title + distance, line)
+        if self.xray_offset < 0:
+            self.xray_offset = 0
+        if self.xray_offset >= len(list_data):
+            self.xray_offset = len(list_data) - 1
+        
+        offset = 0
+        if Flags.xray.is_true():
+            offset = self.xray_offset
+        count = -1
+        line_count = 0
+        for line in list_data:
+            count += 1
+            if count < offset:
+                continue
+            frame.write(line_count, self.tree.max_title + distance, line)
+            line_count += 1
 
     def show_items(self):
         border_color = self.get_admin_color()

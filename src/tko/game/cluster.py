@@ -23,7 +23,7 @@ class Cluster(TreeItem):
         for q in self.__quests:
             if len(q.get_tasks()) == 0:
                 continue
-            if filter_list is not None:
+            if filter_list is not None and len(filter_list) > 0:
                 allow = False
                 for filter in filter_list:
                     if filter in q.get_title() or filter in q.get_db_key():

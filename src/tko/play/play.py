@@ -50,23 +50,52 @@ class Play:
             Floating(self.settings).put_text("\nAté a próxima\n").set_exit_fn(set_exit).set_warning()
         )
 
+    def move_up(self):
+        if Flags.xray.is_true():
+            self.gui.xray_offset -= 1
+        else:
+            self.tree.move_up()
+            self.gui.xray_offset = 0
+
+    def move_down(self):
+        if Flags.xray.is_true():
+            self.gui.xray_offset += 1
+        else:
+            self.tree.move_down()
+            self.gui.xray_offset = 0
+
+    def move_left(self):
+        Flags.xray.set_value('0')
+        self.gui.xray_offset = 0
+        self.tree.arrow_left()
+
+    def move_right(self):
+        Flags.xray.set_value('0')
+        self.gui.xray_offset = 0
+        self.tree.arrow_right()
+
+    def activate(self):
+        Flags.xray.set_value('0')
+        self.gui.xray_offset = 0
+        return self.actions.select_task()
+
     def make_callback(self) -> InputManager:
         cman = InputManager()
 
         cman.add_str(GuiKeys.key_quit, self.send_quit_msg)
         cman.add_int(InputManager.esc, self.send_quit_msg)
-        cman.add_int(curses.KEY_UP, self.tree.move_up)
-        cman.add_int(curses.KEY_DOWN, self.tree.move_down)
-        cman.add_int(curses.KEY_LEFT, self.tree.arrow_left)
-        cman.add_int(curses.KEY_RIGHT, self.tree.arrow_right)
+        cman.add_int(curses.KEY_UP, self.move_up)
+        cman.add_int(curses.KEY_DOWN, self.move_down)
+        cman.add_int(curses.KEY_LEFT, self.move_left)
+        cman.add_int(curses.KEY_RIGHT, self.move_right)
 
         cman.add_str(GuiKeys.calibrate, lambda: self.fman.add_input(FloatingCalibrate(self.settings)))
-        cman.add_str(GuiKeys.activate, lambda: self.actions.select_task()) # type: ignore
+        cman.add_str(GuiKeys.activate, self.activate) # type: ignore
         cman.add_str(GuiKeys.open_url, self.actions.open_link)
         cman.add_str(GuiKeys.down_task, self.actions.down_remote_task)
         cman.add_str(GuiKeys.edit, lambda: self.actions.open_code())
-        cman.add_str(GuiKeys.expand, self.tree.process_expand_all)
-        cman.add_str(GuiKeys.collapse, self.tree.process_collapse_all)
+#        cman.add_str(GuiKeys.expand, self.tree.process_expand_all)
+#        cman.add_str(GuiKeys.collapse, self.tree.process_collapse_all)
         cman.add_str(GuiKeys.borders, self.app.toggle_borders)
         cman.add_str(GuiKeys.images, self.app.toggle_images)
         cman.add_str(GuiKeys.set_lang_drafts, self.gui.language.set_language)

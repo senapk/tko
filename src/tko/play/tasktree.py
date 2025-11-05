@@ -577,6 +577,7 @@ class TaskTree:
             return
         index = self.get_selected_index()
         self.set_selected_by_index(index - 1)
+        
 
     def move_down(self):
         if len(self.items) == 0:

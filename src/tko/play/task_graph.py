@@ -38,7 +38,7 @@ class TaskGraph:
         self.raw_text: list[Text] = []
         all_entries: list[tuple[Delta, LogItemBase]] = self.log_sort.base_list
         for delta, item in all_entries:
-            self.raw_text.append(Text().add(str(item)).add(f" acc:{delta.accumulated}"))
+            self.raw_text.append(Text().add(f"acc:{delta.accumulated}, ").add(str(item).replace(", v:1", "")))
         
 
         item_exec_list: list[tuple[Delta, LogItemExec]] = self.log_sort.exec_list
