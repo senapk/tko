@@ -4,6 +4,8 @@ import argparse
 import csv
 from tko.play.patch_history import PatchHistory
 from tko.util.decoder import Decoder
+import tempfile
+from tko.logger.log_sort import LogSort
 
 class Track:
     def __init__(self):
@@ -43,6 +45,42 @@ class Tracker:
         self._result: str = "None"
         self._files: list[str] = []
         self._folder: str = ""
+
+    def unfold_files(self, log_sort: LogSort) -> str:
+        output = "\n"
+
+
+        timestamp_rate: dict[str, str] = {}
+        for _, item in log_sort.exec_list:
+            timestamp = item.get_timestamp().replace(":", "-").replace(" ", "_")
+            timestamp_rate[timestamp] = str(item.rate)
+
+        # tracks: list[Track] = Tracker.load_from_log(self.log_file)
+        # for track in tracks:
+        #     for file in track.file_stamp_list:
+        #         file_dict[file] = track.result
+
+        with tempfile.TemporaryDirectory(delete=False) as temp_dir:
+            for file in os.listdir(self._folder):
+                path = os.path.join(self._folder, file)
+                if not file.endswith(".json"):
+                    continue
+                ph = PatchHistory().set_json_file(path).load_json()
+                complete = ph.restore_all()
+                for i, patch in enumerate(complete):
+                    key = patch.label
+                    rate = timestamp_rate.get(key, "???")
+                    result = rate.rjust(3, "0").replace("None", "---")
+                    output_file = os.path.join(temp_dir, f"{patch.label}_{result}_{file[:-5]}")
+                    if i < 5 or i == len(complete) - 1:
+                        output += f"  Extraindo: {output_file}\n"
+                    elif i == 5:
+                        output += "...\n"
+                    with open(output_file, 'w', encoding='utf-8') as f:
+                        f.write(patch.content)
+            output += f"\nPasta com os arquivos: {temp_dir}\n"
+            return output
+
 
     def set_files(self, files: list[str]):
         self._files = [os.path.abspath(f) for f in files]
@@ -109,7 +147,7 @@ class Tracker:
 
         log_file = self.get_log_full_path()
         track = Track().set_timestamp(timestamp).set_file_stamp_list(files_in_this_version).set_result(self._result)
-        with open(log_file, encoding="utf-8", mode="a") as f:
+        with open(log_file, encoding="utf-8", mode="a", newline="") as f:
             writer = csv.writer(f)
             writer.writerow(track.track_to_column())
         return any_changes, total_size

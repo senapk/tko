@@ -35,12 +35,8 @@ class TaskGraph:
         if self.log_sort is None:
             return
         self.versions = len(self.log_sort.diff_list)
-        self.raw_text: list[Text] = []
-        all_entries: list[tuple[Delta, LogItemBase]] = self.log_sort.base_list
-        for delta, item in all_entries:
-            self.raw_text.append(Text().add(f"acc:{delta.accumulated}, ").add(str(item).replace(", v:1", "")))
-        
-
+        self.raw_text: list[Text] = self.prepare_xray()
+       
         item_exec_list: list[tuple[Delta, LogItemExec]] = self.log_sort.exec_list
         collected_rate: list[float] = [0]
         collected_elapsed: list[float] = [0]
@@ -79,10 +75,30 @@ class TaskGraph:
         self.eixo = eixo
         # self.eixo = list(range(len(collected)))
 
+    def prepare_xray(self) -> list[Text]:
+        if self.log_sort is None:
+            return []
+        output: list[Text] = []
+        all_entries: list[tuple[Delta, LogItemBase]] = self.log_sort.base_list
+        for delta, item in all_entries:
+            data = str(item)
+            data = data.split(", ")
+            data = [x for x in data if not x.startswith("k:") and not x.startswith("v:")]
+            data_str = ", ".join(data)
+            data_str = data_str.replace("mode:", "")
+            text = (Text().add(data_str)
+                        .replace("EXEC", Text.Token("EXEC", "g"))
+                        .replace("SELF", Text.Token("SELF", "r"))
+                        .replace("MOVE", Text.Token("MOVE", "y")))
+            output.append(Text().add(f"acc:{delta.accumulated}, ").add(text))
+        return output
+
     def get_graph(self) -> list[Text]:
         if not self.eixo:
             return []
-        title = Text.format(" {C}", f" @{self.task_key} ")
+        if Flags.xray.is_true():
+            return self.raw_text
+        title = Text.format(" {C}", f" {self.task_key} ")
         title += Text.format(" {G}", f" Total {self.actual_rate:.0f}% ")
         time_h: int = int(self.total_elapsed) // 3600
         time_m: int = (int(self.total_elapsed) % 3600) // 60
@@ -90,8 +106,7 @@ class TaskGraph:
         title += Text.format(" {B}", f" Tempo {time} ")
         title += Text.format(" {M}", f" Linhas {self.max_lines:.0f} ")
         title += Text.format(" {R}", f" Versões {self.versions} ")
-        if Flags.xray.is_true():
-            return self.raw_text
+
         # if len(self.collected_elapsed) > 1:
         result = plot_to_string(xs=[self.eixo, self.eixo, self.eixo], ys=[self.collected_elapsed, self.collected_lines, self.collected_rate], lines=[True, True, True], y_min=0, y_max=101, width=self.width, height=self.height, y_unit="%", x_unit="runs")
 

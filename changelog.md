@@ -1,5 +1,7 @@
 # Changelog
 
+- 7.5.0
+  - add: improved xray and patch log opener with X and V
 - 7.4.6
   - fix: remove debug msg
 - 7.4.5

@@ -47,6 +47,7 @@ class GuiKeys:
     grade_play2 = "."
     execute_tester = "r" # Interact in manual input
     diff = "d"
+    unfold_patch = "V"
     evaluate = "\n"
     toggle_main = "\t"
     quit   = "q"

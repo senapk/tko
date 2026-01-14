@@ -79,6 +79,7 @@ class Play:
         self.gui.xray_offset = 0
         return self.actions.select_task()
 
+
     def make_callback(self) -> InputManager:
         cman = InputManager()
 
@@ -102,6 +103,7 @@ class Play:
         cman.add_str(GuiKeys.grade_play, self.actions.evaluate)
         cman.add_str(GuiKeys.grade_play2, self.actions.evaluate)
         cman.add_str(GuiKeys.key_help, self.gui.show_help)
+        cman.add_str(GuiKeys.unfold_patch, self.actions.open_versions)
         
         for flag in self.flagsman.flags.values():
             cman.add_str(flag.get_keycode(), FlagFunctor(flag, self.fman, self.settings))

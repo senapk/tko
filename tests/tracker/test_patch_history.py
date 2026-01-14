@@ -1,7 +1,3 @@
-# the inclusion of the tests module is not meant to offer best practices for
-# testing in general, but rather to support the `find_packages` example in
-# setup.py that excludes installing the "tests" package
-
 from tko.play.patch_history import PatchHistory
 import os
 from pathlib import Path
@@ -22,6 +18,7 @@ class Test:
         ph.store_version("segunda", "Hoje eh tempo de louvar a Deus")
         ph.store_version("terceira", "Hoje eh tempo de louvar a Deus\nem nos habita seu espirito")
         ph.store_version("quarta", "oje eh tempo de louvar a Deus\nem nos habita seu espirito")
+        ph.store_version("quinta", "oje eh tempo de louvar a Deus\numa linha no meio\nem nos habita seu espirito")
 
         ph.set_json_file("data.json")
         ph.save_json()
@@ -36,13 +33,12 @@ class Test:
         ph2.set_json_file("data.json")
         ph2.load_json()
         restored = ph2.restore_all()
-        ph3 = PatchHistory()
-        ph3.patches = restored
-        ph3.set_json_file("data2.json")
-        ph3.save_json()
 
-        with open("expected2.json", "r") as f:
-            data2_expected = f.read()
+        with open("data2.txt", "w") as f:
+            for info in restored:
+                f.write(f"# {info.label}\n{info.content}\n")
 
-        with open("data2.json", "r") as f:
-            assert f.read() == data2_expected
+
+        with open("expected2.txt", "r") as f:
+            with open("data2.txt", "r") as f2:
+                assert f.read() == f2.read()

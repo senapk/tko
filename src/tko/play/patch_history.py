@@ -78,7 +78,7 @@ class PatchHistory:
         output.append(PatchInfo(last.label, last.content))
         index = len(self.patches) -2
         dmp = diff_match_patch()
-        while index >= 0:
+        while index > 0:
             label = self.patches[index].label
             patch = dmp.patch_fromText(self.patches[index].content) # type: ignore
             original = output[-1].content

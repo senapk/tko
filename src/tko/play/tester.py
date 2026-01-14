@@ -140,13 +140,14 @@ class Tester:
         else:
             return Text.Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "W")
 
-    def store_version(self) -> tuple[bool, int]:
+    def store_version(self, result: str) -> tuple[bool, int]:
         if self.rep is None:
             return False, 0
         track_folder = self.rep.paths.get_track_task_folder(self.task.get_db_key())
         tracker = Tracker()
         tracker.set_folder(track_folder)
         tracker.set_files(self.wdir.get_solver().args_list)
+        tracker.set_result(result)
         has_changes, total_lines = tracker.store()
         return has_changes, total_lines
 
@@ -160,7 +161,7 @@ class Tester:
 
         if solver.has_compile_error():
             mode = LogItemExec.Mode.LOCK if self.locked_index else LogItemExec.Mode.FULL
-            changes, total_lines = self.store_version()
+            changes, total_lines = self.store_version("0")
             if self.rep:
                 self.rep.logger.store(
                     LogItemExec().set_key(self.task.get_db_key()).set_mode(mode).set_fail(LogItemExec.Fail.COMP).set_size(changes, total_lines)
@@ -178,8 +179,8 @@ class Tester:
             unit = self.get_focused_unit()
             unit.result = UnitRunner.run_unit(solver, unit, self.settings.app.timeout)
 
-            changes, total_lines = self.store_version()
             rate = 100 if unit.result == ExecutionResult.SUCCESS else 0
+            changes, total_lines = self.store_version(str(rate))
             if self.rep:
                 self.rep.logger.store(
                     LogItemExec().set_key(self.task.get_db_key()).set_mode(LogItemExec.Mode.LOCK).set_rate(rate).set_size(changes, total_lines)
@@ -216,7 +217,7 @@ class Tester:
             percent: int = (100 * len(done_list)) // len(self.results)
             self.task.info.rate = percent
             mode = LogItemExec.Mode.LOCK if self.locked_index else LogItemExec.Mode.FULL
-            changes, total_lines = self.store_version()
+            changes, total_lines = self.store_version(str(percent))
             if self.rep:
                 self.rep.save_config()
                 self.rep.logger.store(
@@ -519,7 +520,7 @@ class Tester:
             self.wdir.autoload()
             self.wdir.get_solver().set_main(self.get_solver_names()[self.task.main_idx])
         self.mode = SeqMode.finished
-        changes, total_lines = self.store_version()
+        changes, total_lines = self.store_version("---")
         if self.rep:
             self.rep.logger.store(
                 LogItemExec().set_key(self.task.get_db_key()).set_mode(LogItemExec.Mode.FREE).set_size(changes, total_lines)

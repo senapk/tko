@@ -278,7 +278,7 @@ class Run:
     def __free_run(self):        
         if self.__task is not None:
             if self.__rep:
-                changes, size = self.store_exec_diff()
+                changes, size = self.store_exec_diff("---")
                 self.__rep.logger.store(LogItemExec()
                     .set_mode(LogItemExec.Mode.FREE)
                     .set_key(self.__task.get_db_key() )
@@ -371,7 +371,7 @@ class Run:
         if self.wdir.get_solver().has_compile_error():
             exec_fail = LogItemExec.Fail.COMP
 
-        changes, size = self.store_exec_diff()
+        changes, size = self.store_exec_diff(str(rate))
         if self.__rep:
             self.__rep.logger.store(LogItemExec()
                 .set_mode(exec_mode)
@@ -382,10 +382,11 @@ class Run:
 
         return percent
 
-    def store_exec_diff(self) -> tuple[bool, int]:
+    def store_exec_diff(self, rate: str) -> tuple[bool, int]:
         tracker = Tracker()
         tracker.set_folder(self.__track_folder)
         tracker.set_files(self.wdir.get_solver().args_list)
+        tracker.set_result(rate)
         has_changes, total_lines = tracker.store()
         return has_changes, total_lines
 

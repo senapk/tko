@@ -4,8 +4,10 @@ from tko.game.task import Task
 # from tko.game.graph import Graph
 
 from icecream import ic # type: ignore
+from tko.play.flags import Flags
 from tko.play.floating_grade import FloatingGrade
 from tko.settings.settings import Settings
+from tko.play.tracker import Tracker
 
 from tko.cmds.cmd_down import CmdDown
 from tko.cmds.cmd_run import Run
@@ -224,6 +226,30 @@ class PlayActions:
         if not folder:
             raise Warning("Folder não encontrado")
         self.run_selected_task(task, folder)
+
+
+    def open_versions(self):
+        if not Flags.xray.is_true():
+            return
+        try:
+            obj = self.tree.get_selected_throw()
+
+            if isinstance(obj, Task):
+                task: Task = obj
+                track_folder = self.rep.paths.get_track_task_folder(task.get_db_key())
+                tracker = Tracker()
+                tracker.set_folder(track_folder)
+                if task.get_db_key() in self.rep.logger.tasks.task_dict:
+                    log_sort = self.rep.logger.tasks.task_dict[task.get_db_key()]
+
+                    folder = tracker.unfold_files(log_sort)
+                    self.fman.add_input(
+                        Floating(self.settings, "v>")
+                        .put_text("\nAs versões da tarefa foram descompactadas em uma pasta temporária")
+                        .put_text(folder)
+                    )
+        except:
+            pass
 
     def select_task(self) -> Callable[[], None]:
         try:

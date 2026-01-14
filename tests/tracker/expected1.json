@@ -17,8 +17,13 @@
         },
         {
             "label": "quarta",
-            "content": "oje eh tempo de louvar a Deus\nem nos habita seu espirito",
+            "content": "@@ -27,26 +27,8 @@\n eus%0A\n-uma linha no meio%0A\n em n\n",
             "lines": "2"
+        },
+        {
+            "label": "quinta",
+            "content": "oje eh tempo de louvar a Deus\numa linha no meio\nem nos habita seu espirito",
+            "lines": "3"
         }
     ]
 }
