@@ -192,6 +192,7 @@ class Join:
             print(f"Saving daily mono graph to {graph_mono}")
             f.write(clear_ansi_codes(class_graph))
 
+
     @staticmethod
     def main(target: str) -> None:
         class_task = ClassTask(target).load_from_file()

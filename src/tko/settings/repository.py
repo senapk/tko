@@ -49,13 +49,14 @@ class Repository:
         path = os.path.abspath(path)
         return os.path.commonpath([rep_dir, path]) == rep_dir
 
-    def load_game(self):
+    def load_game(self, try_update: bool = True, silent: bool = False) -> 'Repository':
         if not self.data.get_sources():
             self.load_config()
-        for source in self.data.get_sources():
-            self.update_cache_path(source)
+        if try_update:
+            for source in self.data.get_sources():
+                self.update_cache_path(source)
         sources: list[RepSource] = self.data.get_sources()
-        self.game.load_sources(sources, self.data.lang)
+        self.game.load_sources(sources, self.data.lang, silent=silent)
         self.__load_tasks_from_rep_into_game()
         return self
     

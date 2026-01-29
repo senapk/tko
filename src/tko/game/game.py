@@ -76,7 +76,7 @@ class Game:
         return total_obtained, total_priority, total_complete
 
 
-    def load_sources(self, sources: list[RepSource], language: str):
+    def load_sources(self, sources: list[RepSource], language: str, silent: bool = False) -> None:
         for source in sources:
             filename = source.get_file_path()
             filters = source.filters
@@ -84,7 +84,7 @@ class Game:
             if filename == "":
                 pass
             elif not os.path.exists(filename):
-                if source.database != source.LOCAL_SOURCE_DATABASE:
+                if source.database != source.LOCAL_SOURCE_DATABASE and not silent:
                     print(f"Aviso: fonte {filename} não encontrada")
             else:
                 content = Decoder.load(filename)

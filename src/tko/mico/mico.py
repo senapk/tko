@@ -14,6 +14,9 @@ def collect(args: argparse.Namespace) -> None:
     for target in args.targets:
         Collect.main(target)
 
+def extract(args: argparse.Namespace) -> None:
+    Collect.extract_to(args.reps, json_path=args.json, csv_path=args.csv, block_prefix=args.block_prefix)
+
 def join(args: argparse.Namespace) -> None:
     for target in args.targets:
         Join.main(target)
@@ -56,6 +59,13 @@ def mico_main():
     collect_cmd = subcommands.add_parser("collect", help="Collect data from the specified target.")
     collect_cmd.add_argument("targets", type=str, nargs="+", help="Json class task files")
     collect_cmd.set_defaults(func=collect)
+
+    extract_cmd = subcommands.add_parser("extract", help="Extract problems data from this reps.")
+    extract_cmd.add_argument("--reps", "-r", required=True, type=str, nargs="+", help="Reps to extract data from.")
+    extract_cmd.add_argument("--json", "-j", type=str, help="Path to save the extracted JSON data.")
+    extract_cmd.add_argument("--csv", "-c", type=str, help="Path to save the extracted CSV data.")
+    extract_cmd.add_argument("--block_prefix", "-b", type=str, help="Block prefix to insert in csv file.")
+    extract_cmd.set_defaults(func=extract)
 
     join_cmd = subcommands.add_parser("join", help="Join collected data from the specified target.")
     join_cmd.add_argument("targets", type=str, nargs="+", help="Json class task files")
