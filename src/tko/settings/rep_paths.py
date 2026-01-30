@@ -9,6 +9,7 @@ class RepPaths:
     LOG_FOLDER = "log"
     CACHE_FOLDER = "cache"
     CONFIG_FOLDER = ".tko"
+    cache_folder_override: str | None = None
 
     def __init__(self, rep_dir: str):
         self.root_folder = rep_dir
@@ -30,6 +31,8 @@ class RepPaths:
         return os.path.abspath(os.path.join(self.root_folder, RepPaths.CONFIG_FOLDER, RepPaths.LOG_FOLDER))
     
     def get_cache_folder(self) -> str:
+        if RepPaths.cache_folder_override is not None:
+            return os.path.abspath(RepPaths.cache_folder_override)
         return os.path.abspath(os.path.join(self.root_folder, RepPaths.CONFIG_FOLDER, RepPaths.CACHE_FOLDER))
 
     def get_track_task_folder(self, label: str) -> str:

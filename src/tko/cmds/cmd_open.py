@@ -2,14 +2,17 @@ from tko.settings.settings import Settings
 from tko.settings.repository import Repository
 from tko.play.play import Play
 from tko.util.text import Text
+from tko.settings.rep_paths import RepPaths
 
 class CmdOpen:
-    def __init__(self, settings: Settings, force_update: bool):
+    def __init__(self, settings: Settings, force_update: bool, cache_folder: str | None = None):
         self.settings = settings
         self.need_update = False
         self.rep: Repository | None = None
         self.folder = ""
         self.force_update = force_update
+        if cache_folder is not None:
+            RepPaths.cache_folder_override = cache_folder
 
     def set_need_update(self):
         self.need_update = True
