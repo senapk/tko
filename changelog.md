@@ -1,5 +1,11 @@
 # Changelog
 
+
+- 8.6.0
+  - add: xray mode to see task versions with X key
+  - add: unfold task versions to temp folder with V key
+  - add: open versions with default opener cmd
+  - add: time graph and runs graph
 - 7.5.0
   - add: improved xray and patch log opener with X and V
 - 7.4.6

@@ -229,8 +229,13 @@ class PlayActions:
 
 
     def open_versions(self):
-        if not Flags.xray.is_true():
-            return
+        # if not Flags.xray.is_true():
+        #     self.fman.add_input(
+        #         Floating(self.settings, "v>")
+        #         .put_text("\nEssa opção só está disponível no modo X-Ray.\n")
+        #         .set_error()
+        #     )
+        #     return
         try:
             obj = self.tree.get_selected_throw()
 
@@ -242,11 +247,16 @@ class PlayActions:
                 if task.get_db_key() in self.rep.logger.tasks.task_dict:
                     log_sort = self.rep.logger.tasks.task_dict[task.get_db_key()]
 
-                    folder = tracker.unfold_files(log_sort)
+                    msg, folder = tracker.unfold_files(log_sort)
+                    cmd = self.settings.app.get_editor()
+                    fullcmd = "{} {}".format(cmd, folder)
+                    outfile = tempfile.NamedTemporaryFile(delete=False)
+                    subprocess.Popen(fullcmd, stdout=outfile, stderr=outfile, shell=True)
                     self.fman.add_input(
                         Floating(self.settings, "v>")
                         .put_text("\nAs versões da tarefa foram descompactadas em uma pasta temporária")
-                        .put_text(folder)
+                        .put_text(msg)
+                        .put_text(f"Abrindo com o comando: {fullcmd}\n")
                     )
         except:
             pass

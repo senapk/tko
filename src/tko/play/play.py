@@ -1,10 +1,11 @@
 from tko.game.game import Game
+from tko.game.task import Task
+from tko.play.fmt import Fmt
 from tko.settings.languages import available_languages
 from tko.settings.settings import Settings
 from tko.settings.repository import Repository
 from tko.play.keys import GuiKeys
 from tko.play.floating_calibrate import FloatingCalibrate
-from tko.play.fmt import Fmt
 from tko.play.input_manager import InputManager
 from tko.play.play_config import PlayConfig
 from tko.play.floating import Floating
@@ -106,13 +107,31 @@ class Play:
         cman.add_str(GuiKeys.unfold_patch, self.actions.open_versions)
         
         for flag in self.flagsman.flags.values():
-            cman.add_str(flag.get_keycode(), FlagFunctor(flag, self.fman, self.settings))
+            if flag.get_autoload():
+                cman.add_str(flag.get_keycode(), FlagFunctor(flag, self.fman, self.settings))
+
+        cman.add_str(GuiKeys.show_xray, self.toggle_xray)
 
         cman.add_str(GuiKeys.search, self.gui.search.toggle_search)
         cman.add_str(GuiKeys.palette, self.play_palette.command_pallete)
 
         return cman
         
+    def toggle_xray(self):
+        if not Flags.xray.is_true():
+            try:
+                selected = self.tree.get_selected_throw()
+            except Exception:
+                selected = None
+            if not isinstance(selected, Task):
+                self.fman.add_input( Floating(self.settings, "v>").set_error().put_text("\nO modo Logs só pode ser ativado quando uma tarefa está selecionada.\n") )
+                Flags.xray.set_value("0")
+            else:
+                Flags.xray.set_value("1")
+        else:
+            Flags.xray.set_value("0")
+            self.fman.add_input( Floating(self.settings, "v>").set_warning().put_text("\nModo Logs desativado.\n") )
+
     def send_char_not_found(self, key: int):
         exclude_str = [ord(v) for v in [" ", "a", "d", "\n"]]
         exclude_int = [ -1, InputManager.esc, curses.KEY_UP, curses.KEY_DOWN, curses.KEY_LEFT, curses.KEY_RIGHT] + InputManager.backspace_list

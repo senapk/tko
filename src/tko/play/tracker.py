@@ -46,7 +46,7 @@ class Tracker:
         self._files: list[str] = []
         self._folder: str = ""
 
-    def unfold_files(self, log_sort: LogSort) -> str:
+    def unfold_files(self, log_sort: LogSort) -> tuple[str, str]:
         output = "\n"
 
 
@@ -79,7 +79,7 @@ class Tracker:
                     with open(output_file, 'w', encoding='utf-8') as f:
                         f.write(patch.content)
             output += f"\nPasta com os arquivos: {temp_dir}\n"
-            return output
+            return output, temp_dir
 
 
     def set_files(self, files: list[str]):

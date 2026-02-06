@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any
 from tko.play.keys import GuiKeys
 
@@ -11,6 +12,14 @@ class Flag:
         self._index: int = 0
         self._location: str = ""
         self._bool = True  # many options
+        self._autoload = True
+
+    def set_autoload(self, value: bool):
+        self._autoload = value
+        return self
+    
+    def get_autoload(self) -> bool:
+        return self._autoload
 
     def set_name(self, _name: str):
         self._name = _name
@@ -75,21 +84,25 @@ class Flag:
     
 
 class Flags:
+    graph_none = "0"
+    graph_exec_view = "1"
+    graph_time_view = "2"
+
     quests = (Flag().set_name("Tópicos").set_keycode(GuiKeys.show_quests).set_description("Habilitas todas as missões e tarefas")
                     .set_values(["0", "1", "2"])
                     .set_msgs(["Mostrar apenas quests disponíveis", "Mostrar todas as quests sem habilitar", "Habilitar todas as quests"]))
-    tracks = (Flag().set_name("Trilhas").set_keycode(GuiKeys.tracks).set_description("Mostra a barra de trilhas de habilidades")
+    tracks = (Flag().set_name("Trilhas").set_keycode(GuiKeys.show_tracks).set_description("Mostra a barra de trilhas de habilidades")
                     .set_values(["0", "1", "2"])
                     .set_msgs(["Desabilitar painel de trilhas", "Mostrar painel de trilhas por porcentagem", "Mostrar painel de trilhas por xp"]))
     tasks = (Flag().set_name("Tarefas").set_keycode(GuiKeys.show_tasks).set_description("Mostra as atividades concluídas")
                     .set_values(["0", "1", "2"])
                     .set_msgs(["Mostrar todas as tarefas", "Ocultar tarefas com 100%", "Ocultar tarefas com >70%"]))
-    graph = (Flag().set_name("Graph").set_keycode(GuiKeys.graph).set_description("Muda o Gráfico")
+    graph = (Flag().set_name("Graph").set_keycode(GuiKeys.show_graph).set_description("Mostra o Gráfico")
+                    .set_values([graph_none, graph_exec_view, graph_time_view])
+                    .set_msgs(["Desabilitar gráficos de acompanhamento", "Gráfico por execuções", "Gráfico por tempo"]))
+    xray = (Flag().set_name("Logs").set_keycode(GuiKeys.show_xray).set_description("Muda o modo Logs")
                     .set_values(["0", "1"])
-                    .set_msgs(["Desabilitar gráficos de acompanhamento", "Mostrar gráficos de acompanhamento"]))
-    xray = (Flag().set_name("X-Ray").set_keycode(GuiKeys.xray).set_description("Muda o modo X-Ray")
-                    .set_values(["0", "1"])
-                    .set_msgs(["Desabilitar modo X-Ray", "Ativar modo X-Ray"]))
+                    .set_msgs(["Desabilitar mostrar logs", "Ativar mostrar logs"])).set_autoload(False)
 class FlagsMan:
     def __init__(self, data: dict[str, int]):
         self.flags: dict[str, Flag] = {}

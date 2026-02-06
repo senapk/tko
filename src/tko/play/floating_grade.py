@@ -1,3 +1,4 @@
+from operator import index
 from tko.game.task import Task
 from tko.play.floating import Floating
 from tko.play.input_manager import InputManager
@@ -76,7 +77,6 @@ class InputText(InputLine):
             else:
                 info = chr(key)
                 if info == "," or info == " " or info == ".":
-                    info = "_"
                     self.text += info
                 elif chr(key).isalpha() or chr(key).isdigit() or chr(key) == "_":
                     self.text += info
@@ -89,11 +89,36 @@ class InputText(InputLine):
         return self
 
     def get_text(self) -> Text:
-        data = Text().addf("Y" if self.focus else "", self.prompt).add("   ")
-        if not self.number_only:
-            data = data.addf("Y" if len(self.text) == 0 else "", "NÃO").add(" ").addf("Y" if len(self.text) > 0 else "", "SIM").add("   ")
+        data = Text().addf("Y" if self.focus else "", self.prompt).add(" ")
         data = data.add("├ ").addf("g",self.text).add(symbols.cursor if self.focus else "")
         return data
+    
+class InputBoolean(InputLine):
+    def __init__(self, prefix: Text, start_value: str):
+        self.prefix = prefix
+        self.value = start_value
+        self.focus = False
+
+    def send_key(self, key: int) -> None:
+        if key == curses.KEY_LEFT:
+            self.value = "0"
+        elif key == curses.KEY_RIGHT:
+            self.value = "1"
+        elif key == ord("-"):
+            self.value = "0"
+        elif key == ord("+") or key == ord("="):
+            self.value = "1"
+
+    def set_focus(self, focus: bool) -> None:
+        self.focus = focus
+        if focus and self.value == "":
+            self.value = "0"
+
+    def get_text(self) -> Text:
+        color = "Y" if self.focus else ""
+        text = Text().addf(color, self.prefix).add(" │ ")
+        text.addf("Y" if self.value == "0" else "", "Não").add(" ").addf("Y" if self.value == "1" else "", "Sim")
+        return text
 
 
 class FloatingGrade(Floating):
@@ -121,14 +146,27 @@ class FloatingGrade(Floating):
             ("9", Text().addf("y", " 90%")),
             ("✓", Text().addf("y", " 100%"))]
 
-        self.rate_slide  = InputSlide(Text().add("Quanto alcançou nessa sprint        ?"), progression, self._task.info.rate // 10)
-        self.alone_slide = InputSlide(Text().add("Quanto fez só, por tentativa e erro ?"), progression, self._task.info.alone)
-        self.human_text  =  InputText(Text().add("Ajuda Humana   (monitor, amigo, ...)?"), self._task.info.human)
-        self.iagen_text  =  InputText(Text().add("Ajuda IA         (copilot, gpt, ...)?"), self._task.info.iagen)
-        self.guide_text  =  InputText(Text().add("Ajuda Guiada      (aula, vídeo, ...)?"), self._task.info.guide)
-        self.other_text  =  InputText(Text().add("Ajuda Outros     (livro, fórum, ...)?"), self._task.info.other)
-        self.time_text   =  InputText(Text().add("Tempo total estimado (estudo + código) minutos:"), str(self._task.info.study)).set_number_only(True)
-        self.input_lines: list[InputLine] = [self.rate_slide, self.alone_slide, self.human_text, self.iagen_text, self.guide_text, self.other_text, self.time_text]
+        self.rate_slide      = InputSlide(Text().add("Quanto alcançou nessa sprint?         "), progression, self._task.info.rate // 10)
+        self.human_text      =  InputText(Text().add("Usou ajuda de monitor, amigo? Se sim, qual nome?  "), self._task.info.human)
+        self.guide_text   =  InputBoolean(Text().add("Fez seguindo a aula presencial ou vídeo aula?     "), self._task.info.guide)
+        self.ialearn_text =  InputBoolean(Text().add("ESTUDAR conceitos sem gerar a solução do problema?"), self._task.info.iaconcept)
+        self.iaproblem_text =  InputBoolean(Text().add("ENTENDER o problema a ser resolvido?              "), self._task.info.iaproblem)
+        self.iacode_text    =  InputBoolean(Text().add("GERAR ou CORRIGIR código relacionado ao problema? "), self._task.info.iacode)
+        self.iadebug_text   =  InputBoolean(Text().add("COMPREENDER mensagens de ERRO ou SAÍDA incorreta? "), self._task.info.iadebug)
+        self.iarefactor_text=  InputBoolean(Text().add("REFATORAR o código só após fazer tudo sozinho?    "), self._task.info.iarefactor)
+        # self.other_text      =  InputText(Text().add("Ajuda Outros: Livro, fórum, tutorial, anotações?       "), self._task.info.other)
+        self.time_text       =  InputText(Text().add("Tempo total estimado, estudo + código, em minutos?"), str(self._task.info.study)).set_number_only(True)
+        self.input_lines: list[InputLine] = [
+            self.rate_slide, 
+            self.human_text, 
+            self.time_text,
+            self.guide_text, 
+            self.ialearn_text, 
+            self.iaproblem_text, 
+            self.iacode_text, 
+            self.iadebug_text,
+            self.iarefactor_text
+        ]
 
         # self.questions: dict[str, str] = {}
         # rate_question  = "Quanto entregou ao final dessa sprint?"
@@ -156,17 +194,20 @@ class FloatingGrade(Floating):
         width = 90
         somatorio = (Text() .addf('g', f'{round(self._task.get_percent()):>3}%'))
 
-        self._content.append(Text().add("╔") + Text().add(" Tarefa:").add(somatorio).add(" ══╤").center(width, Text.Token("═", "")))
+        self._content.append(Text().add("╔") + Text().add(" Tarefa:").add(somatorio).center(width, Text.Token("═", "")))
         enabled_option = "╠═ "
         op_prefix = enabled_option if not self._task.is_leet() else "║  "
         self._content.append(Text().add(op_prefix).add(self.rate_slide.get_text()))
-        self._content.append(Text().add(enabled_option).add(self.alone_slide.get_text()))
         self._content.append(Text().add(enabled_option).add(self.human_text.get_text()))
-        self._content.append(Text().add(enabled_option).add(self.iagen_text.get_text()))
+        self._content.append(Text().add(enabled_option).add(self.time_text.get_text()))
         self._content.append(Text().add(enabled_option).add(self.guide_text.get_text()))
-        self._content.append(Text().add(enabled_option).add(self.other_text.get_text()))
-        self._content.append(Text().add("╠═ ").add(self.time_text.get_text()))
-        self._content.append(Text().add("╚════════════════════════════════════════════════════╧═").ljust(width, Text.Token("═", "")))
+        self._content.append(Text().add("╠═") + Text().add(" Você usou IA (LLMs) para ").center(width, Text.Token("═", "")))
+        self._content.append(Text().add(enabled_option).add(self.ialearn_text.get_text()))
+        self._content.append(Text().add(enabled_option).add(self.iaproblem_text.get_text()))
+        self._content.append(Text().add(enabled_option).add(self.iacode_text.get_text()))
+        self._content.append(Text().add(enabled_option).add(self.iadebug_text.get_text()))
+        self._content.append(Text().add(enabled_option).add(self.iarefactor_text.get_text()))
+        self._content.append(Text().add("╚═══════════════════════════════════════════════════════════").ljust(width, Text.Token("═", "")))
 
 
     # @override
@@ -181,11 +222,12 @@ class FloatingGrade(Floating):
     def change_task(self):
         if not self._task.is_leet():
             self._task.info.rate = self.rate_slide.index * 10
-        self._task.info.set_alone(self.alone_slide.index)
         self._task.info.set_human(self.human_text.text)
-        self._task.info.set_iagen(self.iagen_text.text)
-        self._task.info.set_guide(self.guide_text.text)
-        self._task.info.set_other(self.other_text.text)
+        self._task.info.set_guide(self.guide_text.value)
+        self._task.info.set_ialearn(self.ialearn_text.value)
+        self._task.info.set_iacode(self.iacode_text.value)
+        self._task.info.set_iaproblem(self.iaproblem_text.value)
+        self._task.info.set_iarefactor(self.iarefactor_text.value)
         try:
             self._task.info.study = int(self.time_text.text)
         except:

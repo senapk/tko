@@ -7,17 +7,24 @@ class TaskInfo:
     easy_max: int = 5
 
 
-    rate_str: str = "rate"
+    # legacy values, to be removed in the future
     flow_str: str = "flow"
     edge_str: str = "edge"
     neat_str: str = "neat"
     cool_str: str = "cool"
     easy_str: str = "easy"
-
     alone_max = 10
     alone_str: str = "alone" # doing alone, no help
-    human_str: str = "human" # using human help: friend or monitor
     iagen_str: str = "iagen" # using AI generation: gpt-4, dalle-3
+
+    # actual values
+    rate_str: str = "rate"
+    ia_concept_str: str = "ialearn"
+    ia_coding_str: str = "iacode"
+    ia_problem_str: str = "iaproblem"
+    ia_debug_str: str = "iadebug"
+    ia_refactor_str: str = "iarefactor"
+    human_str: str = "human" # using human help: friend or monitor
     guide_str: str = "guide" # using guide: tutorial, doc, class, youtube
     other_str: str = "other" # using other help: book, search, forum
     study_str: str = "study" # study time spent in minutes
@@ -30,12 +37,17 @@ class TaskInfo:
         self.neat: int = 0 # deprecated
         self.cool: int = 0 # deprecated
         self.easy: int = 0 # deprecated
+        self.iagen: str = "" # deprecated
 
         self.alone: int = 0
+        self.iaconcept: str = ""
+        self.iaproblem: str = ""
+        self.iacode: str = ""
+        self.iarefactor: str = ""
+        self.iadebug: str = ""
         self.human: str = ""
-        self.iagen: str = ""
-        self.guide: str = ""
         self.other: str = ""
+        self.guide: str = ""
         self.study: int = 0
 
     def set_study(self, value: int):
@@ -52,6 +64,26 @@ class TaskInfo:
         self.human = value
         return self
     
+    def set_ialearn(self, value: str):
+        self.iaconcept = value
+        return self
+    
+    def set_iacode(self, value: str):
+        self.iacode = value
+        return self
+    
+    def set_iaproblem(self, value: str):
+        self.iaproblem = value
+        return self
+    
+    def set_iadebug(self, value: str):
+        self.iadebug = value
+        return self
+
+    def set_iarefactor(self, value: str):
+        self.iarefactor = value
+        return self
+
     def set_iagen(self, value: str):
         self.iagen = value
         return self
@@ -126,6 +158,18 @@ class TaskInfo:
     def get_easy(self) -> int:
         return self.easy
     
+    def get_ialearn(self) -> str:
+        return self.iaconcept
+    def get_iacode(self) -> str:
+        return self.iacode
+    def get_iaproblem(self) -> str:
+        return self.iaproblem
+    def get_iarefactor(self) -> str:
+        return self.iarefactor
+    def get_iadebug(self) -> str:
+        return self.iadebug
+
+
     def get_human(self) -> str:
         return self.human
     def get_iagen(self) -> str:
@@ -163,6 +207,16 @@ class TaskInfo:
             self.alone = int(kv[TaskInfo.alone_str])
         if TaskInfo.study_str in kv:
             self.study = int(kv[TaskInfo.study_str])
+        if TaskInfo.ia_concept_str in kv:
+            self.iaconcept = kv[TaskInfo.ia_concept_str]
+        if TaskInfo.ia_coding_str in kv:
+            self.iacode = kv[TaskInfo.ia_coding_str]
+        if TaskInfo.ia_debug_str in kv:
+            self.iadebug = kv[TaskInfo.ia_debug_str]
+        if TaskInfo.ia_problem_str in kv:
+            self.iaproblem = kv[TaskInfo.ia_problem_str]
+        if TaskInfo.ia_refactor_str in kv:
+            self.iarefactor = kv[TaskInfo.ia_refactor_str]
         return self
 
     def get_kv(self) -> dict[str, str]:
@@ -177,7 +231,13 @@ class TaskInfo:
                               TaskInfo.guide_str: self.guide, 
                               TaskInfo.other_str: self.other,
                               TaskInfo.alone_str: str(self.alone), 
-                              TaskInfo.study_str: str(self.study)}
+                              TaskInfo.study_str: str(self.study),
+                              TaskInfo.ia_concept_str: str(self.iaconcept),
+                              TaskInfo.ia_coding_str: str(self.iacode),
+                              TaskInfo.ia_debug_str: str(self.iadebug),
+                              TaskInfo.ia_problem_str: str(self.iaproblem),
+                              TaskInfo.ia_refactor_str: str(self.iarefactor)
+                              }
         return kv
     
     def get_filled_kv(self) -> dict[str, str]:
@@ -206,7 +266,16 @@ class TaskInfo:
             kv[TaskInfo.alone_str] = str(self.alone)
         if self.study > 0:
             kv[TaskInfo.study_str] = str(self.study)
-
+        if self.iaconcept:
+            kv[TaskInfo.ia_concept_str] = str(self.iaconcept)
+        if self.iacode:
+            kv[TaskInfo.ia_coding_str] = str(self.iacode)
+        if self.iadebug:
+            kv[TaskInfo.ia_debug_str] = str(self.iadebug)
+        if self.iaproblem:
+            kv[TaskInfo.ia_problem_str] = str(self.iaproblem)
+        if self.iarefactor:
+            kv[TaskInfo.ia_refactor_str] = str(self.iarefactor)
         return kv
     
     

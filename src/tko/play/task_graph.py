@@ -18,7 +18,7 @@ class TaskGraph:
         
         self.collected_rate: list[float] = []
         self.collected_elapsed: list[float] = []
-        self.collected_lines: list[float] = []
+        self.collected_lines_len: list[float] = []
 
         self.total_elapsed: float = 0.0
         self.max_lines: float = 0
@@ -40,7 +40,7 @@ class TaskGraph:
         item_exec_list: list[tuple[Delta, LogItemExec]] = self.log_sort.exec_list
         collected_rate: list[float] = [0]
         collected_elapsed: list[float] = [0]
-        collected_lines: list[float] = [0]
+        collected_lines_len: list[float] = [0]
         last = 0
         eixo: list[float] = [0]
         count = 1
@@ -51,27 +51,32 @@ class TaskGraph:
             else:
                 last = item.rate
                 collected_rate.append(last)
-            collected_elapsed.append(delta.accumulated.total_seconds())  # Convert to minutes
+            collected_elapsed.append(delta.accumulated.total_seconds() / 60)  # Convert to minutes
             if item.size > 0:
                 last_size = item.size
-            collected_lines.append(last_size)
+            collected_lines_len.append(last_size)
             eixo.append(count)
             count += 1
-        self.total_elapsed = collected_elapsed[-1]
-        self.max_lines = max(collected_lines)
         self.actual_rate = collected_rate[-1] if collected_rate else 0
-        if collected_elapsed[-1] != 0:
-            for i in range(len(collected_elapsed)):
-                collected_elapsed[i] = collected_elapsed[i] / self.total_elapsed * 100
+
+        self.total_elapsed = collected_elapsed[-1]
+        # normalizando tempo para porcentagem
+        if not Flags.graph.get_value() == Flags.graph_time_view:
+            if collected_elapsed[-1] != 0:
+                for i in range(len(collected_elapsed)):
+                    collected_elapsed[i] = collected_elapsed[i] / self.total_elapsed * 100
+
+        # normalizando linhas para porcentagem        
+        self.max_lines = max(collected_lines_len)
         if self.max_lines != 0:
-            for i in range(len(collected_lines)):
-                collected_lines[i] = (collected_lines[i] / self.max_lines) * 100
-                if collected_lines[i] < 1:
-                    collected_lines[i] = 0
+            for i in range(len(collected_lines_len)):
+                collected_lines_len[i] = (collected_lines_len[i] / self.max_lines) * 100
+                if collected_lines_len[i] < 1:
+                    collected_lines_len[i] = 0
 
         self.collected_rate = collected_rate
         self.collected_elapsed = collected_elapsed
-        self.collected_lines = collected_lines
+        self.collected_lines_len = collected_lines_len
         self.eixo = eixo
         # self.eixo = list(range(len(collected)))
 
@@ -100,16 +105,18 @@ class TaskGraph:
             return self.raw_text
         title = Text.format(" {C}", f" {self.task_key} ")
         title += Text.format(" {G}", f" Total {self.actual_rate:.0f}% ")
-        time_h: int = int(self.total_elapsed) // 3600
-        time_m: int = (int(self.total_elapsed) % 3600) // 60
+        time_h: int = int(self.total_elapsed) // 60
+        time_m: int = (int(self.total_elapsed) % 60)
         time = f"{time_h:02.0f}h {time_m:.0f}min" if time_h > 0 else f"{time_m:.0f}min"
         title += Text.format(" {B}", f" Tempo {time} ")
         title += Text.format(" {M}", f" Linhas {self.max_lines:.0f} ")
         title += Text.format(" {R}", f" Versões {self.versions} ")
 
-        # if len(self.collected_elapsed) > 1:
-        result = plot_to_string(xs=[self.eixo, self.eixo, self.eixo], ys=[self.collected_elapsed, self.collected_lines, self.collected_rate], lines=[True, True, True], y_min=0, y_max=101, width=self.width, height=self.height, y_unit="%", x_unit="runs")
-
+        if Flags.graph.get_value() == Flags.graph_time_view:
+            result = plot_to_string(color=["magenta", "green", "red"], xs=[self.collected_elapsed, self.collected_elapsed, self.collected_elapsed], ys=[self.collected_lines_len, self.collected_rate, self.collected_rate], lines=[True, True, False], y_min=0, y_max=101, width=self.width, height=self.height, y_unit="%", x_unit="min")
+        else:
+            result = plot_to_string(color=["magenta", "green", "blue", "red"], xs=[self.eixo, self.eixo, self.eixo, self.eixo], ys=[self.collected_lines_len, self.collected_rate, self.collected_elapsed, self.collected_rate], lines=[True, True, True, False], y_min=0, y_max=101, width=self.width, height=self.height, y_unit="%", x_unit="runs")
+        
         if isinstance(result, str):
             result = result.splitlines()
 

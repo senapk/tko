@@ -23,8 +23,13 @@ class GuiActions:
 class GuiKeys:
     calibrate = "C"
 
-    xray = "X"
+    show_graph = "1"
+    show_xray = "2"
+    show_tracks = "3"
+    show_quests = "4"
+    show_tasks = "5"
 
+    time_view = "T"
     palette = "c"
     images = "I"
     down_task = "b"
@@ -38,10 +43,6 @@ class GuiKeys:
     edit= "e"
     colors = "C"
     borders = "B"
-    graph = "1"
-    tracks = "2"
-    show_quests = "3"
-    show_tasks = "4"
     search = "/"
     grade_play = "p"
     grade_play2 = "."

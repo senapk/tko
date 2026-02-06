@@ -4,6 +4,7 @@ from tko.util.text import Text
 from tko.util.symbols import symbols
 import os
 
+
 from tko.play.fmt import Fmt
 from tko.play.frame import Frame
 from tko.play.border import Border
@@ -109,15 +110,23 @@ class Gui:
         color = self.settings.colors.filters
         top = Text()
 
-        graph: str = f"Gráficos [{GuiKeys.graph}]"
-        for i in range(2):
-            if Flags.graph.get_value() == str(i):
+        graph: str = f"Gráficos [{GuiKeys.show_graph}]"
+        for i in Flags.graph.get_values():
+            if Flags.graph.get_value() == i:
                 graph += symbols.closed_circle.text
             else:
                 graph += symbols.open_circle.text
         top.add(self.style.border(color, graph))
 
-        trilhas: str = (f"Trilhas[{GuiKeys.tracks}]")
+        tasks: str = f"Logs [{GuiKeys.show_xray}]"
+        for i in range(2):
+            if Flags.xray.get_value() == str(i):
+                tasks += symbols.closed_circle.text
+            else:
+                tasks += symbols.open_circle.text
+        top.add(self.style.border(color, tasks))
+
+        trilhas: str = (f"Trilhas[{GuiKeys.show_tracks}]")
         for i in range(3):
             if Flags.tracks.get_value() == str(i):
                 trilhas += symbols.closed_circle.text
@@ -355,6 +364,8 @@ class Gui:
         if len(tg.collected_rate) == 1:
             return False, []
         graph = tg.get_graph()
+        if len(graph) == 0:
+            return False, []
         # for y, line in enumerate(graph):
         #     frame.write(y, x, Text().addf("g", line))
         return True, graph
@@ -368,6 +379,12 @@ class Gui:
         return True, graph
 
     def show_graphs(self, frame: Frame):
+
+        try:
+            selected = self.tree.get_selected_throw()
+        except IndexError:
+            selected = None
+
         lines, cols = frame.get_inner()
         
         # now: datetime.datetime = datetime.datetime.now()
@@ -375,14 +392,10 @@ class Gui:
         distance = 18
         made = False
         list_data: list[Text] = []
-        try:
-            selected = self.tree.get_selected_throw()
-        except IndexError:
-            selected = None
         width = cols - self.tree.max_title - distance - 7
         if width < 5:
             width = 5
-        if Flags.graph.get_value() == "1":
+        if Flags.graph.get_value() in (Flags.graph_exec_view, Flags.graph_time_view) or Flags.xray.is_true():
             height = lines - 4
             if height < 3:
                 height = 3
@@ -392,13 +405,16 @@ class Gui:
                 made, list_data = self.get_daily_graph(width, height)
         if not made:
             list_data = [Text().add(x) for x in opening["estuda"].splitlines()]
+            if Flags.xray.is_true():
+                self.fman.add_input(Floating(self.settings, "").put_text(f"Não existe log para essa atividade\n").set_warning())
+                Flags.xray.set_value("0")  # desabilita xray se não tiver log
         if self.xray_offset < 0:
             self.xray_offset = 0
         if self.xray_offset >= len(list_data):
             self.xray_offset = len(list_data) - 1
         
         offset = 0
-        if Flags.xray.is_true():
+        if Flags.xray.is_true() and isinstance(selected, Task):
             offset = self.xray_offset
         count = -1
         line_count = 0

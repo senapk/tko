@@ -90,6 +90,14 @@ class PlayConfig:
             ).set_exit_on_action(True)
         )
 
+        options.append(
+            FloatingInputData(
+                lambda: Text.format(" {} Ver {y} da tarefa ", symbols.action, "versões"),
+                self.actions.open_versions,
+                GuiKeys.unfold_patch
+            ).set_exit_on_action(True)
+        )
+
         self.fman.add_input(
             FloatingInput(self.actions.settings, "^").set_text_ljust()
                       .set_header(" Selecione uma ação da lista ")
