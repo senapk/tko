@@ -118,14 +118,6 @@ class Gui:
                 graph += symbols.open_circle.text
         top.add(self.style.border(color, graph))
 
-        tasks: str = f"Logs [{GuiKeys.show_xray}]"
-        for i in range(2):
-            if Flags.xray.get_value() == str(i):
-                tasks += symbols.closed_circle.text
-            else:
-                tasks += symbols.open_circle.text
-        top.add(self.style.border(color, tasks))
-
         trilhas: str = (f"Trilhas[{GuiKeys.show_tracks}]")
         for i in range(3):
             if Flags.tracks.get_value() == str(i):
@@ -355,20 +347,18 @@ class Gui:
         _help.put_sentence(Text() + f"    {GuiActions.search} " + Text.r_token("r", f"{GuiKeys.search}") + "  Abre a barra de pesquisa")
 
         _help.put_sentence(Text())
-        _help.put_sentence(Text() + "Você pode mudar o editor padrão com o comando")
+        _help.put_sentence(Text() + "Você pode mudar o editor padrão com o comando no terminal")
         _help.put_sentence(Text() + Text.r_token("g", "             tko config --editor <comando>"))
 
 
-    def get_task_graph(self, task_key: str, width: int, height: int) -> tuple[bool, list[Text]]:
+    def get_task_graph(self, task_key: str, width: int, height: int) -> tuple[bool, list[Text], list[Text]]:
         tg = TaskGraph(self.settings, self.rep, task_key, width, height)
-        if len(tg.collected_rate) == 1:
-            return False, []
-        graph = tg.get_graph()
+        header, graph = tg.get_output()
         if len(graph) == 0:
-            return False, []
+            return False, [], []
         # for y, line in enumerate(graph):
         #     frame.write(y, x, Text().addf("g", line))
-        return True, graph
+        return True, header, graph
 
     def get_daily_graph(self, width: int, height: int) -> tuple[bool, list[Text]]:
         graph = DailyGraph(self.rep.logger, width, height).get_graph()
@@ -395,29 +385,31 @@ class Gui:
         width = cols - self.tree.max_title - distance - 7
         if width < 5:
             width = 5
-        if Flags.graph.get_value() in (Flags.graph_exec_view, Flags.graph_time_view) or Flags.xray.is_true():
+        header: list[Text] = []
+        if Flags.graph.get_value() in (Flags.graph_task, Flags.graph_logs):
             height = lines - 4
             if height < 3:
                 height = 3
             if isinstance(selected, Task):
-                made, list_data = self.get_task_graph(selected.get_db_key(), width, height)
+                made, header, list_data = self.get_task_graph(selected.get_db_key(), width, height)
             elif isinstance(selected, Cluster) or isinstance(selected, Quest):
                 made, list_data = self.get_daily_graph(width, height)
         if not made:
             list_data = [Text().add(x) for x in opening["estuda"].splitlines()]
-            if Flags.xray.is_true():
-                self.fman.add_input(Floating(self.settings, "").put_text(f"Não existe log para essa atividade\n").set_warning())
-                Flags.xray.set_value("0")  # desabilita xray se não tiver log
         if self.xray_offset < 0:
             self.xray_offset = 0
         if self.xray_offset >= len(list_data):
             self.xray_offset = len(list_data) - 1
         
         offset = 0
-        if Flags.xray.is_true() and isinstance(selected, Task):
+        if Flags.graph.get_value() == Flags.graph_logs and isinstance(selected, Task):
             offset = self.xray_offset
         count = -1
         line_count = 0
+        if header:
+            for y, line in enumerate(header):
+                frame.write(y, self.tree.max_title + distance, line)
+            line_count = len(header)
         for line in list_data:
             count += 1
             if count < offset:

@@ -67,7 +67,7 @@ class TaskResume:
     def to_dict(self) -> dict[str, Any]:
         output: dict[str, Any] = {}
         output.update(self.resume.to_dict())
-        output.update(self.info.get_filled_kv())
+        output.update(self.info.get_kv())
         return output
 
     def from_dict(self, info: dict[str, str]) -> None:

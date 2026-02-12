@@ -66,7 +66,7 @@ class Search:
             self.tree.selected_item = self.backup_index_selected
 
     def process_search(self, key: int):
-        if key == InputManager.esc:
+        if key == curses.KEY_EXIT:
             self.cancel_search()
         elif key == ord("\n"):
             self.finish_search()
@@ -74,7 +74,7 @@ class Search:
             self.tree.move_up()
         elif key == curses.KEY_DOWN:
             self.tree.move_down()
-        elif any([key == x for x in InputManager.backspace_list]):
+        elif key == curses.KEY_LEFT or key == curses.KEY_BACKSPACE:
             self.tree.search_text = self.tree.search_text[:-1]
             self.update_index()
         elif 32 <= key < 127:

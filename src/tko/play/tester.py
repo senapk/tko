@@ -625,9 +625,9 @@ class Tester:
             self.settings.save_settings()
 
     def process_key(self, key: int) -> Optional[Callable[[], bool]]:
-        if key == ord('q') or any([key == x for x in InputManager.backspace_list]):
+        if key == ord('q'):
             self.set_exit()
-        elif key == InputManager.esc:
+        elif key == curses.KEY_EXIT:
             if self.locked_index:
                 self.locked_index = False
             else:

@@ -24,10 +24,9 @@ class GuiKeys:
     calibrate = "C"
 
     show_graph = "1"
-    show_xray = "2"
-    show_tracks = "3"
-    show_quests = "4"
-    show_tasks = "5"
+    show_tracks = "2"
+    show_quests = "3"
+    show_tasks = "4"
 
     time_view = "T"
     palette = "c"
@@ -45,7 +44,6 @@ class GuiKeys:
     borders = "B"
     search = "/"
     grade_play = "p"
-    grade_play2 = "."
     execute_tester = "r" # Interact in manual input
     diff = "d"
     unfold_patch = "V"

@@ -16,6 +16,10 @@ class AppSettings:
         self.key_right: int = curses.KEY_RIGHT
         self.key_up: int = curses.KEY_UP
         self.key_down: int = curses.KEY_DOWN
+        self.key_pg_up: int = curses.KEY_PPAGE
+        self.key_pg_down: int = curses.KEY_NPAGE
+        self.key_backspace: int = curses.KEY_BACKSPACE
+        self.key_esc: int = 27
 
     def set_key_left(self, key: int):
         self.key_left = key
@@ -44,6 +48,34 @@ class AppSettings:
 
     def get_key_down(self) -> int:
         return self.key_down
+
+    def set_key_pg_up(self, key: int):
+        self.key_pg_up = key
+        return self
+    
+    def set_key_pg_down(self, key: int):
+        self.key_pg_down = key
+        return self
+    
+    def set_key_esc(self, key: int):
+        self.key_esc = key
+        return self
+    
+    def set_key_backspace(self, key: int):
+        self.key_backspace = key
+        return self
+    
+    def get_key_esc(self) -> int:
+        return self.key_esc
+    
+    def get_key_backspace(self) -> int:
+        return self.key_backspace
+
+    def get_key_pg_up(self) -> int:
+        return self.key_pg_up
+
+    def get_key_pg_down(self) -> int:
+        return self.key_pg_down
 
     def to_dict(self):
         return self.__dict__

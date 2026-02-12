@@ -6,13 +6,11 @@ import os
 FN_VOID = Callable[[], None]
 
 class InputManager:
-    backspace_list: list[int] = [8, 127, 263, curses.KEY_BACKSPACE]
     a = 97
     d = 100
     tab = 9
     special_double_key = 195
     cedilha = 167
-    esc = 27
     plus = 465
     minus = 464
     delete = 330
@@ -61,6 +59,14 @@ class InputManager:
             value = curses.KEY_LEFT
         elif value == app.key_right:
             value = curses.KEY_RIGHT
+        elif value == app.key_backspace:
+            value = curses.KEY_BACKSPACE
+        elif value == app.key_esc:
+            value = curses.KEY_EXIT
+        elif value == app.key_pg_up:
+            value = curses.KEY_PPAGE
+        elif value == app.key_pg_down:
+            value = curses.KEY_NPAGE
         # elif value > ord('A') and value < ord('Z'):
         #     value += 32 # convert to lowercase
         return value

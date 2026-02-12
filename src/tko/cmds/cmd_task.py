@@ -13,6 +13,6 @@ class CmdTask:
             width = RawTerminal.get_terminal_size() // 2
         if height is None:
             height = round(width / 4)
-        graph = TaskGraph(settings, rep, task_key, width, height).get_graph()
+        graph = TaskGraph(settings, rep, task_key, width, height).get_output()
         for line in graph:
             print(line)

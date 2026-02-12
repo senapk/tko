@@ -22,7 +22,7 @@ class LogItemSelf(LogItemBase):
 
     def encode_line(self) -> str:
         output = super().encode_line()
-        kv = self.info.get_filled_kv()
+        kv = self.info.get_kv()
         if len(kv) > 0:
             output += ", " + KV.encode_kv(kv, ", ")
         return output

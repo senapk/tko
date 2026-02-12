@@ -2,7 +2,6 @@ from tko.play.frame import Frame
 from tko.util.text import Text
 from tko.play.fmt import Fmt
 from typing import Callable
-from tko.play.input_manager import InputManager
 from tko.util.symbols import symbols
 from tko.settings.settings import Settings
 import enum
@@ -163,15 +162,14 @@ class Floating:
         return self
 
     def process_input(self, key: int) -> int:
-        # self.draw()
         if self._type == FloatingType.WARNING or self._type == FloatingType.ERROR:
-            if key < 300:
+            if key < 300 or key == curses.KEY_EXIT:
                 self._enable = False
                 if self._exit_fn is not None:
                     self._exit_fn()
                 if self._exit_key is not None:
                     return self._exit_key
-                if key == ord(" ") or key == 27:
+                if key == ord(" ") or key == curses.KEY_EXIT: # evita propagar a tecla
                     return -1
                 return key
         
@@ -295,7 +293,7 @@ class FloatingInput(Floating):
         elif 32 <= key < 127:
             self.search_text += chr(key).lower()
             self.update_index()
-        elif any([key == x for x in InputManager.backspace_list]):
+        elif key == curses.KEY_BACKSPACE:
             if len(self.search_text) > 0:
                 self.search_text = self.search_text[:-1]
             else:
@@ -307,7 +305,7 @@ class FloatingInput(Floating):
             if self._index != -1:
                 self._options[self._index].action()
             return -1
-        elif key == InputManager.esc:
+        elif key == curses.KEY_EXIT:
             self._enable = False
             if self._exit_fn is not None:
                 self._exit_fn()

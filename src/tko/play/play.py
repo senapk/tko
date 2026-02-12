@@ -5,6 +5,7 @@ from tko.settings.languages import available_languages
 from tko.settings.settings import Settings
 from tko.settings.repository import Repository
 from tko.play.keys import GuiKeys
+from tko.play.images import opening
 from tko.play.floating_calibrate import FloatingCalibrate
 from tko.play.input_manager import InputManager
 from tko.play.play_config import PlayConfig
@@ -30,7 +31,6 @@ class Play:
         self.fman = FloatingManager()
         self.tree = TaskTree(self.settings, rep, self.fman)
         self.gui = Gui(tree=self.tree, flagsman=self.flagsman, fman=self.fman)
-        Flags.xray.set_value("0")
         self.actions = PlayActions(self.gui)
         self.play_palette = PlayConfig(self.actions)
 
@@ -48,35 +48,39 @@ class Play:
             self.exit = True
 
         self.fman.add_input(
-            Floating(self.settings).put_text("\nAté a próxima\n").set_exit_fn(set_exit).set_warning()
+            Floating(self.settings).set_content(opening['cool'].splitlines()).set_exit_fn(set_exit).set_exit_key('q').set_warning()
         )
 
     def move_up(self):
-        if Flags.xray.is_true():
-            self.gui.xray_offset -= 1
-        else:
-            self.tree.move_up()
-            self.gui.xray_offset = 0
+        self.tree.move_up()
+        self.gui.xray_offset = 0
 
     def move_down(self):
-        if Flags.xray.is_true():
-            self.gui.xray_offset += 1
-        else:
-            self.tree.move_down()
-            self.gui.xray_offset = 0
+        self.tree.move_down()
+        self.gui.xray_offset = 0
+
+    def page_up(self):
+        if Flags.graph.get_value() == Flags.graph_logs:
+            self.gui.xray_offset -= 5
+        elif Flags.graph.get_value() == Flags.graph_task:
+            Flags.task_graph.set_value(Flags.task_exec_view)
+    
+    def page_down(self):
+        if Flags.graph.get_value() == Flags.graph_logs:
+            self.gui.xray_offset += 5
+        elif Flags.graph.get_value() == Flags.graph_task:
+            Flags.task_graph.set_value(Flags.task_time_view)
+
 
     def move_left(self):
-        Flags.xray.set_value('0')
         self.gui.xray_offset = 0
         self.tree.arrow_left()
 
     def move_right(self):
-        Flags.xray.set_value('0')
         self.gui.xray_offset = 0
         self.tree.arrow_right()
 
     def activate(self):
-        Flags.xray.set_value('0')
         self.gui.xray_offset = 0
         return self.actions.select_task()
 
@@ -85,24 +89,29 @@ class Play:
         cman = InputManager()
 
         cman.add_str(GuiKeys.key_quit, self.send_quit_msg)
-        cman.add_int(InputManager.esc, self.send_quit_msg)
+        cman.add_int(curses.KEY_EXIT, self.send_quit_msg)
         cman.add_int(curses.KEY_UP, self.move_up)
         cman.add_int(curses.KEY_DOWN, self.move_down)
         cman.add_int(curses.KEY_LEFT, self.move_left)
         cman.add_int(curses.KEY_RIGHT, self.move_right)
 
+        cman.add_int(curses.KEY_NPAGE, self.page_down)
+        cman.add_int(curses.KEY_PPAGE, self.page_up)
+
         cman.add_str(GuiKeys.calibrate, lambda: self.fman.add_input(FloatingCalibrate(self.settings)))
         cman.add_str(GuiKeys.activate, self.activate) # type: ignore
         cman.add_str(GuiKeys.open_url, self.actions.open_link)
         cman.add_str(GuiKeys.down_task, self.actions.down_remote_task)
-        cman.add_str(GuiKeys.edit, lambda: self.actions.open_code())
+        # cman.add_str(GuiKeys.edit, lambda: self.actions.open_code())
 #        cman.add_str(GuiKeys.expand, self.tree.process_expand_all)
 #        cman.add_str(GuiKeys.collapse, self.tree.process_collapse_all)
         cman.add_str(GuiKeys.borders, self.app.toggle_borders)
         cman.add_str(GuiKeys.images, self.app.toggle_images)
         cman.add_str(GuiKeys.set_lang_drafts, self.gui.language.set_language)
-        cman.add_str(GuiKeys.grade_play, self.actions.evaluate)
-        cman.add_str(GuiKeys.grade_play2, self.actions.evaluate)
+
+        cman.add_str(GuiKeys.grade_play, self.actions.self_evaluate)
+        cman.add_int(curses.KEY_BACKSPACE, self.actions.self_evaluate)
+        
         cman.add_str(GuiKeys.key_help, self.gui.show_help)
         cman.add_str(GuiKeys.unfold_patch, self.actions.open_versions)
         
@@ -110,31 +119,15 @@ class Play:
             if flag.get_autoload():
                 cman.add_str(flag.get_keycode(), FlagFunctor(flag, self.fman, self.settings))
 
-        cman.add_str(GuiKeys.show_xray, self.toggle_xray)
-
         cman.add_str(GuiKeys.search, self.gui.search.toggle_search)
         cman.add_str(GuiKeys.palette, self.play_palette.command_pallete)
 
         return cman
         
-    def toggle_xray(self):
-        if not Flags.xray.is_true():
-            try:
-                selected = self.tree.get_selected_throw()
-            except Exception:
-                selected = None
-            if not isinstance(selected, Task):
-                self.fman.add_input( Floating(self.settings, "v>").set_error().put_text("\nO modo Logs só pode ser ativado quando uma tarefa está selecionada.\n") )
-                Flags.xray.set_value("0")
-            else:
-                Flags.xray.set_value("1")
-        else:
-            Flags.xray.set_value("0")
-            self.fman.add_input( Floating(self.settings, "v>").set_warning().put_text("\nModo Logs desativado.\n") )
 
     def send_char_not_found(self, key: int):
         exclude_str = [ord(v) for v in [" ", "a", "d", "\n"]]
-        exclude_int = [ -1, InputManager.esc, curses.KEY_UP, curses.KEY_DOWN, curses.KEY_LEFT, curses.KEY_RIGHT] + InputManager.backspace_list
+        exclude_int = [ -1, curses.KEY_EXIT, curses.KEY_UP, curses.KEY_DOWN, curses.KEY_LEFT, curses.KEY_RIGHT, curses.KEY_BACKSPACE]
         if key in exclude_int + exclude_str:
             return
         if key < 0 or key > 255:

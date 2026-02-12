@@ -85,8 +85,10 @@ class Flag:
 
 class Flags:
     graph_none = "0"
-    graph_exec_view = "1"
-    graph_time_view = "2"
+    graph_task = "1"
+    graph_logs = "2"
+    task_exec_view = "0"
+    task_time_view = "1"
 
     quests = (Flag().set_name("Tópicos").set_keycode(GuiKeys.show_quests).set_description("Habilitas todas as missões e tarefas")
                     .set_values(["0", "1", "2"])
@@ -98,11 +100,11 @@ class Flags:
                     .set_values(["0", "1", "2"])
                     .set_msgs(["Mostrar todas as tarefas", "Ocultar tarefas com 100%", "Ocultar tarefas com >70%"]))
     graph = (Flag().set_name("Graph").set_keycode(GuiKeys.show_graph).set_description("Mostra o Gráfico")
-                    .set_values([graph_none, graph_exec_view, graph_time_view])
-                    .set_msgs(["Desabilitar gráficos de acompanhamento", "Gráfico por execuções", "Gráfico por tempo"]))
-    xray = (Flag().set_name("Logs").set_keycode(GuiKeys.show_xray).set_description("Muda o modo Logs")
-                    .set_values(["0", "1"])
-                    .set_msgs(["Desabilitar mostrar logs", "Ativar mostrar logs"])).set_autoload(False)
+                    .set_values([graph_none, graph_task, graph_logs])
+                    .set_msgs(["Desabilitar gráficos de acompanhamento", "Gráfico de tarefas", "Mostrar logs"]))
+    task_graph = (Flag().set_name("Task Graph").set_description("Mostra o Gráfico de Tarefas")
+                    .set_values([task_exec_view, task_time_view])
+                    .set_msgs(["Gráfico de tarefas por execuções", "Gráfico de tarefas por tempo"]))
 class FlagsMan:
     def __init__(self, data: dict[str, int]):
         self.flags: dict[str, Flag] = {}

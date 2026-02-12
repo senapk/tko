@@ -60,7 +60,7 @@ class TaskTree:
         self.rep.data.selected = self.selected_item
         tasks: dict[str, str] = {}
         for t in self.game.tasks.values():
-            if len(t.info.get_filled_kv()) != 0:
+            if len(t.info.get_kv()) != 0:
                 tasks[t.get_db_key()] = t.save_to_db()
         self.rep.data.tasks = tasks
 
@@ -77,11 +77,10 @@ class TaskTree:
         return len(cluster.get_database() + ":" + cluster.get_title())
     
     def get_quest_title_size(self, quest: Quest) -> int:
-        return len(quest.get_full_title()) + 2
+        return len(quest.get_full_title()) + 1
 
     def get_task_title_size(self, task: Task) -> int:
-        extra = 0 if not Flags.xray.is_true() else 6
-        return len(task.get_title()) + extra + 9
+        return len(task.get_title()) + 11
 
     def __update_max_title(self):
         min_value = 50
@@ -130,12 +129,13 @@ class TaskTree:
         output.add(down_symbol).add(" ")
         rate = t.info.rate // 10
         output.add(t.get_prog_symbol(rate)).add(" ")
-        alone = t.info.alone
-        output.add(t.get_prog_symbol(alone)).add(" ")
-        output.addf("g" if t.info.human else "", "H")
-        output.addf("g" if t.info.iagen else "", "I")
-        output.addf("g" if t.info.guide else "", "G")
-        output.addf("g" if t.info.other else "", "O")
+        
+        if t.info.feedback:
+            output.addf("g", symbols.closed_circle)
+        elif t.info.rate > 0:
+            output.addf("r", symbols.closed_circle)
+        else:
+            output.addf("", symbols.open_circle)
 
         if in_focus:
             output.add(self.style.round_l(focus_color))
@@ -158,20 +158,26 @@ class TaskTree:
             else:
                 output.addf(color, word + " ")
 
-        if Flags.xray.is_true():
-            logsort = self.rep.logger.tasks.task_dict.get(t.get_db_key(), None)
-            if logsort is not None:
-                if len(logsort.base_list) > 0:
-                    delta, _ = logsort.base_list[-1]
-                    output.addf(focus_color + "y", f" {delta.accumulated.seconds // 60}min")
-
-
         if in_focus:
             output.add(self.style.round_r(focus_color))
         else:
             output.add(" ")
 
-        output.ljust(self.max_title + 9, Text.Token(" "))
+        output.ljust(self.max_title + 2, Text.Token(" "))
+
+        time_inserted = False
+        logsort = self.rep.logger.tasks.task_dict.get(t.get_db_key(), None)
+        if logsort is not None:
+            if len(logsort.base_list) > 0:
+                delta, _ = logsort.base_list[-1]
+                hours = delta.accumulated.seconds // 3600
+                minutes = (delta.accumulated.seconds % 3600) // 60
+                if hours > 0 or minutes > 0:
+                    output.addf("y", f"{hours:02}h{minutes:02}m ")
+                    time_inserted = True
+        if not time_inserted:
+            output.add(" " * 7)
+
         prog = round(t.get_percent())
         output.addf("y", str(prog).rjust(3, " ") + "%")
         return output

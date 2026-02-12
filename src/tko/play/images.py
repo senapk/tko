@@ -30,6 +30,20 @@ opening: dict[str, str] = {}
 #                     '-'-'       
 # """
 
+opening["cool"] = r"""
+       ⢀⣠⣤⣴⡾⠻⢶⣤⡀ 
+     ⢀⣶⠟⠉⠉    ⠉⢷⡄
+   ⠉⢿⣿⣿⣿⠏⠈⢿⣿⣿⣿⡿⢟⣿
+    ⢸⡏ ⢠⣀ ⢀⡤   ⢨⣿
+    ⠸⣿⡀ ⠉⠉⠉  ⢀⣠⡾⠃
+     ⠈⠻⠷⠶⣶⡶⠾⠿⠛⠉  
+ ⢀⡀     ⢀⣿       
+⠿⢿⣧⡀    ⣸⣟       
+  ⠘⢿⡄ ⣠⡾⢻⣿⣄      
+    ⢿⣴⡟ ⢸⡏⠹⣧     
+    ⠈⠛  ⢸⣟ ⠹⣧    
+"""[1:]
+
 opening["estuda"] = r"""
 ▄▖         ▐▘      ▘                 ▐▘▘▜ ▗       ▄▖
 ▌ ▛▌▛▛▌▛▌  ▜▘▌▌▛▌▛▘▌▛▌▛▌▀▌▛▛▌  ▛▌▛▘  ▜▘▌▐ ▜▘▛▘▛▌▛▘▗▘
@@ -44,22 +58,14 @@ Os botões de 1 a 4 habilitam os filtros de exibição.
 ▌ ▛▌▛▛▌▛▌  ▜▘▌▌▛▌▛▘▌▛▌▛▌▀▌  ▀▌  ▛▌▛▌▜▘▀▌▗▘
 ▙▖▙▌▌▌▌▙▌  ▐ ▙▌▌▌▙▖▌▙▌▌▌█▌  █▌  ▌▌▙▌▐▖█▌▗ 
                                           
-- Após fazer ou refazer uma atividade, você usa o comando de pontuar,
-usando o 'p' ou o '.', e informe como fez a atividade.
-       ⢀⣠⣤⣴⡾⠻⢶⣤⡀ 
-     ⢀⣶⠟⠉⠉    ⠉⢷⡄  - Quanto da atividade foi entregue?
-   ⠉⢿⣿⣿⣿⠏⠈⢿⣿⣿⣿⡿⢟⣿    - Se houver testes, isso será calculado automaticamente
-    ⢸⡏ ⢠⣀ ⢀⡤   ⢨⣿  - Quanto conseguiu fazer antes de consultar ajuda?
-    ⠸⣿⡀ ⠉⠉⠉  ⢀⣠⡾⠃  - Se utilizou alguma ajuda, qual foi?
-     ⠈⠻⠷⠶⣶⡶⠾⠿⠛⠉      - Humana? Quem?
- ⢀⡀     ⢀⣿           - IA? Qual? Como?
-⠿⢿⣧⡀    ⣸⣟           - Guiada seguindo aula ou vídeo?
-  ⠘⢿⡄ ⣠⡾⢻⣿⣄          - Outros? Pesquisando na documentação ou exemplos?
-    ⢿⣴⡟ ⢸⡏⠹⣧       - Qual tempo estimado em minutos de estudo + implementação?
-    ⠈⠛  ⢸⣟ ⠹⣧    
-- Você pode e deve refazer a atividade do zero quantas vezes quiser e
-reavaliar e melhorar sua nota.
-
+1. Navegue até as atividades com as setas do teclado.
+2. Se precisar, calibre as teclas com Shift C.
+3. Use o enter para baixar e entrar na atividade.
+4. Aperte a tecla 'e' depois de entrar para abrir
+   os arquivos de rascunho e descrição da atividade.
+5. Faça o código e rode os testes no enter.
+6. Aperte 'esc' para voltar a tela de seleção de atividades.
+7. Use o comando 'p' para pontuar a atividade depois de concluída.
 
 """[1:]
 

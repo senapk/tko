@@ -5,16 +5,19 @@ from tko.util.text import Text
 from tko.logger.log_sort import LogSort
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_base import LogItemBase
+from tko.util.miniwi import Miniwi
 from tko.logger.delta import Delta
 from tko.play.flags import Flags
 
 class TaskGraph:
     def __init__(self, settings: Settings, rep: Repository, task_key: str, width: int, height: int):
+        with open("debug.txt", "a") as f:
+            f.write(f"Initializing TaskGraph for task_key: {task_key}\n")
         self.settings = settings
         self.rep = rep
         self.task_key = task_key
         self.width = width
-        self.height = height
+        self.height = height - 1
         
         self.collected_rate: list[float] = []
         self.collected_elapsed: list[float] = []
@@ -32,10 +35,13 @@ class TaskGraph:
         if task_key in self.logger.tasks.task_dict:
             self.log_sort = self.logger.tasks.task_dict[task_key]
 
+        self.raw_text: list[Text] = self.prepare_xray()
+
         if self.log_sort is None:
+            with open("debug.txt", "a") as f:
+                f.write("LogSort not found for task_key: " + task_key + "\n")
             return
         self.versions = len(self.log_sort.diff_list)
-        self.raw_text: list[Text] = self.prepare_xray()
        
         item_exec_list: list[tuple[Delta, LogItemExec]] = self.log_sort.exec_list
         collected_rate: list[float] = [0]
@@ -61,7 +67,7 @@ class TaskGraph:
 
         self.total_elapsed = collected_elapsed[-1]
         # normalizando tempo para porcentagem
-        if not Flags.graph.get_value() == Flags.graph_time_view:
+        if not Flags.task_graph.get_value() == Flags.task_time_view:
             if collected_elapsed[-1] != 0:
                 for i in range(len(collected_elapsed)):
                     collected_elapsed[i] = collected_elapsed[i] / self.total_elapsed * 100
@@ -82,6 +88,8 @@ class TaskGraph:
 
     def prepare_xray(self) -> list[Text]:
         if self.log_sort is None:
+            with open("debug.txt", "a") as f:
+                f.write("LogSort is None for task_key: " + self.task_key + "\n")
             return []
         output: list[Text] = []
         all_entries: list[tuple[Delta, LogItemBase]] = self.log_sort.base_list
@@ -96,14 +104,55 @@ class TaskGraph:
                         .replace("SELF", Text.Token("SELF", "r"))
                         .replace("MOVE", Text.Token("MOVE", "y")))
             output.append(Text().add(f"acc:{delta.accumulated}, ").add(text))
+        with open("debug.txt", "a") as f:
+            f.write(f"Prepared xray for task_key: {self.task_key}, entries: {len(output)}\n")
         return output
 
     def get_graph(self) -> list[Text]:
+        if Flags.task_graph.get_value() == Flags.task_time_view:
+            result = plot_to_string(
+                color=["magenta", "green", "red"],
+                xs=[self.collected_elapsed, self.collected_elapsed, self.collected_elapsed],
+                ys=[self.collected_lines_len, self.collected_rate, self.collected_rate],
+                lines=[True, True, False], 
+                y_min=0,
+                y_max=101,
+                width=self.width,
+                height=self.height,
+                y_unit="%",
+                x_unit="min"
+            )
+        else:
+            result = plot_to_string(
+                color=["magenta", "green", "blue", "red"], 
+                xs=[self.eixo, self.eixo, self.eixo, self.eixo], 
+                ys=[self.collected_lines_len, self.collected_rate, self.collected_elapsed, self.collected_rate], 
+                lines=[True, True, True, False], 
+                y_min=0, 
+                y_max=101, 
+                width=self.width, 
+                height=self.height, 
+                y_unit="%", 
+                x_unit="runs"
+            )
+        
+        if isinstance(result, str):
+            result = result.splitlines()
+        output: list[Text] = []
+        for line in result:
+            output.append(Text.decode_raw(line))
+        return output
+
+    # returns header and graph lines
+    def get_output(self) -> tuple[list[Text], list[Text]]:
         if not self.eixo:
-            return []
-        if Flags.xray.is_true():
-            return self.raw_text
-        title = Text.format(" {C}", f" {self.task_key} ")
+            return [], []
+        
+        tag = Miniwi.render_dotted(self.task_key)
+        first, second = tag.splitlines()
+        
+        # title = Text.format(" {C}", f" {self.task_key} ")
+        title = Text()
         title += Text.format(" {G}", f" Total {self.actual_rate:.0f}% ")
         time_h: int = int(self.total_elapsed) // 60
         time_m: int = (int(self.total_elapsed) % 60)
@@ -112,18 +161,20 @@ class TaskGraph:
         title += Text.format(" {M}", f" Linhas {self.max_lines:.0f} ")
         title += Text.format(" {R}", f" Versões {self.versions} ")
 
-        if Flags.graph.get_value() == Flags.graph_time_view:
-            result = plot_to_string(color=["magenta", "green", "red"], xs=[self.collected_elapsed, self.collected_elapsed, self.collected_elapsed], ys=[self.collected_lines_len, self.collected_rate, self.collected_rate], lines=[True, True, False], y_min=0, y_max=101, width=self.width, height=self.height, y_unit="%", x_unit="min")
-        else:
-            result = plot_to_string(color=["magenta", "green", "blue", "red"], xs=[self.eixo, self.eixo, self.eixo, self.eixo], ys=[self.collected_lines_len, self.collected_rate, self.collected_elapsed, self.collected_rate], lines=[True, True, True, False], y_min=0, y_max=101, width=self.width, height=self.height, y_unit="%", x_unit="runs")
+        header: list[Text] = []
+        # title = title.center(self.width)
+        header.append(Text().add(first) + title.center(self.width - len(first)))
         
-        if isinstance(result, str):
-            result = result.splitlines()
-
-        lines: list[Text] = []
-        for line in result:
-            lines.append(Text.decode_raw(line))
-        title = title.center(self.width)
-        lines.append(title)
-        return lines
-        # return []
+        if Flags.graph.get_value() == Flags.graph_logs:
+            header.append(Text().addf("", second) + Text.format(" {C} {M}", " Scroll Up [PageUp] ", " Scroll Down [PgDown] ").center(self.width - len(second)))
+            return header, self.raw_text
+        
+        if Flags.task_graph.get_value() == Flags.task_time_view:
+            exec_color = "Y"
+            time_color = "G"
+        else:
+            exec_color = "G"
+            time_color = "Y"
+        header.append(Text().addf("", second) + Text.format(f" {{{exec_color}}} {{{time_color}}}", " ExecGraph [PageUp] ",  " TimeGraph [PageDown] ").center(self.width - len(second)))
+        return header, self.get_graph()
+        

@@ -1,6 +1,5 @@
 from tko.util.text import Text
 from tko.play.floating import Floating
-from tko.play.input_manager import InputManager
 from tko.settings.settings import Settings
 
 
@@ -9,12 +8,16 @@ class FloatingCalibrate(Floating):
         super().__init__(settings)
         self.set_header(" Calibrar teclas direcionais ")
         # self.set_text_ljust()
-        self.set_footer(" Use Enter para salvar ou ESC para cancelar ")
+        self.set_footer(" Use Enter para salvar, mas só quando tiver certeza de que as teclas estão corretas ")
         self._index = 0
         self._options: list[int] = [settings.app.get_key_left(),
                                    settings.app.get_key_right(),
                                    settings.app.get_key_up(),
-                                   settings.app.get_key_down()]
+                                   settings.app.get_key_down(), 
+                                   settings.app.get_key_esc(),
+                                   settings.app.get_key_pg_up(),
+                                   settings.app.get_key_pg_down(), 
+                                   settings.app.get_key_backspace()]
         self._frame.set_border_color("m")
         self._exit_on_action = True
         self.right_dx = 5 # shortcut space
@@ -25,32 +28,43 @@ class FloatingCalibrate(Floating):
         def format_value(value: int) -> str:
             if value == 0:
                 return "---"
-            return str(value)
+            return f"{value:>3}"
+        
         self._content = []
         color = "G" if self._index == 0 else ""
-        self._content.append(Text().addf(color, "Left  ").addf(color, format_value(self._options[0])))
+        self._content.append(Text().addf(color, "Left      ").addf(color, format_value(self._options[0])))
         color = "G" if self._index == 1 else ""
-        self._content.append(Text().addf(color, "Right ").addf(color, format_value(self._options[1])))
+        self._content.append(Text().addf(color, "Right     ").addf(color, format_value(self._options[1])))
         color = "G" if self._index == 2 else ""
-        self._content.append(Text().addf(color, "Up    ").addf(color, format_value(self._options[2])))
+        self._content.append(Text().addf(color, "Up        ").addf(color, format_value(self._options[2])))
         color = "G" if self._index == 3 else ""
-        self._content.append(Text().addf(color, "Down  ").addf(color, format_value(self._options[3])))
+        self._content.append(Text().addf(color, "Down      ").addf(color, format_value(self._options[3])))
+        color = "G" if self._index == 4 else ""
+        self._content.append(Text().addf(color, "Esc       ").addf(color, format_value(self._options[4])))
+        color = "G" if self._index == 5 else ""
+        self._content.append(Text().addf(color, "PageUp    ").addf(color, format_value(self._options[5])))
+        color = "G" if self._index == 6 else ""
+        self._content.append(Text().addf(color, "PageDown  ").addf(color, format_value(self._options[6])))
+        color = "G" if self._index == 7 else ""
+        self._content.append(Text().addf(color, "Backspace ").addf(color, format_value(self._options[7])))
 
     # @override
     def process_input(self, key: int) -> int:
         # self.draw()
         
-        if key == InputManager.esc:
-            self._enable = False
-        elif key == ord('\n'):
+        if key == ord('\n'):
             self._enable = False
             self.settings.app.set_key_left(self._options[0])
             self.settings.app.set_key_right(self._options[1])
             self.settings.app.set_key_up(self._options[2])
             self.settings.app.set_key_down(self._options[3])
+            self.settings.app.set_key_esc(self._options[4])
+            self.settings.app.set_key_pg_up(self._options[5])
+            self.settings.app.set_key_pg_down(self._options[6])
+            self.settings.app.set_key_backspace(self._options[7])
             self.settings.save_settings()
             return -1
-        elif key > 128:
+        else:
             self._options[self._index] = key
             for i in range(len(self._options)):
                 if i != self._index and self._options[i] == key:

@@ -143,17 +143,16 @@ class PlayActions:
             )
 
     def register_action(self, task: Task):
-        self.rep.logger.store( LogItemSelf().set_key(task.get_db_key()).set_info(task.info) )
+        self.rep.logger.store(LogItemSelf().set_key(task.get_db_key()).set_info(task.info.clone()) )
 
-    def evaluate(self):
+    def self_evaluate(self):
         obj = self.tree.get_selected_throw()
         
         if isinstance(obj, Task):
             task: Task = obj
             if ic.enabled:
                 task.info.rate = 100
-                task.info.flow = task.info.flow_max
-                task.info.edge = task.info.edge_max
+                task.info.feedback = True
             else:
                 self.fman.add_input(
                     FloatingGrade(obj, self.settings, "").set_exit_fn(
@@ -229,13 +228,6 @@ class PlayActions:
 
 
     def open_versions(self):
-        # if not Flags.xray.is_true():
-        #     self.fman.add_input(
-        #         Floating(self.settings, "v>")
-        #         .put_text("\nEssa opção só está disponível no modo X-Ray.\n")
-        #         .set_error()
-        #     )
-        #     return
         try:
             obj = self.tree.get_selected_throw()
 

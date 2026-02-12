@@ -126,13 +126,13 @@ class Task(TreeItem):
                 raise ValueError(f"Invalid task value format: {value}. Expected format is 'flow:edge:main_idx:rate' or '{self.str_index}:value'.")
 
     def save_to_db(self) -> str:
-        kv_dict = self.info.get_filled_kv()
+        kv_dict = self.info.get_kv()
         if self.main_idx != 0:
             kv_dict[self.str_index] = str(self.main_idx)
         return "{" + ", ".join(f"{k}:{v}" for k, v in kv_dict.items()) + "}"
 
     def is_db_empty(self) -> bool:
-        return len(self.info.get_filled_kv()) == 0
+        return len(self.info.get_kv()) == 0
 
     def get_prog_color(self, value: int, min_value: None | int = None) -> str:
         if min_value is None:

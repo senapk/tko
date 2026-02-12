@@ -431,28 +431,10 @@ class Run:
                     log_resume = TaskResume(self.get_task().get_db_key()).from_log_sort(log_sort)
                     print(Text().addf("g", f"time:{log_resume.resume.minutes:.0f}, diff:{log_resume.resume.versions}, runs:{log_resume.resume.executions},").add(" "), end="", flush=True)
 
-        rate: int | None = None
-        flow: int | None = None
-        edge: int | None = None
-        if self.__show_self_info and self.__rep is not None:
-            task: Task | None = self.__rep.game.tasks.get(self.get_task().get_db_key())
-            if task is not None:
-                rate = task.info.rate
-                flow = task.info.flow
-                edge = task.info.edge
-                neat = task.info.neat
-                cool = task.info.cool
-                easy = task.info.easy
-                print(Text().addf("m", f"neat:{neat}, cool:{cool}, easy:{easy}, ").addf("y", f"rate:{rate}, flow:{flow}, edge:{edge},").add(" "), end="", flush=True)
         if self.__no_run:
             percent: float = 0
         else:
             percent = self.get_rate()
-        if self.__complex_percent:
-            if rate is not None and flow is not None and edge is not None:
-                if self.__no_run:
-                    percent = rate
-                percent = (percent + (((flow + edge) * 100) / 11)) / 2
 
         print(f"{percent:.0f}%")
         return round(percent)

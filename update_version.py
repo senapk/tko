@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/bin/env python3
 
 version = ""
 with open("src/tko/__init__.py") as f:
