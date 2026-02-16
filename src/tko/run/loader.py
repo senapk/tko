@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Any
 import re
 import os
+import tomllib
 
 from tko.run.unit import Unit
 from tko.util.pattern_loader import PatternLoader
@@ -65,6 +66,77 @@ class VplParser:
         if unit.grade is not None:
             text += "grade reduction=" + str(unit.grade) + "%\n"
         return text
+
+def parse_toml(content: str) -> list[dict[str, Any]]:
+    try:
+        data = tomllib.loads(content)
+    except tomllib.TOMLDecodeError as e:
+        raise ValueError(f"Erro ao analisar o arquivo TOML: {e}") from e
+    
+    if "cases" not in data or not isinstance(data["cases"], list):
+        raise ValueError("Arquivo TOML inválido: seção [[cases]] não encontrada.")
+
+    result: list[dict[str, Any]] = []
+
+    for i, case in enumerate(data["cases"], start=1): # type:ignore
+        if not isinstance(case, dict):
+            raise ValueError(f"Case {i} inválido.")
+
+        if "input" not in case or "expected" not in case:
+            raise ValueError(f"Case {i} deve conter 'input' e 'expected'.")
+
+        parsed: dict[str, str] = {
+            "input": case["input"],
+            "expected": case["expected"],
+        }
+
+        if "label" in case:
+            parsed["label"] = case["label"]
+
+        if "grade_reduction" in case:
+            parsed["grade_reduction"] = case["grade_reduction"]
+
+        result.append(parsed)
+
+    return result
+
+
+def parse_tio2(text: str):
+    pattern = re.compile(
+        r"===== ?(.*?) ?=====\n"   # caso com nome
+        r"(.*?)"
+        r">>>>>\n"
+        r"(.*?)"
+        r"<<<<<",
+        re.DOTALL
+    )
+
+    pattern_no_label = re.compile(
+        r"=====\n"                # caso sem nome
+        r"(.*?)"
+        r">>>>>\n"
+        r"(.*?)"
+        r"<<<<<",
+        re.DOTALL
+    )
+
+    cases: list[dict[str, str]] = []
+
+    for label, inp, out in pattern.findall(text):
+        cases.append({
+            "label": label.strip() or None, # type: ignore
+            "input": inp.strip(),
+            "expected": out.strip(),
+        })
+
+    for inp, out in pattern_no_label.findall(text):
+        cases.append({
+            "label": None, # type: ignore
+            "input": inp.strip(),
+            "expected": out.strip(),
+        })
+
+    return cases
 
 
 class Loader:
@@ -150,6 +222,18 @@ class Loader:
         for m in data_list:
             output.append(Unit(m.case, m.input, m.output, m.grade, source))
         return output
+    
+    @staticmethod
+    def parse_toml(text: str, source: str = "") -> list[Unit]:
+        data_list = parse_toml(text)
+        output: list[Unit] = []
+        for m in data_list:
+            case = m.get("label", "")
+            inp = m["input"]
+            outp = m["expected"]
+            grade = m.get("grade_reduction", None)
+            output.append(Unit(case, inp, outp, grade, source))
+        return output
 
     @staticmethod
     def parse_dir(folder: str) -> list[Unit]:  # Updated return type to list[Unit]
@@ -186,6 +270,8 @@ class Loader:
                 return Loader.parse_vpl(content, source)
             elif source.endswith(".tio"):
                 return Loader.parse_tio(content, source)
+            elif source.endswith(".toml"):
+                return Loader.parse_toml(content, source)
             elif source.endswith(".md"):
                 tests = Loader.parse_tio(content, source)
                 tests += Loader.parse_cio(content, source)

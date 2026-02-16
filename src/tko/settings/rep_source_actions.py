@@ -15,7 +15,7 @@ class RepSourceActions:
 
         path = RepPaths.rec_search_for_repo(folder)
         if path == "":
-            raise ValueError("Repositório não encontrado")
+            raise ValueError(f"Repositório não encontrado em {folder}")
         self.folder = folder
         self.rep = Repository(path).load_config()
     

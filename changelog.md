@@ -1,6 +1,7 @@
 # Changelog
 
-
+- 8.7.0
+  - add: adding .toml support for test cases
 - 8.6.0
   - add: xray mode to see task versions with X key
   - add: unfold task versions to temp folder with V key

@@ -7,3 +7,4 @@ class IdentifierType(enum.Enum):
     TIO = "TIO"
     VPL = "VPL"
     SOLVER = "SOLVER"
+    TOML = "TOML"

@@ -5,6 +5,8 @@ from tko.util.pattern_loader import PatternLoader
 from tko.enums.identifier_type import IdentifierType
 from tko.run.unit import Unit
 from tko.util.decoder import Decoder
+import tomli_w
+
 
 class Writer:
 
@@ -21,6 +23,29 @@ class Writer:
         else:
             text += "grade reduction=" + str(unit.grade).zfill(3) + "%\n"
         return text
+
+    @staticmethod
+    def to_toml(unit: Unit) -> str:
+        def _multiline(value: str) -> str:
+            # Garante que termina com newline (TOML multiline padrão)
+            if not value.endswith("\n"):
+                value += "\n"
+            return f"'''\n{value}'''"
+        
+        lines = ["[[cases]]"]
+
+        # label primeiro
+        if unit.case:
+            lines.append(f'label = {unit.case!r}')
+
+        # blocos multiline reais
+        lines.append(f"input = {_multiline(unit.inserted)}")
+        lines.append(f"expected = {_multiline(unit.get_expected())}")
+
+        if unit.grade is not None:
+            lines.append(f'grade_reduction = "{unit.grade}"')
+
+        return "\n".join(lines) + "\n"
 
     @staticmethod
     def to_tio(unit: Unit):
@@ -58,6 +83,8 @@ class Writer:
         def save_file(_target: str, _unit_list: list[Unit]):
             if _target.endswith(".tio"):
                 _new = "\n".join([Writer.to_tio(unit) for unit in _unit_list])
+            elif _target.endswith(".toml"):
+                _new = "\n".join([Writer.to_toml(unit) for unit in _unit_list])
             else:
                 _new = "\n".join([Writer.to_vpl(unit) for unit in _unit_list])
 
@@ -79,7 +106,7 @@ class Writer:
         target_type = Identifier.get_type(target)
         if target_type == IdentifierType.OBI:
             save_dir(target, unit_list)
-        elif target_type == IdentifierType.TIO or target_type == IdentifierType.VPL:
+        elif target_type in [IdentifierType.TIO, IdentifierType.VPL, IdentifierType.TOML]:
             save_file(target, unit_list)
         else:
             print("fail: target " + target + " do not supported for build operation\n")

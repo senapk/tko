@@ -155,8 +155,12 @@ class Main:
     @staticmethod
     def source_list(args: argparse.Namespace):
         folder: str | None = args.folder
-        rep_actions = RepSourceActions(folder)
-        rep_actions.list_sources()
+        try:
+            RepSourceActions(folder)
+            rep_actions = RepSourceActions(folder)
+            rep_actions.list_sources()
+        except ValueError as e:
+            print(f"Erro ao listar fontes: {e}")
 
     @staticmethod
     def source_add(args: argparse.Namespace):
@@ -201,6 +205,28 @@ class Main:
         settings = Settings()
         print(str(settings))
 
+COMMAND_GROUPS = {
+    "criar e gerenciar repositórios tko": {
+        "init": "inicializa um repositório tko.",
+        "source": "adiciona fontes extras a um repositório.",
+    },
+    "trabalhando em um repositório": {
+        "open": "abre um repositório utilizando um TUI (Terminal user interface).",
+        "run": "executa testes diretamente na tarefa, sem utilizar o TUI.",
+        "tui": "executa testes utilizando o TUI.",
+    },
+    "ferramentas de automação para professores": {
+        "collect": "coleta estatísticas e dados de um repositório.",
+        "update": "atualiza o cache do repositório.",
+        "log": "Show commit logs",
+        "status": "Show working tree status",
+    },
+    "construindo novas tarefas": {
+        "build": "conversão entre modelos de casos de teste",
+        "diff": "mostra as diferenças entre dois arquivos ou textos.",
+    }
+}
+
 
 class Parser:
     def __init__(self):
@@ -210,6 +236,7 @@ class Parser:
 
         self.parent_manip = Parser.create_parent_manip()
         self.parent_basic = Parser.create_parent_basic()
+        self.parent_folder = Parser.create_parent_folder()
 
         self.add_parser_global()
         self.create_parent_basic()
@@ -237,6 +264,12 @@ class Parser:
         parent_basic.add_argument('--pattern', '-p', metavar="P", type=str, default='@.in @.sol',
                                   help='Pattern load/save a folder, default: "@.in @.sol"')
         return parent_basic
+
+    @staticmethod
+    def create_parent_folder():
+        parent_folder = argparse.ArgumentParser(add_help=False)
+        parent_folder.add_argument('--folder', '-f', type=str, nargs='?', default='.', help='Repository folder.')
+        return parent_folder
 
     @staticmethod
     def create_parent_manip():
@@ -340,14 +373,13 @@ class Parser:
 
     def add_parser_rep_tools(self):
         parser_repo = self.subparsers.add_parser('rep', help='Repository tools.')
-        parser_repo.add_argument('folder', type=str, nargs='?', default='.', help='Repository folder.')
         subpar_repo = parser_repo.add_subparsers(title='subcommands', help='Help for subcommand.')
 
-        repo_update = subpar_repo.add_parser("update", help="Update repository cache.")
+        repo_update = subpar_repo.add_parser("update", parents=[self.parent_folder], help="Update repository cache.")
         repo_update.set_defaults(func=CmdRep.update)
 
 
-        repo_collect = subpar_repo.add_parser("collect", help="Collect data")
+        repo_collect = subpar_repo.add_parser("collect", parents=[self.parent_folder], help="Collect data")
         repo_collect.add_argument("--json", action='store_true', help="Collect as json data")
         repo_collect.add_argument("--resume", action='store_true', help="Collect resume")
         repo_collect.add_argument("--log", action='store_true', help="Collect history log")
@@ -366,43 +398,38 @@ class Parser:
         parser_open.add_argument('--update', '-u', action='store_true', help='Force update.')
         parser_open.set_defaults(func=Main.open)
 
-        parser_down = self.subparsers.add_parser('task', help='Task subcommands.')
+        parser_down = self.subparsers.add_parser('task', parents=[self.parent_folder], help='Task subcommands.')
         parser_down.add_argument('label', type=str, help='Task label.')
-        parser_down.add_argument('--folder', type=str, default='.', help='Repository folder.')
         exclusive_group = parser_down.add_mutually_exclusive_group(required=True)
         exclusive_group.add_argument('--down', action='store_true', help="Download task from repository.")
         # exclusive_group.add_argument('--self', action='store_true', help="Self evaluate task in repository.") # TODO
         exclusive_group.add_argument('--graph', nargs=2, type=int, metavar=('WIDTH', 'HEIGHT'), help="Show task graph.")
         parser_down.set_defaults(func=Main.task)
 
-        parser_init = self.subparsers.add_parser('init', help='Initialize a empty repository in a folder.')
-        parser_init.add_argument('--folder', '-f', type=str, help='Local directory.')
+        parser_init = self.subparsers.add_parser('init', parents=[self.parent_folder], help='Initialize a empty repository in a folder.')
         parser_init.add_argument('--language', '-l', type=str, help='Draft language for the repository.')
         parser_init.add_argument('--git', '-g', '-r', type=str, help='Init with remote git source [fup|ed|poo].')
         parser_init.add_argument('--enable', '-e', type=str, nargs='*', help='Only show enabled items')
         parser_init.set_defaults(func=Main.init)
 
 
-        parser_source = self.subparsers.add_parser('source', help='Adds a source to a repository folder.')
+        parser_source = self.subparsers.add_parser('source', parents=[self.parent_folder], help='Adds a source to a repository folder.')
         sub_source = parser_source.add_subparsers(title='source commands', help='help for subcommand.')
         # create subcommands inside source
         source_add = sub_source.add_parser("add", help="Add a new task source")
-        source_add.add_argument('--folder', '-f', type=str, help='Repository folder.')
         source_add.add_argument('alias', type=str, help='Alias for the remote.')
         source_from = source_add.add_mutually_exclusive_group()
         source_from.add_argument('--link', '-l', type=str, help='HTTP url or local file.')
-        source_from.add_argument('--git', '-g', type=str, help='Remote git source [fup|ed|poo].')
+        source_from.add_argument('--git', '-g', type=str, help='Clone one of the default remote git sources [fup|ed|poo].')
         source_from.add_argument('--clone', '-c', type=str, metavar=('URL'), help='Clone a rep with a Readme.md source.')
         source_add.add_argument('--enable', '-e', type=str, nargs='*', help='Only show enabled items')
-        source_add.add_argument('--branch', '-b', type=str, default='master', help='Branch name for clone source')
+        source_add.add_argument('--branch', '-b', type=str, default='master', help='Branch name for clone source.')
         source_add.set_defaults(func=Main.source_add)
 
-        source_list = sub_source.add_parser("list", help="List sources")
-        source_list.add_argument('--folder', '-f', type=str, help='Repository folder.')
+        source_list = sub_source.add_parser("list", parents=[self.parent_folder], help="List tko repository sources")
         source_list.set_defaults(func=Main.source_list)
 
-        source_enable = sub_source.add_parser("enable", help="Enable filters on a source")
-        source_enable.add_argument('--folder', '-f', type=str, help='Repository folder.')
+        source_enable = sub_source.add_parser("enable", parents=[self.parent_folder], help="Enable filters on a tko repository source.")
         source_enable.add_argument('alias', type=str, help='Alias for the remote.')
         source_enable.add_argument('enable', type=str, nargs='*', help='Only show enabled items')
         source_enable.set_defaults(func=Main.source_enable)
