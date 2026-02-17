@@ -82,8 +82,8 @@ class RepSource:
         if self.local_rep_folder is None:
             raise ValueError("Local rep folder is not set")
         return self.local_rep_folder
-    
     def get_local_database_path(self) -> str:
+    
         return os.path.abspath(os.path.join(self.get_rep_folder(), self.database))
 
     def load_from_dict(self, data: dict[str, Any]):

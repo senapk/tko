@@ -54,8 +54,8 @@ class Gui:
             pass
         act_color, act_text = self.get_activate_label()
         help_fixed: list[Text] = [
-            Text().addf("C", f"{GuiActions.filter} [1234]"),
-            Text().addf("C", f"{GuiActions.config} [{GuiKeys.palette}]"),
+            Text().addf("C", f"Criar Rascunho [{GuiKeys.create_draft}]"),
+            Text().addf("C", f"{GuiActions.pallete} [{GuiKeys.palette}]"),
             Text().addf(act_color, f"{act_text} [↲]"),
             Text().addf("G", f"{GuiActions.search} [{GuiKeys.search}]"),
             Text().addf(color, f"{GuiActions.edit} [{GuiKeys.edit}]"),
@@ -337,7 +337,7 @@ class Gui:
         _help.put_sentence(Text() + "  " + Text.r_token("g", f"Shift + {GuiKeys.calibrate}") + "  Para calibrar os direcionais do teclado")
         _help.put_sentence(Text() + "  " + Text.r_token("g", " setas") + "     Para navegar entre os elementos")
     
-        _help.put_sentence(Text() + f"   {GuiActions.config} " + Text.r_token("r", f"{GuiKeys.palette}") + "  Abre o menu de ações e configurações")
+        _help.put_sentence(Text() + f"   {GuiActions.pallete} " + Text.r_token("r", f"{GuiKeys.palette}") + "  Abre o menu de ações e configurações")
         _help.put_sentence(Text() + f"   {GuiActions.github} " + Text.r_token("r", f"{GuiKeys.open_url}") + "  Abre tarefa em uma aba do browser")
         _help.put_sentence(Text() + f"   {GuiActions.download} " + Text.r_token("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
         _help.put_sentence(Text() + f"   {GuiActions.edit} " + Text.r_token("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
@@ -345,6 +345,8 @@ class Gui:
         _help.put_sentence(Text() + "             (baixar, visitar, escolher, compactar, expandir)")
         _help.put_sentence(Text() + f"  {GuiActions.grade} " + Text.r_token("r", GuiKeys.grade_play) + "  Abre tela para auto avaliação")
         _help.put_sentence(Text() + f"    {GuiActions.search} " + Text.r_token("r", f"{GuiKeys.search}") + "  Abre a barra de pesquisa")
+        _help.put_sentence(Text() + "  " + Text.r_token("r", f"{GuiKeys.create_draft}") + "  Cria um rascunho para escrever código ou anotações")
+        
 
         _help.put_sentence(Text())
         _help.put_sentence(Text() + "Você pode mudar o editor padrão com o comando no terminal")

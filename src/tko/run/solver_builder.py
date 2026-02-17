@@ -253,8 +253,13 @@ class SolverBuilder:
 
     def __prepare_go(self):
         self.check_tool("go")
-        
-        self.__exec.set_executable(["go", "run"], self.args_list)
+        cache_exec = os.path.join(self.cache_dir, "main")
+        cmd = ["go", "build", "-o", cache_exec] + self.args_list
+        return_code, stdout, stderr = Runner.subprocess_run(cmd)
+        if return_code != 0:
+            self.__exec.set_compile_error(stdout + stderr)
+        else:
+            self.__exec.set_executable([cache_exec], [])
 
     def __prepare_ts(self, free_run_mode: bool):
         copy_dir = os.path.join(self.cache_dir, "src")
@@ -267,7 +272,7 @@ class SolverBuilder:
         if os.name == "nt":
             transpiler += ".cmd"
 
-        new_files = [os.path.abspath(x) for x in new_files]        
+        new_files = [os.path.abspath(x) for x in new_files]
         self.cache_dir = os.path.abspath(self.cache_dir)
 
         self.check_tool(transpiler)

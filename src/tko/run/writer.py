@@ -16,7 +16,7 @@ class Writer:
     @staticmethod
     def to_vpl(unit: Unit):
         text = "case=" + unit.case + "\n"
-        text += "input=" + unit.inserted
+        text += "input=" + unit.input
         text += "output=\"" + unit.get_expected() + "\"\n"
         if unit.grade is None:
             text += "\n"
@@ -39,13 +39,17 @@ class Writer:
             lines.append(f'label = {unit.case!r}')
 
         # blocos multiline reais
-        lines.append(f"input = {_multiline(unit.inserted)}")
+        lines.append(f"input = {_multiline(unit.input)}")
         lines.append(f"expected = {_multiline(unit.get_expected())}")
 
         if unit.grade is not None:
             lines.append(f'grade_reduction = "{unit.grade}"')
 
         return "\n".join(lines) + "\n"
+    
+    @staticmethod
+    def create_empty_toml() -> str:
+        return "[[cases]]\ninput = '''\n'''\nexpected = '''\n'''\n\n"
 
     @staticmethod
     def to_tio(unit: Unit):
@@ -54,7 +58,7 @@ class Writer:
             text += " " + unit.case
         if unit.grade is not None:
             text += " " + str(unit.grade) + "%"
-        text += '\n' + unit.inserted
+        text += '\n' + unit.input
         text += "======== EXPECT\n"
         text += unit.get_expected()
         if unit.get_expected() != '' and unit.get_expected()[-1] != '\n':
@@ -66,7 +70,7 @@ class Writer:
     def save_dir_files(folder: str, pattern_loader: PatternLoader, label: str, unit: Unit) -> None:
         file_source = pattern_loader.make_file_source(label)
         with open(os.path.join(folder, file_source.input_file), "w", encoding="utf-8") as f:
-            f.write(unit.inserted)
+            f.write(unit.input)
         with open(os.path.join(folder, file_source.output_file), "w", encoding="utf-8") as f:
             f.write(unit.get_expected())
 

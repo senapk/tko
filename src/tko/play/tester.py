@@ -387,8 +387,8 @@ class Tester:
     def make_bottom_line(self) -> list[Text]:
         cmds: list[Text] = []
 
-        text = f"{GuiActions.config} [{GuiKeys.palette}]"
-        cmds.append(self.borders.border("C", f"Voltar[Esc][q]"))
+        text = f"{GuiActions.pallete} [{GuiKeys.palette}]"
+        cmds.append(self.borders.border("C", f"Tela Anterior[Esc]"))
         cmds.append(self.borders.border("C", text))
         cmds.append(self.borders.border("G", f"{GuiActions.evaluate_tester} [{symbols.newline.text}]"))
         cmds.append(self.borders.border("G", f"{GuiActions.execute_tester} [{GuiKeys.execute_tester}]"))

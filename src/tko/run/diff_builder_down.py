@@ -14,7 +14,7 @@ class DiffBuilderDown:
         self.output: list[Text] = []
         self.__to_insert_header = False
         self.__standalone_diff = False
-        self.no_diff_mode = self.unit.inserted == "" and self.unit.get_expected() == ""
+        self.no_diff_mode = self.unit.input == "" and self.unit.get_expected() == ""
         self.expected_received, self.first_failure = self.db.render_diff(self.unit.get_expected(), self.unit.get_received())
 
     def to_insert_header(self):
@@ -55,7 +55,7 @@ class DiffBuilderDown:
         else:
             self.output.append(Text().addf(color, DiffBuilder.vinput).fold_in(self.width, symbols.hbar, "╭", "╮"))
         # lines
-        for line in self.unit.inserted.splitlines():
+        for line in self.unit.input.splitlines():
             self.output.append(Text().add(symbols.vbar).add(" ").add(line).ljust(self.width - 1, Text.Token(" ")).add(symbols.vbar))
 
     def insert_expected(self):

@@ -182,7 +182,6 @@ class FloatingInputData:
         self.shortcut = shortcut
         self.exit_on_action = False
 
-
     def set_exit_on_action(self, value: bool):
         self.exit_on_action = value
         return self

@@ -69,7 +69,7 @@ class GameBuilder:
         tasks = self.collect_tasks()
         if not os.path.exists(database_path):
             os.makedirs(database_path)
-        for entry in os.listdir(database_path):
+        for entry in sorted(os.listdir(database_path)):
             path = os.path.join(database_path, entry)
             if not os.path.isdir(path):
                 continue

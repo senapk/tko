@@ -11,7 +11,7 @@ class GuiActions:
     navigate = "←↓→"
     uncheck = "Desmarcar"
     search = "Busca"
-    config = "Config"
+    pallete = "Paleta"
     grade = "Pontuar"
     # tester frame
     time_limit = "Tempo"
@@ -29,13 +29,14 @@ class GuiKeys:
     show_tasks = "4"
 
     time_view = "T"
-    palette = "c"
+    palette = "P"
     images = "I"
     down_task = "b"
     activate = "\n"
     key_help = "?"
+    reload_sources = "R"
     
-    # rate = "R"
+    create_draft = "r"
     set_lang_drafts = "L"
     open_url = "u"
     key_quit = "q"

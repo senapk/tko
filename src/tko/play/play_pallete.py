@@ -76,7 +76,7 @@ class PlayConfig:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mudar linguagem de download de {y}", symbols.action, "Rascunhos"),
+                lambda: Text.format(" {} Mudar {y} de programação", symbols.action, "Linguagem"),
                 self.gui.language.set_language,
                 GuiKeys.set_lang_drafts
             ).set_exit_on_action(True)
@@ -87,6 +87,14 @@ class PlayConfig:
                 lambda: Text.format(" {} {y} as teclas direcionais", symbols.action, "Calibrar"),
                 lambda: self.fman.add_input(FloatingCalibrate(self.actions.settings)),
                 GuiKeys.calibrate
+            ).set_exit_on_action(True)
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text.format(" {} Criar {y} para escrever código ou anotações", symbols.action, "Rascunho"),
+                self.actions.create_draft,
+                GuiKeys.create_draft
             ).set_exit_on_action(True)
         )
 

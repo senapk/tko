@@ -4,7 +4,6 @@ from tko.game.task import Task
 # from tko.game.graph import Graph
 
 from icecream import ic # type: ignore
-from tko.play.flags import Flags
 from tko.play.floating_grade import FloatingGrade
 from tko.settings.settings import Settings
 from tko.play.tracker import Tracker
@@ -24,10 +23,13 @@ from tko.play.opener import Opener
 from tko.play.tasktree import TaskAction
 from typing import Callable
 
+from tko.down.drafts import Drafts
+from tko.run.writer import Writer
+import os
+
 from tko.logger.log_item_self import LogItemSelf
 from tko.logger.log_item_move import LogItemMove
 
-import os
 import shutil
 import tempfile
 import subprocess
@@ -160,6 +162,32 @@ class PlayActions:
                     )
                 )
             return
+
+    def create_draft(self):
+        local_source = self.game.get_local_source()
+        rep_folder = local_source.get_local_database_path()
+        count = 1
+        while True:
+            folder = os.path.join(rep_folder, "draft" + (str(count) if count > 1 else ""))
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+                break
+            count += 1
+
+        draft = ""
+        if self.rep.data.lang in Drafts.drafts:
+            draft = Drafts.drafts[self.rep.data.lang]
+        with open(os.path.join(folder, f"draft.{self.rep.data.lang}"), "w", encoding="utf-8") as f:
+            f.write(draft)
+        with open(os.path.join(folder, "cases.toml"), "w", encoding="utf-8") as f:
+            f.write(Writer.create_empty_toml())
+        with open (os.path.join(folder, "Readme.md"), "w", encoding="utf-8") as f:
+            f.write("# " + os.path.basename(folder) + "\n\nDescrição do rascunho.\n\nEscreva aqui as informações que você quiser.")
+        self.game.reload_sources()
+        self.fman.add_input(Floating(self.settings, "v>")
+                            .put_text(f"Rascunho criado em {folder}")
+                            .put_text("\nVocê pode renomear a pasta manualmente e apertar shift R para recarregar.")
+                            .set_warning())
 
     def down_remote_task(self):
 

@@ -61,9 +61,9 @@ Os botões de 1 a 4 habilitam os filtros de exibição.
 1. Navegue até as atividades com as setas do teclado.
 2. Se precisar, calibre as teclas com Shift C.
 3. Use o enter para baixar e entrar na atividade.
-4. Aperte a tecla 'e' depois de entrar para abrir
+4. Aperte a tecla 'e', depois de entrar, para abrir
    os arquivos de rascunho e descrição da atividade.
-5. Faça o código e rode os testes no enter.
+5. Aperte enter para rodar os testes quando mudar algo no código.
 6. Aperte 'esc' para voltar a tela de seleção de atividades.
 7. Use o comando 'p' para pontuar a atividade depois de concluída.
 
@@ -107,7 +107,7 @@ intro: dict[str, str] = {}
 
 intro["elephant"] = r"""
         ⣀⣀                                                                      
-      ⣰⣿⣿⣿⣿⣦⣀⣀⣀           ↲ -> avalia usando os testes cadastrados no cases.tio 
+      ⣰⣿⣿⣿⣿⣦⣀⣀⣀           ↲ -> avalia usando os testes cadastrados no cases
       ⢿⣿⠟⠋⠉    ⠉⠑⠢⣄⡀      r -> compila e (r)oda fazendo entrada de dados manual 
      ⢠⠞⠁           ⠙⢿⣿⣿⣦⡀                                                       
  ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇ TAB -> Muda o arquivo PRINCIPAL se múltiplos arquivos 

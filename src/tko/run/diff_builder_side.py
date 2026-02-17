@@ -79,8 +79,8 @@ class DiffBuilderSide:
             self.output.append(Text().addf(input_color, DiffBuilder.vinput).fold_in(self.width, symbols.hbar, "╭", "╮"))
 
         # input lines
-        if self.unit.inserted != "":
-            lines = [Text().add(x) for x in self.unit.inserted.splitlines()]
+        if self.unit.input != "":
+            lines = [Text().add(x) for x in self.unit.input.splitlines()]
             for l in lines:
                 self.output.append(self.split_screen(l, l))
     

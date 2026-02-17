@@ -22,7 +22,7 @@ class UnitRunner:
             timeout = None
         return_code, stdout, stderr = Runner.subprocess_run(
             cmd = cmd, 
-            input_data = unit.inserted,
+            input_data = unit.input,
             timeout = timeout, 
             folder = folder,
             shell_mode=executable.need_shell_mode)

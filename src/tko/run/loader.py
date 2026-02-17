@@ -249,7 +249,7 @@ class Loader:
                 unit.grade = 100
                 input_file = os.path.join(folder, m.input_file)
                 value = Decoder.load(input_file)
-                unit.inserted = value + ("" if value.endswith("\n") else "\n")
+                unit.input = value + ("" if value.endswith("\n") else "\n")
                 output_file = os.path.join(folder, m.output_file)
                 value = Decoder.load(output_file)
                 unit.set_expected(value + ("" if value.endswith("\n") else "\n"))

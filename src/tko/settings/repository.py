@@ -56,7 +56,7 @@ class Repository:
             for source in self.data.get_sources():
                 self.update_cache_path(source)
         sources: list[RepSource] = self.data.get_sources()
-        self.game.load_sources(sources, self.data.lang, silent=silent)
+        self.game.set_sources(sources, self.data.lang, silent=silent)
         self.__load_tasks_from_rep_into_game()
         return self
     
@@ -90,7 +90,6 @@ class Repository:
     def down_source_from_remote_url(self, source: RepSource) -> bool:
         cache_file = source.get_file_path()
         os.makedirs(self.paths.get_cache_folder(), exist_ok=True)
-        #print("debug", source.get_url_link(), cache_file)
         ru = RemoteUrl(source.get_url_link())
         try:
             ru.download_absolute_to(cache_file)

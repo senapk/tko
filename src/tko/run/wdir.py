@@ -76,7 +76,7 @@ class Wdir:
 
         # loading source list
         files = os.listdir(folder)
-        source_list = [target for target in files if target.endswith(".tio") or target.endswith(".vpl") or target.endswith(".cases")]
+        source_list = [target for target in files if target.endswith(".tio") or target.endswith(".vpl") or target.endswith(".cases") or target.endswith(".toml")]
         if len(source_list) == 0:
             source_list = [target for target in files if target.endswith(".md")]
         source_list = [os.path.join(folder, x) for x in source_list]
@@ -121,7 +121,13 @@ class Wdir:
         self.__pack_list = []
         for source in self.__source_list:
             try:
-                self.__pack_list.append(Loader.parse_source(source))
+                raw_list: list[Unit] = Loader.parse_source(source)
+                unit_list: list[Unit] = []
+                for unit in raw_list:
+                    if unit.get_expected() == "" and unit.get_input() == "":
+                        continue
+                    unit_list.append(unit)
+                self.__pack_list.append(unit_list)
             except FileNotFoundError as e:
                 print(str(e))
                 loading_failures += 1
@@ -178,7 +184,7 @@ class Wdir:
         for unit in self.__unit_list:
             unit.index = index
             index += 1
-            search = [x for x in new_list if x.inserted == unit.inserted]
+            search = [x for x in new_list if x.input == unit.input]
             if len(search) > 0:
                 unit.repeated = search[0].index
             new_list.append(unit)
@@ -189,7 +195,7 @@ class Wdir:
         # filtering marked repeated
         self.__unit_list = [unit for unit in self.__unit_list if unit.repeated is None]
         if param.to_sort:
-            self.__unit_list.sort(key=lambda v: len(v.inserted))
+            self.__unit_list.sort(key=lambda v: len(v.input))
         if param.unlabel:
             for unit in self.__unit_list:
                 unit.case = ""

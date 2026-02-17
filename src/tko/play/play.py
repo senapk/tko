@@ -8,7 +8,7 @@ from tko.play.keys import GuiKeys
 from tko.play.images import opening
 from tko.play.floating_calibrate import FloatingCalibrate
 from tko.play.input_manager import InputManager
-from tko.play.play_config import PlayConfig
+from tko.play.play_pallete import PlayConfig
 from tko.play.floating import Floating
 from tko.play.floating_manager import FloatingManager
 from tko.play.flags import Flags, FlagsMan
@@ -85,6 +85,9 @@ class Play:
         return self.actions.select_task()
 
 
+    def reload_sources(self):
+        self.game.reload_sources()
+
     def make_callback(self) -> InputManager:
         cman = InputManager()
 
@@ -94,6 +97,7 @@ class Play:
         cman.add_int(curses.KEY_DOWN, self.move_down)
         cman.add_int(curses.KEY_LEFT, self.move_left)
         cman.add_int(curses.KEY_RIGHT, self.move_right)
+        cman.add_str(GuiKeys.reload_sources, self.reload_sources)
 
         cman.add_int(curses.KEY_NPAGE, self.page_down)
         cman.add_int(curses.KEY_PPAGE, self.page_up)
@@ -102,12 +106,10 @@ class Play:
         cman.add_str(GuiKeys.activate, self.activate) # type: ignore
         cman.add_str(GuiKeys.open_url, self.actions.open_link)
         cman.add_str(GuiKeys.down_task, self.actions.down_remote_task)
-        # cman.add_str(GuiKeys.edit, lambda: self.actions.open_code())
-#        cman.add_str(GuiKeys.expand, self.tree.process_expand_all)
-#        cman.add_str(GuiKeys.collapse, self.tree.process_collapse_all)
         cman.add_str(GuiKeys.borders, self.app.toggle_borders)
         cman.add_str(GuiKeys.images, self.app.toggle_images)
         cman.add_str(GuiKeys.set_lang_drafts, self.gui.language.set_language)
+        cman.add_str(GuiKeys.create_draft, self.actions.create_draft)
 
         cman.add_str(GuiKeys.grade_play, self.actions.self_evaluate)
         cman.add_int(curses.KEY_BACKSPACE, self.actions.self_evaluate)

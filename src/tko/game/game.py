@@ -75,16 +75,31 @@ class Game:
             total_complete += value
         return total_obtained, total_priority, total_complete
 
+    def get_local_source(self) -> RepSource:
+        for s in self.sources:
+            if s.database == RepSource.LOCAL_SOURCE_DATABASE:
+                return s
+        raise ValueError("Local source not found")
 
-    def load_sources(self, sources: list[RepSource], language: str, silent: bool = False) -> None:
-        for source in sources:
+    def set_sources(self, sources: list[RepSource], language: str, silent: bool = False) -> None:
+        self.sources = sources
+        self.ordered_clusters = []
+        self.clusters = {}
+        self.quests = {}
+        self.tasks = {}
+        self.language = language
+        self.silent = silent
+        self.reload_sources()
+    
+    def reload_sources(self):
+        for source in self.sources:
             filename = source.get_file_path()
             filters = source.filters
             content = ""
             if filename == "":
                 pass
             elif not os.path.exists(filename):
-                if source.database != source.LOCAL_SOURCE_DATABASE and not silent:
+                if source.database != source.LOCAL_SOURCE_DATABASE and not self.silent:
                     print(f"Aviso: fonte {filename} não encontrada")
             else:
                 content = Decoder.load(filename)
@@ -96,7 +111,7 @@ class Game:
                 rep_folder=source.get_rep_folder(), 
                 load_local=source.database == source.LOCAL_SOURCE_DATABASE
             )
-            gb.build_from(content, language)
+            gb.build_from(content, self.language)
             for cluster_key in gb.ordered_clusters:
                 self.ordered_clusters.append(source.database + "@" + cluster_key)
             for cluster in gb.clusters.values():

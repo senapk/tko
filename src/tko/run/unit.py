@@ -8,7 +8,7 @@ class Unit:
         self.source_pad = 0  # stores the pad to justify the source file
         self.case = case  # name
         self.case_pad = 0  # stores the pad to justify the case name
-        self.inserted = input_data  # input
+        self.input = input_data  # input
         self.__expected = expected  # expected output
         self.__received: None | str = None  # solver generated answer
         self.grade: None | int = grade  # None represents proportional gr, 100 represents all
@@ -28,6 +28,9 @@ class Unit:
     def set_received(self, received: str):
         self.__received = received.replace("\r", "")
         return self
+
+    def get_input(self) -> str:
+        return self.input
 
     def get_received(self) -> None | str:
         return self.__received

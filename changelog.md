@@ -1,8 +1,11 @@
 # Changelog
 
-- 8.7.0
+- 7.7.0
   - add: adding .toml support for test cases
-- 8.6.0
+  - add: changing go mode to use go build instead of go run.
+  - add: creating drafts using r(rascunho) na tela principal.
+  - add: renaming config to palette
+- 7.6.0
   - add: xray mode to see task versions with X key
   - add: unfold task versions to temp folder with V key
   - add: open versions with default opener cmd
