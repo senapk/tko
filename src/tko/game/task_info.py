@@ -65,7 +65,8 @@ class TaskInfo:
 
     def get_kv(self) -> dict[str, str]:
         kv: dict[str, str] = {}
-        kv[TaskInfo.Keys.feedback_str] = "1" if self.feedback else "0"
+        if self.feedback:
+            kv[TaskInfo.Keys.feedback_str] = "1"
         if self.rate != 0:
             kv[TaskInfo.Keys.rate_str] = str(self.rate)
         if self.study != 0:
@@ -84,7 +85,6 @@ class TaskInfo:
             kv[TaskInfo.Keys.ia_debug_str] = "1"
         if self.ia_refactor:
             kv[TaskInfo.Keys.ia_refactor_str] = "1"
-
         return kv
     
     

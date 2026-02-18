@@ -83,7 +83,7 @@ class PlayActions:
                     .put_text("\nPasta não encontrada.\n")
                     .set_error()
                 )
-            self.game.reload_sources()
+            self.rep.load_game(try_update=False, silent=True)
         else:
             self.fman.add_input(
                  Floating().bottom().right()
@@ -159,9 +159,7 @@ class PlayActions:
                 task.info.feedback = True
             else:
                 self.fman.add_input(
-                    FloatingGrade(obj).set_exit_fn(
-                        lambda: self.register_action(task)
-                    )
+                    FloatingGrade(obj, self.register_action)
                 )
             return
 
@@ -190,7 +188,7 @@ class PlayActions:
                 f.write(Writer.create_empty_toml())
             with open (os.path.join(folder, "Readme.md"), "w", encoding="utf-8") as f:
                 f.write("# " + os.path.basename(folder) + "\n\nDescrição do rascunho.\n\nEscreva aqui as informações que você quiser.")
-            self.game.reload_sources()
+            self.rep.load_game(try_update=False, silent=True) # recarrega o jogo
             self.fman.add_input( Floating().bottom().right()
                                 .put_text(f"Rascunho criado em {folder}")
                                 .put_text("\nVocê pode renomear a pasta manualmente e apertar shift R para recarregar.")

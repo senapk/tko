@@ -118,7 +118,7 @@ class InputBoolean(InputLine):
 
 
 class FloatingGrade(FloatingABC):
-    def __init__(self, task: Task):
+    def __init__(self, task: Task, fn_exit: Callable[[Task], None] | None = None):
         self.floating = Floating()
         self._task = task
         self._grader = TaskGrader(task.info)
@@ -127,6 +127,7 @@ class FloatingGrade(FloatingABC):
         self.floating.frame.set_border_color("g")
         self.floating.set_header_text(Text.format("{y/}", " Utilize os direcionais e texto para marcar"))
         self.floating.set_footer_text(Text.format("{y/}", " Pressione Enter para confirmar, Esc para cancelar"))
+        self.fn_exit = fn_exit
 
         progression: list[tuple[str, Text]] = [
             ("x", Text().addf("g", " Nada")),
@@ -212,12 +213,7 @@ class FloatingGrade(FloatingABC):
 
 
     def draw(self):
-        # self.floating.set_default_header()
-        # self.floating.set_default_footer()
-        # self.floating.setup_frame()
-        # self.floating.frame.draw()
         self.update_content()
-        # self.floating.write_content()
         self.floating.draw()
 
     def change_task(self):
@@ -242,7 +238,7 @@ class FloatingGrade(FloatingABC):
 
     def send_key(self, key: int):
         self.input_lines[self._line].send_key(key)
-        self.change_task()
+        # self.change_task()
     
     def process_input(self, key: int) -> int:
 
@@ -255,8 +251,9 @@ class FloatingGrade(FloatingABC):
                 self.send_key_down()
             else:
                 self.floating.enable = False
-                if self.floating.exit_fn is not None:
-                    self.floating.exit_fn()
+                self.change_task()
+                if self.fn_exit is not None:
+                    self.fn_exit(self._task)
         elif key == curses.KEY_EXIT:
             self.floating.enable = False
         else:

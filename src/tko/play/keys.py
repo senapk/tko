@@ -34,7 +34,7 @@ class GuiKeys:
     down_task = "b"
     activate = "\n"
     key_help = "?"
-    reload_sources = "R"
+    reload_game = "R"
     
     create_draft = "r"
     set_lang_drafts = "L"

@@ -89,9 +89,9 @@ class Game:
         self.tasks = {}
         self.language = language
         self.silent = silent
-        self.reload_sources()
+        self.load_sources()
     
-    def reload_sources(self):
+    def load_sources(self):
         for source in self.sources:
             filename = source.get_file_path()
             filters = source.filters
