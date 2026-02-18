@@ -2,6 +2,7 @@
 
 - 7.8.0
   - fix: error in xray when log in cache fixed
+  - fix: floaging not loading all text
 - 7.7.0
   - add: adding .toml support for test cases
   - add: changing go mode to use go build instead of go run.

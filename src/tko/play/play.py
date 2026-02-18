@@ -32,6 +32,9 @@ class Play:
         self.gui = Gui(tree=self.tree, flagsman=self.flagsman, fman=self.fman)
         self.actions = PlayActions(self.gui)
         self.play_palette = PlayConfig(self.actions)
+        self.fman.add_input(
+            Floating(self.settings).set_content(opening['yoda'].splitlines()).set_warning()
+        )
 
     def set_need_update(self):
         self.gui.set_need_update()
@@ -82,7 +85,6 @@ class Play:
     def activate(self):
         self.gui.xray_offset = 0
         return self.actions.select_task()
-
 
     def reload_sources(self):
         self.game.reload_sources()

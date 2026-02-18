@@ -176,7 +176,6 @@ class FloatingGrade(Floating):
             self.iarefactor_text
         ]
 
-
     def set_focus(self):
         for i, line in enumerate(self.input_lines):
             line.set_focus(i == self._line)
@@ -236,7 +235,6 @@ class FloatingGrade(Floating):
     def send_key(self, key: int):
         self.input_lines[self._line].send_key(key)
         self.change_task()
-
     
     # @override
     def process_input(self, key: int) -> int:
