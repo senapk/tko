@@ -5,9 +5,10 @@ from tko.game.task import Task
 
 from icecream import ic # type: ignore
 from tko.play.floating_grade import FloatingGrade
+from tko.play.floating_input_text import FloatingInputText
 from tko.settings.settings import Settings
 from tko.play.tracker import Tracker
-
+from tko.util.text import Text
 from tko.cmds.cmd_down import CmdDown
 from tko.cmds.cmd_run import Run
 
@@ -82,6 +83,7 @@ class PlayActions:
                     .put_text("\nPasta não encontrada.\n")
                     .set_error()
                 )
+            self.game.reload_sources()
         else:
             self.fman.add_input(
                  Floating().bottom().right()
@@ -166,28 +168,35 @@ class PlayActions:
     def create_draft(self):
         local_source = self.game.get_local_source()
         rep_folder = local_source.get_local_database_path()
-        count = 1
-        while True:
-            folder = os.path.join(rep_folder, "draft" + (str(count) if count > 1 else ""))
+        current_folders_on_rep = os.listdir(rep_folder)
+        def __create(draft_name: str):
+            folder = os.path.join(rep_folder, draft_name)
             if not os.path.exists(folder):
                 os.makedirs(folder)
-                break
-            count += 1
+            else:
+                self.fman.add_input(
+                    Floating().bottom().right()
+                    .put_text(f"\nA pasta {folder} já existe.\n")
+                    .set_error()
+                )
+                return
 
-        draft = ""
-        if self.rep.data.lang in Drafts.drafts:
-            draft = Drafts.drafts[self.rep.data.lang]
-        with open(os.path.join(folder, f"draft.{self.rep.data.lang}"), "w", encoding="utf-8") as f:
-            f.write(draft)
-        with open(os.path.join(folder, "cases.toml"), "w", encoding="utf-8") as f:
-            f.write(Writer.create_empty_toml())
-        with open (os.path.join(folder, "Readme.md"), "w", encoding="utf-8") as f:
-            f.write("# " + os.path.basename(folder) + "\n\nDescrição do rascunho.\n\nEscreva aqui as informações que você quiser.")
-        self.game.reload_sources()
-        self.fman.add_input( Floating().bottom().right()
-                            .put_text(f"Rascunho criado em {folder}")
-                            .put_text("\nVocê pode renomear a pasta manualmente e apertar shift R para recarregar.")
-                            .set_warning())
+            draft = ""
+            if self.rep.data.lang in Drafts.drafts:
+                draft = Drafts.drafts[self.rep.data.lang]
+            with open(os.path.join(folder, f"draft.{self.rep.data.lang}"), "w", encoding="utf-8") as f:
+                f.write(draft)
+            with open(os.path.join(folder, "cases.toml"), "w", encoding="utf-8") as f:
+                f.write(Writer.create_empty_toml())
+            with open (os.path.join(folder, "Readme.md"), "w", encoding="utf-8") as f:
+                f.write("# " + os.path.basename(folder) + "\n\nDescrição do rascunho.\n\nEscreva aqui as informações que você quiser.")
+            self.game.reload_sources()
+            self.fman.add_input( Floating().bottom().right()
+                                .put_text(f"Rascunho criado em {folder}")
+                                .put_text("\nVocê pode renomear a pasta manualmente e apertar shift R para recarregar.")
+                                .set_warning())
+
+        self.fman.add_input(FloatingInputText(Text().add("Nome do rascunho"), __create, current_folders_on_rep))
 
     def down_remote_task(self):
 
