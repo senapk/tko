@@ -1,5 +1,8 @@
 # Changelog
 
+- 7.8.1
+  - fix: reload game erasing tasks
+  - fix: tasks not saving after grading 
 - 7.8.0
   - fix: error in xray when log in cache fixed
   - fix: floaging not loading all text
