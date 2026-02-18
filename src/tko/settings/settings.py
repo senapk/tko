@@ -121,7 +121,6 @@ class Settings:
             yaml.dump(value, f)
         return self
 
-    # @override
     def __str__(self):
         output: list[str] = []
         output.append(str(Text.format("{g}", "Arquivo de configuração:")))

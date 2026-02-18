@@ -32,9 +32,7 @@ class Play:
         self.gui = Gui(tree=self.tree, flagsman=self.flagsman, fman=self.fman)
         self.actions = PlayActions(self.gui)
         self.play_palette = PlayConfig(self.actions)
-        self.fman.add_input(
-            Floating(self.settings).set_content(opening['yoda'].splitlines()).set_warning()
-        )
+        # self.fman.add_input( Floating().set_content(opening['yoda'].splitlines()).set_warning() )
 
     def set_need_update(self):
         self.gui.set_need_update()
@@ -50,7 +48,7 @@ class Play:
             self.exit = True
 
         self.fman.add_input(
-            Floating(self.settings).set_content(opening['cool'].splitlines()).set_exit_fn(set_exit).set_exit_key('q').set_warning()
+            Floating().set_content(opening['cool'].splitlines()).set_exit_fn(set_exit).set_exit_key('q').set_warning()
         )
 
     def move_up(self):
@@ -120,7 +118,7 @@ class Play:
         
         for flag in self.flagsman.flags.values():
             if flag.get_autoload():
-                cman.add_str(flag.get_keycode(), FlagFunctor(flag, self.fman, self.settings))
+                cman.add_str(flag.get_keycode(), FlagFunctor(flag, self.fman))
 
         cman.add_str(GuiKeys.search, self.gui.search.toggle_search)
         cman.add_str(GuiKeys.palette, self.play_palette.command_pallete)
@@ -135,7 +133,7 @@ class Play:
             return
         if key < 0 or key > 255:
             return
-        self.fman.add_input( Floating(self.settings, "v>").set_error().put_text(f"Tecla char:{chr(key)}, code:{key}, não reconhecida") )
+        self.fman.add_input( Floating("v>").set_error().put_text(f"Tecla char:{chr(key)}, code:{key}, não reconhecida") )
 
 
     def main(self, scr: curses.window):

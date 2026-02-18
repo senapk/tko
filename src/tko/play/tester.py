@@ -4,8 +4,10 @@ import os
 from typing import Callable, Optional
 
 from tko.game.task import Task
+from tko.play.floating_drop_down import FloatingDropDown
 from tko.play.border import Border
-from tko.play.floating import Floating, FloatingInput, FloatingInputData
+from tko.play.floating import Floating
+from tko.play.floating_drop_down import FloatingInputData
 from tko.play.floating_manager import FloatingManager
 from tko.play.fmt import Fmt
 from tko.play.frame import Frame
@@ -476,7 +478,7 @@ class Tester:
                     try:
                         self.wdir.get_solver().prepare_exec()
                     except CompileError as e:
-                        self.fman.add_input(Floating(self.settings, "v>").set_error().put_text(e.message))
+                        self.fman.add_input(Floating("v>").set_error().put_text(e.message))
                         self.mode = SeqMode.finished
                     Fmt.clear()
                     self.draw_top_bar()
@@ -558,7 +560,7 @@ class Tester:
         if self.mode == SeqMode.finished:
             self.mode = SeqMode.select
         if self.locked_index:
-            self.fman.add_input(Floating(self.settings, "v>").set_warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(GuiKeys.lock)))
+            self.fman.add_input(Floating("v>").set_warning().put_text("←\nAtividade travada\nAperte {} para destravar".format(GuiKeys.lock)))
             return
         if not self.wdir.get_solver().has_compile_error():
             self.focused_index = max(0, self.focused_index - 1)
@@ -572,7 +574,7 @@ class Tester:
         if self.mode == SeqMode.finished:
             self.mode = SeqMode.select
         if self.locked_index:
-            self.fman.add_input(Floating(self.settings, "v>").set_warning().put_text("→\nAtividade travada\nAperte {} para destravar".format(GuiKeys.lock)))
+            self.fman.add_input(Floating("v>").set_warning().put_text("→\nAtividade travada\nAperte {} para destravar".format(GuiKeys.lock)))
             return
         if not self.wdir.get_solver().has_compile_error():
             self.focused_index = min(len(self.wdir.get_unit_list()) - 1, self.focused_index + 1)
@@ -591,7 +593,7 @@ class Tester:
     def change_main(self):
         if len(self.get_solver_names()) == 1:
             self.fman.add_input(
-                Floating(self.settings, "v>").set_warning()
+                Floating("v>").set_warning()
                 .put_text("Seu projeto só tem um arquivo de solução.")
                 .put_text("Essa funcionalidade troca qual dos arquivos")
                 .put_text("de solução será o principal.")
@@ -647,31 +649,31 @@ class Tester:
         elif key == ord(GuiKeys.evaluate):
             self.run_test_mode()
         elif key == ord(GuiKeys.lock):
-            self.fman.add_input(Floating(self.settings, "v>").set_warning().put_text("Função de travamento {}".format("ligada" if not self.locked_index else "desligada")))
+            self.fman.add_input(Floating("v>").set_warning().put_text("Função de travamento {}".format("ligada" if not self.locked_index else "desligada")))
             self.lock_unit()
         elif key == ord(GuiKeys.edit):
             if self.opener is not None:
                 self.opener.load_folders_and_open()
         elif key == ord(GuiKeys.limite):
             self.change_limit()
-            self.fman.add_input(Floating(self.settings, "v>").set_warning().put_text("Limite de execução alterado para {}".format(self.get_time_limit_symbol())))
+            self.fman.add_input(Floating("v>").set_warning().put_text("Limite de execução alterado para {}".format(self.get_time_limit_symbol())))
             self.settings.save_settings()
         elif key == ord(GuiKeys.diff):
             self.settings.app.toggle_diff()
-            self.fman.add_input(Floating(self.settings, "v>").set_warning().put_text("Modo de Diff alterado para {}".format(self.settings.app.get_diff_mode().value)))
+            self.fman.add_input(Floating("v>").set_warning().put_text("Modo de Diff alterado para {}".format(self.settings.app.get_diff_mode().value)))
             self.settings.save_settings()
         elif key == ord(GuiKeys.borders):
             self.settings.app.toggle_borders()
-            self.fman.add_input(Floating(self.settings, "v>").set_warning().put_text("Modo de Bordas alterado para {}".format("ligado" if self.settings.app.get_use_borders() else "desligado")))
+            self.fman.add_input(Floating("v>").set_warning().put_text("Modo de Bordas alterado para {}".format("ligado" if self.settings.app.get_use_borders() else "desligado")))
             self.settings.save_settings()
         elif key == ord(GuiKeys.images):
             self.settings.app.toggle_images()
-            self.fman.add_input(Floating(self.settings, "v>").set_warning().put_text("Modo de Imagens alterado para {}".format("ligado" if self.settings.app.get_use_images() else "desligado")))
+            self.fman.add_input(Floating("v>").set_warning().put_text("Modo de Imagens alterado para {}".format("ligado" if self.settings.app.get_use_images() else "desligado")))
             self.settings.save_settings()
         elif key == ord(GuiKeys.palette):
             self.command_pallete()
         elif key != -1 and key != curses.KEY_RESIZE:
-            self.fman.add_input( Floating(self.settings, "v>").set_error().put_text(f"Tecla char:{chr(key)}, code:{key}, não reconhecida") )
+            self.fman.add_input( Floating("v>").set_error().put_text(f"Tecla char:{chr(key)}, code:{key}, não reconhecida") )
         return None
 
     def command_pallete(self):
@@ -729,11 +731,13 @@ class Tester:
         )
 
         self.fman.add_input(
-            FloatingInput(self.settings, "").set_text_ljust()
-                      .set_header(" Selecione uma ação da lista ")
+            FloatingDropDown().set_floating(
+                        Floating().set_text_ljust()
+                        .set_header(" Selecione uma ação da lista ")
+                        .set_footer(" Use Enter para aplicar e Esc para Sair ")
+                      )
                       .set_options(options)
                       .set_exit_on_enter(False)
-                      .set_footer(" Use Enter para aplicar e Esc para Sair ")
         )
 
     def run(self):

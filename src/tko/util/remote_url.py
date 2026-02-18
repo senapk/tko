@@ -35,6 +35,5 @@ class RemoteUrl:
         Decoder.save(filename, content)
         return
 
-    # @override
     def __str__(self):
         return self.get_raw_url()

@@ -58,7 +58,6 @@ class Text:
             self.text = text
             self.fmt = fmt
 
-        # @override
         def __eq__(self, other: Any):
             if not isinstance(other, Text.Token):
                 return False
@@ -70,7 +69,6 @@ class Text:
         def __add__(self, other: Any):
             return Text().add(self).add(other)
 
-        # @override
         def __str__(self):
             return f"({self.fmt}:{self.text})"
         
@@ -186,7 +184,6 @@ class Text:
     def __add__(self, other: Any):
         return Text(self.default_fmt).add(self).add(other)
 
-    # @override
     def __eq__(self, other: Any):
         if len(self.data) != len(other.data):
             return False
@@ -195,7 +192,6 @@ class Text:
                 return False
         return True
 
-    # @override
     def __str__(self):
         return self.ansi()
 

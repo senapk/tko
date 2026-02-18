@@ -1,12 +1,12 @@
 from tko.game.task import Task
-from tko.play.floating import Floating
+from tko.play.floating import FloatingABC, Floating
 from tko.util.text import Text
-from tko.settings.settings import Settings
 from tko.game.task_grader import TaskGrader
 from tko.util.symbols import symbols
 
 # import ABC, abstractmethod
 from abc import ABC, abstractmethod
+from typing import Callable
 
 # from typing import override
 
@@ -117,17 +117,16 @@ class InputBoolean(InputLine):
         return text
 
 
-class FloatingGrade(Floating):
-    def __init__(self, task: Task, settings: Settings, _align: str =""):
-        super().__init__(settings, _align)
-        self.settings = settings
+class FloatingGrade(FloatingABC):
+    def __init__(self, task: Task, _align: str =""):
+        self.floating = Floating(_align)
         self._task = task
         self._grader = TaskGrader(task.info)
         self._line = 0 if not task.is_leet() else 1
-        self.set_text_ljust()
-        self._frame.set_border_color("g")
-        self.set_header_text(Text.format("{y/}", " Utilize os direcionais e texto para marcar"))
-        self.set_footer_text(Text.format("{y/}", " Pressione Enter para confirmar, Esc para cancelar"))
+        self.floating.set_text_ljust()
+        self.floating.frame.set_border_color("g")
+        self.floating.set_header_text(Text.format("{y/}", " Utilize os direcionais e texto para marcar"))
+        self.floating.set_footer_text(Text.format("{y/}", " Pressione Enter para confirmar, Esc para cancelar"))
 
         progression: list[tuple[str, Text]] = [
             ("x", Text().addf("g", " Nada")),
@@ -180,37 +179,46 @@ class FloatingGrade(Floating):
         for i, line in enumerate(self.input_lines):
             line.set_focus(i == self._line)
 
+    def set_exit_fn(self, fn: Callable[[], None]):
+        self.floating.exit_fn = fn
+        return self
+
+    def is_enable(self) -> bool:
+        return self.floating.enable
+
     def update_content(self):
         self.set_focus()
-        self._content = []
-        self._content.append(Text().add("         Pontue de acordo com a última fez que você (re)fez a tarefa do zero (sprint)         "))
+
+        content = self.floating.content
+        content.clear()
+        content.append(Text().add("         Pontue de acordo com a última fez que você (re)fez a tarefa do zero (sprint)         "))
         width = 90
         somatorio = (Text() .addf('g', f'{round(self._task.get_percent()):>3}%'))
 
-        self._content.append(Text().add("╔") + Text().add(" Tarefa:").add(somatorio).center(width, Text.Token("═", "")))
+        content.append(Text().add("╔") + Text().add(" Tarefa:").add(somatorio).center(width, Text.Token("═", "")))
         enabled_option = "╠═ "
         op_prefix = enabled_option if not self._task.is_leet() else "║  "
-        self._content.append(Text().add(op_prefix).add(self.rate_slide.get_text()))
-        self._content.append(Text().add(enabled_option).add(self.human_text.get_text()))
-        self._content.append(Text().add(enabled_option).add(self.time_text.get_text()))
-        self._content.append(Text().add(enabled_option).add(self.guide_text.get_text()))
-        self._content.append(Text().add("╠═") + Text().add(" Você usou IA (LLMs) para ").center(width, Text.Token("═", "")))
-        self._content.append(Text().add(enabled_option).add(self.iaconcept_text.get_text()))
-        self._content.append(Text().add(enabled_option).add(self.iaproblem_text.get_text()))
-        self._content.append(Text().add(enabled_option).add(self.iacode_text.get_text()))
-        self._content.append(Text().add(enabled_option).add(self.iadebug_text.get_text()))
-        self._content.append(Text().add(enabled_option).add(self.iarefactor_text.get_text()))
-        self._content.append(Text().add("╚═══════════════════════════════════════════════════════════").ljust(width, Text.Token("═", "")))
+        content.append(Text().add(op_prefix).add(self.rate_slide.get_text()))
+        content.append(Text().add(enabled_option).add(self.human_text.get_text()))
+        content.append(Text().add(enabled_option).add(self.time_text.get_text()))
+        content.append(Text().add(enabled_option).add(self.guide_text.get_text()))
+        content.append(Text().add("╠═") + Text().add(" Você usou IA (LLMs) para ").center(width, Text.Token("═", "")))
+        content.append(Text().add(enabled_option).add(self.iaconcept_text.get_text()))
+        content.append(Text().add(enabled_option).add(self.iaproblem_text.get_text()))
+        content.append(Text().add(enabled_option).add(self.iacode_text.get_text()))
+        content.append(Text().add(enabled_option).add(self.iadebug_text.get_text()))
+        content.append(Text().add(enabled_option).add(self.iarefactor_text.get_text()))
+        content.append(Text().add("╚═══════════════════════════════════════════════════════════").ljust(width, Text.Token("═", "")))
 
 
-    # @override
     def draw(self):
-        self._set_default_header()
-        self._set_default_footer()
-        self.setup_frame()
-        self._frame.draw()
+        # self.floating.set_default_header()
+        # self.floating.set_default_footer()
+        # self.floating.setup_frame()
+        # self.floating.frame.draw()
         self.update_content()
-        self.write_content()
+        # self.floating.write_content()
+        self.floating.draw()
 
     def change_task(self):
         if not self._task.is_leet():
@@ -236,7 +244,6 @@ class FloatingGrade(Floating):
         self.input_lines[self._line].send_key(key)
         self.change_task()
     
-    # @override
     def process_input(self, key: int) -> int:
 
         if key == curses.KEY_UP:
@@ -247,11 +254,11 @@ class FloatingGrade(Floating):
             if self._line != len(self.input_lines) - 1:
                 self.send_key_down()
             else:
-                self._enable = False
-                if self._exit_fn is not None:
-                    self._exit_fn()
+                self.floating.enable = False
+                if self.floating.exit_fn is not None:
+                    self.floating.exit_fn()
         elif key == curses.KEY_EXIT:
-            self._enable = False
+            self.floating.enable = False
         else:
             self.send_key(key)
         return -1

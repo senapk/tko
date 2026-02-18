@@ -1,5 +1,7 @@
+from tko.play.floating_drop_down import FloatingDropDown
 from tko.play.flags import FlagsMan
-from tko.play.floating import Floating, FloatingInput, FloatingInputData
+from tko.play.floating import Floating
+from tko.play.floating_drop_down import FloatingInputData
 from tko.play.floating_manager import FloatingManager
 from tko.settings.languages import available_languages
 from tko.util.text import Text
@@ -20,11 +22,13 @@ class LanguageSetter:
             options.append(FloatingInputData(TextFunctor(lang), SetLangFunctor(self.settings, self.rep, self.fman, lang)))
 
         self.fman.add_input(
-            FloatingInput(self.settings, "^")
-            .set_header(" Escolha a extensão default para os rascunhos ")
+            FloatingDropDown().set_floating(
+                Floating("^")
+                .set_header(" Escolha a extensão default para os rascunhos ")
+                .set_footer(" Escolha e reinicie o tko para aplicar!!!!! ")
+            )
             .set_options(options)
             .set_default_index(available_languages.index(self.rep.data.get_lang()))
-            .set_footer(" Escolha e reinicie o tko para aplicar!!!!! ")
         )
 
 class TextFunctor:
@@ -45,7 +49,7 @@ class SetLangFunctor:
         self.rep.data.set_lang(self.value.strip())
         self.rep.save_config()
         self.fman.add_input(
-            Floating(self.settings, "v>")
+            Floating("v>")
             .put_text("")
             .put_text("Linguagem alterada para " + self.value)
             .put_text("")

@@ -1,9 +1,11 @@
-from tko.play.floating import FloatingInputData, FloatingInput
+from tko.play.floating_drop_down import FloatingDropDown
+from tko.play.floating_drop_down import FloatingInputData
 from tko.util.text import Text
 from tko.util.symbols import symbols
 from tko.play.keys import GuiKeys
 from tko.play.play_actions import PlayActions
 from tko.play.floating_calibrate import FloatingCalibrate
+from tko.play.floating import Floating
 
 class PlayConfig:
     def __init__(self, actions: PlayActions):
@@ -107,9 +109,12 @@ class PlayConfig:
         )
 
         self.fman.add_input(
-            FloatingInput(self.actions.settings, "^").set_text_ljust()
-                      .set_header(" Selecione uma ação da lista ")
-                      .set_options(options)
-                      .set_exit_on_enter(False)
-                      .set_footer(" Use Enter para aplicar e Esc para Sair ")
+            FloatingDropDown().set_floating(
+                    Floating("^")
+                    .set_text_ljust()
+                    .set_footer(" Use Enter para aplicar e Esc para Sair ")
+                    .set_header(" Selecione uma ação da lista ")
+            )
+            .set_options(options)
+            .set_exit_on_enter(False)
         )

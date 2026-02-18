@@ -1,10 +1,10 @@
-from tko.play.floating import Floating
+from tko.play.floating import FloatingABC
 
 class FloatingManager:
     def __init__(self):
-        self.input_layer: list[Floating] = []
+        self.input_layer: list[FloatingABC] = []
 
-    def add_input(self, floating: Floating):
+    def add_input(self, floating: FloatingABC):
         self.input_layer.append(floating)
 
     def draw_warnings(self):
