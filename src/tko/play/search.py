@@ -3,7 +3,6 @@ from tko.game.quest import Quest
 from tko.play.tasktree import TaskTree
 from tko.play.flags import Flags
 from tko.play.floating_manager import FloatingManager
-from tko.play.input_manager import InputManager
 import curses
 
 class Search:

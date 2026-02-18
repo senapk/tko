@@ -5,8 +5,6 @@ from tko.util.pattern_loader import PatternLoader
 from tko.enums.identifier_type import IdentifierType
 from tko.run.unit import Unit
 from tko.util.decoder import Decoder
-import tomli_w
-
 
 class Writer:
 

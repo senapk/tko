@@ -1,5 +1,3 @@
-from tko.game.task import Task
-
 from tko.logger.log_item_base import LogItemBase
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove
@@ -146,20 +144,6 @@ class OldLogLoader:
         item = LogItemSelf().set_timestamp(e.timestamp).set_key(e.task)
         payload = e.payload.strip()
 
-        if len(payload) == 1:
-            item.info.flow, item.info.edge = Task.decode_approach_autonomy(int(payload))
-            return item
-
-        if len(payload) == 2:
-            item.info.flow = int(payload[0])
-            item.info.edge = int(payload[1])
-            return item
-
-        if len(payload) == 3 and payload[0] == "0":
-            item.info.flow = int(payload[1])
-            item.info.edge = int(payload[2])
-            return item
-
         if payload[0] == "{":
             payload = payload[1:-1]
             values = payload.split(",")
@@ -170,22 +154,8 @@ class OldLogLoader:
 
             if "c" in kv:
                 item.info.rate = int(kv["c"])
-            if "a" in kv:
-                item.info.flow = int(kv["a"])
-            if "s" in kv:
-                item.info.edge = int(kv["s"])
-            if "clear" in kv:
-                item.info.neat = int(kv["clear"])
-            if "fun" in kv:
-                item.info.cool = int(kv["fun"])
-            if "easy" in kv:
-                item.info.easy = int(kv["easy"])
             if "cov" in kv:
                 item.info.rate = int(kv["cov"])
-            if "app" in kv:
-                item.info.flow = int(kv["app"])
-            if "aut" in kv:
-                item.info.edge = int(kv["aut"])
             return item
 
         raise Exception(f"Invalid SELF payload: {payload}")

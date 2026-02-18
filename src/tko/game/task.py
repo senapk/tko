@@ -91,39 +91,25 @@ class Task(TreeItem):
             self.main_idx = int(kv_dict[self.str_index])
 
         # deprecated
-        for k, val in kv_dict.items():
-            if k == "cov" or k == 'cove':
-                self.info.rate = int(val)
-            elif k == "aut" or k == "appr":
-                self.info.flow = int(val)
-            elif k == "hab" or k == "auto":
-                self.info.edge = int(val)
-            elif k == "desc":
-                self.info.neat = int(val)
-            elif k == "desire":
-                self.info.cool = int(val)
-            elif k == "effort":
-                self.info.easy = int(val)
+        # for k, val in kv_dict.items():
+        #     if k == "cov" or k == 'cove':
+        #         self.info.rate = int(val)
+        #     elif k == "aut" or k == "appr":
+        #         self.info.flow = int(val)
+        #     elif k == "hab" or k == "auto":
+        #         self.info.edge = int(val)
+        #     elif k == "desc":
+        #         self.info.neat = int(val)
+        #     elif k == "desire":
+        #         self.info.cool = int(val)
+        #     elif k == "effort":
+        #         self.info.easy = int(val)
 
     def load_from_db(self, value: str):
         if value.startswith("{"):
             self.decode_from_dict(value)
-        # deprecated
-        elif ":" not in value:
-            self.info.flow, self.info.edge = Task.decode_approach_autonomy(int(value))
         else:
-            v = value.split(":")
-            if len(v) == 3:
-                self.info.flow, self.info.edge = Task.decode_approach_autonomy(int(v[0]))
-                self.main_idx = int(v[1])
-                self.info.rate = int(v[2])
-            elif len(v) == 4:
-                self.info.rate = (int(v[0]))
-                self.info.flow = (int(v[1]))
-                self.info.edge = (int(v[2]))
-                self.main_idx = (int(v[3]))
-            else:
-                raise ValueError(f"Invalid task value format: {value}. Expected format is 'flow:edge:main_idx:rate' or '{self.str_index}:value'.")
+            raise ValueError(f"Invalid task value format: {value}. Expected format is 'flow:edge:main_idx:rate' or '{self.str_index}:value'.")
 
     def save_to_db(self) -> str:
         kv_dict = self.info.get_kv()

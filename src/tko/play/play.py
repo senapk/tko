@@ -1,5 +1,4 @@
 from tko.game.game import Game
-from tko.game.task import Task
 from tko.play.fmt import Fmt
 from tko.settings.languages import available_languages
 from tko.settings.settings import Settings

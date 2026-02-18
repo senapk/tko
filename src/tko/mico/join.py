@@ -57,7 +57,7 @@ def task_resume_to_full_str(task_resume: TaskResume) -> str:
     """Convert a TaskResume to a string with detailed information."""
     resume: Resume = task_resume.resume
     info: TaskInfo = task_resume.info
-    return f'{info.rate:03d}% {info.flow}{info.edge}how {resume.minutes:03d}m {resume.executions:03d}/{resume.versions:03d}ex {round(resume.percent):03d}%'
+    return f'{info.rate:03d}% {resume.minutes:03d}m {resume.executions:03d}/{resume.versions:03d}ex {round(resume.percent):03d}%'
 
 def quest_resume_to_str(tasks: list[Game.Task], user_task_dict: dict[str, TaskResume]) -> str:
     percent = calc_quest_percent(tasks, user_task_dict)

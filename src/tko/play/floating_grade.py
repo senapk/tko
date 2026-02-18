@@ -1,7 +1,5 @@
-from operator import index
 from tko.game.task import Task
 from tko.play.floating import Floating
-from tko.play.input_manager import InputManager
 from tko.util.text import Text
 from tko.settings.settings import Settings
 from tko.game.task_grader import TaskGrader

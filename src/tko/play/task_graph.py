@@ -11,8 +11,6 @@ from tko.play.flags import Flags
 
 class TaskGraph:
     def __init__(self, settings: Settings, rep: Repository, task_key: str, width: int, height: int):
-        with open("debug.txt", "a") as f:
-            f.write(f"Initializing TaskGraph for task_key: {task_key}\n")
         self.settings = settings
         self.rep = rep
         self.task_key = task_key
@@ -38,8 +36,6 @@ class TaskGraph:
         self.raw_text: list[Text] = self.prepare_xray()
 
         if self.log_sort is None:
-            with open("debug.txt", "a") as f:
-                f.write("LogSort not found for task_key: " + task_key + "\n")
             return
         self.versions = len(self.log_sort.diff_list)
        
@@ -88,8 +84,6 @@ class TaskGraph:
 
     def prepare_xray(self) -> list[Text]:
         if self.log_sort is None:
-            with open("debug.txt", "a") as f:
-                f.write("LogSort is None for task_key: " + self.task_key + "\n")
             return []
         output: list[Text] = []
         all_entries: list[tuple[Delta, LogItemBase]] = self.log_sort.base_list
@@ -103,9 +97,12 @@ class TaskGraph:
                         .replace("EXEC", Text.Token("EXEC", "g"))
                         .replace("SELF", Text.Token("SELF", "r"))
                         .replace("MOVE", Text.Token("MOVE", "y")))
-            output.append(Text().add(f"acc:{delta.accumulated}, ").add(text))
-        with open("debug.txt", "a") as f:
-            f.write(f"Prepared xray for task_key: {self.task_key}, entries: {len(output)}\n")
+            acc = delta.accumulated.total_seconds() / 60
+            acc_h = int(acc) // 60
+            acc_m = int(acc) % 60
+            acc_s = int((acc - int(acc)) * 60)
+            acc_str = f"{acc_h:02d}:{acc_m:02d}:{acc_s:02d}"
+            output.append(Text().add(f"acc:{acc_str}, ").add(text))
         return output
 
     def get_graph(self) -> list[Text]:
