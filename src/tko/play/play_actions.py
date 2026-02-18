@@ -66,25 +66,25 @@ class PlayActions:
                 try:
                     shutil.rmtree(folder)
                     self.fman.add_input(
-                         Floating("v>")
+                         Floating().bottom().right()
                         .put_text(f"\nPasta {folder} apagada com sucesso.\n")
                         .set_warning()
                     )
                 except OSError as e:
                     self.fman.add_input(
-                         Floating("v>")
+                         Floating().bottom().right()
                         .put_text(f"\nErro ao apagar a pasta {folder}: {e}\n")
                         .set_error()
                     )
             else:
                 self.fman.add_input(
-                     Floating("v>")
+                     Floating().bottom().right()
                     .put_text("\nPasta não encontrada.\n")
                     .set_error()
                 )
         else:
             self.fman.add_input(
-                 Floating("v>")
+                 Floating().bottom().right()
                 .put_text("\nVocê só pode apagar pastas de tarefas.\n")
                 .set_error()
             )
@@ -100,13 +100,13 @@ class PlayActions:
                 opener.load_folders_and_open()
             else:
                 self.fman.add_input(
-                     Floating("v>")
+                     Floating().bottom().right()
                     .put_text("\nO arquivo de código não foi encontrado.\n")
                     .set_error()
                 )
         else:
             self.fman.add_input(
-                 Floating("v>")
+                 Floating().bottom().right()
                 .put_text("\nVocê só pode abrir o código")
                 .put_text("de tarefas baixadas.\n")
                 .set_error()
@@ -122,14 +122,14 @@ class PlayActions:
                 except Exception as _:
                     pass
             self.fman.add_input(
-                 Floating("v>")
+                 Floating().bottom().right()
                 .set_header(" Abrindo link ")
                 .put_text("\n " + task.link + " \n")
                 .set_warning()
             )
         elif isinstance(obj, Quest):
             self.fman.add_input(
-                 Floating("v>")
+                 Floating().bottom().right()
                 .put_text("\nEssa é uma missão.")
                 .put_text("\nVocê só pode abrir o link")
                 .put_text("de tarefas.\n")
@@ -137,7 +137,7 @@ class PlayActions:
             )
         else:
             self.fman.add_input(
-                 Floating("v>")
+                 Floating().bottom().right()
                 .put_text("\nEsse é um grupo.")
                 .put_text("\nVocê só pode abrir o link")
                 .put_text("de tarefas.\n")
@@ -184,7 +184,7 @@ class PlayActions:
         with open (os.path.join(folder, "Readme.md"), "w", encoding="utf-8") as f:
             f.write("# " + os.path.basename(folder) + "\n\nDescrição do rascunho.\n\nEscreva aqui as informações que você quiser.")
         self.game.reload_sources()
-        self.fman.add_input( Floating("v>")
+        self.fman.add_input( Floating().bottom().right()
                             .put_text(f"Rascunho criado em {folder}")
                             .put_text("\nVocê pode renomear a pasta manualmente e apertar shift R para recarregar.")
                             .set_warning())
@@ -195,7 +195,7 @@ class PlayActions:
         
         if isinstance(obj, Quest):
             self.fman.add_input(
-                 Floating("v>")
+                 Floating().bottom().right()
                 .put_text("\nEssa é uma missão.")
                 .put_text("\nVocê só pode baixar tarefas.\n")
                 .set_error()
@@ -203,7 +203,7 @@ class PlayActions:
             return
         if isinstance(obj, Cluster):
             self.fman.add_input(
-                 Floating("v>")
+                 Floating().bottom().right()
                 .put_text("\nEsse é um grupo.")
                 .put_text("\nVocê só pode baixar tarefas.\n")
                 .set_error()
@@ -215,12 +215,12 @@ class PlayActions:
     def __down_remote_task(self, task: Task) -> None:
         if task.link_type != Task.Types.REMOTE_FILE and task.link_type != Task.Types.IMPORT_FILE:
             self.fman.add_input(
-                 Floating("v>").put_text("\nEssa não é uma tarefa de baixável.\n").set_error()
+                 Floating().bottom().right().put_text("\nEssa não é uma tarefa de baixável.\n").set_error()
             )
             return
         lang = self.rep.data.get_lang() 
         down_frame = (
-             Floating("v>").set_warning().set_text_ljust().set_header(" Baixando tarefa ")
+             Floating().bottom().right().set_warning().set_text_ljust().set_header(" Baixando tarefa ")
         )
         # down_frame.put_text(f"\ntko down {self.rep.alias} {task.key} -l {lang}\n")
         self.fman.add_input(down_frame)
@@ -273,7 +273,7 @@ class PlayActions:
                     outfile = tempfile.NamedTemporaryFile(delete=False)
                     subprocess.Popen(fullcmd, stdout=outfile, stderr=outfile, shell=True)
                     self.fman.add_input(
-                        Floating("v>")
+                        Floating().bottom().right()
                         .put_text("\nAs versões da tarefa foram descompactadas em uma pasta temporária")
                         .put_text(msg)
                         .put_text(f"Abrindo com o comando: {fullcmd}\n")
@@ -314,7 +314,7 @@ class PlayActions:
             lang = self.rep.data.get_lang()
             draft_folder = os.path.join(folder, lang)
             DownActions().create_default_draft(draft_folder, self.rep.data.get_lang())
-            msg =  Floating("v>").set_warning()
+            msg =  Floating().bottom().right().set_warning()
             msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.rep.data.get_lang()))
             msg.put_text("\nUm arquivo de rascunho vazio foi criado em {}.".format(draft_folder))
             self.fman.add_input(msg)

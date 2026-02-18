@@ -110,7 +110,7 @@ class PlayPalette:
 
         self.fman.add_input(
             FloatingDropDown().set_floating(
-                    Floating("^")
+                    Floating().top()
                     .set_text_ljust()
                     .set_footer(" Use Enter para aplicar e Esc para Sair ")
                     .set_header(" Selecione uma ação da lista ")

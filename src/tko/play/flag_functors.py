@@ -14,7 +14,7 @@ class FlagFunctor:
         index = self.flag.get_index()
         if index < len(self.flag.get_msgs()):
             msg = self.flag.get_msgs()[index]
-            self.fman.add_input(Floating("").set_warning().put_text(msg))
+            self.fman.add_input(Floating().set_warning().put_text(msg))
 
 class GradeFunctor:
     def __init__(self, grade: int, fn: Callable[[int], None]):

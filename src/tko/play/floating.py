@@ -26,16 +26,35 @@ class FloatingABC(ABC):
         pass
 
 class Floating(FloatingABC):
-    def __init__(self, _align: str = ""):
+    def __init__(self):
         self.frame = Frame(0, 0)
         self.content: list[Text] = []
         self.type: FloatingType = FloatingType.WARNING
         self.enable = True
-        self.extra_exit: list[int] = []
         self.exit_fn: Callable[[], None] | None = None
         self.exit_key: None | int = None
         self.centralize_text = True
-        self.floating_align = _align
+        self.floating_align = ""
+
+    def left(self):
+        self.floating_align = [c for c in self.floating_align if c != ">"]
+        self.floating_align += "<"
+        return self
+    
+    def right(self):
+        self.floating_align = [c for c in self.floating_align if c != "<"]
+        self.floating_align += ">"
+        return self
+    
+    def top(self):
+        self.floating_align = [c for c in self.floating_align if c != "v"]
+        self.floating_align += "^"
+        return self
+    
+    def bottom(self):
+        self.floating_align = [c for c in self.floating_align if c != "^"]
+        self.floating_align += "v"
+        return self
 
     def disable(self):
         self.enable = False

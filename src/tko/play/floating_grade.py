@@ -118,8 +118,8 @@ class InputBoolean(InputLine):
 
 
 class FloatingGrade(FloatingABC):
-    def __init__(self, task: Task, _align: str =""):
-        self.floating = Floating(_align)
+    def __init__(self, task: Task):
+        self.floating = Floating()
         self._task = task
         self._grader = TaskGrader(task.info)
         self._line = 0 if not task.is_leet() else 1

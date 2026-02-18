@@ -133,7 +133,7 @@ class Play:
             return
         if key < 0 or key > 255:
             return
-        self.fman.add_input( Floating("v>").set_error().put_text(f"Tecla char:{chr(key)}, code:{key}, não reconhecida") )
+        self.fman.add_input( Floating().bottom().right().set_error().put_text(f"Tecla char:{chr(key)}, code:{key}, não reconhecida") )
 
 
     def main(self, scr: curses.window):
@@ -185,8 +185,7 @@ class Play:
                 if lang in options:
                     break
             self.rep.data.lang = lang
-
-
+            
     def play(self):
         self.check_lang_in_text_mode()
 

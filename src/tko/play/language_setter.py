@@ -23,7 +23,8 @@ class LanguageSetter:
 
         self.fman.add_input(
             FloatingDropDown().set_floating(
-                Floating("^")
+                Floating()
+                .top()
                 .set_header(" Escolha a extensão default para os rascunhos ")
                 .set_footer(" Escolha e reinicie o tko para aplicar!!!!! ")
                 .set_text_ljust()
@@ -50,7 +51,9 @@ class SetLangFunctor:
         self.rep.data.set_lang(self.value.strip())
         self.rep.save_config()
         self.fman.add_input(
-            Floating("v>")
+            Floating()
+            .bottom()
+            .right()
             .put_text("")
             .put_text("Linguagem alterada para " + self.value)
             .put_text("")

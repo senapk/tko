@@ -38,7 +38,9 @@ class Opener:
 
         cmd = self.settings.app.get_editor()
         folder = os.path.dirname(os.path.abspath(files_to_open[0]))
-        aviso = (Floating("v>")
+        aviso = (Floating()
+                .bottom()
+                .right()
                 .set_warning()
                 .put_sentence(Text().add("Pasta: ").addf("g", folder).add(" "))
                 .put_text("Abrindo arquivos com o comando")
