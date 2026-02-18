@@ -26,6 +26,7 @@ class LanguageSetter:
                 Floating("^")
                 .set_header(" Escolha a extensão default para os rascunhos ")
                 .set_footer(" Escolha e reinicie o tko para aplicar!!!!! ")
+                .set_text_ljust()
             )
             .set_options(options)
             .set_default_index(available_languages.index(self.rep.data.get_lang()))

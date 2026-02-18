@@ -24,7 +24,7 @@ class FloatingDropDown(FloatingABC):
         self.options: list[FloatingInputData] = []
         self.floating.frame.set_border_color("m")
         self.exit_on_action = True
-        self.right_dx = 5 # shortcut space
+
         self.search_text: list[str] = []
 
     def set_floating(self, floating: Floating):
@@ -37,15 +37,15 @@ class FloatingDropDown(FloatingABC):
     
     # @override
     def draw(self):
+        self.update_content()
         self.floating.draw()
-        self.write_content()
 
     def calc_dy_dx(self):
         dy, dx = self.floating.calc_dy_dx()
         dy += len(self.options) + 2
         for option in self.options:
             dx = max(dx, len(option.label()))
-        return dy, dx + self.right_dx
+        return dy, dx
 
     def set_exit_on_enter(self, value: bool):
         self.exit_on_action = value
@@ -78,9 +78,13 @@ class FloatingDropDown(FloatingABC):
                 return
             steps -= 1
 
-    def write_content(self):
-        options: list[Text] = []
-        dx = self.floating.frame.get_dx() - self.right_dx
+    def update_content(self):
+        content = self.floating.content
+        content.clear()
+        content.append(Text.format("Busca: ") + "".join(self.search_text) + symbols.cursor)
+
+        # options: list[Text] = []
+        _, dx = self.calc_dy_dx()
         for i, option in enumerate(self.options):
             if not self.match_search(i):
                 continue
@@ -90,18 +94,20 @@ class FloatingDropDown(FloatingABC):
                     text.add(" " + option.shortcut)
                 else:
                     text.add(f" [{option.shortcut}]")
+            else:
+                text.add("    ")
             fmt = "M" if i == self.index else ""
             text.set_background(fmt)
-            options.append(text)
+            content.append(text)
+        
 
-        self.floating.frame.write(0, 0, Text.format("Busca: ") + "".join(self.search_text) + symbols.cursor)
-        y = 1
-        for line in self.floating.content + options:
-            x = 0
-            if self.floating.centralize_text:
-                x = (self.floating.frame.get_dx() - line.len()) // 2
-            self.floating.frame.write(y, x, line)
-            y += 1
+        # y = 1
+        # for line in self.floating.content + options:
+        #     x = 0
+        #     if self.floating.centralize_text:
+        #         x = (self.floating.frame.get_dx() - line.len()) // 2
+        #     self.floating.frame.write(y, x, line)
+        #     y += 1
 
         return self
 

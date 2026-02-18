@@ -7,7 +7,7 @@ from tko.play.play_actions import PlayActions
 from tko.play.floating_calibrate import FloatingCalibrate
 from tko.play.floating import Floating
 
-class PlayConfig:
+class PlayPalette:
     def __init__(self, actions: PlayActions):
         self.actions = actions
         self.app = self.actions.settings.app
@@ -22,7 +22,7 @@ class PlayConfig:
         
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Tarefa: {y} para repositório local", symbols.action, "Baixar"),
+                lambda: Text.format(" {} Tarefa: {y} para o repositório", symbols.action, "Baixar"),
                 self.actions.down_remote_task,
                 GuiKeys.down_task
             ).set_exit_on_action(True)
@@ -94,7 +94,7 @@ class PlayConfig:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Criar {y} para escrever código ou anotações", symbols.action, "Rascunho"),
+                lambda: Text.format(" {} Criar {y} na pasta local", symbols.action, "Rascunho"),
                 self.actions.create_draft,
                 GuiKeys.create_draft
             ).set_exit_on_action(True)

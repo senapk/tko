@@ -7,7 +7,7 @@ from tko.play.keys import GuiKeys
 from tko.play.images import opening
 from tko.play.floating_calibrate import FloatingCalibrate
 from tko.play.input_manager import InputManager
-from tko.play.play_pallete import PlayConfig
+from tko.play.play_palette import PlayPalette
 from tko.play.floating import Floating
 from tko.play.floating_manager import FloatingManager
 from tko.play.flags import Flags, FlagsMan
@@ -31,7 +31,7 @@ class Play:
         self.tree = TaskTree(self.settings, rep, self.fman)
         self.gui = Gui(tree=self.tree, flagsman=self.flagsman, fman=self.fman)
         self.actions = PlayActions(self.gui)
-        self.play_palette = PlayConfig(self.actions)
+        self.play_palette = PlayPalette(self.actions)
         # self.fman.add_input( Floating().set_content(opening['yoda'].splitlines()).set_warning() )
 
     def set_need_update(self):
