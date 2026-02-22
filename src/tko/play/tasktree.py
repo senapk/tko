@@ -33,13 +33,14 @@ class TaskTree:
         self.items: list[TreeItem] = []
         self.all_items: dict[str, TreeItem] = {}
         self.selected_item: str = ""
+        self.filler = "·"
         self.index_begin: int = 0
         self.search_text: str = ""
         self.expanded: list[str] = []
         self.load_all_items()
         self.load_from_rep()
         self.update_tree(admin_mode = Flags.quests.get_value() == "2")
-        self.MIN_TITLE_LENGTH = 0
+        self.MIN_TITLE_LENGTH = 50
         self.cache_max_title: None | int = None
         self.cache_task_times: dict[str, tuple[int, int]] = {}
         self.reload_sentences()
@@ -105,6 +106,13 @@ class TaskTree:
             self.cache_max_title = max(items)
         self.cache_max_title = max(self.MIN_TITLE_LENGTH, self.cache_max_title)
         return self.cache_max_title
+
+    def get_total_width(self) -> int:
+        width = self.get_max_title()
+        if Flags.show_time.is_true():
+            width += len(self.format_hours_minutes("", 0, 0))
+        width += 7 # for percent and symbols
+        return width
 
     @staticmethod
     def color_task_title(title: str, color: str) -> Text:
@@ -226,7 +234,7 @@ class TaskTree:
             output.add(" ")
 
         output.addf(focus_color, q.get_full_title())
-        output = output.ljust(self.get_max_title(), Text.Token(".", focus_color))
+        output = output.ljust(self.get_max_title(), Text.Token(self.filler, focus_color))
         output.add(self.style.round_r(focus_color) if in_focus else " ")
         
         if Flags.show_time.is_true():
@@ -276,7 +284,7 @@ class TaskTree:
         if Flags.show_time.is_true():
             len_extra = len(self.format_hours_minutes("", 0, 0))
 
-        output = output.addf(color, cluster.get_database() + ":" + cluster.get_title()).ljust(self.get_max_title() + len_extra, Text.Token(".", color))
+        output = output.addf(color, cluster.get_database() + ":" + cluster.get_title()).ljust(self.get_max_title() + len_extra, Text.Token(self.filler, color))
 
         if focus_color != "":
             output.add(self.style.round_r(focus_color))

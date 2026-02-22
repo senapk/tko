@@ -381,10 +381,10 @@ class Gui:
         
         # now: datetime.datetime = datetime.datetime.now()
         # parrot = random_get(opening, str(now.hour))
-        distance = 18
+        tasktree_width = self.tree.get_total_width()
         made = False
         list_data: list[Text] = []
-        width = cols - self.tree.cache_max_title - distance - 7
+        width = cols - tasktree_width - 1
         if width < 5:
             width = 5
         header: list[Text] = []
@@ -410,13 +410,13 @@ class Gui:
         line_count = 0
         if header:
             for y, line in enumerate(header):
-                frame.write(y, self.tree.cache_max_title + distance, line)
+                frame.write(y, tasktree_width, line)
             line_count = len(header)
         for line in list_data:
             count += 1
             if count < offset:
                 continue
-            frame.write(line_count, self.tree.cache_max_title + distance, line)
+            frame.write(line_count, tasktree_width, line)
             line_count += 1
 
     def show_items(self):
