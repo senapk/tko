@@ -1,3 +1,4 @@
+from tko.play.flags import Flags
 from tko.play.floating_drop_down import FloatingDropDown
 from tko.play.floating_drop_down import FloatingInputData
 from tko.util.text import Text
@@ -73,6 +74,14 @@ class PlayPalette:
                 lambda: Text.format(" {} Mostrar {y}", icon(self.app.get_use_images()), "Imagens"),
                 self.app.toggle_images, 
                 GuiKeys.images
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text.format(" {} Mostrar {y} decorrido", icon(Flags.show_time.is_true()), "Tempo"),
+                lambda: Flags.show_time.toggle(),
+                GuiKeys.show_time
             )
         )
 

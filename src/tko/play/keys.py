@@ -27,8 +27,8 @@ class GuiKeys:
     show_tracks = "2"
     show_quests = "3"
     show_tasks = "4"
+    show_time = "T"
 
-    time_view = "T"
     palette = "P"
     images = "I"
     down_task = "b"

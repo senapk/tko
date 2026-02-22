@@ -34,12 +34,14 @@ class TaskTree:
         self.all_items: dict[str, TreeItem] = {}
         self.selected_item: str = ""
         self.index_begin: int = 0
-        self.max_title: int = 0
         self.search_text: str = ""
         self.expanded: list[str] = []
         self.load_all_items()
         self.load_from_rep()
         self.update_tree(admin_mode = Flags.quests.get_value() == "2")
+        self.MIN_TITLE_LENGTH = 0
+        self.cache_max_title: None | int = None
+        self.cache_task_times: dict[str, tuple[int, int]] = {}
         self.reload_sentences()
 
     def load_all_items(self):
@@ -74,16 +76,18 @@ class TaskTree:
                     self.expanded.remove(key)
 
     def get_cluster_title_size(self, cluster: Cluster) -> int:
-        return len(cluster.get_database() + ":" + cluster.get_title())
+        return len(cluster.get_database() + ":" + cluster.get_title()) + 3
     
     def get_quest_title_size(self, quest: Quest) -> int:
-        return len(quest.get_full_title()) + 1
+        return len(quest.get_full_title()) + 5
 
     def get_task_title_size(self, task: Task) -> int:
         return len(task.get_title()) + 11
 
-    def __update_max_title(self):
-        min_value = 50
+    def get_max_title(self) -> int:
+        if self.cache_max_title:
+            return self.cache_max_title
+        
         items: list[int] = []
         for c in self.game.clusters.values():
             if c.get_db_key() in self.game.clusters.keys():
@@ -95,15 +99,41 @@ class TaskTree:
                             for t in q.get_tasks():
                                 items.append(self.get_task_title_size(t))
 
-        self.max_title = min_value
+        
+        self.cache_max_title = self.MIN_TITLE_LENGTH
         if len(items) > 0:
-            self.max_title = max(items)
-        if self.max_title < min_value:
-            self.max_title = min_value
+            self.cache_max_title = max(items)
+        self.cache_max_title = max(self.MIN_TITLE_LENGTH, self.cache_max_title)
+        return self.cache_max_title
 
-    def __str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool) -> Text:
-        # down_symbol = Text.Token(" ")
-        in_focus = focus_color != ""
+    @staticmethod
+    def color_task_title(title: str, color: str) -> Text:
+        words = title.split(" ")
+        output = Text()
+        for i, word in enumerate(words):
+            if word.startswith("@") or word.startswith("#") or word.startswith("!"):
+                output.addf(color + "g", word)
+            elif word.startswith(":"):
+                output.addf(color + "y", word)
+            elif word.startswith("*"):
+                output.addf(color + "c", word)
+            elif word.startswith("+"):
+                output.addf(color + "c", word)
+            else:
+                output.addf(color, word)
+            if i < len(words) - 1:
+                output.addf(color, " ")
+        return output
+
+    def format_hours_minutes(self, color: str, hours: int, minutes: int) -> Text:
+        output = Text()
+        if hours > 0 or minutes > 0:
+            output.addf(color, f"{hours:02}h{minutes:02}m ")
+        else:
+            output.add("┄" * 6 + " ")
+        return output
+
+    def get_task_down_symbol(self, t: Task) -> Text.Token:
         down_symbol = symbols.task_to_visit
         if t.link_type == Task.Types.STATIC_FILE:
             down_symbol = symbols.task_local
@@ -111,77 +141,57 @@ class TaskTree:
             down_symbol = symbols.task_to_download
             if self.is_downloaded_for_lang(t):
                 down_symbol = symbols.task_downloaded
-    
-        color_aval = "g" if quest_reachable and t.is_reachable() else "y"
-        color_lig_task = color_aval
-        # if Flags.quests.get_value() == "0":
-        #     quest = self.game.quests[t.quest_key]
-        #     if quest.prog:
-        #         if t.__key != self.game.quests[t.quest_key].get_tasks()[-1].__key:
-        #             if t.get_percent() < 50:
-        #                 color_lig_task = "r"
-                    
+        return down_symbol
 
+    def get_feedback_symbol(self, t: Task) -> Text:
         output = Text()
-        output.add(" ").addf(color_aval, lig_cluster)
-        output.add(" ")
-        output.addf(color_lig_task, lig_quest)
-        output.add(down_symbol).add(" ")
-        rate = t.info.rate // 10
-        output.add(t.get_prog_symbol(rate)).add(" ")
-        
         if t.info.feedback:
             output.addf("g", symbols.closed_circle)
         elif t.info.rate > 0:
             output.addf("r", symbols.closed_circle)
         else:
             output.addf("", symbols.open_circle)
+        return output
 
-        if in_focus:
-            output.add(self.style.round_l(focus_color))
-        else:
-            output.add(" ")
+    def __str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool) -> Text:
+        color_aval = "g" if quest_reachable and t.is_reachable() else "y"
 
-        color = ""
-        if in_focus:
-            color = "k" + focus_color
+        output = Text()
+        output.add(" ").addf(color_aval, lig_cluster).add(" ")
+        output.addf(color_aval, lig_quest)
+        output.add(self.get_task_down_symbol(t)).add(" ")
+        rate = t.info.rate // 10
+        output.add(t.get_prog_symbol(rate)).add(" ")
+        output.add(self.get_feedback_symbol(t))
 
-        for word in t.get_title().split(" "):
-            if word.startswith("@") or word.startswith("#") or word.startswith("!"):
-                output.addf(color + "g", word + " ")
-            elif word.startswith(":"):
-                output.addf(color + "y", word + " ")
-            elif word.startswith("*"):
-                output.addf(color + "c", word + " ")
-            elif word.startswith("+"):
-                output.addf(color + "c", word + " ")
-            else:
-                output.addf(color, word + " ")
+        in_focus = focus_color != ""
+        output.add(self.style.round_l(focus_color) if in_focus else " ")
+        color = "" if not in_focus else "k" + focus_color
+        output.add(self.color_task_title(t.get_title(), color))
+        output.ljust(self.get_max_title(), Text.Token(" ", focus_color))
+        output.add(self.style.round_r(focus_color) if in_focus else " ") 
 
-        if in_focus:
-            output.add(self.style.round_r(focus_color))
-        else:
-            output.add(" ")
-
-        output.ljust(self.max_title + 2, Text.Token(" "))
-
-        time_inserted = False
-        logsort = self.rep.logger.tasks.task_dict.get(t.get_db_key(), None)
-        if logsort is not None:
-            if len(logsort.base_list) > 0:
-                delta, _ = logsort.base_list[-1]
-                hours = delta.accumulated.seconds // 3600
-                minutes = (delta.accumulated.seconds % 3600) // 60
-                if hours > 0 or minutes > 0:
-                    output.addf("y", f"{hours:02}h{minutes:02}m ")
-                    time_inserted = True
-        if not time_inserted:
-            output.add(" " * 7)
+        if Flags.show_time.is_true():
+            hours, minutes = self.get_task_hours_minutes(t)
+            output.add(self.format_hours_minutes("g", hours, minutes))
 
         prog = round(t.get_percent())
         output.addf("y", str(prog).rjust(3, " ") + "%")
         return output
 
+    def get_task_hours_minutes(self, task: Task) -> tuple[int, int]:
+        if task.get_db_key() in self.cache_task_times:
+            return self.cache_task_times[task.get_db_key()]
+        logsort = self.rep.logger.tasks.task_dict.get(task.get_db_key(), None)
+        if logsort is not None and len(logsort.base_list) > 0:
+            delta, _ = logsort.base_list[-1]
+            hours = delta.accumulated.seconds // 3600
+            minutes = (delta.accumulated.seconds % 3600) // 60
+            self.cache_task_times[task.get_db_key()] = (hours, minutes)
+            return hours, minutes
+        self.cache_task_times[task.get_db_key()] = (0, 0)
+        return 0, 0
+    
     def __str_quest(self, has_kids: bool, focus_color: str, q: Quest, lig: str) -> Text:
         con = "┄┄"
         n_visible, n_hidden = self.count_visible_hidden_tasks(q)
@@ -215,18 +225,13 @@ class TaskTree:
         else:
             output.add(" ")
 
-        title = q.get_full_title()
-        title = title.ljust(self.max_title + 3, Text.Token("."))
-        if focus_color != "":
-            output.addf(focus_color, title)
-        else:
-            output.add(title)
-
-        if in_focus:
-            output.add(self.style.round_r(focus_color))
-        else:
-            output.add(" ")
-
+        output.addf(focus_color, q.get_full_title())
+        output = output.ljust(self.get_max_title(), Text.Token(".", focus_color))
+        output.add(self.style.round_r(focus_color) if in_focus else " ")
+        
+        if Flags.show_time.is_true():
+            hours, minutes = self.get_quest_time(q)
+            output.add(self.format_hours_minutes("g", hours, minutes))
         output.add(q.get_resume_by_percent())
 
         all_tasks_done = True
@@ -239,6 +244,17 @@ class TaskTree:
 
         return output
 
+    def get_quest_time(self, quest: Quest) -> tuple[int, int]:
+        hours = 0
+        minutes = 0
+        for t in quest.get_tasks():
+            th, tm = self.get_task_hours_minutes(t)
+            hours += th
+            minutes += tm
+        hours += minutes // 60
+        minutes = minutes % 60
+        return hours, minutes
+
     def __str_cluster(self, has_kids: bool, focus_color: str, cluster: Cluster) -> Text:
         output: Text = Text()
         opening = "━─"
@@ -250,13 +266,17 @@ class TaskTree:
         color = ""
         if focus_color != "":
             color = "k" + focus_color
-        title = (cluster.get_database() + ":" + cluster.get_title()).ljust(self.max_title + 5, ".")
+        
         if focus_color != "":
             output.add(self.style.round_l(focus_color))
         else:
             output.add(" ")
+        
+        len_extra = 0
+        if Flags.show_time.is_true():
+            len_extra = len(self.format_hours_minutes("", 0, 0))
 
-        output.addf(color, title)
+        output = output.addf(color, cluster.get_database() + ":" + cluster.get_title()).ljust(self.get_max_title() + len_extra, Text.Token(".", color))
 
         if focus_color != "":
             output.add(self.style.round_r(focus_color))
@@ -332,7 +352,8 @@ class TaskTree:
                     self.expanded.remove(q.get_db_key())
 
     def reload_sentences(self):
-        self.__update_max_title()
+        self.cache_task_times.clear()
+        self.cache_max_title = None # force recalculation of max title size
         self.items = []
         self.remove_empty_quests()
         filtered, _ = self.filter_by_search()

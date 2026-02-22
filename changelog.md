@@ -1,5 +1,8 @@
 # Changelog
 
+- 7.9.0
+  - refactor: tasktree to add feedback symbol and separate logic
+  - add: shift T to toggle time
 - 7.8.1
   - fix: reload game erasing tasks
   - fix: tasks not saving after grading 
