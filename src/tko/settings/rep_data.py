@@ -27,8 +27,17 @@ class RepData:
                 return s
         return None
 
+    # fonte local é retornada primeiro para garantir que ela seja priorizada em relação a fontes externas
     def get_sources(self) -> list[RepSource]:
-        return self.__sources
+        external_sources: list[RepSource] = []
+        local_sources: list[RepSource] = []
+        for s in self.__sources:
+            if s.database == RepSource.LOCAL_SOURCE_DATABASE:
+                local_sources.append(s)
+            else:
+                external_sources.append(s)
+        
+        return local_sources + external_sources
 
     def get_expanded(self) -> list[str]:
         return self.expanded

@@ -407,8 +407,8 @@ class Parser:
         parser_down.set_defaults(func=Main.task)
 
         parser_init = self.subparsers.add_parser('init', parents=[self.parent_folder], help='Initialize a empty repository in a folder.')
-        parser_init.add_argument('--language', '-l', type=str, help='Draft language for the repository.')
-        parser_init.add_argument('--git', '-g', '-r', type=str, help='Init with remote git source [fup|ed|poo].')
+        parser_init.add_argument('--language', '-l', type=str, metavar=('EXTENSION'), help='Draft language for the repository.')
+        parser_init.add_argument('--git', '-g', '-r', type=str, metavar=('ALIAS '), help='Init with remote git source [fup|ed|poo].')
         parser_init.add_argument('--enable', '-e', type=str, nargs='*', help='Only show enabled items')
         parser_init.set_defaults(func=Main.init)
 
@@ -420,9 +420,9 @@ class Parser:
         source_add.add_argument('alias', type=str, help='Alias for the remote.')
         source_from = source_add.add_mutually_exclusive_group()
         source_from.add_argument('--link', '-l', type=str, help='HTTP url or local file.')
-        source_from.add_argument('--git', '-g', type=str, help='Clone one of the default remote git sources [fup|ed|poo].')
-        source_from.add_argument('--clone', '-c', type=str, metavar=('URL'), help='Clone a rep with a Readme.md source.')
-        source_add.add_argument('--enable', '-e', type=str, nargs='*', help='Only show enabled items')
+        source_from.add_argument('--git', '-g', type=str, metavar=('ALIAS'), help='Clone one of the default remote git sources [fup|ed|poo].')
+        source_from.add_argument('--clone', '-c', type=str, metavar=('REPO_URL'), help='Clone a git rep with a Readme.md source.')
+        source_add.add_argument('--enable', '-e', metavar=('SUBSTRING'), type=str, nargs='*', help='Only show enabled items')
         source_add.add_argument('--branch', '-b', type=str, default='master', help='Branch name for clone source.')
         source_add.set_defaults(func=Main.source_add)
 
