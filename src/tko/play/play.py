@@ -60,16 +60,16 @@ class Play:
         self.gui.xray_offset = 0
 
     def page_up(self):
-        if Flags.graph.get_value() == Flags.graph_logs:
+        if Flags.painel.get_value() == Flags.graph_logs:
             self.gui.xray_offset -= 5
-        elif Flags.graph.get_value() == Flags.graph_task:
-            Flags.task_graph.set_value(Flags.task_exec_view)
+        elif Flags.painel.get_value() == Flags.graph_task:
+            Flags.task_graph_mode.set_value(Flags.task_exec_view)
     
     def page_down(self):
-        if Flags.graph.get_value() == Flags.graph_logs:
+        if Flags.painel.get_value() == Flags.graph_logs:
             self.gui.xray_offset += 5
-        elif Flags.graph.get_value() == Flags.graph_task:
-            Flags.task_graph.set_value(Flags.task_time_view)
+        elif Flags.painel.get_value() == Flags.graph_task:
+            Flags.task_graph_mode.set_value(Flags.task_time_view)
 
 
     def move_left(self):
@@ -110,7 +110,7 @@ class Play:
         cman.add_str(GuiKeys.set_lang_drafts, self.gui.language.set_language)
         cman.add_str(GuiKeys.create_draft, self.actions.create_draft)
 
-        cman.add_str(GuiKeys.grade_play, self.actions.self_evaluate)
+        cman.add_str(GuiKeys.self_evaluate, self.actions.self_evaluate)
         cman.add_int(curses.KEY_BACKSPACE, self.actions.self_evaluate)
         
         cman.add_str(GuiKeys.key_help, self.gui.show_help)
@@ -127,7 +127,7 @@ class Play:
         
 
     def send_char_not_found(self, key: int):
-        exclude_str = [ord(v) for v in [" ", "a", "d", "\n"]]
+        exclude_str = [ord(v) for v in [" ", "\n"]]
         exclude_int = [ -1, curses.KEY_EXIT, curses.KEY_UP, curses.KEY_DOWN, curses.KEY_LEFT, curses.KEY_RIGHT, curses.KEY_BACKSPACE]
         if key in exclude_int + exclude_str:
             return

@@ -1,7 +1,8 @@
 class GuiActions:
     tab = "↔TAB"
     leave   = "Sair"
-    edit = "Editar"
+    edit = "Editar arquivos"
+    show_time = "Mostrar tempo"
     filter = "Filtrar"
     principal = "Principal"
     github = "Web   "
@@ -12,24 +13,25 @@ class GuiActions:
     uncheck = "Desmarcar"
     search = "Busca"
     pallete = "Paleta"
-    grade = "Pontuar"
+    grade = "Auto Avaliação"
     # tester frame
-    time_limit = "Tempo"
+    time_limit = "Tempo limite"
     evaluate_tester = "Avaliar "
     execute_tester  = "Rodar"
-    calibrate = "Calibrar"
+    calibrate = "Calibrar teclas"
+    draft = "Rascunho"
     all = "Todos"
 
 class GuiKeys:
-    calibrate = "C"
+    calibrate = "c"
 
     show_graph = "1"
     show_tracks = "2"
     show_quests = "3"
     show_tasks = "4"
-    show_time = "T"
+    show_time = "t"
 
-    palette = "P"
+    palette = "p"
     images = "I"
     down_task = "b"
     activate = "\n"
@@ -44,7 +46,7 @@ class GuiKeys:
     colors = "C"
     borders = "B"
     search = "/"
-    grade_play = "p"
+    self_evaluate = "a"
     execute_tester = "r" # Interact in manual input
     diff = "d"
     unfold_patch = "V"

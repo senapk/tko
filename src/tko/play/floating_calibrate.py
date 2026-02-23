@@ -9,7 +9,7 @@ class FloatingCalibrate(FloatingABC):
         self.settings = settings
         self.floating.set_header(" Calibrar teclas direcionais ")
         # self.set_text_ljust()
-        self.floating.set_footer(" Use Enter para salvar, mas só quando tiver certeza de que as teclas estão corretas ")
+        self.floating.set_footer_text(Text.format(" Use {y:Enter} para salvar, {y:q} para cancelar e {y:r} para reiniciar. "))
         self._index = 0
         self._options: list[int] = [settings.app.get_key_left(),
                                    settings.app.get_key_right(),
@@ -71,7 +71,13 @@ class FloatingCalibrate(FloatingABC):
             self.settings.app.set_key_backspace(self._options[7])
             self.settings.save_settings()
             return -1
-        else:
+        elif key == ord('q'):
+            self.floating.enable = False
+            return -1
+        elif key == ord('r'):
+            self._index = 0
+            self.set_key_content()
+        elif not (ord('a') <= key <= ord('z') or ord('A') <= key <= ord('Z')) or ord('0') <= key <= ord('9'):
             self._options[self._index] = key
             for i in range(len(self._options)):
                 if i != self._index and self._options[i] == key:

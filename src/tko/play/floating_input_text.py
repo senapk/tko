@@ -46,6 +46,7 @@ class FloatingInputText(FloatingABC):
             return -1
         elif key == curses.KEY_EXIT:
             self.floating.enable = False
+            return -1
         elif key == curses.KEY_BACKSPACE:
             self.input_text = self.input_text[:-1]
             return -1

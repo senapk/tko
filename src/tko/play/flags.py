@@ -90,6 +90,9 @@ class Flags:
     task_exec_view = "0"
     task_time_view = "1"
 
+    painel = (Flag().set_name("Painel").set_keycode(GuiKeys.show_graph).set_description("Mostra o Painel de Informações")
+                    .set_values([graph_none, graph_task, graph_logs])
+                    .set_msgs(["Desabilitar painel de informações", "Gráfico de tarefas", "Mostrar logs"]))
     quests = (Flag().set_name("Tópicos").set_keycode(GuiKeys.show_quests).set_description("Habilitas todas as missões e tarefas")
                     .set_values(["0", "1", "2"])
                     .set_msgs(["Mostrar apenas quests disponíveis", "Mostrar todas as quests sem habilitar", "Habilitar todas as quests"]))
@@ -99,10 +102,7 @@ class Flags:
     tasks = (Flag().set_name("Tarefas").set_keycode(GuiKeys.show_tasks).set_description("Mostra as atividades concluídas")
                     .set_values(["0", "1", "2"])
                     .set_msgs(["Mostrar todas as tarefas", "Ocultar tarefas com 100%", "Ocultar tarefas com >70%"]))
-    graph = (Flag().set_name("Graph").set_keycode(GuiKeys.show_graph).set_description("Mostra o Gráfico")
-                    .set_values([graph_none, graph_task, graph_logs])
-                    .set_msgs(["Desabilitar gráficos de acompanhamento", "Gráfico de tarefas", "Mostrar logs"]))
-    task_graph = (Flag().set_name("Task Graph").set_description("Mostra o Gráfico de Tarefas")
+    task_graph_mode = (Flag().set_name("Task Graph").set_description("Mostra o Gráfico de Tarefas")
                     .set_values([task_exec_view, task_time_view])
                     .set_msgs(["Gráfico de tarefas por execuções", "Gráfico de tarefas por tempo"]))
     show_time = (Flag().set_name("Tempo").set_keycode(GuiKeys.show_time).set_description("Mostra o tempo utilizado para completar as tarefas")

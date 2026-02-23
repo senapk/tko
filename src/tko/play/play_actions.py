@@ -147,7 +147,7 @@ class PlayActions:
             )
 
     def register_action(self, task: Task):
-        self.rep.logger.store(LogItemSelf().set_key(task.get_db_key()).set_info(task.info.clone()) )
+        self.rep.logger.store(LogItemSelf().set_task(task))
 
     def self_evaluate(self):
         obj = self.tree.get_selected_throw()
@@ -159,7 +159,7 @@ class PlayActions:
                 task.info.feedback = True
             else:
                 self.fman.add_input(
-                    FloatingGrade(obj, self.register_action)
+                    FloatingGrade(obj, lambda task: self.rep.logger.store(LogItemSelf().set_task(task)))
                 )
             return
 

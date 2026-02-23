@@ -1,5 +1,9 @@
 # Changelog
 
+- 7.9.1 
+  - fix: tasktree width calculation
+  - add: change time to t, self evaluation to a, palette to p
+  - add: many small improvements in gui and calibration
 - 7.9.0
   - refactor: tasktree to add feedback symbol and separate logic
   - add: shift T to toggle time

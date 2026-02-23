@@ -37,11 +37,12 @@ class PlayPalette:
             ).set_exit_on_action(True)
         )
 
+        # self evaluate
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Tarefa: {y} arquivos na IDE", symbols.action, "Editar"),
-                self.actions.open_code,
-                GuiKeys.edit
+                lambda: Text.format(" {} Tarefa: Auto {y} método de estudo", symbols.action, "Avaliar"),
+                self.actions.self_evaluate,
+                GuiKeys.self_evaluate
             ).set_exit_on_action(True)
         )
 

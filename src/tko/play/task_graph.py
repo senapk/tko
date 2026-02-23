@@ -63,7 +63,7 @@ class TaskGraph:
 
         self.total_elapsed = collected_elapsed[-1]
         # normalizando tempo para porcentagem
-        if not Flags.task_graph.get_value() == Flags.task_time_view:
+        if not Flags.task_graph_mode.get_value() == Flags.task_time_view:
             if collected_elapsed[-1] != 0:
                 for i in range(len(collected_elapsed)):
                     collected_elapsed[i] = collected_elapsed[i] / self.total_elapsed * 100
@@ -106,7 +106,7 @@ class TaskGraph:
         return output
 
     def get_graph(self) -> list[Text]:
-        if Flags.task_graph.get_value() == Flags.task_time_view:
+        if Flags.task_graph_mode.get_value() == Flags.task_time_view:
             result = plot_to_string(
                 color=["magenta", "green", "red"],
                 xs=[self.collected_elapsed, self.collected_elapsed, self.collected_elapsed],
@@ -162,11 +162,11 @@ class TaskGraph:
         # title = title.center(self.width)
         header.append(Text().add(first) + title.center(self.width - len(first)))
         
-        if Flags.graph.get_value() == Flags.graph_logs:
+        if Flags.painel.get_value() == Flags.graph_logs:
             header.append(Text().addf("", second) + Text.format(" {C} {M}", " Scroll Up [PageUp] ", " Scroll Down [PgDown] ").center(self.width - len(second)))
             return header, self.raw_text
         
-        if Flags.task_graph.get_value() == Flags.task_time_view:
+        if Flags.task_graph_mode.get_value() == Flags.task_time_view:
             exec_color = "Y"
             time_color = "G"
         else:

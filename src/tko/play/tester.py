@@ -34,7 +34,8 @@ from tko.settings.repository import Repository
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove
 from tko.util.symbols import symbols
-
+from tko.logger.log_item_self import LogItemSelf
+from tko.play.floating_grade import FloatingGrade
 
 class SeqMode(enum.Enum):
     intro = 0
@@ -392,10 +393,10 @@ class Tester:
         text = f"{GuiActions.pallete} [{GuiKeys.palette}]"
         cmds.append(self.borders.border("C", f"Tela Anterior[Esc]"))
         cmds.append(self.borders.border("C", text))
+        if self.opener is not None:
+            cmds.append(self.borders.border("C", f"{GuiActions.edit} [{GuiKeys.edit}]"))
         cmds.append(self.borders.border("G", f"{GuiActions.evaluate_tester} [{symbols.newline.text}]"))
         cmds.append(self.borders.border("G", f"{GuiActions.execute_tester} [{GuiKeys.execute_tester}]"))
-        if self.opener is not None:
-            cmds.append(self.borders.border("Y", f"{GuiActions.edit} [{GuiKeys.edit}]"))
         limite = f"{GuiActions.time_limit} {self.get_time_limit_symbol()} [{GuiKeys.limite}]"
         cmds.append(self.borders.border("Y", limite))
 
@@ -654,6 +655,8 @@ class Tester:
         elif key == ord(GuiKeys.edit):
             if self.opener is not None:
                 self.opener.load_folders_and_open()
+        elif key == ord(GuiKeys.self_evaluate):
+            self.self_evaluate()
         elif key == ord(GuiKeys.limite):
             self.change_limit()
             self.fman.add_input(Floating().bottom().right().set_warning().put_text("Limite de execução alterado para {}".format(self.get_time_limit_symbol())))
@@ -675,6 +678,15 @@ class Tester:
         elif key != -1 and key != curses.KEY_RESIZE:
             self.fman.add_input( Floating().bottom().right().set_error().put_text(f"Tecla char:{chr(key)}, code:{key}, não reconhecida") )
         return None
+
+    def self_evaluate(self):
+        if self.rep is None:
+            self.fman.add_input(Floating().bottom().right().set_warning().put_text("Nenhum repositório de logs encontrado."))
+            return
+        logger = self.rep.logger
+        self.fman.add_input(
+            FloatingGrade(self.task, lambda task: logger.store(LogItemSelf().set_task(task)))
+        )
 
     def command_pallete(self):
         options: list[FloatingInputData] = []
@@ -730,6 +742,15 @@ class Tester:
             )
         )
 
+                # self evaluate
+        options.append(
+            FloatingInputData(
+                lambda: Text.format(" {} Tarefa: Auto {y} método de estudo", symbols.action, "Avaliar"),
+                self.self_evaluate,
+                GuiKeys.self_evaluate
+            ).set_exit_on_action(True)
+        )
+
         self.fman.add_input(
             FloatingDropDown().set_floating(
                         Floating().set_text_ljust()
@@ -739,6 +760,8 @@ class Tester:
                       .set_options(options)
                       .set_exit_on_enter(False)
         )
+
+
 
     def run(self):
         while True:

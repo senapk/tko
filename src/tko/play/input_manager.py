@@ -61,7 +61,7 @@ class InputManager:
             value = curses.KEY_RIGHT
         elif value == app.key_backspace:
             value = curses.KEY_BACKSPACE
-        elif value == app.key_esc:
+        elif value in [app.key_esc, 27]: # 27 is the ESC key value in some systems
             value = curses.KEY_EXIT
         elif value == app.key_pg_up:
             value = curses.KEY_PPAGE

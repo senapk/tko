@@ -49,17 +49,17 @@ class Gui:
         try:
             selected = self.tree.get_selected_throw()
             if isinstance(selected, Task):
-                color = "Y"
+                color = "G"
         except IndexError:
             pass
         act_color, act_text = self.get_activate_label()
         help_fixed: list[Text] = [
             Text().addf("C", f"Criar Rascunho [{GuiKeys.create_draft}]"),
             Text().addf("C", f"{GuiActions.pallete} [{GuiKeys.palette}]"),
-            Text().addf(act_color, f"{act_text} [↲]"),
+            Text().addf("C", f"{GuiActions.calibrate} [{GuiKeys.calibrate}]"),
             Text().addf("G", f"{GuiActions.search} [{GuiKeys.search}]"),
-            Text().addf(color, f"{GuiActions.edit} [{GuiKeys.edit}]"),
-            Text().addf(color, f"{GuiActions.grade} [{GuiKeys.grade_play}]"),
+            Text().addf(act_color, f"{act_text} [↲]"),
+            Text().addf(color, f"{GuiActions.grade} [{GuiKeys.self_evaluate}]"),
         ]
         return help_fixed
 
@@ -110,9 +110,9 @@ class Gui:
         color = self.settings.colors.filters
         top = Text()
 
-        graph: str = f"Gráficos [{GuiKeys.show_graph}]"
-        for i in Flags.graph.get_values():
-            if Flags.graph.get_value() == i:
+        graph: str = f"Painel [{GuiKeys.show_graph}]"
+        for i in Flags.painel.get_values():
+            if Flags.painel.get_value() == i:
                 graph += symbols.closed_circle.text
             else:
                 graph += symbols.open_circle.text
@@ -343,10 +343,9 @@ class Gui:
         _help.put_sentence(Text() + f"   {GuiActions.edit} " + Text.r_token("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
         _help.put_sentence(Text() + f"   {GuiActions.activate} " + Text.r_token("r", "↲") + "  Interage com o elemento de acordo com o contexto")
         _help.put_sentence(Text() + "             (baixar, visitar, escolher, compactar, expandir)")
-        _help.put_sentence(Text() + f"  {GuiActions.grade} " + Text.r_token("r", GuiKeys.grade_play) + "  Abre tela para auto avaliação")
+        _help.put_sentence(Text() + f"  {GuiActions.grade} " + Text.r_token("r", GuiKeys.self_evaluate) + "  Abre tela para auto avaliação")
         _help.put_sentence(Text() + f"    {GuiActions.search} " + Text.r_token("r", f"{GuiKeys.search}") + "  Abre a barra de pesquisa")
-        _help.put_sentence(Text() + "  " + Text.r_token("r", f"{GuiKeys.create_draft}") + "  Cria um rascunho para escrever código ou anotações")
-        
+        _help.put_sentence(Text() + f"  {GuiActions.draft} " + Text.r_token("r", f"{GuiKeys.create_draft}") + "  Cria um rascunho para escrever código ou anotações")
 
         _help.put_sentence(Text())
         _help.put_sentence(Text() + "Você pode mudar o editor padrão com o comando no terminal")
@@ -388,7 +387,7 @@ class Gui:
         if width < 5:
             width = 5
         header: list[Text] = []
-        if Flags.graph.get_value() in (Flags.graph_task, Flags.graph_logs):
+        if Flags.painel.get_value() in (Flags.graph_task, Flags.graph_logs):
             height = lines - 4
             if height < 3:
                 height = 3
@@ -404,7 +403,7 @@ class Gui:
             self.xray_offset = len(list_data) - 1
         
         offset = 0
-        if Flags.graph.get_value() == Flags.graph_logs and isinstance(selected, Task):
+        if Flags.painel.get_value() == Flags.graph_logs and isinstance(selected, Task):
             offset = self.xray_offset
         count = -1
         line_count = 0

@@ -164,7 +164,7 @@ class Main:
 
     @staticmethod
     def source_add(args: argparse.Namespace):
-        remote: str | None = args.remote
+        remote: str | None = args.git
         link: str | None = args.link 
         clone: str | None = args.clone
         branch: str = args.branch
