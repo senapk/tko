@@ -184,6 +184,14 @@ Também é possível colocar os testes em um arquivos cases.toml.
                 task.info.rate = 100
                 task.info.feedback = True
             else:
+                if task.is_link():
+                    self.fman.add_input(
+                        Floating().bottom().right()
+                        .put_text("\nEssa é uma tarefa de link.")
+                        .put_text("\nNão é possível autoavaliar tarefas de link.\n")
+                        .set_error()
+                    )
+                    return
                 self.fman.add_input(
                     FloatingGrade(obj, lambda task: self.rep.logger.store(LogItemSelf().set_task(task)))
                 )

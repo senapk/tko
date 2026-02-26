@@ -115,7 +115,12 @@ class RepSource:
 
     def get_source_readme(self) -> str:
         if self.source_type == SourceType.LOCAL_FILE:
-            return os.path.join(self.__target, "Readme.md")
+            
+            file: str = os.path.join(self.__target, "Readme.md")
+            if os.path.isabs(file):
+                return file
+            else:
+                return os.path.join(self.get_rep_workspace(), file)
         if self.source_type == SourceType.GIT_SOURCE:
             return os.path.join(self.get_source_cache_folder(),"Readme.md")
         raise ValueError("Unknown source type")

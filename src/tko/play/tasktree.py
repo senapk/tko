@@ -143,7 +143,7 @@ class TaskTree:
 
     def get_task_down_symbol(self, t: Task) -> Text.Token:
         if t.is_link():
-            return symbols.task_to_visit
+            return Text.Token("-")
 
         if not t.is_import_type():
             return symbols.task_local
@@ -155,6 +155,9 @@ class TaskTree:
 
     def get_feedback_symbol(self, t: Task) -> Text:
         output = Text()
+        if t.is_link():
+            output.add("-")
+            return output
         if t.info.feedback:
             output.addf("g", symbols.closed_circle)
         elif t.info.rate > 0:
@@ -169,10 +172,13 @@ class TaskTree:
         output = Text()
         output.add(" ").addf(color_aval, lig_cluster).add(" ")
         output.addf(color_aval, lig_quest)
-        output.add(self.get_task_down_symbol(t)).add(" ")
-        rate = t.info.rate // 10
-        output.add(t.get_prog_symbol(rate)).add(" ")
-        output.add(self.get_feedback_symbol(t))
+        if t.is_link():
+            output.addf("y", "<url>")
+        else:
+            output.add(self.get_task_down_symbol(t)).add(" ")
+            rate = t.info.rate // 10
+            output.add(t.get_prog_symbol(rate)).add(" ")
+            output.add(self.get_feedback_symbol(t))
 
         in_focus = focus_color != ""
         output.add(self.style.round_l(focus_color) if in_focus else " ")
