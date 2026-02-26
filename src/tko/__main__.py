@@ -149,7 +149,7 @@ class Main:
         enable: list[str] | None = args.enable
         if ok and remote is not None:
             rep_actions = RepSourceActions(folder)
-            rep_actions.add_source(alias=remote, remote=remote, link=None, clone=None, filters=enable)
+            rep_actions.add_source(alias=remote, default_repo_aliases=remote, clone_url=None, filters=enable, local_source_folder=None, writeable=False)
         rep_starter.print_end_msg()
 
     @staticmethod
@@ -164,18 +164,19 @@ class Main:
 
     @staticmethod
     def source_add(args: argparse.Namespace):
-        remote: str | None = args.git
-        link: str | None = args.link 
-        clone: str | None = args.clone
-        branch: str = args.branch
+        default_git_alias: str | None = args.git
+        git_clone: str | None = args.clone
+        git_branch: str = args.branch
+        local_source: str | None = args.local
+        writeable: bool = args.writeable
 
-        folder: str | None = args.folder
+        rep_folder: str | None = args.folder
         
         alias: str = args.alias
         enable: list[str] | None = args.enable
         try:
-            rep_actions = RepSourceActions(folder)
-            rep_actions.add_source(alias=alias, remote=remote, link=link, branch=branch, clone=clone, filters=enable)
+            rep_actions = RepSourceActions(rep_folder)
+            rep_actions.add_source(alias=alias, default_repo_aliases=default_git_alias, branch=git_branch, clone_url=git_clone, local_source_folder=local_source, filters=enable, writeable=writeable)
             rep_actions.print_end_msg()
         except ValueError as e:
             print(f"Erro ao adicionar fonte: {e}")
@@ -204,29 +205,6 @@ class Main:
     def list(_: argparse.Namespace):
         settings = Settings()
         print(str(settings))
-
-COMMAND_GROUPS = {
-    "criar e gerenciar repositórios tko": {
-        "init": "inicializa um repositório tko.",
-        "source": "adiciona fontes extras a um repositório.",
-    },
-    "trabalhando em um repositório": {
-        "open": "abre um repositório utilizando um TUI (Terminal user interface).",
-        "run": "executa testes diretamente na tarefa, sem utilizar o TUI.",
-        "tui": "executa testes utilizando o TUI.",
-    },
-    "ferramentas de automação para professores": {
-        "collect": "coleta estatísticas e dados de um repositório.",
-        "update": "atualiza o cache do repositório.",
-        "log": "Show commit logs",
-        "status": "Show working tree status",
-    },
-    "construindo novas tarefas": {
-        "build": "conversão entre modelos de casos de teste",
-        "diff": "mostra as diferenças entre dois arquivos ou textos.",
-    }
-}
-
 
 class Parser:
     def __init__(self):
@@ -413,17 +391,18 @@ class Parser:
         parser_init.set_defaults(func=Main.init)
 
 
-        parser_source = self.subparsers.add_parser('source', parents=[self.parent_folder], help='Adds a source to a repository folder.')
+        parser_source = self.subparsers.add_parser('source', help='Adds a source to a repository folder.')
         sub_source = parser_source.add_subparsers(title='source commands', help='help for subcommand.')
         # create subcommands inside source
-        source_add = sub_source.add_parser("add", help="Add a new task source")
-        source_add.add_argument('alias', type=str, help='Alias for the remote.')
-        source_from = source_add.add_mutually_exclusive_group()
-        source_from.add_argument('--link', '-l', type=str, help='HTTP url or local file.')
+        source_add = sub_source.add_parser("add", parents=[self.parent_folder], help="Add a new task source")
+        source_add.add_argument('--alias', "-a", required=True, type=str, help='Alias for the remote.')
+        source_from = source_add.add_mutually_exclusive_group(required=True)
         source_from.add_argument('--git', '-g', type=str, metavar=('ALIAS'), help='Clone one of the default remote git sources [fup|ed|poo].')
-        source_from.add_argument('--clone', '-c', type=str, metavar=('REPO_URL'), help='Clone a git rep with a Readme.md source.')
+        source_from.add_argument('--clone', '-c', type=str, metavar=('REPO_URL'), help='Clone a git rep with a Readme.md source. Ex: tko source add ed --clone https://github.com/qxcodeed/arcade.git')
+        source_from.add_argument('--local', '-l', type=str, metavar=('FOLDER'), help='Add a local folder as a source.')
         source_add.add_argument('--enable', '-e', metavar=('SUBSTRING'), type=str, nargs='*', help='Only show enabled items')
         source_add.add_argument('--branch', '-b', type=str, default='master', help='Branch name for clone source.')
+        source_add.add_argument('--writeable', '-w', action='store_true', help='Set source as writeable, allowing modifications.')
         source_add.set_defaults(func=Main.source_add)
 
         source_list = sub_source.add_parser("list", parents=[self.parent_folder], help="List tko repository sources")

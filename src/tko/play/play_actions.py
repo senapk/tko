@@ -38,6 +38,20 @@ import subprocess
 
 class PlayActions:
 
+    draft_content: str = f"""Descrição do rascunho
+
+Escreva aqui as informações que você quiser."
+Se quiser adicionar testes automáticos, basta preencher abaixo colocando valores para input e output. 
+
+Cada nova entrada [[cases]] gera um novo case de teste.
+
+Também é possível colocar os testes em um arquivos cases.toml.
+
+```toml"
+{Writer.create_empty_toml()}
+```
+"""
+
     def __init__(self, gui: Gui):
         self.app = Settings().app
         self.settings = Settings()
@@ -49,20 +63,32 @@ class PlayActions:
         self.gui = gui
 
         
-    @staticmethod
-    def open_link_without_stdout_stderr(link: str):
-        outfile = tempfile.NamedTemporaryFile(delete=False)
-        subprocess.Popen("python3 -m webbrowser -t {}".format(link), stdout=outfile, stderr=outfile, shell=True)
+    def open_link_without_stdout_stderr(self, link: str):
+        if link.startswith("http://") or link.startswith("https://"):
+            outfile = tempfile.NamedTemporaryFile(delete=False)
+            subprocess.Popen("python3 -m webbrowser -t {}".format(link), stdout=outfile, stderr=outfile, shell=True)
+        else:
+            Opener(Settings()).open_files([link])
 
     @staticmethod
     def get_task_folder(task: Task) -> str:
-        return task.get_folder_try()
+        folder = task.get_workspace_folder()
+        if folder is None:
+            return ""
+        return folder
 
     def delete_folder(self):
         obj = self.tree.get_selected_throw()
         if isinstance(obj, Task):
             task: Task = obj
             folder = self.get_task_folder(task)
+            if folder == "":
+                self.fman.add_input(
+                     Floating().bottom().right()
+                    .put_text("\nEssa tarefa não possui pasta de código local.\n")
+                    .set_error()
+                )
+                return
             if os.path.exists(folder):
                 try:
                     shutil.rmtree(folder)
@@ -118,15 +144,15 @@ class PlayActions:
         obj = self.tree.get_selected_throw()
         if isinstance(obj, Task):
             task: Task = obj
-            if task.link_type == Task.Types.VISITABLE_URL or task.link_type == Task.Types.REMOTE_FILE:
+            if task.is_link():
                 try:
-                    PlayActions.open_link_without_stdout_stderr(task.link)
+                    self.open_link_without_stdout_stderr(task.target)
                 except Exception as _:
                     pass
             self.fman.add_input(
                  Floating().bottom().right()
                 .set_header(" Abrindo link ")
-                .put_text("\n " + task.link + " \n")
+                .put_text("\n " + task.target + " \n")
                 .set_warning()
             )
         elif isinstance(obj, Quest):
@@ -164,11 +190,13 @@ class PlayActions:
             return
 
     def create_draft(self):
-        local_source = self.game.get_local_source()
-        rep_folder = local_source.get_local_database_path()
-        current_folders_on_rep = os.listdir(rep_folder)
+        local_source = self.game.get_sandbox_source()
+        workspace_folder = os.path.join(local_source.get_source_workspace(), local_source.get_default_sandbox_draft_folder())
+        if not os.path.exists(workspace_folder):
+            os.makedirs(workspace_folder)
+        current_folders_on_rep = os.listdir(workspace_folder)
         def __create(draft_name: str):
-            folder = os.path.join(rep_folder, draft_name)
+            folder = os.path.join(workspace_folder, draft_name)
             if not os.path.exists(folder):
                 os.makedirs(folder)
             else:
@@ -184,10 +212,8 @@ class PlayActions:
                 draft = Drafts.drafts[self.rep.data.lang]
             with open(os.path.join(folder, f"draft.{self.rep.data.lang}"), "w", encoding="utf-8") as f:
                 f.write(draft)
-            with open(os.path.join(folder, "cases.toml"), "w", encoding="utf-8") as f:
-                f.write(Writer.create_empty_toml())
             with open (os.path.join(folder, "Readme.md"), "w", encoding="utf-8") as f:
-                f.write("# " + os.path.basename(folder) + "\n\nDescrição do rascunho.\n\nEscreva aqui as informações que você quiser.")
+                f.write("# " + os.path.basename(folder) + "\n\n" + self.draft_content)
             self.rep.load_game(try_update=False, silent=True) # recarrega o jogo
             self.fman.add_input( Floating().bottom().right()
                                 .put_text(f"Rascunho criado em {folder}")
@@ -220,7 +246,7 @@ class PlayActions:
         self.__down_remote_task(obj)
     
     def __down_remote_task(self, task: Task) -> None:
-        if task.link_type != Task.Types.REMOTE_FILE and task.link_type != Task.Types.IMPORT_FILE:
+        if not task.is_import_type():
             self.fman.add_input(
                  Floating().bottom().right().put_text("\nEssa não é uma tarefa de baixável.\n").set_error()
             )
@@ -256,7 +282,7 @@ class PlayActions:
         if action == TaskAction.VISITAR:
             self.open_link()
             return
-        folder = task.get_folder_try()
+        folder = task.get_workspace_folder()
         if not folder:
             raise Warning("Folder não encontrado")
         self.run_selected_task(task, folder)

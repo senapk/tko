@@ -68,26 +68,29 @@ class VplParser:
         return text
 
 def parse_toml(content: str) -> list[dict[str, Any]]:
+    main_list_name = "cases"
+
     try:
         data = tomllib.loads(content)
     except tomllib.TOMLDecodeError as e:
         raise ValueError(f"Erro ao analisar o arquivo TOML: {e}") from e
     
-    if "cases" not in data or not isinstance(data["cases"], list):
-        raise ValueError("Arquivo TOML inválido: seção [[cases]] não encontrada.")
+    if main_list_name not in data or not isinstance(data[main_list_name], list):
+        raise ValueError(f"Arquivo TOML inválido: seção [[{main_list_name}]] não encontrada.")
 
     result: list[dict[str, Any]] = []
 
-    for i, case in enumerate(data["cases"], start=1): # type:ignore
+    for i, case in enumerate(data[main_list_name], start=1): # type:ignore
         if not isinstance(case, dict):
             raise ValueError(f"Case {i} inválido.")
 
-        if "input" not in case or "expected" not in case:
-            raise ValueError(f"Case {i} deve conter 'input' e 'expected'.")
+        if "input" not in case or "output" not in case:
+            print(f"warning: case {i} data: {case}") # type: ignore
+            continue # ou raise ValueError(f"Case {i} inválido: campos 'input' e 'output' são obrigatórios.")
 
         parsed: dict[str, str] = {
             "input": case["input"],
-            "expected": case["expected"],
+            "output": case["output"],
         }
 
         if "label" in case:
@@ -230,7 +233,7 @@ class Loader:
         for m in data_list:
             case = m.get("label", "")
             inp = m["input"]
-            outp = m["expected"]
+            outp = m["output"]
             grade = m.get("grade_reduction", None)
             output.append(Unit(case, inp, outp, grade, source))
         return output
@@ -259,6 +262,12 @@ class Loader:
         return unit_list
 
     @staticmethod
+    def extract_data_inside_code_fences(content: str) -> str:
+        pattern = r'```.*?\n(.*?)```'  # get only inside code blocks
+        code = re.findall(pattern, content, re.MULTILINE | re.DOTALL)
+        return "\n" + "\n".join(code)
+
+    @staticmethod
     def parse_source(source: str) -> list[Unit]:
         if os.path.isdir(source):
             return Loader.parse_dir(source)
@@ -273,8 +282,10 @@ class Loader:
             elif source.endswith(".toml"):
                 return Loader.parse_toml(content, source)
             elif source.endswith(".md"):
-                tests = Loader.parse_tio(content, source)
-                tests += Loader.parse_cio(content, source)
+                content_fences = Loader.extract_data_inside_code_fences(content)
+                tests = Loader.parse_tio(content_fences, source)
+                tests += Loader.parse_cio(content_fences, source)
+                tests += Loader.parse_toml(content_fences, source)
                 return tests
             else:
                 print("warning: target format do not supported: " + source)  # make this a raise

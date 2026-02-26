@@ -5,14 +5,14 @@ from tko.util.get_md_link import get_md_link
 class QuestParser:
     def __init__(self, source_alias: str):
         self.source_alias = source_alias
-        self.quest = Quest().set_database(source_alias)
+        self.quest = Quest().set_source_alias(source_alias)
         self.line: str = ""
         self.line_num = 0
         self.filename: str = ""
 
     def finish_quest(self) -> Quest:
 
-        if self.quest.get_only_key() == "":
+        if self.quest.get_key_only() == "":
             self.quest.set_key(get_md_link(self.quest.get_title()))
         return self.quest
 

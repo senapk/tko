@@ -31,7 +31,7 @@ class RepStarter:
         return True
 
     def print_end_msg(self):
-        rel_path = os.path.relpath(self.rep.paths.get_rep_dir(), os.getcwd())
+        rel_path = os.path.relpath(self.rep.paths.get_workspace_dir(), os.getcwd())
         print(Text.format("Voce pode acessar o repositório com o comando {g} {y}", "tko open", "<pasta>"))
         print(Text.format("Por exemplo: {g} {y}", "tko open", rel_path))
 
@@ -65,8 +65,8 @@ class RepStarter:
         return Repository(os.path.abspath(self.folder))
     
     def create_empty_rep(self):
-        source = self.rep.get_default_local_source()
+        source = self.rep.get_student_sandbox()
         self.rep.data.set_source(source)
-        folder = source.get_local_database_path()
+        folder = source.get_source_workspace()
         print(f"Criando repositório vazio, utilizando a pasta {folder} como pasta para atividades locais")
     

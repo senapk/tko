@@ -118,7 +118,9 @@ class Tester:
         Tester.print_centered_image(out, "y", clear, "v")
 
     def get_folder(self) -> str:
-        folder = self.task.get_folder_try()
+        folder = self.task.get_workspace_folder()
+        if folder is None:
+            raise Warning("Warning: Task folder não encontrado")
         return os.path.basename(folder)
 
     def get_focused_unit(self) -> Unit:

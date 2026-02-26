@@ -1,3 +1,5 @@
+from __future__ import annotations
+from tko.settings.rep_data import RepData
 from typing import Any
 import os
 import urllib
@@ -12,7 +14,6 @@ import yaml # type: ignore
 from tko.settings.rep_paths import RepPaths
 from icecream import ic # type: ignore
 from tko.logger.delta import Delta
-from tko.settings.legacy import Legacy
 from datetime import datetime
 from tko.util.runner import Runner
 
@@ -45,11 +46,11 @@ class Repository:
         return os.path.isfile(self.paths.get_config_file())
 
     def is_local_dir(self, path: str) -> bool:
-        rep_dir = self.paths.get_rep_dir()
+        rep_dir = self.paths.get_workspace_dir()
         path = os.path.abspath(path)
         return os.path.commonpath([rep_dir, path]) == rep_dir
 
-    def load_game(self, try_update: bool = True, silent: bool = False) -> 'Repository':
+    def load_game(self, try_update: bool = True, silent: bool = False) -> Repository:
         if not self.data.get_sources():
             self.load_config()
         if try_update:
@@ -88,14 +89,14 @@ class Repository:
         return os.path.abspath(os.path.join(self.paths.root_folder, source, label))
 
     def down_source_from_remote_url(self, source: RepSource) -> bool:
-        cache_file = source.get_file_path()
+        cache_file = source.get_source_readme()
         os.makedirs(self.paths.get_cache_folder(), exist_ok=True)
         ru = RemoteUrl(source.get_url_link())
         try:
             ru.download_absolute_to(cache_file)
             return True
         except urllib.error.URLError: # type: ignore
-            print(f"Não foi possível baixar o arquivo do repositório alias:{source.database}, link:{source.get_url_link()}")
+            print(f"Não foi possível baixar o arquivo do repositório alias:{source.alias}, link:{source.get_url_link()}")
             if os.path.exists(cache_file):
                 print("Usando arquivo do cache")
             else:
@@ -110,7 +111,7 @@ class Repository:
         return True
 
     def git_pull_repository(self, source: RepSource) -> bool:
-        basedir = source.get_git_folder()
+        basedir = source.get_source_cache_folder()
         branch_name = source.branch if source.branch is not None else "master"
         print("Verificando atualizações do repositório clonado em", basedir)
         if not self.run_git_cmd(["git", "fetch", "--all"], basedir):
@@ -124,12 +125,12 @@ class Repository:
 
     def is_in_cache(self, source: RepSource, now_dt: datetime) -> bool:
         last_dt = Delta.decode_format(source.cache_timestamp)
-        if os.path.isfile(source.get_file_path()) == False:
+        if os.path.isfile(source.get_source_readme()) == False:
             return False
         if (now_dt - last_dt).total_seconds() < Repository.cache_time_for_remote_source:
             time_missing = Repository.cache_time_for_remote_source - (now_dt - last_dt).total_seconds()
             r = int(time_missing / 60)
-            print(f"Usando cache do repositório {source.database} ({source.get_url_link()}), próxima atualização em {r} minutos")
+            print(f"Usando cache do repositório {source.alias} ({source.get_url_link()}), próxima atualização em {r} minutos")
             return True
         return False
 
@@ -142,26 +143,16 @@ class Repository:
         return True
 
     def update_cache_path(self, source: RepSource) -> None:
-        if source.source_type == RepSource.Type.FILE:
-            return
-
-        if source.source_type == RepSource.Type.LINK:
-            now_str, now_dt = Delta.now()
-            # verify if cache file exists and is less than 1 hour old
-            if not self.force_update and os.path.isfile(source.get_file_path()) and source.cache_timestamp != "":
-                if self.is_in_cache(source, now_dt):
-                    return
-            if self.down_source_from_remote_url(source):
-                source.cache_timestamp = now_str
+        if source.is_sandbox_source():
             return
         
-        if source.source_type == RepSource.Type.CLONE:
+        if source.is_git_source():
             now_str, now_dt = Delta.now()
-            if not self.force_update and source.cache_timestamp != "" and os.path.exists(source.get_file_path()):
+            if not self.force_update and source.cache_timestamp != "" and os.path.exists(source.get_source_readme()):
                 if self.is_in_cache(source, now_dt):
                     return
 
-            if not os.path.exists(source.get_file_path()) and self.clone_repository_git(source.get_url_link(), source.get_git_folder()):
+            if not os.path.exists(source.get_source_readme()) and self.clone_repository_git(source.get_url_link(), source.get_source_cache_folder()):
                 source.cache_timestamp = now_str
             elif self.git_pull_repository(source):
                 source.cache_timestamp = now_str
@@ -185,21 +176,17 @@ class Repository:
                 raise FileNotFoundError(f"Arquivo de configuração vazio: {self.paths.get_config_file()}")
         except:
             raise Warning(Text.format("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.paths.get_config_file(), "corrompido"))
-        if local_data["version"] == "0.0.1":
-            local_data["sources"] = [
-                RepSource(database=Legacy.LEGACY_DATABASE, link=local_data["remote"], source_type=RepSource.Type.LINK, filters=local_data.get("filter", None)).save_to_dict(),
-                self.get_default_local_source().save_to_dict()
-            ]
         self.data.load_from_dict(local_data)
+        self.data.ensure_sandbox_source(self.paths.get_workspace_dir())
 
         for source in self.data.get_sources():
-            source.set_local_info(self.paths.get_rep_dir(), self.paths.get_cache_folder())
+            source.set_rep_globals(self.paths.get_workspace_dir(), self.paths.get_cache_folder())
 
         return self
 
-    def get_default_local_source(self) -> RepSource:
-        source = RepSource(database=RepSource.LOCAL_SOURCE_DATABASE, link="", source_type=RepSource.Type.FILE, filters=None)
-        source.set_local_info(self.paths.get_rep_dir(), self.paths.get_cache_folder())
+    def get_student_sandbox(self) -> RepSource:
+        source = RepSource("").set_student_sandbox()
+        source.set_rep_globals(self.paths.get_workspace_dir(), self.paths.get_cache_folder())
         return source
 
     def save_config(self):

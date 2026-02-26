@@ -29,9 +29,9 @@ class RepSourceActions:
             return
         print("Fontes configuradas:")
         for source in sources:
-            print(Text.format("- Rótulo: {y}", source.database))
+            print(Text.format("- Rótulo: {y}", source.alias))
             print(Text.format("  - Link ou Caminho: {y}", source.get_url_link()))
-            print(Text.format("  - File Path     : {y}", source.get_file_path()))
+            print(Text.format("  - File Path     : {y}", source.get_source_readme()))
             print(Text.format("  - Filtragem      : {y}", "Desativado" if source.filters is None else 'Ativado'))
             for f in source.filters or []:
                 print(f"    - {f}")
@@ -41,7 +41,7 @@ class RepSourceActions:
         sources = rep.data.get_sources()
         found = False
         for source in sources:
-            if source.database == alias:
+            if source.alias == alias:
                 found = True
                 if filters is not None:
                     if source.filters is None:
@@ -55,31 +55,23 @@ class RepSourceActions:
             raise Warning("fail: fonte não encontrada.")
         rep.save_config()
 
-    def add_source(self, alias: str, remote: str | None, link: str | None, clone: str | None, branch: str = "master", filters: list[str] | None = None) -> None:
+    def add_source(self, alias: str, default_repo_aliases: str | None, clone_url: str | None, local_source_folder: str | None, filters: list[str] | None, writeable: bool, branch: str = "master") -> None:
         rep = self.rep
-        if link is None and remote is None and clone is None:
-            print("Você precisa informar o endereço da fonte")
-        elif remote is not None:
-            print(Text.format("Adicionando fonte remota apontando para repositório remoto {y}.", remote))
+        if default_repo_aliases is not None:
+            print(Text.format("Adicionando fonte remota apontando para repositório remoto {y}.", default_repo_aliases))
             url: str = ""
             settings = Settings()
-            if not settings.has_alias_git(remote):
+            if not settings.has_alias_git(default_repo_aliases):
                 raise Warning("fail: alias git remoto não encontrado.")
-            url = settings.get_alias_git(remote)
+            url = settings.get_alias_git(default_repo_aliases)
             self.git_clone_repository(url, alias, filters, branch)
-        elif link is not None:
-            if link.startswith("http"):
-                print(Text.format("Adicionando fonte remota apontando para link remota {y}.", link))
-                source = link
-                rep.data.set_source(RepSource(database=alias, link=source, source_type=RepSource.Type.LINK, filters=filters))
-            else:
-                print(Text.format("Adicionando fonte local apontando para arquivo local {y}.", link))
-                source = os.path.abspath(link)
-                if source.startswith(self.folder):
-                    source = os.path.relpath(source, os.path.dirname(rep.paths.get_config_file()))
-                rep.data.set_source(RepSource(database=alias, link=source, source_type=RepSource.Type.FILE, filters=filters))
-        elif clone is not None:
-            self.git_clone_repository(clone, alias, filters, branch)
+        elif local_source_folder is not None:
+            print(Text.format("Adicionando fonte local apontando parao repositório {y}.", local_source_folder))
+            source = os.path.abspath(local_source_folder)
+            print("debug", f"adicionando alias {alias} para fonte local {source} com filtros {filters} e writeable {writeable}")
+            rep.data.set_source(RepSource(alias=alias).set_local_source(target=source).set_filters(filters).set_writeable(writeable))
+        elif clone_url is not None:
+            self.git_clone_repository(clone_url, alias, filters, branch)
 
         self.rep.save_config()
    
@@ -91,10 +83,10 @@ class RepSourceActions:
         if not self.rep.clone_repository_git(link, target):
             return
         print(Text.format("Repositório clonado com sucesso em {y}.", target))
-        self.rep.data.set_source(RepSource(database=alias, link=link, source_type=RepSource.Type.CLONE, filters=filters).set_branch(branch))
+        self.rep.data.set_source(RepSource(alias=alias).set_git_source(target=link, branch=branch).set_filters(filters))
 
 
     def print_end_msg(self):
-        rel_path = os.path.relpath(self.rep.paths.get_rep_dir(), os.getcwd())
+        rel_path = os.path.relpath(self.rep.paths.get_workspace_dir(), os.getcwd())
         print(Text.format("Voce pode acessar o repositório com o comando {g} {y}", "tko open", "<pasta>"))
         print(Text.format("Por exemplo: {g} {y}", "tko open", rel_path))

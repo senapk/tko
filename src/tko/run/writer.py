@@ -38,7 +38,7 @@ class Writer:
 
         # blocos multiline reais
         lines.append(f"input = {_multiline(unit.input)}")
-        lines.append(f"expected = {_multiline(unit.get_expected())}")
+        lines.append(f"output = {_multiline(unit.get_expected())}")
 
         if unit.grade is not None:
             lines.append(f'grade_reduction = "{unit.grade}"')
@@ -47,7 +47,7 @@ class Writer:
     
     @staticmethod
     def create_empty_toml() -> str:
-        return "[[cases]]\ninput = '''\n'''\nexpected = '''\n'''\n\n"
+        return "[[cases]]\nlabel = ''\ninput = '''\n'''\noutput = '''\n'''\n"
 
     @staticmethod
     def to_tio(unit: Unit):

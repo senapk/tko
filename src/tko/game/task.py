@@ -4,23 +4,11 @@ from tko.util.text import Text
 from tko.game.tree_item import TreeItem
 from tko.game.task_info import TaskInfo
 from tko.game.task_grader import TaskGrader
-import enum
-import os
+
 
 
 class Task(TreeItem):
     str_index = "idx"
-
-    class Types(enum.Enum):
-        UNDEFINED = 0
-        VISITABLE_URL = 1
-        STATIC_FILE = 2 # static folder inside database
-        REMOTE_FILE = 3 # url link do download file
-        IMPORT_FILE = 4 # source folder outside database to import files
-
-        # @override
-        def __str__(self):
-            return self.name
 
     def __init__(self):
 
@@ -31,29 +19,37 @@ class Task(TreeItem):
         self.grader = TaskGrader(self.info)
         self.main_idx: int = 0
         self.leet: bool = False # if the task is a leet task, rate must be marked by running test cases
+        self.solo: bool = False # if the task is a solo task, rate must be marked by running test cases without help
         self.skills: dict[str, int] = {} # skills
         
         self.xp: int = 0
         self.opt: bool = False
         
-        self.link = ""
-        self.link_type: Task.Types = Task.Types.UNDEFINED
-
+        self.target = ""
         self.quest_key = ""
         self.cluster_key = ""
-        self.__rep_folder_path: str | None = None
+        self.__origin_folder: str | None = None
+        self.__workspace_folder: str | None = None
         self.__is_reachable = False
         self.default_min_value = 5 # default min grade to complete task
 
     def is_optional(self) -> bool:
         return self.opt
 
-    def set_leet(self, value: bool):
+    def set_leet(self, value: bool = True):
         self.leet = value
+        return self
+    
+    def set_solo(self):
+        self.solo = True
+        self.leet = True
         return self
     
     def is_leet(self) -> bool:
         return self.leet
+    
+    def is_solo(self) -> bool:
+        return self.solo
 
     def set_reachable(self, reachable: bool):
         self.__is_reachable = reachable
@@ -62,14 +58,39 @@ class Task(TreeItem):
     def is_reachable(self) -> bool:
         return self.__is_reachable
 
-    def set_rep_folder(self, path: str):
-        self.__rep_folder_path = path
+    def is_link(self):
+        return self.__origin_folder is None and self.__workspace_folder is None
+    
+    def set_link_type(self):
+        self.__origin_folder = None
+        self.__workspace_folder = None
         return self
 
-    def get_folder_try(self) -> str:
-        if self.__rep_folder_path is None:
-            raise Warning("Repository folder path not set for task " + self.get_db_key())
-        return os.path.join(self.__rep_folder_path, self.get_database(), self.get_only_key())
+    def is_import_type(self):
+        if self.is_link():
+            return False
+        return self.get_origin_folder() != self.get_workspace_folder()
+
+    def is_static_type(self):
+        if self.is_link():
+            return False
+        return self.get_origin_folder() == self.get_workspace_folder()
+
+    def set_origin_folder(self, folder: str):
+        self.__origin_folder = folder
+        return self
+
+    def set_workspace_folder(self, folder: str):
+        self.__workspace_folder = folder
+        return self
+
+    def get_origin_folder(self) -> str | None:
+        return self.__origin_folder
+    
+    def get_workspace_folder(self) -> str | None:
+        if self.__workspace_folder is not None:
+            return self.__workspace_folder
+        return self.__origin_folder
     
     @staticmethod
     def decode_approach_autonomy(value: int) -> tuple[int, int]:
@@ -176,7 +197,7 @@ class Task(TreeItem):
     def __str__(self):
         lnum = str(self.line_number).rjust(3)
         key = "" if self.get_db_key() == self.get_title() else self.get_db_key() + " "
-        return f"{lnum} key:{key} title:{self.get_title()} skills:{self.skills} remote:{self.link} type:{self.link_type} folder:{self.get_folder_try()}"
+        return f"{lnum} key:{key} title:{self.get_title()} skills:{self.skills} remote:{self.target}"
 
     def has_at_symbol(self):
         return any([s.startswith("@") for s in self.get_title().split(" ")])

@@ -149,7 +149,7 @@ class Gui:
         # footer            
         text = Text()
         alias_color = "R"
-        dirname: str = self.rep.paths.get_rep_dir()
+        dirname: str = self.rep.paths.get_workspace_dir()
         dirname = os.path.basename(dirname).upper()
         text.add(self.style.border(alias_color, dirname))
         text.add(self.style.border("G", self.rep.data.lang.upper()))
@@ -175,8 +175,8 @@ class Gui:
 
     def show_skills_bar(self, frame_xp: Frame):
         dy, dx = frame_xp.get_inner()
-        reachable_quests = [q for q in self.game.quests.values() if q.is_reachable()]
-        obtained, priority, complete = self.game.get_skills_resume(reachable_quests)
+        #_ = [q for q in self.game.quests.values() if q.is_reachable()]
+        obtained, priority, complete = self.game.get_skills_resume()
 
         frame_xp.set_header(Text().addf("/", "Trilhas"), "^", "{", "}")
         frame_xp.draw()
@@ -267,8 +267,8 @@ class Gui:
             # text = text.center(size)
             # xpbar = self.style.build_bar(text, percent, len(text), done_color, todo_color)
 
-        reachable_quests = [q for q in self.game.quests.values() if q.is_reachable()]
-        obtained, priority, complete = self.game.get_skills_resume(reachable_quests)
+        #reachable_quests = [q for q in self.game.quests.values() if q.is_reachable()]
+        obtained, priority, complete = self.game.get_skills_resume()
 
         keys_to_remove: list[str] = []
         for skill, value in obtained.items():

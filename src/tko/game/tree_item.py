@@ -17,7 +17,7 @@ class TreeItem():
             return self.__key
         return self.__database + "@" + self.__key
     
-    def get_only_key(self) -> str:
+    def get_key_only(self) -> str:
         return self.__key
     
     def get_title(self) -> str:
@@ -26,7 +26,7 @@ class TreeItem():
     def get_sentence(self) -> Text:
         return self.__sentence
 
-    def set_database(self, database: str):
+    def set_source_alias(self, database: str):
         self.__database = database
         return self
     

@@ -142,13 +142,15 @@ class TaskTree:
         return output
 
     def get_task_down_symbol(self, t: Task) -> Text.Token:
-        down_symbol = symbols.task_to_visit
-        if t.link_type == Task.Types.STATIC_FILE:
-            down_symbol = symbols.task_local
-        if t.link_type == Task.Types.REMOTE_FILE or t.link_type == Task.Types.IMPORT_FILE:
-            down_symbol = symbols.task_to_download
-            if self.is_downloaded_for_lang(t):
-                down_symbol = symbols.task_downloaded
+        if t.is_link():
+            return symbols.task_to_visit
+
+        if not t.is_import_type():
+            return symbols.task_local
+        
+        down_symbol = symbols.task_to_download
+        if self.is_downloaded_for_lang(t):
+            down_symbol = symbols.task_downloaded
         return down_symbol
 
     def get_feedback_symbol(self, t: Task) -> Text:
@@ -622,20 +624,19 @@ class TaskTree:
 
     # return a TaskAction
     def get_task_action(self, task: Task) -> tuple[str, str]:
-        if task.link_type == Task.Types.VISITABLE_URL:
+        if task.is_link():
             return "B", TaskAction.VISITAR
-        if task.link_type == Task.Types.STATIC_FILE:
+        if task.is_static_type():
             return "G", TaskAction.EXECUTAR
-        
         if not self.is_downloaded_for_lang(task):
             return "Y", TaskAction.BAIXAR
         return "G", TaskAction.EXECUTAR
         
     def is_downloaded_for_lang(self, task: Task):
-        try:
-            folder = task.get_folder_try()
-        except:
+        folder = task.get_workspace_folder()
+        if folder is None:
             return False
+        
         lang = self.rep.data.lang
         drafts = Drafts.load_drafts_only(folder, lang)
         if drafts:

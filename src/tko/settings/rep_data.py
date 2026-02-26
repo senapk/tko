@@ -16,15 +16,24 @@ class RepData:
 
     def set_source(self, source: RepSource):
         for i, s in enumerate(self.__sources):
-            if s.database == source.database:
+            if s.alias == source.alias:
                 self.__sources[i] = source
                 return self
         self.__sources.append(source)
 
-    def get_source(self, database: str) -> RepSource | None:
+    def get_source(self, alias: str) -> RepSource | None:
         for s in self.__sources:
-            if s.database == database:
+            if s.alias == alias:
                 return s
+        return None
+
+    def ensure_sandbox_source(self, rep_workspace: str) -> None:
+        sandbox_source = self.get_source(RepSource.STUDENT_SANDBOX_ALIAS)
+        if sandbox_source is None:
+            sandbox_source = RepSource("").set_student_sandbox().ensure_sandbox_source(rep_workspace)
+            self.set_source(sandbox_source)
+        else:
+            sandbox_source.ensure_sandbox_source(rep_workspace)
         return None
 
     # fonte local é retornada primeiro para garantir que ela seja priorizada em relação a fontes externas
@@ -32,7 +41,7 @@ class RepData:
         external_sources: list[RepSource] = []
         local_sources: list[RepSource] = []
         for s in self.__sources:
-            if s.database == RepSource.LOCAL_SOURCE_DATABASE:
+            if s.is_sandbox_source():
                 local_sources.append(s)
             else:
                 external_sources.append(s)
@@ -54,15 +63,8 @@ class RepData:
     def get_selected(self) -> str:
         return self.selected
 
-    def get_database(self) -> str:
-        return self.database
-
     def set_lang(self, lang: str):
         self.lang = lang
-        return self
-
-    def set_database(self, database: str):
-        self.database = database
         return self
 
     def _safe_load(self, data: dict[str, Any], key: str, target_type: type, default_value: Any = None):
@@ -85,7 +87,7 @@ class RepData:
             if "sources" in data:
                 source_data: list[dict[str, Any]] = data["sources"]
                 if isinstance(source_data, list): # type: ignore
-                    self.__sources = [RepSource("", "", RepSource.Type.LINK, None).load_from_dict(x) for x in source_data]
+                    self.__sources = [RepSource("").load_from_dict(x) for x in source_data]
                 else:
                     raise TypeError("The 'sources' field must be a list.")
 

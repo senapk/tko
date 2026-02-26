@@ -1,8 +1,6 @@
 from tko.game.cluster import Cluster
 from tko.game.quest import Quest
 from tko.game.task import Task
-import os
-from tko.util.decoder import Decoder
 from tko.game.game_builder import GameBuilder
 from tko.game.game_validator import GameValidator
 from tko.settings.rep_source import RepSource
@@ -42,7 +40,7 @@ class Game:
             obtained += o
         return obtained, total
 
-    def get_skills_resume(self, avaliable_quests: list[Quest]) -> tuple[dict[str, float], dict[str, float], dict[str, float]]:
+    def get_skills_resume(self) -> tuple[dict[str, float], dict[str, float], dict[str, float]]:
         # obtained, priority, complete
         priority: dict[str, float] = {}
         complete: dict[str, float] = {}
@@ -75,11 +73,11 @@ class Game:
             total_complete += value
         return total_obtained, total_priority, total_complete
 
-    def get_local_source(self) -> RepSource:
+    def get_sandbox_source(self) -> RepSource:
         for s in self.sources:
-            if s.database == RepSource.LOCAL_SOURCE_DATABASE:
+            if s.is_sandbox_source():
                 return s
-        raise ValueError("Local source not found")
+        raise ValueError("Local sandbox source not found")
 
     def set_sources(self, sources: list[RepSource], language: str, silent: bool = False) -> None:
         self.sources = sources
@@ -93,27 +91,10 @@ class Game:
     
     def load_sources(self):
         for source in self.sources:
-            filename = source.get_file_path()
-            filters = source.filters
-            content = ""
-            if filename == "":
-                pass
-            elif not os.path.exists(filename):
-                if source.database != source.LOCAL_SOURCE_DATABASE and not self.silent:
-                    print(f"Aviso: fonte {filename} não encontrada")
-            else:
-                content = Decoder.load(filename)
-
-            gb = GameBuilder(
-                source_db=source.database, 
-                filename=filename, 
-                quests_filter_view=filters, 
-                rep_folder=source.get_rep_folder(), 
-                load_local=source.database == source.LOCAL_SOURCE_DATABASE
-            )
-            gb.build_from(content, self.language)
+            gb = GameBuilder(source)
+            gb.build_from(self.language)
             for cluster_key in gb.ordered_clusters:
-                self.ordered_clusters.append(source.database + "@" + cluster_key)
+                self.ordered_clusters.append(source.alias + "@" + cluster_key)
             for cluster in gb.clusters.values():
                 self.clusters[cluster.get_db_key()] = cluster
 

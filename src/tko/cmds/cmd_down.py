@@ -7,7 +7,6 @@ import shutil
 import tempfile
 
 
-from tko.game.task import Task
 from tko.settings.repository import Repository
 from tko.settings.settings import Settings
 from tko.game.game import Game
@@ -191,7 +190,7 @@ class CmdDown:
 
     def download_from_external_file(self, task_source: str) -> bool:
         if not os.path.exists(task_source):
-            self.actions.send_to_print(f"Arquivo fonte não encontrado para carregar a atividade {self.task_key}")
+            self.actions.send_to_print(f"Arquivo fonte {task_source} não encontrado para carregar a atividade {self.task_key}")
             return False
         os.makedirs(self.destiny_folder, exist_ok=True)
         source_folder_abs = os.path.dirname(task_source)
@@ -225,10 +224,12 @@ class CmdDown:
 
     def execute(self) -> bool:
         task = self.rep.game.get_task(self.task_key)
-        if task.link_type == Task.Types.REMOTE_FILE:
-            return self.download_from_url(task.link)
-        if task.link_type == Task.Types.IMPORT_FILE:
-            return self.download_from_external_file(task.link)
+        # if task.target_type == Task.Types.REMOTE_FILE:
+        #     return self.download_from_url(task.target)
+        if task.is_import_type():
+            path = task.get_origin_folder()
+            if path is not None:
+                return self.download_from_external_file(path)
         self.actions.send_to_print("falha: link para atividade não possui link para download")
         return False
 

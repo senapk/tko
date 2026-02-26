@@ -1,3 +1,4 @@
+from __future__ import annotations
 from tko.game.task import Task
 
 import os
@@ -5,30 +6,11 @@ import re
 from icecream import ic # type: ignore
 
 
-"""
-Task can be:
-- Link do remote url (http, https)
-- Link para arquivo local (Readme.md com link para arquivos locais)
-  - O source link está fora da pasta do rep
-  - apontando para o ghost ou arcade em outra pasta
-  - apontando para o clone automático do arcade em outra pasta
-- Se abrir o tko init dentro do arcade para fazer as questões no próprio rep
-  - o Readme.md está dentro do rep
-  - o readme aponta para paths de tarefas dentro do database
-  - o alias do rep tem que ser o mesmo do database, ou seja base
-  - tko init --alias base --link Readme.md
-
-- Conseguir carregar valor e tags também a partir do título
-  - por exemplo, se é leet
-  - se é opcional ou obrigatório e o valor usando a tag da quest (*10, +5)
-"""
-
 class TaskParser:
 
-    def __init__(self, index_path: str, database: str, rep_folder_path: str):
-        self.index_path = index_path # path of Repository Root Readme file
-        self.database_folder = os.path.join(rep_folder_path, database) # path of database folder inside rep
-        self.task: Task | None = Task().set_database(database).set_rep_folder(rep_folder_path)
+    def __init__(self, index_path: str, source_alias: str):
+        self.index_path = index_path
+        self.task: Task | None = Task().set_source_alias(source_alias)
 
     def __load_xp(self, tags_raw: str):
         if self.task is None:
@@ -43,91 +25,91 @@ class TaskParser:
                 self.task.opt = False
             
 
-    def parse_line(self, line: str, line_num: int = 0):
-        pattern = r'\s*?- \[ \](.*?)\[([^\]]+)\]\(([^)]+)\)(?:\s*<!--(.*?)-->)?'
+    @staticmethod
+    def filter_task_key(key: str) -> str:
+        allowed = "0123456789_abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        new_key = ""
+        for c in key:
+            if c in allowed:
+                new_key += c
+            else:
+                break
+        return new_key
 
+    # returns
+    # tuple[bool, title, html_tags, link]
+    def match_full_pattern(self, line: str) -> tuple[bool, str, str, str]:
+        pattern = r'\s*?- \[ \](.*?)\[([^\]]+)\]\(([^)]+)\)(?:\s*<!--(.*?)-->)?'
         match = re.match(pattern, line)
         if match is None:
+            return False, "", "", ""
+        title = match.group(1).strip()
+        if title != "":
+            title += " "
+        title += match.group(2).strip()
+        title = title.replace("`", "")
+        html_tags = match.group(4).strip() if match.group(4) is not None else ""
+        link = match.group(3).strip()
+        return True, title, html_tags, link
+
+    def __parse_key_leet_solo(self, tags_raw: str):
+        if self.task is None:
+            return
+        for item in tags_raw.split(" "):
+            if item.startswith("@"):
+                self.task.set_key(self.filter_task_key(item[1:]))
+            elif item == ":leet":
+                self.task.set_leet()
+            elif item == ":solo":
+                self.task.set_solo()
+                self.task.set_leet()
+
+    def redirect_from_readme(self, link: str) -> str:
+        if not os.path.isabs(link):
+            basedir = os.path.dirname(self.index_path)
+            target = os.path.join(basedir, link)
+            return target
+        return link
+
+    def parse_line(self, line: str, line_num: int = 0) -> TaskParser:
+        found, title, html_tags, link = self.match_full_pattern(line)
+        if not found:
             self.task = None
-            return self
         if self.task is None:
             return self
         
         task = self.task
         task.line_number = line_num
         task.line = line
-        title = match.group(1).strip()
-        if title != "":
-            title += " "
-        title += match.group(2).strip()
-        title = title.replace("`", "")
         task.set_title(title)
-        self.__load_xp(task.get_title())
+        self.__load_xp(task.get_title() + " " + html_tags)
+        self.__parse_key_leet_solo(title + " " + html_tags)
 
-        if match.group(4) is not None:
-            self.__load_xp(match.group(4))
+        if link.startswith("http://") or link.startswith("https://"):
+            self.task.set_link_type()
+            self.task.set_key(link)
+            self.task.target = link
+            return self
+        
+        if self.task.get_key_only() == "": # não tem chave, e não é url
+            self.task.set_link_type()
+            self.task.set_key(link)
+            self.task.target = self.redirect_from_readme(link)
+            return self
+        
+        self.task.target = link
+        task.set_origin_folder(self.redirect_from_readme(link))
 
-        for item in task.get_title().split(" "):
-            if item.startswith("@"):
-                task.set_key(item[1:])
-            elif item.startswith("#"):
-                task.set_key(item[1:])
-                task.link_type = Task.Types.VISITABLE_URL
-            elif item == ":leet":
-                task.set_leet(True)
-
-        #remove last non alfa char from key
-        allowed = "0123456789_abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        key = ""
-        for c in task.get_only_key():
-            if c in allowed:
-                key += c
-            else:
-                break
-        task.set_key(key)
-
-        link = match.group(3).strip()
-        self.__select_link_type(link)
-
-        if task.get_only_key() == "":
-            task.set_key(link)
         return self
 
     def get_task(self) -> Task | None:
         return self.task
 
-    def __select_link_type(self, link: str):
-        if self.task is None:
-            return
-        task = self.task
-        task.link = link
-
-        if task.link_type == Task.Types.VISITABLE_URL:
-            # open both url and files
-            return
-
-        if self.task.get_only_key() == "":
-            raise Warning(f"Parsing {self.index_path}, Chave de tarefa não definida: {link}")
-
-        if link.startswith("http:") or link.startswith("https:"):
-            task.link_type = Task.Types.REMOTE_FILE
-            return
-
-        task.link_type = Task.Types.IMPORT_FILE
-
-        # set task link using relpath to index_path
-        if not os.path.isabs(link):
-            basedir = os.path.dirname(self.index_path)
-            task.link = os.path.join(basedir, link)
-
-        if task.link.startswith(task.get_folder_try()):
-            task.link_type = Task.Types.STATIC_FILE
-
 
     def check_path_try(self):
         if self.task is None:
             return self
-        if self.task.link_type == Task.Types.IMPORT_FILE:
-            if not os.path.isfile(self.task.link):
-                raise Warning(f"Parsing {self.index_path}, Arquivo de tarefa não encontrado: {self.task.link}")
+        if self.task.is_import_type():
+            if not os.path.isfile(self.task.target):
+                raise Warning(f"Parsing {self.index_path}, Arquivo de tarefa não encontrado: {self.task.target}")
         return self

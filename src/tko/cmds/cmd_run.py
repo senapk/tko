@@ -325,16 +325,16 @@ class Run:
         pieces = target_path.split(os.sep)
         if len(pieces) >= 3:
             task.set_key(pieces[-1])
-            task.set_database(pieces[-2])
-            task.set_rep_folder(os.sep.join(pieces[:-2]))
+            task.set_source_alias(pieces[-2])
+            # task.set_rep_folder(os.sep.join(pieces[:-2]))
         elif len(pieces) == 2:
             task.set_key(pieces[-1])
-            task.set_database(pieces[-2])
-            task.set_rep_folder(os.sep)
+            task.set_source_alias(pieces[-2])
+            # task.set_rep_folder(os.sep)
         else:
             task.set_key(pieces[-1])
-            task.set_database("")
-            task.set_rep_folder(os.sep)
+            task.set_source_alias("")
+            # task.set_rep_folder(os.sep)
 
         self.__task = task
         self.__track_folder = ""

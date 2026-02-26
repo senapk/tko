@@ -9,7 +9,7 @@ class RepPaths:
     LOG_FOLDER = "log"
     CACHE_FOLDER = "cache"
     CONFIG_FOLDER = ".tko"
-    cache_folder_override: str | None = None
+    cache_folder_override: str | None = None # teacher tools, to avoid rewrite cache in student repos
 
     def __init__(self, rep_dir: str):
         self.root_folder = rep_dir
@@ -50,7 +50,7 @@ class RepPaths:
     def get_old_history_file(self) -> str:
         return os.path.abspath(os.path.join(self.root_folder, RepPaths.CONFIG_FOLDER, RepPaths.OLD_HISTORY_FILE))
 
-    def get_rep_dir(self) -> str:
+    def get_workspace_dir(self) -> str:
         return os.path.abspath(self.root_folder)
     
     def has_local_config_file(self) -> bool:
