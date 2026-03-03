@@ -72,11 +72,11 @@ def parse_toml(content: str) -> list[dict[str, Any]]:
 
     try:
         data = tomllib.loads(content)
-    except tomllib.TOMLDecodeError as e:
-        raise ValueError(f"Erro ao analisar o arquivo TOML: {e}") from e
-    
+    except tomllib.TOMLDecodeError as _:
+        return []
+
     if main_list_name not in data or not isinstance(data[main_list_name], list):
-        raise ValueError(f"Arquivo TOML inválido: seção [[{main_list_name}]] não encontrada.")
+        return []
 
     result: list[dict[str, Any]] = []
 

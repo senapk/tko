@@ -21,6 +21,10 @@ class RepData:
                 return self
         self.__sources.append(source)
 
+    def del_source(self, alias: str):
+        self.__sources = [s for s in self.__sources if s.alias != alias]
+        return self
+
     def get_source(self, alias: str) -> RepSource | None:
         for s in self.__sources:
             if s.alias == alias:

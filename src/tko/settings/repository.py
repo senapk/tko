@@ -62,11 +62,11 @@ class Repository:
         return self
     
     def get_key_from_task_folder(self, folder: str) -> str:
-        label = os.path.basename(folder)
-        task_folder = self.get_task_folder_for_label(label)
-        if task_folder == folder:
-            return label
-        return ""
+        path = os.path.abspath(folder)
+        parts = path.split(os.sep)
+        label = parts[-1]
+        workspace = parts[-2]
+        return f"{workspace}@{label}"
 
     def is_task_folder(self, folder: str) -> bool:
         label = os.path.basename(folder)
@@ -104,7 +104,7 @@ class Repository:
         return False
 
     def run_git_cmd(self, cmd_list: list[str], folder: str)-> bool:
-        error, stdout, stderr = Runner.subprocess_run(cmd_list, folder=folder, timeout=60)
+        error, stdout, stderr = Runner.subprocess_run(cmd_list, folder=folder, timeout=5)
         if error != 0:
             print(f"Não foi possível atualizar o repositório clonado em {folder}. Erro: {stdout}\n{stderr}")
             return False

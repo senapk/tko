@@ -9,7 +9,7 @@ python_files = ["test_*.py"]
 
 [project]
 name = "tko"
-version = "8.0.0"
+version = "8.1.0"
 description = "Add your description here"
 authors = [
     { name = "David", email = "sena.ufc@gmail.com" }
@@ -36,5 +36,4 @@ dependencies = [
 
 [project.scripts]
 tko = "tko.__main__:main"
-feno = "tko.feno.feno:feno_main"
-mico = "tko.mico.mico:mico_main"
+# feno = "tko.feno.feno:feno_main"

@@ -105,6 +105,8 @@ class RepSource:
     def get_url_link(self) -> str:
         if self.source_type == SourceType.GIT_SOURCE:
             return self.__target
+        elif self.source_type == SourceType.LOCAL_FILE:
+            return self.__target
         raise ValueError("Unknown source type")
 
     def is_git_source(self) -> bool:
@@ -213,6 +215,5 @@ class RepSource:
             output[Keys.BRANCH] = self.branch
         if self.cache_timestamp:
             output[Keys.GIT_CACHE_TIMESTAMP] = self.cache_timestamp
-        if self.filters is not None:
-            output[Keys.FILTERS] = self.filters
+        output[Keys.FILTERS] = self.filters
         return output

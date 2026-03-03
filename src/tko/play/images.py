@@ -60,28 +60,30 @@ opening["cool"] = r"""
 """[1:]
 
 opening["estuda"] = r"""
-▄▖         ▐▘      ▘                 ▐▘▘▜ ▗       ▄▖
-▌ ▛▌▛▛▌▛▌  ▜▘▌▌▛▌▛▘▌▛▌▛▌▀▌▛▛▌  ▛▌▛▘  ▜▘▌▐ ▜▘▛▘▛▌▛▘▗▘
-▙▖▙▌▌▌▌▙▌  ▐ ▙▌▌▌▙▖▌▙▌▌▌█▌▌▌▌  ▙▌▄▌  ▐ ▌▐▖▐▖▌ ▙▌▄▌▗ 
-                                                    
-Os botões de 1 a 4 habilitam os filtros de exibição.
-- Gráficos: mostra os gráficos de acompanhamento.
-- Trilhas : mostra a barra lateral de trilhas de habilidades.
-- Tópicos : mostra as missões (recomendadas ou todas).
-- Tarefas : esconde as atividades já concluídas.
-▄▖         ▐▘      ▘                ▗   ▄▖
-▌ ▛▌▛▛▌▛▌  ▜▘▌▌▛▌▛▘▌▛▌▛▌▀▌  ▀▌  ▛▌▛▌▜▘▀▌▗▘
-▙▖▙▌▌▌▌▙▌  ▐ ▙▌▌▌▙▖▌▙▌▌▌█▌  █▌  ▌▌▙▌▐▖█▌▗ 
+###########################################################
+##################  GUIA BÁSICO ###########################
                                           
 1. Navegue até as atividades com as setas do teclado.
-2. Se precisar, calibre as teclas com Shift C.
-3. Use o enter para baixar e entrar na atividade.
-4. Aperte a tecla 'e', depois de entrar, para abrir
+   Use Esquerda e Direita para fechar/abrir e saltar blocos.
+2. Se precisar, calibre as teclas do teclado com 'c'.
+3. Aperte enter para baixar e também para entrar na atividade.
+4. Aperte 'e', depois de entrar, para abrir
    os arquivos de rascunho e descrição da atividade.
 5. Aperte enter para rodar os testes quando mudar algo no código.
 6. Aperte 'esc' para voltar a tela de seleção de atividades.
-7. Use o comando 'p' para pontuar a atividade depois de concluída.
+7. Aperte 'a' para auto avaliar a atividade depois de concluída.
+8. A gamificação(nota) é gerada pelas suas repostas e testes.
 
+#################  FILTROS DE INTERFACE #######################
+Os botões de 1 a 4 habilitam os filtros de exibição.
+- Painel : mostra os gráficos de acompanhamento ou logs.
+- Trilhas: mostra a barra lateral de trilhas de habilidades.
+- Tópicos: mostra as missões (recomendadas ou todas).
+- Tarefas: esconde as atividades já concluídas.
+
+- Aperte 'p' para ver outras opções de interface e ações.
+- Não tenha medo de testar comandos e reportar bugs pelas 
+  issues do github https://github.com/senapk/tko
 """[1:]
 
 # opening["alien4"] = r"""

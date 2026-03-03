@@ -226,8 +226,8 @@ class Wdir:
         out: list[tuple[str, int]] = []
         if len(self.__pack_list) == 0:
             out.append((symbols.failure.text, 0))
-        for ulist in self.__pack_list:
-            nome: str = ulist[0].source.split(os.sep)[-1]
+        for source_name, ulist in zip(self.__source_list, self.__pack_list):
+            nome: str = source_name.split(os.sep)[-1]
             count = len([unit for unit in ulist if unit.repeated is None])
             if count > 0:
                 out.append((nome, count))

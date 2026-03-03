@@ -1,5 +1,10 @@
 # Changelog
 
+- 8.1.0
+  - add: daily cache access for tko version
+  - add: feno and mico integrated in tko build
+- 8.0.0
+  - add: rep sources working without mapi file
 - 7.9.1 
   - fix: tasktree width calculation
   - add: change time to t, self evaluation to a, palette to p

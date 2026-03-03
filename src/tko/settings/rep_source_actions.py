@@ -38,6 +38,24 @@ class RepSourceActions:
             for f in source.filters or []:
                 print(f"    - {f}")
 
+    def del_source(self, alias: str) -> None:
+        rep = self.rep
+        sources = rep.data.get_sources()
+        found = False
+        for source in sources:
+            if source.alias == alias:
+                found = True
+                if source.is_git_source():
+                    cache_folder = source.get_source_cache_folder()
+                    if os.path.exists(cache_folder):
+                        shutil.rmtree(cache_folder)
+                rep.data.del_source(alias)
+                print(Text.format("Fonte {y} removida com sucesso.", alias))
+                break
+        if not found:
+            raise Warning("fail: fonte não encontrada.")
+        rep.save_config()
+
     def source_enable(self, alias: str, filters: list[str] | None = None) -> None:
         rep = self.rep
         sources = rep.data.get_sources()

@@ -12,6 +12,8 @@ class AppSettings:
         self.use_borders = False
         self.editor = "code"
         self.timeout = 2
+        self.last_tko_check_update = ""
+        self.tko_last_version = ""
         self.key_left: int = curses.KEY_LEFT
         self.key_right: int = curses.KEY_RIGHT
         self.key_up: int = curses.KEY_UP
@@ -20,6 +22,20 @@ class AppSettings:
         self.key_pg_down: int = curses.KEY_NPAGE
         self.key_backspace: int = curses.KEY_BACKSPACE
         self.key_esc: int = 27
+
+    def set_lastest_version(self, version: str):
+        self.tko_last_version = version
+        return self
+    
+    def get_lastest_version(self) -> str:
+        return self.tko_last_version
+
+    def set_latest_version_check_timestamp(self, date_str: str):
+        self.last_tko_check_update = date_str
+        return self
+    
+    def get_lastest_version_check_timestamp(self) -> str:
+        return self.last_tko_check_update
 
     def set_key_left(self, key: int):
         self.key_left = key

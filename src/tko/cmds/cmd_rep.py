@@ -6,6 +6,8 @@ from tko.logger.task_resume import TaskResume
 from tko.logger.log_sort import LogSort
 from tko.play.daily_graph import DailyGraph
 from tko.mico.collected import Collected, Game
+from tko.mico.collect import Collect
+
 import yaml # type: ignore
 import json
 import os
@@ -63,6 +65,11 @@ class CmdRep:
                 for task in quest.get_tasks():
                     output_quest.tasks.append(Game.Task(key=task.get_db_key(), value=task.xp, is_leet=task.is_leet(), opt=task.opt))
         return output
+
+
+    @staticmethod
+    def collect_batch(args: argparse.Namespace):
+        Collect.extract_to(args.reps, json_path=args.json, csv_path=args.csv, block_prefix=args.block_prefix)
 
     @staticmethod
     def collect_main(args: argparse.Namespace):
