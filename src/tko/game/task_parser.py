@@ -98,7 +98,7 @@ class TaskParser:
             return self
         
         self.task.target = link
-        task.set_origin_folder(self.redirect_from_readme(link))
+        task.set_origin_folder(os.path.dirname(self.redirect_from_readme(link)))
 
         return self
 

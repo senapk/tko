@@ -282,10 +282,13 @@ class Loader:
             elif source.endswith(".toml"):
                 return Loader.parse_toml(content, source)
             elif source.endswith(".md"):
-                content_fences = Loader.extract_data_inside_code_fences(content)
-                tests = Loader.parse_tio(content_fences, source)
-                tests += Loader.parse_cio(content_fences, source)
-                tests += Loader.parse_toml(content_fences, source)
+                tests = Loader.parse_tio(content, source)
+                tests += Loader.parse_cio(content, source)
+                try:
+                    content_fences = Loader.extract_data_inside_code_fences(content)
+                    tests += Loader.parse_toml(content_fences, source)
+                except ValueError:
+                    pass
                 return tests
             else:
                 print("warning: target format do not supported: " + source)  # make this a raise

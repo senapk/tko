@@ -194,7 +194,7 @@ class Floating(FloatingABC):
 
     def process_input(self, key: int) -> int:
         if self.type == FloatingType.WARNING or self.type == FloatingType.ERROR:
-            if key < 300 or key == curses.KEY_EXIT:
+            if key < 300 or key == curses.KEY_EXIT or key == curses.KEY_NPAGE or key == curses.KEY_PPAGE:
                 self.enable = False
                 if self.exit_fn is not None:
                     self.exit_fn()

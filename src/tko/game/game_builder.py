@@ -103,7 +103,6 @@ class GameBuilder:
             self.__parse_quest_folder(quest_folder)
 
     def __is_autoload_quest_cmd(self, line: str) -> tuple[bool, str]:
-        # print("debug " + line)
         words = line.split("autoload_quest=")
         if len(words) == 2:
             path = words[1].strip("-> ")
@@ -113,7 +112,6 @@ class GameBuilder:
         return False, ""
     
     def __is_autoload_cluster_cmd(self, line: str) -> tuple[bool, str]:
-        # print("debug " + line)
         words = line.split("autoload_cluster=")
         if len(words) == 2:
             path = words[1].strip("-> ")

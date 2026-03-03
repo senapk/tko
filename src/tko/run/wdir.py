@@ -77,8 +77,7 @@ class Wdir:
         # loading source list
         files = os.listdir(folder)
         source_list = [target for target in files if target.endswith(".tio") or target.endswith(".vpl") or target.endswith(".cases") or target.endswith(".toml")]
-        if len(source_list) == 0:
-            source_list = [target for target in files if target.endswith(".md")]
+        source_list.extend([target for target in files if target.endswith(".md")])
         source_list = [os.path.join(folder, x) for x in source_list]
         
         if self.__lang != "":
@@ -134,8 +133,20 @@ class Wdir:
                 pass
         if loading_failures > 0 and loading_failures == len(self.__source_list):
             raise FileNotFoundError("failure: nenhum arquivo de teste encontrado")
-        self.__unit_list = sum(self.__pack_list, []) # type: ignore
-        self.__number_and_mark_duplicated()
+        self.__unit_list = []
+        input_dict: dict[str, int] = {}
+        index = 0
+        for pack in self.__pack_list:
+            for unit in pack:
+                if unit.get_input() in input_dict:
+                    unit.repeated = input_dict[unit.get_input()]
+                else:
+                    input_dict[unit.get_input()] = index
+                    unit.index = index
+                    self.__unit_list.append(unit)
+                index += 1
+        #self.__number_and_mark_duplicated()
+        #self.__remove_duplicated()
         self.__calculate_grade()
         self.__pad()
         return self
@@ -178,17 +189,20 @@ class Wdir:
                 unit.grade_reduction = unit.grade
 
     # number the cases and mark the repeated
-    def __number_and_mark_duplicated(self):
-        new_list: list[Unit] = []
-        index = 0
-        for unit in self.__unit_list:
-            unit.index = index
-            index += 1
-            search = [x for x in new_list if x.input == unit.input]
-            if len(search) > 0:
-                unit.repeated = search[0].index
-            new_list.append(unit)
-        self.__unit_list = new_list
+    # def __number_and_mark_duplicated(self):
+    #     new_list: list[Unit] = []
+    #     index = 0
+    #     for unit in self.__unit_list:
+    #         unit.index = index
+    #         index += 1
+    #         search = [x for x in new_list if x.input == unit.input]
+    #         if len(search) > 0:
+    #             unit.repeated = search[0].index
+    #         new_list.append(unit)
+    #     self.__unit_list = new_list
+
+    # def __remove_duplicated(self):
+    #     self.__unit_list = [unit for unit in self.__unit_list if unit.repeated is None]
 
     # sort, unlabel ou rename using the param received
     def manipulate(self, param: Param.Manip):
@@ -212,9 +226,11 @@ class Wdir:
         out: list[tuple[str, int]] = []
         if len(self.__pack_list) == 0:
             out.append((symbols.failure.text, 0))
-        for i in range(len(self.__pack_list)):
-            nome: str = self.__source_list[i].split(os.sep)[-1]
-            out.append((nome, len(self.__pack_list[i])))
+        for ulist in self.__pack_list:
+            nome: str = ulist[0].source.split(os.sep)[-1]
+            count = len([unit for unit in ulist if unit.repeated is None])
+            if count > 0:
+                out.append((nome, count))
         return out
 
     def solvers_names(self) -> list[str]:

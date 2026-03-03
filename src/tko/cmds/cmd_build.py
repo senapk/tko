@@ -10,7 +10,6 @@ class CmdBuild:
         self.param = param
         self.quiet = False
 
-
     def set_quiet(self, value: bool):
         self.quiet = value
         return self

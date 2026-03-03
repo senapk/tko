@@ -259,7 +259,6 @@ Também é possível colocar os testes em um arquivos cases.toml.
                  Floating().bottom().right().put_text("\nEssa não é uma tarefa de baixável.\n").set_error()
             )
             return
-        lang = self.rep.data.get_lang() 
         down_frame = (
              Floating().bottom().right().set_warning().set_text_ljust().set_header(" Baixando tarefa ")
         )
@@ -272,9 +271,7 @@ Também é possível colocar os testes em um arquivos cases.toml.
             Fmt.refresh()
 
         cmd_down = CmdDown(rep=self.rep, task_key=task.get_db_key(), settings=self.settings)
-        cmd_down.set_game(self.game)
         cmd_down.set_fnprint(fnprint)
-        cmd_down.set_language(lang)
         result = cmd_down.execute()
         if result:
             self.rep.logger.store(

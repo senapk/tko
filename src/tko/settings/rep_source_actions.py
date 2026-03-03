@@ -1,3 +1,5 @@
+import shutil
+
 from tko.settings.rep_paths import RepPaths
 from tko.settings.rep_source import RepSource
 from tko.settings.repository import Repository
@@ -68,7 +70,6 @@ class RepSourceActions:
         elif local_source_folder is not None:
             print(Text.format("Adicionando fonte local apontando parao repositório {y}.", local_source_folder))
             source = os.path.abspath(local_source_folder)
-            print("debug", f"adicionando alias {alias} para fonte local {source} com filtros {filters} e writeable {writeable}")
             rep.data.set_source(RepSource(alias=alias).set_local_source(target=source).set_filters(filters).set_writeable(writeable))
         elif clone_url is not None:
             self.git_clone_repository(clone_url, alias, filters, branch)
@@ -80,6 +81,8 @@ class RepSourceActions:
         print(Text.format("Clonando repositório remoto {y}.", link))
         cache_path = self.rep.paths.get_cache_folder()
         target = os.path.join(cache_path, alias)
+        if os.path.exists(target):
+            shutil.rmtree(target)
         if not self.rep.clone_repository_git(link, target):
             return
         print(Text.format("Repositório clonado com sucesso em {y}.", target))

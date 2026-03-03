@@ -268,7 +268,6 @@ class Run:
     
     def __list_mode(self):
         # list mode
-        
         if not self.__eval_mode:
             print(Text.format("Nenhum arquivo de código encontrado. Listando casos de teste.").center(RawTerminal.get_terminal_size(), Text.Token("╌")), flush=True)
         print(self.wdir.resume_splitted())
