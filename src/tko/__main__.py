@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 import sys
 from icecream import ic # type: ignore
 
@@ -46,10 +47,6 @@ class Main:
 
     @staticmethod
     def run(args: argparse.Namespace) -> None:
-        if args.tui:
-            Main.tui(args)
-            return
-
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         if args.none:
@@ -106,12 +103,13 @@ class Main:
         update: bool = args.update
  
         if args.global_cache:
-            cache_folder: str = user_cache_dir("tko")
-            print("Using global cache directory at: " + cache_folder)
+            cache_folder: str | None = user_cache_dir("tko")
+            print("Usando cache global em: " + cache_folder)
         else:
-            cache_folder: str = args.cache
+            cache_folder = None
 
         folder = args.changedir
+
         rec_folder = RepPaths.rec_search_for_repo(folder)
         if rec_folder != "":
             folder = rec_folder
@@ -242,6 +240,7 @@ class Parser:
         self.add_parser_task()
         self.add_parser_config()
         self.add_parser_collect()
+        self.add_parser_run()
         self.add_parser_build()
 
     def add_parser_global(self):
@@ -250,14 +249,14 @@ class Parser:
         self.parser.add_argument('-v', "--version", action='store_true', help='Show version and exit')
         self.parser.add_argument('-m', "--mono", action='store_true', help='Disable colors')
         self.parser.add_argument('-D', '--debug', action='store_true', help='Enable debug mode')
-        self.parser.add_argument('-C', '--changedir', metavar='DIR', type=str, help='Change to repository directory before running')
+        self.parser.add_argument('-C', '--changedir', metavar='DIR', type=Path, default=Path('.'), help='Repository directory')
 
     @staticmethod
     def create_parent_basic():
         parent_basic = argparse.ArgumentParser(add_help=False)
-        parent_basic.add_argument('--index', '-i', metavar="I", type=int, help='Run a specific index')
-        parent_basic.add_argument('--pattern', '-p', metavar="P", type=str, default='@.in @.sol',
-                                  help='Pattern load/save a folder, default: "@.in @.sol"')
+        parent_basic.add_argument('-i', '--index', metavar="I", type=int, help='Run a specific test index')
+        parent_basic.add_argument('-p', '--pattern', metavar="P", type=str, default='@.in @.sol',
+                                  help='Input/output file pattern (default: "@.in @.sol")')
         return parent_basic
 
     @staticmethod
@@ -268,36 +267,35 @@ class Parser:
         parent_manip.add_argument('--number', '-n', action='store_true', help='Number labels')
         parent_manip.add_argument('--sort', '-s', action='store_true', help="Sort test cases by input size")
         parent_manip.add_argument('--pattern', '-p', metavar="@.in @.out", type=str, default='@.in @.sol',
-                                  help='Pattern load/save a folder, default: "@.in @.sol"')
+                                  help='Input/output file pattern (default: "@.in @.sol")')
         return parent_manip
+
+    def add_parser_run(self):
+        parser_run = self.subparsers.add_parser('run', help='Runs a task in raw terminal', parents=[self.parent_basic], add_help=False)
+        parser_run.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
+        parser_run.add_argument('target_list', metavar='TARGET', type=str, nargs='*', help='Solvers files, test cases or directories containing them')
+        parser_run.add_argument('-f', '--filter', action='store_true', help='Filter solver files in temporary directory before running')
+        parser_run.add_argument('-e', '--eval', action='store_true', help='Show percentage of passed tests')
+        parser_run.add_argument('-c', '--compact', action='store_true', help='Hide test case descriptions in failures')
+
+        group_n = parser_run.add_mutually_exclusive_group()
+        group_n.add_argument('-n', '--none', action='store_true', help='Hide all failures')
+        group_n.add_argument('-a', '--all', action='store_true', help='Show all failures')
+
+        # add an exclusive group for diff mode
+        group = parser_run.add_mutually_exclusive_group()
+        group.add_argument('-d', '--down', action="store_true", help="Diff mode: top-to-bottom")
+        group.add_argument('-s', '--side', action="store_true", help="Diff mode: side-by-side")
+        parser_run.set_defaults(func=Main.run)
 
     def add_parser_task(self):
         parser_task = self.subparsers.add_parser('task', help='Manage individual tasks', add_help=False)
         parser_task.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
-        
 
         subpar_task = parser_task.add_subparsers(title='subcommands', metavar='COMMAND', help='DESCRIPTION')
         parser_open = subpar_task.add_parser('open', parents=[self.parent_basic], help='Open a task in tui')
-        parser_open.add_argument('target_list', metavar='T', type=str, nargs='*', help='Solvers, test cases or folders to load')
+        parser_open.add_argument('target_list', metavar='T', type=str, nargs='*', help='Solvers, test cases or directories to load')
         parser_open.set_defaults(func=Main.tui)
-        
-        parser_run = subpar_task.add_parser('run', parents=[self.parent_basic], help='Run task in raw terminal or tui')
-        parser_run.add_argument('target_list', metavar='T', type=str, nargs='*', help='Solvers, test cases or folders')
-        parser_run.add_argument('--filter', '-f', action='store_true', help='Filter solver in temp dir before run')
-
-        parser_run.add_argument('--eval', action='store_true', help='Get percent running tests')
-
-        parser_run.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures')
-
-        group_n = parser_run.add_mutually_exclusive_group()
-        group_n.add_argument('--none', '-n', action='store_true', help='Do not show any failure')
-        group_n.add_argument('--all', '-a', action='store_true', help='Show all failures')
-
-        # add an exclusive group for diff mode
-        group = parser_run.add_mutually_exclusive_group()
-        group.add_argument('--down', '-d', action='store_true', help="Diff mode up-to-down")
-        group.add_argument('--side', '-s', action='store_true', help="Diff mode side-by-side")
-        parser_run.set_defaults(func=Main.run)
 
     def add_parser_config(self):
         parser_cfg = self.subparsers.add_parser('config', help='DESCRIPTION', add_help=False)
@@ -415,7 +413,7 @@ class Parser:
         # subparser for the 'build' command
         parser_r = subparsers.add_parser('mapi', help='Build .mapi file', add_help=False)
         parser_r.add_argument( "-h", "--help", action="help", help="Show help message and exit")
-        parser_r.add_argument('targets', metavar='T', type=str, nargs='*', help='folders')
+        parser_r.add_argument('targets', metavar='T', type=str, nargs='*', help='directories')
         parser_r.add_argument("--check", "-c", action="store_true", help="Check if the file needs to be rebuilt")
         parser_r.add_argument("--brief", "-b", action="store_true", help="Brief mode")
         # parser_r.add_argument("--pandoc", "-p", action="store_true", help="Use pandoc rather than python markdown")
@@ -442,7 +440,7 @@ class Parser:
         # subparser for the 'mdpp' command
         parser_m = subparsers.add_parser('mdpp', help='Preprocessor for markdown files', add_help=False)
         parser_m.add_argument( "-h", "--help", action="help", help="Show help message and exit")
-        parser_m.add_argument('targets', metavar='T', type=str, nargs='*', help='Readmes or folders')
+        parser_m.add_argument('targets', metavar='T', type=str, nargs='*', help='Readmes or directories')
         parser_m.add_argument('--quiet', '-q', action="store_true", help='quiet mode')
         parser_m.add_argument('--clean', '-c', action="store_true", help='clean mode')
         parser_m.set_defaults(func=mdpp_main)
@@ -468,7 +466,7 @@ class Parser:
         # subparser for the 'redirect' command
         parser_rm = subparsers.add_parser('redirect', help='Create redirected markdown file', add_help=False)
         parser_rm.add_argument( "-h", "--help", action="help", help="Show help message and exit")
-        parser_rm.add_argument('target', type=str, help='Folders')
+        parser_rm.add_argument('target', type=str, help='Directories')
         parser_rm.add_argument('--output', '-o', type=str, help='Output file')
         parser_rm.set_defaults(func=remote_main)
 
@@ -476,7 +474,7 @@ class Parser:
         parser_f = subparsers.add_parser('filter', help='Filter code removing answers', add_help=False)
         parser_f.add_argument( "-h", "--help", action="help", help="Show help message and exit")
 
-        parser_f.add_argument('target', type=str, help='file or folder to process')
+        parser_f.add_argument('target', type=str, help='file or directory to process')
         parser_f.add_argument('-u', '--update', action="store_true", help='update source file')
         parser_f.add_argument('-c', '--cheat', action="store_true", help='recursive cheat mode cleaning comments on students files')
         parser_f.add_argument('-o', '--output', type=str, help='output target')

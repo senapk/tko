@@ -144,7 +144,7 @@ class Wdir:
                     input_dict[unit.get_input()] = index
                     unit.index = index
                     self.__unit_list.append(unit)
-                index += 1
+                    index += 1
         #self.__number_and_mark_duplicated()
         #self.__remove_duplicated()
         self.__calculate_grade()
@@ -222,15 +222,19 @@ class Wdir:
     def unit_list_resume(self) -> list[Text]:
         return [unit.str() for unit in self.__unit_list]
 
-    def sources_names(self) -> list[tuple[str, int]]:
-        out: list[tuple[str, int]] = []
+    def sources_names(self) -> list[tuple[str, str]]:
+        out: list[tuple[str, str]] = []
         if len(self.__pack_list) == 0:
-            out.append((symbols.failure.text, 0))
+            out.append((symbols.failure.text, "0"))
         for source_name, ulist in zip(self.__source_list, self.__pack_list):
             nome: str = source_name.split(os.sep)[-1]
             count = len([unit for unit in ulist if unit.repeated is None])
             if count > 0:
-                out.append((nome, count))
+                count_str = str(count)
+                total = len(ulist)
+                if count < total:
+                    count_str += "/" + str(total)
+                out.append((nome, count_str))
         return out
 
     def solvers_names(self) -> list[str]:

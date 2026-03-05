@@ -130,7 +130,7 @@ class Repository:
         if (now_dt - last_dt).total_seconds() < Repository.cache_time_for_remote_source:
             time_missing = Repository.cache_time_for_remote_source - (now_dt - last_dt).total_seconds()
             r = int(time_missing / 60)
-            print(f"Usando cache do repositório {source.name} ({source.get_url_link()}), próxima atualização em {r} minutos")
+            print(f"Usando cache da fonte remota {source.name} ({source.get_url_link()}), próxima atualização em {r} minutos")
             return True
         return False
 
@@ -138,7 +138,7 @@ class Repository:
         os.makedirs(target, exist_ok=True)
         result = self.run_git_cmd(["git", "clone", "--depth", "1", link, target], folder=".")
         if not result:
-            print(Text.format("fail: Não foi possível clonar o repositório {y}.\nErro: {r}", link))
+            print(Text.format("fail: Não foi possível clonar o repositório git {y}.\nErro: {r}", link))
             return False
         return True
 

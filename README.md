@@ -132,8 +132,6 @@ pipx upgrade tko          # windows, codespace, arch, ubuntu e wsl
 
 ## Para interagir com os repositórios, navegar, baixar, testar
 
-Os `[]` e `<>` indicam onde devem ser colocados os parâmetros. Os `|` indicam opções.
-
 ```bash
 # primeiro crie um repositório local na pasta local
 mkdir myrep
