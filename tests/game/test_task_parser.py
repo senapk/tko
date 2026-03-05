@@ -23,7 +23,7 @@ class Test:
         assert task.get_database() == "database"
         assert task.get_db_key() == "label" # database is hided by legacy compatibility
         assert task.get_workspace_folder() == "/rep/database/label"
-        assert task.target == "/source/data/label/r.md"
+        assert task.target == "data/label/r.md"
     
     def test_database_poo(self):
         # get path of this file
@@ -33,8 +33,8 @@ class Test:
         assert task.get_key_only() == "label"
         assert task.get_database() == "poo"
         assert task.get_db_key() == "poo@label" # database is hided by legacy compatibility
-        assert task.get_workspace_folder() == "/rep/poo/label"
-        assert task.target == "/source/data/label/r.md"
+        assert task.get_workspace_folder() == "/source/data/label"
+        assert task.target == "data/label/r.md"
 
 
     def test_STATIC_FILE(self):
@@ -45,8 +45,8 @@ class Test:
         assert task.get_key_only() == "label"
         assert task.get_database() == "poo"
         assert task.get_db_key() == "poo@label" # database is hided by legacy compatibility
-        assert task.get_workspace_folder() == "/rep/poo/label"
-        assert task.target == "/source/poo/label/r.md"
+        assert task.get_workspace_folder() == "/source/poo/label"
+        assert task.target == "poo/label/r.md"
 
     def test_file_not_found(self):
         # get path of this file
