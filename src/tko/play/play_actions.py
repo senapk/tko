@@ -38,20 +38,6 @@ import subprocess
 
 class PlayActions:
 
-    draft_content: str = f"""Descrição do rascunho
-
-Escreva aqui as informações que você quiser.
-Se quiser adicionar testes automáticos, basta preencher abaixo colocando valores para input e output. 
-
-Cada nova entrada [[tests]] gera um novo case de teste.
-
-Também é possível colocar os testes em um arquivos tests.toml.
-
-```toml"
-{Writer.create_empty_toml()}
-```
-"""
-
     def __init__(self, gui: Gui):
         self.app = Settings().app
         self.settings = Settings()
@@ -221,7 +207,7 @@ Também é possível colocar os testes em um arquivos tests.toml.
             with open(os.path.join(folder, f"draft.{self.rep.data.lang}"), "w", encoding="utf-8") as f:
                 f.write(draft)
             with open (os.path.join(folder, "Readme.md"), "w", encoding="utf-8") as f:
-                f.write("# " + os.path.basename(folder) + "\n\n" + self.draft_content)
+                f.write("# " + os.path.basename(folder) + "\n\n" + Drafts.draft_readme)
             self.rep.load_game(try_update=False, silent=True) # recarrega o jogo
             self.fman.add_input( Floating().bottom().right()
                                 .put_text(f"Rascunho criado em {folder}")

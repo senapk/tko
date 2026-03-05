@@ -262,8 +262,8 @@ class Loader:
         return unit_list
 
     @staticmethod
-    def extract_data_inside_code_fences(content: str) -> str:
-        pattern = r'```.*?\n(.*?)```'  # get only inside code blocks
+    def extract_data_inside_code_fences(content: str, language: str) -> str:
+        pattern = r'```' + language + r'\n(.*?)```'  # get only inside code blocks
         code = re.findall(pattern, content, re.MULTILINE | re.DOTALL)
         return "\n" + "\n".join(code)
 
@@ -285,7 +285,7 @@ class Loader:
                 tests = Loader.parse_tio(content, source)
                 tests += Loader.parse_cio(content, source)
                 try:
-                    content_fences = Loader.extract_data_inside_code_fences(content)
+                    content_fences = Loader.extract_data_inside_code_fences(content, "toml")
                     tests += Loader.parse_toml(content_fences, source)
                 except ValueError:
                     pass
