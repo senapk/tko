@@ -1,5 +1,7 @@
 # Changelog
 
+- 8.2.0:
+  - add: argparse changes to simplify usage and add help messages
 - 8.1.0
   - add: daily cache access for tko version
   - add: feno and mico integrated in tko build

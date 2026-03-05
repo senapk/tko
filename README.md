@@ -138,22 +138,13 @@ Os `[]` e `<>` indicam onde devem ser colocados os parâmetros. Os `|` indicam o
 # primeiro crie um repositório local na pasta local
 mkdir myrep
 cd myrep
-tko init --remote [poo | fup | ed] --lang [c | cpp | java | py | ts]
+tko init # cria repositório tko na pasta myrep
+# adicione o repositório remoto do fup, para programação em c
+tko remote add fup @fup --lang c
 # agora abra o repositório para interagir com ele
-tko open .
-# exemplo: tko open fup
+tko open
+# exemplo: tko open
 ```
-
-## Para utilizar múltiplas fontes de atividades
-
-```bash
-# crie um repositório
-mkdir myrep
-cd myrep
-tko init
-# adicione as fontes que desejar
-tko source add --remote [poo | fup | ed] --alias <nome> [--link <url>] [--enable <filtro> ...]
-# exemplo: t
 
 
 ## Programando em uma linguagem diferente de C, C++, Java, Python e Typescript
@@ -190,7 +181,7 @@ $ ls pasta
 Para rodar a partir da pasta com os testes descompactados, basta passar o nome da pasta como parâmetro.
 
 ```bash
-tko run Solver.java pasta
+tko task run Solver.java pasta
 ```
 
 Se quiser utilizar um nome padrão diferente para leitura ou escrita das pastas, veja a seção de [Convertendo entre formatos](#convertendo-entre-formatos).
@@ -198,16 +189,16 @@ Se quiser utilizar um nome padrão diferente para leitura ou escrita das pastas,
 ## Convertendo entre formatos
 
 - Gerando um `t.vpl`
-  - `tko build t.vpl testes.tio`
+  - `tko build tests t.vpl testes.tio`
 - Gerando um `t.tio` a partir do `Readme.md`e de um `extra.tio`.
-  - `tko build t.tio Readme.md extra.tio`
+  - `tko build tests t.tio Readme.md extra.tio`
 - Para extrair os testes para uma pasta com um arquivo para entrada e outro para saída, crie uma pasta vazia e passe para o primeiro parâmetro do `tko build`.
 
 ```bash
 $ ls
 cases.tio  draft.c  Readme.md
 $ mkdir pasta
-$ tko build pasta cases.tio 
+$ tko build tests pasta cases.tio 
 $ ls pasta/
 00.in   02.sol  05.in   07.sol  10.in   12.sol  15.in   17.sol  20.in   22.sol
 00.sol  03.in   05.sol  08.in   10.sol  13.in   15.sol  18.in   20.sol  23.in
@@ -220,7 +211,7 @@ $ ls pasta/
   - Vamos refazer o comando acima, mas colocando "-p in.@ out.@"
 
 ```bash
-$ tko build pasta/ cases.tio -p "in.@ out.@"
+$ tko build tests pasta/ cases.tio -p "in.@ out.@"
 $ ls pasta/
 in.00  in.05  in.10  in.15  in.20   out.01  out.06  out.11  out.16  out.21
 in.01  in.06  in.11  in.16  in.21   out.02  out.07  out.12  out.17  out.22
