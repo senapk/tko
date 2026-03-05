@@ -1,5 +1,8 @@
 # Changelog
 
+- 8.2.1:
+  - fix: error in argparse for global cache
+  - refactor: quest_view
 - 8.2.0:
   - add: argparse changes to simplify usage and add help messages
 - 8.1.0
