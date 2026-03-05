@@ -21,7 +21,7 @@ class RepSourceActions:
         self.folder = folder
         self.rep = Repository(path).load_config()
     
-    def list_sources(self):
+    def remote_ls(self):
         rep = self.rep
         sources = rep.data.get_sources()
         print("Você também pode configurar as fontes e filtros manualmente editando o arquivo:")
@@ -31,19 +31,19 @@ class RepSourceActions:
             return
         print("Fontes configuradas:")
         for source in sources:
-            print(Text.format("- Rótulo: {y}", source.alias))
+            print(Text.format("- Rótulo: {y}", source.name))
             print(Text.format("  - Link ou Caminho: {y}", source.get_url_link()))
             print(Text.format("  - File Path     : {y}", source.get_source_readme()))
-            print(Text.format("  - Filtragem      : {y}", "Desativado" if source.filters is None else 'Ativado'))
-            for f in source.filters or []:
+            print(Text.format("  - Filtragem      : {y}", "Desativado" if source.quests is None else 'Ativado'))
+            for f in source.quests or []:
                 print(f"    - {f}")
 
-    def del_source(self, alias: str) -> None:
+    def remote_rm(self, alias: str) -> None:
         rep = self.rep
         sources = rep.data.get_sources()
         found = False
         for source in sources:
-            if source.alias == alias:
+            if source.name == alias:
                 found = True
                 if source.is_git_source():
                     cache_folder = source.get_source_cache_folder()
@@ -56,41 +56,54 @@ class RepSourceActions:
             raise Warning("fail: fonte não encontrada.")
         rep.save_config()
 
-    def source_enable(self, alias: str, filters: list[str] | None = None) -> None:
+    def remote_filter(self, alias: str, quests: list[str] | None = None, tasks: list[str] | None = None, clear: bool = False) -> None:
         rep = self.rep
         sources = rep.data.get_sources()
         found = False
         for source in sources:
-            if source.alias == alias:
+            if source.name == alias:
                 found = True
-                if filters is not None:
-                    if source.filters is None:
-                        source.filters = []
-                    for f in filters:
-                        if f not in source.filters:
-                            source.filters.append(f)
-                print(Text.format("Filtro {y} ativado com sucesso.", alias))
+                if quests is not None:
+                    if source.quests is None:
+                        source.quests = []
+                    for f in quests:
+                        if f not in source.quests:
+                            source.quests.append(f)
+                if tasks is not None:
+                    if source.tasks is None:
+                        source.tasks = []
+                    for f in tasks:
+                        if f not in source.tasks:
+                            source.tasks.append(f)
+                if clear:
+                    source.quests = None
+                    source.tasks = None
+                print(Text.format("Filtros {y} atualizados com sucesso.", alias))
                 break
         if not found:
             raise Warning("fail: fonte não encontrada.")
         rep.save_config()
 
-    def add_source(self, alias: str, default_repo_aliases: str | None, clone_url: str | None, local_source_folder: str | None, filters: list[str] | None, writeable: bool, branch: str = "master") -> None:
+    def remote_add(self, name: str, remote_default: str | None, remote_url: str | None, remote_dir: str | None, quest_filter: list[str] | None, task_filter: list[str] | None, writeable: bool, branch: str = "master") -> None:
+        # check if name already exists
+        if any(source.name == name for source in self.rep.data.get_sources()):
+            raise Warning("fail: fonte com esse nome já existe.")
+
         rep = self.rep
-        if default_repo_aliases is not None:
-            print(Text.format("Adicionando fonte remota apontando para repositório remoto {y}.", default_repo_aliases))
+        if remote_default is not None:
+            print(Text.format("Adicionando fonte remota apontando para repositório remoto {y}.", remote_default))
             url: str = ""
             settings = Settings()
-            if not settings.has_alias_git(default_repo_aliases):
+            if not settings.has_alias_git(remote_default):
                 raise Warning("fail: alias git remoto não encontrado.")
-            url = settings.get_alias_git(default_repo_aliases)
-            self.git_clone_repository(url, alias, filters, branch)
-        elif local_source_folder is not None:
-            print(Text.format("Adicionando fonte local apontando parao repositório {y}.", local_source_folder))
-            source = os.path.abspath(local_source_folder)
-            rep.data.set_source(RepSource(alias=alias).set_local_source(target=source).set_filters(filters).set_writeable(writeable))
-        elif clone_url is not None:
-            self.git_clone_repository(clone_url, alias, filters, branch)
+            url = settings.get_alias_git(remote_default)
+            self.git_clone_repository(url, name, quest_filter, branch)
+        elif remote_dir is not None:
+            print(Text.format("Adicionando fonte local apontando parao repositório {y}.", remote_dir))
+            source = os.path.abspath(remote_dir)
+            rep.data.set_source(RepSource(alias=name).set_local_source(target=source).set_filters(quests=quest_filter, tasks=task_filter).set_writeable(writeable))
+        elif remote_url is not None:
+            self.git_clone_repository(remote_url, name, quest_filter, branch)
 
         self.rep.save_config()
    
@@ -108,6 +121,5 @@ class RepSourceActions:
 
 
     def print_end_msg(self):
-        rel_path = os.path.relpath(self.rep.paths.get_workspace_dir(), os.getcwd())
-        print(Text.format("Voce pode acessar o repositório com o comando {g} {y}", "tko open", "<pasta>"))
-        print(Text.format("Por exemplo: {g} {y}", "tko open", rel_path))
+        print(Text.format("Voce pode acessar o repositório com o comando {g}", "tko open"))
+        

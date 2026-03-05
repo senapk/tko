@@ -8,13 +8,29 @@ from tko.util.text import Text
 from tko.settings.repository import Repository
 from tko.settings.settings import Settings
 
+
 class LanguageSetter:
+
+    @staticmethod
+    def check_lang_in_text_mode(repo: Repository):
+        lang = repo.data.lang
+        if lang == "":
+            options = available_languages
+            print("\nLinguagem padrão ainda não foi definida.\n")
+            while True:
+                print("Escolha entre as opções a seguir ", end="")
+                print("[" + ", ".join(options) + "]", ":", end=" ")
+                lang = input()
+                if lang in options:
+                    break
+            repo.data.lang = lang
+            repo.save_config()
+            
     def __init__(self, settings: Settings, rep: Repository, flagsman: FlagsMan, fman: FloatingManager):
         self.flagsman = flagsman
         self.fman = fman
         self.rep = rep
         self.settings = settings
-
 
     def set_language(self):
         options: list[FloatingInputData] = []

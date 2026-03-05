@@ -30,7 +30,7 @@ class Writer:
                 value += "\n"
             return f"'''\n{value}'''"
         
-        lines = ["[[cases]]"]
+        lines = ["[[tests]]"]
 
         # label primeiro
         if unit.case:
@@ -47,7 +47,7 @@ class Writer:
     
     @staticmethod
     def create_empty_toml() -> str:
-        return "[[cases]]\nlabel = ''\ninput = '''\n'''\noutput = '''\n'''\n"
+        return "[[tests]]\nlabel = ''\ninput = '''\n'''\noutput = '''\n'''\n"
 
     @staticmethod
     def to_tio(unit: Unit):

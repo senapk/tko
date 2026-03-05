@@ -68,7 +68,7 @@ class VplParser:
         return text
 
 def parse_toml(content: str) -> list[dict[str, Any]]:
-    main_list_name = "cases"
+    main_list_name = "tests"
 
     try:
         data = tomllib.loads(content)

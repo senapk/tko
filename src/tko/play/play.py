@@ -1,6 +1,6 @@
 from tko.game.game import Game
 from tko.play.fmt import Fmt
-from tko.settings.languages import available_languages
+from tko.play.language_setter import LanguageSetter
 from tko.settings.settings import Settings
 from tko.settings.repository import Repository
 from tko.play.keys import GuiKeys
@@ -172,22 +172,9 @@ class Play:
 
             self.tree.reload_sentences()
             self.save_to_json()
-
-    def check_lang_in_text_mode(self):
-        lang = self.rep.data.lang
-        if lang == "":
-            options = available_languages
-            print("\nLinguagem padrão ainda não foi definida.\n")
-            while True:
-                print("Escolha entre as opções a seguir ", end="")
-                print("[" + ", ".join(options) + "]", ":", end=" ")
-                lang = input()
-                if lang in options:
-                    break
-            self.rep.data.lang = lang
             
     def play(self):
-        self.check_lang_in_text_mode()
+        LanguageSetter.check_lang_in_text_mode(self.rep)
 
         while True:
             output = curses.wrapper(self.main)

@@ -24,7 +24,7 @@ class GameBuilder:
         if filename == "":
             pass
         elif not os.path.exists(filename):
-            print(f"Aviso: fonte {filename} não encontrada no source {self.source.alias}")
+            print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}")
         else:
             content = Decoder.load(filename)
         self.__parse_file_content(content)
@@ -50,7 +50,8 @@ class GameBuilder:
         return quests
 
     def __create_requirements_pointers(self):
-        if self.source.get_filters() is not None:
+        quests, tasks = self.source.get_filters()
+        if quests is not None or tasks is not None:
             return
 
         filename: str = self.source.get_source_readme()
@@ -67,7 +68,7 @@ class GameBuilder:
 
     def __parse_quest_folder(self, folder: str):
         database_path = folder
-        alias = self.source.alias
+        alias = self.source.name
         # local_tasks_cluster: Cluster = Cluster(0, "Atividades Locais", "local_task_cluster").set_source_alias(alias)
         # self.__add_cluster(local_tasks_cluster)
         tasks = self.collect_tasks()
@@ -91,7 +92,7 @@ class GameBuilder:
             self.__add_task(task)
 
     def __parse_cluster_folder(self, folder: str):
-        alias = self.source.alias
+        alias = self.source.name
         if not os.path.exists(folder):
             return
         for entry in sorted(os.listdir(folder)):
@@ -124,7 +125,7 @@ class GameBuilder:
 
     def __parse_file_content(self, content: str):
         lines = content.splitlines()
-        alias = self.source.alias
+        alias = self.source.name
         filename = self.source.get_source_readme()
         for line_num, line in enumerate(lines):
             autoload, quest_folder = self.__is_autoload_quest_cmd(line)
@@ -206,7 +207,7 @@ class GameBuilder:
             
 
         
-        cluster = Cluster(line_num, titulo, only_key, color).set_source_alias(self.source.alias)
+        cluster = Cluster(line_num, titulo, only_key, color).set_source_alias(self.source.name)
         filename = self.source.get_source_readme()
         skey = cluster.get_db_key()
         if skey in self.clusters.keys():
@@ -225,7 +226,8 @@ class GameBuilder:
     def __clear_empty_or_other_language(self, language: str): #call before create_cross_references
         # apagando quests vazias da lista de quests
         for cluster in self.clusters.values():
-            cluster.remove_empty_and_other_language_and_filtered(language, self.source.get_filters()) 
+            quest_filters, task_filters = self.source.get_filters()
+            cluster.remove_empty_and_other_language_and_filtered(language, quest_filters, task_filters) 
 
         # apagando quests vazias dos clusters e clusters vazios
         ordered_clusters: list[str] = []

@@ -16,7 +16,7 @@ class Identifier:
             return IdentifierType.TIO
         elif target.endswith(".toml"):
             return IdentifierType.TOML
-        elif target.endswith(".vpl") or target.endswith(".cases"):
+        elif target.endswith(".vpl"):
             return IdentifierType.VPL
         else:
             return IdentifierType.SOLVER

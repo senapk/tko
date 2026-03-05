@@ -16,18 +16,18 @@ class RepData:
 
     def set_source(self, source: RepSource):
         for i, s in enumerate(self.__sources):
-            if s.alias == source.alias:
+            if s.name == source.name:
                 self.__sources[i] = source
                 return self
         self.__sources.append(source)
 
     def del_source(self, alias: str):
-        self.__sources = [s for s in self.__sources if s.alias != alias]
+        self.__sources = [s for s in self.__sources if s.name != alias]
         return self
 
     def get_source(self, alias: str) -> RepSource | None:
         for s in self.__sources:
-            if s.alias == alias:
+            if s.name == alias:
                 return s
         return None
 

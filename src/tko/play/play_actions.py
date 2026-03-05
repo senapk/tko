@@ -40,12 +40,12 @@ class PlayActions:
 
     draft_content: str = f"""Descrição do rascunho
 
-Escreva aqui as informações que você quiser."
+Escreva aqui as informações que você quiser.
 Se quiser adicionar testes automáticos, basta preencher abaixo colocando valores para input e output. 
 
-Cada nova entrada [[cases]] gera um novo case de teste.
+Cada nova entrada [[tests]] gera um novo case de teste.
 
-Também é possível colocar os testes em um arquivos cases.toml.
+Também é possível colocar os testes em um arquivos tests.toml.
 
 ```toml"
 {Writer.create_empty_toml()}
@@ -351,9 +351,9 @@ Também é possível colocar os testes em um arquivos cases.toml.
         if not run.wdir.has_solver():
             lang = self.rep.data.get_lang()
             draft_folder = os.path.join(folder, lang)
-            DownActions().create_default_draft(draft_folder, self.rep.data.get_lang())
+            draft_path = DownActions().create_default_draft(draft_folder, self.rep.data.get_lang())
             msg =  Floating().bottom().right().set_warning()
             msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.rep.data.get_lang()))
-            msg.put_text("\nUm arquivo de rascunho vazio foi criado em {}.".format(draft_folder))
+            msg.put_text("\nUm arquivo de rascunho vazio foi criado em\n {} ".format(draft_path))
             self.fman.add_input(msg)
         run.execute()

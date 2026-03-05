@@ -1,4 +1,5 @@
 import os
+from tko.play.language_setter import LanguageSetter
 from tko.util.text import Text
 from tko.settings.repository import Repository
 from tko.settings.rep_paths import RepPaths
@@ -12,28 +13,28 @@ class RepStarter:
         self.language = language
 
     def execute(self) -> bool:
-        rep = self.create_repository()
-        if rep is None:
+        repo = self.create_repository()
+        if repo is None:
             return False
         
-        self.rep = rep
+        self.repo = repo
         self.create_empty_rep()
         # erase cache folder to avoid conflicts
-        cache_folder = rep.paths.get_cache_folder()
+        cache_folder = repo.paths.get_cache_folder()
         if os.path.exists(cache_folder):
             shutil.rmtree(cache_folder)
         os.makedirs(cache_folder, exist_ok=True)
         if self.language is not None:
-            rep.data.lang = self.language
+            repo.data.lang = self.language
             print(Text.format("A linguagem do repositório foi definida como {y}.", self.language))
+        else:
+            LanguageSetter.check_lang_in_text_mode(self.repo)
         
-        rep.save_config()
+        repo.save_config()
         return True
 
     def print_end_msg(self):
-        rel_path = os.path.relpath(self.rep.paths.get_workspace_dir(), os.getcwd())
-        print(Text.format("Voce pode acessar o repositório com o comando {g} {y}", "tko open", "<pasta>"))
-        print(Text.format("Por exemplo: {g} {y}", "tko open", rel_path))
+        print(Text.format("Voce pode acessar o repositório com o comando {g} {y}", "tko open"))
 
     def set_folder(self, folder: str | None, remote: str | None) -> bool:
         if folder is not None:
@@ -65,8 +66,8 @@ class RepStarter:
         return Repository(os.path.abspath(self.folder))
     
     def create_empty_rep(self):
-        source = self.rep.get_student_sandbox()
-        self.rep.data.set_source(source)
+        source = self.repo.get_student_sandbox()
+        self.repo.data.set_source(source)
         folder = source.get_source_workspace()
         print(f"Criando repositório vazio, utilizando a pasta {folder} como pasta para atividades locais")
     

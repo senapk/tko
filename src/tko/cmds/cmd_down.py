@@ -34,7 +34,7 @@ class CmdLineDown:
 
 
 class CmdDown:
-    test_case_filename = "cases.toml"
+    test_case_filename = "tests.toml"
     def __init__(self, rep: Repository, task_key: str, settings: Settings):
         self.rep = rep
         self.task_key = task_key
@@ -251,7 +251,7 @@ class DownActions:
             else:
                 self.send_to_print(self.folder_and_file(path) + " (Inalterado)")
 
-    def create_default_draft(self, destiny: str, language: str):
+    def create_default_draft(self, destiny: str, language: str) -> str:
         filename = "draft."
         draft_path = os.path.join(destiny, filename + language)
         os.makedirs(os.path.dirname(draft_path), exist_ok=True)
@@ -264,3 +264,4 @@ class DownActions:
             self.send_to_print(self.folder_and_file(draft_path, 3) + " (Vazio)")
         else:
             self.send_to_print(self.folder_and_file(draft_path, 3) + " (Não sobrescrito)")
+        return draft_path

@@ -19,13 +19,14 @@ class RepSource:
     )
 
     class Keys:
-        ALIAS = "alias"
+        NAME = "name"
         TARGET = "target"
         TYPE = "type"
         WRITEABLE = "writeable"
         GIT_CACHE_TIMESTAMP = "cache_timestamp"
         GIT_CACHE_PATH = "cache_path"
-        FILTERS = "filters"
+        QUESTS = "quests"
+        TASKS = "tasks"
         BRANCH = "branch"
 
     """
@@ -38,13 +39,14 @@ class RepSource:
     filters: list[str] | None - list of filters to apply when loading quests from the source, used to filter quests based on certain criteria
     """
     def __init__(self, alias: str):
-        self.alias = alias
+        self.name = alias
         self.__target = ""
         self.source_type: SourceType = SourceType.LOCAL_FILE
         self.cache_timestamp: str = ""
         self.__writeable: bool = False
         self.branch: str | None = None
-        self.filters: list[str] | None = None
+        self.quests: list[str] | None = None
+        self.tasks: list[str] | None = None
         self.rep_local_workspace: str | None = None   # if read-only rep, rep folder to tasks will be, join(local_workspace, alias)
         self.rep_cache_folder: str | None = None  # if git clone rep, cache folder to git clone will be, join(git_cache_folder, alias)
 
@@ -55,10 +57,10 @@ class RepSource:
         return self
     
     def is_sandbox_source(self) -> bool:
-        return self.alias == RepSource.STUDENT_SANDBOX_ALIAS # for backward compatibility, to remove in the future
+        return self.name == RepSource.STUDENT_SANDBOX_ALIAS # for backward compatibility, to remove in the future
     
     def set_student_sandbox(self):
-        self.alias = RepSource.STUDENT_SANDBOX_ALIAS
+        self.name = RepSource.STUDENT_SANDBOX_ALIAS
         self.set_local_source(target=RepSource.STUDENT_SANDBOX_ALIAS, writeable=True)
         return self
     
@@ -76,8 +78,9 @@ class RepSource:
                 f.write(self.sandbox_readme_content)
         return self
     
-    def get_filters(self) -> list[str] | None:
-        return self.filters
+    # return quests and tasks filters
+    def get_filters(self) -> tuple[list[str] | None, list[str] | None]:
+        return self.quests, self.tasks
 
     def set_git_source(self, target: str, branch: str | None = None):
         self.source_type = SourceType.GIT_SOURCE
@@ -138,8 +141,9 @@ class RepSource:
         self.cache_timestamp = cache_timestamp
         return self
     
-    def set_filters(self, filters: list[str] | None):
-        self.filters = filters
+    def set_filters(self, quests: list[str] | None, tasks: list[str] | None = None):
+        self.quests = quests
+        self.tasks = tasks
         return self
     
     def set_rep_globals(self, local_workspace: str, cache_folder: str):
@@ -149,7 +153,7 @@ class RepSource:
     def get_source_cache_folder(self) -> str:
         if self.rep_cache_folder is None:
             raise ValueError("Local rep folder is not set")
-        return os.path.join(self.rep_cache_folder, self.alias)
+        return os.path.join(self.rep_cache_folder, self.name)
 
     def get_rep_cache_folder(self) -> str:
         if self.rep_cache_folder is None:
@@ -162,7 +166,7 @@ class RepSource:
         return self.rep_local_workspace
     
     def get_source_workspace(self) -> str:
-        return os.path.abspath(os.path.join(self.get_rep_workspace(), self.alias))
+        return os.path.abspath(os.path.join(self.get_rep_workspace(), self.name))
     
     def get_task_workspace(self, task_key: str) -> str:
         if not self.is_read_only():
@@ -171,10 +175,12 @@ class RepSource:
 
     def load_from_dict(self, data: dict[str, Any]):
         Keys = RepSource.Keys
-        if Keys.ALIAS in data and isinstance(data[Keys.ALIAS], str):
-            self.alias = data[Keys.ALIAS]
+        if Keys.NAME in data and isinstance(data[Keys.NAME], str):
+            self.name = data[Keys.NAME]
+        if "alias" in data and isinstance(data["alias"], str): # for backward compatibility
+            self.name = data["alias"]
         if "database" in data and isinstance(data["database"], str): # for backward compatibility
-            self.alias = data["database"]
+            self.name = data["database"]
         if Keys.TARGET in data and isinstance(data[Keys.TARGET], str):
             self.__target = data[Keys.TARGET]
         if "link" in data and isinstance(data["link"], str): # for backward compatibility
@@ -195,18 +201,22 @@ class RepSource:
             self.source_type = SourceType.LOCAL_FILE
         if Keys.GIT_CACHE_TIMESTAMP in data and isinstance(data[Keys.GIT_CACHE_TIMESTAMP], str):
             self.cache_timestamp = data[Keys.GIT_CACHE_TIMESTAMP]
-        if Keys.FILTERS in data and isinstance(data[Keys.FILTERS], list):
-            self.filters = data[Keys.FILTERS]
+        if Keys.QUESTS in data and isinstance(data[Keys.QUESTS], list):
+            self.quests = data[Keys.QUESTS]
+        if "filters" in data and isinstance(data["filters"], list): # for backward compatibility
+            self.quests = data["filters"]
+        if Keys.TASKS in data and isinstance(data[Keys.TASKS], list):
+            self.tasks = data[Keys.TASKS]
         if Keys.WRITEABLE in data and isinstance(data[Keys.WRITEABLE], bool):
             self.__writeable = data[Keys.WRITEABLE]
-        if self.alias == RepSource.STUDENT_SANDBOX_ALIAS or self.alias == "local": # for backward compatibility, to remove in the future
+        if self.name == RepSource.STUDENT_SANDBOX_ALIAS or self.name == "local": # for backward compatibility, to remove in the future
             self.__writeable = True
         return self
 
     def save_to_dict(self) -> dict[str, Any]:
         Keys = RepSource.Keys
         output: dict[str, Any] = {
-            Keys.ALIAS: self.alias,
+            Keys.NAME: self.name,
             Keys.TARGET: self.__target,
             Keys.TYPE: self.source_type.value,
             Keys.WRITEABLE: self.__writeable,
@@ -215,5 +225,6 @@ class RepSource:
             output[Keys.BRANCH] = self.branch
         if self.cache_timestamp:
             output[Keys.GIT_CACHE_TIMESTAMP] = self.cache_timestamp
-        output[Keys.FILTERS] = self.filters
+        output[Keys.QUESTS] = self.quests
+        output[Keys.TASKS] = self.tasks
         return output

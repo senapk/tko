@@ -13,10 +13,11 @@ from tko.feno.remote_md import remote_main
 from tko.feno.filter import filter_main
 from tko.feno.grading import Grading
 
+from platformdirs import user_cache_dir
+
 from tko.cmds.cmd_task import CmdTask
 from tko.cmds.cmd_rep import CmdRep
 from tko.cmds.cmd_open import CmdOpen
-from tko.cmds.cmd_down import CmdLineDown
 from tko.cmds.cmd_run import Run
 from tko.cmds.cmd_build import CmdBuild
 from tko.cmds.cmd_config import CmdConfig, ConfigParams
@@ -103,8 +104,14 @@ class Main:
     def open(args: argparse.Namespace):
         settings = Settings()
         update: bool = args.update
-        cache_folder: str | None = args.cache
-        folder = args.folder
+ 
+        if args.global_cache:
+            cache_folder: str = user_cache_dir("tko")
+            print("Using global cache directory at: " + cache_folder)
+        else:
+            cache_folder: str = args.cache
+
+        folder = args.changedir
         rec_folder = RepPaths.rec_search_for_repo(folder)
         if rec_folder != "":
             folder = rec_folder
@@ -127,64 +134,78 @@ class Main:
 
     @staticmethod
     def init(args: argparse.Namespace):
-        folder: str | None = args.folder
+        folder: str | None = args.changedir
         language: str | None = args.language
         rep_starter = RepStarter(folder=folder, language=language)
-        ok: bool = rep_starter.execute()
-        remote: str | None = args.git
-        enable: list[str] | None = args.enable
-        if ok and remote is not None:
-            rep_actions = RepSourceActions(folder)
-            rep_actions.add_source(alias=remote, default_repo_aliases=remote, clone_url=None, filters=enable, local_source_folder=None, writeable=False)
-        rep_starter.print_end_msg()
+        rep_starter.execute()
 
     @staticmethod
-    def source_list(args: argparse.Namespace):
-        folder: str | None = args.folder
+    def remote_ls(args: argparse.Namespace):
+        folder: str | None = args.changedir
         try:
-            RepSourceActions(folder)
             rep_actions = RepSourceActions(folder)
-            rep_actions.list_sources()
+            rep_actions.remote_ls()
         except ValueError as e:
             print(f"Erro ao listar fontes: {e}")
 
     @staticmethod
-    def source_del(args: argparse.Namespace):
-        alias: str = args.alias
-        folder: str | None = args.folder
+    def remote_rm(args: argparse.Namespace):
+        name: str = args.name
+        folder: str | None = args.changedir
         try:
-            RepSourceActions(folder)
             rep_actions = RepSourceActions(folder)
-            rep_actions.del_source(alias=alias)
+            rep_actions.remote_rm(alias=name)
         except ValueError as e:
             print(f"Erro ao deletar fonte: {e}")
 
     @staticmethod
-    def source_add(args: argparse.Namespace):
-        default_git_alias: str | None = args.git
-        git_clone: str | None = args.clone
-        git_branch: str = args.branch
-        local_source: str | None = args.local
-        writeable: bool = args.writeable
+    def remote_add(args: argparse.Namespace):
+        source: str = args.source
+        default_git_alias = ""
+        git_clone = ""
+        local_source = ""
+        if source.startswith("@"):
+            default_git_alias = source[1:]
+        elif source.startswith("http:") or source.startswith("https:") or source.startswith("ssh:"):
+            git_clone = source
+        else:
+            local_source = source
 
-        rep_folder: str | None = args.folder
+        git_branch: str = args.branch
+        writeable: bool = args.write
+
+        rep_folder: str | None = args.changedir
         
-        alias: str = args.alias
-        enable: list[str] | None = args.enable
+        name: str = args.name
+        quest_filter: list[str] | None = args.quest
+        task_filter: list[str] | None = args.task
         try:
             rep_actions = RepSourceActions(rep_folder)
-            rep_actions.add_source(alias=alias, default_repo_aliases=default_git_alias, branch=git_branch, clone_url=git_clone, local_source_folder=local_source, filters=enable, writeable=writeable)
+            rep_actions.remote_add(
+                name=name, 
+                remote_default=default_git_alias, 
+                branch=git_branch, 
+                remote_url=git_clone, 
+                remote_dir=local_source, 
+                quest_filter=quest_filter, 
+                task_filter=task_filter,
+                writeable=writeable)
             rep_actions.print_end_msg()
         except ValueError as e:
             print(f"Erro ao adicionar fonte: {e}")
 
     @staticmethod
-    def source_enable(args: argparse.Namespace):
-        alias: str = args.alias
-        folder: str | None = args.folder
-        enable: list[str] | None = args.enable
+    def remote_filter(args: argparse.Namespace):
+        name: str = args.name
+        folder: str | None = args.changedir
+        quests: list[str] | None = args.quest
+        tasks: list[str] | None = args.task
+        clear: bool = args.clear
+        if clear and (quests or tasks):
+            print("Erro: --clear não pode ser usado com --quest ou --task")
+            return
         rep_actions = RepSourceActions(folder)
-        rep_actions.source_enable(alias=alias, filters=enable)
+        rep_actions.remote_filter(alias=name, quests=quests, tasks=tasks, clear=clear)
 
     @staticmethod
     def config(args: argparse.Namespace):
@@ -206,114 +227,118 @@ class Main:
 class Parser:
     def __init__(self):
         self.parser: argparse.ArgumentParser = argparse.ArgumentParser(prog='tko',
-                                                                       description=f'tko version {__version__}')
-        self.subparsers = self.parser.add_subparsers(title='subcommands', help='help for subcommand.')
+                                                                       description=f'tko {__version__}', add_help=False)
+        
+        self.parser.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
+        self.subparsers = self.parser.add_subparsers(title='subcommands', metavar='COMMAND', help='DESCRIPTION')
 
         self.parent_manip = Parser.create_parent_manip()
         self.parent_basic = Parser.create_parent_basic()
-        self.parent_folder = Parser.create_parent_folder()
 
         self.add_parser_global()
         self.create_parent_basic()
         self.create_parent_manip()
         self.add_parser_rep_actions()
-        self.add_parser_run()
+        self.add_parser_task()
         self.add_parser_config()
         self.add_parser_collect()
         self.add_parser_build()
-        # self.add_parser_eval()
 
     def add_parser_global(self):
-        self.parser.add_argument('-c', metavar='CONFIG_FILE', type=str, help='Config json file.')
-        self.parser.add_argument('-w', metavar='WIDTH', type=int, help="Terminal width.")
-        self.parser.add_argument('-v', action='store_true', help='Show version.')
-        self.parser.add_argument('-m', action='store_true', help='Monochromatic.')
-        self.parser.add_argument('--debug', '-D', action='store_true', help='Debug mode.')
+        self.parser.add_argument('-c', '--configfile', metavar='FILE', type=str, help='Global config file')
+        self.parser.add_argument('-w', '--width', metavar='WIDTH', type=int, help="Terminal width")
+        self.parser.add_argument('-v', "--version", action='store_true', help='Show version and exit')
+        self.parser.add_argument('-m', "--mono", action='store_true', help='Disable colors')
+        self.parser.add_argument('-D', '--debug', action='store_true', help='Enable debug mode')
+        self.parser.add_argument('-C', '--changedir', metavar='DIR', type=str, help='Change to repository directory before running')
 
     @staticmethod
     def create_parent_basic():
         parent_basic = argparse.ArgumentParser(add_help=False)
-        parent_basic.add_argument('--index', '-i', metavar="I", type=int, help='Run a specific index.')
+        parent_basic.add_argument('--index', '-i', metavar="I", type=int, help='Run a specific index')
         parent_basic.add_argument('--pattern', '-p', metavar="P", type=str, default='@.in @.sol',
                                   help='Pattern load/save a folder, default: "@.in @.sol"')
         return parent_basic
 
     @staticmethod
-    def create_parent_folder():
-        parent_folder = argparse.ArgumentParser(add_help=False)
-        parent_folder.add_argument('--folder', '-f', type=str, nargs='?', default='.', help='Repository folder.')
-        return parent_folder
-
-    @staticmethod
     def create_parent_manip():
         parent_manip = argparse.ArgumentParser(add_help=False)
-        parent_manip.add_argument('--width', '-w', type=int, help="Terminal width.")
-        parent_manip.add_argument('--unlabel', '-u', action='store_true', help='Remove all labels.')
-        parent_manip.add_argument('--number', '-n', action='store_true', help='Number labels.')
-        parent_manip.add_argument('--sort', '-s', action='store_true', help="Sort test cases by input size.")
+        parent_manip.add_argument('--width', '-w', type=int, help="Terminal width")
+        parent_manip.add_argument('--unlabel', '-u', action='store_true', help='Remove all labels')
+        parent_manip.add_argument('--number', '-n', action='store_true', help='Number labels')
+        parent_manip.add_argument('--sort', '-s', action='store_true', help="Sort test cases by input size")
         parent_manip.add_argument('--pattern', '-p', metavar="@.in @.out", type=str, default='@.in @.sol',
                                   help='Pattern load/save a folder, default: "@.in @.sol"')
         return parent_manip
 
-    def add_parser_run(self):
-        parser = self.subparsers.add_parser('run', parents=[self.parent_basic], help='Run task in raw terminal or tui.')
-        parser.add_argument('target_list', metavar='T', type=str, nargs='*', help='Solvers, test cases or folders.')
-        parser.add_argument('--filter', '-f', action='store_true', help='Filter solver in temp dir before run')
+    def add_parser_task(self):
+        parser_task = self.subparsers.add_parser('task', help='Manage individual tasks', add_help=False)
+        parser_task.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
+        
 
-        group_a = parser.add_mutually_exclusive_group()
+        subpar_task = parser_task.add_subparsers(title='subcommands', metavar='COMMAND', help='DESCRIPTION')
+        parser_open = subpar_task.add_parser('open', parents=[self.parent_basic], help='Open a task in tui')
+        parser_open.add_argument('target_list', metavar='T', type=str, nargs='*', help='Solvers, test cases or folders to load')
+        parser_open.set_defaults(func=Main.tui)
+        
+        parser_run = subpar_task.add_parser('run', parents=[self.parent_basic], help='Run task in raw terminal or tui')
+        parser_run.add_argument('target_list', metavar='T', type=str, nargs='*', help='Solvers, test cases or folders')
+        parser_run.add_argument('--filter', '-f', action='store_true', help='Filter solver in temp dir before run')
 
-        group_a.add_argument("--tui", '-t', action='store_true', help='Use TUI interface.')
-        group_a.add_argument('--eval', action='store_true', help='Get percent running tests.')
+        parser_run.add_argument('--eval', action='store_true', help='Get percent running tests')
 
-        parser.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures.')
+        parser_run.add_argument('--compact', '-c', action='store_true', help='Do not show case descriptions in failures')
 
-        group_n = parser.add_mutually_exclusive_group()
-        group_n.add_argument('--none', '-n', action='store_true', help='Do not show any failure.')
-        group_n.add_argument('--all', '-a', action='store_true', help='Show all failures.')
+        group_n = parser_run.add_mutually_exclusive_group()
+        group_n.add_argument('--none', '-n', action='store_true', help='Do not show any failure')
+        group_n.add_argument('--all', '-a', action='store_true', help='Show all failures')
 
         # add an exclusive group for diff mode
-        group = parser.add_mutually_exclusive_group()
-        group.add_argument('--down', '-d', action='store_true', help="Diff mode up-to-down.")
-        group.add_argument('--side', '-s', action='store_true', help="Diff mode side-by-side.")
-        parser.set_defaults(func=Main.run)
+        group = parser_run.add_mutually_exclusive_group()
+        group.add_argument('--down', '-d', action='store_true', help="Diff mode up-to-down")
+        group.add_argument('--side', '-s', action='store_true', help="Diff mode side-by-side")
+        parser_run.set_defaults(func=Main.run)
 
     def add_parser_config(self):
-        parser_cfg = self.subparsers.add_parser('config', help='Global config tool.')
-        subpar_repo = parser_cfg.add_subparsers(title='subcommands', help='Help for subcommand.')
+        parser_cfg = self.subparsers.add_parser('config', help='DESCRIPTION', add_help=False)
+        parser_cfg.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
+        subpar_repo = parser_cfg.add_subparsers(title='subcommands', metavar='COMMAND', help='DESCRIPTION') 
 
         cfg_reset = subpar_repo.add_parser('reset',
-                                           help='Reset all repositories, folders and values to factory default.')
+                                           help='Reset configuration to factory default')
         cfg_reset.set_defaults(func=CmdRep.reset)
 
-        cfg_set = subpar_repo.add_parser('set', help='Set default config values.')
+        cfg_set = subpar_repo.add_parser('set', help='Set default configuration values')
 
         g_diff = cfg_set.add_mutually_exclusive_group()
-        g_diff.add_argument('--side', action='store_true', help='Set side_by_side diff mode.')
-        g_diff.add_argument('--down', action='store_true', help='Set up_to_down   diff mode.')
+        g_diff.add_argument('--side', action='store_true', help='Set side_by_side diff mode')
+        g_diff.add_argument('--down', action='store_true', help='Set up_to_down   diff mode')
 
-        cfg_set.add_argument("--editor", metavar="cmd", type=str, help='Set editor command.')
-        cfg_set.add_argument("--borders", metavar="[0|1]", type=str, help='Enable borders.')
-        cfg_set.add_argument("--images", metavar="[0|1]", type=str, help='Enable images.')
-        cfg_set.add_argument("--timeout", metavar="sec", type=int, help='Set timeout.')
+        cfg_set.add_argument("--editor", metavar="cmd", type=str, help='Set editor command')
+        cfg_set.add_argument("--borders", metavar="[0|1]", type=str, help='Enable borders')
+        cfg_set.add_argument("--images", metavar="[0|1]", type=str, help='Enable images')
+        cfg_set.add_argument("--timeout", metavar="sec", type=int, help='Set timeout')
 
         cfg_set.set_defaults(func=Main.config)
 
-        cfg_list = subpar_repo.add_parser('list', help='list default config values.')
+        cfg_list = subpar_repo.add_parser('list', help='List default configuration values')
         cfg_list.set_defaults(func=Main.list)
 
     def add_parser_collect(self):
-        parser_repo = self.subparsers.add_parser('collect', help='Tools to collect data.')
-        subpar_collect = parser_repo.add_subparsers(title='subcommands', help='Help for subcommand.')
+        parser_repo = self.subparsers.add_parser('collect', help='Collect evaluation data', add_help=False)
+        parser_repo.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
+        subpar_collect = parser_repo.add_subparsers(title='subcommands', metavar='COMMAND', help='DESCRIPTION')
 
-        # repo_update = subpar_repo.add_parser("update", parents=[self.parent_folder], help="Update repository cache.")
+        # repo_update = subpar_repo.add_parser("update", parents=[self.parent_folder], help="Update repository cache")
         # repo_update.set_defaults(func=CmdRep.update)
 
-        parser_task = subpar_collect.add_parser('task', parents=[self.parent_folder], help='Collect data from task.')
-        parser_task.add_argument('label', type=str, help='Task label.')
-        parser_task.add_argument('graph', nargs=2, type=int, metavar=('WIDTH', 'HEIGHT'), help="Show task graph.")
+        parser_task = subpar_collect.add_parser('task', help='Collect data from task', add_help=False)
+        parser_task.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
+        parser_task.add_argument('label', type=str, help='Task label')
+        parser_task.add_argument('graph', nargs=2, type=int, metavar=('WIDTH', 'HEIGHT'), help="Show task graph")
         parser_task.set_defaults(func=Main.collect_task)
 
-        repo_collect = subpar_collect.add_parser("rep", parents=[self.parent_folder], help="Collect data from repository.")
+        repo_collect = subpar_collect.add_parser("repo", help="Collect data from this repository")
         repo_collect.add_argument("--json", action='store_true', help="Collect as json data")
         repo_collect.add_argument("--resume", action='store_true', help="Collect resume")
         repo_collect.add_argument("--log", action='store_true', help="Collect history log")
@@ -324,63 +349,72 @@ class Parser:
         repo_collect.add_argument('--color', type=int, default=1, help="Daily graph color [0|1]")
         repo_collect.set_defaults(func=CmdRep.collect_main)
 
-        extract_cmd = subpar_collect.add_parser("batch", help="Extract problems data from this reps.")
-        extract_cmd.add_argument("--reps", "-r", required=True, type=str, nargs="+", help="Reps to extract data from.")
-        extract_cmd.add_argument("--json", "-j", type=str, help="Path to save the extracted JSON data.")
-        extract_cmd.add_argument("--csv", "-c", type=str, help="Path to save the extracted CSV data.")
-        extract_cmd.add_argument("--block_prefix", "-b", type=str, help="Block prefix to insert in csv file.")
+        extract_cmd = subpar_collect.add_parser("repos", help="Colect and merge data from many repos")
+        extract_cmd.add_argument("path", type=str, nargs="+", help="Paths to repos")
+        extract_cmd.add_argument("--json", "-j", type=str, help="Path to save the extracted JSON data")
+        extract_cmd.add_argument("--csv", "-c", type=str, help="Path to save the extracted CSV data")
+        extract_cmd.add_argument("--block_prefix", "-b", type=str, help="Block prefix to insert in csv file")
         extract_cmd.set_defaults(func=CmdRep.collect_batch)
 
     def add_parser_rep_actions(self):
-        parser_open = self.subparsers.add_parser('open', help='Open a folder with a repository.')
-        parser_open.add_argument('folder', type=str, nargs='?', default='.', help='Repository folder.')
-        parser_open.add_argument('--cache', '-c', type=str, help='Cache folder.')
-        parser_open.add_argument('--update', '-u', action='store_true', help='Force update.')
-        parser_open.set_defaults(func=Main.open)
-
-        parser_init = self.subparsers.add_parser('init', parents=[self.parent_folder], help='Initialize a empty repository in a folder.')
-        parser_init.add_argument('--language', '-l', type=str, metavar=('EXTENSION'), help='Draft language for the repository.')
-        parser_init.add_argument('--git', '-g', '-r', type=str, metavar=('ALIAS '), help='Init with remote git source [fup|ed|poo].')
-        parser_init.add_argument('--enable', '-e', type=str, nargs='*', help='Only show enabled items')
+        parser_init = self.subparsers.add_parser('init', help='Initialize empty TKO repository', add_help=False)
+        parser_init.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
+        parser_init.add_argument('-l', '--language', type=str, metavar=('LANG'), help='Default repository language (e.g. py, cpp, java, go)')
         parser_init.set_defaults(func=Main.init)
 
-        parser_source = self.subparsers.add_parser('source', help='Manipulate sources in a repository folder.')
-        sub_source = parser_source.add_subparsers(title='source commands', help='help for subcommand.')
+        parser_open = self.subparsers.add_parser('open', help='Open repository in interactive mode', add_help=False)
+        parser_open.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
+        parser_open.add_argument('-g', '--global-cache', action='store_true', help='Use global cache for remote URL sources')
+        parser_open.add_argument('-u', '--update', action='store_true', help='Force update remote URL sources')
+        parser_open.set_defaults(func=Main.open)
+
+        parser_source = self.subparsers.add_parser('remote', help='Manage remote task sources', add_help=False)
+        parser_source.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
+        sub_source = parser_source.add_subparsers(title='subcommands', metavar='COMMAND', help='DESCRIPTION')
         # create subcommands inside source
-        source_add = sub_source.add_parser("add", parents=[self.parent_folder], help="Add a new task source")
-        source_add.add_argument('--alias', "-a", required=True, type=str, help='Alias for the remote.')
-        source_from = source_add.add_mutually_exclusive_group(required=True)
-        source_from.add_argument('--git', '-g', type=str, metavar=('ALIAS'), help='Clone one of the default remote git sources [fup|ed|poo].')
-        source_from.add_argument('--clone', '-c', type=str, metavar=('REPO_URL'), help='Clone a git rep with a Readme.md source. Ex: tko source add ed --clone https://github.com/qxcodeed/arcade.git')
-        source_from.add_argument('--local', '-l', type=str, metavar=('FOLDER'), help='Add a local folder as a source.')
-        source_add.add_argument('--enable', '-e', metavar=('SUBSTRING'), type=str, nargs='*', help='Only show enabled items')
-        source_add.add_argument('--branch', '-b', type=str, default='master', help='Branch name for clone source.')
-        source_add.add_argument('--writeable', '-w', action='store_true', help='Set source as writeable, allowing modifications.')
-        source_add.set_defaults(func=Main.source_add)
+        source_add = sub_source.add_parser("add", help="Add a new task source", add_help=False)
+        source_add.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
+        source_add.add_argument('name', type=str, help='Name of the remote')
+        source_add.add_argument('source', type=str, metavar=('SOURCE'), help='Remote source: git URL, local directory or preset name (e.g. @fup, @ed, @poo)')
+        source_add.add_argument('-q', '--quest', action='append', metavar=('QUEST_ID'), type=str, help='Load tasks only from selected quests')
+        source_add.add_argument('-t', '--task', action='append', metavar=('TASK_ID'), type=str, help='Load tasks only from selected tasks')
+        
+        source_add.add_argument('-b', '--branch', type=str, default='master', help='Branch name for git remote sources')
+        source_add.add_argument('-w', '--write', action='store_true', help='Allow modifications for local directory remotes (default: readonly)')
+        source_add.set_defaults(func=Main.remote_add)
 
-        source_list = sub_source.add_parser("list", parents=[self.parent_folder], help="List tko repository sources")
-        source_list.set_defaults(func=Main.source_list)
+        source_list = sub_source.add_parser("ls", help="List remote task sources", add_help=False)
+        source_list.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
+        source_list.set_defaults(func=Main.remote_ls)
 
-        source_del = sub_source.add_parser("del", parents=[self.parent_folder], help="Delete a tko repository source")
-        source_del.add_argument('--alias', required=True, type=str, help='Alias for the remote.')
-        source_del.set_defaults(func=Main.source_del)
+        source_del = sub_source.add_parser("rm", help="Remove a remote task source", add_help=False)
+        source_del.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
+        source_del.add_argument('name', type=str, help='Name of the remote to be removed')
+        source_del.set_defaults(func=Main.remote_rm)
 
-        source_enable = sub_source.add_parser("enable", parents=[self.parent_folder], help="Enable filters on a tko repository source.")
-        source_enable.add_argument('--alias', type=str, required=True, help='Alias for the remote.')
-        source_enable.add_argument('enable', type=str, nargs='*', help='Only show enabled items')
-        source_enable.set_defaults(func=Main.source_enable)
+        source_filter = sub_source.add_parser("filter", help="Manage filters for a remote task source", add_help=False)
+        source_filter.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
+        source_filter.add_argument('name', type=str, help='Name of the remote')
+        source_filter.add_argument('-q', '--quest', action='append', metavar=('QUEST_ID'), type=str, help='Add quests to the filter list')
+        source_filter.add_argument('-t', '--task', action='append', metavar=('TASK_ID'), type=str, help='Add tasks to the filter list')
+        source_filter.add_argument('--clear', action='store_true', help='Clear all filters')
+        source_filter.set_defaults(func=Main.remote_filter)
+        
 
     def add_parser_build(self):
-        parser_build = self.subparsers.add_parser('build', help='Tools to build tko reps.')
-        subparsers = parser_build.add_subparsers(title='subcommands', help='Help for subcommand.')
+        parser_build = self.subparsers.add_parser('build', help='Build repository artifacts', add_help=False)
+        parser_build.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
+        subparsers = parser_build.add_subparsers(title='subcommands', metavar='COMMAND', help='DESCRIPTION')
 
-        parser_b = subparsers.add_parser('tests', parents=[self.parent_manip], help='Build a test target.')
-        parser_b.add_argument('target', metavar='T_OUT', type=str, help='Target to be built.')
-        parser_b.add_argument('target_list', metavar='T', type=str, nargs='+', help='Input test targets.')
+        parser_b = subparsers.add_parser('tests', parents=[self.parent_manip], help='Build a test target', add_help=False)
+        parser_b.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
+        parser_b.add_argument('target', metavar='T_OUT', type=str, help='Target to be built')
+        parser_b.add_argument('target_list', metavar='T', type=str, nargs='+', help='Input test targets')
         parser_b.set_defaults(func=Main.build)
 
         # subparser for the 'build' command
-        parser_r = subparsers.add_parser('mapi', help='Build .mapi file.')
+        parser_r = subparsers.add_parser('mapi', help='Build .mapi file', add_help=False)
+        parser_r.add_argument( "-h", "--help", action="help", help="Show help message and exit")
         parser_r.add_argument('targets', metavar='T', type=str, nargs='*', help='folders')
         parser_r.add_argument("--check", "-c", action="store_true", help="Check if the file needs to be rebuilt")
         parser_r.add_argument("--brief", "-b", action="store_true", help="Brief mode")
@@ -391,49 +425,56 @@ class Parser:
         parser_r.set_defaults(func=build_main)
 
         # subparser for the 'indexer' command
-        parser_i = subparsers.add_parser('indexer', help='Index Readme file.')
+        parser_i = subparsers.add_parser('indexer', help='Index Readme file', add_help=False)
+        parser_i.add_argument( "-h", "--help", action="help", help="Show help message and exit")
         parser_i.add_argument('path', type=str, help='Path to Markdown file')
         parser_i.add_argument("base", type=str, help="Folder with the problems")
         parser_i.set_defaults(func=indexer_main)
 
         # subparser for the 'html' command
-        parser_h = subparsers.add_parser('html', help='Generate HTML file from markdown file.')
+        parser_h = subparsers.add_parser('html', help='Generate HTML file from markdown file', add_help=False)
+        parser_h.add_argument( "-h", "--help", action="help", help="Show help message and exit")
         parser_h.add_argument('input', type=str, help='Input markdown file')
         parser_h.add_argument('output', type=str, help='Output HTML file')
         parser_h.add_argument('--title', type=str, default="Problema", help='Title of the HTML file')
         parser_h.set_defaults(func=html_main)
 
         # subparser for the 'mdpp' command
-        parser_m = subparsers.add_parser('mdpp', help='Preprocessor for markdown files.')
+        parser_m = subparsers.add_parser('mdpp', help='Preprocessor for markdown files', add_help=False)
+        parser_m.add_argument( "-h", "--help", action="help", help="Show help message and exit")
         parser_m.add_argument('targets', metavar='T', type=str, nargs='*', help='Readmes or folders')
         parser_m.add_argument('--quiet', '-q', action="store_true", help='quiet mode')
         parser_m.add_argument('--clean', '-c', action="store_true", help='clean mode')
         parser_m.set_defaults(func=mdpp_main)
 
         # subparser for the 'older' command
-        parser_o = subparsers.add_parser('older', help='Check if the source is newer than the target')
+        parser_o = subparsers.add_parser('older', help='Check if the source is newer than the target', add_help=False)
+        parser_o.add_argument( "-h", "--help", action="help", help="Show help message and exit")
         parser_o.add_argument('targets', type=str, nargs='+', help='Target files or directories')
         parser_o.set_defaults(func=older_main)
 
-        parser_diff = subparsers.add_parser('diff', help='Show diff for 2 inputs or files.')
+        parser_diff = subparsers.add_parser('diff', help='Show diff for 2 inputs or files', add_help=False)
+        parser_diff.add_argument( "-h", "--help", action="help", help="Show help message and exit")
         exclusive_group_target = parser_diff.add_mutually_exclusive_group(required=True)
-        exclusive_group_target.add_argument('--path', '-f', action='store_true', help='Targets are paths.')
-        exclusive_group_target.add_argument('--text', '-t', action='store_true', help='Compare two texts.')
-        parser_diff.add_argument('target_a', type=str, help='First target to be compared.')
-        parser_diff.add_argument('target_b', type=str, help='Second target to be compared.')
+        exclusive_group_target.add_argument('--path', '-f', action='store_true', help='Targets are paths')
+        exclusive_group_target.add_argument('--text', '-t', action='store_true', help='Compare two texts')
+        parser_diff.add_argument('target_a', type=str, help='First target to be compared')
+        parser_diff.add_argument('target_b', type=str, help='Second target to be compared')
         exclusive_group = parser_diff.add_mutually_exclusive_group()
-        exclusive_group.add_argument('--side', '-s', action='store_true', help="Diff mode side-by-side.")
-        exclusive_group.add_argument('--down', '-d', action='store_true', help="Diff mode up-to-down.")
+        exclusive_group.add_argument('--side', '-s', action='store_true', help="Diff mode side-by-side")
+        exclusive_group.add_argument('--down', '-d', action='store_true', help="Diff mode up-to-down")
         parser_diff.set_defaults(func=Main.diff)
 
-        # subparser for the 'remote' command
-        parser_rm = subparsers.add_parser('remote', help='Create remote markdown file.')
+        # subparser for the 'redirect' command
+        parser_rm = subparsers.add_parser('redirect', help='Create redirected markdown file', add_help=False)
+        parser_rm.add_argument( "-h", "--help", action="help", help="Show help message and exit")
         parser_rm.add_argument('target', type=str, help='Folders')
         parser_rm.add_argument('--output', '-o', type=str, help='Output file')
         parser_rm.set_defaults(func=remote_main)
 
         # subparser for the 'filter' command
-        parser_f = subparsers.add_parser('filter', help='Filter code removing answers.')
+        parser_f = subparsers.add_parser('filter', help='Filter code removing answers', add_help=False)
+        parser_f.add_argument( "-h", "--help", action="help", help="Show help message and exit")
 
         parser_f.add_argument('target', type=str, help='file or folder to process')
         parser_f.add_argument('-u', '--update', action="store_true", help='update source file')
@@ -445,24 +486,25 @@ class Parser:
         parser_f.add_argument("-i", "--indent", type=int, default=0, help="indent using spaces")
         parser_f.set_defaults(func=filter_main)
 
-        parser_grading = subparsers.add_parser('grading', help='Grade the tests.')
+        parser_grading = subparsers.add_parser('grading', help='Grade the tests', add_help=False)
+        parser_grading.add_argument( "-h", "--help", action="help", help="Show help message and exit")
 
-        parser_grading.add_argument("--output", "-o", type=str, help="Output file for the awarded grade.")
+        parser_grading.add_argument("--output", "-o", type=str, help="Output file for the awarded grade")
         grading_exclusive = parser_grading.add_mutually_exclusive_group(required=True)
-        grading_exclusive.add_argument("--config", "-c", type=str, help="Path to the configuration file.")
+        grading_exclusive.add_argument("--config", "-c", type=str, help="Path to the configuration file")
         grading_exclusive.add_argument("--readme", "-r", type=str, help="Path to the README file for questions")
         parser_grading.set_defaults(func=Grading.main)
 
 
 def execute(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
     settings = Settings()
-    if args.w is not None:
-        RawTerminal.set_terminal_size(args.w)
-    if args.c:
-        settings.set_settings_file(args.c)
+    if args.width is not None:
+        RawTerminal.set_terminal_size(args.width)
+    if args.configfile:
+        settings.set_settings_file(args.configfile)
     settings.load_settings()
 
-    if args.m:
+    if args.mono:
         AnsiColor.enabled = False
     else:
         AnsiColor.enabled = True
@@ -475,9 +517,9 @@ def execute(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
     else:
         ic.disable()
 
-    if args.v:
-        if args.v:
-            print("tko version " + __version__)
+    if args.version:
+        if args.version:
+            print("tko " + __version__)
             return 0
     else:
         if "func" in args:

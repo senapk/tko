@@ -28,7 +28,7 @@ class Actions:
         self.remote_readme = norm_join(self.cache, "Readme.md")
         self.target_html = norm_join(self.cache, "q.html")
         self.title = ""
-        self.cases = norm_join(self.cache, "q.tio")
+        self.cases = norm_join(self.cache, "tests.toml")
         self.mapi_json = norm_join(self.cache, "mapi.json")
         self.cache_src = norm_join(self.cache, "draft")
         self.vpl: JsonVPL | None = None

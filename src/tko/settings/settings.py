@@ -2,7 +2,7 @@ from __future__ import annotations
 import os
 from typing import Any
 from tko.settings.app_settings import AppSettings
-import appdirs  # type: ignore
+from platformdirs import user_data_dir
 import yaml #type: ignore
 
 from tko.util.text import Text
@@ -48,7 +48,7 @@ class Settings:
     def get_settings_file(self) -> str:
         if self.settings_file == "":
             default_filename = self.CFG_FILE
-            self.settings_file = os.path.join(appdirs.user_data_dir(self.package_name), default_filename) # type: ignore
+            self.settings_file = os.path.join(user_data_dir(self.package_name), default_filename) # type: ignore
         
         if not os.path.exists(self.settings_file):
             os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
@@ -123,13 +123,13 @@ class Settings:
 
     def __str__(self):
         output: list[str] = []
-        output.append(str(Text.format("{g}", "Arquivo de configuração:")))
+        output.append(str(Text.format("{g}", "Arquivo global configuração:")))
         output.append("- " + self.get_settings_file())
         output.append("")
-        output.append(str(Text.format("{g}", "Repositórios remotos cadastrados:")))
+        output.append(str(Text.format("{g}", "Fontes de tarefas remotas cadastradas:")))
         max_alias = max([len(key) for key in self.dict_alias_git])
         for key in self.dict_alias_git:
-            output.append("- {} : {}".format(key.ljust(max_alias), self.dict_alias_git[key]))
+            output.append("- @{} : {}".format(key.ljust(max_alias), self.dict_alias_git[key]))
         output.append("")
         
         app_str = str(self.app)

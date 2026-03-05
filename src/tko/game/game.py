@@ -6,8 +6,6 @@ from tko.game.game_validator import GameValidator
 from tko.settings.rep_source import RepSource
 # from typing import override
 from icecream import ic # type: ignore
-
-import yaml # type: ignore
 import re
 
 def load_html_tags(task: str) -> None | str:
@@ -94,7 +92,7 @@ class Game:
             gb = GameBuilder(source)
             gb.build_from(self.language)
             for cluster_key in gb.ordered_clusters:
-                self.ordered_clusters.append(source.alias + "@" + cluster_key)
+                self.ordered_clusters.append(source.name + "@" + cluster_key)
             for cluster in gb.clusters.values():
                 self.clusters[cluster.get_db_key()] = cluster
 

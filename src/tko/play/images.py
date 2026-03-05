@@ -124,7 +124,7 @@ intro: dict[str, str] = {}
 
 intro["elephant"] = r"""
         ⣀⣀                                                                      
-      ⣰⣿⣿⣿⣿⣦⣀⣀⣀           ↲ -> avalia usando os testes cadastrados no cases
+      ⣰⣿⣿⣿⣿⣦⣀⣀⣀           ↲ -> avalia usando os testes cadastrados no problema
       ⢿⣿⠟⠋⠉    ⠉⠑⠢⣄⡀      r -> compila e (r)oda fazendo entrada de dados manual 
      ⢠⠞⠁           ⠙⢿⣿⣿⣦⡀                                                       
  ⣀  ⢀⡏ ⢀⣴⣶⣶⡄         ⢻⣿⣿⠇ TAB -> Muda o arquivo PRINCIPAL se múltiplos arquivos 

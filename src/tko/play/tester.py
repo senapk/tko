@@ -537,7 +537,7 @@ class Tester:
         self.mode = SeqMode.running
         if self.wdir.is_autoload():
             self.wdir.autoload() # reload sources and solvers
-        self.wdir.build() # reload cases
+        self.wdir.build() # reload tests
 
         Fmt.clear()
 

@@ -96,7 +96,7 @@ class Repository:
             ru.download_absolute_to(cache_file)
             return True
         except urllib.error.URLError: # type: ignore
-            print(f"Não foi possível baixar o arquivo do repositório alias:{source.alias}, link:{source.get_url_link()}")
+            print(f"Não foi possível baixar o arquivo do repositório alias:{source.name}, link:{source.get_url_link()}")
             if os.path.exists(cache_file):
                 print("Usando arquivo do cache")
             else:
@@ -104,7 +104,7 @@ class Repository:
         return False
 
     def run_git_cmd(self, cmd_list: list[str], folder: str)-> bool:
-        error, stdout, stderr = Runner.subprocess_run(cmd_list, folder=folder, timeout=5)
+        error, stdout, stderr = Runner.subprocess_run(cmd_list, folder=folder, timeout=30)
         if error != 0:
             print(f"Não foi possível atualizar o repositório clonado em {folder}. Erro: {stdout}\n{stderr}")
             return False
@@ -130,7 +130,7 @@ class Repository:
         if (now_dt - last_dt).total_seconds() < Repository.cache_time_for_remote_source:
             time_missing = Repository.cache_time_for_remote_source - (now_dt - last_dt).total_seconds()
             r = int(time_missing / 60)
-            print(f"Usando cache do repositório {source.alias} ({source.get_url_link()}), próxima atualização em {r} minutos")
+            print(f"Usando cache do repositório {source.name} ({source.get_url_link()}), próxima atualização em {r} minutos")
             return True
         return False
 

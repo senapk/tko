@@ -17,15 +17,15 @@ class Cluster(TreeItem):
         self.__quests.append(quest)
         return self
     
-    def remove_empty_and_other_language_and_filtered(self, language: str, filter_list: list[str] | None):
+    def remove_empty_and_other_language_and_filtered(self, language: str, quest_filters: list[str] | None, task_filters: list[str] | None):
         # self.__quests = [q for q in self.__quests if len(q.get_tasks()) > 0]
         quests: list[Quest] = []
         for q in self.__quests:
             if len(q.get_tasks()) == 0:
                 continue
-            if filter_list is not None and len(filter_list) > 0:
+            if quest_filters is not None and len(quest_filters) > 0:
                 allow = False
-                for filter in filter_list:
+                for filter in quest_filters:
                     if filter in q.get_title() or filter in q.get_db_key():
                         allow = True
                         break

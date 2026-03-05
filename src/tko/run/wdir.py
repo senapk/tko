@@ -76,7 +76,7 @@ class Wdir:
 
         # loading source list
         files = os.listdir(folder)
-        source_list = [target for target in files if target.endswith(".tio") or target.endswith(".vpl") or target.endswith(".cases") or target.endswith(".toml")]
+        source_list = [target for target in files if target.endswith(".tio") or target.endswith(".vpl") or target.endswith(".toml")]
         source_list.extend([target for target in files if target.endswith(".md")])
         source_list = [os.path.join(folder, x) for x in source_list]
         
