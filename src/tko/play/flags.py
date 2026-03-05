@@ -89,13 +89,16 @@ class Flags:
     graph_logs = "2"
     task_exec_view = "0"
     task_time_view = "1"
+    quest_enable = "0"
+    quest_show = "1"
+    quest_hide = "2"
 
     painel = (Flag().set_name("Painel").set_keycode(GuiKeys.show_graph).set_description("Mostra o Painel de Informações")
                     .set_values([graph_none, graph_task, graph_logs])
                     .set_msgs(["Desabilitar painel de informações", "Gráfico de tarefas", "Mostrar logs"]))
     quests = (Flag().set_name("Tópicos").set_keycode(GuiKeys.show_quests).set_description("Habilitas todas as missões e tarefas")
-                    .set_values(["0", "1", "2"])
-                    .set_msgs(["Mostrar apenas quests disponíveis", "Mostrar todas as quests sem habilitar", "Habilitar todas as quests"]))
+                    .set_values([quest_enable, quest_show, quest_hide])
+                    .set_msgs(["Habilitar todas as quests", "Mostrar todas as quests sem habilitar", "Mostrar apenas quests disponíveis"]))
     tracks = (Flag().set_name("Trilhas").set_keycode(GuiKeys.show_tracks).set_description("Mostra a barra de trilhas de habilidades")
                     .set_values(["0", "1", "2"])
                     .set_msgs(["Desabilitar painel de trilhas", "Mostrar painel de trilhas por porcentagem", "Mostrar painel de trilhas por xp"]))

@@ -70,7 +70,7 @@ class Gui:
             return "R", " Retornar"
         if isinstance(obj, Quest):
             quest: Quest = obj
-            if Flags.quests.get_value() != "2" and not quest.is_reachable():
+            if Flags.quests.get_value() != Flags.quest_enable and not quest.is_reachable():
                 output = TaskAction.BLOQUEIO
             elif quest.get_db_key() in self.tree.expanded:
                 output = TaskAction.CONTRAIR
@@ -91,9 +91,9 @@ class Gui:
 
     @staticmethod
     def get_admin_color() -> str:
-        if Flags.quests.get_value() == "0":
+        if Flags.quests.get_value() == Flags.quest_hide:
             return "g"
-        if Flags.quests.get_value() == "1":
+        if Flags.quests.get_value() == Flags.quest_show:
             return "y"
         return "c"
 
@@ -127,8 +127,8 @@ class Gui:
         top.add(self.style.border(color, trilhas))
 
         quests: str = f"Tópicos [{GuiKeys.show_quests}]"
-        for i in range(3):
-            if Flags.quests.get_value() == str(i):
+        for value in Flags.quests.get_values():
+            if Flags.quests.get_value() == str(value):
                 quests += symbols.closed_circle.text
             else:
                 quests += symbols.open_circle.text

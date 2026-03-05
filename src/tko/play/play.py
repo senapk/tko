@@ -143,7 +143,7 @@ class Play:
         Fmt.set_scr(scr)  # Define o scr como global
 
         while True:
-            self.tree.update_tree(admin_mode=Flags.quests.get_value() == "2" or self.gui.search.search_mode)
+            self.tree.update_tree(admin_mode=Flags.quests.get_value() == Flags.quest_enable or self.gui.search.search_mode)
             self.fman.draw_warnings()
             cman = self.make_callback()
             self.gui.show_items()

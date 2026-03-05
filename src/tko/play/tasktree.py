@@ -39,7 +39,7 @@ class TaskTree:
         self.expanded: list[str] = []
         self.load_all_items()
         self.load_from_rep()
-        self.update_tree(admin_mode = Flags.quests.get_value() == "2")
+        self.update_tree(admin_mode = Flags.quests.get_value() == Flags.quest_enable)
         self.MIN_TITLE_LENGTH = 50
         self.cache_max_title: None | int = None
         self.cache_task_times: dict[str, tuple[int, int]] = {}
@@ -217,7 +217,7 @@ class TaskTree:
                 con = "─╮" if n_hidden == 0 else "┄╮"
 
         color_reachable = "g" if q.is_reachable() else "r"
-        if Flags.quests.get_value() == "2":
+        if Flags.quests.get_value() == Flags.quest_enable:
             for quest in self.game.quests.values():
                 if not quest.is_reachable():
                     if q.get_db_key() in quest.requires:
@@ -375,7 +375,7 @@ class TaskTree:
         filtered, _ = self.filter_by_search()
         matcher = SearchAsc(self.search_text)
 
-        hide = Flags.quests.get_value() == "0"
+        hide = Flags.quests.get_value() == Flags.quest_hide
 
         clusters = [self.game.clusters[key] for key in self.game.clusters.keys() if key in filtered]
         if hide:
@@ -554,7 +554,7 @@ class TaskTree:
             self.set_selected_by_index(index)
 
     def is_admin_mode(self) -> bool:
-        return Flags.quests.get_value() == "2"
+        return Flags.quests.get_value() == Flags.quest_enable
 
     def unfold(self, obj: TreeItem) -> bool:
         if isinstance(obj, Quest) and not obj.is_reachable() and not self.is_admin_mode():
