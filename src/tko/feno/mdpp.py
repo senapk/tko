@@ -284,7 +284,7 @@ class MdppMain:
     def fix_path(target: str):
         target = os.path.normpath(target)
         if os.path.isdir(target):
-            target = os.path.join(target, "Readme.md")
+            target = os.path.join(target, "README.md")
         return target
 
     @staticmethod
@@ -298,7 +298,14 @@ class MdppMain:
 class Mdpp:
     @staticmethod
     def update_file(target: str, action: Action = Action.RUN, quiet: bool = False) -> bool:
-        path = MdppMain.fix_path(target)
+        # path = MdppMain.fix_path(target)
+        path = target
+        if not path.endswith(".md"):
+            print("Warning: File", path, "is not a markdown file")
+            return False
+        if not os.path.isfile(path):
+            print("Warning: File", path, "not found")
+            return False
         target_dir = os.path.dirname(path)
         found, original = MdppMain.open_file(path)
         if not found:
@@ -321,11 +328,12 @@ class Mdpp:
 
 def mdpp_main(args: argparse.Namespace):
 
+    targets: list[str] = args.targets
     if len(args.targets) == 0:
-        print("No targets selected")
-        exit()
-    
+        targets = [os.path.join(os.getcwd(), "README.md")]
+        print(f"Updating README.md in {os.path.basename(os.getcwd())}")
+
     action = Action.RUN if not args.clean else Action.CLEAN
 
-    for target in args.targets:
+    for target in targets:
         Mdpp.update_file(target, action, args.quiet)

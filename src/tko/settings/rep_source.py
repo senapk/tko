@@ -72,7 +72,7 @@ class RepSource:
         sandbox_path = os.path.join(local_workspace, RepSource.STUDENT_SANDBOX_ALIAS)
         if not os.path.exists(sandbox_path):
             os.makedirs(sandbox_path)
-        readme_file = os.path.join(sandbox_path, "Readme.md")
+        readme_file = os.path.join(sandbox_path, "README.md")
         if not os.path.exists(readme_file):
             with open(readme_file, "w") as f:
                 f.write(self.sandbox_readme_content)
@@ -121,13 +121,13 @@ class RepSource:
     def get_source_readme(self) -> str:
         if self.source_type == SourceType.LOCAL_FILE:
             
-            file: str = os.path.join(self.__target, "Readme.md")
+            file: str = os.path.join(self.__target, "README.md")
             if os.path.isabs(file):
                 return file
             else:
                 return os.path.join(self.get_rep_workspace(), file)
         if self.source_type == SourceType.GIT_SOURCE:
-            return os.path.join(self.get_source_cache_folder(),"Readme.md")
+            return os.path.join(self.get_source_cache_folder(),"README.md")
         raise ValueError("Unknown source type")
     
     def get_source_folder(self) -> str:
@@ -185,7 +185,7 @@ class RepSource:
             self.__target = data[Keys.TARGET]
         if "link" in data and isinstance(data["link"], str): # for backward compatibility
             self.__target = data["link"]
-            if self.__target.endswith("Readme.md"):
+            if self.__target.endswith("README.md"):
                 self.__target = os.path.dirname(self.__target)
         if Keys.BRANCH in data and isinstance(data[Keys.BRANCH], str):
             self.branch = data[Keys.BRANCH]

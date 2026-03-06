@@ -157,8 +157,8 @@ class OldLogLoader:
             if "cov" in kv:
                 item.info.rate = int(kv["cov"])
             return item
-
-        raise Exception(f"Invalid SELF payload: {payload}")
+        else:
+            pass
 
     @staticmethod
     def __convert_to_base_list(e: LogAction) -> LogItemBase | None:

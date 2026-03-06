@@ -126,5 +126,5 @@ main = putStrLn "qxcode"
     
     @staticmethod
     def create_sandbox_draft(dir: str, key: str):
-        with open (os.path.join(dir, "Readme.md"), "w", encoding="utf-8") as f:
+        with open (os.path.join(dir, "README.md"), "w", encoding="utf-8") as f:
             f.write(f"---\n# Não altere essa chave, ela deve ser única para cada rascunho\nkey={key}\n---\n\n# {os.path.basename(dir)}\n\n" + Drafts.draft_readme)

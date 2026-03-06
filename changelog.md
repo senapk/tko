@@ -1,5 +1,8 @@
 # Changelog
 
+- 8.3.0:
+  - add: changing Readme.md to README.md in all places
+  - add: changing default drafts to .cache/drafts
 - 8.2.1:
   - fix: error in argparse for global cache
   - refactor: quest_view

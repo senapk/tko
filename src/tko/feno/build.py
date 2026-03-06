@@ -24,13 +24,13 @@ class Actions:
         self.target = norm_join(self.cache, "mapi.json")
         self.source_dir = source_dir
         self.hook = os.path.basename(os.path.abspath(source_dir))
-        self.source_readme = norm_join(self.source_dir, "Readme.md")
-        self.remote_readme = norm_join(self.cache, "Readme.md")
+        self.source_readme = norm_join(self.source_dir, "README.md")
+        self.remote_readme = norm_join(self.cache, "README.md")
         self.target_html = norm_join(self.cache, "q.html")
         self.title = ""
         self.cases = norm_join(self.cache, "tests.toml")
         self.mapi_json = norm_join(self.cache, "mapi.json")
-        self.cache_src = norm_join(self.cache, "draft")
+        self.cache_src = norm_join(source_dir, "drafts")
         self.vpl: JsonVPL | None = None
         self.make_remote: bool = False
         self.use_pandoc: bool = False

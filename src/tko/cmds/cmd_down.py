@@ -11,6 +11,7 @@ from tko.down.drafts import Drafts
 from tko.settings.languages import available_languages
 from tko.feno.remote_md import Absolute
 from tko.game.task import Task
+from tko.feno.filter import CodeFilter
 
 class CmdLineDown:
     def __init__(self, settings: Settings, rep: Repository, task_key: str, game: Game | None = None):
@@ -133,11 +134,9 @@ class CmdDown:
 
         self.actions.cached = True
         destiny_drafts_folder = self.find_folder_for_drafts()
-        origin_source_1 = os.path.join(self.origin_folder, ".cache", "draft", self.language)
-        origin_source_2 = os.path.join(self.origin_folder, ".drafts", self.language)
-        if not self.copy_drafts_from(origin_source_1, destiny_drafts_folder):
-            if not self.copy_drafts_from(origin_source_2, destiny_drafts_folder):
-                self.actions.create_default_draft(destiny_drafts_folder, self.language)
+        origin_source = os.path.join(CodeFilter.get_default_drafts_dir(self.origin_folder), self.language)
+        if not self.copy_drafts_from(origin_source, destiny_drafts_folder):
+            self.actions.create_default_draft(destiny_drafts_folder, self.language)
 
         removed, last_path = self.remove_draft_folder_if_duplicated(destiny_drafts_folder)
         self.actions.cached = False
@@ -153,8 +152,8 @@ class CmdDown:
         return True
     
     def copy_readme(self):
-        origin_readme = os.path.join(self.origin_folder, "Readme.md")
-        destiny_readme = os.path.join(self.destiny_folder, "Readme.md")
+        origin_readme = os.path.join(self.origin_folder, "README.md")
+        destiny_readme = os.path.join(self.destiny_folder, "README.md")
 
         source_folder_rel = os.path.relpath(self.origin_folder, self.destiny_folder)
         content = Decoder.load(origin_readme)

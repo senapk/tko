@@ -1,6 +1,7 @@
 import os
 import argparse
 import shutil
+from tko.feno.log import Log
 from tko.util.decoder import Decoder
 from typing import Any
 
@@ -249,6 +250,14 @@ class CodeFilter:
             else:
                 print(content)
 
+    @staticmethod
+    def get_default_drafts_dir(source_dir: str) -> str:
+        return os.path.join(source_dir, ".cache", "drafts")
+
+    @staticmethod
+    def get_default_src_dir(source_dir: str) -> str:
+        return os.path.join(source_dir, "src")
+    
 def filter_main(args: argparse.Namespace):
     if args.cheat:
         args.recursive = True
@@ -258,3 +267,13 @@ def filter_main(args: argparse.Namespace):
         exit()
 
     CodeFilter.cf_single_file(args.target, args.output, args.update, args.cheat)
+
+
+def build_drafts_main(args: argparse.Namespace):
+    dir = os.path.join(os.getcwd())
+    print(f"Updating drafts in {os.path.basename(os.getcwd())}")
+    source_src = CodeFilter.get_default_src_dir(dir)
+    drafts_dest = CodeFilter.get_default_drafts_dir(dir)
+    if os.path.isdir(source_src):
+        filter = DeepFilter().set_indent(4)
+        filter.copy(source_src, drafts_dest, 5)

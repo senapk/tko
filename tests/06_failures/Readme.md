@@ -1,6 +1,6 @@
 # @002 Carro
 
-Veja a versão online: [aqui.](https://github.com/qxcodepoo/arcade/blob/master/base/002/Readme.md)
+Veja a versão online: [aqui.](https://github.com/qxcodepoo/arcade/blob/master/base/002/README.md)
 
 <!-- toch -->
 [Intro](#intro) | [Draft](#draft) | [Guide](#guide) | [Shell](#shell)

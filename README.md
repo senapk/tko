@@ -188,13 +188,13 @@ Se quiser utilizar um nome padrão diferente para leitura ou escrita das pastas,
 
 - Gerando um `t.vpl`
   - `tko build tests t.vpl testes.tio`
-- Gerando um `t.tio` a partir do `Readme.md`e de um `extra.tio`.
-  - `tko build tests t.tio Readme.md extra.tio`
+- Gerando um `t.tio` a partir do `README.md`e de um `extra.tio`.
+  - `tko build tests t.tio README.md extra.tio`
 - Para extrair os testes para uma pasta com um arquivo para entrada e outro para saída, crie uma pasta vazia e passe para o primeiro parâmetro do `tko build`.
 
 ```bash
 $ ls
-cases.tio  draft.c  Readme.md
+cases.tio  draft.c  README.md
 $ mkdir pasta
 $ tko build tests pasta cases.tio 
 $ ls pasta/

@@ -27,7 +27,7 @@ class TaskLine:
 
     def init_by_hook(self, hook: str):
         self.isTask = True
-        self.link = os.path.join("base", hook, "Readme.md")
+        self.link = os.path.join("base", hook, "README.md")
         self.pre = f" `@{hook}` "
         self.load_title_from_link()
 
@@ -49,7 +49,7 @@ class TaskLine:
         return valid_label
 
     def get_hook(self) -> None | str:
-        if self.link.endswith("/Readme.md") and self.link.startswith("base/"):
+        if self.link.endswith("/README.md") and self.link.startswith("base/"):
             try:
                 hook = self.link.split("/")[-2]
                 return hook
@@ -128,7 +128,7 @@ def loading_titles_from_files(path: str) -> list[TaskLine]:
 #         if label == hook:
 #             count_ok += 1
 #         else:
-#             not_ok.append("    ({} != {}): {}".format(label, hook, os.path.join(base, hook, 'Readme.md')))
+#             not_ok.append("    ({} != {}): {}".format(label, hook, os.path.join(base, hook, 'README.md')))
 #             error_found = True
 
 #     print("- verified:", count_ok)
@@ -149,10 +149,10 @@ def found_unused_hooks(task_lines: list[TaskLine], base_dir: str) -> bool:
     # create a set of hooks
     hooks = set(hooks_all)
 
-    # create a list with folders in base dir if base/folder/Readme.md exists
+    # create a list with folders in base dir if base/folder/README.md exists
     folders: list[str] = []
     for folder in os.listdir(base_dir):
-        if os.path.isfile(base_dir + '/' + folder + '/Readme.md'):
+        if os.path.isfile(base_dir + '/' + folder + '/README.md'):
             folders.append(folder)
 
     missing = [f for f in folders if f not in hooks]

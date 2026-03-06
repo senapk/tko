@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 import sys
 from icecream import ic # type: ignore
@@ -11,7 +12,7 @@ from tko.feno.html import html_main
 from tko.feno.mdpp import mdpp_main
 from tko.feno.older import older_main
 from tko.feno.remote_md import remote_main
-from tko.feno.filter import filter_main
+from tko.feno.filter import filter_main, build_drafts_main
 from tko.feno.grading import Grading
 
 from platformdirs import user_cache_dir
@@ -294,6 +295,7 @@ class Parser:
 
         subpar_task = parser_task.add_subparsers(title='subcommands', metavar='COMMAND', help='DESCRIPTION')
         parser_open = subpar_task.add_parser('open', parents=[self.parent_basic], help='Open a task in tui')
+        parser_open.add_argument("-f", "--filter", action='store_true', help='Filter solver files in temporary directory before running')
         parser_open.add_argument('target_list', metavar='T', type=str, nargs='*', help='Solvers, test cases or directories to load')
         parser_open.set_defaults(func=Main.tui)
 
@@ -440,7 +442,7 @@ class Parser:
         # subparser for the 'mdpp' command
         parser_m = subparsers.add_parser('mdpp', help='Preprocessor for markdown files', add_help=False)
         parser_m.add_argument( "-h", "--help", action="help", help="Show help message and exit")
-        parser_m.add_argument('targets', metavar='T', type=str, nargs='*', help='Readmes or directories')
+        parser_m.add_argument('targets', metavar='T', type=str, nargs='*', help='Readme files or None to default task behavior')
         parser_m.add_argument('--quiet', '-q', action="store_true", help='quiet mode')
         parser_m.add_argument('--clean', '-c', action="store_true", help='clean mode')
         parser_m.set_defaults(func=mdpp_main)
@@ -483,6 +485,11 @@ class Parser:
         parser_f.add_argument("-q", "--quiet", action="store_true", help="quiet mode")
         parser_f.add_argument("-i", "--indent", type=int, default=0, help="indent using spaces")
         parser_f.set_defaults(func=filter_main)
+
+        parser_drafts = subparsers.add_parser('drafts', help='Create drafts for TKO task using src dir', add_help=False)
+
+        parser_drafts.add_argument("-h", "--help", action="help", help="Show help message and exit")
+        parser_drafts.set_defaults(func=build_drafts_main)
 
         parser_grading = subparsers.add_parser('grading', help='Grade the tests', add_help=False)
         parser_grading.add_argument( "-h", "--help", action="help", help="Show help message and exit")

@@ -78,13 +78,13 @@ class GameBuilder:
             folder = os.path.join(database_path, entry)
             if not os.path.isdir(folder):
                 continue
-            if not os.path.isfile(os.path.join(folder, "Readme.md")):
+            if not os.path.isfile(os.path.join(folder, "README.md")):
                 continue
             if entry in tasks:
                 continue
             # parse readme content for yaml front matter with key
             yaml_key = ""
-            with open(os.path.join(folder, "Readme.md"), "r", encoding="utf-8") as f:
+            with open(os.path.join(folder, "README.md"), "r", encoding="utf-8") as f:
                 content = f.read()
                 lines = content.splitlines()
                 if len(lines) > 0 and lines[0].strip() == "---":
