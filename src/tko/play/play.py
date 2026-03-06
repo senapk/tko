@@ -109,6 +109,8 @@ class Play:
         cman.add_str(GuiKeys.images, self.app.toggle_images)
         cman.add_str(GuiKeys.set_lang_drafts, self.gui.language.set_language)
         cman.add_str(GuiKeys.create_draft, self.actions.create_draft)
+        cman.add_int(curses.KEY_DC, self.actions.delete_folder_ask)
+        cman.add_str(GuiKeys.delete_folder, self.actions.delete_folder_ask)
 
         cman.add_str(GuiKeys.self_evaluate, self.actions.self_evaluate)
         cman.add_int(curses.KEY_BACKSPACE, self.actions.self_evaluate)

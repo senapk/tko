@@ -49,8 +49,8 @@ class PlayPalette:
         options.append(
             FloatingInputData(
                 lambda: Text.format(" {} Tarefa: {y} pasta", symbols.action, "Apagar"),
-                self.actions.delete_folder,
-                ""
+                self.actions.delete_folder_ask,
+                GuiKeys.delete_folder
             ).set_exit_on_action(True)
         )
 

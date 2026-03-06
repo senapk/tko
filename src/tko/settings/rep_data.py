@@ -11,6 +11,7 @@ class RepData:
         self.expanded: list[str] = []
         self.tasks: dict[str, Any] = {}
         self.flags: dict[str, Any] = {}
+        self.next_draft_id: int = 0
         self.lang: str = ""
         self.selected: str = ""
 
@@ -66,6 +67,13 @@ class RepData:
 
     def get_selected(self) -> str:
         return self.selected
+    
+    def get_next_draft_id(self) -> int:
+        return self.next_draft_id
+    
+    def increment_next_draft_id(self) -> int:
+        self.next_draft_id += 1
+        return self.next_draft_id
 
     def set_lang(self, lang: str):
         self.lang = lang
@@ -86,7 +94,7 @@ class RepData:
             self.flags = self._safe_load(data, "flags", dict, self.flags)
             self.lang = self._safe_load(data, "lang", str, self.lang)
             self.selected = self._safe_load(data, "selected", str, self.selected)
-
+            self.next_draft_id = self._safe_load(data, "next_draft_id", int, self.next_draft_id)
             # Load the 'source' field with specific validation
             if "sources" in data:
                 source_data: list[dict[str, Any]] = data["sources"]
@@ -109,4 +117,5 @@ class RepData:
             "flags": self.flags,
             "lang": self.lang,
             "selected": self.selected,
+            "next_draft_id": self.next_draft_id,
         }

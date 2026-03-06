@@ -36,7 +36,7 @@ class TaskTree:
         self.filler = "·"
         self.index_begin: int = 0
         self.search_text: str = ""
-        self.expanded: list[str] = []
+        self.expanded: set[str] = set()
         self.load_all_items()
         self.load_from_rep()
         self.update_tree(admin_mode = Flags.quests.get_value() == Flags.quest_enable)
@@ -54,11 +54,11 @@ class TaskTree:
                     self.all_items[t.get_db_key()] = t
 
     def load_from_rep(self):
-        self.expanded: list[str] = [v for v in self.rep.data.expanded]
+        self.expanded = set(self.rep.data.expanded)
         self.selected_item = self.rep.data.selected
 
     def save_on_rep(self):
-        self.rep.data.expanded = self.expanded
+        self.rep.data.expanded = [x for x in self.expanded if x in self.game.quests.keys() or x in self.game.clusters.keys()]
         # self.rep.set_new_items([x for x in set(self.new_items)])
         self.rep.data.selected = self.selected_item
         tasks: dict[str, str] = {}
@@ -433,9 +433,9 @@ class TaskTree:
 
     def process_collapse_all(self):
         if any([q in self.expanded for q in self.game.quests.keys()]):
-            self.expanded = [key for key in self.expanded if key not in self.game.quests.keys()]
+            self.expanded = set([key for key in self.expanded if key not in self.game.quests.keys()])
         else:
-            self.expanded = []
+            self.expanded = set()
 
     def process_expand_all(self):
         # if any cluster outside expanded
@@ -446,11 +446,11 @@ class TaskTree:
         if expand_clusters:
             for ckey in self.game.clusters.keys():
                 if ckey not in self.expanded:
-                    self.expanded.append(ckey)
+                    self.expanded.add(ckey)
         else:
             for qkey in self.game.quests.keys():
                 if qkey not in self.expanded:
-                    self.expanded.append(qkey)
+                    self.expanded.add(qkey)
 
     def  get_selected_index(self) -> int:
         for i, item in enumerate(self.items):
@@ -540,7 +540,7 @@ class TaskTree:
                 for q in obj.get_quests():
                     try:
                         self.expanded.remove(q.get_db_key())
-                    except ValueError:
+                    except KeyError:
                         pass
             else:
                 self.walk_left_on_cluster(index)
@@ -565,11 +565,11 @@ class TaskTree:
                 return False
         if isinstance(obj, Quest) or isinstance(obj, Cluster):
             if obj.get_db_key() not in self.expanded:
-                self.expanded.append(obj.get_db_key())
+                self.expanded.add(obj.get_db_key())
                 if isinstance(obj, Cluster):
                     cluster: Cluster = obj
                     if len(cluster.get_quests()) == 1:
-                        self.expanded.append(cluster.get_quests()[0].get_db_key())
+                        self.expanded.add(cluster.get_quests()[0].get_db_key())
                 return True
         return False
 

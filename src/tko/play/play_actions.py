@@ -11,6 +11,7 @@ from tko.play.tracker import Tracker
 from tko.util.text import Text
 from tko.cmds.cmd_down import CmdDown
 from tko.cmds.cmd_run import Run
+from tko.settings.rep_source import RepSource
 
 from tko.util.param import Param
 
@@ -25,7 +26,6 @@ from tko.play.tasktree import TaskAction
 from typing import Callable
 
 from tko.down.drafts import Drafts
-from tko.run.writer import Writer
 import os
 
 from tko.logger.log_item_self import LogItemSelf
@@ -63,42 +63,50 @@ class PlayActions:
             return ""
         return folder
 
-    def delete_folder(self):
+    def delete_folder_ask(self):
+        def delete_folder(text: str):
+            obj = self.tree.get_selected_throw()
+            if not isinstance(obj, Task):
+                return
+            if obj.get_key_only() != text:
+                self.fman.add_input(
+                    Floating().bottom().right()
+                    .put_text("\nTexto digitado não corresponde ao identificador da tarefa.\n")
+                    .set_error()
+                )
+                return
+            folder = self.get_task_folder(obj)
+            try:
+                shutil.rmtree(folder)
+                self.fman.add_input(
+                    Floating().bottom().right()
+                    .put_text(f"\nPasta {folder} apagada com sucesso.\n")
+                    .set_warning()
+                )
+            except OSError as e:
+                self.fman.add_input(
+                    Floating().bottom().right()
+                    .put_text(f"\nErro ao apagar a pasta {folder}: {e}\n")
+                    .set_error()
+                )
+ 
+            self.tree.move_down()
+            self.rep.load_game(try_update=False, silent=True)
+
         obj = self.tree.get_selected_throw()
         if isinstance(obj, Task):
-            task: Task = obj
-            folder = self.get_task_folder(task)
-            if folder == "":
+            folder = self.get_task_folder(obj)
+            if folder == "" or not os.path.exists(folder):
                 self.fman.add_input(
-                     Floating().bottom().right()
+                    Floating().bottom().right()
                     .put_text("\nEssa tarefa não possui pasta de código local.\n")
                     .set_error()
                 )
                 return
-            if os.path.exists(folder):
-                try:
-                    shutil.rmtree(folder)
-                    self.fman.add_input(
-                         Floating().bottom().right()
-                        .put_text(f"\nPasta {folder} apagada com sucesso.\n")
-                        .set_warning()
-                    )
-                except OSError as e:
-                    self.fman.add_input(
-                         Floating().bottom().right()
-                        .put_text(f"\nErro ao apagar a pasta {folder}: {e}\n")
-                        .set_error()
-                    )
-            else:
-                self.fman.add_input(
-                     Floating().bottom().right()
-                    .put_text("\nPasta não encontrada.\n")
-                    .set_error()
-                )
-            self.rep.load_game(try_update=False, silent=True)
+            self.fman.add_input(FloatingInputText(Text().add(f"Para apagar essa pasta, digite ").addf("y", f"{obj.get_key_only()}"), action=delete_folder))
         else:
             self.fman.add_input(
-                 Floating().bottom().right()
+                Floating().bottom().right()
                 .put_text("\nVocê só pode apagar pastas de tarefas.\n")
                 .set_error()
             )
@@ -184,6 +192,7 @@ class PlayActions:
             return
 
     def create_draft(self):
+        sandbox_key_prefix = "user"
         local_source = self.game.get_sandbox_source()
         workspace_folder = os.path.join(local_source.get_source_workspace(), local_source.get_default_sandbox_draft_folder())
         if not os.path.exists(workspace_folder):
@@ -206,8 +215,15 @@ class PlayActions:
                 draft = Drafts.drafts[self.rep.data.lang]
             with open(os.path.join(folder, f"draft.{self.rep.data.lang}"), "w", encoding="utf-8") as f:
                 f.write(draft)
-            with open (os.path.join(folder, "Readme.md"), "w", encoding="utf-8") as f:
-                f.write("# " + os.path.basename(folder) + "\n\n" + Drafts.draft_readme)
+            draft_id = self.rep.data.get_next_draft_id()
+            self.rep.data.increment_next_draft_id()
+            key = f"{sandbox_key_prefix}_{draft_id:03d}"
+            Drafts.create_sandbox_draft(folder, key)
+            
+            self.tree.selected_item = f"{RepSource.STUDENT_SANDBOX_ALIAS}@{key}"
+            self.tree.expanded.add(f"{RepSource.STUDENT_SANDBOX_ALIAS}@{RepSource.STUDENT_SANDBOX_ALIAS}:{RepSource.DEFAULT_DRAFT_FOLDER}")
+            self.tree.expanded.add(f"{RepSource.STUDENT_SANDBOX_ALIAS}@{RepSource.STUDENT_SANDBOX_ALIAS}")
+            self.rep.data.selected = self.tree.selected_item
             self.rep.load_game(try_update=False, silent=True) # recarrega o jogo
             self.fman.add_input( Floating().bottom().right()
                                 .put_text(f"Rascunho criado em {folder}")
@@ -320,8 +336,6 @@ class PlayActions:
             pass
 
         return lambda: None
-        
-
         
     def run_selected_task(self, task: Task, task_dir: str) -> None:
         folder = task_dir

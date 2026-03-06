@@ -47,6 +47,7 @@ class GuiKeys:
     borders = "B"
     search = "/"
     self_evaluate = "a"
+    delete_folder = "D"
     execute_tester = "r" # Interact in manual input
     diff = "d"
     unfold_patch = "V"

@@ -44,13 +44,13 @@ class Search:
         self.tree.update_tree(Flags.quests.get_value() == Flags.quest_enable) # usa o mode de antes e vê se acha
         self.tree.reload_sentences()
         
-        self.tree.expanded = []
+        self.tree.expanded = set()
         unit = self.tree.all_items[selected_key]
 
         if isinstance(unit, Task):
-            self.tree.expanded = [unit.cluster_key, unit.quest_key]
+            self.tree.expanded = {unit.cluster_key, unit.quest_key}
         elif isinstance(unit, Quest):
-            self.tree.expanded = [unit.get_db_key(), unit.cluster_key]
+            self.tree.expanded = {unit.get_db_key(), unit.cluster_key}
         self.tree.reload_sentences()
 
     # update index to match the first item that matches the search
@@ -61,7 +61,7 @@ class Search:
     def cancel_search(self):
             self.search_mode = False
             self.tree.search_text = ""
-            self.tree.expanded = [v for v in self.backup_expanded]
+            self.tree.expanded = {v for v in self.backup_expanded}
             self.tree.selected_item = self.backup_index_selected
 
     def process_search(self, key: int):

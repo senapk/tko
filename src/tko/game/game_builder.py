@@ -78,13 +78,30 @@ class GameBuilder:
             folder = os.path.join(database_path, entry)
             if not os.path.isdir(folder):
                 continue
+            if not os.path.isfile(os.path.join(folder, "Readme.md")):
+                continue
             if entry in tasks:
                 continue
+            # parse readme content for yaml front matter with key
+            yaml_key = ""
+            with open(os.path.join(folder, "Readme.md"), "r", encoding="utf-8") as f:
+                content = f.read()
+                lines = content.splitlines()
+                if len(lines) > 0 and lines[0].strip() == "---":
+                    for line in lines[1:]:
+                        if line.strip() == "---":
+                            break
+                        if line.startswith("key="):
+                            yaml_key = line.split("key=")[1].strip()
+                            break
             # create task for folder
             task = Task()
-            key = entry
-            task.set_title(key)
+            key = yaml_key if yaml_key else entry
+            title = entry
+            if yaml_key != "":
+                title = f"@{yaml_key} {entry}"
             task.set_key(key)
+            task.set_title(title)
             task.set_source_alias(alias)
             task.set_origin_folder(folder)
             if self.source.is_read_only():
@@ -100,7 +117,7 @@ class GameBuilder:
             if not os.path.isdir(quest_folder):
                 continue
             cluster_key = self.__get_active_cluster().get_key_only()
-            self.__add_quest(Quest(entry, f"{alias}:{cluster_key}:{entry}").set_source_alias(alias))
+            self.__add_quest(Quest(entry, f"{cluster_key}:{entry}").set_source_alias(alias))
             self.__parse_quest_folder(quest_folder)
 
     def __is_autoload_quest_cmd(self, line: str) -> tuple[bool, str]:

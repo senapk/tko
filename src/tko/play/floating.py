@@ -194,14 +194,14 @@ class Floating(FloatingABC):
 
     def process_input(self, key: int) -> int:
         if self.type == FloatingType.WARNING or self.type == FloatingType.ERROR:
-            if key < 300 or key == curses.KEY_EXIT or key == curses.KEY_NPAGE or key == curses.KEY_PPAGE:
-                self.enable = False
-                if self.exit_fn is not None:
-                    self.exit_fn()
-                if self.exit_key is not None:
-                    return self.exit_key
-                if key == ord(" ") or key == curses.KEY_EXIT: # evita propagar a tecla
-                    return -1
-                return key
-        
+            if key == curses.KEY_RESIZE:
+                return -1
+            self.enable = False
+            if self.exit_fn is not None:
+                self.exit_fn()
+            if self.exit_key is not None:
+                return self.exit_key
+            if key == ord(" ") or key == curses.KEY_EXIT: # evita propagar a tecla
+                return -1
+            return key
         return -1

@@ -10,11 +10,11 @@ class SourceType(Enum):
 class RepSource:
     STUDENT_SANDBOX_ALIAS = "sandbox"
 
-    default_draft_folder = "00_rascunhos"
+    DEFAULT_DRAFT_FOLDER = "00_rascunhos"
 
     sandbox_readme_content = (
         "#Sandbox\n"
-        "## Sandbox\n"
+        "## {STUDENT_SANDBOX_ALIAS}\n"
         "<!--autoload_cluster=.-->\n"
     )
 
@@ -65,7 +65,7 @@ class RepSource:
         return self
     
     def get_default_sandbox_draft_folder(self) -> str:
-        return self.default_draft_folder
+        return self.DEFAULT_DRAFT_FOLDER
     
     def ensure_sandbox_source(self, local_workspace: str):
         # create folder sandbox inside rep_workspace if not exists
