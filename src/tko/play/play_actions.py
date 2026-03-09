@@ -63,6 +63,9 @@ class PlayActions:
             return ""
         return folder
 
+    def reload_game(self):
+        self.rep.load_game(try_update=False, silent=True)
+
     def delete_folder_ask(self):
         def delete_folder(text: str):
             obj = self.tree.get_selected_throw()

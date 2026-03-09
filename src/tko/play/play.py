@@ -84,9 +84,6 @@ class Play:
         self.gui.xray_offset = 0
         return self.actions.select_task()
 
-    def reload_game(self):
-        self.rep.load_game(try_update=False, silent=True)
-
     def make_callback(self) -> InputManager:
         cman = InputManager()
 
@@ -96,7 +93,7 @@ class Play:
         cman.add_int(curses.KEY_DOWN, self.move_down)
         cman.add_int(curses.KEY_LEFT, self.move_left)
         cman.add_int(curses.KEY_RIGHT, self.move_right)
-        cman.add_str(GuiKeys.reload_game, self.reload_game)
+        cman.add_str(GuiKeys.reload_game, self.actions.reload_game)
 
         cman.add_int(curses.KEY_NPAGE, self.page_down)
         cman.add_int(curses.KEY_PPAGE, self.page_up)

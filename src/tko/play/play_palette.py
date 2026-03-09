@@ -112,6 +112,14 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
+                lambda: Text.format(" {} {y} pasta de rascunhos", symbols.action, "Reload"),
+                self.actions.reload_game,
+                GuiKeys.reload_game
+            ).set_exit_on_action(True)
+        )
+
+        options.append(
+            FloatingInputData(
                 lambda: Text.format(" {} Ver {y} da tarefa ", symbols.action, "versões"),
                 self.actions.open_versions,
                 GuiKeys.unfold_patch

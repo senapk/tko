@@ -1,5 +1,7 @@
 # Changelog
 
+- 8.3.1
+  - fix: drafts templates
 - 8.3.0:
   - add: changing Readme.md to README.md in all places
   - add: changing default drafts to .cache/drafts

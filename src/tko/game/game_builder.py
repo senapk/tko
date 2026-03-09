@@ -130,7 +130,7 @@ class GameBuilder:
         return False, ""
     
     def __is_autoload_cluster_cmd(self, line: str) -> tuple[bool, str]:
-        words = line.split("autoload_cluster=")
+        words = line.split(f"{self.source.AUTOLOAD_CLUSTER_COMMAND}=")
         if len(words) == 2:
             path = words[1].strip("-> ")
             readme_folder = os.path.dirname(self.source.get_source_readme())
