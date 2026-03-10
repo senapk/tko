@@ -31,7 +31,7 @@ class Quest(TreeItem):
         self.__is_reachable: bool = False
 
     def add_require_key(self, key: str):
-        self.requires.append(self.get_database() + "@" + key)
+        self.requires.append(self.get_alias() + "@" + key)
 
     def get_value(self) -> int:
         return self.value

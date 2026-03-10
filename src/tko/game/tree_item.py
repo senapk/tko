@@ -4,18 +4,18 @@ from tko.settings.legacy import Legacy
 class TreeItem():
 
     def __init__(self):
-        self.__database: str = ""
+        self.__alias: str = ""
         self.__key: str = ""
         self._title: str = ""
         self.__sentence: Text = Text()
 
-    def get_database(self) -> str:
-        return self.__database
+    def get_alias(self) -> str:
+        return self.__alias
 
     def get_db_key(self) -> str:
-        if self.__database == Legacy.LEGACY_DATABASE:
+        if self.__alias == Legacy.LEGACY_DATABASE:
             return self.__key
-        return self.__database + "@" + self.__key
+        return self.__alias + "@" + self.__key
     
     def get_key_only(self) -> str:
         return self.__key
@@ -26,8 +26,8 @@ class TreeItem():
     def get_sentence(self) -> Text:
         return self.__sentence
 
-    def set_source_alias(self, database: str):
-        self.__database = database
+    def set_alias(self, alias: str):
+        self.__alias = alias
         return self
     
     def set_key(self, key: str):

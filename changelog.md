@@ -1,5 +1,9 @@
 # Changelog
 
+- 8.3.2
+  - fix: remove charset-normalizer and chardet dependencies and code
+  - add: improved drafts generation
+  - fix: yaml front matter formatting
 - 8.3.1
   - fix: drafts templates
 - 8.3.0:

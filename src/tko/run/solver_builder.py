@@ -169,10 +169,8 @@ class SolverBuilder:
             origin = path_list[i]
             destiny = new_files[i]
 
-            encoding = Decoder.get_encoding(origin)
-            with open(origin, "r", encoding=encoding) as f:
-                content = f.read()
-                lines = content.splitlines(keepends=True)
+            content = Decoder.load(origin)
+            lines = content.splitlines(keepends=True)
 
             io_source = io.StringIO()
             io_target = io.StringIO()

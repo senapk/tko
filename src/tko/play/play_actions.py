@@ -195,7 +195,6 @@ class PlayActions:
             return
 
     def create_draft(self):
-        sandbox_key_prefix = "user"
         local_source = self.game.get_sandbox_source()
         workspace_folder = os.path.join(local_source.get_source_workspace(), local_source.get_default_sandbox_draft_folder())
         if not os.path.exists(workspace_folder):
@@ -218,9 +217,16 @@ class PlayActions:
                 draft = Drafts.drafts[self.rep.data.lang]
             with open(os.path.join(folder, f"draft.{self.rep.data.lang}"), "w", encoding="utf-8") as f:
                 f.write(draft)
-            draft_id = self.rep.data.get_next_draft_id()
-            self.rep.data.increment_next_draft_id()
-            key = f"{sandbox_key_prefix}_{draft_id:03d}"
+            sandbox_cluster = self.rep.game.get_sandbox_cluster()
+            if not sandbox_cluster:
+                draft_id = 1
+            else:
+                task_keys_only: list[str] = []
+                for quest in sandbox_cluster.get_quests():
+                    for task in quest.get_tasks():
+                        task_keys_only.append(task.get_key_only())
+                draft_id = Drafts.find_max_numbered_key(task_keys_only=task_keys_only) + 1
+            key = Drafts.create_draft_key(draft_id)
             Drafts.create_sandbox_draft(folder, key)
             
             self.tree.selected_item = f"{RepSource.STUDENT_SANDBOX_ALIAS}@{key}"

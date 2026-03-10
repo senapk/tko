@@ -71,6 +71,12 @@ class Game:
             total_complete += value
         return total_obtained, total_priority, total_complete
 
+    def get_sandbox_cluster(self) -> Cluster | None:
+        for c in self.clusters.values():
+            if c.get_alias() == RepSource.STUDENT_SANDBOX_ALIAS:
+                return c
+        return None
+
     def get_sandbox_source(self) -> RepSource:
         for s in self.sources:
             if s.is_sandbox_source():

@@ -10,7 +10,7 @@ class TaskParser:
 
     def __init__(self, index_path: str, source_alias: str):
         self.index_path = index_path
-        self.task: Task | None = Task().set_source_alias(source_alias)
+        self.task: Task | None = Task().set_alias(source_alias)
 
     def __load_xp(self, tags_raw: str):
         if self.task is None:

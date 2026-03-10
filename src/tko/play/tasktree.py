@@ -77,7 +77,7 @@ class TaskTree:
                     self.expanded.remove(key)
 
     def get_cluster_title_size(self, cluster: Cluster) -> int:
-        return len(cluster.get_database() + ":" + cluster.get_title()) + 3
+        return len(cluster.get_alias() + ":" + cluster.get_title()) + 3
     
     def get_quest_title_size(self, quest: Quest) -> int:
         return len(quest.get_full_title()) + 5
@@ -292,7 +292,7 @@ class TaskTree:
         if Flags.show_time.is_true():
             len_extra = len(self.format_hours_minutes("", 0, 0))
 
-        output = output.addf(color, cluster.get_database() + ":" + cluster.get_title()).ljust(self.get_max_title() + len_extra, Text.Token(self.filler, color))
+        output = output.addf(color, cluster.get_alias() + ":" + cluster.get_title()).ljust(self.get_max_title() + len_extra, Text.Token(self.filler, color))
 
         if focus_color != "":
             output.add(self.style.round_r(focus_color))

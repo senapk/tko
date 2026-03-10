@@ -79,6 +79,12 @@ class Task(TreeItem):
     def set_origin_folder(self, folder: str):
         self.__origin_folder = folder
         return self
+    
+    def get_origin_readme(self) -> str:
+        origin_folder = self.get_origin_folder()
+        if origin_folder is not None:
+            return origin_folder + "/README.md"
+        return ""
 
     def set_workspace_folder(self, folder: str):
         self.__workspace_folder = folder

@@ -13,6 +13,7 @@ class RepSource:
     DEFAULT_DRAFT_FOLDER = "00_rascunhos"
 
     AUTOLOAD_CLUSTER_COMMAND = "autoload_cluster"
+    AUTOLOAD_QUEST_COMMAND = "autoload_quest"
 
     sandbox_readme_content = f"""
 # Sandbox

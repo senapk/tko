@@ -82,16 +82,17 @@ class Settings:
             settings_file = self.get_settings_file()
             backup_file = self.get_settings_backup_file()
 
-            encoding = Decoder.get_encoding(settings_file)
-            with open(settings_file, "r", encoding=encoding) as f:
-                lines = f.readlines()
-                lines = remove_git_merge_tags(lines)
-                data: Any = yaml.safe_load("\n".join(lines))
+            content = Decoder.load(settings_file)
+
+            lines = content.splitlines()
+            lines = remove_git_merge_tags(lines)
+            data: Any = yaml.safe_load("\n".join(lines))
+
             if data is None or not isinstance(data, dict):
-                with open(backup_file, "r", encoding=encoding) as f:
-                    lines = f.readlines()
-                    lines = remove_git_merge_tags(lines)
-                    data = yaml.safe_load("\n".join(lines))
+                content = Decoder.load(backup_file)
+                lines = content.splitlines()
+                lines = remove_git_merge_tags(lines)
+                data = yaml.safe_load("\n".join(lines))
             if data is None or not isinstance(data, dict):
                 raise FileNotFoundError(f"Arquivo de configuração vazio: {settings_file}")
             self.data = data

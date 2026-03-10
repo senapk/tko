@@ -2,6 +2,8 @@ import os
 
 class Drafts:
 
+    sandbox_key_prefix = "user"
+
     draft_readme: str = r"""Escreva aqui as informações que você quer salvar, esse é o seu rascunho.
 O texto abaixo é informativo e você pode apagar depois de aprender como usar os rascunhos.
 
@@ -107,6 +109,22 @@ main = putStrLn "qxcode"
     drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'java': java_draft, 'go': go_draft, 'hs': hs_draft, 'yaml': yaml_draft}
 
     @staticmethod
+    def create_draft_key(draft_id: int) -> str:
+        return f"{Drafts.sandbox_key_prefix}_{draft_id:03d}"
+    
+    @staticmethod
+    def find_max_numbered_key(task_keys_only: list[str]) -> int:
+        numbered_keys: list[int] = []
+        for key in task_keys_only:
+            if key.startswith(Drafts.sandbox_key_prefix + "_"):
+                try:
+                    number = int(key[len(Drafts.sandbox_key_prefix) + 1:])
+                    numbered_keys.append(number)
+                except ValueError:
+                    continue
+        return max(numbered_keys) if numbered_keys else 0
+
+    @staticmethod
     def load_drafts_only(folder: str, lang: str, extra: list[str] | None = None) -> list[str]:
         if extra is None:
             extra = []
@@ -135,4 +153,4 @@ main = putStrLn "qxcode"
     @staticmethod
     def create_sandbox_draft(dir: str, key: str):
         with open (os.path.join(dir, "README.md"), "w", encoding="utf-8") as f:
-            f.write(f"---\n# Não altere essa chave, ela deve ser única para cada rascunho\nkey={key}\n---\n\n# {os.path.basename(dir)}\n\n" + Drafts.draft_readme)
+            f.write(f"---\nkey: {key}\n---\n\n# {os.path.basename(dir)}\n\n" + Drafts.draft_readme)

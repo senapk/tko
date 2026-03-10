@@ -5,7 +5,7 @@ from tko.util.get_md_link import get_md_link
 class QuestParser:
     def __init__(self, source_alias: str):
         self.source_alias = source_alias
-        self.quest = Quest().set_source_alias(source_alias)
+        self.quest = Quest().set_alias(source_alias)
         self.line: str = ""
         self.line_num = 0
         self.filename: str = ""

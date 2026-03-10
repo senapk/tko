@@ -20,7 +20,7 @@ class Test:
         task.set_origin_folder("/ping/database/label")
         task.set_workspace_folder("/rep/database/label")
         assert task.get_key_only() == "label"
-        assert task.get_database() == "database"
+        assert task.get_alias() == "database"
         assert task.get_db_key() == "label" # database is hided by legacy compatibility
         assert task.get_workspace_folder() == "/rep/database/label"
         assert task.target == "data/label/r.md"
@@ -31,7 +31,7 @@ class Test:
         task = tp.parse_line("- [ ] [@label complemente](data/label/r.md)", 0).get_task()
         assert task is not None
         assert task.get_key_only() == "label"
-        assert task.get_database() == "poo"
+        assert task.get_alias() == "poo"
         assert task.get_db_key() == "poo@label" # database is hided by legacy compatibility
         assert task.get_workspace_folder() == "/source/data/label"
         assert task.target == "data/label/r.md"
@@ -43,7 +43,7 @@ class Test:
         task = tp.parse_line("- [ ] [@label complemente](poo/label/r.md)", 0).get_task()
         assert task is not None
         assert task.get_key_only() == "label"
-        assert task.get_database() == "poo"
+        assert task.get_alias() == "poo"
         assert task.get_db_key() == "poo@label" # database is hided by legacy compatibility
         assert task.get_workspace_folder() == "/source/poo/label"
         assert task.target == "poo/label/r.md"

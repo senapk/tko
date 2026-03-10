@@ -78,12 +78,11 @@ class LogHistory:
         files_path.sort()
         entries: dict[dt.datetime, LogItemBase] = {}
         for file in files_path:
-            encoding = Decoder.get_encoding(file)
-            with open(file, 'r', encoding=encoding) as f:
-                for line in f:
-                    item: LogItemBase | None = LogHistory.decode_line(line)
-                    if item is not None:
-                        entries[item.get_datetime()] = item
+            content = Decoder.load(file)
+            for line in content.splitlines():
+                item: LogItemBase | None = LogHistory.decode_line(line)
+                if item is not None:
+                    entries[item.get_datetime()] = item
         return entries
     
     @staticmethod

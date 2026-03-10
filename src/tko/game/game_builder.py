@@ -1,3 +1,4 @@
+from tko.down.drafts import Drafts
 from tko.game.quest_parser import QuestParser
 from tko.game.task_parser import TaskParser
 from tko.game.cluster import Cluster
@@ -17,6 +18,7 @@ class GameBuilder:
         self.clusters: dict[str, Cluster] = {}
         self.active_cluster: Cluster | None = None
         self.active_quest: Quest | None = None
+        self.unique_keys: set[str] = set()
 
     def build_from(self, language: str):
         filename = self.source.get_source_readme()
@@ -66,62 +68,93 @@ class GameBuilder:
                     print(f"Quest\n{filename}:{q.line_number}\n{str(q)}\nrequer {r} que não existe")
                     exit(1)
 
-    def __parse_quest_folder(self, folder: str):
-        database_path = folder
+    @staticmethod
+    # extract yaml keys in front matter format and return as dict, also return content without yaml front matter
+    def extract_yaml_keys_and_file_data(content: str) -> tuple[dict[str, str], str]:
+        yaml_keys: dict[str, str] = {}
+        lines = content.splitlines()
+        if len(lines) > 0 and lines[0].strip() == "---":
+            for line in lines[1:]:
+                if line.strip() == "---":
+                    break
+                if ":" in line:
+                    key, val = line.split(":", 1)
+                    yaml_keys[key.strip()] = val.strip()
+                if "=" in line:
+                    key, val = line.split("=", 1)
+                    yaml_keys[key.strip()] = val.strip()
+            content = "\n".join(lines[len(yaml_keys) + 2:])
+        return yaml_keys, content
+
+    def __parse_quest_folder(self, task_dir_path: str, tasks_with_missing_keys: list[str]):
+        database_path = task_dir_path
         alias = self.source.name
-        # local_tasks_cluster: Cluster = Cluster(0, "Atividades Locais", "local_task_cluster").set_source_alias(alias)
-        # self.__add_cluster(local_tasks_cluster)
-        tasks = self.collect_tasks()
         if not os.path.exists(database_path):
             os.makedirs(database_path)
-        for entry in sorted(os.listdir(database_path)):
-            folder = os.path.join(database_path, entry)
-            if not os.path.isdir(folder):
+        for task_dirname in sorted(os.listdir(database_path)):
+            task_dir_path = os.path.join(database_path, task_dirname)
+            if not os.path.isdir(task_dir_path):
                 continue
-            if not os.path.isfile(os.path.join(folder, "README.md")):
-                continue
-            if entry in tasks:
+            if not os.path.isfile(os.path.join(task_dir_path, "README.md")):
                 continue
             # parse readme content for yaml front matter with key
-            yaml_key = ""
-            with open(os.path.join(folder, "README.md"), "r", encoding="utf-8") as f:
-                content = f.read()
-                lines = content.splitlines()
-                if len(lines) > 0 and lines[0].strip() == "---":
-                    for line in lines[1:]:
-                        if line.strip() == "---":
-                            break
-                        if line.startswith("key="):
-                            yaml_key = line.split("key=")[1].strip()
-                            break
-            # create task for folder
-            task = Task()
-            key = yaml_key if yaml_key else entry
-            title = entry
-            if yaml_key != "":
-                title = f"@{yaml_key} {entry}"
-            task.set_key(key)
-            task.set_title(title)
-            task.set_source_alias(alias)
-            task.set_origin_folder(folder)
-            if self.source.is_read_only():
-                task.set_workspace_folder(self.source.get_task_workspace(key))
-            self.__add_task(task)
+            yaml_keys, _ = self.extract_yaml_keys_and_file_data(Decoder.load(os.path.join(task_dir_path, "README.md")))
+            if "key" not in yaml_keys or yaml_keys["key"] in self.unique_keys:
+                tasks_with_missing_keys.append(task_dir_path)
+                # print(f"Readme {task_dir_path}/README.md não possui chave yaml única, será ignorado")
+            else:
+                self.unique_keys.add(yaml_keys["key"])
+                self.create_task_from_folder(alias, yaml_keys["key"], task_dirname, task_dir_path)
+
+    def create_task_from_folder(self, alias: str, yaml_key: str, task_dirname: str, task_dir_path: str):
+        task = Task()
+        title = task_dirname
+        title = f"@{yaml_key} {task_dirname}"
+        task.set_key(yaml_key)
+        task.set_title(title)
+        task.set_alias(alias)
+        task.set_origin_folder(task_dir_path)
+        if self.source.is_read_only():
+            task.set_workspace_folder(self.source.get_task_workspace(yaml_key))
+        self.__add_task(task)
 
     def __parse_cluster_folder(self, folder: str):
         alias = self.source.name
         if not os.path.exists(folder):
             return
+        tasks_with_missing_keys: list[str] = []
         for entry in sorted(os.listdir(folder)):
             quest_folder = os.path.join(folder, entry)
             if not os.path.isdir(quest_folder):
                 continue
             cluster_key = self.__get_active_cluster().get_key_only()
-            self.__add_quest(Quest(entry, f"{cluster_key}:{entry}").set_source_alias(alias))
-            self.__parse_quest_folder(quest_folder)
+            self.__add_quest(Quest(entry, f"{cluster_key}:{entry}").set_alias(alias))
+            self.__parse_quest_folder(quest_folder, tasks_with_missing_keys)
+        if len(tasks_with_missing_keys) > 0:
+            print(f"Os seguintes diretórios de tarefas não possuem chave yaml única e foram ignorados:")
+            for path in tasks_with_missing_keys:
+                print(f"  {path}")
+            print("Você deseja gerar chaves únicas para essas tarefas? (s/n): ", end="")
+            answer = input().strip().lower()
+            if answer == "s":
+                max_number = Drafts.find_max_numbered_key(list(self.unique_keys))
+                for path in tasks_with_missing_keys:
+                    max_number += 1
+                    yaml_key = Drafts.create_draft_key(max_number)
+                    yaml_keys, info = self.extract_yaml_keys_and_file_data(Decoder.load(os.path.join(path, "README.md")))
+                    yaml_keys["key"] = yaml_key
+                    new_content = "---\n"
+                    for k, v in yaml_keys.items():
+                        new_content += f"{k}: {v}\n"
+                    new_content += "---\n\n" + info
+                    with open(os.path.join(path, "README.md"), "w", encoding="utf-8") as f:
+                        f.write(new_content)
+                    self.create_task_from_folder(alias, yaml_key, os.path.basename(path), path)
+
+
 
     def __is_autoload_quest_cmd(self, line: str) -> tuple[bool, str]:
-        words = line.split("autoload_quest=")
+        words = line.split(f"{self.source.AUTOLOAD_QUEST_COMMAND}=")
         if len(words) == 2:
             path = words[1].strip("-> ")
             readme_folder = os.path.dirname(self.source.get_source_readme())
@@ -147,7 +180,7 @@ class GameBuilder:
         for line_num, line in enumerate(lines):
             autoload, quest_folder = self.__is_autoload_quest_cmd(line)
             if autoload:
-                self.__parse_quest_folder(quest_folder)
+                self.__parse_quest_folder(quest_folder, [])
                 continue
 
             autoload, cluster_folder = self.__is_autoload_cluster_cmd(line)
@@ -224,7 +257,7 @@ class GameBuilder:
             
 
         
-        cluster = Cluster(line_num, titulo, only_key, color).set_source_alias(self.source.name)
+        cluster = Cluster(line_num, titulo, only_key, color).set_alias(self.source.name)
         filename = self.source.get_source_readme()
         skey = cluster.get_db_key()
         if skey in self.clusters.keys():

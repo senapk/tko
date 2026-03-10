@@ -160,18 +160,17 @@ class Repository:
 
     # configwa
     def load_config(self):
-        encoding = Decoder.get_encoding(self.paths.get_config_file())
+        content = Decoder.load(self.paths.get_config_file())
         local_data: dict[str, Any] = {}
         try:
-            with open(self.paths.get_config_file(), encoding=encoding) as f:
-                lines = f.readlines()
+            lines = content.splitlines()
+            lines = remove_git_merge_tags(lines)
+            local_data = yaml.safe_load("\n".join(lines))
+            if local_data is None or not isinstance(local_data, dict) or len(local_data) == 0: # type: ignore
+                backup_content = Decoder.load(self.paths.get_config_backup_file())
+                lines = backup_content.splitlines()
                 lines = remove_git_merge_tags(lines)
                 local_data = yaml.safe_load("\n".join(lines))
-            if local_data is None or not isinstance(local_data, dict) or len(local_data) == 0: # type: ignore
-                with open(self.paths.get_config_backup_file(), "r", encoding=encoding) as f:
-                    lines = f.readlines()
-                    lines = remove_git_merge_tags(lines)
-                    local_data = yaml.safe_load("\n".join(lines))
             if local_data is None or not isinstance(local_data, dict) or len(local_data) == 0: # type: ignore
                 raise FileNotFoundError(f"Arquivo de configuração vazio: {self.paths.get_config_file()}")
         except:

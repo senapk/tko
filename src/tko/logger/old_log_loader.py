@@ -1,3 +1,5 @@
+import io
+
 from tko.logger.log_item_base import LogItemBase
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove
@@ -203,9 +205,10 @@ class OldLogLoader:
             return []
         if not os.path.exists(history_file):
             return []
-        encoding = Decoder.get_encoding(history_file)
+
         entries: list[LogAction] = []
-        with open(history_file, 'r', encoding=encoding) as file:
+        content = Decoder.load(history_file)
+        with io.StringIO(content) as file:
             reader = csv.reader(file)
             rows = list(reader)
             for row in rows:
