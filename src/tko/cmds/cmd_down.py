@@ -131,7 +131,6 @@ class CmdDown:
         self.copy_readme()
         self.copy_tests()
 
-
         self.actions.cached = True
         destiny_drafts_folder = self.find_folder_for_drafts()
         origin_source = os.path.join(CodeFilter.get_default_drafts_dir(self.origin_folder), self.language)

@@ -14,10 +14,8 @@ import yaml # type: ignore
 from tko.settings.rep_paths import RepPaths
 from icecream import ic # type: ignore
 from tko.logger.delta import Delta
-from datetime import datetime
-from tko.util.runner import Runner
-
-
+from datetime import timedelta
+from tko.settings.git_cache import GitCache
 
 def remove_git_merge_tags(lines: list[str]) -> list[str]:
     # remove lines with <<<<<<<, =======, >>>>>>>>
@@ -41,6 +39,7 @@ class Repository:
         self.game = Game()
         self.logger: Logger = Logger(rep_folder) 
         self.force_update: bool = force_update
+        self.git_cache = GitCache(self.paths.get_cache_folder(), timedelta(seconds=self.cache_time_for_remote_source))
 
     def found(self):
         return os.path.isfile(self.paths.get_config_file())
@@ -103,60 +102,12 @@ class Repository:
                 raise Warning("fail: Arquivo do cache não encontrado")
         return False
 
-    def run_git_cmd(self, cmd_list: list[str], folder: str)-> bool:
-        error, stdout, stderr = Runner.subprocess_run(cmd_list, folder=folder, timeout=30)
-        if error != 0:
-            print(f"Não foi possível atualizar o repositório clonado em {folder}. Erro: {stdout}\n{stderr}")
-            return False
-        return True
-
-    def git_pull_repository(self, source: RepSource) -> bool:
-        basedir = source.get_source_cache_folder()
-        branch_name = source.branch if source.branch is not None else "master"
-        print("Verificando atualizações do repositório clonado em", basedir)
-        if not self.run_git_cmd(["git", "fetch", "--all"], basedir):
-            return False
-        if not self.run_git_cmd(["git", "reset", "--hard", f"origin/{branch_name}"], folder=basedir):
-            return False
-        if not self.run_git_cmd(["git", "clean", "-df"], folder=basedir):
-            return False
-        return True
-
-
-    def is_in_cache(self, source: RepSource, now_dt: datetime) -> bool:
-        last_dt = Delta.decode_format(source.cache_timestamp)
-        if os.path.isfile(source.get_source_readme()) == False:
-            return False
-        if (now_dt - last_dt).total_seconds() < Repository.cache_time_for_remote_source:
-            time_missing = Repository.cache_time_for_remote_source - (now_dt - last_dt).total_seconds()
-            r = int(time_missing / 60)
-            print(f"Usando cache da fonte remota {source.name} ({source.get_url_link()}), próxima atualização em {r} minutos")
-            return True
-        return False
-
-    def clone_repository_git(self, link: str, target: str) -> bool:
-        os.makedirs(target, exist_ok=True)
-        result = self.run_git_cmd(["git", "clone", "--depth", "1", link, target], folder=".")
-        if not result:
-            print(Text.format("fail: Não foi possível clonar o repositório git {y}.\nErro: {r}", link))
-            return False
-        return True
-
     def update_cache_path(self, source: RepSource) -> None:
         if source.is_sandbox_source():
             return
-        
         if source.is_git_source():
-            now_str, now_dt = Delta.now()
-            if not self.force_update and source.cache_timestamp != "" and os.path.exists(source.get_source_readme()):
-                if self.is_in_cache(source, now_dt):
-                    return
-
-            if not os.path.exists(source.get_source_readme()) and self.clone_repository_git(source.get_url_link(), source.get_source_cache_folder()):
-                source.cache_timestamp = now_str
-            elif self.git_pull_repository(source):
-                source.cache_timestamp = now_str
-            return
+            path = self.git_cache.get(source.get_url_link(), force_update=self.force_update)
+            source.set_local_source
 
     # configwa
     def load_config(self):

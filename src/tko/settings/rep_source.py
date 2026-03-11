@@ -3,6 +3,8 @@ from typing import Any
 import os
 from enum import Enum
 
+from tko.settings.git_cache import GitCache
+
 class SourceType(Enum):
     LOCAL_FILE = "local"
     GIT_SOURCE = "git"
@@ -55,18 +57,22 @@ Sinta-se à vontade para organizar seus rascunhos em subpastas dentro do sandbox
         self.name = alias
         self.__target = ""
         self.source_type: SourceType = SourceType.LOCAL_FILE
-        self.cache_timestamp: str = ""
         self.__writeable: bool = False
         self.branch: str | None = None
         self.quests: list[str] | None = None
         self.tasks: list[str] | None = None
         self.rep_local_workspace: str | None = None   # if read-only rep, rep folder to tasks will be, join(local_workspace, alias)
         self.rep_cache_folder: str | None = None  # if git clone rep, cache folder to git clone will be, join(git_cache_folder, alias)
+        self.git_cache: GitCache | None = None
 
     def set_local_source(self, target: str, writeable: bool = False):
         self.source_type = SourceType.LOCAL_FILE
         self.__target = target
         self.__writeable = writeable
+        return self
+    
+    def set_git_cache(self, git_cache: GitCache):
+        self.git_cache = git_cache
         return self
     
     def is_sandbox_source(self) -> bool:
@@ -143,11 +149,13 @@ Sinta-se à vontade para organizar seus rascunhos em subpastas dentro do sandbox
             return os.path.join(self.get_source_cache_folder(),"README.md")
         raise ValueError("Unknown source type")
     
-    def get_source_folder(self) -> str:
+    def get_source_folder(self, git_cache: GitCache) -> str:
         if self.source_type == SourceType.LOCAL_FILE:
             return self.__target
         if self.source_type == SourceType.GIT_SOURCE:
-            return self.get_source_cache_folder()
+            if self.git_cache is None:
+                raise ValueError("Git cache is not set for git source")
+            return self.git_cache.get(self.get_url_link(), force_update=False).absolute() # absolute path to cached repo
         raise ValueError("Unknown source type")
 
     def set_cache_timestamp(self, cache_timestamp: str):
@@ -163,10 +171,6 @@ Sinta-se à vontade para organizar seus rascunhos em subpastas dentro do sandbox
         self.rep_local_workspace = local_workspace
         self.rep_cache_folder = cache_folder
 
-    def get_source_cache_folder(self) -> str:
-        if self.rep_cache_folder is None:
-            raise ValueError("Local rep folder is not set")
-        return os.path.join(self.rep_cache_folder, self.name)
 
     def get_rep_cache_folder(self) -> str:
         if self.rep_cache_folder is None:
