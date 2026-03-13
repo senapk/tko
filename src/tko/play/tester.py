@@ -397,8 +397,8 @@ class Tester:
         cmds.append(self.borders.border("C", text))
         if self.opener is not None:
             cmds.append(self.borders.border("C", f"{GuiActions.edit} [{GuiKeys.edit}]"))
-        cmds.append(self.borders.border("G", f"{GuiActions.evaluate_tester} [{symbols.newline.text}]"))
-        cmds.append(self.borders.border("G", f"{GuiActions.execute_tester} [{GuiKeys.execute_tester}]"))
+        cmds.append(self.borders.border("G", f"{GuiActions.evaluate_tester} [{GuiKeys.evaluate} | {symbols.newline.text}]"))
+        cmds.append(self.borders.border("G", f"{GuiActions.execute_tester} [{GuiKeys.execute} | ⌫]"))
         limite = f"{GuiActions.time_limit} {self.get_time_limit_symbol()} [{GuiKeys.limite}]"
         cmds.append(self.borders.border("Y", limite))
 
@@ -647,9 +647,9 @@ class Tester:
             self.go_up()
         elif key == ord(GuiKeys.toggle_main):
             self.change_main()
-        elif key == ord(GuiKeys.execute_tester):
+        elif key == ord(GuiKeys.execute) or key == curses.KEY_BACKSPACE:
             return self.run_exec_mode()
-        elif key == ord(GuiKeys.evaluate):
+        elif key == ord(GuiKeys.evaluate) or key == ord('\n'):
             self.run_test_mode()
         elif key == ord(GuiKeys.lock):
             self.fman.add_input(Floating().bottom().right().set_warning().put_text("Função de travamento {}".format("ligada" if not self.locked_index else "desligada")))

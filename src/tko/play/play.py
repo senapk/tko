@@ -110,7 +110,6 @@ class Play:
         cman.add_str(GuiKeys.delete_folder, self.actions.delete_folder_ask)
 
         cman.add_str(GuiKeys.self_evaluate, self.actions.self_evaluate)
-        cman.add_int(curses.KEY_BACKSPACE, self.actions.self_evaluate)
         
         cman.add_str(GuiKeys.key_help, self.gui.show_help)
         cman.add_str(GuiKeys.unfold_patch, self.actions.open_versions)
