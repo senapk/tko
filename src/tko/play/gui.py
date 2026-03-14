@@ -308,7 +308,7 @@ class Gui:
 
     def show_top_bar(self, frame: Frame):
         lista = [
-            Text().addf('Y', f"Sair [q]"),
+            Text().addf('Y', f"Sair [esc]"),
             Text().addf("Y", f"Ajuda[?]"),
         ]
         help_list = self.build_list_sentence(lista)
