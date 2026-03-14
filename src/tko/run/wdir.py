@@ -12,13 +12,14 @@ from tko.util.symbols import symbols
 from tko.util.label_factory import LabelFactory
 from tko.down.drafts import Drafts
 from tko.settings.languages import available_languages
+from pathlib import Path
 
 class Wdir:
     def __init__(self):
         self.__autoload = False
-        self.__autoload_folder = ""
+        self.__autoload_folder: Path | None = None
         self.__solver: None | SolverBuilder = None
-        self.__source_list: list[str] = []
+        self.__source_list: list[Path] = []
         self.__pack_list: list[list[Unit]] = []
         self.__unit_list: list[Unit] = []
         self.__curses = False
@@ -41,7 +42,7 @@ class Wdir:
     def get_unit(self, index: int) -> Unit:
         return self.__unit_list[index]
     
-    def get_source_list(self) -> list[str]:
+    def get_source_list(self) -> list[Path]:
         return self.__source_list
 
     def set_curses(self, value: bool):
@@ -58,27 +59,27 @@ class Wdir:
     def is_autoload(self) -> bool:
         return self.__autoload
 
-    def get_autoload_folder(self) -> str:
+    def get_autoload_folder(self) -> Path | None:
         return self.__autoload_folder
 
-    def set_solver(self, solver_list: list[str]):
+    def set_solver(self, solver_list: list[Path]):
         if len(solver_list) > 0:
             self.__solver = SolverBuilder(solver_list)
         return self
 
-    def set_sources(self, source_list: list[str]):
+    def set_sources(self, source_list: list[Path]):
         self.__source_list = source_list
         return self
 
     def autoload(self):
-        folder = self.__autoload_folder
-        folder = os.path.normpath(os.path.abspath(folder))
+        if self.__autoload_folder is None:
+            raise Warning("fail: pasta de autoload não definida")
+        folder: Path = self.__autoload_folder
 
         # loading source list
-        files = os.listdir(folder)
-        source_list = [target for target in files if target.endswith(".tio") or target.endswith(".vpl") or target.endswith(".toml")]
-        source_list.extend([target for target in files if target.endswith(".md")])
-        source_list = [os.path.join(folder, x) for x in source_list]
+        files = folder.iterdir()
+        source_list: list[Path] = [Path(target) for target in files if target.suffix in [".tio", ".vpl", ".toml"]]
+        source_list.extend([Path(target) for target in files if target.suffix == ".md"])
         
         if self.__lang != "":
             solver_list = Drafts.load_drafts_only(folder, self.__lang)
@@ -95,21 +96,19 @@ class Wdir:
         self.__autoload = True
         return self
 
-    def set_target_list(self, target_list: list[str]):
-        target_list = [os.path.normpath(t) for t in target_list]
+    def set_target_list(self, target_list: list[Path]):
         if len(target_list) == 0:
-            target_list.append(".")
+            target_list.append(Path())
         if len(target_list) == 1 and os.path.isdir(target_list[0]):
             self.__autoload_folder = target_list[0]
             return self.autoload()
                     
-        target_list = [t for t in target_list if t != ""]
         for target in target_list:
             if not os.path.exists(target):
                 raise Warning(f"fail: {target} não encontrado")
 
-        solvers = [target for target in target_list if Identifier.get_type(target) == IdentifierType.SOLVER]
-        sources = [target for target in target_list if Identifier.get_type(target) != IdentifierType.SOLVER]
+        solvers = [target for target in target_list if Identifier.get_type(target.suffix) == IdentifierType.SOLVER]
+        sources = [target for target in target_list if Identifier.get_type(target.suffix) != IdentifierType.SOLVER]
 
         self.set_solver(solvers)
         self.set_sources(sources)
@@ -227,7 +226,7 @@ class Wdir:
         if len(self.__pack_list) == 0:
             out.append((symbols.failure.text, "0"))
         for source_name, ulist in zip(self.__source_list, self.__pack_list):
-            nome: str = source_name.split(os.sep)[-1]
+            nome: str = source_name.name
             count = len([unit for unit in ulist if unit.repeated is None])
             if count > 0:
                 count_str = str(count)

@@ -1,9 +1,9 @@
-import os
+from pathlib import Path
 import argparse
 import shutil
-from tko.feno.log import Log
 from tko.util.decoder import Decoder
 from typing import Any
+import os
 
 class Mark:
     def __init__(self, marker: str, indent: int):
@@ -142,15 +142,17 @@ class DeepFilter:
         self.cheat_mode = (value == True)
         return self
 
-    def copy(self, source: str, destiny: str, deep: int):
+    def copy(self, source: Path | str, destiny: Path | str, deep: int):
+        source = str(source)
+        destiny = str(destiny)
         if deep == 0:
             return
         
         if os.path.isdir(source):
-            chain = source.split(os.sep)
+            chain = str(source).split(os.sep)
             if len(chain) > 1 and chain[-1].startswith("."):
                 return
-            if not os.path.isdir(destiny):
+            if not os.path.exists(destiny):
                 os.makedirs(destiny)
             for file in sorted(os.listdir(source)):
                 self.copy(os.path.join(source, file), os.path.join(destiny, file), deep - 1)
@@ -251,12 +253,12 @@ class CodeFilter:
                 print(content)
 
     @staticmethod
-    def get_default_drafts_dir(source_dir: str) -> str:
-        return os.path.join(source_dir, ".cache", "drafts")
+    def get_default_drafts_dir(source_dir: Path) -> Path:
+        return source_dir / ".cache" / "drafts"
 
     @staticmethod
-    def get_default_src_dir(source_dir: str) -> str:
-        return os.path.join(source_dir, "src")
+    def get_default_src_dir(source_dir: Path) -> Path:
+        return source_dir / "src"
     
 def filter_main(args: argparse.Namespace):
     if args.cheat:
@@ -272,8 +274,8 @@ def filter_main(args: argparse.Namespace):
 def build_drafts_main(args: argparse.Namespace):
     dir = os.path.join(os.getcwd())
     print(f"Updating drafts in {os.path.basename(os.getcwd())}")
-    source_src = CodeFilter.get_default_src_dir(dir)
-    drafts_dest = CodeFilter.get_default_drafts_dir(dir)
+    source_src = CodeFilter.get_default_src_dir(Path(dir))
+    drafts_dest = CodeFilter.get_default_drafts_dir(Path(dir))
     if os.path.isdir(source_src):
         filter = DeepFilter().set_indent(4)
         filter.copy(source_src, drafts_dest, 5)

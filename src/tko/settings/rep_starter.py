@@ -1,15 +1,16 @@
 import os
+from pathlib import Path
 from tko.play.language_setter import LanguageSetter
 from tko.util.text import Text
 from tko.settings.repository import Repository
 from tko.settings.rep_paths import RepPaths
 import shutil
 class RepStarter:
-    def __init__(self, folder: str | None, language: str | None = None):
+    def __init__(self, folder: Path | None, language: str | None = None):
         # if folder is set, use folder, else use local folder.
-        self.folder: str = os.path.abspath(os.getcwd())
+        self.folder: Path = Path.cwd()
         if folder is not None:
-            self.folder = os.path.abspath(folder)
+            self.folder = folder
         self.language = language
 
     def execute(self) -> bool:
@@ -35,25 +36,10 @@ class RepStarter:
 
     def print_end_msg(self):
         print(Text.format("Voce pode acessar o repositório com o comando {g} {y}", "tko open"))
-
-    def set_folder(self, folder: str | None, remote: str | None) -> bool:
-        if folder is not None:
-            self.folder = os.path.abspath(folder)
-            return True
-        
-        self.folder = os.path.abspath(os.getcwd())
-        if remote is not None:
-            self.folder = os.path.join(self.folder, remote)
-        print(Text.format("A pasta onde deve ser criada o repositório {r:não} foi informada."))
-        print(Text.format("Deseja criar o repositório na pasta {y} ? ({g}/{r}): ", self.folder, "s", "n"), end="")
-        op = input()
-        if op == "n":
-            return False
-        return True
     
     def create_repository(self) -> Repository | None:
         path_old = RepPaths.rec_search_for_repo(self.folder)
-        if path_old != "":
+        if path_old is not None:
             if self.folder != path_old:
                 print(Text.format("Você está tentando criar um rep dentro de outro, pois já existe rep em {r}.", path_old))
                 print(Text.format("Você pode apagar o repositório antigo removendo a pasta {r:}.", os.path.join(path_old, ".tko")))
@@ -63,7 +49,7 @@ class RepStarter:
             op = input()
             if op == "n":
                 return None
-        return Repository(os.path.abspath(self.folder))
+        return Repository(self.folder)
     
     def create_empty_rep(self):
         source = self.repo.get_student_sandbox()

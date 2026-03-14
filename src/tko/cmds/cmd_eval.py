@@ -4,6 +4,7 @@ from tko.settings.settings import Settings
 from tko.enums.diff_count import DiffCount
 from tko.util.text import Text
 from tko.util.symbols import symbols
+from pathlib import Path
 
 class CmdEval:
     EVAL_TIMEOUT_DEFAULT = 30
@@ -73,7 +74,7 @@ class CmdEval:
         param.set_compact(True)
 
         settings = Settings()
-        cmd_run = Run(settings, self.target_list, param)
+        cmd_run = Run(settings, [Path(x) for x in self.target_list], param)
         cmd_run.set_eval_mode().set_abort_on_exec_error()
         if self.no_run:
             cmd_run.set_no_run()

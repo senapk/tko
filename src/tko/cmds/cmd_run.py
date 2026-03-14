@@ -26,7 +26,7 @@ from tko.logger.log_sort import LogSort
 from tko.logger.task_resume import TaskResume
 from tko.settings.rep_paths import RepPaths
 from icecream import ic # type: ignore
-
+from pathlib import Path
 
 class TkoFilterMode:
     @staticmethod
@@ -40,9 +40,9 @@ class TkoFilterMode:
 class Run:
     EVAL_MODE_PAD = 14
 
-    def __init__(self, settings: Settings, target_list: list[str], param: None | Param.Basic):
+    def __init__(self, settings: Settings, target_list: list[Path], param: None | Param.Basic):
         self.settings = settings
-        self.target_list: list[str] = target_list
+        self.target_list: list[Path] = target_list
         if param is None:
             self.param = Param.Basic()
         else:
@@ -53,7 +53,7 @@ class Run:
         self.__lang = ""
         self.__rep: Repository | None = None
         self.__task: Task | None = None
-        self.__track_folder: str = ""
+        self.__track_folder: Path | None = None
         self.__opener: Opener | None = None
         self.__run_without_ask: bool = True
         self.__show_track_info: bool = False
@@ -121,13 +121,13 @@ class Run:
     def execute(self):
         if len(self.target_list) == 0:
             if self.__rep is None:
-                self.__try_load_rep(".")
-            self.__try_load_task(".")
+                self.__try_load_rep(Path())
+            self.__try_load_task(Path())
 
         elif len(self.target_list) == 1 and os.path.isdir(self.target_list[0]):
             if self.__rep is None:
-                self.__try_load_rep(self.target_list[0])
-            self.__try_load_task(self.target_list[0])
+                self.__try_load_rep(Path(self.target_list[0]))
+            self.__try_load_task(Path(self.target_list[0]))
 
         if not self.wdir_builded:
             self.build_wdir()
@@ -152,16 +152,16 @@ class Run:
     def __prepare_rep_task_logger(self):
         if self.__rep is None:
             solver_path = self.wdir.get_solver().args_list[0]
-            dirname = os.path.dirname(os.path.abspath(solver_path))
+            dirname = Path(os.path.dirname(os.path.abspath(solver_path)))
             self.__try_load_rep(dirname)
             self.__try_load_task(dirname)
 
         if self.__task is None:
             self.__fill_task()
 
-    def __try_load_rep(self, dirname: str) -> bool:
+    def __try_load_rep(self, dirname: Path) -> bool:
         repo_path = RepPaths.rec_search_for_repo(dirname)
-        if repo_path == "":
+        if repo_path is None:
             return False
         rep: Repository = Repository(repo_path)
         rep.load_config()
@@ -171,7 +171,7 @@ class Run:
             self.__lang = rep.data.get_lang()
         return True
 
-    def __try_load_task(self, dirname: str) -> bool:
+    def __try_load_task(self, dirname: Path) -> bool:
         if self.__rep is None:
             return False
         rep: Repository = self.__rep
@@ -189,20 +189,31 @@ class Run:
         # remove duplicates in target list keeping the order
         self.target_list = list(dict.fromkeys(self.target_list))
 
-    def __change_targets_to_filter_mode(self):
-        if self.param.filter:
-            old_dir = os.getcwd()
+    def __change_targets_to_filter_mode(self) -> None:
+        if not self.param.filter:
+            return
 
-            print(Text.format(" Entrando no modo de filtragem ").center(RawTerminal.get_terminal_size(), Text.Token("═")))
-            TkoFilterMode.deep_copy_and_change_dir()
-            # search for target outside . dir and redirect target
-            new_target_list: list[str] = []
-            for target in self.target_list:
-                if ".." in target:
-                    new_target_list.append(os.path.normpath(os.path.join(old_dir, target)))
-                elif os.path.exists(target):
-                    new_target_list.append(target)
-            self.target_list = new_target_list
+        old_dir: Path = Path.cwd()
+
+        print(
+            Text.format(" Entrando no modo de filtragem ").center(
+                RawTerminal.get_terminal_size(),
+                Text.Token("═"),
+            )
+        )
+
+        TkoFilterMode.deep_copy_and_change_dir()
+
+        new_target_list: list[Path] = []
+
+        for target in self.target_list:
+            resolved: Path = target if target.is_absolute() else (old_dir / target)
+            resolved = resolved.resolve()
+
+            if resolved.exists():
+                new_target_list.append(resolved)
+
+        self.target_list = new_target_list
         
     def __print_diff(self):
         
@@ -286,21 +297,22 @@ class Run:
 
     def __create_opener_for_wdir(self) -> Opener:
         opener = Opener(self.settings)
-        folders: list[str] = []
-        targets = ["."]
+        folders: list[Path] = []
+        targets: list[Path] = [Path(".")]
         if self.target_list:
             targets = self.target_list
+
         for f in targets:
-            if os.path.isdir(f) and f not in folders:
+            if f.is_dir() and f not in folders:
                 folders.append(f)
             else:
-                folder = os.path.dirname(os.path.abspath(f))
+                folder = f.parent
                 if folder not in folders:
                     folders.append(folder)
         opener.set_target(folders)
         if self.wdir.get_solver().args_list:
             solver_zero = self.wdir.get_solver().args_list[0]
-            lang = solver_zero.split(".")[-1]
+            lang = solver_zero.name.split(".")[-1]
             opener.set_language(lang)
         return opener
 
@@ -336,7 +348,7 @@ class Run:
             # task.set_rep_folder(os.sep)
 
         self.__task = task
-        self.__track_folder = ""
+        self.__track_folder = None
         if self.__rep:
             self.__track_folder = self.__rep.paths.get_track_task_folder(task.get_db_key())
 
@@ -362,7 +374,7 @@ class Run:
         percent = self.__run_all_tests_top_line()
         self.__print_diff()
         rate = self.get_rate()
-        if self.__task is None or self.__track_folder == "":
+        if self.__task is None or self.__track_folder is None:
             return rate
 
         exec_mode = LogItemExec.Mode.FULL if self.param.index is None else LogItemExec.Mode.LOCK
@@ -383,11 +395,13 @@ class Run:
 
     def store_exec_diff(self, rate: str) -> tuple[bool, int]:
         tracker = Tracker()
-        tracker.set_folder(self.__track_folder)
-        tracker.set_files(self.wdir.get_solver().args_list)
-        tracker.set_result(rate)
-        has_changes, total_lines = tracker.store()
-        return has_changes, total_lines
+        if self.__track_folder is not None:
+            tracker.set_folder(self.__track_folder)
+            tracker.set_files(self.wdir.get_solver().args_list)
+            tracker.set_result(rate)
+            has_changes, total_lines = tracker.store()
+            return has_changes, total_lines
+        return False, 0
 
     def __run_tests(self) -> int:
         if self.__task is None:

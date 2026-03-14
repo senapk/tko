@@ -1,6 +1,6 @@
 from tko.game.quest import Quest, startswith
 from tko.util.get_md_link import get_md_link
-
+from pathlib import Path
 
 class QuestParser:
     def __init__(self, source_alias: str):
@@ -8,7 +8,7 @@ class QuestParser:
         self.quest = Quest().set_alias(source_alias)
         self.line: str = ""
         self.line_num = 0
-        self.filename: str = ""
+        self.filename: Path = Path("")
 
     def finish_quest(self) -> Quest:
 
@@ -86,10 +86,10 @@ class QuestParser:
 
 
 
-    def parse_quest(self, filename: str, line: str, line_num: int) -> None | Quest:
+    def parse_quest(self, filename: Path, line: str, line_num: int) -> None | Quest:
         self.line = line
         self.line_num = line_num
-        self.filename = filename
+        self.filename: Path = filename
 
         self.quest.line = self.line
         self.quest.line_number = self.line_num

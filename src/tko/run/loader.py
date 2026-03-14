@@ -7,6 +7,7 @@ import tomllib
 from tko.run.unit import Unit
 from tko.util.pattern_loader import PatternLoader
 from tko.util.decoder import Decoder
+from pathlib import Path
 
 
 class CaseData:
@@ -239,7 +240,7 @@ class Loader:
         return output
 
     @staticmethod
-    def parse_dir(folder: str) -> list[Unit]:  # Updated return type to list[Unit]
+    def parse_dir(folder: Path) -> list[Unit]:  # Updated return type to list[Unit]
         pattern_loader = PatternLoader()
         files = sorted(os.listdir(folder))
         matches = pattern_loader.get_file_sources(files)
@@ -268,30 +269,30 @@ class Loader:
         return "\n" + "\n".join(code)
 
     @staticmethod
-    def parse_source(source: str) -> list[Unit]:
-        if os.path.isdir(source):
+    def parse_source(source: Path) -> list[Unit]:
+        if source.is_dir():
             return Loader.parse_dir(source)
-        if os.path.isfile(source):
+        if source.is_file():
             #  if PreScript.exists():
             #      source = PreScript.process_source(source)
             content = Decoder.load(source)
-            if source.endswith(".vpl") or source.endswith(".cases"):
-                return Loader.parse_vpl(content, source)
-            elif source.endswith(".tio"):
-                return Loader.parse_tio(content, source)
-            elif source.endswith(".toml"):
-                return Loader.parse_toml(content, source)
-            elif source.endswith(".md"):
-                tests = Loader.parse_tio(content, source)
-                tests += Loader.parse_cio(content, source)
+            if source.suffix == ".vpl" or source.suffix == ".cases":
+                return Loader.parse_vpl(content, str(source))
+            elif source.suffix == ".tio":
+                return Loader.parse_tio(content, str(source))
+            elif source.suffix == ".toml":
+                return Loader.parse_toml(content, str(source))
+            elif source.suffix == ".md":
+                tests = Loader.parse_tio(content, str(source))
+                tests += Loader.parse_cio(content, str(source))
                 try:
                     content_fences = Loader.extract_data_inside_code_fences(content, "toml")
-                    tests += Loader.parse_toml(content_fences, source)
+                    tests += Loader.parse_toml(content_fences, str(source))
                 except ValueError:
                     pass
                 return tests
             else:
-                print("warning: target format do not supported: " + source)  # make this a raise
+                print("warning: target format do not supported: " + str(source))  # make this a raise
         else:
-            raise FileNotFoundError('warning: unable to find: ' + source)
+            raise FileNotFoundError('warning: unable to find: ' + str(source))
         return []

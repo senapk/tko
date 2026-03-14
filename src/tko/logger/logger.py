@@ -3,10 +3,12 @@ from tko.settings.task_listener import TaskListener
 from tko.settings.daily_listener import DailyListener
 from tko.logger.log_history import LogHistory
 from tko.logger.log_item_base import LogItemBase
+from pathlib import Path
+
 
 class Logger:
 
-    def __init__(self, rep_folder: str):
+    def __init__(self, rep_folder: Path):
         self.tasks = TaskListener()
         self.daily = DailyListener()
         self.history = LogHistory(rep_folder, [self.tasks.handle_log_entry, self.daily.handle_entry_incoming])

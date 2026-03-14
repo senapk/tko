@@ -7,6 +7,7 @@ from tko.util.runner import Runner
 from tko.util.decoder import Decoder
 import yaml #type: ignore
 import io
+from pathlib import Path
 
 class CompileError(Exception):
     def __init__(self, message: str):
@@ -16,7 +17,7 @@ class CompileError(Exception):
         return self.message
 
 class Executable:
-    def __init__(self, cmd: list[str] | None = None, files: list[str] | None =  None, folder: str | None= None):
+    def __init__(self, cmd: list[str] | None = None, files: list[Path] | None =  None, folder: str | None= None):
         if cmd is None:
             cmd = []
         if files is None:
@@ -28,7 +29,7 @@ class Executable:
         self.__error_msg: Text = Text()
         self.need_shell_mode: bool = False # subprocess needs bash mode to process symbols like & or |
     
-    def set_executable(self, cmd: list[str], files: list[str], folder: str | None = None):
+    def set_executable(self, cmd: list[str], files: list[Path], folder: str | None = None):
         self.__compiled = True
         self.__cmd_list = cmd
         self.__files = files
@@ -38,9 +39,9 @@ class Executable:
     def get_command(self) -> tuple[list[str], str | None]:
         cmd: list[str] | str = self.__cmd_list
         if isinstance(cmd, str):
-            cmd += " " + " ".join(self.__files)
+            cmd += " " + " ".join([file.name for file in self.__files])
         else:
-            cmd += self.__files
+            cmd += [file.name for file in self.__files]
         return cmd, self.__folder
 
     def set_compile_error(self, error_msg: Text | str):
@@ -62,13 +63,13 @@ class Executable:
         return self.__error_msg
 
 class SolverBuilder:
-    def __init__(self, args_list: list[str]):
-        self.args_list: list[str] = [os.path.normpath(SolverBuilder.__add_dot_bar(path)) for path in args_list]
-
+    def __init__(self, args_list: list[Path]):
+        self.args_list: list[Path] = args_list
+        self.cache_dir: Path = Path()
         if len(self.args_list) > 0:
-            self.cache_dir = os.path.join(os.path.dirname(self.args_list[0]), ".build")
+            self.cache_dir = self.args_list[0].parent / ".build"
         else:
-            self.cache_dir = os.path.abspath(tempfile.mkdtemp())
+            self.cache_dir = Path(tempfile.mkdtemp())
         self.clear_cache()
         self.__exec: Executable = Executable()
 
@@ -84,11 +85,11 @@ class SolverBuilder:
         return self.__exec.has_compile_error()
 
     def set_main(self, main: str):
-        list_main: list[str] = []
-        list_other: list[str] = []
+        list_main: list[Path] = []
+        list_other: list[Path] = []
 
         for path in self.args_list:
-            if os.path.basename(path) == main:
+            if path.name == main:
                 list_main.append(path)
             else:
                 list_other.append(path)
@@ -118,28 +119,28 @@ class SolverBuilder:
         self.reset()
         first = self.args_list[0]
 
-        if first.endswith(".py"):
+        if first.suffix == ".py":
             self.__prepare_python()
-        elif first.endswith(".yaml"):
+        elif first.suffix == ".yaml":
             self.__prepare_yaml()
-        elif first.endswith(".mk"):
+        elif first.suffix == ".mk":
             self.__prepare_make()
-        elif first.endswith(".js"):
+        elif first.suffix == ".js":
             self.__prepare_js()
-        elif first.endswith(".ts"):
+        elif first.suffix == ".ts":
             self.__prepare_ts(free_run_mode)
-        elif first.endswith(".java"):
+        elif first.suffix == ".java":
             self.__prepare_java()
-        elif first.endswith(".hs"):
+        elif first.suffix == ".hs":
             self.__prepare_hs()
-        elif first.endswith(".c") or first.endswith(".h"):
+        elif first.suffix == ".c" or first.suffix == ".h":
             self.__prepare_c()
-        elif first.endswith(".cpp") or first.endswith(".hpp"):
+        elif first.suffix == ".cpp" or first.suffix == ".hpp":
             self.__prepare_cpp()
-        elif first.endswith(".go"):
+        elif first.suffix == ".go":
             self.__prepare_go()
         else:
-            self.__exec.set_executable(self.args_list, [], "")
+            self.__exec.set_executable([str(x) for x in self.args_list], [], "")
 
     def __prepare_python(self):
         cmd_name = "python3"
@@ -152,15 +153,15 @@ class SolverBuilder:
 
         first = self.args_list[0]
 
-        filename = os.path.basename(first)
-        cmd: list[str] = ["javac"] + self.args_list + ['-d', self.cache_dir]
+        filename = first.name
+        cmd: list[str] = ["javac"] + [str(x) for x in self.args_list] + ['-d', str(self.cache_dir)]
         return_code, stdout, stderr = Runner.subprocess_run(cmd)
         if return_code != 0:
             self.__exec.set_compile_error(stdout + stderr)
         else:
-            self.__exec.set_executable(["java", "-cp"], [self.cache_dir, filename[:-5]])  # removing the .java
+            self.__exec.set_executable(["java", "-cp"], [self.cache_dir / filename[:-5]])  # removing the .java
 
-    def update_input_function(self, free_run_mode: bool, path_list: list[str], copy_dir: str):
+    def update_input_function(self, free_run_mode: bool, path_list: list[Path], copy_dir: Path):
         new_files: list[str] = []
         for origin in self.args_list:
             new_files.append(os.path.join(copy_dir, os.path.basename(origin)))
@@ -248,16 +249,16 @@ class SolverBuilder:
 
     def __prepare_go(self):
         self.check_tool("go")
-        cache_exec = os.path.join(self.cache_dir, "main")
-        cmd = ["go", "build", "-o", cache_exec] + self.args_list
+        cache_exec = self.cache_dir / "main"
+        cmd: list[str] = ["go", "build", "-o", str(cache_exec)] + [str(x) for x in self.args_list]
         return_code, stdout, stderr = Runner.subprocess_run(cmd)
         if return_code != 0:
             self.__exec.set_compile_error(stdout + stderr)
         else:
-            self.__exec.set_executable([cache_exec], [])
+            self.__exec.set_executable([str(cache_exec)], [])
 
     def __prepare_ts(self, free_run_mode: bool):
-        copy_dir = os.path.join(self.cache_dir, "src")
+        copy_dir = self.cache_dir / "src"
         # remove the cache dir
         if os.path.exists(copy_dir):
             shutil.rmtree(copy_dir, ignore_errors=True)
@@ -268,27 +269,25 @@ class SolverBuilder:
             transpiler += ".cmd"
 
         new_files = [os.path.abspath(x) for x in new_files]
-        self.cache_dir = os.path.abspath(self.cache_dir)
 
         self.check_tool(transpiler)
         self.check_tool("node")
         transpiler = ["npx", "esbuild"]
-        cmd: list[str] = transpiler + new_files + ["--outdir=" + self.cache_dir, "--format=cjs", "--log-level=error"]
+        cmd: list[str] = transpiler + new_files + ["--outdir=" + str(self.cache_dir), "--format=cjs", "--log-level=error"]
         return_code, stdout, stderr = Runner.subprocess_run(cmd)
 
         if return_code != 0:
             self.__exec.set_compile_error(stdout + stderr)
         else:
-            new_source_list: list[str] = []
+            new_source_list: list[Path] = []
             for source in new_files:
-                new_source_list.append(os.path.join(self.cache_dir, os.path.basename(source)[:-2] + "js"))
+                new_source_list.append(self.cache_dir / (os.path.basename(source)[:-2] + "js"))
             self.__exec.set_executable(cmd=["node"], files=new_source_list)  # renaming solver to main
 
     def __prepare_c_cpp(self, pre_args: list[str], pos_args: list[str]):
-        tempdir = self.cache_dir
-        source_list = [x for x in self.args_list if not x.endswith(".h") and not x.endswith(".hpp")]
-        exec_path = os.path.join(tempdir, ".a.out")
-        cmd = pre_args + source_list + ["-o", exec_path] + pos_args
+        source_list = [x for x in self.args_list if not x.suffix == ".h" and not x.suffix == ".hpp"]
+        exec_path = self.cache_dir / ".a.out"
+        cmd: list[str] = pre_args + [str(x) for x in source_list] + ["-o", str(exec_path)] + pos_args
         return_code, stdout, stderr = Runner.subprocess_run(cmd)
         if return_code != 0:
             self.__exec.set_compile_error(stdout + stderr)
@@ -312,9 +311,3 @@ class SolverBuilder:
         pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror", "-Wno-deprecated"]
         pos: list[str] = []
         self.__prepare_c_cpp(pre, pos)
-
-    @staticmethod
-    def __add_dot_bar(solver: str) -> str:
-        if os.sep not in solver and os.path.isfile("." + os.sep + solver):
-            solver = "." + os.sep + solver
-        return solver

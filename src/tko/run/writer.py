@@ -5,7 +5,7 @@ from tko.util.pattern_loader import PatternLoader
 from tko.enums.identifier_type import IdentifierType
 from tko.run.unit import Unit
 from tko.util.decoder import Decoder
-
+from pathlib import Path
 class Writer:
 
     def __init__(self):
@@ -65,7 +65,7 @@ class Writer:
         return text
 
     @staticmethod
-    def save_dir_files(folder: str, pattern_loader: PatternLoader, label: str, unit: Unit) -> None:
+    def save_dir_files(folder: Path, pattern_loader: PatternLoader, label: str, unit: Unit) -> None:
         file_source = pattern_loader.make_file_source(label)
         with open(os.path.join(folder, file_source.input_file), "w", encoding="utf-8") as f:
             f.write(unit.input)
@@ -73,8 +73,8 @@ class Writer:
             f.write(unit.get_expected())
 
     @staticmethod
-    def save_target(target: str, unit_list: list[Unit], quiet: bool) -> bool:
-        def save_dir(_target: str, _unit_list: list[Unit]):
+    def save_target(target: Path, unit_list: list[Unit], quiet: bool) -> bool:
+        def save_dir(_target: Path, _unit_list: list[Unit]):
             folder = _target
             pattern_loader = PatternLoader()
             number = 0
@@ -82,10 +82,10 @@ class Writer:
                 Writer.save_dir_files(folder, pattern_loader, str(number).zfill(2), unit)
                 number += 1
 
-        def save_file(_target: str, _unit_list: list[Unit]):
-            if _target.endswith(".tio"):
+        def save_file(_target: Path, _unit_list: list[Unit]):
+            if _target.suffix == ".tio":
                 _new = "\n".join([Writer.to_tio(unit) for unit in _unit_list])
-            elif _target.endswith(".toml"):
+            elif _target.suffix == ".toml":
                 _new = "\n".join([Writer.to_toml(unit) for unit in _unit_list])
             else:
                 _new = "\n".join([Writer.to_vpl(unit) for unit in _unit_list])
@@ -102,15 +102,15 @@ class Writer:
             with open(_target, "w", encoding="utf-8") as f:
                 f.write(_new)
                 if not quiet:
-                    print("file " + _target + " wrote")
+                    print("file " + str(_target) + " wrote")
                 return True
 
-        target_type = Identifier.get_type(target)
+        target_type = Identifier.get_type(str(target))
         if target_type == IdentifierType.OBI:
             save_dir(target, unit_list)
         elif target_type in [IdentifierType.TIO, IdentifierType.VPL, IdentifierType.TOML]:
             save_file(target, unit_list)
         else:
-            print("fail: target " + target + " do not supported for build operation\n")
+            print("fail: target " + str(target) + " do not supported for build operation\n")
             return False
         return True

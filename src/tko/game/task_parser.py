@@ -4,11 +4,11 @@ from tko.game.task import Task
 import os
 import re
 from icecream import ic # type: ignore
-
+from pathlib import Path
 
 class TaskParser:
 
-    def __init__(self, index_path: str, source_alias: str):
+    def __init__(self, index_path: Path, source_alias: str):
         self.index_path = index_path
         self.task: Task | None = Task().set_alias(source_alias)
 
@@ -98,7 +98,7 @@ class TaskParser:
             return self
         
         self.task.target = link
-        task.set_origin_folder(os.path.dirname(self.redirect_from_readme(link)))
+        task.set_origin_folder(Path(os.path.dirname(self.redirect_from_readme(link))))
 
         return self
 

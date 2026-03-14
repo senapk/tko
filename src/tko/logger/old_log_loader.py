@@ -1,4 +1,5 @@
 import io
+from pathlib import Path
 
 from tko.logger.log_item_base import LogItemBase
 from tko.logger.log_item_exec import LogItemExec
@@ -93,8 +94,8 @@ class TrackerLoader: # deprecated
         return output
 
 class OldLogLoader:
-    def __init__(self, rep_folder: str):
-        self.rep_folder = rep_folder
+    def __init__(self, rep_folder: Path):
+        self.rep_folder: Path = rep_folder
         self.paths = RepPaths(rep_folder)
         self.base_dict: dict[dt.datetime, LogItemBase] = {}
 
@@ -161,6 +162,7 @@ class OldLogLoader:
             return item
         else:
             pass
+        return item
 
     @staticmethod
     def __convert_to_base_list(e: LogAction) -> LogItemBase | None:
@@ -200,7 +202,7 @@ class OldLogLoader:
         return LogAction(hash, timestamp, action_value, task, payload)
 
     @staticmethod
-    def __load_file(history_file: str | None) -> list[LogAction]:
+    def __load_file(history_file: Path | None) -> list[LogAction]:
         if history_file is None:
             return []
         if not os.path.exists(history_file):

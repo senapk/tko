@@ -1,28 +1,27 @@
-import shutil
-
 from tko.settings.rep_paths import RepPaths
 from tko.settings.rep_source import RepSource
 from tko.settings.repository import Repository
 from tko.settings.settings import Settings
 from tko.util.text import Text
 import os
+from pathlib import Path
 
 class RepSourceActions:
-    def __init__(self, folder: str | None):
+    def __init__(self, folder: Path | None):
         # if folder is set, use folder, else use remote if remote, else .
         if folder is not None:
-            folder = os.path.abspath(folder)
+            folder = Path(folder).resolve()
         else:
-            folder = os.path.abspath(os.getcwd())
+            folder = Path.cwd()
 
         path = RepPaths.rec_search_for_repo(folder)
-        if path == "":
+        if path is None:
             raise ValueError(f"Repositório não encontrado em {folder}")
         self.folder = folder
-        self.rep = Repository(path).load_config()
+        self.repo = Repository(path).load_config()
     
     def remote_ls(self):
-        rep = self.rep
+        rep = self.repo
         sources = rep.data.get_sources()
         print("Você também pode configurar as fontes e filtros manualmente editando o arquivo:")
         print(Text.format("{y}", rep.paths.get_config_file()))
@@ -39,16 +38,12 @@ class RepSourceActions:
                 print(f"    - {f}")
 
     def remote_rm(self, alias: str) -> None:
-        rep = self.rep
+        rep = self.repo
         sources = rep.data.get_sources()
         found = False
         for source in sources:
             if source.name == alias:
                 found = True
-                if source.is_git_source():
-                    cache_folder = source.get_source_cache_folder()
-                    if os.path.exists(cache_folder):
-                        shutil.rmtree(cache_folder)
                 rep.data.del_source(alias)
                 print(Text.format("Fonte {y} removida com sucesso.", alias))
                 break
@@ -57,7 +52,7 @@ class RepSourceActions:
         rep.save_config()
 
     def remote_filter(self, alias: str, quests: list[str] | None = None, tasks: list[str] | None = None, clear: bool = False) -> None:
-        rep = self.rep
+        rep = self.repo
         sources = rep.data.get_sources()
         found = False
         for source in sources:
@@ -85,39 +80,39 @@ class RepSourceActions:
         rep.save_config()
 
     def remote_add(self, name: str, remote_default: str | None, remote_url: str | None, remote_dir: str | None, quest_filter: list[str] | None, task_filter: list[str] | None, writeable: bool, branch: str = "master") -> None:
-        # check if name already exists
-        if any(source.name == name for source in self.rep.data.get_sources()):
+        
+        if any(source.name == name for source in self.repo.data.get_sources()):
             raise Warning("fail: fonte com esse nome já existe.")
 
-        rep = self.rep
+        repo = self.repo
         if remote_default is not None:
-            print(Text.format("Adicionando fonte remota apontando para repositório remoto {y}.", remote_default))
+            print(Text.format("Adicionando fonte remota apontando para repositório git remoto {y}.", remote_default))
             url: str = ""
             settings = Settings()
             if not settings.has_alias_git(remote_default):
                 raise Warning("fail: alias git remoto não encontrado.")
             url = settings.get_alias_git(remote_default)
-            self.git_clone_repository(url, name, quest_filter, branch)
+            self.git_clone_repository(url)
+            self.repo.data.set_source(RepSource(alias=name).set_git_source(target=url, branch=branch).set_filters(quest_filter, task_filter).set_writeable(writeable))
         elif remote_dir is not None:
-            print(Text.format("Adicionando fonte local apontando parao repositório {y}.", remote_dir))
-            source = os.path.abspath(remote_dir)
-            rep.data.set_source(RepSource(alias=name).set_local_source(target=source).set_filters(quests=quest_filter, tasks=task_filter).set_writeable(writeable))
+            dir_path = Path(remote_dir)
+            if not dir_path.exists() or not dir_path.is_dir():
+                raise Warning("fail: diretório remoto não encontrado.")
+            print(Text.format("Adicionando fonte remota apontando parao repositório no diretorio {y}.", dir_path))
+            repo.data.set_source(RepSource(alias=name).set_local_source(target=dir_path).set_filters(quests=quest_filter, tasks=task_filter).set_writeable(writeable))
         elif remote_url is not None:
-            self.git_clone_repository(remote_url, name, quest_filter, branch)
+            print(Text.format("Adicionando fonte remota apontando para repositório git remoto {y}.", remote_url))
+            self.git_clone_repository(remote_url)
+            self.repo.data.set_source(RepSource(alias=name).set_git_source(target=remote_url, branch=branch).set_filters(quest_filter, task_filter).set_writeable(writeable))
 
-        self.rep.save_config()
+        self.repo.save_config()
    
 
-    def git_clone_repository(self, link: str, alias: str, filters: list[str] | None, branch: str) -> None:
+    def git_clone_repository(self, link: str) -> None:
         print(Text.format("Clonando repositório remoto {y}.", link))
-        cache_path = self.rep.paths.get_cache_folder()
-        target = os.path.join(cache_path, alias)
-        if os.path.exists(target):
-            shutil.rmtree(target)
-        if not self.rep.clone_repository_git(link, target):
-            return
-        print(Text.format("Repositório clonado com sucesso em {y}.", target))
-        self.rep.data.set_source(RepSource(alias=alias).set_git_source(target=link, branch=branch).set_filters(filters))
+        path = self.repo.cache.get(link, force_update=True)
+        print(Text.format("Repositório {y}clonado com sucesso em {y}.", link, path))
+        
 
 
     def print_end_msg(self):

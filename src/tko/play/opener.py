@@ -3,6 +3,7 @@ from tko.play.floating_manager import FloatingManager
 from tko.util.text import Text
 from tko.settings.settings import Settings
 from tko.down.drafts import Drafts
+from pathlib import Path
 
 import tempfile
 import os
@@ -12,14 +13,14 @@ class Opener:
     def __init__(self, settings: Settings):
         self.settings = settings
         self.fman: None | FloatingManager = None
-        self.folders: list[str] = []
+        self.folders: list[Path] = []
         self.language: str = ""
 
     def set_fman(self, fman: FloatingManager):
         self.fman = fman
         return self
     
-    def set_target(self, folders: list[str]):
+    def set_target(self, folders: list[Path]):
         self.folders = folders
         return self
 
@@ -57,22 +58,22 @@ class Opener:
             self.fman.add_input(floating)
 
     @staticmethod
-    def try_add(files_to_open: list[str], folder: str, file: str):
-        path = os.path.join(folder, file)
-        if os.path.isfile(path):
+    def try_add(files_to_open: list[Path], folder: Path, file: Path):
+        path = folder / file
+        if path.is_file():
             files_to_open.append(path)
 
-    def load_folder(self, folder: str):
-        files_to_open: list[str] = []
+    def load_folder(self, folder: Path) -> list[Path]:
+        files_to_open: list[Path] = []
         files_to_open += Drafts.load_drafts_only(folder, self.language, ["md"])
         return files_to_open
 
     def load_folders_and_open(self):
-        files_to_open: list[str] = []
+        files_to_open: list[Path] = []
         for folder in self.folders:
             files_to_open += self.load_folder(folder)
         if len(files_to_open) != 0:
-            self.open_files(files_to_open)
+            self.open_files([str(f) for f in files_to_open])
 
     def __call__(self):
         self.load_folders_and_open()

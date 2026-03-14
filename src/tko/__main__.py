@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import os
 from pathlib import Path
 import sys
 from icecream import ic # type: ignore
@@ -14,8 +13,6 @@ from tko.feno.older import older_main
 from tko.feno.remote_md import remote_main
 from tko.feno.filter import filter_main, build_drafts_main
 from tko.feno.grading import Grading
-
-from platformdirs import user_cache_dir
 
 from tko.cmds.cmd_task import CmdTask
 from tko.cmds.cmd_rep import CmdRep
@@ -104,45 +101,43 @@ class Main:
         update: bool = args.update
  
         if args.global_cache:
-            cache_folder: str | None = user_cache_dir("tko")
-            print("Usando cache global em: " + cache_folder)
-        else:
-            cache_folder = None
+            RepPaths.use_global_cache_folder = True
+            print(f"Usando cache global em: {RepPaths('').get_cache_folder()}")
 
-        folder = args.changedir
+        changedir = args.changedir
 
-        rec_folder = RepPaths.rec_search_for_repo(folder)
-        if rec_folder != "":
-            folder = rec_folder
-        action = CmdOpen(settings, update, cache_folder).load_folder(folder)
+        rec_folder = RepPaths.rec_search_for_repo(changedir)
+        if rec_folder is not None:
+            changedir = rec_folder
+        action = CmdOpen(settings, update).load_folder(changedir)
         if not CheckVersion(settings).is_updated():
-            action.set_need_update()
+            action.display_need_update()
         action.execute()
 
     @staticmethod
     def collect_task(args: argparse.Namespace):
         settings = Settings()
-        folder = args.folder
-        rec_folder = RepPaths.rec_search_for_repo(folder)
-        if rec_folder != "":
-            folder = rec_folder
-        rep = Repository(folder)
+        changedir = args.changedir
+        rec_folder = RepPaths.rec_search_for_repo(changedir)
+        if rec_folder is not None:
+            changedir = rec_folder
+        rep = Repository(changedir)
         width: int  = args.graph[0]
         height: int  = args.graph[1]
         CmdTask.show_graph(settings, rep, args.label, width, height)
 
     @staticmethod
     def init(args: argparse.Namespace):
-        folder: str | None = args.changedir
+        changedir: Path | None = args.changedir
         language: str | None = args.language
-        rep_starter = RepStarter(folder=folder, language=language)
+        rep_starter = RepStarter(folder=changedir, language=language)
         rep_starter.execute()
 
     @staticmethod
     def remote_ls(args: argparse.Namespace):
-        folder: str | None = args.changedir
+        changedir: Path | None = args.changedir
         try:
-            rep_actions = RepSourceActions(folder)
+            rep_actions = RepSourceActions(changedir)
             rep_actions.remote_ls()
         except ValueError as e:
             print(f"Erro ao listar fontes: {e}")
@@ -150,42 +145,42 @@ class Main:
     @staticmethod
     def remote_rm(args: argparse.Namespace):
         name: str = args.name
-        folder: str | None = args.changedir
+        changedir: Path | None = args.changedir
         try:
-            rep_actions = RepSourceActions(folder)
+            rep_actions = RepSourceActions(changedir)
             rep_actions.remote_rm(alias=name)
         except ValueError as e:
             print(f"Erro ao deletar fonte: {e}")
 
     @staticmethod
     def remote_add(args: argparse.Namespace):
-        source: str = args.source
-        default_git_alias = ""
-        git_clone = ""
-        local_source = ""
-        if source.startswith("@"):
-            default_git_alias = source[1:]
-        elif source.startswith("http:") or source.startswith("https:") or source.startswith("ssh:"):
-            git_clone = source
+        target: str = args.target
+        default_git_alias: str | None = None
+        git_repository_url: str | None = None
+        local_source_dir: str | None = None
+
+        if target.startswith("@"):
+            default_git_alias = target[1:]
+        elif target.startswith("http:") or target.startswith("https:") or target.startswith("ssh:"):
+            git_repository_url = target
         else:
-            local_source = source
+            local_source_dir = target
 
         git_branch: str = args.branch
         writeable: bool = args.write
 
-        rep_folder: str | None = args.changedir
-        
+        changedir: Path | None = args.changedir
         name: str = args.name
         quest_filter: list[str] | None = args.quest
         task_filter: list[str] | None = args.task
         try:
-            rep_actions = RepSourceActions(rep_folder)
+            rep_actions = RepSourceActions(changedir)
             rep_actions.remote_add(
                 name=name, 
                 remote_default=default_git_alias, 
                 branch=git_branch, 
-                remote_url=git_clone, 
-                remote_dir=local_source, 
+                remote_url=git_repository_url, 
+                remote_dir=local_source_dir, 
                 quest_filter=quest_filter, 
                 task_filter=task_filter,
                 writeable=writeable)
@@ -196,14 +191,14 @@ class Main:
     @staticmethod
     def remote_filter(args: argparse.Namespace):
         name: str = args.name
-        folder: str | None = args.changedir
+        changedir: Path | None = args.changedir
         quests: list[str] | None = args.quest
         tasks: list[str] | None = args.task
         clear: bool = args.clear
         if clear and (quests or tasks):
             print("Erro: --clear não pode ser usado com --quest ou --task")
             return
-        rep_actions = RepSourceActions(folder)
+        rep_actions = RepSourceActions(changedir)
         rep_actions.remote_filter(alias=name, quests=quests, tasks=tasks, clear=clear)
 
     @staticmethod
@@ -375,7 +370,7 @@ class Parser:
         source_add = sub_source.add_parser("add", help="Add a new task source", add_help=False)
         source_add.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
         source_add.add_argument('name', type=str, help='Name of the remote')
-        source_add.add_argument('source', type=str, metavar=('SOURCE'), help='Remote source: git URL, local directory or preset name (e.g. @fup, @ed, @poo)')
+        source_add.add_argument('target', type=str, metavar=('TARGET'), help='Remote source: git URL, local directory or preset name (e.g. +fup, +ed, +poo)')
         source_add.add_argument('-q', '--quest', action='append', metavar=('QUEST_ID'), type=str, help='Load tasks only from selected quests')
         source_add.add_argument('-t', '--task', action='append', metavar=('TASK_ID'), type=str, help='Load tasks only from selected tasks')
         

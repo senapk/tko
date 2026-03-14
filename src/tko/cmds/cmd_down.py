@@ -12,6 +12,7 @@ from tko.settings.languages import available_languages
 from tko.feno.remote_md import Absolute
 from tko.game.task import Task
 from tko.feno.filter import CodeFilter
+from pathlib import Path
 
 class CmdLineDown:
     def __init__(self, settings: Settings, rep: Repository, task_key: str, game: Game | None = None):
@@ -45,12 +46,12 @@ class CmdDown:
         origin_folder = self.task.get_origin_folder()
         if origin_folder is None:
             raise ValueError(f"Atividade {self.task_key} não possui pasta de origem para download")
-        self.origin_folder: str = origin_folder
+        self.origin_folder: Path = origin_folder
         
         destiny_folder = self.task.get_workspace_folder()
         if destiny_folder is None:
             raise ValueError(f"Atividade {self.task_key} não possui pasta de destino para download")
-        self.destiny_folder: str = destiny_folder
+        self.destiny_folder: Path = destiny_folder
        
         self.language: str = ""
         self.check_and_get_language()
@@ -74,7 +75,7 @@ class CmdDown:
             if len(os.listdir(self.destiny_folder)) == 0:
                 os.rmdir(self.destiny_folder)
 
-    def find_folder_for_drafts(self) -> str:
+    def find_folder_for_drafts(self) -> Path:
         lang = self.language
         destiny_folder = self.destiny_folder
         drafts_folder = os.path.join(destiny_folder, lang)
@@ -88,7 +89,7 @@ class CmdDown:
 
         if not on_root and not os.path.exists(drafts_folder):
             os.makedirs(drafts_folder, exist_ok=True)
-            return drafts_folder
+            return Path(drafts_folder)
         
         count = 1
         while True:
@@ -103,12 +104,12 @@ class CmdDown:
         self.actions.send_to_print(f"")
         self.actions.send_to_print(f"Se quiser utilizar os novos rascunhos, copie manualmente ")
         self.actions.send_to_print(f"os novos rascunhos para a pasta {lang} ")
-        return drafts_folder
+        return Path(drafts_folder)
 
-    def remove_draft_folder_if_duplicated(self, drafts_folder: str) -> tuple[bool, str]:
+    def remove_draft_folder_if_duplicated(self, drafts_folder: Path) -> tuple[bool, Path]:
         lang = self.language
-        destiny_folder = os.path.dirname(drafts_folder)
-        parts = drafts_folder.split(".")
+        destiny_folder = drafts_folder.parent
+        parts = drafts_folder.name.split(".")
         if len(parts) > 1:
             try:
                 count = int(parts[-1])
@@ -118,12 +119,12 @@ class CmdDown:
                     last = count - 1
                     last_path = ".".join(parts[:-1]) + f".{last}"
                 if os.path.exists(last_path):
-                    if self.folder_equals(drafts_folder, last_path):
+                    if self.folder_equals(drafts_folder, Path(last_path)):
                         shutil.rmtree(drafts_folder)
-                        return True, last_path
+                        return True, Path(last_path)
             except ValueError:
                 pass
-        return False, ""
+        return False, Path("")
 
     def download_from_external_source(self) -> bool:
         os.makedirs(self.destiny_folder, exist_ok=True)
@@ -134,7 +135,7 @@ class CmdDown:
         self.actions.cached = True
         destiny_drafts_folder = self.find_folder_for_drafts()
         origin_source = os.path.join(CodeFilter.get_default_drafts_dir(self.origin_folder), self.language)
-        if not self.copy_drafts_from(origin_source, destiny_drafts_folder):
+        if not self.copy_drafts_from(Path(origin_source), Path(destiny_drafts_folder)):
             self.actions.create_default_draft(destiny_drafts_folder, self.language)
 
         removed, last_path = self.remove_draft_folder_if_duplicated(destiny_drafts_folder)
@@ -159,7 +160,7 @@ class CmdDown:
         content = Absolute.change_to_relative_folder(content, source_folder_rel)
         self.actions.compare_and_save_to(content, destiny_readme)
     
-    def copy_drafts_from(self, origin_drafts_folder: str, destiny_draft_folder: str) -> bool:
+    def copy_drafts_from(self, origin_drafts_folder: Path, destiny_draft_folder: Path) -> bool:
         if not os.path.exists(origin_drafts_folder):
             return False
         os.makedirs(destiny_draft_folder, exist_ok=True)
@@ -168,7 +169,7 @@ class CmdDown:
         return False
         
 
-    def copy_drafts_from_cache(self, cache_draft_folder: str, destiny_draft_folder: str) -> bool:
+    def copy_drafts_from_cache(self, cache_draft_folder: Path, destiny_draft_folder: Path) -> bool:
         found: bool = False
         for file in os.listdir(cache_draft_folder):
             source_path = os.path.join(cache_draft_folder, file)
@@ -192,9 +193,9 @@ class CmdDown:
 
 
     @staticmethod
-    def folder_equals(folder1: str, folder2: str) -> bool:
+    def folder_equals(folder1: Path, folder2: Path) -> bool:
         """ Compare two folders and return if they have the same files with the same content """
-        if not os.path.exists(folder1) or not os.path.exists(folder2):
+        if not folder1.exists() or not folder2.exists():
             return False
         if len(os.listdir(folder1)) != len(os.listdir(folder2)):
             return False
@@ -249,7 +250,7 @@ class DownActions:
             else:
                 self.send_to_print(self.folder_and_file(path) + " (Inalterado)")
 
-    def create_default_draft(self, destiny: str, language: str) -> str:
+    def create_default_draft(self, destiny: Path, language: str) -> str:
         filename = "draft."
         draft_path = os.path.join(destiny, filename + language)
         os.makedirs(os.path.dirname(draft_path), exist_ok=True)

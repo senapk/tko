@@ -2,38 +2,35 @@ from tko.settings.settings import Settings
 from tko.settings.repository import Repository
 from tko.play.play import Play
 from tko.util.text import Text
-from tko.settings.rep_paths import RepPaths
+from pathlib import Path
 
 class CmdOpen:
-    def __init__(self, settings: Settings, force_update: bool, cache_folder: str | None = None):
+    def __init__(self, settings: Settings, force_update: bool):
         self.settings = settings
         self.need_update = False
-        self.rep: Repository | None = None
-        self.folder = ""
+        self.repo: Repository | None = None
+        self.repo_dir: Path | None = None
         self.force_update = force_update
-        if cache_folder is not None:
-            RepPaths.cache_folder_override = cache_folder
 
-    def set_need_update(self):
+    def display_need_update(self):
         self.need_update = True
 
-    def load_folder(self, folder: str):
-        self.folder = folder
-        self.rep = Repository(folder, self.force_update)
-        if not self.rep.paths.has_local_config_file():
+    def load_folder(self, repo_dir: Path):
+        self.repo_dir = repo_dir
+        self.repo = Repository(repo_dir, self.force_update)
+        if not self.repo.paths.has_local_config_file():
             print(Text.format("{r}: O parâmetro para o comando {g} {y} deve a pasta onde você iniciou o repositório.", "Erro", "tko open", "<pasta>"))
             print(Text.format("{g}: Navegue ou passe o caminho até a pasta do repositório e tente novamente.", "Ação"))
             print(Text.format("{g}: Ou use {y} para criar um novo repositório.", "Ação","tko init --remote [fup|poo|ed]"))
-            raise Warning(Text.format("{r}: {y} {}", "Erro:", folder, "não contém um repositório do tko"))
-        self.rep.load_config().load_game()
+            raise Warning(Text.format("{r}: {y} {}", "Erro:", repo_dir, "não contém um repositório do tko"))
+        self.repo.load_config().load_game()
         return self
 
-
     def execute(self):
-        if self.rep is None:
+        if self.repo is None:
             raise Warning("Repositório não encontrado")
 
-        play = Play(self.settings, self.rep)
+        play = Play(self.settings, self.repo)
         if self.need_update:
-            play.set_need_update()
+            play.display_need_update()
         play.play()

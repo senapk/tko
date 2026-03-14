@@ -34,6 +34,7 @@ from tko.logger.log_item_move import LogItemMove
 import shutil
 import tempfile
 import subprocess
+from pathlib import Path
 
 
 class PlayActions:
@@ -57,10 +58,10 @@ class PlayActions:
             Opener(Settings()).open_files([link])
 
     @staticmethod
-    def get_task_folder(task: Task) -> str:
+    def get_task_folder(task: Task) -> Path:
         folder = task.get_workspace_folder()
         if folder is None:
-            return ""
+            return Path("")
         return folder
 
     def reload_game(self):
@@ -99,7 +100,7 @@ class PlayActions:
         obj = self.tree.get_selected_throw()
         if isinstance(obj, Task):
             folder = self.get_task_folder(obj)
-            if folder == "" or not os.path.exists(folder):
+            if folder == Path("") or not os.path.exists(folder):
                 self.fman.add_input(
                     Floating().bottom().right()
                     .put_text("\nEssa tarefa não possui pasta de código local.\n")
@@ -196,14 +197,15 @@ class PlayActions:
 
     def create_draft(self):
         local_source = self.game.get_sandbox_source()
-        workspace_folder = os.path.join(local_source.get_source_workspace(), local_source.get_default_sandbox_draft_folder())
+        workspace_folder: Path = local_source.get_source_workspace() / local_source.get_default_sandbox_draft_folder()
         if not os.path.exists(workspace_folder):
             os.makedirs(workspace_folder)
         current_folders_on_rep = os.listdir(workspace_folder)
+        
         def __create(draft_name: str):
-            folder = os.path.join(workspace_folder, draft_name)
-            if not os.path.exists(folder):
-                os.makedirs(folder)
+            folder:Path = workspace_folder / draft_name
+            if not folder.exists():
+                folder.mkdir()
             else:
                 self.fman.add_input(
                     Floating().bottom().right()
@@ -215,7 +217,7 @@ class PlayActions:
             draft = ""
             if self.rep.data.lang in Drafts.drafts:
                 draft = Drafts.drafts[self.rep.data.lang]
-            with open(os.path.join(folder, f"draft.{self.rep.data.lang}"), "w", encoding="utf-8") as f:
+            with open(folder / f"draft.{self.rep.data.lang}", "w", encoding="utf-8") as f:
                 f.write(draft)
             sandbox_cluster = self.rep.game.get_sandbox_cluster()
             if not sandbox_cluster:
@@ -346,7 +348,7 @@ class PlayActions:
 
         return lambda: None
         
-    def run_selected_task(self, task: Task, task_dir: str) -> None:
+    def run_selected_task(self, task: Task, task_dir: Path) -> None:
         folder = task_dir
         run = Run(settings=self.settings, target_list=[folder], param=Param.Basic())
         run.set_lang(self.rep.data.lang)
@@ -359,7 +361,7 @@ class PlayActions:
         
         if not run.wdir.has_solver():
             lang = self.rep.data.get_lang()
-            draft_folder = os.path.join(folder, lang)
+            draft_folder = folder / lang
             draft_path = DownActions().create_default_draft(draft_folder, self.rep.data.get_lang())
             msg =  Floating().bottom().right().set_warning()
             msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.rep.data.get_lang()))

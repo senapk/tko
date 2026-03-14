@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 class Drafts:
 
@@ -125,11 +126,10 @@ main = putStrLn "qxcode"
         return max(numbered_keys) if numbered_keys else 0
 
     @staticmethod
-    def load_drafts_only(folder: str, lang: str, extra: list[str] | None = None) -> list[str]:
+    def load_drafts_only(folder: Path, lang: str, extra: list[str] | None = None) -> list[Path]:
         if extra is None:
             extra = []
-        folder = os.path.normpath(os.path.abspath(folder))
-        draft_list: list[str] = []
+        draft_list: list[Path] = []
         allowed = extra
         if lang != "":
             allowed.append(lang)
@@ -141,16 +141,16 @@ main = putStrLn "qxcode"
         if not os.path.isdir(folder):
             return []
         for root, _, files in os.walk(folder):
-            cut_root = root[len(folder):]
+            cut_root = root[len(str(folder)):]
             pieces = cut_root.split(os.sep)
             if any([piece.startswith(".") for piece in pieces]) or any([piece.startswith("_") for piece in pieces]):
                 continue
             for file in files:
                 if file.endswith(tuple(allowed)):
-                    draft_list.append(os.path.join(root, file))
+                    draft_list.append(Path(os.path.join(root, file)))
         return draft_list
     
     @staticmethod
-    def create_sandbox_draft(dir: str, key: str):
+    def create_sandbox_draft(dir: Path, key: str):
         with open (os.path.join(dir, "README.md"), "w", encoding="utf-8") as f:
             f.write(f"---\nkey: {key}\n---\n\n# {os.path.basename(dir)}\n\n" + Drafts.draft_readme)

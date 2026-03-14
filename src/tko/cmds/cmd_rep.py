@@ -1,4 +1,5 @@
 from __future__ import annotations
+from pathlib import Path
 from tko.settings.repository import Repository
 from tko.settings.settings import Settings
 from tko.logger.logger import Logger
@@ -91,7 +92,7 @@ class CmdRep:
 
     @staticmethod
     def collect(param: CollectParams) -> Collected:
-        rep = Repository(param.folder)
+        rep = Repository(Path(param.folder))
         if not rep.found():
             path = os.path.abspath(param.folder)
             print(f"Repository not found in {path}")

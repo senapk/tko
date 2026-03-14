@@ -1,11 +1,9 @@
 from __future__ import annotations
+from pathlib import Path
 from tko.settings.rep_data import RepData
 from typing import Any
-import os
-import urllib
 from tko.settings.rep_data import RepData
 from tko.settings.rep_source import RepSource
-from tko.util.remote_url import RemoteUrl
 from tko.game.game import Game
 from tko.util.decoder import Decoder
 from tko.util.text import Text
@@ -13,9 +11,9 @@ from tko.logger.logger import Logger
 import yaml # type: ignore
 from tko.settings.rep_paths import RepPaths
 from icecream import ic # type: ignore
-from tko.logger.delta import Delta
 from datetime import timedelta
 from tko.settings.git_cache import GitCache
+import os
 
 def remove_git_merge_tags(lines: list[str]) -> list[str]:
     # remove lines with <<<<<<<, =======, >>>>>>>>
@@ -29,46 +27,46 @@ def remove_git_merge_tags(lines: list[str]) -> list[str]:
 class Repository:
     cache_time_for_remote_source = 3600 # seconds
 
-    def __init__(self, folder: str, force_update: bool = False):
-        rep_folder: str = folder
+    def __init__(self, folder: Path, force_update: bool = False):
+        rep_folder: Path = folder
         recursive_folder = RepPaths.rec_search_for_repo(folder)
-        if recursive_folder != "":
+        if recursive_folder is not None:
             rep_folder = recursive_folder
         self.paths = RepPaths(rep_folder)
         self.data: RepData = RepData()
         self.game = Game()
         self.logger: Logger = Logger(rep_folder) 
         self.force_update: bool = force_update
-        self.git_cache = GitCache(self.paths.get_cache_folder(), timedelta(seconds=self.cache_time_for_remote_source))
+        self.cache = GitCache(self.paths.get_cache_folder(), timedelta(seconds=self.cache_time_for_remote_source))
 
     def found(self):
-        return os.path.isfile(self.paths.get_config_file())
+        return self.paths.get_config_file().exists()
 
-    def is_local_dir(self, path: str) -> bool:
+    def is_local_dir(self, path: Path) -> bool:
         rep_dir = self.paths.get_workspace_dir()
-        path = os.path.abspath(path)
-        return os.path.commonpath([rep_dir, path]) == rep_dir
+        path = path.resolve()
+        return path.is_relative_to(rep_dir)
 
     def load_game(self, try_update: bool = True, silent: bool = False) -> Repository:
         if not self.data.get_sources():
             self.load_config()
         if try_update:
             for source in self.data.get_sources():
-                self.update_cache_path(source)
+                _ = source.get_source_readme() # to ensure cache path is set
         sources: list[RepSource] = self.data.get_sources()
         self.game.set_sources(sources, self.data.lang, silent=silent)
         self.__load_tasks_from_rep_into_game()
         return self
     
-    def get_key_from_task_folder(self, folder: str) -> str:
-        path = os.path.abspath(folder)
-        parts = path.split(os.sep)
+    def get_key_from_task_folder(self, folder: Path) -> str:
+        path = folder.resolve()
+        parts = path.parts
         label = parts[-1]
         workspace = parts[-2]
         return f"{workspace}@{label}"
 
-    def is_task_folder(self, folder: str) -> bool:
-        label = os.path.basename(folder)
+    def is_task_folder(self, folder: Path) -> bool:
+        label = folder.name
         task_folder = self.get_task_folder_for_label(label)
         return task_folder == folder
     
@@ -79,37 +77,15 @@ class Repository:
             if key in self.game.tasks:
                 self.game.tasks[key].load_from_db(serial)
 
-    def get_task_folder_for_label(self, label: str) -> str:
+    def get_task_folder_for_label(self, label: str) -> Path:
         parts: list[str] = label.split("@")
         source = ""
         if len(parts) > 1:
             source = parts[0]
             label = parts[1]
-        return os.path.abspath(os.path.join(self.paths.root_folder, source, label))
+        return self.paths.root_folder / source / label
 
-    def down_source_from_remote_url(self, source: RepSource) -> bool:
-        cache_file = source.get_source_readme()
-        os.makedirs(self.paths.get_cache_folder(), exist_ok=True)
-        ru = RemoteUrl(source.get_url_link())
-        try:
-            ru.download_absolute_to(cache_file)
-            return True
-        except urllib.error.URLError: # type: ignore
-            print(f"Não foi possível baixar o arquivo do repositório alias:{source.name}, link:{source.get_url_link()}")
-            if os.path.exists(cache_file):
-                print("Usando arquivo do cache")
-            else:
-                raise Warning("fail: Arquivo do cache não encontrado")
-        return False
 
-    def update_cache_path(self, source: RepSource) -> None:
-        if source.is_sandbox_source():
-            return
-        if source.is_git_source():
-            path = self.git_cache.get(source.get_url_link(), force_update=self.force_update)
-            source.set_local_source
-
-    # configwa
     def load_config(self):
         content = Decoder.load(self.paths.get_config_file())
         local_data: dict[str, Any] = {}
@@ -139,31 +115,34 @@ class Repository:
         source.set_rep_globals(self.paths.get_workspace_dir(), self.paths.get_cache_folder())
         return source
 
+
     def save_config(self):
         self.data.version = "0.2"
-        yaml_file = self.paths.get_config_file()
-        if not os.path.exists(os.path.dirname(yaml_file)):
-            os.makedirs(os.path.dirname(yaml_file))
-        yaml_file_new = yaml_file + ".new"
-        yaml_file_bkp = yaml_file + ".backup"
-        with open(yaml_file_new, "w", encoding="utf-8") as f:
-            yaml.dump(self.data.save_to_dict(), f, default_flow_style=False, allow_unicode=True, sort_keys=False)
-        # copy file from yaml_file to yaml_file.backup
-        try:
-            Repository.rename_file(yaml_file, yaml_file_bkp)
-        except:
-            pass
-        Repository.rename_file(yaml_file_new, yaml_file)
+
+        path: Path = Path(self.paths.get_config_file())
+        path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_write_yaml(path, self.data.save_to_dict())
         return self
 
     def __str__(self) -> str:
         return f"data: {self.data}\n"
+        
 
-    @staticmethod
-    def rename_file(old_name: str, new_name: str):
-        if os.path.exists(old_name):
-            if os.path.exists(new_name):
-                os.remove(new_name)
-            os.rename(old_name, new_name)
-        else:
-            raise Warning(Text.format("O arquivo {y} não foi encontrado", old_name))
+def atomic_write_yaml(path: Path, data: dict[str, Any]) -> None:
+    tmp: Path = path.with_suffix(path.suffix + ".tmp")
+
+    with tmp.open("w", encoding="utf-8") as f:
+        yaml.safe_dump(data, f, allow_unicode=True, sort_keys=False)
+
+        f.flush()
+        os.fsync(f.fileno())
+
+    tmp.replace(path)
+
+    # fsync do diretório (POSIX apenas)
+    if os.name == "posix":
+        dir_fd: int = os.open(path.parent, os.O_DIRECTORY)
+        try:
+            os.fsync(dir_fd)
+        finally:
+            os.close(dir_fd)

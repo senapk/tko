@@ -2,10 +2,12 @@ import datetime
 import os
 import argparse
 import csv
+from pathlib import Path
 from tko.play.patch_history import PatchHistory
 from tko.util.decoder import Decoder
 import tempfile
 from tko.logger.log_sort import LogSort
+from pathlib import Path
 
 class Track:
     def __init__(self):
@@ -43,8 +45,8 @@ class Tracker:
 
     def __init__(self):
         self._result: str = "None"
-        self._files: list[str] = []
-        self._folder: str = ""
+        self._files: list[Path] = []
+        self._folder: Path = Path()
 
     def unfold_files(self, log_sort: LogSort) -> tuple[str, str]:
         output = "\n"
@@ -82,8 +84,8 @@ class Tracker:
             return output, temp_dir
 
 
-    def set_files(self, files: list[str]):
-        self._files = [os.path.abspath(f) for f in files]
+    def set_files(self, files: list[Path]):
+        self._files = files
         return self
     
     def set_result(self, result: str):
@@ -97,7 +99,7 @@ class Tracker:
     def get_log_full_path(self):
         return os.path.join(self._folder, Tracker.log_file)
 
-    def set_folder(self, folder: str):
+    def set_folder(self, folder: Path):
         self._folder = folder
         return self
     
@@ -114,7 +116,7 @@ class Tracker:
             raise ValueError(f"Invalid timestamp format: {timestamp}. Expected format is YYYY-MM-DD_HH-MM-SS.")
 
     # return timestamp of the last version of the file
-    def save_file_with_timestamp_prefix(self, timestamp: str, file: str) -> tuple[str, bool, int]:
+    def save_file_with_timestamp_prefix(self, timestamp: str, file: Path) -> tuple[str, bool, int]:
         filename = os.path.basename(file)
         ph = PatchHistory()
         json_file = os.path.join(self._folder, f"{filename}{Tracker.extension}")
@@ -173,5 +175,5 @@ class Tracker:
         parser.add_argument("files", metavar="files", type=str, nargs="+", help="files to be tracked.")
         args = parser.parse_args()
         
-        tracker = Tracker().set_folder(".track").set_files(args.files)
+        tracker = Tracker().set_folder(Path(".track")).set_files(args.files)
         tracker.store()

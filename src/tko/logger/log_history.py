@@ -10,16 +10,15 @@ import datetime as dt
 
 from tko.util.decoder import Decoder
 from typing import Callable
-import os
-
+from pathlib import Path
 
 class LogHistory:
 
-    def __init__(self, rep_folder: str, listeners: list[Callable[[LogItemBase, bool], None]] | None = None):
+    def __init__(self, rep_folder: Path, listeners: list[Callable[[LogItemBase, bool], None]] | None = None):
         if listeners is None:
             listeners = []
         self.paths = RepPaths(rep_folder)
-        self.log_folder: str = self.paths.get_log_folder()
+        self.log_folder: Path = self.paths.get_log_folder()
         self.listeners: list[Callable[[LogItemBase, bool], None]] = listeners
         self.entries: dict[dt.datetime, LogItemBase] = {}
         self.entries.update(self.__load_old_log())
@@ -39,16 +38,15 @@ class LogHistory:
     def get_entries(self) -> dict[dt.datetime, LogItemBase]:
         return self.entries
 
-    def get_log_folder(self) -> str | None:
+    def get_log_folder(self) -> Path:
         return self.log_folder
 
 
     @staticmethod
-    def log_file_for_day(folder: str, datetime: dt.datetime) -> str:
+    def log_file_for_day(folder: Path, datetime: dt.datetime) -> Path:
         date_str = datetime.strftime("%Y-%m-%d")
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        return os.path.abspath(os.path.join(folder, f"{date_str}.log"))
+        folder.mkdir(parents=True, exist_ok=True)
+        return folder / f"{date_str}.log"
 
     def append_new_action(self, item_base: LogItemBase) -> LogItemBase:
         now_str, now_dt = Delta.now()
@@ -58,20 +56,20 @@ class LogHistory:
             listener(item_base, True)
 
         log_folder = self.get_log_folder()
-        if log_folder is not None:
-            log_file = LogHistory.log_file_for_day(log_folder, item_base.get_datetime())
-            with open(log_file, 'a', encoding="utf-8", newline='') as file:
-                file.write(f'{item_base.encode_line()}\n')
+        log_file = LogHistory.log_file_for_day(log_folder, item_base.get_datetime())
+        with open(log_file, 'a', encoding="utf-8", newline='') as file:
+            file.write(f'{item_base.encode_line()}\n')
         return item_base
 
     def __load_daily_log_folder(self) -> dict[dt.datetime, LogItemBase]:
         log_folder = self.paths.get_log_folder()
-        if not os.path.exists(log_folder):
+        if not log_folder.exists():
             return {}
-        if not os.path.isdir(log_folder):
+        if not log_folder.is_dir():
             raise ValueError(f"Log folder '{log_folder}' is not a directory.")
-        files = os.listdir(log_folder)
-        files_path = [os.path.join(log_folder, f) for f in files if f.endswith('.log')]
+        files = log_folder.iterdir()
+
+        files_path = [f for f in files if f.suffix == '.log']
         if not files_path:
             return {}
         # begin with the older file

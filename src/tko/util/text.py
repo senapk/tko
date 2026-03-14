@@ -1,4 +1,5 @@
 from __future__ import annotations
+from pathlib import Path
 from typing import Any
 
 import re
@@ -239,7 +240,7 @@ class Text:
             output.add(self)
         return output
 
-    def add(self, value: str | Text.Token | Text | tuple[str, str] | None):
+    def add(self, value: str | Text.Token | Text | Any | tuple[str, str] | None):
         if value is None:
             return self
         if isinstance(value, str):
@@ -254,16 +255,19 @@ class Text:
             self.default_fmt = value.default_fmt
             self.data += [x for x in value.data]
         else:
-            raise TypeError("unsupported type '{}'".format(type(value)))
+            self.add(str(value))
+
         return self
     
-    def addf(self, fmt: str, value: str | Text.Token | Text | None):
+    def addf(self, fmt: str, value: str | Text.Token | Text | Any | None):
         if isinstance(value, str):
             self.add(Text.Token(value, fmt))
         elif isinstance(value, Text.Token):
             self.add(Text.Token(value.text, fmt))
         elif isinstance(value, Text):
             self.add(Text.Token(value.get_str(), fmt))
+        else:
+            self.add(Text.Token(str(value), fmt))
         return self
 
     def ljust(self, width: int, filler: Text.Token = Token(" ")):

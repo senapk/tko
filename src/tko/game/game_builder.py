@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from tko.down.drafts import Drafts
 from tko.game.quest_parser import QuestParser
 from tko.game.task_parser import TaskParser
@@ -21,11 +23,9 @@ class GameBuilder:
         self.unique_keys: set[str] = set()
 
     def build_from(self, language: str):
-        filename = self.source.get_source_readme()
+        filename: Path = self.source.get_source_readme()
         content: str = ""
-        if filename == "":
-            pass
-        elif not os.path.exists(filename):
+        if not filename.exists():
             print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}")
         else:
             content = Decoder.load(filename)
@@ -56,7 +56,7 @@ class GameBuilder:
         if quests is not None or tasks is not None:
             return
 
-        filename: str = self.source.get_source_readme()
+        filename: Path = self.source.get_source_readme()
         quests = self.collect_quests()
         # verificar se todas as quests requeridas existem e adicionar o ponteiro
         for q in quests.values():
@@ -113,7 +113,7 @@ class GameBuilder:
         task.set_key(yaml_key)
         task.set_title(title)
         task.set_alias(alias)
-        task.set_origin_folder(task_dir_path)
+        task.set_origin_folder(Path(task_dir_path))
         if self.source.is_read_only():
             task.set_workspace_folder(self.source.get_task_workspace(yaml_key))
         self.__add_task(task)

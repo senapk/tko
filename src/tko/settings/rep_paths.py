@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+from platformdirs import user_cache_dir
 
 class RepPaths:
     CFG_FILE = "repository.yaml"
@@ -9,49 +11,47 @@ class RepPaths:
     LOG_FOLDER = "log"
     CACHE_FOLDER = "cache"
     CONFIG_FOLDER = ".tko"
-    cache_folder_override: str | None = None # teacher tools, to avoid rewrite cache in student repos
+    use_global_cache_folder: bool =  False # teacher tools, to avoid rewrite cache in student repos
 
-    def __init__(self, rep_dir: str):
-        self.root_folder = rep_dir
+    def __init__(self, repo_dir: Path | str):
+        self.root_folder: Path = Path(repo_dir) if isinstance(repo_dir, str) else repo_dir
 
     @staticmethod
-    def rec_search_for_repo(folder: str) -> str:
-        abs_folder: str = os.path.abspath(folder)
-        if os.path.exists(os.path.join(abs_folder, RepPaths.CONFIG_FOLDER, RepPaths.CFG_FILE)):
-            return abs_folder
-        new_folder = os.path.dirname(abs_folder)
-        if new_folder == abs_folder: # não encontrou, não tem mais como subir
-            return ""
-        return RepPaths.rec_search_for_repo(new_folder)
+    def rec_search_for_repo(folder: Path) -> Path | None:
+        start: Path = Path(folder).resolve()
+        for path in (start, *start.parents):
+            if (path / RepPaths.CONFIG_FOLDER / RepPaths.CFG_FILE).exists():
+                return path
+        return None
     
-    def get_track_folder(self) -> str:
-        return os.path.abspath(os.path.join(self.root_folder, RepPaths.CONFIG_FOLDER, RepPaths.TRACK_FOLDER))
+    def get_track_folder(self) -> Path:
+        return self.root_folder / RepPaths.CONFIG_FOLDER / RepPaths.TRACK_FOLDER
 
-    def get_log_folder(self) -> str:
-        return os.path.abspath(os.path.join(self.root_folder, RepPaths.CONFIG_FOLDER, RepPaths.LOG_FOLDER))
-    
-    def get_cache_folder(self) -> str:
-        if RepPaths.cache_folder_override is not None:
-            return os.path.abspath(RepPaths.cache_folder_override)
-        return os.path.abspath(os.path.join(self.root_folder, RepPaths.CONFIG_FOLDER, RepPaths.CACHE_FOLDER))
+    def get_log_folder(self) -> Path:
+        return self.root_folder / RepPaths.CONFIG_FOLDER / RepPaths.LOG_FOLDER
 
-    def get_track_task_folder(self, label: str) -> str:
-        return os.path.abspath(os.path.join(self.root_folder, RepPaths.CONFIG_FOLDER, RepPaths.TRACK_FOLDER, label))
+    def get_cache_folder(self) -> Path:
+        if RepPaths.use_global_cache_folder:
+            return Path(user_cache_dir("tko")) / RepPaths.CACHE_FOLDER
+        return self.root_folder / RepPaths.CONFIG_FOLDER / RepPaths.CACHE_FOLDER
 
-    def get_config_folder(self) -> str:
-        return os.path.abspath(os.path.join(self.root_folder, RepPaths.CONFIG_FOLDER))
+    def get_track_task_folder(self, label: str) -> Path:
+        return self.root_folder / RepPaths.CONFIG_FOLDER / RepPaths.TRACK_FOLDER / label
 
-    def get_config_file(self) -> str:
-        return os.path.abspath(os.path.join(self.root_folder, RepPaths.CONFIG_FOLDER, RepPaths.CFG_FILE))
+    def get_config_folder(self) -> Path:
+        return self.root_folder / RepPaths.CONFIG_FOLDER
 
-    def get_config_backup_file(self) -> str:
-        return self.get_config_file() + ".backup"
-    
-    def get_old_history_file(self) -> str:
-        return os.path.abspath(os.path.join(self.root_folder, RepPaths.CONFIG_FOLDER, RepPaths.OLD_HISTORY_FILE))
+    def get_config_file(self) -> Path:
+        return self.root_folder / RepPaths.CONFIG_FOLDER / RepPaths.CFG_FILE
 
-    def get_workspace_dir(self) -> str:
-        return os.path.abspath(self.root_folder)
-    
+    def get_config_backup_file(self) -> Path:
+        return Path(str(self.get_config_file()) + ".backup")
+
+    def get_old_history_file(self) -> Path:
+        return self.root_folder / RepPaths.CONFIG_FOLDER / RepPaths.OLD_HISTORY_FILE
+
+    def get_workspace_dir(self) -> Path:
+        return self.root_folder
+
     def has_local_config_file(self) -> bool:
         return os.path.exists(self.get_config_file())

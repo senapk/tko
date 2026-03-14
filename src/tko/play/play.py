@@ -34,7 +34,7 @@ class Play:
         self.play_palette = PlayPalette(self.actions)
         # self.fman.add_input( Floating().set_content(opening['yoda'].splitlines()).set_warning() )
 
-    def set_need_update(self):
+    def display_need_update(self):
         self.gui.set_need_update()
 
     def save_to_json(self):

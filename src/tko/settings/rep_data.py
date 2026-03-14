@@ -1,8 +1,8 @@
+from pathlib import Path
+
 from tko.settings.rep_source import RepSource
 
-
 from typing import Any
-
 
 class RepData:
     def __init__(self):
@@ -31,7 +31,7 @@ class RepData:
                 return s
         return None
 
-    def ensure_sandbox_source(self, rep_workspace: str) -> None:
+    def ensure_sandbox_source(self, rep_workspace: Path) -> None:
         sandbox_source = self.get_source(RepSource.STUDENT_SANDBOX_ALIAS)
         if sandbox_source is None:
             sandbox_source = RepSource("").set_student_sandbox().ensure_sandbox_source(rep_workspace)

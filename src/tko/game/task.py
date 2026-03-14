@@ -1,4 +1,6 @@
 # from typing import override
+from pathlib import Path
+
 from tko.util.symbols import symbols
 from tko.util.text import Text
 from tko.game.tree_item import TreeItem
@@ -28,8 +30,8 @@ class Task(TreeItem):
         self.target = ""
         self.quest_key = ""
         self.cluster_key = ""
-        self.__origin_folder: str | None = None
-        self.__workspace_folder: str | None = None
+        self.__origin_folder: Path | None = None
+        self.__workspace_folder: Path | None = None
         self.__is_reachable = False
         self.default_min_value = 5 # default min grade to complete task
 
@@ -76,24 +78,24 @@ class Task(TreeItem):
             return False
         return self.get_origin_folder() == self.get_workspace_folder()
 
-    def set_origin_folder(self, folder: str):
+    def set_origin_folder(self, folder: Path):
         self.__origin_folder = folder
         return self
     
-    def get_origin_readme(self) -> str:
+    def get_origin_readme(self) -> Path:
         origin_folder = self.get_origin_folder()
         if origin_folder is not None:
-            return origin_folder + "/README.md"
-        return ""
-
-    def set_workspace_folder(self, folder: str):
+            return origin_folder / "README.md"
+        return Path("")
+    
+    def set_workspace_folder(self, folder: Path):
         self.__workspace_folder = folder
         return self
 
-    def get_origin_folder(self) -> str | None:
+    def get_origin_folder(self) -> Path | None:
         return self.__origin_folder
     
-    def get_workspace_folder(self) -> str | None:
+    def get_workspace_folder(self) -> Path | None:
         if self.__workspace_folder is not None:
             return self.__workspace_folder
         return self.__origin_folder

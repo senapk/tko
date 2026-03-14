@@ -1,10 +1,11 @@
 from tko.util.param import Param
 from tko.run.wdir import Wdir
 from tko.run.writer import Writer
+from pathlib import Path
 
 class CmdBuild:
 
-    def __init__(self, target_out: str, source_list: list[str], param: Param.Manip):
+    def __init__(self, target_out: Path, source_list: list[Path], param: Param.Manip):
         self.target_out = target_out
         self.source_list = source_list
         self.param = param

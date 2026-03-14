@@ -14,11 +14,11 @@ class Test:
 
     def test_database_legacy(self):
         # get path of this file
-        tp = TaskParser(index_path="/source/arquivo.md", source_alias="database")
+        tp = TaskParser(index_path=Path("/source/arquivo.md"), source_alias="database")
         task = tp.parse_line("- [ ] [@label complemente](data/label/r.md)", 0).get_task()
         assert task is not None
-        task.set_origin_folder("/ping/database/label")
-        task.set_workspace_folder("/rep/database/label")
+        task.set_origin_folder(Path("/ping/database/label"))
+        task.set_workspace_folder(Path("/rep/database/label"))
         assert task.get_key_only() == "label"
         assert task.get_alias() == "database"
         assert task.get_db_key() == "label" # database is hided by legacy compatibility
@@ -27,7 +27,7 @@ class Test:
     
     def test_database_poo(self):
         # get path of this file
-        tp = TaskParser(index_path="/source/arquivo.md", source_alias="poo")
+        tp = TaskParser(index_path=Path("/source/arquivo.md"), source_alias="poo")
         task = tp.parse_line("- [ ] [@label complemente](data/label/r.md)", 0).get_task()
         assert task is not None
         assert task.get_key_only() == "label"
@@ -39,7 +39,7 @@ class Test:
 
     def test_STATIC_FILE(self):
         # get path of this file
-        tp = TaskParser(index_path="/source/arquivo.md", source_alias="poo")
+        tp = TaskParser(index_path=Path("/source/arquivo.md"), source_alias="poo")
         task = tp.parse_line("- [ ] [@label complemente](poo/label/r.md)", 0).get_task()
         assert task is not None
         assert task.get_key_only() == "label"
@@ -51,7 +51,7 @@ class Test:
     def test_file_not_found(self):
         # get path of this file
         try:
-            (TaskParser("arquivo.md", "database")
+            (TaskParser(index_path=Path("arquivo.md"), source_alias="database")
                 .parse_line("- [ ] [@label complemente](database/label/f.md)", 0)
                 .check_path_try())
         except Warning as _:
