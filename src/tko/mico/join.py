@@ -5,7 +5,7 @@ from collections.abc import Callable
 from .class_task import ClassTask
 from .collected import Collected, Game
 from tko.logger.task_resume import TaskResume, Resume
-from tko.cmds.cmd_rep import CmdRep
+from tko.cmds.cmd_collect import CmdCollect
 from tko.game.task_info import TaskInfo
 from tko.game.quest_grader import QuestGrader
 import subprocess
@@ -202,11 +202,11 @@ class Join:
         Join.save_daily_graphs(class_task, user_info_map)
         ref_folder = class_task.get_reference_rep()
         if ref_folder is not None:
-            params = CmdRep.CollectParams()
+            params = CmdCollect.CollectParams()
             params.folder = ref_folder
             params.game = True
             params.json_output = True # dont echo
-            reference: Collected = CmdRep.collect(params)
+            reference: Collected = CmdCollect.collect(params)
         else:
             reference: Collected = list(user_info_map.values())[0] # TODO
 

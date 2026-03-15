@@ -1,5 +1,9 @@
 # Changelog
 
+- 8.4.0
+  - add: change to pathlib Path instead str
+  - fix: source remote add url
+  
 - 8.3.2
   - fix: remove charset-normalizer and chardet dependencies and code
   - add: improved drafts generation

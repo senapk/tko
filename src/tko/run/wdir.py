@@ -77,9 +77,8 @@ class Wdir:
         folder: Path = self.__autoload_folder
 
         # loading source list
-        files = folder.iterdir()
-        source_list: list[Path] = [Path(target) for target in files if target.suffix in [".tio", ".vpl", ".toml"]]
-        source_list.extend([Path(target) for target in files if target.suffix == ".md"])
+        source_list: list[Path] = [target for target in folder.iterdir() if target.suffix in [".tio", ".vpl", ".toml"]]
+        source_list.extend([target for target in folder.iterdir() if target.suffix == ".md"])
         
         if self.__lang != "":
             solver_list = Drafts.load_drafts_only(folder, self.__lang)
@@ -87,10 +86,6 @@ class Wdir:
             solver_list = Drafts.load_drafts_only(folder, "", extra=available_languages)
         solver_list = sorted(solver_list)
 
-        # if not self.__curses:
-        #     print("códigos encontrados: [" + ", ".join(solvers) + "]")
-        #     print("testes  encontrados: [" + ", ".join(sources) + "]")
-        #     print("Para remover um arquivo da lista, renomeie para sua extensão para .txt")
         self.set_solver(solver_list)
         self.set_sources(source_list)
         self.__autoload = True

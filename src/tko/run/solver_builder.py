@@ -17,31 +17,31 @@ class CompileError(Exception):
         return self.message
 
 class Executable:
-    def __init__(self, cmd: list[str] | None = None, files: list[Path] | None =  None, folder: str | None= None):
+    def __init__(self, cmd: list[str] | None = None, files: list[Path] | None =  None, folder: Path | None= None):
         if cmd is None:
             cmd = []
         if files is None:
             files = []
         self.__cmd_list: list[str] = cmd
-        self.__folder: str | None = folder
+        self.__folder: Path | None = folder
         self.__compiled: bool = False
         self.__compile_error: bool = False
         self.__error_msg: Text = Text()
         self.need_shell_mode: bool = False # subprocess needs bash mode to process symbols like & or |
     
-    def set_executable(self, cmd: list[str], files: list[Path], folder: str | None = None):
+    def set_executable(self, cmd: list[str], files: list[Path], folder: Path | None = None):
         self.__compiled = True
         self.__cmd_list = cmd
-        self.__files = files
-        self.__folder = folder
+        self.__files: list[Path] = files
+        self.__folder: Path | None = folder
         return self
     
-    def get_command(self) -> tuple[list[str], str | None]:
+    def get_command(self) -> tuple[list[str], Path | None]:
         cmd: list[str] | str = self.__cmd_list
         if isinstance(cmd, str):
-            cmd += " " + " ".join([file.name for file in self.__files])
+            cmd += " " + " ".join([str(file.resolve()) for file in self.__files])
         else:
-            cmd += [file.name for file in self.__files]
+            cmd += [str(file.resolve()) for file in self.__files]
         return cmd, self.__folder
 
     def set_compile_error(self, error_msg: Text | str):
@@ -140,17 +140,16 @@ class SolverBuilder:
         elif first.suffix == ".go":
             self.__prepare_go()
         else:
-            self.__exec.set_executable([str(x) for x in self.args_list], [], "")
+            self.__exec.set_executable([str(x) for x in self.args_list], [], None)
 
     def __prepare_python(self):
         cmd_name = "python3"
         if shutil.which(cmd_name) is None:
             cmd_name = "python"
-        self.__exec.set_executable([cmd_name], self.args_list, "")
+        self.__exec.set_executable([cmd_name], self.args_list, None)
 
     def __prepare_java(self):
         self.check_tool("javac")
-
         first = self.args_list[0]
 
         filename = first.name
@@ -159,7 +158,7 @@ class SolverBuilder:
         if return_code != 0:
             self.__exec.set_compile_error(stdout + stderr)
         else:
-            self.__exec.set_executable(["java", "-cp"], [self.cache_dir / filename[:-5]])  # removing the .java
+            self.__exec.set_executable(["java", filename[:-5]], [], self.cache_dir)  # removing the .java
 
     def update_input_function(self, free_run_mode: bool, path_list: list[Path], copy_dir: Path):
         new_files: list[str] = []
@@ -211,8 +210,8 @@ class SolverBuilder:
         return new_files
 
     def __prepare_yaml(self):
-        solver = os.path.abspath(self.args_list[0])
-        folder = os.path.dirname(solver)
+        solver: Path = self.args_list[0]
+        folder = solver.parent
         content = Decoder.load(solver)
         yaml_data = yaml.safe_load(content)
         self.__exec.need_shell_mode = True
@@ -285,6 +284,7 @@ class SolverBuilder:
             self.__exec.set_executable(cmd=["node"], files=new_source_list)  # renaming solver to main
 
     def __prepare_c_cpp(self, pre_args: list[str], pos_args: list[str]):
+
         source_list = [x for x in self.args_list if not x.suffix == ".h" and not x.suffix == ".hpp"]
         exec_path = self.cache_dir / ".a.out"
         cmd: list[str] = pre_args + [str(x) for x in source_list] + ["-o", str(exec_path)] + pos_args
@@ -292,12 +292,12 @@ class SolverBuilder:
         if return_code != 0:
             self.__exec.set_compile_error(stdout + stderr)
         else:
-            self.__exec.set_executable([], [exec_path])
+            self.__exec.set_executable([], [exec_path], None)
 
     def __prepare_hs(self):
         self.check_tool("runhaskell")
         self.check_tool("ghc")
-        self.__exec.set_executable(["runhaskell"], self.args_list, "")
+        self.__exec.set_executable(["runhaskell"], self.args_list, None)
 
 
     def __prepare_c(self):

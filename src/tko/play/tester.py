@@ -654,7 +654,7 @@ class Tester:
         elif key == ord(GuiKeys.lock):
             self.fman.add_input(Floating().bottom().right().set_warning().put_text("Função de travamento {}".format("ligada" if not self.locked_index else "desligada")))
             self.lock_unit()
-        elif key == ord(GuiKeys.edit):
+        elif key == ord(GuiKeys.edit) or key == ord(GuiKeys.edit_alt):
             if self.opener is not None:
                 self.opener.load_folders_and_open()
         elif key == ord(GuiKeys.self_evaluate):

@@ -29,7 +29,7 @@ class Repository:
 
     def __init__(self, folder: Path, force_update: bool = False):
         rep_folder: Path = folder
-        recursive_folder = RepPaths.rec_search_for_repo(folder)
+        recursive_folder = RepPaths.rec_search_for_repo_parents(folder)
         if recursive_folder is not None:
             rep_folder = recursive_folder
         self.paths = RepPaths(rep_folder)

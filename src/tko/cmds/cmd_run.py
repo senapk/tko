@@ -160,7 +160,7 @@ class Run:
             self.__fill_task()
 
     def __try_load_rep(self, dirname: Path) -> bool:
-        repo_path = RepPaths.rec_search_for_repo(dirname)
+        repo_path = RepPaths.rec_search_for_repo_parents(dirname)
         if repo_path is None:
             return False
         rep: Repository = Repository(repo_path)

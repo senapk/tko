@@ -1,3 +1,4 @@
+from pathlib import Path
 import subprocess
 import os
 from subprocess import PIPE
@@ -8,7 +9,7 @@ class Runner:
         pass
 
     @staticmethod
-    def subprocess_run(cmd: str | list[str], input_data: str = "", timeout: None | float = None, folder: str | None = None, shell_mode: bool = False) -> tuple[int, str, str]:
+    def subprocess_run(cmd: str | list[str], input_data: str = "", timeout: None | float = None, folder: Path | None = None, shell_mode: bool = False) -> tuple[int, str, str]:
         try:
             env = os.environ.copy()
             env['NO_COLOR'] = '1'

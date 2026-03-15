@@ -17,11 +17,29 @@ class RepPaths:
         self.root_folder: Path = Path(repo_dir) if isinstance(repo_dir, str) else repo_dir
 
     @staticmethod
-    def rec_search_for_repo(folder: Path) -> Path | None:
-        start: Path = Path(folder).resolve()
-        for path in (start, *start.parents):
-            if (path / RepPaths.CONFIG_FOLDER / RepPaths.CFG_FILE).exists():
+    def walk_to_root(start: Path):
+        current: Path = start.resolve()
+        while True:
+            yield current
+            if current.parent == current:
+                break
+            current = current.parent
+
+    @staticmethod
+    def rec_search_for_repo_subdir(folder: Path) -> list[Path]:
+        repos: list[Path] = [
+            cfg.parent.parent
+            for cfg in folder.rglob(f"{RepPaths.CONFIG_FOLDER}/{RepPaths.CFG_FILE}")
+        ]
+        return repos
+
+    @staticmethod
+    def rec_search_for_repo_parents(folder: Path) -> Path | None:
+        for path in RepPaths.walk_to_root(folder):
+            target: Path = path / RepPaths.CONFIG_FOLDER / RepPaths.CFG_FILE
+            if target.is_file():
                 return path
+
         return None
     
     def get_track_folder(self) -> Path:

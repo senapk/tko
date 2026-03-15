@@ -102,7 +102,7 @@ class Pull:
         # Use ThreadPoolExecutor para gerenciar as threads
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Cria um dicionário para mapear os objetos Future de volta para as pastas
-            future_to_folder = {executor.submit(Pull.pull, repo.folder): repo.folder for repo in repo_list}
+            future_to_folder = {executor.submit(Pull.pull, str(repo.folder)): repo.folder for repo in repo_list}
 
             # Itera sobre os resultados à medida que ficam prontos
             for future in as_completed(future_to_folder):

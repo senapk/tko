@@ -16,8 +16,6 @@ class UnitRunner:
             unit.set_received(executable.get_error_msg().get_str())
             return ExecutionResult.COMPILATION_ERROR
         cmd, folder = executable.get_command()
-        if folder == "":
-            folder = None
         if timeout == 0:
             timeout = None
         return_code, stdout, stderr = Runner.subprocess_run(

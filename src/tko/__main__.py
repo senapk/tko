@@ -15,7 +15,7 @@ from tko.feno.filter import filter_main, build_drafts_main
 from tko.feno.grading import Grading
 
 from tko.cmds.cmd_task import CmdTask
-from tko.cmds.cmd_rep import CmdRep
+from tko.cmds.cmd_collect import CmdCollect
 from tko.cmds.cmd_open import CmdOpen
 from tko.cmds.cmd_run import Run
 from tko.cmds.cmd_build import CmdBuild
@@ -88,7 +88,7 @@ class Main:
     def build(args: argparse.Namespace):
         PatternLoader.pattern = args.pattern
         manip = Param.Manip().set_unlabel(args.unlabel).set_to_sort(args.sort).set_to_number(args.number)
-        build = CmdBuild(args.target, args.target_list, manip)
+        build = CmdBuild(Path(args.target), [Path(x) for x in args.target_list], manip)
         build.execute()
 
     @staticmethod
@@ -106,7 +106,7 @@ class Main:
 
         changedir = args.changedir
 
-        rec_folder = RepPaths.rec_search_for_repo(changedir)
+        rec_folder = RepPaths.rec_search_for_repo_parents(changedir)
         if rec_folder is not None:
             changedir = rec_folder
         action = CmdOpen(settings, update).load_folder(changedir)
@@ -118,7 +118,7 @@ class Main:
     def collect_task(args: argparse.Namespace):
         settings = Settings()
         changedir = args.changedir
-        rec_folder = RepPaths.rec_search_for_repo(changedir)
+        rec_folder = RepPaths.rec_search_for_repo_parents(changedir)
         if rec_folder is not None:
             changedir = rec_folder
         rep = Repository(changedir)
@@ -301,7 +301,7 @@ class Parser:
 
         cfg_reset = subpar_repo.add_parser('reset',
                                            help='Reset configuration to factory default')
-        cfg_reset.set_defaults(func=CmdRep.reset)
+        cfg_reset.set_defaults(func=CmdCollect.reset)
 
         cfg_set = subpar_repo.add_parser('set', help='Set default configuration values')
 
@@ -342,14 +342,14 @@ class Parser:
         repo_collect.add_argument('--width', type=int, default=100, help="Daily graph width")
         repo_collect.add_argument('--height', type=int, default=10, help="Daily graph height")
         repo_collect.add_argument('--color', type=int, default=1, help="Daily graph color [0|1]")
-        repo_collect.set_defaults(func=CmdRep.collect_main)
+        repo_collect.set_defaults(func=CmdCollect.collect_main)
 
         extract_cmd = subpar_collect.add_parser("repos", help="Colect and merge data from many repos")
         extract_cmd.add_argument("path", type=str, nargs="+", help="Paths to repos")
         extract_cmd.add_argument("--json", "-j", type=str, help="Path to save the extracted JSON data")
         extract_cmd.add_argument("--csv", "-c", type=str, help="Path to save the extracted CSV data")
         extract_cmd.add_argument("--block_prefix", "-b", type=str, help="Block prefix to insert in csv file")
-        extract_cmd.set_defaults(func=CmdRep.collect_batch)
+        extract_cmd.set_defaults(func=CmdCollect.collect_batch)
 
     def add_parser_rep_actions(self):
         parser_init = self.subparsers.add_parser('init', help='Initialize empty TKO repository', add_help=False)

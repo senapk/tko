@@ -12,7 +12,7 @@ import shutil
 class GitCache:
 
     def __init__(self, cache_dir: str | Path, max_age: timedelta = timedelta(hours=1)) -> None:
-        self.cache_dir: Path = Path(cache_dir).expanduser()
+        self.cache_dir: Path = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         self.max_age: timedelta = max_age

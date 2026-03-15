@@ -21,6 +21,11 @@ class GameBuilder:
         self.active_cluster: Cluster | None = None
         self.active_quest: Quest | None = None
         self.unique_keys: set[str] = set()
+        self.interactive: bool = False
+
+    def set_interactive(self, interactive: bool):
+        self.interactive = interactive
+        return self
 
     def build_from(self, language: str):
         filename: Path = self.source.get_source_readme()
@@ -130,7 +135,8 @@ class GameBuilder:
             cluster_key = self.__get_active_cluster().get_key_only()
             self.__add_quest(Quest(entry, f"{cluster_key}:{entry}").set_alias(alias))
             self.__parse_quest_folder(quest_folder, tasks_with_missing_keys)
-        if len(tasks_with_missing_keys) > 0:
+        
+        if self.interactive and len(tasks_with_missing_keys) > 0:
             print(f"Os seguintes diretórios de tarefas não possuem chave yaml única e foram ignorados:")
             for path in tasks_with_missing_keys:
                 print(f"  {path}")

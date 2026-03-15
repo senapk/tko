@@ -45,8 +45,6 @@ class Free:
         else:
             executable, _ = solver.get_executable()
             cmd, folder = executable.get_command()
-            if folder == "":
-                folder = None
             if header.len() == 0:
                 print(Text().center(RawTerminal.get_terminal_size(), Text.Token("─")))
             else:

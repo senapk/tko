@@ -43,6 +43,7 @@ class GuiKeys:
     open_url = "u"
     key_quit = "q"
     edit= "v"
+    edit_alt= "e"
     colors = "C"
     borders = "B"
     search = "/"
@@ -50,7 +51,7 @@ class GuiKeys:
     delete_folder = "D"
     diff = "d"
     unfold_patch = "V"
-    execute = "e" # Interact in manual input
+    execute = "x" # Interact in manual input
     evaluate = "t"
     toggle_main = "\t"
     quit   = "q"

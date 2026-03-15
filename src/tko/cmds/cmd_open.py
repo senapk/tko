@@ -19,9 +19,8 @@ class CmdOpen:
         self.repo_dir = repo_dir
         self.repo = Repository(repo_dir, self.force_update)
         if not self.repo.paths.has_local_config_file():
-            print(Text.format("{r}: O parâmetro para o comando {g} {y} deve a pasta onde você iniciou o repositório.", "Erro", "tko open", "<pasta>"))
+            print(Text.format("{r}: O comando {g} deve ser executado na pasta onde o repositório foi iniciado.", "Erro", "tko open"))
             print(Text.format("{g}: Navegue ou passe o caminho até a pasta do repositório e tente novamente.", "Ação"))
-            print(Text.format("{g}: Ou use {y} para criar um novo repositório.", "Ação","tko init --remote [fup|poo|ed]"))
             raise Warning(Text.format("{r}: {y} {}", "Erro:", repo_dir, "não contém um repositório do tko"))
         self.repo.load_config().load_game()
         return self

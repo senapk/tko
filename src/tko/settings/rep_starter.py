@@ -38,17 +38,33 @@ class RepStarter:
         print(Text.format("Voce pode acessar o repositório com o comando {g} {y}", "tko open"))
     
     def create_repository(self) -> Repository | None:
-        path_old = RepPaths.rec_search_for_repo(self.folder)
-        if path_old is not None:
-            if self.folder != path_old:
-                print(Text.format("Você está tentando criar um rep dentro de outro, pois já existe rep em {r}.", path_old))
-                print(Text.format("Você pode apagar o repositório antigo removendo a pasta {r:}.", os.path.join(path_old, ".tko")))
-                print(Text.format("Ou sobrescrever as configurações de  {r:}.", os.path.join(path_old, ".tko")))
-            self.folder = path_old
+        path_parents = RepPaths.rec_search_for_repo_parents(self.folder)
+
+        if path_parents is not None and path_parents.resolve() == self.folder.resolve():
+            print(Text.format("Já existe um repositório TKO na pasta {y}", self.folder.resolve()))
+            print(Text.format("Deseja resetar o repositório? ({g}/{r}): ", "s", "n"), end="")
+            op = input()
+            if op == "n":
+                return None
+
+        elif path_parents is not None:
+            if self.folder != path_parents:
+                print(Text.format("Você está tentando criar um repositório dentro de outro, pois já existe rep em {r}.", path_parents))
+                print(Text.format("Você pode apagar o repositório antigo, criar seu repositório em outro lugar ou sobrescrever as configurações."))
+            self.folder = path_parents
             print(Text.format("Deseja sobrescrever as configurações do repositório em {y} ? ({g}/{r}): ", self.folder, "s", "n"), end="")
             op = input()
             if op == "n":
                 return None
+        else:
+            path_subdir_list = RepPaths.rec_search_for_repo_subdir(self.folder)
+            if len(path_subdir_list) > 0:
+                print(Text.format("Você está tentando criar um repositório TKO na pasta {y}", self.folder.resolve()))
+                print(Text.format("Porém já existem repositórios TKO abaixo dessa pasta. Mova ou apague-os"))
+                for path in path_subdir_list:
+                    print(Text.format("- {r}", path))
+                return None
+
         return Repository(self.folder)
     
     def create_empty_rep(self):

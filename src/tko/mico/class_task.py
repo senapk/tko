@@ -2,6 +2,7 @@ from __future__ import annotations
 from tko.mico.student_repo import StudentRepo
 import json
 import os
+from pathlib import Path
 
 class ClassTask:
     def __init__(self, file_path: str = ""):
@@ -57,5 +58,5 @@ class ClassTask:
     def load_student_repo_list(self) -> list[StudentRepo]:
         student_list: list[str] = os.listdir(self.class_dir)
         student_list = sorted(student_list, key=lambda x: x.lower())  # sort students by name
-        student_folder_list = [StudentRepo(os.path.join(self.class_dir, student), self.sub_dir) for student in student_list]
+        student_folder_list = [StudentRepo(Path(os.path.join(self.class_dir, student)), Path(self.sub_dir)) for student in student_list]
         return student_folder_list

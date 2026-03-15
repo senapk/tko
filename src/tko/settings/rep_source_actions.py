@@ -3,7 +3,6 @@ from tko.settings.rep_source import RepSource
 from tko.settings.repository import Repository
 from tko.settings.settings import Settings
 from tko.util.text import Text
-import os
 from pathlib import Path
 
 class RepSourceActions:
@@ -14,7 +13,7 @@ class RepSourceActions:
         else:
             folder = Path.cwd()
 
-        path = RepPaths.rec_search_for_repo(folder)
+        path = RepPaths.rec_search_for_repo_parents(folder)
         if path is None:
             raise ValueError(f"Repositório não encontrado em {folder}")
         self.folder = folder

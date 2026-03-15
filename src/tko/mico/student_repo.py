@@ -1,8 +1,8 @@
-import os
+from pathlib import Path
 
 class StudentRepo:
-    def __init__(self, folder: str, rep: str):
-        self.__student_key: str = os.path.basename(folder)
+    def __init__(self, folder: Path, rep: Path):
+        self.__student_key: str = folder.name
         self.folder = folder
         self.tko_subfolder = rep
 
