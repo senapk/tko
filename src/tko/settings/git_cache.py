@@ -71,13 +71,16 @@ class GitCache:
         with self._acquire_lock(lock_path):
 
             if not repo.exists():
+                print(f"Cloning {url} into cache...")
                 self._clone(url, repo)
                 return repo
 
             if self._is_expired(repo) or force_update:
                 try:
+                    print(f"Updating cache for {url}...")
                     self._update(repo)
                 except subprocess.CalledProcessError:
+                    print(f"Failed to update cache for {url}. Removing and re-cloning...")
                     shutil.rmtree(repo, ignore_errors=True)
                     self._clone(url, repo)
 

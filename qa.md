@@ -21,6 +21,8 @@
   - tko open
 - executar os rascunhos em diferentes linguagens com e sem os testes
 
+## tko remote
+
 ## Build
 
 - gerar um arquivo de testes a partir do readme

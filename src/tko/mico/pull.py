@@ -8,6 +8,7 @@ from .student_repo import StudentRepo
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import subprocess
+from pathlib import Path
 
 class Pull:
 
@@ -89,7 +90,7 @@ class Pull:
         return output
 
     @staticmethod
-    def pull_all_parallel(repo_list: list[StudentRepo], max_workers: int = 50):
+    def pull_all_parallel(repo_list: list[Path], max_workers: int = 50):
         """
         Pull all repositories in a list of student folders concurrently.
         Args:
@@ -102,7 +103,7 @@ class Pull:
         # Use ThreadPoolExecutor para gerenciar as threads
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Cria um dicionário para mapear os objetos Future de volta para as pastas
-            future_to_folder = {executor.submit(Pull.pull, str(repo.folder)): repo.folder for repo in repo_list}
+            future_to_folder = {executor.submit(Pull.pull, str(repo)): repo for repo in repo_list}
 
             # Itera sobre os resultados à medida que ficam prontos
             for future in as_completed(future_to_folder):
@@ -118,31 +119,8 @@ class Pull:
         end_time = time.time()
         print(f"\n{Text('y')}Processamento concluído em {end_time - start_time:.2f} segundos.{Text('e')}")
 
-    @staticmethod
-    def main(class_task_path: str, n_threads: int = 5) -> None:
-        class_task = ClassTask(class_task_path).load_from_file()
-        students_repo_list = class_task.load_student_repo_list()
-        Pull.pull_all_parallel(students_repo_list, n_threads)
 
-
-def main():
-    parser = argparse.ArgumentParser(description='Pull all git repositories in a directory')
-    parser.add_argument('jsons', type=str, nargs="*", help='Directory to pull repositories from')
-    parser.add_argument("-f", '--folders', type=str, nargs="*", help='Update git folder')
-    parser.add_argument("-t", "--threads", type=int)
-
-    args = parser.parse_args()
-    n_threads = 10
-    if args.threads:
-        n_threads = args.threads
-
-    if args.folders:
-        Pull.pull_all_parallel(args.folders, n_threads)
-
-    if args.jsons:
-        for json in args.jsons:
-            Pull.main(json, n_threads)
-
-
-if __name__ == '__main__':
-    main()
+def pull_all_parallel_main(args: argparse.Namespace) -> None:
+    path_list = [Path(path) for path in args.path]
+    n_threads = args.threads if args.threads else 10
+    Pull.pull_all_parallel(path_list, n_threads)

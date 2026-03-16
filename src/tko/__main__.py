@@ -12,7 +12,6 @@ from tko.feno.mdpp import mdpp_main
 from tko.feno.older import older_main
 from tko.feno.remote_md import remote_main
 from tko.feno.filter import filter_main, build_drafts_main
-from tko.feno.grading import Grading
 
 from tko.cmds.cmd_task import CmdTask
 from tko.cmds.cmd_collect import CmdCollect
@@ -23,6 +22,7 @@ from tko.cmds.cmd_config import CmdConfig, ConfigParams
 from tko.enums.diff_mode import DiffMode
 from tko.util.text import AnsiColor
 from tko.enums.diff_count import DiffCount
+from tko.mico.pull import pull_all_parallel_main
 
 from tko.util.param import Param
 from tko.util.pattern_loader import PatternLoader
@@ -238,6 +238,7 @@ class Parser:
         self.add_parser_collect()
         self.add_parser_run()
         self.add_parser_build()
+        self.add_parser_class()
 
     def add_parser_global(self):
         self.parser.add_argument('-c', '--configfile', metavar='FILE', type=str, help='Global config file')
@@ -319,6 +320,23 @@ class Parser:
         cfg_list = subpar_repo.add_parser('list', help='List default configuration values')
         cfg_list.set_defaults(func=Main.list)
 
+    def add_parser_class(self):
+        parser_class = self.subparsers.add_parser('class', help='Manage class tasks', add_help=False)
+        parser_class.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
+        subpar_class = parser_class.add_subparsers(title='subcommands', metavar='COMMAND', help='DESCRIPTION')
+
+        collect_cmd = subpar_class.add_parser("collect", help="Colect and merge data from many repos")
+        collect_cmd.add_argument("path", type=str, nargs="+", help="Paths to repos")
+        collect_cmd.add_argument("--json", "-j", type=str, help="Path to save the extracted JSON data")
+        collect_cmd.add_argument("--csv", "-c", type=str, help="Path to save the extracted CSV data")
+        collect_cmd.add_argument("--block_prefix", "-b", type=str, help="Block prefix to insert in csv file")
+        collect_cmd.set_defaults(func=CmdCollect.collect_batch)
+
+        pull_cmd = subpar_class.add_parser("pull", help="Perform git pull in many repos using threads")
+        pull_cmd.add_argument("path", type=str, nargs="+", help="Paths to repos")
+        pull_cmd.add_argument("-t", "--threads", type=int)
+        pull_cmd.set_defaults(func=pull_all_parallel_main)
+
     def add_parser_collect(self):
         parser_repo = self.subparsers.add_parser('collect', help='Collect evaluation data', add_help=False)
         parser_repo.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
@@ -344,12 +362,6 @@ class Parser:
         repo_collect.add_argument('--color', type=int, default=1, help="Daily graph color [0|1]")
         repo_collect.set_defaults(func=CmdCollect.collect_main)
 
-        extract_cmd = subpar_collect.add_parser("repos", help="Colect and merge data from many repos")
-        extract_cmd.add_argument("path", type=str, nargs="+", help="Paths to repos")
-        extract_cmd.add_argument("--json", "-j", type=str, help="Path to save the extracted JSON data")
-        extract_cmd.add_argument("--csv", "-c", type=str, help="Path to save the extracted CSV data")
-        extract_cmd.add_argument("--block_prefix", "-b", type=str, help="Block prefix to insert in csv file")
-        extract_cmd.set_defaults(func=CmdCollect.collect_batch)
 
     def add_parser_rep_actions(self):
         parser_init = self.subparsers.add_parser('init', help='Initialize empty TKO repository', add_help=False)
@@ -482,18 +494,8 @@ class Parser:
         parser_f.set_defaults(func=filter_main)
 
         parser_drafts = subparsers.add_parser('drafts', help='Create drafts for TKO task using src dir', add_help=False)
-
         parser_drafts.add_argument("-h", "--help", action="help", help="Show help message and exit")
         parser_drafts.set_defaults(func=build_drafts_main)
-
-        parser_grading = subparsers.add_parser('grading', help='Grade the tests', add_help=False)
-        parser_grading.add_argument( "-h", "--help", action="help", help="Show help message and exit")
-
-        parser_grading.add_argument("--output", "-o", type=str, help="Output file for the awarded grade")
-        grading_exclusive = parser_grading.add_mutually_exclusive_group(required=True)
-        grading_exclusive.add_argument("--config", "-c", type=str, help="Path to the configuration file")
-        grading_exclusive.add_argument("--readme", "-r", type=str, help="Path to the README file for questions")
-        parser_grading.set_defaults(func=Grading.main)
 
 
 def execute(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:

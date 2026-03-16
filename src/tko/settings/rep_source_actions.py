@@ -109,8 +109,8 @@ class RepSourceActions:
 
     def git_clone_repository(self, link: str) -> None:
         print(Text.format("Clonando repositório remoto {y}.", link))
-        path = self.repo.cache.get(link, force_update=True)
-        print(Text.format("Repositório {y}clonado com sucesso em {y}.", link, path))
+        _ = self.repo.cache.get(link, force_update=True)
+        print(Text.format("Repositório {y} clonado com sucesso.", link))
         
 
 
