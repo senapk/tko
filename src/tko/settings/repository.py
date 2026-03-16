@@ -39,6 +39,12 @@ class Repository:
         self.force_update: bool = force_update
         self.cache = GitCache(self.paths.get_cache_folder(), timedelta(seconds=self.cache_time_for_remote_source))
 
+    def set_global_cache(self):
+        RepPaths.use_global_cache_folder = True
+        self.cache = GitCache(self.paths.get_cache_folder(), timedelta(seconds=self.cache_time_for_remote_source))
+        return self
+
+
     def found(self):
         return self.paths.get_config_file().exists()
 

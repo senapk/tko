@@ -3,7 +3,7 @@
   "MD041": false
 } -->
 
-# tko
+# TKO
 
 O tko é um sistema de testes para programação competitiva. Ele é capaz de rodar testes em várias linguagens de programação e em vários formatos de testes. Ele está integrado com os repositórios de atividades das disciplinas de programação da UFC de Quixadá permitindo baixar as atividades e rodar os testes.
 
@@ -13,114 +13,23 @@ O tko é um sistema de testes para programação competitiva. Ele é capaz de ro
 
 ## Instalação
 
-### Windows SEM WSL
+- [Windows, Vscode e WSL- Recomendado](wiki/Windows-WSL.md)
+- [Linux: Vscode](wiki/ubuntu_vscode.md)
+- [WSL e Ubuntu: Setup básico com GIT, Python, TKO](wiki/ubuntu_git_python_tko.md)
+- [Windows SEM WSL](wiki/Windows-Sem-WSL.md)
+- [Linguagens - Java, C, C++, Python, Typescript, Go](wiki/Linguagens.md)
+- [Outros sistemas operacionais](wiki/Outros-Sistemas-Operacionais.md)
 
-- Instale o python pelo instalador do site oficial.
-- Marque a caixinha opção para adicionar o python ao path quando for instalar. `Add python.exe to PATH`
-- Abra o powershell e digite:
+## Uso do TKO pelos alunos
 
-```bash
-pip install pipx
-pipx install tko
-pipx ensurepath
-```
+- [Testando sem estar em uma disciplina](wiki/Testando-Sem-Disciplina.md)
+- [Como organizar seus repositórios da disciplina](wiki/Organizando-Disciplinas.md)
+- [Fazendo as atividades](wiki/Fazendo-Atividades.md)
 
-- Reinicie o powershell. Sempre que quiser atualizar o `tko`, basta executar o comando `pipx upgrade tko`.
-- Sem o WSL, você precisará instalar manualmente os compiladores que precisar, por exemplo, o `g++` para C++, o `javac` para Java, o `python` para Python e o `node e npm` para Typescript.
+## Uso pelos professores
 
-### Windows via WSL
-
-- Vamos instalar o WSL. Abra o powershell e digite
-
-```bash
-wsl --install
-```
-
-- Aceite as opções e espere terminar a instalação. Reinicie o computador.
-- Agora vamos configurar o vscode pra funcionar com o WSL.
-- Instale o vscode normalmente pelo windows.
-- Abra o vscode pelo windows e instale a extensão WSL com 30 M de downloads
-- No lançador de aplicativos do windows, procure por "WSL" e abra o terminal do ubuntu
-- Digite o comando abaixo em qualquer pasta para configurar vscode no ubuntu
-
-```bash
-code .
-```
-
-- Esse comando irá instalar os componenetes necessários para abrir o vscode pelo wsl.
-- Agora, sempre que quiser abrir um repositório, abra o terminal do ubuntu, navegue até a pasta do repositório e execute o comando `code .`
-- Vamos seguir para falta o tko e os compiladores no seu novo linux ubuntu no wsl.
-
-### Instalando o Python, pipx e o tko e ferramentas básicas de desenvolvimento
-
-#### Windows com WSL e Ubuntu
-
-```bash
-# Instalando as ferramentas básicas de desenvolvimento
-sudo apt update && sudo apt install -y build-essential pipx wslu
-# Configurando o web browser
-grep -qxF 'export BROWSER="wslview"' ~/.bashrc || echo 'export BROWSER="wslview"' >> ~/.bashrc
-# Verifique sua versão do python
-python --version
-# Se for menor que o 3.12, você vai precisar instalar o 3.12 manualmente
-sudo add-apt-repository ppa:deadsnakes/ppa
-sudo apt update
-sudo apt install python3.12
-
-# Instalando o tko
-pipx install tko
-# Adicionando o tko no path
-pipx ensurepath
-# Reinicie o terminal
-# Teste a instalação com o comando
-tko --version
-
-# Instale os compiladores que você precisar
-# C, C++, Python já vem com o build-essential
-# Java
-sudo apt install openjdk-11-jdk
-# Node e npm
-sudo apt install nodejs npm
-# Typescript
-sudo apt install nodejs npm
-npm install --save-dev @types/node
-npm install typescript esbuild readline-sync
-# Go
-sudo apt install golang -y
-```
-
-#### Arch Linux e Derivados
-
-```bash
-# Instalando as ferramentas básicas de desenvolvimento
-sudo pacman -S --noconfirm base-devel python-pipx
-# Adicionando o tko no path
-grep -qxF 'export PATH="$HOME/.local/bin:$PATH"' ~/.bashrc || echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-# Reinicie o terminal
-# Instalando o tko
-pipx install tko
-# Teste a instalação com o comando
-tko --version
-
-# Instale os compiladores que você precisar
-# C, C++, Python já vem com o base-devel
-
-# Java
-sudo pacman -S jdk-openjdk
-# Node e npm
-sudo pacman -S nodejs npm
-# Typescript
-sudo pacman -S nodejs npm
-npm install --save-dev @types/node
-npm install typescript esbuild readline-sync
-# Go
-sudo pacman -S go
-```
-
-### Outros sistemas operacionais
-
-- Basta instalar o python e o pipx. Depois, instale o tko com o comando `pipx install tko`.
-- Para instalar os compiladores, você pode usar o gerenciador de pacotes do seu sistema operacional. Por exemplo, no MacOS, você pode usar o Homebrew para instalar o python, g++, java, node e npm.
+- [Trabalhando com o Classroom](wiki/Classroom.md)
+- [Criando atividades e repositórios](wiki/Criando-Atividades.md)
 
 ## Atualizando o tko
 
@@ -130,22 +39,7 @@ Para atualizar o tko para versão mais recente, basta executar o comando:
 pipx upgrade tko          # windows, codespace, arch, ubuntu e wsl
 ```
 
-## Para interagir com os repositórios, navegar, baixar, testar
-
-```bash
-# primeiro crie um repositório local na pasta local
-mkdir myrep
-cd myrep
-tko init # cria repositório tko na pasta myrep
-# adicione o repositório remoto do fup, para programação em c
-tko remote add fup @fup --lang c
-# agora abra o repositório para interagir com ele
-tko open
-# exemplo: tko open
-```
-
-
-## Programando em uma linguagem diferente de C, C++, Java, Python e Typescript
+## Programando em uma linguagem diferente de C, C++, Java, Python e Typescript, Go
 
 - Qual for escolher a linguagem que deseja utilizar, escolha `yaml`. Na pasta de cada atividade será criado um arquivo de rascunho chamado `draft.yaml` com os seguintes campos:
 

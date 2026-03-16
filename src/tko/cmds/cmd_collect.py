@@ -149,8 +149,7 @@ class CollectSingle:
             path = os.path.abspath(param.folder)
             print(f"Repository not found in {path}")
             return Collected()
-        
-        rep.load_config().load_game(try_update=False, silent=True)
+        rep.set_global_cache().load_config().load_game(try_update=False, silent=True)
         data = Collected()
 
         if param.daily:

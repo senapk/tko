@@ -72,9 +72,7 @@ class TaskTree:
         if not admin_mode:
             reachable_quests = [q.get_db_key() for q in self.game.quests.values() if q.is_reachable()]
             reachable_keys = reachable_quests + list(self.game.clusters.keys())
-            for key in self.expanded:
-                if key not in reachable_keys:
-                    self.expanded.remove(key)
+            self.expanded = set(x for x in self.expanded if x in reachable_keys)
 
     def get_cluster_title_size(self, cluster: Cluster) -> int:
         return len(cluster.get_alias() + ":" + cluster.get_title()) + 3

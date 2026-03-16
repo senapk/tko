@@ -112,6 +112,8 @@ class Task(TreeItem):
         kv_dict: dict[str, str] = {}
         key_values = value_list.split(",")
         for kv in key_values:
+            if ":" not in kv:
+                continue
             (k, val) = kv.split(":")
             kv_dict[k.strip()] = val.strip()
         
