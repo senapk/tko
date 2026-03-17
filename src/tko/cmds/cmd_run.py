@@ -47,7 +47,7 @@ class Run:
             self.param = Param.Basic()
         else:
             self.param = param
-        self.wdir: Wdir = Wdir()
+        self.wdir: Wdir = Wdir(self.settings)
         self.wdir_builded = False
         self.__curses_mode: bool = False
         self.__lang = ""
@@ -263,7 +263,7 @@ class Run:
         self.__remove_duplicates()
         self.__change_targets_to_filter_mode()
         try:
-            self.wdir = Wdir().set_curses(self.__curses_mode).set_lang(self.__lang).set_target_list(self.target_list).build().filter(self.param)
+            self.wdir = Wdir(self.settings).set_curses(self.__curses_mode).set_lang(self.__lang).set_target_list(self.target_list).build().filter(self.param)
         except FileNotFoundError as e:
             if self.wdir.has_solver():
                 executable, _ = self.wdir.get_solver().get_executable()

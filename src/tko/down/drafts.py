@@ -1,8 +1,8 @@
 import os
 from pathlib import Path
+from tko.settings.user_languages import UserLanguages
 
 class Drafts:
-
     sandbox_key_prefix = "user"
 
     draft_readme: str = r"""Escreva aqui as informações que você quer salvar, esse é o seu rascunho.
@@ -51,13 +51,9 @@ output = '''
 """
 
     ts_draft = r"""
-const input = () => ""; //essa função será gerada pelo tko na execução
+const input:(()=>string)=(()=>{let l:string[]|undefined,i=0,P:any;return()=>process.stdin.isTTY?((P=P||require("readline-sync")).question()):(l=l||require("fs").readFileSync(0,"utf-8").split(/\r?\n/),l[i++] ?? "")})();
 export {};
-
-function main() {
-    console.log("qxcode");
-}
-main();
+console.log("Hello, World!");
 """[1:]
 
     c_draft = r"""
@@ -85,29 +81,22 @@ public class draft {
         System.out.println("qxcode");
     }
 }
-
 """[1:]
 
-    go_draft = (
-        r"package main""\n"
-        r'import "fmt"'"\n"
-        r"func main() {""\n"
-        r'    fmt.Println("qxcode")''\n'
-        r"}""\n"
-    )
     
-    yaml_draft = r"""
-build: comando para construir o executável
-run: comando para rodar o programa
-"""[1:]
-    
-    hs_draft = r"""
-main :: IO ()
-main = putStrLn "qxcode"
-"""[1:]
+    drafts = {
+        'ts': ts_draft, 
+        'java': java_draft, 
+    }
 
-
-    drafts = {'c': c_draft, 'cpp': cpp_draft, 'ts': ts_draft, 'java': java_draft, 'go': go_draft, 'hs': hs_draft, 'yaml': yaml_draft}
+    def get_languages_with_drafts(self) -> list[str]:
+        keys = list(Drafts.drafts.keys())
+        lang_register = UserLanguages(Path("")).set_default_path().load_file_settings().get_languages()
+        for lang in lang_register.keys():
+            if lang not in keys:
+                keys.append(lang)
+        keys.sort()
+        return keys
 
     @staticmethod
     def create_draft_key(draft_id: int) -> str:

@@ -86,9 +86,10 @@ class Main:
 
     @staticmethod
     def build(args: argparse.Namespace):
+        settings = Settings()
         PatternLoader.pattern = args.pattern
         manip = Param.Manip().set_unlabel(args.unlabel).set_to_sort(args.sort).set_to_number(args.number)
-        build = CmdBuild(Path(args.target), [Path(x) for x in args.target_list], manip)
+        build = CmdBuild(Path(args.target), [Path(x) for x in args.target_list], manip, settings)
         build.execute()
 
     @staticmethod

@@ -2,13 +2,15 @@ from tko.util.param import Param
 from tko.run.wdir import Wdir
 from tko.run.writer import Writer
 from pathlib import Path
+from tko.settings.settings import Settings
 
 class CmdBuild:
 
-    def __init__(self, target_out: Path, source_list: list[Path], param: Param.Manip):
+    def __init__(self, target_out: Path, source_list: list[Path], param: Param.Manip, settings: Settings):
         self.target_out = target_out
         self.source_list = source_list
         self.param = param
+        self.settings = settings
         self.quiet = False
 
     def set_quiet(self, value: bool):
@@ -17,7 +19,7 @@ class CmdBuild:
 
     def execute(self):
         try:
-            wdir = Wdir().set_sources(self.source_list).build()
+            wdir = Wdir(self.settings).set_sources(self.source_list).build()
             wdir.manipulate(self.param)
             Writer.save_target(self.target_out, wdir.get_unit_list(), quiet=self.quiet)
         except FileNotFoundError as e:

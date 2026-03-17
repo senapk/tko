@@ -11,11 +11,12 @@ from tko.util.text import Text
 from tko.util.symbols import symbols
 from tko.util.label_factory import LabelFactory
 from tko.down.drafts import Drafts
-from tko.settings.languages import available_languages
 from pathlib import Path
+from tko.settings.settings import Settings
 
 class Wdir:
-    def __init__(self):
+    def __init__(self, settings: Settings):
+        self.settings = settings
         self.__autoload = False
         self.__autoload_folder: Path | None = None
         self.__solver: None | SolverBuilder = None
@@ -64,7 +65,7 @@ class Wdir:
 
     def set_solver(self, solver_list: list[Path]):
         if len(solver_list) > 0:
-            self.__solver = SolverBuilder(solver_list)
+            self.__solver = SolverBuilder(solver_list, self.settings)
         return self
 
     def set_sources(self, source_list: list[Path]):
@@ -83,7 +84,7 @@ class Wdir:
         if self.__lang != "":
             solver_list = Drafts.load_drafts_only(folder, self.__lang)
         else:
-            solver_list = Drafts.load_drafts_only(folder, "", extra=available_languages)
+            solver_list = Drafts.load_drafts_only(folder, "", extra=Drafts().get_languages_with_drafts())
         solver_list = sorted(solver_list)
 
         self.set_solver(solver_list)

@@ -2,17 +2,17 @@ from typing import Callable
 import os
 import shutil
 
-
+from tko.down.drafts import Drafts
 from tko.settings.repository import Repository
 from tko.settings.settings import Settings
 from tko.game.game import Game
 from tko.util.decoder import Decoder
 from tko.down.drafts import Drafts
-from tko.settings.languages import available_languages
 from tko.feno.remote_md import Absolute
 from tko.game.task import Task
 from tko.feno.filter import CodeFilter
 from pathlib import Path
+from tko.settings.user_languages import LangSettings
 
 class CmdLineDown:
     def __init__(self, settings: Settings, rep: Repository, task_key: str, game: Game | None = None):
@@ -37,11 +37,11 @@ class CmdLineDown:
 
 class CmdDown:
     test_case_filename = "tests.toml"
-    def __init__(self, rep: Repository, task_key: str, settings: Settings):
-        self.rep = rep
+    def __init__(self, repo: Repository, task_key: str, settings: Settings):
+        self.repo = repo
         self.task_key = task_key
         self.settings = settings
-        self.task: Task = self.rep.game.get_task(self.task_key)
+        self.task: Task = self.repo.game.get_task(self.task_key)
        
         origin_folder = self.task.get_origin_folder()
         if origin_folder is None:
@@ -55,7 +55,7 @@ class CmdDown:
        
         self.language: str = ""
         self.check_and_get_language()
-        self.actions = DownActions()
+        self.actions = DownActions(self.settings)
         
     def execute(self) -> bool:
         if self.task.is_import_type():
@@ -210,17 +210,18 @@ class CmdDown:
         return True
 
     def check_and_get_language(self) -> None:
-        language_def = self.rep.data.get_lang()
+        language_def = self.repo.data.get_lang()
 
         if self.language == "":
             if language_def != "":
                 self.language = language_def
             else:
-                print("Escolha uma extensão para os rascunhos: [{}]: ".format(", ".join(available_languages)), end="")
+                print("Escolha uma extensão para os rascunhos: [{}]: ".format(", ".join(Drafts().get_languages_with_drafts())), end="")
                 self.language = input()
 
 class DownActions:
-    def __init__(self):
+    def __init__(self, settings: Settings):
+        self.settings = settings
         self.fnprint: Callable[[str], None] = print
         self.cache_msgs: list[str] = []
         self.cached: bool = False
@@ -254,10 +255,13 @@ class DownActions:
         filename = "draft."
         draft_path = os.path.join(destiny, filename + language)
         os.makedirs(os.path.dirname(draft_path), exist_ok=True)
+        languages: dict[str, LangSettings] = self.settings.languages.lang_settings
         if not os.path.exists(draft_path):
             with open(draft_path, "w", encoding="utf-8") as f:
                 if language in Drafts.drafts:
                     f.write(Drafts.drafts[language])
+                elif language in languages.keys():
+                    f.write(languages[language].draft)  
                 else:
                     f.write("")
             self.send_to_print(self.folder_and_file(draft_path, 3) + " (Vazio)")

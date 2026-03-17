@@ -58,8 +58,8 @@ class Free:
             while input_available():
                 read_input()
             print(Text().center(RawTerminal.get_terminal_size(), Text.Token("─")))
-            print(Text.format("Para [recompilar e] reexecutar digite: {y}", "<enter>"))
-            print(Text.format("Para voltar para tela anterior digite: {y}", "q<enter>"))
+            print(Text.format("Para [recompilar e] reexecutar pressione {y}", "enter"))
+            print(Text.format("Para voltar para tela anterior digite {y} e pressione {y}", "q", "enter"))
             # clear buffer before get input
 
             valor = input()

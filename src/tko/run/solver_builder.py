@@ -4,9 +4,8 @@ import os
 import shutil
 from tko.util.text import Text
 from tko.util.runner import Runner
-from tko.util.decoder import Decoder
+from tko.settings.settings import Settings
 import yaml #type: ignore
-import io
 from pathlib import Path
 
 class CompileError(Exception):
@@ -63,7 +62,8 @@ class Executable:
         return self.__error_msg
 
 class SolverBuilder:
-    def __init__(self, args_list: list[Path]):
+    def __init__(self, args_list: list[Path], settings: Settings):
+        self.settings = settings
         self.args_list: list[Path] = args_list
         self.cache_dir: Path = Path()
         if len(self.args_list) > 0:
@@ -119,117 +119,43 @@ class SolverBuilder:
         self.reset()
         first = self.args_list[0]
 
-        if first.suffix == ".py":
-            self.__prepare_python()
-        elif first.suffix == ".yaml":
-            self.__prepare_yaml()
-        elif first.suffix == ".mk":
+        if first.suffix == ".mk":
             self.__prepare_make()
-        elif first.suffix == ".js":
-            self.__prepare_js()
         elif first.suffix == ".ts":
             self.__prepare_ts(free_run_mode)
-        elif first.suffix == ".java":
-            self.__prepare_java()
-        elif first.suffix == ".hs":
-            self.__prepare_hs()
-        elif first.suffix == ".c" or first.suffix == ".h":
-            self.__prepare_c()
-        elif first.suffix == ".cpp" or first.suffix == ".hpp":
-            self.__prepare_cpp()
-        elif first.suffix == ".go":
-            self.__prepare_go()
+        elif first.suffix[1:] in self.settings.languages.get_languages().keys():
+            self.prepare_exec_with_lang()
         else:
             self.__exec.set_executable([str(x) for x in self.args_list], [], None)
 
-    def __prepare_python(self):
-        cmd_name = "python3"
-        if shutil.which(cmd_name) is None:
-            cmd_name = "python"
-        self.__exec.set_executable([cmd_name], self.args_list, None)
+    def replace_placeholders(self, text: str) -> str:
+        parent_folder = self.args_list[0].parent
+        main_file_without_ext = self.args_list[0].stem
+        exe_ext = ".exe" if os.name == "nt" else ""
+        output_path = self.cache_dir / ("a.out" + exe_ext)
+        
+        files_str = " ".join([str(x.relative_to(parent_folder)) for x in self.args_list])
+        text = (text.replace("{files}", files_str)
+                    .replace("{output}", str(output_path))
+                    .replace("{main}", main_file_without_ext)
+                    .replace("{cache}", str(self.cache_dir.relative_to(parent_folder))))
+        return text
 
-    def __prepare_java(self):
-        self.check_tool("javac")
-        first = self.args_list[0]
-
-        filename = first.name
-        cmd: list[str] = ["javac"] + [str(x) for x in self.args_list] + ['-d', str(self.cache_dir)]
-        return_code, stdout, stderr = Runner.subprocess_run(cmd)
+    def prepare_exec_with_lang(self):
+        lang = self.settings.languages.get_languages().get(self.args_list[0].suffix[1:], None)
+        if lang is None:
+            self.__exec.set_compile_error(Text.format("{r}: Extensão de arquivo '" + self.args_list[0].suffix + "' não reconhecida e sem configuração de linguagem", "Falha"))
+            return
+        build_cmd = lang.build_cmd
+        run_cmd = lang.run_cmd
+        parent_folder = self.args_list[0].parent
+        build_cmd = self.replace_placeholders(build_cmd)
+        return_code, stdout, stderr = Runner.subprocess_run(build_cmd, folder=parent_folder, shell_mode=True)
         if return_code != 0:
             self.__exec.set_compile_error(stdout + stderr)
-        else:
-            self.__exec.set_executable(["java", filename[:-5]], [], self.cache_dir)  # removing the .java
-
-    def update_input_function(self, free_run_mode: bool, path_list: list[Path], copy_dir: Path):
-        new_files: list[str] = []
-        for origin in self.args_list:
-            new_files.append(os.path.join(copy_dir, os.path.basename(origin)))
-
-        for i in range(len(path_list)):
-            origin = path_list[i]
-            destiny = new_files[i]
-
-            content = Decoder.load(origin)
-            lines = content.splitlines(keepends=True)
-
-            io_source = io.StringIO()
-            io_target = io.StringIO()
-
-            tag = "function input()"
-            tag2 = "constinput=()=>"
-
-            if free_run_mode:
-                input_cmd = r'function input(): string { let X: any = input; X.P = X.P || require("readline-sync"); return X.P.question(); }'
-                input_tag = 'const input = () => ""; // INTERATIVO\n'
-            else:
-                input_cmd = r'function input(): string { let X: any = input; X.L = X.L || require("fs").readFileSync(0).toString().split(/\r?\n/); return X.L.shift(); } '
-                input_tag = 'const input = () => ""; // MODO_TESTE\n'
-
-            inserted: bool = False
-            for line in lines:
-                match = False
-                if not inserted:
-                    filtered = "".join([c for c in line if c != " "])
-                    match = filtered.startswith(tag2) or line.startswith(tag)
-                if match:
-                    inserted = True
-                    io_source.write(input_tag)
-                    io_target.write(input_cmd)
-                else:
-                    io_source.write(line)
-                    io_target.write(line)
-
-            result = io_source.getvalue()
-            if result != content:
-                with open(origin, "w", encoding="utf-8") as f:
-                    f.write(io_source.getvalue())
-            with open(destiny, "w", encoding="utf-8") as f:
-                f.write(io_target.getvalue())
-            io_source.close()
-            io_target.close()
-        return new_files
-
-    def __prepare_yaml(self):
-        solver: Path = self.args_list[0]
-        folder = solver.parent
-        content = Decoder.load(solver)
-        yaml_data = yaml.safe_load(content)
-        self.__exec.need_shell_mode = True
-
-        if "build" in yaml_data and yaml_data["build"] is not None:
-            build_txt = yaml_data["build"]
-            if not isinstance(build_txt, str):
-                raise Warning(Text.format("{r}: O campo build deve ser uma string", "Falha"))
-            
-            return_code, stdout, stderr = Runner.subprocess_run(build_txt, folder = folder)
-            if return_code != 0:
-                self.__exec.set_compile_error(stdout + stderr)
-                return
-        if not "run" in yaml_data:
-            raise Warning(Text.format("{r}: Seu arquivo yaml precisa ter um campo {g} ", "Falha", "run:"))
-        if not isinstance(yaml_data["run"], str):
-            raise Warning(Text.format("{r}: O campo run deve ser uma lista", "Falha"))
-        self.__exec.set_executable(yaml_data["run"], [], folder)
+            return
+        run_cmd = self.replace_placeholders(run_cmd)
+        self.__exec.set_executable(run_cmd.split(), [], parent_folder)
 
     def __prepare_make(self):
         self.check_tool("make")
@@ -242,27 +168,9 @@ class SolverBuilder:
         else:
             self.__exec.set_executable(["make", "-s", "-C", folder, "-f", solver, "run"], [])
 
-    def __prepare_js(self):
-        self.check_tool("node")
-        self.__exec.set_executable(["node"], self.args_list)
-
-    def __prepare_go(self):
-        self.check_tool("go")
-        cache_exec = self.cache_dir / "main"
-        cmd: list[str] = ["go", "build", "-o", str(cache_exec)] + [str(x) for x in self.args_list]
-        return_code, stdout, stderr = Runner.subprocess_run(cmd)
-        if return_code != 0:
-            self.__exec.set_compile_error(stdout + stderr)
-        else:
-            self.__exec.set_executable([str(cache_exec)], [])
-
     def __prepare_ts(self, free_run_mode: bool):
-        copy_dir = self.cache_dir / "src"
-        # remove the cache dir
-        if os.path.exists(copy_dir):
-            shutil.rmtree(copy_dir, ignore_errors=True)
-        os.makedirs(copy_dir, exist_ok=True)
-        new_files = self.update_input_function(free_run_mode, self.args_list, copy_dir)
+        
+        new_files = self.args_list
         transpiler = "npx"
         if os.name == "nt":
             transpiler += ".cmd"
@@ -282,32 +190,3 @@ class SolverBuilder:
             for source in new_files:
                 new_source_list.append(self.cache_dir / (os.path.basename(source)[:-2] + "js"))
             self.__exec.set_executable(cmd=["node"], files=new_source_list)  # renaming solver to main
-
-    def __prepare_c_cpp(self, pre_args: list[str], pos_args: list[str]):
-
-        source_list = [x for x in self.args_list if not x.suffix == ".h" and not x.suffix == ".hpp"]
-        exec_path = self.cache_dir / ".a.out"
-        cmd: list[str] = pre_args + [str(x) for x in source_list] + ["-o", str(exec_path)] + pos_args
-        return_code, stdout, stderr = Runner.subprocess_run(cmd)
-        if return_code != 0:
-            self.__exec.set_compile_error(stdout + stderr)
-        else:
-            self.__exec.set_executable([], [exec_path], None)
-
-    def __prepare_hs(self):
-        self.check_tool("runhaskell")
-        self.check_tool("ghc")
-        self.__exec.set_executable(["runhaskell"], self.args_list, None)
-
-
-    def __prepare_c(self):
-        self.check_tool("gcc")
-        pre = ["gcc", "-Wall"]
-        pos = ["-lm"]
-        self.__prepare_c_cpp(pre, pos)
-
-    def __prepare_cpp(self):
-        self.check_tool("g++")
-        pre = ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror", "-Wno-deprecated"]
-        pos: list[str] = []
-        self.__prepare_c_cpp(pre, pos)

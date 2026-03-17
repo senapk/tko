@@ -3,7 +3,6 @@ from tko.util.text import Text
 from typing import Any
 import curses
 
-
 class AppSettings:
 
     def __init__(self):

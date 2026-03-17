@@ -283,7 +283,7 @@ class PlayActions:
             down_frame.draw()
             Fmt.refresh()
 
-        cmd_down = CmdDown(rep=self.rep, task_key=task.get_db_key(), settings=self.settings)
+        cmd_down = CmdDown(repo=self.rep, task_key=task.get_db_key(), settings=self.settings)
         cmd_down.set_fnprint(fnprint)
         result = cmd_down.execute()
         if result:
@@ -362,7 +362,7 @@ class PlayActions:
         if not run.wdir.has_solver():
             lang = self.rep.data.get_lang()
             draft_folder = folder / lang
-            draft_path = DownActions().create_default_draft(draft_folder, self.rep.data.get_lang())
+            draft_path = DownActions(self.settings).create_default_draft(draft_folder, self.rep.data.get_lang())
             msg =  Floating().bottom().right().set_warning()
             msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.rep.data.get_lang()))
             msg.put_text("\nUm arquivo de rascunho vazio foi criado em\n {} ".format(draft_path))

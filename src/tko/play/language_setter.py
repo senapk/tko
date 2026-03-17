@@ -3,10 +3,10 @@ from tko.play.flags import FlagsMan
 from tko.play.floating import Floating
 from tko.play.floating_drop_down import FloatingInputData
 from tko.play.floating_manager import FloatingManager
-from tko.settings.languages import available_languages
 from tko.util.text import Text
 from tko.settings.repository import Repository
 from tko.settings.settings import Settings
+from tko.down.drafts import Drafts
 
 
 class LanguageSetter:
@@ -15,7 +15,7 @@ class LanguageSetter:
     def check_lang_in_text_mode(repo: Repository):
         lang = repo.data.lang
         if lang == "":
-            options = available_languages
+            options = Drafts().get_languages_with_drafts()
             print("\nLinguagem padrão ainda não foi definida.\n")
             while True:
                 print("Escolha entre as opções a seguir ", end="")
@@ -34,7 +34,7 @@ class LanguageSetter:
 
     def set_language(self):
         options: list[FloatingInputData] = []
-        for lang in available_languages:
+        for lang in Drafts().get_languages_with_drafts():
             options.append(FloatingInputData(TextFunctor(lang), SetLangFunctor(self.settings, self.rep, self.fman, lang)))
 
         self.fman.add_input(
@@ -46,7 +46,7 @@ class LanguageSetter:
                 .set_text_ljust()
             )
             .set_options(options)
-            .set_default_index(available_languages.index(self.rep.data.get_lang()))
+            .set_default_index(Drafts().get_languages_with_drafts().index(self.rep.data.get_lang()))
         )
 
 class TextFunctor:
