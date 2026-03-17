@@ -3,8 +3,6 @@
 import os
 import argparse
 from tko.util.text import Text
-from .class_task import ClassTask
-from .student_repo import StudentRepo
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import subprocess
