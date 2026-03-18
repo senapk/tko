@@ -23,7 +23,8 @@ class UnitRunner:
             input_data = unit.input,
             timeout = timeout, 
             folder = folder,
-            shell_mode=executable.need_shell_mode)
+            shell_mode= True if isinstance(cmd, str) else False
+        )
         if return_code != 0:
             unit.set_received(stdout + stderr)
             return ExecutionResult.EXECUTION_ERROR

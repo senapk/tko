@@ -7,6 +7,8 @@ from tko.util.runner import Runner
 from tko.settings.settings import Settings
 import yaml #type: ignore
 from pathlib import Path
+from tko.util.decoder import Decoder
+import io
 
 class CompileError(Exception):
     def __init__(self, message: str):
@@ -28,14 +30,14 @@ class Executable:
         self.__error_msg: Text = Text()
         self.need_shell_mode: bool = False # subprocess needs bash mode to process symbols like & or |
     
-    def set_executable(self, cmd: list[str], files: list[Path], folder: Path | None = None):
+    def set_executable(self, cmd: list[str] | str, files: list[Path], folder: Path | None = None):
         self.__compiled = True
-        self.__cmd_list = cmd
+        self.__cmd_list: list[str] | str = cmd
         self.__files: list[Path] = files
         self.__folder: Path | None = folder
         return self
     
-    def get_command(self) -> tuple[list[str], Path | None]:
+    def get_command(self) -> tuple[list[str] | str, Path | None]:
         cmd: list[str] | str = self.__cmd_list
         if isinstance(cmd, str):
             cmd += " " + " ".join([str(file.resolve()) for file in self.__files])
@@ -115,14 +117,14 @@ class SolverBuilder:
         self.__exec = Executable()
         self.clear_cache()
 
-    def prepare_exec(self, free_run_mode: bool = False) -> None:
+    def prepare_exec(self) -> None:
         self.reset()
         first = self.args_list[0]
 
         if first.suffix == ".mk":
             self.__prepare_make()
         elif first.suffix == ".ts":
-            self.__prepare_ts(free_run_mode)
+            self.__prepare_ts()
         elif first.suffix[1:] in self.settings.languages.get_languages().keys():
             self.prepare_exec_with_lang()
         else:
@@ -134,11 +136,12 @@ class SolverBuilder:
         exe_ext = ".exe" if os.name == "nt" else ""
         output_path = self.cache_dir / ("a.out" + exe_ext)
         
-        files_str = " ".join([str(x.relative_to(parent_folder)) for x in self.args_list])
+        files_str = " ".join([f'"{str(x.relative_to(parent_folder))}"' for x in self.args_list])
         text = (text.replace("{files}", files_str)
-                    .replace("{output}", str(output_path))
+                    .replace("{output}", f'"{str(output_path.relative_to(parent_folder))}"')
                     .replace("{main}", main_file_without_ext)
-                    .replace("{cache}", str(self.cache_dir.relative_to(parent_folder))))
+                    .replace("{cache}", f'"{str(self.cache_dir.relative_to(parent_folder))}"')).strip()
+
         return text
 
     def prepare_exec_with_lang(self):
@@ -155,7 +158,11 @@ class SolverBuilder:
             self.__exec.set_compile_error(stdout + stderr)
             return
         run_cmd = self.replace_placeholders(run_cmd)
-        self.__exec.set_executable(run_cmd.split(), [], parent_folder)
+        with open("debug.txt", "w") as f:
+            f.write(f"build_cmd: {build_cmd}\n")
+            f.write(f"run_cmd: {run_cmd}\n")
+            f.write(f"parent_folder: {parent_folder}")
+        self.__exec.set_executable(run_cmd, [], parent_folder)
 
     def __prepare_make(self):
         self.check_tool("make")
@@ -168,14 +175,50 @@ class SolverBuilder:
         else:
             self.__exec.set_executable(["make", "-s", "-C", folder, "-f", solver, "run"], [])
 
-    def __prepare_ts(self, free_run_mode: bool):
-        
-        new_files = self.args_list
+    def update_input_function(self, path_list: list[Path], copy_dir: Path):
+        new_files: list[str] = []
+        for origin in self.args_list:
+            new_files.append(os.path.join(copy_dir, os.path.basename(origin)))
+
+        for i in range(len(path_list)):
+            origin = path_list[i]
+            destiny = new_files[i]
+
+            content = Decoder.load(origin)
+            lines = content.splitlines(keepends=True)
+            io_target = io.StringIO()
+            tag = 'constinput=()=>""'
+
+            input_cmd = r'const input: () => string = (() => { let lines: string[] | undefined; let index = 0; let readlineSync: any; return (): string => { const isTTY = process?.stdin?.isTTY; if (isTTY) { readlineSync = readlineSync ?? require("readline-sync"); return readlineSync.question(); } if (!lines) { try { const fs = require("fs"); lines = fs.readFileSync(0, "utf-8").split(/\r?\n/); } catch { lines = []; } } return lines![index++] ?? ""; }; })();'
+
+            inserted: bool = False
+            for line in lines:
+                match = False
+                if not inserted:
+                    filtered = "".join([c for c in line if c != " "])
+                    match = filtered.startswith(tag)
+                if match:
+                    inserted = True
+                    io_target.write(input_cmd)
+                else:
+                    io_target.write(line)
+
+            with open(destiny, "w", encoding="utf-8") as f:
+                f.write(io_target.getvalue())
+            io_target.close()
+        return new_files
+
+    def __prepare_ts(self):
+        copy_dir = self.cache_dir / "src"
+        # remove the cache dir
+        if os.path.exists(copy_dir):
+            shutil.rmtree(copy_dir, ignore_errors=True)
+        os.makedirs(copy_dir, exist_ok=True)
+        new_files = self.update_input_function(self.args_list, copy_dir)
+
         transpiler = "npx"
         if os.name == "nt":
             transpiler += ".cmd"
-
-        new_files = [os.path.abspath(x) for x in new_files]
 
         self.check_tool(transpiler)
         self.check_tool("node")

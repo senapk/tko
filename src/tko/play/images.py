@@ -67,7 +67,7 @@ opening["estuda"] = r"""
    Use Esquerda e Direita para fechar/abrir e saltar blocos.
 2. Se precisar, calibre as teclas do teclado com 'c'.
 3. Aperte enter para baixar e também para entrar na atividade.
-4. Aperte 'e', depois de entrar, para abrir
+4. Aperte 'v', depois de entrar, para ver
    os arquivos de rascunho e descrição da atividade.
 5. Aperte enter para rodar os testes quando mudar algo no código.
 6. Aperte 'esc' para voltar a tela de seleção de atividades.

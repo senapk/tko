@@ -38,7 +38,7 @@ class Free:
 
         if show_compilation:
             Runner.clear_screen()
-        solver.prepare_exec(free_run_mode=True)
+        solver.prepare_exec()
         if solver.has_compile_error():
             executable, _ = solver.get_executable()
             print(executable.get_error_msg())

@@ -1,5 +1,9 @@
 # Changelog
 
+- 8.5.1
+  - fix: Path error if space in path for runner
+- 8.5.0
+  - add: new drafts and languagens can be added by users in languages.toml
 - 8.4.0
   - add: change to pathlib Path instead str
   - fix: source remote add url

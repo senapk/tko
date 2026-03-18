@@ -1,6 +1,5 @@
-#!/bin/env python
+from __future__ import annotations
 
-import os
 import argparse
 from tko.util.text import Text
 import time
@@ -8,117 +7,116 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import subprocess
 from pathlib import Path
 
+
 class Pull:
 
     @staticmethod
     def run_git_command(directory: str, command_args: list[str]) -> tuple[str, str, int]:
-        """
-        Executa um comando Git em um diretório específico.
-        Retorna stdout, stderr, e returncode.
-        """
-        # Certifique-se de que o comando Git é executado no diretório correto
-        # cwd (current working directory) é essencial aqui
         try:
-            process = subprocess.Popen(
-                ['git'] + command_args,
-                cwd=directory,  # Executa o comando no diretório do repositório
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True  # Para decodificar automaticamente para string
+            result = subprocess.run(
+                ["git"] + command_args,
+                cwd=directory,
+                capture_output=True,
+                text=True,
+                timeout=120,
             )
-            stdout, stderr = process.communicate()
-            return stdout, stderr, process.returncode
+            return result.stdout, result.stderr, result.returncode
         except FileNotFoundError:
-            print(f"Erro: O comando 'git' não foi encontrado. Certifique-se de que o Git está instalado e no seu PATH.")
-            return "", f"Erro: 'git' not found.", 127
+            return "", "git not found", 127
         except Exception as e:
-            print(f"Erro ao executar o comando 'git {' '.join(command_args)}': {e}")
-            return "", f"Erro inesperado: {e}", 1
+            return "", f"unexpected error: {e}", 1
 
+    @staticmethod
+    def git_ok(directory: str, *args: str) -> tuple[bool, str]:
+        stdout, stderr, code = Pull.run_git_command(directory, list(args))
+        return code == 0, stderr or stdout
+
+    @staticmethod
+    def get_default_branch(directory: str) -> str:
+        stdout, _, code = Pull.run_git_command(
+            directory,
+            ["symbolic-ref", "refs/remotes/origin/HEAD"]
+        )
+        if code == 0 and stdout:
+            return stdout.strip().split("/")[-1]
+        return "main"
+
+    @staticmethod
+    def is_up_to_date(directory: str, branch: str) -> bool:
+        local, _, _ = Pull.run_git_command(directory, ["rev-parse", "HEAD"])
+        remote, _, _ = Pull.run_git_command(directory, ["ls-remote", "origin", branch])
+
+        if not remote:
+            return False
+
+        remote_hash = remote.split()[0]
+        return local.strip() == remote_hash
 
     @staticmethod
     def pull(directory: str) -> Text:
-        """
-        Pull a single repository in folter ignoring any local file or folder changes.
-        If the repository needs a merge, ignore it and just pull the latest changes.
-        Args:
-            directory (str): The directory of the repository to pull.
-        """
-        if not os.path.isdir(directory):
-            return Text()
-        if not os.path.isdir(os.path.join(directory, ".git")):
+        repo_path = Path(directory)
+
+        if not repo_path.is_dir() or not (repo_path / ".git").exists():
             return Text()
 
-        output: Text  = Text()
+        output = Text("g") + directory + " "
 
-        output += Text("g") + directory + " "
-        # 1. Reset Local Hard
-        output += Text("y") + "Local "
-        stdout, stderr, returncode = Pull.run_git_command(directory, ["reset", "--hard", "HEAD"])
-        if returncode != 0:
-            output += "\n" + f"Erro no reset --hard: {stderr}"
+        branch = Pull.get_default_branch(directory)
 
+        # 1. Skip se já atualizado
+        if Pull.is_up_to_date(directory, branch):
+            return output + Text("c") + "Up-to-date"
 
-        # 2. Clean
-        output += Text("y") + "Clean "
-        stdout, stderr, returncode = Pull.run_git_command(directory, ["clean", "-fd"])
-        if returncode != 0:
-            output += "\n" + f"Erro no clean -fd: {stderr}"
-        # else:
-        #     print(f"  {stdout.strip()}")
-
-        # 3. Fetch
+        # 2. Fetch otimizado
         output += Text("y") + "Fetch "
-        stdout, stderr, returncode = Pull.run_git_command(directory, ["fetch", "origin"])
-        if returncode != 0:
-            output += "\n" + f"Erro no fetch: {stderr}"
-        # else:
-        #     print(f"  {stdout.strip()}")
+        ok, msg = Pull.git_ok(
+            directory,
+            "fetch",
+            "--prune",
+            "--filter=blob:none",
+            "--tags",
+            "origin",
+            branch
+        )
+        if not ok:
+            return output + "\nFetch failed: " + msg
 
-        # 4. Restore (git reset --hard origin/main)
-        # Assumindo que o branch principal é 'main'. Mude para 'master' se for o caso.
-        main_branch = "main" # Ou "master"
-        output += Text("y") + "Restore "
-        stdout, stderr, returncode = Pull.run_git_command(directory, ["reset", "--hard", f"origin/{main_branch}"])
-        if returncode != 0:
-            output += "\n" + f"Erro no restore (reset --hard origin/{main_branch}): {stderr}"
-        else:
-            output += "\n" + f"  {stdout.strip()}"
+        # 3. Aplicar atualização
+        output += Text("y") + "Update "
+        ok, msg = Pull.git_ok(directory, "reset", "--hard", "FETCH_HEAD")
 
-        return output
+        if not ok:
+            # fallback raro (repo zoado)
+            output += Text("r") + "Fallback "
+            Pull.git_ok(directory, "clean", "-fd")
+            ok, msg = Pull.git_ok(directory, "reset", "--hard", f"origin/{branch}")
+            if not ok:
+                return output + "\nReset failed: " + msg
+
+        return output + "\n"
 
     @staticmethod
-    def pull_all_parallel(repo_list: list[Path], max_workers: int = 50):
-        """
-        Pull all repositories in a list of student folders concurrently.
-        Args:
-            students_folders (list[str]): List of student folder paths.
-            max_workers (int): Maximum number of threads to use.
-        """
-        print(f"\n{Text('y')}Iniciando pull de {len(repo_list)} repositórios com {max_workers} threads...{Text('e')}")
-        start_time = time.time()
+    def pull_all_parallel(repo_list: list[Path], max_workers: int = 10):
+        print(f"\n{Text('y')}Pull de {len(repo_list)} repositórios ({max_workers} threads){Text('e')}")
+        start = time.time()
 
-        # Use ThreadPoolExecutor para gerenciar as threads
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            # Cria um dicionário para mapear os objetos Future de volta para as pastas
-            future_to_folder = {executor.submit(Pull.pull, str(repo)): repo for repo in repo_list}
+            futures = {executor.submit(Pull.pull, str(repo)): repo for repo in repo_list}
 
-            # Itera sobre os resultados à medida que ficam prontos
-            for future in as_completed(future_to_folder):
-                student_folder = future_to_folder[future]
+            for future in as_completed(futures):
+                repo = futures[future]
                 try:
-                    # Obtém o objeto GitOutput retornado pela função pull
                     output = future.result()
-                    if output.get_str() != "":
+                    if output.get_str():
                         print(output)
                 except Exception as exc:
-                    print(f"{Text('r')}A pasta '{student_folder}' gerou uma exceção não esperada: {exc}{Text('e')}")
+                    print(f"{Text('r')}Erro em {repo}: {exc}{Text('e')}")
 
-        end_time = time.time()
-        print(f"\n{Text('y')}Processamento concluído em {end_time - start_time:.2f} segundos.{Text('e')}")
+        elapsed = time.time() - start
+        print(f"\n{Text('y')}Finalizado em {elapsed:.2f}s{Text('e')}")
 
 
 def pull_all_parallel_main(args: argparse.Namespace) -> None:
-    path_list = [Path(path) for path in args.path]
+    path_list = [Path(p) for p in args.path]
     n_threads = args.threads if args.threads else 10
     Pull.pull_all_parallel(path_list, n_threads)

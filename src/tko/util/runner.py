@@ -14,11 +14,11 @@ class Runner:
             env = os.environ.copy()
             env['NO_COLOR'] = '1'
             env['FORCE_COLOR'] = '0'
-            
+        
             answer = subprocess.run(cmd, 
                                     cwd=folder, 
                                     env=env, 
-                                    shell= True if isinstance(cmd, str) else False, 
+                                    shell= shell_mode, 
                                     input=input_data, 
                                     stdout=PIPE, 
                                     stderr=PIPE, 

@@ -51,42 +51,13 @@ output = '''
 """
 
     ts_draft = r"""
-const input:(()=>string)=(()=>{let l:string[]|undefined,i=0,P:any;return()=>process.stdin.isTTY?((P=P||require("readline-sync")).question()):(l=l||require("fs").readFileSync(0,"utf-8").split(/\r?\n/),l[i++] ?? "")})();
+const input = () => ""; // MACRO
 export {};
 console.log("Hello, World!");
 """[1:]
-
-    c_draft = r"""
-#include <stdio.h>
-
-int main() {
-    puts("qxcode");
-    return 0;
-}
-
-"""[1:]
-
-    cpp_draft = r"""
-#include <iostream>
-
-int main() {
-    std::cout << "qxcode\n";
-}
-
-"""[1:]
-
-    java_draft = r"""
-public class draft {
-    public static void main(String args[]) {
-        System.out.println("qxcode");
-    }
-}
-"""[1:]
-
     
     drafts = {
         'ts': ts_draft, 
-        'java': java_draft, 
     }
 
     def get_languages_with_drafts(self) -> list[str]:

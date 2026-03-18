@@ -5,7 +5,7 @@ from pathlib import Path
 from datetime import  timedelta
 import subprocess
 import hashlib
-import fcntl
+from filelock import FileLock
 import shutil
 
 
@@ -59,10 +59,7 @@ class GitCache:
         return age_seconds > self.max_age.total_seconds()
 
     def _acquire_lock(self, lock_path: Path):
-        lock_path.parent.mkdir(parents=True, exist_ok=True)
-        f = open(lock_path, "w")
-        fcntl.flock(f, fcntl.LOCK_EX)
-        return f
+        return FileLock(str(lock_path))
 
     def get(self, url: str, force_update: bool) -> Path:
         repo: Path = self._repo_dir(url)

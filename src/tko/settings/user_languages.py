@@ -48,7 +48,7 @@ main = putStrLn "Hello, World!"
 c_draft = r"""
 #include <stdio.h>
 int main() {
-    printf("Hello, World!\\n");
+    printf("Hello, World!\n");
     return 0;
 }
 """

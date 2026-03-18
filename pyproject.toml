@@ -14,7 +14,7 @@ where = ["src"]
 
 [project]
 name = "tko"
-version = "8.4.3"
+version = "8.5.0"
 description = "Add your description here"
 authors = [
     { name = "David", email = "sena.ufc@gmail.com" }
@@ -24,6 +24,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "diff-match-patch>=20241021",
+    "filelock>=3.25.2",
     "icecream>=2.1.4",
     "markdown>=3.7",
     "pip>=26.0.1",
