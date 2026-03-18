@@ -40,9 +40,9 @@ class TkoFilterMode:
 class Run:
     EVAL_MODE_PAD = 14
 
-    def __init__(self, settings: Settings, target_list: list[Path], param: None | Param.Basic):
+    def __init__(self, settings: Settings, target_list: list[Path | str], param: None | Param.Basic):
         self.settings = settings
-        self.target_list: list[Path] = target_list
+        self.target_list: list[Path] = [Path(target) for target in target_list]
         if param is None:
             self.param = Param.Basic()
         else:

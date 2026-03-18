@@ -18,26 +18,30 @@ class CompileError(Exception):
         return self.message
 
 class Executable:
-    def __init__(self, cmd: list[str] | None = None, files: list[Path] | None =  None, folder: Path | None= None):
+    def __init__(self, cmd: list[str] | str | None, files: list[Path] | None, folder: Path):
         if cmd is None:
             cmd = []
         if files is None:
             files = []
-        self.__cmd_list: list[str] = cmd
-        self.__folder: Path | None = folder
+        self.__cmd_list: list[str] | str = cmd
+        self.__folder: Path = folder
         self.__compiled: bool = False
         self.__compile_error: bool = False
         self.__error_msg: Text = Text()
-        self.need_shell_mode: bool = False # subprocess needs bash mode to process symbols like & or |
+        self.__shell_mode: bool = False # subprocess needs bash mode to process symbols like & or |
     
-    def set_executable(self, cmd: list[str] | str, files: list[Path], folder: Path | None = None):
+    def needs_shell_mode(self):
+        return self.__shell_mode
+    
+    def set_executable(self, cmd: list[str] | str, files: list[Path], folder: Path, shell_mode: bool):
         self.__compiled = True
-        self.__cmd_list: list[str] | str = cmd
+        self.__cmd_list = cmd
         self.__files: list[Path] = files
-        self.__folder: Path | None = folder
+        self.__folder: Path = folder.resolve()
+        self.__shell_mode = shell_mode
         return self
     
-    def get_command(self) -> tuple[list[str] | str, Path | None]:
+    def get_command(self) -> tuple[list[str] | str, Path]:
         cmd: list[str] | str = self.__cmd_list
         if isinstance(cmd, str):
             cmd += " " + " ".join([str(file.resolve()) for file in self.__files])
@@ -73,7 +77,7 @@ class SolverBuilder:
         else:
             self.cache_dir = Path(tempfile.mkdtemp())
         self.clear_cache()
-        self.__exec: Executable = Executable()
+        self.__exec: Executable = Executable(cmd=None, files=None, folder=Path(""))
 
     def check_tool(self, name: str):
         if shutil.which(name) is None:
@@ -106,7 +110,7 @@ class SolverBuilder:
 
     def get_executable(self, force_rebuild: bool = False) -> tuple[Executable, bool]:
         if not self.args_list:
-            return Executable(), False
+            return Executable(cmd=None, files=None, folder=Path("")), False
         if self.__exec.has_compile_error():
             return self.__exec, False
         if not self.__exec.compiled() or force_rebuild:
@@ -114,7 +118,7 @@ class SolverBuilder:
         return self.__exec, True
 
     def reset(self):
-        self.__exec = Executable()
+        self.__exec = Executable(cmd=None, files=None, folder=Path(""))
         self.clear_cache()
 
     def prepare_exec(self) -> None:
@@ -123,12 +127,35 @@ class SolverBuilder:
 
         if first.suffix == ".mk":
             self.__prepare_make()
+        elif first.suffix == ".yaml":
+            self.__prepare_yaml()
         elif first.suffix == ".ts":
             self.__prepare_ts()
         elif first.suffix[1:] in self.settings.languages.get_languages().keys():
             self.prepare_exec_with_lang()
         else:
-            self.__exec.set_executable([str(x) for x in self.args_list], [], None)
+            self.__exec.set_executable([str(x) for x in self.args_list], [], Path(""), shell_mode=True)
+
+    def __prepare_yaml(self):
+        solver: Path = self.args_list[0]
+        folder = solver.parent
+        content = Decoder.load(solver)
+        yaml_data = yaml.safe_load(content)
+
+        if "build" in yaml_data and yaml_data["build"] is not None:
+            build_txt = yaml_data["build"]
+            if not isinstance(build_txt, str):
+                raise Warning(Text.format("{r}: O campo build deve ser uma string", "Falha"))
+            
+            return_code, stdout, stderr = Runner.subprocess_run(cmd=build_txt, folder=folder, shell_mode=True)
+            if return_code != 0:
+                self.__exec.set_compile_error(stdout + stderr)
+                return
+        if not "run" in yaml_data:
+            raise Warning(Text.format("{r}: Seu arquivo yaml precisa ter um campo {g} ", "Falha", "run:"))
+        if not isinstance(yaml_data["run"], str):
+            raise Warning(Text.format("{r}: O campo run deve ser uma string", "Falha"))
+        self.__exec.set_executable(cmd=yaml_data["run"], files=[], folder=folder, shell_mode=True)
 
     def replace_placeholders(self, text: str) -> str:
         parent_folder = self.args_list[0].parent
@@ -158,11 +185,7 @@ class SolverBuilder:
             self.__exec.set_compile_error(stdout + stderr)
             return
         run_cmd = self.replace_placeholders(run_cmd)
-        with open("debug.txt", "w") as f:
-            f.write(f"build_cmd: {build_cmd}\n")
-            f.write(f"run_cmd: {run_cmd}\n")
-            f.write(f"parent_folder: {parent_folder}")
-        self.__exec.set_executable(run_cmd, [], parent_folder)
+        self.__exec.set_executable(run_cmd, [], parent_folder, shell_mode=True)
 
     def __prepare_make(self):
         self.check_tool("make")
@@ -173,7 +196,7 @@ class SolverBuilder:
         if return_code != 0:
             self.__exec.set_compile_error(stdout + stderr)
         else:
-            self.__exec.set_executable(["make", "-s", "-C", folder, "-f", solver, "run"], [])
+            self.__exec.set_executable(cmd=["make", "-s", "-C", folder, "-f", solver, "run"], files=[], folder=Path(""), shell_mode=False)
 
     def update_input_function(self, path_list: list[Path], copy_dir: Path):
         new_files: list[str] = []
@@ -232,4 +255,4 @@ class SolverBuilder:
             new_source_list: list[Path] = []
             for source in new_files:
                 new_source_list.append(self.cache_dir / (os.path.basename(source)[:-2] + "js"))
-            self.__exec.set_executable(cmd=["node"], files=new_source_list)  # renaming solver to main
+            self.__exec.set_executable(cmd=["node"], files=new_source_list, folder=Path(""), shell_mode=False)  # renaming solver to main

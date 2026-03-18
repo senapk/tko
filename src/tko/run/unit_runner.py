@@ -18,12 +18,13 @@ class UnitRunner:
         cmd, folder = executable.get_command()
         if timeout == 0:
             timeout = None
+
         return_code, stdout, stderr = Runner.subprocess_run(
             cmd = cmd, 
             input_data = unit.input,
             timeout = timeout, 
-            folder = folder,
-            shell_mode= True if isinstance(cmd, str) else False
+            folder = folder.resolve(),
+            shell_mode= executable.needs_shell_mode()
         )
         if return_code != 0:
             unit.set_received(stdout + stderr)

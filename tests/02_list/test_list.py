@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import pytest
 from tko.util.compare import Compare
-
+from pathlib import Path
 class Test:
     @classmethod
     def setup_method(cls):

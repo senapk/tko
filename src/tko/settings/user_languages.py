@@ -19,8 +19,9 @@ class LangSettings:
 
 draft_zip = r"""
 const std = @import("std");
-pub fn main(init: std.process.Init) !void {
-    try std.Io.File.stdout().writeStreamingAll(init.io, "Hello, World!");
+
+pub fn main() !void {
+    try std.fs.File.stdout().writeAll("hello world!\n");
 }"""[1:]
 
 draft_rust = r"""

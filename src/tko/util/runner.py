@@ -14,7 +14,7 @@ class Runner:
             env = os.environ.copy()
             env['NO_COLOR'] = '1'
             env['FORCE_COLOR'] = '0'
-        
+
             answer = subprocess.run(cmd, 
                                     cwd=folder, 
                                     env=env, 

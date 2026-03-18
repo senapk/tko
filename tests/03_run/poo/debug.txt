@@ -1,0 +1,3 @@
+build_cmd: g++ -std=c++17 -Wall -Wextra -Werror -Wno-deprecated "solver.cpp" -o ".build/a.out"
+run_cmd: ".build/a.out"
+parent_folder: .

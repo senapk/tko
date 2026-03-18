@@ -1,0 +1,3 @@
+cmd: g++ -Wall -std=c++17 main.cpp lib.cpp -o solver.out
+folder: .
+shell_mode: True

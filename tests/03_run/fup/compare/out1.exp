@@ -16,7 +16,8 @@
 ├────────────── ESPERADO ──────────────┼────────────── RECEBIDO ───────────────┤
 │ 0.44                                 │ terminate called after throwing an i  │
 │ -5.07                                │   what():  Impossivel calcular        │
-│                                      │ fail: runtime exception               │
+│                                      │ Aborted (core dumped)                 │
+│                                      │ fail: execution error code -6         │
 ├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
 │ 0.44↲                                                              (esperado)│
 │ terminate·called·after·throwing·an·instance·of·'std::invalid_argum (recebido)│
@@ -59,7 +60,8 @@
 ├────────────── ESPERADO ──────────────┼────────────── RECEBIDO ───────────────┤
 │ nao ha raiz real                     │ terminate called after throwing an i  │
 │                                      │   what():  Impossivel calcular        │
-│                                      │ fail: runtime exception               │
+│                                      │ Aborted (core dumped)                 │
+│                                      │ fail: execution error code -6         │
 ├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
 │ nao·ha·raiz·real↲                                                  (esperado)│
 │ terminate·called·after·throwing·an·instance·of·'std::invalid_argum (recebido)│
@@ -102,7 +104,8 @@
 ├────────────── ESPERADO ──────────────┼────────────── RECEBIDO ───────────────┤
 │ nao ha raiz real                     │ terminate called after throwing an i  │
 │                                      │   what():  Impossivel calcular        │
-│                                      │ fail: runtime exception               │
+│                                      │ Aborted (core dumped)                 │
+│                                      │ fail: execution error code -6         │
 ├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
 │ nao·ha·raiz·real↲                                                  (esperado)│
 │ terminate·called·after·throwing·an·instance·of·'std::invalid_argum (recebido)│

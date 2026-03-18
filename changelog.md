@@ -1,5 +1,7 @@
 # Changelog
 
+- 8.5.2
+  - fix: zig language draft
 - 8.5.1
   - fix: Path error if space in path for runner
 - 8.5.0
