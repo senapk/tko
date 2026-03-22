@@ -1,5 +1,7 @@
 # Changelog
 
+- 8.5.3
+  - fix: creating settings dir if not exists
 - 8.5.2
   - fix: zig language draft
 - 8.5.1

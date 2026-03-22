@@ -549,7 +549,5 @@ def main():
     #     print(e)
     #     sys.exit(1)
 
-
-# NÃO RETIRE ESSA TAG POR CAUSA DO MERGE DO REPLIT
-if __name__ == '__main__':  # MERGE_INSERT
+if __name__ == '__main__':
     main()

@@ -22,7 +22,9 @@ class Test:
         assert task.get_key_only() == "label"
         assert task.get_alias() == "database"
         assert task.get_db_key() == "label" # database is hided by legacy compatibility
-        assert task.get_workspace_folder() == "/rep/database/label"
+        folder = task.get_workspace_folder()
+        assert folder is not None
+        assert folder.resolve() == "/rep/database/label"
         assert task.target == "data/label/r.md"
     
     def test_database_poo(self):

@@ -135,6 +135,7 @@ class UserLanguages:
         return self
 
     def save_file_settings(self):
+        self.path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.path, "w") as f:
             for lang, settings in self.lang_settings.items():
                 f.write(f"[{lang}]\n")
