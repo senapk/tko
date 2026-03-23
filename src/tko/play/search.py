@@ -48,9 +48,9 @@ class Search:
         unit = self.tree.all_items[selected_key]
 
         if isinstance(unit, Task):
-            self.tree.expanded = {unit.cluster_key, unit.quest_key}
+            self.tree.expanded = {unit.remote_name, unit.quest_key}
         elif isinstance(unit, Quest):
-            self.tree.expanded = {unit.get_db_key(), unit.cluster_key}
+            self.tree.expanded = {unit.get_db_key(), unit.remote_name}
         self.tree.reload_sentences()
 
     # update index to match the first item that matches the search

@@ -24,7 +24,7 @@ class Test:
         assert task.get_db_key() == "label" # database is hided by legacy compatibility
         folder = task.get_workspace_folder()
         assert folder is not None
-        assert folder.resolve() == "/rep/database/label"
+        assert str(folder.resolve()) == "/rep/database/label"
         assert task.target == "data/label/r.md"
     
     def test_database_poo(self):
@@ -35,7 +35,7 @@ class Test:
         assert task.get_key_only() == "label"
         assert task.get_alias() == "poo"
         assert task.get_db_key() == "poo@label" # database is hided by legacy compatibility
-        assert task.get_workspace_folder() == "/source/data/label"
+        assert str(task.get_workspace_folder()) == "/source/data/label"
         assert task.target == "data/label/r.md"
 
 
@@ -47,7 +47,7 @@ class Test:
         assert task.get_key_only() == "label"
         assert task.get_alias() == "poo"
         assert task.get_db_key() == "poo@label" # database is hided by legacy compatibility
-        assert task.get_workspace_folder() == "/source/poo/label"
+        assert str(task.get_workspace_folder()) == "/source/poo/label"
         assert task.target == "poo/label/r.md"
 
     def test_file_not_found(self):

@@ -1,4 +1,3 @@
-from tko.game.cluster import Cluster
 from tko.game.quest import Quest
 from tko.game.task import Task
 # from tko.game.graph import Graph
@@ -179,8 +178,12 @@ class PlayActions:
         if isinstance(obj, Task):
             task: Task = obj
             if ic.enabled:
-                task.info.rate = 100
-                task.info.feedback = True
+                if not task.info.feedback:
+                    task.info.rate = 100
+                    task.info.feedback = True
+                else:
+                    task.info.rate = 0
+                    task.info.feedback = False
             else:
                 if task.is_link() or task.task_rate == Task.TaskRate.INFO:
                     if task.info.feedback:
@@ -221,15 +224,12 @@ class PlayActions:
                 draft = Drafts.drafts[self.rep.data.lang]
             with open(folder / f"draft.{self.rep.data.lang}", "w", encoding="utf-8") as f:
                 f.write(draft)
-            sandbox_cluster = self.rep.game.get_sandbox_cluster()
-            if not sandbox_cluster:
-                draft_id = 1
-            else:
-                task_keys_only: list[str] = []
-                for quest in sandbox_cluster.get_quests():
-                    for task in quest.get_tasks():
-                        task_keys_only.append(task.get_key_only())
-                draft_id = Drafts.find_max_numbered_key(task_keys_only=task_keys_only) + 1
+
+            task_keys_only: list[str] = []
+            for quest in self.game.quests.values():
+                for task in quest.get_tasks():
+                    task_keys_only.append(task.get_key_only())
+            draft_id = Drafts.find_max_numbered_key(task_keys_only=task_keys_only) + 1
             key = Drafts.create_draft_key(draft_id)
             Drafts.create_sandbox_draft(folder, key)
             
@@ -257,13 +257,6 @@ class PlayActions:
                 .set_error()
             )
             return
-        if isinstance(obj, Cluster):
-            self.fman.add_input(
-                 Floating().bottom().right()
-                .put_text("\nEsse é um grupo.")
-                .put_text("\nVocê só pode baixar tarefas.\n")
-                .set_error()
-            )
         if not isinstance(obj, Task):
             return
         self.__down_remote_task(obj)
@@ -338,7 +331,7 @@ class PlayActions:
         try:
             obj = self.tree.get_selected_throw()
 
-            if isinstance(obj, Quest) or isinstance(obj, Cluster):
+            if isinstance(obj, Quest):
                 self.tree.toggle(obj)
                 return lambda: None
 

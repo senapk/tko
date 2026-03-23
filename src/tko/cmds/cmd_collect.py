@@ -41,21 +41,17 @@ class CmdCollect:
         return "\n".join([str(x) for x in image])
 
     @staticmethod
-    def load_game_as_cluster_list(rep: Repository) -> list[Game.Cluster]:
+    def load_game_as_quest_list(rep: Repository) -> list[Game.Quest]:
         game = rep.game
         if not game:
             return []
-        output: list[Game.Cluster] = []
-        for cluster_key in game.ordered_clusters:
-            cluster_key = cluster_key.replace("database@", "") # legacy support for old database keys that had "database@" prefix
-            cluster = game.clusters[cluster_key]
-            output_cluster = Game.Cluster(cluster.get_db_key())
-            output.append(output_cluster)
-            for quest in cluster.get_quests():
-                output_quest = Game.Quest(quest.get_db_key(), quest.value)
-                output_cluster.quests.append(output_quest)
-                for task in quest.get_tasks():
-                    output_quest.tasks.append(Game.Task(key=task.get_db_key(), value=task.xp, is_leet=task.is_leet(), opt=task.is_optional()))
+        output: list[Game.Quest] = []
+
+        for quest in game.quests.values():
+            output_quest = Game.Quest(quest.get_db_key())
+            output.append(output_quest)
+            for task in quest.get_tasks():
+                output_quest.tasks.append(Game.Task(key=task.get_db_key(), value=task.xp, is_leet=task.is_leet(), opt=task.is_optional()))
         return output
     
     @staticmethod
@@ -173,11 +169,11 @@ class CollectSingle:
                     print(entry)
 
         if param.game:
-            game_data = CmdCollect.load_game_as_cluster_list(rep)
-            data.clusters = game_data
+            game_data = CmdCollect.load_game_as_quest_list(rep)
+            data.quests = game_data
             if not param.json_output:
-                for cluster in game_data:
-                    print(str(cluster))
+                for quest in game_data:
+                    print(str(quest))
         return data
 
 class CollectMany:

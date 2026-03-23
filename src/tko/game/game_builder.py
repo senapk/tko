@@ -3,11 +3,8 @@ from pathlib import Path
 from tko.down.drafts import Drafts
 from tko.game.quest_parser import QuestParser
 from tko.game.task_parser import TaskParser
-from tko.game.cluster import Cluster
 from tko.game.quest import Quest
 from tko.game.task import Task
-from tko.util.get_md_link import get_md_link
-from tko.util.to_asc import uni_to_asc
 from tko.settings.rep_source import RepSource
 from tko.util.decoder import Decoder
 import os
@@ -16,9 +13,8 @@ from icecream import ic # type: ignore
 class GameBuilder:
     def __init__(self, source: RepSource):
         self.source = source
-        self.ordered_clusters: list[str] = [] # ordered clusters
-        self.clusters: dict[str, Cluster] = {}
-        self.active_cluster: Cluster | None = None
+        self.ordered_quests: list[str] = [] # ordered quests keys
+        self.quests: dict[str, Quest] = {}
         self.active_quest: Quest | None = None
         self.unique_keys: set[str] = set()
         self.interactive: bool = False
@@ -43,17 +39,16 @@ class GameBuilder:
 
     def collect_tasks(self) -> dict[str, Task]:
         tasks: dict[str, Task] = {}
-        for cluster in self.clusters.values():
-            for quest in cluster.get_quests():
-                for task in quest.get_tasks():
-                    tasks[task.get_db_key()] = task
+
+        for quest in self.quests.values():
+            for task in quest.get_tasks():
+                tasks[task.get_db_key()] = task
         return tasks
 
     def collect_quests(self) -> dict[str, Quest]:
         quests: dict[str, Quest] = {}
-        for cluster in self.clusters.values():
-            for quest in cluster.get_quests():
-                quests[quest.get_db_key()] = quest
+        for quest in self.quests.values():
+            quests[quest.get_db_key()] = quest
         return quests
 
     def __create_requirements_pointers(self):
@@ -123,7 +118,7 @@ class GameBuilder:
             task.set_workspace_folder(self.source.get_task_workspace(yaml_key))
         self.__add_task(task)
 
-    def __parse_cluster_folder(self, folder: str):
+    def __parse_remote_folder(self, folder: str):
         alias = self.source.name
         if not os.path.exists(folder):
             return
@@ -132,8 +127,7 @@ class GameBuilder:
             quest_folder = os.path.join(folder, entry)
             if not os.path.isdir(quest_folder):
                 continue
-            cluster_key = self.__get_active_cluster().get_key_only()
-            self.__add_quest(Quest(entry, f"{cluster_key}:{entry}").set_alias(alias))
+            self.__add_quest(Quest(entry, f"{entry}").set_alias(alias))
             self.__parse_quest_folder(quest_folder, tasks_with_missing_keys)
         
         if self.interactive and len(tasks_with_missing_keys) > 0:
@@ -189,15 +183,11 @@ class GameBuilder:
                 self.__parse_quest_folder(quest_folder, [])
                 continue
 
-            autoload, cluster_folder = self.__is_autoload_cluster_cmd(line)
+            autoload, remote_folder = self.__is_autoload_cluster_cmd(line)
             if autoload:
-                self.__parse_cluster_folder(cluster_folder)
+                self.__parse_remote_folder(remote_folder)
                 continue
 
-            cluster = self.__load_cluster(line, line_num)
-            if cluster is not None:
-                self.__add_cluster(cluster)
-                continue
             quest = QuestParser(alias).parse_quest(filename, line, line_num + 1)
             if quest is not None:
                 self.__add_quest(quest)
@@ -210,96 +200,50 @@ class GameBuilder:
                     task.set_workspace_folder(self.source.get_task_workspace(task.get_key_only()))
                 self.__add_task(task)
 
-    def __get_active_cluster(self) -> Cluster:
-        if self.active_cluster is None:
-            ckey = "sem_cluster"
-            return self.__add_cluster(Cluster(0, "Sem Cluster", ckey))
-        return self.active_cluster
-
     def __get_active_quest(self) -> Quest:
         if self.active_quest is None:
-            qkey = self.__get_active_cluster().get_db_key() + "_sem_quest"
+            qkey = "_sem_quest"
             return self.__add_quest(Quest("Sem Quest", qkey))
         return self.active_quest
 
-    def __add_cluster(self, cluster: Cluster) -> Cluster:
-        self.clusters[cluster.get_db_key()] = cluster
-        if not cluster.get_db_key() in self.ordered_clusters:
-            self.ordered_clusters.append(cluster.get_db_key())
-        self.active_cluster = cluster
-        self.active_quest = None
-        return cluster
-
     def __add_quest(self, quest: Quest) -> Quest:
-        self.__get_active_cluster().add_quest(quest)
+        self.quests[quest.get_db_key()] = quest
+        self.ordered_quests.append(quest.get_db_key())
         self.active_quest = quest
         return quest
 
     def __add_task(self, task: Task):
         self.__get_active_quest().add_task(task)
 
-    # se existir um cluster nessa linha, insere na lista de clusters e 
-    # retorno o objeto cluster inserido
-    def __load_cluster(self, line: str, line_num: int) -> None | Cluster:
-        if not line.startswith("## "):
-            return None
-        line = line[3:]
 
-        titulo = line
-        tags_raw = ""
-        if "<!--" in line:
-            pieces = line.split("<!--")
-            titulo = pieces[0]
-            middle_end = pieces[1].split("-->")
-            tags_raw = middle_end[0]
-            titulo += middle_end[1]
+    def remove_empty_and_other_language_and_filtered(self, language: str, quest_filters: list[str] | None, task_filters: list[str] | None):
+        # self.__quests = [q for q in self.__quests if len(q.get_tasks()) > 0]
+        quests: list[Quest] = []
+        for q in self.quests.values():
+            if len(q.get_tasks()) == 0:
+                continue
+            if quest_filters is not None and len(quest_filters) > 0:
+                allow = False
+                for filter in quest_filters:
+                    if filter in q.get_title() or filter in q.get_db_key():
+                        allow = True
+                        break
+                if not allow:
+                    continue
+            if len(q.languages) == 0 or language in q.languages:
+                quests.append(q)
+        self.quests = {q.get_db_key(): q for q in quests}
 
-        tags = [tag.strip() for tag in tags_raw.split(" ")]        
-        only_key = uni_to_asc(get_md_link(titulo))
-        try:
-            color = [tag[2:] for tag in tags if tag.startswith("c:")][0]
-        except IndexError as _e:
-            color = None
-            
-
-        
-        cluster = Cluster(line_num, titulo, only_key, color).set_alias(self.source.name)
-        filename = self.source.get_source_readme()
-        skey = cluster.get_db_key()
-        if skey in self.clusters.keys():
-            c = self.clusters[skey]
-            print(f"Cluster {skey} já existe")
-            print(f"{filename}:{line_num}")
-            print(f"{filename}:{c.line_number}")
-            print("  " + str(c))
-            print("  " + str(cluster))
-            exit(1)
-                
-        self.clusters[skey] = cluster
-        self.ordered_clusters.append(skey)
-        return cluster
+        return self
 
     def __clear_empty_or_other_language(self, language: str): #call before create_cross_references
         # apagando quests vazias da lista de quests
-        for cluster in self.clusters.values():
-            quest_filters, task_filters = self.source.get_filters()
-            cluster.remove_empty_and_other_language_and_filtered(language, quest_filters, task_filters) 
-
-        # apagando quests vazias dos clusters e clusters vazios
-        ordered_clusters: list[str] = []
-        clusters: dict[str, Cluster] = {}
-        for key in self.ordered_clusters:
-            cluster = self.clusters[key]
-            if len(cluster.get_quests()) > 0:
-                ordered_clusters.append(cluster.get_db_key())
-                clusters[cluster.get_db_key()] = cluster
-        self.ordered_clusters = ordered_clusters
-        self.clusters = clusters
+        quest_filters, task_filters = self.source.get_filters()
+        self.remove_empty_and_other_language_and_filtered(language, quest_filters, task_filters) 
 
     def __create_cross_references(self): #call after clear_empty
-        for cluster in self.clusters.values():
-            for quest in cluster.get_quests():
-                quest.cluster_key = cluster.get_db_key()
-                for task in quest.get_tasks():
-                    task.cluster_key = cluster.get_db_key()
-                    task.quest_key = quest.get_db_key()
+        for quest in self.quests.values():
+            quest.remote_name = self.source.name
+            for task in quest.get_tasks():
+                task.remote_name = self.source.name
+                task.quest_key = quest.get_db_key()

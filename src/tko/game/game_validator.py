@@ -1,11 +1,9 @@
-from tko.game.cluster import Cluster
 from tko.game.quest import Quest
 from tko.game.task import Task
 
 class GameValidator:
-    def __init__(self, clusters: dict[str, Cluster]):
-        self.clusters: dict[str, Cluster] = clusters
-        self.quests: dict[str, Quest] = {}
+    def __init__(self, quests: dict[str, Quest]):
+        self.quests: dict[str, Quest] = quests
         self.tasks: dict[str, Task] = {}
         
     def validate(self):
@@ -15,8 +13,7 @@ class GameValidator:
 
     def __validate_requirements(self):
         # verify is there are keys repeated between quests, tasks and groups
-        keys = [c.get_db_key() for c in self.clusters.values()] +\
-               [k for k in self.quests.keys()] +\
+        keys = [k for k in self.quests.keys()] +\
                [k for k in self.tasks.keys()]
 
         # print chaves repetidas
@@ -28,8 +25,6 @@ class GameValidator:
         # trim titles
         for q in self.quests.values():
             q.set_title(q.get_title().strip())
-        for c in self.clusters.values():
-            c.set_title(c.get_title().strip())
 
         # verificar auto dependencia
         for q in self.quests.values():

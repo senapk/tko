@@ -44,7 +44,7 @@ class Task(TreeItem):
         
         self.target = ""
         self.quest_key = ""
-        self.cluster_key = ""
+        self.remote_name = ""
         self.__origin_folder: Path | None = None
         self.__workspace_folder: Path | None = None
         self.__is_reachable = False

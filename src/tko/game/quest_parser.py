@@ -1,4 +1,4 @@
-from tko.game.quest import Quest, startswith
+from tko.game.quest import Quest
 from tko.util.get_md_link import get_md_link
 from pathlib import Path
 
@@ -17,38 +17,25 @@ class QuestParser:
         return self.quest
 
     def match_full_pattern(self) -> bool:
-        if not startswith(self.line, "### "):
+        if self.line.startswith("## "):
+            line = self.line[3:]
+        elif self.line.startswith("### "):
+            line = self.line[4:]
+        else:
             return False
-        line = self.line[4:]
 
-        pieces: list[str] = line.split("<!--")
+        line = line.replace("<!--", " ").replace("-->", " ").replace("`", " ")
+        title = self.process_words(line)
+        self.quest.set_title(title)
 
-        # html tags
-        if len(pieces) > 1:
-            middle_end: list[str] = pieces[1].split("-->")
-            middle: str = middle_end[0]
-            end: str = middle_end[1]
-            line = pieces[0] + end # removendo raw text
-            self.process_raw_tags(middle)
 
-        self.quest.set_title(line)
-        if "[](" in line:
-            pieces = line.split("[](")
-            self.quest.set_title(pieces[0])
-
-            del pieces[0]
-            for p in pieces:
-                key = p.split(")")[0]
-                if key[0] == "#":
-                    key = key[1:]
-                self.quest.add_require_key(key)
         return True
 
-    def process_raw_tags(self, raw_tags: str):
-        tags = [tag.strip() for tag in raw_tags.split(" ")]
+    def process_words(self, line: str) -> str:
+        words = [tag.strip() for tag in line.split(" ") if tag != ""]
 
         # skills
-        skills = [t[1:] for t in tags if t.startswith("+")]
+        skills = [t[1:] for t in words if t.startswith("+")]
         if len(skills) > 0:
             self.quest.skills = {}
             for s in skills:
@@ -59,32 +46,26 @@ class QuestParser:
                     self.quest.skills[s] = 1  # default value is 1 if not specified
 
         # languages
-        languages = [t[2:] for t in tags if t.startswith("l:")]
+        languages = [t[1:] for t in words if t.startswith("=")]
         if len(languages) > 0:
             self.quest.languages = []
             for l in languages:
                 self.quest.languages.append(l)
 
         # quest percent
-        qmin = [t[2:] for t in tags if t.startswith("q:")]
-
-        # quest percent
-        value = [t[2:] for t in tags if t.startswith("v:")]
-
-        if len(value) > 0:
-            try:
-                self.quest.value = int(value[0])
-            except ValueError:
-                self.quest.value = 0
-
+        qmin = [t[1:] for t in words if t.startswith("%")]
         if len(qmin) > 0:
             try:
-                self.quest.qmin = int(qmin[0])
+                self.quest.min_percent_completion = int(qmin[0])
             except ValueError:
-                self.quest.qmin = 50
-            
+                self.quest.min_percent_completion = 50
+        
+        required = [t[1:] for t in words if t.startswith("!")]
+        for key in required:
+            self.quest.add_require_key(key)
 
-
+        words = [w for w in words if w[0] not in ["%", "=", "+", "!"]]
+        return " ".join(words)
 
     def parse_quest(self, filename: Path, line: str, line_num: int) -> None | Quest:
         self.line = line
@@ -93,7 +74,7 @@ class QuestParser:
 
         self.quest.line = self.line
         self.quest.line_number = self.line_num
-        self.quest.cluster_key = ""
+        self.quest.remote_name = ""
 
         if self.match_full_pattern():
             return self.finish_quest()

@@ -18,7 +18,6 @@ from tko.play.tasktree import TaskTree, TaskAction
 from tko.play.keys import GuiKeys
 from tko.game.quest import Quest
 from tko.game.task import Task
-from tko.game.cluster import Cluster
 from tko.play.task_graph import TaskGraph
 from tko.play.daily_graph import DailyGraph
 
@@ -72,13 +71,6 @@ class Gui:
             if Flags.quests.get_value() != Flags.quest_enable and not quest.is_reachable():
                 output = TaskAction.BLOQUEIO
             elif quest.get_db_key() in self.tree.expanded:
-                output = TaskAction.CONTRAIR
-            else:
-                output = TaskAction.EXPANDIR
-            return "Y", output
-        elif isinstance(obj, Cluster):
-            cluster: Cluster = obj
-            if cluster.get_db_key() in self.tree.expanded:
                 output = TaskAction.CONTRAIR
             else:
                 output = TaskAction.EXPANDIR
@@ -392,7 +384,7 @@ class Gui:
                 height = 3
             if isinstance(selected, Task):
                 made, header, list_data = self.get_task_graph(selected.get_db_key(), width, height)
-            elif isinstance(selected, Cluster) or isinstance(selected, Quest):
+            elif isinstance(selected, Quest):
                 made, list_data = self.get_daily_graph(width, height)
         if not made:
             list_data = [Text().add(x) for x in opening["estuda"].splitlines()]

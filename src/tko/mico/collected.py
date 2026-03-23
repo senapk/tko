@@ -43,9 +43,8 @@ class Game:
             return f"{self.key}, {Game.value_str}:{self.value}, leet:{self.leet}, {Game.opt_str}:{self.opt}"
 
     class Quest:
-        def __init__(self, key: str, value: int = 0):
+        def __init__(self, key: str):
             self.key = key
-            self.value: int = value
             self.tasks: list[Game.Task] = []
 
         def to_dict(self) -> dict[str, Any]:
@@ -68,33 +67,8 @@ class Game:
         def __str__(self):
             return f'{self.key}, {Game.value_str}:{self.value}\n' + "\n".join([f"\t{str(t)}" for t in self.tasks])
 
-    class Cluster:
-        def __init__(self, key: str = "", value: int = default_value):
-            self.key = key
-            self.quests: list[Game.Quest] = []
-
-        def to_dict(self) -> dict[str, Any]:
-            output: dict[str, Any] = {
-                Game.key_str: self.key,
-                Game.quests_str: [quest.to_dict() for quest in self.quests]
-            }
-            return output
-        
-        def load_from_dict(self, json_data: dict[str, Any]):
-            self.key = json_data.get(Game.key_str, self.key)
-            quests_data = json_data.get(Game.quests_str, [])
-            for quest in quests_data:
-                collected_quest = Game.Quest(quest.get(Game.key_str, ""))
-                collected_quest.load_from_dict(quest)
-                self.quests.append(collected_quest)
-            return self
-            
-        def __str__(self):
-            return f"{self.key}\n" + "\n".join([f"\t{str(q)}" for q in self.quests]) + "\n"
-
-
 class Collected:
-    clusters_str: str = "clusters"
+    quests_str: str = "quests"
     resume_str: str = "resume"
     graph_str: str = "graph"
     log_str: str = "log"
@@ -103,7 +77,7 @@ class Collected:
         self.resume: dict[str, TaskResume] = {}
         self.graph: str = ""
         self.log: list[str] = []
-        self.clusters: list[Game.Cluster] = []
+        self.quests: list[Game.Quest] = []
 
     def load_from_dict(self, json_data: dict[str, Any]):
         if not Collected.resume_str in json_data:
@@ -117,11 +91,11 @@ class Collected:
             self.resume[key] = collected_resume
         self.graph = json_data.get(Collected.graph_str, self.graph)
         self.log = json_data.get(Collected.log_str, self.log)
-        cluster_data = json_data.get(Collected.clusters_str, [])
-        for cluster in cluster_data:
-            game_cluster = Game.Cluster(cluster.get(Game.key_str, ""))
-            game_cluster.load_from_dict(cluster)
-            self.clusters.append(game_cluster)
+        quest_data = json_data.get(Collected.quests_str, [])
+        for quest in quest_data:
+            game_quest = Game.Quest(quest.get(Game.key_str, ""))
+            game_quest.load_from_dict(quest)
+            self.quests.append(game_quest)
         return self
 
     def to_dict(self) -> dict[str, Any]:
@@ -132,5 +106,5 @@ class Collected:
         output[Collected.resume_str] = resume_dict
         output[Collected.graph_str] = self.graph
         output[Collected.log_str] = self.log
-        output[Collected.clusters_str] = [cluster.to_dict() for cluster in self.clusters]
+        output[Collected.quests_str] = [quest.to_dict() for quest in self.quests]
         return output

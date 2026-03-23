@@ -1,5 +1,4 @@
 from tko.util.text import Text
-from tko.settings.legacy import Legacy
 
 class TreeItem():
 
@@ -13,8 +12,6 @@ class TreeItem():
         return self.__alias
 
     def get_db_key(self) -> str:
-        if self.__alias == Legacy.LEGACY_DATABASE:
-            return self.__key
         return self.__alias + "@" + self.__key
     
     def get_key_only(self) -> str:

@@ -1,4 +1,3 @@
-from tko.game.cluster import Cluster
 from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.game.game_builder import GameBuilder
@@ -19,8 +18,7 @@ def load_html_tags(task: str) -> None | str:
 class Game:
     def __init__(self):
         self.sources: list[RepSource] = []
-        self.ordered_clusters: list[str] = [] # ordered clusters
-        self.clusters: dict[str, Cluster] = {} 
+        self.ordered_quests: list[str] = [] # ordered clusters
         self.quests: dict[str, Quest] = {}  # quests indexed by quest key
         self.tasks: dict[str, Task] = {}  # tasks indexed by task key
 
@@ -43,17 +41,17 @@ class Game:
         priority: dict[str, float] = {}
         complete: dict[str, float] = {}
         obtained: dict[str, float] = {}
-        for c in self.clusters.values():
-            for q in c.get_quests():
-                for t in q.get_tasks():
-                    for skill, value in t.skills.items():
-                        gvalue = (value * t.get_xp() * t.get_ratio())
-                        if gvalue < 0.1:
-                            gvalue = 0
-                        obtained[skill] = obtained.get(skill, 0) + gvalue
-                        if not t.is_optional():
-                            priority[skill] = priority.get(skill, 0) + value * t.get_xp()
-                        complete[skill] = complete.get(skill, 0) + value * t.get_xp()
+
+        for q in self.quests.values():
+            for t in q.get_tasks():
+                for skill, value in t.skills.items():
+                    gvalue = (value * t.get_xp() * t.get_ratio())
+                    if gvalue < 0.1:
+                        gvalue = 0
+                    obtained[skill] = obtained.get(skill, 0) + gvalue
+                    if not t.is_optional():
+                        priority[skill] = priority.get(skill, 0) + value * t.get_xp()
+                    complete[skill] = complete.get(skill, 0) + value * t.get_xp()
 
         # remove all keys with value 0
         # obtained = {k: v for k, v in obtained.items() if v > 0}
@@ -70,12 +68,6 @@ class Game:
             total_priority += priority.get(key, 0)
             total_complete += value
         return total_obtained, total_priority, total_complete
-
-    def get_sandbox_cluster(self) -> Cluster | None:
-        for c in self.clusters.values():
-            if c.get_alias() == RepSource.STUDENT_SANDBOX_ALIAS:
-                return c
-        return None
 
     def get_sandbox_source(self) -> RepSource:
         for s in self.sources:
@@ -97,10 +89,8 @@ class Game:
         for source in self.sources:
             gb = GameBuilder(source)
             gb.build_from(self.language)
-            for cluster_key in gb.ordered_clusters:
-                self.ordered_clusters.append(source.name + "@" + cluster_key)
-            for cluster in gb.clusters.values():
-                self.clusters[cluster.get_db_key()] = cluster
+            for quest_key in gb.ordered_quests:
+                self.ordered_quests.append(source.name + "@" + quest_key)
 
             gb_quests = gb.collect_quests()
             gb_tasks = gb.collect_tasks()
@@ -108,7 +98,7 @@ class Game:
                 self.quests[quest.get_db_key()] = quest
             for task in gb_tasks.values():
                 self.tasks[task.get_db_key()] = task
-        GameValidator(self.clusters).validate()
+        GameValidator(self.quests).validate()
 
         # for t in self.tasks.values():
         #     t.get_link(os.path.dirname(filename) + "/")
@@ -133,25 +123,22 @@ class Game:
         for q in self.quests.values():
             q.set_reachable(False)
             q.update_tasks_reachable()
-        for c in self.clusters.values():
-            c.set_reachable(False)
+        for q in self.quests.values():
+            q.set_reachable(False)
 
         cache: dict[str, bool] = {}
-        for c in self.clusters.values():
-            for q in c.get_quests():
-                if Game.is_reachable_quest(q, cache):
-                    q.set_reachable(True)
-                    c.set_reachable(True)
+        for q in self.quests.values():
+            if Game.is_reachable_quest(q, cache):
+                q.set_reachable(True)
+                q.set_reachable(True)
 
     # @override
     def __str__(self):
         output: list[str] = []
-        for c in self.clusters.values():
-            output.append("# " + str(c))
-            for q in c.get_quests():
-                output.append("  - " + str(q))
-                for t in q.get_tasks():
-                    output.append("    - " + str(t))
+        for q in self.quests.values():
+            output.append("  - " + str(q))
+            for t in q.get_tasks():
+                output.append("    - " + str(t))
         output.append(100 * "-")
         for q in self.quests.values():
             output.append(str(q))

@@ -24,26 +24,22 @@ class Quest(TreeItem):
         self.requires_ptr: list[Quest] = []
         self.skills: dict[str, int] = {}  # s:{skill} to be applied to all tasks
         self.languages: list[str] = []  # l:language to filter what is showed to user based in default language
-        self.qmin: int = 50  # q:{value} 50 percent to complete quest
-        self.value: int = 1  # v:{value} quest value in cluster wheighted average
+        self.min_percent_completion: int = 50  # q:{value} 50 percent to complete quest
         self.filename = ""
-        self.cluster_key = ""
+        self.remote_name = ""
         self.__is_reachable: bool = False
 
     def add_require_key(self, key: str):
         self.requires.append(self.get_alias() + "@" + key)
 
-    def get_value(self) -> int:
-        return self.value
-
     def get_full_title(self) -> Text:
-        output = Text().add(self.get_title())
+        output = Text().add(self.remote_name).add(":").add(self.get_title())
         if Flags.tracks.get_value() != "0":
             for skill, value in self.skills.items():
                 if value > 1:
-                    output.addf('y', f" {skill}*{value}")
+                    output.addf('b', f" +{skill}*{value}")
                 else:
-                    output.addf('y', f" {skill}")
+                    output.addf('b', f" +{skill}")
         return output
 
     def is_reachable(self)-> bool:
@@ -71,7 +67,7 @@ class Quest(TreeItem):
         return Text().addf(self.get_grade_color(), (str(value) + "%").rjust(4))
     
     def get_requirement(self) -> Text:
-        return Text().addf("y", f"[{self.qmin}%]")
+        return Text().addf("y", f"[{self.min_percent_completion}%]")
 
     def get_grade_color(self) -> str:
         if self.not_started():
@@ -83,7 +79,7 @@ class Quest(TreeItem):
         return "y"
 
     def is_complete(self):
-        return self.get_percent() >= self.qmin
+        return self.get_percent() >= self.min_percent_completion
 
     def add_task(self, task: Task):
         task.skills.update(self.skills)  # apply quest skills to task
