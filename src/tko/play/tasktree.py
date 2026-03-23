@@ -81,7 +81,7 @@ class TaskTree:
         return len(quest.get_full_title()) + 5
 
     def get_task_title_size(self, task: Task) -> int:
-        return len(task.get_title()) + 11
+        return len(task.get_title()) + 15
 
     def get_max_title(self) -> int:
         if self.cache_max_title:
@@ -150,19 +150,36 @@ class TaskTree:
         if self.is_downloaded_for_lang(t):
             down_symbol = symbols.task_downloaded
         return down_symbol
+    
+    def get_task_rate_symbol(self, t: Task) -> Text.Token:
+        if t.task_rate == Task.TaskRate.TEST:
+            if t.info.feedback:
+                return symbols.circle_filled.set_fmt("g")
+            else:
+                return symbols.circle_open
+        if t.task_rate == Task.TaskRate.SELF:
+            if t.info.feedback:
+                return symbols.square_filled.set_fmt("g")
+            else:
+                return symbols.square_open
+        if t.task_rate == Task.TaskRate.INFO:
+            if t.info.feedback:
+                return symbols.task_info_filled.set_fmt("g")
+            else:
+                return symbols.task_info_open
+        return Text.Token(" ")
 
-    def get_feedback_symbol(self, t: Task) -> Text:
-        output = Text()
-        if t.is_link():
-            output.add("-")
-            return output
-        if t.info.feedback:
-            output.addf("g", symbols.closed_circle)
-        elif t.info.rate > 0:
-            output.addf("r", symbols.closed_circle)
-        else:
-            output.addf("", symbols.open_circle)
-        return output
+    def get_task_path_symbol(self, t: Task) -> Text.Token:
+        if t.task_path == Task.TaskPath.MAIN:
+            return symbols.star_filled
+        return symbols.star_open
+    
+    def get_task_rule_symbol(self, t: Task) -> Text.Token:
+        if t.task_rule == Task.TaskRule.MOCK:
+            return symbols.task_repeat.set_fmt("y")
+        if t.task_rule == Task.TaskRule.EXAM:
+            return symbols.task_denied.set_fmt("r")
+        return Text.Token("")
 
     def __str_task(self, focus_color: str, t: Task, lig_cluster: str, lig_quest: str, quest_reachable: bool) -> Text:
         color_aval = "g" if quest_reachable and t.is_reachable() else "y"
@@ -170,13 +187,13 @@ class TaskTree:
         output = Text()
         output.add(" ").addf(color_aval, lig_cluster).add(" ")
         output.addf(color_aval, lig_quest)
-        if t.is_link():
-            output.addf("y", "<url>")
-        else:
-            output.add(self.get_task_down_symbol(t)).add(" ")
-            rate = t.info.rate // 10
-            output.add(t.get_prog_symbol(rate)).add(" ")
-            output.add(self.get_feedback_symbol(t))
+        
+        output.add(self.get_task_down_symbol(t)).add(" ")
+        rate = t.info.rate // 10
+        output.add(t.get_prog_symbol(rate)).add(" ")
+        output.add(self.get_task_rate_symbol(t)).add(" ")
+        output.add(self.get_task_path_symbol(t)).add(" ")
+        output.add(self.get_task_rule_symbol(t))
 
         in_focus = focus_color != ""
         output.add(self.style.round_l(focus_color) if in_focus else " ")

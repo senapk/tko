@@ -6,11 +6,24 @@ from tko.util.text import Text
 from tko.game.tree_item import TreeItem
 from tko.game.task_info import TaskInfo
 from tko.game.task_grader import TaskGrader
-
+import enum
 
 
 class Task(TreeItem):
     str_index = "idx"
+
+    class TaskRate(enum.Enum):
+        TEST = "test" # rate uses % of test cases passed
+        SELF = "open" # rate uses auto grade
+        INFO = "info" # no rate, just toggle check
+
+    class TaskPath(enum.Enum):
+        MAIN = "main" # main task, required to complete the quest
+        SIDE = "side" # side task, optional to complete the quest, usually with less xp reward
+
+    class TaskRule(enum.Enum):
+        EXAM = "exam" # no help allowed, must be done alone
+        MOCK = "mock" # help allowed, but still graded by test cases, usually with less xp reward
 
     def __init__(self):
 
@@ -20,12 +33,14 @@ class Task(TreeItem):
         self.info = TaskInfo()
         self.grader = TaskGrader(self.info)
         self.main_idx: int = 0
-        self.leet: bool = False # if the task is a leet task, rate must be marked by running test cases
-        self.solo: bool = False # if the task is a solo task, rate must be marked by running test cases without help
+        
+        self.task_rate: Task.TaskRate = Task.TaskRate.TEST
+        self.task_path: Task.TaskPath = Task.TaskPath.MAIN
+        self.task_rule: Task.TaskRule = Task.TaskRule.MOCK
+
         self.skills: dict[str, int] = {} # skills
         
         self.xp: int = 0
-        self.opt: bool = False
         
         self.target = ""
         self.quest_key = ""
@@ -35,27 +50,15 @@ class Task(TreeItem):
         self.__is_reachable = False
         self.default_min_value = 5 # default min grade to complete task
 
-    def is_optional(self) -> bool:
-        return self.opt
-
-    def set_leet(self, value: bool = True):
-        self.leet = value
-        return self
-    
-    def set_solo(self):
-        self.solo = True
-        self.leet = True
-        return self
-    
-    def is_leet(self) -> bool:
-        return self.leet
-    
-    def is_solo(self) -> bool:
-        return self.solo
-
     def set_reachable(self, reachable: bool):
         self.__is_reachable = reachable
         return self
+    
+    def is_optional(self):
+        return self.task_path == Task.TaskPath.SIDE
+    
+    def is_leet(self):
+        return self.task_rate == Task.TaskRate.TEST
 
     def is_reachable(self) -> bool:
         return self.__is_reachable

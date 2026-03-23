@@ -30,8 +30,21 @@ class __Symbols:
         self.whitespace = Text.Token("·") #Text.Token("␣")
         self.newline = Text.Token("↲")
 
-        self.open_circle = Text.Token("○")
-        self.closed_circle = Text.Token("●")
+        self.circle_filled = Text.Token("●")
+        self.circle_open = Text.Token("○")
+
+        self.square_filled = Text.Token("■")
+        self.square_open = Text.Token("□")
+
+        self.task_info_filled = Text.Token("◆")
+        self.task_info_open = Text.Token("◇")
+
+        self.star_filled = Text.Token("★")
+        self.star_open = Text.Token("☆")
+
+        self.task_denied = Text.Token("⊘")
+        self.task_repeat = Text.Token("↺")
+
 
         self.cfill = Text.Token("_")
         self.tab = Text.Token("    ")

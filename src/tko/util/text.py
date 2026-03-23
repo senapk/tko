@@ -57,6 +57,14 @@ class Text:
                 raise TypeError("text must be a string")
             self.text = text
             self.fmt = fmt
+        
+        def set_text(self, text: str):
+            self.text = text
+            return self
+
+        def set_fmt(self, fmt: str):
+            self.fmt = fmt
+            return self
 
         def __eq__(self, other: Any):
             if not isinstance(other, Text.Token):

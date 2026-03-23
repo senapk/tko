@@ -55,7 +55,7 @@ class CmdCollect:
                 output_quest = Game.Quest(quest.get_db_key(), quest.value)
                 output_cluster.quests.append(output_quest)
                 for task in quest.get_tasks():
-                    output_quest.tasks.append(Game.Task(key=task.get_db_key(), value=task.xp, is_leet=task.is_leet(), opt=task.opt))
+                    output_quest.tasks.append(Game.Task(key=task.get_db_key(), value=task.xp, is_leet=task.is_leet(), opt=task.is_optional()))
         return output
     
     @staticmethod

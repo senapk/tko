@@ -112,33 +112,33 @@ class Gui:
         graph: str = f"Painel [{GuiKeys.show_graph}]"
         for i in Flags.painel.get_values():
             if Flags.painel.get_value() == i:
-                graph += symbols.closed_circle.text
+                graph += symbols.circle_filled.text
             else:
-                graph += symbols.open_circle.text
+                graph += symbols.circle_open.text
         top.add(self.style.border(color, graph))
 
         trilhas: str = (f"Trilhas[{GuiKeys.show_tracks}]")
         for i in range(3):
             if Flags.tracks.get_value() == str(i):
-                trilhas += symbols.closed_circle.text
+                trilhas += symbols.circle_filled.text
             else:
-                trilhas += symbols.open_circle.text
+                trilhas += symbols.circle_open.text
         top.add(self.style.border(color, trilhas))
 
         quests: str = f"Tópicos [{GuiKeys.show_quests}]"
         for value in Flags.quests.get_values():
             if Flags.quests.get_value() == str(value):
-                quests += symbols.closed_circle.text
+                quests += symbols.circle_filled.text
             else:
-                quests += symbols.open_circle.text
+                quests += symbols.circle_open.text
         top.add(self.style.border(color, quests))
 
         tasks: str = f"Tarefas [{GuiKeys.show_tasks}]"
         for i in range(3):
             if Flags.tasks.get_value() == str(i):
-                tasks += symbols.closed_circle.text
+                tasks += symbols.circle_filled.text
             else:
-                tasks += symbols.open_circle.text
+                tasks += symbols.circle_open.text
         top.add(self.style.border(color, tasks))
         
 

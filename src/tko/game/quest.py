@@ -98,7 +98,7 @@ class Quest(TreeItem):
         """
         tasks_info: list[QuestGrader.Elem] = []
         for t in self.__tasks:
-            tasks_info.append(QuestGrader.Elem(t.opt, t.xp, t.get_percent()))
+            tasks_info.append(QuestGrader.Elem(t.is_optional(), t.xp, t.get_percent()))
         return QuestGrader.calc_xp_earned_total(tasks_info)
         
     def get_percent(self) -> float:

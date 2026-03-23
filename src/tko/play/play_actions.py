@@ -182,17 +182,19 @@ class PlayActions:
                 task.info.rate = 100
                 task.info.feedback = True
             else:
-                if task.is_link():
+                if task.is_link() or task.task_rate == Task.TaskRate.INFO:
+                    if task.info.feedback:
+                        task.info.feedback = False
+                        task.info.rate = 0
+                        self.rep.logger.store(LogItemSelf().set_task(task))
+                    else:
+                        task.info.feedback = True
+                        task.info.rate = 100
+                        self.rep.logger.store(LogItemSelf().set_task(task))
+                else:
                     self.fman.add_input(
-                        Floating().bottom().right()
-                        .put_text("\nEssa é uma tarefa de link.")
-                        .put_text("\nNão é possível autoavaliar tarefas de link.\n")
-                        .set_error()
+                        FloatingGrade(obj, lambda task: self.rep.logger.store(LogItemSelf().set_task(task)))
                     )
-                    return
-                self.fman.add_input(
-                    FloatingGrade(obj, lambda task: self.rep.logger.store(LogItemSelf().set_task(task)))
-                )
             return
 
     def create_draft(self):

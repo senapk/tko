@@ -11,20 +11,7 @@ class TaskParser:
     def __init__(self, index_path: Path, source_alias: str):
         self.index_path = index_path
         self.task: Task | None = Task().set_alias(source_alias)
-
-    def __load_xp(self, tags_raw: str):
-        if self.task is None:
-            return
-        tags = [tag.strip() for tag in tags_raw.split(" ")]
-        for t in tags:
-            if t.startswith("+"):
-                self.task.xp = int(t[1:])
-                self.task.opt = True
-            elif t.startswith("*"):
-                self.task.xp = int(t[1:])
-                self.task.opt = False
             
-
     @staticmethod
     def filter_task_key(key: str) -> str:
         allowed = "0123456789_abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -52,17 +39,43 @@ class TaskParser:
         link = match.group(3).strip()
         return True, title, html_tags, link
 
-    def __parse_key_leet_solo(self, tags_raw: str):
+    def decode_task_types(self, info: str):
         if self.task is None:
             return
+        for c in info:
+            # if c is digit, set xp
+            if c.isdigit():
+                self.task.xp = int(c)
+            elif c == "t":
+                self.task.task_rate = Task.TaskRate.TEST
+            elif c == "s":
+                self.task.task_rate = Task.TaskRate.SELF
+            elif c == "i":
+                self.task.task_rate = Task.TaskRate.INFO
+            elif c == "=":
+                self.task.task_path = Task.TaskPath.MAIN
+            elif c == "+":
+                self.task.task_path = Task.TaskPath.SIDE
+            elif c == "?":
+                self.task.task_rule = Task.TaskRule.MOCK
+            elif c == "!":
+                self.task.task_rule = Task.TaskRule.EXAM
+
+    def __parse_key_task_types(self, tags_raw: str) -> str:
+        if self.task is None:
+            return ""
+        new_title: list[str] = []
         for item in tags_raw.split(" "):
             if item.startswith("@"):
                 self.task.set_key(self.filter_task_key(item[1:]))
-            elif item == ":leet":
-                self.task.set_leet()
-            elif item == ":solo":
-                self.task.set_solo()
-                self.task.set_leet()
+                new_title.append(item)
+            elif item.startswith(":"):
+                self.decode_task_types(item[1:])
+            else:
+                new_title.append(item)
+        return " ".join(new_title)
+
+
 
     def redirect_from_readme(self, link: str) -> str:
         if not os.path.isabs(link):
@@ -81,9 +94,8 @@ class TaskParser:
         task = self.task
         task.line_number = line_num
         task.line = line
+        title = self.__parse_key_task_types(title + " " + html_tags)
         task.set_title(title)
-        self.__load_xp(task.get_title() + " " + html_tags)
-        self.__parse_key_leet_solo(title + " " + html_tags)
 
         if link.startswith("http://") or link.startswith("https://"):
             self.task.set_link_type()
