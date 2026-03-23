@@ -42,13 +42,13 @@ class GameBuilder:
 
         for quest in self.quests.values():
             for task in quest.get_tasks():
-                tasks[task.get_db_key()] = task
+                tasks[task.get_full_key()] = task
         return tasks
 
     def collect_quests(self) -> dict[str, Quest]:
         quests: dict[str, Quest] = {}
         for quest in self.quests.values():
-            quests[quest.get_db_key()] = quest
+            quests[quest.get_full_key()] = quest
         return quests
 
     def __create_requirements_pointers(self):
@@ -112,7 +112,7 @@ class GameBuilder:
         title = f"@{yaml_key} {task_dirname}"
         task.set_key(yaml_key)
         task.set_title(title)
-        task.set_alias(alias)
+        task.set_remote_name(alias)
         task.set_origin_folder(Path(task_dir_path))
         if self.source.is_read_only():
             task.set_workspace_folder(self.source.get_task_workspace(yaml_key))
@@ -127,7 +127,7 @@ class GameBuilder:
             quest_folder = os.path.join(folder, entry)
             if not os.path.isdir(quest_folder):
                 continue
-            self.__add_quest(Quest(entry, f"{entry}").set_alias(alias))
+            self.__add_quest(Quest(entry, f"{entry}").set_remote_name(alias))
             self.__parse_quest_folder(quest_folder, tasks_with_missing_keys)
         
         if self.interactive and len(tasks_with_missing_keys) > 0:
@@ -197,7 +197,7 @@ class GameBuilder:
             task = tp.parse_line(line, line_num + 1).check_path_try().get_task()
             if task is not None:
                 if self.source.is_read_only() and not task.is_link():
-                    task.set_workspace_folder(self.source.get_task_workspace(task.get_key_only()))
+                    task.set_workspace_folder(self.source.get_task_workspace(task.get_key()))
                 self.__add_task(task)
 
     def __get_active_quest(self) -> Quest:
@@ -207,8 +207,8 @@ class GameBuilder:
         return self.active_quest
 
     def __add_quest(self, quest: Quest) -> Quest:
-        self.quests[quest.get_db_key()] = quest
-        self.ordered_quests.append(quest.get_db_key())
+        self.quests[quest.get_full_key()] = quest
+        self.ordered_quests.append(quest.get_full_key())
         self.active_quest = quest
         return quest
 
@@ -225,14 +225,14 @@ class GameBuilder:
             if quest_filters is not None and len(quest_filters) > 0:
                 allow = False
                 for filter in quest_filters:
-                    if filter in q.get_title() or filter in q.get_db_key():
+                    if filter in q.get_title() or filter in q.get_full_key():
                         allow = True
                         break
                 if not allow:
                     continue
             if len(q.languages) == 0 or language in q.languages:
                 quests.append(q)
-        self.quests = {q.get_db_key(): q for q in quests}
+        self.quests = {q.get_full_key(): q for q in quests}
 
         return self
 
@@ -246,4 +246,4 @@ class GameBuilder:
             quest.remote_name = self.source.name
             for task in quest.get_tasks():
                 task.remote_name = self.source.name
-                task.quest_key = quest.get_db_key()
+                task.quest_key = quest.get_full_key()

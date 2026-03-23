@@ -9,7 +9,7 @@ class LogItemSelf(LogItemBase):
         self.info: TaskInfo = TaskInfo()
 
     def set_task(self, task: Task):
-        self.key = task.get_db_key()
+        self.key = task.get_full_key()
         self.info = task.info.clone()
         return self
 

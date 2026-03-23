@@ -70,7 +70,7 @@ class Gui:
             quest: Quest = obj
             if Flags.quests.get_value() != Flags.quest_enable and not quest.is_reachable():
                 output = TaskAction.BLOQUEIO
-            elif quest.get_db_key() in self.tree.expanded:
+            elif quest.get_full_key() in self.tree.expanded:
                 output = TaskAction.CONTRAIR
             else:
                 output = TaskAction.EXPANDIR
@@ -383,7 +383,7 @@ class Gui:
             if height < 3:
                 height = 3
             if isinstance(selected, Task):
-                made, header, list_data = self.get_task_graph(selected.get_db_key(), width, height)
+                made, header, list_data = self.get_task_graph(selected.get_full_key(), width, height)
             elif isinstance(selected, Quest):
                 made, list_data = self.get_daily_graph(width, height)
         if not made:

@@ -30,7 +30,9 @@ class Quest(TreeItem):
         self.__is_reachable: bool = False
 
     def add_require_key(self, key: str):
-        self.requires.append(self.get_alias() + "@" + key)
+        if key.startswith("@"):
+            key = key[1:]
+        self.requires.append(self.get_remote_name() + "@" + key)
 
     def get_full_title(self) -> Text:
         output = Text().add(self.remote_name).add(":").add(self.get_title())
@@ -58,7 +60,7 @@ class Quest(TreeItem):
     def __str__(self):
         line = str(self.line_number).rjust(3)
         tasks_size = str(len(self.__tasks)).rjust(2, "0")
-        key = "" if self.get_db_key() == self.get_title() else self.get_db_key() + " "
+        key = "" if self.get_full_key() == self.get_title() else self.get_full_key() + " "
         output = f"{line} {tasks_size} {key}{self.get_title()} {self.skills} {self.requires}"
         return output
 

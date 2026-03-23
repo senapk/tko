@@ -42,13 +42,28 @@ class TaskTree:
         self.MIN_TITLE_LENGTH = 50
         self.cache_max_title: None | int = None
         self.cache_task_times: dict[str, tuple[int, int]] = {}
+        self.max_key_size: None | int = None
         self.reload_sentences()
+
+    def get_max_key_size(self):
+        if self.max_key_size is None:
+            self.max_key_size = max([len(k) for k, v in self.all_items.items() if isinstance(v, Task) and not v.is_link()])
+        return self.max_key_size
+    
+    def get_max_quest_itens_key_size(self, quest_key: str):
+        q = self.all_items.get(quest_key, None)
+        if q is None or not isinstance(q, Quest):
+            return 10
+        keys: list[int] = [len(task.get_key()) for task in q.get_tasks() if not task.is_link()]
+        if len(keys) == 0:
+            return 10
+        return max(keys)
 
     def load_all_items(self):
         for q in self.game.quests.values():
-            self.all_items[q.get_db_key()] = q
+            self.all_items[q.get_full_key()] = q
             for t in q.get_tasks():
-                self.all_items[t.get_db_key()] = t
+                self.all_items[t.get_full_key()] = t
 
     def load_from_rep(self):
         self.expanded = set(self.rep.data.expanded)
@@ -61,20 +76,20 @@ class TaskTree:
         tasks: dict[str, str] = {}
         for t in self.game.tasks.values():
             if len(t.info.get_kv()) != 0:
-                tasks[t.get_db_key()] = t.save_to_db()
+                tasks[t.get_full_key()] = t.save_to_db()
         self.rep.data.tasks = tasks
 
     def update_tree(self, admin_mode: bool):
         self.game.update_reachable_and_available()
         if not admin_mode:
-            reachable_keys = [q.get_db_key() for q in self.game.quests.values() if q.is_reachable()]
+            reachable_keys = [q.get_full_key() for q in self.game.quests.values() if q.is_reachable()]
             self.expanded = set(x for x in self.expanded if x in reachable_keys)
 
     def get_quest_title_size(self, quest: Quest) -> int:
         return len(quest.get_full_title()) + 5
 
     def get_task_title_size(self, task: Task) -> int:
-        return len(task.get_title()) + 15
+        return len(task.get_full_title(self.get_max_key_size())) + 15
 
     def get_max_title(self) -> int:
         if self.cache_max_title:
@@ -83,7 +98,7 @@ class TaskTree:
         items: list[int] = []
         for q in self.game.quests.values():
             items.append(self.get_quest_title_size(q))
-            if q.get_db_key() in self.expanded:
+            if q.get_full_key() in self.expanded:
                 for t in q.get_tasks():
                     items.append(self.get_task_title_size(t))
 
@@ -187,7 +202,7 @@ class TaskTree:
         in_focus = focus_color != ""
         output.add(self.style.round_l(focus_color) if in_focus else " ")
         color = "" if not in_focus else "k" + focus_color
-        output.add(self.color_task_title(t.get_title(), color))
+        output.add(self.color_task_title(t.get_full_title(self.get_max_quest_itens_key_size(t.quest_key)), color))
         output.ljust(self.get_max_title(), Text.Token(" ", focus_color))
         output.add(self.style.round_r(focus_color) if in_focus else " ") 
 
@@ -200,16 +215,16 @@ class TaskTree:
         return output
 
     def get_task_hours_minutes(self, task: Task) -> tuple[int, int]:
-        if task.get_db_key() in self.cache_task_times:
-            return self.cache_task_times[task.get_db_key()]
-        logsort = self.rep.logger.tasks.task_dict.get(task.get_db_key(), None)
+        if task.get_full_key() in self.cache_task_times:
+            return self.cache_task_times[task.get_full_key()]
+        logsort = self.rep.logger.tasks.task_dict.get(task.get_full_key(), None)
         if logsort is not None and len(logsort.base_list) > 0:
             delta, _ = logsort.base_list[-1]
             hours = delta.accumulated.seconds // 3600
             minutes = (delta.accumulated.seconds % 3600) // 60
-            self.cache_task_times[task.get_db_key()] = (hours, minutes)
+            self.cache_task_times[task.get_full_key()] = (hours, minutes)
             return hours, minutes
-        self.cache_task_times[task.get_db_key()] = (0, 0)
+        self.cache_task_times[task.get_full_key()] = (0, 0)
         return 0, 0
     
     def __str_quest(self, has_kids: bool, focus_color: str, q: Quest) -> Text:
@@ -217,7 +232,7 @@ class TaskTree:
         n_visible, n_hidden = self.count_visible_hidden_tasks(q)
         if n_visible > 0:
             con = "━─" if n_hidden == 0 else "━┄"
-            if q.get_db_key() in self.expanded and has_kids:
+            if q.get_full_key() in self.expanded and has_kids:
                 con = "─╮" if n_hidden == 0 else "┄╮"
 
         color_reachable = "g" if q.is_reachable() else "y"
@@ -236,7 +251,7 @@ class TaskTree:
             if item_key in list(self.game.quests.keys()):
                 quest = self.game.quests[item_key]
                 if not quest.is_reachable():
-                    if q.get_db_key() in quest.requires:
+                    if q.get_full_key() in quest.requires:
                         focus_color = "y"
 
         if in_focus:
@@ -257,13 +272,13 @@ class TaskTree:
             output.add(self.format_hours_minutes("g", hours, minutes))
         output.add(q.get_resume_by_percent())
 
-        all_tasks_done = True
-        for t in q.get_tasks():
-            if not t.is_complete():
-                all_tasks_done = False
-                break
-        if all_tasks_done:
-            output.add("🌟")
+        # all_tasks_done = True
+        # for t in q.get_tasks():
+        #     if not t.is_complete():
+        #         all_tasks_done = False
+        #         break
+        # if all_tasks_done:
+        #     output.add("🌟")
 
         return output
 
@@ -291,20 +306,20 @@ class TaskTree:
         
         for quest in self.game.quests.values():
             if search.inside(quest.get_title()):
-                first = first or quest.get_db_key()
-                matches.add(quest.get_db_key())
+                first = first or quest.get_full_key()
+                matches.add(quest.get_full_key())
             for task in quest.get_tasks():
                 if search.inside(task.get_title()):
-                    first = first or task.get_db_key()
-                    matches.add(quest.get_db_key())
-                    matches.add(task.get_db_key())
+                    first = first or task.get_full_key()
+                    matches.add(quest.get_full_key())
+                    matches.add(task.get_full_key())
         return matches, first
 
     def __try_add(self, filtered: set[str], matcher: SearchAsc, item: TreeItem):
         if self.search_text == "":
             self.items.append(item)
             return True
-        if item.get_db_key() in filtered:
+        if item.get_full_key() in filtered:
             pos = matcher.find(item.get_sentence().get_str())
             found = pos != -1
             if found:
@@ -323,11 +338,11 @@ class TaskTree:
 
     def remove_empty_quests(self):
         for q in self.game.quests.values():
-            if q.get_db_key() not in self.expanded:
+            if q.get_full_key() not in self.expanded:
                 continue
             visible, _ = self.count_visible_hidden_tasks(q)
             if visible == 0:
-                self.expanded.remove(q.get_db_key())
+                self.expanded.remove(q.get_full_key())
 
     def reload_sentences(self):
         self.cache_task_times.clear()
@@ -339,16 +354,16 @@ class TaskTree:
 
         hide = Flags.quests.get_value() == Flags.quest_hide
 
-        quests = [q for q in self.game.quests.values() if q.get_db_key() in self.game.quests.keys() if q.get_db_key() in filtered]
+        quests = [q for q in self.game.quests.values() if q.get_full_key() in self.game.quests.keys() if q.get_full_key() in filtered]
         if hide:
             quests = [q for q in quests if q.is_reachable()]
 
         for q in quests:
-            tasks =[t for t in q.get_tasks() if t.get_db_key() in filtered]
+            tasks =[t for t in q.get_tasks() if t.get_full_key() in filtered]
             if hide:
                 tasks = [t for t in tasks if t.is_reachable()]
             quest_focus_color: str = self.__get_focus_color_quest(q)
-            focus_color = quest_focus_color if self.selected_item == q.get_db_key() else ""
+            focus_color = quest_focus_color if self.selected_item == q.get_full_key() else ""
             q.set_sentence(self.__str_quest(len(tasks) > 0, focus_color, q))
 
             full_task_size = len(tasks)
@@ -357,13 +372,13 @@ class TaskTree:
             has_hidden_tasks = full_task_size != filtered_tasks_size
 
             self.__try_add(filtered, matcher, q)
-            if q.get_db_key() in self.expanded:
+            if q.get_full_key() in self.expanded:
                 for t in tasks:
                     if has_hidden_tasks:
                         ligq = "┆ " if t != tasks[-1] else "╰ "
                     else:
                         ligq = "├ " if t != tasks[-1] else "╰ "
-                    focus_color: str = quest_focus_color if self.selected_item == t.get_db_key() else ""
+                    focus_color: str = quest_focus_color if self.selected_item == t.get_full_key() else ""
                     t.set_sentence(self.__str_task(focus_color, t, ligq, q.is_reachable()))
                     # if self.is_hide_tasks(t):
                     #     continue
@@ -372,11 +387,11 @@ class TaskTree:
         if self.items:
             found = False
             for item in self.items:
-                if item.get_db_key() == self.selected_item:
+                if item.get_full_key() == self.selected_item:
                     found = True
                     break
             if not found:
-                self.selected_item = self.items[0].get_db_key()
+                self.selected_item = self.items[0].get_full_key()
                 self.reload_sentences()
 
     def process_collapse_all(self):
@@ -393,7 +408,7 @@ class TaskTree:
 
     def  get_selected_index(self) -> int:
         for i, item in enumerate(self.items):
-            if item.get_db_key() == self.selected_item:
+            if item.get_full_key() == self.selected_item:
                 return i
         return 0
 
@@ -409,7 +424,7 @@ class TaskTree:
             index = 0
         if index >= len(self.items):
             index = len(self.items) - 1
-        self.selected_item = self.items[index].get_db_key()
+        self.selected_item = self.items[index].get_full_key()
 
     def arrow_right(self):
         if len(self.items) == 0:
@@ -443,7 +458,7 @@ class TaskTree:
                 break
             index -= 1
             obj = self.items[index]
-            if isinstance(obj, Quest) and obj.get_db_key() in self.expanded:
+            if isinstance(obj, Quest) and obj.get_full_key() in self.expanded:
                 break
             if index == 0:
                 break
@@ -489,8 +504,8 @@ class TaskTree:
             if visible == 0:
                 return False
         if isinstance(obj, Quest):
-            if obj.get_db_key() not in self.expanded:
-                self.expanded.add(obj.get_db_key())
+            if obj.get_full_key() not in self.expanded:
+                self.expanded.add(obj.get_full_key())
                 return True
         return False
 
@@ -506,8 +521,8 @@ class TaskTree:
 
     def fold(self, obj: TreeItem) -> bool:
         if isinstance(obj, Quest):
-            if obj.get_db_key() in self.expanded:
-                self.expanded.remove(obj.get_db_key())
+            if obj.get_full_key() in self.expanded:
+                self.expanded.remove(obj.get_full_key())
                 return True
         return False
 

@@ -50,6 +50,13 @@ class Task(TreeItem):
         self.__is_reachable = False
         self.default_min_value = 5 # default min grade to complete task
 
+    def get_full_title(self, key_pad: None | int):
+        if key_pad is None:
+            key_pad = len(self.get_key())
+        if not f"@{self.get_key()}" in self.get_title():
+            return f"@{self.get_key().ljust(key_pad)} {self.get_title()}"
+        return self.get_title()
+
     def set_reachable(self, reachable: bool):
         self.__is_reachable = reachable
         return self
@@ -209,7 +216,7 @@ class Task(TreeItem):
     # @override
     def __str__(self):
         lnum = str(self.line_number).rjust(3)
-        key = "" if self.get_db_key() == self.get_title() else self.get_db_key() + " "
+        key = "" if self.get_full_key() == self.get_title() else self.get_full_key() + " "
         return f"{lnum} key:{key} title:{self.get_title()} skills:{self.skills} remote:{self.target}"
 
     def has_at_symbol(self):

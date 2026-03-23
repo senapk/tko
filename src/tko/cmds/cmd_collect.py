@@ -48,10 +48,10 @@ class CmdCollect:
         output: list[Game.Quest] = []
 
         for quest in game.quests.values():
-            output_quest = Game.Quest(quest.get_db_key())
+            output_quest = Game.Quest(quest.get_full_key())
             output.append(output_quest)
             for task in quest.get_tasks():
-                output_quest.tasks.append(Game.Task(key=task.get_db_key(), value=task.xp, is_leet=task.is_leet(), opt=task.is_optional()))
+                output_quest.tasks.append(Game.Task(key=task.get_full_key(), value=task.xp, is_leet=task.is_leet(), opt=task.is_optional()))
         return output
     
     @staticmethod

@@ -291,7 +291,7 @@ class Run:
                 changes, size = self.store_exec_diff("---")
                 self.__rep.logger.store(LogItemExec()
                     .set_mode(LogItemExec.Mode.FREE)
-                    .set_key(self.__task.get_db_key() )
+                    .set_key(self.__task.get_full_key() )
                     .set_size(changes, size))
         Free.free_run(self.wdir.get_solver(), show_compilation=False, to_clear=False, wait_input=False)
 
@@ -336,21 +336,21 @@ class Run:
         pieces = target_path.split(os.sep)
         if len(pieces) >= 3:
             task.set_key(pieces[-1])
-            task.set_alias(pieces[-2])
+            task.set_remote_name(pieces[-2])
             # task.set_rep_folder(os.sep.join(pieces[:-2]))
         elif len(pieces) == 2:
             task.set_key(pieces[-1])
-            task.set_alias(pieces[-2])
+            task.set_remote_name(pieces[-2])
             # task.set_rep_folder(os.sep)
         else:
             task.set_key(pieces[-1])
-            task.set_alias("")
+            task.set_remote_name("")
             # task.set_rep_folder(os.sep)
 
         self.__task = task
         self.__track_folder = None
         if self.__rep:
-            self.__track_folder = self.__rep.paths.get_track_task_folder(task.get_db_key())
+            self.__track_folder = self.__rep.paths.get_track_task_folder(task.get_full_key())
 
     def __run_test_on_curses(self):
         cdiff = Tester(self.settings, self.__rep, self.wdir, self.get_task())
@@ -386,7 +386,7 @@ class Run:
         if self.__rep:
             self.__rep.logger.store(LogItemExec()
                 .set_mode(exec_mode)
-                .set_key(self.__task.get_db_key())
+                .set_key(self.__task.get_full_key())
                 .set_size(changes, size)
                 .set_rate(rate)
                 .set_fail(exec_fail))
@@ -415,7 +415,7 @@ class Run:
 
     def __run_all_tests_top_line(self) -> int:
         if self.__eval_mode:
-            key = self.get_task().get_db_key() if self.__task is not None else ""
+            key = self.get_task().get_full_key() if self.__task is not None else ""
             print(Text().addf("c", f"@{key:<{self.EVAL_MODE_PAD}} ").add(symbols.opening).add("[").add(self.wdir.resume_join()).add("]"), end="")
         else:
             print(Text().add(symbols.opening).add(self.wdir.resume_splitted()), end="")
@@ -439,9 +439,9 @@ class Run:
         if self.__show_track_info:
             if self.__rep is not None:
                 logger = self.__rep.logger
-                log_sort: LogSort | None = logger.tasks.task_dict.get(self.get_task().get_db_key(), None)
+                log_sort: LogSort | None = logger.tasks.task_dict.get(self.get_task().get_full_key(), None)
                 if log_sort is not None:
-                    log_resume = TaskResume(self.get_task().get_db_key()).from_log_sort(log_sort)
+                    log_resume = TaskResume(self.get_task().get_full_key()).from_log_sort(log_sort)
                     print(Text().addf("g", f"time:{log_resume.resume.minutes:.0f}, diff:{log_resume.resume.versions}, runs:{log_resume.resume.executions},").add(" "), end="", flush=True)
 
         if self.__no_run:

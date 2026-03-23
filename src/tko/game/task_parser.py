@@ -10,7 +10,7 @@ class TaskParser:
 
     def __init__(self, index_path: Path, source_alias: str):
         self.index_path = index_path
-        self.task: Task | None = Task().set_alias(source_alias)
+        self.task: Task | None = Task().set_remote_name(source_alias)
             
     @staticmethod
     def filter_task_key(key: str) -> str:
@@ -26,18 +26,15 @@ class TaskParser:
     # returns
     # tuple[bool, title, html_tags, link]
     def match_full_pattern(self, line: str) -> tuple[bool, str, str, str]:
-        pattern = r'\s*?- \[ \](.*?)\[([^\]]+)\]\(([^)]+)\)(?:\s*<!--(.*?)-->)?'
+        pattern = r'\s*?- \[ \](.*?)\[([^\]]+)\]\(([^)]+)\)?'
         match = re.match(pattern, line)
         if match is None:
             return False, "", "", ""
-        title = match.group(1).strip()
-        if title != "":
-            title += " "
-        title += match.group(2).strip()
-        title = title.replace("`", "")
-        html_tags = match.group(4).strip() if match.group(4) is not None else ""
+        tags = match.group(1).strip()
+        tags = tags.replace("`", " ").replace("<!--", " ").replace("-->", " ")
+        title = match.group(2).strip()
         link = match.group(3).strip()
-        return True, title, html_tags, link
+        return True, tags, title, link
 
     def decode_task_types(self, info: str):
         if self.task is None:
@@ -61,21 +58,19 @@ class TaskParser:
             elif c == "!":
                 self.task.task_rule = Task.TaskRule.EXAM
 
-    def __parse_key_task_types(self, tags_raw: str) -> str:
+    def __parse_key_task_types(self, tags: str) -> str:
         if self.task is None:
             return ""
         new_title: list[str] = []
-        for item in tags_raw.split(" "):
+        words = [w for w in tags.split(" ") if w != ""]
+        for item in words:
             if item.startswith("@"):
                 self.task.set_key(self.filter_task_key(item[1:]))
-                new_title.append(item)
             elif item.startswith(":"):
                 self.decode_task_types(item[1:])
             else:
                 new_title.append(item)
         return " ".join(new_title)
-
-
 
     def redirect_from_readme(self, link: str) -> str:
         if not os.path.isabs(link):
@@ -85,7 +80,7 @@ class TaskParser:
         return link
 
     def parse_line(self, line: str, line_num: int = 0) -> TaskParser:
-        found, title, html_tags, link = self.match_full_pattern(line)
+        found, tags, title, link = self.match_full_pattern(line)
         if not found:
             self.task = None
         if self.task is None:
@@ -94,7 +89,7 @@ class TaskParser:
         task = self.task
         task.line_number = line_num
         task.line = line
-        title = self.__parse_key_task_types(title + " " + html_tags)
+        title = self.__parse_key_task_types(tags + " " + title)
         task.set_title(title)
 
         if link.startswith("http://") or link.startswith("https://"):
@@ -103,7 +98,7 @@ class TaskParser:
             self.task.target = link
             return self
         
-        if self.task.get_key_only() == "": # não tem chave, e não é url
+        if self.task.get_key() == "": # não tem chave, e não é url
             self.task.set_link_type()
             self.task.set_key(link)
             self.task.target = self.redirect_from_readme(link)

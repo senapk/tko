@@ -71,7 +71,7 @@ class PlayActions:
             obj = self.tree.get_selected_throw()
             if not isinstance(obj, Task):
                 return
-            if obj.get_key_only() != text:
+            if obj.get_key() != text:
                 self.fman.add_input(
                     Floating().bottom().right()
                     .put_text("\nTexto digitado não corresponde ao identificador da tarefa.\n")
@@ -106,7 +106,7 @@ class PlayActions:
                     .set_error()
                 )
                 return
-            self.fman.add_input(FloatingInputText(Text().add(f"Para apagar essa pasta, digite ").addf("y", f"{obj.get_key_only()}"), action=delete_folder))
+            self.fman.add_input(FloatingInputText(Text().add(f"Para apagar essa pasta, digite ").addf("y", f"{obj.get_key()}"), action=delete_folder))
         else:
             self.fman.add_input(
                 Floating().bottom().right()
@@ -118,7 +118,7 @@ class PlayActions:
         obj = self.tree.get_selected_throw()
         if isinstance(obj, Task):
             task: Task = obj
-            folder = self.rep.get_task_folder_for_label(task.get_db_key())
+            folder = self.rep.get_task_folder_for_label(task.get_full_key())
             if os.path.exists(folder):
                 opener = Opener(self.settings).set_fman(self.fman)
                 opener.set_target([folder]).set_language(self.rep.data.get_lang())
@@ -228,7 +228,7 @@ class PlayActions:
             task_keys_only: list[str] = []
             for quest in self.game.quests.values():
                 for task in quest.get_tasks():
-                    task_keys_only.append(task.get_key_only())
+                    task_keys_only.append(task.get_key())
             draft_id = Drafts.find_max_numbered_key(task_keys_only=task_keys_only) + 1
             key = Drafts.create_draft_key(draft_id)
             Drafts.create_sandbox_draft(folder, key)
@@ -278,12 +278,12 @@ class PlayActions:
             down_frame.draw()
             Fmt.refresh()
 
-        cmd_down = CmdDown(repo=self.rep, task_key=task.get_db_key(), settings=self.settings)
+        cmd_down = CmdDown(repo=self.rep, task_key=task.get_full_key(), settings=self.settings)
         cmd_down.set_fnprint(fnprint)
         result = cmd_down.execute()
         if result:
             self.rep.logger.store(
-                LogItemMove().set_key(task.get_db_key()).set_mode(LogItemMove.Mode.DOWN)
+                LogItemMove().set_key(task.get_full_key()).set_mode(LogItemMove.Mode.DOWN)
             )
 
 
@@ -307,11 +307,11 @@ class PlayActions:
 
             if isinstance(obj, Task):
                 task: Task = obj
-                track_folder = self.rep.paths.get_track_task_folder(task.get_db_key())
+                track_folder = self.rep.paths.get_track_task_folder(task.get_full_key())
                 tracker = Tracker()
                 tracker.set_folder(track_folder)
-                if task.get_db_key() in self.rep.logger.tasks.task_dict:
-                    log_sort = self.rep.logger.tasks.task_dict[task.get_db_key()]
+                if task.get_full_key() in self.rep.logger.tasks.task_dict:
+                    log_sort = self.rep.logger.tasks.task_dict[task.get_full_key()]
 
                     msg, folder = tracker.unfold_files(log_sort)
                     cmd = self.settings.app.get_editor()

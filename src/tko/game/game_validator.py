@@ -29,7 +29,7 @@ class GameValidator:
         # verificar auto dependencia
         for q in self.quests.values():
             for r in q.requires:
-                if q.get_db_key() == r:
+                if q.get_full_key() == r:
                     print(f"Erro: auto refência {q.line_number} {q.line}")
                     exit(1)
 
@@ -38,12 +38,12 @@ class GameValidator:
     def __check_cycle(self):
         def dfs(qx: Quest, visitedx: list[str]):
             if len(visitedx) > 0:
-                if visitedx[0] == qx.get_db_key():
+                if visitedx[0] == qx.get_full_key():
                     print(f"Cycle detected: {visitedx}")
                     exit(1)
-            if q.get_db_key() in visitedx:
+            if q.get_full_key() in visitedx:
                 return
-            visitedx.append(q.get_db_key())
+            visitedx.append(q.get_full_key())
             for r in q.requires_ptr:
                 dfs(r, visitedx)
 

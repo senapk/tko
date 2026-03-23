@@ -3,18 +3,18 @@ from tko.util.text import Text
 class TreeItem():
 
     def __init__(self):
-        self.__alias: str = ""
+        self.__remote_name: str = ""
         self.__key: str = ""
         self._title: str = ""
         self.__sentence: Text = Text()
 
-    def get_alias(self) -> str:
-        return self.__alias
+    def get_remote_name(self) -> str:
+        return self.__remote_name
 
-    def get_db_key(self) -> str:
-        return self.__alias + "@" + self.__key
+    def get_full_key(self) -> str:
+        return self.__remote_name + "@" + self.__key
     
-    def get_key_only(self) -> str:
+    def get_key(self) -> str:
         return self.__key
     
     def get_title(self) -> str:
@@ -23,11 +23,13 @@ class TreeItem():
     def get_sentence(self) -> Text:
         return self.__sentence
 
-    def set_alias(self, alias: str):
-        self.__alias = alias
+    def set_remote_name(self, remote_name: str):
+        self.__remote_name = remote_name
         return self
     
     def set_key(self, key: str):
+        if key.startswith("@"):
+            key = key[1:]
         self.__key = key
         return self
 
