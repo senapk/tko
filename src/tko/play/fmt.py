@@ -37,7 +37,7 @@ class Fmt:
         'b': curses.COLOR_BLUE,
         'm': curses.COLOR_MAGENTA,
         'c': curses.COLOR_CYAN,
-        'w': curses.COLOR_WHITE,
+        'w': curses.COLOR_WHITE
     }
     @staticmethod
     def set_scr(scr: curses.window):
@@ -50,6 +50,8 @@ class Fmt:
         curses.start_color()
         curses.use_default_colors()
         for fk, fg in Fmt.COLOR_MAP.items():
+            if fk == "T":
+                continue
             curses.init_pair(pair_number, fg, -1)
             Fmt.color_pairs[fk] = pair_number
             pair_number += 1
@@ -67,7 +69,11 @@ class Fmt:
         stdscr = Fmt.__scr
         italic = False
         underline = False
+        reverse = False
         source_fmt = fmt
+        if "X" in fmt or "x" in fmt:
+            reverse = True
+            fmt = fmt.replace("X", "").replace("x", "")
         if "/" in fmt:
             italic = True
             fmt = fmt.replace("/", "")
@@ -94,6 +100,8 @@ class Fmt:
             stdscr.attron(curses.A_ITALIC)
         if underline:
             stdscr.attron(curses.A_UNDERLINE)
+        if reverse:
+            stdscr.attron(curses.A_REVERSE)
         # Exibir o texto com a combinação de cores escolhida
         if pair_number != -1:
             stdscr.attron(curses.color_pair(pair_number))
@@ -116,6 +124,8 @@ class Fmt:
             stdscr.attroff(curses.A_ITALIC)
         if underline:
             stdscr.attroff(curses.A_UNDERLINE)
+        if reverse:
+            stdscr.attroff(curses.A_REVERSE)
 
     # break in lines and cut everything that is out of the box
     @staticmethod
@@ -226,4 +236,3 @@ def test_fmt(scr: curses.window):
     for i in range(15):
         Fmt.write(i - 2, -1, output)
     scr.getch()
-

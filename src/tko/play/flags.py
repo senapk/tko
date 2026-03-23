@@ -110,7 +110,7 @@ class Flags:
                     .set_msgs(["Gráfico de tarefas por execuções", "Gráfico de tarefas por tempo"]))
     show_time = (Flag().set_name("Tempo").set_keycode(GuiKeys.show_time).set_description("Mostra o tempo utilizado para completar as tarefas")
                     .set_values(["1", "0"])
-                    .set_msgs(["Ocultar tempo gasto nas tarefas", "Mostrar tempo gasto nas tarefas"]))
+                    .set_msgs(["Mostrar tempo gasto nas tarefas", "Ocultar tempo gasto nas tarefas"]))
 class FlagsMan:
     def __init__(self, data: dict[str, int]):
         self.flags: dict[str, Flag] = {}

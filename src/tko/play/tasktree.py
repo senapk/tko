@@ -290,7 +290,10 @@ class TaskTree:
         if Flags.show_time.is_true():
             len_extra = len(self.format_hours_minutes("", 0, 0))
 
-        output = output.addf(color, cluster.get_alias() + ":" + cluster.get_title()).ljust(self.get_max_title() + len_extra, Text.Token(self.filler, color))
+        filer = Text.Token(self.filler, color)
+        output = output.addf(
+            color, 
+            cluster.get_alias() + ":" + cluster.get_title()).ljust(self.get_max_title() + len_extra, filer)
 
         if focus_color != "":
             output.add(self.style.round_r(focus_color))
