@@ -36,8 +36,8 @@ class __Symbols:
         self.square_filled = Text.Token("■")
         self.square_open = Text.Token("□")
 
-        self.task_info_filled = Text.Token("◆")
-        self.task_info_open = Text.Token("◇")
+        self.task_human_filled = Text.Token("◆")
+        self.task_human_open = Text.Token("◇")
 
         self.star_filled = Text.Token("★")
         self.star_open = Text.Token("☆")

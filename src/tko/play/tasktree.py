@@ -169,14 +169,14 @@ class TaskTree:
                 return symbols.circle_open
         if t.task_rate == Task.TaskRate.USER:
             if t.info.feedback:
+                return symbols.task_human_filled.set_fmt("g")
+            else:
+                return symbols.task_human_open
+        if t.task_rate == Task.TaskRate.TICK:
+            if t.info.feedback:
                 return symbols.square_filled.set_fmt("g")
             else:
                 return symbols.square_open
-        if t.task_rate == Task.TaskRate.TICK:
-            if t.info.feedback:
-                return symbols.task_info_filled.set_fmt("g")
-            else:
-                return symbols.task_info_open
         return Text.Token(" ")
 
     def get_task_path_symbol(self, t: Task) -> Text.Token:
