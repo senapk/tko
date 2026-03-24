@@ -112,12 +112,11 @@ class Play:
         cman.add_str(GuiKeys.self_evaluate, self.actions.self_evaluate)
         cman.add_str(GuiKeys.inbox, lambda: Flags.inbox.set_value(Flags.inbox_only))
         cman.add_str(GuiKeys.all_tasks, lambda: Flags.inbox.set_value(Flags.inbox_all))
-        cman.add_str(GuiKeys.toggle_right, lambda: Flags.show_panel.toggle())
 
-        cman.add_str(GuiKeys.panel_help, self.open_help)
-        cman.add_str(GuiKeys.panel_graph, lambda: Flags.panel.set_value(Flags.panel_graph))
-        cman.add_str(GuiKeys.panel_logs, lambda: Flags.panel.set_value(Flags.panel_logs))
-        cman.add_str(GuiKeys.panel_skills, lambda: Flags.panel.set_value(Flags.panel_skills))
+        cman.add_str(GuiKeys.panel_help, lambda: self.open_painel(Flags.panel_help))
+        cman.add_str(GuiKeys.panel_graph, lambda: self.open_painel(Flags.panel_graph))
+        cman.add_str(GuiKeys.panel_logs, lambda: self.open_painel(Flags.panel_logs))
+        cman.add_str(GuiKeys.panel_skills, lambda: self.open_painel(Flags.panel_skills))
 
         cman.add_str(GuiKeys.unfold_patch, self.actions.open_versions)
         
@@ -130,10 +129,23 @@ class Play:
 
         return cman
         
+    def open_painel(self, value: str):
+        if Flags.show_panel.is_true():
+            if Flags.panel.get_value() != value:
+                Flags.panel.set_value(value)
+            else:
+                Flags.show_panel.set_value("0")
+            return
+        Flags.show_panel.set_value("1")
+        if Flags.panel.get_value() != value:
+            Flags.panel.set_value(value)
 
     def open_help(self):
-        Flags.panel.set_value(Flags.panel_help)
-        Flags.show_panel.set_value("1")
+        if not Flags.show_panel.is_true():
+            Flags.show_panel.set_value("1")
+            Flags.panel.set_value(Flags.panel_help)
+        elif Flags.panel.get_value() != Flags.panel_help:
+            Flags.panel.set_value(Flags.panel_help)
 
     def send_char_not_found(self, key: int):
         exclude_str = [ord(v) for v in [" ", "\n"]]

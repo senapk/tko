@@ -51,6 +51,7 @@ class Gui:
             pass
         act_color, act_text = self.get_activate_label()
         help_fixed: list[Text] = [
+            Text().addf('R', f"Sair [esc] "),
             Text().addf("C", f"Criar Rascunho [{GuiKeys.create_draft}]"),
             Text().addf("C", f"{GuiActions.pallete} [{GuiKeys.palette}]"),
             Text().addf("C", f"{GuiActions.calibrate} [{GuiKeys.calibrate}]"),
@@ -96,29 +97,43 @@ class Gui:
         full = Text().addf(color, "─" * ((dx//2) - x - 2 - half)).add(value)
         return full
 
+    def get_lr(self, test: bool) -> tuple[str, str]:
+        if test:
+            return symbols.right_arrow_filled.text, symbols.left_arrow_filled.text
+        else:
+            return " ", " "
+
     def render_button(self, info: str, test: bool):
         left, right = self.get_lr(test)
         bg = "X" if test else ""
-        return Text().addf(bg, left).addf("/" + bg + "X" if test else "", info).addf(bg, right)
+        return Text().addf(bg, left).addf(bg, info).addf(bg, right)
 
     def gen_right_header(self) -> Text:
-        top = Text().add(" ")
-        top.add(self.render_button(f"Ajuda[{GuiKeys.panel_help}]", Flags.panel.get_value() == Flags.panel_help and Flags.show_panel.is_true()))
-        top.add(self.render_button(f"Gráficos[{GuiKeys.panel_graph}]", Flags.panel.get_value() == Flags.panel_graph))
-        top.add(self.render_button(f"Logs[{GuiKeys.panel_logs}]", Flags.panel.get_value() == Flags.panel_logs))
-        top.add(self.render_button(f"Trilhas[{GuiKeys.panel_skills}]", Flags.panel.get_value() == Flags.panel_skills)).add(" ")
-        
+        top = Text()
+        if Flags.panel.get_value() == Flags.panel_graph:
+            top.add(Text().add(" Gráficos "))
+        elif Flags.panel.get_value() == Flags.panel_help:
+            top.add(Text().add(" Help "))
+        elif Flags.panel.get_value() == Flags.panel_skills:
+            top.add(Text().add(" Trilhas "))
+        elif Flags.panel.get_value() == Flags.panel_logs:
+            top.add(Text().add(" Logs "))
         return top
 
     def show_main_bar(self, frame: Frame):
-        top = Text().add(" ")
+        dy, dx = frame.get_inner()
+        top = Text()
 
-        top.add(self.render_button(f"Inbox[{GuiKeys.inbox}]", Flags.inbox.get_value() == Flags.inbox_only))
-        top.add(self.render_button(f"Todas[{GuiKeys.all_tasks}]", Flags.inbox.get_value() == Flags.inbox_all))
-        top.add(self.render_button(f"Painel[{GuiKeys.toggle_right}]", Flags.show_panel.is_true()))
+        if self.search.search_mode:
+            top = self.make_search_text(dx - 20)
+        else:
+            if Flags.inbox.get_value() == Flags.inbox_only:
+                top.add(" Inbox ")
+            else:
+                top.add(" Todas as Tarefas ")
         
         # full = self.center_header_footer(top, frame)
-        frame.set_header(top, "<")
+        frame.set_header(top, "^", prefix="{", suffix= "}")
         # footer            
         text = Text()
         alias_color = "R"
@@ -137,8 +152,7 @@ class Gui:
         #     frame.set_footer(full, "<")
         frame.draw()
 
-        dy, dx = frame.get_inner()
-        values = [Text()] + self.tree.get_senteces(dy)
+        values = self.tree.get_senteces(dy)
         for y, sentence in enumerate(values):
             if sentence.len() > dx:
                 sentence.trim_end(dx - 3)
@@ -150,7 +164,7 @@ class Gui:
         #_ = [q for q in self.game.quests.values() if q.is_reachable()]
         obtained, priority, complete = self.game.get_skills_resume()
 
-        frame_xp.set_header(Text().add(self.gen_right_header()), ">")
+        frame_xp.set_header(Text().add(self.gen_right_header()), "^", prefix="{", suffix= "}")
         frame_xp.draw()
 
         elements: list[Text] = []
@@ -169,7 +183,7 @@ class Gui:
             done_color = self.colors.progress_skill_done
             todo_color = self.colors.progress_skill_todo
             #text = text.rjust(dx - 4)
-            skill_bar = self.style.build_bar(text=text, percent=perc, length=dx - 2, fmt_true=done_color, fmt_false=todo_color)
+            skill_bar = self.style.build_bar(text=text, percent=perc, length=dx - 2, fmt_true=done_color, fmt_false=todo_color, rounded=False)
             elements.append(skill_bar)
         
         # Total bar
@@ -187,7 +201,7 @@ class Gui:
         done_color = self.colors.main_bar_done
         todo_color = self.colors.main_bar_todo
         percent = total_obtained / total_priority if total_priority > 0 else 0.0
-        total_bar = self.style.build_bar(text, percent , dx - 2, done_color, todo_color)
+        total_bar = self.style.build_bar(text, percent , dx - 2, done_color, todo_color, rounded=False)
         elements.append(total_bar)
 
         # printing calculating line breaks
@@ -224,19 +238,14 @@ class Gui:
         line_main = Text().add(" ").join(elems) # alignment adjust
         Fmt.write(lines - 1, 0, line_main.center(cols))
 
+    def make_search_text(self, size: int):
+        text = " Busca: " + self.tree.search_text + symbols.cursor.text
+        text = text.ljust(size)
+        return Text().addf("X", text)
+    
     def make_xp_button(self, size: int):
-        if self.search.search_mode:
-            text = " Busca: " + self.tree.search_text + symbols.cursor.text
-            percent = 0.0
-            done_color = "W"
-            todo_color = "W"
-            text = text.ljust(size)
-            return self.style.build_bar(text, percent, len(text), done_color, todo_color)
-            # text, percent = self.build_xp_bar()
-            # done_color = self.colors.main_bar_done
-            # todo_color = self.colors.main_bar_todo
-            # text = text.center(size)
-            # xpbar = self.style.build_bar(text, percent, len(text), done_color, todo_color)
+        # if self.search.search_mode:
+        #     return self.make_search_text(size)
 
         #reachable_quests = [q for q in self.game.quests.values() if q.is_reachable()]
         obtained, priority, complete = self.game.get_skills_resume()
@@ -257,7 +266,7 @@ class Gui:
         if qtd == 0:
             text = " Nenhuma habilidade disponível "
             percent = 0.0
-            return self.style.build_bar(text, percent, size, "W", "W")
+            return self.style.build_bar(text, percent, size, "W", "W", rounded = False)
         
         skill_size = int(size / qtd)
 
@@ -279,53 +288,67 @@ class Gui:
         return xpbar
 
     def show_top_bar(self, frame: Frame):
-        lista = [
-            Text().addf('Y', f"Sair [esc]"),
-            Text().addf("Y", f"Ajuda[{GuiKeys.panel_help}]"),
+        panel_on = Flags.show_panel.is_true()
+        pre = [
+            self.render_button(f"Inbox[{GuiKeys.inbox}]", Flags.inbox.get_value() == Flags.inbox_only),
+            self.render_button(f"Todas[{GuiKeys.all_tasks}]", Flags.inbox.get_value() == Flags.inbox_all)
         ]
-        help_list = self.build_list_sentence(lista)
-        pre: list[Text] = [help_list[0]]
-        pos: list[Text] = [help_list[1]]
-
+        pos = [
+            self.render_button(f"Gráficos[{GuiKeys.panel_graph}]", panel_on and Flags.panel.get_value() == Flags.panel_graph),
+            self.render_button(f"Trilhas[{GuiKeys.panel_skills}]", panel_on and Flags.panel.get_value() == Flags.panel_skills),
+            self.render_button(f"Logs[{GuiKeys.panel_logs}]", panel_on and Flags.panel.get_value() == Flags.panel_logs),
+            self.render_button(f"Ajuda[{GuiKeys.panel_help}]", panel_on and Flags.panel.get_value() == Flags.panel_help),
+        ]
+        
         limit = frame.get_dx()
-        size = limit - Text().add(" ").join(pre + pos).len() - 2
-        main_label = self.make_xp_button(size)
-        info = Text().add(" ").join(pre + [main_label] + pos)
-        frame.write(0, 0, info.center(frame.get_dx()))
+        # size = limit - Text().add("").join(pre + pos).len() - 2
+        # main_label = self.make_xp_button(size).ljust(size, Text.Token(""))
+        # info = Text().add("").join(pre + [main_label] + pos)
+        info = Text().add("").join(pre + pos).center(limit)
+        frame.write(0, 1, info)
 
     def show_help(self, frame: Frame):
         # def empty(value):
         #     pass
 
-        frame.set_header(self.gen_right_header(), ">")
+        frame.set_header(self.gen_right_header(), align="^", prefix="{", suffix= "}")
         frame.draw()
-
+        dx = frame.get_dx() - 2
         help_lines: list[Text] = []
+        help_lines.append(Text.format("{g}", " Configuração ").center(dx, Text.Token("-")))
+        help_lines.append(Text.format("   Bordas {r} Habilita {r}{R}{r}", "B", "", "bordas redondas", ""))
+        help_lines.append(Text.format(" Calibrar {r} Para calibrar os direcionais do teclado", GuiKeys.calibrate))
 
-        help_lines.append(Text().add(""))
-        help_lines.append(Text.format("    Ajuda ").addf("r", GuiKeys.panel_help).add("  Abre essa tela de ajuda")
-        )
+        help_lines.append(Text().addf("g", " Símbolos ").center(dx, Text.Token("-")))
+        help_lines.append(Text.format("{g} Tarefa sugeridas, {w} Tarefa opcional", symbols.star_filled, symbols.star_open))
+        help_lines.append(Text.format("{y} Tarefa de estudo com consulta permitida", symbols.task_repeat))
+        help_lines.append(Text.format("{r} Tarefa de avaliação que precisa ser feita sem consulta", symbols.task_denied))
+        help_lines.append(Text.format("{g} {g} {g} Autoavaliação feita, {w} {w} {w} Sem Autoavaliação", 
+                                      symbols.circle_filled, symbols.square_filled, symbols.task_human_filled,
+                                      symbols.circle_open, symbols.square_filled, symbols.task_human_open))
+        help_lines.append(Text.format("{g} Nota por testes, {w} Nota manual por critério, {w} Checkbox apenas", 
+                                      symbols.circle_open, symbols.task_human_open, symbols.square_open))
+        
+        help_lines.append(Text.format("{g}", " Navegação ").center(dx, Text.Token("-")))
+        help_lines.append(Text.format("  setas {r} Para navegar entre os elementos", "↑↓→"))
+        help_lines.append(Text.format("    Enter {r} Interage com o elemento de acordo com o contexto", "↲"))
+        help_lines.append(Text().addf("g", " Interface ").center(dx, Text.Token("-")))
+        help_lines.append(Text.format("    Inbox {r} Mostra as tarefas sugeridas e iniciadas", GuiKeys.inbox))
+        help_lines.append(Text.format("    Todas {r} Mostra as todas tarefas cadastradas", GuiKeys.all_tasks))
+        help_lines.append(Text.format("   Paleta {r} Abre o menu de ações e configurações", GuiKeys.palette))
+        help_lines.append(Text.format("    Tempo {r} Mostrar/Oculta o tempo gasto nas tarefas", GuiKeys.show_duration))
+        help_lines.append(Text.format("    Busca {r} Abre a barra de pesquisa", GuiKeys.search))
 
-        help_lines.append(Text.format("  ").addf("r", "Shift + B")
-                           .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
-        help_lines.append(Text() + "  " + Text.r_token("g", f"Shift + {GuiKeys.calibrate}") + "  Para calibrar os direcionais do teclado")
-        help_lines.append(Text() + "  " + Text.r_token("g", " setas") + "     Para navegar entre os elementos")
-    
-        help_lines.append(Text() + f"   {GuiActions.pallete} " + Text.r_token("r", f"{GuiKeys.palette}") + "  Abre o menu de ações e configurações")
-        help_lines.append(Text() + f"   {GuiActions.download} " + Text.r_token("r", f"{GuiKeys.down_task}") + "  Tenta baixar novamente a tarefa selecionada")
-        help_lines.append(Text() + f"   {GuiActions.edit} " + Text.r_token("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
-        help_lines.append(Text() + f"   {GuiActions.show_time} " + Text.r_token("r", f"{GuiKeys.show_duration}") + "  Alterna entre mostrar o tempo gasto nas tarefas ou não")
-        help_lines.append(Text() + f"   Apagar " + Text.r_token("r", f"{GuiKeys.delete_folder}") + "  Apaga a pasta da tarefa selecionada (útil para resetar o progresso de uma tarefa)")
-        help_lines.append(Text() + f"   {GuiActions.activate} " + Text.r_token("r", "↲") + "  Interage com o elemento de acordo com o contexto")
-        help_lines.append(Text() + "             (baixar, visitar, escolher, compactar, expandir)")
-        help_lines.append(Text() + f"  {GuiActions.grade} " + Text.r_token("r", GuiKeys.self_evaluate) + "  Abre tela para auto avaliação")
-        help_lines.append(Text() + f"    {GuiActions.search} " + Text.r_token("r", f"{GuiKeys.search}") + "  Abre a barra de pesquisa")
-        help_lines.append(Text() + f"  {GuiActions.draft} " + Text.r_token("r", f"{GuiKeys.create_draft}") + "  Cria um rascunho para escrever código ou anotações")
+        help_lines.append(Text().addf("g", " Tarefas ").center(dx, Text.Token("-")))
+        help_lines.append(Text.format(" Download {r} Baixa novamente a tarefa selecionada", GuiKeys.down_task))
+        help_lines.append(Text.format("   Apagar {r} Apaga a pasta da tarefa selecionada", GuiKeys.delete_folder))
+        help_lines.append(Text.format(" Rascunho {r} Cria um rascunho para escrever código ou anotações", GuiKeys.create_draft))
+        help_lines.append(Text.format("Avaliação {r} Abre tela para auto avaliação", GuiKeys.self_evaluate))
 
-        help_lines.append(Text())
-        help_lines.append(Text() + "Você pode mudar o editor padrão com o comando no terminal")
-        help_lines.append(Text() + Text.r_token("g", "             tko config --editor <comando>"))
-        help_lines.append(Text())
+        help_lines.append(Text.format("{g}", " Editor padrão ").center(dx, Text.Token("-")))
+        help_lines.append(Text().add(" O comando de edição padrão abre pastas e arquivos no vscode"))
+        help_lines.append(Text().add(" Se quiser mudar o editor, basta definir o novo comando padrão"))
+        help_lines.append(Text().addf("y", "tko config set --editor <comando>").center(dx))
 
         for i, line in enumerate(help_lines):
             frame.write(i, 0, line)
@@ -347,11 +370,6 @@ class Gui:
         #     frame.write(y, x, Text().addf("g", line))
         return True, graph
 
-    def get_lr(self, test: bool) -> tuple[str, str]:
-        if test:
-            return "▶", "◀"
-        else:
-            return " ", " "
 
     def show_graphs(self, frame: Frame):
         
@@ -398,7 +416,7 @@ class Gui:
         if not keep_borders:
             frame.set_border_none()
 
-        frame.set_header(self.gen_right_header(), ">")
+        frame.set_header(self.gen_right_header(), "^", prefix="{", suffix= "}")
         frame.draw()
         if header:
             for y, line in enumerate(header):

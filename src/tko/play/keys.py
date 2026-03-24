@@ -2,7 +2,7 @@ class GuiActions:
     tab = "↔TAB"
     leave   = "Sair"
     edit = "Ver tarefa"
-    show_time = "Mostrar tempo"
+    show_time = "Tempo"
     filter = "Filtrar"
     principal = "Principal"
     github = "Web   "
@@ -27,12 +27,11 @@ class GuiKeys:
 
     inbox = "1"
     all_tasks = "2"
-    toggle_right = "3"
     
-    panel_help = "4"
-    panel_graph = "5"
-    panel_logs = "6"
-    panel_skills = "7"
+    panel_graph = "3"
+    panel_skills = "4"
+    panel_logs = "5"
+    panel_help = "6"
 
     show_duration = "T"
 

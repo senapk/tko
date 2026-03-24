@@ -219,12 +219,11 @@ class TaskTree:
         output.add(self.color_task_title(t.get_full_title(self.get_max_quest_itens_key_size(t.quest_key)), color))
         output.ljust(self.get_max_title(), Text.Token(" ", focus_color))
         # output.add(self.style.round_r(focus_color) if in_focus else " ") 
-        output.add(" ")
 
         if in_focus:
-            output.add("◀")
+            output.add("◀ ")
         else:
-            output.add(" ")
+            output.add("  ")
 
         if Flags.show_time.is_true():
             hours, minutes = self.get_task_hours_minutes(t)
@@ -278,19 +277,18 @@ class TaskTree:
             # output.add(self.style.round_l(focus_color))
         output.add(" ")
         title = q.get_full_title()
-        for i, _ in enumerate(title.data):
-            title.data[i].set_fmt(title.data[i].fmt + focus_color)
-
+        if focus_color:
+            for i, _ in enumerate(title.data):
+                title.data[i].set_fmt(focus_color)
     
         output.add(title)
         output = output.ljust(self.get_max_title(), Text.Token(self.filler, focus_color))
         # output.add(self.style.round_r(focus_color) if in_focus else " ")
-        output.add(" ")
         
         if in_focus:
-            output.add("◀")
+            output.add("◀ ")
         else:
-            output.add(" ")
+            output.add("  ")
         
         if Flags.show_time.is_true():
             hours, minutes = self.get_quest_time(q)
@@ -314,7 +312,7 @@ class TaskTree:
     def __get_focus_color_quest(self, item: Quest) -> str:
         if not item.is_reachable():
                 return "R"
-        return "X"
+        return self.settings.colors.focused_item
 
     def filter_by_search(self) -> tuple[set[str], str | None]:
         matches: set[str] = set()
@@ -354,12 +352,14 @@ class TaskTree:
         return False
 
     def remove_empty_quests(self):
+        new_expanded = set(self.expanded)
         for q in self.game.quests.values():
             if q.get_full_key() not in self.expanded:
                 continue
             visible, _ = self.count_visible_hidden_tasks(q)
             if visible == 0:
-                self.expanded.remove(q.get_full_key())
+                new_expanded.remove(q.get_full_key())
+        self.expanded = new_expanded
 
     def reload_sentences(self):
         self.cache_task_times.clear()
@@ -419,9 +419,11 @@ class TaskTree:
 
     def process_expand_all(self):
         # if any cluster outside expanded
+        new_expanded = [x for x in self.expanded]
         for qkey in self.game.quests.keys():
             if qkey not in self.expanded:
-                self.expanded.add(qkey)
+                new_expanded.append(qkey)
+        self.expanded = set(new_expanded)
 
     def  get_selected_index(self) -> int:
         for i, item in enumerate(self.items):

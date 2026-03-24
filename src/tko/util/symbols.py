@@ -8,8 +8,10 @@ class __Symbols:
         self.task_local = Text.Token("▶", "g")
         
         self.opening = Text.Token("▶")
-        self.right_arrow = Text.Token("▶")
-        self.left_arrow = Text.Token("◀")
+        self.right_arrow_filled = Text.Token("▶")
+        self.right_arrow_open = Text.Token("▷")
+        self.left_arrow_filled = Text.Token("◀")
+        self.left_arrow_open = Text.Token("◁")
         self.neutral = Text.Token("»")
         self.success = Text.Token("✓")
         self.failure = Text.Token("✗")
@@ -112,45 +114,6 @@ class __Symbols:
         self.mark = Text.Token("✦", "g")
 
         self.cursor = Text.Token("┊")
-
-    # def set_ascii(self):
-    #     self.task_downloaded = Text.Token("D", "g")
-    #     self.task_to_download = Text.Token("X")
-    #     self.task_local = Text.Token(">", "g")
-    #     self.whitespace = Text.Token("¨")
-    #     self.newline = Text.Token("~")
-
-    #     self.cfill = Text.Token("_")
-    #     self.tab = Text.Token("    ")
-    #     self.arrow_up = Text.Token("|")
-
-    #     self.check = Text.Token("A")
-    #     self.uncheck = Text.Token("0")
-
-    #     self.infinity = Text.Token("0")
-    #     self.locked_free = Text.Token(">")
-    #     self.locked_locked = Text.Token("v")
-    #     self.left_toggle = Text.Token("━─")
-    #     self.right_toggle = Text.Token("─━")
-    #     self.timer = Text.Token("l")
-    #     self.diff_down = Text.Token("|")
-    #     self.diff_left = Text.Token("─")
-    #     self.sharp_r = Text.Token("")
-    #     self.sharpL = Text.Token("")
-    #     self.action = Text.Token("◎", "b")
-
-    #     self.emoji_vazio = Text.Token("✗", "r")
-    #     self.emoji_confiante = Text.Token("A", "g")
-    #     self.emoji_capaz     = Text.Token("B", "y")
-    #     self.emoji_inseguro  = Text.Token("C", "m")
-    #     self.emoji_confuso   = Text.Token("D", "r")
-    #     self.emoji_nao_fiz   = Text.Token("E")
-
-    #     self.emoji_alone = Text.Token("A", "g")
-    #     self.emoji_dicas = Text.Token("B", "y")
-    #     self.emoji_codes = Text.Token("C", "m")
-    #     self.emoji_guide = Text.Token("D", "r")
-    #     self.cursor = Text.Token("|")
 
     def set_colors(self):
         self.opening.fmt = "b"

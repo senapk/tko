@@ -225,7 +225,7 @@ class GameBuilder:
             if quest_filters is not None and len(quest_filters) > 0:
                 allow = False
                 for filter in quest_filters:
-                    if filter in q.get_title() or filter in q.get_full_key():
+                    if filter.lower() in q.get_title().lower() or filter.lower() in q.get_full_key().lower():
                         allow = True
                         break
                 if not allow:
