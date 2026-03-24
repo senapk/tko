@@ -114,7 +114,7 @@ class Play:
         cman.add_str(GuiKeys.all_tasks, lambda: Flags.inbox.set_value(Flags.inbox_all))
         cman.add_str(GuiKeys.toggle_right, lambda: Flags.show_panel.toggle())
 
-        cman.add_str(GuiKeys.panel_help, lambda: Flags.show_panel.set_value("1") and Flags.panel.set_value(Flags.panel_help))
+        cman.add_str(GuiKeys.panel_help, self.open_help)
         cman.add_str(GuiKeys.panel_graph, lambda: Flags.panel.set_value(Flags.panel_graph))
         cman.add_str(GuiKeys.panel_logs, lambda: Flags.panel.set_value(Flags.panel_logs))
         cman.add_str(GuiKeys.panel_skills, lambda: Flags.panel.set_value(Flags.panel_skills))
@@ -130,6 +130,10 @@ class Play:
 
         return cman
         
+
+    def open_help(self):
+        Flags.panel.set_value(Flags.panel_help)
+        Flags.show_panel.set_value("1")
 
     def send_char_not_found(self, key: int):
         exclude_str = [ord(v) for v in [" ", "\n"]]

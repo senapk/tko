@@ -93,10 +93,10 @@ class TaskTree:
             self.expanded = set(x for x in self.expanded if x in reachable_keys)
 
     def get_quest_title_size(self, quest: Quest) -> int:
-        return len(quest.get_full_title()) + 5
+        return len(quest.get_full_title()) + 6
 
     def get_task_title_size(self, task: Task) -> int:
-        return len(task.get_full_title(self.get_max_key_size())) + 13
+        return len(task.get_full_title(self.get_max_key_size())) + 15
 
     def get_max_title(self) -> int:
         if self.cache_max_title:
@@ -219,6 +219,11 @@ class TaskTree:
         output.ljust(self.get_max_title(), Text.Token(" ", focus_color))
         output.add(self.style.round_r(focus_color) if in_focus else " ") 
 
+        if in_focus:
+            output.add("◀")
+        else:
+            output.add(" ")
+
         if Flags.show_time.is_true():
             hours, minutes = self.get_task_hours_minutes(t)
             output.add(self.format_hours_minutes("g", hours, minutes))
@@ -279,6 +284,11 @@ class TaskTree:
         output.add(title)
         output = output.ljust(self.get_max_title(), Text.Token(self.filler, focus_color))
         output.add(self.style.round_r(focus_color) if in_focus else " ")
+        
+        if in_focus:
+            output.add("◀")
+        else:
+            output.add(" ")
         
         if Flags.show_time.is_true():
             hours, minutes = self.get_quest_time(q)

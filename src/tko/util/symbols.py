@@ -8,6 +8,8 @@ class __Symbols:
         self.task_local = Text.Token("▶", "g")
         
         self.opening = Text.Token("▶")
+        self.right_arrow = Text.Token("▶")
+        self.left_arrow = Text.Token("◀")
         self.neutral = Text.Token("»")
         self.success = Text.Token("✓")
         self.failure = Text.Token("✗")

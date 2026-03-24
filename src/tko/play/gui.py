@@ -101,16 +101,20 @@ class Gui:
         top = Text().add(" ")
 
         inbox: str = f"Inbox [{GuiKeys.inbox}]"
-        color = "G" if Flags.inbox.get_value() == Flags.inbox_only else ""
-        top.addf(color, inbox).add(" ")
+        left, right = self.get_lr(Flags.inbox.get_value() == Flags.inbox_only)
+        top.add(left).addf("/", inbox).add(right).add(" ")
 
         all_tasks: str = f"Todas [{GuiKeys.all_tasks}]"
-        color = "G" if Flags.inbox.get_value() == Flags.inbox_all else ""
-        top.addf(color, all_tasks).add(" ")
+        left, right = self.get_lr(Flags.inbox.get_value() == Flags.inbox_all)
+        top.add(left).addf("/", all_tasks).add(right).add(" ")
 
         toggle_right: str = f"Painel [{GuiKeys.toggle_right}]"
-        color = "G" if Flags.show_panel.get_value() == "1" else ""
-        top.addf(color, toggle_right).add(" ")
+        left, right = self.get_lr(Flags.show_panel.get_value() == "1")
+        top.add(left).addf("/", toggle_right).add(right).add(" ")
+
+        helpv: str = f"Ajuda [{GuiKeys.panel_help}]"
+        left, right = self.get_lr(Flags.panel.get_value() == Flags.panel_help and Flags.show_panel.get_value() == "1")
+        top.add(left).addf("/", helpv).add(right).add(" ")
         
         # full = self.center_header_footer(top, frame)
         frame.set_header(top, "<")
@@ -133,7 +137,8 @@ class Gui:
         frame.draw()
 
         dy, dx = frame.get_inner()
-        for y, sentence in enumerate(self.tree.get_senteces(dy)):
+        values = [Text()] + self.tree.get_senteces(dy)
+        for y, sentence in enumerate(values):
             if sentence.len() > dx:
                 sentence.trim_end(dx - 3)
                 sentence.addf("r", "...")
@@ -144,7 +149,7 @@ class Gui:
         #_ = [q for q in self.game.quests.values() if q.is_reachable()]
         obtained, priority, complete = self.game.get_skills_resume()
 
-        frame_xp.set_header(Text().add(self.gen_right_header()), "^")
+        frame_xp.set_header(Text().add(self.gen_right_header()), ">")
         frame_xp.draw()
 
         elements: list[Text] = []
@@ -191,7 +196,6 @@ class Gui:
             if line_breaks > 0:
                 line_breaks -= 1
                 frame_xp.print(1, Text())
-
 
     def build_list_sentence(self, items: list[Text]) -> list[Text]:
         out: list[Text] = []
@@ -292,12 +296,12 @@ class Gui:
         # def empty(value):
         #     pass
 
-        frame.set_header(self.gen_right_header(), "^")
+        frame.set_header(self.gen_right_header(), ">")
         frame.draw()
 
         help_lines: list[Text] = []
 
-        help_lines.append(Text().add(" Ajuda "))
+        help_lines.append(Text().add(""))
         help_lines.append(Text.format("    Ajuda ").addf("r", GuiKeys.panel_help).add("  Abre essa tela de ajuda")
         )
 
@@ -325,7 +329,6 @@ class Gui:
         for i, line in enumerate(help_lines):
             frame.write(i, 0, line)
 
-
     def get_task_graph(self, task_key: str, width: int, height: int) -> tuple[bool, list[Text], list[Text]]:
         tg = TaskGraph(self.settings, self.rep, task_key, width, height)
         header, graph = tg.get_output()
@@ -343,24 +346,26 @@ class Gui:
         #     frame.write(y, x, Text().addf("g", line))
         return True, graph
 
+    def get_lr(self, test: bool) -> tuple[str, str]:
+        if test:
+            return "▶", "◀"
+        else:
+            return " ", " "
+
     def gen_right_header(self) -> Text:
         top = Text().add(" ")
 
-        helpv: str = f"Ajuda [{GuiKeys.panel_help}]"
-        color = "G" if Flags.panel.get_value() == Flags.panel_help else ""
-        top.addf(color, helpv).add(" ")
-
         graph: str = f"Gráficos [{GuiKeys.panel_graph}]"
-        color = "G" if Flags.panel.get_value() == Flags.panel_graph else ""
-        top.addf(color, graph).add(" ")
+        left, right = self.get_lr(Flags.panel.get_value() == Flags.panel_graph)
+        top.add(left).addf("/", graph).add(right).add(" ")
 
         logs: str = f"Logs [{GuiKeys.panel_logs}]"
-        color = "G" if Flags.panel.get_value() == Flags.panel_logs else ""
-        top.addf(color, logs).add(" ")
+        left, right = self.get_lr(Flags.panel.get_value() == Flags.panel_logs)
+        top.add(left).addf("/", logs).add(right).add(" ")
 
         skills: str = f"Trilhas [{GuiKeys.panel_skills}]"
-        color = "G" if Flags.panel.get_value() == Flags.panel_skills else ""
-        top.addf(color, skills).add(" ")
+        left, right = self.get_lr(Flags.panel.get_value() == Flags.panel_skills)
+        top.add(left).addf("/", skills).add(right).add(" ")
         return top
 
     def show_graphs(self, frame: Frame):
@@ -408,7 +413,7 @@ class Gui:
         if not keep_borders:
             frame.set_border_none()
 
-        frame.set_header(self.gen_right_header(), "^")
+        frame.set_header(self.gen_right_header(), ">")
         frame.draw()
         if header:
             for y, line in enumerate(header):

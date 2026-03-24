@@ -1,5 +1,9 @@
 # Changelog
 
+- 9.0.0
+  - add: new help panel with more detailed instructions and tips
+  - refactor: all grammar to describe tasks and quests in a more intuitive way
+  - remove cluster concept
 - 8.5.3
   - fix: creating settings dir if not exists
 - 8.5.2

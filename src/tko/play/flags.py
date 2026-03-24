@@ -92,15 +92,15 @@ class Flags:
     task_exec_view = "0"
     task_time_view = "1"
     
-    inbox_all = "0"
-    inbox_only = "1"
+    inbox_only = "0"
+    inbox_all = "1"
 
     panel = (Flag().set_name("Painel").set_description("Mostra o Painel de Informações")
                     .set_values([panel_help, panel_graph, panel_logs, panel_skills])
                     .set_msgs(["Desabilitar painel de informações", "Gráfico de tarefas", "Mostrar logs", "Mostrar trilhas de habilidades"]))
     inbox = (Flag().set_name("Tópicos").set_description("Habilitas todas as missões e tarefas")
-                    .set_values([inbox_all, inbox_only])
-                    .set_msgs(["Habilitar todas as tarefas", "Mostrar inbox"]))
+                    .set_values([inbox_only, inbox_all])
+                    .set_msgs(["Mostrar inbox", "Habilitar todas as tarefas"]))
     show_panel = (Flag().set_name("ShowPanel").set_description("Mostra o painel esquerdo")
                     .set_values(["0", "1"])
                     .set_msgs(["Desabilitar painel lateral", "Mostrar painel lateral"]))
