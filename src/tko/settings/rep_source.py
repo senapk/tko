@@ -11,7 +11,7 @@ class SourceType(Enum):
     GIT_SOURCE = "git"
 
 class RepSource:
-    STUDENT_SANDBOX_ALIAS = "sandbox"
+    STUDENT_SANDBOX_NAME = "sandbox"
 
     DEFAULT_DRAFT_FOLDER = "00_rascunhos"
 
@@ -29,7 +29,7 @@ Renomeie o nome da pasta para renomear o rascunho. Exclua a pasta para excluir o
 
 Sinta-se à vontade para organizar seus rascunhos em subpastas dentro do sandbox, se desejar.
 
-## {STUDENT_SANDBOX_ALIAS}
+## {STUDENT_SANDBOX_NAME}
 <!--{AUTOLOAD_CLUSTER_COMMAND}=.-->
 """[1:]
     
@@ -69,11 +69,11 @@ Sinta-se à vontade para organizar seus rascunhos em subpastas dentro do sandbox
         return self
     
     def is_sandbox_source(self) -> bool:
-        return self.name == RepSource.STUDENT_SANDBOX_ALIAS # for backward compatibility, to remove in the future
+        return self.name == RepSource.STUDENT_SANDBOX_NAME # for backward compatibility, to remove in the future
     
     def set_student_sandbox(self):
-        self.name = RepSource.STUDENT_SANDBOX_ALIAS
-        self.set_local_source(target=Path(RepSource.STUDENT_SANDBOX_ALIAS), writeable=True)
+        self.name = RepSource.STUDENT_SANDBOX_NAME
+        self.set_local_source(target=Path(RepSource.STUDENT_SANDBOX_NAME), writeable=True)
         return self
     
     def get_default_sandbox_draft_folder(self) -> str:
@@ -81,7 +81,7 @@ Sinta-se à vontade para organizar seus rascunhos em subpastas dentro do sandbox
     
     def ensure_sandbox_source(self, local_workspace: Path):
         # create folder sandbox inside rep_workspace if not exists
-        sandbox_path = local_workspace / RepSource.STUDENT_SANDBOX_ALIAS
+        sandbox_path = local_workspace / RepSource.STUDENT_SANDBOX_NAME
         sandbox_path.mkdir(parents=True, exist_ok=True)
         readme_file = sandbox_path / "README.md"
         if not os.path.exists(readme_file):
@@ -211,7 +211,7 @@ Sinta-se à vontade para organizar seus rascunhos em subpastas dentro do sandbox
             self.tasks = data[Keys.TASKS]
         if Keys.WRITEABLE in data and isinstance(data[Keys.WRITEABLE], bool):
             self.__writeable = data[Keys.WRITEABLE]
-        if self.name == RepSource.STUDENT_SANDBOX_ALIAS or self.name == "local": # for backward compatibility, to remove in the future
+        if self.name == RepSource.STUDENT_SANDBOX_NAME or self.name == "local": # for backward compatibility, to remove in the future
             self.__writeable = True
         return self
 

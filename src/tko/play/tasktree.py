@@ -108,7 +108,6 @@ class TaskTree:
             if q.get_full_key() in self.expanded:
                 for t in q.get_tasks():
                     items.append(self.get_task_title_size(t))
-
         
         self.cache_max_title = self.MIN_TITLE_LENGTH
         if len(items) > 0:

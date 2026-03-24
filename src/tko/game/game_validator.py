@@ -13,8 +13,14 @@ class GameValidator:
 
     def __validate_requirements(self):
         # verify is there are keys repeated between quests, tasks and groups
-        keys = [k for k in self.quests.keys()] +\
-               [k for k in self.tasks.keys()]
+        keys = [k for k in self.quests.keys()]
+        for q in self.quests.values():
+            for t in q.get_tasks():
+                if t.get_full_key() in keys:
+                    print(f"Chave repetida: {t.get_full_key()} em {t.line_number} {t.line}")
+                    exit(1)
+                keys.append(t.get_full_key())
+                self.tasks[t.get_full_key()] = t
 
         # print chaves repetidas
         for k in keys:

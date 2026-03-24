@@ -56,8 +56,15 @@ export {};
 console.log("Hello, World!");
 """[1:]
     
+    md_draft = r"""
+# Rascunho
+
+Se a tarefa exigir um relatório, escreva ele aqui. Você pode usar markdown, imagens e o que mais quiser para criar um relatório bem completo.
+"""[1:]
+    
     drafts = {
         'ts': ts_draft, 
+        'md': md_draft
     }
 
     def get_languages_with_drafts(self) -> list[str]:

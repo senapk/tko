@@ -57,10 +57,12 @@ class TaskParser:
                 self.task.task_help = Task.TaskHelp.OPEN
             elif c == "!":
                 self.task.task_help = Task.TaskHelp.EXAM
-            elif c == "%":
+            elif c == ">":
                 self.task.task_action = Task.TaskAction.VIEW
-            elif c == "$":
+            elif c == "#":
                 self.task.task_action = Task.TaskAction.EDIT
+            else:
+                raise Warning(f"Parsing {self.index_path}:{self.task.line_number}, Tipo de tarefa desconhecido: {c}")
 
     def __parse_key_task_types(self, tags: str) -> str:
         if self.task is None:

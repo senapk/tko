@@ -32,7 +32,7 @@ class RepData:
         return None
 
     def ensure_sandbox_source(self, rep_workspace: Path) -> None:
-        sandbox_source = self.get_source(RepSource.STUDENT_SANDBOX_ALIAS)
+        sandbox_source = self.get_source(RepSource.STUDENT_SANDBOX_NAME)
         if sandbox_source is None:
             sandbox_source = RepSource("").set_student_sandbox().ensure_sandbox_source(rep_workspace)
             self.set_source(sandbox_source)

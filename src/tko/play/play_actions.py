@@ -92,8 +92,8 @@ class PlayActions:
                     .put_text(f"\nErro ao apagar a pasta {folder}: {e}\n")
                     .set_error()
                 )
- 
-            self.tree.move_down()
+            if obj.get_remote_name() == RepSource.STUDENT_SANDBOX_NAME:
+                self.tree.move_down()
             self.rep.load_game(try_update=False, silent=True)
 
         obj = self.tree.get_selected_throw()
@@ -233,9 +233,8 @@ class PlayActions:
             key = Drafts.create_draft_key(draft_id)
             Drafts.create_sandbox_draft(folder, key)
             
-            self.tree.selected_item = f"{RepSource.STUDENT_SANDBOX_ALIAS}@{key}"
-            self.tree.expanded.add(f"{RepSource.STUDENT_SANDBOX_ALIAS}@{RepSource.STUDENT_SANDBOX_ALIAS}:{RepSource.DEFAULT_DRAFT_FOLDER}")
-            self.tree.expanded.add(f"{RepSource.STUDENT_SANDBOX_ALIAS}@{RepSource.STUDENT_SANDBOX_ALIAS}")
+            self.tree.selected_item = f"{RepSource.STUDENT_SANDBOX_NAME}@{key}"
+            self.tree.expanded.add(f"{RepSource.STUDENT_SANDBOX_NAME}@{RepSource.DEFAULT_DRAFT_FOLDER}")
             self.rep.data.selected = self.tree.selected_item
             self.rep.load_game(try_update=False, silent=True) # recarrega o jogo
             self.fman.add_input( Floating().bottom().right()

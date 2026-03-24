@@ -30,6 +30,7 @@ O tko é um sistema de testes para programação competitiva. Ele é capaz de ro
 
 - [Trabalhando com o Classroom](wiki/Classroom.md)
 - [Criando atividades e repositórios](wiki/Criando-Atividades.md)
+- [Formatando as tarefas no README.md](wiki/Formatando-README.md)
 
 ## Atualizando o tko
 
