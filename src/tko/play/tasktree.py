@@ -213,11 +213,13 @@ class TaskTree:
         output.add(self.get_task_rule_symbol(t))
 
         in_focus = focus_color != ""
-        output.add(self.style.round_l(focus_color) if in_focus else " ")
+        # output.add(self.style.round_l(focus_color) if in_focus else " ")
+        output.add(" ")
         color = "" if not in_focus else "k" + focus_color
         output.add(self.color_task_title(t.get_full_title(self.get_max_quest_itens_key_size(t.quest_key)), color))
         output.ljust(self.get_max_title(), Text.Token(" ", focus_color))
-        output.add(self.style.round_r(focus_color) if in_focus else " ") 
+        # output.add(self.style.round_r(focus_color) if in_focus else " ") 
+        output.add(" ")
 
         if in_focus:
             output.add("◀")
@@ -272,10 +274,9 @@ class TaskTree:
                     if q.get_full_key() in quest.requires:
                         focus_color = "y"
 
-        if in_focus:
-            output.add(self.style.round_l(focus_color))
-        else:
-            output.add(" ")
+        # if in_focus:
+            # output.add(self.style.round_l(focus_color))
+        output.add(" ")
         title = q.get_full_title()
         for i, _ in enumerate(title.data):
             title.data[i].set_fmt(title.data[i].fmt + focus_color)
@@ -283,7 +284,8 @@ class TaskTree:
     
         output.add(title)
         output = output.ljust(self.get_max_title(), Text.Token(self.filler, focus_color))
-        output.add(self.style.round_r(focus_color) if in_focus else " ")
+        # output.add(self.style.round_r(focus_color) if in_focus else " ")
+        output.add(" ")
         
         if in_focus:
             output.add("◀")
@@ -312,7 +314,7 @@ class TaskTree:
     def __get_focus_color_quest(self, item: Quest) -> str:
         if not item.is_reachable():
                 return "R"
-        return self.colors.focused_item
+        return "X"
 
     def filter_by_search(self) -> tuple[set[str], str | None]:
         matches: set[str] = set()

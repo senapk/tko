@@ -10,7 +10,6 @@ from tko.play.border import Border
 from tko.play.search import Search
 from tko.play.language_setter import LanguageSetter
 from tko.play.images import opening
-from tko.play.floating import Floating
 from tko.play.floating_manager import FloatingManager
 from tko.play.flags import Flags, FlagsMan
 from tko.play.tasktree import TaskTree, TaskAction
@@ -97,24 +96,26 @@ class Gui:
         full = Text().addf(color, "─" * ((dx//2) - x - 2 - half)).add(value)
         return full
 
+    def render_button(self, info: str, test: bool):
+        left, right = self.get_lr(test)
+        bg = "X" if test else ""
+        return Text().addf(bg, left).addf("/" + bg + "X" if test else "", info).addf(bg, right)
+
+    def gen_right_header(self) -> Text:
+        top = Text().add(" ")
+        top.add(self.render_button(f"Ajuda[{GuiKeys.panel_help}]", Flags.panel.get_value() == Flags.panel_help and Flags.show_panel.is_true()))
+        top.add(self.render_button(f"Gráficos[{GuiKeys.panel_graph}]", Flags.panel.get_value() == Flags.panel_graph))
+        top.add(self.render_button(f"Logs[{GuiKeys.panel_logs}]", Flags.panel.get_value() == Flags.panel_logs))
+        top.add(self.render_button(f"Trilhas[{GuiKeys.panel_skills}]", Flags.panel.get_value() == Flags.panel_skills)).add(" ")
+        
+        return top
+
     def show_main_bar(self, frame: Frame):
         top = Text().add(" ")
 
-        inbox: str = f"Inbox [{GuiKeys.inbox}]"
-        left, right = self.get_lr(Flags.inbox.get_value() == Flags.inbox_only)
-        top.add(left).addf("/", inbox).add(right).add(" ")
-
-        all_tasks: str = f"Todas [{GuiKeys.all_tasks}]"
-        left, right = self.get_lr(Flags.inbox.get_value() == Flags.inbox_all)
-        top.add(left).addf("/", all_tasks).add(right).add(" ")
-
-        toggle_right: str = f"Painel [{GuiKeys.toggle_right}]"
-        left, right = self.get_lr(Flags.show_panel.get_value() == "1")
-        top.add(left).addf("/", toggle_right).add(right).add(" ")
-
-        helpv: str = f"Ajuda [{GuiKeys.panel_help}]"
-        left, right = self.get_lr(Flags.panel.get_value() == Flags.panel_help and Flags.show_panel.get_value() == "1")
-        top.add(left).addf("/", helpv).add(right).add(" ")
+        top.add(self.render_button(f"Inbox[{GuiKeys.inbox}]", Flags.inbox.get_value() == Flags.inbox_only))
+        top.add(self.render_button(f"Todas[{GuiKeys.all_tasks}]", Flags.inbox.get_value() == Flags.inbox_all))
+        top.add(self.render_button(f"Painel[{GuiKeys.toggle_right}]", Flags.show_panel.is_true()))
         
         # full = self.center_header_footer(top, frame)
         frame.set_header(top, "<")
@@ -351,22 +352,6 @@ class Gui:
             return "▶", "◀"
         else:
             return " ", " "
-
-    def gen_right_header(self) -> Text:
-        top = Text().add(" ")
-
-        graph: str = f"Gráficos [{GuiKeys.panel_graph}]"
-        left, right = self.get_lr(Flags.panel.get_value() == Flags.panel_graph)
-        top.add(left).addf("/", graph).add(right).add(" ")
-
-        logs: str = f"Logs [{GuiKeys.panel_logs}]"
-        left, right = self.get_lr(Flags.panel.get_value() == Flags.panel_logs)
-        top.add(left).addf("/", logs).add(right).add(" ")
-
-        skills: str = f"Trilhas [{GuiKeys.panel_skills}]"
-        left, right = self.get_lr(Flags.panel.get_value() == Flags.panel_skills)
-        top.add(left).addf("/", skills).add(right).add(" ")
-        return top
 
     def show_graphs(self, frame: Frame):
         
