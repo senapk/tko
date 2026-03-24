@@ -96,21 +96,20 @@ class TaskParser:
         title = self.__parse_key_task_types(tags + " " + title)
         task.set_title(title)
 
+        if task.get_key() == "":
+            self.task = None
+            return self
+
         if link.startswith("http://") or link.startswith("https://"):
-            self.task.set_link_type()
+            self.task.set_remote_view_type()
             self.task.target = link
-            if self.task.get_key() == "":
-                self.task.set_key(link)
             return self
         
-        if self.task.get_key() == "": # não tem chave, e não é url
-            self.task.set_link_type()
-            self.task.set_key(link)
-            self.task.target = self.redirect_from_readme(link)
-            return self
-        
-        self.task.target = link
         task.set_origin_folder(Path(os.path.dirname(self.redirect_from_readme(link))))
+        if task.task_action == Task.TaskAction.VIEW:
+            self.task.target = self.redirect_from_readme(link)
+        else:
+            self.task.target = link
 
         return self
 
@@ -122,6 +121,7 @@ class TaskParser:
         if self.task is None:
             return self
         if self.task.is_import_type():
-            if not os.path.isfile(self.task.target):
+            relative_path = self.index_path.parent / self.task.target
+            if not relative_path.exists():
                 raise Warning(f"Parsing {self.index_path}, Arquivo de tarefa não encontrado: {self.task.target}")
         return self

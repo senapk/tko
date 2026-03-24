@@ -52,8 +52,7 @@ class TaskTree:
                 if not q.get_full_key() in self.expanded:
                     continue
                 for t in q.get_tasks():
-                    if not t.is_link():
-                        keys_visible.append(t.get_key())
+                    keys_visible.append(t.get_key())
         if len(keys_visible) == 0:
             return 10
         return max([len(k) for k in keys_visible])
@@ -62,7 +61,7 @@ class TaskTree:
         q = self.all_items.get(quest_key, None)
         if q is None or not isinstance(q, Quest):
             return 10
-        keys: list[int] = [len(task.get_key()) for task in q.get_tasks() if not task.is_link()]
+        keys: list[int] = [len(task.get_key()) for task in q.get_tasks()]
         if len(keys) == 0:
             return 10
         return max(keys)
@@ -97,7 +96,7 @@ class TaskTree:
         return len(quest.get_full_title()) + 5
 
     def get_task_title_size(self, task: Task) -> int:
-        return len(task.get_full_title(self.get_max_key_size())) + 15
+        return len(task.get_full_title(self.get_max_key_size())) + 13
 
     def get_max_title(self) -> int:
         if self.cache_max_title:
@@ -153,7 +152,7 @@ class TaskTree:
 
     def get_task_down_symbol(self, t: Task) -> Text.Token:
         if t.is_link():
-            return Text.Token("-")
+            return symbols.task_view.set_fmt("c")
 
         if not t.is_import_type():
             return symbols.task_local
@@ -212,8 +211,7 @@ class TaskTree:
         output.add(t.get_prog_symbol(rate)).add(" ")
         output.add(self.get_task_rate_symbol(t)).add(" ")
         output.add(self.get_task_path_symbol(t)).add(" ")
-        output.add(self.get_task_rule_symbol(t)).add(" ")
-        output.add(self.get_task_action_symbol(t))
+        output.add(self.get_task_rule_symbol(t))
 
         in_focus = focus_color != ""
         output.add(self.style.round_l(focus_color) if in_focus else " ")

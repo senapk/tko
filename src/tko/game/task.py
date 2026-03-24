@@ -76,18 +76,18 @@ class Task(TreeItem):
         return self.__is_reachable
 
     def is_link(self):
+        if self.task_action == Task.TaskAction.VIEW:
+            return True
         return self.__origin_folder is None and self.__workspace_folder is None
     
-    def set_link_type(self):
+    def set_remote_view_type(self):
         self.__origin_folder = None
         self.__workspace_folder = None
         return self
 
     def is_import_type(self):
-        if self.is_link():
-            return False
-        return self.get_origin_folder() != self.get_workspace_folder()
-
+        return self.task_action == Task.TaskAction.EDIT and self.__origin_folder is not None and self.__workspace_folder is not None
+    
     def is_static_type(self):
         if self.is_link():
             return False

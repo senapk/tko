@@ -6,8 +6,8 @@ class __Symbols:
         self.task_downloaded = Text.Token("▼", "g")
         self.task_to_download = Text.Token("▲")
         self.task_local = Text.Token("▶", "g")
-        self.task_to_visit = Text.Token("◉", "b")
-        self.opening = Text.Token("=> ")
+        
+        self.opening = Text.Token("▶")
         self.neutral = Text.Token("»")
         self.success = Text.Token("✓")
         self.failure = Text.Token("✗")
@@ -115,7 +115,6 @@ class __Symbols:
     #     self.task_downloaded = Text.Token("D", "g")
     #     self.task_to_download = Text.Token("X")
     #     self.task_local = Text.Token(">", "g")
-    #     self.task_to_visit = Text.Token("◉", "b")
     #     self.whitespace = Text.Token("¨")
     #     self.newline = Text.Token("~")
 
