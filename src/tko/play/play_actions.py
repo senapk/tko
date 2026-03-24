@@ -185,7 +185,7 @@ class PlayActions:
                     task.info.rate = 0
                     task.info.feedback = False
             else:
-                if task.is_link() or task.task_rate == Task.TaskRate.INFO:
+                if task.is_link() or task.task_rate == Task.TaskRate.TICK:
                     if task.info.feedback:
                         task.info.feedback = False
                         task.info.rate = 0

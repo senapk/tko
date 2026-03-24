@@ -21,46 +21,122 @@ ferramenta.
 
 ## Organização conceitual
 
-A estrutura do repositório segue três níveis:
+A estrutura do repositório segue dois níveis:
 
--   **Cluster** --- agrupamento de conceitos
 -   **Quest** --- conjunto de tarefas relacionadas
 -   **Task** --- atividade individual
 
 ------------------------------------------------------------------------
 
-## Exemplo de `README.md`
+## Tasks
 
-    # Repositório de Tarefas de Programação
+Uma tarefa segue a seguinte estrutura:
 
-    ## Cluster: Operações Básicas
+```md
+[ ] @label :marcadores [Título](pasta/README.md)
 
-    ### Quest: Operações com Inteiros
+Você pode empacotar dentro de crases para alinhas ou tags html para esconder, mas o formato é sempre o mesmo:
+[ ] `@label :marcadores`[Título](pasta/README.md)
+[ ] <!-- @label :marcadores -->[Título](pasta/README.md)
+```
 
-    - [ ] `@tres   *1 :open` [Soma de três inteiros](base/tres/README.md)
-    - [ ] `@resto  *1 :leet` [Resultado e resto na divisão](base/resto/README.md)
-    - [ ] `@media  *1 :leet` [Média de dois inteiros](base/media/README.md)
-    - [ ] `@sobrou *1 :leet` [Calculando quanto sobrou](base/sobrou/README.md)
+### Marcadores
 
-Cada linha representa uma tarefa e inclui metadados compactos.
+Cada marcador representa uma propriedade da questão.
 
-------------------------------------------------------------------------
+```txt
+: [=|+] [$|%] [0..9] [a|u|t] [?|!]
+(Ordem Livre)
 
-## Convenções
+Pergunta               Categoria   Valores                  Padrão
+---------------------- ----------- ------------------------ --------
+É Obrigatório?         Prioridade  =:main, +:side           =
+Consumir ou Produzir?  Ação        $:edit, %:view           $
+Quem avalia?           Avaliação   a:auto, u:user, t:tick   a
+Quanto vale?           Nível       0..9                     1
+Pode consultar?        Consulta    ?:open, !:exam           ?
+```
 
-A sintaxe utilizada na lista segue algumas convenções:
+**Regras:**
 
--   `@nome` --- chave única da tarefa
--   `*N` --- pontuação associada
--   emojis --- classificações da tarefa
+- Marcadores omitidos usam o valor padrão. 
+- Se não houver ":" a atividade usa todos os valores padrão.
+- Caso não existe um marcador para uma categoria, o valor padrão é assumido.
+- A ordem dos marcadores é livre.
+- Se dois marcadores de mesma categoria forem especificados, o último prevalece.
+- Marcadores são case-sensitive.
 
-Exemplos:
+### Símbolos no TKO
 
--   `:leet` --- tarefa com **testes automatizados**
--   `:open` --- tarefa **aberta**, sem testes automáticos
+```txt
+Categoria   Código   Símbolo   Nome    Significado
+----------- -------- --------- ------- ---------------------------------------
+Avaliação   a        ●         auto    avaliação automática por testes
+            u        ○         user    avaliação feita pelo próprio usuário
+            t        ◇         tick    apenas registro de conclusão (sem avaliação)
 
-O link aponta para o `README.md` da pasta da tarefa, onde está a
-descrição completa do problema.
+Ação        $        ✎         edit    editar / produzir conteúdo
+            %        ↗         view    visualizar / consumir conteúdo
+
+Prioridade  =        ★         main    tarefas sugeridas
+            +        ☆         side    tarefas opcionais
+
+Consulta    ?        ↺         open    consulta permitida
+            !        ⊘         exam    consulta proibida
+```
+
+**Comportamento da ação view**
+
+Se o view for um link remoto → abre no navegador.
+Se o view for um link local → o arquivo é copiado para a pasta do aluno e não é aberto automaticamente.
+
+**Nível**
+
+O nível representa apenas a dificuldade/peso da atividade e é indicado somente por único número:
+
+:0 :1 ... :9
+
+**Exemplos**
+
+```txt
+Marcação   Interpretação
+---------- ---------------------------------------------
+:          main, edit, nível 1, auto, open
+:%         leitura obrigatória
+:+%        leitura extra
+:2$u       exercício nível 2 com autoavaliação
+:3$a!      prova automática nível 3
+:0t%       leitura sem pontuação
+:1t$       resumo apenas para entrega
+:+3u$?     projeto extra com consulta
+```
+
+**Observação:**
+
+| Dimensão   | Pergunta              |
+| ---------- | --------------------- |
+| Prioridade | É obrigatório?        |
+| Ação       | Consumir ou produzir? |
+| Avaliação  | Quem avalia?          |
+| Consulta   | Pode consultar?       |
+| Nível      | Quanto vale?          |
+
+**Restrições**
+
+Utilizar dois marcadores de mesma categoria é permitido, mas o último prevalece. Exemplo:
+
+```txt
+:324ta → nível 3, auto
+```
+
+Mesmo que qualquer combinação seja possível, nem todas fazem sentido, pois não vão gerar interações coerentes no sistema. Exemplo:
+
+```txt
+:a% → avaliação automática, mas para ser consumida, o que não faz sentido. O ideal seria :a$.
+:!% → consulta proibida, mas para ser consumida, o que não faz sentido. O ideal seria :!$.
+```
+
+Atividades para serem consumidas normalmente vão estar como `tick` ou `user`.
 
 ------------------------------------------------------------------------
 
@@ -136,9 +212,7 @@ Esse formato tem duas vantagens importantes:
 As habilidades são declaradas usando a sintaxe:
 
 ```
-
-<!-- +habilidade:valor -->
-
++habilidade[:valor]
 ```
 
 Onde:
@@ -150,44 +224,38 @@ Onde:
 Exemplo:
 
 ```md
-### Missão: Operações<!-- +basic:1 -->
+## Missão: Operações  +basic @basic
+Isso indica que as tarefas dessa missão trabalham a habilidade `basic` com peso `1`.
+A chave @basic é a chave da atividade.
+```
 
-Isso indica que as tarefas dessa missão trabalham a habilidade `basic`
-com peso `1`.
-
-Uma mesma missão pode contribuir para várias habilidades:
-### Missão: Listas<!-- +arrays:1 +loops:1 -->
-
+Uma mesma missão pode contribuir para várias habilidades e pode definir requisitos de outras missões usando links internos.
+```md
+## Missão: Listas +loops:2 +for @list
+Isso indica que as tarefas dessa missão trabalham a habilidade `loops` com peso `2` e a habilidade `for` com peso `1`.
+A chave @list é a chave da atividade.
 ```
 
 ---
 
 ## Definição de dependências entre quests
 
-Dependências são declaradas utilizando **links Markdown internos**.
+Dependências são declaradas utilizando referências para chaves de outras missões, usando a sintaxe:
+
+```
+!@outra_missão
+```
 
 Sintaxe:
 
 ```md
-
-[](#slug-da-missao)
-
-```
-
-Isso indica que a missão atual depende da missão referenciada.
-
-Exemplo:
-
-```md
-
-### Missão: Seleção 1<!-- +if_else:1 --> [](#missão-operações)
-
+### Missão: Seleção 1 +if @selection !@operations
 ```
 
 Nesse caso:
 
-- a missão trabalha a habilidade `if_else`
-- a missão **Operações** deve ser concluída antes
+- a missão trabalha a habilidade `if` com peso `1`
+- a missão `operations` deve ser concluída antes de `selection`
 
 ---
 
@@ -195,15 +263,15 @@ Nesse caso:
 
 ```md
 
-### Missão: Operações<!-- +basic:1 -->
+### Missão: Operações +basic @operations
 
-### Missão: Seleção 1<!-- +if_else:1 --> [](#missão-operações)
+### Missão: Seleção 1 +if @selection1 !@operations
 
-### Missão: Seleção 2<!-- +if_else:1 --> [](#missão-seleção-1)
+### Missão: Seleção 2 +if @selection2 !@selection1
 
-### Missão: Repetição1 <!-- +for:1 --> [](#missão-seleção-1)
+### Missão: Repetição1 +for:2 @repetition1 !@selection2
 
-### Missão: Repetição2 <!-- +for:1 --> [](#missão-repetição-1)
+### Missão: Repetição2 +for:2 @repetition2 !@repetition1
 
 ```
 
@@ -241,13 +309,3 @@ Além disso, o sistema pode usar essas relações para:
 - calcular domínio de habilidades
 - sugerir próximas atividades ao aluno
 ```
-
-## Edição com o VSCode
-
-Abra seu arquivo de configurações e adicione as seguintes linhas:
-
-```json
-"markdown.updateLinksOnFileMove.enabled": "always",
-```
-
-Isso garante que, ao mover ou renomear um título ou arquivo pelo VSCode, o VSCode atualize automaticamente os links internos que fazem referência a ele.

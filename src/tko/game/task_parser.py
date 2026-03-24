@@ -43,20 +43,24 @@ class TaskParser:
             # if c is digit, set xp
             if c.isdigit():
                 self.task.xp = int(c)
+            elif c == "a":
+                self.task.task_rate = Task.TaskRate.AUTO
+            elif c == "u":
+                self.task.task_rate = Task.TaskRate.USER
             elif c == "t":
-                self.task.task_rate = Task.TaskRate.TEST
-            elif c == "s":
-                self.task.task_rate = Task.TaskRate.SELF
-            elif c == "i":
-                self.task.task_rate = Task.TaskRate.INFO
+                self.task.task_rate = Task.TaskRate.TICK
             elif c == "=":
                 self.task.task_path = Task.TaskPath.MAIN
             elif c == "+":
                 self.task.task_path = Task.TaskPath.SIDE
             elif c == "?":
-                self.task.task_rule = Task.TaskRule.MOCK
+                self.task.task_help = Task.TaskHelp.OPEN
             elif c == "!":
-                self.task.task_rule = Task.TaskRule.EXAM
+                self.task.task_help = Task.TaskHelp.EXAM
+            elif c == "%":
+                self.task.task_action = Task.TaskAction.VIEW
+            elif c == "$":
+                self.task.task_action = Task.TaskAction.EDIT
 
     def __parse_key_task_types(self, tags: str) -> str:
         if self.task is None:
@@ -94,8 +98,9 @@ class TaskParser:
 
         if link.startswith("http://") or link.startswith("https://"):
             self.task.set_link_type()
-            self.task.set_key(link)
             self.task.target = link
+            if self.task.get_key() == "":
+                self.task.set_key(link)
             return self
         
         if self.task.get_key() == "": # não tem chave, e não é url

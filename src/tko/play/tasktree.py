@@ -46,9 +46,17 @@ class TaskTree:
         self.reload_sentences()
 
     def get_max_key_size(self):
+        keys_visible: list[str] = []
         if self.max_key_size is None:
-            self.max_key_size = max([len(k) for k, v in self.all_items.items() if isinstance(v, Task) and not v.is_link()])
-        return self.max_key_size
+            for q in self.game.quests.values():
+                if not q.get_full_key() in self.expanded:
+                    continue
+                for t in q.get_tasks():
+                    if not t.is_link():
+                        keys_visible.append(t.get_key())
+        if len(keys_visible) == 0:
+            return 10
+        return max([len(k) for k in keys_visible])
     
     def get_max_quest_itens_key_size(self, quest_key: str):
         q = self.all_items.get(quest_key, None)
@@ -156,17 +164,17 @@ class TaskTree:
         return down_symbol
     
     def get_task_rate_symbol(self, t: Task) -> Text.Token:
-        if t.task_rate == Task.TaskRate.TEST:
+        if t.task_rate == Task.TaskRate.AUTO:
             if t.info.feedback:
                 return symbols.circle_filled.set_fmt("g")
             else:
                 return symbols.circle_open
-        if t.task_rate == Task.TaskRate.SELF:
+        if t.task_rate == Task.TaskRate.USER:
             if t.info.feedback:
                 return symbols.square_filled.set_fmt("g")
             else:
                 return symbols.square_open
-        if t.task_rate == Task.TaskRate.INFO:
+        if t.task_rate == Task.TaskRate.TICK:
             if t.info.feedback:
                 return symbols.task_info_filled.set_fmt("g")
             else:
@@ -179,11 +187,18 @@ class TaskTree:
         return symbols.star_open
     
     def get_task_rule_symbol(self, t: Task) -> Text.Token:
-        if t.task_rule == Task.TaskRule.MOCK:
+        if t.task_help == Task.TaskHelp.OPEN:
             return symbols.task_repeat.set_fmt("y")
-        if t.task_rule == Task.TaskRule.EXAM:
+        if t.task_help == Task.TaskHelp.EXAM:
             return symbols.task_denied.set_fmt("r")
         return Text.Token("")
+    
+    def get_task_action_symbol(self, t: Task) -> Text.Token:
+        if t.task_action == Task.TaskAction.VIEW:
+            return symbols.task_view.set_fmt("c")
+        if t.task_action == Task.TaskAction.EDIT:
+            return symbols.task_edit.set_fmt("c")
+        return Text.Token(" ")
 
     def __str_task(self, focus_color: str, t: Task, lig_quest: str, quest_reachable: bool) -> Text:
         color_aval = "g" if quest_reachable and t.is_reachable() else "y"
@@ -197,7 +212,8 @@ class TaskTree:
         output.add(t.get_prog_symbol(rate)).add(" ")
         output.add(self.get_task_rate_symbol(t)).add(" ")
         output.add(self.get_task_path_symbol(t)).add(" ")
-        output.add(self.get_task_rule_symbol(t))
+        output.add(self.get_task_rule_symbol(t)).add(" ")
+        output.add(self.get_task_action_symbol(t))
 
         in_focus = focus_color != ""
         output.add(self.style.round_l(focus_color) if in_focus else " ")

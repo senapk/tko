@@ -13,17 +13,21 @@ class Task(TreeItem):
     str_index = "idx"
 
     class TaskRate(enum.Enum):
-        TEST = "test" # rate uses % of test cases passed
-        SELF = "open" # rate uses auto grade
-        INFO = "info" # no rate, just toggle check
+        AUTO = "auto" # rate uses % of test cases passed
+        USER = "user" # rate uses user self-evaluation
+        TICK = "tick" # no rate, just tick when complete
 
     class TaskPath(enum.Enum):
         MAIN = "main" # main task, required to complete the quest
         SIDE = "side" # side task, optional to complete the quest, usually with less xp reward
 
-    class TaskRule(enum.Enum):
+    class TaskHelp(enum.Enum):
+        OPEN = "open" # help allowed
         EXAM = "exam" # no help allowed, must be done alone
-        MOCK = "mock" # help allowed, but still graded by test cases, usually with less xp reward
+
+    class TaskAction(enum.Enum):
+        VIEW = "view" # view task details
+        EDIT = "edit" # edit task details
 
     def __init__(self):
 
@@ -34,13 +38,14 @@ class Task(TreeItem):
         self.grader = TaskGrader(self.info)
         self.main_idx: int = 0
         
-        self.task_rate: Task.TaskRate = Task.TaskRate.TEST
+        self.task_rate: Task.TaskRate = Task.TaskRate.AUTO
         self.task_path: Task.TaskPath = Task.TaskPath.MAIN
-        self.task_rule: Task.TaskRule = Task.TaskRule.MOCK
+        self.task_help: Task.TaskHelp = Task.TaskHelp.OPEN
+        self.task_action: Task.TaskAction = Task.TaskAction.EDIT
 
         self.skills: dict[str, int] = {} # skills
         
-        self.xp: int = 0
+        self.xp: int = 1
         
         self.target = ""
         self.quest_key = ""
@@ -65,7 +70,7 @@ class Task(TreeItem):
         return self.task_path == Task.TaskPath.SIDE
     
     def is_leet(self):
-        return self.task_rate == Task.TaskRate.TEST
+        return self.task_rate == Task.TaskRate.AUTO
 
     def is_reachable(self) -> bool:
         return self.__is_reachable
