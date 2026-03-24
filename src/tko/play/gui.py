@@ -102,8 +102,8 @@ class Gui:
         top = Text()
 
         graph: str = f"Painel [{GuiKeys.show_graph}]"
-        for i in Flags.painel.get_values():
-            if Flags.painel.get_value() == i:
+        for i in Flags.panel.get_values():
+            if Flags.panel.get_value() == i:
                 graph += symbols.circle_filled.text
             else:
                 graph += symbols.circle_open.text
@@ -111,7 +111,7 @@ class Gui:
 
         trilhas: str = (f"Trilhas[{GuiKeys.show_tracks}]")
         for i in range(3):
-            if Flags.tracks.get_value() == str(i):
+            if Flags.show_panel.get_value() == str(i):
                 trilhas += symbols.circle_filled.text
             else:
                 trilhas += symbols.circle_open.text
@@ -133,8 +133,6 @@ class Gui:
                 tasks += symbols.circle_open.text
         top.add(self.style.border(color, tasks))
         
-
-
         # full = self.center_header_footer(top, frame)
         frame.set_header(top, "^")
         # footer            
@@ -146,8 +144,8 @@ class Gui:
         text.add(self.style.border("G", self.rep.data.lang.upper()))
         if self.need_update:
             text = Text().addf("r", " TKO DESATUALIZADO!").addf("y"," Atualize com: ").addf("g", "pipx upgrade tko ")
-        text = self.center_header_footer(text, frame)
-        frame.set_footer(text, "<")
+        # text = self.center_header_footer(text, frame)
+        frame.set_footer(text, "^")
         
         # if Flags.flags:
         #     value = self.make_flags_bar()
@@ -174,7 +172,7 @@ class Gui:
 
         elements: list[Text] = []
         for skill, value in complete.items():
-            if Flags.tracks.get_value() == "1":
+            if Flags.show_panel.get_value() == "1":
                 obtained_value = round(100 * obtained.get(skill, 0) / priority.get(skill, 1))
                 possible_value = round(100 * value / priority.get(skill, 1))
                 text = f"{skill}: {obtained_value:03d}%  {possible_value:03d}%"
@@ -187,7 +185,7 @@ class Gui:
             perc = obtained.get(skill, 0) / priority.get(skill, 1)
             done_color = self.colors.progress_skill_done
             todo_color = self.colors.progress_skill_todo
-            text = text.rjust(dx - 4)
+            #text = text.rjust(dx - 4)
             skill_bar = self.style.build_bar(text=text, percent=perc, length=dx - 2, fmt_true=done_color, fmt_false=todo_color)
             elements.append(skill_bar)
         
@@ -198,11 +196,11 @@ class Gui:
         else:
             grade = total_obtained / total_priority * 10.0
 
-        if Flags.tracks.get_value() == "1":
+        if Flags.show_panel.get_value() == "1":
             text = f" Nota: {grade:.1f}       "
         else:
             text = f"Nota: {grade:.1f} :{round(total_obtained):03d}/{round(total_priority):03d}/{round(total_complete):03d}"
-        text = text.rjust(dx - 4)
+        # text = text.rjust(dx - 4)
         done_color = self.colors.main_bar_done
         todo_color = self.colors.main_bar_todo
         percent = total_obtained / total_priority if total_priority > 0 else 0.0
@@ -361,7 +359,7 @@ class Gui:
         return True, graph
 
     def show_graphs(self, frame: Frame):
-
+        
         try:
             selected = self.tree.get_selected_throw()
         except IndexError:
@@ -371,14 +369,14 @@ class Gui:
         
         # now: datetime.datetime = datetime.datetime.now()
         # parrot = random_get(opening, str(now.hour))
-        tasktree_width = self.tree.get_total_width()
+        keep_borders = False
         made = False
         list_data: list[Text] = []
-        width = cols - tasktree_width - 1
+        width = cols - 2
         if width < 5:
             width = 5
         header: list[Text] = []
-        if Flags.painel.get_value() in (Flags.graph_task, Flags.graph_logs):
+        if Flags.panel.get_value() in (Flags.graph_task, Flags.graph_logs):
             height = lines - 4
             if height < 3:
                 height = 3
@@ -388,25 +386,33 @@ class Gui:
                 made, list_data = self.get_daily_graph(width, height)
         if not made:
             list_data = [Text().add(x) for x in opening["estuda"].splitlines()]
+            keep_borders = True
         if self.xray_offset < 0:
             self.xray_offset = 0
         if self.xray_offset >= len(list_data):
             self.xray_offset = len(list_data) - 1
         
         offset = 0
-        if Flags.painel.get_value() == Flags.graph_logs and isinstance(selected, Task):
+        
+        if Flags.panel.get_value() == Flags.graph_logs and isinstance(selected, Task):
             offset = self.xray_offset
+            keep_borders = True
         count = -1
         line_count = 0
+        
+        if not keep_borders:
+            frame.set_border_none()
+        frame.set_header(Text().addf("/", "Right"), "^", "{", "}")
+        frame.draw()
         if header:
             for y, line in enumerate(header):
-                frame.write(y, tasktree_width, line)
+                frame.write(y, 0, line)
             line_count = len(header)
         for line in list_data:
             count += 1
             if count < offset:
                 continue
-            frame.write(line_count, tasktree_width, line)
+            frame.write(line_count, 0, line)
             line_count += 1
 
     def show_items(self):
@@ -422,13 +428,13 @@ class Gui:
         bottom_dy = 1 # quantas linhas o fundo usa
         mid_y = top_dy # onde o meio começa
         mid_sy = main_sy - top_dy - bottom_dy # tamanho do meio
-        left_size = 29
+        # left_size = 29
+
         skills_sx = 0
-        flags_sx = 0
-        if Flags.tracks.get_value() != "0":
-            skills_sx = left_size #max(20, main_sx // 4)
+        if Flags.show_panel.is_true():
+            skills_sx = cols - self.tree.get_total_width() - 1
         
-        task_sx = main_sx - flags_sx - skills_sx
+        task_sx = main_sx - skills_sx
 
         frame_top = Frame(top_y, 0).set_size(top_dy + 2, cols)
         self.show_top_bar(frame_top)
@@ -438,8 +444,11 @@ class Gui:
         # if task_sx > 5: 
         frame_main = Frame(mid_y, 0).set_size(mid_sy, task_sx).set_border_color(border_color)
         self.show_main_bar(frame_main)
-        self.show_graphs(frame_main)
+        # self.show_graphs(frame_main)
 
-        if Flags.tracks.get_value() != "0":
-            frame_skills = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)
-            self.show_skills_bar(frame_skills)
+        if Flags.show_panel.is_true():
+            frame_right = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)
+            if Flags.panel.get_value() == Flags.graph_skills:
+                self.show_skills_bar(frame_right)
+            elif Flags.panel.get_value() in [Flags.graph_logs, Flags.graph_task, Flags.graph_none]:
+                self.show_graphs(frame_right)

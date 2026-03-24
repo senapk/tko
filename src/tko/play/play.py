@@ -60,15 +60,15 @@ class Play:
         self.gui.xray_offset = 0
 
     def page_up(self):
-        if Flags.painel.get_value() == Flags.graph_logs:
+        if Flags.panel.get_value() == Flags.graph_logs:
             self.gui.xray_offset -= 5
-        elif Flags.painel.get_value() == Flags.graph_task:
+        elif Flags.panel.get_value() == Flags.graph_task:
             Flags.task_graph_mode.set_value(Flags.task_exec_view)
     
     def page_down(self):
-        if Flags.painel.get_value() == Flags.graph_logs:
+        if Flags.panel.get_value() == Flags.graph_logs:
             self.gui.xray_offset += 5
-        elif Flags.painel.get_value() == Flags.graph_task:
+        elif Flags.panel.get_value() == Flags.graph_task:
             Flags.task_graph_mode.set_value(Flags.task_time_view)
 
 

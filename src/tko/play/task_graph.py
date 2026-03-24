@@ -145,8 +145,8 @@ class TaskGraph:
         if not self.eixo:
             return [], []
         
-        tag = Miniwi.render_dotted(self.task_key)
-        first, second = tag.splitlines()
+        _ = Miniwi.render_dotted(self.task_key)
+        first, second = "", ""
         
         # title = Text.format(" {C}", f" {self.task_key} ")
         title = Text()
@@ -162,7 +162,7 @@ class TaskGraph:
         # title = title.center(self.width)
         header.append(Text().add(first) + title.center(self.width - len(first)))
         
-        if Flags.painel.get_value() == Flags.graph_logs:
+        if Flags.panel.get_value() == Flags.graph_logs:
             header.append(Text().addf("", second) + Text.format(" {C} {M}", " Scroll Up [PageUp] ", " Scroll Down [PgDown] ").center(self.width - len(second)))
             return header, self.raw_text
         

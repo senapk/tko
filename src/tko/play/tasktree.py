@@ -120,7 +120,7 @@ class TaskTree:
         if Flags.show_time.is_true():
             width += len(self.format_hours_minutes("", 0, 0))
         width += 7 # for percent and symbols
-        return width
+        return max(width, self.MIN_TITLE_LENGTH + 10)
 
     @staticmethod
     def color_task_title(title: str, color: str) -> Text:
