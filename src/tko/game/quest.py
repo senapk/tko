@@ -36,7 +36,7 @@ class Quest(TreeItem):
 
     def get_full_title(self) -> Text:
         output = Text().add(self.remote_name).add(":").add(self.get_title())
-        if Flags.show_panel.get_value() != "0":
+        if Flags.show_panel.get_value() == "1" and Flags.panel.get_value() == Flags.panel_skills:
             for skill, value in self.skills.items():
                 if value > 1:
                     output.addf('b', f" +{skill}*{value}")

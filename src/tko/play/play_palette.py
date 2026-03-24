@@ -57,8 +57,8 @@ class PlayPalette:
         options.append(
             FloatingInputData(
                 lambda: Text.format(" {} Mostrar {y}", symbols.action, "Ajuda"),
-                self.gui.show_help,
-                GuiKeys.key_help
+                lambda: Flags.panel.set_value(Flags.panel_help),
+                GuiKeys.panel_help
             ).set_exit_on_action(True)
         )
 
@@ -82,7 +82,7 @@ class PlayPalette:
             FloatingInputData(
                 lambda: Text.format(" {} Mostrar {y} decorrido", icon(Flags.show_time.is_true()), "Tempo"),
                 lambda: Flags.show_time.toggle(),
-                GuiKeys.show_time
+                GuiKeys.show_duration
             )
         )
 

@@ -25,17 +25,21 @@ class GuiActions:
 class GuiKeys:
     calibrate = "c"
 
-    show_graph = "1"
-    show_tracks = "2"
-    show_quests = "3"
-    show_tasks = "4"
-    show_time = "T"
+    inbox = "1"
+    all_tasks = "2"
+    toggle_right = "3"
+    
+    panel_help = "4"
+    panel_graph = "5"
+    panel_logs = "6"
+    panel_skills = "7"
+
+    show_duration = "T"
 
     palette = "p"
     images = "I"
     down_task = "b"
     activate = "\n"
-    key_help = "?"
     reload_game = "R"
     
     create_draft = "r"

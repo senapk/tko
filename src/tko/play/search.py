@@ -40,8 +40,8 @@ class Search:
         elif isinstance(item, Quest):
             reachable = item.is_reachable()
         if not reachable:
-            Flags.quests.set_value(Flags.quest_enable)
-        self.tree.update_tree(Flags.quests.get_value() == Flags.quest_enable) # usa o mode de antes e vê se acha
+            Flags.inbox.set_value(Flags.inbox_all)
+        self.tree.update_tree(Flags.inbox.get_value() == Flags.inbox_all) # usa o mode de antes e vê se acha
         self.tree.reload_sentences()
         
         self.tree.expanded = set()

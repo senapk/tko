@@ -60,15 +60,15 @@ class Play:
         self.gui.xray_offset = 0
 
     def page_up(self):
-        if Flags.panel.get_value() == Flags.graph_logs:
+        if Flags.panel.get_value() == Flags.panel_logs:
             self.gui.xray_offset -= 5
-        elif Flags.panel.get_value() == Flags.graph_task:
+        elif Flags.panel.get_value() == Flags.panel_graph:
             Flags.task_graph_mode.set_value(Flags.task_exec_view)
     
     def page_down(self):
-        if Flags.panel.get_value() == Flags.graph_logs:
+        if Flags.panel.get_value() == Flags.panel_logs:
             self.gui.xray_offset += 5
-        elif Flags.panel.get_value() == Flags.graph_task:
+        elif Flags.panel.get_value() == Flags.panel_graph:
             Flags.task_graph_mode.set_value(Flags.task_time_view)
 
 
@@ -100,7 +100,7 @@ class Play:
 
         cman.add_str(GuiKeys.calibrate, lambda: self.fman.add_input(FloatingCalibrate(self.settings)))
         cman.add_str(GuiKeys.activate, self.activate) # type: ignore
-        cman.add_str(GuiKeys.open_url, self.actions.open_link)
+        # cman.add_str(GuiKeys.open_url, self.actions.open_link)
         cman.add_str(GuiKeys.down_task, self.actions.down_remote_task)
         cman.add_str(GuiKeys.borders, self.app.toggle_borders)
         cman.add_str(GuiKeys.images, self.app.toggle_images)
@@ -110,8 +110,15 @@ class Play:
         cman.add_str(GuiKeys.delete_folder, self.actions.delete_folder_ask)
 
         cman.add_str(GuiKeys.self_evaluate, self.actions.self_evaluate)
-        
-        cman.add_str(GuiKeys.key_help, self.gui.show_help)
+        cman.add_str(GuiKeys.inbox, lambda: Flags.inbox.set_value(Flags.inbox_only))
+        cman.add_str(GuiKeys.all_tasks, lambda: Flags.inbox.set_value(Flags.inbox_all))
+        cman.add_str(GuiKeys.toggle_right, lambda: Flags.show_panel.toggle())
+
+        cman.add_str(GuiKeys.panel_help, lambda: Flags.show_panel.set_value("1") and Flags.panel.set_value(Flags.panel_help))
+        cman.add_str(GuiKeys.panel_graph, lambda: Flags.panel.set_value(Flags.panel_graph))
+        cman.add_str(GuiKeys.panel_logs, lambda: Flags.panel.set_value(Flags.panel_logs))
+        cman.add_str(GuiKeys.panel_skills, lambda: Flags.panel.set_value(Flags.panel_skills))
+
         cman.add_str(GuiKeys.unfold_patch, self.actions.open_versions)
         
         for flag in self.flagsman.flags.values():
@@ -141,7 +148,7 @@ class Play:
         Fmt.set_scr(scr)  # Define o scr como global
 
         while True:
-            self.tree.update_tree(admin_mode=Flags.quests.get_value() == Flags.quest_enable or self.gui.search.search_mode)
+            self.tree.update_tree(admin_mode=Flags.inbox.get_value() == Flags.inbox_all or self.gui.search.search_mode)
             self.fman.draw_warnings()
             cman = self.make_callback()
             self.gui.show_items()

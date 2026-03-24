@@ -398,7 +398,7 @@ class Tester:
         if self.opener is not None:
             cmds.append(self.borders.border("C", f"{GuiActions.edit} [{GuiKeys.edit}]"))
         cmds.append(self.borders.border("G", f"{GuiActions.evaluate_tester} [{GuiKeys.evaluate} | {symbols.newline.text}]"))
-        cmds.append(self.borders.border("G", f"{GuiActions.execute_tester} [{GuiKeys.execute} | ⌫]"))
+        cmds.append(self.borders.border("G", f"{GuiActions.execute_tester} [{GuiKeys.execute} | ←]"))
         limite = f"{GuiActions.time_limit} {self.get_time_limit_symbol()} [{GuiKeys.limite}]"
         cmds.append(self.borders.border("Y", limite))
 

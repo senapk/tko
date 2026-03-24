@@ -84,33 +84,35 @@ class Flag:
     
 
 class Flags:
-    graph_none = "0"
-    graph_task = "1"
-    graph_logs = "2"
-    graph_skills = "3"
+    panel_help = "0"
+    panel_graph = "1"
+    panel_logs = "2"
+    panel_skills = "3"
+
     task_exec_view = "0"
     task_time_view = "1"
-    quest_enable = "0"
-    quest_show = "1"
-    quest_hide = "2"
+    
+    inbox_all = "0"
+    inbox_only = "1"
 
-    panel = (Flag().set_name("Painel").set_keycode(GuiKeys.show_graph).set_description("Mostra o Painel de Informações")
-                    .set_values([graph_none, graph_task, graph_logs, graph_skills])
+    panel = (Flag().set_name("Painel").set_description("Mostra o Painel de Informações")
+                    .set_values([panel_help, panel_graph, panel_logs, panel_skills])
                     .set_msgs(["Desabilitar painel de informações", "Gráfico de tarefas", "Mostrar logs", "Mostrar trilhas de habilidades"]))
-    quests = (Flag().set_name("Tópicos").set_keycode(GuiKeys.show_quests).set_description("Habilitas todas as missões e tarefas")
-                    .set_values([quest_enable, quest_show, quest_hide])
-                    .set_msgs(["Habilitar todas as quests", "Mostrar todas as quests sem habilitar", "Mostrar apenas quests disponíveis"]))
-    show_panel = (Flag().set_name("ShowPanel").set_keycode(GuiKeys.show_tracks).set_description("Mostra o painel esquerdo")
+    inbox = (Flag().set_name("Tópicos").set_description("Habilitas todas as missões e tarefas")
+                    .set_values([inbox_all, inbox_only])
+                    .set_msgs(["Habilitar todas as tarefas", "Mostrar inbox"]))
+    show_panel = (Flag().set_name("ShowPanel").set_description("Mostra o painel esquerdo")
                     .set_values(["0", "1"])
                     .set_msgs(["Desabilitar painel lateral", "Mostrar painel lateral"]))
-    tasks = (Flag().set_name("Tarefas").set_keycode(GuiKeys.show_tasks).set_description("Mostra as atividades concluídas")
+    tasks = (Flag().set_name("Tarefas").set_description("Mostra as atividades concluídas")
                     .set_values(["0", "1", "2"])
                     .set_msgs(["Mostrar todas as tarefas", "Ocultar tarefas com 100%", "Ocultar tarefas com >70%"]))
     task_graph_mode = (Flag().set_name("Task Graph").set_description("Mostra o Gráfico de Tarefas")
                     .set_values([task_exec_view, task_time_view])
                     .set_msgs(["Gráfico de tarefas por execuções", "Gráfico de tarefas por tempo"]))
-    show_time = (Flag().set_name("Tempo").set_keycode(GuiKeys.show_time).set_description("Mostra o tempo utilizado para completar as tarefas")
+    show_time = (Flag().set_name("Tempo").set_description("Mostra o tempo utilizado para completar as tarefas")
                     .set_values(["1", "0"])
+                    .set_keycode(GuiKeys.show_duration)
                     .set_msgs(["Mostrar tempo gasto nas tarefas", "Ocultar tempo gasto nas tarefas"]))
 class FlagsMan:
     def __init__(self, data: dict[str, int]):

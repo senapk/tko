@@ -68,7 +68,7 @@ class Gui:
             return "R", " Retornar"
         if isinstance(obj, Quest):
             quest: Quest = obj
-            if Flags.quests.get_value() != Flags.quest_enable and not quest.is_reachable():
+            if Flags.inbox.get_value() != Flags.inbox_all and not quest.is_reachable():
                 output = TaskAction.BLOQUEIO
             elif quest.get_full_key() in self.tree.expanded:
                 output = TaskAction.CONTRAIR
@@ -82,9 +82,9 @@ class Gui:
 
     @staticmethod
     def get_admin_color() -> str:
-        if Flags.quests.get_value() == Flags.quest_hide:
+        if Flags.inbox.get_value() == Flags.inbox_only:
             return "g"
-        if Flags.quests.get_value() == Flags.quest_show:
+        if Flags.inbox.get_value() == Flags.inbox_all:
             return "y"
         return "c"
 
@@ -98,43 +98,22 @@ class Gui:
         return full
 
     def show_main_bar(self, frame: Frame):
-        color = self.settings.colors.filters
-        top = Text()
+        top = Text().add(" ")
 
-        graph: str = f"Painel [{GuiKeys.show_graph}]"
-        for i in Flags.panel.get_values():
-            if Flags.panel.get_value() == i:
-                graph += symbols.circle_filled.text
-            else:
-                graph += symbols.circle_open.text
-        top.add(self.style.border(color, graph))
+        inbox: str = f"Inbox [{GuiKeys.inbox}]"
+        color = "G" if Flags.inbox.get_value() == Flags.inbox_only else ""
+        top.addf(color, inbox).add(" ")
 
-        trilhas: str = (f"Trilhas[{GuiKeys.show_tracks}]")
-        for i in range(3):
-            if Flags.show_panel.get_value() == str(i):
-                trilhas += symbols.circle_filled.text
-            else:
-                trilhas += symbols.circle_open.text
-        top.add(self.style.border(color, trilhas))
+        all_tasks: str = f"Todas [{GuiKeys.all_tasks}]"
+        color = "G" if Flags.inbox.get_value() == Flags.inbox_all else ""
+        top.addf(color, all_tasks).add(" ")
 
-        quests: str = f"Tópicos [{GuiKeys.show_quests}]"
-        for value in Flags.quests.get_values():
-            if Flags.quests.get_value() == str(value):
-                quests += symbols.circle_filled.text
-            else:
-                quests += symbols.circle_open.text
-        top.add(self.style.border(color, quests))
-
-        tasks: str = f"Tarefas [{GuiKeys.show_tasks}]"
-        for i in range(3):
-            if Flags.tasks.get_value() == str(i):
-                tasks += symbols.circle_filled.text
-            else:
-                tasks += symbols.circle_open.text
-        top.add(self.style.border(color, tasks))
+        toggle_right: str = f"Painel [{GuiKeys.toggle_right}]"
+        color = "G" if Flags.show_panel.get_value() == "1" else ""
+        top.addf(color, toggle_right).add(" ")
         
         # full = self.center_header_footer(top, frame)
-        frame.set_header(top, "^")
+        frame.set_header(top, "<")
         # footer            
         text = Text()
         alias_color = "R"
@@ -160,14 +139,12 @@ class Gui:
                 sentence.addf("r", "...")
             frame.write(y, 0, sentence)
 
-
-
     def show_skills_bar(self, frame_xp: Frame):
         dy, dx = frame_xp.get_inner()
         #_ = [q for q in self.game.quests.values() if q.is_reachable()]
         obtained, priority, complete = self.game.get_skills_resume()
 
-        frame_xp.set_header(Text().addf("/", "Trilhas"), "^", "{", "}")
+        frame_xp.set_header(Text().add(self.gen_right_header()), "^")
         frame_xp.draw()
 
         elements: list[Text] = []
@@ -299,7 +276,7 @@ class Gui:
     def show_top_bar(self, frame: Frame):
         lista = [
             Text().addf('Y', f"Sair [esc]"),
-            Text().addf("Y", f"Ajuda[?]"),
+            Text().addf("Y", f"Ajuda[{GuiKeys.panel_help}]"),
         ]
         help_list = self.build_list_sentence(lista)
         pre: list[Text] = [help_list[0]]
@@ -311,34 +288,42 @@ class Gui:
         info = Text().add(" ").join(pre + [main_label] + pos)
         frame.write(0, 0, info.center(frame.get_dx()))
 
-    def show_help(self):
+    def show_help(self, frame: Frame):
         # def empty(value):
         #     pass
-        _help: Floating = Floating().left().bottom().set_text_ljust()
-        self.fman.add_input(_help)
 
-        _help.set_header_text(Text().add(" Ajuda "))
-        _help.put_sentence(Text.format("    Ajuda ").addf("r", GuiKeys.key_help).add("  Abre essa tela de ajuda")
+        frame.set_header(self.gen_right_header(), "^")
+        frame.draw()
+
+        help_lines: list[Text] = []
+
+        help_lines.append(Text().add(" Ajuda "))
+        help_lines.append(Text.format("    Ajuda ").addf("r", GuiKeys.panel_help).add("  Abre essa tela de ajuda")
         )
 
-        _help.put_sentence(Text.format("  ").addf("r", "Shift + B")
+        help_lines.append(Text.format("  ").addf("r", "Shift + B")
                            .add("  Habilita ").addf("r", "").addf("R", "ícones").addf("r", "").add(" se seu ambiente suportar"))
-        _help.put_sentence(Text() + "  " + Text.r_token("g", f"Shift + {GuiKeys.calibrate}") + "  Para calibrar os direcionais do teclado")
-        _help.put_sentence(Text() + "  " + Text.r_token("g", " setas") + "     Para navegar entre os elementos")
+        help_lines.append(Text() + "  " + Text.r_token("g", f"Shift + {GuiKeys.calibrate}") + "  Para calibrar os direcionais do teclado")
+        help_lines.append(Text() + "  " + Text.r_token("g", " setas") + "     Para navegar entre os elementos")
     
-        _help.put_sentence(Text() + f"   {GuiActions.pallete} " + Text.r_token("r", f"{GuiKeys.palette}") + "  Abre o menu de ações e configurações")
-        _help.put_sentence(Text() + f"   {GuiActions.github} " + Text.r_token("r", f"{GuiKeys.open_url}") + "  Abre tarefa em uma aba do browser")
-        _help.put_sentence(Text() + f"   {GuiActions.download} " + Text.r_token("r", f"{GuiKeys.down_task}") + "  Baixa tarefa de código para seu dispositivo")
-        _help.put_sentence(Text() + f"   {GuiActions.edit} " + Text.r_token("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
-        _help.put_sentence(Text() + f"   {GuiActions.activate} " + Text.r_token("r", "↲") + "  Interage com o elemento de acordo com o contexto")
-        _help.put_sentence(Text() + "             (baixar, visitar, escolher, compactar, expandir)")
-        _help.put_sentence(Text() + f"  {GuiActions.grade} " + Text.r_token("r", GuiKeys.self_evaluate) + "  Abre tela para auto avaliação")
-        _help.put_sentence(Text() + f"    {GuiActions.search} " + Text.r_token("r", f"{GuiKeys.search}") + "  Abre a barra de pesquisa")
-        _help.put_sentence(Text() + f"  {GuiActions.draft} " + Text.r_token("r", f"{GuiKeys.create_draft}") + "  Cria um rascunho para escrever código ou anotações")
+        help_lines.append(Text() + f"   {GuiActions.pallete} " + Text.r_token("r", f"{GuiKeys.palette}") + "  Abre o menu de ações e configurações")
+        help_lines.append(Text() + f"   {GuiActions.download} " + Text.r_token("r", f"{GuiKeys.down_task}") + "  Tenta baixar novamente a tarefa selecionada")
+        help_lines.append(Text() + f"   {GuiActions.edit} " + Text.r_token("r", f"{GuiKeys.edit}") + "  Abre os arquivos no editor de código")
+        help_lines.append(Text() + f"   {GuiActions.show_time} " + Text.r_token("r", f"{GuiKeys.show_duration}") + "  Alterna entre mostrar o tempo gasto nas tarefas ou não")
+        help_lines.append(Text() + f"   Apagar " + Text.r_token("r", f"{GuiKeys.delete_folder}") + "  Apaga a pasta da tarefa selecionada (útil para resetar o progresso de uma tarefa)")
+        help_lines.append(Text() + f"   {GuiActions.activate} " + Text.r_token("r", "↲") + "  Interage com o elemento de acordo com o contexto")
+        help_lines.append(Text() + "             (baixar, visitar, escolher, compactar, expandir)")
+        help_lines.append(Text() + f"  {GuiActions.grade} " + Text.r_token("r", GuiKeys.self_evaluate) + "  Abre tela para auto avaliação")
+        help_lines.append(Text() + f"    {GuiActions.search} " + Text.r_token("r", f"{GuiKeys.search}") + "  Abre a barra de pesquisa")
+        help_lines.append(Text() + f"  {GuiActions.draft} " + Text.r_token("r", f"{GuiKeys.create_draft}") + "  Cria um rascunho para escrever código ou anotações")
 
-        _help.put_sentence(Text())
-        _help.put_sentence(Text() + "Você pode mudar o editor padrão com o comando no terminal")
-        _help.put_sentence(Text() + Text.r_token("g", "             tko config --editor <comando>"))
+        help_lines.append(Text())
+        help_lines.append(Text() + "Você pode mudar o editor padrão com o comando no terminal")
+        help_lines.append(Text() + Text.r_token("g", "             tko config --editor <comando>"))
+        help_lines.append(Text())
+
+        for i, line in enumerate(help_lines):
+            frame.write(i, 0, line)
 
 
     def get_task_graph(self, task_key: str, width: int, height: int) -> tuple[bool, list[Text], list[Text]]:
@@ -358,6 +343,26 @@ class Gui:
         #     frame.write(y, x, Text().addf("g", line))
         return True, graph
 
+    def gen_right_header(self) -> Text:
+        top = Text().add(" ")
+
+        helpv: str = f"Ajuda [{GuiKeys.panel_help}]"
+        color = "G" if Flags.panel.get_value() == Flags.panel_help else ""
+        top.addf(color, helpv).add(" ")
+
+        graph: str = f"Gráficos [{GuiKeys.panel_graph}]"
+        color = "G" if Flags.panel.get_value() == Flags.panel_graph else ""
+        top.addf(color, graph).add(" ")
+
+        logs: str = f"Logs [{GuiKeys.panel_logs}]"
+        color = "G" if Flags.panel.get_value() == Flags.panel_logs else ""
+        top.addf(color, logs).add(" ")
+
+        skills: str = f"Trilhas [{GuiKeys.panel_skills}]"
+        color = "G" if Flags.panel.get_value() == Flags.panel_skills else ""
+        top.addf(color, skills).add(" ")
+        return top
+
     def show_graphs(self, frame: Frame):
         
         try:
@@ -376,7 +381,7 @@ class Gui:
         if width < 5:
             width = 5
         header: list[Text] = []
-        if Flags.panel.get_value() in (Flags.graph_task, Flags.graph_logs):
+        if Flags.panel.get_value() in (Flags.panel_graph, Flags.panel_logs):
             height = lines - 4
             if height < 3:
                 height = 3
@@ -385,7 +390,7 @@ class Gui:
             elif isinstance(selected, Quest):
                 made, list_data = self.get_daily_graph(width, height)
         if not made:
-            list_data = [Text().add(x) for x in opening["estuda"].splitlines()]
+            list_data = [Text().add(x).rjust(width) for x in opening["parrot"].splitlines()]
             keep_borders = True
         if self.xray_offset < 0:
             self.xray_offset = 0
@@ -394,7 +399,7 @@ class Gui:
         
         offset = 0
         
-        if Flags.panel.get_value() == Flags.graph_logs and isinstance(selected, Task):
+        if Flags.panel.get_value() == Flags.panel_logs and isinstance(selected, Task):
             offset = self.xray_offset
             keep_borders = True
         count = -1
@@ -402,7 +407,8 @@ class Gui:
         
         if not keep_borders:
             frame.set_border_none()
-        frame.set_header(Text().addf("/", "Right"), "^", "{", "}")
+
+        frame.set_header(self.gen_right_header(), "^")
         frame.draw()
         if header:
             for y, line in enumerate(header):
@@ -430,11 +436,13 @@ class Gui:
         mid_sy = main_sy - top_dy - bottom_dy # tamanho do meio
         # left_size = 29
 
-        skills_sx = 0
+        right_sx = 0
         if Flags.show_panel.is_true():
-            skills_sx = cols - self.tree.get_total_width() - 1
+            right_sx = cols - self.tree.get_total_width() - 1
+            if right_sx > cols // 2:
+                right_sx = cols // 2
         
-        task_sx = main_sx - skills_sx
+        task_sx = main_sx - right_sx
 
         frame_top = Frame(top_y, 0).set_size(top_dy + 2, cols)
         self.show_top_bar(frame_top)
@@ -447,8 +455,10 @@ class Gui:
         # self.show_graphs(frame_main)
 
         if Flags.show_panel.is_true():
-            frame_right = Frame(mid_y, cols - skills_sx).set_size(mid_sy, skills_sx).set_border_color(border_color)
-            if Flags.panel.get_value() == Flags.graph_skills:
+            frame_right = Frame(mid_y, cols - right_sx).set_size(mid_sy, right_sx).set_border_color(border_color)
+            if Flags.panel.get_value() == Flags.panel_skills:
                 self.show_skills_bar(frame_right)
-            elif Flags.panel.get_value() in [Flags.graph_logs, Flags.graph_task, Flags.graph_none]:
+            elif Flags.panel.get_value() in [Flags.panel_logs, Flags.panel_graph]:
                 self.show_graphs(frame_right)
+            elif Flags.panel.get_value() == Flags.panel_help:
+                self.show_help(frame_right)

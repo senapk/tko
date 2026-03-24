@@ -38,7 +38,7 @@ class TaskTree:
         self.expanded: set[str] = set()
         self.load_all_items()
         self.load_from_rep()
-        self.update_tree(admin_mode = Flags.quests.get_value() == Flags.quest_enable)
+        self.update_tree(admin_mode = Flags.inbox.get_value() == Flags.inbox_all)
         self.MIN_TITLE_LENGTH = 50
         self.cache_max_title: None | int = None
         self.cache_task_times: dict[str, tuple[int, int]] = {}
@@ -285,14 +285,6 @@ class TaskTree:
             output.add(self.format_hours_minutes("g", hours, minutes))
         output.add(q.get_resume_by_percent())
 
-        # all_tasks_done = True
-        # for t in q.get_tasks():
-        #     if not t.is_complete():
-        #         all_tasks_done = False
-        #         break
-        # if all_tasks_done:
-        #     output.add("🌟")
-
         return output
 
     def get_quest_time(self, quest: Quest) -> tuple[int, int]:
@@ -365,7 +357,7 @@ class TaskTree:
         filtered, _ = self.filter_by_search()
         matcher = SearchAsc(self.search_text)
 
-        hide = Flags.quests.get_value() == Flags.quest_hide
+        hide: bool = Flags.inbox.get_value() == Flags.inbox_only
 
         quests = [q for q in self.game.quests.values() if q.get_full_key() in self.game.quests.keys() if q.get_full_key() in filtered]
         if hide:
@@ -507,7 +499,7 @@ class TaskTree:
             self.set_selected_by_index(index)
 
     def is_admin_mode(self) -> bool:
-        return Flags.quests.get_value() == Flags.quest_enable
+        return Flags.inbox.get_value() == Flags.inbox_all
 
     def unfold(self, obj: TreeItem) -> bool:
         if isinstance(obj, Quest) and not obj.is_reachable() and not self.is_admin_mode():

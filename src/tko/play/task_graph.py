@@ -162,7 +162,7 @@ class TaskGraph:
         # title = title.center(self.width)
         header.append(Text().add(first) + title.center(self.width - len(first)))
         
-        if Flags.panel.get_value() == Flags.graph_logs:
+        if Flags.panel.get_value() == Flags.panel_logs:
             header.append(Text().addf("", second) + Text.format(" {C} {M}", " Scroll Up [PageUp] ", " Scroll Down [PgDown] ").center(self.width - len(second)))
             return header, self.raw_text
         
