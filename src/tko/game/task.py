@@ -115,13 +115,6 @@ class Task(TreeItem):
             return self.__workspace_folder
         return self.__origin_folder
     
-    @staticmethod
-    def decode_approach_autonomy(value: int) -> tuple[int, int]:
-        opts = [(0, 0), (1, 1), (1, 2), (2, 2), (3, 2), (1, 3), (2, 3), (3, 3), (4, 3), (3, 4), (4, 4)]
-        autonomy = opts[value][0]
-        skill = opts[value][1]
-        return autonomy, skill
-
     def decode_from_dict(self, value: str):
         value_list = value[1:-1]
         kv_dict: dict[str, str] = {}

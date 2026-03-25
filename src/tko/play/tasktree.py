@@ -345,9 +345,7 @@ class TaskTree:
         return False
 
     def is_hide_tasks(self, task: Task) -> bool:
-        if Flags.tasks.get_value() == "1" and task.get_percent() > 99:
-            return True
-        if Flags.tasks.get_value() == "2" and task.get_percent() > 70:
+        if Flags.inbox.get_value() == Flags.inbox_only and task.task_path == Task.TaskPath.SIDE and not self.is_downloaded_for_lang(task):
             return True
         return False
 
