@@ -40,11 +40,11 @@ class DailyGraph:
     #         output[i] = output[i].replace(".", ":").rjust(5, " ")
     #     return output
 
-    def get_graph(self) -> list[Text]:
+    def get_graph(self) -> tuple[list[Text], list[Text]]:
         # collected: list[float] = []
         # eixo: list[int] = []
         if not self.daily:
-            return []
+            return [], []
 
         daily: list[float] = [x for x in self.daily]
         accumulates: list[float] = [x for x in self.accumulates]
@@ -77,11 +77,12 @@ class DailyGraph:
             result = result.splitlines()
         lines: list[Text] = []
 
-        lines.append(Text().addf("C", " Máximo diário: ").addf("{C}", f"{Delta.format_h_min(max_daily)} ")
-                     .add(" ").addf("M", " Acumulado: ").addf("M", f"{Delta.format_h_min(max_accumulates)} ")
-                     .center(self.width))
-        
         for line in result:
             lines.append(Text.decode_raw(line))
+        
+        header = [(Text().addf("c", " Máximo diário: ").addf("{c}", f"{Delta.format_h_min(max_daily)} ")
+                     .add(" ").addf("m", " Acumulado: ").addf("m", f"{Delta.format_h_min(max_accumulates)} ")
+                     .center(self.width))]
+        
 
-        return lines
+        return header, lines

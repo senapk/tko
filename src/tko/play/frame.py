@@ -202,11 +202,11 @@ class Frame:
 
         header = self.get_full_header()
         footer = self.get_full_footer()
-
         above = Text().addf(color, up_left).add(header).addf(color, up_right)
         below = Text().addf(color, down_left).add(footer).addf(color, down_right)
 
-        Fmt.write(y, x, above)
+        if header.len() and self._border != "none":
+            Fmt.write(y, x, above)
         if dy >= 0:
             Fmt.write(y + dy + 1, x, below)
         if self._filled:

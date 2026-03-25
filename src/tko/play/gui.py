@@ -19,6 +19,7 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.play.task_graph import TaskGraph
 from tko.play.daily_graph import DailyGraph
+from tko.util.visual import Visual
 
 class Gui:
 
@@ -82,11 +83,11 @@ class Gui:
 
     @staticmethod
     def get_admin_color() -> str:
-        if Flags.inbox.get_value() == Flags.inbox_only:
-            return "g"
-        if Flags.inbox.get_value() == Flags.inbox_all:
-            return "y"
-        return "c"
+        # if Flags.inbox.get_value() == Flags.inbox_only:
+        #     return "g"
+        # if Flags.inbox.get_value() == Flags.inbox_all:
+        #     return "y"
+        return ""
 
     @staticmethod
     def center_header_footer(value: Text, frame: Frame) -> Text:
@@ -97,43 +98,14 @@ class Gui:
         full = Text().addf(color, "─" * ((dx//2) - x - 2 - half)).add(value)
         return full
 
-    def get_lr(self, test: bool) -> tuple[str, str]:
-        if test:
-            return symbols.right_arrow_filled.text, symbols.left_arrow_filled.text
-        else:
-            return " ", " "
-
-    def render_button(self, info: str, test: bool):
-        left, right = self.get_lr(test)
-        bg = "X" if test else ""
-        return Text().addf(bg, left).addf(bg, info).addf(bg, right)
-
-    def gen_right_header(self) -> Text:
-        top = Text()
-        if Flags.panel.get_value() == Flags.panel_graph:
-            top.add(Text().add(" Gráficos "))
-        elif Flags.panel.get_value() == Flags.panel_help:
-            top.add(Text().add(" Help "))
-        elif Flags.panel.get_value() == Flags.panel_skills:
-            top.add(Text().add(" Trilhas "))
-        elif Flags.panel.get_value() == Flags.panel_logs:
-            top.add(Text().add(" Logs "))
-        return top
-
     def show_main_bar(self, frame: Frame):
         dy, dx = frame.get_inner()
         top = Text()
 
         if self.search.search_mode:
             top = self.make_search_text(dx - 20)
-        else:
-            if Flags.inbox.get_value() == Flags.inbox_only:
-                top.add(" Inbox ")
-            else:
-                top.add(" Todas as Tarefas ")
+            frame.set_header(top, "^")
         
-        # full = self.center_header_footer(top, frame)
-        frame.set_header(top, "^", prefix="{", suffix= "}")
         # footer            
         text = Text()
         alias_color = "R"
@@ -163,8 +135,6 @@ class Gui:
         dy, dx = frame_xp.get_inner()
         #_ = [q for q in self.game.quests.values() if q.is_reachable()]
         obtained, priority, complete = self.game.get_skills_resume()
-
-        frame_xp.set_header(Text().add(self.gen_right_header()), "^", prefix="{", suffix= "}")
         frame_xp.draw()
 
         elements: list[Text] = []
@@ -289,29 +259,34 @@ class Gui:
 
     def show_top_bar(self, frame: Frame):
         panel_on = Flags.show_panel.is_true()
+        vi = Visual()
         pre = [
-            self.render_button(f"Inbox[{GuiKeys.inbox}]", Flags.inbox.get_value() == Flags.inbox_only),
-            self.render_button(f"Todas[{GuiKeys.all_tasks}]", Flags.inbox.get_value() == Flags.inbox_all)
+            vi.render_button(f"Inbox[{GuiKeys.inbox}]", Flags.inbox.get_value() == Flags.inbox_only),
+            vi.render_button(f"Todas[{GuiKeys.all_tasks}]", Flags.inbox.get_value() == Flags.inbox_all),
+            Text().add(" ")
         ]
         pos = [
-            self.render_button(f"Gráficos[{GuiKeys.panel_graph}]", panel_on and Flags.panel.get_value() == Flags.panel_graph),
-            self.render_button(f"Trilhas[{GuiKeys.panel_skills}]", panel_on and Flags.panel.get_value() == Flags.panel_skills),
-            self.render_button(f"Logs[{GuiKeys.panel_logs}]", panel_on and Flags.panel.get_value() == Flags.panel_logs),
-            self.render_button(f"Ajuda[{GuiKeys.panel_help}]", panel_on and Flags.panel.get_value() == Flags.panel_help),
+            vi.render_button(f"Gráficos[{GuiKeys.panel_graph}]", panel_on and Flags.panel.get_value() == Flags.panel_graph),
+            vi.render_button(f"Logs[{GuiKeys.panel_logs}]", panel_on and Flags.panel.get_value() == Flags.panel_logs),
+            vi.render_button(f"Trilhas[{GuiKeys.panel_skills}]", panel_on and Flags.panel.get_value() == Flags.panel_skills),
+            vi.render_button(f"Ajuda[{GuiKeys.panel_help}]", panel_on and Flags.panel.get_value() == Flags.panel_help),
+        ]
+        last = [
+            vi.render_button("Exec[PageUp]", Flags.task_graph_mode.get_value() == Flags.task_exec_view),
+            vi.render_button("Time[PgDown]", Flags.task_graph_mode.get_value() == Flags.task_time_view),
         ]
         
         limit = frame.get_dx()
-        # size = limit - Text().add("").join(pre + pos).len() - 2
-        # main_label = self.make_xp_button(size).ljust(size, Text.Token(""))
-        # info = Text().add("").join(pre + [main_label] + pos)
-        info = Text().add("").join(pre + pos).center(limit)
+        extra = Text()
+        if Flags.panel.get_value() == Flags.panel_graph:
+            extra = Text().add("").join(last)
+        info = Text().add("").join(pre + pos)
+        info = Text().add(" " * ((limit - len(info)) // 2)).add(info)
+        info += Text().add(" " * (limit - len(info) - len(extra))).add(extra)
+        # info = info.ljust((limit - len(info))//2).add(" " * (limit - len(extra))).add(extra)
         frame.write(0, 1, info)
 
     def show_help(self, frame: Frame):
-        # def empty(value):
-        #     pass
-
-        frame.set_header(self.gen_right_header(), align="^", prefix="{", suffix= "}")
         frame.draw()
         dx = frame.get_dx() - 2
         help_lines: list[Text] = []
@@ -320,13 +295,12 @@ class Gui:
         help_lines.append(Text.format(" Calibrar {r} Para calibrar os direcionais do teclado", GuiKeys.calibrate))
 
         help_lines.append(Text().addf("g", " Símbolos ").center(dx, Text.Token("-")))
-        help_lines.append(Text.format("{g} Tarefa sugeridas, {w} Tarefa opcional", symbols.star_filled, symbols.star_open))
-        help_lines.append(Text.format("{y} Tarefa de estudo com consulta permitida", symbols.task_repeat))
-        help_lines.append(Text.format("{r} Tarefa de avaliação que precisa ser feita sem consulta", symbols.task_denied))
-        help_lines.append(Text.format("{g} {g} {g} Autoavaliação feita, {w} {w} {w} Sem Autoavaliação", 
+        help_lines.append(Text.format("{g}   Tarefa sugeridas        , {w} Tarefa opcional", symbols.star_filled, symbols.star_open))
+        help_lines.append(Text.format("{y}   Pode consultar e refazer, {r} Fazer sozinho sem consulta", symbols.task_repeat, symbols.task_denied))
+        help_lines.append(Text.format("{g}{g}{g} Fez Autoavaliação       , {w}{w}{w} Sem Autoavaliação", 
                                       symbols.circle_filled, symbols.square_filled, symbols.task_human_filled,
                                       symbols.circle_open, symbols.square_filled, symbols.task_human_open))
-        help_lines.append(Text.format("{g} Nota por testes, {w} Nota manual por critério, {w} Checkbox apenas", 
+        help_lines.append(Text.format("{w} Nota por testes, {w} Nota manual por critério, {w} Checkbox", 
                                       symbols.circle_open, symbols.task_human_open, symbols.square_open))
         
         help_lines.append(Text.format("{g}", " Navegação ").center(dx, Text.Token("-")))
@@ -346,8 +320,7 @@ class Gui:
         help_lines.append(Text.format("Avaliação {r} Abre tela para auto avaliação", GuiKeys.self_evaluate))
 
         help_lines.append(Text.format("{g}", " Editor padrão ").center(dx, Text.Token("-")))
-        help_lines.append(Text().add(" O comando de edição padrão abre pastas e arquivos no vscode"))
-        help_lines.append(Text().add(" Se quiser mudar o editor, basta definir o novo comando padrão"))
+        help_lines.append(Text().add(" Para mudar o editor padrão para abrir arquivos use o comando"))
         help_lines.append(Text().addf("y", "tko config set --editor <comando>").center(dx))
 
         for i, line in enumerate(help_lines):
@@ -362,27 +335,22 @@ class Gui:
         #     frame.write(y, x, Text().addf("g", line))
         return True, header, graph
 
-    def get_daily_graph(self, width: int, height: int) -> tuple[bool, list[Text]]:
-        graph = DailyGraph(self.rep.logger, width, height).get_graph()
+    def get_daily_graph(self, width: int, height: int) -> tuple[bool, list[Text], list[Text]]:
+        header, graph = DailyGraph(self.rep.logger, width, height).get_graph()
         if len(graph) == 0:
-            return False, []
+            return False, [], []
         # for y, line in enumerate(graph):
         #     frame.write(y, x, Text().addf("g", line))
-        return True, graph
+        return True, header, graph
 
 
     def show_graphs(self, frame: Frame):
-        
         try:
             selected = self.tree.get_selected_throw()
         except IndexError:
             selected = None
 
         lines, cols = frame.get_inner()
-        
-        # now: datetime.datetime = datetime.datetime.now()
-        # parrot = random_get(opening, str(now.hour))
-        keep_borders = False
         made = False
         list_data: list[Text] = []
         width = cols - 2
@@ -390,16 +358,16 @@ class Gui:
             width = 5
         header: list[Text] = []
         if Flags.panel.get_value() in (Flags.panel_graph, Flags.panel_logs):
-            height = lines - 4
+            height = lines - 2
             if height < 3:
                 height = 3
             if isinstance(selected, Task):
                 made, header, list_data = self.get_task_graph(selected.get_full_key(), width, height)
-            elif isinstance(selected, Quest):
-                made, list_data = self.get_daily_graph(width, height)
+            elif isinstance(selected, Quest) and Flags.panel.get_value() == Flags.panel_graph:
+                made, header, list_data = self.get_daily_graph(width, height)
         if not made:
             list_data = [Text().add(x).rjust(width) for x in opening["parrot"].splitlines()]
-            keep_borders = True
+            # keep_borders = True
         if self.xray_offset < 0:
             self.xray_offset = 0
         if self.xray_offset >= len(list_data):
@@ -409,25 +377,46 @@ class Gui:
         
         if Flags.panel.get_value() == Flags.panel_logs and isinstance(selected, Task):
             offset = self.xray_offset
-            keep_borders = True
-        count = -1
+            # keep_borders = True
         line_count = 0
         
-        if not keep_borders:
+        dy, _ = frame.get_inner()
+        if Flags.panel.get_value() == Flags.panel_graph:
             frame.set_border_none()
+        # else:
+        #     frame.set_header(self.gen_right_header(), "^", prefix="{", suffix= "}")
 
-        frame.set_header(self.gen_right_header(), "^", prefix="{", suffix= "}")
+        if Flags.panel.get_value() == Flags.panel_logs:
+            if header:
+                frame.set_header(Text().add(" Scroll Up[PageUp]  ScrollDown[PgDown] "), "^")
+                frame.set_footer(Text().add(" ").add(header[0]), "^")
+
+            count = -1
+            line_count = 0
+            for line in list_data:
+                count += 1
+                if count < offset:
+                    continue
+                if line_count > dy - 1:
+                    break
+                frame.write(line_count, 0, line)
+                line_count += 1
+
+        else:
+            if header:
+                frame.set_footer(Text().add(" ").add(header[0]), "^")
+            count = -1
+            line_count = 0
+            for line in list_data:
+                count += 1
+                if count < offset:
+                    continue
+                frame.write(line_count, 0, line)
+                line_count += 1
+ 
         frame.draw()
-        if header:
-            for y, line in enumerate(header):
-                frame.write(y, 0, line)
-            line_count = len(header)
-        for line in list_data:
-            count += 1
-            if count < offset:
-                continue
-            frame.write(line_count, 0, line)
-            line_count += 1
+
+
 
     def show_items(self):
         border_color = self.get_admin_color()
@@ -455,18 +444,23 @@ class Gui:
         frame_top = Frame(top_y, 0).set_size(top_dy + 2, cols)
         self.show_top_bar(frame_top)
 
-        # frame_bottom = Frame(lines - bottom_dy - 1, -1).set_size(bottom_dy + 2, cols + 2)
-        self.show_bottom_bar()
-        # if task_sx > 5: 
-        frame_main = Frame(mid_y, 0).set_size(mid_sy, task_sx).set_border_color(border_color)
-        self.show_main_bar(frame_main)
-        # self.show_graphs(frame_main)
+        def create_frame(delta: int = 0):
+            return Frame(mid_y - delta, cols - right_sx - delta).set_size(mid_sy + delta, right_sx + 2 * delta)
 
         if Flags.show_panel.is_true():
-            frame_right = Frame(mid_y, cols - right_sx).set_size(mid_sy, right_sx).set_border_color(border_color)
             if Flags.panel.get_value() == Flags.panel_skills:
+                frame_right = create_frame(0)
                 self.show_skills_bar(frame_right)
-            elif Flags.panel.get_value() in [Flags.panel_logs, Flags.panel_graph]:
+            elif Flags.panel.get_value() == Flags.panel_graph:
+                frame_right = create_frame(1)
+                self.show_graphs(frame_right)
+            elif Flags.panel.get_value() == Flags.panel_logs:
+                frame_right = create_frame(0)
                 self.show_graphs(frame_right)
             elif Flags.panel.get_value() == Flags.panel_help:
+                frame_right = create_frame(0)
                 self.show_help(frame_right)
+        # precisam ser desenhados após o panel do graphs
+        frame_main = Frame(mid_y, 0).set_size(mid_sy, task_sx).set_border_color(border_color)
+        self.show_main_bar(frame_main)
+        self.show_bottom_bar()

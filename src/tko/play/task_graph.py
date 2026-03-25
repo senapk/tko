@@ -5,7 +5,7 @@ from tko.util.text import Text
 from tko.logger.log_sort import LogSort
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_base import LogItemBase
-from tko.util.miniwi import Miniwi
+
 from tko.logger.delta import Delta
 from tko.play.flags import Flags
 
@@ -145,33 +145,24 @@ class TaskGraph:
         if not self.eixo:
             return [], []
         
-        _ = Miniwi.render_dotted(self.task_key)
-        first, second = "", ""
-        
         # title = Text.format(" {C}", f" {self.task_key} ")
         title = Text()
-        title += Text.format(" {G}", f" Total {self.actual_rate:.0f}% ")
+        title += Text.format("{g}", f"Total {self.actual_rate:.0f}% ")
         time_h: int = int(self.total_elapsed) // 60
         time_m: int = (int(self.total_elapsed) % 60)
         time = f"{time_h:02.0f}h {time_m:.0f}min" if time_h > 0 else f"{time_m:.0f}min"
-        title += Text.format(" {B}", f" Tempo {time} ")
-        title += Text.format(" {M}", f" Linhas {self.max_lines:.0f} ")
-        title += Text.format(" {R}", f" Versões {self.versions} ")
+        title += Text.format("{b}", f"Tempo {time} ")
+        title += Text.format("{m}", f"Linhas {self.max_lines:.0f} ")
+        title += Text.format("{r}", f"Versões {self.versions} ")
 
         header: list[Text] = []
         # title = title.center(self.width)
-        header.append(Text().add(first) + title.center(self.width - len(first)))
         
-        if Flags.panel.get_value() == Flags.panel_logs:
-            header.append(Text().addf("", second) + Text.format(" {C} {M}", " Scroll Up [PageUp] ", " Scroll Down [PgDown] ").center(self.width - len(second)))
+        if Flags.panel.get_value() == Flags.panel_graph:
+            header.append(Text().add(title))
+            return header, self.get_graph()
+        else:
+            header.append(title)
             return header, self.raw_text
         
-        if Flags.task_graph_mode.get_value() == Flags.task_time_view:
-            exec_color = "Y"
-            time_color = "G"
-        else:
-            exec_color = "G"
-            time_color = "Y"
-        header.append(Text().addf("", second) + Text.format(f" {{{exec_color}}} {{{time_color}}}", " ExecGraph [PageUp] ",  " TimeGraph [PageDown] ").center(self.width - len(second)))
-        return header, self.get_graph()
         

@@ -13,6 +13,7 @@ class Search:
         self.search_mode: bool = False
         self.backup_expanded: list[str] = []
         self.backup_index_selected: str = ""
+        self.backup_inbox_op = ""
         self.settings = tree.settings
 
     def toggle_search(self):
@@ -22,7 +23,8 @@ class Search:
             Flags.tasks.set_value("0")
             self.tree.update_tree(admin_mode=True)
             self.tree.process_expand_all()
-            self.tree.process_expand_all()
+            self.backup_inbox_op = Flags.inbox.get_value()
+            Flags.inbox.set_value(Flags.inbox_all)
         self.search_mode = not self.search_mode
             
     def finish_search(self):
@@ -34,16 +36,21 @@ class Search:
         self.tree.search_text = ""
         selected_key = self.tree.selected_item
         item = self.tree.all_items[selected_key]
-        reachable = True
-        if isinstance(item, Task):
-            reachable = self.game.quests[item.quest_key].is_reachable()
-        elif isinstance(item, Quest):
-            reachable = item.is_reachable()
-        if not reachable:
-            Flags.inbox.set_value(Flags.inbox_all)
-        self.tree.update_tree(Flags.inbox.get_value() == Flags.inbox_all) # usa o mode de antes e vê se acha
+        if self.backup_inbox_op == Flags.inbox_only:
+            self.tree.update_tree(admin_mode=False)
+            reachable = True
+            if isinstance(item, Task):
+                reachable = self.game.quests[item.quest_key].is_reachable()
+            elif isinstance(item, Quest):
+                reachable = item.is_reachable()
+            if not reachable:
+                Flags.inbox.set_value(Flags.inbox_all)
+            else:
+                Flags.inbox.set_value(Flags.inbox_only)
+
+        self.tree.update_tree(Flags.inbox.get_value() == Flags.inbox_all)
         self.tree.reload_sentences()
-        
+        self.tree.selected_item = selected_key
         self.tree.expanded = set()
         unit = self.tree.all_items[selected_key]
 

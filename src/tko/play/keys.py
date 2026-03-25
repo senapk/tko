@@ -29,8 +29,8 @@ class GuiKeys:
     all_tasks = "2"
     
     panel_graph = "3"
-    panel_skills = "4"
-    panel_logs = "5"
+    panel_logs = "4"
+    panel_skills = "5"
     panel_help = "6"
 
     show_duration = "T"
