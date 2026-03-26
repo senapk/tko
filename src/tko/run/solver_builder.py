@@ -131,7 +131,7 @@ class SolverBuilder:
             self.__prepare_yaml()
         elif first.suffix == ".ts":
             self.__prepare_ts()
-        elif first.suffix[1:] in self.settings.languages.get_languages().keys():
+        elif first.suffix[1:] in self.settings.get_languages_settings().get_languages().keys():
             self.prepare_exec_with_lang()
         else:
             self.__exec.set_executable([str(x) for x in self.args_list], [], Path(""), shell_mode=True)
@@ -172,7 +172,7 @@ class SolverBuilder:
         return text
 
     def prepare_exec_with_lang(self):
-        lang = self.settings.languages.get_languages().get(self.args_list[0].suffix[1:], None)
+        lang = self.settings.get_languages_settings().get_languages().get(self.args_list[0].suffix[1:], None)
         if lang is None:
             self.__exec.set_compile_error(Text.format("{r}: Extensão de arquivo '" + self.args_list[0].suffix + "' não reconhecida e sem configuração de linguagem", "Falha"))
             return

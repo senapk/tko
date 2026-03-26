@@ -5,7 +5,6 @@ from tko.game.task import Task
 from icecream import ic # type: ignore
 from tko.play.floating_grade import FloatingGrade
 from tko.play.floating_input_text import FloatingInputText
-from tko.settings.settings import Settings
 from tko.play.tracker import Tracker
 from tko.util.text import Text
 from tko.cmds.cmd_down import CmdDown
@@ -23,7 +22,7 @@ from tko.play.opener import Opener
 
 from tko.play.tasktree import TaskAction
 from typing import Callable
-
+from tko.play.flags import Flags
 from tko.down.drafts import Drafts
 import os
 
@@ -39,8 +38,8 @@ from pathlib import Path
 class PlayActions:
 
     def __init__(self, gui: Gui):
-        self.app = Settings().app
-        self.settings = Settings()
+        self.app = gui.app
+        self.settings = gui.settings
         self.fman = gui.fman
         self.rep = gui.rep
         self.tree = gui.tree
@@ -54,7 +53,7 @@ class PlayActions:
             outfile = tempfile.NamedTemporaryFile(delete=False)
             subprocess.Popen("python3 -m webbrowser -t {}".format(link), stdout=outfile, stderr=outfile, shell=True)
         else:
-            Opener(Settings()).open_files([link])
+            Opener(self.settings).open_files([link])
 
     @staticmethod
     def get_task_folder(task: Task) -> Path:
@@ -93,6 +92,8 @@ class PlayActions:
                     .set_error()
                 )
             if obj.get_remote_name() == RepSource.STUDENT_SANDBOX_NAME:
+                self.tree.move_down()
+            if obj.task_path == Task.TaskPath.SIDE and Flags.inbox.get_value() == Flags.inbox_only:
                 self.tree.move_down()
             self.rep.load_game(try_update=False, silent=True)
 

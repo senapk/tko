@@ -12,10 +12,11 @@ from tko.down.drafts import Drafts
 class LanguageSetter:
 
     @staticmethod
-    def check_lang_in_text_mode(repo: Repository):
+    def check_lang_in_text_mode(settings: Settings, repo: Repository):
         lang = repo.data.lang
+        drafts = Drafts(settings.get_languages_settings())
         if lang == "":
-            options = Drafts().get_languages_with_drafts()
+            options = drafts.get_languages_with_drafts()
             print("\nLinguagem padrão ainda não foi definida.\n")
             while True:
                 print("Escolha entre as opções a seguir ", end="")
@@ -34,7 +35,8 @@ class LanguageSetter:
 
     def set_language(self):
         options: list[FloatingInputData] = []
-        for lang in Drafts().get_languages_with_drafts():
+        drafts = Drafts(self.settings.get_languages_settings())
+        for lang in drafts.get_languages_with_drafts():
             options.append(FloatingInputData(TextFunctor(lang), SetLangFunctor(self.settings, self.rep, self.fman, lang)))
 
         self.fman.add_input(
@@ -46,7 +48,7 @@ class LanguageSetter:
                 .set_text_ljust()
             )
             .set_options(options)
-            .set_default_index(Drafts().get_languages_with_drafts().index(self.rep.data.get_lang()))
+            .set_default_index(drafts.get_languages_with_drafts().index(self.rep.data.get_lang()))
         )
 
 class TextFunctor:

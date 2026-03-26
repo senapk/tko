@@ -17,15 +17,19 @@ class Border:
         return Text().add(self.sharp_l(color)).addf(color, data).add(self.sharp_r(color))
 
     def round_l(self, color: str) -> Text.Token:
+        color = color if color != "X" else ""
         return Text.Token("", color.lower()) if self.has_borders() else Text.Token(" ", color)
 
     def round_r(self, color: str) -> Text.Token:
+        color = color if color != "X" else ""
         return Text.Token("", color.lower()) if self.has_borders() else Text.Token(" ", color)
 
     def sharp_l(self, color: str) -> Text.Token:
+        color = color if color != "X" else ""
         return Text.Token("", color.lower()) if self.has_borders() else Text.Token(" ", color)
 
     def sharp_r(self, color: str):
+        color = color if color != "X" else ""
         return Text.Token("", color.lower()) if self.has_borders() else Text.Token(" ", color)
 
     def build_bar(self, text: str, percent: float, length: int, fmt_true: str = "/kC",

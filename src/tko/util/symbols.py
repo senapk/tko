@@ -52,7 +52,6 @@ class __Symbols:
         self.task_edit = Text.Token("✎")
         self.task_view = Text.Token("↗")
 
-
         self.cfill = Text.Token("_")
         self.tab = Text.Token("    ")
         self.arrow_up = Text.Token("↑")

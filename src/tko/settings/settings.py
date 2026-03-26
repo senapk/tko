@@ -1,12 +1,11 @@
 from __future__ import annotations
-import os
 from typing import Any
 from tko.settings.app_settings import AppSettings
 from platformdirs import user_data_dir
 from pathlib import Path
 import yaml #type: ignore
 
-from tko.settings.user_languages import UserLanguages
+from tko.settings.languages_settings import LanguagesSettings
 from tko.util.text import Text
 from tko.play.colors import Colors
 from tko.util.decoder import Decoder
@@ -23,6 +22,7 @@ def singleton(class_): # type: ignore
 @singleton
 class Settings:
     CFG_FILE = "settings.yaml"
+    LANG_FILE = "languages.toml"
     class Defaults:
         alias_git = {
             "poo": "https://github.com/qxcodepoo/arcade.git",
@@ -30,7 +30,8 @@ class Settings:
             "ed": "https://github.com/qxcodeed/arcade.git"
         }
 
-    def __init__(self):
+    # use path_dir None to use default path for tko settings, or set a custom path for the settings file
+    def __init__(self, path_dir: Path | None):
         self.__gitrepos = "gitrepos"
         self.__appcfg = "appcfg"
         self.__colors = "colors"
@@ -38,28 +39,35 @@ class Settings:
         self.package_name = 'tko'
         self.dict_alias_git: dict[str, str] = {}
         self.app = AppSettings()
-        self.languages: UserLanguages = UserLanguages(Path("")).set_default_path().load_file_settings()
+        self.__languages_settings: LanguagesSettings | None = None
         self.colors = Colors()
 
-        self.settings_file: str = ""
+        self.settings_dir: Path | None = path_dir
         self.data: dict[str, Any] = {}
 
-    def set_settings_file(self, path: str):
-        self.settings_file = path
-        return self
+    def get_languages_settings(self) -> LanguagesSettings:
+        if self.__languages_settings is None:
+            self.__languages_settings = LanguagesSettings(self.get_languages_file()).load_file_settings()
+        return self.__languages_settings
+    
+    def get_languages_file(self) -> Path:
+        return self.get_settings_dir() / self.LANG_FILE
 
-    def get_settings_file(self) -> str:
-        if self.settings_file == "":
-            self.settings_file = os.path.join(user_data_dir(self.package_name), self.CFG_FILE) # type: ignore
-        if not os.path.exists(self.settings_file):
-            os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
-        return self.settings_file
+    def get_settings_file(self) -> Path:
+        return self.get_settings_dir() / self.CFG_FILE
+
+    def get_settings_dir(self) -> Path:
+        if self.settings_dir is None:
+            self.settings_dir = Path(user_data_dir(self.package_name))
+        if not self.settings_dir.exists():
+            self.settings_dir.mkdir(parents=True, exist_ok=True)
+        return self.settings_dir
 
     def reset(self):
         self.dict_alias_git = self.Defaults.alias_git.copy()
         self.app = AppSettings()
         self.colors = Colors()
-        self.languages.reset().save_file_settings()
+        self.__languages_settings = LanguagesSettings(self.get_languages_file()).reset().save_file_settings()
 
         return self
 
@@ -79,8 +87,6 @@ class Settings:
     def load_settings(self):
         try:
             settings_file = self.get_settings_file()
-
-
             content = Decoder.load(settings_file)
 
             lines = content.splitlines()
@@ -95,7 +101,7 @@ class Settings:
                 self.dict_alias_git = self.Defaults.alias_git.copy()
             self.app = AppSettings().from_dict(data.get(self.__appcfg, AppSettings())) # type: ignore
             self.colors = Colors().from_dict(data.get(self.__colors, Colors())) # type: ignore
-            self.languages.load_file_settings()
+            self.__languages_settings = LanguagesSettings(self.get_languages_file()).load_file_settings()
         except:
             self.reset()
             self.save_settings()
@@ -110,14 +116,14 @@ class Settings:
         }
         with open(file, "w", encoding="utf-8") as f:
             yaml.dump(value, f)
-        self.languages.save_file_settings()
+        self.get_languages_settings().save_file_settings()
         return self
 
     def __str__(self):
         output: list[str] = []
         output.append(str(Text.format("{g}", "Arquivo global configuração:")))
-        output.append("- " + self.get_settings_file())
-        output.append("- " + self.languages.path.as_posix())
+        output.append("- " + str(self.get_settings_file()))
+        output.append("- " + str(self.get_languages_file()))
         output.append("")
         output.append(str(Text.format("{g}", "Fontes de tarefas remotas cadastradas:")))
         max_alias = max([len(key) for key in self.dict_alias_git])

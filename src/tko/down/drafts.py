@@ -1,9 +1,11 @@
 import os
 from pathlib import Path
-from tko.settings.user_languages import UserLanguages
-
+from tko.settings.languages_settings import LanguagesSettings
 class Drafts:
     sandbox_key_prefix = "user"
+
+    def __init__(self, user_languages: LanguagesSettings):
+        self.user_languages = user_languages
 
     draft_readme: str = r"""Escreva aqui as informações que você quer salvar, esse é o seu rascunho.
 O texto abaixo é informativo e você pode apagar depois de aprender como usar os rascunhos.
@@ -69,7 +71,7 @@ Se a tarefa exigir um relatório, escreva ele aqui. Você pode usar markdown, im
 
     def get_languages_with_drafts(self) -> list[str]:
         keys = list(Drafts.drafts.keys())
-        lang_register = UserLanguages(Path("")).set_default_path().load_file_settings().get_languages()
+        lang_register = self.user_languages.get_languages()
         for lang in lang_register.keys():
             if lang not in keys:
                 keys.append(lang)

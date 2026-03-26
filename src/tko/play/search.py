@@ -20,7 +20,6 @@ class Search:
         if not self.search_mode:
             self.backup_expanded = [v for v in self.tree.expanded]
             self.backup_index_selected = self.tree.selected_item
-            Flags.tasks.set_value("0")
             self.tree.update_tree(admin_mode=True)
             self.tree.process_expand_all()
             self.backup_inbox_op = Flags.inbox.get_value()

@@ -96,8 +96,8 @@ class FloatingDropDown(FloatingABC):
                     text.add(f" [{option.shortcut}]")
             else:
                 text.add("    ")
-            fmt = "M" if i == self.index else ""
-            text.set_background(fmt)
+            if i == self.index:
+                text.set_background("X").set_foreground("")
             content.append(text)
         
 

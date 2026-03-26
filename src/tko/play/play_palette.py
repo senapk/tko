@@ -29,14 +29,6 @@ class PlayPalette:
             ).set_exit_on_action(True)
         )
 
-        options.append(
-            FloatingInputData(
-                lambda: Text.format(" {} Tarefa: Abrir {y} com a descrição", symbols.action, "URL"),
-                self.actions.open_link,
-                GuiKeys.open_url
-            ).set_exit_on_action(True)
-        )
-
         # self evaluate
         options.append(
             FloatingInputData(

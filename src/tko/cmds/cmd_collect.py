@@ -35,9 +35,9 @@ class CmdCollect:
     @staticmethod
     def daily_graph(rep: Repository, width: int, height: int, colored: bool) -> str:
         dg = DailyGraph(rep.logger, width, height)
-        image = dg.get_graph()
+        header, image = dg.get_graph()
         if not colored:
-            return "\n".join([x.get_str() for x in image])
+            return "\n".join([x.get_str() for x in header + image])
         return "\n".join([str(x) for x in image])
 
     @staticmethod
@@ -92,18 +92,10 @@ class CmdCollect:
         print(f"Repositório cache atualizado.")
 
     @staticmethod
-    def list(_args: argparse.Namespace):
-        settings = Settings()
-        print(f"SettingsFile\n- {settings.settings_file}")
+    def list(args: argparse.Namespace):
+        settings = Settings(args.globaldir)
+        print(f"SettingsFile\n- {settings.settings_dir}")
         print(str(settings))
-
-
-    @staticmethod
-    def reset(args: argparse.Namespace):
-        _ = args
-        sp = Settings().reset()
-        print(sp.settings_file)
-        sp.save_settings()
 
     # @staticmethod
     # def graph(args):

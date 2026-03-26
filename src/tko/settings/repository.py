@@ -27,11 +27,12 @@ def remove_git_merge_tags(lines: list[str]) -> list[str]:
 class Repository:
     cache_time_for_remote_source = 3600 # seconds
 
-    def __init__(self, folder: Path, force_update: bool = False):
+    def __init__(self, folder: Path, force_update: bool = False, recursive_search: bool = True):
         rep_folder: Path = folder
-        recursive_folder = RepPaths.rec_search_for_repo_parents(folder)
-        if recursive_folder is not None:
-            rep_folder = recursive_folder
+        if recursive_search:
+            recursive_folder = RepPaths.rec_search_for_repo_parents(folder)
+            if recursive_folder is not None:
+                rep_folder = recursive_folder
         self.paths = RepPaths(rep_folder)
         self.data: RepData = RepData()
         self.game = Game()

@@ -142,6 +142,12 @@ class Text:
             lower_only = "".join([c for c in d.fmt if c.islower()])
             d.fmt = fmt + lower_only
         return self
+    
+    def set_foreground(self, fmt: str):
+        for d in self.data:
+            upper_only = "".join([c for c in d.fmt if c.isupper()])
+            d.fmt = upper_only + fmt
+        return self
 
     def clone(self):
         other = Text()

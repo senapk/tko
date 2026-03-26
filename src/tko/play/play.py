@@ -19,17 +19,17 @@ from tko.play.flag_functors import FlagFunctor
 import curses
 
 class Play:
-    def __init__(self, settings: Settings, rep: Repository):
+    def __init__(self, settings: Settings, repo: Repository):
         self.settings = settings
         self.app = settings.app
-        self.rep = rep
-        self.game: Game = rep.game
+        self.repo = repo
+        self.game: Game = repo.game
         self.exit = False
 
-        self.flagsman = FlagsMan(self.rep.data.flags)
+        self.flagsman = FlagsMan(self.repo.data.flags)
         self.fman = FloatingManager()
-        self.tree = TaskTree(self.settings, rep, self.fman)
-        self.gui = Gui(tree=self.tree, flagsman=self.flagsman, fman=self.fman)
+        self.tree = TaskTree(self.settings, repo, self.fman)
+        self.gui = Gui(settings=self.settings, tree=self.tree, flagsman=self.flagsman, fman=self.fman)
         self.actions = PlayActions(self.gui)
         self.play_palette = PlayPalette(self.actions)
         # self.fman.add_input( Floating().set_content(opening['yoda'].splitlines()).set_warning() )
@@ -39,9 +39,9 @@ class Play:
 
     def save_to_json(self):
         self.tree.save_on_rep()
-        self.rep.data.flags = self.flagsman.get_data()
+        self.repo.data.flags = self.flagsman.get_data()
         self.settings.save_settings()
-        self.rep.save_config()
+        self.repo.save_config()
 
     def send_quit_msg(self):
         def set_exit():
@@ -195,7 +195,7 @@ class Play:
             self.save_to_json()
             
     def play(self):
-        LanguageSetter.check_lang_in_text_mode(self.rep)
+        LanguageSetter.check_lang_in_text_mode(self.settings, self.repo)
 
         while True:
             output = curses.wrapper(self.main)

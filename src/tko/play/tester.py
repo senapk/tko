@@ -139,11 +139,11 @@ class Tester:
         elif result == ExecutionResult.WRONG_OUTPUT:
             return Text.Token(ExecutionResult.get_symbol(ExecutionResult.WRONG_OUTPUT).text, "R")
         elif result == ExecutionResult.COMPILATION_ERROR:
-            return Text.Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "W")
+            return Text.Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "X")
         elif result == ExecutionResult.EXECUTION_ERROR:
             return Text.Token(ExecutionResult.get_symbol(ExecutionResult.EXECUTION_ERROR).text, "Y")
         else:
-            return Text.Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "W")
+            return Text.Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "X")
 
     def store_version(self, result: str) -> tuple[bool, int]:
         if self.rep is None:
@@ -232,7 +232,7 @@ class Tester:
 
     def build_top_line_header(self, frame_dx : int) -> Text:
         activity_color = "C"
-        solver_color = "W"
+        solver_color = "X"
         sources_color = "Y"
         running_color = "R"
 

@@ -20,10 +20,11 @@ from tko.game.task import Task
 from tko.play.task_graph import TaskGraph
 from tko.play.daily_graph import DailyGraph
 from tko.util.visual import Visual
+from tko.settings.settings import Settings
 
 class Gui:
 
-    def __init__(self, tree: TaskTree, flagsman: FlagsMan, fman: FloatingManager):
+    def __init__(self, settings: Settings, tree: TaskTree, flagsman: FlagsMan, fman: FloatingManager):
         self.rep = tree.rep
         self.game = tree.game
         self.tree = tree
@@ -37,30 +38,11 @@ class Gui:
         self.need_update = False
         self.xray_offset = 0
 
-        self.app = Settings().app
+        self.app = self.settings.app
 
     def set_need_update(self):
         self.need_update = True
 
-    def get_help_fixed(self):
-        color = "W"
-        try:
-            selected = self.tree.get_selected_throw()
-            if isinstance(selected, Task):
-                color = "G"
-        except IndexError:
-            pass
-        act_color, act_text = self.get_activate_label()
-        help_fixed: list[Text] = [
-            Text().addf('R', f"Sair [esc] "),
-            Text().addf("C", f"Criar Rascunho [{GuiKeys.create_draft}]"),
-            Text().addf("C", f"{GuiActions.pallete} [{GuiKeys.palette}]"),
-            Text().addf("C", f"{GuiActions.calibrate} [{GuiKeys.calibrate}]"),
-            Text().addf("G", f"{GuiActions.search} [{GuiKeys.search}]"),
-            Text().addf(act_color, f"{act_text} [↲]"),
-            Text().addf(color, f"{GuiActions.grade} [{GuiKeys.self_evaluate}]"),
-        ]
-        return help_fixed
 
     def get_activate_label(self) -> tuple[str, str]:
         try:
@@ -98,30 +80,23 @@ class Gui:
         full = Text().addf(color, "─" * ((dx//2) - x - 2 - half)).add(value)
         return full
 
-    def show_main_bar(self, frame: Frame):
+    def show_left_panel(self, frame: Frame):
         dy, dx = frame.get_inner()
         top = Text()
 
         if self.search.search_mode:
             top = self.make_search_text(dx - 20)
-            frame.set_header(top, "^")
+        else:
+            top = Text.format(" {} ", self.rep.data.lang.upper())
+        frame.set_header(top, "<", prefix="{", suffix="}")
         
-        # footer            
-        text = Text()
-        alias_color = "R"
         dirname: Path = self.rep.paths.get_workspace_dir()
         dirname_str = dirname.name.upper()
-        text.add(self.style.border(alias_color, dirname_str))
-        text.add(self.style.border("G", self.rep.data.lang.upper()))
+        
+        text = Text.format(" {} ", dirname_str)
         if self.need_update:
             text = Text().addf("r", " TKO DESATUALIZADO!").addf("y"," Atualize com: ").addf("g", "pipx upgrade tko ")
-        # text = self.center_header_footer(text, frame)
-        frame.set_footer(text, "^")
-        
-        # if Flags.flags:
-        #     value = self.make_flags_bar()
-        #     full = self.center_header_footer(value, frame)
-        #     frame.set_footer(full, "<")
+        frame.set_footer(text, "<", prefix="{", suffix="}")
         frame.draw()
 
         values = self.tree.get_senteces(dy)
@@ -197,21 +172,31 @@ class Gui:
             out.append(Text().add(left).add(middle).add(right))
         return out
 
-    def build_bottom_array(self):
-        array: list[Text] = []
-        array += self.get_help_fixed()
-        return self.build_list_sentence(array)
-
     def show_bottom_bar(self):
         lines, cols = Fmt.get_size()
-        elems = self.build_bottom_array()
-        line_main = Text().add(" ").join(elems) # alignment adjust
+        self_color = "X"
+        try:
+            selected = self.tree.get_selected_throw()
+            if isinstance(selected, Task):
+                self_color = "G"
+        except IndexError:
+            pass
+        act_color, act_text = self.get_activate_label()
+        help_fixed: list[Text] = [
+            Text().addf('R', f" Sair [esc] "),
+            Text().addf("C", f" Criar Rascunho [{GuiKeys.create_draft}] "),
+            Text().addf("C", f" {GuiActions.pallete} [{GuiKeys.palette}] "),
+            Text().addf("G", f" {GuiActions.search} [{GuiKeys.search}] "),
+            Text().addf(act_color, f" {act_text} [↲] "),
+            Text().addf(self_color, f" {GuiActions.grade} [{GuiKeys.self_evaluate}] "),
+        ]
+        line_main = Text().add(" ").join(help_fixed) # alignment adjust
         Fmt.write(lines - 1, 0, line_main.center(cols))
 
     def make_search_text(self, size: int):
         text = " Busca: " + self.tree.search_text + symbols.cursor.text
         text = text.ljust(size)
-        return Text().addf("X", text)
+        return Text().add(text)
     
     def make_xp_button(self, size: int):
         # if self.search.search_mode:
@@ -280,6 +265,7 @@ class Gui:
         extra = Text()
         if Flags.panel.get_value() == Flags.panel_graph:
             extra = Text().add("").join(last)
+
         info = Text().add("").join(pre + pos)
         info = Text().add(" " * ((limit - len(info)) // 2)).add(info)
         info += Text().add(" " * (limit - len(info) - len(extra))).add(extra)
@@ -343,7 +329,6 @@ class Gui:
         #     frame.write(y, x, Text().addf("g", line))
         return True, header, graph
 
-
     def show_graphs(self, frame: Frame):
         try:
             selected = self.tree.get_selected_throw()
@@ -381,11 +366,6 @@ class Gui:
         line_count = 0
         
         dy, _ = frame.get_inner()
-        if Flags.panel.get_value() == Flags.panel_graph:
-            frame.set_border_none()
-        # else:
-        #     frame.set_header(self.gen_right_header(), "^", prefix="{", suffix= "}")
-
         if Flags.panel.get_value() == Flags.panel_logs:
             if header:
                 frame.set_header(Text().add(" Scroll Up[PageUp]  ScrollDown[PgDown] "), "^")
@@ -416,8 +396,6 @@ class Gui:
  
         frame.draw()
 
-
-
     def show_items(self):
         border_color = self.get_admin_color()
         Fmt.clear()
@@ -444,23 +422,17 @@ class Gui:
         frame_top = Frame(top_y, 0).set_size(top_dy + 2, cols)
         self.show_top_bar(frame_top)
 
-        def create_frame(delta: int = 0):
-            return Frame(mid_y - delta, cols - right_sx - delta).set_size(mid_sy + delta, right_sx + 2 * delta)
-
         if Flags.show_panel.is_true():
+            frame_right =  Frame(mid_y, cols - right_sx).set_size(mid_sy, right_sx)
             if Flags.panel.get_value() == Flags.panel_skills:
-                frame_right = create_frame(0)
                 self.show_skills_bar(frame_right)
             elif Flags.panel.get_value() == Flags.panel_graph:
-                frame_right = create_frame(1)
                 self.show_graphs(frame_right)
             elif Flags.panel.get_value() == Flags.panel_logs:
-                frame_right = create_frame(0)
                 self.show_graphs(frame_right)
             elif Flags.panel.get_value() == Flags.panel_help:
-                frame_right = create_frame(0)
                 self.show_help(frame_right)
         # precisam ser desenhados após o panel do graphs
         frame_main = Frame(mid_y, 0).set_size(mid_sy, task_sx).set_border_color(border_color)
-        self.show_main_bar(frame_main)
+        self.show_left_panel(frame_main)
         self.show_bottom_bar()

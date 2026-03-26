@@ -1,6 +1,6 @@
 import tomllib
 from pathlib import Path
-from platformdirs import user_data_dir
+from tko.util.decoder import Decoder
 
 class LangSettings:
     def __init__(self, build_cmd: str, run_cmd: str, draft: str):
@@ -70,7 +70,7 @@ public class draft {
 }
 """
 
-class UserLanguages:
+class LanguagesSettings:
 
     default_lang_settings: dict[str, LangSettings] = {
         "zig": LangSettings(
@@ -126,10 +126,6 @@ class UserLanguages:
         self.path = path
         self.lang_settings: dict[str, LangSettings] = {}
 
-    def set_default_path(self):
-        self.path = Path(user_data_dir("tko")) / "languages.toml"
-        return self
-
     def reset(self):
         self.lang_settings = self.default_lang_settings.copy()
         return self
@@ -152,15 +148,14 @@ class UserLanguages:
             self.reset()
             self.save_file_settings()
         try:
-            with open(self.path, "rb") as f:
-                content = f.read()
-                data = tomllib.loads(content.decode("utf-8"))
-                for lang, settings in data.items():
-                    self.lang_settings[lang] = LangSettings(
-                        build_cmd=settings.get("build_cmd", ""),
-                        run_cmd=settings.get("run_cmd", ""),
-                        draft=settings.get("draft", "")
-                    )
+            content = Decoder.load(self.path)
+            data = tomllib.loads(content)
+            for lang, settings in data.items():
+                self.lang_settings[lang] = LangSettings(
+                    build_cmd=settings.get("build_cmd", ""),
+                    run_cmd=settings.get("run_cmd", ""),
+                    draft=settings.get("draft", "")
+                )
         except Exception as e:
             print(f"Erro ao carregar as configurações de linguagem {self.path}, resetando para as configurações padrão. Erro: {e}")
             self.reset()

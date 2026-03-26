@@ -84,7 +84,7 @@ class Wdir:
         if self.__lang != "":
             solver_list = Drafts.load_drafts_only(folder, self.__lang)
         else:
-            solver_list = Drafts.load_drafts_only(folder, "", extra=Drafts().get_languages_with_drafts())
+            solver_list = Drafts.load_drafts_only(folder, "", extra=Drafts(self.settings.get_languages_settings()).get_languages_with_drafts())
         solver_list = sorted(solver_list)
 
         self.set_solver(solver_list)

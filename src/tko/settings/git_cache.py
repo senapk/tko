@@ -17,6 +17,12 @@ class GitCache:
 
         self.max_age: timedelta = max_age
 
+    def clear_cache(self):
+        if self.cache_dir.exists():
+            print(f"Clearing git cache at {self.cache_dir}...")
+            shutil.rmtree(self.cache_dir)
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+
     def _repo_dir(self, url: str) -> Path:
         digest: str = hashlib.sha1(url.encode()).hexdigest()
         return self.cache_dir / digest

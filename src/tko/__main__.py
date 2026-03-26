@@ -59,7 +59,7 @@ class Main:
         if args.compact:
             param.set_compact(True)
 
-        settings = Settings()
+        settings = Settings(args.globaldir)
         if not args.side and not args.down:
             param.set_diff_mode(settings.app.get_diff_mode())
         elif args.side:
@@ -76,7 +76,7 @@ class Main:
     def tui(args: argparse.Namespace) -> None:
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
-        settings = Settings()
+        settings = Settings(args.globaldir)
         param.set_diff_mode(settings.app.get_diff_mode())
         if args.filter:
             param.set_filter(True)
@@ -86,7 +86,7 @@ class Main:
 
     @staticmethod
     def build(args: argparse.Namespace):
-        settings = Settings()
+        settings = Settings(args.globaldir)
         PatternLoader.pattern = args.pattern
         manip = Param.Manip().set_unlabel(args.unlabel).set_to_sort(args.sort).set_to_number(args.number)
         build = CmdBuild(Path(args.target), [Path(x) for x in args.target_list], manip, settings)
@@ -98,7 +98,7 @@ class Main:
 
     @staticmethod
     def open(args: argparse.Namespace):
-        settings = Settings()
+        settings = Settings(args.globaldir)
         update: bool = args.update
  
         if args.global_cache:
@@ -116,42 +116,52 @@ class Main:
         action.execute()
 
     @staticmethod
+    def load_repo(dir_path: Path, show_warnings: bool = True) -> tuple[Repository | None, Path | None]:
+        dir_parent = RepPaths.rec_search_for_repo_parents(dir_path)
+        if dir_parent is not None:
+            return Repository(dir_parent, recursive_search=False), dir_parent
+        if show_warnings:
+            print("Nenhum repositório TKO encontrado.")
+        return None, None
+
+    @staticmethod
     def collect_task(args: argparse.Namespace):
-        settings = Settings()
-        changedir = args.changedir
-        rec_folder = RepPaths.rec_search_for_repo_parents(changedir)
-        if rec_folder is not None:
-            changedir = rec_folder
-        rep = Repository(changedir)
+        settings = Settings(args.globaldir)
+        repo, _ = Main.load_repo(args.changedir)
+        if repo is None:
+            return
         width: int  = args.graph[0]
         height: int  = args.graph[1]
-        CmdTask.show_graph(settings, rep, args.label, width, height)
+        CmdTask.show_graph(settings, repo, args.label, width, height)
 
     @staticmethod
     def init(args: argparse.Namespace):
+        settings = Settings(args.globaldir)
         changedir: Path | None = args.changedir
         language: str | None = args.language
-        rep_starter = RepStarter(folder=changedir, language=language)
+        rep_starter = RepStarter(settings=settings, folder=changedir, language=language)
         rep_starter.execute()
 
     @staticmethod
     def remote_ls(args: argparse.Namespace):
-        changedir: Path | None = args.changedir
-        try:
-            rep_actions = RepSourceActions(changedir)
-            rep_actions.remote_ls()
-        except ValueError as e:
-            print(f"Erro ao listar fontes: {e}")
+        settings = Settings(args.globaldir)
+        repo, _ = Main.load_repo(args.changedir)
+        if repo is None:
+            return
+        rep_actions = RepSourceActions(settings, repo)
+        rep_actions.remote_ls()
+
 
     @staticmethod
     def remote_rm(args: argparse.Namespace):
         name: str = args.name
-        changedir: Path | None = args.changedir
-        try:
-            rep_actions = RepSourceActions(changedir)
-            rep_actions.remote_rm(alias=name)
-        except ValueError as e:
-            print(f"Erro ao deletar fonte: {e}")
+        settings = Settings(args.globaldir)
+        repo, _ = Main.load_repo(args.changedir)
+        if repo is None:
+            return
+        rep_actions = RepSourceActions(settings, repo)
+        rep_actions.remote_rm(alias=name)
+
 
     @staticmethod
     def remote_add(args: argparse.Namespace):
@@ -169,13 +179,15 @@ class Main:
 
         git_branch: str = args.branch
         writeable: bool = args.write
-
-        changedir: Path | None = args.changedir
         name: str = args.name
         quest_filter: list[str] | None = args.quest
         task_filter: list[str] | None = args.task
         try:
-            rep_actions = RepSourceActions(changedir)
+            settings = Settings(args.globaldir)
+            repo, _ = Main.load_repo(args.changedir)
+            if repo is None:
+                return
+            rep_actions = RepSourceActions(settings, repo)
             rep_actions.remote_add(
                 name=name, 
                 remote_default=default_git_alias, 
@@ -192,19 +204,41 @@ class Main:
     @staticmethod
     def remote_filter(args: argparse.Namespace):
         name: str = args.name
-        changedir: Path | None = args.changedir
         quests: list[str] | None = args.quest
         tasks: list[str] | None = args.task
         clear: bool = args.clear
         if clear and (quests or tasks):
             print("Erro: --clear não pode ser usado com --quest ou --task")
             return
-        rep_actions = RepSourceActions(changedir)
+        settings = Settings(args.globaldir)
+        repo, _ = Main.load_repo(args.changedir)
+        if repo is None:
+            return
+        rep_actions = RepSourceActions(settings, repo)
         rep_actions.remote_filter(alias=name, quests=quests, tasks=tasks, clear=clear)
 
     @staticmethod
+    def clear_cache(args: argparse.Namespace):
+        repo, _ = Main.load_repo(args.changedir)
+        if repo is None:
+            print("Nenhum repositório TKO encontrado.")
+            return
+        repo.cache.clear_cache()
+
+    @staticmethod
+    def reset_config(args: argparse.Namespace):
+        sp = Settings(args.globaldir).reset().save_settings()
+        print(sp.get_settings_file())
+
+    @staticmethod
+    def reset_languages(args: argparse.Namespace):
+        sp = Settings(args.globaldir)
+        sp.get_languages_settings().reset().save_file_settings()
+        print(sp.get_languages_file())
+
+    @staticmethod
     def config(args: argparse.Namespace):
-        settings = Settings()
+        settings = Settings(args.globaldir)
         param = ConfigParams()
         param.side = args.side
         param.down = args.down
@@ -215,8 +249,8 @@ class Main:
         CmdConfig.execute(settings, param)
 
     @staticmethod
-    def list(_: argparse.Namespace):
-        settings = Settings()
+    def list(args: argparse.Namespace):
+        settings = Settings(args.globaldir)
         print(str(settings))
 
 class Parser:
@@ -236,18 +270,19 @@ class Parser:
         self.add_parser_rep_actions()
         self.add_parser_task()
         self.add_parser_config()
+        self.add_parser_reset()
         self.add_parser_collect()
         self.add_parser_run()
         self.add_parser_build()
         self.add_parser_class()
 
     def add_parser_global(self):
-        self.parser.add_argument('-c', '--configfile', metavar='FILE', type=str, help='Global config file')
+        self.parser.add_argument('-G', '--globaldir', metavar='DIR', type=Path, help='Global config directory')
+        self.parser.add_argument('-C', '--changedir', metavar='DIR', type=Path, default=Path('.'), help='Repository directory')
         self.parser.add_argument('-w', '--width', metavar='WIDTH', type=int, help="Terminal width")
         self.parser.add_argument('-v', "--version", action='store_true', help='Show version and exit')
         self.parser.add_argument('-m', "--mono", action='store_true', help='Disable colors')
         self.parser.add_argument('-D', '--debug', action='store_true', help='Enable debug mode')
-        self.parser.add_argument('-C', '--changedir', metavar='DIR', type=Path, default=Path('.'), help='Repository directory')
 
     @staticmethod
     def create_parent_basic():
@@ -296,14 +331,23 @@ class Parser:
         parser_open.add_argument('target_list', metavar='T', type=str, nargs='*', help='Solvers, test cases or directories to load')
         parser_open.set_defaults(func=Main.tui)
 
+    def add_parser_reset(self):
+        parser_reset = self.subparsers.add_parser('reset', help='Reset configuration', add_help=False)
+        subpar = parser_reset.add_subparsers(title='subcommands', metavar='COMMAND', help='DESCRIPTION')
+    
+        reset_cache = subpar.add_parser('cache', help='Clear configuration cache')
+        reset_cache.set_defaults(func=Main.clear_cache)
+
+        reset_config = subpar.add_parser('global', help='Reset global configuration to factory default')
+        reset_config.set_defaults(func=Main.reset_config)
+
+        reset_lang = subpar.add_parser('languages', help='Reset languages configuration to factory default')
+        reset_lang.set_defaults(func=Main.reset_languages)
+
     def add_parser_config(self):
-        parser_cfg = self.subparsers.add_parser('config', help='DESCRIPTION', add_help=False)
+        parser_cfg = self.subparsers.add_parser('config', help='Configure settings', add_help=False)
         parser_cfg.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
         subpar_repo = parser_cfg.add_subparsers(title='subcommands', metavar='COMMAND', help='DESCRIPTION') 
-
-        cfg_reset = subpar_repo.add_parser('reset',
-                                           help='Reset configuration to factory default')
-        cfg_reset.set_defaults(func=CmdCollect.reset)
 
         cfg_set = subpar_repo.add_parser('set', help='Set default configuration values')
 
@@ -391,7 +435,7 @@ class Parser:
         source_add.add_argument('-w', '--write', action='store_true', help='Allow modifications for local directory remotes (default: readonly)')
         source_add.set_defaults(func=Main.remote_add)
 
-        source_list = sub_source.add_parser("ls", help="List remote task sources", add_help=False)
+        source_list = sub_source.add_parser("list", help="List remote task sources", add_help=False)
         source_list.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
         source_list.set_defaults(func=Main.remote_ls)
 
@@ -500,11 +544,9 @@ class Parser:
 
 
 def execute(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
-    settings = Settings()
+    settings = Settings(args.globaldir)
     if args.width is not None:
         RawTerminal.set_terminal_size(args.width)
-    if args.configfile:
-        settings.set_settings_file(args.configfile)
     settings.load_settings()
 
     if args.mono:

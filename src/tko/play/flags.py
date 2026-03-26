@@ -44,7 +44,7 @@ class Flag:
         self._values = _values
         return self
 
-    def index(self, _index: int):
+    def set_index(self, _index: int):
         self._index = _index
         return self
 
@@ -97,16 +97,13 @@ class Flags:
 
     panel = (Flag().set_name("Painel").set_description("Mostra o Painel de Informações")
                     .set_values([panel_help, panel_graph, panel_logs, panel_skills])
-                    .set_msgs(["Desabilitar painel de informações", "Gráfico de tarefas", "Mostrar logs", "Mostrar trilhas de habilidades"]))
+                    .set_msgs(["Mostrar ajuda", "Gráfico de tarefas", "Mostrar logs", "Mostrar trilhas de habilidades"]))
     inbox = (Flag().set_name("Tópicos").set_description("Habilitas todas as missões e tarefas")
                     .set_values([inbox_only, inbox_all])
                     .set_msgs(["Mostrar inbox", "Habilitar todas as tarefas"]))
     show_panel = (Flag().set_name("ShowPanel").set_description("Mostra o painel esquerdo")
-                    .set_values(["0", "1"])
+                    .set_values(["0", "1"]).set_index(1)
                     .set_msgs(["Desabilitar painel lateral", "Mostrar painel lateral"]))
-    tasks = (Flag().set_name("Tarefas").set_description("Mostra as atividades concluídas")
-                    .set_values(["0", "1", "2"])
-                    .set_msgs(["Mostrar todas as tarefas", "Ocultar tarefas com 100%", "Ocultar tarefas com >70%"]))
     task_graph_mode = (Flag().set_name("Task Graph").set_description("Mostra o Gráfico de Tarefas")
                     .set_values([task_exec_view, task_time_view])
                     .set_msgs(["Gráfico de tarefas por execuções", "Gráfico de tarefas por tempo"]))
@@ -124,7 +121,7 @@ class FlagsMan:
 
         for key, _index in data.items():
             if key in self.flags:
-                self.flags[key].index(_index)
+                self.flags[key].set_index(_index)
 
     def get_data(self) -> dict[str, int]:
         data: dict[str, int] = {}

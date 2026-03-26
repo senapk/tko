@@ -71,18 +71,41 @@ class DailyGraph:
         eixo = [x / 7 for x in eixo]
         self.eixo = [x / 7 for x in self.eixo]
 
-        result: list[str] = plot_to_string(xs=[eixo, self.eixo], ys=[bar, accumulates], lines=[True, True], y_min=0,width=self.width, height=self.height, y_unit="%", x_unit="w")
+        x_fix = 3
+        y_fix = 1
+        result: list[str] = plot_to_string(
+            xs=[eixo, self.eixo], 
+            ys=[bar, accumulates], 
+            lines=[True, True], 
+            y_min=0,
+            width=self.width + x_fix, 
+            height=self.height + y_fix, 
+            y_unit="%", 
+            x_unit="w"
+        )
 
         if isinstance(result, str):
             result = result.splitlines()
-        lines: list[Text] = []
-
+        
+        decoded: list[Text] = []
         for line in result:
-            lines.append(Text.decode_raw(line))
+            decoded.append(Text.decode_raw(line))
+
+        fixed: list[Text] = []
+        qtd = len(decoded)
+        for i, line in enumerate(decoded):
+            if i == 0 or i == qtd - 2:
+                continue
+            if i == qtd - 1:
+                fixed.append(line)
+            else:
+                fixed.append(line.slice(2))
+
+
         
         header = [(Text().addf("c", " Máximo diário: ").addf("{c}", f"{Delta.format_h_min(max_daily)} ")
                      .add(" ").addf("m", " Acumulado: ").addf("m", f"{Delta.format_h_min(max_accumulates)} ")
-                     .center(self.width))]
+                    )]
         
 
-        return header, lines
+        return header, fixed

@@ -106,6 +106,8 @@ class TaskGraph:
         return output
 
     def get_graph(self) -> list[Text]:
+        x_fix = 3
+        y_fix = 2
         if Flags.task_graph_mode.get_value() == Flags.task_time_view:
             result = plot_to_string(
                 color=["magenta", "green", "red"],
@@ -114,8 +116,8 @@ class TaskGraph:
                 lines=[True, True, False], 
                 y_min=0,
                 y_max=101,
-                width=self.width,
-                height=self.height,
+                width=self.width + x_fix,
+                height=self.height + y_fix,
                 y_unit="%",
                 x_unit="min"
             )
@@ -127,8 +129,8 @@ class TaskGraph:
                 lines=[True, True, True, False], 
                 y_min=0, 
                 y_max=101, 
-                width=self.width, 
-                height=self.height, 
+                width=self.width + x_fix, 
+                height=self.height + y_fix, 
                 y_unit="%", 
                 x_unit="runs"
             )
@@ -138,7 +140,17 @@ class TaskGraph:
         output: list[Text] = []
         for line in result:
             output.append(Text.decode_raw(line))
-        return output
+        fixed: list[Text] = []
+        size = len(output)
+        for i, line in enumerate(output):
+            if i == 0 or i == size - 2:
+                continue
+            if i < size - 2:
+                fixed.append(line.slice(2))
+            else:
+                fixed.append(line)
+            
+        return fixed
 
     # returns header and graph lines
     def get_output(self) -> tuple[list[Text], list[Text]]:

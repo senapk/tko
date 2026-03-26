@@ -1,4 +1,3 @@
-from tko.settings.rep_paths import RepPaths
 from tko.settings.rep_source import RepSource
 from tko.settings.repository import Repository
 from tko.settings.settings import Settings
@@ -6,19 +5,10 @@ from tko.util.text import Text
 from pathlib import Path
 
 class RepSourceActions:
-    def __init__(self, folder: Path | None):
-        # if folder is set, use folder, else use remote if remote, else .
-        if folder is not None:
-            folder = Path(folder).resolve()
-        else:
-            folder = Path.cwd()
+    def __init__(self, settings: Settings, repo: Repository):
+        self.settings = settings
+        self.repo = repo
 
-        path = RepPaths.rec_search_for_repo_parents(folder)
-        if path is None:
-            raise ValueError(f"Repositório não encontrado em {folder}")
-        self.folder = folder
-        self.repo = Repository(path).load_config()
-    
     def remote_ls(self):
         rep = self.repo
         sources = rep.data.get_sources()
@@ -87,7 +77,7 @@ class RepSourceActions:
         if remote_default is not None:
             print(Text.format("Adicionando fonte remota apontando para repositório git remoto {y}.", remote_default))
             url: str = ""
-            settings = Settings()
+            settings = self.settings
             if not settings.has_alias_git(remote_default):
                 raise Warning("fail: alias git remoto não encontrado.")
             url = settings.get_alias_git(remote_default)
