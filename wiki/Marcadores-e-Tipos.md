@@ -3,11 +3,13 @@
 Uma questão segue a seguinte estrutura:
 
 ```md
-[ ] @label :marcadores [Título](pasta/README.md)
+- [ ] @label :marcadores [Título](pasta/README.md)
 
 # você pode empacotar dentro de crases para alinhas ou tags html para esconder, mas o formato é sempre o mesmo:
-[ ] `@label :marcadores`[Título](pasta/README.md)
-[ ] <!-- @label :marcadores -->[Título](pasta/README.md)
+- [ ] `@label :marcadores`[Título](pasta/README.md)
+- [ ] <!-- @label :marcadores -->[Título](pasta/README.md)
+- [ ] @label <!-- :marcadores -->[Título](pasta/README.md)
+
 ```
 
 Cada marcador representa uma propriedade da questão.
