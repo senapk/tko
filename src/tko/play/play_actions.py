@@ -173,33 +173,35 @@ class PlayActions:
     def register_action(self, task: Task):
         self.rep.logger.store(LogItemSelf().set_task(task))
 
+    def self_evaluate_full(self):
+        obj = self.tree.get_selected_throw()
+        if isinstance(obj, Task):
+            task: Task = obj
+            if not task.info.feedback:
+                task.info.rate = 100
+                task.info.feedback = True
+            else:
+                task.info.rate = 0
+                task.info.feedback = False
+
     def self_evaluate(self):
         obj = self.tree.get_selected_throw()
         
         if isinstance(obj, Task):
-            task: Task = obj
-            if ic.enabled:
-                if not task.info.feedback:
-                    task.info.rate = 100
-                    task.info.feedback = True
-                else:
-                    task.info.rate = 0
-                    task.info.feedback = False
-            else:
-                if task.is_link() or task.task_rate == Task.TaskRate.TICK:
-                    if task.info.feedback:
-                        task.info.feedback = False
-                        task.info.rate = 0
-                        self.rep.logger.store(LogItemSelf().set_task(task))
-                    else:
-                        task.info.feedback = True
-                        task.info.rate = 100
-                        self.rep.logger.store(LogItemSelf().set_task(task))
-                else:
-                    self.fman.add_input(
-                        FloatingGrade(obj, lambda task: self.rep.logger.store(LogItemSelf().set_task(task)))
-                    )
-            return
+            # task: Task = obj
+            # if task.is_link() or task.task_eval == Task.TaskEval.TICK:
+            #     if task.info.feedback:
+            #         task.info.feedback = False
+            #         task.info.rate = 0
+            #         self.rep.logger.store(LogItemSelf().set_task(task))
+            #     else:
+            #         task.info.feedback = True
+            #         task.info.rate = 100
+            #         self.rep.logger.store(LogItemSelf().set_task(task))
+            # else:
+            self.fman.add_input(
+                FloatingGrade(obj, lambda task: self.rep.logger.store(LogItemSelf().set_task(task)))
+            )
 
     def create_draft(self):
         local_source = self.game.get_sandbox_source()

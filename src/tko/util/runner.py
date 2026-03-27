@@ -41,7 +41,9 @@ class Runner:
             os.system('clear')
 
     @staticmethod
-    def decode_code(return_code: int) -> str:
+    def decode_code(return_code: int | None) -> str:
+        if return_code is None:
+            return "fail: Process was killed"
         code = 128 - return_code
         if code == 127:
             return ""

@@ -96,7 +96,7 @@ class TaskTree:
         return len(quest.get_full_title()) + 6
 
     def get_task_title_size(self, task: Task) -> int:
-        return len(task.get_full_title(self.get_max_key_size())) + 15
+        return len(task.get_full_title(self.get_max_key_size())) + 22
 
     def get_max_title(self) -> int:
         if self.cache_max_title:
@@ -151,52 +151,72 @@ class TaskTree:
 
     def get_task_down_symbol(self, t: Task) -> Text.Token:
         if t.is_link():
-            return symbols.task_view.set_fmt("c")
+            if t.info.feedback:
+                return symbols.task_view.set_fmt("g")
+            return symbols.task_view
 
         if not t.is_import_type():
-            return symbols.task_local
-        
-        down_symbol = symbols.task_to_download
+            if t.info.feedback:
+                return symbols.right_triangle_filled
+            return symbols.right_triangle_void
         if self.is_downloaded_for_lang(t):
-            down_symbol = symbols.task_downloaded
-        return down_symbol
+            if t.info.feedback:
+                return symbols.down_triangle_filled.set_fmt("g")
+            return symbols.down_triangle_void
+        if t.info.feedback:
+            return symbols.up_triangle_filled.set_fmt("g")
+        return symbols.up_triangle_void
     
-    def get_task_rate_symbol(self, t: Task) -> Text.Token:
-        if t.task_rate == Task.TaskRate.AUTO:
-            if t.info.feedback:
-                return symbols.circle_filled.set_fmt("g")
-            else:
-                return symbols.circle_open
-        if t.task_rate == Task.TaskRate.USER:
-            if t.info.feedback:
-                return symbols.task_human_filled.set_fmt("g")
-            else:
-                return symbols.task_human_open
-        if t.task_rate == Task.TaskRate.TICK:
-            if t.info.feedback:
-                return symbols.square_filled.set_fmt("g")
-            else:
-                return symbols.square_open
-        return Text.Token(" ")
+    # def get_task_self_symbol(self, t: Task) -> Text:
+    #     if t.task_eval == Task.TaskEval.AUTO:
+    #         if t.info.feedback:
+    #             return Text().add(symbols.square_filled.set_fmt("g"))
+    #         else:
+    #             return Text().add(symbols.square_void)
+    #     if t.task_eval == Task.TaskEval.USER:
+    #         if t.info.feedback:
+    #             return Text().add(symbols.diamond_filled.set_fmt("g"))
+    #         else:
+    #             return Text().add(symbols.diamond_void)
+    #     return Text().add("X")
 
     def get_task_path_symbol(self, t: Task) -> Text.Token:
         if t.task_path == Task.TaskPath.MAIN:
-            return symbols.star_filled
-        return symbols.star_open
+            return symbols.star_filled.set_fmt("y")
+        return symbols.star_filled.set_fmt("")
     
-    def get_task_rule_symbol(self, t: Task) -> Text.Token:
-        if t.task_help == Task.TaskHelp.OPEN:
-            return symbols.task_repeat.set_fmt("y")
-        if t.task_help == Task.TaskHelp.EXAM:
-            return symbols.task_denied.set_fmt("r")
+    def get_task_help_symbol(self, t: Task) -> Text.Token:
+        if t.task_help == Task.TaskHelp.FREE:
+            return symbols.task_reload.set_fmt("g")
+        if t.task_help == Task.TaskHelp.PART:
+            return symbols.task_reload.set_fmt("y")
+        if t.task_help == Task.TaskHelp.ZERO:
+            return symbols.task_zero.set_fmt("r")
         return Text.Token("")
     
-    def get_task_action_symbol(self, t: Task) -> Text.Token:
-        if t.task_action == Task.TaskAction.VIEW:
+    def get_task_mode_symbol(self, t: Task) -> Text.Token:
+        if t.task_mode == Task.TaskMode.VIEW:
             return symbols.task_view.set_fmt("c")
-        if t.task_action == Task.TaskAction.EDIT:
+        if t.task_mode == Task.TaskMode.EDIT:
             return symbols.task_edit.set_fmt("c")
         return Text.Token(" ")
+
+    def format_percent_1s(self, value: float) -> Text:
+        prog = value
+        if prog < 0.1:
+            return Text().addf("", symbols.middle_dot)
+        if prog > 99:
+            return Text().addf("g", symbols.check)
+        return Text().addf("y", str(round(prog / 10)).rjust(1, "0"))
+
+    def format_percent_2s(self, value: float) -> Text:
+        prog = round(value)
+        if prog < 0.1:
+            return Text().addf("", symbols.rounded_square_void + symbols.rounded_square_void)
+        if prog > 99:
+            return Text().addf("g", symbols.rounded_square_filled + symbols.rounded_square_filled)
+        return Text().addf("y", str(prog).rjust(2, "0"))
+        
 
     def __str_task(self, focus_color: str, t: Task, lig_quest: str, quest_reachable: bool) -> Text:
         color_aval = "g" if quest_reachable and t.is_reachable() else "y"
@@ -204,17 +224,15 @@ class TaskTree:
         output = Text()
         output.addf("b", t.xp)
         output.addf(color_aval, lig_quest)
-        
+
         output.add(self.get_task_down_symbol(t)).add(" ")
-        rate = t.info.rate // 10
-        output.add(t.get_prog_symbol(rate)).add(" ")
-        output.add(self.get_task_rate_symbol(t)).add(" ")
+        output.add(self.format_percent_1s(t.get_rate_percent())).add(" ")
+        # output.add(self.get_task_self_symbol(t)).add(" ")
+        output.add(self.get_task_help_symbol(t)).add(" ")
         output.add(self.get_task_path_symbol(t)).add(" ")
-        output.add(self.get_task_rule_symbol(t))
 
         in_focus = focus_color != ""
         # output.add(self.style.round_l(focus_color) if in_focus else " ")
-        output.add(" ")
         color = "" if not in_focus else "k" + focus_color
         output.add(self.color_task_title(t.get_full_title(self.get_max_quest_itens_key_size(t.quest_key)), color))
         output.ljust(self.get_max_title(), Text.Token(" ", focus_color))
@@ -228,23 +246,17 @@ class TaskTree:
         if Flags.show_time.is_true():
             hours, minutes = self.get_task_hours_minutes(t)
             output.add(self.format_hours_minutes("g", hours, minutes))
+        
+        rate = t.get_rate_percent()
+        if t.task_help != Task.TaskHelp.FREE and rate > 0:
+            rate = rate * t.get_quality_percent() / 100
+        if rate > 1:
+            color = "g" if rate > 99 else ("y" if rate > 49 else "r")
+            output.addf(color, f"{round(rate):>3}%")
+        else:
+            output.addf("", "----")
 
-        prog = round(t.get_percent())
-        output.addf("y", str(prog).rjust(3, " ") + "%")
         return output
-
-    def get_task_hours_minutes(self, task: Task) -> tuple[int, int]:
-        if task.get_full_key() in self.cache_task_times:
-            return self.cache_task_times[task.get_full_key()]
-        logsort = self.rep.logger.tasks.task_dict.get(task.get_full_key(), None)
-        if logsort is not None and len(logsort.base_list) > 0:
-            delta, _ = logsort.base_list[-1]
-            hours = delta.accumulated.seconds // 3600
-            minutes = (delta.accumulated.seconds % 3600) // 60
-            self.cache_task_times[task.get_full_key()] = (hours, minutes)
-            return hours, minutes
-        self.cache_task_times[task.get_full_key()] = (0, 0)
-        return 0, 0
     
     def __str_quest(self, has_kids: bool, focus_color: str, q: Quest) -> Text:
         con = "┄┄"
@@ -255,13 +267,12 @@ class TaskTree:
                 con = "─╮" if n_hidden == 0 else "┄╮"
 
         color_reachable = "g" if q.is_reachable() else "y"
-        # if Flags.quests.get_value() == Flags.quest_enable:
-        #     for quest in self.game.quests.values():
-        #         if not quest.is_reachable() and q.get_db_key() in quest.requires:
-        #                 color_reachable = "y"
-        #                 break
+        output: Text = Text().addf(color_reachable, con).add(" ")
 
-        output: Text = Text().addf(color_reachable, con)
+        output.add(symbols.star_filled)
+        output.add(self.format_percent_2s(q.get_percent_main())).add("|")
+        output.add(self.format_percent_2s(q.get_percent_side()))
+        output.add(symbols.star_void).add(" ")
 
         in_focus = focus_color != ""
 
@@ -275,7 +286,6 @@ class TaskTree:
 
         # if in_focus:
             # output.add(self.style.round_l(focus_color))
-        output.add(" ")
         title = q.get_full_title()
         if focus_color:
             for i, _ in enumerate(title.data):
@@ -293,9 +303,21 @@ class TaskTree:
         if Flags.show_time.is_true():
             hours, minutes = self.get_quest_time(q)
             output.add(self.format_hours_minutes("g", hours, minutes))
-        output.add(q.get_resume_by_percent())
 
         return output
+
+    def get_task_hours_minutes(self, task: Task) -> tuple[int, int]:
+        if task.get_full_key() in self.cache_task_times:
+            return self.cache_task_times[task.get_full_key()]
+        logsort = self.rep.logger.tasks.task_dict.get(task.get_full_key(), None)
+        if logsort is not None and len(logsort.base_list) > 0:
+            delta, _ = logsort.base_list[-1]
+            hours = delta.accumulated.seconds // 3600
+            minutes = (delta.accumulated.seconds % 3600) // 60
+            self.cache_task_times[task.get_full_key()] = (hours, minutes)
+            return hours, minutes
+        self.cache_task_times[task.get_full_key()] = (0, 0)
+        return 0, 0
 
     def get_quest_time(self, quest: Quest) -> tuple[int, int]:
         hours = 0

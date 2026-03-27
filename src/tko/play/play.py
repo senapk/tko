@@ -15,6 +15,7 @@ from tko.play.tasktree import TaskTree
 from tko.play.gui import Gui
 from tko.play.play_actions import PlayActions
 from tko.play.flag_functors import FlagFunctor
+from icecream import ic # type: ignore
 
 import curses
 
@@ -110,6 +111,8 @@ class Play:
         cman.add_str(GuiKeys.delete_folder, self.actions.delete_folder_ask)
 
         cman.add_str(GuiKeys.self_evaluate, self.actions.self_evaluate)
+        if ic.enabled:
+            cman.add_str(GuiKeys.self_evaluate_full, self.actions.self_evaluate_full)
         cman.add_str(GuiKeys.inbox, lambda: Flags.inbox.set_value(Flags.inbox_only))
         cman.add_str(GuiKeys.all_tasks, lambda: Flags.inbox.set_value(Flags.inbox_all))
 

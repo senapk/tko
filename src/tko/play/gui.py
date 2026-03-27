@@ -64,11 +64,11 @@ class Gui:
         return "R", " ERRO"
 
     @staticmethod
-    def get_admin_color() -> str:
-        # if Flags.inbox.get_value() == Flags.inbox_only:
-        #     return "g"
-        # if Flags.inbox.get_value() == Flags.inbox_all:
-        #     return "y"
+    def get_frame_color() -> str:
+        if Flags.inbox.get_value() == Flags.inbox_only:
+            return "g"
+        if Flags.inbox.get_value() == Flags.inbox_all:
+            return "y"
         return ""
 
     @staticmethod
@@ -76,7 +76,7 @@ class Gui:
         half = value.len() // 2
         x = frame.get_x()
         _, dx = Fmt.get_size()
-        color = Gui.get_admin_color()
+        color = Gui.get_frame_color()
         full = Text().addf(color, "─" * ((dx//2) - x - 2 - half)).add(value)
         return full
 
@@ -244,7 +244,7 @@ class Gui:
 
     def show_top_bar(self, frame: Frame):
         panel_on = Flags.show_panel.is_true()
-        vi = Visual()
+        vi = Visual(self.settings.app.use_borders)
         pre = [
             vi.render_button(f"Inbox[{GuiKeys.inbox}]", Flags.inbox.get_value() == Flags.inbox_only),
             vi.render_button(f"Todas[{GuiKeys.all_tasks}]", Flags.inbox.get_value() == Flags.inbox_all),
@@ -281,13 +281,13 @@ class Gui:
         help_lines.append(Text.format(" Calibrar {r} Para calibrar os direcionais do teclado", GuiKeys.calibrate))
 
         help_lines.append(Text().addf("g", " Símbolos ").center(dx, Text.Token("-")))
-        help_lines.append(Text.format("{g}   Tarefa sugeridas        , {w} Tarefa opcional", symbols.star_filled, symbols.star_open))
-        help_lines.append(Text.format("{y}   Pode consultar e refazer, {r} Fazer sozinho sem consulta", symbols.task_repeat, symbols.task_denied))
+        help_lines.append(Text.format("{g}   Tarefa sugeridas        , {w} Tarefa opcional", symbols.star_filled, symbols.star_void))
+        help_lines.append(Text.format("{y}   Pode consultar e refazer, {r} Fazer sozinho sem consulta", symbols.task_part, symbols.task_zero))
         help_lines.append(Text.format("{g}{g}{g} Fez Autoavaliação       , {w}{w}{w} Sem Autoavaliação", 
-                                      symbols.circle_filled, symbols.square_filled, symbols.task_human_filled,
-                                      symbols.circle_open, symbols.square_filled, symbols.task_human_open))
+                                      symbols.circle_filled, symbols.square_filled, symbols.diamond_filled,
+                                      symbols.circle_open, symbols.square_filled, symbols.diamond_void))
         help_lines.append(Text.format("{w} Nota por testes, {w} Nota manual por critério, {w} Checkbox", 
-                                      symbols.circle_open, symbols.task_human_open, symbols.square_open))
+                                      symbols.circle_open, symbols.diamond_void, symbols.square_void))
         
         help_lines.append(Text.format("{g}", " Navegação ").center(dx, Text.Token("-")))
         help_lines.append(Text.format("  setas {r} Para navegar entre os elementos", "↑↓→"))
@@ -397,7 +397,7 @@ class Gui:
         frame.draw()
 
     def show_items(self):
-        border_color = self.get_admin_color()
+        border_color = self.get_frame_color()
         Fmt.clear()
         self.tree.reload_sentences()
         lines, cols = Fmt.get_size()
@@ -423,7 +423,7 @@ class Gui:
         self.show_top_bar(frame_top)
 
         if Flags.show_panel.is_true():
-            frame_right =  Frame(mid_y, cols - right_sx).set_size(mid_sy, right_sx)
+            frame_right =  Frame(mid_y, cols - right_sx).set_size(mid_sy, right_sx).set_border_color(self.get_frame_color())
             if Flags.panel.get_value() == Flags.panel_skills:
                 self.show_skills_bar(frame_right)
             elif Flags.panel.get_value() == Flags.panel_graph:
@@ -433,6 +433,6 @@ class Gui:
             elif Flags.panel.get_value() == Flags.panel_help:
                 self.show_help(frame_right)
         # precisam ser desenhados após o panel do graphs
-        frame_main = Frame(mid_y, 0).set_size(mid_sy, task_sx).set_border_color(border_color)
+        frame_main = Frame(mid_y, 0).set_size(mid_sy, task_sx).set_border_color(border_color).set_border_color(self.get_frame_color())
         self.show_left_panel(frame_main)
         self.show_bottom_bar()

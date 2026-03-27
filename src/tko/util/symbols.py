@@ -3,15 +3,19 @@ from tko.util.text import Text
 class __Symbols:
 
     def __init__(self):
-        self.task_downloaded = Text.Token("▼", "g")
-        self.task_to_download = Text.Token("▲")
-        self.task_local = Text.Token("▶", "g")
+        # self.task_downloaded = Text.Token("▼", "g")
+        # self.task_to_download = Text.Token("▲")
+        # self.task_local = Text.Token("▶", "g")
         
         self.opening = Text.Token("▶")
-        self.right_arrow_filled = Text.Token("▶")
-        self.right_arrow_open = Text.Token("▷")
-        self.left_arrow_filled = Text.Token("◀")
-        self.left_arrow_open = Text.Token("◁")
+        self.up_triangle_filled = Text.Token("▲")
+        self.up_triangle_void = Text.Token("△")
+        self.down_triangle_filled = Text.Token("▼")
+        self.down_triangle_void = Text.Token("▽")
+        self.right_triangle_filled = Text.Token("▶")
+        self.right_triangle_void = Text.Token("▷")
+        self.left_triangle_filled = Text.Token("◀")
+        self.left_triangle_void = Text.Token("◁")
         self.neutral = Text.Token("»")
         self.success = Text.Token("✓")
         self.failure = Text.Token("✗")
@@ -31,30 +35,43 @@ class __Symbols:
             "execution_error": self.execution,
         }
 
-        self.whitespace = Text.Token("·") #Text.Token("␣")
+        self.middle_dot = Text.Token("·") #Text.Token("␣")
         self.newline = Text.Token("↲")
 
         self.circle_filled = Text.Token("●")
         self.circle_open = Text.Token("○")
 
         self.square_filled = Text.Token("■")
-        self.square_open = Text.Token("□")
+        self.square_void = Text.Token("□")
+    
+        self.rounded_square_filled = Text.Token("▣")
+        self.rounded_square_void = Text.Token("▢")
 
-        self.task_human_filled = Text.Token("◆")
-        self.task_human_open = Text.Token("◇")
+        self.diamond_filled = Text.Token("◆")
+        self.diamond_void = Text.Token("◇")
 
         self.star_filled = Text.Token("★")
-        self.star_open = Text.Token("☆")
+        self.star_void = Text.Token("☆")
 
-        self.task_denied = Text.Token("⊘")
-        self.task_repeat = Text.Token("↺")
+        self.mark_filled = Text.Token("✦", "g")
+        self.mark_void = Text.Token("✧", "y")
+
+        self.task_zero = Text.Token("⊘")
+        self.task_part = Text.Token("≈")
+        self.task_free = Text.Token("=")
+        self.task_reload = Text.Token("↺")
+
 
         self.task_edit = Text.Token("✎")
         self.task_view = Text.Token("↗")
 
         self.cfill = Text.Token("_")
         self.tab = Text.Token("    ")
+
         self.arrow_up = Text.Token("↑")
+        self.arrow_down = Text.Token("↓")
+        self.arrow_right = Text.Token("→")
+        self.arrow_left = Text.Token("←")
 
         self.check = Text.Token("✓")
         self.uncheck = Text.Token("✗")
@@ -62,13 +79,13 @@ class __Symbols:
         self.infinity = Text.Token("∞")
         self.locked_free = Text.Token("⇉")
         self.locked_locked = Text.Token("⇟")
+
         self.left_toggle = Text.Token("━─")
         self.right_toggle = Text.Token("─━")
-        self.timer = Text.Token("⏳") #⏰
-        self.diff_down = Text.Token("↓")
-        self.diff_left = Text.Token("→")
-        self.sharp_r = Text.Token("")
-        self.sharpL = Text.Token("")
+
+
+        self.sharp_right = Text.Token("")
+        self.sharp_left = Text.Token("")
         self.action = Text.Token("◎", "b")
 
         # self.emoji_confiante = Text.Token("●", "g")
@@ -107,10 +124,6 @@ class __Symbols:
         self.cool_e = Text.Token("1", "c")
         self.cool_x = Text.Token("x", "")
         self.cool_list = [self.cool_x, self.cool_e, self.cool_d, self.cool_c, self.cool_b, self.cool_a]
-
-        self.star = Text.Token("★", "g")
-        self.open_star = Text.Token("☆")
-        self.mark = Text.Token("✦", "g")
 
         self.cursor = Text.Token("┊")
 

@@ -1,7 +1,7 @@
+from __future__ import annotations
 from tko.game.task import Task
 from tko.play.floating import FloatingABC, Floating
 from tko.util.text import Text
-from tko.game.task_grader import TaskGrader
 from tko.util.symbols import symbols
 
 # import ABC, abstractmethod
@@ -14,27 +14,59 @@ import curses
 
 
 class InputLine(ABC):
+    SELECTED_COLOR = "g"
+    LOCKED_COLOR = "r"
+    OPTION_COLOR = "X"
+
+    def __init__(self, id: str):
+        self.id = id
+        self.locked = False
+        self.focus = False
+
+    def get_selected_color(self) -> str:
+        if self.locked:
+            return self.LOCKED_COLOR
+        return self.SELECTED_COLOR
+
+    def get_opening(self):
+        return Text().add(symbols.right_triangle_filled.text if self.focus else " ").add(" ")
 
     @abstractmethod
     def send_key(self, key: int) -> None:
         pass
 
+    def set_focus(self, focus: bool) -> InputLine:
+        self.focus = focus
+        return self
+
     @abstractmethod
-    def set_focus(self, focus: bool) -> None:
+    def get_text(self, pad: int) -> Text:
         pass
 
     @abstractmethod
-    def get_text(self) -> Text:
+    def get_value(self) -> str:
         pass
+
+    def set_locked(self, value: bool) -> InputLine:
+        self.locked = value
+        return self
+
+    def is_locked(self) -> bool:
+        return self.locked
 
 class InputSlide(InputLine):
-    def __init__(self, prefix: Text, opt_msgs: list[tuple[str, Text]], index: int = 0):
+    def __init__(self, id: str, prefix: Text, opt_msgs: list[tuple[str, Text]], index: int = 0):
+        super().__init__(id)
         self.prefix = prefix
         self.opt_msgs = opt_msgs
         self.index: int = index
-        self.focus: bool = False
+
+    def get_value(self) -> str:
+        return str(self.index)
 
     def send_key(self, key: int) -> None:
+        if self.is_locked():
+            return
         size = len(self.opt_msgs)
         if key == curses.KEY_LEFT:
             self.index = max(0, self.index - 1)
@@ -45,24 +77,26 @@ class InputSlide(InputLine):
         elif key == ord("+") or key == ord("="):
             self.index = size - 1
 
-    def set_focus(self, focus: bool) -> None:
-        self.focus = focus
-
-    def get_text(self) -> Text:
-        color = "Y" if self.focus else ""
-        text = Text().addf(color, self.prefix).add(" ")
+    def get_text(self, pad: int) -> Text:
+        color = self.get_selected_color() if self.focus else ""
+        text = Text().add(self.get_opening()).addf(color, self.prefix).add(" ")
         for i, c in enumerate(self.opt_msgs):
             opt, _ = c
-            text.addf("Y" if i == self.index else "", opt)
+            text.addf(self.OPTION_COLOR if i == self.index else color, opt)
+        text.ljust(pad)
         text.add(" ├").add(self.opt_msgs[self.index][1])
         return text
     
 class InputText(InputLine):
-    def __init__(self, prompt: Text, text: str = ""):
+    def __init__(self, id: str, prompt: Text, text: str = ""):
+        super().__init__(id)
         self.prompt = prompt
         self.text = text
         self.focus = False
         self.number_only = False
+
+    def get_value(self) -> str:
+        return self.text
 
     def send_key(self, key: int) -> None:
         if key == curses.KEY_BACKSPACE:
@@ -79,23 +113,23 @@ class InputText(InputLine):
                 elif chr(key).isalpha() or chr(key).isdigit() or chr(key) == "_":
                     self.text += info
 
-    def set_focus(self, focus: bool) -> None:
-        self.focus = focus
-
     def set_number_only(self, number_only: bool):
         self.number_only = number_only
         return self
 
-    def get_text(self) -> Text:
-        data = Text().addf("Y" if self.focus else "", self.prompt).add(" ")
-        data = data.add("├ ").addf("g",self.text).add(symbols.cursor if self.focus else "")
+    def get_text(self, pad: int) -> Text:
+        data = Text().add(self.get_opening()).addf(self.get_selected_color() if self.focus else "", self.prompt).ljust(pad).add(" ")
+        data = data.add("├ ").addf(self.OPTION_COLOR, self.text).add(symbols.cursor if self.focus else "")
         return data
     
 class InputBoolean(InputLine):
-    def __init__(self, prefix: Text, start_value: str):
+    def __init__(self, id: str, prefix: Text, start_value: str):
+        super().__init__(id)
         self.prefix = prefix
         self.value = start_value
-        self.focus = False
+
+    def get_value(self) -> str:
+        return self.value
 
     def send_key(self, key: int) -> None:
         if key == curses.KEY_LEFT:
@@ -105,24 +139,28 @@ class InputBoolean(InputLine):
             self.value = "1"
             self.focus = False
 
-    def set_focus(self, focus: bool) -> None:
+    def set_focus(self, focus: bool) -> InputLine:
         self.focus = focus
         if focus and self.value == "":
             self.value = "0"
+        return self
 
-    def get_text(self) -> Text:
-        color = "Y" if self.focus else ""
-        text = Text().addf(color, self.prefix).add(" │ ")
-        text.addf("Y" if self.value == "0" else "", "Não").add(" ").addf("Y" if self.value == "1" else "", "Sim")
+    def get_text(self, pad: int) -> Text:
+        color = self.get_selected_color() if self.focus else ""
+        text = Text().add(self.get_opening())
+        if self.focus:
+            text.addf(color, self.prefix)
+        else:
+            text.add(self.prefix)
+        text.ljust(pad).add(" │ ")
+        text.addf(self.OPTION_COLOR if self.value == "0" else color, "Não").add(" ").addf(self.OPTION_COLOR if self.value == "1" else color, "Sim")
         return text
-
 
 class FloatingGrade(FloatingABC):
     def __init__(self, task: Task, fn_exit: Callable[[Task], None] | None = None):
         self.floating = Floating()
         self._task = task
-        self._grader = TaskGrader(task.info)
-        self._line = 0 if not task.is_leet() else 1
+        self._line = 0
         self.floating.set_text_ljust()
         self.floating.frame.set_border_color("g")
         self.floating.set_header_text(Text.format("{y/}", " Utilize os direcionais e texto para marcar"))
@@ -143,10 +181,10 @@ class FloatingGrade(FloatingABC):
             ("✓", Text().addf("y", " 100%"))]
 
 
-        if self._task.is_leet():
-            texto_leet = "Testes que passaram na última execução: "
+        if self._task.is_auto():
+            texto_auto = "Percentual de testes que passaram na última execução"
         else:
-            texto_leet = "Qual percentual da atividade você fez?  "
+            texto_auto = "Informe qual percentual da atividade você fez?"
         
         guided = "" if not self._task.info.feedback else ("1" if self._task.info.guided else "0")
         concept = "" if not self._task.info.feedback else ("1" if self._task.info.ia_concept else "0")
@@ -154,30 +192,35 @@ class FloatingGrade(FloatingABC):
         code = "" if not self._task.info.feedback else ("1" if self._task.info.ia_code else "0")
         debug = "" if not self._task.info.feedback else ("1" if self._task.info.ia_debug else "0")
         refactor = "" if not self._task.info.feedback else ("1" if self._task.info.ia_refactor else "0")
-        
-        self.rate_slide     = InputSlide(Text().add(texto_leet), progression, self._task.info.rate // 10)
-        self.human_text     =     InputText(Text().add("Usou ajuda de monitor, amigo? Se sim, qual nome?    "), self._task.info.friend)
-        self.time_text      =     InputText(Text().add("Tempo total estimado, estudo + código, em minutos?  "), str(self._task.info.study)).set_number_only(True)
-        self.guide_text     =  InputBoolean(Text().add("Fez seguindo a aula presencial ou vídeo aula?       "), guided)
-        self.iaconcept_text =  InputBoolean(Text().add("ESTUDAR conceitos sem gerar a solução do problema?  "), concept)
-        self.iaproblem_text =  InputBoolean(Text().add("ENTENDER o problema a ser resolvido?                "), problem)
-        self.iacode_text    =  InputBoolean(Text().add("GERAR ou CORRIGIR código relacionado ao problema?   "), code)
-        self.iadebug_text   =  InputBoolean(Text().add("COMPREENDER mensagens de ERRO ou SAÍDA incorreta?   "), debug)
-        self.iarefactor_text=  InputBoolean(Text().add("REFATORAR o código só após fazer tudo sozinho?      "), refactor)
-        self.input_lines: list[InputLine] = [
-            self.rate_slide, 
-            self.human_text, 
-            self.time_text,
-            self.guide_text, 
-            self.iaconcept_text, 
-            self.iaproblem_text, 
-            self.iacode_text, 
-            self.iadebug_text,
-            self.iarefactor_text
+
+        self.quantity_input_lines: list[InputLine] = [
+            InputSlide("rate", Text().add(texto_auto), progression, self._task.info.rate // 10).set_locked(self._task.is_auto()),
+            InputText("study", Text().add("Qual tempo total estimado, estudo + código, em minutos?"), str(self._task.info.study)).set_number_only(True),
         ]
+        self.support_input_lines: list[InputLine] = [
+            InputText("friend", Text().add("Deixe em branco se fez sozinho, ou com o nome de quem ajudou"), self._task.info.friend),
+            InputBoolean("guided", Text().add("Fez o código copiando da aula presencial ou vídeo aula?").add(self.get_discount("guided")), guided),
+        ]
+        self.quality_input_lines: list[InputLine] = [
+            InputBoolean("concept", Text().add("ESTUDAR conceitos sem gerar a solução do problema?").add(self.get_discount("concept")), concept),
+            InputBoolean("problem", Text().add("ENTENDER o problema a ser resolvido?").add(self.get_discount("problem")), problem),
+            InputBoolean("code", Text().add("GERAR ou CORRIGIR código relacionado ao problema?").add(self.get_discount("code")), code),
+            InputBoolean("debug", Text().add("COMPREENDER mensagens de ERRO ou SAÍDA incorreta?").add(self.get_discount("debug")), debug),
+            InputBoolean("refactor", Text().add("REFATORAR o código só após fazer tudo sozinho?").add(self.get_discount("refactor")), refactor),
+        ]
+        self.all_input_lines: list[InputLine] = self.quantity_input_lines + self.support_input_lines + self.quality_input_lines
+        self.input_dict: dict[str, InputLine] = {line.id: line for line in self.all_input_lines}
+
+    def get_discount(self, tag: str) -> Text:
+        grade_dict = self._task.grader.grades
+        value = grade_dict.get(self._task.task_help.value, {}).get(tag, 100)
+        if value == 100:
+            return Text().addf("g", "      ")
+        else:
+            return Text().addf("y", f" -{100 - value}%".ljust(6))
 
     def set_focus(self):
-        for i, line in enumerate(self.input_lines):
+        for i, line in enumerate(self.all_input_lines):
             line.set_focus(i == self._line)
 
     def set_exit_fn(self, fn: Callable[[], None]):
@@ -194,21 +237,19 @@ class FloatingGrade(FloatingABC):
         content.clear()
         content.append(Text().add("         Pontue de acordo com a última fez que você (re)fez a tarefa do zero (sprint)         "))
         width = 90
-        somatorio = (Text() .addf('g', f'{round(self._task.get_percent()):>3}%'))
+        pad = 63
+        somatorio = (Text() .addf('g', f'{round(self._task.get_rate_percent() * self._task.get_quality_percent()/100):>3}% '))
 
         content.append(Text().add("╔") + Text().add(" Tarefa:").add(somatorio).center(width, Text.Token("═", "")))
-        enabled_option = "╠═ "
-        op_prefix = enabled_option if not self._task.is_leet() else "║  "
-        content.append(Text().add(op_prefix).add(self.rate_slide.get_text()))
-        content.append(Text().add(enabled_option).add(self.human_text.get_text()))
-        content.append(Text().add(enabled_option).add(self.time_text.get_text()))
-        content.append(Text().add(enabled_option).add(self.guide_text.get_text()))
+        left_side = "║ "
+        for line in self.quantity_input_lines:
+            content.append(Text().add(left_side).add(line.get_text(pad)))
+        content.append(Text().add("╠═") + Text().add(" Você fez com ajuda humana ou guiado? ").center(width, Text.Token("═", "")))
+        for line in self.support_input_lines:
+            content.append(Text().add(left_side).add(line.get_text(pad)))
         content.append(Text().add("╠═") + Text().add(" Você usou IA (LLMs) para ").center(width, Text.Token("═", "")))
-        content.append(Text().add(enabled_option).add(self.iaconcept_text.get_text()))
-        content.append(Text().add(enabled_option).add(self.iaproblem_text.get_text()))
-        content.append(Text().add(enabled_option).add(self.iacode_text.get_text()))
-        content.append(Text().add(enabled_option).add(self.iadebug_text.get_text()))
-        content.append(Text().add(enabled_option).add(self.iarefactor_text.get_text()))
+        for line in self.quality_input_lines:
+            content.append(Text().add(left_side).add(line.get_text(pad)))
         content.append(Text().add("╚═══════════════════════════════════════════════════════════").ljust(width, Text.Token("═", "")))
 
 
@@ -217,27 +258,26 @@ class FloatingGrade(FloatingABC):
         self.floating.draw()
 
     def change_task(self):
-        if not self._task.is_leet():
-            self._task.info.rate = self.rate_slide.index * 10
+        if not self._task.is_auto():
+            self._task.info.rate = int(self.input_dict["rate"].get_value()) * 10
         self._task.info.feedback = True
-        self._task.info.friend = self.human_text.text
-        self._task.info.guided = self.guide_text.value == "1"
-        self._task.info.ia_concept = self.iaconcept_text.value == "1"
-        self._task.info.ia_code = self.iacode_text.value == "1"
-        self._task.info.ia_debug = self.iadebug_text.value == "1"
-        self._task.info.ia_problem = self.iaproblem_text.value == "1"
-        self._task.info.ia_refactor = self.iarefactor_text.value == "1"
-        self._task.info.set_study(self.time_text.text)
+        self._task.info.friend = self.input_dict["friend"].get_value()
+        self._task.info.guided = self.input_dict["guided"].get_value() == "1"
+        self._task.info.ia_concept = self.input_dict["concept"].get_value() == "1"
+        self._task.info.ia_code = self.input_dict["code"].get_value() == "1"
+        self._task.info.ia_debug = self.input_dict["debug"].get_value() == "1"
+        self._task.info.ia_problem = self.input_dict["problem"].get_value() == "1"
+        self._task.info.ia_refactor = self.input_dict["refactor"].get_value() == "1"
+        self._task.info.set_study(self.input_dict["study"].get_value())
 
     def send_key_up(self):
-        if not(self._task.is_leet() and self._line == 1):
-            self._line = max(self._line - 1, 0)
+        self._line = max(self._line - 1, 0)
 
     def send_key_down(self):
-        self._line = min(self._line + 1, len(self.input_lines) - 1)
+        self._line = min(self._line + 1, len(self.all_input_lines) - 1)
 
     def send_key(self, key: int):
-        self.input_lines[self._line].send_key(key)
+        self.all_input_lines[self._line].send_key(key)
         # self.change_task()
     
     def process_input(self, key: int) -> int:
@@ -247,7 +287,7 @@ class FloatingGrade(FloatingABC):
         elif key == curses.KEY_DOWN or key == ord("\t"):
             self.send_key_down()
         elif key == ord('\n'):
-            if self._line != len(self.input_lines) - 1:
+            if self._line != len(self.all_input_lines) - 1:
                 self.send_key_down()
             else:
                 self.floating.enable = False

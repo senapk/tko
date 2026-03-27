@@ -27,11 +27,11 @@ class Game:
             return self.tasks[key]
         raise Warning(f"fail: tarefa '{key}' não encontrada no curso")
 
-    def get_xp_resume(self):
+    def get_xp_resume(self, include_main: bool, include_side: bool):
         total = 0
         obtained = 0
         for q in self.quests.values():
-            o, t = q.get_xp()
+            o, t = q.get_xp(include_main=include_main, include_side=include_side)
             total += t
             obtained += o
         return obtained, total

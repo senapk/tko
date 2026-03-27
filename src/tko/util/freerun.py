@@ -1,3 +1,5 @@
+import signal
+
 from tko.util.text import Text
 from tko.util.raw_terminal import RawTerminal
 from tko.util.runner import Runner
@@ -49,7 +51,12 @@ class Free:
                 print(Text().center(RawTerminal.get_terminal_size(), Text.Token("─")))
             else:
                 print(header.center(RawTerminal.get_terminal_size(), Text.Token("─")))
-            answer = subprocess.run(cmd, cwd=folder, shell=True if isinstance(cmd, str) else False, text=True)
+            answer = subprocess.Popen(cmd, cwd=folder, shell=True if isinstance(cmd, str) else False, text=True, preexec_fn=os.setsid)
+            try:
+                answer.wait()
+            except KeyboardInterrupt:
+                answer.kill()
+                os.killpg(os.getpgid(answer.pid), signal.SIGTERM)
             if answer.returncode != 0 and answer.returncode != 1:
                 print(Runner.decode_code(answer.returncode))
         solver.reset()

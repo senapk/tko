@@ -35,7 +35,7 @@ class DiffBuilder:
 
     @staticmethod
     def render_white(text: str) -> str:
-        return text.replace(' ', symbols.whitespace.text).replace('\n', symbols.newline.text)
+        return text.replace(' ', symbols.middle_dot.text).replace('\n', symbols.newline.text)
 
     def first_failure_diff(self, a_text: str, b_text: str | None, first_failure: int) -> list[Text]:
         if b_text is None:

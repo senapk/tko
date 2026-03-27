@@ -39,30 +39,30 @@ class TaskParser:
     def decode_task_types(self, info: str):
         if self.task is None:
             return
-        for c in info:
+        for tag in info.split(":"):
             # if c is digit, set xp
-            if c.isdigit():
-                self.task.xp = int(c)
-            elif c == "a":
-                self.task.task_rate = Task.TaskRate.AUTO
-            elif c == "u":
-                self.task.task_rate = Task.TaskRate.USER
-            elif c == "t":
-                self.task.task_rate = Task.TaskRate.TICK
-            elif c == "=":
+            if tag.isdigit():
+                self.task.xp = int(tag)
+            elif tag == "auto":
+                self.task.task_eval = Task.TaskEval.AUTO
+            elif tag == "user":
+                self.task.task_eval = Task.TaskEval.USER
+            elif tag == "main":
                 self.task.task_path = Task.TaskPath.MAIN
-            elif c == "+":
+            elif tag == "side":
                 self.task.task_path = Task.TaskPath.SIDE
-            elif c == "?":
-                self.task.task_help = Task.TaskHelp.OPEN
-            elif c == "!":
-                self.task.task_help = Task.TaskHelp.EXAM
-            elif c == ">":
-                self.task.task_action = Task.TaskAction.VIEW
-            elif c == "#":
-                self.task.task_action = Task.TaskAction.EDIT
+            elif tag == "free":
+                self.task.task_help = Task.TaskHelp.FREE
+            elif tag == "part":
+                self.task.task_help = Task.TaskHelp.PART
+            elif tag == "zero":
+                self.task.task_help = Task.TaskHelp.ZERO
+            elif tag == "view":
+                self.task.task_mode = Task.TaskMode.VIEW
+            elif tag == "edit":
+                self.task.task_mode = Task.TaskMode.EDIT
             else:
-                raise Warning(f"Parsing {self.index_path}:{self.task.line_number}, Tipo de tarefa desconhecido: {c}")
+                print(f"Parsing {self.index_path}:{self.task.line_number}, Tipo de tarefa desconhecido: {tag}")
 
     def __parse_key_task_types(self, tags: str) -> str:
         if self.task is None:
@@ -108,7 +108,7 @@ class TaskParser:
             return self
         
         task.set_origin_folder(Path(os.path.dirname(self.redirect_from_readme(link))))
-        if task.task_action == Task.TaskAction.VIEW:
+        if task.task_mode == Task.TaskMode.VIEW:
             self.task.target = self.redirect_from_readme(link)
         else:
             self.task.target = link

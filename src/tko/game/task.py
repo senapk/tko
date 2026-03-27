@@ -1,33 +1,82 @@
 # from typing import override
+from __future__ import annotations
 from pathlib import Path
 
 from tko.util.symbols import symbols
 from tko.util.text import Text
 from tko.game.tree_item import TreeItem
 from tko.game.task_info import TaskInfo
-from tko.game.task_grader import TaskGrader
+
 import enum
+
 
 
 class Task(TreeItem):
     str_index = "idx"
 
-    class TaskRate(enum.Enum):
+    class TaskEval(enum.Enum):
         AUTO = "auto" # rate uses % of test cases passed
         USER = "user" # rate uses user self-evaluation
-        TICK = "tick" # no rate, just tick when complete
 
     class TaskPath(enum.Enum):
         MAIN = "main" # main task, required to complete the quest
         SIDE = "side" # side task, optional to complete the quest, usually with less xp reward
 
     class TaskHelp(enum.Enum):
-        OPEN = "open" # help allowed
-        EXAM = "exam" # no help allowed, must be done alone
+        FREE = "free" # help allowed without penalty
+        PART = "part" # help allowed with partial penalty
+        ZERO = "zero" # if help is given, task is not completed (0% progress)
 
-    class TaskAction(enum.Enum):
+    class TaskMode(enum.Enum):
         VIEW = "view" # view task details
         EDIT = "edit" # edit task details
+
+    class TaskGrader:
+        def __init__(self, task_help: Task.TaskHelp, task_info: TaskInfo):
+            self.info = task_info
+            self.help = task_help
+            self.grades: dict[str, dict[str, int]] = {
+                Task.TaskHelp.FREE.value: {
+                    "guided": 100,
+                    "code": 100,
+                    "debug": 100,
+                    "problem": 100,
+                },
+                Task.TaskHelp.PART.value: {
+                    "guided": 80,
+                    "code": 40,
+                    "debug": 80,
+                    "problem": 90,
+                },
+                Task.TaskHelp.ZERO.value: {
+                    "guided": 0,
+                    "code": 0,
+                    "debug": 0,
+                    "problem": 0,
+                },
+            }
+
+
+        def get_rate_percent(self):
+            rate = float(self.info.rate)
+            return rate
+        
+        def get_quality_percent(self):
+            if not self.info.feedback:
+                return 0.0
+            rate = 100.0
+            if self.info.guided:
+                rate *= self.grades[self.help.value]["guided"] / 100.0
+            if self.info.ia_code:
+                rate *= self.grades[self.help.value]["code"] / 100.0
+            if self.info.ia_debug:
+                rate *= self.grades[self.help.value]["debug"] / 100.0
+            if self.info.ia_problem:
+                rate *= self.grades[self.help.value]["problem"] / 100.0
+            return rate
+
+        def get_ratio(self) -> float:
+            return self.get_rate_percent() / 100.0
 
     def __init__(self):
 
@@ -35,13 +84,14 @@ class Task(TreeItem):
         self.line_number = 0
         self.line = ""
         self.info = TaskInfo()
-        self.grader = TaskGrader(self.info)
         self.main_idx: int = 0
         
-        self.task_rate: Task.TaskRate = Task.TaskRate.AUTO
+        self.task_eval: Task.TaskEval = Task.TaskEval.AUTO
         self.task_path: Task.TaskPath = Task.TaskPath.MAIN
-        self.task_help: Task.TaskHelp = Task.TaskHelp.OPEN
-        self.task_action: Task.TaskAction = Task.TaskAction.EDIT
+        self.task_help: Task.TaskHelp = Task.TaskHelp.PART
+        self.task_mode: Task.TaskMode = Task.TaskMode.EDIT
+        
+        self.grader = Task.TaskGrader(self.task_help, self.info)
 
         self.skills: dict[str, int] = {} # skills
         
@@ -69,14 +119,14 @@ class Task(TreeItem):
     def is_optional(self):
         return self.task_path == Task.TaskPath.SIDE
     
-    def is_leet(self):
-        return self.task_rate == Task.TaskRate.AUTO
+    def is_auto(self):
+        return self.task_eval == Task.TaskEval.AUTO
 
     def is_reachable(self) -> bool:
         return self.__is_reachable
 
     def is_link(self):
-        if self.task_action == Task.TaskAction.VIEW:
+        if self.task_mode == Task.TaskMode.VIEW:
             return True
         return self.__origin_folder is None and self.__workspace_folder is None
     
@@ -86,7 +136,7 @@ class Task(TreeItem):
         return self
 
     def is_import_type(self):
-        return self.task_action == Task.TaskAction.EDIT and self.__origin_folder is not None and self.__workspace_folder is not None
+        return self.task_mode == Task.TaskMode.EDIT and self.__origin_folder is not None and self.__workspace_folder is not None
     
     def is_static_type(self):
         if self.is_link():
@@ -159,7 +209,7 @@ class Task(TreeItem):
     def is_db_empty(self) -> bool:
         return len(self.info.get_kv()) == 0
 
-    def get_prog_color(self, value: int, min_value: None | int = None) -> str:
+    def get_rate_color(self, value: int, min_value: None | int = None) -> str:
         if min_value is None:
             min_value = self.default_min_value
         prog = value
@@ -173,10 +223,10 @@ class Task(TreeItem):
             return "g"
         return "w"  
 
-    def get_prog_symbol(self, value: int, min_value: None | int = None) -> Text:
+    def get_rate_symbol(self, value: int, min_value: None | int = None) -> Text:
         if min_value is None:
             min_value = self.default_min_value
-        color = self.get_prog_color(value, min_value)
+        color = self.get_rate_color(value, min_value)
         prog = value
         if prog == 0:
             return Text().add("x")
@@ -193,23 +243,32 @@ class Task(TreeItem):
             return 1
         return self.xp
 
-    def get_percent(self) -> float:
-        value = self.grader.get_percent()
+    def get_rate_percent(self) -> float:
+        value = self.grader.get_rate_percent()
         if value < 0.1:
             return 0.0
         return value
+    
+    def get_quality_percent(self) -> float:
+        if self.task_help == Task.TaskHelp.FREE:
+            return 0.0
+        value = self.grader.get_quality_percent()
+        if value < 0.1:
+            return 0.0
+        return value
+    
 
     def get_ratio(self) -> float:
         return self.grader.get_ratio()
 
     def is_complete(self):
-        return self.grader.get_percent() >= 70
+        return self.grader.get_rate_percent() >= 70
 
     def not_started(self):
-        return self.grader.get_percent() == 0
+        return self.grader.get_rate_percent() == 0
 
     def in_progress(self):
-        return 0 < self.grader.get_percent() < 100
+        return 0 < self.grader.get_rate_percent() < 100
 
     # @override
     def __str__(self):

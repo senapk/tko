@@ -345,7 +345,7 @@ class Tester:
         # output.addf("M", f"{timer}l {value}  ")
         color = "R" if self.locked_index else "G"
         if self.settings.app.get_use_borders():
-            output.addf(color + "b", symbols.sharp_r.text)
+            output.addf(color + "b", symbols.sharp_right.text)
         else:
             output.addf("B", " ")
 
@@ -386,8 +386,8 @@ class Tester:
 
     def get_diff_symbol(self) -> str:
         if self.settings.app.get_diff_mode() == DiffMode.DOWN:
-            return symbols.diff_down.text
-        return symbols.diff_left.text
+            return symbols.arrow_down.text
+        return symbols.arrow_right.text
 
     def make_bottom_line(self) -> list[Text]:
         cmds: list[Text] = []

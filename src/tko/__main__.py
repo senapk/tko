@@ -116,10 +116,14 @@ class Main:
         action.execute()
 
     @staticmethod
-    def load_repo(dir_path: Path, show_warnings: bool = True) -> tuple[Repository | None, Path | None]:
+    def load_repo(dir_path: Path, show_warnings: bool = True, auto_load: bool = True) -> tuple[Repository | None, Path | None]:
         dir_parent = RepPaths.rec_search_for_repo_parents(dir_path)
         if dir_parent is not None:
-            return Repository(dir_parent, recursive_search=False), dir_parent
+            repo =Repository(dir_parent, recursive_search=False)
+            if auto_load:
+                repo.load_config()
+            return repo, dir_parent
+
         if show_warnings:
             print("Nenhum repositório TKO encontrado.")
         return None, None
@@ -143,13 +147,13 @@ class Main:
         rep_starter.execute()
 
     @staticmethod
-    def remote_ls(args: argparse.Namespace):
+    def remote_lists(args: argparse.Namespace):
         settings = Settings(args.globaldir)
         repo, _ = Main.load_repo(args.changedir)
         if repo is None:
             return
         rep_actions = RepSourceActions(settings, repo)
-        rep_actions.remote_ls()
+        rep_actions.remote_list()
 
 
     @staticmethod
@@ -437,7 +441,7 @@ class Parser:
 
         source_list = sub_source.add_parser("list", help="List remote task sources", add_help=False)
         source_list.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
-        source_list.set_defaults(func=Main.remote_ls)
+        source_list.set_defaults(func=Main.remote_lists)
 
         source_del = sub_source.add_parser("rm", help="Remove a remote task source", add_help=False)
         source_del.add_argument( "-h", "--help", action="help", help="Show help message and exit" )

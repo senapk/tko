@@ -9,7 +9,7 @@ class RepSourceActions:
         self.settings = settings
         self.repo = repo
 
-    def remote_ls(self):
+    def remote_list(self):
         rep = self.repo
         sources = rep.data.get_sources()
         print("Você também pode configurar as fontes e filtros manualmente editando o arquivo:")

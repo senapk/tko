@@ -50,6 +50,7 @@ class GuiKeys:
     borders = "B"
     search = "/"
     self_evaluate = "a"
+    self_evaluate_full = "A"
     delete_folder = "D"
     diff = "d"
     unfold_patch = "V"
