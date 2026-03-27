@@ -281,14 +281,11 @@ class Gui:
         help_lines.append(Text.format(" Calibrar {r} Para calibrar os direcionais do teclado", GuiKeys.calibrate))
 
         help_lines.append(Text().addf("g", " Símbolos ").center(dx, Text.Token("-")))
-        help_lines.append(Text.format("{g}   Tarefa sugeridas        , {w} Tarefa opcional", symbols.star_filled, symbols.star_void))
-        help_lines.append(Text.format("{y}   Pode consultar e refazer, {r} Fazer sozinho sem consulta", symbols.task_part, symbols.task_zero))
-        help_lines.append(Text.format("{g}{g}{g} Fez Autoavaliação       , {w}{w}{w} Sem Autoavaliação", 
-                                      symbols.circle_filled, symbols.square_filled, symbols.diamond_filled,
-                                      symbols.circle_open, symbols.square_filled, symbols.diamond_void))
-        help_lines.append(Text.format("{w} Nota por testes, {w} Nota manual por critério, {w} Checkbox", 
-                                      symbols.circle_open, symbols.diamond_void, symbols.square_void))
-        
+        help_lines.append(Text.format("{}   Tarefa sugeridas        , {} Tarefa opcional", symbols.star_filled.set_fmt("y"), symbols.star_void))
+        help_lines.append(Text.format("{}   Pode consultar e refazer, {r} Fazer sozinho sem consulta", symbols.task_reload.set_fmt("g"), symbols.task_zero.set_fmt("r")))
+        help_lines.append(Text.format("{g}{g}{g} Fez Autoavaliação       , {}{}{} Sem Autoavaliação", 
+                                      symbols.right_triangle_filled.set_fmt("g"), symbols.down_triangle_filled.set_fmt("g"), symbols.task_view.set_fmt("g"),
+                                      symbols.right_triangle_void.set_fmt(""), symbols.square_void.set_fmt(""), symbols.task_view.set_fmt("")))
         help_lines.append(Text.format("{g}", " Navegação ").center(dx, Text.Token("-")))
         help_lines.append(Text.format("  setas {r} Para navegar entre os elementos", "↑↓→"))
         help_lines.append(Text.format("    Enter {r} Interage com o elemento de acordo com o contexto", "↲"))
