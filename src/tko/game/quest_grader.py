@@ -19,7 +19,7 @@ class QuestGrader:
         return earned_xp, total_xp
     
     @staticmethod
-    def get_percent(earned_xp: float, total_xp: float) -> float:
+    def get_percent(earned_xp: float, total_xp: float) -> float | None:
         if total_xp == 0:
-            return 0.0
+            return None
         return (earned_xp * 100.0) / total_xp

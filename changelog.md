@@ -1,5 +1,8 @@
 # Changelog
 
+- 9.2.0
+  - add: layout improvements
+  - refactor: task logic and types
 - 9.0.0
   - add: new help panel with more detailed instructions and tips
   - refactor: all grammar to describe tasks and quests in a more intuitive way

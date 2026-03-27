@@ -1,3 +1,5 @@
+import re
+
 from tko.settings.repository import Repository
 from tko.util.text import Text
 from tko.util.to_asc import SearchAsc
@@ -153,7 +155,7 @@ class TaskTree:
         if t.is_link():
             if t.info.feedback:
                 return symbols.task_view.set_fmt("g")
-            return symbols.task_view
+            return symbols.task_view.set_fmt("")
 
         if not t.is_import_type():
             if t.info.feedback:
@@ -166,24 +168,11 @@ class TaskTree:
         if t.info.feedback:
             return symbols.up_triangle_filled.set_fmt("g")
         return symbols.up_triangle_void
-    
-    # def get_task_self_symbol(self, t: Task) -> Text:
-    #     if t.task_eval == Task.TaskEval.AUTO:
-    #         if t.info.feedback:
-    #             return Text().add(symbols.square_filled.set_fmt("g"))
-    #         else:
-    #             return Text().add(symbols.square_void)
-    #     if t.task_eval == Task.TaskEval.USER:
-    #         if t.info.feedback:
-    #             return Text().add(symbols.diamond_filled.set_fmt("g"))
-    #         else:
-    #             return Text().add(symbols.diamond_void)
-    #     return Text().add("X")
 
     def get_task_path_symbol(self, t: Task) -> Text.Token:
         if t.task_path == Task.TaskPath.MAIN:
             return symbols.star_filled.set_fmt("y")
-        return symbols.star_filled.set_fmt("")
+        return symbols.star_void.set_fmt("")
     
     def get_task_help_symbol(self, t: Task) -> Text.Token:
         if t.task_help == Task.TaskHelp.FREE:
@@ -209,14 +198,20 @@ class TaskTree:
             return Text().addf("g", symbols.check)
         return Text().addf("y", str(round(prog / 10)).rjust(1, "0"))
 
-    def format_percent_2s(self, value: float) -> Text:
+    def format_percent_2s(self, value: float | None) -> Text:
+        if value is None:
+            return Text().addf("", "--")
         prog = round(value)
         if prog < 0.1:
-            return Text().addf("", symbols.rounded_square_void + symbols.rounded_square_void)
+            return Text().addf("", symbols.middle_dot + symbols.middle_dot)
         if prog > 99:
-            return Text().addf("g", symbols.rounded_square_filled + symbols.rounded_square_filled)
+            return Text().addf("g", Text() + "▬▬")
+            
         return Text().addf("y", str(prog).rjust(2, "0"))
         
+    def get_percent_color(self, value: float) -> str:
+        color = "g" if value > 99 else ("y" if value > 49 else "r")
+        return color
 
     def __str_task(self, focus_color: str, t: Task, lig_quest: str, quest_reachable: bool) -> Text:
         color_aval = "g" if quest_reachable and t.is_reachable() else "y"
@@ -227,21 +222,15 @@ class TaskTree:
 
         output.add(self.get_task_down_symbol(t)).add(" ")
         output.add(self.format_percent_1s(t.get_rate_percent())).add(" ")
-        # output.add(self.get_task_self_symbol(t)).add(" ")
         output.add(self.get_task_help_symbol(t)).add(" ")
         output.add(self.get_task_path_symbol(t)).add(" ")
 
         in_focus = focus_color != ""
-        # output.add(self.style.round_l(focus_color) if in_focus else " ")
         color = "" if not in_focus else "k" + focus_color
         output.add(self.color_task_title(t.get_full_title(self.get_max_quest_itens_key_size(t.quest_key)), color))
         output.ljust(self.get_max_title(), Text.Token(" ", focus_color))
-        # output.add(self.style.round_r(focus_color) if in_focus else " ") 
 
-        if in_focus:
-            output.add("◀ ")
-        else:
-            output.add("  ")
+        output.add(symbols.left_triangle_filled if in_focus else " ")
 
         if Flags.show_time.is_true():
             hours, minutes = self.get_task_hours_minutes(t)
@@ -270,8 +259,8 @@ class TaskTree:
         output: Text = Text().addf(color_reachable, con).add(" ")
 
         output.add(symbols.star_filled)
-        output.add(self.format_percent_2s(q.get_percent_main())).add("|")
-        output.add(self.format_percent_2s(q.get_percent_side()))
+        output.add(self.format_percent_2s(q.get_percent(include_main=True, include_side=False))).add("|")
+        output.add(self.format_percent_2s(q.get_percent(include_main=False, include_side=True)))
         output.add(symbols.star_void).add(" ")
 
         in_focus = focus_color != ""
@@ -288,21 +277,25 @@ class TaskTree:
             # output.add(self.style.round_l(focus_color))
         title = q.get_full_title()
         if focus_color:
-            for i, _ in enumerate(title.data):
-                title.data[i].set_fmt(focus_color)
+            title.set_background(focus_color)
     
         output.add(title)
         output = output.ljust(self.get_max_title(), Text.Token(self.filler, focus_color))
-        # output.add(self.style.round_r(focus_color) if in_focus else " ")
-        
-        if in_focus:
-            output.add("◀ ")
-        else:
-            output.add("  ")
-        
+        output.add(symbols.left_triangle_filled if in_focus else " ")
+                
         if Flags.show_time.is_true():
             hours, minutes = self.get_quest_time(q)
             output.add(self.format_hours_minutes("g", hours, minutes))
+
+        main_obtained, main_total = q.get_xp(include_main=True, include_side=False)
+        side_obtained, _ = q.get_xp(include_main=False, include_side=True)
+        if main_total != 0:
+            main_rate = round(((main_obtained + side_obtained) * 100.0) / main_total)
+            color = "g" if main_rate > 99 else ("y" if main_rate > 49 else "r")
+            output.addf(color, f"{main_rate:>3}%")
+        else:
+            output.addf("", "----")
+
 
         return output
 
@@ -611,7 +604,7 @@ class TaskTree:
         folder = task.get_workspace_folder()
         if folder is None:
             return False
-        
+
         lang = self.rep.data.lang
         drafts = Drafts.load_drafts_only(folder, lang)
         if drafts:

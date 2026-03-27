@@ -14,7 +14,7 @@ import curses
 
 
 class InputLine(ABC):
-    SELECTED_COLOR = "g"
+    SELECTED_COLOR = "y"
     LOCKED_COLOR = "r"
     OPTION_COLOR = "X"
 
@@ -152,7 +152,7 @@ class InputBoolean(InputLine):
             text.addf(color, self.prefix)
         else:
             text.add(self.prefix)
-        text.ljust(pad).add(" │ ")
+        text.ljust(pad).add("│ ")
         text.addf(self.OPTION_COLOR if self.value == "0" else color, "Não").add(" ").addf(self.OPTION_COLOR if self.value == "1" else color, "Sim")
         return text
 
@@ -182,7 +182,7 @@ class FloatingGrade(FloatingABC):
 
 
         if self._task.is_auto():
-            texto_auto = "Percentual de testes que passaram na última execução"
+            texto_auto = "Taxa de testes que passou na última execução:"
         else:
             texto_auto = "Informe qual percentual da atividade você fez?"
         
@@ -199,14 +199,14 @@ class FloatingGrade(FloatingABC):
         ]
         self.support_input_lines: list[InputLine] = [
             InputText("friend", Text().add("Deixe em branco se fez sozinho, ou com o nome de quem ajudou"), self._task.info.friend),
-            InputBoolean("guided", Text().add("Fez o código copiando da aula presencial ou vídeo aula?").add(self.get_discount("guided")), guided),
+            InputBoolean("guided",  Text().add("Fez o código copiando da aula ou vídeo aula?      ").addf("g", "   COPIOU:").add(self.get_discount("guided")), guided),
         ]
         self.quality_input_lines: list[InputLine] = [
-            InputBoolean("concept", Text().add("ESTUDAR conceitos sem gerar a solução do problema?").add(self.get_discount("concept")), concept),
-            InputBoolean("problem", Text().add("ENTENDER o problema a ser resolvido?").add(self.get_discount("problem")), problem),
-            InputBoolean("code", Text().add("GERAR ou CORRIGIR código relacionado ao problema?").add(self.get_discount("code")), code),
-            InputBoolean("debug", Text().add("COMPREENDER mensagens de ERRO ou SAÍDA incorreta?").add(self.get_discount("debug")), debug),
-            InputBoolean("refactor", Text().add("REFATORAR o código só após fazer tudo sozinho?").add(self.get_discount("refactor")), refactor),
+            InputBoolean("concept", Text().add("ESTUDAR conceitos sem gerar a solução do problema?").addf("g", "  ESTUDAR:").add(self.get_discount("concept")), concept),
+            InputBoolean("problem", Text().add("ENTENDER o problema a ser resolvido?              ").addf("g", " ENTENDER:").add(self.get_discount("problem")), problem),
+            InputBoolean("code",    Text().add("GERAR ou CORRIGIR código relacionado ao problema? ").addf("g", " CORRIGIR:").add(self.get_discount("code")), code),
+            InputBoolean("debug",   Text().add("COMPREENDER mensagens de ERRO ou SAÍDA incorreta? ").addf("g", "  DEBUGAR:").add(self.get_discount("debug")), debug),
+            InputBoolean("refactor",Text().add("REFATORAR o código só após fazer tudo sozinho?    ").addf("g", "REFATORAR:").add(self.get_discount("refactor")), refactor),
         ]
         self.all_input_lines: list[InputLine] = self.quantity_input_lines + self.support_input_lines + self.quality_input_lines
         self.input_dict: dict[str, InputLine] = {line.id: line for line in self.all_input_lines}
@@ -214,10 +214,11 @@ class FloatingGrade(FloatingABC):
     def get_discount(self, tag: str) -> Text:
         grade_dict = self._task.grader.grades
         value = grade_dict.get(self._task.task_help.value, {}).get(tag, 100)
+        size = 5
         if value == 100:
-            return Text().addf("g", "      ")
+            return Text().addf("g", " " * size)
         else:
-            return Text().addf("y", f" -{100 - value}%".ljust(6))
+            return Text().addf("y", f"-{100 - value}%".ljust(size))
 
     def set_focus(self):
         for i, line in enumerate(self.all_input_lines):
@@ -232,13 +233,14 @@ class FloatingGrade(FloatingABC):
 
     def update_content(self):
         self.set_focus()
-
         content = self.floating.content
         content.clear()
         content.append(Text().add("         Pontue de acordo com a última fez que você (re)fez a tarefa do zero (sprint)         "))
         width = 90
-        pad = 63
-        somatorio = (Text() .addf('g', f'{round(self._task.get_rate_percent() * self._task.get_quality_percent()/100):>3}% '))
+        pad = 66
+        dummy_task = self._task.clone()
+        self.change_task(dummy_task, self.input_dict)
+        somatorio = (Text() .addf('g', f'{round(dummy_task.get_rate_percent() * dummy_task.get_quality_percent()/100):>3}% '))
 
         content.append(Text().add("╔") + Text().add(" Tarefa:").add(somatorio).center(width, Text.Token("═", "")))
         left_side = "║ "
@@ -257,18 +259,19 @@ class FloatingGrade(FloatingABC):
         self.update_content()
         self.floating.draw()
 
-    def change_task(self):
-        if not self._task.is_auto():
-            self._task.info.rate = int(self.input_dict["rate"].get_value()) * 10
-        self._task.info.feedback = True
-        self._task.info.friend = self.input_dict["friend"].get_value()
-        self._task.info.guided = self.input_dict["guided"].get_value() == "1"
-        self._task.info.ia_concept = self.input_dict["concept"].get_value() == "1"
-        self._task.info.ia_code = self.input_dict["code"].get_value() == "1"
-        self._task.info.ia_debug = self.input_dict["debug"].get_value() == "1"
-        self._task.info.ia_problem = self.input_dict["problem"].get_value() == "1"
-        self._task.info.ia_refactor = self.input_dict["refactor"].get_value() == "1"
-        self._task.info.set_study(self.input_dict["study"].get_value())
+    @staticmethod
+    def change_task(task: Task, input_dict: dict[str, InputLine]):
+        if not task.is_auto():
+            task.info.rate = int(input_dict["rate"].get_value()) * 10
+        task.info.feedback = True
+        task.info.friend = input_dict["friend"].get_value()
+        task.info.guided = input_dict["guided"].get_value() == "1"
+        task.info.ia_concept = input_dict["concept"].get_value() == "1"
+        task.info.ia_code = input_dict["code"].get_value() == "1"
+        task.info.ia_debug = input_dict["debug"].get_value() == "1"
+        task.info.ia_problem = input_dict["problem"].get_value() == "1"
+        task.info.ia_refactor = input_dict["refactor"].get_value() == "1"
+        task.info.set_study(input_dict["study"].get_value())
 
     def send_key_up(self):
         self._line = max(self._line - 1, 0)
@@ -291,7 +294,7 @@ class FloatingGrade(FloatingABC):
                 self.send_key_down()
             else:
                 self.floating.enable = False
-                self.change_task()
+                self.change_task(self._task, self.input_dict)
                 if self.fn_exit is not None:
                     self.fn_exit(self._task)
         elif key == curses.KEY_EXIT:

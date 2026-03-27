@@ -64,24 +64,25 @@ class Quest(TreeItem):
         output = f"{line} {tasks_size} {key}{self.get_title()} {self.skills} {self.requires}"
         return output
 
-    def get_resume_by_percent(self) -> Text:
-        value: int = min(100, round(self.get_percent_main()))
-        return Text().addf(self.get_grade_color(), (str(value) + "%").rjust(4))
+    # def get_resume_by_percent(self) -> Text:
+    #     value: int = min(100, round(self.get_percent_main()))
+    #     return Text().addf(self.get_grade_color(), (str(value) + "%").rjust(4))
     
-    def get_requirement(self) -> Text:
-        return Text().addf("y", f"[{self.min_percent_completion}%]")
+    # def get_requirement(self) -> Text:
+    #     return Text().addf("y", f"[{self.min_percent_completion}%]")
 
-    def get_grade_color(self) -> str:
-        if self.not_started():
-            return "m"
-        if not self.is_complete():
-            return "r"
-        if self.get_percent_main() == 100:
-            return "g"
-        return "y"
+    # def get_grade_color(self) -> str:
+    #     if self.not_started():
+    #         return "m"
+    #     if not self.is_complete():
+    #         return "r"
+    #     if self.get_percent_main() == 100:
+    #         return "g"
+    #     return "y"
 
     def is_complete(self):
-        return self.get_percent_main() >= self.min_percent_completion
+        value = self.get_percent_main()
+        return value is None or value >= self.min_percent_completion
 
     def add_task(self, task: Task):
         task.skills.update(self.skills)  # apply quest skills to task
@@ -104,29 +105,27 @@ class Quest(TreeItem):
             tasks_info.append(QuestGrader.Elem(t.is_optional(), t.xp, percent))
         return QuestGrader.calc_xp_earned_total(tasks_info)
         
-    def get_percent_main(self) -> float:
-        obtained, total = self.get_xp(include_main=True, include_side=False)
+    def get_percent(self, include_main: bool, include_side: bool) -> float | None:
+        obtained, total = self.get_xp(include_main=include_main, include_side=include_side)
         return QuestGrader.get_percent(obtained, total)
 
-    def get_percent_side(self) -> float:
-        obtained, total = self.get_xp(include_main=False, include_side=True)
-        return QuestGrader.get_percent(obtained, total)
+    def get_percent_main(self) -> float | None:
+        return self.get_percent(include_main=True, include_side=False)
     
-    def get_percent_total(self) -> float:
-        obtained, total = self.get_xp(include_main=True, include_side=True)
-        return QuestGrader.get_percent(obtained, total)
+    def get_percent_side(self) -> float | None:
+        return self.get_percent(include_main=False, include_side=True)
 
-    def in_progress(self):
-        if self.is_complete():
-            return False
-        for t in self.__tasks:
-            if t.get_rate_percent() != 0:
-                return True
-        return False
+    # def in_progress(self):
+    #     if self.is_complete():
+    #         return False
+    #     for t in self.__tasks:
+    #         if t.get_rate_percent() != 0:
+    #             return True
+    #     return False
 
-    def not_started(self):
-        if self.is_complete():
-            return False
-        if self.in_progress():
-            return False
-        return True
+    # def not_started(self):
+    #     if self.is_complete():
+    #         return False
+    #     if self.in_progress():
+    #         return False
+    #     return True

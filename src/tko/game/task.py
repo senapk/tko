@@ -105,6 +105,27 @@ class Task(TreeItem):
         self.__is_reachable = False
         self.default_min_value = 5 # default min grade to complete task
 
+    def clone(self) -> Task:
+        new_task = Task()
+        new_task.line_number = self.line_number
+        new_task.line = self.line
+        new_task.info = self.info.clone()
+        new_task.main_idx = self.main_idx
+        new_task.task_eval = self.task_eval
+        new_task.task_path = self.task_path
+        new_task.task_help = self.task_help
+        new_task.task_mode = self.task_mode
+        new_task.grader = Task.TaskGrader(new_task.task_help, new_task.info)
+        new_task.skills = self.skills.copy()
+        new_task.xp = self.xp
+        new_task.target = self.target
+        new_task.quest_key = self.quest_key
+        new_task.remote_name = self.remote_name
+        new_task.__origin_folder = self.__origin_folder
+        new_task.__workspace_folder = self.__workspace_folder
+        new_task.__is_reachable = self.__is_reachable
+        return new_task
+
     def get_full_title(self, key_pad: None | int):
         if key_pad is None:
             key_pad = len(self.get_key())
@@ -179,21 +200,6 @@ class Task(TreeItem):
         if self.str_index in kv_dict:
             self.main_idx = int(kv_dict[self.str_index])
 
-        # deprecated
-        # for k, val in kv_dict.items():
-        #     if k == "cov" or k == 'cove':
-        #         self.info.rate = int(val)
-        #     elif k == "aut" or k == "appr":
-        #         self.info.flow = int(val)
-        #     elif k == "hab" or k == "auto":
-        #         self.info.edge = int(val)
-        #     elif k == "desc":
-        #         self.info.neat = int(val)
-        #     elif k == "desire":
-        #         self.info.cool = int(val)
-        #     elif k == "effort":
-        #         self.info.easy = int(val)
-
     def load_from_db(self, value: str):
         if value.startswith("{"):
             self.decode_from_dict(value)
@@ -251,12 +257,11 @@ class Task(TreeItem):
     
     def get_quality_percent(self) -> float:
         if self.task_help == Task.TaskHelp.FREE:
-            return 0.0
+            return 100
         value = self.grader.get_quality_percent()
         if value < 0.1:
             return 0.0
         return value
-    
 
     def get_ratio(self) -> float:
         return self.grader.get_ratio()
