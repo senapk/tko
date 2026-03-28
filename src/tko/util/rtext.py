@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable, Any
 from wcwidth import wcwidth
+import enum
 
 Run = tuple[str, str]  # (style, text)
 
@@ -52,6 +53,15 @@ def normalize_style(style: str) -> str:
         elif c in ATTR and c not in attr:
             attr.append(c)
     return "".join(attr + fg + bg)
+
+class RenderMode(enum.Enum):
+    ANSI = "ansi"
+    PLAIN = "plain"
+    DEBUG = "debug"
+
+class RenderConfig:
+    mode: RenderMode = RenderMode.ANSI
+    enabled: bool = True
 
 
 @dataclass(frozen=True)
@@ -226,7 +236,12 @@ class RText:
     def plain(self) -> str:
         return "".join(text for _, text in self.runs)
 
-    def __str__(self) -> str:
+    def render(self, mode: RenderMode | None = None) -> str:
+        mode = mode or RenderConfig.mode
+        if not RenderConfig.enabled or mode == RenderMode.PLAIN:
+            return self.plain()
+        if mode == RenderMode.DEBUG:
+            return "".join(f"[{s}]{t}" for s, t in self.runs)
         out = ""
         for style, text in self.runs:
             if style:
@@ -234,6 +249,9 @@ class RText:
             else:
                 out += text
         return out
+
+    def __str__(self) -> str:
+        return self.render()
 
     def __len__(self) -> int:
         return len(self.plain())
@@ -558,10 +576,17 @@ class RBuffer:
 
     def __iadd__(self, other: Any):
         return self.add(other)
+    
+    def __str__(self) -> str:
+        return self.to_text().render()
 
 if __name__ == "__main__":
     # Example usage
     t = RText.parse("Hello {r}Red {}!", RText.run("b", "Blue"))
     b = RBuffer()
-    b.add("Hello ", "r").add("World", "g").add(RText("oi", "R"))
-    print(b.to_text())
+    b.add("Hello ", "r").add("World", "g").add(" ").add(RText("oi", "R"))
+    RenderConfig.mode = RenderMode.DEBUG
+    
+    print(b.to_text().render(RenderMode.ANSI))
+    print(b.to_text().render(RenderMode.PLAIN))
+    print(b.to_text().render())
