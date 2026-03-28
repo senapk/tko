@@ -1,6 +1,7 @@
 from tko.game.game import Game
 from tko.play.fmt import Fmt
 from tko.play.language_setter import LanguageSetter
+from tko.settings.app_settings import ToggleOption
 from tko.settings.settings import Settings
 from tko.settings.repository import Repository
 from tko.play.keys import GuiKeys
@@ -103,8 +104,8 @@ class Play:
         cman.add_str(GuiKeys.activate, self.activate) # type: ignore
         # cman.add_str(GuiKeys.open_url, self.actions.open_link)
         cman.add_str(GuiKeys.down_task, self.actions.down_remote_task)
-        cman.add_str(GuiKeys.borders, lambda: self.app.toggle("use_borders"))
-        cman.add_str(GuiKeys.images, lambda: self.app.toggle("use_images"))
+        cman.add_str(GuiKeys.borders, lambda: self.app.toggle(ToggleOption.BORDERS))
+        cman.add_str(GuiKeys.images, lambda: self.app.toggle(ToggleOption.IMAGES))
         cman.add_str(GuiKeys.set_lang_drafts, self.gui.language.set_language)
         cman.add_str(GuiKeys.create_draft, self.actions.create_draft)
         cman.add_int(curses.KEY_DC, self.actions.delete_folder_ask)

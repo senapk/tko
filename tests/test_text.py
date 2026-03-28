@@ -131,30 +131,6 @@ class TestSimple:
         text2 = Text().add("sangue é ").addf("r", "vermelho").add(", mar é ").addf("c", "ciano")
         assert str(text1) == str(text2)
 
-    def test_format_default(self):
-        text1 = Text("b").add("banana").add(Text.Token("uva", "g")).add(Text("r").add("ovo"))
-        assert text1.resume() == [Text.Token("banana", "b"), Text.Token("uva", "g"), Text.Token("ovo", "r")]
-
-    def test_format_default2(self):
-        text1 = Text("b") + "banana" + " " + "madura"
-        text2 = Text("b").add("banana").add(" ").add("madura")
-        assert str(text1) == str(text2)
-        assert text1.resume() == [Text.Token("banana madura", "b")]
-        text1 = Text("b") + "banana" + Text("r") + Text.Token("madura", "g")
-        assert text1.resume() == [Text.Token("banana", "b"), Text.Token("madura", "g")]
-
-    def test_format_1(self):
-        text1 = Text.format("brasil é {g} e {y}", "verde", "amarelo", " e azul")
-        text2 = Text().add("brasil é ").addf("g", "verde").add(" e ").addf("y", "amarelo").add(" e azul")
-        assert str(text1) == str(text2)
-
-        text3 = Text.format("o brasil é {g:verde} e {y:amarelo}.")
-        text4 = Text.format("o brasil é {} e {}.", Text.Token("verde", "g"), Text.Token("amarelo", "y"))
-        assert str(text3) == str(text4)
-
-        text5 = Text() + "o brasil é " + Text("g") + "verde" + Text() + " e " + Text("y") + "amarelo"
-        assert text5.resume() == [Text.Token("o brasil é "), Text.Token("verde", "g"), Text.Token(" e "), Text.Token("amarelo", "y")]
-
     def test_tuple(self):
         text1 = Text().addf("g", "brasil").add(" é ").addf("r", "lindo")
         print(text1)

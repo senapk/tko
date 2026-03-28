@@ -19,11 +19,12 @@ from tko.run.solver_builder import CompileError
 from tko.run.unit import Unit
 from tko.run.unit_runner import UnitRunner
 from tko.run.wdir import Wdir
+from tko.settings.app_settings import ToggleOption
 from tko.settings.settings import Settings
 from tko.enums.execution_result import ExecutionResult
 from tko.util.freerun import Free
 from tko.util.text import  Text
-from tko.util.symbols import symbols
+from tko.util.symbols import Symbols
 from tko.enums.diff_mode import DiffMode
 from tko.play.input_manager import InputManager
 from tko.run.diff_builder_down import DiffBuilderDown
@@ -33,7 +34,7 @@ from tko.util.raw_terminal import RawTerminal
 from tko.settings.repository import Repository
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove
-from tko.util.symbols import symbols
+from tko.util.symbols import Symbols
 from tko.logger.log_item_self import LogItemSelf
 from tko.play.floating_grade import FloatingGrade
 
@@ -345,13 +346,13 @@ class Tester:
         # output.addf("M", f"{timer}l {value}  ")
         color = "R" if self.locked_index else "G"
         if self.settings.app.use_borders:
-            output.addf(color + "b", symbols.sharp_right.text)
+            output.addf(color + "b", Symbols.sharp_right)
         else:
             output.addf("B", " ")
 
         # travar
-        free = symbols.locked_free.text
-        locked = symbols.locked_locked.text
+        free = Symbols.locked_free
+        locked = Symbols.locked_locked
         symbol = locked if self.locked_index else free
         output.addf(color, f" {GuiKeys.lock} {symbol} ").add(self.borders.sharp_r(color))
 
@@ -386,8 +387,8 @@ class Tester:
 
     def get_diff_symbol(self) -> str:
         if self.settings.app.diff_mode == DiffMode.DOWN:
-            return symbols.arrow_down.text
-        return symbols.arrow_right.text
+            return Symbols.arrow_down
+        return Symbols.arrow_right
 
     def make_bottom_line(self) -> list[Text]:
         cmds: list[Text] = []
@@ -397,7 +398,7 @@ class Tester:
         cmds.append(self.borders.border("C", text))
         if self.opener is not None:
             cmds.append(self.borders.border("C", f"{GuiActions.edit} [{GuiKeys.edit}]"))
-        cmds.append(self.borders.border("G", f"{GuiActions.evaluate_tester} [{GuiKeys.evaluate} | {symbols.newline.text}]"))
+        cmds.append(self.borders.border("G", f"{GuiActions.evaluate_tester} [{GuiKeys.evaluate} | {Symbols.newline}]"))
         cmds.append(self.borders.border("G", f"{GuiActions.execute_tester} [{GuiKeys.execute} | ←]"))
         limite = f"{GuiActions.time_limit} {self.get_time_limit_symbol()} [{GuiKeys.limite}]"
         cmds.append(self.borders.border("Y", limite))
@@ -615,7 +616,7 @@ class Tester:
 
     def get_time_limit_symbol(self):
         if self.settings.app.timeout == 0:
-            return symbols.infinity.text
+            return Symbols.infinity
         return str(self.settings.app.timeout)
 
     def change_limit(self):
@@ -668,11 +669,11 @@ class Tester:
             self.fman.add_input(Floating().bottom().right().set_warning().put_text("Modo de Diff alterado para {}".format(self.settings.app.diff_mode)))
             self.settings.save_settings()
         elif key == ord(GuiKeys.borders):
-            self.settings.app.toggle("use_borders")
+            self.settings.app.toggle(ToggleOption.BORDERS)
             self.fman.add_input(Floating().bottom().right().set_warning().put_text("Modo de Bordas alterado para {}".format("ligado" if self.settings.app.use_borders else "desligado")))
             self.settings.save_settings()
         elif key == ord(GuiKeys.images):
-            self.settings.app.toggle("use_images")
+            self.settings.app.toggle(ToggleOption.IMAGES)
             self.fman.add_input(Floating().bottom().right().set_warning().put_text("Modo de Imagens alterado para {}".format("ligado" if self.settings.app.use_images else "desligado")))
             self.settings.save_settings()
         elif key == ord(GuiKeys.palette):
@@ -698,7 +699,7 @@ class Tester:
         
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mudar arquivo {y} de execução", symbols.action, "principal"),
+                lambda: Text.format(" {} Mudar arquivo {y} de execução", Symbols.action, "principal"),
                 self.change_main,
                 "TAB"
             )
@@ -714,7 +715,7 @@ class Tester:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mudar {y} de tempo de execução: {r}", symbols.action, "Limite", self.get_time_limit_symbol()),
+                lambda: Text.format(" {} Mudar {y} de tempo de execução: {r}", Symbols.action, "Limite", self.get_time_limit_symbol()),
                 self.change_limit,
                 GuiKeys.limite
             )
@@ -731,7 +732,7 @@ class Tester:
         options.append(
             FloatingInputData(
                 lambda: Text.format(" {} Mostrar {y}", icon(self.app.use_borders), "Bordas"),
-                lambda: self.app.toggle("use_borders"),
+                lambda: self.app.toggle(ToggleOption.BORDERS),
                 GuiKeys.borders
             )
         )
@@ -739,7 +740,7 @@ class Tester:
         options.append(
             FloatingInputData(
                 lambda: Text.format(" {} Mostrar {y}", icon(self.app.use_images), "Imagens"),
-                lambda: self.app.toggle("use_images"),
+                lambda: self.app.toggle(ToggleOption.IMAGES),
                 GuiKeys.images
             )
         )
@@ -747,7 +748,7 @@ class Tester:
                 # self evaluate
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Tarefa: Auto {y} método de estudo", symbols.action, "Avaliar"),
+                lambda: Text.format(" {} Tarefa: Auto {y} método de estudo", Symbols.action, "Avaliar"),
                 self.self_evaluate,
                 GuiKeys.self_evaluate
             ).set_exit_on_action(True)

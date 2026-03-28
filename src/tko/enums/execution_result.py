@@ -1,5 +1,5 @@
 from __future__ import annotations
-from tko.util.symbols import symbols
+from tko.util.symbols import Symbols
 from tko.util.text import Text
 
 import enum
@@ -14,15 +14,15 @@ class ExecutionResult(enum.Enum):
     @staticmethod
     def get_symbol(result: ExecutionResult) -> Text.Token:
         if result == ExecutionResult.UNTESTED:
-            return symbols.execution_result["untested"]
+            return Text.Token(Symbols.neutral)
         elif result == ExecutionResult.SUCCESS:
-            return symbols.execution_result["success"]
+            return Text.Token(Symbols.success)
         elif result == ExecutionResult.WRONG_OUTPUT:
-            return symbols.execution_result["wrong_output"]
+            return Text.Token(Symbols.wrong)
         elif result == ExecutionResult.COMPILATION_ERROR:
-            return symbols.execution_result["compilation_error"]
+            return Text.Token(Symbols.compilation)
         elif result == ExecutionResult.EXECUTION_ERROR:
-            return symbols.execution_result["execution_error"]
+            return Text.Token(Symbols.execution)
         else:
             raise ValueError("Invalid result type")
 

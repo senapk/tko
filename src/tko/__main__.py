@@ -33,7 +33,6 @@ from tko.cmds.cmd_diff import cmd_diff
 from tko.settings.repository import Repository
 from tko.settings.rep_paths import RepPaths
 from tko.util.raw_terminal import RawTerminal
-from tko.util.symbols import symbols
 from tko.settings.check_version import CheckVersion
 from tko.settings.rep_starter import RepStarter
 from tko.settings.rep_source_actions import RepSourceActions
@@ -557,7 +556,6 @@ def execute(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
         AnsiColor.enabled = False
     else:
         AnsiColor.enabled = True
-        symbols.set_colors()
 
     if args.debug:
         ic.configureOutput(includeContext=True, outputFunction=print)

@@ -8,7 +8,7 @@ from tko.util.param import Param
 from tko.run.loader import Loader
 from tko.run.solver_builder import SolverBuilder
 from tko.util.text import Text
-from tko.util.symbols import symbols
+from tko.util.symbols import Symbols
 from tko.util.label_factory import LabelFactory
 from tko.down.drafts import Drafts
 from pathlib import Path
@@ -220,7 +220,7 @@ class Wdir:
     def sources_names(self) -> list[tuple[str, str]]:
         out: list[tuple[str, str]] = []
         if len(self.__pack_list) == 0:
-            out.append((symbols.failure.text, "0"))
+            out.append((Symbols.failure, "0"))
         for source_name, ulist in zip(self.__source_list, self.__pack_list):
             nome: str = source_name.name
             count = len([unit for unit in ulist if unit.repeated is None])

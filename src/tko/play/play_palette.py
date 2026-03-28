@@ -1,8 +1,9 @@
 from tko.play.flags import Flags
 from tko.play.floating_drop_down import FloatingDropDown
 from tko.play.floating_drop_down import FloatingInputData
+from tko.settings.app_settings import ToggleOption
 from tko.util.text import Text
-from tko.util.symbols import symbols
+from tko.util.symbols import Symbols
 from tko.play.keys import GuiKeys
 from tko.play.play_actions import PlayActions
 from tko.play.floating_calibrate import FloatingCalibrate
@@ -23,7 +24,7 @@ class PlayPalette:
         
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Tarefa: {y} para o repositório", symbols.action, "Baixar"),
+                lambda: Text.format(" {} Tarefa: {y} para o repositório", Symbols.action, "Baixar"),
                 self.actions.down_remote_task,
                 GuiKeys.down_task
             ).set_exit_on_action(True)
@@ -32,7 +33,7 @@ class PlayPalette:
         # self evaluate
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Tarefa: Auto {y} método de estudo", symbols.action, "Avaliar"),
+                lambda: Text.format(" {} Tarefa: Auto {y} método de estudo", Symbols.action, "Avaliar"),
                 self.actions.self_evaluate,
                 GuiKeys.self_evaluate
             ).set_exit_on_action(True)
@@ -40,7 +41,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Tarefa: {y} pasta", symbols.action, "Apagar"),
+                lambda: Text.format(" {} Tarefa: {y} pasta", Symbols.action, "Apagar"),
                 self.actions.delete_folder_ask,
                 GuiKeys.delete_folder
             ).set_exit_on_action(True)
@@ -48,7 +49,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y}", symbols.action, "Ajuda"),
+                lambda: Text.format(" {} Mostrar {y}", Symbols.action, "Ajuda"),
                 lambda: Flags.panel.set_value(Flags.panel_help),
                 GuiKeys.panel_help
             ).set_exit_on_action(True)
@@ -57,7 +58,7 @@ class PlayPalette:
         options.append(
             FloatingInputData(
                 lambda: Text.format(" {} Mostrar {y}", icon(self.app.use_borders), "Bordas"),
-                lambda: self.app.toggle("use_borders"),
+                lambda: self.app.toggle(ToggleOption.BORDERS),
                 GuiKeys.borders
             )
         )
@@ -65,7 +66,7 @@ class PlayPalette:
         options.append(
             FloatingInputData(
                 lambda: Text.format(" {} Mostrar {y}", icon(self.app.use_images), "Imagens"),
-                lambda: self.app.toggle("use_images"),
+                lambda: self.app.toggle(ToggleOption.IMAGES),
                 GuiKeys.images
             )
         )
@@ -80,7 +81,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mudar {y} de programação", symbols.action, "Linguagem"),
+                lambda: Text.format(" {} Mudar {y} de programação", Symbols.action, "Linguagem"),
                 self.gui.language.set_language,
                 GuiKeys.set_lang_drafts
             ).set_exit_on_action(True)
@@ -88,7 +89,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} {y} as teclas direcionais", symbols.action, "Calibrar"),
+                lambda: Text.format(" {} {y} as teclas direcionais", Symbols.action, "Calibrar"),
                 lambda: self.fman.add_input(FloatingCalibrate(self.actions.settings)),
                 GuiKeys.calibrate
             ).set_exit_on_action(True)
@@ -96,7 +97,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Criar {y} na pasta local", symbols.action, "Rascunho"),
+                lambda: Text.format(" {} Criar {y} na pasta local", Symbols.action, "Rascunho"),
                 self.actions.create_draft,
                 GuiKeys.create_draft
             ).set_exit_on_action(True)
@@ -104,7 +105,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} {y} pasta de rascunhos", symbols.action, "Reload"),
+                lambda: Text.format(" {} {y} pasta de rascunhos", Symbols.action, "Reload"),
                 self.actions.reload_game,
                 GuiKeys.reload_game
             ).set_exit_on_action(True)
@@ -112,7 +113,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Ver {y} da tarefa ", symbols.action, "versões"),
+                lambda: Text.format(" {} Ver {y} da tarefa ", Symbols.action, "versões"),
                 self.actions.open_versions,
                 GuiKeys.unfold_patch
             ).set_exit_on_action(True)
@@ -120,7 +121,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} {y} painel", symbols.action, "Aumentar"),
+                lambda: Text.format(" {} {y} painel", Symbols.action, "Aumentar"),
                 lambda: self.actions.resize_panels(10),
                 GuiKeys.panel_resize_inc
             )
@@ -128,7 +129,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} {y} painel", symbols.action, "Diminuir"),
+                lambda: Text.format(" {} {y} painel", Symbols.action, "Diminuir"),
                 lambda: self.actions.resize_panels(-10),
                 GuiKeys.panel_resize_dec
             )

@@ -1,7 +1,7 @@
 from tko.play.flags import Flag
 from tko.util.text import Text
 from tko.settings.app_settings import AppSettings
-from tko.util.symbols import symbols
+from tko.util.symbols import Symbols
 
 class Border:
     def __init__(self, app: AppSettings):
@@ -58,10 +58,10 @@ class Border:
         char = flag.get_keycode()
         text = flag.get_name()
         color = "M"
-        symbol = symbols.neutral
+        symbol = Symbols.neutral
         if len(flag.get_values()) > 0:
             color = "G" if flag else "Y"
-            symbol = symbols.success if flag else symbols.failure
+            symbol = Symbols.success if flag else Symbols.failure
         if not button_mode:
             color = color.lower()
         extra = Text()
@@ -71,7 +71,7 @@ class Border:
 
         mid = Text()
         if include_symbol:
-            mid.addf(color, symbol.text).addf(color, " ")
+            mid.addf(color, symbol).addf(color, " ")
         mid.addf(color, text)
         if include_key:
             mid.add(extra).addf(color, f"[{char}]")

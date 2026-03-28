@@ -8,6 +8,10 @@ from tko.enums.diff_mode import DiffMode
 from tko.util.text import Text
 
 
+class ToggleOption(enum.Enum):
+    BORDERS = "use_borders"
+    IMAGES = "use_images"
+
 class AppKeys(enum.Enum):
     LEFT = "left"
     RIGHT = "right"
@@ -41,9 +45,9 @@ class AppSettings:
     })
 
     # -------- toggles --------
-    def toggle(self, attr: str) -> None:
-        if hasattr(self, attr):
-            setattr(self, attr, not getattr(self, attr))
+    def toggle(self, attr: ToggleOption) -> None:
+        if hasattr(self, attr.value):
+            setattr(self, attr.value, not getattr(self, attr.value))
 
     def toggle_diff(self) -> None:
         self.diff_mode = DiffMode.DOWN if self.diff_mode == DiffMode.SIDE else DiffMode.SIDE

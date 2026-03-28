@@ -2,7 +2,7 @@
 from __future__ import annotations
 from pathlib import Path
 
-from tko.util.symbols import symbols
+from tko.util.symbols import Symbols
 from tko.util.text import Text
 from tko.game.tree_item import TreeItem
 from tko.game.task_info import TaskInfo
@@ -241,7 +241,7 @@ class Task(TreeItem):
         if prog < 10:
             return Text().addf(color, str(prog))
         if prog == 10:
-            return Text().addf(color, symbols.check.text)
+            return Text().addf(color, Symbols.check)
         return Text().add("0")
 
     def get_xp(self) -> int:

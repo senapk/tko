@@ -1,5 +1,5 @@
 from tko.play.floating import Floating, FloatingABC
-from tko.util.symbols import symbols
+from tko.util.symbols import Symbols
 from tko.util.text import Text
 from typing import Callable
 
@@ -81,7 +81,7 @@ class FloatingDropDown(FloatingABC):
     def update_content(self):
         content = self.floating.content
         content.clear()
-        content.append(Text.format("Busca: ") + "".join(self.search_text) + symbols.cursor)
+        content.append(Text.format("Busca: ") + "".join(self.search_text) + Symbols.cursor)
 
         # options: list[Text] = []
         _, dx = self.calc_dy_dx()

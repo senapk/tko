@@ -1,5 +1,5 @@
 from tko.play.floating import Floating, FloatingABC
-from tko.util.symbols import symbols
+from tko.util.symbols import Symbols
 from tko.util.text import Text
 
 
@@ -31,8 +31,8 @@ class FloatingInputText(FloatingABC):
         content = self.floating.content
         content.clear()
         content.append(self.label)
-        is_allowed = Text().addf("g", symbols.check.text) if self.input_text not in self.unallowed_strings else Text().addf("r", symbols.failure.text)
-        content.append(Text.format("Digite aqui: ") + self.input_text + symbols.cursor + is_allowed)
+        is_allowed = Text().addf("g", Symbols.check) if self.input_text not in self.unallowed_strings else Text().addf("r", Symbols.failure)
+        content.append(Text.format("Digite aqui: ") + self.input_text + Symbols.cursor + is_allowed)
         content.append(Text())
         self.floating.draw()
 

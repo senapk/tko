@@ -44,14 +44,6 @@ class AnsiColor:
             output += AnsiColor.terminal_styles.get('.', "")
         return output
 
-def is_tuple_str2(value: object) -> bool:
-    return ( isinstance(value, tuple)
-        and len(value) == 2 # type: ignore
-        and isinstance(value[0], str)
-        and isinstance(value[1], str)
-    )
-
-
 class Text:
     class Token:
         def __init__(self, text: str = "", fmt: str = ""):
@@ -82,11 +74,11 @@ class Text:
         def __str__(self):
             return f"({self.fmt}:{self.text})"
         
-    def __init__(self, value: str | Text.Token | tuple[str, str] | Text | Any = ""):
+    def __init__(self, fmt: str = "", value: str = ""):
         self.data: list[Text.Token] = []
         self.default_fmt = ""
-        if value != "" and value is not None:
-            self.add(value)
+        if value != "":
+            self.addf(fmt, value)
 
 
     # convert a strings formatted with terminal styles to a Text object
@@ -268,14 +260,13 @@ class Text:
             if value.text != "":
                 for c in value.text:
                     self.data.append(Text.Token(c, value.fmt))
+        elif isinstance(value, tuple) and len(value) == 2: # type: ignore
+            self.add(Text.Token(value[1], value[0])) # type: ignore
         elif isinstance(value, Text):  # type: ignore
             self.default_fmt = value.default_fmt
             self.data += [x for x in value.data]
-        elif is_tuple_str2(value):
-            fmt, text = value # type: ignore
-            self.add(Text.Token(text, fmt)) # type: ignore
         else:
-            self.add(str(value))
+            self.add(str(value)) # type: ignore
 
         return self
     
@@ -286,11 +277,10 @@ class Text:
             self.add(Text.Token(value.text, fmt))
         elif isinstance(value, Text):
             self.add(Text.Token(value.get_str(), fmt))
-        elif is_tuple_str2(value):
-            _, text = value # type: ignore
-            self.add(Text.Token(text, fmt)) # type: ignore
+        elif isinstance(value, tuple) and len(value) == 2: # type: ignore
+            self.add(Text.Token(value[1], fmt)) # type: ignore
         else:
-            self.add(Text.Token(str(value), fmt))
+            self.add(Text.Token(str(value), fmt)) # type: ignore
         return self
 
     def ljust(self, width: int, filler: Text.Token = Token(" ")):

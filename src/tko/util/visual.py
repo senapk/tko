@@ -1,5 +1,5 @@
 from tko.util.text import Text
-from tko.util.symbols import symbols
+from tko.util.symbols import Symbols
 
 class Visual:
     def __init__(self, use_borders: bool = True):
@@ -8,7 +8,7 @@ class Visual:
     def get_lr(self, test: bool) -> tuple[str, str]:
         if test:
             if self.use_borders:
-                return symbols.sharp_left.text, symbols.sharp_right.text
+                return Symbols.sharp_left, Symbols.sharp_right
             else:
                 return "[", "]"
         else:

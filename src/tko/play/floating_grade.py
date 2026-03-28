@@ -2,7 +2,7 @@ from __future__ import annotations
 from tko.game.task import Task
 from tko.play.floating import FloatingABC, Floating
 from tko.util.text import Text
-from tko.util.symbols import symbols
+from tko.util.symbols import Symbols
 
 # import ABC, abstractmethod
 from abc import ABC, abstractmethod
@@ -29,7 +29,7 @@ class InputLine(ABC):
         return self.SELECTED_COLOR
 
     def get_opening(self):
-        return Text().add(symbols.right_triangle_filled.text if self.focus else " ").add(" ")
+        return Text().add(Symbols.right_triangle_filled if self.focus else " ").add(" ")
 
     @abstractmethod
     def send_key(self, key: int) -> None:
@@ -119,7 +119,7 @@ class InputText(InputLine):
 
     def get_text(self, pad: int) -> Text:
         data = Text().add(self.get_opening()).addf(self.get_selected_color() if self.focus else "", self.prompt).ljust(pad).add(" ")
-        data = data.add("├ ").addf(self.OPTION_COLOR, self.text).add(symbols.cursor if self.focus else "")
+        data = data.add("├ ").addf(self.OPTION_COLOR, self.text).add(Symbols.cursor if self.focus else "")
         return data
     
 class InputBoolean(InputLine):

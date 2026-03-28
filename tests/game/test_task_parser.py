@@ -1,7 +1,3 @@
-# the inclusion of the tests module is not meant to offer best practices for
-# testing in general, but rather to support the `find_packages` example in
-# setup.py that excludes installing the "tests" package
-
 import os
 from pathlib import Path
 
@@ -21,7 +17,7 @@ class Test:
         task.set_workspace_folder(Path("/rep/database/label"))
         assert task.get_key() == "label"
         assert task.get_remote_name() == "database"
-        assert task.get_full_key() == "label" # database is hided by legacy compatibility
+        assert task.get_full_key() == "database@label" # database is hided by legacy compatibility
         folder = task.get_workspace_folder()
         assert folder is not None
         assert str(folder.resolve()) == "/rep/database/label"

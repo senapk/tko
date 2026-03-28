@@ -1,4 +1,4 @@
-from tko.util.symbols import symbols
+from tko.util.symbols import Symbols
 from tko.util.text import Text
 
 class DiffBuilder:
@@ -24,7 +24,7 @@ class DiffBuilder:
         while i < lim:
             if i >= len(a) or i >= len(b) or a[i] != b[i]:
                 if first:
-                    hdiff += symbols.arrow_up
+                    hdiff += Symbols.arrow_up
                     return hdiff
             else:
                 hdiff += " "
@@ -35,7 +35,7 @@ class DiffBuilder:
 
     @staticmethod
     def render_white(text: str) -> str:
-        return text.replace(' ', symbols.middle_dot.text).replace('\n', symbols.newline.text)
+        return text.replace(' ', Symbols.middle_dot).replace('\n', Symbols.newline)
 
     def first_failure_diff(self, a_text: str, b_text: str | None, first_failure: int) -> list[Text]:
         if b_text is None:

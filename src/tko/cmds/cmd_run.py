@@ -9,7 +9,7 @@ from tko.run.diff_builder_side import DiffBuilderSide
 from tko.util.text import Text
 
 from tko.util.raw_terminal import RawTerminal
-from tko.util.symbols import symbols
+from tko.util.symbols import Symbols
 
 from tko.util.freerun import Free
 from tko.play.tester import Tester
@@ -416,9 +416,9 @@ class Run:
     def __run_all_tests_top_line(self) -> int:
         if self.__eval_mode:
             key = self.get_task().get_full_key() if self.__task is not None else ""
-            print(Text().addf("c", f"@{key:<{self.EVAL_MODE_PAD}} ").add(symbols.opening).add("[").add(self.wdir.resume_join()).add("]"), end="")
+            print(Text().addf("c", f"@{key:<{self.EVAL_MODE_PAD}} ").add(Symbols.opening).add("[").add(self.wdir.resume_join()).add("]"), end="")
         else:
-            print(Text().add(symbols.opening).add(self.wdir.resume_splitted()), end="")
+            print(Text().add(Symbols.opening).add(self.wdir.resume_splitted()), end="")
         print(" [", end="")
         first = True
         execution_error = False
