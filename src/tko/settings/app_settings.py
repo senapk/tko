@@ -1,161 +1,89 @@
-from tko.enums.diff_mode import DiffMode
-from tko.util.text import Text
+from __future__ import annotations
+from dataclasses import dataclass, field, asdict
+import enum
 from typing import Any
 import curses
 
+from tko.enums.diff_mode import DiffMode
+from tko.util.text import Text
+
+
+class AppKeys(enum.Enum):
+    LEFT = "left"
+    RIGHT = "right"
+    UP = "up"
+    DOWN = "down"
+    PG_UP = "pg_up"
+    PG_DOWN = "pg_down"
+    BACKSPACE = "backspace"
+    ESC = "esc"
+
+@dataclass
 class AppSettings:
+    diff_mode: DiffMode = DiffMode.SIDE
+    use_images: bool = True
+    use_borders: bool = False
+    editor: str = "code"
+    timeout: int = 2
+    last_tko_check_update: str = ""
+    last_version: str = ""
+    panel_size_percent: float = 60.0
 
-    def __init__(self):
-        self.diff_mode = DiffMode.SIDE.value
-        self.use_images = True
-        self.use_borders = False
-        self.editor = "code"
-        self.timeout = 2
-        self.last_tko_check_update = ""
-        self.tko_last_version = ""
-        self.key_left: int = curses.KEY_LEFT
-        self.key_right: int = curses.KEY_RIGHT
-        self.key_up: int = curses.KEY_UP
-        self.key_down: int = curses.KEY_DOWN
-        self.key_pg_up: int = curses.KEY_PPAGE
-        self.key_pg_down: int = curses.KEY_NPAGE
-        self.key_backspace: int = curses.KEY_BACKSPACE
-        self.key_esc: int = 27
+    keys: dict[AppKeys, int] = field(default_factory=lambda: {
+        AppKeys.LEFT: curses.KEY_LEFT,
+        AppKeys.RIGHT: curses.KEY_RIGHT,
+        AppKeys.UP: curses.KEY_UP,
+        AppKeys.DOWN: curses.KEY_DOWN,
+        AppKeys.PG_UP: curses.KEY_PPAGE,
+        AppKeys.PG_DOWN: curses.KEY_NPAGE,
+        AppKeys.BACKSPACE: curses.KEY_BACKSPACE,
+        AppKeys.ESC: 27,
+    })
 
-    def set_lastest_version(self, version: str):
-        self.tko_last_version = version
-        return self
-    
-    def get_lastest_version(self) -> str:
-        return self.tko_last_version
+    # -------- toggles --------
+    def toggle(self, attr: str) -> None:
+        if hasattr(self, attr):
+            setattr(self, attr, not getattr(self, attr))
 
-    def set_latest_version_check_timestamp(self, date_str: str):
-        self.last_tko_check_update = date_str
-        return self
-    
-    def get_lastest_version_check_timestamp(self) -> str:
-        return self.last_tko_check_update
+    def toggle_diff(self) -> None:
+        self.diff_mode = DiffMode.DOWN if self.diff_mode == DiffMode.SIDE else DiffMode.SIDE
 
-    def set_key_left(self, key: int):
-        self.key_left = key
-        return self
+    # -------- keys --------
+    def set_key(self, action: AppKeys, key_code: int) -> None:
+        self.keys[action] = key_code
 
-    def set_key_right(self, key: int):
-        self.key_right = key
-        return self
+    def get_key(self, action: AppKeys) -> int:
+        return self.keys.get(action, 0)
 
-    def set_key_up(self, key: int):
-        self.key_up = key
-        return self
+    # -------- serialization --------
+    def to_dict(self) -> dict[str, Any]:
+        data = asdict(self)
+        data["diff_mode"] = self.diff_mode.value
+        data["keys"] = {k.value: v for k, v in self.keys.items()}
+        return data
 
-    def set_key_down(self, key: int):
-        self.key_down = key
-        return self
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "AppSettings":
+        obj = cls()
 
-    def get_key_left(self) -> int:
-        return self.key_left
+        for key, value in data.items():
+            if key == "diff_mode":
+                obj.diff_mode = DiffMode(value)
+            elif key == "keys":
+                obj.keys = {AppKeys(k): v for k, v in value.items()}
+            elif hasattr(obj, key):
+                setattr(obj, key, value)
 
-    def get_key_right(self) -> int:
-        return self.key_right
+        return obj
 
-    def get_key_up(self) -> int:
-        return self.key_up
-
-    def get_key_down(self) -> int:
-        return self.key_down
-
-    def set_key_pg_up(self, key: int):
-        self.key_pg_up = key
-        return self
-    
-    def set_key_pg_down(self, key: int):
-        self.key_pg_down = key
-        return self
-    
-    def set_key_esc(self, key: int):
-        self.key_esc = key
-        return self
-    
-    def set_key_backspace(self, key: int):
-        self.key_backspace = key
-        return self
-    
-    def get_key_esc(self) -> int:
-        return self.key_esc
-    
-    def get_key_backspace(self) -> int:
-        return self.key_backspace
-
-    def get_key_pg_up(self) -> int:
-        return self.key_pg_up
-
-    def get_key_pg_down(self) -> int:
-        return self.key_pg_down
-
-    def to_dict(self):
-        return self.__dict__
-
-    def from_dict(self, attr_dict: dict[str, Any]):
-        for key, value in attr_dict.items():
-            if hasattr(self, key) and type(getattr(self, key)) == type(value):
-                setattr(self, key, value)
-        return self
-
-    def toggle_diff(self):
-        if self.diff_mode == DiffMode.SIDE.value:
-            self.diff_mode = DiffMode.DOWN.value
-        else:
-            self.diff_mode = DiffMode.SIDE.value
-
-    def toggle_borders(self):
-        self.use_borders = not self.use_borders
-
-    def toggle_images(self):
-        self.use_images = not self.use_images
-
-
-    def set_diff_mode(self, diff_mode: DiffMode):
-        self.diff_mode = diff_mode.value
-        return self
-
-    def set_use_borders(self, borders: bool):
-        self.use_borders = borders
-        return self
-
-    def set_use_images(self, images: bool):
-        self.use_images = images
-        return self
-
-    def set_editor(self, editor: str):
-        self.editor = editor
-        return self
-
-    def set_timeout(self, timeout: int):
-        self.timeout = timeout
-        return self
-
-    def get_diff_mode(self) -> DiffMode:
-        if self.diff_mode == DiffMode.SIDE.value:
-            return DiffMode.SIDE
-        return DiffMode.DOWN
-
-    def get_use_images(self) -> bool:
-        return self.use_images
-
-    def get_use_borders(self) -> bool:
-        return self.use_borders
-
-    def get_editor(self) -> str:
-        return self.editor
-
-    def get_timeout(self) -> int:
-        return self.timeout
-
-    def __str__(self):
-        output: list[str] = [str(Text.format("{g}", "Configurações globais:")),
-                             "- Diff    : {}".format(str(self.get_diff_mode().value)),
-                             "- Editor  : {}".format(self.get_editor()),
-                             "- Bordas  : {}".format(self.get_use_borders()),
-                             "- Images  : {}".format(self.get_use_images()),
-                             "- Timeout : {}".format(self.get_timeout())]
+    # -------- display --------
+    def __str__(self) -> str:
+        output = [
+            str(Text.format("{g}", "Configurações globais:")),
+            f"- Diff    : {self.diff_mode.value}",
+            f"- Editor  : {self.editor}",
+            f"- Bordas  : {self.use_borders}",
+            f"- Images  : {self.use_images}",
+            f"- Timeout : {self.timeout}",
+        ]
         return "\n".join(output)

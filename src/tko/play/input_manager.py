@@ -2,6 +2,7 @@ from typing import Callable
 from tko.settings.app_settings import AppSettings
 import curses
 import os
+from tko.settings.app_settings import AppSettings, AppKeys
 
 FN_VOID = Callable[[], None]
 
@@ -51,21 +52,21 @@ class InputManager:
             value = scr.getch()
             if value == InputManager.cedilha: #ç
                 value = ord("c")
-        elif value == app.key_down:
+        elif value == app.keys[AppKeys.DOWN]:
             value = curses.KEY_DOWN
-        elif value == app.key_up:
+        elif value == app.keys[AppKeys.UP]:
             value = curses.KEY_UP
-        elif value == app.key_left:
+        elif value == app.keys[AppKeys.LEFT]:
             value = curses.KEY_LEFT
-        elif value == app.key_right:
+        elif value == app.keys[AppKeys.RIGHT]:
             value = curses.KEY_RIGHT
-        elif value == app.key_backspace:
+        elif value == app.keys[AppKeys.BACKSPACE]:
             value = curses.KEY_BACKSPACE
-        elif value in [app.key_esc, 27]: # 27 is the ESC key value in some systems
+        elif value in [app.keys[AppKeys.ESC], 27]: # 27 is the ESC key value in some systems
             value = curses.KEY_EXIT
-        elif value == app.key_pg_up:
+        elif value == app.keys[AppKeys.PG_UP]:
             value = curses.KEY_PPAGE
-        elif value == app.key_pg_down:
+        elif value == app.keys[AppKeys.PG_DOWN]:
             value = curses.KEY_NPAGE
         # elif value > ord('A') and value < ord('Z'):
         #     value += 32 # convert to lowercase

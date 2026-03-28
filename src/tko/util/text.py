@@ -44,13 +44,15 @@ class AnsiColor:
             output += AnsiColor.terminal_styles.get('.', "")
         return output
 
+def is_tuple_str2(value: object) -> bool:
+    return ( isinstance(value, tuple)
+        and len(value) == 2 # type: ignore
+        and isinstance(value[0], str)
+        and isinstance(value[1], str)
+    )
 
 
 class Text:
-    @staticmethod
-    def r_token(fmt: str, text: str) -> Token:
-        return Text.Token(text, fmt)
-
     class Token:
         def __init__(self, text: str = "", fmt: str = ""):
             if not isinstance(text, str): # type: ignore
@@ -80,9 +82,11 @@ class Text:
         def __str__(self):
             return f"({self.fmt}:{self.text})"
         
-    def __init__(self, default_fmt: str = ""):
+    def __init__(self, value: str | Text.Token | tuple[str, str] | Text | Any = ""):
         self.data: list[Text.Token] = []
-        self.default_fmt = default_fmt
+        self.default_fmt = ""
+        if value != "" and value is not None:
+            self.add(value)
 
 
     # convert a strings formatted with terminal styles to a Text object
@@ -137,13 +141,13 @@ class Text:
         text.__process_placeholders(value, *args)
         return text
 
-    def set_background(self, fmt: str):
+    def set_bg(self, fmt: str):
         for d in self.data:
             lower_only = "".join([c for c in d.fmt if c.islower()])
             d.fmt = fmt + lower_only
         return self
     
-    def set_foreground(self, fmt: str):
+    def set_fg(self, fmt: str):
         for d in self.data:
             upper_only = "".join([c for c in d.fmt if c.isupper()])
             d.fmt = upper_only + fmt
@@ -267,18 +271,24 @@ class Text:
         elif isinstance(value, Text):  # type: ignore
             self.default_fmt = value.default_fmt
             self.data += [x for x in value.data]
+        elif is_tuple_str2(value):
+            fmt, text = value # type: ignore
+            self.add(Text.Token(text, fmt)) # type: ignore
         else:
             self.add(str(value))
 
         return self
     
-    def addf(self, fmt: str, value: str | Text.Token | Text | Any | None):
+    def addf(self, fmt: str, value: str | Text.Token | Text | tuple[str, str] | Any | None):
         if isinstance(value, str):
             self.add(Text.Token(value, fmt))
         elif isinstance(value, Text.Token):
             self.add(Text.Token(value.text, fmt))
         elif isinstance(value, Text):
             self.add(Text.Token(value.get_str(), fmt))
+        elif is_tuple_str2(value):
+            _, text = value # type: ignore
+            self.add(Text.Token(text, fmt)) # type: ignore
         else:
             self.add(Text.Token(str(value), fmt))
         return self
@@ -461,11 +471,11 @@ if __name__ == "__main__":
     print(Text.format("O Brasil é {}, {g:verde} e {y}.", ("b", "azul"), "amarelo"))
 
     # Funciona também por adição
-    print(Text() + "O Brasil é " + Text.r_token("b", "azul") + ", " + Text.r_token("g", "verde") + " e " + Text.r_token("y", "amarelo"))
+    print(Text().add("O Brasil é ").addf("b", "azul").add(", ").addf("g", "verde").add(" e ").addf("y", "amarelo"))
     # Dá pra definir a formatação padrão para quando não for passado nada
-    print(Text("r") + "O Brasil é " + Text.r_token("b", "azul") + ", " + Text.r_token("g", "verde") + " e " + Text.r_token("y", "amarelo"))
+    print(Text("r").add("O Brasil é ").addf("b", "azul").add(", ").addf("g", "verde").add(" e ").addf("y", "amarelo"))
     # A formatação pode incluir cores de fundo
-    print(Text("Yw") + "O Brasil é " + Text.r_token("Rb", "azul") + ", " + Text.r_token("Kg", "verde") + " e " + Text.r_token("y", "amarelo"))
+    print(Text("Yw").add("O Brasil é ").addf("Rb", "azul").add(", ").addf("Kg", "verde").add(" e ").addf("y", "amarelo"))
 
     # Dá pra concatenar, somar ou passar por parâmetro
     print(Text("R") + "Tudo em vermelho " + Text("G") + " e tudo em verde")

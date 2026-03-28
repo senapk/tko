@@ -23,8 +23,8 @@ class CheckVersion:
 
     def get_latest_version(self) -> str:
         now = dt.now()
-        last_check_str = self.settings.app.get_lastest_version_check_timestamp()
-        stored_latest = self.settings.app.get_lastest_version()
+        last_check_str = self.settings.app.last_tko_check_update
+        stored_latest = self.settings.app.last_version
         if last_check_str != "" and stored_latest != "":
             last_check = dt.fromisoformat(last_check_str)
             if (now - last_check).total_seconds() < 60 * 60 * 24: # 24h
@@ -34,8 +34,8 @@ class CheckVersion:
                 for line in f:
                     if b"__version__" in line:
                         latest = line.decode().split('"')[1]
-                        self.settings.app.set_latest_version_check_timestamp(now.isoformat())
-                        self.settings.app.set_lastest_version(latest)
+                        self.settings.app.last_tko_check_update = now.isoformat()
+                        self.settings.app.last_version = latest
                         self.settings.save_settings()
                         return latest
         except:

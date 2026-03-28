@@ -102,7 +102,7 @@ class Tester:
                 Fmt.write(i + init_y, 1, Text().addf(color, line).center(dx - 2, Text.Token(" ", " ")))
 
     def show_success(self):
-        if self.settings.app.get_use_images():
+        if self.settings.app.use_images:
             out = random_get(images, self.get_folder(), "static")
         else:
             out = random_get(success_image, self.get_folder(), "static")
@@ -196,7 +196,7 @@ class Tester:
             index = len(self.results)
             unit = self.unit_list[0]
             self.unit_list = self.unit_list[1:]
-            unit.result = UnitRunner.run_unit(solver, unit, self.settings.app.get_timeout())
+            unit.result = UnitRunner.run_unit(solver, unit, self.settings.app.timeout)
             self.results.append((unit.result, index))
             self.focused_index = index
             if unit.result == ExecutionResult.EXECUTION_ERROR:
@@ -344,7 +344,7 @@ class Tester:
         #     value = symbols.infinity.text
         # output.addf("M", f"{timer}l {value}  ")
         color = "R" if self.locked_index else "G"
-        if self.settings.app.get_use_borders():
+        if self.settings.app.use_borders:
             output.addf(color + "b", symbols.sharp_right.text)
         else:
             output.addf("B", " ")
@@ -385,7 +385,7 @@ class Tester:
         frame.draw()
 
     def get_diff_symbol(self) -> str:
-        if self.settings.app.get_diff_mode() == DiffMode.DOWN:
+        if self.settings.app.diff_mode == DiffMode.DOWN:
             return symbols.arrow_down.text
         return symbols.arrow_right.text
 
@@ -441,7 +441,7 @@ class Tester:
             executable, _ = self.wdir.get_solver().get_executable()
             received = executable.get_error_msg().get_str()
             line_list = [Text().add(line) for line in received.splitlines()]
-        elif self.settings.app.get_diff_mode() == DiffMode.DOWN or not self.wdir.has_tests():
+        elif self.settings.app.diff_mode == DiffMode.DOWN or not self.wdir.has_tests():
             ud_diff = DiffBuilderDown(cols, unit)
             line_list = ud_diff.build_diff()
         else:
@@ -614,19 +614,19 @@ class Tester:
                 self.results[i] = (ExecutionResult.UNTESTED, index)
 
     def get_time_limit_symbol(self):
-        if self.settings.app.get_timeout() == 0:
+        if self.settings.app.timeout == 0:
             return symbols.infinity.text
-        return str(self.settings.app.get_timeout())
+        return str(self.settings.app.timeout)
 
     def change_limit(self):
-            valor = self.settings.app.get_timeout()
+            valor = self.settings.app.timeout
             if valor == 0:
                 valor = 1
             else:
                 valor *= 2
             if valor >= 5:
                 valor = 0
-            self.settings.app.set_timeout(valor)
+            self.settings.app.timeout = valor
             self.settings.save_settings()
 
     def process_key(self, key: int) -> Optional[Callable[[], bool]]:
@@ -665,15 +665,15 @@ class Tester:
             self.settings.save_settings()
         elif key == ord(GuiKeys.diff):
             self.settings.app.toggle_diff()
-            self.fman.add_input(Floating().bottom().right().set_warning().put_text("Modo de Diff alterado para {}".format(self.settings.app.get_diff_mode().value)))
+            self.fman.add_input(Floating().bottom().right().set_warning().put_text("Modo de Diff alterado para {}".format(self.settings.app.diff_mode)))
             self.settings.save_settings()
         elif key == ord(GuiKeys.borders):
-            self.settings.app.toggle_borders()
-            self.fman.add_input(Floating().bottom().right().set_warning().put_text("Modo de Bordas alterado para {}".format("ligado" if self.settings.app.get_use_borders() else "desligado")))
+            self.settings.app.toggle("use_borders")
+            self.fman.add_input(Floating().bottom().right().set_warning().put_text("Modo de Bordas alterado para {}".format("ligado" if self.settings.app.use_borders else "desligado")))
             self.settings.save_settings()
         elif key == ord(GuiKeys.images):
-            self.settings.app.toggle_images()
-            self.fman.add_input(Floating().bottom().right().set_warning().put_text("Modo de Imagens alterado para {}".format("ligado" if self.settings.app.get_use_images() else "desligado")))
+            self.settings.app.toggle("use_images")
+            self.fman.add_input(Floating().bottom().right().set_warning().put_text("Modo de Imagens alterado para {}".format("ligado" if self.settings.app.use_images else "desligado")))
             self.settings.save_settings()
         elif key == ord(GuiKeys.palette):
             self.command_pallete()
@@ -730,16 +730,16 @@ class Tester:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y}", icon(self.app.get_use_borders()), "Bordas"),
-                self.app.toggle_borders,
+                lambda: Text.format(" {} Mostrar {y}", icon(self.app.use_borders), "Bordas"),
+                lambda: self.app.toggle("use_borders"),
                 GuiKeys.borders
             )
         )
         
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y}", icon(self.app.get_use_images()), "Imagens"),
-                self.app.toggle_images, 
+                lambda: Text.format(" {} Mostrar {y}", icon(self.app.use_images), "Imagens"),
+                lambda: self.app.toggle("use_images"),
                 GuiKeys.images
             )
         )

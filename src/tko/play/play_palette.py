@@ -56,16 +56,16 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y}", icon(self.app.get_use_borders()), "Bordas"),
-                self.app.toggle_borders,
+                lambda: Text.format(" {} Mostrar {y}", icon(self.app.use_borders), "Bordas"),
+                lambda: self.app.toggle("use_borders"),
                 GuiKeys.borders
             )
         )
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y}", icon(self.app.get_use_images()), "Imagens"),
-                self.app.toggle_images, 
+                lambda: Text.format(" {} Mostrar {y}", icon(self.app.use_images), "Imagens"),
+                lambda: self.app.toggle("use_images"),
                 GuiKeys.images
             )
         )
@@ -116,6 +116,22 @@ class PlayPalette:
                 self.actions.open_versions,
                 GuiKeys.unfold_patch
             ).set_exit_on_action(True)
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text.format(" {} {y} painel", symbols.action, "Aumentar"),
+                lambda: self.actions.resize_panels(10),
+                GuiKeys.panel_resize_inc
+            )
+        )
+
+        options.append(
+            FloatingInputData(
+                lambda: Text.format(" {} {y} painel", symbols.action, "Diminuir"),
+                lambda: self.actions.resize_panels(-10),
+                GuiKeys.panel_resize_dec
+            )
         )
 
         self.fman.add_input(

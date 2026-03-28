@@ -32,9 +32,12 @@ class GuiKeys:
     panel_logs = "4"
     panel_skills = "5"
     panel_help = "6"
+    panel_toggle = " "
 
     show_duration = "T"
 
+    panel_resize_inc = ">"
+    panel_resize_dec = "<"
     palette = "p"
     images = "I"
     down_task = "b"

@@ -61,7 +61,7 @@ class Main:
 
         settings = Settings(args.globaldir)
         if not args.side and not args.down:
-            param.set_diff_mode(settings.app.get_diff_mode())
+            param.set_diff_mode(settings.app.diff_mode)
         elif args.side:
             param.set_diff_mode(DiffMode.SIDE)
         elif args.down:
@@ -77,7 +77,7 @@ class Main:
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         settings = Settings(args.globaldir)
-        param.set_diff_mode(settings.app.get_diff_mode())
+        param.set_diff_mode(settings.app.diff_mode)
         if args.filter:
             param.set_filter(True)
         cmd_run = Run(settings, args.target_list, param)

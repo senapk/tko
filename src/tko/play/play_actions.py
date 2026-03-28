@@ -47,6 +47,12 @@ class PlayActions:
         self.graph_opened: bool = False
         self.gui = gui
 
+    def resize_panels(self, amount: int):
+        value = self.settings.app.panel_size_percent
+        new_value = max(30, min(70, value + amount))
+        if new_value != value:
+            self.settings.app.panel_size_percent = new_value
+            self.settings.save_settings()
         
     def open_link_without_stdout_stderr(self, link: str):
         if link.startswith("http://") or link.startswith("https://"):
@@ -316,7 +322,7 @@ class PlayActions:
                     log_sort = self.rep.logger.tasks.task_dict[task.get_full_key()]
 
                     msg, folder = tracker.unfold_files(log_sort)
-                    cmd = self.settings.app.get_editor()
+                    cmd = self.settings.app.editor
                     fullcmd = "{} {}".format(cmd, folder)
                     outfile = tempfile.NamedTemporaryFile(delete=False)
                     subprocess.Popen(fullcmd, stdout=outfile, stderr=outfile, shell=True)

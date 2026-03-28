@@ -24,20 +24,20 @@ class CmdConfig:
 
         if param.borders is not None:
             action = True
-            settings.app.set_use_borders(param.borders == "1")
+            settings.app.use_borders = True
             print("Borders now is: " + str("True" if param.borders == "1" else "False"))
         if param.images is not None:
             action = True
-            settings.app.set_use_images(param.images == "1")
+            settings.app.use_images = param.images == "1"
             print("Images now is: " + str("True" if param.images == "1" else "False"))
             
         if param.side:
             action = True
-            settings.app.set_diff_mode(DiffMode.SIDE)
+            settings.app.diff_mode = DiffMode.SIDE
             print("Diff mode now is: SIDE_BY_SIDE")
         if param.down:
             action = True
-            settings.app.set_diff_mode(DiffMode.DOWN)
+            settings.app.diff_mode = DiffMode.DOWN
             print("Diff mode now is: UP_DOWN")
         # if param.lang:
         #     action = True
@@ -55,7 +55,7 @@ class CmdConfig:
 
         if param.timeout is not None:
             action = True
-            settings.app.set_timeout(param.timeout)
+            settings.app.timeout = param.timeout
             print(f"Novo timeout: {param.timeout}")
 
         if not action:

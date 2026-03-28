@@ -1,4 +1,3 @@
-import re
 
 from tko.settings.repository import Repository
 from tko.util.text import Text
@@ -117,12 +116,12 @@ class TaskTree:
         self.cache_max_title = max(self.MIN_TITLE_LENGTH, self.cache_max_title)
         return self.cache_max_title
 
-    def get_total_width(self) -> int:
-        width = self.get_max_title()
-        if Flags.show_time.is_true():
-            width += len(self.format_hours_minutes("", 0, 0))
-        width += 7 # for percent and symbols
-        return max(width, self.MIN_TITLE_LENGTH + 10)
+    # def get_total_width(self) -> int:
+    #     width = self.get_max_title()
+    #     if Flags.show_time.is_true():
+    #         width += len(self.format_hours_minutes("", 0, 0))
+    #     width += 7 # for percent and symbols
+    #     return max(width, self.MIN_TITLE_LENGTH + 10)
 
     @staticmethod
     def color_task_title(title: str, color: str) -> Text:
@@ -277,7 +276,7 @@ class TaskTree:
             # output.add(self.style.round_l(focus_color))
         title = q.get_full_title()
         if focus_color:
-            title.set_background(focus_color)
+            title.set_bg(focus_color)
     
         output.add(title)
         output = output.ljust(self.get_max_title(), Text.Token(self.filler, focus_color))

@@ -21,6 +21,7 @@ from tko.play.task_graph import TaskGraph
 from tko.play.daily_graph import DailyGraph
 from tko.util.visual import Visual
 from tko.settings.settings import Settings
+from tko.settings.app_settings import AppSettings
 
 class Gui:
 
@@ -38,7 +39,7 @@ class Gui:
         self.need_update = False
         self.xray_offset = 0
 
-        self.app = self.settings.app
+        self.app: AppSettings = self.settings.app
 
     def set_need_update(self):
         self.need_update = True
@@ -102,8 +103,8 @@ class Gui:
         values = self.tree.get_senteces(dy)
         for y, sentence in enumerate(values):
             if sentence.len() > dx:
-                sentence.trim_end(dx - 3)
-                sentence.addf("r", "...")
+                sentence.trim_end(dx - 1)
+                sentence.addf("r", "…")
             frame.write(y, 0, sentence)
 
     def show_skills_bar(self, frame_xp: Frame):
@@ -410,9 +411,7 @@ class Gui:
 
         right_sx = 0
         if Flags.show_panel.is_true():
-            right_sx = cols - self.tree.get_total_width() - 1
-            if right_sx > cols // 2:
-                right_sx = cols // 2
+            right_sx = round(cols * (100 - self.settings.app.panel_size_percent) / 100.0)
         
         task_sx = main_sx - right_sx
 

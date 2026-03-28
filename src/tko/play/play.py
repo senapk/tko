@@ -103,8 +103,8 @@ class Play:
         cman.add_str(GuiKeys.activate, self.activate) # type: ignore
         # cman.add_str(GuiKeys.open_url, self.actions.open_link)
         cman.add_str(GuiKeys.down_task, self.actions.down_remote_task)
-        cman.add_str(GuiKeys.borders, self.app.toggle_borders)
-        cman.add_str(GuiKeys.images, self.app.toggle_images)
+        cman.add_str(GuiKeys.borders, lambda: self.app.toggle("use_borders"))
+        cman.add_str(GuiKeys.images, lambda: self.app.toggle("use_images"))
         cman.add_str(GuiKeys.set_lang_drafts, self.gui.language.set_language)
         cman.add_str(GuiKeys.create_draft, self.actions.create_draft)
         cman.add_int(curses.KEY_DC, self.actions.delete_folder_ask)
@@ -116,10 +116,11 @@ class Play:
         cman.add_str(GuiKeys.inbox, lambda: Flags.inbox.set_value(Flags.inbox_only))
         cman.add_str(GuiKeys.all_tasks, lambda: Flags.inbox.set_value(Flags.inbox_all))
 
-        cman.add_str(GuiKeys.panel_help, lambda: self.open_painel(Flags.panel_help))
-        cman.add_str(GuiKeys.panel_graph, lambda: self.open_painel(Flags.panel_graph))
-        cman.add_str(GuiKeys.panel_logs, lambda: self.open_painel(Flags.panel_logs))
-        cman.add_str(GuiKeys.panel_skills, lambda: self.open_painel(Flags.panel_skills))
+        cman.add_str(GuiKeys.panel_help, lambda: self.open_panel(Flags.panel_help))
+        cman.add_str(GuiKeys.panel_graph, lambda: self.open_panel(Flags.panel_graph))
+        cman.add_str(GuiKeys.panel_logs, lambda: self.open_panel(Flags.panel_logs))
+        cman.add_str(GuiKeys.panel_skills, lambda: self.open_panel(Flags.panel_skills))
+        cman.add_str(GuiKeys.panel_toggle, lambda: Flags.show_panel.toggle())
 
         cman.add_str(GuiKeys.unfold_patch, self.actions.open_versions)
         
@@ -129,10 +130,12 @@ class Play:
 
         cman.add_str(GuiKeys.search, self.gui.search.toggle_search)
         cman.add_str(GuiKeys.palette, self.play_palette.command_pallete)
+        cman.add_str(GuiKeys.panel_resize_inc, lambda: self.actions.resize_panels(10))
+        cman.add_str(GuiKeys.panel_resize_dec, lambda: self.actions.resize_panels(-10))
 
         return cman
-        
-    def open_painel(self, value: str):
+
+    def open_panel(self, value: str):
         if Flags.show_panel.is_true():
             if Flags.panel.get_value() != value:
                 Flags.panel.set_value(value)

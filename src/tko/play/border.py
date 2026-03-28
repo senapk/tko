@@ -8,7 +8,7 @@ class Border:
         self.app = app
 
     def has_borders(self):
-        return self.app.get_use_borders()
+        return self.app.use_borders
 
     def border(self, color: str, data: str):
         return Text().add(self.round_l(color)).addf(color, data).add(self.round_r(color))

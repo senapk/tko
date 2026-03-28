@@ -1,7 +1,7 @@
 from tko.util.text import Text
 from tko.play.floating import Floating, FloatingABC
 from tko.settings.settings import Settings
-
+import tko.settings.app_settings as app
 
 class FloatingCalibrate(FloatingABC):
     def __init__(self, settings: Settings):
@@ -11,14 +11,14 @@ class FloatingCalibrate(FloatingABC):
         # self.set_text_ljust()
         self.floating.set_footer_text(Text.format(" Use {y:Enter} para salvar, {y:q} para cancelar e {y:r} para reiniciar. "))
         self._index = 0
-        self._options: list[int] = [settings.app.get_key_left(),
-                                   settings.app.get_key_right(),
-                                   settings.app.get_key_up(),
-                                   settings.app.get_key_down(), 
-                                   settings.app.get_key_esc(),
-                                   settings.app.get_key_pg_up(),
-                                   settings.app.get_key_pg_down(), 
-                                   settings.app.get_key_backspace()]
+        self._options = [settings.app.get_key(app.AppKeys.LEFT),
+                         settings.app.get_key(app.AppKeys.RIGHT),
+                         settings.app.get_key(app.AppKeys.UP),
+                         settings.app.get_key(app.AppKeys.DOWN),
+                         settings.app.get_key(app.AppKeys.ESC),
+                         settings.app.get_key(app.AppKeys.PG_UP),
+                         settings.app.get_key(app.AppKeys.PG_DOWN),
+                         settings.app.get_key(app.AppKeys.BACKSPACE)]
         self.floating.frame.set_border_color("m")
         self._exit_on_action = True
         self.right_dx = 5 # shortcut space
@@ -61,14 +61,14 @@ class FloatingCalibrate(FloatingABC):
         
         if key == ord('\n'):
             self.floating.enable = False
-            self.settings.app.set_key_left(self._options[0])
-            self.settings.app.set_key_right(self._options[1])
-            self.settings.app.set_key_up(self._options[2])
-            self.settings.app.set_key_down(self._options[3])
-            self.settings.app.set_key_esc(self._options[4])
-            self.settings.app.set_key_pg_up(self._options[5])
-            self.settings.app.set_key_pg_down(self._options[6])
-            self.settings.app.set_key_backspace(self._options[7])
+            self.settings.app.set_key(app.AppKeys.LEFT, self._options[0])
+            self.settings.app.set_key(app.AppKeys.RIGHT, self._options[1])
+            self.settings.app.set_key(app.AppKeys.UP, self._options[2])
+            self.settings.app.set_key(app.AppKeys.DOWN, self._options[3])
+            self.settings.app.set_key(app.AppKeys.ESC, self._options[4])
+            self.settings.app.set_key(app.AppKeys.PG_UP, self._options[5])
+            self.settings.app.set_key(app.AppKeys.PG_DOWN, self._options[6])
+            self.settings.app.set_key(app.AppKeys.BACKSPACE, self._options[7])
             self.settings.save_settings()
             return -1
         elif key == ord('q'):

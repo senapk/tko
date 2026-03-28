@@ -37,7 +37,7 @@ class Opener:
             else:
                 files_patched.append(f)
 
-        cmd = self.settings.app.get_editor()
+        cmd = self.settings.app.editor
         folder = os.path.dirname(os.path.abspath(files_to_open[0]))
         aviso = (Floating()
                 .bottom()
