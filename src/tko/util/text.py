@@ -261,7 +261,7 @@ class Text:
                 for c in value.text:
                     self.data.append(Text.Token(c, value.fmt))
         elif isinstance(value, tuple) and len(value) == 2: # type: ignore
-            self.add(Text.Token(value[1], value[0])) # type: ignore
+            self.data.append(Text.Token(value[1], value[0])) # type: ignore
         elif isinstance(value, Text):  # type: ignore
             self.default_fmt = value.default_fmt
             self.data += [x for x in value.data]

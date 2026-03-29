@@ -11,8 +11,7 @@ from tko.play.search import Search
 from tko.play.language_setter import LanguageSetter
 from tko.play.images import opening
 from tko.play.floating_manager import FloatingManager
-from tko.play.flags import Flags, FlagsMan
-from tko.play.tasktree import TaskTree, TaskAction
+from tko.play.tasktree import TaskTree
 
 from tko.play.keys import GuiKeys
 from tko.game.quest import Quest
@@ -22,62 +21,79 @@ from tko.play.daily_graph import DailyGraph
 from tko.util.visual import Visual
 from tko.settings.settings import Settings
 from tko.settings.app_settings import AppSettings
+from tko.play.FormatterUtil import FormatterUtil
+
+class TaskAction:
+    BAIXAR   = "Baixar  "
+    EXECUTAR = "Escolher"
+    VISITAR  = "Visitar "
+    EXPANDIR = "Expandir"
+    CONTRAIR = "Contrair"
+    BLOQUEIO = "Travado"
 
 class Gui:
 
-    def __init__(self, settings: Settings, tree: TaskTree, flagsman: FlagsMan, fman: FloatingManager):
-        self.rep = tree.rep
+    def __init__(self, tree: TaskTree, fman: FloatingManager):
+        self.repo = tree.repo
         self.game = tree.game
         self.tree = tree
-        self.flagsman = flagsman
+        self.flags = self.repo.flags
         self.fman = fman
-        self.settings = tree.settings
+        self.settings: Settings = tree.settings
         self.search = Search(tree=self.tree, fman=self.fman)
         self.style: Border = Border(self.settings.app)
-        self.language = LanguageSetter(self.settings, self.rep, self.flagsman, self.fman)
+        self.language = LanguageSetter(self.settings, self.repo, self.fman)
         self.colors = self.settings.colors
         self.need_update = False
         self.xray_offset = 0
+        self.fmt_util: FormatterUtil = FormatterUtil(self.settings, self.repo)
 
         self.app: AppSettings = self.settings.app
 
     def set_need_update(self):
         self.need_update = True
 
+    def get_task_action(self, task: Task) -> tuple[str, str]:
+        if task.is_link():
+            return "B", TaskAction.VISITAR
+        if task.is_static_type():
+            return "G", TaskAction.EXECUTAR
+        if not self.fmt_util.is_downloaded_for_lang(task):
+            return "Y", TaskAction.BAIXAR
+        return "G", TaskAction.EXECUTAR
+
 
     def get_activate_label(self) -> tuple[str, str]:
         try:
             obj = self.tree.get_selected_throw()
         except IndexError:
-            return "R", " Retornar"
+            return "R", "Retornar"
         if isinstance(obj, Quest):
             quest: Quest = obj
-            if Flags.inbox.get_value() != Flags.inbox_all and not quest.is_reachable():
+            if self.flags.task_view_mode.is_inbox() and not quest.is_reachable():
                 output = TaskAction.BLOQUEIO
-            elif quest.get_full_key() in self.tree.expanded:
+            elif quest.get_full_key() in self.tree.state.expanded:
                 output = TaskAction.CONTRAIR
             else:
                 output = TaskAction.EXPANDIR
             return "Y", output
         elif isinstance(obj, Task):
-            color, output = self.tree.get_task_action(obj)
+            color, output = self.get_task_action(obj)
             return color, output
         return "R", " ERRO"
 
-    @staticmethod
-    def get_frame_color() -> str:
-        if Flags.inbox.get_value() == Flags.inbox_only:
+    def get_frame_color(self) -> str:
+        if self.flags.task_view_mode.is_inbox():
             return "g"
-        if Flags.inbox.get_value() == Flags.inbox_all:
+        if self.flags.task_view_mode.is_all():
             return "y"
         return ""
 
-    @staticmethod
-    def center_header_footer(value: Text, frame: Frame) -> Text:
+    def center_header_footer(self, value: Text, frame: Frame) -> Text:
         half = value.len() // 2
         x = frame.get_x()
         _, dx = Fmt.get_size()
-        color = Gui.get_frame_color()
+        color = self.get_frame_color()
         full = Text().addf(color, "─" * ((dx//2) - x - 2 - half)).add(value)
         return full
 
@@ -88,10 +104,10 @@ class Gui:
         if self.search.search_mode:
             top = self.make_search_text(dx - 20)
         else:
-            top = Text.format(" {} ", self.rep.data.lang.upper())
+            top = Text.format(" {} ", self.repo.data.lang.upper())
         frame.set_header(top, "<", prefix="{", suffix="}")
         
-        dirname: Path = self.rep.paths.get_workspace_dir()
+        dirname: Path = self.repo.paths.get_workspace_dir()
         dirname_str = dirname.name.upper()
         
         text = Text.format(" {} ", dirname_str)
@@ -100,8 +116,9 @@ class Gui:
         frame.set_footer(text, "<", prefix="{", suffix="}")
         frame.draw()
 
-        values = self.tree.get_senteces(dy)
-        for y, sentence in enumerate(values):
+        sentences: list[Text] = self.tree.get_visible_sentences(dy)
+
+        for y, sentence in enumerate(sentences):
             if sentence.len() > dx:
                 sentence.trim_end(dx - 1)
                 sentence.addf("r", "…")
@@ -115,7 +132,7 @@ class Gui:
 
         elements: list[Text] = []
         for skill, value in complete.items():
-            if Flags.show_panel.get_value() == "1":
+            if self.flags.show_panel.is_true():
                 obtained_value = round(100 * obtained.get(skill, 0) / priority.get(skill, 1))
                 possible_value = round(100 * value / priority.get(skill, 1))
                 text = f"{skill}: {obtained_value:03d}%  {possible_value:03d}%"
@@ -139,7 +156,7 @@ class Gui:
         else:
             grade = total_obtained / total_priority * 10.0
 
-        if Flags.show_panel.get_value() == "1":
+        if self.flags.show_panel.is_true():
             text = f" Nota: {grade:.1f}       "
         else:
             text = f"Nota: {grade:.1f} :{round(total_obtained):03d}/{round(total_priority):03d}/{round(total_complete):03d}"
@@ -195,7 +212,7 @@ class Gui:
         Fmt.write(lines - 1, 0, line_main.center(cols))
 
     def make_search_text(self, size: int):
-        text = " Busca: " + self.tree.search_text + Symbols.cursor
+        text = " Busca: " + self.tree.state.search + Symbols.cursor
         text = text.ljust(size)
         return Text().add(text)
     
@@ -244,27 +261,27 @@ class Gui:
         return xpbar
 
     def show_top_bar(self, frame: Frame):
-        panel_on = Flags.show_panel.is_true()
+        panel_on = self.flags.show_panel.is_true()
         vi = Visual(self.settings.app.use_borders)
         pre = [
-            vi.render_button(f"Inbox[{GuiKeys.inbox}]", Flags.inbox.get_value() == Flags.inbox_only),
-            vi.render_button(f"Todas[{GuiKeys.all_tasks}]", Flags.inbox.get_value() == Flags.inbox_all),
+            vi.render_button(f"Inbox[{GuiKeys.inbox}]", self.flags.task_view_mode.is_inbox()),
+            vi.render_button(f"Todas[{GuiKeys.all_tasks}]", self.flags.task_view_mode.is_all()),
             Text().add(" ")
         ]
         pos = [
-            vi.render_button(f"Gráficos[{GuiKeys.panel_graph}]", panel_on and Flags.panel.get_value() == Flags.panel_graph),
-            vi.render_button(f"Logs[{GuiKeys.panel_logs}]", panel_on and Flags.panel.get_value() == Flags.panel_logs),
-            vi.render_button(f"Trilhas[{GuiKeys.panel_skills}]", panel_on and Flags.panel.get_value() == Flags.panel_skills),
-            vi.render_button(f"Ajuda[{GuiKeys.panel_help}]", panel_on and Flags.panel.get_value() == Flags.panel_help),
+            vi.render_button(f"Gráficos[{GuiKeys.panel_graph}]", panel_on and self.flags.panel.is_graph()),
+            vi.render_button(f"Logs[{GuiKeys.panel_logs}]", panel_on and self.flags.panel.is_logs()),
+            vi.render_button(f"Trilhas[{GuiKeys.panel_skills}]", panel_on and self.flags.panel.is_skills()),
+            vi.render_button(f"Ajuda[{GuiKeys.panel_help}]", panel_on and self.flags.panel.is_help()),
         ]
         last = [
-            vi.render_button("Exec[PageUp]", Flags.task_graph_mode.get_value() == Flags.task_exec_view),
-            vi.render_button("Time[PgDown]", Flags.task_graph_mode.get_value() == Flags.task_time_view),
+            vi.render_button("Exec[PageUp]", self.flags.task_graph_mode.is_executions()),
+            vi.render_button("Time[PgDown]", self.flags.task_graph_mode.is_time_view()),
         ]
         
         limit = frame.get_dx()
         extra = Text()
-        if Flags.panel.get_value() == Flags.panel_graph:
+        if self.flags.panel.is_graph():
             extra = Text().add("").join(last)
 
         info = Text().add("").join(pre + pos)
@@ -311,7 +328,7 @@ class Gui:
             frame.write(i, 0, line)
 
     def get_task_graph(self, task_key: str, width: int, height: int) -> tuple[bool, list[Text], list[Text]]:
-        tg = TaskGraph(self.settings, self.rep, task_key, width, height)
+        tg = TaskGraph(self.settings, self.repo, task_key, width, height)
         header, graph = tg.get_output()
         if len(graph) == 0:
             return False, [], []
@@ -320,7 +337,7 @@ class Gui:
         return True, header, graph
 
     def get_daily_graph(self, width: int, height: int) -> tuple[bool, list[Text], list[Text]]:
-        header, graph = DailyGraph(self.rep.logger, width, height).get_graph()
+        header, graph = DailyGraph(self.repo.logger, width, height).get_graph()
         if len(graph) == 0:
             return False, [], []
         # for y, line in enumerate(graph):
@@ -340,13 +357,13 @@ class Gui:
         if width < 5:
             width = 5
         header: list[Text] = []
-        if Flags.panel.get_value() in (Flags.panel_graph, Flags.panel_logs):
+        if self.flags.panel.is_graph() or self.flags.panel.is_logs():
             height = lines - 2
             if height < 3:
                 height = 3
             if isinstance(selected, Task):
                 made, header, list_data = self.get_task_graph(selected.get_full_key(), width, height)
-            elif isinstance(selected, Quest) and Flags.panel.get_value() == Flags.panel_graph:
+            elif isinstance(selected, Quest) and self.flags.panel.is_graph():
                 made, header, list_data = self.get_daily_graph(width, height)
         if not made:
             list_data = [Text().add(x).rjust(width) for x in opening["parrot"].splitlines()]
@@ -358,13 +375,13 @@ class Gui:
         
         offset = 0
         
-        if Flags.panel.get_value() == Flags.panel_logs and isinstance(selected, Task):
+        if self.flags.panel.is_logs() and isinstance(selected, Task):
             offset = self.xray_offset
             # keep_borders = True
         line_count = 0
         
         dy, _ = frame.get_inner()
-        if Flags.panel.get_value() == Flags.panel_logs:
+        if self.flags.panel.is_logs():
             if header:
                 frame.set_header(Text().add(" Scroll Up[PageUp]  ScrollDown[PgDown] "), "^")
                 frame.set_footer(Text().add(" ").add(header[0]), "^")
@@ -397,7 +414,7 @@ class Gui:
     def show_items(self):
         border_color = self.get_frame_color()
         Fmt.clear()
-        self.tree.reload_sentences()
+        self.tree.update()
         lines, cols = Fmt.get_size()
         main_sx = cols  # tamanho em x livre
         main_sy = lines  # size em y avaliable
@@ -410,7 +427,7 @@ class Gui:
         # left_size = 29
 
         right_sx = 0
-        if Flags.show_panel.is_true():
+        if self.flags.show_panel.is_true():
             right_sx = round(cols * (100 - self.settings.app.panel_size_percent) / 100.0)
         
         task_sx = main_sx - right_sx
@@ -418,15 +435,15 @@ class Gui:
         frame_top = Frame(top_y, 0).set_size(top_dy + 2, cols)
         self.show_top_bar(frame_top)
 
-        if Flags.show_panel.is_true():
+        if self.flags.show_panel.is_true():
             frame_right =  Frame(mid_y, cols - right_sx).set_size(mid_sy, right_sx).set_border_color(self.get_frame_color())
-            if Flags.panel.get_value() == Flags.panel_skills:
+            if self.flags.panel.is_skills():
                 self.show_skills_bar(frame_right)
-            elif Flags.panel.get_value() == Flags.panel_graph:
+            elif self.flags.panel.is_graph():
                 self.show_graphs(frame_right)
-            elif Flags.panel.get_value() == Flags.panel_logs:
+            elif self.flags.panel.is_logs():
                 self.show_graphs(frame_right)
-            elif Flags.panel.get_value() == Flags.panel_help:
+            elif self.flags.panel.is_help():
                 self.show_help(frame_right)
         # precisam ser desenhados após o panel do graphs
         frame_main = Frame(mid_y, 0).set_size(mid_sy, task_sx).set_border_color(border_color).set_border_color(self.get_frame_color())

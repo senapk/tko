@@ -13,6 +13,7 @@ from tko.settings.rep_paths import RepPaths
 from icecream import ic # type: ignore
 from datetime import timedelta
 from tko.settings.git_cache import GitCache
+from tko.play.flags import Flags
 import os
 
 def remove_git_merge_tags(lines: list[str]) -> list[str]:
@@ -36,6 +37,7 @@ class Repository:
         self.paths = RepPaths(rep_folder)
         self.data: RepData = RepData()
         self.game = Game()
+        self.flags = Flags()
         self.logger: Logger = Logger(rep_folder) 
         self.force_update: bool = force_update
         self.cache = GitCache(self.paths.get_cache_folder(), timedelta(seconds=self.cache_time_for_remote_source))
@@ -45,11 +47,10 @@ class Repository:
         self.cache = GitCache(self.paths.get_cache_folder(), timedelta(seconds=self.cache_time_for_remote_source))
         return self
 
-
     def found(self):
         return self.paths.get_config_file().exists()
 
-    def is_local_dir(self, path: Path) -> bool:
+    def is_inside_repo(self, path: Path) -> bool:
         rep_dir = self.paths.get_workspace_dir()
         path = path.resolve()
         return path.is_relative_to(rep_dir)
@@ -90,8 +91,7 @@ class Repository:
         if len(parts) > 1:
             source = parts[0]
             label = parts[1]
-        return self.paths.root_folder / source / label
-
+        return self.paths.root_dir / source / label
 
     def load_config(self):
         content = Decoder.load(self.paths.get_config_file())
@@ -110,8 +110,7 @@ class Repository:
         except:
             raise Warning(Text.format("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.paths.get_config_file(), "corrompido"))
         self.data.load_from_dict(local_data)
-        self.data.ensure_sandbox_source(self.paths.get_workspace_dir())
-
+        self.flags.from_dict(self.data.get_flags())
         for source in self.data.get_sources():
             source.set_rep_globals(self.paths.get_workspace_dir(), self.paths.get_cache_folder())
 
@@ -125,7 +124,7 @@ class Repository:
 
     def save_config(self):
         self.data.version = "0.2"
-
+        self.data.flags = self.flags.to_dict()
         path: Path = Path(self.paths.get_config_file())
         path.parent.mkdir(parents=True, exist_ok=True)
         atomic_write_yaml(path, self.data.save_to_dict())

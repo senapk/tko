@@ -3,7 +3,6 @@ from tko.game.task import Task
 from tko.util.text import Text
 from tko.game.tree_item import TreeItem
 from tko.game.quest_grader import QuestGrader
-from tko.play.flags import Flags
 
 # from typing import override
 
@@ -34,9 +33,9 @@ class Quest(TreeItem):
             key = key[1:]
         self.requires.append(self.get_remote_name() + "@" + key)
 
-    def get_full_title(self) -> Text:
+    def get_full_title(self, show_skills: bool) -> Text:
         output = Text().addf("c", self.remote_name).add(":").add(self.get_title())
-        if Flags.show_panel.get_value() == "1" and Flags.panel.get_value() == Flags.panel_skills:
+        if show_skills:
             for skill, value in self.skills.items():
                 if value > 1:
                     output.addf('b', f" +{skill}*{value}")

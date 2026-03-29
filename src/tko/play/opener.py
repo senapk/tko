@@ -2,7 +2,7 @@ from tko.play.floating import Floating
 from tko.play.floating_manager import FloatingManager
 from tko.util.text import Text
 from tko.settings.settings import Settings
-from tko.down.drafts import Drafts
+from tko.down.sandbox_drafts import SandboxDrafts
 from pathlib import Path
 
 import tempfile
@@ -65,7 +65,7 @@ class Opener:
 
     def load_folder(self, folder: Path) -> list[Path]:
         files_to_open: list[Path] = []
-        files_to_open += Drafts.load_drafts_only(folder, self.language, ["md"])
+        files_to_open += SandboxDrafts.load_drafts_only(folder, self.language, ["md"])
         return files_to_open
 
     def load_folders_and_open(self):

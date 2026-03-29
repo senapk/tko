@@ -463,7 +463,7 @@ class Tester:
             frame.write(i, 0, Text().add(line))
         return
 
-    def get_solver_names(self):
+    def get_solver_names(self) -> list[str]:
         return sorted(self.wdir.solvers_names())
     
     def main(self, scr: curses.window) -> Optional[Callable[[], bool]]:

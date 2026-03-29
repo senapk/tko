@@ -10,18 +10,13 @@ class SourceType(Enum):
     LOCAL_FILE = "local"
     GIT_SOURCE = "git"
 
-class RepSource:
-    STUDENT_SANDBOX_NAME = "sandbox"
 
-    DEFAULT_DRAFT_FOLDER = "00_rascunhos"
-
-    AUTOLOAD_CLUSTER_COMMAND = "autoload_cluster"
-    AUTOLOAD_QUEST_COMMAND = "autoload_quest"
-
-    sandbox_readme_content = f"""
+STUDENT_SANDBOX_NAME: str = "sandbox"
+AUTOLOAD_COMMAND: str = "autoload"
+sandbox_readme_content: str = f"""
 # Sandbox
 
-Cada vez que criar um rascunho, ele será salvo na pasta `{DEFAULT_DRAFT_FOLDER}` dentro do sandbox.
+Cada vez que criar um rascunho, ele será salvo na pasta `{STUDENT_SANDBOX_NAME}` dentro do sandbox.
 
 Você pode criar quantos rascunhos quiser. Eles serão rastreados pela chave key no preâmbulo do rascunho.
 
@@ -30,14 +25,15 @@ Renomeie o nome da pasta para renomear o rascunho. Exclua a pasta para excluir o
 Sinta-se à vontade para organizar seus rascunhos em subpastas dentro do sandbox, se desejar.
 
 ## {STUDENT_SANDBOX_NAME}
-<!--{AUTOLOAD_CLUSTER_COMMAND}=.-->
+<!--{AUTOLOAD_COMMAND}=.-->
 """[1:]
-    
 
+class RepSource:
     class Keys:
         NAME = "name"
         TARGET = "target"
         TYPE = "type"
+        INDEX = "index"
         WRITEABLE = "writeable"
         QUESTS = "quests"
         TASKS = "tasks"
@@ -52,10 +48,11 @@ Sinta-se à vontade para organizar seus rascunhos em subpastas dentro do sandbox
     filters: list[str] | None - list of filters to apply when loading quests from the source, used to filter quests based on certain criteria
     """
     def __init__(self, alias: str):
-        self.name = alias
-        self.__target = ""
+        self.name: str = alias
+        self.target: str = ""
         self.source_type: SourceType = SourceType.LOCAL_FILE
-        self.__writeable: bool = False
+        self.writeable: bool = False
+        self.index: str = "README.md"
         self.branch: str | None = None
         self.quests: list[str] | None = None
         self.tasks: list[str] | None = None
@@ -64,30 +61,27 @@ Sinta-se à vontade para organizar seus rascunhos em subpastas dentro do sandbox
 
     def set_local_source(self, target: Path, writeable: bool = False):
         self.source_type = SourceType.LOCAL_FILE
-        self.__target = str(target)
-        self.__writeable = writeable
+        self.target = str(target)
+        self.writeable = writeable
         return self
     
     def is_sandbox_source(self) -> bool:
-        return self.name == RepSource.STUDENT_SANDBOX_NAME # for backward compatibility, to remove in the future
+        return self.name == STUDENT_SANDBOX_NAME
     
     def set_student_sandbox(self):
-        self.name = RepSource.STUDENT_SANDBOX_NAME
-        self.set_local_source(target=Path(RepSource.STUDENT_SANDBOX_NAME), writeable=True)
+        self.name = STUDENT_SANDBOX_NAME
+        self.set_local_source(target=Path(STUDENT_SANDBOX_NAME), writeable=True)
         return self
-    
-    def get_default_sandbox_draft_folder(self) -> str:
-        return self.DEFAULT_DRAFT_FOLDER
-    
-    def ensure_sandbox_source(self, local_workspace: Path):
-        # create folder sandbox inside rep_workspace if not exists
-        sandbox_path = local_workspace / RepSource.STUDENT_SANDBOX_NAME
-        sandbox_path.mkdir(parents=True, exist_ok=True)
-        readme_file = sandbox_path / "README.md"
-        if not os.path.exists(readme_file):
-            with open(readme_file, "w") as f:
-                f.write(self.sandbox_readme_content)
-        return self
+        
+    # def ensure_sandbox_source(self, local_workspace: Path):
+    #     # create folder sandbox inside rep_workspace if not exists
+    #     sandbox_path = local_workspace / RepSource.STUDENT_SANDBOX_NAME
+    #     sandbox_path.mkdir(parents=True, exist_ok=True)
+    #     readme_file = sandbox_path / "README.md"
+    #     if not os.path.exists(readme_file):
+    #         with open(readme_file, "w") as f:
+    #             f.write(self.sandbox_readme_content)
+    #     return self
     
     # return quests and tasks filters
     def get_filters(self) -> tuple[list[str] | None, list[str] | None]:
@@ -95,7 +89,7 @@ Sinta-se à vontade para organizar seus rascunhos em subpastas dentro do sandbox
 
     def set_git_source(self, target: str, branch: str | None = None):
         self.source_type = SourceType.GIT_SOURCE
-        self.__target = target
+        self.target = target
         self.branch = branch
         return self
     
@@ -103,24 +97,24 @@ Sinta-se à vontade para organizar seus rascunhos em subpastas dentro do sandbox
         return self.source_type == SourceType.LOCAL_FILE
 
     def set_writeable(self, writeable: bool = True):
-        self.__writeable = writeable
+        self.writeable = writeable
         return self
 
     def get_writeable(self) -> bool:
-        return self.__writeable
+        return self.writeable
     
     def is_read_only(self) -> bool:
         if self.source_type == SourceType.LOCAL_FILE:
-            return not self.__writeable
+            return not self.writeable
         if self.source_type == SourceType.GIT_SOURCE:
             return True
         return True
 
     def get_url_link(self) -> str:
         if self.source_type == SourceType.GIT_SOURCE:
-            return self.__target
+            return self.target
         elif self.source_type == SourceType.LOCAL_FILE:
-            return self.__target
+            return self.target
         raise ValueError("Unknown source type")
 
     def is_git_source(self) -> bool:
@@ -132,7 +126,7 @@ Sinta-se à vontade para organizar seus rascunhos em subpastas dentro do sandbox
     def get_source_readme(self) -> Path:
         if self.source_type == SourceType.LOCAL_FILE:
             
-            file: str = os.path.join(self.__target, "README.md")
+            file: str = os.path.join(self.target, "README.md")
             if os.path.isabs(file):
                 return Path(file)
             else:
@@ -143,7 +137,7 @@ Sinta-se à vontade para organizar seus rascunhos em subpastas dentro do sandbox
     
     def get_source_folder(self) -> Path:
         if self.source_type == SourceType.LOCAL_FILE:
-            return Path(self.__target)
+            return Path(self.target)
         if self.source_type == SourceType.GIT_SOURCE:
             git_cache = GitCache(self.get_rep_cache_folder())
             return git_cache.get(self.get_url_link(), force_update=False)# absolute path to cached repo
@@ -170,6 +164,8 @@ Sinta-se à vontade para organizar seus rascunhos em subpastas dentro do sandbox
         return self.rep_local_workspace
     
     def get_source_workspace(self) -> Path:
+        if self.name == STUDENT_SANDBOX_NAME:
+            return self.get_rep_workspace() / self.target
         return self.get_rep_workspace() / self.name
     
     def get_task_workspace(self, task_key: str) -> Path:
@@ -186,11 +182,11 @@ Sinta-se à vontade para organizar seus rascunhos em subpastas dentro do sandbox
         if "database" in data and isinstance(data["database"], str): # for backward compatibility
             self.name = data["database"]
         if Keys.TARGET in data and isinstance(data[Keys.TARGET], str):
-            self.__target = data[Keys.TARGET]
+            self.target = data[Keys.TARGET]
         if "link" in data and isinstance(data["link"], str): # for backward compatibility
-            self.__target = data["link"]
-            if self.__target.endswith("README.md"):
-                self.__target = os.path.dirname(self.__target)
+            self.target = data["link"]
+            if self.target.endswith("README.md"):
+                self.target = os.path.dirname(self.target)
         if Keys.BRANCH in data and isinstance(data[Keys.BRANCH], str):
             self.branch = data[Keys.BRANCH]
         else:
@@ -210,18 +206,23 @@ Sinta-se à vontade para organizar seus rascunhos em subpastas dentro do sandbox
         if Keys.TASKS in data and isinstance(data[Keys.TASKS], list):
             self.tasks = data[Keys.TASKS]
         if Keys.WRITEABLE in data and isinstance(data[Keys.WRITEABLE], bool):
-            self.__writeable = data[Keys.WRITEABLE]
-        if self.name == RepSource.STUDENT_SANDBOX_NAME or self.name == "local": # for backward compatibility, to remove in the future
-            self.__writeable = True
+            self.writeable = data[Keys.WRITEABLE]
+        if self.name == STUDENT_SANDBOX_NAME: # for backward compatibility, to remove in the future
+            self.writeable = True
+        if Keys.INDEX in data and isinstance(data[Keys.INDEX], str):
+            self.index = data[Keys.INDEX]
+        else:
+            self.index = "README.md"
         return self
 
     def save_to_dict(self) -> dict[str, Any]:
         Keys = RepSource.Keys
         output: dict[str, Any] = {
             Keys.NAME: self.name,
-            Keys.TARGET: self.__target,
+            Keys.TARGET: self.target,
+            Keys.INDEX: self.index,
             Keys.TYPE: self.source_type.value,
-            Keys.WRITEABLE: self.__writeable,
+            Keys.WRITEABLE: self.writeable,
         }
         if self.branch is not None and self.branch != "master":
             output[Keys.BRANCH] = self.branch

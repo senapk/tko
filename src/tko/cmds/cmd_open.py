@@ -1,3 +1,4 @@
+from tko.play.tasktree import TaskTree
 from tko.settings.settings import Settings
 from tko.settings.repository import Repository
 from tko.play.play import Play
@@ -5,11 +6,11 @@ from tko.util.text import Text
 from pathlib import Path
 
 class CmdOpen:
-    def __init__(self, settings: Settings, force_update: bool):
+    def __init__(self, settings: Settings, repo: Repository, force_update: bool):
         self.settings = settings
         self.need_update = False
-        self.repo: Repository | None = None
-        self.repo_dir: Path | None = None
+        self.repo: Repository = repo
+        self.repo_dir: Path = repo.paths.get_root_dir()
         self.force_update = force_update
 
     def display_need_update(self):
@@ -26,10 +27,13 @@ class CmdOpen:
         return self
 
     def execute(self):
-        if self.repo is None:
-            raise Warning("Repositório não encontrado")
-
         play = Play(self.settings, self.repo)
         if self.need_update:
             play.display_need_update()
         play.play()
+
+    def list(self, show_all: bool):
+        tree = TaskTree(self.settings, self.repo)
+        tree.update(force_view_all=True)
+        for item in tree.lines:
+            print(item)

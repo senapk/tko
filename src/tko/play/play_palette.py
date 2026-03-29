@@ -1,4 +1,3 @@
-from tko.play.flags import Flags
 from tko.play.floating_drop_down import FloatingDropDown
 from tko.play.floating_drop_down import FloatingInputData
 from tko.settings.app_settings import ToggleOption
@@ -12,6 +11,7 @@ from tko.play.floating import Floating
 class PlayPalette:
     def __init__(self, actions: PlayActions):
         self.actions = actions
+        self.flags = self.actions.repo.flags
         self.app = self.actions.settings.app
         self.fman = self.actions.fman
         self.gui = self.actions.gui
@@ -50,7 +50,7 @@ class PlayPalette:
         options.append(
             FloatingInputData(
                 lambda: Text.format(" {} Mostrar {y}", Symbols.action, "Ajuda"),
-                lambda: Flags.panel.set_value(Flags.panel_help),
+                lambda: self.flags.panel.set_help(),
                 GuiKeys.panel_help
             ).set_exit_on_action(True)
         )
@@ -73,8 +73,8 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y} decorrido", icon(Flags.show_time.is_true()), "Tempo"),
-                lambda: Flags.show_time.toggle(),
+                lambda: Text.format(" {} Mostrar {y} decorrido", icon(self.flags.show_time.is_true()), "Tempo"),
+                lambda: self.flags.show_time.toggle(),
                 GuiKeys.show_duration
             )
         )

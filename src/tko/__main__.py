@@ -36,11 +36,27 @@ from tko.util.raw_terminal import RawTerminal
 from tko.settings.check_version import CheckVersion
 from tko.settings.rep_starter import RepStarter
 from tko.settings.rep_source_actions import RepSourceActions
-
+from tko.util.rtext import RenderConfig, RenderMode
 from tko.__init__ import __version__
 
 
 class Main:
+
+    @staticmethod
+    def load_repo(dir_path: Path, show_warnings: bool = True, auto_load: bool = True, global_cache: bool = False) -> tuple[Repository | None, Path | None]:
+        if global_cache:
+            RepPaths.use_global_cache_folder = True
+            print(f"Usando cache global em: {RepPaths('').get_cache_folder()}")
+        dir_parent = RepPaths.rec_search_for_repo_parents(dir_path)
+        if dir_parent is not None:
+            repo = Repository(dir_parent, recursive_search=False)
+            if auto_load:
+                repo.load_config().load_game()
+            return repo, dir_parent
+
+        if show_warnings:
+            print("Nenhum repositório TKO encontrado.")
+        return None, None
 
     @staticmethod
     def run(args: argparse.Namespace) -> None:
@@ -72,7 +88,18 @@ class Main:
         cmd_run.execute()
 
     @staticmethod
-    def tui(args: argparse.Namespace) -> None:
+    def task_list(args: argparse.Namespace) -> None:
+        settings = Settings(args.globaldir)
+        repo, _ = Main.load_repo(args.changedir, show_warnings=True, auto_load=True, global_cache=args.global_cache)
+        if repo is None:
+            return
+        action = CmdOpen(settings, repo, args.update)
+        # if not CheckVersion(settings).is_updated():
+        #     action.display_need_update()
+        action.list(show_all = args.all)
+
+    @staticmethod
+    def task_open(args: argparse.Namespace) -> None:
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
         settings = Settings(args.globaldir)
@@ -98,34 +125,15 @@ class Main:
     @staticmethod
     def open(args: argparse.Namespace):
         settings = Settings(args.globaldir)
-        update: bool = args.update
- 
-        if args.global_cache:
-            RepPaths.use_global_cache_folder = True
-            print(f"Usando cache global em: {RepPaths('').get_cache_folder()}")
-
-        changedir = args.changedir
-
-        rec_folder = RepPaths.rec_search_for_repo_parents(changedir)
-        if rec_folder is not None:
-            changedir = rec_folder
-        action = CmdOpen(settings, update).load_folder(changedir)
-        if not CheckVersion(settings).is_updated():
-            action.display_need_update()
+        settings = Settings(args.globaldir)
+        repo, _ = Main.load_repo(args.changedir, show_warnings=True, auto_load=True, global_cache=args.global_cache)
+        if repo is None:
+            return
+        action = CmdOpen(settings, repo, args.update)
+        if not args.offline:
+            if not CheckVersion(settings).is_updated():
+                action.display_need_update()
         action.execute()
-
-    @staticmethod
-    def load_repo(dir_path: Path, show_warnings: bool = True, auto_load: bool = True) -> tuple[Repository | None, Path | None]:
-        dir_parent = RepPaths.rec_search_for_repo_parents(dir_path)
-        if dir_parent is not None:
-            repo =Repository(dir_parent, recursive_search=False)
-            if auto_load:
-                repo.load_config()
-            return repo, dir_parent
-
-        if show_warnings:
-            print("Nenhum repositório TKO encontrado.")
-        return None, None
 
     @staticmethod
     def collect_task(args: argparse.Namespace):
@@ -327,12 +335,18 @@ class Parser:
     def add_parser_task(self):
         parser_task = self.subparsers.add_parser('task', help='Manage individual tasks', add_help=False)
         parser_task.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
-
         subpar_task = parser_task.add_subparsers(title='subcommands', metavar='COMMAND', help='DESCRIPTION')
+
         parser_open = subpar_task.add_parser('open', parents=[self.parent_basic], help='Open a task in tui')
         parser_open.add_argument("-f", "--filter", action='store_true', help='Filter solver files in temporary directory before running')
         parser_open.add_argument('target_list', metavar='T', type=str, nargs='*', help='Solvers, test cases or directories to load')
-        parser_open.set_defaults(func=Main.tui)
+        parser_open.set_defaults(func=Main.task_open)
+
+        parser_list = subpar_task.add_parser('list', parents=[self.parent_basic], help='List tasks')
+        parser_list.add_argument('-g', '--global-cache', action='store_true', help='Use global cache for remote URL sources')
+        parser_list.add_argument('-u', '--update', action='store_true', help='Force update remote URL sources')
+        parser_list.add_argument("-a", '--all', action='store_true', help='Show all tasks')
+        parser_list.set_defaults(func=Main.task_list)
 
     def add_parser_reset(self):
         parser_reset = self.subparsers.add_parser('reset', help='Reset configuration', add_help=False)
@@ -410,7 +424,6 @@ class Parser:
         repo_collect.add_argument('--color', type=int, default=1, help="Daily graph color [0|1]")
         repo_collect.set_defaults(func=CmdCollect.collect_main)
 
-
     def add_parser_rep_actions(self):
         parser_init = self.subparsers.add_parser('init', help='Initialize empty TKO repository', add_help=False)
         parser_init.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
@@ -421,6 +434,7 @@ class Parser:
         parser_open.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
         parser_open.add_argument('-g', '--global-cache', action='store_true', help='Use global cache for remote URL sources')
         parser_open.add_argument('-u', '--update', action='store_true', help='Force update remote URL sources')
+        parser_open.add_argument('-o', '--offline', action='store_true', help='Offline mode')
         parser_open.set_defaults(func=Main.open)
 
         parser_source = self.subparsers.add_parser('remote', help='Manage remote task sources', add_help=False)
@@ -554,6 +568,7 @@ def execute(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
 
     if args.mono:
         AnsiColor.enabled = False
+        RenderConfig.mode = RenderMode.PLAIN
     else:
         AnsiColor.enabled = True
 

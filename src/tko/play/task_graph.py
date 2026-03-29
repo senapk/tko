@@ -7,12 +7,11 @@ from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_base import LogItemBase
 
 from tko.logger.delta import Delta
-from tko.play.flags import Flags
 
 class TaskGraph:
-    def __init__(self, settings: Settings, rep: Repository, task_key: str, width: int, height: int):
+    def __init__(self, settings: Settings, repo: Repository, task_key: str, width: int, height: int):
         self.settings = settings
-        self.rep = rep
+        self.repo = repo
         self.task_key = task_key
         self.width = width
         self.height = height - 1
@@ -26,7 +25,7 @@ class TaskGraph:
         self.actual_rate: float = 0.0
         
         self.eixo: list[float] = []
-        self.logger = rep.logger
+        self.logger = repo.logger
         self.versions = 0
 
         self.log_sort: LogSort | None = None
@@ -63,7 +62,7 @@ class TaskGraph:
 
         self.total_elapsed = collected_elapsed[-1]
         # normalizando tempo para porcentagem
-        if not Flags.task_graph_mode.get_value() == Flags.task_time_view:
+        if not self.repo.flags.task_graph_mode.is_time_view():
             if collected_elapsed[-1] != 0:
                 for i in range(len(collected_elapsed)):
                     collected_elapsed[i] = collected_elapsed[i] / self.total_elapsed * 100
@@ -108,8 +107,8 @@ class TaskGraph:
     def get_graph(self) -> list[Text]:
         x_fix = 3
         y_fix = 2
-        if Flags.task_graph_mode.get_value() == Flags.task_time_view:
-            result = plot_to_string(
+        if self.repo.flags.task_graph_mode.is_time_view():
+            result = plot_to_string( # type: ignore
                 color=["magenta", "green", "red"],
                 xs=[self.collected_elapsed, self.collected_elapsed, self.collected_elapsed],
                 ys=[self.collected_lines_len, self.collected_rate, self.collected_rate],
@@ -170,7 +169,7 @@ class TaskGraph:
         header: list[Text] = []
         # title = title.center(self.width)
         
-        if Flags.panel.get_value() == Flags.panel_graph:
+        if self.repo.flags.panel.is_graph():
             header.append(Text().add(title))
             return header, self.get_graph()
         else:

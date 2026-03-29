@@ -1,11 +1,10 @@
 from pathlib import Path
 
-from tko.down.drafts import Drafts
 from tko.game.quest_parser import QuestParser
 from tko.game.task_parser import TaskParser
 from tko.game.quest import Quest
 from tko.game.task import Task
-from tko.settings.rep_source import RepSource
+from tko.settings.rep_source import RepSource, AUTOLOAD_COMMAND
 from tko.util.decoder import Decoder
 import os
 from icecream import ic # type: ignore
@@ -68,129 +67,71 @@ class GameBuilder:
                     print(f"Quest\n{filename}:{q.line_number}\n{str(q)}\nrequer {r} que não existe")
                     exit(1)
 
-    @staticmethod
-    # extract yaml keys in front matter format and return as dict, also return content without yaml front matter
-    def extract_yaml_keys_and_file_data(content: str) -> tuple[dict[str, str], str]:
-        yaml_keys: dict[str, str] = {}
-        lines = content.splitlines()
-        if len(lines) > 0 and lines[0].strip() == "---":
-            for line in lines[1:]:
-                if line.strip() == "---":
-                    break
-                if ":" in line:
-                    key, val = line.split(":", 1)
-                    yaml_keys[key.strip()] = val.strip()
-                if "=" in line:
-                    key, val = line.split("=", 1)
-                    yaml_keys[key.strip()] = val.strip()
-            content = "\n".join(lines[len(yaml_keys) + 2:])
-        return yaml_keys, content
 
-    def __parse_quest_folder(self, task_dir_path: str, tasks_with_missing_keys: list[str]):
-        database_path = task_dir_path
+    def __parse_quest_folder(self, database_path: Path):
         alias = self.source.name
         if not os.path.exists(database_path):
             os.makedirs(database_path)
-        for task_dirname in sorted(os.listdir(database_path)):
-            task_dir_path = os.path.join(database_path, task_dirname)
-            if not os.path.isdir(task_dir_path):
+        for task_path in database_path.iterdir():
+            if not task_path.is_dir():
                 continue
-            if not os.path.isfile(os.path.join(task_dir_path, "README.md")):
+            if not (task_path / "README.md").exists():
                 continue
-            # parse readme content for yaml front matter with key
-            yaml_keys, _ = self.extract_yaml_keys_and_file_data(Decoder.load(os.path.join(task_dir_path, "README.md")))
-            if "key" not in yaml_keys or yaml_keys["key"] in self.unique_keys:
-                tasks_with_missing_keys.append(task_dir_path)
-                # print(f"Readme {task_dir_path}/README.md não possui chave yaml única, será ignorado")
-            else:
-                self.unique_keys.add(yaml_keys["key"])
-                self.create_task_from_folder(alias, yaml_keys["key"], task_dirname, task_dir_path)
+            
+            self.create_task_from_folder(alias, task_path)
 
-    def create_task_from_folder(self, alias: str, yaml_key: str, task_dirname: str, task_dir_path: str):
+    def create_task_from_folder(self, alias: str, task_dir_path: Path):
         task = Task()
-        title = task_dirname
-        title = f"@{yaml_key} {task_dirname}"
-        task.set_key(yaml_key)
-        task.set_title(title)
+        key = task_dir_path.name
+
+        task.set_key(key)
+        task.set_title(self.load_markdown_title_or_first_line(task_dir_path / "README.md"))
         task.set_remote_name(alias)
         task.set_origin_folder(Path(task_dir_path))
         if self.source.is_read_only():
-            task.set_workspace_folder(self.source.get_task_workspace(yaml_key))
+            task.set_workspace_folder(self.source.get_task_workspace(key))
         self.__add_task(task)
 
-    def __parse_remote_folder(self, folder: str):
-        alias = self.source.name
-        if not os.path.exists(folder):
-            return
-        tasks_with_missing_keys: list[str] = []
-        for entry in sorted(os.listdir(folder)):
-            quest_folder = os.path.join(folder, entry)
-            if not os.path.isdir(quest_folder):
-                continue
-            self.__add_quest(Quest(entry, f"{entry}").set_remote_name(alias))
-            self.__parse_quest_folder(quest_folder, tasks_with_missing_keys)
-        
-        if self.interactive and len(tasks_with_missing_keys) > 0:
-            print(f"Os seguintes diretórios de tarefas não possuem chave yaml única e foram ignorados:")
-            for path in tasks_with_missing_keys:
-                print(f"  {path}")
-            print("Você deseja gerar chaves únicas para essas tarefas? (s/n): ", end="")
-            answer = input().strip().lower()
-            if answer == "s":
-                max_number = Drafts.find_max_numbered_key(list(self.unique_keys))
-                for path in tasks_with_missing_keys:
-                    max_number += 1
-                    yaml_key = Drafts.create_draft_key(max_number)
-                    yaml_keys, info = self.extract_yaml_keys_and_file_data(Decoder.load(os.path.join(path, "README.md")))
-                    yaml_keys["key"] = yaml_key
-                    new_content = "---\n"
-                    for k, v in yaml_keys.items():
-                        new_content += f"{k}: {v}\n"
-                    new_content += "---\n\n" + info
-                    with open(os.path.join(path, "README.md"), "w", encoding="utf-8") as f:
-                        f.write(new_content)
-                    self.create_task_from_folder(alias, yaml_key, os.path.basename(path), path)
+    def load_markdown_title_or_first_line(self, path: Path) -> str:
+        if not path.exists():
+            return ""
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("---"):
+                    continue
+                if len(line.split(":")) > 1:
+                    continue
+                line = line.strip()
+                if line.startswith("#"):
+                    return line.lstrip("#").strip()
+                if line.strip() != "":
+                    return line
+        return ""
 
-
-
-    def __is_autoload_quest_cmd(self, line: str) -> tuple[bool, str]:
-        words = line.split(f"{self.source.AUTOLOAD_QUEST_COMMAND}=")
+    def __is_autoload_cmd(self, line: str) -> Path | None:
+        words = line.split(f"{AUTOLOAD_COMMAND}=")
         if len(words) == 2:
-            path = words[1].strip("-> ")
-            readme_folder = os.path.dirname(self.source.get_source_readme())
-            folder = os.path.join(readme_folder, path)
-            return True, folder
-        return False, ""
+            path: str = words[1].strip("-> ")
+            readme_folder = self.source.get_source_readme().parent
+            folder = Path(readme_folder) / path
+            return folder
+        return None
     
-    def __is_autoload_cluster_cmd(self, line: str) -> tuple[bool, str]:
-        words = line.split(f"{self.source.AUTOLOAD_CLUSTER_COMMAND}=")
-        if len(words) == 2:
-            path = words[1].strip("-> ")
-            readme_folder = os.path.dirname(self.source.get_source_readme())
-            folder = os.path.join(readme_folder, path)
-            folder = os.path.abspath(folder)
-            return True, folder
-        return False, ""
-
 
     def __parse_file_content(self, content: str):
         lines = content.splitlines()
         alias = self.source.name
         filename = self.source.get_source_readme()
         for line_num, line in enumerate(lines):
-            autoload, quest_folder = self.__is_autoload_quest_cmd(line)
-            if autoload:
-                self.__parse_quest_folder(quest_folder, [])
-                continue
+            sandbox_folder = self.__is_autoload_cmd(line)
+            if sandbox_folder:
+                self.__add_quest(Quest(sandbox_folder.name, f"{sandbox_folder.name}").set_remote_name(alias))
+                self.__parse_quest_folder(sandbox_folder)
 
-            autoload, remote_folder = self.__is_autoload_cluster_cmd(line)
-            if autoload:
-                self.__parse_remote_folder(remote_folder)
-                continue
-
-            quest = QuestParser(alias).parse_quest(filename, line, line_num + 1)
+            quest_parser = QuestParser(alias)
+            quest = quest_parser.parse_quest(filename, line, line_num + 1)
             if quest is not None:
-                self.__add_quest(quest)
+                self.__add_quest(quest_parser.finish_quest())
                 continue
 
             tp = TaskParser(filename, alias)

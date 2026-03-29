@@ -70,6 +70,12 @@ public class draft {
 }
 """
 
+ts_draft = r"""
+const input = () => ""; // MACRO
+export {};
+console.log("Hello, World!");
+"""[1:]
+    
 class LanguagesSettings:
 
     default_lang_settings: dict[str, LangSettings] = {
@@ -117,10 +123,21 @@ class LanguagesSettings:
             build_cmd="javac {files} -d {cache}",
             run_cmd="java -cp {cache} {main}",
             draft=java_draft
-        )
+        ),
+        "ts": LangSettings(
+            build_cmd="",
+            run_cmd="",
+            draft=ts_draft
+        ),
     }
     def get_languages(self) -> dict[str, LangSettings]:
         return self.lang_settings
+    
+    def get_languages_with_drafts(self) -> dict[str, str]:
+        dict_lang_drafts: dict[str, str] = {}
+        for lang in self.lang_settings.keys():
+            dict_lang_drafts[lang] = self.lang_settings[lang].draft
+        return dict_lang_drafts
 
     def __init__(self, path: Path):
         self.path = path

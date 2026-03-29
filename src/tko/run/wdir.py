@@ -10,7 +10,7 @@ from tko.run.solver_builder import SolverBuilder
 from tko.util.text import Text
 from tko.util.symbols import Symbols
 from tko.util.label_factory import LabelFactory
-from tko.down.drafts import Drafts
+from tko.down.sandbox_drafts import SandboxDrafts
 from pathlib import Path
 from tko.settings.settings import Settings
 
@@ -82,9 +82,10 @@ class Wdir:
         source_list.extend([target for target in folder.iterdir() if target.suffix == ".md"])
         
         if self.__lang != "":
-            solver_list = Drafts.load_drafts_only(folder, self.__lang)
+            solver_list = SandboxDrafts.load_drafts_only(folder, self.__lang)
         else:
-            solver_list = Drafts.load_drafts_only(folder, "", extra=Drafts(self.settings.get_languages_settings()).get_languages_with_drafts())
+            lang_drafts: list[str] = sorted(self.settings.get_languages_settings().get_languages_with_drafts().keys())
+            solver_list = SandboxDrafts.load_drafts_only(folder, "", extra=lang_drafts)
         solver_list = sorted(solver_list)
 
         self.set_solver(solver_list)

@@ -3,13 +3,14 @@ from tko.game.task import Task
 # from tko.game.graph import Graph
 
 from icecream import ic # type: ignore
+from tko.play.FormatterUtil import FormatterUtil
 from tko.play.floating_grade import FloatingGrade
 from tko.play.floating_input_text import FloatingInputText
 from tko.play.tracker import Tracker
 from tko.util.text import Text
 from tko.cmds.cmd_down import CmdDown
 from tko.cmds.cmd_run import Run
-from tko.settings.rep_source import RepSource
+from tko.settings.rep_source import STUDENT_SANDBOX_NAME
 
 from tko.util.param import Param
 
@@ -17,13 +18,11 @@ from tko.cmds.cmd_down import DownActions
 
 from tko.play.fmt import Fmt
 from tko.play.floating import Floating
-from tko.play.gui import Gui
+from tko.play.gui import Gui, TaskAction
 from tko.play.opener import Opener
 
-from tko.play.tasktree import TaskAction
 from typing import Callable
-from tko.play.flags import Flags
-from tko.down.drafts import Drafts
+from tko.down.sandbox_drafts import SandboxDrafts
 import os
 
 from tko.logger.log_item_self import LogItemSelf
@@ -34,18 +33,18 @@ import tempfile
 import subprocess
 from pathlib import Path
 
-
 class PlayActions:
 
     def __init__(self, gui: Gui):
         self.app = gui.app
         self.settings = gui.settings
         self.fman = gui.fman
-        self.rep = gui.rep
+        self.repo = gui.repo
         self.tree = gui.tree
         self.game = gui.game
         self.graph_opened: bool = False
         self.gui = gui
+        self.fmt_util = FormatterUtil(self.settings, self.repo)
 
     def resize_panels(self, amount: int):
         value = self.settings.app.panel_size_percent
@@ -69,7 +68,7 @@ class PlayActions:
         return folder
 
     def reload_game(self):
-        self.rep.load_game(try_update=False, silent=True)
+        self.repo.load_game(try_update=False, silent=True)
 
     def delete_folder_ask(self):
         def delete_folder(text: str):
@@ -97,11 +96,11 @@ class PlayActions:
                     .put_text(f"\nErro ao apagar a pasta {folder}: {e}\n")
                     .set_error()
                 )
-            if obj.get_remote_name() == RepSource.STUDENT_SANDBOX_NAME:
+            if obj.get_remote_name() == STUDENT_SANDBOX_NAME:
                 self.tree.move_down()
-            if obj.task_path == Task.TaskPath.SIDE and Flags.inbox.get_value() == Flags.inbox_only:
+            if obj.task_path == Task.TaskPath.SIDE and self.repo.flags.task_view_mode.is_inbox():
                 self.tree.move_down()
-            self.rep.load_game(try_update=False, silent=True)
+            self.repo.load_game(try_update=False, silent=True)
 
         obj = self.tree.get_selected_throw()
         if isinstance(obj, Task):
@@ -125,10 +124,10 @@ class PlayActions:
         obj = self.tree.get_selected_throw()
         if isinstance(obj, Task):
             task: Task = obj
-            folder = self.rep.get_task_folder_for_label(task.get_full_key())
+            folder = self.repo.get_task_folder_for_label(task.get_full_key())
             if os.path.exists(folder):
                 opener = Opener(self.settings).set_fman(self.fman)
-                opener.set_target([folder]).set_language(self.rep.data.get_lang())
+                opener.set_target([folder]).set_language(self.repo.data.get_lang())
                 opener.load_folders_and_open()
             else:
                 self.fman.add_input(
@@ -177,7 +176,7 @@ class PlayActions:
             )
 
     def register_action(self, task: Task):
-        self.rep.logger.store(LogItemSelf().set_task(task))
+        self.repo.logger.store(LogItemSelf().set_task(task))
 
     def self_evaluate_full(self):
         obj = self.tree.get_selected_throw()
@@ -206,18 +205,42 @@ class PlayActions:
             #         self.rep.logger.store(LogItemSelf().set_task(task))
             # else:
             self.fman.add_input(
-                FloatingGrade(obj, lambda task: self.rep.logger.store(LogItemSelf().set_task(task)))
+                FloatingGrade(obj, lambda task: self.repo.logger.store(LogItemSelf().set_task(task)))
             )
 
     def create_draft(self):
-        local_source = self.game.get_sandbox_source()
-        workspace_folder: Path = local_source.get_source_workspace() / local_source.get_default_sandbox_draft_folder()
-        if not os.path.exists(workspace_folder):
-            os.makedirs(workspace_folder)
-        current_folders_on_rep = os.listdir(workspace_folder)
+        sandbox_source = self.game.get_sandbox_source()
+        sandbox_folder: Path = sandbox_source.get_source_workspace()
+        sandbox_folder.mkdir(parents=True, exist_ok=True)
         
-        def __create(draft_name: str):
-            folder:Path = workspace_folder / draft_name
+        def find_numbered_draft_id() -> int:
+            task_keys_only: list[str] = []
+            for quest in self.game.quests.values():
+                for task in quest.get_tasks():
+                    task_keys_only.append(task.get_key())
+            draft_id = SandboxDrafts.find_max_numbered_key(task_keys_only=task_keys_only) + 1
+            return draft_id
+        
+        def search_for_key(text: str) -> tuple[str, str]:
+            key = ""
+            title_words: list[str] = []
+
+            words = text.split(" ")
+            for word in words:
+                if word.startswith("@"):
+                    key = word[1:]
+                else:
+                    title_words.append(word)
+            return key, " ".join(title_words)
+
+        def __create(draft_title: str):
+            key, title = search_for_key(draft_title)
+            if key == "":
+                key = SandboxDrafts.format_draft_key(find_numbered_draft_id())
+            if title == "":
+                title = "Digite o título da tarefa aqui"
+            
+            folder:Path = sandbox_folder / key
             if not folder.exists():
                 folder.mkdir()
             else:
@@ -228,30 +251,26 @@ class PlayActions:
                 )
                 return
 
+            lang_drafts: dict[str, str] = self.settings.get_languages_settings().get_languages_with_drafts()
             draft = ""
-            if self.rep.data.lang in Drafts.drafts:
-                draft = Drafts.drafts[self.rep.data.lang]
-            with open(folder / f"draft.{self.rep.data.lang}", "w", encoding="utf-8") as f:
+            if self.repo.data.lang in lang_drafts:
+                draft = lang_drafts[self.repo.data.lang]
+            with open(folder / f"draft.{self.repo.data.lang}", "w", encoding="utf-8") as f:
                 f.write(draft)
 
-            task_keys_only: list[str] = []
-            for quest in self.game.quests.values():
-                for task in quest.get_tasks():
-                    task_keys_only.append(task.get_key())
-            draft_id = Drafts.find_max_numbered_key(task_keys_only=task_keys_only) + 1
-            key = Drafts.create_draft_key(draft_id)
-            Drafts.create_sandbox_draft(folder, key)
+            SandboxDrafts.create_sandbox_draft(folder, title)
             
-            self.tree.selected_item = f"{RepSource.STUDENT_SANDBOX_NAME}@{key}"
-            self.tree.expanded.add(f"{RepSource.STUDENT_SANDBOX_NAME}@{RepSource.DEFAULT_DRAFT_FOLDER}")
-            self.rep.data.selected = self.tree.selected_item
-            self.rep.load_game(try_update=False, silent=True) # recarrega o jogo
+            # self.tree.selected_item = f"{RepSource.STUDENT_SANDBOX_NAME}@{key}"
+            # self.tree.expanded.add(f"{RepSource.STUDENT_SANDBOX_NAME}@{RepSource.STUDENT_SANDBOX_NAME}")
+            self.repo.data.selected = self.tree.state.selected
+            self.repo.load_game(try_update=False, silent=True) # recarrega o jogo
             self.fman.add_input( Floating().bottom().right()
                                 .put_text(f"Rascunho criado em {folder}")
                                 .put_text("\nVocê pode renomear a pasta manualmente e apertar shift R para recarregar.")
                                 .set_warning())
 
-        self.fman.add_input(FloatingInputText(Text().add("Nome do rascunho"), __create, current_folders_on_rep))
+        current_folders_on_rep: list[str] = [folder.name for folder in sandbox_folder.iterdir() if folder.is_dir()]
+        self.fman.add_input(FloatingInputText(Text().add("Digite o Título (use @label para definir a chave ou deixe vazio para gerar automaticamente)" ), __create, current_folders_on_rep))
 
     def down_remote_task(self):
 
@@ -269,6 +288,19 @@ class PlayActions:
             return
         self.__down_remote_task(obj)
     
+    def select_task_action(self, task: Task) -> None:
+        _, action = self.gui.get_task_action(task)
+        if action == TaskAction.BAIXAR:
+            self.__down_remote_task(task)
+            return
+        if action == TaskAction.VISITAR:
+            self.open_link()
+            return
+        folder = task.get_workspace_folder()
+        if not folder:
+            raise Warning("Folder não encontrado")
+        self.run_selected_task(task, folder)
+
     def __down_remote_task(self, task: Task) -> None:
         if not task.is_import_type():
             self.fman.add_input(
@@ -286,28 +318,13 @@ class PlayActions:
             down_frame.draw()
             Fmt.refresh()
 
-        cmd_down = CmdDown(repo=self.rep, task_key=task.get_full_key(), settings=self.settings)
+        cmd_down = CmdDown(repo=self.repo, task_key=task.get_full_key(), settings=self.settings)
         cmd_down.set_fnprint(fnprint)
         result = cmd_down.execute()
         if result:
-            self.rep.logger.store(
+            self.repo.logger.store(
                 LogItemMove().set_key(task.get_full_key()).set_mode(LogItemMove.Mode.DOWN)
             )
-
-
-    def select_task_action(self, task: Task) -> None:
-        _, action = self.tree.get_task_action(task)
-        if action == TaskAction.BAIXAR:
-            self.__down_remote_task(task)
-            return
-        if action == TaskAction.VISITAR:
-            self.open_link()
-            return
-        folder = task.get_workspace_folder()
-        if not folder:
-            raise Warning("Folder não encontrado")
-        self.run_selected_task(task, folder)
-
 
     def open_versions(self):
         try:
@@ -315,11 +332,11 @@ class PlayActions:
 
             if isinstance(obj, Task):
                 task: Task = obj
-                track_folder = self.rep.paths.get_track_task_folder(task.get_full_key())
+                track_folder = self.repo.paths.get_track_task_folder(task.get_full_key())
                 tracker = Tracker()
                 tracker.set_folder(track_folder)
-                if task.get_full_key() in self.rep.logger.tasks.task_dict:
-                    log_sort = self.rep.logger.tasks.task_dict[task.get_full_key()]
+                if task.get_full_key() in self.repo.logger.tasks.task_dict:
+                    log_sort = self.repo.logger.tasks.task_dict[task.get_full_key()]
 
                     msg, folder = tracker.unfold_files(log_sort)
                     cmd = self.settings.app.editor
@@ -340,7 +357,7 @@ class PlayActions:
             obj = self.tree.get_selected_throw()
 
             if isinstance(obj, Quest):
-                self.tree.toggle(obj)
+                self.tree.toggle()
                 return lambda: None
 
             if isinstance(obj, Task):
@@ -354,20 +371,20 @@ class PlayActions:
     def run_selected_task(self, task: Task, task_dir: Path) -> None:
         folder = task_dir
         run = Run(settings=self.settings, target_list=[folder], param=Param.Basic())
-        run.set_lang(self.rep.data.lang)
-        opener = Opener(self.settings).set_language(self.rep.data.get_lang()).set_target([folder])
+        run.set_lang(self.repo.data.lang)
+        opener = Opener(self.settings).set_language(self.repo.data.get_lang()).set_target([folder])
         run.set_opener(opener)
         run.set_run_without_ask(False)
         run.set_curses(True)
-        run.set_task(self.rep, task)
+        run.set_task(self.repo, task)
         run.build_wdir()
         
         if not run.wdir.has_solver():
-            lang = self.rep.data.get_lang()
+            lang = self.repo.data.get_lang()
             draft_folder = folder / lang
-            draft_path = DownActions(self.settings).create_default_draft(draft_folder, self.rep.data.get_lang())
+            draft_path = DownActions(self.settings).create_default_draft(draft_folder, self.repo.data.get_lang())
             msg =  Floating().bottom().right().set_warning()
-            msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.rep.data.get_lang()))
+            msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.repo.data.get_lang()))
             msg.put_text("\nUm arquivo de rascunho vazio foi criado em\n {} ".format(draft_path))
             self.fman.add_input(msg)
         run.execute()

@@ -1,6 +1,4 @@
-from pathlib import Path
-
-from tko.settings.rep_source import RepSource
+from tko.settings.rep_source import STUDENT_SANDBOX_NAME, RepSource
 
 from typing import Any
 
@@ -31,26 +29,24 @@ class RepData:
                 return s
         return None
 
-    def ensure_sandbox_source(self, rep_workspace: Path) -> None:
-        sandbox_source = self.get_source(RepSource.STUDENT_SANDBOX_NAME)
+    def __ensure_sandbox_source(self) -> None:
+        sandbox_source = self.get_source(STUDENT_SANDBOX_NAME)
         if sandbox_source is None:
-            sandbox_source = RepSource("").set_student_sandbox().ensure_sandbox_source(rep_workspace)
+            sandbox_source = RepSource(STUDENT_SANDBOX_NAME).set_student_sandbox()
             self.set_source(sandbox_source)
-        else:
-            sandbox_source.ensure_sandbox_source(rep_workspace)
-        return None
 
     # fonte local é retornada primeiro para garantir que ela seja priorizada em relação a fontes externas
+    # sandbox é sempre a primeira fonte local, para garantir que ela seja priorizada em relação a outras fontes locais
     def get_sources(self) -> list[RepSource]:
+        self.__ensure_sandbox_source()
         external_sources: list[RepSource] = []
-        local_sources: list[RepSource] = []
+        sandbox_source: list[RepSource] = []
         for s in self.__sources:
             if s.is_sandbox_source():
-                local_sources.append(s)
+                sandbox_source.append(s)
             else:
                 external_sources.append(s)
-        
-        return local_sources + external_sources
+        return sandbox_source + external_sources
 
     def get_expanded(self) -> list[str]:
         return self.expanded

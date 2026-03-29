@@ -1,11 +1,11 @@
 import os
 from pathlib import Path
-from tko.settings.languages_settings import LanguagesSettings
-class Drafts:
+
+class SandboxDrafts:
     sandbox_key_prefix = "user"
 
-    def __init__(self, user_languages: LanguagesSettings):
-        self.user_languages = user_languages
+    def __init__(self):
+        pass
 
     draft_readme: str = r"""Escreva aqui as informações que você quer salvar, esse é o seu rascunho.
 O texto abaixo é informativo e você pode apagar depois de aprender como usar os rascunhos.
@@ -52,43 +52,23 @@ output = '''
 
 """
 
-    ts_draft = r"""
-const input = () => ""; // MACRO
-export {};
-console.log("Hello, World!");
-"""[1:]
-    
     md_draft = r"""
 # Rascunho
 
 Se a tarefa exigir um relatório, escreva ele aqui. Você pode usar markdown, imagens e o que mais quiser para criar um relatório bem completo.
 """[1:]
-    
-    drafts = {
-        'ts': ts_draft, 
-        'md': md_draft
-    }
-
-    def get_languages_with_drafts(self) -> list[str]:
-        keys = list(Drafts.drafts.keys())
-        lang_register = self.user_languages.get_languages()
-        for lang in lang_register.keys():
-            if lang not in keys:
-                keys.append(lang)
-        keys.sort()
-        return keys
 
     @staticmethod
-    def create_draft_key(draft_id: int) -> str:
-        return f"{Drafts.sandbox_key_prefix}_{draft_id:03d}"
+    def format_draft_key(draft_id: int) -> str:
+        return f"{SandboxDrafts.sandbox_key_prefix}_{draft_id:03d}"
     
     @staticmethod
     def find_max_numbered_key(task_keys_only: list[str]) -> int:
         numbered_keys: list[int] = []
         for key in task_keys_only:
-            if key.startswith(Drafts.sandbox_key_prefix + "_"):
+            if key.startswith(SandboxDrafts.sandbox_key_prefix + "_"):
                 try:
-                    number = int(key[len(Drafts.sandbox_key_prefix) + 1:])
+                    number = int(key[len(SandboxDrafts.sandbox_key_prefix) + 1:])
                     numbered_keys.append(number)
                 except ValueError:
                     continue
@@ -120,6 +100,6 @@ Se a tarefa exigir um relatório, escreva ele aqui. Você pode usar markdown, im
         return draft_list
     
     @staticmethod
-    def create_sandbox_draft(dir: Path, key: str):
+    def create_sandbox_draft(dir: Path, title: str):
         with open (os.path.join(dir, "README.md"), "w", encoding="utf-8") as f:
-            f.write(f"---\nkey: {key}\n---\n\n# {os.path.basename(dir)}\n\n" + Drafts.draft_readme)
+            f.write(f"# {title}\n\n" + SandboxDrafts.draft_readme)

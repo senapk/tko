@@ -78,7 +78,6 @@ class Game:
     def set_sources(self, sources: list[RepSource], language: str, silent: bool = False) -> None:
         self.sources = sources
         self.ordered_clusters = []
-        self.clusters = {}
         self.quests = {}
         self.tasks = {}
         self.language = language

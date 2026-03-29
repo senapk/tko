@@ -14,7 +14,7 @@ class RepPaths:
     use_global_cache_folder: bool =  False # teacher tools, to avoid rewrite cache in student repos
 
     def __init__(self, repo_dir: Path | str):
-        self.root_folder: Path = Path(repo_dir) if isinstance(repo_dir, str) else repo_dir
+        self.root_dir: Path = Path(repo_dir) if isinstance(repo_dir, str) else repo_dir
 
     @staticmethod
     def walk_to_root(start: Path):
@@ -39,37 +39,39 @@ class RepPaths:
             target: Path = path / RepPaths.CONFIG_FOLDER / RepPaths.CFG_FILE
             if target.is_file():
                 return path
-
         return None
     
+    def get_root_dir(self):
+        return self.root_dir
+
     def get_track_folder(self) -> Path:
-        return self.root_folder / RepPaths.CONFIG_FOLDER / RepPaths.TRACK_FOLDER
+        return self.root_dir / RepPaths.CONFIG_FOLDER / RepPaths.TRACK_FOLDER
 
     def get_log_folder(self) -> Path:
-        return self.root_folder / RepPaths.CONFIG_FOLDER / RepPaths.LOG_FOLDER
+        return self.root_dir / RepPaths.CONFIG_FOLDER / RepPaths.LOG_FOLDER
 
     def get_cache_folder(self) -> Path:
         if RepPaths.use_global_cache_folder:
             return Path(user_cache_dir("tko")) / RepPaths.CACHE_FOLDER
-        return self.root_folder / RepPaths.CONFIG_FOLDER / RepPaths.CACHE_FOLDER
+        return self.root_dir / RepPaths.CONFIG_FOLDER / RepPaths.CACHE_FOLDER
 
     def get_track_task_folder(self, label: str) -> Path:
-        return self.root_folder / RepPaths.CONFIG_FOLDER / RepPaths.TRACK_FOLDER / label
+        return self.root_dir / RepPaths.CONFIG_FOLDER / RepPaths.TRACK_FOLDER / label
 
     def get_config_folder(self) -> Path:
-        return self.root_folder / RepPaths.CONFIG_FOLDER
+        return self.root_dir / RepPaths.CONFIG_FOLDER
 
     def get_config_file(self) -> Path:
-        return self.root_folder / RepPaths.CONFIG_FOLDER / RepPaths.CFG_FILE
+        return self.root_dir / RepPaths.CONFIG_FOLDER / RepPaths.CFG_FILE
 
     def get_config_backup_file(self) -> Path:
         return Path(str(self.get_config_file()) + ".backup")
 
     def get_old_history_file(self) -> Path:
-        return self.root_folder / RepPaths.CONFIG_FOLDER / RepPaths.OLD_HISTORY_FILE
+        return self.root_dir / RepPaths.CONFIG_FOLDER / RepPaths.OLD_HISTORY_FILE
 
     def get_workspace_dir(self) -> Path:
-        return self.root_folder
+        return self.root_dir
 
     def has_local_config_file(self) -> bool:
         return os.path.exists(self.get_config_file())

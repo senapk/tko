@@ -1,12 +1,10 @@
 from tko.play.floating_drop_down import FloatingDropDown
-from tko.play.flags import FlagsMan
 from tko.play.floating import Floating
 from tko.play.floating_drop_down import FloatingInputData
 from tko.play.floating_manager import FloatingManager
 from tko.util.text import Text
 from tko.settings.repository import Repository
 from tko.settings.settings import Settings
-from tko.down.drafts import Drafts
 
 
 class LanguageSetter:
@@ -14,9 +12,9 @@ class LanguageSetter:
     @staticmethod
     def check_lang_in_text_mode(settings: Settings, repo: Repository):
         lang = repo.data.lang
-        drafts = Drafts(settings.get_languages_settings())
+        lang_drafts: dict[str, str] = settings.get_languages_settings().get_languages_with_drafts()
         if lang == "":
-            options = drafts.get_languages_with_drafts()
+            options = lang_drafts.keys()
             print("\nLinguagem padrão ainda não foi definida.\n")
             while True:
                 print("Escolha entre as opções a seguir ", end="")
@@ -27,16 +25,16 @@ class LanguageSetter:
             repo.data.lang = lang
             repo.save_config()
             
-    def __init__(self, settings: Settings, rep: Repository, flagsman: FlagsMan, fman: FloatingManager):
-        self.flagsman = flagsman
+    def __init__(self, settings: Settings, repo: Repository, fman: FloatingManager):
         self.fman = fman
-        self.rep = rep
+        self.rep = repo
         self.settings = settings
 
     def set_language(self):
         options: list[FloatingInputData] = []
-        drafts = Drafts(self.settings.get_languages_settings())
-        for lang in drafts.get_languages_with_drafts():
+        lang_drafts: dict[str, str] = self.settings.get_languages_settings().get_languages_with_drafts()
+        keys = sorted(lang_drafts.keys())
+        for lang in keys:
             options.append(FloatingInputData(TextFunctor(lang), SetLangFunctor(self.settings, self.rep, self.fman, lang)))
 
         self.fman.add_input(
@@ -48,7 +46,7 @@ class LanguageSetter:
                 .set_text_ljust()
             )
             .set_options(options)
-            .set_default_index(drafts.get_languages_with_drafts().index(self.rep.data.get_lang()))
+            .set_default_index(keys.index(self.rep.data.get_lang()))
         )
 
 class TextFunctor:

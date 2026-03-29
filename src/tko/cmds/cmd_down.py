@@ -2,17 +2,14 @@ from typing import Callable
 import os
 import shutil
 
-from tko.down.drafts import Drafts
 from tko.settings.repository import Repository
 from tko.settings.settings import Settings
 from tko.game.game import Game
 from tko.util.decoder import Decoder
-from tko.down.drafts import Drafts
 from tko.feno.remote_md import Absolute
 from tko.game.task import Task
 from tko.feno.filter import CodeFilter
 from pathlib import Path
-from tko.settings.languages_settings import LangSettings
 
 class CmdLineDown:
     def __init__(self, settings: Settings, rep: Repository, task_key: str, game: Game | None = None):
@@ -218,7 +215,8 @@ class CmdDown:
             if language_def != "":
                 self.language = language_def
             else:
-                print("Escolha uma extensão para os rascunhos: [{}]: ".format(", ".join(Drafts(self.settings.get_languages_settings()).get_languages_with_drafts())), end="")
+                langs = self.settings.get_languages_settings().get_languages_with_drafts()
+                print("Escolha uma extensão para os rascunhos: [{}]: ".format(", ".join(langs.keys())), end="")
                 self.language = input()
 
 class DownActions:
@@ -257,13 +255,11 @@ class DownActions:
         filename = "draft."
         draft_path = os.path.join(destiny, filename + language)
         os.makedirs(os.path.dirname(draft_path), exist_ok=True)
-        languages: dict[str, LangSettings] = self.settings.get_languages_settings().get_languages()
+        lang_drafts: dict[str, str] = self.settings.get_languages_settings().get_languages_with_drafts()
         if not os.path.exists(draft_path):
             with open(draft_path, "w", encoding="utf-8") as f:
-                if language in Drafts.drafts:
-                    f.write(Drafts.drafts[language])
-                elif language in languages.keys():
-                    f.write(languages[language].draft)  
+                if language in lang_drafts.keys():
+                    f.write(lang_drafts[language])
                 else:
                     f.write("")
             self.send_to_print(self.folder_and_file(draft_path, 3) + " (Vazio)")

@@ -11,7 +11,6 @@ from tko.play.input_manager import InputManager
 from tko.play.play_palette import PlayPalette
 from tko.play.floating import Floating
 from tko.play.floating_manager import FloatingManager
-from tko.play.flags import Flags, FlagsMan
 from tko.play.tasktree import TaskTree
 from tko.play.gui import Gui
 from tko.play.play_actions import PlayActions
@@ -27,11 +26,10 @@ class Play:
         self.repo = repo
         self.game: Game = repo.game
         self.exit = False
-
-        self.flagsman = FlagsMan(self.repo.data.flags)
-        self.fman = FloatingManager()
-        self.tree = TaskTree(self.settings, repo, self.fman)
-        self.gui = Gui(settings=self.settings, tree=self.tree, flagsman=self.flagsman, fman=self.fman)
+        self.flags = repo.flags
+        self.fman: FloatingManager = FloatingManager()
+        self.tree = TaskTree(self.settings, repo)
+        self.gui = Gui(tree=self.tree, fman=self.fman)
         self.actions = PlayActions(self.gui)
         self.play_palette = PlayPalette(self.actions)
         # self.fman.add_input( Floating().set_content(opening['yoda'].splitlines()).set_warning() )
@@ -40,8 +38,7 @@ class Play:
         self.gui.set_need_update()
 
     def save_to_json(self):
-        self.tree.save_on_rep()
-        self.repo.data.flags = self.flagsman.get_data()
+        self.tree.save_state()
         self.settings.save_settings()
         self.repo.save_config()
 
@@ -62,25 +59,25 @@ class Play:
         self.gui.xray_offset = 0
 
     def page_up(self):
-        if Flags.panel.get_value() == Flags.panel_logs:
+        if self.flags.panel.is_logs():
             self.gui.xray_offset -= 5
-        elif Flags.panel.get_value() == Flags.panel_graph:
-            Flags.task_graph_mode.set_value(Flags.task_exec_view)
+        elif self.flags.panel.is_graph():
+            self.flags.task_graph_mode.set_exec_view()
     
     def page_down(self):
-        if Flags.panel.get_value() == Flags.panel_logs:
+        if self.flags.panel.is_logs():
             self.gui.xray_offset += 5
-        elif Flags.panel.get_value() == Flags.panel_graph:
-            Flags.task_graph_mode.set_value(Flags.task_time_view)
+        elif self.flags.panel.is_graph():
+            self.flags.task_graph_mode.set_time_view()
 
 
     def move_left(self):
         self.gui.xray_offset = 0
-        self.tree.arrow_left()
+        self.tree.move_left()
 
     def move_right(self):
         self.gui.xray_offset = 0
-        self.tree.arrow_right()
+        self.tree.move_right()
 
     def activate(self):
         self.gui.xray_offset = 0
@@ -114,20 +111,20 @@ class Play:
         cman.add_str(GuiKeys.self_evaluate, self.actions.self_evaluate)
         if ic.enabled:
             cman.add_str(GuiKeys.self_evaluate_full, self.actions.self_evaluate_full)
-        cman.add_str(GuiKeys.inbox, lambda: Flags.inbox.set_value(Flags.inbox_only))
-        cman.add_str(GuiKeys.all_tasks, lambda: Flags.inbox.set_value(Flags.inbox_all))
+        cman.add_str(GuiKeys.inbox, lambda: self.flags.task_view_mode.set_view_inbox())
+        cman.add_str(GuiKeys.all_tasks, lambda: self.flags.task_view_mode.set_view_all())
 
-        cman.add_str(GuiKeys.panel_help, lambda: self.open_panel(Flags.panel_help))
-        cman.add_str(GuiKeys.panel_graph, lambda: self.open_panel(Flags.panel_graph))
-        cman.add_str(GuiKeys.panel_logs, lambda: self.open_panel(Flags.panel_logs))
-        cman.add_str(GuiKeys.panel_skills, lambda: self.open_panel(Flags.panel_skills))
-        cman.add_str(GuiKeys.panel_toggle, lambda: Flags.show_panel.toggle())
+        cman.add_str(GuiKeys.panel_help, lambda: self.open_toggle_panel(self.flags.panel.HELP))
+        cman.add_str(GuiKeys.panel_graph, lambda: self.open_toggle_panel(self.flags.panel.GRAPH))
+        cman.add_str(GuiKeys.panel_logs, lambda: self.open_toggle_panel(self.flags.panel.LOGS))
+        cman.add_str(GuiKeys.panel_skills, lambda: self.open_toggle_panel(self.flags.panel.SKILLS))
+        cman.add_str(GuiKeys.panel_toggle, lambda: self.flags.show_panel.toggle())
 
         cman.add_str(GuiKeys.unfold_patch, self.actions.open_versions)
         
-        for flag in self.flagsman.flags.values():
-            if flag.get_autoload():
-                cman.add_str(flag.get_keycode(), FlagFunctor(flag, self.fman))
+        for flag in self.flags.all_flags:
+            if flag.keycode:
+                cman.add_str(flag.keycode, FlagFunctor(flag, self.fman))
 
         cman.add_str(GuiKeys.search, self.gui.search.toggle_search)
         cman.add_str(GuiKeys.palette, self.play_palette.command_pallete)
@@ -136,23 +133,23 @@ class Play:
 
         return cman
 
-    def open_panel(self, value: str):
-        if Flags.show_panel.is_true():
-            if Flags.panel.get_value() != value:
-                Flags.panel.set_value(value)
+    def open_toggle_panel(self, value: str):
+        current = self.flags.panel.get_value()
+        panel = self.flags.panel
+        if self.flags.show_panel.is_true():
+            if current != value:
+                panel.set_value(value)
             else:
-                Flags.show_panel.set_value("0")
+                self.flags.show_panel.set_false()
             return
-        Flags.show_panel.set_value("1")
-        if Flags.panel.get_value() != value:
-            Flags.panel.set_value(value)
+        self.flags.show_panel.set_true()
+        if current != value:
+            panel.set_value(value)
 
     def open_help(self):
-        if not Flags.show_panel.is_true():
-            Flags.show_panel.set_value("1")
-            Flags.panel.set_value(Flags.panel_help)
-        elif Flags.panel.get_value() != Flags.panel_help:
-            Flags.panel.set_value(Flags.panel_help)
+        self.flags.show_panel.set_true()
+        self.flags.panel.set_help()
+
 
     def send_char_not_found(self, key: int):
         exclude_str = [ord(v) for v in [" ", "\n"]]
@@ -171,7 +168,7 @@ class Play:
         Fmt.set_scr(scr)  # Define o scr como global
 
         while True:
-            self.tree.update_tree(admin_mode=Flags.inbox.get_value() == Flags.inbox_all or self.gui.search.search_mode)
+            self.tree.update()
             self.fman.draw_warnings()
             cman = self.make_callback()
             self.gui.show_items()
@@ -198,7 +195,7 @@ class Play:
             else:
                 self.send_char_not_found(value)
 
-            self.tree.reload_sentences()
+            self.tree.update()
             self.save_to_json()
             
     def play(self):

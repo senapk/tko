@@ -54,5 +54,7 @@ class Symbols:
     right_toggle = "─━"
     sharp_right = ""
     sharp_left = ""
+    round_left = ""
+    round_right = ""
     action = "◎"
     cursor = "┊"
