@@ -7,6 +7,8 @@ class TreeItem():
         self.__key: str = ""
         self._title: str = ""
         self.__sentence: Text = Text()
+        self.ligature: Text = Text(" ")
+        self.hidden: bool = False
 
     def get_remote_name(self) -> str:
         return self.__remote_name

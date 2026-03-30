@@ -63,22 +63,6 @@ class Quest(TreeItem):
         output = f"{line} {tasks_size} {key}{self.get_title()} {self.skills} {self.requires}"
         return output
 
-    # def get_resume_by_percent(self) -> Text:
-    #     value: int = min(100, round(self.get_percent_main()))
-    #     return Text().addf(self.get_grade_color(), (str(value) + "%").rjust(4))
-    
-    # def get_requirement(self) -> Text:
-    #     return Text().addf("y", f"[{self.min_percent_completion}%]")
-
-    # def get_grade_color(self) -> str:
-    #     if self.not_started():
-    #         return "m"
-    #     if not self.is_complete():
-    #         return "r"
-    #     if self.get_percent_main() == 100:
-    #         return "g"
-    #     return "y"
-
     def is_complete(self):
         value = self.get_percent_main()
         return value is None or value >= self.min_percent_completion
@@ -113,18 +97,3 @@ class Quest(TreeItem):
     
     def get_percent_side(self) -> float | None:
         return self.get_percent(include_main=False, include_side=True)
-
-    # def in_progress(self):
-    #     if self.is_complete():
-    #         return False
-    #     for t in self.__tasks:
-    #         if t.get_rate_percent() != 0:
-    #             return True
-    #     return False
-
-    # def not_started(self):
-    #     if self.is_complete():
-    #         return False
-    #     if self.in_progress():
-    #         return False
-    #     return True

@@ -63,7 +63,6 @@ class GameBuilder:
                 if r in quests:
                     q.requires_ptr.append(quests[r])
                 else:
-                    # print(f"keys: {self.quests.keys()}")
                     print(f"Quest\n{filename}:{q.line_number}\n{str(q)}\nrequer {r} que não existe")
                     exit(1)
 

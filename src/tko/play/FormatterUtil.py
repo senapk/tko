@@ -28,13 +28,13 @@ class FormatterUtil:
         visible = 0
         hidden = 0
         for t in quest.get_tasks():
-            if not self.is_hide_tasks(t):
+            if not self.is_hide_tasks(quest, t):
                 visible += 1
             else:
                 hidden += 1
         return visible, hidden
 
-    def is_hide_tasks(self, task: Task) -> bool:
+    def is_hide_tasks(self, quest: Quest, task: Task) -> bool:
         if self.repo.flags.task_view_mode.is_inbox() and task.task_path == Task.TaskPath.SIDE and not self.is_downloaded_for_lang(task):
             return True
         return False
@@ -97,6 +97,12 @@ class FormatterUtil:
 
         return Text().addf("y", str(prog).rjust(2, "0"))
 
+    def format_percent_3s(self, value: float | None) -> Text:
+        if value is None or value < 1:
+            return Text("----")
+        rvalue = round(value)
+        return Text().add(f"{rvalue:>3}%")
+
     def get_percent_color(self, value: float) -> str:
         color = "g" if value > 99 else ("y" if value > 49 else "r")
         return color
@@ -140,6 +146,8 @@ class FormatterUtil:
 
     @staticmethod
     def color_task_title(title: str, color: str) -> Text:
+        if color != "":
+            return Text().addf(color, title)
         words = title.split(" ")
         output = Text()
         for i, word in enumerate(words):

@@ -74,7 +74,7 @@ class Text:
         def __str__(self):
             return f"({self.fmt}:{self.text})"
         
-    def __init__(self, fmt: str = "", value: str = ""):
+    def __init__(self, value: str = "", fmt: str = ""):
         self.data: list[Text.Token] = []
         self.default_fmt = ""
         if value != "":

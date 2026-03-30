@@ -1,4 +1,5 @@
 from __future__ import annotations
+from tko.play.keys import GuiKeys
 
 class Flag:
     def __init__(self, id: str, default_value: str, msgs: dict[str, str], description: str, keycode: str | None = None):
@@ -161,7 +162,7 @@ class Flags:
                 False: "Ocultar tempo",
             },
             description="Mostra o tempo das tarefas",
-            keycode=""
+            keycode= GuiKeys.show_duration
         )
 
         self.all_flags: list[Flag] = [

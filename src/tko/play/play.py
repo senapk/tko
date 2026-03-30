@@ -32,10 +32,10 @@ class Play:
         self.gui = Gui(tree=self.tree, fman=self.fman)
         self.actions = PlayActions(self.gui)
         self.play_palette = PlayPalette(self.actions)
-        # self.fman.add_input( Floating().set_content(opening['yoda'].splitlines()).set_warning() )
 
     def display_need_update(self):
         self.gui.set_need_update()
+
 
     def save_to_json(self):
         self.tree.save_state()

@@ -350,6 +350,7 @@ class Parser:
 
     def add_parser_reset(self):
         parser_reset = self.subparsers.add_parser('reset', help='Reset configuration', add_help=False)
+        parser_reset.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
         subpar = parser_reset.add_subparsers(title='subcommands', metavar='COMMAND', help='DESCRIPTION')
     
         reset_cache = subpar.add_parser('cache', help='Clear configuration cache')
