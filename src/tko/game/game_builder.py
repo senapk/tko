@@ -4,7 +4,7 @@ from tko.game.quest_parser import QuestParser
 from tko.game.task_parser import TaskParser
 from tko.game.quest import Quest
 from tko.game.task import Task
-from tko.settings.rep_source import RepSource, AUTOLOAD_COMMAND
+from tko.settings.rep_source import RepSource
 from tko.util.decoder import Decoder
 import os
 from icecream import ic # type: ignore
@@ -151,7 +151,7 @@ class GameBuilder:
         self.__get_active_quest().add_task(task)
 
 
-    def remove_empty_and_other_language_and_filtered(self, language: str, quest_filters: list[str] | None, task_filters: list[str] | None):
+    def remove_empty_and_other_language_and_filtered(self, language: str, quest_filters: dict[str, str] | None, task_filters: dict[str, str] | None):
         # self.__quests = [q for q in self.__quests if len(q.get_tasks()) > 0]
         quests: list[Quest] = []
         for q in self.quests.values():
@@ -159,8 +159,8 @@ class GameBuilder:
                 continue
             if quest_filters is not None and len(quest_filters) > 0:
                 allow = False
-                for filter in quest_filters:
-                    if filter.lower() in q.get_title().lower() or filter.lower() in q.get_full_key().lower():
+                for pattern, _ in quest_filters:
+                    if pattern.lower() in q.get_title().lower() or pattern.lower() in q.get_full_key().lower():
                         allow = True
                         break
                 if not allow:

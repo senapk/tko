@@ -39,6 +39,31 @@ class RepSource:
         TASKS = "tasks"
         BRANCH = "branch"
 
+    class Filter:
+        def __init__(self, pattern: str, destiny: str):
+            self.pattern = pattern
+            self.destiny = destiny
+        
+        @staticmethod
+        def from_dict(data: Any):
+            filter = RepSource.Filter("", "")
+            if isinstance(data, str):
+                filter.pattern = data
+                filter.destiny = ""
+                return filter
+            if "pattern" in data and isinstance(data["pattern"], str):
+                filter.pattern = data["pattern"]
+            if "destiny" in data and isinstance(data["destiny"], str):
+                filter.destiny = data["destiny"]
+            return filter
+        
+        def to_dict(self) -> dict[str, Any]:
+            return {
+                "pattern": self.pattern,
+                "destiny": self.destiny
+            }
+
+
     """
     alias: str - unique identifier for the source, used to reference the source in the code and configuration
     target: str - for LOCAL_FILE, it's folder path; for GIT_CLONE, it's the git repository link
@@ -54,8 +79,8 @@ class RepSource:
         self.writeable: bool = False
         self.index: str = "README.md"
         self.branch: str | None = None
-        self.quests: list[str] | None = None
-        self.tasks: list[str] | None = None
+        self.quests: dict[str, str] | None = None
+        self.tasks: dict[str, str] | None = None
         self.rep_local_workspace: Path | None = None   # if read-only rep, rep folder to tasks will be, join(local_workspace, alias)
         self.rep_cache_folder: Path | None = None 
 
@@ -73,18 +98,7 @@ class RepSource:
         self.set_local_source(target=Path(STUDENT_SANDBOX_NAME), writeable=True)
         return self
         
-    # def ensure_sandbox_source(self, local_workspace: Path):
-    #     # create folder sandbox inside rep_workspace if not exists
-    #     sandbox_path = local_workspace / RepSource.STUDENT_SANDBOX_NAME
-    #     sandbox_path.mkdir(parents=True, exist_ok=True)
-    #     readme_file = sandbox_path / "README.md"
-    #     if not os.path.exists(readme_file):
-    #         with open(readme_file, "w") as f:
-    #             f.write(self.sandbox_readme_content)
-    #     return self
-    
-    # return quests and tasks filters
-    def get_filters(self) -> tuple[list[str] | None, list[str] | None]:
+    def get_filters(self) -> tuple[dict[str, str] | None, dict[str, str] | None]:
         return self.quests, self.tasks
 
     def set_git_source(self, target: str, branch: str | None = None):
@@ -144,7 +158,7 @@ class RepSource:
         raise ValueError("Unknown source type")
 
     
-    def set_filters(self, quests: list[str] | None, tasks: list[str] | None = None):
+    def set_filters(self, quests: dict[str, str] | None, tasks: dict[str, str] | None = None):
         self.quests = quests
         self.tasks = tasks
         return self
@@ -200,11 +214,11 @@ class RepSource:
         else:
             self.source_type = SourceType.LOCAL_FILE
         if Keys.QUESTS in data and isinstance(data[Keys.QUESTS], list):
-            self.quests = data[Keys.QUESTS]
+            self.quests = {q['pattern']: q['destiny'] for q in data[Keys.QUESTS]}
         if "filters" in data and isinstance(data["filters"], list): # for backward compatibility
-            self.quests = data["filters"]
+            self.quests = {q['pattern']: q['destiny'] for q in data["filters"]} # type: ignore
         if Keys.TASKS in data and isinstance(data[Keys.TASKS], list):
-            self.tasks = data[Keys.TASKS]
+            self.tasks = {t['pattern']: t['destiny'] for t in data[Keys.TASKS]}
         if Keys.WRITEABLE in data and isinstance(data[Keys.WRITEABLE], bool):
             self.writeable = data[Keys.WRITEABLE]
         if self.name == STUDENT_SANDBOX_NAME: # for backward compatibility, to remove in the future
@@ -226,6 +240,6 @@ class RepSource:
         }
         if self.branch is not None and self.branch != "master":
             output[Keys.BRANCH] = self.branch
-        output[Keys.QUESTS] = self.quests
-        output[Keys.TASKS] = self.tasks
+        output[Keys.QUESTS] = None if self.quests is None else [ {'pattern': k, 'destiny': v} for k, v in self.quests.items() ]
+        output[Keys.TASKS] = None if self.tasks is None else [ {'pattern': k, 'destiny': v} for k, v in self.tasks.items() ]
         return output
