@@ -6,9 +6,10 @@ class TreeItem():
         self.__remote_name: str = ""
         self.__key: str = ""
         self._title: str = ""
-        self.__sentence: Text = Text()
+
         self.ligature: Text = Text(" ")
-        self.hidden: bool = False
+        self.visible: bool = False
+        self.is_requirement_color: str = ""
 
     def get_remote_name(self) -> str:
         return self.__remote_name
@@ -22,8 +23,8 @@ class TreeItem():
     def get_title(self) -> str:
         return self._title
     
-    def get_sentence(self) -> Text:
-        return self.__sentence
+    # def get_sentence(self) -> Text:
+    #     return self.__sentence
 
     def set_remote_name(self, remote_name: str):
         self.__remote_name = remote_name

@@ -21,6 +21,7 @@ class Quest(TreeItem):
         self.__tasks: list[Task] = []
         self.requires: list[str] = []  # 
         self.requires_ptr: list[Quest] = []
+        self.required_by_ptr: list[Quest] = []
         self.skills: dict[str, int] = {}  # s:{skill} to be applied to all tasks
         self.languages: list[str] = []  # l:language to filter what is showed to user based in default language
         self.min_percent_completion: int = 50  # q:{value} 50 percent to complete quest
@@ -87,7 +88,17 @@ class Quest(TreeItem):
             percent = (t.get_rate_percent() * t.get_quality_percent()) / 100.0
             tasks_info.append(QuestGrader.Elem(t.is_optional(), t.xp, percent))
         return QuestGrader.calc_xp_earned_total(tasks_info)
-        
+    
+    def get_completion(self) -> tuple[int, int]:
+        total = 0
+        done = 0
+        for t in self.__tasks:
+            if t.visible:
+                total += 1
+            if t.is_complete():
+                done += 1
+        return done, total
+
     def get_percent(self, include_main: bool, include_side: bool) -> float | None:
         obtained, total = self.get_xp(include_main=include_main, include_side=include_side)
         return QuestGrader.get_percent(obtained, total)

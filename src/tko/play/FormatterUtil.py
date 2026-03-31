@@ -28,14 +28,18 @@ class FormatterUtil:
         visible = 0
         hidden = 0
         for t in quest.get_tasks():
-            if not self.is_hide_tasks(quest, t):
+            if self.is_visible_task(quest, t):
                 visible += 1
             else:
                 hidden += 1
         return visible, hidden
 
-    def is_hide_tasks(self, quest: Quest, task: Task) -> bool:
-        if self.repo.flags.task_view_mode.is_inbox() and task.task_path == Task.TaskPath.SIDE and not self.is_downloaded_for_lang(task):
+    def is_visible_task(self, quest: Quest, task: Task) -> bool:
+        if self.repo.flags.task_view_mode.is_all():
+            return True
+        if task.task_path == Task.TaskPath.MAIN:
+            return True
+        if self.is_downloaded_for_lang(task):
             return True
         return False
 
@@ -51,11 +55,11 @@ class FormatterUtil:
             return ("", Symbols.right_triangle_void)
         if self.is_downloaded_for_lang(t):
             if t.info.feedback:
-                return ("g", Symbols.down_triangle_filled)
-            return ("", Symbols.down_triangle_void)
+                return ("g", Symbols.diamond_filled)
+            return ("", Symbols.diamond_void)
         if t.info.feedback:
-            return ("g", Symbols.up_triangle_filled)
-        return ("", Symbols.up_triangle_void)
+            return ("g", Symbols.square_filled)
+        return ("", Symbols.square_void)
 
     def get_task_path_symbol(self, t: Task) -> tuple[str, str]:
         if t.task_path == Task.TaskPath.MAIN:
@@ -145,22 +149,20 @@ class FormatterUtil:
         return self.settings.colors.focused_item
 
     @staticmethod
-    def color_task_title(title: str, color: str) -> Text:
-        if color != "":
-            return Text().addf(color, title)
+    def color_task_title(title: str) -> Text:
         words = title.split(" ")
         output = Text()
         for i, word in enumerate(words):
             if word.startswith("@") or word.startswith("#") or word.startswith("!"):
-                output.addf(color + "g", word)
+                output.addf("g", word)
             elif word.startswith(":"):
-                output.addf(color + "y", word)
+                output.addf("y", word)
             elif word.startswith("*"):
-                output.addf(color + "c", word)
+                output.addf("c", word)
             elif word.startswith("+"):
-                output.addf(color + "c", word)
+                output.addf("c", word)
             else:
-                output.addf(color, word)
+                output.addf("", word)
             if i < len(words) - 1:
-                output.addf(color, " ")
+                output.addf("", " ")
         return output

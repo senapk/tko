@@ -98,7 +98,7 @@ class PlayActions:
                 )
             if obj.get_remote_name() == STUDENT_SANDBOX_NAME:
                 self.tree.move_down()
-            if obj.task_path == Task.TaskPath.SIDE and self.repo.flags.task_view_mode.is_inbox():
+            if not obj.visible:
                 self.tree.move_down()
             self.repo.load_game(try_update=False, silent=True)
 
@@ -112,7 +112,10 @@ class PlayActions:
                     .set_error()
                 )
                 return
-            self.fman.add_input(FloatingInputText(Text().add(f"Para apagar essa pasta, digite ").addf("y", f"{obj.get_key()}"), action=delete_folder))
+            if ic.enabled:
+                delete_folder(text=folder.name)
+            else:
+                self.fman.add_input(FloatingInputText(Text().add(f"Para apagar essa pasta, digite ").addf("y", f"{obj.get_key()}"), action=delete_folder))
         else:
             self.fman.add_input(
                 Floating().bottom().right()

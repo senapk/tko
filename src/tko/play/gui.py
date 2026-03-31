@@ -302,8 +302,8 @@ class Gui:
         help_lines.append(Text.format("{y}   Tarefa sugeridas        , {} Tarefa opcional", Symbols.star_filled, Symbols.star_void))
         help_lines.append(Text.format("{g}   Pode consultar e refazer, {r} Fazer sozinho sem consulta", Symbols.task_reload, Symbols.task_zero))
         help_lines.append(Text.format("{g}{g}{g} Fez Autoavaliação       , {}{}{} Sem Autoavaliação", 
-                                      Symbols.right_triangle_filled, Symbols.down_triangle_filled, Symbols.task_view,
-                                      Symbols.right_triangle_void, Symbols.square_void, Symbols.task_view))
+                                      Symbols.diamond_filled, Symbols.square_filled, Symbols.task_view,
+                                      Symbols.diamond_void, Symbols.square_void, Symbols.task_view))
         help_lines.append(Text.format("{g}", " Navegação ").center(dx, Text.Token("-")))
         help_lines.append(Text.format("  setas {r} Para navegar entre os elementos", "↑↓→"))
         help_lines.append(Text.format("    Enter {r} Interage com o elemento de acordo com o contexto", "↲"))

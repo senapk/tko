@@ -62,6 +62,7 @@ class GameBuilder:
             for r in q.requires:
                 if r in quests:
                     q.requires_ptr.append(quests[r])
+                    quests[r].required_by_ptr.append(q)
                 else:
                     print(f"Quest\n{filename}:{q.line_number}\n{str(q)}\nrequer {r} que não existe")
                     exit(1)

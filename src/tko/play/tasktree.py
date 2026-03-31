@@ -13,13 +13,15 @@ from tko.game.tree_item import TreeItem
 
 class TreeLayout:
     def __init__(self):
-        self.sentence_cut_size: int = 50
-        self.key_size: int = 50
-        self.fixed_task_itens_size = 11
-        self.fixed_quest_itens_size = 11
-
-        self.key_size_min = 10
+        self.key_size_min = 20
         self.sentence_cut_min_size = 60
+
+        self.fixed_task_itens_size = 11
+        self.fixed_quest_itens_size = 9
+        
+        self.key_size: int = 0
+        self.sentence_cut_size: int = 0
+
 
     def calculate(self, game: Game, flags: Flags, expanded: set[str]):
         key_sizes: list[int] = []
@@ -105,71 +107,11 @@ class TreeBuilder:
     def __init__(self, fmt_util: FormatterUtil):
         self.fmt_util = fmt_util
 
-    def filter_items(
-        self,
-        game: Game,
-        search_text: str
-    ) -> tuple[set[str], str | None]:
-        matches: set[str] = set()
-        first: str | None = None
-        search = SearchAsc(search_text)
-
-        for quest in game.quests.values():
-            if search.inside(quest.get_title()):
-                first = first or quest.get_full_key()
-                matches.add(quest.get_full_key())
-
-            for task in quest.get_tasks():
-                if search.inside(task.get_title()):
-                    first = first or task.get_full_key()
-                    matches.add(quest.get_full_key())
-                    matches.add(task.get_full_key())
-
-        return matches, first
-
-    def add_if_match(
-        self,
-        items: list[TreeItem],
-        item: TreeItem,
-        filtered: set[str],
-        matcher: SearchAsc,
-        search_text: str
-    ):
-        if search_text == "":
-            items.append(item)
-            return
-
-        if item.get_full_key() in filtered:
-            pos = matcher.find(item.get_sentence().get_str())
-            if pos != -1:
-                for i in range(pos, pos + len(search_text)):
-                    item.get_sentence().data[i].fmt = "Y"
-
-            items.append(item)
-
-    def remove_empty_quests(
-        self,
-        game: Game,
-        expanded: set[str]
-    ) -> set[str]:
-        new_expanded = set(expanded)
-
-        for q in game.quests.values():
-            if q.get_full_key() not in expanded:
-                continue
-
-            visible, _ = self.fmt_util.count_visible_hidden_tasks(q)
-            if visible == 0:
-                new_expanded.remove(q.get_full_key())
-
-        return new_expanded
-
     def filter_by_search(self, game: Game, search_text: str) -> tuple[set[str], str | None]:
         matches: set[str] = set()
         first: str | None = None
 
         if search_text == "":
-            # sem busca → tudo visível
             for q in game.quests.values():
                 matches.add(q.get_full_key())
                 for t in q.get_tasks():
@@ -191,80 +133,120 @@ class TreeBuilder:
 
         return matches, first
 
+    def filter_visible_tasks(self, enabled: set[str], game: Game, tf: TreeFilter, fmt_util: FormatterUtil) -> set[str]:
+        if not tf.inbox_mode:
+            return enabled
+        disabled: set[str] = set()
+        for q in game.quests.values():
+            first_drop = True
+            if not q.is_reachable():
+                disabled.add(q.get_full_key())
+                for t in q.get_tasks():
+                    disabled.add(t.get_full_key())
+            else:
+                for t in q.get_tasks():
+                    if not fmt_util.is_visible_task(q, t):
+                        if first_drop:
+                            first_drop = False
+                        else:
+                            disabled.add(t.get_full_key())
+        return enabled - disabled
+    
     def build(self, game: Game, state: TreeState, tfilter: TreeFilter) -> list[TreeItem]:
         items: list[TreeItem] = []
         game.update_reachable_and_available()
-        filtered, first_match = self.filter_by_search(game, tfilter.search_text)
+        enabled, first_match = self.filter_by_search(game, tfilter.search_text)
+        enabled = self.filter_visible_tasks(enabled, game, tfilter, self.fmt_util)
+        for q in game.quests.values():
+            q.is_requirement_color = ""
+            if q.get_full_key() in enabled:
+                q.visible = True
+            else:
+                q.visible = False
+            for t in q.get_tasks():
+                if t.get_full_key() in enabled:
+                    t.visible = True
+                else:
+                    t.visible = False
 
         # se entrou em modo busca, seleciona o primeiro match
         if first_match and state.selected == "":
             state.selected = first_match
 
-        hide_unreachable: bool = tfilter.hide_elements()
-
         for q in game.quests.values():
-            if (q.get_full_key() not in filtered) or (hide_unreachable and not q.is_reachable()):
+            if not q.visible:
                 continue
+            for req in q.required_by_ptr:
+                if req.get_full_key() == state.selected:
+                    q.is_requirement_color = "y" if req.is_reachable() else "r"
+                    break
+
             items.append(q)
             color = "g" if q.is_reachable() else "y"
             if q.get_full_key() not in state.expanded:
                 q.ligature = Text("━─", color)
                 continue
-            tasks: list[Task] = [t for t in q.get_tasks() 
-                                 if not self.fmt_util.is_hide_tasks(q, t) and t.get_full_key() in filtered
-                                ]
+            tasks: list[Task] = [t for t in q.get_tasks() if t.visible ]
             has_hidden = len(tasks) != len(q.get_tasks())
             q.ligature = Text("┄┯", color) if has_hidden else Text("─┯", color)
             for i, t in enumerate(tasks):
                 if i == len(tasks) - 1:
-                    t.ligature = Text("╰ ", color)
+                    t.ligature = Text("└", color)
                 else:
-                    t.ligature = Text("┆ ", color) if has_hidden else Text("├ ", color)
+                    t.ligature = Text("┆", color) if has_hidden else Text("├", color)
 
             for t in tasks:
                 items.append(t)
 
+        # matcher = SearchAsc(tfilter.search_text)
+        # items = [self.mark_visible_tasks(items, matcher) or item for item in items]
+
         return items
     
 class TreeRenderer:
-    def __init__(self, fmt_util: FormatterUtil, layout: TreeLayout, settings: Settings, flags: Flags):
+    def __init__(self, fmt_util: FormatterUtil, layout: TreeLayout, settings: Settings, flags: Flags, state: TreeState):
         self.fmt_util = fmt_util
         self.layout = layout
         self.settings = settings
         self.flags = flags
+        self.state = state
         self.filler = "."
 
-    def render(self, item: TreeItem, selected_key: str) -> Text:
+    def mark_search_match(self, text: Text, matcher: SearchAsc):
+            pos = matcher.find(text.get_str())
+            if pos != -1:
+                for i in range(pos, pos + len(matcher.pattern)):
+                    text.data[i].fmt += "X"
+            return text
+
+    def render(self, item: TreeItem, selected_key: str, matcher: SearchAsc) -> Text:
         if isinstance(item, Quest):
             focused = item.get_full_key() == selected_key
             return self.render_quest(item, focused)
 
         if isinstance(item, Task):
             focused = item.get_full_key() == selected_key
-            return self.render_task(item, focused)
+            return self.mark_search_match(self.render_task(item, focused), matcher)
 
         return Text("")
 
 
     def render_task(self, t: Task, focused: bool) -> Text:
-
         output = Text()
         output.addf("b", t.xp)
-        output.add(t.ligature)
+        output.add(t.ligature).add(" ")
 
         output.add(self.fmt_util.get_task_down_symbol(t)).add(" ")
         output.add(self.fmt_util.format_percent_1s(t.get_rate_percent())).add(" ")
         output.add(self.fmt_util.get_task_help_symbol(t)).add(" ")
         output.add(self.fmt_util.get_task_path_symbol(t)).add(" ")
 
-        focus_color = self.settings.colors.focused_item if focused else ""
-        output.add(
-            self.fmt_util.color_task_title(
-                t.get_full_title(self.layout.key_size),
-                focus_color
-            )
-        )
+        title = self.fmt_util.color_task_title( t.get_full_title(self.layout.key_size) )
 
+        focus_color = self.settings.colors.focused_item if focused else ""
+        if focused:
+            title.add_style(focus_color)
+        output.add(title)
         output.ljust(self.layout.sentence_cut_size, Text.Token(" ", focus_color))
         output.add(Symbols.left_triangle_filled if focused else " ")
 
@@ -280,16 +262,18 @@ class TreeRenderer:
         color = "g" if q.is_reachable() else "y"
         # output = Text().addf(color, "━━ ")
         output = Text().addf(color, q.ligature)
-        output.add(Symbols.star_filled)
-        output.add(self.fmt_util.format_percent_2s(q.get_percent(True, False))).add("|")
-        output.add(self.fmt_util.format_percent_2s(q.get_percent(False, True)))
-        output.add(Symbols.star_void).add(" ")
+        # output.add(self.fmt_util.format_percent_2s(q.get_percent(True, False))).add("|")
+        # output.add(self.fmt_util.format_percent_2s(q.get_percent(False, True)))
+        done, total = q.get_completion()
+        output.add(f" {done:02}/{total:02} ")
 
-        title = q.get_full_title(self.flags.panel.is_skills())
-        color = ""
+        color = q.is_requirement_color
+
+        title = q.get_full_title(self.flags.panel.is_skills()).add_style(color)
         if focused:
             color = self.settings.colors.focused_item
-        output.addf(color, title)
+            title.add_style(color)
+        output.add(title)
         output.ljust(self.layout.sentence_cut_size, Text.Token(self.filler, color))
         output.add(Symbols.left_triangle_filled if focused else " ")
         if self.flags.show_time.is_true():
@@ -427,7 +411,7 @@ class TaskTree:
         self.layout = TreeLayout()
         self.fmt_util = FormatterUtil(settings, repo)
         self.builder = TreeBuilder(self.fmt_util)
-        self.renderer = TreeRenderer(self.fmt_util, self.layout, settings, repo.flags)
+        self.renderer = TreeRenderer(self.fmt_util, self.layout, settings, repo.flags, self.state)
         self.navigator = TreeNavigator()
         self.repository = TreeRepository(repo, self.game)
 
@@ -478,9 +462,9 @@ class TaskTree:
         visible_items = self.items[
             self.state.scroll : self.state.scroll + height
         ]
-
+        matcher = SearchAsc(self.state.search)
         return [
-            self.renderer.render(item, self.state.selected)
+            self.renderer.render(item, self.state.selected, matcher)
             for item in visible_items
         ]
     
@@ -496,8 +480,9 @@ class TaskTree:
 
         self.layout.calculate(self.game, self.repo.flags, self.state.expanded)
 
+        matcher = SearchAsc(self.state.search)
         self.lines = [
-            self.renderer.render(item, self.state.selected)
+            self.renderer.render(item, self.state.selected, matcher)
             for item in self.items
         ]
 

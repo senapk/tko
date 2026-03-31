@@ -144,6 +144,11 @@ class Text:
             upper_only = "".join([c for c in d.fmt if c.isupper()])
             d.fmt = upper_only + fmt
         return self
+    
+    def add_style(self, fmt: str):
+        for d in self.data:
+            d.fmt += fmt
+        return self
 
     def clone(self):
         other = Text()
