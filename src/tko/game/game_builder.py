@@ -26,9 +26,11 @@ class GameBuilder:
         filename: Path = self.source.get_source_readme()
         content: str = ""
         if not filename.exists():
-            print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}")
+            if not self.source.is_sandbox_source():
+                print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}")
         else:
             content = Decoder.load(filename)
+        self.__load_sandbox_tasks()
         self.__parse_file_content(content)
         self.__clear_empty_or_other_language(language)
         self.__create_requirements_pointers()
@@ -107,26 +109,18 @@ class GameBuilder:
                 if line.strip() != "":
                     return line
         return ""
-
-    def __is_autoload_cmd(self, line: str) -> Path | None:
-        words = line.split(f"{AUTOLOAD_COMMAND}=")
-        if len(words) == 2:
-            path: str = words[1].strip("-> ")
-            readme_folder = self.source.get_source_readme().parent
-            folder = Path(readme_folder) / path
-            return folder
-        return None
     
+    def __load_sandbox_tasks(self):
+        if self.source.is_sandbox_source():
+            sandbox_folder = self.source.get_source_workspace()
+            self.__add_quest(Quest(sandbox_folder.name, f"{sandbox_folder.name}").set_remote_name(self.source.name))
+            self.__parse_quest_folder(sandbox_folder)
 
     def __parse_file_content(self, content: str):
         lines = content.splitlines()
         alias = self.source.name
         filename = self.source.get_source_readme()
         for line_num, line in enumerate(lines):
-            sandbox_folder = self.__is_autoload_cmd(line)
-            if sandbox_folder:
-                self.__add_quest(Quest(sandbox_folder.name, f"{sandbox_folder.name}").set_remote_name(alias))
-                self.__parse_quest_folder(sandbox_folder)
 
             quest_parser = QuestParser(alias)
             quest = quest_parser.parse_quest(filename, line, line_num + 1)

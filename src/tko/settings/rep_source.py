@@ -130,7 +130,7 @@ class RepSource:
             if os.path.isabs(file):
                 return Path(file)
             else:
-                return self.get_rep_workspace() / file
+                return self.get_repo_workspace() / file
         if self.source_type == SourceType.GIT_SOURCE:
             return self.get_source_folder() / "README.md"
         raise ValueError("Unknown source type")
@@ -139,7 +139,7 @@ class RepSource:
         if self.source_type == SourceType.LOCAL_FILE:
             return Path(self.target)
         if self.source_type == SourceType.GIT_SOURCE:
-            git_cache = GitCache(self.get_rep_cache_folder())
+            git_cache = GitCache(self.get_repo_cache_folder())
             return git_cache.get(self.get_url_link(), force_update=False)# absolute path to cached repo
         raise ValueError("Unknown source type")
 
@@ -149,24 +149,24 @@ class RepSource:
         self.tasks = tasks
         return self
     
-    def set_rep_globals(self, local_workspace: Path, cache_folder: Path):
+    def set_repo_globals(self, local_workspace: Path, cache_folder: Path):
         self.rep_local_workspace = local_workspace
         self.rep_cache_folder = cache_folder
 
-    def get_rep_cache_folder(self) -> Path:
+    def get_repo_cache_folder(self) -> Path:
         if self.rep_cache_folder is None:
             raise ValueError("Local cache folder is not set")
         return self.rep_cache_folder
 
-    def get_rep_workspace(self) -> Path:
+    def get_repo_workspace(self) -> Path:
         if self.rep_local_workspace is None:
             raise ValueError("Local workspace is not set")
         return self.rep_local_workspace
     
     def get_source_workspace(self) -> Path:
         if self.name == STUDENT_SANDBOX_NAME:
-            return self.get_rep_workspace() / self.target
-        return self.get_rep_workspace() / self.name
+            return self.get_repo_workspace() / self.target
+        return self.get_repo_workspace() / self.name
     
     def get_task_workspace(self, task_key: str) -> Path:
         if not self.is_read_only():

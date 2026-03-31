@@ -112,13 +112,13 @@ class Repository:
         self.data.load_from_dict(local_data)
         self.flags.from_dict(self.data.get_flags())
         for source in self.data.get_sources():
-            source.set_rep_globals(self.paths.get_workspace_dir(), self.paths.get_cache_folder())
+            source.set_repo_globals(self.paths.get_workspace_dir(), self.paths.get_cache_folder())
 
         return self
 
     def get_student_sandbox(self) -> RepSource:
         source = RepSource("").set_student_sandbox()
-        source.set_rep_globals(self.paths.get_workspace_dir(), self.paths.get_cache_folder())
+        source.set_repo_globals(self.paths.get_workspace_dir(), self.paths.get_cache_folder())
         return source
 
 
