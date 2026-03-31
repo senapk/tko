@@ -79,11 +79,11 @@ class GameBuilder:
                 continue
             
             self.create_task_from_folder(alias, task_path)
+        self.__get_active_quest().sort_tasks_by_title()
 
     def create_task_from_folder(self, alias: str, task_dir_path: Path):
         task = Task()
         key = task_dir_path.name
-
         task.set_key(key)
         task.set_title(self.load_markdown_title_or_first_line(task_dir_path / "README.md"))
         task.set_remote_name(alias)

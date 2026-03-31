@@ -75,6 +75,9 @@ class Quest(TreeItem):
     def get_tasks(self):
         return self.__tasks
 
+    def sort_tasks_by_title(self):
+        self.__tasks = sorted(self.__tasks, key=lambda t: t.get_title())
+
     def get_xp(self, include_main: bool, include_side: bool) -> tuple[float, float]:
         """
         Returns a tuple of (earned_xp, total_xp)
