@@ -420,7 +420,7 @@ class TaskTree:
         self.state.selected = self.repo.data.selected
 
         self.items: list[TreeItem] = []
-        self.lines: list[Text] = []
+        # self.lines: list[Text] = []
 
     def save_state(self):
         self.repository.save_state(self.state)
@@ -458,14 +458,18 @@ class TaskTree:
 
     def get_visible_sentences(self, height: int) -> list[Text]:
         self.state.update_scroll(height, self.items)
-
         visible_items = self.items[
             self.state.scroll : self.state.scroll + height
         ]
+        return self.get_rendered_items(visible_items)
+    
+    def get_rendered_items(self, items: list[TreeItem] | None = None) -> list[Text]:
+        if items is None:
+            items = self.items
         matcher = SearchAsc(self.state.search)
         return [
             self.renderer.render(item, self.state.selected, matcher)
-            for item in visible_items
+            for item in items
         ]
     
     def update(self, force_view_all: bool = False):
@@ -473,18 +477,14 @@ class TaskTree:
             inbox_mode=self.repo.flags.task_view_mode.is_inbox() and not force_view_all,
             search_text=self.state.search
         )
-
         self.items = self.builder.build(self.game, self.state, tree_filter)
-
         self.state.ensure_valid_selection(self.items)
-
         self.layout.calculate(self.game, self.repo.flags, self.state.expanded)
-
-        matcher = SearchAsc(self.state.search)
-        self.lines = [
-            self.renderer.render(item, self.state.selected, matcher)
-            for item in self.items
-        ]
+        # matcher = SearchAsc(self.state.search)
+        # self.lines = [
+        #     self.renderer.render(item, self.state.selected, matcher)
+        #     for item in self.items
+        # ]
 
     def expand_all(self):
         for q in self.game.quests.values():
