@@ -96,7 +96,7 @@ class Actions:
             Log.resume("Drafts ", end="")
             Log.verbose(f"  Drafts dir: {source_src}")
             filter = DeepFilter().set_indent(4)
-            filter.copy(source_src, self.cache_src, 5)
+            filter.prepare_actions(source_src, self.cache_src, 5)
 
     def run_local_sh(self):
         local_sh = norm_join(self.source_dir, "local.sh")

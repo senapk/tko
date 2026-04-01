@@ -3,7 +3,6 @@ import argparse
 import shutil
 from tko.util.decoder import Decoder
 from typing import Any
-import os
 
 class Mark:
     def __init__(self, marker: str, indent: int):
@@ -21,22 +20,22 @@ class Mode:
     DEL = "DEL!"
     opts = [ADD, COM, ACT, DEL]
 
-def get_comment(filename: str) -> str:
+def get_comment(filename: Path) -> str:
     com = "//"
-    if filename.endswith(".py"):
+    if filename.suffix == ".py":
         com = "#"
-    elif filename.endswith(".hs"):
+    elif filename.suffix == ".hs":
         com = "--"
-    elif filename.endswith(".puml"):
+    elif filename.suffix == ".puml":
         com = "'"
     return com
 
 class Filter:
-    def __init__(self, filename: str):
+    def __init__(self, filename: Path):
         self.filename = filename
         self.stack = [Mark(Mode.ADD, 0)]
         self.com = get_comment(filename)
-        self.tab_char = "\t" if filename.endswith(".go") else " "
+        self.tab_char = "\t" if filename.suffix == ".go" else " "
 
     def get_marker(self) -> str:
         return self.stack[-1].marker
@@ -111,14 +110,24 @@ class Filter:
     def process(self, content: str) -> str:
         return self.__process(content)
 
-def clean_com(target: str, content: str) -> str:
+def clean_com(target: Path, content: str) -> str:
     com = get_comment(target)
     lines = content.splitlines()
     output = [line for line in lines if not line.lstrip().startswith(com)]
     return "\n".join(output)
 
+class Action:
+    DISABLED = 0 # filtrado e completamente removido
+    FILTERED = 1 # filtrado
+    ORIGINAL = 2 # nenhuma marcação de filtragem
+    COMCLEAN = 3 # comando de limpar comentários
+
+    def __init__(self, action: int, content: str):
+        self.action: int = action
+        self.content: str = content
+
 class DeepFilter:
-    extensions = [".md", ".c", ".cpp", ".h", ".hpp", ".py", ".java", ".js", ".ts", ".hs", ".txt", ".go", ".json", ".mod", ".puml", ".sh", ".sql", ".yaml", ".exec", ".hide", ".tio"]
+    extensions = ["md", "c", "cpp", "h", "hpp", "py", "java", "js", "ts", "hs", "txt", "go", "json", "mod", "puml", "sh", "sql", "yaml", "exec", "hide", "tio", "zig"]
 
     def __init__(self):
         self.cheat_mode = False
@@ -142,97 +151,110 @@ class DeepFilter:
         self.cheat_mode = (value == True)
         return self
 
-    def copy(self, source: Path | str, destiny: Path | str, deep: int):
-        source = str(source)
-        destiny = str(destiny)
+    def prepare_actions(self, source: Path | str, destiny: Path | str, deep: int, action_map: dict[Path, Action]):
+        source = Path(source)
+        destiny = Path(destiny)
         if deep == 0:
             return
         
-        if os.path.isdir(source):
-            chain = str(source).split(os.sep)
-            if len(chain) > 1 and chain[-1].startswith("."):
+        if source.is_dir():
+            if source.name.startswith("."):
                 return
-            if not os.path.exists(destiny):
-                os.makedirs(destiny)
-            for file in sorted(os.listdir(source)):
-                self.copy(os.path.join(source, file), os.path.join(destiny, file), deep - 1)
+            for item in sorted(source.iterdir()):
+                self.prepare_actions(item, destiny / item.name, deep - 1, action_map)
             return
         
-        filename = os.path.basename(source)
-        folder = os.path.dirname(source)
-        deny_list = os.path.join(folder, ".deny")
-        if os.path.isfile(deny_list):
+        filename = source
+        folder = source.parent
+        deny_list = folder / ".deny"
+        if deny_list.is_file():
             with open(deny_list) as f:
                 deny = [x.strip() for x in f.read().splitlines()]
                 if filename in deny:
                     print("(disabled):", destiny)
+                    action_map[destiny] = Action(Action.DISABLED, "")
                     return
 
-        if not any([filename.endswith(ext) for ext in self.extensions]):
-            # print("(skipped ): ", filename)
+        if not any([filename.suffix == f".{ext}" for ext in self.extensions]):
             return
-
         content = Decoder.load(source)
 
         processed = Filter(filename).process(content)
 
-        if self.cheat_mode:
-            if processed != content:
-                cleaned = clean_com(source, content)
-                Decoder.save(destiny, cleaned)
-        elif processed != "" and processed != "\n":
-            Decoder.save(destiny, processed)
+        if self.cheat_mode and processed != content:
+            content = clean_com(source, content)
 
         line = ""
         if self.cheat_mode:
             if processed != content:
                 line += "(cleaned ): "
+                action_map[destiny] = Action(Action.COMCLEAN, content)
             else:
                 line += "(disabled): "
+                action_map[destiny] = Action(Action.DISABLED, "")
         else:
             if processed == "" or processed == "\n":
                 line += "(disabled): "
+                action_map[destiny] = Action(Action.DISABLED, "")
             elif processed != content:
                 line += "(filtered): "
+                action_map[destiny] = Action(Action.FILTERED, processed)
             else:
-                line += "(        ): "
-        line += destiny
+                line += "(original): "
+                action_map[destiny] = Action(Action.ORIGINAL, "")
+        line += f"{destiny}"
 
         self.print(line)
 
+    def deploy_actions(self, actions: dict[Path, Action]):
+        run_actions = False
+        for _, action in actions.items():
+            if action.action in [Action.FILTERED, Action.COMCLEAN]:
+                run_actions = True
+                break
+        if not run_actions:
+            print("Nenhuma filtragem encontrada, nenhuma ação tomada.")
+            return
+        for path, action in actions.items():
+            if action.action in [Action.FILTERED, Action.COMCLEAN, Action.ORIGINAL]:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                with open(path, "w") as f:
+                    f.write(action.content) 
+        
 class CodeFilter:
     @staticmethod
-    def open_file(path: str): 
-        if os.path.isfile(path):
+    def open_file(path: Path): 
+        if path.is_file():
             file_content = Decoder.load(path)
             return True, file_content
         print("Warning: File", path, "not found")
         return False, "" 
 
     @staticmethod
-    def cf_recursive(target_dir: str, output_dir: str, force: bool, cheat: bool = False, quiet: bool = False, indent: int = 0):
-        if not os.path.isdir(target_dir):
+    def cf_recursive(target_dir: Path, output_dir: Path, force: bool, cheat: bool = False, quiet: bool = False, indent: int = 0):
+        if not target_dir.is_dir():
             print("Error: target must be a folder in recursive mode")
             exit()
-        if os.path.exists(output_dir):
+        if output_dir.exists():
             if not force:
                 print("Error: output folder already exists")
                 exit()
             else:
                 # recursive delete all folder content without deleting the folder itself
-                for file in os.listdir(output_dir):
-                    path = os.path.join(output_dir, file)
-                    if os.path.isdir(path):
-                        shutil.rmtree(path, ignore_errors=True)
+                for item in output_dir.iterdir():
+                    if item.is_dir():
+                        shutil.rmtree(item, ignore_errors=True)
                     else:
-                        os.remove(path)
+                        item.unlink()
 
         deep_filter = DeepFilter().set_cheat(cheat).set_quiet(quiet).set_indent(indent)
-        deep_filter.copy(target_dir, output_dir, 10)
+        actions: dict[Path, Action] = {}
+        deep_filter.prepare_actions(target_dir, output_dir, 10, actions)
+        deep_filter.deploy_actions(actions)
 
     @staticmethod
-    def cf_single_file(target: str, output: str, update: bool, cheat: bool):
-        file = target
+    def cf_single_file(target: Path, output: Path, update: bool, cheat: bool):
+        file = Path(target)
         success, content = CodeFilter.open_file(file)
         if success:
             if cheat:
@@ -241,7 +263,7 @@ class CodeFilter:
                 content = Filter(file).process(content)
 
             if output:
-                if os.path.isfile(output):
+                if output.is_file():
                     old = Decoder.load(output)
                     if old != content:
                         Decoder.save(output, content)
@@ -272,10 +294,13 @@ def filter_main(args: argparse.Namespace):
 
 
 def build_drafts_main(args: argparse.Namespace):
-    dir = os.path.join(os.getcwd())
-    print(f"Updating drafts in {os.path.basename(os.getcwd())}")
-    source_src = CodeFilter.get_default_src_dir(Path(dir))
-    drafts_dest = CodeFilter.get_default_drafts_dir(Path(dir))
-    if os.path.isdir(source_src):
+    changedir = args.changedir
+    here = Path(".").resolve() if changedir is None else Path(changedir).resolve()
+    print(f"Updating drafts in {here}")
+    source_src = CodeFilter.get_default_src_dir(here)
+    drafts_dest = CodeFilter.get_default_drafts_dir(here)
+    if source_src.is_dir():
         filter = DeepFilter().set_indent(4)
-        filter.copy(source_src, drafts_dest, 5)
+        actions: dict[Path, Action] = {}
+        filter.prepare_actions(source_src, drafts_dest, 5, actions)
+        filter.deploy_actions(actions)

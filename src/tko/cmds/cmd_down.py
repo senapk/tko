@@ -43,12 +43,12 @@ class CmdDown:
         origin_folder = self.task.get_origin_folder()
         if origin_folder is None:
             raise ValueError(f"Atividade {self.task_key} não possui pasta de origem para download")
-        self.origin_folder: Path = origin_folder
+        self.origin_folder: Path = origin_folder # root task folder
         
         destiny_folder = self.task.get_workspace_folder()
         if destiny_folder is None:
             raise ValueError(f"Atividade {self.task_key} não possui pasta de destino para download")
-        self.destiny_folder: Path = destiny_folder
+        self.destiny_folder: Path = destiny_folder # root task workspace folder
        
         self.language: str = ""
         self.check_and_get_language()
@@ -74,23 +74,22 @@ class CmdDown:
 
     def find_folder_for_drafts(self) -> Path:
         lang = self.language
-        destiny_folder = self.destiny_folder
-        drafts_folder = os.path.join(destiny_folder, lang)
-        files_under_destiny = os.listdir(destiny_folder)
+        drafts_folder: Path = self.destiny_folder / "src" / lang
+        files_under_destiny: list[Path] = [x for x in self.destiny_folder.iterdir()]
         on_root = False
         for file in files_under_destiny:
-            if file.endswith(f".{lang}"):
-                drafts_folder = os.path.join(destiny_folder)
+            if file.suffix == lang:
+                drafts_folder = self.destiny_folder
                 on_root = True
                 break
 
-        if not on_root and not os.path.exists(drafts_folder):
-            os.makedirs(drafts_folder, exist_ok=True)
-            return Path(drafts_folder)
+        if not on_root and not drafts_folder.exists():
+            drafts_folder.mkdir(parents=True, exist_ok=True)
+            return drafts_folder
         
         count = 1
         while True:
-            drafts_backup_folder = os.path.join(destiny_folder, f"_{lang}.{count}")
+            drafts_backup_folder = self.destiny_folder / "src" / f"_{lang}.{count}"
             if not os.path.exists(drafts_backup_folder):
                 drafts_folder = drafts_backup_folder
                 os.makedirs(drafts_folder, exist_ok=True)

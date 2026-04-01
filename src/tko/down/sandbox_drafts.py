@@ -12,10 +12,9 @@ O texto abaixo é informativo e você pode apagar depois de aprender como usar o
 
 ## Como usar os rascunhos
 
-- Para renomear seu rascunho, basta renomear a pasta do rascunho.
-- Para reorganizar, você pode criar subpastas dentro do sandbox e mover as pastas de rascunhos pra lá.
-- Você pode usar o atalho R(Reload) no TKO para recarregar os rascunhos depois de criar, renomear ou reorganizar eles.
-- Tudo que você fizer nos rascunhos também será rastreado pela ferramenta.
+- A chave do seu rascunho é o nome da pasta.
+- O título do seu rascunho é carregado a partir da primeira linha desse arquivo \#
+- Tudo que você fizer nos rascunhos também será rastreado pelo tko.
 
 ## Como criar seus próprios testes
 

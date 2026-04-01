@@ -207,11 +207,13 @@ class PlayActions:
         sandbox_folder: Path = sandbox_source.get_source_workspace()
         sandbox_folder.mkdir(parents=True, exist_ok=True)
         
-        def find_numbered_draft_id() -> int:
+        def find_numbered_draft_id(sandbox_folder: Path) -> int:
             task_keys_only: list[str] = []
             for quest in self.game.quests.values():
                 for task in quest.get_tasks():
                     task_keys_only.append(task.get_key())
+            for element in sandbox_folder.iterdir():
+                task_keys_only.append(element.name)
             draft_id = SandboxDrafts.find_max_numbered_key(task_keys_only=task_keys_only) + 1
             return draft_id
         
@@ -230,7 +232,7 @@ class PlayActions:
         def __create(draft_title: str):
             key, title = search_for_key(draft_title)
             if key == "":
-                key = SandboxDrafts.format_draft_key(find_numbered_draft_id())
+                key = SandboxDrafts.format_draft_key(find_numbered_draft_id(sandbox_folder))
             if title == "":
                 title = "Digite o título da tarefa aqui"
             
@@ -249,7 +251,9 @@ class PlayActions:
             draft = ""
             if self.repo.data.lang in lang_drafts:
                 draft = lang_drafts[self.repo.data.lang]
-            with open(folder / f"draft.{self.repo.data.lang}", "w", encoding="utf-8") as f:
+            draft_path = folder / "src" / self.repo.data.lang / f"draft.{self.repo.data.lang}"
+            draft_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(draft_path, "w", encoding="utf-8") as f:
                 f.write(draft)
 
             SandboxDrafts.create_sandbox_draft(folder, title)
