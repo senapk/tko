@@ -14,6 +14,7 @@ from icecream import ic # type: ignore
 from datetime import timedelta
 from tko.settings.git_cache import GitCache
 from tko.play.flags import Flags
+from tko.logger.log_sort import LogSort
 import os
 
 def remove_git_merge_tags(lines: list[str]) -> list[str]:
@@ -63,7 +64,7 @@ class Repository:
                 _ = source.get_source_readme() # to ensure cache path is set
         sources: list[RepSource] = self.data.get_sources()
         self.game.set_sources(sources, self.data.lang, silent=silent).build()
-        self.__load_tasks_from_rep_into_game()
+        self.__load_tasks_from_log_into_game()
         return self
     
     def get_key_from_task_folder(self, folder: Path) -> str:
@@ -78,12 +79,20 @@ class Repository:
         task_folder = self.get_task_folder_for_label(label)
         return task_folder == folder
     
-    def __load_tasks_from_rep_into_game(self):
-        # load tasks from repository.yaml into game
-        tasks = self.data.tasks
-        for key, serial in tasks.items():
-            if key in self.game.tasks:
-                self.game.tasks[key].load_from_db(serial)
+    def __load_tasks_from_log_into_game(self):
+        task_dict: dict[str, LogSort] = self.logger.tasks.task_dict
+        for key, task_log in task_dict.items():
+            if not key in self.game.tasks:
+                continue
+            task = self.game.tasks[key]
+            exec_list = task_log.exec_list
+            if exec_list:
+                _, exec_item = exec_list[-1]
+                task.info.rate = exec_item.rate
+            self_list = task_log.self_list
+            if self_list:
+                _, self_item = self_list[-1]
+                task.info = self_item.info
 
     def get_task_folder_for_label(self, label: str) -> Path:
         parts: list[str] = label.split("@")

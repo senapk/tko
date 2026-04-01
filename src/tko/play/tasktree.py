@@ -210,9 +210,6 @@ class TreeBuilder:
             for t in tasks:
                 items.append(t)
 
-        # matcher = SearchAsc(tfilter.search_text)
-        # items = [self.mark_visible_tasks(items, matcher) or item for item in items]
-
         return items
     
 class TreeRenderer:
@@ -409,15 +406,6 @@ class TreeRepository:
         # salvar selecionado
         self.repo.data.selected = state.selected
 
-        # salvar tasks com info
-        tasks: dict[str, str] = {}
-        for t in self.game.tasks.values():
-            if len(t.info.get_kv()) != 0:
-                with open("debug.txt", "a") as f:
-                    f.write(f"{t.info.get_kv()}")
-                tasks[t.get_full_key()] = t.save_to_db()
-
-        self.repo.data.tasks = tasks
 
 class TaskTree:
     def __init__(self, settings: Settings, repo: Repository):
@@ -517,5 +505,4 @@ class TaskTree:
         self.update()
 
     def key_enter(self):
-        # self.navigator.toggle(self.state, self.items)
         self.update()

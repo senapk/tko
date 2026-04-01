@@ -7,7 +7,6 @@ class RepData:
         self.version: str = ""
         self.__sources: list[RepSource] = []
         self.expanded: list[str] = []
-        self.tasks: dict[str, Any] = {}
         self.flags: dict[str, Any] = {}
         self.lang: str = ""
         self.selected: str = ""
@@ -55,8 +54,8 @@ class RepData:
     def get_expanded(self) -> list[str]:
         return self.expanded
 
-    def get_tasks(self) -> dict[str, Any]:
-        return self.tasks
+    # def get_tasks(self) -> dict[str, Any]:
+    #     return self.tasks
 
     def get_flags(self) -> dict[str, Any]:
         return self.flags
@@ -82,7 +81,7 @@ class RepData:
             # Load simple fields
             self.version = self._safe_load(data, "version", str, self.version)
             self.expanded = self._safe_load(data, "expanded", list, self.expanded)
-            self.tasks = self._safe_load(data, "tasks", dict, self.tasks)
+            # self.tasks = self._safe_load(data, "tasks", dict, self.tasks)
             self.flags = self._safe_load(data, "flags", dict, self.flags)
             self.lang = self._safe_load(data, "lang", str, self.lang)
             self.selected = self._safe_load(data, "selected", str, self.selected)
@@ -96,15 +95,12 @@ class RepData:
 
         except (KeyError, TypeError) as e:
             print(f"Error loading data from dictionary: {e}")
-            # Optionally, you can re-raise the exception or handle it differently
-            # raise ValueError("Malformed data for RepData") from e
 
     def save_to_dict(self) -> dict[str, Any]:
         return {
             "version": self.version,
             "sources": [x.save_to_dict() for x in self.__sources],
             "expanded": self.expanded,
-            "tasks": self.tasks,
             "flags": self.flags,
             "lang": self.lang,
             "selected": self.selected,

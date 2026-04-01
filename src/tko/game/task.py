@@ -200,17 +200,17 @@ class Task(TreeItem):
         if self.str_index in kv_dict:
             self.main_idx = int(kv_dict[self.str_index])
 
-    def load_from_db(self, value: str):
-        if value.startswith("{"):
-            self.decode_from_dict(value)
-        else:
-            raise ValueError(f"Invalid task value format: {value}. Expected format is 'flow:edge:main_idx:rate' or '{self.str_index}:value'.")
+    # def load_from_db(self, value: str):
+    #     if value.startswith("{"):
+    #         self.decode_from_dict(value)
+    #     else:
+    #         raise ValueError(f"Invalid task value format: {value}. Expected format is 'flow:edge:main_idx:rate' or '{self.str_index}:value'.")
 
-    def save_to_db(self) -> str:
-        kv_dict = self.info.get_kv()
-        if self.main_idx != 0:
-            kv_dict[self.str_index] = str(self.main_idx)
-        return "{" + ", ".join(f"{k}:{v}" for k, v in kv_dict.items()) + "}"
+    # def save_to_db(self) -> str:
+    #     kv_dict = self.info.get_kv()
+    #     if self.main_idx != 0:
+    #         kv_dict[self.str_index] = str(self.main_idx)
+    #     return "{" + ", ".join(f"{k}:{v}" for k, v in kv_dict.items()) + "}"
 
     def is_db_empty(self) -> bool:
         return len(self.info.get_kv()) == 0
