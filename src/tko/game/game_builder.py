@@ -24,25 +24,33 @@ class GameBuilder:
 
     def build_from(self, language: str):
         filename: Path = self.source.get_source_readme()
-        content: str = ""
-        if not filename.exists():
-            if not self.source.is_sandbox_source():
-                print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}")
-        else:
-            content = Decoder.load(filename)
-        if self.source.is_sandbox_source():
-            if not filename.exists():
-                print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}, criando arquivo")
-                with open(filename, "w", encoding="utf-8") as f:
-                    f.write(f"# {self.source.name}\n\n")
-
-            fix_readme(filename.resolve(), self.source.get_source_workspace(), self.source.name, verbose=False)
+        self.__ensure_sandbox_readme_fixed(filename)
+        content: str = self.load_content(filename)
         self.__parse_file_content(content)
         quest_filters, task_filters = self.source.get_filters()
         self.__remove_empty_and_other_language_and_filtered(language, quest_filters, task_filters) 
         self.__create_requirements_pointers()
         self.__create_cross_references()
         return self
+
+    def load_content(self, filename: Path) -> str:
+        content: str = ""
+        if not filename.exists():
+            if not self.source.is_sandbox_source():
+                print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}")
+        else:
+            content = Decoder.load(filename)
+        return content
+
+    def __ensure_sandbox_readme_fixed(self, filename: Path):
+        if not self.source.is_sandbox_source():
+            return
+        if not filename.exists():
+            print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}, criando arquivo")
+            filename.parent.mkdir(parents=True, exist_ok=True)
+            with open(filename, "w", encoding="utf-8") as f:
+                f.write(f"# {self.source.name}\n\n")
+        fix_readme(filename.resolve(), self.source.get_source_workspace(), self.source.name, verbose=False)
 
 
     def collect_tasks(self) -> dict[str, Task]:

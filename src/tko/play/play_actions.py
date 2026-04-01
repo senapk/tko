@@ -253,10 +253,10 @@ class PlayActions:
                 f.write(draft)
 
             SandboxDrafts.create_sandbox_draft(folder, title)
-            
-            # self.tree.selected_item = f"{RepSource.STUDENT_SANDBOX_NAME}@{key}"
-            # self.tree.expanded.add(f"{RepSource.STUDENT_SANDBOX_NAME}@{RepSource.STUDENT_SANDBOX_NAME}")
+            self.tree.state.selected = f"{sandbox_source.name}@{key}"
+            self.tree.state.expanded.add(f"{sandbox_source.name}@{sandbox_source.name}")
             self.repo.data.selected = self.tree.state.selected
+            self.reload_game()
             self.fman.add_input( Floating().bottom().right()
                                 .put_text(f"Rascunho criado em {folder}")
                                 .put_text(f"Aperte {GuiKeys.reload_game} para recarregar as tarefas")
@@ -265,9 +265,7 @@ class PlayActions:
         current_folders_on_rep: list[str] = [f"@{folder.name}" for folder in sandbox_folder.iterdir() if folder.is_dir()]
         self.fman.add_input(FloatingInputText(Text().add("Digite o Título (use @label para definir a chave manualmente)" ), __create, current_folders_on_rep))
 
-
     def down_remote_task(self):
-
         obj = self.tree.get_selected_throw()
         
         if isinstance(obj, Quest):

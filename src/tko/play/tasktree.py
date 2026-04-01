@@ -413,6 +413,8 @@ class TreeRepository:
         tasks: dict[str, str] = {}
         for t in self.game.tasks.values():
             if len(t.info.get_kv()) != 0:
+                with open("debug.txt", "a") as f:
+                    f.write(f"{t.info.get_kv()}")
                 tasks[t.get_full_key()] = t.save_to_db()
 
         self.repo.data.tasks = tasks
@@ -439,9 +441,6 @@ class TaskTree:
 
     def save_state(self):
         self.repository.save_state(self.state)
-        for t in self.game.tasks.values():
-            if t.is_import_type() or t.is_link():
-                self.repository.repo.data.tasks[t.get_full_key()] = t.save_to_db()
 
     def filter_by_search(self) -> tuple[set[str], str | None]:
         return self.builder.filter_by_search(self.game, self.state.search)

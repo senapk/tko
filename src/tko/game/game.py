@@ -21,6 +21,8 @@ class Game:
         self.ordered_quests: list[str] = [] # ordered clusters
         self.quests: dict[str, Quest] = {}  # quests indexed by quest key
         self.tasks: dict[str, Task] = {}  # tasks indexed by task key
+        self.language: str = ""
+        self.silent: bool = False
 
     def get_task(self, key: str) -> Task:
         if key in self.tasks:
@@ -53,10 +55,6 @@ class Game:
                         priority[skill] = priority.get(skill, 0) + value * t.get_xp()
                     complete[skill] = complete.get(skill, 0) + value * t.get_xp()
 
-        # remove all keys with value 0
-        # obtained = {k: v for k, v in obtained.items() if v > 0}
-        # priority = {k: v for k, v in priority.items() if v > 0}
-        # complete = {k: v for k, v in complete.items() if v > 0}
         return obtained, priority, complete
 
     def sum_xp(self, obtained: dict[str, float], priority: dict[str, float], complete: dict[str, float]) -> tuple[float, float, float]:
@@ -75,22 +73,21 @@ class Game:
                 return s
         raise ValueError("Local sandbox source not found")
 
-    def set_sources(self, sources: list[RepSource], language: str, silent: bool = False) -> None:
+    def set_sources(self, sources: list[RepSource], language: str, silent: bool = False):
         self.sources = sources
-        self.ordered_clusters = []
-        self.quests = {}
-        self.tasks = {}
         self.language = language
         self.silent = silent
-        self.load_sources()
+        return self
     
-    def load_sources(self):
+    def build(self):
+        self.ordered_quests = []
+        self.quests = {}
+        self.tasks = {}
         for source in self.sources:
             gb = GameBuilder(source)
             gb.build_from(self.language)
             for quest_key in gb.ordered_quests:
                 self.ordered_quests.append(source.name + "@" + quest_key)
-
             gb_quests = gb.collect_quests()
             gb_tasks = gb.collect_tasks()
             for quest in gb_quests.values():
@@ -98,9 +95,7 @@ class Game:
             for task in gb_tasks.values():
                 self.tasks[task.get_full_key()] = task
         GameValidator(self.quests).validate()
-
-        # for t in self.tasks.values():
-        #     t.get_link(os.path.dirname(filename) + "/")
+        return self
 
     @staticmethod
     def is_reachable_quest(q: Quest, cache: dict[str, bool]):
@@ -112,11 +107,6 @@ class Game:
             return True
         cache[q.get_full_key()] = all([r.is_complete() and Game.is_reachable_quest(r, cache) for r in q.requires_ptr])
         return cache[q.get_full_key()]
-
-    # def __get_reachable_quests(self):
-    #     # cache needs to be reseted before each call
-    #     cache: dict[str, bool] = {}
-    #     return [q for q in self.quests.values() if Game.__is_reachable_quest(q, cache)]
 
     def update_reachable_and_available(self):
         for q in self.quests.values():

@@ -62,7 +62,7 @@ class Repository:
             for source in self.data.get_sources():
                 _ = source.get_source_readme() # to ensure cache path is set
         sources: list[RepSource] = self.data.get_sources()
-        self.game.set_sources(sources, self.data.lang, silent=silent)
+        self.game.set_sources(sources, self.data.lang, silent=silent).build()
         self.__load_tasks_from_rep_into_game()
         return self
     
