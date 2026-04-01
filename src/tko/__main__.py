@@ -192,7 +192,7 @@ class Main:
         writeable: bool = args.write
         name: str = args.name
         quest_filter: list[str] | None = args.quest
-        task_filter: list[str] | None = args.task
+        task_filter: list[str] | None = None
         try:
             settings = Settings(args.globaldir)
             repo, _ = Main.load_repo(args.changedir)
@@ -207,7 +207,7 @@ class Main:
                 remote_dir=local_source_dir, 
                 filter_quest=quest_filter, 
                 filter_task=task_filter,
-                filter_to=args.destiny,
+                filter_to=args.to,
                 writeable=writeable)
             rep_actions.print_end_msg()
         except ValueError as e:
@@ -217,7 +217,7 @@ class Main:
     def remote_filter(args: argparse.Namespace):
         name: str = args.name
         quests: list[str] | None = args.quest
-        tasks: list[str] | None = args.task
+        tasks: list[str] | None = None
         clear: bool = args.clear
         if clear and (quests or tasks):
             print("Erro: --clear não pode ser usado com --quest ou --task")
@@ -227,7 +227,7 @@ class Main:
         if repo is None:
             return
         rep_actions = RepSourceActions(settings, repo)
-        rep_actions.remote_filter(alias=name, filter_quest=quests, filter_task=tasks, clear=clear, filter_to=args.destiny)
+        rep_actions.remote_filter(alias=name, filter_quest=quests, filter_task=tasks, clear=clear, filter_to=args.to)
 
     @staticmethod
     def clear_cache(args: argparse.Namespace):
@@ -448,8 +448,8 @@ class Parser:
         source_add.add_argument('name', type=str, help='Name of the remote')
         source_add.add_argument('target', type=str, metavar=('TARGET'), help='Remote source: git URL, local directory or preset name (e.g. +fup, +ed, +poo)')
         source_add.add_argument('-q', '--quest', action='append', metavar=('QUEST_ID'), type=str, help='Load all tasks only from selected quests')
-        source_add.add_argument('-t', '--task', action='append', metavar=('TASK_ID'), type=str, help='Only load tasks this tasks')
-        source_add.add_argument('-d', '--destiny', type=str, help='Quest destination for filtered quests and tasks added with this source')
+        source_add.add_argument('-t', '--to', type=str, help='Quest destination for filtered tasks added with this source')
+        source_add.add_argument('-s', '--setup', metavar=('JSON'), type=str, help='SETUP JSON string to configure the remote source')
         
         source_add.add_argument('-b', '--branch', type=str, default='master', help='Branch name for git remote sources')
         source_add.add_argument('-w', '--write', action='store_true', help='Allow modifications for local directory remotes (default: readonly)')
@@ -467,10 +467,10 @@ class Parser:
         source_filter = sub_source.add_parser("filter", help="Manage filters for a remote task source", add_help=False)
         source_filter.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
         source_filter.add_argument('name', type=str, help='Name of the remote')
-        source_filter.add_argument('-q', '--quest', action='append', metavar=('QUEST_ID'), type=str, help='Add quests to the filter list')
-        source_filter.add_argument('-t', '--task', action='append', metavar=('TASK_ID'), type=str, help='Add tasks to the filter list')
+        source_filter.add_argument('-q', '--quest', action='append', metavar=('QUEST_ID'), type=str, help='Load all tasks only from selected quests')
+        source_filter.add_argument('-s', '--setup', metavar=('JSON'), type=str, help='SETUP JSON string to configure the remote source')
         source_filter.add_argument('--clear', action='store_true', help='Clear all filters')
-        source_filter.add_argument('-d', '--destiny', type=str, help='Filter destination')
+        source_filter.add_argument('-t', '--to', type=str, help='Quest destination for filtered tasks added with this source')
         source_filter.set_defaults(func=Main.remote_filter)
         
 

@@ -150,25 +150,42 @@ class GameBuilder:
     def __add_task(self, task: Task):
         self.__get_active_quest().add_task(task)
 
+    def add_filtered_quests(self, quest_filters: dict[str, str] | None):
+        if quest_filters is None or len(quest_filters) == 0:
+            return
+        quests: list[Quest] = []
+        available_quests = [q for q in self.quests.values()]
+        for pattern, destiny in quest_filters.items():
+            for q in available_quests:
+                if (pattern.lower() in q.get_title().lower()) or (pattern.lower() == f"@{q.get_key()}".lower()):
+                    if destiny == "":
+                        quests.append(q)
+                    else:
+                        qdestiny = self.quests.get(f"{self.source.name}@{destiny}", None)
+                        if qdestiny is None:
+                            qdestiny = Quest(destiny, destiny).set_remote_name(self.source.name)
+                            self.__add_quest(qdestiny)
+                        for t in q.get_tasks():
+                            qdestiny.add_task(t)
+                        if qdestiny not in quests:
+                            quests.append(qdestiny)
+        self.quests = {q.get_full_key(): q for q in quests}
 
-    def remove_empty_and_other_language_and_filtered(self, language: str, quest_filters: dict[str, str] | None, task_filters: dict[str, str] | None):
-        # self.__quests = [q for q in self.__quests if len(q.get_tasks()) > 0]
+    def filter_by_language_and_empty(self, language: str):
         quests: list[Quest] = []
         for q in self.quests.values():
             if len(q.get_tasks()) == 0:
                 continue
-            if quest_filters is not None and len(quest_filters) > 0:
-                allow = False
-                for pattern, _ in quest_filters:
-                    if pattern.lower() in q.get_title().lower() or pattern.lower() in q.get_full_key().lower():
-                        allow = True
-                        break
-                if not allow:
-                    continue
             if len(q.languages) == 0 or language in q.languages:
                 quests.append(q)
         self.quests = {q.get_full_key(): q for q in quests}
+        return self
 
+    def remove_empty_and_other_language_and_filtered(self, language: str, quest_filters: dict[str, str] | None, task_filters: dict[str, str] | None):
+        if quest_filters is None or len(quest_filters) == 0:
+            self.filter_by_language_and_empty(language)
+        else:
+            self.add_filtered_quests(quest_filters)
         return self
 
     def __clear_empty_or_other_language(self, language: str): #call before create_cross_references

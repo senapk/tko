@@ -26,11 +26,13 @@ class RepSourceActions:
         print(Text.format("  - Link ou Caminho: {y}", source.get_url_link()))
         print(Text.format("  - File Path     : {y}", source.get_source_readme()))
         print(Text.format("  - Filtro Quests : {y}", "Desativado" if source.quests is None else 'Ativado'))
-        for f in source.quests or []:
-            print(f"    - {f}")
+        if source.quests is not None:
+            for f, v in source.quests.items():
+                print(f"    - {f}: {v}")
         print(Text.format("  - Filtro Tasks  : {y}", "Desativado" if source.tasks is None else 'Ativado'))
-        for f in source.tasks or []:
-            print(f"    - {f}")
+        if source.tasks is not None:
+            for f, v in source.tasks.items():
+                print(f"    - {f}: {v}")
 
     def remote_rm(self, alias: str) -> None:
         rep = self.repo
