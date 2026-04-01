@@ -94,8 +94,6 @@ class Main:
         if repo is None:
             return
         action = CmdOpen(settings, repo, args.update)
-        # if not CheckVersion(settings).is_updated():
-        #     action.display_need_update()
         action.list(show_all = args.all)
 
     @staticmethod

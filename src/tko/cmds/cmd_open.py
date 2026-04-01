@@ -34,6 +34,7 @@ class CmdOpen:
 
     def list(self, show_all: bool):
         tree = TaskTree(self.settings, self.repo)
-        tree.update(force_view_all=True)
+        tree.expand_all()
+        tree.update(force_view_all=True, ligatures=False)
         for item in tree.get_rendered_items():
             print(item)

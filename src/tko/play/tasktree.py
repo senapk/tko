@@ -152,7 +152,7 @@ class TreeBuilder:
                             disabled.add(t.get_full_key())
         return enabled - disabled
     
-    def build(self, game: Game, state: TreeState, tfilter: TreeFilter) -> list[TreeItem]:
+    def build(self, game: Game, state: TreeState, tfilter: TreeFilter, ligatures: bool = True) -> list[TreeItem]:
         items: list[TreeItem] = []
         game.update_reachable_and_available()
         enabled, first_match = self.filter_by_search(game, tfilter.search_text)
@@ -184,16 +184,28 @@ class TreeBuilder:
             items.append(q)
             color = "g" if q.is_reachable() else "y"
             if q.get_full_key() not in state.expanded:
-                q.ligature = Text("━─", color)
+                if ligatures:
+                    q.ligature = Text("━─", color)
+                else:
+                    q.ligature = Text("──", color)
                 continue
             tasks: list[Task] = [t for t in q.get_tasks() if t.visible ]
             has_hidden = len(tasks) != len(q.get_tasks())
-            q.ligature = Text("┄┯", color) if has_hidden else Text("─┯", color)
+            if ligatures:
+                q.ligature = Text("┄┯", color) if has_hidden else Text("─┯", color)
+            else:
+                q.ligature = Text("──", color)
             for i, t in enumerate(tasks):
                 if i == len(tasks) - 1:
-                    t.ligature = Text("└", color)
+                    if ligatures:
+                        t.ligature = Text("└", color)
+                    else:
+                        t.ligature = Text("|", color)
                 else:
-                    t.ligature = Text("┆", color) if has_hidden else Text("├", color)
+                    if ligatures:
+                        t.ligature = Text("┆", color) if has_hidden else Text("├", color)
+                    else:
+                        t.ligature = Text("┆", color) if has_hidden else Text("|", color)
 
             for t in tasks:
                 items.append(t)
@@ -472,19 +484,14 @@ class TaskTree:
             for item in items
         ]
     
-    def update(self, force_view_all: bool = False):
+    def update(self, force_view_all: bool = False, ligatures: bool = True):
         tree_filter = TreeFilter(
             inbox_mode=self.repo.flags.task_view_mode.is_inbox() and not force_view_all,
             search_text=self.state.search
         )
-        self.items = self.builder.build(self.game, self.state, tree_filter)
+        self.items = self.builder.build(self.game, self.state, tree_filter, ligatures)
         self.state.ensure_valid_selection(self.items)
         self.layout.calculate(self.game, self.repo.flags, self.state.expanded)
-        # matcher = SearchAsc(self.state.search)
-        # self.lines = [
-        #     self.renderer.render(item, self.state.selected, matcher)
-        #     for item in self.items
-        # ]
 
     def expand_all(self):
         for q in self.game.quests.values():
