@@ -6,6 +6,8 @@ from icecream import ic # type: ignore
 from tko.play.FormatterUtil import FormatterUtil
 from tko.play.floating_grade import FloatingGrade
 from tko.play.floating_input_text import FloatingInputText
+from tko.play.keys import GuiKeys
+from tko.play.keys import GuiKeys
 from tko.play.tracker import Tracker
 from tko.util.text import Text
 from tko.cmds.cmd_down import CmdDown
@@ -196,17 +198,6 @@ class PlayActions:
         obj = self.tree.get_selected_throw()
         
         if isinstance(obj, Task):
-            # task: Task = obj
-            # if task.is_link() or task.task_eval == Task.TaskEval.TICK:
-            #     if task.info.feedback:
-            #         task.info.feedback = False
-            #         task.info.rate = 0
-            #         self.rep.logger.store(LogItemSelf().set_task(task))
-            #     else:
-            #         task.info.feedback = True
-            #         task.info.rate = 100
-            #         self.rep.logger.store(LogItemSelf().set_task(task))
-            # else:
             self.fman.add_input(
                 FloatingGrade(obj, lambda task: self.repo.logger.store(LogItemSelf().set_task(task)))
             )
@@ -266,14 +257,14 @@ class PlayActions:
             # self.tree.selected_item = f"{RepSource.STUDENT_SANDBOX_NAME}@{key}"
             # self.tree.expanded.add(f"{RepSource.STUDENT_SANDBOX_NAME}@{RepSource.STUDENT_SANDBOX_NAME}")
             self.repo.data.selected = self.tree.state.selected
-            self.repo.load_game(try_update=False, silent=True) # recarrega o jogo
             self.fman.add_input( Floating().bottom().right()
                                 .put_text(f"Rascunho criado em {folder}")
-                                .put_text("\nVocê pode renomear a pasta manualmente e apertar shift R para recarregar.")
+                                .put_text(f"Aperte {GuiKeys.reload_game} para recarregar as tarefas")
                                 .set_warning())
 
-        current_folders_on_rep: list[str] = [folder.name for folder in sandbox_folder.iterdir() if folder.is_dir()]
-        self.fman.add_input(FloatingInputText(Text().add("Digite o Título (use @label para definir a chave ou deixe vazio para gerar automaticamente)" ), __create, current_folders_on_rep))
+        current_folders_on_rep: list[str] = [f"@{folder.name}" for folder in sandbox_folder.iterdir() if folder.is_dir()]
+        self.fman.add_input(FloatingInputText(Text().add("Digite o Título (use @label para definir a chave manualmente)" ), __create, current_folders_on_rep))
+
 
     def down_remote_task(self):
 

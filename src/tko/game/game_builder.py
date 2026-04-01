@@ -6,7 +6,7 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.settings.rep_source import RepSource
 from tko.util.decoder import Decoder
-import os
+from tko.feno.indexer import fix_readme
 from icecream import ic # type: ignore
 
 class GameBuilder:
@@ -15,7 +15,7 @@ class GameBuilder:
         self.ordered_quests: list[str] = [] # ordered quests keys
         self.quests: dict[str, Quest] = {}
         self.active_quest: Quest | None = None
-        self.unique_keys: set[str] = set()
+        # self.unique_keys: set[str] = set()
         self.interactive: bool = False
 
     def set_interactive(self, interactive: bool):
@@ -30,7 +30,13 @@ class GameBuilder:
                 print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}")
         else:
             content = Decoder.load(filename)
-        self.__load_sandbox_tasks()
+        if self.source.is_sandbox_source():
+            if not filename.exists():
+                print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}, criando arquivo")
+                with open(filename, "w", encoding="utf-8") as f:
+                    f.write(f"# {self.source.name}\n\n")
+
+            fix_readme(filename.resolve(), self.source.get_source_workspace(), self.source.name, verbose=False)
         self.__parse_file_content(content)
         quest_filters, task_filters = self.source.get_filters()
         self.__remove_empty_and_other_language_and_filtered(language, quest_filters, task_filters) 
@@ -71,51 +77,43 @@ class GameBuilder:
                     exit(1)
 
 
-    def __parse_quest_folder(self, database_path: Path):
-        alias = self.source.name
-        if not os.path.exists(database_path):
-            os.makedirs(database_path)
-        for task_path in database_path.iterdir():
-            if not task_path.is_dir():
-                continue
-            if not (task_path / "README.md").exists():
-                continue
-            self.add_task_from_folder(alias, task_path)
+    # def __parse_folder_for_tasks(self, database_path: Path):
+    #     alias = self.source.name
+    #     if not os.path.exists(database_path):
+    #         os.makedirs(database_path)
+    #     for task_path in database_path.iterdir():
+    #         if not task_path.is_dir():
+    #             continue
+    #         if not (task_path / "README.md").exists():
+    #             continue
+    #         print("debug", f"Loading task from folder {task_path}")
+    #         self.add_task_from_folder(alias, task_path)
 
-        self.__get_active_quest().sort_tasks_by_title()
+    #     self.__get_active_quest().sort_tasks_by_title()
 
-    def add_task_from_folder(self, alias: str, task_dir_path: Path):
-        task = Task()
-        key = task_dir_path.name
-        task.set_key(key)
-        task.set_title(self.load_markdown_title_or_first_line(task_dir_path / "README.md"))
-        task.set_remote_name(alias)
-        task.set_origin_folder(Path(task_dir_path))
-        if self.source.is_read_only():
-            task.set_workspace_folder(self.source.get_task_workspace(key))
-        self.__add_task(task)
+    # def add_task_from_folder(self, alias: str, task_dir_path: Path):
+    #     task = Task()
+    #     key = task_dir_path.name
+    #     keys = [t.get_key() for t in self.__get_active_quest().get_tasks()]
+    #     # print("debug", f"Adding task from folder {task_dir_path}, key: {key}, existing keys: {keys}")
+    #     if key in keys:
+    #         print("debug", f"Duplicate key {key} in {task_dir_path}")
+    #         return
+    #     task.set_key(key)
+    #     task.set_title(TaskLine.load_markdown_title_or_first_line(task_dir_path / "README.md"))
+    #     task.set_remote_name(alias)
+    #     task.set_origin_folder(Path(task_dir_path))
+    #     if self.source.is_read_only():
+    #         task.set_workspace_folder(self.source.get_task_workspace(key))
+    #     self.__add_task(task)
 
-    def load_markdown_title_or_first_line(self, path: Path) -> str:
-        if not path.exists():
-            return ""
-        with open(path, "r", encoding="utf-8") as f:
-            for line in f:
-                if line.startswith("---"):
-                    continue
-                if len(line.split(":")) > 1:
-                    continue
-                line = line.strip()
-                if line.startswith("#"):
-                    return line.lstrip("#").strip()
-                if line.strip() != "":
-                    return line
-        return ""
     
-    def __load_sandbox_tasks(self):
-        if self.source.is_sandbox_source():
-            sandbox_folder = self.source.get_source_workspace()
-            self.__add_quest(Quest(sandbox_folder.name, f"{sandbox_folder.name}").set_remote_name(self.source.name))
-            self.__parse_quest_folder(sandbox_folder)
+    # def __load_sandbox_tasks(self):
+    #     if self.source.is_sandbox_source():
+    #         sandbox_folder = self.source.get_source_workspace()
+    #         self.__add_quest(Quest(self.source.name, f"{self.source.name}").set_remote_name(self.source.name))
+    #         print("debug", f"Loading sandbox tasks from {sandbox_folder}")
+    #         self.__parse_folder_for_tasks(sandbox_folder)
 
     def __parse_file_content(self, content: str):
         lines = content.splitlines()
@@ -144,6 +142,7 @@ class GameBuilder:
 
     def __add_quest(self, quest: Quest) -> Quest:
         if quest.get_full_key() not in self.quests:
+            # print("debug", f"Adding quest {quest.get_full_key()} with title {quest.get_title()}")
             self.quests[quest.get_full_key()] = quest
         if quest.get_full_key() not in self.ordered_quests:
             self.ordered_quests.append(quest.get_full_key())

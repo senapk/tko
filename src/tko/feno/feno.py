@@ -1,7 +1,7 @@
 import argparse
 
 from tko.feno.build import build_main
-from tko.feno.indexer import indexer_main
+from tko.feno.indexer import index_main
 from tko.feno.html import html_main
 from tko.feno.mdpp import mdpp_main
 from tko.feno.older import older_main
@@ -29,7 +29,7 @@ def feno_main():
     parser_i = subparsers.add_parser('indexer', help='Index Readme file.')
     parser_i.add_argument('path', type=str, help='Path to Markdown file')
     parser_i.add_argument("base", type=str, help="Folder with the problems")
-    parser_i.set_defaults(func=indexer_main)
+    parser_i.set_defaults(func=index_main)
 
     # subparser for the 'html' command
     parser_h = subparsers.add_parser('html', help='Generate HTML file from markdown file.')

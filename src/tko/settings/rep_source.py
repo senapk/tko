@@ -12,21 +12,6 @@ class SourceType(Enum):
 
 
 STUDENT_SANDBOX_NAME: str = "sandbox"
-AUTOLOAD_COMMAND: str = "autoload"
-sandbox_readme_content: str = f"""
-# Sandbox
-
-Cada vez que criar um rascunho, ele será salvo na pasta `{STUDENT_SANDBOX_NAME}` dentro do sandbox.
-
-Você pode criar quantos rascunhos quiser. Eles serão rastreados pela chave key no preâmbulo do rascunho.
-
-Renomeie o nome da pasta para renomear o rascunho. Exclua a pasta para excluir o rascunho.
-
-Sinta-se à vontade para organizar seus rascunhos em subpastas dentro do sandbox, se desejar.
-
-## {STUDENT_SANDBOX_NAME}
-<!--{AUTOLOAD_COMMAND}=.-->
-"""[1:]
 
 class RepSource:
     class Keys:
@@ -115,14 +100,13 @@ class RepSource:
 
     def get_source_readme(self) -> Path:
         if self.source_type == SourceType.LOCAL_FILE:
-            
-            file: str = os.path.join(self.target, "README.md")
+            file: str = os.path.join(self.target, self.index)
             if os.path.isabs(file):
                 return Path(file)
             else:
                 return self.get_repo_workspace() / file
         if self.source_type == SourceType.GIT_SOURCE:
-            return self.get_source_folder() / "README.md"
+            return self.get_source_folder() / self.index
         raise ValueError("Unknown source type")
     
     def get_source_folder(self) -> Path:

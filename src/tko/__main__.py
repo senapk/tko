@@ -6,7 +6,7 @@ import sys
 from icecream import ic # type: ignore
 
 from tko.feno.build import build_main
-from tko.feno.indexer import indexer_main
+from tko.feno.indexer import index_main
 from tko.feno.html import html_main
 from tko.feno.mdpp import mdpp_main
 from tko.feno.older import older_main
@@ -154,7 +154,7 @@ class Main:
         rep_starter.execute()
 
     @staticmethod
-    def remote_lists(args: argparse.Namespace):
+    def remote_list(args: argparse.Namespace):
         settings = Settings(args.globaldir)
         repo, _ = Main.load_repo(args.changedir)
         if repo is None:
@@ -228,6 +228,17 @@ class Main:
             return
         rep_actions = RepSourceActions(settings, repo)
         rep_actions.remote_filter(alias=name, filter_quest=quests, filter_task=tasks, clear=clear, filter_to=args.to)
+
+    @staticmethod
+    def remote_set(args: argparse.Namespace):
+        name: str = args.name
+        settings = Settings(args.globaldir)
+        repo, _ = Main.load_repo(args.changedir)
+        if repo is None:
+            return
+        rep_actions = RepSourceActions(settings, repo)
+        rep_actions.remote_set(alias=name, target=args.target, index=args.index)
+
 
     @staticmethod
     def clear_cache(args: argparse.Namespace):
@@ -343,7 +354,7 @@ class Parser:
         parser_open.add_argument('target_list', metavar='T', type=str, nargs='*', help='Solvers, test cases or directories to load')
         parser_open.set_defaults(func=Main.task_open)
 
-        parser_list = subpar_task.add_parser('list', parents=[self.parent_basic], help='List tasks')
+        parser_list = subpar_task.add_parser('list', help='List tasks')
         parser_list.add_argument('-g', '--global-cache', action='store_true', help='Use global cache for remote URL sources')
         parser_list.add_argument('-u', '--update', action='store_true', help='Force update remote URL sources')
         parser_list.add_argument("-a", '--all', action='store_true', help='Show all tasks')
@@ -457,7 +468,7 @@ class Parser:
 
         source_list = sub_source.add_parser("list", help="List remote task sources", add_help=False)
         source_list.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
-        source_list.set_defaults(func=Main.remote_lists)
+        source_list.set_defaults(func=Main.remote_list)
 
         source_del = sub_source.add_parser("rm", help="Remove a remote task source", add_help=False)
         source_del.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
@@ -472,6 +483,13 @@ class Parser:
         source_filter.add_argument('--clear', action='store_true', help='Clear all filters')
         source_filter.add_argument('-t', '--to', type=str, help='Quest destination for filtered tasks added with this source')
         source_filter.set_defaults(func=Main.remote_filter)
+
+        source_set = sub_source.add_parser("set", help="Manage filters for a remote task source", add_help=False)
+        source_set.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
+        source_set.add_argument('name', type=str, help='Name of the remote')
+        source_set.add_argument('-t', '--target', type=str, help='Set a new target for the remote source (git URL or local directory)')
+        source_set.add_argument('-i', '--index', type=str, help='Set a new index for the remote source')
+        source_set.set_defaults(func=Main.remote_set)
         
 
     def add_parser_build(self):
@@ -498,11 +516,11 @@ class Parser:
         parser_r.set_defaults(func=build_main)
 
         # subparser for the 'indexer' command
-        parser_i = subparsers.add_parser('indexer', help='Index Readme file', add_help=False)
+        parser_i = subparsers.add_parser('index', help='Index Readme file', add_help=False)
         parser_i.add_argument( "-h", "--help", action="help", help="Show help message and exit")
-        parser_i.add_argument('path', type=str, help='Path to Markdown file')
+        parser_i.add_argument('index', type=str, help='Path to index Markdown file')
         parser_i.add_argument("base", type=str, help="Folder with the problems")
-        parser_i.set_defaults(func=indexer_main)
+        parser_i.set_defaults(func=index_main)
 
         # subparser for the 'html' command
         parser_h = subparsers.add_parser('html', help='Generate HTML file from markdown file', add_help=False)

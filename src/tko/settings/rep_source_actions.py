@@ -24,12 +24,12 @@ class RepSourceActions:
     def show_source(self, source: RepSource):
         print(Text.format("- Rótulo: {y}", source.name))
         print(Text.format("  - Link ou Caminho: {y}", source.get_url_link()))
-        print(Text.format("  - File Path     : {y}", source.get_source_readme()))
-        print(Text.format("  - Filtro Quests : {y}", "Desativado" if source.quests is None else 'Ativado'))
+        print(Text.format("  - Index          : {y}", source.index))
+        print(Text.format("  - Filtro Quests  : {y}", "Desativado" if source.quests is None else 'Ativado'))
         if source.quests is not None:
             for f, v in source.quests.items():
                 print(f"    - {f}: {v}")
-        print(Text.format("  - Filtro Tasks  : {y}", "Desativado" if source.tasks is None else 'Ativado'))
+        print(Text.format("  - Filtro Tasks   : {y}", "Desativado" if source.tasks is None else 'Ativado'))
         if source.tasks is not None:
             for f, v in source.tasks.items():
                 print(f"    - {f}: {v}")
@@ -47,6 +47,24 @@ class RepSourceActions:
         if not found:
             raise Warning("fail: fonte não encontrada.")
         rep.save_config()
+
+    def remote_set(self, alias: str, target: str | None = None, index: str | None = None) -> None:
+        repo = self.repo
+        source: RepSource | None = repo.data.get_source(alias)
+        if source is None:
+            raise Warning("fail: fonte não encontrada.")
+        change: bool = False
+
+        if target is not None:
+            source.target = target
+            change = True
+        if index is not None:
+            source.index = index
+            change = True
+        self.show_source(source)
+        if change:
+            print(Text.format("Filtros {y} atualizados com sucesso.", alias))
+            repo.save_config()
 
     def remote_filter(self, alias: str, filter_quest: list[str] | None = None, filter_task: list[str] | None = None, clear: bool = False, filter_to: str | None = None) -> None:
         rep = self.repo
