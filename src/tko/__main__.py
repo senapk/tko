@@ -39,6 +39,8 @@ from tko.settings.rep_source_actions import RepSourceActions
 from tko.util.rtext import RenderConfig, RenderMode
 from tko.__init__ import __version__
 
+import signal
+signal.signal(signal.SIGPIPE, signal.SIG_DFL) # permit using tko in pipelines without showing broken pipe errors
 
 class Main:
 

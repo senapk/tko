@@ -296,9 +296,12 @@ class TreeRenderer:
         if totalm > 0:
             output.addf('y', Symbols.star_filled)
             output.addf("g", self.fmt_util.format_percent_3s(((obtainedm + obtaineds) / totalm) * 100))
-        else:
+        elif totals > 0:
             output.addf(' ', Symbols.star_void)
             output.addf("g", self.fmt_util.format_percent_3s((obtaineds / totals) * 100))
+        else:
+            output.addf(' ', Symbols.star_void)
+            output.addf("g", "----")
 
         return output
     

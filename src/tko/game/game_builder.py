@@ -32,7 +32,8 @@ class GameBuilder:
             content = Decoder.load(filename)
         self.__load_sandbox_tasks()
         self.__parse_file_content(content)
-        self.__clear_empty_or_other_language(language)
+        quest_filters, task_filters = self.source.get_filters()
+        self.__remove_empty_and_other_language_and_filtered(language, quest_filters, task_filters) 
         self.__create_requirements_pointers()
         self.__create_cross_references()
         return self
@@ -79,11 +80,11 @@ class GameBuilder:
                 continue
             if not (task_path / "README.md").exists():
                 continue
-            
-            self.create_task_from_folder(alias, task_path)
+            self.add_task_from_folder(alias, task_path)
+
         self.__get_active_quest().sort_tasks_by_title()
 
-    def create_task_from_folder(self, alias: str, task_dir_path: Path):
+    def add_task_from_folder(self, alias: str, task_dir_path: Path):
         task = Task()
         key = task_dir_path.name
         task.set_key(key)
@@ -120,8 +121,8 @@ class GameBuilder:
         lines = content.splitlines()
         alias = self.source.name
         filename = self.source.get_source_readme()
-        for line_num, line in enumerate(lines):
 
+        for line_num, line in enumerate(lines):
             quest_parser = QuestParser(alias)
             quest = quest_parser.parse_quest(filename, line, line_num + 1)
             if quest is not None:
@@ -142,8 +143,10 @@ class GameBuilder:
         return self.active_quest
 
     def __add_quest(self, quest: Quest) -> Quest:
-        self.quests[quest.get_full_key()] = quest
-        self.ordered_quests.append(quest.get_full_key())
+        if quest.get_full_key() not in self.quests:
+            self.quests[quest.get_full_key()] = quest
+        if quest.get_full_key() not in self.ordered_quests:
+            self.ordered_quests.append(quest.get_full_key())
         self.active_quest = quest
         return quest
 
@@ -151,6 +154,8 @@ class GameBuilder:
         self.__get_active_quest().add_task(task)
 
     def add_filtered_quests(self, quest_filters: dict[str, str] | None):
+        if self.source.is_sandbox_source():
+            return
         if quest_filters is None or len(quest_filters) == 0:
             return
         quests: list[Quest] = []
@@ -181,17 +186,12 @@ class GameBuilder:
         self.quests = {q.get_full_key(): q for q in quests}
         return self
 
-    def remove_empty_and_other_language_and_filtered(self, language: str, quest_filters: dict[str, str] | None, task_filters: dict[str, str] | None):
+    def __remove_empty_and_other_language_and_filtered(self, language: str, quest_filters: dict[str, str] | None, task_filters: dict[str, str] | None):
         if quest_filters is None or len(quest_filters) == 0:
             self.filter_by_language_and_empty(language)
         else:
             self.add_filtered_quests(quest_filters)
         return self
-
-    def __clear_empty_or_other_language(self, language: str): #call before create_cross_references
-        # apagando quests vazias da lista de quests
-        quest_filters, task_filters = self.source.get_filters()
-        self.remove_empty_and_other_language_and_filtered(language, quest_filters, task_filters) 
 
     def __create_cross_references(self): #call after clear_empty
         for quest in self.quests.values():
