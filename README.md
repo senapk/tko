@@ -32,6 +32,10 @@ O tko é um sistema de testes para programação competitiva. Ele é capaz de ro
 - [Repositórios e quests](wiki/Criando-Atividades.md)
 - [Marcadores e tipos de atividades](wiki/Marcadores-e-Tipos.md)
 
+## Ferramentas 
+
+- [Filtragem e Rascunhos](wiki/filter.md)
+
 ## Atualizando o tko
 
 Para atualizar o tko para versão mais recente, basta executar o comando:
