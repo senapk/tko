@@ -7,14 +7,19 @@ import subprocess
 import hashlib
 from filelock import FileLock
 import shutil
-
+import enum
 
 class GitCache:
+    class UpdateMode(enum.Enum):
+        ALWAYS = "always"
+        NEVER = "never"
+        IF_OLDER = "if_older"
 
-    def __init__(self, cache_dir: str | Path, max_age: timedelta = timedelta(hours=1)) -> None:
+    def __init__(self, cache_dir: str | Path, max_age: timedelta = timedelta(hours=1), update_mode: GitCache.UpdateMode = UpdateMode.IF_OLDER) -> None:
         self.cache_dir: Path = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-
+        self.update_mode: GitCache.UpdateMode = update_mode
+        self.updated: dict[str, bool] = {}
         self.max_age: timedelta = max_age
 
     def clear_cache(self):
@@ -54,6 +59,7 @@ class GitCache:
         self._git("fetch", "--prune", "origin", cwd=repo)
         self._git("reset", "--hard", "origin/HEAD", cwd=repo)
         self._git("clean", "-fd", cwd=repo)
+        self.updated[str(repo)] = True
 
     def _is_expired(self, repo: Path) -> bool:
         fetch_head: Path = repo / ".git" / "FETCH_HEAD"
@@ -67,7 +73,7 @@ class GitCache:
     def _acquire_lock(self, lock_path: Path):
         return FileLock(str(lock_path))
 
-    def get(self, url: str, force_update: bool) -> Path:
+    def get(self, url: str) -> Path:
         repo: Path = self._repo_dir(url)
         lock_path: Path = self._lock_path(repo)
 
@@ -78,7 +84,7 @@ class GitCache:
                 self._clone(url, repo)
                 return repo
 
-            if self._is_expired(repo) or force_update:
+            if self._is_expired(repo) or (self.update_mode == GitCache.UpdateMode.ALWAYS) and not self.updated.get(str(repo), False):
                 try:
                     print(f"Updating cache for {url}...")
                     self._update(repo)

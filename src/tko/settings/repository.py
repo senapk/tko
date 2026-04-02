@@ -29,23 +29,23 @@ def remove_git_merge_tags(lines: list[str]) -> list[str]:
 class Repository:
     cache_time_for_remote_source = 3600 # seconds
 
-    def __init__(self, folder: Path, force_update: bool = False, recursive_search: bool = True):
+    def __init__(self, folder: Path, update_mode: GitCache.UpdateMode = GitCache.UpdateMode.IF_OLDER, recursive_search: bool = True):
         rep_folder: Path = folder
         if recursive_search:
             recursive_folder = RepPaths.rec_search_for_repo_parents(folder)
             if recursive_folder is not None:
                 rep_folder = recursive_folder
         self.paths = RepPaths(rep_folder)
-        self.data: RepData = RepData()
+        self.git_cache = GitCache(cache_dir=self.paths.get_cache_folder(), max_age=timedelta(seconds=self.cache_time_for_remote_source), update_mode=update_mode)
+        self.data: RepData = RepData(self.git_cache)
         self.game = Game()
         self.flags = Flags()
         self.logger: Logger = Logger(rep_folder) 
-        self.force_update: bool = force_update
-        self.cache = GitCache(self.paths.get_cache_folder(), timedelta(seconds=self.cache_time_for_remote_source))
 
     def set_global_cache(self):
         RepPaths.use_global_cache_folder = True
-        self.cache = GitCache(self.paths.get_cache_folder(), timedelta(seconds=self.cache_time_for_remote_source))
+        update_mode = self.git_cache.update_mode
+        self.git_cache = GitCache(self.paths.get_cache_folder(), timedelta(seconds=self.cache_time_for_remote_source), update_mode=update_mode)
         return self
 
     def found(self):
@@ -56,10 +56,10 @@ class Repository:
         path = path.resolve()
         return path.is_relative_to(rep_dir)
 
-    def load_game(self, try_update: bool = True, silent: bool = False) -> Repository:
+    def load_game(self, silent: bool = False) -> Repository:
         if not self.data.get_sources():
             self.load_config()
-        if try_update:
+        if self.git_cache.update_mode == GitCache.UpdateMode.ALWAYS:
             for source in self.data.get_sources():
                 _ = source.get_source_readme() # to ensure cache path is set
         sources: list[RepSource] = self.data.get_sources()
@@ -126,7 +126,7 @@ class Repository:
         return self
 
     def get_student_sandbox(self) -> RepSource:
-        source = RepSource("").set_student_sandbox()
+        source = RepSource("", git_cache=self.git_cache).set_student_sandbox()
         source.set_repo_globals(self.paths.get_workspace_dir(), self.paths.get_cache_folder())
         return source
 

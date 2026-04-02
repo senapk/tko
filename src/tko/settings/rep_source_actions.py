@@ -128,7 +128,7 @@ class RepSourceActions:
                 raise Warning("fail: alias git remoto não encontrado.")
             url = settings.get_alias_git(remote_default)
             self.git_clone_repository(url)
-            self.repo.data.set_source(RepSource(alias=name)
+            self.repo.data.set_source(RepSource(alias=name, git_cache=self.repo.git_cache)
                                       .set_git_source(target=url, branch=branch)
                                       .set_filters(self.fix_filter(filter_quest, filter_to), self.fix_filter(filter_task, filter_to))
                                       .set_writeable(writeable))
@@ -137,14 +137,14 @@ class RepSourceActions:
             if not dir_path.exists() or not dir_path.is_dir():
                 raise Warning("fail: diretório remoto não encontrado.")
             print(Text.format("Adicionando fonte remota apontando parao repositório no diretorio {y}.", dir_path))
-            repo.data.set_source(RepSource(alias=name)
+            repo.data.set_source(RepSource(alias=name, git_cache=self.repo.git_cache)
                                  .set_local_source(target=dir_path)
                                  .set_filters(quests=self.fix_filter(filter_quest, filter_to), tasks=self.fix_filter(filter_task, filter_to))
                                  .set_writeable(writeable))
         elif remote_url is not None:
             print(Text.format("Adicionando fonte remota apontando para repositório git remoto {y}.", remote_url))
             self.git_clone_repository(remote_url)
-            self.repo.data.set_source(RepSource(alias=name)
+            self.repo.data.set_source(RepSource(alias=name, git_cache=self.repo.git_cache)
                                        .set_git_source(target=remote_url, branch=branch)
                                        .set_filters(self.fix_filter(filter_quest, filter_to), self.fix_filter(filter_task, filter_to))
                                        .set_writeable(writeable))
@@ -154,7 +154,7 @@ class RepSourceActions:
 
     def git_clone_repository(self, link: str) -> None:
         print(Text.format("Clonando repositório remoto {y}.", link))
-        _ = self.repo.cache.get(link, force_update=True)
+        _ = self.repo.git_cache.get(link)
         print(Text.format("Repositório {y} clonado com sucesso.", link))
         
 

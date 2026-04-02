@@ -70,7 +70,7 @@ class PlayActions:
         return folder
 
     def reload_game(self):
-        self.repo.load_game(try_update=False, silent=True)
+        self.repo.load_game(silent=True)
 
     def delete_folder_ask(self):
         def delete_folder(text: str):
@@ -102,7 +102,7 @@ class PlayActions:
                 self.tree.move_down()
             if not obj.visible:
                 self.tree.move_down()
-            self.repo.load_game(try_update=False, silent=True)
+            self.repo.load_game(silent=True)
 
         obj = self.tree.get_selected_throw()
         if isinstance(obj, Task):

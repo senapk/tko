@@ -34,7 +34,7 @@ class TkoFilterMode:
         # path to ~/.tko_filter
         filter_path = os.path.join(os.path.expanduser("~"), ".tko_filter")
 
-        CodeFilter.cf_recursive(".", filter_path, force=True)
+        CodeFilter.cf_recursive(Path("."), Path(filter_path), force=True)
         os.chdir(filter_path)
 
 class Run:

@@ -151,7 +151,12 @@ class DeepFilter:
         self.cheat_mode = (value == True)
         return self
 
-    def prepare_actions(self, source: Path | str, destiny: Path | str, deep: int, action_map: dict[Path, Action]):
+    def execute(self, source: Path | str, destiny: Path | str, deep: int):
+        actions: dict[Path, Action] = {}
+        self.__prepare_actions(source, destiny, 10, actions)
+        self.deploy_actions(actions)
+
+    def __prepare_actions(self, source: Path | str, destiny: Path | str, deep: int, action_map: dict[Path, Action]):
         source = Path(source)
         destiny = Path(destiny)
         if deep == 0:
@@ -161,7 +166,7 @@ class DeepFilter:
             if source.name.startswith("."):
                 return
             for item in sorted(source.iterdir()):
-                self.prepare_actions(item, destiny / item.name, deep - 1, action_map)
+                self.__prepare_actions(item, destiny / item.name, deep - 1, action_map)
             return
         
         filename = source
@@ -248,9 +253,7 @@ class CodeFilter:
                         item.unlink()
 
         deep_filter = DeepFilter().set_cheat(cheat).set_quiet(quiet).set_indent(indent)
-        actions: dict[Path, Action] = {}
-        deep_filter.prepare_actions(target_dir, output_dir, 10, actions)
-        deep_filter.deploy_actions(actions)
+        deep_filter.execute(target_dir, output_dir, 10)
 
     @staticmethod
     def cf_single_file(target: Path, output: Path, update: bool, cheat: bool):
@@ -301,6 +304,4 @@ def build_drafts_main(args: argparse.Namespace):
     drafts_dest = CodeFilter.get_default_drafts_dir(here)
     if source_src.is_dir():
         filter = DeepFilter().set_indent(4)
-        actions: dict[Path, Action] = {}
-        filter.prepare_actions(source_src, drafts_dest, 5, actions)
-        filter.deploy_actions(actions)
+        filter.execute(source_src, drafts_dest, 5)

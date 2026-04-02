@@ -4,21 +4,22 @@ from tko.settings.repository import Repository
 from tko.play.play import Play
 from tko.util.text import Text
 from pathlib import Path
+from tko.settings.git_cache import GitCache
 
 class CmdOpen:
-    def __init__(self, settings: Settings, repo: Repository, force_update: bool):
+    def __init__(self, settings: Settings, repo: Repository, update_mode: GitCache.UpdateMode):
         self.settings = settings
         self.need_update = False
         self.repo: Repository = repo
         self.repo_dir: Path = repo.paths.get_root_dir()
-        self.force_update = force_update
+        self.update_mode = update_mode
 
     def display_need_update(self):
         self.need_update = True
 
     def load_folder(self, repo_dir: Path):
         self.repo_dir = repo_dir
-        self.repo = Repository(repo_dir, self.force_update)
+        self.repo = Repository(repo_dir, self.update_mode)
         if not self.repo.paths.has_local_config_file():
             print(Text.format("{r}: O comando {g} deve ser executado na pasta onde o repositório foi iniciado.", "Erro", "tko open"))
             print(Text.format("{g}: Navegue ou passe o caminho até a pasta do repositório e tente novamente.", "Ação"))

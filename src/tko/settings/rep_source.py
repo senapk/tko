@@ -33,7 +33,7 @@ class RepSource:
     branch: str | None - for GIT_CLONE type, it's the branch to clone or pull, default is "master"
     filters: list[str] | None - list of filters to apply when loading quests from the source, used to filter quests based on certain criteria
     """
-    def __init__(self, alias: str):
+    def __init__(self, alias: str, git_cache: GitCache | None):
         self.name: str = alias
         self.target: str = ""
         self.source_type: SourceType = SourceType.LOCAL_FILE
@@ -44,6 +44,11 @@ class RepSource:
         self.tasks: dict[str, str] | None = None
         self.rep_local_workspace: Path | None = None   # if read-only rep, rep folder to tasks will be, join(local_workspace, alias)
         self.rep_cache_folder: Path | None = None 
+        self.git_cache = git_cache
+
+    def set_git_cache(self, git_cache: GitCache):
+        self.git_cache = git_cache
+        return self
 
     def set_local_source(self, target: Path, writeable: bool = False):
         self.source_type = SourceType.LOCAL_FILE
@@ -113,8 +118,9 @@ class RepSource:
         if self.source_type == SourceType.LOCAL_FILE:
             return Path(self.target)
         if self.source_type == SourceType.GIT_SOURCE:
-            git_cache = GitCache(self.get_repo_cache_folder())
-            return git_cache.get(self.get_url_link(), force_update=False)# absolute path to cached repo
+            if self.git_cache is None:
+                raise ValueError("Git cache is not set for git source")
+            return self.git_cache.get(self.get_url_link())# absolute path to cached repo
         raise ValueError("Unknown source type")
 
     

@@ -7,6 +7,7 @@ import argparse
 import enum
 from tko.feno.filter import Filter
 from tko.util.decoder import Decoder
+from pathlib import Path
 
 
 class Action(enum.Enum):
@@ -228,7 +229,7 @@ class Load:
                     new_content += "\n```" + ext + "\n"
                 if os.path.isfile(abspath):
                     if len(filter) > 0:
-                        data = Filter(path).process(Decoder.load(abspath)) + "\n"
+                        data = Filter(Path(path)).process(Decoder.load(abspath)) + "\n"
                         new_content += data
                         if data[-1] != "\n":
                             new_content += "\n"

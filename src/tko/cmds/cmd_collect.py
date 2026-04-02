@@ -93,7 +93,7 @@ class CmdCollect:
 
     @staticmethod
     def list(args: argparse.Namespace):
-        settings = Settings(args.globaldir)
+        settings = Settings(args.settings)
         print(f"SettingsFile\n- {settings.settings_dir}")
         print(str(settings))
 
@@ -137,7 +137,7 @@ class CollectSingle:
             path = os.path.abspath(param.folder)
             print(f"Repository not found in {path}")
             return Collected()
-        rep.set_global_cache().load_config().load_game(try_update=False, silent=True)
+        rep.set_global_cache().load_config().load_game(silent=True)
         data = Collected()
 
         if param.daily:

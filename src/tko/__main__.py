@@ -37,6 +37,8 @@ from tko.settings.check_version import CheckVersion
 from tko.settings.rep_starter import RepStarter
 from tko.settings.rep_source_actions import RepSourceActions
 from tko.util.rtext import RenderConfig, RenderMode
+from tko.settings.git_cache import GitCache
+
 from tko.__init__ import __version__
 
 import os
@@ -47,13 +49,18 @@ if os.name != "nt":
 class Main:
 
     @staticmethod
-    def load_repo(dir_path: Path, show_warnings: bool = True, auto_load: bool = True, global_cache: bool = False) -> tuple[Repository | None, Path | None]:
+    def load_repo(dir_path: Path, show_warnings: bool = True, auto_load: bool = True, global_cache: bool = False, force_update: bool = False, force_offline: bool = False) -> tuple[Repository | None, Path | None]:
         if global_cache:
             RepPaths.use_global_cache_folder = True
             print(f"Usando cache global em: {RepPaths('').get_cache_folder()}")
         dir_parent = RepPaths.rec_search_for_repo_parents(dir_path)
         if dir_parent is not None:
-            repo = Repository(dir_parent, recursive_search=False)
+            mode = GitCache.UpdateMode.IF_OLDER
+            if force_update:
+                mode = GitCache.UpdateMode.ALWAYS
+            elif force_offline:
+                mode = GitCache.UpdateMode.NEVER
+            repo = Repository(dir_parent, update_mode=mode, recursive_search=False)
             if auto_load:
                 repo.load_config().load_game()
             return repo, dir_parent
@@ -78,7 +85,7 @@ class Main:
         if args.compact:
             param.set_compact(True)
 
-        settings = Settings(args.globaldir)
+        settings = Settings(args.settings)
         if not args.side and not args.down:
             param.set_diff_mode(settings.app.diff_mode)
         elif args.side:
@@ -93,8 +100,8 @@ class Main:
 
     @staticmethod
     def task_list(args: argparse.Namespace) -> None:
-        settings = Settings(args.globaldir)
-        repo, _ = Main.load_repo(args.changedir, show_warnings=True, auto_load=True, global_cache=args.global_cache)
+        settings = Settings(args.settings)
+        repo, _ = Main.load_repo(args.changedir, show_warnings=True, auto_load=True, global_cache=args.global_cache, force_update=args.update)
         if repo is None:
             return
         action = CmdOpen(settings, repo, args.update)
@@ -104,7 +111,7 @@ class Main:
     def task_open(args: argparse.Namespace) -> None:
         PatternLoader.pattern = args.pattern
         param = Param.Basic().set_index(args.index)
-        settings = Settings(args.globaldir)
+        settings = Settings(args.settings)
         param.set_diff_mode(settings.app.diff_mode)
         if args.filter:
             param.set_filter(True)
@@ -114,7 +121,7 @@ class Main:
 
     @staticmethod
     def build(args: argparse.Namespace):
-        settings = Settings(args.globaldir)
+        settings = Settings(args.settings)
         PatternLoader.pattern = args.pattern
         manip = Param.Manip().set_unlabel(args.unlabel).set_to_sort(args.sort).set_to_number(args.number)
         build = CmdBuild(Path(args.target), [Path(x) for x in args.target_list], manip, settings)
@@ -126,9 +133,9 @@ class Main:
 
     @staticmethod
     def open(args: argparse.Namespace):
-        settings = Settings(args.globaldir)
-        settings = Settings(args.globaldir)
-        repo, _ = Main.load_repo(args.changedir, show_warnings=True, auto_load=True, global_cache=args.global_cache)
+        settings = Settings(args.settings)
+        settings = Settings(args.settings)
+        repo, _ = Main.load_repo(args.changedir, show_warnings=True, auto_load=True, global_cache=args.global_cache, force_update=args.update)
         if repo is None:
             return
         action = CmdOpen(settings, repo, args.update)
@@ -139,8 +146,8 @@ class Main:
 
     @staticmethod
     def collect_task(args: argparse.Namespace):
-        settings = Settings(args.globaldir)
-        repo, _ = Main.load_repo(args.changedir)
+        settings = Settings(args.settings)
+        repo, _ = Main.load_repo(args.changedir, force_update=False)
         if repo is None:
             return
         width: int  = args.graph[0]
@@ -149,7 +156,7 @@ class Main:
 
     @staticmethod
     def init(args: argparse.Namespace):
-        settings = Settings(args.globaldir)
+        settings = Settings(args.settings)
         changedir: Path | None = args.changedir
         language: str | None = args.language
         rep_starter = RepStarter(settings=settings, folder=changedir, language=language)
@@ -157,7 +164,7 @@ class Main:
 
     @staticmethod
     def remote_list(args: argparse.Namespace):
-        settings = Settings(args.globaldir)
+        settings = Settings(args.settings)
         repo, _ = Main.load_repo(args.changedir)
         if repo is None:
             return
@@ -168,7 +175,7 @@ class Main:
     @staticmethod
     def remote_rm(args: argparse.Namespace):
         name: str = args.name
-        settings = Settings(args.globaldir)
+        settings = Settings(args.settings)
         repo, _ = Main.load_repo(args.changedir)
         if repo is None:
             return
@@ -196,7 +203,7 @@ class Main:
         quest_filter: list[str] | None = args.quest
         task_filter: list[str] | None = None
         try:
-            settings = Settings(args.globaldir)
+            settings = Settings(args.settings)
             repo, _ = Main.load_repo(args.changedir)
             if repo is None:
                 return
@@ -224,7 +231,7 @@ class Main:
         if clear and (quests or tasks):
             print("Erro: --clear não pode ser usado com --quest ou --task")
             return
-        settings = Settings(args.globaldir)
+        settings = Settings(args.settings)
         repo, _ = Main.load_repo(args.changedir)
         if repo is None:
             return
@@ -234,7 +241,7 @@ class Main:
     @staticmethod
     def remote_set(args: argparse.Namespace):
         name: str = args.name
-        settings = Settings(args.globaldir)
+        settings = Settings(args.settings)
         repo, _ = Main.load_repo(args.changedir)
         if repo is None:
             return
@@ -248,22 +255,22 @@ class Main:
         if repo is None:
             print("Nenhum repositório TKO encontrado.")
             return
-        repo.cache.clear_cache()
+        repo.git_cache.clear_cache()
 
     @staticmethod
     def reset_config(args: argparse.Namespace):
-        sp = Settings(args.globaldir).reset().save_settings()
+        sp = Settings(args.settings).reset().save_settings()
         print(sp.get_settings_file())
 
     @staticmethod
     def reset_languages(args: argparse.Namespace):
-        sp = Settings(args.globaldir)
+        sp = Settings(args.settings)
         sp.get_languages_settings().reset().save_file_settings()
         print(sp.get_languages_file())
 
     @staticmethod
     def config(args: argparse.Namespace):
-        settings = Settings(args.globaldir)
+        settings = Settings(args.settings)
         param = ConfigParams()
         param.side = args.side
         param.down = args.down
@@ -275,7 +282,7 @@ class Main:
 
     @staticmethod
     def list(args: argparse.Namespace):
-        settings = Settings(args.globaldir)
+        settings = Settings(args.settings)
         print(str(settings))
 
 class Parser:
@@ -302,12 +309,16 @@ class Parser:
         self.add_parser_class()
 
     def add_parser_global(self):
-        self.parser.add_argument('-G', '--globaldir', metavar='DIR', type=Path, help='Global config directory')
+        self.parser.add_argument('-S', '--settings', metavar='DIR', type=Path, help='Global Settings config directory')
         self.parser.add_argument('-C', '--changedir', metavar='DIR', type=Path, default=Path('.'), help='Repository directory')
         self.parser.add_argument('-w', '--width', metavar='WIDTH', type=int, help="Terminal width")
         self.parser.add_argument('-v', "--version", action='store_true', help='Show version and exit')
         self.parser.add_argument('-m', "--mono", action='store_true', help='Disable colors')
         self.parser.add_argument('-D', '--debug', action='store_true', help='Enable debug mode')
+        self.parser.add_argument('-G', '--global-cache', action='store_true', help='Use global cache for remote URL sources')
+        self.parser.add_argument('-U', '--update', action='store_true', help='Force update remote URL sources')
+        self.parser.add_argument('-O', '--offline', action='store_true', help='Disable any update attempts (Offline mode)')
+
 
     @staticmethod
     def create_parent_basic():
@@ -357,8 +368,6 @@ class Parser:
         parser_open.set_defaults(func=Main.task_open)
 
         parser_list = subpar_task.add_parser('list', help='List tasks')
-        parser_list.add_argument('-g', '--global-cache', action='store_true', help='Use global cache for remote URL sources')
-        parser_list.add_argument('-u', '--update', action='store_true', help='Force update remote URL sources')
         parser_list.add_argument("-a", '--all', action='store_true', help='Show all tasks')
         parser_list.set_defaults(func=Main.task_list)
 
@@ -447,9 +456,6 @@ class Parser:
 
         parser_open = self.subparsers.add_parser('open', help='Open repository in interactive mode', add_help=False)
         parser_open.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
-        parser_open.add_argument('-g', '--global-cache', action='store_true', help='Use global cache for remote URL sources')
-        parser_open.add_argument('-u', '--update', action='store_true', help='Force update remote URL sources')
-        parser_open.add_argument('-o', '--offline', action='store_true', help='Offline mode')
         parser_open.set_defaults(func=Main.open)
 
         parser_source = self.subparsers.add_parser('remote', help='Manage remote task sources', add_help=False)
@@ -585,7 +591,7 @@ class Parser:
 
 
 def execute(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
-    settings = Settings(args.globaldir)
+    settings = Settings(args.settings)
     if args.width is not None:
         RawTerminal.set_terminal_size(args.width)
     settings.load_settings()

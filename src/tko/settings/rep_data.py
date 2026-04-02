@@ -1,15 +1,17 @@
+from tko.settings.git_cache import GitCache
 from tko.settings.rep_source import STUDENT_SANDBOX_NAME, RepSource
 
 from typing import Any
 
 class RepData:
-    def __init__(self):
+    def __init__(self, git_cache: GitCache):
         self.version: str = ""
         self.__sources: list[RepSource] = []
         self.expanded: list[str] = []
         self.flags: dict[str, Any] = {}
         self.lang: str = ""
         self.selected: str = ""
+        self.git_cache = git_cache
 
     def set_source(self, source: RepSource):
         for i, s in enumerate(self.__sources):
@@ -31,7 +33,7 @@ class RepData:
     def __ensure_sandbox_source(self) -> None:
         sandbox_source = self.get_source(STUDENT_SANDBOX_NAME)
         if sandbox_source is None:
-            sandbox_source = RepSource(STUDENT_SANDBOX_NAME).set_student_sandbox()
+            sandbox_source = RepSource(STUDENT_SANDBOX_NAME, git_cache=None).set_student_sandbox()
             self.set_source(sandbox_source)
             # readme = sandbox_source.get_source_readme()
             # if not readme.exists():
@@ -89,7 +91,7 @@ class RepData:
             if "sources" in data:
                 source_data: list[dict[str, Any]] = data["sources"]
                 if isinstance(source_data, list): # type: ignore
-                    self.__sources = [RepSource("").load_from_dict(x) for x in source_data]
+                    self.__sources = [RepSource("", git_cache=self.git_cache).load_from_dict(x) for x in source_data]
                 else:
                     raise TypeError("The 'sources' field must be a list.")
 
