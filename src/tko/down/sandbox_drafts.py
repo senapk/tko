@@ -24,29 +24,24 @@ Seus casos de teste personalizados podem ser escritos diretamente aqui na descri
 
 Exemplo de teste para ler dois números, um por linha, e imprimir a soma e a subtração deles.
 
-Se quiser habilitar esses casos de teste e ver funcionando, altere o fenced abaixo de `bash` para `toml` e execute novamente a tarefa no TKO.
+Se quiser habilitar esses casos de teste e ver funcionando, insira algo no input e no output.
 
-```bash
+```toml
+# Exemplo de entrada em uma linha
 [[tests]]
-input = '''
-3
-2
-'''
-output = '''
-5
-1
-'''
+input = ''
+output = ''
 
-[[tests]]
-label = 'números negativos'
-input = '''
--3
--4
-'''
-output = '''
--7
-1
-'''
+# Exemplo de entrada em múltiplas linhas
+# [[tests]]
+# input = '''
+# 1
+# 2
+# '''
+# output = '''
+# 3
+# 4
+# '''
 ```
 
 """

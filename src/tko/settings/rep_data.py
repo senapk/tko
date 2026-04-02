@@ -33,10 +33,10 @@ class RepData:
         if sandbox_source is None:
             sandbox_source = RepSource(STUDENT_SANDBOX_NAME).set_student_sandbox()
             self.set_source(sandbox_source)
-            readme = sandbox_source.get_source_readme()
-            if not readme.exists():
-                readme.parent.mkdir(parents=True, exist_ok=True)
-                readme.touch()
+            # readme = sandbox_source.get_source_readme()
+            # if not readme.exists():
+            #     readme.parent.mkdir(parents=True, exist_ok=True)
+            #     readme.touch()
 
     # fonte local é retornada primeiro para garantir que ela seja priorizada em relação a fontes externas
     # sandbox é sempre a primeira fonte local, para garantir que ela seja priorizada em relação a outras fontes locais

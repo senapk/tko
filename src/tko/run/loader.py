@@ -88,6 +88,16 @@ def parse_toml(content: str) -> list[dict[str, Any]]:
         if "input" not in case or "output" not in case:
             print(f"warning: case {i} data: {case}") # type: ignore
             continue # ou raise ValueError(f"Case {i} inválido: campos 'input' e 'output' são obrigatórios.")
+        
+        if "input" in case:
+            case["input"] = str(case["input"]) # type: ignore
+            if case["input"] != "" and not case["input"].endswith("\n"): # type: ignore
+                case["input"] += "\n"
+
+        if "output" in case:
+            case["output"] = str(case["output"]) # type: ignore
+            if case["output"] != "" and not case["output"].endswith("\n"):
+                case["output"] += "\n"
 
         parsed: dict[str, str] = {
             "input": case["input"],

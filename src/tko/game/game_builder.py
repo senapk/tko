@@ -45,8 +45,10 @@ class GameBuilder:
     def __ensure_sandbox_readme_fixed(self, filename: Path):
         if not self.source.is_sandbox_source():
             return
+        if not filename.parent.exists():
+            return
         if not filename.exists():
-            print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}, criando arquivo")
+            # print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}, criando arquivo")
             filename.parent.mkdir(parents=True, exist_ok=True)
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(f"# {self.source.name}\n\n")
