@@ -114,6 +114,7 @@ class Gui:
         if self.need_update:
             text = Text().addf("r", " TKO DESATUALIZADO!").addf("y"," Atualize com: ").addf("g", "pipx upgrade tko ")
         frame.set_footer(text, "<", prefix="{", suffix="}")
+        frame.set_scrollbar(current_index=self.tree.state.scroll, text_length=len(self.tree.items), side="left")
         frame.draw()
 
         sentences: list[Text] = self.tree.get_visible_sentences(dy)
@@ -123,6 +124,7 @@ class Gui:
                 sentence.trim_end(dx - 1)
                 sentence.addf("r", "…")
             frame.write(y, 0, sentence)
+        
 
     def show_skills_bar(self, frame_xp: Frame):
         dy, dx = frame_xp.get_inner()

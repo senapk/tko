@@ -107,6 +107,8 @@ class Play:
         cman.add_str(GuiKeys.create_draft, self.actions.create_draft)
         cman.add_int(curses.KEY_DC, self.actions.delete_folder_ask)
         cman.add_str(GuiKeys.delete_folder, self.actions.delete_folder_ask)
+        cman.add_str(GuiKeys.expand_all, self.tree.expand_all)
+        cman.add_str(GuiKeys.collapse_all, self.tree.collapse_all)
 
         cman.add_str(GuiKeys.self_evaluate, self.actions.self_evaluate)
         if ic.enabled:

@@ -1,5 +1,6 @@
 from tko.play.fmt import Fmt
 from tko.util.text import Text
+from tko.util.scrollbar import ScrollBar
 
 class Frame:
     def __init__(self, y: int = 0, x: int = 0):
@@ -21,6 +22,10 @@ class Frame:
         self._wrap = False
         self._border_color = ""
         self._print_index = 0
+        self.__current_index = 0
+        self.__text_length = 0
+        self.__show_scrollbar = False
+        self.__scrollbar_side = "left"
 
     def set_border_color(self, color: str):
         self._border_color = color
@@ -103,22 +108,15 @@ class Frame:
     def get_symbol(self, value: str):
         square = {"lu": "┌", "ru": "┐", "ld": "└", "rd": "┘", "h": "─", "v": "│"}
         rounded = {"lu": "╭", "ru": "╮", "ld": "╰", "rd": "╯", "h": "─", "v": "│"}
-        bold = {"lu": "┏", "ru": "┓", "ld": "┗", "rd": "┛", "h": "━", "v": "┃"}
 
         if self._border == "square":
             return square[value]
         elif self._border == "rounded":
             return rounded[value]
-        elif self._border == "bold":
-            return bold[value]
         return " "
 
     def set_border_none(self):
         self._border = "none"
-        return self
-
-    def set_border_bold(self):
-        self._border = "bold"
         return self
 
     def set_border_rounded(self):
@@ -187,6 +185,31 @@ class Frame:
             x_abs += len(text)
         return count != 0
 
+    def set_scrollbar(self, current_index: int, text_length: int, side: str = "right"):
+        self.__current_index = current_index
+        self.__text_length = text_length
+        self.__show_scrollbar = True
+        self.__scrollbar_side = side
+
+    def __draw_scrollbar(self, current_index: int, text_length: int):
+        scrollbar = ScrollBar(
+            text_size=text_length,
+            index=current_index,
+            screen_size=self._inner_dy,
+            bar_size=self._inner_dy,
+            char_block="█",
+            char_empty=" ",
+        )
+        values = scrollbar.render()
+        color = self._border_color
+        for i in range(self._inner_dy):
+            char = values[i] if i < len(values) else " "
+            if char != " ":
+                if self.__scrollbar_side == "right":
+                    Fmt.stroke(self._y + 1 + i, self._x + self._inner_dx + 1, color, char)
+                else:
+                    Fmt.stroke(self._y + 1 + i, self._x, color, char)
+
     def draw(self):
         x = self._x
         y = self._y
@@ -198,7 +221,7 @@ class Frame:
         down_left = self.get_symbol("ld")
         down_right = self.get_symbol("rd")
         # hor = self.get_symbol("h")
-        ver = self.get_symbol("v")
+        vertical = self.get_symbol("v")
 
         header = self.get_full_header()
         footer = self.get_full_footer()
@@ -215,12 +238,14 @@ class Frame:
                     y + i,
                     x,
                     Text()
-                    .addf(color, ver)
+                    .addf(color, vertical)
                     .add(dx * self._fill_char)
-                    .addf(color, ver),
+                    .addf(color, vertical),
                 )
         else:
             for i in range(1, dy + 1):
-                Fmt.write(y + i, x, Text().addf(color, ver))
-                Fmt.write(y + i, x + dx + 1, Text().addf(color, ver))
+                Fmt.write(y + i, x, Text().addf(color, vertical))
+                Fmt.write(y + i, x + dx + 1, Text().addf(color, vertical))
+        if self.__show_scrollbar:
+            self.__draw_scrollbar(self.__current_index, self.__text_length)
         return self

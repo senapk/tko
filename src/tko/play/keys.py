@@ -44,6 +44,8 @@ class GuiKeys:
     activate = "\n"
     reload_game = "R"
     
+    expand_all = ']'
+    collapse_all = "["
     create_draft = "r"
     set_lang_drafts = "L"
     open_url = "u"

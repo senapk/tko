@@ -16,8 +16,8 @@ class TreeLayout:
         self.key_size_min = 20
         self.sentence_cut_min_size = 60
 
-        self.fixed_task_itens_size = 11
-        self.fixed_quest_itens_size = 9
+        self.fixed_task_itens_size = 12
+        self.fixed_quest_itens_size = 10
         
         self.key_size: int = 0
         self.sentence_cut_size: int = 0
@@ -241,7 +241,7 @@ class TreeRenderer:
 
 
     def render_task(self, t: Task, focused: bool) -> Text:
-        output = Text()
+        output = Text().add(" ")
         output.addf("b", t.xp)
         output.add(t.ligature).add(" ")
 
@@ -270,7 +270,7 @@ class TreeRenderer:
     def render_quest(self, q: Quest, focused: bool) -> Text:
         color = "g" if q.is_reachable() else "y"
         # output = Text().addf(color, "━━ ")
-        output = Text().addf(color, q.ligature)
+        output = Text().add(" ").addf(color, q.ligature)
         # output.add(self.fmt_util.format_percent_2s(q.get_percent(True, False))).add("|")
         # output.add(self.fmt_util.format_percent_2s(q.get_percent(False, True)))
         done, total = q.get_completion()
@@ -482,6 +482,10 @@ class TaskTree:
         self.items = self.builder.build(self.game, self.state, tree_filter, ligatures)
         self.state.ensure_valid_selection(self.items)
         self.layout.calculate(self.game, self.repo.flags, self.state.expanded)
+
+    def collapse_all(self):
+        self.state.expanded.clear()
+        self.update()
 
     def expand_all(self):
         for q in self.game.quests.values():
