@@ -264,7 +264,7 @@ class TreeRenderer:
             output.add(self.fmt_util.format_hours_minutes("g", h, m))
         
         value = t.get_rate_percent() * t.get_quality_percent() / 100
-        output.add(" ").addf("y", self.fmt_util.format_percent_3s(value))
+        output.addf("y", self.fmt_util.format_percent_3s(value))
         return output
 
     def render_quest(self, q: Quest, focused: bool) -> Text:
@@ -291,14 +291,14 @@ class TreeRenderer:
         obtainedm, totalm = q.get_xp(include_main=True, include_side=False)
         obtaineds, totals = q.get_xp(include_main=False, include_side=True)
         if totalm > 0:
-            output.addf('y', Symbols.star_filled)
             output.addf("g", self.fmt_util.format_percent_3s(((obtainedm + obtaineds) / totalm) * 100))
+            output.add(" ").addf('y', Symbols.star_filled)
         elif totals > 0:
-            output.addf(' ', Symbols.star_void)
             output.addf("g", self.fmt_util.format_percent_3s((obtaineds / totals) * 100))
+            output.add(" ").addf(' ', Symbols.star_void)
         else:
-            output.addf(' ', Symbols.star_void)
             output.addf("g", "----")
+            output.add(" ").addf(' ', Symbols.star_void)
 
         return output
     

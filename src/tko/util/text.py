@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any
+import unicodedata
 
 import re
 
@@ -76,7 +77,6 @@ class Text:
         
     def __init__(self, value: str = "", fmt: str = ""):
         self.data: list[Text.Token] = []
-        self.default_fmt = ""
         if value != "":
             self.addf(fmt, value)
 
@@ -197,7 +197,7 @@ class Text:
         return self.len()
     
     def __add__(self, other: Any):
-        return Text(self.default_fmt).add(self).add(other)
+        return Text().add(self).add(other)
 
     def __eq__(self, other: Any):
         if len(self.data) != len(other.data):
@@ -258,17 +258,22 @@ class Text:
         if value is None:
             return self
         if isinstance(value, str):
+            value =  unicodedata.normalize("NFC", value)
             if value != "":
                 for c in value:
-                    self.data.append(Text.Token(c, self.default_fmt))
+                    self.data.append(Text.Token(c, ""))
         elif isinstance(value, Text.Token):
+            value.text = unicodedata.normalize("NFC", value.text)
             if value.text != "":
                 for c in value.text:
                     self.data.append(Text.Token(c, value.fmt))
         elif isinstance(value, tuple) and len(value) == 2: # type: ignore
-            self.data.append(Text.Token(value[1], value[0])) # type: ignore
+            fmt, text = value # type: ignore
+            text = unicodedata.normalize("NFC", text) # type: ignore
+            if text != "":
+                for c in text:
+                    self.data.append(Text.Token(c, fmt)) # type: ignore
         elif isinstance(value, Text):  # type: ignore
-            self.default_fmt = value.default_fmt
             self.data += [x for x in value.data]
         else:
             self.add(str(value)) # type: ignore
@@ -459,18 +464,5 @@ class Text:
 if __name__ == "__main__":
     # Formatação usando placeholders {} e argumentos variádicos
     # Cor de conteúdo no texto
-    print(Text.format("O Brasil é {b:azul}, {g:verde} e {y:amarelo}"))
-    # Cor no texto e conteúdo nos argumentos
-    print(Text.format("O Brasil é {b}, {g} e {y}.", "azul", "verde", "amarelo"))
-    # Carrega tupla, ou conteúdo ou nada
-    print(Text.format("O Brasil é {}, {g:verde} e {y}.", ("b", "azul"), "amarelo"))
-
-    # Funciona também por adição
-    print(Text().add("O Brasil é ").addf("b", "azul").add(", ").addf("g", "verde").add(" e ").addf("y", "amarelo"))
-    # Dá pra definir a formatação padrão para quando não for passado nada
-    print(Text("r").add("O Brasil é ").addf("b", "azul").add(", ").addf("g", "verde").add(" e ").addf("y", "amarelo"))
-    # A formatação pode incluir cores de fundo
-    print(Text("Yw").add("O Brasil é ").addf("Rb", "azul").add(", ").addf("Kg", "verde").add(" e ").addf("y", "amarelo"))
-
-    # Dá pra concatenar, somar ou passar por parâmetro
-    print(Text("R") + "Tudo em vermelho " + Text("G") + " e tudo em verde")
+    text = Text().add("Faça").add(" uma ").addf("r", "formatação")
+    print([f"[{t.text}]" for t in text.data])  # Exibe os tokens com seus formatos

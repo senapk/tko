@@ -116,7 +116,7 @@ class FormatterUtil:
         if hours > 0 or minutes > 0:
             output.addf(color, f"{hours:02}h{minutes:02}m ")
         else:
-            output.add("┄" * 6 + " ")
+            output.add("------ ")
         return output
 
     def get_task_hours_minutes(self, task: Task) -> tuple[int, int]:
