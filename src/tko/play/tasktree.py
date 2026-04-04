@@ -128,7 +128,7 @@ class TreeBuilder:
                 matches.add(quest.get_full_key())
 
             for task in quest.get_tasks():
-                if search.inside(task.get_title()):
+                if search.inside(task.get_full_title(None)):
                     first = first or task.get_full_key()
                     matches.add(quest.get_full_key())
                     matches.add(task.get_full_key())
