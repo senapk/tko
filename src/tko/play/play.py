@@ -197,7 +197,7 @@ class Play:
             else:
                 self.send_char_not_found(value)
 
-            self.tree.update()
+            # self.tree.update()
             self.save_to_json()
             
     def play(self):

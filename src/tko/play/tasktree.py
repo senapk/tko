@@ -14,32 +14,34 @@ from tko.game.tree_item import TreeItem
 class TreeLayout:
     def __init__(self):
         self.key_size_min = 20
-        self.sentence_cut_min_size = 60
+        self.sentence_cut_min_size = 30
+        self.sentence_cut_max_size = 80
 
         self.fixed_task_itens_size = 12
         self.fixed_quest_itens_size = 10
         
         self.key_size: int = 0
-        self.sentence_cut_size: int = 0
-
+        self.sentence_cut_size: int = 0 # 0 if not calculated yet
 
     def calculate(self, game: Game, flags: Flags, expanded: set[str]):
+        if self.sentence_cut_size != 0:
+            return
         key_sizes: list[int] = []
         sentence_cut: list[int] = []
 
         for q in game.quests.values():
-            if q.get_full_key() in expanded:
-                for t in q.get_tasks():
-                    key_sizes.append(len(t.get_key()))
+            for t in q.get_tasks():
+                key_sizes.append(len(t.get_key()))
         self.key_size = max(key_sizes) if key_sizes else self.key_size_min
 
         for q in game.quests.values():
             sentence_cut.append(len(q.get_full_title(flags.panel.is_skills())) + self.fixed_quest_itens_size)
-            if q.get_full_key() in expanded:
-                for t in q.get_tasks():
-                    sentence_cut.append(len(t.get_full_title(self.key_size)) + self.fixed_task_itens_size)
+            for t in q.get_tasks():
+                sentence_cut.append(len(t.get_full_title(self.key_size)) + self.fixed_task_itens_size)
 
         self.sentence_cut_size = max(max(sentence_cut), self.sentence_cut_min_size) if sentence_cut else self.sentence_cut_min_size
+        if self.sentence_cut_size > self.sentence_cut_max_size:
+            self.sentence_cut_size = self.sentence_cut_max_size
 
 class TreeFilter:
     def __init__(self, inbox_mode: bool, search_text: str):
@@ -256,7 +258,10 @@ class TreeRenderer:
         if focused:
             title.add_style(focus_color)
         output.add(title)
-        output.ljust(self.layout.sentence_cut_size, Text.Token(" ", focus_color))
+        if len(output) > self.layout.sentence_cut_size:
+            output = output.slice(0, self.layout.sentence_cut_size - 1).add("…")
+        else:
+            output.ljust(self.layout.sentence_cut_size, Text.Token(" ", focus_color))
         output.add(Symbols.left_triangle_filled if focused else " ")
 
         if self.flags.show_time.is_true():
@@ -283,7 +288,10 @@ class TreeRenderer:
             color = self.settings.colors.focused_item
             title.add_style(color)
         output.add(title)
-        output.ljust(self.layout.sentence_cut_size, Text.Token(self.filler, color))
+        if len(output) > self.layout.sentence_cut_size:
+            output = output.slice(0, self.layout.sentence_cut_size - 1).add("…")
+        else:
+            output.ljust(self.layout.sentence_cut_size, Text.Token(self.filler, color))
         output.add(Symbols.left_triangle_filled if focused else " ")
         if self.flags.show_time.is_true():
             h, m = self.fmt_util.get_quest_time(q)
@@ -444,19 +452,19 @@ class TaskTree:
 
     def move_up(self):
         self.navigator.move_up(self.state, self.items)
-        self.update()
+        # self.update()
     
     def move_down(self):
         self.navigator.move_down(self.state, self.items)
-        self.update()
+        # self.update()
 
     def move_right(self):
         self.navigator.right(self.state, self.items)
-        self.update()
+        # self.update()
 
     def move_left(self):
         self.navigator.left(self.state, self.items)
-        self.update()
+        # self.update()
 
     def get_visible_sentences(self, height: int) -> list[Text]:
         self.state.update_scroll(height, self.items)
@@ -485,28 +493,9 @@ class TaskTree:
 
     def collapse_all(self):
         self.state.expanded.clear()
-        self.update()
+        # self.update()
 
     def expand_all(self):
         for q in self.game.quests.values():
             self.state.expanded.add(q.get_full_key())
-        self.update()
-
-    def key_up(self):
-        self.navigator.move_up(self.state, self.items)
-        self.update()
-
-    def key_down(self):
-        self.navigator.move_down(self.state, self.items)
-        self.update()
-
-    def key_left(self):
-        self.navigator.left(self.state, self.items)
-        self.update()
-
-    def key_right(self):
-        self.navigator.right(self.state, self.items)
-        self.update()
-
-    def key_enter(self):
-        self.update()
+        # self.update()

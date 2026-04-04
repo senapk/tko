@@ -416,7 +416,7 @@ class Gui:
     def show_items(self):
         border_color = self.get_frame_color()
         Fmt.clear()
-        self.tree.update()
+        # self.tree.update()
         lines, cols = Fmt.get_size()
         main_sx = cols  # tamanho em x livre
         main_sy = lines  # size em y avaliable
