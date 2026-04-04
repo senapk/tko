@@ -52,14 +52,16 @@ class FormatterUtil:
         if not t.is_import_type():
             if t.info.feedback:
                 return ("g", Symbols.right_triangle_filled)
-            return ("", Symbols.right_triangle_void)
+            return ("", Symbols.right_triangle_filled)
+        
         if self.is_downloaded_for_lang(t):
             if t.info.feedback:
                 return ("g", Symbols.diamond_filled)
-            return ("", Symbols.diamond_void)
+            return ("", Symbols.diamond_filled)
+        
         if t.info.feedback:
-            return ("g", Symbols.square_filled)
-        return ("", Symbols.square_void)
+            return ("r", Symbols.diamond_filled)
+        return ("", Symbols.diamond_void)
 
     def get_task_path_symbol(self, t: Task) -> tuple[str, str]:
         if t.task_path == Task.TaskPath.MAIN:
