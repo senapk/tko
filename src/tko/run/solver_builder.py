@@ -163,11 +163,11 @@ class SolverBuilder:
         exe_ext = ".exe" if os.name == "nt" else ""
         output_path = self.cache_dir / ("a.out" + exe_ext)
         
-        files_str = " ".join([f'"{str(x.relative_to(parent_folder))}"' for x in self.args_list])
+        files_str = " ".join([f'"{str(x.relative_to(parent_folder, walk_up=True))}"' for x in self.args_list])
         text = (text.replace("{files}", files_str)
-                    .replace("{output}", f'"{str(output_path.relative_to(parent_folder))}"')
+                    .replace("{output}", f'"{str(output_path.relative_to(parent_folder, walk_up=True))}"')
                     .replace("{main}", main_file_without_ext)
-                    .replace("{cache}", f'"{str(self.cache_dir.relative_to(parent_folder))}"')).strip()
+                    .replace("{cache}", f'"{str(self.cache_dir.relative_to(parent_folder, walk_up=True))}"')).strip()
 
         return text
 
