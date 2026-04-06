@@ -44,16 +44,17 @@ class FormatterUtil:
         return False
 
     def get_task_down_symbol(self, t: Task) -> tuple[str, str]:
-        if t.is_link():
-            if t.info.feedback:
-                return ("g", Symbols.task_view)
-            return ("", Symbols.task_view)
 
         # local writeable tasks like sandbox
         if not t.is_import_type():
-            if t.info.feedback:
-                return ("g", Symbols.right_triangle_filled)
-            return ("", Symbols.right_triangle_filled)
+            if t.task_test == Task.TaskTest.TEST:
+                if t.info.feedback:
+                    return ("g", Symbols.right_triangle_filled)
+                return ("", Symbols.right_triangle_filled)
+            else:
+                if t.info.feedback:
+                    return ("g", Symbols.left_triangle_filled)
+                return ("", Symbols.left_triangle_filled)
         
         if t.task_test == Task.TaskTest.TEST:
             if self.is_downloaded_for_lang(t):
@@ -66,12 +67,16 @@ class FormatterUtil:
         elif t.task_test == Task.TaskTest.SELF:
             if self.is_downloaded_for_lang(t):
                 if t.info.feedback:
-                    return ("g", Symbols.circle_filled)   # baixou e tem feedback
-                return ("", Symbols.circle_filled)        # baixou e não tem feedback
+                    return ("g", Symbols.square_filled)   # baixou e tem feedback
+                return ("", Symbols.square_filled)        # baixou e não tem feedback
             if t.info.feedback:
-                return ("r", Symbols.circle_filled)       # não baixou e tem feedback
-            return ("", Symbols.circle_void)              # não baixou e não tem feedback
+                return ("r", Symbols.square_filled)       # não baixou e tem feedback
+            return ("", Symbols.square_void)              # não baixou e não tem feedback
 
+        # if t.is_link():
+        if t.info.feedback:
+            return ("g", Symbols.task_view)
+        return ("", Symbols.task_view)
 
     def get_task_path_symbol(self, t: Task) -> tuple[str, str]:
         if t.task_path == Task.TaskMain.MAIN:
