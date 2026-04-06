@@ -65,6 +65,7 @@ class TaskParser:
             return ""
         new_title: list[str] = []
         words = [w for w in tags.split(" ") if w != ""]
+        self.task.task_loss = Task.TaskLoss.NULL
         for item in words:
             if item.startswith("@"):
                 self.task.set_key(self.filter_task_key(item[1:]))

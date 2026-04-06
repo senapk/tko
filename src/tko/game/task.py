@@ -34,9 +34,9 @@ class Task(TreeItem):
         EDIT = "edit" # edit task details
 
     class TaskGrader:
-        def __init__(self, task_help: Task.TaskLoss, task_info: TaskInfo):
+        def __init__(self, task_loss: Task.TaskLoss, task_info: TaskInfo):
             self.info = task_info
-            self.help = task_help
+            self.loss = task_loss
             self.grades: dict[str, dict[str, int]] = {
                 Task.TaskLoss.FREE.value: {
                     "guided": 100,
@@ -68,13 +68,13 @@ class Task(TreeItem):
                 return 0.0
             rate = 100.0
             if self.info.guided:
-                rate *= self.grades[self.help.value]["guided"] / 100.0
+                rate *= self.grades[self.loss.value]["guided"] / 100.0
             if self.info.ia_code:
-                rate *= self.grades[self.help.value]["code"] / 100.0
+                rate *= self.grades[self.loss.value]["code"] / 100.0
             if self.info.ia_debug:
-                rate *= self.grades[self.help.value]["debug"] / 100.0
+                rate *= self.grades[self.loss.value]["debug"] / 100.0
             if self.info.ia_problem:
-                rate *= self.grades[self.help.value]["problem"] / 100.0
+                rate *= self.grades[self.loss.value]["problem"] / 100.0
             return rate
 
         def get_ratio(self) -> float:
@@ -90,7 +90,7 @@ class Task(TreeItem):
         
         self.task_test: Task.TaskTest = Task.TaskTest.TEST
         self.task_path: Task.TaskMain = Task.TaskMain.MAIN
-        self.task_loss: Task.TaskLoss = Task.TaskLoss.NULL
+        self.task_loss: Task.TaskLoss = Task.TaskLoss.PART
         self.task_mode: Task.TaskEdit = Task.TaskEdit.EDIT
         
         self.grader = Task.TaskGrader(self.task_loss, self.info)
