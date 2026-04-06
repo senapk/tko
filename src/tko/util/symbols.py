@@ -38,6 +38,7 @@ class Symbols:
     task_zero = "⊘"
     task_part = "≈"
     task_free = "="
+    focus = "⊙"
     task_reload = "↺"
     task_edit = "✎"
     task_view = "↗"

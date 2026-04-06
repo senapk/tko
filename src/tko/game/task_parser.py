@@ -14,7 +14,7 @@ class TaskParser:
             
     @staticmethod
     def filter_task_key(key: str) -> str:
-        allowed = "0123456789_abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        allowed = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_+"
         new_key = ""
         for c in key:
             if c in allowed:
@@ -43,24 +43,20 @@ class TaskParser:
             # if c is digit, set xp
             if tag.isdigit():
                 self.task.xp = int(tag)
-            elif tag == "auto":
-                self.task.task_eval = Task.TaskEval.AUTO
-            elif tag == "user":
-                self.task.task_eval = Task.TaskEval.USER
-            elif tag == "main":
-                self.task.task_path = Task.TaskPath.MAIN
-            elif tag == "side":
-                self.task.task_path = Task.TaskPath.SIDE
-            elif tag == "free":
-                self.task.task_help = Task.TaskHelp.FREE
-            elif tag == "part":
-                self.task.task_help = Task.TaskHelp.PART
-            elif tag == "zero":
-                self.task.task_help = Task.TaskHelp.ZERO
-            elif tag == "view":
-                self.task.task_mode = Task.TaskMode.VIEW
-            elif tag == "edit":
-                self.task.task_mode = Task.TaskMode.EDIT
+            elif tag == Task.TaskTest.TEST.value:
+                self.task.task_test = Task.TaskTest.TEST
+            elif tag == Task.TaskTest.SELF.value:
+                self.task.task_test = Task.TaskTest.SELF
+            elif tag == Task.TaskMain.MAIN.value:
+                self.task.task_path = Task.TaskMain.MAIN
+            elif tag == Task.TaskMain.SIDE.value:
+                self.task.task_path = Task.TaskMain.SIDE
+            elif tag == Task.TaskLoss.FREE.value:
+                self.task.task_loss = Task.TaskLoss.FREE
+            elif tag == Task.TaskLoss.PART.value:
+                self.task.task_loss = Task.TaskLoss.PART
+            elif tag == Task.TaskLoss.ZERO.value:
+                self.task.task_loss = Task.TaskLoss.ZERO
             else:
                 print(f"Parsing {self.index_path}:{self.task.line_number}, Tipo de tarefa desconhecido: {tag}")
 
@@ -76,6 +72,23 @@ class TaskParser:
                 self.decode_task_types(item[1:])
             else:
                 new_title.append(item)
+
+        if self.task.get_key().startswith("+"):
+            self.task.task_mode = Task.TaskEdit.VIEW
+        else:
+            self.task.task_mode = Task.TaskEdit.EDIT
+        
+        if self.task.task_mode == Task.TaskEdit.VIEW:
+            if self.task.task_loss == Task.TaskLoss.NULL:
+                self.task.task_loss = Task.TaskLoss.FREE
+            if self.task.task_test == Task.TaskTest.NULL:
+                self.task.task_test = Task.TaskTest.SELF
+        else: # EDIT
+            if self.task.task_loss == Task.TaskLoss.NULL:
+                self.task.task_loss = Task.TaskLoss.PART
+            if self.task.task_test == Task.TaskTest.NULL:
+                self.task.task_test = Task.TaskTest.TEST
+
         return " ".join(new_title)
 
     def redirect_from_readme(self, link: str) -> str:
@@ -108,7 +121,7 @@ class TaskParser:
             return self
         
         task.set_origin_folder(Path(os.path.dirname(self.redirect_from_readme(link))))
-        if task.task_mode == Task.TaskMode.VIEW:
+        if task.task_mode == Task.TaskEdit.VIEW:
             self.task.target = self.redirect_from_readme(link)
         else:
             self.task.target = link

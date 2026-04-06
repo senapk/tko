@@ -84,9 +84,9 @@ class Quest(TreeItem):
         """
         tasks_info: list[QuestGrader.Elem] = []
         for t in self.__tasks:
-            if t.task_path == Task.TaskPath.MAIN and not include_main:
+            if t.task_path == Task.TaskMain.MAIN and not include_main:
                 continue
-            if t.task_path == Task.TaskPath.SIDE and not include_side:
+            if t.task_path == Task.TaskMain.SIDE and not include_side:
                 continue
             percent = (t.get_rate_percent() * t.get_quality_percent()) / 100.0
             tasks_info.append(QuestGrader.Elem(t.is_optional(), t.xp, percent))

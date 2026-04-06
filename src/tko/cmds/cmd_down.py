@@ -133,7 +133,7 @@ class CmdDown:
         origin_source = os.path.join(CodeFilter.get_default_drafts_dir(self.origin_folder), self.language)
         if not self.copy_drafts_from(Path(origin_source), Path(destiny_drafts_folder)):
             self.actions.create_default_draft(destiny_drafts_folder, self.language)
-        if self.task.task_eval == self.task.TaskEval.USER:
+        if self.task.task_test == self.task.TaskTest.SELF:
             self.actions.create_default_draft(destiny_drafts_folder, "md")
 
         removed, last_path = self.remove_draft_folder_if_duplicated(destiny_drafts_folder)

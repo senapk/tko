@@ -11,17 +11,10 @@ def load_title_from_markdown_file(path: Path) -> str | None:
         return None
     with open(path, "r", encoding="utf-8") as f:
         for line in f:
-            if line.startswith("---"):
-                continue
-            if len(line.split(":")) > 1:
-                continue
             line = line.strip()
             if line.startswith("# "):
                 return line[2:].strip()
-            if line.strip() != "":
-                return line
     return "NÃO TEM TÍTULO"
-
 
 class IndexLine:
     def __init__(self, index_path: Path, base_dir: Path):
@@ -84,7 +77,7 @@ class IndexLine:
             valid_label = edit_task_label
         else:
             label = line.split('@')[1]
-            valid_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
+            valid_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-+"
             valid_label = ""
             for char in label:
                 if char in valid_chars:
@@ -117,7 +110,7 @@ class Indexer:
                         titles[readme] = title
         self.path_title_dict = titles
         if self.verbose:
-            print(f"Found {len(self.path_title_dict)} README.md files in base directory '{self.base_dir}':")
+            print(f"Found {len(self.path_title_dict)} README.md files in base directory '{self.base_dir}'")
 
     def found_unused_task_dirs(self,) -> None:
         index_tasks = set([f.readme_file for f in self.index_lines if f.isTask])

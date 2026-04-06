@@ -14,41 +14,43 @@ import enum
 class Task(TreeItem):
     str_index = "idx"
 
-    class TaskEval(enum.Enum):
-        AUTO = "auto" # rate uses % of test cases passed
-        USER = "user" # rate uses user self-evaluation
+    class TaskTest(enum.Enum):
+        NULL = "null" # default mode, EDIT if TEST, VIEW if USER
+        TEST = "test" # rate uses % of test cases passed
+        SELF = "self" # rate uses user self-evaluation
 
-    class TaskPath(enum.Enum):
+    class TaskMain(enum.Enum):
         MAIN = "main" # main task, required to complete the quest
         SIDE = "side" # side task, optional to complete the quest, usually with less xp reward
 
-    class TaskHelp(enum.Enum):
+    class TaskLoss(enum.Enum):
+        NULL = "null" # default mode, FREE if VIEW, PART if EDIT
         FREE = "free" # help allowed without penalty
         PART = "part" # help allowed with partial penalty
         ZERO = "zero" # if help is given, task is not completed (0% progress)
 
-    class TaskMode(enum.Enum):
+    class TaskEdit(enum.Enum):
         VIEW = "view" # view task details
         EDIT = "edit" # edit task details
 
     class TaskGrader:
-        def __init__(self, task_help: Task.TaskHelp, task_info: TaskInfo):
+        def __init__(self, task_help: Task.TaskLoss, task_info: TaskInfo):
             self.info = task_info
             self.help = task_help
             self.grades: dict[str, dict[str, int]] = {
-                Task.TaskHelp.FREE.value: {
+                Task.TaskLoss.FREE.value: {
                     "guided": 100,
                     "code": 100,
                     "debug": 100,
                     "problem": 100,
                 },
-                Task.TaskHelp.PART.value: {
+                Task.TaskLoss.PART.value: {
                     "guided": 80,
                     "code": 40,
                     "debug": 80,
                     "problem": 90,
                 },
-                Task.TaskHelp.ZERO.value: {
+                Task.TaskLoss.ZERO.value: {
                     "guided": 0,
                     "code": 0,
                     "debug": 0,
@@ -86,12 +88,12 @@ class Task(TreeItem):
         self.info = TaskInfo()
         self.main_idx: int = 0
         
-        self.task_eval: Task.TaskEval = Task.TaskEval.AUTO
-        self.task_path: Task.TaskPath = Task.TaskPath.MAIN
-        self.task_help: Task.TaskHelp = Task.TaskHelp.PART
-        self.task_mode: Task.TaskMode = Task.TaskMode.EDIT
+        self.task_test: Task.TaskTest = Task.TaskTest.TEST
+        self.task_path: Task.TaskMain = Task.TaskMain.MAIN
+        self.task_loss: Task.TaskLoss = Task.TaskLoss.NULL
+        self.task_mode: Task.TaskEdit = Task.TaskEdit.EDIT
         
-        self.grader = Task.TaskGrader(self.task_help, self.info)
+        self.grader = Task.TaskGrader(self.task_loss, self.info)
 
         self.skills: dict[str, int] = {} # skills
         
@@ -111,11 +113,11 @@ class Task(TreeItem):
         new_task.line = self.line
         new_task.info = self.info.clone()
         new_task.main_idx = self.main_idx
-        new_task.task_eval = self.task_eval
+        new_task.task_test = self.task_test
         new_task.task_path = self.task_path
-        new_task.task_help = self.task_help
+        new_task.task_loss = self.task_loss
         new_task.task_mode = self.task_mode
-        new_task.grader = Task.TaskGrader(new_task.task_help, new_task.info)
+        new_task.grader = Task.TaskGrader(new_task.task_loss, new_task.info)
         new_task.skills = self.skills.copy()
         new_task.xp = self.xp
         new_task.target = self.target
@@ -138,16 +140,16 @@ class Task(TreeItem):
         return self
     
     def is_optional(self):
-        return self.task_path == Task.TaskPath.SIDE
+        return self.task_path == Task.TaskMain.SIDE
     
     def is_auto(self):
-        return self.task_eval == Task.TaskEval.AUTO
+        return self.task_test == Task.TaskTest.TEST
 
     def is_reachable(self) -> bool:
         return self.__is_reachable
 
     def is_link(self):
-        if self.task_mode == Task.TaskMode.VIEW:
+        if self.task_mode == Task.TaskEdit.VIEW:
             return True
         return self.__origin_folder is None and self.__workspace_folder is None
     
@@ -157,7 +159,7 @@ class Task(TreeItem):
         return self
 
     def is_import_type(self):
-        return self.task_mode == Task.TaskMode.EDIT and self.__origin_folder is not None and self.__workspace_folder is not None
+        return self.task_mode == Task.TaskEdit.EDIT and self.__origin_folder is not None and self.__workspace_folder is not None
     
     def is_static_type(self):
         if self.is_link():
@@ -256,7 +258,7 @@ class Task(TreeItem):
         return value
     
     def get_quality_percent(self) -> float:
-        if self.task_help == Task.TaskHelp.FREE:
+        if self.task_loss == Task.TaskLoss.FREE:
             return 100
         value = self.grader.get_quality_percent()
         if value < 0.1:

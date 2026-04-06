@@ -301,11 +301,11 @@ class Gui:
         help_lines.append(Text.format(" Calibrar {r} Para calibrar os direcionais do teclado", GuiKeys.calibrate))
 
         help_lines.append(Text().addf("g", " Símbolos ").center(dx, Text.Token("-")))
-        help_lines.append(Text.format("{y}   Tarefa sugeridas        , {} Tarefa opcional", Symbols.star_filled, Symbols.star_void))
-        help_lines.append(Text.format("{g}   Pode consultar e refazer, {r} Fazer sozinho sem consulta", Symbols.task_reload, Symbols.task_zero))
-        help_lines.append(Text.format("{g}{g}{g} Fez Autoavaliação       , {}{}{} Sem Autoavaliação", 
-                                      Symbols.diamond_filled, Symbols.square_filled, Symbols.task_view,
-                                      Symbols.diamond_void, Symbols.square_void, Symbols.task_view))
+        help_lines.append(Text.format(" {y} Tarefa sugeridas, {} Tarefa opcional", Symbols.star_filled, Symbols.star_void))
+        help_lines.append(Text.format(" {g} Estudo/Consulta, {y} Escrever e refazer, {r} Fazer sem consulta", Symbols.focus, Symbols.task_reload, Symbols.task_zero))
+        help_lines.append(Text.format(" {g}{g}{g} Fez Autoavaliação       , {}{}{} Sem Autoavaliação", 
+                                      Symbols.diamond_filled, Symbols.circle_filled, Symbols.task_view,
+                                      Symbols.diamond_void, Symbols.circle_void, Symbols.task_view))
         help_lines.append(Text.format("{g}", " Navegação ").center(dx, Text.Token("-")))
         help_lines.append(Text.format("  setas {r} Para navegar entre os elementos", "↑↓→"))
         help_lines.append(Text.format("    Enter {r} Interage com o elemento de acordo com o contexto", "↲"))

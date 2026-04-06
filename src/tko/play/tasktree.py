@@ -279,7 +279,21 @@ class TreeRenderer:
         # output.add(self.fmt_util.format_percent_2s(q.get_percent(True, False))).add("|")
         # output.add(self.fmt_util.format_percent_2s(q.get_percent(False, True)))
         done, total = q.get_completion()
-        output.add(f" {done:02}/{total:02} ")
+        output.add(f" {done:02}/{total:02}")
+
+        percent = Text()
+        obtainedm, totalm = q.get_xp(include_main=True, include_side=False)
+        obtaineds, totals = q.get_xp(include_main=False, include_side=True)
+        if totalm > 0:
+            percent.addf("g", self.fmt_util.format_percent_3s(((obtainedm + obtaineds) / totalm) * 100))
+            output.add(" ").addf('y', Symbols.star_filled)
+        elif totals > 0:
+            percent.addf("g", self.fmt_util.format_percent_3s((obtaineds / totals) * 100))
+            output.add(" ").addf(' ', Symbols.star_void)
+        else:
+            percent.addf("g", "----")
+            output.add(" ").addf(' ', Symbols.star_void)
+        output.add(" ")
 
         color = q.is_requirement_color
 
@@ -296,17 +310,7 @@ class TreeRenderer:
         if self.flags.show_time.is_true():
             h, m = self.fmt_util.get_quest_time(q)
             output.add(self.fmt_util.format_hours_minutes("g", h, m))
-        obtainedm, totalm = q.get_xp(include_main=True, include_side=False)
-        obtaineds, totals = q.get_xp(include_main=False, include_side=True)
-        if totalm > 0:
-            output.addf("g", self.fmt_util.format_percent_3s(((obtainedm + obtaineds) / totalm) * 100))
-            output.add(" ").addf('y', Symbols.star_filled)
-        elif totals > 0:
-            output.addf("g", self.fmt_util.format_percent_3s((obtaineds / totals) * 100))
-            output.add(" ").addf(' ', Symbols.star_void)
-        else:
-            output.addf("g", "----")
-            output.add(" ").addf(' ', Symbols.star_void)
+        output.add(percent)
 
         return output
     

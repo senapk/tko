@@ -37,7 +37,7 @@ class FormatterUtil:
     def is_visible_task(self, quest: Quest, task: Task) -> bool:
         if self.repo.flags.task_view_mode.is_all():
             return True
-        if task.task_path == Task.TaskPath.MAIN:
+        if task.task_path == Task.TaskMain.MAIN:
             return True
         if self.is_downloaded_for_lang(task):
             return True
@@ -55,7 +55,7 @@ class FormatterUtil:
                 return ("g", Symbols.right_triangle_filled)
             return ("", Symbols.right_triangle_filled)
         
-        if t.task_eval == Task.TaskEval.AUTO:
+        if t.task_test == Task.TaskTest.TEST:
             if self.is_downloaded_for_lang(t):
                 if t.info.feedback:
                     return ("g", Symbols.diamond_filled)   # baixou e tem feedback
@@ -63,7 +63,7 @@ class FormatterUtil:
             if t.info.feedback:
                 return ("r", Symbols.diamond_filled)       # não baixou e tem feedback
             return ("", Symbols.diamond_void)              # não baixou e não tem feedback
-        elif t.task_eval == Task.TaskEval.USER:
+        elif t.task_test == Task.TaskTest.SELF:
             if self.is_downloaded_for_lang(t):
                 if t.info.feedback:
                     return ("g", Symbols.circle_filled)   # baixou e tem feedback
@@ -73,26 +73,24 @@ class FormatterUtil:
             return ("", Symbols.circle_void)              # não baixou e não tem feedback
 
 
-
-
     def get_task_path_symbol(self, t: Task) -> tuple[str, str]:
-        if t.task_path == Task.TaskPath.MAIN:
+        if t.task_path == Task.TaskMain.MAIN:
             return ("y", Symbols.star_filled)
         return ("", Symbols.star_void)
 
     def get_task_help_symbol(self, t: Task) -> tuple[str, str]:
-        if t.task_help == Task.TaskHelp.FREE:
-            return ("g", Symbols.task_reload)
-        if t.task_help == Task.TaskHelp.PART:
+        if t.task_loss == Task.TaskLoss.FREE:
+            return ("g", Symbols.focus)
+        if t.task_loss == Task.TaskLoss.PART:
             return ("y", Symbols.task_reload)
-        if t.task_help == Task.TaskHelp.ZERO:
+        if t.task_loss == Task.TaskLoss.ZERO:
             return ("r", Symbols.task_zero)
         return ("", "")
 
     def get_task_mode_symbol(self, t: Task) -> tuple[str, str]:
-        if t.task_mode == Task.TaskMode.VIEW:
+        if t.task_mode == Task.TaskEdit.VIEW:
             return ("c", Symbols.task_view)
-        if t.task_mode == Task.TaskMode.EDIT:
+        if t.task_mode == Task.TaskEdit.EDIT:
             return ("c", Symbols.task_edit)
         return ("", Symbols.task_edit)
 

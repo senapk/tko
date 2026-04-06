@@ -213,7 +213,7 @@ class FloatingGrade(FloatingABC):
 
     def get_discount(self, tag: str) -> Text:
         grade_dict = self._task.grader.grades
-        value = grade_dict.get(self._task.task_help.value, {}).get(tag, 100)
+        value = grade_dict.get(self._task.task_loss.value, {}).get(tag, 100)
         size = 5
         if value == 100:
             return Text().addf("g", " " * size)
