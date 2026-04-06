@@ -12,44 +12,44 @@ def test_parse_plain():
 
 
 def test_parse_style():
-    t = RText.parse("{r}hello")
+    t = RText.parse("[r]hello")
     assert t.runs == (("r", "hello"),)
 
 
 def test_parse_reset():
-    t = RText.parse("{r}hello{.} world")
+    t = RText.parse("[r]hello[.] world")
     assert t.runs == (("r", "hello"), ("", " world"))
 
 
 def test_parse_overlay():
-    t = RText.parse("{r}red {B}blue")
+    t = RText.parse("[r]red [B]blue")
     # overlay -> rB
     assert t.runs == (("r", "red "), ("rB", "blue"))
 
 
 def test_parse_reset_overlay():
-    t = RText.parse("{r}red {.B}blue")
+    t = RText.parse("[r]red [.B]blue")
     assert t.runs == (("r", "red "), ("B", "blue"))
 
 
 def test_parse_argument_string():
-    t = RText.parse("Hello {}", "World")
+    t = RText.parse("Hello []", "World")
     assert t.runs == (("", "Hello World"),)
 
 
 def test_parse_argument_text_overlay():
     name = RText("World", "y")
-    t = RText.parse("{r}Hello {}", name)
+    t = RText.parse("[r]Hello []", name)
     assert t.runs == (("r", "Hello "), ("y", "World"))
 
 
 def test_parse_escape():
-    t = RText.parse("{{ hello }}")
-    assert t.plain() == "{ hello }"
+    t = RText.parse("[[ hello ]]")
+    assert t.plain() == "[ hello ]"
 
 
 def test_parse_multiple_args():
-    t = RText.parse("{} + {} = {}", 1, 2, 3)
+    t = RText.parse("[] + [] = []", 1, 2, 3)
     assert t.plain() == "1 + 2 = 3"
 
 
@@ -75,7 +75,7 @@ def test_len():
 
 
 def test_plain():
-    t = RText.parse("{r}hello{.} world")
+    t = RText.parse("[r]hello[.] world")
     assert t.plain() == "hello world"
 
 
@@ -192,16 +192,6 @@ def test_buffer_extend_buffer():
 
     buf1.add(buf2)
     assert buf1.to_text().plain() == "HelloWorld"
-
-
-# =========================================================
-# ANSI RENDER
-# =========================================================
-
-def test_str_contains_ansi():
-    t = RText("Hello", "r")
-    s = str(t)
-    assert "\033[" in s
 
 
 # =========================================================

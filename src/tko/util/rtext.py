@@ -590,3 +590,4 @@ if __name__ == "__main__":
     print(b.to_text().render(RenderMode.ANSI))
     print(b.to_text().render(RenderMode.PLAIN))
     print(b.to_text().render())
+    print(b.to_text().plain())

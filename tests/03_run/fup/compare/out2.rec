@@ -17,12 +17,10 @@
 │ 0.44                                                                         │
 │ -5.07                                                                        │
 │                                                                              │
-│                                                                              │
 ├────────────────────────────────── RECEBIDO ──────────────────────────────────┤
 │ terminate called after throwing an instance of 'std::invalid_argument'       │
 │   what():  Impossivel calcular                                               │
-│ Aborted (core dumped)                                                        │
-│ fail: execution error code -6                                                │
+│ fail: runtime exception                                                      │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭──────────────────────────────────────────────────────────────────────────────╮
 │            (ω saída_incorreta)[01] GR:014 cases.tio (duas raízes)            │
@@ -68,12 +66,10 @@
 │ nao ha raiz real                                                             │
 │                                                                              │
 │                                                                              │
-│                                                                              │
 ├────────────────────────────────── RECEBIDO ──────────────────────────────────┤
 │ terminate called after throwing an instance of 'std::invalid_argument'       │
 │   what():  Impossivel calcular                                               │
-│ Aborted (core dumped)                                                        │
-│ fail: execution error code -6                                                │
+│ fail: runtime exception                                                      │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭──────────────────────────────────────────────────────────────────────────────╮
 │            (ω saída_incorreta)[04] GR:014 cases.tio (05         )            │
@@ -119,10 +115,8 @@
 │ nao ha raiz real                                                             │
 │                                                                              │
 │                                                                              │
-│                                                                              │
 ├────────────────────────────────── RECEBIDO ──────────────────────────────────┤
 │ terminate called after throwing an instance of 'std::invalid_argument'       │
 │   what():  Impossivel calcular                                               │
-│ Aborted (core dumped)                                                        │
-│ fail: execution error code -6                                                │
+│ fail: runtime exception                                                      │
 ╰──────────────────────────────────────────────────────────────────────────────╯
