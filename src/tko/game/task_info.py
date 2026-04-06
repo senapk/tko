@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 class TaskInfo:
     class Keys:
         rate_str: str = "rate"
@@ -16,6 +18,7 @@ class TaskInfo:
         self.rate: int = 0
 
         self.study: int = 0  # quantos minutos ele estudou para fazer a atividade
+
         self.feedback: bool = False # se fez a auto avaliação
         self.friend: str = "" # se usou ajuda de monitor, amigo, etc
 
@@ -25,6 +28,18 @@ class TaskInfo:
         self.ia_code: bool = False # se usou IA para escrever código
         self.ia_debug: bool = False # se usou IA para debugar
         self.ia_refactor: bool = False # se usou IA para refatorar
+
+    def copy_quality_from(self, other: TaskInfo):
+        self.feedback = other.feedback
+        self.friend = other.friend
+        
+        self.guided = other.guided
+        self.ia_concept = other.ia_concept
+        self.ia_problem = other.ia_problem
+        self.ia_code = other.ia_code
+        self.ia_debug = other.ia_debug
+        self.ia_refactor = other.ia_refactor
+
 
     def clone(self):
         return TaskInfo().load_from_kv(self.get_kv())

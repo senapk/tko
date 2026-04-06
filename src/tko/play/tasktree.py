@@ -267,7 +267,7 @@ class TreeRenderer:
         if self.flags.show_time.is_true():
             h, m = self.fmt_util.get_task_hours_minutes(t)
             output.add(self.fmt_util.format_hours_minutes("g", h, m))
-        
+
         value = t.get_rate_percent() * t.get_quality_percent() / 100
         output.addf("y", self.fmt_util.format_percent_3s(value))
         return output

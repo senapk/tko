@@ -85,14 +85,16 @@ class Repository:
             if not key in self.game.tasks:
                 continue
             task = self.game.tasks[key]
+            self_list = task_log.self_list
+            if self_list:
+                _, self_item = self_list[-1]
+                task.info.copy_quality_from(self_item.info)
+
             exec_list = task_log.exec_list
             if exec_list:
                 _, exec_item = exec_list[-1]
                 task.info.rate = exec_item.rate
-            self_list = task_log.self_list
-            if self_list:
-                _, self_item = self_list[-1]
-                task.info = self_item.info
+
 
     def get_task_folder_for_label(self, label: str) -> Path:
         parts: list[str] = label.split("@")

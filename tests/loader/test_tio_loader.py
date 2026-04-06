@@ -1,6 +1,7 @@
 
-from tko.run.loader import Loader
 from tko.run.unit import Unit
+from tko.loader.tio_parser import TioParser
+from pathlib import Path
 
 readme_text = """
 # É positivo
@@ -62,11 +63,9 @@ SIM
 
 """
 
-
-
 class TestSimple:
     def test_tio_loader(self):
-        unit_list: list[Unit] = Loader.parse_tio(readme_text, "string")
+        unit_list: list[Unit] = TioParser.parse_tio(readme_text, Path())
 
         assert len(unit_list) == 5
         assert unit_list[0].case == "quebra"

@@ -1,9 +1,9 @@
 from tko.enums.execution_result import ExecutionResult
 from tko.util.text import Text
-import os
+from pathlib import Path
 
 class Unit:
-    def __init__(self, case: str = "", input_data: str = "", expected: str = "", grade: None | int = None, source: str = ""):
+    def __init__(self, case: str = "", input_data: str = "", expected: str = "", grade: None | int = None, source: Path = Path()):
         self.source = source  # stores the source file of the unit
         self.source_pad = 0  # stores the pad to justify the source file
         self.case = case  # name
@@ -40,9 +40,9 @@ class Unit:
         grade = str(self.grade_reduction).zfill(3)
         rep = "" if self.repeated is None else " [" + str(self.repeated) + "]"
         op = Text() + ExecutionResult.get_symbol(self.result) + " " + self.result.value
-        source = os.path.basename(self.source)
+        source = self.source.name
         if pad:
-            source = self.source.ljust(self.source_pad)
+            source = str(self.source).ljust(self.source_pad)
         case = self.case
         if pad:
             case = self.case.ljust(self.case_pad)

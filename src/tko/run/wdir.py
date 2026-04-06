@@ -5,7 +5,7 @@ from tko.util.identifier import Identifier
 from tko.enums.identifier_type import IdentifierType
 from tko.run.unit import Unit
 from tko.util.param import Param
-from tko.run.loader import Loader
+from tko.loader.loader import Loader
 from tko.run.solver_builder import SolverBuilder
 from tko.util.text import Text
 from tko.util.symbols import Symbols
@@ -159,7 +159,7 @@ class Wdir:
         if len(self.__unit_list) == 0:
             return
         max_case = max([len(x.case) for x in self.__unit_list])
-        max_source = max([len(x.source) for x in self.__unit_list])
+        max_source = max([len(str(x.source)) for x in self.__unit_list])
         for unit in self.__unit_list:
             unit.case_pad = max_case
             unit.source_pad = max_source
