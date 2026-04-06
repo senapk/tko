@@ -49,19 +49,31 @@ class FormatterUtil:
                 return ("g", Symbols.task_view)
             return ("", Symbols.task_view)
 
+        # local writeable tasks like sandbox
         if not t.is_import_type():
             if t.info.feedback:
                 return ("g", Symbols.right_triangle_filled)
             return ("", Symbols.right_triangle_filled)
         
-        if self.is_downloaded_for_lang(t):
+        if t.task_eval == Task.TaskEval.AUTO:
+            if self.is_downloaded_for_lang(t):
+                if t.info.feedback:
+                    return ("g", Symbols.diamond_filled)   # baixou e tem feedback
+                return ("", Symbols.diamond_filled)        # baixou e não tem feedback
             if t.info.feedback:
-                return ("g", Symbols.diamond_filled)
-            return ("", Symbols.diamond_filled)
-        
-        if t.info.feedback:
-            return ("r", Symbols.diamond_filled)
-        return ("", Symbols.diamond_void)
+                return ("r", Symbols.diamond_filled)       # não baixou e tem feedback
+            return ("", Symbols.diamond_void)              # não baixou e não tem feedback
+        elif t.task_eval == Task.TaskEval.USER:
+            if self.is_downloaded_for_lang(t):
+                if t.info.feedback:
+                    return ("g", Symbols.circle_filled)   # baixou e tem feedback
+                return ("", Symbols.circle_filled)        # baixou e não tem feedback
+            if t.info.feedback:
+                return ("r", Symbols.circle_filled)       # não baixou e tem feedback
+            return ("", Symbols.circle_void)              # não baixou e não tem feedback
+
+
+
 
     def get_task_path_symbol(self, t: Task) -> tuple[str, str]:
         if t.task_path == Task.TaskPath.MAIN:

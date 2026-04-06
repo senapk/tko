@@ -149,14 +149,14 @@ class RText:
         while i < len(template):
             c = template[i]
 
-            if c == "{":
-                # escape {{
-                if i + 1 < len(template) and template[i+1] == "{":
-                    buf += "{"
+            if c == "[":
+                # escape [[
+                if i + 1 < len(template) and template[i+1] == "[":
+                    buf += "["
                     i += 2
                     continue
 
-                j = template.find("}", i)
+                j = template.find("]", i)
                 if j == -1:
                     buf += c
                     i += 1
@@ -193,8 +193,8 @@ class RText:
                 i = j + 1
                 continue
 
-            elif c == "}" and i + 1 < len(template) and template[i+1] == "}":
-                buf += "}"
+            elif c == "]" and i + 1 < len(template) and template[i+1] == "]":
+                buf += "]"
                 i += 2
                 continue
 

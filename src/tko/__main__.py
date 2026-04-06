@@ -527,7 +527,10 @@ class Parser:
         parser_i = subparsers.add_parser('index', help='Index Readme file', add_help=False)
         parser_i.add_argument( "-h", "--help", action="help", help="Show help message and exit")
         parser_i.add_argument('index', type=str, help='Path to index Markdown file')
-        parser_i.add_argument("base", type=str, help="Folder with the problems")
+        parser_i.add_argument("base", type=str, help="Directory with the task problems")
+        exclusive_group = parser_i.add_mutually_exclusive_group(required=False)
+        exclusive_group.add_argument("--save", action="store_true", help="Save README.md task title's inside task problems")
+        exclusive_group.add_argument("--load", action="store_true", help="Load README.md task title's from task problems")
         parser_i.set_defaults(func=index_main)
 
         # subparser for the 'html' command
