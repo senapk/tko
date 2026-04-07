@@ -3,7 +3,6 @@
 import re
 from pathlib import Path
 import argparse
-from tabnanny import verbose
 from tko.util.decoder import Decoder
 from tko.util.rtext import RText
 
@@ -64,6 +63,7 @@ class IndexLine:
     def get_pre(self, key_pad: int) -> str:
         pre = self.pre.replace(f"@{self.get_label()}", "").replace("`", "").replace("- [ ]", "").strip()
         words = pre.split(" ")
+        words = [w for w in words if not w.startswith("@") and w != ""]
         tags = [f"{w}" for w in words if w.startswith(":")]
         others = [w for w in words if not w.startswith(":")]
         return f"`@{self.get_label():<{key_pad + 1}}{" ".join(tags)}`" + (f" {' '.join(others)} " if len(others) > 0 else "")
@@ -74,21 +74,25 @@ class IndexLine:
             edit_task_label = self.readme_file.parent.name
 
         valid_label = ""
-        line = self.pre + " " + self.title + " " + self.pos
-        if "@" not in line:
-            valid_label = edit_task_label
-        else:
-            label = line.split('@')[1]
-            valid_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-+"
-            valid_label = ""
-            for char in label:
-                if char in valid_chars:
-                    valid_label += char
-                else:
-                    break
-            if len(valid_label) == 0:
-                print("fail: error in", line)
-                raise ValueError(f"Invalid label in line: {line}")
+        # if "@" not in line:
+        valid_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-+"
+        for char in edit_task_label:
+            if char in valid_chars:
+                valid_label += char
+            else:
+                print("fail: error in", edit_task_label)
+                raise ValueError(f"Invalid label in line: {edit_task_label}")
+        # else:
+        #     label = line.split('@')[1]
+        #     valid_label = ""
+        #     for char in label:
+        #         if char in valid_chars:
+        #             valid_label += char
+        #         else:
+        #             break
+        #     if len(valid_label) == 0:
+        #         print("fail: error in", line)
+        #         raise ValueError(f"Invalid label in line: {line}")
         return valid_label
     
 class Indexer:
