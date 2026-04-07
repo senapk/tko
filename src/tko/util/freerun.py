@@ -1,4 +1,5 @@
 import signal
+from typing import Any
 
 from tko.util.text import Text
 from tko.util.raw_terminal import RawTerminal
@@ -51,7 +52,20 @@ class Free:
                 print(Text().center(RawTerminal.get_terminal_size(), Text.Token("─")))
             else:
                 print(header.center(RawTerminal.get_terminal_size(), Text.Token("─")))
-            answer = subprocess.Popen(cmd, cwd=folder, shell=True if isinstance(cmd, str) else False, text=True, preexec_fn=os.setsid)
+
+            kwargs: dict[str, Any] = {
+                "cwd": folder,
+                "shell": isinstance(cmd, str),
+                "text": True,
+            }
+
+            if sys.platform != "win32":
+                kwargs["preexec_fn"] = os.setsid
+            else:
+                kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+
+            answer = subprocess.Popen(cmd, **kwargs)
+            #answer = subprocess.Popen(cmd, cwd=folder, shell=True if isinstance(cmd, str) else False, text=True, preexec_fn=os.setsid)
             try:
                 answer.wait()
             except KeyboardInterrupt:

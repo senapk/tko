@@ -52,7 +52,7 @@ class GameBuilder:
             filename.parent.mkdir(parents=True, exist_ok=True)
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(f"# {self.source.name}\n\n")
-        fix_readme(filename.resolve(), self.source.get_source_workspace(), self.source.name, verbose=False, load_titles=True)
+        fix_readme(filename.resolve(), self.source.get_workspace(), self.source.name, verbose=False, load_titles=True)
 
 
     def collect_tasks(self) -> dict[str, Task]:

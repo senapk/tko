@@ -42,8 +42,8 @@ class RepSource:
         self.branch: str | None = None
         self.quests: dict[str, str] | None = None # none significa não ter filtro
         self.tasks: dict[str, str] | None = None
-        self.rep_local_workspace: Path | None = None   # if read-only rep, rep folder to tasks will be, join(local_workspace, alias)
-        self.rep_cache_folder: Path | None = None 
+        self.repo_local_workspace: Path | None = None   # if read-only rep, rep folder to tasks will be, join(local_workspace, alias)
+        self.repo_cache_folder: Path | None = None 
         self.git_cache = git_cache
 
     def set_git_cache(self, git_cache: GitCache):
@@ -109,7 +109,7 @@ class RepSource:
             if os.path.isabs(file):
                 return Path(file)
             else:
-                return self.get_repo_workspace() / file
+                return self.get_workspace() / file
         if self.source_type == SourceType.GIT_SOURCE:
             return self.get_source_folder() / self.index
         raise ValueError("Unknown source type")
@@ -129,29 +129,24 @@ class RepSource:
         self.tasks = tasks
         return self
     
-    def set_repo_globals(self, local_workspace: Path, cache_folder: Path):
-        self.rep_local_workspace = local_workspace
-        self.rep_cache_folder = cache_folder
+    def set_source_globals(self, root_workspace: Path, cache_folder: Path):
+        self.repo_local_workspace = root_workspace / self.name
+        self.repo_cache_folder = cache_folder
 
-    def get_repo_cache_folder(self) -> Path:
-        if self.rep_cache_folder is None:
+    def get_cache_folder(self) -> Path:
+        if self.repo_cache_folder is None:
             raise ValueError("Local cache folder is not set")
-        return self.rep_cache_folder
+        return self.repo_cache_folder
 
-    def get_repo_workspace(self) -> Path:
-        if self.rep_local_workspace is None:
+    def get_workspace(self) -> Path:
+        if self.repo_local_workspace is None:
             raise ValueError("Local workspace is not set")
-        return self.rep_local_workspace
-    
-    def get_source_workspace(self) -> Path:
-        if self.name == STUDENT_SANDBOX_NAME:
-            return self.get_repo_workspace() / self.target
-        return self.get_repo_workspace() / self.name
+        return self.repo_local_workspace
     
     def get_task_workspace(self, task_key: str) -> Path:
         if not self.is_read_only():
             raise ValueError("Source is not read-only, task workspace is the same as source workspace")
-        return self.get_source_workspace() / task_key
+        return self.get_workspace() / task_key
 
     def load_from_dict(self, data: dict[str, Any]):
         Keys = RepSource.Keys

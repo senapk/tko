@@ -138,11 +138,13 @@ class Main:
         repo, _ = Main.load_repo(args.changedir, show_warnings=True, auto_load=True, global_cache=args.global_cache, force_update=args.update)
         if repo is None:
             return
+        repo.start_watching()
         action = CmdOpen(settings, repo, args.update)
         if not args.offline:
             if not CheckVersion(settings).is_updated():
                 action.display_need_update()
         action.execute()
+        repo.stop_watching()
 
     @staticmethod
     def collect_task(args: argparse.Namespace):

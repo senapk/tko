@@ -50,7 +50,8 @@ class LogHistory:
 
     def append_new_action(self, item_base: LogItemBase) -> LogItemBase:
         now_str, now_dt = Delta.now()
-        item_base.set_timestamp(now_str, now_dt)
+        if item_base.get_datetime() == dt.datetime.fromordinal(1):
+            item_base.set_timestamp(now_str, now_dt)
         self.entries[now_dt] = item_base
         for listener in self.listeners:
             listener(item_base, True)

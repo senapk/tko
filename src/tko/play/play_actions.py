@@ -204,7 +204,7 @@ class PlayActions:
 
     def create_draft(self):
         sandbox_source = self.game.get_sandbox_source()
-        sandbox_folder: Path = sandbox_source.get_source_workspace()
+        sandbox_folder: Path = sandbox_source.get_workspace()
         sandbox_folder.mkdir(parents=True, exist_ok=True)
         
         def find_numbered_draft_id(sandbox_folder: Path) -> int:

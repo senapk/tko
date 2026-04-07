@@ -15,6 +15,7 @@ from datetime import timedelta
 from tko.settings.git_cache import GitCache
 from tko.play.flags import Flags
 from tko.logger.log_sort import LogSort
+from tko.logger.file_monitor import FileMonitor
 import os
 
 def remove_git_merge_tags(lines: list[str]) -> list[str]:
@@ -29,6 +30,17 @@ def remove_git_merge_tags(lines: list[str]) -> list[str]:
 class Repository:
     cache_time_for_remote_source = 3600 # seconds
 
+    ignore_patterns = [
+        "*.log",
+        ".git/*",
+        "*/.git*",
+        "*/.vscode/*",
+        "*/.idea/*",
+        "*/__pycache__/*",
+        "*/.pytest_cache/*",
+        "*/.venv/*",
+    ]
+
     def __init__(self, folder: Path, update_mode: GitCache.UpdateMode = GitCache.UpdateMode.IF_OLDER, recursive_search: bool = True):
         rep_folder: Path = folder
         if recursive_search:
@@ -40,7 +52,8 @@ class Repository:
         self.data: RepData = RepData(self.git_cache)
         self.game = Game()
         self.flags = Flags()
-        self.logger: Logger = Logger(rep_folder) 
+        self.logger: Logger = Logger(rep_folder)
+        self.watcher: FileMonitor | None = None
 
     def set_global_cache(self):
         RepPaths.use_global_cache_folder = True
@@ -123,13 +136,32 @@ class Repository:
         self.data.load_from_dict(local_data)
         self.flags.from_dict(self.data.get_flags())
         for source in self.data.get_sources():
-            source.set_repo_globals(self.paths.get_workspace_dir(), self.paths.get_cache_folder())
+            source.set_source_globals(self.paths.get_workspace_dir(), self.paths.get_cache_folder())
 
+        return self
+
+    def start_watching(self):
+        if self.watcher is not None:
+            return self
+        self.watcher = FileMonitor(
+            root_directory=self.paths.get_workspace_dir(),
+            sources_dir_list={source.get_workspace(): source.name for source in self.data.get_sources()},
+            ignore_patterns=self.ignore_patterns,
+            second_interval=300,
+            logger=self.logger
+        )
+        self.watcher.init()
+        return self
+    
+    def stop_watching(self):
+        if self.watcher is not None:
+            self.watcher.stop()
+            self.watcher = None
         return self
 
     def get_student_sandbox(self) -> RepSource:
         source = RepSource("", git_cache=self.git_cache).set_student_sandbox()
-        source.set_repo_globals(self.paths.get_workspace_dir(), self.paths.get_cache_folder())
+        source.set_source_globals(self.paths.get_workspace_dir(), self.paths.get_cache_folder())
         return source
 
 
