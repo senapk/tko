@@ -39,6 +39,8 @@ class TaskParser:
     def decode_task_types(self, info: str):
         if self.task is None:
             return
+        self.task.task_loss = Task.TaskLoss.NULL
+        self.task.task_test = Task.TaskTest.NULL
         for tag in info.split(":"):
             # if c is digit, set xp
             if tag.isdigit():
