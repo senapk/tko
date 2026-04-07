@@ -48,6 +48,7 @@ class IndexLine:
         self.title = title
         key = self.readme_file.parent.name
         self.pre = f"@{key}"
+        self.isTask = True
         return self
 
     def get_raw_line(self) -> str:
@@ -187,11 +188,10 @@ class Indexer:
         if found_index == -1:
             quest_lines.append([IndexLine(index_path=self.index_path, base_dir=self.base_dir).init_by_line(f"## {default_quest_name}")])
             found_index = len(quest_lines) - 1
-            if self.missing_entries and self.verbose:
+        if self.missing_entries:
+            if self.verbose:
                 print(f"Found {len(self.missing_entries)} missing hooks, adding to quest '{default_quest_name}':")
-            for m, line in self.missing_entries.items():
-                if self.verbose:
-                    print(m)
+            for _, line in self.missing_entries.items():
                 quest_lines[found_index].append(line)
         return quest_lines
 
@@ -202,7 +202,6 @@ class Indexer:
                 if line.isTask:
                     keys.append(line.get_label())
         key_pad = max([len(k) for k in keys]) if len(keys) > 0 else 0
-        # print(f"Writing file with key padding: {key_pad}")
 
         with open(self.index_path, "w", encoding="utf-8") as f:
             for q in quest_lines:

@@ -104,17 +104,11 @@ class RepSource:
         return self.source_type == SourceType.LOCAL_FILE
 
     def get_source_readme(self) -> Path:
-        if self.source_type == SourceType.LOCAL_FILE:
-            file: str = os.path.join(self.target, self.index)
-            if os.path.isabs(file):
-                return Path(file)
-            else:
-                return self.get_workspace() / file
-        if self.source_type == SourceType.GIT_SOURCE:
-            return self.get_source_folder() / self.index
-        raise ValueError("Unknown source type")
+        return self.get_source_folder() / self.index
     
     def get_source_folder(self) -> Path:
+        if self.is_sandbox_source():
+            return self.get_workspace()
         if self.source_type == SourceType.LOCAL_FILE:
             return Path(self.target)
         if self.source_type == SourceType.GIT_SOURCE:

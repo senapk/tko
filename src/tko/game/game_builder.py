@@ -52,6 +52,8 @@ class GameBuilder:
             filename.parent.mkdir(parents=True, exist_ok=True)
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(f"# {self.source.name}\n\n")
+        # with open("/home/sena/debug.txt", "a", encoding="utf-8") as f:
+        #     f.write(f"filename: {filename}, workspace: {self.source.get_workspace()}, source: {self.source.name}\n")
         fix_readme(filename.resolve(), self.source.get_workspace(), self.source.name, verbose=False, load_titles=True)
 
 
