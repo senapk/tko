@@ -266,7 +266,7 @@ class TreeRenderer:
             output = output.slice(0, self.layout.sentence_cut_size - 1).add("…")
         else:
             output.ljust(self.layout.sentence_cut_size, Text.Token(" ", focus_color))
-        output.add(Symbols.left_triangle_filled if focused else " ")
+        output.add(" ")
 
         if self.flags.show_time.is_true():
             h, m = self.fmt_util.get_task_hours_minutes(t)
@@ -278,10 +278,7 @@ class TreeRenderer:
 
     def render_quest(self, q: Quest, focused: bool) -> Text:
         color = "g" if q.is_reachable() else "y"
-        # output = Text().addf(color, "━━ ")
         output = Text().add(" ").addf(color, q.ligature)
-        # output.add(self.fmt_util.format_percent_2s(q.get_percent(True, False))).add("|")
-        # output.add(self.fmt_util.format_percent_2s(q.get_percent(False, True)))
         done, total = q.get_completion()
         output.add(f" {done:02}/{total:02}")
 
@@ -310,7 +307,7 @@ class TreeRenderer:
             output = output.slice(0, self.layout.sentence_cut_size - 1).add("…")
         else:
             output.ljust(self.layout.sentence_cut_size, Text.Token(self.filler, color))
-        output.add(Symbols.left_triangle_filled if focused else " ")
+        output.add(" ")
         if self.flags.show_time.is_true():
             h, m = self.fmt_util.get_quest_time(q)
             output.add(self.fmt_util.format_hours_minutes("g", h, m))
@@ -444,7 +441,7 @@ class TaskTree:
         # self.lines: list[Text] = []
 
     def recalculate_layout(self):
-        self.layout.reset()
+        self.layout.reset
 
     def save_state(self):
         self.repository.save_state(self.state)

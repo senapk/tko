@@ -44,18 +44,11 @@ class FormatterUtil:
         return False
 
     def get_task_down_symbol(self, t: Task) -> tuple[str, str]:
+        if t.task_mode == Task.TaskEdit.VIEW:
+            if t.info.feedback:
+                return ("g", Symbols.task_view)
+            return ("", Symbols.task_view)
 
-        # local writeable tasks like sandbox
-        if not t.is_import_type():
-            if t.task_test == Task.TaskTest.TEST:
-                if t.info.feedback:
-                    return ("g", Symbols.right_triangle_filled)
-                return ("", Symbols.right_triangle_filled)
-            else:
-                if t.info.feedback:
-                    return ("g", Symbols.left_triangle_filled)
-                return ("", Symbols.left_triangle_filled)
-        
         if t.task_test == Task.TaskTest.TEST:
             if self.is_downloaded_for_lang(t):
                 if t.info.feedback:
@@ -72,32 +65,23 @@ class FormatterUtil:
             if t.info.feedback:
                 return ("r", Symbols.square_filled)       # não baixou e tem feedback
             return ("", Symbols.square_void)              # não baixou e não tem feedback
+        return ("x", "x")
 
-        # if t.is_link():
-        if t.info.feedback:
-            return ("g", Symbols.task_view)
-        return ("", Symbols.task_view)
 
     def get_task_path_symbol(self, t: Task) -> tuple[str, str]:
         if t.task_path == Task.TaskMain.MAIN:
-            return ("y", Symbols.star_filled)
-        return ("", Symbols.star_void)
+            return ("y", Symbols.mark_filled)
+        return ("", Symbols.mark_void)
+
 
     def get_task_help_symbol(self, t: Task) -> tuple[str, str]:
         if t.task_loss == Task.TaskLoss.FREE:
-            return ("g", Symbols.focus)
+            return ("g", "⌖")
         if t.task_loss == Task.TaskLoss.PART:
-            return ("y", Symbols.task_reload)
+            return ("y", "±")
         if t.task_loss == Task.TaskLoss.ZERO:
-            return ("r", Symbols.task_zero)
+            return ("r", "x")
         return ("", "")
-
-    def get_task_mode_symbol(self, t: Task) -> tuple[str, str]:
-        if t.task_mode == Task.TaskEdit.VIEW:
-            return ("c", Symbols.task_view)
-        if t.task_mode == Task.TaskEdit.EDIT:
-            return ("c", Symbols.task_edit)
-        return ("", Symbols.task_edit)
 
     def format_percent_1s(self, value: float) -> Text:
         prog = value

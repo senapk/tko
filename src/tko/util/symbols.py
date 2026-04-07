@@ -9,6 +9,7 @@ class Symbols:
     right_triangle_void: str = "▷"
     left_triangle_filled: str = "◀"
     left_triangle_void: str = "◁"
+    bar_thick: str = "<"
     neutral: str = "»"
     success: str = "✓"
     failure: str = "✗"

@@ -264,7 +264,6 @@ class PlayActions:
             self.reload_game()
             self.fman.add_input( Floating().bottom().right()
                                 .put_text(f"Rascunho criado em {folder}")
-                                .put_text(f"Aperte {GuiKeys.reload_game} para recarregar as tarefas")
                                 .set_warning())
 
         current_folders_on_rep: list[str] = [f"@{folder.name}" for folder in sandbox_folder.iterdir() if folder.is_dir()]
