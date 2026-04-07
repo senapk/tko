@@ -67,10 +67,11 @@ class PlayActions:
         folder = task.get_workspace_folder()
         if folder is None:
             return Path("")
-        return folder
+        return folder.resolve()
 
     def reload_game(self):
         self.repo.load_game(silent=True)
+        self.tree.recalculate_layout()
 
     def delete_folder_ask(self):
         def delete_folder(text: str):

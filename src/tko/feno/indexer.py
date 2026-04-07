@@ -3,6 +3,7 @@
 import re
 from pathlib import Path
 import argparse
+from tabnanny import verbose
 from tko.util.decoder import Decoder
 from tko.util.rtext import RText
 
@@ -131,8 +132,8 @@ class Indexer:
             file_line = IndexLine(index_path=self.index_path, base_dir=self.base_dir).init_by_line(line)
             if file_line.isTask:
                 if not file_line.readme_file.exists():
-                    print(file_line.readme_file)
-                    # print(f"Warning: folder {file_line.readme_file} does not exist, removing line: {line}")
+                    if self.verbose:
+                        print(RText.parse(f"Warning: README file '[y]{file_line.readme_file}[.]' does not exist for task:[b]{file_line.get_label()}[.], removing from index"))
                     continue
             index_lines.append(file_line)
         self.index_lines = index_lines

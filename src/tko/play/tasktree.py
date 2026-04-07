@@ -23,6 +23,10 @@ class TreeLayout:
         self.key_size: int = 0
         self.sentence_cut_size: int = 0 # 0 if not calculated yet
 
+    def reset(self):
+        self.key_size = 0
+        self.sentence_cut_size = 0
+
     def calculate(self, game: Game, flags: Flags, expanded: set[str]):
         if self.sentence_cut_size != 0:
             return
@@ -438,6 +442,9 @@ class TaskTree:
 
         self.items: list[TreeItem] = []
         # self.lines: list[Text] = []
+
+    def recalculate_layout(self):
+        self.layout.reset()
 
     def save_state(self):
         self.repository.save_state(self.state)

@@ -124,7 +124,10 @@ class RepSource:
         return self
     
     def set_source_globals(self, root_workspace: Path, cache_folder: Path):
-        self.repo_local_workspace = root_workspace / self.name
+        if self.is_sandbox_source():
+            self.repo_local_workspace = root_workspace / self.target
+        else:
+            self.repo_local_workspace = root_workspace / self.name
         self.repo_cache_folder = cache_folder
 
     def get_cache_folder(self) -> Path:
