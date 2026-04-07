@@ -70,8 +70,8 @@ class FormatterUtil:
 
     def get_task_path_symbol(self, t: Task) -> tuple[str, str]:
         if t.task_path == Task.TaskMain.MAIN:
-            return ("y", Symbols.mark_filled)
-        return ("", Symbols.mark_void)
+            return ("y", Symbols.star_filled)
+        return ("", Symbols.star_void)
 
 
     def get_task_help_symbol(self, t: Task) -> tuple[str, str]:

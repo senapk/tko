@@ -65,7 +65,7 @@ class Quest(TreeItem):
         return output
 
     def is_complete(self):
-        value = self.get_percent_main()
+        value = self.get_percent(include_main=True, include_side=True)
         return value is None or value >= self.min_percent_completion
 
     def add_task(self, task: Task):
@@ -103,8 +103,16 @@ class Quest(TreeItem):
         return done, total
 
     def get_percent(self, include_main: bool, include_side: bool) -> float | None:
-        obtained, total = self.get_xp(include_main=include_main, include_side=include_side)
-        return QuestGrader.get_percent(obtained, total)
+        if not include_main and not include_side:
+            return None
+        main_obt, main_total = self.get_xp(include_main=include_main, include_side=False)
+        side_obt, side_total = self.get_xp(include_main=False, include_side=include_side)
+        if include_main and include_side:
+            return QuestGrader.get_percent(main_obt + side_obt, main_total)
+        if include_main:
+            return QuestGrader.get_percent(main_obt, main_total)
+        if include_side:
+            return QuestGrader.get_percent(side_obt, side_total)
 
     def get_percent_main(self) -> float | None:
         return self.get_percent(include_main=True, include_side=False)

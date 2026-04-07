@@ -50,6 +50,10 @@ class QuestParser:
                     self.quest.skills[k] = int(v)
                 except ValueError:
                     self.quest.skills[s] = 1  # default value is 1 if not specified
+        if len(self.quest.skills) == 0:
+            self.quest.skills = {
+                self.quest.get_key(): 1
+            }
 
         # languages
         languages = [t[1:] for t in words if t[0] == "="]
