@@ -110,6 +110,7 @@ class RepSourceActions:
             remote_default: str | None, 
             remote_url: str | None, 
             remote_dir: str | None, 
+            index: str | None,
             filter_quest: list[str] | None, 
             filter_task: list[str] | None, 
             filter_to: str | None,
@@ -121,7 +122,7 @@ class RepSourceActions:
 
         repo = self.repo
         if remote_default is not None:
-            print(Text.format("Adicionando fonte remota apontando para repositório git remoto {y}.", remote_default))
+            print(Text.format("Adicionando fonte remota apontando para repositório git remoto {y}", remote_default))
             url: str = ""
             settings = self.settings
             if not settings.has_alias_git(remote_default):
@@ -131,22 +132,25 @@ class RepSourceActions:
             self.repo.data.set_source(RepSource(alias=name, git_cache=self.repo.git_cache)
                                       .set_git_source(target=url, branch=branch)
                                       .set_filters(self.fix_filter(filter_quest, filter_to), self.fix_filter(filter_task, filter_to))
+                                      .set_index(index)
                                       .set_writeable(writeable))
         elif remote_dir is not None:
             dir_path = Path(remote_dir)
             if not dir_path.exists() or not dir_path.is_dir():
                 raise Warning("fail: diretório remoto não encontrado.")
-            print(Text.format("Adicionando fonte remota apontando parao repositório no diretorio {y}.", dir_path))
+            print(Text.format("Adicionando fonte remota apontando parao repositório no diretorio {y}", dir_path))
             repo.data.set_source(RepSource(alias=name, git_cache=self.repo.git_cache)
                                  .set_local_source(target=dir_path)
                                  .set_filters(quests=self.fix_filter(filter_quest, filter_to), tasks=self.fix_filter(filter_task, filter_to))
+                                 .set_index(index)
                                  .set_writeable(writeable))
         elif remote_url is not None:
-            print(Text.format("Adicionando fonte remota apontando para repositório git remoto {y}.", remote_url))
+            print(Text.format("Adicionando fonte remota apontando para repositório git remoto {y}", remote_url))
             self.git_clone_repository(remote_url)
             self.repo.data.set_source(RepSource(alias=name, git_cache=self.repo.git_cache)
                                        .set_git_source(target=remote_url, branch=branch)
                                        .set_filters(self.fix_filter(filter_quest, filter_to), self.fix_filter(filter_task, filter_to))
+                                       .set_index(index)
                                        .set_writeable(writeable))
 
         self.repo.save_config()

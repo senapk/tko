@@ -17,8 +17,8 @@ class GameValidator:
         for q in self.quests.values():
             for t in q.get_tasks():
                 if t.get_full_key() in keys:
-                    print(f"Chave repetida: {t.get_full_key()} em {t.line_number} {t.line}")
-                    exit(1)
+                    print(f"Chave repetida: {t.get_full_key()} em {t.line_number} {t.line}, ignorando tarefa")
+                    continue
                 keys.append(t.get_full_key())
                 self.tasks[t.get_full_key()] = t
 

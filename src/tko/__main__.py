@@ -216,6 +216,7 @@ class Main:
                 branch=git_branch, 
                 remote_url=git_repository_url, 
                 remote_dir=local_source_dir, 
+                index=args.index,
                 filter_quest=quest_filter, 
                 filter_task=task_filter,
                 filter_to=args.to,
@@ -467,11 +468,11 @@ class Parser:
         source_add = sub_source.add_parser("add", help="Add a new task source", add_help=False)
         source_add.add_argument( "-h", "--help", action="help", help="Show help message and exit" )
         source_add.add_argument('name', type=str, help='Name of the remote')
-        source_add.add_argument('target', type=str, metavar=('TARGET'), help='Remote source: git URL, local directory or preset name (e.g. +fup, +ed, +poo)')
+        source_add.add_argument('target', type=str, metavar=('TARGET'), help='Remote source: git URL, local directory or preset name (e.g. @fup, @ed, @poo)')
         source_add.add_argument('-q', '--quest', action='append', metavar=('QUEST_ID'), type=str, help='Load all tasks only from selected quests')
         source_add.add_argument('-t', '--to', type=str, help='Quest destination for filtered tasks added with this source')
         source_add.add_argument('-s', '--setup', metavar=('JSON'), type=str, help='SETUP JSON string to configure the remote source')
-        
+        source_add.add_argument('-i', '--index', type=str, help='Set a custom index relative do repo dir, default is README.md')
         source_add.add_argument('-b', '--branch', type=str, default='master', help='Branch name for git remote sources')
         source_add.add_argument('-w', '--write', action='store_true', help='Allow modifications for local directory remotes (default: readonly)')
         source_add.set_defaults(func=Main.remote_add)

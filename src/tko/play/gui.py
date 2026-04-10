@@ -107,7 +107,7 @@ class Gui:
             top = Text.format(" {} ", self.repo.data.lang.upper())
         frame.set_header(top, "<", prefix="{", suffix="}")
         
-        dirname: Path = self.repo.paths.get_workspace_dir()
+        dirname: Path = self.repo.paths.get_repo_root_dir()
         dirname_str = dirname.name.upper()
         
         text = Text.format(" {} ", dirname_str)
@@ -302,7 +302,7 @@ class Gui:
 
         help_lines.append(Text().addf("g", " Símbolos ").center(dx, Text.Token("-")))
         help_lines.append(Text.format(" {y} Tarefa sugeridas, {} Tarefa opcional", Symbols.star_filled, Symbols.star_void))
-        help_lines.append(Text.format(" {g} Estudo/Consulta, {y} Escrever e refazer, {r} Fazer sem consulta", Symbols.focus, Symbols.task_reload, Symbols.task_zero))
+        help_lines.append(Text.format(" {g} Estudo/Consulta, {y} Escrever e refazer, {r} Fazer sem consulta", Symbols.loss_free, Symbols.loss_part, Symbols.loss_zero))
         help_lines.append(Text.format(" {g}{g}{g} Fez Autoavaliação       , {}{}{} Sem Autoavaliação", 
                                       Symbols.diamond_filled, Symbols.circle_filled, Symbols.task_view,
                                       Symbols.diamond_void, Symbols.circle_void, Symbols.task_view))

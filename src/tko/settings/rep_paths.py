@@ -70,7 +70,7 @@ class RepPaths:
     def get_old_history_file(self) -> Path:
         return self.root_dir / RepPaths.CONFIG_FOLDER / RepPaths.OLD_HISTORY_FILE
 
-    def get_workspace_dir(self) -> Path:
+    def get_repo_root_dir(self) -> Path:
         return self.root_dir
 
     def has_local_config_file(self) -> bool:

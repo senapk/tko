@@ -6,8 +6,6 @@ from icecream import ic # type: ignore
 from tko.play.FormatterUtil import FormatterUtil
 from tko.play.floating_grade import FloatingGrade
 from tko.play.floating_input_text import FloatingInputText
-from tko.play.keys import GuiKeys
-from tko.play.keys import GuiKeys
 from tko.play.tracker import Tracker
 from tko.util.text import Text
 from tko.cmds.cmd_down import CmdDown
@@ -376,11 +374,16 @@ class PlayActions:
         run.build_wdir()
         
         if not run.wdir.has_solver():
-            lang = self.repo.data.get_lang()
-            draft_folder = folder / lang
-            draft_path = DownActions(self.settings).create_default_draft(draft_folder, self.repo.data.get_lang())
+            # lang = self.repo.data.get_lang()
+            # draft_folder = CmdDown.get_default_source_folder(task_dir) / lang
+            cmd = CmdDown(self.repo, task.get_full_key(), self.settings)
+            # def discart(_: str):
+            #     pass
+            # cmd.set_fnprint(discart)
+            cmd.execute()
             msg =  Floating().bottom().right().set_warning()
             msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.repo.data.get_lang()))
-            msg.put_text("\nUm arquivo de rascunho vazio foi criado em\n {} ".format(draft_path))
+            msg.put_text("\nUm arquivo de rascunho foi criado\n")
             self.fman.add_input(msg)
-        run.execute()
+        else:
+            run.execute()

@@ -1,6 +1,7 @@
 from pathlib import Path
 import argparse
 import shutil
+from tko.util.rtext import RText
 from tko.util.decoder import Decoder
 from typing import Any
 
@@ -117,13 +118,13 @@ def clean_com(target: Path, content: str) -> str:
     return "\n".join(output)
 
 class Action:
-    DISABLED = 0 # filtrado e completamente removido
-    FILTERED = 1 # filtrado
-    ORIGINAL = 2 # nenhuma marcação de filtragem
-    COMCLEAN = 3 # comando de limpar comentários
+    DISABLED = "disabled" # filtrado e completamente removido
+    FILTERED = "filtered" # filtrado
+    ORIGINAL = "original" # nenhuma marcação de filtragem
+    COMCLEAN = "comclean" # comando de limpar comentários
 
-    def __init__(self, action: int, content: str):
-        self.action: int = action
+    def __init__(self, action: str, content: str):
+        self.name: str = action
         self.content: str = content
 
 class DeepFilter:
@@ -206,22 +207,35 @@ class DeepFilter:
                 action_map[destiny] = Action(Action.FILTERED, processed)
             else:
                 line += "(original): "
-                action_map[destiny] = Action(Action.ORIGINAL, "")
+                action_map[destiny] = Action(Action.ORIGINAL, content)
         line += f"{destiny}"
 
-        self.print(line)
+        # self.print(line)
 
     def deploy_actions(self, actions: dict[Path, Action]):
+        folder_actions: dict[Path, list[tuple[Path, Action]]] = {}
+        for path, action in actions.items():
+            parent = path.parent
+            if parent not in folder_actions:
+                folder_actions[parent] = []
+            folder_actions[parent].append((path, action))
+
+        for _, action_list in folder_actions.items():
+            self.__deploy_actions(action_list)
+
+    def __deploy_actions(self, actions: list[tuple[Path, Action]]):
         run_actions = False
-        for _, action in actions.items():
-            if action.action in [Action.FILTERED, Action.COMCLEAN]:
+        for path, action in actions:
+            print(RText.parse(f"action: [y]{action.name}[.], path: {path.relative_to(Path().resolve(), walk_up=True)}"))
+            if action.name in [Action.FILTERED, Action.COMCLEAN]:
                 run_actions = True
                 break
         if not run_actions:
-            print("Nenhuma filtragem encontrada, nenhuma ação tomada.")
+            dir = actions[0][0].parent.relative_to(Path().resolve())
+            print(RText.parse(f"Nenhuma filtragem encontrada para a pasta [y]{dir}[.], nenhuma ação tomada."))
             return
-        for path, action in actions.items():
-            if action.action in [Action.FILTERED, Action.COMCLEAN, Action.ORIGINAL]:
+        for path, action in actions:
+            if action.name in [Action.FILTERED, Action.COMCLEAN, Action.ORIGINAL]:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 with open(path, "w") as f:
                     f.write(action.content) 

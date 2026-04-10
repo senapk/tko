@@ -65,7 +65,7 @@ class Repository:
         return self.paths.get_config_file().exists()
 
     def is_inside_repo(self, path: Path) -> bool:
-        rep_dir = self.paths.get_workspace_dir()
+        rep_dir = self.paths.get_repo_root_dir()
         path = path.resolve()
         return path.is_relative_to(rep_dir)
 
@@ -136,7 +136,7 @@ class Repository:
         self.data.load_from_dict(local_data)
         self.flags.from_dict(self.data.get_flags())
         for source in self.data.get_sources():
-            source.set_source_globals(self.paths.get_workspace_dir(), self.paths.get_cache_folder())
+            source.set_source_globals(self.paths.get_repo_root_dir(), self.paths.get_cache_folder())
 
         return self
 
@@ -144,7 +144,7 @@ class Repository:
         if self.watcher is not None:
             return self
         self.watcher = FileMonitor(
-            root_directory=self.paths.get_workspace_dir(),
+            root_directory=self.paths.get_repo_root_dir(),
             sources_dir_list={source.get_workspace(): source.name for source in self.data.get_sources()},
             ignore_patterns=self.ignore_patterns,
             second_interval=300,
@@ -159,11 +159,10 @@ class Repository:
             self.watcher = None
         return self
 
-    def get_student_sandbox(self) -> RepSource:
-        source = RepSource("", git_cache=self.git_cache).set_student_sandbox()
-        source.set_source_globals(self.paths.get_workspace_dir(), self.paths.get_cache_folder())
+    def create_default_sandbox_source(self) -> RepSource:
+        source = RepSource("", git_cache=self.git_cache).set_default_student_sandbox()
+        source.set_source_globals(self.paths.get_repo_root_dir(), self.paths.get_cache_folder())
         return source
-
 
     def save_config(self):
         self.data.version = "0.2"
@@ -175,7 +174,6 @@ class Repository:
 
     def __str__(self) -> str:
         return f"data: {self.data}\n"
-        
 
 def atomic_write_yaml(path: Path, data: dict[str, Any]) -> None:
     tmp: Path = path.with_suffix(path.suffix + ".tmp")

@@ -70,7 +70,7 @@ class RepStarter:
         return Repository(self.folder)
     
     def create_empty_rep(self):
-        source = self.repo.get_student_sandbox()
+        source = self.repo.create_default_sandbox_source()
         self.repo.data.set_source(source)
         folder = source.get_workspace()
         print(f"Criando repositório vazio, utilizando a pasta {folder} como pasta para atividades locais")

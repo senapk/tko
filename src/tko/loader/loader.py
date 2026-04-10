@@ -26,11 +26,10 @@ class Loader:
         data_list = parser.parse_toml(text, source)
         output: list[Unit] = []
         for m in data_list:
-            case = m.get("label", "")
-            inp = m["input"]
-            outp = m["output"]
-            grade = m.get("grade_reduction", None)
-            output.append(Unit(case, inp, outp, grade, source))
+            case = m.label
+            inp = m.input
+            outp = m.output
+            output.append(Unit(case, inp, outp, None, source))
         return output
 
     @staticmethod

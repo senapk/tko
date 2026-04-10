@@ -6,7 +6,7 @@ class Decoder:
     @staticmethod
 
 
-    def load(file_path: str | Path) -> str:
+    def load(file_path: str | Path, normalize_endl: bool = True) -> str:
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 value = f.read().replace("\r\n", "\n")
@@ -14,6 +14,8 @@ class Decoder:
             with open(file_path, "r", encoding="latin-1") as f:
                 value = f.read().replace("\r\n", "\n")
         value =  unicodedata.normalize("NFC", value)
+        if normalize_endl and value != "" and value[-1] != "\n":
+            return value + "\n"
         return value
 
     @staticmethod

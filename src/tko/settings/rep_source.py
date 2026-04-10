@@ -12,6 +12,8 @@ class SourceType(Enum):
 
 
 STUDENT_SANDBOX_NAME: str = "sandbox"
+STUDENT_SANDBOX_TARGET: str = "base"
+STUDENT_SANDBOX_INDEX: str = "../README.md"
 
 class RepSource:
     class Keys:
@@ -50,18 +52,20 @@ class RepSource:
         self.git_cache = git_cache
         return self
 
-    def set_local_source(self, target: Path, writeable: bool = False):
+    def set_local_source(self, target: Path, writeable: bool = False, index: str | None = None):
         self.source_type = SourceType.LOCAL_FILE
         self.target = str(target)
         self.writeable = writeable
+        if index is not None:
+            self.index = index
         return self
     
     def is_sandbox_source(self) -> bool:
         return self.name == STUDENT_SANDBOX_NAME
     
-    def set_student_sandbox(self):
+    def set_default_student_sandbox(self):
         self.name = STUDENT_SANDBOX_NAME
-        self.set_local_source(target=Path(STUDENT_SANDBOX_NAME), writeable=True)
+        self.set_local_source(target=Path(STUDENT_SANDBOX_TARGET), writeable=True, index=STUDENT_SANDBOX_INDEX)
         return self
         
     def get_filters(self) -> tuple[dict[str, str] | None, dict[str, str] | None]:
@@ -123,6 +127,10 @@ class RepSource:
         self.tasks = tasks
         return self
     
+    def set_index(self, index: str | None):
+        self.index = index if index is not None else "README.md"
+        return self
+
     def set_source_globals(self, root_workspace: Path, cache_folder: Path):
         if self.is_sandbox_source():
             self.repo_local_workspace = root_workspace / self.target

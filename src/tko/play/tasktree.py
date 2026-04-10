@@ -281,20 +281,8 @@ class TreeRenderer:
         output = Text().add(" ").addf(color, q.ligature)
         done, total = q.get_completion()
         output.add(f" {done:02}/{total:02}")
-
-        percent = Text()
-        obtainedm, totalm = q.get_xp(include_main=True, include_side=False)
-        obtaineds, totals = q.get_xp(include_main=False, include_side=True)
-        if totalm > 0:
-            percent.addf("g", self.fmt_util.format_percent_3s(((obtainedm + obtaineds) / totalm) * 100))
-            output.add(" ").addf('y', Symbols.star_filled)
-        elif totals > 0:
-            percent.addf("g", self.fmt_util.format_percent_3s((obtaineds / totals) * 100))
-            output.add(" ").addf(' ', Symbols.star_void)
-        else:
-            percent.addf("g", "----")
-            output.add(" ").addf(' ', Symbols.star_void)
-        output.add(" ")
+        star_symbol, percent = self.fmt_util.get_start_symbols_and_percent_quest(q)
+        output.add(" ").add(star_symbol).add(" ")
 
         color = q.is_requirement_color
 

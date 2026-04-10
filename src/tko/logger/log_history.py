@@ -32,7 +32,7 @@ class LogHistory:
 
     def __load_old_log(self) -> dict[dt.datetime, LogItemBase]:
         self.old_log_file = self.paths.get_old_history_file()
-        loader = OldLogLoader(self.paths.get_workspace_dir())
+        loader = OldLogLoader(self.paths.get_repo_root_dir())
         return loader.base_dict
 
     def get_entries(self) -> dict[dt.datetime, LogItemBase]:

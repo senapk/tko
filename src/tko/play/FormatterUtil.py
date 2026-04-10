@@ -13,6 +13,13 @@ class FormatterUtil:
         self.repo = repo
         self.cache_task_times: dict[str, tuple[int, int]] = {}
 
+
+    def is_downloaded(self, task: Task):
+        folder = task.get_workspace_folder()
+        if folder is None:
+            return False
+        return folder.exists()
+
     def is_downloaded_for_lang(self, task: Task):
         folder = task.get_workspace_folder()
         if folder is None:
@@ -34,6 +41,22 @@ class FormatterUtil:
                 hidden += 1
         return visible, hidden
 
+    def get_start_symbols_and_percent_quest(self, q: Quest) -> tuple[str, Text]:
+        symbol = ""
+        percent = Text()
+        obtainedm, totalm = q.get_xp(include_main=True, include_side=False)
+        obtaineds, totals = q.get_xp(include_main=False, include_side=True)
+        if totalm > 0:
+            percent.addf("g", self.format_percent_3s(((obtainedm + obtaineds) / totalm) * 100))
+            symbol = Symbols.star_filled
+        elif totals > 0:
+            percent.addf("g", self.format_percent_3s((obtaineds / totals) * 100))
+            symbol = Symbols.star_void
+        else:
+            percent.addf("g", "----")
+            symbol = Symbols.star_void
+        return symbol, percent
+
     def is_visible_task(self, quest: Quest, task: Task) -> bool:
         if self.repo.flags.task_view_mode.is_all():
             return True
@@ -48,39 +71,49 @@ class FormatterUtil:
             if t.info.feedback:
                 return ("g", Symbols.task_view)
             return ("", Symbols.task_view)
-
         if t.task_test == Task.TaskTest.TEST:
             if self.is_downloaded_for_lang(t):
                 if t.info.feedback:
                     return ("g", Symbols.diamond_filled)   # baixou e tem feedback
                 return ("", Symbols.diamond_filled)        # baixou e não tem feedback
-            if t.info.feedback:
-                return ("r", Symbols.diamond_filled)       # não baixou e tem feedback
-            return ("", Symbols.diamond_void)              # não baixou e não tem feedback
+            elif self.is_downloaded(t):
+                if t.info.feedback:
+                    return ("r", Symbols.diamond_void)   # baixou e tem feedback
+                return ("y", Symbols.diamond_void)        # baixou e não tem feedback
+            else:
+                if t.info.feedback:
+                    return ("r", Symbols.diamond_void)       # não baixou e tem feedback
+                return ("", Symbols.diamond_void)              # não baixou e não tem feedback
         elif t.task_test == Task.TaskTest.SELF:
             if self.is_downloaded_for_lang(t):
                 if t.info.feedback:
                     return ("g", Symbols.square_filled)   # baixou e tem feedback
                 return ("", Symbols.square_filled)        # baixou e não tem feedback
-            if t.info.feedback:
-                return ("r", Symbols.square_filled)       # não baixou e tem feedback
-            return ("", Symbols.square_void)              # não baixou e não tem feedback
+            elif self.is_downloaded(t):
+                if t.info.feedback:
+                    return ("r", Symbols.square_void)   # baixou e tem feedback
+                return ("y", Symbols.square_void)        # baixou e não tem feedback
+            else:
+                if t.info.feedback:
+                    return ("r", Symbols.square_void)       # não baixou e tem feedback
+                return ("", Symbols.square_void)              # não baixou e não tem feedback
         return ("x", "x")
 
 
     def get_task_path_symbol(self, t: Task) -> tuple[str, str]:
+        color = "y" if t.is_import_type() else "m"
         if t.task_path == Task.TaskMain.MAIN:
-            return ("y", Symbols.star_filled)
-        return ("", Symbols.star_void)
+            return (color, Symbols.star_filled)
+        return (color, Symbols.star_void)
 
 
     def get_task_help_symbol(self, t: Task) -> tuple[str, str]:
         if t.task_loss == Task.TaskLoss.FREE:
-            return ("g", "⌖")
+            return ("g", Symbols.loss_free)
         if t.task_loss == Task.TaskLoss.PART:
-            return ("y", "±")
+            return ("y", Symbols.loss_part)
         if t.task_loss == Task.TaskLoss.ZERO:
-            return ("r", "x")
+            return ("r", Symbols.loss_zero)
         return ("", "")
 
     def format_percent_1s(self, value: float) -> Text:

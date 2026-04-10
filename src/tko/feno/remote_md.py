@@ -4,6 +4,7 @@ import configparser
 import argparse
 from tko.util.decoder import Decoder
 from tko.util.text import Text
+from pathlib import Path
 
 class RemoteLink:
     def __init__(self):
@@ -149,8 +150,8 @@ class Absolute:
         return Absolute.__replace_remote(content, remote_raw, remote_view, remote_folder, is_local = False)
 
     @staticmethod
-    def change_to_relative_folder(content: str, relative_folder: str):
-        folder = relative_folder
+    def change_to_relative_folder(content: str, relative_folder: Path):
+        folder = str(relative_folder)
         return Absolute.__replace_remote(content, folder, folder, folder, is_local = True)
 
     @staticmethod

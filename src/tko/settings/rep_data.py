@@ -33,7 +33,7 @@ class RepData:
     def __ensure_sandbox_source(self) -> None:
         sandbox_source = self.get_source(STUDENT_SANDBOX_NAME)
         if sandbox_source is None:
-            sandbox_source = RepSource(STUDENT_SANDBOX_NAME, git_cache=None).set_student_sandbox()
+            sandbox_source = RepSource(STUDENT_SANDBOX_NAME, git_cache=None).set_default_student_sandbox()
             self.set_source(sandbox_source)
             # readme = sandbox_source.get_source_readme()
             # if not readme.exists():

@@ -3,6 +3,7 @@ import os
 from tko.util.identifier import Identifier
 from tko.util.pattern_loader import PatternLoader
 from tko.enums.identifier_type import IdentifierType
+from tko.loader.toml_parser import TomlParser
 from tko.run.unit import Unit
 from tko.util.decoder import Decoder
 from pathlib import Path
@@ -22,32 +23,6 @@ class Writer:
             text += "grade reduction=" + str(unit.grade).zfill(3) + "%\n"
         return text
 
-    @staticmethod
-    def to_toml(unit: Unit) -> str:
-        def _multiline(value: str) -> str:
-            # Garante que termina com newline (TOML multiline padrão)
-            if not value.endswith("\n"):
-                value += "\n"
-            return f"'''\n{value}'''"
-        
-        lines = ["[[tests]]"]
-
-        # label primeiro
-        if unit.case:
-            lines.append(f'label = {unit.case!r}')
-
-        # blocos multiline reais
-        lines.append(f"input = {_multiline(unit.input)}")
-        lines.append(f"output = {_multiline(unit.get_expected())}")
-
-        if unit.grade is not None:
-            lines.append(f'grade_reduction = "{unit.grade}"')
-
-        return "\n".join(lines) + "\n"
-    
-    @staticmethod
-    def create_empty_toml() -> str:
-        return "[[tests]]\nlabel = ''\ninput = '''\n'''\noutput = '''\n'''\n"
 
     @staticmethod
     def to_tio(unit: Unit):
@@ -86,7 +61,7 @@ class Writer:
             if _target.suffix == ".tio":
                 _new = "\n".join([Writer.to_tio(unit) for unit in _unit_list])
             elif _target.suffix == ".toml":
-                _new = "\n".join([Writer.to_toml(unit) for unit in _unit_list])
+                _new = "\n".join([TomlParser.to_toml(unit.case, unit.get_input(), unit.get_expected()) for unit in _unit_list])
             else:
                 _new = "\n".join([Writer.to_vpl(unit) for unit in _unit_list])
 
