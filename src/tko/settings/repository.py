@@ -69,14 +69,15 @@ class Repository:
         path = path.resolve()
         return path.is_relative_to(rep_dir)
 
-    def load_game(self, silent: bool = False) -> Repository:
+    def load_game(self, verbose: bool) -> Repository:
         if not self.data.get_sources():
             self.load_config()
         if self.git_cache.update_mode == GitCache.UpdateMode.ALWAYS:
             for source in self.data.get_sources():
-                _ = source.get_source_readme() # to ensure cache path is set
+                _ = source.get_source_readme(verbose)
         sources: list[RepSource] = self.data.get_sources()
-        self.game.set_sources(sources, self.data.lang, silent=silent).build()
+        self.game.set_sources(sources, self.data.lang)
+        self.game.build(verbose)
         self.__load_tasks_from_log_into_game()
         return self
     

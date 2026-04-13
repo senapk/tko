@@ -19,7 +19,7 @@ class CmdLineDown:
         self.rep = rep
         self.task_key = task_key
         if game is None:
-            self.rep.load_config().load_game()
+            self.rep.load_config().load_game(verbose=True)
             self.game = self.rep.game
         else:
             self.game = game

@@ -160,7 +160,7 @@ class Run:
             return False
         rep: Repository = Repository(repo_path)
         rep.load_config()
-        rep.load_game()
+        rep.load_game(verbose=True)
         self.__rep = rep
         if rep.data.get_lang() != "":
             self.__lang = rep.data.get_lang()

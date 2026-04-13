@@ -45,15 +45,19 @@ class GitCache:
             timeout=120,
         )
 
-    def _clone(self, url: str, path: Path) -> None:
-        self._git(
-            "clone",
-            "--depth", "1",
-            "--filter=blob:none",
-            "--no-single-branch",
-            url,
-            str(path),
-        )
+    def _clone(self, url: str, path: Path) -> bool:
+        try:
+            self._git(
+                "clone",
+                "--depth", "1",
+                "--filter=blob:none",
+                "--no-single-branch",
+                url,
+                str(path),
+            )
+            return True
+        except subprocess.CalledProcessError as _:
+            return False
 
     def _update(self, repo: Path) -> None:
         self._git("fetch", "--prune", "origin", cwd=repo)
@@ -73,24 +77,29 @@ class GitCache:
     def _acquire_lock(self, lock_path: Path):
         return FileLock(str(lock_path))
 
-    def get(self, url: str) -> Path:
+    def get_repo_dir(self, url: str, verbose: bool) -> Path | None:
         repo: Path = self._repo_dir(url)
         lock_path: Path = self._lock_path(repo)
 
         with self._acquire_lock(lock_path):
-
             if not repo.exists():
-                print(f"Cloning {url} into cache...")
-                self._clone(url, repo)
-                return repo
+                if verbose:
+                    print(f"Cloning {url} into cache...")
+                ok = self._clone(url, repo)
+                if not ok:
+                    if verbose:
+                        print(f"Failed to clone {url}. Removing cache directory...")
+                    shutil.rmtree(repo, ignore_errors=True)
+                    return None
 
             if self._is_expired(repo) or (self.update_mode == GitCache.UpdateMode.ALWAYS) and not self.updated.get(str(repo), False):
                 try:
-                    print(f"Updating cache for {url}...")
+                    if verbose:
+                        print(f"Updating cache for {url}...")
                     self._update(repo)
                 except subprocess.CalledProcessError:
-                    print(f"Failed to update cache for {url}. Removing and re-cloning...")
+                    if verbose:
+                        print(f"Failed to update cache for {url}. Removing and re-cloning...")
                     shutil.rmtree(repo, ignore_errors=True)
                     self._clone(url, repo)
-
         return repo

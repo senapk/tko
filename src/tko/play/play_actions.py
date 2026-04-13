@@ -71,7 +71,7 @@ class PlayActions:
 
     def reload_game(self):
         DraftsFinderCached.reset_cache()
-        self.repo.load_game(silent=True)
+        self.repo.load_game(verbose=False)
         self.tree.recalculate_layout()
 
     def delete_folder_ask(self):
@@ -104,7 +104,7 @@ class PlayActions:
                 self.tree.move_down()
             if not obj.visible:
                 self.tree.move_down()
-            self.repo.load_game(silent=True)
+            self.repo.load_game(verbose=True)
 
         obj = self.tree.get_selected_throw()
         if isinstance(obj, Task):
@@ -195,6 +195,7 @@ class PlayActions:
             else:
                 task.info.rate = 0
                 task.info.feedback = False
+            self.repo.logger.store(LogItemSelf().set_task(task))
 
     def self_evaluate(self):
         obj = self.tree.get_selected_throw()

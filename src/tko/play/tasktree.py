@@ -285,7 +285,7 @@ class TreeRenderer:
 
         color = q.is_requirement_color
 
-        title = q.get_full_title(self.flags.panel.is_skills()).add_style(color)
+        title = q.get_full_title(self.flags.panel.is_skills() and self.flags.show_panel.is_true()).add_style(color)
         if focused:
             color = self.settings.colors.focused_item
             title.add_style(color)
