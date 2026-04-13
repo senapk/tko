@@ -2,6 +2,7 @@ from typing import Callable
 import os
 import shutil
 
+from tko.cmds.drafts_finder_cached import DraftsFinderCached
 from tko.settings.repository import Repository
 from tko.settings.settings import Settings
 from tko.game.game import Game
@@ -73,107 +74,57 @@ class CmdDown:
             if len(os.listdir(self.destiny_folder)) == 0:
                 os.rmdir(self.destiny_folder)
 
-    @staticmethod
-    def get_default_dir_for_drafts(task_folder: Path):
-        return task_folder / 'src'
-
-    def source_on_root(self, path: Path) -> bool:
-        for file in path.iterdir():
-            if file.suffix == self.language:
-                return True
-        return False
-    
-    def source_on_lang_folder(self, path: Path) -> bool:
-        lang_folder = path / self.language
-        if not lang_folder.exists():
-            return False
-        for file in lang_folder.iterdir():
-            if file.suffix == self.language:
-                return True
-        return False
-
-    def find_and_create_folder_for_drafts(self) -> Path:
+    def find_and_create_folder_for_drafts(self, force: bool = False) -> Path:
         lang = self.language
-        default_drafts_folder: Path = self.get_default_dir_for_drafts(self.destiny_folder) / lang
-        on_root = self.source_on_root(self.destiny_folder)
-        if on_root:
-            return self.destiny_folder
-        on_lang = self.source_on_lang_folder(self.destiny_folder)
-        if on_lang:
-            return self.destiny_folder / lang
-        if not default_drafts_folder.exists():
-            default_drafts_folder.mkdir(parents=True, exist_ok=True)
-            return default_drafts_folder
+        finder = DraftsFinderCached(self.destiny_folder, lang)
+        drafts_folder = finder.find_dir_for_drafts()
+        if not drafts_folder.exists():
+            drafts_folder.mkdir(parents=True, exist_ok=True)
+            return drafts_folder
+        elif force:
+            shutil.rmtree(drafts_folder)
+            drafts_folder.mkdir(parents=True, exist_ok=True)
+            return drafts_folder
         
-        count = 1
-        while True:
-            drafts_backup_folder = self.get_default_dir_for_drafts(self.destiny_folder)/ f"_{lang}.{count}"
-            if not os.path.exists(drafts_backup_folder):
-                default_drafts_folder = drafts_backup_folder
-                os.makedirs(default_drafts_folder, exist_ok=True)
-                break
-            count += 1
+        drafts_folder = finder.find_dir_for_drafts_secondary()
         self.actions.send_to_print("")
-        self.actions.send_to_print(f"Criando nova pasta de rascunhos: {os.path.basename(default_drafts_folder)} ")
+        self.actions.send_to_print(f"Criando nova pasta de rascunhos: {drafts_folder.name} ")
         self.actions.send_to_print(f"")
         self.actions.send_to_print(f"Se quiser utilizar os novos rascunhos, copie manualmente ")
         self.actions.send_to_print(f"os novos rascunhos para a pasta {lang} ")
-        return Path(default_drafts_folder)
-
-    def remove_draft_folder_if_duplicated(self, drafts_folder: Path) -> tuple[bool, Path]:
-        lang = self.language
-        destiny_folder = drafts_folder.parent
-        parts = drafts_folder.name.split(".")
-        if len(parts) > 1:
-            try:
-                count = int(parts[-1])
-                if count == 1:
-                    last_path = os.path.join(destiny_folder, lang)
-                else:
-                    last = count - 1
-                    last_path = ".".join(parts[:-1]) + f".{last}"
-                if os.path.exists(last_path):
-                    if self.folder_equals(drafts_folder, Path(last_path)):
-                        shutil.rmtree(drafts_folder)
-                        return True, Path(last_path)
-            except ValueError:
-                pass
-        return False, Path("")
+        return Path(drafts_folder)
 
     def download_from_external_source(self) -> bool:
-        os.makedirs(self.destiny_folder, exist_ok=True)
-
+        self.destiny_folder.mkdir(exist_ok=True, parents=True)
         self.copy_readme()
         self.copy_tests()
         return self.copy_drafts()
 
     def copy_drafts(self):
         self.actions.cached = True
-        if self.task.is_import_type():
-            destiny_drafts_folder: Path = self.find_and_create_folder_for_drafts()
-        else:
-            destiny_drafts_folder: Path = self.get_default_dir_for_drafts(self.destiny_folder) / self.language
-            os.makedirs(destiny_drafts_folder, exist_ok=True)
+        finder = DraftsFinderCached(self.destiny_folder, self.language)
+        if not self.task.is_import_type():
+            destiny_drafts_folder: Path = finder.find_dir_for_drafts()
+            destiny_drafts_folder.mkdir(exist_ok=True, parents=True)
+            self.actions.create_default_draft(destiny_drafts_folder, self.language)
+            return True
 
-        origin_drafts_source: Path = CodeFilter.get_default_drafts_dir(self.origin_folder) / self.language
-        
+        destiny_drafts_folder: Path = self.find_and_create_folder_for_drafts()
+        origin_drafts_source: Path = CodeFilter.get_source_drafts_dir(self.origin_folder, self.language)
         if not self.copy_drafts_from(origin_drafts_source, destiny_drafts_folder):
             self.actions.create_default_draft(destiny_drafts_folder, self.language)
         if self.task.task_test == self.task.TaskTest.SELF:
             self.actions.create_default_draft(destiny_drafts_folder, "md")
-
-        if self.task.is_import_type():
-            removed, last_path = self.remove_draft_folder_if_duplicated(destiny_drafts_folder)
-            self.actions.cached = False
-            if not removed:
-                for msg in self.actions.cache_msgs:
-                    self.actions.send_to_print(msg)
-                self.actions.cache_msgs.clear()
-            else:
-                self.actions.send_to_print(f"Último rascunho em {os.path.basename(last_path)}")
-            self.actions.send_to_print("")
-            self.actions.send_to_print("Atividade baixada com sucesso")
-                
+        removed, last_path = finder.remove_secondary_dir_if_duplicated()
+        self.actions.cached = False
+        if not removed:
+            for msg in self.actions.cache_msgs:
+                self.actions.send_to_print(msg)
+            self.actions.cache_msgs.clear()
+        else:
+            self.actions.send_to_print(f"Último rascunho em {os.path.basename(last_path)}")
+        self.actions.send_to_print("")
+        self.actions.send_to_print("Atividade baixada com sucesso")
         return True
     
     def copy_readme(self):
@@ -217,23 +168,6 @@ class CmdDown:
                 self.actions.compare_and_save_to(content, destiny_path)
 
 
-    @staticmethod
-    def folder_equals(folder1: Path, folder2: Path) -> bool:
-        """ Compare two folders and return if they have the same files with the same content """
-        if not folder1.exists() or not folder2.exists():
-            return False
-        if len(os.listdir(folder1)) != len(os.listdir(folder2)):
-            return False
-        for file in os.listdir(folder1):
-            path1 = os.path.join(folder1, file)
-            path2 = os.path.join(folder2, file)
-            if not os.path.isfile(path1) or not os.path.isfile(path2):
-                return False
-            with open(path1, "rb") as f1, open(path2, "rb") as f2:
-                if f1.read() != f2.read():
-                    return False
-        return True
-
     def check_and_get_language(self) -> None:
         language_def = self.repo.data.get_lang()
 
@@ -261,7 +195,7 @@ class DownActions:
     @staticmethod
     def folder_and_file(path: Path, parts: int = 2) -> str:
         """ Return the folder and file name of the path """
-        pieces = path.parts
+        pieces = path.resolve().parts
         pieces = pieces[-parts:]  # Get the last 'parts' elements
         return os.path.join(*pieces)
 

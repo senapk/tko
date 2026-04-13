@@ -177,7 +177,7 @@ class Task(TreeItem):
         return Path("")
     
     def set_workspace_folder(self, folder: Path):
-        self.__workspace_folder = folder
+        self.__workspace_folder = folder.resolve()
         return self
 
     def get_origin_folder(self) -> Path | None:
@@ -185,7 +185,7 @@ class Task(TreeItem):
     
     def get_workspace_folder(self) -> Path | None:
         if self.__workspace_folder is not None:
-            return self.__workspace_folder
+            return self.__workspace_folder.resolve()
         return self.__origin_folder
     
     def decode_from_dict(self, value: str):

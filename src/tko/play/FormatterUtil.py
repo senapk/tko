@@ -1,4 +1,4 @@
-from tko.down.sandbox_drafts import SandboxDrafts
+from tko.cmds.drafts_finder_cached import DraftsFinderCached
 from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.settings.repository import Repository
@@ -26,10 +26,9 @@ class FormatterUtil:
             return False
 
         lang = self.repo.data.lang
-        drafts = SandboxDrafts.load_drafts_only(folder, lang)
-        if drafts:
-            return True
-        return False
+        finder = DraftsFinderCached(folder, lang)
+        drafts = finder.load_source_files()
+        return len(drafts) > 0
 
     def count_visible_hidden_tasks(self, quest: Quest) -> tuple[int, int]:
         visible = 0

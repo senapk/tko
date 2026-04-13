@@ -8,7 +8,6 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.game.game import Game
 from tko.settings.settings import Settings
-from tko.util.symbols import Symbols
 from tko.game.tree_item import TreeItem
 
 class TreeLayout:

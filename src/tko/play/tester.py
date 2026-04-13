@@ -75,8 +75,7 @@ class Tester:
 
 
     def set_opener(self, opener: Opener):
-        self.opener = opener
-        self.opener.set_fman(self.fman)
+        self.opener = opener.set_fman(self.fman)
         return self
 
     def set_autorun(self, value:bool):
@@ -657,7 +656,7 @@ class Tester:
             self.lock_unit()
         elif key == ord(GuiKeys.edit):
             if self.opener is not None:
-                self.opener.load_folders_and_open()
+                self.opener.open_files()
         elif key == ord(GuiKeys.self_evaluate):
             self.self_evaluate()
         elif key == ord(GuiKeys.limite):

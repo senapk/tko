@@ -130,8 +130,8 @@ class Play:
 
         cman.add_str(GuiKeys.search, self.gui.search.toggle_search)
         cman.add_str(GuiKeys.palette, self.play_palette.command_pallete)
-        cman.add_str(GuiKeys.panel_resize_inc, lambda: self.actions.resize_panels(10))
-        cman.add_str(GuiKeys.panel_resize_dec, lambda: self.actions.resize_panels(-10))
+        cman.add_str(GuiKeys.panel_resize_inc, lambda: self.actions.resize_panels(5))
+        cman.add_str(GuiKeys.panel_resize_dec, lambda: self.actions.resize_panels(-5))
 
         return cman
 

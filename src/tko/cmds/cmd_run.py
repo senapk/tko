@@ -38,11 +38,10 @@ class TkoFilterMode:
         os.chdir(filter_path)
 
 class Run:
-    EVAL_MODE_PAD = 14
 
-    def __init__(self, settings: Settings, target_list: list[Path | str], param: None | Param.Basic):
+    def __init__(self, settings: Settings, target_list: list[Path], param: None | Param.Basic):
         self.settings = settings
-        self.target_list: list[Path] = [Path(target) for target in target_list]
+        self.target_list: list[Path] = target_list
         if param is None:
             self.param = Param.Basic()
         else:
@@ -63,10 +62,6 @@ class Run:
         self.__abord_on_exec_error: bool = False
         self.__no_run: bool = False
         self.__timeout: int = 0
-
-    def set_eval_mode(self):
-        self.__eval_mode = True
-        return self
 
     def show_track_info(self):
         self.__show_track_info = True
@@ -302,18 +297,16 @@ class Run:
         if self.target_list:
             targets = self.target_list
 
-        for f in targets:
-            if f.is_dir() and f not in folders:
-                folders.append(f)
-            else:
-                folder = f.parent
-                if folder not in folders:
-                    folders.append(folder)
-        opener.set_target(folders)
         if self.wdir.get_solver().args_list:
             solver_zero = self.wdir.get_solver().args_list[0]
             lang = solver_zero.name.split(".")[-1]
             opener.set_language(lang)
+
+        for f in targets:
+            if f.is_dir() and f not in folders:
+                opener.add_task_folder_to_open(f)
+            else:
+                opener.add_files_to_open([f])
         return opener
 
     def __fill_task(self):
@@ -321,7 +314,6 @@ class Run:
         sources = self.wdir.get_source_list()
         solver = self.wdir.get_solver()
 
-        
         if len(sources) > 0:
             target_path = os.path.abspath(sources[0])
         elif solver.args_list:
@@ -414,11 +406,7 @@ class Run:
         return 0
 
     def __run_all_tests_top_line(self) -> int:
-        if self.__eval_mode:
-            key = self.get_task().get_full_key() if self.__task is not None else ""
-            print(Text().addf("c", f"@{key:<{self.EVAL_MODE_PAD}} ").add(Symbols.opening).add("[").add(self.wdir.resume_join()).add("]"), end="")
-        else:
-            print(Text().add(Symbols.opening).add(self.wdir.resume_splitted()), end="")
+        print(Text().add(Symbols.opening).add(self.wdir.resume_splitted()), end="")
         print(" [", end="")
         first = True
         execution_error = False

@@ -1,6 +1,7 @@
 import math
 import os
 
+from tko.cmds.drafts_finder_cached import DraftsFinderCached
 from tko.util.identifier import Identifier
 from tko.enums.identifier_type import IdentifierType
 from tko.run.unit import Unit
@@ -10,7 +11,6 @@ from tko.run.solver_builder import SolverBuilder
 from tko.util.text import Text
 from tko.util.symbols import Symbols
 from tko.util.label_factory import LabelFactory
-from tko.down.sandbox_drafts import SandboxDrafts
 from pathlib import Path
 from tko.settings.settings import Settings
 
@@ -80,12 +80,12 @@ class Wdir:
         # loading source list
         source_list: list[Path] = [target for target in folder.iterdir() if target.suffix in [".tio", ".vpl", ".toml"]]
         source_list.extend([target for target in folder.iterdir() if target.suffix == ".md"])
-        
+        finder = DraftsFinderCached(folder, self.__lang)
         if self.__lang != "":
-            solver_list = SandboxDrafts.load_drafts_only(folder, self.__lang)
+            solver_list = finder.load_source_files()
         else:
             lang_drafts: list[str] = sorted(self.settings.get_languages_settings().get_languages_with_drafts().keys())
-            solver_list = SandboxDrafts.load_drafts_only(folder, "", extra=lang_drafts)
+            solver_list = finder.load_source_files(extra=lang_drafts)
         solver_list = sorted(solver_list)
 
         self.set_solver(solver_list)

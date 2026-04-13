@@ -67,31 +67,6 @@ Se a tarefa exigir um relatório, escreva ele aqui. Você pode usar markdown, im
                 except ValueError:
                     continue
         return max(numbered_keys) if numbered_keys else 0
-
-    @staticmethod
-    def load_drafts_only(folder: Path, lang: str, extra: list[str] | None = None) -> list[Path]:
-        if extra is None:
-            extra = []
-        draft_list: list[Path] = []
-        allowed = extra
-        if lang != "":
-            allowed.append(lang)
-        if "c" in allowed:
-            allowed.append("h")
-        if "cpp" in allowed:
-            allowed.append("h")
-            allowed.append("hpp")
-        if not os.path.isdir(folder):
-            return []
-        for root, _, files in os.walk(folder):
-            cut_root = root[len(str(folder)):]
-            pieces = cut_root.split(os.sep)
-            if any([piece.startswith(".") for piece in pieces]) or any([piece.startswith("_") for piece in pieces]):
-                continue
-            for file in files:
-                if file.endswith(tuple(allowed)):
-                    draft_list.append(Path(os.path.join(root, file)))
-        return draft_list
     
     @staticmethod
     def create_sandbox_draft(dir: Path, title: str):

@@ -1,3 +1,4 @@
+from tko.cmds.drafts_finder_cached import DraftsFinderCached
 from tko.game.quest import Quest
 from tko.game.task import Task
 # from tko.game.graph import Graph
@@ -14,8 +15,6 @@ from tko.settings.rep_source import STUDENT_SANDBOX_NAME
 
 from tko.util.param import Param
 
-from tko.cmds.cmd_down import DownActions
-
 from tko.play.fmt import Fmt
 from tko.play.floating import Floating
 from tko.play.gui import Gui, TaskAction
@@ -27,6 +26,7 @@ import os
 
 from tko.logger.log_item_self import LogItemSelf
 from tko.logger.log_item_move import LogItemMove
+from tko.cmds.drafts_finder_cached import DraftsFinderCached
 
 import shutil
 import tempfile
@@ -58,7 +58,9 @@ class PlayActions:
             outfile = tempfile.NamedTemporaryFile(delete=False)
             subprocess.Popen("python3 -m webbrowser -t {}".format(link), stdout=outfile, stderr=outfile, shell=True)
         else:
-            Opener(self.settings).open_files([link])
+            opener = Opener(self.settings)
+            opener.add_files_to_open([Path(link)])
+            opener.open_files()
 
     @staticmethod
     def get_task_folder(task: Task) -> Path:
@@ -68,6 +70,7 @@ class PlayActions:
         return folder.resolve()
 
     def reload_game(self):
+        DraftsFinderCached.reset_cache()
         self.repo.load_game(silent=True)
         self.tree.recalculate_layout()
 
@@ -130,9 +133,9 @@ class PlayActions:
             task: Task = obj
             folder = self.repo.get_task_folder_for_label(task.get_full_key())
             if os.path.exists(folder):
-                opener = Opener(self.settings).set_fman(self.fman)
-                opener.set_target([folder]).set_language(self.repo.data.get_lang())
-                opener.load_folders_and_open()
+                opener = Opener(self.settings).set_fman(self.fman).set_language(self.repo.data.get_lang())
+                opener.add_task_folder_to_open(folder)
+                opener.open_files()
             else:
                 self.fman.add_input(
                      Floating().bottom().right()
@@ -290,10 +293,7 @@ class PlayActions:
         if action == TaskAction.VISITAR:
             self.open_link()
             return
-        folder = task.get_workspace_folder()
-        if not folder:
-            raise Warning("Folder não encontrado")
-        self.run_selected_task(task, folder)
+        self.run_selected_task(task)
 
     def __down_remote_task(self, task: Task) -> None:
         if not task.is_import_type():
@@ -362,11 +362,13 @@ class PlayActions:
 
         return lambda: None
         
-    def run_selected_task(self, task: Task, task_dir: Path) -> None:
-        folder = task_dir
-        run = Run(settings=self.settings, target_list=[folder], param=Param.Basic())
+    def run_selected_task(self, task: Task) -> None:
+        task_folder = task.get_workspace_folder()
+        if not task_folder:
+            raise Warning("Folder não encontrado")
+        run = Run(settings=self.settings, target_list=[task_folder], param=Param.Basic())
         run.set_lang(self.repo.data.lang)
-        opener = Opener(self.settings).set_language(self.repo.data.get_lang()).set_target([folder])
+        opener = Opener(self.settings).set_language(self.repo.data.get_lang()).add_task_folder_to_open(task_folder)
         run.set_opener(opener)
         run.set_run_without_ask(False)
         run.set_curses(True)
@@ -374,12 +376,7 @@ class PlayActions:
         run.build_wdir()
         
         if not run.wdir.has_solver():
-            # lang = self.repo.data.get_lang()
-            # draft_folder = CmdDown.get_default_source_folder(task_dir) / lang
             cmd = CmdDown(self.repo, task.get_full_key(), self.settings)
-            # def discart(_: str):
-            #     pass
-            # cmd.set_fnprint(discart)
             cmd.execute()
             msg =  Floating().bottom().right().set_warning()
             msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.repo.data.get_lang()))

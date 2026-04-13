@@ -226,13 +226,13 @@ class DeepFilter:
     def __deploy_actions(self, actions: list[tuple[Path, Action]]):
         run_actions = False
         for path, action in actions:
-            print(RText.parse(f"action: [y]{action.name}[.], path: {path.relative_to(Path().resolve(), walk_up=True)}"))
+            print(RText.parse(f"action: [y]{action.name}[.], path: {path.resolve()}"))
             if action.name in [Action.FILTERED, Action.COMCLEAN]:
                 run_actions = True
                 break
         if not run_actions:
-            dir = actions[0][0].parent.relative_to(Path().resolve())
-            print(RText.parse(f"Nenhuma filtragem encontrada para a pasta [y]{dir}[.], nenhuma ação tomada."))
+            dir = actions[0][0].parent.resolve().relative_to(Path().resolve())
+            print(RText.parse(f"Nenhuma filtragem encontrada para a pasta [r]{dir.resolve()}[.], nenhuma ação tomada."))
             return
         for path, action in actions:
             if action.name in [Action.FILTERED, Action.COMCLEAN, Action.ORIGINAL]:
@@ -250,7 +250,11 @@ class CodeFilter:
         return False, "" 
 
     @staticmethod
-    def cf_recursive(target_dir: Path, output_dir: Path, force: bool, cheat: bool = False, quiet: bool = False, indent: int = 0):
+    def cf_recursive(target_dir: Path | str, output_dir: Path | str, force: bool, cheat: bool = False, quiet: bool = False, indent: int = 0):
+        if isinstance(target_dir, str):
+            target_dir = Path(target_dir)
+        if isinstance(output_dir, str):
+            output_dir = Path(output_dir)
         if not target_dir.is_dir():
             print("Error: target must be a folder in recursive mode")
             exit()
@@ -292,8 +296,11 @@ class CodeFilter:
                 print(content)
 
     @staticmethod
-    def get_default_drafts_dir(source_dir: Path) -> Path:
-        return source_dir / ".cache" / "drafts"
+    def get_source_drafts_dir(source_dir: Path, language: str | None = None) -> Path:
+        if language is None:
+            return source_dir / ".cache" / "drafts"
+        else:
+            return source_dir / ".cache" / "drafts" / language
 
     @staticmethod
     def get_default_src_dir(source_dir: Path) -> Path:
@@ -315,7 +322,7 @@ def build_drafts_main(args: argparse.Namespace):
     here = Path(".").resolve() if changedir is None else Path(changedir).resolve()
     print(f"Updating drafts in {here}")
     source_src = CodeFilter.get_default_src_dir(here)
-    drafts_dest = CodeFilter.get_default_drafts_dir(here)
+    drafts_dest = CodeFilter.get_source_drafts_dir(here)
     if source_src.is_dir():
         filter = DeepFilter().set_indent(4)
         filter.execute(source_src, drafts_dest, 5)
