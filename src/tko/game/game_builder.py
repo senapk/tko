@@ -23,7 +23,11 @@ class GameBuilder:
         return self
 
     def build_from(self, language: str):
-        filename: Path = self.source.get_source_readme()
+        try:
+            filename: Path = self.source.get_source_readme()
+        except ValueError as e:
+            print(f"Erro ao obter o arquivo README da fonte {self.source.name}: {e}")
+            return self
         self.__ensure_sandbox_readme_fixed(filename)
         content: str = self.load_content(filename)
         self.__parse_file_content(content)

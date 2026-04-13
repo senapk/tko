@@ -92,7 +92,8 @@ class Main:
             param.set_diff_mode(DiffMode.SIDE)
         elif args.down:
             param.set_diff_mode(DiffMode.DOWN)
-        cmd_run = Run(settings, args.target_list, param)
+        target_list = [Path(target) for target in args.target_list]
+        cmd_run = Run(settings, target_list, param)
         if args.eval:
             cmd_run.show_track_info().show_self_info()
 

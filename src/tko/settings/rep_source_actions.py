@@ -146,19 +146,25 @@ class RepSourceActions:
                                  .set_writeable(writeable))
         elif remote_url is not None:
             print(Text.format("Adicionando fonte remota apontando para repositório git remoto {y}", remote_url))
-            self.git_clone_repository(remote_url)
-            self.repo.data.set_source(RepSource(alias=name, git_cache=self.repo.git_cache)
-                                       .set_git_source(target=remote_url, branch=branch)
-                                       .set_filters(self.fix_filter(filter_quest, filter_to), self.fix_filter(filter_task, filter_to))
-                                       .set_index(index)
-                                       .set_writeable(writeable))
+            try:
+                self.git_clone_repository(remote_url)
+                self.repo.data.set_source(RepSource(alias=name, git_cache=self.repo.git_cache)
+                                        .set_git_source(target=remote_url, branch=branch)
+                                        .set_filters(self.fix_filter(filter_quest, filter_to), self.fix_filter(filter_task, filter_to))
+                                        .set_index(index)
+                                        .set_writeable(writeable))
+            except Warning as e:
+                print(f"Erro ao clonar repositório: {e}, fonte não foi adicionada.")
+                raise Warning("fail: não foi possível clonar o repositório.")
 
         self.repo.save_config()
    
 
     def git_clone_repository(self, link: str) -> None:
         print(Text.format("Clonando repositório remoto {y}.", link))
-        _ = self.repo.git_cache.get(link)
+        repo_dir = self.repo.git_cache.get_repo_dir(link)
+        if repo_dir is None:
+            raise Warning("fail: não foi possível clonar o repositório.")
         print(Text.format("Repositório {y} clonado com sucesso.", link))
         
 

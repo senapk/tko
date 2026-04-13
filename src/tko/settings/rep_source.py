@@ -118,7 +118,10 @@ class RepSource:
         if self.source_type == SourceType.GIT_SOURCE:
             if self.git_cache is None:
                 raise ValueError("Git cache is not set for git source")
-            return self.git_cache.get(self.get_url_link())# absolute path to cached repo
+            repodir = self.git_cache.get_repo_dir(self.get_url_link())# absolute path to cached repo
+            if repodir is None:
+                raise ValueError("Failed to get repository directory")
+            return repodir
         raise ValueError("Unknown source type")
 
     

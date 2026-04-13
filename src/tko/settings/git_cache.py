@@ -73,7 +73,7 @@ class GitCache:
     def _acquire_lock(self, lock_path: Path):
         return FileLock(str(lock_path))
 
-    def get(self, url: str) -> Path:
+    def get_repo_dir(self, url: str) -> Path | None:
         repo: Path = self._repo_dir(url)
         lock_path: Path = self._lock_path(repo)
 
@@ -81,7 +81,12 @@ class GitCache:
 
             if not repo.exists():
                 print(f"Cloning {url} into cache...")
-                self._clone(url, repo)
+                try:
+                    self._clone(url, repo)
+                except subprocess.CalledProcessError:
+                    print(f"Failed to clone {url}. Removing cache directory...")
+                    shutil.rmtree(repo, ignore_errors=True)
+                    return None
                 return repo
 
             if self._is_expired(repo) or (self.update_mode == GitCache.UpdateMode.ALWAYS) and not self.updated.get(str(repo), False):
