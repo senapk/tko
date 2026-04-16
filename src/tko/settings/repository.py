@@ -1,5 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
+import sys
 from tko.settings.rep_data import RepData
 from typing import Any
 from tko.settings.rep_data import RepData
@@ -70,6 +71,8 @@ class Repository:
         return path.is_relative_to(rep_dir)
 
     def load_game(self, verbose: bool) -> Repository:
+        if verbose:
+            print(f"Loading repository from {self.paths.get_repo_root_dir()}...", file=sys.stderr)
         if not self.data.get_sources():
             self.load_config()
         if self.git_cache.update_mode == GitCache.UpdateMode.ALWAYS:

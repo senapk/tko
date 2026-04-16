@@ -92,7 +92,7 @@ class Play:
         cman.add_int(curses.KEY_DOWN, self.move_down)
         cman.add_int(curses.KEY_LEFT, self.move_left)
         cman.add_int(curses.KEY_RIGHT, self.move_right)
-        cman.add_str(GuiKeys.reload_game, self.actions.reload_game)
+        cman.add_str(GuiKeys.reload_game, self.actions.reload)
 
         cman.add_int(curses.KEY_NPAGE, self.page_down)
         cman.add_int(curses.KEY_PPAGE, self.page_up)

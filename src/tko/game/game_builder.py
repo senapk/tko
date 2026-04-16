@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 
 from tko.game.quest_parser import QuestParser
 from tko.game.task_parser import TaskParser
@@ -27,8 +28,8 @@ class GameBuilder:
         try:
             filename: Path = self.source.get_source_readme(self.verbose)
         except ValueError as e:
-            if not self.verbose:
-                print(f"Erro ao obter o arquivo README da fonte {self.source.name}: {e}")
+            if self.verbose:
+                print(f"Erro ao obter o arquivo README da fonte {self.source.name}: {e}", file=sys.stderr)
             return self
         self.__ensure_sandbox_readme_fixed(filename)
         content: str = self.load_content(filename)
@@ -43,8 +44,8 @@ class GameBuilder:
         content: str = ""
         if not filename.exists():
             if not self.source.is_sandbox_source():
-                if not self.verbose:
-                    print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}")
+                if self.verbose:
+                    print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}", file=sys.stderr)
         else:
             content = Decoder.load(filename)
         return content
@@ -56,8 +57,8 @@ class GameBuilder:
             return
         if not filename.exists():
             # print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}, criando arquivo")
-            if not self.verbose:
-                print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}, criando arquivo")
+            if self.verbose:
+                print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}, criando arquivo", file=sys.stderr)
             filename.parent.mkdir(parents=True, exist_ok=True)
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(f"# {self.source.name}\n\n")
@@ -92,8 +93,8 @@ class GameBuilder:
                     q.requires_ptr.append(quests[r])
                     quests[r].required_by_ptr.append(q)
                 else:
-                    if not self.verbose:
-                        print(f"Quest\n{filename}:{q.line_number}\n{str(q)}\nrequer {r} que não existe")
+                    if self.verbose:
+                        print(f"Quest\n{filename}:{q.line_number}\n{str(q)}\nrequer {r} que não existe", file=sys.stderr)
                     exit(1)
 
     def __parse_file_content(self, content: str):

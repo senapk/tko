@@ -97,12 +97,6 @@ class CmdCollect:
         print(f"SettingsFile\n- {settings.settings_dir}")
         print(str(settings))
 
-    # @staticmethod
-    # def graph(args):
-    #     rep = Repository(args.folder).load_config().load_game()
-    #     rep.game.check_cycle()
-    #     Graph(rep.game).generate()
-
 class CollectSingle:
     class CollectParams:
         def __init__(self):

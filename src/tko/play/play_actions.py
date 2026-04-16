@@ -69,7 +69,7 @@ class PlayActions:
             return Path("")
         return folder.resolve()
 
-    def reload_game(self):
+    def reload(self):
         DraftsFinderCached.reset_cache()
         self.repo.load_game(verbose=False)
         self.tree.recalculate_layout()
@@ -104,7 +104,7 @@ class PlayActions:
                 self.tree.move_down()
             if not obj.visible:
                 self.tree.move_down()
-            self.repo.load_game(verbose=True)
+            self.reload()
 
         obj = self.tree.get_selected_throw()
         if isinstance(obj, Task):
@@ -263,7 +263,7 @@ class PlayActions:
             self.tree.state.selected = f"{sandbox_source.name}@{key}"
             self.tree.state.expanded.add(f"{sandbox_source.name}@{sandbox_source.name}")
             self.repo.data.selected = self.tree.state.selected
-            self.reload_game()
+            self.reload()
             self.fman.add_input( Floating().bottom().right()
                                 .put_text(f"Rascunho criado em {folder}")
                                 .set_warning())
