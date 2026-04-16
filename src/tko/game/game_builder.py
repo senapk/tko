@@ -100,8 +100,11 @@ class GameBuilder:
     def __parse_file_content(self, content: str):
         lines = content.splitlines()
         alias = self.source.name
-        filename = self.source.get_source_readme(self.verbose)
-
+        try:
+            filename = self.source.get_source_readme(self.verbose)
+        except ValueError as e:
+            print(e)
+            return
         for line_num, line in enumerate(lines):
             quest_parser = QuestParser(alias)
             quest = quest_parser.parse_quest(filename, line, line_num + 1)

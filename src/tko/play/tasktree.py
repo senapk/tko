@@ -138,23 +138,30 @@ class TreeBuilder:
 
         return matches, first
 
+    def select_inbox_tasks(self, q: Quest, fmt_util: FormatterUtil) -> set[str]:
+        disabled: set[str] = set()
+        first_drop = True
+        for t in q.get_tasks():
+            if not fmt_util.is_visible_task(q, t):
+                if first_drop:
+                    first_drop = False
+                else:
+                    disabled.add(t.get_full_key())
+        return disabled
+
+
     def filter_visible_tasks(self, enabled: set[str], game: Game, tf: TreeFilter, fmt_util: FormatterUtil) -> set[str]:
         if not tf.inbox_mode:
             return enabled
         disabled: set[str] = set()
         for q in game.quests.values():
-            first_drop = True
+            
             if not q.is_reachable():
                 disabled.add(q.get_full_key())
                 for t in q.get_tasks():
                     disabled.add(t.get_full_key())
             else:
-                for t in q.get_tasks():
-                    if not fmt_util.is_visible_task(q, t):
-                        if first_drop:
-                            first_drop = False
-                        else:
-                            disabled.add(t.get_full_key())
+                disabled = disabled.union(self.select_inbox_tasks(q, fmt_util))
         return enabled - disabled
     
     def build(self, game: Game, state: TreeState, tfilter: TreeFilter, ligatures: bool = True) -> list[TreeItem]:
@@ -189,29 +196,13 @@ class TreeBuilder:
             items.append(q)
             color = "g" if q.is_reachable() else "y"
             if q.get_full_key() not in state.expanded:
-                if ligatures:
-                    q.ligature = Text("━─", color)
-                else:
-                    q.ligature = Text("──", color)
+                q.ligature = Text("━─", color)
                 continue
             tasks: list[Task] = [t for t in q.get_tasks() if t.visible ]
             has_hidden = len(tasks) != len(q.get_tasks())
-            if ligatures:
-                q.ligature = Text("┄┯", color) if has_hidden else Text("─┯", color)
-            else:
-                q.ligature = Text("──", color)
-            for i, t in enumerate(tasks):
-                if i == len(tasks) - 1:
-                    if ligatures:
-                        t.ligature = Text("└", color)
-                    else:
-                        t.ligature = Text("|", color)
-                else:
-                    if ligatures:
-                        t.ligature = Text("┆", color) if has_hidden else Text("├", color)
-                    else:
-                        t.ligature = Text("┆", color) if has_hidden else Text("|", color)
-
+            q.ligature = Text("┅┅", color) if has_hidden else Text("━━", color)
+            for _, t in enumerate(tasks):
+                t.ligature = Text("┄", color) if has_hidden else Text("─", color)
             for t in tasks:
                 items.append(t)
 
@@ -247,8 +238,8 @@ class TreeRenderer:
 
     def render_task(self, t: Task, focused: bool) -> Text:
         output = Text().add(" ")
-        output.addf("b", t.xp)
-        output.add(t.ligature).add(" ")
+        # output.add(" ").add(t.ligature)
+        output.addf("b", t.xp).add(" ")
 
         output.add(self.fmt_util.get_task_down_symbol(t)).add(" ")
         output.add(self.fmt_util.format_percent_1s(t.get_rate_percent())).add(" ")
@@ -277,7 +268,8 @@ class TreeRenderer:
 
     def render_quest(self, q: Quest, focused: bool) -> Text:
         color = "g" if q.is_reachable() else "y"
-        output = Text().add(" ").addf(color, q.ligature)
+        output = Text()
+        output.addf(color, q.ligature)
         done, total = q.get_completion()
         output.add(f" {done:02}/{total:02}")
         star_symbol, percent = self.fmt_util.get_start_symbols_and_percent_quest(q)
