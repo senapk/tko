@@ -1,6 +1,7 @@
 from __future__ import annotations
 from pathlib import Path
 import sys
+from tko.settings.atomic_write_yaml import atomic_write_yaml
 from tko.settings.rep_data import RepData
 from typing import Any
 from tko.settings.rep_data import RepData
@@ -17,7 +18,6 @@ from tko.settings.git_cache import GitCache
 from tko.play.flags import Flags
 from tko.logger.log_sort import LogSort
 from tko.logger.file_monitor import FileMonitor
-import os
 
 def remove_git_merge_tags(lines: list[str]) -> list[str]:
     # remove lines with <<<<<<<, =======, >>>>>>>>
@@ -178,22 +178,3 @@ class Repository:
 
     def __str__(self) -> str:
         return f"data: {self.data}\n"
-
-def atomic_write_yaml(path: Path, data: dict[str, Any]) -> None:
-    tmp: Path = path.with_suffix(path.suffix + ".tmp")
-
-    with tmp.open("w", encoding="utf-8") as f:
-        yaml.safe_dump(data, f, allow_unicode=True, sort_keys=False)
-
-        f.flush()
-        os.fsync(f.fileno())
-
-    tmp.replace(path)
-
-    # fsync do diretório (POSIX apenas)
-    if os.name == "posix":
-        dir_fd: int = os.open(path.parent, os.O_DIRECTORY)
-        try:
-            os.fsync(dir_fd)
-        finally:
-            os.close(dir_fd)
