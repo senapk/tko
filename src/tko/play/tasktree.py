@@ -111,18 +111,11 @@ class TreeState:
 class TreeBuilder:
     def __init__(self, fmt_util: FormatterUtil):
         self.fmt_util = fmt_util
+        self.repo = fmt_util.repo
 
     def filter_by_search(self, game: Game, search_text: str) -> tuple[set[str], str | None]:
         matches: set[str] = set()
         first: str | None = None
-
-        if search_text == "":
-            for q in game.quests.values():
-                matches.add(q.get_full_key())
-                for t in q.get_tasks():
-                    matches.add(t.get_full_key())
-            return matches, None
-
         search = SearchAsc(search_text)
 
         for quest in game.quests.values():
@@ -138,37 +131,51 @@ class TreeBuilder:
 
         return matches, first
 
-    def select_inbox_tasks(self, q: Quest, fmt_util: FormatterUtil) -> set[str]:
-        disabled: set[str] = set()
-        first_drop = True
-        for t in q.get_tasks():
-            if not fmt_util.is_visible_task(q, t):
-                if first_drop:
-                    first_drop = False
-                else:
-                    disabled.add(t.get_full_key())
-        return disabled
-
-
-    def filter_visible_tasks(self, enabled: set[str], game: Game, tf: TreeFilter, fmt_util: FormatterUtil) -> set[str]:
-        if not tf.inbox_mode:
-            return enabled
-        disabled: set[str] = set()
+    def select_inbox_enabled(self, game: Game, tf: TreeFilter, fmt_util: FormatterUtil) -> set[str]:
+        max_count = 10
+        enabled: set[str] = set()
         for q in game.quests.values():
-            
             if not q.is_reachable():
-                disabled.add(q.get_full_key())
-                for t in q.get_tasks():
-                    disabled.add(t.get_full_key())
-            else:
-                disabled = disabled.union(self.select_inbox_tasks(q, fmt_util))
-        return enabled - disabled
-    
-    def build(self, game: Game, state: TreeState, tfilter: TreeFilter, ligatures: bool = True) -> list[TreeItem]:
-        items: list[TreeItem] = []
+                continue
+            enabled.add(q.get_full_key())
+            count = 0
+            # sort tasks choosing first those that are not 100% completed, then the main tasks, then the others
+            tasks = sorted(
+                q.get_tasks(),
+                key=lambda t: (t.get_rate_percent() != 100, t.task_path != Task.TaskMain.MAIN)
+            )
+            for t in tasks:
+                if t.get_rate_percent() == 100 and t.get_quality_percent() == 100:
+                    continue
+                if fmt_util.is_downloaded_for_lang(t):
+                    enabled.add(t.get_full_key())
+                    count += 1
+                elif count < max_count:
+                    enabled.add(t.get_full_key())
+                    count += 1
+        return enabled
+
+    def enable_all(self, game: Game) -> set[str]:
+        matches: set[str] = set()
+        for q in game.quests.values():
+            matches.add(q.get_full_key())
+            for t in q.get_tasks():
+                matches.add(t.get_full_key())
+        return matches
+
+    def get_enabled_by_mode(self, game: Game, state: TreeState, tfilter: TreeFilter):
         game.update_reachable_and_available()
-        enabled, first_match = self.filter_by_search(game, tfilter.search_text)
-        enabled = self.filter_visible_tasks(enabled, game, tfilter, self.fmt_util)
+        if state.search != "":
+            enabled, first_match = self.filter_by_search(game, tfilter.search_text)
+            if first_match and state.selected == "":
+                state.selected = first_match
+        elif self.repo.flags.task_view_mode.is_inbox():
+            enabled = self.select_inbox_enabled(game, tfilter, self.fmt_util)
+        else:
+            enabled = self.enable_all(game)
+        return enabled
+    
+    def set_visible(self, game: Game, enabled: set[str]):
         for q in game.quests.values():
             q.is_requirement_color = ""
             if q.get_full_key() in enabled:
@@ -180,32 +187,34 @@ class TreeBuilder:
                     t.visible = True
                 else:
                     t.visible = False
-
         # se entrou em modo busca, seleciona o primeiro match
-        if first_match and state.selected == "":
-            state.selected = first_match
 
+    def build(self, game: Game, state: TreeState, tfilter: TreeFilter) -> list[TreeItem]:
+        enabled = self.get_enabled_by_mode(game, state, tfilter)
+        self.set_visible(game, enabled)
+        items = self.set_colors_and_ligatures(game, state)
+        return items
+    
+    def set_colors_and_ligatures(self, game: Game, state: TreeState) -> list[TreeItem]:
+        items: list[TreeItem] = []
         for q in game.quests.values():
             if not q.visible:
                 continue
+            # coloring quest requiments for selected quest
             for req in q.required_by_ptr:
                 if req.get_full_key() == state.selected:
                     q.is_requirement_color = "y" if req.is_reachable() else "r"
                     break
-
             items.append(q)
             color = "g" if q.is_reachable() else "y"
-            if q.get_full_key() not in state.expanded:
-                q.ligature = Text("━─", color)
-                continue
             tasks: list[Task] = [t for t in q.get_tasks() if t.visible ]
             has_hidden = len(tasks) != len(q.get_tasks())
+            if q.get_full_key() not in state.expanded:
+                q.ligature = Text("┅┄", color) if has_hidden else Text("━─", color)
+                continue
             q.ligature = Text("┅┅", color) if has_hidden else Text("━━", color)
-            for _, t in enumerate(tasks):
-                t.ligature = Text("┄", color) if has_hidden else Text("─", color)
             for t in tasks:
                 items.append(t)
-
         return items
     
 class TreeRenderer:
@@ -263,7 +272,7 @@ class TreeRenderer:
             output.add(self.fmt_util.format_hours_minutes("g", h, m))
 
         value = t.get_rate_percent() * t.get_quality_percent() / 100
-        output.addf("y", self.fmt_util.format_percent_3s(value))
+        output.add(self.fmt_util.format_percent_3s(value))
         return output
 
     def render_quest(self, q: Quest, focused: bool) -> Text:
@@ -469,12 +478,12 @@ class TaskTree:
             for item in items
         ]
     
-    def update(self, force_view_all: bool = False, ligatures: bool = True):
+    def update(self, force_view_all: bool = False):
         tree_filter = TreeFilter(
             inbox_mode=self.repo.flags.task_view_mode.is_inbox() and not force_view_all,
             search_text=self.state.search
         )
-        self.items = self.builder.build(self.game, self.state, tree_filter, ligatures)
+        self.items = self.builder.build(self.game, self.state, tree_filter)
         self.state.ensure_valid_selection(self.items)
         self.layout.calculate(self.game, self.repo.flags, self.state.expanded)
 

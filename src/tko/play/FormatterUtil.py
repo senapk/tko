@@ -34,7 +34,7 @@ class FormatterUtil:
         visible = 0
         hidden = 0
         for t in quest.get_tasks():
-            if self.is_visible_task(quest, t):
+            if t.visible:
                 visible += 1
             else:
                 hidden += 1
@@ -55,15 +55,6 @@ class FormatterUtil:
             percent.addf("g", "----")
             symbol = Symbols.star_void
         return symbol, percent
-
-    def is_visible_task(self, quest: Quest, task: Task) -> bool:
-        if self.repo.flags.task_view_mode.is_all():
-            return True
-        if task.task_path == Task.TaskMain.MAIN:
-            return True
-        if self.is_downloaded_for_lang(task):
-            return True
-        return False
 
     def get_task_down_symbol(self, t: Task) -> tuple[str, str]:
         if t.task_mode == Task.TaskEdit.VIEW:
@@ -138,7 +129,8 @@ class FormatterUtil:
         if value is None or value < 1:
             return Text("----")
         rvalue = round(value)
-        return Text().add(f"{rvalue:>3}%")
+        color = self.get_percent_color(value)
+        return Text().addf(color, f"{rvalue:>3}%")
 
     def get_percent_color(self, value: float) -> str:
         color = "g" if value > 99 else ("y" if value > 49 else "r")

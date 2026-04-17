@@ -1,6 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
-import sys
+import sys # type: ignore
 from typing import Any
 import os
 from enum import Enum

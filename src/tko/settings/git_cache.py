@@ -98,6 +98,8 @@ class GitCache:
                         print(f"Updating cache for {url}...", file=sys.stderr)
                     self._update(repo)
                 except subprocess.CalledProcessError:
+                    if self.update_mode == self.UpdateMode.IF_OLDER:
+                        pass
                     if verbose:
                         print(f"Failed to update cache for {url}. Removing and re-cloning...", file=sys.stderr)
                     shutil.rmtree(repo, ignore_errors=True)
