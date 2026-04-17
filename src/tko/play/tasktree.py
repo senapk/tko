@@ -76,7 +76,7 @@ class TreeState:
                 self.selected = keys[0]
 
     def get_selected_index(self, items: list[TreeItem]) -> int:
-        if items[self.selected_index].get_full_key() == self.selected:
+        if self.selected_index < len(items) and items[self.selected_index].get_full_key() == self.selected:
             return self.selected_index
         for i, item in enumerate(items):
             if item.get_full_key() == self.selected:
@@ -144,7 +144,8 @@ class TreeBuilder:
         max_count = 10
         enabled: set[str] = set()
         for q in game.quests.values():
-            if not q.is_reachable():
+            _, pall = q.get_percent_main_and_all()
+            if not q.is_reachable() or pall >= 100:
                 continue
             enabled.add(q.get_full_key())
             count = 0
@@ -290,7 +291,7 @@ class TreeRenderer:
         output.addf(color, q.ligature)
         done, total = q.get_completion()
         output.add(f" {done:02}/{total:02}")
-        star_symbol, percent = self.fmt_util.get_start_symbols_and_percent_quest(q)
+        star_symbol, percent_text = self.fmt_util.get_start_symbols_and_percent_text(q)
         output.add(" ").add(star_symbol).add(" ")
 
         color = q.is_requirement_color
@@ -308,7 +309,7 @@ class TreeRenderer:
         if self.flags.show_time.is_true():
             h, m = self.fmt_util.get_quest_time(q)
             output.add(self.fmt_util.format_hours_minutes("g", h, m))
-        output.add(percent)
+        output.add(percent_text)
 
         return output
     

@@ -131,7 +131,7 @@ class CmdDown:
         origin_readme  = self.origin_folder /"README.md"
         destiny_readme = self.destiny_folder/ "README.md"
 
-        source_folder_rel = self.origin_folder.relative_to(self.destiny_folder, walk_up=True)
+        source_folder_rel = self.origin_folder.resolve().relative_to(self.destiny_folder.resolve(), walk_up=True)
         content = Decoder.load(origin_readme)
         content = Absolute.change_to_relative_folder(content, source_folder_rel)
         self.actions.compare_and_save_to(content, destiny_readme)

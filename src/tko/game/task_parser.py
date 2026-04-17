@@ -53,6 +53,8 @@ class TaskParser:
                 self.task.task_path = Task.TaskMain.MAIN
             elif tag == Task.TaskMain.SIDE.value:
                 self.task.task_path = Task.TaskMain.SIDE
+            elif tag == Task.TaskMain.PERK.value:
+                self.task.task_path = Task.TaskMain.PERK
             elif tag == Task.TaskLoss.FREE.value:
                 self.task.task_loss = Task.TaskLoss.FREE
             elif tag == Task.TaskLoss.PART.value:

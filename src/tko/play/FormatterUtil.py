@@ -40,21 +40,17 @@ class FormatterUtil:
                 hidden += 1
         return visible, hidden
 
-    def get_start_symbols_and_percent_quest(self, q: Quest) -> tuple[str, Text]:
+    def get_start_symbols_and_percent_text(self, q: Quest) -> tuple[str, Text]:
         symbol = ""
-        percent = Text()
-        obtainedm, totalm = q.get_xp(include_main=True, include_side=False)
-        obtaineds, totals = q.get_xp(include_main=False, include_side=True)
-        if totalm > 0:
-            percent.addf("g", self.format_percent_3s(((obtainedm + obtaineds) / totalm) * 100))
+        percent_text = Text()
+        pmain, pall = q.get_percent_main_and_all()
+        if pmain is not None:
+            percent_text.addf("g", self.format_percent_3s(pall))
             symbol = Symbols.star_filled
-        elif totals > 0:
-            percent.addf("g", self.format_percent_3s((obtaineds / totals) * 100))
-            symbol = Symbols.star_void
         else:
-            percent.addf("g", "----")
+            percent_text.addf("g", self.format_percent_3s(pall))
             symbol = Symbols.star_void
-        return symbol, percent
+        return symbol, percent_text
 
     def get_task_down_symbol(self, t: Task) -> tuple[str, str]:
         if t.task_mode == Task.TaskEdit.VIEW:
