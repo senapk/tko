@@ -97,7 +97,7 @@ class FloatingDropDown(FloatingABC):
             else:
                 text.add("    ")
             if i == self.index:
-                text.set_bg("X").set_fg("")
+                text.add_style("/_")
             content.append(text)
         
 

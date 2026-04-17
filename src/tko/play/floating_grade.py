@@ -14,8 +14,8 @@ import curses
 
 
 class InputLine(ABC):
-    SELECTED_COLOR = "y"
-    LOCKED_COLOR = "r"
+    SELECTED_COLOR = "/_"
+    LOCKED_COLOR = "/_r"
     OPTION_COLOR = "X"
 
     def __init__(self, id: str):
