@@ -57,6 +57,7 @@ class TreeFilter:
 class TreeState:
     expanded: set[str] = set()
     selected: str = ""
+    selected_index: int = 0
     search: str = ""
     scroll: int = 0
 
@@ -64,15 +65,22 @@ class TreeState:
         """Garante que selected sempre aponta para um item visível"""
         if not items:
             self.selected = ""
+            self.selected_index = 0
             return
 
         keys = [i.get_full_key() for i in items]
-        if self.selected not in keys:
-            self.selected = keys[0]
+        if self.selected not in keys: # fallback_mode
+            if self.selected_index < len(keys):
+                self.selected = keys[self.selected_index]
+            else:
+                self.selected = keys[0]
 
     def get_selected_index(self, items: list[TreeItem]) -> int:
+        if items[self.selected_index].get_full_key() == self.selected:
+            return self.selected_index
         for i, item in enumerate(items):
             if item.get_full_key() == self.selected:
+                self.selected_index = i
                 return i
         return 0
 
@@ -90,6 +98,7 @@ class TreeState:
         index += delta
         index = max(0, min(index, len(items) - 1))
         self.selected = items[index].get_full_key()
+        self.selected_index = index
 
     def update_scroll(self, window_height: int, items: list[TreeItem]):
         """Controla o scroll da tela"""
@@ -406,6 +415,7 @@ class TreeRepository:
 
         # salvar selecionado
         self.repo.data.selected = state.selected
+        self.repo.data.selected_index = state.selected_index
 
 
 class TaskTree:

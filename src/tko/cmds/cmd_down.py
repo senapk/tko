@@ -169,7 +169,7 @@ class CmdDown:
 
 
     def check_and_get_language(self) -> None:
-        language_def = self.repo.data.get_lang()
+        language_def = self.repo.data.lang
 
         if self.language == "":
             if language_def != "":

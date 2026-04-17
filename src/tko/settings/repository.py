@@ -138,7 +138,7 @@ class Repository:
         except:
             raise Warning(Text.format("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.paths.get_config_file(), "corrompido"))
         self.data.load_from_dict(local_data)
-        self.flags.from_dict(self.data.get_flags())
+        self.flags.from_dict(self.data.flags)
         for source in self.data.get_sources():
             source.set_source_globals(self.paths.get_repo_root_dir(), self.paths.get_cache_folder())
 

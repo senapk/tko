@@ -11,6 +11,7 @@ class RepData:
         self.flags: dict[str, Any] = {}
         self.lang: str = ""
         self.selected: str = ""
+        self.selected_index: int = 0
         self.git_cache = git_cache
 
     def set_source(self, source: RepSource):
@@ -49,25 +50,6 @@ class RepData:
                 external_sources.append(s)
         return sandbox_source + external_sources
 
-    def get_expanded(self) -> list[str]:
-        return self.expanded
-
-    # def get_tasks(self) -> dict[str, Any]:
-    #     return self.tasks
-
-    def get_flags(self) -> dict[str, Any]:
-        return self.flags
-
-    def get_lang(self) -> str:
-        return self.lang
-
-    def get_selected(self) -> str:
-        return self.selected
-
-    def set_lang(self, lang: str):
-        self.lang = lang
-        return self
-
     def _safe_load(self, data: dict[str, Any], key: str, target_type: type, default_value: Any = None):
         """Helper method to safely load a value from a dictionary."""
         if key in data and isinstance(data[key], target_type):
@@ -83,6 +65,8 @@ class RepData:
             self.flags = self._safe_load(data, "flags", dict, self.flags)
             self.lang = self._safe_load(data, "lang", str, self.lang)
             self.selected = self._safe_load(data, "selected", str, self.selected)
+            self.selected_index = self._safe_load(data, "selected_index", int, self.selected_index)
+
             # Load the 'source' field with specific validation
             if "sources" in data:
                 source_data: list[dict[str, Any]] = data["sources"]
@@ -102,4 +86,5 @@ class RepData:
             "flags": self.flags,
             "lang": self.lang,
             "selected": self.selected,
+            "selected_index": self.selected_index,
         }
