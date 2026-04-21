@@ -24,7 +24,7 @@ class CmdOpen:
             print(Text.format("{r}: O comando {g} deve ser executado na pasta onde o repositório foi iniciado.", "Erro", "tko open"))
             print(Text.format("{g}: Navegue ou passe o caminho até a pasta do repositório e tente novamente.", "Ação"))
             raise Warning(Text.format("{r}: {y} {}", "Erro:", repo_dir, "não contém um repositório do tko"))
-        self.repo.load_config().load_game()
+        self.repo.load_config().load_game(verbose=True)
         return self
 
     def execute(self):
@@ -36,6 +36,6 @@ class CmdOpen:
     def list(self, show_all: bool):
         tree = TaskTree(self.settings, self.repo)
         tree.expand_all()
-        tree.update(force_view_all=show_all, ligatures=True)
+        tree.update(force_view_all=show_all)
         for item in tree.get_rendered_items():
             print(item)

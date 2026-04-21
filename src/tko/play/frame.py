@@ -197,7 +197,7 @@ class Frame:
             index=current_index,
             screen_size=self._inner_dy,
             bar_size=self._inner_dy,
-            char_block="█",
+            char_block="┃",
             char_empty=" ",
         )
         values = scrollbar.render()

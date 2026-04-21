@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 
 from tko.game.quest_parser import QuestParser
 from tko.game.task_parser import TaskParser
@@ -10,13 +11,14 @@ from tko.feno.indexer import fix_readme
 from icecream import ic # type: ignore
 
 class GameBuilder:
-    def __init__(self, source: RepSource):
+    def __init__(self, source: RepSource, verbose: bool):
         self.source = source
         self.ordered_quests: list[str] = [] # ordered quests keys
         self.quests: dict[str, Quest] = {}
         self.active_quest: Quest | None = None
         # self.unique_keys: set[str] = set()
         self.interactive: bool = False
+        self.verbose: bool = verbose
 
     def set_interactive(self, interactive: bool):
         self.interactive = interactive
@@ -24,9 +26,10 @@ class GameBuilder:
 
     def build_from(self, language: str):
         try:
-            filename: Path = self.source.get_source_readme()
+            filename: Path = self.source.get_source_readme(self.verbose)
         except ValueError as e:
-            print(f"Erro ao obter o arquivo README da fonte {self.source.name}: {e}")
+            if self.verbose:
+                print(f"Erro ao obter o arquivo README da fonte {self.source.name}: {e}", file=sys.stderr)
             return self
         self.__ensure_sandbox_readme_fixed(filename)
         content: str = self.load_content(filename)
@@ -41,7 +44,8 @@ class GameBuilder:
         content: str = ""
         if not filename.exists():
             if not self.source.is_sandbox_source():
-                print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}")
+                if self.verbose:
+                    print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}", file=sys.stderr)
         else:
             content = Decoder.load(filename)
         return content
@@ -53,6 +57,8 @@ class GameBuilder:
             return
         if not filename.exists():
             # print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}, criando arquivo")
+            if self.verbose:
+                print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}, criando arquivo", file=sys.stderr)
             filename.parent.mkdir(parents=True, exist_ok=True)
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(f"# {self.source.name}\n\n")
@@ -78,7 +84,7 @@ class GameBuilder:
         if quests is not None or tasks is not None:
             return
 
-        filename: Path = self.source.get_source_readme()
+        filename: Path = self.source.get_source_readme(self.verbose)
         quests = self.collect_quests()
         # verificar se todas as quests requeridas existem e adicionar o ponteiro
         for q in quests.values():
@@ -87,53 +93,18 @@ class GameBuilder:
                     q.requires_ptr.append(quests[r])
                     quests[r].required_by_ptr.append(q)
                 else:
-                    print(f"Quest\n{filename}:{q.line_number}\n{str(q)}\nrequer {r} que não existe")
+                    if self.verbose:
+                        print(f"Quest\n{filename}:{q.line_number}\n{str(q)}\nrequer {r} que não existe", file=sys.stderr)
                     exit(1)
-
-
-    # def __parse_folder_for_tasks(self, database_path: Path):
-    #     alias = self.source.name
-    #     if not os.path.exists(database_path):
-    #         os.makedirs(database_path)
-    #     for task_path in database_path.iterdir():
-    #         if not task_path.is_dir():
-    #             continue
-    #         if not (task_path / "README.md").exists():
-    #             continue
-    #         print("debug", f"Loading task from folder {task_path}")
-    #         self.add_task_from_folder(alias, task_path)
-
-    #     self.__get_active_quest().sort_tasks_by_title()
-
-    # def add_task_from_folder(self, alias: str, task_dir_path: Path):
-    #     task = Task()
-    #     key = task_dir_path.name
-    #     keys = [t.get_key() for t in self.__get_active_quest().get_tasks()]
-    #     # print("debug", f"Adding task from folder {task_dir_path}, key: {key}, existing keys: {keys}")
-    #     if key in keys:
-    #         print("debug", f"Duplicate key {key} in {task_dir_path}")
-    #         return
-    #     task.set_key(key)
-    #     task.set_title(TaskLine.load_markdown_title_or_first_line(task_dir_path / "README.md"))
-    #     task.set_remote_name(alias)
-    #     task.set_origin_folder(Path(task_dir_path))
-    #     if self.source.is_read_only():
-    #         task.set_workspace_folder(self.source.get_task_workspace(key))
-    #     self.__add_task(task)
-
-    
-    # def __load_sandbox_tasks(self):
-    #     if self.source.is_sandbox_source():
-    #         sandbox_folder = self.source.get_source_workspace()
-    #         self.__add_quest(Quest(self.source.name, f"{self.source.name}").set_remote_name(self.source.name))
-    #         print("debug", f"Loading sandbox tasks from {sandbox_folder}")
-    #         self.__parse_folder_for_tasks(sandbox_folder)
 
     def __parse_file_content(self, content: str):
         lines = content.splitlines()
         alias = self.source.name
-        filename = self.source.get_source_readme()
-
+        try:
+            filename = self.source.get_source_readme(self.verbose)
+        except ValueError as e:
+            print(e)
+            return
         for line_num, line in enumerate(lines):
             quest_parser = QuestParser(alias)
             quest = quest_parser.parse_quest(filename, line, line_num + 1)

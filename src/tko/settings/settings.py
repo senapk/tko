@@ -100,7 +100,7 @@ class Settings:
             if len(self.dict_alias_git.keys()) == 0: # type: ignore
                 self.dict_alias_git = self.Defaults.alias_git.copy()
             self.app = AppSettings().from_dict(data.get(self.__appcfg, AppSettings())) # type: ignore
-            self.colors = Colors().from_dict(data.get(self.__colors, Colors())) # type: ignore
+            # self.colors = Colors().from_dict(data.get(self.__colors, Colors())) # type: ignore
             self.__languages_settings = LanguagesSettings(self.get_languages_file()).load_file_settings()
         except:
             self.reset()
@@ -112,7 +112,7 @@ class Settings:
         value: dict[str, Any] = {
             self.__gitrepos: self.dict_alias_git,
             self.__appcfg: self.app.to_dict(),
-            self.__colors: self.colors.to_dict()
+            # self.__colors: self.colors.to_dict()
         }
         with open(file, "w", encoding="utf-8") as f:
             yaml.dump(value, f)

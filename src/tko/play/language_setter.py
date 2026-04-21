@@ -46,7 +46,7 @@ class LanguageSetter:
                 .set_text_ljust()
             )
             .set_options(options)
-            .set_default_index(keys.index(self.rep.data.get_lang()))
+            .set_default_index(keys.index(self.rep.data.lang))
         )
 
 class TextFunctor:
@@ -64,7 +64,7 @@ class SetLangFunctor:
         self.settings = settings
 
     def __call__(self):
-        self.rep.data.set_lang(self.value.strip())
+        self.rep.data.lang = self.value.strip()
         self.rep.save_config()
         self.fman.add_input(
             Floating()

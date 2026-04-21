@@ -266,7 +266,7 @@ class Gui:
         panel_on = self.flags.show_panel.is_true()
         vi = Visual(self.settings.app.use_borders)
         pre = [
-            vi.render_button(f"Inbox[{GuiKeys.inbox}]", self.flags.task_view_mode.is_inbox()),
+            vi.render_button(f"Recomendadas[{GuiKeys.inbox}]", self.flags.task_view_mode.is_inbox()),
             vi.render_button(f"Todas[{GuiKeys.all_tasks}]", self.flags.task_view_mode.is_all()),
             Text().add(" ")
         ]

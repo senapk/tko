@@ -65,7 +65,7 @@ class Quest(TreeItem):
         return output
 
     def is_complete(self):
-        value = self.get_percent(include_main=True, include_side=True)
+        value = self.get_percent(include_main_perk=True, include_side=True)
         return value is None or value >= self.min_percent_completion
 
     def add_task(self, task: Task):
@@ -78,13 +78,13 @@ class Quest(TreeItem):
     def sort_tasks_by_title(self):
         self.__tasks = sorted(self.__tasks, key=lambda t: t.get_title())
 
-    def get_xp(self, include_main: bool, include_side: bool) -> tuple[float, float]:
+    def get_xp(self, include_main_perk: bool, include_side: bool) -> tuple[float, float]:
         """
         Returns a tuple of (earned_xp, total_xp)
         """
         tasks_info: list[QuestGrader.Elem] = []
         for t in self.__tasks:
-            if t.task_path == Task.TaskMain.MAIN and not include_main:
+            if t.task_path in [Task.TaskMain.MAIN, Task.TaskMain.PERK] and not include_main_perk:
                 continue
             if t.task_path == Task.TaskMain.SIDE and not include_side:
                 continue
@@ -96,26 +96,40 @@ class Quest(TreeItem):
         total = 0
         done = 0
         for t in self.__tasks:
-            if t.visible:
-                total += 1
+            total += 1
             if t.is_complete():
                 done += 1
         return done, total
 
-    def get_percent(self, include_main: bool, include_side: bool) -> float | None:
-        if not include_main and not include_side:
+    def get_percent_main_and_all(self) -> tuple[float | None, float]:
+        percent_main: float | None = 0.0
+        percent_all: float = 0.0
+        obtainedm, totalm = self.get_xp(include_main_perk=True, include_side=False)
+        obtaineds, totals = self.get_xp(include_main_perk=False, include_side=True)
+        if totalm > 0:
+            percent_main = (obtainedm / totalm) * 100
+            percent_all = ((obtainedm + obtaineds) / totalm) * 100
+        elif totals > 0:
+            percent_main = None
+            percent_all = (obtaineds / totals) * 100
+        else:
+            percent_all = 0.0
+        return percent_main, percent_all
+
+    def get_percent(self, include_main_perk: bool, include_side: bool) -> float | None:
+        if not include_main_perk and not include_side:
             return None
-        main_obt, main_total = self.get_xp(include_main=include_main, include_side=False)
-        side_obt, side_total = self.get_xp(include_main=False, include_side=include_side)
-        if include_main and include_side:
+        main_obt, main_total = self.get_xp(include_main_perk=include_main_perk, include_side=False)
+        side_obt, side_total = self.get_xp(include_main_perk=False, include_side=include_side)
+        if include_main_perk and include_side:
             return QuestGrader.get_percent(main_obt + side_obt, main_total)
-        if include_main:
+        if include_main_perk:
             return QuestGrader.get_percent(main_obt, main_total)
         if include_side:
             return QuestGrader.get_percent(side_obt, side_total)
 
     def get_percent_main(self) -> float | None:
-        return self.get_percent(include_main=True, include_side=False)
+        return self.get_percent(include_main_perk=True, include_side=False)
     
     def get_percent_side(self) -> float | None:
-        return self.get_percent(include_main=False, include_side=True)
+        return self.get_percent(include_main_perk=False, include_side=True)

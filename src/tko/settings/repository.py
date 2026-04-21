@@ -1,5 +1,7 @@
 from __future__ import annotations
 from pathlib import Path
+import sys
+from tko.settings.atomic_write_yaml import atomic_write_yaml
 from tko.settings.rep_data import RepData
 from typing import Any
 from tko.settings.rep_data import RepData
@@ -16,7 +18,6 @@ from tko.settings.git_cache import GitCache
 from tko.play.flags import Flags
 from tko.logger.log_sort import LogSort
 from tko.logger.file_monitor import FileMonitor
-import os
 
 def remove_git_merge_tags(lines: list[str]) -> list[str]:
     # remove lines with <<<<<<<, =======, >>>>>>>>
@@ -69,14 +70,17 @@ class Repository:
         path = path.resolve()
         return path.is_relative_to(rep_dir)
 
-    def load_game(self, silent: bool = False) -> Repository:
+    def load_game(self, verbose: bool) -> Repository:
+        if verbose:
+            print(f"Loading repository from {self.paths.get_repo_root_dir()}...", file=sys.stderr)
         if not self.data.get_sources():
             self.load_config()
         if self.git_cache.update_mode == GitCache.UpdateMode.ALWAYS:
             for source in self.data.get_sources():
-                _ = source.get_source_readme() # to ensure cache path is set
+                _ = source.get_source_readme(verbose)
         sources: list[RepSource] = self.data.get_sources()
-        self.game.set_sources(sources, self.data.lang, silent=silent).build()
+        self.game.set_sources(sources, self.data.lang)
+        self.game.build(verbose)
         self.__load_tasks_from_log_into_game()
         return self
     
@@ -134,7 +138,7 @@ class Repository:
         except:
             raise Warning(Text.format("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.paths.get_config_file(), "corrompido"))
         self.data.load_from_dict(local_data)
-        self.flags.from_dict(self.data.get_flags())
+        self.flags.from_dict(self.data.flags)
         for source in self.data.get_sources():
             source.set_source_globals(self.paths.get_repo_root_dir(), self.paths.get_cache_folder())
 
@@ -174,22 +178,3 @@ class Repository:
 
     def __str__(self) -> str:
         return f"data: {self.data}\n"
-
-def atomic_write_yaml(path: Path, data: dict[str, Any]) -> None:
-    tmp: Path = path.with_suffix(path.suffix + ".tmp")
-
-    with tmp.open("w", encoding="utf-8") as f:
-        yaml.safe_dump(data, f, allow_unicode=True, sort_keys=False)
-
-        f.flush()
-        os.fsync(f.fileno())
-
-    tmp.replace(path)
-
-    # fsync do diretório (POSIX apenas)
-    if os.name == "posix":
-        dir_fd: int = os.open(path.parent, os.O_DIRECTORY)
-        try:
-            os.fsync(dir_fd)
-        finally:
-            os.close(dir_fd)

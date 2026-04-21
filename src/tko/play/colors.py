@@ -21,7 +21,7 @@ class Colors:
         return self.__dict__
     
     def from_dict(self, attr_dict: dict[str, str]):
-        for key, value in attr_dict.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
+        # for key, value in attr_dict.items():
+        #     if hasattr(self, key):
+        #         setattr(self, key, value)
         return self

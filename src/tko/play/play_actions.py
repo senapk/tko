@@ -69,9 +69,9 @@ class PlayActions:
             return Path("")
         return folder.resolve()
 
-    def reload_game(self):
+    def reload(self):
         DraftsFinderCached.reset_cache()
-        self.repo.load_game(silent=True)
+        self.repo.load_game(verbose=False)
         self.tree.recalculate_layout()
 
     def delete_folder_ask(self):
@@ -100,11 +100,7 @@ class PlayActions:
                     .put_text(f"\nErro ao apagar a pasta {folder}: {e}\n")
                     .set_error()
                 )
-            if obj.get_remote_name() == STUDENT_SANDBOX_NAME:
-                self.tree.move_down()
-            if not obj.visible:
-                self.tree.move_down()
-            self.repo.load_game(silent=True)
+            self.reload()
 
         obj = self.tree.get_selected_throw()
         if isinstance(obj, Task):
@@ -133,7 +129,7 @@ class PlayActions:
             task: Task = obj
             folder = self.repo.get_task_folder_for_label(task.get_full_key())
             if os.path.exists(folder):
-                opener = Opener(self.settings).set_fman(self.fman).set_language(self.repo.data.get_lang())
+                opener = Opener(self.settings).set_fman(self.fman).set_language(self.repo.data.lang)
                 opener.add_task_folder_to_open(folder)
                 opener.open_files()
             else:
@@ -195,6 +191,7 @@ class PlayActions:
             else:
                 task.info.rate = 0
                 task.info.feedback = False
+            self.repo.logger.store(LogItemSelf().set_task(task))
 
     def self_evaluate(self):
         obj = self.tree.get_selected_throw()
@@ -262,7 +259,7 @@ class PlayActions:
             self.tree.state.selected = f"{sandbox_source.name}@{key}"
             self.tree.state.expanded.add(f"{sandbox_source.name}@{sandbox_source.name}")
             self.repo.data.selected = self.tree.state.selected
-            self.reload_game()
+            self.reload()
             self.fman.add_input( Floating().bottom().right()
                                 .put_text(f"Rascunho criado em {folder}")
                                 .set_warning())
@@ -368,7 +365,7 @@ class PlayActions:
             raise Warning("Folder não encontrado")
         run = Run(settings=self.settings, target_list=[task_folder], param=Param.Basic())
         run.set_lang(self.repo.data.lang)
-        opener = Opener(self.settings).set_language(self.repo.data.get_lang()).add_task_folder_to_open(task_folder)
+        opener = Opener(self.settings).set_language(self.repo.data.lang).add_task_folder_to_open(task_folder)
         run.set_opener(opener)
         run.set_run_without_ask(False)
         run.set_curses(True)
@@ -379,7 +376,7 @@ class PlayActions:
             cmd = CmdDown(self.repo, task.get_full_key(), self.settings)
             cmd.execute()
             msg =  Floating().bottom().right().set_warning()
-            msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.repo.data.get_lang()))
+            msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.repo.data.lang))
             msg.put_text("\nUm arquivo de rascunho foi criado\n")
             self.fman.add_input(msg)
         else:

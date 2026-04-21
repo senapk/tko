@@ -162,7 +162,7 @@ class RepSourceActions:
 
     def git_clone_repository(self, link: str) -> None:
         print(Text.format("Clonando repositório remoto {y}.", link))
-        repo_dir = self.repo.git_cache.get_repo_dir(link)
+        repo_dir = self.repo.git_cache.get_repo_dir(link, verbose=True)
         if repo_dir is None:
             raise Warning("fail: não foi possível clonar o repositório.")
         print(Text.format("Repositório {y} clonado com sucesso.", link))

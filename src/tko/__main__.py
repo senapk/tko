@@ -62,7 +62,7 @@ class Main:
                 mode = GitCache.UpdateMode.NEVER
             repo = Repository(dir_parent, update_mode=mode, recursive_search=False)
             if auto_load:
-                repo.load_config().load_game()
+                repo.load_config().load_game(verbose=True)
             return repo, dir_parent
 
         if show_warnings:

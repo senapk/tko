@@ -160,10 +160,10 @@ class Run:
             return False
         rep: Repository = Repository(repo_path)
         rep.load_config()
-        rep.load_game()
+        rep.load_game(verbose=True)
         self.__rep = rep
-        if rep.data.get_lang() != "":
-            self.__lang = rep.data.get_lang()
+        if rep.data.lang != "":
+            self.__lang = rep.data.lang
         return True
 
     def __try_load_task(self, dirname: Path) -> bool:

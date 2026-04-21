@@ -1,5 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
+import sys # type: ignore
 from typing import Any
 import os
 from enum import Enum
@@ -107,10 +108,10 @@ class RepSource:
     def is_local_source(self) -> bool:
         return self.source_type == SourceType.LOCAL_FILE
 
-    def get_source_readme(self) -> Path:
-        return self.get_source_folder() / self.index
+    def get_source_readme(self, verbose: bool) -> Path:
+        return self.get_source_folder(verbose) / self.index
     
-    def get_source_folder(self) -> Path:
+    def get_source_folder(self, verbose: bool) -> Path:
         if self.is_sandbox_source():
             return self.get_workspace()
         if self.source_type == SourceType.LOCAL_FILE:
@@ -118,12 +119,11 @@ class RepSource:
         if self.source_type == SourceType.GIT_SOURCE:
             if self.git_cache is None:
                 raise ValueError("Git cache is not set for git source")
-            repodir = self.git_cache.get_repo_dir(self.get_url_link())# absolute path to cached repo
+            repodir = self.git_cache.get_repo_dir(self.get_url_link(), verbose)# absolute path to cached repo
             if repodir is None:
                 raise ValueError("Failed to get repository directory")
             return repodir
         raise ValueError("Unknown source type")
-
     
     def set_filters(self, quests: dict[str, str] | None, tasks: dict[str, str] | None = None):
         self.quests = quests

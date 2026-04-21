@@ -106,7 +106,7 @@ class PlayPalette:
         options.append(
             FloatingInputData(
                 lambda: Text.format(" {} {y} pasta de rascunhos", Symbols.action, "Reload"),
-                self.actions.reload_game,
+                self.actions.reload,
                 GuiKeys.reload_game
             ).set_exit_on_action(True)
         )

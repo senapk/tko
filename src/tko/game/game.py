@@ -22,7 +22,6 @@ class Game:
         self.quests: dict[str, Quest] = {}  # quests indexed by quest key
         self.tasks: dict[str, Task] = {}  # tasks indexed by task key
         self.language: str = ""
-        self.silent: bool = False
 
     def get_task(self, key: str) -> Task:
         if key in self.tasks:
@@ -33,7 +32,7 @@ class Game:
         total = 0
         obtained = 0
         for q in self.quests.values():
-            o, t = q.get_xp(include_main=include_main, include_side=include_side)
+            o, t = q.get_xp(include_main_perk=include_main, include_side=include_side)
             total += t
             obtained += o
         return obtained, total
@@ -73,18 +72,18 @@ class Game:
                 return s
         raise ValueError("Local sandbox source not found")
 
-    def set_sources(self, sources: list[RepSource], language: str, silent: bool = False):
+    def set_sources(self, sources: list[RepSource], language: str):
         self.sources = sources
         self.language = language
-        self.silent = silent
         return self
     
-    def build(self):
+    def build(self, verbose: bool):
+        
         self.ordered_quests = []
         self.quests = {}
         self.tasks = {}
         for source in self.sources:
-            gb = GameBuilder(source)
+            gb = GameBuilder(source, verbose)
             gb.build_from(self.language)
             for quest_key in gb.ordered_quests:
                 self.ordered_quests.append(source.name + "@" + quest_key)
