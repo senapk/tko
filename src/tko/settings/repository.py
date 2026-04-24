@@ -16,18 +16,6 @@ from icecream import ic # type: ignore
 from datetime import timedelta
 from tko.settings.git_cache import GitCache
 from tko.play.flags import Flags
-from tko.logger.log_sort import LogSort
-from tko.logger.file_monitor import FileMonitor
-
-def remove_git_merge_tags(lines: list[str]) -> list[str]:
-    # remove lines with <<<<<<<, =======, >>>>>>>>
-    filtered_lines: list[str] = []
-    for line in lines:
-        if line.startswith("<<<<<<<") or line.startswith("=======") or line.startswith(">>>>>>>"):
-            continue
-        filtered_lines.append(line)
-    return filtered_lines
-
 class Repository:
     cache_time_for_remote_source = 3600 # seconds
 
@@ -54,7 +42,6 @@ class Repository:
         self.game = Game()
         self.flags = Flags()
         self.logger: Logger = Logger(rep_folder)
-        self.watcher: FileMonitor | None = None
 
     def set_global_cache(self):
         RepPaths.use_global_cache_folder = True
@@ -70,20 +57,7 @@ class Repository:
         path = path.resolve()
         return path.is_relative_to(rep_dir)
 
-    def load_game(self, verbose: bool) -> Repository:
-        if verbose:
-            print(f"Loading repository from {self.paths.get_repo_root_dir()}...", file=sys.stderr)
-        if not self.data.get_sources():
-            self.load_config()
-        if self.git_cache.update_mode == GitCache.UpdateMode.ALWAYS:
-            for source in self.data.get_sources():
-                _ = source.get_source_readme(verbose)
-        sources: list[RepSource] = self.data.get_sources()
-        self.game.set_sources(sources, self.data.lang)
-        self.game.build(verbose)
-        self.__load_tasks_from_log_into_game()
-        return self
-    
+
     def get_key_from_task_folder(self, folder: Path) -> str:
         path = folder.resolve()
         parts = path.parts
@@ -96,23 +70,6 @@ class Repository:
         task_folder = self.get_task_folder_for_label(label)
         return task_folder == folder
     
-    def __load_tasks_from_log_into_game(self):
-        task_dict: dict[str, LogSort] = self.logger.tasks.task_dict
-        for key, task_log in task_dict.items():
-            if not key in self.game.tasks:
-                continue
-            task = self.game.tasks[key]
-            self_list = task_log.self_list
-            if self_list:
-                _, self_item = self_list[-1]
-                task.info.copy_quality_from(self_item.info)
-
-            exec_list = task_log.exec_list
-            if exec_list:
-                _, exec_item = exec_list[-1]
-                task.info.rate = exec_item.rate
-
-
     def get_task_folder_for_label(self, label: str) -> Path:
         parts: list[str] = label.split("@")
         source = ""
@@ -121,60 +78,12 @@ class Repository:
             label = parts[1]
         return self.paths.root_dir / source / label
 
-    def load_config(self):
-        content = Decoder.load(self.paths.get_config_file())
-        local_data: dict[str, Any] = {}
-        try:
-            lines = content.splitlines()
-            lines = remove_git_merge_tags(lines)
-            local_data = yaml.safe_load("\n".join(lines))
-            if local_data is None or not isinstance(local_data, dict) or len(local_data) == 0: # type: ignore
-                backup_content = Decoder.load(self.paths.get_config_backup_file())
-                lines = backup_content.splitlines()
-                lines = remove_git_merge_tags(lines)
-                local_data = yaml.safe_load("\n".join(lines))
-            if local_data is None or not isinstance(local_data, dict) or len(local_data) == 0: # type: ignore
-                raise FileNotFoundError(f"Arquivo de configuração vazio: {self.paths.get_config_file()}")
-        except:
-            raise Warning(Text.format("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.paths.get_config_file(), "corrompido"))
-        self.data.load_from_dict(local_data)
-        self.flags.from_dict(self.data.flags)
-        for source in self.data.get_sources():
-            source.set_source_globals(self.paths.get_repo_root_dir(), self.paths.get_cache_folder())
-
-        return self
-
-    def start_watching(self):
-        if self.watcher is not None:
-            return self
-        self.watcher = FileMonitor(
-            root_directory=self.paths.get_repo_root_dir(),
-            sources_dir_list={source.get_workspace(): source.name for source in self.data.get_sources()},
-            ignore_patterns=self.ignore_patterns,
-            second_interval=300,
-            logger=self.logger
-        )
-        self.watcher.init()
-        return self
-    
-    def stop_watching(self):
-        if self.watcher is not None:
-            self.watcher.stop()
-            self.watcher = None
-        return self
 
     def create_default_sandbox_source(self) -> RepSource:
         source = RepSource("", git_cache=self.git_cache).set_default_student_sandbox()
         source.set_source_globals(self.paths.get_repo_root_dir(), self.paths.get_cache_folder())
         return source
 
-    def save_config(self):
-        self.data.version = "0.2"
-        self.data.flags = self.flags.to_dict()
-        path: Path = Path(self.paths.get_config_file())
-        path.parent.mkdir(parents=True, exist_ok=True)
-        atomic_write_yaml(path, self.data.save_to_dict())
-        return self
 
     def __str__(self) -> str:
         return f"data: {self.data}\n"

@@ -62,7 +62,10 @@ class Main:
                 mode = GitCache.UpdateMode.NEVER
             repo = Repository(dir_parent, update_mode=mode, recursive_search=False)
             if auto_load:
-                repo.load_config().load_game(verbose=True)
+                from tko.settings.repository_loader import RepositoryLoader
+                from tko.settings.game_coordinator import GameCoordinator
+                RepositoryLoader(repo).load_config()
+                GameCoordinator(repo).load_game(verbose=True)
             return repo, dir_parent
 
         if show_warnings:
@@ -139,13 +142,14 @@ class Main:
         repo, _ = Main.load_repo(args.changedir, show_warnings=True, auto_load=True, global_cache=args.global_cache, force_update=args.update)
         if repo is None:
             return
-        repo.start_watching()
+        from tko.settings.repository_watcher import RepositoryWatcher
+        watcher = RepositoryWatcher(repo).start_watching()
         action = CmdOpen(settings, repo, args.update)
         if not args.offline:
             if not CheckVersion(settings).is_updated():
                 action.display_need_update()
         action.execute()
-        repo.stop_watching()
+        watcher.stop_watching()
 
     @staticmethod
     def collect_task(args: argparse.Namespace):

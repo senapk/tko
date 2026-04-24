@@ -9,8 +9,6 @@ from tko.settings.languages_settings import LanguagesSettings
 from tko.util.text import Text
 from tko.play.colors import Colors
 from tko.util.decoder import Decoder
-from tko.settings.repository import remove_git_merge_tags
-
 def singleton(class_): # type: ignore
     instances = {}
     def getinstance(*args, **kwargs): # type: ignore
@@ -89,9 +87,7 @@ class Settings:
             settings_file = self.get_settings_file()
             content = Decoder.load(settings_file)
 
-            lines = content.splitlines()
-            lines = remove_git_merge_tags(lines)
-            data: Any = yaml.safe_load("\n".join(lines))
+            data: Any = yaml.safe_load(content)
 
             if data is None or not isinstance(data, dict):
                 raise FileNotFoundError(f"Arquivo de configuração vazio: {settings_file}")

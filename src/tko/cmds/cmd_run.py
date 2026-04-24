@@ -159,8 +159,10 @@ class Run:
         if repo_path is None:
             return False
         rep: Repository = Repository(repo_path)
-        rep.load_config()
-        rep.load_game(verbose=True)
+        from tko.settings.repository_loader import RepositoryLoader
+        from tko.settings.game_coordinator import GameCoordinator
+        RepositoryLoader(rep).load_config()
+        GameCoordinator(rep).load_game(verbose=True)
         self.__rep = rep
         if rep.data.lang != "":
             self.__lang = rep.data.lang

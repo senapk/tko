@@ -88,7 +88,10 @@ class CmdCollect:
         if not rep.found():
             print(f"Folder {folder} is not a valid tko repository.")
             return
-        rep.load_config().load_game(verbose=True)
+        from tko.settings.repository_loader import RepositoryLoader
+        from tko.settings.game_coordinator import GameCoordinator
+        RepositoryLoader(rep).load_config()
+        GameCoordinator(rep).load_game(verbose=True)
         print(f"Repositório cache atualizado.")
 
     @staticmethod
@@ -131,7 +134,11 @@ class CollectSingle:
             path = os.path.abspath(param.folder)
             print(f"Repository not found in {path}")
             return Collected()
-        rep.set_global_cache().load_config().load_game(verbose=True)
+        rep.set_global_cache()
+        from tko.settings.repository_loader import RepositoryLoader
+        from tko.settings.game_coordinator import GameCoordinator
+        RepositoryLoader(rep).load_config()
+        GameCoordinator(rep).load_game(verbose=True)
         data = Collected()
 
         if param.daily:

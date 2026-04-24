@@ -71,7 +71,8 @@ class PlayActions:
 
     def reload(self):
         DraftsFinderCached.reset_cache()
-        self.repo.load_game(verbose=False)
+        from tko.settings.game_coordinator import GameCoordinator
+        GameCoordinator(self.repo).load_game(verbose=False)
         self.tree.recalculate_layout()
 
     def delete_folder_ask(self):
