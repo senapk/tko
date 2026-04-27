@@ -1,6 +1,6 @@
 from tko.play.floating_drop_down import FloatingDropDown
 from tko.play.floating_drop_down import FloatingInputData
-from tko.settings.app_settings import ToggleOption
+from tko.config.app_settings import ToggleOption
 from tko.util.text import Text
 from tko.util.symbols import Symbols
 from tko.play.keys import GuiKeys

@@ -1,11 +1,11 @@
 from __future__ import annotations
 from typing import Any
-from tko.settings.app_settings import AppSettings
+from tko.config.app_settings import AppSettings
 from platformdirs import user_data_dir
 from pathlib import Path
 import yaml #type: ignore
 
-from tko.settings.languages_settings import LanguagesSettings
+from tko.config.languages_settings import LanguagesSettings
 from tko.util.text import Text
 from tko.play.colors import Colors
 from tko.util.decoder import Decoder

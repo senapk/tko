@@ -12,7 +12,7 @@ from tko.util.text import Text
 from tko.util.symbols import Symbols
 from tko.util.label_factory import LabelFactory
 from pathlib import Path
-from tko.settings.settings import Settings
+from tko.config.settings import Settings
 
 class Wdir:
     def __init__(self, settings: Settings):

@@ -4,7 +4,7 @@ import os
 import shutil
 from tko.util.text import Text
 from tko.util.runner import Runner
-from tko.settings.settings import Settings
+from tko.config.settings import Settings
 import yaml #type: ignore
 from pathlib import Path
 from tko.util.decoder import Decoder

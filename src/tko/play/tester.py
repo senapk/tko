@@ -19,9 +19,9 @@ from tko.run.solver_builder import CompileError
 from tko.run.unit import Unit
 from tko.run.unit_runner import UnitRunner
 from tko.run.wdir import Wdir
-from tko.settings.app_settings import ToggleOption
-from tko.settings.repository_loader import RepositoryLoader
-from tko.settings.settings import Settings
+from tko.config.app_settings import ToggleOption
+from tko.repository.repository_loader import RepositoryLoader
+from tko.config.settings import Settings
 from tko.enums.execution_result import ExecutionResult
 from tko.util.freerun import Free
 from tko.util.text import  Text
@@ -32,7 +32,7 @@ from tko.run.diff_builder_down import DiffBuilderDown
 from tko.run.diff_builder_side import DiffBuilderSide
 from tko.play.tracker import Tracker
 from tko.util.raw_terminal import RawTerminal
-from tko.settings.repository import Repository
+from tko.repository.repository import Repository
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove
 from tko.util.symbols import Symbols

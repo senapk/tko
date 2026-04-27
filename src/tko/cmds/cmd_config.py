@@ -1,6 +1,6 @@
 # from typing import override
 
-from tko.settings.settings import Settings
+from tko.config.settings import Settings
 from tko.enums.diff_mode import DiffMode
 
 class ConfigParams:

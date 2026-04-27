@@ -5,7 +5,7 @@ from tko.game.quest_parser import QuestParser
 from tko.game.task_parser import TaskParser
 from tko.game.quest import Quest
 from tko.game.task import Task
-from tko.settings.rep_source import RepSource
+from tko.repository.rep_source import RepSource
 from tko.util.decoder import Decoder
 from tko.feno.indexer import fix_readme
 from icecream import ic # type: ignore

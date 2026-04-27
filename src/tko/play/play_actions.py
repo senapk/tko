@@ -70,7 +70,7 @@ class PlayActions:
 
     def reload(self):
         DraftsFinderCached.reset_cache()
-        from tko.settings.game_coordinator import GameCoordinator
+        from tko.repository.game_coordinator import GameCoordinator
         GameCoordinator(self.repo).load_game(verbose=False)
         self.tree.recalculate_layout()
 

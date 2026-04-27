@@ -1,5 +1,5 @@
-from tko.settings.git_cache import GitCache
-from tko.settings.rep_source import STUDENT_SANDBOX_NAME, RepSource
+from tko.repository.git_cache import GitCache
+from tko.repository.rep_source import STUDENT_SANDBOX_NAME, RepSource
 
 from typing import Any
 

@@ -2,10 +2,10 @@ from tko.play.floating_drop_down import FloatingDropDown
 from tko.play.floating import Floating
 from tko.play.floating_drop_down import FloatingInputData
 from tko.play.floating_manager import FloatingManager
-from tko.settings.repository_loader import RepositoryLoader
+from tko.repository.repository_loader import RepositoryLoader
 from tko.util.text import Text
-from tko.settings.repository import Repository
-from tko.settings.settings import Settings
+from tko.repository.repository import Repository
+from tko.config.settings import Settings
 
 
 class LanguageSetter:

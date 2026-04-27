@@ -1,7 +1,7 @@
-from tko.settings.rep_source import RepSource
-from tko.settings.repository import Repository
-from tko.settings.settings import Settings
-from tko.settings.repository_loader import RepositoryLoader
+from tko.repository.rep_source import RepSource
+from tko.repository.repository import Repository
+from tko.config.settings import Settings
+from tko.repository.repository_loader import RepositoryLoader
 from tko.util.text import Text
 from pathlib import Path
 

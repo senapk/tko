@@ -1,5 +1,5 @@
 from tko.util.text import Text
-from tko.settings.app_settings import AppSettings
+from tko.config.app_settings import AppSettings
 from tko.util.symbols import Symbols
 
 class Border:

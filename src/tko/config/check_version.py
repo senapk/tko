@@ -1,6 +1,6 @@
 from urllib.request import urlopen
 from datetime import datetime as dt
-from tko.settings.settings import Settings
+from tko.config.settings import Settings
 from tko import __version__
 
 class CheckVersion:

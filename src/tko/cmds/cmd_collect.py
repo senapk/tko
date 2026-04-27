@@ -1,15 +1,15 @@
 from __future__ import annotations
 from pathlib import Path
 from typing import Any
-from tko.settings.repository import Repository
-from tko.settings.settings import Settings
+from tko.repository.repository import Repository
+from tko.config.settings import Settings
 from tko.logger.logger import Logger
 from tko.logger.task_resume import TaskResume
 from tko.logger.log_sort import LogSort
 from tko.play.daily_graph import DailyGraph
 from tko.mico.collected import Collected, Game
 from tko.util.text import Text
-from tko.settings.rep_paths import RepPaths
+from tko.repository.rep_paths import RepPaths
 
 import yaml # type: ignore
 import json
@@ -88,8 +88,8 @@ class CmdCollect:
         if not rep.found():
             print(f"Folder {folder} is not a valid tko repository.")
             return
-        from tko.settings.repository_loader import RepositoryLoader
-        from tko.settings.game_coordinator import GameCoordinator
+        from tko.repository.repository_loader import RepositoryLoader
+        from tko.repository.game_coordinator import GameCoordinator
         RepositoryLoader(rep).load_config()
         GameCoordinator(rep).load_game(verbose=True)
         print(f"Repositório cache atualizado.")
@@ -135,8 +135,8 @@ class CollectSingle:
             print(f"Repository not found in {path}")
             return Collected()
         rep.set_global_cache()
-        from tko.settings.repository_loader import RepositoryLoader
-        from tko.settings.game_coordinator import GameCoordinator
+        from tko.repository.repository_loader import RepositoryLoader
+        from tko.repository.game_coordinator import GameCoordinator
         RepositoryLoader(rep).load_config()
         GameCoordinator(rep).load_game(verbose=True)
         data = Collected()

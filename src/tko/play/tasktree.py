@@ -1,13 +1,13 @@
 
 from tko.play.FormatterUtil import FormatterUtil
-from tko.settings.repository import Repository
+from tko.repository.repository import Repository
 from tko.util.text import Text
 from tko.util.to_asc import SearchAsc
 from tko.play.flags import Flags
 from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.game.game import Game
-from tko.settings.settings import Settings
+from tko.config.settings import Settings
 from tko.game.tree_item import TreeItem
 
 class TreeLayout:

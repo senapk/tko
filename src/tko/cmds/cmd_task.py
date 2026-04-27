@@ -1,5 +1,5 @@
-from tko.settings.settings import Settings
-from tko.settings.repository import Repository
+from tko.config.settings import Settings
+from tko.repository.repository import Repository
 from tko.play.task_graph import TaskGraph
 from tko.util.raw_terminal import RawTerminal
 

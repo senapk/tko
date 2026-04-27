@@ -5,7 +5,7 @@ from typing import Any
 import os
 from enum import Enum
 
-from tko.settings.git_cache import GitCache
+from tko.repository.git_cache import GitCache
 
 class SourceType(Enum):
     LOCAL_FILE = "local"

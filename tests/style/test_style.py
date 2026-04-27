@@ -1,5 +1,5 @@
 from tko.play.border import Border
-from tko.settings.app_settings import AppSettings
+from tko.config.app_settings import AppSettings
 from tko.util.text import Text
 
 class Test:    

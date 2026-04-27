@@ -5,7 +5,7 @@ from tko.logger.log_item_self import LogItemSelf
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove
 from tko.logger.delta import Delta
-from tko.settings.rep_paths import RepPaths
+from tko.repository.rep_paths import RepPaths
 import datetime as dt
 
 from tko.util.decoder import Decoder

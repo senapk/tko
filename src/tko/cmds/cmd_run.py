@@ -17,14 +17,14 @@ from tko.play.tracker import Tracker
 from tko.run.unit_runner import UnitRunner
 from tko.game.task import Task
 from tko.play.opener import Opener
-from tko.settings.settings import Settings
+from tko.config.settings import Settings
 from tko.enums.diff_mode import DiffMode
 from tko.feno.filter import CodeFilter
-from tko.settings.repository import Repository
+from tko.repository.repository import Repository
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_sort import LogSort
 from tko.logger.task_resume import TaskResume
-from tko.settings.rep_paths import RepPaths
+from tko.repository.rep_paths import RepPaths
 from icecream import ic # type: ignore
 from pathlib import Path
 
@@ -159,8 +159,8 @@ class Run:
         if repo_path is None:
             return False
         rep: Repository = Repository(repo_path)
-        from tko.settings.repository_loader import RepositoryLoader
-        from tko.settings.game_coordinator import GameCoordinator
+        from tko.repository.repository_loader import RepositoryLoader
+        from tko.repository.game_coordinator import GameCoordinator
         RepositoryLoader(rep).load_config()
         GameCoordinator(rep).load_game(verbose=True)
         self.__rep = rep

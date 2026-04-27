@@ -1,15 +1,15 @@
 from __future__ import annotations
 from pathlib import Path
-from tko.settings.rep_data import RepData
-from tko.settings.rep_data import RepData
-from tko.settings.rep_source import RepSource
+from tko.repository.rep_data import RepData
+from tko.repository.rep_data import RepData
+from tko.repository.rep_source import RepSource
 from tko.game.game import Game
 from tko.logger.logger import Logger
 import yaml # type: ignore
-from tko.settings.rep_paths import RepPaths
+from tko.repository.rep_paths import RepPaths
 from icecream import ic # type: ignore
 from datetime import timedelta
-from tko.settings.git_cache import GitCache
+from tko.repository.git_cache import GitCache
 from tko.play.flags import Flags
 class Repository:
     cache_time_for_remote_source = 3600 # seconds

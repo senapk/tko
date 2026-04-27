@@ -1,8 +1,8 @@
 import sys
-from tko.settings.git_cache import GitCache
-from tko.settings.rep_source import RepSource
+from tko.repository.git_cache import GitCache
+from tko.repository.rep_source import RepSource
 from tko.logger.log_sort import LogSort
-from tko.settings.repository import Repository
+from tko.repository.repository import Repository
 
 class GameCoordinator:
     def __init__(self, repo: Repository): 
@@ -13,7 +13,7 @@ class GameCoordinator:
             print(f"Loading repository from {self.repo.paths.get_repo_root_dir()}...", file=sys.stderr)
             
         if not self.repo.data.get_sources():
-            from tko.settings.repository_loader import RepositoryLoader
+            from tko.repository.repository_loader import RepositoryLoader
             RepositoryLoader(self.repo).load_config()
             
         if self.repo.git_cache.update_mode == GitCache.UpdateMode.ALWAYS:

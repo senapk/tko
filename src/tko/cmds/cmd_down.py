@@ -3,8 +3,8 @@ import os
 import shutil
 
 from tko.cmds.drafts_finder_cached import DraftsFinderCached
-from tko.settings.repository import Repository
-from tko.settings.settings import Settings
+from tko.repository.repository import Repository
+from tko.config.settings import Settings
 from tko.game.game import Game
 from tko.util.decoder import Decoder
 from tko.feno.remote_md import Absolute
@@ -19,8 +19,8 @@ class CmdLineDown:
         self.rep = rep
         self.task_key = task_key
         if game is None:
-            from tko.settings.repository_loader import RepositoryLoader
-            from tko.settings.game_coordinator import GameCoordinator
+            from tko.repository.repository_loader import RepositoryLoader
+            from tko.repository.game_coordinator import GameCoordinator
             RepositoryLoader(self.rep).load_config()
             GameCoordinator(self.rep).load_game(verbose=True)
             self.game = self.rep.game

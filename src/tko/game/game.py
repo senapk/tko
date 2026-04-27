@@ -2,7 +2,7 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.game.game_builder import GameBuilder
 from tko.game.game_validator import GameValidator
-from tko.settings.rep_source import RepSource
+from tko.repository.rep_source import RepSource
 # from typing import override
 from icecream import ic # type: ignore
 import re

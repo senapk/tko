@@ -1,5 +1,5 @@
 from tko.logger.file_monitor import FileMonitor
-from tko.settings.repository import Repository
+from tko.repository.repository import Repository
 
 class RepositoryWatcher:
     def __init__(self, repo: Repository):

@@ -1,8 +1,8 @@
 from tko.cmds.drafts_finder_cached import DraftsFinderCached
 from tko.game.quest import Quest
 from tko.game.task import Task
-from tko.settings.repository import Repository
-from tko.settings.settings import Settings
+from tko.repository.repository import Repository
+from tko.config.settings import Settings
 from tko.util.symbols import Symbols
 from tko.util.text import Text
 

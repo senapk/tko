@@ -1,5 +1,5 @@
-from tko.settings.settings import Settings
-from tko.settings.repository import Repository
+from tko.config.settings import Settings
+from tko.repository.repository import Repository
 from uniplot import plot_to_string # type: ignore
 from tko.util.text import Text
 from tko.logger.log_sort import LogSort

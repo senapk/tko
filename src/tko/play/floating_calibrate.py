@@ -1,7 +1,7 @@
 from tko.util.text import Text
 from tko.play.floating import Floating, FloatingABC
-from tko.settings.settings import Settings
-import tko.settings.app_settings as app
+from tko.config.settings import Settings
+import tko.config.app_settings as app
 
 class FloatingCalibrate(FloatingABC):
     def __init__(self, settings: Settings):

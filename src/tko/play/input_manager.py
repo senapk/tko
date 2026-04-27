@@ -1,8 +1,8 @@
 from typing import Callable
-from tko.settings.app_settings import AppSettings
+from tko.config.app_settings import AppSettings
 import curses
 import os
-from tko.settings.app_settings import AppSettings, AppKeys
+from tko.config.app_settings import AppSettings, AppKeys
 
 FN_VOID = Callable[[], None]
 

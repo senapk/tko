@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Any
 from tko.util.decoder import Decoder
 from tko.util.text import Text
-from tko.settings.atomic_write_yaml import atomic_write_yaml
-from tko.settings.repository import Repository
+from tko.util.atomic_write_yaml import atomic_write_yaml
+from tko.repository.repository import Repository
 
 class ConfigMergeConflictError(Exception):
     pass

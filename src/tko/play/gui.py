@@ -1,5 +1,5 @@
 from tko.play.keys import GuiActions
-from tko.settings.settings import Settings
+from tko.config.settings import Settings
 from tko.util.text import Text
 from tko.util.symbols import Symbols
 from pathlib import Path
@@ -19,8 +19,8 @@ from tko.game.task import Task
 from tko.play.task_graph import TaskGraph
 from tko.play.daily_graph import DailyGraph
 from tko.util.visual import Visual
-from tko.settings.settings import Settings
-from tko.settings.app_settings import AppSettings
+from tko.config.settings import Settings
+from tko.config.app_settings import AppSettings
 from tko.play.FormatterUtil import FormatterUtil
 
 class TaskAction:

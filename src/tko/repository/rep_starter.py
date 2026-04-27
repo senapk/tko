@@ -2,11 +2,11 @@ import os
 from pathlib import Path
 from tko.play.language_setter import LanguageSetter
 from tko.util.text import Text
-from tko.settings.repository import Repository
-from tko.settings.rep_paths import RepPaths
+from tko.repository.repository import Repository
+from tko.repository.rep_paths import RepPaths
 import shutil
-from tko.settings.settings import Settings
-from tko.settings.repository_loader import RepositoryLoader
+from tko.config.settings import Settings
+from tko.repository.repository_loader import RepositoryLoader
 
 class RepStarter:
     def __init__(self, settings: Settings, folder: Path | None, language: str | None = None):

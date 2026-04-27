@@ -27,17 +27,17 @@ from tko.mico.pull import pull_all_parallel_main
 from tko.util.param import Param
 from tko.util.pattern_loader import PatternLoader
 
-from tko.settings.settings import Settings
+from tko.config.settings import Settings
 from tko.cmds.cmd_diff import cmd_diff
 
-from tko.settings.repository import Repository
-from tko.settings.rep_paths import RepPaths
+from tko.repository.repository import Repository
+from tko.repository.rep_paths import RepPaths
 from tko.util.raw_terminal import RawTerminal
-from tko.settings.check_version import CheckVersion
-from tko.settings.rep_starter import RepStarter
-from tko.settings.rep_source_actions import RepSourceActions
+from tko.config.check_version import CheckVersion
+from tko.repository.rep_starter import RepStarter
+from tko.repository.rep_source_actions import RepSourceActions
 from tko.util.rtext import RenderConfig, RenderMode
-from tko.settings.git_cache import GitCache
+from tko.repository.git_cache import GitCache
 
 from tko.__init__ import __version__
 
@@ -62,8 +62,8 @@ class Main:
                 mode = GitCache.UpdateMode.NEVER
             repo = Repository(dir_parent, update_mode=mode, recursive_search=False)
             if auto_load:
-                from tko.settings.repository_loader import RepositoryLoader
-                from tko.settings.game_coordinator import GameCoordinator
+                from tko.repository.repository_loader import RepositoryLoader
+                from tko.repository.game_coordinator import GameCoordinator
                 RepositoryLoader(repo).load_config()
                 GameCoordinator(repo).load_game(verbose=True)
             return repo, dir_parent
@@ -142,7 +142,7 @@ class Main:
         repo, _ = Main.load_repo(args.changedir, show_warnings=True, auto_load=True, global_cache=args.global_cache, force_update=args.update)
         if repo is None:
             return
-        from tko.settings.repository_watcher import RepositoryWatcher
+        from tko.repository.repository_watcher import RepositoryWatcher
         watcher = RepositoryWatcher(repo).start_watching()
         action = CmdOpen(settings, repo, args.update)
         if not args.offline:

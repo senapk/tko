@@ -2,7 +2,7 @@ from tko.util.param import Param
 from tko.run.wdir import Wdir
 from tko.run.writer import Writer
 from pathlib import Path
-from tko.settings.settings import Settings
+from tko.config.settings import Settings
 
 class CmdBuild:
 
