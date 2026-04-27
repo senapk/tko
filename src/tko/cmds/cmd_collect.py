@@ -2,7 +2,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 from tko.repository.repository import Repository
-from tko.config.settings import Settings
 from tko.logger.logger import Logger
 from tko.logger.task_resume import TaskResume
 from tko.logger.log_sort import LogSort
@@ -14,7 +13,6 @@ from tko.repository.rep_paths import RepPaths
 import yaml # type: ignore
 import json
 import os
-import argparse
 import csv
     
 
@@ -54,51 +52,6 @@ class CmdCollect:
                 output_quest.tasks.append(Game.Task(key=task.get_full_key(), value=task.xp, is_leet=task.is_auto(), opt=task.is_optional()))
         return output
     
-    @staticmethod
-    def collect_batch(args: argparse.Namespace):
-        git_repo_list: list[Path] = [Path(x) for x in args.path]
-        CollectMany.execute(git_repo_list, json_path=args.json, csv_path=args.csv, block_prefix=args.block_prefix)
-
-    @staticmethod
-    def collect_main(args: argparse.Namespace):
-        params = CollectSingle.CollectParams()
-        params.folder = Path() if args.changedir is None else Path(args.changedir)
-        params.width = args.width
-        params.height = args.height
-        params.daily = args.daily
-        params.resume = args.resume
-        params.game = args.game
-        params.log = args.log
-        params.json_output = args.json
-        params.colored = args.color
-        data: Collected = CollectSingle.collect(params)
-
-        if params.json_output:
-            # print(yaml.dump(data))
-            print(json.dumps(data.to_dict(), indent=4, ensure_ascii=False))
-
-
-    @staticmethod
-    def update(args: argparse.Namespace):
-        folder = args.folder
-        if not os.path.isdir(folder):
-            print(f"Folder {folder} does not exist.")
-            return
-        rep = Repository(folder)
-        if not rep.found():
-            print(f"Folder {folder} is not a valid tko repository.")
-            return
-        from tko.repository.repository_loader import RepositoryLoader
-        from tko.repository.game_coordinator import GameCoordinator
-        RepositoryLoader(rep).load_config()
-        GameCoordinator(rep).load_game(verbose=True)
-        print(f"Repositório cache atualizado.")
-
-    @staticmethod
-    def list(args: argparse.Namespace):
-        settings = Settings(args.settings)
-        print(f"SettingsFile\n- {settings.settings_dir}")
-        print(str(settings))
 
 class CollectSingle:
     class CollectParams:

@@ -115,7 +115,7 @@ def test_links_execute(tmp_path: Path):
 <!-- links -->
 """
     # Create dummy file path to resolve relative paths
-    dummy_file = str(target_dir / "README.md")
+    dummy_file = target_dir / "README.md"
     
     out = Links.execute(dummy_file, content, Action.RUN)
     expected = """# Main

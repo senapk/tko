@@ -1,7 +1,6 @@
 import os
 import re
 import configparser
-import argparse
 from tko.util.decoder import Decoder
 from tko.util.text import Text
 from pathlib import Path
@@ -49,7 +48,7 @@ class RemoteLink:
         return self
 
 class RemoteCfg:
-    def __init__(self, target: str, make_remote: bool):
+    def __init__(self, target: Path, make_remote: bool):
         self.target = target
         self.remote: RemoteLink = RemoteLink()
         self.cfg_path: str | None = None
@@ -86,7 +85,7 @@ class RemoteCfg:
         self.remote.repo = config["DEFAULT"]["rep"]
         self.remote.branch = config["DEFAULT"]["branch"]
 
-    def __load_cfg_path(self, target: str):
+    def __load_cfg_path(self, target: Path):
         # look for the remote.cfg file in the current folder
         # if not found, look for it in the parent folder
         # if not found, look for it in the parent's parent folder ...
@@ -155,7 +154,7 @@ class Absolute:
         return Absolute.__replace_remote(content, folder, folder, folder, is_local = True)
 
     @staticmethod
-    def convert_or_copy_or_print(source: str, target: str | None, make_remote: bool = False):
+    def convert_or_copy_or_print(source: Path, target: Path | None, make_remote: bool = False):
         content = Decoder.load(source)
         cfg = RemoteCfg(source, make_remote)
         if cfg.cfg_exists():
@@ -164,7 +163,3 @@ class Absolute:
             Decoder.save(target, content)
         else:
             print(content)
-        
-
-def remote_main(args: argparse.Namespace):
-    Absolute.convert_or_copy_or_print(args.target, args.output)

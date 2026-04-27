@@ -3,7 +3,6 @@
 
 import re
 import os
-import argparse
 import enum
 from tko.feno.filter import Filter
 from tko.util.decoder import Decoder
@@ -117,7 +116,7 @@ class Toch:
 class Links:
 
     @staticmethod
-    def load_links(readme_dir: str, filter_dir: str):
+    def load_links(readme_dir: Path, filter_dir: Path):
         def traverse_directory(directory: str, depth: int = 0):
             output = ""
             if os.path.isdir(directory):
@@ -138,7 +137,7 @@ class Links:
         return traverse_directory(origin)
 
     @staticmethod
-    def execute(path: str, content: str, action: Action = Action.RUN) -> str:
+    def execute(path: Path, content: str, action: Action = Action.RUN) -> str:
         regex = r"<!-- links (\S*?) -->\n(.*?)<!-- links -->"
         matches = re.finditer(regex, content, re.MULTILINE | re.DOTALL)
         
@@ -147,8 +146,8 @@ class Links:
             filter_dir = match.group(1)
             lregex = r"<!-- links " + filter_dir + r" -->\n(.*?)<!-- links -->"
             if action == Action.RUN:
-                readme_dir = os.path.normpath(os.path.dirname(path))
-                new_links = Links.load_links(readme_dir, filter_dir)
+                readme_dir = path.parent.resolve()
+                new_links = Links.load_links(readme_dir, Path(filter_dir))
                 subst = r"<!-- links " + filter_dir + r" -->\n" + new_links + r"<!-- links -->"
             else:
                 subst = r"<!-- links " + filter_dir + r" -->\n<!-- links -->"
@@ -289,7 +288,7 @@ class MdppMain:
         return target
 
     @staticmethod
-    def open_file(path: str) -> tuple[bool, str]: 
+    def open_file(path: Path) -> tuple[bool, str]: 
         if os.path.isfile(path):
             file_content = Decoder.load(path)
             return True, file_content
@@ -298,10 +297,10 @@ class MdppMain:
 
 class Mdpp:
     @staticmethod
-    def update_file(target: str, action: Action = Action.RUN, quiet: bool = False) -> bool:
+    def update_file(target: Path, action: Action = Action.RUN, quiet: bool = False) -> bool:
         # path = MdppMain.fix_path(target)
         path = target
-        if not path.endswith(".md"):
+        if not path.suffix == ".md":
             print("Warning: File", path, "is not a markdown file")
             return False
         if not os.path.isfile(path):
@@ -326,15 +325,3 @@ class Mdpp:
             return True
 
         return False
-
-def mdpp_main(args: argparse.Namespace):
-
-    targets: list[str] = args.targets
-    if len(args.targets) == 0:
-        targets = [os.path.join(os.getcwd(), "README.md")]
-        print(f"Updating README.md in {os.path.basename(os.getcwd())}")
-
-    action = Action.RUN if not args.clean else Action.CLEAN
-
-    for target in targets:
-        Mdpp.update_file(target, action, args.quiet)

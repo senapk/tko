@@ -5,9 +5,6 @@ from typing import Any
 from tko.util.decoder import Decoder
 from pathlib import Path
 
-def json_norm_join(*args: str) -> str:
-    return str(Path(*args).resolve())
-
 class FileType(enum.Enum):
     SHOW = "show" # visível para o aluno como required
     HIDE = "hide" # arquivos extra utilizados na compilação, mas escondidos dos alunos
@@ -41,15 +38,15 @@ class JsonVPL:
         self.upload: list[JsonFile] = []
         self.draft: dict[str, list[JsonFile]] = {}
     
-    def set_tests(self, exec_file: str):
+    def set_tests(self, exec_file: Path):
         data = Decoder.load(exec_file)
         self.upload.append(JsonFile("vpl_evaluate.cases", data, FileType.HIDE))
         return self
     
-    def add_draft(self, extension: str, exec_file: str, ftype: FileType):
+    def add_draft(self, extension: str, exec_file: Path, ftype: FileType):
         if extension not in self.draft:
             self.draft[extension] = []
-        filename = exec_file.split(os.sep)[-1]
+        filename = exec_file.name
         data = Decoder.load(exec_file)
         jfile = JsonFile(filename, data, ftype)
         self.draft[extension].append(jfile)
@@ -64,14 +61,14 @@ class JsonVPL:
         }
         return json.dumps(json_dict, indent=4, ensure_ascii=True)
     
-    def load_drafts(self, cache_draft: str):
+    def load_drafts(self, cache_draft: Path) -> bool:
         found = False
         if not os.path.isdir(cache_draft):
             return False
         folders: list[str] = os.listdir(cache_draft)
         folders = [f for f in folders if os.path.isdir(os.path.join(cache_draft, f))]
         for lang in folders:
-            lang_path = json_norm_join(cache_draft, lang)
+            lang_path = cache_draft / lang
             hide_files: list[str] = []
             hide_files_config = os.path.join(lang_path, JsonVPL.hide_extension)
             if os.path.isfile(hide_files_config):
@@ -91,7 +88,7 @@ class JsonVPL:
                     ftype = FileType.HIDE
                 elif file in exec_files:
                     ftype = FileType.EXEC
-                file_path = json_norm_join(lang_path, file)
+                file_path = lang_path / file
                 self.add_draft(lang, file_path, ftype)
                 found = True
         return found

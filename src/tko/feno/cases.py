@@ -1,15 +1,17 @@
+from pathlib import Path
 import subprocess
-import os
-import glob
-
 
 class Cases:
 
     @staticmethod
-    def run(cases_file: str, source_readme: str, source_dir: str):
-        # find all files in the directory terminatig with .tio or .vpl
-        files = list(glob.iglob(source_dir + '/**', recursive=True))
-        files = [f for f in files if os.path.isfile(f)]
-        files = [f for f in files if f.endswith(".tio") or f.endswith(".vpl")]
-        cmd = " ".join(["tko", "build", cases_file, source_readme] + files)
-        subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+    def run(cases_file: Path, source_readme: Path, source_dir: Path) -> None:
+        # encontra recursivamente arquivos .tio e .vpl
+        files: list[Path] = [
+            p for p in source_dir.rglob("*")
+            if p.is_file() and p.suffix in {".tio", ".vpl"}
+        ]
+
+        # evita shell=True e mantém tipagem correta
+        cmd: list[str] = ["tko", "build", str(cases_file), str(source_readme)] + [str(f) for f in files]
+
+        subprocess.run(cmd, stdout=subprocess.PIPE, check=False)

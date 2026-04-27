@@ -1,5 +1,4 @@
 from __future__ import annotations
-import argparse
 import os
 from tko.run.diff_builder_down import DiffBuilderDown
 from tko.run.diff_builder_side import DiffBuilderSide
@@ -8,11 +7,9 @@ from tko.util.raw_terminal import RawTerminal
 from tko.run.unit import Unit
 
 
-def cmd_diff(args: argparse.Namespace) -> None:
-    target_a: str = args.target_a
-    target_b: str = args.target_b
-    diff_mode = DiffMode.SIDE if args.side else DiffMode.DOWN
-    if args.path:
+def cmd_diff(target_a: str, target_b: str, side: bool, is_path: bool) -> None:
+    diff_mode = DiffMode.SIDE if side else DiffMode.DOWN
+    if is_path:
         if os.path.isfile(target_a):
             content_a = open(target_a, 'r', encoding='utf-8').read()
         else:

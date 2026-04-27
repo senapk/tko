@@ -1,7 +1,7 @@
-import argparse
+from pathlib import Path
+
 import markdown
 from typing import Any
-from tko.feno.title import FenoTitle
 
 def convert_lists_to_4_spaces(markdown_content: str) -> str:
     """
@@ -23,7 +23,7 @@ def convert_lists_to_4_spaces(markdown_content: str) -> str:
         output_lines.append(line)
     return '\n'.join(output_lines)
 
-def convert_markdown_to_html(title: str, markdown_file_path: str, output_html_path: str):
+def convert_markdown_to_html(title: str, markdown_file_path: Path, output_html_path: Path):
     try:
         with open(markdown_file_path, 'r', encoding='utf-8') as f:
             markdown_content = f.read()
@@ -158,20 +158,3 @@ def convert_markdown_to_html(title: str, markdown_file_path: str, output_html_pa
         print(f"Erro: Arquivo Markdown não encontrado em '{markdown_file_path}'")
     except Exception as e:
         print(f"Ocorreu um erro durante a conversão: {e}")
-
-def html_main(args: argparse.Namespace):
-    # Verifica se os arquivos têm as extensões corretas
-    if not args.input.endswith('.md'):
-        print("Erro: O arquivo de entrada Markdown deve ter a extensão .md")
-        exit(1)
-    if not args.output.endswith('.html'):
-        print("Erro: O arquivo de saída HTML deve ter a extensão .html")
-        exit(1)
-
-    title: str = ""
-    if args.title:
-        title = args.title
-    else:
-        title = FenoTitle.extract_title(args.input)
-        
-    convert_markdown_to_html(title, args.input, args.output)

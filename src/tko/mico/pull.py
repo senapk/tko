@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 from tko.util.text import Text
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -114,9 +113,3 @@ class Pull:
 
         elapsed = time.time() - start
         print(f"\n{Text('y')}Finalizado em {elapsed:.2f}s{Text('e')}")
-
-
-def pull_all_parallel_main(args: argparse.Namespace) -> None:
-    path_list = [Path(p) for p in args.path]
-    n_threads = args.threads if args.threads else 10
-    Pull.pull_all_parallel(path_list, n_threads)

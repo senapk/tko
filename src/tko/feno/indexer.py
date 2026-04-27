@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 import re
 from pathlib import Path
-import argparse
 from tko.util.decoder import Decoder
 from tko.util.rtext import RText
 
@@ -228,14 +227,3 @@ def fix_readme(index: Path, base_dir: Path, default_quest_name: str = "Sem Quest
     indexer.found_unused_task_dirs()
     quest_lines: list[list[IndexLine]] = indexer.insert_missing_tasks(default_quest_name)
     indexer.write_file(quest_lines, align=True)
-
-def index_main(args: argparse.Namespace):
-    fix_readme(
-        index=Path(args.index), 
-        base_dir=Path(args.base), 
-        default_quest_name="sandbox", 
-        verbose=True, 
-        save_titles=args.save, 
-        load_titles=args.load
-    )
-    return 0

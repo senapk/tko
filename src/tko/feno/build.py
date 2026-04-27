@@ -10,27 +10,22 @@ from tko.feno.filter import DeepFilter
 from tko.util.decoder import Decoder
 from pathlib import Path
 import subprocess
-import argparse
 import os
 import shutil
 
-def norm_join(*args: str) -> str:
-    return str(Path(*args).resolve())
-
-
 class Actions:
-    def __init__(self, source_dir: str):
-        self.cache = norm_join(source_dir, ".cache")
-        self.target = norm_join(self.cache, "mapi.json")
+    def __init__(self, source_dir: Path):
+        self.cache = source_dir / ".cache"
+        self.target = self.cache / "mapi.json"
         self.source_dir = source_dir
-        self.hook = os.path.basename(os.path.abspath(source_dir))
-        self.source_readme = norm_join(self.source_dir, "README.md")
-        self.remote_readme = norm_join(self.cache, "README.md")
-        self.target_html = norm_join(self.cache, "q.html")
+        self.hook = source_dir.name
+        self.source_readme = self.source_dir / "README.md"
+        self.remote_readme = self.cache / "README.md"
+        self.target_html = self.cache / "q.html"
         self.title = ""
-        self.cases = norm_join(self.cache, "tests.toml")
-        self.mapi_json = norm_join(self.cache, "mapi.json")
-        self.cache_src = norm_join(source_dir, "drafts")
+        self.cases = self.cache / "tests.toml"
+        self.mapi_json = self.cache / "mapi.json"
+        self.cache_src = source_dir / "drafts"
         self.vpl: JsonVPL | None = None
         self.make_remote: bool = False
         self.use_pandoc: bool = False
@@ -91,7 +86,7 @@ class Actions:
         Log.verbose(f"  Cases file: {self.cases}")
 
     def copy_drafts(self):
-        source_src = norm_join(self.source_dir, "src")
+        source_src = self.source_dir / "src"
         if os.path.isdir(source_src):
             Log.resume("Drafts ", end="")
             Log.verbose(f"  Drafts dir: {source_src}")
@@ -99,7 +94,7 @@ class Actions:
             filter.execute(source_src, self.cache_src, 5)
 
     def run_local_sh(self):
-        local_sh = norm_join(self.source_dir, "local.sh")
+        local_sh = self.source_dir / "local.sh"
         actual_chdir = os.getcwd()
         if os.path.isfile(local_sh):
             Log.verbose(f"  Execute local.sh")
@@ -136,18 +131,17 @@ class Actions:
             Log.verbose(f"  Mdpp updading")
 
 
-def build_main(args: argparse.Namespace):
-    Log.set_verbose(not args.brief)
+def build_all(targets: list[Path], remote: bool, check: bool, erase: bool, brief: bool):
+    Log.set_verbose(not brief)
 
-    if len(args.targets) == 0:
+    if len(targets) == 0:
         print("fail: No targets specified")
         exit(1)
 
-    for target in args.targets:
+    for target in targets:
         hook = os.path.basename(os.path.abspath(target))
 
-        actions = Actions(target) \
-            .set_remote(args.remote)
+        actions = Actions(target).set_remote(remote)
 
         if not actions.validate():
             continue
@@ -159,7 +153,7 @@ def build_main(args: argparse.Namespace):
         actions.create_cache()
         actions.update_markdown()
 
-        if not args.check or actions.need_rebuild():
+        if not check or actions.need_rebuild():
             actions.recreate_cache()  # erase .cache
             actions.copy_drafts()
             actions.run_local_sh()
@@ -169,6 +163,6 @@ def build_main(args: argparse.Namespace):
             actions.build_cases()
             actions.init_vpl()
             actions.create_mapi()
-            actions.clean(args.erase)
+            actions.clean(erase)
 
         Log.resume("]")

@@ -1,11 +1,11 @@
-import os
+from pathlib import Path
 from tko.util.decoder import Decoder
 
 class FenoTitle:
     @staticmethod
-    def extract_title(readme_file: str) -> str:
+    def extract_title(readme_file: Path) -> str:
 
-        folder = os.path.basename(os.path.dirname(readme_file))
+        folder = readme_file.parent.name
 
         title = Decoder.load(readme_file).splitlines()[0]
         parts = title.split(" ")

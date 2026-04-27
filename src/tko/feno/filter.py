@@ -1,5 +1,4 @@
 from pathlib import Path
-import argparse
 import shutil
 from tko.util.rtext import RText
 from tko.util.decoder import Decoder
@@ -306,23 +305,3 @@ class CodeFilter:
     def get_default_src_dir(source_dir: Path) -> Path:
         return source_dir / "src"
     
-def filter_main(args: argparse.Namespace):
-    if args.cheat:
-        args.recursive = True
-
-    if args.recursive:
-        CodeFilter.cf_recursive(args.target, args.output, force=args.force, cheat=args.cheat, quiet=args.quiet, indent=args.indent)
-        exit()
-
-    CodeFilter.cf_single_file(args.target, args.output, args.update, args.cheat)
-
-
-def build_drafts_main(args: argparse.Namespace):
-    changedir = args.changedir
-    here = Path(".").resolve() if changedir is None else Path(changedir).resolve()
-    print(f"Updating drafts in {here}")
-    source_src = CodeFilter.get_default_src_dir(here)
-    drafts_dest = CodeFilter.get_source_drafts_dir(here)
-    if source_src.is_dir():
-        filter = DeepFilter().set_indent(4)
-        filter.execute(source_src, drafts_dest, 5)
