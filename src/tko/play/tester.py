@@ -20,6 +20,7 @@ from tko.run.unit import Unit
 from tko.run.unit_runner import UnitRunner
 from tko.run.wdir import Wdir
 from tko.settings.app_settings import ToggleOption
+from tko.settings.repository_loader import RepositoryLoader
 from tko.settings.settings import Settings
 from tko.enums.execution_result import ExecutionResult
 from tko.util.freerun import Free
@@ -224,7 +225,7 @@ class Tester:
             mode = LogItemExec.Mode.LOCK if self.locked_index else LogItemExec.Mode.FULL
             changes, total_lines = self.store_version(str(percent))
             if self.rep:
-                self.rep.save_config()
+                RepositoryLoader(self.rep).save_config()
                 self.rep.logger.store(
                     LogItemExec().set_key(self.task.get_full_key()).set_mode(mode).set_rate(percent).set_size(changes, total_lines)
                 )

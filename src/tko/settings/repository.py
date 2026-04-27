@@ -1,14 +1,9 @@
 from __future__ import annotations
 from pathlib import Path
-import sys
-from tko.settings.atomic_write_yaml import atomic_write_yaml
 from tko.settings.rep_data import RepData
-from typing import Any
 from tko.settings.rep_data import RepData
 from tko.settings.rep_source import RepSource
 from tko.game.game import Game
-from tko.util.decoder import Decoder
-from tko.util.text import Text
 from tko.logger.logger import Logger
 import yaml # type: ignore
 from tko.settings.rep_paths import RepPaths

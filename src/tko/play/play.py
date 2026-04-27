@@ -2,6 +2,7 @@ from tko.game.game import Game
 from tko.play.fmt import Fmt
 from tko.play.language_setter import LanguageSetter
 from tko.settings.app_settings import ToggleOption
+from tko.settings.repository_loader import RepositoryLoader
 from tko.settings.settings import Settings
 from tko.settings.repository import Repository
 from tko.play.keys import GuiKeys
@@ -40,7 +41,7 @@ class Play:
     def save_to_json(self):
         self.tree.save_state()
         self.settings.save_settings()
-        self.repo.save_config()
+        RepositoryLoader(self.repo).save_config()
 
     def send_quit_msg(self):
         def set_exit():

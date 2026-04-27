@@ -1,6 +1,5 @@
-import pytest
 from pathlib import Path
-from tko.feno.filter import Filter, clean_com, get_comment, Mode
+from tko.feno.filter import Filter, clean_com, get_comment
 
 def test_get_comment():
     assert get_comment(Path("script.py")) == "#"

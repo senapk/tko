@@ -1,6 +1,7 @@
 from tko.settings.rep_source import RepSource
 from tko.settings.repository import Repository
 from tko.settings.settings import Settings
+from tko.settings.repository_loader import RepositoryLoader
 from tko.util.text import Text
 from pathlib import Path
 
@@ -46,7 +47,7 @@ class RepSourceActions:
                 break
         if not found:
             raise Warning("fail: fonte não encontrada.")
-        rep.save_config()
+        RepositoryLoader(rep).save_config()
 
     def remote_set(self, alias: str, target: str | None = None, index: str | None = None) -> None:
         repo = self.repo
@@ -64,11 +65,11 @@ class RepSourceActions:
         self.show_source(source)
         if change:
             print(Text.format("Filtros {y} atualizados com sucesso.", alias))
-            repo.save_config()
+            RepositoryLoader(repo).save_config()
 
     def remote_filter(self, alias: str, filter_quest: list[str] | None = None, filter_task: list[str] | None = None, clear: bool = False, filter_to: str | None = None) -> None:
-        rep = self.repo
-        source = rep.data.get_source(alias)
+        repo = self.repo
+        source = repo.data.get_source(alias)
         if source is None:
             raise Warning("fail: fonte não encontrada.")
         change: bool = False
@@ -97,7 +98,7 @@ class RepSourceActions:
         self.show_source(source)
         if change:
             print(Text.format("Filtros {y} atualizados com sucesso.", alias))
-            rep.save_config()
+            RepositoryLoader(repo).save_config()
 
     def fix_filter(self, source: list[str] | None, destiny: str | None) -> dict[str, str] | None:
         if source is None:
@@ -156,10 +157,8 @@ class RepSourceActions:
             except Warning as e:
                 print(f"Erro ao clonar repositório: {e}, fonte não foi adicionada.")
                 raise Warning("fail: não foi possível clonar o repositório.")
-
-        self.repo.save_config()
+        RepositoryLoader(repo).save_config()
    
-
     def git_clone_repository(self, link: str) -> None:
         print(Text.format("Clonando repositório remoto {y}.", link))
         repo_dir = self.repo.git_cache.get_repo_dir(link, verbose=True)

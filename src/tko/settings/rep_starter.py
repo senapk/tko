@@ -6,6 +6,8 @@ from tko.settings.repository import Repository
 from tko.settings.rep_paths import RepPaths
 import shutil
 from tko.settings.settings import Settings
+from tko.settings.repository_loader import RepositoryLoader
+
 class RepStarter:
     def __init__(self, settings: Settings, folder: Path | None, language: str | None = None):
         self.settings = settings
@@ -33,7 +35,8 @@ class RepStarter:
         else:
             LanguageSetter.check_lang_in_text_mode(self.settings, self.repo)
         
-        repo.save_config()
+        RepositoryLoader(repo).save_config()
+
         return True
 
     def print_end_msg(self):

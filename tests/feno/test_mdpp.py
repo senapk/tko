@@ -1,18 +1,15 @@
-import pytest
 from pathlib import Path
 from tko.feno.mdpp import TocMaker, Toc, Toch, Load, Links, Action, Save
-from tko.util.decoder import Decoder
-import os
 
 def test_toc_maker_get_md_link():
-    assert TocMaker._TocMaker__get_md_link("## Hello World") == "hello-world"
-    assert TocMaker._TocMaker__get_md_link("# Some_Title") == "some_title"
-    assert TocMaker._TocMaker__get_md_link("### Title With <!-- comment -->") == "title-with-"
-    assert TocMaker._TocMaker__get_md_link("## Title [](link)") == "title-"
+    assert TocMaker.get_md_link("## Hello World") == "hello-world"
+    assert TocMaker.get_md_link("# Some_Title") == "some_title"
+    assert TocMaker.get_md_link("### Title With <!-- comment -->") == "title-with-"
+    assert TocMaker.get_md_link("## Title [](link)") == "title-"
 
 def test_toc_maker_remove_code_fences():
     content = "a\n```python\n# skip this\n```\nb"
-    out = TocMaker._TocMaker__remove_code_fences(content)
+    out = TocMaker.remove_code_fences(content)
     assert out == "a\nb"
 
 def test_toc_execute():

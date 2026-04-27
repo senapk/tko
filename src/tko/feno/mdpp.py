@@ -21,7 +21,7 @@ class TocMaker:
 
     # generate md link for the text
     @staticmethod
-    def __get_md_link(title: str | None) -> str:
+    def get_md_link(title: str | None) -> str:
         if title is None:
             return ""
         # remove html comments
@@ -46,24 +46,24 @@ class TocMaker:
         return out
 
     @staticmethod
-    def __get_level(line: str) -> int:
+    def _get_level(line: str) -> int:
         return len(line.split(" ")[0])
 
     @staticmethod
-    def __get_content(line: str) -> str:
+    def _get_content(line: str) -> str:
         if "<!--" in line and "-->" in line:
             line = line.split("<!--")[0]
         return " ".join(line.split(" ")[1:]).replace("\\", "\\\\")
 
     @staticmethod
-    def __remove_code_fences(content: str) -> str:
+    def remove_code_fences(content: str) -> str:
         regex = r"^```.*?```\n"
         return re.sub(regex, "", content, 0, re.MULTILINE | re.DOTALL)
 
 
     @staticmethod
-    def __extract_entries(content: str) -> list[tuple[int, str]]:
-        content = TocMaker.__remove_code_fences(content)
+    def _extract_entries(content: str) -> list[tuple[int, str]]:
+        content = TocMaker.remove_code_fences(content)
 
         lines = content.splitlines()
         disable_tag = "[]()"
@@ -71,15 +71,15 @@ class TocMaker:
 
         entries: list[tuple[int, str]] = []
         for line in lines:
-            level = TocMaker.__get_level(line)
-            text = "[" + TocMaker.__get_content(line) + "](#" + TocMaker.__get_md_link(line) + ")"
+            level = TocMaker._get_level(line)
+            text = "[" + TocMaker._get_content(line) + "](#" + TocMaker.get_md_link(line) + ")"
             entries.append((level, text))
         return entries
 
     
     @staticmethod
     def execute_toch(content: str) -> str:
-        entries = TocMaker.__extract_entries(content)
+        entries = TocMaker._extract_entries(content)
         links = [b for (a, b) in entries if a == 2]
         table = ["--" for _ in links]
         return " | ".join(links) + "\n" + " | ".join(table)
@@ -87,7 +87,7 @@ class TocMaker:
 
     @staticmethod
     def execute_toc(content: str) -> str:
-        entries = TocMaker.__extract_entries(content)
+        entries = TocMaker._extract_entries(content)
         toc_lines = ["  " * (level - 2) + "- " + link for (level, link) in entries if level > 1]
         toc_text = "\n".join(toc_lines)
         return toc_text

@@ -11,7 +11,6 @@ from tko.play.tracker import Tracker
 from tko.util.text import Text
 from tko.cmds.cmd_down import CmdDown
 from tko.cmds.cmd_run import Run
-from tko.settings.rep_source import STUDENT_SANDBOX_NAME
 
 from tko.util.param import Param
 
