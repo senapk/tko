@@ -2,12 +2,12 @@ from tko.play.tasktree import TaskTree
 from tko.config.settings import Settings
 from tko.repository.repository import Repository
 from tko.play.play import Play
-from tko.util.text import Text
+from tko.util.rtext import RText
 from pathlib import Path
-from tko.repository.git_cache import GitCache
+from tko.repository.git_cache import UpdateMode
 
 class CmdOpen:
-    def __init__(self, settings: Settings, repo: Repository, update_mode: GitCache.UpdateMode):
+    def __init__(self, settings: Settings, repo: Repository, update_mode: UpdateMode):
         self.settings = settings
         self.need_update = False
         self.repo: Repository = repo
@@ -21,9 +21,9 @@ class CmdOpen:
         self.repo_dir = repo_dir
         self.repo = Repository(repo_dir, self.update_mode)
         if not self.repo.paths.has_local_config_file():
-            print(Text.format("{r}: O comando {g} deve ser executado na pasta onde o repositório foi iniciado.", "Erro", "tko open"))
-            print(Text.format("{g}: Navegue ou passe o caminho até a pasta do repositório e tente novamente.", "Ação"))
-            raise Warning(Text.format("{r}: {y} {}", "Erro:", repo_dir, "não contém um repositório do tko"))
+            print(RText.parse("[r]Erro[.]: O comando [g]tko open[.] deve ser executado na pasta onde o repositório foi iniciado."))
+            print(RText.parse("[g]Ação[.]: Navegue ou passe o caminho até a pasta do repositório e tente novamente."))
+            raise Warning(RText.parse("[r]Erro:[.] [y][][.] não contém um repositório do tko", repo_dir))
         from tko.repository.repository_loader import RepositoryLoader
         from tko.repository.game_coordinator import GameCoordinator
         RepositoryLoader(self.repo).load_config()

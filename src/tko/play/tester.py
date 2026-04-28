@@ -24,7 +24,7 @@ from tko.repository.repository_loader import RepositoryLoader
 from tko.config.settings import Settings
 from tko.enums.execution_result import ExecutionResult
 from tko.util.freerun import Free
-from tko.util.text import  Text
+from tko.util.rtext import RText
 from tko.util.symbols import Symbols
 from tko.enums.diff_mode import DiffMode
 from tko.play.input_manager import InputManager
@@ -96,11 +96,11 @@ class Tester:
         if align == "v":
             init_y = dy - len(lines) - 1
         for i, line in enumerate(lines):
-            info = Text().addf(color, line).center(dx - 2, Text.Token(" ", " "))
+            info = RText(line, color).center(dx - 2, " ")
             if clear:
-                Fmt.write(i + init_y, 1, Text().add(" " * info.len()))
+                Fmt.write(i + init_y, 1, RText(" " * info.len()))
             else:
-                Fmt.write(i + init_y, 1, Text().addf(color, line).center(dx - 2, Text.Token(" ", " ")))
+                Fmt.write(i + init_y, 1, RText(line, color).center(dx - 2, " "))
 
     def show_success(self):
         if self.settings.app.use_images:
@@ -134,17 +134,17 @@ class Tester:
         return self.wdir.get_unit(self.focused_index)
 
     @staticmethod
-    def get_token(result: ExecutionResult) -> Text.Token:
+    def get_token(result: ExecutionResult) -> RText:
         if result == ExecutionResult.SUCCESS:
-            return Text.Token(ExecutionResult.get_symbol(ExecutionResult.SUCCESS).text, "G")
+            return RText(ExecutionResult.get_symbol(ExecutionResult.SUCCESS).plain(), "G")
         elif result == ExecutionResult.WRONG_OUTPUT:
-            return Text.Token(ExecutionResult.get_symbol(ExecutionResult.WRONG_OUTPUT).text, "R")
+            return RText(ExecutionResult.get_symbol(ExecutionResult.WRONG_OUTPUT).plain(), "R")
         elif result == ExecutionResult.COMPILATION_ERROR:
-            return Text.Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "X")
+            return RText(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).plain(), "X")
         elif result == ExecutionResult.EXECUTION_ERROR:
-            return Text.Token(ExecutionResult.get_symbol(ExecutionResult.EXECUTION_ERROR).text, "Y")
+            return RText(ExecutionResult.get_symbol(ExecutionResult.EXECUTION_ERROR).plain(), "Y")
         else:
-            return Text.Token(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).text, "X")
+            return RText(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).plain(), "X")
 
     def store_version(self, result: str) -> tuple[bool, int]:
         if self.rep is None:
@@ -231,43 +231,43 @@ class Tester:
                 )
 
 
-    def build_top_line_header(self, frame_dx : int) -> Text:
+    def build_top_line_header(self, frame_dx : int) -> RText:
         activity_color = "C"
         solver_color = "X"
         sources_color = "Y"
         running_color = "R"
 
         # building activity
-        activity = Text().add(self.borders.border(activity_color, self.get_folder()))
+        activity = self.borders.border(activity_color, self.get_folder())
 
         # building solvers
-        solvers = Text()
+        solvers = RText()
         if len(self.get_solver_names()) > 1:
-            solvers.add(Text().add(self.borders.round_l("R")).addf("R", f"{GuiActions.tab}").add(self.borders.sharp_r("R")))
+            solvers += self.borders.round_l("R") + RText(f"{GuiActions.tab}", "R") + self.borders.sharp_r("R")
         for i, solver in enumerate(self.get_solver_names()):
             if len(self.get_solver_names()) > 1:
-                solvers.add(" ")
+                solvers += " "
             color = solver_color
             if i == self.task.main_idx:
                 color = "G"
-            solvers.add(self.borders.border(color, solver))
+            solvers += self.borders.border(color, solver)
         
         # replacing with count if running
         done = len(self.results)
         full = len(self.wdir.get_unit_list())
-        count_missing = Text().add(self.borders.border(running_color, f"({done}/{full})"))
+        count_missing = self.borders.border(running_color, f"({done}/{full})")
         if self.mode == SeqMode.running:
             if  self.locked_index:
-                solvers = Text().add(self.borders.border("R", "Executando atividade travada"))
+                solvers = self.borders.border("R", "Executando atividade travada")
             else:
                 solvers = count_missing
 
         # building sources
-        source_names = Text().add(", ").join([Text().addf(sources_color, f"{name[0]}({name[1]})") for name in self.wdir.sources_names()])
+        source_names = RText.join([RText(f"{name[0]}({name[1]})", sources_color) for name in self.wdir.sources_names()], RText(", "))
         if self.wdir.has_tests():
-            sources = Text().add(self.borders.round_l(sources_color)).add(source_names).add(self.borders.round_r(sources_color))
+            sources = self.borders.round_l(sources_color) + source_names + self.borders.round_r(sources_color)
         else:
-            sources = Text().add(self.borders.border("R", "Nenhum teste cadastrado"))
+            sources = self.borders.border("R", "Nenhum teste cadastrado")
 
         # merging activity, solvers and sources in header
         delta = frame_dx - solvers.len()
@@ -279,9 +279,9 @@ class Tester:
             delta_right = delta - delta_left
             right = max(1, delta_right - sources.len())
         filler = "─" if self.wdir.has_tests() else " "
-        return Text().add(activity).add(filler * left).add(solvers).add(filler * right).add(sources)
+        return activity + filler * left + solvers + filler * right + sources
 
-    def build_unit_list(self, frame: Frame) -> Text:
+    def build_unit_list(self, frame: Frame) -> RText:
         done_list = self.results
         if len(done_list) > 0 and self.locked_index:
             _, index = done_list[self.focused_index]
@@ -298,25 +298,26 @@ class Tester:
         i = 0
         show_focused_index = not self.wdir.get_solver().has_compile_error() and not self.mode == SeqMode.intro and not self.is_all_right()
         
-        output = Text()
-        output.add(self.get_fixed_arrow())
+        output = self.get_fixed_arrow()
 
 
         for unit_result, index in done_list + todo_list:
             foco = i == self.focused_index
             token = Tester.get_token(unit_result)
-            extrap = self.borders.round_l(token.fmt)
-            extras = self.borders.round_r(token.fmt)
+            token_style = token.runs[0][0] if token.runs else ""
+            token_text = token.plain()
+            extrap = self.borders.round_l(token_style)
+            extras = self.borders.round_r(token_style)
             if foco and show_focused_index:
                 # token.fmt = token.fmt.lower() + ""
-                extrap = Text.Token("(")
-                extras = Text.Token(")")
-                # extrap = Text.Token(" ") #self.borders.roundL("")
-                # extras = Text.Token(" ") #self.borders.roundR("")
+                extrap = RText("(")
+                extras = RText(")")
+                # extrap = RText(" ") # self.borders.round_l("")
+                # extras = RText(" ") # self.borders.round_r("")
             if self.locked_index and not foco:
-                output.add("  ").addf(token.fmt.lower(), str(index).zfill(2)).addf(token.fmt.lower(), token.text).add(" ")
+                output += "  " + RText(str(index).zfill(2), token_style.lower()) + RText(token_text, token_style.lower()) + " "
             else:
-                output.add(" ").add(extrap).addf(token.fmt, str(index).zfill(2)).add(token).add(extras)
+                output += " " + extrap + RText(str(index).zfill(2), token_style) + token + extras
             i += 1
 
         size = 6
@@ -325,15 +326,15 @@ class Tester:
         dx = frame.get_dx()
         while (index + 4) * size - to_remove >= dx:
             to_remove += size
-        output.data = output.data[:3 * 6] + output.data[3 * 6 + to_remove:]
+        output = output.slice(0, 3 * 6) + output.slice(3 * 6 + to_remove)
         return output
 
-    def get_fixed_arrow(self) -> Text:
+    def get_fixed_arrow(self) -> RText:
         
-        output = Text()
+        output = RText()
         # diff
         diff_text = self.get_diff_symbol()
-        output.addf("B", f" {GuiKeys.diff} {diff_text} ")
+        output += RText(f" {GuiKeys.diff} {diff_text} ", "B")
         # if self.settings.app.has_borders():
         #     output.addf("Mb", symbols.sharp_r.text)
         # else:
@@ -346,15 +347,15 @@ class Tester:
         # output.addf("M", f"{timer}l {value}  ")
         color = "R" if self.locked_index else "G"
         if self.settings.app.use_borders:
-            output.addf(color + "b", Symbols.sharp_right)
+            output += RText(Symbols.sharp_right, color + "b")
         else:
-            output.addf("B", " ")
+            output += RText(" ", "B")
 
         # travar
         free = Symbols.locked_free
         locked = Symbols.locked_locked
         symbol = locked if self.locked_index else free
-        output.addf(color, f" {GuiKeys.lock} {symbol} ").add(self.borders.sharp_r(color))
+        output += RText(f" {GuiKeys.lock} {symbol} ", color) + self.borders.sharp_r(color)
 
         return output
 
@@ -362,14 +363,14 @@ class Tester:
         if not self.wdir.has_tests():
             return
         value = self.get_focused_unit()
-        info = Text()
+        info = RText()
         if self.wdir.get_solver().has_compile_error():
             info = self.borders.border("R", "Erro de compilação")
         elif not self.is_all_right() and not self.mode == SeqMode.intro:
             info = value.str(pad = False)
             # if self.locked_index:
             #     info = self.borders.border(focused_unit_color, info.get_text())
-        frame.write(0, 0, Text().add(info).center(frame.get_dx()))
+        frame.write(0, 0, info.center(frame.get_dx()))
 
     def draw_top_bar(self):
         # construir mais uma solução
@@ -390,8 +391,8 @@ class Tester:
             return Symbols.arrow_down
         return Symbols.arrow_right
 
-    def make_bottom_line(self) -> list[Text]:
-        cmds: list[Text] = []
+    def make_bottom_line(self) -> list[RText]:
+        cmds: list[RText] = []
 
         text = f"{GuiActions.pallete} [{GuiKeys.palette}]"
         cmds.append(self.borders.border("C", f"Tela Anterior[Esc]"))
@@ -407,8 +408,8 @@ class Tester:
 
     def show_bottom_line(self):
         lines, cols = Fmt.get_size()
-        out = Text().add(" ").join(self.make_bottom_line())
-        Fmt.write(lines - 1, 0, out.center(cols, Text.Token(" ")))
+        out = RText.join(self.make_bottom_line(), RText(" "))
+        Fmt.write(lines - 1, 0, out.center(cols, " "))
 
     def is_all_right(self):
         if self.locked_index or len(self.results) == 0:
@@ -441,7 +442,7 @@ class Tester:
         if self.wdir.get_solver().has_compile_error():
             executable, _ = self.wdir.get_solver().get_executable()
             received = executable.get_error_msg().get_str()
-            line_list = [Text().add(line) for line in received.splitlines()]
+            line_list = [RText(line) for line in received.splitlines()]
         elif self.settings.app.diff_mode == DiffMode.DOWN or not self.wdir.has_tests():
             ud_diff = DiffBuilderDown(cols, unit)
             line_list = ud_diff.build_diff()
@@ -460,7 +461,7 @@ class Tester:
         if self.diff_first_line < self.length:
             line_list = line_list[self.diff_first_line:]
         for i, line in enumerate(line_list):
-            frame.write(i, 0, Text().add(line))
+            frame.write(i, 0, line)
         return
 
     def get_solver_names(self) -> list[str]:
@@ -699,7 +700,7 @@ class Tester:
         
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mudar arquivo {y} de execução", Symbols.action, "principal"),
+                lambda: RText.format(" {} Mudar arquivo {y} de execução", Symbols.action, "principal"),
                 self.change_main,
                 "TAB"
             )
@@ -707,7 +708,7 @@ class Tester:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mudar modo {y}}", self.get_diff_symbol(), "Diff"),
+                lambda: RText.format(" {} Mudar modo {y}}", self.get_diff_symbol(), "Diff"),
                 self.app.toggle_diff,
                 GuiKeys.diff
             )
@@ -715,7 +716,7 @@ class Tester:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mudar {y} de tempo de execução: {r}", Symbols.action, "Limite", self.get_time_limit_symbol()),
+                lambda: RText.format(" {} Mudar {y} de tempo de execução: {r}", Symbols.action, "Limite", self.get_time_limit_symbol()),
                 self.change_limit,
                 GuiKeys.limite
             )
@@ -723,7 +724,7 @@ class Tester:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Testar {y} os casos ou apenas o selecionado", icon(not self.locked_index), "Todos"),
+                lambda: RText.format(" {} Testar {y} os casos ou apenas o selecionado", icon(not self.locked_index), "Todos"),
                 self.lock_unit,
                 GuiKeys.lock
             )
@@ -731,7 +732,7 @@ class Tester:
 
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y}", icon(self.app.use_borders), "Bordas"),
+                lambda: RText.format(" {} Mostrar {y}", icon(self.app.use_borders), "Bordas"),
                 lambda: self.app.toggle(ToggleOption.BORDERS),
                 GuiKeys.borders
             )
@@ -739,7 +740,7 @@ class Tester:
         
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Mostrar {y}", icon(self.app.use_images), "Imagens"),
+                lambda: RText.format(" {} Mostrar {y}", icon(self.app.use_images), "Imagens"),
                 lambda: self.app.toggle(ToggleOption.IMAGES),
                 GuiKeys.images
             )
@@ -748,7 +749,7 @@ class Tester:
                 # self evaluate
         options.append(
             FloatingInputData(
-                lambda: Text.format(" {} Tarefa: Auto {y} método de estudo", Symbols.action, "Avaliar"),
+                lambda: RText.format(" {} Tarefa: Auto {y} método de estudo", Symbols.action, "Avaliar"),
                 self.self_evaluate,
                 GuiKeys.self_evaluate
             ).set_exit_on_action(True)

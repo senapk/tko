@@ -6,7 +6,7 @@ from pathlib import Path
 import yaml #type: ignore
 
 from tko.config.languages_settings import LanguagesSettings
-from tko.util.text import Text
+from tko.util.rtext import RText
 from tko.play.colors import Colors
 from tko.util.decoder import Decoder
 def singleton(class_): # type: ignore
@@ -117,11 +117,11 @@ class Settings:
 
     def __str__(self):
         output: list[str] = []
-        output.append(str(Text.format("{g}", "Arquivo global configuração:")))
-        output.append("- " + str(self.get_settings_file()))
-        output.append("- " + str(self.get_languages_file()))
+        output.append(str(RText.parse("[g]Arquivo global configuração:[.]")))
+        output.append("    " + self.get_settings_file().resolve().as_posix())
         output.append("")
-        output.append(str(Text.format("{g}", "Fontes de tarefas remotas cadastradas:")))
+        
+        output.append(str(RText.parse("[g]Fontes de tarefas remotas cadastradas:[.]")))
         max_alias = max([len(key) for key in self.dict_alias_git])
         for key in self.dict_alias_git:
             output.append("- @{} : {}".format(key.ljust(max_alias), self.dict_alias_git[key]))

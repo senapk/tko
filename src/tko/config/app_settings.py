@@ -5,7 +5,7 @@ from typing import Any
 import curses
 
 from tko.enums.diff_mode import DiffMode
-from tko.util.text import Text
+from tko.util.rtext import RText
 
 
 class ToggleOption(enum.Enum):
@@ -83,7 +83,7 @@ class AppSettings:
     # -------- display --------
     def __str__(self) -> str:
         output = [
-            str(Text.format("{g}", "Configurações globais:")),
+            str(RText.parse("[g]Configurações globais:[.]")),
             f"- Diff    : {self.diff_mode.value}",
             f"- Editor  : {self.editor}",
             f"- Bordas  : {self.use_borders}",

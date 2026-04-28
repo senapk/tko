@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from tko.util.text import Text
+from tko.util.rtext import RText
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import subprocess
@@ -52,22 +52,22 @@ class Pull:
         return local.strip() == remote_hash
 
     @staticmethod
-    def pull(directory: str) -> Text:
+    def pull(directory: str) -> RText:
         repo_path = Path(directory)
 
         if not repo_path.is_dir() or not (repo_path / ".git").exists():
-            return Text()
+            return RText()
 
-        output = Text("g") + directory + " "
+        output = RText(directory, "g") + " "
 
         branch = Pull.get_default_branch(directory)
 
         # 1. Skip se já atualizado
         if Pull.is_up_to_date(directory, branch):
-            return output + Text("c") + "Up-to-date"
+            return output + RText("Up-to-date", "c")
 
         # 2. Fetch otimizado
-        output += Text("y") + "Fetch "
+        output += RText("Fetch ", "y")
         ok, msg = Pull.git_ok(
             directory,
             "fetch",
@@ -81,12 +81,12 @@ class Pull:
             return output + "\nFetch failed: " + msg
 
         # 3. Aplicar atualização
-        output += Text("y") + "Update "
+        output += RText("Update ", "y")
         ok, msg = Pull.git_ok(directory, "reset", "--hard", "FETCH_HEAD")
 
         if not ok:
             # fallback raro (repo zoado)
-            output += Text("r") + "Fallback "
+            output += RText("Fallback ", "r")
             Pull.git_ok(directory, "clean", "-fd")
             ok, msg = Pull.git_ok(directory, "reset", "--hard", f"origin/{branch}")
             if not ok:
@@ -96,7 +96,7 @@ class Pull:
 
     @staticmethod
     def pull_all_parallel(repo_list: list[Path], max_workers: int = 10):
-        print(f"\n{Text('y')}Pull de {len(repo_list)} repositórios ({max_workers} threads){Text('e')}")
+        print("\n" + str(RText(f"Pull de {len(repo_list)} repositórios ({max_workers} threads)", "y")))
         start = time.time()
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -106,10 +106,10 @@ class Pull:
                 repo = futures[future]
                 try:
                     output = future.result()
-                    if output.get_str():
+                    if output.plain():
                         print(output)
                 except Exception as exc:
-                    print(f"{Text('r')}Erro em {repo}: {exc}{Text('e')}")
+                    print(RText(f"Erro em {repo}: {exc}", "r"))
 
         elapsed = time.time() - start
-        print(f"\n{Text('y')}Finalizado em {elapsed:.2f}s{Text('e')}")
+        print("\n" + str(RText(f"Finalizado em {elapsed:.2f}s", "y")))

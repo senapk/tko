@@ -1,4 +1,5 @@
-from tko.util.text import Text
+from tko.run.unit import Unit
+from tko.util.rtext import RText
 from tko.util.raw_terminal import RawTerminal
 from tko.enums.execution_result import ExecutionResult
 from tko.enums.diff_count import DiffCount
@@ -38,7 +39,7 @@ class RunPresenter:
                 if unit.result != ExecutionResult.SUCCESS:
                     self._print_diff_for_unit(unit)
 
-    def _print_diff_for_unit(self, unit):
+    def _print_diff_for_unit(self, unit: Unit):
         if self.ctx.param.diff_mode == DiffMode.DOWN:
             ud_diff_builder = DiffBuilderDown(RawTerminal.get_terminal_size(), unit).to_insert_header()
             for line in ud_diff_builder.build_diff():
@@ -50,7 +51,7 @@ class RunPresenter:
 
     def list_mode(self):
         if not self.ctx.eval_mode:
-            print(Text.format("Nenhum arquivo de código encontrado. Listando casos de teste.").center(RawTerminal.get_terminal_size(), Text.Token("╌")), flush=True)
+            print(RText.parse("Nenhum arquivo de código encontrado. Listando casos de teste.").center(RawTerminal.get_terminal_size(), "╌"), flush=True)
         print(self.ctx.wdir.resume_splitted())
         for line in self.ctx.wdir.unit_list_resume():
             print(line)

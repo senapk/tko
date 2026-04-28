@@ -1,4 +1,4 @@
-from tko.util.text import Text
+from tko.util.rtext import RText
 from tko.util.raw_terminal import RawTerminal
 from tko.util.symbols import Symbols
 from tko.util.freerun import Free
@@ -48,7 +48,7 @@ class RunExecutor:
 
     def run_tests_on_raw_term(self) -> int:
         if not self.ctx.eval_mode:
-            print(Text.format(" Testando o código com os casos de teste ").center(RawTerminal.get_terminal_size(), Text.Token("═")))
+            print(RText.parse(" Testando o código com os casos de teste ").center(RawTerminal.get_terminal_size(), "═"))
         
         percent = self._run_all_tests_top_line()
         self.presenter.print_diff()
@@ -62,7 +62,7 @@ class RunExecutor:
         Free.free_run(self.ctx.wdir.get_solver(), show_compilation=False, to_clear=False, wait_input=False)
 
     def _run_all_tests_top_line(self) -> int:
-        print(Text().add(Symbols.opening).add(self.ctx.wdir.resume_splitted()), end="")
+        print(RText(Symbols.opening) + self.ctx.wdir.resume_splitted(), end="")
         print(" [", end="")
         first = True
         execution_error = False
@@ -78,7 +78,7 @@ class RunExecutor:
                 unit.result = UnitRunner.run_unit(solver, unit, timeout=self.ctx.timeout)
                 if unit.result == ExecutionResult.EXECUTION_ERROR:
                     execution_error = True
-            print(Text() + ExecutionResult.get_symbol(unit.result), end="")
+            print(ExecutionResult.get_symbol(unit.result), end="")
         print("] ", end="")
         
         if self.ctx.show_track_info:
@@ -87,7 +87,7 @@ class RunExecutor:
                 log_sort: LogSort | None = logger.tasks.task_dict.get(self.ctx.get_task().get_full_key(), None)
                 if log_sort is not None:
                     log_resume = TaskResume(self.ctx.get_task().get_full_key()).from_log_sort(log_sort)
-                    print(Text().addf("g", f"time:{log_resume.resume.minutes:.0f}, diff:{log_resume.resume.versions}, runs:{log_resume.resume.executions},").add(" "), end="", flush=True)
+                    print(RText(f"time:{log_resume.resume.minutes:.0f}, diff:{log_resume.resume.versions}, runs:{log_resume.resume.executions},", "g") + " ", end="", flush=True)
 
         percent: float = 0 if self.ctx.no_run else self.get_rate()
         print(f"{percent:.0f}%")

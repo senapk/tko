@@ -1,7 +1,7 @@
 import typer
-from typing import Optional
-from pathlib import Path
 import json
+
+from tko.app_context import AppContext
 
 app = typer.Typer(help="Collect evaluation data")
 
@@ -14,9 +14,10 @@ def collect_task(
     from tko.cli.common import load_repo
     from tko.cmds.cmd_task import CmdTask
     
-    settings = ctx.obj.get("settings")
-    changedir = ctx.obj.get("changedir")
-    repo, _ = load_repo(changedir, force_update=False)
+    app_ctx: AppContext = AppContext.load_from_context(ctx)
+    settings = app_ctx.settings
+    changedir = app_ctx.changedir
+    repo, _, _ = load_repo(changedir, force_update=False)
     if repo is None:
         return
         
@@ -37,10 +38,11 @@ def collect_repo(
 ):
     from tko.cmds.cmd_collect import CollectSingle
     
-    changedir = ctx.obj.get("changedir")
+    app_ctx: AppContext = AppContext.load_from_context(ctx)
+    changedir = app_ctx.changedir
     
     params = CollectSingle.CollectParams()
-    params.folder = Path() if changedir is None else Path(changedir)
+    params.folder = changedir
     params.width = width
     params.height = height
     params.daily = daily

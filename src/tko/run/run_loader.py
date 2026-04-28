@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from tko.util.text import Text
+from tko.util.rtext import RText
 from tko.util.raw_terminal import RawTerminal
 from tko.feno.filter import CodeFilter
 from tko.repository.repository import Repository
@@ -89,7 +89,7 @@ class RunLoader:
             return
 
         old_dir: Path = Path.cwd()
-        print(Text.format(" Entrando no modo de filtragem ").center(RawTerminal.get_terminal_size(), Text.Token("═")))
+        print(RText(" Entrando no modo de filtragem ").center(RawTerminal.get_terminal_size(), "═"))
 
         TkoFilterMode.deep_copy_and_change_dir()
         new_target_list: list[Path] = []

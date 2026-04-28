@@ -1,16 +1,17 @@
 import typer
 from typing import Optional
+from tko.app_context import AppContext
+from tko.cli.common import load_repo
+from tko.repository.rep_source_actions import RepSourceActions
 
 app = typer.Typer(help="Manage remote task sources")
 
 @app.command("list", help="List remote task sources")
 def remote_list(ctx: typer.Context):
-    from tko.cli.common import load_repo
-    from tko.repository.rep_source_actions import RepSourceActions
     
-    settings = ctx.obj.get("settings")
-    changedir = ctx.obj.get("changedir")
-    repo, _ = load_repo(changedir)
+    app_ctx: AppContext = AppContext.load_from_context(ctx)
+    settings = app_ctx.settings
+    repo, _, _ = load_repo(app_ctx.changedir)
     if repo is None:
         return
     rep_actions = RepSourceActions(settings, repo)
@@ -18,12 +19,10 @@ def remote_list(ctx: typer.Context):
 
 @app.command("rm", help="Remove a remote task source")
 def remote_rm(ctx: typer.Context, name: str = typer.Argument(..., help="Name of the remote to be removed")):
-    from tko.cli.common import load_repo
-    from tko.repository.rep_source_actions import RepSourceActions
     
-    settings = ctx.obj.get("settings")
-    changedir = ctx.obj.get("changedir")
-    repo, _ = load_repo(changedir)
+    app_ctx: AppContext = AppContext.load_from_context(ctx)
+    settings = app_ctx.settings
+    repo, _, _ = load_repo(app_ctx.changedir)
     if repo is None:
         return
     rep_actions = RepSourceActions(settings, repo)
@@ -41,17 +40,14 @@ def remote_add(
     branch: str = typer.Option("master", "--branch", "-b", help="Branch name for git remote sources"),
     write: bool = typer.Option(False, "--write", "-w", help="Allow modifications for local directory remotes (default: readonly)")
 ):
-    from tko.cli.common import load_repo
-    from tko.repository.rep_source_actions import RepSourceActions
-    
     default_git_alias = target[1:] if target.startswith("@") else None
     git_repository_url = target if target.startswith(("http:", "https:", "ssh:")) else None
     local_source_dir = target if not (default_git_alias or git_repository_url) else None
 
     try:
-        settings = ctx.obj.get("settings")
-        changedir = ctx.obj.get("changedir")
-        repo, _ = load_repo(changedir)
+        app_ctx: AppContext = AppContext.load_from_context(ctx)
+        settings = app_ctx.settings
+        repo, _, _ = load_repo(app_ctx.changedir)
         if repo is None:
             return
         rep_actions = RepSourceActions(settings, repo)
@@ -80,16 +76,14 @@ def remote_filter(
     clear: bool = typer.Option(False, "--clear", help="Clear all filters"),
     to: Optional[str] = typer.Option(None, "--to", "-t", help="Quest destination for filtered tasks added with this source")
 ):
-    from tko.cli.common import load_repo
-    from tko.repository.rep_source_actions import RepSourceActions
-    
     if clear and quest:
         print("Erro: --clear não pode ser usado com --quest")
         return
         
-    settings = ctx.obj.get("settings")
-    changedir = ctx.obj.get("changedir")
-    repo, _ = load_repo(changedir)
+    app_ctx: AppContext = AppContext.load_from_context(ctx)
+    settings = app_ctx.settings
+    changedir = app_ctx.changedir
+    repo, _, _ = load_repo(changedir)
     if repo is None:
         return
     rep_actions = RepSourceActions(settings, repo)
@@ -102,12 +96,10 @@ def remote_set(
     target: Optional[str] = typer.Option(None, "--target", "-t", help="Set a new target for the remote source"),
     index: Optional[str] = typer.Option(None, "--index", "-i", help="Set a new index for the remote source")
 ):
-    from tko.cli.common import load_repo
-    from tko.repository.rep_source_actions import RepSourceActions
-    
-    settings = ctx.obj.get("settings")
-    changedir = ctx.obj.get("changedir")
-    repo, _ = load_repo(changedir)
+    app_ctx: AppContext = AppContext.load_from_context(ctx)
+    settings = app_ctx.settings
+    changedir = app_ctx.changedir
+    repo, _, _ = load_repo(changedir)
     if repo is None:
         return
     rep_actions = RepSourceActions(settings, repo)

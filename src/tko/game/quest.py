@@ -1,6 +1,6 @@
 from __future__ import annotations
 from tko.game.task import Task
-from tko.util.text import Text
+from tko.util.rtext import RText
 from tko.game.tree_item import TreeItem
 from tko.game.quest_grader import QuestGrader
 
@@ -34,14 +34,14 @@ class Quest(TreeItem):
             key = key[1:]
         self.requires.append(self.get_remote_name() + "@" + key)
 
-    def get_full_title(self, show_skills: bool) -> Text:
-        output = Text().addf("c", self.remote_name).add(":").add(self.get_title())
+    def get_full_title(self, show_skills: bool) -> RText:
+        output = RText(self.remote_name, "c") + RText(":") + RText(self.get_title())
         if show_skills:
             for skill, value in self.skills.items():
                 if value > 1:
-                    output.addf('b', f" +{skill}*{value}")
+                    output += RText.run('b', f" +{skill}*{value}")
                 else:
-                    output.addf('b', f" +{skill}")
+                    output += RText.run('b', f" +{skill}")
         return output
 
     def is_reachable(self)-> bool:

@@ -8,7 +8,7 @@ from tko.play.FormatterUtil import FormatterUtil
 from tko.play.floating_grade import FloatingGrade
 from tko.play.floating_input_text import FloatingInputText
 from tko.play.tracker import Tracker
-from tko.util.text import Text
+from tko.util.rtext import RText
 from tko.cmds.cmd_down import CmdDown
 from tko.cmds.cmd_run import Run
 
@@ -115,7 +115,7 @@ class PlayActions:
             if ic.enabled:
                 delete_folder(text=folder.name)
             else:
-                self.fman.add_input(FloatingInputText(Text().add(f"Para apagar essa pasta, digite ").addf("y", f"{obj.get_key()}"), action=delete_folder))
+                self.fman.add_input(FloatingInputText(RText("Para apagar essa pasta, digite ") + RText(f"{obj.get_key()}", "y"), action=delete_folder))
         else:
             self.fman.add_input(
                 Floating().bottom().right()
@@ -265,7 +265,7 @@ class PlayActions:
                                 .set_warning())
 
         current_folders_on_rep: list[str] = [f"@{folder.name}" for folder in sandbox_folder.iterdir() if folder.is_dir()]
-        self.fman.add_input(FloatingInputText(Text().add("Digite o Título (use @label para definir a chave manualmente)" ), __create, current_folders_on_rep))
+        self.fman.add_input(FloatingInputText(RText("Digite o Título (use @label para definir a chave manualmente)"), __create, current_folders_on_rep))
 
     def down_remote_task(self):
         obj = self.tree.get_selected_throw()
@@ -370,9 +370,9 @@ class PlayActions:
         run.set_run_without_ask(False)
         run.set_curses(True)
         run.set_task(self.repo, task)
-        run.build_wdir()
+        run.load()
         
-        if not run.wdir.has_solver():
+        if not run.context.wdir.has_solver():
             cmd = CmdDown(self.repo, task.get_full_key(), self.settings)
             cmd.execute()
             msg =  Floating().bottom().right().set_warning()

@@ -1,5 +1,5 @@
 import sys
-from tko.repository.git_cache import GitCache
+from tko.repository.git_cache import UpdateMode
 from tko.repository.rep_source import RepSource
 from tko.logger.log_sort import LogSort
 from tko.repository.repository import Repository
@@ -16,7 +16,7 @@ class GameCoordinator:
             from tko.repository.repository_loader import RepositoryLoader
             RepositoryLoader(self.repo).load_config()
             
-        if self.repo.git_cache.update_mode == GitCache.UpdateMode.ALWAYS:
+        if self.repo.git_cache.update_mode == UpdateMode.ALWAYS:
             for source in self.repo.data.get_sources():
                 _ = source.get_source_readme(verbose)
                 

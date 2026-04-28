@@ -1,5 +1,5 @@
 from tko.play.fmt import Fmt
-from tko.util.text import Text
+from tko.util.rtext import RText
 from tko.util.scrollbar import ScrollBar
 
 class Frame:
@@ -10,11 +10,11 @@ class Frame:
         self._inner_dy = 0
         self._border = "rounded"
         self._filled = False
-        self._header: Text = Text()
+        self._header: RText = RText()
         self._halign = ""
         self._hprefix = ""
         self._hsuffix = ""
-        self._footer: Text = Text()
+        self._footer: RText = RText()
         self._falign = ""
         self._fprefix = ""
         self._fsuffix = ""
@@ -43,27 +43,27 @@ class Frame:
     def get_y(self):
         return self._y
 
-    def __align_header_footer(self, data: Text, symbol: str, prefix: str, suffix: str):
+    def __align_header_footer(self, data: RText, symbol: str, prefix: str, suffix: str):
         dx = self._inner_dx
         color = self._border_color
         pad = dx - len(prefix) - len(suffix)
         hor = self.get_symbol("h")
         
-        data.trim_end(pad)
-        sent = Text().addf(color, prefix).add(data).addf(color, suffix)
+        data = data.trim_end(pad)
+        sent = RText(prefix, color) + data + RText(suffix, color)
         if symbol == "<":
-            sent.ljust(dx, Text.Token(hor, color))
+            sent = sent.ljust(dx, RText(hor, color))
         elif symbol == ">":
-            sent.rjust(dx, Text.Token(hor, color))
+            sent = sent.rjust(dx, RText(hor, color))
         else:
-            sent.center(dx, Text.Token(hor, color))
+            sent = sent.center(dx, RText(hor, color))
         return sent
 
     def get_header(self):
-        return Text().add(self._hprefix).add(self._header).add(self._hsuffix)
+        return RText(self._hprefix) + self._header + self._hsuffix
     
     def get_footer(self):
-        return Text().add(self._fprefix).add(self._footer).add(self._fsuffix)
+        return RText(self._fprefix) + self._footer + self._fsuffix
 
     def get_full_header(self):
         return self.__align_header_footer(self._header, self._halign, self._hprefix, self._hsuffix)
@@ -127,14 +127,14 @@ class Frame:
         self._border = "square"
         return self
 
-    def set_header(self, header: Text, align: str = "<", prefix: str = "", suffix: str = ""):
+    def set_header(self, header: RText, align: str = "<", prefix: str = "", suffix: str = ""):
         self._halign = align
         self._header = header
         self._hprefix = prefix
         self._hsuffix = suffix
         return self
 
-    def set_footer(self, footer: Text, align: str = ">", prefix: str = "", suffix: str = ""):
+    def set_footer(self, footer: RText, align: str = ">", prefix: str = "", suffix: str = ""):
         self._falign = align
         self._footer = footer
         self._fprefix = prefix
@@ -149,13 +149,13 @@ class Frame:
         self._filled = False
         return self
 
-    def print(self, x: int, sentence: Text):
+    def print(self, x: int, sentence: RText):
         self.write(self._print_index, x, sentence)
         self._print_index += 1
         return self
 
     # return y, x of the last character
-    def write(self, y: int, x: int, sentence: Text) -> bool:
+    def write(self, y: int, x: int, sentence: RText) -> bool:
         lines, cols = Fmt.get_size()
 
         x_min = max(-1, self._x)
@@ -169,8 +169,7 @@ class Frame:
         if y_abs <= y_min or y_abs > y_max:
             return False
         count = 0
-        for token in sentence.resume():
-            fmt, text = token.fmt, token.text
+        for fmt, text in sentence.runs:
             if x_abs - 1 < x_min:  # Se o texto começa fora do frame
                 if x_abs + len(text) > x_min:  # mas ter parte dentro
                     text = text[x_min - x_abs + 1 :]
@@ -225,8 +224,8 @@ class Frame:
 
         header = self.get_full_header()
         footer = self.get_full_footer()
-        above = Text().addf(color, up_left).add(header).addf(color, up_right)
-        below = Text().addf(color, down_left).add(footer).addf(color, down_right)
+        above = RText(up_left, color) + header + RText(up_right, color)
+        below = RText(down_left, color) + footer + RText(down_right, color)
 
         if header.len() and self._border != "none":
             Fmt.write(y, x, above)
@@ -237,15 +236,14 @@ class Frame:
                 Fmt.write(
                     y + i,
                     x,
-                    Text()
-                    .addf(color, vertical)
-                    .add(dx * self._fill_char)
-                    .addf(color, vertical),
+                    RText(vertical, color)
+                    + dx * self._fill_char
+                    + RText(vertical, color),
                 )
         else:
             for i in range(1, dy + 1):
-                Fmt.write(y + i, x, Text().addf(color, vertical))
-                Fmt.write(y + i, x + dx + 1, Text().addf(color, vertical))
+                Fmt.write(y + i, x, RText(vertical, color))
+                Fmt.write(y + i, x + dx + 1, RText(vertical, color))
         if self.__show_scrollbar:
             self.__draw_scrollbar(self.__current_index, self.__text_length)
         return self

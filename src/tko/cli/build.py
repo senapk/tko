@@ -2,6 +2,8 @@ import typer
 from pathlib import Path
 from typing import Optional
 
+from tko.app_context import AppContext
+
 app = typer.Typer(help="Build repository artifacts")
 
 @app.command("tests", help="Build a test target")
@@ -19,7 +21,9 @@ def build_tests(
     from tko.util.pattern_loader import PatternLoader
     from tko.cmds.cmd_build import CmdBuild
     
-    settings = ctx.obj.get("settings") if ctx.obj else None
+    app_ctx: AppContext = AppContext.load_from_context(ctx)
+    settings = app_ctx.settings
+
     PatternLoader.pattern = pattern
     manip = Param.Manip().set_unlabel(unlabel).set_to_sort(sort).set_to_number(number)
     build_cmd = CmdBuild(Path(target), [Path(x) for x in target_list], manip, settings)
@@ -27,7 +31,7 @@ def build_tests(
 
 @app.command("all", help="Build .mapi file")
 def build_all(
-    targets: Optional[list[str]] = typer.Argument(None, help="directories"),
+    targets: list[str] | None = typer.Argument(None, help="directories"),
     check: bool = typer.Option(False, "--check", "-c", help="Check if the file needs to be rebuilt"),
     brief: bool = typer.Option(False, "--brief", "-b", help="Brief mode"),
     remote: bool = typer.Option(False, "--remote", "-r", help="Search for remote.cfg and create absolute links"),
@@ -42,7 +46,7 @@ def build_all(
 
 @app.command("index", help="Index Readme file")
 def build_index(
-    index: str = typer.Argument(..., help="Path to index Markdown file"),
+    index: Path = typer.Argument(..., help="Path to index Markdown file"),
     base: str = typer.Argument(..., help="Directory with the task problems"),
     save: bool = typer.Option(False, "--save", help="Save README.md task title's inside task problems"),
     load: bool = typer.Option(False, "--load", help="Load README.md task title's from task problems")
@@ -74,8 +78,8 @@ def build_html(
         exit(1)
 
     # Allow custom title or extract from input
-    final_title = title if title != "Problema" else FenoTitle.extract_title(input_file)
-    convert_markdown_to_html(final_title, input_file, output_file)
+    final_title = title if title != "Problema" else FenoTitle.extract_title(Path(input_file))
+    convert_markdown_to_html(final_title, Path(input_file), Path(output_file))
 
 @app.command("mdpp", help="Preprocessor for markdown files")
 def build_mdpp(
@@ -98,7 +102,7 @@ def build_older(
     targets: list[str] = typer.Argument(..., help="Target files or directories")
 ):
     from tko.feno.older import Older
-    print(Older.find_older(targets))
+    print(Older.find_older([Path(x) for x in targets]))
 
 @app.command("diff", help="Show diff for 2 inputs or files")
 def build_diff(
@@ -117,10 +121,10 @@ def build_diff(
 @app.command("redirect", help="Create redirected markdown file")
 def build_redirect(
     target: str = typer.Argument(..., help="Directories"),
-    output: Optional[str] = typer.Option(None, "--output", "-o", help="Output file")
+    output: str | None = typer.Option(None, "--output", "-o", help="Output file")
 ):
     from tko.feno.remote_md import Absolute
-    Absolute.convert_or_copy_or_print(target, output)
+    Absolute.convert_or_copy_or_print(Path(target), output if output is None else Path(output))
 
 @app.command("filter", help="Filter code removing answers")
 def build_filter(
@@ -138,18 +142,19 @@ def build_filter(
     is_recursive = recursive or cheat
 
     if is_recursive:
-        CodeFilter.cf_recursive(target, output, force=force, cheat=cheat, quiet=quiet, indent=indent)
+        CodeFilter.cf_recursive(target, output if output is None else Path(output), force=force, cheat=cheat, quiet=quiet, indent=indent)
         exit()
 
-    CodeFilter.cf_single_file(target, output, update, cheat)
+    CodeFilter.cf_single_file(Path(target), None if output is None else Path(output), update, cheat)
 
 @app.command("drafts", help="Create drafts for TKO task using src dir")
 def build_drafts(ctx: typer.Context):
     from tko.feno.filter import CodeFilter, DeepFilter
     
     # get changedir from globals
-    changedir = ctx.obj.get("changedir") if ctx.obj else None
-    here = Path(".").resolve() if changedir is None else Path(changedir).resolve()
+    app_ctx = AppContext.load_from_context(ctx)  # Ensure context is loaded
+    changedir = app_ctx.changedir
+    here = Path(changedir).resolve()
     
     print(f"Updating drafts in {here}")
     source_src = CodeFilter.get_default_src_dir(here)

@@ -2,7 +2,7 @@ import tempfile
 
 import os
 import shutil
-from tko.util.text import Text
+from tko.util.rtext import RText
 from tko.util.runner import Runner
 from tko.config.settings import Settings
 import yaml #type: ignore
@@ -27,7 +27,7 @@ class Executable:
         self.__folder: Path = folder
         self.__compiled: bool = False
         self.__compile_error: bool = False
-        self.__error_msg: Text = Text()
+        self.__error_msg: RText = RText()
         self.__shell_mode: bool = False # subprocess needs bash mode to process symbols like & or |
     
     def needs_shell_mode(self):
@@ -49,11 +49,11 @@ class Executable:
             cmd += [str(file.resolve()) for file in self.__files]
         return cmd, self.__folder
 
-    def set_compile_error(self, error_msg: Text | str):
+    def set_compile_error(self, error_msg: RText | str):
         self.__compiled = True
         self.__compile_error = True
         if isinstance(error_msg, str):
-            self.__error_msg = Text().add(error_msg)
+            self.__error_msg = RText(error_msg)
         else:
             self.__error_msg = error_msg
         return self
@@ -81,7 +81,7 @@ class SolverBuilder:
 
     def check_tool(self, name: str):
         if shutil.which(name) is None:
-            self.__exec.set_compile_error(Text.format("{r}: O comando '" + name + "' não foi encontrado", "Falha")) 
+            self.__exec.set_compile_error(RText.parse(f"[r]Falha: O comando '{name}' não foi encontrado[.]")) 
             raise CompileError("fail: comando '" + name + "' não foi encontrado")
 
     def not_compiled(self):
@@ -145,16 +145,16 @@ class SolverBuilder:
         if "build" in yaml_data and yaml_data["build"] is not None:
             build_txt = yaml_data["build"]
             if not isinstance(build_txt, str):
-                raise Warning(Text.format("{r}: O campo build deve ser uma string", "Falha"))
+                raise Warning(RText.parse("[r]Falha: O campo build deve ser uma string[.]"))
             
             return_code, stdout, stderr = Runner.subprocess_run(cmd=build_txt, folder=folder, shell_mode=True)
             if return_code != 0:
                 self.__exec.set_compile_error(stdout + stderr)
                 return
         if not "run" in yaml_data:
-            raise Warning(Text.format("{r}: Seu arquivo yaml precisa ter um campo {g} ", "Falha", "run:"))
+            raise Warning(RText.parse("[r]Falha: Seu arquivo yaml precisa ter um campo [g]run:[.][.] "))
         if not isinstance(yaml_data["run"], str):
-            raise Warning(Text.format("{r}: O campo run deve ser uma string", "Falha"))
+            raise Warning(RText.parse("[r]Falha: O campo run deve ser uma string[.]"))
         self.__exec.set_executable(cmd=yaml_data["run"], files=[], folder=folder, shell_mode=True)
 
     def replace_placeholders(self, text: str) -> str:
@@ -174,7 +174,7 @@ class SolverBuilder:
     def prepare_exec_with_lang(self):
         lang = self.settings.get_languages_settings().get_languages().get(self.args_list[0].suffix[1:], None)
         if lang is None:
-            self.__exec.set_compile_error(Text.format("{r}: Extensão de arquivo '" + self.args_list[0].suffix + "' não reconhecida e sem configuração de linguagem", "Falha"))
+            self.__exec.set_compile_error(RText.parse(f"[r]Falha: Extensão de arquivo '{self.args_list[0].suffix}' não reconhecida e sem configuração de linguagem[.]"))
             return
         build_cmd = lang.build_cmd
         run_cmd = lang.run_cmd

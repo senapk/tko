@@ -2,7 +2,7 @@ from tko.repository.rep_source import RepSource
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.repository.repository_loader import RepositoryLoader
-from tko.util.text import Text
+from tko.util.rtext import RText
 from pathlib import Path
 
 class RepSourceActions:
@@ -14,7 +14,7 @@ class RepSourceActions:
         rep = self.repo
         sources = rep.data.get_sources()
         print("Você também pode configurar as fontes e filtros manualmente editando o arquivo:")
-        print(Text.format("{y}", rep.paths.get_config_file()))
+        print(RText.parse(f"[y]{rep.paths.get_config_file()}[.]"))
         if len(sources) == 0:
             print("Nenhuma fonte configurada")
             return
@@ -23,14 +23,14 @@ class RepSourceActions:
             self.show_source(source)
     
     def show_source(self, source: RepSource):
-        print(Text.format("- Rótulo: {y}", source.name))
-        print(Text.format("  - Link ou Caminho: {y}", source.get_url_link()))
-        print(Text.format("  - Index          : {y}", source.index))
-        print(Text.format("  - Filtro Quests  : {y}", "Desativado" if source.quests is None else 'Ativado'))
+        print(RText.parse(f"- Rótulo: [y]{source.name}[.]"))
+        print(RText.parse(f"  - Link ou Caminho: [y]{source.get_url_link()}[.]"))
+        print(RText.parse(f"  - Index          : [y]{source.index}[.]"))
+        print(RText.parse(f"  - Filtro Quests  : [y]{'Desativado' if source.quests is None else 'Ativado'}[.]"))
         if source.quests is not None:
             for f, v in source.quests.items():
                 print(f"    - {f}: {v}")
-        print(Text.format("  - Filtro Tasks   : {y}", "Desativado" if source.tasks is None else 'Ativado'))
+        print(RText.parse(f"  - Filtro Tasks   : [y]{'Desativado' if source.tasks is None else 'Ativado'}[.]"))
         if source.tasks is not None:
             for f, v in source.tasks.items():
                 print(f"    - {f}: {v}")
@@ -43,7 +43,7 @@ class RepSourceActions:
             if source.name == alias:
                 found = True
                 rep.data.del_source(alias)
-                print(Text.format("Fonte {y} removida com sucesso.", alias))
+                print(RText.parse(f"Fonte [y]{alias}[.] removida com sucesso."))
                 break
         if not found:
             raise Warning("fail: fonte não encontrada.")
@@ -64,7 +64,7 @@ class RepSourceActions:
             change = True
         self.show_source(source)
         if change:
-            print(Text.format("Filtros {y} atualizados com sucesso.", alias))
+            print(RText.parse(f"Filtros [y]{alias}[.] atualizados com sucesso."))
             RepositoryLoader(repo).save_config()
 
     def remote_filter(self, alias: str, filter_quest: list[str] | None = None, filter_task: list[str] | None = None, clear: bool = False, filter_to: str | None = None) -> None:
@@ -97,7 +97,7 @@ class RepSourceActions:
         # if not quests and not tasks and not clear:
         self.show_source(source)
         if change:
-            print(Text.format("Filtros {y} atualizados com sucesso.", alias))
+            print(RText.parse(f"Filtros [y]{alias}[.] atualizados com sucesso."))
             RepositoryLoader(repo).save_config()
 
     def fix_filter(self, source: list[str] | None, destiny: str | None) -> dict[str, str] | None:
@@ -123,7 +123,7 @@ class RepSourceActions:
 
         repo = self.repo
         if remote_default is not None:
-            print(Text.format("Adicionando fonte remota apontando para repositório git remoto {y}", remote_default))
+            print(RText.parse(f"Adicionando fonte remota apontando para repositório git remoto [y]{remote_default}[.]"))
             url: str = ""
             settings = self.settings
             if not settings.has_alias_git(remote_default):
@@ -139,14 +139,14 @@ class RepSourceActions:
             dir_path = Path(remote_dir)
             if not dir_path.exists() or not dir_path.is_dir():
                 raise Warning("fail: diretório remoto não encontrado.")
-            print(Text.format("Adicionando fonte remota apontando parao repositório no diretorio {y}", dir_path))
+            print(RText.parse(f"Adicionando fonte remota apontando parao repositório no diretorio [y]{dir_path}[.]"))
             repo.data.set_source(RepSource(alias=name, git_cache=self.repo.git_cache)
                                  .set_local_source(target=dir_path)
                                  .set_filters(quests=self.fix_filter(filter_quest, filter_to), tasks=self.fix_filter(filter_task, filter_to))
                                  .set_index(index)
                                  .set_writeable(writeable))
         elif remote_url is not None:
-            print(Text.format("Adicionando fonte remota apontando para repositório git remoto {y}", remote_url))
+            print(RText.parse(f"Adicionando fonte remota apontando para repositório git remoto [y]{remote_url}[.]"))
             try:
                 self.git_clone_repository(remote_url)
                 self.repo.data.set_source(RepSource(alias=name, git_cache=self.repo.git_cache)
@@ -160,14 +160,14 @@ class RepSourceActions:
         RepositoryLoader(repo).save_config()
    
     def git_clone_repository(self, link: str) -> None:
-        print(Text.format("Clonando repositório remoto {y}.", link))
+        print(RText.parse(f"Clonando repositório remoto [y]{link}[.]."))
         repo_dir = self.repo.git_cache.get_repo_dir(link, verbose=True)
         if repo_dir is None:
             raise Warning("fail: não foi possível clonar o repositório.")
-        print(Text.format("Repositório {y} clonado com sucesso.", link))
+        print(RText.parse(f"Repositório [y]{link}[.] clonado com sucesso."))
         
 
 
     def print_end_msg(self):
-        print(Text.format("Voce pode acessar o repositório com o comando {g}", "tko open"))
+        print(RText.parse(f"Voce pode acessar o repositório com o comando [g]tko open[.]"))
         

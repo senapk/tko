@@ -1,12 +1,12 @@
 from tko.play.floating import Floating, FloatingABC
 from tko.util.symbols import Symbols
-from tko.util.text import Text
+from tko.util.rtext import RText
 from typing import Callable
 
 import curses
 
 class FloatingInputData:
-    def __init__(self, label: Callable[[], Text], action: Callable[[], None], shortcut: str = ""):
+    def __init__(self, label: Callable[[], RText], action: Callable[[], None], shortcut: str = ""):
         self.label = label
         self.action = action
         self.shortcut = shortcut
@@ -53,7 +53,7 @@ class FloatingDropDown(FloatingABC):
         return self
 
     def match_search(self, index: int):
-        return "".join(self.search_text) in self.options[index].label().get_str().lower()
+        return "".join(self.search_text) in self.options[index].label().plain().lower()
 
     def next_option(self):
         if not self.match_search(self.index):
@@ -82,23 +82,23 @@ class FloatingDropDown(FloatingABC):
     def update_content(self):
         content = self.floating.content
         content.clear()
-        content.append(Text.format("Busca: ") + "".join(self.search_text) + Symbols.cursor)
+        content.append(RText("Busca: ") + "".join(self.search_text) + Symbols.cursor)
 
-        # options: list[Text] = []
+        # options: list[RText] = []
         _, dx = self.calc_dy_dx()
         for i, option in enumerate(self.options):
             if not self.match_search(i):
                 continue
-            text = Text().add(option.label()).ljust(dx)
+            text = option.label().ljust(dx)
             if option.shortcut != "":
                 if len(option.shortcut) > 1:
-                    text.add(" " + option.shortcut)
+                    text += " " + option.shortcut
                 else:
-                    text.add(f" [{option.shortcut}]")
+                    text += f" [{option.shortcut}]"
             else:
-                text.add("    ")
+                text += "    "
             if i == self.index:
-                text.add_style(self.SELECTED_COLOR)
+                text = text.add_style(self.SELECTED_COLOR)
             content.append(text)
         
 

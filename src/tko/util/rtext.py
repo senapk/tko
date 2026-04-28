@@ -3,17 +3,19 @@ from dataclasses import dataclass
 from typing import Iterable, Any
 from wcwidth import wcwidth
 import enum
+import re
 
 Run = tuple[str, str]  # (style, text)
 
-ANSI = {
+ATTR = {
     ".": "\033[0m",  # reset
     "*": "\033[1m",  # bold
     "_": "\033[4m",  # underline
     "/": "\033[3m",  # italic
-    "~": "\033[7m",  # reverse
+    "X": "\033[7m",  # reverse
     "!": "\033[9m",  # strikethrough
-
+}
+FG = {
     "k": "\033[30m",  # black
     "r": "\033[31m",  # red
     "g": "\033[32m",  # green
@@ -22,7 +24,9 @@ ANSI = {
     "m": "\033[35m",  # magenta
     "c": "\033[36m",  # cyan
     "w": "\033[37m",  # white
+}
 
+BG = {
     "K": "\033[40m",  # black
     "R": "\033[41m",  # red
     "G": "\033[42m",  # green
@@ -33,10 +37,7 @@ ANSI = {
     "W": "\033[47m",  # white
 }
 
-FG = set("krgybmcw")
-BG = set("KRGYBMCW")
-ATTR = set("*_/~!")
-
+ANSI = {**ATTR, **FG, **BG}
 
 def ansi(style: str) -> str:
     return "".join(ANSI.get(s, "") for s in style)
@@ -85,6 +86,101 @@ class RText:
         return RText(runs=runs)
 
     @staticmethod
+    def decode_raw(data: str) -> RText:
+        ansi_to_style = {
+            "\033[30m": "k",
+            "\033[31m": "r",
+            "\033[32m": "g",
+            "\033[33m": "y",
+            "\033[34m": "b",
+            "\033[35m": "m",
+            "\033[36m": "c",
+            "\033[37m": "w",
+            "\033[40m": "K",
+            "\033[41m": "R",
+            "\033[42m": "G",
+            "\033[43m": "Y",
+            "\033[44m": "B",
+            "\033[45m": "M",
+            "\033[46m": "C",
+            "\033[47m": "W",
+            "\033[0m": "",
+        }
+        pattern = "|".join(re.escape(key) for key in ansi_to_style)
+        if not pattern:
+            return RText(data)
+
+        runs: list[Run] = []
+        style = ""
+        last_idx = 0
+        for match in re.finditer(pattern, data):
+            if match.start() > last_idx:
+                runs.append((style, data[last_idx:match.start()]))
+            style = ansi_to_style[match.group(0)]
+            last_idx = match.end()
+        if last_idx < len(data):
+            runs.append((style, data[last_idx:]))
+        return RText.from_runs(runs)
+
+    @staticmethod
+    def format(template: str = "", *args: Any) -> RText:
+        runs: list[Run] = []
+        arg_i = 0
+        i = 0
+
+        def append(value: Any, style: str = "") -> None:
+            if value is None:
+                return
+            if isinstance(value, RText):
+                if style:
+                    runs.extend((normalize_style(style), text) for _, text in value.runs)
+                else:
+                    runs.extend(value.runs)
+            elif isinstance(value, tuple) and len(value) == 2: # type: ignore
+                value_style, text = value # type: ignore
+                runs.append((normalize_style(style or str(value_style)), str(text))) # type: ignore
+            else:
+                runs.append((normalize_style(style), str(value))) # type: ignore
+
+        while i < len(template):
+            if template[i:i + 2] == "{{":
+                append("{")
+                i += 2
+                continue
+            if template[i:i + 2] == "}}":
+                append("}")
+                i += 2
+                continue
+            if template[i] != "{":
+                j = template.find("{", i)
+                if j == -1:
+                    j = len(template)
+                append(template[i:j])
+                i = j
+                continue
+
+            j = template.find("}", i)
+            if j == -1:
+                append(template[i])
+                i += 1
+                continue
+
+            token = template[i + 1:j]
+            style, inline = (token.split(":", 1) + [""])[:2] if ":" in token else (token, "")
+            if inline:
+                append(inline, style)
+            elif arg_i < len(args):
+                append(args[arg_i], style)
+                arg_i += 1
+            else:
+                append("", style)
+            i = j + 1
+
+        for arg in args[arg_i:]:
+            append(arg)
+        return RText.from_runs(runs)
+
+    @staticmethod
     def concat(*texts: RText) -> RText:
         runs: list[Run] = []
         for t in texts:
@@ -103,34 +199,27 @@ class RText:
 
     @staticmethod
     def _combine_styles(base: str, overlay: str) -> str:
-        fg = None
-        bg = None
+        fg: None | str = None
+        bg: None | str = None
         attr: set[str] = set()
 
         for c in base:
-            if c in FG:
+            if c in FG.keys():
                 fg = c
-            elif c in BG:
+            elif c in BG.keys():
                 bg = c
-            elif c in ATTR:
+            elif c in ATTR.keys():
                 attr.add(c)
 
         for c in overlay:
-            if c in FG:
+            if c in FG.keys():
                 fg = c
-            elif c in BG:
+            elif c in BG.keys():
                 bg = c
-            elif c in ATTR:
+            elif c in ATTR.keys():
                 attr.add(c)
 
-        result = ""
-        if fg:
-            result += fg
-        if bg:
-            result += bg
-        if attr:
-            result += "".join(sorted(attr))
-        return result
+        return normalize_style("".join(sorted(attr)) + (fg or "") + (bg or ""))
 
     @staticmethod
     def parse(template: str, *args: Any) -> RText:
@@ -175,8 +264,11 @@ class RText:
                             # combina estilos
                             for s, t in arg.runs:
                                 runs.append((RText._combine_styles(style, s), t))
+                        elif isinstance(arg, tuple) and len(arg) == 2: # type: ignore
+                            s, t = arg # type: ignore
+                            runs.append((RText._combine_styles(style, s), t)) # type: ignore
                         else:
-                            runs.append((style, str(arg)))
+                            runs.append((style, str(arg))) # type: ignore
 
                 # ---------- reset ----------
                 elif token == ".":
@@ -236,6 +328,9 @@ class RText:
     def plain(self) -> str:
         return "".join(text for _, text in self.runs)
 
+    def get_str(self) -> str:
+        return self.plain()
+
     def render(self, mode: RenderMode | None = None) -> str:
         mode = mode or RenderConfig.mode
         if not RenderConfig.enabled or mode == RenderMode.PLAIN:
@@ -255,6 +350,9 @@ class RText:
 
     def __len__(self) -> int:
         return len(self.plain())
+
+    def len(self) -> int:
+        return len(self)
 
     def __add__(self, other: "RText | str") -> RText:
         if isinstance(other, str):
@@ -344,7 +442,12 @@ class RText:
 
         return RText.from_runs(result)
 
-    def slice(self, start: int, end: int) -> RText:
+    def trim_end(self, width: int) -> "RText":
+        return self.truncate(width)
+
+    def slice(self, start: int = 0, end: int | None = None) -> RText:
+        if end is None:
+            end = len(self)
         if start < 0:
             start = 0
         if end <= start:
@@ -470,6 +573,27 @@ class RText:
 
         return left_fill + self + right_fill
 
+    def fold_in(
+        self,
+        width: int,
+        sep: RText | str = " ",
+        left_border: RText | str = " ",
+        right_border: RText | str = " ",
+    ) -> RText:
+        if isinstance(sep, str):
+            sep = RText(sep)
+        if isinstance(left_border, str):
+            left_border = RText(left_border)
+        if isinstance(right_border, str):
+            right_border = RText(right_border)
+
+        available = width - len(left_border) - len(right_border)
+        content = self.truncate(max(0, available))
+        missing = max(0, available - len(content))
+        left = missing // 2
+        right = missing - left
+        return left_border + sep.repeat(left) + content + sep.repeat(right) + right_border
+
     def ljust(self, width: int, fill: RText | str = " ") -> RText:
         if isinstance(fill, str):
             fill = RText(fill)
@@ -582,12 +706,13 @@ class RBuffer:
 
 if __name__ == "__main__":
     # Example usage
-    t = RText.parse("Hello {r}Red {}!", RText.run("b", "Blue"))
+    t = RText.parse("Hello [] []!", ("r", "Red"), ("b", "Blue"))
+    print(t)
     b = RBuffer()
-    b.add("Hello ", "r").add("World", "g").add(" ").add(RText("oi", "R"))
-    RenderConfig.mode = RenderMode.DEBUG
+    b.add("Hello ", "r").add("World", "R").add(" ").add(RText("oi", "bR"))
+    # RenderConfig.mode = RenderMode.DEBUG
     
-    print(b.to_text().render(RenderMode.ANSI))
-    print(b.to_text().render(RenderMode.PLAIN))
+    # print(b.to_text().render(RenderMode.ANSI))
+    # print(b.to_text().render(RenderMode.PLAIN))
     print(b.to_text().render())
     print(b.to_text().plain())

@@ -1,7 +1,6 @@
 from __future__ import annotations
 from tko.util.symbols import Symbols
-from tko.util.text import Text
-
+from tko.util.rtext import RText
 import enum
 
 class ExecutionResult(enum.Enum):
@@ -12,17 +11,17 @@ class ExecutionResult(enum.Enum):
     EXECUTION_ERROR   = "erro_execução__"
 
     @staticmethod
-    def get_symbol(result: ExecutionResult) -> Text.Token:
+    def get_symbol(result: ExecutionResult) -> RText:
         if result == ExecutionResult.UNTESTED:
-            return Text.Token(Symbols.neutral)
+            return RText(Symbols.neutral)
         elif result == ExecutionResult.SUCCESS:
-            return Text.Token(Symbols.success)
+            return RText(Symbols.success)
         elif result == ExecutionResult.WRONG_OUTPUT:
-            return Text.Token(Symbols.wrong)
+            return RText(Symbols.wrong)
         elif result == ExecutionResult.COMPILATION_ERROR:
-            return Text.Token(Symbols.compilation)
+            return RText(Symbols.compilation)
         elif result == ExecutionResult.EXECUTION_ERROR:
-            return Text.Token(Symbols.execution)
+            return RText(Symbols.execution)
         else:
             raise ValueError("Invalid result type")
 

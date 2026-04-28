@@ -249,13 +249,16 @@ class CodeFilter:
         return False, "" 
 
     @staticmethod
-    def cf_recursive(target_dir: Path | str, output_dir: Path | str, force: bool, cheat: bool = False, quiet: bool = False, indent: int = 0):
+    def cf_recursive(target_dir: Path | str, output_dir: Path | str | None, force: bool, cheat: bool = False, quiet: bool = False, indent: int = 0):
         if isinstance(target_dir, str):
             target_dir = Path(target_dir)
         if isinstance(output_dir, str):
             output_dir = Path(output_dir)
         if not target_dir.is_dir():
             print("Error: target must be a folder in recursive mode")
+            exit()
+        if output_dir is None:
+            print("Error: output folder must be specified in recursive mode")
             exit()
         if output_dir.exists():
             if not force:
@@ -273,7 +276,7 @@ class CodeFilter:
         deep_filter.execute(target_dir, output_dir, 10)
 
     @staticmethod
-    def cf_single_file(target: Path, output: Path, update: bool, cheat: bool):
+    def cf_single_file(target: Path, output: Path | None, update: bool, cheat: bool):
         file = Path(target)
         success, content = CodeFilter.open_file(file)
         if success:

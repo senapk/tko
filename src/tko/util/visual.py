@@ -1,4 +1,4 @@
-from tko.util.text import Text
+from tko.util.rtext import RText
 from tko.util.symbols import Symbols
 
 class Visual:
@@ -14,7 +14,7 @@ class Visual:
         else:
             return " ", " "
 
-    def render_button(self, info: str, test: bool):
+    def render_button(self, info: str, test: bool) -> RText:
         left, right = self.get_lr(test)
         bg = "X" if test else ""
-        return Text().add(left).addf(bg, info).add(right)
+        return RText(left) + RText(info, bg) + RText(right)

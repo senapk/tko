@@ -1,6 +1,6 @@
 from tko.play.floating import Floating, FloatingABC
 from tko.util.symbols import Symbols
-from tko.util.text import Text
+from tko.util.rtext import RText
 
 
 import curses
@@ -8,7 +8,7 @@ from typing import Callable
 
 
 class FloatingInputText(FloatingABC):
-    def __init__(self, label: Text, action: Callable[[str], None], unallowed_strings: list[str]| None = None):
+    def __init__(self, label: RText, action: Callable[[str], None], unallowed_strings: list[str]| None = None):
         self.floating = Floating()
         self.floating.set_footer(" Use Enter para confirmar ou Esc para cancelar ")
         self.floating.set_text_ljust()
@@ -31,9 +31,9 @@ class FloatingInputText(FloatingABC):
         content = self.floating.content
         content.clear()
         content.append(self.label)
-        is_allowed = Text().addf("g", Symbols.check) if self.input_text not in self.unallowed_strings else Text().addf("r", Symbols.failure)
-        content.append(Text.format("Digite aqui: ") + self.input_text + Symbols.cursor + is_allowed)
-        content.append(Text())
+        is_allowed = RText(Symbols.check, "g") if self.input_text not in self.unallowed_strings else RText(Symbols.failure, "r")
+        content.append(RText("Digite aqui: ") + self.input_text + Symbols.cursor + is_allowed)
+        content.append(RText())
         self.floating.draw()
 
     # @override

@@ -1,5 +1,5 @@
 from tko.util.symbols import Symbols
-from tko.util.text import Text
+from tko.util.rtext import RText
 
 class DiffBuilder:
     vinput    = " INSERIDO "
@@ -16,8 +16,8 @@ class DiffBuilder:
         return self
 
     @staticmethod
-    def make_line_arrow_up(a: str, b: str) -> Text:
-        hdiff = Text()
+    def make_line_arrow_up(a: str, b: str) -> RText:
+        hdiff = RText()
         first = True
         i = 0
         lim = max(len(a), len(b))
@@ -37,7 +37,7 @@ class DiffBuilder:
     def render_white(text: str) -> str:
         return text.replace(' ', Symbols.middle_dot).replace('\n', Symbols.newline)
 
-    def first_failure_diff(self, a_text: str, b_text: str | None, first_failure: int) -> list[Text]:
+    def first_failure_diff(self, a_text: str, b_text: str | None, first_failure: int) -> list[RText]:
         if b_text is None:
             b_text = ""
         def get(vet: list[str], index: int) -> str:
@@ -51,27 +51,27 @@ class DiffBuilder:
         first_b = get(b_render, first_failure)
         out_a, out_b = DiffBuilder.colorize_2_lines_diff(first_a, first_b)
         if out_a is None:
-            out_a = Text()
+            out_a = RText()
         if out_b is None:
-            out_b = Text()
+            out_b = RText()
         greater = max(len(out_a), len(out_b))
-        output: list[Text] = []
+        output: list[RText] = []
         width = self.width - 13
-        output.append(Text().add(" ").add(out_a.ljust(greater)).trim_end(width).addf("y", " (esperado)"))
-        output.append(Text().add(" ").add(out_b.ljust(greater)).trim_end(width).addf("r", " (recebido)"))
+        output.append((RText(" ") + out_a.ljust(greater)).trim_end(width) + RText(" (esperado)", "y"))
+        output.append((RText(" ") + out_b.ljust(greater)).trim_end(width) + RText(" (recebido)", "r"))
         diff = DiffBuilder.make_line_arrow_up(first_a, first_b)
-        output.append(Text().add(" ").add(diff.ljust(greater)).trim_end(width).addf("b", " (primeiro)"))
+        output.append((RText(" ") + diff.ljust(greater)).trim_end(width) + RText(" (primeiro)", "b"))
         return output
 
     @staticmethod
-    def colorize_2_lines_diff(la: str | None, lb: str | None, neut: str = "g", exp: str = "y", rec: str = "r") -> tuple[Text | None, Text | None]:
+    def colorize_2_lines_diff(la: str | None, lb: str | None, neut: str = "g", exp: str = "y", rec: str = "r") -> tuple[RText | None, RText | None]:
         pos = DiffBuilder.find_first_mismatch(la, lb)
-        tla: Text | None = None
-        tlb: Text | None = None
+        tla: RText | None = None
+        tlb: RText | None = None
         if la is not None:
-            tla = Text().addf(neut, la[0:pos]).addf(exp, la[pos:])
+            tla = RText(la[0:pos], neut) + RText(la[pos:], exp)
         if lb is not None:
-            tlb = Text().addf(neut, lb[0:pos]).addf(rec, lb[pos:])
+            tlb = RText(lb[0:pos], neut) + RText(lb[pos:], rec)
         return tla, tlb
 
     @staticmethod
@@ -87,14 +87,14 @@ class DiffBuilder:
 
     # return a tuple of two strings with the diff and the index of the first mismatch line
     @staticmethod
-    def render_diff(a_text: str | None, b_text: str | None) -> tuple[list[tuple[Text | None, Text | None]], int]:
+    def render_diff(a_text: str | None, b_text: str | None) -> tuple[list[tuple[RText | None, RText | None]], int]:
         if a_text is None:
             a_text = ""
         if b_text is None:
             b_text = ""
         a_lines: list[str] = a_text.splitlines(keepends=True)
         b_lines: list[str] = b_text.splitlines(keepends=True)
-        output: list[tuple[Text | None, Text | None]] = []
+        output: list[tuple[RText | None, RText | None]] = []
         a_size = len(a_lines)
         b_size = len(b_lines)
         first_failure = -1

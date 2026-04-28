@@ -1,7 +1,7 @@
 from __future__ import annotations
 from tko.game.task import Task
 from tko.play.floating import FloatingABC, Floating
-from tko.util.text import Text
+from tko.util.rtext import RText
 from tko.util.symbols import Symbols
 
 # import ABC, abstractmethod
@@ -29,7 +29,7 @@ class InputLine(ABC):
         return self.SELECTED_COLOR
 
     def get_opening(self):
-        return Text().add(Symbols.right_triangle_filled if self.focus else " ").add(" ")
+        return RText(Symbols.right_triangle_filled if self.focus else " ") + " "
 
     @abstractmethod
     def send_key(self, key: int) -> None:
@@ -40,7 +40,7 @@ class InputLine(ABC):
         return self
 
     @abstractmethod
-    def get_text(self, pad: int) -> Text:
+    def get_text(self, pad: int) -> RText:
         pass
 
     @abstractmethod
@@ -55,7 +55,7 @@ class InputLine(ABC):
         return self.locked
 
 class InputSlide(InputLine):
-    def __init__(self, id: str, prefix: Text, opt_msgs: list[tuple[str, Text]], index: int = 0):
+    def __init__(self, id: str, prefix: RText, opt_msgs: list[tuple[str, RText]], index: int = 0):
         super().__init__(id)
         self.prefix = prefix
         self.opt_msgs = opt_msgs
@@ -77,18 +77,18 @@ class InputSlide(InputLine):
         elif key == ord("+") or key == ord("="):
             self.index = size - 1
 
-    def get_text(self, pad: int) -> Text:
+    def get_text(self, pad: int) -> RText:
         color = self.get_selected_color() if self.focus else ""
-        text = Text().add(self.get_opening()).addf(color, self.prefix).add(" ")
+        text = self.get_opening() + self.prefix.set_style(color) + " "
         for i, c in enumerate(self.opt_msgs):
             opt, _ = c
-            text.addf(self.CHOOSEN_COLOR if i == self.index else "", opt)
-        text.ljust(pad)
-        text.add(" ├").add(self.opt_msgs[self.index][1])
+            text += RText(opt, self.CHOOSEN_COLOR if i == self.index else "")
+        text = text.ljust(pad)
+        text += " ├" + self.opt_msgs[self.index][1]
         return text
     
 class InputText(InputLine):
-    def __init__(self, id: str, prompt: Text, text: str = ""):
+    def __init__(self, id: str, prompt: RText, text: str = ""):
         super().__init__(id)
         self.prompt = prompt
         self.text = text
@@ -117,13 +117,13 @@ class InputText(InputLine):
         self.number_only = number_only
         return self
 
-    def get_text(self, pad: int) -> Text:
-        data = Text().add(self.get_opening()).addf(self.get_selected_color() if self.focus else "", self.prompt).ljust(pad).add(" ")
-        data = data.add("├ ").addf(self.CHOOSEN_COLOR, self.text).add(Symbols.cursor if self.focus else "")
+    def get_text(self, pad: int) -> RText:
+        data = (self.get_opening() + self.prompt.set_style(self.get_selected_color() if self.focus else "")).ljust(pad) + " "
+        data = data + "├ " + RText(self.text, self.CHOOSEN_COLOR) + (Symbols.cursor if self.focus else "")
         return data
     
 class InputBoolean(InputLine):
-    def __init__(self, id: str, prefix: Text, start_value: str):
+    def __init__(self, id: str, prefix: RText, start_value: str):
         super().__init__(id)
         self.prefix = prefix
         self.value = start_value
@@ -145,15 +145,15 @@ class InputBoolean(InputLine):
             self.value = "0"
         return self
 
-    def get_text(self, pad: int) -> Text:
+    def get_text(self, pad: int) -> RText:
         color = self.get_selected_color() if self.focus else ""
-        text = Text().add(self.get_opening())
+        text = self.get_opening()
         if self.focus:
-            text.addf(color, self.prefix)
+            text += self.prefix.set_style(color)
         else:
-            text.add(self.prefix)
-        text.ljust(pad).add("│ ")
-        text.addf(self.CHOOSEN_COLOR if self.value == "0" else "", "Não").add(" ").addf(self.CHOOSEN_COLOR if self.value == "1" else "", "Sim")
+            text += self.prefix
+        text = text.ljust(pad) + "│ "
+        text += RText("Não", self.CHOOSEN_COLOR if self.value == "0" else "") + " " + RText("Sim", self.CHOOSEN_COLOR if self.value == "1" else "")
         return text
 
 class FloatingGrade(FloatingABC):
@@ -163,22 +163,22 @@ class FloatingGrade(FloatingABC):
         self._line = 0
         self.floating.set_text_ljust()
         self.floating.frame.set_border_color("g")
-        self.floating.set_header_text(Text.format("{y/}", " Utilize os direcionais e texto para marcar"))
-        self.floating.set_footer_text(Text.format("{y/}", " Pressione Enter para confirmar, Esc para cancelar"))
+        self.floating.set_header_text(RText(" Utilize os direcionais e texto para marcar", "y/"))
+        self.floating.set_footer_text(RText(" Pressione Enter para confirmar, Esc para cancelar", "y/"))
         self.fn_exit = fn_exit
 
-        progression: list[tuple[str, Text]] = [
-            ("x", Text().addf("g", " Nada")),
-            ("1", Text().addf("y", " 10%")),
-            ("2", Text().addf("y", " 20%")),
-            ("3", Text().addf("y", " 30%")),
-            ("4", Text().addf("y", " 40%")),
-            ("5", Text().addf("y", " 50%")),
-            ("6", Text().addf("y", " 60%")),
-            ("7", Text().addf("y", " 70%")),
-            ("8", Text().addf("y", " 80%")),
-            ("9", Text().addf("y", " 90%")),
-            ("✓", Text().addf("y", " 100%"))]
+        progression: list[tuple[str, RText]] = [
+            ("x", RText(" Nada", "g")),
+            ("1", RText(" 10%", "y")),
+            ("2", RText(" 20%", "y")),
+            ("3", RText(" 30%", "y")),
+            ("4", RText(" 40%", "y")),
+            ("5", RText(" 50%", "y")),
+            ("6", RText(" 60%", "y")),
+            ("7", RText(" 70%", "y")),
+            ("8", RText(" 80%", "y")),
+            ("9", RText(" 90%", "y")),
+            ("✓", RText(" 100%", "y"))]
 
 
         if self._task.is_auto():
@@ -194,31 +194,31 @@ class FloatingGrade(FloatingABC):
         refactor = "" if not self._task.info.feedback else ("1" if self._task.info.ia_refactor else "0")
 
         self.quantity_input_lines: list[InputLine] = [
-            InputSlide("rate", Text().add(texto_auto), progression, self._task.info.rate // 10).set_locked(self._task.is_auto()),
-            InputText("study", Text().add("Qual tempo total estimado, estudo + código, em minutos?"), str(self._task.info.study)).set_number_only(True),
+            InputSlide("rate", RText(texto_auto), progression, self._task.info.rate // 10).set_locked(self._task.is_auto()),
+            InputText("study", RText("Qual tempo total estimado, estudo + código, em minutos?"), str(self._task.info.study)).set_number_only(True),
         ]
         self.support_input_lines: list[InputLine] = [
-            InputText("friend", Text().add("Deixe em branco se fez sozinho, ou com o nome de quem ajudou"), self._task.info.friend),
-            InputBoolean("guided",  Text().add("Fez o código copiando da aula ou vídeo aula?      ").addf("g", "   COPIOU:").add(self.get_discount("guided")), guided),
+            InputText("friend", RText("Deixe em branco se fez sozinho, ou com o nome de quem ajudou"), self._task.info.friend),
+            InputBoolean("guided",  RText("Fez o código copiando da aula ou vídeo aula?      ") + RText("   COPIOU:", "g") + self.get_discount("guided"), guided),
         ]
         self.quality_input_lines: list[InputLine] = [
-            InputBoolean("concept", Text().add("ESTUDAR conceitos sem gerar a solução do problema?").addf("g", "  ESTUDAR:").add(self.get_discount("concept")), concept),
-            InputBoolean("problem", Text().add("ENTENDER o problema a ser resolvido?              ").addf("g", " ENTENDER:").add(self.get_discount("problem")), problem),
-            InputBoolean("code",    Text().add("GERAR ou CORRIGIR código relacionado ao problema? ").addf("g", " CORRIGIR:").add(self.get_discount("code")), code),
-            InputBoolean("debug",   Text().add("COMPREENDER mensagens de ERRO ou SAÍDA incorreta? ").addf("g", "  DEBUGAR:").add(self.get_discount("debug")), debug),
-            InputBoolean("refactor",Text().add("REFATORAR o código só após fazer tudo sozinho?    ").addf("g", "REFATORAR:").add(self.get_discount("refactor")), refactor),
+            InputBoolean("concept", RText("ESTUDAR conceitos sem gerar a solução do problema?") + RText("  ESTUDAR:", "g") + self.get_discount("concept"), concept),
+            InputBoolean("problem", RText("ENTENDER o problema a ser resolvido?              ") + RText(" ENTENDER:", "g") + self.get_discount("problem"), problem),
+            InputBoolean("code",    RText("GERAR ou CORRIGIR código relacionado ao problema? ") + RText(" CORRIGIR:", "g") + self.get_discount("code"), code),
+            InputBoolean("debug",   RText("COMPREENDER mensagens de ERRO ou SAÍDA incorreta? ") + RText("  DEBUGAR:", "g") + self.get_discount("debug"), debug),
+            InputBoolean("refactor",RText("REFATORAR o código só após fazer tudo sozinho?    ") + RText("REFATORAR:", "g") + self.get_discount("refactor"), refactor),
         ]
         self.all_input_lines: list[InputLine] = self.quantity_input_lines + self.support_input_lines + self.quality_input_lines
         self.input_dict: dict[str, InputLine] = {line.id: line for line in self.all_input_lines}
 
-    def get_discount(self, tag: str) -> Text:
+    def get_discount(self, tag: str) -> RText:
         grade_dict = self._task.grader.grades
         value = grade_dict.get(self._task.task_loss.value, {}).get(tag, 100)
         size = 5
         if value == 100:
-            return Text().addf("g", " " * size)
+            return RText(" " * size, "g")
         else:
-            return Text().addf("y", f"-{100 - value}%".ljust(size))
+            return RText(f"-{100 - value}%".ljust(size), "y")
 
     def set_focus(self):
         for i, line in enumerate(self.all_input_lines):
@@ -235,24 +235,24 @@ class FloatingGrade(FloatingABC):
         self.set_focus()
         content = self.floating.content
         content.clear()
-        content.append(Text().add("         Pontue de acordo com a última fez que você (re)fez a tarefa do zero (sprint)         "))
+        content.append(RText("         Pontue de acordo com a última fez que você (re)fez a tarefa do zero (sprint)         "))
         width = 90
         pad = 66
         dummy_task = self._task.clone()
         self.change_task(dummy_task, self.input_dict)
-        somatorio = (Text() .addf('g', f'{round(dummy_task.get_rate_percent() * dummy_task.get_quality_percent()/100):>3}% '))
+        somatorio = RText(f'{round(dummy_task.get_rate_percent() * dummy_task.get_quality_percent()/100):>3}% ', 'g')
 
-        content.append(Text().add("╔") + Text().add(" Tarefa:").add(somatorio).center(width, Text.Token("═", "")))
+        content.append(RText("╔") + (RText(" Tarefa:") + somatorio).center(width, "═"))
         left_side = "║ "
         for line in self.quantity_input_lines:
-            content.append(Text().add(left_side).add(line.get_text(pad)))
-        content.append(Text().add("╠═") + Text().add(" Você fez com ajuda humana ou guiado? ").center(width, Text.Token("═", "")))
+            content.append(RText(left_side) + line.get_text(pad))
+        content.append(RText("╠═") + RText(" Você fez com ajuda humana ou guiado? ").center(width, "═"))
         for line in self.support_input_lines:
-            content.append(Text().add(left_side).add(line.get_text(pad)))
-        content.append(Text().add("╠═") + Text().add(" Você usou IA (LLMs) para ").center(width, Text.Token("═", "")))
+            content.append(RText(left_side) + line.get_text(pad))
+        content.append(RText("╠═") + RText(" Você usou IA (LLMs) para ").center(width, "═"))
         for line in self.quality_input_lines:
-            content.append(Text().add(left_side).add(line.get_text(pad)))
-        content.append(Text().add("╚═══════════════════════════════════════════════════════════").ljust(width, Text.Token("═", "")))
+            content.append(RText(left_side) + line.get_text(pad))
+        content.append(RText("╚═══════════════════════════════════════════════════════════").ljust(width, "═"))
 
 
     def draw(self):

@@ -10,16 +10,17 @@ from filelock import FileLock
 import shutil
 import enum
 
-class GitCache:
-    class UpdateMode(enum.Enum):
-        ALWAYS = "always"
-        NEVER = "never"
-        IF_OLDER = "if_older"
+class UpdateMode(enum.Enum):
+    ALWAYS = "always"
+    NEVER = "never"
+    IF_OLDER = "if_older"
 
-    def __init__(self, cache_dir: str | Path, max_age: timedelta = timedelta(hours=1), update_mode: GitCache.UpdateMode = UpdateMode.IF_OLDER) -> None:
+class GitCache:
+
+    def __init__(self, cache_dir: str | Path, max_age: timedelta = timedelta(hours=1), update_mode: UpdateMode = UpdateMode.IF_OLDER) -> None:
         self.cache_dir: Path = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        self.update_mode: GitCache.UpdateMode = update_mode
+        self.update_mode: UpdateMode = update_mode
         self.updated: dict[str, bool] = {}
         self.max_age: timedelta = max_age
 
@@ -92,13 +93,13 @@ class GitCache:
                     shutil.rmtree(repo, ignore_errors=True)
                     return None
 
-            if self._is_expired(repo) or (self.update_mode == GitCache.UpdateMode.ALWAYS) and not self.updated.get(str(repo), False):
+            if self._is_expired(repo) or (self.update_mode == UpdateMode.ALWAYS) and not self.updated.get(str(repo), False):
                 try:
                     if verbose:
                         print(f"Updating cache for {url}...", file=sys.stderr)
                     self._update(repo)
                 except subprocess.CalledProcessError:
-                    if self.update_mode == self.UpdateMode.IF_OLDER:
+                    if self.update_mode == UpdateMode.IF_OLDER:
                         pass
                     if verbose:
                         print(f"Failed to update cache for {url}. Removing and re-cloning...", file=sys.stderr)

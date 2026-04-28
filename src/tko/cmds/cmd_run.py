@@ -1,8 +1,11 @@
 from pathlib import Path
 
+from tko.game.task import Task
+from tko.play.opener import Opener
+from tko.repository.repository import Repository
 from tko.util.param import Param
 from tko.config.settings import Settings
-from tko.util.text import Text
+from tko.util.rtext import RText
 from tko.run.run_context import RunContext
 from tko.run.run_loader import RunLoader
 from tko.run.run_presenter import RunPresenter
@@ -45,7 +48,7 @@ class Run:
         self.context.set_lang(lang)
         return self
     
-    def set_opener(self, opener):
+    def set_opener(self, opener: Opener):
         self.context.set_opener(opener)
         return self
 
@@ -53,15 +56,21 @@ class Run:
         self.context.set_run_without_ask(value)
         return self
 
-    def set_task(self, rep, task):
+    def set_task(self, rep: Repository, task: Task):
         self.context.set_task(rep, task)
+        return self
+
+    def load(self):
+        loader = RunLoader(self.context)
+        loader.setup_initial_environment()
+        loader.build_wdir()
         return self
 
     def execute(self):
         loader = RunLoader(self.context)
-        loader.setup_initial_environment()
 
         if not self.context.wdir_builded:
+            loader.setup_initial_environment()
             loader.build_wdir()
 
         if self._missing_target():
@@ -80,7 +89,7 @@ class Run:
             if not self.context.eval_mode:
                 executor.free_run()
             else:
-                print(Text().addf("", "fail: ") + "Nenhum caso de teste encontrado.")
+                print(RText("fail: ") + "Nenhum caso de teste encontrado.")
             return 0
             
         return executor.run_tests()
@@ -88,6 +97,6 @@ class Run:
     def _missing_target(self) -> bool:
         if not self.context.wdir.has_solver() and not self.context.wdir.has_tests():
             if not self.context.curses_mode:
-                print(Text().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
+                print(RText("fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
             return True
         return False

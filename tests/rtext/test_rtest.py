@@ -1,4 +1,4 @@
-from tko.util.rtext import RText, RBuffer
+from tko.util.rtext import RText, RBuffer, RenderMode
 
 
 # =========================================================
@@ -155,6 +155,14 @@ def test_buffer_add_string():
     buf = RBuffer()
     buf.add("Hello", "r")
     assert buf.to_text().runs == (("r", "Hello"),)
+
+
+def test_buffer_rb_renders_blue_foreground_red_background():
+    buf = RBuffer()
+    buf.add("Hello", "Rb")
+
+    assert buf.to_text().runs == (("bR", "Hello"),)
+    assert buf.to_text().render(RenderMode.ANSI) == "\033[34m\033[41mHello\033[0m"
 
 
 def test_buffer_add_text():

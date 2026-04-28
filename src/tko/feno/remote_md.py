@@ -2,7 +2,7 @@ import os
 import re
 import configparser
 from tko.util.decoder import Decoder
-from tko.util.text import Text
+from tko.util.rtext import RText
 from pathlib import Path
 
 class RemoteLink:
@@ -56,7 +56,7 @@ class RemoteCfg:
             self.__load_cfg_path(target)
             self.__parse_cfg()
             if self.cfg_path is None:
-                print(Text.format("{r}: remote.cfg file not set", "fail"))
+                print(RText.parse("[r]fail[.]: remote.cfg file not set"))
 
     def cfg_exists(self):
         return self.cfg_path is not None

@@ -2,7 +2,7 @@ from tko.run.diff_builder import DiffBuilder
 from tko.run.unit import Unit
 from tko.enums.execution_result import ExecutionResult
 from tko.util.symbols import Symbols
-from tko.util.text import Text
+from tko.util.rtext import RText
 
 class DiffBuilderSide:
     def __init__(self, width: int, unit: Unit):
@@ -10,7 +10,7 @@ class DiffBuilderSide:
         self.curses = False
         self.db = DiffBuilder(width)
         self.unit: Unit = unit
-        self.output: list[Text] = []
+        self.output: list[RText] = []
         self.__to_insert_header = False
         self.__standalone_diff = False
         self.expected_received, self.first_failure = self.db.render_diff(self.unit.get_expected(), self.unit.get_received())
@@ -19,28 +19,44 @@ class DiffBuilderSide:
         self.curses = True
         return self
 
-    def split_screen(self, a: Text | None, b: Text | None, unequal: Text.Token | None = None) -> Text:
+    def split_screen(self, a: RText | None, b: RText | None, unequal: RText | None = None) -> RText:
         if unequal is None:
-            unequal = Text.Token(Symbols.vbar, "")
+            unequal = RText(Symbols.vbar)
         avaliable = self.width - 7 # 2 spaces before, 2 spaces after, 3 between
         cut = avaliable // 2
         if a is None or b is None or a != b:
             symb = unequal
         else:
-            symb = Text.Token(Symbols.vbar)
-        ta = Text() + a
-        tb = Text() + b
-        ta = ta.ljust(cut, Text.Token(" ")).trim_end(cut)
-        tb = tb.ljust(cut, Text.Token(" ")).trim_end(cut)
+            symb = RText(Symbols.vbar)
+        ta = RText() + (a or RText())
+        tb = RText() + (b or RText())
+        ta = ta.ljust(cut, " ").trim_end(cut)
+        tb = tb.ljust(cut, " ").trim_end(cut)
         line = symb + " " + ta + " " + symb + " " + tb + " "
         if self.width % 2 == 0:
             line += " "
         return line + Symbols.vbar
 
-    def title_side_by_side(self, left: Text, right: Text, filler: Text.Token = Text.Token(" "), middle: Text.Token = Text.Token(" "), prefix: Text.Token = Text.Token(), posfix: Text.Token = Text.Token()) -> Text:
+    def title_side_by_side(
+        self,
+        left: RText,
+        right: RText,
+        filler: RText | str = " ",
+        middle: RText | str = " ",
+        prefix: RText | str = "",
+        posfix: RText | str = "",
+    ) -> RText:
+        if isinstance(filler, str):
+            filler = RText(filler)
+        if isinstance(middle, str):
+            middle = RText(middle)
+        if isinstance(prefix, str):
+            prefix = RText(prefix)
+        if isinstance(posfix, str):
+            posfix = RText(posfix)
         avaliable = self.width - len(prefix) - len(posfix) - len(middle)
         half = avaliable // 2
-        line = Text() + prefix
+        line = RText() + prefix
 
         a = left
         a = a.center(half, filler)
@@ -67,57 +83,57 @@ class DiffBuilderSide:
         return self
 
     def _insert_header(self):
-        self.output.append(Text().fold_in(self.width, Symbols.hbar, "╭", "╮"))
+        self.output.append(RText().fold_in(self.width, Symbols.hbar, "╭", "╮"))
         self.output.append(self.unit.str().fold_in(self.width, " ", "│", "│"))
 
     def _insert_input(self):
         # input header
         input_color = "b" if self.unit.get_expected() != self.unit.get_received() else "g"
-        input_headera = Text().addf(input_color, DiffBuilder.vinput)
-        input_headerb = Text().addf(input_color, DiffBuilder.vinput)
+        input_headera = RText(DiffBuilder.vinput, input_color)
+        input_headerb = RText(DiffBuilder.vinput, input_color)
         if self.__to_insert_header:
-            self.output.append(self.title_side_by_side(input_headera, input_headerb, Text.Token(Symbols.hbar), Text.Token("┬"), Text.Token("├"), Text.Token("┤")))
+            self.output.append(self.title_side_by_side(input_headera, input_headerb, Symbols.hbar, "┬", "├", "┤"))
         else:
-            self.output.append(Text().addf(input_color, DiffBuilder.vinput).fold_in(self.width, Symbols.hbar, "╭", "╮"))
+            self.output.append(RText(DiffBuilder.vinput, input_color).fold_in(self.width, Symbols.hbar, "╭", "╮"))
 
         # input lines
         if self.unit.input != "":
-            lines = [Text().add(x) for x in self.unit.input.splitlines()]
+            lines = [RText(x) for x in self.unit.input.splitlines()]
             for l in lines:
                 self.output.append(self.split_screen(l, l))
     
     def _insert_expected_received(self):
         # expected and received header
         ecolor = "g" if self.unit.get_expected() == self.unit.get_received() else "y"
-        expected_header = Text().addf(ecolor, DiffBuilder.vexpected)
+        expected_header = RText(DiffBuilder.vexpected, ecolor)
         rcolor = "r" if self.unit.get_expected() != self.unit.get_received() else "g"
-        received_header = Text().addf(rcolor, DiffBuilder.vreceived)
+        received_header = RText(DiffBuilder.vreceived, rcolor)
         if self.__standalone_diff:
-            self.output.append(self.title_side_by_side(expected_header, received_header, Text.Token(Symbols.hbar), Text.Token("┬"), Text.Token("╭"), Text.Token("╮")))
+            self.output.append(self.title_side_by_side(expected_header, received_header, Symbols.hbar, "┬", "╭", "╮"))
         else:
-            self.output.append(self.title_side_by_side(expected_header, received_header, Text.Token(Symbols.hbar)   , Text.Token("┼"), Text.Token("├"), Text.Token("┤")))
+            self.output.append(self.title_side_by_side(expected_header, received_header, Symbols.hbar, "┼", "├", "┤"))
         # expected and received lines
-        symbol: Text.Token = Text.Token(Symbols.unequal)
+        symbol = RText(Symbols.unequal)
         if self.unit.result == ExecutionResult.EXECUTION_ERROR or self.unit.result == ExecutionResult.COMPILATION_ERROR:
-            symbol = Text.Token(Symbols.vbar)
+            symbol = RText(Symbols.vbar)
         for exp, rec in self.expected_received:
             self.output.append(self.split_screen(exp, rec, symbol))
 
     def _insert_first_line_diff(self):
         if self.unit.get_expected() == self.unit.get_received() or self.unit.get_expected() == "":
             return
-        self.output.append(Text().addf("b", DiffBuilder.vunequal).fold_in(self.width, Symbols.hbar, "├", "┤"))
+        self.output.append(RText(DiffBuilder.vunequal, "b").fold_in(self.width, Symbols.hbar, "├", "┤"))
         for line in self.db.first_failure_diff(self.unit.get_expected(), self.unit.get_received(), self.first_failure):
             width = self.width - 1
-            self.output.append(Text().add("│").add(line).ljust(width, Text.Token(" ")).add("│"))
+            self.output.append((RText("│") + line).ljust(width, " ") + "│")
         
     def _finish(self):
         if self.unit.get_expected() == self.unit.get_received() or self.unit.get_expected() == "":
-            self.output.append(Text().add("┴").fold_in(self.width, Symbols.hbar, "╰", "╯"))
+            self.output.append(RText("┴").fold_in(self.width, Symbols.hbar, "╰", "╯"))
         else:
-            self.output.append(Text().fold_in(self.width, Symbols.hbar, "╰", "╯"))
+            self.output.append(RText().fold_in(self.width, Symbols.hbar, "╰", "╯"))
 
-    def build_diff(self) -> list[Text]:
+    def build_diff(self) -> list[RText]:
         self.output = []
         if self.__to_insert_header:
             self._insert_header()

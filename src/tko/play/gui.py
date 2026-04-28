@@ -1,6 +1,6 @@
 from tko.play.keys import GuiActions
 from tko.config.settings import Settings
-from tko.util.text import Text
+from tko.util.rtext import RText
 from tko.util.symbols import Symbols
 from pathlib import Path
 
@@ -89,40 +89,39 @@ class Gui:
             return "y"
         return ""
 
-    def center_header_footer(self, value: Text, frame: Frame) -> Text:
+    def center_header_footer(self, value: RText, frame: Frame) -> RText:
         half = value.len() // 2
         x = frame.get_x()
         _, dx = Fmt.get_size()
         color = self.get_frame_color()
-        full = Text().addf(color, "─" * ((dx//2) - x - 2 - half)).add(value)
+        full = RText("─" * ((dx//2) - x - 2 - half), color) + value
         return full
 
     def show_left_panel(self, frame: Frame):
         dy, dx = frame.get_inner()
-        top = Text()
+        top = RText()
 
         if self.search.search_mode:
             top = self.make_search_text(dx - 20)
         else:
-            top = Text.format(" {} ", self.repo.data.lang.upper())
+            top = RText.format(" {} ", self.repo.data.lang.upper())
         frame.set_header(top, "<", prefix="{", suffix="}")
         
         dirname: Path = self.repo.paths.get_repo_root_dir()
         dirname_str = dirname.name.upper()
         
-        text = Text.format(" {} ", dirname_str)
+        text = RText.format(" {} ", dirname_str)
         if self.need_update:
-            text = Text().addf("r", " TKO DESATUALIZADO!").addf("y"," Atualize com: ").addf("g", "pipx upgrade tko ")
+            text = RText(" TKO DESATUALIZADO!", "r") + RText(" Atualize com: ", "y") + RText("pipx upgrade tko ", "g")
         frame.set_footer(text, "<", prefix="{", suffix="}")
         frame.set_scrollbar(current_index=self.tree.state.scroll, text_length=len(self.tree.items), side="left")
         frame.draw()
 
-        sentences: list[Text] = self.tree.get_visible_sentences(dy)
+        sentences: list[RText] = self.tree.get_visible_sentences(dy)
 
         for y, sentence in enumerate(sentences):
             if sentence.len() > dx:
-                sentence.trim_end(dx - 1)
-                sentence.addf("r", "…")
+                sentence = sentence.trim_end(dx - 1) + RText("…", "r")
             frame.write(y, 0, sentence)
         
 
@@ -132,7 +131,7 @@ class Gui:
         obtained, priority, complete = self.game.get_skills_resume()
         frame_xp.draw()
 
-        elements: list[Text] = []
+        elements: list[RText] = []
         for skill, value in complete.items():
             if self.flags.show_panel.is_true():
                 obtained_value = round(100 * obtained.get(skill, 0) / priority.get(skill, 1))
@@ -175,21 +174,21 @@ class Gui:
             frame_xp.print(1, skill_bar)
             if line_breaks > 0:
                 line_breaks -= 1
-                frame_xp.print(1, Text())
+                frame_xp.print(1, RText())
 
-    def build_list_sentence(self, items: list[Text]) -> list[Text]:
-        out: list[Text] = []
+    def build_list_sentence(self, items: list[RText]) -> list[RText]:
+        out: list[RText] = []
         for x in items:
-            color_ini = x.data[0].fmt
-            color_end = x.data[-1].fmt
+            color_ini = x[0].runs[0][0] if x[0].runs else ""
+            color_end = x[-1].runs[0][0] if x[-1].runs else ""
             left = self.style.round_l(color_ini)
             right = self.style.round_r(color_end)
-            middle = x.clone()
-            if x.data[0].text == "!":
+            middle = x
+            if x.plain().startswith("!"):
                 left = self.style.sharp_l(color_ini)
                 right = self.style.sharp_r(color_end)
-                middle.data = x.data[1:]
-            out.append(Text().add(left).add(middle).add(right))
+                middle = x.slice(1)
+            out.append(left + middle + right)
         return out
 
     def show_bottom_bar(self):
@@ -202,21 +201,21 @@ class Gui:
         except IndexError:
             pass
         act_color, act_text = self.get_activate_label()
-        help_fixed: list[Text] = [
-            Text().addf('R', f" Sair [esc] "),
-            Text().addf("C", f" Criar Rascunho [{GuiKeys.create_draft}] "),
-            Text().addf("C", f" {GuiActions.pallete} [{GuiKeys.palette}] "),
-            Text().addf("G", f" {GuiActions.search} [{GuiKeys.search}] "),
-            Text().addf(act_color, f" {act_text} [↲] "),
-            Text().addf(self_color, f" {GuiActions.grade} [{GuiKeys.self_evaluate}] "),
+        help_fixed: list[RText] = [
+            RText(f" Sair [esc] ", "R"),
+            RText(f" Criar Rascunho [{GuiKeys.create_draft}] ", "C"),
+            RText(f" {GuiActions.pallete} [{GuiKeys.palette}] ", "C"),
+            RText(f" {GuiActions.search} [{GuiKeys.search}] ", "G"),
+            RText(f" {act_text} [↲] ", act_color),
+            RText(f" {GuiActions.grade} [{GuiKeys.self_evaluate}] ", self_color),
         ]
-        line_main = Text().add(" ").join(help_fixed) # alignment adjust
+        line_main = RText.join(help_fixed, RText(" ")) # alignment adjust
         Fmt.write(lines - 1, 0, line_main.center(cols))
 
     def make_search_text(self, size: int):
         text = " Busca: " + self.tree.state.search + Symbols.cursor
         text = text.ljust(size)
-        return Text().add(text)
+        return RText(text)
     
     def make_xp_button(self, size: int):
         # if self.search.search_mode:
@@ -245,7 +244,7 @@ class Gui:
         
         skill_size = int(size / qtd)
 
-        elements: list[Text] = []
+        elements: list[RText] = []
         for skill, _ in complete.items():
             text = f"{skill}"
             perc = obtained.get(skill, 0) / priority.get(skill, 1)
@@ -255,10 +254,10 @@ class Gui:
             skill_bar = self.style.build_bar(text=text, percent=perc, length=skill_size - 2, fmt_true=done_color, fmt_false=todo_color, rounded=False)
             elements.append(skill_bar)
         cover_color = 'K'
-        xpbar = Text().add(self.style.round_l(cover_color)).addf(cover_color.lower(), '█')
+        xpbar = self.style.round_l(cover_color) + RText('█', cover_color.lower())
         for skill_bar in elements:
-            xpbar.add(skill_bar).addf(cover_color.lower(), '█')
-        xpbar.add(self.style.round_r(cover_color))
+            xpbar += skill_bar + RText('█', cover_color.lower())
+        xpbar += self.style.round_r(cover_color)
 
         return xpbar
 
@@ -268,7 +267,7 @@ class Gui:
         pre = [
             vi.render_button(f"Recomendadas[{GuiKeys.inbox}]", self.flags.task_view_mode.is_inbox()),
             vi.render_button(f"Todas[{GuiKeys.all_tasks}]", self.flags.task_view_mode.is_all()),
-            Text().add(" ")
+            RText(" ")
         ]
         pos = [
             vi.render_button(f"Gráficos[{GuiKeys.panel_graph}]", panel_on and self.flags.panel.is_graph()),
@@ -282,54 +281,54 @@ class Gui:
         ]
         
         limit = frame.get_dx()
-        extra = Text()
+        extra = RText()
         if self.flags.panel.is_graph():
-            extra = Text().add("").join(last)
+            extra = RText.join(last, RText(""))
 
-        info = Text().add("").join(pre + pos)
-        info = Text().add(" " * ((limit - len(info)) // 2)).add(info)
-        info += Text().add(" " * (limit - len(info) - len(extra))).add(extra)
+        info = RText.join(pre + pos, RText(""))
+        info = RText(" " * ((limit - len(info)) // 2)) + info
+        info += RText(" " * (limit - len(info) - len(extra))) + extra
         # info = info.ljust((limit - len(info))//2).add(" " * (limit - len(extra))).add(extra)
         frame.write(0, 1, info)
 
     def show_help(self, frame: Frame):
         frame.draw()
         dx = frame.get_dx() - 2
-        help_lines: list[Text] = []
-        help_lines.append(Text.format("{g}", " Configuração ").center(dx, Text.Token("-")))
-        help_lines.append(Text.format("   Bordas {r} Habilita {r}{R}{r}", "B", "", "bordas redondas", ""))
-        help_lines.append(Text.format(" Calibrar {r} Para calibrar os direcionais do teclado", GuiKeys.calibrate))
+        help_lines: list[RText] = []
+        help_lines.append(RText.format("{g}", " Configuração ").center(dx, RText("-")))
+        help_lines.append(RText.format("   Bordas {r} Habilita {r}{R}{r}", "B", "", "bordas redondas", ""))
+        help_lines.append(RText.format(" Calibrar {r} Para calibrar os direcionais do teclado", GuiKeys.calibrate))
 
-        help_lines.append(Text().addf("g", " Símbolos ").center(dx, Text.Token("-")))
-        help_lines.append(Text.format(" {y} Tarefa sugeridas, {} Tarefa opcional", Symbols.star_filled, Symbols.star_void))
-        help_lines.append(Text.format(" {g} Estudo/Consulta, {y} Escrever e refazer, {r} Fazer sem consulta", Symbols.loss_free, Symbols.loss_part, Symbols.loss_zero))
-        help_lines.append(Text.format(" {g}{g}{g} Fez Autoavaliação       , {}{}{} Sem Autoavaliação", 
+        help_lines.append(RText(" Símbolos ", "g").center(dx, RText("-")))
+        help_lines.append(RText.format(" {y} Tarefa sugeridas, {} Tarefa opcional", Symbols.star_filled, Symbols.star_void))
+        help_lines.append(RText.format(" {g} Estudo/Consulta, {y} Escrever e refazer, {r} Fazer sem consulta", Symbols.loss_free, Symbols.loss_part, Symbols.loss_zero))
+        help_lines.append(RText.format(" {g}{g}{g} Fez Autoavaliação       , {}{}{} Sem Autoavaliação", 
                                       Symbols.diamond_filled, Symbols.circle_filled, Symbols.task_view,
                                       Symbols.diamond_void, Symbols.circle_void, Symbols.task_view))
-        help_lines.append(Text.format("{g}", " Navegação ").center(dx, Text.Token("-")))
-        help_lines.append(Text.format("  setas {r} Para navegar entre os elementos", "↑↓→"))
-        help_lines.append(Text.format("    Enter {r} Interage com o elemento de acordo com o contexto", "↲"))
-        help_lines.append(Text().addf("g", " Interface ").center(dx, Text.Token("-")))
-        help_lines.append(Text.format("    Inbox {r} Mostra as tarefas sugeridas e iniciadas", GuiKeys.inbox))
-        help_lines.append(Text.format("    Todas {r} Mostra as todas tarefas cadastradas", GuiKeys.all_tasks))
-        help_lines.append(Text.format("   Paleta {r} Abre o menu de ações e configurações", GuiKeys.palette))
-        help_lines.append(Text.format("    Tempo {r} Mostrar/Oculta o tempo gasto nas tarefas", GuiKeys.show_duration))
-        help_lines.append(Text.format("    Busca {r} Abre a barra de pesquisa", GuiKeys.search))
+        help_lines.append(RText.format("{g}", " Navegação ").center(dx, RText("-")))
+        help_lines.append(RText.format("  setas {r} Para navegar entre os elementos", "↑↓→"))
+        help_lines.append(RText.format("    Enter {r} Interage com o elemento de acordo com o contexto", "↲"))
+        help_lines.append(RText(" Interface ", "g").center(dx, RText("-")))
+        help_lines.append(RText.format("    Inbox {r} Mostra as tarefas sugeridas e iniciadas", GuiKeys.inbox))
+        help_lines.append(RText.format("    Todas {r} Mostra as todas tarefas cadastradas", GuiKeys.all_tasks))
+        help_lines.append(RText.format("   Paleta {r} Abre o menu de ações e configurações", GuiKeys.palette))
+        help_lines.append(RText.format("    Tempo {r} Mostrar/Oculta o tempo gasto nas tarefas", GuiKeys.show_duration))
+        help_lines.append(RText.format("    Busca {r} Abre a barra de pesquisa", GuiKeys.search))
 
-        help_lines.append(Text().addf("g", " Tarefas ").center(dx, Text.Token("-")))
-        help_lines.append(Text.format(" Download {r} Baixa novamente a tarefa selecionada", GuiKeys.down_task))
-        help_lines.append(Text.format("   Apagar {r} Apaga a pasta da tarefa selecionada", GuiKeys.delete_folder))
-        help_lines.append(Text.format(" Rascunho {r} Cria um rascunho para escrever código ou anotações", GuiKeys.create_draft))
-        help_lines.append(Text.format("Avaliação {r} Abre tela para auto avaliação", GuiKeys.self_evaluate))
+        help_lines.append(RText(" Tarefas ", "g").center(dx, RText("-")))
+        help_lines.append(RText.format(" Download {r} Baixa novamente a tarefa selecionada", GuiKeys.down_task))
+        help_lines.append(RText.format("   Apagar {r} Apaga a pasta da tarefa selecionada", GuiKeys.delete_folder))
+        help_lines.append(RText.format(" Rascunho {r} Cria um rascunho para escrever código ou anotações", GuiKeys.create_draft))
+        help_lines.append(RText.format("Avaliação {r} Abre tela para auto avaliação", GuiKeys.self_evaluate))
 
-        help_lines.append(Text.format("{g}", " Editor padrão ").center(dx, Text.Token("-")))
-        help_lines.append(Text().add(" Para mudar o editor padrão para abrir arquivos use o comando"))
-        help_lines.append(Text().addf("y", "tko config set --editor <comando>").center(dx))
+        help_lines.append(RText.format("{g}", " Editor padrão ").center(dx, RText("-")))
+        help_lines.append(RText(" Para mudar o editor padrão para abrir arquivos use o comando"))
+        help_lines.append(RText("tko config set --editor <comando>", "y").center(dx))
 
         for i, line in enumerate(help_lines):
             frame.write(i, 0, line)
 
-    def get_task_graph(self, task_key: str, width: int, height: int) -> tuple[bool, list[Text], list[Text]]:
+    def get_task_graph(self, task_key: str, width: int, height: int) -> tuple[bool, list[RText], list[RText]]:
         tg = TaskGraph(self.settings, self.repo, task_key, width, height)
         header, graph = tg.get_output()
         if len(graph) == 0:
@@ -338,7 +337,7 @@ class Gui:
         #     frame.write(y, x, Text().addf("g", line))
         return True, header, graph
 
-    def get_daily_graph(self, width: int, height: int) -> tuple[bool, list[Text], list[Text]]:
+    def get_daily_graph(self, width: int, height: int) -> tuple[bool, list[RText], list[RText]]:
         header, graph = DailyGraph(self.repo.logger, width, height).get_graph()
         if len(graph) == 0:
             return False, [], []
@@ -354,11 +353,11 @@ class Gui:
 
         lines, cols = frame.get_inner()
         made = False
-        list_data: list[Text] = []
+        list_data: list[RText] = []
         width = cols - 2
         if width < 5:
             width = 5
-        header: list[Text] = []
+        header: list[RText] = []
         if self.flags.panel.is_graph() or self.flags.panel.is_logs():
             height = lines - 2
             if height < 3:
@@ -368,7 +367,7 @@ class Gui:
             elif isinstance(selected, Quest) and self.flags.panel.is_graph():
                 made, header, list_data = self.get_daily_graph(width, height)
         if not made:
-            list_data = [Text().add(x).rjust(width) for x in opening["parrot"].splitlines()]
+            list_data = [RText(x).rjust(width) for x in opening["parrot"].splitlines()]
             # keep_borders = True
         if self.xray_offset < 0:
             self.xray_offset = 0
@@ -385,8 +384,8 @@ class Gui:
         dy, _ = frame.get_inner()
         if self.flags.panel.is_logs():
             if header:
-                frame.set_header(Text().add(" Scroll Up[PageUp]  ScrollDown[PgDown] "), "^")
-                frame.set_footer(Text().add(" ").add(header[0]), "^")
+                frame.set_header(RText(" Scroll Up[PageUp]  ScrollDown[PgDown] "), "^")
+                frame.set_footer(RText(" ") + header[0], "^")
 
             count = -1
             line_count = 0
@@ -401,7 +400,7 @@ class Gui:
 
         else:
             if header:
-                frame.set_footer(Text().add(" ").add(header[0]), "^")
+                frame.set_footer(RText(" ") + header[0], "^")
             count = -1
             line_count = 0
             for line in list_data:

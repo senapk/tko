@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from tko.util.symbols import Symbols
-from tko.util.text import Text
+from tko.util.rtext import RText
 from tko.game.tree_item import TreeItem
 from tko.game.task_info import TaskInfo
 
@@ -222,20 +222,21 @@ class Task(TreeItem):
             return "g"
         return "w"  
 
-    def get_rate_symbol(self, value: int, min_value: None | int = None) -> Text:
-        if min_value is None:
-            min_value = self.default_min_value
-        color = self.get_rate_color(value, min_value)
-        prog = value
-        if prog == 0:
-            return Text().add("x")
-        if prog < min_value:
-            return Text().addf(color, str(prog))
-        if prog < 10:
-            return Text().addf(color, str(prog))
-        if prog == 10:
-            return Text().addf(color, Symbols.check)
-        return Text().add("0")
+    def get_rate_symbol(self, value: int, min_value: None | int = None) -> RText:
+        if value < 0:
+            if min_value is not None:
+                if value < min_value:
+                    return RText("x")
+        elif value < 100:
+            prog = (value + 5) // 10
+            color = "y" if value >= 50 else "r"
+            if prog == 10:
+                prog = 9
+            return RText(str(prog), color)
+        elif value >= 100:
+            color = "g"
+            return RText(Symbols.check, color)
+        return RText("0")
 
     def get_xp(self) -> int:
         if self.xp == 0:

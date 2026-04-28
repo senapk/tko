@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from tko.play.language_setter import LanguageSetter
-from tko.util.text import Text
+from tko.util.rtext import RText
 from tko.repository.repository import Repository
 from tko.repository.rep_paths import RepPaths
 import shutil
@@ -31,7 +31,7 @@ class RepStarter:
         os.makedirs(cache_folder, exist_ok=True)
         if self.language is not None:
             repo.data.lang = self.language
-            print(Text.format("A linguagem do repositório foi definida como {y}.", self.language))
+            print(RText.parse(f"A linguagem do repositório foi definida como [y]{self.language}[.]."))
         else:
             LanguageSetter.check_lang_in_text_mode(self.settings, self.repo)
         
@@ -40,34 +40,34 @@ class RepStarter:
         return True
 
     def print_end_msg(self):
-        print(Text.format("Voce pode acessar o repositório com o comando {g} {y}", "tko open"))
+        print(RText.parse(f"Voce pode acessar o repositório com o comando [g]tko open[.]"))
     
     def create_repository(self) -> Repository | None:
         path_parents = RepPaths.rec_search_for_repo_parents(self.folder)
 
         if path_parents is not None and path_parents.resolve() == self.folder.resolve():
-            print(Text.format("Já existe um repositório TKO na pasta {y}", self.folder.resolve()))
-            print(Text.format("Deseja resetar o repositório? ({g}/{r}): ", "s", "n"), end="")
+            print(RText.parse(f"Já existe um repositório TKO na pasta [y]{self.folder.resolve()}[.]"))
+            print(RText.parse(f"Deseja resetar o repositório? ([g]s[.]/[r]n[.]): "), end="")
             op = input()
             if op == "n":
                 return None
 
         elif path_parents is not None:
             if self.folder != path_parents:
-                print(Text.format("Você está tentando criar um repositório dentro de outro, pois já existe rep em {r}.", path_parents))
-                print(Text.format("Você pode apagar o repositório antigo, criar seu repositório em outro lugar ou sobrescrever as configurações."))
+                print(RText.parse(f"Você está tentando criar um repositório dentro de outro, pois já existe rep em [r]{path_parents}[.]"))
+                print(RText.parse("Você pode apagar o repositório antigo, criar seu repositório em outro lugar ou sobrescrever as configurações."))
             self.folder = path_parents
-            print(Text.format("Deseja sobrescrever as configurações do repositório em {y} ? ({g}/{r}): ", self.folder, "s", "n"), end="")
+            print(RText.parse(f"Deseja sobrescrever as configurações do repositório em [y]{self.folder}[.] ? ([g]s[.]/[r]n[.]): "), end="")
             op = input()
             if op == "n":
                 return None
         else:
             path_subdir_list = RepPaths.rec_search_for_repo_subdir(self.folder)
             if len(path_subdir_list) > 0:
-                print(Text.format("Você está tentando criar um repositório TKO na pasta {y}", self.folder.resolve()))
-                print(Text.format("Porém já existem repositórios TKO abaixo dessa pasta. Mova ou apague-os"))
+                print(RText.parse(f"Você está tentando criar um repositório TKO na pasta [y]{self.folder.resolve()}[.]"))
+                print(RText.parse("Porém já existem repositórios TKO abaixo dessa pasta. Mova ou apague-os"))
                 for path in path_subdir_list:
-                    print(Text.format("- {r}", path))
+                    print(RText.parse(f"- [r]{path}[.]"))
                 return None
 
         return Repository(self.folder)

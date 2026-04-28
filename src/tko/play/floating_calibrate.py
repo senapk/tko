@@ -1,4 +1,4 @@
-from tko.util.text import Text
+from tko.util.rtext import RText
 from tko.play.floating import Floating, FloatingABC
 from tko.config.settings import Settings
 import tko.config.app_settings as app
@@ -9,7 +9,7 @@ class FloatingCalibrate(FloatingABC):
         self.settings = settings
         self.floating.set_header(" Calibrar teclas direcionais ")
         # self.set_text_ljust()
-        self.floating.set_footer_text(Text.format(" Use {y:Enter} para salvar, {y:q} para cancelar e {y:r} para reiniciar. "))
+        self.floating.set_footer_text(RText.parse(" Use [y]Enter[.] para salvar, [y]q[.] para cancelar e [y]r[.] para reiniciar. "))
         self._index = 0
         self._options = [settings.app.get_key(app.AppKeys.LEFT),
                          settings.app.get_key(app.AppKeys.RIGHT),
@@ -40,21 +40,21 @@ class FloatingCalibrate(FloatingABC):
         content = self.floating.content
         content.clear()
         color = "G" if self._index == 0 else ""
-        content.append(Text().addf(color, "Left      ").addf(color, format_value(self._options[0])))
+        content.append(RText("Left      ", color) + RText(format_value(self._options[0]), color))
         color = "G" if self._index == 1 else ""
-        content.append(Text().addf(color, "Right     ").addf(color, format_value(self._options[1])))
+        content.append(RText("Right     ", color) + RText(format_value(self._options[1]), color))
         color = "G" if self._index == 2 else ""
-        content.append(Text().addf(color, "Up        ").addf(color, format_value(self._options[2])))
+        content.append(RText("Up        ", color) + RText(format_value(self._options[2]), color))
         color = "G" if self._index == 3 else ""
-        content.append(Text().addf(color, "Down      ").addf(color, format_value(self._options[3])))
+        content.append(RText("Down      ", color) + RText(format_value(self._options[3]), color))
         color = "G" if self._index == 4 else ""
-        content.append(Text().addf(color, "Esc       ").addf(color, format_value(self._options[4])))
+        content.append(RText("Esc       ", color) + RText(format_value(self._options[4]), color))
         color = "G" if self._index == 5 else ""
-        content.append(Text().addf(color, "PageUp    ").addf(color, format_value(self._options[5])))
+        content.append(RText("PageUp    ", color) + RText(format_value(self._options[5]), color))
         color = "G" if self._index == 6 else ""
-        content.append(Text().addf(color, "PageDown  ").addf(color, format_value(self._options[6])))
+        content.append(RText("PageDown  ", color) + RText(format_value(self._options[6]), color))
         color = "G" if self._index == 7 else ""
-        content.append(Text().addf(color, "Backspace ").addf(color, format_value(self._options[7])))
+        content.append(RText("Backspace ", color) + RText(format_value(self._options[7]), color))
 
     def process_input(self, key: int) -> int:
         # self.draw()

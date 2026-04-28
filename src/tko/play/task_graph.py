@@ -1,7 +1,7 @@
 from tko.config.settings import Settings
 from tko.repository.repository import Repository
 from uniplot import plot_to_string # type: ignore
-from tko.util.text import Text
+from tko.util.rtext import RText
 from tko.logger.log_sort import LogSort
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_base import LogItemBase
@@ -32,7 +32,7 @@ class TaskGraph:
         if task_key in self.logger.tasks.task_dict:
             self.log_sort = self.logger.tasks.task_dict[task_key]
 
-        self.raw_text: list[Text] = self.prepare_xray()
+        self.raw_text: list[RText] = self.prepare_xray()
 
         if self.log_sort is None:
             return
@@ -81,10 +81,10 @@ class TaskGraph:
         self.eixo = eixo
         # self.eixo = list(range(len(collected)))
 
-    def prepare_xray(self) -> list[Text]:
+    def prepare_xray(self) -> list[RText]:
         if self.log_sort is None:
             return []
-        output: list[Text] = []
+        output: list[RText] = []
         all_entries: list[tuple[Delta, LogItemBase]] = self.log_sort.base_list
         for delta, item in all_entries:
             data = str(item)
@@ -92,19 +92,19 @@ class TaskGraph:
             data = [x for x in data if not x.startswith("k:") and not x.startswith("v:")]
             data_str = ", ".join(data)
             data_str = data_str.replace("mode:", "")
-            text = (Text().add(data_str)
-                        .replace("EXEC", Text.Token("EXEC", "g"))
-                        .replace("SELF", Text.Token("SELF", "r"))
-                        .replace("MOVE", Text.Token("MOVE", "y")))
+            text = (RText(data_str)
+                        .replace("EXEC", RText("EXEC", "g"))
+                        .replace("SELF", RText("SELF", "r"))
+                        .replace("MOVE", RText("MOVE", "y")))
             acc = delta.accumulated.total_seconds() / 60
             acc_h = int(acc) // 60
             acc_m = int(acc) % 60
             acc_s = int((acc - int(acc)) * 60)
             acc_str = f"{acc_h:02d}:{acc_m:02d}:{acc_s:02d}"
-            output.append(Text().add(f"acc:{acc_str}, ").add(text))
+            output.append(RText(f"acc:{acc_str}, ") + text)
         return output
 
-    def get_graph(self) -> list[Text]:
+    def get_graph(self) -> list[RText]:
         x_fix = 3
         y_fix = 2
         if self.repo.flags.task_graph_mode.is_time_view():
@@ -136,10 +136,10 @@ class TaskGraph:
         
         if isinstance(result, str):
             result = result.splitlines()
-        output: list[Text] = []
+        output: list[RText] = []
         for line in result:
-            output.append(Text.decode_raw(line))
-        fixed: list[Text] = []
+            output.append(RText.decode_raw(line))
+        fixed: list[RText] = []
         size = len(output)
         for i, line in enumerate(output):
             if i == 0 or i == size - 2:
@@ -152,25 +152,25 @@ class TaskGraph:
         return fixed
 
     # returns header and graph lines
-    def get_output(self) -> tuple[list[Text], list[Text]]:
+    def get_output(self) -> tuple[list[RText], list[RText]]:
         if not self.eixo:
             return [], []
         
-        # title = Text.format(" {C}", f" {self.task_key} ")
-        title = Text()
-        title += Text.format("{g}", f"Total {self.actual_rate:.0f}% ")
+        # title = RText(f" {self.task_key} ", "C")
+        title = RText()
+        title += RText(f"Total {self.actual_rate:.0f}% ", "g")
         time_h: int = int(self.total_elapsed) // 60
         time_m: int = (int(self.total_elapsed) % 60)
         time = f"{time_h:02.0f}h {time_m:.0f}min" if time_h > 0 else f"{time_m:.0f}min"
-        title += Text.format("{b}", f"Tempo {time} ")
-        title += Text.format("{m}", f"Linhas {self.max_lines:.0f} ")
-        title += Text.format("{r}", f"Versões {self.versions} ")
+        title += RText(f"Tempo {time} ", "b")
+        title += RText(f"Linhas {self.max_lines:.0f} ", "m")
+        title += RText(f"Versões {self.versions} ", "r")
 
-        header: list[Text] = []
+        header: list[RText] = []
         # title = title.center(self.width)
         
         if self.repo.flags.panel.is_graph():
-            header.append(Text().add(title))
+            header.append(title)
             return header, self.get_graph()
         else:
             header.append(title)

@@ -7,7 +7,7 @@ from tko.logger.task_resume import TaskResume
 from tko.logger.log_sort import LogSort
 from tko.play.daily_graph import DailyGraph
 from tko.mico.collected import Collected, Game
-from tko.util.text import Text
+from tko.util.rtext import RText
 from tko.repository.rep_paths import RepPaths
 
 import yaml # type: ignore
@@ -148,26 +148,26 @@ class CollectMany:
         for git_dir, username in zip(git_dir_list, usernames):
             tko_rep_folder_list = RepPaths.rec_search_for_repo_subdir(git_dir)
             if not tko_rep_folder_list:
-                print(Text("").addf("r", f"{username: <{padding}}").addf("r", f"TKO repo not found in {git_dir}"))
+                print(RText(f"{username: <{padding}}", "r") + RText(f"TKO repo not found in {git_dir}", "r"))
                 continue
             tko_folder = tko_rep_folder_list[0]
-            multiple_found = Text().addf("r", " - Multiple TKO repos found, using the first one." if len(tko_rep_folder_list) > 1 else "")
-            print(Text("").addf("g" if not multiple_found else "y", f"{username: <{padding}}").addf("", f"Running tko collect in {tko_folder}").add(multiple_found))
+            multiple_found = RText(" - Multiple TKO repos found, using the first one.", "r") if len(tko_rep_folder_list) > 1 else RText()
+            print(RText(f"{username: <{padding}}", "y" if multiple_found else "g") + f"Running tko collect in {tko_folder}" + multiple_found)
             output = CollectSingle.collect_to_json(tko_folder, daily=False, resume=True, game=False)
 
             try:
                 json_output: dict[str, Any] = json.loads(output) if output != "" else {}
             except json.JSONDecodeError:
-                print(Text("").addf("r", f"{username: <{padding}}").addf("r", "Error: Failed to parse JSON output"))
+                print(RText(f"{username: <{padding}}", "r") + RText("Error: Failed to parse JSON output", "r"))
                 continue
             if "error" in json_output:
-                print(Text("").addf("r", f"{username: <{padding}}").addf("r", f"Error: {json_output['error']}"))
+                print(RText(f"{username: <{padding}}", "r") + RText(f"Error: {json_output['error']}", "r"))
                 continue
 
             output_map[username] = json_output["resume"] if "resume" in json_output else {}
         if json_path is not None:
             with open(json_path, "w", encoding="utf-8") as f:
-                print(Text("").addf("g", f"Saving extracted data to {json_path}"))
+                print(RText(f"Saving extracted data to {json_path}", "g"))
                 json.dump(output_map, f, indent=4, ensure_ascii=False)
         
         header_keys = ["username", "key", "minutes", "versions", "executions", "rate", "study", "self", "friend", "concept", "problem", "code", "debug", "refactor", "guided"]
@@ -203,4 +203,4 @@ class CollectMany:
                         if block_prefix is not None:
                             row["block"]= f"{block_prefix}"
                         writer.writerow(row)
-            print(Text("").addf("g", f"Saving extracted data to {csv_path}"))
+            print(RText(f"Saving extracted data to {csv_path}", "g"))

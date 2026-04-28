@@ -1,5 +1,5 @@
 from tko.enums.execution_result import ExecutionResult
-from tko.util.text import Text
+from tko.util.rtext import RText
 from pathlib import Path
 
 class Unit:
@@ -35,15 +35,15 @@ class Unit:
     def get_received(self) -> None | str:
         return self.__received
 
-    def str(self, pad: bool = True) -> Text:
+    def str(self, pad: bool = True) -> RText:
         index = str(self.index).zfill(2)
         grade = str(self.grade_reduction).zfill(3)
         rep = "" if self.repeated is None else " [" + str(self.repeated) + "]"
-        op = Text() + ExecutionResult.get_symbol(self.result) + " " + self.result.value
+        op = ExecutionResult.get_symbol(self.result) + " " + self.result.value
         source = self.source.name
         if pad:
             source = str(self.source).ljust(self.source_pad)
         case = self.case
         if pad:
             case = self.case.ljust(self.case_pad)
-        return Text() + "(" + op + ")" + f"[{index}] GR:{grade} {source} ({case}){rep}"
+        return RText("(") + op + ")" + f"[{index}] GR:{grade} {source} ({case}){rep}"

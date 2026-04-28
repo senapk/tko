@@ -1,11 +1,11 @@
 import curses
 # from typing import override
-from tko.util.text import Text
+from tko.util.rtext import RText
 from tko.play.colors import Colors
 
 
 class TextPosition:
-    def __init__(self, y: int, x: int, text: Text):
+    def __init__(self, y: int, x: int, text: RText):
         self.y = y
         self.x = x
         self.text = text
@@ -15,14 +15,15 @@ class TextPosition:
         return f"{self.y}:{self.x}:{self.text}"
     
 class TokenPosition:
-    def __init__(self, y: int, x: int, token: Text.Token):
+    def __init__(self, y: int, x: int, style: str, text: str):
         self.y = y
         self.x = x
-        self.token = token
+        self.style = style
+        self.text = text
 
     # @override
     def __str__(self):
-        return f"{self.y}:{self.x}:{self.token}"
+        return f"{self.y}:{self.x}:({self.style}:{self.text})"
 
 class Fmt:
     __scr = None
@@ -129,8 +130,8 @@ class Fmt:
 
     # break in lines and cut everything that is out of the box
     @staticmethod
-    def cut_box(y: int, x: int, box_y: int, box_x: int, sentence: Text) -> list[TextPosition]:
-        lines: list[Text] = sentence.split("\n")
+    def cut_box(y: int, x: int, box_y: int, box_x: int, sentence: RText) -> list[TextPosition]:
+        lines: list[RText] = sentence.split("\n")
         output: list[TextPosition] = []
         for line in lines:
             px = x
@@ -140,10 +141,10 @@ class Fmt:
             if y >= box_y:
                 break
             if px < 0:
-                line.data = line.data[-px:]
+                line = line.slice(-px)
                 px = 0
             if px + len(line) > box_x:
-                line.data = line.data[:box_x - px]
+                line = line.slice(0, box_x - px)
             output.append(TextPosition(y, px, line))
             y += 1
         return output
@@ -155,15 +156,15 @@ class Fmt:
             y = text_pos.y
             x = text_pos.x
             line = text_pos.text
-            for token in line.resume():
-                output.append(TokenPosition(y, x, token))
-                x += len(token)
+            for style, text in line.runs:
+                output.append(TokenPosition(y, x, style, text))
+                x += len(text)
         return output
 
     @staticmethod
-    def write(y: int, x: int, sentence: Text | str):
+    def write(y: int, x: int, sentence: RText | str):
         if isinstance(sentence, str):
-            data: Text = Text().add(sentence)
+            data = RText(sentence)
         else:
             data = sentence
 
@@ -173,9 +174,7 @@ class Fmt:
         for token_pos in token_list:
             y = token_pos.y
             x = token_pos.x
-            token = token_pos.token
-            # print(f"y:{y}, x:{x}, fmt:{token.fmt}, len:{len(token.text)}")
-            Fmt.stroke(y, x, token.fmt, token.text)
+            Fmt.stroke(y, x, token_pos.style, token_pos.text)
 
     # @staticmethod
     # def get_user_input(stdscr, prompt: str) -> str:
@@ -191,16 +190,16 @@ class Fmt:
     #     return input_str
 
     @staticmethod
-    def get_percent(value: int, pad: int = 0) -> Text:
+    def get_percent(value: int, pad: int = 0) -> RText:
         colors = Colors()
         text = f"{str(value)}%".rjust(pad)
         if value == 100:
-            return Text().addf(colors.mark_complete, "100%")
+            return RText("100%", colors.mark_complete)
         if value >= 70:
-            return Text().addf(colors.mark_required, text)
+            return RText(text, colors.mark_required)
         if value == 0:
-            return Text().addf(colors.mark_nothing, text)
-        return Text().addf(colors.mark_started, text)
+            return RText(text, colors.mark_nothing)
+        return RText(text, colors.mark_started)
     
     @staticmethod
     def get_screen() -> curses.window:
@@ -230,9 +229,9 @@ def test_fmt(scr: curses.window):
     Fmt.init_colors()  # Inicializa as cores
     Fmt.set_scr(scr)  # Define o scr como global
 
-    output = Text.format("..")
+    output = RText("..")
     for i in range(60):
-        output.addf("r", str(i) + " ")
+        output += RText(str(i) + " ", "r")
     for i in range(15):
         Fmt.write(i - 2, -1, output)
     scr.getch()

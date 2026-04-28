@@ -3,7 +3,7 @@ import yaml # type: ignore
 from pathlib import Path
 from typing import Any
 from tko.util.decoder import Decoder
-from tko.util.text import Text
+from tko.util.rtext import RText
 from tko.util.atomic_write_yaml import atomic_write_yaml
 from tko.repository.repository import Repository
 
@@ -49,11 +49,11 @@ class RepositoryLoader:
         except ConfigMergeConflictError:
             raise
         except yaml.YAMLError as e:
-            raise Warning(Text.format(f"O arquivo de configuração do repositório {{y}} contém erros de YAML e está {{r}}.\nErro: {e}\nAbra e corrija o conteúdo ou crie um novo.", self.repo.paths.get_config_file(), "corrompido"))
+            raise Warning(RText.parse(f"O arquivo de configuração do repositório [y]{self.repo.paths.get_config_file()}[.] contém erros de YAML e está [r]corrompido[.].\nErro: {e}\nAbra e corrija o conteúdo ou crie um novo."))
         except FileNotFoundError:
-            raise Warning(Text.format("O arquivo de configuração do repositório {y} está {r}.\nAbra e corrija o conteúdo ou crie um novo.", self.repo.paths.get_config_file(), "vazio"))
+            raise Warning(RText.parse(f"O arquivo de configuração do repositório [y]{self.repo.paths.get_config_file()}[.] está [r]vazio[.].\nAbra e corrija o conteúdo ou crie um novo."))
         except Exception as e:
-            raise Warning(Text.format(f"O arquivo de configuração do repositório {{y}} está {{r}}.\nErro inesperado: {e}\nAbra e corrija o conteúdo ou crie um novo.", self.repo.paths.get_config_file(), "corrompido"))
+            raise Warning(RText.parse(f"O arquivo de configuração do repositório [y]{self.repo.paths.get_config_file()}[.] está [r]corrompido[.].\nErro inesperado: {e}\nAbra e corrija o conteúdo ou crie um novo."))
 
         self.repo.data.load_from_dict(local_data) # type: ignore
         self.repo.flags.from_dict(self.repo.data.flags) # type: ignore

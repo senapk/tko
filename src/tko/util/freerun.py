@@ -1,7 +1,7 @@
 import signal
 from typing import Any
 
-from tko.util.text import Text
+from tko.util.rtext import RText
 from tko.util.raw_terminal import RawTerminal
 from tko.util.runner import Runner
 from tko.play.images import compilling_image
@@ -30,14 +30,14 @@ else:  # Unix (Linux, macOS)
 
 class Free:
     @staticmethod
-    def free_run(solver: SolverBuilder, show_compilation:bool=True, to_clear: bool=True, wait_input:bool=True, header: Text = Text()) -> bool:
+    def free_run(solver: SolverBuilder, show_compilation:bool=True, to_clear: bool=True, wait_input:bool=True, header: RText = RText()) -> bool:
 
         if to_clear:
             Runner.clear_screen()
         if show_compilation:
             image = random.choice(list(compilling_image.keys()))
             for line in compilling_image[image].splitlines():
-                print(Text().addf("y", line).center(RawTerminal.get_terminal_size(), Text.Token(" ")))
+                print(RText(line, "y").center(RawTerminal.get_terminal_size(), " "))
 
         if show_compilation:
             Runner.clear_screen()
@@ -48,10 +48,10 @@ class Free:
         else:
             executable, _ = solver.get_executable()
             cmd, folder = executable.get_command()
-            if header.len() == 0:
-                print(Text().center(RawTerminal.get_terminal_size(), Text.Token("─")))
+            if len(header) == 0:
+                print(RText().center(RawTerminal.get_terminal_size(), "─"))
             else:
-                print(header.center(RawTerminal.get_terminal_size(), Text.Token("─")))
+                print(header.center(RawTerminal.get_terminal_size(), "─"))
 
             kwargs: dict[str, Any] = {
                 "cwd": folder,
@@ -65,7 +65,6 @@ class Free:
                 kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
 
             answer = subprocess.Popen(cmd, **kwargs)
-            #answer = subprocess.Popen(cmd, cwd=folder, shell=True if isinstance(cmd, str) else False, text=True, preexec_fn=os.setsid)
             try:
                 answer.wait()
             except KeyboardInterrupt:
@@ -78,10 +77,9 @@ class Free:
         if wait_input:
             while input_available():
                 read_input()
-            print(Text().center(RawTerminal.get_terminal_size(), Text.Token("─")))
-            print(Text.format("Para [recompilar e] reexecutar pressione {y}", "enter"))
-            print(Text.format("Para voltar para tela anterior digite {y} e pressione {y}", "q", "enter"))
-            # clear buffer before get input
+            print(RText().center(RawTerminal.get_terminal_size(), "─"))
+            print(RText.parse("Para [[recompilar e]] reexecutar pressione [y]enter[.]"))
+            print(RText.parse("Para voltar para tela anterior digite [y]q[.] e pressione [y]enter[.]"))
 
             valor = input()
             if valor != "n" and valor != "q":

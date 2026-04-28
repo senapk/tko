@@ -9,7 +9,7 @@ import yaml # type: ignore
 from tko.repository.rep_paths import RepPaths
 from icecream import ic # type: ignore
 from datetime import timedelta
-from tko.repository.git_cache import GitCache
+from tko.repository.git_cache import GitCache, UpdateMode
 from tko.play.flags import Flags
 class Repository:
     cache_time_for_remote_source = 3600 # seconds
@@ -25,7 +25,7 @@ class Repository:
         "*/.venv/*",
     ]
 
-    def __init__(self, folder: Path, update_mode: GitCache.UpdateMode = GitCache.UpdateMode.IF_OLDER, recursive_search: bool = True):
+    def __init__(self, folder: Path, update_mode: UpdateMode = UpdateMode.IF_OLDER, recursive_search: bool = True):
         rep_folder: Path = folder
         if recursive_search:
             recursive_folder = RepPaths.rec_search_for_repo_parents(folder)

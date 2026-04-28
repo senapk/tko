@@ -1,4 +1,4 @@
-from tko.util.text import Text
+from tko.util.rtext import RText
 
 class TreeItem():
 
@@ -7,7 +7,7 @@ class TreeItem():
         self.__key: str = ""
         self._title: str = ""
 
-        self.ligature: Text = Text(" ")
+        self.ligature: RText = RText(" ")
         self.visible: bool = False
         self.is_requirement_color: str = ""
 
@@ -23,7 +23,7 @@ class TreeItem():
     def get_title(self) -> str:
         return self._title
     
-    # def get_sentence(self) -> Text:
+    # def get_sentence(self) -> RText:
     #     return self.__sentence
 
     def set_remote_name(self, remote_name: str):
@@ -40,6 +40,6 @@ class TreeItem():
         self._title = title
         return self
     
-    def set_sentence(self, sentence: Text):
+    def set_sentence(self, sentence: RText):
         self.__sentence = sentence
         return self

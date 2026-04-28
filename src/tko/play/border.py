@@ -1,4 +1,4 @@
-from tko.util.text import Text
+from tko.util.rtext import RText
 from tko.config.app_settings import AppSettings
 from tko.util.symbols import Symbols
 
@@ -10,29 +10,29 @@ class Border:
         return self.app.use_borders
 
     def border(self, color: str, data: str):
-        return Text().add(self.round_l(color)).addf(color, data).add(self.round_r(color))
+        return self.round_l(color) + RText(data, color) + self.round_r(color)
 
     def border_sharp(self, color: str, data: str):
-        return Text().add(self.sharp_l(color)).addf(color, data).add(self.sharp_r(color))
+        return self.sharp_l(color) + RText(data, color) + self.sharp_r(color)
 
-    def round_l(self, color: str) -> Text.Token:
+    def round_l(self, color: str) -> RText:
         color = color if color != "X" else ""
-        return Text.Token(Symbols.round_left, color.lower()) if self.has_borders() else Text.Token(" ", color)
+        return RText(Symbols.round_left, color.lower()) if self.has_borders() else RText(" ", color)
 
-    def round_r(self, color: str) -> Text.Token:
+    def round_r(self, color: str) -> RText:
         color = color if color != "X" else ""
-        return Text.Token(Symbols.round_right, color.lower()) if self.has_borders() else Text.Token(" ", color)
+        return RText(Symbols.round_right, color.lower()) if self.has_borders() else RText(" ", color)
 
-    def sharp_l(self, color: str) -> Text.Token:
+    def sharp_l(self, color: str) -> RText:
         color = color if color != "X" else ""
-        return Text.Token(Symbols.sharp_left, color.lower()) if self.has_borders() else Text.Token(" ", color)
+        return RText(Symbols.sharp_left, color.lower()) if self.has_borders() else RText(" ", color)
 
     def sharp_r(self, color: str):
         color = color if color != "X" else ""
-        return Text.Token(Symbols.sharp_right, color.lower()) if self.has_borders() else Text.Token(" ", color)
+        return RText(Symbols.sharp_right, color.lower()) if self.has_borders() else RText(" ", color)
 
     def build_bar(self, text: str, percent: float, length: int, fmt_true: str = "/kC",
-                  fmt_false: str = "/kY", rounded: bool = True) -> Text:
+                  fmt_false: str = "/kY", rounded: bool = True) -> RText:
         if rounded and (len(text) >= length - 2):
             text = " " + text
 
@@ -45,11 +45,16 @@ class Border:
 
         full_line: str = text
         done_len: int = round(percent * length)
-        xp_bar = Text.Token(full_line[:done_len], fmt_true) + Text.Token(full_line[done_len:], fmt_false)
+        xp_bar = RText(full_line[:done_len], fmt_true) + RText(full_line[done_len:], fmt_false)
 
-        if rounded:
-            xp_bar.data[0] = self.round_l(xp_bar.data[0].fmt)
-            xp_bar.data[-1] = self.round_r(xp_bar.data[-1].fmt)
+        if rounded and length == 1:
+            first_style = xp_bar[0].runs[0][0] if xp_bar[0].runs else ""
+            xp_bar = self.round_l(first_style)
+        elif rounded and length > 1:
+            first_style = xp_bar[0].runs[0][0] if xp_bar[0].runs else ""
+            last_style = xp_bar[-1].runs[0][0] if xp_bar[-1].runs else ""
+            middle = xp_bar.slice(1, max(1, len(xp_bar) - 1))
+            xp_bar = self.round_l(first_style) + middle + self.round_r(last_style)
         return xp_bar
 
     # def get_flag_sentence(self, flag: Flag, pad: int = 0, button_mode: bool = True, include_symbol: bool = True,

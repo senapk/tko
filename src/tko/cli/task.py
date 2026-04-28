@@ -2,6 +2,8 @@ import typer
 from pathlib import Path
 from typing import Optional
 
+from tko.app_context import AppContext
+
 app = typer.Typer(help="Manage individual tasks")
 
 @app.command("open", help="Open a task in tui")
@@ -16,7 +18,8 @@ def task_open(
     from tko.util.pattern_loader import PatternLoader
     from tko.cmds.cmd_run import Run
     
-    settings = ctx.obj.get("settings") if ctx.obj else None
+    app_ctx: AppContext = AppContext.load_from_context(ctx)
+    settings = app_ctx.settings
     
     PatternLoader.pattern = pattern
     param = Param.Basic().set_index(index)
@@ -38,16 +41,17 @@ def task_list(
     from tko.cli.common import load_repo
     from tko.cmds.cmd_open import CmdOpen
     
-    settings = ctx.obj.get("settings") if ctx.obj else None
-    changedir = ctx.obj.get("changedir") if ctx.obj else Path('.')
-    global_cache = ctx.obj.get("global_cache", False) if ctx.obj else False
-    update = ctx.obj.get("update", False) if ctx.obj else False
+    app_ctx: AppContext = AppContext.load_from_context(ctx)
+    settings = app_ctx.settings
+    changedir = app_ctx.changedir
+    global_cache = app_ctx.global_cache
+    update = app_ctx.update
     
-    repo, _ = load_repo(changedir, show_warnings=True, auto_load=True, global_cache=global_cache, force_update=update)
+    repo, _, update_mode = load_repo(changedir, show_warnings=True, auto_load=True, global_cache=global_cache, force_update=update)
     if repo is None:
         return
         
-    action = CmdOpen(settings, repo, update)
+    action = CmdOpen(settings, repo, update_mode)
     action.list(show_all=all)
 
 if __name__ == "__main__":

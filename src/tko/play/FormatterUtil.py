@@ -4,7 +4,7 @@ from tko.game.task import Task
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.util.symbols import Symbols
-from tko.util.text import Text
+from tko.util.rtext import RText
 
 
 class FormatterUtil:
@@ -40,15 +40,14 @@ class FormatterUtil:
                 hidden += 1
         return visible, hidden
 
-    def get_start_symbols_and_percent_text(self, q: Quest) -> tuple[str, Text]:
+    def get_start_symbols_and_percent_text(self, q: Quest) -> tuple[str, RText]:
         symbol = ""
-        percent_text = Text()
         pmain, pall = q.get_percent_main_and_all()
         if pmain is not None:
-            percent_text.addf("g", self.format_percent_3s(pall))
+            percent_text = self.format_percent_3s(pall).set_style("g")
             symbol = Symbols.star_filled
         else:
-            percent_text.addf("g", self.format_percent_3s(pall))
+            percent_text = self.format_percent_3s(pall).set_style("g")
             symbol = Symbols.star_void
         return symbol, percent_text
 
@@ -102,43 +101,40 @@ class FormatterUtil:
             return ("r", Symbols.loss_zero)
         return ("", "")
 
-    def format_percent_1s(self, value: float) -> Text:
+    def format_percent_1s(self, value: float) -> RText:
         prog = value
         if prog < 0.1:
-            return Text().addf("", Symbols.middle_dot)
+            return RText(Symbols.middle_dot)
         if prog > 99:
-            return Text().addf("g", Symbols.check)
-        return Text().addf("y", str(round(prog / 10)).rjust(1, "0"))
+            return RText(Symbols.check, "g")
+        return RText(str(round(prog / 10)).rjust(1, "0"), "y")
 
-    def format_percent_2s(self, value: float | None) -> Text:
+    def format_percent_2s(self, value: float | None) -> RText:
         if value is None:
-            return Text().addf("", "--")
+            return RText("--")
         prog = round(value)
         if prog < 0.1:
-            return Text().add(Symbols.middle_dot + Symbols.middle_dot)
+            return RText(Symbols.middle_dot + Symbols.middle_dot)
         if prog > 99:
-            return Text().addf("g", Text() + "▬▬")
+            return RText("▬▬", "g")
 
-        return Text().addf("y", str(prog).rjust(2, "0"))
+        return RText(str(prog).rjust(2, "0"), "y")
 
-    def format_percent_3s(self, value: float | None) -> Text:
+    def format_percent_3s(self, value: float | None) -> RText:
         if value is None or value < 1:
-            return Text("----")
+            return RText("----")
         rvalue = round(value)
         color = self.get_percent_color(value)
-        return Text().addf(color, f"{rvalue:>3}%")
+        return RText(f"{rvalue:>3}%", color)
 
     def get_percent_color(self, value: float) -> str:
         color = "g" if value > 99 else ("y" if value > 49 else "r")
         return color
 
-    def format_hours_minutes(self, color: str, hours: int, minutes: int) -> Text:
-        output = Text()
+    def format_hours_minutes(self, color: str, hours: int, minutes: int) -> RText:
         if hours > 0 or minutes > 0:
-            output.addf(color, f"{hours:02}h{minutes:02}m ")
-        else:
-            output.add("------ ")
-        return output
+            return RText(f"{hours:02}h{minutes:02}m ", color)
+        return RText("------ ")
 
     def get_task_hours_minutes(self, task: Task) -> tuple[int, int]:
         if task.get_full_key() in self.cache_task_times:
@@ -170,22 +166,22 @@ class FormatterUtil:
         return self.settings.colors.focused_item
 
     @staticmethod
-    def color_task_title(key: str, title: str) -> Text:
+    def color_task_title(key: str, title: str) -> RText:
         words = title.split(" ")
-        output = Text()
+        output = RText()
         for i, word in enumerate(words):
             if word.startswith("@") or word.startswith("#") or word.startswith("!"):
-                output.addf("g", word)
+                output += RText(word, "g")
             elif word.startswith(":"):
-                output.addf("y", word)
+                output += RText(word, "y")
             elif word.startswith("*"):
-                output.addf("c", word)
+                output += RText(word, "c")
             elif word.startswith("+"):
-                output.addf("c", word)
+                output += RText(word, "c")
             else:
-                output.addf("", word)
+                output += word
             if i < len(words) - 1:
-                output.addf("", " ")
+                output += " "
         if key != "":
-            output = Text().addf("g", key).add(output)
+            output = RText(key, "g") + output
         return output
