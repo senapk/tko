@@ -2,7 +2,6 @@ import os
 import pytest
 from pathlib import Path
 
-from tko.__main__ import execute, Parser #type: ignore
 from tko.util.compare import Compare # type: ignore
 
 class Test:

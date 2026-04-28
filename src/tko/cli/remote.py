@@ -1,0 +1,117 @@
+import typer
+from typing import Optional
+
+app = typer.Typer(help="Manage remote task sources")
+
+@app.command("list", help="List remote task sources")
+def remote_list(ctx: typer.Context):
+    from tko.cli.common import load_repo
+    from tko.repository.rep_source_actions import RepSourceActions
+    
+    settings = ctx.obj.get("settings")
+    changedir = ctx.obj.get("changedir")
+    repo, _ = load_repo(changedir)
+    if repo is None:
+        return
+    rep_actions = RepSourceActions(settings, repo)
+    rep_actions.remote_list()
+
+@app.command("rm", help="Remove a remote task source")
+def remote_rm(ctx: typer.Context, name: str = typer.Argument(..., help="Name of the remote to be removed")):
+    from tko.cli.common import load_repo
+    from tko.repository.rep_source_actions import RepSourceActions
+    
+    settings = ctx.obj.get("settings")
+    changedir = ctx.obj.get("changedir")
+    repo, _ = load_repo(changedir)
+    if repo is None:
+        return
+    rep_actions = RepSourceActions(settings, repo)
+    rep_actions.remote_rm(alias=name)
+
+@app.command("add", help="Add a new task source")
+def remote_add(
+    ctx: typer.Context,
+    name: str = typer.Argument(..., help="Name of the remote"),
+    target: str = typer.Argument(..., help="Remote source: git URL, local directory or preset name"),
+    quest: Optional[list[str]] = typer.Option(None, "--quest", "-q", help="Load all tasks only from selected quests"),
+    to: Optional[str] = typer.Option(None, "--to", "-t", help="Quest destination for filtered tasks added with this source"),
+    setup: Optional[str] = typer.Option(None, "--setup", "-s", help="SETUP JSON string to configure the remote source"),
+    index: Optional[str] = typer.Option(None, "--index", "-i", help="Set a custom index relative do repo dir, default is README.md"),
+    branch: str = typer.Option("master", "--branch", "-b", help="Branch name for git remote sources"),
+    write: bool = typer.Option(False, "--write", "-w", help="Allow modifications for local directory remotes (default: readonly)")
+):
+    from tko.cli.common import load_repo
+    from tko.repository.rep_source_actions import RepSourceActions
+    
+    default_git_alias = target[1:] if target.startswith("@") else None
+    git_repository_url = target if target.startswith(("http:", "https:", "ssh:")) else None
+    local_source_dir = target if not (default_git_alias or git_repository_url) else None
+
+    try:
+        settings = ctx.obj.get("settings")
+        changedir = ctx.obj.get("changedir")
+        repo, _ = load_repo(changedir)
+        if repo is None:
+            return
+        rep_actions = RepSourceActions(settings, repo)
+        rep_actions.remote_add(
+            name=name, 
+            remote_default=default_git_alias, 
+            branch=branch, 
+            remote_url=git_repository_url, 
+            remote_dir=local_source_dir, 
+            index=index,
+            filter_quest=quest, 
+            filter_task=None, # tasks param not in argparse anymore or not used
+            filter_to=to,
+            writeable=write
+        )
+        rep_actions.print_end_msg()
+    except ValueError as e:
+        print(f"Erro ao adicionar fonte: {e}")
+
+@app.command("filter", help="Manage filters for a remote task source")
+def remote_filter(
+    ctx: typer.Context,
+    name: str = typer.Argument(..., help="Name of the remote"),
+    quest: Optional[list[str]] = typer.Option(None, "--quest", "-q", help="Load all tasks only from selected quests"),
+    setup: Optional[str] = typer.Option(None, "--setup", "-s", help="SETUP JSON string to configure the remote source"),
+    clear: bool = typer.Option(False, "--clear", help="Clear all filters"),
+    to: Optional[str] = typer.Option(None, "--to", "-t", help="Quest destination for filtered tasks added with this source")
+):
+    from tko.cli.common import load_repo
+    from tko.repository.rep_source_actions import RepSourceActions
+    
+    if clear and quest:
+        print("Erro: --clear não pode ser usado com --quest")
+        return
+        
+    settings = ctx.obj.get("settings")
+    changedir = ctx.obj.get("changedir")
+    repo, _ = load_repo(changedir)
+    if repo is None:
+        return
+    rep_actions = RepSourceActions(settings, repo)
+    rep_actions.remote_filter(alias=name, filter_quest=quest, filter_task=None, clear=clear, filter_to=to)
+
+@app.command("set", help="Manage filters for a remote task source")
+def remote_set(
+    ctx: typer.Context,
+    name: str = typer.Argument(..., help="Name of the remote"),
+    target: Optional[str] = typer.Option(None, "--target", "-t", help="Set a new target for the remote source"),
+    index: Optional[str] = typer.Option(None, "--index", "-i", help="Set a new index for the remote source")
+):
+    from tko.cli.common import load_repo
+    from tko.repository.rep_source_actions import RepSourceActions
+    
+    settings = ctx.obj.get("settings")
+    changedir = ctx.obj.get("changedir")
+    repo, _ = load_repo(changedir)
+    if repo is None:
+        return
+    rep_actions = RepSourceActions(settings, repo)
+    rep_actions.remote_set(alias=name, target=target, index=index)
+
+if __name__ == "__main__":
+    app()

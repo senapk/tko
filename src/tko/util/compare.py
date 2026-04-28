@@ -1,4 +1,5 @@
-from tko.__main__ import Parser, execute
+from typer.testing import CliRunner
+from tko.__main__ import app
 import pytest
 import os
 
@@ -24,8 +25,8 @@ class Compare:
 
     @staticmethod
     def list(capsys: pytest.CaptureFixture[str], file: str, cmd_list: list[str]):
-        parser = Parser().parser
-        args = parser.parse_args(cmd_list)
-        execute(parser, args)
-        expected, received = Compare.load_and_save(file, capsys.readouterr().out) # type: ignore
+        runner = CliRunner()
+        result = runner.invoke(app, cmd_list)
+        expected, received = Compare.load_and_save(file, result.stdout)
         assert expected == received
+
