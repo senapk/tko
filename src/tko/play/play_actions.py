@@ -16,7 +16,8 @@ from tko.util.param import Param
 
 from tko.play.fmt import Fmt
 from tko.play.floating import Floating
-from tko.play.gui import Gui, TaskAction
+from tko.play.gui import Gui
+from tko.play.task_action import TaskAction
 from tko.play.opener import Opener
 
 from typing import Callable

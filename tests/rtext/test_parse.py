@@ -100,8 +100,8 @@ def test_attributes():
 
 # ---------- reverse ----------
 def test_reverse():
-    t = RText.parse("[~]hello")
-    assert "~" in t.runs[0][0]
+    t = RText.parse("[X]hello")
+    assert "X" in t.runs[0][0]
 
 
 # ---------- bright ----------
