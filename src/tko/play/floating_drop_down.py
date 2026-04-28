@@ -18,6 +18,7 @@ class FloatingInputData:
 
 
 class FloatingDropDown(FloatingABC):
+    SELECTED_COLOR = "X"
     def __init__(self):
         self.floating = Floating()
         self.index = 0
@@ -97,7 +98,7 @@ class FloatingDropDown(FloatingABC):
             else:
                 text.add("    ")
             if i == self.index:
-                text.add_style("/_")
+                text.add_style(self.SELECTED_COLOR)
             content.append(text)
         
 

@@ -1,6 +1,6 @@
 class Colors:
     def __init__(self):
-        self.focused_item: str = "/_"
+        self.focused_item: str = "X"
         self.task_text_done: str = "g"
         self.task_text_todo: str = "y"
         self.button_flag_on: str = "G"

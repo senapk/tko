@@ -14,9 +14,9 @@ import curses
 
 
 class InputLine(ABC):
-    SELECTED_COLOR = "/_"
-    LOCKED_COLOR = "/_r"
-    OPTION_COLOR = "X"
+    SELECTED_COLOR = "X"
+    LOCKED_COLOR = "r"
+    CHOOSEN_COLOR = "X"
 
     def __init__(self, id: str):
         self.id = id
@@ -82,7 +82,7 @@ class InputSlide(InputLine):
         text = Text().add(self.get_opening()).addf(color, self.prefix).add(" ")
         for i, c in enumerate(self.opt_msgs):
             opt, _ = c
-            text.addf(self.OPTION_COLOR if i == self.index else color, opt)
+            text.addf(self.CHOOSEN_COLOR if i == self.index else "", opt)
         text.ljust(pad)
         text.add(" ├").add(self.opt_msgs[self.index][1])
         return text
@@ -119,7 +119,7 @@ class InputText(InputLine):
 
     def get_text(self, pad: int) -> Text:
         data = Text().add(self.get_opening()).addf(self.get_selected_color() if self.focus else "", self.prompt).ljust(pad).add(" ")
-        data = data.add("├ ").addf(self.OPTION_COLOR, self.text).add(Symbols.cursor if self.focus else "")
+        data = data.add("├ ").addf(self.CHOOSEN_COLOR, self.text).add(Symbols.cursor if self.focus else "")
         return data
     
 class InputBoolean(InputLine):
@@ -153,7 +153,7 @@ class InputBoolean(InputLine):
         else:
             text.add(self.prefix)
         text.ljust(pad).add("│ ")
-        text.addf(self.OPTION_COLOR if self.value == "0" else color, "Não").add(" ").addf(self.OPTION_COLOR if self.value == "1" else color, "Sim")
+        text.addf(self.CHOOSEN_COLOR if self.value == "0" else "", "Não").add(" ").addf(self.CHOOSEN_COLOR if self.value == "1" else "", "Sim")
         return text
 
 class FloatingGrade(FloatingABC):

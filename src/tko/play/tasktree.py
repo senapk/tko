@@ -40,7 +40,8 @@ class TreeLayout:
         for q in game.quests.values():
             sentence_cut.append(len(q.get_full_title(flags.panel.is_skills())) + self.fixed_quest_itens_size)
             for t in q.get_tasks():
-                sentence_cut.append(len(t.get_full_title(self.key_size)) + self.fixed_task_itens_size)
+                _full, _, _ = t.get_full_title(self.key_size)
+                sentence_cut.append(len(_full) + self.fixed_task_itens_size)
 
         self.sentence_cut_size = max(max(sentence_cut), self.sentence_cut_min_size) if sentence_cut else self.sentence_cut_min_size
         if self.sentence_cut_size > self.sentence_cut_max_size:
@@ -265,7 +266,8 @@ class TreeRenderer:
         output.add(self.fmt_util.get_task_help_symbol(t)).add(" ")
         output.add(self.fmt_util.get_task_path_symbol(t)).add(" ")
 
-        title = self.fmt_util.color_task_title( t.get_full_title(self.layout.key_size) )
+        _key_title, _key, _title = t.get_full_title(self.layout.key_size)
+        title = self.fmt_util.color_task_title(_key, _title)
 
         focus_color = self.settings.colors.focused_item if focused else ""
         if focused:

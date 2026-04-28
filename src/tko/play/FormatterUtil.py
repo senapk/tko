@@ -170,7 +170,7 @@ class FormatterUtil:
         return self.settings.colors.focused_item
 
     @staticmethod
-    def color_task_title(title: str) -> Text:
+    def color_task_title(key: str, title: str) -> Text:
         words = title.split(" ")
         output = Text()
         for i, word in enumerate(words):
@@ -186,4 +186,6 @@ class FormatterUtil:
                 output.addf("", word)
             if i < len(words) - 1:
                 output.addf("", " ")
+        if key != "":
+            output = Text().addf("g", key).add(output)
         return output

@@ -129,12 +129,14 @@ class Task(TreeItem):
         new_task.__is_reachable = self.__is_reachable
         return new_task
 
-    def get_full_title(self, key_pad: None | int, pad_char: str = " ") -> str:
+    def get_full_title(self, key_pad: None | int, pad_char: str = " ") -> tuple[str, str, str]:
         if key_pad is None:
             key_pad = len(self.get_key())
         if not f"@{self.get_key()}" in self.get_title():
-            return f"@{self.get_key().ljust(key_pad, pad_char)} {self.get_title()}"
-        return self.get_title()
+            key = f"@{self.get_key().ljust(key_pad, pad_char)} "
+            title = self.get_title()
+            return key + title, key, title
+        return self.get_title(), "", self.get_title()
 
     def set_reachable(self, reachable: bool):
         self.__is_reachable = reachable

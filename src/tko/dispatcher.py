@@ -40,8 +40,6 @@ from tko.repository.git_cache import GitCache
 from tko.feno.filter import CodeFilter, DeepFilter
 from tko.feno.mdpp import Action, Mdpp
 
-from tko.__init__ import __version__
-
 class Task:
     @staticmethod
     def run(args: argparse.Namespace) -> None:

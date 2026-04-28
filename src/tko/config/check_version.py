@@ -4,7 +4,7 @@ from tko.config.settings import Settings
 from tko import __version__
 
 class CheckVersion:
-    link = "https://raw.githubusercontent.com/senapk/tko/master/src/tko/__init__.py"
+    link = "https://raw.githubusercontent.com/senapk/tko/main/src/tko/__init__.py"
 
     def __init__(self, settings: Settings):
         self.settings: Settings = settings
