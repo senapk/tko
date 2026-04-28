@@ -1,443 +1,93 @@
-import os
-
-from tko.enums.execution_result import ExecutionResult
-from tko.run.diff_builder_down import DiffBuilderDown
-from tko.run.wdir import Wdir
-from tko.enums.diff_count import DiffCount
-from tko.util.param import Param
-from tko.run.diff_builder_side import DiffBuilderSide
-from tko.util.text import Text
-
-from tko.util.raw_terminal import RawTerminal
-from tko.util.symbols import Symbols
-
-from tko.util.freerun import Free
-from tko.play.tester import Tester
-from tko.play.tracker import Tracker
-from tko.run.unit_runner import UnitRunner
-from tko.game.task import Task
-from tko.play.opener import Opener
-from tko.config.settings import Settings
-from tko.enums.diff_mode import DiffMode
-from tko.feno.filter import CodeFilter
-from tko.repository.repository import Repository
-from tko.logger.log_item_exec import LogItemExec
-from tko.logger.log_sort import LogSort
-from tko.logger.task_resume import TaskResume
-from tko.repository.rep_paths import RepPaths
-from icecream import ic # type: ignore
 from pathlib import Path
 
-class TkoFilterMode:
-    @staticmethod
-    def deep_copy_and_change_dir():
-        # path to ~/.tko_filter
-        filter_path = os.path.join(os.path.expanduser("~"), ".tko_filter")
-
-        CodeFilter.cf_recursive(Path("."), Path(filter_path), force=True)
-        os.chdir(filter_path)
+from tko.util.param import Param
+from tko.config.settings import Settings
+from tko.util.text import Text
+from tko.run.run_context import RunContext
+from tko.run.run_loader import RunLoader
+from tko.run.run_presenter import RunPresenter
+from tko.run.run_executor import RunExecutor
 
 class Run:
-
     def __init__(self, settings: Settings, target_list: list[Path], param: None | Param.Basic):
-        self.settings = settings
-        self.target_list: list[Path] = [Path(target) for target in target_list]
-        if param is None:
-            self.param = Param.Basic()
-        else:
-            self.param = param
-        self.wdir: Wdir = Wdir(self.settings)
-        self.wdir_builded = False
-        self.__curses_mode: bool = False
-        self.__lang = ""
-        self.__rep: Repository | None = None
-        self.__task: Task | None = None
-        self.__track_folder: Path | None = None
-        self.__opener: Opener | None = None
-        self.__run_without_ask: bool = True
-        self.__show_track_info: bool = False
-        self.__show_self_info: bool = False
-        self.__eval_mode: bool = False
-        self.__complex_percent: bool = False
-        self.__abord_on_exec_error: bool = False
-        self.__no_run: bool = False
-        self.__timeout: int = 0
+        self.context = RunContext(settings, target_list, param)
 
+    # Fluent Setters delegated to context
     def show_track_info(self):
-        self.__show_track_info = True
+        self.context.set_show_track_info()
         return self
     
     def set_no_run(self):
-        self.__no_run = True
+        self.context.set_no_run()
         return self
     
     def show_self_info(self):
-        self.__show_self_info = True
+        self.context.set_show_self_info()
         return self
 
     def set_complex_percent(self):
-        self.__complex_percent = True
+        self.context.set_complex_percent()
         return self
 
     def set_abort_on_exec_error(self):
-        self.__abord_on_exec_error = True
+        self.context.set_abort_on_exec_error()
         return self
     
     def set_timeout(self, timeout: int):
-        self.__timeout = timeout
+        self.context.set_timeout(timeout)
         return self
 
-    def set_curses(self, value:bool=True):
-        self.__curses_mode = value
+    def set_curses(self, value: bool = True):
+        self.context.set_curses(value)
         return self
    
-    def set_lang(self, lang:str):
-        self.__lang = lang
+    def set_lang(self, lang: str):
+        self.context.set_lang(lang)
         return self
     
-    def set_opener(self, opener: Opener):
-        self.__opener = opener
+    def set_opener(self, opener):
+        self.context.set_opener(opener)
         return self
 
-    def set_run_without_ask(self, value:bool):
-        self.__run_without_ask = value
+    def set_run_without_ask(self, value: bool):
+        self.context.set_run_without_ask(value)
         return self
 
-    def set_task(self, rep: Repository, task: Task):
-        self.__rep = rep
-        self.__task = task
+    def set_task(self, rep, task):
+        self.context.set_task(rep, task)
         return self
-    
-    def get_task(self) -> Task:
-        if self.__task is None:
-            raise Warning("Task não definida")
-        return self.__task
 
     def execute(self):
-        if len(self.target_list) == 0:
-            if self.__rep is None:
-                self.__try_load_rep(Path())
-            self.__try_load_task(Path())
+        loader = RunLoader(self.context)
+        loader.setup_initial_environment()
 
-        elif len(self.target_list) == 1 and os.path.isdir(self.target_list[0]):
-            if self.__rep is None:
-                self.__try_load_rep(Path(self.target_list[0]))
-            self.__try_load_task(Path(self.target_list[0]))
+        if not self.context.wdir_builded:
+            loader.build_wdir()
 
-        if not self.wdir_builded:
-            self.build_wdir()
-
-        if self.__missing_target():
+        if self._missing_target():
             return 0
 
-        if not self.wdir.has_solver() and self.wdir.has_tests() and not self.__eval_mode:
-            self.__list_mode()
+        if not self.context.wdir.has_solver() and self.context.wdir.has_tests() and not self.context.eval_mode:
+            RunPresenter(self.context).list_mode()
             return 0
-        if self.wdir.has_solver():
-            self.__prepare_rep_task_logger()
+            
+        if self.context.wdir.has_solver():
+            loader.prepare_rep_task_logger()
 
-        if self.wdir.has_solver() and not self.wdir.has_tests() and not self.__curses_mode and not self.__no_run:
-            if not self.__eval_mode:
-                self.__free_run()
+        executor = RunExecutor(self.context)
+        
+        if self.context.wdir.has_solver() and not self.context.wdir.has_tests() and not self.context.curses_mode and not self.context.no_run:
+            if not self.context.eval_mode:
+                executor.free_run()
             else:
                 print(Text().addf("", "fail: ") + "Nenhum caso de teste encontrado.")
             return 0
-        return self.__run_tests()
+            
+        return executor.run_tests()
 
-    def __prepare_rep_task_logger(self):
-        if self.__rep is None:
-            solver_path = self.wdir.get_solver().args_list[0]
-            dirname = Path(os.path.dirname(os.path.abspath(solver_path)))
-            self.__try_load_rep(dirname)
-            self.__try_load_task(dirname)
-
-        if self.__task is None:
-            self.__fill_task()
-
-    def __try_load_rep(self, dirname: Path) -> bool:
-        repo_path = RepPaths.rec_search_for_repo_parents(dirname)
-        if repo_path is None:
-            return False
-        rep: Repository = Repository(repo_path)
-        from tko.repository.repository_loader import RepositoryLoader
-        from tko.repository.game_coordinator import GameCoordinator
-        RepositoryLoader(rep).load_config()
-        GameCoordinator(rep).load_game(verbose=True)
-        self.__rep = rep
-        if rep.data.lang != "":
-            self.__lang = rep.data.lang
-        return True
-
-    def __try_load_task(self, dirname: Path) -> bool:
-        if self.__rep is None:
-            return False
-        rep: Repository = self.__rep
-        task_key = rep.get_key_from_task_folder(dirname)
-        if task_key == "":
-            return False
-        task = rep.game.tasks.get(task_key)
-        if task is None:
-            return False
-        self.__task = task
-        self.__track_folder = rep.paths.get_track_task_folder(task_key)
-        return True
-
-    def __remove_duplicates(self):
-        # remove duplicates in target list keeping the order
-        self.target_list = list(dict.fromkeys(self.target_list))
-
-    def __change_targets_to_filter_mode(self) -> None:
-        if not self.param.filter:
-            return
-
-        old_dir: Path = Path.cwd()
-
-        print(
-            Text.format(" Entrando no modo de filtragem ").center(
-                RawTerminal.get_terminal_size(),
-                Text.Token("═"),
-            )
-        )
-
-        TkoFilterMode.deep_copy_and_change_dir()
-
-        new_target_list: list[Path] = []
-
-        for target in self.target_list:
-            resolved: Path = target if target.is_absolute() else (old_dir / target)
-            resolved = resolved.resolve()
-
-            if resolved.exists():
-                new_target_list.append(resolved)
-
-        self.target_list = new_target_list
-        
-    def __print_diff(self):
-        
-        if self.wdir.get_solver().has_compile_error():
-            executable, _ = self.wdir.get_solver().get_executable()
-            print(executable.get_error_msg())
-            return
-        
-        results = [unit.result for unit in self.wdir.get_unit_list()]
-        if ExecutionResult.EXECUTION_ERROR not in results and ExecutionResult.WRONG_OUTPUT not in results:
-            return
-        
-        if not self.param.compact:
-            for elem in self.wdir.unit_list_resume():
-                print(elem)
-
-        if self.param.diff_count == DiffCount.NONE:
-            return
-        
-        if self.param.diff_count == DiffCount.FIRST:
-            # printing only the first wrong case
-            wrong = [unit for unit in self.wdir.get_unit_list() if unit.result != ExecutionResult.SUCCESS][0]
-            if self.param.diff_mode == DiffMode.DOWN:
-                ud_diff_builder = DiffBuilderDown(RawTerminal.get_terminal_size(), wrong).to_insert_header()
-                for line in ud_diff_builder.build_diff():
-                    print(line)
-            else:
-                ss_diff_builder = DiffBuilderSide(RawTerminal.get_terminal_size(), wrong).to_insert_header(True)
-                for line in ss_diff_builder.build_diff():
-                    print(line)
-            return
-
-        if self.param.diff_count == DiffCount.ALL:
-            for unit in self.wdir.get_unit_list():
-                if unit.result != ExecutionResult.SUCCESS:
-                    if self.param.diff_mode == DiffMode.DOWN:
-                        ud_diff_builder = DiffBuilderDown(RawTerminal.get_terminal_size(), unit).to_insert_header()
-                        for line in ud_diff_builder.build_diff():
-                            print(line)
-                    else:
-                        ss_diff_builder = DiffBuilderSide(RawTerminal.get_terminal_size(), unit).to_insert_header(True)
-                        for line in ss_diff_builder.build_diff():
-                            print(line)
-
-    def build_wdir(self):
-        self.wdir_builded = True
-        self.__remove_duplicates()
-        self.__change_targets_to_filter_mode()
-        try:
-            self.wdir = Wdir(self.settings).set_curses(self.__curses_mode).set_lang(self.__lang).set_target_list(self.target_list).build().filter(self.param)
-        except FileNotFoundError as e:
-            if self.wdir.has_solver():
-                executable, _ = self.wdir.get_solver().get_executable()
-                executable.set_compile_error(str(e))
-        return self.wdir
-
-    def __missing_target(self) -> bool:
-        if not self.wdir.has_solver() and not self.wdir.has_tests():
-            if not self.__curses_mode:
+    def _missing_target(self) -> bool:
+        if not self.context.wdir.has_solver() and not self.context.wdir.has_tests():
+            if not self.context.curses_mode:
                 print(Text().addf("", "fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
             return True
         return False
-    
-    def __list_mode(self):
-        # list mode
-        if not self.__eval_mode:
-            print(Text.format("Nenhum arquivo de código encontrado. Listando casos de teste.").center(RawTerminal.get_terminal_size(), Text.Token("╌")), flush=True)
-        print(self.wdir.resume_splitted())
-        for line in self.wdir.unit_list_resume():
-            print(line)
-
-    def __free_run(self):        
-        if self.__task is not None:
-            if self.__rep:
-                changes, size = self.store_exec_diff("---")
-                self.__rep.logger.store(LogItemExec()
-                    .set_mode(LogItemExec.Mode.FREE)
-                    .set_key(self.__task.get_full_key() )
-                    .set_size(changes, size))
-        Free.free_run(self.wdir.get_solver(), show_compilation=False, to_clear=False, wait_input=False)
-
-    def __create_opener_for_wdir(self) -> Opener:
-        opener = Opener(self.settings)
-        folders: list[Path] = []
-        targets: list[Path] = [Path(".")]
-        if self.target_list:
-            targets = self.target_list
-
-        if self.wdir.get_solver().args_list:
-            solver_zero = self.wdir.get_solver().args_list[0]
-            lang = solver_zero.name.split(".")[-1]
-            opener.set_language(lang)
-
-        for f in targets:
-            if f.is_dir() and f not in folders:
-                opener.add_task_folder_to_open(f)
-            else:
-                opener.add_files_to_open([f])
-        return opener
-
-    def __fill_task(self):
-        task = Task()
-        sources = self.wdir.get_source_list()
-        solver = self.wdir.get_solver()
-
-        if len(sources) > 0:
-            target_path = os.path.abspath(sources[0])
-        elif solver.args_list:
-            target_path = os.path.abspath(self.wdir.get_solver().args_list[0])
-        else:
-            target_path = os.path.abspath(os.getcwd())
-
-        if os.path.isfile(target_path):
-            target_path = os.path.dirname(target_path)
-
-        #break path in pieces rep_folder/database/key
-        pieces = target_path.split(os.sep)
-        if len(pieces) >= 3:
-            task.set_key(pieces[-1])
-            task.set_remote_name(pieces[-2])
-            # task.set_rep_folder(os.sep.join(pieces[:-2]))
-        elif len(pieces) == 2:
-            task.set_key(pieces[-1])
-            task.set_remote_name(pieces[-2])
-            # task.set_rep_folder(os.sep)
-        else:
-            task.set_key(pieces[-1])
-            task.set_remote_name("")
-            # task.set_rep_folder(os.sep)
-
-        self.__task = task
-        self.__track_folder = None
-        if self.__rep:
-            self.__track_folder = self.__rep.paths.get_track_task_folder(task.get_full_key())
-
-    def __run_test_on_curses(self):
-        cdiff = Tester(self.settings, self.__rep, self.wdir, self.get_task())
-        if self.__opener is not None:
-            cdiff.set_opener(self.__opener)
-        else:
-            cdiff.set_opener(self.__create_opener_for_wdir())
-        cdiff.set_autorun(self.__run_without_ask)
-        cdiff.run()
-
-    def get_rate(self) -> int:
-        if self.__no_run:
-            return 0
-        correct = [unit for unit in self.wdir.get_unit_list() if unit.result == ExecutionResult.SUCCESS]
-        percent = (len(correct) * 100) // len(self.wdir.get_unit_list())
-        return percent
-
-    def __run_tests_on_raw_term(self) -> int:
-        if not self.__eval_mode:
-            print(Text.format(" Testando o código com os casos de teste ").center(RawTerminal.get_terminal_size(), Text.Token("═")))
-        percent = self.__run_all_tests_top_line()
-        self.__print_diff()
-        rate = self.get_rate()
-        if self.__task is None or self.__track_folder is None:
-            return rate
-
-        exec_mode = LogItemExec.Mode.FULL if self.param.index is None else LogItemExec.Mode.LOCK
-        exec_fail = LogItemExec.Fail.NONE
-        if self.wdir.get_solver().has_compile_error():
-            exec_fail = LogItemExec.Fail.COMP
-
-        changes, size = self.store_exec_diff(str(rate))
-        if self.__rep:
-            self.__rep.logger.store(LogItemExec()
-                .set_mode(exec_mode)
-                .set_key(self.__task.get_full_key())
-                .set_size(changes, size)
-                .set_rate(rate)
-                .set_fail(exec_fail))
-
-        return percent
-
-    def store_exec_diff(self, rate: str) -> tuple[bool, int]:
-        tracker = Tracker()
-        if self.__track_folder is not None:
-            tracker.set_folder(self.__track_folder)
-            tracker.set_files(self.wdir.get_solver().args_list)
-            tracker.set_result(rate)
-            has_changes, total_lines = tracker.store()
-            return has_changes, total_lines
-        return False, 0
-
-    def __run_tests(self) -> int:
-        if self.__task is None:
-            self.__fill_task()
-        if self.__curses_mode:
-            self.__run_test_on_curses()
-        else:
-            return self.__run_tests_on_raw_term()
-
-        return 0
-
-    def __run_all_tests_top_line(self) -> int:
-        print(Text().add(Symbols.opening).add(self.wdir.resume_splitted()), end="")
-        print(" [", end="")
-        first = True
-        execution_error = False
-        for unit in self.wdir.get_unit_list():
-            if first:
-                first = False
-            else:
-                print(" ", end="")
-            solver = self.wdir.get_solver()
-            if self.__no_run or (execution_error and self.__abord_on_exec_error):
-                unit.result = ExecutionResult.UNTESTED
-            else:
-                unit.result = UnitRunner.run_unit(solver, unit, timeout=self.__timeout)
-                if unit.result == ExecutionResult.EXECUTION_ERROR:
-                    execution_error = True
-            print(Text() + ExecutionResult.get_symbol(unit.result), end="")
-        print("] ", end="")
-        if self.__show_track_info:
-            if self.__rep is not None:
-                logger = self.__rep.logger
-                log_sort: LogSort | None = logger.tasks.task_dict.get(self.get_task().get_full_key(), None)
-                if log_sort is not None:
-                    log_resume = TaskResume(self.get_task().get_full_key()).from_log_sort(log_sort)
-                    print(Text().addf("g", f"time:{log_resume.resume.minutes:.0f}, diff:{log_resume.resume.versions}, runs:{log_resume.resume.executions},").add(" "), end="", flush=True)
-
-        if self.__no_run:
-            percent: float = 0
-        else:
-            percent = self.get_rate()
-
-        print(f"{percent:.0f}%")
-        return round(percent)
