@@ -53,8 +53,8 @@ class GuiGraphPanel:
 
         if self.xray_offset < 0:
             self.xray_offset = 0
-        if self.xray_offset >= len(list_data):
-            self.xray_offset = len(list_data) - 1
+        if self.xray_offset >= len(list_data) - lines + 2:
+            self.xray_offset = len(list_data) - lines + 2
 
         offset = 0
         if self.flags.panel.is_logs() and isinstance(selected, Task):
@@ -65,7 +65,7 @@ class GuiGraphPanel:
             if header:
                 frame.set_header(RText(" Scroll Up[PageUp]  ScrollDown[PgDown] "), "^")
                 frame.set_footer(RText(" ") + header[0], "^")
-
+            frame.set_scrollbar(offset, len(list_data), "right")
             count = -1
             line_count = 0
             for line in list_data:
