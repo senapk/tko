@@ -4,7 +4,7 @@ from tko.util.symbols import Symbols
 from tko.util.freerun import Free
 from tko.enums.execution_result import ExecutionResult
 from tko.run.unit_runner import UnitRunner
-from tko.play.tester import Tester
+from tko.tester import Tester
 from tko.logger.log_sort import LogSort
 from tko.logger.task_resume import TaskResume
 from tko.run.run_context import RunContext

@@ -1,4 +1,4 @@
-from tko.play.border import Border
+from tko.widget.border import Border
 from tko.config.app_settings import AppSettings
 from tko.util.rtext import RText
 

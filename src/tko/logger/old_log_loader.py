@@ -5,8 +5,8 @@ from tko.logger.log_item_base import LogItemBase
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove
 from tko.logger.log_item_self import LogItemSelf
-from tko.play.patch_history import PatchHistory, PatchInfo
-from tko.play.tracker import Tracker, Track
+from tko.logger.patch_history import PatchHistory, PatchInfo
+from tko.logger.tracker import Tracker, Track
 from tko.repository.rep_paths import RepPaths
 from tko.util.decoder import Decoder
 import datetime as dt

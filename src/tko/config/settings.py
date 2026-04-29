@@ -7,7 +7,7 @@ import yaml #type: ignore
 
 from tko.config.languages_settings import LanguagesSettings
 from tko.util.rtext import RText
-from tko.play.colors import Colors
+from tko.widget.colors import Colors
 from tko.util.decoder import Decoder
 def singleton(class_): # type: ignore
     instances = {}

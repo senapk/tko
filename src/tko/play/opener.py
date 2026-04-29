@@ -1,5 +1,5 @@
-from tko.play.floating import Floating
-from tko.play.floating_manager import FloatingManager
+from tko.floating import Floating
+from tko.floating.floating_manager import FloatingManager
 from tko.util.rtext import RText
 from tko.config.settings import Settings
 from tko.cmds.drafts_finder_cached import DraftsFinderCached

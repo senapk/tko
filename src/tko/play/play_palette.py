@@ -1,12 +1,12 @@
-from tko.play.floating_drop_down import FloatingDropDown
-from tko.play.floating_drop_down import FloatingInputData
+from tko.floating.floating_drop_down import FloatingDropDown
+from tko.floating.floating_drop_down import FloatingInputData
 from tko.config.app_settings import ToggleOption
 from tko.util.rtext import RText
 from tko.util.symbols import Symbols
 from tko.play.keys import GuiKeys
 from tko.play.play_actions import PlayActions
-from tko.play.floating_calibrate import FloatingCalibrate
-from tko.play.floating import Floating
+from tko.floating.floating_calibrate import FloatingCalibrate
+from tko.floating import Floating
 
 class PlayPalette:
     def __init__(self, actions: PlayActions):

@@ -1,4 +1,4 @@
-from tko.play.tasktree import TaskTree
+from tko.play_tree.task_tree import TaskTree
 from tko.config.settings import Settings
 from tko.repository.repository import Repository
 from tko.play.play import Play

@@ -1,5 +1,5 @@
 from tko.game.game import Game
-from tko.play.fmt import Fmt
+from tko.widget.fmt import Fmt
 from tko.play.language_setter import LanguageSetter
 from tko.config.app_settings import ToggleOption
 from tko.repository.repository_loader import RepositoryLoader
@@ -7,13 +7,13 @@ from tko.config.settings import Settings
 from tko.repository.repository import Repository
 from tko.play.keys import GuiKeys
 from tko.play.images import opening
-from tko.play.floating_calibrate import FloatingCalibrate
+from tko.floating.floating_calibrate import FloatingCalibrate
 from tko.play.input_manager import InputManager
 from tko.play.play_palette import PlayPalette
-from tko.play.floating import Floating
-from tko.play.floating_manager import FloatingManager
-from tko.play.tasktree import TaskTree
-from tko.play.gui import Gui
+from tko.floating import Floating
+from tko.floating.floating_manager import FloatingManager
+from tko.play_tree.task_tree import TaskTree
+from tko.play_gui.gui import Gui
 from tko.play.play_actions import PlayActions
 from tko.play.flag_functors import FlagFunctor
 from icecream import ic # type: ignore

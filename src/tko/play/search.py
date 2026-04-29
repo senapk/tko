@@ -1,7 +1,7 @@
 from tko.game.task import Task
 from tko.game.quest import Quest
-from tko.play.tasktree import TaskTree
-from tko.play.floating_manager import FloatingManager
+from tko.play_tree.task_tree import TaskTree
+from tko.floating.floating_manager import FloatingManager
 import curses
 
 class Search:

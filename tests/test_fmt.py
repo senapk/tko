@@ -1,5 +1,5 @@
 from tko.util.rtext import RText
-from tko.play.fmt import Fmt
+from tko.widget.fmt import Fmt
 
 class TestSimple:
     def test_split_1(self):
