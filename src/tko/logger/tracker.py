@@ -50,8 +50,6 @@ class Tracker:
 
     def unfold_files(self, log_sort: LogSort) -> tuple[str, str]:
         output = "\n"
-
-
         timestamp_rate: dict[str, str] = {}
         for _, item in log_sort.exec_list:
             timestamp = item.get_timestamp().replace(":", "-").replace(" ", "_")
@@ -71,9 +69,14 @@ class Tracker:
                 complete = ph.restore_all()
                 for i, patch in enumerate(complete):
                     key = patch.label
-                    rate = timestamp_rate.get(key, "???")
-                    result = rate.rjust(3, "0").replace("None", "---")
-                    output_file = os.path.join(temp_dir, f"{patch.label}_{result}_{file[:-5]}")
+                    rate = timestamp_rate.get(key, "000")
+                    try:
+                        if int(rate) < 0:
+                            rate = "0"
+                    except ValueError as _:
+                        pass
+                    result = rate.rjust(3, "0")
+                    output_file = os.path.join(temp_dir, f"{patch.label}__rate-{result}__{file[:-5]}")
                     if i < 5 or i == len(complete) - 1:
                         output += f"  Extraindo: {output_file}\n"
                     elif i == 5:

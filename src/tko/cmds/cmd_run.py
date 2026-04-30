@@ -62,16 +62,17 @@ class Run:
 
     def load(self):
         loader = RunLoader(self.context)
-        loader.setup_initial_environment()
         loader.build_wdir()
+        loader.setup_task()
+        
         return self
 
     def execute(self):
         loader = RunLoader(self.context)
 
         if not self.context.wdir_builded:
-            loader.setup_initial_environment()
             loader.build_wdir()
+            loader.setup_task()
 
         if self._missing_target():
             return 0
@@ -80,9 +81,6 @@ class Run:
             RunPresenter(self.context).list_mode()
             return 0
             
-        if self.context.wdir.has_solver():
-            loader.prepare_rep_task_logger()
-
         executor = RunExecutor(self.context)
         
         if self.context.wdir.has_solver() and not self.context.wdir.has_tests() and not self.context.curses_mode and not self.context.no_run:

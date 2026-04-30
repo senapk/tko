@@ -44,7 +44,6 @@ def test_task_folder_helpers_handle_prefixed_and_plain_labels(tmp_path: Path) ->
     task_folder = tmp_path / "disc" / "task1"
     task_folder.mkdir(parents=True)
 
-    assert repo.get_key_from_task_folder(task_folder) == "disc@task1"
     assert repo.get_task_folder_for_label("disc@task1") == task_folder
     assert repo.get_task_folder_for_label("task2") == tmp_path / "task2"
     assert repo.is_task_folder(task_folder) is False

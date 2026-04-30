@@ -84,7 +84,11 @@ class Game:
         self.tasks = {}
         for source in self.sources:
             gb = GameBuilder(source, verbose)
-            gb.build_from(self.language)
+            try:
+                gb.build_from(self.language)
+            except ValueError as e:
+                print(e)
+                continue
             for quest_key in gb.ordered_quests:
                 self.ordered_quests.append(source.name + "@" + quest_key)
             gb_quests = gb.collect_quests()

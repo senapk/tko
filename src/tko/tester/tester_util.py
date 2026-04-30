@@ -1,5 +1,4 @@
-import os
-
+from pathlib import Path
 from tko.enums.diff_mode import DiffMode
 from tko.enums.execution_result import ExecutionResult
 from tko.game.task import Task
@@ -32,11 +31,14 @@ def get_time_limit_symbol(timeout: int) -> str:
     return str(timeout)
 
 
-def get_folder(task: Task) -> str:
-    folder = task.get_workspace_folder()
+def get_folder(task: Task) -> Path:
+    if task.is_import_type():
+        folder = task.get_workspace_folder()
+    else:
+        folder = task.get_origin_folder()
     if folder is None:
-        raise Warning("Warning: Task folder não encontrado")
-    return os.path.basename(folder)
+        raise Warning("Warning: Pasta da tarefa não encontrada")
+    return folder
 
 
 def get_solver_names(wdir: Wdir) -> list[str]:

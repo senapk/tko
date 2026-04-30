@@ -67,26 +67,39 @@ class DiffBuilderDown:
             return
         color = "g" if self.unit.get_expected() == self.unit.get_received() else "y"
         if self.__standalone_diff:
-            self.output.append(RText(DiffBuilder.vexpected, color).fold_in(self.width, Symbols.hbar, "╭", "╮"))
+            opening = "╭"
+            ending = "╮"
         else:
-            self.output.append(RText(DiffBuilder.vexpected, color).fold_in(self.width, Symbols.hbar, "├", "┤"))
+            opening = "├"
+            ending = "┤" if self.curses else "╯"
+        self.output.append(RText(DiffBuilder.vexpected, color).fold_in(self.width, Symbols.hbar, opening, ending))
         for line, _ in self.expected_received:
             if line is not None:
-                self.output.append(line.ljust(self.width - 1, " ") + Symbols.vbar)
+                if self.curses:
+                    self.output.append(line.ljust(self.width - 1, " ") + Symbols.vbar)
+                else:
+                    self.output.append(line)
 
     def insert_received(self):
         # headers
         color = "g" if self.unit.get_expected() == self.unit.get_received() else "r"
         if self.no_diff_mode:
             color = "g"
-            self.output.append(RText(DiffBuilder.vreceived, color).fold_in(self.width, Symbols.hbar, "╭", "╮"))
+            opening = "╭"
+            ending = "╮"
         else:
-            self.output.append(RText(DiffBuilder.vreceived, color).fold_in(self.width, Symbols.hbar, "├", "┤"))
+            opening = "├"
+            ending = "┤" if self.curses else Symbols.hbar
+        self.output.append(RText(DiffBuilder.vreceived, color).fold_in(self.width, Symbols.hbar, opening, ending))
 
         # lines
         for _, line in self.expected_received:
             if line is not None:
-                self.output.append(line.ljust(self.width - 1, " ").trim_end(self.width) + Symbols.vbar)
+                if self.curses:
+                    self.output.append(line.ljust(self.width - 1, " ").trim_end(self.width) + Symbols.vbar)
+                else:
+                    self.output.append(line)
+
 
     def insert_first_line_diff(self):
         include_rendering = False
@@ -97,7 +110,8 @@ class DiffBuilderDown:
 
         if not include_rendering:
             return
-        self.output.append(RText(DiffBuilder.vunequal, "b").fold_in(self.width, Symbols.hbar, "├", "┤"))
+        ending = "┤" if self.curses else "╮"
+        self.output.append(RText(DiffBuilder.vunequal, "b").fold_in(self.width, Symbols.hbar, "├", ending))
         for line in self.db.first_failure_diff(self.unit.get_expected(), self.unit.get_received(), self.first_failure):
             self.output.append((RText("│") + line).ljust(self.width - 1, " ") + "│")
 

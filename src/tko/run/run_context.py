@@ -10,6 +10,7 @@ from tko.play.opener import Opener
 
 class RunContext:
     def __init__(self, settings: Settings, target_list: list[Path], param: Optional[Param.Basic]):
+        self.pwd = Path(".").resolve()
         self.settings = settings
         self.target_list: list[Path] = [Path(target) for target in target_list]
         self.param = param if param is not None else Param.Basic()
@@ -30,7 +31,7 @@ class RunContext:
         self.timeout: int = 0
         
         # Discovered Environment
-        self.rep: Optional[Repository] = None
+        self.repo: Optional[Repository] = None
         self.task: Optional[Task] = None
         self.track_folder: Optional[Path] = None
         self.opener: Optional[Opener] = None
@@ -76,7 +77,7 @@ class RunContext:
         return self
 
     def set_task(self, rep: Repository, task: Task):
-        self.rep = rep
+        self.repo = rep
         self.task = task
         return self
     

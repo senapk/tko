@@ -40,7 +40,7 @@ class TesterTopBar:
         running_color  = "R"
 
         folder   = tester_util.get_folder(self.task)
-        activity = self.borders.border(activity_color, folder)
+        activity = self.borders.border(activity_color, folder.name)
 
         solver_names = tester_util.get_solver_names(self.wdir)
         solvers = RText()

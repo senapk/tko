@@ -60,7 +60,7 @@ class TesterRenderer:
                 Fmt.write(i + init_y, 1, info)
 
     def show_success(self) -> None:
-        folder = tester_util.get_folder(self.task)
+        folder = str(tester_util.get_folder(self.task).name)
         if self.settings.app.use_images:
             out = random_get(images, folder, "static")
         else:
@@ -68,7 +68,7 @@ class TesterRenderer:
         TesterRenderer.print_centered_image(out, "g")
 
     def show_compilling(self, clear: bool = False) -> None:
-        folder = tester_util.get_folder(self.task)
+        folder = str(tester_util.get_folder(self.task).name)
         out = random_get(compilling_image, folder, "random")
         TesterRenderer.print_centered_image(out, "y", clear)
 
@@ -145,7 +145,7 @@ class TesterRenderer:
     def draw(self, state: TesterState) -> None:
         self.top_bar.draw(state)
         if state.mode == SeqMode.intro:
-            folder = tester_util.get_folder(self.task)
+            folder = str(tester_util.get_folder(self.task).name)
             TesterRenderer.print_centered_image(random_get(intro, folder), "y")
         else:
             self.draw_main(state)

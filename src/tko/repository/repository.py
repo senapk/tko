@@ -5,12 +5,13 @@ from tko.repository.rep_data import RepData
 from tko.repository.rep_source import RepSource
 from tko.game.game import Game
 from tko.logger.logger import Logger
-import yaml # type: ignore
 from tko.repository.rep_paths import RepPaths
 from icecream import ic # type: ignore
 from datetime import timedelta
 from tko.repository.git_cache import GitCache, UpdateMode
 from tko.play.flags import Flags
+from tko.game.task import Task
+
 class Repository:
     cache_time_for_remote_source = 3600 # seconds
 
@@ -53,12 +54,12 @@ class Repository:
         return path.is_relative_to(rep_dir)
 
 
-    def get_key_from_task_folder(self, folder: Path) -> str:
-        path = folder.resolve()
-        parts = path.parts
-        label = parts[-1]
-        workspace = parts[-2]
-        return f"{workspace}@{label}"
+    def get_task_from_task_folder(self, folder: Path) -> Task | None:
+        folder = folder.resolve()
+        for t in self.game.tasks.values():
+            if t.get_workspace_folder() == folder:
+                return t
+        return None
 
     def is_task_folder(self, folder: Path) -> bool:
         label = folder.name

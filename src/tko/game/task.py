@@ -170,7 +170,7 @@ class Task(TreeItem):
         return self.get_origin_folder() == self.get_workspace_folder()
 
     def set_origin_folder(self, folder: Path):
-        self.__origin_folder = folder
+        self.__origin_folder = folder.resolve()
         return self
     
     def get_origin_readme(self) -> Path:
@@ -184,12 +184,12 @@ class Task(TreeItem):
         return self
 
     def get_origin_folder(self) -> Path | None:
-        return self.__origin_folder
+        return self.__origin_folder.resolve() if self.__origin_folder is not None else None
     
     def get_workspace_folder(self) -> Path | None:
         if self.__workspace_folder is not None:
             return self.__workspace_folder.resolve()
-        return self.__origin_folder
+        return self.__origin_folder.resolve() if self.__origin_folder is not None else None
     
     def decode_from_dict(self, value: str):
         value_list = value[1:-1]

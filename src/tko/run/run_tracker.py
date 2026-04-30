@@ -26,8 +26,8 @@ class RunTracker:
             exec_fail = LogItemExec.Fail.COMP
 
         changes, size = self.store_exec_diff(str(rate))
-        if self.ctx.rep:
-            self.ctx.rep.logger.store(LogItemExec()
+        if self.ctx.repo:
+            self.ctx.repo.logger.store(LogItemExec()
                 .set_mode(exec_mode)
                 .set_key(self.ctx.task.get_full_key())
                 .set_size(changes, size)
@@ -35,9 +35,9 @@ class RunTracker:
                 .set_fail(exec_fail))
 
     def store_free_run_log(self):
-        if self.ctx.task is not None and self.ctx.rep:
+        if self.ctx.task is not None and self.ctx.repo:
             changes, size = self.store_exec_diff("---")
-            self.ctx.rep.logger.store(LogItemExec()
+            self.ctx.repo.logger.store(LogItemExec()
                 .set_mode(LogItemExec.Mode.FREE)
                 .set_key(self.ctx.task.get_full_key())
                 .set_size(changes, size))

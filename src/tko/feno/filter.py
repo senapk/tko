@@ -127,7 +127,8 @@ class Action:
         self.content: str = content
 
 class DeepFilter:
-    extensions = ["md", "c", "cpp", "h", "hpp", "py", "java", "js", "ts", "hs", "txt", "go", "json", "mod", "puml", "sh", "sql", "yaml", "exec", "hide", "tio", "zig"]
+    include = ["md", "txt", "toml", "tio", "json", "puml", "yaml"]
+    extensions = ["c", "cpp", "h", "hpp", "py", "java", "js", "ts", "hs", "go", "mod", "sh", "sql", "exec", "hide", "zig"] + include
 
     def __init__(self):
         self.cheat_mode = False
@@ -214,30 +215,30 @@ class DeepFilter:
     def deploy_actions(self, actions: dict[Path, Action]):
         folder_actions: dict[Path, list[tuple[Path, Action]]] = {}
         for path, action in actions.items():
-            parent = path.parent
+            parent = path.parent.resolve()
             if parent not in folder_actions:
                 folder_actions[parent] = []
             folder_actions[parent].append((path, action))
-
         for _, action_list in folder_actions.items():
             self.__deploy_actions(action_list)
 
     def __deploy_actions(self, actions: list[tuple[Path, Action]]):
         run_actions = False
         for path, action in actions:
-            print(RText.parse(f"action: [y]{action.name}[.], path: {path.resolve()}"))
             if action.name in [Action.FILTERED, Action.COMCLEAN]:
                 run_actions = True
                 break
-        if not run_actions:
-            dir = actions[0][0].parent.resolve().relative_to(Path().resolve())
-            print(RText.parse(f"Nenhuma filtragem encontrada para a pasta [r]{dir.resolve()}[.], nenhuma ação tomada."))
-            return
+        # if not run_actions:
+        #     print(RText.parse(f"Nenhuma filtragem encontrada para a pasta [r]{parent}[.], nenhuma ação tomada."))
+        #     return
         for path, action in actions:
-            if action.name in [Action.FILTERED, Action.COMCLEAN, Action.ORIGINAL]:
+            if (run_actions or path.suffix[1:] in DeepFilter.include) and action.name in [Action.FILTERED, Action.COMCLEAN, Action.ORIGINAL] :
+                print(RText.parse(f"action: [g]{action.name}[.], path: {path.resolve()}"))
                 path.parent.mkdir(parents=True, exist_ok=True)
                 with open(path, "w") as f:
                     f.write(action.content) 
+            else:
+                print(RText.parse(f"action: [y]disabled[.], path: {path.resolve()}"))
         
 class CodeFilter:
     @staticmethod
@@ -249,31 +250,31 @@ class CodeFilter:
         return False, "" 
 
     @staticmethod
-    def cf_recursive(target_dir: Path | str, output_dir: Path | str | None, force: bool, cheat: bool = False, quiet: bool = False, indent: int = 0):
-        if isinstance(target_dir, str):
-            target_dir = Path(target_dir)
-        if isinstance(output_dir, str):
-            output_dir = Path(output_dir)
-        if not target_dir.is_dir():
+    def cf_recursive(source_dir: Path | str, destiny_dir: Path | str | None, force: bool, cheat: bool = False, quiet: bool = False, indent: int = 0):
+        if isinstance(source_dir, str):
+            source_dir = Path(source_dir)
+        if isinstance(destiny_dir, str):
+            destiny_dir = Path(destiny_dir)
+        if not source_dir.is_dir():
             print("Error: target must be a folder in recursive mode")
             exit()
-        if output_dir is None:
+        if destiny_dir is None:
             print("Error: output folder must be specified in recursive mode")
             exit()
-        if output_dir.exists():
+        if destiny_dir.exists():
             if not force:
                 print("Error: output folder already exists")
                 exit()
             else:
                 # recursive delete all folder content without deleting the folder itself
-                for item in output_dir.iterdir():
+                for item in destiny_dir.iterdir():
                     if item.is_dir():
                         shutil.rmtree(item, ignore_errors=True)
                     else:
                         item.unlink()
 
         deep_filter = DeepFilter().set_cheat(cheat).set_quiet(quiet).set_indent(indent)
-        deep_filter.execute(target_dir, output_dir, 10)
+        deep_filter.execute(source_dir, destiny_dir, 10)
 
     @staticmethod
     def cf_single_file(target: Path, output: Path | None, update: bool, cheat: bool):

@@ -38,7 +38,7 @@ class RunExecutor:
             return self.run_tests_on_raw_term()
 
     def run_test_on_curses(self):
-        cdiff = Tester(self.ctx.settings, self.ctx.rep, self.ctx.wdir, self.ctx.get_task())
+        cdiff = Tester(self.ctx.settings, self.ctx.repo, self.ctx.wdir, self.ctx.get_task())
         if self.ctx.opener is not None:
             cdiff.set_opener(self.ctx.opener)
         else:
@@ -82,8 +82,8 @@ class RunExecutor:
         print("] ", end="")
         
         if self.ctx.show_track_info:
-            if self.ctx.rep is not None:
-                logger = self.ctx.rep.logger
+            if self.ctx.repo is not None:
+                logger = self.ctx.repo.logger
                 log_sort: LogSort | None = logger.tasks.task_dict.get(self.ctx.get_task().get_full_key(), None)
                 if log_sort is not None:
                     log_resume = TaskResume(self.ctx.get_task().get_full_key()).from_log_sort(log_sort)

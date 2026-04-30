@@ -12,48 +12,41 @@ from tko.run.run_context import RunContext
 class TkoFilterMode:
     @staticmethod
     def deep_copy_and_change_dir():
-        filter_path = os.path.join(os.path.expanduser("~"), ".tko_filter")
-        CodeFilter.cf_recursive(Path("."), Path(filter_path), force=True)
+        filter_path = (Path.home()/ ".tko_filter").resolve()
+        CodeFilter.cf_recursive(Path(".").resolve(), filter_path, force=True)
+        # chdir to filter_path
         os.chdir(filter_path)
 
 class RunLoader:
     def __init__(self, ctx: RunContext):
         self.ctx = ctx
 
-    def setup_initial_environment(self):
-        if len(self.ctx.target_list) == 0:
-            if self.ctx.rep is None:
-                self._try_load_rep(Path())
-            self._try_load_task(Path())
-
-        elif len(self.ctx.target_list) == 1 and os.path.isdir(self.ctx.target_list[0]):
-            if self.ctx.rep is None:
-                self._try_load_rep(Path(self.ctx.target_list[0]))
-            self._try_load_task(Path(self.ctx.target_list[0]))
+    def setup_task(self):
+        if self.ctx.repo is None:
+            self.try_setup_task_from_rep()
+        if self.ctx.task is None:
+            self.setup_task_from_wdir()
 
     def build_wdir(self):
         self.ctx.wdir_builded = True
         self._remove_duplicates()
-        self._change_targets_to_filter_mode()
+        if self.ctx.param.filter:
+            self._change_targets_to_filter_mode()
         try:
-            self.ctx.wdir = self.ctx.wdir.set_curses(self.ctx.curses_mode).set_lang(self.ctx.lang).set_target_list(self.ctx.target_list).build().filter(self.ctx.param)
+            self.ctx.wdir = (self.ctx.wdir.set_curses(self.ctx.curses_mode)
+                                    .set_lang(self.ctx.lang)
+                                    .set_target_list(self.ctx.target_list)
+                                    .build()
+                                    .filter(self.ctx.param)
+                            )
         except FileNotFoundError as e:
             if self.ctx.wdir.has_solver():
                 executable, _ = self.ctx.wdir.get_solver().get_executable()
                 executable.set_compile_error(str(e))
         return self.ctx.wdir
 
-    def prepare_rep_task_logger(self):
-        if self.ctx.rep is None:
-            solver_path = self.ctx.wdir.get_solver().args_list[0]
-            dirname = Path(os.path.dirname(os.path.abspath(solver_path)))
-            self._try_load_rep(dirname)
-            self._try_load_task(dirname)
-
-        if self.ctx.task is None:
-            self._fill_task()
-
-    def _try_load_rep(self, dirname: Path) -> bool:
+    def try_setup_task_from_rep(self) -> bool:
+        dirname = self.ctx.pwd
         repo_path = RepPaths.rec_search_for_repo_parents(dirname)
         if repo_path is None:
             return False
@@ -62,47 +55,35 @@ class RunLoader:
         from tko.repository.game_coordinator import GameCoordinator
         RepositoryLoader(rep).load_config()
         GameCoordinator(rep).load_game(verbose=True)
-        self.ctx.rep = rep
+        self.ctx.repo = rep
         if rep.data.lang != "":
             self.ctx.lang = rep.data.lang
-        return True
-
-    def _try_load_task(self, dirname: Path) -> bool:
-        if self.ctx.rep is None:
-            return False
-        rep: Repository = self.ctx.rep
-        task_key = rep.get_key_from_task_folder(dirname)
-        if task_key == "":
-            return False
-        task = rep.game.tasks.get(task_key)
-        if task is None:
-            return False
-        self.ctx.task = task
-        self.ctx.track_folder = rep.paths.get_track_task_folder(task_key)
+        task = self.ctx.repo.get_task_from_task_folder(self.ctx.pwd)
+        if task is not None:
+            self.ctx.task = task
         return True
 
     def _remove_duplicates(self):
         self.ctx.target_list = list(dict.fromkeys(self.ctx.target_list))
 
     def _change_targets_to_filter_mode(self) -> None:
-        if not self.ctx.param.filter:
-            return
-
-        old_dir: Path = Path.cwd()
         print(RText(" Entrando no modo de filtragem ").center(RawTerminal.get_terminal_size(), "═"))
 
         TkoFilterMode.deep_copy_and_change_dir()
         new_target_list: list[Path] = []
 
         for target in self.ctx.target_list:
-            resolved: Path = target if target.is_absolute() else (old_dir / target)
-            resolved = resolved.resolve()
+            resolved = target.resolve()
             if resolved.exists():
                 new_target_list.append(resolved)
 
         self.ctx.target_list = new_target_list
 
-    def _fill_task(self):
+    def setup_task_from_wdir(self) -> bool:
+        if self.ctx.task is not None:
+            return False
+        if not self.ctx.wdir_builded:
+            return False
         task = Task()
         sources = self.ctx.wdir.get_source_list()
         solver = self.ctx.wdir.get_solver()
@@ -130,8 +111,10 @@ class RunLoader:
 
         self.ctx.task = task
         self.ctx.track_folder = None
-        if self.ctx.rep:
-            self.ctx.track_folder = self.ctx.rep.paths.get_track_task_folder(task.get_full_key())
+        return True
+        # if self.ctx.rep:
+        #     self.ctx.track_folder = self.ctx.rep.paths.get_track_task_folder(task.get_full_key())
+            
 
     def create_opener_for_wdir(self) -> Opener:
         opener = Opener(self.ctx.settings)
