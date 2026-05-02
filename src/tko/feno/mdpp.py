@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import re
-import os
 import enum
 from tko.feno.filter import Filter
 from tko.util.decoder import Decoder
 from pathlib import Path
+from dataclasses import dataclass
+from tko.loader.unit_data import UnitData
 
 
 class Action(enum.Enum):
@@ -61,7 +62,7 @@ class TocMaker:
 
 
     @staticmethod
-    def _extract_entries(content: str) -> list[tuple[int, str]]:
+    def extract_entries(content: str) -> list[tuple[int, str]]:
         content = TocMaker.remove_code_fences(content)
 
         lines = content.splitlines()
@@ -78,7 +79,7 @@ class TocMaker:
     
     @staticmethod
     def execute_toch(content: str) -> str:
-        entries = TocMaker._extract_entries(content)
+        entries = TocMaker.extract_entries(content)
         links = [b for (a, b) in entries if a == 2]
         table = ["--" for _ in links]
         return " | ".join(links) + "\n" + " | ".join(table)
@@ -86,7 +87,7 @@ class TocMaker:
 
     @staticmethod
     def execute_toc(content: str) -> str:
-        entries = TocMaker._extract_entries(content)
+        entries = TocMaker.extract_entries(content)
         toc_lines = ["  " * (level - 2) + "- " + link for (level, link) in entries if level > 1]
         toc_text = "\n".join(toc_lines)
         return toc_text
@@ -117,23 +118,23 @@ class Links:
 
     @staticmethod
     def load_links(readme_dir: Path, filter_dir: Path):
-        def traverse_directory(directory: str, depth: int = 0):
-            output = ""
-            if os.path.isdir(directory):
-                entries = sorted(os.listdir(directory))
+        readme_dir = readme_dir.resolve()
+        def traverse_directory(directory: Path, depth: int = 0) -> str:
+            output:str = ""
+            if directory.is_dir():
+                entries = sorted(directory.iterdir())
                 for entry in entries:
-                    if entry.startswith("."):
+                    if entry.name.startswith("."):
                         continue
-                    full_path = os.path.join(directory, entry)
-                    if os.path.isdir(full_path):
-                        output += "  " * depth + "- " + entry + "\n"
-                        output += traverse_directory(full_path, depth + 1)
+                    if entry.is_dir():
+                        output += "  " * depth + "- " + entry.name + "\n"
+                        output += traverse_directory(entry, depth + 1)
                     else:
-                        path = os.path.relpath(full_path, readme_dir).replace("\\", "/")
-                        output += "  " * depth + "- [" + entry + "](" + path + ")\n"
+                        path = entry.resolve().relative_to(readme_dir)
+                        output += "  " * depth + "- [" + entry.name + "](" + str(path) + ")\n"
             return output
         
-        origin = os.path.join(readme_dir, filter_dir)
+        origin = readme_dir / filter_dir
         return traverse_directory(origin)
 
     @staticmethod
@@ -155,8 +156,15 @@ class Links:
 
         return content
 
-class Load:
+@dataclass
+class LoadParams:
+    extract: str | None = None
+    rmcom: bool = False
+    fenced: bool = False
+    filter: bool = False
+    tests: int | None = None
 
+class Load:
     @staticmethod
     def extract_between_tags(content: str, tag: str) -> str:
         regex = r"\[\[" + tag + r"\]\].*?^(.*)^[\S ]*\[\[" + tag + r"\]\]"
@@ -166,11 +174,11 @@ class Load:
         return ""
 
     @staticmethod
-    def rmcom(target: str, content: str) -> str:
+    def rmcom(target: Path, content: str) -> str:
         com = "//"
-        if target.endswith(".py"):
+        if target.suffix == ".py":
             com = "#"
-        if target.endswith(".puml"):
+        if target.suffix == ".puml":
             com = "'"
         lines = content.splitlines()
         output: list[str] = []
@@ -178,89 +186,146 @@ class Load:
             if not line.lstrip().startswith(com):
                 output.append(line)
         return "\n".join(output)
-
+    
+    @staticmethod
+    def __get_value(tokens: list[str], index: int) -> str | None:
+        """Tenta pegar o próximo token se ele não for uma nova flag."""
+        next_idx = index + 1
+        if next_idx < len(tokens) and not tokens[next_idx].startswith("--"):
+            return tokens[next_idx]
+        return None
 
     @staticmethod
-    def execute(content: str, target_dir: str, action: Action = Action.RUN) -> str:
-        new_content = ""
-        last = 0
-
-        regex = r"<!-- load (\S*?) (\S*?) -->\n(.*?)<!-- load -->"
-        matches = re.finditer(regex, content, re.MULTILINE | re.DOTALL)
+    def parse_tags(tag_str: str) -> LoadParams:
+        params = LoadParams()
+        tokens = tag_str.split()
         
-        for match in matches:
-            path = match.group(1)
-            abspath = os.path.abspath(os.path.join(target_dir, path))
-            tags = match.group(2)
-            words: list[str] = tags.split(":")
-
-            fenced: list[str] = [tag for tag in words if tag.startswith("fenced")]
-            words = [tag for tag in words if not tag.startswith("fenced")]
-
-            filter: list[str] = [tag for tag in words if tag.startswith("filter")]
-            words = [tag for tag in words if not tag.startswith("filter")]
-
-            rmcom: list[str] = [tag for tag in words if tag.startswith("rmcom")]
-            words = [tag for tag in words if not tag.startswith("rmcom")]
-
-
-            extract: list[str] = [tag for tag in words if tag.startswith("extract")]
-            words = [tag for tag in words if not tag.startswith("extract")]
-
-
-            ext = os.path.splitext(path)[1][1:]
-            if len(words) > 0:
-                ext = words[0]
-            if len(fenced) == 1:
-                parts = fenced[0].split("=")
-                if len(parts) == 2:
-                    ext = parts[1]
-
-
-            new_content += content[last:match.start()] # inserindo texto entre matches
-            last = match.end()
-            # new_content += "[](load)[](" + path + ")[](" + tags + ")\n"
-            new_content += "<!-- load " + path + " " + tags + " -->\n"
-
-            # se não for run, deve limpar o conteúdo não inserindo os arquivos
-            if action == Action.RUN:
-                if len(fenced) > 0:
-                    new_content += "\n```" + ext + "\n"
-                if os.path.isfile(abspath):
-                    if len(filter) > 0:
-                        data = Filter(Path(path)).process(Decoder.load(abspath)) + "\n"
-                        new_content += data
-                        if data[-1] != "\n":
-                            new_content += "\n"
-                    elif len(rmcom) > 0:
-                        full_data = Decoder.load(abspath)
-                        data =  Load.rmcom(abspath, full_data) + "\n"
-                        new_content += data
-                        if data[-1] != "\n":
-                            new_content += "\n"
-                    elif len(extract) > 0:
-                        tag = extract[0].split("=")[1]
-                        full_data = Decoder.load(abspath)
-                        data = Load.extract_between_tags(full_data, tag)
-                        new_content += data
-                        if len(data) == 0 or data[-1] != "\n":
-                            new_content += "\n"
-                    else:
-                        data = Decoder.load(abspath)
-                        new_content += data
-                        if data[-1] != "\n":
-                            new_content += "\n"
-                else:
-                    print("warning: file", path, "not found")
-                if fenced:
-                    new_content += "```\n\n"
-            new_content += "<!-- load -->"
-        
-        new_content += content[last:]
-        return new_content
-
-
+        i = 0
+        while i < len(tokens):
+            token = tokens[i]
             
+            if token  == "--fenced":
+                params.fenced = True
+            elif token == "--extract":
+                val = Load.__get_value(tokens, i)
+                if val:
+                    params.extract = val
+                    i += 1 # Consome o valor
+                else:
+                    print(f"warning: missing value for --extract")
+            elif token == "--tests":
+                val = Load.__get_value(tokens, i)
+                try:
+                    if val:
+                        params.tests = int(val)
+                        i += 1 # Consome o valor
+                    else:
+                        raise ValueError
+                except ValueError:
+                    print(f"warning: invalid or missing integer for --tests")
+
+            elif token == "--rmcom":
+                params.rmcom = True
+
+            elif token == "--filter":
+                params.filter = True
+
+            elif token.startswith("--"):
+                print(f"warning: unrecognized tag '{token}'")
+            
+            i += 1 # Sempre avança para o próximo token
+            
+        return params
+
+    @staticmethod
+    def __calc_input_and_output_pad(arr: list[UnitData]) -> tuple[int, int]:
+        input_lines: list[str] = []
+        output_lines: list[str] = []
+        for unit in arr:
+            input_lines.extend(unit.input.splitlines())
+            output_lines.extend(unit.output.splitlines())
+        input_pad = max((len(line) for line in input_lines), default=0)
+        output_pad = max((len(line) for line in output_lines), default=0)
+        return input_pad, output_pad
+
+    @staticmethod
+    def generate_table_from_test_toml(content: str, path: Path, cases: int) -> str:
+        def format_table(_input: str, _output: str, pad_input: int, pad_output: int) -> str:
+            pad_input += 3
+            if pad_input % 2 == 0:
+                pad_input += 1
+            pad_output += 3
+            if pad_output % 2 == 0:
+                pad_output += 1
+            # Envolvemos o texto e o padding dentro da tag <code>
+            header_in = f'{"Entrada".center(pad_input, " ")}'
+            header_out = f'{"Saída".center(pad_output, " ")}'
+            
+            table_start = f'<table><tr><th><code>{header_in}</code>\n</th><th><code>{header_out}</code>\n</th></tr><tr><td valign="top"><pre>\n'
+            table_mid = '</pre></td><td valign="top"><pre>\n'
+            table_end = '</pre></td></tr></table>'
+            
+            return table_start + _input + table_mid + _output + table_end
+
+        from tko.loader.toml_parser import TomlParser
+        test_data_list: list[UnitData] = TomlParser.extract_toml_units(content, path)
+        if cases == 0:
+            cases = len(test_data_list)
+        elif cases > 0:
+            test_data_list = test_data_list[:cases]
+        pad_input, pad_output = Load.__calc_input_and_output_pad(test_data_list)
+        print(f"pad_input: {pad_input}, pad_output: {pad_output}")
+
+        table_data_list = [format_table(unit.input, unit.output, pad_input, pad_output) for unit in test_data_list]
+
+
+        return "\n\n".join(table_data_list[:cases])
+
+    @staticmethod
+    def _process_file_content(abspath: Path, rel_path: str, params: LoadParams) -> str:
+        """Encapsula a lógica de leitura e transformação do conteúdo."""
+        if not abspath.is_file():
+            print(f"warning: file {rel_path} not found")
+            return ""
+
+        data = Decoder.load(abspath)
+
+        if params.extract:
+            tag = params.extract
+            data = Load.extract_between_tags(data, tag)
+        if params.filter:
+            data = Filter(Path(rel_path)).process(data)
+        if params.rmcom:
+            data = Load.rmcom(abspath, data)
+        if params.tests is not None:
+            data = Load.generate_table_from_test_toml(data, abspath, params.tests)
+        if params.fenced:
+            lang = abspath.suffix[1:]
+            data = f"```{lang}\n{data}```"
+
+        # Garante que termine com apenas uma quebra de linha
+        return data.rstrip() + "\n"
+
+    @staticmethod
+    def execute(content: str, target_dir: Path, action: Action = Action.RUN) -> str:
+        regex = r"<!-- load\s*(.*?)\s*-->\n(.*?)(?=<!-- load -->)<!-- load -->"
+        
+        def replace_tag_fn(match: re.Match[str]) -> str:
+            full_command = match.group(1).strip()
+            _ = match.group(2) 
+            parts = full_command.split(maxsplit=1)
+            path_str = parts[0] if len(parts) > 0 else ""
+            flags_str = parts[1] if len(parts) > 1 else ""
+            result = [f"<!-- load {full_command} -->"]
+            if action == Action.RUN:
+                params = Load.parse_tags(flags_str)
+                abspath = (Path(target_dir) / path_str).resolve()
+                result.append(Load._process_file_content(abspath, path_str, params))
+            result.append("<!-- load -->")
+            return "\n".join(result)
+
+        # O sub substitui as ocorrências usando a função de callback
+        return re.sub(regex, replace_tag_fn, content, flags=re.MULTILINE | re.DOTALL)
 
 class Save:
     @staticmethod
@@ -270,9 +335,9 @@ class Save:
         matches = re.finditer(regex, file_content, re.MULTILINE | re.DOTALL)
         content_old = ""        
         for match in matches:
-            path = match.group(1)
+            path = Path(match.group(1))
             content = match.group(2)
-            exists = os.path.isfile(path)
+            exists = path.is_file()
             if exists:
                 content_old = Decoder.load(path)
             if not exists or content != content_old:
@@ -281,15 +346,15 @@ class Save:
 
 class MdppMain:
     @staticmethod
-    def fix_path(target: str):
-        target = os.path.normpath(target)
-        if os.path.isdir(target):
-            target = os.path.join(target, "README.md")
+    def fix_path(target: Path):
+        target = target.resolve()
+        if target.is_dir():
+            target = target / "README.md"
         return target
 
     @staticmethod
     def open_file(path: Path) -> tuple[bool, str]: 
-        if os.path.isfile(path):
+        if path.is_file():
             file_content = Decoder.load(path)
             return True, file_content
         print("Warning: File", path, "not found")
@@ -303,10 +368,10 @@ class Mdpp:
         if not path.suffix == ".md":
             print("Warning: File", path, "is not a markdown file")
             return False
-        if not os.path.isfile(path):
+        if not path.is_file():
             print("Warning: File", path, "not found")
             return False
-        target_dir = os.path.dirname(path)
+        target_dir = path.parent.resolve()
         found, original = MdppMain.open_file(path)
         if not found:
             return False

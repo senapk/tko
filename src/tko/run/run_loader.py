@@ -85,35 +85,11 @@ class RunLoader:
         if not self.ctx.wdir_builded:
             return False
         task = Task()
-        sources = self.ctx.wdir.get_source_list()
-        solver = self.ctx.wdir.get_solver()
-
-        if len(sources) > 0:
-            target_path = os.path.abspath(sources[0])
-        elif solver.args_list:
-            target_path = os.path.abspath(self.ctx.wdir.get_solver().args_list[0])
-        else:
-            target_path = os.path.abspath(os.getcwd())
-
-        if os.path.isfile(target_path):
-            target_path = os.path.dirname(target_path)
-
-        pieces = target_path.split(os.sep)
-        if len(pieces) >= 3:
-            task.set_key(pieces[-1])
-            task.set_remote_name(pieces[-2])
-        elif len(pieces) == 2:
-            task.set_key(pieces[-1])
-            task.set_remote_name(pieces[-2])
-        else:
-            task.set_key(pieces[-1])
-            task.set_remote_name("")
-
+        task.set_key("STANDALONE")
+        task.set_remote_name("NONE")
         self.ctx.task = task
         self.ctx.track_folder = None
         return True
-        # if self.ctx.rep:
-        #     self.ctx.track_folder = self.ctx.rep.paths.get_track_task_folder(task.get_full_key())
             
 
     def create_opener_for_wdir(self) -> Opener:

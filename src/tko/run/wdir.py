@@ -34,7 +34,7 @@ class Wdir:
 
     def get_solver(self) -> SolverBuilder:
         if self.__solver is None:
-            raise Warning("fail: Não foi encontrado arquivo de código")
+            raise FileNotFoundError("fail: Não foi encontrado arquivo de código")
         return self.__solver
     
     def get_unit_list(self) -> list[Unit]:

@@ -1,0 +1,13 @@
+Nenhum arquivo de código encontrado. Listando casos de teste.
+Códigos:[] Testes:[_calc2.tio(11)]
+(» não_verificado_)[00] GR:009 _calc2.tio (iniciar mostrar e recarregar       )
+(» não_verificado_)[01] GR:009 _calc2.tio (charge                             )
+(» não_verificado_)[02] GR:009 _calc2.tio (boundary                           )
+(» não_verificado_)[03] GR:009 _calc2.tio (reset                              )
+(» não_verificado_)[04] GR:009 _calc2.tio (somando                            )
+(» não_verificado_)[05] GR:009 _calc2.tio (gastando bateria                   )
+(» não_verificado_)[06] GR:009 _calc2.tio (sem bateria                        )
+(» não_verificado_)[07] GR:009 _calc2.tio (recarregando                       )
+(» não_verificado_)[08] GR:009 _calc2.tio (dividindo                          )
+(» não_verificado_)[09] GR:009 _calc2.tio (dividindo por zero gastando bateria)
+(» não_verificado_)[10] GR:009 _calc2.tio (gastando bateria                   )

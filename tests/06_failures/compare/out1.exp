@@ -15,15 +15,15 @@
 ├────────────────────────────────── INSERIDO ──────────────────────────────────┤
 │ show                                                                         │
 │ end                                                                          │
-├────────────────────────────────── ESPERADO ──────────────────────────────────┤
-│ $show                                                                        │
-├ pass: 0, gas: 0, km: 0                                                       │
-│ $end                                                                         │
-├────────────────────────────────── RECEBIDO ──────────────────────────────────┤
-│ $show                                                                        │
-├ pass: 0, gas: 1, km: 0                                                       │
-│ $end                                                                         │
-├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
+├────────────────────────────────── ESPERADO ──────────────────────────────────╯
+│ $show
+├ pass: 0, gas: 0, km: 0
+│ $end
+├────────────────────────────────── RECEBIDO ───────────────────────────────────
+│ $show
+├ pass: 0, gas: 1, km: 0
+│ $end
+├────────────────────────────────── DESIGUAL ──────────────────────────────────╮
 │ pass:·0,·gas:·0,·km:·0↲ (esperado)                                           │
 │ pass:·0,·gas:·1,·km:·0↲ (recebido)                                           │
 │               ↑         (primeiro)                                           │
@@ -36,23 +36,19 @@
 │ enter                                                                        │
 │ show                                                                         │
 │ end                                                                          │
-├────────────────────────────────── ESPERADO ──────────────────────────────────┤
-│ $show                                                                        │
-├ pass: 0, gas: 0, km: 0                                                       │
-├ $enter                                                                       │
-├ $enter                                                                       │
-├ $show                                                                        │
-├ pass: 2, gas: 0, km: 0                                                       │
-├ $end                                                                         │
-├────────────────────────────────── RECEBIDO ──────────────────────────────────┤
-│ $show                                                                        │
-├ pass: 0, gas: 1, km: 0                                                       │
-├ $end                                                                         │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
+├────────────────────────────────── ESPERADO ──────────────────────────────────╯
+│ $show
+├ pass: 0, gas: 0, km: 0
+├ $enter
+├ $enter
+├ $show
+├ pass: 2, gas: 0, km: 0
+├ $end
+├────────────────────────────────── RECEBIDO ───────────────────────────────────
+│ $show
+├ pass: 0, gas: 1, km: 0
+├ $end
+├────────────────────────────────── DESIGUAL ──────────────────────────────────╮
 │ pass:·0,·gas:·0,·km:·0↲ (esperado)                                           │
 │ pass:·0,·gas:·1,·km:·0↲ (recebido)                                           │
 │               ↑         (primeiro)                                           │
@@ -67,31 +63,23 @@
 │ enter                                                                        │
 │ show                                                                         │
 │ end                                                                          │
-├────────────────────────────────── ESPERADO ──────────────────────────────────┤
-│ $show                                                                        │
-├ pass: 0, gas: 0, km: 0                                                       │
-├ $enter                                                                       │
-├ $enter                                                                       │
-├ $show                                                                        │
-├ pass: 2, gas: 0, km: 0                                                       │
-├ $enter                                                                       │
-├ fail: limite de pessoas atingido                                             │
-├ $show                                                                        │
-├ pass: 2, gas: 0, km: 0                                                       │
-├ $end                                                                         │
-├────────────────────────────────── RECEBIDO ──────────────────────────────────┤
-│ $show                                                                        │
-├ pass: 0, gas: 1, km: 0                                                       │
-├ $end                                                                         │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
+├────────────────────────────────── ESPERADO ──────────────────────────────────╯
+│ $show
+├ pass: 0, gas: 0, km: 0
+├ $enter
+├ $enter
+├ $show
+├ pass: 2, gas: 0, km: 0
+├ $enter
+├ fail: limite de pessoas atingido
+├ $show
+├ pass: 2, gas: 0, km: 0
+├ $end
+├────────────────────────────────── RECEBIDO ───────────────────────────────────
+│ $show
+├ pass: 0, gas: 1, km: 0
+├ $end
+├────────────────────────────────── DESIGUAL ──────────────────────────────────╮
 │ pass:·0,·gas:·0,·km:·0↲ (esperado)                                           │
 │ pass:·0,·gas:·1,·km:·0↲ (recebido)                                           │
 │               ↑         (primeiro)                                           │
@@ -108,37 +96,26 @@
 │ leave                                                                        │
 │ show                                                                         │
 │ end                                                                          │
-├────────────────────────────────── ESPERADO ──────────────────────────────────┤
-│ $show                                                                        │
-├ pass: 0, gas: 0, km: 0                                                       │
-├ $enter                                                                       │
-├ $enter                                                                       │
-├ $show                                                                        │
-├ pass: 2, gas: 0, km: 0                                                       │
-├ $enter                                                                       │
-├ fail: limite de pessoas atingido                                             │
-├ $show                                                                        │
-├ pass: 2, gas: 0, km: 0                                                       │
-├ $leave                                                                       │
-├ $show                                                                        │
-├ pass: 1, gas: 0, km: 0                                                       │
-├ $end                                                                         │
-├────────────────────────────────── RECEBIDO ──────────────────────────────────┤
-│ $show                                                                        │
-├ pass: 0, gas: 1, km: 0                                                       │
-├ $end                                                                         │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
+├────────────────────────────────── ESPERADO ──────────────────────────────────╯
+│ $show
+├ pass: 0, gas: 0, km: 0
+├ $enter
+├ $enter
+├ $show
+├ pass: 2, gas: 0, km: 0
+├ $enter
+├ fail: limite de pessoas atingido
+├ $show
+├ pass: 2, gas: 0, km: 0
+├ $leave
+├ $show
+├ pass: 1, gas: 0, km: 0
+├ $end
+├────────────────────────────────── RECEBIDO ───────────────────────────────────
+│ $show
+├ pass: 0, gas: 1, km: 0
+├ $end
+├────────────────────────────────── DESIGUAL ──────────────────────────────────╮
 │ pass:·0,·gas:·0,·km:·0↲ (esperado)                                           │
 │ pass:·0,·gas:·1,·km:·0↲ (recebido)                                           │
 │               ↑         (primeiro)                                           │
@@ -158,47 +135,31 @@
 │ leave                                                                        │
 │ show                                                                         │
 │ end                                                                          │
-├────────────────────────────────── ESPERADO ──────────────────────────────────┤
-│ $show                                                                        │
-├ pass: 0, gas: 0, km: 0                                                       │
-├ $enter                                                                       │
-├ $enter                                                                       │
-├ $show                                                                        │
-├ pass: 2, gas: 0, km: 0                                                       │
-├ $enter                                                                       │
-├ fail: limite de pessoas atingido                                             │
-├ $show                                                                        │
-├ pass: 2, gas: 0, km: 0                                                       │
-├ $leave                                                                       │
-├ $show                                                                        │
-├ pass: 1, gas: 0, km: 0                                                       │
-├ $leave                                                                       │
-├ $leave                                                                       │
-├ fail: nao ha ninguem no carro                                                │
-├ $show                                                                        │
-├ pass: 0, gas: 0, km: 0                                                       │
-├ $end                                                                         │
-├────────────────────────────────── RECEBIDO ──────────────────────────────────┤
-│ $show                                                                        │
-├ pass: 0, gas: 1, km: 0                                                       │
-├ $end                                                                         │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
+├────────────────────────────────── ESPERADO ──────────────────────────────────╯
+│ $show
+├ pass: 0, gas: 0, km: 0
+├ $enter
+├ $enter
+├ $show
+├ pass: 2, gas: 0, km: 0
+├ $enter
+├ fail: limite de pessoas atingido
+├ $show
+├ pass: 2, gas: 0, km: 0
+├ $leave
+├ $show
+├ pass: 1, gas: 0, km: 0
+├ $leave
+├ $leave
+├ fail: nao ha ninguem no carro
+├ $show
+├ pass: 0, gas: 0, km: 0
+├ $end
+├────────────────────────────────── RECEBIDO ───────────────────────────────────
+│ $show
+├ pass: 0, gas: 1, km: 0
+├ $end
+├────────────────────────────────── DESIGUAL ──────────────────────────────────╮
 │ pass:·0,·gas:·0,·km:·0↲ (esperado)                                           │
 │ pass:·0,·gas:·1,·km:·0↲ (recebido)                                           │
 │               ↑         (primeiro)                                           │
@@ -209,17 +170,16 @@
 │ fuel 60                                                                      │
 │ show                                                                         │
 │ end                                                                          │
-├────────────────────────────────── ESPERADO ──────────────────────────────────┤
-├ $fuel 60                                                                     │
-├ $show                                                                        │
-├ pass: 0, gas: 60, km: 0                                                      │
-├ $end                                                                         │
-├────────────────────────────────── RECEBIDO ──────────────────────────────────┤
-├ $show                                                                        │
-├ pass: 0, gas: 1, km: 0                                                       │
-├ $end                                                                         │
-├                                                                              │
-├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
+├────────────────────────────────── ESPERADO ──────────────────────────────────╯
+├ $fuel 60
+├ $show
+├ pass: 0, gas: 60, km: 0
+├ $end
+├────────────────────────────────── RECEBIDO ───────────────────────────────────
+├ $show
+├ pass: 0, gas: 1, km: 0
+├ $end
+├────────────────────────────────── DESIGUAL ──────────────────────────────────╮
 │ $fuel·60↲ (esperado)                                                         │
 │ $show↲    (recebido)                                                         │
 │  ↑        (primeiro)                                                         │
@@ -231,21 +191,18 @@
 │ show                                                                         │
 │ drive 10                                                                     │
 │ end                                                                          │
-├────────────────────────────────── ESPERADO ──────────────────────────────────┤
-├ $fuel 60                                                                     │
-├ $show                                                                        │
-├ pass: 0, gas: 60, km: 0                                                      │
-├ $drive 10                                                                    │
-├ fail: nao ha ninguem no carro                                                │
-├ $end                                                                         │
-├────────────────────────────────── RECEBIDO ──────────────────────────────────┤
-├ $show                                                                        │
-├ pass: 0, gas: 1, km: 0                                                       │
-├ $end                                                                         │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
+├────────────────────────────────── ESPERADO ──────────────────────────────────╯
+├ $fuel 60
+├ $show
+├ pass: 0, gas: 60, km: 0
+├ $drive 10
+├ fail: nao ha ninguem no carro
+├ $end
+├────────────────────────────────── RECEBIDO ───────────────────────────────────
+├ $show
+├ pass: 0, gas: 1, km: 0
+├ $end
+├────────────────────────────────── DESIGUAL ──────────────────────────────────╮
 │ $fuel·60↲ (esperado)                                                         │
 │ $show↲    (recebido)                                                         │
 │  ↑        (primeiro)                                                         │
@@ -260,29 +217,22 @@
 │ drive 10                                                                     │
 │ show                                                                         │
 │ end                                                                          │
-├────────────────────────────────── ESPERADO ──────────────────────────────────┤
-├ $fuel 60                                                                     │
-├ $show                                                                        │
-├ pass: 0, gas: 60, km: 0                                                      │
-├ $drive 10                                                                    │
-├ fail: nao ha ninguem no carro                                                │
-├ $enter                                                                       │
-├ $drive 10                                                                    │
-├ $show                                                                        │
-├ pass: 1, gas: 50, km: 10                                                     │
-├ $end                                                                         │
-├────────────────────────────────── RECEBIDO ──────────────────────────────────┤
-├ $show                                                                        │
-├ pass: 0, gas: 1, km: 0                                                       │
-├ $end                                                                         │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
+├────────────────────────────────── ESPERADO ──────────────────────────────────╯
+├ $fuel 60
+├ $show
+├ pass: 0, gas: 60, km: 0
+├ $drive 10
+├ fail: nao ha ninguem no carro
+├ $enter
+├ $drive 10
+├ $show
+├ pass: 1, gas: 50, km: 10
+├ $end
+├────────────────────────────────── RECEBIDO ───────────────────────────────────
+├ $show
+├ pass: 0, gas: 1, km: 0
+├ $end
+├────────────────────────────────── DESIGUAL ──────────────────────────────────╮
 │ $fuel·60↲ (esperado)                                                         │
 │ $show↲    (recebido)                                                         │
 │  ↑        (primeiro)                                                         │
@@ -300,41 +250,28 @@
 │ drive 10                                                                     │
 │ show                                                                         │
 │ end                                                                          │
-├────────────────────────────────── ESPERADO ──────────────────────────────────┤
-├ $fuel 60                                                                     │
-├ $show                                                                        │
-├ pass: 0, gas: 60, km: 0                                                      │
-├ $drive 10                                                                    │
-├ fail: nao ha ninguem no carro                                                │
-├ $enter                                                                       │
-├ $drive 10                                                                    │
-├ $show                                                                        │
-├ pass: 1, gas: 50, km: 10                                                     │
-├ $drive 70                                                                    │
-├ fail: tanque vazio apos andar 50 km                                          │
-├ $drive 10                                                                    │
-├ fail: tanque vazio                                                           │
-├ $show                                                                        │
-├ pass: 1, gas: 0, km: 60                                                      │
-├ $end                                                                         │
-├────────────────────────────────── RECEBIDO ──────────────────────────────────┤
-├ $show                                                                        │
-├ pass: 0, gas: 1, km: 0                                                       │
-├ $end                                                                         │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
+├────────────────────────────────── ESPERADO ──────────────────────────────────╯
+├ $fuel 60
+├ $show
+├ pass: 0, gas: 60, km: 0
+├ $drive 10
+├ fail: nao ha ninguem no carro
+├ $enter
+├ $drive 10
+├ $show
+├ pass: 1, gas: 50, km: 10
+├ $drive 70
+├ fail: tanque vazio apos andar 50 km
+├ $drive 10
+├ fail: tanque vazio
+├ $show
+├ pass: 1, gas: 0, km: 60
+├ $end
+├────────────────────────────────── RECEBIDO ───────────────────────────────────
+├ $show
+├ pass: 0, gas: 1, km: 0
+├ $end
+├────────────────────────────────── DESIGUAL ──────────────────────────────────╮
 │ $fuel·60↲ (esperado)                                                         │
 │ $show↲    (recebido)                                                         │
 │  ↑        (primeiro)                                                         │
@@ -354,47 +291,31 @@
 │ fuel 200                                                                     │
 │ show                                                                         │
 │ end                                                                          │
-├────────────────────────────────── ESPERADO ──────────────────────────────────┤
-├ $fuel 60                                                                     │
-├ $show                                                                        │
-├ pass: 0, gas: 60, km: 0                                                      │
-├ $drive 10                                                                    │
-├ fail: nao ha ninguem no carro                                                │
-├ $enter                                                                       │
-├ $drive 10                                                                    │
-├ $show                                                                        │
-├ pass: 1, gas: 50, km: 10                                                     │
-├ $drive 70                                                                    │
-├ fail: tanque vazio apos andar 50 km                                          │
-├ $drive 10                                                                    │
-├ fail: tanque vazio                                                           │
-├ $show                                                                        │
-├ pass: 1, gas: 0, km: 60                                                      │
-├ $fuel 200                                                                    │
-├ $show                                                                        │
-├ pass: 1, gas: 100, km: 60                                                    │
-├ $end                                                                         │
-├────────────────────────────────── RECEBIDO ──────────────────────────────────┤
-├ $show                                                                        │
-├ pass: 0, gas: 1, km: 0                                                       │
-├ $end                                                                         │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├                                                                              │
-├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
+├────────────────────────────────── ESPERADO ──────────────────────────────────╯
+├ $fuel 60
+├ $show
+├ pass: 0, gas: 60, km: 0
+├ $drive 10
+├ fail: nao ha ninguem no carro
+├ $enter
+├ $drive 10
+├ $show
+├ pass: 1, gas: 50, km: 10
+├ $drive 70
+├ fail: tanque vazio apos andar 50 km
+├ $drive 10
+├ fail: tanque vazio
+├ $show
+├ pass: 1, gas: 0, km: 60
+├ $fuel 200
+├ $show
+├ pass: 1, gas: 100, km: 60
+├ $end
+├────────────────────────────────── RECEBIDO ───────────────────────────────────
+├ $show
+├ pass: 0, gas: 1, km: 0
+├ $end
+├────────────────────────────────── DESIGUAL ──────────────────────────────────╮
 │ $fuel·60↲ (esperado)                                                         │
 │ $show↲    (recebido)                                                         │
 │  ↑        (primeiro)                                                         │

@@ -61,7 +61,7 @@ class Writer:
             if _target.suffix == ".tio":
                 _new = "\n".join([Writer.to_tio(unit) for unit in _unit_list])
             elif _target.suffix == ".toml":
-                _new = "\n".join([TomlParser.to_toml(unit.case, unit.get_input(), unit.get_expected()) for unit in _unit_list])
+                _new = "\n".join([TomlParser.data_to_toml_test(unit.case, unit.get_input(), unit.get_expected()) for unit in _unit_list])
             else:
                 _new = "\n".join([Writer.to_vpl(unit) for unit in _unit_list])
 

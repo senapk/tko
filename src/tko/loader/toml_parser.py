@@ -6,17 +6,21 @@ from tko.loader.unit_data import UnitData
 class TomlParser:
 
     @staticmethod
-    def load_and_expand(origin: Path) -> str:
-        test_cases: list[UnitData] = TomlParser().parse_toml(Decoder.load(origin), origin)
-        content = "\n".join([TomlParser.to_toml(unit.label, unit.input, unit.output) for unit in test_cases])
-        return content
-
-    def parse_toml(self, content: str, file: Path) -> list[UnitData]:
-        visited: set[Path] = set()
-        return self.__parse_toml(content, file, visited)
+    def load_and_expand_from_path(origin: Path) -> str:
+        return "\n".join(TomlParser.load_and_expand_from_content(Decoder.load(origin), origin))
+    
+    @staticmethod
+    def load_and_expand_from_content(content: str, origin: Path) -> list[str]:
+        test_cases: list[UnitData] = TomlParser.extract_toml_units(content, origin)
+        return [TomlParser.data_to_toml_test(unit.label, unit.input, unit.output) for unit in test_cases]
 
     @staticmethod
-    def to_toml(label: str, input: str, output: str) -> str:
+    def extract_toml_units(content: str, file: Path) -> list[UnitData]:
+        visited: set[Path] = set()
+        return TomlParser.__parse_toml(content, file, visited)
+
+    @staticmethod
+    def data_to_toml_test(label: str, input: str, output: str) -> str:
         def _multiline(value: str) -> str:
             # Garante que termina com newline (TOML multiline padrão)
             if not value.endswith("\n"):
@@ -40,7 +44,8 @@ class TomlParser:
     def create_empty_toml() -> str:
         return "[[tests]]\nlabel = ''\ninput = '''\n'''\noutput = '''\n'''\n"
 
-    def __parse_toml(self, content: str, file: Path, visited: set[Path]) -> list[UnitData]:
+    @staticmethod
+    def __parse_toml(content: str, file: Path, visited: set[Path]) -> list[UnitData]:
         main_list_name = "tests"
         load_command = "load"
 
@@ -59,7 +64,7 @@ class TomlParser:
             path = Path(data[load_command])
             if not path.is_absolute():
                 path = (file.parent / path).resolve()
-            result.extend(self.__parse_toml(Decoder.load(path), path, visited))
+            result.extend(TomlParser.__parse_toml(Decoder.load(path), path, visited))
 
         if main_list_name not in data or not isinstance(data[main_list_name], list):
             return result

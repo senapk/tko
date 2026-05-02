@@ -167,7 +167,7 @@ class CmdDown:
                 self.actions.compare_and_save_to(Decoder.load(file), destiny_path)
             if file.suffix == ".toml":
                 destiny_path = destiny_folder / file.name
-                content = TomlParser.load_and_expand(file)
+                content = TomlParser.load_and_expand_from_path(file)
                 self.actions.compare_and_save_to(content, destiny_path)
 
 

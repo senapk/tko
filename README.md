@@ -35,6 +35,7 @@ O tko é um sistema de testes para programação competitiva. Ele é capaz de ro
 ## Ferramentas 
 
 - [Filtragem e Rascunhos](wiki/filter.md)
+- [Markdown Preprocessor](wiki/mdpp.md)
 
 ## Atualizando o tko
 

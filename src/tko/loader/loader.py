@@ -23,7 +23,7 @@ class Loader:
     @staticmethod
     def parse_toml(text: str, source: Path) -> list[Unit]:
         parser = TomlParser()
-        data_list = parser.parse_toml(text, source)
+        data_list = parser.extract_toml_units(text, source)
         output: list[Unit] = []
         for m in data_list:
             case = m.label

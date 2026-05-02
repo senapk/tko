@@ -13,6 +13,7 @@ from tko.cli.reset import app as reset_app
 from tko.cli.remote import app as remote_app
 from tko.cli.collect import app as collect_app
 from tko.cli.class_cmd import app as class_app
+from tko.cli.tool import app as tool_app
 from tko.cli.main_cmds import register_main_commands
 
 import os
@@ -33,6 +34,7 @@ app.add_typer(reset_app, name="reset")
 app.add_typer(remote_app, name="remote")
 app.add_typer(collect_app, name="collect")
 app.add_typer(class_app, name="class")
+app.add_typer(tool_app, name="tool")
 
 # Register main commands directly
 register_main_commands(app)

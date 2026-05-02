@@ -93,15 +93,21 @@ class DiffBuilderDown:
         self.output.append(RText(DiffBuilder.vreceived, color).fold_in(self.width, Symbols.hbar, opening, ending))
 
         # lines
+        received: list[RText] = []
         for _, line in self.expected_received:
             if line is not None:
+                received.append(line)
+        while len(received) > 1 and len(received[-1]) == 2:
+            received.pop()
+        
+        for line in received:
                 if self.curses:
                     self.output.append(line.ljust(self.width - 1, " ").trim_end(self.width) + Symbols.vbar)
                 else:
                     self.output.append(line)
 
 
-    def insert_first_line_diff(self):
+    def insert_mismatch(self) -> bool:
         include_rendering = False
         if self.unit.get_expected() != self.unit.get_received() and self.unit.get_expected() != "":
             include_rendering = True
@@ -109,14 +115,16 @@ class DiffBuilderDown:
             include_rendering = False
 
         if not include_rendering:
-            return
+            return False
         ending = "┤" if self.curses else "╮"
         self.output.append(RText(DiffBuilder.vunequal, "b").fold_in(self.width, Symbols.hbar, "├", ending))
         for line in self.db.first_failure_diff(self.unit.get_expected(), self.unit.get_received(), self.first_failure):
             self.output.append((RText("│") + line).ljust(self.width - 1, " ") + "│")
+        return True
 
-    def end_frame(self):
-        self.output.append(RText().fold_in(self.width, Symbols.hbar, "╰", "╯"))
+    def end_frame(self, mistatch_inserted: bool):
+        end = "╯" if mistatch_inserted else Symbols.hbar
+        self.output.append(RText().fold_in(self.width, Symbols.hbar, "╰", end))
 
     def build_diff(self) -> list[RText]:
         if self.__to_insert_header:
@@ -134,7 +142,7 @@ class DiffBuilderDown:
 
         self.insert_expected()
         self.insert_received()
-        self.insert_first_line_diff()
-        self.end_frame()
+        mistatch_inserted = self.insert_mismatch()
+        self.end_frame(mistatch_inserted)
 
         return self.output
