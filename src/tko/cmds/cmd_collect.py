@@ -108,10 +108,10 @@ class CollectSingle:
                     print(f"{key}: {value.to_dict()}")
 
         if param.log:
-            log_data = sorted(rep.logger.history.get_entries().items(), key=lambda x: x[0])
-            data.log = [str(entry) for _, entry in log_data]
+            log_data = rep.logger.history.get_entries()
+            data.log = [str(entry) for entry in log_data]
             if not param.json_output:
-                for _, entry in log_data:
+                for entry in log_data:
                     print(entry)
 
         if param.game:

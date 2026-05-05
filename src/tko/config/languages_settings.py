@@ -166,6 +166,8 @@ class LanguagesSettings:
             self.save_file_settings()
         try:
             content = Decoder.load(self.path)
+            if content.strip() == "":
+                raise Exception("Configurações de linguagem vazias")
             data = tomllib.loads(content)
             for lang, settings in data.items():
                 self.lang_settings[lang] = LangSettings(

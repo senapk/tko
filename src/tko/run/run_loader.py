@@ -3,8 +3,6 @@ from pathlib import Path
 from tko.util.rtext import RText
 from tko.util.raw_terminal import RawTerminal
 from tko.feno.filter import CodeFilter
-from tko.repository.repository import Repository
-from tko.repository.rep_paths import RepPaths
 from tko.game.task import Task
 from tko.play.opener import Opener
 from tko.run.run_context import RunContext

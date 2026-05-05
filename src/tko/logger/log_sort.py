@@ -1,3 +1,5 @@
+import sys # type: ignore
+
 from tko.logger.log_item_base import LogItemBase
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove

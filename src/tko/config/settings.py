@@ -119,6 +119,8 @@ class Settings:
         output: list[str] = []
         output.append(str(RText.parse("[g]Arquivo global configuração:[.]")))
         output.append("    " + self.get_settings_file().resolve().as_posix())
+        output.append(str(RText.parse("[g]Configurações de linguagem:[.]")))
+        output.append("    " + self.get_languages_file().resolve().as_posix())
         output.append("")
         
         output.append(str(RText.parse("[g]Fontes de tarefas remotas cadastradas:[.]")))

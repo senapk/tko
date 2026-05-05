@@ -1,5 +1,4 @@
 from __future__ import annotations
-from tko.logger.old_log_loader import OldLogLoader
 from tko.logger.log_item_base import LogItemBase
 from tko.logger.log_item_self import LogItemSelf
 from tko.logger.log_item_exec import LogItemExec
@@ -11,6 +10,7 @@ import datetime as dt
 from tko.util.decoder import Decoder
 from typing import Callable
 from pathlib import Path
+import sys # type: ignore
 
 class LogHistory:
 
@@ -20,23 +20,23 @@ class LogHistory:
         self.paths = RepPaths(rep_folder)
         self.log_folder: Path = self.paths.get_log_folder()
         self.listeners: list[Callable[[LogItemBase, bool], None]] = listeners
-        self.entries: dict[dt.datetime, LogItemBase] = {}
-        self.entries.update(self.__load_old_log())
-        self.entries.update(self.__load_daily_log_folder())
+        self.entries: dict[str, LogItemBase] = {}
+        #self.entries.extend(self.__load_old_log().values())
+        self.entries.update({str(item): item for item in self.__load_daily_log_folder()})
         # avoid duplicated entries
-        sorted_entries = sorted(self.entries.items(), key=lambda x: x[0])
+        sorted_entries: list[LogItemBase] = sorted([item for item in self.entries.values()], key=lambda x: x.get_datetime())
         
-        for _, item in sorted_entries:
+        for item in sorted_entries:
             for listener in self.listeners:
                 listener(item, False)
 
-    def __load_old_log(self) -> dict[dt.datetime, LogItemBase]:
-        self.old_log_file = self.paths.get_old_history_file()
-        loader = OldLogLoader(self.paths.get_repo_root_dir())
-        return loader.base_dict
+    # def __load_old_log(self) -> dict[dt.datetime, LogItemBase]:
+    #     self.old_log_file = self.paths.get_old_history_file()
+    #     loader = OldLogLoader(self.paths.get_repo_root_dir())
+    #     return loader.base_dict
 
-    def get_entries(self) -> dict[dt.datetime, LogItemBase]:
-        return self.entries
+    def get_entries(self) -> list[LogItemBase]:
+        return list(self.entries.values())
 
     def get_log_folder(self) -> Path:
         return self.log_folder
@@ -52,7 +52,7 @@ class LogHistory:
         now_str, now_dt = Delta.now()
         if item_base.get_datetime() == dt.datetime.fromordinal(1):
             item_base.set_timestamp(now_str, now_dt)
-        self.entries[now_dt] = item_base
+        self.entries[str(item_base)] = item_base
         for listener in self.listeners:
             listener(item_base, True)
 
@@ -62,26 +62,32 @@ class LogHistory:
             file.write(f'{item_base.encode_line()}\n')
         return item_base
 
-    def __load_daily_log_folder(self) -> dict[dt.datetime, LogItemBase]:
+    def __load_daily_log_folder(self) -> list[LogItemBase]:
         log_folder = self.paths.get_log_folder()
         if not log_folder.exists():
-            return {}
+            return []
         if not log_folder.is_dir():
             raise ValueError(f"Log folder '{log_folder}' is not a directory.")
         files = log_folder.iterdir()
 
         files_path = [f for f in files if f.suffix == '.log']
         if not files_path:
-            return {}
+            return []
         # begin with the older file
         files_path.sort()
-        entries: dict[dt.datetime, LogItemBase] = {}
+        entries: list[LogItemBase] = []
         for file in files_path:
+            # verify if name is in the format YYYY-MM-DD.log
+            name = file.stem
+            try:
+                dt.datetime.strptime(name, "%Y-%m-%d")
+            except ValueError:
+                continue
             content = Decoder.load(file)
             for line in content.splitlines():
                 item: LogItemBase | None = LogHistory.decode_line(line)
                 if item is not None:
-                    entries[item.get_datetime()] = item
+                    entries.append(item)
         return entries
     
     @staticmethod

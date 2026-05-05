@@ -4,6 +4,7 @@ from tko.logger.daily_listener import DailyListener
 from tko.logger.log_history import LogHistory
 from tko.logger.log_item_base import LogItemBase
 from pathlib import Path
+import sys # type: ignore
 
 
 class Logger:
