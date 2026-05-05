@@ -39,6 +39,8 @@ class Actions:
     def in_blacklist(self):
         if self.hook == "node_modules":
             return False
+        if self.hook.startswith(".") or self.hook.startswith("_") or self.hook.startswith("+"):
+            return False
         return True
 
     def load_title(self):
