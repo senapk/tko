@@ -44,8 +44,9 @@ class Resume:
 
 
 class TaskResume:
-    def __init__(self, key: str):
+    def __init__(self, key: str, quest_key: str):
         self.key: str = key
+        self.quest: str = quest_key
         self.resume: Resume = Resume()
         self.info: TaskInfo = TaskInfo()
 
@@ -66,10 +67,14 @@ class TaskResume:
     
     def to_dict(self) -> dict[str, Any]:
         output: dict[str, Any] = {}
+        output["key"] = self.key
+        output["quest"] = self.quest
         output.update(self.resume.to_dict())
         output.update(self.info.get_kv())
         return output
 
     def from_dict(self, info: dict[str, str]) -> None:
+        self.key = info.get("key", "")
+        self.quest = info.get("quest", "")
         self.resume.from_dict(info)
         self.info.load_from_kv(info)

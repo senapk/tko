@@ -9,8 +9,6 @@ from tko.game.task_info import TaskInfo
 
 import enum
 
-
-
 class Task(TreeItem):
     str_index = "idx"
 

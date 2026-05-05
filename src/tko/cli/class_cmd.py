@@ -1,5 +1,4 @@
 import typer
-from typing import Optional
 from pathlib import Path
 
 app = typer.Typer(help="Manage class tasks")
@@ -7,9 +6,9 @@ app = typer.Typer(help="Manage class tasks")
 @app.command("collect", help="Colect and merge data from many repos")
 def class_collect(
     path: list[str] = typer.Argument(..., help="Paths to repos"),
-    json: Optional[str] = typer.Option(None, "--json", "-j", help="Path to save the extracted JSON data"),
-    csv: Optional[str] = typer.Option(None, "--csv", "-c", help="Path to save the extracted CSV data"),
-    block_prefix: Optional[str] = typer.Option(None, "--block_prefix", "-b", help="Block prefix to insert in csv file")
+    json: str | None = typer.Option(None, "--json", "-j", help="Path to save the extracted JSON data"),
+    csv: str | None = typer.Option(None, "--csv", "-c", help="Path to save the extracted CSV data"),
+    block_prefix: str | None = typer.Option(None, "--block_prefix", "-b", help="Block prefix to insert in csv file")
 ):
     from tko.cmds.cmd_collect import CollectMany
     git_repo_list = [Path(x) for x in path]

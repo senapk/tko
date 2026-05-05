@@ -136,7 +136,6 @@ class TaskParser:
     def get_task(self) -> Task | None:
         return self.task
 
-
     def check_path_try(self):
         if self.task is None:
             return self

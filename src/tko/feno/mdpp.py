@@ -10,9 +10,7 @@ from pathlib import Path
 from dataclasses import dataclass
 from tko.loader.unit_data import UnitData
 
-
 logger = logging.getLogger(__name__)
-
 
 class Action(enum.Enum):
     RUN = 1

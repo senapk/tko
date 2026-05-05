@@ -1,5 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
+import sys # type: ignore
 from typing import Any
 from tko.repository.repository import Repository
 from tko.logger.logger import Logger
@@ -14,20 +15,24 @@ import yaml # type: ignore
 import json
 import os
 import csv
-    
 
 class CmdCollect:
     @staticmethod
-    def resume(rep: Repository) -> dict[str, TaskResume]:
-        logger: Logger = rep.logger
+    def resume(repo: Repository) -> dict[str, TaskResume]:
+        logger: Logger = repo.logger
         tasks: dict[str, LogSort] = logger.tasks.task_dict
         resume_dict: dict[str, TaskResume] = {}
 
-        for key in tasks:
-            log_sort = tasks[key]
-            resume = TaskResume(key).from_log_sort(log_sort)
+        game = repo.game
+        quest_map: dict[str, str] = {}
+        for quest in game.quests.values():
+            # print(f"Processing quest: {quest.get_full_key()}", file=sys.stderr) # debug
+            for task in quest.get_tasks():
+                quest_map[task.get_full_key()] = quest.get_full_key()
+        for key, log_sort in tasks.items():
+            quest_key = quest_map.get(key, "")
+            resume = TaskResume(key, quest_key).from_log_sort(log_sort)
             resume_dict[key] = resume
-
         return resume_dict
 
     @staticmethod
@@ -65,8 +70,6 @@ class CollectSingle:
             self.log: bool = False
             self.json_output: bool = False
             self.colored: int = 1
-
-
 
 
     @staticmethod
@@ -170,7 +173,7 @@ class CollectMany:
                 print(RText(f"Saving extracted data to {json_path}", "g"))
                 json.dump(output_map, f, indent=4, ensure_ascii=False)
         
-        header_keys = ["username", "key", "minutes", "versions", "executions", "rate", "study", "self", "friend", "concept", "problem", "code", "debug", "refactor", "guided"]
+        header_keys = ["username", "key", "quest", "minutes", "versions", "executions", "rate", "study", "self", "friend", "concept", "problem", "code", "debug", "refactor", "guided"]
         if block_prefix is not None:
             header_keys = ["block"] + header_keys
         if csv_path is not None:
@@ -184,7 +187,8 @@ class CollectMany:
 
                         row: dict[str, Any] = {
                             "username": student_key,
-                            "key": key,
+                            "key": data.get("key", ""),
+                            "quest": data.get("quest", ""),
                             "minutes": data.get("minutes", 0),
                             "versions": data.get("versions", 0),
                             "executions": data.get("executions", 0),
