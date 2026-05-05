@@ -29,7 +29,7 @@ def task_open(
         param.set_filter(True)
         
     targets = [Path(x) for x in target_list] if target_list else []
-    cmd_run = Run(settings, targets, param)
+    cmd_run = Run(settings, targets, param, None, )
     cmd_run.set_curses()
     cmd_run.execute()
 

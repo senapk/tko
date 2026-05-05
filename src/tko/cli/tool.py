@@ -4,7 +4,6 @@ from typing import Optional
 
 app = typer.Typer(help="Utility tools for one-off operations")
 
-
 @app.command("mdpp", help="Preprocessor for markdown files")
 def tool_mdpp(
     targets: Optional[list[str]] = typer.Argument(None, help="Readme files or None to default task behavior"),
@@ -49,7 +48,7 @@ def tool_redirect(
     output: str | None = typer.Option(None, "--output", "-o", help="Output file")
 ):
     from tko.feno.remote_md import Absolute
-    Absolute.convert_or_copy_or_print(Path(target), output if output is None else Path(output))
+    Absolute.convert_or_copy_or_print(Path(target), output if output is None else Path(output), make_remote=True)
 
 
 @app.command("filter", help="Filter code removing answers")

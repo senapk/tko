@@ -167,8 +167,6 @@ class TesterExecutor:
         header = self.top_bar.build_top_line_header(state, RawTerminal.get_terminal_size())
         return lambda: Free.free_run(
             self.wdir.get_solver(),
-            show_compilation=True,
-            to_clear=True,
-            wait_input=True,
+            standalone_mode=False,
             header=header,
         )

@@ -34,15 +34,15 @@ def build_all(
     targets: list[str] | None = typer.Argument(None, help="directories"),
     check: bool = typer.Option(False, "--check", "-c", help="Check if the file needs to be rebuilt"),
     brief: bool = typer.Option(False, "--brief", "-b", help="Brief mode"),
-    remote: bool = typer.Option(False, "--remote", "-r", help="Search for remote.cfg and create absolute links"),
-    erase: bool = typer.Option(False, "--erase", "-e", help="Erase .md and .tio temp files"),
-    debug: bool = typer.Option(False, "--debug", "-d", help="Display debug msgs")
+    moodle: bool = typer.Option(False, "--moodle", "-m", help="Build for Moodle VPL"),
+    local: bool = typer.Option(False, "--local", "-l", help="Don't search for remote.cfg to create absolute links"),
+    erase: bool = typer.Option(False, "--erase", "-e", help="Erase .md and .vpl temp files"),
 ):
     from tko.feno.build import build_all as feno_build_all
     
     if targets is None:
         targets = []
-    feno_build_all([Path(x) for x in targets], remote, check, erase, brief)
+    feno_build_all(targets=[Path(x) for x in targets], remote=not local, check=check, erase=erase, brief=brief, moodle=moodle)
 
 @app.command("index", help="Index Readme file")
 def build_index(

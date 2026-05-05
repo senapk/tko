@@ -160,8 +160,9 @@ class Links:
 class LoadParams:
     extract: str | None = None
     rmcom: bool = False
-    fenced: bool = False
+    fenced: str | None = None
     filter: bool = False
+    table: bool = False
     tests: int | None = None
 
 class Load:
@@ -205,7 +206,14 @@ class Load:
             token = tokens[i]
             
             if token  == "--fenced":
-                params.fenced = True
+                value = Load.__get_value(tokens, i)
+                if value:
+                    params.fenced = value
+                    i += 1 # Consome o valor
+                else:
+                    params.fenced = "" # Se não houver valor, apenas ativa o fenced sem linguagem específica
+            elif token == "--table":
+                params.table = True
             elif token == "--extract":
                 val = Load.__get_value(tokens, i)
                 if val:
@@ -235,6 +243,8 @@ class Load:
             
             i += 1 # Sempre avança para o próximo token
             
+            # if params.tests is not None and not params.table:
+            #     params.fenced = "py"
         return params
 
     @staticmethod
@@ -249,7 +259,7 @@ class Load:
         return input_pad, output_pad
 
     @staticmethod
-    def generate_table_from_test_toml(content: str, path: Path, cases: int) -> str:
+    def generate_tests_from_test_toml(content: str, path: Path, cases: int, use_table: bool) -> str:
         def format_table(_input: str, _output: str, pad_input: int, pad_output: int) -> str:
             pad_input += 3
             if pad_input % 2 == 0:
@@ -266,6 +276,14 @@ class Load:
             table_end = '</pre></td></tr></table>'
             
             return table_start + _input + table_mid + _output + table_end
+        
+        def format_simple_test_cases(_input: str, _output: str, pad: int) -> str:
+            opening = "```py"
+            before = f'{">>>>>>>> INSERT"}'
+            middle = f'{"======== EXPECT"}'
+            ending = f'{"<<<<<<<< FINISH"}'
+            closing = "```"
+            return f"{opening}\n{before}\n{_input}{middle}\n{_output}{ending}\n{closing}"
 
         from tko.loader.toml_parser import TomlParser
         test_data_list: list[UnitData] = TomlParser.extract_toml_units(content, path)
@@ -274,12 +292,13 @@ class Load:
         elif cases > 0:
             test_data_list = test_data_list[:cases]
         pad_input, pad_output = Load.__calc_input_and_output_pad(test_data_list)
-        print(f"pad_input: {pad_input}, pad_output: {pad_output}")
+        if use_table:
+            table_data_list = [format_table(unit.input, unit.output, pad_input, pad_output) for unit in test_data_list]
+        else:
+            pad = max(20, pad_input, pad_output)
+            table_data_list = [format_simple_test_cases(unit.input, unit.output, pad) for unit in test_data_list]
 
-        table_data_list = [format_table(unit.input, unit.output, pad_input, pad_output) for unit in test_data_list]
-
-
-        return "\n\n".join(table_data_list[:cases])
+        return "\n\n".join(table_data_list)
 
     @staticmethod
     def _process_file_content(abspath: Path, rel_path: str, params: LoadParams) -> str:
@@ -298,13 +317,16 @@ class Load:
         if params.rmcom:
             data = Load.rmcom(abspath, data)
         if params.tests is not None:
-            data = Load.generate_table_from_test_toml(data, abspath, params.tests)
-        if params.fenced:
-            lang = abspath.suffix[1:]
-            data = f"```{lang}\n{data}```"
+            data = Load.generate_tests_from_test_toml(data, abspath, params.tests, params.table)
+        if params.fenced is not None:
+            if params.fenced == "":
+                lang = abspath.suffix[1:]
+            else:
+                lang = params.fenced
+            data = f"```{lang}\n{data}\n```"
 
         # Garante que termine com apenas uma quebra de linha
-        return data.rstrip() + "\n"
+        return data.rstrip()
 
     @staticmethod
     def execute(content: str, target_dir: Path, action: Action = Action.RUN) -> str:

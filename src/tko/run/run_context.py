@@ -1,6 +1,4 @@
 from pathlib import Path
-from typing import Optional
-
 from tko.util.param import Param
 from tko.config.settings import Settings
 from tko.run.wdir import Wdir
@@ -9,7 +7,7 @@ from tko.game.task import Task
 from tko.play.opener import Opener
 
 class RunContext:
-    def __init__(self, settings: Settings, target_list: list[Path], param: Optional[Param.Basic]):
+    def __init__(self, settings: Settings, target_list: list[Path], param: Param.Basic | None, language: str | None, repo: Repository | None = None):
         self.pwd = Path(".").resolve()
         self.settings = settings
         self.target_list: list[Path] = [Path(target) for target in target_list]
@@ -20,7 +18,7 @@ class RunContext:
         
         # State
         self.curses_mode: bool = False
-        self.lang: str = ""
+        self.lang: str = language if language is not None else ""
         self.run_without_ask: bool = True
         self.show_track_info: bool = False
         self.show_self_info: bool = False
@@ -31,10 +29,10 @@ class RunContext:
         self.timeout: int = 0
         
         # Discovered Environment
-        self.repo: Optional[Repository] = None
-        self.task: Optional[Task] = None
-        self.track_folder: Optional[Path] = None
-        self.opener: Optional[Opener] = None
+        self.repo: None | Repository = repo
+        self.task: None | Task = None
+        self.track_folder: None | Path = None
+        self.opener: None | Opener = None
 
     def set_show_track_info(self):
         self.show_track_info = True

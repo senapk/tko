@@ -29,8 +29,6 @@ class RunExecutor:
         return percent
 
     def run_tests(self) -> int:
-        if self.ctx.task is None:
-            self.loader.prepare_rep_task_logger()
         if self.ctx.curses_mode:
             self.run_test_on_curses()
             return 0
@@ -59,7 +57,7 @@ class RunExecutor:
 
     def free_run(self):
         self.tracker.store_free_run_log()
-        Free.free_run(self.ctx.wdir.get_solver(), show_compilation=False, to_clear=False, wait_input=False)
+        Free.free_run(self.ctx.wdir.get_solver(), standalone_mode=True)
 
     def _run_all_tests_top_line(self) -> int:
         print(RText(Symbols.opening) + self.ctx.wdir.resume_splitted(), end="")

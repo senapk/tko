@@ -22,8 +22,7 @@ class RunLoader:
         self.ctx = ctx
 
     def setup_task(self):
-        if self.ctx.repo is None:
-            self.try_setup_task_from_rep()
+        self.try_setup_task_from_rep()
         if self.ctx.task is None:
             self.setup_task_from_wdir()
 
@@ -33,8 +32,13 @@ class RunLoader:
         if self.ctx.param.filter:
             self._change_targets_to_filter_mode()
         try:
+            lang: str = ""
+            if self.ctx.lang:
+                lang = self.ctx.lang
+            elif self.ctx.repo is not None and self.ctx.repo.data.lang:
+                lang = self.ctx.repo.data.lang
             self.ctx.wdir = (self.ctx.wdir.set_curses(self.ctx.curses_mode)
-                                    .set_lang(self.ctx.lang)
+                                    .set_lang(lang)
                                     .set_target_list(self.ctx.target_list)
                                     .build()
                                     .filter(self.ctx.param)
@@ -46,18 +50,8 @@ class RunLoader:
         return self.ctx.wdir
 
     def try_setup_task_from_rep(self) -> bool:
-        dirname = self.ctx.pwd
-        repo_path = RepPaths.rec_search_for_repo_parents(dirname)
-        if repo_path is None:
+        if self.ctx.repo is None:
             return False
-        rep: Repository = Repository(repo_path)
-        from tko.repository.repository_loader import RepositoryLoader
-        from tko.repository.game_coordinator import GameCoordinator
-        RepositoryLoader(rep).load_config()
-        GameCoordinator(rep).load_game(verbose=True)
-        self.ctx.repo = rep
-        if rep.data.lang != "":
-            self.ctx.lang = rep.data.lang
         task = self.ctx.repo.get_task_from_task_folder(self.ctx.pwd)
         if task is not None:
             self.ctx.task = task

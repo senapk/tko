@@ -51,6 +51,8 @@ class Wdir:
         return self
 
     def set_lang(self, lang: str):
+        if lang == "":
+            return self
         self.__lang = lang
         return self
     
@@ -76,6 +78,9 @@ class Wdir:
         if self.__autoload_folder is None:
             raise Warning("fail: pasta de autoload não definida")
         folder: Path = self.__autoload_folder
+
+        if self.__lang == "":
+            print(RText.parse("Você não definiu os arquivos diretamente. Use [y]-l[.] caso queira especificar a linguagem para autoloading."))
 
         # loading source list
         source_list: list[Path] = [target for target in folder.iterdir() if target.suffix in [".tio", ".vpl", ".toml"]]

@@ -12,8 +12,8 @@ from tko.run.run_presenter import RunPresenter
 from tko.run.run_executor import RunExecutor
 
 class Run:
-    def __init__(self, settings: Settings, target_list: list[Path], param: None | Param.Basic):
-        self.context = RunContext(settings, target_list, param)
+    def __init__(self, settings: Settings, target_list: list[Path], param: None | Param.Basic, language: str | None = None, repo: Repository | None = None):
+        self.context = RunContext(settings, target_list, param, language, repo)
 
     # Fluent Setters delegated to context
     def show_track_info(self):

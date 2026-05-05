@@ -30,7 +30,10 @@ else:  # Unix (Linux, macOS)
 
 class Free:
     @staticmethod
-    def free_run(solver: SolverBuilder, show_compilation:bool=True, to_clear: bool=True, wait_input:bool=True, header: RText = RText()) -> bool:
+    def free_run(solver: SolverBuilder, standalone_mode:bool=True, header: RText = RText()) -> bool:
+        show_compilation = not standalone_mode
+        to_clear = not standalone_mode
+        wait_input = not standalone_mode
 
         if to_clear:
             Runner.clear_screen()
@@ -58,20 +61,23 @@ class Free:
                 "shell": isinstance(cmd, str),
                 "text": True,
             }
+            if not standalone_mode:
+                if sys.platform != "win32":
+                    kwargs["preexec_fn"] = os.setsid
+                else:
+                    kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
 
-            if sys.platform != "win32":
-                kwargs["preexec_fn"] = os.setsid
+                answer = subprocess.Popen(cmd, **kwargs)
+                try:
+                    answer.wait()
+                except KeyboardInterrupt:
+                    answer.kill()
+                    os.killpg(os.getpgid(answer.pid), signal.SIGTERM)
+                if answer.returncode != 0 and answer.returncode != 1:
+                    print(Runner.decode_code(answer.returncode))
             else:
-                kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
-
-            answer = subprocess.Popen(cmd, **kwargs)
-            try:
-                answer.wait()
-            except KeyboardInterrupt:
-                answer.kill()
-                os.killpg(os.getpgid(answer.pid), signal.SIGTERM)
-            if answer.returncode != 0 and answer.returncode != 1:
-                print(Runner.decode_code(answer.returncode))
+                subprocess.run(cmd, **kwargs)
+                
         solver.reset()
         to_run_again = False
         if wait_input:

@@ -122,7 +122,7 @@ def test_load_extract_between_tags():
 
 def test_load_parse_tags_and_warnings(capsys):
     params = Load.parse_tags("--fenced --extract sec --rmcom --filter --tests 2")
-    assert params.fenced is True
+    assert params.fenced == ""
     assert params.extract == "sec"
     assert params.rmcom is True
     assert params.filter is True
@@ -137,7 +137,7 @@ def test_load_parse_tags_and_warnings(capsys):
     assert "unrecognized tag '--unknown'" in out
 
 
-def test_generate_table_from_test_toml_all_cases(capsys, tmp_path: Path):
+def test_generate_table_from_test_toml_all_cases(tmp_path: Path):
     toml_content = """[[tests]]
 input = '''
 1
@@ -156,15 +156,12 @@ b
 c
 '''
 """
-    out = Load.generate_table_from_test_toml(toml_content, tmp_path / "cases.toml", 0)
+    out = Load.generate_tests_from_test_toml(toml_content, tmp_path / "cases.toml", 0, True)
     assert out.count("<table>") == 2
     assert "Entrada" in out
     assert "Saída" in out
     assert "1\n2\n" in out
     assert "b\nc\n" in out
-    printed = capsys.readouterr().out
-    assert "pad_input:" in printed
-    assert "pad_output:" in printed
 
 
 def test_generate_table_from_test_toml_limited_cases(tmp_path: Path):
@@ -184,8 +181,12 @@ output = '''
 case
 '''
 """
-    out = Load.generate_table_from_test_toml(toml_content, tmp_path / "cases.toml", 1)
-    assert out.count("<table>") == 1
+    out = Load.generate_tests_from_test_toml(toml_content, tmp_path / "cases.toml", 1, False)
+    assert out.count("<table>") == 0
+    assert "```py" in out
+    assert ">>>>>>>> INSERT" in out
+    assert "======== EXPECT" in out
+    assert "<<<<<<<< FINISH" in out
     assert "left\n" in out
     assert "right\n" in out
     assert "second\n" not in out
@@ -205,8 +206,8 @@ def test_load_execute(tmp_path: Path):
 <!-- load script.py --fenced -->
 ```py
 print('hello')
-```
 
+```
 <!-- load -->
 """
     assert out == expected

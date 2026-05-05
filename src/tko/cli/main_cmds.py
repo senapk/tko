@@ -14,6 +14,7 @@ def register_main_commands(app: typer.Typer):
         target_list: Optional[list[str]] = typer.Argument(None, help="Solvers files, test cases or directories containing them"),
         index: Optional[int] = typer.Option(None, "--index", "-i", help="Run a specific test index"),
         pattern: str = typer.Option("@.in @.sol", "--pattern", "-p", help="Input/output file pattern"),
+        language: str = typer.Option(None, "--lang", "-l", help="Language for autoloading (e.g. py, cpp, java, go)"),
         filter: bool = typer.Option(False, "--filter", "-f", help="Filter solver files in temporary directory before running"),
         eval: bool = typer.Option(False, "--eval", "-e", help="Show percentage of passed tests"),
         compact: bool = typer.Option(False, "--compact", "-c", help="Hide test case descriptions in failures"),
@@ -22,12 +23,14 @@ def register_main_commands(app: typer.Typer):
         down: bool = typer.Option(False, "--down", "-d", help="Diff mode: top-to-bottom"),
         side: bool = typer.Option(False, "--side", "-s", help="Diff mode: side-by-side")
     ):
+        from tko.cli.common import load_repo
         from tko.util.param import Param
         from tko.util.pattern_loader import PatternLoader
         from tko.enums.diff_count import DiffCount
         from tko.enums.diff_mode import DiffMode
         from tko.cmds.cmd_run import Run
         
+
         app_ctx: AppContext = AppContext.load_from_context(ctx)
         settings = app_ctx.settings
         
@@ -51,9 +54,11 @@ def register_main_commands(app: typer.Typer):
             param.set_diff_mode(DiffMode.SIDE)
         elif down:
             param.set_diff_mode(DiffMode.DOWN)
-            
+
+        changedir = app_ctx.changedir
+        repo, _, _ = load_repo(changedir, show_warnings=False, force_offline=True)
         targets = [Path(target) for target in target_list] if target_list else []
-        cmd_run = Run(settings, targets, param)
+        cmd_run = Run(settings, targets, param, language, repo)
         if eval:
             cmd_run.show_track_info().show_self_info()
 
