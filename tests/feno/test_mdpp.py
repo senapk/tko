@@ -1,4 +1,6 @@
+import logging
 from pathlib import Path
+from pytest import LogCaptureFixture
 from tko.feno.mdpp import TocMaker, Toc, Toch, Load, Links, Action, Save
 
 def test_toc_maker_get_md_link():
@@ -120,7 +122,7 @@ def test_load_extract_between_tags():
     assert out == "b\nc\n"
 
 
-def test_load_parse_tags_and_warnings(capsys):
+def test_load_parse_tags_and_warnings(caplog: LogCaptureFixture):
     params = Load.parse_tags("--fenced --extract sec --rmcom --filter --tests 2")
     assert params.fenced == ""
     assert params.extract == "sec"
@@ -128,13 +130,14 @@ def test_load_parse_tags_and_warnings(capsys):
     assert params.filter is True
     assert params.tests == 2
 
-    invalid = Load.parse_tags("--extract --tests nope --unknown")
+    with caplog.at_level(logging.WARNING):
+        invalid = Load.parse_tags("--extract --tests nope --unknown")
+
     assert invalid.extract is None
     assert invalid.tests is None
-    out = capsys.readouterr().out
-    assert "missing value for --extract" in out
-    assert "invalid or missing integer for --tests" in out
-    assert "unrecognized tag '--unknown'" in out
+    assert "missing value for --extract" in caplog.text
+    assert "invalid or missing integer for --tests" in caplog.text
+    assert "unrecognized tag '--unknown'" in caplog.text
 
 
 def test_generate_table_from_test_toml_all_cases(tmp_path: Path):
@@ -229,20 +232,22 @@ print('old')
     assert out == expected
 
 
-def test_load_execute_missing_file(tmp_path: Path, capsys):
+def test_load_execute_missing_file(tmp_path: Path, caplog: LogCaptureFixture):
     content = """# Main
 <!-- load missing.py -->
 something stale
 <!-- load -->
 """
-    out = Load.execute(content, tmp_path, Action.RUN)
+    with caplog.at_level(logging.WARNING):
+        out = Load.execute(content, tmp_path, Action.RUN)
+
     expected = """# Main
 <!-- load missing.py -->
 
 <!-- load -->
 """
     assert out == expected
-    assert "file missing.py not found" in capsys.readouterr().out
+    assert "file missing.py not found" in caplog.text
 
 
 def test_load_execute_multiple_blocks(tmp_path: Path):
@@ -330,7 +335,7 @@ saved content
     assert (tmp_path / "output.txt").read_text() == "saved content\n"
 
 
-def test_save_execute_skips_unchanged(tmp_path: Path, capsys):
+def test_save_execute_skips_unchanged(tmp_path: Path, caplog: LogCaptureFixture):
     content = f"""
 [](save)[]({tmp_path}/output.txt)
 ```text
@@ -338,10 +343,12 @@ saved content
 ```
 [](save)
 """
-    Save.execute(content)
-    first = capsys.readouterr().out
-    assert "updated" in first
+    with caplog.at_level(logging.INFO):
+        Save.execute(content)
+    assert "updated" in caplog.text
 
-    Save.execute(content)
-    second = capsys.readouterr().out
-    assert second == ""
+    caplog.clear()
+
+    with caplog.at_level(logging.INFO):
+        Save.execute(content)
+    assert caplog.text == ""
