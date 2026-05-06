@@ -70,7 +70,7 @@ e se há tentativa de divisão por 0.
 
 ![diagrama](diagrama.png)
 
-<!-- load diagrama.puml fenced=ts:filter -->
+<!-- load diagrama.puml --fenced ts --filter -->
 
 ```ts
 class Calculator {

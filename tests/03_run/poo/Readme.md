@@ -44,7 +44,7 @@ Seu sistema deverá:
 
 ![diagrama](https://raw.githubusercontent.com/qxcodepoo/arcade/master/base/002/diagrama.png)
 
-<!-- load diagrama.puml fenced=ts:filter -->
+<!-- load diagrama.puml --fenced --filter -->
 
 ```ts
 class Car {
