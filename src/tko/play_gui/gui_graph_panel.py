@@ -1,7 +1,7 @@
 from tko.config.settings import Settings
 from tko.game.quest import Quest
 from tko.game.task import Task
-from tko.game.tree_item import TreeItem
+from tko.game.tree_item import HasTreeIdentity
 from tko.play.daily_graph import DailyGraph
 from tko.play.flags import Flags
 from tko.widget.frame import Frame
@@ -32,7 +32,7 @@ class GuiGraphPanel:
             return False, [], []
         return True, header, graph
 
-    def show(self, frame: Frame, selected: TreeItem | None) -> None:
+    def show(self, frame: Frame, selected: HasTreeIdentity | None) -> None:
         lines, cols = frame.get_inner()
         made = False
         list_data: list[RText] = []
@@ -45,7 +45,7 @@ class GuiGraphPanel:
             if height < 3:
                 height = 3
             if isinstance(selected, Task):
-                made, header, list_data = self.get_task_graph(selected.get_full_key(), width, height)
+                made, header, list_data = self.get_task_graph(selected.identity.get_full_key(), width, height)
             elif isinstance(selected, Quest) and self.flags.panel.is_graph():
                 made, header, list_data = self.get_daily_graph(width, height)
         if not made:

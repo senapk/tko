@@ -45,12 +45,12 @@ class CmdDown:
         self.settings = settings
         self.task: Task = self.repo.game.get_task(self.task_key)
        
-        origin_folder = self.task.get_origin_folder()
+        origin_folder = self.task.location.get_origin_folder()
         if origin_folder is None:
             raise ValueError(f"Atividade {self.task_key} não possui pasta de origem para download")
         self.origin_folder: Path = origin_folder # root task folder
         
-        destiny_folder = self.task.get_workspace_folder()
+        destiny_folder = self.task.location.get_workspace_folder()
         if destiny_folder is None:
             raise ValueError(f"Atividade {self.task_key} não possui pasta de destino para download")
         self.destiny_folder: Path = destiny_folder # root task workspace folder

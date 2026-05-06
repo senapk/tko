@@ -82,9 +82,9 @@ class RunExecutor:
         if self.ctx.show_track_info:
             if self.ctx.repo is not None:
                 logger = self.ctx.repo.logger
-                log_sort: LogSort | None = logger.tasks.task_dict.get(self.ctx.get_task().get_full_key(), None)
+                log_sort: LogSort | None = logger.tasks.task_dict.get(self.ctx.get_task().identity.get_full_key(), None)
                 if log_sort is not None:
-                    log_resume = TaskResume(self.ctx.get_task().get_full_key()).from_log_sort(log_sort)
+                    log_resume = TaskResume(self.ctx.get_task().identity.get_full_key(), "").from_log_sort(log_sort)
                     print(RText(f"time:{log_resume.resume.minutes:.0f}, diff:{log_resume.resume.versions}, runs:{log_resume.resume.executions},", "g") + " ", end="", flush=True)
 
         percent: float = 0 if self.ctx.no_run else self.get_rate()

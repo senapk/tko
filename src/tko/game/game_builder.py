@@ -70,13 +70,13 @@ class GameBuilder:
 
         for quest in self.quests.values():
             for task in quest.get_tasks():
-                tasks[task.get_full_key()] = task
+                tasks[task.identity.get_full_key()] = task
         return tasks
 
     def collect_quests(self) -> dict[str, Quest]:
         quests: dict[str, Quest] = {}
         for quest in self.quests.values():
-            quests[quest.get_full_key()] = quest
+            quests[quest.identity.get_full_key()] = quest
         return quests
 
     def __create_requirements_pointers(self):
@@ -116,7 +116,7 @@ class GameBuilder:
             task = tp.parse_line(line, line_num + 1).check_path_try().get_task()
             if task is not None:
                 if self.source.is_read_only() and not task.is_link():
-                    task.set_workspace_folder(self.source.get_task_workspace(task.get_key()))
+                    task.location.set_workspace_folder(self.source.get_task_workspace(task.identity.get_key()))
                 self.__add_task(task)
 
     def __get_active_quest(self) -> Quest:
@@ -126,11 +126,11 @@ class GameBuilder:
         return self.active_quest
 
     def __add_quest(self, quest: Quest) -> Quest:
-        if quest.get_full_key() not in self.quests:
-            # print("debug", f"Adding quest {quest.get_full_key()} with title {quest.get_title()}")
-            self.quests[quest.get_full_key()] = quest
-        if quest.get_full_key() not in self.ordered_quests:
-            self.ordered_quests.append(quest.get_full_key())
+        if quest.identity.get_full_key() not in self.quests:
+            # print("debug", f"Adding quest {quest.identity.get_full_key()} with title {quest.identity.get_title()}")
+            self.quests[quest.identity.get_full_key()] = quest
+        if quest.identity.get_full_key() not in self.ordered_quests:
+            self.ordered_quests.append(quest.identity.get_full_key())
         self.active_quest = quest
         return quest
 
@@ -146,19 +146,20 @@ class GameBuilder:
         available_quests = [q for q in self.quests.values()]
         for pattern, destiny in quest_filters.items():
             for q in available_quests:
-                if (pattern.lower() in q.get_title().lower()) or (pattern.lower() == f"@{q.get_key()}".lower()):
+                if (pattern.lower() in q.identity.get_title().lower()) or (pattern.lower() == f"@{q.identity.get_key()}".lower()):
                     if destiny == "":
                         quests.append(q)
                     else:
                         qdestiny = self.quests.get(f"{self.source.name}@{destiny}", None)
                         if qdestiny is None:
-                            qdestiny = Quest(destiny, destiny).set_remote_name(self.source.name)
+                            qdestiny = Quest(destiny, destiny)
+                            qdestiny.identity.set_remote_name(self.source.name)
                             self.__add_quest(qdestiny)
                         for t in q.get_tasks():
                             qdestiny.add_task(t)
                         if qdestiny not in quests:
                             quests.append(qdestiny)
-        self.quests = {q.get_full_key(): q for q in quests}
+        self.quests = {q.identity.get_full_key(): q for q in quests}
 
     def filter_by_language_and_empty(self, language: str):
         quests: list[Quest] = []
@@ -167,7 +168,7 @@ class GameBuilder:
                 continue
             if len(q.languages) == 0 or language in q.languages:
                 quests.append(q)
-        self.quests = {q.get_full_key(): q for q in quests}
+        self.quests = {q.identity.get_full_key(): q for q in quests}
         return self
 
     def __remove_empty_and_other_language_and_filtered(self, language: str, quest_filters: dict[str, str] | None, task_filters: dict[str, str] | None):
@@ -179,7 +180,7 @@ class GameBuilder:
 
     def __create_cross_references(self): #call after clear_empty
         for quest in self.quests.values():
-            quest.remote_name = self.source.name
+            quest.identity.set_remote_name(self.source.name)
             for task in quest.get_tasks():
-                task.remote_name = self.source.name
-                task.quest_key = quest.get_full_key()
+                task.identity.set_remote_name(self.source.name)
+                task.quest_key = quest.identity.get_full_key()

@@ -10,14 +10,15 @@ Values can be hided with <!-- comment -->
 class QuestParser:
     def __init__(self, source_alias: str):
         self.source_alias = source_alias
-        self.quest = Quest().set_remote_name(source_alias)
+        self.quest = Quest()
+        self.quest.identity.set_remote_name(source_alias)
         self.line: str = ""
         self.line_num = 0
         self.filename: Path = Path("")
 
     def finish_quest(self) -> Quest:
-        if self.quest.get_key() == "":
-            self.quest.set_key(get_md_link(self.quest.get_title()))
+        if self.quest.identity.get_key() == "":
+            self.quest.identity.set_key(get_md_link(self.quest.identity.get_title()))
         return self.quest
 
     def match_full_pattern(self) -> bool:
@@ -30,7 +31,7 @@ class QuestParser:
 
         line = line.replace("<!--", " ").replace("-->", " ").replace("`", " ")
         title = self.process_words(line)
-        self.quest.set_title(title)
+        self.quest.identity.set_title(title)
         return True
 
     def process_words(self, line: str) -> str:
@@ -38,7 +39,7 @@ class QuestParser:
 
         keys = [tag for tag in words if tag[0] == "@"]
         if keys:
-            self.quest.set_key(keys[0])
+            self.quest.identity.set_key(keys[0])
 
         # skills
         skills = [t[1:] for t in words if t[0] == "+"]
@@ -52,7 +53,7 @@ class QuestParser:
                     self.quest.skills[s] = 1  # default value is 1 if not specified
         if len(self.quest.skills) == 0:
             self.quest.skills = {
-                self.quest.get_key(): 1
+                self.quest.identity.get_key(): 1
             }
 
         # languages
@@ -83,7 +84,7 @@ class QuestParser:
         self.filename: Path = filename
         self.quest.line = self.line
         self.quest.line_number = self.line_num
-        self.quest.remote_name = ""
+        self.quest.identity.set_remote_name("")
 
         if self.match_full_pattern():
             return self.finish_quest()

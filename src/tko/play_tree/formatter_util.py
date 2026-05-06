@@ -16,13 +16,13 @@ class FormatterUtil:
 
 
     def is_downloaded(self, task: Task):
-        folder = task.get_workspace_folder()
+        folder = task.location.get_workspace_folder()
         if folder is None:
             return False
         return folder.exists()
 
     def is_downloaded_for_lang(self, task: Task):
-        folder = task.get_workspace_folder()
+        folder = task.location.get_workspace_folder()
         if folder is None:
             return False
 
@@ -35,7 +35,7 @@ class FormatterUtil:
         visible = 0
         hidden = 0
         for t in quest.get_tasks():
-            if t.visible:
+            if t.ui.visible:
                 visible += 1
             else:
                 hidden += 1
@@ -138,16 +138,16 @@ class FormatterUtil:
         return RText("------ ")
 
     def get_task_hours_minutes(self, task: Task) -> tuple[int, int]:
-        if task.get_full_key() in self.cache_task_times:
-            return self.cache_task_times[task.get_full_key()]
-        logsort = self.repo.logger.tasks.task_dict.get(task.get_full_key(), None)
+        if task.identity.get_full_key() in self.cache_task_times:
+            return self.cache_task_times[task.identity.get_full_key()]
+        logsort = self.repo.logger.tasks.task_dict.get(task.identity.get_full_key(), None)
         if logsort is not None and len(logsort.base_list) > 0:
             delta, _ = logsort.base_list[-1]
             hours = delta.accumulated.seconds // 3600
             minutes = (delta.accumulated.seconds % 3600) // 60
-            self.cache_task_times[task.get_full_key()] = (hours, minutes)
+            self.cache_task_times[task.identity.get_full_key()] = (hours, minutes)
             return hours, minutes
-        self.cache_task_times[task.get_full_key()] = (0, 0)
+        self.cache_task_times[task.identity.get_full_key()] = (0, 0)
         return 0, 0
 
     def get_quest_time(self, quest: Quest) -> tuple[int, int]:

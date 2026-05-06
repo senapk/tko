@@ -96,22 +96,22 @@ class Game:
             gb_quests = gb.collect_quests()
             gb_tasks = gb.collect_tasks()
             for quest in gb_quests.values():
-                self.quests[quest.get_full_key()] = quest
+                self.quests[quest.identity.get_full_key()] = quest
             for task in gb_tasks.values():
-                self.tasks[task.get_full_key()] = task
+                self.tasks[task.identity.get_full_key()] = task
         GameValidator(self.quests).validate()
         return self
 
     @staticmethod
     def is_reachable_quest(q: Quest, cache: dict[str, bool]):
-        if q.get_full_key() in cache:
-            return cache[q.get_full_key()]
+        if q.identity.get_full_key() in cache:
+            return cache[q.identity.get_full_key()]
 
         if len(q.requires_ptr) == 0:
-            cache[q.get_full_key()] = True
+            cache[q.identity.get_full_key()] = True
             return True
-        cache[q.get_full_key()] = all([r.is_complete() and Game.is_reachable_quest(r, cache) for r in q.requires_ptr])
-        return cache[q.get_full_key()]
+        cache[q.identity.get_full_key()] = all([r.is_complete() and Game.is_reachable_quest(r, cache) for r in q.requires_ptr])
+        return cache[q.identity.get_full_key()]
 
     def update_reachable_and_available(self):
         for q in self.quests.values():

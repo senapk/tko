@@ -77,8 +77,8 @@ class RunLoader:
         if not self.ctx.wdir_builded:
             return False
         task = Task()
-        task.set_key("STANDALONE")
-        task.set_remote_name("NONE")
+        task.identity.set_key("STANDALONE")
+        task.identity.set_remote_name("NONE")
         self.ctx.task = task
         self.ctx.track_folder = None
         return True

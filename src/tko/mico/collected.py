@@ -86,7 +86,7 @@ class Collected:
 
         task_resume = json_data.get(Collected.resume_str, self.resume)
         for key, value in task_resume.items():
-            collected_resume = TaskResume(key)
+            collected_resume = TaskResume(key, "")
             collected_resume.from_dict(value)
             self.resume[key] = collected_resume
         self.graph = json_data.get(Collected.graph_str, self.graph)

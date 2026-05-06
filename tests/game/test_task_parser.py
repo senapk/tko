@@ -13,26 +13,26 @@ class Test:
         tp = TaskParser(index_path=Path("/source/arquivo.md"), source_alias="database")
         task = tp.parse_line("- [ ] [@label complemente](data/label/r.md)", 0).get_task()
         assert task is not None
-        task.set_origin_folder(Path("/ping/database/label"))
-        task.set_workspace_folder(Path("/rep/database/label"))
-        assert task.get_key() == "label"
-        assert task.get_remote_name() == "database"
-        assert task.get_full_key() == "database@label" # database is hided by legacy compatibility
-        folder = task.get_workspace_folder()
+        task.location.set_origin_folder(Path("/ping/database/label"))
+        task.location.set_workspace_folder(Path("/rep/database/label"))
+        assert task.identity.get_key() == "label"
+        assert task.identity.get_remote_name() == "database"
+        assert task.identity.get_full_key() == "database@label" # database is hided by legacy compatibility
+        folder = task.location.get_workspace_folder()
         assert folder is not None
         assert str(folder.resolve()) == "/rep/database/label"
-        assert task.target == "data/label/r.md"
+        assert task.location.target == "data/label/r.md"
     
     def test_database_poo(self):
         # get path of this file
         tp = TaskParser(index_path=Path("/source/arquivo.md"), source_alias="poo")
         task = tp.parse_line("- [ ] [@label complemente](data/label/r.md)", 0).get_task()
         assert task is not None
-        assert task.get_key() == "label"
-        assert task.get_remote_name() == "poo"
-        assert task.get_full_key() == "poo@label" # database is hided by legacy compatibility
-        assert str(task.get_workspace_folder()) == "/source/data/label"
-        assert task.target == "data/label/r.md"
+        assert task.identity.get_key() == "label"
+        assert task.identity.get_remote_name() == "poo"
+        assert task.identity.get_full_key() == "poo@label" # database is hided by legacy compatibility
+        assert str(task.location.get_workspace_folder()) == "/source/data/label"
+        assert task.location.target == "data/label/r.md"
 
 
     def test_STATIC_FILE(self):
@@ -40,11 +40,11 @@ class Test:
         tp = TaskParser(index_path=Path("/source/arquivo.md"), source_alias="poo")
         task = tp.parse_line("- [ ] [@label complemente](poo/label/r.md)", 0).get_task()
         assert task is not None
-        assert task.get_key() == "label"
-        assert task.get_remote_name() == "poo"
-        assert task.get_full_key() == "poo@label" # database is hided by legacy compatibility
-        assert str(task.get_workspace_folder()) == "/source/poo/label"
-        assert task.target == "poo/label/r.md"
+        assert task.identity.get_key() == "label"
+        assert task.identity.get_remote_name() == "poo"
+        assert task.identity.get_full_key() == "poo@label" # database is hided by legacy compatibility
+        assert str(task.location.get_workspace_folder()) == "/source/poo/label"
+        assert task.location.target == "poo/label/r.md"
 
     def test_file_not_found(self):
         # get path of this file

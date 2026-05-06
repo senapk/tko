@@ -11,7 +11,8 @@ class TaskParser:
 
     def __init__(self, index_path: Path, source_alias: str):
         self.index_path = index_path
-        self.task: Task | None = Task().set_remote_name(source_alias)
+        self.task: Task | None = Task()
+        self.task.identity.set_remote_name(source_alias)
             
     @staticmethod
     def filter_task_key(key: str) -> str:
@@ -63,7 +64,7 @@ class TaskParser:
             elif tag == TaskLoss.ZERO.value:
                 self.task.config.loss = TaskLoss.ZERO
             else:
-                print(f"Parsing {self.index_path}:{self.task.line_number}, Tipo de tarefa desconhecido: {tag}")
+                    print(f"Parsing {self.index_path}:{self.task.location.line_number}, Tipo de tarefa desconhecido: {tag}")
 
     def __parse_key_task_types(self, tags: str) -> str:
         if self.task is None:
@@ -73,13 +74,13 @@ class TaskParser:
         self.task.config.loss = TaskLoss.NULL
         for item in words:
             if item.startswith("@"):
-                self.task.set_key(self.filter_task_key(item[1:]))
+                self.task.identity.set_key(self.filter_task_key(item[1:]))
             elif item.startswith(":"):
                 self.decode_task_types(item[1:])
             else:
                 new_title.append(item)
 
-        if self.task.get_key().startswith("+"):
+        if self.task.identity.get_key().startswith("+"):
             self.task.config.mode = TaskEdit.VIEW
         else:
             self.task.config.mode = TaskEdit.EDIT
@@ -112,25 +113,25 @@ class TaskParser:
             return self
         
         task = self.task
-        task.line_number = line_num
-        task.line = line
+        task.location.line_number = line_num
+        task.location.line = line
         title = self.__parse_key_task_types(tags + " " + title)
-        task.set_title(title)
+        task.identity.set_title(title)
 
-        if task.get_key() == "":
+        if task.identity.get_key() == "":
             self.task = None
             return self
 
         if link.startswith("http://") or link.startswith("https://"):
-            self.task.set_remote_view_type()
-            self.task.target = link
+            self.task.location.set_remote_view_type()
+            self.task.location.target = link
             return self
         
-        task.set_origin_folder(Path(os.path.dirname(self.redirect_from_readme(link))))
+        task.location.set_origin_folder(Path(os.path.dirname(self.redirect_from_readme(link))))
         if task.config.mode == TaskEdit.VIEW:
-            self.task.target = self.redirect_from_readme(link)
+            self.task.location.target = self.redirect_from_readme(link)
         else:
-            self.task.target = link
+            self.task.location.target = link
 
         return self
 
@@ -141,7 +142,7 @@ class TaskParser:
         if self.task is None:
             return self
         if self.task.is_import_type():
-            relative_path = self.index_path.parent / self.task.target
+            relative_path = self.index_path.parent / self.task.location.target
             if not relative_path.exists():
-                raise Warning(f"Parsing {self.index_path}, Arquivo de tarefa não encontrado: {self.task.target}")
+                raise Warning(f"Parsing {self.index_path}, Arquivo de tarefa não encontrado: {self.task.location.target}")
         return self

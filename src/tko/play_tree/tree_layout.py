@@ -26,7 +26,7 @@ class TreeLayout:
 
         for q in game.quests.values():
             for t in q.get_tasks():
-                key_sizes.append(len(t.get_key()))
+                key_sizes.append(len(t.identity.get_key()))
         self.key_size = max(key_sizes) if key_sizes else self.key_size_min
 
         for q in game.quests.values():

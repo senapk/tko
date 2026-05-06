@@ -33,7 +33,7 @@ class GuiActionResolver:
             quest: Quest = obj
             if self.flags.task_view_mode.is_inbox() and not quest.is_reachable():
                 output = TaskAction.BLOQUEIO
-            elif quest.get_full_key() in self.tree.state.expanded:
+            elif quest.identity.get_full_key() in self.tree.state.expanded:
                 output = TaskAction.CONTRAIR
             else:
                 output = TaskAction.EXPANDIR

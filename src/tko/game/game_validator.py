@@ -16,11 +16,11 @@ class GameValidator:
         keys = [k for k in self.quests.keys()]
         for q in self.quests.values():
             for t in q.get_tasks():
-                if t.get_full_key() in keys:
-                    print(f"Chave repetida: {t.get_full_key()} em {t.line_number} {t.line}, ignorando tarefa")
+                if t.identity.get_full_key() in keys:
+                    print(f"Chave repetida: {t.identity.get_full_key()} em {t.location.line_number} {t.location.line}, ignorando tarefa")
                     continue
-                keys.append(t.get_full_key())
-                self.tasks[t.get_full_key()] = t
+                keys.append(t.identity.get_full_key())
+                self.tasks[t.identity.get_full_key()] = t
 
         # print chaves repetidas
         for k in keys:
@@ -30,12 +30,12 @@ class GameValidator:
 
         # trim titles
         for q in self.quests.values():
-            q.set_title(q.get_title().strip())
+            q.identity.set_title(q.identity.get_title().strip())
 
         # verificar auto dependencia
         for q in self.quests.values():
             for r in q.requires:
-                if q.get_full_key() == r:
+                if q.identity.get_full_key() == r:
                     print(f"Erro: auto refência {q.line_number} {q.line}")
                     exit(1)
 
@@ -44,13 +44,13 @@ class GameValidator:
     def __check_cycle(self):
         def dfs(qx: Quest, visitedx: list[str]):
             if len(visitedx) > 0:
-                if visitedx[0] == qx.get_full_key():
+                if visitedx[0] == qx.identity.get_full_key():
                     print(f"Cycle detected: {visitedx}")
                     exit(1)
-            if q.get_full_key() in visitedx:
+            if qx.identity.get_full_key() in visitedx:
                 return
-            visitedx.append(q.get_full_key())
-            for r in q.requires_ptr:
+            visitedx.append(qx.identity.get_full_key())
+            for r in qx.requires_ptr:
                 dfs(r, visitedx)
 
         for q in self.quests.values():

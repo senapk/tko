@@ -53,9 +53,9 @@ class Search:
         unit = self.tree.get_selected_throw()
 
         if isinstance(unit, Task):
-            self.tree.state.expanded = {unit.remote_name, unit.quest_key}
+            self.tree.state.expanded = {unit.identity.get_remote_name(), unit.quest_key}
         elif isinstance(unit, Quest):
-            self.tree.state.expanded = {unit.get_full_key(), unit.remote_name}
+            self.tree.state.expanded = {unit.identity.get_full_key(), unit.identity.get_remote_name()}
 
     # update index to match the first item that matches the search
     def update_index(self):

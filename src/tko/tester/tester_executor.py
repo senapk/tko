@@ -40,7 +40,7 @@ class TesterExecutor:
     def store_version(self, result: str) -> tuple[bool, int]:
         if self.rep is None:
             return False, 0
-        track_folder = self.rep.paths.get_track_task_folder(self.task.get_full_key())
+        track_folder = self.rep.paths.get_track_task_folder(self.task.identity.get_full_key())
         tracker = Tracker()
         tracker.set_folder(track_folder)
         tracker.set_files(self.wdir.get_solver().args_list)
@@ -59,7 +59,7 @@ class TesterExecutor:
             if self.rep:
                 self.rep.logger.store(
                     LogItemExec()
-                    .set_key(self.task.get_full_key())
+                    .set_key(self.task.identity.get_full_key())
                     .set_mode(mode)
                     .set_fail(LogItemExec.Fail.COMP)
                     .set_size(changes, total_lines)
@@ -80,7 +80,7 @@ class TesterExecutor:
             if self.rep:
                 self.rep.logger.store(
                     LogItemExec()
-                    .set_key(self.task.get_full_key())
+                    .set_key(self.task.identity.get_full_key())
                     .set_mode(LogItemExec.Mode.LOCK)
                     .set_rate(rate)
                     .set_size(changes, total_lines)
@@ -121,7 +121,7 @@ class TesterExecutor:
                 RepositoryLoader(self.rep).save_config()
                 self.rep.logger.store(
                     LogItemExec()
-                    .set_key(self.task.get_full_key())
+                    .set_key(self.task.identity.get_full_key())
                     .set_mode(mode)
                     .set_rate(percent)
                     .set_size(changes, total_lines)
@@ -160,7 +160,7 @@ class TesterExecutor:
         if self.rep:
             self.rep.logger.store(
                 LogItemExec()
-                .set_key(self.task.get_full_key())
+                .set_key(self.task.identity.get_full_key())
                 .set_mode(LogItemExec.Mode.FREE)
                 .set_size(changes, total_lines)
             )

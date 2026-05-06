@@ -57,7 +57,7 @@ class Repository:
     def get_task_from_task_folder(self, folder: Path) -> Task | None:
         folder = folder.resolve()
         for t in self.game.tasks.values():
-            task_folder = t.get_workspace_folder()
+            task_folder = t.location.get_workspace_folder()
             if task_folder is None:
                 continue
             if folder.is_relative_to(task_folder):

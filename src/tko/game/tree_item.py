@@ -1,15 +1,28 @@
+from __future__ import annotations
 from tko.util.rtext import RText
+from typing import Protocol
+
+
+class TreeUi:
+    def __init__(self):
+        self.ligature: RText = RText(" ")
+        self.visible: bool = False
+        self.is_requirement_color: str = ""
+
+    def clone(self) -> TreeUi:
+        new_ui = TreeUi()
+        new_ui.ligature = self.ligature
+        new_ui.visible = self.visible
+        new_ui.is_requirement_color = self.is_requirement_color
+        return new_ui
 
 class TreeItem():
 
     def __init__(self):
+        self.identity: TreeItem = self
         self.__remote_name: str = ""
         self.__key: str = ""
         self._title: str = ""
-
-        self.ligature: RText = RText(" ")
-        self.visible: bool = False
-        self.is_requirement_color: str = ""
 
     def get_remote_name(self) -> str:
         return self.__remote_name
@@ -43,3 +56,6 @@ class TreeItem():
     def set_sentence(self, sentence: RText):
         self.__sentence = sentence
         return self
+
+class HasTreeIdentity(Protocol):
+    identity: TreeItem

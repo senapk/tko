@@ -1,7 +1,7 @@
 from tko.game.game import Game
 from tko.game.task import Task
 from tko.game.task_config import TaskMain
-from tko.game.tree_item import TreeItem
+from tko.game.tree_item import HasTreeIdentity
 from tko.play_tree.formatter_util import FormatterUtil
 from tko.play_tree.tree_state import TreeState, TreeFilter
 from tko.util.rtext import RText
@@ -19,16 +19,16 @@ class TreeBuilder:
         search = SearchAsc(search_text)
 
         for quest in game.quests.values():
-            if search.inside(quest.get_title()):
-                first = first or quest.get_full_key()
-                matches.add(quest.get_full_key())
+            if search.inside(quest.identity.get_title()):
+                first = first or quest.identity.get_full_key()
+                matches.add(quest.identity.get_full_key())
 
             for task in quest.get_tasks():
                 full, _key, _title = task.get_full_title(None)
                 if search.inside(full):
-                    first = first or task.get_full_key()
-                    matches.add(quest.get_full_key())
-                    matches.add(task.get_full_key())
+                    first = first or task.identity.get_full_key()
+                    matches.add(quest.identity.get_full_key())
+                    matches.add(task.identity.get_full_key())
 
         return matches, first
 
@@ -39,7 +39,7 @@ class TreeBuilder:
             _, pall = q.get_percent_main_and_all()
             if not q.is_reachable() or pall >= 100:
                 continue
-            enabled.add(q.get_full_key())
+            enabled.add(q.identity.get_full_key())
             count = 0
             tasks = sorted(
                 q.get_tasks(),
@@ -49,19 +49,19 @@ class TreeBuilder:
                 if t.get_rate_percent() == 100 and t.get_quality_percent() == 100:
                     continue
                 if fmt_util.is_downloaded_for_lang(t):
-                    enabled.add(t.get_full_key())
+                    enabled.add(t.identity.get_full_key())
                     count += 1
                 elif count < max_count:
-                    enabled.add(t.get_full_key())
+                    enabled.add(t.identity.get_full_key())
                     count += 1
         return enabled
 
     def enable_all(self, game: Game) -> set[str]:
         matches: set[str] = set()
         for q in game.quests.values():
-            matches.add(q.get_full_key())
+            matches.add(q.identity.get_full_key())
             for t in q.get_tasks():
-                matches.add(t.get_full_key())
+                matches.add(t.identity.get_full_key())
         return matches
 
     def get_enabled_by_mode(self, game: Game, state: TreeState, tfilter: TreeFilter):
@@ -78,40 +78,40 @@ class TreeBuilder:
     
     def set_visible(self, game: Game, enabled: set[str]):
         for q in game.quests.values():
-            q.is_requirement_color = ""
-            if q.get_full_key() in enabled:
-                q.visible = True
+            q.ui.is_requirement_color = ""
+            if q.identity.get_full_key() in enabled:
+                q.ui.visible = True
             else:
-                q.visible = False
+                q.ui.visible = False
             for t in q.get_tasks():
-                if t.get_full_key() in enabled:
-                    t.visible = True
+                if t.identity.get_full_key() in enabled:
+                    t.ui.visible = True
                 else:
-                    t.visible = False
+                    t.ui.visible = False
 
-    def build(self, game: Game, state: TreeState, tfilter: TreeFilter) -> list[TreeItem]:
+    def build(self, game: Game, state: TreeState, tfilter: TreeFilter) -> list[HasTreeIdentity]:
         enabled = self.get_enabled_by_mode(game, state, tfilter)
         self.set_visible(game, enabled)
         items = self.set_colors_and_ligatures(game, state)
         return items
     
-    def set_colors_and_ligatures(self, game: Game, state: TreeState) -> list[TreeItem]:
-        items: list[TreeItem] = []
+    def set_colors_and_ligatures(self, game: Game, state: TreeState) -> list[HasTreeIdentity]:
+        items: list[HasTreeIdentity] = []
         for q in game.quests.values():
-            if not q.visible:
+            if not q.ui.visible:
                 continue
             for req in q.required_by_ptr:
-                if req.get_full_key() == state.selected:
-                    q.is_requirement_color = "y" if req.is_reachable() else "r"
+                if req.identity.get_full_key() == state.selected:
+                    q.ui.is_requirement_color = "y" if req.is_reachable() else "r"
                     break
             items.append(q)
             color = "g" if q.is_reachable() else "y"
-            tasks: list[Task] = [t for t in q.get_tasks() if t.visible]
+            tasks: list[Task] = [t for t in q.get_tasks() if t.ui.visible]
             has_hidden = len(tasks) != len(q.get_tasks())
-            if q.get_full_key() not in state.expanded:
-                q.ligature = RText("┅┄", color) if has_hidden else RText("━─", color)
+            if q.identity.get_full_key() not in state.expanded:
+                q.ui.ligature = RText("┅┄", color) if has_hidden else RText("━─", color)
                 continue
-            q.ligature = RText("┅┅", color) if has_hidden else RText("━━", color)
+            q.ui.ligature = RText("┅┅", color) if has_hidden else RText("━━", color)
             for t in tasks:
                 items.append(t)
         return items

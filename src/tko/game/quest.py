@@ -2,7 +2,7 @@ from __future__ import annotations
 from tko.game.task import Task
 from tko.game.task_config import TaskMain
 from tko.util.rtext import RText
-from tko.game.tree_item import TreeItem
+from tko.game.tree_item import TreeItem, TreeUi
 from tko.game.quest_grader import QuestGrader
 
 # from typing import override
@@ -12,11 +12,12 @@ def startswith(text: str, prefix: str) -> bool:
         return False
     return text[:len(prefix)] == prefix
 
-class Quest(TreeItem):
+class Quest:
     def __init__(self, title: str = "", key: str = ""):
-        super().__init__()
-        self.set_key(key)
-        self.set_title(title)
+        self.identity = TreeItem()
+        self.ui = TreeUi()
+        self.identity.set_key(key)
+        self.identity.set_title(title)
         self.line_number: int = 0
         self.line: str = ""
         self.__tasks: list[Task] = []
@@ -27,16 +28,15 @@ class Quest(TreeItem):
         self.languages: list[str] = []  # l:language to filter what is showed to user based in default language
         self.min_percent_completion: int = 50  # q:{value} 50 percent to complete quest
         self.filename = ""
-        self.remote_name = ""
         self.__is_reachable: bool = False
 
     def add_require_key(self, key: str):
         if key.startswith("@"):
             key = key[1:]
-        self.requires.append(self.get_remote_name() + "@" + key)
+        self.requires.append(self.identity.get_remote_name() + "@" + key)
 
     def get_full_title(self, show_skills: bool) -> RText:
-        output = RText(self.remote_name, "c") + RText(":") + RText(self.get_title())
+        output = RText(self.identity.get_remote_name(), "c") + RText(":") + RText(self.identity.get_title())
         if show_skills:
             for skill, value in self.skills.items():
                 if value > 1:
@@ -61,8 +61,8 @@ class Quest(TreeItem):
     def __str__(self):
         line = str(self.line_number).rjust(3)
         tasks_size = str(len(self.__tasks)).rjust(2, "0")
-        key = "" if self.get_full_key() == self.get_title() else self.get_full_key() + " "
-        output = f"{line} {tasks_size} {key}{self.get_title()} {self.skills} {self.requires}"
+        key = "" if self.identity.get_full_key() == self.identity.get_title() else self.identity.get_full_key() + " "
+        output = f"{line} {tasks_size} {key}{self.identity.get_title()} {self.skills} {self.requires}"
         return output
 
     def is_complete(self):
@@ -77,7 +77,7 @@ class Quest(TreeItem):
         return self.__tasks
 
     def sort_tasks_by_title(self):
-        self.__tasks = sorted(self.__tasks, key=lambda t: t.get_title())
+        self.__tasks = sorted(self.__tasks, key=lambda t: t.identity.get_title())
 
     def get_xp(self, include_main_perk: bool, include_side: bool) -> tuple[float, float]:
         """

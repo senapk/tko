@@ -29,7 +29,7 @@ class RunTracker:
         if self.ctx.repo:
             self.ctx.repo.logger.store(LogItemExec()
                 .set_mode(exec_mode)
-                .set_key(self.ctx.task.get_full_key())
+                .set_key(self.ctx.task.identity.get_full_key())
                 .set_size(changes, size)
                 .set_rate(rate)
                 .set_fail(exec_fail))
@@ -39,5 +39,5 @@ class RunTracker:
             changes, size = self.store_exec_diff("---")
             self.ctx.repo.logger.store(LogItemExec()
                 .set_mode(LogItemExec.Mode.FREE)
-                .set_key(self.ctx.task.get_full_key())
+                .set_key(self.ctx.task.identity.get_full_key())
                 .set_size(changes, size))

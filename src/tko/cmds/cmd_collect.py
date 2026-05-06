@@ -26,9 +26,9 @@ class CmdCollect:
         game = repo.game
         quest_map: dict[str, str] = {}
         for quest in game.quests.values():
-            # print(f"Processing quest: {quest.get_full_key()}", file=sys.stderr) # debug
+            # print(f"Processing quest: {quest.identity.get_full_key()}", file=sys.stderr) # debug
             for task in quest.get_tasks():
-                quest_map[task.get_full_key()] = quest.get_full_key()
+                quest_map[task.identity.get_full_key()] = quest.identity.get_full_key()
         for key, log_sort in tasks.items():
             quest_key = quest_map.get(key, "")
             resume = TaskResume(key, quest_key).from_log_sort(log_sort)
@@ -51,10 +51,10 @@ class CmdCollect:
         output: list[Game.Quest] = []
 
         for quest in game.quests.values():
-            output_quest = Game.Quest(quest.get_full_key())
+            output_quest = Game.Quest(quest.identity.get_full_key())
             output.append(output_quest)
             for task in quest.get_tasks():
-                output_quest.tasks.append(Game.Task(key=task.get_full_key(), value=task.xp, is_leet=task.is_auto(), opt=task.is_optional()))
+                output_quest.tasks.append(Game.Task(key=task.identity.get_full_key(), value=task.xp, is_leet=task.is_auto(), opt=task.is_optional()))
         return output
     
 

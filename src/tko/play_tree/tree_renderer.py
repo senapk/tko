@@ -1,6 +1,6 @@
 from tko.game.quest import Quest
 from tko.game.task import Task
-from tko.game.tree_item import TreeItem
+from tko.game.tree_item import HasTreeIdentity
 from tko.play_tree.formatter_util import FormatterUtil
 from tko.play.flags import Flags
 from tko.play_tree.tree_layout import TreeLayout
@@ -26,13 +26,13 @@ class TreeRenderer:
             text = text.slice(0, pos) + text.slice(pos, end).add_style("X") + text.slice(end)
         return text
 
-    def render(self, item: TreeItem, selected_key: str, matcher: SearchAsc) -> RText:
+    def render(self, item: HasTreeIdentity, selected_key: str, matcher: SearchAsc) -> RText:
         if isinstance(item, Quest):
-            focused = item.get_full_key() == selected_key
+            focused = item.identity.get_full_key() == selected_key
             return self.render_quest(item, focused)
 
         if isinstance(item, Task):
-            focused = item.get_full_key() == selected_key
+            focused = item.identity.get_full_key() == selected_key
             return self.mark_search_match(self.render_task(item, focused), matcher)
 
         return RText("")
@@ -69,13 +69,13 @@ class TreeRenderer:
 
     def render_quest(self, q: Quest, focused: bool) -> RText:
         color = "g" if q.is_reachable() else "y"
-        output = q.ligature.set_style(color)
+        output = q.ui.ligature.set_style(color)
         done, total = q.get_completion()
         output += f" {done:02}/{total:02}"
         star_symbol, percent_text = self.fmt_util.get_start_symbols_and_percent_text(q)
         output += " " + star_symbol + " "
 
-        color = q.is_requirement_color
+        color = q.ui.is_requirement_color
 
         title = q.get_full_title(self.flags.panel.is_skills() and self.flags.show_panel.is_true()).add_style(color)
         if focused:
