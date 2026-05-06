@@ -46,6 +46,8 @@ class Game:
         for q in self.quests.values():
             for t in q.get_tasks():
                 for skill, value in t.skills.items():
+                    if skill == "":
+                        continue
                     gvalue = (value * t.get_xp() * t.get_ratio())
                     if gvalue < 0.1:
                         gvalue = 0
