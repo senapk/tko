@@ -1,6 +1,7 @@
 from tko.cmds.drafts_finder_cached import DraftsFinderCached
 from tko.game.quest import Quest
 from tko.game.task import Task
+from tko.game.task_config import TaskEdit, TaskLoss, TaskMain, TaskTest
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.util.symbols import Symbols
@@ -52,11 +53,11 @@ class FormatterUtil:
         return symbol, percent_text
 
     def get_task_down_symbol(self, t: Task) -> tuple[str, str]:
-        if t.task_mode == Task.TaskEdit.VIEW:
+        if t.config.mode == TaskEdit.VIEW:
             if t.info.feedback:
                 return ("g", Symbols.task_view)
             return ("", Symbols.task_view)
-        if t.task_test == Task.TaskTest.TEST:
+        if t.config.test == TaskTest.TEST:
             if self.is_downloaded_for_lang(t):
                 if t.info.feedback:
                     return ("g", Symbols.diamond_filled)   # baixou e tem feedback
@@ -69,7 +70,7 @@ class FormatterUtil:
                 if t.info.feedback:
                     return ("r", Symbols.diamond_void)       # não baixou e tem feedback
                 return ("", Symbols.diamond_void)              # não baixou e não tem feedback
-        elif t.task_test == Task.TaskTest.SELF:
+        elif t.config.test == TaskTest.SELF:
             if self.is_downloaded_for_lang(t):
                 if t.info.feedback:
                     return ("g", Symbols.square_filled)   # baixou e tem feedback
@@ -87,17 +88,17 @@ class FormatterUtil:
 
     def get_task_path_symbol(self, t: Task) -> tuple[str, str]:
         color = "y" if t.is_import_type() else "m"
-        if t.task_path == Task.TaskMain.MAIN:
+        if t.config.path == TaskMain.MAIN:
             return (color, Symbols.star_filled)
         return (color, Symbols.star_void)
 
 
     def get_task_help_symbol(self, t: Task) -> tuple[str, str]:
-        if t.task_loss == Task.TaskLoss.FREE:
+        if t.config.loss == TaskLoss.FREE:
             return ("g", Symbols.loss_free)
-        if t.task_loss == Task.TaskLoss.PART:
+        if t.config.loss == TaskLoss.PART:
             return ("y", Symbols.loss_part)
-        if t.task_loss == Task.TaskLoss.ZERO:
+        if t.config.loss == TaskLoss.ZERO:
             return ("r", Symbols.loss_zero)
         return ("", "")
 

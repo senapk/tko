@@ -1,5 +1,6 @@
 from __future__ import annotations
 from tko.game.task import Task
+from tko.game.task_config import TaskEdit, TaskLoss, TaskMain, TaskTest
 
 import os
 import re
@@ -39,28 +40,28 @@ class TaskParser:
     def decode_task_types(self, info: str):
         if self.task is None:
             return
-        self.task.task_loss = Task.TaskLoss.NULL
-        self.task.task_test = Task.TaskTest.NULL
+        self.task.config.loss = TaskLoss.NULL
+        self.task.config.test = TaskTest.NULL
         for tag in info.split(":"):
             # if c is digit, set xp
             if tag.isdigit():
                 self.task.xp = int(tag)
-            elif tag == Task.TaskTest.TEST.value:
-                self.task.task_test = Task.TaskTest.TEST
-            elif tag == Task.TaskTest.SELF.value:
-                self.task.task_test = Task.TaskTest.SELF
-            elif tag == Task.TaskMain.MAIN.value:
-                self.task.task_path = Task.TaskMain.MAIN
-            elif tag == Task.TaskMain.SIDE.value:
-                self.task.task_path = Task.TaskMain.SIDE
-            elif tag == Task.TaskMain.PERK.value:
-                self.task.task_path = Task.TaskMain.PERK
-            elif tag == Task.TaskLoss.FREE.value:
-                self.task.task_loss = Task.TaskLoss.FREE
-            elif tag == Task.TaskLoss.PART.value:
-                self.task.task_loss = Task.TaskLoss.PART
-            elif tag == Task.TaskLoss.ZERO.value:
-                self.task.task_loss = Task.TaskLoss.ZERO
+            elif tag == TaskTest.TEST.value:
+                self.task.config.test = TaskTest.TEST
+            elif tag == TaskTest.SELF.value:
+                self.task.config.test = TaskTest.SELF
+            elif tag == TaskMain.MAIN.value:
+                self.task.config.path = TaskMain.MAIN
+            elif tag == TaskMain.SIDE.value:
+                self.task.config.path = TaskMain.SIDE
+            elif tag == TaskMain.PERK.value:
+                self.task.config.path = TaskMain.PERK
+            elif tag == TaskLoss.FREE.value:
+                self.task.config.loss = TaskLoss.FREE
+            elif tag == TaskLoss.PART.value:
+                self.task.config.loss = TaskLoss.PART
+            elif tag == TaskLoss.ZERO.value:
+                self.task.config.loss = TaskLoss.ZERO
             else:
                 print(f"Parsing {self.index_path}:{self.task.line_number}, Tipo de tarefa desconhecido: {tag}")
 
@@ -69,7 +70,7 @@ class TaskParser:
             return ""
         new_title: list[str] = []
         words = [w for w in tags.split(" ") if w != ""]
-        self.task.task_loss = Task.TaskLoss.NULL
+        self.task.config.loss = TaskLoss.NULL
         for item in words:
             if item.startswith("@"):
                 self.task.set_key(self.filter_task_key(item[1:]))
@@ -79,20 +80,20 @@ class TaskParser:
                 new_title.append(item)
 
         if self.task.get_key().startswith("+"):
-            self.task.task_mode = Task.TaskEdit.VIEW
+            self.task.config.mode = TaskEdit.VIEW
         else:
-            self.task.task_mode = Task.TaskEdit.EDIT
+            self.task.config.mode = TaskEdit.EDIT
         
-        if self.task.task_mode == Task.TaskEdit.VIEW:
-            if self.task.task_loss == Task.TaskLoss.NULL:
-                self.task.task_loss = Task.TaskLoss.FREE
-            if self.task.task_test == Task.TaskTest.NULL:
-                self.task.task_test = Task.TaskTest.SELF
+        if self.task.config.mode == TaskEdit.VIEW:
+            if self.task.config.loss == TaskLoss.NULL:
+                self.task.config.loss = TaskLoss.FREE
+            if self.task.config.test == TaskTest.NULL:
+                self.task.config.test = TaskTest.SELF
         else: # EDIT
-            if self.task.task_loss == Task.TaskLoss.NULL:
-                self.task.task_loss = Task.TaskLoss.PART
-            if self.task.task_test == Task.TaskTest.NULL:
-                self.task.task_test = Task.TaskTest.TEST
+            if self.task.config.loss == TaskLoss.NULL:
+                self.task.config.loss = TaskLoss.PART
+            if self.task.config.test == TaskTest.NULL:
+                self.task.config.test = TaskTest.TEST
 
         return " ".join(new_title)
 
@@ -126,7 +127,7 @@ class TaskParser:
             return self
         
         task.set_origin_folder(Path(os.path.dirname(self.redirect_from_readme(link))))
-        if task.task_mode == Task.TaskEdit.VIEW:
+        if task.config.mode == TaskEdit.VIEW:
             self.task.target = self.redirect_from_readme(link)
         else:
             self.task.target = link

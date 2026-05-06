@@ -1,5 +1,6 @@
 from __future__ import annotations
 from tko.game.task import Task
+from tko.game.task_config import TaskMain
 from tko.util.rtext import RText
 from tko.game.tree_item import TreeItem
 from tko.game.quest_grader import QuestGrader
@@ -84,9 +85,9 @@ class Quest(TreeItem):
         """
         tasks_info: list[QuestGrader.Elem] = []
         for t in self.__tasks:
-            if t.task_path in [Task.TaskMain.MAIN, Task.TaskMain.PERK] and not include_main_perk:
+            if t.config.path in [TaskMain.MAIN, TaskMain.PERK] and not include_main_perk:
                 continue
-            if t.task_path == Task.TaskMain.SIDE and not include_side:
+            if t.config.path == TaskMain.SIDE and not include_side:
                 continue
             percent = (t.get_rate_percent() * t.get_quality_percent()) / 100.0
             tasks_info.append(QuestGrader.Elem(t.is_optional(), t.xp, percent))

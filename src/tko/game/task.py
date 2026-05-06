@@ -6,98 +6,22 @@ from tko.util.symbols import Symbols
 from tko.util.rtext import RText
 from tko.game.tree_item import TreeItem
 from tko.game.task_info import TaskInfo
-
-import enum
+from tko.game.task_config import TaskConfig, TaskEdit, TaskGrader, TaskLoss, TaskMain, TaskTest
 
 class Task(TreeItem):
     str_index = "idx"
-
-    class TaskTest(enum.Enum):
-        NULL = "null" # default mode, EDIT if TEST, VIEW if USER
-        TEST = "test" # rate uses % of test cases passed
-        SELF = "self" # rate uses user self-evaluation
-
-    class TaskMain(enum.Enum):
-        MAIN = "main" # main task, required to complete the quest
-        PERK = "perk" # optional task that gives extra rewards and count as main for completion
-        SIDE = "side" # side task, allowing to achieve above 100% completion
-
-    class TaskLoss(enum.Enum):
-        NULL = "null" # default mode, FREE if VIEW, PART if EDIT
-        FREE = "free" # help allowed without penalty
-        PART = "part" # help allowed with partial penalty
-        ZERO = "zero" # if help is given, task is not completed (0% progress)
-
-    class TaskEdit(enum.Enum):
-        VIEW = "view" # view task details
-        EDIT = "edit" # edit task details
-
-    class TaskGrader:
-        def __init__(self, task_loss: Task.TaskLoss, task_info: TaskInfo):
-            self.info = task_info
-            self.loss = task_loss
-            self.grades: dict[str, dict[str, int]] = {
-                Task.TaskLoss.FREE.value: {
-                    "guided": 100,
-                    "code": 100,
-                    "debug": 100,
-                    "problem": 100,
-                },
-                Task.TaskLoss.PART.value: {
-                    "guided": 80,
-                    "code": 40,
-                    "debug": 80,
-                    "problem": 90,
-                },
-                Task.TaskLoss.ZERO.value: {
-                    "guided": 0,
-                    "code": 0,
-                    "debug": 0,
-                    "problem": 0,
-                },
-            }
-
-
-        def get_rate_percent(self):
-            rate = float(self.info.rate)
-            return rate
-        
-        def get_quality_percent(self):
-            if not self.info.feedback:
-                return 0.0
-            rate = 100.0
-            if self.info.guided:
-                rate *= self.grades[self.loss.value]["guided"] / 100.0
-            if self.info.ia_code:
-                rate *= self.grades[self.loss.value]["code"] / 100.0
-            if self.info.ia_debug:
-                rate *= self.grades[self.loss.value]["debug"] / 100.0
-            if self.info.ia_problem:
-                rate *= self.grades[self.loss.value]["problem"] / 100.0
-            return rate
-
-        def get_ratio(self) -> float:
-            return self.get_rate_percent() / 100.0
 
     def __init__(self):
 
         super().__init__()
         self.line_number = 0
         self.line = ""
-        self.info = TaskInfo()
+        self.info: TaskInfo = TaskInfo()
+        self.config: TaskConfig = TaskConfig()
         self.main_idx: int = 0
-        
-        self.task_test: Task.TaskTest = Task.TaskTest.TEST
-        self.task_path: Task.TaskMain = Task.TaskMain.MAIN
-        self.task_loss: Task.TaskLoss = Task.TaskLoss.PART
-        self.task_mode: Task.TaskEdit = Task.TaskEdit.EDIT
-        
-        self.grader = Task.TaskGrader(self.task_loss, self.info)
-
         self.skills: dict[str, int] = {} # skills
         
         self.xp: int = 1
-        
         self.target = ""
         self.quest_key = ""
         self.remote_name = ""
@@ -111,12 +35,8 @@ class Task(TreeItem):
         new_task.line_number = self.line_number
         new_task.line = self.line
         new_task.info = self.info.clone()
+        new_task.config = self.config.clone()
         new_task.main_idx = self.main_idx
-        new_task.task_test = self.task_test
-        new_task.task_path = self.task_path
-        new_task.task_loss = self.task_loss
-        new_task.task_mode = self.task_mode
-        new_task.grader = Task.TaskGrader(new_task.task_loss, new_task.info)
         new_task.skills = self.skills.copy()
         new_task.xp = self.xp
         new_task.target = self.target
@@ -141,16 +61,16 @@ class Task(TreeItem):
         return self
     
     def is_optional(self):
-        return self.task_path == Task.TaskMain.SIDE
+        return self.config.path == TaskMain.SIDE
     
     def is_auto(self):
-        return self.task_test == Task.TaskTest.TEST
+        return self.config.test == TaskTest.TEST
 
     def is_reachable(self) -> bool:
         return self.__is_reachable
 
     def is_link(self):
-        if self.task_mode == Task.TaskEdit.VIEW:
+        if self.config.mode == TaskEdit.VIEW:
             return True
         return self.__origin_folder is None and self.__workspace_folder is None
     
@@ -160,7 +80,7 @@ class Task(TreeItem):
         return self
 
     def is_import_type(self):
-        return self.task_mode == Task.TaskEdit.EDIT and self.__origin_folder is not None and self.__workspace_folder is not None
+        return self.config.mode == TaskEdit.EDIT and self.__origin_folder is not None and self.__workspace_folder is not None
     
     def is_static_type(self):
         if self.is_link():
@@ -248,12 +168,16 @@ class Task(TreeItem):
         return value
     
     def get_quality_percent(self) -> float:
-        if self.task_loss == Task.TaskLoss.FREE:
+        if self.config.loss == TaskLoss.FREE:
             return 100
         value = self.grader.get_quality_percent()
         if value < 0.1:
             return 0.0
         return value
+
+    @property
+    def grader(self) -> TaskGrader:
+        return self.config.build_grader(self.info)
 
     def get_ratio(self) -> float:
         return self.grader.get_ratio()

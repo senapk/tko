@@ -1,5 +1,6 @@
 from tko.game.game import Game
 from tko.game.task import Task
+from tko.game.task_config import TaskMain
 from tko.game.tree_item import TreeItem
 from tko.play_tree.formatter_util import FormatterUtil
 from tko.play_tree.tree_state import TreeState, TreeFilter
@@ -42,7 +43,7 @@ class TreeBuilder:
             count = 0
             tasks = sorted(
                 q.get_tasks(),
-                key=lambda t: (t.get_rate_percent() != 100, t.task_path != Task.TaskMain.MAIN)
+                key=lambda t: (t.get_rate_percent() != 100, t.config.path != TaskMain.MAIN)
             )
             for t in tasks:
                 if t.get_rate_percent() == 100 and t.get_quality_percent() == 100:

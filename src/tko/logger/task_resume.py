@@ -1,6 +1,6 @@
 from tko.game.task_info import TaskInfo
 from tko.logger.log_sort import LogSort
-from tko.game.task import Task
+from tko.game.task_config import TaskGrader, TaskLoss
 from typing import Any
 
 
@@ -62,7 +62,7 @@ class TaskResume:
         if log_sort.self_list:
             delta, last_self = log_sort.self_list[-1]
             self.info = last_self.get_info()
-            self.resume.percent = Task.TaskGrader(Task.TaskLoss.PART, self.info).get_rate_percent()
+            self.resume.percent = TaskGrader(TaskLoss.PART, self.info).get_rate_percent()
         return self
     
     def to_dict(self) -> dict[str, Any]:
