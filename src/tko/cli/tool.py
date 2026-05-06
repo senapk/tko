@@ -2,6 +2,20 @@ import typer
 from pathlib import Path
 from typing import Optional
 
+
+def _build_readme_candidates_from_repo_url(repo_url: str) -> list[str]:
+    # Normalizes common git URL forms to GitHub web URLs and returns branch candidates.
+    normalized: str = repo_url.strip()
+    if normalized.endswith(".git"):
+        normalized = normalized[:-4]
+    if normalized.startswith("git@github.com:"):
+        normalized = "https://github.com/" + normalized[len("git@github.com:") :]
+    normalized = normalized.rstrip("/")
+    return [
+        f"{normalized}/blob/main/README.md",
+        f"{normalized}/blob/master/README.md",
+    ]
+
 app = typer.Typer(help="Utility tools for one-off operations")
 
 @app.command("mdpp", help="Preprocessor for markdown files")
@@ -42,13 +56,78 @@ def tool_diff(
     cmd_diff(target_a, target_b, side, path)
 
 
-@app.command("redirect", help="Create redirected markdown file")
-def tool_redirect(
-    target: str = typer.Argument(..., help="Directories"),
-    output: str | None = typer.Option(None, "--output", "-o", help="Output file")
+@app.command("rebase-links", help="Rebase markdown links to work from a new path")
+def tool_rebase_links(
+    ctx: typer.Context,
+    target: str = typer.Argument(..., help="URL or local path to the source markdown"),
+    output: str | None = typer.Option(None, "--output", "-o", help="Output markdown file path (default: current directory with source filename)"),
 ):
+    import os
+    import tempfile
+    from urllib.parse import urlparse
+    from tko.util.decoder import Decoder
+    from tko.util.remote_url import RemoteUrl
     from tko.feno.remote_md import Absolute
-    Absolute.convert_or_copy_or_print(Path(target), output if output is None else Path(output), make_remote=True)
+    from tko.app_context import AppContext
+
+    # Determine output filename and path
+    if output is None:
+        if target.startswith("@"):
+            filename: str = "README.md"
+        elif target.startswith("https://"):
+            parsed_url = urlparse(target)
+            filename = Path(parsed_url.path).name or "README.md"
+        else:
+            filename = Path(target).name
+        output_path: Path = Path(filename)
+    else:
+        output_path = Path(output)
+
+    if target.startswith("@"):
+        alias: str = target[1:]
+        app_ctx: AppContext = AppContext.load_from_context(ctx)
+        settings = app_ctx.settings
+        repo_url: str = settings.get_alias_git(alias)
+        candidates: list[str] = _build_readme_candidates_from_repo_url(repo_url)
+
+        last_error: Exception | None = None
+        for candidate in candidates:
+            try:
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    temp_file: str = str(Path(tmpdir) / "temp.md")
+                    remote: RemoteUrl = RemoteUrl(candidate)
+                    remote.download_absolute_to(temp_file)
+                    print(f"Arquivo url={candidate} baixado com sucesso")
+                    print("Rebase concluído")
+                    print(f"Arquivo salvo no path: {output_path}")
+                    # Copy from temp to final output
+                    import shutil
+                    shutil.copy(temp_file, output_path)
+                return
+            except Exception as exc:
+                last_error = exc
+
+        raise Warning(f"Não foi possível baixar README.md para @{alias}: {last_error}")
+
+    if target.startswith("https://"):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            temp_file: str = str(Path(tmpdir) / "temp.md")
+            remote: RemoteUrl = RemoteUrl(target)
+            remote.download_absolute_to(temp_file)
+            print(f"Arquivo url={target} baixado com sucesso")
+            print("Rebase concluído")
+            print(f"Arquivo salvo no path: {output_path}")
+            # Copy from temp to final output
+            import shutil
+            shutil.copy(temp_file, output_path)
+    else:
+        source_path: Path = Path(target)
+        relative_folder: Path = Path(os.path.relpath(source_path.parent, output_path.parent))
+        content: str = Decoder.load(source_path)
+        content = Absolute.change_to_relative_folder(content, relative_folder)
+        Decoder.save(output_path, content)
+        print("Rebase concluído")
+        print(f"Arquivo salvo no path: {output_path}")
 
 
 @app.command("filter", help="Filter code removing answers")

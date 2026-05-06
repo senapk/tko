@@ -36,6 +36,7 @@ O tko é um sistema de testes para programação competitiva. Ele é capaz de ro
 
 - [Filtragem e Rascunhos](wiki/filter.md)
 - [Markdown Preprocessor](wiki/mdpp.md)
+- [Rebase de links markdown](wiki/rebase-links.md)
 
 ## Atualizando o tko
 
@@ -44,24 +45,6 @@ Para atualizar o tko para versão mais recente, basta executar o comando:
 ```bash
 pipx upgrade tko          # windows, codespace, arch, ubuntu e wsl
 ```
-
-## Programando em uma linguagem diferente de C, C++, Java, Python e Typescript, Go
-
-- Qual for escolher a linguagem que deseja utilizar, escolha `yaml`. Na pasta de cada atividade será criado um arquivo de rascunho chamado `draft.yaml` com os seguintes campos:
-
-```yaml
-build:
-run:
-```
-
-- Preencha os campos `build` e `run` com os comandos de compilação e execução da sua linguagem. Exemplo, em c++ para um arquivo fonte chamado solver.cpp, o `draft.yaml` ficaria assim:
-
-```yaml
-build: g++ -Wall solver.cpp -o solver.out
-run: ./solver.out
-```
-
-Adapte para os comandos da sua linguagem e o nome dos arquivos da pasta.
 
 ## Criando os testes
 
