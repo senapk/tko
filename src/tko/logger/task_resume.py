@@ -1,4 +1,4 @@
-from tko.game.task_info import TaskInfo
+from tko.game.task_info import TaskSelfInfo
 from tko.logger.log_sort import LogSort
 from tko.game.task_config import TaskGrader, TaskLoss
 from typing import Any
@@ -48,7 +48,7 @@ class TaskResume:
         self.key: str = key
         self.quest: str = quest_key
         self.resume: Resume = Resume()
-        self.info: TaskInfo = TaskInfo()
+        self.info: TaskSelfInfo = TaskSelfInfo()
 
     def from_log_sort(self, log_sort: LogSort):
         if log_sort.base_list:

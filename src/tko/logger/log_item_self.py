@@ -1,23 +1,23 @@
 from tko.logger.log_item_base import LogItemBase
-from tko.game.task_info import TaskInfo
+from tko.game.task_info import TaskSelfInfo
 from tko.game.task import Task
 from tko.logger.kv import KV
 
 class LogItemSelf(LogItemBase):
     def __init__(self):
         super().__init__(LogItemBase.Type.SELF)
-        self.info: TaskInfo = TaskInfo()
+        self.info: TaskSelfInfo = TaskSelfInfo()
 
     def set_task(self, task: Task):
         self.key = task.get_full_key()
         self.info = task.info.clone()
         return self
 
-    def set_info(self, info: TaskInfo):
+    def set_info(self, info: TaskSelfInfo):
         self.info = info
         return self
     
-    def get_info(self) -> TaskInfo:
+    def get_info(self) -> TaskSelfInfo:
         return self.info
 
     def identify_kv(self, kv: dict[str, str]) -> bool:

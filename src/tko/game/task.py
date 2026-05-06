@@ -1,50 +1,52 @@
-# from typing import override
 from __future__ import annotations
 from pathlib import Path
 
 from tko.util.symbols import Symbols
 from tko.util.rtext import RText
 from tko.game.tree_item import TreeItem
-from tko.game.task_info import TaskInfo
+from tko.game.task_info import TaskSelfInfo
 from tko.game.task_config import TaskConfig, TaskEdit, TaskGrader, TaskLoss, TaskMain, TaskTest
 
 class Task(TreeItem):
-    str_index = "idx"
-
     def __init__(self):
 
         super().__init__()
+        self.info: TaskSelfInfo = TaskSelfInfo()
+        self.config: TaskConfig = TaskConfig()
+        self.skills: dict[str, int] = {} # skills
+        self.default_min_value = 5 # default min grade to complete task
+        self.xp: int = 1
+        self.quest_key = ""
+        self.__is_reachable = False
+
+        # location info
+        self.target = ""
         self.line_number = 0
         self.line = ""
-        self.info: TaskInfo = TaskInfo()
-        self.config: TaskConfig = TaskConfig()
-        self.main_idx: int = 0
-        self.skills: dict[str, int] = {} # skills
-        
-        self.xp: int = 1
-        self.target = ""
-        self.quest_key = ""
         self.remote_name = ""
         self.__origin_folder: Path | None = None
         self.__workspace_folder: Path | None = None
-        self.__is_reachable = False
-        self.default_min_value = 5 # default min grade to complete task
+
+    @property
+    def grader(self) -> TaskGrader:
+        return self.config.build_grader(self.info)
 
     def clone(self) -> Task:
         new_task = Task()
-        new_task.line_number = self.line_number
-        new_task.line = self.line
         new_task.info = self.info.clone()
         new_task.config = self.config.clone()
-        new_task.main_idx = self.main_idx
         new_task.skills = self.skills.copy()
         new_task.xp = self.xp
         new_task.target = self.target
         new_task.quest_key = self.quest_key
+        new_task.__is_reachable = self.__is_reachable
+
+        # location info
+        new_task.line_number = self.line_number
+        new_task.line = self.line
         new_task.remote_name = self.remote_name
         new_task.__origin_folder = self.__origin_folder
         new_task.__workspace_folder = self.__workspace_folder
-        new_task.__is_reachable = self.__is_reachable
         return new_task
 
     def get_full_title(self, key_pad: None | int, pad_char: str = " ") -> tuple[str, str, str]:
@@ -109,20 +111,6 @@ class Task(TreeItem):
             return self.__workspace_folder.resolve()
         return self.__origin_folder.resolve() if self.__origin_folder is not None else None
     
-    def decode_from_dict(self, value: str):
-        value_list = value[1:-1]
-        kv_dict: dict[str, str] = {}
-        key_values = value_list.split(",")
-        for kv in key_values:
-            if ":" not in kv:
-                continue
-            (k, val) = kv.split(":")
-            kv_dict[k.strip()] = val.strip()
-        
-        self.info.load_from_kv(kv_dict)
-        if self.str_index in kv_dict:
-            self.main_idx = int(kv_dict[self.str_index])
-
     def is_db_empty(self) -> bool:
         return len(self.info.get_kv()) == 0
 
@@ -175,9 +163,7 @@ class Task(TreeItem):
             return 0.0
         return value
 
-    @property
-    def grader(self) -> TaskGrader:
-        return self.config.build_grader(self.info)
+
 
     def get_ratio(self) -> float:
         return self.grader.get_ratio()

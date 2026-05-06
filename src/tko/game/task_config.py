@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import enum
 
-from tko.game.task_info import TaskInfo
+from tko.game.task_info import TaskSelfInfo
 
 
 class TaskTest(enum.Enum):
@@ -31,7 +31,7 @@ class TaskEdit(enum.Enum):
 
 
 class TaskGrader:
-    def __init__(self, task_loss: TaskLoss, task_info: TaskInfo):
+    def __init__(self, task_loss: TaskLoss, task_info: TaskSelfInfo):
         self.info = task_info
         self.loss = task_loss
         self.grades: dict[str, dict[str, int]] = {
@@ -92,5 +92,5 @@ class TaskConfig:
             mode=self.mode,
         )
 
-    def build_grader(self, info: TaskInfo) -> TaskGrader:
+    def build_grader(self, info: TaskSelfInfo) -> TaskGrader:
         return TaskGrader(self.loss, info)
