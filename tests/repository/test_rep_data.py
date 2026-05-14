@@ -41,7 +41,7 @@ def test_get_sources_ensures_sandbox_and_puts_it_first(tmp_path: Path) -> None:
 
     sources = data.remotes_raw_list
 
-    assert sources[0].data.name == ""
+    assert sources[0].data.name == "sandbox"
     assert [source.data.name for source in sources[1:]] == ["remote1", "remote2"]
 
 

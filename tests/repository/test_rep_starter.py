@@ -215,7 +215,7 @@ def test_execute_integration_creates_repository_config_with_default_sandbox(tmp_
     assert data["lang"] == "py"
     assert len(data["sources"]) == 1
     sandbox = data["sources"][0]
-    assert sandbox["name"] == ""
+    assert sandbox["name"] == "sandbox"
     assert sandbox["target"] == "base"
     assert sandbox["index"] == "../README.md"
     assert sandbox["type"] == "local"

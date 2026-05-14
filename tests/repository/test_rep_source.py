@@ -27,7 +27,7 @@ def test_set_is_sandbox_updates_remote_data_fields() -> None:
 
     remote.is_sandbox = True
 
-    assert remote.data.name == ""
+    assert remote.data.name == "sandbox"
     assert remote.data.target == STUDENT_SANDBOX_TARGET
     assert remote.data.index == STUDENT_SANDBOX_INDEX
     assert remote.data.source_type == SourceType.LOCAL_FILE

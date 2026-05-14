@@ -57,7 +57,7 @@ def test_create_default_sandbox_source_binds_workspace_and_cache(tmp_path: Path)
     source.root_dir = repo.root_dir
 
     assert source.is_sandbox is True
-    assert source.data.name == ""
+    assert source.data.name == "sandbox"
     assert source.data.target == "base"
     assert source.path.work_dir == (tmp_path / "base").resolve()
 
