@@ -79,7 +79,7 @@ class GitCache:
     def _acquire_lock(self, lock_path: Path):
         return FileLock(str(lock_path))
 
-    def get_repo_dir(self, url: str, verbose: bool) -> Path | None:
+    def get_remote_dir(self, url: str, verbose: bool) -> Path | None:
         repo: Path = self._repo_dir(url)
         lock_path: Path = self._lock_path(repo)
         with self._acquire_lock(lock_path):

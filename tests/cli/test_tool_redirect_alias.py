@@ -1,4 +1,4 @@
-from tko.cli.tool import _build_readme_candidates_from_repo_url
+from tko.cli.tool import _build_readme_candidates_from_repo_url # type: ignore
 
 
 def test_build_readme_candidates_from_https_git_url() -> None:

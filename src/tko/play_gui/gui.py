@@ -1,5 +1,6 @@
 from tko.config.settings import Settings
 from tko.config.app_settings import AppSettings
+from tko.game.task import Task
 from tko.widget.border import Border
 from tko.widget.fmt import Fmt
 from tko.widget.frame import Frame
@@ -16,7 +17,6 @@ from tko.play_gui.gui_top_bar import GuiTopBar
 from tko.play_gui.gui_skills_bar import GuiSkillsBar
 from tko.play_gui.gui_help_panel import GuiHelpPanel
 from tko.play_gui.gui_graph_panel import GuiGraphPanel
-from tko.game.task import Task
 
 
 class Gui:
@@ -65,8 +65,8 @@ class Gui:
     # Delegações para compatibilidade com play_actions.py
     # ------------------------------------------------------------------
 
-    def get_task_action(self, task: Task) -> tuple[str, str]:
-        return self.action_resolver.get_task_action(task)
+    def get_task_action(self, tr: Task) -> tuple[str, str]:
+        return self.action_resolver.get_task_action(tr)
 
     def get_activate_label(self) -> tuple[str, str]:
         return self.action_resolver.get_activate_label()

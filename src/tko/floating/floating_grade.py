@@ -1,6 +1,6 @@
 from __future__ import annotations
-from tko.game.task import Task
 from tko.floating.floating import FloatingABC, Floating
+from tko.game.task import Task
 from tko.util.rtext import RText
 from tko.util.symbols import Symbols
 
@@ -181,7 +181,7 @@ class FloatingGrade(FloatingABC):
             ("9", RText(" 90%", "y")),
             ("✓", RText(" 100%", "y"))]
 
-        if self._task.is_auto():
+        if self._task.config.is_auto:
             texto_auto = "Taxa de testes que passou na última execução:"
         else:
             texto_auto = "Informe qual percentual da atividade você fez?"
@@ -194,7 +194,7 @@ class FloatingGrade(FloatingABC):
         refactor = "" if not self._task.info.feedback else ("1" if self._task.info.ia_refactor else "0")
 
         self.quantity_input_lines: list[InputLine] = [
-            InputSlide("rate", RText(texto_auto), progression, self._task.info.rate // 10).set_locked(self._task.is_auto()),
+            InputSlide("rate", RText(texto_auto), progression, self._task.info.rate // 10).set_locked(self._task.config.is_auto),
             InputText("study", RText("Qual tempo total estimado, estudo + código, em minutos?"), str(self._task.info.study)).set_number_only(True),
         ]
         self.support_input_lines: list[InputLine] = [
@@ -240,7 +240,8 @@ class FloatingGrade(FloatingABC):
         pad = 66
         dummy_task = self._task.clone()
         self.change_task(dummy_task, self.input_dict)
-        somatorio = RText(f'{round(dummy_task.get_rate_percent() * dummy_task.get_quality_percent()/100):>3}% ', 'g')
+        full_percent = dummy_task.grader.full_percent
+        somatorio = RText(f'{round(full_percent):>3}% ', 'g')
 
         content.append(RText("╔") + (RText(" Tarefa:") + somatorio).center(width, "═"))
         left_side = "║ "
@@ -260,7 +261,7 @@ class FloatingGrade(FloatingABC):
 
     @staticmethod
     def change_task(task: Task, input_dict: dict[str, InputLine]):
-        if not task.is_auto():
+        if not task.config.is_auto:
             task.info.rate = int(input_dict["rate"].get_value()) * 10
         task.info.feedback = True
         task.info.friend = input_dict["friend"].get_value()

@@ -4,7 +4,7 @@ from tko.logger.log_item_self import LogItemSelf
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove
 from tko.logger.delta import Delta
-from tko.repository.rep_paths import RepPaths
+from tko.repository.repository_paths import RepositoryPaths
 import datetime as dt
 
 from tko.util.decoder import Decoder
@@ -17,8 +17,8 @@ class LogHistory:
     def __init__(self, rep_folder: Path, listeners: list[Callable[[LogItemBase, bool], None]] | None = None):
         if listeners is None:
             listeners = []
-        self.paths = RepPaths(rep_folder)
-        self.log_folder: Path = self.paths.get_log_folder()
+        self.paths = RepositoryPaths(rep_folder)
+        self.log_folder: Path = self.paths.log_folder
         self.listeners: list[Callable[[LogItemBase, bool], None]] = listeners
         self.entries: dict[str, LogItemBase] = {}
         #self.entries.extend(self.__load_old_log().values())
@@ -63,7 +63,7 @@ class LogHistory:
         return item_base
 
     def __load_daily_log_folder(self) -> list[LogItemBase]:
-        log_folder = self.paths.get_log_folder()
+        log_folder = self.paths.log_folder
         if not log_folder.exists():
             return []
         if not log_folder.is_dir():

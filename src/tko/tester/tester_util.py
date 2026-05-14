@@ -32,10 +32,7 @@ def get_time_limit_symbol(timeout: int) -> str:
 
 
 def get_folder(task: Task) -> Path:
-    if task.is_import_type():
-        folder = task.location.get_workspace_folder()
-    else:
-        folder = task.location.get_origin_folder()
+    folder = task.path.work_dir
     if folder is None:
         raise Warning("Warning: Pasta da tarefa não encontrada")
     return folder

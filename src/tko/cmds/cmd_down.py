@@ -29,7 +29,7 @@ class CmdLineDown:
             self.game = game
         
     def execute(self):
-        if not self.rep.paths.has_local_config_file():
+        if not self.rep.paths.config_file.exists():
             print("O parâmetro para o comando tko down deve a pasta onde você iniciou o repositório.")
             print("Navegue ou passe o caminho até a pasta do repositório e tente novamente.")
             return False
@@ -44,25 +44,28 @@ class CmdDown:
         self.task_key = task_key
         self.settings = settings
         self.task: Task = self.repo.game.get_task(self.task_key)
-       
-        origin_folder = self.task.location.get_origin_folder()
-        if origin_folder is None:
-            raise ValueError(f"Atividade {self.task_key} não possui pasta de origem para download")
-        self.origin_folder: Path = origin_folder # root task folder
+        self.resolver = self.task.path
+        if self.task.resource.is_view:
+            raise ValueError(f"Atividade {self.task_key} é do tipo link, ela para download")
         
-        destiny_folder = self.task.location.get_workspace_folder()
+        origin_target = self.resolver.origin_target
+        destiny_folder = self.resolver.work_dir
+        if origin_target is None:
+            raise ValueError(f"Atividade {self.task_key} não possui pasta de origem para download")
         if destiny_folder is None:
-            raise ValueError(f"Atividade {self.task_key} não possui pasta de destino para download")
-        self.destiny_folder: Path = destiny_folder # root task workspace folder
+            raise ValueError(f"Atividade {self.task_key} não possui pasta de destino para download") 
+
+        self.origin_folder: Path = origin_target.parent        
+        self.destiny_folder: Path = destiny_folder
        
         self.language: str = ""
         self.check_and_get_language()
         self.actions = DownActions(self.settings)
         
     def execute(self) -> bool:
-        if self.task.is_import_type():
-            return self.download_from_external_source()
-        if self.task.is_static_type():
+        if self.task.resource.is_import_type:
+            return self.download_from_external_remote()
+        if self.task.resource.is_static_type:
             if not self.copy_drafts():
                 self.actions.send_to_print("Atividade já está no repositório, precisa baixar nenhum arquivo")
             return False
@@ -98,7 +101,7 @@ class CmdDown:
         self.actions.send_to_print(f"os novos rascunhos para a pasta {lang} ")
         return Path(drafts_folder)
 
-    def download_from_external_source(self) -> bool:
+    def download_from_external_remote(self) -> bool:
         self.destiny_folder.mkdir(exist_ok=True, parents=True)
         self.copy_readme()
         self.copy_tests()
@@ -107,7 +110,7 @@ class CmdDown:
     def copy_drafts(self):
         self.actions.cached = True
         finder = DraftsFinderCached(self.destiny_folder, self.language)
-        if not self.task.is_import_type():
+        if not self.task.resource.is_import_type:
             destiny_drafts_folder: Path = finder.find_dir_for_drafts()
             destiny_drafts_folder.mkdir(exist_ok=True, parents=True)
             self.actions.create_default_draft(destiny_drafts_folder, self.language)

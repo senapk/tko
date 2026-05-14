@@ -97,11 +97,11 @@ def register_main_commands(app: typer.Typer):
         ctx: typer.Context,
         language: Optional[str] = typer.Option(None, "--language", "-l", help="Default repository language (e.g. py, cpp, java, go)")
     ):
-        from tko.repository.rep_starter import RepStarter
+        from tko.repository.repository_starter import RepositoryStarter
         
         app_ctx: AppContext = AppContext.load_from_context(ctx)
         settings = app_ctx.settings
         changedir = app_ctx.changedir
         
-        rep_starter = RepStarter(settings=settings, folder=changedir, language=language)
+        rep_starter = RepositoryStarter(settings=settings, folder=changedir, language=language)
         rep_starter.execute()

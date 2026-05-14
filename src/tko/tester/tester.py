@@ -47,7 +47,7 @@ class Tester:
 
         if rep:
                 rep.logger.store(
-                    LogItemMove().set_mode(LogItemMove.Mode.PICK).set_key(task.identity.get_full_key())
+                    LogItemMove().set_mode(LogItemMove.Mode.PICK).set_key(task.basic.full_key)
             )
 
     def set_opener(self, opener: Opener) -> "Tester":
@@ -210,7 +210,7 @@ class Tester:
                     self.rep.logger.store(
                         LogItemMove()
                         .set_mode(LogItemMove.Mode.BACK)
-                            .set_key(self.task.identity.get_full_key())
+                            .set_key(self.task.basic.full_key)
                     )
                 break
             else:
@@ -224,7 +224,7 @@ class Tester:
                         if self.rep:
                             self.rep.logger.store(
                                 LogItemExec()
-                                    .set_key(self.task.identity.get_full_key())
+                                    .set_key(self.task.basic.full_key)
                                 .set_mode(LogItemExec.Mode.FREE)
                                 .set_fail(LogItemExec.Fail.COMP)
                             )

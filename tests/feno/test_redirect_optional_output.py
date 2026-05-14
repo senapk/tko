@@ -13,7 +13,6 @@ def test_rebase_local_file_default_output(tmp_path: Path) -> None:
 
     # Simulate default output behavior by calculating expected filename
     expected_filename: str = "myfile.md"
-    expected_output: Path = Path(expected_filename)
 
     # Extract the logic to verify filename derivation
     assert Path(source).name == expected_filename

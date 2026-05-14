@@ -9,9 +9,8 @@ from tko.logger.log_sort import LogSort
 from tko.play.daily_graph import DailyGraph
 from tko.mico.collected import Collected, Game
 from tko.util.rtext import RText
-from tko.repository.rep_paths import RepPaths
+from tko.repository.repository_paths import RepositoryPaths
 
-import yaml # type: ignore
 import json
 import os
 import csv
@@ -26,9 +25,8 @@ class CmdCollect:
         game = repo.game
         quest_map: dict[str, str] = {}
         for quest in game.quests.values():
-            # print(f"Processing quest: {quest.identity.get_full_key()}", file=sys.stderr) # debug
             for task in quest.get_tasks():
-                quest_map[task.identity.get_full_key()] = quest.identity.get_full_key()
+                quest_map[task.basic.full_key] = quest.basic.full_key
         for key, log_sort in tasks.items():
             quest_key = quest_map.get(key, "")
             resume = TaskResume(key, quest_key).from_log_sort(log_sort)
@@ -51,10 +49,10 @@ class CmdCollect:
         output: list[Game.Quest] = []
 
         for quest in game.quests.values():
-            output_quest = Game.Quest(quest.identity.get_full_key())
+            output_quest = Game.Quest(quest.basic.full_key)
             output.append(output_quest)
             for task in quest.get_tasks():
-                output_quest.tasks.append(Game.Task(key=task.identity.get_full_key(), value=task.xp, is_leet=task.is_auto(), opt=task.is_optional()))
+                output_quest.tasks.append(Game.Task(key=task.basic.full_key, value=task.game.xp, is_leet=task.config.is_auto, opt=task.config.is_optional))
         return output
     
 
@@ -149,7 +147,7 @@ class CollectMany:
 
         output_map: dict[str, Any] = {}
         for git_dir, username in zip(git_dir_list, usernames):
-            tko_rep_folder_list = RepPaths.rec_search_for_repo_subdir(git_dir)
+            tko_rep_folder_list = RepositoryPaths.rec_search_for_repo_subdir(git_dir)
             if not tko_rep_folder_list:
                 print(RText(f"{username: <{padding}}", "r") + RText(f"TKO repo not found in {git_dir}", "r"))
                 continue

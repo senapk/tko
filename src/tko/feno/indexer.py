@@ -4,6 +4,8 @@ import re
 from pathlib import Path
 from tko.util.decoder import Decoder
 from tko.util.rtext import RText
+from tko.game.task_matcher import TaskMatcher
+import sys
 
 def load_title_from_markdown_file(path: Path) -> str | None:
     if not path.exists():
@@ -17,50 +19,63 @@ def load_title_from_markdown_file(path: Path) -> str | None:
 
 class IndexLine:
     def __init__(self, index_path: Path, base_dir: Path):
-        self.__line: str = ""
+        self.raw_line: str = ""
         self.isTask: bool = False
-        self.pre: str = ""
+        self.raw_pre: str = ""
+        self.raw_pos: str = ""
         self.title: str = ""
-        self.readme_file: Path = Path()
-        self.pos: str = ""
+        self.origin_key: str | None = None
+
+        self.readme_file: Path | None = None
+        self.url: str | None = None
+        
         self.index_path: Path = index_path.resolve()
         self.base_dir: Path = base_dir.resolve()
     
     def init_by_line(self, line: str):
-        self.__line = line
-        regex = r'^(- \[ \].*?)\[(.*?)\]\(([^()]*)\)(.*)$'
-        match = re.search(regex, self.__line)
-        if match:
-            self.isTask = True
-            self.pre = match.group(1)
-            self.title = match.group(2)
-            file = Path(match.group(3))
-            if file.is_absolute():
-                self.readme_file = Path(file).resolve()
+        self.raw_line = line
+        tm = TaskMatcher()
+        if not tm.match_full_pattern(line):
+            return self
+        self.isTask = True
+        self.raw_pre = tm.raw_pre
+        self.raw_pos = tm.raw_pos
+        self.title = tm.task_title
+        self.origin_key = tm.key
+        
+        if not tm.is_view:
+            link = Path(tm.task_link)
+            if link.name != "README.md":
+                print(f"Error: README file '{link}' does not have a valid name, expected 'README.md'", file=sys.stderr)
+                raise ValueError(f"Invalid README file name: {link}")
+            if link.is_absolute():
+                self.readme_file = Path(link).resolve()
             else:
-                self.readme_file = (self.index_path.parent / file).resolve()
-            self.pos = match.group(4)
+                self.readme_file = (self.index_path.parent / link).resolve()
+        else:
+            self.url = tm.task_link
         return self
 
     def init_by_readme_file(self, readme_file: Path, title: str):
         self.readme_file = readme_file
         self.title = title
-        key = self.readme_file.parent.name
-        self.pre = f"@{key}"
+        self.origin_key = self.readme_file.parent.name
+        self.raw_pre = f"@{self.origin_key}"
         self.isTask = True
         return self
 
-    def get_raw_line(self) -> str:
-        return self.__line
-
     def get_render_line(self, key_pad: int) -> str:
         if not self.isTask:
-            return self.__line
-        readme_path = self.readme_file.resolve().relative_to(self.index_path.parent.resolve(), walk_up=True)
-        return f"- [ ]{self.get_pre(key_pad)}[{self.title}]({readme_path}){self.pos}"
+            return self.raw_line
+        if self.readme_file is not None:
+            readme_path = self.readme_file.resolve().relative_to(self.index_path.parent.resolve(), walk_up=True)
+            return f"- [ ]{self.get_pre(key_pad)}[{self.title}]({readme_path}){self.raw_pos}"
+        elif self.url is not None:
+            return f"- [ ]{self.get_pre(key_pad)}[{self.title}]({self.url}){self.raw_pos}"
+        return self.raw_line
 
     def get_pre(self, key_pad: int) -> str:
-        pre = self.pre.replace(f"@{self.get_label()}", "").replace("`", "").replace("- [ ]", "").strip()
+        pre = self.raw_pre.replace(f"@{self.get_label()}", "").replace("`", "").replace("- [ ]", "").strip()
         words = pre.split(" ")
         words = [w for w in words if not w.startswith("@") and w != ""]
         tags = [f"{w}" for w in words if w.startswith(":")]
@@ -69,29 +84,21 @@ class IndexLine:
 
     def get_label(self) -> str:
         edit_task_label = ""
-        if self.readme_file.resolve().is_relative_to(self.base_dir.resolve()):
-            edit_task_label = self.readme_file.parent.name
-
+        if self.readme_file is not None:
+            if self.readme_file.resolve().is_relative_to(self.base_dir.resolve()):
+                edit_task_label = self.readme_file.parent.name
+        elif self.origin_key is not None:
+            edit_task_label = self.origin_key
         valid_label = ""
         # if "@" not in line:
-        valid_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-+"
+        valid_chars = TaskMatcher.ALLOWED
         for char in edit_task_label:
             if char in valid_chars:
                 valid_label += char
             else:
                 print("fail: error in", edit_task_label)
                 raise ValueError(f"Invalid label in line: {edit_task_label}")
-        # else:
-        #     label = line.split('@')[1]
-        #     valid_label = ""
-        #     for char in label:
-        #         if char in valid_chars:
-        #             valid_label += char
-        #         else:
-        #             break
-        #     if len(valid_label) == 0:
-        #         print("fail: error in", line)
-        #         raise ValueError(f"Invalid label in line: {line}")
+
         return valid_label
     
 class Indexer:
@@ -133,7 +140,7 @@ class Indexer:
         index_lines: list[IndexLine] = []
         for line in content.splitlines():
             file_line = IndexLine(index_path=self.index_path, base_dir=self.base_dir).init_by_line(line)
-            if file_line.isTask:
+            if file_line.isTask and file_line.readme_file is not None:
                 if not file_line.readme_file.exists():
                     if self.verbose:
                         print(RText.parse(f"Warning: README file '[y]{file_line.readme_file}[.]' does not exist for task:[b]{file_line.get_label()}[.], removing from index"))
@@ -144,7 +151,7 @@ class Indexer:
     def fix_titles(self, save_titles: bool = False, load_titles: bool = False) -> None:
         # fixing titles
         for line in self.index_lines:
-            if not line.isTask:
+            if not line.isTask or line.readme_file is None:
                 continue
             if not line.readme_file in self.path_title_dict: # wiki maybe?
                 if self.verbose:
@@ -181,12 +188,12 @@ class Indexer:
         if self.index_lines:
             quest_lines.append([self.index_lines[0]])
         for line in self.index_lines[1:]:
-            if line.get_raw_line().startswith("## "):
+            if line.raw_line.startswith("## "):
                 quest_lines.append([line])
-                if line.get_raw_line().startswith(f"## {default_quest_name}"):
+                if line.raw_line.startswith(f"## {default_quest_name}"):
                     found_index = len(quest_lines) - 1
             else:
-                if line.get_raw_line().strip() != "":
+                if line.raw_line.strip() != "":
                     quest_lines[-1].append(line)
 
         if found_index == -1:

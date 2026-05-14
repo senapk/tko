@@ -1,4 +1,4 @@
-from tko.game.tree_item import HasTreeIdentity
+from tko.game.tree_item import IsTreeItem
 from typing import Sequence
 
 
@@ -18,46 +18,46 @@ class TreeState:
     search: str = ""
     scroll: int = 0
 
-    def ensure_valid_selection(self, items: Sequence[HasTreeIdentity]):
+    def ensure_valid_selection(self, items: Sequence[IsTreeItem]):
         """Garante que selected sempre aponta para um item visível"""
         if not items:
             self.selected = ""
             self.selected_index = 0
             return
 
-        keys = [i.identity.get_full_key() for i in items]
+        keys = [i.basic.full_key for i in items]
         if self.selected not in keys:  # fallback_mode
             if self.selected_index < len(keys):
                 self.selected = keys[self.selected_index]
             else:
                 self.selected = keys[0]
 
-    def get_selected_index(self, items: Sequence[HasTreeIdentity]) -> int:
-        if self.selected_index < len(items) and items[self.selected_index].identity.get_full_key() == self.selected:
+    def get_selected_index(self, items: Sequence[IsTreeItem]) -> int:
+        if self.selected_index < len(items) and items[self.selected_index].basic.full_key == self.selected:
             return self.selected_index
         for i, item in enumerate(items):
-            if item.identity.get_full_key() == self.selected:
+            if item.basic.full_key == self.selected:
                 self.selected_index = i
                 return i
         return 0
 
-    def get_selected_throw(self, items: Sequence[HasTreeIdentity]) -> HasTreeIdentity:
+    def get_selected_throw(self, items: Sequence[IsTreeItem]) -> IsTreeItem:
         for item in items:
-            if item.identity.get_full_key() == self.selected:
+            if item.basic.full_key == self.selected:
                 return item
         raise IndexError("Selected item not found")
 
-    def move_selection(self, delta: int, items: Sequence[HasTreeIdentity]):
+    def move_selection(self, delta: int, items: Sequence[IsTreeItem]):
         if not items:
             return
 
         index = self.get_selected_index(items)
         index += delta
         index = max(0, min(index, len(items) - 1))
-        self.selected = items[index].identity.get_full_key()
+        self.selected = items[index].basic.full_key
         self.selected_index = index
 
-    def update_scroll(self, window_height: int, items: Sequence[HasTreeIdentity]):
+    def update_scroll(self, window_height: int, items: Sequence[IsTreeItem]):
         """Controla o scroll da tela"""
         if not items:
             self.scroll = 0

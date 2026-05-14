@@ -1,3 +1,4 @@
+from __future__ import annotations
 from tko.logger.file_monitor import FileMonitor
 from tko.repository.repository import Repository
 
@@ -6,13 +7,13 @@ class RepositoryWatcher:
         self.repo = repo
         self.monitor: FileMonitor | None = None
 
-    def start_watching(self) -> 'RepositoryWatcher':
+    def start_watching(self) -> RepositoryWatcher:
         if self.monitor is not None:
             return self
             
         self.monitor = FileMonitor(
-            root_directory=self.repo.paths.get_repo_root_dir(),
-            sources_dir_list={source.get_workspace(): source.name for source in self.repo.data.get_sources()},
+            root_directory=self.repo.root_dir,
+            sources_dir_list={source.path.work_dir: source.data.name for source in self.repo.remotes},
             ignore_patterns=self.repo.ignore_patterns,
             second_interval=300,
             logger=self.repo.logger

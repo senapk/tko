@@ -1,3 +1,5 @@
+import sys
+
 from tko.cmds.drafts_finder_cached import DraftsFinderCached
 from tko.game.quest import Quest
 from tko.game.task import Task
@@ -11,7 +13,6 @@ from tko.logger.tracker import Tracker
 from tko.util.rtext import RText
 from tko.cmds.cmd_down import CmdDown
 from tko.cmds.cmd_run import Run
-
 from tko.util.param import Param
 
 from tko.widget.fmt import Fmt
@@ -53,18 +54,14 @@ class PlayActions:
             self.settings.app.panel_size_percent = new_value
             self.settings.save_settings()
         
-    def open_link_without_stdout_stderr(self, link: str):
-        if link.startswith("http://") or link.startswith("https://"):
+    def open_link_without_stdout_stderr(self, url: str | None):
+        if url is not None:
             outfile = tempfile.NamedTemporaryFile(delete=False)
-            subprocess.Popen("python3 -m webbrowser -t {}".format(link), stdout=outfile, stderr=outfile, shell=True)
-        else:
-            opener = Opener(self.settings)
-            opener.add_files_to_open([Path(link)])
-            opener.open_files()
+            subprocess.Popen("python3 -m webbrowser -t {}".format(url), stdout=outfile, stderr=outfile, shell=True)
+        
 
-    @staticmethod
-    def get_task_folder(task: Task) -> Path:
-        folder = task.location.get_workspace_folder()
+    def get_task_folder(self, task: Task) -> Path:
+        folder = task.path.work_dir
         if folder is None:
             return Path("")
         return folder.resolve()
@@ -80,7 +77,7 @@ class PlayActions:
             obj = self.tree.get_selected_throw()
             if not isinstance(obj, Task):
                 return
-            if obj.identity.get_key() != text:
+            if obj.basic.key != text:
                 self.fman.add_input(
                     Floating().bottom().right()
                     .put_text("\nTexto digitado não corresponde ao identificador da tarefa.\n")
@@ -116,7 +113,7 @@ class PlayActions:
             if ic.enabled:
                 delete_folder(text=folder.name)
             else:
-                self.fman.add_input(FloatingInputText(RText("Para apagar essa pasta, digite ") + RText(f"{obj.identity.get_key()}", "y"), action=delete_folder))
+                self.fman.add_input(FloatingInputText(RText("Para apagar essa pasta, digite ") + RText(f"{obj.basic.key}", "y"), action=delete_folder))
         else:
             self.fman.add_input(
                 Floating().bottom().right()
@@ -128,7 +125,7 @@ class PlayActions:
         obj = self.tree.get_selected_throw()
         if isinstance(obj, Task):
             task: Task = obj
-            folder = self.repo.get_task_folder_for_label(task.identity.get_full_key())
+            folder = self.repo.get_task_folder_for_label(task.basic.full_key)
             if os.path.exists(folder):
                 opener = Opener(self.settings).set_fman(self.fman).set_language(self.repo.data.lang)
                 opener.add_task_folder_to_open(folder)
@@ -151,29 +148,30 @@ class PlayActions:
         obj = self.tree.get_selected_throw()
         if isinstance(obj, Task):
             task: Task = obj
-            if task.is_link():
+            url = task.resource.external_url
+            target = task.path.origin_target
+            print(f"Opening link for task: {task.basic.key}, URL: {url}", file=sys.stderr)
+            print(f"Target: {target}", file=sys.stderr)
+            if url is not None:
                 try:
-                    self.open_link_without_stdout_stderr(task.location.target)
+                    self.open_link_without_stdout_stderr(url)
+                    self.fman.add_input(
+                        Floating().bottom().right()
+                        .set_header(" Abrindo link ")
+                        .put_text("\n " + str(url) + " \n")
+                        .set_warning()
+                    )
                 except Exception as _:
                     pass
-            self.fman.add_input(
-                 Floating().bottom().right()
-                .set_header(" Abrindo link ")
-                .put_text("\n " + task.location.target + " \n")
-                .set_warning()
-            )
+            if target is not None:
+                opener = Opener(self.settings)
+                opener.set_fman(self.fman).set_language(self.repo.data.lang)
+                opener.add_files_to_open([target])
+                opener.open_files()
         elif isinstance(obj, Quest):
             self.fman.add_input(
                  Floating().bottom().right()
                 .put_text("\nEssa é uma missão.")
-                .put_text("\nVocê só pode abrir o link")
-                .put_text("de tarefas.\n")
-                .set_error()
-            )
-        else:
-            self.fman.add_input(
-                 Floating().bottom().right()
-                .put_text("\nEsse é um grupo.")
                 .put_text("\nVocê só pode abrir o link")
                 .put_text("de tarefas.\n")
                 .set_error()
@@ -203,15 +201,15 @@ class PlayActions:
             )
 
     def create_draft(self):
-        sandbox_source = self.game.get_sandbox_source()
-        sandbox_folder: Path = sandbox_source.get_workspace()
+        sandbox_source = self.game.get_sandbox_remote()
+        sandbox_folder: Path = sandbox_source.path.work_dir
         sandbox_folder.mkdir(parents=True, exist_ok=True)
         
         def find_numbered_draft_id(sandbox_folder: Path) -> int:
             task_keys_only: list[str] = []
             for quest in self.game.quests.values():
                 for task in quest.get_tasks():
-                    task_keys_only.append(task.identity.get_key())
+                    task_keys_only.append(task.basic.key)
             for element in sandbox_folder.iterdir():
                 task_keys_only.append(element.name)
             draft_id = SandboxDrafts.find_max_numbered_key(task_keys_only=task_keys_only) + 1
@@ -257,8 +255,8 @@ class PlayActions:
                 f.write(draft)
 
             SandboxDrafts.create_sandbox_draft(folder, title)
-            self.tree.state.selected = f"{sandbox_source.name}@{key}"
-            self.tree.state.expanded.add(f"{sandbox_source.name}@{sandbox_source.name}")
+            self.tree.state.selected = f"{sandbox_source.data.name}@{key}"
+            self.tree.state.expanded.add(f"{sandbox_source.data.name}@{sandbox_source.data.name}")
             self.repo.data.selected = self.tree.state.selected
             self.reload()
             self.fman.add_input( Floating().bottom().right()
@@ -294,7 +292,7 @@ class PlayActions:
         self.run_selected_task(task)
 
     def __down_remote_task(self, task: Task) -> None:
-        if not task.is_import_type():
+        if not task.resource.is_import_type:
             self.fman.add_input(
                  Floating().bottom().right().put_text("\nEssa não é uma tarefa de baixável.\n").set_error()
             )
@@ -310,12 +308,12 @@ class PlayActions:
             down_frame.draw()
             Fmt.refresh()
 
-        cmd_down = CmdDown(repo=self.repo, task_key=task.identity.get_full_key(), settings=self.settings)
+        cmd_down = CmdDown(repo=self.repo, task_key=task.basic.full_key, settings=self.settings)
         cmd_down.set_fnprint(fnprint)
         result = cmd_down.execute()
         if result:
             self.repo.logger.store(
-                LogItemMove().set_key(task.identity.get_full_key()).set_mode(LogItemMove.Mode.DOWN)
+                LogItemMove().set_key(task.basic.full_key).set_mode(LogItemMove.Mode.DOWN)
             )
 
     def open_versions(self):
@@ -324,11 +322,11 @@ class PlayActions:
 
             if isinstance(obj, Task):
                 task: Task = obj
-                track_folder = self.repo.paths.get_track_task_folder(task.identity.get_full_key())
+                track_folder = self.repo.paths.get_track_task_folder(task.basic.full_key)
                 tracker = Tracker()
                 tracker.set_folder(track_folder)
-                if task.identity.get_full_key() in self.repo.logger.tasks.task_dict:
-                    log_sort = self.repo.logger.tasks.task_dict[task.identity.get_full_key()]
+                if task.basic.full_key in self.repo.logger.tasks.task_dict:
+                    log_sort = self.repo.logger.tasks.task_dict[task.basic.full_key]
 
                     msg, folder = tracker.unfold_files(log_sort)
                     cmd = self.settings.app.editor
@@ -361,7 +359,7 @@ class PlayActions:
         return lambda: None
         
     def run_selected_task(self, task: Task) -> None:
-        task_folder = task.location.get_workspace_folder()
+        task_folder = task.path.work_dir
         if not task_folder:
             raise Warning("Folder não encontrado")
         run = Run(settings=self.settings, target_list=[task_folder], param=Param.Basic())
@@ -374,7 +372,7 @@ class PlayActions:
         run.load()
         
         if not run.context.wdir.has_solver():
-            cmd = CmdDown(self.repo, task.identity.get_full_key(), self.settings)
+            cmd = CmdDown(self.repo, task.basic.full_key, self.settings)
             cmd.execute()
             msg =  Floating().bottom().right().set_warning()
             msg.put_text("\nNenhum arquivo de código na linguagem {} encontrado.".format(self.repo.data.lang))

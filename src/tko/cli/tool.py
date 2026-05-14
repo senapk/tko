@@ -12,8 +12,8 @@ def _build_readme_candidates_from_repo_url(repo_url: str) -> list[str]:
         normalized = "https://github.com/" + normalized[len("git@github.com:") :]
     normalized = normalized.rstrip("/")
     return [
-        f"{normalized}/blob/main/README.md",
         f"{normalized}/blob/master/README.md",
+        f"{normalized}/blob/main/README.md",
     ]
 
 app = typer.Typer(help="Utility tools for one-off operations")

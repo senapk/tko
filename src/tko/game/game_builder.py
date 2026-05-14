@@ -5,18 +5,17 @@ from tko.game.quest_parser import QuestParser
 from tko.game.task_parser import TaskParser
 from tko.game.quest import Quest
 from tko.game.task import Task
-from tko.repository.rep_source import RepSource
+from tko.repository.remote import Remote
 from tko.util.decoder import Decoder
 from tko.feno.indexer import fix_readme
 from icecream import ic # type: ignore
 
 class GameBuilder:
-    def __init__(self, source: RepSource, verbose: bool):
-        self.source = source
+    def __init__(self, remote: Remote, verbose: bool):
+        self.remote: Remote = remote
         self.ordered_quests: list[str] = [] # ordered quests keys
         self.quests: dict[str, Quest] = {}
         self.active_quest: Quest | None = None
-        # self.unique_keys: set[str] = set()
         self.interactive: bool = False
         self.verbose: bool = verbose
 
@@ -26,16 +25,16 @@ class GameBuilder:
 
     def build_from(self, language: str):
         try:
-            filename: Path = self.source.get_source_readme(self.verbose)
+            filename: Path = self.remote.path.index_file
         except ValueError as e:
             if self.verbose:
-                print(f"Erro ao obter o arquivo README da fonte {self.source.name}: {e}", file=sys.stderr)
+                print(f"Erro ao obter o arquivo README da fonte {self.remote.data.name}: {e}", file=sys.stderr)
             return self
         self.__ensure_sandbox_readme_fixed(filename)
         content: str = self.load_content(filename)
         self.__parse_file_content(content)
-        quest_filters, task_filters = self.source.get_filters()
-        self.__remove_empty_and_other_language_and_filtered(language, quest_filters, task_filters) 
+        quest_filters = self.remote.data.quest_filters
+        self.__remove_empty_and_other_language_and_filtered(language, quest_filters) 
         self.__create_requirements_pointers()
         self.__create_cross_references()
         return self
@@ -43,26 +42,26 @@ class GameBuilder:
     def load_content(self, filename: Path) -> str:
         content: str = ""
         if not filename.exists():
-            if not self.source.is_sandbox_source():
+            if not self.remote.is_sandbox:
                 if self.verbose:
-                    print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}", file=sys.stderr)
+                    print(f"Aviso: fonte {filename} não encontrada no source {self.remote.data.name}", file=sys.stderr)
         else:
             content = Decoder.load(filename)
         return content
 
     def __ensure_sandbox_readme_fixed(self, filename: Path):
-        if not self.source.is_sandbox_source():
+        if not self.remote.is_sandbox:
             return
         if not filename.parent.exists():
             return
         if not filename.exists():
             # print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}, criando arquivo")
             if self.verbose:
-                print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}, criando arquivo", file=sys.stderr)
+                print(f"Aviso: fonte {filename} não encontrada no source {self.remote.data.name}, criando arquivo", file=sys.stderr)
             filename.parent.mkdir(parents=True, exist_ok=True)
             with open(filename, "w", encoding="utf-8") as f:
-                f.write(f"# {self.source.name}\n\n")
-        fix_readme(filename.resolve(), self.source.get_workspace(), self.source.name, verbose=False, load_titles=True)
+                f.write(f"# {self.remote.data.name}\n\n")
+        fix_readme(filename.resolve(), self.remote.path.work_dir, self.remote.data.name, verbose=False, load_titles=True)
 
 
     def collect_tasks(self) -> dict[str, Task]:
@@ -70,21 +69,21 @@ class GameBuilder:
 
         for quest in self.quests.values():
             for task in quest.get_tasks():
-                tasks[task.identity.get_full_key()] = task
+                tasks[task.basic.full_key] = task
         return tasks
 
     def collect_quests(self) -> dict[str, Quest]:
         quests: dict[str, Quest] = {}
         for quest in self.quests.values():
-            quests[quest.identity.get_full_key()] = quest
+            quests[quest.basic.full_key] = quest
         return quests
 
     def __create_requirements_pointers(self):
-        quests, tasks = self.source.get_filters()
-        if quests is not None or tasks is not None:
+        quests = self.remote.data.quest_filters
+        if quests is not None:
             return
 
-        filename: Path = self.source.get_source_readme(self.verbose)
+        filename: Path = self.remote.path.index_file
         quests = self.collect_quests()
         # verificar se todas as quests requeridas existem e adicionar o ponteiro
         for q in quests.values():
@@ -99,9 +98,17 @@ class GameBuilder:
 
     def __parse_file_content(self, content: str):
         lines = content.splitlines()
-        alias = self.source.name
+        alias = self.remote.data.name
+        editable_source: bool = self.remote.data.is_editable
+        source_dir_root: Path | None = self.remote.path.source_dir
+        if source_dir_root is None:
+            if self.verbose:
+                print(f"Aviso: fonte {alias} não possui diretório de origem", file=sys.stderr)
+            return
+        git_url: str | None = self.remote.data.git_url
+
         try:
-            filename = self.source.get_source_readme(self.verbose)
+            filename = self.remote.path.index_file
         except ValueError as e:
             print(e)
             return
@@ -111,12 +118,9 @@ class GameBuilder:
             if quest is not None:
                 self.__add_quest(quest_parser.finish_quest())
                 continue
-
-            tp = TaskParser(filename, alias)
-            task = tp.parse_line(line, line_num + 1).check_path_try().get_task()
+            tp = TaskParser(index_path=filename, remote_name=alias, remote_dir_root=source_dir_root, remote_git_url=git_url, editable_source=editable_source)
+            task = tp.parse_line(line, line_num + 1)
             if task is not None:
-                if self.source.is_read_only() and not task.is_link():
-                    task.location.set_workspace_folder(self.source.get_task_workspace(task.identity.get_key()))
                 self.__add_task(task)
 
     def __get_active_quest(self) -> Quest:
@@ -126,11 +130,11 @@ class GameBuilder:
         return self.active_quest
 
     def __add_quest(self, quest: Quest) -> Quest:
-        if quest.identity.get_full_key() not in self.quests:
-            # print("debug", f"Adding quest {quest.identity.get_full_key()} with title {quest.identity.get_title()}")
-            self.quests[quest.identity.get_full_key()] = quest
-        if quest.identity.get_full_key() not in self.ordered_quests:
-            self.ordered_quests.append(quest.identity.get_full_key())
+        if quest.basic.full_key not in self.quests:
+            # print("debug", f"Adding quest {quest.identity.full_key} with title {quest.identity.get_title()}")
+            self.quests[quest.basic.full_key] = quest
+        if quest.basic.full_key not in self.ordered_quests:
+            self.ordered_quests.append(quest.basic.full_key)
         self.active_quest = quest
         return quest
 
@@ -138,7 +142,7 @@ class GameBuilder:
         self.__get_active_quest().add_task(task)
 
     def add_filtered_quests(self, quest_filters: dict[str, str] | None):
-        if self.source.is_sandbox_source():
+        if self.remote.is_sandbox:
             return
         if quest_filters is None or len(quest_filters) == 0:
             return
@@ -146,20 +150,20 @@ class GameBuilder:
         available_quests = [q for q in self.quests.values()]
         for pattern, destiny in quest_filters.items():
             for q in available_quests:
-                if (pattern.lower() in q.identity.get_title().lower()) or (pattern.lower() == f"@{q.identity.get_key()}".lower()):
+                if (pattern.lower() in q.basic.title.lower()) or (pattern.lower() == f"@{q.basic.key}".lower()):
                     if destiny == "":
                         quests.append(q)
                     else:
-                        qdestiny = self.quests.get(f"{self.source.name}@{destiny}", None)
+                        qdestiny = self.quests.get(f"{self.remote.data.name}@{destiny}", None)
                         if qdestiny is None:
                             qdestiny = Quest(destiny, destiny)
-                            qdestiny.identity.set_remote_name(self.source.name)
+                            qdestiny.basic.remote_name = self.remote.data.name
                             self.__add_quest(qdestiny)
                         for t in q.get_tasks():
                             qdestiny.add_task(t)
                         if qdestiny not in quests:
                             quests.append(qdestiny)
-        self.quests = {q.identity.get_full_key(): q for q in quests}
+        self.quests = {q.basic.full_key: q for q in quests}
 
     def filter_by_language_and_empty(self, language: str):
         quests: list[Quest] = []
@@ -168,10 +172,10 @@ class GameBuilder:
                 continue
             if len(q.languages) == 0 or language in q.languages:
                 quests.append(q)
-        self.quests = {q.identity.get_full_key(): q for q in quests}
+        self.quests = {q.basic.full_key: q for q in quests}
         return self
 
-    def __remove_empty_and_other_language_and_filtered(self, language: str, quest_filters: dict[str, str] | None, task_filters: dict[str, str] | None):
+    def __remove_empty_and_other_language_and_filtered(self, language: str, quest_filters: dict[str, str] | None):
         if quest_filters is None or len(quest_filters) == 0:
             self.filter_by_language_and_empty(language)
         else:
@@ -180,7 +184,7 @@ class GameBuilder:
 
     def __create_cross_references(self): #call after clear_empty
         for quest in self.quests.values():
-            quest.identity.set_remote_name(self.source.name)
+            quest.basic.remote_name = self.remote.data.name
             for task in quest.get_tasks():
-                task.identity.set_remote_name(self.source.name)
-                task.quest_key = quest.identity.get_full_key()
+                task.basic.remote_name = self.remote.data.name
+                task.quest_key = quest.basic.full_key

@@ -1,6 +1,6 @@
 from tko.game.quest import Quest
 from tko.game.task import Task
-from tko.game.tree_item import HasTreeIdentity
+from tko.game.tree_item import IsTreeItem
 from tko.play_tree.formatter_util import FormatterUtil
 from tko.play.flags import Flags
 from tko.play_tree.tree_layout import TreeLayout
@@ -26,27 +26,27 @@ class TreeRenderer:
             text = text.slice(0, pos) + text.slice(pos, end).add_style("X") + text.slice(end)
         return text
 
-    def render(self, item: HasTreeIdentity, selected_key: str, matcher: SearchAsc) -> RText:
+    def render(self, item: IsTreeItem, selected_key: str, matcher: SearchAsc) -> RText:
         if isinstance(item, Quest):
-            focused = item.identity.get_full_key() == selected_key
+            focused = item.basic.full_key == selected_key
             return self.render_quest(item, focused)
 
         if isinstance(item, Task):
-            focused = item.identity.get_full_key() == selected_key
+            focused = item.basic.full_key == selected_key
             return self.mark_search_match(self.render_task(item, focused), matcher)
 
         return RText("")
 
     def render_task(self, t: Task, focused: bool) -> RText:
         output = RText(" ")
-        output += RText(str(t.xp), "b") + " "
+        output += RText(str(t.game.xp), "b") + " "
 
         output += RText(self.fmt_util.get_task_down_symbol(t)[1], self.fmt_util.get_task_down_symbol(t)[0]) + " "
-        output += self.fmt_util.format_percent_1s(t.get_rate_percent()) + " "
+        output += self.fmt_util.format_percent_1s(t.grader.get_rate_percent()) + " "
         output += RText(self.fmt_util.get_task_help_symbol(t)[1], self.fmt_util.get_task_help_symbol(t)[0]) + " "
         output += RText(self.fmt_util.get_task_path_symbol(t)[1], self.fmt_util.get_task_path_symbol(t)[0]) + " "
 
-        _key_title, _key, _title = t.get_full_title(self.layout.key_size)
+        _key_title, _key, _title = self.fmt_util.get_full_title(t, self.layout.key_size)
         title = self.fmt_util.color_task_title(_key, _title)
 
         focus_color = self.settings.colors.focused_item if focused else ""
@@ -63,7 +63,7 @@ class TreeRenderer:
             h, m = self.fmt_util.get_task_hours_minutes(t)
             output += self.fmt_util.format_hours_minutes("g", h, m)
 
-        value = t.get_rate_percent() * t.get_quality_percent() / 100
+        value = t.grader.full_percent
         output += self.fmt_util.format_percent_3s(value)
         return output
 

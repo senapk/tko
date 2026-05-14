@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 
 from tko.game.task_parser import TaskParser
+from tko.game.task_resource import ResourceType
+from tko.repository.git_cache import GitCache
 
 class Test:
     @classmethod
@@ -9,49 +11,44 @@ class Test:
         os.chdir(Path(__file__).parent)
 
     def test_database_legacy(self):
-        # get path of this file
-        tp = TaskParser(index_path=Path("/source/arquivo.md"), source_alias="database")
-        task = tp.parse_line("- [ ] [@label complemente](data/label/r.md)", 0).get_task()
+        tp = TaskParser(index_path=Path("/source/arquivo.md"), remote_dir_root=Path("/source"), remote_name="database")
+        task = tp.parse_line("- [ ] [@label complemente](data/label/r.md)", 0)
         assert task is not None
-        task.location.set_origin_folder(Path("/ping/database/label"))
-        task.location.set_workspace_folder(Path("/rep/database/label"))
-        assert task.identity.get_key() == "label"
-        assert task.identity.get_remote_name() == "database"
-        assert task.identity.get_full_key() == "database@label" # database is hided by legacy compatibility
-        folder = task.location.get_workspace_folder()
-        assert folder is not None
-        assert str(folder.resolve()) == "/rep/database/label"
-        assert task.location.target == "data/label/r.md"
+        assert task.basic.key == "label"
+        assert task.basic.remote_name == "database"
+        assert task.basic.full_key == "database@label"
+        assert task.resource.raw_link == "data/label/r.md"
+        assert task.resource.remote_dir == Path("/source")
+        assert task.resource.relative_path == Path("data/label/r.md")
+        assert task.resource.resource_type == ResourceType.EDIT
     
     def test_database_poo(self):
-        # get path of this file
-        tp = TaskParser(index_path=Path("/source/arquivo.md"), source_alias="poo")
-        task = tp.parse_line("- [ ] [@label complemente](data/label/r.md)", 0).get_task()
+        tp = TaskParser(index_path=Path("/source/arquivo.md"), remote_dir_root=Path("/source"), remote_name="poo")
+        task = tp.parse_line("- [ ] [@label complemente](data/label/r.md)", 0)
         assert task is not None
-        assert task.identity.get_key() == "label"
-        assert task.identity.get_remote_name() == "poo"
-        assert task.identity.get_full_key() == "poo@label" # database is hided by legacy compatibility
-        assert str(task.location.get_workspace_folder()) == "/source/data/label"
-        assert task.location.target == "data/label/r.md"
+        assert task.basic.key == "label"
+        assert task.basic.remote_name == "poo"
+        assert task.basic.full_key == "poo@label"
+        assert task.resource.relative_path == Path("data/label/r.md")
+        assert task.resource.raw_link == "data/label/r.md"
 
 
     def test_STATIC_FILE(self):
-        # get path of this file
-        tp = TaskParser(index_path=Path("/source/arquivo.md"), source_alias="poo")
-        task = tp.parse_line("- [ ] [@label complemente](poo/label/r.md)", 0).get_task()
+        tp = TaskParser(index_path=Path("/source/arquivo.md"), remote_dir_root=Path("/source"), remote_name="poo")
+        task = tp.parse_line("- [ ] [@label complemente](poo/label/r.md)", 0)
         assert task is not None
-        assert task.identity.get_key() == "label"
-        assert task.identity.get_remote_name() == "poo"
-        assert task.identity.get_full_key() == "poo@label" # database is hided by legacy compatibility
-        assert str(task.location.get_workspace_folder()) == "/source/poo/label"
-        assert task.location.target == "poo/label/r.md"
+        assert task.basic.key == "label"
+        assert task.basic.remote_name == "poo"
+        assert task.basic.full_key == "poo@label"
+        assert task.resource.relative_path == Path("poo/label/r.md")
+        assert task.resource.raw_link == "poo/label/r.md"
 
     def test_file_not_found(self):
-        # get path of this file
-        try:
-            (TaskParser(index_path=Path("arquivo.md"), source_alias="database")
-                .parse_line("- [ ] [@label complemente](database/label/f.md)", 0)
-                .check_path_try())
-        except Warning as _:
-            assert True
-            return
+        task = (
+            TaskParser(index_path=(Path.cwd() / "arquivo.md"), remote_dir_root=Path.cwd(), remote_name="database")
+            .parse_line("- [ ] [@label complemente](database/label/f.md)", 0)
+        )
+        assert task is not None
+        task.root_dir = Path.cwd()
+        task.git_cache = GitCache(Path.cwd() / ".tko" / "cache_test")
+        assert task.path.check_origin_path() is False

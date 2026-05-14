@@ -19,7 +19,7 @@ class RepositoryLoader:
         for line in lines:
             if line.startswith("<<<<<<<") or line.startswith("=======") or line.startswith(">>>>>>>"):
                 raise ConfigMergeConflictError(
-                    f"Git merge conflict detected in {self.repo.paths.get_config_file()}.\n"
+                    f"Git merge conflict detected in {self.repo.paths.config_file}.\n"
                     "Please resolve the conflict manually before continuing."
                 )
     @staticmethod
@@ -32,41 +32,38 @@ class RepositoryLoader:
             return 0
 
     def load_config(self) -> RepositoryLoader:
-        content = Decoder.load(self.repo.paths.get_config_file())
+        content = Decoder.load(self.repo.paths.config_file)
         self.check_for_merge_conflicts(content)
         
         local_data: dict[str, Any] | Any = {}
         try:
             local_data = yaml.safe_load(content)
             if local_data is None or not isinstance(local_data, dict) or self.length(local_data) == 0:
-                backup_content = Decoder.load(self.repo.paths.get_config_backup_file())
+                backup_content = Decoder.load(self.repo.paths.config_backup_file)
                 self.check_for_merge_conflicts(backup_content)
                 local_data = yaml.safe_load(backup_content)
                 
             if local_data is None or not isinstance(local_data, dict) or self.length(local_data) == 0:
-                raise FileNotFoundError(f"Arquivo de configuração vazio: {self.repo.paths.get_config_file()}")
+                raise FileNotFoundError(f"Arquivo de configuração vazio: {self.repo.paths.config_file}")
                 
         except ConfigMergeConflictError:
             raise
         except yaml.YAMLError as e:
-            raise Warning(RText.parse(f"O arquivo de configuração do repositório [y]{self.repo.paths.get_config_file()}[.] contém erros de YAML e está [r]corrompido[.].\nErro: {e}\nAbra e corrija o conteúdo ou crie um novo."))
+            raise Warning(RText.parse(f"O arquivo de configuração do repositório [y]{self.repo.paths.config_file}[.] contém erros de YAML e está [r]corrompido[.].\nErro: {e}\nAbra e corrija o conteúdo ou crie um novo."))
         except FileNotFoundError:
-            raise Warning(RText.parse(f"O arquivo de configuração do repositório [y]{self.repo.paths.get_config_file()}[.] está [r]vazio[.].\nAbra e corrija o conteúdo ou crie um novo."))
+            raise Warning(RText.parse(f"O arquivo de configuração do repositório [y]{self.repo.paths.config_file}[.] está [r]vazio[.].\nAbra e corrija o conteúdo ou crie um novo."))
         except Exception as e:
-            raise Warning(RText.parse(f"O arquivo de configuração do repositório [y]{self.repo.paths.get_config_file()}[.] está [r]corrompido[.].\nErro inesperado: {e}\nAbra e corrija o conteúdo ou crie um novo."))
+            raise Warning(RText.parse(f"O arquivo de configuração do repositório [y]{self.repo.paths.config_file}[.] está [r]corrompido[.].\nErro inesperado: {e}\nAbra e corrija o conteúdo ou crie um novo."))
 
         self.repo.data.load_from_dict(local_data) # type: ignore
         self.repo.flags.from_dict(self.repo.data.flags) # type: ignore
         
-        for source in self.repo.data.get_sources():
-            source.set_source_globals(self.repo.paths.get_repo_root_dir(), self.repo.paths.get_cache_folder())
-
         return self
 
     def save_config(self) -> RepositoryLoader:
         self.repo.data.version = "0.2"
         self.repo.data.flags = self.repo.flags.to_dict()
-        path: Path = Path(self.repo.paths.get_config_file())
+        path: Path = Path(self.repo.paths.config_file)
         path.parent.mkdir(parents=True, exist_ok=True)
         atomic_write_yaml(path, self.repo.data.save_to_dict())
         return self

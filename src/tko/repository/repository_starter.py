@@ -1,14 +1,13 @@
-import os
 from pathlib import Path
 from tko.play.language_setter import LanguageSetter
 from tko.util.rtext import RText
 from tko.repository.repository import Repository
-from tko.repository.rep_paths import RepPaths
+from tko.repository.repository_paths import RepositoryPaths
 import shutil
 from tko.config.settings import Settings
 from tko.repository.repository_loader import RepositoryLoader
 
-class RepStarter:
+class RepositoryStarter:
     def __init__(self, settings: Settings, folder: Path | None, language: str | None = None):
         self.settings = settings
         # if folder is set, use folder, else use local folder.
@@ -23,12 +22,12 @@ class RepStarter:
             return False
         
         self.repo = repo
-        self.create_empty_rep()
+        self.create_empty_repo()
         # erase cache folder to avoid conflicts
-        cache_folder = repo.paths.get_cache_folder()
-        if os.path.exists(cache_folder):
+        cache_folder = repo.paths.cache_folder
+        if cache_folder.exists():
             shutil.rmtree(cache_folder)
-        os.makedirs(cache_folder, exist_ok=True)
+        cache_folder.mkdir(parents=True, exist_ok=True)
         if self.language is not None:
             repo.data.lang = self.language
             print(RText.parse(f"A linguagem do repositório foi definida como [y]{self.language}[.]."))
@@ -43,7 +42,7 @@ class RepStarter:
         print(RText.parse(f"Voce pode acessar o repositório com o comando [g]tko open[.]"))
     
     def create_repository(self) -> Repository | None:
-        path_parents = RepPaths.rec_search_for_repo_parents(self.folder)
+        path_parents = RepositoryPaths.rec_search_for_repo_parents(self.folder)
 
         if path_parents is not None and path_parents.resolve() == self.folder.resolve():
             print(RText.parse(f"Já existe um repositório TKO na pasta [y]{self.folder.resolve()}[.]"))
@@ -62,7 +61,7 @@ class RepStarter:
             if op == "n":
                 return None
         else:
-            path_subdir_list = RepPaths.rec_search_for_repo_subdir(self.folder)
+            path_subdir_list = RepositoryPaths.rec_search_for_repo_subdir(self.folder)
             if len(path_subdir_list) > 0:
                 print(RText.parse(f"Você está tentando criar um repositório TKO na pasta [y]{self.folder.resolve()}[.]"))
                 print(RText.parse("Porém já existem repositórios TKO abaixo dessa pasta. Mova ou apague-os"))
@@ -72,9 +71,8 @@ class RepStarter:
 
         return Repository(self.folder)
     
-    def create_empty_rep(self):
+    def create_empty_repo(self):
         source = self.repo.create_default_sandbox_source()
-        self.repo.data.set_source(source)
-        folder = source.get_workspace()
-        print(f"Criando repositório vazio, utilizando a pasta {folder} como pasta para atividades locais")
+        self.repo.data.set_remote(source)
+        print(f"Criando repositório vazio, como pasta para atividades locais")
     

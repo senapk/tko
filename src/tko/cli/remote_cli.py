@@ -2,7 +2,7 @@ import typer
 from typing import Optional
 from tko.app_context import AppContext
 from tko.cli.common import load_repo
-from tko.repository.rep_source_actions import RepSourceActions
+from tko.repository.remote_actions import RemoteActions
 
 app = typer.Typer(help="Manage remote task sources")
 
@@ -14,7 +14,7 @@ def remote_list(ctx: typer.Context):
     repo, _, _ = load_repo(app_ctx.changedir)
     if repo is None:
         return
-    rep_actions = RepSourceActions(settings, repo)
+    rep_actions = RemoteActions(settings, repo)
     rep_actions.remote_list()
 
 @app.command("rm", help="Remove a remote task source")
@@ -25,7 +25,7 @@ def remote_rm(ctx: typer.Context, name: str = typer.Argument(..., help="Name of 
     repo, _, _ = load_repo(app_ctx.changedir)
     if repo is None:
         return
-    rep_actions = RepSourceActions(settings, repo)
+    rep_actions = RemoteActions(settings, repo)
     rep_actions.remote_rm(alias=name)
 
 @app.command("add", help="Add a new task source")
@@ -50,7 +50,7 @@ def remote_add(
         repo, _, _ = load_repo(app_ctx.changedir)
         if repo is None:
             return
-        rep_actions = RepSourceActions(settings, repo)
+        rep_actions = RemoteActions(settings, repo)
         rep_actions.remote_add(
             name=name, 
             remote_default=default_git_alias, 
@@ -86,8 +86,8 @@ def remote_filter(
     repo, _, _ = load_repo(changedir)
     if repo is None:
         return
-    rep_actions = RepSourceActions(settings, repo)
-    rep_actions.remote_filter(alias=name, filter_quest=quest, filter_task=None, clear=clear, filter_to=to)
+    rep_actions = RemoteActions(settings, repo)
+    rep_actions.remote_filter(alias=name, filter_quest=quest, clear=clear, filter_to=to)
 
 @app.command("set", help="Manage filters for a remote task source")
 def remote_set(
@@ -102,7 +102,7 @@ def remote_set(
     repo, _, _ = load_repo(changedir)
     if repo is None:
         return
-    rep_actions = RepSourceActions(settings, repo)
+    rep_actions = RemoteActions(settings, repo)
     rep_actions.remote_set(alias=name, target=target, index=index)
 
 if __name__ == "__main__":

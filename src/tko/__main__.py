@@ -7,10 +7,10 @@ from icecream import ic # type: ignore
 from tko.app_context import AppContext
 from tko.__init__ import __version__
 from tko.cli.build import app as build_app
-from tko.cli.task import app as task_app
+from tko.cli.task_cli import app as task_app
 from tko.cli.config import app as config_app
 from tko.cli.reset import app as reset_app
-from tko.cli.remote import app as remote_app
+from tko.cli.remote_cli import app as remote_app
 from tko.cli.collect import app as collect_app
 from tko.cli.class_cmd import app as class_app
 from tko.cli.tool import app as tool_app

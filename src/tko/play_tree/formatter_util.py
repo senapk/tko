@@ -1,7 +1,8 @@
 from tko.cmds.drafts_finder_cached import DraftsFinderCached
 from tko.game.quest import Quest
 from tko.game.task import Task
-from tko.game.task_config import TaskEdit, TaskLoss, TaskMain, TaskTest
+from tko.game.task_config import TaskLoss, TaskMain, TaskTest
+from tko.game.task import Task
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.util.symbols import Symbols
@@ -15,14 +16,14 @@ class FormatterUtil:
         self.cache_task_times: dict[str, tuple[int, int]] = {}
 
 
-    def is_downloaded(self, task: Task):
-        folder = task.location.get_workspace_folder()
+    def is_downloaded(self, task: Task) -> bool:
+        folder = task.path.work_dir
         if folder is None:
             return False
         return folder.exists()
 
     def is_downloaded_for_lang(self, task: Task):
-        folder = task.location.get_workspace_folder()
+        folder = task.path.work_dir
         if folder is None:
             return False
 
@@ -52,43 +53,54 @@ class FormatterUtil:
             symbol = Symbols.star_void
         return symbol, percent_text
 
-    def get_task_down_symbol(self, t: Task) -> tuple[str, str]:
-        if t.config.mode == TaskEdit.VIEW:
-            if t.info.feedback:
+
+    def get_full_title(self, task: Task, key_pad: None | int, pad_char: str = " ") -> tuple[str, str, str]:
+        basic = task.basic
+        if key_pad is None:
+            key_pad = len(basic.key)
+        if not f"@{basic.key}" in basic.title:
+            key = f"@{basic.key.ljust(key_pad, pad_char)} "
+            title = basic.title
+            return key + title, key, title
+        return basic.title, "", basic.title
+
+    def get_task_down_symbol(self, task: Task) -> tuple[str, str]:
+        if task.resource.is_view:
+            if task.info.feedback:
                 return ("g", Symbols.task_view)
             return ("", Symbols.task_view)
-        if t.config.test == TaskTest.TEST:
-            if self.is_downloaded_for_lang(t):
-                if t.info.feedback:
+        if task.config.test == TaskTest.TEST:
+            if self.is_downloaded_for_lang(task):
+                if task.info.feedback:
                     return ("g", Symbols.diamond_filled)   # baixou e tem feedback
                 return ("", Symbols.diamond_filled)        # baixou e não tem feedback
-            elif self.is_downloaded(t):
-                if t.info.feedback:
+            elif self.is_downloaded(task):
+                if task.info.feedback:
                     return ("r", Symbols.diamond_void)   # baixou e tem feedback
                 return ("y", Symbols.diamond_void)        # baixou e não tem feedback
             else:
-                if t.info.feedback:
+                if task.info.feedback:
                     return ("r", Symbols.diamond_void)       # não baixou e tem feedback
                 return ("", Symbols.diamond_void)              # não baixou e não tem feedback
-        elif t.config.test == TaskTest.SELF:
-            if self.is_downloaded_for_lang(t):
-                if t.info.feedback:
+        elif task.config.test == TaskTest.SELF:
+            if self.is_downloaded_for_lang(task):
+                if task.info.feedback:
                     return ("g", Symbols.square_filled)   # baixou e tem feedback
                 return ("", Symbols.square_filled)        # baixou e não tem feedback
-            elif self.is_downloaded(t):
-                if t.info.feedback:
+            elif self.is_downloaded(task):
+                if task.info.feedback:
                     return ("r", Symbols.square_void)   # baixou e tem feedback
                 return ("y", Symbols.square_void)        # baixou e não tem feedback
             else:
-                if t.info.feedback:
+                if task.info.feedback:
                     return ("r", Symbols.square_void)       # não baixou e tem feedback
                 return ("", Symbols.square_void)              # não baixou e não tem feedback
         return ("x", "x")
 
 
-    def get_task_path_symbol(self, t: Task) -> tuple[str, str]:
-        color = "y" if t.is_import_type() else "m"
-        if t.config.path == TaskMain.MAIN:
+    def get_task_path_symbol(self, tr: Task) -> tuple[str, str]:
+        color = "y" if tr.resource.is_import_type else "m"
+        if tr.config.path == TaskMain.MAIN:
             return (color, Symbols.star_filled)
         return (color, Symbols.star_void)
 
@@ -138,16 +150,16 @@ class FormatterUtil:
         return RText("------ ")
 
     def get_task_hours_minutes(self, task: Task) -> tuple[int, int]:
-        if task.identity.get_full_key() in self.cache_task_times:
-            return self.cache_task_times[task.identity.get_full_key()]
-        logsort = self.repo.logger.tasks.task_dict.get(task.identity.get_full_key(), None)
+        if task.basic.full_key in self.cache_task_times:
+            return self.cache_task_times[task.basic.full_key]
+        logsort = self.repo.logger.tasks.task_dict.get(task.basic.full_key, None)
         if logsort is not None and len(logsort.base_list) > 0:
             delta, _ = logsort.base_list[-1]
             hours = delta.accumulated.seconds // 3600
             minutes = (delta.accumulated.seconds % 3600) // 60
-            self.cache_task_times[task.identity.get_full_key()] = (hours, minutes)
+            self.cache_task_times[task.basic.full_key] = (hours, minutes)
             return hours, minutes
-        self.cache_task_times[task.identity.get_full_key()] = (0, 0)
+        self.cache_task_times[task.basic.full_key] = (0, 0)
         return 0, 0
 
     def get_quest_time(self, quest: Quest) -> tuple[int, int]:

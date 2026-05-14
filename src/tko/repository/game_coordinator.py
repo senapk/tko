@@ -1,6 +1,6 @@
+from __future__ import annotations
 import sys
 from tko.repository.git_cache import UpdateMode
-from tko.repository.rep_source import RepSource
 from tko.logger.log_sort import LogSort
 from tko.repository.repository import Repository
 
@@ -8,21 +8,22 @@ class GameCoordinator:
     def __init__(self, repo: Repository): 
         self.repo = repo
 
-    def load_game(self, verbose: bool) -> 'GameCoordinator':
+    def load_game(self, verbose: bool) -> GameCoordinator:
         if verbose:
-            print(f"Loading repository from {self.repo.paths.get_repo_root_dir()}...", file=sys.stderr)
-            
-        if not self.repo.data.get_sources():
+            print(f"Loading repository from {self.repo.paths.root_dir}...", file=sys.stderr)
+        
+        remotes = self.repo.remotes
+        if not remotes: # load now
             from tko.repository.repository_loader import RepositoryLoader
             RepositoryLoader(self.repo).load_config()
-            
-        if self.repo.git_cache.update_mode == UpdateMode.ALWAYS:
-            for source in self.repo.data.get_sources():
-                _ = source.get_source_readme(verbose)
+            remotes = self.repo.remotes
+        else: # update cache if needed
+            if self.repo.git_cache.update_mode == UpdateMode.ALWAYS:
+                for remote in remotes:
+                    _ = remote.path.index_file
                 
-        sources: list[RepSource] = self.repo.data.get_sources()
-        self.repo.game.set_sources(sources, self.repo.data.lang)
-        self.repo.game.build(verbose)
+        self.repo.game.set_remotes(remotes, self.repo.data.lang)
+        self.repo.game.build(verbose, git_cache=self.repo.git_cache, root_dir=self.repo.root_dir)
         self._load_tasks_from_log_into_game()
         
         return self

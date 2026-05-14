@@ -1,11 +1,13 @@
 from tko.game.quest import Quest
-from tko.game.task import Task
 from tko.game.game_builder import GameBuilder
 from tko.game.game_validator import GameValidator
-from tko.repository.rep_source import RepSource
+from tko.game.task import Task
+from tko.repository.remote import Remote
 # from typing import override
 from icecream import ic # type: ignore
 import re
+from pathlib import Path
+from tko.repository.git_cache import GitCache
 
 def load_html_tags(task: str) -> None | str:
     pattern = r"<!--\s*(.*?)\s*-->"
@@ -14,10 +16,9 @@ def load_html_tags(task: str) -> None | str:
         return None
     return match.group(1).strip()
 
-
 class Game:
     def __init__(self):
-        self.sources: list[RepSource] = []
+        self.remotes: list[Remote] = []
         self.ordered_quests: list[str] = [] # ordered clusters
         self.quests: dict[str, Quest] = {}  # quests indexed by quest key
         self.tasks: dict[str, Task] = {}  # tasks indexed by task key
@@ -28,90 +29,52 @@ class Game:
             return self.tasks[key]
         raise Warning(f"fail: tarefa '{key}' não encontrada no curso")
 
-    def get_xp_resume(self, include_main: bool, include_side: bool):
-        total = 0
-        obtained = 0
-        for q in self.quests.values():
-            o, t = q.get_xp(include_main_perk=include_main, include_side=include_side)
-            total += t
-            obtained += o
-        return obtained, total
-
-    def get_skills_resume(self) -> tuple[dict[str, float], dict[str, float], dict[str, float]]:
-        # obtained, priority, complete
-        priority: dict[str, float] = {}
-        complete: dict[str, float] = {}
-        obtained: dict[str, float] = {}
-
-        for q in self.quests.values():
-            for t in q.get_tasks():
-                for skill, value in t.skills.items():
-                    if skill == "":
-                        continue
-                    gvalue = (value * t.get_xp() * t.get_ratio())
-                    if gvalue < 0.1:
-                        gvalue = 0
-                    obtained[skill] = obtained.get(skill, 0) + gvalue
-                    if not t.is_optional():
-                        priority[skill] = priority.get(skill, 0) + value * t.get_xp()
-                    complete[skill] = complete.get(skill, 0) + value * t.get_xp()
-
-        return obtained, priority, complete
-
-    def sum_xp(self, obtained: dict[str, float], priority: dict[str, float], complete: dict[str, float]) -> tuple[float, float, float]:
-        total_obtained = 0
-        total_priority = 0
-        total_complete = 0
-        for key, value in complete.items():
-            total_obtained += obtained.get(key, 0)
-            total_priority += priority.get(key, 0)
-            total_complete += value
-        return total_obtained, total_priority, total_complete
-
-    def get_sandbox_source(self) -> RepSource:
-        for s in self.sources:
-            if s.is_sandbox_source():
+    def get_sandbox_remote(self) -> Remote:
+        for s in self.remotes:
+            if s.is_sandbox:
                 return s
         raise ValueError("Local sandbox source not found")
 
-    def set_sources(self, sources: list[RepSource], language: str):
-        self.sources = sources
+    def set_remotes(self, remotes: list[Remote], language: str):
+        self.remotes = remotes
         self.language = language
         return self
     
-    def build(self, verbose: bool):
-        
+    def build(self, verbose: bool, git_cache: GitCache, root_dir: Path):
         self.ordered_quests = []
         self.quests = {}
         self.tasks = {}
-        for source in self.sources:
-            gb = GameBuilder(source, verbose)
+        for remote in self.remotes:
+            gb = GameBuilder(remote, verbose)
             try:
                 gb.build_from(self.language)
             except ValueError as e:
                 print(e)
                 continue
             for quest_key in gb.ordered_quests:
-                self.ordered_quests.append(source.name + "@" + quest_key)
+                self.ordered_quests.append(remote.data.name + "@" + quest_key)
             gb_quests = gb.collect_quests()
             gb_tasks = gb.collect_tasks()
             for quest in gb_quests.values():
-                self.quests[quest.identity.get_full_key()] = quest
+                self.quests[quest.basic.full_key] = quest
             for task in gb_tasks.values():
-                self.tasks[task.identity.get_full_key()] = task
+                self.tasks[task.basic.full_key] = task
         GameValidator(self.quests).validate()
+        for task in self.tasks.values():
+            task.git_cache = git_cache
+            task.root_dir = root_dir
         return self
 
     @staticmethod
     def is_reachable_quest(q: Quest, cache: dict[str, bool]):
-        if q.identity.get_full_key() in cache:
-            return cache[q.identity.get_full_key()]
+        if q.basic.full_key in cache:
+            return cache[q.basic.full_key]
 
         if len(q.requires_ptr) == 0:
-            cache[q.identity.get_full_key()] = True
+            cache[q.basic.full_key] = True
             return True
-        cache[q.identity.get_full_key()] = all([r.is_complete() and Game.is_reachable_quest(r, cache) for r in q.requires_ptr])
-        return cache[q.identity.get_full_key()]
+        cache[q.basic.full_key] = all([r.is_complete() and Game.is_reachable_quest(r, cache) for r in q.requires_ptr])
+        return cache[q.basic.full_key]
 
     def update_reachable_and_available(self):
         for q in self.quests.values():
@@ -140,3 +103,4 @@ class Game:
         for t in self.tasks.values():
             output.append(str(t))
         return "\n".join(output)
+    

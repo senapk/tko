@@ -5,6 +5,7 @@ from tko.floating.floating_manager import FloatingManager
 from tko.play_tree.formatter_util import FormatterUtil
 from tko.play.flags import Flags
 from tko.play_tree.task_tree import TaskTree
+from tko.game.task import Task
 
 
 class GuiActionResolver:
@@ -16,9 +17,9 @@ class GuiActionResolver:
         self.flags = flags
 
     def get_task_action(self, task: Task) -> tuple[str, str]:
-        if task.is_link():
+        if task.resource.is_view:
             return "B", TaskAction.VISITAR
-        if task.is_static_type():
+        if task.resource.is_static_type:
             return "G", TaskAction.EXECUTAR
         if not self.fmt_util.is_downloaded_for_lang(task):
             return "Y", TaskAction.BAIXAR
@@ -33,12 +34,13 @@ class GuiActionResolver:
             quest: Quest = obj
             if self.flags.task_view_mode.is_inbox() and not quest.is_reachable():
                 output = TaskAction.BLOQUEIO
-            elif quest.identity.get_full_key() in self.tree.state.expanded:
+            elif quest.basic.full_key in self.tree.state.expanded:
                 output = TaskAction.CONTRAIR
             else:
                 output = TaskAction.EXPANDIR
             return "Y", output
         elif isinstance(obj, Task):
-            color, output = self.get_task_action(obj)
+            tr = self.tree.game.get_task(obj.basic.full_key)
+            color, output = self.get_task_action(tr)
             return color, output
         return "R", " ERRO"

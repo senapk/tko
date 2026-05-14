@@ -7,7 +7,7 @@ from tko.logger.log_item_move import LogItemMove
 from tko.logger.log_item_self import LogItemSelf
 from tko.logger.patch_history import PatchHistory, PatchInfo
 from tko.logger.tracker import Tracker, Track
-from tko.repository.rep_paths import RepPaths
+from tko.repository.repository_paths import RepositoryPaths
 from tko.util.decoder import Decoder
 import datetime as dt
 import csv
@@ -96,14 +96,14 @@ class TrackerLoader: # deprecated
 class OldLogLoader:
     def __init__(self, rep_folder: Path):
         self.rep_folder: Path = rep_folder
-        self.paths = RepPaths(rep_folder)
+        self.paths = RepositoryPaths(rep_folder)
         self.base_dict: dict[dt.datetime, LogItemBase] = {}
 
         self.merge_old_log_into_base()
         self.merge_track_into_base()
     
     def merge_old_log_into_base(self):
-        old_log_file = self.paths.get_old_history_file()
+        old_log_file = self.paths.old_history_file
         entries: list[LogAction] = OldLogLoader.__load_file(old_log_file)
         for e in entries:
             item = OldLogLoader.__convert_to_base_list(e)
@@ -128,7 +128,7 @@ class OldLogLoader:
 
     def load_from_track_folder(self) -> dict[dt.datetime, LogItemExec]:
         output: dict[dt.datetime, LogItemExec] = {}
-        track_folder = self.paths.get_track_folder()
+        track_folder = self.paths.track_folder
         if not os.path.exists(track_folder):
             return output
         entries = os.listdir(track_folder)

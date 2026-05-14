@@ -16,46 +16,34 @@ class TreeUi:
         new_ui.is_requirement_color = self.is_requirement_color
         return new_ui
 
-class TreeItem():
-
+class TreeBasic:
     def __init__(self):
-        self.identity: TreeItem = self
-        self.__remote_name: str = ""
+        self.remote_name: str = ""
+        self.title: str = ""
         self.__key: str = ""
-        self._title: str = ""
 
-    def get_remote_name(self) -> str:
-        return self.__remote_name
+    def clone(self) -> TreeBasic:
+        new_identity = TreeBasic()
+        new_identity.remote_name = self.remote_name
+        new_identity.title = self.title
+        new_identity.__key = self.__key
+        return new_identity
 
-    def get_full_key(self) -> str:
-        return self.__remote_name + "@" + self.__key
-    
-    def get_key(self) -> str:
+    @property
+    def key(self) -> str:
         return self.__key
     
-    def get_title(self) -> str:
-        return self._title
-    
-    # def get_sentence(self) -> RText:
-    #     return self.__sentence
+    @property
+    def full_key(self) -> str:
+        return f"{self.remote_name}@{self.__key}"
 
-    def set_remote_name(self, remote_name: str):
-        self.__remote_name = remote_name
-        return self
-    
-    def set_key(self, key: str):
-        if key.startswith("@"):
-            key = key[1:]
-        self.__key = key
-        return self
+    @key.setter
+    def key(self, value: str):
+        if value.startswith("@"):
+            value = value[1:]
+        self.__key = value
+        return self    
 
-    def set_title(self, title: str):
-        self._title = title
-        return self
-    
-    def set_sentence(self, sentence: RText):
-        self.__sentence = sentence
-        return self
-
-class HasTreeIdentity(Protocol):
-    identity: TreeItem
+class IsTreeItem(Protocol):
+    basic: TreeBasic
+    ui: TreeUi

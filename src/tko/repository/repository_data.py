@@ -1,50 +1,56 @@
-from tko.repository.git_cache import GitCache
-from tko.repository.rep_source import STUDENT_SANDBOX_NAME, RepSource
+from tko.repository.remote import Remote
 
 from typing import Any
 
-class RepData:
-    def __init__(self, git_cache: GitCache):
+class RepositoryData:
+    def __init__(self):
         self.version: str = ""
-        self.__sources: list[RepSource] = []
+        self.__remotes: list[Remote] = []
         self.expanded: list[str] = []
         self.flags: dict[str, Any] = {}
         self.lang: str = ""
         self.selected: str = ""
         self.selected_index: int = 0
-        self.git_cache = git_cache
 
-    def set_source(self, source: RepSource):
-        for i, s in enumerate(self.__sources):
-            if s.name == source.name:
-                self.__sources[i] = source
+    def set_remote(self, source: Remote):
+        for i, s in enumerate(self.__remotes):
+            if s.data.name == source.data.name:
+                self.__remotes[i] = source
                 return self
-        self.__sources.append(source)
+        self.__remotes.append(source)
 
-    def del_source(self, alias: str):
-        self.__sources = [s for s in self.__sources if s.name != alias]
+    def del_remote(self, alias: str):
+        self.__remotes = [s for s in self.__remotes if s.data.name != alias]
         return self
 
-    def get_source(self, alias: str) -> RepSource | None:
-        for s in self.__sources:
-            if s.name == alias:
+    def get_remote(self, alias: str) -> Remote | None:
+        for s in self.__remotes:
+            if s.data.name == alias:
+                return s
+        return None
+
+    def get_sandbox(self) -> Remote | None:
+        for s in self.__remotes:
+            if s.is_sandbox:
                 return s
         return None
 
     def __ensure_sandbox_source(self) -> None:
-        sandbox_source = self.get_source(STUDENT_SANDBOX_NAME)
+        sandbox_source = self.get_sandbox()
         if sandbox_source is None:
-            sandbox_source = RepSource(STUDENT_SANDBOX_NAME, git_cache=None).set_default_student_sandbox()
-            self.set_source(sandbox_source)
+            sandbox_source = Remote("")
+            sandbox_source.is_sandbox = True
+            self.set_remote(sandbox_source)
 
     # fonte local é retornada primeiro para garantir que ela seja priorizada em relação a fontes externas
     # sandbox é sempre a primeira fonte local, para garantir que ela seja priorizada em relação a outras fontes locais
-    def get_sources(self) -> list[RepSource]:
+    @property
+    def remotes_raw_list(self) -> list[Remote]:
         self.__ensure_sandbox_source()
-        external_sources: list[RepSource] = []
-        sandbox_source: list[RepSource] = []
-        for s in self.__sources:
-            if s.is_sandbox_source():
+        external_sources: list[Remote] = []
+        sandbox_source: list[Remote] = []
+        for s in self.__remotes:
+            if s.is_sandbox:
                 sandbox_source.append(s)
             else:
                 external_sources.append(s)
@@ -71,7 +77,7 @@ class RepData:
             if "sources" in data:
                 source_data: list[dict[str, Any]] = data["sources"]
                 if isinstance(source_data, list): # type: ignore
-                    self.__sources = [RepSource("", git_cache=self.git_cache).load_from_dict(x) for x in source_data]
+                    self.__remotes = [Remote("").load_from_dict(x) for x in source_data]
                 else:
                     raise TypeError("The 'sources' field must be a list.")
 
@@ -81,7 +87,7 @@ class RepData:
     def save_to_dict(self) -> dict[str, Any]:
         return {
             "version": self.version,
-            "sources": [x.save_to_dict() for x in self.__sources],
+            "sources": [x.save_to_dict() for x in self.__remotes],
             "expanded": self.expanded,
             "flags": self.flags,
             "lang": self.lang,

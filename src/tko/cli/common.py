@@ -2,15 +2,15 @@ from pathlib import Path
 
 from tko.repository.git_cache import UpdateMode
 from tko.repository.repository import Repository
-from tko.repository.rep_paths import RepPaths
+from tko.repository.repository_paths import RepositoryPaths
 
 def load_repo(dir_path: Path, show_warnings: bool = True, auto_load: bool = True, global_cache: bool = False, force_update: bool = False, force_offline: bool = False) -> tuple[Repository | None, Path | None, UpdateMode]:
     
     if global_cache:
-        RepPaths.use_global_cache_folder = True
-        print(f"Usando cache global em: {RepPaths('').get_cache_folder()}")
+        RepositoryPaths.use_global_cache_folder = True
+        print(f"Usando cache global em: {RepositoryPaths('').cache_folder}")
         
-    dir_parent = RepPaths.rec_search_for_repo_parents(dir_path)
+    dir_parent = RepositoryPaths.rec_search_for_repo_parents(dir_path)
     if dir_parent is not None:
         mode = UpdateMode.IF_OLDER
         if force_update:

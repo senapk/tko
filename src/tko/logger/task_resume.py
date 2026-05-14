@@ -1,6 +1,7 @@
+from tko.game.task_grader import TaskGrader
 from tko.game.task_info import TaskSelfInfo
 from tko.logger.log_sort import LogSort
-from tko.game.task_config import TaskGrader, TaskLoss
+from tko.game.task_config import TaskLoss
 from typing import Any
 
 

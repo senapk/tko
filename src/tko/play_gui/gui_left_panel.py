@@ -28,7 +28,7 @@ class GuiLeftPanel:
             top = RText.format(" {} ", self.tree.repo.data.lang.upper())
         frame.set_header(top, "<", prefix="{", suffix="}")
 
-        dirname: Path = self.tree.repo.paths.get_repo_root_dir()
+        dirname: Path = self.tree.repo.paths.root_dir
         dirname_str = dirname.name.upper()
 
         text = RText.format(" {} ", dirname_str)

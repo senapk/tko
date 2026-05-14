@@ -4,6 +4,7 @@ from tko.widget.colors import Colors
 from tko.widget.frame import Frame
 from tko.play.flags import Flags
 from tko.util.rtext import RText
+from tko.game.xp_resume import XPResume
 
 
 class GuiSkillsBar:
@@ -30,7 +31,8 @@ class GuiSkillsBar:
         return out
 
     def make_xp_button(self, size: int) -> RText:
-        obtained, priority, complete = self.game.get_skills_resume()
+        xp_resume = XPResume(self.game.quests)
+        obtained, priority, complete = xp_resume.get_skills_resume()
 
         keys_to_remove: list[str] = []
         for skill, value in obtained.items():
@@ -76,7 +78,8 @@ class GuiSkillsBar:
 
     def show(self, frame_xp: Frame) -> None:
         dy, dx = frame_xp.get_inner()
-        obtained, priority, complete = self.game.get_skills_resume()
+        xp_resume = XPResume(self.game.quests)
+        obtained, priority, complete = xp_resume.get_skills_resume()
         frame_xp.draw()
 
         elements: list[RText] = []
@@ -104,7 +107,7 @@ class GuiSkillsBar:
             elements.append(skill_bar)
 
         # Total bar
-        total_obtained, total_priority, total_complete = self.game.sum_xp(obtained, priority, complete)
+        total_obtained, total_priority, total_complete = xp_resume.sum_xp(obtained, priority, complete)
         if total_priority == 0:
             grade = 0
         else:

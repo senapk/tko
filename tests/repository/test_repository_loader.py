@@ -13,16 +13,16 @@ class FakePaths:
     def __init__(self, root: Path):
         self.root = root
 
-    def get_config_file(self) -> Path:
+    @property
+    def config_file(self) -> Path:
         return self.root / ".tko" / "repository.yaml"
 
-    def get_config_backup_file(self) -> Path:
-        return Path(str(self.get_config_file()) + ".backup")
+    @property
+    def config_backup_file(self) -> Path:
+        return Path(str(self.config_file) + ".backup")
 
-    def get_repo_root_dir(self) -> Path:
-        return self.root
-
-    def get_cache_folder(self) -> Path:
+    @property
+    def cache_folder(self) -> Path:
         return self.root / ".tko" / "cache"
 
 
@@ -45,9 +45,6 @@ class FakeData:
     def load_from_dict(self, data: dict[str, Any]) -> None:
         self.loaded = data
         self.flags = data.get("flags", {})
-
-    def get_sources(self) -> list[FakeSource]:
-        return self.sources
 
     def save_to_dict(self) -> dict[str, Any]:
         return self.saved_payload
@@ -86,7 +83,7 @@ def test_load_config_uses_main_file_and_sets_source_globals(tmp_path: Path):
     source = FakeSource()
     loader, repo = make_loader(tmp_path, [source])
     write_text(
-        repo.paths.get_config_file(),
+        repo.paths.config_file,
         "flags:\n  panel: logs\nlang: py\nsources: []\n",
     )
 
@@ -95,13 +92,13 @@ def test_load_config_uses_main_file_and_sets_source_globals(tmp_path: Path):
     assert returned is loader
     assert repo.data.loaded == {"flags": {"panel": "logs"}, "lang": "py", "sources": []}
     assert repo.flags.loaded == {"panel": "logs"}
-    assert source.globals_args == (repo.paths.get_repo_root_dir(), repo.paths.get_cache_folder())
+    assert source.globals_args is None
 
 
 def test_load_config_falls_back_to_backup_when_main_file_is_empty(tmp_path: Path):
     loader, repo = make_loader(tmp_path)
-    write_text(repo.paths.get_config_file(), "")
-    write_text(repo.paths.get_config_backup_file(), "flags:\n  show_time: false\n")
+    write_text(repo.paths.config_file, "")
+    write_text(repo.paths.config_backup_file, "flags:\n  show_time: false\n")
 
     loader.load_config()
 
@@ -111,7 +108,7 @@ def test_load_config_falls_back_to_backup_when_main_file_is_empty(tmp_path: Path
 
 def test_load_config_raises_for_merge_conflict(tmp_path: Path):
     loader, repo = make_loader(tmp_path)
-    write_text(repo.paths.get_config_file(), "<<<<<<< HEAD\nflags: {}\n=======\nflags: {}\n>>>>>>> branch\n")
+    write_text(repo.paths.config_file, "<<<<<<< HEAD\nflags: {}\n=======\nflags: {}\n>>>>>>> branch\n")
 
     with pytest.raises(ConfigMergeConflictError):
         loader.load_config()
@@ -119,7 +116,7 @@ def test_load_config_raises_for_merge_conflict(tmp_path: Path):
 
 def test_load_config_raises_warning_for_invalid_yaml(tmp_path: Path):
     loader, repo = make_loader(tmp_path)
-    write_text(repo.paths.get_config_file(), "flags: [unterminated\n")
+    write_text(repo.paths.config_file, "flags: [unterminated\n")
 
     with pytest.raises(Warning, match="contém erros de YAML"):
         loader.load_config()
@@ -127,8 +124,8 @@ def test_load_config_raises_warning_for_invalid_yaml(tmp_path: Path):
 
 def test_load_config_raises_warning_when_main_and_backup_are_empty(tmp_path: Path):
     loader, repo = make_loader(tmp_path)
-    write_text(repo.paths.get_config_file(), "")
-    write_text(repo.paths.get_config_backup_file(), "")
+    write_text(repo.paths.config_file, "")
+    write_text(repo.paths.config_backup_file, "")
 
     with pytest.raises(Warning, match=r"está .*vazio"):
         loader.load_config()
@@ -150,6 +147,6 @@ def test_save_config_sets_version_and_writes_flags(monkeypatch: MonkeyPatch, tmp
     assert returned.repo is repo
     assert repo.data.version == "0.2"
     assert repo.data.flags == {"show_time": "true"}
-    assert captured["path"] == repo.paths.get_config_file()
+    assert captured["path"] == repo.paths.config_file
     assert captured["payload"] == repo.data.saved_payload
-    assert repo.paths.get_config_file().parent.exists()
+    assert repo.paths.config_file.parent.exists()

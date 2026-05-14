@@ -1,9 +1,9 @@
 from __future__ import annotations
-from tko.game.task import Task
 from tko.game.task_config import TaskMain
 from tko.util.rtext import RText
-from tko.game.tree_item import TreeItem, TreeUi
+from tko.game.tree_item import TreeBasic, TreeUi
 from tko.game.quest_grader import QuestGrader
+from tko.game.task import Task
 
 # from typing import override
 
@@ -14,29 +14,33 @@ def startswith(text: str, prefix: str) -> bool:
 
 class Quest:
     def __init__(self, title: str = "", key: str = ""):
-        self.identity = TreeItem()
+        self.basic = TreeBasic()
         self.ui = TreeUi()
-        self.identity.set_key(key)
-        self.identity.set_title(title)
+
+        self.filename = ""
+        self.basic.key = key
+        self.basic.title = title
+        
         self.line_number: int = 0
         self.line: str = ""
+        
         self.__tasks: list[Task] = []
         self.requires: list[str] = []  # 
         self.requires_ptr: list[Quest] = []
         self.required_by_ptr: list[Quest] = []
+        
+        self.min_percent_completion: int = 50  # q:{value} 50 percent to complete quest
         self.skills: dict[str, int] = {}  # s:{skill} to be applied to all tasks
         self.languages: list[str] = []  # l:language to filter what is showed to user based in default language
-        self.min_percent_completion: int = 50  # q:{value} 50 percent to complete quest
-        self.filename = ""
         self.__is_reachable: bool = False
 
     def add_require_key(self, key: str):
         if key.startswith("@"):
             key = key[1:]
-        self.requires.append(self.identity.get_remote_name() + "@" + key)
+        self.requires.append(self.basic.remote_name + "@" + key)
 
     def get_full_title(self, show_skills: bool) -> RText:
-        output = RText(self.identity.get_remote_name(), "c") + RText(":") + RText(self.identity.get_title())
+        output = RText(self.basic.remote_name, "c") + RText(":") + RText(self.basic.title)
         if show_skills:
             for skill, value in self.skills.items():
                 if value > 1:
@@ -53,16 +57,16 @@ class Quest:
         return self
     
     def update_tasks_reachable(self):
-        for t in self.__tasks:
-            t.set_reachable(True)
+        for task in self.__tasks:
+            task.game.is_reachable = True
         return
 
     # @override
     def __str__(self):
         line = str(self.line_number).rjust(3)
         tasks_size = str(len(self.__tasks)).rjust(2, "0")
-        key = "" if self.identity.get_full_key() == self.identity.get_title() else self.identity.get_full_key() + " "
-        output = f"{line} {tasks_size} {key}{self.identity.get_title()} {self.skills} {self.requires}"
+        key = "" if self.basic.full_key == self.basic.title else self.basic.full_key + " "
+        output = f"{line} {tasks_size} {key}{self.basic.title} {self.skills} {self.requires}"
         return output
 
     def is_complete(self):
@@ -70,35 +74,35 @@ class Quest:
         return value is None or value >= self.min_percent_completion
 
     def add_task(self, task: Task):
-        task.skills.update(self.skills)  # apply quest skills to task
+        task.game.skills.update(self.skills)  # apply quest skills to task
         self.__tasks.append(task)
 
     def get_tasks(self):
         return self.__tasks
 
     def sort_tasks_by_title(self):
-        self.__tasks = sorted(self.__tasks, key=lambda t: t.identity.get_title())
+        self.__tasks = sorted(self.__tasks, key=lambda tr: tr.basic.title)
 
     def get_xp(self, include_main_perk: bool, include_side: bool) -> tuple[float, float]:
         """
         Returns a tuple of (earned_xp, total_xp)
         """
         tasks_info: list[QuestGrader.Elem] = []
-        for t in self.__tasks:
-            if t.config.path in [TaskMain.MAIN, TaskMain.PERK] and not include_main_perk:
+        for task in self.__tasks:
+            if task.config.path in [TaskMain.MAIN, TaskMain.PERK] and not include_main_perk:
                 continue
-            if t.config.path == TaskMain.SIDE and not include_side:
+            if task.config.path == TaskMain.SIDE and not include_side:
                 continue
-            percent = (t.get_rate_percent() * t.get_quality_percent()) / 100.0
-            tasks_info.append(QuestGrader.Elem(t.is_optional(), t.xp, percent))
+            percent = task.grader.full_percent
+            tasks_info.append(QuestGrader.Elem(task.config.is_optional, task.game.xp, percent))
         return QuestGrader.calc_xp_earned_total(tasks_info)
     
     def get_completion(self) -> tuple[int, int]:
         total = 0
         done = 0
-        for t in self.__tasks:
+        for task in self.__tasks:
             total += 1
-            if t.is_complete():
+            if task.grader.is_complete:
                 done += 1
         return done, total
 

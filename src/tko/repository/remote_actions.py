@@ -1,98 +1,83 @@
-from tko.repository.rep_source import RepSource
+from tko.repository.remote import Remote
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.repository.repository_loader import RepositoryLoader
 from tko.util.rtext import RText
 from pathlib import Path
 
-class RepSourceActions:
+class RemoteActions:
     def __init__(self, settings: Settings, repo: Repository):
         self.settings = settings
         self.repo = repo
 
     def remote_list(self):
-        rep = self.repo
-        sources = rep.data.get_sources()
+        remotes = self.repo.remotes
         print("Você também pode configurar as fontes e filtros manualmente editando o arquivo:")
-        print(RText.parse(f"[y]{rep.paths.get_config_file()}[.]"))
-        if len(sources) == 0:
+        print(RText.parse(f"[y]{self.repo.paths.config_file}[.]"))
+        if len(remotes) == 0:
             print("Nenhuma fonte configurada")
             return
         print("Fontes configuradas:")
-        for source in sources:
-            self.show_source(source)
+        for remote in remotes:
+            self.show_source(remote)
     
-    def show_source(self, source: RepSource):
-        print(RText.parse(f"- Rótulo: [y]{source.name}[.]"))
-        print(RText.parse(f"  - Link ou Caminho: [y]{source.get_url_link()}[.]"))
-        print(RText.parse(f"  - Index          : [y]{source.index}[.]"))
-        print(RText.parse(f"  - Filtro Quests  : [y]{'Desativado' if source.quests is None else 'Ativado'}[.]"))
-        if source.quests is not None:
-            for f, v in source.quests.items():
-                print(f"    - {f}: {v}")
-        print(RText.parse(f"  - Filtro Tasks   : [y]{'Desativado' if source.tasks is None else 'Ativado'}[.]"))
-        if source.tasks is not None:
-            for f, v in source.tasks.items():
+    def show_source(self, remote: Remote):
+        print(RText.parse(f"- Rótulo: [y]{remote.data.name}[.]"))
+        print(RText.parse(f"  - Link ou Caminho: [y]{remote.data.target}[.]"))
+        print(RText.parse(f"  - Index          : [y]{remote.data.index}[.]"))
+        print(RText.parse(f"  - Filtro Quests  : [y]{'Desativado' if remote.data.quest_filters is None else 'Ativado'}[.]"))
+        if remote.data.quest_filters is not None:
+            for f, v in remote.data.quest_filters.items():
                 print(f"    - {f}: {v}")
 
     def remote_rm(self, alias: str) -> None:
-        rep = self.repo
-        sources = rep.data.get_sources()
         found = False
-        for source in sources:
-            if source.name == alias:
+        for remote in self.repo.remotes:
+            if remote.data.name == alias:
                 found = True
-                rep.data.del_source(alias)
+                self.repo.data.del_remote(alias)
                 print(RText.parse(f"Fonte [y]{alias}[.] removida com sucesso."))
                 break
         if not found:
             raise Warning("fail: fonte não encontrada.")
-        RepositoryLoader(rep).save_config()
+        RepositoryLoader(self.repo).save_config()
 
     def remote_set(self, alias: str, target: str | None = None, index: str | None = None) -> None:
         repo = self.repo
-        source: RepSource | None = repo.data.get_source(alias)
-        if source is None:
+        remote: Remote | None = repo.data.get_remote(alias)
+        if remote is None:
             raise Warning("fail: fonte não encontrada.")
         change: bool = False
 
         if target is not None:
-            source.target = target
+            remote.data.target = target
             change = True
         if index is not None:
-            source.index = index
+            remote.data.index = index
             change = True
-        self.show_source(source)
+        self.show_source(remote)
         if change:
             print(RText.parse(f"Filtros [y]{alias}[.] atualizados com sucesso."))
             RepositoryLoader(repo).save_config()
 
-    def remote_filter(self, alias: str, filter_quest: list[str] | None = None, filter_task: list[str] | None = None, clear: bool = False, filter_to: str | None = None) -> None:
+    def remote_filter(self, alias: str, filter_quest: list[str] | None = None, clear: bool = False, filter_to: str | None = None) -> None:
         repo = self.repo
-        source = repo.data.get_source(alias)
+        source = repo.data.get_remote(alias)
         if source is None:
             raise Warning("fail: fonte não encontrada.")
         change: bool = False
 
         if filter_quest is not None:
-            if source.quests is None:
-                source.quests = {}
+            if source.data.quest_filters is None:
+                source.data.quest_filters = {}
             for f in filter_quest:
-                if f not in source.quests:
+                if f not in source.data.quest_filters:
                     change = True
-                    source.quests[f] = filter_to if filter_to is not None else ""
+                    source.data.quest_filters[f] = filter_to if filter_to is not None else ""
             
-        if filter_task is not None:
-            if source.tasks is None:
-                source.tasks = {}
-            for f in filter_task:
-                if f not in source.tasks:
-                    change = True
-                    source.tasks[f] = filter_to if filter_to is not None else ""
         if clear:
             change = True
-            source.quests = None
-            source.tasks = None
+            source.data.quest_filters = None
         
         # if not quests and not tasks and not clear:
         self.show_source(source)
@@ -118,7 +103,8 @@ class RepSourceActions:
             writeable: bool, branch: str = "master"
             ) -> None:
         
-        if any(source.name == name for source in self.repo.data.get_sources()):
+        remotes = self.repo.remotes
+        if any(remote.data.name == name for remote in remotes):
             raise Warning("fail: fonte com esse nome já existe.")
 
         repo = self.repo
@@ -128,32 +114,35 @@ class RepSourceActions:
             settings = self.settings
             if not settings.has_alias_git(remote_default):
                 raise Warning("fail: alias git remoto não encontrado.")
-            url = settings.get_alias_git(remote_default)
-            self.git_clone_repository(url)
-            self.repo.data.set_source(RepSource(alias=name, git_cache=self.repo.git_cache)
-                                      .set_git_source(target=url, branch=branch)
-                                      .set_filters(self.fix_filter(filter_quest, filter_to), self.fix_filter(filter_task, filter_to))
-                                      .set_index(index)
-                                      .set_writeable(writeable))
+            try:
+                url = settings.get_alias_git(remote_default)
+                self.git_clone_repository(url)
+                remote = Remote(alias=name)
+                remote.data.set_git_source(target=url, branch=branch, index=index)
+                remote.data.quest_filters = self.fix_filter(filter_quest, filter_to)
+                self.repo.data.set_remote(remote)
+            except Warning as e:
+                print(f"Erro ao clonar repositório: {e}, fonte não foi adicionada.")
+                raise Warning("fail: não foi possível clonar o repositório.")
         elif remote_dir is not None:
             dir_path = Path(remote_dir)
             if not dir_path.exists() or not dir_path.is_dir():
                 raise Warning("fail: diretório remoto não encontrado.")
             print(RText.parse(f"Adicionando fonte remota apontando parao repositório no diretorio [y]{dir_path}[.]"))
-            repo.data.set_source(RepSource(alias=name, git_cache=self.repo.git_cache)
-                                 .set_local_source(target=dir_path)
-                                 .set_filters(quests=self.fix_filter(filter_quest, filter_to), tasks=self.fix_filter(filter_task, filter_to))
-                                 .set_index(index)
-                                 .set_writeable(writeable))
+            remote = Remote(alias=name)
+            remote.data.set_local_source(target=dir_path)
+            remote.data.quest_filters = self.fix_filter(filter_quest, filter_to)
+            self.repo.data.set_remote(remote)
         elif remote_url is not None:
             print(RText.parse(f"Adicionando fonte remota apontando para repositório git remoto [y]{remote_url}[.]"))
             try:
                 self.git_clone_repository(remote_url)
-                self.repo.data.set_source(RepSource(alias=name, git_cache=self.repo.git_cache)
-                                        .set_git_source(target=remote_url, branch=branch)
-                                        .set_filters(self.fix_filter(filter_quest, filter_to), self.fix_filter(filter_task, filter_to))
-                                        .set_index(index)
-                                        .set_writeable(writeable))
+                remote = Remote(alias=name)
+                remote.data.set_git_source(target=remote_url, branch=branch, index=index)
+                remote.data.quest_filters = self.fix_filter(filter_quest, filter_to)
+                remote.data.is_editable = writeable
+                self.repo.data.set_remote(remote)
+                print(RText.parse(f"Fonte remota [y]{name}[.] adicionada com sucesso."))
             except Warning as e:
                 print(f"Erro ao clonar repositório: {e}, fonte não foi adicionada.")
                 raise Warning("fail: não foi possível clonar o repositório.")
@@ -161,7 +150,7 @@ class RepSourceActions:
    
     def git_clone_repository(self, link: str) -> None:
         print(RText.parse(f"Clonando repositório remoto [y]{link}[.]."))
-        repo_dir = self.repo.git_cache.get_repo_dir(link, verbose=True)
+        repo_dir = self.repo.git_cache.get_remote_dir(link, verbose=True)
         if repo_dir is None:
             raise Warning("fail: não foi possível clonar o repositório.")
         print(RText.parse(f"Repositório [y]{link}[.] clonado com sucesso."))

@@ -1,11 +1,21 @@
 import pytest
 
-from tko.game.tree_item import TreeItem
+from tko.game.tree_item import TreeBasic, TreeUi
 from tko.play_tree.tree_state import TreeFilter, TreeState
 
 
-def make_item(key: str, remote_name: str = "repo") -> TreeItem:
-    return TreeItem().set_remote_name(remote_name).set_key(key).set_title(key)
+class Item:
+    def __init__(self, basic: TreeBasic):
+        self.basic = basic
+        self.ui = TreeUi()
+
+
+def make_item(key: str, remote_name: str = "repo"):
+    basic = TreeBasic()
+    basic.remote_name = remote_name
+    basic.key = key
+    basic.title = key
+    return Item(basic)
 
 
 class TestTreeFilter:
@@ -59,7 +69,7 @@ class TestTreeState:
         state = TreeState()
         state.selected = "repo@b"
 
-        assert state.get_selected_throw(items).identity.get_full_key() == "repo@b"
+        assert state.get_selected_throw(items).basic.full_key == "repo@b"
 
         state.selected = "repo@missing"
         with pytest.raises(IndexError, match="Selected item not found"):

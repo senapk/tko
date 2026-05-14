@@ -22,7 +22,7 @@ class DraftsFinderCached:
 
     @staticmethod
     def __is_source_on(folder: Path, language: str) -> bool:
-        if not folder.exists():
+        if not folder.exists() or not folder.is_dir():
             return False
         for file in folder.iterdir():
             if file.suffix == f".{language}":

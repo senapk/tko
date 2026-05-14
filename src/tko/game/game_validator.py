@@ -16,11 +16,11 @@ class GameValidator:
         keys = [k for k in self.quests.keys()]
         for q in self.quests.values():
             for t in q.get_tasks():
-                if t.identity.get_full_key() in keys:
-                    print(f"Chave repetida: {t.identity.get_full_key()} em {t.location.line_number} {t.location.line}, ignorando tarefa")
+                if t.basic.full_key in keys:
+                    print(f"Chave repetida: {t.basic.full_key} em {t.resource.line_number} {t.resource.line_data}, ignorando tarefa")
                     continue
-                keys.append(t.identity.get_full_key())
-                self.tasks[t.identity.get_full_key()] = t
+                keys.append(t.basic.full_key)
+                self.tasks[t.basic.full_key] = t
 
         # print chaves repetidas
         for k in keys:
@@ -30,12 +30,12 @@ class GameValidator:
 
         # trim titles
         for q in self.quests.values():
-            q.identity.set_title(q.identity.get_title().strip())
+            q.basic.title = q.basic.title.strip()
 
         # verificar auto dependencia
         for q in self.quests.values():
             for r in q.requires:
-                if q.identity.get_full_key() == r:
+                if q.basic.full_key == r:
                     print(f"Erro: auto refência {q.line_number} {q.line}")
                     exit(1)
 
@@ -44,12 +44,12 @@ class GameValidator:
     def __check_cycle(self):
         def dfs(qx: Quest, visitedx: list[str]):
             if len(visitedx) > 0:
-                if visitedx[0] == qx.identity.get_full_key():
+                if visitedx[0] == qx.basic.full_key:
                     print(f"Cycle detected: {visitedx}")
                     exit(1)
-            if qx.identity.get_full_key() in visitedx:
+            if qx.basic.full_key in visitedx:
                 return
-            visitedx.append(qx.identity.get_full_key())
+            visitedx.append(qx.basic.full_key)
             for r in qx.requires_ptr:
                 dfs(r, visitedx)
 

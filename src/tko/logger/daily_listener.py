@@ -1,4 +1,4 @@
-import yaml # type: ignore
+import yaml
 from tko.logger.log_item_base import LogItemBase
 from tko.logger.log_sort import LogSort
 from tko.logger.delta import Delta
