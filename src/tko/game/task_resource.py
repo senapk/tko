@@ -38,6 +38,10 @@ class TaskResource:
         return self.resource_type == ResourceType.VIEW
     
     @property
+    def is_edit(self) -> bool:
+        return self.resource_type == ResourceType.EDIT
+    
+    @property
     def is_link(self) -> bool:
         return self.external_url is not None
         

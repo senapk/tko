@@ -15,13 +15,14 @@ class GitHubUrl:
         if url.startswith("https://gist.githubusercontent.com"):
             self.raw_link = url
         else:
-            try:
-                self.url_structure = GithubUrlStructure().from_url(url)
-            except ValueError as _:
-                raise Warning("URL inválida para download: {}".format(url))
+            url_structure = GithubUrlStructure()
+            if not url_structure.parse(url):
+                raise ValueError("Invalid GitHub URL")
+            self.url_structure = url_structure
         self.file = ""
 
-    def get_raw_url(self):
+    @property
+    def fixed_url(self):
         if self.raw_link:
             return self.raw_link
         if self.url_structure is None:
@@ -29,7 +30,7 @@ class GitHubUrl:
         return self.url_structure.raw_github_url
 
     def download_and_rebase(self, filename: str):
-        [tempfile, __content] = urllib.request.urlretrieve(self.get_raw_url(), filename)
+        [tempfile, __content] = urllib.request.urlretrieve(self.fixed_url, filename)
         content = Decoder.load(tempfile)
         if self.url_structure is not None:
             content = LinkRebase.rebase(content, self.url_structure)
@@ -37,4 +38,4 @@ class GitHubUrl:
         return
 
     def __str__(self):
-        return self.get_raw_url()
+        return self.fixed_url

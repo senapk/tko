@@ -4,6 +4,7 @@ from tko.game.task import Task
 from tko.game.task_config import TaskLoss, TaskMain, TaskTest
 from tko.game.task_resource import TaskResource, ResourceType
 from tko.game.task_matcher import TaskMatcher
+from tko.feno.github_url_structure import GithubUrlStructure
 from icecream import ic # type: ignore
 from pathlib import Path
 
@@ -92,10 +93,25 @@ class TaskParser:
             return None
 
         # url link tasks
-        if tm.is_view and (tm.task_link.startswith(r"http://") or tm.task_link.startswith(r"https://")):
-            print(f"Parsing view task with external url: {tm.task_link}", file=sys.stderr)
-            self.task.resource.external_url = tm.task_link
-            return self.task
+        if tm.task_link.startswith(r"http://") or tm.task_link.startswith(r"https://"):
+            if tm.is_view:
+                print(f"Parsing view task with external url: {tm.task_link}", file=sys.stderr)
+                self.task.resource.external_url = tm.task_link
+                return self.task
+            else:
+                parser = GithubUrlStructure()
+                if parser.parse(tm.task_link):
+                    task.resource.remote_git = parser.repository_url
+                    task.resource.remote_dir = self.remote_dir
+                    task.resource.relative_path = Path(parser.relative_path)
+                    task.resource.editable_source = False
+                    return task
+                else:
+                    print(f"Parsing edit task with external url: {tm.task_link}", file=sys.stderr)
+                    task.resource.external_url = tm.task_link
+                    task.resource.editable_source = False
+                    task.resource.resource_type = ResourceType.VIEW
+                    return task
         
         # file view, static task or import task
         path = Path(self.redirect_from_readme(tm.task_link)).resolve()

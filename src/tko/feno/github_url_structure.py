@@ -10,6 +10,10 @@ class GithubUrlStructure:
         self.relative_path: str = ""
 
     @property
+    def repository_url(self) -> str:
+        return f"https://github.com/{self.user}/{self.repo}"
+
+    @property
     def github_url(self) -> str:
         return (
             f"https://github.com/"
@@ -25,7 +29,7 @@ class GithubUrlStructure:
             f"{self.branch}/{self.relative_path}"
         )
     
-    def from_url(self, url: str) -> GithubUrlStructure:
+    def parse(self, url: str) -> bool:
         parsed = urlparse(url)
 
         parts: list[str] = [
@@ -42,7 +46,7 @@ class GithubUrlStructure:
                 self.repo = repo
                 self.branch = branch
                 self.relative_path = "/".join(path)
-                return self 
+                return True 
 
             case (
                 "github.com", [user, repo, ("blob" | "tree"), branch, *path],
@@ -51,7 +55,7 @@ class GithubUrlStructure:
                 self.repo = repo
                 self.branch = branch
                 self.relative_path = "/".join(path)
-                return self
+                return True
 
             case _:
-                raise ValueError(f"Invalid GitHub URL: {url}")
+                return False

@@ -22,7 +22,7 @@ def test_gist_url_sets_raw_link() -> None:
 def test_gist_url_get_raw_url() -> None:
     url: str = "https://gist.githubusercontent.com/user/abc123/raw/abc/file.md"
     r: GitHubUrl = GitHubUrl(url)
-    assert r.get_raw_url() == url
+    assert r.fixed_url == url
 
 
 def test_gist_url_str() -> None:
@@ -44,7 +44,7 @@ def test_github_blob_md_url_parses_remote() -> None:
 def test_github_blob_md_get_raw_url() -> None:
     url: str = "https://github.com/user/repo/blob/main/folder/file.md"
     r: GitHubUrl = GitHubUrl(url)
-    assert r.get_raw_url() == "https://raw.githubusercontent.com/user/repo/main/folder/file.md"
+    assert r.fixed_url == "https://raw.githubusercontent.com/user/repo/main/folder/file.md"
 
 
 def test_github_blob_md_str() -> None:
@@ -63,8 +63,8 @@ def test_github_tree_url_parses_remote() -> None:
     assert r.url_structure.relative_path == "folder/sub"
 
 
-def test_invalid_github_url_raises_warning() -> None:
-    with pytest.raises(Warning):
+def test_invalid_github_url_raises_value_error() -> None:
+    with pytest.raises(ValueError):
         GitHubUrl("https://github.com/user/repo/invalid/path/file.md")
 
 
@@ -73,4 +73,4 @@ def test_github_blob_nested_folder() -> None:
     r: GitHubUrl = GitHubUrl(url)
     assert r.url_structure is not None
     assert r.url_structure.relative_path == "a/b/c/file.md"
-    assert r.get_raw_url() == "https://raw.githubusercontent.com/user/repo/main/a/b/c/file.md"
+    assert r.fixed_url == "https://raw.githubusercontent.com/user/repo/main/a/b/c/file.md"
