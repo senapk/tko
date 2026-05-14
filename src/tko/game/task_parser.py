@@ -1,5 +1,5 @@
 from __future__ import annotations
-import sys
+import logging
 from tko.game.task import Task
 from tko.game.task_config import TaskLoss, TaskMain, TaskTest
 from tko.game.task_resource import TaskResource, ResourceType
@@ -7,6 +7,9 @@ from tko.game.task_matcher import TaskMatcher
 from tko.feno.github_url_structure import GithubUrlStructure
 from icecream import ic # type: ignore
 from pathlib import Path
+
+
+logger = logging.getLogger(__name__)
 
 
 class TaskParser:
@@ -43,7 +46,12 @@ class TaskParser:
             elif tag == TaskLoss.ZERO.value:
                 self.task.config.loss = TaskLoss.ZERO
             else:
-                    print(f"Parsing {self.index_path}:{self.task.resource.line_number}, Tipo de tarefa desconhecido: {tag}")
+                logger.warning(
+                    "Parsing %s:%s, Tipo de tarefa desconhecido: %s",
+                    self.index_path,
+                    self.task.resource.line_number,
+                    tag,
+                )
 
     def __parse_task_types(self, tags: str) -> str:
         new_title: list[str] = []
@@ -95,7 +103,7 @@ class TaskParser:
         # url link tasks
         if tm.task_link.startswith(r"http://") or tm.task_link.startswith(r"https://"):
             if tm.is_view:
-                print(f"Parsing view task with external url: {tm.task_link}", file=sys.stderr)
+                logger.info("Parsing view task with external url: %s", tm.task_link)
                 self.task.resource.external_url = tm.task_link
                 return self.task
             else:
@@ -107,7 +115,7 @@ class TaskParser:
                     task.resource.editable_source = False
                     return task
                 else:
-                    print(f"Parsing edit task with external url: {tm.task_link}", file=sys.stderr)
+                    logger.warning("Parsing edit task with external url: %s", tm.task_link)
                     task.resource.external_url = tm.task_link
                     task.resource.editable_source = False
                     task.resource.resource_type = ResourceType.VIEW
