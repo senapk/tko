@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from tko.feno.remote_md import Absolute
+from tko.feno.link_rebase import LinkRebase
 from tko.util.decoder import Decoder
 
 
@@ -27,7 +27,7 @@ def test_rebase_local_same_dir_with_custom_output(tmp_path: Path) -> None:
 
     relative_folder: Path = Path(os.path.relpath(source.parent, output.parent))
     content: str = Decoder.load(source)
-    result: str = Absolute.change_to_relative_folder(content, relative_folder)
+    result: str = LinkRebase.change_to_relative_folder(content, relative_folder)
     Decoder.save(output, result)
 
     assert "page.md" in output.read_text()
@@ -36,7 +36,7 @@ def test_rebase_local_same_dir_with_custom_output(tmp_path: Path) -> None:
 def test_url_extraction_from_github_blob() -> None:
     """Test extraction of filename from GitHub blob URL"""
     from urllib.parse import urlparse
-    url: str = "https://github.com/qxcodefup/arcade/blob/master/README.md"
+    url: str = "https://github.com/qxcodefup/arcade/blob/main/README.md"
     parsed_url = urlparse(url)
     filename: str = Path(parsed_url.path).name or "README.md"
     assert filename == "README.md"

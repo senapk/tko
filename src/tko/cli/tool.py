@@ -12,7 +12,6 @@ def _build_readme_candidates_from_repo_url(repo_url: str) -> list[str]:
         normalized = "https://github.com/" + normalized[len("git@github.com:") :]
     normalized = normalized.rstrip("/")
     return [
-        f"{normalized}/blob/master/README.md",
         f"{normalized}/blob/main/README.md",
     ]
 
@@ -66,8 +65,8 @@ def tool_rebase_links(
     import tempfile
     from urllib.parse import urlparse
     from tko.util.decoder import Decoder
-    from tko.util.remote_url import RemoteUrl
-    from tko.feno.remote_md import Absolute
+    from tko.util.github_url import GitHubUrl
+    from tko.feno.link_rebase import LinkRebase
     from tko.app_context import AppContext
 
     # Determine output filename and path
@@ -95,8 +94,8 @@ def tool_rebase_links(
             try:
                 with tempfile.TemporaryDirectory() as tmpdir:
                     temp_file: str = str(Path(tmpdir) / "temp.md")
-                    remote: RemoteUrl = RemoteUrl(candidate)
-                    remote.download_absolute_to(temp_file)
+                    remote: GitHubUrl = GitHubUrl(candidate)
+                    remote.download_and_rebase(temp_file)
                     print(f"Arquivo url={candidate} baixado com sucesso")
                     print("Rebase concluído")
                     print(f"Arquivo salvo no path: {output_path}")
@@ -112,8 +111,8 @@ def tool_rebase_links(
     if target.startswith("https://"):
         with tempfile.TemporaryDirectory() as tmpdir:
             temp_file: str = str(Path(tmpdir) / "temp.md")
-            remote: RemoteUrl = RemoteUrl(target)
-            remote.download_absolute_to(temp_file)
+            remote: GitHubUrl = GitHubUrl(target)
+            remote.download_and_rebase(temp_file)
             print(f"Arquivo url={target} baixado com sucesso")
             print("Rebase concluído")
             print(f"Arquivo salvo no path: {output_path}")
@@ -124,7 +123,7 @@ def tool_rebase_links(
         source_path: Path = Path(target)
         relative_folder: Path = Path(os.path.relpath(source_path.parent, output_path.parent))
         content: str = Decoder.load(source_path)
-        content = Absolute.change_to_relative_folder(content, relative_folder)
+        content = LinkRebase.change_to_relative_folder(content, relative_folder)
         Decoder.save(output_path, content)
         print("Rebase concluído")
         print(f"Arquivo salvo no path: {output_path}")

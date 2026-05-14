@@ -1,12 +1,13 @@
 # from typing import override
 import urllib.request
-from tko.feno.remote_md import RemoteLink, Absolute
+from tko.feno.github_url_structure import GithubUrlStructure
+from tko.feno.link_rebase import LinkRebase
 from tko.util.decoder import Decoder
 
-class RemoteUrl:
+class GitHubUrl:
     def __init__(self, url: str):
         self.raw_link: str | None = ""
-        self.remote: RemoteLink | None = None
+        self.url_structure: GithubUrlStructure | None = None
 
         if not url.startswith("https://"):
             raise ValueError("Invalid URL")
@@ -15,23 +16,23 @@ class RemoteUrl:
             self.raw_link = url
         else:
             try:
-                self.remote = RemoteLink().identify_from_url(url)
-            except:
+                self.url_structure = GithubUrlStructure().from_url(url)
+            except ValueError as _:
                 raise Warning("URL inválida para download: {}".format(url))
         self.file = ""
 
     def get_raw_url(self):
         if self.raw_link:
             return self.raw_link
-        if self.remote is None:
+        if self.url_structure is None:
             return ""
-        return "https://raw.githubusercontent.com/" + self.remote.user + "/" + self.remote.repo + "/" + self.remote.branch + "/" + self.remote.folder + "/" + self.remote.file
+        return self.url_structure.raw_github_url
 
-    def download_absolute_to(self, filename: str):
+    def download_and_rebase(self, filename: str):
         [tempfile, __content] = urllib.request.urlretrieve(self.get_raw_url(), filename)
         content = Decoder.load(tempfile)
-        if self.remote is not None:
-            content = Absolute.relative_to_absolute(content, self.remote)
+        if self.url_structure is not None:
+            content = LinkRebase.rebase(content, self.url_structure)
         Decoder.save(filename, content)
         return
 

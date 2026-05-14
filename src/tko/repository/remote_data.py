@@ -11,7 +11,7 @@ alias: str - unique identifier for the source, used to reference the source in t
 target: str - for LOCAL_FILE, it's folder path; for GIT_CLONE, it's the git repository link
 source_type: SourceType - type of the source, either LOCAL_FILE or GIT_CLONE
 writeable: bool - indicates if the source is writeable, used to determine if the source can be modified or not
-branch: str | None - for GIT_CLONE type, it's the branch to clone or pull, default is "master"
+branch: str | None - for GIT_CLONE type, it's the branch to clone or pull, default is "main"
 filters: list[str] | None - list of filters to apply when loading quests from the source, used to filter quests based on certain criteria
 """
 

@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from tko.feno.remote_md import Absolute
+from tko.feno.link_rebase import LinkRebase
 from tko.util.decoder import Decoder
 
 
@@ -12,7 +12,7 @@ def test_redirect_local_same_dir(tmp_path: Path) -> None:
 
     relative_folder: Path = Path(os.path.relpath(source.parent, output.parent))
     content: str = Decoder.load(source)
-    result: str = Absolute.change_to_relative_folder(content, relative_folder)
+    result: str = LinkRebase.change_to_relative_folder(content, relative_folder)
     Decoder.save(output, result)
 
     assert "page.md" in output.read_text()
@@ -30,7 +30,7 @@ def test_redirect_local_to_sibling_dir(tmp_path: Path) -> None:
 
     relative_folder: Path = Path(os.path.relpath(source.parent, output.parent))
     content: str = Decoder.load(source)
-    result: str = Absolute.change_to_relative_folder(content, relative_folder)
+    result: str = LinkRebase.change_to_relative_folder(content, relative_folder)
     Decoder.save(output, result)
 
     assert "../src/page.md" in output.read_text()
@@ -48,7 +48,7 @@ def test_redirect_local_image_link(tmp_path: Path) -> None:
 
     relative_folder: Path = Path(os.path.relpath(source.parent, output.parent))
     content: str = Decoder.load(source)
-    result: str = Absolute.change_to_relative_folder(content, relative_folder)
+    result: str = LinkRebase.change_to_relative_folder(content, relative_folder)
     Decoder.save(output, result)
 
     assert "../src/image.png" in output.read_text()
@@ -66,7 +66,7 @@ def test_redirect_local_nested_source(tmp_path: Path) -> None:
 
     relative_folder: Path = Path(os.path.relpath(source.parent, output.parent))
     content: str = Decoder.load(source)
-    result: str = Absolute.change_to_relative_folder(content, relative_folder)
+    result: str = LinkRebase.change_to_relative_folder(content, relative_folder)
     Decoder.save(output, result)
 
     text: str = output.read_text()
@@ -86,7 +86,7 @@ def test_redirect_local_absolute_links_unchanged(tmp_path: Path) -> None:
 
     relative_folder: Path = Path(os.path.relpath(source.parent, output.parent))
     content: str = Decoder.load(source)
-    result: str = Absolute.change_to_relative_folder(content, relative_folder)
+    result: str = LinkRebase.change_to_relative_folder(content, relative_folder)
     Decoder.save(output, result)
 
     assert "https://github.com/user/repo" in output.read_text()
@@ -104,7 +104,7 @@ def test_redirect_local_empty_content(tmp_path: Path) -> None:
 
     relative_folder: Path = Path(os.path.relpath(source.parent, output.parent))
     content: str = Decoder.load(source)
-    result: str = Absolute.change_to_relative_folder(content, relative_folder)
+    result: str = LinkRebase.change_to_relative_folder(content, relative_folder)
     Decoder.save(output, result)
 
     assert output.read_text() == ""

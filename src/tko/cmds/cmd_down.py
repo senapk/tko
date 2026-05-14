@@ -7,7 +7,7 @@ from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.game.game import Game
 from tko.util.decoder import Decoder
-from tko.feno.remote_md import Absolute
+from tko.feno.link_rebase import LinkRebase
 from tko.game.task import Task
 from tko.game.task_config import TaskTest
 from tko.feno.filter import CodeFilter
@@ -140,7 +140,7 @@ class CmdDown:
 
         source_folder_rel = self.origin_folder.resolve().relative_to(self.destiny_folder.resolve(), walk_up=True)
         content = Decoder.load(origin_readme)
-        content = Absolute.change_to_relative_folder(content, source_folder_rel)
+        content = LinkRebase.change_to_relative_folder(content, source_folder_rel)
         self.actions.compare_and_save_to(content, destiny_readme)
     
     def copy_drafts_from(self, origin_drafts_folder: Path, destiny_draft_folder: Path) -> bool:

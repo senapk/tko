@@ -25,7 +25,7 @@ class RemoteStore:
         if Keys.BRANCH in data and isinstance(data[Keys.BRANCH], str):
             self.data.branch = data[Keys.BRANCH]
         else:
-            self.data.branch = "master"
+            self.data.branch = "main"
         if Keys.TYPE in data and isinstance(data[Keys.TYPE], str):
             type_str = data[Keys.TYPE]
             if type_str == SourceType.LOCAL_FILE.value:
@@ -63,7 +63,7 @@ class RemoteStore:
             Keys.TYPE: self.data.source_type.value,
             Keys.WRITEABLE: self.data.is_editable,
         }
-        if self.data.branch is not None and self.data.branch != "master":
+        if self.data.branch is not None and self.data.branch != "main":
             output[Keys.BRANCH] = self.data.branch
         output[Keys.QUESTS] = None if self.data.quest_filters is None else { k: v for k, v in self.data.quest_filters.items() }
         return output

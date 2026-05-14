@@ -6,7 +6,7 @@ from pathlib import Path
 readme_text = """
 # É positivo
 
-![_](https://raw.githubusercontent.com/qxcodefup/arcade/master/base/positivo/cover.jpg)
+![_](https://raw.githubusercontent.com/qxcodefup/arcade/main/base/positivo/cover.jpg)
 
 ## Contexto
 

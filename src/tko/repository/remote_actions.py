@@ -100,7 +100,7 @@ class RemoteActions:
             filter_quest: list[str] | None, 
             filter_task: list[str] | None, 
             filter_to: str | None,
-            writeable: bool, branch: str = "master"
+            writeable: bool, branch: str = "main"
             ) -> None:
         
         remotes = self.repo.remotes

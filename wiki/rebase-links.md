@@ -22,10 +22,10 @@ tko tool rebase-links src/myfile.md
 tko tool rebase-links README.md -o docs/README.local.md
 
 # Baixa markdown remoto (salva como README.md na pasta local)
-tko tool rebase-links https://github.com/qxcodefup/arcade/blob/master/README.md
+tko tool rebase-links https://github.com/qxcodefup/arcade/blob/main/README.md
 
 # Com output explícito
-tko tool rebase-links https://github.com/qxcodefup/arcade/blob/master/README.md -o docs/README.fup.md
+tko tool rebase-links https://github.com/qxcodefup/arcade/blob/main/README.md -o docs/README.fup.md
 
 # Usa alias configurado em settings (salva como README.md na pasta local)
 tko tool rebase-links @fup

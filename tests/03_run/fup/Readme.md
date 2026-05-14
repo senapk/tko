@@ -1,6 +1,6 @@
 # @001 L2 - Bhaskara
 
-![_](https://raw.githubusercontent.com/qxcodefup/arcade/master/base/001/cover.jpg)
+![_](https://raw.githubusercontent.com/qxcodefup/arcade/main/base/001/cover.jpg)
 
 ## Motivação
 

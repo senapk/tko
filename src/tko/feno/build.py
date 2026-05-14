@@ -1,7 +1,7 @@
 from tko.feno.title import FenoTitle
 from tko.feno.jsontools import JsonVPL
 from tko.feno.older import Older
-from tko.feno.remote_md import Absolute
+from tko.feno.link_rebase import LinkRebase
 from tko.feno.html import convert_markdown_to_html
 from tko.feno.cases import Cases
 from tko.feno.log import Log
@@ -68,7 +68,7 @@ class Actions:
         return True
 
     def remote_md(self):
-        Absolute.convert_or_copy_or_print(self.source_readme, self.output_readme, self.make_remote)
+        LinkRebase.convert_or_copy_or_print(self.source_readme, self.output_readme, self.make_remote)
         Log.verbose(f"RemoteFile: {self.output_readme}")
 
     def html(self):

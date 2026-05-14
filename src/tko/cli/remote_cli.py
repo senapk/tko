@@ -37,7 +37,7 @@ def remote_add(
     to: Optional[str] = typer.Option(None, "--to", "-t", help="Quest destination for filtered tasks added with this source"),
     setup: Optional[str] = typer.Option(None, "--setup", "-s", help="SETUP JSON string to configure the remote source"),
     index: Optional[str] = typer.Option(None, "--index", "-i", help="Set a custom index relative do repo dir, default is README.md"),
-    branch: str = typer.Option("master", "--branch", "-b", help="Branch name for git remote sources"),
+    branch: str = typer.Option("main", "--branch", "-b", help="Branch name for git remote sources"),
     write: bool = typer.Option(False, "--write", "-w", help="Allow modifications for local directory remotes (default: readonly)")
 ):
     default_git_alias = target[1:] if target.startswith("@") else None

@@ -4,7 +4,7 @@ from tko.feno.github_url_structure import GithubUrlStructure
 from tko.util.decoder import Decoder
 from pathlib import Path
 
-class GithubRebase:
+class LinkRebase:
 
     # processa o conteúdo trocando os links locais para links absolutos utilizando a url remota
     @staticmethod
@@ -41,25 +41,25 @@ class GithubRebase:
         return result
 
     @staticmethod
-    def relative_to_absolute(content: str, rl: GithubUrlStructure):
+    def rebase(content: str, rl: GithubUrlStructure):
         folder = rl.relative_path
         user_repo = "/".join([rl.user, rl.repo])
         remote_raw    = "/".join(["https://raw.githubusercontent.com", user_repo, rl.branch , folder])
         remote_view    = "/".join(["https://github.com", user_repo, "blob", rl.branch, folder])
         remote_folder = "/".join(["https://github.com", user_repo, "tree", rl.branch, folder])
-        return GithubRebase.__replace_remote(content, remote_raw, remote_view, remote_folder, is_local = False)
+        return LinkRebase.__replace_remote(content, remote_raw, remote_view, remote_folder, is_local = False)
 
     @staticmethod
     def change_to_relative_folder(content: str, relative_folder: Path):
         folder = str(relative_folder)
-        return GithubRebase.__replace_remote(content, folder, folder, folder, is_local = True)
+        return LinkRebase.__replace_remote(content, folder, folder, folder, is_local = True)
 
     @staticmethod
     def convert_or_copy_or_print(source: Path, target: Path | None, make_remote: bool = False):
         content = Decoder.load(source)
         cfg = GithubCfg(source, make_remote)
         if cfg.cfg_exists():
-            content = GithubRebase.relative_to_absolute(content, cfg.calc_link_for_local_file())
+            content = LinkRebase.rebase(content, cfg.calc_link_for_local_file())
         if target is not None:
             Decoder.save(target, content)
         else:
