@@ -172,7 +172,8 @@ class Test:
         task = tp.parse_line("- [ ] [@label :self:side:free titulo](data/label/r.md)", 12)
 
         assert task is not None
-        assert task.basic.title == "@label titulo"
+        assert task.basic.key == "label"
+        assert task.basic.title == "titulo"
         assert task.config.test == TaskTest.SELF
         assert task.config.path == TaskMain.SIDE
         assert task.config.loss == TaskLoss.FREE

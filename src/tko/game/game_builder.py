@@ -1,5 +1,5 @@
 from pathlib import Path
-import sys
+import logging
 
 from tko.game.quest_parser import QuestParser
 from tko.game.task_parser import TaskParser
@@ -9,6 +9,9 @@ from tko.repository.remote import Remote
 from tko.util.decoder import Decoder
 from tko.feno.indexer import fix_readme
 from icecream import ic # type: ignore
+
+
+logger = logging.getLogger(__name__)
 
 class GameBuilder:
     def __init__(self, remote: Remote, verbose: bool):
@@ -28,7 +31,7 @@ class GameBuilder:
             filename: Path = self.remote.path.index_file
         except ValueError as e:
             if self.verbose:
-                print(f"Erro ao obter o arquivo README da fonte {self.remote.data.name}: {e}", file=sys.stderr)
+                logger.warning("Erro ao obter o arquivo README da fonte %s: %s", self.remote.data.name, e)
             return self
         self.__ensure_sandbox_readme_fixed(filename)
         content: str = self.load_content(filename)
@@ -44,7 +47,7 @@ class GameBuilder:
         if not filename.exists():
             if not self.remote.is_sandbox:
                 if self.verbose:
-                    print(f"Aviso: fonte {filename} não encontrada no source {self.remote.data.name}", file=sys.stderr)
+                    logger.warning("Aviso: fonte %s não encontrada no source %s", filename, self.remote.data.name)
         else:
             content = Decoder.load(filename)
         return content
@@ -57,7 +60,11 @@ class GameBuilder:
         if not filename.exists():
             # print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}, criando arquivo")
             if self.verbose:
-                print(f"Aviso: fonte {filename} não encontrada no source {self.remote.data.name}, criando arquivo", file=sys.stderr)
+                logger.warning(
+                    "Aviso: fonte %s não encontrada no source %s, criando arquivo",
+                    filename,
+                    self.remote.data.name,
+                )
             filename.parent.mkdir(parents=True, exist_ok=True)
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(f"# {self.remote.data.name}\n\n")
@@ -93,7 +100,13 @@ class GameBuilder:
                     quests[r].required_by_ptr.append(q)
                 else:
                     if self.verbose:
-                        print(f"Quest\n{filename}:{q.line_number}\n{str(q)}\nrequer {r} que não existe", file=sys.stderr)
+                        logger.warning(
+                            "Quest\n%s:%s\n%s\nrequer %s que não existe",
+                            filename,
+                            q.line_number,
+                            str(q),
+                            r,
+                        )
                     exit(1)
 
     def __parse_file_content(self, content: str):
@@ -103,7 +116,7 @@ class GameBuilder:
         source_dir_root: Path | None = self.remote.path.source_dir
         if source_dir_root is None:
             if self.verbose:
-                print(f"Aviso: fonte {alias} não possui diretório de origem", file=sys.stderr)
+                logger.warning("Aviso: fonte %s não possui diretório de origem", alias)
             return
         git_url: str | None = self.remote.data.git_url
 

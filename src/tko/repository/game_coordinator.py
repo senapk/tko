@@ -1,16 +1,19 @@
 from __future__ import annotations
-import sys
+import logging
 from tko.repository.git_cache import UpdateMode
 from tko.logger.log_sort import LogSort
 from tko.repository.repository import Repository
 
 class GameCoordinator:
+
+    logger = logging.getLogger(__name__)
+
     def __init__(self, repo: Repository): 
         self.repo = repo
 
     def load_game(self, verbose: bool) -> GameCoordinator:
         if verbose:
-            print(f"Loading repository from {self.repo.paths.root_dir}...", file=sys.stderr)
+            self.logger.info("Loading repository from %s...", self.repo.paths.root_dir)
         
         remotes = self.repo.remotes
         if not remotes: # load now

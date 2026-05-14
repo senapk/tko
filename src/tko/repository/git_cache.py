@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import sys
+import logging
 import time
 from pathlib import Path
 from datetime import  timedelta
@@ -17,6 +17,8 @@ class UpdateMode(enum.Enum):
 
 class GitCache:
 
+    logger = logging.getLogger(__name__)
+
     def __init__(self, cache_dir: str | Path, max_age: timedelta = timedelta(hours=1), update_mode: UpdateMode = UpdateMode.IF_OLDER) -> None:
         self.cache_dir: Path = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -26,7 +28,7 @@ class GitCache:
 
     def clear_cache(self):
         if self.cache_dir.exists():
-            print(f"Clearing git cache at {self.cache_dir}...", file=sys.stderr)
+            self.logger.info("Clearing git cache at %s...", self.cache_dir)
             shutil.rmtree(self.cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
@@ -85,24 +87,24 @@ class GitCache:
         with self._acquire_lock(lock_path):
             if not repo.exists():
                 if verbose:
-                    print(f"Cloning {url} into cache...", file=sys.stderr)
+                    self.logger.info("Cloning %s into cache...", url)
                 ok = self._clone(url, repo)
                 if not ok:
                     if verbose:
-                        print(f"Failed to clone {url}. Removing cache directory...", file=sys.stderr)
+                        self.logger.warning("Failed to clone %s. Removing cache directory...", url)
                     shutil.rmtree(repo, ignore_errors=True)
                     return None
 
             if self._is_expired(repo) or (self.update_mode == UpdateMode.ALWAYS) and not self.updated.get(str(repo), False):
                 try:
                     if verbose:
-                        print(f"Updating cache for {url}...", file=sys.stderr)
+                        self.logger.info("Updating cache for %s...", url)
                     self._update(repo)
                 except subprocess.CalledProcessError:
                     if self.update_mode == UpdateMode.IF_OLDER:
                         pass
                     if verbose:
-                        print(f"Failed to update cache for {url}. Removing and re-cloning...", file=sys.stderr)
+                        self.logger.warning("Failed to update cache for %s. Removing and re-cloning...", url)
                     shutil.rmtree(repo, ignore_errors=True)
                     self._clone(url, repo)
         return repo

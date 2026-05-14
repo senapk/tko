@@ -1,3 +1,5 @@
+import sys
+
 from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.game.tree_item import IsTreeItem

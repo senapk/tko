@@ -1,4 +1,4 @@
-import sys
+import logging
 
 from tko.cmds.drafts_finder_cached import DraftsFinderCached
 from tko.game.quest import Quest
@@ -35,6 +35,8 @@ import subprocess
 from pathlib import Path
 
 class PlayActions:
+
+    logger = logging.getLogger(__name__)
 
     def __init__(self, gui: Gui):
         self.app = gui.app
@@ -150,8 +152,8 @@ class PlayActions:
             task: Task = obj
             url = task.resource.external_url
             target = task.path.origin_target
-            print(f"Opening link for task: {task.basic.key}, URL: {url}", file=sys.stderr)
-            print(f"Target: {target}", file=sys.stderr)
+            self.logger.info("Opening link for task: %s, URL: %s", task.basic.key, url)
+            self.logger.info("Target: %s", target)
             if url is not None:
                 try:
                     self.open_link_without_stdout_stderr(url)

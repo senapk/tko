@@ -53,15 +53,12 @@ class TaskParser:
                     tag,
                 )
 
-    def __parse_task_types(self, tags: str) -> str:
-        new_title: list[str] = []
+    def __parse_task_types(self, tags: str) -> None:
         words = [w for w in tags.split()]
         self.task.config.loss = TaskLoss.NULL
         for item in words:
             if item.startswith(":"):
                 self.decode_task_types(item[1:])
-            else:
-                new_title.append(item)
         
         location: TaskResource = self.task.resource
         if location.resource_type == ResourceType.VIEW:
@@ -75,7 +72,16 @@ class TaskParser:
             if self.task.config.test == TaskTest.NULL:
                 self.task.config.test = TaskTest.TEST
 
-        return " ".join(new_title)
+    def __remove_tags_from_title(self, text: str) -> str:
+        words: list[str] = [w for w in text.split()]
+        output: list[str] = []
+        for item in words:
+            if item.startswith(":"):
+                continue
+            if item.startswith("@"):
+                continue
+            output.append(item)
+        return " ".join(output)
 
     def redirect_from_readme(self, link: str) -> str:
         if not Path(link).is_absolute():
@@ -94,8 +100,9 @@ class TaskParser:
         task.resource.line_number = line_num
         task.resource.line_data = line
         task.resource.raw_link = tm.task_link
-        title = self.__parse_task_types(tm.filter_tags(tm.raw_pre + " " + tm.task_title))
-        task.basic.title = title
+        pre_text = tm.filter_tags(tm.raw_pre + " " + tm.task_title)
+        self.__parse_task_types(pre_text)
+        task.basic.title = self.__remove_tags_from_title(tm.task_title)
 
         if task.basic.key == "":
             return None

@@ -46,7 +46,6 @@ class IndexLine:
         if not tm.is_view:
             link = Path(tm.task_link)
             if link.name != "README.md":
-                print(f"Error: README file '{link}' does not have a valid name, expected 'README.md'", file=sys.stderr)
                 raise ValueError(f"Invalid README file name: {link}")
             if link.is_absolute():
                 self.readme_file = Path(link).resolve()
