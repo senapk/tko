@@ -36,7 +36,9 @@ def task_open(
 @app.command("list", help="List tasks")
 def task_list(
     ctx: typer.Context,
-    all: bool = typer.Option(False, "--all", "-a", help="Show all tasks")
+    all: bool = typer.Option(False, "--all", "-a", help="Show all tasks"),
+    down: bool = typer.Option(False, "--down", "-d", help="Show downloaded tasks only"),
+    quests: bool = typer.Option(False, "--quest", "-q", help="Show quests")
 ):
     from tko.cli.common import load_repo
     from tko.cmds.cmd_open import CmdOpen
@@ -52,7 +54,7 @@ def task_list(
         return
         
     action = CmdOpen(settings, repo, update_mode)
-    action.list(show_all=all)
+    action.list(show_all=all, only_down=down, show_quests=quests)
 
 if __name__ == "__main__":
     app()

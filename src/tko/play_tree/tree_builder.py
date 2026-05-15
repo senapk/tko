@@ -70,7 +70,7 @@ class TreeBuilder:
             enabled, first_match = self.filter_by_search(game, tfilter.search_text)
             if first_match and state.selected == "":
                 state.selected = first_match
-        elif self.repo.flags.task_view_mode.is_inbox():
+        elif tfilter.inbox_mode:
             enabled = self.select_inbox_enabled(game, tfilter, self.fmt_util)
         else:
             enabled = self.enable_all(game)

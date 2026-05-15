@@ -1,5 +1,3 @@
-import sys
-
 from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.game.tree_item import IsTreeItem
@@ -47,8 +45,10 @@ class TreeRenderer:
         output += self.fmt_util.format_percent_1s(t.grader.get_rate_percent()) + " "
         output += RText(self.fmt_util.get_task_help_symbol(t)[1], self.fmt_util.get_task_help_symbol(t)[0]) + " "
         output += RText(self.fmt_util.get_task_path_symbol(t)[1], self.fmt_util.get_task_path_symbol(t)[0]) + " "
-
-        _key_title, _key, _title = self.fmt_util.get_full_title(t, self.layout.key_size)
+        remote_name: str = ""
+        if self.layout.use_full_key:
+            remote_name = t.basic.remote_name
+        _key_title, _key, _title = self.fmt_util.get_full_title(task=t, key_pad=self.layout.key_size, remote_name=remote_name)
         title = self.fmt_util.color_task_title(_key, _title)
 
         focus_color = self.settings.colors.focused_item if focused else ""

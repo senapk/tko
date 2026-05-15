@@ -5,7 +5,6 @@ from pathlib import Path
 from tko.util.decoder import Decoder
 from tko.util.rtext import RText
 from tko.game.task_matcher import TaskMatcher
-import sys
 
 def load_title_from_markdown_file(path: Path) -> str | None:
     if not path.exists():

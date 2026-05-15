@@ -61,19 +61,19 @@ class TaskTree:
     def move_left(self):
         self.navigator.left(self.state, self.items)
 
-    def get_visible_sentences(self, height: int) -> list[RText]:
+    def get_visible_sentences(self, height: int) -> list[tuple[RText, IsTreeItem]]:
         self.state.update_scroll(height, self.items)
         visible_items = self.items[
             self.state.scroll : self.state.scroll + height
         ]
         return self.get_rendered_items(visible_items)
     
-    def get_rendered_items(self, items: list[IsTreeItem] | None = None) -> list[RText]:
+    def get_rendered_items(self, items: list[IsTreeItem] | None = None) -> list[tuple[RText, IsTreeItem]]:
         if items is None:
             items = self.items
         matcher = SearchAsc(self.state.search)
         return [
-            self.renderer.render(item, self.state.selected, matcher)
+            (self.renderer.render(item, self.state.selected, matcher), item)
             for item in items
         ]
     
@@ -82,9 +82,9 @@ class TaskTree:
             inbox_mode=self.repo.flags.task_view_mode.is_inbox() and not force_view_all,
             search_text=self.state.search
         )
-        self.items = self.builder.build(self.game, self.state, tree_filter)
         self.state.ensure_valid_selection(self.items)
         self.layout.calculate(self.game, self.repo.flags, self.state.expanded)
+        self.items = self.builder.build(self.game, self.state, tree_filter)
 
     def collapse_all(self):
         self.state.expanded.clear()

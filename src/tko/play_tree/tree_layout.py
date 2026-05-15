@@ -13,6 +13,8 @@ class TreeLayout:
         self.fixed_task_itens_size = 12
         self.fixed_quest_itens_size = 10
         
+        self.use_full_key: bool = False
+
         self.key_size: int = 0
         self.sentence_cut_size: int = 0  # 0 if not calculated yet
 
@@ -28,7 +30,8 @@ class TreeLayout:
 
         for q in game.quests.values():
             for t in q.get_tasks():
-                key_sizes.append(len(t.basic.key))
+                key = t.basic.full_key if self.use_full_key else t.basic.key
+                key_sizes.append(len(key))
         self.key_size = max(key_sizes) if key_sizes else self.key_size_min
 
         for q in game.quests.values():

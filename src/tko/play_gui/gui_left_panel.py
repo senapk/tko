@@ -6,6 +6,7 @@ from tko.play_tree.task_tree import TaskTree
 from tko.util.rtext import RText
 from tko.util.symbols import Symbols
 from typing import Callable
+from tko.game.tree_item import IsTreeItem
 
 class GuiLeftPanel:
 
@@ -46,8 +47,8 @@ class GuiLeftPanel:
         )
         frame.draw()
 
-        sentences: list[RText] = self.tree.get_visible_sentences(dy)
-        for y, sentence in enumerate(sentences):
+        sentences: list[tuple[RText, IsTreeItem]] = self.tree.get_visible_sentences(dy)
+        for y, (sentence, _) in enumerate(sentences):
             if sentence.len() > dx:
                 sentence = sentence.trim_end(dx - 1) + RText("…", "r")
             frame.write(y, 0, sentence)

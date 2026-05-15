@@ -12,11 +12,12 @@ class TreeFilter:
 
 
 class TreeState:
-    expanded: set[str] = set()
-    selected: str = ""
-    selected_index: int = 0
-    search: str = ""
-    scroll: int = 0
+    def __init__(self):
+        self.expanded: set[str] = set()
+        self.selected: str = ""
+        self.selected_index: int = 0
+        self.search: str = ""
+        self.scroll: int = 0
 
     def ensure_valid_selection(self, items: Sequence[IsTreeItem]):
         """Garante que selected sempre aponta para um item visível"""

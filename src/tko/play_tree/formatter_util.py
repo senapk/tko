@@ -1,5 +1,3 @@
-import sys
-
 from tko.cmds.drafts_finder_cached import DraftsFinderCached
 from tko.game.quest import Quest
 from tko.game.task import Task
@@ -56,12 +54,12 @@ class FormatterUtil:
         return symbol, percent_text
 
 
-    def get_full_title(self, task: Task, key_pad: None | int, pad_char: str = " ") -> tuple[str, str, str]:
+    def get_full_title(self, task: Task, key_pad: None | int, pad_char: str = " ", remote_name: str = "") -> tuple[str, str, str]:
         basic = task.basic
         if key_pad is None:
             key_pad = len(basic.key)
         if not f"@{basic.key}" in basic.title:
-            key = f"@{basic.key.ljust(key_pad, pad_char)} "
+            key = f"{remote_name}@{basic.key}".ljust(key_pad, pad_char) + " "
             title = basic.title
             return key + title, key, title
         return basic.title, "", basic.title
