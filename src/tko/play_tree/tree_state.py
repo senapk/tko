@@ -1,14 +1,23 @@
 from tko.game.tree_item import IsTreeItem
 from typing import Sequence
+from dataclasses import dataclass
 
 
+@dataclass(frozen=True, slots=True)
 class TreeFilter:
-    def __init__(self, inbox_mode: bool, search_text: str):
-        self.inbox_mode: bool = inbox_mode
-        self.search_text: str = search_text
+    inbox_mode: bool
+    search_text: str
+
+    @property
+    def is_searching(self) -> bool:
+        return self.search_text != ""
+
+    @property
+    def should_use_inbox_filter(self) -> bool:
+        return self.inbox_mode and not self.is_searching
 
     def hide_elements(self) -> bool:
-        return self.inbox_mode and self.search_text == ""
+        return self.should_use_inbox_filter
 
 
 class TreeState:

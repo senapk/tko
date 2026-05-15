@@ -1,4 +1,4 @@
-from tko.play.flags import BoolFlag, Flag, Flags, PanelMode, TaskGraphMode, ViewMode
+from tko.config.flags import BoolFlag, Flag, Flags, PanelMode, TaskGraphMode, ViewMode
 
 
 class TestFlag:

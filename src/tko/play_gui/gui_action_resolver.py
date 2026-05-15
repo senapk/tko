@@ -3,7 +3,7 @@ from tko.game.task import Task
 from tko.play.task_action import TaskAction
 from tko.floating.floating_manager import FloatingManager
 from tko.play_tree.task_formatter import TaskFormatter
-from tko.play.flags import Flags
+from tko.config.flags import Flags
 from tko.play.quest_visibility_service import QuestVisibilityService
 from tko.play_tree.task_tree import TaskTree
 from tko.game.task import Task

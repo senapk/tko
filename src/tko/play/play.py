@@ -48,7 +48,7 @@ class Play:
             self.exit = True
 
         self.fman.add_input(
-            Floating().set_content(opening['cool'].splitlines()).set_exit_fn(set_exit).set_exit_key('q').set_warning()
+            Floating().set_content(opening['cool'].splitlines()).set_exit_fn(set_exit).set_exit_key(GuiKeys.key_quit).set_warning()
         )
 
     def move_up(self):

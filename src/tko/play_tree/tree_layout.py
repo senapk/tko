@@ -1,5 +1,5 @@
 from tko.game.game import Game
-from tko.play.flags import Flags
+from tko.config.flags import Flags
 from tko.play_tree.task_formatter import TaskFormatter
 from tko.play_tree.quest_formatter import QuestFormatter
 

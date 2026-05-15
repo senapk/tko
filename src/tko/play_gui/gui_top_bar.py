@@ -1,6 +1,6 @@
 from tko.config.app_settings import AppSettings
 from tko.widget.frame import Frame
-from tko.play.flags import Flags
+from tko.config.flags import Flags
 from tko.play.keys import GuiKeys
 from tko.util.rtext import RText
 from tko.util.visual import Visual

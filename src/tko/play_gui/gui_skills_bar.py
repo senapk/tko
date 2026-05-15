@@ -2,7 +2,7 @@ from tko.game.game import Game
 from tko.widget.border import Border
 from tko.widget.colors import Colors
 from tko.widget.frame import Frame
-from tko.play.flags import Flags
+from tko.config.flags import Flags
 from tko.util.rtext import RText
 from tko.game.xp_resume import XPResume
 

@@ -1,30 +1,27 @@
-import math
-import os
-
-from tko.cmds.drafts_finder_cached import DraftsFinderCached
-from tko.util.identifier import Identifier
-from tko.enums.identifier_type import IdentifierType
 from tko.run.unit import Unit
+from tko.run.wdir_config import WdirConfig
+from tko.run.wdir_manipulation_service import WdirManipulationService
 from tko.util.param import Param
-from tko.loader.loader import Loader
 from tko.run.solver_builder import SolverBuilder
+from tko.run.wdir_summary_service import WdirSummaryService
+from tko.run.wdir_target_resolver import WdirTargetResolver
+from tko.run.wdir_units_service import WdirUnitsService
 from tko.util.rtext import RText
-from tko.util.symbols import Symbols
-from tko.util.label_factory import LabelFactory
 from pathlib import Path
 from tko.config.settings import Settings
 
 class Wdir:
     def __init__(self, settings: Settings):
         self.settings = settings
-        self.__autoload = False
-        self.__autoload_folder: Path | None = None
+        self.__config = WdirConfig()
         self.__solver: None | SolverBuilder = None
         self.__source_list: list[Path] = []
         self.__pack_list: list[list[Unit]] = []
         self.__unit_list: list[Unit] = []
-        self.__curses = False
-        self.__lang = ""
+        self.__summary_service = WdirSummaryService()
+        self.__target_resolver = WdirTargetResolver(self.settings)
+        self.__manipulation_service = WdirManipulationService()
+        self.__units_service = WdirUnitsService()
 
     def has_solver(self) -> bool:
         return not self.__solver is None
@@ -47,23 +44,21 @@ class Wdir:
         return self.__source_list
 
     def set_curses(self, value: bool):
-        self.__curses = value
+        self.__config.set_curses(value)
         return self
 
     def set_lang(self, lang: str):
-        if lang == "":
-            return self
-        self.__lang = lang
+        self.__config.set_lang(lang)
         return self
     
     def is_curses(self) -> bool:
-        return self.__curses
+        return self.__config.curses_mode
 
     def is_autoload(self) -> bool:
-        return self.__autoload
+        return self.__config.autoload
 
     def get_autoload_folder(self) -> Path | None:
-        return self.__autoload_folder
+        return self.__config.autoload_folder
 
     def set_solver(self, solver_list: list[Path]):
         if len(solver_list) > 0:
@@ -75,99 +70,46 @@ class Wdir:
         return self
 
     def autoload(self):
-        if self.__autoload_folder is None:
+        if self.__config.autoload_folder is None:
             raise Warning("fail: pasta de autoload não definida")
-        folder: Path = self.__autoload_folder
+        folder: Path = self.__config.autoload_folder
 
-        if self.__lang == "":
+        if self.__config.lang == "":
             print(RText.parse("Você não definiu os arquivos diretamente. Use [y]-l[.] caso queira especificar a linguagem para autoloading."))
 
-        # loading source list
-        source_list: list[Path] = [target for target in folder.iterdir() if target.suffix in [".tio", ".vpl", ".toml"]]
-        source_list.extend([target for target in folder.iterdir() if target.suffix == ".md"])
-        finder = DraftsFinderCached(folder, self.__lang)
-        if self.__lang != "":
-            solver_list = finder.load_source_files()
-        else:
-            lang_drafts: list[str] = sorted(self.settings.get_languages_settings().get_languages_with_drafts().keys())
-            solver_list = finder.load_source_files(extra=lang_drafts)
-        solver_list = sorted(solver_list)
+        source_list, solver_list = self.__target_resolver.resolve_autoload(folder, self.__config.lang)
 
         self.set_solver(solver_list)
         self.set_sources(source_list)
-        self.__autoload = True
+        self.__config.set_autoload(True)
         return self
 
     def set_target_list(self, target_list: list[Path]):
-        if len(target_list) == 0:
-            target_list.append(Path())
-        if len(target_list) == 1 and os.path.isdir(target_list[0]):
-            self.__autoload_folder = target_list[0]
+        target_list = self.__target_resolver.normalize_targets(target_list)
+        autoload_folder = self.__target_resolver.get_autoload_folder(target_list)
+        if autoload_folder is not None:
+            self.__config.set_autoload_folder(autoload_folder)
             return self.autoload()
-                    
-        for target in target_list:
-            if not os.path.exists(target):
-                raise Warning(f"fail: {target} não encontrado")
 
-        solvers = [target for target in target_list if Identifier.get_type(target.suffix) == IdentifierType.SOLVER]
-        sources = [target for target in target_list if Identifier.get_type(target.suffix) != IdentifierType.SOLVER]
+        sources, solvers = self.__target_resolver.resolve_explicit_targets(target_list)
 
         self.set_solver(solvers)
         self.set_sources(sources)
         return self
 
     def build(self):
-        loading_failures = 0
-        self.__pack_list = []
-        for source in self.__source_list:
-            try:
-                raw_list: list[Unit] = Loader.parse_source(source)
-                unit_list: list[Unit] = []
-                for unit in raw_list:
-                    if unit.get_expected() == "" and unit.get_input() == "":
-                        continue
-                    unit_list.append(unit)
-                self.__pack_list.append(unit_list)
-            except FileNotFoundError as e:
-                print(str(e))
-                loading_failures += 1
-                pass
+        self.__pack_list, loading_failures = self.__units_service.load_packs(self.__source_list)
         if loading_failures > 0 and loading_failures == len(self.__source_list):
             raise FileNotFoundError("failure: nenhum arquivo de teste encontrado")
-        self.__unit_list = []
-        input_dict: dict[str, int] = {}
-        index = 0
-        for pack in self.__pack_list:
-            for unit in pack:
-                if unit.get_input() in input_dict:
-                    unit.repeated = input_dict[unit.get_input()]
-                else:
-                    input_dict[unit.get_input()] = index
-                    unit.index = index
-                    self.__unit_list.append(unit)
-                    index += 1
+        self.__unit_list = self.__units_service.merge_unique_units(self.__pack_list)
         #self.__number_and_mark_duplicated()
         #self.__remove_duplicated()
-        self.__calculate_grade()
-        self.__pad()
+        self.__units_service.calculate_grade_reduction(self.__unit_list)
+        self.__units_service.pad_units(self.__unit_list)
         return self
 
     def calc_grade(self) -> int:
-        grade = 100
-        for case in self.__unit_list:
-            if not case.repeated and (case.get_received() is None or case.get_expected() != case.get_received()):
-                grade -= case.grade_reduction
-        return max(0, grade)
-
-    # put all the labels with the same length
-    def __pad(self):
-        if len(self.__unit_list) == 0:
-            return
-        max_case = max([len(x.case) for x in self.__unit_list])
-        max_source = max([len(str(x.source)) for x in self.__unit_list])
-        for unit in self.__unit_list:
-            unit.case_pad = max_case
-            unit.source_pad = max_source
+        return self.__units_service.calc_grade(self.__unit_list)
 
     # select a single unit to execute exclusively
     def filter(self, param: Param.Basic):
@@ -179,81 +121,20 @@ class Wdir:
                 raise ValueError("Índice fora dos limites: " + str(index))
         return self
 
-    # calculate the grade reduction for the cases without grade
-    # the grade is proportional to the number of unique cases
-    def __calculate_grade(self):
-        unique_count = len([x for x in self.__unit_list if not x.repeated])
-        for unit in self.__unit_list:
-            if unit.grade is None:
-                unit.grade_reduction = math.floor(100 / unique_count)
-            else:
-                unit.grade_reduction = unit.grade
-
-    # number the cases and mark the repeated
-    # def __number_and_mark_duplicated(self):
-    #     new_list: list[Unit] = []
-    #     index = 0
-    #     for unit in self.__unit_list:
-    #         unit.index = index
-    #         index += 1
-    #         search = [x for x in new_list if x.input == unit.input]
-    #         if len(search) > 0:
-    #             unit.repeated = search[0].index
-    #         new_list.append(unit)
-    #     self.__unit_list = new_list
-
-    # def __remove_duplicated(self):
-    #     self.__unit_list = [unit for unit in self.__unit_list if unit.repeated is None]
-
-    # sort, unlabel ou rename using the param received
     def manipulate(self, param: Param.Manip):
-        # filtering marked repeated
-        self.__unit_list = [unit for unit in self.__unit_list if unit.repeated is None]
-        if param.to_sort:
-            self.__unit_list.sort(key=lambda v: len(v.input))
-        if param.unlabel:
-            for unit in self.__unit_list:
-                unit.case = ""
-        if param.to_number:
-            number = 00
-            for unit in self.__unit_list:
-                unit.case = LabelFactory().label(unit.case).index(number).generate()
-                number += 1
+        self.__unit_list = self.__manipulation_service.apply(self.__unit_list, param)
 
     def unit_list_resume(self) -> list[RText]:
-        return [unit.str() for unit in self.__unit_list]
+        return self.__summary_service.unit_list_resume(self.__unit_list)
 
     def sources_names(self) -> list[tuple[str, str]]:
-        out: list[tuple[str, str]] = []
-        if len(self.__pack_list) == 0:
-            out.append((Symbols.failure, "0"))
-        for source_name, ulist in zip(self.__source_list, self.__pack_list):
-            nome: str = source_name.name
-            count = len([unit for unit in ulist if unit.repeated is None])
-            if count > 0:
-                count_str = str(count)
-                total = len(ulist)
-                if count < total:
-                    count_str += "/" + str(total)
-                out.append((nome, count_str))
-        return out
+        return self.__summary_service.sources_names(self.__source_list, self.__pack_list)
 
     def solvers_names(self) -> list[str]:
-        path_list = [] if self.__solver is None else self.__solver.args_list
-        if self.__solver is not None and len(path_list) == 0:  # free_cmd
-            out = ["free cmd"]
-        else:
-            out = [os.path.basename(path) for path in path_list]
-        return out
+        return self.__summary_service.solvers_names(self.__solver)
 
     def resume_splitted(self) -> RText:
-        sources = ["{}({})".format(name, str(count).rjust(2, "0")) for name, count in self.sources_names()]
-        source_text = RText("Testes:[") + RText(", ".join(sources), "y") + "]"
-        solver_text = RText("Códigos:[") + RText(", ".join(self.solvers_names()), "g") + "]"
-        return solver_text + " " + source_text
+        return self.__summary_service.resume_splitted(self.__source_list, self.__pack_list, self.__solver)
 
     def resume_join(self) -> RText:
-        sources = ["{}({})".format(name, str(count).rjust(2, "0")) for name, count in self.sources_names()]
-        source_text = RText(", ".join(sources), "y")
-        solver_text = RText(", ".join(self.solvers_names()), "g")
-        return solver_text + ", " + source_text
+        return self.__summary_service.resume_join(self.__source_list, self.__pack_list, self.__solver)

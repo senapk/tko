@@ -9,7 +9,7 @@ from tko.repository.repository_paths import RepositoryPaths
 from icecream import ic # type: ignore
 from datetime import timedelta
 from tko.repository.git_cache import GitCache, UpdateMode
-from tko.play.flags import Flags
+from tko.config.flags import Flags
 from tko.game.task import Task
 
 class Repository:

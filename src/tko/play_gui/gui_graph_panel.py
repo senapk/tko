@@ -3,7 +3,7 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.game.tree_item import IsTreeItem
 from tko.play.daily_graph import DailyGraph
-from tko.play.flags import Flags
+from tko.config.flags import Flags
 from tko.widget.frame import Frame
 from tko.play.images import opening
 from tko.play.task_graph import TaskGraph

@@ -4,7 +4,7 @@ from tko.game.tree_item import IsTreeItem
 from tko.play_tree.task_formatter import TaskFormatter
 from tko.play_tree.quest_formatter import QuestFormatter
 from tko.play_tree.time_formatter import TimeFormatter
-from tko.play.flags import Flags
+from tko.config.flags import Flags
 from tko.play_tree.tree_layout import TreeLayout
 from tko.play_tree.tree_state import TreeState
 from tko.play.quest_visibility_service import QuestVisibilityService

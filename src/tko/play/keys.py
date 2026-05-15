@@ -62,7 +62,6 @@ class GuiKeys:
     execute = "e"
     evaluate = "t"
     toggle_main = "\t"
-    quit   = "q"
     lock = "u"
     limite  = "l"
     expand = ">"

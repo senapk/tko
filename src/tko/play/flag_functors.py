@@ -1,4 +1,4 @@
-from tko.play.flags import Flag
+from tko.config.flags import Flag
 from tko.floating.floating_manager import FloatingManager
 from tko.floating import Floating
 from typing import Callable

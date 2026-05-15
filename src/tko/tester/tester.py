@@ -1,7 +1,6 @@
 import curses
 from typing import Callable
 
-from tko.config.app_settings import ToggleOption
 from tko.config.settings import Settings
 from tko.game.task import Task
 from tko.logger.log_item_exec import LogItemExec
@@ -19,7 +18,7 @@ from tko.tester.tester_palette import TesterPalette
 from tko.tester.tester_renderer import TesterRenderer
 from tko.tester.tester_state import TesterState, SeqMode
 from tko.tester.tester_top_bar import TesterTopBar
-from tko.tester import tester_util
+from tko.tester.tester_ui_actions import TesterUiActions
 from tko.repository.repository import Repository
 from tko.run.solver_builder import CompileError
 from tko.run.wdir import Wdir
@@ -43,6 +42,7 @@ class Tester:
         self.renderer = TesterRenderer(settings, wdir, task, borders, self.top_bar, None)
         self.navigator = TesterNavigator(settings, rep, wdir, task, fman, self.executor)
         self.palette   = TesterPalette(settings.app, fman, self.navigator)
+        self.ui_actions = TesterUiActions(settings, fman, self.navigator, self.palette)
         self.fman = fman
 
         if rep:
@@ -65,88 +65,55 @@ class Tester:
         self.state.exit = True
         return self
 
+    def _process_key_exit(self):
+        if self.state.locked_index:
+            self.state.locked_index = False
+            return
+        self.set_exit()
+
+    def _set_exit_void(self):
+        self.set_exit()
+
+    def make_callback(self) -> InputManager:
+        cman = InputManager()
+        state = self.state
+        nav = self.navigator
+
+        cman.add_str('q', self._set_exit_void)
+        cman.add_int(curses.KEY_EXIT, self._process_key_exit)
+        cman.add_int(curses.KEY_LEFT, lambda: nav.go_left(state))
+        cman.add_int(curses.KEY_RIGHT, lambda: nav.go_right(state))
+        cman.add_int(curses.KEY_DOWN, lambda: nav.go_down(state))
+        cman.add_int(curses.KEY_UP, lambda: nav.go_up(state))
+
+        cman.add_str(GuiKeys.toggle_main, lambda: nav.change_main(state))
+        cman.add_str(GuiKeys.evaluate, lambda: self.executor.run_test_mode(state))
+        cman.add_str('\n', lambda: self.executor.run_test_mode(state))
+        cman.add_str(GuiKeys.lock, lambda: self.ui_actions.toggle_lock(state))
+        cman.add_str(GuiKeys.edit, lambda: self.ui_actions.open_editor(getattr(self, "navigator_opener", None)))
+        cman.add_str(GuiKeys.self_evaluate, lambda: nav.self_evaluate(state))
+        cman.add_str(GuiKeys.limite, lambda: self.ui_actions.change_limit(state))
+        cman.add_str(GuiKeys.diff, self.ui_actions.toggle_diff)
+        cman.add_str(GuiKeys.borders, self.ui_actions.toggle_borders)
+        cman.add_str(GuiKeys.images, self.ui_actions.toggle_images)
+        cman.add_str(GuiKeys.palette, lambda: self.ui_actions.open_palette(state))
+
+        return cman
+
     # ------------------------------------------------------------------
     # Despacho de teclas (orquestra todos os sub-componentes)
     # ------------------------------------------------------------------
 
     def _process_key(self, key: int) -> Callable[[], bool] | None:
-        state = self.state
-        nav   = self.navigator
+        if key == ord(GuiKeys.execute) or key == curses.KEY_BACKSPACE:
+            return self.executor.run_exec_mode(self.state)
 
-        if key == ord('q'):
-            self.set_exit()
-        elif key == curses.KEY_EXIT:
-            if state.locked_index:
-                state.locked_index = False
-            else:
-                self.set_exit()
-        elif key == curses.KEY_LEFT:
-            nav.go_left(state)
-        elif key == curses.KEY_RIGHT:
-            nav.go_right(state)
-        elif key == curses.KEY_DOWN:
-            nav.go_down(state)
-        elif key == curses.KEY_UP:
-            nav.go_up(state)
-        elif key == ord(GuiKeys.toggle_main):
-            nav.change_main(state)
-        elif key == ord(GuiKeys.execute) or key == curses.KEY_BACKSPACE:
-            return self.executor.run_exec_mode(state)
-        elif key == ord(GuiKeys.evaluate) or key == ord('\n'):
-            self.executor.run_test_mode(state)
-        elif key == ord(GuiKeys.lock):
-            self.fman.add_input(
-                Floating().bottom().right().set_warning()
-                .put_text("Função de travamento {}".format("ligada" if not state.locked_index else "desligada"))
-            )
-            nav.lock_unit(state)
-        elif key == ord(GuiKeys.edit):
-            opener = getattr(self, "navigator_opener", None)
-            if opener is not None:
-                opener.open_files()
-        elif key == ord(GuiKeys.self_evaluate):
-            nav.self_evaluate(state)
-        elif key == ord(GuiKeys.limite):
-            nav.change_limit(state)
-            self.fman.add_input(
-                Floating().bottom().right().set_warning()
-                .put_text("Limite de execução alterado para {}".format(
-                    tester_util.get_time_limit_symbol(self.settings.app.timeout)
-                ))
-            )
-            self.settings.save_settings()
-        elif key == ord(GuiKeys.diff):
-            self.app.toggle_diff()
-            self.fman.add_input(
-                Floating().bottom().right().set_warning()
-                .put_text("Modo de Diff alterado para {}".format(self.app.diff_mode))
-            )
-            self.settings.save_settings()
-        elif key == ord(GuiKeys.borders):
-            self.app.toggle(ToggleOption.BORDERS)
-            self.fman.add_input(
-                Floating().bottom().right().set_warning()
-                .put_text("Modo de Bordas alterado para {}".format(
-                    "ligado" if self.app.use_borders else "desligado"
-                ))
-            )
-            self.settings.save_settings()
-        elif key == ord(GuiKeys.images):
-            self.app.toggle(ToggleOption.IMAGES)
-            self.fman.add_input(
-                Floating().bottom().right().set_warning()
-                .put_text("Modo de Imagens alterado para {}".format(
-                    "ligado" if self.app.use_images else "desligado"
-                ))
-            )
-            self.settings.save_settings()
-        elif key == ord(GuiKeys.palette):
-            self.palette.open(state)
-        elif key != -1 and key != curses.KEY_RESIZE:
-            self.fman.add_input(
-                Floating().bottom().right().set_error()
-                .put_text(f"Tecla char:{chr(key)}, code:{key}, não reconhecida")
-            )
+        cman = self.make_callback()
+        if cman.has_int_key(key):
+            cman.exec_call(key)
+            return None
+        if key != -1 and key != curses.KEY_RESIZE:
+            self.ui_actions.send_char_not_found(key)
         return None
 
     # ------------------------------------------------------------------

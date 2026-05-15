@@ -19,10 +19,22 @@ def make_item(key: str, remote_name: str = "repo"):
 
 
 class TestTreeFilter:
-    def test_hide_elements_only_in_inbox_without_search(self):
+    def test_semantic_properties_for_filter_state(self):
+        inbox_no_search = TreeFilter(inbox_mode=True, search_text="")
+        inbox_with_search = TreeFilter(inbox_mode=True, search_text="graph")
+        all_no_search = TreeFilter(inbox_mode=False, search_text="")
+
+        assert inbox_no_search.is_searching is False
+        assert inbox_with_search.is_searching is True
+        assert all_no_search.is_searching is False
+
+        assert inbox_no_search.should_use_inbox_filter is True
+        assert inbox_with_search.should_use_inbox_filter is False
+        assert all_no_search.should_use_inbox_filter is False
+
+    def test_hide_elements_kept_as_compatibility_alias(self):
         assert TreeFilter(inbox_mode=True, search_text="").hide_elements() is True
         assert TreeFilter(inbox_mode=True, search_text="graph").hide_elements() is False
-        assert TreeFilter(inbox_mode=False, search_text="").hide_elements() is False
 
 
 class TestTreeState:

@@ -3,12 +3,15 @@ from tko.play_tree.task_formatter import TaskFormatter
 from tko.play_tree.time_formatter import TimeFormatter
 from tko.play_tree.quest_formatter import QuestFormatter
 from tko.play_tree.tree_builder import TreeBuilder
+from tko.play_tree.tree_filter_policy import TreeFilterPolicy
 from tko.play_tree.tree_layout import TreeLayout
+from tko.play_tree.tree_presentation_service import TreePresentationService
 from tko.play_tree.tree_renderer import TreeRenderer
 from tko.play_tree.tree_repository import TreeRepository
 from tko.play_tree.tree_selection_service import TreeSelectionService
 from tko.play_tree.tree_state_service import TreeStateService
 from tko.play_tree.tree_state import TreeState, TreeFilter
+from tko.play_tree.tree_visibility_service import TreeVisibilityService
 from tko.config.settings import Settings
 from tko.repository.repository import Repository
 from tko.util.rtext import RText
@@ -24,8 +27,11 @@ class TaskTree:
         self.task_formatter = TaskFormatter(settings, repo)
         self.time_formatter = TimeFormatter(repo)
         self.quest_formatter = QuestFormatter(settings, self.time_formatter)
+        self.filter_policy = TreeFilterPolicy(self.task_formatter)
+        self.visibility_service = TreeVisibilityService()
+        self.presentation_service = TreePresentationService()
         self.layout = TreeLayout(self.task_formatter, self.quest_formatter)
-        self.builder = TreeBuilder(self.task_formatter)
+        self.builder = TreeBuilder(self.filter_policy, self.visibility_service, self.presentation_service)
         self.renderer = TreeRenderer(
             self.task_formatter,
             self.quest_formatter,
@@ -47,9 +53,6 @@ class TaskTree:
 
     def save_state(self):
         self.state_service.save()
-
-    def filter_by_search(self) -> tuple[set[str], str | None]:
-        return self.builder.filter_by_search(self.game, self.state.search)
 
     def get_selected_throw(self) -> IsTreeItem:
         return self.selection.get_selected_throw(self.items)

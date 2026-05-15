@@ -1,8 +1,7 @@
-from tko.game.task import Task
-from tko.game.quest import Quest
 from tko.play_tree.task_tree import TaskTree
 from tko.floating.floating_manager import FloatingManager
-from tko.play.quest_visibility_service import QuestVisibilityService
+from tko.play.search_session_service import SearchSessionService
+from tko.play.search_service import SearchService
 import curses
 
 class Search:
@@ -12,19 +11,13 @@ class Search:
         self.fman = fman
         self.repo = tree.repo
         self.search_mode: bool = False
-        self.backup_expanded: list[str] = []
-        self.backup_index_selected: str = ""
-        self.backup_inbox_op = ""
+        self.session = SearchSessionService(tree)
+        self.service = SearchService(tree)
         self.settings = tree.settings
 
     def toggle_search(self):
         if not self.search_mode:
-            self.backup_expanded = [v for v in self.tree.state.expanded]
-            self.backup_index_selected = self.tree.state.selected
-            self.tree.update(force_view_all=True)
-            self.tree.expand_all()
-            self.inbox_in_beggining: bool = self.repo.flags.task_view_mode.is_inbox()
-            self.repo.flags.task_view_mode.set_view_all()    
+            self.session.start()
         self.search_mode = not self.search_mode
             
     def finish_search(self):
@@ -35,39 +28,18 @@ class Search:
         self.search_mode = False
         self.tree.state.search = ""
         selected = self.tree.state.selected
-        item = self.tree.get_selected_throw()
-        if self.inbox_in_beggining: # try to found item using inbox mode
-            self.tree.update(force_view_all=False)
-            reachable = True
-            if isinstance(item, Task):
-                reachable = QuestVisibilityService.is_task_reachable(self.game, item)
-            elif isinstance(item, Quest):
-                reachable = QuestVisibilityService.is_reachable(item)
-            if not reachable:
-                self.repo.flags.task_view_mode.set_view_all()
-            else:
-                self.repo.flags.task_view_mode.set_view_inbox()
-
-        self.tree.update()
-        self.tree.state.selected = selected
-        self.tree.state.expanded = set()
-        unit = self.tree.get_selected_throw()
-
-        if isinstance(unit, Task):
-            self.tree.state.expanded = {unit.basic.remote_name, unit.quest_key}
-        elif isinstance(unit, Quest):
-            self.tree.state.expanded = {unit.basic.full_key, unit.basic.remote_name}
+        if not self.service.finish(selected, self.session.inbox_in_beggining):
+            # The filtered selection may become stale after state transitions.
+            self.cancel_search()
+        return
 
     # update index to match the first item that matches the search
     def update_index(self):
-        _, first = self.tree.filter_by_search()
-        self.tree.state.selected = first if first is not None else ""
+        self.service.update_selected_from_search()
 
     def cancel_search(self):
-            self.search_mode = False
-            self.tree.state.search = ""
-            self.tree.state.expanded = {v for v in self.backup_expanded}
-            self.tree.state.selected = self.backup_index_selected
+        self.search_mode = False
+        self.session.cancel()
 
     def process_search(self, key: int):
         if key == curses.KEY_EXIT:

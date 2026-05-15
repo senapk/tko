@@ -11,6 +11,7 @@ class TreeRepository:
     def load_state(self, state: TreeState):
         state.expanded = set(self.repo.data.expanded)
         state.selected = self.repo.data.selected
+        state.selected_index = self.repo.data.selected_index
 
     def save_state(self, state: TreeState):
         # salvar expanded (somente quests válidas)
