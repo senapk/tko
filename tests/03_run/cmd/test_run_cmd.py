@@ -9,5 +9,5 @@ class Test:
         os.chdir(Path(__file__).parent)
 
     def test_run_cmd(self, capsys: pytest.CaptureFixture[str]):
-        cmd2 = ["-w", "50", "-m", "run", "solver.yaml", "cases.tio"]
+        cmd2 = ["-w", "50", "-m", "run", "solver.mk", "cases.tio"]
         Compare.list(capsys, "out1", cmd2)

@@ -80,3 +80,51 @@ echo "console.log('Digite algo:'); const input = require('readline-sync').questi
 npx esbuild test.ts  --outfile=test.js --format=cjs --log-level=error
 node test.js
 ```
+
+## Trabalhando com outras linguagens
+
+O modelo legado com `solver.yaml` foi removido. Para linguagens/fluxos fora do padrao, use uma destas abordagens:
+
+### 1) Definir no `languages.toml`
+
+Use quando sua linguagem segue o fluxo normal de compilacao/execucao.
+
+Exemplo de entrada:
+
+```toml
+[rs]
+build_cmd = '''
+rustc {files} -o {output}
+'''
+run_cmd = '''
+{output}
+'''
+draft = '''
+fn main() {
+    println!("Hello, World!");
+}
+'''
+```
+
+Placeholders disponiveis:
+
+- `{files}`: lista de arquivos fonte
+- `{output}`: executavel de saida
+- `{cache}`: pasta de build
+- `{main}`: nome do arquivo principal sem extensao
+- `{entry}`: entrada JS principal (uso comum em TypeScript)
+
+### 2) Metodo Markdown (com `README.md` da tarefa)
+
+Use quando voce quer documentar e executar um fluxo customizado no proprio material da tarefa.
+
+Fluxo recomendado:
+
+1. Descreva o processo no markdown da tarefa (`README.md`) com blocos `bash` em `Shell`.
+2. Gere/atualize os casos com o fluxo de markdown da disciplina (mdpp/tio/toml, conforme seu repositorio).
+3. Execute usando arquivos de codigo suportados pelo `languages.toml` ou um `solver.mk` quando precisar de orquestracao customizada.
+
+Resumo pratico:
+
+- Para adicionar uma linguagem nova de forma global: `languages.toml`.
+- Para conduzir um fluxo especifico de uma tarefa: markdown + artefatos da propria tarefa.

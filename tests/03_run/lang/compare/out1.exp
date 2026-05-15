@@ -1,2 +1,2 @@
 ═══════════════════ Testando o código com os casos de teste ════════════════════
-=> Códigos:[solver.yaml] Testes:[cases.tio(02)] [✓ ✓] 100%
+=> Códigos:[main.cpp, lib.cpp] Testes:[cases.tio(02)] [✓ ✓] 100%

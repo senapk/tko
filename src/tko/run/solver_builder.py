@@ -1,14 +1,13 @@
 import tempfile
+from collections.abc import Callable
 
 import os
 import shutil
 from tko.util.rtext import RText
 from tko.util.runner import Runner
 from tko.config.settings import Settings
-import yaml #type: ignore
 from pathlib import Path
-from tko.util.decoder import Decoder
-import io
+from tko.run.build.ts_macro_preprocessor import TypeScriptMacroPreprocessor
 
 class CompileError(Exception):
     def __init__(self, message: str):
@@ -68,6 +67,9 @@ class Executable:
         return self.__error_msg
 
 class SolverBuilder:
+    TS_DEFAULT_BUILD_CMD = "npx esbuild {files} --outdir={cache} --format=cjs --log-level=error"
+    TS_DEFAULT_RUN_CMD = "node {entry}"
+
     def __init__(self, args_list: list[Path], settings: Settings):
         self.settings = settings
         self.args_list: list[Path] = args_list
@@ -125,49 +127,32 @@ class SolverBuilder:
         self.reset()
         first = self.args_list[0]
 
-        if first.suffix == ".mk":
-            self.__prepare_make()
-        elif first.suffix == ".yaml":
-            self.__prepare_yaml()
-        elif first.suffix == ".ts":
-            self.__prepare_ts()
+        handlers: dict[str, Callable[[], None]] = {
+            ".mk": self.__prepare_make,
+            ".ts": self.__prepare_ts,
+        }
+        handler = handlers.get(first.suffix)
+
+        if handler is not None:
+            handler()
         elif first.suffix[1:] in self.settings.get_languages_settings().get_languages().keys():
             self.prepare_exec_with_lang()
         else:
             self.__exec.set_executable([str(x) for x in self.args_list], [], Path(""), shell_mode=True)
-
-    def __prepare_yaml(self):
-        solver: Path = self.args_list[0]
-        folder = solver.parent
-        content = Decoder.load(solver)
-        yaml_data = yaml.safe_load(content)
-
-        if "build" in yaml_data and yaml_data["build"] is not None:
-            build_txt = yaml_data["build"]
-            if not isinstance(build_txt, str):
-                raise Warning(RText.parse("[r]Falha: O campo build deve ser uma string[.]"))
-            
-            return_code, stdout, stderr = Runner.subprocess_run(cmd=build_txt, folder=folder, shell_mode=True)
-            if return_code != 0:
-                self.__exec.set_compile_error(stdout + stderr)
-                return
-        if not "run" in yaml_data:
-            raise Warning(RText.parse("[r]Falha: Seu arquivo yaml precisa ter um campo [g]run:[.][.] "))
-        if not isinstance(yaml_data["run"], str):
-            raise Warning(RText.parse("[r]Falha: O campo run deve ser uma string[.]"))
-        self.__exec.set_executable(cmd=yaml_data["run"], files=[], folder=folder, shell_mode=True)
 
     def replace_placeholders(self, text: str) -> str:
         parent_folder = self.args_list[0].parent
         main_file_without_ext = self.args_list[0].stem
         exe_ext = ".exe" if os.name == "nt" else ""
         output_path = self.cache_dir / ("a.out" + exe_ext)
+        entry_path = self.cache_dir / (main_file_without_ext + ".js")
         
         files_str = " ".join([f'"{str(x.relative_to(parent_folder, walk_up=True))}"' for x in self.args_list])
         text = (text.replace("{files}", files_str)
                     .replace("{output}", f'"{str(output_path.relative_to(parent_folder, walk_up=True))}"')
                     .replace("{main}", main_file_without_ext)
-                    .replace("{cache}", f'"{str(self.cache_dir.relative_to(parent_folder, walk_up=True))}"')).strip()
+                    .replace("{cache}", f'"{str(self.cache_dir.relative_to(parent_folder, walk_up=True))}"')
+                    .replace("{entry}", f'"{str(entry_path.relative_to(parent_folder, walk_up=True))}"')).strip()
 
         return text
 
@@ -176,8 +161,9 @@ class SolverBuilder:
         if lang is None:
             self.__exec.set_compile_error(RText.parse(f"[r]Falha: Extensão de arquivo '{self.args_list[0].suffix}' não reconhecida e sem configuração de linguagem[.]"))
             return
-        build_cmd = lang.build_cmd
-        run_cmd = lang.run_cmd
+        self._prepare_exec_with_commands(lang.build_cmd, lang.run_cmd)
+
+    def _prepare_exec_with_commands(self, build_cmd: str, run_cmd: str):
         parent_folder = self.args_list[0].parent
         build_cmd = self.replace_placeholders(build_cmd)
         return_code, stdout, stderr = Runner.subprocess_run(build_cmd, folder=parent_folder, shell_mode=True)
@@ -198,46 +184,11 @@ class SolverBuilder:
         else:
             self.__exec.set_executable(cmd=["make", "-s", "-C", folder, "-f", solver, "run"], files=[], folder=Path(""), shell_mode=False)
 
-    def update_input_function(self, path_list: list[Path], copy_dir: Path):
-        new_files: list[str] = []
-        for origin in self.args_list:
-            new_files.append(os.path.join(copy_dir, os.path.basename(origin)))
-
-        for i in range(len(path_list)):
-            origin = path_list[i]
-            destiny = new_files[i]
-
-            content = Decoder.load(origin)
-            lines = content.splitlines(keepends=True)
-            io_target = io.StringIO()
-            tag = 'constinput=()=>""'
-
-            input_cmd = r'const input: () => string = (() => { let lines: string[] | undefined; let index = 0; let readlineSync: any; return (): string => { const isTTY = process?.stdin?.isTTY; if (isTTY) { readlineSync = readlineSync ?? require("readline-sync"); return readlineSync.question(); } if (!lines) { try { const fs = require("fs"); lines = fs.readFileSync(0, "utf-8").split(/\r?\n/); } catch { lines = []; } } return lines![index++] ?? ""; }; })();'
-
-            inserted: bool = False
-            for line in lines:
-                match = False
-                if not inserted:
-                    filtered = "".join([c for c in line if c != " "])
-                    match = filtered.startswith(tag)
-                if match:
-                    inserted = True
-                    io_target.write(input_cmd)
-                else:
-                    io_target.write(line)
-
-            with open(destiny, "w", encoding="utf-8") as f:
-                f.write(io_target.getvalue())
-            io_target.close()
-        return new_files
-
     def __prepare_ts(self):
         copy_dir = self.cache_dir / "src"
-        # remove the cache dir
-        if os.path.exists(copy_dir):
+        if copy_dir.exists():
             shutil.rmtree(copy_dir, ignore_errors=True)
-        os.makedirs(copy_dir, exist_ok=True)
-        new_files = self.update_input_function(self.args_list, copy_dir)
+        new_files = TypeScriptMacroPreprocessor.copy_and_patch(self.args_list, copy_dir)
 
         transpiler = "npx"
         if os.name == "nt":
@@ -245,14 +196,20 @@ class SolverBuilder:
 
         self.check_tool(transpiler)
         self.check_tool("node")
-        transpiler = ["npx", "esbuild"]
-        cmd: list[str] = transpiler + new_files + ["--outdir=" + str(self.cache_dir), "--format=cjs", "--log-level=error"]
-        return_code, stdout, stderr = Runner.subprocess_run(cmd)
 
-        if return_code != 0:
-            self.__exec.set_compile_error(stdout + stderr)
-        else:
-            new_source_list: list[Path] = []
-            for source in new_files:
-                new_source_list.append(self.cache_dir / (os.path.basename(source)[:-2] + "js"))
-            self.__exec.set_executable(cmd=["node"], files=new_source_list, folder=Path(""), shell_mode=False)  # renaming solver to main
+        original_args = self.args_list
+        self.args_list = new_files
+        try:
+            lang = self.settings.get_languages_settings().get_languages().get("ts", None)
+            if lang is None:
+                self.__exec.set_compile_error(RText.parse("[r]Falha: Configuração da linguagem 'ts' não encontrada[.]"))
+                return
+            build_cmd = lang.build_cmd.strip() if lang.build_cmd is not None else ""
+            run_cmd = lang.run_cmd.strip() if lang.run_cmd is not None else ""
+            if build_cmd == "":
+                build_cmd = self.TS_DEFAULT_BUILD_CMD
+            if run_cmd == "":
+                run_cmd = self.TS_DEFAULT_RUN_CMD
+            self._prepare_exec_with_commands(build_cmd, run_cmd)
+        finally:
+            self.args_list = original_args

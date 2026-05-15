@@ -125,8 +125,8 @@ class LanguagesSettings:
             draft=java_draft
         ),
         "ts": LangSettings(
-            build_cmd="",
-            run_cmd="",
+            build_cmd="npx esbuild {files} --outdir={cache} --format=cjs --log-level=error",
+            run_cmd="node {entry}",
             draft=ts_draft
         ),
     }
