@@ -31,12 +31,21 @@ O tko é um sistema de testes para programação competitiva. Ele é capaz de ro
 - [Trabalhando com o Classroom](wiki/Classroom.md)
 - [Repositórios e quests](wiki/Criando-Atividades.md)
 - [Marcadores e tipos de atividades](wiki/Marcadores-e-Tipos.md)
+- [Criando tarefas e testes](wiki/Criando-Tarefas-e-Testes.md)
+- [Gamificacao e progressao](wiki/Gamificacao-e-Progressao.md)
+
+## Uso pelos desenvolvedores
+
+- [Desenvolvimento de tarefas no TKO](wiki/Desenvolvimento-de-Tarefas.md)
+- [Gamificacao e progressao](wiki/Gamificacao-e-Progressao.md)
 
 ## Ferramentas 
 
 - [Filtragem e Rascunhos](wiki/filter.md)
 - [Markdown Preprocessor](wiki/mdpp.md)
 - [Rebase de links markdown](wiki/rebase-links.md)
+- [Build all: pipeline de mdpp, filter e drafts](wiki/build-all.md)
+- [Build index: manter e atualizar indices](wiki/build-index.md)
 
 ## Atualizando o tko
 

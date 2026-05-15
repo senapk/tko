@@ -27,21 +27,17 @@ Exemplo de teste para ler dois números, um por linha, e imprimir a soma e a sub
 Se quiser habilitar esses casos de teste e ver funcionando, insira algo no input e no output.
 
 ```toml
-# Exemplo de entrada em uma linha
+# Exemplo de entrada em uma linha, adicione algo entre as crases para habilitar o teste
 [[tests]]
 input = ''
 output = ''
 
-# Exemplo de entrada em múltiplas linhas
-# [[tests]]
-# input = '''
-# 1
-# 2
-# '''
-# output = '''
-# 3
-# 4
-# '''
+# Exemplo de entrada em múltiplas linhas, escreva algo nas linhas entre as crases para habilitar o teste
+[[tests]]
+input = '''
+'''
+output = '''
+'''
 ```
 
 """
