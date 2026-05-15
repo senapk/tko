@@ -4,6 +4,7 @@ from tko.play.task_action import TaskAction
 from tko.floating.floating_manager import FloatingManager
 from tko.play_tree.formatter_util import FormatterUtil
 from tko.play.flags import Flags
+from tko.play.quest_visibility_service import QuestVisibilityService
 from tko.play_tree.task_tree import TaskTree
 from tko.game.task import Task
 
@@ -32,7 +33,7 @@ class GuiActionResolver:
             return "R", "Retornar"
         if isinstance(obj, Quest):
             quest: Quest = obj
-            if self.flags.task_view_mode.is_inbox() and not quest.state.is_reachable:
+            if self.flags.task_view_mode.is_inbox() and not QuestVisibilityService.is_reachable(quest):
                 output = TaskAction.BLOQUEIO
             elif quest.basic.full_key in self.tree.state.expanded:
                 output = TaskAction.CONTRAIR

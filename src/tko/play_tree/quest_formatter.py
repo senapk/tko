@@ -1,0 +1,48 @@
+from tko.game.quest import Quest
+from tko.config.settings import Settings
+from tko.play.quest_visibility_service import QuestVisibilityService
+from tko.util.symbols import Symbols
+from tko.util.rtext import RText
+from tko.play_tree.time_formatter import TimeFormatter
+
+
+class QuestFormatter:
+    def __init__(self, settings: Settings, time_formatter: TimeFormatter):
+        self.settings = settings
+        self.time_formatter = time_formatter
+
+    def count_visible_hidden_tasks(self, quest: Quest) -> tuple[int, int]:
+        visible = 0
+        hidden = 0
+        for task in quest.get_tasks():
+            if task.ui.visible:
+                visible += 1
+            else:
+                hidden += 1
+        return visible, hidden
+
+    def get_start_symbols_and_percent_text(self, quest: Quest) -> tuple[str, RText]:
+        symbol = ""
+        pmain, pall = quest.progress.get_percent_main_and_all()
+        if pmain is not None:
+            percent_text = self.time_formatter.format_percent_3s(pall).set_style("g")
+            symbol = Symbols.star_filled
+        else:
+            percent_text = self.time_formatter.format_percent_3s(pall).set_style("g")
+            symbol = Symbols.star_void
+        return symbol, percent_text
+
+    def get_quest_full_title(self, quest: Quest, show_skills: bool) -> RText:
+        output = RText(quest.basic.remote_name, "c") + RText(":") + RText(quest.basic.title)
+        if show_skills:
+            for skill, value in quest.config.skills.items():
+                if value > 1:
+                    output += RText.run("b", f" +{skill}*{value}")
+                else:
+                    output += RText.run("b", f" +{skill}")
+        return output
+
+    def get_focus_color_quest(self, quest: Quest) -> str:
+        if not QuestVisibilityService.is_reachable(quest):
+            return "R"
+        return self.settings.colors.focused_item

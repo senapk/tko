@@ -4,6 +4,7 @@ from tko.game.task_config import TaskMain
 from tko.game.tree_item import IsTreeItem
 from tko.play_tree.formatter_util import FormatterUtil
 from tko.play_tree.tree_state import TreeState, TreeFilter
+from tko.play.quest_visibility_service import QuestVisibilityService
 from tko.util.rtext import RText
 from tko.util.to_asc import SearchAsc
 
@@ -36,8 +37,7 @@ class TreeBuilder:
         max_count = 10
         enabled: set[str] = set()
         for q in game.quests.values():
-            _, pall = q.progress.get_percent_main_and_all()
-            if not q.state.is_reachable or pall >= 100:
+            if QuestVisibilityService.is_quest_closed_in_inbox(q):
                 continue
             enabled.add(q.basic.full_key)
             count = 0
@@ -102,10 +102,10 @@ class TreeBuilder:
                 continue
             for req in q.requirements.required_by_ptr:
                 if req.basic.full_key == state.selected:
-                    q.ui.is_requirement_color = "y" if req.state.is_reachable else "r"
+                    q.ui.is_requirement_color = "y" if QuestVisibilityService.is_reachable(req) else "r"
                     break
             items.append(q)
-            color = "g" if q.state.is_reachable else "y"
+            color = "g" if QuestVisibilityService.is_reachable(q) else "y"
             tasks: list[Task] = [t for t in q.get_tasks() if t.ui.visible]
             has_hidden = len(tasks) != len(q.get_tasks())
             if q.basic.full_key not in state.expanded:

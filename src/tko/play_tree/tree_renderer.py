@@ -5,6 +5,7 @@ from tko.play_tree.formatter_util import FormatterUtil
 from tko.play.flags import Flags
 from tko.play_tree.tree_layout import TreeLayout
 from tko.play_tree.tree_state import TreeState
+from tko.play.quest_visibility_service import QuestVisibilityService
 from tko.config.settings import Settings
 from tko.util.rtext import RText
 from tko.util.to_asc import SearchAsc
@@ -74,7 +75,7 @@ class TreeRenderer:
         return output
 
     def render_quest(self, q: Quest, focused: bool) -> RText:
-        color = "g" if q.state.is_reachable else "y"
+        color = "g" if QuestVisibilityService.is_reachable(q) else "y"
         output = q.ui.ligature.set_style(color)
         done, total = q.progress.get_completion()
         output += f" {done:02}/{total:02}"

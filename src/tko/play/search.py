@@ -2,6 +2,7 @@ from tko.game.task import Task
 from tko.game.quest import Quest
 from tko.play_tree.task_tree import TaskTree
 from tko.floating.floating_manager import FloatingManager
+from tko.play.quest_visibility_service import QuestVisibilityService
 import curses
 
 class Search:
@@ -39,9 +40,9 @@ class Search:
             self.tree.update(force_view_all=False)
             reachable = True
             if isinstance(item, Task):
-                reachable = self.game.quests[item.quest_key].state.is_reachable
+                reachable = QuestVisibilityService.is_task_reachable(self.game, item)
             elif isinstance(item, Quest):
-                reachable = item.state.is_reachable
+                reachable = QuestVisibilityService.is_reachable(item)
             if not reachable:
                 self.repo.flags.task_view_mode.set_view_all()
             else:
