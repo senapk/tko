@@ -25,7 +25,7 @@ class PlayPalette:
         options.append(
             FloatingInputData(
                 lambda: RText.parse(" [] Tarefa: [y][][.] para o repositório", Symbols.action, "Baixar"),
-                self.actions.down_remote_task,
+                self.actions.downloader.down_remote_task,
                 GuiKeys.down_task
             ).set_exit_on_action(True)
         )
@@ -34,7 +34,7 @@ class PlayPalette:
         options.append(
             FloatingInputData(
                 lambda: RText.parse(" [] Tarefa: Auto [y][][.] método de estudo", Symbols.action, "Avaliar"),
-                self.actions.self_evaluate,
+                self.actions.evaluator.self_evaluate,
                 GuiKeys.self_evaluate
             ).set_exit_on_action(True)
         )
@@ -98,7 +98,7 @@ class PlayPalette:
         options.append(
             FloatingInputData(
                 lambda: RText.parse(" [] Criar [y][][.] na pasta local", Symbols.action, "Rascunho"),
-                self.actions.create_draft,
+                self.actions.draft_creator.create_draft,
                 GuiKeys.create_draft
             ).set_exit_on_action(True)
         )
@@ -114,7 +114,7 @@ class PlayPalette:
         options.append(
             FloatingInputData(
                 lambda: RText.parse(" [] Ver [y][][.] da tarefa ", Symbols.action, "versões"),
-                self.actions.open_versions,
+                self.actions.editor.open_versions,
                 GuiKeys.unfold_patch
             ).set_exit_on_action(True)
         )

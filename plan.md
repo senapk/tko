@@ -1,18 +1,5 @@
 ## Mapa de Acoplamentos Críticos
 
-### 🔴 P1 — Violação de camada (architecture smell)
-
-#### 1. repository.py importa `play.flags`
-```python
-# src/tko/repository/repository.py
-from tko.play.flags import Flags
-```
-`Repository` é entidade de domínio puro (persistência, git, game). Ela não deve conhecer nada de UI. `Flags` é estado de apresentação (painel, modo inbox, etc.).  
-**Risco**: qualquer mudança em `play.flags` quebra o domínio.  
-**Solução**: mover `Flags` para `tko.config.flags` ou `tko.game.view_state`, ou separar serialização de Flags do Repository.
-
----
-
 ### 🔴 P2 — God Class
 
 #### 2. `play/play_actions.py` (382 linhas)

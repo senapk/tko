@@ -50,7 +50,7 @@ class RunPresenter:
                 print(line)
 
     def list_mode(self):
-        if not self.ctx.eval_mode:
+        if not self.ctx.config.eval_mode:
             print(RText.parse("Nenhum arquivo de código encontrado. Listando casos de teste.").center(RawTerminal.get_terminal_size(), "╌"), flush=True)
         print(self.ctx.wdir.resume_splitted())
         for line in self.ctx.wdir.unit_list_resume():

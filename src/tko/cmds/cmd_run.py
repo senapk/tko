@@ -6,6 +6,7 @@ from tko.repository.repository import Repository
 from tko.util.param import Param
 from tko.config.settings import Settings
 from tko.util.rtext import RText
+from tko.run.run_config import RunConfig
 from tko.run.run_context import RunContext
 from tko.run.run_loader import RunLoader
 from tko.run.run_presenter import RunPresenter
@@ -13,7 +14,8 @@ from tko.run.run_executor import RunExecutor
 
 class Run:
     def __init__(self, settings: Settings, target_list: list[Path], param: None | Param.Basic, language: str | None = None, repo: Repository | None = None):
-        self.context = RunContext(settings, target_list, param, language, repo)
+        config = RunConfig()
+        self.context = RunContext(config, settings, target_list, param, language, repo)
 
     # Fluent Setters delegated to context
     def show_track_info(self):
@@ -77,14 +79,14 @@ class Run:
         if self._missing_target():
             return 0
 
-        if not self.context.wdir.has_solver() and self.context.wdir.has_tests() and not self.context.eval_mode:
+        if not self.context.wdir.has_solver() and self.context.wdir.has_tests() and not self.context.config.eval_mode:
             RunPresenter(self.context).list_mode()
             return 0
             
         executor = RunExecutor(self.context)
         
-        if self.context.wdir.has_solver() and not self.context.wdir.has_tests() and not self.context.curses_mode and not self.context.no_run:
-            if not self.context.eval_mode:
+        if self.context.wdir.has_solver() and not self.context.wdir.has_tests() and not self.context.config.curses_mode and not self.context.config.no_run:
+            if not self.context.config.eval_mode:
                 executor.free_run()
             else:
                 print(RText("fail: ") + "Nenhum caso de teste encontrado.")
@@ -94,7 +96,7 @@ class Run:
 
     def _missing_target(self) -> bool:
         if not self.context.wdir.has_solver() and not self.context.wdir.has_tests():
-            if not self.context.curses_mode:
+            if not self.context.config.curses_mode:
                 print(RText("fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
             return True
         return False

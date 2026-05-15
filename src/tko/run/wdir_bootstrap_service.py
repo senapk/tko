@@ -24,7 +24,7 @@ class WdirBootstrapService:
         try:
             lang = self._resolve_lang(ctx)
             ctx.wdir = (
-                ctx.wdir.set_curses(ctx.curses_mode)
+                ctx.wdir.set_curses(ctx.config.curses_mode)
                 .set_lang(lang)
                 .set_target_list(ctx.target_list)
                 .build()

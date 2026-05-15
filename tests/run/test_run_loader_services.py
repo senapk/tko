@@ -114,7 +114,7 @@ def test_wdir_bootstrap_service_builds_chain_with_lang_from_repo():
         wdir_builded=False,
         target_list=[Path("a"), Path("a")],
         param=SimpleNamespace(filter=False),
-        curses_mode=True,
+        config=SimpleNamespace(curses_mode=True),
         lang="",
         repo=SimpleNamespace(data=SimpleNamespace(lang="py")),
     )
@@ -136,7 +136,7 @@ def test_wdir_bootstrap_service_sets_compile_error_on_build_failure():
         wdir_builded=False,
         target_list=[Path("a")],
         param=SimpleNamespace(filter=False),
-        curses_mode=False,
+        config=SimpleNamespace(curses_mode=False),
         lang="",
         repo=None,
     )

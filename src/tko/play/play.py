@@ -82,7 +82,7 @@ class Play:
 
     def activate(self):
         self.gui.xray_offset = 0
-        return self.actions.select_task()
+        return self.actions.launcher.select_task()
 
     def make_callback(self) -> InputManager:
         cman = InputManager()
@@ -101,19 +101,19 @@ class Play:
         cman.add_str(GuiKeys.calibrate, lambda: self.fman.add_input(FloatingCalibrate(self.settings)))
         cman.add_str(GuiKeys.activate, self.activate) # type: ignore
         # cman.add_str(GuiKeys.open_url, self.actions.open_link)
-        cman.add_str(GuiKeys.down_task, self.actions.down_remote_task)
+        cman.add_str(GuiKeys.down_task, self.actions.downloader.down_remote_task)
         cman.add_str(GuiKeys.borders, lambda: self.app.toggle(ToggleOption.BORDERS))
         cman.add_str(GuiKeys.images, lambda: self.app.toggle(ToggleOption.IMAGES))
         cman.add_str(GuiKeys.set_lang_drafts, self.gui.language.set_language)
-        cman.add_str(GuiKeys.create_draft, self.actions.create_draft)
+        cman.add_str(GuiKeys.create_draft, self.actions.draft_creator.create_draft)
         cman.add_int(curses.KEY_DC, self.actions.delete_folder_ask)
         cman.add_str(GuiKeys.delete_folder, self.actions.delete_folder_ask)
         cman.add_str(GuiKeys.expand_all, self.tree.expand_all)
         cman.add_str(GuiKeys.collapse_all, self.tree.collapse_all)
 
-        cman.add_str(GuiKeys.self_evaluate, self.actions.self_evaluate)
+        cman.add_str(GuiKeys.self_evaluate, self.actions.evaluator.self_evaluate)
         if ic.enabled:
-            cman.add_str(GuiKeys.self_evaluate_full, self.actions.self_evaluate_full)
+            cman.add_str(GuiKeys.self_evaluate_full, self.actions.evaluator.self_evaluate_full)
         cman.add_str(GuiKeys.inbox, lambda: self.flags.task_view_mode.set_view_inbox())
         cman.add_str(GuiKeys.all_tasks, lambda: self.flags.task_view_mode.set_view_all())
 
@@ -123,7 +123,7 @@ class Play:
         cman.add_str(GuiKeys.panel_skills, lambda: self.open_toggle_panel(self.flags.panel.SKILLS))
         cman.add_str(GuiKeys.panel_toggle, lambda: self.flags.show_panel.toggle())
 
-        cman.add_str(GuiKeys.unfold_patch, self.actions.open_versions)
+        cman.add_str(GuiKeys.unfold_patch, self.actions.editor.open_versions)
         
         for flag in self.flags.all_flags:
             if flag.keycode:
