@@ -200,11 +200,12 @@ class DownActions:
             self.fnprint(text)
 
     @staticmethod
-    def folder_and_file(path: Path, parts: int = 2) -> str:
+    def folder_and_file(path: Path, parts: int = 3) -> str:
         """ Return the folder and file name of the path """
-        pieces = path.resolve().parts
-        pieces = pieces[-parts:]  # Get the last 'parts' elements
-        return os.path.join(*pieces)
+        return path.relative_to(Path.cwd(), walk_up=True).as_posix()
+        # pieces = path.resolve().parts
+        # pieces = pieces[-parts:]  # Get the last 'parts' elements
+        # return os.path.join(*pieces)
 
     def compare_and_save_to(self, content: str, path: Path):
         if not os.path.exists(path):

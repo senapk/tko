@@ -56,5 +56,30 @@ def task_list(
     action = CmdOpen(settings, repo, update_mode)
     action.list(show_all=all, only_down=down, show_quests=quests)
 
+
+@app.command("down", help="Download a task by full key")
+def task_down(
+    ctx: typer.Context,
+    full_key: str = typer.Argument(..., help="Task full key (e.g. fup@mumia)")
+):
+    from tko.cli.common import load_repo
+    from tko.cmds.cmd_down import CmdDown
+
+    app_ctx: AppContext = AppContext.load_from_context(ctx)
+    settings = app_ctx.settings
+    changedir = app_ctx.changedir
+    global_cache = app_ctx.global_cache
+    update = app_ctx.update
+
+    repo, _, _ = load_repo(changedir, show_warnings=True, auto_load=True, global_cache=global_cache, force_update=update)
+    if repo is None:
+        return
+
+    try:
+        CmdDown(repo, full_key, settings).execute()
+    except (Warning, ValueError) as exc:
+        typer.echo(str(exc))
+        raise typer.Exit(code=1)
+
 if __name__ == "__main__":
     app()
