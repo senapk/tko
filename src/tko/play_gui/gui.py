@@ -5,7 +5,6 @@ from tko.widget.border import Border
 from tko.widget.fmt import Fmt
 from tko.widget.frame import Frame
 from tko.floating.floating_manager import FloatingManager
-from tko.play_tree.formatter_util import FormatterUtil
 from tko.play.language_setter import LanguageSetter
 from tko.play.search import Search
 from tko.play_tree.task_tree import TaskTree
@@ -35,10 +34,9 @@ class Gui:
         self.app: AppSettings = self.settings.app
 
         self._need_update: bool = False
-        self.fmt_util: FormatterUtil = FormatterUtil(self.settings, self.repo)
 
         # Sub-renderizadores
-        self.action_resolver = GuiActionResolver(self.tree, self.fman, self.fmt_util, self.flags)
+        self.action_resolver = GuiActionResolver(self.tree, self.fman, self.tree.task_formatter, self.flags)
         self.left_panel      = GuiLeftPanel(self.tree, self.search, lambda: self._need_update)
         self.bottom_bar      = GuiBottomBar(self.tree, self.action_resolver)
         self.top_bar         = GuiTopBar(self.flags, self.app)

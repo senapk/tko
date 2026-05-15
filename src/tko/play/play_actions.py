@@ -6,7 +6,6 @@ from tko.game.task import Task
 # from tko.game.graph import Graph
 
 from icecream import ic # type: ignore
-from tko.play_tree.formatter_util import FormatterUtil
 from tko.floating.floating_grade import FloatingGrade
 from tko.floating.floating_input_text import FloatingInputText
 from tko.logger.tracker import Tracker
@@ -47,7 +46,6 @@ class PlayActions:
         self.game = gui.game
         self.graph_opened: bool = False
         self.gui = gui
-        self.fmt_util = FormatterUtil(self.settings, self.repo)
 
     def resize_panels(self, amount: int):
         value = self.settings.app.panel_size_percent

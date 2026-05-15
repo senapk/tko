@@ -1,7 +1,9 @@
 from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.game.tree_item import IsTreeItem
-from tko.play_tree.formatter_util import FormatterUtil
+from tko.play_tree.task_formatter import TaskFormatter
+from tko.play_tree.quest_formatter import QuestFormatter
+from tko.play_tree.time_formatter import TimeFormatter
 from tko.play.flags import Flags
 from tko.play_tree.tree_layout import TreeLayout
 from tko.play_tree.tree_state import TreeState
@@ -12,8 +14,19 @@ from tko.util.to_asc import SearchAsc
 
 
 class TreeRenderer:
-    def __init__(self, fmt_util: FormatterUtil, layout: TreeLayout, settings: Settings, flags: Flags, state: TreeState):
-        self.fmt_util = fmt_util
+    def __init__(
+        self,
+        task_formatter: TaskFormatter,
+        quest_formatter: QuestFormatter,
+        time_formatter: TimeFormatter,
+        layout: TreeLayout,
+        settings: Settings,
+        flags: Flags,
+        state: TreeState,
+    ):
+        self.task_formatter = task_formatter
+        self.quest_formatter = quest_formatter
+        self.time_formatter = time_formatter
         self.layout = layout
         self.settings = settings
         self.flags = flags
@@ -42,19 +55,19 @@ class TreeRenderer:
         output = RText(" ")
         output += RText(str(t.game.xp), "b") + " "
 
-        output += RText(self.fmt_util.get_task_down_symbol(t)[1], self.fmt_util.get_task_down_symbol(t)[0]) + " "
-        output += self.fmt_util.format_percent_1s(t.grader.get_rate_percent()) + " "
-        output += RText(self.fmt_util.get_task_help_symbol(t)[1], self.fmt_util.get_task_help_symbol(t)[0]) + " "
-        output += RText(self.fmt_util.get_task_path_symbol(t)[1], self.fmt_util.get_task_path_symbol(t)[0]) + " "
+        output += RText(self.task_formatter.get_task_down_symbol(t)[1], self.task_formatter.get_task_down_symbol(t)[0]) + " "
+        output += self.time_formatter.format_percent_1s(t.grader.get_rate_percent()) + " "
+        output += RText(self.task_formatter.get_task_help_symbol(t)[1], self.task_formatter.get_task_help_symbol(t)[0]) + " "
+        output += RText(self.task_formatter.get_task_path_symbol(t)[1], self.task_formatter.get_task_path_symbol(t)[0]) + " "
         remote_name: str = ""
         if self.layout.use_full_key:
             remote_name = t.basic.remote_name
-        _key_title, _key, _title = self.fmt_util.get_task_full_title(
+        _key_title, _key, _title = self.task_formatter.get_task_full_title(
             task=t,
             key_pad=self.layout.key_size,
             remote_name=remote_name,
         )
-        title = self.fmt_util.color_task_title(_key, _title)
+        title = self.task_formatter.color_task_title(_key, _title)
 
         focus_color = self.settings.colors.focused_item if focused else ""
         if focused:
@@ -67,11 +80,11 @@ class TreeRenderer:
         output += " "
 
         if self.flags.show_time.is_true():
-            h, m = self.fmt_util.get_task_hours_minutes(t)
-            output += self.fmt_util.format_hours_minutes("g", h, m)
+            h, m = self.time_formatter.get_task_hours_minutes(t)
+            output += self.time_formatter.format_hours_minutes("g", h, m)
 
         value = t.grader.full_percent
-        output += self.fmt_util.format_percent_3s(value)
+        output += self.time_formatter.format_percent_3s(value)
         return output
 
     def render_quest(self, q: Quest, focused: bool) -> RText:
@@ -79,12 +92,12 @@ class TreeRenderer:
         output = q.ui.ligature.set_style(color)
         done, total = q.progress.get_completion()
         output += f" {done:02}/{total:02}"
-        star_symbol, percent_text = self.fmt_util.get_start_symbols_and_percent_text(q)
+        star_symbol, percent_text = self.quest_formatter.get_start_symbols_and_percent_text(q)
         output += " " + star_symbol + " "
 
         color = q.ui.is_requirement_color
 
-        title = self.fmt_util.get_quest_full_title(
+        title = self.quest_formatter.get_quest_full_title(
             q,
             self.flags.panel.is_skills() and self.flags.show_panel.is_true(),
         ).add_style(color)
@@ -98,8 +111,8 @@ class TreeRenderer:
             output = output.ljust(self.layout.sentence_cut_size, RText(self.filler, color))
         output += " "
         if self.flags.show_time.is_true():
-            h, m = self.fmt_util.get_quest_time(q)
-            output += self.fmt_util.format_hours_minutes("g", h, m)
+            h, m = self.time_formatter.get_quest_time(q)
+            output += self.time_formatter.format_hours_minutes("g", h, m)
         output += percent_text
 
         return output

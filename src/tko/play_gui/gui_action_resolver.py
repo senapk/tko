@@ -2,7 +2,7 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.play.task_action import TaskAction
 from tko.floating.floating_manager import FloatingManager
-from tko.play_tree.formatter_util import FormatterUtil
+from tko.play_tree.task_formatter import TaskFormatter
 from tko.play.flags import Flags
 from tko.play.quest_visibility_service import QuestVisibilityService
 from tko.play_tree.task_tree import TaskTree
@@ -11,10 +11,10 @@ from tko.game.task import Task
 
 class GuiActionResolver:
 
-    def __init__(self, tree: TaskTree, fman: FloatingManager, fmt_util: FormatterUtil, flags: Flags):
+    def __init__(self, tree: TaskTree, fman: FloatingManager, task_formatter: TaskFormatter, flags: Flags):
         self.tree = tree
         self.fman = fman
-        self.fmt_util = fmt_util
+        self.task_formatter = task_formatter
         self.flags = flags
 
     def get_task_action(self, task: Task) -> tuple[str, str]:
@@ -22,7 +22,7 @@ class GuiActionResolver:
             return "B", TaskAction.VISITAR
         if task.resource.is_static_type:
             return "G", TaskAction.EXECUTAR
-        if not self.fmt_util.is_downloaded_for_lang(task):
+        if not self.task_formatter.is_downloaded_for_lang(task):
             return "Y", TaskAction.BAIXAR
         return "G", TaskAction.EXECUTAR
 

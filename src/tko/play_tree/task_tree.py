@@ -1,10 +1,13 @@
 from tko.game.tree_item import IsTreeItem
-from tko.play_tree.formatter_util import FormatterUtil
+from tko.play_tree.task_formatter import TaskFormatter
+from tko.play_tree.time_formatter import TimeFormatter
+from tko.play_tree.quest_formatter import QuestFormatter
 from tko.play_tree.tree_builder import TreeBuilder
 from tko.play_tree.tree_layout import TreeLayout
-from tko.play_tree.tree_navigator import TreeNavigator
 from tko.play_tree.tree_renderer import TreeRenderer
 from tko.play_tree.tree_repository import TreeRepository
+from tko.play_tree.tree_selection_service import TreeSelectionService
+from tko.play_tree.tree_state_service import TreeStateService
 from tko.play_tree.tree_state import TreeState, TreeFilter
 from tko.config.settings import Settings
 from tko.repository.repository import Repository
@@ -18,16 +21,24 @@ class TaskTree:
         self.repo = repo
         self.settings = settings
         self.state = TreeState()
-        self.fmt_util = FormatterUtil(settings, repo)
-        self.layout = TreeLayout(self.fmt_util)
-        self.builder = TreeBuilder(self.fmt_util)
-        self.renderer = TreeRenderer(self.fmt_util, self.layout, settings, repo.flags, self.state)
-        self.navigator = TreeNavigator()
+        self.task_formatter = TaskFormatter(settings, repo)
+        self.time_formatter = TimeFormatter(repo)
+        self.quest_formatter = QuestFormatter(settings, self.time_formatter)
+        self.layout = TreeLayout(self.task_formatter, self.quest_formatter)
+        self.builder = TreeBuilder(self.task_formatter)
+        self.renderer = TreeRenderer(
+            self.task_formatter,
+            self.quest_formatter,
+            self.time_formatter,
+            self.layout,
+            settings,
+            repo.flags,
+            self.state,
+        )
+        self.selection = TreeSelectionService(self.state)
         self.repository = TreeRepository(repo, self.game)
-
-        # loading configs
-        self.state.expanded = set(self.repo.data.expanded)
-        self.state.selected = self.repo.data.selected
+        self.state_service = TreeStateService(self.state, self.repository, self.game)
+        self.state_service.load()
 
         self.items: list[IsTreeItem] = []
 
@@ -35,34 +46,34 @@ class TaskTree:
         self.layout.reset
 
     def save_state(self):
-        self.repository.save_state(self.state)
+        self.state_service.save()
 
     def filter_by_search(self) -> tuple[set[str], str | None]:
         return self.builder.filter_by_search(self.game, self.state.search)
 
     def get_selected_throw(self) -> IsTreeItem:
-        return self.state.get_selected_throw(self.items)
+        return self.selection.get_selected_throw(self.items)
     
     def get_selected_index(self) -> int:
-        return self.state.get_selected_index(self.items)
+        return self.selection.get_selected_index(self.items)
 
     def toggle(self):
-        self.navigator.toggle(self.state, self.items)
+        self.selection.toggle(self.items)
 
     def move_up(self):
-        self.navigator.move_up(self.state, self.items)
+        self.selection.move_up(self.items)
     
     def move_down(self):
-        self.navigator.move_down(self.state, self.items)
+        self.selection.move_down(self.items)
 
     def move_right(self):
-        self.navigator.right(self.state, self.items)
+        self.selection.move_right(self.items)
 
     def move_left(self):
-        self.navigator.left(self.state, self.items)
+        self.selection.move_left(self.items)
 
     def get_visible_sentences(self, height: int) -> list[tuple[RText, IsTreeItem]]:
-        self.state.update_scroll(height, self.items)
+        self.selection.update_scroll(height, self.items)
         visible_items = self.items[
             self.state.scroll : self.state.scroll + height
         ]
@@ -82,13 +93,12 @@ class TaskTree:
             inbox_mode=self.repo.flags.task_view_mode.is_inbox() and not force_view_all,
             search_text=self.state.search
         )
-        self.state.ensure_valid_selection(self.items)
+        self.selection.ensure_valid_selection(self.items)
         self.layout.calculate(self.game, self.repo.flags, self.state.expanded)
         self.items = self.builder.build(self.game, self.state, tree_filter)
 
     def collapse_all(self):
-        self.state.expanded.clear()
+        self.state_service.collapse_all()
 
     def expand_all(self):
-        for q in self.game.quests.values():
-            self.state.expanded.add(q.basic.full_key)
+        self.state_service.expand_all()

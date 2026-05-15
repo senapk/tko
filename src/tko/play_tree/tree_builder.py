@@ -2,7 +2,7 @@ from tko.game.game import Game
 from tko.game.task import Task
 from tko.game.task_config import TaskMain
 from tko.game.tree_item import IsTreeItem
-from tko.play_tree.formatter_util import FormatterUtil
+from tko.play_tree.task_formatter import TaskFormatter
 from tko.play_tree.tree_state import TreeState, TreeFilter
 from tko.play.quest_visibility_service import QuestVisibilityService
 from tko.util.rtext import RText
@@ -10,9 +10,9 @@ from tko.util.to_asc import SearchAsc
 
 
 class TreeBuilder:
-    def __init__(self, fmt_util: FormatterUtil):
-        self.fmt_util = fmt_util
-        self.repo = fmt_util.repo
+    def __init__(self, task_formatter: TaskFormatter):
+        self.task_formatter = task_formatter
+        self.repo = task_formatter.repo
 
     def filter_by_search(self, game: Game, search_text: str) -> tuple[set[str], str | None]:
         matches: set[str] = set()
@@ -25,7 +25,7 @@ class TreeBuilder:
                 matches.add(quest.basic.full_key)
 
             for task in quest.get_tasks():
-                full, _key, _title = self.fmt_util.get_task_full_title(task, None)
+                full, _key, _title = self.task_formatter.get_task_full_title(task, None)
                 if search.inside(full):
                     first = first or task.basic.full_key
                     matches.add(quest.basic.full_key)
@@ -33,7 +33,7 @@ class TreeBuilder:
 
         return matches, first
 
-    def select_inbox_enabled(self, game: Game, tf: TreeFilter, fmt_util: FormatterUtil) -> set[str]:
+    def select_inbox_enabled(self, game: Game, tf: TreeFilter, task_formatter: TaskFormatter) -> set[str]:
         max_count = 10
         enabled: set[str] = set()
         for q in game.quests.values():
@@ -48,7 +48,7 @@ class TreeBuilder:
             for t in tasks:
                 if t.grader.get_rate_percent() == 100 and t.grader.get_quality_percent() == 100:
                     continue
-                if fmt_util.is_downloaded_for_lang(t):
+                if task_formatter.is_downloaded_for_lang(t):
                     enabled.add(t.basic.full_key)
                     count += 1
                 elif count < max_count:
@@ -71,7 +71,7 @@ class TreeBuilder:
             if first_match and state.selected == "":
                 state.selected = first_match
         elif tfilter.inbox_mode:
-            enabled = self.select_inbox_enabled(game, tfilter, self.fmt_util)
+            enabled = self.select_inbox_enabled(game, tfilter, self.task_formatter)
         else:
             enabled = self.enable_all(game)
         return enabled

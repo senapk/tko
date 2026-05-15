@@ -1,11 +1,13 @@
 from tko.game.game import Game
 from tko.play.flags import Flags
-from tko.play_tree.formatter_util import FormatterUtil
+from tko.play_tree.task_formatter import TaskFormatter
+from tko.play_tree.quest_formatter import QuestFormatter
 
 
 class TreeLayout:
-    def __init__(self, fmt_util: FormatterUtil):
-        self.fmt_util = fmt_util
+    def __init__(self, task_formatter: TaskFormatter, quest_formatter: QuestFormatter):
+        self.task_formatter = task_formatter
+        self.quest_formatter = quest_formatter
         self.key_size_min = 20
         self.sentence_cut_min_size = 30
         self.sentence_cut_max_size = 80
@@ -36,10 +38,10 @@ class TreeLayout:
 
         for q in game.quests.values():
             sentence_cut.append(
-                len(self.fmt_util.get_quest_full_title(q, flags.panel.is_skills())) + self.fixed_quest_itens_size
+                len(self.quest_formatter.get_quest_full_title(q, flags.panel.is_skills())) + self.fixed_quest_itens_size
             )
             for t in q.get_tasks():
-                _full, _, _ = self.fmt_util.get_task_full_title(t, self.key_size)
+                _full, _, _ = self.task_formatter.get_task_full_title(t, self.key_size)
                 sentence_cut.append(len(_full) + self.fixed_task_itens_size)
 
         self.sentence_cut_size = max(max(sentence_cut), self.sentence_cut_min_size) if sentence_cut else self.sentence_cut_min_size

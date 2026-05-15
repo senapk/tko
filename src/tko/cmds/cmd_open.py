@@ -5,9 +5,8 @@ from tko.play.play import Play
 from tko.util.rtext import RText
 from pathlib import Path
 from tko.repository.git_cache import UpdateMode
-from tko.play_tree.formatter_util import FormatterUtil
+from tko.play_tree.task_formatter import TaskFormatter
 from tko.game.task import Task
-from tko.game.quest import Quest
 
 class CmdOpen:
     def __init__(self, settings: Settings, repo: Repository, update_mode: UpdateMode):
@@ -45,14 +44,14 @@ class CmdOpen:
             tree.layout.use_full_key = True
         tree.expand_all()
         tree.update(force_view_all=show_all)
-        fmt_util = FormatterUtil(self.settings, self.repo)
+        task_formatter = TaskFormatter(self.settings, self.repo)
         for item, tree_item in tree.get_rendered_items():
             istask = isinstance(tree_item, Task)
             if only_down:
                 if not istask:
                     if show_quests:
                         print(item)
-                elif fmt_util.is_downloaded_for_lang(tree_item):
+                elif task_formatter.is_downloaded_for_lang(tree_item):
                     print(item)
             else:
                 if istask:
