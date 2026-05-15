@@ -43,13 +43,16 @@ class IndexLine:
         self.origin_key = tm.key
         
         if not tm.is_view:
-            link = Path(tm.task_link)
-            if link.name != "README.md":
-                raise ValueError(f"Invalid README file name: {link}")
-            if link.is_absolute():
-                self.readme_file = Path(link).resolve()
+            if tm.task_link.startswith(r"http://") or tm.task_link.startswith(r"https://"):
+                self.url = tm.task_link
             else:
-                self.readme_file = (self.index_path.parent / link).resolve()
+                link = Path(tm.task_link)
+                if link.name != "README.md":
+                    raise ValueError(f"Invalid README file name: {link}")
+                if link.is_absolute():
+                    self.readme_file = Path(link).resolve()
+                else:
+                    self.readme_file = (self.index_path.parent / link).resolve()
         else:
             self.url = tm.task_link
         return self
@@ -73,14 +76,15 @@ class IndexLine:
         return self.raw_line
 
     def get_pre(self, key_pad: int) -> str:
-        pre = self.raw_pre.replace(f"@{self.get_label()}", "").replace("`", "").replace("- [ ]", "").strip()
+        pre = self.raw_pre.replace(f"@{self.key}", "").replace("`", "").replace("- [ ]", "").strip()
         words = pre.split(" ")
         words = [w for w in words if not w.startswith("@") and w != ""]
         tags = [f"{w}" for w in words if w.startswith(":")]
         others = [w for w in words if not w.startswith(":")]
-        return f"`@{self.get_label():<{key_pad + 1}}{" ".join(tags)}`" + (f" {' '.join(others)} " if len(others) > 0 else "")
+        return f"`@{self.key:<{key_pad + 1}}{" ".join(tags)}`" + (f" {' '.join(others)} " if len(others) > 0 else "")
 
-    def get_label(self) -> str:
+    @property
+    def key(self) -> str:
         edit_task_label = ""
         if self.readme_file is not None:
             if self.readme_file.resolve().is_relative_to(self.base_dir.resolve()):
@@ -123,8 +127,8 @@ class Indexer:
             print(f"Found {len(self.path_title_dict)} README.md files in base directory '{self.base_dir}'")
 
     def found_unused_task_dirs(self,) -> None:
-        index_tasks = set([f.readme_file for f in self.index_lines if f.isTask])
-        missing_entries = [t for t in self.path_title_dict.keys() if t not in index_tasks]
+        index_tasks: set[str] = set([f.key for f in self.index_lines if f.isTask])
+        missing_entries = [t for t in self.path_title_dict.keys() if t.parent.name not in index_tasks]
         output: dict[Path, IndexLine] = {}
         if len(missing_entries) > 0:
             for m in missing_entries:
@@ -141,7 +145,7 @@ class Indexer:
             if file_line.isTask and file_line.readme_file is not None:
                 if not file_line.readme_file.exists():
                     if self.verbose:
-                        print(RText.parse(f"Warning: README file '[y]{file_line.readme_file}[.]' does not exist for task:[b]{file_line.get_label()}[.], removing from index"))
+                        print(RText.parse(f"Warning: README file '[y]{file_line.readme_file}[.]' does not exist for task:[b]{file_line.key}[.], removing from index"))
                     continue
             index_lines.append(file_line)
         self.index_lines = index_lines
@@ -209,7 +213,7 @@ class Indexer:
         for quest in quest_lines:
             for line in quest:
                 if line.isTask:
-                    keys.append(line.get_label())
+                    keys.append(line.key)
         key_pad = max([len(k) for k in keys]) if len(keys) > 0 else 0
 
         with open(self.index_path, "w", encoding="utf-8") as f:

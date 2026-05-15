@@ -41,9 +41,7 @@ class LinkRebase:
         return result
 
     @staticmethod
-    def rebase(content: str, rl: GithubUrlStructure):rm tk
-        # Extract directory from relative_path (remove filename if it's a file)
-        # A file has a dot in the last segment; a directory doesn't
+    def rebase(content: str, rl: GithubUrlStructure) -> None:
         parts = rl.relative_path.split("/")
         if parts and "." in parts[-1]:
             folder = "/".join(parts[:-1])
