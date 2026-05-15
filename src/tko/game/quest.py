@@ -1,60 +1,28 @@
 from __future__ import annotations
-from tko.game.task_config import TaskMain
-from tko.util.rtext import RText
 from tko.game.tree_item import TreeBasic, TreeUi
-from tko.game.quest_grader import QuestGrader
 from tko.game.task import Task
+from tko.game.quest_source import QuestSource
+from tko.game.quest_config import QuestConfig
+from tko.game.quest_requirements import QuestRequirements
+from tko.game.quest_state import QuestState
+from tko.game.quest_progress import QuestProgress
 
 # from typing import override
-
-def startswith(text: str, prefix: str) -> bool: 
-    if len(prefix) > len(text):
-        return False
-    return text[:len(prefix)] == prefix
 
 class Quest:
     def __init__(self, title: str = "", key: str = ""):
         self.basic = TreeBasic()
         self.ui = TreeUi()
+        self.source = QuestSource()
+        self.config = QuestConfig()
+        self.requirements = QuestRequirements()
+        self.state = QuestState()
 
-        self.filename = ""
         self.basic.key = key
         self.basic.title = title
-        
-        self.line_number: int = 0
-        self.line: str = ""
-        
+
         self.__tasks: list[Task] = []
-        self.requires: list[str] = []  # 
-        self.requires_ptr: list[Quest] = []
-        self.required_by_ptr: list[Quest] = []
-        
-        self.min_percent_completion: int = 50  # q:{value} 50 percent to complete quest
-        self.skills: dict[str, int] = {}  # s:{skill} to be applied to all tasks
-        self.languages: list[str] = []  # l:language to filter what is showed to user based in default language
-        self.__is_reachable: bool = False
-
-    def add_require_key(self, key: str):
-        if key.startswith("@"):
-            key = key[1:]
-        self.requires.append(self.basic.remote_name + "@" + key)
-
-    def get_full_title(self, show_skills: bool) -> RText:
-        output = RText(self.basic.remote_name, "c") + RText(":") + RText(self.basic.title)
-        if show_skills:
-            for skill, value in self.skills.items():
-                if value > 1:
-                    output += RText.run('b', f" +{skill}*{value}")
-                else:
-                    output += RText.run('b', f" +{skill}")
-        return output
-
-    def is_reachable(self)-> bool:
-        return self.__is_reachable
-
-    def set_reachable(self, value: bool):
-        self.__is_reachable = value
-        return self
+        self.progress = QuestProgress(lambda: self.__tasks, lambda: self.config.min_percent_completion)
     
     def update_tasks_reachable(self):
         for task in self.__tasks:
@@ -63,18 +31,14 @@ class Quest:
 
     # @override
     def __str__(self):
-        line = str(self.line_number).rjust(3)
+        line = str(self.source.line_number).rjust(3)
         tasks_size = str(len(self.__tasks)).rjust(2, "0")
         key = "" if self.basic.full_key == self.basic.title else self.basic.full_key + " "
-        output = f"{line} {tasks_size} {key}{self.basic.title} {self.skills} {self.requires}"
+        output = f"{line} {tasks_size} {key}{self.basic.title} {self.config.skills} {self.requirements.requires}"
         return output
 
-    def is_complete(self):
-        value = self.get_percent(include_main_perk=True, include_side=True)
-        return value is None or value >= self.min_percent_completion
-
     def add_task(self, task: Task):
-        task.game.skills.update(self.skills)  # apply quest skills to task
+        task.game.skills.update(self.config.skills)  # apply quest skills to task
         self.__tasks.append(task)
 
     def get_tasks(self):
@@ -82,59 +46,3 @@ class Quest:
 
     def sort_tasks_by_title(self):
         self.__tasks = sorted(self.__tasks, key=lambda tr: tr.basic.title)
-
-    def get_xp(self, include_main_perk: bool, include_side: bool) -> tuple[float, float]:
-        """
-        Returns a tuple of (earned_xp, total_xp)
-        """
-        tasks_info: list[QuestGrader.Elem] = []
-        for task in self.__tasks:
-            if task.config.path in [TaskMain.MAIN, TaskMain.PERK] and not include_main_perk:
-                continue
-            if task.config.path == TaskMain.SIDE and not include_side:
-                continue
-            percent = task.grader.full_percent
-            tasks_info.append(QuestGrader.Elem(task.config.is_optional, task.game.xp, percent))
-        return QuestGrader.calc_xp_earned_total(tasks_info)
-    
-    def get_completion(self) -> tuple[int, int]:
-        total = 0
-        done = 0
-        for task in self.__tasks:
-            total += 1
-            if task.grader.is_complete:
-                done += 1
-        return done, total
-
-    def get_percent_main_and_all(self) -> tuple[float | None, float]:
-        percent_main: float | None = 0.0
-        percent_all: float = 0.0
-        obtainedm, totalm = self.get_xp(include_main_perk=True, include_side=False)
-        obtaineds, totals = self.get_xp(include_main_perk=False, include_side=True)
-        if totalm > 0:
-            percent_main = (obtainedm / totalm) * 100
-            percent_all = ((obtainedm + obtaineds) / totalm) * 100
-        elif totals > 0:
-            percent_main = None
-            percent_all = (obtaineds / totals) * 100
-        else:
-            percent_all = 0.0
-        return percent_main, percent_all
-
-    def get_percent(self, include_main_perk: bool, include_side: bool) -> float | None:
-        if not include_main_perk and not include_side:
-            return None
-        main_obt, main_total = self.get_xp(include_main_perk=include_main_perk, include_side=False)
-        side_obt, side_total = self.get_xp(include_main_perk=False, include_side=include_side)
-        if include_main_perk and include_side:
-            return QuestGrader.get_percent(main_obt + side_obt, main_total)
-        if include_main_perk:
-            return QuestGrader.get_percent(main_obt, main_total)
-        if include_side:
-            return QuestGrader.get_percent(side_obt, side_total)
-
-    def get_percent_main(self) -> float | None:
-        return self.get_percent(include_main_perk=True, include_side=False)
-    
-    def get_percent_side(self) -> float | None:
-        return self.get_percent(include_main_perk=False, include_side=True)

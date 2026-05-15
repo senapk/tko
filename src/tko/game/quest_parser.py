@@ -44,36 +44,36 @@ class QuestParser:
         # skills
         skills = [t[1:] for t in words if t[0] == "+"]
         if len(skills) > 0:
-            self.quest.skills = {}
+            self.quest.config.skills = {}
             for s in skills:
                 try:
                     k, v = s.split(":")
-                    self.quest.skills[k] = int(v)
+                    self.quest.config.skills[k] = int(v)
                 except ValueError:
-                    self.quest.skills[s] = 1  # default value is 1 if not specified
-        if len(self.quest.skills) == 0:
-            self.quest.skills = {
+                    self.quest.config.skills[s] = 1  # default value is 1 if not specified
+        if len(self.quest.config.skills) == 0:
+            self.quest.config.skills = {
                 self.quest.basic.key: 1
             }
 
         # languages
         languages = [t[1:] for t in words if t[0] == "="]
         if len(languages) > 0:
-            self.quest.languages = []
+            self.quest.config.languages = []
             for l in languages:
-                self.quest.languages.append(l)
+                self.quest.config.languages.append(l)
 
         # quest percent
         qmin = [t[1:] for t in words if t[0] == "%"]
         if len(qmin) > 0:
             try:
-                self.quest.min_percent_completion = int(qmin[0])
+                self.quest.config.min_percent_completion = int(qmin[0])
             except ValueError:
-                self.quest.min_percent_completion = 50
+                self.quest.config.min_percent_completion = 50
         
         required = [t[1:] for t in words if t[0] == "!"]
         for req_key in required:
-            self.quest.add_require_key(req_key)
+            self.quest.requirements.add_require_key(self.quest.basic.remote_name, req_key)
 
         words = [w for w in words if w[0] not in ["@", "%", "=", "+", "!"]]
         return " ".join(words)
@@ -82,8 +82,8 @@ class QuestParser:
         self.line = line
         self.line_num = line_num
         self.filename: Path = filename
-        self.quest.line = self.line
-        self.quest.line_number = self.line_num
+        self.quest.source.line = self.line
+        self.quest.source.line_number = self.line_num
         self.quest.basic.remote_name = ""
 
         if self.match_full_pattern():

@@ -94,16 +94,16 @@ class GameBuilder:
         quests = self.collect_quests()
         # verificar se todas as quests requeridas existem e adicionar o ponteiro
         for q in quests.values():
-            for r in q.requires:
+            for r in q.requirements.requires:
                 if r in quests:
-                    q.requires_ptr.append(quests[r])
-                    quests[r].required_by_ptr.append(q)
+                    q.requirements.requires_ptr.append(quests[r])
+                    quests[r].requirements.required_by_ptr.append(q)
                 else:
                     if self.verbose:
                         logger.warning(
                             "Quest\n%s:%s\n%s\nrequer %s que não existe",
                             filename,
-                            q.line_number,
+                            q.source.line_number,
                             str(q),
                             r,
                         )
@@ -183,7 +183,7 @@ class GameBuilder:
         for q in self.quests.values():
             if len(q.get_tasks()) == 0:
                 continue
-            if len(q.languages) == 0 or language in q.languages:
+            if len(q.config.languages) == 0 or language in q.config.languages:
                 quests.append(q)
         self.quests = {q.basic.full_key: q for q in quests}
         return self

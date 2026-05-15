@@ -39,9 +39,9 @@ class Search:
             self.tree.update(force_view_all=False)
             reachable = True
             if isinstance(item, Task):
-                reachable = self.game.quests[item.quest_key].is_reachable()
+                reachable = self.game.quests[item.quest_key].state.is_reachable
             elif isinstance(item, Quest):
-                reachable = item.is_reachable()
+                reachable = item.state.is_reachable
             if not reachable:
                 self.repo.flags.task_view_mode.set_view_all()
             else:

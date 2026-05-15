@@ -35,9 +35,11 @@ class TreeLayout:
         self.key_size = max(key_sizes) if key_sizes else self.key_size_min
 
         for q in game.quests.values():
-            sentence_cut.append(len(q.get_full_title(flags.panel.is_skills())) + self.fixed_quest_itens_size)
+            sentence_cut.append(
+                len(self.fmt_util.get_quest_full_title(q, flags.panel.is_skills())) + self.fixed_quest_itens_size
+            )
             for t in q.get_tasks():
-                _full, _, _ = self.fmt_util.get_full_title(t, self.key_size)
+                _full, _, _ = self.fmt_util.get_task_full_title(t, self.key_size)
                 sentence_cut.append(len(_full) + self.fixed_task_itens_size)
 
         self.sentence_cut_size = max(max(sentence_cut), self.sentence_cut_min_size) if sentence_cut else self.sentence_cut_min_size

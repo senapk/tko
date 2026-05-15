@@ -70,24 +70,26 @@ class Game:
         if q.basic.full_key in cache:
             return cache[q.basic.full_key]
 
-        if len(q.requires_ptr) == 0:
+        if len(q.requirements.requires_ptr) == 0:
             cache[q.basic.full_key] = True
             return True
-        cache[q.basic.full_key] = all([r.is_complete() and Game.is_reachable_quest(r, cache) for r in q.requires_ptr])
+        cache[q.basic.full_key] = all(
+            [r.progress.is_complete() and Game.is_reachable_quest(r, cache) for r in q.requirements.requires_ptr]
+        )
         return cache[q.basic.full_key]
 
     def update_reachable_and_available(self):
         for q in self.quests.values():
-            q.set_reachable(False)
+            q.state.is_reachable = False
             q.update_tasks_reachable()
         for q in self.quests.values():
-            q.set_reachable(False)
+            q.state.is_reachable = False
 
         cache: dict[str, bool] = {}
         for q in self.quests.values():
             if Game.is_reachable_quest(q, cache):
-                q.set_reachable(True)
-                q.set_reachable(True)
+                q.state.is_reachable = True
+                q.state.is_reachable = True
 
     # @override
     def __str__(self):

@@ -34,9 +34,9 @@ class GameValidator:
 
         # verificar auto dependencia
         for q in self.quests.values():
-            for r in q.requires:
+            for r in q.requirements.requires:
                 if q.basic.full_key == r:
-                    print(f"Erro: auto refência {q.line_number} {q.line}")
+                    print(f"Erro: auto refência {q.source.line_number} {q.source.line}")
                     exit(1)
 
 
@@ -50,7 +50,7 @@ class GameValidator:
             if qx.basic.full_key in visitedx:
                 return
             visitedx.append(qx.basic.full_key)
-            for r in qx.requires_ptr:
+            for r in qx.requirements.requires_ptr:
                 dfs(r, visitedx)
 
         for q in self.quests.values():

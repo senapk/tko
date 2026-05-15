@@ -24,7 +24,7 @@ class TreeBuilder:
                 matches.add(quest.basic.full_key)
 
             for task in quest.get_tasks():
-                full, _key, _title = self.fmt_util.get_full_title(task, None)
+                full, _key, _title = self.fmt_util.get_task_full_title(task, None)
                 if search.inside(full):
                     first = first or task.basic.full_key
                     matches.add(quest.basic.full_key)
@@ -36,8 +36,8 @@ class TreeBuilder:
         max_count = 10
         enabled: set[str] = set()
         for q in game.quests.values():
-            _, pall = q.get_percent_main_and_all()
-            if not q.is_reachable() or pall >= 100:
+            _, pall = q.progress.get_percent_main_and_all()
+            if not q.state.is_reachable or pall >= 100:
                 continue
             enabled.add(q.basic.full_key)
             count = 0
@@ -100,12 +100,12 @@ class TreeBuilder:
         for q in game.quests.values():
             if not q.ui.visible:
                 continue
-            for req in q.required_by_ptr:
+            for req in q.requirements.required_by_ptr:
                 if req.basic.full_key == state.selected:
-                    q.ui.is_requirement_color = "y" if req.is_reachable() else "r"
+                    q.ui.is_requirement_color = "y" if req.state.is_reachable else "r"
                     break
             items.append(q)
-            color = "g" if q.is_reachable() else "y"
+            color = "g" if q.state.is_reachable else "y"
             tasks: list[Task] = [t for t in q.get_tasks() if t.ui.visible]
             has_hidden = len(tasks) != len(q.get_tasks())
             if q.basic.full_key not in state.expanded:

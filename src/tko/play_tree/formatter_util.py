@@ -44,7 +44,7 @@ class FormatterUtil:
 
     def get_start_symbols_and_percent_text(self, q: Quest) -> tuple[str, RText]:
         symbol = ""
-        pmain, pall = q.get_percent_main_and_all()
+        pmain, pall = q.progress.get_percent_main_and_all()
         if pmain is not None:
             percent_text = self.format_percent_3s(pall).set_style("g")
             symbol = Symbols.star_filled
@@ -53,8 +53,18 @@ class FormatterUtil:
             symbol = Symbols.star_void
         return symbol, percent_text
 
+    def get_quest_full_title(self, quest: Quest, show_skills: bool) -> RText:
+        output = RText(quest.basic.remote_name, "c") + RText(":") + RText(quest.basic.title)
+        if show_skills:
+            for skill, value in quest.config.skills.items():
+                if value > 1:
+                    output += RText.run("b", f" +{skill}*{value}")
+                else:
+                    output += RText.run("b", f" +{skill}")
+        return output
 
-    def get_full_title(self, task: Task, key_pad: None | int, pad_char: str = " ", remote_name: str = "") -> tuple[str, str, str]:
+
+    def get_task_full_title(self, task: Task, key_pad: None | int, pad_char: str = " ", remote_name: str = "") -> tuple[str, str, str]:
         basic = task.basic
         if key_pad is None:
             key_pad = len(basic.key)
@@ -174,7 +184,7 @@ class FormatterUtil:
         return hours, minutes
 
     def get_focus_color_quest(self, item: Quest) -> str:
-        if not item.is_reachable():
+        if not item.state.is_reachable:
                 return "R"
         return self.settings.colors.focused_item
 

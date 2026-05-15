@@ -32,7 +32,7 @@ class GuiActionResolver:
             return "R", "Retornar"
         if isinstance(obj, Quest):
             quest: Quest = obj
-            if self.flags.task_view_mode.is_inbox() and not quest.is_reachable():
+            if self.flags.task_view_mode.is_inbox() and not quest.state.is_reachable:
                 output = TaskAction.BLOQUEIO
             elif quest.basic.full_key in self.tree.state.expanded:
                 output = TaskAction.CONTRAIR
