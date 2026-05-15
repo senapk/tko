@@ -41,8 +41,15 @@ class LinkRebase:
         return result
 
     @staticmethod
-    def rebase(content: str, rl: GithubUrlStructure):
-        folder = rl.relative_path
+    def rebase(content: str, rl: GithubUrlStructure):rm tk
+        # Extract directory from relative_path (remove filename if it's a file)
+        # A file has a dot in the last segment; a directory doesn't
+        parts = rl.relative_path.split("/")
+        if parts and "." in parts[-1]:
+            folder = "/".join(parts[:-1])
+        else:
+            folder = rl.relative_path
+        
         user_repo = "/".join([rl.user, rl.repo])
         remote_raw    = "/".join(["https://raw.githubusercontent.com", user_repo, rl.branch , folder])
         remote_view    = "/".join(["https://github.com", user_repo, "blob", rl.branch, folder])

@@ -23,6 +23,20 @@ def test_rebase_rewrites_image_file_and_folder_links() -> None:
     assert "[file](https://github.com/user/repo/blob/main/docs/readme.md)" in result
 
 
+def test_rebase_task_markdown_link_from_github_downloaded_file() -> None:
+    structure = GithubUrlStructure()
+    structure.user = "qxcodefup"
+    structure.repo = "arcade"
+    structure.branch = "main"
+    structure.relative_path = ""
+
+    content = "- [ ]`@tres            :1:main`[Soma de três inteiros](base/tres/README.md)"
+
+    result = LinkRebase.rebase(content, structure)
+
+    assert "[Soma de três inteiros](https://github.com/qxcodefup/arcade/blob/main/base/tres/README.md)" in result
+
+
 def test_convert_or_copy_or_print_writes_file_when_target_is_provided(tmp_path: Path) -> None:
     source = tmp_path / "input.md"
     source.write_text("[x](a.md)", encoding="utf-8")
