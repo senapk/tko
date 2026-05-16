@@ -131,6 +131,9 @@ Repositórios de referência:
 - [Guia de contribuição](CONTRIBUTING.md)
 - [FAQ](docs/FAQ.md)
 - [Referência rápida da CLI](docs/REFERENCE.md)
+- [Ciclo de vida de tarefas](docs/TASK_LIFECYCLE.md)
+- [Suporte a linguagens](docs/LANGUAGE_SUPPORT.md)
+- [Guia de testes e QA](docs/TESTING.md)
 
 ## Atualizando o TKO
 

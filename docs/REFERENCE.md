@@ -4,6 +4,23 @@ Esta página resume os comandos mais usados do TKO para consulta rápida.
 
 > Dica: para detalhes completos, use `tko --help` e `tko <comando> --help`.
 
+## Fluxo mínimo do aluno (disciplina)
+
+Primeira configuração:
+
+```bash
+tko init
+tko remote add <alias> <url_git_do_professor>
+tko open
+```
+
+Resumo do comportamento remoto:
+
+- O TKO clona o repositório remoto na primeira vez.
+- Mantém cache por 1 hora.
+- Após esse período, tenta atualizar ao abrir novamente.
+- Novas atividades publicadas pelo professor passam a aparecer para os alunos.
+
 ## Comandos globais
 
 ```bash
