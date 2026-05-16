@@ -5,6 +5,8 @@
   - docs: migração de conteúdo longo de criação/conversão de testes para a wiki
   - docs: padronização editorial dos guias principais (nomenclatura e links)
   - docs: adição de template de PR com checklist obrigatório de documentação
+  - docs: adição de template de issue para bugs de documentação
+  - docs: adição de workflow CI para validação de links de README/wiki
 
 - 9.2.0
   - add: layout improvements
