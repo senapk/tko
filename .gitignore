@@ -15,3 +15,9 @@ token.txt
 todo.md
 temp
 uv.lock
+.codex
+.coverage
+.python-version
+qa.md
+plan.md
+DOCUMENTATION_PLAN.md
