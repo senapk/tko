@@ -5,6 +5,14 @@
 
 # TKO
 
+[![Tests](https://github.com/senapk/tko/actions/workflows/tests.yml/badge.svg)](https://github.com/senapk/tko/actions/workflows/tests.yml)
+[![PyPI version](https://img.shields.io/pypi/v/tko)](https://pypi.org/project/tko/)
+[![Python](https://img.shields.io/pypi/pyversions/tko)](https://pypi.org/project/tko/)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/tko)](https://pypi.org/project/tko/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Repo](https://img.shields.io/badge/GitHub-senapk%2Ftko-181717?logo=github)](https://github.com/senapk/tko)
+[![Stars](https://img.shields.io/github/stars/senapk/tko?style=social)](https://github.com/senapk/tko/stargazers)
+
 O tko é um sistema de testes para programação competitiva. Ele é capaz de rodar testes em várias linguagens de programação e em vários formatos de testes. Ele está integrado com os repositórios de atividades das disciplinas de programação da UFC de Quixadá permitindo baixar as atividades e rodar os testes.
 
 - [FUP - Fundamentos de Programação](https://github.com/qxcodefup/arcade)
