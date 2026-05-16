@@ -1,0 +1,68 @@
+name: Documentation bug
+description: Report an issue in README/wiki docs (broken links, outdated commands, unclear steps)
+title: "docs: "
+labels:
+  - documentation
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve TKO documentation.
+
+        Use this template for broken links, outdated commands, missing steps, or unclear explanations.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Documentation area
+      description: Where is the issue located?
+      options:
+        - README
+        - Wiki - Installation
+        - Wiki - Student flow
+        - Wiki - Teacher flow
+        - Wiki - Developer guides
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: location
+    attributes:
+      label: File or page
+      description: Example: README.md or wiki/Windows-WSL.md
+      placeholder: README.md
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong?
+      description: Describe exactly what is incorrect or confusing.
+      placeholder: The command says X, but the correct command is Y.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Suggested fix
+      description: What should the documentation say?
+      placeholder: Replace command X with command Y and add one troubleshooting note.
+
+  - type: input
+    id: related_command
+    attributes:
+      label: Related command (if any)
+      placeholder: tko --help
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Validation
+      options:
+        - label: I confirmed this issue still exists in the latest main branch docs.
+          required: true
+        - label: I searched and did not find a duplicate documentation issue.
+          required: true
