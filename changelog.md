@@ -1,5 +1,11 @@
 # Changelog
 
+- Unreleased
+  - docs: renovação do README (badges, visão geral, quick start e navegação por perfis)
+  - docs: migração de conteúdo longo de criação/conversão de testes para a wiki
+  - docs: padronização editorial dos guias principais (nomenclatura e links)
+  - docs: adição de template de PR com checklist obrigatório de documentação
+
 - 9.2.0
   - add: layout improvements
   - refactor: task logic and types
