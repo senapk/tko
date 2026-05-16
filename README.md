@@ -126,6 +126,12 @@ Repositórios de referência:
 - [Build all: pipeline de mdpp, filter e drafts](wiki/build-all.md)
 - [Build index: manter e atualizar índices](wiki/build-index.md)
 
+## Referência e suporte
+
+- [Guia de contribuição](CONTRIBUTING.md)
+- [FAQ](docs/FAQ.md)
+- [Referência rápida da CLI](docs/REFERENCE.md)
+
 ## Atualizando o TKO
 
 Para atualizar o TKO para a versão mais recente, basta executar o comando:
