@@ -1,4 +1,4 @@
-# Instando os compiladores e interpretadores
+# Instalando os compiladores e interpretadores
 
 ## Java no Linux / WSL
 
@@ -29,10 +29,10 @@ go version
 
 # instale o pacote para debug
 go install github.com/go-delve/delve/cmd/dlv@latest
-# configure o vscode para usar o dlv como depurador rodando o arquivo individual
+# configure o VS Code para usar o dlv como depurador rodando o arquivo individual
 ```
 
-Na sua pasta de projeto, crie uma pasta .vscode e dentro dela um arquivo launch.json com a seguinte configuração. Ela vai permitir utilizar o terminal integrado do vscode para depurar seus arquivos go usando o dlv.
+Na sua pasta de projeto, crie uma pasta .vscode e dentro dela um arquivo launch.json com a seguinte configuração. Ela vai permitir utilizar o terminal integrado do VS Code para depurar seus arquivos Go usando o dlv.
 
 ```bash
 mkdir -p .vscode
@@ -61,7 +61,7 @@ code .vscode/launch.json
 ## Typescript no Linux / WSL
 
 ```bash
-# Instale o vscode extension para typescript
+# Instale a extensao do VS Code para TypeScript
 code --install-extension ms-vscode.vscode-typescript-next
 
 # Instale o nodejs e npm

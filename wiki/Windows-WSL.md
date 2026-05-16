@@ -1,4 +1,4 @@
-# Windows - Vscode e WSL
+# Windows - VS Code e WSL
 
 ## Visual Studio Code  
 
@@ -13,7 +13,7 @@ O Visual Studio Code (VS Code) é um editor de código fonte utilizado por progr
 
 ![vsc](Images/VSC.jpg)
 
-Abra o powershell para testar a instalação e instalar a extensão do WSL para o vscode. Digite o comando abaixo:
+Abra o PowerShell para testar a instalação e instalar a extensão do WSL para o VS Code. Digite o comando abaixo:
 
 ```bash
 code --install-extension ms-vscode-remote.remote-wsl
@@ -42,7 +42,7 @@ Para verificar e instalar as atualizações, abra o terminal Ubuntu (digite "Ubu
 
 ```bash
 sudo apt update && sudo apt upgrade -y
-# Agora abra o vscode para finalizar a integração
+# Agora abra o VS Code para finalizar a integração
 code .
 # ferramentas básicas de desenvolvimento e integração do wsl com o navegador
 sudo apt update && sudo apt install -y build-essential wslu

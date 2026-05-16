@@ -91,7 +91,7 @@ utilizando comentários Markdown e links internos.
 Esse formato tem duas vantagens importantes:
 
 - mantém o arquivo **legível para humanos**
-- permite que o **VSCode atualize automaticamente as referências**
+- permite que o **VS Code atualize automaticamente as referências**
   quando títulos são renomeados
 
 ---
@@ -189,7 +189,7 @@ Essa abordagem oferece várias vantagens:
 - dependências **claras e visíveis no README**
 - fácil edição manual
 - compatível com Markdown padrão
-- atualização automática de referências no VSCode
+- atualização automática de referências no VS Code
 - permite construir **grafos de progressão de aprendizado**
 
 Além disso, o sistema pode usar essas relações para:

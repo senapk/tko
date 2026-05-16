@@ -1,4 +1,4 @@
-# Gamificacao e Progressao
+# Gamificação e Progressão
 
 Este guia centraliza como o TKO calcula progresso, XP, quests e desbloqueio de tarefas.
 
@@ -143,11 +143,11 @@ Esse comando ajuda a:
 
 Guia detalhado:
 
-- [Build index: manter e atualizar indices](build-index.md)
+- [Build index: manter e atualizar índices](build-index.md)
 
 ## Onde documentar cada coisa
 
-- Regras de gamificacao e progressao: este arquivo.
+- Regras de gamificação e progressão: este arquivo.
 - Sintaxe de tags por linha de tarefa: [Marcadores-e-Tipos.md](Marcadores-e-Tipos.md).
 - Operacao de autoria para professores: [Criando-Tarefas-e-Testes.md](Criando-Tarefas-e-Testes.md).
 - Detalhes tecnicos de parser/engine: [Desenvolvimento-de-Tarefas.md](Desenvolvimento-de-Tarefas.md).

@@ -30,8 +30,8 @@ Fluxo rápido:
 1. Professor cria ou publica repositórios de questões.
 2. Aluno baixa a atividade e desenvolve na própria IDE.
 3. Aluno executa os testes localmente e itera com feedback imediato.
-4. Aluno envia para o professor via (Git | Email | Drive Compartilhado)
-4. Professor acompanha evolução, métricas de aprendizado, tentativas e progressos da turma.
+4. Aluno envia para o professor via Git, GitHub Classroom, Dropbox ou e-mail.
+5. Professor acompanha evolução, métricas de aprendizado, tentativas e progresso da turma.
 
 ## Quick Start
 
@@ -60,7 +60,7 @@ Depois reabra o terminal.
 
 Use o guia recomendado para setup completo com VS Code e WSL:
 
-- [Windows, Vscode e WSL- Recomendado](wiki/Windows-WSL.md)
+- [Windows, VS Code e WSL - Recomendado](wiki/Windows-WSL.md)
 
 ## Casos de Uso
 
@@ -71,7 +71,7 @@ Use o guia recomendado para setup completo com VS Code e WSL:
 
 ## Documentação por Perfil
 
-- Professor da disciplina (distribui e coleta via Git, Classroom, Dropbox, email):
+- Professor da disciplina (distribui e coleta via Git, GitHub Classroom (recomendado), Dropbox e e-mail):
   [Uso pelos professores](#uso-pelos-professores),
   [Criando tarefas e testes](wiki/Criando-Tarefas-e-Testes.md)
 - Aluno da disciplina:
@@ -79,7 +79,7 @@ Use o guia recomendado para setup completo com VS Code e WSL:
   [Fazendo as atividades](wiki/Fazendo-Atividades.md)
 - Aluno em estudo autônomo (fora de disciplina):
   [Testando sem estar em uma disciplina](wiki/Testando-Sem-Disciplina.md),
-  [repositórios oficiais](#repositórios-de-referência)
+  [Repositórios de referência](#repositórios-de-referência)
 - Instalação e ambiente: [Instalação](#instalação)
 - Desenvolvedores: [Uso pelos desenvolvedores](#uso-pelos-desenvolvedores)
 - Ferramentas auxiliares: [Ferramentas](#ferramentas)
@@ -92,11 +92,11 @@ Repositórios de referência:
 
 ## Instalação
 
-- [Windows, Vscode e WSL- Recomendado](wiki/Windows-WSL.md)
-- [Linux: Vscode](wiki/ubuntu_vscode.md)
+- [Windows, VS Code e WSL - Recomendado](wiki/Windows-WSL.md)
+- [Linux: VS Code](wiki/ubuntu_vscode.md)
 - [WSL e Ubuntu: Setup básico com GIT, Python, TKO](wiki/ubuntu_git_python_tko.md)
-- [Windows SEM WSL](wiki/Windows-Sem-WSL.md)
-- [Linguagens - Java, C, C++, Python, Typescript, Go](wiki/Linguagens.md)
+- [Windows sem WSL](wiki/Windows-Sem-WSL.md)
+- [Linguagens - Java, C, C++, Python, TypeScript, Go](wiki/Linguagens.md)
 - [Outros sistemas operacionais](wiki/Outros-Sistemas-Operacionais.md)
 
 ## Uso do TKO pelos alunos
@@ -107,28 +107,28 @@ Repositórios de referência:
 
 ## Uso pelos professores
 
-- [Trabalhando com o Classroom](wiki/Classroom.md)
+- [Trabalhando com o GitHub Classroom](wiki/Classroom.md)
 - [Repositórios e quests](wiki/Criando-Atividades.md)
 - [Marcadores e tipos de atividades](wiki/Marcadores-e-Tipos.md)
 - [Criando tarefas e testes](wiki/Criando-Tarefas-e-Testes.md)
-- [Gamificacao e progressao](wiki/Gamificacao-e-Progressao.md)
+- [Gamificação e progressão](wiki/Gamificacao-e-Progressao.md)
 
 ## Uso pelos desenvolvedores
 
 - [Desenvolvimento de tarefas no TKO](wiki/Desenvolvimento-de-Tarefas.md)
-- [Gamificacao e progressao](wiki/Gamificacao-e-Progressao.md)
+- [Gamificação e progressão](wiki/Gamificacao-e-Progressao.md)
 
-## Ferramentas 
+## Ferramentas
 
 - [Filtragem e Rascunhos](wiki/filter.md)
 - [Markdown Preprocessor](wiki/mdpp.md)
 - [Rebase de links markdown](wiki/rebase-links.md)
 - [Build all: pipeline de mdpp, filter e drafts](wiki/build-all.md)
-- [Build index: manter e atualizar indices](wiki/build-index.md)
+- [Build index: manter e atualizar índices](wiki/build-index.md)
 
-## Atualizando o tko
+## Atualizando o TKO
 
-Para atualizar o tko para versão mais recente, basta executar o comando:
+Para atualizar o TKO para a versão mais recente, basta executar o comando:
 
 ```bash
 pipx upgrade tko          # windows, codespace, arch, ubuntu e wsl

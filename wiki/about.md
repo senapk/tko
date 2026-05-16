@@ -264,7 +264,7 @@ seu **ambiente de desenvolvimento nativo**.
 
 Isso inclui:
 
--   VSCode
+-   VS Code
 -   Vim
 -   Emacs
 -   PyCharm

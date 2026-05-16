@@ -1,10 +1,8 @@
 # Outros sistemas operacionais
 
-Você vai precisar descobrir como instalar o git, python, o pipx, o vscode e os compiladores. Tudo precisa estar no path do sistema.
+Você vai precisar descobrir como instalar o git, python, o pipx, o VS Code e os compiladores. Tudo precisa estar no path do sistema.
 
 ## Exemplo de instalação no Arch Linux e Derivados:
-
-```bash
 
 ```bash
 # Instalando as ferramentas básicas de desenvolvimento

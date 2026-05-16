@@ -1,6 +1,6 @@
-# Window sem WSL
+# Windows sem WSL
 
-## VSCODE
+## VS Code
 
 O Visual Studio Code (VS Code) é um editor de código fonte utilizado por programadores para escrever, editar depurar e organizar projetos de software em diversas linguagens.  
 
