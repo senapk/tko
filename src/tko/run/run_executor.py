@@ -2,7 +2,6 @@ from tko.util.rtext import RText
 from tko.util.raw_terminal import RawTerminal
 from tko.util.freerun import Free
 from tko.enums.execution_result import ExecutionResult
-from tko.tester import Tester
 from tko.run.run_context import RunContext
 from tko.run.run_tracker import RunTracker
 from tko.run.run_presenter import RunPresenter
@@ -27,20 +26,8 @@ class RunExecutor:
         return percent
 
     def run_tests(self) -> int:
-        if self.ctx.config.curses_mode:
-            self.run_test_on_curses()
-            return 0
-        else:
-            return self.run_tests_on_raw_term()
-
-    def run_test_on_curses(self):
-        cdiff = Tester(self.ctx.settings, self.ctx.repo, self.ctx.wdir, self.ctx.get_task())
-        if self.ctx.opener is not None:
-            cdiff.set_opener(self.ctx.opener)
-        else:
-            cdiff.set_opener(self.loader.create_opener_for_wdir())
-        cdiff.set_autorun(self.ctx.config.run_without_ask)
-        cdiff.run()
+        """Execute tests in raw terminal mode."""
+        return self.run_tests_on_raw_term()
 
     def run_tests_on_raw_term(self) -> int:
         if not self.ctx.config.eval_mode:

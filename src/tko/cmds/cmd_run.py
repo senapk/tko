@@ -11,6 +11,7 @@ from tko.run.run_context import RunContext
 from tko.run.run_loader import RunLoader
 from tko.run.run_presenter import RunPresenter
 from tko.run.run_executor import RunExecutor
+from tko.tester import Tester
 
 class Run:
     def __init__(self, settings: Settings, target_list: list[Path], param: None | Param.Basic, language: str | None = None, repo: Repository | None = None):
@@ -82,16 +83,43 @@ class Run:
         if not self.context.wdir.has_solver() and self.context.wdir.has_tests() and not self.context.config.eval_mode:
             RunPresenter(self.context).list_mode()
             return 0
-            
+        
+        # Decidir entre curses (TUI) e raw terminal
+        if self.context.config.curses_mode:
+            # TUI mode: criar Tester
+            return self._run_in_curses_mode(loader)
+        else:
+            # Raw terminal mode: usar RunExecutor
+            return self._run_in_raw_terminal_mode()
+
+    def _run_in_curses_mode(self, loader: RunLoader) -> int:
+        """Execute in curses TUI mode."""
+        tester = Tester(self.context.settings, self.context.repo, self.context.wdir, self.context.get_task())
+        
+        # Set opener
+        if self.context.opener is not None:
+            tester.set_opener(self.context.opener)
+        else:
+            tester.set_opener(loader.create_opener_for_wdir())
+        
+        # Set autorun if configured
+        tester.set_autorun(self.context.config.run_without_ask)
+        tester.run()
+        return 0
+
+    def _run_in_raw_terminal_mode(self) -> int:
+        """Execute in raw terminal mode."""
         executor = RunExecutor(self.context)
         
-        if self.context.wdir.has_solver() and not self.context.wdir.has_tests() and not self.context.config.curses_mode and not self.context.config.no_run:
+        # Free run mode (no tests)
+        if self.context.wdir.has_solver() and not self.context.wdir.has_tests() and not self.context.config.no_run:
             if not self.context.config.eval_mode:
                 executor.free_run()
             else:
                 print(RText("fail: ") + "Nenhum caso de teste encontrado.")
             return 0
-            
+        
+        # Normal test mode
         return executor.run_tests()
 
     def _missing_target(self) -> bool:
