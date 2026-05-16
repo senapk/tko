@@ -128,6 +128,7 @@ Repositórios de referência:
 
 ## Referência e suporte
 
+- [Índice da documentação](docs/README.md)
 - [Guia de contribuição](CONTRIBUTING.md)
 - [Arquitetura técnica](docs/ARCHITECTURE.md)
 - [FAQ](docs/FAQ.md)
