@@ -7,7 +7,7 @@
 
 [![Tests](https://github.com/senapk/tko/actions/workflows/tests.yml/badge.svg)](https://github.com/senapk/tko/actions/workflows/tests.yml)
 [![PyPI version](https://img.shields.io/pypi/v/tko)](https://pypi.org/project/tko/)
-[![Python](https://img.shields.io/pypi/pyversions/tko)](https://pypi.org/project/tko/)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://pypi.org/project/tko/)
 [![PyPI Downloads](https://img.shields.io/pypi/dm/tko)](https://pypi.org/project/tko/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Repo](https://img.shields.io/badge/GitHub-senapk%2Ftko-181717?logo=github)](https://github.com/senapk/tko)
