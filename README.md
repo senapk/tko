@@ -129,6 +129,7 @@ Repositórios de referência:
 ## Referência e suporte
 
 - [Guia de contribuição](CONTRIBUTING.md)
+- [Arquitetura técnica](docs/ARCHITECTURE.md)
 - [FAQ](docs/FAQ.md)
 - [Referência rápida da CLI](docs/REFERENCE.md)
 - [Especificação de formatos](docs/FORMATS.md)
