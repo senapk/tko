@@ -1,3 +1,4 @@
+import difflib
 from typer.testing import CliRunner
 from tko.__main__ import app
 import pytest
@@ -23,10 +24,28 @@ class Compare:
     def text(capsys: pytest.CaptureFixture[str], file: str, cmd: str):
         Compare.list(capsys, file, cmd.split(" "))
 
+    # @staticmethod
+    # def list(capsys: pytest.CaptureFixture[str], file: str, cmd_list: list[str]):
+    #     runner = CliRunner()
+    #     result = runner.invoke(app, cmd_list)
+    #     expected, received = Compare.load_and_save(file, result.stdout)
+    #     assert expected == received
+
+
     @staticmethod
     def list(capsys: pytest.CaptureFixture[str], file: str, cmd_list: list[str]):
         runner = CliRunner()
         result = runner.invoke(app, cmd_list)
         expected, received = Compare.load_and_save(file, result.stdout)
-        assert expected == received
-
+        if expected != received:
+            diff = "\n".join(difflib.unified_diff(
+                expected.splitlines(),
+                received.splitlines(),
+                fromfile=f"{file}.exp",
+                tofile=f"{file}.rec",
+                lineterm=""
+            ))
+            raise AssertionError(
+                f"Output mismatch for {file}\n"
+                f"command: {' '.join(cmd_list)}\n{diff}"
+            )
