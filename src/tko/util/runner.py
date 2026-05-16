@@ -44,11 +44,18 @@ class Runner:
     def decode_code(return_code: int | None) -> str:
         if return_code is None:
             return "fail: Process was killed"
-        code = 128 - return_code
-        if code == 127:
-            return ""
-        if code == 139:
+        
+        # Linux shells may report signal exits as 128 + signal (e.g. 134),
+        # while subprocess may also expose them as negative signals (e.g. -6).
+        if return_code < 0:
+            signal = -return_code
+        elif return_code >= 128:
+            signal = return_code - 128
+        else:
+            signal = None
+
+        if signal == 11:
             return "fail: segmentation fault"
-        if code == 134:
+        if signal == 6:
             return "fail: runtime exception"
-        return "fail: execution error code " + str(code)
+        return "fail: execution error code " + str(return_code)
