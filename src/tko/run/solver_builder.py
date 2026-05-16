@@ -7,7 +7,7 @@ from tko.util.rtext import RText
 from tko.util.runner import Runner
 from tko.config.settings import Settings
 from pathlib import Path
-from tko.run.build.ts_macro_preprocessor import TypeScriptMacroPreprocessor
+from tko.run_build.ts_macro_preprocessor import TypeScriptMacroPreprocessor
 
 class CompileError(Exception):
     def __init__(self, message: str):
