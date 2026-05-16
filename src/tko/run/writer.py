@@ -1,3 +1,4 @@
+import logging
 import os
 
 from tko.util.identifier import Identifier
@@ -7,6 +8,9 @@ from tko.loader.toml_parser import TomlParser
 from tko.run.unit import Unit
 from tko.util.decoder import Decoder
 from pathlib import Path
+
+
+logger = logging.getLogger(__name__)
 class Writer:
 
     def __init__(self):
@@ -86,6 +90,6 @@ class Writer:
         elif target_type in [IdentifierType.TIO, IdentifierType.VPL, IdentifierType.TOML]:
             save_file(target, unit_list)
         else:
-            print("fail: target " + str(target) + " do not supported for build operation\n")
+            logger.error("fail: target %s do not supported for build operation", target)
             return False
         return True

@@ -1,21 +1,28 @@
+import logging
 import tomllib
 from pathlib import Path
+
 from tko.util.decoder import Decoder
+
+
+logger = logging.getLogger(__name__)
+
 
 class LangSettings:
     def __init__(self, build_cmd: str, run_cmd: str, draft: str):
         self.build_cmd: str = build_cmd
         self.run_cmd: str = run_cmd
         self.draft: str = draft
-    
+
     def to_dict(self):
         return self.__dict__
-    
+
     def from_dict(self, attr_dict: dict[str, str]):
         self.build_cmd = attr_dict.get("build_cmd", self.build_cmd)
         self.run_cmd = attr_dict.get("run_cmd", self.run_cmd)
         self.draft = attr_dict.get("draft", self.draft)
         return self
+
 
 draft_zip = r"""
 const std = @import("std");
@@ -75,7 +82,8 @@ const input = () => ""; // MACRO
 export {};
 console.log("Hello, World!");
 """[1:]
-    
+
+
 class LanguagesSettings:
 
     default_lang_settings: dict[str, LangSettings] = {
@@ -130,9 +138,10 @@ class LanguagesSettings:
             draft=ts_draft
         ),
     }
+
     def get_languages(self) -> dict[str, LangSettings]:
         return self.lang_settings
-    
+
     def get_languages_with_drafts(self) -> dict[str, str]:
         dict_lang_drafts: dict[str, str] = {}
         for lang in self.lang_settings.keys():
@@ -175,8 +184,11 @@ class LanguagesSettings:
                     run_cmd=settings.get("run_cmd", ""),
                     draft=settings.get("draft", "")
                 )
-        except Exception as e:
-            print(f"Erro ao carregar as configurações de linguagem {self.path}, resetando para as configurações padrão. Erro: {e}")
+        except Exception:
+            logger.exception(
+                "Erro ao carregar as configurações de linguagem %s, resetando para as configurações padrão",
+                self.path,
+            )
             self.reset()
             self.save_file_settings()
         return self

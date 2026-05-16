@@ -1,3 +1,4 @@
+import logging
 import curses
 from typing import Callable
 
@@ -22,6 +23,9 @@ from tko.tester.tester_ui_actions import TesterUiActions
 from tko.repository.repository import Repository
 from tko.run.solver_builder import CompileError
 from tko.run.wdir import Wdir
+
+
+logger = logging.getLogger(__name__)
 
 
 class Tester:
@@ -186,7 +190,7 @@ class Tester:
                         repeat = free_run_fn()
                         if not repeat:
                             break
-                    except CompileError as e:
+                    except CompileError:
                         self.state.mode = SeqMode.finished
                         if self.rep:
                             self.rep.logger.store(
@@ -195,6 +199,6 @@ class Tester:
                                 .set_mode(LogItemExec.Mode.FREE)
                                 .set_fail(LogItemExec.Fail.COMP)
                             )
-                        print(e)
+                        logger.exception("CompileError during tester run")
                         input("Pressione enter para continuar")
                         break

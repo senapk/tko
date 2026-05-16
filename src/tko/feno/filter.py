@@ -1,8 +1,12 @@
+import logging
 from pathlib import Path
 import shutil
 from tko.util.rtext import RText
 from tko.util.decoder import Decoder
 from typing import Any
+
+
+logger = logging.getLogger(__name__)
 
 class Mark:
     def __init__(self, marker: str, indent: int):
@@ -246,7 +250,7 @@ class CodeFilter:
         if path.is_file():
             file_content = Decoder.load(path)
             return True, file_content
-        print("Warning: File", path, "not found")
+        logger.warning("Warning: File %s not found", path)
         return False, "" 
 
     @staticmethod
@@ -256,14 +260,14 @@ class CodeFilter:
         if isinstance(destiny_dir, str):
             destiny_dir = Path(destiny_dir)
         if not source_dir.is_dir():
-            print("Error: target must be a folder in recursive mode")
+            logger.error("Error: target must be a folder in recursive mode")
             exit()
         if destiny_dir is None:
-            print("Error: output folder must be specified in recursive mode")
+            logger.error("Error: output folder must be specified in recursive mode")
             exit()
         if destiny_dir.exists():
             if not force:
-                print("Error: output folder already exists")
+                logger.error("Error: output folder already exists")
                 exit()
             else:
                 # recursive delete all folder content without deleting the folder itself

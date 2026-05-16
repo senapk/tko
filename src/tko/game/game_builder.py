@@ -8,15 +8,16 @@ from tko.game.task import Task
 from tko.repository.remote import Remote
 from tko.util.decoder import Decoder
 from tko.feno.indexer import fix_readme
-from icecream import ic # type: ignore
+from icecream import ic  # type: ignore
 
 
 logger = logging.getLogger(__name__)
 
+
 class GameBuilder:
     def __init__(self, remote: Remote, verbose: bool):
         self.remote: Remote = remote
-        self.ordered_quests: list[str] = [] # ordered quests keys
+        self.ordered_quests: list[str] = []  # ordered quests keys
         self.quests: dict[str, Quest] = {}
         self.active_quest: Quest | None = None
         self.interactive: bool = False
@@ -29,15 +30,15 @@ class GameBuilder:
     def build_from(self, language: str):
         try:
             filename: Path = self.remote.path.index_file
-        except ValueError as e:
+        except ValueError:
             if self.verbose:
-                logger.warning("Erro ao obter o arquivo README da fonte %s: %s", self.remote.data.name, e)
+                logger.exception("Erro ao obter o arquivo README da fonte %s", self.remote.data.name)
             return self
         self.__ensure_sandbox_readme_fixed(filename)
         content: str = self.load_content(filename)
         self.__parse_file_content(content)
         quest_filters = self.remote.data.quest_filters
-        self.__remove_empty_and_other_language_and_filtered(language, quest_filters) 
+        self.__remove_empty_and_other_language_and_filtered(language, quest_filters)
         self.__create_requirements_pointers()
         self.__create_cross_references()
         return self
@@ -69,7 +70,6 @@ class GameBuilder:
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(f"# {self.remote.data.name}\n\n")
         fix_readme(filename.resolve(), self.remote.path.work_dir, self.remote.data.name, verbose=False, load_titles=True)
-
 
     def collect_tasks(self) -> dict[str, Task]:
         tasks: dict[str, Task] = {}
@@ -122,8 +122,9 @@ class GameBuilder:
 
         try:
             filename = self.remote.path.index_file
-        except ValueError as e:
-            print(e)
+        except ValueError:
+            if self.verbose:
+                logger.exception("Erro ao obter o arquivo de índice da fonte %s", alias)
             return
         for line_num, line in enumerate(lines):
             quest_parser = QuestParser(alias)
@@ -195,7 +196,7 @@ class GameBuilder:
             self.add_filtered_quests(quest_filters)
         return self
 
-    def __create_cross_references(self): #call after clear_empty
+    def __create_cross_references(self):  # call after clear_empty
         for quest in self.quests.values():
             quest.basic.remote_name = self.remote.data.name
             for task in quest.get_tasks():

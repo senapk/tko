@@ -1,6 +1,10 @@
+import logging
 from tko.repository.remote import Remote
 
 from typing import Any
+
+
+logger = logging.getLogger(__name__)
 
 class RepositoryData:
     def __init__(self):
@@ -81,8 +85,8 @@ class RepositoryData:
                 else:
                     raise TypeError("The 'sources' field must be a list.")
 
-        except (KeyError, TypeError) as e:
-            print(f"Error loading data from dictionary: {e}")
+        except (KeyError, TypeError):
+            logger.exception("Error loading data from dictionary")
 
     def save_to_dict(self) -> dict[str, Any]:
         return {

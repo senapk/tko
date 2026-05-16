@@ -2,6 +2,7 @@ from __future__ import annotations
 from pathlib import Path
 import sys # type: ignore
 from typing import Any
+import logging
 from tko.repository.repository import Repository
 from tko.logger.logger import Logger
 from tko.logger.task_resume import TaskResume
@@ -14,6 +15,9 @@ from tko.repository.repository_paths import RepositoryPaths
 import json
 import os
 import csv
+
+
+logger = logging.getLogger(__name__)
 
 class CmdCollect:
     @staticmethod
@@ -159,7 +163,7 @@ class CollectMany:
             try:
                 json_output: dict[str, Any] = json.loads(output) if output != "" else {}
             except json.JSONDecodeError:
-                print(RText(f"{username: <{padding}}", "r") + RText("Error: Failed to parse JSON output", "r"))
+                logger.exception("Error: Failed to parse JSON output for %s", username)
                 continue
             if "error" in json_output:
                 print(RText(f"{username: <{padding}}", "r") + RText(f"Error: {json_output['error']}", "r"))

@@ -1,10 +1,13 @@
+import logging
+import os
+from pathlib import Path
+
 from tko.run.unit import Unit
 from tko.util.decoder import Decoder
 from tko.util.pattern_loader import PatternLoader
 
 
-import os
-from pathlib import Path
+logger = logging.getLogger(__name__)
 
 
 class DirParser:
@@ -27,6 +30,6 @@ class DirParser:
                 value = Decoder.load(output_file)
                 unit.set_expected(value + ("" if value.endswith("\n") else "\n"))
                 unit_list.append(unit)
-        except FileNotFoundError as e:
-            print(str(e))
+        except FileNotFoundError:
+            logger.exception("Falha ao carregar arquivos da pasta %s", folder)
         return unit_list

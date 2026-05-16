@@ -1,4 +1,5 @@
 from __future__ import annotations
+import logging
 import sys
 import typer
 from pathlib import Path
@@ -22,6 +23,7 @@ if os.name != "nt":
     signal.signal(signal.SIGPIPE, signal.SIG_DFL) # permit using tko in pipelines without showing broken pipe errors
 
 app = typer.Typer(name="tko", help=f"tko {__version__}", no_args_is_help=True, context_settings={"help_option_names": ["-h", "--help"]})
+logger = logging.getLogger(__name__)
 
 # app = typer.Typer(
 #     context_settings={"help_option_names": ["-h", "--help"]}
@@ -93,7 +95,7 @@ def main():
         print("\n\nKeyboard Interrupt")
         sys.exit(1)
     except Warning as w:
-        print(w)
+        logger.warning("%s", w)
         sys.exit(1)
 
 if __name__ == '__main__':

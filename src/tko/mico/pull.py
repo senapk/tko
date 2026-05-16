@@ -1,10 +1,15 @@
 from __future__ import annotations
 
-from tko.util.rtext import RText
+import logging
+import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import subprocess
 from pathlib import Path
+
+from tko.util.rtext import RText
+
+
+logger = logging.getLogger(__name__)
 
 
 class Pull:
@@ -22,8 +27,9 @@ class Pull:
             return result.stdout, result.stderr, result.returncode
         except FileNotFoundError:
             return "", "git not found", 127
-        except Exception as e:
-            return "", f"unexpected error: {e}", 1
+        except Exception:
+            logger.exception("Erro inesperado ao executar comando git em %s", directory)
+            return "", "unexpected error", 1
 
     @staticmethod
     def git_ok(directory: str, *args: str) -> tuple[bool, str]:
@@ -108,8 +114,8 @@ class Pull:
                     output = future.result()
                     if output.plain():
                         print(output)
-                except Exception as exc:
-                    print(RText(f"Erro em {repo}: {exc}", "r"))
+                except Exception:
+                    logger.exception("Erro ao fazer pull em %s", repo)
 
         elapsed = time.time() - start
         print("\n" + str(RText(f"Finalizado em {elapsed:.2f}s", "y")))

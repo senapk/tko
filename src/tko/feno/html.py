@@ -1,7 +1,11 @@
+import logging
 from pathlib import Path
 
 import markdown
 from typing import Any
+
+
+logger = logging.getLogger(__name__)
 
 def convert_lists_to_4_spaces(markdown_content: str) -> str:
     """
@@ -155,6 +159,6 @@ def convert_markdown_to_html(title: str, markdown_file_path: Path, output_html_p
         # print(f"Conversão concluída: '{markdown_file_path}' -> '{output_html_path}'")
 
     except FileNotFoundError:
-        print(f"Erro: Arquivo Markdown não encontrado em '{markdown_file_path}'")
-    except Exception as e:
-        print(f"Ocorreu um erro durante a conversão: {e}")
+        logger.exception("Erro: Arquivo Markdown não encontrado em '%s'", markdown_file_path)
+    except Exception:
+        logger.exception("Ocorreu um erro durante a conversão")

@@ -1,13 +1,19 @@
-from tko.game.quest import Quest
-from tko.game.game_builder import GameBuilder
-from tko.game.game_validator import GameValidator
-from tko.game.task import Task
-from tko.repository.remote import Remote
-# from typing import override
-from icecream import ic # type: ignore
+import logging
 import re
 from pathlib import Path
+
+from icecream import ic # type: ignore
+
+from tko.game.game_builder import GameBuilder
+from tko.game.game_validator import GameValidator
+from tko.game.quest import Quest
+from tko.game.task import Task
 from tko.repository.git_cache import GitCache
+from tko.repository.remote import Remote
+# from typing import override
+
+
+logger = logging.getLogger(__name__)
 
 def load_html_tags(task: str) -> None | str:
     pattern = r"<!--\s*(.*?)\s*-->"
@@ -48,8 +54,8 @@ class Game:
             gb = GameBuilder(remote, verbose)
             try:
                 gb.build_from(self.language)
-            except ValueError as e:
-                print(e)
+            except ValueError:
+                logger.exception("Falha ao construir jogo para a fonte %s", remote.data.name)
                 continue
             for quest_key in gb.ordered_quests:
                 self.ordered_quests.append(remote.data.name + "@" + quest_key)

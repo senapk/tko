@@ -1,9 +1,13 @@
+import logging
 from tko.repository.remote import Remote
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.repository.repository_loader import RepositoryLoader
 from tko.util.rtext import RText
 from pathlib import Path
+
+
+logger = logging.getLogger(__name__)
 
 class RemoteActions:
     def __init__(self, settings: Settings, repo: Repository):
@@ -121,8 +125,8 @@ class RemoteActions:
                 remote.data.set_git_source(target=url, branch=branch, index=index)
                 remote.data.quest_filters = self.fix_filter(filter_quest, filter_to)
                 self.repo.data.set_remote(remote)
-            except Warning as e:
-                print(f"Erro ao clonar repositório: {e}, fonte não foi adicionada.")
+            except Warning:
+                logger.exception("Erro ao clonar repositório, fonte não foi adicionada")
                 raise Warning("fail: não foi possível clonar o repositório.")
         elif remote_dir is not None:
             dir_path = Path(remote_dir)
@@ -143,8 +147,8 @@ class RemoteActions:
                 remote.data.is_editable = writeable
                 self.repo.data.set_remote(remote)
                 print(RText.parse(f"Fonte remota [y]{name}[.] adicionada com sucesso."))
-            except Warning as e:
-                print(f"Erro ao clonar repositório: {e}, fonte não foi adicionada.")
+            except Warning:
+                logger.exception("Erro ao clonar repositório, fonte não foi adicionada")
                 raise Warning("fail: não foi possível clonar o repositório.")
         RepositoryLoader(repo).save_config()
    

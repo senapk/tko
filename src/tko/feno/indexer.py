@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import logging
 import re
 from pathlib import Path
 from tko.util.decoder import Decoder
 from tko.util.rtext import RText
 from tko.game.task_matcher import TaskMatcher
+
+
+logger = logging.getLogger(__name__)
 
 def load_title_from_markdown_file(path: Path) -> str | None:
     if not path.exists():
@@ -98,7 +102,7 @@ class IndexLine:
             if char in valid_chars:
                 valid_label += char
             else:
-                print("fail: error in", edit_task_label)
+                logger.error("fail: error in %s", edit_task_label)
                 raise ValueError(f"Invalid label in line: {edit_task_label}")
 
         return valid_label
@@ -171,7 +175,7 @@ class Indexer:
 
     def replace_title_in_readme(self, readme_file: Path, new_title: str) -> None:
         if not readme_file.exists():
-            print(f"Error: README file '{readme_file}' does not exist, cannot replace title.")
+            logger.error("Error: README file '%s' does not exist, cannot replace title.", readme_file)
             return
         with open(readme_file, "r", encoding="utf-8") as f:
             content = f.read()

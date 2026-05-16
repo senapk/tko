@@ -1,5 +1,10 @@
+import logging
+
 from tko.game.quest import Quest
 from tko.game.task import Task
+
+
+logger = logging.getLogger(__name__)
 
 class GameValidator:
     def __init__(self, quests: dict[str, Quest]):
@@ -17,7 +22,12 @@ class GameValidator:
         for q in self.quests.values():
             for t in q.get_tasks():
                 if t.basic.full_key in keys:
-                    print(f"Chave repetida: {t.basic.full_key} em {t.resource.line_number} {t.resource.line_data}, ignorando tarefa")
+                    logger.error(
+                        "Chave repetida: %s em %s %s, ignorando tarefa",
+                        t.basic.full_key,
+                        t.resource.line_number,
+                        t.resource.line_data,
+                    )
                     continue
                 keys.append(t.basic.full_key)
                 self.tasks[t.basic.full_key] = t
@@ -25,7 +35,7 @@ class GameValidator:
         # print chaves repetidas
         for k in keys:
             if keys.count(k) > 1:
-                print(f"Chave repetida: {k}")
+                logger.error("Chave repetida: %s", k)
                 exit(1)
 
         # trim titles
@@ -36,7 +46,7 @@ class GameValidator:
         for q in self.quests.values():
             for r in q.requirements.requires:
                 if q.basic.full_key == r:
-                    print(f"Erro: auto refência {q.source.line_number} {q.source.line}")
+                    logger.error("Erro: auto refência %s %s", q.source.line_number, q.source.line)
                     exit(1)
 
 
@@ -45,7 +55,7 @@ class GameValidator:
         def dfs(qx: Quest, visitedx: list[str]):
             if len(visitedx) > 0:
                 if visitedx[0] == qx.basic.full_key:
-                    print(f"Cycle detected: {visitedx}")
+                    logger.error("Cycle detected: %s", visitedx)
                     exit(1)
             if qx.basic.full_key in visitedx:
                 return

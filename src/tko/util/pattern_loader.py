@@ -1,5 +1,9 @@
 from __future__ import annotations
+import logging
 import re
+
+
+logger = logging.getLogger(__name__)
 
 
 class FileSource:
@@ -50,7 +54,7 @@ class PatternLoader:
             label = match[0]
             file_source = self.make_file_source(label)
             if file_source.output_file not in filename_list:
-                print("fail: file " + file_source.output_file + " not found")
+                logger.error("fail: file %s not found", file_source.output_file)
             else:
                 file_source_list.append(file_source)
         return file_source_list
