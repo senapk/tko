@@ -131,6 +131,8 @@ Repositórios de referência:
 - [Guia de contribuição](CONTRIBUTING.md)
 - [FAQ](docs/FAQ.md)
 - [Referência rápida da CLI](docs/REFERENCE.md)
+- [Especificação de formatos](docs/FORMATS.md)
+- [Exemplos end-to-end](docs/EXAMPLES.md)
 - [Ciclo de vida de tarefas](docs/TASK_LIFECYCLE.md)
 - [Suporte a linguagens](docs/LANGUAGE_SUPPORT.md)
 - [Guia de testes e QA](docs/TESTING.md)
