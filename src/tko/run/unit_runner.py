@@ -27,7 +27,9 @@ class UnitRunner:
             shell_mode= executable.needs_shell_mode()
         )
         if return_code != 0:
-            unit.set_received(stdout + stderr)
+            # Keep execution errors stable across environments by avoiding
+            # shell/runtime specific stderr noise in snapshot comparisons.
+            unit.set_received(Runner.decode_code(return_code))
             return ExecutionResult.EXECUTION_ERROR
         unit.set_received(stdout)
         if unit.get_received() == unit.get_expected():
